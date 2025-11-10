@@ -17,34 +17,91 @@
 #define ALLOC_DEBUG_CANARY_VALUE 0xDEADBEEFDEADBEEFul
 
 #ifdef MEM_STATS
+#define MEM_STATS_START(NAME) \
+    auto start_##NAME = std::chrono::high_resolution_clock::now()
 
-#define MEM_STATS_START() \
-    auto start = std::chrono::high_resolution_clock::now()
-#define MEM_STATS_END(BUCKETS)                                                             \
-    do {                                                                                   \
-        auto end = std::chrono::high_resolution_clock::now();                              \
-        double duration_ms = std::chrono::                                                 \
-            duration_cast<std::chrono::duration<double, std::milli>>(end - start).count(); \
-        gtl_info.mstats.total_collection_time += duration_ms;                              \
-        gtl_info.mstats.total_time = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(end.time_since_epoch()).count(); \
-        update_collection_extrema(gtl_info.mstats, duration_ms);                           \
-        update_bucket(gtl_info.mstats. BUCKETS, duration_ms);                              \
-    } while(0)
-#define UPDATE_MEMSTATS()                                 \
-    do {                                                  \
+#define MEM_STATS_END(INFO, BUCKETS, NAME) \
+    auto end_##NAME = std::chrono::high_resolution_clock::now(); \
+    double NAME##_ms = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(end_##NAME - start_##NAME).count(); \
+    update_bucket((INFO).mstats. BUCKETS, NAME##_ms);
+
+#ifdef COLLECTION_STATS_MODE
+
+#define COLLECTION_STATS_START() \
+    MEM_STATS_START(collection)
+#define COLLECTION_STATS_END(INFO, BUCKETS) \
+    MEM_STATS_END(INFO, BUCKETS, collection)
+
+#define UPDATE_COLLECTION_TIMES(INFO) \
+    update_collection_stats((INFO).mstats, collection_ms)
+
+#define NURSERY_STATS_START()
+#define NURSERY_STATS_END(INFO, BUCKETS)
+#define RC_STATS_START()
+
+#define RC_STATS_END(INFO, BUCKETS)
+#define UPDATE_NURSERY_TIMES(INFO) 
+
+#define UPDATE_RC_TIMES(INFO)
+
+#elif defined(NURSERY_RC_STATS_MODE) 
+
+#define UPDATE_COLLECTION_TIMES(INFO)
+#define COLLECTION_STATS_START()
+#define COLLECTION_STATS_END(INFO, BUCKETS)
+
+#define NURSERY_STATS_START() \
+    MEM_STATS_START(nursery)
+#define NURSERY_STATS_END(INFO, BUCKETS) \
+    MEM_STATS_END(INFO, BUCKETS, nursery)
+
+    #define RC_STATS_START() \
+    MEM_STATS_START(rc)
+#define RC_STATS_END(INFO, BUCKETS) \
+    MEM_STATS_END(INFO, BUCKETS, rc)
+
+#define UPDATE_NURSERY_TIMES(INFO) \
+    update_nursery_stats((INFO).mstats, nursery_ms)
+#define UPDATE_RC_TIMES(INFO) \
+    update_rc_stats((INFO).mstats, rc_ms)
+#else
+#define UPDATE_COLLECTION_TIMES(INFO)
+#define UPDATE_NURSERY_TIMES(INFO)
+#define UPDATE_RC_TIMES(INFO)
+#endif
+
+#define UPDATE_MEMSTATS_TOTALS(INFO) \
+    auto now = std::chrono::high_resolution_clock::now(); \
+    gtl_info.mstats.total_time = std::chrono:: \
+        duration_cast<std::chrono::duration<double, std::milli>> \
+        (now.time_since_epoch()).count(); \
+    do { \
         for(size_t i = 0; i < BSQ_MAX_ALLOC_SLOTS; i++) { \
-            GCAllocator* alloc = gtl_info.g_gcallocs[i];  \
-            if(alloc != nullptr) {                        \
-                alloc->updateMemStats();                  \
-            }                                             \
-        }                                                 \
+            GCAllocator* alloc = (INFO).g_gcallocs[i]; \
+            if(alloc != nullptr) { \
+                alloc->updateMemStats(); \
+            } \
+        } \
     } while(0)
 
 #else
-#define MEM_STATS_START()
-#define MEM_STATS_END(BUCKETS)
-#define UPDATE_MEMSTATS()
-#endif
+#define MEM_STATS_START(NAME)
+#define MEM_STATS_END(INFO, BUCKETS, NAME)
+
+#define COLLECTION_STATS_START()
+#define COLLECTION_STATS_END(INFO, BUCKETS)
+
+#define NURSERY_STATS_START()
+#define NURSERY_STATS_END(INFO, BUCKETS)
+
+#define RC_STATS_START()
+#define RC_STATS_END(INFO, BUCKETS)
+
+#define UPDATE_COLLECTION_TIMES(INFO)
+#define UPDATE_NURSERY_TIMES(INFO)
+#define UPDATE_RC_TIMES(INFO)
+#define UPDATE_MEMSTATS_TOTALS(INFO)
+#endif // MEM_STATS
 
 // Allows us to correctly determine pointer offsets
 #ifdef ALLOC_DEBUG_CANARY

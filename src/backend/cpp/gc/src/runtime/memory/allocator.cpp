@@ -93,6 +93,8 @@ PageInfo* GlobalPageGCManager::allocateFreshPage(uint16_t entrysize, uint16_t re
         this->pagetableInsert(page);
 
         pp = PageInfo::initialize(page, entrysize, realsize);
+
+        UPDATE_TOTAL_PAGES(gtl_info, +=, 1);
     }
 
     GC_MEM_LOCK_RELEASE();
