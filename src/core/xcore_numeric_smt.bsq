@@ -12,6 +12,8 @@ namespace NumericOps {
     
     function s_floatPow(a: Float, b: Float): Float = s_float_pow;
     function s_floatSqrt(a: Float): Float = s_float_sqrt;
+
+    function s_natPow(a: Nat, b: Nat): Nat = s_nat_pow;
 }
 #else
 #endif %% SMT_LIBS
