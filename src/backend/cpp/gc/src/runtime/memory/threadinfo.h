@@ -45,8 +45,8 @@ struct RegisterContents
 
 #ifdef MEM_STATS
 
-// Buckets store BUCKET_VARIANCE ms variance, final entry is for outliers (hopefully never any values present there)
-#define MAX_MEMSTATS_BUCKETS 1000 + 1
+// Buckets store BUCKET_VARIANCE ms variance, final entry is for outliers (hopefully never any values present there!)
+#define MAX_MEMSTATS_BUCKETS 10000 + 1
 struct Stats {
     size_t count = 0;
     double mean  = 0.0;
@@ -55,8 +55,10 @@ struct Stats {
 };
 struct MemStats {
     size_t total_alloc_count  = 0;
+    size_t prev_total_alloc_count = 0;
     size_t total_alloc_memory = 0;
     size_t total_live_bytes   = 0;
+    size_t total_live_objects = 0;
     size_t total_promotions   = 0;
     size_t total_pages        = 0;
 
@@ -66,6 +68,8 @@ struct MemStats {
 
     double start_time = 0.0;
     double total_time = 0.0;
+
+    double survival_rate_sum = 0.0;
 
     double min_collection_time = 0;
     double max_collection_time = 0;
@@ -175,7 +179,7 @@ struct BSQMemoryTheadLocalInfo
 #ifdef MEM_STATS
 #include <iostream>
 
-#define BUCKET_VARIANCE 0.01
+#define BUCKET_VARIANCE 0.001
 #define BUCKET_AVERAGE ((BUCKET_VARIANCE) / 2)
 
 inline void update_bucket(size_t* bucket, double time) noexcept 
@@ -245,6 +249,11 @@ inline void update_rc_stats(MemStats& ms, double time) noexcept
     update_stats(ms.rc_stats, time);
 }
 
+inline void update_survival_rate_sum(MemStats& ms) noexcept 
+{
+    ms.survival_rate_sum += static_cast<double>(ms.total_live_objects) / static_cast<double>(ms.total_alloc_count - ms.prev_total_alloc_count);
+}
+
 inline double calculate_total_collection_time(const size_t* buckets) noexcept
 {
     double curvariance = BUCKET_VARIANCE;
@@ -275,10 +284,10 @@ inline double calculate_total_collection_time(const size_t* buckets) noexcept
     (std::cout << "Total Collections: " << (E).mstats.collection_stats.count << "\n")
 
 #define PRINT_NURSERY_TIME(E) \
-        std::cout << "Nursery - Average: " << get_mean_pause((E).mstats.nursery_stats) << "ms\n";
+        std::cout << "Nursery Average: " << get_mean_pause((E).mstats.nursery_stats) << "ms\n";
 
 #define PRINT_RC_TIME(E) \
-    std::cout << "RC - Average: " << get_mean_pause((E).mstats.rc_stats) << "ms\n";
+    std::cout << "RC Average: " << get_mean_pause((E).mstats.rc_stats) << "ms\n";
 
 #define PRINT_TOTAL_PAGES(E) \
     (std::cout << "Total Pages: " << (E).mstats.total_pages << "\n")
@@ -302,8 +311,11 @@ inline double calculate_total_collection_time(const size_t* buckets) noexcept
     do {\
         (E).mstats.total_time -= (E).mstats.start_time; \
         std::cout << "Total Time: " << (E).mstats.total_time << "ms\n"; \
-        std::cout << "Percentage of Time Collecting: " << (calculate_total_collection_time((E).mstats.collection_times) / (E).mstats.total_time) * 100 << "%\n";\
+        std::cout << "Percentage of Time Collecting: " << (calculate_total_collection_time((E).mstats.collection_times) / (E).mstats.total_time) * 100.0 << "%\n";\
     } while(0)
+
+#define PRINT_SURVIVAL_RATE(E) \
+    std::cout << "Survival Rate: " << ((E).mstats.survival_rate_sum / static_cast<double>((E).mstats.collection_stats.count)) * 100.0 << "%\n";
 
 #define MEM_STATS_DUMP(E) \
     do { \
@@ -317,6 +329,7 @@ inline double calculate_total_collection_time(const size_t* buckets) noexcept
         PRINT_TOTAL_PAGES(E); \
         PRINT_MAX_HEAP(E); \
         PRINT_HEAP_SIZE(E); \
+        PRINT_SURVIVAL_RATE(E); \
     } while(0)
 
 #else
