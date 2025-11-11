@@ -534,6 +534,26 @@ public:
     };
     constexpr uint64_t get() const noexcept { return value; } 
 
+    inline Nat pow(const Nat& b) noexcept {
+        uint64_t exp = b.get();
+        Nat base = *this;
+        if(base.value == 2) {
+            return Nat(1ull << exp);
+        }
+        else {
+            Nat res = Nat(1ull);
+            while(exp) {
+                if(exp & 1) {
+                    res *= base;
+                }
+                exp >>= 1;
+                base *= base;
+            }
+
+            return Nat(res);
+        }
+    }
+
     // Overloaded operators on Nat
     constexpr Nat& operator+=(const Nat& rhs) noexcept {
         do_safe_arithmetic(Nat, uint64_t, add);
