@@ -1658,6 +1658,7 @@ function emitBuiltinBodyImplementation(body: CPPAssembly::BuiltinBodyImplementat
     switch(String::fromCString(body.builtin)) {
         | "s_float_pow" => { return String::concat(indent, "    ", "return __CoreCpp::Float(powf64(a.get(), b.get()));%n;"); }
         | "s_float_sqrt" => { return String::concat(indent, "    ", "return __CoreCpp::Float(sqrtf64(a.get()));%n;"); }
+        | "s_nat_pow" => { return String::concat(indent, "    ", "return a.pow(b);%n;"); }
         | "ccharbuffer_create_empty" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_empty();%n;"); }
         | "ccharbuffer_create_1" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1);%n;"); }
         | "ccharbuffer_create_2" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1, c2);%n;"); }

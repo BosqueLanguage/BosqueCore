@@ -1,6 +1,6 @@
 "use strict";
 
-import { runMainCode } from "../../../bin/test/cppoutput/cppemit_nf.js"
+import { runMainCode, runMainCodeError } from "../../../bin/test/cppoutput/cppemit_nf.js";
 import { describe, it } from "node:test";
 
 describe ("CPP Emit Evaluate -- NamespaceFunction (no template)", () => {
@@ -43,5 +43,17 @@ describe ("CPP Emit Evaluate -- NamespaceFunction with builtin", () => {
     it("should exec simple float builtin", function () {
         runMainCode("function sqrt(x: Float): Float { return Float::sqrt(x); } public function main(): Bool { return sqrt(5.0f) < 3.0f; }", "true");
         runMainCode("function square(x: Float): Float { return Float::square(x); } public function main(): Bool { return square(5.0f) > 20.0f; }", "true");
+    });
+
+    it("should exec simple nat builtin", function() {
+        runMainCode("public function main(): Bool { return 4n.pow(5n) == 1024n; }", "true");
+        runMainCode("public function main(): Bool { return 2n.pow(12n) == 4096n; }", "true");
+    })
+});
+
+describe ("CPP Emit Evaluate -- NamespaceFunction with builtin should overflow", () => {
+    it("should exec simple nat builtin error", function () {
+        runMainCodeError("public function main(): Bool { return 100n.pow(100n) == 0n; }", "Assertion failed! Or perhaps over/underflow?\n");
+        runMainCodeError("public function main(): Bool { return 2n.pow(64n) == 4096n; }", "Assertion failed! Or perhaps over/underflow?\n");
     });
 });

@@ -38,6 +38,10 @@ __internal __typedeclable __keycomparable __numeric entity Nat {
         return NumericOps::s_natFromCString(str);
     }
 
+    method pow(b: Nat): Nat {
+        return NumericOps::s_natPow(this, b);
+    }
+
 #endif %% STRIPPED_CORE
 }
 
