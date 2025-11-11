@@ -235,6 +235,7 @@ static inline void process(PageInfo* page) noexcept
    
     uint64_t freecount = getPageFreeCount(page);
     UPDATE_TOTAL_LIVE_BYTES(gtl_info, +=, (page->allocsize * (page->entrycount - freecount)));
+    UPDATE_TOTAL_LIVE_OBJECTS(gtl_info, +=, (page->entrycount - freecount));
 }
 
 static void traverseBST(PageInfo* node) noexcept

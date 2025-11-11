@@ -71,17 +71,19 @@
 #endif
 
 #define UPDATE_MEMSTATS_TOTALS(INFO) \
-    auto now = std::chrono::high_resolution_clock::now(); \
-    gtl_info.mstats.total_time = std::chrono:: \
-        duration_cast<std::chrono::duration<double, std::milli>> \
-        (now.time_since_epoch()).count(); \
     do { \
+        auto now = std::chrono::high_resolution_clock::now(); \
+        gtl_info.mstats.total_time = std::chrono:: \
+            duration_cast<std::chrono::duration<double, std::milli>> \
+            (now.time_since_epoch()).count(); \
         for(size_t i = 0; i < BSQ_MAX_ALLOC_SLOTS; i++) { \
             GCAllocator* alloc = (INFO).g_gcallocs[i]; \
             if(alloc != nullptr) { \
                 alloc->updateMemStats(); \
             } \
         } \
+        update_survival_rate_sum((INFO).mstats); \
+        UPDATE_PREV_TOTAL_ALLOC_COUNT(INFO); \
     } while(0)
 
 #else

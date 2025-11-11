@@ -9,15 +9,15 @@
 #define BSQ_GC_CHECK_ENABLED
 #define VERBOSE_HEADER
 
-#ifdef BSQ_GC_CHECK_ENABLED
-#define ALLOC_DEBUG_MEM_INITIALIZE
-
 //
 // Note: If we are deterministic the base addresses for our pages
 // will be outside of asan's address range. Will need to run asan
 // in non-deterministic
 //
 #define ALLOC_DEBUG_MEM_DETERMINISTIC
+
+#ifdef BSQ_GC_CHECK_ENABLED
+#define ALLOC_DEBUG_MEM_INITIALIZE
 
 #define ALLOC_DEBUG_CANARY
 #define DSA_INVARIANTS
@@ -37,7 +37,7 @@
 
 // If BITS_IN_ADDR_FOR_PAGE != 12 mmap fails or will not garuntee the correct size block 
 // unless compiled in  non-deterministic mode (as it is not a multiple of default page size, 4kb)
-#define BITS_IN_ADDR_FOR_PAGE 12ul
+#define BITS_IN_ADDR_FOR_PAGE 13ul
 #define BSQ_BLOCK_ALLOCATION_SIZE (1ul << BITS_IN_ADDR_FOR_PAGE)
 
 #define PAGE_MASK ((1ul << BITS_IN_ADDR_FOR_PAGE) - 1ul)
@@ -55,7 +55,7 @@
 #define BSQ_MAX_ALLOC_SLOTS 64ul
 
 //Number of allocation pages we fill up before we start collecting
-#define BSQ_COLLECTION_THRESHOLD 1024
+#define BSQ_COLLECTION_THRESHOLD 1024 
 
 //Max number of decrement ops we do per collection -- 
 //    TODO:we may need to make this a bit dynamic 
@@ -288,8 +288,10 @@ do { \
 #define NURSERY_RC_STATS_MODE
 
 #define TOTAL_ALLOC_COUNT(E)      (E).mstats.total_alloc_count
+#define PREV_TOTAL_ALLOC_COUNT(E) (E).mstats.total_alloc_count
 #define TOTAL_ALLOC_MEMORY(E)     (E).mstats.total_alloc_memory
 #define TOTAL_LIVE_BYTES(E)       (E).mstats.total_live_bytes
+#define TOTAL_LIVE_OBJECTS(E)       (E).mstats.total_live_objects
 #define TOTAL_PROMOTIONS(E)       (E).mstats.total_promotions
 #define TOTAL_PAGES(E)            (E).mstats.total_pages
 #define MIN_COLLECTION_TIME(E)    (E).mstats.min_collection_time
@@ -297,8 +299,10 @@ do { \
 #define MAX_LIVE_HEAP(E)          (E).mstats.max_live_heap
 
 #define UPDATE_TOTAL_ALLOC_COUNT(E, OP, ...)      TOTAL_ALLOC_COUNT((E)) OP __VA_ARGS__
+#define UPDATE_PREV_TOTAL_ALLOC_COUNT(E)          PREV_TOTAL_ALLOC_COUNT((E)) = TOTAL_ALLOC_COUNT((E))
 #define UPDATE_TOTAL_ALLOC_MEMORY(E, OP, ...)     TOTAL_ALLOC_MEMORY((E)) OP __VA_ARGS__
 #define UPDATE_TOTAL_LIVE_BYTES(E, OP, ...)       TOTAL_LIVE_BYTES((E)) OP __VA_ARGS__
+#define UPDATE_TOTAL_LIVE_OBJECTS(E, OP, ...)     TOTAL_LIVE_OBJECTS((E)) OP __VA_ARGS__
 #define UPDATE_TOTAL_PROMOTIONS(E, OP, ...)       TOTAL_PROMOTIONS((E)) OP __VA_ARGS__
 #define UPDATE_TOTAL_PAGES(E, OP, ...)            TOTAL_PAGES((E)) OP __VA_ARGS__ 
 #define UPDATE_MIN_COLLECTION_TIME(E, OP, ...)    MIN_COLLECTION_TIME((E)) OP __VA_ARGS__
