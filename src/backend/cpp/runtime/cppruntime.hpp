@@ -537,7 +537,7 @@ public:
     inline Nat pow(const Nat& b) noexcept {
         uint64_t exp = b.get();
         Nat base = *this;
-        if(base.value == 2) {
+        if(base.value == 2 && exp < 63) {
             return Nat(1ull << exp);
         }
         else {
