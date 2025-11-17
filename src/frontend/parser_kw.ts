@@ -23,7 +23,6 @@ const KW_failed = "failed";
 const KW_false = "false";
 const KW_fn = "fn";
 const KW_if = "if";
-const KW_implements = "implements";
 const KW_let = "let";
 const KW_match = "match";
 const KW_none = "none";
@@ -124,7 +123,6 @@ const KeywordStrings = [
     KW_fn,
     KW_function,
     KW_if,
-    KW_implements,
     KW_invariant,
     KW_let,
     KW_match,
@@ -393,7 +391,7 @@ export {
     KW_assert,
     KW_concept,
     KW_const,
-    // KW_declare,
+    KW_declare,
     KW_debug,
     KW_dispatch,
     KW_elif,
@@ -410,7 +408,6 @@ export {
     KW_fn,
     KW_function,
     KW_if,
-    // KW_implements,
     KW_invariant,
     KW_let,
     KW_match,
