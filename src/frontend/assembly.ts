@@ -1,6 +1,6 @@
 
 import { FullyQualifiedNamespace, TypeSignature, LambdaTypeSignature, RecursiveAnnotation, TemplateTypeSignature, VoidTypeSignature, LambdaParameterSignature, AutoTypeSignature, NominalTypeSignature } from "./type.js";
-import { Expression, BodyImplementation, ConstantExpressionValue, LiteralExpressionValue, ExpressionTag, AccessNamespaceConstantExpression, LiteralRegexExpression } from "./body.js";
+import { Expression, BodyImplementation, ExpressionTag, AccessNamespaceConstantExpression, LiteralRegexExpression, ChkLogicExpression } from "./body.js";
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls.js";
 
@@ -53,12 +53,15 @@ class TypeTemplateTermDecl extends TemplateTermDecl {
 }
 
 class InvokeTemplateTermDecl extends TemplateTermDecl {
-    constructor(name: string, tags: TemplateTermDeclExtraTag[], tconstraint: TypeSignature | undefined) {
+    readonly caninfer: boolean;
+
+    constructor(name: string, tags: TemplateTermDeclExtraTag[], tconstraint: TypeSignature | undefined, caninfer: boolean) {
         super(name, tconstraint, tags);
+        this.caninfer = caninfer;
     }
 
     emit(): string {
-        return this.emitHelper();
+        return this.emitHelper() + (this.caninfer ? "?" : "");
     }
 }
 
@@ -97,6 +100,32 @@ class InvokeTemplateTypeRestriction {
     }
 }
 
+class TaskConfiguration {
+    timeout: number | undefined;
+    retry: {delay: number, tries: number} | undefined;
+    priority: "immediate" | "fast" | "normal" | "longrunning" | "background" | "optional" | undefined;
+
+    constructor(timeout: number | undefined, retry: {delay: number, tries: number} | undefined, priority: "immediate" | "fast" | "normal" | "longrunning" | "background" | "optional" | undefined) {
+        this.timeout = timeout;
+        this.retry = retry;
+        this.priority = priority;
+    }
+
+    emit(): string | undefined {
+        if(this.priority === undefined && this.retry !== undefined && this.timeout !== undefined) {
+            return undefined;
+        }
+
+        const cs = [
+            this.timeout !== undefined ? `timeout=${this.timeout}ms` : undefined,
+            this.retry !== undefined ? `retry=(${this.retry.tries}@${this.retry.delay}ms)` : undefined,
+            this.priority !== undefined ? `priority=${this.priority}` : undefined
+        ].filter((c) => c !== undefined) as string[];
+
+        return cs.join(", ");
+    }
+}
+
 abstract class AbstractDecl {
     readonly file: string;
     readonly sinfo: SourceInfo;
@@ -125,9 +154,9 @@ abstract class ConditionDecl extends AbstractDecl {
 class PreConditionDecl extends ConditionDecl {
     readonly level: BuildLevel;
     readonly issoft: boolean;
-    readonly exp: Expression;
+    readonly exp: ChkLogicExpression;
 
-    constructor(file: string, sinfo: SourceInfo, tag: string | undefined, level: BuildLevel, issoft: boolean, exp: Expression) {
+    constructor(file: string, sinfo: SourceInfo, tag: string | undefined, level: BuildLevel, issoft: boolean, exp: ChkLogicExpression) {
         super(file, sinfo, tag);
 
         this.level = level;
@@ -136,16 +165,16 @@ class PreConditionDecl extends ConditionDecl {
     }
 
     emit(fmt: CodeFormatter): string {
-        return fmt.indent("requires" + this.emitDiagnosticTag() + (this.issoft ? " softcheck" : "") + (this.level !== "release" ? (" " + this.level) : "") + " " + this.exp.emit(true, fmt) + ";");
+        return fmt.indent("requires" + this.emitDiagnosticTag() + (this.issoft ? " softcheck" : "") + (this.level !== "release" ? (" " + this.level) : "") + " " + this.exp.emit(fmt) + ";");
     }
 }
 
 class PostConditionDecl extends ConditionDecl {
     readonly level: BuildLevel;
     readonly issoft: boolean;
-    readonly exp: Expression;
+    readonly exp: ChkLogicExpression;
 
-    constructor(file: string, sinfo: SourceInfo, tag: string | undefined, level: BuildLevel, issoft: boolean, exp: Expression) {
+    constructor(file: string, sinfo: SourceInfo, tag: string | undefined, level: BuildLevel, issoft: boolean, exp: ChkLogicExpression) {
         super(file, sinfo, tag);
 
         this.level = level;
@@ -154,16 +183,16 @@ class PostConditionDecl extends ConditionDecl {
     }
 
     emit(fmt: CodeFormatter): string {
-        return fmt.indent("ensures" + this.emitDiagnosticTag() + (this.issoft ? " softcheck" : "") + (this.level !== "release" ? (" " + this.level) : "") + " " + this.exp.emit(true, fmt) + ";");
+        return fmt.indent("ensures" + this.emitDiagnosticTag() + (this.issoft ? " softcheck" : "") + (this.level !== "release" ? (" " + this.level) : "") + " " + this.exp.emit(fmt) + ";");
     }
 }
 
 class InvariantDecl extends ConditionDecl {
     readonly ii: number;
     readonly level: BuildLevel;
-    readonly exp: ConstantExpressionValue;
+    readonly exp: ChkLogicExpression;
 
-    constructor(file: string, sinfo: SourceInfo, ii: number, tag: string | undefined, level: BuildLevel, exp: ConstantExpressionValue) {
+    constructor(file: string, sinfo: SourceInfo, ii: number, tag: string | undefined, level: BuildLevel, exp: ChkLogicExpression) {
         super(file, sinfo, tag);
 
         this.ii = ii;
@@ -172,15 +201,15 @@ class InvariantDecl extends ConditionDecl {
     }
 
     emit(fmt: CodeFormatter): string {
-        return fmt.indent("invariant" + this.emitDiagnosticTag() + (this.level !== "release" ? (" " + this.level) : "") + " " + this.exp.emit(true, fmt) + ";");
+        return fmt.indent("invariant" + this.emitDiagnosticTag() + (this.level !== "release" ? (" " + this.level) : "") + " " + this.exp.emit(fmt) + ";");
     }
 }
 
 class ValidateDecl extends ConditionDecl {
     readonly ii: number;
-    readonly exp: ConstantExpressionValue;
+    readonly exp: ChkLogicExpression;
 
-    constructor(file: string, sinfo: SourceInfo, ii: number, tag: string | undefined, exp: ConstantExpressionValue) {
+    constructor(file: string, sinfo: SourceInfo, ii: number, tag: string | undefined, exp: ChkLogicExpression) {
         super(file, sinfo, tag);
 
         this.ii = ii;
@@ -188,7 +217,7 @@ class ValidateDecl extends ConditionDecl {
     }
 
     emit(fmt: CodeFormatter): string {
-        return fmt.indent("validate" + this.emitDiagnosticTag() + " " + this.exp.emit(true, fmt) + ";");
+        return fmt.indent("validate" + this.emitDiagnosticTag() + " " + this.exp.emit(fmt) + ";");
     }
 }
 
@@ -236,22 +265,22 @@ abstract class AbstractCoreDecl extends AbstractDecl {
 class InvokeParameterDecl {
     readonly name: string;
     readonly type: TypeSignature;
-    readonly optDefaultValue: ConstantExpressionValue | undefined;
-    readonly isRefParam: boolean;
+    readonly optDefaultValue: Expression | undefined;
+    readonly pkind: "ref" | "out" | "out?" | "inout" | undefined;
     readonly isRestParam: boolean;
 
-    constructor(name: string, type: TypeSignature, optDefaultValue: ConstantExpressionValue | undefined, isRefParam: boolean, isRestParam: boolean) {
+    constructor(name: string, type: TypeSignature, optDefaultValue: Expression | undefined, pkind: "ref" | "out" | "out?" | "inout" | undefined, isRestParam: boolean) {
         this.name = name;
         this.type = type;
         this.optDefaultValue = optDefaultValue;
-        this.isRefParam = isRefParam;
+        this.pkind = pkind;
         this.isRestParam = isRestParam;
     }
 
     emit(fmt: CodeFormatter): string {
         const tdecl = this.type instanceof AutoTypeSignature ? "" : `: ${this.type.emit()}`;
         const defv = this.optDefaultValue === undefined ? "" : ` = ${this.optDefaultValue.emit(true, fmt)}`;
-        return `${(this.isRefParam ? "ref " : "")}${this.isRestParam ? "..." : ""}${this.name}${tdecl}${defv}`;
+        return `${(this.pkind ? this.pkind + " " : "")}${this.isRestParam ? "..." : ""}${this.name}${tdecl}${defv}`;
     }
 }
 
@@ -292,6 +321,8 @@ abstract class AbstractInvokeDecl extends AbstractCoreDecl {
 class LambdaDecl extends AbstractInvokeDecl {
     readonly isAuto: boolean;
 
+    capturedVars: {name: string, type: TypeSignature}[] = [];
+
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: "fn" | "pred", recursive: "yes" | "no" | "cond", params: InvokeParameterDecl[], resultType: TypeSignature, body: BodyImplementation, isAuto: boolean) {
         super(file, sinfo, attributes, name, recursive, params, resultType, body);
 
@@ -299,7 +330,7 @@ class LambdaDecl extends AbstractInvokeDecl {
     }
 
     generateSig(sinfo: SourceInfo): TypeSignature {
-        const lpsigs = this.params.map((p) => new LambdaParameterSignature(p.name, p.type, p.isRefParam, p.isRestParam));
+        const lpsigs = this.params.map((p) => new LambdaParameterSignature(p.name, p.type, p.pkind, p.isRestParam));
         return new LambdaTypeSignature(sinfo, this.recursive, this.name as ("fn" | "pred"), lpsigs, this.resultType);
     }
 
@@ -484,9 +515,9 @@ class TaskActionDecl extends ExplicitInvokeDecl {
 
 class ConstMemberDecl extends AbstractCoreDecl {
     readonly declaredType: TypeSignature;
-    readonly value: ConstantExpressionValue;
+    readonly value: Expression;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, dtype: TypeSignature, value: ConstantExpressionValue) {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, dtype: TypeSignature, value: Expression) {
         super(file, sinfo, attributes, name);
 
         this.declaredType = dtype;
@@ -500,10 +531,10 @@ class ConstMemberDecl extends AbstractCoreDecl {
 
 class MemberFieldDecl extends AbstractCoreDecl {
     readonly declaredType: TypeSignature;
-    readonly defaultValue: ConstantExpressionValue | undefined;
+    readonly defaultValue: Expression | undefined;
     readonly isSpecialAccess: boolean;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, dtype: TypeSignature, dvalue: ConstantExpressionValue | undefined, isSpecialAccess: boolean) {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, dtype: TypeSignature, dvalue: Expression | undefined, isSpecialAccess: boolean) {
         super(file, sinfo, attributes, name);
         
         this.declaredType = dtype;
@@ -649,7 +680,7 @@ class EnumTypeDecl extends AbstractEntityTypeDecl {
 
 class TypedeclTypeDecl extends AbstractEntityTypeDecl {
     valuetype: TypeSignature;
-    optofexp: LiteralExpressionValue | undefined; 
+    optofexp: Expression | undefined; //for strings, cstrings, and paths (but not fragments or globs)
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, etag: AdditionalTypeDeclTag, valuetype: TypeSignature) {
         super(file, sinfo, attributes, ns, name, etag);
@@ -879,6 +910,17 @@ class UnicodeRopeTypeDecl extends AbstractCollectionTypeDecl {
     }
 }
 
+class UnicodeRopeIteratorTypeDecl extends InternalEntityTypeDecl {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
+        super(file, sinfo, attributes, name);
+    }
+
+    // Internal to the cpp runtime so no need to emit anything
+    emit(fmt: CodeFormatter): string {
+        return "";
+    }
+}
+
 class StackTypeDecl extends AbstractCollectionTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
@@ -1099,11 +1141,11 @@ class DatatypeTypeDecl extends AbstractConceptTypeDecl {
 }
 
 class EnvironmentVariableInformation {
-    readonly evname: string; //cstring
+    readonly evname: string; //identifier or cstring
     readonly evtype: TypeSignature;
-    readonly optdefault: ConstantExpressionValue | undefined;
+    readonly optdefault: Expression | undefined;
 
-    constructor(evname: string, evtype: TypeSignature, optdefault: ConstantExpressionValue | undefined) {
+    constructor(evname: string, evtype: TypeSignature, optdefault: Expression | undefined) {
         this.evname = evname;
         this.evtype = evtype;
         this.optdefault = optdefault;
@@ -1119,68 +1161,64 @@ class EnvironmentVariableInformation {
     }
 }
 
-////
-//  This is copied from BREX path_glob.h for reference here -- see how it works with the access modes
-//
-//  /x/y/*     <-- all files that are single extensions of the prefix
-//  /x/y/*/    <-- all directories that are single extensions of the prefix
-//
-//  /x/y/**   <-- all files that are extensions of the prefix
-//  /x/y/**/  <-- all directories that are extensions of the prefix
-//  
-//  /x/y/*.*     <-- all files that have an extension with a file extension
-//  /x/y/**/*.*  <-- all files that are an extension of the prefix and with a file extension
-//
-
-//Are all of these in effect idempotent???
-enum ResourceAccessModes {
-    get    = "?",  //no side effects and -- reads the value or list (elements) 
-    modify = "!",  //replaces an existing value
-    create = "+",  //creates a new value or list (that did not previously exist)
-    delete = "-",  //removes a value or list that may have previously existed
-    any =    "*"   //any possible of the above
-}
-
 class ResourceInformation {
-    readonly pathglob: ConstantExpressionValue; //this is g\xxxx\* or g\xxxx\oftype or g\xxxx\_oftype, or constant, or an environment variable
-    readonly accessInfo: ResourceAccessModes[];
+    readonly pathglobs: { pg: Expression[], optas: Expression | undefined }[]; //Literal glob, constant refernence, or env var reference
 
-    constructor(pathglob: ConstantExpressionValue, accessInfo: ResourceAccessModes[]) {
-        this.pathglob = pathglob;
-        this.accessInfo = accessInfo;
+    constructor(pathglobs: { pg: Expression[], optas: Expression | undefined }[]) {
+        this.pathglobs = pathglobs;
     }
 
-    emit(fmt: CodeFormatter): string {
-        const mstr = this.accessInfo.join("");
-        return fmt.indent(`${this.pathglob.emit(true, fmt)}@[${mstr}]`);
+    static emitSingleRInfo(fmt: CodeFormatter, pg: Expression[], optas: Expression | undefined): string {
+        if(optas === undefined) {
+            if(pg.length === 1) {
+                return fmt.indent(pg[0].emit(true, fmt));
+            }
+            else {
+                return fmt.indent(`[${pg.map((pge) => pge.emit(true, fmt)).join(", ")}]`);
+            }
+        }
+        else {
+            if(pg.length === 1) {
+                return fmt.indent(`${pg[0].emit(true, fmt)} as ${optas.emit(true, fmt)}`);
+            }
+            else {
+                return fmt.indent(`[${pg.map((pge) => pge.emit(true, fmt)).join(", ")}] as ${optas.emit(true, fmt)}`);
+            }
+        }
     }
 }
 
 class APIDecl extends AbstractCoreDecl {
     readonly params: InvokeParameterDecl[];    
     readonly resultType: TypeSignature;
+    readonly eventType: TypeSignature | undefined;
 
     readonly preconditions: PreConditionDecl[];
     readonly postconditions: PostConditionDecl[];
 
-    readonly statusOutputs: TypeSignature[];
-    readonly envVarRequirements: EnvironmentVariableInformation[];
-    readonly resourceImpacts: ResourceInformation[] | "**" | "{}";
+    readonly configs: TaskConfiguration;
+
+    readonly statusinfo: TypeSignature[];
+    readonly envreqs: EnvironmentVariableInformation[];
+    readonly resourcereqs: ResourceInformation;
 
     readonly body: BodyImplementation;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, params: InvokeParameterDecl[], resultType: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], statusOutputs: TypeSignature[], envVarRequirements: EnvironmentVariableInformation[], resourceImpacts: ResourceInformation[] | "**" | "{}", body: BodyImplementation) {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, params: InvokeParameterDecl[], resultType: TypeSignature, eventType: TypeSignature | undefined, preconds: PreConditionDecl[], postconds: PostConditionDecl[], configs: TaskConfiguration, statusinfo: TypeSignature[], envreqs: EnvironmentVariableInformation[], resourcereqs: ResourceInformation, body: BodyImplementation) {
         super(file, sinfo, attributes, name);
-        
+
         this.params = params;
         this.resultType = resultType;
+        this.eventType = eventType;
 
         this.preconditions = preconds;
         this.postconditions = postconds
 
-        this.statusOutputs = statusOutputs;
-        this.envVarRequirements = envVarRequirements;
-        this.resourceImpacts = resourceImpacts;
+        this.configs = configs;
+
+        this.statusinfo = statusinfo;
+        this.envreqs = envreqs;
+        this.resourcereqs = resourcereqs;
 
         this.body = body;
     }
@@ -1190,44 +1228,42 @@ class APIDecl extends AbstractCoreDecl {
 
         let prec: string[] = [];
         if(this.preconditions.length !== 0) {
-            prec = this.preconditions.map((pc) => pc.emit(fmt));
+            prec = this.preconditions.map((pc) => fmt.indent(pc.emit(fmt)));
         }
 
         let postc: string[] = [];
         if(this.postconditions.length !== 0) {
-            postc = this.postconditions.map((pc) => pc.emit(fmt));
+            postc = this.postconditions.map((pc) => fmt.indent(pc.emit(fmt)));
+        }
+
+        let configs: string[] = [];
+        if(this.configs !== undefined) {
+            configs = [fmt.indent(`configs { ${this.configs.emit()} }`)];
         }
 
         let status: string[] = [];
-        if(this.statusOutputs.length !== 0) {
-            status = [`status {${this.statusOutputs.map((so) => so.emit()).join(", ")}}`];
+        if(this.statusinfo.length !== 0) {
+            status = [fmt.indent(`status ${this.statusinfo.map((so) => so.emit()).join(" | ")};`)];
         }
 
         let resources: string[] = [];
-        if(this.resourceImpacts === "**") {
-            resources = ["resource { ** }"];
+        if(this.resourcereqs.pathglobs.length !== 0) {
+            const rrs = this.resourcereqs.pathglobs.map((rr) => ResourceInformation.emitSingleRInfo(fmt, rr.pg, rr.optas));
+            resources = [fmt.indent(`resource { ${rrs.join(", ")} }`)];
         }
-        else if(this.resourceImpacts === "{}") {
-            resources = ["resource { }"];
-        }
-        else {
-            resources = [`resource { ${this.resourceImpacts.map((ri) => ri.emit(fmt)).join(", ")} }`];
-        }
-
-        const vvl = this.envVarRequirements.map((ev) => ev.emit(fmt));
-
-        fmt.indentPush();
-        const vvs = [vvl[0], ...vvl.slice(1).map((vv) => fmt.indent(vv))].join("\n");
-        fmt.indentPop();
-
-        const evs = [`env{ ${vvs} ${fmt.indent("}")}`];
         
+        let evs: string[] = [];
+        if(this.envreqs.length !== 0) {
+            const vvl = this.envreqs.map((ev) => ev.emit(fmt));
+            evs = [fmt.indent(`env { ${vvl.join(", ")} }`)];
+        }
+
         fmt.indentPop();
         if(prec.length === 0 && postc.length === 0 && status.length === 0 && evs.length === 0) {
             return undefined;
         }
         else {
-            return [...prec, ...postc, ...status, ...evs, ...resources].join("\n");
+            return [...prec, ...postc, ...configs, ...status, ...evs, ...resources].join("\n");
         }
     }
 
@@ -1238,7 +1274,99 @@ class APIDecl extends AbstractCoreDecl {
         const result = this.resultType.emit();
 
         const minfo = this.emitMetaInfo(fmt);
-        return `${attrs}api ${this.name}(${params}): ${result} ${this.body.emit(fmt, minfo)}`;
+        return `${attrs}api ${this.name}(${params}): ${result}${this.eventType !== undefined ? ", " + this.eventType.emit() : ""} ${this.body.emit(fmt, minfo)}`;
+    }
+}
+
+class AgentDecl extends AbstractCoreDecl {
+    readonly params: InvokeParameterDecl[];    
+    readonly resultType: TypeSignature | undefined; //This may be set on a per call-site basis
+    readonly eventType: TypeSignature | undefined;
+
+    readonly preconditions: PreConditionDecl[];
+    readonly postconditions: PostConditionDecl[];
+
+    readonly configs: TaskConfiguration;
+
+    readonly statusinfo: TypeSignature[];
+    readonly envreqs: EnvironmentVariableInformation[];
+    readonly resourcereqs: ResourceInformation;
+
+    readonly body: BodyImplementation;
+
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, params: InvokeParameterDecl[], resultType: TypeSignature | undefined, eventType: TypeSignature | undefined, preconds: PreConditionDecl[], postconds: PostConditionDecl[], configs: TaskConfiguration, statusinfo: TypeSignature[], envreqs: EnvironmentVariableInformation[], resourcereqs: ResourceInformation, body: BodyImplementation) {
+        super(file, sinfo, attributes, name);
+
+        this.params = params;
+        this.resultType = resultType;
+        this.eventType = eventType;
+
+        this.preconditions = preconds;
+        this.postconditions = postconds
+
+        this.configs = configs;
+
+        this.statusinfo = statusinfo;
+        this.envreqs = envreqs;
+        this.resourcereqs = resourcereqs;
+
+        this.body = body;
+    }
+
+    emitMetaInfo(fmt: CodeFormatter): string | undefined {
+        fmt.indentPush();
+
+        let prec: string[] = [];
+        if(this.preconditions.length !== 0) {
+            prec = this.preconditions.map((pc) => fmt.indent(pc.emit(fmt)));
+        }
+
+        let postc: string[] = [];
+        if(this.postconditions.length !== 0) {
+            postc = this.postconditions.map((pc) => fmt.indent(pc.emit(fmt)));
+        }
+
+        let configs: string[] = [];
+        if(this.configs !== undefined) {
+            configs = [fmt.indent(`configs { ${this.configs.emit()} }`)];
+        }
+
+        let status: string[] = [];
+        if(this.statusinfo.length !== 0) {
+            status = [fmt.indent(`status ${this.statusinfo.map((so) => so.emit()).join(" | ")};`)];
+        }
+
+        let resources: string[] = [];
+        if(this.resourcereqs.pathglobs.length !== 0) {
+            const rrs = this.resourcereqs.pathglobs.map((rr) => ResourceInformation.emitSingleRInfo(fmt, rr.pg, rr.optas));
+            resources = [fmt.indent(`resource { ${rrs.join(", ")} }`)];
+        }
+        
+        let evs: string[] = [];
+        if(this.envreqs.length !== 0) {
+            const vvl = this.envreqs.map((ev) => ev.emit(fmt));
+            evs = [fmt.indent(`env{ ${vvl.join(", ")} }`)];
+        }
+
+        fmt.indentPop();
+        if(prec.length === 0 && postc.length === 0 && status.length === 0 && evs.length === 0) {
+            return undefined;
+        }
+        else {
+            return [...prec, ...postc, ...configs, ...status, ...evs, ...resources].join("\n");
+        }
+    }
+
+    emit(fmt: CodeFormatter): string {
+        const attrs = this.emitAttributes();
+
+        const params = this.params.map((p) => p.emit(fmt)).join(", ");
+        const iresult = this.resultType === undefined ? "<T>" : "";
+        const eresult = this.resultType !== undefined ? (": " + this.resultType.emit()) : "";
+        const eevent = this.eventType !== undefined ? (this.resultType !== undefined ? ", " : " ") + this.eventType.emit() : "";
+
+        const minfo = this.emitMetaInfo(fmt);
+        return `${attrs}agent ${this.name}${iresult}(${params})${eresult}${eevent} ${this.body.emit(fmt, minfo)}`;
     }
 }
 
@@ -1247,13 +1375,12 @@ class TaskDecl extends AbstractNominalTypeDecl {
     readonly selfmethods: TaskMethodDecl[] = [];
     readonly actions: TaskActionDecl[] = [];
 
-    eventsInfo: TypeSignature | undefined; //undefined means no events
-    statusInfo: TypeSignature[] | undefined; //undefined means no status
-    envVarRequirementInfo: EnvironmentVariableInformation[] | undefined; 
-    resourceImpactInfo: ResourceInformation[] | "**" | "{}" | "?" | undefined; //** means any possible resource impact -- ? means passthrough
-    
-    //If this is defined then the info is all taken from the API
-    implementsapi: [FullyQualifiedNamespace, string] | undefined = undefined;
+    readonly configs: TaskConfiguration = new TaskConfiguration(undefined, undefined, undefined);
+
+    readonly statusinfo: TypeSignature[] = [];
+    readonly envreqs: EnvironmentVariableInformation[] = [];
+    readonly resourcereqs: ResourceInformation = new ResourceInformation([]);
+    readonly eventinfo: TypeSignature[] = [];
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string) {
         super(file, sinfo, attributes, ns, name, AdditionalTypeDeclTag.Std);
@@ -1264,34 +1391,28 @@ class TaskDecl extends AbstractNominalTypeDecl {
 
         fmt.indentPush();
         const mg: string[][] = [];
-        if(this.eventsInfo !== undefined) {
-            mg.push([`event ${this.eventsInfo.emit()}`]);
+        
+        const confstr = this.configs.emit();
+        if(confstr !== undefined) {
+            mg.push([fmt.indent(`configs { ${confstr} }`)]);
         }
-        if(this.statusInfo !== undefined) {
-            mg.push([`status {${this.statusInfo.map((so) => so.emit()).join(", ")}}`]);
-        }
-        if(this.envVarRequirementInfo !== undefined) {
-            const vvl = this.envVarRequirementInfo.map((ev) => ev.emit(fmt));
 
-            fmt.indentPush();
-            const vvs = [vvl[0], ...vvl.slice(1).map((vv) => fmt.indent(vv))].join("\n");
-            fmt.indentPop();
-
-            mg.push([`env{ ${vvs} ${fmt.indent("}")}`]);
+        if(this.statusinfo.length !== 0) {
+            mg.push([fmt.indent(`status ${this.statusinfo.map((so) => so.emit()).join(" | ")};`)]);
         }
-        if(this.resourceImpactInfo !== undefined) {
-            if(this.resourceImpactInfo === "**") {
-                mg.push(["resource { ** }"]);
-            }
-            else if(this.resourceImpactInfo === "{}") {
-                mg.push(["resource { }"]);
-            }
-            else if(this.resourceImpactInfo === "?") {
-                mg.push(["resource { ? }"]);
-            }
-            else {
-                mg.push([`resource { ${this.resourceImpactInfo.map((ri) => ri.emit(fmt)).join(", ")} }`]);
-            }
+
+        if(this.resourcereqs.pathglobs.length !== 0) {
+            const rrs = this.resourcereqs.pathglobs.map((rr) => ResourceInformation.emitSingleRInfo(fmt, rr.pg, rr.optas));
+            mg.push([fmt.indent(`resource { ${rrs.join(", ")} }`)]);
+        }
+        
+        if(this.envreqs.length !== 0) {
+            const vvl = this.envreqs.map((ev) => ev.emit(fmt));
+            mg.push([fmt.indent(`env{ ${vvl.join(", ")} }`)]);
+        }
+
+        if(this.eventinfo.length !== 0) {
+            mg.push([fmt.indent(`event ${this.eventinfo.map((et) => et.emit()).join(" | ")};`)]);
         }
 
         if(this.fields.length !== 0) {
@@ -1306,9 +1427,6 @@ class TaskDecl extends AbstractNominalTypeDecl {
         fmt.indentPop();
 
         let rootdecl = attrs + "task " + this.name + this.emitTerms(); 
-        if(this.implementsapi !== undefined) {
-            rootdecl += `implements ${this.implementsapi[0].emit()}::${this.implementsapi[1]}`;
-        }
 
         fmt.indentPush();
         const bg = this.emitBodyGroups(fmt);
@@ -1316,7 +1434,7 @@ class TaskDecl extends AbstractNominalTypeDecl {
 
         let etail = "";
         if(bg.length !== 0) {
-            etail = " {\n" + this.joinBodyGroups([...bg, ...mg]) + fmt.indent("\n}");
+            etail = " {\n" + this.joinBodyGroups([...mg, ...bg]) + fmt.indent("\n}");
         }
 
         return `${rootdecl}${etail}`;
@@ -1325,9 +1443,9 @@ class TaskDecl extends AbstractNominalTypeDecl {
 
 class NamespaceConstDecl extends AbstractCoreDecl {
     readonly declaredType: TypeSignature;
-    readonly value: ConstantExpressionValue;
+    readonly value: Expression;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, dtype: TypeSignature, value: ConstantExpressionValue) {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, dtype: TypeSignature, value: Expression) {
         super(file, sinfo, attributes, name);
 
         this.declaredType = dtype;
@@ -1388,20 +1506,22 @@ class NamespaceDeclaration {
 
     usings: NamespaceUsing[] = [];
     declaredNames: Set<string> = new Set<string>();
-    declaredTypeNames: {name: string, hasterms: boolean}[] = []; //types, typedecls, and tasks
+    declaredTypeNames: {name: string, hasterms: boolean}[] = []; //types, typedecls, tasks, agents
     declaredSubNSNames: Set<string> = new Set<string>();
     declaredConstNames: Set<string> = new Set<string>(); 
-    declaredFunctionNames: Set<string> = new Set<string>(); //functions, apis, and consts
-    declaredAPINames: Set<string> = new Set<string>(); //functions, apis, and consts
+    declaredFunctionNames: Set<string> = new Set<string>();
+    declaredAPINames: Set<string> = new Set<string>();
+    declaredAgentNames: Set<string> = new Set<string>();
 
     subns: NamespaceDeclaration[] = [];
 
     consts: NamespaceConstDecl[] = [];
-    functions: NamespaceFunctionDecl[] = [];
+    functions: NamespaceFunctionDecl[] = []; //function as name+TemplateFlag+refFlag+lambdaFlag
     typedecls: AbstractNominalTypeDecl[] = [];
 
     apis: APIDecl[] = [];
     tasks: TaskDecl[] = [];
+    agents: AgentDecl[] = [];
 
     constructor(name: string, topnamespace: string, fullnamespace: FullyQualifiedNamespace) {
         this.name = name;
@@ -1446,7 +1566,7 @@ class NamespaceDeclaration {
         return !hasterms && this.declaredSubNSNames.has(rname);
     }
 
-    checkDeclNameClashMember(rname: string): boolean {
+    checkDeclNameClashMemberSimple(rname: string): boolean {
         return this.declaredNames.has(rname);
     }
 
@@ -1506,6 +1626,13 @@ class NamespaceDeclaration {
             res += fmt.indent(a.emit(fmt) + "\n");
         });
         if(this.apis.length !== 0) {
+            res += "\n";
+        }
+
+        this.agents.forEach((a) => {
+            res += fmt.indent(a.emit(fmt) + "\n");
+        });
+        if(this.agents.length !== 0) {
             res += "\n";
         }
 
@@ -1576,11 +1703,11 @@ class Assembly {
             }
 
             const nnins = exp.ns.emit();
-            if(nsconst.value.exp instanceof LiteralRegexExpression) {
-                return [nsconst.value.exp.value, nnins];
+            if(nsconst.value instanceof LiteralRegexExpression) {
+                return [nsconst.value.value, nnins];
             }
-            else if(nsconst.value.exp instanceof AccessNamespaceConstantExpression) {
-                return this.resolveConstantRegexExpressionValue(nsconst.value.exp, nnins);
+            else if(nsconst.value instanceof AccessNamespaceConstantExpression) {
+                return this.resolveConstantRegexExpressionValue(nsconst.value, nnins);
             }
             else {
                 return [undefined, inns];
@@ -1596,7 +1723,7 @@ class Assembly {
                 return undefined;
             }
 
-            return this.resolveValidatorLiteral(nsconst.value.exp);
+            return this.resolveValidatorLiteral(nsconst.value);
         }
         else {
             if(exp.tag === ExpressionTag.LiteralUnicodeRegexExpression || exp.tag === ExpressionTag.LiteralCRegexExpression || exp.tag === ExpressionTag.LiteralGlobExpression) {
@@ -1608,6 +1735,74 @@ class Assembly {
         }
     }
 
+    static checkFunctionSigMatch(fd1: FunctionInvokeDecl, fd2: FunctionInvokeDecl): boolean {
+        if(fd1.name !== fd2.name) {
+            return false;
+        }
+
+        if((fd1.terms.length !== 0) !== (fd2.terms.length !== 0)) {
+            return false;
+        }
+
+        const l1has = fd1.params.some((p) => p.type instanceof LambdaTypeSignature);
+        const l2has = fd2.params.some((p) => p.type instanceof LambdaTypeSignature);
+        if(l1has !== l2has) {
+            return false;
+        }
+
+        const r1isref = fd1.params.some((p) => p.pkind !== undefined);
+        const r2isref = fd2.params.some((p) => p.pkind !== undefined);
+        if(r1isref !== r2isref) {
+            return false;
+        }
+
+        return true;
+    }
+
+    static checkMethodSigMatch(md1: MethodDecl, md2: MethodDecl): boolean {
+        if(md1.name !== md2.name) {
+            return false;
+        }
+
+        if((md1.terms.length !== 0) !== (md2.terms.length !== 0)) {
+            return false;
+        }
+
+        const l1has = md1.params.some((p) => p.type instanceof LambdaTypeSignature);
+        const l2has = md2.params.some((p) => p.type instanceof LambdaTypeSignature);
+        if(l1has !== l2has) {
+            return false;
+        }
+
+        const r1isref = md1.params.some((p) => p.pkind !== undefined);
+        const r2isref = md2.params.some((p) => p.pkind !== undefined);
+        if((r1isref || md1.isThisRef) !== (r2isref || md2.isThisRef)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    static resolveSigMatch(s1: {name: string, isTemplate: boolean, hasLambda: boolean, isRef: boolean}, s2: {name: string, isTemplate: boolean, hasLambda: boolean, isRef: boolean}): boolean {
+        if(s1.name !== s2.name) {
+            return false;
+        }
+
+        if(s1.isTemplate !== s2.isTemplate) {
+            return false;
+        }
+        
+        if(s1.hasLambda !== s2.hasLambda) {
+            return false;
+        }
+
+        if(s1.isRef !== s2.isRef) {
+            return false;
+        }
+        
+        return true;
+    }
+
     resolveNamespaceConstant(ns: FullyQualifiedNamespace, name: string): NamespaceConstDecl | undefined {
         const nsdecl = this.resolveNamespaceDecl(ns.ns);
         if(nsdecl === undefined) {
@@ -1617,13 +1812,14 @@ class Assembly {
         return nsdecl.consts.find((c) => c.name === name);
     }
 
-    resolveNamespaceFunction(ns: FullyQualifiedNamespace, name: string): NamespaceFunctionDecl | undefined {
+    resolveNamespaceFunction(ns: FullyQualifiedNamespace, name: string, isTemplate: boolean, hasLambda: boolean, isRef: boolean): NamespaceFunctionDecl | undefined {
         const nsdecl = this.resolveNamespaceDecl(ns.ns);
         if(nsdecl === undefined) {
             return undefined;
         }
 
-        return nsdecl.functions.find((c) => c.name === name);
+        const fnsig = {name: name, isTemplate: isTemplate, hasLambda: hasLambda, isRef: isRef};
+        return nsdecl.functions.find((c) => Assembly.resolveSigMatch(fnsig, {name: c.name, isTemplate: c.terms.length !== 0, hasLambda: c.params.some((p) => p.type instanceof LambdaTypeSignature), isRef: c.params.some((p) => p.pkind !== undefined)}));
     }
 
     tryReduceConstantExpressionToRE(exp: Expression): LiteralRegexExpression | undefined {
@@ -1636,7 +1832,7 @@ class Assembly {
                 return undefined;
             }
 
-            return this.tryReduceConstantExpressionToRE(nsresl.value.exp);
+            return this.tryReduceConstantExpressionToRE(nsresl.value);
         }
         else {
             return undefined;
@@ -1650,7 +1846,7 @@ class Assembly {
 
         const reinfos: NSRegexREInfoEntry[] = [];
         nsdecl.consts.forEach((c) => {
-            const re = this.tryReduceConstantExpressionToRE(c.value.exp);
+            const re = this.tryReduceConstantExpressionToRE(c.value);
             if(re !== undefined) {
                 reinfos.push({name: c.name, restr: re.value});
             }
@@ -1666,6 +1862,7 @@ export {
     MIN_SAFE_INT, MAX_SAFE_INT, MAX_SAFE_NAT,
     WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME,
     TemplateTermDeclExtraTag, TemplateTermDecl, TypeTemplateTermDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestriction, 
+    TaskConfiguration,
     AbstractDecl, 
     ConditionDecl, PreConditionDecl, PostConditionDecl, InvariantDecl, ValidateDecl,
     DeclarationAttibute, AbstractCoreDecl,
@@ -1682,14 +1879,15 @@ export {
     AbstractEntityTypeDecl, PrimitiveEntityTypeDecl,
     InternalEntityTypeDecl, CRopeIteratorTypeDecl,
     ConstructableTypeDecl, OkTypeDecl, FailTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APISuccessTypeDecl, SomeTypeDecl, MapEntryTypeDecl,
-    AbstractCollectionTypeDecl, ListTypeDecl, CRopeTypeDecl, UnicodeRopeTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl,
+    AbstractCollectionTypeDecl, ListTypeDecl, CRopeTypeDecl, UnicodeRopeTypeDecl, UnicodeRopeIteratorTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl,
     EventListTypeDecl,
     EntityTypeDecl, 
     AbstractConceptTypeDecl, InternalConceptTypeDecl, 
     OptionTypeDecl, ResultTypeDecl, APIResultTypeDecl,
     ConceptTypeDecl, 
     DatatypeMemberEntityTypeDecl, DatatypeTypeDecl,
-    EnvironmentVariableInformation, ResourceAccessModes, ResourceInformation, APIDecl,
+    EnvironmentVariableInformation, ResourceInformation, 
+    APIDecl, AgentDecl,
     TaskDecl,
     NamespaceConstDecl, NamespaceUsing, NamespaceDeclaration,
     NSRegexInfo, NSRegexNameInfo, NSRegexREInfoEntry,

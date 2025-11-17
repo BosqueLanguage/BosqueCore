@@ -319,23 +319,40 @@ class EListTypeSignature extends TypeSignature {
     }
 }
 
+class DashResultTypeSignature extends TypeSignature {
+    readonly entries: TypeSignature[];
+
+    constructor(sinfo: SourceInfo, entries: TypeSignature[]) {
+        super(sinfo, "DashResult<" + entries.map((tt) => tt.tkeystr).join(", ") + ">");
+        this.entries = entries;
+    }
+
+    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
+        return new DashResultTypeSignature(this.sinfo, this.entries.map((tt) => tt.remapTemplateBindings(mapper)));
+    }
+
+    emit(): string {
+        return `DashResult<${this.entries.map((tt) => tt.emit()).join(", ")}>`;
+    }
+}
+
 type RecursiveAnnotation = "yes" | "no" | "cond";
 
 class LambdaParameterSignature {
     readonly name: string | undefined; //optional name for the parameter
     readonly type: TypeSignature;
-    readonly isRefParam: boolean;
+    readonly pkind: "ref" | "out" | "out?" | "inout" | undefined;;
     readonly isRestParam: boolean;
 
-    constructor(name: string | undefined, type: TypeSignature, isRefParam: boolean, isRestParam: boolean) {
+    constructor(name: string | undefined, type: TypeSignature, pkind: "ref" | "out" | "out?" | "inout" | undefined, isRestParam: boolean) {
         this.name = name;
         this.type = type;
-        this.isRefParam = isRefParam;
+        this.pkind = pkind;
         this.isRestParam = isRestParam;
     }
 
     emit(): string {
-        return `${(this.isRefParam ? "ref " : "")}${this.isRestParam ? "..." : ""}${this.type.emit()}`;
+        return `${(this.pkind ? this.pkind + " " : "")}${this.isRestParam ? "..." : ""}${this.type.emit()}`;
     }
 }
 
@@ -354,7 +371,7 @@ class LambdaTypeSignature extends TypeSignature {
     }
 
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
-        const rbparams = this.params.map((pp) => new LambdaParameterSignature(pp.name, pp.type.remapTemplateBindings(mapper), pp.isRefParam, pp.isRestParam));
+        const rbparams = this.params.map((pp) => new LambdaParameterSignature(pp.name, pp.type.remapTemplateBindings(mapper), pp.pkind, pp.isRestParam));
         return new LambdaTypeSignature(this.sinfo, this.recursive, this.name, rbparams, this.resultType.remapTemplateBindings(mapper));
     }
 
@@ -371,10 +388,76 @@ class LambdaTypeSignature extends TypeSignature {
     }
 }
 
+class FormatStringTypeSignature extends TypeSignature {
+    readonly oftype: "String" | "CString";
+    readonly rtype: TypeSignature;
+    readonly terms: {argname: string | undefined, argtype: TypeSignature}[];
+
+    private static buildkstr(oftype: "String" | "CString", rtype: TypeSignature, terms: {argname: string | undefined, argtype: TypeSignature}[]): string {
+        if(terms.length === 0) {
+            return `F${oftype}<${rtype.emit()}>`
+        }
+        else {
+            const aargs = terms.map((tt) => (tt.argname !== undefined ? tt.argname + ": " : "") + tt.argtype.emit()).join(", ");
+            return `F${oftype}<${aargs}, ${rtype.emit()}>`;
+        }
+    }
+
+    constructor(sinfo: SourceInfo, oftype: "String" | "CString", rtype: TypeSignature, terms: {argname: string | undefined, argtype: TypeSignature}[]) {
+        super(sinfo, FormatStringTypeSignature.buildkstr(oftype, rtype, terms));
+        this.oftype = oftype;
+        this.rtype = rtype;
+        this.terms = terms;
+    }
+
+    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
+        const ttrmp = this.terms.map((tt) => { return {argname: tt.argname, argtype: tt.argtype.remapTemplateBindings(mapper)}; });
+        return new FormatStringTypeSignature(this.sinfo, this.oftype, this.rtype.remapTemplateBindings(mapper), ttrmp);
+    }
+
+    emit(): string {
+        return this.tkeystr;
+    }
+}
+
+class FormatPathTypeSignature extends TypeSignature {
+    readonly oftype: "Path" | "PathFragment" | "PathGlob";
+    readonly rtype: TypeSignature;
+    readonly terms: {argname: string | undefined, argtype: TypeSignature}[];
+
+    private static buildkstr(oftype: "Path" | "PathFragment" | "PathGlob", rtype: TypeSignature, terms: {argname: string | undefined, argtype: TypeSignature}[]): string {
+        if(terms.length === 0) {
+            return `F${oftype}<${rtype.emit()}>`
+        }
+        else {
+            const aargs = terms.map((tt) => (tt.argname !== undefined ? tt.argname + ": " : "") + tt.argtype.emit()).join(", ");
+            return `F${oftype}<${aargs}, ${rtype.emit()}>`;
+        }
+    }
+
+    constructor(sinfo: SourceInfo, oftype: "Path" | "PathFragment" | "PathGlob", rtype: TypeSignature, terms: {argname: string | undefined, argtype: TypeSignature}[]) {
+        super(sinfo, FormatPathTypeSignature.buildkstr(oftype, rtype, terms));
+        this.oftype = oftype;
+        this.rtype = rtype;
+        this.terms = terms;
+    }
+
+    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
+        const ttrmp = this.terms.map((tt) => { return {argname: tt.argname, argtype: tt.argtype.remapTemplateBindings(mapper)}; });
+        return new FormatPathTypeSignature(this.sinfo, this.oftype, this.rtype.remapTemplateBindings(mapper), ttrmp);
+    }
+
+    emit(): string {
+        return this.tkeystr;
+    }
+}
+
 export {
     FullyQualifiedNamespace, TemplateConstraintScope, TemplateNameMapper,
     TypeSignature, ErrorTypeSignature, VoidTypeSignature, AutoTypeSignature, 
     TemplateTypeSignature, NominalTypeSignature, 
     EListTypeSignature,
-    RecursiveAnnotation, LambdaParameterSignature, LambdaTypeSignature
+    DashResultTypeSignature,
+    RecursiveAnnotation, LambdaParameterSignature, LambdaTypeSignature,
+    FormatStringTypeSignature, FormatPathTypeSignature
 };

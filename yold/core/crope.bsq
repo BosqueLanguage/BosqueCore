@@ -1,0 +1,4 @@
+namespace Core;
+
+__internal entity CRope {
+}

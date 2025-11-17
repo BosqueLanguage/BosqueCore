@@ -11,28 +11,35 @@ const KW_action = "action";
 const KW__debug = "_debug";
 const KW_abort = "abort";
 const KW_assert = "assert";
+const KW_configs = "configs";
+const KW_dispatch = "dispatch";
+const KW_do = "do";
 const KW_elif = "elif";
 const KW_else = "else";
 const KW_env = "env";
+const KW_error = "error";
 const KW_fail = "fail";
+const KW_failed = "failed";
 const KW_false = "false";
 const KW_fn = "fn";
 const KW_if = "if";
-const KW_implements = "implements";
 const KW_let = "let";
 const KW_match = "match";
 const KW_none = "none";
 const KW_ok = "ok";
-const KW_option = "option";
+const KW_parallel = "parallel";
 const KW_pred = "pred";
 const KW_ref = "ref";
+const KW_out = "out";
+const KW_out_q = "out?";
+const KW_inout = "inout";
+const KW_rejected = "rejected";
 const KW_return = "return";
-const KW_result = "result";
 const KW_some = "some";
 const KW_this = "this";
 const KW_self = "self";
 const KW_switch = "switch";
-const KW_then = "then";
+const KW_success = "success";
 const KW_true = "true";
 const KW_type = "type";
 const KW_var = "var";
@@ -49,6 +56,7 @@ const KW_test = "test";
 ////
 //Declaration keywords
 const KW_api = "api";
+const KW_agent = "agent";
 const KW_as = "as";
 const KW_concept = "concept";
 const KW_const = "const";
@@ -65,6 +73,7 @@ const KW_of = "of";
 const KW_provides = "provides";
 const KW_requires = "requires";
 const KW_task = "task";
+const KW_Task = "Task";
 const KW_datatype = "datatype";
 const KW_using = "using";
 const KW_validate = "validate";
@@ -87,12 +96,16 @@ const KeywordStrings = [
     KW_recursive,
     
     KW_api,
+    KW_agent,
     KW_as,
     KW_action,
+    KW_configs,
     KW__debug,
+    KW_do,
     KW_abort,
     KW_assert,
     KW_concept,
+    KW_dispatch,
     KW_const,
     KW_declare,
     KW_debug,
@@ -102,13 +115,14 @@ const KeywordStrings = [
     KW_env,
     KW_entity,
     KW_ensures,
+    KW_error,
     KW_fail,
+    KW_failed,
     KW_false,
     KW_field,
     KW_fn,
     KW_function,
     KW_if,
-    KW_implements,
     KW_invariant,
     KW_let,
     KW_match,
@@ -118,23 +132,26 @@ const KeywordStrings = [
     KW_of,
     KW_ok,
     KW_operator,
-    KW_option,
+    KW_parallel,
     KW_pred,
     KW_predicate,
     KW_provides,
     KW_ref,
+    KW_rejected,
+    KW_out,
+    KW_out_q,
+    KW_inout,
     KW_release,
     KW_return,
-    KW_result,
     KW_requires,
     KW_self,
     KW_some,
     KW_safety,
     KW_spec,
     KW_switch,
+    KW_success,
     KW_task,
     KW_test,
-    KW_then,
     KW_this,
     KW_true,
     KW_type,
@@ -158,7 +175,7 @@ const KeywordStrings = [
 ////////////////////////////////////////////////////////////////////////////////
 //Attributes
 
-const GeneralAttributes = [ 
+const GeneralAttributes: string[] = [ 
     "private",
     "internal",
     "hidden",
@@ -167,14 +184,16 @@ const GeneralAttributes = [
     "sensitive"
 ];
 
-const APIDeclAttributes = [
-    "export",
+const APIDeclAttributes: string[] = [
     "pure",
     "deterministic",
     "idempotent",
 ];
 
-const InvokeAttributes = [
+const AgentDeclAttributes: string[] = [
+];
+
+const InvokeAttributes: string[] = [
     "abstract",
     "override",
     "virtual"
@@ -183,6 +202,7 @@ const InvokeAttributes = [
 const AllAttributes = [
     ...GeneralAttributes,
     ...APIDeclAttributes,
+    ...AgentDeclAttributes,
     ...InvokeAttributes
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
@@ -199,8 +219,16 @@ const CoreOnlyAttributes = [
 
 const TermRestrictions = [
     "keytype",
-    "numeric"
+    "numeric",
+    "equiv",
+    "mergeable"
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
+
+const TaskConfigs: string[] = [
+    "timeout",
+    "retry",
+    "priority"
+];
 
 ////////////////////////////////////////////////////////////////////////////////
 //Symbols
@@ -223,6 +251,7 @@ const SYM_amp = "&";
 const SYM_bar = "|";
 const SYM_at = "@";
 const SYM_atat = "@@";
+const SYM_questionat = "?@";
 const SYM_hash = "#";
 const SYM_bang = "!";
 const SYM_colon = ":";
@@ -245,7 +274,6 @@ const SYM_eqeq = " == ";
 const SYM_eqeqeq = " === ";
 const SYM_bigarrow = " => ";
 const SYM_implies = " ==> ";
-const SYM_iff = " <==> ";
 const SYM_arrow = " -> ";
 const SYM_barbar = " || ";
 const SYM_plus = " + ";
@@ -276,6 +304,7 @@ const StandardSymbols = [
     SYM_HOLE,
     
     SYM_atat,
+    SYM_questionat,
     SYM_hash
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
@@ -287,7 +316,6 @@ const SpaceRequiredSymbols = [
     SYM_eqeqeq,
     SYM_bigarrow,
     SYM_implies,
-    SYM_iff,
     SYM_arrow,
     SYM_barbar,
     SYM_plus,
@@ -312,39 +340,74 @@ const ParenSymbols = [
     ...RightScanParens
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
+const SpecialStringFormatTypes = [
+    "FString",
+    "FCString"
+];
+
+const SpecialPathFormatTypes = [
+    "FPath",
+    "FPathItem",
+    "FPathGlob"
+];
+
+const SpecialDashResultType = "DashResult";
+
+const SpecialTaskActionNames = [
+    "onTerm", //Cancel, timout, or not needed (while still running -- see "termcheck")
+    "onError", //Hard error during Task execution and immediate termination
+    "onDrop" //Task result is being dropped / ignored
+];
+
+const SpecialNominalTypes = [
+    ...SpecialStringFormatTypes,
+    ...SpecialPathFormatTypes,
+    SpecialDashResultType
+];
+
 export {
     KeywordStrings,
-    GeneralAttributes, APIDeclAttributes, InvokeAttributes, AllAttributes, CoreOnlyAttributes,
+    GeneralAttributes, APIDeclAttributes, AgentDeclAttributes, InvokeAttributes, AllAttributes, CoreOnlyAttributes,
     TermRestrictions,
     LeftScanParens, RightScanParens,
     SpaceRequiredSymbols, SpaceFrontSymbols, StandardSymbols, ParenSymbols,
+
+    SpecialStringFormatTypes, SpecialPathFormatTypes, SpecialDashResultType, SpecialNominalTypes,
+
+    SpecialTaskActionNames,
+    TaskConfigs,
 
     KW_recursive_q,
     KW_recursive,
     
     KW_api,
+    KW_agent,
     KW_as,
     KW_action,
+    KW_configs,
     KW__debug,
+    KW_do,
     KW_abort,
     KW_assert,
     KW_concept,
     KW_const,
     KW_declare,
     KW_debug,
+    KW_dispatch,
     KW_elif,
     KW_else,
     KW_enum,
     KW_env,
     KW_entity,
     KW_ensures,
+    KW_error,
     KW_fail,
+    KW_failed,
     KW_false,
     KW_field,
     KW_fn,
     KW_function,
     KW_if,
-    KW_implements,
     KW_invariant,
     KW_let,
     KW_match,
@@ -353,24 +416,28 @@ export {
     KW_none,
     KW_of,
     KW_ok,
-    KW_operator,
-    KW_option,
+    // KW_operator, //TODO: reserved for future use
+    KW_parallel,
     KW_pred,
     KW_predicate,
     KW_provides,
     KW_ref,
+    KW_out,
+    KW_out_q,
+    KW_inout,
+    KW_rejected,
     KW_release,
     KW_return,
-    KW_result,
     KW_requires,
     KW_self,
     KW_some,
     KW_safety,
     KW_spec,
     KW_switch,
+    KW_success,
     KW_task,
+    KW_Task,
     KW_test,
-    KW_then,
     KW_this,
     KW_true,
     KW_type,
@@ -380,7 +447,7 @@ export {
     KW_var,
     KW_when,
     KW_yield,
-    KW_continue,
+    // KW_continue, //TODO: reserved for future use
     KW_under,
     KW_event,
     KW_resource,
@@ -407,6 +474,7 @@ export {
     SYM_bar,
     SYM_at,
     SYM_atat,
+    SYM_questionat,
     SYM_hash,
     SYM_bang,
     SYM_colon,
@@ -429,7 +497,6 @@ export {
     SYM_eqeqeq,
     SYM_bigarrow,
     SYM_implies,
-    SYM_iff,
     SYM_arrow,
     SYM_barbar,
     SYM_plus,
