@@ -4,9 +4,9 @@ import assert from "node:assert";
 import { VariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env.js";
 import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, ErrorTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateTypeSignature, TypeSignature } from "./type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfStatement, LiteralRegexExpression, LiteralSimpleExpression, LiteralNoneExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, SpecialConstructorExpression, ConstructorPrimaryExpression, PostfixAccessFromName, ReturnVoidStatement, ReturnSingleStatement, PostfixInvoke, KeyCompareEqExpression, KeyCompareLessExpression, ReturnMultiStatement, SafeConvertExpression, PostfixAccessFromIndex, AccessStaticFieldExpression, CallTypeFunctionExpression, CreateDirectExpression, LambdaInvokeExpression, ThisUpdateStatement, VarUpdateStatement, CallRefThisExpression, VoidRefCallStatement, CallRefSelfExpression, CallRefVariableExpression, CallRefInvokeExpression, PostfixAssignFields, ChkLogicExpression, RValueExpression, ITestGuard, ITestGuardSet, ITestRejected, ITestFailed, ITestError, ITestSuccess, ITestBinderGuard, ITestSimpleGuard, ITestTypeGuard, PassingArgumentValue, LiteralStringExpression, LiteralCStringExpression, LiteralFormatStringExpression, LiteralFormatCStringExpression, LiteralFormatPathItemExpression, LiteralPathItemExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LiteralTypedCStringExpression, LiteralTypedPathExpression, FormatStringComponent, FormatStringTextComponent, FormatStringArgComponent, LiteralTypedFormatCStringExpression, LiteralTypedPathFormatExpression, AccessEnvValueExpression, TaskAccessInfoExpression, InterpolateFormatExpression, PostfixOfOperator, HoleExpression, LogicAndExpression, LogicOrExpression, TaskRunExpression, EnvironmentGenerationExpression, EmptyEnvironmentExpression, CurrentEnvironmentExpression, InitializeEnvironmentExpression, TaskMultiExpression, TaskAllExpression, TaskDashExpression, TaskDashAnyExpression, TaskRaceExpression, TaskRaceAnyExpression, APIInvokeExpression, AgentInvokeExpression, ChkLogicImpliesExpression, ChkLogicBaseExpression, BaseRValueExpression, ConditionalValueExpression, ShortCircuitAssignRHSExpressionFail, ShortCircuitAssignRHSExpressionReturn, CallTaskActionExpression, SelfUpdateStatement, TaskCheckAndHandleTerminationStatement, TaskStatusStatement, TaskYieldStatement, DispatchTaskStatement, DispatchPatternStatement, HoleStatement, HoleBodyImplementation } from "./body.js";
-import { APIDecl, APIResultTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, CRopeTypeDecl, CRopeIteratorTypeDecl, UnicodeRopeTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, SomeTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, OkTypeDecl, FailTypeDecl, APIRejectedTypeDecl, APIFailedTypeDecl, APIErrorTypeDecl, APISuccessTypeDecl, InternalEntityTypeDecl, AbstractCollectionTypeDecl, TestAssociation } from "./assembly.js";
+import { APIDecl, APIResultTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, CRopeTypeDecl, CRopeIteratorTypeDecl, UnicodeRopeTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, SomeTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, OkTypeDecl, FailTypeDecl, APIRejectedTypeDecl, APIFailedTypeDecl, APIErrorTypeDecl, APISuccessTypeDecl, InternalEntityTypeDecl, AbstractCollectionTypeDecl, TestAssociation, UnicodeRopeIteratorTypeDecl } from "./assembly.js";
 import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls.js";
-import { AllAttributes, CoreOnlyAttributes, KeywordStrings, KW__debug, KW_abort, KW_action, KW_agent, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_dispatch, KW_do, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_error, KW_errtest, KW_event, KW_example, KW_fail, KW_failed, KW_false, KW_fn, KW_function, KW_if, KW_inout, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_of, KW_ok, KW_out, KW_out_q, KW_parallel, KW_pred, KW_predicate, KW_recursive, KW_recursive_q, KW_ref, KW_rejected, KW_release, KW_requires, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_spec, KW_status, KW_success, KW_switch, KW_task, KW_Task, KW_test, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KW_yield, LeftScanParens, ParenSymbols, RightScanParens, SpaceFrontSymbols, SpaceRequiredSymbols, SpecialNominalTypes, SpecialPathFormatTypes, SpecialStringFormatTypes, StandardSymbols, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_HOLE, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lparenbar, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_questionat, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_rparenbar, SYM_semicolon, SYM_times, TaskConfigs, TermRestrictions } from "./parser_kw.js";
+import { AllAttributes, CoreOnlyAttributes, KeywordStrings, KW__debug, KW_abort, KW_action, KW_agent, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_dispatch, KW_do, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_error, KW_errtest, KW_event, KW_example, KW_fail, KW_failed, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_inout, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_of, KW_ok, KW_out, KW_out_q, KW_parallel, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_rejected, KW_release, KW_requires, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_spec, KW_status, KW_success, KW_switch, KW_task, KW_Task, KW_test, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KW_yield, LeftScanParens, ParenSymbols, RightScanParens, SpaceFrontSymbols, SpaceRequiredSymbols, SpecialNominalTypes, SpecialPathFormatTypes, SpecialStringFormatTypes, StandardSymbols, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_HOLE, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lparenbar, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_questionat, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_rparenbar, SYM_semicolon, SYM_times, TaskConfigs, TermRestrictions } from "./parser_kw.js";
 
 type ParsePhase = number;
 const ParsePhase_RegisterNames: ParsePhase = 1;
@@ -1363,7 +1363,7 @@ class Parser {
     }
 
     //scan until we find a balanaced xxx { ... } declaration -- eat the parens
-    private scanOverBraceDelimitedDeclaration(usesemi?: boolean) {
+    private scanOverBraceDelimitedDeclaration(allowcorebi?: boolean) {
         let pscount = 0;
 
         let tok = this.peekToken();
@@ -1373,7 +1373,7 @@ class Parser {
                 return;
             }
 
-            if(usesemi && pscount === 0) {
+            if(allowcorebi && pscount === 0) {
                 //check for the end of a builtin method "= ID;"
                 if(this.peekTokenKind() === SYM_eq && this.peekTokenKind(1) === TokenStrings.IdentifierName && this.peekTokenKind(2) === SYM_semicolon) {
                     this.consumeToken();
@@ -4103,7 +4103,6 @@ class Parser {
 
     private parseMapEntryConstructorExpression(): Expression {
         const sinfo = this.peekToken().getSourceInfo();
-        //TODO: this will reject (2 => 3) since there are parens, maybe this is ok or maybe we should allow it?
 
         const lexp = this.parseExpression();   
         if(this.testAndConsumeTokenIf(SYM_bigarrow)) {
@@ -4116,8 +4115,6 @@ class Parser {
     }
 
     private parseLambdaOkExpression(): Expression {
-        //TODO: this will reject (fn(x) => x) since there are parens, maybe this is ok or maybe we should allow it?
-
         if (this.testToken(KW_fn) || this.testFollows(KW_recursive, KW_fn) || this.testFollows(KW_recursive_q, KW_fn)) {
             return this.parseLambdaTerm();
         }
@@ -5619,7 +5616,7 @@ class Parser {
                 this.parseAPI(attributes);
             }
             else if(this.testToken(KW_agent)) {
-                xxxx;
+                this.parseAgent(attributes);
             }
             else if(this.testToken(KW_namespace)) {
                 this.parseSubNamespace();
@@ -5683,21 +5680,26 @@ class Parser {
         const sname = this.parseIdentifierAsStdVariable();
 
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
-            if(this.env.currentNamespace.checkDeclNameClashMember(sname)) {
-                this.recordErrorGeneral(sinfo, `Collision between const and other names -- ${sname}`);
-            }
-
             this.env.currentNamespace.declaredNames.add(sname);
             this.env.currentNamespace.declaredConstNames.add(sname);
 
             this.scanOverSemiDelimitedDeclaration();
         }
         else {
+            if(this.env.currentNamespace.checkDeclNameClashMemberSimple(sname)) {
+                const mconst = this.env.currentNamespace.consts.find((cc) => cc.name === sname);
+                const mfunc = this.env.currentNamespace.functions.find((ff) => ff.name === sname);
+
+                if(mconst !== undefined || mfunc !== undefined) {
+                    this.recordErrorGeneral(sinfo, `Collision between const and other names -- ${sname}`);
+                }
+            }
+
             this.ensureAndConsumeTokenIf(SYM_colon, "const member");
             const stype = this.parseStdTypeSignature();
 
             this.ensureAndConsumeTokenIf(SYM_eq, "const member");
-            const value = this.parseConstExpression(stype, new Set<string>());
+            const value = this.parseConstScopedExpression(stype, new Set<string>());
         
             this.env.currentNamespace.consts.push(new ConstMemberDecl(this.env.currentFile, sinfo, attributes, sname, stype, value));
 
@@ -5714,10 +5716,6 @@ class Parser {
             this.consumeToken();
 
             const fname = this.consumeTokenAndGetValue();
-            if(this.env.currentNamespace.checkDeclNameClashMember(fname)) {
-                this.recordErrorGeneral(sinfo, `Collision between function and other names -- ${fname}`);
-            }
-
             this.env.currentNamespace.declaredNames.add(fname);
             this.env.currentNamespace.declaredFunctionNames.add(fname);
 
@@ -5744,9 +5742,20 @@ class Parser {
 
             const fdecl = this.parseFunctionInvokeDecl(fkind, attributes, new Set<string>());
 
-            if(fdecl !== undefined) {
-                this.env.currentNamespace.functions.push(fdecl as NamespaceFunctionDecl);
+            if(fdecl === undefined) {
+                return;
             }
+
+            if(this.env.currentNamespace.checkDeclNameClashMemberSimple(fdecl.name)) {
+                const mconst = this.env.currentNamespace.consts.find((cc) => cc.name === fdecl.name);
+                const mfunc = this.env.currentNamespace.functions.find((ff) => Assembly.checkFunctionSigMatch(ff, fdecl));
+
+                if(mconst !== undefined || mfunc !== undefined) {
+                    this.recordErrorGeneral(sinfo, `Collision between function and other names -- ${fdecl.name}`);
+                }
+            }
+
+            this.env.currentNamespace.functions.push(fdecl as NamespaceFunctionDecl);
         }
     }
 
@@ -5789,7 +5798,7 @@ class Parser {
         const stype = this.parseStdTypeSignature();
 
         this.ensureAndConsumeTokenIf(SYM_eq, "const member");
-        const value = this.parseConstExpression(stype, typeTerms);
+        const value = this.parseConstScopedExpression(stype, typeTerms);
 
         if(constMembers === undefined) {
             this.recordErrorGeneral(sinfo, "Cannot have a const member on this type");
@@ -5799,7 +5808,7 @@ class Parser {
         }
         allMemberNames.add(sname);
 
-        if(constMembers !== undefined && !constMembers.some((cm) => cm.name === sname)) {
+        if(constMembers !== undefined) {
             constMembers.push(new ConstMemberDecl(this.env.currentFile, sinfo, attributes, sname, stype, value));
         }
 
@@ -5819,12 +5828,20 @@ class Parser {
             return;
         } 
         
-        if(allMemberNames.has(fdecl.name)) {
-            this.recordErrorGeneral(sinfo, `Duplicate const member ${fdecl.name}`);
+        if(memberFunctions !== undefined && allMemberNames.has(fdecl.name)) {
+            const ffdecl = memberFunctions.find((mf) => Assembly.checkFunctionSigMatch(mf, fdecl));
+            const fndecl = memberFunctions.find((mf) => mf.name === fdecl.name);
+
+            if(fndecl === undefined) {
+                this.recordErrorGeneral(sinfo, `Duplicate member ${fdecl.name} with same name`);
+            }
+            if(fndecl !== undefined && ffdecl !== undefined) {
+                this.recordErrorGeneral(sinfo, `Duplicate member ${fdecl.name} with same signature`);
+            }
         }
         allMemberNames.add(fdecl.name);
 
-        if(memberFunctions !== undefined && !memberFunctions.some((cm) => cm.name === fdecl.name)) {
+        if(memberFunctions !== undefined) {
             memberFunctions.push(fdecl);
         }
     }
@@ -5841,9 +5858,9 @@ class Parser {
         this.ensureAndConsumeTokenIf(SYM_colon, "member field");
         const ftype = this.parseStdTypeSignature();
 
-        let ivalue: ConstantExpressionValue | undefined = undefined;
+        let ivalue: Expression | undefined = undefined;
         if (this.testAndConsumeTokenIf(SYM_eq)) {
-            ivalue = this.parseConstExpression(ftype, typeTerms);
+            ivalue = this.parseConstScopedExpression(ftype, typeTerms);
         }
 
         if(memberFields === undefined) {
@@ -5854,7 +5871,7 @@ class Parser {
         }
         allMemberNames.add(fname);
 
-        if(memberFields !== undefined && !memberFields.some((cm) => cm.name === fname)) {
+        if(memberFields !== undefined) {
             memberFields.push(new MemberFieldDecl(this.env.currentFile, sinfo, attributes, fname, ftype, ivalue, false));
         }
 
@@ -5874,12 +5891,20 @@ class Parser {
             return;
         } 
         
-        if(allMemberNames.has(mdecl.name)) {
-            this.recordErrorGeneral(sinfo, `Duplicate const member ${mdecl.name}`);
+        if(memberMethods !== undefined && allMemberNames.has(mdecl.name)) {
+            const mfdecl = memberMethods.find((mf) => Assembly.checkMethodSigMatch(mf, mdecl));
+            const mndecl = memberMethods.find((mf) => mf.name === mdecl.name);
+
+            if(mndecl === undefined) {
+                this.recordErrorGeneral(sinfo, `Duplicate member ${mdecl.name} with same name`);
+            }
+            if(mndecl !== undefined && mfdecl !== undefined) {
+                this.recordErrorGeneral(sinfo, `Duplicate member ${mdecl.name} with same signature`);
+            }
         }
         allMemberNames.add(mdecl.name);
 
-        if(memberMethods !== undefined && !memberMethods.some((cm) => cm.name === mdecl.name)) {
+        if(memberMethods !== undefined) {
             memberMethods.push(mdecl);
         }
     }
@@ -5902,7 +5927,7 @@ class Parser {
         }
         allMemberNames.add(mdecl.name);
 
-        if(taskMemberMethods !== undefined && !taskMemberMethods.some((cm) => cm.name === mdecl.name)) {
+        if(taskMemberMethods !== undefined) {
             taskMemberMethods.push(mdecl);
         }
     }
@@ -5925,7 +5950,7 @@ class Parser {
         }
         allMemberNames.add(adecl.name);
 
-        if(taskMemberAction !== undefined && !taskMemberAction.some((cm) => cm.name === adecl.name)) {
+        if(taskMemberAction !== undefined) {
             taskMemberAction.push(adecl);
         }
     }
@@ -5948,7 +5973,7 @@ class Parser {
             }
 
             if(isvalidate) {
-                const exp = this.parseConstExpression(this.wellknownTypes.get("Bool") as TypeSignature, typeTerms);
+                const exp = this.parseChkLogicScopedExpression(typeTerms);
 
                 if(vdates === undefined) {
                     this.recordErrorGeneral(sinfo, "Cannot have a validate on this type");
@@ -5959,7 +5984,7 @@ class Parser {
             }
             else {
                 const level = this.parseBuildInfo(KW_release);
-                const exp = this.parseConstExpression(this.wellknownTypes.get("Bool") as TypeSignature, typeTerms);
+                const exp = this.parseChkLogicScopedExpression(typeTerms);
 
                 if(invs === undefined) {
                     this.recordErrorGeneral(sinfo, "Cannot have an invariant on this type");
@@ -5977,8 +6002,7 @@ class Parser {
         invariants: InvariantDecl[] | undefined, validates: ValidateDecl[] | undefined,
         constMembers: ConstMemberDecl[] | undefined, functionMembers: TypeFunctionDecl[] | undefined, 
         memberFields: MemberFieldDecl[] | undefined, memberMethods: MethodDecl[] | undefined, 
-        taskMemberMethods: TaskMethodDecl[] | undefined, taskMemberAction: TaskActionDecl[] | undefined, 
-        taskmain: string | undefined) {
+        taskMemberMethods: TaskMethodDecl[] | undefined, taskMemberAction: TaskActionDecl[] | undefined) {
         let allMemberNames = new Set<string>();
 
         const rpos = this.scanMatchingParens(SYM_lbrace, SYM_rbrace);
@@ -6030,7 +6054,7 @@ class Parser {
                 }
             }
             else if(this.testToken(KW_action)) {
-                this.parseTaskMemberAction(taskMemberAction, allMemberNames, attributes, typeTerms, taskmain as string);
+                this.parseTaskMemberAction(taskMemberAction, allMemberNames, attributes, typeTerms, "main");
             }
             else if(this.testToken(KW_entity)) {
                 if(specialConcept === undefined) {
@@ -6070,7 +6094,7 @@ class Parser {
                 tdecl.provides.push(...provides);
             }
 
-            this.parseOOPMembersCommonAll(false, undefined, typeTerms, undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, typeTerms, undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
         }
         else {
             const tdecl = (specialConcept as APIResultTypeDecl).nestedEntityDecls.find((ned) => ned.name === ename) as InternalEntityTypeDecl;
@@ -6080,7 +6104,7 @@ class Parser {
                 tdecl.provides.push(...provides);
             }
 
-            this.parseOOPMembersCommonAll(false, undefined, typeTerms, undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, typeTerms, undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
         }
     }
 
@@ -6124,6 +6148,9 @@ class Parser {
             else if(name === "UnicodeRope") {
                 tdecl = new UnicodeRopeTypeDecl(this.env.currentFile, sinfo, attributes, "UnicodeRope");
             }
+            else if(name === "UnicodeRopeIterator") {
+                tdecl = new UnicodeRopeIteratorTypeDecl(this.env.currentFile, sinfo, attributes, "UnicodeRopeIterator");
+            }
             else {
                 assert(!attributes.some((attr) => attr.name === "__internal"), "Missing special case on primitive entity parse -- " + name);
 
@@ -6155,32 +6182,32 @@ class Parser {
         }
 
         if(tdecl instanceof PrimitiveEntityTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
         }
         else if(tdecl instanceof SomeTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
         }
         else if(tdecl instanceof ListTypeDecl || tdecl instanceof StackTypeDecl || tdecl instanceof QueueTypeDecl || tdecl instanceof SetTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
         }
         else if(tdecl instanceof MapEntryTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(["K", "V"]), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(["K", "V"]), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
         }
         else if(tdecl instanceof MapTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(["K", "V"]), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(["K", "V"]), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
         }
         else if(tdecl instanceof EventListTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
         }
         else if (tdecl instanceof CRopeTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
         }
         else if (tdecl instanceof UnicodeRopeTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
         }
         else {
             const edecl = tdecl as EntityTypeDecl;
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(edecl.terms.map((term) => term.name)), edecl.invariants, edecl.validates, edecl.consts, edecl.functions, edecl.fields, edecl.methods, undefined, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(edecl.terms.map((term) => term.name)), edecl.invariants, edecl.validates, edecl.consts, edecl.functions, edecl.fields, edecl.methods, undefined, undefined);
         }
     }
 
@@ -6316,17 +6343,17 @@ class Parser {
         }
 
         if(tdecl instanceof OptionTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
         }
         else if(tdecl instanceof ResultTypeDecl) {
-            this.parseOOPMembersCommonAll(false, tdecl, new Set<string>(["T", "E"]), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, tdecl, new Set<string>(["T", "E"]), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
         }
         else if(tdecl instanceof APIResultTypeDecl) {
-            this.parseOOPMembersCommonAll(false, tdecl, new Set<string>(["T"]), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, tdecl, new Set<string>(["T"]), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
         }
         else {
             const cdecl = tdecl as ConceptTypeDecl;
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(cdecl.terms.map((term) => term.name)), cdecl.invariants, cdecl.validates, cdecl.consts, cdecl.functions, cdecl.fields, cdecl.methods, undefined, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(cdecl.terms.map((term) => term.name)), cdecl.invariants, cdecl.validates, cdecl.consts, cdecl.functions, cdecl.fields, cdecl.methods, undefined, undefined);
         }
     }
 
@@ -6420,7 +6447,7 @@ class Parser {
             (tdecl as TypedeclTypeDecl).valuetype = ttype;
 
             if(this.testAndConsumeTokenIf(KW_of)) {
-                const ofexp = this.parseConstExpression(undefined, new Set<string>());
+                const ofexp = this.parseConstScopedExpression(undefined, new Set<string>());
                 (tdecl as TypedeclTypeDecl).optofexp = ofexp;
             }
 
@@ -6432,7 +6459,7 @@ class Parser {
                     tdecl.provides.push(...provides);
                 }
 
-                this.parseOOPMembersCommonAll(false, undefined, new Set<string>(), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
+                this.parseOOPMembersCommonAll(false, undefined, new Set<string>(), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
             }
         }
     }
@@ -6483,7 +6510,7 @@ class Parser {
                 (tdecl as DatatypeMemberEntityTypeDecl).fields.push(...fields);
             }
             else {
-                this.parseOOPMembersCommonAll(false, undefined, new Set<string>(parenttype.terms.map((term) => term.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, (tdecl as DatatypeMemberEntityTypeDecl).fields, tdecl.methods, undefined, undefined, undefined);
+                this.parseOOPMembersCommonAll(false, undefined, new Set<string>(parenttype.terms.map((term) => term.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, (tdecl as DatatypeMemberEntityTypeDecl).fields, tdecl.methods, undefined, undefined);
             }
         }
     }
@@ -6543,7 +6570,7 @@ class Parser {
                     tdecl.fields.push(...fields);
                 }
                 else {
-                    this.parseOOPMembersCommonAll(false, undefined, new Set<string>(tdecl.terms.map((term) => term.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, tdecl.fields, tdecl.methods, undefined, undefined, undefined);
+                    this.parseOOPMembersCommonAll(false, undefined, new Set<string>(tdecl.terms.map((term) => term.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, tdecl.fields, tdecl.methods, undefined, undefined);
                     if(tdecl.functions.length !== 0 || tdecl.methods.length !== 0) {
                         this.recordErrorGeneral(sinfo, "Using component cannot include functions or methods");
                     }
@@ -6569,7 +6596,7 @@ class Parser {
                 this.scanOverBraceDelimitedDeclaration();
             }
             else {
-                this.parseOOPMembersCommonAll(false, undefined, new Set<string>(tdecl.terms.map((tt) => tt.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, tdecl.fields, tdecl.methods, undefined, undefined, undefined);
+                this.parseOOPMembersCommonAll(false, undefined, new Set<string>(tdecl.terms.map((tt) => tt.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, tdecl.fields, tdecl.methods, undefined, undefined);
             }
         }
 
@@ -6742,6 +6769,119 @@ class Parser {
                 return;
             }
 
+            const boundtemplates = new Set<string>();
+            const params: InvokeParameterDecl[] = this.parseInvokeDeclParameters(sinfo, false, boundtemplates);
+        
+            this.ensureAndConsumeTokenIf(SYM_colon, "api declaration");
+            const resultInfo = this.parseReturnTypeSignature(true);
+
+            const argNames = new Set<string>(params.map((param) => param.name));
+            const cargs = params.map((param) => new LocalVariableDefinitionInfo(!param.isRefParam, param.name));
+
+            const [preconds, postconds] = this.parsePreAndPostConditions(sinfo, argNames, new Set<string>(), new Set<string>(), true, true);
+    
+            let statusinfo: TypeSignature[] = [];
+            let resouceinfo: ResourceInformation[] | "**" | "{}" | undefined = undefined;
+            let envinfo: EnvironmentVariableInformation[] | undefined = undefined;
+            while(this.testToken(KW_event) || this.testToken(KW_status) || this.testToken(KW_resource) || this.testToken(KW_env)) {
+                if(this.testToken(KW_status)) {
+                    if(statusinfo !== undefined) {
+                        this.recordErrorGeneral(sinfo, "Cannot have multiple status sections");
+                    }
+
+                    this.consumeToken();
+                    statusinfo = this.parseListOf<TypeSignature>("task status section", SYM_lbrack, SYM_rbrack, SYM_coma, () => this.parseNominalType());
+                }
+                else if(this.testToken(KW_resource)) {
+                    if(resouceinfo !== undefined) {
+                        this.recordErrorGeneral(sinfo, "Cannot have multiple resource sections");
+                    }
+
+                    this.consumeToken();
+                    if(this.testFollows(SYM_lbrace, SYM_rbrace)) {
+                        this.consumeToken();
+                        this.consumeToken();
+                        resouceinfo = "{}";
+                    }
+                    else {
+                        resouceinfo = this.parseListOf<ResourceInformation>("task resource section", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
+                            const pp = this.parseConstExpression(undefined, new Set<string>());
+                            this.ensureAndConsumeTokenIf(SYM_at, "task resource section");
+
+                            const mod = this.ensureToken(TokenStrings.ResourceUseMod, "task resource section") ? this.consumeTokenAndGetValue() : "[*]";
+                            const oops = mod.includes("*") ? "*" : mod.slice(1, -1).split("");
+
+                            return new ResourceInformation(pp, oops as ResourceAccessModes[]);
+                        });
+                    }
+                }
+                else {
+                    if(envinfo !== undefined) {
+                        this.recordErrorGeneral(sinfo, "Cannot have multiple env sections");
+                    }
+
+                    this.consumeToken();
+                    envinfo = this.parseListOf<EnvironmentVariableInformation>("task env section", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
+                        this.ensureToken(TokenStrings.CString, "task env section");
+                        const ename = this.consumeTokenAndGetValue();
+
+                        this.ensureAndConsumeTokenIf(SYM_colon, "task env section");
+                        const ttype = this.parseStdTypeSignature();
+
+                        let exp: ConstantExpressionValue | undefined = undefined;
+                        if(this.testAndConsumeTokenIf(SYM_eq)) {
+                            exp = this.parseConstExpression(ttype, new Set<string>());
+                        }
+
+                        return new EnvironmentVariableInformation(ename, ttype, exp);
+                    });
+                }
+            }
+
+            if(statusinfo === undefined) {
+                statusinfo = [];
+            }
+            if(envinfo === undefined) {
+                envinfo = [];
+            }
+            if(resouceinfo === undefined) {
+                resouceinfo = "{}";
+            }
+
+            this.env.pushStandardFunctionScope(cargs, boundtemplates, resultInfo);
+            const body = this.parseBody(attributes, false, false);
+            this.env.popStandardFunctionScope();
+            
+            const api = new APIDecl(this.env.currentFile, sinfo, attributes, apiname, params, resultInfo, preconds, postconds, statusinfo, envinfo, resouceinfo, body);
+            this.env.currentNamespace.apis.push(api);
+        }
+    }
+
+    private parseAgent(attributes: DeclarationAttibute[]) {
+        const sinfo = this.peekToken().getSourceInfo();
+
+        this.ensureAndConsumeTokenAlways(KW_agent, "agent declaration");
+        this.ensureToken(TokenStrings.IdentifierName, "agent declaration");
+        const apiname = this.parseIdentifierAsStdVariable();
+
+        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
+            if(this.env.currentNamespace.checkDeclNameClashMember(apiname)) {
+                this.recordErrorGeneral(sinfo, `Collision between Agent and other names -- ${apiname}`);
+            }
+
+            this.env.currentNamespace.declaredNames.add(apiname);
+            this.env.currentNamespace.declaredAPINames.add(apiname);
+
+            this.scanOverSemiDelimitedDeclaration();
+        }
+        else {
+            const okdecl = this.testToken(SYM_lparen);
+            if(!okdecl) {
+                this.recordErrorGeneral(sinfo, "Agent declaration missing parameter list");
+                return;
+            }
+
+            xxxx;
             const boundtemplates = new Set<string>();
             const params: InvokeParameterDecl[] = this.parseInvokeDeclParameters(sinfo, false, boundtemplates);
         

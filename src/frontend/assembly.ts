@@ -884,6 +884,17 @@ class UnicodeRopeTypeDecl extends AbstractCollectionTypeDecl {
     }
 }
 
+class UnicodeRopeIteratorTypeDecl extends InternalEntityTypeDecl {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
+        super(file, sinfo, attributes, name);
+    }
+
+    // Internal to the cpp runtime so no need to emit anything
+    emit(fmt: CodeFormatter): string {
+        return "";
+    }
+}
+
 class StackTypeDecl extends AbstractCollectionTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
@@ -1547,7 +1558,7 @@ class NamespaceDeclaration {
         return !hasterms && this.declaredSubNSNames.has(rname);
     }
 
-    checkDeclNameClashMember(rname: string): boolean {
+    checkDeclNameClashMemberSimple(rname: string): boolean {
         return this.declaredNames.has(rname);
     }
 
@@ -1716,6 +1727,74 @@ class Assembly {
         }
     }
 
+    static checkFunctionSigMatch(fd1: FunctionInvokeDecl, fd2: FunctionInvokeDecl): boolean {
+        if(fd1.name !== fd2.name) {
+            return false;
+        }
+
+        if((fd1.terms.length !== 0) !== (fd2.terms.length !== 0)) {
+            return false;
+        }
+
+        const l1has = fd1.params.some((p) => p.type instanceof LambdaTypeSignature);
+        const l2has = fd2.params.some((p) => p.type instanceof LambdaTypeSignature);
+        if(l1has !== l2has) {
+            return false;
+        }
+
+        const r1isref = fd1.params.some((p) => p.pkind !== undefined);
+        const r2isref = fd2.params.some((p) => p.pkind !== undefined);
+        if(r1isref !== r2isref) {
+            return false;
+        }
+
+        return true;
+    }
+
+    static checkMethodSigMatch(md1: MethodDecl, md2: MethodDecl): boolean {
+        if(md1.name !== md2.name) {
+            return false;
+        }
+
+        if((md1.terms.length !== 0) !== (md2.terms.length !== 0)) {
+            return false;
+        }
+
+        const l1has = md1.params.some((p) => p.type instanceof LambdaTypeSignature);
+        const l2has = md2.params.some((p) => p.type instanceof LambdaTypeSignature);
+        if(l1has !== l2has) {
+            return false;
+        }
+
+        const r1isref = md1.params.some((p) => p.pkind !== undefined);
+        const r2isref = md2.params.some((p) => p.pkind !== undefined);
+        if((r1isref || md1.isThisRef) !== (r2isref || md2.isThisRef)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    static resolveSigMatch(s1: {name: string, isTemplate: boolean, hasLambda: boolean, isRef: boolean}, s2: {name: string, isTemplate: boolean, hasLambda: boolean, isRef: boolean}): boolean {
+        if(s1.name !== s2.name) {
+            return false;
+        }
+
+        if(s1.isTemplate !== s2.isTemplate) {
+            return false;
+        }
+        
+        if(s1.hasLambda !== s2.hasLambda) {
+            return false;
+        }
+
+        if(s1.isRef !== s2.isRef) {
+            return false;
+        }
+        
+        return true;
+    }
+
     resolveNamespaceConstant(ns: FullyQualifiedNamespace, name: string): NamespaceConstDecl | undefined {
         const nsdecl = this.resolveNamespaceDecl(ns.ns);
         if(nsdecl === undefined) {
@@ -1725,13 +1804,14 @@ class Assembly {
         return nsdecl.consts.find((c) => c.name === name);
     }
 
-    resolveNamespaceFunction(ns: FullyQualifiedNamespace, name: string): NamespaceFunctionDecl | undefined {
+    resolveNamespaceFunction(ns: FullyQualifiedNamespace, name: string, isTemplate: boolean, hasLambda: boolean, isRef: boolean): NamespaceFunctionDecl | undefined {
         const nsdecl = this.resolveNamespaceDecl(ns.ns);
         if(nsdecl === undefined) {
             return undefined;
         }
 
-        return nsdecl.functions.find((c) => c.name === name);
+        const fnsig = {name: name, isTemplate: isTemplate, hasLambda: hasLambda, isRef: isRef};
+        return nsdecl.functions.find((c) => Assembly.resolveSigMatch(fnsig, {name: c.name, isTemplate: c.terms.length !== 0, hasLambda: c.params.some((p) => p.type instanceof LambdaTypeSignature), isRef: c.params.some((p) => p.pkind !== undefined)}));
     }
 
     tryReduceConstantExpressionToRE(exp: Expression): LiteralRegexExpression | undefined {
@@ -1790,7 +1870,7 @@ export {
     AbstractEntityTypeDecl, PrimitiveEntityTypeDecl,
     InternalEntityTypeDecl, CRopeIteratorTypeDecl,
     ConstructableTypeDecl, OkTypeDecl, FailTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APISuccessTypeDecl, SomeTypeDecl, MapEntryTypeDecl,
-    AbstractCollectionTypeDecl, ListTypeDecl, CRopeTypeDecl, UnicodeRopeTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl,
+    AbstractCollectionTypeDecl, ListTypeDecl, CRopeTypeDecl, UnicodeRopeTypeDecl, UnicodeRopeIteratorTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl,
     EventListTypeDecl,
     EntityTypeDecl, 
     AbstractConceptTypeDecl, InternalConceptTypeDecl, 
