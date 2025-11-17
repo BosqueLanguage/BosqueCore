@@ -11,6 +11,7 @@ const KW_action = "action";
 const KW__debug = "_debug";
 const KW_abort = "abort";
 const KW_assert = "assert";
+const KW_configs = "configs";
 const KW_dispatch = "dispatch";
 const KW_do = "do";
 const KW_elif = "elif";
@@ -99,6 +100,7 @@ const KeywordStrings = [
     KW_agent,
     KW_as,
     KW_action,
+    KW_configs,
     KW__debug,
     KW_do,
     KW_abort,
@@ -384,6 +386,7 @@ export {
     KW_agent,
     KW_as,
     KW_action,
+    KW_configs,
     KW__debug,
     KW_do,
     KW_abort,
@@ -450,7 +453,7 @@ export {
     // KW_continue, //TODO: reserved for future use
     KW_under,
     KW_event,
-    // KW_resource,
+    KW_resource,
     KW_status,
     KW_softcheck,
     KW_errtest,

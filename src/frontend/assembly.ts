@@ -100,6 +100,32 @@ class InvokeTemplateTypeRestriction {
     }
 }
 
+class TaskConfiguration {
+    timeout: number | undefined;
+    retry: {delay: number, tries: number} | undefined;
+    priority: "immediate" | "fast" | "normal" | "longrunning" | "background" | "optional" | undefined;
+
+    constructor(timeout: number | undefined, retry: {delay: number, tries: number} | undefined, priority: "immediate" | "fast" | "normal" | "longrunning" | "background" | "optional" | undefined) {
+        this.timeout = timeout;
+        this.retry = retry;
+        this.priority = priority;
+    }
+
+    emit(): string | undefined {
+        if(this.priority === undefined && this.retry !== undefined && this.timeout !== undefined) {
+            return undefined;
+        }
+
+        const cs = [
+            this.timeout !== undefined ? `timeout=${this.timeout}ms` : undefined,
+            this.retry !== undefined ? `retry=(${this.retry.tries}@${this.retry.delay}ms)` : undefined,
+            this.priority !== undefined ? `priority=${this.priority}` : undefined
+        ].filter((c) => c !== undefined) as string[];
+
+        return cs.join(", ");
+    }
+}
+
 abstract class AbstractDecl {
     readonly file: string;
     readonly sinfo: SourceInfo;
@@ -1115,7 +1141,7 @@ class DatatypeTypeDecl extends AbstractConceptTypeDecl {
 }
 
 class EnvironmentVariableInformation {
-    readonly evname: string; //cstring
+    readonly evname: string; //identifier or cstring
     readonly evtype: TypeSignature;
     readonly optdefault: Expression | undefined;
 
@@ -1136,13 +1162,13 @@ class EnvironmentVariableInformation {
 }
 
 class ResourceInformation {
-    readonly pathglobs: { pg: Expression[], optas: Expression }[]; //Literal glob, constant refernence, or env var reference
+    readonly pathglobs: { pg: Expression[], optas: Expression | undefined }[]; //Literal glob, constant refernence, or env var reference
 
-    constructor(pathglobs: { pg: Expression[], optas: Expression }[]) {
+    constructor(pathglobs: { pg: Expression[], optas: Expression | undefined }[]) {
         this.pathglobs = pathglobs;
     }
 
-    static emitSingleRInfo(fmt: CodeFormatter, pg: Expression[], optas: Expression): string {
+    static emitSingleRInfo(fmt: CodeFormatter, pg: Expression[], optas: Expression | undefined): string {
         if(optas === undefined) {
             if(pg.length === 1) {
                 return fmt.indent(pg[0].emit(true, fmt));
@@ -1163,8 +1189,6 @@ class ResourceInformation {
 }
 
 class APIDecl extends AbstractCoreDecl {
-    readonly configs: {key: string, value: Expression | undefined}[];
-
     readonly params: InvokeParameterDecl[];    
     readonly resultType: TypeSignature;
     readonly eventType: TypeSignature | undefined;
@@ -1172,16 +1196,17 @@ class APIDecl extends AbstractCoreDecl {
     readonly preconditions: PreConditionDecl[];
     readonly postconditions: PostConditionDecl[];
 
-    readonly statusupdates: TypeSignature[];
+    readonly configs: TaskConfiguration;
+
+    readonly statusinfo: TypeSignature[];
     readonly envreqs: EnvironmentVariableInformation[];
     readonly resourcereqs: ResourceInformation;
 
     readonly body: BodyImplementation;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, configs: {key: string, value: Expression | undefined}[], params: InvokeParameterDecl[], resultType: TypeSignature, eventType: TypeSignature | undefined, preconds: PreConditionDecl[], postconds: PostConditionDecl[], statusUpdates: TypeSignature[], envreqs: EnvironmentVariableInformation[], resourcereqs: ResourceInformation, body: BodyImplementation) {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, params: InvokeParameterDecl[], resultType: TypeSignature, eventType: TypeSignature | undefined, preconds: PreConditionDecl[], postconds: PostConditionDecl[], configs: TaskConfiguration, statusinfo: TypeSignature[], envreqs: EnvironmentVariableInformation[], resourcereqs: ResourceInformation, body: BodyImplementation) {
         super(file, sinfo, attributes, name);
 
-        this.configs = configs;
         this.params = params;
         this.resultType = resultType;
         this.eventType = eventType;
@@ -1189,7 +1214,9 @@ class APIDecl extends AbstractCoreDecl {
         this.preconditions = preconds;
         this.postconditions = postconds
 
-        this.statusupdates = statusUpdates;
+        this.configs = configs;
+
+        this.statusinfo = statusinfo;
         this.envreqs = envreqs;
         this.resourcereqs = resourcereqs;
 
@@ -1198,20 +1225,6 @@ class APIDecl extends AbstractCoreDecl {
 
     emitMetaInfo(fmt: CodeFormatter): string | undefined {
         fmt.indentPush();
-
-        let configs: string[] = [];
-        if(this.configs.length !== 0) {
-            const cs = this.configs.map((cfg) => {
-                if(cfg.value === undefined) {
-                    return cfg.key;
-                }
-                else {
-                    return `${cfg.key} = ${cfg.value.emit(true, fmt)}`;
-                }
-            });
-
-            configs = [fmt.indent(`configs { ${cs.join(", ")} }`)];
-        }
 
         let prec: string[] = [];
         if(this.preconditions.length !== 0) {
@@ -1223,9 +1236,14 @@ class APIDecl extends AbstractCoreDecl {
             postc = this.postconditions.map((pc) => fmt.indent(pc.emit(fmt)));
         }
 
+        let configs: string[] = [];
+        if(this.configs !== undefined) {
+            configs = [fmt.indent(`configs { ${this.configs.emit()} }`)];
+        }
+
         let status: string[] = [];
-        if(this.statusupdates.length !== 0) {
-            status = [fmt.indent(`status {${this.statusupdates.map((so) => so.emit()).join(", ")}}`)];
+        if(this.statusinfo.length !== 0) {
+            status = [fmt.indent(`status ${this.statusinfo.map((so) => so.emit()).join(" | ")};`)];
         }
 
         let resources: string[] = [];
@@ -1237,7 +1255,7 @@ class APIDecl extends AbstractCoreDecl {
         let evs: string[] = [];
         if(this.envreqs.length !== 0) {
             const vvl = this.envreqs.map((ev) => ev.emit(fmt));
-            evs = [fmt.indent(`env{ ${vvl.join(", ")} }`)];
+            evs = [fmt.indent(`env { ${vvl.join(", ")} }`)];
         }
 
         fmt.indentPop();
@@ -1245,7 +1263,7 @@ class APIDecl extends AbstractCoreDecl {
             return undefined;
         }
         else {
-            return [...prec, ...postc, ...status, ...configs, ...evs, ...resources].join("\n");
+            return [...prec, ...postc, ...configs, ...status, ...evs, ...resources].join("\n");
         }
     }
 
@@ -1261,8 +1279,6 @@ class APIDecl extends AbstractCoreDecl {
 }
 
 class AgentDecl extends AbstractCoreDecl {
-    readonly configs: {key: string, value: Expression | undefined}[];
-    
     readonly params: InvokeParameterDecl[];    
     readonly resultType: TypeSignature | undefined; //This may be set on a per call-site basis
     readonly eventType: TypeSignature | undefined;
@@ -1270,16 +1286,17 @@ class AgentDecl extends AbstractCoreDecl {
     readonly preconditions: PreConditionDecl[];
     readonly postconditions: PostConditionDecl[];
 
-    readonly statusupdates: TypeSignature[];
+    readonly configs: TaskConfiguration;
+
+    readonly statusinfo: TypeSignature[];
     readonly envreqs: EnvironmentVariableInformation[];
     readonly resourcereqs: ResourceInformation;
 
     readonly body: BodyImplementation;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, configs: {key: string, value: Expression | undefined}[], params: InvokeParameterDecl[], resultType: TypeSignature | undefined, eventType: TypeSignature | undefined, preconds: PreConditionDecl[], postconds: PostConditionDecl[], statusUpdates: TypeSignature[], envreqs: EnvironmentVariableInformation[], resourcereqs: ResourceInformation, body: BodyImplementation) {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, params: InvokeParameterDecl[], resultType: TypeSignature | undefined, eventType: TypeSignature | undefined, preconds: PreConditionDecl[], postconds: PostConditionDecl[], configs: TaskConfiguration, statusinfo: TypeSignature[], envreqs: EnvironmentVariableInformation[], resourcereqs: ResourceInformation, body: BodyImplementation) {
         super(file, sinfo, attributes, name);
 
-        this.configs = configs;
         this.params = params;
         this.resultType = resultType;
         this.eventType = eventType;
@@ -1287,7 +1304,9 @@ class AgentDecl extends AbstractCoreDecl {
         this.preconditions = preconds;
         this.postconditions = postconds
 
-        this.statusupdates = statusUpdates;
+        this.configs = configs;
+
+        this.statusinfo = statusinfo;
         this.envreqs = envreqs;
         this.resourcereqs = resourcereqs;
 
@@ -1296,20 +1315,6 @@ class AgentDecl extends AbstractCoreDecl {
 
     emitMetaInfo(fmt: CodeFormatter): string | undefined {
         fmt.indentPush();
-
-        let configs: string[] = [];
-        if(this.configs.length !== 0) {
-            const cs = this.configs.map((cfg) => {
-                if(cfg.value === undefined) {
-                    return cfg.key;
-                }
-                else {
-                    return `${cfg.key} = ${cfg.value.emit(true, fmt)}`;
-                }
-            });
-
-            configs = [fmt.indent(`configs { ${cs.join(", ")} }`)];
-        }
 
         let prec: string[] = [];
         if(this.preconditions.length !== 0) {
@@ -1321,9 +1326,14 @@ class AgentDecl extends AbstractCoreDecl {
             postc = this.postconditions.map((pc) => fmt.indent(pc.emit(fmt)));
         }
 
+        let configs: string[] = [];
+        if(this.configs !== undefined) {
+            configs = [fmt.indent(`configs { ${this.configs.emit()} }`)];
+        }
+
         let status: string[] = [];
-        if(this.statusupdates.length !== 0) {
-            status = [fmt.indent(`status {${this.statusupdates.map((so) => so.emit()).join(", ")}}`)];
+        if(this.statusinfo.length !== 0) {
+            status = [fmt.indent(`status ${this.statusinfo.map((so) => so.emit()).join(" | ")};`)];
         }
 
         let resources: string[] = [];
@@ -1343,7 +1353,7 @@ class AgentDecl extends AbstractCoreDecl {
             return undefined;
         }
         else {
-            return [...prec, ...postc, ...status, ...configs, ...evs, ...resources].join("\n");
+            return [...prec, ...postc, ...configs, ...status, ...evs, ...resources].join("\n");
         }
     }
 
@@ -1365,10 +1375,12 @@ class TaskDecl extends AbstractNominalTypeDecl {
     readonly selfmethods: TaskMethodDecl[] = [];
     readonly actions: TaskActionDecl[] = [];
 
-    configs: {key: string, value: Expression | undefined}[] = [];
-    statusupdates: TypeSignature[] = [];
-    envreqs: EnvironmentVariableInformation[] = [];
-    resourcereqs: ResourceInformation = new ResourceInformation([]);
+    readonly configs: TaskConfiguration = new TaskConfiguration(undefined, undefined, undefined);
+
+    readonly statusinfo: TypeSignature[] = [];
+    readonly envreqs: EnvironmentVariableInformation[] = [];
+    readonly resourcereqs: ResourceInformation = new ResourceInformation([]);
+    readonly eventinfo: TypeSignature[] = [];
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string) {
         super(file, sinfo, attributes, ns, name, AdditionalTypeDeclTag.Std);
@@ -1380,21 +1392,13 @@ class TaskDecl extends AbstractNominalTypeDecl {
         fmt.indentPush();
         const mg: string[][] = [];
         
-        if(this.configs.length !== 0) {
-            const cs = this.configs.map((cfg) => {
-                if(cfg.value === undefined) {
-                    return cfg.key;
-                }
-                else {
-                    return `${cfg.key} = ${cfg.value.emit(true, fmt)}`;
-                }
-            });
-
-            mg.push([fmt.indent(`configs { ${cs.join(", ")} }`)]);
+        const confstr = this.configs.emit();
+        if(confstr !== undefined) {
+            mg.push([fmt.indent(`configs { ${confstr} }`)]);
         }
 
-        if(this.statusupdates.length !== 0) {
-            mg.push([fmt.indent(`status {${this.statusupdates.map((so) => so.emit()).join(", ")}}`)]);
+        if(this.statusinfo.length !== 0) {
+            mg.push([fmt.indent(`status ${this.statusinfo.map((so) => so.emit()).join(" | ")};`)]);
         }
 
         if(this.resourcereqs.pathglobs.length !== 0) {
@@ -1405,6 +1409,10 @@ class TaskDecl extends AbstractNominalTypeDecl {
         if(this.envreqs.length !== 0) {
             const vvl = this.envreqs.map((ev) => ev.emit(fmt));
             mg.push([fmt.indent(`env{ ${vvl.join(", ")} }`)]);
+        }
+
+        if(this.eventinfo.length !== 0) {
+            mg.push([fmt.indent(`event ${this.eventinfo.map((et) => et.emit()).join(" | ")};`)]);
         }
 
         if(this.fields.length !== 0) {
@@ -1854,6 +1862,7 @@ export {
     MIN_SAFE_INT, MAX_SAFE_INT, MAX_SAFE_NAT,
     WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME,
     TemplateTermDeclExtraTag, TemplateTermDecl, TypeTemplateTermDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestriction, 
+    TaskConfiguration,
     AbstractDecl, 
     ConditionDecl, PreConditionDecl, PostConditionDecl, InvariantDecl, ValidateDecl,
     DeclarationAttibute, AbstractCoreDecl,

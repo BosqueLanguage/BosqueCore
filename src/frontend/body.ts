@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { FullyQualifiedNamespace, AutoTypeSignature, RecursiveAnnotation, TypeSignature, LambdaTypeSignature, NominalTypeSignature } from "./type.js";
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls.js";
-import { LambdaDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration } from "./assembly.js";
+import { LambdaDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, TaskConfiguration } from "./assembly.js";
 
 class BinderInfo {
     readonly srcname: string; //the name in the source code
@@ -1808,24 +1808,25 @@ abstract class TaskInvokeExpression extends Expression {
         super(tag, sinfo);
     }
 
-    static emitconfigs(configs: {key: string, value: Expression}[], fmt: CodeFormatter): string {
-        if(configs.length === 0) {
+    static emitconfigs(configs: TaskConfiguration, fmt: CodeFormatter): string {
+        const ccf = configs.emit();
+        
+        if(ccf === undefined) {
             return "";
         }
         else {
-            const configstrs = configs.map((cfg) => `${cfg.key}=${cfg.value.emit(true, fmt)}`);
-            return `[${configstrs.join(", ")}]`;
+            return `[${ccf}]`;
         }
     }
 }
 
 class TaskRunExpression extends TaskInvokeExpression {
     readonly task: TypeSignature;
-    readonly configs: {key: string, value: Expression}[];
+    readonly configs: TaskConfiguration;
     readonly args: Expression[];
     readonly envexp: EnvironmentGenerationExpression;
 
-    constructor(sinfo: SourceInfo, task: TypeSignature, args: Expression[], envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
+    constructor(sinfo: SourceInfo, task: TypeSignature, args: Expression[], envexp: EnvironmentGenerationExpression, configs: TaskConfiguration) {
         super(ExpressionTag.TaskRunExpression, sinfo);
         this.task = task;
         this.configs = configs;
@@ -1844,10 +1845,10 @@ class TaskRunExpression extends TaskInvokeExpression {
 
 class TaskMultiExpression extends TaskInvokeExpression {
     readonly isparallel: boolean;
-    readonly tasks: [TypeSignature, {key: string, value: Expression}[]][];
+    readonly tasks: [TypeSignature, TaskConfiguration][];
     readonly args: [Expression[], EnvironmentGenerationExpression][];
 
-    constructor(sinfo: SourceInfo, isparallel: boolean, tasks: [TypeSignature, {key: string, value: Expression}[]][], args: [Expression[], EnvironmentGenerationExpression][]) {
+    constructor(sinfo: SourceInfo, isparallel: boolean, tasks: [TypeSignature, TaskConfiguration][], args: [Expression[], EnvironmentGenerationExpression][]) {
         super(ExpressionTag.TaskMultiExpression, sinfo);
         this.isparallel = isparallel;
         this.tasks = tasks;
@@ -1874,11 +1875,11 @@ class TaskMultiExpression extends TaskInvokeExpression {
 class TaskAllExpression extends TaskInvokeExpression {
     readonly isparallel: boolean;
     readonly task: TypeSignature;
-    readonly configs: {key: string, value: Expression}[];
+    readonly configs: TaskConfiguration;
     readonly args: Expression;
     readonly envexp: EnvironmentGenerationExpression;
 
-    constructor(sinfo: SourceInfo, isparallel: boolean, task: TypeSignature, args: Expression, envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
+    constructor(sinfo: SourceInfo, isparallel: boolean, task: TypeSignature, args: Expression, envexp: EnvironmentGenerationExpression, configs: TaskConfiguration) {
         super(ExpressionTag.TaskAllExpression, sinfo);
         this.isparallel = isparallel;
         this.task = task;
@@ -1898,10 +1899,10 @@ class TaskAllExpression extends TaskInvokeExpression {
 
 class TaskDashExpression extends TaskInvokeExpression {
     readonly isparallel: boolean;
-    readonly tasks: [TypeSignature, {key: string, value: Expression}[]][];
+    readonly tasks: [TypeSignature, TaskConfiguration][];
     readonly args: [Expression[], EnvironmentGenerationExpression][];
 
-    constructor(sinfo: SourceInfo, isparallel: boolean, tasks: [TypeSignature, {key: string, value: Expression}[]][], args: [Expression[], EnvironmentGenerationExpression][]) {
+    constructor(sinfo: SourceInfo, isparallel: boolean, tasks: [TypeSignature, TaskConfiguration][], args: [Expression[], EnvironmentGenerationExpression][]) {
         super(ExpressionTag.TaskDashExpression, sinfo);
         this.isparallel = isparallel;
         this.tasks = tasks;
@@ -1927,10 +1928,10 @@ class TaskDashExpression extends TaskInvokeExpression {
 
 class TaskDashAnyExpression extends TaskInvokeExpression {
     readonly isparallel: boolean;
-    readonly tasks: [TypeSignature, {key: string, value: Expression}[]][];
+    readonly tasks: [TypeSignature, TaskConfiguration][];
     readonly args: [Expression[], EnvironmentGenerationExpression][];
 
-    constructor(sinfo: SourceInfo, isparallel: boolean, tasks: [TypeSignature, {key: string, value: Expression}[]][], args: [Expression[], EnvironmentGenerationExpression][]) {
+    constructor(sinfo: SourceInfo, isparallel: boolean, tasks: [TypeSignature, TaskConfiguration][], args: [Expression[], EnvironmentGenerationExpression][]) {
         super(ExpressionTag.TaskDashAnyExpression, sinfo);
         this.isparallel = isparallel;
         this.tasks = tasks;
@@ -1957,11 +1958,11 @@ class TaskDashAnyExpression extends TaskInvokeExpression {
 class TaskRaceExpression extends TaskInvokeExpression {
     readonly isparallel: boolean;
     readonly task: TypeSignature;
-    readonly configs: {key: string, value: Expression}[];
+    readonly configs: TaskConfiguration;
     readonly args: Expression;
     readonly envexp: EnvironmentGenerationExpression;
 
-    constructor(sinfo: SourceInfo, isparallel: boolean, task: TypeSignature, args: Expression, envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
+    constructor(sinfo: SourceInfo, isparallel: boolean, task: TypeSignature, args: Expression, envexp: EnvironmentGenerationExpression, configs: TaskConfiguration) {
         super(ExpressionTag.TaskRaceExpression, sinfo);
         this.isparallel = isparallel;
         this.task = task;
@@ -1982,11 +1983,11 @@ class TaskRaceExpression extends TaskInvokeExpression {
 class TaskRaceAnyExpression extends TaskInvokeExpression {
     readonly isparallel: boolean;
     readonly task: TypeSignature;
-    readonly configs: {key: string, value: Expression}[];
+    readonly configs: TaskConfiguration;
     readonly args: Expression;
     readonly envexp: EnvironmentGenerationExpression;
 
-    constructor(sinfo: SourceInfo, isparallel: boolean, task: TypeSignature, args: Expression, envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
+    constructor(sinfo: SourceInfo, isparallel: boolean, task: TypeSignature, args: Expression, envexp: EnvironmentGenerationExpression, configs: TaskConfiguration) {
         super(ExpressionTag.TaskRaceAnyExpression, sinfo);
         this.isparallel = isparallel;
         this.task = task;
@@ -2008,10 +2009,10 @@ class APIInvokeExpression extends Expression {
     readonly ns: FullyQualifiedNamespace;
     readonly api: string;
     readonly args: Expression[];
-    readonly configs: {key: string, value: Expression}[];
+    readonly configs: TaskConfiguration;
     readonly envexp: EnvironmentGenerationExpression;
 
-    constructor(sinfo: SourceInfo, ns: FullyQualifiedNamespace, api: string, args: Expression[], envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
+    constructor(sinfo: SourceInfo, ns: FullyQualifiedNamespace, api: string, args: Expression[], envexp: EnvironmentGenerationExpression, configs: TaskConfiguration) {
         super(ExpressionTag.APIInvokeExpression, sinfo);
         this.ns = ns;
         this.api = api;
@@ -2035,10 +2036,10 @@ class AgentInvokeExpression extends Expression {
     readonly agent: string;
     readonly optrestype: TypeSignature | undefined;
     readonly args: Expression[];
-    readonly configs: {key: string, value: Expression}[];
+    readonly configs: TaskConfiguration;
     readonly envexp: EnvironmentGenerationExpression;
 
-    constructor(sinfo: SourceInfo, ns: FullyQualifiedNamespace, agent: string, optrestype: TypeSignature | undefined, args: Expression[], envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
+    constructor(sinfo: SourceInfo, ns: FullyQualifiedNamespace, agent: string, optrestype: TypeSignature | undefined, args: Expression[], envexp: EnvironmentGenerationExpression, configs: TaskConfiguration) {
         super(ExpressionTag.AgentInvokeExpression, sinfo);
         this.ns = ns;
         this.agent = agent;
@@ -2849,12 +2850,9 @@ class BuiltinBodyImplementation extends BodyImplementation {
     }
 
     emit(fmt: CodeFormatter, headerstr: string | undefined): string {
-        if(headerstr === undefined) {
-            return ` = ${this.builtin};`;
-        }
-        else {
-            return " = " + headerstr + this.builtin + ";";
-        }
+        assert(headerstr === undefined);
+       
+        return ` = @${this.builtin};`;
     }
 }
 
