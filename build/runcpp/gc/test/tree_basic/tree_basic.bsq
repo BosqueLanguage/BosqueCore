@@ -1,0 +1,25 @@
+datatype BasicTree of 
+| Leaf { v: Nat }
+| Node { v: Nat, l: BasicTree, r: BasicTree }
+;
+
+function makeTree(depth: Nat, val: Nat): BasicTree {
+    if(depth == 0n) {
+        return Leaf { val };
+    }
+    
+    return Node {
+        val,
+        makeTree(depth - 1n, val + 1n),
+        makeTree(depth - 1n, val + 1n)
+    };
+}
+
+function accessNode(t: BasicTree): Node {
+    return t@<Node>;
+}
+
+public function main(): Bool {
+    let t = accessNode(makeTree(3n, 3n));
+    return true;
+}
