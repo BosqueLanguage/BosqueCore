@@ -20,20 +20,14 @@
         "typescript": "5.6.2"
     },
     "scripts": {
-        "build": "node ./build/build_all.js && node ./build/build_smtemit.js && node ./build/build_cppemit.js",
-        "build-core": "node ./build/build_core.js",
-        "test": "node ./build/build_all.js && node ./build/build_smtemit.js && node ./build/build_cppemit.js && node --test-concurrency=8 --test test/*/*/*.test.js",
-        "test-coverage": "node ./build/build_all.js && node --test-concurrency=4 --experimental-test-coverage --test-coverage-exclude=test/** --test-coverage-exclude=bin/test/*/*_nf.js --test-coverage-exclude=/tmp/** --test test/*/*/*.test.js",
+        "build": "node ./build/build_all.js",
+        "test": "node ./build/build_all.js && node --test-concurrency=8 --test test/*/*/*.test.js",
         "test-parser": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/parser/*/*.test.js",
         "test-typecheck": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/typecheck/*/*.test.js",
         "test-runtime": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/runtime/*/*.test.js",
         "test-stdlib": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/stdlib/*/*.test.js",
         "test-docs": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/documentation/*/*.test.js",
-        "test-apps": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/apps/*/*.test.js",
-        "test-smtoutput": "node ./build/build_all.js && node ./build/build_smtemit.js && node --test-concurrency=8 --test ./test/smtoutput/*/*.test.js",
-        "test-cppoutput": "node ./build/build_all.js && node ./build/build_cppemit.js && node --test-concurrency=8 --test ./test/cppoutput/*/*.test.js",
-        "test-gc": "node ./build/build_all.js && node ./build/build_cppemit.js && node --test-concurrency=8 --test ./test/gc/*/*.test.js"
-
+        "test-apps": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/apps/*/*.test.js"
     },
     "files": [
         "bin/*"

@@ -437,7 +437,7 @@ __internal concept Result<T, E> {
 
 %** APIResult type. **%
 __internal concept APIResult<T> {
-    %** Failed in validation/precondition checks -- additional information via failure enum **%
+    %** Failed in validation/precondition checks (also used for timeout or canceled) -- additional information via failure enum **%
     __internal entity Rejected provides APIResult<T> {
     }
 

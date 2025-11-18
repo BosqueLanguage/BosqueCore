@@ -16,7 +16,9 @@ const WELL_KNOWN_SRC_VAR_NAME = "$src";
 
 enum TemplateTermDeclExtraTag {
     KeyType = "keytype",
-    Numeric = "numeric"
+    Numeric = "numeric",
+    Equiv = "equiv",
+    Mergeable = "mergeable"
 }
 
 class TemplateTermDecl {

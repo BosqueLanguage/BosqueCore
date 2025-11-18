@@ -116,7 +116,7 @@ class TypeCheckerRelations {
         }
 
         for(let i = 0; i < tl1.length; ++i) {
-            if(tl1[i].isRefParam !== tl2[i].isRefParam || tl1[i].isRestParam !== tl2[i].isRestParam) {
+            if(tl1[i].pkind !== tl2[i].pkind || tl1[i].isRestParam !== tl2[i].isRestParam) {
                 return false;
             }
             
@@ -151,6 +151,9 @@ class TypeCheckerRelations {
         }
         else if(t1 instanceof EListTypeSignature && t2 instanceof EListTypeSignature) {
             res = this.areSameTypeSignatureLists(t1.entries, t2.entries);
+        }
+        else if(xxxx) {
+            //OTHER TYPE CASES GO HERE
         }
         else if(t1 instanceof LambdaTypeSignature && t2 instanceof LambdaTypeSignature) {
             if(t1.name !== t2.name) {
