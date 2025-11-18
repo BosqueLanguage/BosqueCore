@@ -4,15 +4,21 @@ import { Expression, BodyImplementation, ExpressionTag, AccessNamespaceConstantE
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls.js";
 
-const MIN_SAFE_INT = -4611686018427387903n;
-const MAX_SAFE_INT = 4611686018427387903n;
+const s_p62bit_safe = 4611686018427387903n;
+const s_p124bit_safe = s_p62bit_safe * s_p62bit_safe; 
+
+const MIN_SAFE_INT = -s_p62bit_safe;
+const MAX_SAFE_INT = s_p62bit_safe;
+
+const MIN_SAFE_BIG_INT = -s_p124bit_safe;
+const MAX_SAFE_BIG_INT = s_p124bit_safe;
 
 //negation and conversion are always safe
-const MAX_SAFE_NAT = 4611686018427387903n;
+const MAX_SAFE_NAT = s_p62bit_safe;
+const MAX_SAFE_BIG_NAT = s_p124bit_safe;
 
 const WELL_KNOWN_RETURN_VAR_NAME = "$return";
 const WELL_KNOWN_EVENTS_VAR_NAME = "$events";
-const WELL_KNOWN_SRC_VAR_NAME = "$src";
 
 enum TemplateTermDeclExtraTag {
     KeyType = "keytype",
@@ -599,7 +605,7 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
 
     //These are our annoying nested types
     isSpecialResultEntity(): boolean { return (this instanceof OkTypeDecl) || (this instanceof FailTypeDecl); }
-    isSpecialAPIResultEntity(): boolean { return (this instanceof APIRejectedTypeDecl) || (this instanceof APIFailedTypeDecl) || (this instanceof APIErrorTypeDecl) || (this instanceof APISuccessTypeDecl); }
+    isSpecialAPIResultEntity(): boolean { return (this instanceof APIErrorTypeDecl) || (this instanceof APIRejectedTypeDecl) || (this instanceof APIDeniedTypeDecl) || (this instanceof APIFlaggedTypeDecl) || (this instanceof APISuccessTypeDecl); }
 
     hasAttribute(aname: string): boolean {
         return this.attributes.find((attr) => attr.name === aname) !== undefined;
@@ -623,6 +629,14 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
 
     isNumericRestricted(): boolean {
         return this.attributes.find((attr) => attr.name === "__numeric") !== undefined;
+    }
+
+    isEquivRestricted(): boolean {
+        return this.attributes.find((attr) => attr.name === "equiv") !== undefined;
+    }
+
+    isMergeableRestricted(): boolean {
+        return this.attributes.find((attr) => attr.name === "mergeable") !== undefined;
     }
 
     emitTerms(): string {
@@ -771,6 +785,22 @@ class FailTypeDecl extends ConstructableTypeDecl {
     }
 }
 
+class APIErrorTypeDecl extends ConstructableTypeDecl {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
+        super(file, sinfo, attributes, name);
+    }
+
+    emit(fmt: CodeFormatter): string {
+        const attrs = this.emitAttributes();
+
+        fmt.indentPush();
+        const bg = this.emitBodyGroups(fmt);
+        fmt.indentPop();
+
+        return attrs + "entity " + this.name + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
+    }
+}
+
 class APIRejectedTypeDecl extends ConstructableTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
@@ -787,7 +817,7 @@ class APIRejectedTypeDecl extends ConstructableTypeDecl {
     }
 }
 
-class APIFailedTypeDecl extends ConstructableTypeDecl {
+class APIDeniedTypeDecl extends ConstructableTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
     }
@@ -803,7 +833,7 @@ class APIFailedTypeDecl extends ConstructableTypeDecl {
     }
 }
 
-class APIErrorTypeDecl extends ConstructableTypeDecl {
+class APIFlaggedTypeDecl extends ConstructableTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
     }
@@ -1030,7 +1060,7 @@ class ResultTypeDecl extends InternalConceptTypeDecl {
 }
 
 class APIResultTypeDecl extends InternalConceptTypeDecl {
-    readonly nestedEntityDecls: (APIErrorTypeDecl | APIFailedTypeDecl | APIRejectedTypeDecl | APISuccessTypeDecl)[] = [];
+    readonly nestedEntityDecls: (APIErrorTypeDecl | APIRejectedTypeDecl | APIDeniedTypeDecl | APIFlaggedTypeDecl | APISuccessTypeDecl)[] = [];
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
@@ -1040,12 +1070,16 @@ class APIResultTypeDecl extends InternalConceptTypeDecl {
         return this.nestedEntityDecls.find((ned) => ned instanceof APIErrorTypeDecl) as APIErrorTypeDecl;
     }
 
-    getAPIFailedType(): APIFailedTypeDecl {
-        return this.nestedEntityDecls.find((ned) => ned instanceof APIFailedTypeDecl) as APIFailedTypeDecl;
-    }
-
     getAPIRejectedType(): APIRejectedTypeDecl {
         return this.nestedEntityDecls.find((ned) => ned instanceof APIRejectedTypeDecl) as APIRejectedTypeDecl;
+    }
+
+    getAPIDeniedType(): APIDeniedTypeDecl {
+        return this.nestedEntityDecls.find((ned) => ned instanceof APIDeniedTypeDecl) as APIDeniedTypeDecl;
+    }
+    
+    getAPIFlaggedType(): APIFlaggedTypeDecl {
+        return this.nestedEntityDecls.find((ned) => ned instanceof APIFlaggedTypeDecl) as APIFlaggedTypeDecl;
     }
 
     getAPISuccessType(): APISuccessTypeDecl {
@@ -1861,8 +1895,8 @@ class Assembly {
 }
 
 export {
-    MIN_SAFE_INT, MAX_SAFE_INT, MAX_SAFE_NAT,
-    WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME,
+    MIN_SAFE_INT, MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_BIG_INT, MAX_SAFE_BIG_INT, MAX_SAFE_BIG_NAT,
+    WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_EVENTS_VAR_NAME,
     TemplateTermDeclExtraTag, TemplateTermDecl, TypeTemplateTermDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestriction, 
     TaskConfiguration,
     AbstractDecl, 
@@ -1880,7 +1914,7 @@ export {
     TypedeclTypeDecl,
     AbstractEntityTypeDecl, PrimitiveEntityTypeDecl,
     InternalEntityTypeDecl, CRopeIteratorTypeDecl,
-    ConstructableTypeDecl, OkTypeDecl, FailTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APISuccessTypeDecl, SomeTypeDecl, MapEntryTypeDecl,
+    ConstructableTypeDecl, OkTypeDecl, FailTypeDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIDeniedTypeDecl, APIFlaggedTypeDecl, APISuccessTypeDecl, SomeTypeDecl, MapEntryTypeDecl,
     AbstractCollectionTypeDecl, ListTypeDecl, CRopeTypeDecl, UnicodeRopeTypeDecl, UnicodeRopeIteratorTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl,
     EventListTypeDecl,
     EntityTypeDecl, 

@@ -1,9 +1,9 @@
 import assert from "node:assert";
 
-import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, CRopeTypeDecl, UnicodeRopeTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, InvokeParameterDecl, AbstractCollectionTypeDecl, ConstructableTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, AbstractEntityTypeDecl, InvokeTemplateTypeRestrictionClause, CRopeIteratorTypeDecl } from "./assembly.js";
+import { APIDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, CRopeTypeDecl, UnicodeRopeTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, InvokeParameterDecl, AbstractCollectionTypeDecl, ConstructableTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, AbstractEntityTypeDecl, InvokeTemplateTypeRestrictionClause, CRopeIteratorTypeDecl, MAX_SAFE_BIG_NAT, MIN_SAFE_BIG_INT, MAX_SAFE_BIG_INT } from "./assembly.js";
 import { CodeFormatter, SourceInfo } from "./build_decls.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, DebugStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestError, ITestFail, ITestFailed, ITestNone, ITestOk, ITestRejected, ITestSome, ITestSuccess, ITestType, IfElifElseStatement, IfElseStatement, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralNoneExpression, LiteralPathItemExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, ShortCircuitAssignRHSITestExpression, SpecialConstructorExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VoidRefCallStatement } from "./body.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, DebugStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestDenied, ITestError, ITestFail, ITestFailed, ITestFlagged, ITestNone, ITestOk, ITestRejected, ITestSome, ITestSuccess, ITestType, IfElifElseStatement, IfElseStatement, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralNoneExpression, LiteralPathItemExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, ShortCircuitAssignRHSITestExpression, SpecialConstructorExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VoidRefCallStatement } from "./body.js";
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeEnvironment, TypeInferContext, VarInfo } from "./checker_environment.js";
 import { MemberLookupInfo, TypeCheckerRelations } from "./checker_relations.js";
 
@@ -259,15 +259,19 @@ class TypeChecker {
         }
     }
 
+    private processITest_Error(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
+        xxxx;
+    }
+
     private processITest_Rejected(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
         xxxx;
     }
 
-    private processITest_Failed(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
+    private processITest_Denied(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
         xxxx;
     }
 
-    private processITest_Error(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
+    private processITest_Flagged(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
         xxxx;
     }
 
@@ -314,16 +318,20 @@ class TypeChecker {
                 const tres = this.processITest_Ok(src, tt.isnot);
                 return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
             }
+            else if(tt instanceof ITestError) {
+                const tres = this.processITest_Error(src, tt.isnot);
+                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
+            }
             else if(tt instanceof ITestRejected) {
                 const tres = this.processITest_Rejected(src, tt.isnot);
                 return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
             }
-            else if(tt instanceof ITestFailed) {
-                const tres = this.processITest_Failed(src, tt.isnot);
+            else if(tt instanceof ITestDenied) {
+                const tres = this.processITest_Denied(src, tt.isnot);
                 return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
             }
-            else if(tt instanceof ITestError) {
-                const tres = this.processITest_Error(src, tt.isnot);
+            else if(tt instanceof ITestFlagged) {
+                const tres = this.processITest_Flagged(src, tt.isnot);
                 return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
             }
             else if(tt instanceof ITestSuccess) {
@@ -383,16 +391,20 @@ class TypeChecker {
                 const tres = this.processITest_Ok(src, tt.isnot);
                 return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
             }
+            else if(tt instanceof ITestError) {
+                const tres = this.processITest_Error(src, tt.isnot);
+                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
+            }
             else if(tt instanceof ITestRejected) {
                 const tres = this.processITest_Rejected(src, tt.isnot);
                 return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
             }
-            else if(tt instanceof ITestFailed) {
-                const tres = this.processITest_Failed(src, tt.isnot);
+            else if(tt instanceof ITestDenied) {
+                const tres = this.processITest_Denied(src, tt.isnot);
                 return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
             }
-            else if(tt instanceof ITestError) {
-                const tres = this.processITest_Error(src, tt.isnot);
+            else if(tt instanceof ITestFlagged) {
+                const tres = this.processITest_Flagged(src, tt.isnot);
                 return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
             }
             else if(tt instanceof ITestSuccess) {
@@ -990,18 +1002,25 @@ class TypeChecker {
     private checkLiteralBigNatExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
         const nval = BigInt(exp.value.slice(0, exp.value.length - 1));
         this.checkError(exp.sinfo, nval < 0n, "BigNat literal cannot be negative");
+        this.checkError(exp.sinfo, MAX_SAFE_BIG_NAT < nval, "BigNat literal out of valid range");
 
         return exp.setType(this.getWellKnownType("BigNat"));
     }
 
     private checkLiteralBigIntExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
+        const nval = BigInt(exp.value.slice(0, exp.value.length - 1));
+        this.checkError(exp.sinfo, nval < MIN_SAFE_BIG_INT, "BigInt literal out of valid range");
+        this.checkError(exp.sinfo, MAX_SAFE_BIG_INT < nval, "BigInt literal out of valid range");
+        
         return exp.setType(this.getWellKnownType("BigInt"));
     }
 
     private checkLiteralRationalExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
         const slpos = exp.value.indexOf("/");
-        const den = BigInt(exp.value.slice(slpos + 1, -1));
+        const num = BigInt(exp.value.slice(0, slpos));
+        this.checkError(exp.sinfo, MAX_SAFE_BIG_INT < num, "Rational literal numerator out of valid range");
 
+        const den = BigInt(exp.value.slice(slpos + 1, -1));
         this.checkError(exp.sinfo, MAX_SAFE_NAT < den, "Rational literal denominator out of valid range");
 
         return exp.setType(this.getWellKnownType("Rational"));
@@ -1072,6 +1091,9 @@ class TypeChecker {
     }
 
     private checkLiteralByteBufferExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
+
+        xxxxxxxxxxxxxxxxx; //<---------------------------------------------------- continue here
+
         return exp.setType(this.getWellKnownType("ByteBuffer"));
     }
 

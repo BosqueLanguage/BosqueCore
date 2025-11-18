@@ -1,0 +1,8 @@
+
+class IRAssembly {
+    //
+}
+
+export {
+    IRAssembly
+};

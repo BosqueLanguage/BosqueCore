@@ -12,6 +12,7 @@ const KW__debug = "_debug";
 const KW_abort = "abort";
 const KW_assert = "assert";
 const KW_configs = "configs";
+const KW_denied = "denied";
 const KW_dispatch = "dispatch";
 const KW_do = "do";
 const KW_elif = "elif";
@@ -19,7 +20,7 @@ const KW_else = "else";
 const KW_env = "env";
 const KW_error = "error";
 const KW_fail = "fail";
-const KW_failed = "failed";
+const KW_flagged = "flagged";
 const KW_false = "false";
 const KW_fn = "fn";
 const KW_if = "if";
@@ -105,6 +106,7 @@ const KeywordStrings = [
     KW_abort,
     KW_assert,
     KW_concept,
+    KW_denied,
     KW_dispatch,
     KW_const,
     KW_declare,
@@ -117,7 +119,7 @@ const KeywordStrings = [
     KW_ensures,
     KW_error,
     KW_fail,
-    KW_failed,
+    KW_flagged,
     KW_false,
     KW_field,
     KW_fn,
@@ -386,6 +388,7 @@ export {
     KW_action,
     KW_configs,
     KW__debug,
+    KW_denied,
     KW_do,
     KW_abort,
     KW_assert,
@@ -402,7 +405,7 @@ export {
     KW_ensures,
     KW_error,
     KW_fail,
-    KW_failed,
+    KW_flagged,
     KW_false,
     KW_field,
     KW_fn,

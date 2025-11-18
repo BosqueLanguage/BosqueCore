@@ -452,6 +452,37 @@ class FormatPathTypeSignature extends TypeSignature {
     }
 }
 
+class LambdaParameterPackTypeSignature extends TypeSignature {
+    readonly stdvalues: {vname: string, vtype: TypeSignature}[];
+    readonly lambdavalues: {lname: string, ltype: LambdaParameterPackTypeSignature}[];
+
+    private static buildkstr(stdvalues: {vname: string, vtype: TypeSignature}[], lambdavalues: {lname: string, ltype: LambdaParameterPackTypeSignature}[]): string {
+        const sstr = stdvalues.map((vv) => `${vv.vname}: ${vv.vtype.emit()}`).join(", ");
+        const lstr = lambdavalues.map((ll) => `${ll.lname}: ${ll.ltype.emit()}`).join(", ");
+
+        const allstr = [sstr, lstr].filter((x) => x !== "").join(", ");
+
+        return `LambdaParameterPack<${allstr}>`;
+    }
+
+    constructor(sinfo: SourceInfo, stdvalues: {vname: string, vtype: TypeSignature}[], lambdavalues: {lname: string, ltype: LambdaParameterPackTypeSignature}[]) {
+        super(sinfo, LambdaParameterPackTypeSignature.buildkstr(stdvalues, lambdavalues));
+        this.stdvalues = stdvalues;
+        this.lambdavalues = lambdavalues;
+    }
+
+    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
+        const stdv = this.stdvalues.map((vv) => { return {vname: vv.vname, vtype: vv.vtype.remapTemplateBindings(mapper)}; });
+        const lambdav = this.lambdavalues.map((ll) => { return {lname: ll.lname, ltype: ll.ltype.remapTemplateBindings(mapper) as LambdaParameterPackTypeSignature}; });
+        
+        return new LambdaParameterPackTypeSignature(this.sinfo, stdv, lambdav);
+    }
+
+    emit(): string {
+        return this.tkeystr;
+    }
+}
+
 export {
     FullyQualifiedNamespace, TemplateConstraintScope, TemplateNameMapper,
     TypeSignature, ErrorTypeSignature, VoidTypeSignature, AutoTypeSignature, 
@@ -459,5 +490,6 @@ export {
     EListTypeSignature,
     DashResultTypeSignature,
     RecursiveAnnotation, LambdaParameterSignature, LambdaTypeSignature,
-    FormatStringTypeSignature, FormatPathTypeSignature
+    FormatStringTypeSignature, FormatPathTypeSignature,
+    LambdaParameterPackTypeSignature
 };

@@ -315,7 +315,6 @@ class TypeCheckerRelations {
     isKeyType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         if(t instanceof NominalTypeSignature) {
             const oftype = (t.decl instanceof TypedeclTypeDecl) ? this.getTypeDeclValueType(t) : t;
-            
             return oftype !== undefined && (oftype instanceof NominalTypeSignature) && oftype.decl.isKeyTypeRestricted();
         }
         else if(t instanceof TemplateTypeSignature) {
@@ -330,12 +329,39 @@ class TypeCheckerRelations {
     isNumericType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         if(t instanceof NominalTypeSignature) {
             const oftype = (t.decl instanceof TypedeclTypeDecl) ? this.getTypeDeclValueType(t) : t;
-            
             return oftype !== undefined && (oftype instanceof NominalTypeSignature) && oftype.decl.isNumericRestricted();
         }
         else if(t instanceof TemplateTypeSignature) {
             const tcs = tconstrain.resolveConstraint(t.name);
             return tcs !== undefined && tcs.extraTags.includes(TemplateTermDeclExtraTag.Numeric);
+        }
+        else {
+            return false;
+        }
+    }
+
+    isEquivType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
+        if(t instanceof NominalTypeSignature) {
+            const oftype = (t.decl instanceof TypedeclTypeDecl) ? this.getTypeDeclValueType(t) : t;
+            return oftype !== undefined && (oftype instanceof NominalTypeSignature) && oftype.decl.isEquivRestricted();
+        }
+        else if(t instanceof TemplateTypeSignature) {
+            const tcs = tconstrain.resolveConstraint(t.name);
+            return tcs !== undefined && tcs.extraTags.includes(TemplateTermDeclExtraTag.Equiv);
+        }
+        else {
+            return false;
+        }
+    }
+
+    isMergeableType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
+        if(t instanceof NominalTypeSignature) {
+            const oftype = (t.decl instanceof TypedeclTypeDecl) ? this.getTypeDeclValueType(t) : t;
+            return oftype !== undefined && (oftype instanceof NominalTypeSignature) && oftype.decl.isMergeableRestricted();
+        }
+        else if(t instanceof TemplateTypeSignature) {
+            const tcs = tconstrain.resolveConstraint(t.name);
+            return tcs !== undefined && tcs.extraTags.includes(TemplateTermDeclExtraTag.Mergeable);
         }
         else {
             return false;
