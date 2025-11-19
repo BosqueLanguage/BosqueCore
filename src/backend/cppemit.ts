@@ -1,5 +1,5 @@
 import { MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_INT } from "../frontend/assembly";
-import { IRExpression, IRExpressionTag, IRLiteralBigIntExpression, IRLiteralBigNatExpression, IRLiteralBoolExpression, IRLiteralComplexExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralNatExpression, IRLiteralSHAContentHashExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression } from "./irbody";
+import { IRExpression, IRExpressionTag, IRLiteralBigIntExpression, IRLiteralBigNatExpression, IRLiteralBoolExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression } from "./irbody";
 
 import assert from "node:assert";
 
@@ -70,10 +70,52 @@ class CPPEmitter {
             const bytes = (exp as IRLiteralSHAContentHashExpression).bytes.map((b) => `0x${b.toString(16).padStart(2, '0')}`).join(", ");
             return `SHAContentHash{${bytes}}`;
         }
-
-        IRLiteralTZDateTimeExpression, IRLiteralTAITimeExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralLogicalTimeExpression, IRLiteralISOTimeStampExpression,
-        IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaSecondsExpression, IRLiteralDeltaLogicalExpression,
-
+        else if(ttag === IRExpressionTag.IRLiteralTZDateTimeExpression) {
+            const dtinfo = (exp as IRLiteralTZDateTimeExpression);
+            return `TZDateTime{{${dtinfo.date.year}, ${dtinfo.date.month}, ${dtinfo.date.day}}, {${dtinfo.time.hour}, ${dtinfo.time.minute}, ${dtinfo.time.second}}, "${dtinfo.timezone}"};`;
+        }
+        else if(ttag === IRExpressionTag.IRLiteralTAITimeExpression) {
+            const taiinfo = (exp as IRLiteralTAITimeExpression);
+            return `TAITime{{${taiinfo.date.year}, ${taiinfo.date.month}, ${taiinfo.date.day}}, {${taiinfo.time.hour}, ${taiinfo.time.minute}, ${taiinfo.time.second}}};`;
+        }
+        else if(ttag === IRExpressionTag.IRLiteralPlainDateExpression) {
+            const pdate = (exp as IRLiteralPlainDateExpression);
+            return `PlainDate{${pdate.date.year}, ${pdate.date.month}, ${pdate.date.day}}`;
+        }
+        else if(ttag === IRExpressionTag.IRLiteralPlainTimeExpression) {
+            const ptime = (exp as IRLiteralPlainTimeExpression);
+            return `PlainTime{${ptime.time.hour}, ${ptime.time.minute}, ${ptime.time.second}}`;
+        }
+        else if(ttag === IRExpressionTag.IRLiteralLogicalTimeExpression) {
+            const ltime = (exp as IRLiteralLogicalTimeExpression);
+            return `LogicalTime{${ltime.ticks}}`;
+        }
+        else if(ttag === IRExpressionTag.IRLiteralISOTimeStampExpression) {
+            const isotimestamp = (exp as IRLiteralISOTimeStampExpression);
+            return `ISOTimeStamp{{${isotimestamp.date.year}, ${isotimestamp.date.month}, ${isotimestamp.date.day}}, {${isotimestamp.time.hour}, ${isotimestamp.time.minute}, ${isotimestamp.time.second}}, ${isotimestamp.milliseconds}}`;
+        }
+        else if(ttag === IRExpressionTag.IRLiteralDeltaDateTimeExpression) {
+            const ddtexp = (exp as IRLiteralDeltaDateTimeExpression);
+            return `DeltaDateTime{'${ddtexp.sign}', {${ddtexp.deltadate.years}, ${ddtexp.deltadate.months}, ${ddtexp.deltadate.days}, {${ddtexp.deltatime.hours}, ${ddtexp.deltatime.minutes}, ${ddtexp.deltatime.seconds}}}`;
+        }
+        else if(ttag === IRExpressionTag.IRLiteralDeltaISOTimeStampExpression) {
+            const itsexp = (exp as IRLiteralDeltaISOTimeStampExpression);
+            return `DeltaISOTimeStamp{'${itsexp.sign}', {${itsexp.deltadate.years}, ${itsexp.deltadate.months}, ${itsexp.deltadate.days}}, {${itsexp.deltatime.hours}, ${itsexp.deltatime.minutes}, ${itsexp.deltatime.seconds}}, ${itsexp.deltatime.milliseconds}}`;
+        }
+        else if(ttag === IRExpressionTag.IRLiteralDeltaSecondsExpression) {
+            const dsexp = (exp as IRLiteralDeltaSecondsExpression);
+            return `DeltaSeconds{'${dsexp.sign}', ${dsexp.seconds}}`;
+        }
+        else if(ttag === IRExpressionTag.IRLiteralDeltaLogicalTimeExpression) {
+            const dltexp = (exp as IRLiteralDeltaLogicalTimeExpression);
+            return `DeltaLogicalTime{'${dltexp.sign}', ${dltexp.ticks}}`;
+        }
+        else if(ttag === IRExpressionTag.IRLiteralUnicodeRegexExpression) {
+            return `Runtime::g_regexs[${(exp as IRLiteralUnicodeRegexExpression).regexID}]`;
+        }
+        else if(ttag === IRExpressionTag.IRLiteralCRegexExpression) {
+            return `Runtime::g_regexs[${(exp as IRLiteralCRegexExpression).regexID}]`;
+        }
         else {
             assert(false, `CPPEmitter: Unsupported IR expression type -- ${exp.constructor.name}`);
         }

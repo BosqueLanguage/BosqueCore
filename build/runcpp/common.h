@@ -23,6 +23,9 @@
 #define btrue 1ull
 #define bfalse 0ull
 
+#define BSQ_NUMERIC_DYNAMIC_RANGE_BASE 4611686018427387903ull
+#define BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED ((__int128_t)BSQ_NUMERIC_DYNAMIC_RANGE_BASE * (__int128_t)BSQ_NUMERIC_DYNAMIC_RANGE_BASE)
+
 namespace Core
 {
     namespace Runtime
@@ -40,6 +43,6 @@ namespace Core
         };
 
 
-        thread_local ThreadLocalInfo& tl_info;
+        extern thread_local ThreadLocalInfo& tl_info;
     }
 }

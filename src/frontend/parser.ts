@@ -3670,7 +3670,7 @@ class Parser {
         }
         else if(tk === TokenStrings.Regex) {
             const rstr = this.consumeTokenAndGetValue();
-            return new LiteralRegexExpression(rstr.endsWith("/") ? ExpressionTag.LiteralUnicodeRegexExpression : ExpressionTag.LiteralCRegexExpression, sinfo, rstr);
+            return new LiteralRegexExpression(rstr.endsWith("/") ? ExpressionTag.LiteralUnicodeRegexExpression : ExpressionTag.LiteralCRegexExpression, sinfo, this.env.currentNamespace.fullnamespace, rstr);
         }
         else if(tk === TokenStrings.CChar) {
             const cstr = this.consumeTokenAndGetValue();

@@ -28,7 +28,10 @@ enum IRExpressionTag {
     IRLiteralDeltaDateTimeExpression = "IRLiteralDeltaDateTimeExpression",
     IRLiteralDeltaISOTimeStampExpression = "IRLiteralDeltaISOTimeStampExpression",
     IRLiteralDeltaSecondsExpression = "IRLiteralDeltaSecondsExpression",
-    IRLiteralDeltaLogicalExpression = "IRLiteralDeltaLogicalExpression"
+    IRLiteralDeltaLogicalTimeExpression = "IRLiteralDeltaLogicalTimeExpression",
+
+    IRLiteralUnicodeRegexExpression = "IRLiteralUnicodeRegexExpression",
+    IRLiteralCRegexExpression = "IRLiteralCRegexExpression"
 }
 
 class IRExpression {
@@ -328,14 +331,36 @@ class IRLiteralDeltaSecondsExpression extends IRExpression {
     }
 }
 
-class IRLiteralDeltaLogicalExpression extends IRExpression {
+class IRLiteralDeltaLogicalTimeExpression extends IRExpression {
     readonly sign: "+" | "-";
     readonly ticks: string;
 
     constructor(sign: "+" | "-", ticks: string) {
-        super(IRExpressionTag.IRLiteralDeltaLogicalExpression);
+        super(IRExpressionTag.IRLiteralDeltaLogicalTimeExpression);
         this.sign = sign;
         this.ticks = ticks;
+    }
+}
+
+class IRLiteralUnicodeRegexExpression extends IRExpression {
+    readonly regexID: number
+    readonly value: string;
+
+    constructor(regexID: number, value: string) {
+        super(IRExpressionTag.IRLiteralUnicodeRegexExpression);
+        this.regexID = regexID;
+        this.value = value;
+    }
+}
+
+class IRLiteralCRegexExpression extends IRExpression {
+    readonly regexID: number
+    readonly value: string;
+
+    constructor(regexID: number, value: string) {
+        super(IRExpressionTag.IRLiteralCRegexExpression);
+        this.regexID = regexID;
+        this.value = value;
     }
 }
 
@@ -350,6 +375,7 @@ export {
     IRLiteralByteBufferExpression, 
     IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralSHAContentHashExpression,
     DateRepresentation, TimeRepresentation, IRLiteralTZDateTimeExpression, IRLiteralTAITimeExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralLogicalTimeExpression, IRLiteralISOTimeStampExpression,
-    DeltaDateRepresentation, DeltaTimeRepresentation, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaSecondsExpression, IRLiteralDeltaLogicalExpression,
+    DeltaDateRepresentation, DeltaTimeRepresentation, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaSecondsExpression, IRLiteralDeltaLogicalTimeExpression,
+    IRLiteralUnicodeRegexExpression, IRLiteralCRegexExpression,
     IRStatement
 };

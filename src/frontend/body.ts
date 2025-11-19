@@ -583,10 +583,12 @@ class LiteralFormatCStringExpression extends Expression {
 }
 
 class LiteralRegexExpression extends Expression {
+    readonly inns: FullyQualifiedNamespace;
     readonly value: string;
 
-    constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string) {
+    constructor(tag: ExpressionTag, sinfo: SourceInfo, inns: FullyQualifiedNamespace, value: string) {
         super(tag, sinfo);
+        this.inns = inns;
         this.value = value;
     }
 

@@ -44,6 +44,9 @@ class Explicitifier {
         else if(ttag === ExpressionTag.LiteralDeltaISOTimeStampExpression || ttag === ExpressionTag.LiteralDeltaSecondsExpression || ttag === ExpressionTag.LiteralDeltaLogicalExpression) {
             return exp;
         }
+        else if(ttag === ExpressionTag.LiteralUnicodeRegexExpression || ttag === ExpressionTag.LiteralCRegexExpression) {
+            return exp;
+        }
         else {
             assert(false, `Explicitifier: Unsupported expression type -- ${exp.tag}`);
         }

@@ -1152,20 +1152,25 @@ class TypeChecker {
     }
 
     private checkLiteralUnicodeRegexExpression(env: TypeEnvironment, exp: LiteralRegexExpression): TypeSignature {
-        //TODO: validate regex parse is error free
+        try { 
+            accepts(exp.value, "", exp.inns.ns.join("::")); //if this throws the the regex was invalid
+        }
+        catch(err) {
+            this.reportError(exp.sinfo, `Invalid UnicodeRegex literal: ${exp.value}`);
+        }
 
         return exp.setType(this.getWellKnownType("Regex"));
     }
 
     private checkLiteralCRegexExpression(env: TypeEnvironment, exp: LiteralRegexExpression): TypeSignature {
-        //TODO: validate regex parse is error free
+        try { 
+            accepts(exp.value, "", exp.inns.ns.join("::")); //if this throws the the regex was invalid
+        }
+        catch(err) {
+            this.reportError(exp.sinfo, `Invalid UnicodeRegex literal: ${exp.value}`);
+        }
 
-        if(exp.value.endsWith("c")) {
-            return exp.setType(this.getWellKnownType("CRegex"));
-        }
-        else {
-            return exp.setType(this.getWellKnownType("PathRegex"));
-        }
+        return exp.setType(this.getWellKnownType("CRegex"));
     }
 
     private checkLiteralCCharExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {

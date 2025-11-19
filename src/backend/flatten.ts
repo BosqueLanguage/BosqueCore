@@ -1,9 +1,16 @@
-import { Expression, ExpressionTag, LiteralSimpleExpression } from "../frontend/body";
-import { DateRepresentation, DeltaDateRepresentation, DeltaTimeRepresentation, IRExpression, IRLiteralBigIntExpression, IRLiteralBigNatExpression, IRLiteralBoolExpression, IRLiteralByteBufferExpression, IRLiteralComplexExpression, IRLiteralDecimalExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLatLongCoordinateExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralNoneExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralRationalExpression, IRLiteralSHAContentHashExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRStatement, TimeRepresentation } from "./irbody";
+import { FullyQualifiedNamespace } from "../frontend/type";
+import { Expression, ExpressionTag, LiteralRegexExpression, LiteralSimpleExpression } from "../frontend/body";
+
+import { IRRegex } from "./irsupport";
+import {} from "./irassembly";
+import { DateRepresentation, DeltaDateRepresentation, DeltaTimeRepresentation, IRExpression, IRLiteralBigIntExpression, IRLiteralBigNatExpression, IRLiteralBoolExpression, IRLiteralByteBufferExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDecimalExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLatLongCoordinateExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralNoneExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralRationalExpression, IRLiteralSHAContentHashExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRStatement, TimeRepresentation } from "./irbody";
 
 import assert from "node:assert";
 
+
 class ASMToIRConverter {
+    regexs: IRRegex[] = [];
+
     pendingblocks: IRStatement[][];
 
     constructor() {
@@ -42,6 +49,15 @@ class ASMToIRConverter {
         const s = parseInt(pa[2], 10);
 
         return new DeltaTimeRepresentation(h, m, s);
+    }
+
+    private processRegex(inns: FullyQualifiedNamespace, regexstr: string): IRRegex {
+        const rectr = this.regexs.length;
+        
+        const inst: IRRegex = xxxx;
+
+        this.regexs.push(inst);
+        return inst;
     }
 
     private flattenExpression(exp: Expression): IRExpression {
@@ -182,6 +198,18 @@ class ASMToIRConverter {
             const ticks = (exp as LiteralSimpleExpression).value.slice(1, -2);
 
             return new IRLiteralDeltaLogicalExpression(sign, ticks);
+        }
+        else if(ttag === ExpressionTag.LiteralUnicodeRegexExpression) {
+            const rexp = (exp as LiteralRegexExpression);
+            const regexinst = this.processRegex(rexp.inns, rexp.value);
+
+            return new IRLiteralUnicodeRegexExpression(regexinst.regexID, rexp.value);
+        }
+        else if(ttag === ExpressionTag.LiteralCRegexExpression) {
+            const rexp = (exp as LiteralRegexExpression);
+            const regexinst = this.processRegex(rexp.inns, rexp.value);
+
+            return new IRLiteralCRegexExpression(regexinst.regexID, rexp.value);
         }
         else {
             assert(false, `ASMToIRConverter: Unsupported expression type -- ${exp.tag}`);
