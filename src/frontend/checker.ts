@@ -1092,8 +1092,6 @@ class TypeChecker {
 
     private checkLiteralByteBufferExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
 
-        xxxxxxxxxxxxxxxxx; //<---------------------------------------------------- continue here
-
         return exp.setType(this.getWellKnownType("ByteBuffer"));
     }
 

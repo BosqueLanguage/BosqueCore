@@ -32,6 +32,18 @@ class Explicitifier {
         else if(ttag === ExpressionTag.LiteralComplexNumberExpression) {
             return exp;
         }
+        else if(ttag === ExpressionTag.LiteralByteBufferExpression) {
+            return exp;
+        }
+        else if(ttag === ExpressionTag.LiteralUUIDv4Expression || ttag === ExpressionTag.LiteralUUIDv7Expression || ttag === ExpressionTag.LiteralSHAContentHashExpression) {
+            return exp;
+        }
+        else if(ttag === ExpressionTag.LiteralTZDateTimeExpression || ttag === ExpressionTag.LiteralTAITimeExpression || ttag === ExpressionTag.LiteralPlainDateExpression || ttag === ExpressionTag.LiteralPlainTimeExpression || ttag === ExpressionTag.LiteralLogicalTimeExpression || ttag === ExpressionTag.LiteralISOTimeStampExpression) {
+            return exp;
+        }
+        else if(ttag === ExpressionTag.LiteralDeltaISOTimeStampExpression || ttag === ExpressionTag.LiteralDeltaSecondsExpression || ttag === ExpressionTag.LiteralDeltaLogicalExpression) {
+            return exp;
+        }
         else {
             assert(false, `Explicitifier: Unsupported expression type -- ${exp.tag}`);
         }

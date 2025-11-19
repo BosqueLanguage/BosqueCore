@@ -131,6 +131,18 @@ __internal __typedeclable __keycomparable entity CChar {
 __internal __typedeclable __keycomparable entity UnicodeChar { 
 }
 
+%** Primitive UUIDv4 value. **%
+__internal __typedeclable __keycomparable entity UUIDv4 {
+}
+
+%** Primitive UUIDv7 value. **%
+__internal __typedeclable __keycomparable entity UUIDv7 {
+}
+
+%** Primitive hash (SHA3 256) value suitable for content addressable operations or crypto secure digests. **%
+__internal __typedeclable __keycomparable entity SHAContentHash {
+}
+
 %** Primitive string value. **%
 __internal __typedeclable __keycomparable entity String {
     #if STRIPPED_CORE

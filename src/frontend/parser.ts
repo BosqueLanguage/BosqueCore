@@ -559,7 +559,7 @@ class Lexer {
         return false;
     }
 
-    private static _s_bytebufferRe = new RegExp('0x\\[[0-9a-fA-Fx,]+\\]', "y");
+    private static _s_bytebufferRe = new RegExp('0x\\[\\]|0x\\[[0-9a-fA-F]{1,2}(,[0-9a-fA-F]{1,2})*\\]', "y");
     private tryLexByteBuffer(): boolean {
         const m = this.trylex(Lexer._s_bytebufferRe);
         if(m !== null) {
@@ -862,13 +862,13 @@ class Lexer {
         return false;
     }
 
-    private static _s_deltadatevalue = '([0-9]{1,4})-([0-9]{1,2})-([0-9]{1,2})';
-    private static _s_deltatimevalue = '([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})';
+    private static _s_deltadatevalue = '([0-9]{1,4})-([0-9]{1,10})-([0-9]{1,10})';
+    private static _s_deltatimevalue = '([0-9]{1,10}):([0-9]{1,10}):([0-9]{1,10})';
 
     private static _s_datetimeDeltaRE = new RegExp(`[+-]${Lexer._s_deltadatevalue}T${Lexer._s_deltatimevalue}?`, "y");
     private static _s_plaindateDeltaRE = new RegExp(`[+-]${Lexer._s_deltadatevalue}`, "y");
     private static _s_plaintimeDeltaRE = new RegExp(`[+-]${Lexer._s_deltatimevalue}`, "y");
-    private static _s_timestampDeltaRE = new RegExp(`[+-]${Lexer._s_deltadatevalue}T${Lexer._s_deltatimevalue}[.]([0-9]{3})Z`, "y");
+    private static _s_timestampDeltaRE = new RegExp(`[+-]${Lexer._s_deltadatevalue}T${Lexer._s_deltatimevalue}[.]([0-9]{18})Z`, "y");
 
     private tryLexDateTimeDelta() {
         const mdt = this.trylex(Lexer._s_datetimeDeltaRE);
