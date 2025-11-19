@@ -172,13 +172,7 @@ struct BSQMemoryTheadLocalInfo
 
     inline void updateNurseryUsage(PageInfo* p) noexcept
     {
-        // Fresh page without old objects
-        if(p->approx_utilization == 0.0f) {
-            this->nursery_usage += 1.0f;
-        }
-        else {
-            this->nursery_usage += 1.0f - p->approx_utilization;
-        }
+        this->nursery_usage += 1.0f - p->approx_utilization;
     }
 
     void initialize(size_t ntl_id, void** caller_rbp) noexcept;
