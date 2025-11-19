@@ -540,7 +540,6 @@ void collect() noexcept
 
     xmem_zerofill(gtl_info.roots, gtl_info.roots_count);
     gtl_info.roots_count = 0;
-    gtl_info.newly_filled_pages_count = 0;
 
     COLLECTION_STATS_END(gtl_info, collection_times);
     UPDATE_COLLECTION_TIMES(gtl_info);
