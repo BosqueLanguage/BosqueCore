@@ -171,34 +171,22 @@ PageInfo* GCAllocator::getFreshPageForEvacuation() noexcept
 
 void GCAllocator::allocatorRefreshAllocationPage(__CoreGC::TypeInfoBase* typeinfo) noexcept
 {
-    //
-    // We will want a better way to get the high 32 bits (just not in this function) but this is fine
-    //
+    // Just to make sure high 32 bits are stored
     if(gtl_info.typeptr_high32 == 0) {
         gtl_info.typeptr_high32 = reinterpret_cast<uint64_t>(typeinfo) >> NUM_TYPEPTR_BITS;
     }
 
-    if(this->alloc_page == nullptr) {
-        this->alloc_page = this->getFreshPageForAllocator();
-    }
-    else {
-        gtl_info.newly_filled_pages_count++;
-
-        // If we exceed our filled pages thresh collect
-        if(gtl_info.newly_filled_pages_count == BSQ_COLLECTION_THRESHOLD) {
-            if(!gtl_info.disable_automatic_collections) {
-                this->collectfp();
-            }
+    if(this->alloc_page != nullptr) {
+        gtl_info.updateNurseryUsage(this->alloc_page);
+        if(gtl_info.nursery_usage >= BSQ_FULL_NURSERY_THRESHOLD && !gtl_info.disable_automatic_collections) { 
+            this->collectfp();
         }
         else {
-            // Rotate collection pages
-            this->alloc_page->next = this->pendinggc_pages;
-            this->pendinggc_pages = this->alloc_page;            
-        } 
-    
-        this->alloc_page = this->getFreshPageForAllocator();
+            this->rotateFullAllocPage();
+        }
     }
 
+    this->alloc_page = this->getFreshPageForAllocator();
     this->freelist = this->alloc_page->freelist;
 }
 

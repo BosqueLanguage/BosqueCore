@@ -56,6 +56,7 @@
 
 //Number of allocation pages we fill up before we start collecting
 #define BSQ_COLLECTION_THRESHOLD 1024 
+#define BSQ_FULL_NURSERY_THRESHOLD static_cast<float>(BSQ_COLLECTION_THRESHOLD)
 
 //Max number of decrement ops we do per collection -- 
 //    TODO:we may need to make this a bit dynamic 

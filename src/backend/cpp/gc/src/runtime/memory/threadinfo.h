@@ -110,7 +110,7 @@ struct BSQMemoryTheadLocalInfo
 
     uint64_t typeptr_high32; // high 32 bits taken from a typeinfo pointer
 
-    uint32_t newly_filled_pages_count = 0;
+    float nursery_usage = 0.0f;
 
     ArrayList<void*> pending_roots; //the worklist of roots that we need to do visits from
     ArrayList<MarkStackEntry> visit_stack; //stack for doing a depth first visit (and topo organization) of the object graph
@@ -168,6 +168,17 @@ struct BSQMemoryTheadLocalInfo
         std::chrono::duration<double, std::milli> dur = start.time_since_epoch();
         this->mstats.start_time = dur.count();
 #endif
+    }
+
+    inline void updateNurseryUsage(PageInfo* p) noexcept
+    {
+        // Fresh page without old objects
+        if(p->approx_utilization == 0.0f) {
+            this->nursery_usage += 1.0f;
+        }
+        else {
+            this->nursery_usage += 1.0f - p->approx_utilization;
+        }
     }
 
     void initialize(size_t ntl_id, void** caller_rbp) noexcept;

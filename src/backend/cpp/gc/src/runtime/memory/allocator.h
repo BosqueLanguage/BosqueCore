@@ -355,6 +355,12 @@ private:
     PageInfo* getFreshPageForAllocator() noexcept; 
     PageInfo* getFreshPageForEvacuation() noexcept;
 
+    inline void rotateFullAllocPage() noexcept
+    {
+        this->alloc_page->next = this->pendinggc_pages;
+        this->pendinggc_pages = this->alloc_page;
+    }
+
 public:
 #ifdef MEM_STATS
     GCAllocator(uint16_t objsize, uint16_t fullsize, void (*collect)()) noexcept : freelist(nullptr), evacfreelist(nullptr), alloc_page(nullptr), evac_page(nullptr), allocsize(objsize), realsize(fullsize), pendinggc_pages(nullptr), filled_pages(nullptr), alloc_count(0), alloc_memory(0), collectfp(collect) {
