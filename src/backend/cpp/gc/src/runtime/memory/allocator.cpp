@@ -179,6 +179,7 @@ void GCAllocator::allocatorRefreshAllocationPage(__CoreGC::TypeInfoBase* typeinf
     if(this->alloc_page != nullptr) {
         gtl_info.updateNurseryUsage(this->alloc_page);
         if(gtl_info.nursery_usage >= BSQ_FULL_NURSERY_THRESHOLD && !gtl_info.disable_automatic_collections) { 
+            gtl_info.nursery_usage = 0.0f;
             this->collectfp();
         }
         else {
