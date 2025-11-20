@@ -1,20 +1,30 @@
 import { FullyQualifiedNamespace } from "../frontend/type";
-import { Expression, ExpressionTag, LiteralRegexExpression, LiteralSimpleExpression } from "../frontend/body";
+import { Expression, ExpressionTag, LiteralCStringExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression } from "../frontend/body";
+import { Assembly } from "../frontend/assembly";
 
 import { IRRegex } from "./irsupport";
 import {} from "./irassembly";
-import { DateRepresentation, DeltaDateRepresentation, DeltaTimeRepresentation, IRExpression, IRLiteralBigIntExpression, IRLiteralBigNatExpression, IRLiteralBoolExpression, IRLiteralByteBufferExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDecimalExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLatLongCoordinateExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralNoneExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralRationalExpression, IRLiteralSHAContentHashExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRStatement, TimeRepresentation } from "./irbody";
+import { DateRepresentation, DeltaDateRepresentation, DeltaTimeRepresentation, IRExpression, IRLiteralBigIntExpression, IRLiteralBigNatExpression, IRLiteralBoolExpression, IRLiteralByteBufferExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralCStringExpression, IRLiteralDecimalExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLatLongCoordinateExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralNoneExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralRationalExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRStatement, TimeRepresentation } from "./irbody";
 
 import assert from "node:assert";
 
-
 class ASMToIRConverter {
-    regexs: IRRegex[] = [];
+    readonly assembly: Assembly;
+
+    regexs: IRRegex[];
+    errCtr: number;
 
     pendingblocks: IRStatement[][];
+    tmpVarCtr: number;
 
-    constructor() {
+    constructor(assembly: Assembly) {
+        this.assembly = assembly;
+        
+        this.regexs = [];
+        this.errCtr = 0;
+
         this.pendingblocks = [];
+        this.tmpVarCtr = 0;
     }
 
     private static extractLiteralDateInfo(datestr: string): DateRepresentation {
@@ -197,7 +207,7 @@ class ASMToIRConverter {
             const sign = (exp as LiteralSimpleExpression).value[0] as "+" | "-";
             const ticks = (exp as LiteralSimpleExpression).value.slice(1, -2);
 
-            return new IRLiteralDeltaLogicalExpression(sign, ticks);
+            return new IRLiteralDeltaLogicalTimeExpression(sign, ticks);
         }
         else if(ttag === ExpressionTag.LiteralUnicodeRegexExpression) {
             const rexp = (exp as LiteralRegexExpression);
@@ -210,6 +220,37 @@ class ASMToIRConverter {
             const regexinst = this.processRegex(rexp.inns, rexp.value);
 
             return new IRLiteralCRegexExpression(regexinst.regexID, rexp.value);
+        }
+        else if(ttag === ExpressionTag.LiteralByteExpression) {
+            const bstr = (exp as LiteralSimpleExpression).value;
+            const nval = Number.parseInt(bstr, 16);
+            return new IRLiteralByteExpression(nval);
+        }
+        else if(ttag === ExpressionTag.LiteralCCharExpression) {
+            return new IRLiteralCCharExpression(((exp as LiteralSimpleExpression).resolvedValue as string).charCodeAt(0));
+        }
+        else if(ttag === ExpressionTag.LiteralUnicodeCharExpression) {
+            return new IRLiteralUnicodeCharExpression(((exp as LiteralSimpleExpression).resolvedValue as string).charCodeAt(0));
+        }
+        else if(ttag === ExpressionTag.LiteralCStringExpression) {
+            const slexp = exp as LiteralCStringExpression;
+            const bbuff = Buffer.from((slexp.resolvedValue as string, "utf8"));
+            let bytes: number[] = [];
+            for(let i = 0; i < bbuff.length; ++i) {
+                bytes.push(bbuff[i]);
+            }
+
+            return new IRLiteralCStringExpression(slexp.value, bytes);
+        }
+        else if(ttag === ExpressionTag.LiteralStringExpression) {
+            const slexp = exp as LiteralStringExpression;
+            const bbuff = Buffer.from((slexp.resolvedValue as string, "utf8"));
+            let bytes: number[] = [];
+            for(let i = 0; i < bbuff.length; ++i) {
+                bytes.push(bbuff[i]);
+            }
+
+            return new IRLiteralStringExpression(slexp.value, bytes);
         }
         else {
             assert(false, `ASMToIRConverter: Unsupported expression type -- ${exp.tag}`);

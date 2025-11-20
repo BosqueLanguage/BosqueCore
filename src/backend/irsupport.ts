@@ -1,4 +1,16 @@
 
+class SourceInfo
+{
+    readonly line: number;
+    readonly column: number;
+
+    constructor(line: number, column: number)
+    {
+        this.line = line;
+        this.column = column;
+    }
+}
+
 class IRRegex
 {
     readonly regexID: number;
@@ -7,5 +19,6 @@ class IRRegex
 }
 
 export {
+    SourceInfo,
     IRRegex
 };

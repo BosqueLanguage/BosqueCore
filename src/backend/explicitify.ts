@@ -47,6 +47,9 @@ class Explicitifier {
         else if(ttag === ExpressionTag.LiteralUnicodeRegexExpression || ttag === ExpressionTag.LiteralCRegexExpression) {
             return exp;
         }
+        else if(ttag === ExpressionTag.LiteralByteExpression || ttag === ExpressionTag.LiteralCCharExpression || ttag === ExpressionTag.LiteralUnicodeCharExpression) {
+            return exp;
+        }
         else {
             assert(false, `Explicitifier: Unsupported expression type -- ${exp.tag}`);
         }

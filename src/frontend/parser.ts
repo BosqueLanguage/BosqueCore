@@ -3611,10 +3611,6 @@ class Parser {
             const cstr = this.consumeTokenAndGetValue();
             return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralComplexNumberExpression, cstr);
         }
-        else if(tk === TokenStrings.Byte) {
-            const bstr = this.consumeTokenAndGetValue();
-            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralByteExpression, bstr);
-        }
         else if(tk === TokenStrings.ByteBuffer) {
             const bbstr = this.consumeTokenAndGetValue();
             return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralByteBufferExpression, bbstr);
@@ -3671,6 +3667,10 @@ class Parser {
         else if(tk === TokenStrings.Regex) {
             const rstr = this.consumeTokenAndGetValue();
             return new LiteralRegexExpression(rstr.endsWith("/") ? ExpressionTag.LiteralUnicodeRegexExpression : ExpressionTag.LiteralCRegexExpression, sinfo, this.env.currentNamespace.fullnamespace, rstr);
+        }
+        else if(tk === TokenStrings.Byte) {
+            const bstr = this.consumeTokenAndGetValue();
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralByteExpression, bstr);
         }
         else if(tk === TokenStrings.CChar) {
             const cstr = this.consumeTokenAndGetValue();

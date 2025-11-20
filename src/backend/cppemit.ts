@@ -1,7 +1,9 @@
 import { MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_INT } from "../frontend/assembly";
-import { IRExpression, IRExpressionTag, IRLiteralBigIntExpression, IRLiteralBigNatExpression, IRLiteralBoolExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression } from "./irbody";
+import { IRExpression, IRExpressionTag, IRLiteralBigIntExpression, IRLiteralBigNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression } from "./irbody";
 
 import assert from "node:assert";
+
+const RUNTIME_NAMESPACE = "ᐸRuntimeᐳ";
 
 class CPPEmitter {
     private emitExpression(exp: IRExpression): string {
@@ -100,7 +102,7 @@ class CPPEmitter {
         }
         else if(ttag === IRExpressionTag.IRLiteralDeltaISOTimeStampExpression) {
             const itsexp = (exp as IRLiteralDeltaISOTimeStampExpression);
-            return `DeltaISOTimeStamp{'${itsexp.sign}', {${itsexp.deltadate.years}, ${itsexp.deltadate.months}, ${itsexp.deltadate.days}}, {${itsexp.deltatime.hours}, ${itsexp.deltatime.minutes}, ${itsexp.deltatime.seconds}}, ${itsexp.deltatime.milliseconds}}`;
+            return `DeltaISOTimeStamp{'${itsexp.sign}', {${itsexp.deltadate.years}, ${itsexp.deltadate.months}, ${itsexp.deltadate.days}}, {${itsexp.deltatime.hours}, ${itsexp.deltatime.minutes}, ${itsexp.deltatime.seconds}}, ${itsexp.deltamilliseconds}}`;
         }
         else if(ttag === IRExpressionTag.IRLiteralDeltaSecondsExpression) {
             const dsexp = (exp as IRLiteralDeltaSecondsExpression);
@@ -111,10 +113,28 @@ class CPPEmitter {
             return `DeltaLogicalTime{'${dltexp.sign}', ${dltexp.ticks}}`;
         }
         else if(ttag === IRExpressionTag.IRLiteralUnicodeRegexExpression) {
-            return `Runtime::g_regexs[${(exp as IRLiteralUnicodeRegexExpression).regexID}]`;
+            return `${RUNTIME_NAMESPACE}::g_regexs[${(exp as IRLiteralUnicodeRegexExpression).regexID}]`;
         }
         else if(ttag === IRExpressionTag.IRLiteralCRegexExpression) {
-            return `Runtime::g_regexs[${(exp as IRLiteralCRegexExpression).regexID}]`;
+            return `${RUNTIME_NAMESPACE}::g_regexs[${(exp as IRLiteralCRegexExpression).regexID}]`;
+        }
+        else if(ttag === IRExpressionTag.IRLiteralByteExpression) {
+            const b = (exp as IRLiteralByteExpression).value;
+            return `Byte{0x${b.toString(16).padStart(2, '0')}}`;
+        }
+        else if(ttag === IRExpressionTag.IRLiteralCCharExpression) {
+            const ccv = (exp as IRLiteralCCharExpression).value;
+            return `CChar{'${String.fromCodePoint(ccv)}'}`;
+        }
+        else if(ttag === IRExpressionTag.IRLiteralUnicodeCharExpression) {
+            const ucv = (exp as IRLiteralUnicodeCharExpression).value;
+            return (31 < ucv && ucv < 127) ? `UnicodeChar{'${String.fromCodePoint(ucv)}'}` : `UnicodeChar{${ucv}}`;
+        }
+        else if(ttag === IRExpressionTag.IRLiteralCStringExpression) {
+            xxxx;
+        }
+        else if(ttag === IRExpressionTag.IRLiteralStringExpression) {
+            xxxx;
         }
         else {
             assert(false, `CPPEmitter: Unsupported IR expression type -- ${exp.constructor.name}`);

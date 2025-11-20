@@ -1,3 +1,4 @@
+import { SourceInfo } from "./irsupport";
 
 enum IRExpressionTag {
     IRLiteralNoneExpression = "IRLiteralNoneExpression",
@@ -31,7 +32,14 @@ enum IRExpressionTag {
     IRLiteralDeltaLogicalTimeExpression = "IRLiteralDeltaLogicalTimeExpression",
 
     IRLiteralUnicodeRegexExpression = "IRLiteralUnicodeRegexExpression",
-    IRLiteralCRegexExpression = "IRLiteralCRegexExpression"
+    IRLiteralCRegexExpression = "IRLiteralCRegexExpression",
+
+    IRLiteralByteExpression = "IRLiteralByteExpression",
+    IRLiteralCCharExpression = "IRLiteralCCharExpression",
+    IRLiteralUnicodeCharExpression = "IRLiteralUnicodeCharExpression",
+
+    IRLiteralCStringExpression = "IRLiteralCStringExpression",
+    IRLiteralStringExpression = "IRLiteralStringExpression"
 }
 
 class IRExpression {
@@ -41,6 +49,23 @@ class IRExpression {
         this.tag = tag;
     }
 }
+
+enum IRStatementTag {
+    IRErrorAdditionBoundsCheckStatement = "IRErrorAdditionBoundsCheckStatement",
+    IRErrorSubtractionBoundsCheckStatement = "IRErrorSubtractionBoundsCheckStatement",
+    IRErrorMultiplicationBoundsCheckStatement = "IRErrorMultiplicationBoundsCheckStatement",
+    IRErrorDivisionByZeroCheckStatement = "IRErrorDivisionByZeroCheckStatement"
+}
+
+class IRStatement {
+    readonly tag: IRStatementTag;
+
+    constructor(tag: IRStatementTag) {
+        this.tag = tag;
+    }
+}
+////////////////////////////////////////
+//Our literal expressions are all very safe and will never fail to construct -- if there are possible issues the flattening phase should have emitted and explicit check
 
 class IRLiteralNoneExpression extends IRExpression {
     constructor() {
@@ -364,11 +389,120 @@ class IRLiteralCRegexExpression extends IRExpression {
     }
 }
 
-class IRStatement {
+class IRLiteralByteExpression extends IRExpression {
+    readonly value: number;
+
+    constructor(value: number) {
+        super(IRExpressionTag.IRLiteralByteExpression);
+        this.value = value;
+    }
+}
+
+class IRLiteralCCharExpression extends IRExpression {
+    readonly value: number;
+
+    constructor(value: number) {
+        super(IRExpressionTag.IRLiteralCCharExpression);
+        this.value = value;
+    }
+}
+
+class IRLiteralUnicodeCharExpression extends IRExpression {
+    readonly value: number;
+
+    constructor(value: number) {
+        super(IRExpressionTag.IRLiteralUnicodeCharExpression);
+        this.value = value;
+    }
+}
+
+class IRLiteralCStringExpression extends IRExpression {
+    readonly srcstring: string; //source code string literal format
+    readonly bytes: number[]; //utf8 bytes
+
+    constructor(srcstring: string, bytes: number[]) {
+        super(IRExpressionTag.IRLiteralCStringExpression);
+        this.srcstring = srcstring;
+        this.bytes = bytes;
+    }
+}
+
+class IRLiteralStringExpression extends IRExpression {
+    readonly srcstring: string; //source code string literal format
+    readonly bytes: number[]; //utf8 bytes
+
+    constructor(srcstring: string, bytes: number[]) {
+        super(IRExpressionTag.IRLiteralStringExpression);
+        this.srcstring = srcstring;
+        this.bytes = bytes;
+    }
+}
+
+
+
+////////////////////////////////////////
+//Basic Line statements
+
+////////////////////////////////////////
+//Explicit error condition checks -- all possible error conditions must be made explicit during flattening
+
+abstract class IRErrorCheckStatement extends IRStatement {
+    readonly file: string;
+    readonly sinfo: SourceInfo;
+
+    readonly diagnosticTag: string | undefined;
+    readonly checkID: number;
+
+    constructor(tag: IRStatementTag, file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number) {
+        super(tag);
+        this.file = file;
+        this.sinfo = sinfo;
+        this.diagnosticTag = diagnosticTag;
+        this.checkID = checkID;
+    }
+}
+
+abstract class IRErrorBinArithCheckStatement extends IRErrorCheckStatement {
+    readonly left: IRExpression;
+    readonly right: IRExpression;
+
+    readonly optypechk: "Nat" | "Int" | "BigNat" | "BigInt";
+
+    constructor(tag: IRStatementTag, file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRExpression, right: IRExpression, optypechk: "Nat" | "Int" | "BigNat" | "BigInt") {
+        super(tag, file, sinfo, diagnosticTag, checkID);
+        this.left = left;
+        this.right = right;
+        this.optypechk = optypechk;
+    }
+}
+
+class IRErrorAdditionBoundsCheckStatement extends IRErrorBinArithCheckStatement {
+    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRExpression, right: IRExpression, optypechk: "Nat" | "Int" | "BigNat" | "BigInt") {
+        super(IRStatementTag.IRErrorAdditionBoundsCheckStatement, file, sinfo, diagnosticTag, checkID, left, right, optypechk);
+    }
+}
+
+class IRErrorSubtractionBoundsCheckStatement extends IRErrorBinArithCheckStatement {
+    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRExpression, right: IRExpression, optypechk: "Nat" | "Int" | "BigNat" | "BigInt") {
+        super(IRStatementTag.IRErrorSubtractionBoundsCheckStatement, file, sinfo, diagnosticTag, checkID, left, right, optypechk);
+    }
+}
+
+class IRErrorMultiplicationBoundsCheckStatement extends IRErrorBinArithCheckStatement {
+    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRExpression, right: IRExpression, optypechk: "Nat" | "Int" | "BigNat" | "BigInt") {
+        super(IRStatementTag.IRErrorMultiplicationBoundsCheckStatement, file, sinfo, diagnosticTag, checkID, left, right, optypechk);
+    }
+}
+
+class IRErrorDivisionByZeroCheckStatement extends IRErrorBinArithCheckStatement {
+    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRExpression, right: IRExpression, optypechk: "Nat" | "Int" | "BigNat" | "BigInt") {
+        super(IRStatementTag.IRErrorDivisionByZeroCheckStatement, file, sinfo, diagnosticTag, checkID, left, right, optypechk);
+    }
 }
 
 export {
-    IRExpressionTag, IRExpression, IRLiteralNoneExpression, IRLiteralBoolExpression,
+    IRExpressionTag, IRExpression,
+    IRLiteralNoneExpression, IRLiteralBoolExpression,
     IRLiteralIntegralNumberExpression, IRLiteralNatExpression, IRLiteralIntExpression, IRLiteralBigNatExpression, IRLiteralBigIntExpression,
     IRLiteralRationalExpression, IRLiteralFloatingPointExpression, IRLiteralFloatExpression, IRLiteralDecimalExpression,
     IRLiteralDecimalDegreeExpression, IRLiteralLatLongCoordinateExpression, IRLiteralComplexExpression,
@@ -377,5 +511,11 @@ export {
     DateRepresentation, TimeRepresentation, IRLiteralTZDateTimeExpression, IRLiteralTAITimeExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralLogicalTimeExpression, IRLiteralISOTimeStampExpression,
     DeltaDateRepresentation, DeltaTimeRepresentation, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaSecondsExpression, IRLiteralDeltaLogicalTimeExpression,
     IRLiteralUnicodeRegexExpression, IRLiteralCRegexExpression,
-    IRStatement
+    IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralUnicodeCharExpression,
+    IRLiteralCStringExpression, IRLiteralStringExpression,
+
+
+    IRStatementTag, IRStatement,
+    IRErrorCheckStatement,
+    IRErrorBinArithCheckStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement
 };

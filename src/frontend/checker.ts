@@ -1173,11 +1173,21 @@ class TypeChecker {
         return exp.setType(this.getWellKnownType("CRegex"));
     }
 
+    private checkLiteralByteExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
+        const nval = Number.parseInt(exp.value, 16);
+        this.checkError(exp.sinfo, nval < 0 || 255 < nval, "Byte literal out of valid range");
+
+        return exp.setType(this.getWellKnownType("Byte"));
+    }
+
     private checkLiteralCCharExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
         try {
             const vcc = validateCStringLiteral(exp.value.slice(2, exp.value.length - 1));
             if(vcc === null) {
                 throw new Error(`Invalid CChar literal`);
+            }
+            if(vcc.length > 1) {
+                throw new Error(`Expected zero or one UnicodeChar, but found ${vcc.length} characters`);
             }
             exp.resolvedValue = vcc;
         } catch(err) {
@@ -2689,6 +2699,9 @@ class TypeChecker {
             }
             case ExpressionTag.LiteralCRegexExpression: {
                 return this.checkLiteralCRegexExpression(env, exp as LiteralRegexExpression);
+            }
+            case ExpressionTag.LiteralByteExpression: {
+                return this.checkLiteralByteExpression(env, exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralCCharExpression: {
                 return this.checkLiteralCCharExpression(env, exp as LiteralSimpleExpression);

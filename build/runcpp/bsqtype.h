@@ -10,7 +10,7 @@
 
 namespace Core
 {
-    namespace Runtime
+    namespace ᐸRuntimeᐳ
     {
         enum class LayoutTag
         {
@@ -37,6 +37,5 @@ namespace Core
             const char* typekey;
             const FieldOffsetInfo* vtable;
         };
-
     }
 }

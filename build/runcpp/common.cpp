@@ -2,7 +2,7 @@
 
 namespace Core
 {
-    namespace Runtime
+    namespace ᐸRuntimeᐳ
     {
         thread_local ThreadLocalInfo tl_info;
     }
