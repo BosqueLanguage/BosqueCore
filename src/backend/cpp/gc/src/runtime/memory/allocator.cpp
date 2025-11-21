@@ -73,10 +73,8 @@ PageInfo* GlobalPageGCManager::allocateFreshPage(uint16_t entrysize, uint16_t re
     GC_MEM_LOCK_ACQUIRE();
 
     PageInfo* pp = nullptr;
-    if(this->empty_pages != nullptr) {
-        void* page = this->empty_pages;
-        this->empty_pages = this->empty_pages->next;
-
+    if(!this->empty_pages.empty()) {
+        void* page = this->empty_pages.pop();
         pp = PageInfo::initialize(page, entrysize, realsize);
     }
     else {

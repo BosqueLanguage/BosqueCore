@@ -112,16 +112,15 @@
 #define REAL_ENTRY_SIZE(ESIZE) (ESIZE + sizeof(MetaData))
 #endif
 
-class PageList;
-
 ////////////////////////////////
 //Memory allocator
+
+class PageList;
 
 //global storage for constant data (and testing support)
 //  -- Only a single thread may run while initializing the global roots as they are visible to all threads
 //  -- After initialization a GC must be run to promote all values to old ref-count space
 //  -- TODO: when we add multi-threading we need to use the special root-ref tag for these roots as well -- then we can skip re-scanning these after the promotion collection
-
 class GlobalDataStorage
 {
 public:
@@ -317,7 +316,7 @@ public:
 class GlobalPageGCManager
 {
 private:
-    PageInfo* empty_pages;
+    PageList empty_pages;
     PageTable pagetable;
 
     inline void pagetableInsert(void* addr) noexcept
@@ -328,7 +327,7 @@ private:
 public:
     static GlobalPageGCManager g_gc_page_manager;
 
-    GlobalPageGCManager() noexcept : empty_pages(nullptr), pagetable() { }
+    GlobalPageGCManager() noexcept : empty_pages(), pagetable() { }
 
     PageInfo* allocateFreshPage(uint16_t entrysize, uint16_t realsize) noexcept;
 
@@ -341,8 +340,7 @@ public:
     {
         GC_MEM_LOCK_ACQUIRE();
 
-        newPage->next = empty_pages;  
-        empty_pages = newPage;    
+        this->empty_pages.push(newPage);
         
         GC_MEM_LOCK_RELEASE();
     }
