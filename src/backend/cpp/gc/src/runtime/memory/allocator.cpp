@@ -113,8 +113,7 @@ void GCAllocator::processPage(PageInfo* p) noexcept
         return ;
     }
      
-    p->next = this->filled_pages;
-    filled_pages = p;
+    this->filled_pages.push(p);
 }
 
 void GCAllocator::processCollectorPages() noexcept
@@ -135,9 +134,8 @@ void GCAllocator::processCollectorPages() noexcept
         this->evacfreelist = nullptr;
     }
 
-    while(pendinggc_pages.hasNext()) {
-        PageInfo* p = pendinggc_pages.pop();
-
+    while(!this->pendinggc_pages.empty()) {
+        PageInfo* p = this->pendinggc_pages.pop();
         p->rebuild();
         this->processPage(p);
     }
@@ -191,8 +189,7 @@ void GCAllocator::allocatorRefreshAllocationPage(__CoreGC::TypeInfoBase* typeinf
 void GCAllocator::allocatorRefreshEvacuationPage() noexcept
 {
     if(this->evac_page != nullptr) {
-        this->evac_page->next = this->filled_pages;
-        this->filled_pages = this->evac_page;
+        this->filled_pages.push(this->evac_page);
     }
 
     this->evac_page = this->getFreshPageForEvacuation();
@@ -224,22 +221,6 @@ static inline void process(PageInfo* page) noexcept
     UPDATE_TOTAL_LIVE_OBJECTS(gtl_info, +=, (page->entrycount - freecount));
 }
 
-static void traverseBST(PageInfo* node) noexcept
-{
-    if(!node) {
-        return;
-    }
-
-    PageInfo* current = node;
-    while (current != nullptr) {
-        process(current);
-        current = current->next;
-    }
-    
-    traverseBST(node->left);
-    traverseBST(node->right); 
-}
-
 void GCAllocator::updateMemStats() noexcept
 {
     UPDATE_TOTAL_ALLOC_COUNT(gtl_info, +=, GET_ALLOC_COUNT(this));
@@ -247,20 +228,31 @@ void GCAllocator::updateMemStats() noexcept
     RESET_ALLOC_STATS(this);
 
     //compute stats for filled pages
-    PageInfo* filled_it = this->filled_pages;
-    while(filled_it != nullptr) {
+    PageInfo* filled_it = this->filled_pages.begin();
+    while(this->filled_pages.hasNext(filled_it)) {
+        PageInfo* next = this->filled_pages.next(filled_it);
         process(filled_it);
-        filled_it = filled_it->next;
+        filled_it = next;
     }
 
     // Compute stats for high util pages
     for(int i = 0; i < NUM_HIGH_UTIL_BUCKETS; i++) {
-        traverseBST(this->high_util_buckets[i]);
+        PageInfo* high_it = this->high_util_buckets[i].begin();
+        while(this->high_util_buckets[i].hasNext(high_it)) {
+            PageInfo* next = this->high_util_buckets[i].next(high_it);
+            process(high_it);
+            high_it = next;
+        }
     }
 
     // Compute stats for low util pages
     for(int i = 0; i < NUM_LOW_UTIL_BUCKETS; i++) {
-        traverseBST(this->low_util_buckets[i]);
+        PageInfo* low_it = this->low_util_buckets[i].begin();
+        while(this->low_util_buckets[i].hasNext(low_it)) {
+            PageInfo* next = this->low_util_buckets[i].next(low_it);
+            process(low_it);
+            low_it = next;
+        }
     }
 
     if(TOTAL_LIVE_BYTES(gtl_info) > MAX_LIVE_HEAP(gtl_info)) {
