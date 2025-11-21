@@ -302,9 +302,9 @@ public:
         return this->root;
     }
 
-    inline bool hasNext(PageInfo* cur) noexcept
+    inline bool hasNext() noexcept
     {
-        return cur->next != nullptr;
+        return this->root != nullptr;
     }
 
     inline PageInfo* next(PageInfo* cur) noexcept
@@ -422,7 +422,7 @@ private:
     uint16_t allocsize; //size of the alloc entries in this page (excluding metadata)
     uint16_t realsize;  //size of the alloc entries in this page (including metadata and other stuff)
 
-    PageInfo* pendinggc_pages; // Pages that are pending GC
+    PageList pendinggc_pages; // Pages that are pending GC
     PageInfo* filled_pages; // Pages with over 90% utilization (no need for buckets here)
     //completely empty pages go back to the global pool
 
@@ -440,17 +440,16 @@ private:
 
     inline void rotateFullAllocPage() noexcept
     {
-        this->alloc_page->next = this->pendinggc_pages;
-        this->pendinggc_pages = this->alloc_page;
+        this->pendinggc_pages.push(this->alloc_page);
     }
 
 public:
 #ifdef MEM_STATS
-    GCAllocator(uint16_t objsize, uint16_t fullsize, void (*collect)()) noexcept : freelist(nullptr), evacfreelist(nullptr), alloc_page(nullptr), evac_page(nullptr), allocsize(objsize), realsize(fullsize), pendinggc_pages(nullptr), filled_pages(nullptr), alloc_count(0), alloc_memory(0), collectfp(collect) {
+    GCAllocator(uint16_t objsize, uint16_t fullsize, void (*collect)()) noexcept : freelist(nullptr), evacfreelist(nullptr), alloc_page(nullptr), evac_page(nullptr), allocsize(objsize), realsize(fullsize), pendinggc_pages(), filled_pages(nullptr), alloc_count(0), alloc_memory(0), collectfp(collect) {
         resetBuckets();
     }
 #else 
-    GCAllocator(uint16_t objsize, uint16_t fullsize, void (*collect)()) noexcept : freelist(nullptr), evacfreelist(nullptr), alloc_page(nullptr), evac_page(nullptr), allocsize(objsize), realsize(fullsize), pendinggc_pages(nullptr), filled_pages(nullptr), collectfp(collect) {
+    GCAllocator(uint16_t objsize, uint16_t fullsize, void (*collect)()) noexcept : freelist(nullptr), evacfreelist(nullptr), alloc_page(nullptr), evac_page(nullptr), allocsize(objsize), realsize(fullsize), pendinggc_pages(), filled_pages(nullptr), collectfp(collect) {
         resetBuckets();
     }
 #endif

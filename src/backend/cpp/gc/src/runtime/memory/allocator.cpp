@@ -135,16 +135,12 @@ void GCAllocator::processCollectorPages() noexcept
         this->evacfreelist = nullptr;
     }
 
-    PageInfo* cur = this->pendinggc_pages;
-    while(cur != nullptr) {
-        PageInfo* next = cur->next;
+    while(pendinggc_pages.hasNext()) {
+        PageInfo* p = pendinggc_pages.pop();
 
-        cur->rebuild();
-        this->processPage(cur);
-
-        cur = next;
+        p->rebuild();
+        this->processPage(p);
     }
-    this->pendinggc_pages = nullptr;
 }
 
 PageInfo* GCAllocator::getFreshPageForAllocator() noexcept
