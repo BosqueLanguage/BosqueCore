@@ -14,87 +14,72 @@ namespace Core
             TypeInfoBase* typeinfo;
             
         private:
-            uintptr_t data[K];
+            uint64_t data[K];
 
         public:
             constexpr Option() noexcept : typeinfo(nullptr), data{0} {};
+            constexpr Option(const TypeInfoBase* ti) noexcept : typeinfo(ti), data{0} {};
+            
             constexpr Option(const Option& rhs) noexcept = default;
-            constexpr Option(Option&& rhs) noexcept = default;
+            constexpr Option& operator=(const Option& rhs) noexcept = default;
+            
+            // Special none option constructor
+            static constexpr Option optnone(&g_wellKnownTypeNone);
 
-            Option& operator=(const Option& rhs) noexcept = default;
-            Option& operator=(Option&& rhs) noexcept = default;
-
-            // Empty constructor
-            constexpr Option(TypeInfoBase* ti) noexcept : typeinfo(ti), data{0} {}
-
-            // Value constructors
+            // Some constructors
             template<typename T>
-            inline constexpr Option(TypeInfoBase* ti, const T& d) noexcept : typeinfo(ti) {
-                static_assert(sizeof(T) <= K * sizeof(uintptr_t), "Object too large for Option<K>");
-                *(reinterpret_cast<T*>(this->data)) = d;
+            constexpr makeSome(const TypeInfoBase* ti, const T& d) noexcept : typeinfo(ti) {
+                static_assert(sizeof(T) <= K * sizeof(uint64_t), "Object too large for Option<K>");
+
+                Option<K> opt(ti);
+                *(reinterpret_cast<T*>(opt.data)) = d;
+                return opt;
             }
 
-            // Value constructors
             template<typename T>
-            inline constexpr Option(TypeInfoBase* ti, T&& d) noexcept : typeinfo(ti) {
-                static_assert(sizeof(T) <= K * sizeof(uintptr_t), "Object too large for Option<K>");
-                *(reinterpret_cast<T*>(this->data)) = d;
+            constexpr T get() {
+                return *(reinterpret_cast<T*>(this->data));
             }
-
-            template<typename T, uintptr_t i=0>
-            inline constexpr T access() noexcept { 
-                if(this->typeinfo->tag == LayoutTag::Ref) {
-                    //load the field as if it is stored indirectly
-                    return *(reinterpret_cast<T*>(reinterpret_cast<uintptr_t*>(this->data[0]) + i));   
-                }
-                else {
-                    //load the field as if it is laid out inline
-                    return *(reinterpret_cast<T*>(this->data + i));
-                }
-            }
-
-            constexpr uintptr_t accessnone() noexcept { return UINTPTR_MAX; }
         };
 
         template <size_t K>
         class Boxed 
         {
         public:
-            TypeInfoBase* typeinfo;
+            const TypeInfoBase* typeinfo;
             
         private:
-            uintptr_t data[K];
+            const uint64_t data[K];
 
         public:
             constexpr Boxed() noexcept : typeinfo(nullptr), data{0} {};
-            constexpr Boxed(const Boxed& rhs) noexcept = default;
-            constexpr Boxed(Boxed&& rhs) noexcept = default;
+            constexpr Boxed(const TypeInfoBase* ti) noexcept : typeinfo(ti), data{0} {};
 
-            Boxed& operator=(const Boxed& rhs) noexcept = default;
-            Boxed& operator=(Boxed&& rhs) noexcept = default;
+            constexpr Boxed(const Boxed& rhs) noexcept = default;
+            constexpr Boxed& operator=(const Boxed& rhs) noexcept {
+                this->typeinfo = rhs.typeinfo;
+                std::copy(rhs.data, rhs.data + K, const_cast<uint64_t*>(this->data));
+                return *this;
+            }
 
             // Empty constructor
-            constexpr Boxed(TypeInfoBase* ti) noexcept : typeinfo(ti), data{0} {}
+            constexpr Boxed(const TypeInfoBase* ti) noexcept : typeinfo(ti), data{0} {}
 
             // Value constructors
             template<typename T>
-            inline constexpr Boxed(TypeInfoBase* ti, const T& d) noexcept : typeinfo(ti) {
-                static_assert(sizeof(T) <= K * sizeof(uintptr_t), "Object too large for Boxed<K>");
-                *(reinterpret_cast<T*>(this->data)) = d;
+            static constexpr Boxed makeBoxed(const TypeInfoBase* ti, const T& d) noexcept {
+                static_assert(sizeof(T) <= K * sizeof(uint64_t), "Object too large for Boxed<K>");
+
+                constexpr Boxed<K> boxed(ti);
+                //*(reinterpret_cast<T*>(boxed.data)) = d;
+                return boxed;
             }
 
-            // Value constructors
-            template<typename T>
-            inline constexpr Boxed(TypeInfoBase* ti, T&& d) noexcept : typeinfo(ti) {
-                static_assert(sizeof(T) <= K * sizeof(uintptr_t), "Object too large for Boxed<K>");
-                *(reinterpret_cast<T*>(this->data)) = d;
-            }
-
-            template<typename T, uintptr_t i=0>
-            inline constexpr T access() noexcept { 
+            template<typename T, size_t i=0>
+            constexpr T access() noexcept { 
                 if(this->typeinfo->tag == LayoutTag::Ref) {
                     //load the field as if it is stored indirectly
-                    return *(reinterpret_cast<T*>(reinterpret_cast<uintptr_t*>(this->data[0]) + i));   
+                    return *(reinterpret_cast<T*>(reinterpret_cast<uint64_t*>(this->data[0]) + i));   
                 }
                 else {
                     //load the field as if it is laid out inline
@@ -102,69 +87,5 @@ namespace Core
                 }
             }
         };
-
-    template<typename T, uintptr_t E>
-    T vlookup(const __CoreGC::FieldOffsetInfo* vtable) noexcept {
-        if(this->typeinfo->tag == __CoreGC::Tag::Ref) {
-            return *reinterpret_cast<T*>(this->data[static_cast<uintptr_t>(vtable[E].byteoffset)]);
-        }
-        else {
-            return *reinterpret_cast<T*>(this->data + static_cast<uintptr_t>(vtable[E].byteoffset));
-        }
-    }
-};
-
-template<>
-class Boxed<1> {
-public:
-    __CoreGC::TypeInfoBase* typeinfo = nullptr;
-    uintptr_t data = 0;
-
-    Boxed() noexcept = default;
-    Boxed(const Boxed& rhs) noexcept = default;
-    Boxed& operator=(const Boxed& rhs) noexcept = default;
-
-    template<typename T>
-    Boxed(__CoreGC::TypeInfoBase* ti, T&& d) noexcept : typeinfo(ti), data(*reinterpret_cast<uintptr_t*>(&d)) { 
-        static_assert(sizeof(T) <= sizeof(uintptr_t), "Object too large for Boxed<1>");
-    };
-
-    // None constructor
-    Boxed(__CoreGC::TypeInfoBase* ti) noexcept : typeinfo(ti) {};
-
-    template<typename T, uintptr_t I=0>
-    constexpr T* access_ref() noexcept {
-        return reinterpret_cast<T*>(reinterpret_cast<uintptr_t*>(this->data) + I);   
-    }
-
-    template<typename T, uintptr_t I=0>
-    constexpr T access() noexcept { 
-        if (this->typeinfo->tag == __CoreGC::Tag::Ref) {
-            return *access_ref<T, I>();
-        }
-        else {
-            return *reinterpret_cast<T*>(&this->data);
-        }
-    }
-    
-    constexpr uintptr_t accessnone() noexcept { return UINTPTR_MAX; }
-};
-
-template<>
-class Boxed<0> {
-public:
-    __CoreGC::TypeInfoBase* typeinfo = nullptr;
-
-    Boxed() noexcept = default;
-    Boxed(const Boxed& rhs) noexcept = default;
-    Boxed& operator=(const Boxed& rhs) noexcept = default;        
-
-    Boxed(__CoreGC::TypeInfoBase* ti) noexcept: typeinfo(ti) {};
-
-    template<typename T>
-    constexpr T access() noexcept { 
-        return T{};
-    }
-};
     }
 }

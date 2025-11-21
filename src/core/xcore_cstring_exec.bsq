@@ -6,8 +6,7 @@ namespace Core;
 
 namespace CStringOps {
     __internal concept CStrTree { } %% Internal map this to union (inline) of CStrEmpty, CStrBuff, CStrNode
-    __internal entity CStrEmpty provides CStrTree { } %% Internal map this to nullptr
-    __internal entity CStrBuff provides CStrTree { } %% Internal map this to CCharBuffer of 16 ascii chars
+    __internal entity CStrBuff provides CStrTree { } %% Internal map this to CCharBuffer of up to 24 ascii chars
     __internal entity CStrNode provides CStrTree { } %% Internal map this to struct with count, left and right CStrTree
 
     function s_empty(s: CString): Bool = cstring_empty;

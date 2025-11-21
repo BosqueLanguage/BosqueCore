@@ -20,12 +20,9 @@ namespace Core
     public:
         constexpr Nat() noexcept : value(0) {}
         constexpr Nat(int64_t v) noexcept : value(v) {}
-        constexpr Nat(const Nat& other) noexcept = default;
-        constexpr Nat(Nat&& other) noexcept = default;
-        ~Nat() noexcept = default;
 
+        constexpr Nat(const Nat& other) noexcept = default;
         constexpr Nat& operator=(const Nat& other) noexcept = default;
-        constexpr Nat& operator=(Nat&& other) noexcept = default;
 
         // Check operators on Nat
         inline static void checkOverflowAddition(Nat n1, Nat n2, const char* file, uint32_t line) noexcept
@@ -51,35 +48,35 @@ namespace Core
         }
 
         // Overloaded operators on Nat
-        inline constexpr Nat operator+() const noexcept
+        constexpr Nat operator+() const noexcept
         {
             return Nat{this->value};
         }
         // Negation is not defined for Nat
 
-        friend inline constexpr Nat operator+(Nat lhs, Nat rhs) noexcept
+        friend constexpr Nat operator+(Nat lhs, Nat rhs) noexcept
         {
             return Nat{lhs.value + rhs.value};
         }
-        friend inline constexpr Nat operator-(Nat lhs, Nat rhs) noexcept
+        friend constexpr Nat operator-(Nat lhs, Nat rhs) noexcept
         {
             return Nat{lhs.value - rhs.value};
         }
-        friend inline constexpr Nat operator/(Nat lhs, Nat rhs) noexcept
+        friend constexpr Nat operator/(Nat lhs, Nat rhs) noexcept
         {
            return Nat{lhs.value / rhs.value};
         }
-        friend inline constexpr Nat operator*(Nat lhs, Nat rhs) noexcept
+        friend constexpr Nat operator*(Nat lhs, Nat rhs) noexcept
         {
             return Nat{lhs.value * rhs.value};
         }
 
-        friend inline constexpr bool operator<(const Nat &lhs, const Nat &rhs) noexcept { return lhs.value < rhs.value; }
-        friend inline constexpr bool operator==(const Nat &lhs, const Nat &rhs) noexcept { return lhs.value == rhs.value; }
-        friend inline constexpr bool operator>(const Nat &lhs, const Nat &rhs) noexcept { return rhs.value < lhs.value; }
-        friend inline constexpr bool operator!=(const Nat &lhs, const Nat &rhs) noexcept { return !(lhs.value == rhs.value); }
-        friend inline constexpr bool operator<=(const Nat &lhs, const Nat &rhs) noexcept { return !(lhs.value > rhs.value); }
-        friend inline constexpr bool operator>=(const Nat &lhs, const Nat &rhs) noexcept { return !(lhs.value < rhs.value); }
+        friend constexpr bool operator<(const Nat &lhs, const Nat &rhs) noexcept { return lhs.value < rhs.value; }
+        friend constexpr bool operator==(const Nat &lhs, const Nat &rhs) noexcept { return lhs.value == rhs.value; }
+        friend constexpr bool operator>(const Nat &lhs, const Nat &rhs) noexcept { return rhs.value < lhs.value; }
+        friend constexpr bool operator!=(const Nat &lhs, const Nat &rhs) noexcept { return !(lhs.value == rhs.value); }
+        friend constexpr bool operator<=(const Nat &lhs, const Nat &rhs) noexcept { return !(lhs.value > rhs.value); }
+        friend constexpr bool operator>=(const Nat &lhs, const Nat &rhs) noexcept { return !(lhs.value < rhs.value); }
     };
 
     class Int
@@ -99,12 +96,9 @@ namespace Core
     public:
         constexpr Int() noexcept : value(0) {}
         constexpr Int(int64_t v) noexcept : value(v) {}
-        constexpr Int(const Int& other) noexcept = default;
-        constexpr Int(Int&& other) noexcept = default;
-        ~Int() noexcept = default;
 
+        constexpr Int(const Int& other) noexcept = default;
         constexpr Int& operator=(const Int& other) noexcept = default;
-        constexpr Int& operator=(Int&& other) noexcept = default;
 
         // Check operators on Int
         inline static void checkOverflowAddition(Int n1, Int n2, const char* file, uint32_t line) noexcept
@@ -129,38 +123,38 @@ namespace Core
         }
 
         // Overloaded operators on Int
-        inline constexpr Int operator+() const noexcept
+        constexpr Int operator+() const noexcept
         {
             return Int{this->value};
         }
-        inline constexpr Int operator-() const noexcept
+        constexpr Int operator-() const noexcept
         {
             return Int{-this->value};
         }
 
-        friend inline constexpr Int operator+(Int lhs, Int rhs) noexcept
+        friend constexpr Int operator+(Int lhs, Int rhs) noexcept
         {
             return Int{lhs.value + rhs.value};
         }
-        friend inline constexpr Int operator-(Int lhs, Int rhs) noexcept
+        friend constexpr Int operator-(Int lhs, Int rhs) noexcept
         {
             return Int{lhs.value - rhs.value};
         }
-        friend inline constexpr Int operator/(Int lhs, Int rhs) noexcept
+        friend constexpr Int operator/(Int lhs, Int rhs) noexcept
         {
             return Int{lhs.value / rhs.value};
         }
-        friend inline constexpr Int operator*(Int lhs, Int rhs) noexcept
+        friend constexpr Int operator*(Int lhs, Int rhs) noexcept
         {
             return Int{lhs.value * rhs.value};
         }
 
-        friend inline constexpr bool operator<(const Int &lhs, const Int &rhs) noexcept { return lhs.value < rhs.value; }
-        friend inline constexpr bool operator==(const Int &lhs, const Int &rhs) noexcept { return lhs.value == rhs.value; }
-        friend inline constexpr bool operator>(const Int &lhs, const Int &rhs) noexcept { return rhs.value < lhs.value; }
-        friend inline constexpr bool operator!=(const Int &lhs, const Int &rhs) noexcept { return !(lhs.value == rhs.value); }
-        friend inline constexpr bool operator<=(const Int &lhs, const Int &rhs) noexcept { return !(lhs.value > rhs.value); }
-        friend inline constexpr bool operator>=(const Int &lhs, const Int &rhs) noexcept { return !(lhs.value < rhs.value); }
+        friend constexpr bool operator<(const Int &lhs, const Int &rhs) noexcept { return lhs.value < rhs.value; }
+        friend constexpr bool operator==(const Int &lhs, const Int &rhs) noexcept { return lhs.value == rhs.value; }
+        friend constexpr bool operator>(const Int &lhs, const Int &rhs) noexcept { return rhs.value < lhs.value; }
+        friend constexpr bool operator!=(const Int &lhs, const Int &rhs) noexcept { return !(lhs.value == rhs.value); }
+        friend constexpr bool operator<=(const Int &lhs, const Int &rhs) noexcept { return !(lhs.value > rhs.value); }
+        friend constexpr bool operator>=(const Int &lhs, const Int &rhs) noexcept { return !(lhs.value < rhs.value); }
     };
 
     class BigNat
@@ -196,12 +190,12 @@ namespace Core
     public:
     };
 
-    inline constexpr Nat operator""_Nat(unsigned long long n)
+    constexpr Nat operator""_Nat(unsigned long long n)
     {
         return Nat{n};
     }
 
-    inline constexpr Int operator""_Int(unsigned long long n)
+    constexpr Int operator""_Int(unsigned long long n)
     {
         return Int{n};
     }

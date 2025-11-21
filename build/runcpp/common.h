@@ -8,6 +8,7 @@
 #include <stdalign.h>
 
 #include <optional>
+#include <string>
 #include <map>
 #include <list>
 
@@ -79,6 +80,6 @@ namespace Core
         };
 
 
-        extern thread_local ThreadLocalInfo& tl_info;
+        extern thread_local ThreadLocalInfo tl_info;
     }
 }
