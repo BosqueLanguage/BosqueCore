@@ -21,8 +21,11 @@ PageInfo* PageInfo::initialize(void* block, uint16_t allocsize, uint16_t realsiz
     pp->approx_utilization = 0.0f;
     pp->pending_decs_count = 0;
     pp->seen = false;
-    pp->left = nullptr;
-    pp->right = nullptr;
+
+    pp->owner = nullptr;
+    pp->prev = nullptr;
+    pp->next = nullptr;
+
     pp->entrycount = (BSQ_BLOCK_ALLOCATION_SIZE - (pp->data - (uint8_t*)pp)) / realsize;
     pp->freecount = pp->entrycount;
 
@@ -41,10 +44,11 @@ void PageInfo::rebuild() noexcept
     this->freelist = nullptr;
     this->freecount = 0;
     this->seen = false;
+ 
+    this->owner = nullptr;
+    this->prev = nullptr;
     this->next = nullptr;
-    this->left = nullptr;
-    this->right = nullptr;
-    
+
     for(int64_t i = this->entrycount - 1; i >= 0; i--) {
         MetaData* meta = this->getMetaEntryAtIndex(i);
 
