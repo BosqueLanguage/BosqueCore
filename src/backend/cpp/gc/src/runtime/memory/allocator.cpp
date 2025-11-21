@@ -109,7 +109,7 @@ void GCAllocator::processPage(PageInfo* p) noexcept
         return ;
     }
     
-    if(insertPageInBucket(this, p)) {
+    if(this->insertPageInBucket(p)) {
         return ;
     }
      
@@ -143,7 +143,7 @@ void GCAllocator::processCollectorPages() noexcept
 
 PageInfo* GCAllocator::getFreshPageForAllocator() noexcept
 {
-    PageInfo* page = getLowestUtilPageLow(this);
+    PageInfo* page = this->getLowestLowUtilPage();
     if(page == nullptr) {
         page = GlobalPageGCManager::g_gc_page_manager.allocateFreshPage(this->allocsize, this->realsize);
     }
@@ -153,9 +153,9 @@ PageInfo* GCAllocator::getFreshPageForAllocator() noexcept
 
 PageInfo* GCAllocator::getFreshPageForEvacuation() noexcept
 {
-    PageInfo* page = getLowestUtilPageHigh(this);
+    PageInfo* page = this->getLowestHighUtilPage();
     if(page == nullptr) {
-        page = getLowestUtilPageLow(this);
+        page = this->getLowestLowUtilPage();
     }
     if(page == nullptr) {
         page = GlobalPageGCManager::g_gc_page_manager.allocateFreshPage(this->allocsize, this->realsize);

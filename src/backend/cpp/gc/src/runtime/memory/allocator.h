@@ -417,6 +417,10 @@ T* MEM_ALLOC_CHECK(T* alloc)
 #define GET_ALLOC_MEMORY(ALLOC) (0)
 #endif
 
+#define IS_LOW_UTIL(U) (U >= 0.01f && U <= 0.60f)
+#define IS_HIGH_UTIL(U) (U > 0.60f && U <= 0.90f)
+#define IS_FULL(U) (U > 0.90f && U <= 1.0f)
+
 class GCAllocator
 {
 private:
@@ -434,13 +438,15 @@ private:
     PageList filled_pages; // Pages with over 90% utilization (no need for buckets here)
     //completely empty pages go back to the global pool
 
+    PageList low_util_buckets[NUM_LOW_UTIL_BUCKETS]; // Pages with 1-60% utilization (does not hold fully empty)
+    PageList high_util_buckets[NUM_HIGH_UTIL_BUCKETS]; // Pages with 61-90% utilization 
+
 #ifdef MEM_STATS
     // These two get zeroed at a collection
     size_t alloc_count;
     size_t alloc_memory;
 #else 
 #endif
-
     void (*collectfp)();
 
     PageInfo* getFreshPageForAllocator() noexcept; 
@@ -450,6 +456,76 @@ private:
     {
         this->pendinggc_pages.push(this->alloc_page);
     }
+
+    // TOOD: Unmagic number this
+    static inline int getBucketIndex(PageInfo* p) noexcept
+    {
+        float util = p->approx_utilization;
+        int idx = 0;
+        if(IS_LOW_UTIL(util)) {
+            idx = (90.0f - util) / 5.0f;
+        }
+        else {
+            idx = (60.0f - util) / 5.0f;
+        }
+
+        DSA_INVARIANT_CHECK(idx >= 0);
+        return idx;
+    }
+
+    inline bool insertPageInBucket(PageInfo* p) noexcept 
+    {
+        int idx = getBucketIndex(p);       
+
+        float util = p->approx_utilization;
+        if(IS_LOW_UTIL(util)) {
+            this->low_util_buckets[idx].push(p);
+            return true;
+        }
+        else if(IS_HIGH_UTIL(util)) {
+            this->high_util_buckets[idx].push(p);
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    inline PageInfo* getLowestLowUtilPage()
+    {
+        for(int i = 0; i < NUM_LOW_UTIL_BUCKETS; i++) {
+            if(!this->low_util_buckets[i].empty()) {
+                PageInfo* p = this->low_util_buckets[i].pop();
+                return p;
+            }
+        }
+
+        return nullptr;
+    }
+
+    inline PageInfo* getLowestHighUtilPage()
+    {
+        for(int i = 0; i < NUM_HIGH_UTIL_BUCKETS; i++) {
+            if(!this->high_util_buckets[i].empty()) {
+                PageInfo* p = this->high_util_buckets[i].pop();
+                return p;
+            }
+        }
+
+        return nullptr;
+    }
+
+    inline void removePageFromBucket(PageInfo* p) 
+    {
+        int idx = getBucketIndex(p);
+
+        if(IS_HIGH_UTIL(p->approx_utilization)) {
+            this->high_util_buckets[idx].remove(p);
+        }
+        else {
+            this->low_util_buckets[idx].remove(p);
+        }
+    }   
 
 public:
 #ifdef MEM_STATS
@@ -461,10 +537,6 @@ public:
         resetBuckets();
     }
 #endif
-
-    // Each "bucket" is a binary tree storing 5% of variance in approx_utiliation
-    PageInfo* low_util_buckets[NUM_LOW_UTIL_BUCKETS]; // Pages with 1-60% utilization (does not hold fully empty)
-    PageInfo* high_util_buckets[NUM_HIGH_UTIL_BUCKETS]; // Pages with 61-90% utilization 
 
     inline size_t getAllocSize() const noexcept
     {
@@ -495,7 +567,7 @@ public:
             this->filled_pages.remove(p);
         }
         else {
-            assert(false && "Lacking support for removal from low/high util pages!");
+            this->removePageFromBucket(p);
         }
 
         return p;
