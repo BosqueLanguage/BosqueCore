@@ -44,10 +44,6 @@ void PageInfo::rebuild() noexcept
     this->freelist = nullptr;
     this->freecount = 0;
     this->seen = false;
- 
-    this->owner = nullptr;
-    this->prev = nullptr;
-    this->next = nullptr;
 
     for(int64_t i = this->entrycount - 1; i >= 0; i--) {
         MetaData* meta = this->getMetaEntryAtIndex(i);

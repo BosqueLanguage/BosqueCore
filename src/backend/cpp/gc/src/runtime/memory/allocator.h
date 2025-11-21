@@ -231,24 +231,30 @@ public:
     }
 };
 
+//
+// I believe there is some very good ideas here, but most critically
+// im thinking storing the this pointer is leading to UB!
+// We may instead want to store the address of the list itself 
+// (i.e. pendinggc_pages or filled_pages)
+//
 class PageList {
     PageInfo* root;
 
-    static inline void reset(PageInfo* p) noexcept
+    static void reset(PageInfo* p) noexcept
     {
         p->owner = nullptr;
         p->prev = p->next = nullptr;
     }
 
 public:
-    PageList() = default;
+    PageList(): root(nullptr) {}
 
-    inline bool empty()
+    bool empty() const noexcept
     {
         return this->root == nullptr;
     }
 
-    void push(PageInfo* p) noexcept
+    void push(PageInfo* p)
     {
         assert(p->prev == nullptr && p->next == nullptr && p->owner == nullptr);
        
@@ -263,7 +269,7 @@ public:
         this->root = p;
     }
 
-    inline PageInfo* pop()
+    PageInfo* pop()
     {
         assert(!this->empty());
         
@@ -281,30 +287,26 @@ public:
     {
         assert(p->owner == this);
 
-        if(p == this->root) {
-            this->root = this->root->next;
-        }
+        if(p->prev != nullptr) {
+            p->prev->next = p->next;
+        } 
         else {
-            PageInfo* prev = p->prev;
-            PageInfo* next = p->next;
-
-            if(prev != nullptr) {
-                prev->next = next;
-            }
-            if(next != nullptr) {
-                next->prev = prev;
-            }
+            this->root = p->next;
         }
+        
+        if(p->next != nullptr) {
+            p->next->prev = p->prev;
+        } 
 
         reset(p);
     }
 
-    inline PageInfo* begin() noexcept 
+    PageInfo* begin() const noexcept 
     {
         return this->root;
     }
 
-    inline bool hasNext(PageInfo* cur) noexcept
+    bool hasNext(PageInfo* cur) const noexcept
     {
         if(cur == nullptr) {
             return false;
@@ -313,7 +315,7 @@ public:
         return cur->next != nullptr;
     }
 
-    inline PageInfo* next(PageInfo* cur)
+    PageInfo* next(PageInfo* cur) const
     {
         assert(cur != nullptr);
 
@@ -529,13 +531,9 @@ private:
 
 public:
 #ifdef MEM_STATS
-    GCAllocator(uint16_t objsize, uint16_t fullsize, void (*collect)()) noexcept : freelist(nullptr), evacfreelist(nullptr), alloc_page(nullptr), evac_page(nullptr), allocsize(objsize), realsize(fullsize), pendinggc_pages(), filled_pages(), alloc_count(0), alloc_memory(0), collectfp(collect) {
-        resetBuckets();
-    }
+    GCAllocator(uint16_t objsize, uint16_t fullsize, void (*collect)()) noexcept : freelist(nullptr), evacfreelist(nullptr), alloc_page(nullptr), evac_page(nullptr), allocsize(objsize), realsize(fullsize), pendinggc_pages(), filled_pages(), alloc_count(0), alloc_memory(0), collectfp(collect) { }
 #else 
-    GCAllocator(uint16_t objsize, uint16_t fullsize, void (*collect)()) noexcept : freelist(nullptr), evacfreelist(nullptr), alloc_page(nullptr), evac_page(nullptr), allocsize(objsize), realsize(fullsize), pendinggc_pages(), filled_pages(), collectfp(collect) {
-        resetBuckets();
-    }
+    GCAllocator(uint16_t objsize, uint16_t fullsize, void (*collect)()) noexcept : freelist(nullptr), evacfreelist(nullptr), alloc_page(nullptr), evac_page(nullptr), allocsize(objsize), realsize(fullsize), pendinggc_pages(), filled_pages(), collectfp(collect) { }
 #endif
 
     inline size_t getAllocSize() const noexcept
@@ -549,14 +547,7 @@ public:
         this->alloc_count++;
         this->alloc_memory += static_cast<size_t>(memory);
     }
-#else 
 #endif
-
-    inline void resetBuckets() noexcept 
-    {
-        xmem_zerofill(this->low_util_buckets, NUM_LOW_UTIL_BUCKETS);
-        xmem_zerofill(this->high_util_buckets, NUM_HIGH_UTIL_BUCKETS);
-    }
 
     PageInfo* tryRemovePage(PageInfo* p) {
         if(p == alloc_page || p == evac_page || p->owner == &this->pendinggc_pages) {
