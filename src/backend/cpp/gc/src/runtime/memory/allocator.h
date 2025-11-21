@@ -112,6 +112,8 @@
 #define REAL_ENTRY_SIZE(ESIZE) (ESIZE + sizeof(MetaData))
 #endif
 
+class PageList;
+
 ////////////////////////////////
 //Memory allocator
 
@@ -152,9 +154,10 @@ class PageInfo
 {
 public:
     FreeListEntry* freelist; //allocate from here until nullptr
+    
+    PageList* owner; // What list are we in (if any)?
+    PageInfo* prev;
     PageInfo* next;
-    PageInfo* left; //left pointer in bst
-    PageInfo* right; //right pointer in bst
 
     uint8_t* data; //start of the data block
 
@@ -226,6 +229,88 @@ public:
     {
         GC_INVARIANT_CHECK(this->pending_decs_count > 0);
         this->pending_decs_count--;
+    }
+};
+
+class PageList {
+    PageInfo* root;
+
+    static inline void reset(PageInfo* p) noexcept
+    {
+        p->owner = nullptr;
+        p->prev = p->next = nullptr;
+    }
+
+public:
+    PageList() = default;
+
+    inline bool empty()
+    {
+        return this->root == nullptr;
+    }
+
+    void push(PageInfo* p) noexcept
+    {
+        assert(p->prev == nullptr && p->next == nullptr && p->owner == nullptr);
+       
+        p->owner = this;
+        p->prev = nullptr;
+        p->next = this->root;
+
+        if(this->root != nullptr) {
+            this->root->prev = p;
+        }
+
+        this->root = p;
+    }
+
+    inline PageInfo* pop()
+    {
+        assert(!this->empty());
+        
+        PageInfo* p = this->root;
+        this->root = this->root->next;
+        if(this->root != nullptr) {
+            this->root->prev = nullptr;
+        }
+
+        reset(p);
+        return p;
+    }
+
+    void remove(PageInfo* p) 
+    {
+        if(p == this->root) {
+            this->root = this->root->next;
+        }
+        else {
+            PageInfo* prev = p->prev;
+            PageInfo* next = p->next;
+
+            if(prev != nullptr) {
+                prev->next = next;
+            }
+            if(next != nullptr) {
+                next->prev = prev;
+            }
+        }
+
+        reset(p);
+    }
+
+    inline PageInfo* begin() noexcept 
+    {
+        return this->root;
+    }
+
+    inline bool hasNext(PageInfo* cur) noexcept
+    {
+        return cur->next != nullptr;
+    }
+
+    inline PageInfo* next(PageInfo* cur) noexcept
+    {
+        return cur->next;
     }
 };
 
