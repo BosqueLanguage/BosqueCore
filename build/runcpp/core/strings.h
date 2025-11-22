@@ -109,21 +109,26 @@ namespace Core
 
     public:
         constexpr CString() noexcept : tree() {}
-        constexpr CString(ᐸRuntimeᐳ::CStrBuff b) noexcept : tree(ᐸRuntimeᐳ::Boxed<sizeof(ᐸRuntimeᐳ::CStrBuff) / BSQ_SLOT_BYTE_SIZE>::makeBoxed<ᐸRuntimeᐳ::CStrBuff>(&ᐸRuntimeᐳ::g_wellKnownTypeCStrBuff, b)) {}
+        constexpr CString(ᐸRuntimeᐳ::CStrBuff b) noexcept : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::CStrTreeᐤUnion>(&ᐸRuntimeᐳ::g_wellKnownTypeCStrBuff, ᐸRuntimeᐳ::CStrTreeᐤUnion(b))) {}
+        constexpr CString(ᐸRuntimeᐳ::CStrNode n) noexcept : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::CStrTreeᐤUnion>(&ᐸRuntimeᐳ::g_wellKnownTypeCStrNode, ᐸRuntimeᐳ::CStrTreeᐤUnion(n))) {}
         constexpr CString(const ᐸRuntimeᐳ::CStrTree& t) noexcept : tree(t) {}
 
         constexpr static CString foo() noexcept {
-            constexpr auto t = &ᐸRuntimeᐳ::g_wellKnownTypeCStrBuff;
-            constexpr ᐸRuntimeᐳ::CStrBuff b("hello");
-
-            constexpr auto bs = ᐸRuntimeᐳ::CStrTreeᐤUnion(b);
-            constexpr auto bb = ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::CStrTreeᐤUnion>(&ᐸRuntimeᐳ::g_wellKnownTypeCStrBuff, bs);
-
+            constexpr auto nnode = ᐸRuntimeᐳ::CStrNode(5, ᐸRuntimeᐳ::RColor::Red, nullptr, nullptr);
+            constexpr auto nn = ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::CStrTreeᐤUnion>(&ᐸRuntimeᐳ::g_wellKnownTypeCStrNode, ᐸRuntimeᐳ::CStrTreeᐤUnion(nnode));
             
-            ᐸRuntimeᐳ::CStrTree t1;
-            t1 = bb;
+            
+            constexpr int64_t x = 5;
+            static_assert(sizeof(int64_t) == sizeof(std::array<int32_t, 2>), "bit_cast size assumption failure");
 
-            return CString(b);
+            constexpr int32_t z = std::bit_cast<std::array<int32_t, 2>>(x)[0];
+
+            constexpr auto yy = std::bit_cast<uint64_t[4], ᐸRuntimeᐳ::CStrTreeᐤUnion>(nn.data);
+            constexpr auto bb = std::bit_cast<ᐸRuntimeᐳ::CStrTree*>( + 3);
+            
+            constexpr auto left = nn.accessfield<ᐸRuntimeᐳ::CStrTree*, ᐸRuntimeᐳ::CStrNode, 3, 1>();
+
+            return CString(nn);
         }
 
         constexpr CString(const CString& other) noexcept = default;

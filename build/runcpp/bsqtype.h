@@ -2,25 +2,23 @@
 
 #include "common.h"
 
-#define BSQ_SLOT_BYTE_SIZE 8
+#define BSQ_PTR_MASK_NOP ('0')
+#define BSQ_PTR_MASK_PTR ('1')
+#define BSQ_PTR_MASK_TAGGED ('2')
 
-#define PTR_MASK_NOP ('0')
-#define PTR_MASK_PTR ('1')
-#define PTR_MASK_TAGGED ('2')
-
-#define PTR_MASK_LEAF nullptr
-
-#define WELL_KNOWN_TYPE_ID_NONE 0
-#define WELL_KNOWN_TYPE_ID_BOOL 1
-
-#define WELL_KNOWN_TYPE_ID_CSTRBUFF 2
-#define WELL_KNOWN_TYPE_ID_CSTRNODE 3
-#define WELL_KNOWN_TYPE_ID_CSTRING 4
+#define BSQ_PTR_MASK_LEAF nullptr
 
 namespace Core
 {
     namespace ᐸRuntimeᐳ
     {
+        constexpr uint32_t WELL_KNOWN_TYPE_ID_NONE = 0;
+        constexpr uint32_t WELL_KNOWN_TYPE_ID_BOOL = 1;
+
+        constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTRBUFF = 2;
+        constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTRNODE = 3;
+        constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTRING = 4;
+
         enum class LayoutTag
         {
             Value,
