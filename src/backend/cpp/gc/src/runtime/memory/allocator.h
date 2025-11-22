@@ -115,11 +115,12 @@
 ////////////////////////////////
 //Memory allocator
 
+class PageList;
+
 //global storage for constant data (and testing support)
 //  -- Only a single thread may run while initializing the global roots as they are visible to all threads
 //  -- After initialization a GC must be run to promote all values to old ref-count space
 //  -- TODO: when we add multi-threading we need to use the special root-ref tag for these roots as well -- then we can skip re-scanning these after the promotion collection
-
 class GlobalDataStorage
 {
 public:
@@ -146,15 +147,17 @@ struct FreeListEntry
 };
 static_assert(sizeof(FreeListEntry) <= sizeof(MetaData), "BlockHeader size is not 8 bytes");
 
-#define PAGE_OFFSET_MASK 0xFFF
-
 class PageInfo
 {
 public:
     FreeListEntry* freelist; //allocate from here until nullptr
+   
+    // NOTE: as our gc allocators are declared statically, the addresses 
+    // of a PageList will not change. However, if PageLists need to be 
+    // used elsewhere, extra care will be needed (i.e. stack allocs)
+    PageList* owner; // What list are we in (if any)?
+    PageInfo* prev;
     PageInfo* next;
-    PageInfo* left; //left pointer in bst
-    PageInfo* right; //right pointer in bst
 
     uint8_t* data; //start of the data block
 
@@ -229,10 +232,105 @@ public:
     }
 };
 
+struct PageIterator {
+    PageInfo* current;
+    
+    PageInfo* operator*()
+    { 
+        return current; 
+    }
+
+    PageIterator& operator++() 
+    { 
+        current = current->next; 
+        return *this; 
+    }
+    
+    bool operator!=(const PageIterator& other) 
+    { 
+        return current != other.current; 
+    }
+};
+
+class PageList {
+    PageInfo* root;
+
+    static void reset(PageInfo* p) noexcept
+    {
+        p->owner = nullptr;
+        p->prev = p->next = nullptr;
+    }
+
+public:
+    PageList() noexcept : root(nullptr) {}
+
+    bool empty() const noexcept
+    {
+        return this->root == nullptr;
+    }
+
+    void push(PageInfo* p)
+    {
+        assert(p->prev == nullptr && p->next == nullptr && p->owner == nullptr);
+       
+        p->owner = this;
+        p->prev = nullptr;
+        p->next = this->root;
+
+        if(this->root != nullptr) {
+            this->root->prev = p;
+        }
+
+        this->root = p;
+    }
+
+    PageInfo* pop()
+    {
+        assert(!this->empty());
+        
+        PageInfo* p = this->root;
+        this->root = this->root->next;
+        if(this->root != nullptr) {
+            this->root->prev = nullptr;
+        }
+
+        reset(p);
+        return p;
+    }
+
+    void remove(PageInfo* p) 
+    {
+        assert(p->owner == this);
+
+        if(p->prev != nullptr) {
+            p->prev->next = p->next;
+        } 
+        else {
+            this->root = p->next;
+        }
+        
+        if(p->next != nullptr) {
+            p->next->prev = p->prev;
+        } 
+
+        reset(p);
+    }
+
+    PageIterator begin() const noexcept 
+    {
+        return PageIterator{ this->root };
+    }
+
+    PageIterator end() const noexcept 
+    {
+        return PageIterator{ nullptr };
+    }
+};
+
 class GlobalPageGCManager
 {
 private:
-    PageInfo* empty_pages;
+    PageList empty_pages;
     PageTable pagetable;
 
     inline void pagetableInsert(void* addr) noexcept
@@ -243,7 +341,7 @@ private:
 public:
     static GlobalPageGCManager g_gc_page_manager;
 
-    GlobalPageGCManager() noexcept : empty_pages(nullptr), pagetable() { }
+    GlobalPageGCManager() noexcept : empty_pages(), pagetable() { }
 
     PageInfo* allocateFreshPage(uint16_t entrysize, uint16_t realsize) noexcept;
 
@@ -256,8 +354,7 @@ public:
     {
         GC_MEM_LOCK_ACQUIRE();
 
-        newPage->next = empty_pages;  
-        empty_pages = newPage;    
+        this->empty_pages.push(newPage);
         
         GC_MEM_LOCK_RELEASE();
     }
@@ -302,10 +399,6 @@ T* MEM_ALLOC_CHECK(T* alloc)
 
 #define CALC_APPROX_UTILIZATION(P) 1.0f - ((float)P->freecount / (float)P->entrycount)
 
-#define NUM_LOW_UTIL_BUCKETS 12
-#define NUM_HIGH_UTIL_BUCKETS 6
-
-
 #ifdef MEM_STATS
 #define UPDATE_ALLOC_STATS(ALLOC, MEMORY_SIZE) \
     (ALLOC)->updateAllocInfo(MEMORY_SIZE)
@@ -326,6 +419,15 @@ T* MEM_ALLOC_CHECK(T* alloc)
 #define GET_ALLOC_MEMORY(ALLOC) (0)
 #endif
 
+#define NUM_LOW_UTIL_BUCKETS 12
+#define NUM_HIGH_UTIL_BUCKETS 6
+#define LOW_UTIL_THRESH 0.60f
+#define HIGH_UTIL_THRESH 0.90f
+#define BUCKET_UTIL_VARIANCE 0.05f
+#define IS_LOW_UTIL(U) (U >= 0.01f && U <= LOW_UTIL_THRESH)
+#define IS_HIGH_UTIL(U) (U > LOW_UTIL_THRESH && U <= HIGH_UTIL_THRESH)
+#define IS_FULL(U) (U > HIGH_UTIL_THRESH && U <= 1.0f)
+
 class GCAllocator
 {
 private:
@@ -339,9 +441,12 @@ private:
     uint16_t allocsize; //size of the alloc entries in this page (excluding metadata)
     uint16_t realsize;  //size of the alloc entries in this page (including metadata and other stuff)
 
-    PageInfo* pendinggc_pages; // Pages that are pending GC
-    PageInfo* filled_pages; // Pages with over 90% utilization (no need for buckets here)
+    PageList pendinggc_pages; // Pages that are pending GC
+    PageList filled_pages; // Pages with over 90% utilization (no need for buckets here)
     //completely empty pages go back to the global pool
+
+    PageList low_util_buckets[NUM_LOW_UTIL_BUCKETS]; // Pages with 1-60% utilization (does not hold fully empty)
+    PageList high_util_buckets[NUM_HIGH_UTIL_BUCKETS]; // Pages with 61-90% utilization 
 
 #ifdef MEM_STATS
     // These two get zeroed at a collection
@@ -349,32 +454,93 @@ private:
     size_t alloc_memory;
 #else 
 #endif
-
     void (*collectfp)();
 
     PageInfo* getFreshPageForAllocator() noexcept; 
     PageInfo* getFreshPageForEvacuation() noexcept;
 
-    inline void rotateFullAllocPage() noexcept
+    inline void rotateFullAllocPage()
     {
-        this->alloc_page->next = this->pendinggc_pages;
-        this->pendinggc_pages = this->alloc_page;
+        this->pendinggc_pages.push(this->alloc_page);
     }
+
+    static int getBucketIndex(PageInfo* p)
+    {
+        float util = p->approx_utilization;
+        int idx = 0;
+        if(IS_LOW_UTIL(util)) {
+            idx = (util - 0.01f) / BUCKET_UTIL_VARIANCE;
+            DSA_INVARIANT_CHECK(idx < NUM_LOW_UTIL_BUCKETS);
+        }
+        else {
+            idx = (util - 0.61f) / BUCKET_UTIL_VARIANCE;
+            DSA_INVARIANT_CHECK(idx < NUM_HIGH_UTIL_BUCKETS);
+        }
+
+        DSA_INVARIANT_CHECK(idx >= 0);
+        return idx;
+    }
+
+    bool insertPageInBucket(PageInfo* p) 
+    {
+        float util = p->approx_utilization;
+        if(IS_LOW_UTIL(util)) { 
+            int idx = getBucketIndex(p);
+            this->low_util_buckets[idx].push(p);
+            return true;
+        }
+        else if(IS_HIGH_UTIL(util)) {
+            int idx = getBucketIndex(p);
+            this->high_util_buckets[idx].push(p);
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    PageInfo* getLowestLowUtilPage()
+    {
+        for(int i = 0; i < NUM_LOW_UTIL_BUCKETS; i++) {
+            if(!this->low_util_buckets[i].empty()) {
+                PageInfo* p = this->low_util_buckets[i].pop();
+                return p;
+            }
+        }
+
+        return nullptr;
+    }
+
+    PageInfo* getLowestHighUtilPage()
+    {
+        for(int i = 0; i < NUM_HIGH_UTIL_BUCKETS; i++) {
+            if(!this->high_util_buckets[i].empty()) {
+                PageInfo* p = this->high_util_buckets[i].pop();
+                return p;
+            }
+        }
+
+        return nullptr;
+    }
+
+    void removePageFromBucket(PageInfo* p) 
+    {
+        int idx = getBucketIndex(p);
+
+        if(IS_HIGH_UTIL(p->approx_utilization)) {
+            this->high_util_buckets[idx].remove(p);
+        }
+        else {
+            this->low_util_buckets[idx].remove(p);
+        }
+    }   
 
 public:
 #ifdef MEM_STATS
-    GCAllocator(uint16_t objsize, uint16_t fullsize, void (*collect)()) noexcept : freelist(nullptr), evacfreelist(nullptr), alloc_page(nullptr), evac_page(nullptr), allocsize(objsize), realsize(fullsize), pendinggc_pages(nullptr), filled_pages(nullptr), alloc_count(0), alloc_memory(0), collectfp(collect) {
-        resetBuckets();
-    }
+    GCAllocator(uint16_t objsize, uint16_t fullsize, void (*collect)()) noexcept : freelist(nullptr), evacfreelist(nullptr), alloc_page(nullptr), evac_page(nullptr), allocsize(objsize), realsize(fullsize), pendinggc_pages(), filled_pages(), alloc_count(0), alloc_memory(0), collectfp(collect) { }
 #else 
-    GCAllocator(uint16_t objsize, uint16_t fullsize, void (*collect)()) noexcept : freelist(nullptr), evacfreelist(nullptr), alloc_page(nullptr), evac_page(nullptr), allocsize(objsize), realsize(fullsize), pendinggc_pages(nullptr), filled_pages(nullptr), collectfp(collect) {
-        resetBuckets();
-    }
+    GCAllocator(uint16_t objsize, uint16_t fullsize, void (*collect)()) noexcept : freelist(nullptr), evacfreelist(nullptr), alloc_page(nullptr), evac_page(nullptr), allocsize(objsize), realsize(fullsize), pendinggc_pages(), filled_pages(), collectfp(collect) { }
 #endif
-
-    // Each "bucket" is a binary tree storing 5% of variance in approx_utiliation
-    PageInfo* low_util_buckets[NUM_LOW_UTIL_BUCKETS]; // Pages with 1-60% utilization (does not hold fully empty)
-    PageInfo* high_util_buckets[NUM_HIGH_UTIL_BUCKETS]; // Pages with 61-90% utilization 
 
     inline size_t getAllocSize() const noexcept
     {
@@ -387,43 +553,21 @@ public:
         this->alloc_count++;
         this->alloc_memory += static_cast<size_t>(memory);
     }
-#else 
 #endif
 
-    inline void resetBuckets() noexcept 
-    {
-        xmem_zerofill(this->low_util_buckets, NUM_LOW_UTIL_BUCKETS);
-        xmem_zerofill(this->high_util_buckets, NUM_HIGH_UTIL_BUCKETS);
-    }
-
-    //
-    // NOTE: This search is quite slow, if we have a lot of pages
-    // maybe problematic (faster that just rebuilding all filled pages though)
-    //
-
-    // Remove for reprocessing, called if decrements occured on p
-    PageInfo* tryRemoveFromFilledPages(PageInfo* p) {
-        if(p == alloc_page || p == evac_page) {
+    PageInfo* tryRemovePage(PageInfo* p) {
+        if(p == alloc_page || p == evac_page || p->owner == &this->pendinggc_pages) {
             return nullptr;
         }
     
-        PageInfo* prev = nullptr;
-        PageInfo* cur = this->filled_pages;
-        while(cur != nullptr) {
-            if(cur == p) {
-                if(prev == nullptr) {
-                    this->filled_pages = cur->next;
-                }
-                else {
-                    prev->next = cur->next;
-                }
-                cur->next = nullptr;
-                return p;
-            }
-            prev = cur;
-            cur = cur->next;
+        if(p->owner == &this->filled_pages) {
+            this->filled_pages.remove(p);
         }
-        return nullptr;
+        else {
+            this->removePageFromBucket(p);
+        }
+
+        return p;
     }
 
     inline void* allocate(__CoreGC::TypeInfoBase* type)

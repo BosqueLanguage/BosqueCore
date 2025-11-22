@@ -20,7 +20,7 @@ static void reprocessPageInfo(PageInfo* page, BSQMemoryTheadLocalInfo& tinfo) no
 {
     // This should not be called on pages that are (1) active allocators or evacuators or (2) pending collection pages
     GCAllocator* gcalloc = tinfo.getAllocatorForPageSize(page);
-    PageInfo* npage = gcalloc->tryRemoveFromFilledPages(page);
+    PageInfo* npage = gcalloc->tryRemovePage(page);
     if(npage != nullptr) {
         npage->rebuild();
         gcalloc->processPage(npage);

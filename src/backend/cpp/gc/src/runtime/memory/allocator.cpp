@@ -1,6 +1,5 @@
 #include "allocator.h"
 #include "threadinfo.h"
-#include "../support/pagebst.h"
 
 GlobalDataStorage GlobalDataStorage::g_global_data{};
 
@@ -15,15 +14,17 @@ PageInfo* PageInfo::initialize(void* block, uint16_t allocsize, uint16_t realsiz
     PageInfo* pp = (PageInfo*)block;
 
     pp->freelist = nullptr;
-    pp->next = nullptr;
     pp->data = ((uint8_t*)block + sizeof(PageInfo));
     pp->allocsize = allocsize;
     pp->realsize = realsize;
     pp->approx_utilization = 0.0f;
     pp->pending_decs_count = 0;
     pp->seen = false;
-    pp->left = nullptr;
-    pp->right = nullptr;
+
+    pp->owner = nullptr;
+    pp->prev = nullptr;
+    pp->next = nullptr;
+
     pp->entrycount = (BSQ_BLOCK_ALLOCATION_SIZE - (pp->data - (uint8_t*)pp)) / realsize;
     pp->freecount = pp->entrycount;
 
@@ -42,10 +43,7 @@ void PageInfo::rebuild() noexcept
     this->freelist = nullptr;
     this->freecount = 0;
     this->seen = false;
-    this->next = nullptr;
-    this->left = nullptr;
-    this->right = nullptr;
-    
+
     for(int64_t i = this->entrycount - 1; i >= 0; i--) {
         MetaData* meta = this->getMetaEntryAtIndex(i);
 
@@ -70,10 +68,8 @@ PageInfo* GlobalPageGCManager::allocateFreshPage(uint16_t entrysize, uint16_t re
     GC_MEM_LOCK_ACQUIRE();
 
     PageInfo* pp = nullptr;
-    if(this->empty_pages != nullptr) {
-        void* page = this->empty_pages;
-        this->empty_pages = this->empty_pages->next;
-
+    if(!this->empty_pages.empty()) {
+        void* page = this->empty_pages.pop();
         pp = PageInfo::initialize(page, entrysize, realsize);
     }
     else {
@@ -108,12 +104,11 @@ void GCAllocator::processPage(PageInfo* p) noexcept
         return ;
     }
     
-    if(insertPageInBucket(this, p)) {
+    if(this->insertPageInBucket(p)) {
         return ;
     }
      
-    p->next = this->filled_pages;
-    filled_pages = p;
+    this->filled_pages.push(p);
 }
 
 void GCAllocator::processCollectorPages() noexcept
@@ -134,21 +129,16 @@ void GCAllocator::processCollectorPages() noexcept
         this->evacfreelist = nullptr;
     }
 
-    PageInfo* cur = this->pendinggc_pages;
-    while(cur != nullptr) {
-        PageInfo* next = cur->next;
-
-        cur->rebuild();
-        this->processPage(cur);
-
-        cur = next;
+    while(!this->pendinggc_pages.empty()) {
+        PageInfo* p = this->pendinggc_pages.pop();
+        p->rebuild();
+        this->processPage(p);
     }
-    this->pendinggc_pages = nullptr;
 }
 
 PageInfo* GCAllocator::getFreshPageForAllocator() noexcept
 {
-    PageInfo* page = getLowestUtilPageLow(this);
+    PageInfo* page = this->getLowestLowUtilPage();
     if(page == nullptr) {
         page = GlobalPageGCManager::g_gc_page_manager.allocateFreshPage(this->allocsize, this->realsize);
     }
@@ -158,9 +148,9 @@ PageInfo* GCAllocator::getFreshPageForAllocator() noexcept
 
 PageInfo* GCAllocator::getFreshPageForEvacuation() noexcept
 {
-    PageInfo* page = getLowestUtilPageHigh(this);
+    PageInfo* page = this->getLowestHighUtilPage();
     if(page == nullptr) {
-        page = getLowestUtilPageLow(this);
+        page = this->getLowestLowUtilPage();
     }
     if(page == nullptr) {
         page = GlobalPageGCManager::g_gc_page_manager.allocateFreshPage(this->allocsize, this->realsize);
@@ -194,8 +184,7 @@ void GCAllocator::allocatorRefreshAllocationPage(__CoreGC::TypeInfoBase* typeinf
 void GCAllocator::allocatorRefreshEvacuationPage() noexcept
 {
     if(this->evac_page != nullptr) {
-        this->evac_page->next = this->filled_pages;
-        this->filled_pages = this->evac_page;
+        this->filled_pages.push(this->evac_page);
     }
 
     this->evac_page = this->getFreshPageForEvacuation();
@@ -227,22 +216,6 @@ static inline void process(PageInfo* page) noexcept
     UPDATE_TOTAL_LIVE_OBJECTS(gtl_info, +=, (page->entrycount - freecount));
 }
 
-static void traverseBST(PageInfo* node) noexcept
-{
-    if(!node) {
-        return;
-    }
-
-    PageInfo* current = node;
-    while (current != nullptr) {
-        process(current);
-        current = current->next;
-    }
-    
-    traverseBST(node->left);
-    traverseBST(node->right); 
-}
-
 void GCAllocator::updateMemStats() noexcept
 {
     UPDATE_TOTAL_ALLOC_COUNT(gtl_info, +=, GET_ALLOC_COUNT(this));
@@ -250,20 +223,22 @@ void GCAllocator::updateMemStats() noexcept
     RESET_ALLOC_STATS(this);
 
     //compute stats for filled pages
-    PageInfo* filled_it = this->filled_pages;
-    while(filled_it != nullptr) {
-        process(filled_it);
-        filled_it = filled_it->next;
+    for(PageInfo* p : this->filled_pages) {
+        process(p);
     }
 
     // Compute stats for high util pages
     for(int i = 0; i < NUM_HIGH_UTIL_BUCKETS; i++) {
-        traverseBST(this->high_util_buckets[i]);
+        for(PageInfo* p : this->high_util_buckets[i]) {
+            process(p);
+        }
     }
 
     // Compute stats for low util pages
     for(int i = 0; i < NUM_LOW_UTIL_BUCKETS; i++) {
-        traverseBST(this->low_util_buckets[i]);
+        for(PageInfo* p : this->low_util_buckets[i]) {
+            process(p);
+        }
     }
 
     if(TOTAL_LIVE_BYTES(gtl_info) > MAX_LIVE_HEAP(gtl_info)) {
