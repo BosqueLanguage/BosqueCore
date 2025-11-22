@@ -459,12 +459,12 @@ private:
     PageInfo* getFreshPageForAllocator() noexcept; 
     PageInfo* getFreshPageForEvacuation() noexcept;
 
-    inline void rotateFullAllocPage() noexcept
+    inline void rotateFullAllocPage()
     {
         this->pendinggc_pages.push(this->alloc_page);
     }
 
-    static inline int getBucketIndex(PageInfo* p) noexcept
+    static int getBucketIndex(PageInfo* p)
     {
         float util = p->approx_utilization;
         int idx = 0;
@@ -481,16 +481,16 @@ private:
         return idx;
     }
 
-    inline bool insertPageInBucket(PageInfo* p) noexcept 
+    bool insertPageInBucket(PageInfo* p) 
     {
-        int idx = getBucketIndex(p);       
-
         float util = p->approx_utilization;
-        if(IS_LOW_UTIL(util)) {
+        if(IS_LOW_UTIL(util)) { 
+            int idx = getBucketIndex(p);
             this->low_util_buckets[idx].push(p);
             return true;
         }
         else if(IS_HIGH_UTIL(util)) {
+            int idx = getBucketIndex(p);
             this->high_util_buckets[idx].push(p);
             return true;
         }
@@ -499,7 +499,7 @@ private:
         }
     }
 
-    inline PageInfo* getLowestLowUtilPage()
+    PageInfo* getLowestLowUtilPage()
     {
         for(int i = 0; i < NUM_LOW_UTIL_BUCKETS; i++) {
             if(!this->low_util_buckets[i].empty()) {
@@ -511,7 +511,7 @@ private:
         return nullptr;
     }
 
-    inline PageInfo* getLowestHighUtilPage()
+    PageInfo* getLowestHighUtilPage()
     {
         for(int i = 0; i < NUM_HIGH_UTIL_BUCKETS; i++) {
             if(!this->high_util_buckets[i].empty()) {
@@ -523,7 +523,7 @@ private:
         return nullptr;
     }
 
-    inline void removePageFromBucket(PageInfo* p) 
+    void removePageFromBucket(PageInfo* p) 
     {
         int idx = getBucketIndex(p);
 
