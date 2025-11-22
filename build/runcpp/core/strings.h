@@ -59,7 +59,6 @@ namespace Core
         {
             CStrBuff buff;
             CStrNode node;
-            uint64_t* rawptr;
 
             constexpr CStrTreeᐤUnion() noexcept : buff() {}
             constexpr CStrTreeᐤUnion(const CStrBuff& b) noexcept : buff(b) {}
@@ -120,8 +119,7 @@ namespace Core
             constexpr auto bs = ᐸRuntimeᐳ::CStrTreeᐤUnion(b);
             constexpr auto bb = ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::CStrTreeᐤUnion>(&ᐸRuntimeᐳ::g_wellKnownTypeCStrBuff, bs);
 
-            std::copy(bb.data.rawptr, bb.data.rawptr + 1, nullptr);
-
+            
             ᐸRuntimeᐳ::CStrTree t1;
             t1 = bb;
 

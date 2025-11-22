@@ -41,6 +41,7 @@ namespace Core
 
         private:
             static_assert(std::is_union_v<U>, "BoxedUnion requires a union type U");
+            constexpr BoxedUnion(const TypeInfoBase* ti) noexcept : typeinfo(ti), data() {}
 
         public:
             constexpr BoxedUnion() noexcept : typeinfo(nullptr), data() {};
@@ -48,10 +49,33 @@ namespace Core
             constexpr BoxedUnion(const BoxedUnion& other) noexcept = default;
             constexpr BoxedUnion& operator=(const BoxedUnion& other) noexcept = default;
             
-            template<typename T>
+            template<typename V>
+            constexpr BoxedUnion<V> convert() noexcept {
+                static_assert(std::is_union_v<V>, "BoxedUnion widen requires a union type V");
+                static_assert(sizeof(V) == sizeof(U), "BoxedUnion widen requires V to be at least as large as U");
+
+                return BoxedUnion<V>(this->typeinfo, std::bit_cast<V>(this->data));
+            }
+
+            template<typename V>
+            constexpr BoxedUnion<V> widen() noexcept {
+                static_assert(std::is_union_v<V>, "BoxedUnion widen requires a union type V");
+                static_assert(sizeof(V) > sizeof(U), "BoxedUnion widen requires V to be at least as large as U");
+
+                return BoxedUnion<V>(this->typeinfo, std::bit_cast<V>(this->data));
+            }
+
+            template<typename V>
+            constexpr BoxedUnion<V> narrow() noexcept {
+                static_assert(std::is_union_v<V>, "BoxedUnion widen requires a union type V");
+                static_assert(sizeof(V) < sizeof(U), "BoxedUnion widen requires V to be at least as large as U");
+
+                return BoxedUnion<V>(this->typeinfo, std::bit_cast<V>(this->data));
+            }
+
+            template<typename T, size_t idx, typename FTypeRepr>
             constexpr T access() noexcept { 
-                constexpr if(std::is_pointer_v<T>) {
-                    //load the field as if it is stored indirectly
+                constexpr if(std::is_pointer_v<FTypeRepr>) {
                     return *(reinterpret_cast<T*>(reinterpret_cast<uint64_t*>(this->data[0]) + i));   
                 }
                 else {
