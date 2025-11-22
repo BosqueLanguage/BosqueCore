@@ -147,13 +147,14 @@ struct FreeListEntry
 };
 static_assert(sizeof(FreeListEntry) <= sizeof(MetaData), "BlockHeader size is not 8 bytes");
 
-#define PAGE_OFFSET_MASK 0xFFF
-
 class PageInfo
 {
 public:
     FreeListEntry* freelist; //allocate from here until nullptr
-    
+   
+    // NOTE: as our gc allocators are declared statically, the addresses 
+    // of a PageList will not change. However, if PageLists need to be 
+    // used elsewhere, extra care will be needed (i.e. stack allocs)
     PageList* owner; // What list are we in (if any)?
     PageInfo* prev;
     PageInfo* next;
