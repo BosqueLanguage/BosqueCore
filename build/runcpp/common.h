@@ -11,6 +11,7 @@
 #include <string>
 #include <map>
 #include <list>
+#include <type_traits>
 
 #include <threads.h>
 

@@ -7,77 +7,50 @@ namespace Core
 {
     namespace ᐸRuntimeᐳ
     {
-        template <size_t K>
+        template <typename T>
         class Option 
         {
         public:
-            TypeInfoBase* typeinfo;
-            
+            const TypeInfoBase* typeinfo;
+            T data;
+        
         private:
-            uint64_t data[K];
+            constexpr Option(const TypeInfoBase* ti) noexcept : typeinfo(ti), data() {}
+            constexpr Option(const TypeInfoBase* ti, const T& d) noexcept : typeinfo(ti), data(d) {}
 
         public:
             constexpr Option() noexcept : typeinfo(nullptr), data{0} {};
-            constexpr Option(const TypeInfoBase* ti) noexcept : typeinfo(ti), data{0} {};
+            constexpr Option(const Option& other) noexcept = default;
+            constexpr Option& operator=(const Option& other) noexcept = default;
             
-            constexpr Option(const Option& rhs) noexcept = default;
-            constexpr Option& operator=(const Option& rhs) noexcept = default;
-            
-            // Special none option constructor
+            // Special none option bits
+            constexpr isNone() const noexcept { return this->typeinfo == &g_wellKnownTypeNone; }
             static constexpr Option optnone(&g_wellKnownTypeNone);
 
-            // Some constructors
-            template<typename T>
-            constexpr makeSome(const TypeInfoBase* ti, const T& d) noexcept : typeinfo(ti) {
-                static_assert(sizeof(T) <= K * sizeof(uint64_t), "Object too large for Option<K>");
-
-                Option<K> opt(ti);
-                *(reinterpret_cast<T*>(opt.data)) = d;
-                return opt;
-            }
-
-            template<typename T>
-            constexpr T get() {
-                return *(reinterpret_cast<T*>(this->data));
-            }
+            // Some option bits
+            constexpr isSome() const noexcept { return this->typeinfo != &g_wellKnownTypeNone; }
+            constexpr makeSome(const TypeInfoBase* ti, const T& d) noexcept : typeinfo(ti) { return Option(ti, d); }
         };
 
-        template <size_t K>
-        class Boxed 
+        template <typename U>
+        class BoxedUnion
         {
         public:
             const TypeInfoBase* typeinfo;
-            
+            U data;
+
         private:
-            const uint64_t data[K];
+            static_assert(std::is_union_v<U>, "BoxedUnion requires a union type U");
 
         public:
-            constexpr Boxed() noexcept : typeinfo(nullptr), data{0} {};
-            constexpr Boxed(const TypeInfoBase* ti) noexcept : typeinfo(ti), data{0} {};
-
-            constexpr Boxed(const Boxed& rhs) noexcept = default;
-            constexpr Boxed& operator=(const Boxed& rhs) noexcept {
-                this->typeinfo = rhs.typeinfo;
-                std::copy(rhs.data, rhs.data + K, const_cast<uint64_t*>(this->data));
-                return *this;
-            }
-
-            // Empty constructor
-            constexpr Boxed(const TypeInfoBase* ti) noexcept : typeinfo(ti), data{0} {}
-
-            // Value constructors
+            constexpr BoxedUnion() noexcept : typeinfo(nullptr), data() {};
+            constexpr BoxedUnion(const TypeInfoBase* ti, const U& d) noexcept : typeinfo(ti), data(d) {}
+            constexpr BoxedUnion(const BoxedUnion& other) noexcept = default;
+            constexpr BoxedUnion& operator=(const BoxedUnion& other) noexcept = default;
+            
             template<typename T>
-            static constexpr Boxed makeBoxed(const TypeInfoBase* ti, const T& d) noexcept {
-                static_assert(sizeof(T) <= K * sizeof(uint64_t), "Object too large for Boxed<K>");
-
-                constexpr Boxed<K> boxed(ti);
-                //*(reinterpret_cast<T*>(boxed.data)) = d;
-                return boxed;
-            }
-
-            template<typename T, size_t i=0>
             constexpr T access() noexcept { 
-                if(this->typeinfo->tag == LayoutTag::Ref) {
+                constexpr if(std::is_pointer_v<T>) {
                     //load the field as if it is stored indirectly
                     return *(reinterpret_cast<T*>(reinterpret_cast<uint64_t*>(this->data[0]) + i));   
                 }
