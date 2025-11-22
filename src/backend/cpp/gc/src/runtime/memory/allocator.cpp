@@ -14,7 +14,6 @@ PageInfo* PageInfo::initialize(void* block, uint16_t allocsize, uint16_t realsiz
     PageInfo* pp = (PageInfo*)block;
 
     pp->freelist = nullptr;
-    pp->next = nullptr;
     pp->data = ((uint8_t*)block + sizeof(PageInfo));
     pp->allocsize = allocsize;
     pp->realsize = realsize;
