@@ -231,12 +231,6 @@ public:
     }
 };
 
-//
-// I believe there is some very good ideas here, but most critically
-// im thinking storing the this pointer is leading to UB!
-// We may instead want to store the address of the list itself 
-// (i.e. pendinggc_pages or filled_pages)
-//
 class PageList {
     PageInfo* root;
 
@@ -395,10 +389,6 @@ T* MEM_ALLOC_CHECK(T* alloc)
 
 #define CALC_APPROX_UTILIZATION(P) 1.0f - ((float)P->freecount / (float)P->entrycount)
 
-#define NUM_LOW_UTIL_BUCKETS 12
-#define NUM_HIGH_UTIL_BUCKETS 6
-
-
 #ifdef MEM_STATS
 #define UPDATE_ALLOC_STATS(ALLOC, MEMORY_SIZE) \
     (ALLOC)->updateAllocInfo(MEMORY_SIZE)
@@ -419,9 +409,14 @@ T* MEM_ALLOC_CHECK(T* alloc)
 #define GET_ALLOC_MEMORY(ALLOC) (0)
 #endif
 
-#define IS_LOW_UTIL(U) (U >= 0.01f && U <= 0.60f)
-#define IS_HIGH_UTIL(U) (U > 0.60f && U <= 0.90f)
-#define IS_FULL(U) (U > 0.90f && U <= 1.0f)
+#define NUM_LOW_UTIL_BUCKETS 12
+#define NUM_HIGH_UTIL_BUCKETS 6
+#define LOW_UTIL_THRESH 0.60f
+#define HIGH_UTIL_THRESH 0.90f
+#define BUCKET_UTIL_VARIANCE 0.05f
+#define IS_LOW_UTIL(U) (U >= 0.01f && U <= LOW_UTIL_THRESH)
+#define IS_HIGH_UTIL(U) (U > LOW_UTIL_THRESH && U <= HIGH_UTIL_THRESH)
+#define IS_FULL(U) (U > HIGH_UTIL_THRESH && U <= 1.0f)
 
 class GCAllocator
 {
@@ -465,10 +460,12 @@ private:
         float util = p->approx_utilization;
         int idx = 0;
         if(IS_LOW_UTIL(util)) {
-            idx = (90.0f - util) / 5.0f;
+            idx = (LOW_UTIL_THRESH - util) / BUCKET_UTIL_VARIANCE;
+            DSA_INVARIANT_CHECK(idx < NUM_LOW_UTIL_BUCKETS);
         }
         else {
-            idx = (60.0f - util) / 5.0f;
+            idx = (HIGH_UTIL_THRESH - util) / BUCKET_UTIL_VARIANCE;
+            DSA_INVARIANT_CHECK(idx < NUM_HIGH_UTIL_BUCKETS);
         }
 
         DSA_INVARIANT_CHECK(idx >= 0);
