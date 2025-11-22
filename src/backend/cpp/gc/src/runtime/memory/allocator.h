@@ -231,6 +231,26 @@ public:
     }
 };
 
+struct PageIterator {
+    PageInfo* current;
+    
+    PageInfo* operator*()
+    { 
+        return current; 
+    }
+
+    PageIterator& operator++() 
+    { 
+        current = current->next; 
+        return *this; 
+    }
+    
+    bool operator!=(const PageIterator& other) 
+    { 
+        return current != other.current; 
+    }
+};
+
 class PageList {
     PageInfo* root;
 
@@ -241,7 +261,7 @@ class PageList {
     }
 
 public:
-    PageList(): root(nullptr) {}
+    PageList() noexcept : root(nullptr) {}
 
     bool empty() const noexcept
     {
@@ -295,25 +315,14 @@ public:
         reset(p);
     }
 
-    PageInfo* begin() const noexcept 
+    PageIterator begin() const noexcept 
     {
-        return this->root;
+        return PageIterator{ this->root };
     }
 
-    bool hasNext(PageInfo* cur) const noexcept
+    PageIterator end() const noexcept 
     {
-        if(cur == nullptr) {
-            return false;
-        }
-
-        return cur->next != nullptr;
-    }
-
-    PageInfo* next(PageInfo* cur) const
-    {
-        assert(cur != nullptr);
-
-        return cur->next;
+        return PageIterator{ nullptr };
     }
 };
 

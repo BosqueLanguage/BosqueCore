@@ -224,30 +224,21 @@ void GCAllocator::updateMemStats() noexcept
     RESET_ALLOC_STATS(this);
 
     //compute stats for filled pages
-    PageInfo* filled_it = this->filled_pages.begin();
-    while(this->filled_pages.hasNext(filled_it)) {
-        PageInfo* next = this->filled_pages.next(filled_it);
-        process(filled_it);
-        filled_it = next;
+    for(PageInfo* p : this->filled_pages) {
+        process(p);
     }
 
     // Compute stats for high util pages
     for(int i = 0; i < NUM_HIGH_UTIL_BUCKETS; i++) {
-        PageInfo* high_it = this->high_util_buckets[i].begin();
-        while(this->high_util_buckets[i].hasNext(high_it)) {
-            PageInfo* next = this->high_util_buckets[i].next(high_it);
-            process(high_it);
-            high_it = next;
+        for(PageInfo* p : this->high_util_buckets[i]) {
+            process(p);
         }
     }
 
     // Compute stats for low util pages
     for(int i = 0; i < NUM_LOW_UTIL_BUCKETS; i++) {
-        PageInfo* low_it = this->low_util_buckets[i].begin();
-        while(this->low_util_buckets[i].hasNext(low_it)) {
-            PageInfo* next = this->low_util_buckets[i].next(low_it);
-            process(low_it);
-            low_it = next;
+        for(PageInfo* p : this->low_util_buckets[i]) {
+            process(p);
         }
     }
 
