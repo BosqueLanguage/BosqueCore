@@ -463,7 +463,6 @@ private:
         this->pendinggc_pages.push(this->alloc_page);
     }
 
-    // TOOD: Unmagic number this
     static inline int getBucketIndex(PageInfo* p) noexcept
     {
         float util = p->approx_utilization;
