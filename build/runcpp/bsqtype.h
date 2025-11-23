@@ -10,6 +10,9 @@
 
 namespace Core
 {
+    using None = uint64_t;
+    constexpr None none = 0ull;
+
     namespace ᐸRuntimeᐳ
     {
         constexpr uint32_t WELL_KNOWN_TYPE_ID_NONE = 0;
@@ -65,16 +68,6 @@ namespace Core
             LayoutTag::Value,
             BSQ_PTR_MASK_LEAF,
             "None",
-            nullptr
-        };
-
-        constexpr TypeInfoBase g_wellKnownTypeBool = {
-            WELL_KNOWN_TYPE_ID_BOOL,
-            sizeof(Bool),
-            byteSizeToSlotCount(sizeof(Bool)),
-            LayoutTag::Value,
-            BSQ_PTR_MASK_LEAF,
-            "Bool",
             nullptr
         };
     }

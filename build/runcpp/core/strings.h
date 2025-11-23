@@ -33,11 +33,14 @@ namespace Core
             constexpr CStrBuff() noexcept : CStrBase(0), data{0} {}
 
             template<size_t len>
-            constexpr CStrBuff(const char (&cstr)[len]) noexcept : CStrBase(len - 1), data{0} 
+            constexpr static CStrBuff literal(const char (&cstr)[len]) noexcept
             {
                 static_assert(len - 1 <= ᐸRuntimeᐳ::CStrBuff::CSTR_BUFF_SIZE, "CString literal too large for CStrBuff");
 
-                std::copy(cstr, cstr + len - 1, this->data);
+                CStrBuff cb(len - 1);
+                std::copy(cstr, cstr + len - 1, cb.data);
+
+                return cb;
             }
 
             constexpr CStrBuff(const CStrBuff& other) noexcept = default;
@@ -116,33 +119,15 @@ namespace Core
         constexpr CString(const ᐸRuntimeᐳ::CStrTree& t) noexcept : tree(t) {}
         constexpr CString(const CString& other) noexcept = default;
 
-        constexpr static CString emptycstr(ᐸRuntimeᐳ::CStrBuff());
-
         template<size_t len>
-        constexpr CStringCString(const char (&cstr)[len]) noexcept
+        constexpr static CString literal(const char (&cstr)[len]) noexcept
         {
-            xxxx;
+            return CString(ᐸRuntimeᐳ::CStrBuff::literal(cstr));
         }
 
-        constexpr size_t size() const noexcept
+        size_t size() const noexcept
         {
             return std::bit_cast<ᐸRuntimeᐳ::CStrBase*>(&this->tree)->length;
-        }
-
-        static size_t foo(CString s)
-        {
-            constexpr auto b = ᐸRuntimeᐳ::CStrBuff("hello");
-            constexpr ᐸRuntimeᐳ::ᐸCStrTreeUnionᐳ cc = ᐸRuntimeᐳ::ᐸCStrTreeUnionᐳ(b);
-            constexpr ᐸRuntimeᐳ::CStrTree t = ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ᐸCStrTreeUnionᐳ>(&ᐸRuntimeᐳ::g_wellKnownTypeCStrBuff, cc);
-
-            constexpr CString xemptycstr = CString(b);
-            constexpr CString aemptycstr = CString(xemptycstr);
-
-            constexpr ᐸRuntimeᐳ::CStrBuff rr("hello world");
-            constexpr CString ss(rr);
-            
-            constexpr size_t sz = ss.size();
-            return rr.size();
         }
     };
 
@@ -150,4 +135,9 @@ namespace Core
     {
         //TODO: yeah todo
     };
+
+    namespace ᐸRuntimeᐳ
+    {
+        constexpr static CString emptycstr(ᐸRuntimeᐳ::CStrBuff::literal(""));
+    }
 }

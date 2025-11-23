@@ -23,12 +23,12 @@ namespace Core
             constexpr Option(const Option& other) noexcept = default;
             
             // Special none option bits
-            constexpr isNone() const noexcept { return this->typeinfo == &g_wellKnownTypeNone; }
-            static constexpr Option optnone(&g_wellKnownTypeNone);
+            constexpr bool isNone() const noexcept { return this->typeinfo == &g_wellKnownTypeNone; }
+            static constexpr Option<T> optnone = Option(&g_wellKnownTypeNone);
 
             // Some option bits
-            constexpr isSome() const noexcept { return this->typeinfo != &g_wellKnownTypeNone; }
-            constexpr makeSome(const TypeInfoBase* ti, const T& d) noexcept : typeinfo(ti) { return Option(ti, d); }
+            constexpr bool isSome() const noexcept { return this->typeinfo != &g_wellKnownTypeNone; }
+            constexpr static Option<T> makeSome(const TypeInfoBase* ti, const T& d) noexcept { return Option(ti, d); }
         };
 
         template <typename U>

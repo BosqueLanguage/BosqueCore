@@ -12,6 +12,7 @@ namespace Core
     public:
         constexpr Byte() noexcept : value(0) {}
         constexpr Byte(uint64_t v) noexcept : value(v) {}
+        constexpr Byte(uint8_t v) noexcept : value((uint64_t)v) {}
         constexpr Byte(const Byte& other) noexcept = default;
 
         friend constexpr bool operator<(const Byte &lhs, const Byte &rhs) noexcept { return lhs.value < rhs.value; }

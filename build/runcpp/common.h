@@ -22,17 +22,10 @@
 
 namespace Core
 {
-    using None = uint64_t;
-    using Bool = uint64_t;
-
     namespace ᐸRuntimeᐳ
     {
         constexpr int64_t BSQ_NUMERIC_DYNAMIC_RANGE_BASE = 4611686018427387903ll;
         constexpr __int128_t BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED = ((__int128_t)BSQ_NUMERIC_DYNAMIC_RANGE_BASE * (__int128_t)BSQ_NUMERIC_DYNAMIC_RANGE_BASE);
-
-        constexpr None none = 0ull;
-        constexpr Bool btrue = 1ull;
-        constexpr Bool bfalse = 0ull;
 
         enum class ErrorKind
         {
@@ -71,28 +64,28 @@ namespace Core
             bsq_handle_error(file, line, ErrorKind::UserAbort, tag, message);
         }
 
-        inline void bsq_assert(Bool cond, const char* file, uint32_t line, const char* tag, const char* message)
+        inline void bsq_assert(bool cond, const char* file, uint32_t line, const char* tag, const char* message)
         {
             if(!cond) [[unlikely]] {
                 bsq_handle_error(file, line, ErrorKind::UserAssertion, tag, message);
             }
         }
 
-        inline void bsq_invariant(Bool cond, const char* file, uint32_t line, const char* tag, const char* message)
+        inline void bsq_invariant(bool cond, const char* file, uint32_t line, const char* tag, const char* message)
         {
             if(!cond) [[unlikely]] {
                 bsq_handle_error(file, line, ErrorKind::UserInvariant, tag, message);
             }
         }
 
-        inline void bsq_requires(Bool cond, const char* file, uint32_t line, const char* tag, const char* message)
+        inline void bsq_requires(bool cond, const char* file, uint32_t line, const char* tag, const char* message)
         {
             if(!cond) [[unlikely]] {
                 bsq_handle_error(file, line, ErrorKind::UserPrecondition, tag, message);
             }
         }
 
-        inline void bsq_ensures(Bool cond, const char* file, uint32_t line, const char* tag, const char* message)
+        inline void bsq_ensures(bool cond, const char* file, uint32_t line, const char* tag, const char* message)
         {
             if(!cond) [[unlikely]] {
                 bsq_handle_error(file, line, ErrorKind::UserPostcondition, tag, message);

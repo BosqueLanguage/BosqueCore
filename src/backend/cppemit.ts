@@ -1,11 +1,34 @@
 import { MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_INT } from "../frontend/assembly";
-import { IRExpression, IRExpressionTag, IRLiteralBigIntExpression, IRLiteralBigNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression } from "./irbody";
+import { IRExpression, IRExpressionTag, IRLiteralBigIntExpression, IRLiteralBigNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression } from "./irbody";
 
 import assert from "node:assert";
 
 const RUNTIME_NAMESPACE = "ᐸRuntimeᐳ";
 
 class CPPEmitter {
+    private escapeLiteralCString(cstrbytes: number[]): string {
+        let escstr = '"';
+        for(const b of cstrbytes) {
+            if(b === 0x5C) {
+                escstr += "\\\\";
+            }
+            else if(b === 0x22) {
+                escstr += '\\"';
+            }
+            else if(b === 0x0A) {
+                escstr += "\\n";
+            }
+            else if(b === 0x09) {
+                escstr += "\\t";
+            }
+            else {
+                escstr += String.fromCodePoint(b);
+            }
+        }
+        escstr += '"';
+        return escstr;
+    }
+
     private emitExpression(exp: IRExpression): string {
         const ttag = exp.tag;
 
@@ -13,7 +36,7 @@ class CPPEmitter {
             return "none";
         }
         else if(ttag === IRExpressionTag.IRLiteralBoolExpression) {
-            return (exp as IRLiteralBoolExpression).value ? "btrue" : "bfalse";
+            return `${RUNTIME_NAMESPACE}::` + ((exp as IRLiteralBoolExpression).value ? "btrue" : "bfalse");
         }
         else if(ttag === IRExpressionTag.IRLiteralNatExpression) {
             return `${(exp as IRLiteralNatExpression).value}_Nat`;
@@ -124,17 +147,23 @@ class CPPEmitter {
         }
         else if(ttag === IRExpressionTag.IRLiteralCCharExpression) {
             const ccv = (exp as IRLiteralCCharExpression).value;
-            return `CChar{'${String.fromCodePoint(ccv)}'}`;
+            return `CChar('${String.fromCodePoint(ccv)}')`;
         }
         else if(ttag === IRExpressionTag.IRLiteralUnicodeCharExpression) {
             const ucv = (exp as IRLiteralUnicodeCharExpression).value;
-            return (31 < ucv && ucv < 127) ? `UnicodeChar{'${String.fromCodePoint(ucv)}'}` : `UnicodeChar{${ucv}}`;
+            return (31 < ucv && ucv < 127) ? `UnicodeChar('${String.fromCodePoint(ucv)}')` : `UnicodeChar(${ucv})`;
         }
         else if(ttag === IRExpressionTag.IRLiteralCStringExpression) {
-            xxxx;
+            const cstr = (exp as IRLiteralStringExpression).bytes;
+            if(cstr.length <= 24) {
+                return `${RUNTIME_NAMESPACE}::CString::literal(${this.escapeLiteralCString(cstr)})`;
+            }
+            else {
+                assert(false, "CPPEmitter: need to do heap allocation for long cstrings");
+            }
         }
         else if(ttag === IRExpressionTag.IRLiteralStringExpression) {
-            xxxx;
+            assert(false, "CPPEmitter: need to handle full Unicode string literals");
         }
         else {
             assert(false, `CPPEmitter: Unsupported IR expression type -- ${exp.constructor.name}`);
