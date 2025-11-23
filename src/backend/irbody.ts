@@ -39,7 +39,14 @@ enum IRExpressionTag {
     IRLiteralUnicodeCharExpression = "IRLiteralUnicodeCharExpression",
 
     IRLiteralCStringExpression = "IRLiteralCStringExpression",
-    IRLiteralStringExpression = "IRLiteralStringExpression"
+    IRLiteralStringExpression = "IRLiteralStringExpression",
+
+    IRLiteralFormatStringExpression = "IRLiteralFormatStringExpression",
+    IRLiteralFormatCStringExpression = "IRLiteralFormatCStringExpression",
+
+    //TODO: path literal options here
+
+
 }
 
 class IRExpression {
@@ -418,7 +425,7 @@ class IRLiteralUnicodeCharExpression extends IRExpression {
 
 class IRLiteralCStringExpression extends IRExpression {
     readonly srcstring: string; //source code string literal format
-    readonly bytes: number[]; //utf8 bytes
+    readonly bytes: number[]; //char bytes
 
     constructor(srcstring: string, bytes: number[]) {
         super(IRExpressionTag.IRLiteralCStringExpression);
@@ -435,6 +442,49 @@ class IRLiteralStringExpression extends IRExpression {
         super(IRExpressionTag.IRLiteralStringExpression);
         this.srcstring = srcstring;
         this.bytes = bytes;
+    }
+}
+
+abstract class IRFormatStringComponent {
+}
+
+class IRFormatStringTextComponent extends IRFormatStringComponent {
+    readonly srcstring: string; //source code string literal format
+    readonly bytes: number[];
+
+    constructor(srcstring: string, bytes: number[]) {
+        super();
+        this.srcstring = srcstring;
+        this.bytes = bytes;
+    }
+}
+
+class IRFormatStringArgComponent extends IRFormatStringComponent {
+    readonly argPos: string; // number | name
+    readonly argType: TypeSignature; //can be AutoTypeSignature, string, or typed string
+
+    constructor(argPos: string, argType: TypeSignature) {
+        super();
+        this.argPos = argPos;
+        this.argType = argType;
+    }
+}
+
+class IRLiteralFormatStringExpression extends IRExpression {
+    readonly fmts: IRFormatStringComponent[];
+
+    constructor(value: string, fmts: IRFormatStringComponent[]) {
+        super(IRExpressionTag.IRLiteralFormatStringExpression);
+        this.fmts = fmts;
+    }
+}
+
+class IRLiteralFormatCStringExpression extends IRExpression {
+    readonly fmts: IRFormatStringComponent[];
+
+    constructor(value: string, fmts: IRFormatStringComponent[]) {
+        super(IRExpressionTag.IRLiteralFormatCStringExpression);
+        this.fmts = fmts;
     }
 }
 
@@ -513,7 +563,8 @@ export {
     IRLiteralUnicodeRegexExpression, IRLiteralCRegexExpression,
     IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralUnicodeCharExpression,
     IRLiteralCStringExpression, IRLiteralStringExpression,
-
+    IRFormatStringComponent, IRFormatStringTextComponent, IRFormatStringArgComponent,
+    IRLiteralFormatStringExpression, IRLiteralFormatCStringExpression,
 
     IRStatementTag, IRStatement,
     IRErrorCheckStatement,

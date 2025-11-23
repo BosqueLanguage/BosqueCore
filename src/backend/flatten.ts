@@ -252,6 +252,12 @@ class ASMToIRConverter {
 
             return new IRLiteralStringExpression(slexp.value, bytes);
         }
+        else if(ttag === ExpressionTag.LiteralFormatStringExpression) {
+            xxxx;
+        }
+        else if(ttag === ExpressionTag.LiteralFormatCStringExpression) {
+            xxxx;
+        }
         else {
             assert(false, `ASMToIRConverter: Unsupported expression type -- ${exp.tag}`);
         }

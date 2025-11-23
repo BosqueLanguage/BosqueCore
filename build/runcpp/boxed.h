@@ -31,6 +31,11 @@ namespace Core
             constexpr static Option<T> makeSome(const TypeInfoBase* ti, const T& d) noexcept { return Option(ti, d); }
         };
 
+        //
+        //TODO: probably want to specialize for option bool, nat/int where we can steal a indicator bit
+        //TODO: Any Option<BoxedUnion> is interesting too (particularly for common case of string), where can can include none in the typeinfo
+        //
+
         template <typename U>
         class BoxedUnion
         {

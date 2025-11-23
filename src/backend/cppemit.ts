@@ -165,6 +165,12 @@ class CPPEmitter {
         else if(ttag === IRExpressionTag.IRLiteralStringExpression) {
             assert(false, "CPPEmitter: need to handle full Unicode string literals");
         }
+        else if(ttag === IRExpressionTag.IRLiteralFormatStringExpression) {
+            xxxx;
+        }
+        else if(ttag === IRExpressionTag.IRLiteralFormatCStringExpression) {
+            xxxx;
+        }
         else {
             assert(false, `CPPEmitter: Unsupported IR expression type -- ${exp.constructor.name}`);
         }
