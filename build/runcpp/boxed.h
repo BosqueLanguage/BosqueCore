@@ -83,10 +83,10 @@ namespace Core
                 return cn;
             }
 
-            template<typename T, typename ORepr, size_t idx>
+            template<typename T, size_t idx>
             T accessfield() const noexcept 
             {
-                if constexpr(!std::is_pointer_v<ORepr>) {
+                if(this->typeinfo->tag != LayoutTag::Ref) {
                     //not a pointer, just load the slot index as T
                     return *(reinterpret_cast<const T*>(reinterpret_cast<const uint64_t*>(&this->data) + idx));
                 }
@@ -97,10 +97,10 @@ namespace Core
                 }
             }
 
-            template<typename T, typename ORepr>
+            template<typename T>
             T accessfield(size_t idx) const noexcept 
             {
-                if constexpr(!std::is_pointer_v<ORepr>) {
+                if(this->typeinfo->tag != LayoutTag::Ref) {
                     //not a pointer, just load the slot index as T
                     return *(reinterpret_cast<const T*>(reinterpret_cast<const uint64_t*>(&this->data) + idx));
                 }
