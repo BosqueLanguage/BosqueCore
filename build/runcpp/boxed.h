@@ -19,9 +19,8 @@ namespace Core
             constexpr Option(const TypeInfoBase* ti, const T& d) noexcept : typeinfo(ti), data(d) {}
 
         public:
-            constexpr Option() noexcept : typeinfo(nullptr), data{0} {};
+            constexpr Option() noexcept : typeinfo(nullptr), data() {};
             constexpr Option(const Option& other) noexcept = default;
-            constexpr Option& operator=(const Option& other) noexcept = default;
             
             // Special none option bits
             constexpr isNone() const noexcept { return this->typeinfo == &g_wellKnownTypeNone; }
@@ -47,62 +46,68 @@ namespace Core
             constexpr BoxedUnion() noexcept : typeinfo(nullptr), data() {};
             constexpr BoxedUnion(const TypeInfoBase* ti, const U& d) noexcept : typeinfo(ti), data(d) {}
             constexpr BoxedUnion(const BoxedUnion& other) noexcept = default;
-            constexpr BoxedUnion& operator=(const BoxedUnion& other) noexcept = default;
             
             template<typename V>
-            constexpr BoxedUnion<V> convert() noexcept 
+            constexpr BoxedUnion<V> convert() const noexcept 
             {
                 static_assert(std::is_union_v<V>, "BoxedUnion widen requires a union type V");
                 static_assert(sizeof(V) == sizeof(U), "BoxedUnion widen requires V to be at least as large as U");
 
-                return BoxedUnion<V>(this->typeinfo, std::bit_cast<V>(this->data));
+                BoxedUnion<V> cu(this->typeinfo);
+                std::copy(reinterpret_cast<const uint8_t*>(&this->data), reinterpret_cast<const uint8_t*>(&this->data) + sizeof(U), reinterpret_cast<uint8_t*>(&cu.data));
+
+                return cu;
             }
 
             template<typename V>
-            BoxedUnion<V> widen() noexcept 
+            BoxedUnion<V> widen() const noexcept 
             {
                 static_assert(std::is_union_v<V>, "BoxedUnion widen requires a union type V");
                 static_assert(sizeof(V) > sizeof(U), "BoxedUnion widen requires V to be at least as large as U");
 
-                xxxx;
-                return BoxedUnion<V>(this->typeinfo, std::bit_cast<V>(this->data));
+                BoxedUnion<V> cw(this->typeinfo);
+                std::copy(reinterpret_cast<const uint8_t*>(&this->data), reinterpret_cast<const uint8_t*>(&this->data) + sizeof(U), reinterpret_cast<uint8_t*>(&cw.data));
+
+                return cw;
             }
 
             template<typename V>
-            BoxedUnion<V> narrow() noexcept 
+            BoxedUnion<V> narrow() const noexcept 
             {
                 static_assert(std::is_union_v<V>, "BoxedUnion widen requires a union type V");
-                static_assert(sizeof(V) < sizeof(U), "BoxedUnion widen requires V to be at least as large as U");
+                static_assert(sizeof(V) < sizeof(U), "BoxedUnion widen requires V to be at most as large as U");
 
-                xxxx;
-                return BoxedUnion<V>(this->typeinfo, std::bit_cast<V>(this->data));
+                BoxedUnion<V> cn(this->typeinfo);
+                std::copy(reinterpret_cast<const uint8_t*>(&this->data), reinterpret_cast<const uint8_t*>(&this->data) + sizeof(V), reinterpret_cast<uint8_t*>(&cn.data));
+
+                return cn;
             }
 
-            template<typename T, typename ORepr, size_t slotcount, size_t idx>
-            constexpr T accessfield() const noexcept 
+            template<typename T, typename ORepr, size_t idx>
+            T accessfield() const noexcept 
             {
-                xxxx;
                 if constexpr(!std::is_pointer_v<ORepr>) {
                     //not a pointer, just load the slot index as T
-                    return std::bit_cast<T>(std::bit_cast<uint64_t[slotcount]>(this->data) + idx);
+                    return *(reinterpret_cast<const T*>(reinterpret_cast<const uint64_t*>(&this->data) + idx));
                 }
                 else {
                     //dereference pointer in the union and then get the slot at index
-                    return std::bit_cast<T>(std::bit_cast<uint64_t[slotcount]>(*std::bit_cast<ORepr>(this->data)) + idx);
+
+                    return *(reinterpret_cast<const T*>(reinterpret_cast<const uint64_t*>(this->data) + idx));
                 }
             }
 
-            template<typename T, typename ORepr, size_t slotcount>
-            constexpr T accessfield(size_t idx) const noexcept 
+            template<typename T, typename ORepr>
+            T accessfield(size_t idx) const noexcept 
             {
-                xxxx; 
                 if constexpr(!std::is_pointer_v<ORepr>) {
                     //not a pointer, just load the slot index as T
-                    return std::bit_cast<T>(std::bit_cast<uint64_t[slotcount]>(this->data) + idx);
+                    return *(reinterpret_cast<const T*>(reinterpret_cast<const uint64_t*>(&this->data) + idx));
                 }
                 else {
                     //dereference pointer in the union and then get the slot at index
-                    return std::bit_cast<T>(std::bit_cast<uint64_t[slotcount]>(*std::bit_cast<ORepr>(this->data)) + idx);
+
+                    return *(reinterpret_cast<const T*>(reinterpret_cast<const uint64_t*>(this->data) + idx));
                 }
             }
         };

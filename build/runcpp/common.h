@@ -20,9 +20,6 @@
 //Only for internal diagnostics
 #include <assert.h>
 
-#define BSQ_NUMERIC_DYNAMIC_RANGE_BASE 4611686018427387903ull
-#define BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED ((__int128_t)BSQ_NUMERIC_DYNAMIC_RANGE_BASE * (__int128_t)BSQ_NUMERIC_DYNAMIC_RANGE_BASE)
-
 namespace Core
 {
     using None = uint64_t;
@@ -30,6 +27,9 @@ namespace Core
 
     namespace ᐸRuntimeᐳ
     {
+        constexpr int64_t BSQ_NUMERIC_DYNAMIC_RANGE_BASE = 4611686018427387903ll;
+        constexpr __int128_t BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED = ((__int128_t)BSQ_NUMERIC_DYNAMIC_RANGE_BASE * (__int128_t)BSQ_NUMERIC_DYNAMIC_RANGE_BASE);
+
         constexpr None none = 0ull;
         constexpr Bool btrue = 1ull;
         constexpr Bool bfalse = 0ull;

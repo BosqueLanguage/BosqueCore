@@ -48,22 +48,32 @@ namespace Core
             const FieldOffsetInfo* vtable;
         };
 
+        constexpr uint32_t byteSizeToSlotCount(size_t bytesize) noexcept
+        {
+            return bytesize / sizeof(uint64_t);
+        }
+
+        constexpr uint32_t slotCountToByteSize(size_t slotcount) noexcept
+        {
+            return slotcount * sizeof(uint64_t);
+        }
+
         constexpr TypeInfoBase g_wellKnownTypeNone = {
             WELL_KNOWN_TYPE_ID_NONE,
-            8,
-            1,
+            sizeof(None),
+            byteSizeToSlotCount(sizeof(None)),
             LayoutTag::Value,
-            PTR_MASK_LEAF,
+            BSQ_PTR_MASK_LEAF,
             "None",
             nullptr
         };
 
         constexpr TypeInfoBase g_wellKnownTypeBool = {
             WELL_KNOWN_TYPE_ID_BOOL,
-            8,
-            1,
+            sizeof(Bool),
+            byteSizeToSlotCount(sizeof(Bool)),
             LayoutTag::Value,
-            PTR_MASK_LEAF,
+            BSQ_PTR_MASK_LEAF,
             "Bool",
             nullptr
         };

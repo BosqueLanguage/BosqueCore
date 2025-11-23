@@ -3,8 +3,6 @@
 #include "../common.h"
 #include "boxed.h"
 
-#define CSTR_BUFF_SIZE 24
-
 namespace Core 
 {
     namespace ᐸRuntimeᐳ
@@ -28,17 +26,24 @@ namespace Core
         class CStrBuff : public CStrBase
         {
         public:
+            constexpr static size_t CSTR_BUFF_SIZE = 24;
+
             char data[CSTR_BUFF_SIZE];
 
             constexpr CStrBuff() noexcept : CStrBase(0), data{0} {}
 
             template<size_t len>
-            constexpr CStrBuff(const char (&cstr)[len]) noexcept : CStrBase(len - 1), data{0} {
+            constexpr CStrBuff(const char (&cstr)[len]) noexcept : CStrBase(len - 1), data{0} 
+            {
+                static_assert(len - 1 <= ᐸRuntimeᐳ::CStrBuff::CSTR_BUFF_SIZE, "CString literal too large for CStrBuff");
+
                 std::copy(cstr, cstr + len - 1, this->data);
             }
 
             constexpr CStrBuff(const CStrBuff& other) noexcept = default;
-            constexpr CStrBuff& operator=(const CStrBuff& other) noexcept = default;
+
+            constexpr size_t size() const noexcept { return this->length; }
+            constexpr char at(size_t index) const noexcept { return this->data[index]; }
         };
 
         class CStrNode : public CStrBase
@@ -52,31 +57,28 @@ namespace Core
             constexpr CStrNode(size_t len, RColor c, CStrTree* l, CStrTree* r) noexcept : CStrBase(len), color(c), left(l), right(r) {}
             
             constexpr CStrNode(const CStrNode& other) noexcept = default;
-            constexpr CStrNode& operator=(const CStrNode& other) noexcept = default;
         };
 
-        union CStrTreeᐤUnion
+        union ᐸCStrTreeUnionᐳ
         {
             CStrBuff buff;
             CStrNode node;
 
-            constexpr CStrTreeᐤUnion() noexcept : buff() {}
-            constexpr CStrTreeᐤUnion(const CStrBuff& b) noexcept : buff(b) {}
-            constexpr CStrTreeᐤUnion(const CStrNode& n) noexcept : node(n) {}
-
-            constexpr CStrTreeᐤUnion(const CStrTreeᐤUnion& other) noexcept = default;
-            constexpr CStrTreeᐤUnion& operator=(const CStrTreeᐤUnion& other) noexcept = default;
+            constexpr ᐸCStrTreeUnionᐳ() noexcept : buff() {}
+            constexpr ᐸCStrTreeUnionᐳ(const ᐸCStrTreeUnionᐳ& other) noexcept = default;
+            constexpr ᐸCStrTreeUnionᐳ(const CStrBuff& b) noexcept : buff(b) {}
+            constexpr ᐸCStrTreeUnionᐳ(const CStrNode& n) noexcept : node(n) {}
         };
-        using CStrTree = ᐸRuntimeᐳ::BoxedUnion<CStrTreeᐤUnion>;
+        using CStrTree = ᐸRuntimeᐳ::BoxedUnion<ᐸCStrTreeUnionᐳ>;
 
         static_assert(sizeof(CStrBuff) == sizeof(CStrNode), "CStrBuff size incorrect");
 
         constexpr TypeInfoBase g_wellKnownTypeCStrBuff = {
             WELL_KNOWN_TYPE_ID_CSTRBUFF,
             sizeof(CStrBuff),
-            sizeof(CStrBuff) / BSQ_SLOT_BYTE_SIZE,
+            byteSizeToSlotCount(sizeof(CStrBuff)),
             LayoutTag::Value, //Note this cheats a bit since we store as pointers in tree but flat in the string!!! Not generally possible for other types.
-            PTR_MASK_LEAF,
+            BSQ_PTR_MASK_LEAF,
             "CStrBuff",
             nullptr
         };
@@ -84,7 +86,7 @@ namespace Core
         constexpr TypeInfoBase g_wellKnownTypeCStrNode = {
             WELL_KNOWN_TYPE_ID_CSTRNODE,
             sizeof(CStrNode),
-            sizeof(CStrNode) / BSQ_SLOT_BYTE_SIZE,
+            byteSizeToSlotCount(sizeof(CStrNode)),
             LayoutTag::Value, //Note this cheats a bit since we store as pointers in tree but flat in the string!!! Not generally possible for other types.
             "0011",
             "CStrNode",
@@ -94,7 +96,7 @@ namespace Core
         constexpr TypeInfoBase g_wellKnownTypeCString = {
             WELL_KNOWN_TYPE_ID_CSTRING,
             sizeof(CStrTree),
-            sizeof(CStrTree) / BSQ_SLOT_BYTE_SIZE,
+            byteSizeToSlotCount(sizeof(CStrTree)),
             LayoutTag::Value,
             "20000",
             "CString",
@@ -109,36 +111,43 @@ namespace Core
 
     public:
         constexpr CString() noexcept : tree() {}
-        constexpr CString(ᐸRuntimeᐳ::CStrBuff b) noexcept : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::CStrTreeᐤUnion>(&ᐸRuntimeᐳ::g_wellKnownTypeCStrBuff, ᐸRuntimeᐳ::CStrTreeᐤUnion(b))) {}
-        constexpr CString(ᐸRuntimeᐳ::CStrNode n) noexcept : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::CStrTreeᐤUnion>(&ᐸRuntimeᐳ::g_wellKnownTypeCStrNode, ᐸRuntimeᐳ::CStrTreeᐤUnion(n))) {}
+        constexpr CString(const ᐸRuntimeᐳ::CStrBuff& b) noexcept : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ᐸCStrTreeUnionᐳ>(&ᐸRuntimeᐳ::g_wellKnownTypeCStrBuff, ᐸRuntimeᐳ::ᐸCStrTreeUnionᐳ(b))) {}
+        constexpr CString(const ᐸRuntimeᐳ::CStrNode& n) noexcept : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ᐸCStrTreeUnionᐳ>(&ᐸRuntimeᐳ::g_wellKnownTypeCStrNode, ᐸRuntimeᐳ::ᐸCStrTreeUnionᐳ(n))) {}
         constexpr CString(const ᐸRuntimeᐳ::CStrTree& t) noexcept : tree(t) {}
+        constexpr CString(const CString& other) noexcept = default;
 
-        constexpr static CString foo() noexcept {
-            constexpr auto nnode = ᐸRuntimeᐳ::CStrNode(5, ᐸRuntimeᐳ::RColor::Red, nullptr, nullptr);
-            constexpr auto nn = ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::CStrTreeᐤUnion>(&ᐸRuntimeᐳ::g_wellKnownTypeCStrNode, ᐸRuntimeᐳ::CStrTreeᐤUnion(nnode));
-            
-            
-            constexpr int64_t x = 5;
-            static_assert(sizeof(int64_t) == sizeof(std::array<int32_t, 2>), "bit_cast size assumption failure");
+        constexpr static CString emptycstr(ᐸRuntimeᐳ::CStrBuff());
 
-            constexpr int32_t z = std::bit_cast<std::array<int32_t, 2>>(x)[0];
-
-            constexpr auto yy = std::bit_cast<uint64_t[4], ᐸRuntimeᐳ::CStrTreeᐤUnion>(nn.data);
-            constexpr auto bb = std::bit_cast<ᐸRuntimeᐳ::CStrTree*>( + 3);
-            
-            constexpr auto left = nn.accessfield<ᐸRuntimeᐳ::CStrTree*, ᐸRuntimeᐳ::CStrNode, 3, 1>();
-
-            return CString(nn);
+        template<size_t len>
+        constexpr CStringCString(const char (&cstr)[len]) noexcept
+        {
+            xxxx;
         }
 
-        constexpr CString(const CString& other) noexcept = default;
-        constexpr CString& operator=(const CString& other) noexcept = default;
+        constexpr size_t size() const noexcept
+        {
+            return std::bit_cast<ᐸRuntimeᐳ::CStrBase*>(&this->tree)->length;
+        }
 
-        static constexpr CString emptycstr(&g_wellKnownTypeCString);
+        static size_t foo(CString s)
+        {
+            constexpr auto b = ᐸRuntimeᐳ::CStrBuff("hello");
+            constexpr ᐸRuntimeᐳ::ᐸCStrTreeUnionᐳ cc = ᐸRuntimeᐳ::ᐸCStrTreeUnionᐳ(b);
+            constexpr ᐸRuntimeᐳ::CStrTree t = ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ᐸCStrTreeUnionᐳ>(&ᐸRuntimeᐳ::g_wellKnownTypeCStrBuff, cc);
+
+            constexpr CString xemptycstr = CString(b);
+            constexpr CString aemptycstr = CString(xemptycstr);
+
+            constexpr ᐸRuntimeᐳ::CStrBuff rr("hello world");
+            constexpr CString ss(rr);
+            
+            constexpr size_t sz = ss.size();
+            return rr.size();
+        }
     };
 
     class String
     {
-
+        //TODO: yeah todo
     };
 }
