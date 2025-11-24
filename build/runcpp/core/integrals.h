@@ -182,6 +182,15 @@ namespace Core
             return ChkNat::s_isBottom(this->value);
         }
 
+        inline static void checkOverflowSubtraction(ChkNat n1, ChkNat n2, const char* file, uint32_t line) noexcept
+        {
+            if(n2.value > n1.value) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericUnderflow, nullptr, "Nat subtraction underflow"); }
+        }
+        inline static void checkDivisionByZero(ChkNat n2, const char* file, uint32_t line) noexcept
+        {
+            if(n2.value == 0) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::DivisionByZero, nullptr, "Int division by zero"); }
+        }
+
         // Overloaded operators on Nat
         constexpr ChkNat operator+() const noexcept
         {
@@ -210,7 +219,7 @@ namespace Core
             }
 
             __int128_t result = 0;
-            if((rhs.value <= lhs.value) && !__builtin_sub_overflow(lhs.value, rhs.value, &result) && (ChkNat::isValidNat(result))) [[likely]] {
+            if(!__builtin_sub_overflow(lhs.value, rhs.value, &result) && (ChkNat::isValidNat(result))) [[likely]] {
                 return ChkNat(result);
             }
             else {
@@ -223,12 +232,7 @@ namespace Core
                 return ChkNat(ChkNat::BOTTOM_VALUE);
             }
 
-            if(rhs.value != 0) [[likely]] {
-                return ChkNat(lhs.value / rhs.value);
-            }
-            else {
-                return ChkNat(ChkNat::BOTTOM_VALUE);
-            }
+            return ChkNat(lhs.value / rhs.value);
         }
         friend constexpr ChkNat operator*(ChkNat lhs, ChkNat rhs) noexcept
         {
@@ -275,8 +279,6 @@ namespace Core
         }
 
     public:
-
-    //TODO: need pos and neg bottom to keep ordering reasonable (like a - b goes to neg if b > a or a neg and b pos etc)
         constexpr ChkInt() noexcept : value(0) {}
         constexpr ChkInt(__int128_t v) noexcept : value(v) {}
         constexpr ChkInt(const ChkInt& other) noexcept = default;
@@ -284,6 +286,11 @@ namespace Core
         constexpr bool isBottom() const noexcept
         {
             return ChkInt::isBottom(this->value);
+        }
+
+        inline static void checkDivisionByZero(ChkInt n2, const char* file, uint32_t line) noexcept
+        {
+            if(n2.value == 0) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::DivisionByZero, nullptr, "Int division by zero"); }
         }
 
         // Overloaded operators on Int
@@ -312,8 +319,47 @@ namespace Core
         }
         friend constexpr ChkInt operator-(ChkInt lhs, ChkInt rhs) noexcept
         {
-            //figure out what way to overflow
+            if(lhs.isBottom() | rhs.isBottom()) {
+                return ChkInt(ChkInt::BOTTOM_VALUE);
+            }
+
+            __int128_t result = 0;
+            if(!__builtin_sub_overflow(lhs.value, rhs.value, &result) && (ChkInt::isValidInt(result))) [[likely]] {
+                return ChkInt(result);
+            }
+            else {
+                return ChkInt(ChkInt::BOTTOM_VALUE);
+            }
         }
+        friend constexpr ChkInt operator/(ChkInt lhs, ChkInt rhs) noexcept
+        {
+            if(lhs.isBottom() | rhs.isBottom()) {
+                return ChkInt(ChkInt::BOTTOM_VALUE);
+            }
+
+            return ChkInt(lhs.value / rhs.value);
+        }
+        friend constexpr ChkInt operator*(ChkInt lhs, ChkInt rhs) noexcept
+        {
+            if(lhs.isBottom() | rhs.isBottom()) {
+                return ChkInt(ChkInt::BOTTOM_VALUE);
+            }
+
+           __int128_t result = 0;
+            if(!__builtin_mul_overflow(lhs.value, rhs.value, &result) && (ChkInt::isValidInt(result))) [[likely]] {
+                return ChkInt(result);
+            }
+            else {
+                return ChkInt(ChkInt::BOTTOM_VALUE);
+            }
+        }
+
+        friend constexpr bool operator<(const ChkInt &lhs, const ChkInt &rhs) noexcept { return lhs.value < rhs.value; }
+        friend constexpr bool operator==(const ChkInt &lhs, const ChkInt &rhs) noexcept { return lhs.value == rhs.value; }
+        friend constexpr bool operator>(const ChkInt &lhs, const ChkInt &rhs) noexcept { return rhs.value < lhs.value; }
+        friend constexpr bool operator!=(const ChkInt &lhs, const ChkInt &rhs) noexcept { return !(lhs.value == rhs.value); }
+        friend constexpr bool operator<=(const ChkInt &lhs, const ChkInt &rhs) noexcept { return !(lhs.value > rhs.value); }
+        friend constexpr bool operator>=(const ChkInt &lhs, const ChkInt &rhs) noexcept { return !(lhs.value < rhs.value); }
     };
 
     constexpr Nat operator""_Nat(unsigned long long n)
@@ -324,6 +370,16 @@ namespace Core
     constexpr Int operator""_Int(unsigned long long n)
     {
         return Int(n);
+    }
+
+    constexpr ChkNat operator""_ChkNat(unsigned long long n)
+    {
+        return ChkNat(n);
+    }
+    
+    constexpr ChkInt operator""_ChkInt(unsigned long long n)
+    {
+        return ChkInt(n);
     }
 
     static_assert(sizeof(Nat) == sizeof(int64_t), "Nat size incorrect");
