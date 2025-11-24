@@ -919,40 +919,6 @@ class ListTypeDecl extends AbstractCollectionTypeDecl {
     }
 }
 
-class CRopeTypeDecl extends AbstractCollectionTypeDecl {
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name);
-    }
-}
-
-class CRopeIteratorTypeDecl extends InternalEntityTypeDecl {
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name);
-    }
-
-    // Internal to the cpp runtime so no need to emit anything
-    emit(fmt: CodeFormatter): string {
-        return "";
-    }
-}
-
-class UnicodeRopeTypeDecl extends AbstractCollectionTypeDecl {
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name);
-    }
-}
-
-class UnicodeRopeIteratorTypeDecl extends InternalEntityTypeDecl {
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name);
-    }
-
-    // Internal to the cpp runtime so no need to emit anything
-    emit(fmt: CodeFormatter): string {
-        return "";
-    }
-}
-
 class StackTypeDecl extends AbstractCollectionTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
@@ -1913,9 +1879,9 @@ export {
     EnumTypeDecl,
     TypedeclTypeDecl,
     AbstractEntityTypeDecl, PrimitiveEntityTypeDecl,
-    InternalEntityTypeDecl, CRopeIteratorTypeDecl,
+    InternalEntityTypeDecl,
     ConstructableTypeDecl, OkTypeDecl, FailTypeDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIDeniedTypeDecl, APIFlaggedTypeDecl, APISuccessTypeDecl, SomeTypeDecl, MapEntryTypeDecl,
-    AbstractCollectionTypeDecl, ListTypeDecl, CRopeTypeDecl, UnicodeRopeTypeDecl, UnicodeRopeIteratorTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl,
+    AbstractCollectionTypeDecl, ListTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl,
     EventListTypeDecl,
     EntityTypeDecl, 
     AbstractConceptTypeDecl, InternalConceptTypeDecl, 

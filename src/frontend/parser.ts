@@ -4,9 +4,9 @@ import assert from "node:assert";
 import { VariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env.js";
 import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, ErrorTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateTypeSignature, TypeSignature } from "./type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfStatement, LiteralRegexExpression, LiteralSimpleExpression, LiteralNoneExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, SpecialConstructorExpression, ConstructorPrimaryExpression, PostfixAccessFromName, ReturnVoidStatement, ReturnSingleStatement, PostfixInvoke, KeyCompareEqExpression, KeyCompareLessExpression, ReturnMultiStatement, SafeConvertExpression, PostfixAccessFromIndex, AccessStaticFieldExpression, CallTypeFunctionExpression, CreateDirectExpression, LambdaInvokeExpression, ThisUpdateStatement, VarUpdateStatement, CallRefThisExpression, VoidRefCallStatement, CallRefSelfExpression, CallRefVariableExpression, CallRefInvokeExpression, PostfixAssignFields, ChkLogicExpression, RValueExpression, ITestGuard, ITestGuardSet, ITestError, ITestRejected, ITestDenied, ITestFlagged , ITestSuccess, ITestBinderGuard, ITestSimpleGuard, ITestTypeGuard, PassingArgumentValue, LiteralStringExpression, LiteralCStringExpression, LiteralFormatStringExpression, LiteralFormatCStringExpression, LiteralFormatPathItemExpression, LiteralPathItemExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LiteralTypedCStringExpression, LiteralTypedPathExpression, FormatStringComponent, FormatStringTextComponent, FormatStringArgComponent, LiteralTypedFormatCStringExpression, LiteralTypedPathFormatExpression, AccessEnvValueExpression, TaskAccessInfoExpression, InterpolateFormatExpression, PostfixOfOperator, HoleExpression, LogicAndExpression, LogicOrExpression, TaskRunExpression, EnvironmentGenerationExpression, EmptyEnvironmentExpression, CurrentEnvironmentExpression, InitializeEnvironmentExpression, TaskMultiExpression, TaskAllExpression, TaskDashExpression, TaskDashAnyExpression, TaskRaceExpression, TaskRaceAnyExpression, APIInvokeExpression, AgentInvokeExpression, ChkLogicImpliesExpression, ChkLogicBaseExpression, BaseRValueExpression, ConditionalValueExpression, ShortCircuitAssignRHSExpressionFail, ShortCircuitAssignRHSExpressionReturn, CallTaskActionExpression, SelfUpdateStatement, TaskCheckAndHandleTerminationStatement, TaskStatusStatement, TaskYieldStatement, DispatchTaskStatement, DispatchPatternStatement, HoleStatement, HoleBodyImplementation } from "./body.js";
-import { APIDecl, APIResultTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, CRopeTypeDecl, CRopeIteratorTypeDecl, UnicodeRopeTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, SomeTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, OkTypeDecl, FailTypeDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIDeniedTypeDecl, APIFlaggedTypeDecl, APISuccessTypeDecl, InternalEntityTypeDecl, AbstractCollectionTypeDecl, TestAssociation, UnicodeRopeIteratorTypeDecl, TaskConfiguration, AgentDecl } from "./assembly.js";
+import { APIDecl, APIResultTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, SomeTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, OkTypeDecl, FailTypeDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIDeniedTypeDecl, APIFlaggedTypeDecl, APISuccessTypeDecl, InternalEntityTypeDecl, AbstractCollectionTypeDecl, TestAssociation, TaskConfiguration, AgentDecl } from "./assembly.js";
 import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls.js";
-import { AllAttributes, CoreOnlyAttributes, KeywordStrings, KW__debug, KW_abort, KW_action, KW_agent, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_configs, KW_const, KW_datatype, KW_debug, KW_declare, KW_denied, KW_dispatch, KW_do, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_error, KW_errtest, KW_event, KW_example, KW_fail, KW_false, KW_field, KW_flagged, KW_fn, KW_function, KW_if, KW_inout, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_of, KW_ok, KW_out, KW_out_q, KW_parallel, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_rejected, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_spec, KW_status, KW_success, KW_switch, KW_task, KW_Task, KW_test, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KW_yield, LeftScanParens, ParenSymbols, RightScanParens, SpaceFrontSymbols, SpaceRequiredSymbols, SpecialNominalTypes, SpecialPathFormatTypes, SpecialStringFormatTypes, StandardSymbols, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_HOLE, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lparenbar, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_questionat, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_rparenbar, SYM_semicolon, SYM_times, TaskConfigs, TermRestrictions } from "./parser_kw.js";
+import { AllAttributes, CoreOnlyAttributes, KeywordStrings, KW__debug, KW_abort, KW_action, KW_agent, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_configs, KW_const, KW_datatype, KW_debug, KW_declare, KW_denied, KW_dispatch, KW_do, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_error, KW_errtest, KW_event, KW_example, KW_fail, KW_false, KW_field, KW_flagged, KW_fn, KW_function, KW_if, KW_inout, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_of, KW_ok, KW_out, KW_out_q, KW_parallel, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_rejected, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_sequential, KW_softcheck, KW_some, KW_spec, KW_status, KW_success, KW_switch, KW_task, KW_Task, KW_test, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KW_yield, LeftScanParens, ParenSymbols, RightScanParens, SpaceFrontSymbols, SpaceRequiredSymbols, SpecialNominalTypes, SpecialPathFormatTypes, SpecialStringFormatTypes, StandardSymbols, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_HOLE, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lparenbar, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_questionat, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_rparenbar, SYM_semicolon, SYM_times, TaskConfigs, TermRestrictions } from "./parser_kw.js";
 
 type ParsePhase = number;
 const ParsePhase_RegisterNames: ParsePhase = 1;
@@ -1448,7 +1448,7 @@ class Parser {
                     const argpos = part.slice(2, tpos);
                     const fmtstr = part.slice(tpos + 1, part.length - 1);
                     this.warnings.push(`Formatting argument ${argpos} has type ${fmtstr} but currently this decays to auto`);
-
+xxxx;
                     return new FormatStringArgComponent(argpos, new AutoTypeSignature(sinfo));
                 }
             }
@@ -4233,9 +4233,9 @@ class Parser {
         }
     }
 
-    private parseTaskRunExpression(sinfo: SourceInfo, isparallel: boolean): Expression {
-        if(isparallel) {
-            this.recordErrorGeneral(sinfo, "Parallel is not allowed on single Task::run");
+    private parseTaskRunExpression(sinfo: SourceInfo, execmode: "parallel" | "sequential" | "std"): Expression {
+        if(execmode !== "std") {
+            this.recordErrorGeneral(sinfo, "Parallel/Sequential are not allowed on single Task::run");
         }
 
         this.consumeToken(); //<
@@ -4249,7 +4249,7 @@ class Parser {
         return new TaskRunExpression(sinfo, task, args, envexp, configs);
     }
 
-    private parseTaskMultiExpression(sinfo: SourceInfo, isparallel: boolean): Expression {
+    private parseTaskMultiExpression(sinfo: SourceInfo, execmode: "parallel" | "sequential" | "std"): Expression {
         const tasks = this.parseListOf<[TypeSignature, TaskConfiguration]>("Task multi types", SYM_langle, SYM_rangle, SYM_coma, () => {
             const task = this.parseNominalType();
             const configs = new TaskConfiguration(undefined, undefined, undefined);
@@ -4262,10 +4262,10 @@ class Parser {
             return this.parseTaskArguments();
         });
 
-        return new TaskMultiExpression(sinfo, isparallel, tasks, args);
+        return new TaskMultiExpression(sinfo, execmode, tasks, args);
     }
 
-    private parseTaskAllExpression(sinfo: SourceInfo, isparallel: boolean): Expression {
+    private parseTaskAllExpression(sinfo: SourceInfo, execmode: "parallel" | "sequential" | "std"): Expression {
         this.consumeToken(); //<
         const task = this.parseNominalType();
         const configs = new TaskConfiguration(undefined, undefined, undefined);
@@ -4278,10 +4278,10 @@ class Parser {
         const argl = this.parseExpression();
         this.ensureAndConsumeTokenAlways(SYM_rparen, "Task all expression");
 
-        return new TaskAllExpression(sinfo, isparallel, task, argl, envexp, configs);
+        return new TaskAllExpression(sinfo, execmode, task, argl, envexp, configs);
     }
 
-    private parseTaskDashStyleExpression(sinfo: SourceInfo, isparallel: boolean, isany: boolean): Expression {
+    private parseTaskDashStyleExpression(sinfo: SourceInfo, execmode: "parallel" | "sequential" | "std", isany: boolean): Expression {
         const tasks = this.parseListOf<[TypeSignature, TaskConfiguration]>("Task dash types", SYM_langle, SYM_rangle, SYM_coma, () => {
             const task = this.parseNominalType();
             const configs = new TaskConfiguration(undefined, undefined, undefined);
@@ -4295,14 +4295,14 @@ class Parser {
         });
 
         if(!isany) {
-            return new TaskDashExpression(sinfo, isparallel, tasks, args);
+            return new TaskDashExpression(sinfo, execmode, tasks, args);
         }
         else {
-            return new TaskDashAnyExpression(sinfo, isparallel, tasks, args);
+            return new TaskDashAnyExpression(sinfo, execmode, tasks, args);
         }
     }
 
-    private parseTaskRaceStyleExpression(sinfo: SourceInfo, isparallel: boolean, isany: boolean): Expression {
+    private parseTaskRaceStyleExpression(sinfo: SourceInfo, execmode: "parallel" | "sequential" | "std", isany: boolean): Expression {
         this.consumeToken(); //<
         const task = this.parseNominalType();
         const configs = new TaskConfiguration(undefined, undefined, undefined);
@@ -4316,10 +4316,10 @@ class Parser {
         this.ensureAndConsumeTokenAlways(SYM_rparen, "Task race expression");
 
         if(!isany) {
-            return new TaskRaceExpression(sinfo, isparallel, task, argl, envexp, configs);
+            return new TaskRaceExpression(sinfo, execmode, task, argl, envexp, configs);
         }
         else {
-            return new TaskRaceAnyExpression(sinfo, isparallel, task, argl, envexp, configs);
+            return new TaskRaceAnyExpression(sinfo, execmode, task, argl, envexp, configs);
         }
     }
 
@@ -4504,7 +4504,7 @@ class Parser {
         return new CallTaskActionExpression(sinfo, name, terms, args);
     }
 
-    private parseTaskRunRValueExpression(isparallel: boolean): Expression {
+    private parseTaskRunRValueExpression(execmode: "parallel" | "sequential" | "std"): Expression {
         this.ensureAndConsumeTokenAlways(KW_Task, "Task run expression");
         this.ensureAndConsumeTokenAlways(SYM_coloncolon, "Task run expression");
 
@@ -4512,25 +4512,25 @@ class Parser {
         const taskname = this.consumeTokenAndGetValue();
 
         if(taskname === "run") {
-            return this.parseTaskRunExpression(this.peekToken().getSourceInfo(), isparallel);
+            return this.parseTaskRunExpression(this.peekToken().getSourceInfo(), execmode);
         }
         else if(taskname === "multi") {
-            return this.parseTaskMultiExpression(this.peekToken().getSourceInfo(), isparallel);
+            return this.parseTaskMultiExpression(this.peekToken().getSourceInfo(), execmode);
         }
         else if(taskname === "all") {
-            return this.parseTaskAllExpression(this.peekToken().getSourceInfo(), isparallel);
+            return this.parseTaskAllExpression(this.peekToken().getSourceInfo(), execmode);
         }
         else if(taskname === "dash") {
-            return this.parseTaskDashStyleExpression(this.peekToken().getSourceInfo(), isparallel, false);
+            return this.parseTaskDashStyleExpression(this.peekToken().getSourceInfo(), execmode, false);
         }
         else if(taskname === "dashAny") {
-            return this.parseTaskDashStyleExpression(this.peekToken().getSourceInfo(), isparallel, true);
+            return this.parseTaskDashStyleExpression(this.peekToken().getSourceInfo(), execmode, true);
         }
         else if(taskname ===  "race") {
-            return this.parseTaskRaceStyleExpression(this.peekToken().getSourceInfo(), isparallel, false);
+            return this.parseTaskRaceStyleExpression(this.peekToken().getSourceInfo(), execmode, false);
         }
         else if(taskname ===  "raceAny") {
-            return this.parseTaskRaceStyleExpression(this.peekToken().getSourceInfo(), isparallel, true);
+            return this.parseTaskRaceStyleExpression(this.peekToken().getSourceInfo(), execmode, true);
         }
         else {
             this.recordErrorGeneral(this.peekToken().getSourceInfo(), `Unknown Task function '${taskname}'`);
@@ -4584,14 +4584,18 @@ class Parser {
             const expr = this.parseTaskActionRValueExpression(); 
             return this.parseRValueOfLHSExpressionSimple(sinfo, expr);
         }
-        else if(this.testToken(KW_parallel) || this.testToken(KW_Task)) {
-            const isparallel = this.testAndConsumeTokenIf(KW_parallel);
+        else if(this.testToken(KW_sequential) || this.testToken(KW_parallel) || this.testToken(KW_Task)) {
+            let execmode: "sequential" | "parallel" | "std" = "std";
+            if(this.testToken(KW_sequential) || this.testToken(KW_parallel)) {
+                execmode = this.consumeTokenAndGetValue() as "sequential" | "parallel";
+            }
+
             const oop = this.peekToken(2);
             if(oop.kind === TokenStrings.IdentifierName && (oop.data === "currentID" || oop.data === "parentID")) {
                 return this.parseRValueOfLHSExpression(sinfo); //Task::currentID() or Task::parentID() -- followed maybe by some more stuff
             }
             else {
-                const expr = this.parseTaskRunRValueExpression(isparallel);
+                const expr = this.parseTaskRunRValueExpression(execmode);
                 return new BaseRValueExpression(expr);
             }
         }
@@ -6167,18 +6171,6 @@ class Parser {
             else if(name === "EventList") {
                 tdecl = new EventListTypeDecl(this.env.currentFile, sinfo, attributes, "EventList");
             }
-            else if(name === "CRope") {
-                tdecl = new CRopeTypeDecl(this.env.currentFile, sinfo, attributes, "CRope");
-            } 
-            else if(name === "CRopeIterator") {
-                tdecl = new CRopeIteratorTypeDecl(this.env.currentFile, sinfo, attributes, "CRopeIterator")
-            }
-            else if(name === "UnicodeRope") {
-                tdecl = new UnicodeRopeTypeDecl(this.env.currentFile, sinfo, attributes, "UnicodeRope");
-            }
-            else if(name === "UnicodeRopeIterator") {
-                tdecl = new UnicodeRopeIteratorTypeDecl(this.env.currentFile, sinfo, attributes, "UnicodeRopeIterator");
-            }
             else {
                 assert(!attributes.some((attr) => attr.name === "__internal"), "Missing special case on primitive entity parse -- " + name);
 
@@ -6226,12 +6218,6 @@ class Parser {
         }
         else if(tdecl instanceof EventListTypeDecl) {
             this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
-        }
-        else if (tdecl instanceof CRopeTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
-        }
-        else if (tdecl instanceof UnicodeRopeTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
         }
         else {
             const edecl = tdecl as EntityTypeDecl;

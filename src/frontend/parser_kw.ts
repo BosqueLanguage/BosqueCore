@@ -29,6 +29,7 @@ const KW_match = "match";
 const KW_none = "none";
 const KW_ok = "ok";
 const KW_parallel = "parallel";
+const KW_sequential = "sequential";
 const KW_pred = "pred";
 const KW_ref = "ref";
 const KW_out = "out";
@@ -135,6 +136,7 @@ const KeywordStrings = [
     KW_ok,
     KW_operator,
     KW_parallel,
+    KW_sequential,
     KW_pred,
     KW_predicate,
     KW_provides,
@@ -421,6 +423,7 @@ export {
     KW_ok,
     // KW_operator, //TODO: reserved for future use
     KW_parallel,
+    KW_sequential,
     KW_pred,
     KW_predicate,
     KW_provides,
