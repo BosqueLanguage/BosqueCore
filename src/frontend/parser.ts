@@ -31,8 +31,8 @@ const TokenStrings = {
 
     Nat: "[LITERAL_NAT]",
     Int: "[LITERAL_INT]",
-    BigNat: "[LITERAL_BIGNAT]",
-    BigInt: "[LITERAL_BIGINT]",
+    SafeNat: "[LITERAL_SAFENAT]",
+    SafeInt: "[LITERAL_SAFEINT]",
     Float: "[LITERAL_FLOAT]",
     Decimal: "[LITERAL_DECIMAL]",
     Rational: "[LITERAL_RATIONAL]",
@@ -79,7 +79,7 @@ const TokenStrings = {
 
 const PRIMITIVE_ENTITY_TYPE_NAMES = [
     "None", "Bool", 
-    "Nat", "Int", "BigInt", "BigNat", "Rational", "Float", "Decimal", "DecimalDegree", "LatLongCoordinate", "Complex",
+    "Nat", "Int", "SafeInt", "SafeNat", "Rational", "Float", "Decimal", "DecimalDegree", "LatLongCoordinate", "Complex",
     "ByteBuffer", "UUIDv4", "UUIDv7", "SHAContentHash", 
     "TZDateTime", "TAITime", "PlainDate", "PlainTime", "LogicalTime", "ISOTimestamp",
     "DeltaDateTime", "DeltaSeconds", "DeltaLogicalTime", "DeltaISOTimestamp",
@@ -351,8 +351,8 @@ class Lexer {
 
     private static readonly _s_intRe = new RegExp(`(${Lexer._s_intValue})i`, "y");
     private static readonly _s_natRe = new RegExp(`(${Lexer._s_intValue})n`, "y");
-    private static readonly _s_bigintRe = new RegExp(`(${Lexer._s_intValue})I`, "y");
-    private static readonly _s_bignatRe = new RegExp(`(${Lexer._s_intValue})N`, "y");
+    private static readonly _s_safeintRe = new RegExp(`(${Lexer._s_intValue})I`, "y");
+    private static readonly _s_safenatRe = new RegExp(`(${Lexer._s_intValue})N`, "y");
 
     private static readonly _s_floatRe = new RegExp(`(${Lexer._s_floatValue})f`, "y");
     private static readonly _s_decimalRe = new RegExp(`(${Lexer._s_floatValue})d`, "y");
@@ -496,15 +496,15 @@ class Lexer {
             return true;
         }
 
-        const mbigint = this.trylex(Lexer._s_bigintRe);
-        if(mbigint !== null) {
-            this.recordLexTokenWData(this.jsStrPos + mbigint.length, TokenStrings.BigInt, mbigint);
+        const msafeint = this.trylex(Lexer._s_safeintRe);
+        if(msafeint !== null) {
+            this.recordLexTokenWData(this.jsStrPos + msafeint.length, TokenStrings.SafeInt, msafeint);
             return true;
         }
 
-        const mbignat = this.trylex(Lexer._s_bignatRe);
-        if(mbignat !== null) {
-            this.recordLexTokenWData(this.jsStrPos + mbignat.length, TokenStrings.BigNat, mbignat);
+        const msafenat = this.trylex(Lexer._s_safenatRe);
+        if(msafenat !== null) {
+            this.recordLexTokenWData(this.jsStrPos + msafenat.length, TokenStrings.SafeNat, msafenat);
             return true;
         }
 
@@ -3579,13 +3579,13 @@ class Parser {
             const istr = this.consumeTokenAndGetValue();
             return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralIntExpression, istr);
         }
-        else if(tk === TokenStrings.BigNat) {
+        else if(tk === TokenStrings.SafeNat) {
             const istr = this.consumeTokenAndGetValue();
-            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralBigNatExpression, istr);
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralSafeNatExpression, istr);
         }
-        else if (tk === TokenStrings.BigInt) {
+        else if (tk === TokenStrings.SafeInt) {
             const istr = this.consumeTokenAndGetValue();
-            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralBigIntExpression, istr);
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralSafeIntExpression, istr);
         }
         else if (tk === TokenStrings.Rational) {
             const rstr = this.consumeTokenAndGetValue();

@@ -1,4 +1,5 @@
 import { SourceInfo } from "./irsupport";
+import { IRTypeSignature } from "./irtype";
 
 enum IRExpressionTag {
     IRLiteralNoneExpression = "IRLiteralNoneExpression",
@@ -6,8 +7,8 @@ enum IRExpressionTag {
     
     IRLiteralNatExpression = "IRLiteralNatExpression",
     IRLiteralIntExpression = "IRLiteralIntExpression",
-    IRLiteralBigNatExpression = "IRLiteralBigNatExpression",
-    IRLiteralBigIntExpression = "IRLiteralBigIntExpression",
+    IRLiteralSafeNatExpression = "IRLiteralSafeNatExpression",
+    IRLiteralSafeIntExpression = "IRLiteralSafeIntExpression",
     IRLiteralRationalExpression = "IRLiteralRationalExpression",
     IRLiteralFloatExpression = "IRLiteralFloatExpression",
     IRLiteralDecimalExpression = "IRLiteralDecimalExpression",
@@ -46,7 +47,7 @@ enum IRExpressionTag {
 
     //TODO: path literal options here
 
-
+    //TODO: path literal -format- options here
 }
 
 class IRExpression {
@@ -107,14 +108,14 @@ class IRLiteralIntExpression extends IRLiteralIntegralNumberExpression {
         super(IRExpressionTag.IRLiteralIntExpression, value);
     }
 }
-class IRLiteralBigNatExpression extends IRLiteralIntegralNumberExpression {
+class IRLiteralSafeNatExpression extends IRLiteralIntegralNumberExpression {
     constructor(value: string) {
-        super(IRExpressionTag.IRLiteralBigNatExpression, value);
+        super(IRExpressionTag.IRLiteralSafeNatExpression, value);
     }
 }
-class IRLiteralBigIntExpression extends IRLiteralIntegralNumberExpression {
+class IRLiteralSafeIntExpression extends IRLiteralIntegralNumberExpression {
     constructor(value: string) {
-        super(IRExpressionTag.IRLiteralBigIntExpression, value);
+        super(IRExpressionTag.IRLiteralSafeIntExpression, value);
     }
 }
 
@@ -460,10 +461,10 @@ class IRFormatStringTextComponent extends IRFormatStringComponent {
 }
 
 class IRFormatStringArgComponent extends IRFormatStringComponent {
-    readonly argPos: string; // number | name
-    readonly argType: TypeSignature; //can be AutoTypeSignature, string, or typed string
+    readonly argPos: number;
+    readonly argType: IRTypeSignature;
 
-    constructor(argPos: string, argType: TypeSignature) {
+    constructor(argPos: number, argType: IRTypeSignature) {
         super();
         this.argPos = argPos;
         this.argType = argType;
@@ -473,7 +474,7 @@ class IRFormatStringArgComponent extends IRFormatStringComponent {
 class IRLiteralFormatStringExpression extends IRExpression {
     readonly fmts: IRFormatStringComponent[];
 
-    constructor(value: string, fmts: IRFormatStringComponent[]) {
+    constructor(fmts: IRFormatStringComponent[]) {
         super(IRExpressionTag.IRLiteralFormatStringExpression);
         this.fmts = fmts;
     }
@@ -482,12 +483,20 @@ class IRLiteralFormatStringExpression extends IRExpression {
 class IRLiteralFormatCStringExpression extends IRExpression {
     readonly fmts: IRFormatStringComponent[];
 
-    constructor(value: string, fmts: IRFormatStringComponent[]) {
+    constructor(fmts: IRFormatStringComponent[]) {
         super(IRExpressionTag.IRLiteralFormatCStringExpression);
         this.fmts = fmts;
     }
 }
 
+
+//
+//TODO: Path literal expressions here
+//
+
+//
+//TODO: Path literal -format- expressions here
+//
 
 
 ////////////////////////////////////////
@@ -516,9 +525,9 @@ abstract class IRErrorBinArithCheckStatement extends IRErrorCheckStatement {
     readonly left: IRExpression;
     readonly right: IRExpression;
 
-    readonly optypechk: "Nat" | "Int" | "BigNat" | "BigInt";
+    readonly optypechk: "Nat" | "Int" | "SafeNat" | "SafeInt";
 
-    constructor(tag: IRStatementTag, file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRExpression, right: IRExpression, optypechk: "Nat" | "Int" | "BigNat" | "BigInt") {
+    constructor(tag: IRStatementTag, file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRExpression, right: IRExpression, optypechk: "Nat" | "Int" | "SafeNat" | "SafeInt") {
         super(tag, file, sinfo, diagnosticTag, checkID);
         this.left = left;
         this.right = right;
@@ -527,25 +536,25 @@ abstract class IRErrorBinArithCheckStatement extends IRErrorCheckStatement {
 }
 
 class IRErrorAdditionBoundsCheckStatement extends IRErrorBinArithCheckStatement {
-    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRExpression, right: IRExpression, optypechk: "Nat" | "Int" | "BigNat" | "BigInt") {
+    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRExpression, right: IRExpression, optypechk: "Nat" | "Int" | "SafeNat" | "SafeInt") {
         super(IRStatementTag.IRErrorAdditionBoundsCheckStatement, file, sinfo, diagnosticTag, checkID, left, right, optypechk);
     }
 }
 
 class IRErrorSubtractionBoundsCheckStatement extends IRErrorBinArithCheckStatement {
-    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRExpression, right: IRExpression, optypechk: "Nat" | "Int" | "BigNat" | "BigInt") {
+    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRExpression, right: IRExpression, optypechk: "Nat" | "Int" | "SafeNat" | "SafeInt") {
         super(IRStatementTag.IRErrorSubtractionBoundsCheckStatement, file, sinfo, diagnosticTag, checkID, left, right, optypechk);
     }
 }
 
 class IRErrorMultiplicationBoundsCheckStatement extends IRErrorBinArithCheckStatement {
-    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRExpression, right: IRExpression, optypechk: "Nat" | "Int" | "BigNat" | "BigInt") {
+    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRExpression, right: IRExpression, optypechk: "Nat" | "Int" | "SafeNat" | "SafeInt") {
         super(IRStatementTag.IRErrorMultiplicationBoundsCheckStatement, file, sinfo, diagnosticTag, checkID, left, right, optypechk);
     }
 }
 
 class IRErrorDivisionByZeroCheckStatement extends IRErrorBinArithCheckStatement {
-    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRExpression, right: IRExpression, optypechk: "Nat" | "Int" | "BigNat" | "BigInt") {
+    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRExpression, right: IRExpression, optypechk: "Nat" | "Int" | "SafeNat" | "SafeInt") {
         super(IRStatementTag.IRErrorDivisionByZeroCheckStatement, file, sinfo, diagnosticTag, checkID, left, right, optypechk);
     }
 }
@@ -553,7 +562,7 @@ class IRErrorDivisionByZeroCheckStatement extends IRErrorBinArithCheckStatement 
 export {
     IRExpressionTag, IRExpression,
     IRLiteralNoneExpression, IRLiteralBoolExpression,
-    IRLiteralIntegralNumberExpression, IRLiteralNatExpression, IRLiteralIntExpression, IRLiteralBigNatExpression, IRLiteralBigIntExpression,
+    IRLiteralIntegralNumberExpression, IRLiteralNatExpression, IRLiteralIntExpression, IRLiteralSafeNatExpression, IRLiteralSafeIntExpression,
     IRLiteralRationalExpression, IRLiteralFloatingPointExpression, IRLiteralFloatExpression, IRLiteralDecimalExpression,
     IRLiteralDecimalDegreeExpression, IRLiteralLatLongCoordinateExpression, IRLiteralComplexExpression,
     IRLiteralByteBufferExpression, 

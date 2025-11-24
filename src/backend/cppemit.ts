@@ -1,5 +1,5 @@
 import { MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_INT } from "../frontend/assembly";
-import { IRExpression, IRExpressionTag, IRLiteralBigIntExpression, IRLiteralBigNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression } from "./irbody";
+import { IRExpression, IRExpressionTag, IRLiteralSafeIntExpression, IRLiteralSafeNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression } from "./irbody";
 
 import assert from "node:assert";
 
@@ -44,22 +44,22 @@ class CPPEmitter {
         else if(ttag === IRExpressionTag.IRLiteralIntExpression) {
             return `${(exp as IRLiteralIntExpression).value}_Int`;
         }
-        else if(ttag === IRExpressionTag.IRLiteralBigNatExpression) {
-            const nval = BigInt((exp as IRLiteralBigNatExpression).value);
+        else if(ttag === IRExpressionTag.IRLiteralSafeNatExpression) {
+            const nval = BigInt((exp as IRLiteralSafeNatExpression).value);
             if(nval <= MAX_SAFE_NAT) {
-                return `${(exp as IRLiteralBigNatExpression).value}_BigNat`;
+                return `${(exp as IRLiteralSafeNatExpression).value}_SafeNat`;
             }
             else {
-                assert(false, `CPPEmitter: need to do bit shift construction for (really big) big nat -- ${(exp as IRLiteralBigNatExpression).value}`);
+                assert(false, `CPPEmitter: need to do bit shift construction for (really big) safe nat -- ${(exp as IRLiteralSafeNatExpression).value}`);
             }
         }
-        else if(ttag === IRExpressionTag.IRLiteralBigIntExpression) {
-            const ival = BigInt((exp as IRLiteralBigIntExpression).value);
+        else if(ttag === IRExpressionTag.IRLiteralSafeIntExpression) {
+            const ival = BigInt((exp as IRLiteralSafeIntExpression).value);
             if(MIN_SAFE_INT <= ival && ival <= MAX_SAFE_INT) {
-                return `${(exp as IRLiteralBigIntExpression).value}_BigInt`;
+                return `${(exp as IRLiteralSafeIntExpression).value}_SafeInt`;
             }
             else {
-                assert(false, `CPPEmitter: need to do bit shift construction for (really big) big int -- ${(exp as IRLiteralBigIntExpression).value}`);
+                assert(false, `CPPEmitter: need to do bit shift construction for (really big) safe int -- ${(exp as IRLiteralSafeIntExpression).value}`);
             }
         }
         else if(ttag === IRExpressionTag.IRLiteralRationalExpression) {

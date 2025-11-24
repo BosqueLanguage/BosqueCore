@@ -14,7 +14,7 @@ class Explicitifier {
         else if(ttag === ExpressionTag.LiteralBoolExpression) {
             return exp;
         }
-        else if(ttag === ExpressionTag.LiteralNatExpression || ttag === ExpressionTag.LiteralIntExpression || ttag === ExpressionTag.LiteralBigNatExpression || ttag === ExpressionTag.LiteralBigIntExpression) {
+        else if(ttag === ExpressionTag.LiteralNatExpression || ttag === ExpressionTag.LiteralIntExpression || ttag === ExpressionTag.LiteralSafeNatExpression || ttag === ExpressionTag.LiteralSafeIntExpression) {
             return exp;
         }
         else if(ttag === ExpressionTag.LiteralRationalExpression) {
