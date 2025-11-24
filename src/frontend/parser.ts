@@ -1155,8 +1155,6 @@ class Parser {
 
     private wellknownTypes: Map<string, NominalTypeSignature> = new Map<string, NominalTypeSignature>();
 
-    private readonly warnings: string[] = [];
-
     constructor(currentFile: string, toplevelns: string, tokens: Token[], assembly: Assembly, currentPhase: ParsePhase) {
         this.currentPhase = currentPhase;
         this.tokens = tokens;
@@ -1430,6 +1428,56 @@ class Parser {
         }
     }
 
+    private FA_TSigLookup(sinfo: SourceInfo, fmtstr: string): TypeSignature | undefined {
+        //
+        //TODO: A temp kludge to extract type info from the format string (can only be nominal without templates for now)
+        //
+
+        const parts = fmtstr.split("::");
+        const corens = this.env.assembly.getCoreNamespace();
+        const rns = this.env.currentNamespace;
+        const tlns = this.env.assembly.getToplevelNamespace(rns.topnamespace);
+
+        if(parts.length === 1) {
+            const cnst = corens.typedecls.find((v) => v.name === parts[0]);
+            const nnst = rns.typedecls.find((v) => v.name === parts[0]);
+            const tnst = tlns !== undefined ? tlns.typedecls.find((v) => v.name === parts[0]) : undefined;
+
+            if(cnst !== undefined) {
+                return new NominalTypeSignature(sinfo, undefined, cnst, []);
+            }
+            else if(nnst !== undefined) {
+                return new NominalTypeSignature(sinfo, undefined, nnst, []);
+            }
+            else if(tnst !== undefined) {
+                return new NominalTypeSignature(sinfo, undefined, tnst, []);
+            }
+            else {
+                return undefined;
+            }
+        }
+        else if (tlns !== undefined) {
+            let tns = tlns as NamespaceDeclaration;
+            for(let i = 0; i < parts.length - 1; ++i) {
+                tns = tns.subns.find((v) => v.name === parts[i]) as NamespaceDeclaration;
+                if(tns === undefined) {
+                    return undefined;
+                }
+            }
+            
+            const tnst = tns.typedecls.find((v) => v.name === parts[parts.length - 1]);
+            if(tnst !== undefined) {
+                return new NominalTypeSignature(sinfo, undefined, tnst, []);
+            }
+            else {
+                return undefined;
+            }
+        }
+        else {
+            return undefined;
+        }
+    }
+
     static _s_formatArgRe = /\$\{[0-9]+(?:[:][A-Za-z_0-9:]+)?\}$/;
     private processFormatArguments(contents: string, sinfo: SourceInfo): FormatStringComponent[] {
         const parts = contents.split(/(\{[0-9]+\})/);
@@ -1447,9 +1495,15 @@ class Parser {
                 else {
                     const argpos = part.slice(2, tpos);
                     const fmtstr = part.slice(tpos + 1, part.length - 1);
-                    this.warnings.push(`Formatting argument ${argpos} has type ${fmtstr} but currently this decays to auto`);
-xxxx;
-                    return new FormatStringArgComponent(argpos, new AutoTypeSignature(sinfo));
+                    
+                    const fsig = this.FA_TSigLookup(sinfo, fmtstr);
+                    if(fsig !== undefined) {
+                        return new FormatStringArgComponent(argpos, fsig);
+                    }
+                    else {
+                        this.recordErrorGeneral(sinfo, `Unable to resolve type signature "${fmtstr}" in format string argument`);
+                        return new FormatStringArgComponent(argpos, new AutoTypeSignature(sinfo));
+                    }    
                 }
             }
         });
