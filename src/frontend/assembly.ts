@@ -10,12 +10,12 @@ const s_p124bit_safe = s_p62bit_safe * s_p62bit_safe;
 const MIN_SAFE_INT = -s_p62bit_safe;
 const MAX_SAFE_INT = s_p62bit_safe;
 
-const MIN_SAFE_SAFE_INT = -s_p124bit_safe;
-const MAX_SAFE_SAFE_INT = s_p124bit_safe;
+const MIN_SAFE_CHK_INT = -s_p124bit_safe;
+const MAX_SAFE_CHK_INT = s_p124bit_safe;
 
 //negation and conversion are always safe
 const MAX_SAFE_NAT = s_p62bit_safe;
-const MAX_SAFE_BIG_NAT = s_p124bit_safe;
+const MAX_SAFE_CHK_NAT = s_p124bit_safe;
 
 const WELL_KNOWN_RETURN_VAR_NAME = "$return";
 const WELL_KNOWN_EVENTS_VAR_NAME = "$events";
@@ -1895,7 +1895,7 @@ class Assembly {
 }
 
 export {
-    MIN_SAFE_INT, MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_SAFE_INT, MAX_SAFE_SAFE_INT, MAX_SAFE_BIG_NAT,
+    MIN_SAFE_INT, MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_CHK_INT, MAX_SAFE_CHK_INT, MAX_SAFE_CHK_NAT,
     WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_EVENTS_VAR_NAME,
     TemplateTermDeclExtraTag, TemplateTermDecl, TypeTemplateTermDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestriction, 
     TaskConfiguration,

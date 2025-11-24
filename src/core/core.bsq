@@ -59,11 +59,11 @@ __internal __typedeclable __keycomparable __numeric entity Int {
 }
 
 %** Primitive big-integer value. **%
-__internal __typedeclable __keycomparable __numeric entity SafeNat {
+__internal __typedeclable __keycomparable __numeric entity ChkNat {
 }
 
 %** Primitive big-integer value. **%
-__internal __typedeclable __keycomparable __numeric entity SafeInt {
+__internal __typedeclable __keycomparable __numeric entity ChkInt {
 }
 
 %** Primitive rational value. **%

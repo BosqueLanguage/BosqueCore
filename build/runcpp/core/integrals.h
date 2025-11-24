@@ -152,14 +152,14 @@ namespace Core
         friend constexpr bool operator>=(const Int &lhs, const Int &rhs) noexcept { return !(lhs.value < rhs.value); }
     };
 
-    class SafeNat
+    class ChkNat
     {
     public:
         static constexpr __int128_t MAX_NAT = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED; 
 
         inline constexpr static bool isValidNat(__int128_t v) noexcept
         {
-            return (0 <= v) & (v <= SafeNat::MAX_NAT);
+            return (0 <= v) & (v <= ChkNat::MAX_NAT);
         }
 
     private:
@@ -173,87 +173,87 @@ namespace Core
         }
 
     public:
-        constexpr SafeNat() noexcept : value(0) {}
-        constexpr SafeNat(__int128_t v) noexcept : value(v) {}
-        constexpr SafeNat(const SafeNat& other) noexcept = default;
+        constexpr ChkNat() noexcept : value(0) {}
+        constexpr ChkNat(__int128_t v) noexcept : value(v) {}
+        constexpr ChkNat(const ChkNat& other) noexcept = default;
 
         constexpr bool isBottom() const noexcept
         {
-            return SafeNat::s_isBottom(this->value);
+            return ChkNat::s_isBottom(this->value);
         }
 
         // Overloaded operators on Nat
-        constexpr SafeNat operator+() const noexcept
+        constexpr ChkNat operator+() const noexcept
         {
-            return SafeNat(this->value);
+            return ChkNat(this->value);
         }
         // Negation is not defined for Nat
 
-        friend constexpr SafeNat operator+(SafeNat lhs, SafeNat rhs) noexcept
+        friend constexpr ChkNat operator+(ChkNat lhs, ChkNat rhs) noexcept
         {
             if(lhs.isBottom() | rhs.isBottom()) {
-                return SafeNat(SafeNat::BOTTOM_VALUE);
+                return ChkNat(ChkNat::BOTTOM_VALUE);
             }
 
             __int128_t result = 0;
-            if(!__builtin_add_overflow_p(lhs.value, rhs.value, &result) && (SafeNat::isValidNat(result))) [[likely]] {
-                return SafeNat(result);
+            if(!__builtin_add_overflow_p(lhs.value, rhs.value, &result) && (ChkNat::isValidNat(result))) [[likely]] {
+                return ChkNat(result);
             }
             else {
-                return SafeNat(SafeNat::BOTTOM_VALUE);
+                return ChkNat(ChkNat::BOTTOM_VALUE);
             }
         }
-        friend constexpr SafeNat operator-(SafeNat lhs, SafeNat rhs) noexcept
+        friend constexpr ChkNat operator-(ChkNat lhs, ChkNat rhs) noexcept
         {
             if(lhs.isBottom() | rhs.isBottom()) {
-                return SafeNat(SafeNat::BOTTOM_VALUE);
+                return ChkNat(ChkNat::BOTTOM_VALUE);
             }
 
             __int128_t result = 0;
-            if((rhs.value <= lhs.value) && !__builtin_sub_overflow(lhs.value, rhs.value, &result) && (SafeNat::isValidNat(result))) [[likely]] {
-                return SafeNat(result);
+            if((rhs.value <= lhs.value) && !__builtin_sub_overflow(lhs.value, rhs.value, &result) && (ChkNat::isValidNat(result))) [[likely]] {
+                return ChkNat(result);
             }
             else {
-                return SafeNat(SafeNat::BOTTOM_VALUE);
+                return ChkNat(ChkNat::BOTTOM_VALUE);
             }
         }
-        friend constexpr SafeNat operator/(SafeNat lhs, SafeNat rhs) noexcept
+        friend constexpr ChkNat operator/(ChkNat lhs, ChkNat rhs) noexcept
         {
             if(lhs.isBottom() | rhs.isBottom()) {
-                return SafeNat(SafeNat::BOTTOM_VALUE);
+                return ChkNat(ChkNat::BOTTOM_VALUE);
             }
 
             if(rhs.value != 0) [[likely]] {
-                return SafeNat(lhs.value / rhs.value);
+                return ChkNat(lhs.value / rhs.value);
             }
             else {
-                return SafeNat(SafeNat::BOTTOM_VALUE);
+                return ChkNat(ChkNat::BOTTOM_VALUE);
             }
         }
-        friend constexpr SafeNat operator*(SafeNat lhs, SafeNat rhs) noexcept
+        friend constexpr ChkNat operator*(ChkNat lhs, ChkNat rhs) noexcept
         {
             if(lhs.isBottom() | rhs.isBottom()) {
-                return SafeNat(SafeNat::BOTTOM_VALUE);
+                return ChkNat(ChkNat::BOTTOM_VALUE);
             }
 
            __int128_t result = 0;
-            if(!__builtin_mul_overflow(lhs.value, rhs.value, &result) && (SafeNat::isValidNat(result))) [[likely]] {
-                return SafeNat(result);
+            if(!__builtin_mul_overflow(lhs.value, rhs.value, &result) && (ChkNat::isValidNat(result))) [[likely]] {
+                return ChkNat(result);
             }
             else {
-                return SafeNat(SafeNat::BOTTOM_VALUE);
+                return ChkNat(ChkNat::BOTTOM_VALUE);
             }
         }
 
-        friend constexpr bool operator<(const SafeNat &lhs, const SafeNat &rhs) noexcept { return lhs.value < rhs.value; }
-        friend constexpr bool operator==(const SafeNat &lhs, const SafeNat &rhs) noexcept { return lhs.value == rhs.value; }
-        friend constexpr bool operator>(const SafeNat &lhs, const SafeNat &rhs) noexcept { return rhs.value < lhs.value; }
-        friend constexpr bool operator!=(const SafeNat &lhs, const SafeNat &rhs) noexcept { return !(lhs.value == rhs.value); }
-        friend constexpr bool operator<=(const SafeNat &lhs, const SafeNat &rhs) noexcept { return !(lhs.value > rhs.value); }
-        friend constexpr bool operator>=(const SafeNat &lhs, const SafeNat &rhs) noexcept { return !(lhs.value < rhs.value); }
+        friend constexpr bool operator<(const ChkNat &lhs, const ChkNat &rhs) noexcept { return lhs.value < rhs.value; }
+        friend constexpr bool operator==(const ChkNat &lhs, const ChkNat &rhs) noexcept { return lhs.value == rhs.value; }
+        friend constexpr bool operator>(const ChkNat &lhs, const ChkNat &rhs) noexcept { return rhs.value < lhs.value; }
+        friend constexpr bool operator!=(const ChkNat &lhs, const ChkNat &rhs) noexcept { return !(lhs.value == rhs.value); }
+        friend constexpr bool operator<=(const ChkNat &lhs, const ChkNat &rhs) noexcept { return !(lhs.value > rhs.value); }
+        friend constexpr bool operator>=(const ChkNat &lhs, const ChkNat &rhs) noexcept { return !(lhs.value < rhs.value); }
     };
 
-    class BigInt
+    class ChkInt
     {
     public:
         static constexpr __int128_t MIN_INT = -ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED; 
@@ -261,7 +261,7 @@ namespace Core
 
         inline constexpr static bool isValidInt(__int128_t v) noexcept
         {
-            return (BigInt::MIN_INT <= v) & (v <= BigInt::MAX_INT);
+            return (ChkInt::MIN_INT <= v) & (v <= ChkInt::MAX_INT);
         }
 
     private:
@@ -277,40 +277,40 @@ namespace Core
     public:
 
     //TODO: need pos and neg bottom to keep ordering reasonable (like a - b goes to neg if b > a or a neg and b pos etc)
-        constexpr BigInt() noexcept : value(0) {}
-        constexpr BigInt(__int128_t v) noexcept : value(v) {}
-        constexpr BigInt(const BigInt& other) noexcept = default;
+        constexpr ChkInt() noexcept : value(0) {}
+        constexpr ChkInt(__int128_t v) noexcept : value(v) {}
+        constexpr ChkInt(const ChkInt& other) noexcept = default;
 
         constexpr bool isBottom() const noexcept
         {
-            return BigInt::isBottom(this->value);
+            return ChkInt::isBottom(this->value);
         }
 
         // Overloaded operators on Int
-        constexpr BigInt operator+() const noexcept
+        constexpr ChkInt operator+() const noexcept
         {
-            return BigInt(this->value);
+            return ChkInt(this->value);
         }
-        constexpr BigInt operator-() const noexcept
+        constexpr ChkInt operator-() const noexcept
         {
-            return BigInt(-this->value);
+            return ChkInt(-this->value);
         }
 
-        friend constexpr BigInt operator+(BigInt lhs, BigInt rhs) noexcept
+        friend constexpr ChkInt operator+(ChkInt lhs, ChkInt rhs) noexcept
         {
             if(lhs.isBottom() | rhs.isBottom()) {
-                return BigInt(BigInt::BOTTOM_VALUE);
+                return ChkInt(ChkInt::BOTTOM_VALUE);
             }
 
             __int128_t result = 0;
-            if(!__builtin_add_overflow_p(lhs.value, rhs.value, &result) && (BigInt::isValidInt(result))) [[likely]] {
-                return BigInt(result);
+            if(!__builtin_add_overflow_p(lhs.value, rhs.value, &result) && (ChkInt::isValidInt(result))) [[likely]] {
+                return ChkInt(result);
             }
             else {
-                return BigInt(BigInt::BOTTOM_VALUE);
+                return ChkInt(ChkInt::BOTTOM_VALUE);
             }
         }
-        friend constexpr BigInt operator-(BigInt lhs, BigInt rhs) noexcept
+        friend constexpr ChkInt operator-(ChkInt lhs, ChkInt rhs) noexcept
         {
             //figure out what way to overflow
         }
@@ -328,6 +328,6 @@ namespace Core
 
     static_assert(sizeof(Nat) == sizeof(int64_t), "Nat size incorrect");
     static_assert(sizeof(Int) == sizeof(int64_t), "Int size incorrect");
-    static_assert(sizeof(SafeNat) == sizeof(__int128_t), "BigNat size incorrect");
-    static_assert(sizeof(SafeInt) == sizeof(__int128_t), "BigInt size incorrect");
+    static_assert(sizeof(ChkNat) == sizeof(__int128_t), "BigNat size incorrect");
+    static_assert(sizeof(ChkInt) == sizeof(__int128_t), "BigInt size incorrect");
 }

@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import { APIDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, CRopeTypeDecl, UnicodeRopeTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, InvokeParameterDecl, AbstractCollectionTypeDecl, ConstructableTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, AbstractEntityTypeDecl, InvokeTemplateTypeRestrictionClause, CRopeIteratorTypeDecl, MAX_SAFE_SAFE_NAT, MIN_SAFE_SAFE_INT } from "./assembly.js";
+import { APIDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, CRopeTypeDecl, UnicodeRopeTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, InvokeParameterDecl, AbstractCollectionTypeDecl, ConstructableTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, AbstractEntityTypeDecl, InvokeTemplateTypeRestrictionClause, CRopeIteratorTypeDecl, MAX_SAFE_CHK_NAT, MIN_SAFE_CHK_INT, MAX_SAFE_CHK_INT } from "./assembly.js";
 import { CodeFormatter, SourceInfo } from "./build_decls.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, DebugStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestDenied, ITestError, ITestFail, ITestFlagged, ITestNone, ITestOk, ITestRejected, ITestSome, ITestSuccess, ITestType, IfElifElseStatement, IfElseStatement, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralNoneExpression, LiteralPathItemExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, ShortCircuitAssignRHSITestExpression, SpecialConstructorExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VoidRefCallStatement } from "./body.js";
@@ -999,26 +999,26 @@ class TypeChecker {
         return exp.setType(this.getWellKnownType("Int"));
     }
 
-    private checkLiteralSafeNatExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
+    private checkLiteralChkNatExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
         const nval = BigInt(exp.value.slice(0, exp.value.length - 1));
-        this.checkError(exp.sinfo, nval < 0n, "SafeNat literal cannot be negative");
-        this.checkError(exp.sinfo, MAX_SAFE_SAFE_NAT < nval, "SafeNat literal out of valid range");
+        this.checkError(exp.sinfo, nval < 0n, "ChkNat literal cannot be negative");
+        this.checkError(exp.sinfo, MAX_SAFE_CHK_NAT < nval, "ChkNat literal out of valid range");
 
-        return exp.setType(this.getWellKnownType("SafeNat"));
+        return exp.setType(this.getWellKnownType("ChkNat"));
     }
 
-    private checkLiteralSafeIntExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
+    private checkLiteralChkIntExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
         const nval = BigInt(exp.value.slice(0, exp.value.length - 1));
-        this.checkError(exp.sinfo, nval < MIN_SAFE_SAFE_INT, "SafeInt literal out of valid range");
-        this.checkError(exp.sinfo, MAX_SAFE_SAFE_INT < nval, "SafeInt literal out of valid range");
+        this.checkError(exp.sinfo, nval < MIN_SAFE_CHK_INT, "ChkInt literal out of valid range");
+        this.checkError(exp.sinfo, MAX_SAFE_CHK_INT < nval, "ChkInt literal out of valid range");
         
-        return exp.setType(this.getWellKnownType("SafeInt"));
+        return exp.setType(this.getWellKnownType("ChkInt"));
     }
 
     private checkLiteralRationalExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
         const slpos = exp.value.indexOf("/");
         const num = BigInt(exp.value.slice(0, slpos));
-        this.checkError(exp.sinfo, MAX_SAFE_BIG_INT < num, "Rational literal numerator out of valid range");
+        this.checkError(exp.sinfo, MAX_SAFE_CHK_INT < num, "Rational literal numerator out of valid range");
 
         const den = BigInt(exp.value.slice(slpos + 1, -1));
         this.checkError(exp.sinfo, MAX_SAFE_NAT < den, "Rational literal denominator out of valid range");
@@ -2636,11 +2636,11 @@ class TypeChecker {
             case ExpressionTag.LiteralIntExpression: {
                 return this.checkLiteralIntExpression(env, exp as LiteralSimpleExpression);
             }
-            case ExpressionTag.LiteralSafeNatExpression: {
-                return this.checkLiteralSafeNatExpression(env, exp as LiteralSimpleExpression);
+            case ExpressionTag.LiteralChkNatExpression: {
+                return this.checkLiteralChkNatExpression(env, exp as LiteralSimpleExpression);
             }
-            case ExpressionTag.LiteralSafeIntExpression: {
-                return this.checkLiteralSafeIntExpression(env, exp as LiteralSimpleExpression);
+            case ExpressionTag.LiteralChkIntExpression: {
+                return this.checkLiteralChkIntExpression(env, exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralRationalExpression: {
                 return this.checkLiteralRationalExpression(env, exp as LiteralSimpleExpression);
@@ -4845,8 +4845,8 @@ class TypeChecker {
         TypeChecker.loadWellKnownType(assembly, "Bool", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "Int", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "Nat", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "SafeInt", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "SafeNat", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "ChkInt", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "ChkNat", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "Rational", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "Float", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "Decimal", wellknownTypes);

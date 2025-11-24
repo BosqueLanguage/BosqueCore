@@ -4,7 +4,7 @@ import { Assembly } from "../frontend/assembly";
 
 import { IRRegex } from "./irsupport";
 import {} from "./irassembly";
-import { DateRepresentation, DeltaDateRepresentation, DeltaTimeRepresentation, IRExpression, IRLiteralSafeIntExpression, IRLiteralSafeNatExpression, IRLiteralBoolExpression, IRLiteralByteBufferExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralCStringExpression, IRLiteralDecimalExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLatLongCoordinateExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralNoneExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralRationalExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRStatement, TimeRepresentation } from "./irbody";
+import { DateRepresentation, DeltaDateRepresentation, DeltaTimeRepresentation, IRExpression, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteBufferExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralCStringExpression, IRLiteralDecimalExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLatLongCoordinateExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralNoneExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralRationalExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRStatement, TimeRepresentation } from "./irbody";
 
 import assert from "node:assert";
 
@@ -85,11 +85,11 @@ class ASMToIRConverter {
         else if(ttag === ExpressionTag.LiteralIntExpression) {
             return new IRLiteralIntExpression((exp as LiteralSimpleExpression).value.slice(-1));
         }
-        else if(ttag === ExpressionTag.LiteralSafeNatExpression) {
-            return new IRLiteralSafeNatExpression((exp as LiteralSimpleExpression).value.slice(-1));
+        else if(ttag === ExpressionTag.LiteralChkNatExpression) {
+            return new IRLiteralChkNatExpression((exp as LiteralSimpleExpression).value.slice(-1));
         }
-        else if(ttag === ExpressionTag.LiteralSafeIntExpression) {
-            return new IRLiteralSafeIntExpression((exp as LiteralSimpleExpression).value.slice(-1));
+        else if(ttag === ExpressionTag.LiteralChkIntExpression) {
+            return new IRLiteralChkIntExpression((exp as LiteralSimpleExpression).value.slice(-1));
         }
         else if(ttag === ExpressionTag.LiteralRationalExpression) {
             const rrval = (exp as LiteralSimpleExpression).value;
