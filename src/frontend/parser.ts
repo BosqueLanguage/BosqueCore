@@ -6722,6 +6722,7 @@ class Parser {
                 ename = this.consumeTokenAndGetValue();
             }
 
+            const isoptional = this.testAndConsumeTokenIf(SYM_question);
             this.ensureAndConsumeTokenIf(SYM_colon, "task env section");
             const ttype = this.parseStdTypeSignature();
                         
@@ -6730,7 +6731,7 @@ class Parser {
                 exp = this.parseConstScopedExpression(ttype, new Set<string>());
             }
 
-            return new EnvironmentVariableInformation(ename, ttype, exp);
+            return new EnvironmentVariableInformation(ename, ttype, !isoptional, exp);
         });
 
         envinfo.push(...ei);

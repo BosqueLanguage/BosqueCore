@@ -52,6 +52,18 @@ enum IRExpressionTag {
     IRLiteralTypedExpression = "IRLiteralTypedExpression",
     IRLiteralTypedStringExpression = "IRLiteralTypedStringExpression",
     IRLiteralTypedCStringExpression = "IRLiteralTypedCStringExpression",
+
+    IRLiteralTypedFormatStringExpression = "IRLiteralTypedFormatStringExpression",
+    IRLiteralTypedFormatCStringExpression = "IRLiteralTypedFormatCStringExpression",
+
+    //TODO: path typed literal and -format- options here
+
+    IRAccessEnvHasExpression = "IRAccessEnvHasExpression",
+    IRAccessEnvGetExpression = "IRAccessEnvGetExpression",
+    IRAccessEnvTryGetExpression = "IRAccessEnvTryGetExpression",
+
+    IRTaskAccessIDExpression = "IRTaskAccessIDExpression",
+    IRTaskAccessParentIDExpression = "IRTaskAccessParentIDExpression",
 }
 
 abstract class IRExpression {
@@ -505,7 +517,6 @@ class IRLiteralFormatCStringExpression extends IRLiteralExpression {
     }
 }
 
-
 //
 //TODO: Path literal expressions here
 //
@@ -547,17 +558,87 @@ class IRLiteralTypedCStringExpression extends IRLiteralExpression {
     }
 }
 
-////////////////////////////////////////
-//Basic Line statements
+class IRLiteralTypedFormatStringExpression extends IRLiteralExpression {
+    readonly oftype: IRTypeSignature;
+    readonly fmts: IRFormatStringComponent[];
+
+    constructor(oftype: IRTypeSignature, fmts: IRFormatStringComponent[]) {
+        super(IRExpressionTag.IRLiteralTypedFormatStringExpression);
+        this.oftype = oftype;
+        this.fmts = fmts;
+    }
+}
+
+class IRLiteralTypedFormatCStringExpression extends IRLiteralExpression {
+    readonly oftype: IRTypeSignature;
+    readonly fmts: IRFormatStringComponent[];
+
+    constructor(oftype: IRTypeSignature, fmts: IRFormatStringComponent[]) {
+        super(IRExpressionTag.IRLiteralTypedFormatCStringExpression);
+        this.oftype = oftype;
+        this.fmts = fmts;
+    }
+}
+
+
+//
+//TODO: Path typed literal and -format- expressions here
+//
+
+class IRAccessEnvHasExpression extends IRExpression {
+    readonly keybytes: number[];
+
+    constructor(keybytes: number[]) {
+        super(IRExpressionTag.IRAccessEnvHasExpression);
+        this.keybytes = keybytes;
+    }
+}
+
+class IRAccessEnvGetExpression extends IRExpression {
+    readonly keybytes: number[];
+    readonly oftype: IRTypeSignature;
+
+    constructor(keybytes: number[], oftype: IRTypeSignature) {
+        super(IRExpressionTag.IRAccessEnvGetExpression);
+        this.keybytes = keybytes;
+        this.oftype = oftype;
+    }
+}
+
+class IRAccessEnvTryGetExpression extends IRExpression {
+    readonly keybytes: number[];
+    readonly oftype: IRTypeSignature;
+
+    constructor(keybytes: number[], oftype: IRTypeSignature) {
+        super(IRExpressionTag.IRAccessEnvTryGetExpression);
+        this.keybytes = keybytes;
+        this.oftype = oftype;
+    }
+}
+
+class IRTaskAccessIDExpression extends IRExpression {
+    constructor() {
+        super(IRExpressionTag.IRTaskAccessIDExpression);
+    }
+}
+
+class IRTaskAccessParentIDExpression extends IRExpression {
+    constructor() {
+        super(IRExpressionTag.IRTaskAccessParentIDExpression);
+    }
+}
 
 ////////////////////////////////////////
-//Explicit error condition checks -- all possible error conditions must be made explicit during flattening
+//Basic Line statements
 
 class IRNopStatement extends IRStatement {
     constructor() {
         super(IRStatementTag.IRNopStatement);
     }
 }
+
+////////////////////////////////////////
+//Explicit error condition checks -- all possible error conditions must be made explicit during flattening
 
 abstract class IRErrorCheckStatement extends IRStatement {
     readonly file: string;
@@ -627,6 +708,7 @@ class IRTypeDeclInvariantCheckStatement  extends IRStatement {
 
 export {
     IRExpressionTag, IRExpression, IRImmediateExpression, IRLiteralExpression,
+    
     IRLiteralNoneExpression, IRLiteralBoolExpression,
     IRLiteralIntegralNumberExpression, IRLiteralNatExpression, IRLiteralIntExpression, IRLiteralChkNatExpression, IRLiteralChkIntExpression,
     IRLiteralRationalExpression, IRLiteralFloatingPointExpression, IRLiteralFloatExpression, IRLiteralDecimalExpression,
@@ -638,9 +720,14 @@ export {
     IRLiteralUnicodeRegexExpression, IRLiteralCRegexExpression,
     IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralUnicodeCharExpression,
     IRLiteralCStringExpression, IRLiteralStringExpression,
+
     IRFormatStringComponent, IRFormatStringTextComponent, IRFormatStringArgComponent,
     IRLiteralFormatStringExpression, IRLiteralFormatCStringExpression,
     IRLiteralTypedExpression, IRLiteralTypedStringExpression, IRLiteralTypedCStringExpression,
+    IRLiteralTypedFormatStringExpression, IRLiteralTypedFormatCStringExpression,
+
+    IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression,
+    IRTaskAccessIDExpression, IRTaskAccessParentIDExpression,
 
     IRStatementTag, IRStatement,
     IRNopStatement,

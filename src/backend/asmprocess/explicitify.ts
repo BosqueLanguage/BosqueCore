@@ -59,10 +59,10 @@ class Explicitifier {
         else if(ttag === ExpressionTag.LiteralTypeDeclValueExpression) {
             return exp;
         }
-        else if(ttag === ExpressionTag.LiteralTypedStringExpression) {
+        else if(ttag === ExpressionTag.LiteralTypedStringExpression || ttag === ExpressionTag.LiteralTypedCStringExpression) {
             return exp;
         }
-        else if(ttag === ExpressionTag.LiteralTypedCStringExpression) {
+        else if(ttag === ExpressionTag.LiteralTypedFormatStringExpression || ttag === ExpressionTag.LiteralTypedFormatCStringExpression) {
             return exp;
         }
         else {

@@ -168,9 +168,37 @@ class CPPEmitter {
         }
         else if(ttag === IRExpressionTag.IRLiteralFormatStringExpression) {
             //TODO: probably represent this natively as a Bosque List<FormatArgComponent>
-            assert(false, "CPPEmitter: need to handle format string literals");
+            assert(false, "CPPEmitter: need to handle format String literals");
         }
         else if(ttag === IRExpressionTag.IRLiteralFormatCStringExpression) {
+            //TODO: probably represent this natively as a Bosque List<FormatArgComponent>
+            assert(false, "CPPEmitter: need to handle format CString literals");
+        }
+        else if(ttag === IRExpressionTag.IRLiteralTypedExpression) {
+            const ilte = exp as IRLiteralTypedExpression
+            const cce = TransformCPPNameManager.convertTypeKey(ilte.constype.tkeystr);
+
+            return `${cce}(${this.emitIRLiteral(ilte.value as IRLiteralExpression)})`;
+        }
+        else if(ttag === IRExpressionTag.IRLiteralTypedStringExpression) {
+            assert(false, "CPPEmitter: need to handle full Unicode string literals")
+        }
+        else if(ttag === IRExpressionTag.IRLiteralTypedCStringExpression) {
+            const ilte = exp as IRLiteralTypedCStringExpression
+            const cce = TransformCPPNameManager.convertTypeKey(ilte.constype.tkeystr);
+
+            if(ilte.bytes.length <= 24) {
+                return `${cce}(${RUNTIME_NAMESPACE}::CString::literal(${this.escapeLiteralCString(ilte.bytes)}))`;
+            }
+            else {
+                assert(false, "CPPEmitter: need to do heap allocation for long cstrings");
+            }
+        }
+        else if(ttag === IRExpressionTag.IRLiteralTypedFormatStringExpression) {
+            //TODO: probably represent this natively as a Bosque List<FormatArgComponent>
+            assert(false, "CPPEmitter: need to handle format String literals");
+        }
+        else if(ttag === IRExpressionTag.IRLiteralTypedFormatCStringExpression) {
             //TODO: probably represent this natively as a Bosque List<FormatArgComponent>
             assert(false, "CPPEmitter: need to handle format CString literals");
         }
@@ -196,25 +224,9 @@ class CPPEmitter {
         }
         else {
             const ttag = exp.tag;
-            if(ttag === IRExpressionTag.IRLiteralTypedExpression) {
-                const ilte = exp as IRLiteralTypedExpression
-                const cce = TransformCPPNameManager.convertTypeKey(ilte.constype.tkeystr);
-
-                return `${cce}(${this.emitIRLiteral(ilte.value as IRLiteralExpression)})`;
-            }
-            else if(ttag === IRExpressionTag.IRLiteralTypedStringExpression) {
-                assert(false, "CPPEmitter: need to handle full Unicode string literals")
-            }
-            else if(ttag === IRExpressionTag.IRLiteralTypedCStringExpression) {
-                const ilte = exp as IRLiteralTypedCStringExpression
-                const cce = TransformCPPNameManager.convertTypeKey(ilte.constype.tkeystr);
-
-                if(ilte.bytes.length <= 24) {
-                    return `${cce}(${RUNTIME_NAMESPACE}::CString::literal(${this.escapeLiteralCString(ilte.bytes)}))`;
-                }
-                else {
-                    assert(false, "CPPEmitter: need to do heap allocation for long cstrings");
-                }
+            xxxx;
+            if() {
+                
             }
             else {
                 assert(false, `CPPEmitter: Unsupported IR expression type -- ${exp.constructor.name}`);

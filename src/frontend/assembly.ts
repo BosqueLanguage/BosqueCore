@@ -1145,20 +1145,23 @@ class DatatypeTypeDecl extends AbstractConceptTypeDecl {
 class EnvironmentVariableInformation {
     readonly evname: string; //identifier or cstring
     readonly evtype: TypeSignature;
+    readonly required: boolean;
     readonly optdefault: Expression | undefined;
 
-    constructor(evname: string, evtype: TypeSignature, optdefault: Expression | undefined) {
+    constructor(evname: string, evtype: TypeSignature, required: boolean, optdefault: Expression | undefined) {
         this.evname = evname;
         this.evtype = evtype;
+        this.required = required;
         this.optdefault = optdefault;
     }
 
     emit(fmt: CodeFormatter): string {
+        const optional = this.required ? "" : "?";
         if(this.optdefault === undefined) {
-            return fmt.indent(`${this.evname}: ${this.evtype.emit()}`);
+            return fmt.indent(`${this.evname}${optional}: ${this.evtype.emit()}`);
         }
         else {
-            return fmt.indent(`${this.evname}: ${this.evtype.emit()} = ${this.optdefault.emit(true, fmt)}`);
+            return fmt.indent(`${this.evname}${optional}: ${this.evtype.emit()} = ${this.optdefault.emit(true, fmt)}`);
         }
     }
 }
