@@ -1,4 +1,4 @@
-import { Expression, ExpressionTag } from "../frontend/body";
+import { Expression, ExpressionTag } from "../../frontend/body";
 
 import assert from "node:assert";
 

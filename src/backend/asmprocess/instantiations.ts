@@ -1,4 +1,4 @@
-import { EListTypeSignature, FullyQualifiedNamespace, TemplateNameMapper, TypeSignature } from "../frontend/type.ts";
+import { EListTypeSignature, FullyQualifiedNamespace, TemplateNameMapper, TypeSignature } from "../../frontend/type.ts";
 
 
 class FunctionInstantiationInfo {

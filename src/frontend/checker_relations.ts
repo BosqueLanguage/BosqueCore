@@ -755,9 +755,6 @@ class TypeCheckerRelations {
         const decl = t.decl;
         if((decl instanceof ListTypeDecl) || (decl instanceof StackTypeDecl) || (decl instanceof QueueTypeDecl)) {
             return t.alltermargs[0];
-        } 
-        else if(decl instanceof CRopeTypeDecl || decl instanceof UnicodeRopeTypeDecl) {
-            return undefined;
         }
         else if(decl instanceof SetTypeDecl) {
             return t.alltermargs[0];
