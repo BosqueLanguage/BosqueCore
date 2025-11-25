@@ -47,10 +47,6 @@ class TypeChecker {
         return cond;
     }
 
-    private reportWarn(sinfo: SourceInfo, msg: string) {
-        console.warn(`Warning at ${this.file}:${sinfo.line} - ${msg}`);
-    }
-
     private doRegexValidation(sinfo: SourceInfo, ofexp: LiteralRegexExpression | AccessNamespaceConstantExpression, inns: string, input: string, literalstring: string): void {
         try {
             const [pattern, pns] = this.relations.assembly.resolveConstantRegexExpressionValue(ofexp, inns);
@@ -88,79 +84,71 @@ class TypeChecker {
         return (t.tkeystr === "Void");
     }
 
-    private checkTypeDeclOfRestrictions(tdecl: TypedeclTypeDecl, exp: Expression): string | undefined {
-        if(exp.tag === ExpressionTag.LiteralStringExpression) {
-            const vs = validateStringLiteral((exp as LiteralStringExpression).value.slice(1, -1));
-            this.checkError(exp.sinfo, vs === null, `Invalid string literal value ${(exp as LiteralSimpleExpression).value}`);
+    private checkTypeDeclOfStringRestrictions(sinfo: SourceInfo, tdecl: TypedeclTypeDecl, value: string): string | undefined {
+        const vs = validateStringLiteral(value.slice(1, -1));
+        this.checkError(sinfo, vs === null, `Invalid string literal value ${value}`);
 
-            if(vs !== null && tdecl.optofexp !== undefined) {
-                const vexp = this.relations.assembly.resolveValidatorLiteral(tdecl.optofexp);
+        if(vs !== null && tdecl.optofexp !== undefined) {
+            const vexp = this.relations.assembly.resolveValidatorLiteral(tdecl.optofexp);
 
-                if(vexp === undefined || vexp.tag !== ExpressionTag.LiteralUnicodeRegexExpression) {
-                    this.reportError(exp.sinfo, `Unable to resolve regex validator`);
-                }
-                else {
-                    if(!(vexp instanceof LiteralRegexExpression) && !(vexp instanceof AccessNamespaceConstantExpression)) {
-                        this.reportError(exp.sinfo, `Invalid regex validator -- expected literal or namespace constant`);
-                    }
-                    else {
-                        this.doRegexValidation(exp.sinfo, vexp, tdecl.ns.ns.join("::"), vs, (exp as LiteralStringExpression).value.slice(1, -1));
-                    }
-                }
-            }
-
-            return vs !== null ? vs : undefined;
-        }
-        else if(exp.tag === ExpressionTag.LiteralCStringExpression) {
-            const vs = validateCStringLiteral((exp as LiteralCStringExpression).value.slice(1, -1));
-            this.checkError(exp.sinfo, vs === null, `Invalid cstring literal value ${(exp as LiteralSimpleExpression).value}`);
-
-            if(vs !== null && tdecl.optofexp !== undefined) {
-                const vexp = this.relations.assembly.resolveValidatorLiteral(tdecl.optofexp);
-                if(vexp === undefined || vexp.tag !== ExpressionTag.LiteralCRegexExpression) {
-                    this.reportError(exp.sinfo, `Unable to resolve cregex validator`);
-                }
-                else {
-                    if(!(vexp instanceof LiteralRegexExpression) && !(vexp instanceof AccessNamespaceConstantExpression)) {
-                        this.reportError(exp.sinfo, `Invalid regex validator -- expected literal or namespace constant`);
-                    }
-                    else {
-                        this.doRegexValidation(exp.sinfo, vexp, tdecl.ns.ns.join("::"), vs, (exp as LiteralCStringExpression).value.slice(1, -1));
-                    }
-                }
-            }
-
-            return vs !== null ? vs : undefined;
-        }
-        else {
-            if(exp.tag !== ExpressionTag.LiteralPathExpression) {
-                this.reportError(exp.sinfo, `Type declaration restrictions only support string/cstring/path literals`);
-                return undefined;
+            if(vexp === undefined || vexp.tag !== ExpressionTag.LiteralUnicodeRegexExpression) {
+                this.reportError(sinfo, `Unable to resolve regex validator`);
             }
             else {
-                this.reportWarn(exp.sinfo, `Type checking for type decl restrictions do not run the GLOB yet -- just getting and returning the contents!!!`);
-
-                //TODO: should validate with glob here!!!
-                const vs = (exp as LiteralPathItemExpression).value;
-                
-                if(vs !== null && tdecl.optofexp !== undefined) {
-                    const vexp = this.relations.assembly.resolveValidatorLiteral(tdecl.optofexp);
-                    if(vexp === undefined || vexp.tag !== ExpressionTag.LiteralGlobExpression) {
-                        this.reportError(exp.sinfo, `Unable to resolve glob validator`);
-                    }
-                    else {
-                        if(!(vexp instanceof LiteralPathItemExpression) && !(vexp instanceof AccessNamespaceConstantExpression)) {
-                            this.reportError(exp.sinfo, `Invalid glob validator -- expected literal or namespace constant`);
-                        }
-                        else {
-                            this.doGlobValidation(exp.sinfo, vexp, tdecl.ns.ns.join("::"), vs, (exp as LiteralPathItemExpression).value.slice(1, -1));
-                        }
-                    }
+                if(!(vexp instanceof LiteralRegexExpression) && !(vexp instanceof AccessNamespaceConstantExpression)) {
+                    this.reportError(sinfo, `Invalid regex validator -- expected literal or namespace constant`);
                 }
-
-                return vs !== null ? vs : undefined;
+                else {
+                    this.doRegexValidation(sinfo, vexp, tdecl.ns.ns.join("::"), vs, value.slice(1, -1));
+                }
             }
         }
+
+        return vs !== null ? vs : undefined;
+    }
+
+    private checkTypeDeclOfCStringRestrictions(sinfo: SourceInfo, tdecl: TypedeclTypeDecl, value: string): string | undefined {
+        const vs = validateCStringLiteral(value.slice(1, -1));
+        this.checkError(sinfo, vs === null, `Invalid cstring literal value ${value}`);
+
+        if(vs !== null && tdecl.optofexp !== undefined) {
+            const vexp = this.relations.assembly.resolveValidatorLiteral(tdecl.optofexp);
+            if(vexp === undefined || vexp.tag !== ExpressionTag.LiteralCRegexExpression) {
+                this.reportError(sinfo, `Unable to resolve cregex validator`);
+            }
+            else {
+                if(!(vexp instanceof LiteralRegexExpression) && !(vexp instanceof AccessNamespaceConstantExpression)) {
+                    this.reportError(sinfo, `Invalid regex validator -- expected literal or namespace constant`);
+                }
+                else {
+                    this.doRegexValidation(sinfo, vexp, tdecl.ns.ns.join("::"), vs, value.slice(1, -1));
+                }
+            }
+        }
+
+        return vs !== null ? vs : undefined;
+    }
+
+     private checkTypeDeclOfPathRestrictions(sinfo: SourceInfo, tdecl: TypedeclTypeDecl, value: string): string | undefined {
+        //TODO: should validate with glob here!!!
+        const vs = value;
+                
+        if(vs !== null && tdecl.optofexp !== undefined) {
+            const vexp = this.relations.assembly.resolveValidatorLiteral(tdecl.optofexp);
+            if(vexp === undefined || vexp.tag !== ExpressionTag.LiteralGlobExpression) {
+                this.reportError(sinfo, `Unable to resolve glob validator`);
+            }
+            else {
+                if(!(vexp instanceof LiteralPathItemExpression) && !(vexp instanceof AccessNamespaceConstantExpression)) {
+                    this.reportError(sinfo, `Invalid glob validator -- expected literal or namespace constant`);
+                }
+                else {
+                    this.doGlobValidation(sinfo, vexp, tdecl.ns.ns.join("::"), vs, value.slice(1, -1));
+                }
+            }
+        }
+
+        return vs !== null ? vs : undefined;
     }
 
     private processITest_None(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
@@ -1273,13 +1261,13 @@ class TypeChecker {
     private checkLiteralFormatStringExpression(env: TypeEnvironment, exp: LiteralFormatStringExpression): TypeSignature {
         const fmttypes = this.computeFormatArgsTypes(exp.sinfo, exp.fmts, this.getWellKnownType("String"));
         
-        exp.setType(new FormatStringTypeSignature(exp.sinfo, "String", this.getWellKnownType("String"), fmttypes));
+        return exp.setType(new FormatStringTypeSignature(exp.sinfo, "String", this.getWellKnownType("String"), fmttypes));
     }
 
     private checkLiteralFormatCStringExpression(env: TypeEnvironment, exp: LiteralFormatCStringExpression): TypeSignature {
         const fmttypes = this.computeFormatArgsTypes(exp.sinfo, exp.fmts, this.getWellKnownType("CString"));
         
-        exp.setType(new FormatStringTypeSignature(exp.sinfo, "CString", this.getWellKnownType("CString"), fmttypes));
+        return exp.setType(new FormatStringTypeSignature(exp.sinfo, "CString", this.getWellKnownType("CString"), fmttypes));
     }
 
     private checkLiteralPathExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
@@ -1321,24 +1309,30 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
-        const tdecl = exp.constype.decl as TypedeclTypeDecl;
-        try {
-            const vs = validateStringLiteral(exp.value.slice(1, exp.value.length - 1));
+        const vs = this.checkTypeDeclOfStringRestrictions(exp.sinfo, exp.constype.decl as TypedeclTypeDecl, exp.value.slice(1, exp.value.length - 1));
+        if(vs === null) {
             exp.resolvedValue = vs;
-        } catch(err) {
-            this.reportError(exp.sinfo, (err as Error).message);
-            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
-
-        const vtype = this.relations.getTypedStringValueType(stype);
-        const vexpType = this.checkExpression(env, exp, vtype !== undefined ? new SimpleTypeInferContext(vtype) : undefined);
-        this.checkError(exp.sinfo, !(vexpType instanceof ErrorTypeSignature) && vtype !== undefined && !this.relations.areSameTypes(vexpType, vtype), `Typed string literal value is not the same type (${vexpType.emit()}) as the value type (${TypeChecker.safeTypePrint(vtype)})`);
-
-        return exp.setType(stype);
+            
+        return exp.setType(exp.constype);
     }
 
     private checkLiteralTypedCStringExpression(env: TypeEnvironment, exp: LiteralTypedCStringExpression): TypeSignature {
-        xxxx;
+        if(!this.checkTypeSignature(exp.constype)) {
+            return exp.setType(exp.constype);
+        }
+
+        if(!(exp.constype instanceof NominalTypeSignature) || !(exp.constype.decl instanceof TypedeclTypeDecl)) {
+            this.reportError(exp.sinfo, `Invalid type for typed cstring literal expression -- ${exp.constype.emit()}`);
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        const vs = this.checkTypeDeclOfCStringRestrictions(exp.sinfo, exp.constype.decl as TypedeclTypeDecl, exp.value.slice(1, exp.value.length - 1));
+        if(vs === null) {
+            exp.resolvedValue = vs;
+        }
+            
+        return exp.setType(exp.constype);
     }
 
     private checkHasEnvValueExpression(env: TypeEnvironment, exp: AccessEnvValueExpression): TypeSignature {
