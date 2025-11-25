@@ -1,5 +1,5 @@
 import { MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_INT } from "../frontend/assembly";
-import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression } from "./irbody";
+import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression } from "./irbody";
 
 import assert from "node:assert";
 
@@ -29,7 +29,7 @@ class CPPEmitter {
         return escstr;
     }
 
-    private emitExpression(exp: IRExpression): string {
+    private emitIRLiteral(exp: IRLiteralExpression): string {
         const ttag = exp.tag;
 
         if(ttag === IRExpressionTag.IRLiteralNoneExpression) {
@@ -174,7 +174,39 @@ class CPPEmitter {
             assert(false, "CPPEmitter: need to handle format CString literals");
         }
         else {
-            assert(false, `CPPEmitter: Unsupported IR expression type -- ${exp.constructor.name}`);
+            assert(false, `CPPEmitter: Unsupported IR literal type -- ${exp.constructor.name}`);
+        }
+    }
+
+    private emitIRImmediateExpression(exp: IRImmediateExpression): string {
+        if(exp instanceof IRLiteralExpression) {
+            return this.emitIRLiteral(exp);
+        }
+        else {
+            assert(false, `CPPEmitter: Unsupported IR immediate expression type -- ${exp.constructor.name}`);
+        }
+    }
+
+    private emitExpression(exp: IRExpression): string {
+        const ttag = exp.tag;
+
+        if(exp instanceof IRImmediateExpression) {
+            return this.emitIRImmediateExpression(exp);
+        }
+        else {
+            const ttag = exp.tag;
+            if(ttag === IRExpressionTag.IRLiteralTypedExpression) {
+                xxxx;
+            }
+            else if(ttag === IRExpressionTag.IRLiteralTypedStringExpression) {
+                xxxx;
+            }
+            else if(ttag === IRExpressionTag.IRLiteralTypedCStringExpression) {
+                xxxx;
+            }
+            else {
+                assert(false, `CPPEmitter: Unsupported IR expression type -- ${exp.constructor.name}`);
+            }
         }
     }
 }

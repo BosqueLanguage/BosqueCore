@@ -360,6 +360,15 @@ class ASMToIRConverter {
 
             return new IRLiteralFormatCStringExpression(fmts);
         }
+        else if(ttag === ExpressionTag.LiteralTypeDeclValueExpression) {
+            xxxx;
+        }
+        else if(ttag === ExpressionTag.LiteralTypedStringExpression) {
+            xxxx;
+        }
+        else if(ttag === ExpressionTag.LiteralTypedCStringExpression) {
+            xxxx;
+        }
         else {
             assert(false, `ASMToIRConverter: Unsupported expression type -- ${exp.tag}`);
         }

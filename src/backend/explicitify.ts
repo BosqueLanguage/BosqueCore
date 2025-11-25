@@ -56,6 +56,15 @@ class Explicitifier {
         else if(ttag === ExpressionTag.LiteralFormatStringExpression || ttag === ExpressionTag.LiteralFormatCStringExpression) {
             return exp;
         }
+        else if(ttag === ExpressionTag.LiteralTypeDeclValueExpression) {
+            return exp;
+        }
+        else if(ttag === ExpressionTag.LiteralTypedStringExpression) {
+            return exp;
+        }
+        else if(ttag === ExpressionTag.LiteralTypedCStringExpression) {
+            return exp;
+        }
         else {
             assert(false, `Explicitifier: Unsupported expression type -- ${exp.tag}`);
         }

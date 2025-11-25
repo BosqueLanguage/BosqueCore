@@ -48,9 +48,13 @@ enum IRExpressionTag {
     //TODO: path literal options here
 
     //TODO: path literal -format- options here
+
+    IRLiteralTypedExpression = "IRLiteralTypedExpression",
+    IRLiteralTypedStringExpression = "IRLiteralTypedStringExpression",
+    IRLiteralTypedCStringExpression = "IRLiteralTypedCStringExpression",
 }
 
-class IRExpression {
+abstract class IRExpression {
     readonly tag: IRExpressionTag;
 
     constructor(tag: IRExpressionTag) {
@@ -58,11 +62,29 @@ class IRExpression {
     }
 }
 
+/* This class represents expressions that are guaranteed to be immediate values (i.e., vars, literals, constants) */
+abstract class IRImmediateExpression extends IRExpression {
+    constructor(tag: IRExpressionTag) {
+        super(tag);
+    }
+}
+
+/* This class represents expressions that are guaranteed to be immediate values (i.e., constants, typdecl literals) */
+abstract class IRLiteralExpression extends IRExpression {
+    constructor(tag: IRExpressionTag) {
+        super(tag);
+    }
+}
+
 enum IRStatementTag {
+    IRNopStatement = "IRNopStatement",
+
     IRErrorAdditionBoundsCheckStatement = "IRErrorAdditionBoundsCheckStatement",
     IRErrorSubtractionBoundsCheckStatement = "IRErrorSubtractionBoundsCheckStatement",
     IRErrorMultiplicationBoundsCheckStatement = "IRErrorMultiplicationBoundsCheckStatement",
-    IRErrorDivisionByZeroCheckStatement = "IRErrorDivisionByZeroCheckStatement"
+    IRErrorDivisionByZeroCheckStatement = "IRErrorDivisionByZeroCheckStatement",
+
+    IRTypeDeclInvariantCheckStatement = "IRTypeDeclInvariantCheckStatement",
 }
 
 class IRStatement {
@@ -75,13 +97,13 @@ class IRStatement {
 ////////////////////////////////////////
 //Our literal expressions are all very safe and will never fail to construct -- if there are possible issues the flattening phase should have emitted and explicit check
 
-class IRLiteralNoneExpression extends IRExpression {
+class IRLiteralNoneExpression extends IRLiteralExpression {
     constructor() {
         super(IRExpressionTag.IRLiteralNoneExpression);
     }
 }
 
-class IRLiteralBoolExpression extends IRExpression {
+class IRLiteralBoolExpression extends IRLiteralExpression {
     readonly value: boolean;
 
     constructor(value: boolean) {
@@ -89,8 +111,8 @@ class IRLiteralBoolExpression extends IRExpression {
         this.value = value;
     }
 }
-
-abstract class IRLiteralIntegralNumberExpression extends IRExpression {
+    
+abstract class IRLiteralIntegralNumberExpression extends IRLiteralExpression {
     readonly value: string;
 
     constructor(tag: IRExpressionTag, value: string) {
@@ -119,7 +141,7 @@ class IRLiteralChkIntExpression extends IRLiteralIntegralNumberExpression {
     }
 }
 
-class IRLiteralRationalExpression extends IRExpression {
+class IRLiteralRationalExpression extends IRLiteralExpression {
     readonly numerator: string;
     readonly denominator: string;
 
@@ -130,7 +152,7 @@ class IRLiteralRationalExpression extends IRExpression {
     }
 }
 
-abstract class IRLiteralFloatingPointExpression extends IRExpression {
+abstract class IRLiteralFloatingPointExpression extends IRLiteralExpression {
     readonly value: string;
 
     constructor(tag: IRExpressionTag, value: string) {
@@ -155,7 +177,7 @@ class IRLiteralDecimalDegreeExpression extends IRLiteralFloatingPointExpression 
     }
 }
 
-class IRLiteralLatLongCoordinateExpression extends IRExpression {
+class IRLiteralLatLongCoordinateExpression extends IRLiteralExpression {
     readonly latitude: string;
     readonly longitude: string;
 
@@ -166,7 +188,7 @@ class IRLiteralLatLongCoordinateExpression extends IRExpression {
     }
 }
 
-class IRLiteralComplexExpression extends IRExpression {
+class IRLiteralComplexExpression extends IRLiteralExpression {
     readonly real: string;
     readonly imaginary: string;
 
@@ -177,7 +199,7 @@ class IRLiteralComplexExpression extends IRExpression {
     }
 }
 
-class IRLiteralByteBufferExpression extends IRExpression {
+class IRLiteralByteBufferExpression extends IRLiteralExpression {
     readonly bytes: number[];
 
     constructor(bytes: number[]) {
@@ -186,7 +208,7 @@ class IRLiteralByteBufferExpression extends IRExpression {
     }
 }
 
-class IRLiteralUUIDv4Expression extends IRExpression {
+class IRLiteralUUIDv4Expression extends IRLiteralExpression {
     readonly bytes: number[];
 
     constructor(bytes: number[]) {
@@ -195,7 +217,7 @@ class IRLiteralUUIDv4Expression extends IRExpression {
     }
 }
 
-class IRLiteralUUIDv7Expression extends IRExpression {
+class IRLiteralUUIDv7Expression extends IRLiteralExpression {
     readonly bytes: number[];
 
     constructor(bytes: number[]) {
@@ -204,7 +226,7 @@ class IRLiteralUUIDv7Expression extends IRExpression {
     }
 }
 
-class IRLiteralSHAContentHashExpression extends IRExpression {
+class IRLiteralSHAContentHashExpression extends IRLiteralExpression {
     readonly bytes: number[];
 
     constructor(bytes: number[]) {
@@ -237,7 +259,7 @@ class TimeRepresentation {
     }
 }
 
-class IRLiteralTZDateTimeExpression extends IRExpression {
+class IRLiteralTZDateTimeExpression extends IRLiteralExpression {
     readonly date: DateRepresentation;
     readonly time: TimeRepresentation;
     readonly timezone: string; //IANA timezone as well as freeform with printable ascii
@@ -250,7 +272,7 @@ class IRLiteralTZDateTimeExpression extends IRExpression {
     }
 }
 
-class IRLiteralTAITimeExpression extends IRExpression {
+class IRLiteralTAITimeExpression extends IRLiteralExpression {
     readonly date: DateRepresentation;
     readonly time: TimeRepresentation;
 
@@ -261,7 +283,7 @@ class IRLiteralTAITimeExpression extends IRExpression {
     }
 }
 
-class IRLiteralPlainDateExpression extends IRExpression {
+class IRLiteralPlainDateExpression extends IRLiteralExpression {
     readonly date: DateRepresentation;
 
     constructor(date: DateRepresentation) {
@@ -270,7 +292,7 @@ class IRLiteralPlainDateExpression extends IRExpression {
     }
 }
 
-class IRLiteralPlainTimeExpression extends IRExpression {
+class IRLiteralPlainTimeExpression extends IRLiteralExpression {
     readonly time: TimeRepresentation;
 
     constructor(time: TimeRepresentation) {
@@ -279,7 +301,7 @@ class IRLiteralPlainTimeExpression extends IRExpression {
     }
 }
 
-class IRLiteralLogicalTimeExpression extends IRExpression {
+class IRLiteralLogicalTimeExpression extends IRLiteralExpression {
     readonly ticks: string;
     
     constructor(ticks: string) {
@@ -288,7 +310,7 @@ class IRLiteralLogicalTimeExpression extends IRExpression {
     }
 }
 
-class IRLiteralISOTimeStampExpression extends IRExpression {
+class IRLiteralISOTimeStampExpression extends IRLiteralExpression {
     readonly date: DateRepresentation;
     readonly time: TimeRepresentation;
     readonly milliseconds: number;
@@ -325,7 +347,7 @@ class DeltaTimeRepresentation {
     }
 }
 
-class IRLiteralDeltaDateTimeExpression extends IRExpression {
+class IRLiteralDeltaDateTimeExpression extends IRLiteralExpression {
     readonly sign: "+" | "-";
     readonly deltadate: DeltaDateRepresentation;
     readonly deltatime: DeltaTimeRepresentation;
@@ -338,7 +360,7 @@ class IRLiteralDeltaDateTimeExpression extends IRExpression {
     }
 }
  
-class IRLiteralDeltaISOTimeStampExpression extends IRExpression {
+class IRLiteralDeltaISOTimeStampExpression extends IRLiteralExpression {
     readonly sign: "+" | "-";
     readonly deltadate: DeltaDateRepresentation;
     readonly deltatime: DeltaTimeRepresentation;
@@ -353,7 +375,7 @@ class IRLiteralDeltaISOTimeStampExpression extends IRExpression {
     }
 } 
 
-class IRLiteralDeltaSecondsExpression extends IRExpression {
+class IRLiteralDeltaSecondsExpression extends IRLiteralExpression {
     readonly sign: "+" | "-";
     readonly seconds: string;
 
@@ -364,7 +386,7 @@ class IRLiteralDeltaSecondsExpression extends IRExpression {
     }
 }
 
-class IRLiteralDeltaLogicalTimeExpression extends IRExpression {
+class IRLiteralDeltaLogicalTimeExpression extends IRLiteralExpression {
     readonly sign: "+" | "-";
     readonly ticks: string;
 
@@ -375,7 +397,7 @@ class IRLiteralDeltaLogicalTimeExpression extends IRExpression {
     }
 }
 
-class IRLiteralUnicodeRegexExpression extends IRExpression {
+class IRLiteralUnicodeRegexExpression extends IRLiteralExpression {
     readonly regexID: number
     readonly value: string;
 
@@ -386,7 +408,7 @@ class IRLiteralUnicodeRegexExpression extends IRExpression {
     }
 }
 
-class IRLiteralCRegexExpression extends IRExpression {
+class IRLiteralCRegexExpression extends IRLiteralExpression {
     readonly regexID: number
     readonly value: string;
 
@@ -397,7 +419,7 @@ class IRLiteralCRegexExpression extends IRExpression {
     }
 }
 
-class IRLiteralByteExpression extends IRExpression {
+class IRLiteralByteExpression extends IRLiteralExpression {
     readonly value: number;
 
     constructor(value: number) {
@@ -406,7 +428,7 @@ class IRLiteralByteExpression extends IRExpression {
     }
 }
 
-class IRLiteralCCharExpression extends IRExpression {
+class IRLiteralCCharExpression extends IRLiteralExpression {
     readonly value: number;
 
     constructor(value: number) {
@@ -415,7 +437,7 @@ class IRLiteralCCharExpression extends IRExpression {
     }
 }
 
-class IRLiteralUnicodeCharExpression extends IRExpression {
+class IRLiteralUnicodeCharExpression extends IRLiteralExpression {
     readonly value: number;
 
     constructor(value: number) {
@@ -424,7 +446,7 @@ class IRLiteralUnicodeCharExpression extends IRExpression {
     }
 }
 
-class IRLiteralCStringExpression extends IRExpression {
+class IRLiteralCStringExpression extends IRLiteralExpression {
     readonly bytes: number[]; //char bytes
 
     constructor(bytes: number[]) {
@@ -433,7 +455,7 @@ class IRLiteralCStringExpression extends IRExpression {
     }
 }
 
-class IRLiteralStringExpression extends IRExpression {
+class IRLiteralStringExpression extends IRLiteralExpression {
     readonly bytes: number[]; //utf8 bytes
 
     constructor(bytes: number[]) {
@@ -465,7 +487,7 @@ class IRFormatStringArgComponent extends IRFormatStringComponent {
     }
 }
 
-class IRLiteralFormatStringExpression extends IRExpression {
+class IRLiteralFormatStringExpression extends IRLiteralExpression {
     readonly fmts: IRFormatStringComponent[];
 
     constructor(fmts: IRFormatStringComponent[]) {
@@ -474,7 +496,7 @@ class IRLiteralFormatStringExpression extends IRExpression {
     }
 }
 
-class IRLiteralFormatCStringExpression extends IRExpression {
+class IRLiteralFormatCStringExpression extends IRLiteralExpression {
     readonly fmts: IRFormatStringComponent[];
 
     constructor(fmts: IRFormatStringComponent[]) {
@@ -492,12 +514,50 @@ class IRLiteralFormatCStringExpression extends IRExpression {
 //TODO: Path literal -format- expressions here
 //
 
+class IRLiteralTypedExpression extends IRLiteralExpression {
+    readonly value: IRLiteralExpression;
+    readonly constype: IRTypeSignature;
+
+    constructor(value: IRLiteralExpression, constype: IRTypeSignature) {
+        super(IRExpressionTag.IRLiteralTypedExpression);
+        this.value = value;
+        this.constype = constype;
+    }
+}
+
+class IRLiteralTypedStringExpression extends IRLiteralExpression {
+    readonly bytes: number[];
+    readonly constype: IRTypeSignature;
+
+    constructor(bytes: number[], constype: IRTypeSignature) {
+        super(IRExpressionTag.IRLiteralTypedStringExpression);
+        this.bytes = bytes;
+        this.constype = constype;
+    }
+}
+
+class IRLiteralTypedCStringExpression extends IRLiteralExpression {
+    readonly bytes: number[];
+    readonly constype: IRTypeSignature;
+
+    constructor(bytes: number[], constype: IRTypeSignature) {
+        super(IRExpressionTag.IRLiteralTypedCStringExpression);
+        this.bytes = bytes;
+        this.constype = constype;
+    }
+}
 
 ////////////////////////////////////////
 //Basic Line statements
 
 ////////////////////////////////////////
 //Explicit error condition checks -- all possible error conditions must be made explicit during flattening
+
+class IRNopStatement extends IRStatement {
+    constructor() {
+        super(IRStatementTag.IRNopStatement);
+    }
+}
 
 abstract class IRErrorCheckStatement extends IRStatement {
     readonly file: string;
@@ -516,12 +576,12 @@ abstract class IRErrorCheckStatement extends IRStatement {
 }
 
 abstract class IRErrorBinArithCheckStatement extends IRErrorCheckStatement {
-    readonly left: IRExpression;
-    readonly right: IRExpression;
+    readonly left: IRImmediateExpression;
+    readonly right: IRImmediateExpression;
 
     readonly optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt";
 
-    constructor(tag: IRStatementTag, file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRExpression, right: IRExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt") {
+    constructor(tag: IRStatementTag, file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt") {
         super(tag, file, sinfo, diagnosticTag, checkID);
         this.left = left;
         this.right = right;
@@ -530,31 +590,42 @@ abstract class IRErrorBinArithCheckStatement extends IRErrorCheckStatement {
 }
 
 class IRErrorAdditionBoundsCheckStatement extends IRErrorBinArithCheckStatement {
-    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRExpression, right: IRExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt") {
+    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt") {
         super(IRStatementTag.IRErrorAdditionBoundsCheckStatement, file, sinfo, diagnosticTag, checkID, left, right, optypechk);
     }
 }
 
 class IRErrorSubtractionBoundsCheckStatement extends IRErrorBinArithCheckStatement {
-    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRExpression, right: IRExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt") {
+    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt") {
         super(IRStatementTag.IRErrorSubtractionBoundsCheckStatement, file, sinfo, diagnosticTag, checkID, left, right, optypechk);
     }
 }
 
 class IRErrorMultiplicationBoundsCheckStatement extends IRErrorBinArithCheckStatement {
-    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRExpression, right: IRExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt") {
+    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt") {
         super(IRStatementTag.IRErrorMultiplicationBoundsCheckStatement, file, sinfo, diagnosticTag, checkID, left, right, optypechk);
     }
 }
 
 class IRErrorDivisionByZeroCheckStatement extends IRErrorBinArithCheckStatement {
-    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRExpression, right: IRExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt") {
+    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt") {
         super(IRStatementTag.IRErrorDivisionByZeroCheckStatement, file, sinfo, diagnosticTag, checkID, left, right, optypechk);
     }
 }
 
+class IRTypeDeclInvariantCheckStatement  extends IRErrorCheckStatement {
+    readonly targetType: IRTypeSignature;
+    readonly targetValue: IRImmediateExpression;
+
+    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, targetType: IRTypeSignature, targetValue: IRImmediateExpression) {
+        super(IRStatementTag.IRTypeDeclInvariantCheckStatement, file, sinfo, diagnosticTag, checkID);
+        this.targetType = targetType;
+        this.targetValue = targetValue;
+    }
+}
+
 export {
-    IRExpressionTag, IRExpression,
+    IRExpressionTag, IRExpression, IRImmediateExpression, IRLiteralExpression,
     IRLiteralNoneExpression, IRLiteralBoolExpression,
     IRLiteralIntegralNumberExpression, IRLiteralNatExpression, IRLiteralIntExpression, IRLiteralChkNatExpression, IRLiteralChkIntExpression,
     IRLiteralRationalExpression, IRLiteralFloatingPointExpression, IRLiteralFloatExpression, IRLiteralDecimalExpression,
@@ -568,8 +639,11 @@ export {
     IRLiteralCStringExpression, IRLiteralStringExpression,
     IRFormatStringComponent, IRFormatStringTextComponent, IRFormatStringArgComponent,
     IRLiteralFormatStringExpression, IRLiteralFormatCStringExpression,
+    IRLiteralTypedExpression, IRLiteralTypedStringExpression, IRLiteralTypedCStringExpression,
 
     IRStatementTag, IRStatement,
+    IRNopStatement,
     IRErrorCheckStatement,
-    IRErrorBinArithCheckStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement
+    IRErrorBinArithCheckStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement,
+    IRTypeDeclInvariantCheckStatement
 };

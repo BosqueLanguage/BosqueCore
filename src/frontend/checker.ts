@@ -1309,7 +1309,13 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
-        const vs = this.checkTypeDeclOfStringRestrictions(exp.sinfo, exp.constype.decl as TypedeclTypeDecl, exp.value.slice(1, exp.value.length - 1));
+        const btype = this.relations.getTypeDeclValueType(exp.constype);
+        if(btype === undefined || !this.relations.areSameTypes(btype, this.getWellKnownType("String"))) {
+            this.reportError(exp.sinfo, `Typed string literal type must have base type String -- ${exp.constype.emit()}`);
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        const vs = this.checkTypeDeclOfStringRestrictions(exp.sinfo, exp.constype.decl as TypedeclTypeDecl, exp.value);
         if(vs === null) {
             exp.resolvedValue = vs;
         }
@@ -1327,7 +1333,13 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
-        const vs = this.checkTypeDeclOfCStringRestrictions(exp.sinfo, exp.constype.decl as TypedeclTypeDecl, exp.value.slice(1, exp.value.length - 1));
+        const btype = this.relations.getTypeDeclValueType(exp.constype);
+        if(btype === undefined || !this.relations.areSameTypes(btype, this.getWellKnownType("CString"))) {
+            this.reportError(exp.sinfo, `Typed cstring literal type must have base type CString -- ${exp.constype.emit()}`);
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        const vs = this.checkTypeDeclOfCStringRestrictions(exp.sinfo, exp.constype.decl as TypedeclTypeDecl, exp.value);
         if(vs === null) {
             exp.resolvedValue = vs;
         }
