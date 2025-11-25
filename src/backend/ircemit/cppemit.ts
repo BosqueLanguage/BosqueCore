@@ -1,7 +1,8 @@
 import { MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_INT } from "../../frontend/assembly";
-import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression } from "../irdefs/irbody";
+import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression } from "../irdefs/irbody";
 
 import assert from "node:assert";
+import { TransformCPPNameManager } from "./namemgr";
 
 const RUNTIME_NAMESPACE = "ᐸRuntimeᐳ";
 
@@ -197,14 +198,23 @@ class CPPEmitter {
             const ttag = exp.tag;
             if(ttag === IRExpressionTag.IRLiteralTypedExpression) {
                 const ilte = exp as IRLiteralTypedExpression
-                const cce = ;
+                const cce = TransformCPPNameManager.convertTypeKey(ilte.constype.tkeystr);
+
                 return `${cce}(${this.emitIRLiteral(ilte.value as IRLiteralExpression)})`;
             }
             else if(ttag === IRExpressionTag.IRLiteralTypedStringExpression) {
-                xxxx;
+                assert(false, "CPPEmitter: need to handle full Unicode string literals")
             }
             else if(ttag === IRExpressionTag.IRLiteralTypedCStringExpression) {
-                xxxx;
+                const ilte = exp as IRLiteralTypedCStringExpression
+                const cce = TransformCPPNameManager.convertTypeKey(ilte.constype.tkeystr);
+
+                if(ilte.bytes.length <= 24) {
+                    return `${cce}(${RUNTIME_NAMESPACE}::CString::literal(${this.escapeLiteralCString(ilte.bytes)}))`;
+                }
+                else {
+                    assert(false, "CPPEmitter: need to do heap allocation for long cstrings");
+                }
             }
             else {
                 assert(false, `CPPEmitter: Unsupported IR expression type -- ${exp.constructor.name}`);
