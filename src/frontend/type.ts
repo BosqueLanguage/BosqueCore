@@ -391,19 +391,19 @@ class LambdaTypeSignature extends TypeSignature {
 class FormatStringTypeSignature extends TypeSignature {
     readonly oftype: "String" | "CString";
     readonly rtype: TypeSignature;
-    readonly terms: {argname: string | undefined, argtype: TypeSignature}[];
+    readonly terms: {argname: string, argtype: TypeSignature}[];
 
     private static buildkstr(oftype: "String" | "CString", rtype: TypeSignature, terms: {argname: string | undefined, argtype: TypeSignature}[]): string {
         if(terms.length === 0) {
             return `F${oftype}<${rtype.emit()}>`
         }
         else {
-            const aargs = terms.map((tt) => (tt.argname !== undefined ? tt.argname + ": " : "") + tt.argtype.emit()).join(", ");
+            const aargs = terms.map((tt) => tt.argname + ": " + tt.argtype.emit()).join(", ");
             return `F${oftype}<${aargs}, ${rtype.emit()}>`;
         }
     }
 
-    constructor(sinfo: SourceInfo, oftype: "String" | "CString", rtype: TypeSignature, terms: {argname: string | undefined, argtype: TypeSignature}[]) {
+    constructor(sinfo: SourceInfo, oftype: "String" | "CString", rtype: TypeSignature, terms: {argname: string, argtype: TypeSignature}[]) {
         super(sinfo, FormatStringTypeSignature.buildkstr(oftype, rtype, terms));
         this.oftype = oftype;
         this.rtype = rtype;
@@ -423,19 +423,19 @@ class FormatStringTypeSignature extends TypeSignature {
 class FormatPathTypeSignature extends TypeSignature {
     readonly oftype: "Path" | "PathFragment" | "PathGlob";
     readonly rtype: TypeSignature;
-    readonly terms: {argname: string | undefined, argtype: TypeSignature}[];
+    readonly terms: {argname: string, argtype: TypeSignature}[];
 
     private static buildkstr(oftype: "Path" | "PathFragment" | "PathGlob", rtype: TypeSignature, terms: {argname: string | undefined, argtype: TypeSignature}[]): string {
         if(terms.length === 0) {
             return `F${oftype}<${rtype.emit()}>`
         }
         else {
-            const aargs = terms.map((tt) => (tt.argname !== undefined ? tt.argname + ": " : "") + tt.argtype.emit()).join(", ");
+            const aargs = terms.map((tt) => tt.argname + ": " + tt.argtype.emit()).join(", ");
             return `F${oftype}<${aargs}, ${rtype.emit()}>`;
         }
     }
 
-    constructor(sinfo: SourceInfo, oftype: "Path" | "PathFragment" | "PathGlob", rtype: TypeSignature, terms: {argname: string | undefined, argtype: TypeSignature}[]) {
+    constructor(sinfo: SourceInfo, oftype: "Path" | "PathFragment" | "PathGlob", rtype: TypeSignature, terms: {argname: string, argtype: TypeSignature}[]) {
         super(sinfo, FormatPathTypeSignature.buildkstr(oftype, rtype, terms));
         this.oftype = oftype;
         this.rtype = rtype;

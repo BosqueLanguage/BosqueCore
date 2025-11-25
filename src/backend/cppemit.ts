@@ -166,10 +166,12 @@ class CPPEmitter {
             assert(false, "CPPEmitter: need to handle full Unicode string literals");
         }
         else if(ttag === IRExpressionTag.IRLiteralFormatStringExpression) {
-            xxxx;
+            //TODO: probably represent this natively as a Bosque List<FormatArgComponent>
+            assert(false, "CPPEmitter: need to handle format string literals");
         }
         else if(ttag === IRExpressionTag.IRLiteralFormatCStringExpression) {
-            xxxx;
+            //TODO: probably represent this natively as a Bosque List<FormatArgComponent>
+            assert(false, "CPPEmitter: need to handle format CString literals");
         }
         else {
             assert(false, `CPPEmitter: Unsupported IR expression type -- ${exp.constructor.name}`);

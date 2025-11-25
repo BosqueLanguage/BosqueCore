@@ -40,9 +40,9 @@ class IRDashResultTypeSignature extends IRTypeSignature {
 
 abstract class IRFormatTypeSignature extends IRTypeSignature {
     readonly rtype: IRTypeSignature;
-    readonly terms: {argname: string | undefined, argtype: IRTypeSignature}[];
+    readonly terms: {argname: string, argtype: IRTypeSignature}[];
 
-    constructor(tkeystr: string, rtype: IRTypeSignature, terms: {argname: string | undefined, argtype: IRTypeSignature}[]) {
+    constructor(tkeystr: string, rtype: IRTypeSignature, terms: {argname: string, argtype: IRTypeSignature}[]) {
         super(tkeystr);
         this.rtype = rtype;
         this.terms = terms;
@@ -50,31 +50,31 @@ abstract class IRFormatTypeSignature extends IRTypeSignature {
 }
 
 class IRFormatCStringTypeSignature extends IRFormatTypeSignature {
-    constructor(tkeystr: string, rtype: IRTypeSignature, terms: {argname: string | undefined, argtype: IRTypeSignature}[]) {
+    constructor(tkeystr: string, rtype: IRTypeSignature, terms: {argname: string, argtype: IRTypeSignature}[]) {
         super(tkeystr, rtype, terms);
     }
 }
 
 class IRFormatStringTypeSignature extends IRFormatTypeSignature {
-    constructor(tkeystr: string, rtype: IRTypeSignature, terms: {argname: string | undefined, argtype: IRTypeSignature}[]) {
+    constructor(tkeystr: string, rtype: IRTypeSignature, terms: {argname: string, argtype: IRTypeSignature}[]) {
         super(tkeystr, rtype, terms);
     }
 }
 
 class IRFormatPathTypeSignature extends IRFormatTypeSignature {
-    constructor(tkeystr: string, rtype: IRTypeSignature, terms: {argname: string | undefined, argtype: IRTypeSignature}[]) {
+    constructor(tkeystr: string, rtype: IRTypeSignature, terms: {argname: string, argtype: IRTypeSignature}[]) {
         super(tkeystr, rtype, terms);
     }
 }
 
 class IRFormatPathFragmentTypeSignature extends IRFormatTypeSignature {
-    constructor(tkeystr: string, rtype: IRTypeSignature, terms: {argname: string | undefined, argtype: IRTypeSignature}[]) {
+    constructor(tkeystr: string, rtype: IRTypeSignature, terms: {argname: string, argtype: IRTypeSignature}[]) {
         super(tkeystr, rtype, terms);
     }
 }
 
 class IRFormatPathGlobTypeSignature extends IRFormatTypeSignature {
-    constructor(tkeystr: string, rtype: IRTypeSignature, terms: {argname: string | undefined, argtype: IRTypeSignature}[]) {
+    constructor(tkeystr: string, rtype: IRTypeSignature, terms: {argname: string, argtype: IRTypeSignature}[]) {
         super(tkeystr, rtype, terms);
     }
 }

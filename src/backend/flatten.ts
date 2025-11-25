@@ -1,12 +1,13 @@
-import { FullyQualifiedNamespace } from "../frontend/type";
-import { Expression, ExpressionTag, LiteralCStringExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression } from "../frontend/body";
+import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, LambdaParameterPackTypeSignature, NominalTypeSignature, TypeSignature, VoidTypeSignature } from "../frontend/type";
+import { Expression, ExpressionTag, FormatStringArgComponent, FormatStringTextComponent, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression } from "../frontend/body";
 import { Assembly } from "../frontend/assembly";
 
 import { IRRegex } from "./irsupport";
 import {} from "./irassembly";
-import { DateRepresentation, DeltaDateRepresentation, DeltaTimeRepresentation, IRExpression, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteBufferExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralCStringExpression, IRLiteralDecimalExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLatLongCoordinateExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralNoneExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralRationalExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRStatement, TimeRepresentation } from "./irbody";
+import { DateRepresentation, DeltaDateRepresentation, DeltaTimeRepresentation, IRExpression, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteBufferExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralCStringExpression, IRLiteralDecimalExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLatLongCoordinateExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralNoneExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralRationalExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRStatement, TimeRepresentation, IRLiteralFormatStringExpression, IRFormatStringTextComponent, IRFormatStringArgComponent, IRFormatStringComponent, IRLiteralFormatCStringExpression } from "./irbody";
 
 import assert from "node:assert";
+import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatCStringTypeSignature, IRFormatPathFragmentTypeSignature, IRFormatPathGlobTypeSignature, IRFormatPathTypeSignature, IRFormatStringTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "./irtype";
 
 class ASMToIRConverter {
     readonly assembly: Assembly;
@@ -68,6 +69,71 @@ class ASMToIRConverter {
 
         this.regexs.push(inst);
         return inst;
+    }
+
+    private processTypeSignature(tsig: TypeSignature): IRTypeSignature {
+        if(tsig instanceof VoidTypeSignature) {
+            return new IRVoidTypeSignature();
+        }
+        else if(tsig instanceof NominalTypeSignature) {
+            return new IRNominalTypeSignature(tsig.tkeystr);
+        }
+        else if(tsig instanceof EListTypeSignature) {
+            const elisttsig = tsig as EListTypeSignature;
+            const irents = elisttsig.entries.map<IRTypeSignature>((ent) => this.processTypeSignature(ent));
+
+            return new IREListTypeSignature(tsig.tkeystr, irents);
+        }
+        else if(tsig instanceof DashResultTypeSignature) {
+            const drtsig = tsig as DashResultTypeSignature;
+            const irents = drtsig.entries.map<IRTypeSignature>((ent) => this.processTypeSignature(ent));
+
+            return new IRDashResultTypeSignature(tsig.tkeystr, irents);
+        }
+        else if(tsig instanceof FormatStringTypeSignature) {
+            const ffmtsig = tsig as FormatStringTypeSignature;
+            const irfmts = ffmtsig.terms.map<{argname: string, argtype: IRTypeSignature}>((term) => {
+                return {argname: term.argname, argtype: this.processTypeSignature(term.argtype)};
+            });
+
+            if(ffmtsig.oftype === "CString") {
+                return new IRFormatCStringTypeSignature(tsig.tkeystr, this.processTypeSignature(ffmtsig.rtype), irfmts);
+            }
+            else {
+                return new IRFormatStringTypeSignature(tsig.tkeystr, this.processTypeSignature(ffmtsig.rtype), irfmts);
+            }
+        }
+        else if(tsig instanceof FormatPathTypeSignature) {
+            const fpathtsig = tsig as FormatPathTypeSignature;
+            const irfmts = fpathtsig.terms.map<{argname: string, argtype: IRTypeSignature}>((term) => {
+                return {argname: term.argname, argtype: this.processTypeSignature(term.argtype)};
+            });
+
+            if(fpathtsig.oftype === "Path") {
+                return new IRFormatPathTypeSignature(tsig.tkeystr, this.processTypeSignature(fpathtsig.rtype), irfmts);
+            }
+            else if(fpathtsig.oftype === "PathFragment") {
+                return new IRFormatPathFragmentTypeSignature(tsig.tkeystr, this.processTypeSignature(fpathtsig.rtype), irfmts);
+            }
+            else {
+                return new IRFormatPathGlobTypeSignature(tsig.tkeystr, this.processTypeSignature(fpathtsig.rtype), irfmts);
+            }
+        }
+        else if(tsig instanceof LambdaParameterPackTypeSignature) {
+            const lppsig = tsig as LambdaParameterPackTypeSignature;
+
+            const stdvals = lppsig.stdvalues.map<{vname: string, vtype: IRTypeSignature}>((sv) => {
+                return {vname: sv.vname, vtype: this.processTypeSignature(sv.vtype)};
+            });
+            const lambdavals = lppsig.lambdavalues.map<{lname: string, ltype: IRLambdaParameterPackTypeSignature}>((lv) => {
+                return {lname: lv.lname, ltype: this.processTypeSignature(lv.ltype) as IRLambdaParameterPackTypeSignature};
+            });
+
+            return new IRLambdaParameterPackTypeSignature(tsig.tkeystr, stdvals, lambdavals);
+        }
+        else {
+            assert(false, `ASMToIRConverter: Unsupported type signature -- ${tsig.tkeystr}`);
+        }
     }
 
     private flattenExpression(exp: Expression): IRExpression {
@@ -240,7 +306,7 @@ class ASMToIRConverter {
                 bytes.push(bbuff[i]);
             }
 
-            return new IRLiteralCStringExpression(slexp.value, bytes);
+            return new IRLiteralCStringExpression(bytes);
         }
         else if(ttag === ExpressionTag.LiteralStringExpression) {
             const slexp = exp as LiteralStringExpression;
@@ -250,13 +316,49 @@ class ASMToIRConverter {
                 bytes.push(bbuff[i]);
             }
 
-            return new IRLiteralStringExpression(slexp.value, bytes);
+            return new IRLiteralStringExpression(bytes);
         }
         else if(ttag === ExpressionTag.LiteralFormatStringExpression) {
-            xxxx;
+            const ffmt = exp as LiteralFormatStringExpression;
+            const fmts = ffmt.fmts.map<IRFormatStringComponent>((fmtcomp) => {
+                if(fmtcomp instanceof FormatStringTextComponent) {
+                    const slexp = fmtcomp as FormatStringTextComponent;
+                    const bbuff = Buffer.from((slexp.resolvedValue as string, "utf8"));
+                    let bytes: number[] = [];
+                    for(let i = 0; i < bbuff.length; ++i) {
+                        bytes.push(bbuff[i]);
+                    }
+
+                    return new IRFormatStringTextComponent(bytes);
+                }
+                else {
+                    const argexp = fmtcomp as FormatStringArgComponent;
+                    return new IRFormatStringArgComponent(argexp.argPos, this.processTypeSignature(argexp.resolvedType as TypeSignature));
+                }
+            });
+
+            return new IRLiteralFormatStringExpression(fmts);
         }
         else if(ttag === ExpressionTag.LiteralFormatCStringExpression) {
-            xxxx;
+            const ffmt = exp as LiteralFormatCStringExpression;
+            const fmts = ffmt.fmts.map<IRFormatStringComponent>((fmtcomp) => {
+                if(fmtcomp instanceof FormatStringTextComponent) {
+                    const slexp = fmtcomp as FormatStringTextComponent;
+                    const bbuff = Buffer.from((slexp.resolvedValue as string, "utf8"));
+                    let bytes: number[] = [];
+                    for(let i = 0; i < bbuff.length; ++i) {
+                        bytes.push(bbuff[i]);
+                    }
+
+                    return new IRFormatStringTextComponent(bytes);
+                }
+                else {
+                    const argexp = fmtcomp as FormatStringArgComponent;
+                    return new IRFormatStringArgComponent(argexp.argPos, this.processTypeSignature(argexp.resolvedType as TypeSignature));
+                }
+            });
+
+            return new IRLiteralFormatCStringExpression(fmts);
         }
         else {
             assert(false, `ASMToIRConverter: Unsupported expression type -- ${exp.tag}`);

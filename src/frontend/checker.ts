@@ -2,8 +2,8 @@ import assert from "node:assert";
 
 import { APIDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, CRopeTypeDecl, UnicodeRopeTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, InvokeParameterDecl, AbstractCollectionTypeDecl, ConstructableTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, AbstractEntityTypeDecl, InvokeTemplateTypeRestrictionClause, CRopeIteratorTypeDecl, MAX_SAFE_CHK_NAT, MIN_SAFE_CHK_INT, MAX_SAFE_CHK_INT } from "./assembly.js";
 import { CodeFormatter, SourceInfo } from "./build_decls.js";
-import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, DebugStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestDenied, ITestError, ITestFail, ITestFlagged, ITestNone, ITestOk, ITestRejected, ITestSome, ITestSuccess, ITestType, IfElifElseStatement, IfElseStatement, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralNoneExpression, LiteralPathItemExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, ShortCircuitAssignRHSITestExpression, SpecialConstructorExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VoidRefCallStatement } from "./body.js";
+import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FormatStringTypeSignature, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, DebugStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, FormatStringTextComponent, ITest, ITestDenied, ITestError, ITestFail, ITestFlagged, ITestNone, ITestOk, ITestRejected, ITestSome, ITestSuccess, ITestType, IfElifElseStatement, IfElseStatement, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralNoneExpression, LiteralPathItemExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypeDeclValueExpression, LiteralTypedCStringExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, ShortCircuitAssignRHSITestExpression, SpecialConstructorExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VoidRefCallStatement } from "./body.js";
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeEnvironment, TypeInferContext, VarInfo } from "./checker_environment.js";
 import { MemberLookupInfo, TypeCheckerRelations } from "./checker_relations.js";
 
@@ -1236,20 +1236,58 @@ class TypeChecker {
         return exp.setType(this.getWellKnownType("CString"));
     }
 
+    private computeFormatArgsTypes(sinfo: SourceInfo, fmts: FormatStringComponent[], defaulttype: TypeSignature): {argname: string, argtype: TypeSignature}[] {
+        let fmttypes: {argname: string, argtype: TypeSignature}[] = [];
+        for(let i = 0; i < fmts.length; ++i) {
+            const ffmt = fmts[i];
+            if(ffmt instanceof FormatStringTextComponent) {
+                try {
+                    const vs = validateStringLiteral(ffmt.text);
+                    ffmt.resolvedValue = vs;
+                } catch(err) {
+                    this.reportError(sinfo, (err as Error).message);
+                }
+            }
+            else {
+                const argfmt = ffmt as FormatStringArgComponent;
+                if(argfmt.argType instanceof AutoTypeSignature) {
+                    argfmt.resolvedType = defaulttype;
+                }
+                else {
+                    const oktype = this.checkTypeSignature(argfmt.argType);
+                    if(!oktype || !(argfmt.argType instanceof NominalTypeSignature)) {
+                        argfmt.resolvedType = new ErrorTypeSignature(sinfo, undefined);
+                    }
+                    else {
+                        argfmt.resolvedType = argfmt.argType;
+                    }
+                }
+
+                fmttypes.push({argname: argfmt.argPos, argtype: argfmt.resolvedType});
+            }
+        }
+
+        return fmttypes;
+    }
+
     private checkLiteralFormatStringExpression(env: TypeEnvironment, exp: LiteralFormatStringExpression): TypeSignature {
-        xxxx;
+        const fmttypes = this.computeFormatArgsTypes(exp.sinfo, exp.fmts, this.getWellKnownType("String"));
+        
+        exp.setType(new FormatStringTypeSignature(exp.sinfo, "String", this.getWellKnownType("String"), fmttypes));
     }
 
     private checkLiteralFormatCStringExpression(env: TypeEnvironment, exp: LiteralFormatCStringExpression): TypeSignature {
-        xxxx;
+        const fmttypes = this.computeFormatArgsTypes(exp.sinfo, exp.fmts, this.getWellKnownType("CString"));
+        
+        exp.setType(new FormatStringTypeSignature(exp.sinfo, "CString", this.getWellKnownType("CString"), fmttypes));
     }
 
     private checkLiteralPathExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
         assert(false, "Not Implemented -- checkLiteralPathExpression");
     }
 
-    private checkLiteralPathItemExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
-        assert(false, "Not Implemented -- checkLiteralPathItemExpression");
+    private checkLiteralPathFragmentExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
+        assert(false, "Not Implemented -- checkLiteralPathFragmentExpression");
     }
 
     private checkLiteralGlobExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
@@ -1270,8 +1308,37 @@ class TypeChecker {
         const bvalue = this.checkExpression(env, exp.value, btype !== undefined ? new SimpleTypeInferContext(btype) : undefined);
         this.checkError(exp.sinfo, !(bvalue instanceof ErrorTypeSignature) && btype !== undefined && !this.relations.areSameTypes(bvalue, btype), `Literal value is not the same type (${bvalue.emit()}) as the value type (${TypeChecker.safeTypePrint(btype)})`);
 
-        exp.optResolvedString = this.checkTypeDeclOfRestrictions(exp.constype.decl, exp.value);
         return exp.setType(exp.constype);
+    }
+
+    private checkLiteralTypedStringExpression(env: TypeEnvironment, exp: LiteralTypedStringExpression): TypeSignature {
+         if(!this.checkTypeSignature(exp.constype)) {
+            return exp.setType(exp.constype);
+        }
+
+        if(!(exp.constype instanceof NominalTypeSignature) || !(exp.constype.decl instanceof TypedeclTypeDecl)) {
+            this.reportError(exp.sinfo, `Invalid type for typed string literal expression -- ${exp.constype.emit()}`);
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        const tdecl = exp.constype.decl as TypedeclTypeDecl;
+        try {
+            const vs = validateStringLiteral(exp.value.slice(1, exp.value.length - 1));
+            exp.resolvedValue = vs;
+        } catch(err) {
+            this.reportError(exp.sinfo, (err as Error).message);
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        const vtype = this.relations.getTypedStringValueType(stype);
+        const vexpType = this.checkExpression(env, exp, vtype !== undefined ? new SimpleTypeInferContext(vtype) : undefined);
+        this.checkError(exp.sinfo, !(vexpType instanceof ErrorTypeSignature) && vtype !== undefined && !this.relations.areSameTypes(vexpType, vtype), `Typed string literal value is not the same type (${vexpType.emit()}) as the value type (${TypeChecker.safeTypePrint(vtype)})`);
+
+        return exp.setType(stype);
+    }
+
+    private checkLiteralTypedCStringExpression(env: TypeEnvironment, exp: LiteralTypedCStringExpression): TypeSignature {
+        xxxx;
     }
 
     private checkHasEnvValueExpression(env: TypeEnvironment, exp: AccessEnvValueExpression): TypeSignature {
@@ -2733,14 +2800,20 @@ class TypeChecker {
             case ExpressionTag.LiteralPathExpression: {
                 return this.checkLiteralPathExpression(env, exp as LiteralSimpleExpression);
             }
-            case ExpressionTag.LiteralPathItemExpression: {
-                return this.checkLiteralPathItemExpression(env, exp as LiteralSimpleExpression);
+            case ExpressionTag.LiteralPathFragmentExpression: {
+                return this.checkLiteralPathFragmentExpression(env, exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralGlobExpression: {
                 return this.checkLiteralGlobExpression(env, exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralTypeDeclValueExpression: {
                 return this.checkLiteralTypeDeclValueExpression(env, exp as LiteralTypeDeclValueExpression);
+            }
+            case ExpressionTag.LiteralTypedStringExpression: {
+                return this.checkLiteralTypedStringExpression(env, exp as LiteralTypedStringExpression);
+            }
+            case ExpressionTag.LiteralTypedCStringExpression: {
+                return this.checkLiteralTypedCStringExpression(env, exp as LiteralTypedCStringExpression);
             }
             case ExpressionTag.HasEnvValueExpression: {
                 return this.checkHasEnvValueExpression(env, exp as AccessEnvValueExpression);

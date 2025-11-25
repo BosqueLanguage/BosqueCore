@@ -1478,7 +1478,7 @@ class Parser {
         }
     }
 
-    static _s_formatArgRe = /\$\{[0-9]+(?:[:][A-Za-z_0-9:]+)?\}$/;
+    static _s_formatArgRe = /\$\{[_a-zA-Z][_a-zA-Z0-9]*(?:[:] *[A-Za-z_0-9:]+)?\}$/;
     private processFormatArguments(contents: string, sinfo: SourceInfo): FormatStringComponent[] {
         const parts = contents.split(/(\{[0-9]+\})/);
 
@@ -2673,17 +2673,15 @@ class Parser {
         return terms;
     }
 
-    private parseFormatTypeTermList(sinfo: SourceInfo): [TypeSignature, {argname: string | undefined, argtype: TypeSignature}[]] {
+    private parseFormatTypeTermList(sinfo: SourceInfo): [TypeSignature, {argname: string, argtype: TypeSignature}[]] {
         this.ensureAndConsumeTokenAlways(SYM_langle, "format type term list");
-        let terms: {argname: string | undefined, argtype: TypeSignature}[] = [];
+        let terms: {argname: string, argtype: TypeSignature}[] = [];
 
         while(!this.testToken(SYM_rangle)) {
-            let argname: string | undefined = undefined;
-            if(this.testToken(TokenStrings.IdentifierName) && this.peekToken(1).kind === SYM_colon) {
-                argname = this.consumeTokenAndGetValue();
-                this.consumeToken(); //the colon
-            }
-
+            this.ensureToken(TokenStrings.IdentifierName, "format type term");
+            
+            const argname = this.consumeTokenAndGetValue();
+            this.ensureAndConsumeTokenAlways(SYM_colon, "format type term");
             const rtype = this.parseStdTypeSignature();
 
             terms.push({argname: argname, argtype: rtype});

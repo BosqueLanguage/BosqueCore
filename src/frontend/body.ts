@@ -214,8 +214,9 @@ class FormatStringTextComponent extends FormatStringComponent {
 }
 
 class FormatStringArgComponent extends FormatStringComponent {
-    readonly argPos: string; // number | name
+    readonly argPos: string; //name
     readonly argType: TypeSignature; //can be AutoTypeSignature, string, or typed string
+    resolvedType: TypeSignature | undefined; //after type checking
 
     constructor(argPos: string, argType: TypeSignature) {
         super();

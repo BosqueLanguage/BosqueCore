@@ -425,23 +425,19 @@ class IRLiteralUnicodeCharExpression extends IRExpression {
 }
 
 class IRLiteralCStringExpression extends IRExpression {
-    readonly srcstring: string; //source code string literal format
     readonly bytes: number[]; //char bytes
 
-    constructor(srcstring: string, bytes: number[]) {
+    constructor(bytes: number[]) {
         super(IRExpressionTag.IRLiteralCStringExpression);
-        this.srcstring = srcstring;
         this.bytes = bytes;
     }
 }
 
 class IRLiteralStringExpression extends IRExpression {
-    readonly srcstring: string; //source code string literal format
     readonly bytes: number[]; //utf8 bytes
 
-    constructor(srcstring: string, bytes: number[]) {
+    constructor(bytes: number[]) {
         super(IRExpressionTag.IRLiteralStringExpression);
-        this.srcstring = srcstring;
         this.bytes = bytes;
     }
 }
@@ -450,23 +446,21 @@ abstract class IRFormatStringComponent {
 }
 
 class IRFormatStringTextComponent extends IRFormatStringComponent {
-    readonly srcstring: string; //source code string literal format
     readonly bytes: number[];
 
-    constructor(srcstring: string, bytes: number[]) {
+    constructor(bytes: number[]) {
         super();
-        this.srcstring = srcstring;
         this.bytes = bytes;
     }
 }
 
 class IRFormatStringArgComponent extends IRFormatStringComponent {
-    readonly argPos: number;
+    readonly argName: string;
     readonly argType: IRTypeSignature;
 
-    constructor(argPos: number, argType: IRTypeSignature) {
+    constructor(argName: string, argType: IRTypeSignature) {
         super();
-        this.argPos = argPos;
+        this.argName = argName;
         this.argType = argType;
     }
 }
