@@ -1,5 +1,5 @@
 import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, LambdaParameterPackTypeSignature, NominalTypeSignature, TypeSignature, VoidTypeSignature } from "../frontend/type";
-import { Expression, ExpressionTag, FormatStringArgComponent, FormatStringTextComponent, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression } from "../frontend/body";
+import { AccessEnvValueExpression, Expression, ExpressionTag, FormatStringArgComponent, FormatStringTextComponent, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, TaskAccessInfoExpression } from "../frontend/body";
 import { Assembly } from "../frontend/assembly";
 
 import { IRRegex } from "./irdefs/irsupport";
@@ -421,7 +421,7 @@ class ASMToIRConverter {
             });
 
             const csig = this.processTypeSignature(ffmt.constype);
-            const iexp = new IRLiteralTypedFormatStringExpression(csig, fmts);
+            return new IRLiteralTypedFormatStringExpression(csig, fmts);
         }
         else if(ttag === ExpressionTag.LiteralTypedFormatCStringExpression) {
             const ffmt = exp as LiteralTypedFormatCStringExpression;
@@ -439,8 +439,16 @@ class ASMToIRConverter {
             });
 
             const csig = this.processTypeSignature(ffmt.constype);
-            const iexp = new IRLiteralTypedFormatCStringExpression(csig, fmts);
+            return new IRLiteralTypedFormatCStringExpression(csig, fmts);
         } 
+        else if(ttag === ExpressionTag.AccessEnvValueExpression) {
+            const aevexp = exp as AccessEnvValueExpression;
+            xxxx;
+        }
+        else if(ttag === ExpressionTag.TaskAccessIDExpression) {
+            const taexp = exp as TaskAccessInfoExpression;
+            xxxx;
+        }
         else {
             assert(false, `ASMToIRConverter: Unsupported expression type -- ${exp.tag}`);
         }

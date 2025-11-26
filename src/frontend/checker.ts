@@ -30,6 +30,9 @@ class TypeChecker {
     readonly constraints: TemplateConstraintScope;
     readonly relations: TypeCheckerRelations;
 
+    isTaskScope: boolean = false;
+    envDecl: EnvironmentVariableInformation[] = [];
+
     constructor(constraints: TemplateConstraintScope, relations: TypeCheckerRelations) {
         this.constraints = constraints;
         this.relations = relations;
@@ -1389,16 +1392,58 @@ class TypeChecker {
         return exp.setType(new FormatStringTypeSignature(exp.sinfo, "CString", exp.constype, fmttypes));
     }
 
-    private checkHasEnvValueExpression(env: TypeEnvironment, exp: AccessEnvValueExpression): TypeSignature {
-        assert(false, "Not Implemented -- checkHasEnvValueExpression");
-    }
-    
     private checkAccessEnvValueExpression(env: TypeEnvironment, exp: AccessEnvValueExpression): TypeSignature {
-        assert(false, "Not Implemented -- checkAccessEnvValueExpression");
+        this.checkError(exp.sinfo, !this.isTaskScope, `Environment values in non-task scopes`);
+
+        if(!exp.keyname.startsWith("'")) {
+            exp.resolvedkey = exp.keyname;
+        }
+        else {
+            try {
+                const vs = validateCStringLiteral(exp.keyname.slice(1, exp.keyname.length - 1));
+                if(vs === null) {
+                    this.reportError(exp.sinfo, `Invalid CString literal for environment value key`);
+                    return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+                }
+                exp.resolvedkey = vs;
+            } catch(err) {
+                this.reportError(exp.sinfo, (err as Error).message);
+                return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            }
+        }
+
+        const evdecl = this.envDecl.find((ev) => ev.evname === exp.keyname);
+        if(exp.opname === "has") {
+            if(evdecl === undefined) {
+                this.reportError(exp.sinfo, `Environment variable ${exp.keyname} is never defined`);
+            }
+            else {
+                this.checkError(exp.sinfo, evdecl.required, `Environment variable ${exp.keyname} is always defined`);
+            }
+
+            return exp.setType(this.getWellKnownType("Bool"));
+        }
+        else {
+            if(evdecl === undefined) {
+                this.reportError(exp.sinfo, `Could not find environment value ${exp.keyname}`);
+                return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            }
+
+            this.checkTypeSignature(evdecl.evtype);
+            if(exp.opname === "tryGet") {
+                const optdecl = this.relations.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Option") as OptionTypeDecl;
+                return exp.setType(new NominalTypeSignature(exp.sinfo, undefined, optdecl, [evdecl.evtype]));
+            }
+            else {
+                return exp.setType(evdecl.evtype);
+            }
+        }
     }
 
     private checkTaskAccessInfoExpression(env: TypeEnvironment, exp: TaskAccessInfoExpression): TypeSignature {
-        assert(false, "Not Implemented -- checkTaskAccessInfoExpression");
+        this.checkError(exp.sinfo, !this.isTaskScope, `Task ID values cannot be accessed in non-task scopes`);
+
+        return exp.setType(this.getWellKnownType("UUIDv7"));
     }
     
     private checkAccessNamespaceConstantExpression(env: TypeEnvironment, exp: AccessNamespaceConstantExpression): TypeSignature {
@@ -2869,13 +2914,10 @@ class TypeChecker {
             case ExpressionTag.LiteralTypedFormatCStringExpression: {
                 return this.checkLiteralTypedFormatCStringExpression(env, exp as LiteralTypedFormatCStringExpression);
             }
-            case ExpressionTag.HasEnvValueExpression: {
-                return this.checkHasEnvValueExpression(env, exp as AccessEnvValueExpression);
-            }
             case ExpressionTag.AccessEnvValueExpression: {
                 return this.checkAccessEnvValueExpression(env, exp as AccessEnvValueExpression);
             }
-            case ExpressionTag.TaskAccessInfoExpression: {
+            case ExpressionTag.TaskAccessIDExpression: {
                 return this.checkTaskAccessInfoExpression(env, exp as TaskAccessInfoExpression);
             }
             case ExpressionTag.AccessNamespaceConstantExpression: {
@@ -4989,6 +5031,9 @@ class TypeChecker {
 
         TypeChecker.loadWellKnownType(assembly, "Regex", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "CRegex", wellknownTypes);
+
+        TypeChecker.loadWellKnownType(assembly, "UUIDv4", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "UUIDv7", wellknownTypes);
 
         const checker = new TypeChecker(new TemplateConstraintScope(), new TypeCheckerRelations(assembly, wellknownTypes));
 

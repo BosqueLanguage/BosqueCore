@@ -782,6 +782,8 @@ class LiteralTypedPathFormatExpression extends Expression {
 class AccessEnvValueExpression extends Expression {
     readonly opname: "has" | "get" | "tryGet" | undefined;
     readonly keyname: string;
+
+    resolvedkey: string | undefined = undefined;
     mustdefined: boolean = false;
 
     constructor(sinfo: SourceInfo, opname: "has" | "get" | "tryGet" | undefined, keyname: string) {

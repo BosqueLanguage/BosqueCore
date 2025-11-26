@@ -65,6 +65,12 @@ class Explicitifier {
         else if(ttag === ExpressionTag.LiteralTypedFormatStringExpression || ttag === ExpressionTag.LiteralTypedFormatCStringExpression) {
             return exp;
         }
+        else if(ttag === ExpressionTag.AccessEnvValueExpression) {
+            return exp;
+        }
+        else if(ttag === ExpressionTag.TaskAccessIDExpression) {
+            return exp;
+        }
         else {
             assert(false, `Explicitifier: Unsupported expression type -- ${exp.tag}`);
         }
