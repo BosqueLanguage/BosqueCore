@@ -1,6 +1,8 @@
 #pragma once
 
 #include "../common.h"
+#include "../bsqtype.h"
+#include "../core/uuids.h"
 #include "../core/strings.h"
 
 //
@@ -68,17 +70,11 @@ namespace ᐸRuntimeᐳ
     class TaskInfo
     {
     public:
-        const boost::uuids::uuid taskid;
+        const UUIDv4 taskid;
         const TaskInfo* parent; //null for a root task
         TaskPriority priority;
 
-        TaskInfo() noexcept : taskid(boost::uuids::nil_uuid()), parent(nullptr), priority() {}
-        TaskInfo(const boost::uuids::uuid& tId, const TaskInfo* pTask, TaskPriority prio) noexcept : taskid(tId), parent(pTask), priority(prio) {}
-    
-        generate uuidv4() noexcept
-        {
-            static boost::uuids::random_generator uuidgen;
-            return uuidgen();
-        }
+        TaskInfo() noexcept : taskid(), parent(nullptr), priority() {}
+        TaskInfo(const UUIDv4& tId, const TaskInfo* pTask, TaskPriority prio) noexcept : taskid(tId), parent(pTask), priority(prio) {}
     };
 }

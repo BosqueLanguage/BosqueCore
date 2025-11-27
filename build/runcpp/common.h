@@ -9,6 +9,8 @@
 #include <stdalign.h>
 
 #include <optional>
+#include <chrono>
+#include <random>
 #include <string>
 #include <map>
 #include <list>
@@ -17,10 +19,8 @@
 #include <type_traits>
 #include <concepts>
 
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_generators.hpp>
-
 #include <threads.h>
+#include <uuid/uuid.h>
 
 //Only for internal diagnostics
 #include <assert.h>
@@ -136,9 +136,9 @@ namespace ᐸRuntimeᐳ
         std::list<std::jmp_buf> error_handler;
         std::optional<ErrorInfo> pending_error;
 
-        boost::uuids::random_generator uuid4gen;
-        boost::uuids::time_generator_v7 uuid7gen;
-
+        //uuid_generate_random((unsigned char*)buf);
+        //uuid_generate_time_safe((unsigned char*)buf); 
+        
         ThreadLocalInfo() {}
 
         // Cannot copy or move thread local info

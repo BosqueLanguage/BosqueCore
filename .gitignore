@@ -4,7 +4,6 @@
 *.dgml
 
 /bin
-/build/boost/**
 /build/test/**
 
 **/.DS_Store
