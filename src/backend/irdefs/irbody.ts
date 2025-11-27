@@ -608,11 +608,13 @@ class IRAccessEnvGetExpression extends IRExpression {
 class IRAccessEnvTryGetExpression extends IRExpression {
     readonly keybytes: number[];
     readonly oftype: IRTypeSignature;
+    readonly optiontype: IRTypeSignature;
 
-    constructor(keybytes: number[], oftype: IRTypeSignature) {
+    constructor(keybytes: number[], oftype: IRTypeSignature, optiontype: IRTypeSignature) {
         super(IRExpressionTag.IRAccessEnvTryGetExpression);
         this.keybytes = keybytes;
         this.oftype = oftype;
+        this.optiontype = optiontype;
     }
 }
 

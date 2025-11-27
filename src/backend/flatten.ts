@@ -4,7 +4,7 @@ import { Assembly } from "../frontend/assembly";
 
 import { IRRegex } from "./irdefs/irsupport";
 import {} from "./irassembly";
-import { DateRepresentation, DeltaDateRepresentation, DeltaTimeRepresentation, IRExpression, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteBufferExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralCStringExpression, IRLiteralDecimalExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLatLongCoordinateExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralNoneExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralRationalExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRStatement, TimeRepresentation, IRLiteralFormatStringExpression, IRFormatStringTextComponent, IRFormatStringArgComponent, IRFormatStringComponent, IRLiteralFormatCStringExpression, IRLiteralTypedExpression, IRLiteralExpression, IRTypeDeclInvariantCheckStatement, IRLiteralTypedStringExpression, IRLiteralTypedCStringExpression, IRLiteralTypedFormatStringExpression, IRLiteralTypedFormatCStringExpression } from "./irdefs/irbody";
+import { DateRepresentation, DeltaDateRepresentation, DeltaTimeRepresentation, IRExpression, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteBufferExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralCStringExpression, IRLiteralDecimalExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLatLongCoordinateExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralNoneExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralRationalExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRStatement, TimeRepresentation, IRLiteralFormatStringExpression, IRFormatStringTextComponent, IRFormatStringArgComponent, IRFormatStringComponent, IRLiteralFormatCStringExpression, IRLiteralTypedExpression, IRLiteralExpression, IRTypeDeclInvariantCheckStatement, IRLiteralTypedStringExpression, IRLiteralTypedCStringExpression, IRLiteralTypedFormatStringExpression, IRLiteralTypedFormatCStringExpression, IRTaskAccessIDExpression, IRTaskAccessParentIDExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression } from "./irdefs/irbody";
 
 import assert from "node:assert";
 import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatCStringTypeSignature, IRFormatPathFragmentTypeSignature, IRFormatPathGlobTypeSignature, IRFormatPathTypeSignature, IRFormatStringTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "./irdefs/irtype";
@@ -443,11 +443,26 @@ class ASMToIRConverter {
         } 
         else if(ttag === ExpressionTag.AccessEnvValueExpression) {
             const aevexp = exp as AccessEnvValueExpression;
-            xxxx;
+
+            const kbytes = this.processStringBytes(aevexp.resolvedkey as string);
+            if(aevexp.opname === "has") {
+                return new IRAccessEnvHasExpression(kbytes);
+            }
+            else if(aevexp.opname === "get"){
+                return new IRAccessEnvGetExpression(kbytes, this.processTypeSignature(aevexp.optoftype as TypeSignature));
+            }
+            else {
+                return new IRAccessEnvTryGetExpression(kbytes, this.processTypeSignature(aevexp.optoftype as TypeSignature), this.processTypeSignature(exp.getType()));
+            }
         }
         else if(ttag === ExpressionTag.TaskAccessIDExpression) {
             const taexp = exp as TaskAccessInfoExpression;
-            xxxx;
+            if(taexp.name === "currentID") {
+                return new IRTaskAccessIDExpression();
+            }
+            else {
+                return new IRTaskAccessParentIDExpression();
+            }
         }
         else {
             assert(false, `ASMToIRConverter: Unsupported expression type -- ${exp.tag}`);

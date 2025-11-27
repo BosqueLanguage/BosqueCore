@@ -144,6 +144,16 @@ namespace ᐸRuntimeᐳ
         // Cannot copy or move thread local info
         ThreadLocalInfo(const ThreadLocalInfo&) = delete;
         ThreadLocalInfo &operator=(const ThreadLocalInfo&) = delete;
+
+        static void generate_uuid4(char out[16]) noexcept
+        {
+            assert(false && "UUIDv7 generation not yet implemented");
+        }
+
+        static void generate_uuid7(char out[16]) noexcept
+        {
+            assert(false && "UUIDv7 generation not yet implemented");
+        }
     };
 
 
