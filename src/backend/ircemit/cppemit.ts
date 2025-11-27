@@ -1,5 +1,5 @@
 import { MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_INT } from "../../frontend/assembly";
-import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression } from "../irdefs/irbody";
+import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression } from "../irdefs/irbody";
 
 import assert from "node:assert";
 import { TransformCPPNameManager } from "./namemgr";
@@ -7,6 +7,13 @@ import { TransformCPPNameManager } from "./namemgr";
 const RUNTIME_NAMESPACE = "ᐸRuntimeᐳ";
 
 class CPPEmitter {
+    //The C++ TaskInfoRepr<U> for accessing the global info for the task we are emitting
+    private cppTaskType: string;
+
+    constructor(cppTaskType: string) {
+        this.cppTaskType = cppTaskType;
+    }
+
     private escapeLiteralCString(cstrbytes: number[]): string {
         let escstr = '"';
         for(const b of cstrbytes) {
@@ -226,19 +233,31 @@ class CPPEmitter {
             const ttag = exp.tag;
             
             if(ttag === IRExpressionTag.IRAccessEnvHasExpression) {
-                xxxx;
+                const iehe = exp as IRAccessEnvHasExpression;
+                return `${this.cppTaskType}::asRepr(&${RUNTIME_NAMESPACE}::tl_info)->environment.has(${RUNTIME_NAMESPACE}::CString::literal(${this.escapeLiteralCString(iehe.keybytes)}))`;
             }
             else if(ttag === IRExpressionTag.IRAccessEnvGetExpression) {
-                xxxx;
+                const iege = exp as IRAccessEnvGetExpression;
+                const mname = TransformCPPNameManager.generateNameForUnionMember(iege.oftype.tkeystr);
+                return `${this.cppTaskType}::asRepr(&${RUNTIME_NAMESPACE}::tl_info)->environment.tryGetEntry(${RUNTIME_NAMESPACE}::CString::literal(${this.escapeLiteralCString(iege.keybytes)}))->value.${mname}`;
             }
             else if(ttag === IRExpressionTag.IRAccessEnvTryGetExpression) {
-                xxxx;
+                const iege = exp as IRAccessEnvTryGetExpression;
+                const mname = TransformCPPNameManager.generateNameForUnionMember(iege.oftype.tkeystr);
+
+                const chkstr = `${this.cppTaskType}::asRepr(&${RUNTIME_NAMESPACE}::tl_info)->environment.has(${RUNTIME_NAMESPACE}::CString::literal(${this.escapeLiteralCString(iege.keybytes)}))`;
+                const gettype = `${this.cppTaskType}::asRepr(&${RUNTIME_NAMESPACE}::tl_info)->environment.get(${RUNTIME_NAMESPACE}::CString::literal(${this.escapeLiteralCString(iege.keybytes)}))->typeinfo`;
+                const getstr = `${this.cppTaskType}::asRepr(&${RUNTIME_NAMESPACE}::tl_info)->environment.get(${RUNTIME_NAMESPACE}::CString::literal(${this.escapeLiteralCString(iege.keybytes)}))->value.${mname}`;
+
+                const makeopt = `${RUNTIME_NAMESPACE}::Option<${TransformCPPNameManager.convertTypeKey(iege.oftype.tkeystr)}>::makeSome(${gettype}, ${getstr})`;
+                const makenone = `${RUNTIME_NAMESPACE}::Option<${TransformCPPNameManager.convertTypeKey(iege.oftype.tkeystr)}>::optnone`;
+                return `(${chkstr} ? ${makeopt} : ${makenone})`;
             }
             else if(ttag === IRExpressionTag.IRTaskAccessIDExpression) {
-                xxxx;
+                return `${RUNTIME_NAMESPACE}::tl_info.taskid`;
             }
             else if(ttag === IRExpressionTag.IRTaskAccessParentIDExpression) {
-                xxxx;
+                return `(${RUNTIME_NAMESPACE}::tl_info.parent !== nullptr ? ${RUNTIME_NAMESPACE}::tl_info.parent->taskid : 0)`;
             }
             else {
                 assert(false, `CPPEmitter: Unsupported IR expression type -- ${exp.constructor.name}`);

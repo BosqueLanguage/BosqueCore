@@ -4200,11 +4200,11 @@ class Parser {
             return new CurrentEnvironmentExpression(sinfo);
         }
         else {
-            const pprms = this.parseListOf<{envkey: string, value: Expression}>("environment construction parameters", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
+            const pprms = this.parseListOf<{envkey: string, value: RValueExpression}>("environment construction parameters", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
                 this.ensureToken(TokenStrings.IdentifierName, "environment construction parameter");
                 const envkey = this.consumeTokenAndGetValue();
                 this.ensureAndConsumeTokenAlways("=", "environment construction parameter");
-                const value = this.parseExpression();
+                const value = this.parseRValueExpression();
 
                 return { envkey: envkey, value: value };
             });

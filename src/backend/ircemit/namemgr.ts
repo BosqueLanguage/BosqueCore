@@ -1,10 +1,12 @@
 
-const s_coloncolon_repl = xxxx;
-const s_comma_repl = xxxx;
-const s_BSQ_tag = xxxx;
+const s_coloncolon_repl = "ᕒ";
+const s_comma_repl = "ᐪ";
+const s_BSQ_tag = "ᗑ";
 
-const s_binderv_tag = xxxx;
-const s_specialop_sep = xxxx;
+const s_binderv_tag = "ᑯ";
+const s_specialop_sep = "ᐤ";
+
+const s_runtimename = "ᐸRuntimeᐳ";
 
 class TransformCPPNameManager {
     static c_dangerous: Map<string, string> = new Map<string, string>([
@@ -39,10 +41,10 @@ class TransformCPPNameManager {
         let nn = TransformCPPNameManager.safeifyName(vname);
 
         if(!nn.startsWith("$")) {
-            return nn;
+            return TransformCPPNameManager.safeifyName(vname);
         }
         else {
-            return s_binderv_tag + nn.slice(1)
+            return s_binderv_tag + TransformCPPNameManager.safeifyName(vname.slice(1));
         }
     }
 
@@ -58,12 +60,20 @@ class TransformCPPNameManager {
         return TransformCPPNameManager.safeifyName(ikey);
     }
 
+    public static generateNameForUnionMember(tkey: string): string {
+        return TransformCPPNameManager.convertTypeKey(tkey) + s_specialop_sep + "um";
+    }
+
+    public static generateTypeInfoNameForTypeKey(tkey: string): string {
+        return `${s_runtimename}::g_typeinfo_${TransformCPPNameManager.convertTypeKey(tkey)}`;
+    }
+
     public static generateNameForInvariantFunction(tkey: string): string {
         return TransformCPPNameManager.convertTypeKey(tkey) + s_specialop_sep + "invariant";
     }
 
     public static generateNameForFieldDefaultFunction(tkey: string, fname: string): string {
-        return TransformCPPNameManager.convertTypeKey(tkey) + s_specialop_sep + "default" + TransformCPPNameManager.safeifyName(fname);
+        return TransformCPPNameManager.convertTypeKey(tkey) + s_specialop_sep + "default" + s_specialop_sep + TransformCPPNameManager.safeifyName(fname);
     }
 }
 

@@ -21,12 +21,13 @@ namespace ᐸRuntimeᐳ
         constexpr Option(const Option& other) noexcept = default;
         
         // Special none option bits
-        constexpr bool isNone() const noexcept { return this->typeinfo == &g_wellKnownTypeNone; }
-        static constexpr Option<T> optnone = Option(&g_wellKnownTypeNone);
+        constexpr bool isNone() const noexcept { return this->typeinfo == &g_typeinfo_None; }
+        static constexpr Option<T> optnone = Option(&g_typeinfo_None);
 
         // Some option bits
-        constexpr bool isSome() const noexcept { return this->typeinfo != &g_wellKnownTypeNone; }
-        constexpr static Option<T> makeSome(const TypeInfoBase* ti, const T& d) noexcept { return Option(ti, d); }
+        constexpr bool isSome() const noexcept { return this->typeinfo != &g_typeinfo_None; }
+
+        static Option<T> makeSome(const TypeInfoBase* ti, const T& d) noexcept { return Option<T>(ti, d); }
     };
 
     //
@@ -53,39 +54,15 @@ namespace ᐸRuntimeᐳ
         // Note -- inject and extract are generated for each use based on the generation union type (see strings for example)
 
         template<typename V>
-        constexpr BoxedUnion<V> convert() const noexcept 
+        BoxedUnion<V> convert() const noexcept 
         {
-            static_assert(std::is_union_v<V>, "BoxedUnion widen requires a union type V");
-            static_assert(sizeof(V) == sizeof(U), "BoxedUnion widen requires V to be at least as large as U");
+            static_assert(std::is_union_v<V>, "BoxedUnion convert requires a union type V");
+            constexpr size_t copysize = std::min(sizeof(U), sizeof(V));
 
             BoxedUnion<V> cu(this->typeinfo);
-            std::copy(reinterpret_cast<const uint8_t*>(&this->data), reinterpret_cast<const uint8_t*>(&this->data) + sizeof(U), reinterpret_cast<uint8_t*>(&cu.data));
-
+            std::copy(reinterpret_cast<const uint8_t*>(&this->data), reinterpret_cast<const uint8_t*>(&this->data) + copysize, reinterpret_cast<uint8_t*>(&cu.data));
+            
             return cu;
-        }
-
-        template<typename V>
-        BoxedUnion<V> widen() const noexcept 
-        {
-            static_assert(std::is_union_v<V>, "BoxedUnion widen requires a union type V");
-            static_assert(sizeof(V) > sizeof(U), "BoxedUnion widen requires V to be at least as large as U");
-
-            BoxedUnion<V> cw(this->typeinfo);
-            std::copy(reinterpret_cast<const uint8_t*>(&this->data), reinterpret_cast<const uint8_t*>(&this->data) + sizeof(U), reinterpret_cast<uint8_t*>(&cw.data));
-
-            return cw;
-        }
-
-        template<typename V>
-        BoxedUnion<V> narrow() const noexcept 
-        {
-            static_assert(std::is_union_v<V>, "BoxedUnion widen requires a union type V");
-            static_assert(sizeof(V) < sizeof(U), "BoxedUnion widen requires V to be at most as large as U");
-
-            BoxedUnion<V> cn(this->typeinfo);
-            std::copy(reinterpret_cast<const uint8_t*>(&this->data), reinterpret_cast<const uint8_t*>(&this->data) + sizeof(V), reinterpret_cast<uint8_t*>(&cn.data));
-
-            return cn;
         }
 
         template<typename T, size_t idx>

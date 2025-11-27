@@ -5,7 +5,7 @@
 
 namespace ᐸRuntimeᐳ
 {
-    constexpr TypeInfoBase g_wellKnownTypeBool = {
+    constexpr TypeInfoBase g_typeinfo_Bool = {
         WELL_KNOWN_TYPE_ID_BOOL,
         sizeof(Bool),
         byteSizeToSlotCount(sizeof(Bool)),

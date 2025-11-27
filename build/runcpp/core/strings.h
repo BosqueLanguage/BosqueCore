@@ -65,7 +65,7 @@ namespace ᐸRuntimeᐳ
     };
     using CStrTree = ᐸRuntimeᐳ::BoxedUnion<ᐸCStrTreeUnionᐳ>;
 
-    constexpr TypeInfoBase g_wellKnownTypeCStrBuff = {
+    constexpr TypeInfoBase g_typeinfo_CStrBuff = {
         WELL_KNOWN_TYPE_ID_CSTRBUFF,
         sizeof(CStrBuff),
         byteSizeToSlotCount(sizeof(CStrBuff)),
@@ -75,7 +75,7 @@ namespace ᐸRuntimeᐳ
         nullptr
     };
 
-    constexpr TypeInfoBase g_wellKnownTypeCStrNode = {
+    constexpr TypeInfoBase g_typeinfo_CStrNode = {
         WELL_KNOWN_TYPE_ID_CSTRNODE,
         sizeof(CStrNode),
         byteSizeToSlotCount(sizeof(CStrNode)),
@@ -85,7 +85,7 @@ namespace ᐸRuntimeᐳ
         nullptr
     };
 
-    constexpr TypeInfoBase g_wellKnownTypeCString = {
+    constexpr TypeInfoBase g_typeinfo_CString = {
         WELL_KNOWN_TYPE_ID_CSTRING,
         sizeof(CStrTree),
         byteSizeToSlotCount(sizeof(CStrTree)),
@@ -102,8 +102,8 @@ namespace ᐸRuntimeᐳ
 
     public:
         constexpr CString() noexcept : tree() {}
-        constexpr CString(const ᐸRuntimeᐳ::CStrBuff& b) noexcept : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ᐸCStrTreeUnionᐳ>(&ᐸRuntimeᐳ::g_wellKnownTypeCStrBuff, ᐸRuntimeᐳ::ᐸCStrTreeUnionᐳ(b))) {}
-        constexpr CString(ᐸRuntimeᐳ::CStrNode* n) noexcept : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ᐸCStrTreeUnionᐳ>(&ᐸRuntimeᐳ::g_wellKnownTypeCStrNode, ᐸRuntimeᐳ::ᐸCStrTreeUnionᐳ(n))) {}
+        constexpr CString(const ᐸRuntimeᐳ::CStrBuff& b) noexcept : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ᐸCStrTreeUnionᐳ>(&ᐸRuntimeᐳ::g_typeinfo_CStrBuff, ᐸRuntimeᐳ::ᐸCStrTreeUnionᐳ(b))) {}
+        constexpr CString(ᐸRuntimeᐳ::CStrNode* n) noexcept : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ᐸCStrTreeUnionᐳ>(&ᐸRuntimeᐳ::g_typeinfo_CStrNode, ᐸRuntimeᐳ::ᐸCStrTreeUnionᐳ(n))) {}
         constexpr CString(const ᐸRuntimeᐳ::CStrTree& t) noexcept : tree(t) {}
         constexpr CString(const CString& other) noexcept = default;
 

@@ -20,7 +20,6 @@
 #include <concepts>
 
 #include <threads.h>
-#include <uuid/uuid.h>
 
 //Only for internal diagnostics
 #include <assert.h>
@@ -130,16 +129,15 @@ namespace ᐸRuntimeᐳ
         }
     }
 
+    //forward declaration of types that are stored in a thread local way
+    class TaskInfo;
+
     class ThreadLocalInfo
     {
     public:
-        std::list<std::jmp_buf> error_handler;
-        std::optional<ErrorInfo> pending_error;
+        TaskInfo* current_task;
 
-        //uuid_generate_random((unsigned char*)buf);
-        //uuid_generate_time_safe((unsigned char*)buf); 
-        
-        ThreadLocalInfo() {}
+        ThreadLocalInfo() noexcept : current_task(nullptr) {}
 
         // Cannot copy or move thread local info
         ThreadLocalInfo(const ThreadLocalInfo&) = delete;

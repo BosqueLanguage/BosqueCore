@@ -1798,9 +1798,9 @@ class EmptyEnvironmentExpression extends EnvironmentGenerationExpression {
 }
 
 class InitializeEnvironmentExpression extends EnvironmentGenerationExpression {
-    readonly args: {envkey: string, value: Expression}[];
+    readonly args: {envkey: string, value: RValueExpression}[];
 
-    constructor(sinfo: SourceInfo, args: {envkey: string, value: Expression}[]) {
+    constructor(sinfo: SourceInfo, args: {envkey: string, value: RValueExpression}[]) {
         super(EnvironmentGenerationExpressionTag.InitializeEnvironmentExpression, sinfo);
         this.args = args;
     }

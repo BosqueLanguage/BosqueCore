@@ -97,6 +97,8 @@ enum IRStatementTag {
     IRErrorDivisionByZeroCheckStatement = "IRErrorDivisionByZeroCheckStatement",
 
     IRTypeDeclInvariantCheckStatement = "IRTypeDeclInvariantCheckStatement",
+    IRPreconditionCheck = "IRPreconditionCheck",
+    IRPostconditionCheck = "IRPostconditionCheck"
 }
 
 class IRStatement {
@@ -708,6 +710,26 @@ class IRTypeDeclInvariantCheckStatement  extends IRStatement {
     }
 }
 
+/* This asserts that the given precondition expression is true */
+class IRPreconditionCheck  extends IRErrorCheckStatement {
+    readonly cond: IRExpression;
+
+    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, cond: IRExpression) {
+        super(IRStatementTag.IRPreconditionCheck, file, sinfo, diagnosticTag, checkID);
+        this.cond = cond;
+    }
+}
+
+/* This asserts that the given postcondition expresssion is true */
+class IRPostconditionCheck  extends IRErrorCheckStatement {
+    readonly cond: IRExpression;
+
+    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, cond: IRExpression) {
+        super(IRStatementTag.IRPostconditionCheck, file, sinfo, diagnosticTag, checkID);
+        this.cond = cond;
+    }
+}
+
 export {
     IRExpressionTag, IRExpression, IRImmediateExpression, IRLiteralExpression,
     
@@ -735,5 +757,6 @@ export {
     IRNopStatement,
     IRErrorCheckStatement,
     IRErrorBinArithCheckStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement,
-    IRTypeDeclInvariantCheckStatement
+    IRTypeDeclInvariantCheckStatement,
+    IRPreconditionCheck, IRPostconditionCheck
 };

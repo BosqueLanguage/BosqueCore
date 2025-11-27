@@ -59,7 +59,7 @@ namespace ᐸRuntimeᐳ
         return slotcount * sizeof(uint64_t);
     }
 
-    constexpr TypeInfoBase g_wellKnownTypeNone = {
+    constexpr TypeInfoBase g_typeinfo_None = {
         WELL_KNOWN_TYPE_ID_NONE,
         sizeof(None),
         byteSizeToSlotCount(sizeof(None)),

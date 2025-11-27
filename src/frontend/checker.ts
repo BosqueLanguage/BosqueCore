@@ -1428,14 +1428,15 @@ class TypeChecker {
                 this.reportError(exp.sinfo, `Could not find environment value ${exp.keyname}`);
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
+            exp.mustdefined = evdecl.required;
 
             this.checkTypeSignature(evdecl.evtype);
-            if(exp.opname === "tryGet") {
-                const optdecl = this.relations.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Option") as OptionTypeDecl;
-                return exp.setType(new NominalTypeSignature(exp.sinfo, undefined, optdecl, [evdecl.evtype]));
+            if(exp.opname === undefined || exp.opname === "get") {
+                return exp.setType(evdecl.evtype);
             }
             else {
-                return exp.setType(evdecl.evtype);
+                const optdecl = this.relations.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Option") as OptionTypeDecl;
+                return exp.setType(new NominalTypeSignature(exp.sinfo, undefined, optdecl, [evdecl.evtype]));
             }
         }
     }
@@ -1455,27 +1456,6 @@ class TypeChecker {
 
         this.checkTypeSignature(cdecl.declaredType);
         return exp.setType(cdecl.declaredType);
-    }
-
-    private checkAccessEnumExpression(env: TypeEnvironment, exp: AccessEnumExpression): TypeSignature {
-        const oktype = this.checkTypeSignature(exp.stype);
-        if(!oktype) {
-            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
-        }
-
-        if(!(exp.stype instanceof NominalTypeSignature) || !(exp.stype.decl instanceof EnumTypeDecl)) {
-            this.reportError(exp.sinfo, `Invalid type for enum access expression -- ${exp.stype.emit()}`);
-            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
-        }
-
-        const edecl = exp.stype.decl as EnumTypeDecl;
-        if(edecl.members.includes(exp.name)) {
-            return exp.setType(exp.stype);
-        }
-        else {
-            this.reportError(exp.sinfo, `Enum ${exp.stype.decl.name} does not have member ${exp.name}`);
-            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
-        }
     }
 
     private checkAccessStaticFieldExpression(env: TypeEnvironment, exp: AccessStaticFieldExpression): TypeSignature {
@@ -1506,7 +1486,29 @@ class TypeChecker {
         }
     }
 
+    private checkAccessEnumExpression(env: TypeEnvironment, exp: AccessEnumExpression): TypeSignature {
+        const oktype = this.checkTypeSignature(exp.stype);
+        if(!oktype) {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        if(!(exp.stype instanceof NominalTypeSignature) || !(exp.stype.decl instanceof EnumTypeDecl)) {
+            this.reportError(exp.sinfo, `Invalid type for enum access expression -- ${exp.stype.emit()}`);
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        const edecl = exp.stype.decl as EnumTypeDecl;
+        if(edecl.members.includes(exp.name)) {
+            return exp.setType(exp.stype);
+        }
+        else {
+            this.reportError(exp.sinfo, `Enum ${exp.stype.decl.name} does not have member ${exp.name}`);
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+    }
+
     private checkAccessVariableExpression(env: TypeEnvironment, exp: AccessVariableExpression): TypeSignature {
+        xxxx;
         const vinfo = env.resolveLocalVarInfoFromSrcName(exp.srcname);
         if(vinfo !== undefined) {
             this.checkError(exp.sinfo, !vinfo.mustDefined, `Variable ${exp.srcname} may not be defined on all control flow paths`);
