@@ -2,7 +2,7 @@
 
 #include "../common.h"
 
-namespace Core 
+namespace ᐸRuntimeᐳ 
 {
     class Byte
     {

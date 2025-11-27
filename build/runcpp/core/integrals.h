@@ -2,7 +2,7 @@
 
 #include "../common.h"
 
-namespace Core 
+namespace ᐸRuntimeᐳ 
 {
     class Nat
     {
@@ -361,26 +361,6 @@ namespace Core
         friend constexpr bool operator<=(const ChkInt &lhs, const ChkInt &rhs) noexcept { return !(lhs.value > rhs.value); }
         friend constexpr bool operator>=(const ChkInt &lhs, const ChkInt &rhs) noexcept { return !(lhs.value < rhs.value); }
     };
-
-    constexpr Nat operator""_Nat(unsigned long long n)
-    {
-        return Nat(n);
-    }
-
-    constexpr Int operator""_Int(unsigned long long n)
-    {
-        return Int(n);
-    }
-
-    constexpr ChkNat operator""_ChkNat(unsigned long long n)
-    {
-        return ChkNat(n);
-    }
-    
-    constexpr ChkInt operator""_ChkInt(unsigned long long n)
-    {
-        return ChkInt(n);
-    }
 
     static_assert(sizeof(Nat) == sizeof(int64_t), "Nat size incorrect");
     static_assert(sizeof(Int) == sizeof(int64_t), "Int size incorrect");

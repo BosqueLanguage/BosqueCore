@@ -7,47 +7,78 @@
 //TODO: need to add support for GC to load the implicit roots from the task info
 //
 
-namespace ᐸTaskRuntimeᐳ
+namespace ᐸRuntimeᐳ
 {
+    template<ConceptUnionRepr U>
     class TaskEnvironmentEntry
     {
     public:
-        Core::CString key;
+        CString key;
 
-        const Core::ᐸRuntimeᐳ::TypeInfoBase* typeinfo;
-        void* value; //Env creation is scoped so we can just store a pointer to the value on the stack/heap here
+        const TypeInfoBase* typeinfo;
+        U value;
 
         constexpr TaskEnvironmentEntry() noexcept : key(), typeinfo(nullptr), value(nullptr) {}
-        constexpr TaskEnvironmentEntry(const Core::CString& k, const Core::ᐸRuntimeᐳ::TypeInfoBase* ti, void* v) noexcept : key(k), typeinfo(ti), value(v) {}
+        constexpr TaskEnvironmentEntry(const CString& k, const TypeInfoBase* ti, const U& u) noexcept : key(k), typeinfo(ti), value(v) {}
         constexpr TaskEnvironmentEntry(const TaskEnvironmentEntry& other) noexcept = default;
     };
 
+    template<ConceptUnionRepr U>
     class TaskEnvironment
     {
     public:
-        std::list<TaskEnvironmentEntry> tenv;
+        std::list<TaskEnvironmentEntry<U>> tenv;
 
         TaskEnvironment() noexcept : tenv() {}
         TaskEnvironment(const TaskEnvironment& other) noexcept = default;
 
-        void setEntry(const Core::CString& key, const Core::ᐸRuntimeᐳ::TypeInfoBase* typeinfo, void* value) noexcept
+        void setEntry(const CString& key, const TypeInfoBase* typeinfo, void* value) noexcept
         {
             this->tenv.emplace_back(key, typeinfo, value);
         }
 
-        xxxx;
+        std::list<TaskEnvironmentEntry<U>>::iterator tryGetEntry(const CString& key) noexcept
+        {
+            return std::find(this->tenv.begin(), this->tenv.end(), key);
+        }
     };
 
+    class TaskPriority
+    {
+    public:
+        uint64_t level;
+        const char* description;
+
+        constexpr TaskPriority() noexcept : level(0), description("Normal") {}
+        constexpr TaskPriority(uint64_t lvl, const char* desc) noexcept : level(lvl), description(desc) {}
+        constexpr TaskPriority(const TaskPriority& other) noexcept = default;
+
+        friend constexpr bool operator<(const TaskPriority &lhs, const TaskPriority &rhs) noexcept { return lhs.level < rhs.level; }
+        friend constexpr bool operator==(const TaskPriority &lhs, const TaskPriority &rhs) noexcept { return lhs.level == rhs.level; }
+        friend constexpr bool operator>(const TaskPriority &lhs, const TaskPriority &rhs) noexcept { return rhs.level < lhs.level; }
+        friend constexpr bool operator!=(const TaskPriority &lhs, const TaskPriority &rhs) noexcept { return !(lhs.level == rhs.level); }
+        friend constexpr bool operator<=(const TaskPriority &lhs, const TaskPriority &rhs) noexcept { return !(lhs.level > rhs.level); }
+        friend constexpr bool operator>=(const TaskPriority &lhs, const TaskPriority &rhs) noexcept { return !(lhs.level < rhs.level); } 
+    
+        constexpr static TaskPriority lnormal() noexcept { return TaskPriority(50, "normal"); }
+        //TODO all the levels here
+    };
+
+    template<ConceptUnionRepr U> //U must be a union of all possible types stored in the environment
     class TaskInfo
     {
     public:
-        uint64_t taskId;
-        TaskInfo* parentTask; //null for a root task
-        uint32_t priority;
-        uint32_t state;
+        const boost::uuids::uuid taskid;
+        const TaskInfo* parent; //null for a root task
+        TaskPriority priority;
 
-        constexpr TaskInfo() noexcept : taskId(0), parentTask(nullptr), priority(0), state(0) {}
-        constexpr TaskInfo(uint64_t tId, TaskInfo* pTask, uint32_t prio, uint32_t st) noexcept : taskId(tId), parentTask(pTask), priority(prio), state(st) {}
-        constexpr TaskInfo(const TaskInfo &other) noexcept = default;
+        TaskInfo() noexcept : taskid(boost::uuids::nil_uuid()), parent(nullptr), priority() {}
+        TaskInfo(const boost::uuids::uuid& tId, const TaskInfo* pTask, TaskPriority prio) noexcept : taskid(tId), parent(pTask), priority(prio) {}
+    
+        generate uuidv4() noexcept
+        {
+            static boost::uuids::random_generator uuidgen;
+            return uuidgen();
+        }
     };
 }

@@ -9,135 +9,143 @@
 #include <stdalign.h>
 
 #include <optional>
-#include <array>
 #include <string>
 #include <map>
 #include <list>
+#include <algorithm>
+
 #include <type_traits>
+#include <concepts>
+
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
 
 #include <threads.h>
 
 //Only for internal diagnostics
 #include <assert.h>
 
-namespace Core
+namespace ᐸRuntimeᐳ
 {
-    namespace ᐸRuntimeᐳ
-    {
-        constexpr int64_t BSQ_NUMERIC_DYNAMIC_RANGE_BASE = 4611686018427387903ll;
-        constexpr __int128_t BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED = ((__int128_t)BSQ_NUMERIC_DYNAMIC_RANGE_BASE * (__int128_t)BSQ_NUMERIC_DYNAMIC_RANGE_BASE);
+    constexpr int64_t BSQ_NUMERIC_DYNAMIC_RANGE_BASE = 4611686018427387903ll;
+    constexpr __int128_t BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED = ((__int128_t)BSQ_NUMERIC_DYNAMIC_RANGE_BASE * (__int128_t)BSQ_NUMERIC_DYNAMIC_RANGE_BASE);
 
-        constexpr int32_t buildlevel_release = 0;
-        constexpr int32_t buildlevel_test = 1;
-        constexpr int32_t buildlevel_debug = 2;
+    constexpr int32_t buildlevel_release = 0;
+    constexpr int32_t buildlevel_test = 1;
+    constexpr int32_t buildlevel_debug = 2;
 
 #ifndef BSQ_BUILD_LEVEL
-        constexpr int32_t current_build_level = buildlevel_debug;
+    constexpr int32_t current_build_level = buildlevel_debug;
 #else
-        constexpr int32_t current_build_level = BSQ_BUILD_LEVEL;
+    constexpr int32_t current_build_level = BSQ_BUILD_LEVEL;
 #endif
 
-        enum class ErrorKind
-        {
-            Generic,
-            OutOfMemory,
-            RuntimeAssertion,
+    enum class ErrorKind
+    {
+        Generic,
+        OutOfMemory,
+        RuntimeAssertion,
 
-            NumericBounds,
-            NumericUnderflow,
-            DivisionByZero,
+        NumericBounds,
+        NumericUnderflow,
+        DivisionByZero,
 
-            InvalidCast,
+        InvalidCast,
 
-            UserAbort,
-            UserAssertion,
-            UserInvariant,
-            UserPrecondition,
-            UserPostcondition
-        };
+        UserAbort,
+        UserAssertion,
+        UserInvariant,
+        UserPrecondition,
+        UserPostcondition
+    };
 
-        class ErrorInfo
-        {
-        public:
-            const char* file;
-            uint32_t line;
+    class ErrorInfo
+    {
+    public:
+        const char* file;
+        uint32_t line;
 
-            ErrorKind kerror;
-            const char* tag; //optional
-            const char* message; //optional
-        };
+        ErrorKind kerror;
+        const char* tag; //optional
+        const char* message; //optional
+    };
 
-        //slow path error handler
-        [[noreturn]] void bsq_handle_error(const char* file, uint32_t line, ErrorKind kerror, const char* tag, const char* message);
+    template <typename U> 
+    concept ConceptUnionRepr = std::is_union<U>::value;
 
-        [[noreturn]] inline void bsq_abort(const char* file, uint32_t line, const char* tag, const char* message)
-        {
-            bsq_handle_error(file, line, ErrorKind::UserAbort, tag, message);
-        }
+    //slow path error handler
+    [[noreturn]] void bsq_handle_error(const char* file, uint32_t line, ErrorKind kerror, const char* tag, const char* message);
 
-        template<int32_t enabled>
-        inline void runtime_assert_specialized(bool cond, const char* file, uint32_t line, const char* tag, const char* message)
-        {   
-            if(!cond) [[unlikely]] {
-                bsq_handle_error(file, line, ErrorKind::RuntimeAssertion, tag, message);
-            }
-        }
-
-        template<>
-        inline void runtime_assert_specialized<0>(bool cond, const char* file, uint32_t line, const char* tag, const char* message)
-        {   
-            ;
-        }
-
-        template<int32_t level>
-        inline void runtime_assert(bool cond, const char* file, uint32_t line, const char* tag, const char* message)
-        {   
-            static_assert(level >= buildlevel_release && level <= buildlevel_debug, "Invalid build level for runtime_assert");
-            runtime_assert_specialized<level == current_build_level>(cond, file, line, tag, message);
-        }
-
-        inline void bsq_assert(bool cond, const char* file, uint32_t line, const char* tag, const char* message)
-        {
-            if(!cond) [[unlikely]] {
-                bsq_handle_error(file, line, ErrorKind::UserAssertion, tag, message);
-            }
-        }
-
-        inline void bsq_invariant(bool cond, const char* file, uint32_t line, const char* tag, const char* message)
-        {
-            if(!cond) [[unlikely]] {
-                bsq_handle_error(file, line, ErrorKind::UserInvariant, tag, message);
-            }
-        }
-
-        inline void bsq_requires(bool cond, const char* file, uint32_t line, const char* tag, const char* message)
-        {
-            if(!cond) [[unlikely]] {
-                bsq_handle_error(file, line, ErrorKind::UserPrecondition, tag, message);
-            }
-        }
-
-        inline void bsq_ensures(bool cond, const char* file, uint32_t line, const char* tag, const char* message)
-        {
-            if(!cond) [[unlikely]] {
-                bsq_handle_error(file, line, ErrorKind::UserPostcondition, tag, message);
-            }
-        }
-
-        class ThreadLocalInfo
-        {
-        public:
-            std::list<std::jmp_buf> error_handler;
-            std::optional<ErrorInfo> pending_error;
-
-            ThreadLocalInfo() {}
-
-            // Cannot copy or move thread local info
-            ThreadLocalInfo(const ThreadLocalInfo&) = delete;
-            ThreadLocalInfo &operator=(const ThreadLocalInfo&) = delete;
-        };
-
-
-        extern thread_local ThreadLocalInfo tl_info;
+    [[noreturn]] inline void bsq_abort(const char* file, uint32_t line, const char* tag, const char* message)
+    {
+        bsq_handle_error(file, line, ErrorKind::UserAbort, tag, message);
     }
+
+    template<int32_t enabled>
+    inline void runtime_assert_specialized(bool cond, const char* file, uint32_t line, const char* tag, const char* message)
+    {   
+        if(!cond) [[unlikely]] {
+            bsq_handle_error(file, line, ErrorKind::RuntimeAssertion, tag, message);
+        }
+    }
+
+    template<>
+    inline void runtime_assert_specialized<0>(bool cond, const char* file, uint32_t line, const char* tag, const char* message)
+    {   
+        ;
+    }
+
+    template<int32_t level>
+    inline void runtime_assert(bool cond, const char* file, uint32_t line, const char* tag, const char* message)
+    {   
+        static_assert(level >= buildlevel_release && level <= buildlevel_debug, "Invalid build level for runtime_assert");
+        runtime_assert_specialized<level == current_build_level>(cond, file, line, tag, message);
+    }
+
+    inline void bsq_assert(bool cond, const char* file, uint32_t line, const char* tag, const char* message)
+    {
+        if(!cond) [[unlikely]] {
+            bsq_handle_error(file, line, ErrorKind::UserAssertion, tag, message);
+        }
+    }
+
+    inline void bsq_invariant(bool cond, const char* file, uint32_t line, const char* tag, const char* message)
+    {
+        if(!cond) [[unlikely]] {
+            bsq_handle_error(file, line, ErrorKind::UserInvariant, tag, message);
+        }
+    }
+
+    inline void bsq_requires(bool cond, const char* file, uint32_t line, const char* tag, const char* message)
+    {
+        if(!cond) [[unlikely]] {
+            bsq_handle_error(file, line, ErrorKind::UserPrecondition, tag, message);
+        }
+    }
+
+    inline void bsq_ensures(bool cond, const char* file, uint32_t line, const char* tag, const char* message)
+    {
+        if(!cond) [[unlikely]] {
+            bsq_handle_error(file, line, ErrorKind::UserPostcondition, tag, message);
+        }
+    }
+
+    class ThreadLocalInfo
+    {
+    public:
+        std::list<std::jmp_buf> error_handler;
+        std::optional<ErrorInfo> pending_error;
+
+        boost::uuids::random_generator uuid4gen;
+        boost::uuids::time_generator_v7 uuid7gen;
+
+        ThreadLocalInfo() {}
+
+        // Cannot copy or move thread local info
+        ThreadLocalInfo(const ThreadLocalInfo&) = delete;
+        ThreadLocalInfo &operator=(const ThreadLocalInfo&) = delete;
+    };
+
+
+    extern thread_local ThreadLocalInfo tl_info;
 }

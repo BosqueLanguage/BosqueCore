@@ -3,20 +3,17 @@
 #include "../common.h"
 #include "../bsqtype.h"
 
-namespace Core 
+namespace ᐸRuntimeᐳ
 {
-    namespace ᐸRuntimeᐳ
-    {
-        constexpr TypeInfoBase g_wellKnownTypeBool = {
-            WELL_KNOWN_TYPE_ID_BOOL,
-            sizeof(Bool),
-            byteSizeToSlotCount(sizeof(Bool)),
-            LayoutTag::Value,
-            BSQ_PTR_MASK_LEAF,
-            "Bool",
-            nullptr
-        };
-    }
+    constexpr TypeInfoBase g_wellKnownTypeBool = {
+        WELL_KNOWN_TYPE_ID_BOOL,
+        sizeof(Bool),
+        byteSizeToSlotCount(sizeof(Bool)),
+        LayoutTag::Value,
+        BSQ_PTR_MASK_LEAF,
+        "Bool",
+        nullptr
+    };
 
     class BBool
     {
@@ -40,9 +37,6 @@ namespace Core
         friend constexpr bool operator>=(const BBool &lhs, const BBool &rhs) noexcept { return !(lhs.value < rhs.value); }
     };
 
-    namespace ᐸRuntimeᐳ
-    {
-        constexpr BBool bfalse = BBool::from(false);
-        constexpr BBool btrue = BBool::from(true);
-    }
+    constexpr BBool bfalse = BBool::from(false);
+    constexpr BBool btrue = BBool::from(true);
 }
