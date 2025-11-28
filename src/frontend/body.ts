@@ -868,6 +868,7 @@ class AccessEnumExpression extends Expression {
 class AccessVariableExpression extends Expression {
     readonly srcname: string; //the name in the source code
     isCaptured: boolean;
+    scopeidx: number | undefined = undefined;
 
     constructor(sinfo: SourceInfo, srcname: string) {
         super(ExpressionTag.AccessVariableExpression, sinfo);

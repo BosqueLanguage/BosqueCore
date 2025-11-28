@@ -99,6 +99,21 @@ class LocalScope {
             return [new LocalScope(this.binderscope, newlocals, this.accessed), true];
         }
     }
+
+    static mergeLocalScopes(...envs: LocalScope[]): LocalScope {
+        let locals: VarInfo[] = [];
+        for(let i = 0; i < envs[0].locals.length; i++) {
+            const mdef = envs.every((e) => e.locals[i].mustDefined);
+            locals.push(new VarInfo(envs[0].locals[i].srcname, envs[0].locals[i].decltype, envs[0].locals[i].vkind, mdef));
+        }
+        
+        let baccess = new Set<string>();
+        for(let i = 0; i < envs.length; i++) {
+            baccess = new Set<string>([...baccess, ...envs[i].accessed]);
+        }
+
+        return new LocalScope(envs[0].binderscope, locals, baccess);
+    }
 }
 
 class TypeEnvironment {
@@ -221,21 +236,24 @@ class TypeEnvironment {
     }
 
     static mergeEnvironmentsSimple(origenv: TypeEnvironment, ...envs: TypeEnvironment[]): TypeEnvironment {
-        let locals: VarInfo[][] = [];
+        let locals: LocalScope[] = [];
         const normalenvs = envs.filter((e) => e.isnormalflow);
         for(let i = 0; i < origenv.locals.length; i++) {
-            let frame: VarInfo[] = [];
+            locals.push(LocalScope.mergeLocalScopes(...normalenvs.map((e) => e.locals[i])));
+        }
 
-            for(let j = 0; j < origenv.locals[i].length; j++) {
-                const mdef = normalenvs.every((e) => (e.locals[i].find((vv) => vv.srcname === origenv.locals[i][j].srcname) as VarInfo).mustDefined);
-                frame.push(new VarInfo(origenv.locals[i][j].srcname, origenv.locals[i][j].decltype, origenv.locals[i][j].vkind, mdef));
+        let lcaptures: {vname: string, vtype: TypeSignature, scopeidx: number}[] = [...origenv.lcaptures];
+        for(let i = 0; i < envs.length; i++) {
+            for(let j = 0; j < envs[i].lcaptures.length; j++) {
+                const cinfo = envs[i].lcaptures[j];
+                if(!lcaptures.some((c) => c.vname === cinfo.vname && c.scopeidx === cinfo.scopeidx)) {
+                    lcaptures.push(cinfo);
+                }
             }
-
-            locals.push(frame);
         }
 
         const normalflow = envs.some((e) => e.isnormalflow);
-        return new TypeEnvironment(normalflow, origenv.parent, [...origenv.args], locals);
+        return new TypeEnvironment(normalflow, origenv.parent, lcaptures, [...origenv.args], locals);
     }
 }
 

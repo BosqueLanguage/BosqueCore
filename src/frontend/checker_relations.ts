@@ -46,6 +46,7 @@ class TypeCheckerRelations {
         }
         else if(t.decl.isSpecialAPIResultEntity()) {
             pmap.set("T", t.alltermargs[0]);
+            pmap.set("E", t.alltermargs[1]);
         }
         else {
             for(let j = 0; j < t.decl.terms.length; ++j) {
@@ -851,22 +852,6 @@ class TypeCheckerRelations {
                 if(name === "value") {
                     const tlva = (this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "ListOps") as NamespaceDeclaration).typedecls.find((tdecl) => tdecl.name === "Tree" || tdecl.name === "Vector") as DatatypeTypeDecl;
                     const vtype = new NominalTypeSignature(tn.decl.sinfo, undefined, tlva, [tn.alltermargs[0]]);
-                    
-                    cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "value", vtype, undefined, true);
-                }
-            }
-            else if(tn.decl instanceof CRopeTypeDecl) {
-                if(name === "value") {
-                    const tlva = (this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "CRopeOps") as NamespaceDeclaration).typedecls.find((tdecl) => tdecl.name === "Rope") as DatatypeTypeDecl;
-                    const vtype = new NominalTypeSignature(tn.decl.sinfo, undefined, tlva, []);
-                    
-                    cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "value", vtype, undefined, true);
-                }
-            }
-            else if(tn.decl instanceof UnicodeRopeTypeDecl) {
-                if(name === "value") {
-                    const tlva = (this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "UnicodeRopeOps") as NamespaceDeclaration).typedecls.find((tdecl) => tdecl.name === "Rope") as DatatypeTypeDecl;
-                    const vtype = new NominalTypeSignature(tn.decl.sinfo, undefined, tlva, []);
                     
                     cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "value", vtype, undefined, true);
                 }

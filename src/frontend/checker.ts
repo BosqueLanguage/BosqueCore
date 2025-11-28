@@ -1520,10 +1520,11 @@ class TypeChecker {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
             else {
-                this.checkError(exp.sinfo, !cinfo.mustDefined, `Variable ${exp.srcname} may not be defined on all control flow paths`);
+                this.checkError(exp.sinfo, !cinfo[0].mustDefined, `Variable ${exp.srcname} may not be defined on all control flow paths`);
 
                 exp.isCaptured = true;
-                return exp.setType(cinfo.decltype);
+                exp.scopeidx = cinfo[1];
+                return exp.setType(cinfo[0].decltype);
             }
         }
     }
