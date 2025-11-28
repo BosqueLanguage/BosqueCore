@@ -68,7 +68,10 @@ class Explicitifier {
         else if(ttag === ExpressionTag.AccessEnvValueExpression) {
             return exp;
         }
-        else if(ttag === ExpressionTag.TaskAccessIDExpression) {
+        else if(ttag === ExpressionTag.TaskAccessIDExpression || ttag === ExpressionTag.TaskAccessParentIDExpression) {
+            return exp;
+        }
+        else if(ttag === ExpressionTag.AccessNamespaceConstantExpression || ttag === ExpressionTag.AccessStaticFieldExpression || ttag === ExpressionTag.AccessEnumExpression || ttag === ExpressionTag.AccessVariableExpression) {
             return exp;
         }
         else {

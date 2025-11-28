@@ -219,7 +219,26 @@ class CPPEmitter {
             return this.emitIRLiteral(exp);
         }
         else {
-            assert(false, `CPPEmitter: Unsupported IR immediate expression type -- ${exp.constructor.name}`);
+            const ttag = exp.tag;
+            
+            if(ttag === IRExpressionTag.IRAccessNamespaceConstantExpression) {
+                xxxx;
+            }
+            else if(ttag === IRExpressionTag.IRAccessStaticFieldExpression) {
+                xxxx;
+            }
+            else if (ttag === IRExpressionTag.IRAccessParameterVariableExpression) {
+                xxxx;
+            }
+            else if(ttag === IRExpressionTag.IRAccessLocalVariableExpression) {
+                xxxx;
+            }
+            else if(ttag === IRExpressionTag.IRAccessCapturedVariableExpression) {
+                xxxx;
+            }
+            else {
+                assert(false, `CPPEmitter: Unsupported IR immediate expression type -- ${exp.constructor.name}`);
+            }
         }
     }
 

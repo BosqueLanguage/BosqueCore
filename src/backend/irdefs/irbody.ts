@@ -1,5 +1,5 @@
 import { SourceInfo } from "./irsupport";
-import { IRTypeSignature } from "./irtype";
+import { IRNominalTypeSignature, IRTypeSignature } from "./irtype";
 
 enum IRExpressionTag {
     IRLiteralNoneExpression = "IRLiteralNoneExpression",
@@ -64,6 +64,14 @@ enum IRExpressionTag {
 
     IRTaskAccessIDExpression = "IRTaskAccessIDExpression",
     IRTaskAccessParentIDExpression = "IRTaskAccessParentIDExpression",
+
+    IRAccessNamespaceConstantExpression = "IRAccessNamespaceConstantExpression",
+    IRAccessStaticFieldExpression = "IRAccessStaticFieldExpression",
+    IRAccessEnumExpression = "IRAccessEnumExpression",
+
+    IRAccessParameterVariableExpression = "IRAccessParameterVariableExpression",
+    IRAccessLocalVariableExpression = "IRAccessLocalVariableExpression",
+    IRAccessCapturedVariableExpression = "IRAccessCapturedVariableExpression"
 }
 
 abstract class IRExpression {
@@ -632,6 +640,53 @@ class IRTaskAccessParentIDExpression extends IRExpression {
     }
 }
 
+class IRAccessNamespaceConstantExpression extends IRExpression {
+    readonly xxxx;
+    
+    constructor() {
+        super(IRExpressionTag.IRAccessNamespaceConstantExpression);
+    }
+}
+
+class IRAccessStaticFieldExpression extends IRImmediateExpression {
+    readonly decltype: IRNominalTypeSignature;
+
+    constructor() {
+        super(IRExpressionTag.IRAccessStaticFieldExpression);
+    }
+}
+
+class IRAccessEnumExpression extends IRImmediateExpression {
+    xxxx;
+
+    constructor() {
+        super(IRExpressionTag.IRAccessEnumExpression);
+    }
+}
+
+class IRAccessParameterVariableExpression extends IRImmediateExpression {
+    xxxx;
+    constructor() {
+        super(IRExpressionTag.IRAccessParameterVariableExpression);
+    }
+}
+
+class IRAccessLocalVariableExpression extends IRImmediateExpression {
+    xxxx;
+
+    constructor() {
+        super(IRExpressionTag.IRAccessLocalVariableExpression);
+    }
+}
+
+class IRAccessCapturedVariableExpression extends IRImmediateExpression {
+    xxxx;
+
+    constructor() {
+        super(IRExpressionTag.IRAccessCapturedVariableExpression);
+    }
+}
+
 ////////////////////////////////////////
 //Basic Line statements
 
@@ -752,6 +807,9 @@ export {
 
     IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression,
     IRTaskAccessIDExpression, IRTaskAccessParentIDExpression,
+
+    IRAccessNamespaceConstantExpression, IRAccessStaticFieldExpression, IRAccessEnumExpression,
+    IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression,
 
     IRStatementTag, IRStatement,
     IRNopStatement,

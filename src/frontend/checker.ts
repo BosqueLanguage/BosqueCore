@@ -1511,6 +1511,8 @@ class TypeChecker {
         const vinfo = env.resolveLocalVarInfoFromSrcName(exp.srcname);
         if(vinfo !== undefined) {
             this.checkError(exp.sinfo, !vinfo.mustDefined, `Variable ${exp.srcname} may not be defined on all control flow paths`);
+            
+            exp.isParameter = env.isLocalVariableAParameter(vinfo.srcname);
             return exp.setType(vinfo.decltype);
         }
         else {

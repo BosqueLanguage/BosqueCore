@@ -867,13 +867,13 @@ class AccessEnumExpression extends Expression {
 
 class AccessVariableExpression extends Expression {
     readonly srcname: string; //the name in the source code
-    isCaptured: boolean;
+    isParameter: boolean = false;
+    isCaptured: boolean = false;
     scopeidx: number | undefined = undefined;
 
     constructor(sinfo: SourceInfo, srcname: string) {
         super(ExpressionTag.AccessVariableExpression, sinfo);
         this.srcname = srcname;
-        this.isCaptured = false;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {

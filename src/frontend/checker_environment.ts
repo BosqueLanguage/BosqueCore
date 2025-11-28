@@ -178,6 +178,10 @@ class TypeEnvironment {
         return this.args.find((v) => v.srcname === vname);
     }
 
+    isLocalVariableAParameter(vname: string): boolean {
+        return this.args.some((v) => v.srcname === vname);
+    }
+
     addLocalVar(vname: string, vtype: TypeSignature, vkind: "let" | "ref" | "var", mustDefined: boolean): TypeEnvironment {
         let newlocals = [...this.locals.slice(0, this.locals.length - 1), this.locals[this.locals.length - 1].clone()];
         newlocals[newlocals.length - 1].locals.push(new VarInfo(vname, vtype, vkind, mustDefined));

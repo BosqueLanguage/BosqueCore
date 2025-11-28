@@ -469,6 +469,18 @@ class ASMToIRConverter {
                 return new IRTaskAccessParentIDExpression();
             }
         }
+        else if(ttag === ExpressionTag.AccessNamespaceConstantExpression) {
+            xxxx;
+        }
+        else if(ttag === ExpressionTag.AccessStaticFieldExpression) {
+            xxxx;
+        }
+        else if(ttag === ExpressionTag.AccessEnumExpression) {
+            xxxx;
+        }
+        else if(ttag === ExpressionTag.AccessVariableExpression) {
+            xxxx;
+        }
         else {
             assert(false, `ASMToIRConverter: Unsupported expression type -- ${exp.tag}`);
         }
