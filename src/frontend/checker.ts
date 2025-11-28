@@ -1508,14 +1508,10 @@ class TypeChecker {
     }
 
     private checkAccessVariableExpression(env: TypeEnvironment, exp: AccessVariableExpression): TypeSignature {
-        xxxx;
         const vinfo = env.resolveLocalVarInfoFromSrcName(exp.srcname);
         if(vinfo !== undefined) {
             this.checkError(exp.sinfo, !vinfo.mustDefined, `Variable ${exp.srcname} may not be defined on all control flow paths`);
-
-            exp.layouttype = vinfo.decltype;
-            exp.specialaccess = [...vinfo.itype];
-            return exp.setType(vinfo.itype.length !== 0 ? vinfo.itype[vinfo.itype.length - 1].ttype : vinfo.decltype);
+            return exp.setType(vinfo.decltype);
         }
         else {
             const cinfo = env.resolveLambdaCaptureVarInfoFromSrcName(exp.srcname);
@@ -1527,9 +1523,7 @@ class TypeChecker {
                 this.checkError(exp.sinfo, !cinfo.mustDefined, `Variable ${exp.srcname} may not be defined on all control flow paths`);
 
                 exp.isCaptured = true;
-                exp.layouttype = cinfo.decltype;
-                exp.specialaccess = [...cinfo.itype];
-                return exp.setType(cinfo.itype.length !== 0 ? cinfo.itype[cinfo.itype.length - 1].ttype : cinfo.decltype);
+                return exp.setType(cinfo.decltype);
             }
         }
     }

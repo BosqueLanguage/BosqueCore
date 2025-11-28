@@ -16,6 +16,10 @@ class VarInfo {
         this.mustDefined = mustDefined;
     }
 
+    clone(): VarInfo {
+        return new VarInfo(this.srcname, this.decltype, this.vkind, this.mustDefined);
+    }
+
     updateDefine(): VarInfo {
         return new VarInfo(this.srcname, this.decltype, this.vkind, true);
     }
@@ -59,128 +63,173 @@ class EListStyleTypeInferContext extends TypeInferContext {
     }
 }
 
+class LocalScope {
+    readonly locals: VarInfo[];
+    
+    readonly binderscope: boolean;
+    readonly accessed: Set<string>; //only for binder scopes
+
+    constructor(binderscope: boolean, locals: VarInfo[], accessed: Set<string>) {
+        this.binderscope = binderscope;
+        this.locals = locals;
+        this.accessed = accessed;
+    }
+
+    clone(): LocalScope {
+        return new LocalScope(this.binderscope, [...this.locals.map((v) => v.clone())], new Set<string>(this.accessed));
+    }
+
+    resolveLocalVarInfoFromSrcName(vname: string): VarInfo | undefined {
+        const vinfo = this.locals.find((v) => v.srcname === vname);
+        if(vinfo !== undefined && this.binderscope) {
+            this.accessed.add(vname);
+        }
+
+        return vinfo
+    }
+
+    assignLocalVariable(vname: string): [LocalScope, boolean] {
+        const vidx = this.locals.findIndex((v) => v.srcname === vname);
+        if(vidx === -1) {
+            return [this, false];
+        }
+        else {
+            let newlocals = [...this.locals];
+            newlocals[vidx] = newlocals[vidx].updateDefine();
+            return [new LocalScope(this.binderscope, newlocals, this.accessed), true];
+        }
+    }
+}
+
+enum FlowKind {
+    Dead,
+    Normal,
+    Return,
+    Yield
+}
+
 class TypeEnvironment {
-    readonly normalflow: boolean;
-    readonly returnflow: boolean;
-    readonly parent: TypeEnvironment | undefined;
+    readonly flowkind: FlowKind[];
+
+    readonly parent: TypeEnvironment | undefined; //undefined for normal scopes and set for lambda scopes
+    readonly lcaptures: {vname: string, vtype: TypeSignature, scopeidx: number}[]; //only set for lambda scopes
 
     readonly args: VarInfo[];
+    readonly locals: LocalScope[];
 
-    readonly locals: VarInfo[][];
+    constructor(flowkind: FlowKind[], parent: TypeEnvironment | undefined, lcaptures: {vname: string, vtype: TypeSignature, scopeidx: number}[], args: VarInfo[], locals: LocalScope[]) {
+        this.flowkind = flowkind;
 
-    constructor(normalflow: boolean, returnflow: boolean, parent: TypeEnvironment | undefined, args: VarInfo[], locals: VarInfo[][]) {
-        this.normalflow = normalflow;
-        this.returnflow = returnflow;
         this.parent = parent;
-
+        this.lcaptures = lcaptures;
+        
         this.args = args;
-
         this.locals = locals;
     }
 
-    private static cloneLocals(locals: VarInfo[][]): VarInfo[][] {
-        return locals.map((l) => [...l]);
-    }
-
     static createInitialStdEnv(args: VarInfo[]): TypeEnvironment {
-        return new TypeEnvironment(true, false, undefined, args, [[]]);
+        return new TypeEnvironment([FlowKind.Normal], undefined, [], args, [new LocalScope(false, [], new Set<string>())]);
     }
 
     static createInitialLambdaEnv(args: VarInfo[], enclosing: TypeEnvironment): TypeEnvironment {
-        return new TypeEnvironment(true, false, enclosing, args, [[]]);
+        return new TypeEnvironment([FlowKind.Normal], enclosing, [], args, [new LocalScope(false, [], new Set<string>())]);
     }
 
-    resolveLambdaCaptureVarInfoFromSrcName(vname: string): VarInfo | undefined {
+    cloneEnvironment(): TypeEnvironment {
+        return new TypeEnvironment(this.flowkind, this.parent, [...this.lcaptures], [...this.args], [...this.locals].map((l) => l.clone()));
+    }
+
+    resolveLambdaCaptureVarInfoFromSrcName(vname: string): [VarInfo, number] | undefined {
         const localdef = this.resolveLocalVarInfoFromSrcName(vname);
         if(localdef !== undefined) {
-            return localdef;
+            return [localdef, 0];
         }
 
-        return this.parent !== undefined ? this.parent.resolveLambdaCaptureVarInfoFromSrcName(vname) : undefined;
+        if(this.parent === undefined) {
+            return undefined;
+        }
+
+        const pcapture = this.parent.resolveLambdaCaptureVarInfoFromSrcName(vname);
+        if(pcapture === undefined) {
+            return undefined;
+        }
+
+        const [cinfo, cidx] = pcapture;
+        this.lcaptures.push({vname: cinfo.srcname, vtype: cinfo.decltype, scopeidx: cidx + 1});
+        return [cinfo, cidx + 1];
     }
 
     resolveLocalVarInfoFromSrcName(vname: string): VarInfo | undefined {
         for(let i = this.locals.length - 1; i >= 0; i--) {
-            for(let j = 0; j < this.locals[i].length; j++) {
-                if(this.locals[i][j].srcname === vname) {
-                    return this.locals[i][j];
-                }
+            const vinfo = this.locals[i].resolveLocalVarInfoFromSrcName(vname);
+            if(vinfo !== undefined) {
+                return vinfo;
             }
         }
 
         return this.args.find((v) => v.srcname === vname);
     }
 
-    resolveLocalVarInfoFromSrcNameWithIsParam(vname: string): [VarInfo | undefined, boolean] {
-        for(let i = this.locals.length - 1; i >= 0; i--) {
-            for(let j = 0; j < this.locals[i].length; j++) {
-                if(this.locals[i][j].srcname === vname) {
-                    return [this.locals[i][j], false];
-                }
-            }
-        }
-
-        return [this.args.find((v) => v.srcname === vname), true];
-    }
-
     addLocalVar(vname: string, vtype: TypeSignature, vkind: "let" | "ref" | "var", mustDefined: boolean): TypeEnvironment {
-        let newlocals = TypeEnvironment.cloneLocals(this.locals);
-        newlocals[newlocals.length - 1].push(new VarInfo(vname, vtype, vkind, mustDefined));
+        let newlocals = [...this.locals.slice(0, this.locals.length - 1), this.locals[this.locals.length - 1].clone()];
+        newlocals[newlocals.length - 1].locals.push(new VarInfo(vname, vtype, vkind, mustDefined));
 
-        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], newlocals);
+        return new TypeEnvironment(this.flowkind, this.parent, this.lcaptures, this.args, newlocals);
     }
 
     addLocalVarSet(vars: {name: string, vtype: TypeSignature}[], vkind: "let" | "ref" | "var"): TypeEnvironment {
-        let newlocals = TypeEnvironment.cloneLocals(this.locals);
+        let newlocals = [...this.locals.slice(0, this.locals.length - 1), this.locals[this.locals.length - 1].clone()];
         const newvars = vars.map((v) => new VarInfo(v.name, v.vtype, vkind, true));
-        newlocals[newlocals.length - 1].push(...newvars);
+        newlocals[newlocals.length - 1].locals.push(...newvars);
 
-        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], newlocals);
+        return new TypeEnvironment(this.flowkind, this.parent, this.lcaptures, this.args, newlocals);
     }
 
     assignLocalVariable(vname: string): TypeEnvironment {
-        let locals: VarInfo[][] = [];
+        let locals: LocalScope[] = [];
+        let assigned = false;
         for(let i = this.locals.length - 1; i >= 0; i--) {
-            let frame: VarInfo[] = [];
-            for(let j = 0; j < this.locals[i].length; j++) {
-                if(this.locals[i][j].srcname !== vname) {
-                    frame.push(this.locals[i][j]);
-                }
-                else {
-                    frame.push(this.locals[i][j].updateDefine());
-                }
+            if(assigned) {
+                locals.push(this.locals[i]);
             }
-
-            locals = [frame, ...locals];
+            else {
+                const [newframe, wasassigned] = this.locals[i].assignLocalVariable(vname);
+                locals.push(newframe);
+                assigned = wasassigned;
+            };
         }
 
-        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], locals);
+        return new TypeEnvironment(this.flowkind, this.parent, this.lcaptures, this.args, locals);
     }
 
     setDeadFlow(): TypeEnvironment {
-        return new TypeEnvironment(false, false, this.parent, [...this.args], TypeEnvironment.cloneLocals(this.locals));
+        return new TypeEnvironment([FlowKind.Dead], this.parent, this.lcaptures, this.args, this.locals);
     }
 
     setReturnFlow(): TypeEnvironment {
-        return new TypeEnvironment(false, true, this.parent, [...this.args], TypeEnvironment.cloneLocals(this.locals));
+        return new TypeEnvironment([FlowKind.Return], this.parent, this.lcaptures, this.args, this.locals);
+    }
+
+    setYieldFlow(): TypeEnvironment {
+        return new TypeEnvironment([FlowKind.Yield], this.parent, this.lcaptures, this.args, this.locals);
     }
 
     pushNewLocalScope(): TypeEnvironment {
-        return new TypeEnvironment(this.normalflow, this.returnflow, this, [...this.args], [...TypeEnvironment.cloneLocals(this.locals), []]);
+        return new TypeEnvironment([FlowKind.Normal], this.parent, this.lcaptures, this.args, [...this.locals, new LocalScope(false, [], new Set<string>())]);
     }
 
     pushNewLocalBinderScope(vname: string, vtype: TypeSignature): TypeEnvironment {
-        return new TypeEnvironment(this.normalflow, this.returnflow, this, [...this.args], [...TypeEnvironment.cloneLocals(this.locals), [new VarInfo(vname, vtype, "let", true)]]);
+        return new TypeEnvironment([FlowKind.Normal], this, this.lcaptures, this.args, [...this.locals, new LocalScope(false, [new VarInfo(vname, vtype, "let", true)], new Set<string>())]);
     }
 
-    popLocalScope(): TypeEnvironment {
+    popLocalScope(): [TypeEnvironment, LocalScope] {
         assert(this.locals.length > 0);
-        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], TypeEnvironment.cloneLocals(this.locals).slice(0, this.locals.length - 1));
+        return [new TypeEnvironment(this.flowkind, this.parent, this.lcaptures, [...this.args], [...this.locals].slice(0, this.locals.length - 1)), this.locals[this.locals.length - 1]];
     }
 
     static mergeEnvironmentsSimple(origenv: TypeEnvironment, ...envs: TypeEnvironment[]): TypeEnvironment {
         let locals: VarInfo[][] = [];
-        const normalenvs = envs.filter((e) => e.normalflow);
+        const normalenvs = envs.filter((e) => e.flowkind.includes(FlowKind.Normal));
         for(let i = 0; i < origenv.locals.length; i++) {
             let frame: VarInfo[] = [];
 
