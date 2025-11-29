@@ -1,5 +1,6 @@
 
 const s_coloncolon_repl = "ᕒ";
+const s_hash_repl = "ᙾ";
 const s_comma_repl = "ᐪ";
 const s_BSQ_tag = "ᗑ";
 
@@ -14,7 +15,9 @@ class TransformCPPNameManager {
     ]);
 
     private static resymbol(cstr: string): string {
-        const bb = cstr.replace(/::/g, s_coloncolon_repl)
+        const bb = cstr
+            .replace(/::/g, s_coloncolon_repl)
+            .replace(/#/g, s_hash_repl)
             .replace(/, */g, s_comma_repl)
             .replace(/\(|/g, "ᐸRuntimeᐳ::EList<")
             .replace(/|\)/g, ">");
@@ -37,7 +40,7 @@ class TransformCPPNameManager {
         }    
     }
 
-    private static convertIdentifier(vname: string): string {
+    static convertIdentifier(vname: string): string {
         let nn = TransformCPPNameManager.safeifyName(vname);
 
         if(!nn.startsWith("$")) {
@@ -48,31 +51,39 @@ class TransformCPPNameManager {
         }
     }
 
-    public static convertNamespaceKey(nskey: string): string {
+    static convertNamespaceKey(nskey: string): string {
         return TransformCPPNameManager.safeifyName(nskey);
     }
 
-    public static convertTypeKey(tkey: string): string {
+    static convertTypeKey(tkey: string): string {
         return TransformCPPNameManager.safeifyName(tkey);
     }
 
-    public static convertInvokeKey(ikey: string): string {
+    static convertInvokeKey(ikey: string): string {
         return TransformCPPNameManager.safeifyName(ikey);
     }
 
-    public static generateNameForUnionMember(tkey: string): string {
+    static generateNameForUnionMember(tkey: string): string {
         return TransformCPPNameManager.convertTypeKey(tkey) + s_specialop_sep + "um";
     }
 
-    public static generateTypeInfoNameForTypeKey(tkey: string): string {
+    static generateTypeInfoNameForTypeKey(tkey: string): string {
         return `${s_runtimename}::g_typeinfo_${TransformCPPNameManager.convertTypeKey(tkey)}`;
     }
 
-    public static generateNameForInvariantFunction(tkey: string): string {
+    static generateNameForConstantKey(constkey: string): string {
+        return TransformCPPNameManager.safeifyName(constkey);
+    }
+
+    static generateNameForEnumKey(enumkey: string): string {
+        return TransformCPPNameManager.safeifyName(enumkey);
+    }
+
+    static generateNameForInvariantFunction(tkey: string): string {
         return TransformCPPNameManager.convertTypeKey(tkey) + s_specialop_sep + "invariant";
     }
 
-    public static generateNameForFieldDefaultFunction(tkey: string, fname: string): string {
+    static generateNameForFieldDefaultFunction(tkey: string, fname: string): string {
         return TransformCPPNameManager.convertTypeKey(tkey) + s_specialop_sep + "default" + s_specialop_sep + TransformCPPNameManager.safeifyName(fname);
     }
 }

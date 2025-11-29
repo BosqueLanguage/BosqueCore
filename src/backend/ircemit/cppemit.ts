@@ -1,10 +1,11 @@
 import { MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_INT } from "../../frontend/assembly";
-import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression } from "../irdefs/irbody";
+import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessNamespaceConstantExpression, IRAccessStaticFieldExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression } from "../irdefs/irbody";
 
 import assert from "node:assert";
 import { TransformCPPNameManager } from "./namemgr";
 
 const RUNTIME_NAMESPACE = "ᐸRuntimeᐳ";
+const CLOSURE_CAPTURE_NAME = "ᐸclosureᐳ";
 
 class CPPEmitter {
     //The C++ TaskInfoRepr<U> for accessing the global info for the task we are emitting
@@ -222,19 +223,20 @@ class CPPEmitter {
             const ttag = exp.tag;
             
             if(ttag === IRExpressionTag.IRAccessNamespaceConstantExpression) {
-                xxxx;
+                return TransformCPPNameManager.generateNameForConstantKey((exp as IRAccessNamespaceConstantExpression).constkey);
             }
             else if(ttag === IRExpressionTag.IRAccessStaticFieldExpression) {
-                xxxx;
+                return TransformCPPNameManager.generateNameForConstantKey((exp as IRAccessStaticFieldExpression).constkey);
             }
             else if (ttag === IRExpressionTag.IRAccessParameterVariableExpression) {
-                xxxx;
+                return TransformCPPNameManager.convertIdentifier((exp as IRAccessParameterVariableExpression).pname);
             }
             else if(ttag === IRExpressionTag.IRAccessLocalVariableExpression) {
-                xxxx;
+                return TransformCPPNameManager.convertIdentifier((exp as IRAccessLocalVariableExpression).vname);
             }
             else if(ttag === IRExpressionTag.IRAccessCapturedVariableExpression) {
-                xxxx;
+                const cve = exp as IRAccessCapturedVariableExpression;
+                return `${CLOSURE_CAPTURE_NAME}.scope${cve.scope}.${TransformCPPNameManager.convertIdentifier(cve.vname)}`;
             }
             else {
                 assert(false, `CPPEmitter: Unsupported IR immediate expression type -- ${exp.constructor.name}`);

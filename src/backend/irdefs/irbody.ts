@@ -641,49 +641,58 @@ class IRTaskAccessParentIDExpression extends IRExpression {
 }
 
 class IRAccessNamespaceConstantExpression extends IRExpression {
-    readonly xxxx;
+    readonly constkey: string; //flattened identifer names
     
-    constructor() {
+    constructor(constkey: string) {
         super(IRExpressionTag.IRAccessNamespaceConstantExpression);
+        this.constkey = constkey;
     }
 }
 
 class IRAccessStaticFieldExpression extends IRImmediateExpression {
-    readonly decltype: IRNominalTypeSignature;
+    readonly constkey: string; //flattened identifer names
 
-    constructor() {
+    constructor(constkey: string) {
         super(IRExpressionTag.IRAccessStaticFieldExpression);
+        this.constkey = constkey;
     }
 }
 
 class IRAccessEnumExpression extends IRImmediateExpression {
-    xxxx;
+    readonly enumkey: string; //flattened identifer names
 
-    constructor() {
+    constructor(enumkey: string) {
         super(IRExpressionTag.IRAccessEnumExpression);
+        this.enumkey = enumkey;
     }
 }
 
 class IRAccessParameterVariableExpression extends IRImmediateExpression {
-    xxxx;
-    constructor() {
+    readonly pname: string;
+
+    constructor(pname: string) {
         super(IRExpressionTag.IRAccessParameterVariableExpression);
+        this.pname = pname;
     }
 }
 
 class IRAccessLocalVariableExpression extends IRImmediateExpression {
-    xxxx;
+    readonly vname: string;
 
-    constructor() {
+    constructor(vname: string) {
         super(IRExpressionTag.IRAccessLocalVariableExpression);
+        this.vname = vname;
     }
 }
 
 class IRAccessCapturedVariableExpression extends IRImmediateExpression {
-    xxxx;
+    readonly scope: number;
+    readonly vname: string;
 
-    constructor() {
+    constructor(scope: number, vname: string) {
         super(IRExpressionTag.IRAccessCapturedVariableExpression);
+        this.scope = scope;
+        this.vname = vname;
     }
 }
 
