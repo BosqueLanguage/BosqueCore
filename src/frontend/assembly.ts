@@ -1,6 +1,6 @@
 
 import { FullyQualifiedNamespace, TypeSignature, LambdaTypeSignature, RecursiveAnnotation, TemplateTypeSignature, VoidTypeSignature, LambdaParameterSignature, AutoTypeSignature, NominalTypeSignature } from "./type.js";
-import { Expression, BodyImplementation, ExpressionTag, AccessNamespaceConstantExpression, LiteralRegexExpression, ChkLogicExpression } from "./body.js";
+import { Expression, BodyImplementation, ExpressionTag, AccessNamespaceConstantExpression, LiteralRegexExpression, ChkLogicExpression, AccessStaticFieldExpression } from "./body.js";
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls.js";
 
@@ -1860,6 +1860,31 @@ class Assembly {
         const subnsinfo = nsdecl.subns.flatMap((ns) => this.loadConstantsAndValidatorREs(ns));
 
         return [{nsinfo: nsinfo, reinfos: reinfos}, ...subnsinfo].filter((nsi) => nsi.reinfos.length !== 0);
+    }
+
+    tryReduceConstantExpression(exp: Expression): Expression | undefined {
+        if(exp.isLiteralExpression()) {
+            return exp;
+        }
+        else if (exp instanceof AccessNamespaceConstantExpression) {
+            const nsresl = this.resolveNamespaceConstant(exp.ns, exp.name);
+            if(nsresl === undefined) {
+                return undefined;
+            }
+
+            return this.tryReduceConstantExpression(nsresl.value);
+        }
+        else if(exp instanceof AccessStaticFieldExpression) {
+            const tsdecl = (exp.resolvedDeclType as NominalTypeSignature).decl.consts.find((c) => c.name === exp.name);
+            if(tsdecl === undefined) {
+                return undefined;
+            }
+
+            return this.tryReduceConstantExpression(tsdecl.value);
+        }
+        else {
+            return undefined;
+        }
     }
 }
 

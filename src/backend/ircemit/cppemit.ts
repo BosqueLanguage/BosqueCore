@@ -1,5 +1,5 @@
 import { MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_INT } from "../../frontend/assembly";
-import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessNamespaceConstantExpression, IRAccessStaticFieldExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression } from "../irdefs/irbody";
+import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessNamespaceConstantExpression, IRAccessStaticFieldExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression } from "../irdefs/irbody";
 
 import assert from "node:assert";
 import { TransformCPPNameManager } from "./namemgr";
@@ -223,10 +223,13 @@ class CPPEmitter {
             const ttag = exp.tag;
             
             if(ttag === IRExpressionTag.IRAccessNamespaceConstantExpression) {
-                return TransformCPPNameManager.generateNameForConstantKey((exp as IRAccessNamespaceConstantExpression).constkey);
+                return TransformCPPNameManager.generateNameForConstantKey((exp as IRAccessNamespaceConstantExpression).constkey) + "()";
             }
             else if(ttag === IRExpressionTag.IRAccessStaticFieldExpression) {
-                return TransformCPPNameManager.generateNameForConstantKey((exp as IRAccessStaticFieldExpression).constkey);
+                return TransformCPPNameManager.generateNameForConstantKey((exp as IRAccessStaticFieldExpression).constkey) + "()";
+            }
+            else if(ttag === IRExpressionTag.IRAccessEnumExpression) {
+                return TransformCPPNameManager.generateNameForEnumKey((exp as IRAccessEnumExpression).enumkey);
             }
             else if (ttag === IRExpressionTag.IRAccessParameterVariableExpression) {
                 return TransformCPPNameManager.convertIdentifier((exp as IRAccessParameterVariableExpression).pname);

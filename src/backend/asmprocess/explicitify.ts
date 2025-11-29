@@ -1,10 +1,15 @@
+import { Assembly } from "../../frontend/assembly";
 import { Expression, ExpressionTag } from "../../frontend/body";
 
 import assert from "node:assert";
 
 class Explicitifier {
+    readonly assembly: Assembly;
     
-    
+    constructor(assembly: Assembly) {
+        this.assembly = assembly;
+    }
+
     private explicitifyExpression(exp: Expression): Expression {
         const ttag = exp.tag;
 
@@ -71,7 +76,18 @@ class Explicitifier {
         else if(ttag === ExpressionTag.TaskAccessIDExpression || ttag === ExpressionTag.TaskAccessParentIDExpression) {
             return exp;
         }
-        else if(ttag === ExpressionTag.AccessNamespaceConstantExpression || ttag === ExpressionTag.AccessStaticFieldExpression || ttag === ExpressionTag.AccessEnumExpression || ttag === ExpressionTag.AccessVariableExpression) {
+        else if(ttag === ExpressionTag.AccessNamespaceConstantExpression) {
+            const rrval = this.assembly.tryReduceConstantExpression(exp);
+            return rrval !== undefined ? rrval : exp;
+        }
+        else if(ttag === ExpressionTag.AccessStaticFieldExpression) {
+            const rrval = this.assembly.tryReduceConstantExpression(exp);
+            return rrval !== undefined ? rrval : exp;
+        }
+        else if(ttag === ExpressionTag.AccessEnumExpression) {
+            return exp;
+        }
+        else if(ttag === ExpressionTag.AccessVariableExpression) {
             return exp;
         }
         else {
