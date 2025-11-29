@@ -28,7 +28,6 @@ namespace ᐸRuntimeᐳ
         constexpr static BBool from(bool b) noexcept { return BBool(b ? 1ull : 0ull); }
         constexpr static bool toBool(BBool b) noexcept { return b.value != 0ull; }
 
-
         friend constexpr bool operator<(const BBool &lhs, const BBool &rhs) noexcept { return lhs.value < rhs.value; }
         friend constexpr bool operator==(const BBool &lhs, const BBool &rhs) noexcept { return lhs.value == rhs.value; }
         friend constexpr bool operator>(const BBool &lhs, const BBool &rhs) noexcept { return rhs.value < lhs.value; }
@@ -36,7 +35,8 @@ namespace ᐸRuntimeᐳ
         friend constexpr bool operator<=(const BBool &lhs, const BBool &rhs) noexcept { return !(lhs.value > rhs.value); }
         friend constexpr bool operator>=(const BBool &lhs, const BBool &rhs) noexcept { return !(lhs.value < rhs.value); }
     };
+    using Bool = BBool; //work around bool kw preventing Class name of Bool
 
-    constexpr BBool bfalse = BBool::from(false);
-    constexpr BBool btrue = BBool::from(true);
+    constexpr Bool bfalse = Bool::from(false);
+    constexpr Bool btrue = Bool::from(true);
 }

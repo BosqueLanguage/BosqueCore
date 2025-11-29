@@ -22,6 +22,8 @@ namespace ᐸRuntimeᐳ
         constexpr Nat(int64_t v) noexcept : value(v) {}
         constexpr Nat(const Nat& other) noexcept = default;
 
+        inline constexpr int64_t getValue() const noexcept { return this->value; }
+
         // Check operators on Nat
         inline static void checkOverflowAddition(Nat n1, Nat n2, const char* file, uint32_t line) noexcept
         {
@@ -94,6 +96,8 @@ namespace ᐸRuntimeᐳ
         constexpr Int() noexcept : value(0) {}
         constexpr Int(int64_t v) noexcept : value(v) {}
         constexpr Int(const Int& other) noexcept = default;
+
+        inline constexpr int64_t getValue() const noexcept { return this->value; }
 
         // Check operators on Int
         inline static void checkOverflowAddition(Int n1, Int n2, const char* file, uint32_t line) noexcept
@@ -176,6 +180,8 @@ namespace ᐸRuntimeᐳ
         constexpr ChkNat() noexcept : value(0) {}
         constexpr ChkNat(__int128_t v) noexcept : value(v) {}
         constexpr ChkNat(const ChkNat& other) noexcept = default;
+
+        inline constexpr __int128_t getValue() const noexcept { return this->value; }
 
         constexpr bool isBottom() const noexcept
         {
@@ -282,6 +288,8 @@ namespace ᐸRuntimeᐳ
         constexpr ChkInt() noexcept : value(0) {}
         constexpr ChkInt(__int128_t v) noexcept : value(v) {}
         constexpr ChkInt(const ChkInt& other) noexcept = default;
+
+        inline constexpr __int128_t getValue() const noexcept { return this->value; }
 
         constexpr bool isBottom() const noexcept
         {

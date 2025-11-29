@@ -145,12 +145,12 @@ namespace ᐸRuntimeᐳ
 
         static void generate_uuid4(char out[16]) noexcept
         {
-            assert(false && "UUIDv7 generation not yet implemented");
+            assert(false); //UUIDv7 generation not yet implemented;
         }
 
         static void generate_uuid7(char out[16]) noexcept
         {
-            assert(false && "UUIDv7 generation not yet implemented");
+            assert(false); //UUIDv7 generation not yet implemented;
         }
     };
 

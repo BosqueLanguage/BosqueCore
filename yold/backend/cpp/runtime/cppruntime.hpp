@@ -18,7 +18,7 @@
 namespace __CoreCpp {
 
 typedef uintptr_t None;
-typedef bool Bool;
+//typedef bool Bool;
 typedef uint8_t CChar;
 typedef uint32_t UnicodeChar;
 

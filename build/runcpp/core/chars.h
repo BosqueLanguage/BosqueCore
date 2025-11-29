@@ -15,6 +15,8 @@ namespace ᐸRuntimeᐳ
         constexpr Byte(uint8_t v) noexcept : value((uint64_t)v) {}
         constexpr Byte(const Byte& other) noexcept = default;
 
+        uint8_t getValue() const noexcept { return (uint8_t)(this->value); }
+
         friend constexpr bool operator<(const Byte &lhs, const Byte &rhs) noexcept { return lhs.value < rhs.value; }
         friend constexpr bool operator==(const Byte &lhs, const Byte &rhs) noexcept { return lhs.value == rhs.value; }
         friend constexpr bool operator>(const Byte &lhs, const Byte &rhs) noexcept { return rhs.value < lhs.value; }
@@ -34,6 +36,8 @@ namespace ᐸRuntimeᐳ
         constexpr CChar(char v) noexcept : value((uint64_t)v) {}
         constexpr CChar(const CChar& other) noexcept = default;
 
+        char getValue() const noexcept { return (char)(this->value); }
+
         friend constexpr bool operator<(const CChar &lhs, const CChar &rhs) noexcept { return lhs.value < rhs.value; }
         friend constexpr bool operator==(const CChar &lhs, const CChar &rhs) noexcept { return lhs.value == rhs.value; }
         friend constexpr bool operator>(const CChar &lhs, const CChar &rhs) noexcept { return rhs.value < lhs.value; }
@@ -52,6 +56,8 @@ namespace ᐸRuntimeᐳ
         constexpr UnicodeChar(uint64_t v) noexcept : value(v) {}
         constexpr UnicodeChar(char v) noexcept : value((uint64_t)v) {}
         constexpr UnicodeChar(const UnicodeChar& other) noexcept = default;
+
+        uint64_t getValue() const noexcept { return this->value; }
 
         friend constexpr bool operator<(const UnicodeChar &lhs, const UnicodeChar &rhs) noexcept { return lhs.value < rhs.value; }
         friend constexpr bool operator==(const UnicodeChar &lhs, const UnicodeChar &rhs) noexcept { return lhs.value == rhs.value; }
