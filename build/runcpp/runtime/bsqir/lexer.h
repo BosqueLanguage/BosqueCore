@@ -12,7 +12,8 @@ namespace ᐸRuntimeᐳ
         ErrorToken,
         EOFToken,
         LiteralNone,
-        LiteralBool,
+        LiteralTrue,
+        LiteralFalse,
         LiteralNat,
         LiteralInt,
         LiteralChkNat,
@@ -36,11 +37,23 @@ namespace ᐸRuntimeᐳ
     {
     private:
         //iterator may be defined over GC ByteBuffer or IO ByteBuffer (both represented via the same ByteBuffer and iterator structure for lexing)
-        ByteBufferIterator it;
+        ByteBufferIterator iter;
         BSQONToken ctoken;
 
+        static bool testchar(const ByteBufferIterator& ii, char c) noexcept;
+        static bool testchars(ByteBufferIterator ii, const char* chars) noexcept;
+
+        bool tryLexNone() noexcept;
+        bool tryLexBool() noexcept;
+
+        bool lexIntegralHelper(bool negok, char suffix) noexcept;
+        bool tryLexNat() noexcept;
+        bool tryLexInt() noexcept;
+        bool tryLexChkNat() noexcept;
+        bool tryLexChkInt() noexcept;
+
     public:
-        BSQONLexer(const ByteBuffer& buff) noexcept : it(buff.iterator()), ctoken() {}
+        BSQONLexer(const ByteBufferIterator& iter) noexcept : iter(iter), ctoken() {}
 
         const BSQONToken& current() const noexcept { return this->ctoken; }
         void consume() noexcept;

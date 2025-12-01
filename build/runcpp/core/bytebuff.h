@@ -117,6 +117,11 @@ namespace ᐸRuntimeᐳ
             return this->centry->data[this->cindex];
         }
 
+        inline size_t getIndex() const noexcept 
+        {
+            return this->gindex;
+        }
+
         void nextslow() noexcept
         {
             if(this->gindex < this->totalbytes) {
@@ -142,6 +147,27 @@ namespace ᐸRuntimeᐳ
             else {
                 this->nextslow();
             }
+        }
+
+        //for lexing 
+        inline void advance(size_t& startidx, size_t& endidx, size_t count) noexcept
+        {
+            startidx = this->gindex;
+            endidx = startidx + count;
+            for(size_t i = 0; i < count; i++) {
+                this->next();
+            }
+        }
+
+        inline void advanceWithExtract(size_t& startidx, size_t& endidx, char* outbuf, size_t count) noexcept
+        {
+            startidx = this->gindex;
+            endidx = startidx + count;
+            for(size_t i = 0; i < count; i++) {
+                outbuf[i] = (char)this->get();
+                this->next();
+            }
+            outbuf[count] = '\0';
         }
     };
 

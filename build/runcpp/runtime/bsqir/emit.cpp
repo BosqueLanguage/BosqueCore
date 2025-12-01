@@ -74,7 +74,7 @@ namespace ᐸRuntimeᐳ
 
     void BSQONEmitter::emitInt(Int i) noexcept
     {
-        this->bufferMgr.writeNumberWFormat("%llin", i.getValue());
+        this->bufferMgr.writeNumberWFormat("%llii", i.getValue());
     }
 
     void BSQONEmitter::emitChkNat(ChkNat n) noexcept
@@ -84,7 +84,7 @@ namespace ᐸRuntimeᐳ
         }
         else {
             if(n.getValue() <= (__int128_t)std::numeric_limits<int64_t>::max()) {
-                this->bufferMgr.writeImmediate("overflow");
+                this->bufferMgr.writeNumberWFormat("%lliN", static_cast<int64_t>(n.getValue()));
             }
             else {
                 assert(false); // Not Implemented: format for very large ChkNat values
@@ -99,7 +99,7 @@ namespace ᐸRuntimeᐳ
         }
         else {
             if(((__int128_t)std::numeric_limits<int64_t>::min() <= i.getValue()) & (i.getValue() <= (__int128_t)std::numeric_limits<int64_t>::max())) {
-                this->bufferMgr.writeNumberWFormat("%llin", static_cast<int64_t>(i.getValue()));
+                this->bufferMgr.writeNumberWFormat("%lliI", static_cast<int64_t>(i.getValue()));
             }
             else {
                 assert(false); // Not Implemented: format for very large ChkInt values

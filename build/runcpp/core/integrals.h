@@ -183,6 +183,11 @@ namespace ᐸRuntimeᐳ
 
         inline constexpr __int128_t getValue() const noexcept { return this->value; }
 
+        constexpr static ChkNat bliteral() noexcept
+        {
+            return ChkNat(ChkNat::BOTTOM_VALUE);
+        }
+
         constexpr bool isBottom() const noexcept
         {
             return ChkNat::s_isBottom(this->value);
@@ -296,6 +301,11 @@ namespace ᐸRuntimeᐳ
             return ChkInt::isBottom(this->value);
         }
 
+        constexpr static ChkInt bliteral() noexcept
+        {
+            return ChkInt(ChkInt::BOTTOM_VALUE);
+        }
+    
         inline static void checkDivisionByZero(ChkInt n2, const char* file, uint32_t line) noexcept
         {
             if(n2.value == 0) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::DivisionByZero, nullptr, "Int division by zero"); }
