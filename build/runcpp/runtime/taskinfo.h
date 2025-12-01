@@ -5,16 +5,13 @@
 #include "../core/uuids.h"
 #include "../core/strings.h"
 
-//
-//TODO: need to add support for GC to load the implicit roots from the task info
-//
-
 namespace ᐸRuntimeᐳ
 {
     template<ConceptUnionRepr U>
     class TaskEnvironmentEntry
     {
     public:
+        //Make sure to put key and value in special roots list for GC
         CString key;
 
         const TypeInfoBase* typeinfo; //typeinfo of U

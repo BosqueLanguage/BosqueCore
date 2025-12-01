@@ -15,7 +15,7 @@ namespace ᐸRuntimeᐳ
     void BSQEmitBufferMgr::writeSlow(char c) noexcept
     {
         if(this->cpos == this->epos) {
-            BSQIOBuffer newbuf = xxxx; //CALL ALLOCATOR HERE TO GET A NEW BUFFER
+            BSQIOBuffer newbuf = xxxx; //CALL ALLOCATOR HERE TO GET A NEW BUFFER -- either from IO or from GC Runtime -- depends on the output target
             this->buffers.push_back(newbuf);
 
             this->cpos = newbuf;
@@ -29,7 +29,7 @@ namespace ᐸRuntimeᐳ
 
     void BSQEmitBufferMgr::writeSlowTail(const char* str, size_t slen) noexcept
     {
-        BSQIOBuffer newbuf = xxxx; //CALL ALLOCATOR HERE TO GET A NEW BUFFER
+        BSQIOBuffer newbuf = xxxx; //CALL ALLOCATOR HERE TO GET A NEW BUFFER -- either from IO or from GC Runtime -- depends on the output target
         this->buffers.push_back(newbuf);
 
         this->cpos = newbuf;
@@ -114,7 +114,7 @@ namespace ᐸRuntimeᐳ
 
     void BSQONEmitter::emitCChar(CChar c) noexcept
     {
-        xxxx;
+        assert(false); // Not Implemented
     }
 
     void BSQONEmitter::emitUnicodeChar(UnicodeChar c) noexcept
@@ -124,7 +124,7 @@ namespace ᐸRuntimeᐳ
 
     void BSQONEmitter::emitCString(CString s) noexcept
     {
-        xxxx;
+        assert(false); // Not Implemented
     }
 
     void BSQONEmitter::emitString(String s) noexcept
