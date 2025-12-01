@@ -1,19 +1,10 @@
 #pragma once
 
 #include "../common.h"
+#include "../bsqtype.h"
 
 namespace ᐸRuntimeᐳ
 {
-    constexpr TypeInfoBase g_typeinfo_Bool = {
-        WELL_KNOWN_TYPE_ID_BOOL,
-        sizeof(Bool),
-        byteSizeToSlotCount(sizeof(Bool)),
-        LayoutTag::Value,
-        BSQ_PTR_MASK_LEAF,
-        "Bool",
-        nullptr
-    };
-
     class BBool
     {
     private:
@@ -35,6 +26,16 @@ namespace ᐸRuntimeᐳ
         friend constexpr bool operator>=(const BBool &lhs, const BBool &rhs) { return !(lhs.value < rhs.value); }
     };
     using Bool = BBool; //work around bool kw preventing Class name of Bool
+
+    constexpr TypeInfoBase g_typeinfo_Bool = {
+        WELL_KNOWN_TYPE_ID_BOOL,
+        sizeof(Bool),
+        byteSizeToSlotCount(sizeof(Bool)),
+        LayoutTag::Value,
+        BSQ_PTR_MASK_LEAF,
+        "Bool",
+        nullptr
+    };
 
     constexpr Bool bfalse = Bool::from(false);
     constexpr Bool btrue = Bool::from(true);

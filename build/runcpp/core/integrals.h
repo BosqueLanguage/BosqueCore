@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../common.h"
+#include "../bsqtype.h"
 
 namespace ᐸRuntimeᐳ 
 {
@@ -28,7 +29,7 @@ namespace ᐸRuntimeᐳ
         inline static void checkOverflowAddition(Nat n1, Nat n2, const char* file, uint32_t line)
         {
             int64_t result = 0;
-            if(!__builtin_add_overflow_p(n1.value, n2.value, &result) || !(Nat::isValidNat(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Nat addition bounds"); }
+            if(!__builtin_add_overflow(n1.value, n2.value, &result) || !(Nat::isValidNat(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Nat addition bounds"); }
         }
         inline static void checkOverflowSubtraction(Nat n1, Nat n2, const char* file, uint32_t line)
         {
@@ -103,7 +104,7 @@ namespace ᐸRuntimeᐳ
         inline static void checkOverflowAddition(Int n1, Int n2, const char* file, uint32_t line)
         {
             int64_t result = 0;
-            if(!__builtin_add_overflow_p(n1.value, n2.value, &result) || !(Int::isValidInt(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Int addition bounds"); }
+            if(!__builtin_add_overflow(n1.value, n2.value, &result) || !(Int::isValidInt(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Int addition bounds"); }
         }
         inline static void checkOverflowSubtraction(Int n1, Int n2, const char* file, uint32_t line)
         {
@@ -216,7 +217,7 @@ namespace ᐸRuntimeᐳ
             }
 
             __int128_t result = 0;
-            if(!__builtin_add_overflow_p(lhs.value, rhs.value, &result) && (ChkNat::isValidNat(result))) [[likely]] {
+            if(!__builtin_add_overflow(lhs.value, rhs.value, &result) && (ChkNat::isValidNat(result))) [[likely]] {
                 return ChkNat(result);
             }
             else {
@@ -328,7 +329,7 @@ namespace ᐸRuntimeᐳ
             }
 
             __int128_t result = 0;
-            if(!__builtin_add_overflow_p(lhs.value, rhs.value, &result) && (ChkInt::isValidInt(result))) [[likely]] {
+            if(!__builtin_add_overflow(lhs.value, rhs.value, &result) && (ChkInt::isValidInt(result))) [[likely]] {
                 return ChkInt(result);
             }
             else {

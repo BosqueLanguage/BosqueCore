@@ -24,11 +24,19 @@ CPPFLAGS_OPT.release=-O3 -march=x86-64-v3
 CPPFLAGS=${CPPFLAGS_OPT.${BUILD}} ${CPP_STDFLAGS}
 
 HEADERS=$(wildcard $(SRC_DIR)*.h) $(wildcard $(CORE_SRC_DIR)*.h) $(wildcard $(RUNTIME_SRC_DIR)*.h) $(wildcard $(ALLOC_SRC_DIR)*.h) $(wildcard $(BSQIR_SRC_DIR)*.h)
-OBJS=$(OUT_OBJ)common.o $(OUT_OBJ)lexer.o
+OBJS=$(OUT_OBJ)common.o $(OUT_OBJ)lexer.o $(OUT_OBJ)parser.o $(OUT_OBJ)emit.o
 
 #MAKEFLAGS += -j4
 
 all: $(OBJS)
+
+$(OUT_OBJ)emit.o: $(HEADERS) $(BSQIR_SRC_DIR)emit.cpp
+	@mkdir -p $(OUT_OBJ)
+	$(CPP) $(CPPFLAGS) -o $(OUT_OBJ)emit.o -c $(BSQIR_SRC_DIR)emit.cpp
+
+$(OUT_OBJ)parser.o: $(HEADERS) $(BSQIR_SRC_DIR)parser.cpp
+	@mkdir -p $(OUT_OBJ)
+	$(CPP) $(CPPFLAGS) -o $(OUT_OBJ)parser.o -c $(BSQIR_SRC_DIR)parser.cpp
 
 $(OUT_OBJ)lexer.o: $(HEADERS) $(BSQIR_SRC_DIR)lexer.cpp
 	@mkdir -p $(OUT_OBJ)

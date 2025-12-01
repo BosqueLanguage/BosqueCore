@@ -1,18 +1,18 @@
 #pragma once
 
 #include "../../common.h"
-#include "../allocator/bsqalloc.h"
+#include "../allocator/alloc.h"
 
 #include "../../core/bools.h"
 #include "../../core/chars.h"
 #include "../../core/integrals.h"
 #include "../../core/strings.h"
+#include "../../core/bytebuff.h"
 
 namespace ᐸRuntimeᐳ
 {
     /**
-     * A buffer manager for emitting BSQON or other text formats (e.g. JSON). This should be 1 per thread (and thread local). We depend on the underlying allocator for fetching new buffers.
-     * This needs to be coordinated with the allocator and host to ensure proper buffer sizes and deallocation.
+     * A buffer manager for emitting BSQON or other text formats (e.g. JSON). This should be local per thread. The buffers may be IO or GC allocated depending on the output target.
      */
     class BSQEmitBufferMgr
     {
@@ -22,12 +22,16 @@ namespace ᐸRuntimeᐳ
 
         size_t bytes;
         size_t indentlevel; 
-        std::list<BSQIOBuffer> buffers;
+
+        ByteBufferBlock* buffs;
+        uint8_t data[ByteBufferEntry::BUFFER_ENTRY_SIZE];
+
+        bool isIOEmit; //whether this is an IO emit (vs GC emit) -- determines allocator used and GC root processing
 
     public:
         BSQEmitBufferMgr() : cpos(nullptr), epos(nullptr), bytes(0), indentlevel(0) {}
 
-        void prepForEmit();
+        void prepForEmit(bool isIOEmit);
         
         void increaseIndent() 
         {
@@ -114,7 +118,7 @@ namespace ᐸRuntimeᐳ
             this->write('\n');
         }
 
-        std::list<BSQIOBuffer>&& completeEmit(size_t& bytes);
+        ByteBufferBlock* completeEmit(size_t& bytes);
     };
 
     class BSQONEmitter

@@ -1,15 +1,18 @@
 #include "emit.h"
 
-
 namespace ᐸRuntimeᐳ
 {
-    void BSQEmitBufferMgr::prepForEmit()
+    void BSQEmitBufferMgr::prepForEmit(bool isIOEmit)
     {
         this->cpos = nullptr;
         this->epos = nullptr;
         this->bytes = 0;
         this->indentlevel = 0;
-        this->buffers.clear();
+
+        this->buffs = nullptr;
+        std::memset(this->data, 0, sizeof(this->data));
+
+        this->isIOEmit = isIOEmit;
     }
         
     void BSQEmitBufferMgr::writeSlow(char c)
@@ -40,7 +43,7 @@ namespace ᐸRuntimeᐳ
         this->bytes += slen;
     }
         
-    std::list<BSQIOBuffer>&& BSQEmitBufferMgr::completeEmit(size_t& bytes)
+    ByteBufferBlock* BSQEmitBufferMgr::completeEmit(size_t& bytes)
     {
         this->cpos = nullptr;
         this->epos = nullptr;
@@ -48,6 +51,12 @@ namespace ᐸRuntimeᐳ
 
         bytes = this->bytes;
         this->bytes = 0;
+
+        xxxx; //flush active buffer
+
+        if(!this->isIOEmit) {
+            xxxx; //release the GC root pin
+        }
 
         return std::move(this->buffers);
     }
