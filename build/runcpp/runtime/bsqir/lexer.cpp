@@ -6,12 +6,12 @@ namespace ᐸRuntimeᐳ
 {
     using REState = std::bitset<32>;
 
-    bool BSQONLexer::testchar(const ByteBufferIterator& ii, char c) noexcept
+    bool BSQONLexer::testchar(const ByteBufferIterator& ii, char c)
     {
         return ii.valid() && (ii.get() == static_cast<uint8_t>(c));
     }
         
-    bool BSQONLexer::testchars(ByteBufferIterator ii, const char* chars) noexcept
+    bool BSQONLexer::testchars(ByteBufferIterator ii, const char* chars)
     {
         while(*chars != '\0') {
             if(!ii.valid() || (ii.get() != static_cast<uint8_t>(*chars))) {
@@ -25,7 +25,7 @@ namespace ᐸRuntimeᐳ
         return true;
     }
 
-    bool BSQONLexer::tryLexNone() noexcept
+    bool BSQONLexer::tryLexNone()
     {
         if(BSQONLexer::testchars(this->iter, "none")) {
             this->ctoken.tokentype = BSQONTokenType::LiteralNone;
@@ -36,7 +36,7 @@ namespace ᐸRuntimeᐳ
         return false;
     }
 
-    bool BSQONLexer::tryLexBool() noexcept
+    bool BSQONLexer::tryLexBool()
     {
         if(BSQONLexer::testchars(this->iter, "true")) {
             this->ctoken.tokentype = BSQONTokenType::LiteralTrue;
@@ -52,7 +52,7 @@ namespace ᐸRuntimeᐳ
         return false;
     }
 
-    bool BSQONLexer::lexIntegralHelper(bool negok, char suffix) noexcept
+    bool BSQONLexer::lexIntegralHelper(bool negok, char suffix)
     {
         ByteBufferIterator ii = this->iter;
         size_t startidx = ii.getIndex();
@@ -139,17 +139,17 @@ namespace ᐸRuntimeᐳ
         return false;
     }
 
-    bool BSQONLexer::tryLexNat() noexcept
+    bool BSQONLexer::tryLexNat()
     {
         return this->lexIntegralHelper(false, 'n');
     }
 
-    bool BSQONLexer::tryLexInt() noexcept
+    bool BSQONLexer::tryLexInt()
     {
         return this->lexIntegralHelper(true, 'i');
     }
     
-    bool BSQONLexer::tryLexChkNat() noexcept
+    bool BSQONLexer::tryLexChkNat()
     {
         if(this->testchar(this->iter, '#')) {
             this->ctoken.tokentype = BSQONTokenType::LiteralChkNat;
@@ -160,7 +160,7 @@ namespace ᐸRuntimeᐳ
         return this->lexIntegralHelper(false, 'N');
     }
 
-    bool BSQONLexer::tryLexChkInt() noexcept
+    bool BSQONLexer::tryLexChkInt()
     {
         if(this->testchar(this->iter, '#')) {
             this->ctoken.tokentype = BSQONTokenType::LiteralChkInt;
@@ -171,7 +171,7 @@ namespace ᐸRuntimeᐳ
         return this->lexIntegralHelper(true, 'I');
     }
 
-    void BSQONLexer::consume() noexcept
+    void BSQONLexer::consume()
     {
         if(!this->iter.valid()) {
             this->ctoken.tokentype = BSQONTokenType::EOFToken;

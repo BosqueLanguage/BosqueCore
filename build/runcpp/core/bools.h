@@ -21,19 +21,19 @@ namespace ᐸRuntimeᐳ
         uint64_t value; // Stored as uint64_t for alignment reasons
 
     public:
-        constexpr BBool() noexcept : value(0) {}
-        constexpr BBool(uint64_t v) noexcept : value(v) {}
-        constexpr BBool(const BBool& other) noexcept = default;
+        constexpr BBool() : value(0) {}
+        constexpr BBool(uint64_t v) : value(v) {}
+        constexpr BBool(const BBool& other) = default;
 
-        constexpr static BBool from(bool b) noexcept { return BBool(b ? 1ull : 0ull); }
-        constexpr static bool toBool(BBool b) noexcept { return b.value != 0ull; }
+        constexpr static BBool from(bool b) { return BBool(b ? 1ull : 0ull); }
+        constexpr static bool toBool(BBool b) { return b.value != 0ull; }
 
-        friend constexpr bool operator<(const BBool &lhs, const BBool &rhs) noexcept { return lhs.value < rhs.value; }
-        friend constexpr bool operator==(const BBool &lhs, const BBool &rhs) noexcept { return lhs.value == rhs.value; }
-        friend constexpr bool operator>(const BBool &lhs, const BBool &rhs) noexcept { return rhs.value < lhs.value; }
-        friend constexpr bool operator!=(const BBool &lhs, const BBool &rhs) noexcept { return !(lhs.value == rhs.value); }
-        friend constexpr bool operator<=(const BBool &lhs, const BBool &rhs) noexcept { return !(lhs.value > rhs.value); }
-        friend constexpr bool operator>=(const BBool &lhs, const BBool &rhs) noexcept { return !(lhs.value < rhs.value); }
+        friend constexpr bool operator<(const BBool &lhs, const BBool &rhs) { return lhs.value < rhs.value; }
+        friend constexpr bool operator==(const BBool &lhs, const BBool &rhs) { return lhs.value == rhs.value; }
+        friend constexpr bool operator>(const BBool &lhs, const BBool &rhs) { return rhs.value < lhs.value; }
+        friend constexpr bool operator!=(const BBool &lhs, const BBool &rhs) { return !(lhs.value == rhs.value); }
+        friend constexpr bool operator<=(const BBool &lhs, const BBool &rhs) { return !(lhs.value > rhs.value); }
+        friend constexpr bool operator>=(const BBool &lhs, const BBool &rhs) { return !(lhs.value < rhs.value); }
     };
     using Bool = BBool; //work around bool kw preventing Class name of Bool
 

@@ -9,7 +9,7 @@ namespace ᐸRuntimeᐳ
     public:
         static constexpr int64_t MAX_NAT = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_BASE;
 
-        inline constexpr static bool isValidNat(int64_t v) noexcept
+        inline constexpr static bool isValidNat(int64_t v)
         {
             return (0 <= v) & (v <= Nat::MAX_NAT);
         }
@@ -18,64 +18,64 @@ namespace ᐸRuntimeᐳ
         int64_t value;
 
     public:
-        constexpr Nat() noexcept : value(0) {}
-        constexpr Nat(int64_t v) noexcept : value(v) {}
-        constexpr Nat(const Nat& other) noexcept = default;
+        constexpr Nat() : value(0) {}
+        constexpr Nat(int64_t v) : value(v) {}
+        constexpr Nat(const Nat& other) = default;
 
-        inline constexpr int64_t getValue() const noexcept { return this->value; }
+        inline constexpr int64_t getValue() const { return this->value; }
 
         // Check operators on Nat
-        inline static void checkOverflowAddition(Nat n1, Nat n2, const char* file, uint32_t line) noexcept
+        inline static void checkOverflowAddition(Nat n1, Nat n2, const char* file, uint32_t line)
         {
             int64_t result = 0;
             if(!__builtin_add_overflow_p(n1.value, n2.value, &result) || !(Nat::isValidNat(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Nat addition bounds"); }
         }
-        inline static void checkOverflowSubtraction(Nat n1, Nat n2, const char* file, uint32_t line) noexcept
+        inline static void checkOverflowSubtraction(Nat n1, Nat n2, const char* file, uint32_t line)
         {
             if(n2.value > n1.value) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericUnderflow, nullptr, "Nat subtraction underflow"); }
             int64_t result = 0;
             if(!__builtin_sub_overflow(n1.value, n2.value, &result) || !(Nat::isValidNat(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Nat subtraction bounds"); }
         }
-        inline static void checkOverflowMultiplication(Nat n1, Nat n2, const char* file, uint32_t line) noexcept
+        inline static void checkOverflowMultiplication(Nat n1, Nat n2, const char* file, uint32_t line)
         {
             int64_t result = 0;
             if(!__builtin_mul_overflow(n1.value, n2.value, &result) || !(Nat::isValidNat(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Nat multiplication bounds"); }
         }
-        inline static void checkDivisionByZero(Nat n2, const char* file, uint32_t line) noexcept
+        inline static void checkDivisionByZero(Nat n2, const char* file, uint32_t line)
         {
             if(n2.value == 0) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::DivisionByZero, nullptr, "Nat division by zero"); }
         }
 
         // Overloaded operators on Nat
-        constexpr Nat operator+() const noexcept
+        constexpr Nat operator+() const
         {
             return Nat(this->value);
         }
         // Negation is not defined for Nat
 
-        friend constexpr Nat operator+(Nat lhs, Nat rhs) noexcept
+        friend constexpr Nat operator+(Nat lhs, Nat rhs)
         {
             return Nat(lhs.value + rhs.value);
         }
-        friend constexpr Nat operator-(Nat lhs, Nat rhs) noexcept
+        friend constexpr Nat operator-(Nat lhs, Nat rhs)
         {
             return Nat(lhs.value - rhs.value);
         }
-        friend constexpr Nat operator/(Nat lhs, Nat rhs) noexcept
+        friend constexpr Nat operator/(Nat lhs, Nat rhs)
         {
            return Nat(lhs.value / rhs.value);
         }
-        friend constexpr Nat operator*(Nat lhs, Nat rhs) noexcept
+        friend constexpr Nat operator*(Nat lhs, Nat rhs)
         {
             return Nat(lhs.value * rhs.value);
         }
 
-        friend constexpr bool operator<(const Nat &lhs, const Nat &rhs) noexcept { return lhs.value < rhs.value; }
-        friend constexpr bool operator==(const Nat &lhs, const Nat &rhs) noexcept { return lhs.value == rhs.value; }
-        friend constexpr bool operator>(const Nat &lhs, const Nat &rhs) noexcept { return rhs.value < lhs.value; }
-        friend constexpr bool operator!=(const Nat &lhs, const Nat &rhs) noexcept { return !(lhs.value == rhs.value); }
-        friend constexpr bool operator<=(const Nat &lhs, const Nat &rhs) noexcept { return !(lhs.value > rhs.value); }
-        friend constexpr bool operator>=(const Nat &lhs, const Nat &rhs) noexcept { return !(lhs.value < rhs.value); }
+        friend constexpr bool operator<(const Nat &lhs, const Nat &rhs) { return lhs.value < rhs.value; }
+        friend constexpr bool operator==(const Nat &lhs, const Nat &rhs) { return lhs.value == rhs.value; }
+        friend constexpr bool operator>(const Nat &lhs, const Nat &rhs) { return rhs.value < lhs.value; }
+        friend constexpr bool operator!=(const Nat &lhs, const Nat &rhs) { return !(lhs.value == rhs.value); }
+        friend constexpr bool operator<=(const Nat &lhs, const Nat &rhs) { return !(lhs.value > rhs.value); }
+        friend constexpr bool operator>=(const Nat &lhs, const Nat &rhs) { return !(lhs.value < rhs.value); }
     };
 
     class Int
@@ -84,7 +84,7 @@ namespace ᐸRuntimeᐳ
         static constexpr int64_t MIN_INT = -ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_BASE; 
         static constexpr int64_t MAX_INT = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_BASE; 
 
-        inline constexpr static bool isValidInt(int64_t v) noexcept
+        inline constexpr static bool isValidInt(int64_t v)
         {
             return (Int::MIN_INT <= v) & (v <= Int::MAX_INT);
         }
@@ -93,67 +93,67 @@ namespace ᐸRuntimeᐳ
         int64_t value;
 
     public:
-        constexpr Int() noexcept : value(0) {}
-        constexpr Int(int64_t v) noexcept : value(v) {}
-        constexpr Int(const Int& other) noexcept = default;
+        constexpr Int() : value(0) {}
+        constexpr Int(int64_t v) : value(v) {}
+        constexpr Int(const Int& other) = default;
 
-        inline constexpr int64_t getValue() const noexcept { return this->value; }
+        inline constexpr int64_t getValue() const { return this->value; }
 
         // Check operators on Int
-        inline static void checkOverflowAddition(Int n1, Int n2, const char* file, uint32_t line) noexcept
+        inline static void checkOverflowAddition(Int n1, Int n2, const char* file, uint32_t line)
         {
             int64_t result = 0;
             if(!__builtin_add_overflow_p(n1.value, n2.value, &result) || !(Int::isValidInt(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Int addition bounds"); }
         }
-        inline static void checkOverflowSubtraction(Int n1, Int n2, const char* file, uint32_t line) noexcept
+        inline static void checkOverflowSubtraction(Int n1, Int n2, const char* file, uint32_t line)
         {
             if(n2.value > n1.value) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericUnderflow, nullptr, "Int subtraction underflow"); }
             int64_t result = 0;
             if(!__builtin_sub_overflow(n1.value, n2.value, &result) || !(Int::isValidInt(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Int subtraction bounds"); }
         }
-        inline static void checkOverflowMultiplication(Int n1, Int n2, const char* file, uint32_t line) noexcept
+        inline static void checkOverflowMultiplication(Int n1, Int n2, const char* file, uint32_t line)
         {
             int64_t result = 0;
             if(!__builtin_mul_overflow(n1.value, n2.value, &result) || !(Int::isValidInt(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Int multiplication bounds"); }
         }
-        inline static void checkDivisionByZero(Int n2, const char* file, uint32_t line) noexcept
+        inline static void checkDivisionByZero(Int n2, const char* file, uint32_t line)
         {
             if(n2.value == 0) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::DivisionByZero, nullptr, "Int division by zero"); }
         }
 
         // Overloaded operators on Int
-        constexpr Int operator+() const noexcept
+        constexpr Int operator+() const
         {
             return Int(this->value);
         }
-        constexpr Int operator-() const noexcept
+        constexpr Int operator-() const
         {
             return Int(-this->value);
         }
 
-        friend constexpr Int operator+(Int lhs, Int rhs) noexcept
+        friend constexpr Int operator+(Int lhs, Int rhs)
         {
             return Int(lhs.value + rhs.value);
         }
-        friend constexpr Int operator-(Int lhs, Int rhs) noexcept
+        friend constexpr Int operator-(Int lhs, Int rhs)
         {
             return Int(lhs.value - rhs.value);
         }
-        friend constexpr Int operator/(Int lhs, Int rhs) noexcept
+        friend constexpr Int operator/(Int lhs, Int rhs)
         {
             return Int(lhs.value / rhs.value);
         }
-        friend constexpr Int operator*(Int lhs, Int rhs) noexcept
+        friend constexpr Int operator*(Int lhs, Int rhs)
         {
             return Int(lhs.value * rhs.value);
         }
 
-        friend constexpr bool operator<(const Int &lhs, const Int &rhs) noexcept { return lhs.value < rhs.value; }
-        friend constexpr bool operator==(const Int &lhs, const Int &rhs) noexcept { return lhs.value == rhs.value; }
-        friend constexpr bool operator>(const Int &lhs, const Int &rhs) noexcept { return rhs.value < lhs.value; }
-        friend constexpr bool operator!=(const Int &lhs, const Int &rhs) noexcept { return !(lhs.value == rhs.value); }
-        friend constexpr bool operator<=(const Int &lhs, const Int &rhs) noexcept { return !(lhs.value > rhs.value); }
-        friend constexpr bool operator>=(const Int &lhs, const Int &rhs) noexcept { return !(lhs.value < rhs.value); }
+        friend constexpr bool operator<(const Int &lhs, const Int &rhs) { return lhs.value < rhs.value; }
+        friend constexpr bool operator==(const Int &lhs, const Int &rhs) { return lhs.value == rhs.value; }
+        friend constexpr bool operator>(const Int &lhs, const Int &rhs) { return rhs.value < lhs.value; }
+        friend constexpr bool operator!=(const Int &lhs, const Int &rhs) { return !(lhs.value == rhs.value); }
+        friend constexpr bool operator<=(const Int &lhs, const Int &rhs) { return !(lhs.value > rhs.value); }
+        friend constexpr bool operator>=(const Int &lhs, const Int &rhs) { return !(lhs.value < rhs.value); }
     };
 
     class ChkNat
@@ -161,7 +161,7 @@ namespace ᐸRuntimeᐳ
     public:
         static constexpr __int128_t MAX_NAT = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED; 
 
-        inline constexpr static bool isValidNat(__int128_t v) noexcept
+        inline constexpr static bool isValidNat(__int128_t v)
         {
             return (0 <= v) & (v <= ChkNat::MAX_NAT);
         }
@@ -171,45 +171,45 @@ namespace ᐸRuntimeᐳ
 
         static constexpr __int128_t BOTTOM_VALUE = (__int128_t(1) << 126);
 
-        inline constexpr static bool s_isBottom(__int128_t v) noexcept
+        inline constexpr static bool s_isBottom(__int128_t v)
         {
             return (v & BOTTOM_VALUE) != 0;
         }
 
     public:
-        constexpr ChkNat() noexcept : value(0) {}
-        constexpr ChkNat(__int128_t v) noexcept : value(v) {}
-        constexpr ChkNat(const ChkNat& other) noexcept = default;
+        constexpr ChkNat() : value(0) {}
+        constexpr ChkNat(__int128_t v) : value(v) {}
+        constexpr ChkNat(const ChkNat& other) = default;
 
-        inline constexpr __int128_t getValue() const noexcept { return this->value; }
+        inline constexpr __int128_t getValue() const { return this->value; }
 
-        constexpr static ChkNat bliteral() noexcept
+        constexpr static ChkNat bliteral()
         {
             return ChkNat(ChkNat::BOTTOM_VALUE);
         }
 
-        constexpr bool isBottom() const noexcept
+        constexpr bool isBottom() const
         {
             return ChkNat::s_isBottom(this->value);
         }
 
-        inline static void checkOverflowSubtraction(ChkNat n1, ChkNat n2, const char* file, uint32_t line) noexcept
+        inline static void checkOverflowSubtraction(ChkNat n1, ChkNat n2, const char* file, uint32_t line)
         {
             if(n2.value > n1.value) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericUnderflow, nullptr, "Nat subtraction underflow"); }
         }
-        inline static void checkDivisionByZero(ChkNat n2, const char* file, uint32_t line) noexcept
+        inline static void checkDivisionByZero(ChkNat n2, const char* file, uint32_t line)
         {
             if(n2.value == 0) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::DivisionByZero, nullptr, "Int division by zero"); }
         }
 
         // Overloaded operators on Nat
-        constexpr ChkNat operator+() const noexcept
+        constexpr ChkNat operator+() const
         {
             return ChkNat(this->value);
         }
         // Negation is not defined for Nat
 
-        friend constexpr ChkNat operator+(ChkNat lhs, ChkNat rhs) noexcept
+        friend constexpr ChkNat operator+(ChkNat lhs, ChkNat rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
                 return ChkNat(ChkNat::BOTTOM_VALUE);
@@ -223,7 +223,7 @@ namespace ᐸRuntimeᐳ
                 return ChkNat(ChkNat::BOTTOM_VALUE);
             }
         }
-        friend constexpr ChkNat operator-(ChkNat lhs, ChkNat rhs) noexcept
+        friend constexpr ChkNat operator-(ChkNat lhs, ChkNat rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
                 return ChkNat(ChkNat::BOTTOM_VALUE);
@@ -237,7 +237,7 @@ namespace ᐸRuntimeᐳ
                 return ChkNat(ChkNat::BOTTOM_VALUE);
             }
         }
-        friend constexpr ChkNat operator/(ChkNat lhs, ChkNat rhs) noexcept
+        friend constexpr ChkNat operator/(ChkNat lhs, ChkNat rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
                 return ChkNat(ChkNat::BOTTOM_VALUE);
@@ -245,7 +245,7 @@ namespace ᐸRuntimeᐳ
 
             return ChkNat(lhs.value / rhs.value);
         }
-        friend constexpr ChkNat operator*(ChkNat lhs, ChkNat rhs) noexcept
+        friend constexpr ChkNat operator*(ChkNat lhs, ChkNat rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
                 return ChkNat(ChkNat::BOTTOM_VALUE);
@@ -260,12 +260,12 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        friend constexpr bool operator<(const ChkNat &lhs, const ChkNat &rhs) noexcept { return lhs.value < rhs.value; }
-        friend constexpr bool operator==(const ChkNat &lhs, const ChkNat &rhs) noexcept { return lhs.value == rhs.value; }
-        friend constexpr bool operator>(const ChkNat &lhs, const ChkNat &rhs) noexcept { return rhs.value < lhs.value; }
-        friend constexpr bool operator!=(const ChkNat &lhs, const ChkNat &rhs) noexcept { return !(lhs.value == rhs.value); }
-        friend constexpr bool operator<=(const ChkNat &lhs, const ChkNat &rhs) noexcept { return !(lhs.value > rhs.value); }
-        friend constexpr bool operator>=(const ChkNat &lhs, const ChkNat &rhs) noexcept { return !(lhs.value < rhs.value); }
+        friend constexpr bool operator<(const ChkNat &lhs, const ChkNat &rhs) { return lhs.value < rhs.value; }
+        friend constexpr bool operator==(const ChkNat &lhs, const ChkNat &rhs) { return lhs.value == rhs.value; }
+        friend constexpr bool operator>(const ChkNat &lhs, const ChkNat &rhs) { return rhs.value < lhs.value; }
+        friend constexpr bool operator!=(const ChkNat &lhs, const ChkNat &rhs) { return !(lhs.value == rhs.value); }
+        friend constexpr bool operator<=(const ChkNat &lhs, const ChkNat &rhs) { return !(lhs.value > rhs.value); }
+        friend constexpr bool operator>=(const ChkNat &lhs, const ChkNat &rhs) { return !(lhs.value < rhs.value); }
     };
 
     class ChkInt
@@ -274,7 +274,7 @@ namespace ᐸRuntimeᐳ
         static constexpr __int128_t MIN_INT = -ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED; 
         static constexpr __int128_t MAX_INT = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED; 
 
-        inline constexpr static bool isValidInt(__int128_t v) noexcept
+        inline constexpr static bool isValidInt(__int128_t v)
         {
             return (ChkInt::MIN_INT <= v) & (v <= ChkInt::MAX_INT);
         }
@@ -284,44 +284,44 @@ namespace ᐸRuntimeᐳ
         
         static constexpr __int128_t BOTTOM_VALUE = (__int128_t(1) << 126);
 
-        inline constexpr static bool isBottom(__int128_t v) noexcept
+        inline constexpr static bool isBottom(__int128_t v)
         {
             return (v & BOTTOM_VALUE) != 0;
         }
 
     public:
-        constexpr ChkInt() noexcept : value(0) {}
-        constexpr ChkInt(__int128_t v) noexcept : value(v) {}
-        constexpr ChkInt(const ChkInt& other) noexcept = default;
+        constexpr ChkInt() : value(0) {}
+        constexpr ChkInt(__int128_t v) : value(v) {}
+        constexpr ChkInt(const ChkInt& other) = default;
 
-        inline constexpr __int128_t getValue() const noexcept { return this->value; }
+        inline constexpr __int128_t getValue() const { return this->value; }
 
-        constexpr bool isBottom() const noexcept
+        constexpr bool isBottom() const
         {
             return ChkInt::isBottom(this->value);
         }
 
-        constexpr static ChkInt bliteral() noexcept
+        constexpr static ChkInt bliteral()
         {
             return ChkInt(ChkInt::BOTTOM_VALUE);
         }
     
-        inline static void checkDivisionByZero(ChkInt n2, const char* file, uint32_t line) noexcept
+        inline static void checkDivisionByZero(ChkInt n2, const char* file, uint32_t line)
         {
             if(n2.value == 0) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::DivisionByZero, nullptr, "Int division by zero"); }
         }
 
         // Overloaded operators on Int
-        constexpr ChkInt operator+() const noexcept
+        constexpr ChkInt operator+() const
         {
             return ChkInt(this->value);
         }
-        constexpr ChkInt operator-() const noexcept
+        constexpr ChkInt operator-() const
         {
             return ChkInt(-this->value);
         }
 
-        friend constexpr ChkInt operator+(ChkInt lhs, ChkInt rhs) noexcept
+        friend constexpr ChkInt operator+(ChkInt lhs, ChkInt rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
                 return ChkInt(ChkInt::BOTTOM_VALUE);
@@ -335,7 +335,7 @@ namespace ᐸRuntimeᐳ
                 return ChkInt(ChkInt::BOTTOM_VALUE);
             }
         }
-        friend constexpr ChkInt operator-(ChkInt lhs, ChkInt rhs) noexcept
+        friend constexpr ChkInt operator-(ChkInt lhs, ChkInt rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
                 return ChkInt(ChkInt::BOTTOM_VALUE);
@@ -349,7 +349,7 @@ namespace ᐸRuntimeᐳ
                 return ChkInt(ChkInt::BOTTOM_VALUE);
             }
         }
-        friend constexpr ChkInt operator/(ChkInt lhs, ChkInt rhs) noexcept
+        friend constexpr ChkInt operator/(ChkInt lhs, ChkInt rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
                 return ChkInt(ChkInt::BOTTOM_VALUE);
@@ -357,7 +357,7 @@ namespace ᐸRuntimeᐳ
 
             return ChkInt(lhs.value / rhs.value);
         }
-        friend constexpr ChkInt operator*(ChkInt lhs, ChkInt rhs) noexcept
+        friend constexpr ChkInt operator*(ChkInt lhs, ChkInt rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
                 return ChkInt(ChkInt::BOTTOM_VALUE);
@@ -372,12 +372,12 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        friend constexpr bool operator<(const ChkInt &lhs, const ChkInt &rhs) noexcept { return lhs.value < rhs.value; }
-        friend constexpr bool operator==(const ChkInt &lhs, const ChkInt &rhs) noexcept { return lhs.value == rhs.value; }
-        friend constexpr bool operator>(const ChkInt &lhs, const ChkInt &rhs) noexcept { return rhs.value < lhs.value; }
-        friend constexpr bool operator!=(const ChkInt &lhs, const ChkInt &rhs) noexcept { return !(lhs.value == rhs.value); }
-        friend constexpr bool operator<=(const ChkInt &lhs, const ChkInt &rhs) noexcept { return !(lhs.value > rhs.value); }
-        friend constexpr bool operator>=(const ChkInt &lhs, const ChkInt &rhs) noexcept { return !(lhs.value < rhs.value); }
+        friend constexpr bool operator<(const ChkInt &lhs, const ChkInt &rhs) { return lhs.value < rhs.value; }
+        friend constexpr bool operator==(const ChkInt &lhs, const ChkInt &rhs) { return lhs.value == rhs.value; }
+        friend constexpr bool operator>(const ChkInt &lhs, const ChkInt &rhs) { return rhs.value < lhs.value; }
+        friend constexpr bool operator!=(const ChkInt &lhs, const ChkInt &rhs) { return !(lhs.value == rhs.value); }
+        friend constexpr bool operator<=(const ChkInt &lhs, const ChkInt &rhs) { return !(lhs.value > rhs.value); }
+        friend constexpr bool operator>=(const ChkInt &lhs, const ChkInt &rhs) { return !(lhs.value < rhs.value); }
     };
 
     static_assert(sizeof(Nat) == sizeof(int64_t), "Nat size incorrect");

@@ -29,8 +29,8 @@ namespace ᐸRuntimeᐳ
 
         char scvalue[32]; // Simple constant value storage for small literals (bool, nat, int, uuidv4)
 
-        BSQONToken() noexcept : tokentype(BSQONTokenType::Invalid), startindex(0), endindex(0), scvalue{0} {}
-        BSQONToken(const BSQONToken& other) noexcept = default;
+        BSQONToken() : tokentype(BSQONTokenType::Invalid), startindex(0), endindex(0), scvalue{0} {}
+        BSQONToken(const BSQONToken& other) = default;
     };
 
     class BSQONLexer
@@ -40,22 +40,22 @@ namespace ᐸRuntimeᐳ
         ByteBufferIterator iter;
         BSQONToken ctoken;
 
-        static bool testchar(const ByteBufferIterator& ii, char c) noexcept;
-        static bool testchars(ByteBufferIterator ii, const char* chars) noexcept;
+        static bool testchar(const ByteBufferIterator& ii, char c);
+        static bool testchars(ByteBufferIterator ii, const char* chars);
 
-        bool tryLexNone() noexcept;
-        bool tryLexBool() noexcept;
+        bool tryLexNone();
+        bool tryLexBool();
 
-        bool lexIntegralHelper(bool negok, char suffix) noexcept;
-        bool tryLexNat() noexcept;
-        bool tryLexInt() noexcept;
-        bool tryLexChkNat() noexcept;
-        bool tryLexChkInt() noexcept;
+        bool lexIntegralHelper(bool negok, char suffix);
+        bool tryLexNat();
+        bool tryLexInt();
+        bool tryLexChkNat();
+        bool tryLexChkInt();
 
     public:
-        BSQONLexer(const ByteBufferIterator& iter) noexcept : iter(iter), ctoken() {}
+        BSQONLexer(const ByteBufferIterator& iter) : iter(iter), ctoken() {}
 
-        const BSQONToken& current() const noexcept { return this->ctoken; }
-        void consume() noexcept;
+        const BSQONToken& current() const { return this->ctoken; }
+        void consume();
     };
 }

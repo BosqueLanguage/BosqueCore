@@ -25,24 +25,24 @@ namespace ᐸRuntimeᐳ
         std::list<BSQIOBuffer> buffers;
 
     public:
-        BSQEmitBufferMgr() noexcept : cpos(nullptr), epos(nullptr), bytes(0), indentlevel(0) {}
+        BSQEmitBufferMgr() : cpos(nullptr), epos(nullptr), bytes(0), indentlevel(0) {}
 
-        void prepForEmit() noexcept;
+        void prepForEmit();
         
-        void increaseIndent() noexcept 
+        void increaseIndent() 
         {
             this->indentlevel++;
         }
 
-        void decreaseIndent() noexcept 
+        void decreaseIndent() 
         {
             this->indentlevel--;
         }
         
-        void writeSlow(char c) noexcept;
-        void writeSlowTail(const char* str, size_t slen) noexcept;
+        void writeSlow(char c);
+        void writeSlowTail(const char* str, size_t slen);
 
-        void write(char c) noexcept
+        void write(char c)
         {
             if(this->cpos == this->epos) [[unlikely]] {
                 this->writeSlow(c);
@@ -54,7 +54,7 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        void write(const char* str, size_t slen) noexcept 
+        void write(const char* str, size_t slen) 
         {
             size_t initcopylen = std::min((size_t)(this->epos - this->cpos), slen);
 
@@ -67,12 +67,12 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        void write(const char* str) noexcept {
+        void write(const char* str) {
             this->write(str, std::strlen(str));
         }
 
         template<size_t len>
-        void writeImmediate(const char (&cstr)[len]) noexcept
+        void writeImmediate(const char (&cstr)[len])
         {
             if constexpr (len - 1 == 0) {
                 return;
@@ -95,26 +95,26 @@ namespace ᐸRuntimeᐳ
         }
 
         template <typename T>
-        void writeNumberWFormat(const char* fmt, const T& val) noexcept
+        void writeNumberWFormat(const char* fmt, const T& val)
         {
             char numbuf[32];
             int written = std::snprintf(numbuf, sizeof(numbuf), fmt, val);
             this->write(numbuf, static_cast<size_t>(written));
         }
 
-        void writeIndent() noexcept
+        void writeIndent()
         {
             for(size_t i = 0; i < this->indentlevel; i++) {
                 this->writeImmediate("  ");
             }
         }
 
-        void writeNewline() noexcept 
+        void writeNewline() 
         {
             this->write('\n');
         }
 
-        std::list<BSQIOBuffer>&& completeEmit(size_t& bytes) noexcept;
+        std::list<BSQIOBuffer>&& completeEmit(size_t& bytes);
     };
 
     class BSQONEmitter
@@ -125,28 +125,28 @@ namespace ᐸRuntimeᐳ
         bool sensitiveOutputEnabled;
 
     public:
-        BSQONEmitter(bool sensitiveEnabled) noexcept : bufferMgr(), sensitiveOutputEnabled(sensitiveEnabled) {}
+        BSQONEmitter(bool sensitiveEnabled) : bufferMgr(), sensitiveOutputEnabled(sensitiveEnabled) {}
 
-        void emitNone() noexcept;
-        void emitBool(Bool b) noexcept;
-        void emitNat(Nat n) noexcept;
-        void emitInt(Int i) noexcept;
-        void emitChkNat(ChkNat n) noexcept;
-        void emitChkInt(ChkInt i) noexcept;
+        void emitNone();
+        void emitBool(Bool b);
+        void emitNat(Nat n);
+        void emitInt(Int i);
+        void emitChkNat(ChkNat n);
+        void emitChkInt(ChkInt i);
 
-        void emitRational() noexcept;
-        void emitFloat() noexcept;
+        void emitRational();
+        void emitFloat();
 
         //
         //Lots more here
         //
 
-        void emitByte(Byte b) noexcept;
-        void emitCChar(CChar c) noexcept;
-        void emitUnicodeChar(UnicodeChar c) noexcept;
+        void emitByte(Byte b);
+        void emitCChar(CChar c);
+        void emitUnicodeChar(UnicodeChar c);
 
-        void emitCString(CString s) noexcept;
-        void emitString(String s) noexcept;
+        void emitCString(CString s);
+        void emitString(String s);
 
         //
         //Lots more here

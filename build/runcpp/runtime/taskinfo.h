@@ -17,9 +17,9 @@ namespace ᐸRuntimeᐳ
         const TypeInfoBase* typeinfo; //typeinfo of U
         U value;
 
-        constexpr TaskEnvironmentEntry() noexcept : key(), typeinfo(nullptr), value(nullptr) {}
-        constexpr TaskEnvironmentEntry(const CString& k, const TypeInfoBase* ti, const U& u) noexcept : key(k), typeinfo(ti), value(v) {}
-        constexpr TaskEnvironmentEntry(const TaskEnvironmentEntry& other) noexcept = default;
+        constexpr TaskEnvironmentEntry() : key(), typeinfo(nullptr), value(nullptr) {}
+        constexpr TaskEnvironmentEntry(const CString& k, const TypeInfoBase* ti, const U& u) : key(k), typeinfo(ti), value(v) {}
+        constexpr TaskEnvironmentEntry(const TaskEnvironmentEntry& other) = default;
     };
 
     template<ConceptUnionRepr U>
@@ -28,20 +28,20 @@ namespace ᐸRuntimeᐳ
     public:
         std::list<TaskEnvironmentEntry<U>> tenv;
 
-        TaskEnvironment() noexcept : tenv() {}
-        TaskEnvironment(const TaskEnvironment& other) noexcept = default;
+        TaskEnvironment() : tenv() {}
+        TaskEnvironment(const TaskEnvironment& other) = default;
 
-        bool has(const CString& key) noexcept
+        bool has(const CString& key)
         {
             return std::find(this->tenv.begin(), this->tenv.end(), key) != this->tenv.end();
         }
 
-        void setEntry(const CString& key, const TypeInfoBase* typeinfo, void* value) noexcept
+        void setEntry(const CString& key, const TypeInfoBase* typeinfo, void* value)
         {
             this->tenv.emplace_front(key, typeinfo, value);
         }
 
-        std::list<TaskEnvironmentEntry<U>>::iterator get(const CString& key) noexcept
+        std::list<TaskEnvironmentEntry<U>>::iterator get(const CString& key)
         {
             return std::find(this->tenv.begin(), this->tenv.end(), key);
         }
@@ -53,24 +53,24 @@ namespace ᐸRuntimeᐳ
         uint64_t level;
         const char* description;
 
-        constexpr TaskPriority() noexcept : level(0), description("Normal") {}
-        constexpr TaskPriority(uint64_t lvl, const char* desc) noexcept : level(lvl), description(desc) {}
-        constexpr TaskPriority(const TaskPriority& other) noexcept = default;
+        constexpr TaskPriority() : level(0), description("Normal") {}
+        constexpr TaskPriority(uint64_t lvl, const char* desc) : level(lvl), description(desc) {}
+        constexpr TaskPriority(const TaskPriority& other) = default;
 
-        friend constexpr bool operator<(const TaskPriority &lhs, const TaskPriority &rhs) noexcept { return lhs.level < rhs.level; }
-        friend constexpr bool operator==(const TaskPriority &lhs, const TaskPriority &rhs) noexcept { return lhs.level == rhs.level; }
-        friend constexpr bool operator>(const TaskPriority &lhs, const TaskPriority &rhs) noexcept { return rhs.level < lhs.level; }
-        friend constexpr bool operator!=(const TaskPriority &lhs, const TaskPriority &rhs) noexcept { return !(lhs.level == rhs.level); }
-        friend constexpr bool operator<=(const TaskPriority &lhs, const TaskPriority &rhs) noexcept { return !(lhs.level > rhs.level); }
-        friend constexpr bool operator>=(const TaskPriority &lhs, const TaskPriority &rhs) noexcept { return !(lhs.level < rhs.level); } 
+        friend constexpr bool operator<(const TaskPriority &lhs, const TaskPriority &rhs) { return lhs.level < rhs.level; }
+        friend constexpr bool operator==(const TaskPriority &lhs, const TaskPriority &rhs) { return lhs.level == rhs.level; }
+        friend constexpr bool operator>(const TaskPriority &lhs, const TaskPriority &rhs) { return rhs.level < lhs.level; }
+        friend constexpr bool operator!=(const TaskPriority &lhs, const TaskPriority &rhs) { return !(lhs.level == rhs.level); }
+        friend constexpr bool operator<=(const TaskPriority &lhs, const TaskPriority &rhs) { return !(lhs.level > rhs.level); }
+        friend constexpr bool operator>=(const TaskPriority &lhs, const TaskPriority &rhs) { return !(lhs.level < rhs.level); } 
     
         
-        constexpr static TaskPriority pimmediate() noexcept { return TaskPriority(100, "immediate"); }
-        constexpr static TaskPriority ppriority() noexcept { return TaskPriority(80, "priority"); }
-        constexpr static TaskPriority pstd() noexcept { return TaskPriority(50, "std"); }
-        constexpr static TaskPriority plongrun() noexcept { return TaskPriority(30, "longrun"); }
-        constexpr static TaskPriority pbackground() noexcept { return TaskPriority(10, "background"); }
-        constexpr static TaskPriority poptional() noexcept { return TaskPriority(0, "optional"); }
+        constexpr static TaskPriority pimmediate() { return TaskPriority(100, "immediate"); }
+        constexpr static TaskPriority ppriority() { return TaskPriority(80, "priority"); }
+        constexpr static TaskPriority pstd() { return TaskPriority(50, "std"); }
+        constexpr static TaskPriority plongrun() { return TaskPriority(30, "longrun"); }
+        constexpr static TaskPriority pbackground() { return TaskPriority(10, "background"); }
+        constexpr static TaskPriority poptional() { return TaskPriority(0, "optional"); }
     };
 
     class TaskInfo
@@ -83,8 +83,8 @@ namespace ᐸRuntimeᐳ
         std::jmp_buf error_handler;
         std::optional<ErrorInfo> pending_error;
 
-        TaskInfo() noexcept : taskid(), parent(nullptr), priority(), error_handler(), pending_error() {}
-        TaskInfo(const UUIDv4& tId, const TaskInfo* pTask, TaskPriority prio) noexcept : taskid(tId), parent(pTask), priority(prio), error_handler(), pending_error() {}
+        TaskInfo() : taskid(), parent(nullptr), priority(), error_handler(), pending_error() {}
+        TaskInfo(const UUIDv4& tId, const TaskInfo* pTask, TaskPriority prio) : taskid(tId), parent(pTask), priority(prio), error_handler(), pending_error() {}
     };
 
     template<ConceptUnionRepr U> //U must be a union of all possible types stored in the environment
@@ -93,10 +93,10 @@ namespace ᐸRuntimeᐳ
     public:        
         TaskEnvironment<U> environment;
 
-        TaskInfoRepr() noexcept : TaskInfo(), environment() {}
-        TaskInfoRepr(const UUIDv4& tId, const TaskInfo* pTask, TaskPriority prio) noexcept : TaskInfo(tId, pTask, prio), environment() {}
+        TaskInfoRepr() : TaskInfo(), environment() {}
+        TaskInfoRepr(const UUIDv4& tId, const TaskInfo* pTask, TaskPriority prio) : TaskInfo(tId, pTask, prio), environment() {}
 
-        TaskInfoRepr* asRepr(TaskInfo* current_task) noexcept
+        TaskInfoRepr* asRepr(TaskInfo* current_task)
         {
             return static_cast<TaskInfoRepr<U>*>(current_task);
         }

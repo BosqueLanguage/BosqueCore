@@ -12,15 +12,15 @@ namespace ᐸRuntimeᐳ
 
         uint8_t data[BUFFER_ENTRY_SIZE];
 
-        constexpr ByteBufferEntry() noexcept : data{0} {}
-        constexpr ByteBufferEntry(const std::initializer_list<uint8_t>& initdata) noexcept : data{0} { std::copy(initdata.begin(), initdata.end(), this->data); }
-        constexpr ByteBufferEntry(const ByteBufferEntry& other) noexcept = default;
+        constexpr ByteBufferEntry() : data{0} {}
+        constexpr ByteBufferEntry(const std::initializer_list<uint8_t>& initdata) : data{0} { std::copy(initdata.begin(), initdata.end(), this->data); }
+        constexpr ByteBufferEntry(const ByteBufferEntry& other) = default;
 
-        inline constexpr uint8_t* getData() noexcept { return this->data; }
-        inline constexpr const uint8_t* getData() const noexcept { return this->data; }
+        inline constexpr uint8_t* getData() { return this->data; }
+        inline constexpr const uint8_t* getData() const { return this->data; }
 
-        inline constexpr uint8_t getInner(size_t index) const noexcept { return this->data[index]; }
-        inline constexpr uint8_t getFull(size_t index, uint8_t value) const noexcept { return this->data[index % BUFFER_ENTRY_SIZE]; }
+        inline constexpr uint8_t getInner(size_t index) const { return this->data[index]; }
+        inline constexpr uint8_t getFull(size_t index, uint8_t value) const { return this->data[index % BUFFER_ENTRY_SIZE]; }
     };
 
     class ByteBufferBlock
@@ -31,11 +31,11 @@ namespace ᐸRuntimeᐳ
         ByteBufferEntry* entries[BUFFER_BLOCK_ENTRY_COUNT];
         ByteBufferBlock* next;
 
-        ByteBufferBlock(size_t entryCount) noexcept : entries{0}, next(nullptr) {}
-        ByteBufferBlock(ByteBufferEntry* entries, size_t entryCount, ByteBufferBlock* next) noexcept : entries{0}, next(next) { std::copy(entries, entries + entryCount, this->entries); }
-        ByteBufferBlock(const ByteBufferBlock& other) noexcept = default;
+        ByteBufferBlock(size_t entryCount) : entries{0}, next(nullptr) {}
+        ByteBufferBlock(ByteBufferEntry* entries, size_t entryCount, ByteBufferBlock* next) : entries{0}, next(next) { std::copy(entries, entries + entryCount, this->entries); }
+        ByteBufferBlock(const ByteBufferBlock& other) = default;
 
-        inline constexpr ByteBufferEntry* getEntryFor(size_t index) const noexcept 
+        inline constexpr ByteBufferEntry* getEntryFor(size_t index) const 
         {
             constexpr size_t bbvolume = ByteBufferBlock::BUFFER_BLOCK_ENTRY_COUNT * ByteBufferEntry::BUFFER_ENTRY_SIZE;
 
@@ -54,10 +54,10 @@ namespace ᐸRuntimeᐳ
         ByteBufferEntry* buff;
         ByteBufferBlock* node;
 
-        constexpr ᐸByteBufferTreeUnionᐳ() noexcept : buff() {}
-        constexpr ᐸByteBufferTreeUnionᐳ(const ᐸByteBufferTreeUnionᐳ& other) noexcept = default;
-        constexpr ᐸByteBufferTreeUnionᐳ(ByteBufferEntry* b) noexcept : buff(b) {}
-        constexpr ᐸByteBufferTreeUnionᐳ(ByteBufferBlock* n) noexcept : node(n) {}
+        constexpr ᐸByteBufferTreeUnionᐳ() : buff() {}
+        constexpr ᐸByteBufferTreeUnionᐳ(const ᐸByteBufferTreeUnionᐳ& other) = default;
+        constexpr ᐸByteBufferTreeUnionᐳ(ByteBufferEntry* b) : buff(b) {}
+        constexpr ᐸByteBufferTreeUnionᐳ(ByteBufferBlock* n) : node(n) {}
     };
     using BufferTree = ᐸRuntimeᐳ::BoxedUnion<ᐸByteBufferTreeUnionᐳ>;
 
@@ -104,25 +104,25 @@ namespace ᐸRuntimeᐳ
         size_t totalbytes;
 
     public:
-        ByteBufferIterator(ByteBufferEntry* e, ByteBufferBlock* b, size_t totalbytes) noexcept : centry(e), cindex(0), cblock(b), bbindex(0), gindex(0), totalbytes(totalbytes) {}
-        ByteBufferIterator(const ByteBufferIterator& other) noexcept = default;
+        ByteBufferIterator(ByteBufferEntry* e, ByteBufferBlock* b, size_t totalbytes) : centry(e), cindex(0), cblock(b), bbindex(0), gindex(0), totalbytes(totalbytes) {}
+        ByteBufferIterator(const ByteBufferIterator& other) = default;
 
-        inline bool valid() const noexcept 
+        inline bool valid() const 
         {
             return (this->gindex < totalbytes);
         }
 
-        inline uint8_t get() const noexcept 
+        inline uint8_t get() const 
         {
             return this->centry->data[this->cindex];
         }
 
-        inline size_t getIndex() const noexcept 
+        inline size_t getIndex() const 
         {
             return this->gindex;
         }
 
-        void nextslow() noexcept
+        void nextslow()
         {
             if(this->gindex < this->totalbytes) {
                 this->bbindex++;
@@ -137,7 +137,7 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        inline void next() noexcept 
+        inline void next() 
         {
             this->gindex++;
 
@@ -150,7 +150,7 @@ namespace ᐸRuntimeᐳ
         }
 
         //for lexing 
-        inline void advance(size_t& startidx, size_t& endidx, size_t count) noexcept
+        inline void advance(size_t& startidx, size_t& endidx, size_t count)
         {
             startidx = this->gindex;
             endidx = startidx + count;
@@ -159,7 +159,7 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        inline void advanceWithExtract(size_t& startidx, size_t& endidx, char* outbuf, size_t count) noexcept
+        inline void advanceWithExtract(size_t& startidx, size_t& endidx, char* outbuf, size_t count)
         {
             startidx = this->gindex;
             endidx = startidx + count;
@@ -178,15 +178,15 @@ namespace ᐸRuntimeᐳ
         size_t bytes;
 
     public:
-        constexpr ByteBuffer() noexcept : tree(), bytes(0) {}
-        constexpr ByteBuffer(ByteBufferEntry* b) noexcept : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ᐸByteBufferTreeUnionᐳ>(&ᐸRuntimeᐳ::g_typeinfo_ByteBufferEntry, ᐸRuntimeᐳ::ᐸByteBufferTreeUnionᐳ(b))), bytes(ByteBufferEntry::BUFFER_ENTRY_SIZE) {}
-        ByteBuffer(ByteBufferBlock* n) noexcept : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ᐸByteBufferTreeUnionᐳ>(&ᐸRuntimeᐳ::g_typeinfo_ByteBufferBlock, ᐸRuntimeᐳ::ᐸByteBufferTreeUnionᐳ(n))), bytes(0) {}
-        ByteBuffer(const BufferTree& t, size_t b) noexcept : tree(t), bytes(b) {}
-        ByteBuffer(const ByteBuffer& other) noexcept = default;
+        constexpr ByteBuffer() : tree(), bytes(0) {}
+        constexpr ByteBuffer(ByteBufferEntry* b) : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ᐸByteBufferTreeUnionᐳ>(&ᐸRuntimeᐳ::g_typeinfo_ByteBufferEntry, ᐸRuntimeᐳ::ᐸByteBufferTreeUnionᐳ(b))), bytes(ByteBufferEntry::BUFFER_ENTRY_SIZE) {}
+        ByteBuffer(ByteBufferBlock* n) : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ᐸByteBufferTreeUnionᐳ>(&ᐸRuntimeᐳ::g_typeinfo_ByteBufferBlock, ᐸRuntimeᐳ::ᐸByteBufferTreeUnionᐳ(n))), bytes(0) {}
+        ByteBuffer(const BufferTree& t, size_t b) : tree(t), bytes(b) {}
+        ByteBuffer(const ByteBuffer& other) = default;
 
-        inline constexpr size_t bytes() const noexcept { return this->bytes; }
+        inline constexpr size_t bytes() const { return this->bytes; }
 
-        ByteBufferIterator iterator() const noexcept 
+        ByteBufferIterator iterator() const 
         {
             if(this->tree.typeinfo->bsqtypeid == ᐸRuntimeᐳ::WELL_KNOWN_TYPE_ID_BYTEBUFFERENTRY) {
                 return ByteBufferIterator(this->tree.data.buff, nullptr, this->bytes);

@@ -2,7 +2,7 @@
 
 namespace ᐸRuntimeᐳ
 {
-    std::optional<None> BSQONParser::parseNone() noexcept
+    std::optional<None> BSQONParser::parseNone() 
     {
         if(this->lexer.current().tokentype == BSQONTokenType::LiteralNone) {
             this->lexer.consume();
@@ -13,7 +13,7 @@ namespace ᐸRuntimeᐳ
     }
 
     
-    std::optional<Bool> BSQONParser::parseBool() noexcept
+    std::optional<Bool> BSQONParser::parseBool() 
     {
         if(this->lexer.current().tokentype == BSQONTokenType::LiteralTrue) {
             this->lexer.consume();
@@ -28,7 +28,7 @@ namespace ᐸRuntimeᐳ
     }
 
 
-    std::optional<Nat> BSQONParser::parseNat() noexcept
+    std::optional<Nat> BSQONParser::parseNat() 
     {
         if(this->lexer.current().tokentype == BSQONTokenType::LiteralNat) {
             errno = 0;
@@ -47,7 +47,7 @@ namespace ᐸRuntimeᐳ
         return std::nullopt;
     }
 
-    std::optional<Int> BSQONParser::parseInt() noexcept
+    std::optional<Int> BSQONParser::parseInt() 
     {
         if(this->lexer.current().tokentype == BSQONTokenType::LiteralInt) {
             errno = 0;
@@ -66,7 +66,7 @@ namespace ᐸRuntimeᐳ
         return std::nullopt;
     }
 
-    std::optional<ChkNat> BSQONParser::parseChkNat() noexcept
+    std::optional<ChkNat> BSQONParser::parseChkNat() 
     {
         if(this->lexer.current().tokentype == BSQONTokenType::LiteralChkNat) {
             if(this->lexer.current().scvalue[0] == '#') {
@@ -94,7 +94,7 @@ namespace ᐸRuntimeᐳ
         return std::nullopt;
     }
 
-    std::optional<ChkInt> BSQONParser::parseChkInt() noexcept
+    std::optional<ChkInt> BSQONParser::parseChkInt() 
     {
         if(this->lexer.current().tokentype == BSQONTokenType::LiteralChkInt) {
             if(this->lexer.current().scvalue[0] == '#') {

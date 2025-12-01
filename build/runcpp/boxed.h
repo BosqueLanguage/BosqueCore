@@ -13,21 +13,21 @@ namespace ᐸRuntimeᐳ
         T data;
     
     private:
-        constexpr Option(const TypeInfoBase* ti) noexcept : typeinfo(ti), data() {}
-        constexpr Option(const TypeInfoBase* ti, const T& d) noexcept : typeinfo(ti), data(d) {}
+        constexpr Option(const TypeInfoBase* ti) : typeinfo(ti), data() {}
+        constexpr Option(const TypeInfoBase* ti, const T& d) : typeinfo(ti), data(d) {}
 
     public:
-        constexpr Option() noexcept : typeinfo(nullptr), data() {};
-        constexpr Option(const Option& other) noexcept = default;
+        constexpr Option() : typeinfo(nullptr), data() {};
+        constexpr Option(const Option& other) = default;
         
         // Special none option bits
-        constexpr bool isNone() const noexcept { return this->typeinfo == &g_typeinfo_None; }
+        constexpr bool isNone() const { return this->typeinfo == &g_typeinfo_None; }
         static constexpr Option<T> optnone = Option(&g_typeinfo_None);
 
         // Some option bits
-        constexpr bool isSome() const noexcept { return this->typeinfo != &g_typeinfo_None; }
+        constexpr bool isSome() const { return this->typeinfo != &g_typeinfo_None; }
 
-        static Option<T> makeSome(const TypeInfoBase* ti, const T& d) noexcept { return Option<T>(ti, d); }
+        static Option<T> makeSome(const TypeInfoBase* ti, const T& d) { return Option<T>(ti, d); }
     };
 
     //
@@ -44,17 +44,17 @@ namespace ᐸRuntimeᐳ
 
     private:
         static_assert(std::is_union_v<U>, "BoxedUnion requires a union type U");
-        constexpr BoxedUnion(const TypeInfoBase* ti) noexcept : typeinfo(ti), data() {}
+        constexpr BoxedUnion(const TypeInfoBase* ti) : typeinfo(ti), data() {}
 
     public:
-        constexpr BoxedUnion() noexcept : typeinfo(nullptr), data() {};
-        constexpr BoxedUnion(const TypeInfoBase* ti, const U& d) noexcept : typeinfo(ti), data(d) {}
-        constexpr BoxedUnion(const BoxedUnion& other) noexcept = default;
+        constexpr BoxedUnion() : typeinfo(nullptr), data() {};
+        constexpr BoxedUnion(const TypeInfoBase* ti, const U& d) : typeinfo(ti), data(d) {}
+        constexpr BoxedUnion(const BoxedUnion& other) = default;
         
         // Note -- inject and extract are generated for each use based on the generation union type (see strings for example)
 
         template<typename V>
-        BoxedUnion<V> convert() const noexcept 
+        BoxedUnion<V> convert() const 
         {
             static_assert(std::is_union_v<V>, "BoxedUnion convert requires a union type V");
             constexpr size_t copysize = std::min(sizeof(U), sizeof(V));
@@ -66,7 +66,7 @@ namespace ᐸRuntimeᐳ
         }
 
         template<typename T, size_t idx>
-        T accessfield() const noexcept 
+        T accessfield() const 
         {
             if(this->typeinfo->tag != LayoutTag::Ref) {
                 //not a pointer, just load the slot index as T
@@ -80,7 +80,7 @@ namespace ᐸRuntimeᐳ
         }
 
         template<typename T>
-        T accessfield(size_t idx) const noexcept 
+        T accessfield(size_t idx) const 
         {
             if(this->typeinfo->tag != LayoutTag::Ref) {
                 //not a pointer, just load the slot index as T

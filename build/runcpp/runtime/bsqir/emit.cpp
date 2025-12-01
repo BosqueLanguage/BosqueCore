@@ -3,7 +3,7 @@
 
 namespace ᐸRuntimeᐳ
 {
-    void BSQEmitBufferMgr::prepForEmit() noexcept
+    void BSQEmitBufferMgr::prepForEmit()
     {
         this->cpos = nullptr;
         this->epos = nullptr;
@@ -12,7 +12,7 @@ namespace ᐸRuntimeᐳ
         this->buffers.clear();
     }
         
-    void BSQEmitBufferMgr::writeSlow(char c) noexcept
+    void BSQEmitBufferMgr::writeSlow(char c)
     {
         if(this->cpos == this->epos) {
             BSQIOBuffer newbuf = xxxx; //CALL ALLOCATOR HERE TO GET A NEW BUFFER -- either from IO or from GC Runtime -- depends on the output target
@@ -27,7 +27,7 @@ namespace ᐸRuntimeᐳ
         this->bytes++;
     }
 
-    void BSQEmitBufferMgr::writeSlowTail(const char* str, size_t slen) noexcept
+    void BSQEmitBufferMgr::writeSlowTail(const char* str, size_t slen)
     {
         BSQIOBuffer newbuf = xxxx; //CALL ALLOCATOR HERE TO GET A NEW BUFFER -- either from IO or from GC Runtime -- depends on the output target
         this->buffers.push_back(newbuf);
@@ -40,7 +40,7 @@ namespace ᐸRuntimeᐳ
         this->bytes += slen;
     }
         
-    std::list<BSQIOBuffer>&& BSQEmitBufferMgr::completeEmit(size_t& bytes) noexcept
+    std::list<BSQIOBuffer>&& BSQEmitBufferMgr::completeEmit(size_t& bytes)
     {
         this->cpos = nullptr;
         this->epos = nullptr;
@@ -52,12 +52,12 @@ namespace ᐸRuntimeᐳ
         return std::move(this->buffers);
     }
 
-    void BSQONEmitter::emitNone() noexcept
+    void BSQONEmitter::emitNone()
     {
         this->bufferMgr.writeImmediate("none");
     }
 
-    void BSQONEmitter::emitBool(Bool b) noexcept
+    void BSQONEmitter::emitBool(Bool b)
     {
         if(Bool::toBool(b)) {
             this->bufferMgr.writeImmediate("true");
@@ -67,17 +67,17 @@ namespace ᐸRuntimeᐳ
         }
     }
         
-    void BSQONEmitter::emitNat(Nat n) noexcept
+    void BSQONEmitter::emitNat(Nat n)
     {
         this->bufferMgr.writeNumberWFormat("%llin", n.getValue());
     }
 
-    void BSQONEmitter::emitInt(Int i) noexcept
+    void BSQONEmitter::emitInt(Int i)
     {
         this->bufferMgr.writeNumberWFormat("%llii", i.getValue());
     }
 
-    void BSQONEmitter::emitChkNat(ChkNat n) noexcept
+    void BSQONEmitter::emitChkNat(ChkNat n)
     {
         if(n.isBottom()) {
             this->bufferMgr.writeImmediate("#");
@@ -92,7 +92,7 @@ namespace ᐸRuntimeᐳ
         }
     }
 
-    void BSQONEmitter::emitChkInt(ChkInt i) noexcept
+    void BSQONEmitter::emitChkInt(ChkInt i)
     {
         if(i.isBottom()) {
             this->bufferMgr.writeImmediate("#");
@@ -107,27 +107,27 @@ namespace ᐸRuntimeᐳ
         }
     }
 
-    void BSQONEmitter::emitByte(Byte b) noexcept
+    void BSQONEmitter::emitByte(Byte b)
     {
         this->bufferMgr.writeNumberWFormat("0x%x", b.getValue());
     }
 
-    void BSQONEmitter::emitCChar(CChar c) noexcept
+    void BSQONEmitter::emitCChar(CChar c)
     {
         assert(false); // Not Implemented
     }
 
-    void BSQONEmitter::emitUnicodeChar(UnicodeChar c) noexcept
+    void BSQONEmitter::emitUnicodeChar(UnicodeChar c)
     {
         assert(false); // Not Implemented
     }
 
-    void BSQONEmitter::emitCString(CString s) noexcept
+    void BSQONEmitter::emitCString(CString s)
     {
         assert(false); // Not Implemented
     }
 
-    void BSQONEmitter::emitString(String s) noexcept
+    void BSQONEmitter::emitString(String s)
     {
         assert(false); // Not Implemented
     }

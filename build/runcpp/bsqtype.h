@@ -53,12 +53,12 @@ namespace ᐸRuntimeᐳ
         const FieldOffsetInfo* vtable;
     };
 
-    constexpr uint32_t byteSizeToSlotCount(size_t bytesize) noexcept
+    constexpr uint32_t byteSizeToSlotCount(size_t bytesize)
     {
         return bytesize / sizeof(uint64_t);
     }
 
-    constexpr uint32_t slotCountToByteSize(size_t slotcount) noexcept
+    constexpr uint32_t slotCountToByteSize(size_t slotcount)
     {
         return slotcount * sizeof(uint64_t);
     }

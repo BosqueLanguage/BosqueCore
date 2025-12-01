@@ -137,18 +137,18 @@ namespace ᐸRuntimeᐳ
     public:
         TaskInfo* current_task;
 
-        ThreadLocalInfo() noexcept : current_task(nullptr) {}
+        ThreadLocalInfo() : current_task(nullptr) {}
 
         // Cannot copy or move thread local info
         ThreadLocalInfo(const ThreadLocalInfo&) = delete;
         ThreadLocalInfo &operator=(const ThreadLocalInfo&) = delete;
 
-        static void generate_uuid4(char out[16]) noexcept
+        static void generate_uuid4(char out[16])
         {
             assert(false); //UUIDv7 generation not yet implemented;
         }
 
-        static void generate_uuid7(char out[16]) noexcept
+        static void generate_uuid7(char out[16])
         {
             assert(false); //UUIDv7 generation not yet implemented;
         }

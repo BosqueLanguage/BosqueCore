@@ -16,14 +16,14 @@ namespace ᐸRuntimeᐳ
         BSQONLexer lexer;
 
     public:
-        BSQONParser(ByteBufferIterator iter) noexcept : lexer(iter) {}
+        BSQONParser(ByteBufferIterator iter) : lexer(iter) {}
 
-        std::optional<None> parseNone() noexcept;
-        std::optional<Bool> parseBool() noexcept;
-        std::optional<Nat> parseNat() noexcept;
-        std::optional<Int> parseInt() noexcept;
-        std::optional<ChkNat> parseChkNat() noexcept;
-        std::optional<ChkInt> parseChkInt() noexcept;
+        std::optional<None> parseNone();
+        std::optional<Bool> parseBool();
+        std::optional<Nat> parseNat();
+        std::optional<Int> parseInt();
+        std::optional<ChkNat> parseChkNat();
+        std::optional<ChkInt> parseChkInt();
     };
 
     class JSONParser
