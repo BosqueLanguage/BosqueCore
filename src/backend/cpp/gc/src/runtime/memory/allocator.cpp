@@ -162,8 +162,8 @@ PageInfo* GCAllocator::getFreshPageForEvacuation() noexcept
 void GCAllocator::allocatorRefreshAllocationPage(__CoreGC::TypeInfoBase* typeinfo) noexcept
 {
     // Just to make sure high 32 bits are stored
-    if(gtl_info.typeptr_high32 == 0) {
-        gtl_info.typeptr_high32 = reinterpret_cast<uint64_t>(typeinfo) >> NUM_TYPEPTR_BITS;
+    if(g_typeptr_high32 == 0) {
+        const_cast<uint64_t&>(g_typeptr_high32) = reinterpret_cast<uint64_t>(typeinfo) >> NUM_TYPEPTR_BITS;
     }
 
     if(this->alloc_page != nullptr) {

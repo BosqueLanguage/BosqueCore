@@ -108,19 +108,12 @@ struct BSQMemoryTheadLocalInfo
     int32_t forward_table_index;
     void** forward_table;
 
-    uint64_t typeptr_high32; // high 32 bits taken from a typeinfo pointer
-
     float nursery_usage = 0.0f;
 
     ArrayList<void*> pending_roots; //the worklist of roots that we need to do visits from
     ArrayList<MarkStackEntry> visit_stack; //stack for doing a depth first visit (and topo organization) of the object graph
 
     ArrayList<void*> pending_young; //the list of young objects that need to be processed
-    ArrayList<void*> pending_decs; //the list of objects that need to be decremented 
-
-    //TODO: Once PID is implemented this will need to use this->max_decrement_count
-    uint32_t decremented_pages_index = 0;
-    PageInfo* decremented_pages[BSQ_INITIAL_MAX_DECREMENT_COUNT];
 
     size_t max_decrement_count;
 
@@ -137,7 +130,7 @@ struct BSQMemoryTheadLocalInfo
     bool enable_global_rescan         = false;
 #endif
 
-    BSQMemoryTheadLocalInfo() noexcept : tl_id(0), g_gcallocs(nullptr), native_stack_base(nullptr), native_stack_contents(), native_register_contents(), roots_count(0), roots(nullptr), old_roots_count(0), old_roots(nullptr), forward_table_index(FWD_TABLE_START), forward_table(nullptr), typeptr_high32(0), pending_roots(), visit_stack(), pending_young(), pending_decs(), max_decrement_count(BSQ_INITIAL_MAX_DECREMENT_COUNT), mstats() { }
+    BSQMemoryTheadLocalInfo() noexcept : tl_id(0), g_gcallocs(nullptr), native_stack_base(nullptr), native_stack_contents(), native_register_contents(), roots_count(0), roots(nullptr), old_roots_count(0), old_roots(nullptr), forward_table_index(FWD_TABLE_START), forward_table(nullptr), pending_roots(), visit_stack(), pending_young(), max_decrement_count(BSQ_INITIAL_MAX_DECREMENT_COUNT), mstats() { }
 
     inline GCAllocator* getAllocatorForPageSize(PageInfo* page) noexcept {
         uint8_t idx = this->g_gcallocs_lookuptable[page->allocsize >> 3];
