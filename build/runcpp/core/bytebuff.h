@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../../common.h"
-#include "boxed.h"
+#include "../common.h"
+#include "../boxed.h"
 
 namespace ᐸRuntimeᐳ 
 {
@@ -32,7 +32,7 @@ namespace ᐸRuntimeᐳ
         ByteBufferBlock* next;
 
         ByteBufferBlock(size_t entryCount) : entries{0}, next(nullptr) {}
-        ByteBufferBlock(ByteBufferEntry* entries, size_t entryCount, ByteBufferBlock* next) : entries{0}, next(next) { std::copy(entries, entries + entryCount, this->entries); }
+        ByteBufferBlock(ByteBufferEntry** entries, size_t entryCount, ByteBufferBlock* next) : entries{0}, next(next) { std::copy(entries, entries + entryCount, this->entries); }
         ByteBufferBlock(const ByteBufferBlock& other) = default;
 
         inline constexpr ByteBufferEntry* getEntryFor(size_t index) const 
@@ -49,17 +49,17 @@ namespace ᐸRuntimeᐳ
         }
     };
 
-    union ᐸByteBufferTreeUnionᐳ
+    union ByteBufferTreeUnion
     {
         ByteBufferEntry* buff;
         ByteBufferBlock* node;
 
-        constexpr ᐸByteBufferTreeUnionᐳ() : buff() {}
-        constexpr ᐸByteBufferTreeUnionᐳ(const ᐸByteBufferTreeUnionᐳ& other) = default;
-        constexpr ᐸByteBufferTreeUnionᐳ(ByteBufferEntry* b) : buff(b) {}
-        constexpr ᐸByteBufferTreeUnionᐳ(ByteBufferBlock* n) : node(n) {}
+        constexpr ByteBufferTreeUnion() : buff() {}
+        constexpr ByteBufferTreeUnion(const ByteBufferTreeUnion& other) = default;
+        constexpr ByteBufferTreeUnion(ByteBufferEntry* b) : buff(b) {}
+        constexpr ByteBufferTreeUnion(ByteBufferBlock* n) : node(n) {}
     };
-    using BufferTree = ᐸRuntimeᐳ::BoxedUnion<ᐸByteBufferTreeUnionᐳ>;
+    using BufferTree = ᐸRuntimeᐳ::BoxedUnion<ByteBufferTreeUnion>;
 
     constexpr TypeInfoBase g_typeinfo_ByteBufferEntry = {
         WELL_KNOWN_TYPE_ID_BYTEBUFFERENTRY,
@@ -175,25 +175,25 @@ namespace ᐸRuntimeᐳ
     {
     private:
         BufferTree tree;
-        size_t bytes;
+        size_t bytesize;
 
     public:
-        constexpr ByteBuffer() : tree(), bytes(0) {}
-        constexpr ByteBuffer(ByteBufferEntry* b) : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ᐸByteBufferTreeUnionᐳ>(&ᐸRuntimeᐳ::g_typeinfo_ByteBufferEntry, ᐸRuntimeᐳ::ᐸByteBufferTreeUnionᐳ(b))), bytes(ByteBufferEntry::BUFFER_ENTRY_SIZE) {}
-        ByteBuffer(ByteBufferBlock* n) : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ᐸByteBufferTreeUnionᐳ>(&ᐸRuntimeᐳ::g_typeinfo_ByteBufferBlock, ᐸRuntimeᐳ::ᐸByteBufferTreeUnionᐳ(n))), bytes(0) {}
-        ByteBuffer(const BufferTree& t, size_t b) : tree(t), bytes(b) {}
+        constexpr ByteBuffer() : tree(), bytesize(0) {}
+        constexpr ByteBuffer(ByteBufferEntry* b) : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ByteBufferTreeUnion>(&ᐸRuntimeᐳ::g_typeinfo_ByteBufferEntry, ᐸRuntimeᐳ::ByteBufferTreeUnion(b))), bytesize(ByteBufferEntry::BUFFER_ENTRY_SIZE) {}
+        ByteBuffer(ByteBufferBlock* n) : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ByteBufferTreeUnion>(&ᐸRuntimeᐳ::g_typeinfo_ByteBufferBlock, ᐸRuntimeᐳ::ByteBufferTreeUnion(n))), bytesize(0) {}
+        ByteBuffer(const BufferTree& t, size_t b) : tree(t), bytesize(b) {}
         ByteBuffer(const ByteBuffer& other) = default;
 
-        inline constexpr size_t bytes() const { return this->bytes; }
+        inline constexpr size_t bytes() const { return this->bytesize; }
 
         ByteBufferIterator iterator() const 
         {
             if(this->tree.typeinfo->bsqtypeid == ᐸRuntimeᐳ::WELL_KNOWN_TYPE_ID_BYTEBUFFERENTRY) {
-                return ByteBufferIterator(this->tree.data.buff, nullptr, this->bytes);
+                return ByteBufferIterator(this->tree.data.buff, nullptr, this->bytesize);
             }
             else {
                 ByteBufferBlock* root = this->tree.data.node;
-                return ByteBufferIterator(root->entries[0], root, this->bytes);
+                return ByteBufferIterator(root->entries[0], root, this->bytesize);
             }
         }
     };

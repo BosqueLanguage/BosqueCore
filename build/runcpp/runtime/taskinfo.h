@@ -18,7 +18,7 @@ namespace ᐸRuntimeᐳ
         U value;
 
         constexpr TaskEnvironmentEntry() : key(), typeinfo(nullptr), value(nullptr) {}
-        constexpr TaskEnvironmentEntry(const CString& k, const TypeInfoBase* ti, const U& u) : key(k), typeinfo(ti), value(v) {}
+        constexpr TaskEnvironmentEntry(const CString& k, const TypeInfoBase* ti, const U& u) : key(k), typeinfo(ti), value(u) {}
         constexpr TaskEnvironmentEntry(const TaskEnvironmentEntry& other) = default;
     };
 
@@ -36,7 +36,7 @@ namespace ᐸRuntimeᐳ
             return std::find(this->tenv.begin(), this->tenv.end(), key) != this->tenv.end();
         }
 
-        void setEntry(const CString& key, const TypeInfoBase* typeinfo, void* value)
+        void setEntry(const CString& key, const TypeInfoBase* typeinfo, const U& value)
         {
             this->tenv.emplace_front(key, typeinfo, value);
         }

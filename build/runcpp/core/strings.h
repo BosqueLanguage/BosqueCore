@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../common.h"
-#include "boxed.h"
+#include "../boxed.h"
 
 namespace ᐸRuntimeᐳ
 {
@@ -11,7 +11,7 @@ namespace ᐸRuntimeᐳ
         Black
     };
 
-    union CStrTree;
+    class CStrNode;
 
     class CStrBuff
     {
@@ -40,6 +40,18 @@ namespace ᐸRuntimeᐳ
         constexpr char at(size_t index) const { return this->data[index + 1]; }
     };
 
+    union CStrTreeUnion
+    {
+        CStrBuff buff;
+        CStrNode* node;
+
+        constexpr CStrTreeUnion() : buff() {}
+        constexpr CStrTreeUnion(const CStrTreeUnion& other) = default;
+        constexpr CStrTreeUnion(const CStrBuff& b) : buff(b) {}
+        constexpr CStrTreeUnion(CStrNode* n) : node(n) {}
+    };
+    using CStrTree = ᐸRuntimeᐳ::BoxedUnion<CStrTreeUnion>;
+
     class CStrNode
     {
     public:
@@ -52,18 +64,6 @@ namespace ᐸRuntimeᐳ
         constexpr CStrNode(size_t cnt, RColor c, CStrTree* l, CStrTree* r) : count(cnt), color(c), left(l), right(r) {}
         constexpr CStrNode(const CStrNode& other) = default;
     };
-
-    union ᐸCStrTreeUnionᐳ
-    {
-        CStrBuff buff;
-        CStrNode* node;
-
-        constexpr ᐸCStrTreeUnionᐳ() : buff() {}
-        constexpr ᐸCStrTreeUnionᐳ(const ᐸCStrTreeUnionᐳ& other) = default;
-        constexpr ᐸCStrTreeUnionᐳ(const CStrBuff& b) : buff(b) {}
-        constexpr ᐸCStrTreeUnionᐳ(CStrNode* n) : node(n) {}
-    };
-    using CStrTree = ᐸRuntimeᐳ::BoxedUnion<ᐸCStrTreeUnionᐳ>;
 
     constexpr TypeInfoBase g_typeinfo_CStrBuff = {
         WELL_KNOWN_TYPE_ID_CSTRBUFF,
@@ -102,8 +102,8 @@ namespace ᐸRuntimeᐳ
 
     public:
         constexpr CString() : tree() {}
-        constexpr CString(const ᐸRuntimeᐳ::CStrBuff& b) : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ᐸCStrTreeUnionᐳ>(&ᐸRuntimeᐳ::g_typeinfo_CStrBuff, ᐸRuntimeᐳ::ᐸCStrTreeUnionᐳ(b))) {}
-        constexpr CString(ᐸRuntimeᐳ::CStrNode* n) : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ᐸCStrTreeUnionᐳ>(&ᐸRuntimeᐳ::g_typeinfo_CStrNode, ᐸRuntimeᐳ::ᐸCStrTreeUnionᐳ(n))) {}
+        constexpr CString(const ᐸRuntimeᐳ::CStrBuff& b) : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::CStrTreeUnion>(&ᐸRuntimeᐳ::g_typeinfo_CStrBuff, ᐸRuntimeᐳ::CStrTreeUnion(b))) {}
+        constexpr CString(ᐸRuntimeᐳ::CStrNode* n) : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::CStrTreeUnion>(&ᐸRuntimeᐳ::g_typeinfo_CStrNode, ᐸRuntimeᐳ::CStrTreeUnion(n))) {}
         constexpr CString(const ᐸRuntimeᐳ::CStrTree& t) : tree(t) {}
         constexpr CString(const CString& other) = default;
 
