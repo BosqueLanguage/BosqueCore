@@ -17,8 +17,8 @@
 struct DecsInfo {
     ArrayList<void*> pending_decs; //the list of objects that need to be decremented 
     
-    //TODO: Once PID we will need to use variant max dec count
-    PageInfo* decdpages[BSQ_INITIAL_MAX_DECREMENT_COUNT];
+    // Not sure what a good count would be (maybe just use array list?)
+    PageInfo* decdpages[10'000];
     uint32_t decdpages_idx = 0;
 
     DecsInfo(): pending_decs() {
@@ -174,12 +174,8 @@ static inline void tryReprocessDecrementedPages(BSQMemoryTheadLocalInfo& tinfo, 
     decsinfo.decdpages_idx = 0;
 }
 
-// We may be interested in moving rc_lock into the actual decrementObject phase
-// rather than locking for the full process
 static void finishDecrements(DecsInfo& decsinfo) noexcept
 {
-    GC_REFCT_LOCK_ACQUIRE();
-
     while(!decsinfo.pending_decs.isEmpty()) {
         void* obj = decsinfo.pending_decs.pop_front();
 
@@ -193,8 +189,6 @@ static void finishDecrements(DecsInfo& decsinfo) noexcept
         PageInfo* p = PageInfo::extractPageFromPointer(obj);
         updateDecrementedPages(p, decsinfo);
     }
-
-    GC_REFCT_LOCK_RELEASE();
 }
 
 static void processDecrements(BSQMemoryTheadLocalInfo& tinfo, DecsInfo& decsinfo) noexcept
@@ -217,6 +211,7 @@ static void processDecrements(BSQMemoryTheadLocalInfo& tinfo, DecsInfo& decsinfo
 
         deccount++;
     }
+    tryReprocessDecrementedPages(gtl_info, decsinfo);
 
     GC_REFCT_LOCK_RELEASE();
 
@@ -546,7 +541,6 @@ void collect() noexcept
     RC_STATS_START();
 
     computeDeadRootsForDecrement(gtl_info, decsinfo);
-    tryReprocessDecrementedPages(gtl_info, decsinfo);
     processDecrements(gtl_info, decsinfo);
 
     RC_STATS_END(gtl_info, rc_times);
