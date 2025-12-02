@@ -1,9 +1,9 @@
 #pragma once
 
 #include "../common.h"
-#include "../bsqtype.h"
 
-#include "../boxed.h"
+#include "bsqtype.h"
+#include "boxed.h"
 
 namespace ᐸRuntimeᐳ
 {

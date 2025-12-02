@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common.h"
+#include "../common.h"
 
 #define BSQ_PTR_MASK_NOP ('0')
 #define BSQ_PTR_MASK_PTR ('1')

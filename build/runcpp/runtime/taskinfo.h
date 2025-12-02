@@ -1,7 +1,8 @@
 #pragma once
 
 #include "../common.h"
-#include "../bsqtype.h"
+
+#include "../core/bsqtype.h"
 #include "../core/uuids.h"
 #include "../core/strings.h"
 
