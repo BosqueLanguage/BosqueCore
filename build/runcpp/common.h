@@ -19,7 +19,8 @@
 #include <type_traits>
 #include <concepts>
 
-#include <threads.h>
+#include <mutex>
+#include <thread>
 
 //Only for internal diagnostics
 #include <assert.h>
@@ -132,16 +133,16 @@ namespace ᐸRuntimeᐳ
     //forward declaration of types that are stored in a thread local way
     class TaskInfo;
 
-    class ThreadLocalInfo
+    class BosqueThreadLocalInfo
     {
     public:
         TaskInfo* current_task;
 
-        ThreadLocalInfo() : current_task(nullptr) {}
+        BosqueThreadLocalInfo() : current_task(nullptr) {}
 
         // Cannot copy or move thread local info
-        ThreadLocalInfo(const ThreadLocalInfo&) = delete;
-        ThreadLocalInfo &operator=(const ThreadLocalInfo&) = delete;
+        BosqueThreadLocalInfo(const BosqueThreadLocalInfo&) = delete;
+        BosqueThreadLocalInfo &operator=(const BosqueThreadLocalInfo&) = delete;
 
         static void generate_uuid4(char out[16])
         {
@@ -155,5 +156,7 @@ namespace ᐸRuntimeᐳ
     };
 
 
-    extern thread_local ThreadLocalInfo tl_info;
+    extern thread_local BosqueThreadLocalInfo tl_info;
+
+    //See also allocator/alloc.h for allocator specific thread local and global info -- no other globals should be hanging around!
 }

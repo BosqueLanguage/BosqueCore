@@ -22,11 +22,14 @@ class TransformCPPNameManager {
             .replace(/\(|/g, "ᐸRuntimeᐳ::EList<")
             .replace(/|\)/g, ">");
 
-        if(!bb.startsWith("BSQ_")) {
+        if(!bb.startsWith("BSQ_") && !bb.startsWith("MINT_")) {
             return bb;
         }
-        else {
+        else if(bb.startsWith("BSQ_")) {
             return "BSQ_" + s_BSQ_tag + bb.slice(3);
+        }
+        else {
+            return "MINT_" + s_BSQ_tag + bb.slice(4);
         }
     }
 

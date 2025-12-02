@@ -118,7 +118,7 @@ namespace ᐸRuntimeᐳ
             this->write('\n');
         }
 
-        ByteBufferBlock* completeEmit(size_t& bytes);
+        std::list<ByteBufferBlock>&& completeEmit(size_t& bytes);
     };
 
     class BSQONEmitter

@@ -43,7 +43,7 @@ namespace ᐸRuntimeᐳ
         this->bytes += slen;
     }
         
-    ByteBufferBlock* BSQEmitBufferMgr::completeEmit(size_t& bytes)
+    std::list<ByteBufferBlock>&& BSQEmitBufferMgr::completeEmit(size_t& bytes)
     {
         this->cpos = nullptr;
         this->epos = nullptr;
