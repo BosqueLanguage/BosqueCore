@@ -2,6 +2,16 @@
 
 namespace ᐸRuntimeᐳ
 {
+    void BSQONParser::initialize(std::list<uint8_t*>&& iobuffs)
+    {
+        this->lexer.initialize(std::move(iobuffs));
+    }
+
+    void BSQONParser::release()
+    {
+        this->lexer.release();
+    }
+
     std::optional<None> BSQONParser::parseNone() 
     {
         if(this->lexer.current().tokentype == BSQONTokenType::LiteralNone) {

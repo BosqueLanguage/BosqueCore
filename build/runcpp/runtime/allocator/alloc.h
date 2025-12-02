@@ -21,20 +21,6 @@ namespace ᐸRuntimeᐳ
         {
             return (uint8_t*)malloc(MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE);
         }
-
-        //Pin data of type T in the GC root section -- returns base pointer to pinned data for cleanup
-        template <typename T>
-        void* pin_gc_root(T v)
-        {
-            return;
-        }
-
-        //Release previously pinned GC root data -- takes the pointer returned from pin_gc_root and zeros it out of the GC root section
-        template <typename T>
-        void release_gc_root(void* ptr)
-        {
-            return;
-        }
     };
 
     class AllocatorGlobalInfo

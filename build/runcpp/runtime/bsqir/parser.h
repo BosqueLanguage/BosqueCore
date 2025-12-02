@@ -16,7 +16,10 @@ namespace ᐸRuntimeᐳ
         BSQONLexer lexer;
 
     public:
-        BSQONParser(ByteBufferIterator iter) : lexer(iter) {}
+        BSQONParser() : lexer() {}
+
+        void initialize(std::list<uint8_t*>&& iobuffs);
+        void release();
 
         std::optional<None> parseNone();
         std::optional<Bool> parseBool();
