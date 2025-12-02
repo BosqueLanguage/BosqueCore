@@ -6,12 +6,30 @@ namespace ᐸRuntimeᐳ
 {
     using REState = std::bitset<32>;
 
-    bool BSQONLexer::testchar(const ByteBufferIterator& ii, char c)
+    void BSQONLexer::initialize(std::list<uint8_t*>&& iobuffs)
+    {
+        this->iobuffs = std::move(iobuffs);
+        this->iter.initialize(this->iobuffs.begin(), this->iobuffs.size());
+        this->ctoken.clear();
+    }
+
+    void BSQONLexer::release()
+    {
+        for(auto iter = this->iobuffs.begin(); iter != this->iobuffs.end(); iter++) {
+            g_alloc_info.io_buffer_free(*iter);
+        }
+
+        this->iobuffs.clear();
+        this->iter.clear(this->iobuffs.end());
+        this->ctoken.clear();
+    }
+
+    bool BSQONLexer::testchar(const BSQLexBufferIterator& ii, char c)
     {
         return ii.valid() && (ii.get() == static_cast<uint8_t>(c));
     }
         
-    bool BSQONLexer::testchars(ByteBufferIterator ii, const char* chars)
+    bool BSQONLexer::testchars(BSQLexBufferIterator ii, const char* chars)
     {
         while(*chars != '\0') {
             if(!ii.valid() || (ii.get() != static_cast<uint8_t>(*chars))) {
@@ -54,7 +72,7 @@ namespace ᐸRuntimeᐳ
 
     bool BSQONLexer::lexIntegralHelper(bool negok, char suffix)
     {
-        ByteBufferIterator ii = this->iter;
+        BSQLexBufferIterator ii = this->iter;
         size_t startidx = ii.getIndex();
         size_t endidx = std::numeric_limits<size_t>::max();
 

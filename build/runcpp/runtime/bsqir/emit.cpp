@@ -4,25 +4,32 @@ namespace ᐸRuntimeᐳ
 {
     void BSQEmitBufferMgr::prepForEmit(bool isIOEmit)
     {
-        this->cpos = nullptr;
-        this->epos = nullptr;
+        this->cdata = g_alloc_info.io_buffer_alloc();
+
+        this->cpos = this->cdata;
+        this->epos = this->cdata + MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE;
         this->bytes = 0;
         this->indentlevel = 0;
 
-        this->buffs = nullptr;
-        std::memset(this->data, 0, sizeof(this->data));
-
-        this->isIOEmit = isIOEmit;
+        std::memset(this->cdata, 0, MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE);
+        this->iobuffs.clear();
     }
         
+    void BSQEmitBufferMgr::rotateData()
+    {
+        this->iobuffs.push_back(this->cdata);
+        this->cdata = g_alloc_info.io_buffer_alloc();
+
+        this->cpos = this->cdata;
+        this->epos = this->cdata + MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE;
+        
+        std::memset(this->cdata, 0, MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE);
+    }
+
     void BSQEmitBufferMgr::writeSlow(char c)
     {
         if(this->cpos == this->epos) {
-            BSQIOBuffer newbuf = xxxx; //CALL ALLOCATOR HERE TO GET A NEW BUFFER -- either from IO or from GC Runtime -- depends on the output target
-            this->buffers.push_back(newbuf);
-
-            this->cpos = newbuf;
-            this->epos = newbuf + BSQ_BUFFER_ALLOCATOR_BLOCK_SIZE;
+            this->rotateData();
         }
 
         *(this->cpos) = (uint8_t)c;
@@ -32,33 +39,22 @@ namespace ᐸRuntimeᐳ
 
     void BSQEmitBufferMgr::writeSlowTail(const char* str, size_t slen)
     {
-        BSQIOBuffer newbuf = xxxx; //CALL ALLOCATOR HERE TO GET A NEW BUFFER -- either from IO or from GC Runtime -- depends on the output target
-        this->buffers.push_back(newbuf);
-
-        this->cpos = newbuf;
-        this->epos = newbuf + BSQ_BUFFER_ALLOCATOR_BLOCK_SIZE;
+        this->rotateData();
 
         std::memcpy(this->cpos, str, slen);
         this->cpos += slen;
         this->bytes += slen;
     }
         
-    std::list<ByteBufferBlock>&& BSQEmitBufferMgr::completeEmit(size_t& bytes)
+    std::list<uint8_t*>&& BSQEmitBufferMgr::completeEmit(size_t& bytes)
     {
-        this->cpos = nullptr;
-        this->epos = nullptr;
-        this->indentlevel = 0;
-
+        this->rotateData();
         bytes = this->bytes;
+        
+        this->indentlevel = 0;
         this->bytes = 0;
 
-        xxxx; //flush active buffer
-
-        if(!this->isIOEmit) {
-            xxxx; //release the GC root pin
-        }
-
-        return std::move(this->buffers);
+        return std::move(this->iobuffs);
     }
 
     void BSQONEmitter::emitNone()

@@ -12,7 +12,7 @@
 namespace ᐸRuntimeᐳ
 {
     /**
-     * A buffer manager for emitting BSQON or other text formats (e.g. JSON). This should be local per thread. The buffers may be IO or GC allocated depending on the output target.
+     * A buffer manager for emitting BSQON or other text formats (e.g. JSON). This should be local per thread.
      */
     class BSQEmitBufferMgr
     {
@@ -21,15 +21,15 @@ namespace ᐸRuntimeᐳ
         uint8_t* epos;
 
         size_t bytes;
+        size_t maxbytes;
         size_t indentlevel; 
 
-        ByteBufferBlock* buffs;
-        uint8_t data[ByteBufferEntry::BUFFER_ENTRY_SIZE];
+        uint8_t* cdata;
 
-        bool isIOEmit; //whether this is an IO emit (vs GC emit) -- determines allocator used and GC root processing
+        std::list<uint8_t*> iobuffs;
 
     public:
-        BSQEmitBufferMgr() : cpos(nullptr), epos(nullptr), bytes(0), indentlevel(0) {}
+        BSQEmitBufferMgr() : cpos(nullptr), epos(nullptr), bytes(0), maxbytes(0), indentlevel(0), cdata(nullptr), iobuffs() { }
 
         void prepForEmit(bool isIOEmit);
         
@@ -43,6 +43,7 @@ namespace ᐸRuntimeᐳ
             this->indentlevel--;
         }
         
+        void rotateData();
         void writeSlow(char c);
         void writeSlowTail(const char* str, size_t slen);
 
@@ -118,7 +119,7 @@ namespace ᐸRuntimeᐳ
             this->write('\n');
         }
 
-        std::list<ByteBufferBlock>&& completeEmit(size_t& bytes);
+        std::list<uint8_t*>&& completeEmit(size_t& bytes);
     };
 
     class BSQONEmitter
@@ -129,7 +130,7 @@ namespace ᐸRuntimeᐳ
         bool sensitiveOutputEnabled;
 
     public:
-        BSQONEmitter(bool sensitiveEnabled) : bufferMgr(), sensitiveOutputEnabled(sensitiveEnabled) {}
+        BSQONEmitter() : bufferMgr(), sensitiveOutputEnabled(true) {}
 
         void emitNone();
         void emitBool(Bool b);

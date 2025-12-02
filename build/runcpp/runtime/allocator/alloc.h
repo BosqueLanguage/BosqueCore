@@ -17,7 +17,7 @@ namespace ᐸRuntimeᐳ
         //Support for IO Buffer Allocator and interop with Native code
         ////////////////
 
-        uint8_t* io_buffer_alloc()
+        void* io_buffer_alloc()
         {
             return (uint8_t*)malloc(MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE);
         }
