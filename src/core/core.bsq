@@ -495,9 +495,6 @@ namespace XCore {
 #if SMT_LIBS
     internal __intrinsic_error function s_blockingfailure<T>(): T = s_blockingfailure;
 #endif
-
-    internal function s_safeas<T, U>(v: T): U = special_function;
-    internal function s_createDirect<T, U>(t: T): U = special_function;
 }
 
 

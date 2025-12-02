@@ -386,8 +386,6 @@ enum ExpressionTag {
     CallTaskActionExpression = "CallTaskActionExpression",
 
     ParseAsTypeExpression = "ParseAsTypeExpression",
-    SafeConvertExpression = "SafeConvertExpression",
-    CreateDirectExpression = "CreateDirectExpression",
 
     InterpolateFormatStringExpression = "InterpolateFormatStringExpression",
 
@@ -1139,40 +1137,6 @@ class ParseAsTypeExpression extends Expression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         return `<${this.ttype.emit()}>(${this.exp.emit(toplevel, fmt)})`;
-    }
-}
-
-class SafeConvertExpression extends Expression {
-    readonly exp: Expression;
-    readonly srctype: TypeSignature;
-    readonly trgttype: TypeSignature;
-
-    constructor(sinfo: SourceInfo, exp: Expression, srctype: TypeSignature, trgttype: TypeSignature) {
-        super(ExpressionTag.SafeConvertExpression, sinfo);
-        this.exp = exp;
-        this.srctype = srctype;
-        this.trgttype = trgttype;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `s_safeas<${this.srctype.emit()}, ${this.trgttype.emit()}>(${this.exp.emit(toplevel, fmt)})`;
-    }
-}
-
-class CreateDirectExpression extends Expression {
-    readonly exp: Expression;
-    readonly srctype: TypeSignature;
-    readonly trgttype: TypeSignature;
-
-    constructor(sinfo: SourceInfo, exp: Expression, srctype: TypeSignature, trgttype: TypeSignature) {
-        super(ExpressionTag.CreateDirectExpression, sinfo);
-        this.exp = exp;
-        this.srctype = srctype;
-        this.trgttype = trgttype;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `s_createDirect<${this.srctype.emit()}, ${this.trgttype.emit()}>(${this.exp.emit(toplevel, fmt)})`;
     }
 }
 
@@ -2979,7 +2943,7 @@ export {
     CallNamespaceFunctionExpression, CallTypeFunctionExpression, 
     CallRefInvokeExpression, CallRefVariableExpression, CallRefThisExpression, CallRefSelfExpression, 
     CallTaskActionExpression,
-    ParseAsTypeExpression, SafeConvertExpression, CreateDirectExpression,
+    ParseAsTypeExpression,
     InterpolateFormatExpression,
     PostfixOpTag, PostfixOperation, PostfixOp,
     PostfixError, PostfixAccessFromName, PostfixAccessFromIndex, PostfixProjectFromNames,
