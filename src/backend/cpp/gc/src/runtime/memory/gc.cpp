@@ -516,11 +516,18 @@ static void markingWalk(BSQMemoryTheadLocalInfo& tinfo) noexcept
 // As old objects are fundamentally immutable, this should be possible.
 // Just needs some semi-clever engineering.
 //
+// Ok, if we cant finish decrements within the allocation phase of runtime we need 
+// to rejoin the decrements thread with out call to collect.
+// Otherwise, we will continue with an akward two thread contengency over 
+// pending decs inside of processPendingDecs and finishDecs.
+//
 void collect() noexcept
 {
     COLLECTION_STATS_START();
 
     static DecsInfo decsinfo;
+
+    // Under heavy workloads this does not hold -- then we segfault
     GC_INVARIANT_CHECK(decsinfo.pending_decs.isEmpty());
 
     gtl_info.pending_young.initialize();

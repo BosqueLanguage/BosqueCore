@@ -60,7 +60,7 @@
 
 //Max number of decrement ops we do per collection -- 
 //    TODO:we may need to make this a bit dynamic 
-#define BSQ_INITIAL_MAX_DECREMENT_COUNT 20
+#define BSQ_INITIAL_MAX_DECREMENT_COUNT (BSQ_COLLECTION_THRESHOLD * BSQ_BLOCK_ALLOCATION_SIZE) / (BSQ_MEM_ALIGNMENT * 32)
 
 //mem is an 8byte aligned pointer and n is the number of 8byte words to clear
 inline void xmem_zerofill(void* mem, size_t n) noexcept
