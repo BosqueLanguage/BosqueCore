@@ -1385,6 +1385,8 @@ class PostfixInvoke extends PostfixOperation {
 abstract class UnaryExpression extends Expression {
     readonly exp: Expression;
 
+    opertype: TypeSignature | undefined = undefined;
+
     constructor(tag: ExpressionTag, sinfo: SourceInfo, exp: Expression) {
         super(tag, sinfo);
         this.exp = exp;
@@ -1402,8 +1404,6 @@ abstract class UnaryExpression extends Expression {
 }
 
 class PrefixNotOpExpression extends UnaryExpression {
-    opertype: TypeSignature | undefined = undefined;
-
     constructor(sinfo: SourceInfo, exp: Expression) {
         super(ExpressionTag.PrefixNotOpExpression, sinfo, exp);
     }
@@ -1415,8 +1415,6 @@ class PrefixNotOpExpression extends UnaryExpression {
 
 class PrefixNegateOrPlusOpExpression extends UnaryExpression {
     readonly op: "-" | "+";
-
-    opertype: TypeSignature | undefined = undefined;
 
     constructor(sinfo: SourceInfo, exp: Expression, op: "-" | "+") {
         super(ExpressionTag.PrefixNegateOrPlusOpExpression, sinfo, exp);
@@ -1643,7 +1641,6 @@ class NumericGreaterEqExpression extends BinaryNumericExpression {
 
 abstract class LogicExpression extends Expression {
     readonly exps: Expression[];
-    purebool: boolean = true;
 
     constructor(tag: ExpressionTag, sinfo: SourceInfo, exps: Expression[]) {
         super(tag, sinfo);

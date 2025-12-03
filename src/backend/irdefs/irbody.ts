@@ -71,7 +71,39 @@ enum IRExpressionTag {
 
     IRAccessParameterVariableExpression = "IRAccessParameterVariableExpression",
     IRAccessLocalVariableExpression = "IRAccessLocalVariableExpression",
-    IRAccessCapturedVariableExpression = "IRAccessCapturedVariableExpression"
+    IRAccessCapturedVariableExpression = "IRAccessCapturedVariableExpression",
+    IRAccessTempVariableExpression = "IRAccessTempVariableExpression",
+
+    //
+    //TODO: lots more expression types here
+    //
+
+    IRPrefixNotOpExpression = "IRPrefixNotOpExpression",
+    IRPrefixNegateOpExpression = "IRPrefixNegateOrPlusOpExpression",
+    IRPrefixPlusOpExpression = "IRPrefixPlusOpExpression",
+
+    IRBinAddExpression = "IRBinAddExpression",
+    IRBinSubExpression = "IRBinSubExpression",
+    IRBinMultExpression = "IRBinMultExpression",
+    IRBinDivExpression = "IRBinDivExpression",
+
+    //
+    //TODO: lots more expression types here
+    //
+
+    IRNumericEqExpression = "IRNumericEqExpression",
+    IRNumericNeqExpression = "IRNumericNeqExpression",
+    IRNumericLessExpression = "IRNumericLessExpression",
+    IRNumericLessEqExpression = "IRNumericLessEqExpression",
+    IRNumericGreaterExpression = "IRNumericGreaterExpression",
+    IRNumericGreaterEqExpression = "IRNumericGreaterEqExpression",
+
+    IRLogicAndExpression = "IRLogicAndExpression",
+    IRLogicOrExpression = "IRLogicOrExpression",
+
+    //
+    //TODO: lots more expression types here
+    //
 }
 
 abstract class IRExpression {
@@ -82,15 +114,22 @@ abstract class IRExpression {
     }
 }
 
+/* This class represents expressions that are simple and side-effect free (i.e., immediate expressions plus simple operations that we can put into expression trees) */
+abstract class IRSimpleExpression extends IRExpression {
+    constructor(tag: IRExpressionTag) {
+        super(tag);
+    }
+}
+
 /* This class represents expressions that are guaranteed to be immediate values (i.e., vars, literals, constants) */
-abstract class IRImmediateExpression extends IRExpression {
+abstract class IRImmediateExpression extends IRSimpleExpression {
     constructor(tag: IRExpressionTag) {
         super(tag);
     }
 }
 
 /* This class represents expressions that are guaranteed to be immediate values (i.e., constants, typdecl literals) */
-abstract class IRLiteralExpression extends IRExpression {
+abstract class IRLiteralExpression extends IRImmediateExpression {
     constructor(tag: IRExpressionTag) {
         super(tag);
     }
@@ -99,6 +138,18 @@ abstract class IRLiteralExpression extends IRExpression {
 enum IRStatementTag {
     IRNopStatement = "IRNopStatement",
 
+    //TODO: add atomic statement for temporary variable inject on RHS ref and condition expressions
+
+    IRVariableDeclarationStatement = "IRVariableDeclarationStatement",
+    IRVariableInitializationStatement = "IRVariableInitializationStatement",
+
+    //TODO: add initialization for ref/condition expression where the rhs is a temp variable
+
+    IRReturnVoidSimpleStatement = "IRReturnVoidSimpleStatement",
+    IRReturnValueSimpleStatement = "IRReturnValueSimpleStatement",
+
+    //TODO: lots more statement types here
+
     IRErrorAdditionBoundsCheckStatement = "IRErrorAdditionBoundsCheckStatement",
     IRErrorSubtractionBoundsCheckStatement = "IRErrorSubtractionBoundsCheckStatement",
     IRErrorMultiplicationBoundsCheckStatement = "IRErrorMultiplicationBoundsCheckStatement",
@@ -106,16 +157,75 @@ enum IRStatementTag {
 
     IRTypeDeclInvariantCheckStatement = "IRTypeDeclInvariantCheckStatement",
     IRPreconditionCheck = "IRPreconditionCheck",
-    IRPostconditionCheck = "IRPostconditionCheck"
+    IRPostconditionCheck = "IRPostconditionCheck",
+
+    IRAbortStatement = "IRAbortStatement",
+    IRDebugStatement = "IRDebugStatement"
 }
 
-class IRStatement {
+abstract class IRStatement {
     readonly tag: IRStatementTag;
 
     constructor(tag: IRStatementTag) {
         this.tag = tag;
     }
 }
+
+/* This class represents statements that are atomic (line statements) and don't have control flow or sub blocks */
+abstract class IRAtomicStatement extends IRStatement {
+    constructor(tag: IRStatementTag) {
+        super(tag);
+    }
+}
+
+/* Represent return statement that do not involve any ref/out/out?/inout parameters */
+abstract class IRReturnSimpleStatement extends IRAtomicStatement {
+    constructor(tag: IRStatementTag) {
+        super(tag);
+    }
+}
+
+/* Represent return statement that involve ref/out/out?/inout parameters and thus have an implicit variable to hold the returned value */
+abstract class IRReturnWithImplicitStatement extends IRAtomicStatement {
+    readonly implicitvar: string;
+
+    constructor(tag: IRStatementTag, implicitvar: string) {
+        super(tag);
+        this.implicitvar = implicitvar;
+    }
+}
+
+/* Explicit error condition checks -- all possible error conditions must be made explicit during flattening */
+abstract class IRErrorCheckStatement extends IRAtomicStatement {
+    readonly file: string;
+    readonly sinfo: SourceInfo;
+
+    readonly diagnosticTag: string | undefined;
+    readonly checkID: number;
+
+    constructor(tag: IRStatementTag, file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number) {
+        super(tag);
+        this.file = file;
+        this.sinfo = sinfo;
+        this.diagnosticTag = diagnosticTag;
+        this.checkID = checkID;
+    }
+}
+
+abstract class IRErrorBinArithCheckStatement extends IRErrorCheckStatement {
+    readonly left: IRImmediateExpression;
+    readonly right: IRImmediateExpression;
+
+    readonly optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt";
+
+    constructor(tag: IRStatementTag, file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt") {
+        super(tag, file, sinfo, diagnosticTag, checkID);
+        this.left = left;
+        this.right = right;
+        this.optypechk = optypechk;
+    }
+}
+
 ////////////////////////////////////////
 //Our literal expressions are all very safe and will never fail to construct -- if there are possible issues the flattening phase should have emitted and explicit check
 
@@ -640,7 +750,7 @@ class IRTaskAccessParentIDExpression extends IRExpression {
     }
 }
 
-class IRAccessNamespaceConstantExpression extends IRExpression {
+class IRAccessNamespaceConstantExpression extends IRImmediateExpression {
     readonly constkey: string; //flattened identifer names
     
     constructor(constkey: string) {
@@ -696,45 +806,214 @@ class IRAccessCapturedVariableExpression extends IRImmediateExpression {
     }
 }
 
+class IRAccessTempVariableExpression extends IRImmediateExpression {
+    readonly vname: string;
+
+    constructor(vname: string) {
+        super(IRExpressionTag.IRAccessTempVariableExpression);
+        this.vname = vname;
+    }
+}
+
+//
+//TODO: lots more expression types here
+//
+
+abstract class IRUnaryOpExpression extends IRSimpleExpression {
+    readonly exp: IRExpression;
+    readonly opertype: IRTypeSignature;
+
+    constructor(tag: IRExpressionTag, exp: IRExpression, opertype: IRTypeSignature) {
+        super(tag);
+        this.exp = exp;
+        this.opertype = opertype;
+    }
+}
+
+class IRPrefixNotOpExpression extends IRUnaryOpExpression {
+    constructor(exp: IRExpression, opertype: IRTypeSignature) {
+        super(IRExpressionTag.IRPrefixNotOpExpression, exp, opertype);
+    }
+}
+
+class IRPrefixNegateOpExpression extends IRUnaryOpExpression {
+    constructor(exp: IRExpression, opertype: IRTypeSignature) {
+        super(IRExpressionTag.IRPrefixNegateOpExpression, exp, opertype);
+    }
+}
+
+class IRPrefixPlusOpExpression extends IRUnaryOpExpression {
+    constructor(exp: IRExpression, opertype: IRTypeSignature) {
+        super(IRExpressionTag.IRPrefixPlusOpExpression, exp, opertype);
+    }
+}
+
+abstract class IRBinOpExpression extends IRSimpleExpression {
+    readonly left: IRExpression;
+    readonly right: IRExpression;
+    readonly opertype: IRTypeSignature;
+
+    constructor(tag: IRExpressionTag, left: IRExpression, right: IRExpression, opertype: IRTypeSignature) {
+        super(tag);
+        this.left = left;
+        this.right = right;
+        this.opertype = opertype;
+    }
+}
+
+class IRBinAddExpression extends IRBinOpExpression {
+    constructor(left: IRExpression, right: IRExpression, opertype: IRTypeSignature) {
+        super(IRExpressionTag.IRBinAddExpression, left, right, opertype);
+    }
+}
+
+class IRBinSubExpression extends IRBinOpExpression {
+    constructor(left: IRExpression, right: IRExpression, opertype: IRTypeSignature) {
+        super(IRExpressionTag.IRBinSubExpression, left, right, opertype);
+    }
+}
+
+class IRBinMultExpression extends IRBinOpExpression {
+    constructor(left: IRExpression, right: IRExpression, opertype: IRTypeSignature) {
+        super(IRExpressionTag.IRBinMultExpression, left, right, opertype);
+    }
+}
+
+class IRBinDivExpression extends IRBinOpExpression {
+    constructor(left: IRExpression, right: IRExpression, opertype: IRTypeSignature) {
+        super(IRExpressionTag.IRBinDivExpression, left, right, opertype);
+    }
+}
+
+//
+//TODO: lots more expression types here
+//
+
+abstract class IRNumericComparisonExpression extends IRSimpleExpression {
+    readonly left: IRExpression;
+    readonly right: IRExpression;
+    readonly opertype: IRTypeSignature;
+
+    constructor(tag: IRExpressionTag, left: IRExpression, right: IRExpression, opertype: IRTypeSignature) {
+        super(tag);
+        this.left = left;
+        this.right = right;
+        this.opertype = opertype;
+    }
+}
+
+class IRNumericEqExpression extends IRNumericComparisonExpression {
+    constructor(left: IRExpression, right: IRExpression, opertype: IRTypeSignature) {
+        super(IRExpressionTag.IRNumericEqExpression, left, right, opertype);
+    }
+}
+
+class IRNumericNeqExpression extends IRNumericComparisonExpression {
+    constructor(left: IRExpression, right: IRExpression, opertype: IRTypeSignature) {
+        super(IRExpressionTag.IRNumericNeqExpression, left, right, opertype);
+    }
+}
+
+class IRNumericLessExpression extends IRNumericComparisonExpression {
+    constructor(left: IRExpression, right: IRExpression, opertype: IRTypeSignature) {
+        super(IRExpressionTag.IRNumericLessExpression, left, right, opertype);
+    }
+}
+
+class IRNumericLessEqExpression extends IRNumericComparisonExpression {
+    constructor(left: IRExpression, right: IRExpression, opertype: IRTypeSignature) {
+        super(IRExpressionTag.IRNumericLessEqExpression, left, right, opertype);
+    }
+}
+
+class IRNumericGreaterExpression extends IRNumericComparisonExpression {
+    constructor(left: IRExpression, right: IRExpression, opertype: IRTypeSignature) {
+        super(IRExpressionTag.IRNumericGreaterExpression, left, right, opertype);
+    }
+}
+
+class IRNumericGreaterEqExpression extends IRNumericComparisonExpression {
+    constructor(left: IRExpression, right: IRExpression, opertype: IRTypeSignature) {
+        super(IRExpressionTag.IRNumericGreaterEqExpression, left, right, opertype);
+    }
+}
+
+abstract class IRLogicOpExpression extends IRSimpleExpression {
+    readonly left: IRExpression;
+    readonly right: IRExpression;
+
+    constructor(tag: IRExpressionTag, left: IRExpression, right: IRExpression) {
+        super(tag);
+        this.left = left;
+        this.right = right;
+    }
+}
+
+class IRLogicAndExpression extends IRLogicOpExpression {
+    constructor(left: IRExpression, right: IRExpression) {
+        super(IRExpressionTag.IRLogicAndExpression, left, right);
+    }
+}
+
+class IRLogicOrExpression extends IRLogicOpExpression {
+    constructor(left: IRExpression, right: IRExpression) {
+        super(IRExpressionTag.IRLogicOrExpression, left, right);
+    }
+}
+
+//
+//TODO: lots more expression types here
+//
+
 ////////////////////////////////////////
 //Basic Line statements
 
-class IRNopStatement extends IRStatement {
+class IRNopStatement extends IRAtomicStatement {
     constructor() {
         super(IRStatementTag.IRNopStatement);
     }
 }
 
-////////////////////////////////////////
-//Explicit error condition checks -- all possible error conditions must be made explicit during flattening
+class IRVariableDeclarationStatement extends IRAtomicStatement {
+    readonly vname: string;
+    readonly vtype: IRTypeSignature;
 
-abstract class IRErrorCheckStatement extends IRStatement {
-    readonly file: string;
-    readonly sinfo: SourceInfo;
-
-    readonly diagnosticTag: string | undefined;
-    readonly checkID: number;
-
-    constructor(tag: IRStatementTag, file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number) {
-        super(tag);
-        this.file = file;
-        this.sinfo = sinfo;
-        this.diagnosticTag = diagnosticTag;
-        this.checkID = checkID;
+    constructor(vname: string, vtype: IRTypeSignature) {
+        super(IRStatementTag.IRVariableDeclarationStatement);
+        this.vname = vname;
+        this.vtype = vtype;
     }
 }
 
-abstract class IRErrorBinArithCheckStatement extends IRErrorCheckStatement {
-    readonly left: IRImmediateExpression;
-    readonly right: IRImmediateExpression;
+class IRVariableInitializationStatement extends IRAtomicStatement {
+    readonly vname: string;
+    readonly vtype: IRTypeSignature;
+    readonly initexp: IRSimpleExpression;
 
-    readonly optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt";
+    constructor(vname: string, vtype: IRTypeSignature, initexp: IRSimpleExpression) {
+        super(IRStatementTag.IRVariableInitializationStatement);
+        this.vname = vname;
+        this.vtype = vtype;
+        this.initexp = initexp;
+    }
+}
 
-    constructor(tag: IRStatementTag, file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt") {
-        super(tag, file, sinfo, diagnosticTag, checkID);
-        this.left = left;
-        this.right = right;
-        this.optypechk = optypechk;
+//
+//TODO: lots more statement types here
+//
+
+class IRReturnVoidSimpleStatement extends IRReturnSimpleStatement {
+    constructor() {
+        super(IRStatementTag.IRReturnVoidSimpleStatement);
+    }
+}
+
+class IRReturnValueSimpleStatement extends IRReturnSimpleStatement {
+    readonly retexp: IRImmediateExpression;
+
+    constructor(retexp: IRImmediateExpression) {
+        super(IRStatementTag.IRReturnValueSimpleStatement);
+        this.retexp = retexp;
     }
 }
 
@@ -763,19 +1042,19 @@ class IRErrorDivisionByZeroCheckStatement extends IRErrorBinArithCheckStatement 
 }
 
 /* This calls the defined invariant check function for the target type decl on the provided value -- errors are reported from there */
-class IRTypeDeclInvariantCheckStatement  extends IRStatement {
+class IRTypeDeclInvariantCheckStatement extends IRErrorCheckStatement {
     readonly targetType: IRTypeSignature;
     readonly targetValue: IRImmediateExpression;
 
-    constructor(targetType: IRTypeSignature, targetValue: IRImmediateExpression) {
-        super(IRStatementTag.IRTypeDeclInvariantCheckStatement);
+    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, targetType: IRTypeSignature, targetValue: IRImmediateExpression) {
+        super(IRStatementTag.IRTypeDeclInvariantCheckStatement, file, sinfo, diagnosticTag, checkID);
         this.targetType = targetType;
         this.targetValue = targetValue;
     }
 }
 
 /* This asserts that the given precondition expression is true */
-class IRPreconditionCheck  extends IRErrorCheckStatement {
+class IRPreconditionCheck extends IRErrorCheckStatement {
     readonly cond: IRExpression;
 
     constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, cond: IRExpression) {
@@ -785,7 +1064,7 @@ class IRPreconditionCheck  extends IRErrorCheckStatement {
 }
 
 /* This asserts that the given postcondition expresssion is true */
-class IRPostconditionCheck  extends IRErrorCheckStatement {
+class IRPostconditionCheck extends IRErrorCheckStatement {
     readonly cond: IRExpression;
 
     constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, cond: IRExpression) {
@@ -794,8 +1073,23 @@ class IRPostconditionCheck  extends IRErrorCheckStatement {
     }
 }
 
+class IRAbortStatement extends IRErrorCheckStatement {
+    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number) {
+        super(IRStatementTag.IRAbortStatement, file, sinfo, diagnosticTag, checkID);
+    }
+}
+
+class IRDebugStatement extends IRErrorCheckStatement {
+    readonly dbgexp: IRExpression;
+
+    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, dbgexp: IRExpression) {
+        super(IRStatementTag.IRDebugStatement, file, sinfo, diagnosticTag, checkID);
+        this.dbgexp = dbgexp;
+    }
+}
+
 export {
-    IRExpressionTag, IRExpression, IRImmediateExpression, IRLiteralExpression,
+    IRExpressionTag, IRExpression, IRLiteralExpression, IRImmediateExpression, IRSimpleExpression,
     
     IRLiteralNoneExpression, IRLiteralBoolExpression,
     IRLiteralIntegralNumberExpression, IRLiteralNatExpression, IRLiteralIntExpression, IRLiteralChkNatExpression, IRLiteralChkIntExpression,
@@ -818,12 +1112,24 @@ export {
     IRTaskAccessIDExpression, IRTaskAccessParentIDExpression,
 
     IRAccessNamespaceConstantExpression, IRAccessStaticFieldExpression, IRAccessEnumExpression,
-    IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression,
+    IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessTempVariableExpression,
 
-    IRStatementTag, IRStatement,
+    IRUnaryOpExpression, IRPrefixNotOpExpression, IRPrefixNegateOpExpression, IRPrefixPlusOpExpression,
+    IRBinOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression,
+    IRNumericComparisonExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression,
+    IRLogicOpExpression, IRLogicAndExpression, IRLogicOrExpression,
+
+    IRStatementTag, IRStatement, IRAtomicStatement, IRReturnSimpleStatement, IRReturnWithImplicitStatement,
+    IRErrorCheckStatement, IRErrorBinArithCheckStatement,
+
     IRNopStatement,
-    IRErrorCheckStatement,
-    IRErrorBinArithCheckStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement,
+
+    IRVariableDeclarationStatement, IRVariableInitializationStatement,
+    
+    IRReturnVoidSimpleStatement, IRReturnValueSimpleStatement,
+
+    IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement,
     IRTypeDeclInvariantCheckStatement,
-    IRPreconditionCheck, IRPostconditionCheck
+    IRPreconditionCheck, IRPostconditionCheck,
+    IRAbortStatement, IRDebugStatement
 };

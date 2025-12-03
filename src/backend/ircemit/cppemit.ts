@@ -1,5 +1,5 @@
 import { MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_INT } from "../../frontend/assembly";
-import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessNamespaceConstantExpression, IRAccessStaticFieldExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRLiteralByteBufferExpression } from "../irdefs/irbody";
+import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessNamespaceConstantExpression, IRAccessStaticFieldExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRLiteralByteBufferExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag } from "../irdefs/irbody";
 
 import assert from "node:assert";
 import { TransformCPPNameManager } from "./namemgr";
@@ -242,17 +242,76 @@ class CPPEmitter {
                 const cve = exp as IRAccessCapturedVariableExpression;
                 return `${CLOSURE_CAPTURE_NAME}.scope${cve.scope}.${TransformCPPNameManager.convertIdentifier(cve.vname)}`;
             }
+            else if(ttag === IRExpressionTag.IRAccessTempVariableExpression) {
+                return TransformCPPNameManager.convertIdentifier((exp as IRAccessTempVariableExpression).vname);
+            }
             else {
                 assert(false, `CPPEmitter: Unsupported IR immediate expression type -- ${exp.constructor.name}`);
             }
         }
     }
 
-    private emitExpression(exp: IRExpression): string {
-        const ttag = exp.tag;
+    private emitIRSimpleExpression(exps: IRSimpleExpression): string {
+        if(exps instanceof IRImmediateExpression) {
+            return this.emitIRImmediateExpression(exps);
+        }
+        else {
+            const ttag = exps.tag;
 
-        if(exp instanceof IRImmediateExpression) {
-            return this.emitIRImmediateExpression(exp);
+            if(ttag === IRExpressionTag.IRPrefixNotOpExpression) {
+                xxxx;
+            }
+            else if(ttag === IRExpressionTag.IRPrefixPlusOpExpression) {
+                xxxx;
+            }
+            else if(ttag === IRExpressionTag.IRPrefixNegateOpExpression) {
+                xxxx;
+            }
+            else if(ttag === IRExpressionTag.IRBinAddExpression) {
+                xxxx;
+            }
+            else if(ttag === IRExpressionTag.IRBinSubExpression) {
+                xxxx;
+            }
+            else if(ttag === IRExpressionTag.IRBinMultExpression) {
+                xxxx;
+            }
+            else if(ttag === IRExpressionTag.IRBinDivExpression) {
+                xxxx;
+            }
+            else if(ttag === IRExpressionTag.IRNumericEqExpression) {
+                xxxx;
+            }
+            else if(ttag === IRExpressionTag.IRNumericNeqExpression) {
+                xxxx;
+            }
+            else if(ttag === IRExpressionTag.IRNumericLessExpression) {
+                xxxx;
+            }
+            else if(ttag === IRExpressionTag.IRNumericLessEqExpression) {
+                xxxx;
+            }
+            else if(ttag === IRExpressionTag.IRNumericGreaterExpression) {
+                xxxx;
+            }
+            else if(ttag === IRExpressionTag.IRNumericGreaterEqExpression) {
+                xxxx;
+            }
+            else if(ttag === IRExpressionTag.IRLogicAndExpression) {
+                xxxx;
+            }
+            else if(ttag === IRExpressionTag.IRLogicOrExpression) {
+                xxxx;
+            }
+            else {
+                assert(false, `CPPEmitter: Unsupported IR simple expression type -- ${exps.constructor.name}`);
+            }
+        }
+    }
+
+    private emitExpression(exp: IRExpression): string {
+        if(exp instanceof IRSimpleExpression) {
+            return this.emitIRSimpleExpression(exp);
         }
         else {
             const ttag = exp.tag;
@@ -287,6 +346,32 @@ class CPPEmitter {
             else {
                 assert(false, `CPPEmitter: Unsupported IR expression type -- ${exp.constructor.name}`);
             }
+        }
+    }
+
+    private emitAtomicStatement(stmt: IRAtomicStatement): string {
+        const ttag = stmt.tag;
+
+        if(ttag === IRStatementTag.IRNopStatement) {
+            return ";";
+        }
+        else if(ttag === IRStatementTag.IRVariableDeclarationStatement) {
+            xxxx;
+        }
+        else if(ttag === IRStatementTag.IRVariableInitializationStatement) {
+            xxxx;
+        }
+        else {
+            assert(false, `CPPEmitter: Unsupported IR atomic statement type -- ${stmt.constructor.name}`);
+        }
+    }
+
+    private emitStatement(stmt: IRStatement): string {
+        if(stmt instanceof IRAtomicStatement) {
+            return this.emitAtomicStatement(stmt);
+        }
+        else {
+            assert(false, `CPPEmitter: Unsupported IR statement type -- ${stmt.constructor.name}`);
         }
     }
 }

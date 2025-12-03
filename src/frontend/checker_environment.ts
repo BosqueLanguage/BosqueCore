@@ -117,6 +117,9 @@ class LocalScope {
 }
 
 class TypeEnvironment {
+    readonly declReturnType: TypeSignature;
+    readonly inferReturn: TypeInferContext;
+
     readonly isnormalflow: boolean;
 
     readonly parent: TypeEnvironment | undefined; //undefined for normal scopes and set for lambda scopes
@@ -125,7 +128,10 @@ class TypeEnvironment {
     readonly args: VarInfo[];
     readonly locals: LocalScope[];
 
-    constructor(isnormalflow: boolean, parent: TypeEnvironment | undefined, lcaptures: {vname: string, vtype: TypeSignature, scopeidx: number}[], args: VarInfo[], locals: LocalScope[]) {
+    constructor(declReturnType: TypeSignature, inferReturn: TypeInferContext, isnormalflow: boolean, parent: TypeEnvironment | undefined, lcaptures: {vname: string, vtype: TypeSignature, scopeidx: number}[], args: VarInfo[], locals: LocalScope[]) {
+        this.declReturnType = declReturnType;
+        this.inferReturn = inferReturn;
+
         this.isnormalflow = isnormalflow;
 
         this.parent = parent;
@@ -135,16 +141,16 @@ class TypeEnvironment {
         this.locals = locals;
     }
 
-    static createInitialStdEnv(args: VarInfo[]): TypeEnvironment {
-        return new TypeEnvironment(true, undefined, [], args, [new LocalScope(false, [], new Set<string>())]);
+    static createInitialStdEnv(declReturnType: TypeSignature, inferReturn: TypeInferContext,args: VarInfo[]): TypeEnvironment {
+        return new TypeEnvironment(declReturnType, inferReturn, true, undefined, [], args, [new LocalScope(false, [], new Set<string>())]);
     }
 
-    static createInitialLambdaEnv(args: VarInfo[], enclosing: TypeEnvironment): TypeEnvironment {
-        return new TypeEnvironment(true, enclosing, [], args, [new LocalScope(false, [], new Set<string>())]);
+    static createInitialLambdaEnv(declReturnType: TypeSignature, inferReturn: TypeInferContext, args: VarInfo[], enclosing: TypeEnvironment): TypeEnvironment {
+        return new TypeEnvironment(declReturnType, inferReturn, true, enclosing, [], args, [new LocalScope(false, [], new Set<string>())]);
     }
 
     cloneEnvironment(): TypeEnvironment {
-        return new TypeEnvironment(this.isnormalflow, this.parent, [...this.lcaptures], [...this.args], [...this.locals].map((l) => l.clone()));
+        return new TypeEnvironment(this.declReturnType, this.inferReturn, this.isnormalflow, this.parent, [...this.lcaptures], [...this.args], [...this.locals].map((l) => l.clone()));
     }
 
     resolveLambdaCaptureVarInfoFromSrcName(vname: string): [VarInfo, number] | undefined {
@@ -186,7 +192,7 @@ class TypeEnvironment {
         let newlocals = [...this.locals.slice(0, this.locals.length - 1), this.locals[this.locals.length - 1].clone()];
         newlocals[newlocals.length - 1].locals.push(new VarInfo(vname, vtype, vkind, mustDefined));
 
-        return new TypeEnvironment(this.isnormalflow, this.parent, this.lcaptures, this.args, newlocals);
+        return new TypeEnvironment(this.declReturnType, this.inferReturn, this.isnormalflow, this.parent, this.lcaptures, this.args, newlocals);
     }
 
     addLocalVarSet(vars: {name: string, vtype: TypeSignature}[], vkind: "let" | "ref" | "var"): TypeEnvironment {
@@ -194,7 +200,7 @@ class TypeEnvironment {
         const newvars = vars.map((v) => new VarInfo(v.name, v.vtype, vkind, true));
         newlocals[newlocals.length - 1].locals.push(...newvars);
 
-        return new TypeEnvironment(this.isnormalflow, this.parent, this.lcaptures, this.args, newlocals);
+        return new TypeEnvironment(this.declReturnType, this.inferReturn, this.isnormalflow, this.parent, this.lcaptures, this.args, newlocals);
     }
 
     assignLocalVariable(vname: string): TypeEnvironment {
@@ -211,32 +217,32 @@ class TypeEnvironment {
             };
         }
 
-        return new TypeEnvironment(this.isnormalflow, this.parent, this.lcaptures, this.args, locals);
+        return new TypeEnvironment(this.declReturnType, this.inferReturn, this.isnormalflow, this.parent, this.lcaptures, this.args, locals);
     }
 
     setDeadFlow(): TypeEnvironment {
-        return new TypeEnvironment(false, this.parent, this.lcaptures, this.args, this.locals);
+        return new TypeEnvironment(this.declReturnType, this.inferReturn, false, this.parent, this.lcaptures, this.args, this.locals);
     }
 
     setReturnFlow(): TypeEnvironment {
-        return new TypeEnvironment(false, this.parent, this.lcaptures, this.args, this.locals);
+        return new TypeEnvironment(this.declReturnType, this.inferReturn, false, this.parent, this.lcaptures, this.args, this.locals);
     }
 
     setYieldFlow(): TypeEnvironment {
-        return new TypeEnvironment(false, this.parent, this.lcaptures, this.args, this.locals);
+        return new TypeEnvironment(this.declReturnType, this.inferReturn, false, this.parent, this.lcaptures, this.args, this.locals);
     }
 
     pushNewLocalScope(): TypeEnvironment {
-        return new TypeEnvironment(this.isnormalflow, this.parent, this.lcaptures, this.args, [...this.locals, new LocalScope(false, [], new Set<string>())]);
+        return new TypeEnvironment(this.declReturnType, this.inferReturn, this.isnormalflow, this.parent, this.lcaptures, this.args, [...this.locals, new LocalScope(false, [], new Set<string>())]);
     }
 
     pushNewLocalBinderScope(vname: string, vtype: TypeSignature): TypeEnvironment {
-        return new TypeEnvironment(this.isnormalflow, this, this.lcaptures, this.args, [...this.locals, new LocalScope(false, [new VarInfo(vname, vtype, "let", true)], new Set<string>())]);
+        return new TypeEnvironment(this.declReturnType, this.inferReturn, this.isnormalflow, this, this.lcaptures, this.args, [...this.locals, new LocalScope(false, [new VarInfo(vname, vtype, "let", true)], new Set<string>())]);
     }
 
     popLocalScope(): [TypeEnvironment, LocalScope] {
         assert(this.locals.length > 0);
-        return [new TypeEnvironment(this.isnormalflow, this.parent, this.lcaptures, [...this.args], [...this.locals].slice(0, this.locals.length - 1)), this.locals[this.locals.length - 1]];
+        return [new TypeEnvironment(this.declReturnType, this.inferReturn, this.isnormalflow, this.parent, this.lcaptures, [...this.args], [...this.locals].slice(0, this.locals.length - 1)), this.locals[this.locals.length - 1]];
     }
 
     static mergeEnvironmentsSimple(origenv: TypeEnvironment, ...envs: TypeEnvironment[]): TypeEnvironment {
@@ -257,7 +263,7 @@ class TypeEnvironment {
         }
 
         const normalflow = envs.some((e) => e.isnormalflow);
-        return new TypeEnvironment(normalflow, origenv.parent, lcaptures, [...origenv.args], locals);
+        return new TypeEnvironment(origenv.declReturnType, origenv.inferReturn, normalflow, origenv.parent, lcaptures, [...origenv.args], locals);
     }
 }
 
