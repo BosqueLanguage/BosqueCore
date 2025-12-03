@@ -102,7 +102,7 @@ struct DecsProcessor {
     bool canrun;
     bool needs_merge;
 
-    DecsProcessor(): cv(), mtx(), worker(&DecsProcessor::process, this), processDecfp(nullptr), canrun(false), needs_merge(false) {
+    DecsProcessor(BSQMemoryTheadLocalInfo* tinfo): cv(), mtx(), worker(&DecsProcessor::process, this, tinfo), pending(), processDecfp(nullptr), canrun(false), needs_merge(false) {
         this->pending.initialize();
     }
 
@@ -124,7 +124,7 @@ struct DecsProcessor {
         this->cv.notify_one();
     }
 
-    void process(BSQMemoryTheadLocalInfo& tinfo)
+    void process(BSQMemoryTheadLocalInfo* tinfo)
     {
         while(true) {
             std::unique_lock lk(this->mtx);
@@ -135,7 +135,7 @@ struct DecsProcessor {
             while(!this->pending.isEmpty()) {
                 if(this->processDecfp != nullptr) {
                     void* obj = this->pending.pop_front();
-                    this->processDecfp(obj, tinfo);
+                    this->processDecfp(obj, *tinfo);
                 }
             }
         }
@@ -195,7 +195,15 @@ struct BSQMemoryTheadLocalInfo
     bool enable_global_rescan         = false;
 #endif
 
-    BSQMemoryTheadLocalInfo() noexcept : tl_id(0), g_gcallocs(nullptr), native_stack_base(nullptr), native_stack_contents(), native_register_contents(), roots_count(0), roots(nullptr), old_roots_count(0), old_roots(nullptr), forward_table_index(FWD_TABLE_START), forward_table(nullptr), decs(), decs_batch(), decd_pages_idx(0), decd_pages(), pending_roots(), visit_stack(), pending_young(), max_decrement_count(BSQ_INITIAL_MAX_DECREMENT_COUNT), mstats() { }
+    BSQMemoryTheadLocalInfo() noexcept : tl_id(0), g_gcallocs(nullptr), 
+        native_stack_base(nullptr), native_stack_contents(), native_register_contents(), 
+        roots_count(0), roots(nullptr), old_roots_count(0), old_roots(nullptr), 
+        forward_table_index(FWD_TABLE_START), forward_table(nullptr), decs(this), 
+        decs_batch(), decd_pages_idx(0), decd_pages(), pending_roots(), visit_stack(), 
+        pending_young(), max_decrement_count(BSQ_INITIAL_MAX_DECREMENT_COUNT), mstats() 
+    { }
+    BSQMemoryTheadLocalInfo& operator=(BSQMemoryTheadLocalInfo&) = delete;
+    BSQMemoryTheadLocalInfo(BSQMemoryTheadLocalInfo&) = delete;
 
     inline GCAllocator* getAllocatorForPageSize(PageInfo* page) noexcept {
         uint8_t idx = this->g_gcallocs_lookuptable[page->allocsize >> 3];
