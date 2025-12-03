@@ -30,16 +30,6 @@ namespace ᐸRuntimeᐳ
     constexpr int64_t BSQ_NUMERIC_DYNAMIC_RANGE_BASE = 4611686018427387903ll;
     constexpr __int128_t BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED = ((__int128_t)BSQ_NUMERIC_DYNAMIC_RANGE_BASE * (__int128_t)BSQ_NUMERIC_DYNAMIC_RANGE_BASE);
 
-    constexpr int32_t buildlevel_release = 0;
-    constexpr int32_t buildlevel_test = 1;
-    constexpr int32_t buildlevel_debug = 2;
-
-#ifndef BSQ_BUILD_LEVEL
-    constexpr int32_t current_build_level = buildlevel_debug;
-#else
-    constexpr int32_t current_build_level = BSQ_BUILD_LEVEL;
-#endif
-
     enum class ErrorKind
     {
         Generic,
@@ -79,27 +69,6 @@ namespace ᐸRuntimeᐳ
     [[noreturn]] inline void bsq_abort(const char* file, uint32_t line, const char* tag, const char* message)
     {
         bsq_handle_error(file, line, ErrorKind::UserAbort, tag, message);
-    }
-
-    template<int32_t enabled>
-    inline void runtime_assert_specialized(bool cond, const char* file, uint32_t line, const char* tag, const char* message)
-    {   
-        if(!cond) [[unlikely]] {
-            bsq_handle_error(file, line, ErrorKind::RuntimeAssertion, tag, message);
-        }
-    }
-
-    template<>
-    inline void runtime_assert_specialized<0>(bool cond, const char* file, uint32_t line, const char* tag, const char* message)
-    {   
-        ;
-    }
-
-    template<int32_t level>
-    inline void runtime_assert(bool cond, const char* file, uint32_t line, const char* tag, const char* message)
-    {   
-        static_assert(level >= buildlevel_release && level <= buildlevel_debug, "Invalid build level for runtime_assert");
-        runtime_assert_specialized<level == current_build_level>(cond, file, line, tag, message);
     }
 
     inline void bsq_assert(bool cond, const char* file, uint32_t line, const char* tag, const char* message)

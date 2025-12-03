@@ -1,11 +1,11 @@
-import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, LambdaParameterPackTypeSignature, NominalTypeSignature, TypeSignature, VoidTypeSignature } from "../frontend/type";
-import { AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, Expression, ExpressionTag, FormatStringArgComponent, FormatStringTextComponent, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, TaskAccessInfoExpression } from "../frontend/body";
-import { Assembly } from "../frontend/assembly";
+import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, LambdaParameterPackTypeSignature, NominalTypeSignature, TypeSignature, VoidTypeSignature } from "../../frontend/type";
+import { AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, Expression, ExpressionTag, FormatStringArgComponent, FormatStringTextComponent, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, TaskAccessInfoExpression } from "../../frontend/body";
+import { Assembly } from "../../frontend/assembly";
 
-import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatCStringTypeSignature, IRFormatPathFragmentTypeSignature, IRFormatPathGlobTypeSignature, IRFormatPathTypeSignature, IRFormatStringTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "./irdefs/irtype";
-import { DateRepresentation, DeltaDateRepresentation, DeltaTimeRepresentation, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteBufferExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralCStringExpression, IRLiteralDecimalExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLatLongCoordinateExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralNoneExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralRationalExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRStatement, TimeRepresentation, IRLiteralFormatStringExpression, IRFormatStringTextComponent, IRFormatStringArgComponent, IRFormatStringComponent, IRLiteralFormatCStringExpression, IRLiteralTypedExpression, IRLiteralExpression, IRTypeDeclInvariantCheckStatement, IRLiteralTypedStringExpression, IRLiteralTypedCStringExpression, IRLiteralTypedFormatStringExpression, IRLiteralTypedFormatCStringExpression, IRTaskAccessIDExpression, IRTaskAccessParentIDExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRPreconditionCheck, IRAccessNamespaceConstantExpression, IRAccessStaticFieldExpression, IRAccessEnumExpression, IRSimpleExpression } from "./irdefs/irbody";
-import { IRRegex } from "./irdefs/irsupport";
-import {} from "./irdefs/irassembly";
+import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatCStringTypeSignature, IRFormatPathFragmentTypeSignature, IRFormatPathGlobTypeSignature, IRFormatPathTypeSignature, IRFormatStringTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype";
+import { DateRepresentation, DeltaDateRepresentation, DeltaTimeRepresentation, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteBufferExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralCStringExpression, IRLiteralDecimalExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLatLongCoordinateExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralNoneExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralRationalExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRStatement, TimeRepresentation, IRLiteralFormatStringExpression, IRFormatStringTextComponent, IRFormatStringArgComponent, IRFormatStringComponent, IRLiteralFormatCStringExpression, IRLiteralTypedExpression, IRLiteralExpression, IRTypeDeclInvariantCheckStatement, IRLiteralTypedStringExpression, IRLiteralTypedCStringExpression, IRLiteralTypedFormatStringExpression, IRLiteralTypedFormatCStringExpression, IRTaskAccessIDExpression, IRTaskAccessParentIDExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessNamespaceConstantExpression, IRAccessStaticFieldExpression, IRAccessEnumExpression, IRSimpleExpression, IRPreconditionCheckStatement } from "../irdefs/irbody";
+import { IRRegex } from "../irdefs/irsupport";
+import {} from "../irdefs/irassembly";
 
 import assert from "node:assert";
 
@@ -375,7 +375,7 @@ class ASMToIRConverter {
             const csig = this.processTypeSignature(tdeclexp.constype);
             const iexp = this.flattenExpression(tdeclexp.value);
             if((tdeclexp.constype as NominalTypeSignature).decl.allInvariants.length > 0) {
-                this.pushStatement(new IRTypeDeclInvariantCheckStatement(csig, iexp as IRLiteralExpression));
+                this.pushStatement(new IRTypeDeclInvariantCheckStatement(this.currentFile as string, tdeclexp.sinfo, undefined, this.errCtr++, csig, iexp));
             }
 
             return new IRLiteralTypedExpression(iexp as IRLiteralExpression, csig);
@@ -388,7 +388,7 @@ class ASMToIRConverter {
             const iexp = new IRLiteralStringExpression(bytes);
 
             if((tdeclexp.constype as NominalTypeSignature).decl.allInvariants.length > 0) {
-                this.pushStatement(new IRTypeDeclInvariantCheckStatement(csig, iexp));
+                this.pushStatement(new IRTypeDeclInvariantCheckStatement(this.currentFile as string, tdeclexp.sinfo, undefined, this.errCtr++, csig, iexp));
             }
 
             return new IRLiteralTypedStringExpression(bytes, csig);
@@ -401,7 +401,7 @@ class ASMToIRConverter {
             const iexp = new IRLiteralCStringExpression(bytes);
 
             if((tdeclexp.constype as NominalTypeSignature).decl.allInvariants.length > 0) {
-                this.pushStatement(new IRTypeDeclInvariantCheckStatement(csig, iexp));
+                this.pushStatement(new IRTypeDeclInvariantCheckStatement(this.currentFile as string, tdeclexp.sinfo, undefined, this.errCtr++, csig, iexp));
             }
 
             return new IRLiteralTypedCStringExpression(bytes, csig);
@@ -451,7 +451,7 @@ class ASMToIRConverter {
             }
             else if(aevexp.opname === "get"){
                 if(!aevexp.mustdefined) {
-                    this.pushStatement(new IRPreconditionCheck(this.currentFile as string, exp.sinfo, undefined, this.errCtr++, new IRAccessEnvHasExpression(kbytes)));
+                    this.pushStatement(new IRPreconditionCheckStatement(this.currentFile as string, exp.sinfo, undefined, this.errCtr++, new IRAccessEnvHasExpression(kbytes)));
                 }
 
                 return new IRAccessEnvGetExpression(kbytes, this.processTypeSignature(aevexp.optoftype as TypeSignature));

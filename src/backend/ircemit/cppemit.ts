@@ -1,5 +1,5 @@
 import { MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_INT } from "../../frontend/assembly";
-import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessNamespaceConstantExpression, IRAccessStaticFieldExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRLiteralByteBufferExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag, IRPrefixNotOpExpression, IRPrefixPlusOpExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRReturnValueSimpleStatement } from "../irdefs/irbody";
+import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessNamespaceConstantExpression, IRAccessStaticFieldExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRLiteralByteBufferExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag, IRPrefixNotOpExpression, IRPrefixPlusOpExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRReturnValueSimpleStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement, IRAbortStatement } from "../irdefs/irbody";
 
 import assert from "node:assert";
 import { TransformCPPNameManager } from "./namemgr";
@@ -366,8 +366,6 @@ class CPPEmitter {
         }
     }
 
-    private emit
-
     private emitAtomicStatement(stmt: IRAtomicStatement): string {
         const ttag = stmt.tag;
 
@@ -388,28 +386,33 @@ class CPPEmitter {
             return `return ${this.emitExpression(ires.retexp, true)};`;
         }
         else if(ttag === IRStatementTag.IRErrorAdditionBoundsCheckStatement) {
-            xxxx;
+            const ieabc = stmt as IRErrorAdditionBoundsCheckStatement;
+            return `${RUNTIME_NAMESPACE}::${ieabc.optypechk}::checkOverflowAddition(${this.emitExpression(ieabc.left, true)}, ${this.emitExpression(ieabc.right, true)}, ${ieabc.file}, ${ieabc.sinfo.line});`;
         }
         else if(ttag === IRStatementTag.IRErrorSubtractionBoundsCheckStatement) {
-            xxxx;
+            const iesbc = stmt as IRErrorSubtractionBoundsCheckStatement;
+            return `${RUNTIME_NAMESPACE}::${iesbc.optypechk}::checkOverflowSubtraction(${this.emitExpression(iesbc.left, true)}, ${this.emitExpression(iesbc.right, true)}, ${iesbc.file}, ${iesbc.sinfo.line});`;
         }
         else if(ttag === IRStatementTag.IRErrorMultiplicationBoundsCheckStatement) {
-            xxxx;
+            const iembc = stmt as IRErrorMultiplicationBoundsCheckStatement;
+            return `${RUNTIME_NAMESPACE}::${iembc.optypechk}::checkOverflowMultiplication(${this.emitExpression(iembc.left, true)}, ${this.emitExpression(iembc.right, true)}, ${iembc.file}, ${iembc.sinfo.line});`;
         }
         else if(ttag === IRStatementTag.IRErrorDivisionByZeroCheckStatement) {
-            xxxx;
+            const iedzbc = stmt as IRErrorDivisionByZeroCheckStatement;
+            return `${RUNTIME_NAMESPACE}::${iedzbc.optypechk}::checkDivisionByZero(${this.emitExpression(iedzbc.left, true)}, ${iedzbc.file}, ${iedzbc.sinfo.line});`;
         }
         else if(ttag === IRStatementTag.IRTypeDeclInvariantCheckStatement) {
             xxxx;
         }
         else if(ttag === IRStatementTag.IRPreconditionCheckStatement) {
-            xxxx;
+            assert(false, "CPPEmitter: need to implement precondition checks");
         }
         else if(ttag === IRStatementTag.IRPostconditionCheckStatement) {
-            xxxx;
+            assert(false, "CPPEmitter: need to implement postcondition checks");
         }
         else if(ttag === IRStatementTag.IRAbortStatement) {
-            xxxx;
+            const ias = stmt as IRAbortStatement;
+            return `${RUNTIME_NAMESPACE}::bsq_abort(${ias.file}, ${ias.sinfo.line}, nullptr, nullptr);`;
         }
         else if(ttag === IRStatementTag.IRDebugStatement) {
             xxxx;
