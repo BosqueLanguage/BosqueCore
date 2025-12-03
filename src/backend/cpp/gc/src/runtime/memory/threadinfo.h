@@ -91,19 +91,21 @@ struct MemStats {};
 #endif
 
 // An object for processing RC decrements on separate thread
+typedef ArrayList<void*> DecsList;
 struct DecsProcessor {
     std::condition_variable cv;
     std::mutex mtx;
     std::jthread worker;
 
-    ArrayList<void*> pending;
+    DecsList pending;
     void (*processDecfp)(void*, BSQMemoryTheadLocalInfo&);
 
     bool canrun;
     bool needs_merge;
 
     DecsProcessor(BSQMemoryTheadLocalInfo* tinfo): cv(), mtx(), worker(&DecsProcessor::process, this, tinfo), pending(), processDecfp(nullptr), canrun(false), needs_merge(false) {
-        this->pending.initialize();
+        // Doesnt work, mutexes are not init yet
+        //this->pending.initialize();
     }
 
     void requestMergeAndPause(std::unique_lock<std::mutex>& lk)
@@ -167,7 +169,7 @@ struct BSQMemoryTheadLocalInfo
     void** forward_table;
 
     DecsProcessor decs; 
-    ArrayList<void*> decs_batch; // Decrements able to be done without needing decs thread
+    DecsList decs_batch; // Decrements able to be done without needing decs thread
 
     // Arbitrary size for now --- fix before merging
     uint32_t decd_pages_idx = 0;
