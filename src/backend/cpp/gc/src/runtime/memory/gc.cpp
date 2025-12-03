@@ -173,6 +173,34 @@ void processDec(void* obj, BSQMemoryTheadLocalInfo& tinfo) noexcept
     updateDecrementedPages(tinfo, p);
 }
 
+static void mergeDecList(BSQMemoryTheadLocalInfo& tinfo)
+{
+        while(!tinfo.decs_batch.isEmpty()) {
+            void* obj = tinfo.decs_batch.pop_front();
+            tinfo.decs.pending.push_back(obj);
+        }
+        tinfo.decs_batch.clear();
+        tinfo.decs_batch.initialize(); // Needed?
+}
+
+// If we did not finish decs in main thread pause decs thread, merge remaining work,
+// then signal processing can continue
+static void tryMergeDecList(BSQMemoryTheadLocalInfo& tinfo)
+{
+    if(tinfo.decs.processDecfp == nullptr) {
+        tinfo.decs.processDecfp = processDec;
+    }
+
+    if(!tinfo.decs_batch.isEmpty()) {
+        std::unique_lock lk(tinfo.decs.mtx);
+        tinfo.decs.requestMergeAndPause(lk);
+
+        mergeDecList(tinfo);
+
+        tinfo.decs.resumeAfterMerge(lk);
+    }
+}
+
 static void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     GC_REFCT_LOCK_ACQUIRE();
@@ -544,6 +572,7 @@ void collect() noexcept
 
     computeDeadRootsForDecrement(gtl_info);
     processDecrements(gtl_info);
+    tryMergeDecList(gtl_info);
 
     RC_STATS_END(gtl_info, rc_times);
     UPDATE_RC_TIMES(gtl_info); 

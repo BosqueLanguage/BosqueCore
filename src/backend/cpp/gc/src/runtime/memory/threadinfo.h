@@ -19,6 +19,8 @@
 
 #define FWD_TABLE_START 1
 
+struct BSQMemoryTheadLocalInfo;
+
 struct MarkStackEntry
 {
     void* obj;
@@ -95,7 +97,7 @@ struct DecsProcessor {
     std::jthread worker;
 
     ArrayList<void*> pending;
-    void (*processDecfp)(void*);
+    void (*processDecfp)(void*, BSQMemoryTheadLocalInfo&);
 
     bool canrun;
     bool needs_merge;
@@ -122,7 +124,7 @@ struct DecsProcessor {
         this->cv.notify_one();
     }
 
-    void process()
+    void process(BSQMemoryTheadLocalInfo& tinfo)
     {
         while(true) {
             std::unique_lock lk(this->mtx);
@@ -133,7 +135,7 @@ struct DecsProcessor {
             while(!this->pending.isEmpty()) {
                 if(this->processDecfp != nullptr) {
                     void* obj = this->pending.pop_front();
-                    this->processDecfp(obj);
+                    this->processDecfp(obj, tinfo);
                 }
             }
         }
