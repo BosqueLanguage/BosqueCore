@@ -94,14 +94,14 @@ struct DecsProcessor {
     std::mutex mtx;
     std::jthread worker;
 
-    ArrayList<void*> decs;
+    ArrayList<void*> pending;
     void (*processDecfp)(void*);
 
     bool canrun;
     bool needs_merge;
 
     DecsProcessor(): cv(), mtx(), worker(&DecsProcessor::process, this), processDecfp(nullptr), canrun(false), needs_merge(false) {
-        decs.initialize();
+        this->pending.initialize();
     }
 
     void requestMergeAndPause(std::unique_lock<std::mutex>& lk)
@@ -130,9 +130,9 @@ struct DecsProcessor {
                 return this->canrun && !this->needs_merge; 
             });
 
-            while(!this->decs.isEmpty()) {
+            while(!this->pending.isEmpty()) {
                 if(this->processDecfp != nullptr) {
-                    void* obj = this->decs.pop_front();
+                    void* obj = this->pending.pop_front();
                     this->processDecfp(obj);
                 }
             }
@@ -167,6 +167,10 @@ struct BSQMemoryTheadLocalInfo
     DecsProcessor decs; 
     ArrayList<void*> decs_batch; // Decrements able to be done without needing decs thread
 
+    // Arbitrary size for now --- fix before merging
+    uint32_t decd_pages_idx = 0;
+    PageInfo* decd_pages[10'000];
+    
     float nursery_usage = 0.0f;
 
     ArrayList<void*> pending_roots; //the worklist of roots that we need to do visits from
@@ -189,7 +193,7 @@ struct BSQMemoryTheadLocalInfo
     bool enable_global_rescan         = false;
 #endif
 
-    BSQMemoryTheadLocalInfo() noexcept : tl_id(0), g_gcallocs(nullptr), native_stack_base(nullptr), native_stack_contents(), native_register_contents(), roots_count(0), roots(nullptr), old_roots_count(0), old_roots(nullptr), forward_table_index(FWD_TABLE_START), forward_table(nullptr), decs(), decs_batch(), pending_roots(), visit_stack(), pending_young(), max_decrement_count(BSQ_INITIAL_MAX_DECREMENT_COUNT), mstats() { }
+    BSQMemoryTheadLocalInfo() noexcept : tl_id(0), g_gcallocs(nullptr), native_stack_base(nullptr), native_stack_contents(), native_register_contents(), roots_count(0), roots(nullptr), old_roots_count(0), old_roots(nullptr), forward_table_index(FWD_TABLE_START), forward_table(nullptr), decs(), decs_batch(), decd_pages_idx(0), decd_pages(), pending_roots(), visit_stack(), pending_young(), max_decrement_count(BSQ_INITIAL_MAX_DECREMENT_COUNT), mstats() { }
 
     inline GCAllocator* getAllocatorForPageSize(PageInfo* page) noexcept {
         uint8_t idx = this->g_gcallocs_lookuptable[page->allocsize >> 3];
