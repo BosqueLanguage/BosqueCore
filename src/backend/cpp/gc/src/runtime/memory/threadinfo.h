@@ -100,44 +100,66 @@ struct DecsProcessor {
     DecsList pending;
     void (*processDecfp)(void*, BSQMemoryTheadLocalInfo&);
 
-    bool canrun;
-    bool needs_merge;
+    bool worker_paused;
+    bool merge_requested;
 
-    DecsProcessor(BSQMemoryTheadLocalInfo* tinfo): cv(), mtx(), worker(&DecsProcessor::process, this, tinfo), pending(), processDecfp(nullptr), canrun(false), needs_merge(false) {
-        // Doesnt work, mutexes are not init yet
-        //this->pending.initialize();
-    }
+    DecsProcessor(BSQMemoryTheadLocalInfo* tinfo): cv(), mtx(), worker(&DecsProcessor::process, this, tinfo), pending(), processDecfp(nullptr), worker_paused(true), merge_requested(false) { }
 
     void requestMergeAndPause(std::unique_lock<std::mutex>& lk)
     {
-        this->canrun = false;
-        this->needs_merge = true;
-        this->cv.notify_one();
+        this->merge_requested = true;
 
-        // Once canrun is false we know the decs thread ackd our merge request
-        cv.wait(lk, [this]{ return !this->canrun; });
+        lk.unlock();
+        this->cv.notify_one();
+        lk.lock();
+
+        // Ack that the worker is fully paused
+        cv.wait(lk, [this]{ return this->worker_paused; });
+
+        // Items can safely be inserted into this->pending now
     }
 
     void resumeAfterMerge(std::unique_lock<std::mutex>& lk)
     {
-        this->canrun = true;
-        this->needs_merge = false;
+        this->merge_requested = false;
+        this->worker_paused = false;
+
         lk.unlock();
         this->cv.notify_one();
     }
 
+    void pauseWorker(std::unique_lock<std::mutex>& lk)
+    {
+        this->worker_paused = true;
+        
+        lk.unlock();
+        this->cv.notify_one();
+        lk.lock();
+        
+        cv.wait(lk, [this]{ return !this->worker_paused; });
+    }
+
     void process(BSQMemoryTheadLocalInfo* tinfo)
     {
+        std::unique_lock lk(this->mtx);
         while(true) {
-            std::unique_lock lk(this->mtx);
-            cv.wait(lk, [this]{ 
-                return this->canrun && !this->needs_merge; 
+            this->cv.wait(lk, [this]{
+                return (!this->worker_paused && !this->pending.isEmpty())
+                    || this->merge_requested;
             });
 
+            if(this->merge_requested) {
+                this->pauseWorker(lk);
+                continue;
+            }
+
             while(!this->pending.isEmpty()) {
-                if(this->processDecfp != nullptr) {
-                    void* obj = this->pending.pop_front();
-                    this->processDecfp(obj, *tinfo);
+                void* obj = this->pending.pop_front();
+                this->processDecfp(obj, *tinfo);
+                
+                if(this->merge_requested) {
+                    this->pauseWorker(lk);
+                    break;
                 }
             }
         }
