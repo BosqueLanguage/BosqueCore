@@ -496,6 +496,33 @@ static void markingWalk(BSQMemoryTheadLocalInfo& tinfo) noexcept
     gtl_info.pending_roots.clear();
 }
 
+static void processAllocatorsPages()
+{
+    UPDATE_TOTAL_LIVE_BYTES(gtl_info, =, 0);
+    for(size_t i = 0; i < BSQ_MAX_ALLOC_SLOTS; i++) {
+        GCAllocator* alloc = gtl_info.g_gcallocs[i];
+        if(alloc != nullptr) {
+            alloc->processCollectorPages();
+        }
+    }
+}
+
+static void updateRoots()
+{
+    xmem_zerofill(gtl_info.old_roots, gtl_info.old_roots_count);
+    gtl_info.old_roots_count = 0;
+
+    for(int32_t i = 0; i < gtl_info.roots_count; i++) {
+        GC_CLEAR_ROOT_MARK(GC_GET_META_DATA_ADDR(gtl_info.roots[i]));
+        GC_CLEAR_YOUNG_MARK(GC_GET_META_DATA_ADDR(gtl_info.roots[i]));
+
+        gtl_info.old_roots[gtl_info.old_roots_count++] = gtl_info.roots[i];
+    }
+
+    xmem_zerofill(gtl_info.roots, gtl_info.roots_count);
+    gtl_info.roots_count = 0;
+}
+
 void collect() noexcept
 {
     COLLECTION_STATS_START();
@@ -525,26 +552,9 @@ void collect() noexcept
     RC_STATS_END(gtl_info, rc_times);
     UPDATE_RC_TIMES(gtl_info); 
 
-    UPDATE_TOTAL_LIVE_BYTES(gtl_info, =, 0);
-    for(size_t i = 0; i < BSQ_MAX_ALLOC_SLOTS; i++) {
-        GCAllocator* alloc = gtl_info.g_gcallocs[i];
-        if(alloc != nullptr) {
-            alloc->processCollectorPages();
-        }
-    }
-
-    xmem_zerofill(gtl_info.old_roots, gtl_info.old_roots_count);
-    gtl_info.old_roots_count = 0;
-
-    for(int32_t i = 0; i < gtl_info.roots_count; i++) {
-        GC_CLEAR_ROOT_MARK(GC_GET_META_DATA_ADDR(gtl_info.roots[i]));
-        GC_CLEAR_YOUNG_MARK(GC_GET_META_DATA_ADDR(gtl_info.roots[i]));
-
-        gtl_info.old_roots[gtl_info.old_roots_count++] = gtl_info.roots[i];
-    }
-
-    xmem_zerofill(gtl_info.roots, gtl_info.roots_count);
-    gtl_info.roots_count = 0;
+    // Cleanup for next collection
+    processAllocatorsPages();
+    updateRoots();
 
     COLLECTION_STATS_END(gtl_info, collection_times);
     UPDATE_COLLECTION_TIMES(gtl_info);
