@@ -175,12 +175,17 @@ void processDec(void* obj, BSQMemoryTheadLocalInfo& tinfo) noexcept
 
 static void mergeDecList(BSQMemoryTheadLocalInfo& tinfo)
 {
-        while(!tinfo.decs_batch.isEmpty()) {
-            void* obj = tinfo.decs_batch.pop_front();
-            tinfo.decs.pending.push_back(obj);
-        }
-        tinfo.decs_batch.clear();
-        tinfo.decs_batch.initialize(); // Needed?
+    if(!tinfo.decs.pending.isInitialized()) {
+        tinfo.decs.pending.initialize();
+    }
+    
+
+    while(!tinfo.decs_batch.isEmpty()) {
+        void* obj = tinfo.decs_batch.pop_front();
+        tinfo.decs.pending.push_back(obj);
+    }
+    tinfo.decs_batch.clear();
+    tinfo.decs_batch.initialize(); // Needed?
 }
 
 // If we did not finish decs in main thread pause decs thread, merge remaining work,

@@ -175,6 +175,11 @@ public:
         this->tail = nullptr;
     }
 
+    inline bool isInitialized() const noexcept 
+    {
+        return this->head != nullptr && this->tail != nullptr;
+    }
+
     inline bool isEmpty() const noexcept
     {
         return this->head == this->tail;
