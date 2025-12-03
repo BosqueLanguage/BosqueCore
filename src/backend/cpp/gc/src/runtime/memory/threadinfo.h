@@ -90,6 +90,12 @@ struct MemStats {
 struct MemStats {};
 #endif
 
+//
+// TODO: we are still lacking notification from main thread that 
+// processing is done and this worker thread can stop looping
+// forever!
+//
+
 // An object for processing RC decrements on separate thread
 typedef ArrayList<void*> DecsList;
 struct DecsProcessor {
