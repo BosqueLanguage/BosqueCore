@@ -3,8 +3,6 @@
 #include "../support/qsort.h"
 #include "threadinfo.h"
 
-#include <thread>
-
 // Used to determine if a pointer points into the data segment of an object
 #define POINTS_TO_DATA_SEG(P) P >= (void*)PAGE_FIND_OBJ_BASE(P) && P < (void*)((char*)PAGE_FIND_OBJ_BASE(P) + PAGE_MASK_EXTRACT_PINFO(P)->entrysize)
 
@@ -14,19 +12,7 @@
 #define GET_SLOT_START_FROM_OFFSET(O) (O - sizeof(PageInfo) - sizeof(MetaData)) 
 #endif
 
-struct DecsInfo {
-    ArrayList<void*> pending_decs; //the list of objects that need to be decremented 
-    
-    // Not sure what a good count would be (maybe just use array list?)
-    PageInfo* decdpages[10'000];
-    uint32_t decdpages_idx = 0;
-
-    DecsInfo(): pending_decs() {
-        this->pending_decs.initialize();
-    }
-};
-
-static void walkPointerMaskForDecrements(DecsInfo& decsinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept;
+static void walkPointerMaskForDecrements(__CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept;
 static void updatePointers(void** slots, __CoreGC::TypeInfoBase* typeinfo, BSQMemoryTheadLocalInfo& tinfo) noexcept;
 static void walkPointerMaskForMarking(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept; 
 
@@ -41,7 +27,7 @@ static void reprocessPageInfo(PageInfo* page, BSQMemoryTheadLocalInfo& tinfo) no
     }
 }
 
-static inline void pushPendingDecs(DecsInfo& decsinfo, void* obj)
+static inline void pushPendingDecs(void* obj)
 {
     // Dead root points to root case, keep the root pointed to alive
     if(GC_IS_ROOT(obj)) [[unlikely]] {
@@ -51,7 +37,7 @@ static inline void pushPendingDecs(DecsInfo& decsinfo, void* obj)
     decsinfo.pending_decs.push_back(obj);
 }
 
-static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo, DecsInfo& decsinfo) noexcept
+static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     // First we need to sort the roots we find
     qsort(tinfo.roots, 0, tinfo.roots_count - 1, tinfo.roots_count);
@@ -65,7 +51,7 @@ static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo, DecsInf
         if(roots_idx >= tinfo.roots_count) {
             // Was dropped from roots
             if(GC_REF_COUNT(cur_oldroot) == 0) {
-                pushPendingDecs(decsinfo, cur_oldroot);
+                pushPendingDecs(cur_oldroot);
             }
             oldroots_idx++;
             continue;
@@ -79,7 +65,7 @@ static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo, DecsInf
         else if(cur_oldroot < cur_root) {
             // Was dropped from roots
             if(GC_REF_COUNT(cur_oldroot) == 0) {
-                pushPendingDecs(decsinfo, cur_oldroot);
+                pushPendingDecs(cur_oldroot);
             }
             oldroots_idx++;
         } 
@@ -93,26 +79,26 @@ static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo, DecsInf
     tinfo.old_roots_count = 0;
 }
 
-static inline void handleTaggedObjectDecrement(DecsInfo& decsinfo, void** slots) noexcept 
+static inline void handleTaggedObjectDecrement(void** slots) noexcept 
 {
     __CoreGC::TypeInfoBase* tagged_typeinfo = (__CoreGC::TypeInfoBase*)*slots;
     switch(tagged_typeinfo->tag) {
         case __CoreGC::Tag::Ref: {
-            pushPendingDecs(decsinfo, *(slots + 1)); 
+            pushPendingDecs(*(slots + 1)); 
             break;
         }
         case __CoreGC::Tag::Tagged: {
-            walkPointerMaskForDecrements(decsinfo, tagged_typeinfo, slots + 1); 
+            walkPointerMaskForDecrements(tagged_typeinfo, slots + 1); 
             break;
         }
         case __CoreGC::Tag::Value: {
-            walkPointerMaskForDecrements(decsinfo, tagged_typeinfo, slots + 1);
+            walkPointerMaskForDecrements(tagged_typeinfo, slots + 1);
             break;
         }
     }
 }
 
-static void walkPointerMaskForDecrements(DecsInfo& decsinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept
+static void walkPointerMaskForDecrements(__CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept
 {
     const char* ptr_mask = typeinfo->ptr_mask;
     if(ptr_mask == PTR_MASK_LEAF) {
@@ -122,11 +108,11 @@ static void walkPointerMaskForDecrements(DecsInfo& decsinfo, __CoreGC::TypeInfoB
     while(*ptr_mask != '\0') {
         switch(*ptr_mask) {
             case PTR_MASK_PTR: { 
-                pushPendingDecs(decsinfo, *slots); 
+                pushPendingDecs(*slots); 
                 break;
             }
             case PTR_MASK_TAGGED: { 
-                handleTaggedObjectDecrement(decsinfo, slots); 
+                handleTaggedObjectDecrement(slots); 
                 break; 
             }
             case PTR_MASK_NOP: { 
@@ -139,7 +125,7 @@ static void walkPointerMaskForDecrements(DecsInfo& decsinfo, __CoreGC::TypeInfoB
     }
 }
 
-static inline void updateDecrementedPages(PageInfo* p, DecsInfo& decsinfo) noexcept 
+static inline void updateDecrementedPages(PageInfo* p) noexcept 
 {
     if(p->seen == false) {
         p->seen = true;
@@ -154,19 +140,19 @@ static inline void decrementObject(void* obj) noexcept
     }
 }
 
-static inline void updateDecrementedObject(void* obj, DecsInfo& decsinfo)
+static inline void updateDecrementedObject(void* obj)
 {
     __CoreGC::TypeInfoBase* typeinfo = GC_TYPE(obj);
     
     if(typeinfo->ptr_mask != PTR_MASK_LEAF && GC_REF_COUNT(obj) == 0) {
-        walkPointerMaskForDecrements(decsinfo, typeinfo, static_cast<void**>(obj));
+        walkPointerMaskForDecrements(typeinfo, static_cast<void**>(obj));
 
         MetaData* m = GC_GET_META_DATA_ADDR(obj);
         GC_RESET_ALLOC(m);
     }
 }
 
-static inline void tryReprocessDecrementedPages(BSQMemoryTheadLocalInfo& tinfo, DecsInfo& decsinfo)
+static inline void tryReprocessDecrementedPages(BSQMemoryTheadLocalInfo& tinfo)
 {
     for(uint32_t i = 0; i < decsinfo.decdpages_idx; i++) {        
         reprocessPageInfo(decsinfo.decdpages[i], tinfo);
@@ -174,7 +160,7 @@ static inline void tryReprocessDecrementedPages(BSQMemoryTheadLocalInfo& tinfo, 
     decsinfo.decdpages_idx = 0;
 }
 
-static void finishDecrements(DecsInfo& decsinfo) noexcept
+static void finishDecrements() noexcept
 {
     while(!decsinfo.pending_decs.isEmpty()) {
         void* obj = decsinfo.pending_decs.pop_front();
@@ -191,7 +177,7 @@ static void finishDecrements(DecsInfo& decsinfo) noexcept
     }
 }
 
-static void processDecrements(BSQMemoryTheadLocalInfo& tinfo, DecsInfo& decsinfo) noexcept
+static void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     GC_REFCT_LOCK_ACQUIRE();
     
@@ -204,14 +190,13 @@ static void processDecrements(BSQMemoryTheadLocalInfo& tinfo, DecsInfo& decsinfo
         }
 
         decrementObject(obj);
-        updateDecrementedObject(obj, decsinfo);
+        updateDecrementedObject(obj);
 
         PageInfo* p = PageInfo::extractPageFromPointer(obj);
-        updateDecrementedPages(p, decsinfo);
+        updateDecrementedPages(p);
 
         deccount++;
     }
-    tryReprocessDecrementedPages(gtl_info, decsinfo);
 
     GC_REFCT_LOCK_RELEASE();
 
@@ -511,24 +496,11 @@ static void markingWalk(BSQMemoryTheadLocalInfo& tinfo) noexcept
     gtl_info.pending_roots.clear();
 }
 
-//
-// We need to explore possibilites for doing decs wihtout blocking the mutator.
-// As old objects are fundamentally immutable, this should be possible.
-// Just needs some semi-clever engineering.
-//
-// Ok, if we cant finish decrements within the allocation phase of runtime we need 
-// to rejoin the decrements thread with out call to collect.
-// Otherwise, we will continue with an akward two thread contengency over 
-// pending decs inside of processPendingDecs and finishDecs.
-//
 void collect() noexcept
 {
     COLLECTION_STATS_START();
 
-    static DecsInfo decsinfo;
-
-    // Under heavy workloads this does not hold -- then we segfault
-    GC_INVARIANT_CHECK(decsinfo.pending_decs.isEmpty());
+    tryReprocessDecrementedPages(gtl_info);
 
     gtl_info.pending_young.initialize();
 
@@ -547,8 +519,8 @@ void collect() noexcept
 
     RC_STATS_START();
 
-    computeDeadRootsForDecrement(gtl_info, decsinfo);
-    processDecrements(gtl_info, decsinfo);
+    computeDeadRootsForDecrement(gtl_info);
+    processDecrements(gtl_info);
 
     RC_STATS_END(gtl_info, rc_times);
     UPDATE_RC_TIMES(gtl_info); 
@@ -577,8 +549,4 @@ void collect() noexcept
     COLLECTION_STATS_END(gtl_info, collection_times);
     UPDATE_COLLECTION_TIMES(gtl_info);
     UPDATE_MEMSTATS_TOTALS(gtl_info);
-
-    if(!decsinfo.pending_decs.isEmpty()) {
-        std::thread(finishDecrements, std::ref(decsinfo)).detach();
-    }
 }

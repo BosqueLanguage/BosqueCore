@@ -2,6 +2,10 @@
 
 #include "allocator.h"
 
+#include <thread>
+#include <condition_variable>
+#include <mutex>
+
 #ifdef MEM_STATS
 #include <chrono>
 #endif
@@ -84,6 +88,58 @@ struct MemStats {
 struct MemStats {};
 #endif
 
+// An object for processing RC decrements on separate thread
+struct DecsProcessor {
+    std::condition_variable cv;
+    std::mutex mtx;
+    std::jthread worker;
+
+    ArrayList<void*> decs;
+    void (*processDecfp)(void*);
+
+    bool canrun;
+    bool needs_merge;
+
+    DecsProcessor(): cv(), mtx(), worker(&DecsProcessor::process, this), processDecfp(nullptr), canrun(false), needs_merge(false) {
+        decs.initialize();
+    }
+
+    void requestMergeAndPause(std::unique_lock<std::mutex>& lk)
+    {
+        this->canrun = false;
+        this->needs_merge = true;
+        this->cv.notify_one();
+
+        // Once canrun is false we know the decs thread ackd our merge request
+        cv.wait(lk, [this]{ return !this->canrun; });
+    }
+
+    void resumeAfterMerge(std::unique_lock<std::mutex>& lk)
+    {
+        this->canrun = true;
+        this->needs_merge = false;
+        lk.unlock();
+        this->cv.notify_one();
+    }
+
+    void process()
+    {
+        while(true) {
+            std::unique_lock lk(this->mtx);
+            cv.wait(lk, [this]{ 
+                return this->canrun && !this->needs_merge; 
+            });
+
+            while(!this->decs.isEmpty()) {
+                if(this->processDecfp != nullptr) {
+                    void* obj = this->decs.pop_front();
+                    this->processDecfp(obj);
+                }
+            }
+        }
+    }
+};
+
 //All of the data that a thread local allocator needs to run it's operations
 struct BSQMemoryTheadLocalInfo
 {
@@ -108,6 +164,9 @@ struct BSQMemoryTheadLocalInfo
     int32_t forward_table_index;
     void** forward_table;
 
+    DecsProcessor decs; 
+    ArrayList<void*> decs_batch; // Decrements able to be done without needing decs thread
+
     float nursery_usage = 0.0f;
 
     ArrayList<void*> pending_roots; //the worklist of roots that we need to do visits from
@@ -130,7 +189,7 @@ struct BSQMemoryTheadLocalInfo
     bool enable_global_rescan         = false;
 #endif
 
-    BSQMemoryTheadLocalInfo() noexcept : tl_id(0), g_gcallocs(nullptr), native_stack_base(nullptr), native_stack_contents(), native_register_contents(), roots_count(0), roots(nullptr), old_roots_count(0), old_roots(nullptr), forward_table_index(FWD_TABLE_START), forward_table(nullptr), pending_roots(), visit_stack(), pending_young(), max_decrement_count(BSQ_INITIAL_MAX_DECREMENT_COUNT), mstats() { }
+    BSQMemoryTheadLocalInfo() noexcept : tl_id(0), g_gcallocs(nullptr), native_stack_base(nullptr), native_stack_contents(), native_register_contents(), roots_count(0), roots(nullptr), old_roots_count(0), old_roots(nullptr), forward_table_index(FWD_TABLE_START), forward_table(nullptr), decs(), decs_batch(), pending_roots(), visit_stack(), pending_young(), max_decrement_count(BSQ_INITIAL_MAX_DECREMENT_COUNT), mstats() { }
 
     inline GCAllocator* getAllocatorForPageSize(PageInfo* page) noexcept {
         uint8_t idx = this->g_gcallocs_lookuptable[page->allocsize >> 3];
