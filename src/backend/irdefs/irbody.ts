@@ -156,8 +156,8 @@ enum IRStatementTag {
     IRErrorDivisionByZeroCheckStatement = "IRErrorDivisionByZeroCheckStatement",
 
     IRTypeDeclInvariantCheckStatement = "IRTypeDeclInvariantCheckStatement",
-    IRPreconditionCheck = "IRPreconditionCheck",
-    IRPostconditionCheck = "IRPostconditionCheck",
+    IRPreconditionCheckStatement = "IRPreconditionCheckStatement",
+    IRPostconditionCheckStatement = "IRPostconditionCheckStatement",
 
     IRAbortStatement = "IRAbortStatement",
     IRDebugStatement = "IRDebugStatement"
@@ -1054,21 +1054,21 @@ class IRTypeDeclInvariantCheckStatement extends IRErrorCheckStatement {
 }
 
 /* This asserts that the given precondition expression is true */
-class IRPreconditionCheck extends IRErrorCheckStatement {
+class IRPreconditionCheckStatement extends IRErrorCheckStatement {
     readonly cond: IRExpression;
 
     constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, cond: IRExpression) {
-        super(IRStatementTag.IRPreconditionCheck, file, sinfo, diagnosticTag, checkID);
+        super(IRStatementTag.IRPreconditionCheckStatement, file, sinfo, diagnosticTag, checkID);
         this.cond = cond;
     }
 }
 
 /* This asserts that the given postcondition expresssion is true */
-class IRPostconditionCheck extends IRErrorCheckStatement {
+class IRPostconditionCheckStatement extends IRErrorCheckStatement {
     readonly cond: IRExpression;
 
     constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, cond: IRExpression) {
-        super(IRStatementTag.IRPostconditionCheck, file, sinfo, diagnosticTag, checkID);
+        super(IRStatementTag.IRPostconditionCheckStatement, file, sinfo, diagnosticTag, checkID);
         this.cond = cond;
     }
 }
@@ -1130,6 +1130,6 @@ export {
 
     IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement,
     IRTypeDeclInvariantCheckStatement,
-    IRPreconditionCheck, IRPostconditionCheck,
+    IRPreconditionCheckStatement, IRPostconditionCheckStatement,
     IRAbortStatement, IRDebugStatement
 };

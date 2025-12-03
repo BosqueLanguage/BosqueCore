@@ -16,6 +16,8 @@ namespace ᐸRuntimeᐳ
         constexpr UUIDv4(const uint8_t v[16]) : value{0} { std::copy(v, v + 16, value); }
         constexpr UUIDv4(const UUIDv4& other) = default;
 
+        constexpr static UUIDv4 nil() { return UUIDv4(); }
+
         friend constexpr bool operator<(const UUIDv4 &lhs, const UUIDv4 &rhs) { return std::lexicographical_compare(lhs.value, lhs.value + 16, rhs.value, rhs.value + 16); }
         friend constexpr bool operator==(const UUIDv4 &lhs, const UUIDv4 &rhs) { return std::equal(lhs.value, lhs.value + 16, rhs.value); }
         friend constexpr bool operator>(const UUIDv4 &lhs, const UUIDv4 &rhs) { return std::lexicographical_compare(rhs.value, rhs.value + 16, lhs.value, lhs.value + 16); }
@@ -33,6 +35,8 @@ namespace ᐸRuntimeᐳ
         constexpr UUIDv7() : value{0} {}
         constexpr UUIDv7(const uint8_t v[16]) : value{0} { std::copy(v, v + 16, value); }
         constexpr UUIDv7(const UUIDv7& other) = default;
+
+        constexpr static UUIDv7 nil() { return UUIDv7(); }
 
         friend constexpr bool operator<(const UUIDv7 &lhs, const UUIDv7 &rhs) { return std::lexicographical_compare(lhs.value, lhs.value + 16, rhs.value, rhs.value + 16); }
         friend constexpr bool operator==(const UUIDv7 &lhs, const UUIDv7 &rhs) { return std::equal(lhs.value, lhs.value + 16, rhs.value); }

@@ -1,10 +1,10 @@
 import assert from "node:assert";
 
-import { AbstractNominalTypeDecl, APIDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InvariantDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl, MethodDecl, AbstractCollectionTypeDecl, CRopeTypeDecl, UnicodeRopeTypeDecl, CRopeIteratorTypeDecl } from "../../frontend/assembly.js";
-import { FunctionInstantiationInfo, MethodInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiations.js";
-import { AutoTypeSignature, EListTypeSignature, FullyQualifiedNamespace, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, DebugStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfStatement, ITest, ITestType, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement } from "../../frontend/body.js";
-import { SourceInfo } from "../../frontend/build_decls.js";
+import { AbstractNominalTypeDecl, Assembly, ExplicitInvokeDecl, NamespaceDeclaration, NamespaceFunctionDecl, TypeFunctionDecl } from "../../frontend/assembly.js";
+import { NamespaceInstantiationInfo } from "./instantiations.js";
+import { TemplateNameMapper, TypeSignature } from "../../frontend/type.js";
+import { } from "../../frontend/body.js";
+import { } from "../../frontend/build_decls.js";
 
 function computeTBindsKey(tbinds: TypeSignature[]): string {
     return (tbinds.length !== 0) ? `<${tbinds.map(t => t.tkeystr).join(", ")}>` : "";
@@ -132,45 +132,6 @@ class Monomorphizer {
             ; //nothing to do
         }
         else if(rt instanceof NominalTypeSignature) {
-            if(rt.tkeystr === "String") {
-                const nns = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "UnicodeRopeOps") as NamespaceDeclaration;
-
-                if(nns !== undefined) {
-                    const createdecl = nns.functions.find((tt) => tt.name === "s_unicoderope_create") as NamespaceFunctionDecl;                    
-                    this.instantiateNamespaceFunction(nns, createdecl, []);
-
-                    const pushdecl = nns.functions.find((tt) => tt.name === "s_unicoderope_append") as NamespaceFunctionDecl;
-                    this.instantiateNamespaceFunction(nns, pushdecl, []);
-
-                    const eqdecl = nns.functions.find((tt) => tt.name === "s_unicoderope_equal") as NamespaceFunctionDecl;                    
-                    this.instantiateNamespaceFunction(nns, eqdecl, []);
-
-                    // Not supported yet
-                    /*
-                    const ldecl = nns.functions.find((tt) => tt.name === "s_crope_less") as NamespaceFunctionDecl;                    
-                    this.instantiateNamespaceFunction(nns, ldecl, []);
-                    */
-                }
-            }
-
-            if(rt.tkeystr === "CString") {
-                const nns = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "CRopeOps") as NamespaceDeclaration;
-
-                if(nns !== undefined) {
-                    const createdecl = nns.functions.find((tt) => tt.name === "s_crope_create") as NamespaceFunctionDecl;                    
-                    this.instantiateNamespaceFunction(nns, createdecl, []);
-
-                    const pushdecl = nns.functions.find((tt) => tt.name === "s_crope_append") as NamespaceFunctionDecl;
-                    this.instantiateNamespaceFunction(nns, pushdecl, []);
-
-                    const eqdecl = nns.functions.find((tt) => tt.name === "s_crope_equal") as NamespaceFunctionDecl;                    
-                    this.instantiateNamespaceFunction(nns, eqdecl, []);
-                
-                    const ldecl = nns.functions.find((tt) => tt.name === "s_crope_less") as NamespaceFunctionDecl;                    
-                    this.instantiateNamespaceFunction(nns, ldecl, []);
-                }
-            }
-
             rt.alltermargs.forEach((tt) => this.instantiateTypeSignature(tt, mapping));
             this.pendingNominalTypeDecls.push(new PendingNominalTypeDecl(rt.tkeystr, rt, rt.decl, rt.alltermargs));
         }
@@ -2184,14 +2145,15 @@ class Monomorphizer {
     }
 
     static computeExecutableInstantiations(assembly: Assembly, roonts: string[]): NamespaceInstantiationInfo[] {
-        return InstantiationPropagator.computeInstantiations(assembly, false, roonts);
+        return Monomorphizer.computeInstantiations(assembly, false, roonts);
+
     }
 
     static computeTestInstantiations(assembly: Assembly, roonts: string[]): NamespaceInstantiationInfo[] {
-        return InstantiationPropagator.computeInstantiations(assembly, true, roonts);
+        return Monomorphizer.computeInstantiations(assembly, true, roonts);
     }
 }
 
 export { 
-    InstantiationPropagator
+    Monomorphizer
 };

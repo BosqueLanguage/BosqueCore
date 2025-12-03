@@ -1,5 +1,5 @@
 import { MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_INT } from "../../frontend/assembly";
-import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessNamespaceConstantExpression, IRAccessStaticFieldExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRLiteralByteBufferExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag } from "../irdefs/irbody";
+import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessNamespaceConstantExpression, IRAccessStaticFieldExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRLiteralByteBufferExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag, IRPrefixNotOpExpression, IRPrefixPlusOpExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRReturnValueSimpleStatement } from "../irdefs/irbody";
 
 import assert from "node:assert";
 import { TransformCPPNameManager } from "./namemgr";
@@ -251,67 +251,84 @@ class CPPEmitter {
         }
     }
 
-    private emitIRSimpleExpression(exps: IRSimpleExpression): string {
+    private emitIRSimpleExpression(exps: IRSimpleExpression, toplevel: boolean): string {
         if(exps instanceof IRImmediateExpression) {
             return this.emitIRImmediateExpression(exps);
         }
         else {
             const ttag = exps.tag;
 
+            let bstr = "";
+            let skipparens = false;
             if(ttag === IRExpressionTag.IRPrefixNotOpExpression) {
-                xxxx;
+                skipparens = true;
+                bstr = `!${this.emitIRSimpleExpression((exps as IRPrefixNotOpExpression).exp, false)}`;
             }
             else if(ttag === IRExpressionTag.IRPrefixPlusOpExpression) {
-                xxxx;
+                bstr = `${this.emitIRSimpleExpression((exps as IRPrefixPlusOpExpression).exp, toplevel)}`;
             }
             else if(ttag === IRExpressionTag.IRPrefixNegateOpExpression) {
-                xxxx;
+                bstr = `-${this.emitIRSimpleExpression((exps as IRPrefixNegateOpExpression).exp, false)}`;
             }
             else if(ttag === IRExpressionTag.IRBinAddExpression) {
-                xxxx;
+                const bexp = exps as IRBinAddExpression;
+                bstr = `${this.emitIRSimpleExpression(bexp.left, false)} + ${this.emitIRSimpleExpression(bexp.right, false)}`;
             }
             else if(ttag === IRExpressionTag.IRBinSubExpression) {
-                xxxx;
+                const bexp = exps as IRBinSubExpression;
+                bstr = `${this.emitIRSimpleExpression(bexp.left, false)} - ${this.emitIRSimpleExpression(bexp.right, false)}`;
             }
             else if(ttag === IRExpressionTag.IRBinMultExpression) {
-                xxxx;
+                const bexp = exps as IRBinMultExpression;
+                bstr = `${this.emitIRSimpleExpression(bexp.left, false)} * ${this.emitIRSimpleExpression(bexp.right, false)}`;
             }
             else if(ttag === IRExpressionTag.IRBinDivExpression) {
-                xxxx;
+                const bexp = exps as IRBinDivExpression;
+                bstr = `${this.emitIRSimpleExpression(bexp.left, false)} / ${this.emitIRSimpleExpression(bexp.right, false)}`;
             }
             else if(ttag === IRExpressionTag.IRNumericEqExpression) {
-                xxxx;
+                const bexp = exps as IRNumericEqExpression;
+                bstr = `${this.emitIRSimpleExpression(bexp.left, false)} == ${this.emitIRSimpleExpression(bexp.right, false)}`;
             }
             else if(ttag === IRExpressionTag.IRNumericNeqExpression) {
-                xxxx;
+                const bexp = exps as IRNumericNeqExpression;
+                bstr = `${this.emitIRSimpleExpression(bexp.left, false)} != ${this.emitIRSimpleExpression(bexp.right, false)}`;
             }
             else if(ttag === IRExpressionTag.IRNumericLessExpression) {
-                xxxx;
+                const bexp = exps as IRNumericLessExpression;
+                bstr = `${this.emitIRSimpleExpression(bexp.left, false)} < ${this.emitIRSimpleExpression(bexp.right, false)}`;
             }
             else if(ttag === IRExpressionTag.IRNumericLessEqExpression) {
-                xxxx;
+                const bexp = exps as IRNumericLessEqExpression;
+                bstr = `${this.emitIRSimpleExpression(bexp.left, false)} <= ${this.emitIRSimpleExpression(bexp.right, false)}`;
             }
             else if(ttag === IRExpressionTag.IRNumericGreaterExpression) {
-                xxxx;
+                const bexp = exps as IRNumericGreaterExpression;
+                bstr = `${this.emitIRSimpleExpression(bexp.left, false)} > ${this.emitIRSimpleExpression(bexp.right, false)}`;
             }
             else if(ttag === IRExpressionTag.IRNumericGreaterEqExpression) {
-                xxxx;
+                const bexp = exps as IRNumericGreaterEqExpression;
+                bstr = `${this.emitIRSimpleExpression(bexp.left, false)} >= ${this.emitIRSimpleExpression(bexp.right, false)}`;
             }
             else if(ttag === IRExpressionTag.IRLogicAndExpression) {
-                xxxx;
+                const bexp = exps as IRLogicAndExpression;
+                bstr = `${this.emitIRSimpleExpression(bexp.left, false)} & ${this.emitIRSimpleExpression(bexp.right, false)}`;
             }
             else if(ttag === IRExpressionTag.IRLogicOrExpression) {
-                xxxx;
+                const bexp = exps as IRLogicOrExpression;
+                bstr = `${this.emitIRSimpleExpression(bexp.left, false)} | ${this.emitIRSimpleExpression(bexp.right, false)}`;
             }
             else {
                 assert(false, `CPPEmitter: Unsupported IR simple expression type -- ${exps.constructor.name}`);
             }
+
+            return (toplevel || skipparens) ? bstr : `(${bstr})`;
         }
     }
 
-    private emitExpression(exp: IRExpression): string {
+    private emitExpression(exp: IRExpression, toplevel: boolean): string {
         if(exp instanceof IRSimpleExpression) {
-            return this.emitIRSimpleExpression(exp);
+            return this.emitIRSimpleExpression(exp, toplevel);
         }
         else {
             const ttag = exp.tag;
@@ -341,13 +358,15 @@ class CPPEmitter {
                 return `${RUNTIME_NAMESPACE}::tl_info.taskid`;
             }
             else if(ttag === IRExpressionTag.IRTaskAccessParentIDExpression) {
-                return `(${RUNTIME_NAMESPACE}::tl_info.parent !== nullptr ? ${RUNTIME_NAMESPACE}::tl_info.parent->taskid : 0)`;
+                return `(${RUNTIME_NAMESPACE}::tl_info.parent !== nullptr ? ${RUNTIME_NAMESPACE}::tl_info.parent->taskid : ${RUNTIME_NAMESPACE}::UUIDv4::nil())`;
             }
             else {
                 assert(false, `CPPEmitter: Unsupported IR expression type -- ${exp.constructor.name}`);
             }
         }
     }
+
+    private emit
 
     private emitAtomicStatement(stmt: IRAtomicStatement): string {
         const ttag = stmt.tag;
@@ -359,6 +378,40 @@ class CPPEmitter {
             xxxx;
         }
         else if(ttag === IRStatementTag.IRVariableInitializationStatement) {
+            xxxx;
+        }
+        else if(ttag === IRStatementTag.IRReturnVoidSimpleStatement) {
+            return "return;";
+        }
+        else if(ttag === IRStatementTag.IRReturnValueSimpleStatement) {
+            const ires = stmt as IRReturnValueSimpleStatement;
+            return `return ${this.emitExpression(ires.retexp, true)};`;
+        }
+        else if(ttag === IRStatementTag.IRErrorAdditionBoundsCheckStatement) {
+            xxxx;
+        }
+        else if(ttag === IRStatementTag.IRErrorSubtractionBoundsCheckStatement) {
+            xxxx;
+        }
+        else if(ttag === IRStatementTag.IRErrorMultiplicationBoundsCheckStatement) {
+            xxxx;
+        }
+        else if(ttag === IRStatementTag.IRErrorDivisionByZeroCheckStatement) {
+            xxxx;
+        }
+        else if(ttag === IRStatementTag.IRTypeDeclInvariantCheckStatement) {
+            xxxx;
+        }
+        else if(ttag === IRStatementTag.IRPreconditionCheckStatement) {
+            xxxx;
+        }
+        else if(ttag === IRStatementTag.IRPostconditionCheckStatement) {
+            xxxx;
+        }
+        else if(ttag === IRStatementTag.IRAbortStatement) {
+            xxxx;
+        }
+        else if(ttag === IRStatementTag.IRDebugStatement) {
             xxxx;
         }
         else {
