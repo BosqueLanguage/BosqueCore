@@ -81,20 +81,22 @@ class TypeInfoManager {
 
     emitTypeInfoDecl(tkey: string): string {
         const typeinfo = this.getTypeInfo(tkey);
-
         const tk = TransformCPPNameManager.convertTypeKey(tkey);
         
-        xxxx;
+        let layouttag = "";
+        if(typeinfo.tag === LayoutTag.Value) {
+            layouttag = "Value";
+        }
+        else if(typeinfo.tag === LayoutTag.Ref) {
+            layouttag = "Ref";
+        }
+        else {
+            layouttag = "Tagged";
+        }
 
-        return `constexpr TypeInfo g_typeinfo_${tk} = { ${typeinfo.bsqtypeid}, ${typeinfo.bytesize}, ${typeinfo.slotcount}, LayoutTag::${LayoutTag[typeinfo.tag]}, ${typeinfo?.ptrmask ?? "BSQ_PTR_MASK_LEAF"}, "${tk}", ${typeinfo?.vtable === undefined ? "nullptr" : "/* vtable info */"} };`;
-        WELL_KNOWN_TYPE_ID_CSTRBUFF,
-        sizeof(CStrBuff),
-        byteSizeToSlotCount(sizeof(CStrBuff)),
-        LayoutTag::Value,
-        BSQ_PTR_MASK_LEAF,
-        "CStrBuff",
-        nullptr
-    };
+        assert(typeinfo.vtable?.length === 0, `TypeInfoManager::emitTypeInfoDecl - VTable emission not yet supported for type key ${tkey}`);
+
+        return `constexpr TypeInfo g_typeinfo_${tk} = { ${typeinfo.bsqtypeid}, ${typeinfo.bytesize}, ${typeinfo.slotcount}, LayoutTag::${layouttag}, ${typeinfo.ptrmask ?? "BSQ_PTR_MASK_LEAF"}, "${tk}", nullptr };`;
     }
 
     emitTypeAsParameter(tkey: string, isconst: boolean): string {

@@ -1,6 +1,8 @@
 import { TransformCPPNameManager } from "./namemgr";
+import { TypeInfoManager } from "./typeinfomgr";
+
 import { MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_INT } from "../../frontend/assembly";
-import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessNamespaceConstantExpression, IRAccessStaticFieldExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRLiteralByteBufferExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag, IRPrefixNotOpExpression, IRPrefixPlusOpExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRReturnValueSimpleStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement, IRAbortStatement } from "../irdefs/irbody";
+import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessNamespaceConstantExpression, IRAccessStaticFieldExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRLiteralByteBufferExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag, IRPrefixNotOpExpression, IRPrefixPlusOpExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRReturnValueSimpleStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement, IRAbortStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRTempAssignExpressionStatement } from "../irdefs/irbody";
 
 import assert from "node:assert";
 
@@ -11,8 +13,11 @@ class CPPEmitter {
     //The C++ TaskInfoRepr<U> for accessing the global info for the task we are emitting
     private cppTaskType: string;
 
-    constructor(cppTaskType: string) {
+    private typeInfoManager: TypeInfoManager;
+
+    constructor(cppTaskType: string, typeInfoManager: TypeInfoManager) {
         this.cppTaskType = cppTaskType;
+        this.typeInfoManager = typeInfoManager;
     }
 
     private escapeLiteralCString(cstrbytes: number[]): string {
@@ -372,34 +377,57 @@ class CPPEmitter {
         if(ttag === IRStatementTag.IRNopStatement) {
             return ";";
         }
+        else if(ttag === IRStatementTag.IRTempAssignExpressionStatement) {
+            const tase = stmt as IRTempAssignExpressionStatement;
+            
+            const vdecltype = this.typeInfoManager.emitTypeAsStd(tase.ttype.tkeystr, true);
+            const wval = this.emitExpression(tase.rhs, true);
+            return `${vdecltype} ${TransformCPPNameManager.convertIdentifier(tase.tname)} = ${wval};`
+        }
+        else if(ttag === IRStatementTag.IRTempAssignStdInvokeStatement) {
+            assert(false, "CPPEmitter: need to implement std invoke temp assign");
+        }
+        else if(ttag === IRStatementTag.IRTempAssignRefInvokeStatement) {
+            assert(false, "CPPEmitter: need to implement ref invoke temp assign");
+        }
+        else if(ttag === IRStatementTag.IRTempAssignConditionalStatement) {
+            assert(false, "CPPEmitter: need to implement conditional temp assign");
+        }
         else if(ttag === IRStatementTag.IRVariableDeclarationStatement) {
-            xxxx;
+            const vdeclstmt = stmt as IRVariableDeclarationStatement;
+
+            const vdecltype = this.typeInfoManager.emitTypeAsStd(vdeclstmt.vtype.tkeystr, false);
+            return `${vdecltype} ${TransformCPPNameManager.convertIdentifier(vdeclstmt.vname)};`
         }
         else if(ttag === IRStatementTag.IRVariableInitializationStatement) {
-            xxxx;
+            const vistmt = stmt as IRVariableInitializationStatement;
+
+            const vdecltype = this.typeInfoManager.emitTypeAsStd(vistmt.vtype.tkeystr, vistmt.isconst);
+            const wval = this.emitIRSimpleExpression(vistmt.initexp, true);
+            return `${vdecltype} ${TransformCPPNameManager.convertIdentifier(vistmt.vname)} = ${wval};`
         }
         else if(ttag === IRStatementTag.IRReturnVoidSimpleStatement) {
             return "return;";
         }
         else if(ttag === IRStatementTag.IRReturnValueSimpleStatement) {
             const ires = stmt as IRReturnValueSimpleStatement;
-            return `return ${this.emitExpression(ires.retexp, true)};`;
+            return `return ${this.emitIRSimpleExpression(ires.retexp, true)};`;
         }
         else if(ttag === IRStatementTag.IRErrorAdditionBoundsCheckStatement) {
             const ieabc = stmt as IRErrorAdditionBoundsCheckStatement;
-            return `${RUNTIME_NAMESPACE}::${ieabc.optypechk}::checkOverflowAddition(${this.emitExpression(ieabc.left, true)}, ${this.emitExpression(ieabc.right, true)}, ${ieabc.file}, ${ieabc.sinfo.line});`;
+            return `${RUNTIME_NAMESPACE}::${ieabc.optypechk}::checkOverflowAddition(${this.emitIRSimpleExpression(ieabc.left, true)}, ${this.emitIRSimpleExpression(ieabc.right, true)}, ${ieabc.file}, ${ieabc.sinfo.line});`;
         }
         else if(ttag === IRStatementTag.IRErrorSubtractionBoundsCheckStatement) {
             const iesbc = stmt as IRErrorSubtractionBoundsCheckStatement;
-            return `${RUNTIME_NAMESPACE}::${iesbc.optypechk}::checkOverflowSubtraction(${this.emitExpression(iesbc.left, true)}, ${this.emitExpression(iesbc.right, true)}, ${iesbc.file}, ${iesbc.sinfo.line});`;
+            return `${RUNTIME_NAMESPACE}::${iesbc.optypechk}::checkOverflowSubtraction(${this.emitIRSimpleExpression(iesbc.left, true)}, ${this.emitIRSimpleExpression(iesbc.right, true)}, ${iesbc.file}, ${iesbc.sinfo.line});`;
         }
         else if(ttag === IRStatementTag.IRErrorMultiplicationBoundsCheckStatement) {
             const iembc = stmt as IRErrorMultiplicationBoundsCheckStatement;
-            return `${RUNTIME_NAMESPACE}::${iembc.optypechk}::checkOverflowMultiplication(${this.emitExpression(iembc.left, true)}, ${this.emitExpression(iembc.right, true)}, ${iembc.file}, ${iembc.sinfo.line});`;
+            return `${RUNTIME_NAMESPACE}::${iembc.optypechk}::checkOverflowMultiplication(${this.emitIRSimpleExpression(iembc.left, true)}, ${this.emitIRSimpleExpression(iembc.right, true)}, ${iembc.file}, ${iembc.sinfo.line});`;
         }
         else if(ttag === IRStatementTag.IRErrorDivisionByZeroCheckStatement) {
             const iedzbc = stmt as IRErrorDivisionByZeroCheckStatement;
-            return `${RUNTIME_NAMESPACE}::${iedzbc.optypechk}::checkDivisionByZero(${this.emitExpression(iedzbc.left, true)}, ${iedzbc.file}, ${iedzbc.sinfo.line});`;
+            return `${RUNTIME_NAMESPACE}::${iedzbc.optypechk}::checkDivisionByZero(${this.emitIRSimpleExpression(iedzbc.left, true)}, ${iedzbc.file}, ${iedzbc.sinfo.line});`;
         }
         else if(ttag === IRStatementTag.IRTypeDeclInvariantCheckStatement) {
             xxxx;

@@ -138,7 +138,10 @@ abstract class IRLiteralExpression extends IRImmediateExpression {
 enum IRStatementTag {
     IRNopStatement = "IRNopStatement",
 
-    //TODO: add atomic statement for temporary variable inject on RHS ref and condition expressions
+    IRTempAssignExpressionStatement = "IRTempAssignExpressionStatement",
+    IRTempAssignStdInvokeStatement = "IRTempAssignStdInvokeStatement",
+    IRTempAssignRefInvokeStatement = "IRTempAssignRefInvokeStatement",
+    IRTempAssignConditionalStatement = "IRTempAssignConditionalStatement",
 
     IRVariableDeclarationStatement = "IRVariableDeclarationStatement",
     IRVariableInitializationStatement = "IRVariableInitializationStatement",
@@ -175,6 +178,18 @@ abstract class IRStatement {
 abstract class IRAtomicStatement extends IRStatement {
     constructor(tag: IRStatementTag) {
         super(tag);
+    }
+}
+
+/* Represent temporary variable assignment statements */
+abstract class IRTempAssignStatement extends IRAtomicStatement {
+    readonly ttype: IRTypeSignature;
+    readonly tname: string;
+
+    constructor(tag: IRStatementTag, tname: string, ttype: IRTypeSignature) {
+        super(tag);
+        this.tname = tname;
+        this.ttype = ttype;
     }
 }
 
@@ -974,6 +989,24 @@ class IRNopStatement extends IRAtomicStatement {
     }
 }
 
+class IRTempAssignExpressionStatement extends IRTempAssignStatement {
+    readonly rhs: IRExpression;
+
+    constructor(tname: string, rhs: IRExpression, ttype: IRTypeSignature) {
+        super(IRStatementTag.IRTempAssignExpressionStatement, tname, ttype);
+        this.rhs = rhs;
+    }
+}
+
+class IRTempAssignStdInvokeStatement extends IRTempAssignStatement {
+}
+
+class IRTempAssignRefInvokeStatement extends IRTempAssignStatement {
+}
+
+class IRTempAssignConditionalStatement extends IRTempAssignStatement {
+}
+
 class IRVariableDeclarationStatement extends IRAtomicStatement {
     readonly vname: string;
     readonly vtype: IRTypeSignature;
@@ -988,13 +1021,15 @@ class IRVariableDeclarationStatement extends IRAtomicStatement {
 class IRVariableInitializationStatement extends IRAtomicStatement {
     readonly vname: string;
     readonly vtype: IRTypeSignature;
-    readonly initexp: IRSimpleExpression;
+    readonly initexp: IRExpression;
+    readonly isconst: boolean;
 
-    constructor(vname: string, vtype: IRTypeSignature, initexp: IRSimpleExpression) {
+    constructor(vname: string, vtype: IRTypeSignature, initexp: IRExpression, isconst: boolean) {
         super(IRStatementTag.IRVariableInitializationStatement);
         this.vname = vname;
         this.vtype = vtype;
         this.initexp = initexp;
+        this.isconst = isconst;
     }
 }
 
@@ -1009,9 +1044,9 @@ class IRReturnVoidSimpleStatement extends IRReturnSimpleStatement {
 }
 
 class IRReturnValueSimpleStatement extends IRReturnSimpleStatement {
-    readonly retexp: IRImmediateExpression;
+    readonly retexp: IRSimpleExpression;
 
-    constructor(retexp: IRImmediateExpression) {
+    constructor(retexp: IRSimpleExpression) {
         super(IRStatementTag.IRReturnValueSimpleStatement);
         this.retexp = retexp;
     }
@@ -1123,6 +1158,7 @@ export {
     IRErrorCheckStatement, IRErrorBinArithCheckStatement,
 
     IRNopStatement,
+    IRTempAssignExpressionStatement, IRTempAssignStdInvokeStatement, IRTempAssignRefInvokeStatement, IRTempAssignConditionalStatement,
 
     IRVariableDeclarationStatement, IRVariableInitializationStatement,
     
