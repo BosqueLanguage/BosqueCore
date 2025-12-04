@@ -16,6 +16,9 @@ int wrap_setjmp() {
     __CoreCpp::MainType ret = Main::main();
     std::cout << __CoreCpp::to_string(ret) << std::endl;
 
+    // Ensure decs thread stops waiting
+    gtl_info.decs.signalFinished();
+
     return 0;
 }
 

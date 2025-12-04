@@ -91,9 +91,9 @@ struct MemStats {};
 #endif
 
 //
-// TODO: we are still lacking notification from main thread that 
-// processing is done and this worker thread can stop looping
-// forever!
+// For simplicity we have each method creating their own lock (which doesnt matter functionally)
+// We should have a universal lock for the sake of speeding things up though,
+// I dont love making new locks every call 
 //
 
 // An object for processing RC decrements on separate thread
@@ -108,8 +108,10 @@ struct DecsProcessor {
 
     bool worker_paused;
     bool merge_requested;
+    bool stop_requested;
 
-    DecsProcessor(BSQMemoryTheadLocalInfo* tinfo): cv(), mtx(), worker(&DecsProcessor::process, this, tinfo), pending(), processDecfp(nullptr), worker_paused(true), merge_requested(false) { }
+    DecsProcessor(BSQMemoryTheadLocalInfo* tinfo): cv(), mtx(), worker(&DecsProcessor::process, this, tinfo), pending(), processDecfp(nullptr), worker_paused(true), merge_requested(false), stop_requested(false) { 
+    }
 
     void requestMergeAndPause(std::unique_lock<std::mutex>& lk)
     {
@@ -138,11 +140,19 @@ struct DecsProcessor {
     {
         this->worker_paused = true;
         
-        lk.unlock();
         this->cv.notify_one();
-        lk.lock();
         
         cv.wait(lk, [this]{ return !this->worker_paused; });
+    }
+
+    // May need to pass in a lock? might not matter, just kills the thread
+    void signalFinished()
+    {
+        std::unique_lock lk(this->mtx);
+        this->stop_requested = true;
+
+        lk.unlock();
+        this->cv.notify_one();
     }
 
     void process(BSQMemoryTheadLocalInfo* tinfo)
@@ -151,8 +161,14 @@ struct DecsProcessor {
         while(true) {
             this->cv.wait(lk, [this]{
                 return (!this->worker_paused && !this->pending.isEmpty())
-                    || this->merge_requested;
+                    || this->merge_requested
+                    || this->stop_requested;
             });
+
+            if(this->stop_requested) {
+                this->stop_requested = false;
+                return ;
+            }
 
             if(this->merge_requested) {
                 this->pauseWorker(lk);

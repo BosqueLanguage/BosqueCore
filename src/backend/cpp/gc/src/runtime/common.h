@@ -3,6 +3,7 @@
 #include "../language/bsqtype.h"
 
 #include <sys/mman.h> //mmap
+#include <mutex>
 
 //DEFAULT ENABLED WHILE LOTS OF DEVELOPMENT!!!!
 #define MEM_STATS
