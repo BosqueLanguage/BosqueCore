@@ -10,12 +10,12 @@ namespace ᐸRuntimeᐳ
     class Option 
     {
     public:
-        const TypeInfoBase* typeinfo;
+        const TypeInfo* typeinfo;
         T data;
     
     private:
-        constexpr Option(const TypeInfoBase* ti) : typeinfo(ti), data() {}
-        constexpr Option(const TypeInfoBase* ti, const T& d) : typeinfo(ti), data(d) {}
+        constexpr Option(const TypeInfo* ti) : typeinfo(ti), data() {}
+        constexpr Option(const TypeInfo* ti, const T& d) : typeinfo(ti), data(d) {}
 
     public:
         constexpr Option() : typeinfo(nullptr), data() {};
@@ -28,7 +28,7 @@ namespace ᐸRuntimeᐳ
         // Some option bits
         constexpr bool isSome() const { return this->typeinfo != &g_typeinfo_None; }
 
-        static Option<T> makeSome(const TypeInfoBase* ti, const T& d) { return Option<T>(ti, d); }
+        static Option<T> makeSome(const TypeInfo* ti, const T& d) { return Option<T>(ti, d); }
     };
 
     //
@@ -40,16 +40,16 @@ namespace ᐸRuntimeᐳ
     class BoxedUnion 
     {
     public:
-        const TypeInfoBase* typeinfo;
+        const TypeInfo* typeinfo;
         U data;
 
     private:
         static_assert(std::is_union_v<U>, "BoxedUnion requires a union type U");
-        constexpr BoxedUnion(const TypeInfoBase* ti) : typeinfo(ti), data() {}
+        constexpr BoxedUnion(const TypeInfo* ti) : typeinfo(ti), data() {}
 
     public:
         constexpr BoxedUnion() : typeinfo(nullptr), data() {};
-        constexpr BoxedUnion(const TypeInfoBase* ti, const U& d) : typeinfo(ti), data(d) {}
+        constexpr BoxedUnion(const TypeInfo* ti, const U& d) : typeinfo(ti), data(d) {}
         constexpr BoxedUnion(const BoxedUnion& other) = default;
         
         // Note -- inject and extract are generated for each use based on the generation union type (see strings for example)

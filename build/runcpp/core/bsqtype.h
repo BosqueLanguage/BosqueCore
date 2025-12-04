@@ -40,7 +40,7 @@ namespace ᐸRuntimeᐳ
         uint32_t slotoffset;
     };
 
-    class TypeInfoBase
+    class TypeInfo
     {
     public:
         uint32_t bsqtypeid;
@@ -63,7 +63,7 @@ namespace ᐸRuntimeᐳ
         return slotcount * sizeof(uint64_t);
     }
 
-    constexpr TypeInfoBase g_typeinfo_None = {
+    constexpr TypeInfo g_typeinfo_None = {
         WELL_KNOWN_TYPE_ID_NONE,
         sizeof(None),
         byteSizeToSlotCount(sizeof(None)),

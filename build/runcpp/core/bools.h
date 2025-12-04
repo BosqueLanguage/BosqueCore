@@ -28,7 +28,7 @@ namespace ᐸRuntimeᐳ
     };
     using Bool = BBool; //work around bool kw preventing Class name of Bool
 
-    constexpr TypeInfoBase g_typeinfo_Bool = {
+    constexpr TypeInfo g_typeinfo_Bool = {
         WELL_KNOWN_TYPE_ID_BOOL,
         sizeof(Bool),
         byteSizeToSlotCount(sizeof(Bool)),

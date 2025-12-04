@@ -1,5 +1,4 @@
 
-
 abstract class IRTypeSignature {
     readonly tkeystr: string;
 

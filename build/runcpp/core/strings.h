@@ -67,7 +67,7 @@ namespace ᐸRuntimeᐳ
         constexpr CStrNode(const CStrNode& other) = default;
     };
 
-    constexpr TypeInfoBase g_typeinfo_CStrBuff = {
+    constexpr TypeInfo g_typeinfo_CStrBuff = {
         WELL_KNOWN_TYPE_ID_CSTRBUFF,
         sizeof(CStrBuff),
         byteSizeToSlotCount(sizeof(CStrBuff)),
@@ -77,7 +77,7 @@ namespace ᐸRuntimeᐳ
         nullptr
     };
 
-    constexpr TypeInfoBase g_typeinfo_CStrNode = {
+    constexpr TypeInfo g_typeinfo_CStrNode = {
         WELL_KNOWN_TYPE_ID_CSTRNODE,
         sizeof(CStrNode),
         byteSizeToSlotCount(sizeof(CStrNode)),
@@ -87,7 +87,7 @@ namespace ᐸRuntimeᐳ
         nullptr
     };
 
-    constexpr TypeInfoBase g_typeinfo_CString = {
+    constexpr TypeInfo g_typeinfo_CString = {
         WELL_KNOWN_TYPE_ID_CSTRING,
         sizeof(CStrTree),
         byteSizeToSlotCount(sizeof(CStrTree)),
