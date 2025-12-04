@@ -104,7 +104,14 @@ struct DecsProcessor {
     bool merge_requested;
     bool stop_requested;
 
+    // Prolly need locks for this
+    // and it doesnt fking work...
     DecsProcessor(BSQMemoryTheadLocalInfo* tinfo): cv(), mtx(), worker(&DecsProcessor::process, this, tinfo), pending(), processDecfp(nullptr), worker_paused(true), merge_requested(false), stop_requested(false) { 
+        GlobalThreadAllocInfo::s_thread_counter++;
+    }
+
+    ~DecsProcessor() {
+        GlobalThreadAllocInfo::s_thread_counter--;
     }
 
     void requestMergeAndPause(std::unique_lock<std::mutex>& lk)
@@ -145,9 +152,9 @@ struct DecsProcessor {
         this->stop_requested = true;
 
         lk.unlock();
-        this->cv.notify_one();
+        this->cv.notify_all();
         
-        cv.wait(lk, [this]{ return this->worker_paused; });
+        cv.wait(lk, [this]{ return GlobalThreadAllocInfo::s_thread_counter == 0; });
     }
 
     void process(BSQMemoryTheadLocalInfo* tinfo)
