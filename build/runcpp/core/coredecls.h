@@ -11,6 +11,11 @@
 #include "fpoints.h"
 #include "strings.h"
 
+using None = uint64_t;
+constexpr None none = 0ull;
+
+constexpr ᐸRuntimeᐳ::Bool FALSE = ᐸRuntimeᐳ::Bool::from(false);
+constexpr ᐸRuntimeᐳ::Bool TRUE = ᐸRuntimeᐳ::Bool::from(true);
 
 constexpr ᐸRuntimeᐳ::Nat operator""_n(unsigned long long n)
 {

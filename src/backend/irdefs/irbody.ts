@@ -1114,12 +1114,20 @@ class IRAbortStatement extends IRErrorCheckStatement {
     }
 }
 
-class IRDebugStatement extends IRErrorCheckStatement {
-    readonly dbgexp: IRExpression;
+class IRDebugStatement extends IRAtomicStatement {
+    readonly oftype: IRTypeSignature;
+    readonly dbgexp: IRAccessTempVariableExpression;
 
-    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, dbgexp: IRExpression) {
-        super(IRStatementTag.IRDebugStatement, file, sinfo, diagnosticTag, checkID);
+    readonly file: string;
+    readonly line: number;
+
+    constructor(oftype: IRTypeSignature, dbgexp: IRAccessTempVariableExpression, file: string, sinfo: SourceInfo) {
+        super(IRStatementTag.IRDebugStatement);
+        this.oftype = oftype;
         this.dbgexp = dbgexp;
+
+        this.file = file;
+        this.line = sinfo.line;
     }
 }
 

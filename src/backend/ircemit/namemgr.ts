@@ -19,17 +19,24 @@ class TransformCPPNameManager {
             .replace(/::/g, s_coloncolon_repl)
             .replace(/#/g, s_hash_repl)
             .replace(/, */g, s_comma_repl)
+            .replace(/</g, "ᐸ")
+            .replace(/>/g, "ᐳ")
+            .replace(/\[/g, "ᑅ")
+            .replace(/\]/g, "ᑀ")
             .replace(/\(|/g, "ᐸRuntimeᐳ::EList<")
             .replace(/|\)/g, ">");
 
-        if(!bb.startsWith("BSQ_") && !bb.startsWith("MINT_")) {
-            return bb;
+        if(bb.startsWith("lambda_")) {
+            return "lambda_" + s_BSQ_tag + bb.slice(6);
         }
         else if(bb.startsWith("BSQ_")) {
             return "BSQ_" + s_BSQ_tag + bb.slice(3);
         }
-        else {
+        else if(bb.startsWith("MINT_")) {
             return "MINT_" + s_BSQ_tag + bb.slice(4);
+        }
+        else {
+            return bb;
         }
     }
 
@@ -67,7 +74,7 @@ class TransformCPPNameManager {
     }
 
     static generateNameForUnionMember(tkey: string): string {
-        return TransformCPPNameManager.convertTypeKey(tkey) + s_specialop_sep + "um";
+        return `${s_runtimename}::${TransformCPPNameManager.convertTypeKey(tkey)}${s_specialop_sep}um`;
     }
 
     static generateTypeInfoNameForTypeKey(tkey: string): string {
@@ -84,6 +91,14 @@ class TransformCPPNameManager {
 
     static generateNameForInvariantFunction(tkey: string): string {
         return TransformCPPNameManager.convertTypeKey(tkey) + s_specialop_sep + "invariant";
+    }
+
+    static generateNameForBSQONParseFunction(tkey: string): string {
+        return TransformCPPNameManager.convertTypeKey(tkey) + s_specialop_sep + "bsqparse";
+    }
+
+    static generateNameForBSQONEmitFunction(tkey: string): string {
+        return TransformCPPNameManager.convertTypeKey(tkey) + s_specialop_sep + "bsqemit";
     }
 
     static generateNameForFieldDefaultFunction(tkey: string, fname: string): string {

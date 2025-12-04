@@ -10,9 +10,6 @@
 
 namespace ᐸRuntimeᐳ
 {
-    using None = uint64_t;
-    constexpr None none = 0ull;
-
     constexpr uint32_t WELL_KNOWN_TYPE_ID_NONE = 0;
     constexpr uint32_t WELL_KNOWN_TYPE_ID_BOOL = 1;
 

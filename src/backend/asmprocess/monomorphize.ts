@@ -1,14 +1,10 @@
 import assert from "node:assert";
 
-import { AbstractNominalTypeDecl, Assembly, ExplicitInvokeDecl, NamespaceDeclaration, NamespaceFunctionDecl, TypeFunctionDecl } from "../../frontend/assembly.js";
+import { AbstractNominalTypeDecl, Assembly, ExplicitInvokeDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, TypeFunctionDecl } from "../../frontend/assembly.js";
 import { NamespaceInstantiationInfo } from "./instantiations.js";
-import { TemplateNameMapper, TypeSignature } from "../../frontend/type.js";
+import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaParameterPackTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
 import { } from "../../frontend/body.js";
 import { } from "../../frontend/build_decls.js";
-
-function computeTBindsKey(tbinds: TypeSignature[]): string {
-    return (tbinds.length !== 0) ? `<${tbinds.map(t => t.tkeystr).join(", ")}>` : "";
-}
 
 class PendingNamespaceFunction {
     readonly namespace: NamespaceDeclaration;
@@ -17,12 +13,12 @@ class PendingNamespaceFunction {
 
     readonly fkey: string;
 
-    constructor(namespace: NamespaceDeclaration, func: NamespaceFunctionDecl, instantiation: TypeSignature[]) {
+    constructor(namespace: NamespaceDeclaration, func: NamespaceFunctionDecl, instantiation: TypeSignature[], lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[], fkey: string) {
         this.namespace = namespace;
         this.function = func;
         this.instantiation = instantiation;
 
-        this.fkey = `${namespace.fullnamespace.emit()}::${func.name}${computeTBindsKey(instantiation)}`;
+        this.fkey = fkey;
     }
 }
 
@@ -78,6 +74,8 @@ class Monomorphizer {
     readonly assembly: Assembly;
     readonly instantiation: NamespaceInstantiationInfo[];
 
+    lambdaCtr: number = 0;
+
     readonly wellknowntypes: Map<string, TypeSignature>;
 
     readonly pendingNominalTypeDecls: PendingNominalTypeDecl[] = [];
@@ -98,6 +96,33 @@ class Monomorphizer {
         this.instantiation = [];
 
         this.wellknowntypes = wellknowntypes;
+    }
+
+
+    private static computeTBindsKey(tbinds: TypeSignature[]): string {
+        return (tbinds.length !== 0) ? `<${tbinds.map(t => t.tkeystr).join(", ")}>` : "";
+    }
+
+    private static computeLambdaKey(packs: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[]): string {
+        return (packs.length !== 0) ? `[${packs.map(lp => lp.pname).join(", ")}]` : "";
+    }
+
+    private getFreshLambdaKey(): string {
+        return `lambda_${this.lambdaCtr++}`;
+    }
+
+    private computeInvokeKeyForNamespaceFunction(ns: NamespaceDeclaration, fdecl: NamespaceFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[]): string {
+        const rti = fdecl.params.some((p) => p.pkind !== undefined) ? "@ref" : "";
+        
+        `${ns.fullnamespace.emit()}::${fdecl.name}${rti}${Monomorphizer.computeTBindsKey(terms)}${Monomorphizer.computeLambdaKey(lambdas)}`;
+    }
+
+    private computeInvokeKeyForTypeFunction(rcvrtype: TypeSignature, fdecl: TypeFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[]): string {
+        xxxx;
+    }
+
+    private computeInvokeKeyForTypeMethod(rcvrtype: TypeSignature, mdecl: MethodDecl, terms: TypeSignature[], lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[]): string {
+        xxxx;
     }
 
     private getWellKnownType(name: string): TypeSignature {
@@ -139,97 +164,42 @@ class Monomorphizer {
             rt.entries.forEach((tt) => this.instantiateTypeSignature(tt, mapping));
             (this.currentNSInstantiation as NamespaceInstantiationInfo).elists.set(rt.tkeystr, rt);
         }
+        else if(rt instanceof DashResultTypeSignature) {
+            rt.entries.forEach((tt) => this.instantiateTypeSignature(tt, mapping));
+        }
         else if(rt instanceof LambdaTypeSignature) {
             rt.params.forEach((param) => this.instantiateTypeSignature(param.type, mapping));
             this.instantiateTypeSignature(rt.resultType, mapping);
         }
+        else if(rt instanceof FormatStringTypeSignature) {
+            rt.terms.forEach((tt) => this.instantiateTypeSignature(tt.argtype, mapping));
+            this.instantiateTypeSignature(rt.rtype, mapping);
+        }
+        else if(rt instanceof FormatPathTypeSignature) {
+            rt.terms.forEach((tt) => this.instantiateTypeSignature(tt.argtype, mapping));
+            this.instantiateTypeSignature(rt.rtype, mapping);
+        }
         else {
+            //Lambda parameter packs are only introduced in monomorphize to we should not get them here
             assert(false, "Unknown TypeSignature type -- " + rt.tkeystr);
-        }
-
-        if(rt instanceof NominalTypeSignature && rt.decl instanceof ListTypeDecl) {
-            const nns = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "ListOps") as NamespaceDeclaration;
-
-            const createdecl = nns.functions.find((tt) => tt.name === "s_list_create_empty") as NamespaceFunctionDecl;
-            this.instantiateNamespaceFunction(nns, createdecl, rt.alltermargs);
-
-            const pushdecl = nns.functions.find((tt) => tt.name === "s_list_push_back") as NamespaceFunctionDecl;
-            this.instantiateNamespaceFunction(nns, pushdecl, rt.alltermargs);
-        }
-
-        if(rt instanceof NominalTypeSignature && rt.decl instanceof MapTypeDecl) {
-            const nns = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "MapOps") as NamespaceDeclaration;
-
-            const createdecl = nns.functions.find((tt) => tt.name === "s_map_create_empty") as NamespaceFunctionDecl;
-            this.instantiateNamespaceFunction(nns, createdecl, rt.alltermargs);
-
-            const pushdecl = nns.functions.find((tt) => tt.name === "s_map_insert") as NamespaceFunctionDecl;
-            this.instantiateNamespaceFunction(nns, pushdecl, rt.alltermargs);
         }
     }
 
     //Given a namespace function -- instantiate it
-    private instantiateNamespaceFunction(ns: NamespaceDeclaration, fdecl: NamespaceFunctionDecl, terms: TypeSignature[]) {
+    private instantiateNamespaceFunction(ns: NamespaceDeclaration, fdecl: NamespaceFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[]) {
         const tterms = this.currentMapping !== undefined ? terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : terms;
-        const fkey = `${ns.fullnamespace.emit()}::${fdecl.name}${computeTBindsKey(tterms)}`;
+        const fkey = this.computeInvokeKeyForNamespaceFunction(ns, fdecl, tterms, lambdas);
 
         if(this.isAlreadySeenNamespaceFunction(fkey)) {
             return;
         }
 
-        // If we are cpp runtime see if we need to instantiate rope functions 
-        if(fkey.startsWith("CString")) {
-            const nns = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "CRopeOps") as NamespaceDeclaration;
-
-            if(nns !== undefined) {
-                if(fkey.endsWith("s_concat2")) {
-                    const concatdecl = nns.functions.find((tt) => tt.name === "s_crope_concat2") as NamespaceFunctionDecl;
-                    this.instantiateNamespaceFunction(nns, concatdecl, []);
-                }
-                if(fkey.endsWith("s_empty")) {
-                    const emptydecl = nns.functions.find((tt) => tt.name === "s_crope_empty") as NamespaceFunctionDecl;
-                    this.instantiateNamespaceFunction(nns, emptydecl, []);
-                }
-                if(fkey.endsWith("startsWithString")) {
-                    const emptydecl = nns.functions.find((tt) => tt.name === "s_crope_starts_with_crope") as NamespaceFunctionDecl;
-                    this.instantiateNamespaceFunction(nns, emptydecl, []);
-                }
-                if(fkey.endsWith("removePrefixString")) {
-                    const emptydecl = nns.functions.find((tt) => tt.name === "s_crope_remove_prefix_crope") as NamespaceFunctionDecl;
-                    this.instantiateNamespaceFunction(nns, emptydecl, []);
-                }
-            }
-        } 
-
-        if(fkey.startsWith("String")) {
-            const nns = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "UnicodeRopeOps") as NamespaceDeclaration;
-
-            if(nns !== undefined) {
-                if(fkey.endsWith("s_concat2")) {
-                    const concatdecl = nns.functions.find((tt) => tt.name === "s_unicoderope_concat2") as NamespaceFunctionDecl;
-                    this.instantiateNamespaceFunction(nns, concatdecl, []);
-                }
-                if(fkey.endsWith("s_empty")) {
-                    const emptydecl = nns.functions.find((tt) => tt.name === "s_unicoderope_empty") as NamespaceFunctionDecl;
-                    this.instantiateNamespaceFunction(nns, emptydecl, []);
-                }
-                if(fkey.endsWith("startsWithString")) {
-                    const startdecl = nns.functions.find((tt) => tt.name === "s_unicoderope_starts_with_unicoderope") as NamespaceFunctionDecl;
-                    this.instantiateNamespaceFunction(nns, startdecl, []);
-                }
-                if(fkey.endsWith("removePrefixString")) {
-                    const predecl = nns.functions.find((tt) => tt.name === "s_unicoderope_remove_prefix_unicoderope") as NamespaceFunctionDecl;
-                    this.instantiateNamespaceFunction(nns, predecl, []);
-                }
-            }
-        } 
-
-        this.pendingNamespaceFunctions.push(new PendingNamespaceFunction(ns, fdecl, tterms));
+        this.pendingNamespaceFunctions.push(new PendingNamespaceFunction(ns, fdecl, tterms, lambdas, fkey));
     }
 
     //Given a type function -- instantiate it
-    private instantiateTypeFunction(resolvedtype: TypeSignature, ttype: AbstractNominalTypeDecl, fdecl: TypeFunctionDecl, terms: TypeSignature[]) {
-        const rcvrtype = this.currentMapping !== undefined ? resolvedtype.remapTemplateBindings(this.currentMapping) : resolvedtype;
+    private instantiateTypeFunction(enclosingType: TypeSignature, fdecl: TypeFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[]) {
+        const rcvrtype = this.currentMapping !== undefined ? enclosingType.remapTemplateBindings(this.currentMapping) : enclosingType;
         const tterms = this.currentMapping !== undefined ? terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : terms;
         const fkey = `${rcvrtype.tkeystr}::${fdecl.name}${computeTBindsKey(tterms)}`;
 
@@ -240,8 +210,8 @@ class Monomorphizer {
         this.pendingTypeFunctions.push(new PendingTypeFunction(rcvrtype, fdecl, tterms));
     }
 
-    //Given a namespace function -- instantiate it
-    private instantiateSpecificResolvedMemberMethod(ns: FullyQualifiedNamespace, enclosingType: TypeSignature, fdecl: MethodDecl, terms: TypeSignature[]) {
+    //Given a type method -- instantiate it
+    private instantiateMemberMethod(enclosingType: TypeSignature, fdecl: MethodDecl, terms: TypeSignature[], lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[]) {
         const retype = this.currentMapping !== undefined ? enclosingType.remapTemplateBindings(this.currentMapping) : enclosingType;
         const tterms = this.currentMapping !== undefined ? terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : terms;
         const mkey = `${retype.tkeystr}@${fdecl.name}${computeTBindsKey(tterms)}`;

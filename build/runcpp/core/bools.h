@@ -37,7 +37,4 @@ namespace ᐸRuntimeᐳ
         "Bool",
         nullptr
     };
-
-    constexpr Bool bfalse = Bool::from(false);
-    constexpr Bool btrue = Bool::from(true);
 }
