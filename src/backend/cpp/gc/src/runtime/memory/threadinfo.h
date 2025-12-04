@@ -90,12 +90,6 @@ struct MemStats {
 struct MemStats {};
 #endif
 
-//
-// For simplicity we have each method creating their own lock (which doesnt matter functionally)
-// We should have a universal lock for the sake of speeding things up though,
-// I dont love making new locks every call 
-//
-
 // An object for processing RC decrements on separate thread
 typedef ArrayList<void*> DecsList;
 struct DecsProcessor {
@@ -145,7 +139,6 @@ struct DecsProcessor {
         cv.wait(lk, [this]{ return !this->worker_paused; });
     }
 
-    // May need to pass in a lock? might not matter, just kills the thread
     void signalFinished()
     {
         std::unique_lock lk(this->mtx);
@@ -153,21 +146,26 @@ struct DecsProcessor {
 
         lk.unlock();
         this->cv.notify_one();
+        
+        cv.wait(lk, [this]{ return this->worker_paused; });
     }
 
     void process(BSQMemoryTheadLocalInfo* tinfo)
     {
         std::unique_lock lk(this->mtx);
-        while(true) {
+        while(!this->stop_requested) {
             this->cv.wait(lk, [this]{
                 return (!this->worker_paused && !this->pending.isEmpty())
                     || this->merge_requested
                     || this->stop_requested;
             });
 
+            // Enter a paused state before exiting
             if(this->stop_requested) {
-                this->stop_requested = false;
-                return ;
+                this->worker_paused = true;
+                lk.unlock();
+                this->cv.notify_one(); 
+                return;
             }
 
             if(this->merge_requested) {
@@ -177,10 +175,9 @@ struct DecsProcessor {
 
             while(!this->pending.isEmpty()) {
                 void* obj = this->pending.pop_front();
-                this->processDecfp(obj, *tinfo);
-                
-                if(this->merge_requested) {
-                    this->pauseWorker(lk);
+                this->processDecfp(obj, *tinfo);         
+
+                if(this->merge_requested || this->stop_requested) {
                     break;
                 }
             }
