@@ -1,10 +1,8 @@
 #include "lexer.h"
 
-#include <bitset>
-
 namespace ᐸRuntimeᐳ
 {
-    using REState = std::bitset<32>;
+    using REState = uint8_t[32];
 
     void BSQONLexer::initialize(std::list<uint8_t*>&& iobuffs)
     {
@@ -88,64 +86,62 @@ namespace ᐸRuntimeᐳ
         constexpr size_t STATE_SUFFIX = 4;
         constexpr size_t STATE_ACCEPT = 5;
 
-        while(!states.none() && ii.valid()) {
+        while(std::find(states, states + 32, 1) != (states + 32) && ii.valid()) {
             const char c = (char)ii.get();
+            REState next = {0};
 
-            REState postInit = 0;
-            if(states.test(STATE_START)) {
+            if(states[STATE_START]) {
                 if(c == '0') {
-                    postInit.set(STATE_SUFFIX);
+                    next[STATE_SUFFIX] = 1;
                 }
                 if(('1' <= c) & (c <= '9')) {
-                    postInit.set(STATE_NONZERO);
+                    next[STATE_NONZERO] = 1;
                 }
                 if(c == '+') {
-                    postInit.set(STATE_PLUS);
+                    next[STATE_PLUS] = 1;
                 }
                 if(negok & (c == '-')) {
-                    postInit.set(STATE_MINUS);
+                    next[STATE_MINUS] = 1;
                 }
             }
 
-            REState postPlus = 0;
-            if(states.test(STATE_PLUS)) {
+            if(states[STATE_PLUS]) {
                 if(c == '0') {
-                    postPlus.set(STATE_SUFFIX);
+                    next[STATE_SUFFIX] = 1;
                 }
                 if(('1' <= c) & (c <= '9')) {
-                    postPlus.set(STATE_NONZERO);
+                    next[STATE_NONZERO] = 1;
                 }
             }
 
-            REState postMinus = 0;
-            if(states.test(STATE_MINUS)) {
+            if(states[STATE_MINUS]) {
                 if(c == '0') {
-                    postMinus.set(STATE_SUFFIX);
+                    next[STATE_SUFFIX] = 1;
                 }
                 if(('1' <= c) & (c <= '9')) {
-                    postMinus.set(STATE_NONZERO);
+                    next[STATE_NONZERO] = 1;
                 }
             }
 
-            REState postNonzero = 0;
-            if(states.test(STATE_NONZERO)) {
+            if(states[STATE_NONZERO]) {
                 if(('0' <= c) & (c <= '9')) {
-                    postNonzero.set(STATE_NONZERO);
+                    next[STATE_NONZERO] = 1;
                 }
-                postNonzero.set(STATE_SUFFIX);
+                next[STATE_SUFFIX] = 1;
             }
 
-            REState postSuffix = 0;
-            if(states.test(STATE_SUFFIX)) {
+            if(states[STATE_SUFFIX]) {
                 if(c == suffix) {
-                    postSuffix.set(STATE_ACCEPT);
+                    next[STATE_ACCEPT] = 1;
                 }
             }
 
-            states = postInit | postPlus | postMinus | postNonzero | postSuffix;
-            if(states.test(STATE_ACCEPT)) {
+            std::memcpy(states, next, sizeof(REState));
+            if(states[STATE_ACCEPT]) {
                 endidx = ii.getIndex();
             }
+
+            ii.next();
         }
 
         if(endidx != std::numeric_limits<size_t>::max()) {
