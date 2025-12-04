@@ -178,7 +178,6 @@ static void mergeDecList(BSQMemoryTheadLocalInfo& tinfo)
     if(!tinfo.decs.pending.isInitialized()) {
         tinfo.decs.pending.initialize();
     }
-    
 
     while(!tinfo.decs_batch.isEmpty()) {
         void* obj = tinfo.decs_batch.pop_front();
@@ -197,12 +196,7 @@ static void tryMergeDecList(BSQMemoryTheadLocalInfo& tinfo)
     }
 
     if(!tinfo.decs_batch.isEmpty()) {
-        std::unique_lock lk(tinfo.decs.mtx);
-        tinfo.decs.requestMergeAndPause(lk);
-
         mergeDecList(tinfo);
-
-        tinfo.decs.resumeAfterMerge(lk);
     }
 }
 
@@ -558,8 +552,10 @@ void collect() noexcept
 {
     COLLECTION_STATS_START();
 
-    tryReprocessDecrementedPages(gtl_info);
-
+    // Pause decs thread while we run a collection
+    std::unique_lock lk(gtl_info.decs.mtx);
+    gtl_info.decs.requestMergeAndPause(lk);
+    
     gtl_info.pending_young.initialize();
 
     NURSERY_STATS_START();
@@ -581,6 +577,7 @@ void collect() noexcept
     
     computeDeadRootsForDecrement(gtl_info);
     processDecrements(gtl_info);
+    tryReprocessDecrementedPages(gtl_info);
     tryMergeDecList(gtl_info);
 
     RC_STATS_END(gtl_info, rc_times);
@@ -591,6 +588,9 @@ void collect() noexcept
     // Cleanup for next collection
     processAllocatorsPages();
     updateRoots();
+
+    // Unpause now that everything has been processed
+    gtl_info.decs.resumeAfterMerge(lk);
 
     COLLECTION_STATS_END(gtl_info, collection_times);
     UPDATE_COLLECTION_TIMES(gtl_info);
