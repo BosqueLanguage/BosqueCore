@@ -552,6 +552,8 @@ static void updateRoots()
     gtl_info.roots_count = 0;
 }
 
+// I think while we are doing the allocator page reprocessing we will need to 
+// block the decs thread (so really we should do this the duration of whole collection tbh)
 void collect() noexcept
 {
     COLLECTION_STATS_START();
