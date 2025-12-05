@@ -130,6 +130,7 @@ static inline void updateDecrementedPages(BSQMemoryTheadLocalInfo& tinfo, PageIn
     if(p->seen == false) {
         p->seen = true;
         tinfo.decd_pages[tinfo.decd_pages_idx++] = p;
+        GC_INVARIANT_CHECK(tinfo.decd_pages_idx < MAX_DECD_PAGES);
     }
 }
 
