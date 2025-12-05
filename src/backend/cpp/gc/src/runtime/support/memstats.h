@@ -233,17 +233,11 @@ double calculate_total_collection_time(const size_t* buckets) noexcept;
 
 #else
 struct MemStats {};
-#define TOTAL_ALLOC_COUNT(E)                      (0)
-#define TOTAL_ALLOC_MEMORY(E)                     (0)
-#define TOTAL_LIVE_BYTES(E)                       (0)
-#define MIN_COLLECTION_TIME(E)                    (0)
-#define MAX_COLLECTION_TIME(E)                    (0)
-#define MAX_LIVE_HEAP(E)                          (0)
-
 #define UPDATE_TOTAL_ALLOC_COUNT(E, OP, ...)
 #define UPDATE_TOTAL_ALLOC_MEMORY(E, OP, ...)
 #define UPDATE_TOTAL_LIVE_BYTES(E, OP, ...)
 #define UPDATE_TOTAL_PROMOTIONS(E, OP, ...)
+#define UPDATE_TOTAL_PAGES(E, OP, ...)
 #define UPDATE_MIN_COLLECTION_TIME(E, OP, ...)
 #define UPDATE_MAX_COLLECTION_TIME(E, OP, ...)
 #define UPDATE_MAX_LIVE_HEAP(E, OP, ...)

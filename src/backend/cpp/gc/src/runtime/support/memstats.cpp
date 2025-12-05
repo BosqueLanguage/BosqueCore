@@ -2,7 +2,6 @@
 
 #ifdef MEM_STATS
 
-#include <chrono>
 #include <cmath>
 
 MemStats g_memstats;
