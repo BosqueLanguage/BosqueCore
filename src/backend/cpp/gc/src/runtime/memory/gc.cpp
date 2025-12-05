@@ -192,6 +192,10 @@ static void mergeDecList(BSQMemoryTheadLocalInfo& tinfo)
 // then signal processing can continue
 static void tryMergeDecList(BSQMemoryTheadLocalInfo& tinfo)
 {
+    if(tinfo.disable_decs_thread_for_tests) {
+        return ;
+    }
+
     if(tinfo.decs.processDecfp == nullptr) {
         tinfo.decs.processDecfp = processDec;
     }
@@ -551,9 +555,11 @@ void collect() noexcept
 {
     COLLECTION_STATS_START();
 
-    // Pause decs thread while we run a collection
     std::unique_lock lk(gtl_info.decs.mtx);
-    gtl_info.decs.requestMergeAndPause(lk);
+    if(!gtl_info.disable_decs_thread_for_tests) {
+        // Pause decs thread while we run a collection
+        gtl_info.decs.requestMergeAndPause(lk);
+    }
     
     gtl_info.pending_young.initialize();
 
@@ -588,8 +594,10 @@ void collect() noexcept
     processAllocatorsPages();
     updateRoots();
 
-    // Unpause now that everything has been processed
-    gtl_info.decs.resumeAfterMerge(lk);
+    if(!gtl_info.disable_decs_thread_for_tests) {
+        // Unpause now that everything has been processed
+        gtl_info.decs.resumeAfterMerge(lk);
+    }
 
     COLLECTION_STATS_END(gtl_info, collection_times);
     UPDATE_COLLECTION_TIMES(gtl_info);

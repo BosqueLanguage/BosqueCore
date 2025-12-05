@@ -187,6 +187,7 @@ struct BSQMemoryTheadLocalInfo
     bool disable_automatic_collections = false;
 
 #ifdef BSQ_GC_CHECK_ENABLED
+    bool disable_decs_thread_for_tests = false;
     bool disable_stack_refs_for_tests = false;
     bool enable_global_rescan         = false;
 #endif
