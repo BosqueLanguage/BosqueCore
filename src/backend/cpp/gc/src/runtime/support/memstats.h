@@ -60,7 +60,8 @@ extern MemStats g_memstats;
 #define COLLECTION_STATS_MODE
 #define NURSERY_RC_STATS_MODE
 
-// Macro wrappers that use g_memstats but accept E parameter for fallback
+// This E object technically does nothing, but is being left in case
+// we want to roll back to using threadlocal memstats
 #define TOTAL_ALLOC_COUNT(E)      g_memstats.total_alloc_count
 #define PREV_TOTAL_ALLOC_COUNT(E) g_memstats.prev_total_alloc_count
 #define TOTAL_ALLOC_MEMORY(E)     g_memstats.total_alloc_memory
