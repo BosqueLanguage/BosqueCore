@@ -47,6 +47,31 @@ struct MemStats {
     size_t rc_times[MAX_MEMSTATS_BUCKETS]         { 0 };
 };
 
+#define COLLECTION_STATS_MODE
+#define NURSERY_RC_STATS_MODE
+
+#define TOTAL_ALLOC_COUNT(E)      (E).mstats.total_alloc_count
+#define PREV_TOTAL_ALLOC_COUNT(E) (E).mstats.total_alloc_count
+#define TOTAL_ALLOC_MEMORY(E)     (E).mstats.total_alloc_memory
+#define TOTAL_LIVE_BYTES(E)       (E).mstats.total_live_bytes
+#define TOTAL_LIVE_OBJECTS(E)       (E).mstats.total_live_objects
+#define TOTAL_PROMOTIONS(E)       (E).mstats.total_promotions
+#define TOTAL_PAGES(E)            (E).mstats.total_pages
+#define MIN_COLLECTION_TIME(E)    (E).mstats.min_collection_time
+#define MAX_COLLECTION_TIME(E)    (E).mstats.max_collection_time
+#define MAX_LIVE_HEAP(E)          (E).mstats.max_live_heap
+
+#define UPDATE_TOTAL_ALLOC_COUNT(E, OP, ...)      TOTAL_ALLOC_COUNT((E)) OP __VA_ARGS__
+#define UPDATE_PREV_TOTAL_ALLOC_COUNT(E)          PREV_TOTAL_ALLOC_COUNT((E)) = TOTAL_ALLOC_COUNT((E))
+#define UPDATE_TOTAL_ALLOC_MEMORY(E, OP, ...)     TOTAL_ALLOC_MEMORY((E)) OP __VA_ARGS__
+#define UPDATE_TOTAL_LIVE_BYTES(E, OP, ...)       TOTAL_LIVE_BYTES((E)) OP __VA_ARGS__
+#define UPDATE_TOTAL_LIVE_OBJECTS(E, OP, ...)     TOTAL_LIVE_OBJECTS((E)) OP __VA_ARGS__
+#define UPDATE_TOTAL_PROMOTIONS(E, OP, ...)       TOTAL_PROMOTIONS((E)) OP __VA_ARGS__
+#define UPDATE_TOTAL_PAGES(E, OP, ...)            TOTAL_PAGES((E)) OP __VA_ARGS__ 
+#define UPDATE_MIN_COLLECTION_TIME(E, OP, ...)    MIN_COLLECTION_TIME((E)) OP __VA_ARGS__
+#define UPDATE_MAX_COLLECTION_TIME(E, OP, ...)    MAX_COLLECTION_TIME((E)) OP __VA_ARGS__
+#define UPDATE_MAX_LIVE_HEAP(E, OP, ...)          MAX_LIVE_HEAP((E)) OP __VA_ARGS__
+
 inline void update_bucket(size_t* bucket, double time) noexcept 
 {
     int index = static_cast<int>((time * (1.0 / BUCKET_VARIANCE)) + 0.5);
@@ -131,6 +156,75 @@ inline double calculate_total_collection_time(const size_t* buckets) noexcept
     return total;
 }
 
+#define MEM_STATS_START(NAME) \
+    auto start_##NAME = std::chrono::high_resolution_clock::now()
+
+#define MEM_STATS_END(INFO, BUCKETS, NAME) \
+    auto end_##NAME = std::chrono::high_resolution_clock::now(); \
+    double NAME##_ms = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(end_##NAME - start_##NAME).count(); \
+    update_bucket((INFO).mstats. BUCKETS, NAME##_ms);
+
+#ifdef COLLECTION_STATS_MODE
+
+#define COLLECTION_STATS_START() \
+    MEM_STATS_START(collection)
+#define COLLECTION_STATS_END(INFO, BUCKETS) \
+    MEM_STATS_END(INFO, BUCKETS, collection)
+
+#define UPDATE_COLLECTION_TIMES(INFO) \
+    update_collection_stats((INFO).mstats, collection_ms)
+
+#define NURSERY_STATS_START()
+#define NURSERY_STATS_END(INFO, BUCKETS)
+#define RC_STATS_START()
+
+#define RC_STATS_END(INFO, BUCKETS)
+#define UPDATE_NURSERY_TIMES(INFO) 
+
+#define UPDATE_RC_TIMES(INFO)
+
+#elif defined(NURSERY_RC_STATS_MODE) 
+
+#define UPDATE_COLLECTION_TIMES(INFO)
+#define COLLECTION_STATS_START()
+#define COLLECTION_STATS_END(INFO, BUCKETS)
+
+#define NURSERY_STATS_START() \
+    MEM_STATS_START(nursery)
+#define NURSERY_STATS_END(INFO, BUCKETS) \
+    MEM_STATS_END(INFO, BUCKETS, nursery)
+
+    #define RC_STATS_START() \
+    MEM_STATS_START(rc)
+#define RC_STATS_END(INFO, BUCKETS) \
+    MEM_STATS_END(INFO, BUCKETS, rc)
+
+#define UPDATE_NURSERY_TIMES(INFO) \
+    update_nursery_stats((INFO).mstats, nursery_ms)
+#define UPDATE_RC_TIMES(INFO) \
+    update_rc_stats((INFO).mstats, rc_ms)
+#else
+#define UPDATE_COLLECTION_TIMES(INFO)
+#define UPDATE_NURSERY_TIMES(INFO)
+#define UPDATE_RC_TIMES(INFO)
+#endif
+
+#define UPDATE_MEMSTATS_TOTALS(INFO) \
+    do { \
+        auto now = std::chrono::high_resolution_clock::now(); \
+        gtl_info.mstats.total_time = std::chrono:: \
+            duration_cast<std::chrono::duration<double, std::milli>> \
+            (now.time_since_epoch()).count(); \
+        for(size_t i = 0; i < BSQ_MAX_ALLOC_SLOTS; i++) { \
+            GCAllocator* alloc = (INFO).g_gcallocs[i]; \
+            if(alloc != nullptr) { \
+                alloc->updateMemStats(); \
+            } \
+        } \
+        update_survival_rate_sum((INFO).mstats); \
+        UPDATE_PREV_TOTAL_ALLOC_COUNT(INFO); \
+    } while(0)
+
 #define PRINT_COLLECTION_TIME(E) \
     do{ \
         double mean = get_mean_pause((E).mstats.collection_stats); \
@@ -199,9 +293,41 @@ inline double calculate_total_collection_time(const size_t* buckets) noexcept
 
 #else
 struct MemStats {};
+#define TOTAL_ALLOC_COUNT(E)                      (0)
+#define TOTAL_ALLOC_MEMORY(E)                     (0)
+#define TOTAL_LIVE_BYTES(E)                       (0)
+#define MIN_COLLECTION_TIME(E)                    (0)
+#define MAX_COLLECTION_TIME(E)                    (0)
+#define MAX_LIVE_HEAP(E)                          (0)
+
+#define UPDATE_TOTAL_ALLOC_COUNT(E, OP, ...)
+#define UPDATE_TOTAL_ALLOC_MEMORY(E, OP, ...)
+#define UPDATE_TOTAL_LIVE_BYTES(E, OP, ...)
+#define UPDATE_TOTAL_PROMOTIONS(E, OP, ...)
+#define UPDATE_MIN_COLLECTION_TIME(E, OP, ...)
+#define UPDATE_MAX_COLLECTION_TIME(E, OP, ...)
+#define UPDATE_MAX_LIVE_HEAP(E, OP, ...)
+
 #define update_bucket (void)sizeof
 #define compute_average_time(B) 0
 #define generate_formatted_memstats(MS) ""
 #define MEM_STATS_DUMP(E)
+
+#define MEM_STATS_START(NAME)
+#define MEM_STATS_END(INFO, BUCKETS, NAME)
+
+#define COLLECTION_STATS_START()
+#define COLLECTION_STATS_END(INFO, BUCKETS)
+
+#define NURSERY_STATS_START()
+#define NURSERY_STATS_END(INFO, BUCKETS)
+
+#define RC_STATS_START()
+#define RC_STATS_END(INFO, BUCKETS)
+
+#define UPDATE_COLLECTION_TIMES(INFO)
+#define UPDATE_NURSERY_TIMES(INFO)
+#define UPDATE_RC_TIMES(INFO)
+#define UPDATE_MEMSTATS_TOTALS(INFO)
 
 #endif// MEM_STATS

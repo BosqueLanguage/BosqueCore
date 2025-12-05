@@ -281,47 +281,4 @@ do { \
     GC_INVARIANT_CHECK((M)->bits.isroot == 0 || (M)->bits.isroot == 1); \
 } while(0)
 
-#endif
-
-#ifdef MEM_STATS
-
-#define COLLECTION_STATS_MODE
-#define NURSERY_RC_STATS_MODE
-
-#define TOTAL_ALLOC_COUNT(E)      (E).mstats.total_alloc_count
-#define PREV_TOTAL_ALLOC_COUNT(E) (E).mstats.total_alloc_count
-#define TOTAL_ALLOC_MEMORY(E)     (E).mstats.total_alloc_memory
-#define TOTAL_LIVE_BYTES(E)       (E).mstats.total_live_bytes
-#define TOTAL_LIVE_OBJECTS(E)       (E).mstats.total_live_objects
-#define TOTAL_PROMOTIONS(E)       (E).mstats.total_promotions
-#define TOTAL_PAGES(E)            (E).mstats.total_pages
-#define MIN_COLLECTION_TIME(E)    (E).mstats.min_collection_time
-#define MAX_COLLECTION_TIME(E)    (E).mstats.max_collection_time
-#define MAX_LIVE_HEAP(E)          (E).mstats.max_live_heap
-
-#define UPDATE_TOTAL_ALLOC_COUNT(E, OP, ...)      TOTAL_ALLOC_COUNT((E)) OP __VA_ARGS__
-#define UPDATE_PREV_TOTAL_ALLOC_COUNT(E)          PREV_TOTAL_ALLOC_COUNT((E)) = TOTAL_ALLOC_COUNT((E))
-#define UPDATE_TOTAL_ALLOC_MEMORY(E, OP, ...)     TOTAL_ALLOC_MEMORY((E)) OP __VA_ARGS__
-#define UPDATE_TOTAL_LIVE_BYTES(E, OP, ...)       TOTAL_LIVE_BYTES((E)) OP __VA_ARGS__
-#define UPDATE_TOTAL_LIVE_OBJECTS(E, OP, ...)     TOTAL_LIVE_OBJECTS((E)) OP __VA_ARGS__
-#define UPDATE_TOTAL_PROMOTIONS(E, OP, ...)       TOTAL_PROMOTIONS((E)) OP __VA_ARGS__
-#define UPDATE_TOTAL_PAGES(E, OP, ...)            TOTAL_PAGES((E)) OP __VA_ARGS__ 
-#define UPDATE_MIN_COLLECTION_TIME(E, OP, ...)    MIN_COLLECTION_TIME((E)) OP __VA_ARGS__
-#define UPDATE_MAX_COLLECTION_TIME(E, OP, ...)    MAX_COLLECTION_TIME((E)) OP __VA_ARGS__
-#define UPDATE_MAX_LIVE_HEAP(E, OP, ...)          MAX_LIVE_HEAP((E)) OP __VA_ARGS__
-#else 
-#define TOTAL_ALLOC_COUNT(E)                      (0)
-#define TOTAL_ALLOC_MEMORY(E)                     (0)
-#define TOTAL_LIVE_BYTES(E)                       (0)
-#define MIN_COLLECTION_TIME(E)                    (0)
-#define MAX_COLLECTION_TIME(E)                    (0)
-#define MAX_LIVE_HEAP(E)                          (0)
-
-#define UPDATE_TOTAL_ALLOC_COUNT(E, OP, ...)
-#define UPDATE_TOTAL_ALLOC_MEMORY(E, OP, ...)
-#define UPDATE_TOTAL_LIVE_BYTES(E, OP, ...)
-#define UPDATE_TOTAL_PROMOTIONS(E, OP, ...)
-#define UPDATE_MIN_COLLECTION_TIME(E, OP, ...)
-#define UPDATE_MAX_COLLECTION_TIME(E, OP, ...)
-#define UPDATE_MAX_LIVE_HEAP(E, OP, ...)
-#endif
+#endif //VERBOSE_HEADER
