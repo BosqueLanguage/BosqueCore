@@ -89,6 +89,10 @@ class TransformCPPNameManager {
         return TransformCPPNameManager.safeifyName(enumkey);
     }
 
+    static generateNameForConstructor(tkey: string): string {
+        return TransformCPPNameManager.convertTypeKey(tkey);
+    }
+
     static generateNameForInvariantFunction(tkey: string): string {
         return TransformCPPNameManager.convertTypeKey(tkey) + s_specialop_sep + "invariant";
     }

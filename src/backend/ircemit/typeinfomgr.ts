@@ -132,8 +132,6 @@ class TypeInfoManager {
     }
 
     emitTypeAsMemberField(tkey: string, enclosingtinfo: TypeInfo): string {
-        const typeinfo = this.getTypeInfo(tkey);
-
         const cspec = (enclosingtinfo.tag === LayoutTag.Ref) ? "const " : "";
         const lspec = TransformCPPNameManager.convertTypeKey(tkey);
         

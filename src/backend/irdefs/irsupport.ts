@@ -16,6 +16,11 @@ class IRRegex
     readonly regexID: number;
 
     //TODO: we need to store the (resolved) regex AST and compile later
+
+    constructor(regexID: number)
+    {
+        this.regexID = regexID;
+    }
 }
 
 export {

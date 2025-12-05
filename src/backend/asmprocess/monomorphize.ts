@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, Assembly, ExplicitInvokeDecl, ListTypeDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, TypeFunctionDecl } from "../../frontend/assembly.js";
 import { NamespaceInstantiationInfo } from "./instantiations.js";
 import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaParameterPackTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
-import { AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, BinAddExpression, BinDivExpression, BinMultExpression, BinSubExpression, CallNamespaceFunctionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, Expression, ExpressionTag, FormatStringArgComponent, FormatStringComponent, LambdaInvokeExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, ParseAsTypeExpression, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOfOperator, PostfixOp, PostfixOpTag, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, SpecialConstructorExpression, TaskAccessInfoExpression } from "../../frontend/body.js";
+import { AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, CallNamespaceFunctionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, Expression, ExpressionTag, FormatStringArgComponent, FormatStringComponent, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOfOperator, PostfixOp, PostfixOpTag, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, SpecialConstructorExpression, TaskAccessInfoExpression } from "../../frontend/body.js";
 import { } from "../../frontend/build_decls.js";
 
 class PendingNamespaceFunction {
@@ -695,49 +695,17 @@ class Monomorphizer {
         this.instantiateBinaryNumericArgs(exp.lhs, exp.rhs);
     }
 
-    private instantiateBinaryBooleanArgs(lhs: Expression, rhs: Expression) {
-        this.instantiateExpression(lhs);
-        this.instantiateExpression(rhs);
+    private instantiateLogicAndExpression(exp: LogicAndExpression) {
+        exp.exps.forEach((e) => this.instantiateExpression(e));
     }
 
-    private instantiateBinLogicAndExpression(exp: BinLogicAndExpression) {
-        this.instantiateBinaryBooleanArgs(exp.lhs, exp.rhs);
-    }
-
-    private instantiateBinLogicOrExpression(exp: BinLogicOrExpression) {
-        this.instantiateBinaryBooleanArgs(exp.lhs, exp.rhs);
-    }
-
-    private instantiateBinLogicImpliesExpression(exp: BinLogicImpliesExpression) {
-        this.instantiateBinaryBooleanArgs(exp.lhs, exp.rhs);
-    }
-
-    private instantiateBinLogicIFFExpression(exp: BinLogicIFFExpression) {
-        this.instantiateBinaryBooleanArgs(exp.lhs, exp.rhs);
+    private instantiateLogicOrExpression(exp: LogicOrExpression) {
+        exp.exps.forEach((e) => this.instantiateExpression(e));
     }
 
     private instantiateMapEntryConstructorExpression(exp: MapEntryConstructorExpression) {
         this.instantiateExpression(exp.kexp);
         this.instantiateExpression(exp.vexp);
-    }
-
-    private instantiateIfExpression(exp: IfExpression) {
-        this.instantiateExpression(exp.test.exp);
-
-        this.instantiateExpression(exp.trueValue);
-        this.instantiateExpression(exp.falseValue);
-
-        if(exp.trueBindType !== undefined) {
-            this.instantiateTypeSignature(exp.trueBindType, this.currentMapping);
-        }
-
-        if(exp.trueBindType !== undefined) {
-            this.instantiateTypeSignature(exp.trueBindType, this.currentMapping);
-        }
-
-        if(exp.test.itestopt !== undefined) {
-            this.processITestAsConvert(exp.test.exp.getType(), exp.test.itestopt);
-        }
     }
 
     private instantiateConditionalValueExpression(exp: ConditionalValueExpression) {
@@ -901,9 +869,6 @@ class Monomorphizer {
                 this.instantiateBinDivExpression(exp as BinDivExpression);
                 break;
             }
-
-            xxxx;
-
             case ExpressionTag.BinKeyEqExpression: {
                 this.instantiateBinKeyEqExpression(exp as BinKeyEqExpression);
                 break;
@@ -944,28 +909,19 @@ class Monomorphizer {
                 this.instantiateNumericGreaterEqExpression(exp as NumericGreaterEqExpression);
                 break;
             }
-            case ExpressionTag.BinLogicAndExpression: {
-                this.instantiateBinLogicAndExpression(exp as BinLogicAndExpression);
+            case ExpressionTag.LogicAndExpression: {
+                this.instantiateLogicAndExpression(exp as LogicAndExpression);
                 break;
             }
-            case ExpressionTag.BinLogicOrExpression: {
-                this.instantiateBinLogicOrExpression(exp as BinLogicOrExpression);
+            case ExpressionTag.LogicOrExpression: {
+                this.instantiateLogicOrExpression(exp as LogicOrExpression);
                 break;
             }
-            case ExpressionTag.BinLogicImpliesExpression: {
-                this.instantiateBinLogicImpliesExpression(exp as BinLogicImpliesExpression);
-                break;
-            }
-            case ExpressionTag.BinLogicIFFExpression: {
-                this.instantiateBinLogicIFFExpression(exp as BinLogicIFFExpression);
-                break;
-            }
+
+            xxxx;
+
             case ExpressionTag.MapEntryConstructorExpression: {
                 this.instantiateMapEntryConstructorExpression(exp as MapEntryConstructorExpression);
-                break;
-            }
-            case ExpressionTag.IfExpression: {
-                this.instantiateIfExpression(exp as IfExpression);
                 break;
             }
             case ExpressionTag.ConditionalValueExpression: {

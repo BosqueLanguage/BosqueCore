@@ -2669,25 +2669,41 @@ class TypeChecker {
         return exp.setType(this.getWellKnownType("Bool"));
     }
 
-    private checkBinaryBooleanArg(env: TypeEnvironment, arg: Expression) {
+    private checkBinaryBooleanArg(env: TypeEnvironment, arg: Expression): TypeSignature | undefined {
         const targ = this.checkExpression(env, arg, undefined);
         if(targ instanceof ErrorTypeSignature) {
             return undefined;
         }
 
         this.checkError(arg.sinfo, !this.relations.isBooleanType(targ), "Binary operator requires a Bool type");
+
+        return targ;
     }
 
     private checkBinLogicAndExpression(env: TypeEnvironment, exp: LogicAndExpression): TypeSignature {
-        exp.exps.forEach((arg) => this.checkBinaryBooleanArg(env, arg));
+        const etypes = exp.exps.map((arg) => this.checkBinaryBooleanArg(env, arg));
         
-        return exp.setType(this.getWellKnownType("Bool"));
+        const oftype = etypes.find((t) => t !== undefined);
+        if(oftype === undefined) {
+            return exp.setType(this.getWellKnownType("Bool"));    
+        }
+        else {
+            const ft = etypes.every((t) => t !== undefined && t.tkeystr === oftype.tkeystr) ? oftype : this.getWellKnownType("Bool");
+            return exp.setType(ft);
+        }
     }
 
     private checkBinLogicOrExpression(env: TypeEnvironment, exp: LogicOrExpression): TypeSignature {
-        exp.exps.forEach((arg) => this.checkBinaryBooleanArg(env, arg));
+        const etypes = exp.exps.map((arg) => this.checkBinaryBooleanArg(env, arg));
         
-        return exp.setType(this.getWellKnownType("Bool"));
+        const oftype = etypes.find((t) => t !== undefined);
+        if(oftype === undefined) {
+            return exp.setType(this.getWellKnownType("Bool"));    
+        }
+        else {
+            const ft = etypes.every((t) => t !== undefined && t.tkeystr === oftype.tkeystr) ? oftype : this.getWellKnownType("Bool");
+            return exp.setType(ft);
+        }
     }
 
     private checkMapEntryConstructorExpression(env: TypeEnvironment, exp: MapEntryConstructorExpression, infertype: TypeSignature | undefined): TypeSignature {

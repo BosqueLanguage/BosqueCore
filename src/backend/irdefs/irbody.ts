@@ -74,6 +74,9 @@ enum IRExpressionTag {
     IRAccessCapturedVariableExpression = "IRAccessCapturedVariableExpression",
     IRAccessTempVariableExpression = "IRAccessTempVariableExpression",
 
+    IRAccessTypeDeclValueExpression = "IRAccessTypeDeclValueExpression",
+    IRConstructSafeTypeDeclExpression = "IRConstructSafeTypeDeclExpression",
+    
     //
     //TODO: lots more expression types here
     //
@@ -267,21 +270,25 @@ abstract class IRLiteralIntegralNumberExpression extends IRLiteralExpression {
         this.value = value;
     }
 }
+
 class IRLiteralNatExpression extends IRLiteralIntegralNumberExpression {
     constructor(value: string) {
         super(IRExpressionTag.IRLiteralNatExpression, value);
     }
 }
+
 class IRLiteralIntExpression extends IRLiteralIntegralNumberExpression {
     constructor(value: string) {
         super(IRExpressionTag.IRLiteralIntExpression, value);
     }
 }
+
 class IRLiteralChkNatExpression extends IRLiteralIntegralNumberExpression {
     constructor(value: string) {
         super(IRExpressionTag.IRLiteralChkNatExpression, value);
     }
 }
+
 class IRLiteralChkIntExpression extends IRLiteralIntegralNumberExpression {
     constructor(value: string) {
         super(IRExpressionTag.IRLiteralChkIntExpression, value);
@@ -830,15 +837,37 @@ class IRAccessTempVariableExpression extends IRImmediateExpression {
     }
 }
 
+class IRAccessTypeDeclValueExpression extends IRSimpleExpression {
+    readonly accesstype: IRNominalTypeSignature;
+    readonly exp: IRSimpleExpression;
+
+    constructor(accesstype: IRNominalTypeSignature, exp: IRSimpleExpression) {
+        super(IRExpressionTag.IRAccessTypeDeclValueExpression);
+        this.accesstype = accesstype;
+        this.exp = exp;
+    }
+}
+
+class IRConstructSafeTypeDeclExpression extends IRSimpleExpression {
+    readonly constype: IRNominalTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(constype: IRNominalTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRAccessTypeDeclValueExpression);
+        this.constype = constype;
+        this.value = value;
+    }
+}
+
 //
 //TODO: lots more expression types here
 //
 
 abstract class IRUnaryOpExpression extends IRSimpleExpression {
-    readonly exp: IRExpression;
+    readonly exp: IRSimpleExpression;
     readonly opertype: IRTypeSignature;
 
-    constructor(tag: IRExpressionTag, exp: IRExpression, opertype: IRTypeSignature) {
+    constructor(tag: IRExpressionTag, exp: IRSimpleExpression, opertype: IRTypeSignature) {
         super(tag);
         this.exp = exp;
         this.opertype = opertype;
@@ -846,29 +875,29 @@ abstract class IRUnaryOpExpression extends IRSimpleExpression {
 }
 
 class IRPrefixNotOpExpression extends IRUnaryOpExpression {
-    constructor(exp: IRExpression, opertype: IRTypeSignature) {
+    constructor(exp: IRSimpleExpression, opertype: IRTypeSignature) {
         super(IRExpressionTag.IRPrefixNotOpExpression, exp, opertype);
     }
 }
 
 class IRPrefixNegateOpExpression extends IRUnaryOpExpression {
-    constructor(exp: IRExpression, opertype: IRTypeSignature) {
+    constructor(exp: IRSimpleExpression, opertype: IRTypeSignature) {
         super(IRExpressionTag.IRPrefixNegateOpExpression, exp, opertype);
     }
 }
 
 class IRPrefixPlusOpExpression extends IRUnaryOpExpression {
-    constructor(exp: IRExpression, opertype: IRTypeSignature) {
+    constructor(exp: IRSimpleExpression, opertype: IRTypeSignature) {
         super(IRExpressionTag.IRPrefixPlusOpExpression, exp, opertype);
     }
 }
 
 abstract class IRBinOpExpression extends IRSimpleExpression {
-    readonly left: IRExpression;
-    readonly right: IRExpression;
+    readonly left: IRSimpleExpression;
+    readonly right: IRSimpleExpression;
     readonly opertype: IRTypeSignature;
 
-    constructor(tag: IRExpressionTag, left: IRExpression, right: IRExpression, opertype: IRTypeSignature) {
+    constructor(tag: IRExpressionTag, left: IRSimpleExpression, right: IRSimpleExpression, opertype: IRTypeSignature) {
         super(tag);
         this.left = left;
         this.right = right;
@@ -877,25 +906,25 @@ abstract class IRBinOpExpression extends IRSimpleExpression {
 }
 
 class IRBinAddExpression extends IRBinOpExpression {
-    constructor(left: IRExpression, right: IRExpression, opertype: IRTypeSignature) {
+    constructor(left: IRSimpleExpression, right: IRSimpleExpression, opertype: IRTypeSignature) {
         super(IRExpressionTag.IRBinAddExpression, left, right, opertype);
     }
 }
 
 class IRBinSubExpression extends IRBinOpExpression {
-    constructor(left: IRExpression, right: IRExpression, opertype: IRTypeSignature) {
+    constructor(left: IRSimpleExpression, right: IRSimpleExpression, opertype: IRTypeSignature) {
         super(IRExpressionTag.IRBinSubExpression, left, right, opertype);
     }
 }
 
 class IRBinMultExpression extends IRBinOpExpression {
-    constructor(left: IRExpression, right: IRExpression, opertype: IRTypeSignature) {
+    constructor(left: IRSimpleExpression, right: IRSimpleExpression, opertype: IRTypeSignature) {
         super(IRExpressionTag.IRBinMultExpression, left, right, opertype);
     }
 }
 
 class IRBinDivExpression extends IRBinOpExpression {
-    constructor(left: IRExpression, right: IRExpression, opertype: IRTypeSignature) {
+    constructor(left: IRSimpleExpression, right: IRSimpleExpression, opertype: IRTypeSignature) {
         super(IRExpressionTag.IRBinDivExpression, left, right, opertype);
     }
 }
@@ -905,11 +934,11 @@ class IRBinDivExpression extends IRBinOpExpression {
 //
 
 abstract class IRNumericComparisonExpression extends IRSimpleExpression {
-    readonly left: IRExpression;
-    readonly right: IRExpression;
+    readonly left: IRSimpleExpression;
+    readonly right: IRSimpleExpression;
     readonly opertype: IRTypeSignature;
 
-    constructor(tag: IRExpressionTag, left: IRExpression, right: IRExpression, opertype: IRTypeSignature) {
+    constructor(tag: IRExpressionTag, left: IRSimpleExpression, right: IRSimpleExpression, opertype: IRTypeSignature) {
         super(tag);
         this.left = left;
         this.right = right;
@@ -918,61 +947,59 @@ abstract class IRNumericComparisonExpression extends IRSimpleExpression {
 }
 
 class IRNumericEqExpression extends IRNumericComparisonExpression {
-    constructor(left: IRExpression, right: IRExpression, opertype: IRTypeSignature) {
+    constructor(left: IRSimpleExpression, right: IRSimpleExpression, opertype: IRTypeSignature) {
         super(IRExpressionTag.IRNumericEqExpression, left, right, opertype);
     }
 }
 
 class IRNumericNeqExpression extends IRNumericComparisonExpression {
-    constructor(left: IRExpression, right: IRExpression, opertype: IRTypeSignature) {
+    constructor(left: IRSimpleExpression, right: IRSimpleExpression, opertype: IRTypeSignature) {
         super(IRExpressionTag.IRNumericNeqExpression, left, right, opertype);
     }
 }
 
 class IRNumericLessExpression extends IRNumericComparisonExpression {
-    constructor(left: IRExpression, right: IRExpression, opertype: IRTypeSignature) {
+    constructor(left: IRSimpleExpression, right: IRSimpleExpression, opertype: IRTypeSignature) {
         super(IRExpressionTag.IRNumericLessExpression, left, right, opertype);
     }
 }
 
 class IRNumericLessEqExpression extends IRNumericComparisonExpression {
-    constructor(left: IRExpression, right: IRExpression, opertype: IRTypeSignature) {
+    constructor(left: IRSimpleExpression, right: IRSimpleExpression, opertype: IRTypeSignature) {
         super(IRExpressionTag.IRNumericLessEqExpression, left, right, opertype);
     }
 }
 
 class IRNumericGreaterExpression extends IRNumericComparisonExpression {
-    constructor(left: IRExpression, right: IRExpression, opertype: IRTypeSignature) {
+    constructor(left: IRSimpleExpression, right: IRSimpleExpression, opertype: IRTypeSignature) {
         super(IRExpressionTag.IRNumericGreaterExpression, left, right, opertype);
     }
 }
 
 class IRNumericGreaterEqExpression extends IRNumericComparisonExpression {
-    constructor(left: IRExpression, right: IRExpression, opertype: IRTypeSignature) {
+    constructor(left: IRSimpleExpression, right: IRSimpleExpression, opertype: IRTypeSignature) {
         super(IRExpressionTag.IRNumericGreaterEqExpression, left, right, opertype);
     }
 }
 
 abstract class IRLogicOpExpression extends IRSimpleExpression {
-    readonly left: IRExpression;
-    readonly right: IRExpression;
+    readonly args: IRSimpleExpression[];
 
-    constructor(tag: IRExpressionTag, left: IRExpression, right: IRExpression) {
+    constructor(tag: IRExpressionTag, args: IRSimpleExpression[]) {
         super(tag);
-        this.left = left;
-        this.right = right;
+        this.args = args;
     }
 }
 
 class IRLogicAndExpression extends IRLogicOpExpression {
-    constructor(left: IRExpression, right: IRExpression) {
-        super(IRExpressionTag.IRLogicAndExpression, left, right);
+    constructor(args: IRSimpleExpression[]) {
+        super(IRExpressionTag.IRLogicAndExpression, args);
     }
 }
 
 class IRLogicOrExpression extends IRLogicOpExpression {
-    constructor(left: IRExpression, right: IRExpression) {
-        super(IRExpressionTag.IRLogicOrExpression, left, right);
+    constructor(args: IRSimpleExpression[]) {
+        super(IRExpressionTag.IRLogicOrExpression, args);
     }
 }
 
@@ -1156,6 +1183,8 @@ export {
 
     IRAccessNamespaceConstantExpression, IRAccessStaticFieldExpression, IRAccessEnumExpression,
     IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessTempVariableExpression,
+    
+    IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression,
 
     IRUnaryOpExpression, IRPrefixNotOpExpression, IRPrefixNegateOpExpression, IRPrefixPlusOpExpression,
     IRBinOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression,
