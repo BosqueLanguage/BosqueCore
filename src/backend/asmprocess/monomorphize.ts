@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, Assembly, ExplicitInvokeDecl, ListTypeDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, TypeFunctionDecl } from "../../frontend/assembly.js";
 import { NamespaceInstantiationInfo } from "./instantiations.js";
 import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaParameterPackTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
-import { AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, CallNamespaceFunctionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, Expression, ExpressionTag, FormatStringArgComponent, FormatStringComponent, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOfOperator, PostfixOp, PostfixOpTag, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, SpecialConstructorExpression, TaskAccessInfoExpression } from "../../frontend/body.js";
+import { AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, EmptyStatement, Expression, ExpressionTag, FormatStringArgComponent, FormatStringComponent, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOfOperator, PostfixOp, PostfixOpTag, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SpecialConstructorExpression, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement } from "../../frontend/body.js";
 import { } from "../../frontend/build_decls.js";
 
 class PendingNamespaceFunction {
@@ -708,10 +708,6 @@ class Monomorphizer {
         this.instantiateExpression(exp.vexp);
     }
 
-    private instantiateConditionalValueExpression(exp: ConditionalValueExpression) {
-        assert(false, "Not Implemented -- instantiateConditionalValueExpression");
-    }
-
     // Add our rope instantiation here, check if we are cstring or string and go lookup ns to find the constructor for the correct size
     private instantiateExpression(exp: Expression) {
         this.instantiateTypeSignature(exp.getType(), this.currentMapping);
@@ -917,15 +913,8 @@ class Monomorphizer {
                 this.instantiateLogicOrExpression(exp as LogicOrExpression);
                 break;
             }
-
-            xxxx;
-
             case ExpressionTag.MapEntryConstructorExpression: {
                 this.instantiateMapEntryConstructorExpression(exp as MapEntryConstructorExpression);
-                break;
-            }
-            case ExpressionTag.ConditionalValueExpression: {
-                this.instantiateConditionalValueExpression(exp as ConditionalValueExpression);
                 break;
             }
             default: {
@@ -935,6 +924,7 @@ class Monomorphizer {
     }
 
     private instantiateCallRefInvokeExpression(exp: CallRefInvokeExpression) {
+        /*
         this.instantiateExpression(exp.rcvr);
 
         if(exp.specificResolve !== undefined) {
@@ -963,6 +953,8 @@ class Monomorphizer {
         const nns = (exp.resolvedTrgt as NominalTypeSignature).decl.ns;
         const mm = (exp.resolvedTrgt as NominalTypeSignature).decl.methods.find((m) => m.isThisRef && m.name === exp.name) as MethodDecl;
         this.instantiateSpecificResolvedMemberMethod(nns, exp.resolvedTrgt as NominalTypeSignature, mm, exp.terms);
+        */
+         assert(false, "Not Implemented -- instantiateCallRefInvokeExpression");
     }
 
     private instantiateCallRefVariableExpression(exp: CallRefVariableExpression) {
@@ -1001,7 +993,7 @@ class Monomorphizer {
         assert(false, "Not Implemented -- instantiateTaskRaceExpression");
     }
 
-    private instantiateExpressionRHS(exp: Expression) {
+    private instantiateBaseRValueExpression(exp: Expression) {
         const ttag = exp.tag;
         switch (ttag) {
             case ExpressionTag.CallRefVariableExpression: {
@@ -1047,6 +1039,32 @@ class Monomorphizer {
         }
     }
 
+    private instantiateExpressionRHS(exp: RValueExpression) {
+        const ttag = exp.tag;
+        
+        if(ttag === RValueExpressionTag.BaseExpression) {
+            return this.instantiateBaseRValueExpression((exp as BaseRValueExpression).exp);
+        }
+        else if(ttag === RValueExpressionTag.ShortCircuitAssignRHSExpressionFail) {
+            assert(false, "Not Implemented -- checkShortCircuitAssignRHSFailExpression");
+        }
+        else if(ttag === RValueExpressionTag.ShortCircuitAssignRHSExpressionReturn) {
+            assert(false, "Not Implemented -- checkShortCircuitAssignRHSReturnExpression");
+        }
+        else if(ttag === RValueExpressionTag.ConditionalValueExpression) {
+            assert(false, "Not Implemented -- checkConditionalValueExpression");
+        }
+        else {
+            assert(false, "Unknown RValueExpression kind");
+        }
+    }
+
+    /*
+    private instantiateExpressionRootCondition(env: TypeEnvironment, exp: xxx): TypeSignature {
+        xxxx;
+    }
+    */
+
     private instantiateEmptyStatement(stmt: EmptyStatement) {
         return;
     }
@@ -1067,6 +1085,7 @@ class Monomorphizer {
     }
 
     private instantiateVariableMultiInitializationStatement(stmt: VariableMultiInitializationStatement) {
+        /*
         for(let i = 0; i < stmt.decls.length; ++i) {
             if(!(stmt.decls[i].vtype instanceof AutoTypeSignature)) {
                 this.instantiateTypeSignature(stmt.decls[i].vtype, this.currentMapping);
@@ -1082,13 +1101,19 @@ class Monomorphizer {
         else {
             this.instantiateExpressionRHS(stmt.exp);
         }
+        */
+       assert(false, "Not Implemented -- instantiateVariableMultiInitializationStatement");
     }
 
     private instantiateVariableAssignmentStatement(stmt: VariableAssignmentStatement) {
+        /*
         this.instantiateExpressionRHS(stmt.exp);
+        */
+        assert(false, "Not Implemented -- instantiateVariableAssignmentStatement");
     }
 
     private instantiateVariableMultiAssignmentStatement(stmt: VariableMultiAssignmentStatement) {
+        /*
         if(Array.isArray(stmt.exp)) {
             for(let i = 0; i < stmt.exp.length; ++i) {
                 this.instantiateExpression(stmt.exp[i]); 
@@ -1097,11 +1122,8 @@ class Monomorphizer {
         else {
             this.instantiateExpressionRHS(stmt.exp);
         }
-    }
-
-    private instantiateVariableRetypeStatement(stmt: VariableRetypeStatement) {
-        this.processITestAsConvert(stmt.vtype as TypeSignature, stmt.ttest);
-        this.instantiateTypeSignature(stmt.newvtype as TypeSignature, this.currentMapping);
+        */
+        assert(false, "Not Implemented -- instantiateVariableMultiAssignmentStatement");
     }
 
     private instantiateReturnVoidStatement(stmt: ReturnVoidStatement) {
@@ -1114,6 +1136,7 @@ class Monomorphizer {
     }
 
     private instantiateReturnMultiStatement(stmt: ReturnMultiStatement) {
+        /*
         for(let i = 0; i < stmt.value.length; ++i) {
             this.instantiateExpression(stmt.value[i]);
         }
@@ -1123,6 +1146,8 @@ class Monomorphizer {
         }
 
         this.instantiateTypeSignature(new EListTypeSignature(stmt.sinfo, stmt.rtypes), this.currentMapping);
+        */
+        assert(false, "Not Implemented -- instantiateReturnMultiStatement");
     }
 
     private instantiateIfStatement(stmt: IfStatement) {

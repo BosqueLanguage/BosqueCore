@@ -1,9 +1,9 @@
 import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, LambdaParameterPackTypeSignature, NominalTypeSignature, TypeSignature, VoidTypeSignature } from "../../frontend/type";
-import { AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, BinAddExpression, BinDivExpression, BinMultExpression, BinSubExpression, Expression, ExpressionTag, FormatStringArgComponent, FormatStringTextComponent, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, TaskAccessInfoExpression } from "../../frontend/body";
+import { AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, BaseRValueExpression, BinAddExpression, BinDivExpression, BinMultExpression, BinSubExpression, EmptyStatement, Expression, ExpressionTag, FormatStringArgComponent, FormatStringTextComponent, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PostfixOp, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, TaskAccessInfoExpression, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement } from "../../frontend/body";
 import { Assembly, TypedeclTypeDecl } from "../../frontend/assembly";
 
 import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatCStringTypeSignature, IRFormatPathFragmentTypeSignature, IRFormatPathGlobTypeSignature, IRFormatPathTypeSignature, IRFormatStringTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype";
-import { DateRepresentation, DeltaDateRepresentation, DeltaTimeRepresentation, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteBufferExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralCStringExpression, IRLiteralDecimalExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLatLongCoordinateExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralNoneExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralRationalExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRStatement, TimeRepresentation, IRLiteralFormatStringExpression, IRFormatStringTextComponent, IRFormatStringArgComponent, IRFormatStringComponent, IRLiteralFormatCStringExpression, IRLiteralTypedExpression, IRLiteralExpression, IRTypeDeclInvariantCheckStatement, IRLiteralTypedStringExpression, IRLiteralTypedCStringExpression, IRLiteralTypedFormatStringExpression, IRLiteralTypedFormatCStringExpression, IRTaskAccessIDExpression, IRTaskAccessParentIDExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessNamespaceConstantExpression, IRAccessStaticFieldExpression, IRAccessEnumExpression, IRSimpleExpression, IRPreconditionCheckStatement, IRExpression, IRTempAssignExpressionStatement, IRAccessTempVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessParameterVariableExpression, IRPrefixNotOpExpression, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRErrorAdditionBoundsCheckStatement, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRErrorDivisionByZeroCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression } from "../irdefs/irbody";
+import { DateRepresentation, DeltaDateRepresentation, DeltaTimeRepresentation, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteBufferExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralCStringExpression, IRLiteralDecimalExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLatLongCoordinateExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralNoneExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralRationalExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRStatement, TimeRepresentation, IRLiteralFormatStringExpression, IRFormatStringTextComponent, IRFormatStringArgComponent, IRFormatStringComponent, IRLiteralFormatCStringExpression, IRLiteralTypedExpression, IRLiteralExpression, IRTypeDeclInvariantCheckStatement, IRLiteralTypedStringExpression, IRLiteralTypedCStringExpression, IRLiteralTypedFormatStringExpression, IRLiteralTypedFormatCStringExpression, IRTaskAccessIDExpression, IRTaskAccessParentIDExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessNamespaceConstantExpression, IRAccessStaticFieldExpression, IRAccessEnumExpression, IRSimpleExpression, IRPreconditionCheckStatement, IRExpression, IRTempAssignExpressionStatement, IRAccessTempVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessParameterVariableExpression, IRPrefixNotOpExpression, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRErrorAdditionBoundsCheckStatement, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRErrorDivisionByZeroCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRNopStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRReturnVoidSimpleStatement } from "../irdefs/irbody";
 import { IRRegex } from "../irdefs/irsupport";
 import {} from "../irdefs/irassembly";
 
@@ -854,6 +854,122 @@ class ASMToIRConverter {
         else {
             assert(false, `ASMToIRConverter: Unsupported expression type -- ${exp.tag}`);
         }
+    }
+
+    private flattenBaseRValueExpression(exp: Expression): IRExpression {
+        const ttag = exp.tag;
+
+        switch (ttag) {
+            case ExpressionTag.CallRefVariableExpression: {
+                assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+            }
+            case ExpressionTag.CallRefThisExpression: {
+                assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+            }
+            case ExpressionTag.CallRefSelfExpression: {
+                assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+            }
+            case ExpressionTag.CallTaskActionExpression: {
+                assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+            }
+            case ExpressionTag.TaskRunExpression: {
+                assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+            }
+            case ExpressionTag.TaskMultiExpression: {
+                assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+            }
+            case ExpressionTag.TaskDashExpression: {
+                assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+            }
+            case ExpressionTag.TaskAllExpression: {
+                assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+            }
+            case ExpressionTag.TaskRaceExpression: {
+                assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+            }
+            default: {
+                return this.flattenExpression(exp);
+            }
+        }
+    }
+
+    private flattenExpressionRHS(exp: RValueExpression): IRExpression {
+        const ttag = exp.tag;
+        
+        if(ttag === RValueExpressionTag.BaseExpression) {
+            return this.flattenBaseRValueExpression((exp as BaseRValueExpression).exp);
+        }
+        else if(ttag === RValueExpressionTag.ShortCircuitAssignRHSExpressionFail) {
+            assert(false, "Not Implemented -- checkShortCircuitAssignRHSFailExpression");
+        }
+        else if(ttag === RValueExpressionTag.ShortCircuitAssignRHSExpressionReturn) {
+            assert(false, "Not Implemented -- checkShortCircuitAssignRHSReturnExpression");
+        }
+        else if(ttag === RValueExpressionTag.ConditionalValueExpression) {
+            assert(false, "Not Implemented -- checkConditionalValueExpression");
+        }
+        else {
+            assert(false, "Unknown RValueExpression kind");
+        }
+    }
+
+    /*
+    private checkExpressionRootCondition(env: TypeEnvironment, exp: xxx): TypeSignature {
+        xxxx;
+    }
+    */
+
+    private flattenEmptyStatement(stmt: EmptyStatement) {
+        this.pushStatement(new IRNopStatement());
+    }
+
+    private flattenVariableDeclarationStatement(stmt: VariableDeclarationStatement) {
+        this.pushStatement(new IRVariableDeclarationStatement(this.processLocalVariableName(stmt.name), this.processTypeSignature(stmt.vtype)));
+    }
+    
+    private flattenVariableMultiDeclarationStatement(stmt: VariableMultiDeclarationStatement) {
+        for(let i = 0; i < stmt.decls.length; ++i) {
+            const vdecl = stmt.decls[i];
+            this.pushStatement(new IRVariableDeclarationStatement(this.processLocalVariableName(vdecl.name), this.processTypeSignature(vdecl.vtype)));
+        }
+    }
+
+    private flattenVariableInitializationStatement(stmt: VariableInitializationStatement) {
+        const irval = this.flattenExpressionRHS(stmt.exp);
+        const irvtype = this.processTypeSignature(stmt.vtype);
+
+        if(irval instanceof IRSimpleExpression) {
+            return this.pushStatement(new IRVariableInitializationStatement(this.processLocalVariableName(stmt.name), irvtype, irval, stmt.vkind === "let"));
+        }
+        else {
+            assert(false, "ASMToIRConverter not implemented: VariableInitializationStatement value is not simple expression");
+        }
+    }
+
+    private flattenVariableMultiInitializationStatement(stmt: VariableMultiInitializationStatement) {
+       assert(false, "Not Implemented -- flattenVariableMultiInitializationStatement");
+    }
+
+    private flattenVariableAssignmentStatement(stmt: VariableAssignmentStatement) {
+        assert(false, "Not Implemented -- flattenVariableAssignmentStatement");
+    }
+
+    private flattenVariableMultiAssignmentStatement(stmt: VariableMultiAssignmentStatement) {
+        assert(false, "Not Implemented -- flattenVariableMultiAssignmentStatement");
+    }
+
+    private flattenReturnVoidStatement(stmt: ReturnVoidStatement) {
+        xxxx;
+        this.pushStatement(new IRReturnVoidSimpleStatement());
+    }
+
+    private flattenReturnSingleStatement(stmt: ReturnSingleStatement) {
+        xxxx;
+        const irval = this.flattenExpressionRHS(stmt.value);
+    }
+
+    private flattenReturnMultiStatement(stmt: ReturnMultiStatement) {
+        assert(false, "Not Implemented -- flattenReturnMultiStatement");
     }
 }
 

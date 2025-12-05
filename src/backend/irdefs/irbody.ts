@@ -1048,10 +1048,10 @@ class IRVariableDeclarationStatement extends IRAtomicStatement {
 class IRVariableInitializationStatement extends IRAtomicStatement {
     readonly vname: string;
     readonly vtype: IRTypeSignature;
-    readonly initexp: IRExpression;
+    readonly initexp: IRSimpleExpression;
     readonly isconst: boolean;
 
-    constructor(vname: string, vtype: IRTypeSignature, initexp: IRExpression, isconst: boolean) {
+    constructor(vname: string, vtype: IRTypeSignature, initexp: IRSimpleExpression, isconst: boolean) {
         super(IRStatementTag.IRVariableInitializationStatement);
         this.vname = vname;
         this.vtype = vtype;
