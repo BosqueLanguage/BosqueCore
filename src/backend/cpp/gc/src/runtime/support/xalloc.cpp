@@ -22,6 +22,12 @@ void* XAllocPageManager::allocatePage_impl() noexcept
 #endif
 
         this->freelist->next = NULL;
+
+        //
+        // This can be hit by the decs thread whihc causes the decs thread to need 
+        // its own tinfo, which in initializaxtion creates another decs thread!
+        // To fix this, lets make memstats not part of a thread local object (global static?)
+        //
         UPDATE_TOTAL_PAGES(gtl_info, +=, 1);
     }
 
