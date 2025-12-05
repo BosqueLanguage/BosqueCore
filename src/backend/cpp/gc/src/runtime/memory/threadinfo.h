@@ -115,12 +115,6 @@ struct BSQMemoryTheadLocalInfo
             uint8_t idx = generateAllocLookupIndex(alloc);
             this->g_gcallocs[idx] = alloc;
         }
-
-#ifdef MEM_STATS
-        auto start = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double, std::milli> dur = start.time_since_epoch();
-        this->mstats.start_time = dur.count();
-#endif
     }
 
     inline void updateNurseryUsage(PageInfo* p) noexcept

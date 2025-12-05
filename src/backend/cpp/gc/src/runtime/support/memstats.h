@@ -47,6 +47,12 @@ struct MemStats {
     size_t collection_times[MAX_MEMSTATS_BUCKETS] { 0 };
     size_t nursery_times[MAX_MEMSTATS_BUCKETS]    { 0 };
     size_t rc_times[MAX_MEMSTATS_BUCKETS]         { 0 };
+
+    MemStats() {
+        auto start = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> dur = start.time_since_epoch();
+        this->start_time = dur.count();
+    }        
 };
 
 extern MemStats g_memstats;
