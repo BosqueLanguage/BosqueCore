@@ -151,6 +151,8 @@ public:
 #define NUM_TYPEPTR_BITS 32
 #define TYPEPTR_MASK 0x0000'0000'FFFF'FFFFUL
 
+// TODO: Temporary hack for getting approximate data seg address
+//       --- used in packed metadata
 static const char* GC_DATA_SEGMENT_ANCHOR = "GC_DATA_SEGMENT_BASE";
 static const uint64_t g_typeptr_high32 = (reinterpret_cast<uint64_t>(&GC_DATA_SEGMENT_ANCHOR) >> NUM_TYPEPTR_BITS);
 
