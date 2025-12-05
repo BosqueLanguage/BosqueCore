@@ -1,11 +1,12 @@
 #pragma once
 
 #include "../language/bsqtype.h"
+#include "support/memstats.h"
 
 #include <sys/mman.h> //mmap
 
 //DEFAULT ENABLED WHILE LOTS OF DEVELOPMENT!!!!
-#define MEM_STATS
+// MEM_STATS defined in support/memstats.h
 #define BSQ_GC_CHECK_ENABLED
 #define VERBOSE_HEADER
 

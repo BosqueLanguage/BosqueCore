@@ -5,6 +5,8 @@
 #include <chrono>
 #include <cmath>
 
+MemStats g_memstats;
+
 void update_stats(Stats& stats, double time) noexcept
 {
     // Welford's algorithm
