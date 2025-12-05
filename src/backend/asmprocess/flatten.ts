@@ -1,9 +1,9 @@
 import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, LambdaParameterPackTypeSignature, NominalTypeSignature, TypeSignature, VoidTypeSignature } from "../../frontend/type";
-import { AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, Expression, ExpressionTag, FormatStringArgComponent, FormatStringTextComponent, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, TaskAccessInfoExpression } from "../../frontend/body";
+import { AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, Expression, ExpressionTag, FormatStringArgComponent, FormatStringTextComponent, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, TaskAccessInfoExpression } from "../../frontend/body";
 import { Assembly } from "../../frontend/assembly";
 
 import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatCStringTypeSignature, IRFormatPathFragmentTypeSignature, IRFormatPathGlobTypeSignature, IRFormatPathTypeSignature, IRFormatStringTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype";
-import { DateRepresentation, DeltaDateRepresentation, DeltaTimeRepresentation, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteBufferExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralCStringExpression, IRLiteralDecimalExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLatLongCoordinateExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralNoneExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralRationalExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRStatement, TimeRepresentation, IRLiteralFormatStringExpression, IRFormatStringTextComponent, IRFormatStringArgComponent, IRFormatStringComponent, IRLiteralFormatCStringExpression, IRLiteralTypedExpression, IRLiteralExpression, IRTypeDeclInvariantCheckStatement, IRLiteralTypedStringExpression, IRLiteralTypedCStringExpression, IRLiteralTypedFormatStringExpression, IRLiteralTypedFormatCStringExpression, IRTaskAccessIDExpression, IRTaskAccessParentIDExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessNamespaceConstantExpression, IRAccessStaticFieldExpression, IRAccessEnumExpression, IRSimpleExpression, IRPreconditionCheckStatement, IRExpression, IRTempAssignExpressionStatement, IRAccessTempVariableExpression } from "../irdefs/irbody";
+import { DateRepresentation, DeltaDateRepresentation, DeltaTimeRepresentation, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteBufferExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralCStringExpression, IRLiteralDecimalExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLatLongCoordinateExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralNoneExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralRationalExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRStatement, TimeRepresentation, IRLiteralFormatStringExpression, IRFormatStringTextComponent, IRFormatStringArgComponent, IRFormatStringComponent, IRLiteralFormatCStringExpression, IRLiteralTypedExpression, IRLiteralExpression, IRTypeDeclInvariantCheckStatement, IRLiteralTypedStringExpression, IRLiteralTypedCStringExpression, IRLiteralTypedFormatStringExpression, IRLiteralTypedFormatCStringExpression, IRTaskAccessIDExpression, IRTaskAccessParentIDExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessNamespaceConstantExpression, IRAccessStaticFieldExpression, IRAccessEnumExpression, IRSimpleExpression, IRPreconditionCheckStatement, IRExpression, IRTempAssignExpressionStatement, IRAccessTempVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessParameterVariableExpression } from "../irdefs/irbody";
 import { IRRegex } from "../irdefs/irsupport";
 import {} from "../irdefs/irassembly";
 
@@ -506,8 +506,66 @@ class ASMToIRConverter {
             return new IRAccessEnumExpression(flatenumname);
         }
         else if(ttag === ExpressionTag.AccessVariableExpression) {
-            xxxx;
+            const tave = exp as AccessVariableExpression;
+
+            if(tave.isParameter) {
+                return new IRAccessParameterVariableExpression(tave.srcname);
+            }
+            else if(tave.isCaptured) {
+                return new IRAccessCapturedVariableExpression(tave.scopeidx as number, tave.srcname);
+            }
+            else {
+                return new IRAccessLocalVariableExpression(tave.srcname);
+            }
         }
+        else if(ttag === ExpressionTag.ConstructorPrimaryExpression) {
+            assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+        }
+        else if(ttag === ExpressionTag.ConstructorEListExpression) {
+            assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+        }
+        else if(ttag === ExpressionTag.ConstructorLambdaExpression) {
+            assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+        }
+        else if(ttag === ExpressionTag.LambdaInvokeExpression) {
+            assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+        }
+        else if(ttag === ExpressionTag.SpecialConstructorExpression) {
+            assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+        }
+        else if(ttag === ExpressionTag.CallNamespaceFunctionExpression) {
+            assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+        }
+        else if(ttag === ExpressionTag.CallTypeFunctionExpression) {
+            assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+        }
+        else if(ttag === ExpressionTag.ParseAsTypeExpression) {
+            assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+        }
+        else if(ttag === ExpressionTag.PostfixOpExpression) {
+            assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+        }
+        
+        
+        case ExpressionTag.PrefixNotOpExpression: {
+                return this.checkPrefixNotOpExpression(env, exp as PrefixNotOpExpression);
+            }
+            case ExpressionTag.PrefixNegateOrPlusOpExpression: {
+                return this.checkPrefixNegateOrPlusOpExpression(env, exp as PrefixNegateOrPlusOpExpression);
+            }
+            case ExpressionTag.BinAddExpression: {
+                return this.checkBinAddExpression(env, exp as BinAddExpression);
+            }
+            case ExpressionTag.BinSubExpression: {
+                return this.checkBinSubExpression(env, exp as BinSubExpression);
+            }
+            case ExpressionTag.BinMultExpression: {
+                return this.checkBinMultExpression(env, exp as BinMultExpression);
+            }
+            case ExpressionTag.BinDivExpression: {
+                return this.checkBinDivExpression(env, exp as BinDivExpression);
+            }
+
         else {
             assert(false, `ASMToIRConverter: Unsupported expression type -- ${exp.tag}`);
         }

@@ -1,15 +1,16 @@
 import assert from "node:assert";
 
-import { AbstractNominalTypeDecl, Assembly, ExplicitInvokeDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, TypeFunctionDecl } from "../../frontend/assembly.js";
+import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, Assembly, ExplicitInvokeDecl, ListTypeDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, TypeFunctionDecl } from "../../frontend/assembly.js";
 import { NamespaceInstantiationInfo } from "./instantiations.js";
 import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaParameterPackTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
-import { } from "../../frontend/body.js";
+import { AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, BinAddExpression, BinDivExpression, BinMultExpression, BinSubExpression, CallNamespaceFunctionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, Expression, ExpressionTag, FormatStringArgComponent, FormatStringComponent, LambdaInvokeExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, ParseAsTypeExpression, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOfOperator, PostfixOp, PostfixOpTag, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, SpecialConstructorExpression, TaskAccessInfoExpression } from "../../frontend/body.js";
 import { } from "../../frontend/build_decls.js";
 
 class PendingNamespaceFunction {
     readonly namespace: NamespaceDeclaration;
     readonly function: NamespaceFunctionDecl;
     readonly instantiation: TypeSignature[];
+    readonly lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[];
 
     readonly fkey: string;
 
@@ -17,6 +18,7 @@ class PendingNamespaceFunction {
         this.namespace = namespace;
         this.function = func;
         this.instantiation = instantiation;
+        this.lambdas = lambdas;
 
         this.fkey = fkey;
     }
@@ -26,15 +28,17 @@ class PendingTypeFunction {
     readonly type: TypeSignature;
     readonly function: TypeFunctionDecl;
     readonly instantiation: TypeSignature[];
+    readonly lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[];
 
     readonly fkey: string;
 
-    constructor(type: TypeSignature, func: TypeFunctionDecl, instantiation: TypeSignature[]) {
+    constructor(type: TypeSignature, func: TypeFunctionDecl, instantiation: TypeSignature[], lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[], fkey: string) {
         this.type = type;
         this.function = func;
         this.instantiation = instantiation;
+        this.lambdas = lambdas;
 
-        this.fkey = `${type.tkeystr}::${func.name}${computeTBindsKey(instantiation)}`;
+        this.fkey = fkey;;
     }
 }
 
@@ -42,15 +46,17 @@ class PendingTypeMethod {
     readonly type: TypeSignature;
     readonly method: ExplicitInvokeDecl;
     readonly instantiation: TypeSignature[];
+    readonly lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[];
 
     readonly mkey: string;
 
-    constructor(type: TypeSignature, mthd: ExplicitInvokeDecl, instantiation: TypeSignature[]) {
+    constructor(type: TypeSignature, mthd: ExplicitInvokeDecl, instantiation: TypeSignature[], lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[], mkey: string) {
         this.type = type;
         this.method = mthd;
         this.instantiation = instantiation;
+        this.lambdas = lambdas;
 
-        this.mkey = `${type.tkeystr}@${mthd.name}${computeTBindsKey(instantiation)}`;
+        this.mkey = mkey;
     }
 }
 
@@ -112,17 +118,18 @@ class Monomorphizer {
     }
 
     private computeInvokeKeyForNamespaceFunction(ns: NamespaceDeclaration, fdecl: NamespaceFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[]): string {
-        const rti = fdecl.params.some((p) => p.pkind !== undefined) ? "@ref" : "";
-        
-        `${ns.fullnamespace.emit()}::${fdecl.name}${rti}${Monomorphizer.computeTBindsKey(terms)}${Monomorphizer.computeLambdaKey(lambdas)}`;
+        const rti = fdecl.params.some((p) => p.pkind !== undefined) ? "#ref" : "";
+        return `${ns.fullnamespace.emit()}::${fdecl.name}${rti}${Monomorphizer.computeTBindsKey(terms)}${Monomorphizer.computeLambdaKey(lambdas)}`;
     }
 
     private computeInvokeKeyForTypeFunction(rcvrtype: TypeSignature, fdecl: TypeFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[]): string {
-        xxxx;
+        const rti = fdecl.params.some((p) => p.pkind !== undefined) ? "#ref" : "";
+        return `${rcvrtype.tkeystr}::${fdecl.name}${rti}${Monomorphizer.computeTBindsKey(terms)}${Monomorphizer.computeLambdaKey(lambdas)}`;
     }
 
     private computeInvokeKeyForTypeMethod(rcvrtype: TypeSignature, mdecl: MethodDecl, terms: TypeSignature[], lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[]): string {
-        xxxx;
+        const rti = ((mdecl.isThisRef) || mdecl.params.some((p) => p.pkind !== undefined)) ? "#ref" : "";
+        return `${rcvrtype.tkeystr}@${mdecl.name}${rti}${Monomorphizer.computeTBindsKey(terms)}${Monomorphizer.computeLambdaKey(lambdas)}`;
     }
 
     private getWellKnownType(name: string): TypeSignature {
@@ -201,28 +208,38 @@ class Monomorphizer {
     private instantiateTypeFunction(enclosingType: TypeSignature, fdecl: TypeFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[]) {
         const rcvrtype = this.currentMapping !== undefined ? enclosingType.remapTemplateBindings(this.currentMapping) : enclosingType;
         const tterms = this.currentMapping !== undefined ? terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : terms;
-        const fkey = `${rcvrtype.tkeystr}::${fdecl.name}${computeTBindsKey(tterms)}`;
+        const fkey = this.computeInvokeKeyForTypeFunction(rcvrtype, fdecl, tterms, lambdas);
 
         if(this.isAlreadySeenTypeFunction(fkey)) {
             return;
         }
 
-        this.pendingTypeFunctions.push(new PendingTypeFunction(rcvrtype, fdecl, tterms));
+        this.pendingTypeFunctions.push(new PendingTypeFunction(rcvrtype, fdecl, tterms, lambdas, fkey));
     }
 
     //Given a type method -- instantiate it
-    private instantiateMemberMethod(enclosingType: TypeSignature, fdecl: MethodDecl, terms: TypeSignature[], lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[]) {
+    private instantiateMemberMethod(enclosingType: TypeSignature, mdecl: MethodDecl, terms: TypeSignature[], lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[]) {
         const retype = this.currentMapping !== undefined ? enclosingType.remapTemplateBindings(this.currentMapping) : enclosingType;
         const tterms = this.currentMapping !== undefined ? terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : terms;
-        const mkey = `${retype.tkeystr}@${fdecl.name}${computeTBindsKey(tterms)}`;
+        const mkey = this.computeInvokeKeyForTypeMethod(retype, mdecl, tterms, lambdas);
 
         if(this.isAlreadySeenMemberMethod(mkey)) {
             return;
         }
 
-        this.pendingTypeMethods.push(new PendingTypeMethod(retype, fdecl, tterms));
+        this.pendingTypeMethods.push(new PendingTypeMethod(retype, mdecl, tterms, lambdas, mkey));
     }
 
+    private instantiateStringFormatsList(formats: FormatStringComponent[]) {
+        for(let i = 0; i < formats.length; ++i) {
+            const fc = formats[i];
+            if(fc instanceof FormatStringArgComponent) {
+                this.instantiateTypeSignature(fc.argType, this.currentMapping);
+            }
+        }
+    }
+
+/*
     private processITestAsBoolean(src: TypeSignature, tt: ITest) {
         this.instantiateTypeSignature(src, this.currentMapping);
         
@@ -252,41 +269,56 @@ class Monomorphizer {
     private instantiateConstructorArgumentList(args: ArgumentValue[]) {
         args.forEach((arg) => this.instantiateExpression(arg.exp));
     }
+*/
 
     private instantiateLiteralTypeDeclValueExpression(exp: LiteralTypeDeclValueExpression) {
         this.instantiateTypeSignature(exp.constype, this.currentMapping);
         this.instantiateExpression(exp.value);
     }
-    
-    private instantiateHasEnvValueExpression(exp: AccessEnvValueExpression) {
-        assert(false, "Not Implemented -- instantiateHasEnvValueExpression");
+
+    private instantiateLiteralTypedStringExpression(exp: LiteralTypedStringExpression) {
+        this.instantiateTypeSignature(exp.constype, this.currentMapping);
+    }
+
+    private instantiateLiteralTypedCStringExpression(exp: LiteralTypedCStringExpression) {
+        this.instantiateTypeSignature(exp.constype, this.currentMapping);
+    }
+
+    private instantiateLiteralTypedFormatStringExpression(exp: LiteralTypedFormatStringExpression) {
+        this.instantiateTypeSignature(exp.constype, this.currentMapping);
+        this.instantiateStringFormatsList(exp.fmts);
+    }
+
+    private instantiateLiteralTypedFormatCStringExpression(exp: LiteralTypedFormatCStringExpression) {
+        this.instantiateTypeSignature(exp.constype, this.currentMapping);
+        this.instantiateStringFormatsList(exp.fmts);
     }
     
     private instantiateAccessEnvValueExpression(exp: AccessEnvValueExpression) {
-        assert(false, "Not Implemented -- instantiateAccessEnvValueExpression");
+        if(exp.optoftype !== undefined) {
+            this.instantiateTypeSignature(exp.optoftype, this.currentMapping);
+        }
     }
 
     private instantiateTaskAccessInfoExpression(exp: TaskAccessInfoExpression) {
-        assert(false, "Not Implemented -- instantiateTaskAccessInfoExpression");
+        return;
     }
 
-    private instantiateAccessVariableExpression(exp: AccessVariableExpression) {
-        if(exp.layouttype !== undefined) {
-            this.instantiateTypeSignature(exp.layouttype, this.currentMapping);
-        }
+    private instantiateNamespaceConstExpression(exp: AccessNamespaceConstantExpression) {
+        return;
+    }
 
-        for(let i = 0; i < exp.specialaccess.length; ++i) {
-            this.instantiateTypeSignature(exp.specialaccess[i].ttype, this.currentMapping);
-        }
+    private instantiateAccessStaticFieldExpression(exp: AccessStaticFieldExpression) {
+        this.instantiateTypeSignature(exp.stype, this.currentMapping);
+        this.instantiateTypeSignature(exp.resolvedDeclType as NominalTypeSignature, this.currentMapping);
     }
 
     private instantiateAccessEnumExpression(exp: AccessEnumExpression) {
         this.instantiateTypeSignature(exp.stype, this.currentMapping);
     }
 
-    private instantiateAccessStaticFieldExpression(exp: AccessStaticFieldExpression) {
-        this.instantiateTypeSignature(exp.stype, this.currentMapping);
-        this.instantiateTypeSignature(exp.resolvedDeclType as NominalTypeSignature, this.currentMapping);
+    private instantiateAccessVariableExpression(exp: AccessVariableExpression) {
+        return;
     }
 
     private instantiateCollectionConstructor(decl: AbstractCollectionTypeDecl, t: NominalTypeSignature, args: ArgumentValue[]) {
@@ -367,6 +399,7 @@ class Monomorphizer {
     }
 
     private instantiateConstructorPrimaryExpression(exp: ConstructorPrimaryExpression) {
+        /*
         this.instantiateConstructorArgumentList(exp.args.args);
 
         const ctype = (exp.ctype as NominalTypeSignature);
@@ -374,6 +407,8 @@ class Monomorphizer {
         if(decl instanceof AbstractCollectionTypeDecl) {
             this.instantiateCollectionConstructor(decl, ctype, exp.args.args);
         }
+        */
+       assert(false, "Not Implemented -- instantiateConstructorPrimaryExpression");
     }
     
     private instantiateConstructorEListExpression(exp: ConstructorEListExpression) {
@@ -383,10 +418,14 @@ class Monomorphizer {
     }
 
     private instantiateConstructorLambdaExpression(exp: ConstructorLambdaExpression) {
+        /*
         this.instantiateBodyImplementation(exp.invoke.body);
+        */
+       assert(false, "Not Implemented -- instantiateConstructorLambdaExpression");
     }
 
     private instantiateLambdaInvokeExpression(exp: LambdaInvokeExpression) {
+        /*
         this.instantiateTypeSignature(exp.lambda as LambdaTypeSignature, this.currentMapping);
 
         this.instantiateArgumentList(exp.args.args);
@@ -405,6 +444,8 @@ class Monomorphizer {
 
             this.instantiateCollectionConstructor(rparamtype.decl as AbstractCollectionTypeDecl, rparamtype, rargs);
         }
+        */
+       assert(false, "Not Implemented -- instantiateLambdaInvokeExpression");
     }
 
     private instantiateSpecialConstructorExpression(exp: SpecialConstructorExpression) {
@@ -412,11 +453,8 @@ class Monomorphizer {
         this.instantiateExpression(exp.arg);
     }
 
-    private instantiateSpecialConverterExpression(exp: SpecialConverterExpression) {
-        assert(false, "Not Implemented -- instantiateSpecialConverterExpression");
-    }
-
     private instantiateCallNamespaceFunctionExpression(exp: CallNamespaceFunctionExpression) {
+        /*
         this.instantiateArgumentList(exp.args.args);
 
         for(let i = 0; i < exp.shuffleinfo.length; ++i) {
@@ -437,9 +475,12 @@ class Monomorphizer {
         const nns = this.assembly.resolveNamespaceDecl(exp.ns.ns) as NamespaceDeclaration;
         const nfd = this.assembly.resolveNamespaceFunction(exp.ns, exp.name) as NamespaceFunctionDecl;
         this.instantiateNamespaceFunction(nns, nfd, exp.terms);
+        */
+       assert(false, "Not Implemented -- instantiateCallNamespaceFunctionExpression");
     }
 
     private instantiateCallTypeFunctionExpression(exp: CallTypeFunctionExpression) {
+        /*
         this.instantiateTypeSignature(exp.ttype, this.currentMapping);
         this.instantiateTypeSignature(exp.resolvedDeclType as TypeSignature, this.currentMapping);
 
@@ -464,6 +505,8 @@ class Monomorphizer {
             const fdecl = (exp.resolvedDeclType as NominalTypeSignature).decl.functions.find((ff) => ff.name === exp.name) as TypeFunctionDecl;
             this.instantiateTypeFunction(exp.resolvedDeclType as TypeSignature, (exp.resolvedDeclType as NominalTypeSignature).decl, fdecl, exp.terms);
         }
+        */
+       assert(false, "Not Implemented -- instantiateCallTypeFunctionExpression");
     }
 
     private instantiateParseAsTypeExpression(exp: ParseAsTypeExpression) {
@@ -471,27 +514,22 @@ class Monomorphizer {
         this.instantiateExpression(exp.exp);
     }
 
-    private instantiateSafeConvertExpression(exp: SafeConvertExpression) {
-        this.instantiateTypeSignature(exp.srctype, this.currentMapping);
-        this.instantiateTypeSignature(exp.trgttype, this.currentMapping);
-        this.instantiateExpression(exp.exp);
-    }
-
-    private insantiateCreateDirectExpression(exp: CreateDirectExpression) {
-        this.instantiateTypeSignature(exp.srctype, this.currentMapping);
-        this.instantiateTypeSignature(exp.trgttype, this.currentMapping);
-        this.instantiateExpression(exp.exp);
-    }
-
     private instantiatePostfixIsTest(exp: PostfixIsTest) {
+        /*
         this.processITestAsBoolean(exp.getRcvrType(), exp.ttest);
+        */
+        assert(false, "Not Implemented -- instantiatePostfixIsTest");
     }
 
     private instantiatePostfixAsConvert(exp: PostfixAsConvert) {
+        /*
         this.processITestAsConvert(exp.getRcvrType(), exp.ttest);
+        */
+        assert(false, "Not Implemented -- instantiatePostfixAsConvert");
     }
 
     private instantiatePostfixAssignFields(exp: PostfixAssignFields) {
+        /*
         for(let i = 0; i < exp.updates.length; ++i) {
             this.instantiateExpression(exp.updates[i][1]);
         }
@@ -502,9 +540,16 @@ class Monomorphizer {
             this.instantiateTypeSignature(exp.updateinfo[i].fieldtype, this.currentMapping);
             this.instantiateTypeSignature(exp.updateinfo[i].etype, this.currentMapping);
         }
+        */
+        assert(false, "Not Implemented -- instantiatePostfixAssignFields");
+    }
+
+    private instantiatePostfixOfOperator(exp: PostfixOfOperator) {
+        assert(false, "Not Implemented -- instantiatePostfixOfOperator");
     }
 
     private instantiatePostfixInvoke(exp: PostfixInvoke) {
+        /*
         this.instantiateArgumentList(exp.args.args);
 
         for(let i = 0; i < exp.shuffleinfo.length; ++i) {
@@ -532,10 +577,8 @@ class Monomorphizer {
         else {
             assert(false, "Not Implemented -- instantiatePostfixInvoke for virtual");
         }
-    }
-
-    private instantiatePostfixLiteralKeyAccess(exp: PostfixLiteralKeyAccess) {
-        assert(false, "Not Implemented -- instantiatePostfixLiteralKeyAccess");
+        */
+        assert(false, "Not Implemented -- instantiatePostfixInvoke");
     }
 
     private instantiatePostfixOp(exp: PostfixOp) {
@@ -560,12 +603,12 @@ class Monomorphizer {
                     this.instantiatePostfixAssignFields(op as PostfixAssignFields);
                     break;
                 }
-                case PostfixOpTag.PostfixInvoke: {
-                    this.instantiatePostfixInvoke(op as PostfixInvoke);
+                case PostfixOpTag.PostfixOfOperator: {
+                    this.instantiatePostfixOfOperator(op as PostfixOfOperator);
                     break;
                 }
-                case PostfixOpTag.PostfixLiteralKeyAccess: {
-                    this.instantiatePostfixLiteralKeyAccess(op as PostfixLiteralKeyAccess);
+                case PostfixOpTag.PostfixInvoke: {
+                    this.instantiatePostfixInvoke(op as PostfixInvoke);
                     break;
                 }
                 default: {
@@ -706,24 +749,84 @@ class Monomorphizer {
         this.instantiateTypeSignature(exp.getType(), this.currentMapping);
 
         switch (exp.tag) {
+            case ExpressionTag.LiteralNoneExpression:
+            case ExpressionTag.LiteralBoolExpression:
+            case ExpressionTag.LiteralNatExpression:
+            case ExpressionTag.LiteralIntExpression:
+            case ExpressionTag.LiteralChkNatExpression:
+            case ExpressionTag.LiteralChkIntExpression:
+            case ExpressionTag.LiteralRationalExpression:
+            case ExpressionTag.LiteralFloatExpression:
+            case ExpressionTag.LiteralDecimalExpression:
+            case ExpressionTag.LiteralDecimalDegreeExpression:
+            case ExpressionTag.LiteralLatLongCoordinateExpression:
+            case ExpressionTag.LiteralComplexNumberExpression:
+            case ExpressionTag.LiteralByteBufferExpression:
+            case ExpressionTag.LiteralUUIDv4Expression:
+            case ExpressionTag.LiteralUUIDv7Expression:
+            case ExpressionTag.LiteralSHAContentHashExpression:
+            case ExpressionTag.LiteralTZDateTimeExpression:
+            case ExpressionTag.LiteralTAITimeExpression:
+            case ExpressionTag.LiteralPlainDateExpression:
+            case ExpressionTag.LiteralPlainTimeExpression:
+            case ExpressionTag.LiteralLogicalTimeExpression:
+            case ExpressionTag.LiteralISOTimeStampExpression:
+            case ExpressionTag.LiteralDeltaDateTimeExpression:
+            case ExpressionTag.LiteralDeltaISOTimeStampExpression:
+            case ExpressionTag.LiteralDeltaSecondsExpression:
+            case ExpressionTag.LiteralDeltaLogicalExpression:
+            case ExpressionTag.LiteralUnicodeRegexExpression:
+            case ExpressionTag.LiteralCRegexExpression:
+            case ExpressionTag.LiteralByteExpression:
+            case ExpressionTag.LiteralCCharExpression:
+            case ExpressionTag.LiteralUnicodeCharExpression:
+            case ExpressionTag.LiteralStringExpression:
+            case ExpressionTag.LiteralCStringExpression: {
+                break; //nothing to do
+            }
+            case ExpressionTag.LiteralFormatStringExpression: {
+                this.instantiateStringFormatsList((exp as LiteralFormatStringExpression).fmts);
+                break;
+            }
+            case ExpressionTag.LiteralFormatCStringExpression: {
+                this.instantiateStringFormatsList((exp as LiteralFormatCStringExpression).fmts);
+                break;
+            }
+            case ExpressionTag.LiteralPathExpression:
+            case ExpressionTag.LiteralPathFragmentExpression:
+            case ExpressionTag.LiteralGlobExpression: {
+                break; //nothing to do
+            }
             case ExpressionTag.LiteralTypeDeclValueExpression: {
                 this.instantiateLiteralTypeDeclValueExpression(exp as LiteralTypeDeclValueExpression);
                 break;
             }
-            case ExpressionTag.HasEnvValueExpression: {
-                this.instantiateHasEnvValueExpression(exp as AccessEnvValueExpression);
+            case ExpressionTag.LiteralTypedStringExpression: {
+                this.instantiateLiteralTypedStringExpression(exp as LiteralTypedStringExpression);
+                break;
+            }
+            case ExpressionTag.LiteralTypedCStringExpression: {
+                this.instantiateLiteralTypedCStringExpression(exp as LiteralTypedCStringExpression);
+                break;
+            }
+            case ExpressionTag.LiteralTypedFormatStringExpression: {
+                this.instantiateLiteralTypedFormatStringExpression(exp as LiteralTypedFormatStringExpression);
+                break;
+            }
+            case ExpressionTag.LiteralTypedFormatCStringExpression: {
+                this.instantiateLiteralTypedFormatCStringExpression(exp as LiteralTypedFormatCStringExpression);
                 break;
             }
             case ExpressionTag.AccessEnvValueExpression: {
                 this.instantiateAccessEnvValueExpression(exp as AccessEnvValueExpression);
                 break;
             }
-            case ExpressionTag.TaskAccessInfoExpression: {
+            case ExpressionTag.TaskAccessIDExpression: {
                 this.instantiateTaskAccessInfoExpression(exp as TaskAccessInfoExpression);
                 break;
             }
-            case ExpressionTag.AccessVariableExpression: {
-                this.instantiateAccessVariableExpression(exp as AccessVariableExpression);
+            case ExpressionTag.AccessNamespaceConstantExpression: {
+                this.instantiateNamespaceConstExpression(exp as AccessNamespaceConstantExpression);
                 break;
             }
             case ExpressionTag.AccessEnumExpression: {
@@ -732,6 +835,10 @@ class Monomorphizer {
             }
             case ExpressionTag.AccessStaticFieldExpression: {
                 this.instantiateAccessStaticFieldExpression(exp as AccessStaticFieldExpression);
+                break;
+            }
+            case ExpressionTag.AccessVariableExpression: {
+                this.instantiateAccessVariableExpression(exp as AccessVariableExpression);
                 break;
             }
             case ExpressionTag.ConstructorPrimaryExpression: {
@@ -754,10 +861,6 @@ class Monomorphizer {
                 this.instantiateSpecialConstructorExpression(exp as SpecialConstructorExpression);
                 break;
             }
-            case ExpressionTag.SpecialConverterExpression: {
-                this.instantiateSpecialConverterExpression(exp as SpecialConverterExpression);
-                break;
-            }
             case ExpressionTag.CallNamespaceFunctionExpression: {
                 this.instantiateCallNamespaceFunctionExpression(exp as CallNamespaceFunctionExpression);
                 break;
@@ -768,14 +871,6 @@ class Monomorphizer {
             }
             case ExpressionTag.ParseAsTypeExpression: {
                 this.instantiateParseAsTypeExpression(exp as ParseAsTypeExpression);
-                break;
-            }
-            case ExpressionTag.SafeConvertExpression: {
-                this.instantiateSafeConvertExpression(exp as SafeConvertExpression);
-                break;
-            }
-            case ExpressionTag.CreateDirectExpression: {
-                this.insantiateCreateDirectExpression(exp as CreateDirectExpression);
                 break;
             }
             case ExpressionTag.PostfixOpExpression: {
@@ -806,6 +901,9 @@ class Monomorphizer {
                 this.instantiateBinDivExpression(exp as BinDivExpression);
                 break;
             }
+
+            xxxx;
+
             case ExpressionTag.BinKeyEqExpression: {
                 this.instantiateBinKeyEqExpression(exp as BinKeyEqExpression);
                 break;

@@ -5463,6 +5463,7 @@ class Parser {
         else if(this.testToken(SYM_eq)) {
             this.consumeToken();
 
+            this.ensureAndConsumeTokenAlways(SYM_at, "expression body");
             this.ensureToken(TokenStrings.IdentifierName, "body");
             const iname = this.parseIdentifierAsStdVariable();
             this.ensureAndConsumeTokenIf(SYM_semicolon, "body");
