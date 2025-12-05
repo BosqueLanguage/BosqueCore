@@ -2,6 +2,10 @@
 
 #include "allocator.h"
 
+#include <mutex>
+#include <condition_variable>
+#include <thread>
+
 #define InitBSQMemoryTheadLocalInfo() { ALLOC_LOCK_ACQUIRE(); register void** rbp asm("rbp"); gtl_info.initialize(GlobalThreadAllocInfo::s_thread_counter++, rbp); ALLOC_LOCK_RELEASE(); }
 
 #define MAX_ALLOC_LOOKUP_TABLE_SIZE 1024
@@ -10,6 +14,8 @@
 #define MARK_STACK_NODE_COLOR_BLACK 1
 
 #define FWD_TABLE_START 1
+
+struct BSQMemoryTheadLocalInfo;
 
 struct MarkStackEntry
 {
@@ -39,6 +45,102 @@ struct RegisterContents
     void* r15 = nullptr;
 };
 
+// An object for processing RC decrements on separate thread
+typedef ArrayList<void*> DecsList;
+struct DecsProcessor {
+    std::condition_variable cv;
+    std::mutex mtx;
+    std::jthread worker;
+
+    DecsList pending;
+    void (*processDecfp)(void*, BSQMemoryTheadLocalInfo&);
+
+    bool worker_paused;
+    bool merge_requested;
+    bool stop_requested;
+
+    DecsProcessor(BSQMemoryTheadLocalInfo* tinfo) : 
+        cv(), mtx(), worker(&DecsProcessor::process, this, tinfo), pending(), 
+        processDecfp(nullptr), worker_paused(true), merge_requested(false), 
+        stop_requested(false) { }
+
+    void requestMergeAndPause(std::unique_lock<std::mutex>& lk)
+    {
+        this->merge_requested = true;
+
+        lk.unlock();
+        this->cv.notify_one();
+        lk.lock();
+
+        // Ack that the worker is fully paused
+        cv.wait(lk, [this]{ return this->worker_paused; });
+
+        // Items can safely be inserted into this->pending now
+    }
+
+    void resumeAfterMerge(std::unique_lock<std::mutex>& lk)
+    {
+        this->merge_requested = false;
+        this->worker_paused = false;
+
+        lk.unlock();
+        this->cv.notify_one();
+    }
+
+    void pauseWorker(std::unique_lock<std::mutex>& lk)
+    {
+        this->worker_paused = true;
+        this->cv.notify_one(); 
+        cv.wait(lk, [this]{ return !this->worker_paused; });
+    }
+
+    void signalFinished()
+    {
+        std::unique_lock lk(this->mtx);
+        this->stop_requested = true;
+
+        lk.unlock();
+        this->cv.notify_one();
+
+        // Worker thread ack 
+        cv.wait(lk, [this]{ return this->worker_paused; });
+    }
+
+    void process(BSQMemoryTheadLocalInfo* tinfo)
+    {
+        std::unique_lock lk(this->mtx);
+        while(!this->stop_requested) {
+            this->cv.wait(lk, [this]{
+                return (!this->worker_paused && !this->pending.isEmpty())
+                    || this->merge_requested
+                    || this->stop_requested;
+            });
+
+            // Enter a paused state before exiting
+            if(this->stop_requested) {
+                this->worker_paused = true;
+                lk.unlock();
+                this->cv.notify_one(); 
+                return;
+            }
+
+            if(this->merge_requested) {
+                this->pauseWorker(lk);
+                continue;
+            }
+
+            while(!this->pending.isEmpty()) {
+                void* obj = this->pending.pop_front();
+                this->processDecfp(obj, *tinfo);         
+
+                if(this->merge_requested || this->stop_requested) {
+                    break;
+                }
+            }
+        }
+    }
+};
+
 //All of the data that a thread local allocator needs to run it's operations
 struct BSQMemoryTheadLocalInfo
 {
@@ -63,19 +165,18 @@ struct BSQMemoryTheadLocalInfo
     int32_t forward_table_index;
     void** forward_table;
 
-    uint64_t typeptr_high32; // high 32 bits taken from a typeinfo pointer
+    DecsProcessor decs; 
+    DecsList decs_batch; // Decrements able to be done without needing decs thread
 
+    uint32_t decd_pages_idx = 0;
+    PageInfo* decd_pages[MAX_DECD_PAGES];
+    
     float nursery_usage = 0.0f;
 
     ArrayList<void*> pending_roots; //the worklist of roots that we need to do visits from
     ArrayList<MarkStackEntry> visit_stack; //stack for doing a depth first visit (and topo organization) of the object graph
 
     ArrayList<void*> pending_young; //the list of young objects that need to be processed
-    ArrayList<void*> pending_decs; //the list of objects that need to be decremented 
-
-    //TODO: Once PID is implemented this will need to use this->max_decrement_count
-    uint32_t decremented_pages_index = 0;
-    PageInfo* decremented_pages[BSQ_INITIAL_MAX_DECREMENT_COUNT];
 
     size_t max_decrement_count;
 
@@ -86,11 +187,19 @@ struct BSQMemoryTheadLocalInfo
     bool disable_automatic_collections = false;
 
 #ifdef BSQ_GC_CHECK_ENABLED
+    bool disable_decs_thread_for_tests = false;
     bool disable_stack_refs_for_tests = false;
     bool enable_global_rescan         = false;
 #endif
 
-    BSQMemoryTheadLocalInfo() noexcept : tl_id(0), g_gcallocs(nullptr), native_stack_base(nullptr), native_stack_contents(), native_register_contents(), roots_count(0), roots(nullptr), old_roots_count(0), old_roots(nullptr), forward_table_index(FWD_TABLE_START), forward_table(nullptr), typeptr_high32(0), pending_roots(), visit_stack(), pending_young(), pending_decs(), max_decrement_count(BSQ_INITIAL_MAX_DECREMENT_COUNT) { }
+    BSQMemoryTheadLocalInfo() noexcept : 
+        tl_id(0), g_gcallocs(nullptr), native_stack_base(nullptr), native_stack_contents(), 
+        native_register_contents(), roots_count(0), roots(nullptr), old_roots_count(0), 
+        old_roots(nullptr), forward_table_index(FWD_TABLE_START), forward_table(nullptr), 
+        decs(this), decs_batch(), decd_pages_idx(0), decd_pages(), pending_roots(), 
+        visit_stack(), pending_young(), max_decrement_count(BSQ_INITIAL_MAX_DECREMENT_COUNT) { }
+    BSQMemoryTheadLocalInfo& operator=(BSQMemoryTheadLocalInfo&) = delete;
+    BSQMemoryTheadLocalInfo(BSQMemoryTheadLocalInfo&) = delete;
 
     inline GCAllocator* getAllocatorForPageSize(PageInfo* page) noexcept {
         uint8_t idx = this->g_gcallocs_lookuptable[page->allocsize >> 3];

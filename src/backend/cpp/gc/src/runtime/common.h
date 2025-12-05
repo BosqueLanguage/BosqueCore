@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../language/bsqtype.h"
-#include "support/memstats.h"
+#include "./support/memstats.h"
 
 #include <sys/mman.h> //mmap
 
@@ -62,6 +62,9 @@
 //Max number of decrement ops we do per collection -- 
 //    TODO:we may need to make this a bit dynamic 
 #define BSQ_INITIAL_MAX_DECREMENT_COUNT (BSQ_COLLECTION_THRESHOLD * BSQ_BLOCK_ALLOCATION_SIZE) / (BSQ_MEM_ALIGNMENT * 32)
+
+// TODO: Arbitrary size for now
+#define MAX_DECD_PAGES 10'000
 
 //mem is an 8byte aligned pointer and n is the number of 8byte words to clear
 inline void xmem_zerofill(void* mem, size_t n) noexcept
@@ -147,6 +150,11 @@ public:
 
 #define NUM_TYPEPTR_BITS 32
 #define TYPEPTR_MASK 0x0000'0000'FFFF'FFFFUL
+
+// TODO: Temporary hack for getting approximate data seg address
+//       --- used in packed metadata
+static const char* GC_DATA_SEGMENT_ANCHOR = "GC_DATA_SEGMENT_BASE";
+static const uint64_t g_typeptr_high32 = (reinterpret_cast<uint64_t>(&GC_DATA_SEGMENT_ANCHOR) >> NUM_TYPEPTR_BITS);
 
 #ifdef VERBOSE_HEADER
 struct MetaData 
@@ -247,7 +255,7 @@ do { \
 #define GC_FWD_INDEX(O)    (GC_GET_META_DATA_ADDR(O)->bits.rc_fwd)
 #define GC_REF_COUNT(O)    (GC_GET_META_DATA_ADDR(O)->bits.rc_fwd)
 
-#define GET_TYPE_PTR(O)    ((GC_GET_META_DATA_ADDR(O)->bits.typeptr_low) | (gtl_info.typeptr_high32 << NUM_TYPEPTR_BITS)) 
+#define GET_TYPE_PTR(O)    ((GC_GET_META_DATA_ADDR(O)->bits.typeptr_low) | (g_typeptr_high32 << NUM_TYPEPTR_BITS)) 
 #define GC_TYPE(O)         (reinterpret_cast<__CoreGC::TypeInfoBase*>(GET_TYPE_PTR(O)))
 
 // Sets low 32 bits of ptr in meta
@@ -282,4 +290,4 @@ do { \
     GC_INVARIANT_CHECK((M)->bits.isroot == 0 || (M)->bits.isroot == 1); \
 } while(0)
 
-#endif //VERBOSE_HEADER
+#endif // VERBOSE_HEADER
