@@ -7,6 +7,7 @@ int wrap_setjmp() {
     if(setjmp(__CoreCpp::info.error_handler)) { 
         // We may want to pass in some source info here and perhaps expression causing failure
         std::cout << "Assertion failed! Or perhaps over/underflow?" << std::endl;
+        gtl_info.decs.signalFinished();
         return EXIT_FAILURE;
     }
 
