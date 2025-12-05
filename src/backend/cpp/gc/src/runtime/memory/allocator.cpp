@@ -111,11 +111,6 @@ void GCAllocator::processPage(PageInfo* p) noexcept
     this->filled_pages.push(p);
 }
 
-//
-// I believe pages can end up here (being processed)
-// while they still exist on the decrementedPages list,
-// so we should ignore those (dont rebuild or move)
-//
 void GCAllocator::processCollectorPages() noexcept
 {
     if(this->alloc_page != nullptr) {

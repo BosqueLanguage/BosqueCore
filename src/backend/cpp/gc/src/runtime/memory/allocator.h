@@ -466,9 +466,6 @@ public:
     }
 #endif
 
-    // Pretty sure the decs thread may grab a page for reprocessing
-    // BUT the alloc thread happens to have just grabbed it and it now
-    // has no owner
     PageInfo* tryRemovePage(PageInfo* p) {
         if(p == alloc_page || p == evac_page || p->owner == &this->pendinggc_pages) {
             return nullptr;
