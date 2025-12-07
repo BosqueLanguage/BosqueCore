@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { APIDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, InvokeParameterDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, InvokeTemplateTypeRestrictionClause, MAX_SAFE_CHK_NAT, MIN_SAFE_CHK_INT, MAX_SAFE_CHK_INT } from "./assembly.js";
 import { CodeFormatter, SourceInfo } from "./build_decls.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FormatStringTypeSignature, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, FormatStringTextComponent, HoleBodyImplementation, ITest, ITestDenied, ITestError, ITestFail, ITestFlagged, ITestNone, ITestOk, ITestRejected, ITestSome, ITestSuccess, ITestType, IfElifElseStatement, IfElseStatement, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypeDeclValueExpression, LiteralTypedCStringExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RValueExpression, RValueExpressionTag, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VoidRefCallStatement } from "./body.js";
+import { APIInvokeExpression, AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, ArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, FormatStringTextComponent, HoleBodyImplementation, HoleExpression, HoleStatement, ITest, ITestDenied, ITestError, ITestFail, ITestFlagged, ITestGuard, ITestGuardSet, ITestNone, ITestOk, ITestRejected, ITestSimpleGuard, ITestSome, ITestSuccess, ITestType, IfElifElseStatement, IfElseStatement, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypeDeclValueExpression, LiteralTypedCStringExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RValueExpression, RValueExpressionTag, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VoidRefCallStatement } from "./body.js";
 import { SimpleTypeInferContext, TypeEnvironment, TypeInferContext, VarInfo } from "./checker_environment.js";
 import { TypeCheckerRelations } from "./checker_relations.js";
 
@@ -158,6 +158,7 @@ class TypeChecker {
     }
     */
 
+    /*
     private processITest_None(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
         //!none === some
         if(isnot) {
@@ -411,6 +412,25 @@ class TypeChecker {
                 return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
             }
         }
+    }
+    */
+
+    private processITestGuard(sinfo: SourceInfo, env: TypeEnvironment, src: TypeSignature, tt: ITestGuard): TypeEnvironment {
+        if(tt instanceof ITestSimpleGuard) {
+            return env;
+        }
+        else {
+            assert(false, "Unknown ITestGuard type"); //TODO check and do binders here!!!
+        }
+    }
+
+    private processITestGuardSet(sinfo: SourceInfo, env: TypeEnvironment, src: TypeSignature, tt: ITestGuardSet): TypeEnvironment {
+        let cenv = env;
+        for(let i = 0; i < tt.guards.length; ++i) {
+            cenv = this.processITestGuard(sinfo, cenv, src, tt.guards[i]);
+        }
+
+        return cenv;
     }
 
     private checkTemplateInstantiationIsOkWithDecls(sinfo: SourceInfo, targs: TypeSignature[], decls: TypeTemplateTermDecl[]): boolean {
@@ -2706,6 +2726,10 @@ class TypeChecker {
         }
     }
 
+    private checkHoleExpression(env: TypeEnvironment, exp: HoleExpression, typeinfer: TypeInferContext | undefined): TypeSignature {
+        assert(false, "Not Implemented -- checkHoleExpression");
+    }
+
     private checkMapEntryConstructorExpression(env: TypeEnvironment, exp: MapEntryConstructorExpression, infertype: TypeSignature | undefined): TypeSignature {
         /*
         const ioktype = infertype !== undefined && (infertype instanceof NominalTypeSignature) && (infertype.decl instanceof MapEntryTypeDecl);
@@ -2971,6 +2995,9 @@ class TypeChecker {
             case ExpressionTag.LogicOrExpression: {
                 return this.checkBinLogicOrExpression(env, exp as LogicOrExpression);
             }
+            case ExpressionTag.HoleExpression: {
+                return this.checkHoleExpression(env, exp as HoleExpression, typeinfer);
+            }
             case ExpressionTag.MapEntryConstructorExpression: {
                 return this.checkMapEntryConstructorExpression(env, exp as MapEntryConstructorExpression, TypeInferContext.asSimpleType(typeinfer));
             }
@@ -3081,6 +3108,14 @@ class TypeChecker {
         assert(false, "Not Implemented -- checkTaskRaceExpression");
     }
 
+    private checkAPIInvokeExpression(env: TypeEnvironment, exp: APIInvokeExpression): TypeSignature {
+        assert(false, "Not Implemented -- checkAPIInvokeExpression");
+    }
+    
+    private checkAgentInvokeExpression(env: TypeEnvironment, exp: AgentInvokeExpression): TypeSignature {
+        assert(false, "Not Implemented -- checkAgentInvokeExpression");
+    }
+    
     private checkBaseRValueExpression(env: TypeEnvironment, exp: Expression, typeinfer: TypeInferContext | undefined): TypeSignature {
         const ttag = exp.tag;
 
@@ -3112,6 +3147,12 @@ class TypeChecker {
             case ExpressionTag.TaskRaceExpression: {
                 return this.checkTaskRaceExpression(env, exp as TaskRaceExpression);
             }
+            case ExpressionTag.APIInvokeExpression: {
+                return this.checkAPIInvokeExpression(env, exp as APIInvokeExpression);
+            }
+            case ExpressionTag.AgentInvokeExpression: {
+                return this.checkAgentInvokeExpression(env, exp as AgentInvokeExpression);
+            }
             default: {
                 if(ttag === ExpressionTag.CallNamespaceFunctionExpression) {
                     return this.checkCallNamespaceFunctionExpression(env, true, exp as CallNamespaceFunctionExpression);
@@ -3132,6 +3173,17 @@ class TypeChecker {
         }
     }
 
+    private checkConditionalValueExpression(env: TypeEnvironment, exp: ConditionalValueExpression, typeinfer: TypeInferContext | undefined): TypeSignature {
+        const renv = this.processITestGuardSet(env, exp.guardset);
+
+        exp.trueBinders = xxx;
+        exp.falseBinders = xxx;
+
+        const ttype = this.checkExpressionRHS(renv.trueEnv, exp.trueExp, typeinfer);
+        const ftype = this.checkExpressionRHS(renv.falseEnv, exp.falseExp, typeinfer);
+
+    }
+
     private checkExpressionRHS(env: TypeEnvironment, exp: RValueExpression, typeinfer: TypeInferContext | undefined): TypeSignature {
         const ttag = exp.tag;
         
@@ -3145,7 +3197,7 @@ class TypeChecker {
             assert(false, "Not Implemented -- checkShortCircuitAssignRHSReturnExpression");
         }
         else if(ttag === RValueExpressionTag.ConditionalValueExpression) {
-            assert(false, "Not Implemented -- checkConditionalValueExpression");
+            xxxx;
         }
         else {
             assert(false, "Unknown RValueExpression kind");
@@ -3667,6 +3719,14 @@ class TypeChecker {
         assert(false, "Not Implemented -- checkMatchStatement");
     }
 
+    private checkDispatchPatternStatement(env: TypeEnvironment, stmt: DispatchPatternStatement): TypeEnvironment {
+        assert(false, "Not Implemented -- checkDispatchPatternStatement");
+    }
+
+    private checkDispatchTaskStatement(env: TypeEnvironment, stmt: DispatchTaskStatement): TypeEnvironment {
+        assert(false, "Not Implemented -- checkDispatchTaskStatement");
+    }
+
     private checkAbortStatement(env: TypeEnvironment, stmt: AbortStatement): TypeEnvironment {
         return env.setDeadFlow();
     }
@@ -3796,8 +3856,20 @@ class TypeChecker {
         assert(false, "Not implemented -- SelfUpdateStatement");
     }
 
+    private checkTaskStatusStatement(env: TypeEnvironment, stmt: TaskStatusStatement): TypeEnvironment {
+        assert(false, "Not implemented -- TaskStatusStatement");
+    }
+
+    private checkTaskCheckAndHandleTerminationStatement(env: TypeEnvironment, stmt: TaskCheckAndHandleTerminationStatement): TypeEnvironment {
+        assert(false, "Not implemented -- TaskCheckAndHandleTerminationStatement");
+    }
+
     private checkTaskYieldStatement(env: TypeEnvironment, stmt: TaskYieldStatement): TypeEnvironment {
         assert(false, "Not implemented -- TaskYieldStatement");
+    }
+
+    private checkHoleStatement(env: TypeEnvironment, stmt: HoleStatement): TypeEnvironment {
+        return env;
     }
 
     private checkBlockStatement(env: TypeEnvironment, stmt: BlockStatement): TypeEnvironment {
@@ -4074,6 +4146,12 @@ class TypeChecker {
             case StatementTag.MatchStatement: {
                 return this.checkMatchStatement(env, stmt as MatchStatement);
             }
+            case StatementTag.DispatchPatternStatement: {
+                return this.checkDispatchPatternStatement(env, stmt as DispatchPatternStatement);
+            }
+            case StatementTag.DispatchTaskStatement: {
+                return this.checkDispatchTaskStatement(env, stmt as DispatchTaskStatement);
+            }
             case StatementTag.AbortStatement: {
                 return this.checkAbortStatement(env, stmt as AbortStatement);
             }
@@ -4098,8 +4176,17 @@ class TypeChecker {
             case StatementTag.SelfUpdateStatement: {
                 return this.checkSelfUpdateStatement(env, stmt as SelfUpdateStatement);
             }
+            case StatementTag.TaskStatusStatement: {
+                return this.checkTaskStatusStatement(env, stmt as TaskStatusStatement);
+            }
+            case StatementTag.TaskCheckAndHandleTerminationStatement: {
+                return this.checkTaskCheckAndHandleTerminationStatement(env, stmt as TaskCheckAndHandleTerminationStatement);
+            }
             case StatementTag.TaskYieldStatement: {
                 return this.checkTaskYieldStatement(env, stmt as TaskYieldStatement);
+            }
+            case StatementTag.HoleStatement: {
+                return this.checkHoleStatement(env, stmt as HoleStatement);
             }
             case StatementTag.BlockStatement: {
                 return this.checkBlockStatement(env, stmt as BlockStatement);
@@ -4113,11 +4200,17 @@ class TypeChecker {
     }
 
     private checkBodyImplementation(env: TypeEnvironment, body: BodyImplementation) {
-        if((body instanceof AbstractBodyImplementation) || (body instanceof PredicateUFBodyImplementation) || (body instanceof BuiltinBodyImplementation) || (body instanceof HoleBodyImplementation)) {
+        if((body instanceof AbstractBodyImplementation) || (body instanceof PredicateUFBodyImplementation) || (body instanceof BuiltinBodyImplementation)) {
             return;
         }
 
-        if(body instanceof ExpressionBodyImplementation) {
+        if(body instanceof HoleBodyImplementation) {
+            if(body.samplesfile !== undefined) {
+                const sptype = this.checkExpression(env, body.samplesfile, undefined);
+                this.checkError(body.sinfo, (sptype instanceof ErrorTypeSignature) || sptype.tkeystr !== "Path", `Samples file expression does not have a path type -- got ${sptype.emit()}`);
+            }
+        }
+        else if(body instanceof ExpressionBodyImplementation) {
             const etype = this.checkExpression(env, body.exp, env.inferReturn);
             this.checkError(body.sinfo, !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, env.declReturnType, this.constraints), `Expression body does not match expected return type -- expected ${env.declReturnType.emit()} but got ${etype.emit()}`);
         }

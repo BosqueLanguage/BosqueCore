@@ -2113,8 +2113,8 @@ class ConditionalValueExpression extends RValueExpression {
     readonly trueValue: Expression
     readonly falseValue: Expression;
 
-    trueBindType: TypeSignature | undefined = undefined;
-    falseBindType: TypeSignature | undefined = undefined
+    trueBinders: { bvname: string, tsig: TypeSignature }[] = [];
+    falseBinders: { bvname: string, tsig: TypeSignature }[] = [];
 
     constructor(sinfo: SourceInfo, guardset: ITestGuardSet, trueValue: Expression, falseValue: Expression) {
         super(RValueExpressionTag.ConditionalValueExpression);
