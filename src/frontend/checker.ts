@@ -4,7 +4,7 @@ import { APIDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APIS
 import { CodeFormatter, SourceInfo } from "./build_decls.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FormatStringTypeSignature, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
 import { APIInvokeExpression, AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, ArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, FormatStringTextComponent, HoleBodyImplementation, HoleExpression, HoleStatement, ITest, ITestDenied, ITestError, ITestFail, ITestFlagged, ITestGuard, ITestGuardSet, ITestNone, ITestOk, ITestRejected, ITestSimpleGuard, ITestSome, ITestSuccess, ITestType, IfElifElseStatement, IfElseStatement, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypeDeclValueExpression, LiteralTypedCStringExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RValueExpression, RValueExpressionTag, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VoidRefCallStatement } from "./body.js";
-import { SimpleTypeInferContext, TypeEnvironment, TypeInferContext, VarInfo } from "./checker_environment.js";
+import { SimpleTypeInferContext, TypeEnvironment, TypeResultWRefVarInfoResult, TypeInferContext, VarInfo } from "./checker_environment.js";
 import { TypeCheckerRelations } from "./checker_relations.js";
 
 import { validateStringLiteral, validateCStringLiteral, loadConstAndValidateRESystem, accepts } from "@bosque/jsbrex";
@@ -417,7 +417,43 @@ class TypeChecker {
 
     private processITestGuard(sinfo: SourceInfo, env: TypeEnvironment, src: TypeSignature, tt: ITestGuard): TypeEnvironment {
         if(tt instanceof ITestSimpleGuard) {
-            return env;
+            switch (ttag) {
+            case ExpressionTag.CallRefVariableExpression: {
+                return this.checkCallRefVariableExpression(env, exp as CallRefVariableExpression);
+            }
+            case ExpressionTag.CallRefThisExpression: {
+                return this.checkCallRefThisExpression(env, exp as CallRefThisExpression);
+            }
+            case ExpressionTag.CallRefSelfExpression: {
+                return this.checkCallRefSelfExpression(env, exp as CallRefSelfExpression);
+            }
+            case ExpressionTag.CallTaskActionExpression: {
+                return this.checkCallTaskActionExpression(env, exp as CallTaskActionExpression);
+            }
+            default: {
+                if(ttag === ExpressionTag.CallNamespaceFunctionExpression) {
+                    return this.checkCallNamespaceFunctionExpression(env, true, exp as CallNamespaceFunctionExpression, true);
+                }
+                else if(ttag === ExpressionTag.CallTypeFunctionExpression) {
+                    return this.checkCallTypeFunctionExpression(env, true, exp as CallTypeFunctionExpression, true);
+                }
+                else if(ttag === ExpressionTag.LambdaInvokeExpression) {
+                    return this.checkLambdaInvokeExpression(env, true, exp as LambdaInvokeExpression, true);
+                }
+                else if(ttag === ExpressionTag.PostfixOpExpression) {
+                    return this.checkPostfixOp(env, true, exp as PostfixOp, typeinfer, true);
+                }
+                else if(ttag === ExpressionTag.PrefixNotOpExpression) {
+                    return this.checkPrefixNotOpExpression(env, exp as PrefixNotOpExpression, true);
+                }
+                else if(ttag === ExpressionTag.LogicAndExpression) {
+                    return this.checkBinLogicAndExpression(env, exp as LogicAndExpression, true);
+                }
+                else {
+                    return TypeResultWRefVarInfoResult.makeNoRefResult(this.checkExpression(env, exp, typeinfer, false));
+                }
+            }
+        }
         }
         else {
             assert(false, "Unknown ITestGuard type"); //TODO check and do binders here!!!
@@ -1909,7 +1945,7 @@ class TypeChecker {
         assert(false, "Not Implemented -- checkConstructorLambdaExpression");
     }
 
-    private checkLambdaInvokeExpression(env: TypeEnvironment, refok: boolean, exp: LambdaInvokeExpression): TypeSignature {
+    private checkLambdaInvokeExpression(env: TypeEnvironment, refok: boolean, exp: LambdaInvokeExpression, refallowed: boolean): TypeSignature {
         /*
         let llvar = env.resolveLocalVarInfoFromSrcName(exp.name);
         if(llvar === undefined) {
@@ -2036,7 +2072,7 @@ class TypeChecker {
         assert(false, "Not Implemented -- checkSpecialConstructorExpression");
     }
 
-    private checkCallNamespaceFunctionExpression(env: TypeEnvironment, refok: boolean, exp: CallNamespaceFunctionExpression): TypeSignature {
+    private checkCallNamespaceFunctionExpression(env: TypeEnvironment, refok: boolean, exp: CallNamespaceFunctionExpression, refallowed: boolean): TypeSignature {
         /*
         const fdecl = this.relations.assembly.resolveNamespaceFunction(exp.ns, exp.name);
         if(fdecl === undefined) {
@@ -2059,7 +2095,7 @@ class TypeChecker {
         assert(false, "Not Implemented -- checkCallNamespaceFunctionExpression");
     }
 
-    private checkCallTypeFunctionExpression(env: TypeEnvironment, refok: boolean, exp: CallTypeFunctionExpression): TypeSignature {
+    private checkCallTypeFunctionExpression(env: TypeEnvironment, refok: boolean, exp: CallTypeFunctionExpression, refallowed: boolean): TypeSignature {
         /*
         const oktype = this.checkTypeSignature(exp.ttype);
         if(!oktype) {
@@ -2245,7 +2281,7 @@ class TypeChecker {
     }
     */
 
-    private checkPostfixInvoke(env: TypeEnvironment, refok: boolean, exp: PostfixInvoke, rcvrtype: TypeSignature): TypeSignature {
+    private checkPostfixInvoke(env: TypeEnvironment, refok: boolean, exp: PostfixInvoke, rcvrtype: TypeSignature, refallowed: boolean): TypeSignature {
         /*
         let resolvefrom = rcvrtype;
         if(exp.specificResolve !== undefined) {
@@ -2299,8 +2335,8 @@ class TypeChecker {
         assert(false, "Not Implemented -- checkPostfixInvoke");
     }
 
-    private checkPostfixOp(env: TypeEnvironment, refok: boolean, exp: PostfixOp, typeinfer: TypeInferContext | undefined): TypeSignature {
-        let ctype = this.checkExpression(env, exp.rootExp, undefined);
+    private checkPostfixOp(env: TypeEnvironment, refok: boolean, exp: PostfixOp, typeinfer: TypeInferContext | undefined, refallowed: boolean): TypeSignature {
+        let ctype = this.checkExpression(env, exp.rootExp, undefined, refallowed);
         if(ctype instanceof ErrorTypeSignature) {
             return exp.setType(ctype);
         }
@@ -2346,7 +2382,7 @@ class TypeChecker {
                     break;
                 }
                 case PostfixOpTag.PostfixInvoke: {
-                    ctype = this.checkPostfixInvoke(env, refokops, op as PostfixInvoke, ctype);
+                    ctype = this.checkPostfixInvoke(env, refokops, op as PostfixInvoke, ctype, refallowed && i === 0 && exp.ops.length === 1);
                     break;
                 }
                 default: {
@@ -2383,8 +2419,8 @@ class TypeChecker {
         }
     }
 
-    private checkPrefixNotOpExpression(env: TypeEnvironment, exp: PrefixNotOpExpression): TypeSignature {
-        const etype = this.checkExpression(env, exp.exp, undefined);
+    private checkPrefixNotOpExpression(env: TypeEnvironment, exp: PrefixNotOpExpression, refallowed: boolean): TypeSignature {
+        const etype = this.checkExpression(env, exp.exp, undefined, refallowed);
         if(etype instanceof ErrorTypeSignature) {
             return exp.setType(etype);
         }
@@ -2396,7 +2432,7 @@ class TypeChecker {
     }
 
     private checkPrefixNegateOrPlusOpExpression(env: TypeEnvironment, exp: PrefixNegateOrPlusOpExpression): TypeSignature {
-        const etype = this.checkExpression(env, exp.exp, undefined);
+        const etype = this.checkExpression(env, exp.exp, undefined, false);
         if(etype instanceof ErrorTypeSignature) {
             return exp.setType(etype);
         }
@@ -2410,12 +2446,12 @@ class TypeChecker {
     }
 
     private checkBinaryNumericArgs(env: TypeEnvironment, lhs: Expression, rhs: Expression): [boolean, TypeSignature, TypeSignature] {
-        const tlhs = this.checkExpression(env, lhs, undefined);
+        const tlhs = this.checkExpression(env, lhs, undefined, false);
         if(tlhs instanceof ErrorTypeSignature) {
             return [false, tlhs, tlhs];
         }
 
-        const trhs = this.checkExpression(env, rhs, undefined);
+        const trhs = this.checkExpression(env, rhs, undefined, false);
         if(trhs instanceof ErrorTypeSignature) {
             return [false, tlhs, trhs];
         }
@@ -2689,8 +2725,8 @@ class TypeChecker {
         return exp.setType(this.getWellKnownType("Bool"));
     }
 
-    private checkBinaryBooleanArg(env: TypeEnvironment, arg: Expression): TypeSignature | undefined {
-        const targ = this.checkExpression(env, arg, undefined);
+    private checkBinaryBooleanArg(env: TypeEnvironment, arg: Expression, refallowed: boolean): TypeSignature | undefined {
+        const targ = this.checkExpression(env, arg, undefined, refallowed);
         if(targ instanceof ErrorTypeSignature) {
             return undefined;
         }
@@ -2700,8 +2736,8 @@ class TypeChecker {
         return targ;
     }
 
-    private checkBinLogicAndExpression(env: TypeEnvironment, exp: LogicAndExpression): TypeSignature {
-        const etypes = exp.exps.map((arg) => this.checkBinaryBooleanArg(env, arg));
+    private checkBinLogicAndExpression(env: TypeEnvironment, exp: LogicAndExpression, refallowed: boolean): TypeSignature {
+        const etypes = exp.exps.map((arg) => this.checkBinaryBooleanArg(env, arg, refallowed));
         
         const oftype = etypes.find((t) => t !== undefined);
         if(oftype === undefined) {
@@ -2714,7 +2750,7 @@ class TypeChecker {
     }
 
     private checkBinLogicOrExpression(env: TypeEnvironment, exp: LogicOrExpression): TypeSignature {
-        const etypes = exp.exps.map((arg) => this.checkBinaryBooleanArg(env, arg));
+        const etypes = exp.exps.map((arg) => this.checkBinaryBooleanArg(env, arg, false));
         
         const oftype = etypes.find((t) => t !== undefined);
         if(oftype === undefined) {
@@ -2765,7 +2801,7 @@ class TypeChecker {
 
     ////////
     //statement expressions
-    private checkExpression(env: TypeEnvironment, exp: Expression, typeinfer: TypeInferContext | undefined): TypeSignature {
+    private checkExpression(env: TypeEnvironment, exp: Expression, typeinfer: TypeInferContext | undefined, refallowed: boolean): TypeSignature {
         switch (exp.tag) {
             case ExpressionTag.LiteralNoneExpression: {
                 return this.checkLiteralNoneExpression(env, exp as LiteralNoneExpression);
@@ -2924,25 +2960,25 @@ class TypeChecker {
                 return this.checkConstructorLambdaExpression(env, exp as ConstructorLambdaExpression, TypeInferContext.asSimpleType(typeinfer));
             }
             case ExpressionTag.LambdaInvokeExpression: {
-                return this.checkLambdaInvokeExpression(env, false, exp as LambdaInvokeExpression);
+                return this.checkLambdaInvokeExpression(env, false, exp as LambdaInvokeExpression, refallowed);
             }
             case ExpressionTag.SpecialConstructorExpression: {
                 return this.checkSpecialConstructorExpression(env, exp as SpecialConstructorExpression, TypeInferContext.asSimpleType(typeinfer));
             }
             case ExpressionTag.CallNamespaceFunctionExpression: {
-                return this.checkCallNamespaceFunctionExpression(env, false, exp as CallNamespaceFunctionExpression);
+                return this.checkCallNamespaceFunctionExpression(env, false, exp as CallNamespaceFunctionExpression, refallowed);
             }
             case ExpressionTag.CallTypeFunctionExpression: {
-                return this.checkCallTypeFunctionExpression(env, false, exp as CallTypeFunctionExpression);
+                return this.checkCallTypeFunctionExpression(env, false, exp as CallTypeFunctionExpression, refallowed);
             }
             case ExpressionTag.ParseAsTypeExpression: {
                 return this.checkParseAsTypeExpression(env, exp as ParseAsTypeExpression);
             }
             case ExpressionTag.PostfixOpExpression: {
-                return this.checkPostfixOp(env, false, exp as PostfixOp, typeinfer);
+                return this.checkPostfixOp(env, false, exp as PostfixOp, typeinfer, refallowed);
             }
             case ExpressionTag.PrefixNotOpExpression: {
-                return this.checkPrefixNotOpExpression(env, exp as PrefixNotOpExpression);
+                return this.checkPrefixNotOpExpression(env, exp as PrefixNotOpExpression, false);
             }
             case ExpressionTag.PrefixNegateOrPlusOpExpression: {
                 return this.checkPrefixNegateOrPlusOpExpression(env, exp as PrefixNegateOrPlusOpExpression);
@@ -2990,7 +3026,7 @@ class TypeChecker {
                 return this.checkNumericGreaterEqExpression(env, exp as NumericGreaterEqExpression);
             }
             case ExpressionTag.LogicAndExpression: {
-                return this.checkBinLogicAndExpression(env, exp as LogicAndExpression);
+                return this.checkBinLogicAndExpression(env, exp as LogicAndExpression, false);
             }
             case ExpressionTag.LogicOrExpression: {
                 return this.checkBinLogicOrExpression(env, exp as LogicOrExpression);
@@ -3008,7 +3044,7 @@ class TypeChecker {
         }
     }
 
-    private checkCallRefInvokeExpression(env: TypeEnvironment, exp: CallRefInvokeExpression): TypeSignature {
+    private checkCallRefInvokeExpression(env: TypeEnvironment, exp: CallRefInvokeExpression): TypeResultWRefVarInfoResult {
         /*
         const rcvrtype: TypeSignature = this.checkExpression(env, exp.rcvr, undefined);
 
@@ -3072,19 +3108,19 @@ class TypeChecker {
         assert(false, "Not Implemented -- checkCallRefInvokeExpression");
     }
 
-    private checkCallRefVariableExpression(env: TypeEnvironment, exp: CallRefVariableExpression): TypeSignature {
+    private checkCallRefVariableExpression(env: TypeEnvironment, exp: CallRefVariableExpression): TypeResultWRefVarInfoResult {
         return this.checkCallRefInvokeExpression(env, exp);
     }
 
-    private checkCallRefThisExpression(env: TypeEnvironment, exp: CallRefThisExpression): TypeSignature {
+    private checkCallRefThisExpression(env: TypeEnvironment, exp: CallRefThisExpression): TypeResultWRefVarInfoResult {
         return this.checkCallRefInvokeExpression(env, exp);
     }
 
-    private checkCallRefSelfExpression(env: TypeEnvironment, exp: CallRefSelfExpression): TypeSignature {
+    private checkCallRefSelfExpression(env: TypeEnvironment, exp: CallRefSelfExpression): TypeResultWRefVarInfoResult {
         assert(false, "Not Implemented -- checkCallRefSelfExpression");
     }
 
-    private checkCallTaskActionExpression(env: TypeEnvironment, exp: CallTaskActionExpression): TypeSignature {
+    private checkCallTaskActionExpression(env: TypeEnvironment, exp: CallTaskActionExpression): TypeResultWRefVarInfoResult {
         assert(false, "Not Implemented -- checkCallTaskActionExpression");
     }
 
@@ -3115,9 +3151,22 @@ class TypeChecker {
     private checkAgentInvokeExpression(env: TypeEnvironment, exp: AgentInvokeExpression): TypeSignature {
         assert(false, "Not Implemented -- checkAgentInvokeExpression");
     }
-    
-    private checkBaseRValueExpression(env: TypeEnvironment, exp: Expression, typeinfer: TypeInferContext | undefined): TypeSignature {
+
+    private checkConditionalValueExpression(env: TypeEnvironment, exp: ConditionalValueExpression, typeinfer: TypeInferContext | undefined): TypeSignature {
+        const renv = this.processITestGuardSet(env, exp.guardset);
+
+        exp.trueBinders = xxx;
+        exp.falseBinders = xxx;
+
+        const ttype = this.checkExpressionRHS(renv.trueEnv, exp.trueExp, typeinfer);
+        const ftype = this.checkExpressionRHS(renv.falseEnv, exp.falseExp, typeinfer);
+
+    }
+
+    private checkBaseRValueExpression(env: TypeEnvironment, exp: Expression, typeinfer: TypeInferContext | undefined): TypeResultWRefVarInfoResult {
         const ttag = exp.tag;
+
+        xxxx;
 
         switch (ttag) {
             case ExpressionTag.CallRefVariableExpression: {
@@ -3133,58 +3182,47 @@ class TypeChecker {
                 return this.checkCallTaskActionExpression(env, exp as CallTaskActionExpression);
             }
             case ExpressionTag.TaskRunExpression: {
-                return this.checkTaskRunExpression(env, exp as TaskRunExpression);
+                return TypeResultWRefVarInfoResult.makeNoRefResult(this.checkTaskRunExpression(env, exp as TaskRunExpression));
             }
             case ExpressionTag.TaskMultiExpression: {
-                return this.checkTaskMultiExpression(env, exp as TaskMultiExpression);
+                return TypeResultWRefVarInfoResult.makeNoRefResult(this.checkTaskMultiExpression(env, exp as TaskMultiExpression));
             }
             case ExpressionTag.TaskDashExpression: {
-                return this.checkTaskDashExpression(env, exp as TaskDashExpression);
+                return TypeResultWRefVarInfoResult.makeNoRefResult(this.checkTaskDashExpression(env, exp as TaskDashExpression));
             }
             case ExpressionTag.TaskAllExpression: {
-                return this.checkTaskAllExpression(env, exp as TaskAllExpression);
+                return TypeResultWRefVarInfoResult.makeNoRefResult(this.checkTaskAllExpression(env, exp as TaskAllExpression));
             }
             case ExpressionTag.TaskRaceExpression: {
-                return this.checkTaskRaceExpression(env, exp as TaskRaceExpression);
+                return TypeResultWRefVarInfoResult.makeNoRefResult(this.checkTaskRaceExpression(env, exp as TaskRaceExpression));
             }
             case ExpressionTag.APIInvokeExpression: {
-                return this.checkAPIInvokeExpression(env, exp as APIInvokeExpression);
+                return TypeResultWRefVarInfoResult.makeNoRefResult(this.checkAPIInvokeExpression(env, exp as APIInvokeExpression));
             }
             case ExpressionTag.AgentInvokeExpression: {
-                return this.checkAgentInvokeExpression(env, exp as AgentInvokeExpression);
+                return TypeResultWRefVarInfoResult.makeNoRefResult(this.checkAgentInvokeExpression(env, exp as AgentInvokeExpression));
             }
             default: {
                 if(ttag === ExpressionTag.CallNamespaceFunctionExpression) {
-                    return this.checkCallNamespaceFunctionExpression(env, true, exp as CallNamespaceFunctionExpression);
+                    return this.checkCallNamespaceFunctionExpression(env, true, exp as CallNamespaceFunctionExpression, true);
                 }
                 else if(ttag === ExpressionTag.CallTypeFunctionExpression) {
-                    return this.checkCallTypeFunctionExpression(env, true, exp as CallTypeFunctionExpression);
+                    return this.checkCallTypeFunctionExpression(env, true, exp as CallTypeFunctionExpression, true);
                 }
                 else if(ttag === ExpressionTag.LambdaInvokeExpression) {
-                    return this.checkLambdaInvokeExpression(env, true, exp as LambdaInvokeExpression);
+                    return this.checkLambdaInvokeExpression(env, true, exp as LambdaInvokeExpression, true);
                 }
                 else if(ttag === ExpressionTag.PostfixOpExpression) {
-                    return this.checkPostfixOp(env, true, exp as PostfixOp, typeinfer);
+                    return this.checkPostfixOp(env, true, exp as PostfixOp, typeinfer, true);
                 }
                 else {
-                    return this.checkExpression(env, exp, typeinfer);
+                    return TypeResultWRefVarInfoResult.makeNoRefResult(this.checkExpression(env, exp, typeinfer, false));
                 }
             }
         }
     }
 
-    private checkConditionalValueExpression(env: TypeEnvironment, exp: ConditionalValueExpression, typeinfer: TypeInferContext | undefined): TypeSignature {
-        const renv = this.processITestGuardSet(env, exp.guardset);
-
-        exp.trueBinders = xxx;
-        exp.falseBinders = xxx;
-
-        const ttype = this.checkExpressionRHS(renv.trueEnv, exp.trueExp, typeinfer);
-        const ftype = this.checkExpressionRHS(renv.falseEnv, exp.falseExp, typeinfer);
-
-    }
-
-    private checkExpressionRHS(env: TypeEnvironment, exp: RValueExpression, typeinfer: TypeInferContext | undefined): TypeSignature {
+    private checkExpressionRHS(env: TypeEnvironment, exp: RValueExpression, typeinfer: TypeInferContext | undefined): TypeResultWRefVarInfoResult {
         const ttag = exp.tag;
         
         if(ttag === RValueExpressionTag.BaseExpression) {

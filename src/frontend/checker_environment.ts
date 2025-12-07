@@ -267,8 +267,35 @@ class TypeEnvironment {
     }
 }
 
+class TypeTestBindInfo {
+    readonly vname: string;
+    readonly vtype: TypeSignature;
+
+    readonly tconv: xxxx;
+
+    readonly ttrue: TypeSignature | undefined;
+    readonly tfalse: TypeSignature | undefined;
+}
+
+class TypeResultWRefVarInfoResult {
+    readonly tsig: TypeSignature;
+    readonly setcondout: {ttrue: string[], tfalse: string[]};
+    readonly modified: string[];
+    readonly bbinds: { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined };
+
+    constructor(tsig: TypeSignature, setcondout: {ttrue: string[], tfalse: string[]}, modified: string[]) {
+        this.tsig = tsig;
+        this.setcondout = setcondout;
+        this.modified = modified;
+    }
+
+    static makeNoRefResult(tsig: TypeSignature): TypeResultWRefVarInfoResult {
+        return new TypeResultWRefVarInfoResult(tsig, [], []);
+    }
+}
+
 export {
     VarInfo,
     TypeInferContext, SimpleTypeInferContext, EListStyleTypeInferContext,
-    TypeEnvironment
+    TypeEnvironment, TypeResultWRefVarInfoResult
 };
