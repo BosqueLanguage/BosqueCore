@@ -116,6 +116,67 @@ class LocalScope {
     }
 }
 
+
+class TypeTestBindInfo {
+    readonly guardidx: number;
+    readonly bname: string;
+
+    readonly ttrue: TypeSignature | undefined;
+    readonly tfalse: TypeSignature | undefined;
+
+    constructor(guardidx: number, bname: string, ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined) {
+        this.guardidx = guardidx;
+        this.bname = bname;
+        this.ttrue = ttrue;
+        this.tfalse = tfalse;
+    }
+
+    notop(): TypeTestBindInfo {
+        return new TypeTestBindInfo(this.guardidx, this.bname, this.tfalse, this.ttrue);
+    }
+}
+
+class TypeResultWRefVarInfoResult {
+    readonly tsig: TypeSignature;
+    readonly setcondout: {ttrue: string[], tfalse: string[]};
+    readonly modified: string[];
+    readonly bbinds: TypeTestBindInfo[] = [];
+
+    constructor(tsig: TypeSignature, setcondout: {ttrue: string[], tfalse: string[]}, modified: string[], bbinds: TypeTestBindInfo[]) {
+        this.tsig = tsig;
+        this.setcondout = setcondout;
+        this.modified = modified;
+        this.bbinds = bbinds;
+    }
+
+    static makeNoRefResult(tsig: TypeSignature): TypeResultWRefVarInfoResult {
+        return new TypeResultWRefVarInfoResult(tsig, {ttrue: [], tfalse: []}, [], []);
+    }
+
+    static merge(results: TypeResultWRefVarInfoResult[]): TypeResultWRefVarInfoResult {
+        assert(results.length > 0);
+
+        const ttrue = new Set<string>();
+        const tfalse = new Set<string>();
+        const modified = new Set<string>();
+        const bbinds: TypeTestBindInfo[] = [];
+
+        for(let i = 0; i < results.length; i++) {
+            results[i].setcondout.ttrue.forEach((v) => ttrue.add(v));
+            results[i].setcondout.tfalse.forEach((v) => tfalse.add(v));
+            results[i].modified.forEach((v) => modified.add(v));
+            bbinds.push(...results[i].bbinds);
+        }
+
+        return new TypeResultWRefVarInfoResult(
+            results[0].tsig,
+            {ttrue: [...ttrue], tfalse: [...tfalse]},
+            [...modified],
+            bbinds
+        );
+    }
+}
+
 class TypeEnvironment {
     readonly declReturnType: TypeSignature;
     readonly inferReturn: TypeInferContext;
@@ -265,43 +326,36 @@ class TypeEnvironment {
         const normalflow = envs.some((e) => e.isnormalflow);
         return new TypeEnvironment(origenv.declReturnType, origenv.inferReturn, normalflow, origenv.parent, lcaptures, [...origenv.args], locals);
     }
-}
 
-class TypeTestBindInfo {
-    readonly guardidx: number;
-    readonly bname: string;
+    generateBranchFlows(ttre: TypeResultWRefVarInfoResult): [TypeEnvironment, TypeEnvironment] {
+        let tenv = this.cloneEnvironment();
+        let fenv = this.cloneEnvironment();
+            
+        for(let i = 0; i < ttre.bbinds.length; i++) {
+            const bind = ttre.bbinds[i];
+            if(bind.ttrue !== undefined) {
+                tenv = tenv.addLocalVar(bind.bname, bind.ttrue, "let", true);
+            }
 
-    readonly ttrue: TypeSignature | undefined;
-    readonly tfalse: TypeSignature | undefined;
+            if(bind.tfalse !== undefined) {
+                fenv = fenv.addLocalVar(bind.bname, bind.tfalse, "let", true);
+            }
+        }
 
-    constructor(guardidx: number, bname: string, ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined) {
-        this.guardidx = guardidx;
-        this.bname = bname;
-        this.ttrue = ttrue;
-        this.tfalse = tfalse;
-    }
-}
+        for(let i = 0; i < ttre.setcondout.ttrue.length; i++) {
+            tenv = tenv.assignLocalVariable(ttre.setcondout.ttrue[i]);
+        }
+        for(let i = 0; i < ttre.setcondout.tfalse.length; i++) {
+            fenv = fenv.assignLocalVariable(ttre.setcondout.tfalse[i]);
+        }
 
-class TypeResultWRefVarInfoResult {
-    readonly tsig: TypeSignature;
-    readonly setcondout: {ttrue: string[], tfalse: string[]};
-    readonly modified: string[];
-    readonly bbinds: TypeTestBindInfo[] = [];
-
-    constructor(tsig: TypeSignature, setcondout: {ttrue: string[], tfalse: string[]}, modified: string[], bbinds: TypeTestBindInfo[]) {
-        this.tsig = tsig;
-        this.setcondout = setcondout;
-        this.modified = modified;
-        this.bbinds = bbinds;
-    }
-
-    static makeNoRefResult(tsig: TypeSignature): TypeResultWRefVarInfoResult {
-        return new TypeResultWRefVarInfoResult(tsig, {ttrue: [], tfalse: []}, [], []);
+        return [tenv, fenv];
     }
 }
 
 export {
     VarInfo,
     TypeInferContext, SimpleTypeInferContext, EListStyleTypeInferContext,
-    TypeEnvironment, TypeTestBindInfo, TypeResultWRefVarInfoResult
+    TypeTestBindInfo, TypeResultWRefVarInfoResult,
+    TypeEnvironment
 };
