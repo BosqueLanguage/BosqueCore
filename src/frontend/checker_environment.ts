@@ -268,34 +268,40 @@ class TypeEnvironment {
 }
 
 class TypeTestBindInfo {
-    readonly vname: string;
-    readonly vtype: TypeSignature;
-
-    readonly tconv: xxxx;
+    readonly guardidx: number;
+    readonly bname: string;
 
     readonly ttrue: TypeSignature | undefined;
     readonly tfalse: TypeSignature | undefined;
+
+    constructor(guardidx: number, bname: string, ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined) {
+        this.guardidx = guardidx;
+        this.bname = bname;
+        this.ttrue = ttrue;
+        this.tfalse = tfalse;
+    }
 }
 
 class TypeResultWRefVarInfoResult {
     readonly tsig: TypeSignature;
     readonly setcondout: {ttrue: string[], tfalse: string[]};
     readonly modified: string[];
-    readonly bbinds: { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined };
+    readonly bbinds: TypeTestBindInfo[] = [];
 
-    constructor(tsig: TypeSignature, setcondout: {ttrue: string[], tfalse: string[]}, modified: string[]) {
+    constructor(tsig: TypeSignature, setcondout: {ttrue: string[], tfalse: string[]}, modified: string[], bbinds: TypeTestBindInfo[]) {
         this.tsig = tsig;
         this.setcondout = setcondout;
         this.modified = modified;
+        this.bbinds = bbinds;
     }
 
     static makeNoRefResult(tsig: TypeSignature): TypeResultWRefVarInfoResult {
-        return new TypeResultWRefVarInfoResult(tsig, [], []);
+        return new TypeResultWRefVarInfoResult(tsig, {ttrue: [], tfalse: []}, [], []);
     }
 }
 
 export {
     VarInfo,
     TypeInferContext, SimpleTypeInferContext, EListStyleTypeInferContext,
-    TypeEnvironment, TypeResultWRefVarInfoResult
+    TypeEnvironment, TypeTestBindInfo, TypeResultWRefVarInfoResult
 };

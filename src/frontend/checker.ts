@@ -415,9 +415,8 @@ class TypeChecker {
     }
     */
 
-    private processITestGuard(sinfo: SourceInfo, env: TypeEnvironment, src: TypeSignature, tt: ITestGuard): TypeEnvironment {
-        if(tt instanceof ITestSimpleGuard) {
-            switch (ttag) {
+    private processITestGuardExpression(env: TypeEnvironment, exp: Expression, andrefsok: boolean): TypeResultWRefVarInfoResult {
+        switch (exp.tag) {
             case ExpressionTag.CallRefVariableExpression: {
                 return this.checkCallRefVariableExpression(env, exp as CallRefVariableExpression);
             }
@@ -441,30 +440,37 @@ class TypeChecker {
                     return this.checkLambdaInvokeExpression(env, true, exp as LambdaInvokeExpression, true);
                 }
                 else if(ttag === ExpressionTag.PostfixOpExpression) {
-                    return this.checkPostfixOp(env, true, exp as PostfixOp, typeinfer, true);
+                    return this.checkPostfixOp(env, true, exp as PostfixOp, undefined, true);
                 }
                 else if(ttag === ExpressionTag.PrefixNotOpExpression) {
                     return this.checkPrefixNotOpExpression(env, exp as PrefixNotOpExpression, true);
                 }
                 else if(ttag === ExpressionTag.LogicAndExpression) {
-                    return this.checkBinLogicAndExpression(env, exp as LogicAndExpression, true);
+                    return this.checkBinLogicAndExpression(env, exp as LogicAndExpression, andrefsok);
                 }
                 else {
-                    return TypeResultWRefVarInfoResult.makeNoRefResult(this.checkExpression(env, exp, typeinfer, false));
+                    return TypeResultWRefVarInfoResult.makeNoRefResult(this.checkExpression(env, exp, undefined, false));
                 }
             }
         }
+    }
+
+    private processITestGuard(sinfo: SourceInfo, env: TypeEnvironment, src: TypeSignature, tt: ITestGuard, andrefsok: boolean): TypeResultWRefVarInfoResult {
+        if(tt instanceof ITestSimpleGuard) {
+            return this.processITestGuardExpression(env, tt.exp, andrefsok);
         }
         else {
             assert(false, "Unknown ITestGuard type"); //TODO check and do binders here!!!
         }
     }
 
-    private processITestGuardSet(sinfo: SourceInfo, env: TypeEnvironment, src: TypeSignature, tt: ITestGuardSet): TypeEnvironment {
-        let cenv = env;
-        for(let i = 0; i < tt.guards.length; ++i) {
-            cenv = this.processITestGuard(sinfo, cenv, src, tt.guards[i]);
-        }
+    private processITestGuardSet(sinfo: SourceInfo, env: TypeEnvironment, src: TypeSignature, tt: ITestGuardSet): TypeResultWRefVarInfoResult {
+        const andrefsok = tt.guards.length === 1; //we don't want odd nested and-ref binds
+        const grenvs = tt.guards.map((guard) => this.processITestGuard(sinfo, env, src, guard, andrefsok));
+
+        this.checkError(sinfo, grenvs.some((grenv) => !this.relations.isBooleanType(grenv.tsig)), `Guard expression does not evaluate to boolean`);
+
+        xxxx; //merge them
 
         return cenv;
     }
@@ -3241,12 +3247,6 @@ class TypeChecker {
             assert(false, "Unknown RValueExpression kind");
         }
     }
-
-    /*
-    private checkExpressionRootCondition(env: TypeEnvironment, exp: xxx): TypeSignature {
-        xxxx;
-    }
-    */
 
     private checkEmptyStatement(env: TypeEnvironment, stmt: EmptyStatement): TypeEnvironment {
         return env;
