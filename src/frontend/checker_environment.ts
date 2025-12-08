@@ -134,44 +134,64 @@ class TypeTestBindInfo {
     notop(): TypeTestBindInfo {
         return new TypeTestBindInfo(this.guardidx, this.bname, this.tfalse, this.ttrue);
     }
+
+    convertToStructInfoTrue(): { gidx: number, bvname: string, tsig: TypeSignature } {
+        return { gidx: this.guardidx, bvname: this.bname, tsig: this.ttrue as TypeSignature };
+    }
+
+    convertToStructInfoFalse(): { gidx: number, bvname: string, tsig: TypeSignature } {
+        return { gidx: this.guardidx, bvname: this.bname, tsig: this.tfalse as TypeSignature };
+    }
 }
 
 class TypeResultWRefVarInfoResult {
     readonly tsig: TypeSignature;
     readonly setcondout: {ttrue: string[], tfalse: string[]};
-    readonly modified: string[];
-    readonly bbinds: TypeTestBindInfo[] = [];
+    readonly setuncond: string[];
+    readonly usemod: string[];
+    readonly bbinds: TypeTestBindInfo[];
 
-    constructor(tsig: TypeSignature, setcondout: {ttrue: string[], tfalse: string[]}, modified: string[], bbinds: TypeTestBindInfo[]) {
+    readonly alwaystrue: boolean;
+    readonly alwaysfalse: boolean;
+
+    constructor(tsig: TypeSignature, alwaystrue: boolean, alwaysfalse: boolean, setcondout: {ttrue: string[], tfalse: string[]}, setuncond: string[], usemod: string[], bbinds: TypeTestBindInfo[]) {
         this.tsig = tsig;
+        this.alwaystrue = alwaystrue;
+        this.alwaysfalse = alwaysfalse;
         this.setcondout = setcondout;
-        this.modified = modified;
+        this.setuncond = setuncond;
+        this.usemod = usemod;
         this.bbinds = bbinds;
     }
 
-    static makeNoRefResult(tsig: TypeSignature): TypeResultWRefVarInfoResult {
-        return new TypeResultWRefVarInfoResult(tsig, {ttrue: [], tfalse: []}, [], []);
+    static makeSimpleResult(tsig: TypeSignature): TypeResultWRefVarInfoResult {
+        return new TypeResultWRefVarInfoResult(tsig, false, false, {ttrue: [], tfalse: []}, [], [], []);
     }
 
-    static merge(results: TypeResultWRefVarInfoResult[]): TypeResultWRefVarInfoResult {
+    static andstates(results: TypeResultWRefVarInfoResult[]): TypeResultWRefVarInfoResult {
         assert(results.length > 0);
 
-        const ttrue = new Set<string>();
-        const tfalse = new Set<string>();
-        const modified = new Set<string>();
-        const bbinds: TypeTestBindInfo[] = [];
+        let ttrue = new Set<string>();
+        let tfalse = new Set<string>();
+        let setuncond = new Set<string>();
+        let usemod = new Set<string>();
+        let bbinds: TypeTestBindInfo[] = [];
 
         for(let i = 0; i < results.length; i++) {
             results[i].setcondout.ttrue.forEach((v) => ttrue.add(v));
             results[i].setcondout.tfalse.forEach((v) => tfalse.add(v));
-            results[i].modified.forEach((v) => modified.add(v));
+            results[i].setuncond.forEach((v) => setuncond.add(v));
+            results[i].usemod.forEach((v) => usemod.add(v));
             bbinds.push(...results[i].bbinds);
         }
 
         return new TypeResultWRefVarInfoResult(
             results[0].tsig,
+            results.every((r) => r.alwaystrue),
+            results.some((r) => r.alwaysfalse),
             {ttrue: [...ttrue], tfalse: [...tfalse]},
-            [...modified],
+            [...setuncond],
+            [...usemod],
             bbinds
         );
     }
@@ -350,6 +370,12 @@ class TypeEnvironment {
         }
 
         return [tenv, fenv];
+    }
+
+    updateUsedBindersFromOtherEnv(other: TypeEnvironment): void {[]
+        for(let i = 0 ; i < other.locals.length; i++) {
+            other.locals[i].accessed.forEach((v) => this.locals[i].accessed.add(v));
+        }
     }
 }
 

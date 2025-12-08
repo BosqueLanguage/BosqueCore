@@ -2061,6 +2061,8 @@ class ChkLogicImpliesExpression extends ChkLogicExpression {
     readonly lhs: ITestGuardSet;
     readonly rhs: Expression;
 
+    trueBinders: { gidx: number, bvname: string, tsig: TypeSignature }[] = [];
+
     constructor(sinfo: SourceInfo, lhs: ITestGuardSet, rhs: Expression) {
         super(ChkLogicExpressionTag.ChkLogicImpliesExpression);
 
@@ -2113,8 +2115,9 @@ class ConditionalValueExpression extends RValueExpression {
     readonly trueValue: Expression
     readonly falseValue: Expression;
 
-    trueBinders: { bvname: string, tsig: TypeSignature }[] = [];
-    falseBinders: { bvname: string, tsig: TypeSignature }[] = [];
+    rtype: TypeSignature | undefined = undefined;
+    trueBinders: { gidx: number, bvname: string, tsig: TypeSignature }[] = [];
+    falseBinders: { gidx: number, bvname: string, tsig: TypeSignature }[] = [];
 
     constructor(sinfo: SourceInfo, guardset: ITestGuardSet, trueValue: Expression, falseValue: Expression) {
         super(RValueExpressionTag.ConditionalValueExpression);

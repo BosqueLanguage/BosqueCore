@@ -448,17 +448,17 @@ class TypeChecker {
                     const tte = this.processITestGuardExpression(env, (exp as PrefixNotOpExpression).exp, false);
                     assert(tte.bbinds.length === 0, "These should be set in the itest part (not the expression part) probably bad nesting");
 
-                    return new TypeResultWRefVarInfoResult(tte.tsig, {ttrue: tte.setcondout.tfalse, tfalse: tte.setcondout.ttrue}, tte.modified, []);
+                    return new TypeResultWRefVarInfoResult(tte.tsig, false, false, {ttrue: tte.setcondout.tfalse, tfalse: tte.setcondout.ttrue}, tte.setuncond, tte.usemod, []);
                 }
                 else if(ttag === ExpressionTag.LogicAndExpression) {
                     const aexps = (exp as LogicAndExpression).exps.map((e) => this.processITestGuardExpression(env, e, false));
                     this.checkError(exp.sinfo, !andrefsok, `Nested and-ref expressions are not allowed in guards`);
                     assert(aexps.every((a) => a.bbinds.length === 0), "These should be set in the itest part (not the expression part) probably bad nesting");
 
-                    return TypeResultWRefVarInfoResult.merge(aexps);
+                    return TypeResultWRefVarInfoResult.andstates(aexps);
                 }
                 else {
-                    return TypeResultWRefVarInfoResult.makeNoRefResult(this.checkExpression(env, exp, undefined));
+                    return TypeResultWRefVarInfoResult.makeSimpleResult(this.checkExpression(env, exp, undefined));
                 }
             }
         }
@@ -478,7 +478,7 @@ class TypeChecker {
         const grenvs = tt.guards.map((guard, ii) => this.processITestGuard(sinfo, env, guard, ii, andrefsok));
 
         this.checkError(sinfo, grenvs.some((grenv) => !this.relations.isBooleanType(grenv.tsig)), `Guard expression does not evaluate to boolean`);
-        return TypeResultWRefVarInfoResult.merge(grenvs);
+        return TypeResultWRefVarInfoResult.andstates(grenvs);
     }
 
     private checkTemplateInstantiationIsOkWithDecls(sinfo: SourceInfo, targs: TypeSignature[], decls: TypeTemplateTermDecl[]): boolean {
@@ -2408,7 +2408,7 @@ class TypeChecker {
     private checkPostfixOpMaybeRefs(env: TypeEnvironment, exp: PostfixOp, typeinfer: TypeInferContext | undefined): TypeResultWRefVarInfoResult {
         let ctype = this.checkExpression(env, exp.rootExp, undefined);
         if(ctype instanceof ErrorTypeSignature) {
-            return TypeResultWRefVarInfoResult.makeNoRefResult(exp.setType(ctype));
+            return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(ctype));
         }
 
         const refokpreops = exp.ops.slice(0, exp.ops.length - 1).every((op) => {
@@ -2473,7 +2473,7 @@ class TypeChecker {
             op.setType(ctype);
         }
 
-        return TypeResultWRefVarInfoResult.makeNoRefResult(exp.setType(ctype));
+        return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(ctype));
     }
 
     private resolveUnderlyingType(ttype: TypeSignature): TypeSignature | undefined {
@@ -3235,15 +3235,22 @@ class TypeChecker {
             const iiexp = exp as ChkLogicImpliesExpression;
             const renv = this.processITestGuardSet(iiexp.sinfo, env, iiexp.lhs);
 
-            let [tenv, _] = env.generateBranchFlows(renv);
+            this.checkError(iiexp.sinfo, renv.setcondout.ttrue.length !== 0 || renv.setcondout.tfalse.length !== 0, "Implicit mod via 'out?' is not allowed in this context");
+            this.checkError(iiexp.sinfo, renv.setuncond.length !== 0, "Implicit mod via 'out' is not allowed in this context");
+            this.checkError(iiexp.sinfo, renv.usemod.length !== 0, "Implicit mod via 'ref/out' is not allowed in this context");
+            
+            this.checkError(iiexp.sinfo, renv.alwaysfalse, "Condition is never true -- true branch of if is unreachable");
+            this.checkError(iiexp.sinfo, renv.alwaystrue, "Condition is never false -- false branch of if is unreachable");
+
+            let [tenv] = env.generateBranchFlows(renv);
             const tresult = this.checkExpression(tenv, iiexp.rhs, undefined); //tenv is modified in place with used var info
             this.checkError(iiexp.sinfo, !(tresult instanceof ErrorTypeSignature) && this.relations.isBooleanType(tresult), "Right hand side of 'implies' must be a valid Bool compatible expression");
 
-            const usedbinds = renv.bbinds.filter((b) => tenv.isBinderUsedInExp(b.bname));
-            env.updateUsedBindersFromOtherEnv(tenv, usedbinds);
+            const [nenv] = tenv.popLocalScope();
+            env.updateUsedBindersFromOtherEnv(nenv);
 
-            iiexp.lhs.bindinfos = usedbinds;
-
+            iiexp.trueBinders = renv.bbinds.filter((b) => b.ttrue !== undefined).map((b) => b.convertToStructInfoTrue());
+            
             return this.getWellKnownType("Bool");
         }
     }
@@ -3251,24 +3258,31 @@ class TypeChecker {
     private checkConditionalValueExpression(env: TypeEnvironment, exp: ConditionalValueExpression, typeinfer: TypeInferContext | undefined): TypeSignature {
         const renv = this.processITestGuardSet(exp.sinfo, env, exp.guardset);
 
+        this.checkError(exp.sinfo, renv.alwaysfalse, "Condition is never true -- true branch of if is unreachable");
+        this.checkError(exp.sinfo, renv.alwaystrue, "Condition is never false -- false branch of if is unreachable");
+
         let [tenv, fenv] = env.generateBranchFlows(renv);
 
         const ttype = this.checkExpression(tenv, exp.trueValue, typeinfer);
         const ftype = this.checkExpression(fenv, exp.falseValue, typeinfer);
 
-        xxxx;
-        this.checkError(exp.sinfo, !(ttype instanceof ErrorTypeSignature) && !(ftype instanceof ErrorTypeSignature) && !this.relations.areSameTypes(ttype, ftype), `True and False branches of conditional value must be of the same type`);
+        env.updateUsedBindersFromOtherEnv(tenv);
+        env.updateUsedBindersFromOtherEnv(fenv);
 
-        const tusedbinds = renv.bbinds.filter((b) => tenv.isBinderUsedInExp(b.bname));
-        env.updateUsedBindersFromOtherEnv(tenv, tusedbinds);
+        exp.trueBinders = renv.bbinds.filter((b) => b.ttrue !== undefined).map((b) => b.convertToStructInfoTrue());
+        exp.falseBinders = renv.bbinds.filter((b) => b.tfalse !== undefined).map((b) => b.convertToStructInfoFalse());
 
-        const fusedbinds = renv.bbinds.filter((b) => fenv.isBinderUsedInExp(b.bname));
-        env.updateUsedBindersFromOtherEnv(fenv, fusedbinds);
+        if(ttype instanceof ErrorTypeSignature || ftype instanceof ErrorTypeSignature) {
+            exp.rtype = new ErrorTypeSignature(exp.sinfo, undefined);
+        }
+        else {
+            const jtype = this.relations.flowTypeLUB(exp.sinfo, TypeInferContext.asSimpleType(typeinfer), [ttype, ftype], this.constraints);
+            this.checkError(exp.sinfo, jtype instanceof ErrorTypeSignature, "Could not unify types of true and false branches of if expression");
 
-        exp.trueBinders = tusedbinds;
-        exp.falseBinders = fusedbinds;
+            exp.rtype = jtype;
+        }
 
-        return xxx;
+        return exp.rtype;
     }
 
     private checkBaseRValueExpression(env: TypeEnvironment, exp: Expression, typeinfer: TypeInferContext | undefined): TypeResultWRefVarInfoResult {
@@ -3288,25 +3302,25 @@ class TypeChecker {
                 return this.checkCallTaskActionExpression(env, exp as CallTaskActionExpression);
             }
             case ExpressionTag.TaskRunExpression: {
-                return TypeResultWRefVarInfoResult.makeNoRefResult(this.checkTaskRunExpression(env, exp as TaskRunExpression));
+                return TypeResultWRefVarInfoResult.makeSimpleResult(this.checkTaskRunExpression(env, exp as TaskRunExpression));
             }
             case ExpressionTag.TaskMultiExpression: {
-                return TypeResultWRefVarInfoResult.makeNoRefResult(this.checkTaskMultiExpression(env, exp as TaskMultiExpression));
+                return TypeResultWRefVarInfoResult.makeSimpleResult(this.checkTaskMultiExpression(env, exp as TaskMultiExpression));
             }
             case ExpressionTag.TaskDashExpression: {
-                return TypeResultWRefVarInfoResult.makeNoRefResult(this.checkTaskDashExpression(env, exp as TaskDashExpression));
+                return TypeResultWRefVarInfoResult.makeSimpleResult(this.checkTaskDashExpression(env, exp as TaskDashExpression));
             }
             case ExpressionTag.TaskAllExpression: {
-                return TypeResultWRefVarInfoResult.makeNoRefResult(this.checkTaskAllExpression(env, exp as TaskAllExpression));
+                return TypeResultWRefVarInfoResult.makeSimpleResult(this.checkTaskAllExpression(env, exp as TaskAllExpression));
             }
             case ExpressionTag.TaskRaceExpression: {
-                return TypeResultWRefVarInfoResult.makeNoRefResult(this.checkTaskRaceExpression(env, exp as TaskRaceExpression));
+                return TypeResultWRefVarInfoResult.makeSimpleResult(this.checkTaskRaceExpression(env, exp as TaskRaceExpression));
             }
             case ExpressionTag.APIInvokeExpression: {
-                return TypeResultWRefVarInfoResult.makeNoRefResult(this.checkAPIInvokeExpression(env, exp as APIInvokeExpression));
+                return TypeResultWRefVarInfoResult.makeSimpleResult(this.checkAPIInvokeExpression(env, exp as APIInvokeExpression));
             }
             case ExpressionTag.AgentInvokeExpression: {
-                return TypeResultWRefVarInfoResult.makeNoRefResult(this.checkAgentInvokeExpression(env, exp as AgentInvokeExpression));
+                return TypeResultWRefVarInfoResult.makeSimpleResult(this.checkAgentInvokeExpression(env, exp as AgentInvokeExpression));
             }
             default: {
                 if(ttag === ExpressionTag.CallNamespaceFunctionExpression) {
@@ -3322,13 +3336,19 @@ class TypeChecker {
                     return this.checkPostfixOpMaybeRefs(env, exp as PostfixOp, typeinfer);
                 }
                 else if(ttag === ExpressionTag.PrefixNotOpExpression) {
-                    return this.checkPrefixNotOpExpression(env, exp as PrefixNotOpExpression, true);
+                    const tte = this.processITestGuardExpression(env, (exp as PrefixNotOpExpression).exp, false);
+                    assert(tte.bbinds.length === 0, "These should be set in the itest part (not the expression part) probably bad nesting");
+
+                    return new TypeResultWRefVarInfoResult(tte.tsig, false, false, {ttrue: tte.setcondout.tfalse, tfalse: tte.setcondout.ttrue}, tte.setuncond, tte.usemod, []);
                 }
                 else if(ttag === ExpressionTag.LogicAndExpression) {
-                    return this.checkBinLogicAndExpression(env, exp as LogicAndExpression, andrefsok);
+                    const aexps = (exp as LogicAndExpression).exps.map((e) => this.processITestGuardExpression(env, e, false));
+                    assert(aexps.every((a) => a.bbinds.length === 0), "These should be set in the itest part (not the expression part) probably bad nesting");
+
+                    return TypeResultWRefVarInfoResult.andstates(aexps);
                 }
                 else {
-                    return TypeResultWRefVarInfoResult.makeNoRefResult(this.checkExpression(env, exp, typeinfer));
+                    return TypeResultWRefVarInfoResult.makeSimpleResult(this.checkExpression(env, exp, typeinfer));
                 }
             }
         }
@@ -3347,7 +3367,7 @@ class TypeChecker {
             assert(false, "Not Implemented -- checkShortCircuitAssignRHSReturnExpression");
         }
         else if(ttag === RValueExpressionTag.ConditionalValueExpression) {
-            return this.checkConditionalValueExpression(env, exp as ConditionalValueExpression, typeinfer);
+            return TypeResultWRefVarInfoResult.makeSimpleResult(this.checkConditionalValueExpression(env, exp as ConditionalValueExpression, typeinfer));
         }
         else {
             assert(false, "Unknown RValueExpression kind");
@@ -3378,7 +3398,11 @@ class TypeChecker {
         const itype = !(stmt.vtype instanceof AutoTypeSignature) ? stmt.vtype : undefined;
         const rhs = this.checkExpressionRHS(env, stmt.exp, itype !== undefined ? new SimpleTypeInferContext(itype) : undefined);
 
-        this.checkError(stmt.sinfo, itype !== undefined && !(rhs instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(rhs.tsig, itype, this.constraints), `Expression of type ${TypeChecker.safeTypePrint(rhs)} cannot be assigned to variable of type ${TypeChecker.safeTypePrint(itype)}`);
+        for(let i = 0; i < rhs.setuncond.length; ++i) {
+            env = env.assignLocalVariable(rhs.setuncond[i]);
+        }
+
+        this.checkError(stmt.sinfo, itype !== undefined && !(rhs instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(rhs.tsig, itype, this.constraints), `Expression of type ${TypeChecker.safeTypePrint(rhs.tsig)} cannot be assigned to variable of type ${TypeChecker.safeTypePrint(itype)}`);
         
         if(stmt.name === "_") {
             return env;
@@ -3575,6 +3599,10 @@ class TypeChecker {
 
     private checkReturnSingleStatement(env: TypeEnvironment, stmt: ReturnSingleStatement): TypeEnvironment {
         const rtype = this.checkExpressionRHS(env, stmt.value, env.inferReturn);
+
+        for(let i = 0; i < rtype.setuncond.length; ++i) {
+            env = env.assignLocalVariable(rtype.setuncond[i]);
+        }
 
         stmt.rtype = env.declReturnType;
         this.checkError(stmt.sinfo, !(rtype.tsig instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(rtype.tsig, env.declReturnType, this.constraints), `Expected a return value of type ${env.declReturnType.emit()} but got ${rtype.tsig.emit()}`);
@@ -3876,29 +3904,23 @@ class TypeChecker {
     }
 
     private checkAssertStatement(env: TypeEnvironment, stmt: AssertStatement): TypeEnvironment {
-        /*
-        const etype = this.checkExpression(env, stmt.cond, undefined);
+        const etype = this.checkChkLogicExpression(env, stmt.cond);
         if(etype instanceof ErrorTypeSignature) {
             return env;
         }
 
         this.checkError(stmt.sinfo, !this.relations.isBooleanType(etype), `Expected a boolean type for assert condition but got ${etype.emit()}`);
         return env;
-        */
-        assert(false, "Not Implemented -- checkAssertStatement");
     }
 
     private checkValidateStatement(env: TypeEnvironment, stmt: ValidateStatement): TypeEnvironment {
-        /*
-        const etype = this.checkExpression(env, stmt.cond, undefined);
+        const etype = this.checkChkLogicExpression(env, stmt.cond);
         if(etype instanceof ErrorTypeSignature) {
             return env;
         }
 
         this.checkError(stmt.sinfo, !this.relations.isBooleanType(etype), `Expected a boolean type for validate condition but got ${etype.emit()}`);
         return env;
-        */
-        assert(false, "Not Implemented -- checkValidateStatement");
     }
 
     private checkDebugStatement(env: TypeEnvironment, stmt: DebugStatement): TypeEnvironment {
@@ -3917,7 +3939,6 @@ class TypeChecker {
         assert(false, "Not Implemented -- checkVoidRefCallStatement");
     }
 
-    /*
     private static isTypeUpdatable(ttype: TypeSignature): [boolean, boolean] {
         if(!(ttype instanceof NominalTypeSignature)) {
             return [false, false];
@@ -3930,6 +3951,7 @@ class TypeChecker {
         return [okupdate, isdirect];
     }
 
+    /*
     private getFieldType(rcvrtype: TypeSignature, fname: string): TypeSignature | undefined {
         const finfo = this.relations.resolveTypeField(rcvrtype, fname, this.constraints);
         if(finfo === undefined) {
@@ -4370,65 +4392,53 @@ class TypeChecker {
     }
 
     private checkRequires(env: TypeEnvironment, requires: PreConditionDecl[]) {
-        /*
         for(let i = 0; i < requires.length; ++i) {
             const precond = requires[i];
-            const etype = this.checkExpression(env, precond.exp, undefined);
+            const etype = this.checkChkLogicExpression(env, precond.exp);
             this.checkError(precond.sinfo, !this.relations.isBooleanType(etype), `Requires expression does not have a boolean type -- got ${etype.emit()}`);
         }
-        */
-        assert(false, "Not Implemented -- checkRequires");
     }
 
     private checkEnsures(env: TypeEnvironment, returntype: TypeSignature, refvars: string[], eventtype: TypeSignature | undefined, ensures: PostConditionDecl[]) {
-        /*
         let eev = env.pushNewLocalScope();
         
-        eev = eev.addLocalVar(WELL_KNOWN_RETURN_VAR_NAME, returntype, true, true);
+        eev = eev.addLocalVar(WELL_KNOWN_RETURN_VAR_NAME, returntype, "let", true);
         if(eventtype !== undefined) {
             const eldecl = this.relations.assembly.getCoreNamespace().typedecls.find((td) => td.name === "EventList") as EventListTypeDecl;
             const eventlisttype = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), undefined, eldecl, [eventtype]);
-            eev = eev.addLocalVar(WELL_KNOWN_EVENTS_VAR_NAME, eventlisttype, true, true);
+            eev = eev.addLocalVar(WELL_KNOWN_EVENTS_VAR_NAME, eventlisttype, "let", true);
         }
         
         for(let i = 0; i < refvars.length; ++i) {
             const v = refvars[i];
-            eev = eev.addLocalVar("$" + v, (env.resolveLocalVarInfoFromSrcName(v) as VarInfo).decltype, true, true);
+            eev = eev.addLocalVar("$" + v, (env.resolveLocalVarInfoFromSrcName(v) as VarInfo).decltype, "let", true);
         }
 
         for(let i = 0; i < ensures.length; ++i) {
             const postcond = ensures[i];
-            const etype = this.checkExpression(eev, postcond.exp, undefined);
+            const etype = this.checkChkLogicExpression(eev, postcond.exp);
             this.checkError(postcond.sinfo, !this.relations.isBooleanType(etype), `Ensures expression does not have a boolean type -- got ${etype.emit()}`);
         }
-        */
-        assert(false, "Not Implemented -- checkEnsures");
     }
 
     private checkInvariants(bnames: {name: string, type: TypeSignature, hasdefault: boolean}[], invariants: InvariantDecl[]) {
-        /*
-        const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, bn.type, [], true, true, false)), this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")));
+        const env = TypeEnvironment.createInitialStdEnv(this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")), bnames.map((bn) => new VarInfo("$" + bn.name, bn.type, "let", true)));
 
         for(let i = 0; i < invariants.length; ++i) {
             const inv = invariants[i];
-            const etype = this.checkExpression(env, inv.exp.exp, undefined);
+            const etype = this.checkChkLogicExpression(env, inv.exp);
             this.checkError(invariants[i].sinfo, !this.relations.isBooleanType(etype), `Invariant expression does not have a boolean type -- got ${etype.emit()}`);
         }
-        */
-        assert(false, "Not Implemented -- checkInvariants");
     }
 
     private checkValidates(bnames: {name: string, type: TypeSignature, hasdefault: boolean}[], validates: ValidateDecl[]) {
-        /*
-        const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, bn.type, [], true, true, false)), this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")));
+        const env = TypeEnvironment.createInitialStdEnv(this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")), bnames.map((bn) => new VarInfo("$" + bn.name, bn.type, "let", true)));
 
         for(let i = 0; i < validates.length; ++i) {
             const validate = validates[i];
-            const etype = this.checkExpression(env, validate.exp.exp, undefined);
+            const etype = this.checkChkLogicExpression(env, validate.exp);
             this.checkError(validates[i].sinfo, !this.relations.isBooleanType(etype), `Validate expression does not have a boolean type -- got ${etype.emit()}`);
         }
-        */
-        assert(false, "Not Implemented -- checkValidates");
     }
 
     private checkExplicitInvokeDeclTermInfoClause(sinfo: SourceInfo, trclause: InvokeTemplateTypeRestrictionClause) {
@@ -4460,7 +4470,7 @@ class TypeChecker {
 
     private checkExplicitInvokeDeclSignature(idecl: ExplicitInvokeDecl, specialvinfo: VarInfo[]) {
         let argnames = new Set<string>();
-        const fullvinfo = [...specialvinfo, ...idecl.params.map((p) => new VarInfo("$" + p.name, p.type, [], true, true, p.isRefParam))];
+        const fullvinfo = [...specialvinfo, ...idecl.params.map((p) => new VarInfo("$" + p.name, p.type, p.pkind || "let", true))];
         for(let i = 0; i < idecl.params.length; ++i) {
             const p = idecl.params[i];
             this.checkError(idecl.sinfo, argnames.has(p.name), `Duplicate parameter name ${p.name}`);
@@ -4468,23 +4478,23 @@ class TypeChecker {
 
             const tok = this.checkTypeSignature(p.type);
             if(tok && p.optDefaultValue !== undefined) {
-                const env = TypeEnvironment.createInitialStdEnv(fullvinfo, idecl.resultType, new SimpleTypeInferContext(idecl.resultType));
-                const etype = this.checkExpression(env, p.optDefaultValue.exp, p.type);
+                const env = TypeEnvironment.createInitialStdEnv(idecl.resultType, new SimpleTypeInferContext(idecl.resultType), fullvinfo);
+                const etype = this.checkExpression(env, p.optDefaultValue, p.type);
 
                 this.checkError(idecl.sinfo, !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, p.type, this.constraints), `Default value does not match declared type -- expected ${p.type.emit()} but got ${etype.emit()}`);
             }
 
-            this.checkError(p.type.sinfo, p.isRefParam && !TypeChecker.isTypeUpdatable(p.type)[0], `Ref parameter must be of an updatable type`);
+            this.checkError(p.type.sinfo, p.pkind === "ref" && !TypeChecker.isTypeUpdatable(p.type)[0], `Ref parameter must be of an updatable type`);
         }
 
         this.checkTypeSignature(idecl.resultType);
     }
 
     private checkExplicitInvokeDeclMetaData(idecl: ExplicitInvokeDecl, specialvinfo: VarInfo[], specialrefvars: string[], eventtype: TypeSignature | undefined) {
-        const fullvinfo = [...specialvinfo, ...idecl.params.map((p) => new VarInfo(p.name, p.type, [], true, true, p.isRefParam))];
-        const fullrefvars = [...specialrefvars, ...idecl.params.filter((p) => p.isRefParam).map((p) => p.name)];
+        const fullvinfo = [...specialvinfo, ...idecl.params.map((p) => new VarInfo(p.name, p.type, p.pkind || "let", true))];
+        const fullrefvars = [...specialrefvars, ...idecl.params.filter((p) => p.pkind === "ref" || p.pkind === "inout").map((p) => p.name)];
 
-        const ienv = TypeEnvironment.createInitialStdEnv(fullvinfo, this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")));
+        const ienv = TypeEnvironment.createInitialStdEnv(this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")), fullvinfo);
         this.checkRequires(ienv, idecl.preconditions);
         this.checkEnsures(ienv, idecl.resultType, fullrefvars, eventtype, idecl.postconditions);
     }
