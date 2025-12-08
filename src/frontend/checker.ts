@@ -433,13 +433,13 @@ class TypeChecker {
                 const ttag = exp.tag;
 
                 if(ttag === ExpressionTag.CallNamespaceFunctionExpression) {
-                    return this.checkCallNamespaceFunctionExpression(env, true, exp as CallNamespaceFunctionExpression, true);
+                    return this.checkCallNamespaceFunctionExpression(env, exp as CallNamespaceFunctionExpression, true);
                 }
                 else if(ttag === ExpressionTag.CallTypeFunctionExpression) {
-                    return this.checkCallTypeFunctionExpression(env, true, exp as CallTypeFunctionExpression, true);
+                    return this.checkCallTypeFunctionExpression(env, exp as CallTypeFunctionExpression, true);
                 }
                 else if(ttag === ExpressionTag.LambdaInvokeExpression) {
-                    return this.checkLambdaInvokeExpression(env, true, exp as LambdaInvokeExpression, true);
+                    return this.checkLambdaInvokeExpression(env, exp as LambdaInvokeExpression, true);
                 }
                 else if(ttag === ExpressionTag.PostfixOpExpression) {
                     return this.checkPostfixOpMaybeRefs(env, exp as PostfixOp, undefined);
@@ -1959,7 +1959,7 @@ class TypeChecker {
         assert(false, "Not Implemented -- checkConstructorLambdaExpression");
     }
 
-    private checkLambdaInvokeExpression(env: TypeEnvironment, refok: boolean, exp: LambdaInvokeExpression, refallowed: boolean): TypeResultWRefVarInfoResult {
+    private checkLambdaInvokeExpression(env: TypeEnvironment, exp: LambdaInvokeExpression, refallowed: boolean): TypeResultWRefVarInfoResult {
         /*
         let llvar = env.resolveLocalVarInfoFromSrcName(exp.name);
         if(llvar === undefined) {
@@ -2086,7 +2086,7 @@ class TypeChecker {
         assert(false, "Not Implemented -- checkSpecialConstructorExpression");
     }
 
-    private checkCallNamespaceFunctionExpression(env: TypeEnvironment, refok: boolean, exp: CallNamespaceFunctionExpression, refallowed: boolean): TypeResultWRefVarInfoResult {
+    private checkCallNamespaceFunctionExpression(env: TypeEnvironment, exp: CallNamespaceFunctionExpression, refallowed: boolean): TypeResultWRefVarInfoResult {
         /*
         const fdecl = this.relations.assembly.resolveNamespaceFunction(exp.ns, exp.name);
         if(fdecl === undefined) {
@@ -2109,7 +2109,7 @@ class TypeChecker {
         assert(false, "Not Implemented -- checkCallNamespaceFunctionExpression");
     }
 
-    private checkCallTypeFunctionExpression(env: TypeEnvironment, refok: boolean, exp: CallTypeFunctionExpression, refallowed: boolean): TypeResultWRefVarInfoResult {
+    private checkCallTypeFunctionExpression(env: TypeEnvironment, exp: CallTypeFunctionExpression, refallowed: boolean): TypeResultWRefVarInfoResult {
         /*
         const oktype = this.checkTypeSignature(exp.ttype);
         if(!oktype) {
@@ -2864,16 +2864,6 @@ class TypeChecker {
         assert(false, "Not Implemented -- checkMapEntryConstructorExpression");
     }
 
-    /*
-    private checkConditionalValueExpression(env: TypeEnvironment, exp: ConditionalValueExpression, typeinfer: TypeInferContext | undefined): TypeSignature {
-        assert(false, "Not Implemented -- checkConditionalValueExpression");
-    }
-
-    private checkShortCircuitAssignRHSITestExpression(env: TypeEnvironment, exp: ShortCircuitAssignRHSITestExpression, typeinfer: TypeInferContext | undefined): TypeSignature {
-        assert(false, "Not Implemented -- checkShortCircuitAssignRHSITestExpression");
-    }
-    */
-
     ////////
     //statement expressions
     private checkExpression(env: TypeEnvironment, exp: Expression, typeinfer: TypeInferContext | undefined): TypeSignature {
@@ -3035,16 +3025,16 @@ class TypeChecker {
                 return this.checkConstructorLambdaExpression(env, exp as ConstructorLambdaExpression, TypeInferContext.asSimpleType(typeinfer));
             }
             case ExpressionTag.LambdaInvokeExpression: {
-                return this.checkLambdaInvokeExpression(env, false, exp as LambdaInvokeExpression, false).tsig;
+                return this.checkLambdaInvokeExpression(env, exp as LambdaInvokeExpression, false).tsig;
             }
             case ExpressionTag.SpecialConstructorExpression: {
                 return this.checkSpecialConstructorExpression(env, exp as SpecialConstructorExpression, TypeInferContext.asSimpleType(typeinfer));
             }
             case ExpressionTag.CallNamespaceFunctionExpression: {
-                return this.checkCallNamespaceFunctionExpression(env, false, exp as CallNamespaceFunctionExpression, false).tsig;
+                return this.checkCallNamespaceFunctionExpression(env, exp as CallNamespaceFunctionExpression, false).tsig;
             }
             case ExpressionTag.CallTypeFunctionExpression: {
-                return this.checkCallTypeFunctionExpression(env, false, exp as CallTypeFunctionExpression, false).tsig;
+                return this.checkCallTypeFunctionExpression(env, exp as CallTypeFunctionExpression, false).tsig;
             }
             case ExpressionTag.ParseAsTypeExpression: {
                 return this.checkParseAsTypeExpression(env, exp as ParseAsTypeExpression);
@@ -3324,13 +3314,13 @@ class TypeChecker {
             }
             default: {
                 if(ttag === ExpressionTag.CallNamespaceFunctionExpression) {
-                    return this.checkCallNamespaceFunctionExpression(env, true, exp as CallNamespaceFunctionExpression, true);
+                    return this.checkCallNamespaceFunctionExpression(env, exp as CallNamespaceFunctionExpression, true);
                 }
                 else if(ttag === ExpressionTag.CallTypeFunctionExpression) {
-                    return this.checkCallTypeFunctionExpression(env, true, exp as CallTypeFunctionExpression, true);
+                    return this.checkCallTypeFunctionExpression(env, exp as CallTypeFunctionExpression, true);
                 }
                 else if(ttag === ExpressionTag.LambdaInvokeExpression) {
-                    return this.checkLambdaInvokeExpression(env, true, exp as LambdaInvokeExpression, true);
+                    return this.checkLambdaInvokeExpression(env, exp as LambdaInvokeExpression, true);
                 }
                 else if(ttag === ExpressionTag.PostfixOpExpression) {
                     return this.checkPostfixOpMaybeRefs(env, exp as PostfixOp, typeinfer);

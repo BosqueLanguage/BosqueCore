@@ -1,9 +1,9 @@
 import assert from "node:assert";
 
-import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, Assembly, ExplicitInvokeDecl, ListTypeDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, TypeFunctionDecl } from "../../frontend/assembly.js";
+import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, Assembly, ExplicitInvokeDecl, InvariantDecl, ListTypeDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, PostConditionDecl, PreConditionDecl, TypeFunctionDecl, ValidateDecl } from "../../frontend/assembly.js";
 import { NamespaceInstantiationInfo } from "./instantiations.js";
 import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaParameterPackTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, ArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, HoleBodyImplementation, HoleExpression, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOfOperator, PostfixOp, PostfixOpTag, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement } from "../../frontend/body.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, ArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, HoleBodyImplementation, HoleExpression, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOfOperator, PostfixOp, PostfixOpTag, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement } from "../../frontend/body.js";
 import { } from "../../frontend/build_decls.js";
 
 class PendingNamespaceFunction {
@@ -261,7 +261,64 @@ class Monomorphizer {
             ; //any needed instantiations will happen in the specific type processing (e.g. Option<T> will also force processing Some<T> and None)
         }
     }
+*/
 
+    private instantiateITestGuardExpression(exp: Expression) {
+        switch (exp.tag) {
+            case ExpressionTag.CallRefVariableExpression: {
+                return this.instantiateCallRefVariableExpression(exp as CallRefVariableExpression);
+            }
+            case ExpressionTag.CallRefThisExpression: {
+                return this.instantiateCallRefThisExpression(exp as CallRefThisExpression);
+            }
+            case ExpressionTag.CallRefSelfExpression: {
+                return this.instantiateCallRefSelfExpression(exp as CallRefSelfExpression);
+            }
+            case ExpressionTag.CallTaskActionExpression: {
+                return this.instantiateCallTaskActionExpression(exp as CallTaskActionExpression);
+            }
+            default: {
+                const ttag = exp.tag;
+
+                if(ttag === ExpressionTag.CallNamespaceFunctionExpression) {
+                    return this.instantiateCallNamespaceFunctionExpression(exp as CallNamespaceFunctionExpression);
+                }
+                else if(ttag === ExpressionTag.CallTypeFunctionExpression) {
+                    return this.instantiateCallTypeFunctionExpression(exp as CallTypeFunctionExpression);
+                }
+                else if(ttag === ExpressionTag.LambdaInvokeExpression) {
+                    return this.instantiateLambdaInvokeExpression(exp as LambdaInvokeExpression);
+                }
+                else if(ttag === ExpressionTag.PostfixOpExpression) {
+                    return this.instantiatePostfixOp(exp as PostfixOp);
+                }
+                else if(ttag === ExpressionTag.PrefixNotOpExpression) {
+                    this.instantiateITestGuardExpression((exp as PrefixNotOpExpression).exp);
+                }
+                else if(ttag === ExpressionTag.LogicAndExpression) {
+                    (exp as LogicAndExpression).exps.forEach((e) => this.instantiateITestGuardExpression(e));
+                }
+                else {
+                    return this.instantiateExpression(exp);
+                }
+            }
+        }
+    }
+
+    private instantiateITestGuard(tt: ITestGuard) {
+        if(tt instanceof ITestSimpleGuard) {
+            return this.instantiateITestGuardExpression(tt.exp);
+        }
+        else {
+            assert(false, "Unknown ITestGuard type"); //TODO check and do binders here!!!
+        }
+    }
+
+    private instantiateITestGuardSet(tt: ITestGuardSet) {
+        const grenvs = tt.guards.forEach((guard) => this.instantiateITestGuard(guard));
+    }
+
+/*
     private instantiateArgumentList(args: ArgumentValue[]) {
         args.forEach((arg) => this.instantiateExpression(arg.exp));
     }
@@ -321,6 +378,7 @@ class Monomorphizer {
         return;
     }
 
+    /*
     private instantiateCollectionConstructor(decl: AbstractCollectionTypeDecl, t: NominalTypeSignature, args: ArgumentValue[]) {
         let ists: TypeSignature | undefined = undefined;
 
@@ -397,6 +455,7 @@ class Monomorphizer {
             }
         }
     }
+    */
 
     private instantiateConstructorPrimaryExpression(exp: ConstructorPrimaryExpression) {
         /*
@@ -1023,6 +1082,24 @@ class Monomorphizer {
         assert(false, "Not Implemented -- instantiateTaskRaceExpression");
     }
 
+    private instantiateChkLogicExpression(exp: ChkLogicExpression) {
+        if(exp.tag === ChkLogicExpressionTag.ChkLogicBaseExpression) {
+            return this.instantiateExpression((exp as ChkLogicBaseExpression).exp);
+        }
+        else {
+            const iiexp = exp as ChkLogicImpliesExpression;
+            this.instantiateITestGuardSet(iiexp.lhs);
+            this.instantiateExpression(iiexp.rhs);
+        }
+    }
+
+    private instantiateConditionalValueExpression(exp: ConditionalValueExpression) {
+        this.instantiateITestGuardSet(exp.guardset);
+
+        this.instantiateExpression(exp.trueValue);
+        this.instantiateExpression(exp.falseValue);
+    }
+
     private instantiateBaseRValueExpression(exp: Expression) {
         const ttag = exp.tag;
         switch (ttag) {
@@ -1082,18 +1159,12 @@ class Monomorphizer {
             assert(false, "Not Implemented -- checkShortCircuitAssignRHSReturnExpression");
         }
         else if(ttag === RValueExpressionTag.ConditionalValueExpression) {
-            assert(false, "Not Implemented -- checkConditionalValueExpression");
+            return this.instantiateConditionalValueExpression(exp as ConditionalValueExpression);
         }
         else {
             assert(false, "Unknown RValueExpression kind");
         }
     }
-
-    /*
-    private instantiateExpressionRootCondition(env: TypeEnvironment, exp: xxx): TypeSignature {
-        xxxx;
-    }
-    */
 
     private instantiateEmptyStatement(stmt: EmptyStatement) {
         return;
@@ -1279,11 +1350,11 @@ class Monomorphizer {
     }
 
     private instantiateAssertStatement(stmt: AssertStatement) {
-        this.instantiate(stmt.cond);
+        this.instantiateChkLogicExpression(stmt.cond);
     }
 
     private instantiateValidateStatement(stmt: ValidateStatement) {
-        assert(false, "Not implemented -- ValidateStatement");
+        this.instantiateChkLogicExpression(stmt.cond);
     }
 
     private instantiateDebugStatement(stmt: DebugStatement) {
@@ -1496,7 +1567,7 @@ class Monomorphizer {
     private instantiateRequires(requires: PreConditionDecl[]) {
         for(let i = 0; i < requires.length; ++i) {
             const precond = requires[i];
-            this.instantiateExpression(precond.exp);
+            this.instantiateChkLogicExpression(precond.exp);
         }
     }
 
@@ -1507,21 +1578,21 @@ class Monomorphizer {
         
         for(let i = 0; i < ensures.length; ++i) {
             const postcond = ensures[i];
-            this.instantiateExpression(postcond.exp);
+            this.instantiateChkLogicExpression(postcond.exp);
         }
     }
 
     private instantiateInvariants(invariants: InvariantDecl[]) {
         for(let i = 0; i < invariants.length; ++i) {
             const inv = invariants[i];
-            this.instantiateExpression(inv.exp.exp);
+            this.instantiateChkLogicExpression(inv.exp);
         }
     }
 
     private instantiateValidates(validates: ValidateDecl[]) {
         for(let i = 0; i < validates.length; ++i) {
             const validate = validates[i];
-            this.instantiateExpression(validate.exp.exp);
+            this.instantiateChkLogicExpression(validate.exp);
         }
     }
 
@@ -1531,7 +1602,7 @@ class Monomorphizer {
             
             this.instantiateTypeSignature(p.type, this.currentMapping);
             if(p.optDefaultValue !== undefined) {
-                this.instantiateExpression(p.optDefaultValue.exp);
+                this.instantiateExpression(p.optDefaultValue);
             }
         }
 

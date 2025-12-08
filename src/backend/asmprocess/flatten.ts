@@ -1,5 +1,5 @@
 import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, LambdaParameterPackTypeSignature, NominalTypeSignature, TypeSignature, VoidTypeSignature } from "../../frontend/type";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringTextComponent, HoleBodyImplementation, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PostfixOp, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskCheckAndHandleTerminationStatement, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement } from "../../frontend/body";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringTextComponent, HoleBodyImplementation, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PostfixOp, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskCheckAndHandleTerminationStatement, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement } from "../../frontend/body";
 import { Assembly, TypedeclTypeDecl } from "../../frontend/assembly";
 
 import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatCStringTypeSignature, IRFormatPathFragmentTypeSignature, IRFormatPathGlobTypeSignature, IRFormatPathTypeSignature, IRFormatStringTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype";
@@ -8,6 +8,7 @@ import { IRRegex } from "../irdefs/irsupport";
 import {} from "../irdefs/irassembly";
 
 import assert from "node:assert";
+import { SourceInfo } from "../../frontend/build_decls";
 
 class ASMToIRConverter {
     readonly assembly: Assembly;
@@ -175,7 +176,7 @@ class ASMToIRConverter {
         }
     }
 
-    //If we flatten an expressoin but it is nested then we need to simplify it -- this handles that by creating temps!
+    //If we flatten an expression but it is nested then we need to simplify it -- this handles that by creating temps!
     private makeExpressionSimple(exp: IRExpression, oftype: TypeSignature): IRSimpleExpression {
         if(exp instanceof IRSimpleExpression) {
             return exp;
@@ -191,6 +192,419 @@ class ASMToIRConverter {
             this.pushStatement(new IRTempAssignExpressionStatement(tmpname, exp, irtype));
             return new IRAccessTempVariableExpression(tmpname);
         }
+    }
+
+    private coerceToBoolForTest(exp: IRSimpleExpression, oftype: TypeSignature): IRSimpleExpression {
+        if(oftype.tkeystr === "Bool") {
+            return exp;
+        }
+        else {
+            return new IRAccessTypeDeclValueExpression(this.processTypeSignature(oftype), exp);
+        }
+    }
+
+    private makeCoercionExplicitAsNeeded(exp: IRSimpleExpression, fromtype: TypeSignature, totype: TypeSignature): IRSimpleExpression {
+        if(fromtype.tkeystr === totype.tkeystr) {
+            return exp;
+        }
+        else {
+            assert(false, "ASMToIRConverter::makeCoercionExplicit - Not Implemented");
+        }
+    }
+
+    private static isLiteralFalseExpression(exp: IRExpression): boolean {
+        return exp instanceof IRLiteralBoolExpression && exp.value === false;
+    }
+
+    private static isLiteralTrueExpression(exp: IRExpression): boolean {
+        return exp instanceof IRLiteralBoolExpression && exp.value === true;
+    }
+
+    private getSpecialType(sinfo: SourceInfo, tname: string): TypeSignature {
+        const coredecl = this.assembly.getCoreNamespace().typedecls.find((td) => td.name === tname);
+        assert(coredecl !== undefined, `ASMToIRConverter::getSpecialType - Missing core type declaration for ${tname}`);
+        return new NominalTypeSignature(sinfo, undefined, coredecl, []);
+    }
+
+    /*
+    private processITest_None(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
+        //!none === some
+        if(isnot) {
+            const rinfo = this.relations.splitOnSome(src, this.constraints);
+            if(rinfo === undefined) {
+                this.reportError(src.sinfo, `Unable to some-split type ${src.emit()}`);
+                return { bindtrue: undefined, bindfalse: undefined };
+            }
+            else {
+                return { bindtrue: rinfo.overlapSomeT, bindfalse: rinfo.hasnone ? this.getWellKnownType("None") : undefined };
+            }
+        }
+        else {
+            const rinfo = this.relations.splitOnNone(src, this.constraints);
+            if(rinfo === undefined) {
+                this.reportError(src.sinfo, `Unable to none-split type ${src.emit()}`);
+                return { bindtrue: undefined, bindfalse: undefined };
+            }
+            else {
+                return { bindtrue: rinfo.hasnone ? this.getWellKnownType("None") : undefined, bindfalse: rinfo.remainSomeT };
+            }
+        }
+    }
+
+    private processITest_Some(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
+        //!some === none
+        if(isnot) {
+            const rinfo = this.relations.splitOnNone(src, this.constraints);
+            if(rinfo === undefined) {
+                this.reportError(src.sinfo, `Unable to none-split type ${src.emit()}`);
+                return { bindtrue: undefined, bindfalse: undefined };
+            }
+            else {
+                return { bindtrue: rinfo.hasnone ? this.getWellKnownType("None") : undefined, bindfalse: rinfo.remainSomeT };
+            }
+        }
+        else {
+            const rinfo = this.relations.splitOnSome(src, this.constraints);
+            if(rinfo === undefined) {
+                this.reportError(src.sinfo, `Unable to some-split type ${src.emit()}`);
+                return { bindtrue: undefined, bindfalse: undefined };
+            }
+            else {
+                return { bindtrue: rinfo.overlapSomeT, bindfalse: rinfo.hasnone ? this.getWellKnownType("None") : undefined };
+            }
+        }
+    }
+
+    private processITest_Ok(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
+        //!ok === err
+        if(isnot) {
+            const rinfo = this.relations.splitOnErr(src, this.constraints);
+            if(rinfo === undefined) {
+                this.reportError(src.sinfo, `Unable to err-split type ${src.emit()}`);
+                return { bindtrue: undefined, bindfalse: undefined };
+            }
+            else {
+                return { bindtrue: rinfo.overlapErrE, bindfalse: rinfo.remainOkT };
+            }
+        }
+        else {
+            const rinfo = this.relations.splitOnOk(src, this.constraints);
+            if(rinfo === undefined) {
+                this.reportError(src.sinfo, `Unable to nothing-split type ${src.emit()}`);
+                return { bindtrue: undefined, bindfalse: undefined };
+            }
+            else {
+                return { bindtrue: rinfo.overlapOkT, bindfalse: rinfo.remainErrE };
+            }
+        }
+    }
+
+    private processITest_Err(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
+        //!err === ok
+        if(isnot) {
+            const rinfo = this.relations.splitOnOk(src, this.constraints);
+            if(rinfo === undefined) {
+                this.reportError(src.sinfo, `Unable to err-split type ${src.emit()}`);
+                return { bindtrue: undefined, bindfalse: undefined };
+            }
+            else {
+                return { bindtrue: rinfo.overlapOkT, bindfalse: rinfo.remainErrE };
+            }
+        }
+        else {
+            const rinfo = this.relations.splitOnErr(src, this.constraints);
+            if(rinfo === undefined) {
+                this.reportError(src.sinfo, `Unable to nothing-split type ${src.emit()}`);
+                return { bindtrue: undefined, bindfalse: undefined };
+            }
+            else {
+                return { bindtrue: rinfo.overlapErrE, bindfalse: rinfo.remainOkT };
+            }
+        }
+    }
+
+    private processITest_Error(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
+        xxxx;
+    }
+
+    private processITest_Rejected(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
+        xxxx;
+    }
+
+    private processITest_Denied(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
+        xxxx;
+    }
+
+    private processITest_Flagged(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
+        xxxx;
+    }
+
+    private processITest_Success(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
+        xxxx;
+    }
+
+    private processITest_Type(src: TypeSignature, oftype: TypeSignature): { ttrue: TypeSignature[], tfalse: TypeSignature[] } {
+        const rinfo = this.relations.refineType(src, oftype, this.constraints);
+        if(rinfo === undefined) {
+            this.reportError(src.sinfo, `Unable to some-split type ${src.emit()}`);
+            return { ttrue: [], tfalse: [] };
+        }
+        else {
+            return { ttrue: rinfo.overlap, tfalse: rinfo.remain };
+        }
+    }
+    
+    private processITestAsBoolean(sinfo: SourceInfo, env: TypeEnvironment, src: TypeSignature, tt: ITest): { ttrue: boolean, tfalse: boolean } {
+        if(tt instanceof ITestType) {
+            if(!this.checkTypeSignature(tt.ttype)) {
+                return { ttrue: false, tfalse: false };
+            }
+            else {
+                const tres = this.processITest_Type(src, tt.ttype);
+                if(tt.isnot) {
+                    return { ttrue: tres.tfalse.length !== 0, tfalse: tres.ttrue.length !== 0 };
+                }
+                else {
+                    return { ttrue: tres.ttrue.length !== 0, tfalse: tres.tfalse.length !== 0 };
+                }
+            }
+        }
+        else {
+            if(tt instanceof ITestNone) {
+                const tres = this.processITest_None(src, tt.isnot);
+                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
+            }
+            else if(tt instanceof ITestSome) {
+                const tres = this.processITest_Some(src, tt.isnot);
+                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
+            }
+            else if(tt instanceof ITestOk) {
+                const tres = this.processITest_Ok(src, tt.isnot);
+                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
+            }
+            else if(tt instanceof ITestError) {
+                const tres = this.processITest_Error(src, tt.isnot);
+                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
+            }
+            else if(tt instanceof ITestRejected) {
+                const tres = this.processITest_Rejected(src, tt.isnot);
+                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
+            }
+            else if(tt instanceof ITestDenied) {
+                const tres = this.processITest_Denied(src, tt.isnot);
+                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
+            }
+            else if(tt instanceof ITestFlagged) {
+                const tres = this.processITest_Flagged(src, tt.isnot);
+                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
+            }
+            else if(tt instanceof ITestSuccess) {
+                const tres = this.processITest_Success(src, tt.isnot);
+                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
+            }
+            else {
+                assert(tt instanceof ITestFail, "missing case in ITest");
+                const tres = this.processITest_Err(src, tt.isnot);
+                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
+            }
+        }
+    }
+
+    private processITestConvertLUB(sinfo: SourceInfo, opts: TypeSignature[], lubtype: TypeSignature): TypeSignature | undefined {
+        const flowlub = this.relations.flowTypeLUB(sinfo, lubtype, opts, this.constraints);
+        if(flowlub instanceof ErrorTypeSignature) {
+            return lubtype;
+        }
+        else {
+            return flowlub;
+        }
+    }
+
+    private processITestAsConvert(sinfo: SourceInfo, env: TypeEnvironment, src: TypeSignature, tt: ITest): { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined } {
+        if(tt instanceof ITestType) {
+            if(!this.checkTypeSignature(tt.ttype)) {
+                return { ttrue: undefined, tfalse: undefined };
+            }
+            else {
+                const tres = this.processITest_Type(src, tt.ttype);
+                if(tt.isnot) {
+                    const ttrue = tres.tfalse.length !== 0 ? this.processITestConvertLUB(sinfo, tres.tfalse, src) : undefined; //negate takes the remain and lubs to the src
+                    const tfalse = tres.ttrue.length !== 0 ? tt.ttype : undefined; //overlap and passes as the user spec type -- does not matter now but short circuiting return will use this
+
+                    return { ttrue: ttrue, tfalse: tfalse };
+                }
+                else {
+                    const ttrue = tres.ttrue.length !== 0 ? tt.ttype : undefined; //always cast to what the user asked for
+                    const tfalse = tres.tfalse.length !== 0 ? this.processITestConvertLUB(sinfo, tres.tfalse, src) : undefined; //cast to the LUB of the remaining types (with src as a default option)
+
+                    return { ttrue: ttrue, tfalse: tfalse };
+                }
+            }
+        }
+        else {
+            if(tt instanceof ITestNone) {
+                const tres = this.processITest_None(src, tt.isnot);
+                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
+            }
+            else if(tt instanceof ITestSome) {
+                const tres = this.processITest_Some(src, tt.isnot);
+                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
+            }
+            else if(tt instanceof ITestOk) {
+                const tres = this.processITest_Ok(src, tt.isnot);
+                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
+            }
+            else if(tt instanceof ITestError) {
+                const tres = this.processITest_Error(src, tt.isnot);
+                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
+            }
+            else if(tt instanceof ITestRejected) {
+                const tres = this.processITest_Rejected(src, tt.isnot);
+                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
+            }
+            else if(tt instanceof ITestDenied) {
+                const tres = this.processITest_Denied(src, tt.isnot);
+                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
+            }
+            else if(tt instanceof ITestFlagged) {
+                const tres = this.processITest_Flagged(src, tt.isnot);
+                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
+            }
+            else if(tt instanceof ITestSuccess) {
+                const tres = this.processITest_Success(src, tt.isnot);
+                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
+            }
+            else {
+                assert(tt instanceof ITestFail, "missing case in ITest");
+                const tres = this.processITest_Err(src, tt.isnot);
+                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
+            }
+        }
+    }
+    */
+    
+    private flattenITestGuardExpression(exp: Expression): IRSimpleExpression {
+        switch (exp.tag) {
+            case ExpressionTag.CallRefVariableExpression: {
+                const crexp = exp as CallRefVariableExpression;
+
+                return this.coerceToBoolForTest(this.flattenCallRefVariableExpression(crexp), crexp.getType());
+            }
+            case ExpressionTag.CallRefThisExpression: {
+                const crexp = exp as CallRefThisExpression;
+                
+                return this.coerceToBoolForTest(this.flattenCallRefThisExpression(crexp), crexp.getType());
+            }
+            case ExpressionTag.CallRefSelfExpression: {
+                const crexp = exp as CallRefSelfExpression;
+
+                return this.coerceToBoolForTest(this.flattenCallRefSelfExpression(crexp), crexp.getType());
+            }
+            case ExpressionTag.CallTaskActionExpression: {
+                const crexp = exp as CallTaskActionExpression;
+                
+                return this.coerceToBoolForTest(this.flattenCallTaskActionExpression(crexp), crexp.getType());
+            }
+            default: {
+                const ttag = exp.tag;
+
+                if(ttag === ExpressionTag.CallNamespaceFunctionExpression) {
+                    const crexp = exp as CallNamespaceFunctionExpression;
+
+                    return this.coerceToBoolForTest(this.flattenCallNamespaceFunctionExpression(crexp), crexp.getType());
+                }
+                else if(ttag === ExpressionTag.CallTypeFunctionExpression) {
+                    const crexp = exp as CallTypeFunctionExpression;
+
+                    return this.coerceToBoolForTest(this.flattenCallTypeFunctionExpression(crexp), crexp.getType());
+                }
+                else if(ttag === ExpressionTag.LambdaInvokeExpression) {
+                    const crexp = exp as LambdaInvokeExpression;
+
+                    return this.coerceToBoolForTest(this.flattenLambdaInvokeExpression(crexp), crexp.getType());
+                }
+                else if(ttag === ExpressionTag.PostfixOpExpression) {
+                    const crexp = exp as PostfixOp;
+
+                    return this.coerceToBoolForTest(this.flattenPostfixOp(crexp), crexp.getType());
+                }
+                else if(ttag === ExpressionTag.PrefixNotOpExpression) {
+                    const nexp = exp as PrefixNotOpExpression;
+                    const nval = this.coerceToBoolForTest(this.flattenITestGuardExpression(nexp.exp), nexp.exp.getType());
+
+                    return new IRPrefixNotOpExpression(nval, this.getSpecialType(exp.sinfo, "Bool"));
+                }
+                else if(ttag === ExpressionTag.LogicAndExpression) {
+                    const aexps = (exp as LogicAndExpression).exps.map((e) => this.coerceToBoolForTest(this.flattenITestGuardExpression(e), e.getType()));
+                    
+                    const mustfalse = aexps.some((aexp) => ASMToIRConverter.isLiteralFalseExpression(aexp));
+                    if(mustfalse) {
+                        return new IRLiteralBoolExpression(false);
+                    }
+                    else {
+                        const filteredexps = aexps.filter((aexp) => !ASMToIRConverter.isLiteralTrueExpression(aexp));
+                        if(filteredexps.length === 0) {
+                            return new IRLiteralBoolExpression(true);
+                        }
+                        else if(filteredexps.length === 1) {
+                            return filteredexps[0];
+                        }
+                        else {
+                            return new IRLogicAndExpression(filteredexps);
+                        }
+                    }
+                }
+                else {
+                    return this.coerceToBoolForTest(this.flattenExpression(exp), exp.getType());
+                }
+            }
+        }
+    }
+
+    private flattenITestGuard(sinfo: SourceInfo, tt: ITestGuard, gidx: number): IRSimpleExpression {
+        if(tt instanceof ITestSimpleGuard) {
+            return this.flattenITestGuardExpression(tt.exp);
+        }
+        else {
+            assert(false, "Unknown ITestGuard type"); //TODO check and do binders here!!!
+        }
+    }
+
+    private flattenITestGuardSet(sinfo: SourceInfo, tt: ITestGuardSet): IRSimpleExpression {
+        const grenvs = tt.guards.map((guard, ii) => this.flattenITestGuard(sinfo, guard, ii));
+
+        const mustfalse = grenvs.some((aexp) => ASMToIRConverter.isLiteralFalseExpression(aexp));
+        if(mustfalse) {
+            return new IRLiteralBoolExpression(false);
+        }
+        else {
+            const filteredexps = grenvs.filter((aexp) => !ASMToIRConverter.isLiteralTrueExpression(aexp));
+            if(filteredexps.length === 0) {
+                return new IRLiteralBoolExpression(true);
+            }
+            else if(filteredexps.length === 1) {
+                return filteredexps[0];
+            }
+            else {
+                return new IRLogicAndExpression(filteredexps);
+            }
+        }
+    }
+
+    private flattenCallNamespaceFunctionExpression(exp: CallNamespaceFunctionExpression): IRExpression {
+        assert(false, "ASMToIRConverter::flattenCallNamespaceFunctionExpression - Not Implemented");
+    }
+
+    private flattenCallTypeFunctionExpression(exp: CallTypeFunctionExpression): IRExpression {
+        assert(false, "ASMToIRConverter::flattenCallTypeFunctionExpression - Not Implemented");
+    }
+
+    private flattenLambdaInvokeExpression(exp: LambdaInvokeExpression): IRExpression {
+        assert(false, "ASMToIRConverter::flattenLambdaInvokeExpression - Not Implemented");
+    }
+
+    private flattenPostfixOp(exp: PostfixOp): IRExpression {
+        assert(false, "ASMToIRConverter::flattenPostfixOp - Not Implemented");
     }
 
     private unwrapBinArgs(left: IRExpression, right: IRExpression, lefttype: TypeSignature, righttype: TypeSignature): [IRSimpleExpression, IRSimpleExpression] {
@@ -562,22 +976,22 @@ class ASMToIRConverter {
             assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
         }
         else if(ttag === ExpressionTag.LambdaInvokeExpression) {
-            assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+            return this.flattenLambdaInvokeExpression(exp as LambdaInvokeExpression);
         }
         else if(ttag === ExpressionTag.SpecialConstructorExpression) {
             assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
         }
         else if(ttag === ExpressionTag.CallNamespaceFunctionExpression) {
-            assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+            return this.flattenCallNamespaceFunctionExpression(exp as CallNamespaceFunctionExpression);
         }
         else if(ttag === ExpressionTag.CallTypeFunctionExpression) {
-            assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+            return this.flattenCallTypeFunctionExpression(exp as CallTypeFunctionExpression);
         }
         else if(ttag === ExpressionTag.ParseAsTypeExpression) {
             assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
         }
         else if(ttag === ExpressionTag.PostfixOpExpression) {
-            assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+            return this.flattenPostfixOp(exp as PostfixOp);
         }
         else if(ttag === ExpressionTag.PrefixNotOpExpression) {
             const pfxnot = exp as PrefixNotOpExpression;
@@ -783,13 +1197,13 @@ class ASMToIRConverter {
             const landexp = exp as LogicAndExpression;
             const landargs = landexp.exps.map<[IRExpression, IRTypeSignature]>((argexp) => [this.makeExpressionSimple(this.flattenExpression(argexp), argexp.getType() as NominalTypeSignature), this.processTypeSignature(argexp.getType())]);
 
-            if(landargs.some((a) => (a[0] instanceof IRLiteralBoolExpression) && a[0].value === false)) {
+            if(landargs.some((a) => ASMToIRConverter.isLiteralFalseExpression(a[0]))) {
                 //if one arg was a literal bool then the return must also be a bool type (namely false)
                 return new IRLiteralBoolExpression(false);
             }
             else {
                 let resbool: IRSimpleExpression;
-                const filteredargs = landargs.filter((a) => !(a[0] instanceof IRLiteralBoolExpression));
+                const filteredargs = landargs.filter((a) => !ASMToIRConverter.isLiteralTrueExpression(a[0]));
                 if(filteredargs.length === 1) {
                     if(filteredargs[0][1].tkeystr === "Bool") {
                         resbool = filteredargs[0][0];
@@ -819,13 +1233,13 @@ class ASMToIRConverter {
             const lorexp = exp as LogicOrExpression;
             const lorargs = lorexp.exps.map<[IRExpression, IRTypeSignature]>((argexp) => [this.makeExpressionSimple(this.flattenExpression(argexp), argexp.getType() as NominalTypeSignature), this.processTypeSignature(argexp.getType())]);
 
-            if(lorargs.some((a) => (a[0] instanceof IRLiteralBoolExpression) && a[0].value === true)) {
+            if(lorargs.some((a) => ASMToIRConverter.isLiteralTrueExpression(a[0]))) {
                 //if one arg was a literal bool then the return must also be a bool type (namely true)
                 return new IRLiteralBoolExpression(true);
             }
             else {
                 let resbool: IRSimpleExpression;
-                const filteredargs = lorargs.filter((a) => !(a[0] instanceof IRLiteralBoolExpression));
+                const filteredargs = lorargs.filter((a) => !ASMToIRConverter.isLiteralFalseExpression(a[0]));
                 if(filteredargs.length === 1) {
                     if(filteredargs[0][1].tkeystr === "Bool") {
                         resbool = filteredargs[0][0];
@@ -862,45 +1276,140 @@ class ASMToIRConverter {
         }
     }
 
-    private flattenBaseRValueExpression(exp: Expression): IRExpression {
+    private flattenCallRefVariableExpression(exp: CallRefVariableExpression): IRExpression {
+        assert(false, "Not Implemented -- checkCallRefVariableExpression");
+    }
+
+    private flattenCallRefThisExpression(exp: CallRefThisExpression): IRExpression {
+        assert(false, "Not Implemented -- checkCallRefThisExpression");
+    }
+
+    private flattenCallRefSelfExpression(exp: CallRefSelfExpression): IRExpression {
+        assert(false, "Not Implemented -- checkCallRefSelfExpression");
+    }
+
+    private flattenCallTaskActionExpression(exp: CallTaskActionExpression): IRExpression {
+        assert(false, "Not Implemented -- checkCallTaskActionExpression");
+    }
+
+    private flattenChkLogicExpression(exp: ChkLogicExpression): IRSimpleExpression {
+        if(exp.tag === ChkLogicExpressionTag.ChkLogicBaseExpression) {
+            const cle = exp as ChkLogicBaseExpression;
+
+            return this.coerceToBoolForTest(this.makeExpressionSimple(this.flattenExpression(cle.exp), cle.exp.getType()), cle.exp.getType());
+        }
+        else {
+            const iiexp = exp as ChkLogicImpliesExpression;
+            const renv = this.flattenITestGuardSet(iiexp.sinfo, iiexp.lhs);
+
+            let [tenv] = env.generateBranchFlows(renv);
+            const tresult = this.checkExpression(tenv, iiexp.rhs, undefined); //tenv is modified in place with used var info
+            this.checkError(iiexp.sinfo, !(tresult instanceof ErrorTypeSignature) && this.relations.isBooleanType(tresult), "Right hand side of 'implies' must be a valid Bool compatible expression");
+
+            const [nenv] = tenv.popLocalScope();
+            env.updateUsedBindersFromOtherEnv(nenv);
+
+            iiexp.trueBinders = renv.bbinds.filter((b) => b.ttrue !== undefined).map((b) => b.convertToStructInfoTrue());
+            
+            return this.getWellKnownType("Bool");
+        }
+    }
+
+    private flattenConditionalValueExpression(env: TypeEnvironment, exp: ConditionalValueExpression, typeinfer: TypeInferContext | undefined): TypeSignature {
+        const renv = this.processITestGuardSet(exp.sinfo, env, exp.guardset);
+
+        this.checkError(exp.sinfo, renv.alwaysfalse, "Condition is never true -- true branch of if is unreachable");
+        this.checkError(exp.sinfo, renv.alwaystrue, "Condition is never false -- false branch of if is unreachable");
+
+        let [tenv, fenv] = env.generateBranchFlows(renv);
+
+        const ttype = this.checkExpression(tenv, exp.trueValue, typeinfer);
+        const ftype = this.checkExpression(fenv, exp.falseValue, typeinfer);
+
+        env.updateUsedBindersFromOtherEnv(tenv);
+        env.updateUsedBindersFromOtherEnv(fenv);
+
+        exp.trueBinders = renv.bbinds.filter((b) => b.ttrue !== undefined).map((b) => b.convertToStructInfoTrue());
+        exp.falseBinders = renv.bbinds.filter((b) => b.tfalse !== undefined).map((b) => b.convertToStructInfoFalse());
+
+        if(ttype instanceof ErrorTypeSignature || ftype instanceof ErrorTypeSignature) {
+            exp.rtype = new ErrorTypeSignature(exp.sinfo, undefined);
+        }
+        else {
+            const jtype = this.relations.flowTypeLUB(exp.sinfo, TypeInferContext.asSimpleType(typeinfer), [ttype, ftype], this.constraints);
+            this.checkError(exp.sinfo, jtype instanceof ErrorTypeSignature, "Could not unify types of true and false branches of if expression");
+
+            exp.rtype = jtype;
+        }
+
+        return exp.rtype;
+    }
+
+    private flattenBaseRValueExpression(env: TypeEnvironment, exp: Expression, typeinfer: TypeInferContext | undefined): TypeResultWRefVarInfoResult {
         const ttag = exp.tag;
 
         switch (ttag) {
             case ExpressionTag.CallRefVariableExpression: {
-                assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+                return this.checkCallRefVariableExpression(env, exp as CallRefVariableExpression);
             }
             case ExpressionTag.CallRefThisExpression: {
-                assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+                return this.checkCallRefThisExpression(env, exp as CallRefThisExpression);
             }
             case ExpressionTag.CallRefSelfExpression: {
-                assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+                return this.checkCallRefSelfExpression(env, exp as CallRefSelfExpression);
             }
             case ExpressionTag.CallTaskActionExpression: {
-                assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+                return this.checkCallTaskActionExpression(env, exp as CallTaskActionExpression);
             }
             case ExpressionTag.TaskRunExpression: {
-                assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+                return TypeResultWRefVarInfoResult.makeSimpleResult(this.checkTaskRunExpression(env, exp as TaskRunExpression));
             }
             case ExpressionTag.TaskMultiExpression: {
-                assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+                return TypeResultWRefVarInfoResult.makeSimpleResult(this.checkTaskMultiExpression(env, exp as TaskMultiExpression));
             }
             case ExpressionTag.TaskDashExpression: {
-                assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+                return TypeResultWRefVarInfoResult.makeSimpleResult(this.checkTaskDashExpression(env, exp as TaskDashExpression));
             }
             case ExpressionTag.TaskAllExpression: {
-                assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+                return TypeResultWRefVarInfoResult.makeSimpleResult(this.checkTaskAllExpression(env, exp as TaskAllExpression));
             }
             case ExpressionTag.TaskRaceExpression: {
-                assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+                return TypeResultWRefVarInfoResult.makeSimpleResult(this.checkTaskRaceExpression(env, exp as TaskRaceExpression));
             }
             case ExpressionTag.APIInvokeExpression: {
-                assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+                return TypeResultWRefVarInfoResult.makeSimpleResult(this.checkAPIInvokeExpression(env, exp as APIInvokeExpression));
             }
             case ExpressionTag.AgentInvokeExpression: {
-                assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+                return TypeResultWRefVarInfoResult.makeSimpleResult(this.checkAgentInvokeExpression(env, exp as AgentInvokeExpression));
             }
             default: {
-                return this.flattenExpression(exp);
+                if(ttag === ExpressionTag.CallNamespaceFunctionExpression) {
+                    return this.checkCallNamespaceFunctionExpression(env, true, exp as CallNamespaceFunctionExpression, true);
+                }
+                else if(ttag === ExpressionTag.CallTypeFunctionExpression) {
+                    return this.checkCallTypeFunctionExpression(env, true, exp as CallTypeFunctionExpression, true);
+                }
+                else if(ttag === ExpressionTag.LambdaInvokeExpression) {
+                    return this.checkLambdaInvokeExpression(env, true, exp as LambdaInvokeExpression, true);
+                }
+                else if(ttag === ExpressionTag.PostfixOpExpression) {
+                    return this.checkPostfixOpMaybeRefs(env, exp as PostfixOp, typeinfer);
+                }
+                else if(ttag === ExpressionTag.PrefixNotOpExpression) {
+                    const tte = this.processITestGuardExpression(env, (exp as PrefixNotOpExpression).exp, false);
+                    assert(tte.bbinds.length === 0, "These should be set in the itest part (not the expression part) probably bad nesting");
+
+                    return new TypeResultWRefVarInfoResult(tte.tsig, false, false, {ttrue: tte.setcondout.tfalse, tfalse: tte.setcondout.ttrue}, tte.setuncond, tte.usemod, []);
+                }
+                else if(ttag === ExpressionTag.LogicAndExpression) {
+                    const aexps = (exp as LogicAndExpression).exps.map((e) => this.processITestGuardExpression(env, e, false));
+                    assert(aexps.every((a) => a.bbinds.length === 0), "These should be set in the itest part (not the expression part) probably bad nesting");
+
+                    return TypeResultWRefVarInfoResult.andstates(aexps);
+                }
+                else {
+                    return TypeResultWRefVarInfoResult.makeSimpleResult(this.checkExpression(env, exp, typeinfer));
+                }
             }
         }
     }
@@ -925,12 +1434,6 @@ class ASMToIRConverter {
         }
     }
 
-    /*
-    private checkExpressionRootCondition(env: TypeEnvironment, exp: xxx): TypeSignature {
-        xxxx;
-    }
-    */
-
     private flattenEmptyStatement(stmt: EmptyStatement) {
         this.pushStatement(new IRNopStatement());
     }
@@ -950,6 +1453,7 @@ class ASMToIRConverter {
         const irval = this.flattenExpressionRHS(stmt.exp);
         const irvtype = this.processTypeSignature(stmt.vtype);
 
+        xxxx;
         if(irval instanceof IRSimpleExpression) {
             return this.pushStatement(new IRVariableInitializationStatement(this.processLocalVariableName(stmt.name), irvtype, irval, stmt.vkind === "let"));
         }
@@ -1021,7 +1525,7 @@ class ASMToIRConverter {
     }
     
     private flattenValidateStatement(stmt: ValidateStatement) {
-        assert(false, "Not Implemented -- flattenValidateStatement");
+        xxxx;
     }
 
     private flattenDebugStatement(stmt: DebugStatement) {
