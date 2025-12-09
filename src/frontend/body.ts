@@ -2099,6 +2099,8 @@ enum RValueExpressionTag {
 
 abstract class RValueExpression {
     readonly tag: RValueExpressionTag;
+    
+    rtype: TypeSignature | undefined = undefined;
 
     constructor(tag: RValueExpressionTag) {
         this.tag = tag;
@@ -2115,7 +2117,6 @@ class ConditionalValueExpression extends RValueExpression {
     readonly trueValue: Expression
     readonly falseValue: Expression;
 
-    rtype: TypeSignature | undefined = undefined;
     trueBinders: { gidx: number, bvname: string, tsig: TypeSignature }[] = [];
     falseBinders: { gidx: number, bvname: string, tsig: TypeSignature }[] = [];
 

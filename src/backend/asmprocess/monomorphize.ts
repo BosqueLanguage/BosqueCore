@@ -777,14 +777,6 @@ class Monomorphizer {
         this.instantiateExpression(exp.vexp);
     }
 
-    private instantiateAPIInvokeExpression(exp: APIInvokeExpression) {
-        assert(false, "Not Implemented");
-    }
-    
-    private instantiateAgentInvokeExpression(exp: AgentInvokeExpression) {
-        assert(false, "Not Implemented");
-    }
-
     // Add our rope instantiation here, check if we are cstring or string and go lookup ns to find the constructor for the correct size
     private instantiateExpression(exp: Expression) {
         this.instantiateTypeSignature(exp.getType(), this.currentMapping);
@@ -998,14 +990,6 @@ class Monomorphizer {
                 this.instantiateMapEntryConstructorExpression(exp as MapEntryConstructorExpression);
                 break;
             }
-            case ExpressionTag.APIInvokeExpression: {
-                this.instantiateAPIInvokeExpression(exp as APIInvokeExpression);
-                break;
-            }
-            case ExpressionTag.AgentInvokeExpression: {
-                this.instantiateAgentInvokeExpression(exp as AgentInvokeExpression);
-                break;
-            }
             default: {
                 ; //handled by the type signature instantiation on exp type
             }
@@ -1082,6 +1066,14 @@ class Monomorphizer {
         assert(false, "Not Implemented -- instantiateTaskRaceExpression");
     }
 
+    private instantiateAPIInvokeExpression(exp: APIInvokeExpression) {
+        assert(false, "Not Implemented");
+    }
+    
+    private instantiateAgentInvokeExpression(exp: AgentInvokeExpression) {
+        assert(false, "Not Implemented");
+    }
+
     private instantiateChkLogicExpression(exp: ChkLogicExpression) {
         if(exp.tag === ChkLogicExpressionTag.ChkLogicBaseExpression) {
             return this.instantiateExpression((exp as ChkLogicBaseExpression).exp);
@@ -1139,6 +1131,14 @@ class Monomorphizer {
                 this.instantiateTaskRaceExpression(exp as TaskRaceExpression);
                 break;
             }
+            case ExpressionTag.APIInvokeExpression: {
+                this.instantiateAPIInvokeExpression(exp as APIInvokeExpression);
+                break;
+            }
+            case ExpressionTag.AgentInvokeExpression: {
+                this.instantiateAgentInvokeExpression(exp as AgentInvokeExpression);
+                break;
+            }
             default: {
                 this.instantiateExpression(exp);
                 break;
@@ -1150,7 +1150,7 @@ class Monomorphizer {
         const ttag = exp.tag;
         
         if(ttag === RValueExpressionTag.BaseExpression) {
-            return this.instantiateBaseRValueExpression((exp as BaseRValueExpression).exp);
+            this.instantiateBaseRValueExpression((exp as BaseRValueExpression).exp);
         }
         else if(ttag === RValueExpressionTag.ShortCircuitAssignRHSExpressionFail) {
             assert(false, "Not Implemented -- checkShortCircuitAssignRHSFailExpression");
@@ -1159,11 +1159,13 @@ class Monomorphizer {
             assert(false, "Not Implemented -- checkShortCircuitAssignRHSReturnExpression");
         }
         else if(ttag === RValueExpressionTag.ConditionalValueExpression) {
-            return this.instantiateConditionalValueExpression(exp as ConditionalValueExpression);
+            this.instantiateConditionalValueExpression(exp as ConditionalValueExpression);
         }
         else {
             assert(false, "Unknown RValueExpression kind");
         }
+
+        this.instantiateTypeSignature(exp.rtype as TypeSignature, this.currentMapping);
     }
 
     private instantiateEmptyStatement(stmt: EmptyStatement) {

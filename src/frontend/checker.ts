@@ -3347,8 +3347,9 @@ class TypeChecker {
     private checkExpressionRHS(env: TypeEnvironment, exp: RValueExpression, typeinfer: TypeInferContext | undefined): TypeResultWRefVarInfoResult {
         const ttag = exp.tag;
         
+        let cbb: TypeResultWRefVarInfoResult;
         if(ttag === RValueExpressionTag.BaseExpression) {
-            return this.checkBaseRValueExpression(env, (exp as BaseRValueExpression).exp, typeinfer);
+            cbb = this.checkBaseRValueExpression(env, (exp as BaseRValueExpression).exp, typeinfer);
         }
         else if(ttag === RValueExpressionTag.ShortCircuitAssignRHSExpressionFail) {
             assert(false, "Not Implemented -- checkShortCircuitAssignRHSFailExpression");
@@ -3357,11 +3358,14 @@ class TypeChecker {
             assert(false, "Not Implemented -- checkShortCircuitAssignRHSReturnExpression");
         }
         else if(ttag === RValueExpressionTag.ConditionalValueExpression) {
-            return TypeResultWRefVarInfoResult.makeSimpleResult(this.checkConditionalValueExpression(env, exp as ConditionalValueExpression, typeinfer));
+            cbb = TypeResultWRefVarInfoResult.makeSimpleResult(this.checkConditionalValueExpression(env, exp as ConditionalValueExpression, typeinfer));
         }
         else {
             assert(false, "Unknown RValueExpression kind");
         }
+        
+        exp.rtype = cbb.tsig;
+        return cbb;
     }
 
     private checkEmptyStatement(env: TypeEnvironment, stmt: EmptyStatement): TypeEnvironment {

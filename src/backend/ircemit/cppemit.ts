@@ -2,7 +2,7 @@ import { TransformCPPNameManager } from "./namemgr";
 import { TypeInfoManager } from "./typeinfomgr";
 
 import { MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_INT } from "../../frontend/assembly";
-import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessNamespaceConstantExpression, IRAccessStaticFieldExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRLiteralByteBufferExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag, IRPrefixNotOpExpression, IRPrefixPlusOpExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRReturnValueSimpleStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement, IRAbortStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRTempAssignExpressionStatement, IRTypeDeclInvariantCheckStatement, IRDebugStatement, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRChkLogicImpliesShortCircuitStatement, IRBlockStatement, IRPreconditionCheckStatement, IRPostconditionCheckStatement } from "../irdefs/irbody";
+import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessNamespaceConstantExpression, IRAccessStaticFieldExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRLiteralByteBufferExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag, IRPrefixNotOpExpression, IRPrefixPlusOpExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRReturnValueSimpleStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement, IRAbortStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRTempAssignExpressionStatement, IRTypeDeclInvariantCheckStatement, IRDebugStatement, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRChkLogicImpliesShortCircuitStatement, IRBlockStatement, IRPreconditionCheckStatement, IRPostconditionCheckStatement, IRVariableInitializationDirectInvokeStatement, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement } from "../irdefs/irbody";
 
 import assert from "node:assert";
 
@@ -333,6 +333,10 @@ class CPPEmitter {
                 const args = bexp.args.map((arg) => this.emitIRSimpleExpression(arg, false));
                 bstr = args.join(" | ");
             }
+            else if(ttag === IRExpressionTag.IRLogicSimpleConditionalExpression) {
+                const cexp = exps as IRLogicSimpleConditionalExpression;
+                bstr = `(${this.emitIRSimpleExpression(cexp.condition, false)} ? ${this.emitIRSimpleExpression(cexp.trueexp, false)} : ${this.emitIRSimpleExpression(cexp.falseexp, false)})`;
+            }
             else {
                 assert(false, `CPPEmitter: Unsupported IR simple expression type -- ${exps.constructor.name}`);
             }
@@ -375,6 +379,19 @@ class CPPEmitter {
             else if(ttag === IRExpressionTag.IRTaskAccessParentIDExpression) {
                 return `(${RUNTIME_NAMESPACE}::tl_info.parent !== nullptr ? ${RUNTIME_NAMESPACE}::tl_info.parent->taskid : ${RUNTIME_NAMESPACE}::UUIDv4::nil())`;
             }
+            
+            else if(ttag === IRExpressionTag.IRInvokeSimpleExpression) {
+                assert(false, "CPPEmitter: need to implement simple invoke expression");
+            }
+            else if(ttag === IRExpressionTag.IRInvokeVirtualSimpleExpression) {
+                assert(false, "CPPEmitter: need to implement virtual simple invoke expression");
+            }
+            else if(ttag === IRExpressionTag.IRInvokeSimpleWithImplicitsExpression) {
+                assert(false, "CPPEmitter: need to implement simple with implicits invoke expression");
+            }
+            else if(ttag === IRExpressionTag.IRInvokeVirtualWithImplicitsExpression) {
+                assert(false, "CPPEmitter: need to implement virtual with implicits invoke expression");
+            }
             else {
                 assert(false, `CPPEmitter: Unsupported IR expression type -- ${exp.constructor.name}`);
             }
@@ -395,13 +412,10 @@ class CPPEmitter {
             return `${vdecltype} ${TransformCPPNameManager.convertIdentifier(tase.tname)} = ${wval};`
         }
         else if(ttag === IRStatementTag.IRTempAssignStdInvokeStatement) {
-            assert(false, "CPPEmitter: need to implement std invoke temp assign");
+            xxxx;
         }
         else if(ttag === IRStatementTag.IRTempAssignRefInvokeStatement) {
-            assert(false, "CPPEmitter: need to implement ref invoke temp assign");
-        }
-        else if(ttag === IRStatementTag.IRTempAssignConditionalStatement) {
-            assert(false, "CPPEmitter: need to implement conditional temp assign");
+            xxxx;
         }
         else if(ttag === IRStatementTag.IRVariableDeclarationStatement) {
             const vdeclstmt = stmt as IRVariableDeclarationStatement;
@@ -416,6 +430,13 @@ class CPPEmitter {
             const wval = this.emitIRSimpleExpression(vistmt.initexp, true);
             return `${vdecltype} ${TransformCPPNameManager.convertIdentifier(vistmt.vname)} = ${wval};`
         }
+        else if(ttag === IRStatementTag.IRVariableInitializationDirectInvokeStatement) {
+            const vistmt = stmt as IRVariableInitializationDirectInvokeStatement;
+
+            const vdecltype = this.typeInfoManager.emitTypeAsStd(vistmt.vtype.tkeystr, vistmt.isconst);
+            const wval = this.emitExpression(vistmt.initexp, true);
+            return `${vdecltype} ${TransformCPPNameManager.convertIdentifier(vistmt.vname)} = ${wval};`
+        }
         else if(ttag === IRStatementTag.IRReturnVoidSimpleStatement) {
             return "return;";
         }
@@ -423,9 +444,20 @@ class CPPEmitter {
             const ires = stmt as IRReturnValueSimpleStatement;
             return `return ${this.emitIRSimpleExpression(ires.retexp, true)};`;
         }
+        else if(ttag === IRStatementTag.IRReturnDirectInvokeStatement) {
+            const ires = stmt as IRReturnValueSimpleStatement;
+            return `return ${this.emitExpression(ires.retexp, true)};`;
+        }
         else if(ttag === IRStatementTag.IRChkLogicImpliesShortCircuitStatement) {
             const icliss = stmt as IRChkLogicImpliesShortCircuitStatement;
-            return `Bool ${icliss.tvar} = TRUE; if(${this.emitIRSimpleExpression(icliss.lhs, true)}) ${this.emitBlockStatement(icliss.rhs, undefined)}`;
+            const bb = this.emitStatementList(icliss.rstmts, undefined, [`${TransformCPPNameManager.convertIdentifier(icliss.tvar)} = ${this.emitIRSimpleExpression(icliss.rexp, true)};`], undefined);
+            return `Bool ${TransformCPPNameManager.convertIdentifier(icliss.tvar)} = TRUE; if(${this.emitIRSimpleExpression(icliss.lhs, true)}) ${bb}`;
+        }
+        else if(ttag === IRStatementTag.IRLogicConditionalStatement) {
+            const ilcs = stmt as IRLogicConditionalStatement;
+            const tb = this.emitStatementList(ilcs.truestmt, undefined, [`${TransformCPPNameManager.convertIdentifier(ilcs.tvar)} = ${this.emitIRSimpleExpression(ilcs.trueexp, true)};`], undefined);
+            const fb = this.emitStatementList(ilcs.falsestmt, undefined, [`${TransformCPPNameManager.convertIdentifier(ilcs.tvar)} = ${this.emitIRSimpleExpression(ilcs.falseexp, true)};`], undefined);
+            return `${this.typeInfoManager.emitTypeAsStd(ilcs.ttype.tkeystr, false)} ${TransformCPPNameManager.convertIdentifier(ilcs.tvar)}; if(${this.emitIRSimpleExpression(ilcs.condition, true)}) ${tb} else ${fb}`;
         }
         else if(ttag === IRStatementTag.IRErrorAdditionBoundsCheckStatement) {
             const ieabc = stmt as IRErrorAdditionBoundsCheckStatement;
@@ -459,7 +491,7 @@ class CPPEmitter {
         }
         else if(ttag === IRStatementTag.IRPostconditionCheckStatement) {
             const ipcs = stmt as IRPostconditionCheckStatement;
-            
+
             const postchk = `${TransformCPPNameManager.generateNameForInvokePostconditionCheck(ipcs.ikey, ipcs.ensuresidx)}(${ipcs.args.map((arg) => this.emitIRSimpleExpression(arg, true)).join(", ")}, ${ipcs.file}, ${ipcs.sinfo.line})`
             const dtag = ipcs.diagnosticTag !== null ? `"${ipcs.diagnosticTag}"` : "nullptr";
             return `ᐸRuntimeᐳ::bsq_ensures(${postchk}, "${ipcs.file}", ${ipcs.sinfo.line}, ${dtag}, "Failed Ensures");`;
@@ -488,8 +520,10 @@ class CPPEmitter {
         }
     }
 
-    private emitBlockStatement(stmts: IRBlockStatement, indent: string | undefined): string {
-        const stmtstrs = stmts.statements.map((stmt) => this.emitStatement(stmt));
+    private emitStatementList(stmts: IRStatement[], prefx: string[] | undefined, postfix: string[] | undefined, indent: string | undefined): string {
+        const slstrs = stmts.map((stmt) => this.emitStatement(stmt));
+        const stmtstrs = (prefx !== undefined || postfix !== undefined) ? [...(prefx || []), ...slstrs, ...(postfix || [])] : slstrs;
+
         if(indent === undefined) {
             return stmtstrs.join(" ");
         }
@@ -497,6 +531,10 @@ class CPPEmitter {
             const bindent = indent + "    ";
             return `{\n${bindent}${stmtstrs.map((s) => bindent + s).join("\n")}\n${indent}}`;
         }
+    }
+
+    private emitBlockStatement(stmts: IRBlockStatement, indent: string | undefined): string {
+        return this.emitStatementList(stmts.statements, undefined, undefined, indent);
     }
 }
 

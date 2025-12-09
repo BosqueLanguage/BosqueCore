@@ -112,6 +112,8 @@ enum IRExpressionTag {
     //
     //TODO: lots more expression types here
     //
+
+    IRLogicSimpleConditionalExpression = "IRLogicSimpleConditionalExpression"
 }
 
 abstract class IRExpression {
@@ -144,12 +146,16 @@ abstract class IRInvokeDirectExpression extends IRInvokeExpression {
 /* This class represents expressions that have implicit return values */
 abstract class IRInvokeImplicitsExpression extends IRInvokeExpression {
     readonly implicitidx: number;
-    readonly implicitkind: "ref" | "out" | "out?" | "inout";
+    readonly ivar: string; //the implicit variable to assign the returned ref/out/out?/inout parameter
+    readonly ivartype: IRTypeSignature;
+    readonly passkind : "ref" | "out" | "out?" | "inout";
 
-    constructor(tag: IRExpressionTag, ikey: string, args: IRSimpleExpression[], implicitidx: number, implicitkind: "ref" | "out" | "out?" | "inout") {
+    constructor(tag: IRExpressionTag, ikey: string, args: IRSimpleExpression[], implicitidx: number, ivar: string, ivartype: IRTypeSignature, passkind: "ref" | "out" | "out?" | "inout") {
         super(tag, ikey, args);
         this.implicitidx = implicitidx;
-        this.implicitkind = implicitkind;
+        this.ivar = ivar;
+        this.ivartype = ivartype;
+        this.passkind = passkind;
     }
 }
 
@@ -180,7 +186,6 @@ enum IRStatementTag {
     IRTempAssignExpressionStatement = "IRTempAssignExpressionStatement",
     IRTempAssignStdInvokeStatement = "IRTempAssignStdInvokeStatement",
     IRTempAssignRefInvokeStatement = "IRTempAssignRefInvokeStatement",
-    IRTempAssignConditionalStatement = "IRTempAssignConditionalStatement",
 
     IRVariableDeclarationStatement = "IRVariableDeclarationStatement",
     IRVariableInitializationStatement = "IRVariableInitializationStatement",
@@ -193,6 +198,8 @@ enum IRStatementTag {
     IRReturnDirectInvokeStatement = "IRReturnDirectInvokeStatement",
 
     IRChkLogicImpliesShortCircuitStatement = "IRChkLogicImpliesShortCircuitStatement",
+
+    IRLogicConditionalStatement = "IRLogicConditionalStatement",
 
     //TODO: lots more statement types here
 
@@ -912,8 +919,8 @@ class IRInvokeSimpleExpression extends IRInvokeDirectExpression {
 
 /** Simple invocations functions/methods/lambdas that have any special ref/out/out?/inout parameters **/
 class IRInvokeSimpleWithImplicitsExpression extends IRInvokeImplicitsExpression {
-    constructor(ikey: string, args: IRSimpleExpression[], implicitidx: number, implicitkind: "ref" | "out" | "out?" | "inout") {
-        super(IRExpressionTag.IRInvokeSimpleWithImplicitsExpression, ikey, args, implicitidx, implicitkind);
+    constructor(ikey: string, args: IRSimpleExpression[], implicitidx: number, ivar: string, ivartype: IRTypeSignature, passkind: "ref" | "out" | "out?" | "inout") {
+        super(IRExpressionTag.IRInvokeSimpleWithImplicitsExpression, ikey, args, implicitidx, ivar, ivartype, passkind);
     }
 }
 
@@ -931,8 +938,8 @@ class IRInvokeVirtualSimpleExpression extends IRInvokeDirectExpression {
 class IRInvokeVirtualWithImplicitsExpression extends IRInvokeImplicitsExpression {
     readonly rcvr: IRImmediateExpression;
 
-    constructor(ikey: string, rcvr: IRImmediateExpression, args: IRSimpleExpression[], implicitidx: number, implicitkind: "ref" | "out" | "out?" | "inout") {
-        super(IRExpressionTag.IRInvokeVirtualWithImplicitsExpression, ikey, args, implicitidx, implicitkind);
+    constructor(ikey: string, rcvr: IRImmediateExpression, args: IRSimpleExpression[], implicitidx: number, ivar: string, ivartype: IRTypeSignature, passkind: "ref" | "out" | "out?" | "inout") {
+        super(IRExpressionTag.IRInvokeVirtualWithImplicitsExpression, ikey, args, implicitidx, ivar, ivartype, passkind);
         this.rcvr = rcvr;
     }
 }
@@ -1077,6 +1084,19 @@ class IRLogicOrExpression extends IRLogicOpExpression {
     }
 }
 
+class IRLogicSimpleConditionalExpression extends IRSimpleExpression {
+    readonly condition: IRSimpleExpression;
+    readonly trueexp: IRSimpleExpression;
+    readonly falseexp: IRSimpleExpression;
+
+    constructor(condition: IRSimpleExpression, trueexp: IRSimpleExpression, falseexp: IRSimpleExpression) {
+        super(IRExpressionTag.IRLogicSimpleConditionalExpression);
+        this.condition = condition;
+        this.trueexp = trueexp;
+        this.falseexp = falseexp;
+    }
+}
+
 //
 //TODO: lots more expression types here
 //
@@ -1099,13 +1119,30 @@ class IRTempAssignExpressionStatement extends IRTempAssignStatement {
     }
 }
 
+//We may need to check error results on this in smt
 class IRTempAssignStdInvokeStatement extends IRTempAssignStatement {
+    readonly rhs: IRInvokeSimpleExpression;
+
+    constructor(tname: string, rhs: IRInvokeSimpleExpression, ttype: IRTypeSignature) {
+        super(IRStatementTag.IRTempAssignStdInvokeStatement, tname, ttype);
+        this.rhs = rhs;
+    }
 }
 
+//We definitely need to have the var type include the ref/out/intout.. placeholder info AND may need to check error results on this in smt
 class IRTempAssignRefInvokeStatement extends IRTempAssignStatement {
-}
+    readonly ivar: string; //the implicit variable to assign the returned ref/out/out?/inout parameter
+    readonly ivartype: IRTypeSignature;
+    readonly passkind : "ref" | "out" | "out?" | "inout";
+    readonly rhs: IRInvokeImplicitsExpression;
 
-class IRTempAssignConditionalStatement extends IRTempAssignStatement {
+    constructor(tname: string, ttype: IRTypeSignature, ivar: string, ivartype: IRTypeSignature, passkind: "ref" | "out" | "out?" | "inout", rhs: IRInvokeImplicitsExpression) {
+        super(IRStatementTag.IRTempAssignRefInvokeStatement, tname, ttype);
+        this.ivar = ivar;
+        this.ivartype = ivartype;
+        this.passkind = passkind;
+        this.rhs = rhs;
+    }
 }
 
 class IRVariableDeclarationStatement extends IRAtomicStatement {
@@ -1180,13 +1217,36 @@ class IRReturnDirectInvokeStatement extends IRReturnSimpleStatement {
 class IRChkLogicImpliesShortCircuitStatement extends IRStatement {
     readonly tvar: string; //the temp variable to hold the result
     readonly lhs: IRSimpleExpression;
-    readonly rhs: IRBlockStatement;
+    readonly rstmts: IRStatement[];
+    readonly rexp: IRSimpleExpression;
 
-    constructor(tvar: string, lhs: IRSimpleExpression, rhs: IRBlockStatement) {
+    constructor(tvar: string, lhs: IRSimpleExpression, rstmts: IRStatement[], rexp: IRSimpleExpression) {
         super(IRStatementTag.IRChkLogicImpliesShortCircuitStatement);
         this.tvar = tvar;
         this.lhs = lhs;
-        this.rhs = rhs;
+        this.rstmts = rstmts;
+        this.rexp = rexp;
+    }
+}
+
+class IRLogicConditionalStatement extends IRStatement {
+    readonly tvar: string; //the temp variable to hold the result
+    readonly ttype: IRTypeSignature;
+    readonly condition: IRSimpleExpression;
+    readonly truestmt: IRStatement[];
+    readonly trueexp: IRSimpleExpression;
+    readonly falsestmt: IRStatement[];
+    readonly falseexp: IRSimpleExpression;
+
+    constructor(tvar: string, ttype: IRTypeSignature, condition: IRSimpleExpression, truestmt: IRStatement[], trueexp: IRSimpleExpression, falsestmt: IRStatement[], falseexp: IRSimpleExpression) {
+        super(IRStatementTag.IRLogicConditionalStatement);
+        this.tvar = tvar;
+        this.ttype = ttype;
+        this.condition = condition;
+        this.truestmt = truestmt;
+        this.trueexp = trueexp;
+        this.falsestmt = falsestmt;
+        this.falseexp = falseexp;
     }
 }
 
@@ -1322,16 +1382,19 @@ export {
     IRNumericComparisonExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression,
     IRLogicOpExpression, IRLogicAndExpression, IRLogicOrExpression,
 
+    IRLogicSimpleConditionalExpression,
+
     IRStatementTag, IRStatement, IRAtomicStatement, IRReturnSimpleStatement, IRReturnWithImplicitStatement,
     IRErrorCheckStatement, IRErrorBinArithCheckStatement,
 
     IRNopStatement,
-    IRTempAssignExpressionStatement, IRTempAssignStdInvokeStatement, IRTempAssignRefInvokeStatement, IRTempAssignConditionalStatement,
+    IRTempAssignExpressionStatement, IRTempAssignStdInvokeStatement, IRTempAssignRefInvokeStatement,
 
     IRVariableDeclarationStatement, IRVariableInitializationStatement, IRVariableInitializationDirectInvokeStatement,
     
     IRReturnVoidSimpleStatement, IRReturnValueSimpleStatement, IRReturnDirectInvokeStatement,
     IRChkLogicImpliesShortCircuitStatement,
+    IRLogicConditionalStatement,
 
     IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement,
     IRTypeDeclInvariantCheckStatement,
