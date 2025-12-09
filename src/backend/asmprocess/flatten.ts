@@ -1656,8 +1656,8 @@ class ASMToIRConverter {
     }
 
     private flattenDebugStatement(stmt: DebugStatement) {
-        const irval = this.makeExpressionSimple(this.flattenExpressionRHS(stmt.exp), stmt.exp.rtype as TypeSignature);
-        const irtype = this.processTypeSignature(stmt.exp.rtype as TypeSignature);
+        const irval = this.makeExpressionSimple(this.flattenExpression(stmt.value), stmt.value.getType());
+        const irtype = this.processTypeSignature(stmt.value.getType());
 
         this.pushStatement(new IRDebugStatement(irtype, irval, this.currentFile as string, stmt.sinfo));
     }
