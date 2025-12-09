@@ -154,6 +154,8 @@ enum IRStatementTag {
     IRReturnVoidSimpleStatement = "IRReturnVoidSimpleStatement",
     IRReturnValueSimpleStatement = "IRReturnValueSimpleStatement",
 
+    IRChkLogicImpliesShortCircuitStatement = "IRChkLogicImpliesShortCircuitStatement",
+
     //TODO: lots more statement types here
 
     IRErrorAdditionBoundsCheckStatement = "IRErrorAdditionBoundsCheckStatement",
@@ -1079,6 +1081,19 @@ class IRReturnValueSimpleStatement extends IRReturnSimpleStatement {
     }
 }
 
+class IRChkLogicImpliesShortCircuitStatement extends IRStatement {
+    readonly tvar: string; //the temp variable to hold the result
+    readonly lhs: IRSimpleExpression;
+    readonly rhs: IRBlockStatement;
+
+    constructor(tvar: string, lhs: IRSimpleExpression, rhs: IRBlockStatement) {
+        super(IRStatementTag.IRChkLogicImpliesShortCircuitStatement);
+        this.tvar = tvar;
+        this.lhs = lhs;
+        this.rhs = rhs;
+    }
+}
+
 class IRErrorAdditionBoundsCheckStatement extends IRErrorBinArithCheckStatement {
     constructor(file: string, sinfo: SourceInfo, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt") {
         super(IRStatementTag.IRErrorAdditionBoundsCheckStatement, file, sinfo, undefined, checkID, left, right, optypechk);
@@ -1117,9 +1132,9 @@ class IRTypeDeclInvariantCheckStatement extends IRErrorCheckStatement {
 
 /* This asserts that the given precondition expression is true */
 class IRPreconditionCheckStatement extends IRErrorCheckStatement {
-    readonly cond: IRExpression;
+    readonly cond: IRSimpleExpression;
 
-    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, cond: IRExpression) {
+    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, cond: IRSimpleExpression) {
         super(IRStatementTag.IRPreconditionCheckStatement, file, sinfo, diagnosticTag, checkID);
         this.cond = cond;
     }
@@ -1127,9 +1142,9 @@ class IRPreconditionCheckStatement extends IRErrorCheckStatement {
 
 /* This asserts that the given postcondition expresssion is true */
 class IRPostconditionCheckStatement extends IRErrorCheckStatement {
-    readonly cond: IRExpression;
+    readonly cond: IRSimpleExpression;
 
-    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, cond: IRExpression) {
+    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, cond: IRSimpleExpression) {
         super(IRStatementTag.IRPostconditionCheckStatement, file, sinfo, diagnosticTag, checkID);
         this.cond = cond;
     }
@@ -1155,6 +1170,14 @@ class IRDebugStatement extends IRAtomicStatement {
 
         this.file = file;
         this.line = sinfo.line;
+    }
+}
+
+class IRBlockStatement {
+    readonly statements: IRStatement[];
+
+    constructor(statements: IRStatement[]) {
+        this.statements = statements;
     }
 }
 
@@ -1200,9 +1223,12 @@ export {
     IRVariableDeclarationStatement, IRVariableInitializationStatement,
     
     IRReturnVoidSimpleStatement, IRReturnValueSimpleStatement,
+    IRChkLogicImpliesShortCircuitStatement,
 
     IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement,
     IRTypeDeclInvariantCheckStatement,
     IRPreconditionCheckStatement, IRPostconditionCheckStatement,
-    IRAbortStatement, IRDebugStatement
+    IRAbortStatement, IRDebugStatement,
+
+    IRBlockStatement
 };

@@ -108,6 +108,14 @@ class TransformCPPNameManager {
     static generateNameForFieldDefaultFunction(tkey: string, fname: string): string {
         return TransformCPPNameManager.convertTypeKey(tkey) + s_specialop_sep + "default" + s_specialop_sep + TransformCPPNameManager.safeifyName(fname);
     }
+
+    static generateNameForInvokePreconditionCheck(ikey: string): string {
+        return TransformCPPNameManager.convertInvokeKey(ikey) + s_specialop_sep + "requires";
+    }
+
+    static generateNameForInvokePostconditionCheck(ikey: string): string {
+        return TransformCPPNameManager.convertInvokeKey(ikey) + s_specialop_sep + "ensures";
+    }
 }
 
 export {

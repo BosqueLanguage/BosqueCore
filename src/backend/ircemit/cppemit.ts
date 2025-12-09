@@ -2,7 +2,7 @@ import { TransformCPPNameManager } from "./namemgr";
 import { TypeInfoManager } from "./typeinfomgr";
 
 import { MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_INT } from "../../frontend/assembly";
-import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessNamespaceConstantExpression, IRAccessStaticFieldExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRLiteralByteBufferExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag, IRPrefixNotOpExpression, IRPrefixPlusOpExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRReturnValueSimpleStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement, IRAbortStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRTempAssignExpressionStatement, IRTypeDeclInvariantCheckStatement, IRDebugStatement, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression } from "../irdefs/irbody";
+import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessNamespaceConstantExpression, IRAccessStaticFieldExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRLiteralByteBufferExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag, IRPrefixNotOpExpression, IRPrefixPlusOpExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRReturnValueSimpleStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement, IRAbortStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRTempAssignExpressionStatement, IRTypeDeclInvariantCheckStatement, IRDebugStatement, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRChkLogicImpliesShortCircuitStatement, IRBlockStatement, IRPreconditionCheckStatement } from "../irdefs/irbody";
 
 import assert from "node:assert";
 
@@ -423,6 +423,10 @@ class CPPEmitter {
             const ires = stmt as IRReturnValueSimpleStatement;
             return `return ${this.emitIRSimpleExpression(ires.retexp, true)};`;
         }
+        else if(ttag === IRStatementTag.IRChkLogicImpliesShortCircuitStatement) {
+            const icliss = stmt as IRChkLogicImpliesShortCircuitStatement;
+            return `Bool ${icliss.tvar} = TRUE; if(${this.emitIRSimpleExpression(icliss.lhs, true)}) ${this.emitBlockStatement(icliss.rhs, undefined)}`;
+        }
         else if(ttag === IRStatementTag.IRErrorAdditionBoundsCheckStatement) {
             const ieabc = stmt as IRErrorAdditionBoundsCheckStatement;
             return `${RUNTIME_NAMESPACE}::${ieabc.optypechk}::checkOverflowAddition(${this.emitIRSimpleExpression(ieabc.left, true)}, ${this.emitIRSimpleExpression(ieabc.right, true)}, ${ieabc.file}, ${ieabc.sinfo.line});`;
@@ -446,9 +450,11 @@ class CPPEmitter {
             return `${invfunc}(${this.emitIRSimpleExpression(itdics.targetValue, true)}, ${itdics.file}, ${itdics.sinfo.line});`;
         }
         else if(ttag === IRStatementTag.IRPreconditionCheckStatement) {
+            //TODO: this is for the actual check call inside the generated precondition function -- we also need to inject a call to precondition function
             assert(false, "CPPEmitter: need to implement precondition checks");
         }
         else if(ttag === IRStatementTag.IRPostconditionCheckStatement) {
+            //TODO: this is for the actual check call inside the generated precondition function -- we also need to inject a call to precondition function
             assert(false, "CPPEmitter: need to implement postcondition checks");
         }
         else if(ttag === IRStatementTag.IRAbortStatement) {
@@ -472,6 +478,17 @@ class CPPEmitter {
         }
         else {
             assert(false, `CPPEmitter: Unsupported IR statement type -- ${stmt.constructor.name}`);
+        }
+    }
+
+    private emitBlockStatement(stmts: IRBlockStatement, indent: string | undefined): string {
+        const stmtstrs = stmts.statements.map((stmt) => this.emitStatement(stmt));
+        if(indent === undefined) {
+            return stmtstrs.join(" ");
+        }
+        else {
+            const bindent = indent + "    ";
+            return `{\n${bindent}${stmtstrs.map((s) => bindent + s).join("\n")}\n${indent}}`;
         }
     }
 }
