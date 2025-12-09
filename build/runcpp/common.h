@@ -45,6 +45,7 @@ namespace ᐸRuntimeᐳ
         UserAbort,
         UserAssertion,
         UserInvariant,
+        UserValidation,
         UserPrecondition,
         UserPostcondition
     };
@@ -75,6 +76,13 @@ namespace ᐸRuntimeᐳ
     {
         if(!cond) [[unlikely]] {
             bsq_handle_error(file, line, ErrorKind::UserAssertion, tag, message);
+        }
+    }
+
+    inline void bsq_validate(bool cond, const char* file, uint32_t line, const char* tag, const char* message)
+    {
+        if(!cond) [[unlikely]] {
+            bsq_handle_error(file, line, ErrorKind::UserValidation, tag, message);
         }
     }
 

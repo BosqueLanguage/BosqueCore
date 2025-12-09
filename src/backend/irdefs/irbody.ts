@@ -213,6 +213,8 @@ enum IRStatementTag {
     IRPostconditionCheckStatement = "IRPostconditionCheckStatement",
 
     IRAbortStatement = "IRAbortStatement",
+    IRAssertStatement = "IRAssertStatement",
+    IRValidateStatement = "IRValidateStatement",
     IRDebugStatement = "IRDebugStatement"
 }
 
@@ -1172,13 +1174,15 @@ class IRVariableInitializationStatement extends IRAtomicStatement {
 }
 
 class IRVariableInitializationDirectInvokeStatement extends IRAtomicStatement {
+    readonly scratchname: string; //a scratch temp variable to hold the direct invoke result if needed
     readonly vname: string;
     readonly vtype: IRTypeSignature;
     readonly initexp: IRInvokeDirectExpression;
     readonly isconst: boolean;
 
-    constructor(vname: string, vtype: IRTypeSignature, initexp: IRInvokeDirectExpression, isconst: boolean) {
+    constructor(scratch: string, vname: string, vtype: IRTypeSignature, initexp: IRInvokeDirectExpression, isconst: boolean) {
         super(IRStatementTag.IRVariableInitializationDirectInvokeStatement);
+        this.scratchname = scratch;
         this.vname = vname;
         this.vtype = vtype;
         this.initexp = initexp;
@@ -1322,14 +1326,32 @@ class IRAbortStatement extends IRErrorCheckStatement {
     }
 }
 
+class IRAssertStatement extends IRErrorCheckStatement {
+    readonly cond: IRSimpleExpression;
+
+    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, cond: IRSimpleExpression) {
+        super(IRStatementTag.IRAssertStatement, file, sinfo, diagnosticTag, checkID);
+        this.cond = cond;
+    }
+}
+
+class IRValidateStatement extends IRErrorCheckStatement {
+    readonly cond: IRSimpleExpression;
+
+    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, cond: IRSimpleExpression) {
+        super(IRStatementTag.IRValidateStatement, file, sinfo, diagnosticTag, checkID);
+        this.cond = cond;
+    }
+}
+
 class IRDebugStatement extends IRAtomicStatement {
     readonly oftype: IRTypeSignature;
-    readonly dbgexp: IRAccessTempVariableExpression;
+    readonly dbgexp: IRSimpleExpression;
 
     readonly file: string;
     readonly line: number;
 
-    constructor(oftype: IRTypeSignature, dbgexp: IRAccessTempVariableExpression, file: string, sinfo: SourceInfo) {
+    constructor(oftype: IRTypeSignature, dbgexp: IRSimpleExpression, file: string, sinfo: SourceInfo) {
         super(IRStatementTag.IRDebugStatement);
         this.oftype = oftype;
         this.dbgexp = dbgexp;
@@ -1399,7 +1421,7 @@ export {
     IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement,
     IRTypeDeclInvariantCheckStatement,
     IRPreconditionCheckStatement, IRPostconditionCheckStatement,
-    IRAbortStatement, IRDebugStatement,
+    IRAbortStatement, IRAssertStatement, IRValidateStatement, IRDebugStatement,
 
     IRBlockStatement
 };
