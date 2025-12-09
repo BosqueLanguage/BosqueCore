@@ -1334,7 +1334,7 @@ class ASMToIRConverter {
         }
     }
 
-    private flattenConditionalValueExpression(exp: ConditionalValueExpression, ): IRSimpleExpression {
+    private flattenConditionalValueExpression(exp: ConditionalValueExpression): IRSimpleExpression {
         const renv = this.flattenITestGuardSet(exp.sinfo, exp.guardset);
 
         if(exp.trueBinders.length === 0 && exp.falseBinders.length === 0) {
@@ -1354,11 +1354,8 @@ class ASMToIRConverter {
                 const tstmts = this.popStatementBlock();
 
                 const tvar = this.generateTempVarName();
-                const rbb = new IRBlockStatement([
-                    ...fstmts,
-                    ...tstmts,
-                    new IRTempAssignExpressionStatement(tvar, fexp, this.processTypeSignature(exp.falseValue.getType()))
-                ]);
+                
+                xxxx;
                 this.pushStatement(new IRConditionalValueShortCircuitStatement(tvar, renv[0], rbb));
                 return new IRAccessTempVariableExpression(tvar);
             }
