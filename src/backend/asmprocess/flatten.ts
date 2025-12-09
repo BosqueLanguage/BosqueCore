@@ -1316,15 +1316,21 @@ class ASMToIRConverter {
                     const rhs = this.coerceToBoolForTest(this.makeExpressionSimple(this.flattenExpression(iiexp.rhs), iiexp.rhs.getType()), iiexp.rhs.getType());
                     
                     const stmts = this.popStatementBlock();
-                    if(ASMToIRConverter.isLiteralTrueExpression(renv[0])) {
-                        stmts.forEach((s) => this.pushStatement(s));
-                        return rhs;
+                    if(stmts.length === 0) {
+                        //no statements generated, so just return a simple expression directly
+                        return new IRLogicOrExpression([new IRPrefixNotOpExpression(renv[0], this.processTypeSignature(this.getSpecialType(iiexp.sinfo, "Bool"))), rhs]);
                     }
                     else {
-                        const tvar = this.generateTempVarName();
-                        const rbb = new IRBlockStatement([...stmts, new IRTempAssignExpressionStatement(tvar, rhs, this.processTypeSignature(this.getSpecialType(iiexp.sinfo, "Bool")))]);
-                        this.pushStatement(new IRChkLogicImpliesShortCircuitStatement(tvar, renv[0], rbb));
-                        return new IRAccessTempVariableExpression(tvar);
+                        if(ASMToIRConverter.isLiteralTrueExpression(renv[0])) {
+                            stmts.forEach((s) => this.pushStatement(s));
+                            return rhs;
+                        }
+                        else {
+                            const tvar = this.generateTempVarName();
+                            const rbb = new IRBlockStatement([...stmts, new IRTempAssignExpressionStatement(tvar, rhs, this.processTypeSignature(this.getSpecialType(iiexp.sinfo, "Bool")))]);
+                            this.pushStatement(new IRChkLogicImpliesShortCircuitStatement(tvar, renv[0], rbb));
+                            return new IRAccessTempVariableExpression(tvar);
+                        }
                     }
                 }
             }
@@ -1355,6 +1361,8 @@ class ASMToIRConverter {
 
                 const tvar = this.generateTempVarName();
                 
+                //TODO -- generate in context of assign to temp variable (and return as well)
+
                 xxxx;
                 this.pushStatement(new IRConditionalValueShortCircuitStatement(tvar, renv[0], rbb));
                 return new IRAccessTempVariableExpression(tvar);

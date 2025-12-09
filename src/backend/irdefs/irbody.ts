@@ -1223,7 +1223,7 @@ export {
     IRVariableDeclarationStatement, IRVariableInitializationStatement,
     
     IRReturnVoidSimpleStatement, IRReturnValueSimpleStatement,
-    IRChkLogicImpliesShortCircuitStatement,
+    IRChkLogicImpliesSimpleStatement, IRChkLogicImpliesShortCircuitStatement,
 
     IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement,
     IRTypeDeclInvariantCheckStatement,
