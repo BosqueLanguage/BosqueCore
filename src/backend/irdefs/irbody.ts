@@ -81,6 +81,11 @@ enum IRExpressionTag {
     //TODO: lots more expression types here
     //
 
+    IRInvokeSimpleExpression = "IRInvokeSimpleExpression",
+    IRInvokeSimpleWithImplicitsExpression = "IRInvokeSimpleWithImplicitsExpression",
+    IRInvokeVirtualSimpleExpression = "IRInvokeVirtualSimpleExpression",
+    IRInvokeVirtualWithImplicitsExpression = "IRInvokeVirtualWithImplicitsExpression",
+
     IRPrefixNotOpExpression = "IRPrefixNotOpExpression",
     IRPrefixNegateOpExpression = "IRPrefixNegateOrPlusOpExpression",
     IRPrefixPlusOpExpression = "IRPrefixPlusOpExpression",
@@ -117,6 +122,37 @@ abstract class IRExpression {
     }
 }
 
+/* This class represents expressions that are invocations (function/method/virtual calls) */
+abstract class IRInvokeExpression extends IRExpression {
+    readonly ikey: string;
+    readonly args: IRSimpleExpression[];
+
+    constructor(tag: IRExpressionTag, ikey: string, args: IRSimpleExpression[]) {
+        super(tag);
+        this.ikey = ikey;
+        this.args = args;
+    }
+}
+
+/* This class represents expressions that have a single return value */
+abstract class IRInvokeDirectExpression extends IRInvokeExpression {
+    constructor(tag: IRExpressionTag, ikey: string, args: IRSimpleExpression[]) {
+        super(tag, ikey, args);
+    }
+}
+
+/* This class represents expressions that have implicit return values */
+abstract class IRInvokeImplicitsExpression extends IRInvokeExpression {
+    readonly implicitidx: number;
+    readonly implicitkind: "ref" | "out" | "out?" | "inout";
+
+    constructor(tag: IRExpressionTag, ikey: string, args: IRSimpleExpression[], implicitidx: number, implicitkind: "ref" | "out" | "out?" | "inout") {
+        super(tag, ikey, args);
+        this.implicitidx = implicitidx;
+        this.implicitkind = implicitkind;
+    }
+}
+
 /* This class represents expressions that are simple and side-effect free (i.e., immediate expressions plus simple operations that we can put into expression trees) */
 abstract class IRSimpleExpression extends IRExpression {
     constructor(tag: IRExpressionTag) {
@@ -148,11 +184,13 @@ enum IRStatementTag {
 
     IRVariableDeclarationStatement = "IRVariableDeclarationStatement",
     IRVariableInitializationStatement = "IRVariableInitializationStatement",
+    IRVariableInitializationDirectInvokeStatement = "IRVariableInitializationDirectInvokeStatement",
 
     //TODO: add initialization for ref/condition expression where the rhs is a temp variable
 
     IRReturnVoidSimpleStatement = "IRReturnVoidSimpleStatement",
     IRReturnValueSimpleStatement = "IRReturnValueSimpleStatement",
+    IRReturnDirectInvokeStatement = "IRReturnDirectInvokeStatement",
 
     IRChkLogicImpliesShortCircuitStatement = "IRChkLogicImpliesShortCircuitStatement",
 
@@ -865,6 +903,40 @@ class IRConstructSafeTypeDeclExpression extends IRSimpleExpression {
 //TODO: lots more expression types here
 //
 
+/** Simple invocations functions/methods/lambdas that do not have any special parameters **/
+class IRInvokeSimpleExpression extends IRInvokeDirectExpression {
+    constructor(ikey: string, args: IRSimpleExpression[]) {
+        super(IRExpressionTag.IRInvokeSimpleExpression, ikey, args);
+    }
+}
+
+/** Simple invocations functions/methods/lambdas that have any special ref/out/out?/inout parameters **/
+class IRInvokeSimpleWithImplicitsExpression extends IRInvokeImplicitsExpression {
+    constructor(ikey: string, args: IRSimpleExpression[], implicitidx: number, implicitkind: "ref" | "out" | "out?" | "inout") {
+        super(IRExpressionTag.IRInvokeSimpleWithImplicitsExpression, ikey, args, implicitidx, implicitkind);
+    }
+}
+
+/** Virtual invocations functions/methods/lambdas that do not have any special parameters (arg0 is the receiver) **/
+class IRInvokeVirtualSimpleExpression extends IRInvokeDirectExpression {
+    readonly rcvr: IRImmediateExpression;
+
+    constructor(ikey: string, rcvr: IRImmediateExpression, args: IRSimpleExpression[]) {
+        super(IRExpressionTag.IRInvokeVirtualSimpleExpression, ikey, args);
+        this.rcvr = rcvr;
+    }
+}
+
+/** Virtual invocations functions/methods/lambdas that have any special ref/out/out?/inout parameters (arg0 is the receiver) **/
+class IRInvokeVirtualWithImplicitsExpression extends IRInvokeImplicitsExpression {
+    readonly rcvr: IRImmediateExpression;
+
+    constructor(ikey: string, rcvr: IRImmediateExpression, args: IRSimpleExpression[], implicitidx: number, implicitkind: "ref" | "out" | "out?" | "inout") {
+        super(IRExpressionTag.IRInvokeVirtualWithImplicitsExpression, ikey, args, implicitidx, implicitkind);
+        this.rcvr = rcvr;
+    }
+}
+
 abstract class IRUnaryOpExpression extends IRSimpleExpression {
     readonly exp: IRSimpleExpression;
     readonly opertype: IRTypeSignature;
@@ -1062,6 +1134,21 @@ class IRVariableInitializationStatement extends IRAtomicStatement {
     }
 }
 
+class IRVariableInitializationDirectInvokeStatement extends IRAtomicStatement {
+    readonly vname: string;
+    readonly vtype: IRTypeSignature;
+    readonly initexp: IRInvokeDirectExpression;
+    readonly isconst: boolean;
+
+    constructor(vname: string, vtype: IRTypeSignature, initexp: IRInvokeDirectExpression, isconst: boolean) {
+        super(IRStatementTag.IRVariableInitializationDirectInvokeStatement);
+        this.vname = vname;
+        this.vtype = vtype;
+        this.initexp = initexp;
+        this.isconst = isconst;
+    }
+}
+
 //
 //TODO: lots more statement types here
 //
@@ -1077,6 +1164,15 @@ class IRReturnValueSimpleStatement extends IRReturnSimpleStatement {
 
     constructor(retexp: IRSimpleExpression) {
         super(IRStatementTag.IRReturnValueSimpleStatement);
+        this.retexp = retexp;
+    }
+}
+
+class IRReturnDirectInvokeStatement extends IRReturnSimpleStatement {
+    readonly retexp: IRInvokeDirectExpression;
+
+    constructor(retexp: IRInvokeDirectExpression) {
+        super(IRStatementTag.IRReturnDirectInvokeStatement);
         this.retexp = retexp;
     }
 }
@@ -1120,33 +1216,43 @@ class IRErrorDivisionByZeroCheckStatement extends IRErrorBinArithCheckStatement 
 
 /* This calls the defined invariant check function for the target type decl on the provided value -- errors are reported from there */
 class IRTypeDeclInvariantCheckStatement extends IRErrorCheckStatement {
-    readonly targetType: IRTypeSignature;
-    readonly targetValue: IRImmediateExpression;
+    readonly tkey: string;
+    readonly invariantidx: number;
+    readonly targetValue: IRSimpleExpression;
 
-    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, targetType: IRTypeSignature, targetValue: IRImmediateExpression) {
+    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, tkey: string, invariantidx: number, targetValue: IRSimpleExpression) {
         super(IRStatementTag.IRTypeDeclInvariantCheckStatement, file, sinfo, diagnosticTag, checkID);
-        this.targetType = targetType;
+        this.tkey = tkey;
+        this.invariantidx = invariantidx;
         this.targetValue = targetValue;
     }
 }
 
 /* This asserts that the given precondition expression is true */
 class IRPreconditionCheckStatement extends IRErrorCheckStatement {
-    readonly cond: IRSimpleExpression;
+    readonly ikey: string;
+    readonly requiresidx: number;
+    readonly args: IRSimpleExpression[];
 
-    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, cond: IRSimpleExpression) {
+    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, ikey: string, requiresidx: number, args: IRSimpleExpression[]) {
         super(IRStatementTag.IRPreconditionCheckStatement, file, sinfo, diagnosticTag, checkID);
-        this.cond = cond;
+        this.ikey = ikey;
+        this.requiresidx = requiresidx;
+        this.args = args;
     }
 }
 
 /* This asserts that the given postcondition expresssion is true */
 class IRPostconditionCheckStatement extends IRErrorCheckStatement {
-    readonly cond: IRSimpleExpression;
+    readonly ikey: string;
+    readonly ensuresidx: number;
+    readonly args: IRSimpleExpression[];
 
-    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, cond: IRSimpleExpression) {
+    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, ikey: string, ensuresidx: number, args: IRSimpleExpression[]) {
         super(IRStatementTag.IRPostconditionCheckStatement, file, sinfo, diagnosticTag, checkID);
-        this.cond = cond;
+        this.ikey = ikey;
+        this.ensuresidx = ensuresidx;
+        this.args = args;
     }
 }
 
@@ -1209,6 +1315,8 @@ export {
     
     IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression,
 
+    IRInvokeExpression, IRInvokeDirectExpression, IRInvokeImplicitsExpression, IRInvokeSimpleExpression, IRInvokeSimpleWithImplicitsExpression, IRInvokeVirtualSimpleExpression, IRInvokeVirtualWithImplicitsExpression,
+
     IRUnaryOpExpression, IRPrefixNotOpExpression, IRPrefixNegateOpExpression, IRPrefixPlusOpExpression,
     IRBinOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression,
     IRNumericComparisonExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression,
@@ -1220,9 +1328,9 @@ export {
     IRNopStatement,
     IRTempAssignExpressionStatement, IRTempAssignStdInvokeStatement, IRTempAssignRefInvokeStatement, IRTempAssignConditionalStatement,
 
-    IRVariableDeclarationStatement, IRVariableInitializationStatement,
+    IRVariableDeclarationStatement, IRVariableInitializationStatement, IRVariableInitializationDirectInvokeStatement,
     
-    IRReturnVoidSimpleStatement, IRReturnValueSimpleStatement,
+    IRReturnVoidSimpleStatement, IRReturnValueSimpleStatement, IRReturnDirectInvokeStatement,
     IRChkLogicImpliesShortCircuitStatement,
 
     IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement,

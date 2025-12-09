@@ -93,8 +93,8 @@ class TransformCPPNameManager {
         return TransformCPPNameManager.convertTypeKey(tkey);
     }
 
-    static generateNameForInvariantFunction(tkey: string): string {
-        return TransformCPPNameManager.convertTypeKey(tkey) + s_specialop_sep + "invariant";
+    static generateNameForInvariantFunction(tkey: string, invariantidx: number): string {
+        return TransformCPPNameManager.convertTypeKey(tkey) + s_specialop_sep + "invariant_" + invariantidx;
     }
 
     static generateNameForBSQONParseFunction(tkey: string): string {
@@ -109,12 +109,12 @@ class TransformCPPNameManager {
         return TransformCPPNameManager.convertTypeKey(tkey) + s_specialop_sep + "default" + s_specialop_sep + TransformCPPNameManager.safeifyName(fname);
     }
 
-    static generateNameForInvokePreconditionCheck(ikey: string): string {
-        return TransformCPPNameManager.convertInvokeKey(ikey) + s_specialop_sep + "requires";
+    static generateNameForInvokePreconditionCheck(ikey: string, requiresidx: number): string {
+        return TransformCPPNameManager.convertInvokeKey(ikey) + s_specialop_sep + "requires_" + requiresidx;
     }
 
-    static generateNameForInvokePostconditionCheck(ikey: string): string {
-        return TransformCPPNameManager.convertInvokeKey(ikey) + s_specialop_sep + "ensures";
+    static generateNameForInvokePostconditionCheck(ikey: string, ensuresidx: number): string {
+        return TransformCPPNameManager.convertInvokeKey(ikey) + s_specialop_sep + "ensures_" + ensuresidx;
     }
 }
 
