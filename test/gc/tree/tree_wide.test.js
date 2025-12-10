@@ -4,7 +4,7 @@ import { runMainCodeGC } from "../../../bin/test/gc/gc_nf.js"
 import { describe, it } from "node:test";
 
 // set up global array, disable stack refs
-const base = "__CoreCpp::Bool main() { GlobalDataStorage::g_global_data.initialize(sizeof(garray), (void**)garray); gtl_info.disable_decs_thread_for_tests = true; gtl_info.disable_stack_refs_for_tests = true; gtl_info.enable_global_rescan = true;\n";
+const base = "__CoreCpp::Bool main() { GlobalDataStorage::g_global_data.initialize(sizeof(garray), (void**)garray); gtl_info.disable_stack_refs_for_tests = true; gtl_info.enable_global_rescan = true;\n";
 const end = "\nreturn true;}"
 
 const test_1 = base.concat("wideTreeTest_1();", end);

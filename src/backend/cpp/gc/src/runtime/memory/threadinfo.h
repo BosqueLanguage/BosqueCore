@@ -50,48 +50,47 @@ typedef ArrayList<void*> DecsList;
 struct DecsProcessor {
     std::condition_variable cv;
     std::mutex mtx;
-    std::jthread worker;
+    std::thread worker;
 
     DecsList pending;
     void (*processDecfp)(void*, BSQMemoryTheadLocalInfo&);
 
-    bool worker_paused;
-    bool merge_requested;
+    enum class WorkerState {
+        Running,
+        Paused,
+        Merging,
+        Stopped
+    };
+
+    WorkerState worker_state;
     bool stop_requested;
 
     DecsProcessor(BSQMemoryTheadLocalInfo* tinfo) : 
         cv(), mtx(), worker(&DecsProcessor::process, this, tinfo), pending(), 
-        processDecfp(nullptr), worker_paused(true), merge_requested(false), 
-        stop_requested(false) { }
+        processDecfp(nullptr), worker_state(WorkerState::Paused), stop_requested(false) 
+    { 
+        GlobalThreadAllocInfo::s_thread_counter++;
+    }
 
     void requestMergeAndPause(std::unique_lock<std::mutex>& lk)
     {
-        this->merge_requested = true;
+        this->worker_state = WorkerState::Merging;
 
         lk.unlock();
         this->cv.notify_one();
         lk.lock();
 
         // Ack that the worker is fully paused
-        cv.wait(lk, [this]{ return this->worker_paused; });
+        cv.wait(lk, [this]{ return this->worker_state == WorkerState::Paused; });
 
         // Items can safely be inserted into this->pending now
     }
 
     void resumeAfterMerge(std::unique_lock<std::mutex>& lk)
     {
-        this->merge_requested = false;
-        this->worker_paused = false;
-
+        this->worker_state = WorkerState::Running;
         lk.unlock();
         this->cv.notify_one();
-    }
-
-    void pauseWorker(std::unique_lock<std::mutex>& lk)
-    {
-        this->worker_paused = true;
-        this->cv.notify_one(); 
-        cv.wait(lk, [this]{ return !this->worker_paused; });
     }
 
     void signalFinished()
@@ -103,39 +102,47 @@ struct DecsProcessor {
         this->cv.notify_one();
 
         // Worker thread ack 
-        cv.wait(lk, [this]{ return this->worker_paused; });
+        cv.wait(lk, [this]{ return this->worker_state == WorkerState::Paused; });
+
+        this->worker.join();
+        GlobalThreadAllocInfo::s_thread_counter--;
     }
 
     void process(BSQMemoryTheadLocalInfo* tinfo)
     {
         std::unique_lock lk(this->mtx);
         while(!this->stop_requested) {
-            this->cv.wait(lk, [this]{
-                return (!this->worker_paused && !this->pending.isEmpty())
-                    || this->merge_requested
-                    || this->stop_requested;
-            });
-
-            // Enter a paused state before exiting
-            if(this->stop_requested) {
-                this->worker_paused = true;
-                lk.unlock();
-                this->cv.notify_one(); 
-                return;
+            if(this->worker_state == WorkerState::Paused) {
+                cv.wait(lk, [this] {
+                    return this->worker_state != WorkerState::Paused || this->stop_requested;
+                });
             }
 
-            if(this->merge_requested) {
-                this->pauseWorker(lk);
+            if(this->stop_requested) {
+                break;
+            }
+
+            if(this->worker_state == WorkerState::Merging) {
+                this->worker_state = WorkerState::Paused;
+                lk.unlock();
+                this->cv.notify_one(); // Notify main thread of merge
+                lk.lock();
                 continue;
             }
 
-            while(!this->pending.isEmpty()) {
-                void* obj = this->pending.pop_front();
-                this->processDecfp(obj, *tinfo);         
+            if(this->worker_state == WorkerState::Running) {
+                while(!this->pending.isEmpty() && !this->stop_requested) {
+                    void* obj = this->pending.pop_front();
+                    this->processDecfp(obj, *tinfo);
 
-                if(this->merge_requested || this->stop_requested) {
-                    break;
+                    if(this->worker_state != WorkerState::Running) {
+                        break;
+                    }
                 }
+            }
+
+            if(this->pending.isEmpty() && !this->stop_requested) {
+                this->worker_state = WorkerState::Paused;
             }
         }
     }
@@ -187,7 +194,6 @@ struct BSQMemoryTheadLocalInfo
     bool disable_automatic_collections = false;
 
 #ifdef BSQ_GC_CHECK_ENABLED
-    bool disable_decs_thread_for_tests = false;
     bool disable_stack_refs_for_tests = false;
     bool enable_global_rescan         = false;
 #endif
