@@ -50,7 +50,7 @@ typedef ArrayList<void*> DecsList;
 struct DecsProcessor {
     std::condition_variable cv;
     std::mutex mtx;
-    std::jthread worker;
+    std::thread worker;
 
     DecsList pending;
     void (*processDecfp)(void*, BSQMemoryTheadLocalInfo&);
@@ -62,7 +62,10 @@ struct DecsProcessor {
     DecsProcessor(BSQMemoryTheadLocalInfo* tinfo) : 
         cv(), mtx(), worker(&DecsProcessor::process, this, tinfo), pending(), 
         processDecfp(nullptr), worker_paused(true), merge_requested(false), 
-        stop_requested(false) { }
+        stop_requested(false) 
+    { 
+        ++GlobalThreadAllocInfo::s_thread_counter;
+    }
 
     void requestMergeAndPause(std::unique_lock<std::mutex>& lk)
     {
@@ -104,6 +107,9 @@ struct DecsProcessor {
 
         // Worker thread ack 
         cv.wait(lk, [this]{ return this->worker_paused; });
+
+        this->worker.join();
+        GlobalThreadAllocInfo::s_thread_counter--;
     }
 
     void process(BSQMemoryTheadLocalInfo* tinfo)
@@ -187,7 +193,6 @@ struct BSQMemoryTheadLocalInfo
     bool disable_automatic_collections = false;
 
 #ifdef BSQ_GC_CHECK_ENABLED
-    bool disable_decs_thread_for_tests = false;
     bool disable_stack_refs_for_tests = false;
     bool enable_global_rescan         = false;
 #endif
