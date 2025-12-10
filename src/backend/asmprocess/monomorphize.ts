@@ -1,10 +1,10 @@
 import assert from "node:assert";
 
-import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, Assembly, ExplicitInvokeDecl, InvariantDecl, ListTypeDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, PostConditionDecl, PreConditionDecl, TypeFunctionDecl, ValidateDecl } from "../../frontend/assembly.js";
-import { NamespaceInstantiationInfo } from "./instantiations.js";
-import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaParameterPackTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
+import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, Assembly, ConstMemberDecl, ExplicitInvokeDecl, InvariantDecl, ListTypeDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, PostConditionDecl, PreConditionDecl, ResultTypeDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl } from "../../frontend/assembly.js";
+import { InvokeInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiations.js";
+import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaParameterPackTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, ArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, HoleBodyImplementation, HoleExpression, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOfOperator, PostfixOp, PostfixOpTag, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement } from "../../frontend/body.js";
-import { } from "../../frontend/build_decls.js";
+import { SourceInfo } from "../../frontend/build_decls.js";
 
 class PendingNamespaceFunction {
     readonly namespace: NamespaceDeclaration;
@@ -115,6 +115,14 @@ class Monomorphizer {
 
     private getFreshLambdaKey(): string {
         return `lambda_${this.lambdaCtr++}`;
+    }
+
+    private computeResolveKeyForInvoke(ikey: string, termcount: number, hasref: boolean, lambdas: boolean): string {
+        const tci = (termcount !== 0) ? `*tc_${termcount}_` : "";
+        const rfi = (hasref ? "*_ref_" : "");
+        const li = (lambdas ? "*_lambdas_" : "");
+
+        return `${ikey}${tci}${rfi}${li}`;
     }
 
     private computeInvokeKeyForNamespaceFunction(ns: NamespaceDeclaration, fdecl: NamespaceFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[]): string {
@@ -1635,13 +1643,14 @@ class Monomorphizer {
         this.instantiateBodyImplementation(fdecl.function.body);
 
         const cnns = this.currentNSInstantiation as NamespaceInstantiationInfo;
-        if(!cnns.functionbinds.has(fdecl.function.name)) {
-            cnns.functionbinds.set(fdecl.function.name, new FunctionInstantiationInfo(fdecl.function.terms.length !== 0 ? [] : undefined));
+        const rkey = this.computeResolveKeyForInvoke(fdecl.function.name, fdecl.function.terms.length, fdecl.function.params.some((p) => p.pkind !== undefined), fdecl.function.params.some((p) => p.type instanceof LambdaTypeSignature));
+
+        if(!cnns.functionbinds.has(rkey)) {
+            cnns.functionbinds.set(rkey, []);
         }
 
-        if(fdecl.function.terms.length !== 0) {
-            ((cnns.functionbinds.get(fdecl.function.name) as FunctionInstantiationInfo).binds as TemplateNameMapper[]).push(this.currentMapping as TemplateNameMapper);
-        }
+        const ikey = this.computeInvokeKeyForNamespaceFunction(ns, fdecl.function, fdecl.instantiation, fdecl.lambdas);
+        (cnns.functionbinds.get(rkey) as InvokeInstantiationInfo[]).push(new InvokeInstantiationInfo(ikey, this.currentMapping as TemplateNameMapper, fdecl.lambdas));
 
         this.currentMapping = undefined;
     }
@@ -1669,18 +1678,20 @@ class Monomorphizer {
 
         this.instantiateBodyImplementation(fdecl.function.body);
 
-        if(!typeinst.functionbinds.has(fdecl.function.name)) {
-            typeinst.functionbinds.set(fdecl.function.name, new FunctionInstantiationInfo(fdecl.function.terms.length !== 0 ? [] : undefined));
+        const rkey = this.computeResolveKeyForInvoke(fdecl.function.name, fdecl.function.terms.length, fdecl.function.params.some((p) => p.pkind !== undefined), fdecl.function.params.some((p) => p.type instanceof LambdaTypeSignature));
+
+        if(!typeinst.functionbinds.has(rkey)) {
+            typeinst.functionbinds.set(rkey, []);
         }
 
-        if(fdecl.function.terms.length !== 0) {
-            ((typeinst.functionbinds.get(fdecl.function.name) as FunctionInstantiationInfo).binds as TemplateNameMapper[]).push(this.currentMapping as TemplateNameMapper);
-        }
+        const ikey = this.computeInvokeKeyForTypeFunction(fdecl.type, fdecl.function, fdecl.instantiation, fdecl.lambdas);
+        (typeinst.functionbinds.get(rkey) as InvokeInstantiationInfo[]).push(new InvokeInstantiationInfo(ikey, this.currentMapping as TemplateNameMapper, fdecl.lambdas));
 
         this.currentMapping = undefined;
     }
 
-    private instantiateMethodDecl(tdecl: AbstractNominalTypeDecl, mdecl: PendingTypeMethod) { 
+    private instantiateMethodDecl(tdecl: AbstractNominalTypeDecl, mdecl: PendingTypeMethod) {
+        /*
         const nskey = tdecl.ns.emit();
         this.currentNSInstantiation = this.instantiation.find((nsi) => nsi.ns.emit() === nskey);
         const typeinst = ((this.currentNSInstantiation as NamespaceInstantiationInfo).typebinds.get(tdecl.name) as TypeInstantiationInfo[]).find((ti) => ti.tkey === mdecl.type.tkeystr) as TypeInstantiationInfo;
@@ -1712,6 +1723,8 @@ class Monomorphizer {
         }
 
         this.currentMapping = undefined;
+        */
+        assert(false, "Not implemented -- instantiateMethodDecl");
     }
 
     private instantiateTaskMethodDecl(tdecl: AbstractNominalTypeDecl, mdecl: PendingTypeMethod) {
@@ -1727,7 +1740,7 @@ class Monomorphizer {
             const m = mdecls[i];
 
             this.instantiateTypeSignature(m.declaredType, this.currentMapping);
-            this.instantiateExpression(m.value.exp);
+            this.instantiateExpression(m.value);
         }
     }
 
@@ -1737,7 +1750,7 @@ class Monomorphizer {
             
             this.instantiateTypeSignature(f.declaredType, this.currentMapping);
             if(f.defaultValue !== undefined) {
-                this.instantiateExpression(f.defaultValue.exp);
+                this.instantiateExpression(f.defaultValue);
             }
         }
     }
@@ -1785,10 +1798,10 @@ class Monomorphizer {
         const bbl = cnns.typebinds.get(pdecl.type.name) as TypeInstantiationInfo[];
 
         if(terms.length === 0) {
-            bbl.push(new TypeInstantiationInfo(pdecl.tkey, pdecl.tsig, undefined, new Map<string, FunctionInstantiationInfo>(), new Map<string, MethodInstantiationInfo>()));
+            bbl.push(new TypeInstantiationInfo(pdecl.tkey, pdecl.tsig, undefined, new Map<string, InvokeInstantiationInfo[]>(), new Map<string, InvokeInstantiationInfo[]>()));
         }
         else {
-            bbl.push(new TypeInstantiationInfo(pdecl.tkey, pdecl.tsig, this.currentMapping as TemplateNameMapper, new Map<string, FunctionInstantiationInfo>(), new Map<string, MethodInstantiationInfo>()));
+            bbl.push(new TypeInstantiationInfo(pdecl.tkey, pdecl.tsig, this.currentMapping as TemplateNameMapper, new Map<string, InvokeInstantiationInfo[]>(), new Map<string, InvokeInstantiationInfo[]>()));
             this.currentMapping = undefined;
         }
     }

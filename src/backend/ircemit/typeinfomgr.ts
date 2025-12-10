@@ -99,19 +99,20 @@ class TypeInfoManager {
         return `constexpr TypeInfo g_typeinfo_${tk} = { ${typeinfo.bsqtypeid}, ${typeinfo.bytesize}, ${typeinfo.slotcount}, LayoutTag::${layouttag}, ${typeinfo.ptrmask ?? "BSQ_PTR_MASK_LEAF"}, "${tk}", nullptr };`;
     }
 
-    emitTypeAsParameter(tkey: string, isconst: boolean): string {
+    emitTypeAsParameter(tkey: string, isconst: boolean, isreftagged: boolean): string {
         const typeinfo = this.getTypeInfo(tkey);
 
         const cspec = (isconst ? "const " : "");
+        const rtspec = (isreftagged ? "&" : "");
         if(typeinfo.tag === LayoutTag.Ref) {
-            return cspec + TransformCPPNameManager.convertTypeKey(tkey) + "*";
+            return cspec + TransformCPPNameManager.convertTypeKey(tkey) + "*" + rtspec;
         }
         else if(typeinfo.tsig instanceof IRLambdaParameterPackTypeSignature) {
             return "const " + TransformCPPNameManager.convertTypeKey(tkey) + "&";
         }
         else {
             if(typeinfo.bytesize <= TypeInfoManager.c_ref_pass_size) {
-                return cspec + TransformCPPNameManager.convertTypeKey(tkey);
+                return cspec + TransformCPPNameManager.convertTypeKey(tkey) + rtspec;
             }
             else {
                 return "const " + TransformCPPNameManager.convertTypeKey(tkey) + "&";                
