@@ -20,8 +20,6 @@ int wrap_setjmp() {
     // Ensure decs thread stops waiting
     gtl_info.decs.signalFinished();
 
-    std::cerr << "Live Thread Count (excluding main): " << GlobalThreadAllocInfo::s_thread_counter << std::endl;
-
     return 0;
 }
 
