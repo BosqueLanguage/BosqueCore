@@ -20,6 +20,8 @@ int wrap_setjmp() {
     // Ensure decs thread stops waiting
     gtl_info.decs.signalFinished();
 
+    assert(!gtl_info.decs.worker.joinable());
+
     return 0;
 }
 

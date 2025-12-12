@@ -197,6 +197,9 @@ static void tryMergeDecList(BSQMemoryTheadLocalInfo& tinfo)
     }
 
     if(!tinfo.decs_batch.isEmpty()) {
+
+        std::cerr << "merging decs list!\n" << std::endl;
+
         mergeDecList(tinfo);
     }
 }

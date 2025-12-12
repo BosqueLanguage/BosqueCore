@@ -70,7 +70,7 @@ struct DecsProcessor {
         processDecfp(nullptr), worker_state(WorkerState::Paused), stop_requested(false) 
     { 
         GlobalThreadAllocInfo::s_thread_counter++;
-    }
+    }   
 
     void requestMergeAndPause(std::unique_lock<std::mutex>& lk)
     {
