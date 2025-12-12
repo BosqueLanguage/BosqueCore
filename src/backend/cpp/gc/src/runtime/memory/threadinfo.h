@@ -5,6 +5,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <thread>
+#include <chrono>
 
 #define InitBSQMemoryTheadLocalInfo() { ALLOC_LOCK_ACQUIRE(); register void** rbp asm("rbp"); gtl_info.initialize(GlobalThreadAllocInfo::s_thread_counter++, rbp); ALLOC_LOCK_RELEASE(); }
 
@@ -50,7 +51,7 @@ typedef ArrayList<void*> DecsList;
 struct DecsProcessor {
     std::unique_ptr<std::condition_variable> cv;
     std::unique_ptr<std::mutex> mtx;
-    std::unique_ptr<std::jthread> worker;
+    std::unique_ptr<std::thread> worker;
 
     DecsList pending;
     void (*processDecfp)(void*, BSQMemoryTheadLocalInfo&);
@@ -74,7 +75,7 @@ struct DecsProcessor {
         this->pending.initialize();
         this->cv = std::make_unique<std::condition_variable>();
         this->mtx = std::make_unique<std::mutex>();
-        this->worker = std::make_unique<std::jthread>([this, tinfo]{ return this->process(tinfo); });
+        this->worker = std::make_unique<std::thread>([this, tinfo]{ return this->process(tinfo); });
         GlobalThreadAllocInfo::s_thread_counter++;
     }
 
@@ -102,15 +103,24 @@ struct DecsProcessor {
     void signalFinished()
     {
         std::unique_lock lk(*this->mtx);
+
         this->stop_requested = true;
 
         lk.unlock();
         this->cv->notify_one();
 
         // Worker thread ack 
+        //lk.lock();
         this->cv->wait(lk, [this]{ return this->worker_state == WorkerState::Paused; });
 
+        // something is totally donked up here, we always hit the assertion
         this->worker->join();
+
+        if(!this->worker->joinable()) {
+            std::cerr << "Worker thread never terminated!\n";
+            std::abort();
+        }
+
         GlobalThreadAllocInfo::s_thread_counter--;
     }
 
@@ -151,6 +161,9 @@ struct DecsProcessor {
                 this->worker_state = WorkerState::Paused;
             }
         }
+        
+        this->worker_state = WorkerState::Paused;
+        this->cv->notify_one();
     }
 };
 

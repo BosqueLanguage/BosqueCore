@@ -554,6 +554,12 @@ void collect() noexcept
 {
     COLLECTION_STATS_START();
 
+    //
+    // U know, im sorta suspicious about this lock possibly causing our
+    // hanging CI. When i run ci with the decs thread disabled
+    // (meaning we just dont try moving decs in) it runs fine. otherwise locks...
+    //
+
     // Pause decs thread while we run a collection
     std::unique_lock lk(*gtl_info.decs.mtx);
     gtl_info.decs.requestMergeAndPause(lk);

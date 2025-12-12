@@ -21,13 +21,6 @@ int wrap_setjmp() {
     // Ensure decs thread stops waiting
     gtl_info.decs.signalFinished();
 
-/*
-    if(!gtl_info.decs.worker->joinable()) {
-        std::cerr << "Worker thread never terminated!\n";
-        std::abort();
-    }
-*/
-
     return 0;
 }
 
