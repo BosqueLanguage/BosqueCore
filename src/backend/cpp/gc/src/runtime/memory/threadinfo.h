@@ -48,9 +48,9 @@ struct RegisterContents
 // An object for processing RC decrements on separate thread
 typedef ArrayList<void*> DecsList;
 struct DecsProcessor {
-    std::condition_variable cv;
-    std::mutex mtx;
-    std::thread worker;
+    std::unique_ptr<std::condition_variable> cv;
+    std::unique_ptr<std::mutex> mtx;
+    std::unique_ptr<std::jthread> worker;
 
     DecsList pending;
     void (*processDecfp)(void*, BSQMemoryTheadLocalInfo&);
@@ -65,23 +65,29 @@ struct DecsProcessor {
     WorkerState worker_state;
     bool stop_requested;
 
-    DecsProcessor(BSQMemoryTheadLocalInfo* tinfo) : 
-        cv(), mtx(), worker(&DecsProcessor::process, this, tinfo), pending(), 
-        processDecfp(nullptr), worker_state(WorkerState::Paused), stop_requested(false) 
-    { 
+    DecsProcessor() : 
+        cv(nullptr), mtx(nullptr), worker(nullptr), pending(), 
+        processDecfp(nullptr), worker_state(WorkerState::Paused), stop_requested(false) { }
+
+    void initialize(BSQMemoryTheadLocalInfo* tinfo)
+    {
+        this->pending.initialize();
+        this->cv = std::make_unique<std::condition_variable>();
+        this->mtx = std::make_unique<std::mutex>();
+        this->worker = std::make_unique<std::jthread>([this, tinfo]{ return this->process(tinfo); });
         GlobalThreadAllocInfo::s_thread_counter++;
-    }   
+    }
 
     void requestMergeAndPause(std::unique_lock<std::mutex>& lk)
     {
         this->worker_state = WorkerState::Merging;
 
         lk.unlock();
-        this->cv.notify_one();
+        this->cv->notify_one();
         lk.lock();
 
         // Ack that the worker is fully paused
-        cv.wait(lk, [this]{ return this->worker_state == WorkerState::Paused; });
+        this->cv->wait(lk, [this]{ return this->worker_state == WorkerState::Paused; });
 
         // Items can safely be inserted into this->pending now
     }
@@ -90,30 +96,30 @@ struct DecsProcessor {
     {
         this->worker_state = WorkerState::Running;
         lk.unlock();
-        this->cv.notify_one();
+        this->cv->notify_one();
     }
 
     void signalFinished()
     {
-        std::unique_lock lk(this->mtx);
+        std::unique_lock lk(*this->mtx);
         this->stop_requested = true;
 
         lk.unlock();
-        this->cv.notify_one();
+        this->cv->notify_one();
 
         // Worker thread ack 
-        cv.wait(lk, [this]{ return this->worker_state == WorkerState::Paused; });
+        this->cv->wait(lk, [this]{ return this->worker_state == WorkerState::Paused; });
 
-        this->worker.join();
+        this->worker->join();
         GlobalThreadAllocInfo::s_thread_counter--;
     }
 
     void process(BSQMemoryTheadLocalInfo* tinfo)
     {
-        std::unique_lock lk(this->mtx);
+        std::unique_lock lk(*this->mtx);
         while(!this->stop_requested) {
             if(this->worker_state == WorkerState::Paused) {
-                cv.wait(lk, [this] {
+                this->cv->wait(lk, [this] {
                     return this->worker_state != WorkerState::Paused || this->stop_requested;
                 });
             }
@@ -125,7 +131,7 @@ struct DecsProcessor {
             if(this->worker_state == WorkerState::Merging) {
                 this->worker_state = WorkerState::Paused;
                 lk.unlock();
-                this->cv.notify_one(); // Notify main thread of merge
+                this->cv->notify_one(); // Notify main thread of merge
                 lk.lock();
                 continue;
             }
@@ -202,7 +208,7 @@ struct BSQMemoryTheadLocalInfo
         tl_id(0), g_gcallocs(nullptr), native_stack_base(nullptr), native_stack_contents(), 
         native_register_contents(), roots_count(0), roots(nullptr), old_roots_count(0), 
         old_roots(nullptr), forward_table_index(FWD_TABLE_START), forward_table(nullptr), 
-        decs(this), decs_batch(), decd_pages_idx(0), decd_pages(), pending_roots(), 
+        decs(), decs_batch(), decd_pages_idx(0), decd_pages(), pending_roots(), 
         visit_stack(), pending_young(), max_decrement_count(BSQ_INITIAL_MAX_DECREMENT_COUNT) { }
     BSQMemoryTheadLocalInfo& operator=(BSQMemoryTheadLocalInfo&) = delete;
     BSQMemoryTheadLocalInfo(BSQMemoryTheadLocalInfo&) = delete;
