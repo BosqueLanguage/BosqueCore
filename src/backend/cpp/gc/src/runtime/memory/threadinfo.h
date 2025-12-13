@@ -52,7 +52,7 @@ typedef ArrayList<void*> DecsList;
 struct DecsProcessor {
     std::mutex mtx;
     std::condition_variable cv;
-    std::unique_ptr<std::thread> thd;    
+    std::thread thd;    
 
     void (*processDecfp)(void*, BSQMemoryTheadLocalInfo&);
     DecsList pending;
@@ -66,12 +66,12 @@ struct DecsProcessor {
     };
     std::atomic<State> st;
 
-    DecsProcessor(): mtx(), cv(), thd(nullptr), processDecfp(nullptr), pending(), st(State::Paused) {}
+    DecsProcessor(): mtx(), cv(), thd(), processDecfp(nullptr), pending(), st(State::Paused) {}
 
     void initialize(BSQMemoryTheadLocalInfo* tinfo)
     {
         this->pending.initialize();
-        this->thd = std::make_unique<std::thread>([this, tinfo] { this->process(tinfo); });
+        this->thd = std::thread([this, tinfo] { this->process(tinfo); });
         GlobalThreadAllocInfo::s_thread_counter++;
     }
 
@@ -109,8 +109,8 @@ struct DecsProcessor {
         this->pause(); // Ensure we are waiting
         this->changeStateFromMain(State::Stopping, State::Stopped);
 
-        this->thd->join();
-        if(this->thd->joinable()) {
+        this->thd.join();
+        if(this->thd.joinable()) {
             std::cerr << "Thread did not finish joining!\n";
             std::abort();
         }
