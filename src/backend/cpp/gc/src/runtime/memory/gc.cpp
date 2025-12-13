@@ -176,10 +176,6 @@ void processDec(void* obj, BSQMemoryTheadLocalInfo& tinfo) noexcept
 
 static void mergeDecList(BSQMemoryTheadLocalInfo& tinfo)
 {
-    if(!tinfo.decs.pending.isInitialized()) {
-        tinfo.decs.pending.initialize();
-    }
-
     while(!tinfo.decs_batch.isEmpty()) {
         void* obj = tinfo.decs_batch.pop_front();
         tinfo.decs.pending.push_back(obj);
@@ -551,9 +547,7 @@ void collect() noexcept
 {
     COLLECTION_STATS_START();
 
-    // Pause decs thread while we run a collection
-    std::unique_lock lk(gtl_info.decs.mtx);
-    gtl_info.decs.requestMergeAndPause(lk);
+    gtl_info.decs.pause();
     
     gtl_info.pending_young.initialize();
 
@@ -588,10 +582,9 @@ void collect() noexcept
     processAllocatorsPages();
     updateRoots();
 
-    // Unpause now that everything has been processed
-    gtl_info.decs.resumeAfterMerge(lk);
-
     COLLECTION_STATS_END(gtl_info, collection_times);
     UPDATE_COLLECTION_TIMES(gtl_info);
     UPDATE_MEMSTATS_TOTALS(gtl_info);
+
+    gtl_info.decs.resume();
 }
