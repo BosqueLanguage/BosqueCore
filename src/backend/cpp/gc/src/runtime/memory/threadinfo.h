@@ -46,10 +46,6 @@ struct RegisterContents
     void* r15 = nullptr;
 };
 
-// An object for processing RC decrements on separate thread
-typedef ArrayList<void*> DecsList;
-
-// Helper function for timeout waits
 template<typename Predicate>
 bool wait_with_timeout(std::condition_variable& cv, std::unique_lock<std::mutex>& lock, 
                       Predicate pred, const char* wait_location)
@@ -61,12 +57,14 @@ bool wait_with_timeout(std::condition_variable& cv, std::unique_lock<std::mutex>
             std::cerr << "TIMEOUT ERROR: Waiting too long at: " << wait_location 
                       << " (timeout: 500ms)" << std::endl;
             std::cerr << "  Thread ID: " << std::this_thread::get_id() << std::endl;
-            return false; // Timeout occurred
+            return false;
         }
     }
-    return true; // Predicate satisfied
+    return true;
 }
 
+// An object for processing RC decrements on separate thread
+typedef ArrayList<void*> DecsList;
 struct DecsProcessor {
     std::unique_ptr<std::condition_variable> cv;
     std::unique_ptr<std::mutex> mtx;
@@ -148,7 +146,7 @@ struct DecsProcessor {
     void signalFinished()
     {
         std::cerr << "signalFinished called from thread: " 
-                  << std::this_thread::get_id() << std::endl;
+                << std::this_thread::get_id() << std::endl;
         std::cerr << "  Setting stop_requested = true" << std::endl;
         
         std::unique_lock lk(*this->mtx);
@@ -173,10 +171,17 @@ struct DecsProcessor {
         lk.unlock();
         
         std::cerr << "  Attempting to join worker thread..." << std::endl;
-        this->worker->join();
-
+        
         if(!this->worker->joinable()) {
-            std::cerr << "ERROR: Worker thread never terminated!" << std::endl;
+            std::cerr << "ERROR: Worker thread is not joinable (was it already joined or moved?)" << std::endl;
+            std::cerr << "  Thread ID: " << this->worker->get_id() << std::endl;
+            std::abort();
+        }
+        
+        this->worker->join();
+        
+        if(this->worker->joinable()) {
+            std::cerr << "ERROR: Worker thread still joinable after join()!" << std::endl;
             std::abort();
         }
         
