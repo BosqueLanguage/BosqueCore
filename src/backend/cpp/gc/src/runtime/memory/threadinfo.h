@@ -48,6 +48,25 @@ struct RegisterContents
 
 // An object for processing RC decrements on separate thread
 typedef ArrayList<void*> DecsList;
+
+// Helper function for timeout waits
+template<typename Predicate>
+bool wait_with_timeout(std::condition_variable& cv, std::unique_lock<std::mutex>& lock, 
+                      Predicate pred, const char* wait_location)
+{
+    auto timeout = std::chrono::steady_clock::now() + std::chrono::milliseconds(500);
+    
+    while (!pred()) {
+        if (cv.wait_until(lock, timeout) == std::cv_status::timeout) {
+            std::cerr << "TIMEOUT ERROR: Waiting too long at: " << wait_location 
+                      << " (timeout: 500ms)" << std::endl;
+            std::cerr << "  Thread ID: " << std::this_thread::get_id() << std::endl;
+            return false; // Timeout occurred
+        }
+    }
+    return true; // Predicate satisfied
+}
+
 struct DecsProcessor {
     std::unique_ptr<std::condition_variable> cv;
     std::unique_ptr<std::mutex> mtx;
@@ -72,15 +91,30 @@ struct DecsProcessor {
 
     void initialize(BSQMemoryTheadLocalInfo* tinfo)
     {
+        std::cerr << "DecsProcessor::initialize called from thread: " 
+                  << std::this_thread::get_id() << std::endl;
+        
         this->pending.initialize();
         this->cv = std::make_unique<std::condition_variable>();
         this->mtx = std::make_unique<std::mutex>();
-        this->worker = std::make_unique<std::thread>([this, tinfo]{ return this->process(tinfo); });
+        this->worker = std::make_unique<std::thread>([this, tinfo]{ 
+            return this->process(tinfo); 
+        });
+        
+        std::cerr << "Worker thread created with ID: " << this->worker->get_id() << std::endl;
+        
         GlobalThreadAllocInfo::s_thread_counter++;
+        
+        // Wait a bit for worker to start up
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
     void requestMergeAndPause(std::unique_lock<std::mutex>& lk)
     {
+        std::cerr << "requestMergeAndPause called from thread: " 
+                  << std::this_thread::get_id() << std::endl;
+        std::cerr << "  Current worker_state: " << static_cast<int>(this->worker_state) << std::endl;
+        
         this->worker_state = WorkerState::Merging;
 
         lk.unlock();
@@ -88,13 +122,24 @@ struct DecsProcessor {
         lk.lock();
 
         // Ack that the worker is fully paused
-        this->cv->wait(lk, [this]{ return this->worker_state == WorkerState::Paused; });
+        std::cerr << "  Waiting for worker to pause..." << std::endl;
+        if (!wait_with_timeout(*this->cv, lk, 
+            [this]{ return this->worker_state == WorkerState::Paused; },
+            "requestMergeAndPause - waiting for Paused state")) {
+            std::cerr << "ERROR: requestMergeAndPause timed out!" << std::endl;
+            std::abort();
+        }
+        std::cerr << "  Worker is now paused" << std::endl;
 
         // Items can safely be inserted into this->pending now
     }
 
     void resumeAfterMerge(std::unique_lock<std::mutex>& lk)
     {
+        std::cerr << "resumeAfterMerge called from thread: " 
+                  << std::this_thread::get_id() << std::endl;
+        std::cerr << "  Setting worker_state to Running" << std::endl;
+        
         this->worker_state = WorkerState::Running;
         lk.unlock();
         this->cv->notify_one();
@@ -102,43 +147,75 @@ struct DecsProcessor {
 
     void signalFinished()
     {
+        std::cerr << "signalFinished called from thread: " 
+                  << std::this_thread::get_id() << std::endl;
+        std::cerr << "  Setting stop_requested = true" << std::endl;
+        
         std::unique_lock lk(*this->mtx);
 
         this->stop_requested = true;
 
         lk.unlock();
         this->cv->notify_one();
+        lk.lock();
 
         // Worker thread ack 
-        //lk.lock();
-        this->cv->wait(lk, [this]{ return this->worker_state == WorkerState::Paused; });
+        std::cerr << "  Waiting for worker to acknowledge stop..." << std::endl;
+        if (!wait_with_timeout(*this->cv, lk, 
+            [this]{ return this->worker_state == WorkerState::Paused; },
+            "signalFinished - waiting for Paused state")) {
+            std::cerr << "ERROR: signalFinished timed out waiting for worker!" << std::endl;
+            std::cerr << "  Current worker_state: " << static_cast<int>(this->worker_state) << std::endl;
+            std::cerr << "  stop_requested: " << this->stop_requested << std::endl;
+            std::abort();
+        }
 
-        // something is totally donked up here, we always hit the assertion
+        lk.unlock();
+        
+        std::cerr << "  Attempting to join worker thread..." << std::endl;
         this->worker->join();
 
         if(!this->worker->joinable()) {
-            std::cerr << "Worker thread never terminated!\n";
+            std::cerr << "ERROR: Worker thread never terminated!" << std::endl;
             std::abort();
         }
+        
+        std::cerr << "  Worker thread successfully joined" << std::endl;
 
         GlobalThreadAllocInfo::s_thread_counter--;
     }
 
     void process(BSQMemoryTheadLocalInfo* tinfo)
     {
+        std::cerr << "Worker process started on thread: " 
+                  << std::this_thread::get_id() << std::endl;
+                  
         std::unique_lock lk(*this->mtx);
+        
         while(!this->stop_requested) {
+            std::cerr << "Worker loop - state: " << static_cast<int>(this->worker_state) 
+                      << ", pending empty: " << this->pending.isEmpty() << std::endl;
+            
             if(this->worker_state == WorkerState::Paused) {
-                this->cv->wait(lk, [this] {
+                std::cerr << "  Worker is paused, waiting for work..." << std::endl;
+                
+                if (!wait_with_timeout(*this->cv, lk, [this] {
                     return this->worker_state != WorkerState::Paused || this->stop_requested;
-                });
+                }, "process - waiting in Paused state")) {
+                    std::cerr << "ERROR: Worker timed out in paused state!" << std::endl;
+                    std::cerr << "  worker_state: " << static_cast<int>(this->worker_state) << std::endl;
+                    std::cerr << "  stop_requested: " << this->stop_requested << std::endl;
+                    std::abort();
+                }
             }
 
             if(this->stop_requested) {
+                std::cerr << "  stop_requested is true, breaking loop" << std::endl;
                 break;
             }
 
             if(this->worker_state == WorkerState::Merging) {
+                std::cerr << "  Worker received Merging request, switching to Paused" << std::endl;
                 this->worker_state = WorkerState::Paused;
                 lk.unlock();
                 this->cv->notify_one(); // Notify main thread of merge
@@ -147,23 +224,38 @@ struct DecsProcessor {
             }
 
             if(this->worker_state == WorkerState::Running) {
+                std::cerr << "  Worker is Running, processing pending items..." << std::endl;
                 while(!this->pending.isEmpty() && !this->stop_requested) {
                     void* obj = this->pending.pop_front();
+                    lk.unlock();
+                    
+                    std::cerr << "  Processing object: " << obj << std::endl;
                     this->processDecfp(obj, *tinfo);
-
+                    
+                    lk.lock();
+                    
                     if(this->worker_state != WorkerState::Running) {
+                        std::cerr << "  Worker state changed during processing to: " 
+                                  << static_cast<int>(this->worker_state) << std::endl;
                         break;
                     }
                 }
+                
+                std::cerr << "  Done processing batch" << std::endl;
             }
 
             if(this->pending.isEmpty() && !this->stop_requested) {
+                std::cerr << "  No pending items, switching to Paused" << std::endl;
                 this->worker_state = WorkerState::Paused;
             }
         }
         
+        std::cerr << "Worker exiting main loop, finalizing..." << std::endl;
+        
         this->worker_state = WorkerState::Paused;
         this->cv->notify_one();
+        
+        std::cerr << "Worker thread finished" << std::endl;
     }
 };
 
