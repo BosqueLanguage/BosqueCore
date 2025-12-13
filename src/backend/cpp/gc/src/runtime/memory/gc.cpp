@@ -176,10 +176,6 @@ void processDec(void* obj, BSQMemoryTheadLocalInfo& tinfo) noexcept
 
 static void mergeDecList(BSQMemoryTheadLocalInfo& tinfo)
 {
-    if(!tinfo.decs.pending.isInitialized()) {
-        tinfo.decs.pending.initialize();
-    }
-
     while(!tinfo.decs_batch.isEmpty()) {
         void* obj = tinfo.decs_batch.pop_front();
         tinfo.decs.pending.push_back(obj);
@@ -197,9 +193,6 @@ static void tryMergeDecList(BSQMemoryTheadLocalInfo& tinfo)
     }
 
     if(!tinfo.decs_batch.isEmpty()) {
-
-        std::cerr << "merging decs list!\n" << std::endl;
-
         mergeDecList(tinfo);
     }
 }

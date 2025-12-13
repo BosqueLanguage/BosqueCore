@@ -47,23 +47,6 @@ struct RegisterContents
     void* r15 = nullptr;
 };
 
-template<typename Predicate>
-bool wait_with_timeout(std::condition_variable& cv, std::unique_lock<std::mutex>& lock, 
-                      Predicate pred, const char* wait_location)
-{
-    auto timeout = std::chrono::steady_clock::now() + std::chrono::milliseconds(500);
-    
-    while (!pred()) {
-        if (cv.wait_until(lock, timeout) == std::cv_status::timeout) {
-            std::cerr << "TIMEOUT ERROR: Waiting too long at: " << wait_location 
-                      << " (timeout: 500ms)" << std::endl;
-            std::cerr << "  Thread ID: " << std::this_thread::get_id() << std::endl;
-            return false;
-        }
-    }
-    return true;
-}
-
 // An object for processing RC decrements on separate thread
 typedef ArrayList<void*> DecsList;
 struct DecsProcessor {
