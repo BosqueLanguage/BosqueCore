@@ -412,10 +412,11 @@ class CPPEmitter {
             return `${vdecltype} ${TransformCPPNameManager.convertIdentifier(tase.tname)} = ${wval};`
         }
         else if(ttag === IRStatementTag.IRTempAssignStdInvokeStatement) {
-            xxxx;
+            assert(false, "CPPEmitter: need to implement temp assign standard invoke expression");
         }
         else if(ttag === IRStatementTag.IRTempAssignRefInvokeStatement) {
-            xxxx;
+            assert(false, "CPPEmitter: need to implement temp assign invoke with references expression");
+            //TODO: but since we use by-ref passing it is actually just the same as the temp assign standard invoke
         }
         else if(ttag === IRStatementTag.IRVariableDeclarationStatement) {
             const vdeclstmt = stmt as IRVariableDeclarationStatement;
