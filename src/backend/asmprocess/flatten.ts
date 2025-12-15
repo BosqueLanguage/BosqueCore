@@ -1,14 +1,16 @@
-import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, LambdaParameterPackTypeSignature, NominalTypeSignature, TypeSignature, VoidTypeSignature } from "../../frontend/type";
+import { SourceInfo } from "../../frontend/build_decls";
+import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "../../frontend/type";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringTextComponent, HoleBodyImplementation, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PostfixOp, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement } from "../../frontend/body";
 import { Assembly, InvariantDecl, NamespaceFunctionDecl, PostConditionDecl, PreConditionDecl, TypedeclTypeDecl, ValidateDecl } from "../../frontend/assembly";
 
 import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatCStringTypeSignature, IRFormatPathFragmentTypeSignature, IRFormatPathGlobTypeSignature, IRFormatPathTypeSignature, IRFormatStringTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype";
 import { DateRepresentation, DeltaDateRepresentation, DeltaTimeRepresentation, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteBufferExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralCStringExpression, IRLiteralDecimalExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLatLongCoordinateExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralNoneExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralRationalExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRStatement, TimeRepresentation, IRLiteralFormatStringExpression, IRFormatStringTextComponent, IRFormatStringArgComponent, IRFormatStringComponent, IRLiteralFormatCStringExpression, IRLiteralTypedExpression, IRLiteralExpression, IRTypeDeclInvariantCheckStatement, IRLiteralTypedStringExpression, IRLiteralTypedCStringExpression, IRLiteralTypedFormatStringExpression, IRLiteralTypedFormatCStringExpression, IRTaskAccessIDExpression, IRTaskAccessParentIDExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessNamespaceConstantExpression, IRAccessStaticFieldExpression, IRAccessEnumExpression, IRSimpleExpression, IRPreconditionCheckStatement, IRExpression, IRTempAssignExpressionStatement, IRAccessTempVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessParameterVariableExpression, IRPrefixNotOpExpression, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRErrorAdditionBoundsCheckStatement, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRErrorDivisionByZeroCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRNopStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRReturnVoidSimpleStatement, IRAbortStatement, IRImmediateExpression, IRReturnSimpleStatement, IRReturnValueSimpleStatement, IRBlockStatement, IRChkLogicImpliesShortCircuitStatement, IRInvokeDirectExpression, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRVariableInitializationDirectInvokeStatement, IRInvokeSimpleExpression, IRInvokeImplicitsExpression, IRTempAssignStdInvokeStatement, IRTempAssignRefInvokeStatement, IRReturnDirectInvokeStatement, IRAssertStatement, IRValidateStatement, IRDebugStatement, IRInvokeExpression } from "../irdefs/irbody";
 import { IRRegex } from "../irdefs/irsupport";
-import { IRPostConditionDecl } from "../irdefs/irassembly";
+import { IRInvariantDecl, IRPostConditionDecl, IRValidateDecl } from "../irdefs/irassembly";
+
+import { InvokeInstantiationInfo, TypeInstantiationInfo } from "./instantiations";
 
 import assert from "node:assert";
-import { SourceInfo } from "../../frontend/build_decls";
 
 class ASMToIRConverter {
     readonly assembly: Assembly;
@@ -24,6 +26,9 @@ class ASMToIRConverter {
     currentReturnType: IRTypeSignature | undefined;
     currentImplicitReturnVar: string | undefined;
     currentPostconditions: PostConditionDecl[] | undefined
+
+    currentTypeInstantiation: TypeInstantiationInfo | undefined;
+    currentInvokeInstantation: InvokeInstantiationInfo | undefined;
 
     pendingblocks: IRStatement[][];
     rescopeStack: Map<string, string>[]; //Maps from old name to new name
@@ -134,70 +139,70 @@ class ASMToIRConverter {
         return bytes;
     }
 
-    private processTypeSignature(tsig: TypeSignature): IRTypeSignature {
-        xxxx; //using tkeystr in wrong since we need to instantiate the templates using our current instantiation bindings!!! also in other places!
 
-        if(tsig instanceof VoidTypeSignature) {
+    private processTypeSignature(tsig: TypeSignature): IRTypeSignature {
+        let rtsig: TypeSignature;
+
+        //If an invoke instantiation is active then it subsumes the type instantiation so use it first
+        if(this.currentInvokeInstantation !== undefined) {
+            rtsig = this.currentInvokeInstantation.binds !== undefined ? tsig.remapTemplateBindings(this.currentInvokeInstantation.binds) : tsig;
+        }
+        else if(this.currentTypeInstantiation !== undefined) {
+            rtsig = this.currentTypeInstantiation.binds !== undefined ? tsig.remapTemplateBindings(this.currentTypeInstantiation.binds) : tsig;
+        }
+        else {
+            rtsig = tsig;
+        }
+        
+        if(rtsig instanceof VoidTypeSignature) {
             return new IRVoidTypeSignature();
         }
-        else if(tsig instanceof NominalTypeSignature) {
-            return new IRNominalTypeSignature(tsig.tkeystr);
+        else if(rtsig instanceof NominalTypeSignature) {
+            return new IRNominalTypeSignature(rtsig.tkeystr);
         }
-        else if(tsig instanceof EListTypeSignature) {
-            const elisttsig = tsig as EListTypeSignature;
+        else if(rtsig instanceof EListTypeSignature) {
+            const elisttsig = rtsig as EListTypeSignature;
             const irents = elisttsig.entries.map<IRTypeSignature>((ent) => this.processTypeSignature(ent));
 
-            return new IREListTypeSignature(tsig.tkeystr, irents);
+            return new IREListTypeSignature(rtsig.tkeystr, irents);
         }
-        else if(tsig instanceof DashResultTypeSignature) {
-            const drtsig = tsig as DashResultTypeSignature;
+        else if(rtsig instanceof DashResultTypeSignature) {
+            const drtsig = rtsig as DashResultTypeSignature;
             const irents = drtsig.entries.map<IRTypeSignature>((ent) => this.processTypeSignature(ent));
 
-            return new IRDashResultTypeSignature(tsig.tkeystr, irents);
+            return new IRDashResultTypeSignature(rtsig.tkeystr, irents);
         }
-        else if(tsig instanceof FormatStringTypeSignature) {
-            const ffmtsig = tsig as FormatStringTypeSignature;
+        else if(rtsig instanceof FormatStringTypeSignature) {
+            const ffmtsig = rtsig as FormatStringTypeSignature;
             const irfmts = ffmtsig.terms.map<{argname: string, argtype: IRTypeSignature}>((term) => {
                 return {argname: term.argname, argtype: this.processTypeSignature(term.argtype)};
             });
 
             if(ffmtsig.oftype === "CString") {
-                return new IRFormatCStringTypeSignature(tsig.tkeystr, this.processTypeSignature(ffmtsig.rtype), irfmts);
+                return new IRFormatCStringTypeSignature(rtsig.tkeystr, this.processTypeSignature(ffmtsig.rtype), irfmts);
             }
             else {
-                return new IRFormatStringTypeSignature(tsig.tkeystr, this.processTypeSignature(ffmtsig.rtype), irfmts);
+                return new IRFormatStringTypeSignature(rtsig.tkeystr, this.processTypeSignature(ffmtsig.rtype), irfmts);
             }
         }
-        else if(tsig instanceof FormatPathTypeSignature) {
-            const fpathtsig = tsig as FormatPathTypeSignature;
+        else if(rtsig instanceof FormatPathTypeSignature) {
+            const fpathtsig = rtsig as FormatPathTypeSignature;
             const irfmts = fpathtsig.terms.map<{argname: string, argtype: IRTypeSignature}>((term) => {
                 return {argname: term.argname, argtype: this.processTypeSignature(term.argtype)};
             });
 
             if(fpathtsig.oftype === "Path") {
-                return new IRFormatPathTypeSignature(tsig.tkeystr, this.processTypeSignature(fpathtsig.rtype), irfmts);
+                return new IRFormatPathTypeSignature(rtsig.tkeystr, this.processTypeSignature(fpathtsig.rtype), irfmts);
             }
             else if(fpathtsig.oftype === "PathFragment") {
-                return new IRFormatPathFragmentTypeSignature(tsig.tkeystr, this.processTypeSignature(fpathtsig.rtype), irfmts);
+                return new IRFormatPathFragmentTypeSignature(rtsig.tkeystr, this.processTypeSignature(fpathtsig.rtype), irfmts);
             }
             else {
-                return new IRFormatPathGlobTypeSignature(tsig.tkeystr, this.processTypeSignature(fpathtsig.rtype), irfmts);
+                return new IRFormatPathGlobTypeSignature(rtsig.tkeystr, this.processTypeSignature(fpathtsig.rtype), irfmts);
             }
         }
-        else if(tsig instanceof LambdaParameterPackTypeSignature) {
-            const lppsig = tsig as LambdaParameterPackTypeSignature;
-
-            const stdvals = lppsig.stdvalues.map<{vname: string, vtype: IRTypeSignature}>((sv) => {
-                return {vname: sv.vname, vtype: this.processTypeSignature(sv.vtype)};
-            });
-            const lambdavals = lppsig.lambdavalues.map<{lname: string, ltype: IRLambdaParameterPackTypeSignature}>((lv) => {
-                return {lname: lv.lname, ltype: this.processTypeSignature(lv.ltype) as IRLambdaParameterPackTypeSignature};
-            });
-
-            return new IRLambdaParameterPackTypeSignature(tsig.tkeystr, stdvals, lambdavals);
-        }
         else {
-            assert(false, `ASMToIRConverter: Unsupported type signature -- ${tsig.tkeystr}`);
+            assert(false, `ASMToIRConverter: Unsupported type signature -- ${rtsig.tkeystr}`);
         }
     }
 
@@ -1871,7 +1876,7 @@ class ASMToIRConverter {
         }
     }
 
-    private generateRequiresClauseExplicitInvoke(TypeSignature req: PreConditionDecl): IRPreconditionCheckStatement {
+    private generateRequiresClauseExplicitInvoke(req: PreConditionDecl): IRPreconditionCheckStatement {
         assert(false, "Not Implemented -- generateRequiresClauseExplicitInvoke");
     }
 
@@ -1879,11 +1884,11 @@ class ASMToIRConverter {
         assert(false, "Not Implemented -- generateEnsuresClauseExplicitInvoke");
     }
 
-    private generateInvariantClauseExplicitInvoke(req: InvariantDecl): xxx {
-        const iiname = 
+    private generateInvariantClauseExplicitInvoke(req: InvariantDecl): IRInvariantDecl {
+        xxxx;
     }
 
-    private generateValidateClauseExplicitInvoke(req: ValidateDecl): xxx {
+    private generateValidateClauseExplicitInvoke(req: ValidateDecl): IRValidateDecl {
         xxxx;
     }
 

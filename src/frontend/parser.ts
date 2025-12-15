@@ -2101,6 +2101,10 @@ class Parser {
 
         const ptype = this.parseParameterTypeSignature();
 
+        if(ptype instanceof LambdaTypeSignature) {
+            this.recordErrorGeneral(cinfo, "Cannot have a lambda type as a parameter type of a lambda signature");
+        }
+
         if(this.testToken(SYM_eq)) {
             this.recordErrorGeneral(this.peekToken(), "Cannot have default values for lambda parameters");
             this.consumeToken();
@@ -2257,6 +2261,10 @@ class Parser {
         let ptype = this.env.SpecialAutoSignature;
         if(this.testAndConsumeTokenIf(SYM_colon)) {
             ptype = this.parseParameterTypeSignature();
+        }
+
+        if(ptype instanceof LambdaTypeSignature) {
+            this.recordErrorGeneral(cinfo, "Cannot have a lambda type as a parameter type of a lambda declaration");
         }
 
         if(this.testToken(SYM_eq)) {
