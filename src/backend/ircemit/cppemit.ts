@@ -505,6 +505,9 @@ class CPPEmitter {
             const ias = stmt as IRAssertStatement;
             return `${RUNTIME_NAMESPACE}::bsq_assert(${this.emitIRSimpleExpression(ias.cond, true)}, "${ias.file}", ${ias.sinfo.line}, nullptr, "Assertion Failed");`;
         }
+        else if(ttag === IRStatementTag.IRAssumeStatement) {
+            return ";"; //nop for execution
+        }
         else if(ttag === IRStatementTag.IRValidateStatement) {
             const ivs = stmt as IRValidateStatement;
             return `${RUNTIME_NAMESPACE}::bsq_validate(${this.emitIRSimpleExpression(ivs.cond, true)}, "${ivs.file}", ${ivs.sinfo.line}, nullptr, "Validation Failed");`;

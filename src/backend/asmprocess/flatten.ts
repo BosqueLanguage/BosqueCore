@@ -1,11 +1,11 @@
 import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, LambdaParameterPackTypeSignature, NominalTypeSignature, TypeSignature, VoidTypeSignature } from "../../frontend/type";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringTextComponent, HoleBodyImplementation, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PostfixOp, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement } from "../../frontend/body";
-import { Assembly, PreConditionDecl, TypedeclTypeDecl } from "../../frontend/assembly";
+import { Assembly, InvariantDecl, NamespaceFunctionDecl, PostConditionDecl, PreConditionDecl, TypedeclTypeDecl, ValidateDecl } from "../../frontend/assembly";
 
 import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatCStringTypeSignature, IRFormatPathFragmentTypeSignature, IRFormatPathGlobTypeSignature, IRFormatPathTypeSignature, IRFormatStringTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype";
 import { DateRepresentation, DeltaDateRepresentation, DeltaTimeRepresentation, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteBufferExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralCStringExpression, IRLiteralDecimalExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLatLongCoordinateExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralNoneExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralRationalExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRStatement, TimeRepresentation, IRLiteralFormatStringExpression, IRFormatStringTextComponent, IRFormatStringArgComponent, IRFormatStringComponent, IRLiteralFormatCStringExpression, IRLiteralTypedExpression, IRLiteralExpression, IRTypeDeclInvariantCheckStatement, IRLiteralTypedStringExpression, IRLiteralTypedCStringExpression, IRLiteralTypedFormatStringExpression, IRLiteralTypedFormatCStringExpression, IRTaskAccessIDExpression, IRTaskAccessParentIDExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessNamespaceConstantExpression, IRAccessStaticFieldExpression, IRAccessEnumExpression, IRSimpleExpression, IRPreconditionCheckStatement, IRExpression, IRTempAssignExpressionStatement, IRAccessTempVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessParameterVariableExpression, IRPrefixNotOpExpression, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRErrorAdditionBoundsCheckStatement, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRErrorDivisionByZeroCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRNopStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRReturnVoidSimpleStatement, IRAbortStatement, IRImmediateExpression, IRReturnSimpleStatement, IRReturnValueSimpleStatement, IRBlockStatement, IRChkLogicImpliesShortCircuitStatement, IRInvokeDirectExpression, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRVariableInitializationDirectInvokeStatement, IRInvokeSimpleExpression, IRInvokeImplicitsExpression, IRTempAssignStdInvokeStatement, IRTempAssignRefInvokeStatement, IRReturnDirectInvokeStatement, IRAssertStatement, IRValidateStatement, IRDebugStatement, IRInvokeExpression } from "../irdefs/irbody";
 import { IRRegex } from "../irdefs/irsupport";
-import {} from "../irdefs/irassembly";
+import { IRPostConditionDecl } from "../irdefs/irassembly";
 
 import assert from "node:assert";
 import { SourceInfo } from "../../frontend/build_decls";
@@ -14,6 +14,8 @@ class ASMToIRConverter {
     readonly assembly: Assembly;
 
     regexs: IRRegex[];
+
+    errInfos: { file: string, sinfo: SourceInfo, kind: "arith" | "runtime" | "userspec", checkID: number }[];
     errCtr: number;
 
     currentFile: string | undefined;
@@ -21,6 +23,7 @@ class ASMToIRConverter {
     isTaskAllowed: boolean = false;
     currentReturnType: IRTypeSignature | undefined;
     currentImplicitReturnVar: string | undefined;
+    currentPostconditions: PostConditionDecl[] | undefined
 
     pendingblocks: IRStatement[][];
     rescopeStack: Map<string, string>[]; //Maps from old name to new name
@@ -30,11 +33,18 @@ class ASMToIRConverter {
         this.assembly = assembly;
         
         this.regexs = [];
+
+        this.errInfos = [];
         this.errCtr = 0;
 
         this.pendingblocks = [];
         this.rescopeStack = [];
         this.tmpVarCtr = 0;
+    }
+
+    private registerError(file: string, sinfo: SourceInfo, kind: "arith" | "runtime" | "userspec"): number {
+        this.errInfos.push({ file: file, sinfo: sinfo, kind: kind, checkID: this.errCtr });
+        return this.errCtr++;
     }
 
     private generateTempVarName(): string {
@@ -125,6 +135,8 @@ class ASMToIRConverter {
     }
 
     private processTypeSignature(tsig: TypeSignature): IRTypeSignature {
+        xxxx; //using tkeystr in wrong since we need to instantiate the templates using our current instantiation bindings!!! also in other places!
+
         if(tsig instanceof VoidTypeSignature) {
             return new IRVoidTypeSignature();
         }
@@ -851,7 +863,7 @@ class ASMToIRConverter {
             const iexp = this.flattenExpression(tdeclexp.value);
             if((tdeclexp.constype as NominalTypeSignature).decl.allInvariants.length > 0) {
                 const invchecks = (tdeclexp.constype as NominalTypeSignature).decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
-                    return new IRTypeDeclInvariantCheckStatement(invdecl.file, invdecl.sinfo, invdecl.tag, this.errCtr++, invdecl.containingtype.tkeystr, invdecl.ii, iexp);
+                    return new IRTypeDeclInvariantCheckStatement(invdecl.file, invdecl.sinfo, invdecl.tag, this.registerError(invdecl.file, invdecl.sinfo, "userspec"), invdecl.containingtype.tkeystr, invdecl.ii, iexp);
                 });
 
                 this.pushStatements(invchecks);
@@ -868,7 +880,7 @@ class ASMToIRConverter {
 
             if((tdeclexp.constype as NominalTypeSignature).decl.allInvariants.length > 0) {
                 const invchecks = (tdeclexp.constype as NominalTypeSignature).decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
-                    return new IRTypeDeclInvariantCheckStatement(invdecl.file, invdecl.sinfo, invdecl.tag, this.errCtr++, invdecl.containingtype.tkeystr, invdecl.ii, iexp);
+                    return new IRTypeDeclInvariantCheckStatement(invdecl.file, invdecl.sinfo, invdecl.tag, this.registerError(invdecl.file, invdecl.sinfo, "userspec"), invdecl.containingtype.tkeystr, invdecl.ii, iexp);
                 });
 
                 this.pushStatements(invchecks);
@@ -885,7 +897,7 @@ class ASMToIRConverter {
 
             if((tdeclexp.constype as NominalTypeSignature).decl.allInvariants.length > 0) {
                 const invchecks = (tdeclexp.constype as NominalTypeSignature).decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
-                    return new IRTypeDeclInvariantCheckStatement(invdecl.file, invdecl.sinfo, invdecl.tag, this.errCtr++, invdecl.containingtype.tkeystr, invdecl.ii, iexp);
+                    return new IRTypeDeclInvariantCheckStatement(invdecl.file, invdecl.sinfo, invdecl.tag, this.registerError(invdecl.file, invdecl.sinfo, "userspec"), invdecl.containingtype.tkeystr, invdecl.ii, iexp);
                 });
                 
                 this.pushStatements(invchecks);
@@ -938,7 +950,7 @@ class ASMToIRConverter {
             }
             else if(aevexp.opname === "get"){
                 if(!aevexp.mustdefined) {
-                    this.pushStatement(new IRPreconditionCheckStatement(this.currentFile as string, exp.sinfo, undefined, this.errCtr++, "env::get", 0, [new IRAccessEnvHasExpression(kbytes)]));
+                    this.pushStatement(new IRPreconditionCheckStatement(this.currentFile as string, exp.sinfo, undefined, this.registerError(this.currentFile as string, exp.sinfo, "runtime"), "env::get", 0, [new IRAccessEnvHasExpression(kbytes)]));
                 }
 
                 return new IRAccessEnvGetExpression(kbytes, this.processTypeSignature(aevexp.optoftype as TypeSignature));
@@ -1038,7 +1050,7 @@ class ASMToIRConverter {
 
                 if(eetype.decl.allInvariants.length !== 0) {
                     const invchecks = eetype.decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
-                        return new IRTypeDeclInvariantCheckStatement(invdecl.file, invdecl.sinfo, invdecl.tag, this.errCtr++, invdecl.containingtype.tkeystr, invdecl.ii, notop);
+                        return new IRTypeDeclInvariantCheckStatement(invdecl.file, invdecl.sinfo, invdecl.tag, this.registerError(invdecl.file, invdecl.sinfo, "userspec"), invdecl.containingtype.tkeystr, invdecl.ii, notop);
                     });
                 
                     this.pushStatements(invchecks);
@@ -1061,7 +1073,7 @@ class ASMToIRConverter {
 
                 if(eetype.decl.allInvariants.length !== 0) {
                     const invchecks = eetype.decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
-                        return new IRTypeDeclInvariantCheckStatement(invdecl.file, invdecl.sinfo, invdecl.tag, this.errCtr++, invdecl.containingtype.tkeystr, invdecl.ii, nsop);
+                        return new IRTypeDeclInvariantCheckStatement(invdecl.file, invdecl.sinfo, invdecl.tag, this.registerError(invdecl.file, invdecl.sinfo, "userspec"), invdecl.containingtype.tkeystr, invdecl.ii, nsop);
                     });
                 
                     this.pushStatements(invchecks);
@@ -1079,7 +1091,7 @@ class ASMToIRConverter {
             const [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(binadd.lhs), this.flattenExpression(binadd.rhs), leetype, reetype);
 
             const opchk = (binadd.opertype as TypeSignature).tkeystr as "Nat" | "Int" | "ChkNat" | "ChkInt";
-            this.pushStatement(new IRErrorAdditionBoundsCheckStatement(this.currentFile as string, binadd.sinfo, this.errCtr++, lexp, rexp, opchk));
+            this.pushStatement(new IRErrorAdditionBoundsCheckStatement(this.currentFile as string, binadd.sinfo, this.registerError(this.currentFile as string, binadd.sinfo, "arith"), lexp, rexp, opchk));
 
             if(!(finaltype.decl instanceof TypedeclTypeDecl)) {
                 return new IRBinAddExpression(lexp, rexp, this.processTypeSignature(binadd.opertype as TypeSignature));
@@ -1089,7 +1101,7 @@ class ASMToIRConverter {
 
                 if(finaltype.decl.allInvariants.length !== 0) {
                     const invchecks = finaltype.decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
-                        return new IRTypeDeclInvariantCheckStatement(invdecl.file, invdecl.sinfo, invdecl.tag, this.errCtr++, invdecl.containingtype.tkeystr, invdecl.ii, addop);
+                        return new IRTypeDeclInvariantCheckStatement(invdecl.file, invdecl.sinfo, invdecl.tag, this.registerError(invdecl.file, invdecl.sinfo, "userspec"), invdecl.containingtype.tkeystr, invdecl.ii, addop);
                     });
                 
                     this.pushStatements(invchecks);
@@ -1107,7 +1119,7 @@ class ASMToIRConverter {
             const [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(binsub.lhs), this.flattenExpression(binsub.rhs), leetype, reetype);
 
             const opchk = (binsub.opertype as TypeSignature).tkeystr as "Nat" | "Int" | "ChkNat" | "ChkInt";
-            this.pushStatement(new IRErrorSubtractionBoundsCheckStatement(this.currentFile as string, binsub.sinfo, this.errCtr++, lexp, rexp, opchk));
+            this.pushStatement(new IRErrorSubtractionBoundsCheckStatement(this.currentFile as string, binsub.sinfo, this.registerError(this.currentFile as string, binsub.sinfo, (opchk === "Nat" || opchk === "ChkNat") ? "runtime" : "arith"), lexp, rexp, opchk));
 
             if(!(finaltype.decl instanceof TypedeclTypeDecl)) {
                 return new IRBinSubExpression(lexp, rexp, this.processTypeSignature(binsub.opertype as TypeSignature));
@@ -1117,7 +1129,7 @@ class ASMToIRConverter {
 
                 if(finaltype.decl.allInvariants.length !== 0) {
                     const invchecks = finaltype.decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
-                        return new IRTypeDeclInvariantCheckStatement(invdecl.file, invdecl.sinfo, invdecl.tag, this.errCtr++, invdecl.containingtype.tkeystr, invdecl.ii, subop);
+                        return new IRTypeDeclInvariantCheckStatement(invdecl.file, invdecl.sinfo, invdecl.tag, this.registerError(invdecl.file, invdecl.sinfo, "userspec"), invdecl.containingtype.tkeystr, invdecl.ii, subop);
                     });
                 
                     this.pushStatements(invchecks);
@@ -1135,7 +1147,7 @@ class ASMToIRConverter {
             const [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(binmult.lhs), this.flattenExpression(binmult.rhs), leetype, reetype);
 
             const opchk = (binmult.opertype as TypeSignature).tkeystr as "Nat" | "Int" | "ChkNat" | "ChkInt";
-            this.pushStatement(new IRErrorMultiplicationBoundsCheckStatement(this.currentFile as string, binmult.sinfo, this.errCtr++, lexp, rexp, opchk));
+            this.pushStatement(new IRErrorMultiplicationBoundsCheckStatement(this.currentFile as string, binmult.sinfo, this.registerError(this.currentFile as string, binmult.sinfo, "arith"), lexp, rexp, opchk));
 
             if(!(finaltype.decl instanceof TypedeclTypeDecl)) {
                 return new IRBinMultExpression(lexp, rexp, this.processTypeSignature(binmult.opertype as TypeSignature));
@@ -1145,7 +1157,7 @@ class ASMToIRConverter {
 
                 if(finaltype.decl.allInvariants.length !== 0) {
                     const invchecks = finaltype.decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
-                        return new IRTypeDeclInvariantCheckStatement(invdecl.file, invdecl.sinfo, invdecl.tag, this.errCtr++, invdecl.containingtype.tkeystr, invdecl.ii, multop);
+                        return new IRTypeDeclInvariantCheckStatement(invdecl.file, invdecl.sinfo, invdecl.tag, this.registerError(invdecl.file, invdecl.sinfo, "userspec"), invdecl.containingtype.tkeystr, invdecl.ii, multop);
                     });
                 
                     this.pushStatements(invchecks);
@@ -1163,7 +1175,7 @@ class ASMToIRConverter {
             const [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(bindiv.lhs), this.flattenExpression(bindiv.rhs), leetype, reetype);
 
             const opchk = (bindiv.opertype as TypeSignature).tkeystr as "Nat" | "Int" | "ChkNat" | "ChkInt";
-            this.pushStatement(new IRErrorDivisionByZeroCheckStatement(this.currentFile as string, bindiv.sinfo, this.errCtr++, lexp, rexp, opchk));
+            this.pushStatement(new IRErrorDivisionByZeroCheckStatement(this.currentFile as string, bindiv.sinfo, this.registerError(this.currentFile as string, bindiv.sinfo, "runtime"), lexp, rexp, opchk));
 
             if(!(finaltype.decl instanceof TypedeclTypeDecl)) {
                 return new IRBinDivExpression(lexp, rexp, this.processTypeSignature(bindiv.opertype as TypeSignature));
@@ -1173,7 +1185,7 @@ class ASMToIRConverter {
 
                 if(finaltype.decl.allInvariants.length !== 0) {
                     const invchecks = finaltype.decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
-                        return new IRTypeDeclInvariantCheckStatement(invdecl.file, invdecl.sinfo, invdecl.tag, this.errCtr++, invdecl.containingtype.tkeystr, invdecl.ii, divop);
+                        return new IRTypeDeclInvariantCheckStatement(invdecl.file, invdecl.sinfo, invdecl.tag, this.registerError(invdecl.file, invdecl.sinfo, "userspec"), invdecl.containingtype.tkeystr, invdecl.ii, divop);
                     });
                 
                     this.pushStatements(invchecks);
@@ -1278,7 +1290,7 @@ class ASMToIRConverter {
                 else {
                     if((exp.getType() as NominalTypeSignature).decl.allInvariants.length !== 0) {
                         const invchecks = (exp.getType() as NominalTypeSignature).decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
-                            return new IRTypeDeclInvariantCheckStatement(invdecl.file, invdecl.sinfo, invdecl.tag, this.errCtr++, invdecl.containingtype.tkeystr, invdecl.ii, resbool);
+                            return new IRTypeDeclInvariantCheckStatement(invdecl.file, invdecl.sinfo, invdecl.tag, this.registerError(invdecl.file, invdecl.sinfo, "userspec"), invdecl.containingtype.tkeystr, invdecl.ii, resbool);
                         });
                 
                         this.pushStatements(invchecks);
@@ -1318,7 +1330,7 @@ class ASMToIRConverter {
                 else {
                     if((exp.getType() as NominalTypeSignature).decl.allInvariants.length !== 0) {
                         const invchecks = (exp.getType() as NominalTypeSignature).decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
-                            return new IRTypeDeclInvariantCheckStatement(invdecl.file, invdecl.sinfo, invdecl.tag, this.errCtr++, invdecl.containingtype.tkeystr, invdecl.ii, resbool);
+                            return new IRTypeDeclInvariantCheckStatement(invdecl.file, invdecl.sinfo, invdecl.tag, this.registerError(invdecl.file, invdecl.sinfo, "userspec"), invdecl.containingtype.tkeystr, invdecl.ii, resbool);
                         });
                 
                         this.pushStatements(invchecks);
@@ -1575,6 +1587,10 @@ class ASMToIRConverter {
     }
 
     private flattenReturnVoidStatement(stmt: ReturnVoidStatement) {
+        if(this.currentPostconditions !== undefined) {
+            assert(false, "Not Implemented -- emit postcondition check asserts");
+        }
+
         if(this.currentImplicitReturnVar === undefined) {
             this.pushStatement(new IRReturnVoidSimpleStatement());
         }
@@ -1584,7 +1600,14 @@ class ASMToIRConverter {
     }
 
     private flattenReturnSingleStatement(stmt: ReturnSingleStatement) {
-        const irval = this.flattenExpressionRHS(stmt.value);
+        let irval = this.flattenExpressionRHS(stmt.value);
+
+        if(this.currentPostconditions !== undefined) {
+            //introduce new temp variable and update irval to use it if needed (e.g. irval is not a simple expression)
+            //then run all the postcondition checks
+
+            assert(false, "Not Implemented -- emit postcondition check asserts");
+        }
 
         if(this.currentImplicitReturnVar === undefined) {
             if(irval instanceof IRSimpleExpression) {
@@ -1596,6 +1619,9 @@ class ASMToIRConverter {
             else {
                 assert(false, "ASMToIRConverter not implemented: need to do ref or simplify here");
             }
+        }
+        else {
+            assert(false, "Not Implemented -- flattenReturnSimpleStatement with implicit return variable");
         }
     }
 
@@ -1632,7 +1658,7 @@ class ASMToIRConverter {
     }
 
     private flattenAbortStatement(stmt: AbortStatement) {
-        this.pushStatement(new IRAbortStatement(this.currentFile as string, stmt.sinfo, undefined, this.errCtr++));
+        this.pushStatement(new IRAbortStatement(this.currentFile as string, stmt.sinfo, undefined, this.registerError(this.currentFile as string, stmt.sinfo, "userspec")));
     }
 
     private flattenAssertStatement(stmt: AssertStatement) {
@@ -1641,7 +1667,7 @@ class ASMToIRConverter {
             ;//no-op
         }
         else {
-            this.pushStatement(new IRAssertStatement(this.currentFile as string, stmt.sinfo, stmt.tag, this.errCtr++, ircond));
+            this.pushStatement(new IRAssertStatement(this.currentFile as string, stmt.sinfo, stmt.tag, this.registerError(this.currentFile as string, stmt.sinfo, "userspec"), ircond));
         }
     }
     
@@ -1651,7 +1677,7 @@ class ASMToIRConverter {
             ;//no-op
         }
         else {
-            this.pushStatement(new IRValidateStatement(this.currentFile as string, stmt.sinfo, stmt.tag, this.errCtr++, ircond));
+            this.pushStatement(new IRValidateStatement(this.currentFile as string, stmt.sinfo, stmt.tag, this.registerError(this.currentFile as string, stmt.sinfo, "userspec"), ircond));
         }
     }
 
@@ -1845,24 +1871,23 @@ class ASMToIRConverter {
         }
     }
 
-    private generateRequiresClauseExplicitInvoke(req: PreConditionDecl): IRInvokeDirectExpression {
+    private generateRequiresClauseExplicitInvoke(TypeSignature req: PreConditionDecl): IRPreconditionCheckStatement {
+        assert(false, "Not Implemented -- generateRequiresClauseExplicitInvoke");
+    }
+
+    private generateEnsuresClauseExplicitInvoke(req: PostConditionDecl): IRPostConditionDecl {
+        assert(false, "Not Implemented -- generateEnsuresClauseExplicitInvoke");
+    }
+
+    private generateInvariantClauseExplicitInvoke(req: InvariantDecl): xxx {
+        const iiname = 
+    }
+
+    private generateValidateClauseExplicitInvoke(req: ValidateDecl): xxx {
         xxxx;
     }
 
-    private generateEnsuresClauseExplicitInvoke(req: PreConditionDecl): IRInvokeDirectExpression {
-        //TODO: ensures are in the generated body while requires are in caller?
-        xxxx;
-    }
-
-    private generateInvariantClauseExplicitInvoke(req: PreConditionDecl): IRInvokeDirectExpression {
-        xxxx;
-    }
-
-    private generateValidateClauseExplicitInvoke(req: PreConditionDecl): IRInvokeDirectExpression {
-        xxxx;
-    }
-
-    private generateNamespaceFunctionDecl(asmdecl: NamespaceFunctionDecl): IRInvokeExpression {
+    private generateNamespaceFunctionDecl(asmdecl: NamespaceFunctionDecl): xxx {
         xxxx;
     }
 }

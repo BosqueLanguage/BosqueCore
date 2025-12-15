@@ -2017,6 +2017,7 @@ class Parser {
         let preconds: PreConditionDecl[] = [];
 
         this.env.scope = new StandardScopeInfo([...argnames].map((v) => new VariableDefinitionInfo("let", v)), boundtemplates, this.wellknownTypes.get("Bool") as TypeSignature);
+        let ii = 0;
         while (this.testToken(KW_requires)) {
             this.consumeToken();
             
@@ -2039,7 +2040,7 @@ class Parser {
             const level = this.parseBuildInfo(KW_release);
             const exp = this.parseChkLogicExpression();
 
-            preconds.push(new PreConditionDecl(this.env.currentFile, sinfo, tag, level, softcheck, exp));
+            preconds.push(new PreConditionDecl(this.env.currentFile, sinfo, tag, ii++, level, softcheck, exp));
 
             this.ensureAndConsumeTokenIf(SYM_semicolon, "requires");
         }
@@ -2056,6 +2057,7 @@ class Parser {
 
         this.env.scope = new StandardScopeInfo(postvardecls, boundtemplates, this.wellknownTypes.get("Bool") as TypeSignature);
         
+        let jj = 0;
         while (this.testToken(KW_ensures)) {
             this.consumeToken();
 
@@ -2078,7 +2080,7 @@ class Parser {
             const level = this.parseBuildInfo(KW_release);
             const exp = this.parseChkLogicExpression();
 
-            postconds.push(new PostConditionDecl(this.env.currentFile, sinfo, tag, level, softcheck, exp));
+            postconds.push(new PostConditionDecl(this.env.currentFile, sinfo, tag, jj++, level, softcheck, exp));
 
             this.ensureAndConsumeTokenIf(SYM_semicolon, "ensures");
         }

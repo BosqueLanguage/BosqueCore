@@ -160,13 +160,15 @@ abstract class ConditionDecl extends AbstractDecl {
 }
 
 class PreConditionDecl extends ConditionDecl {
+    readonly ii: number;
     readonly level: BuildLevel;
     readonly issoft: boolean;
     readonly exp: ChkLogicExpression;
 
-    constructor(file: string, sinfo: SourceInfo, tag: string | undefined, level: BuildLevel, issoft: boolean, exp: ChkLogicExpression) {
+    constructor(file: string, sinfo: SourceInfo, tag: string | undefined, ii: number, level: BuildLevel, issoft: boolean, exp: ChkLogicExpression) {
         super(file, sinfo, tag);
 
+        this.ii = ii;
         this.level = level;
         this.issoft = issoft;
         this.exp = exp;
@@ -178,13 +180,15 @@ class PreConditionDecl extends ConditionDecl {
 }
 
 class PostConditionDecl extends ConditionDecl {
+    readonly ii: number;
     readonly level: BuildLevel;
     readonly issoft: boolean;
     readonly exp: ChkLogicExpression;
 
-    constructor(file: string, sinfo: SourceInfo, tag: string | undefined, level: BuildLevel, issoft: boolean, exp: ChkLogicExpression) {
+    constructor(file: string, sinfo: SourceInfo, tag: string | undefined, ii: number, level: BuildLevel, issoft: boolean, exp: ChkLogicExpression) {
         super(file, sinfo, tag);
 
+        this.ii = ii;
         this.level = level;
         this.issoft = issoft;
         this.exp = exp;

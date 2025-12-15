@@ -214,6 +214,7 @@ enum IRStatementTag {
 
     IRAbortStatement = "IRAbortStatement",
     IRAssertStatement = "IRAssertStatement",
+    IRAssumeStatement = "IRAssumeStatement",
     IRValidateStatement = "IRValidateStatement",
     IRDebugStatement = "IRDebugStatement"
 }
@@ -269,6 +270,8 @@ abstract class IRErrorCheckStatement extends IRAtomicStatement {
 
     readonly diagnosticTag: string | undefined;
     readonly checkID: number;
+
+    static assumeCheckID: number = -11;
 
     constructor(tag: IRStatementTag, file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number) {
         super(tag);
@@ -1335,6 +1338,15 @@ class IRAssertStatement extends IRErrorCheckStatement {
     }
 }
 
+class IRAssumeStatement extends IRErrorCheckStatement {
+    readonly cond: IRSimpleExpression;
+
+    constructor(file: string, sinfo: SourceInfo, cond: IRSimpleExpression) {
+        super(IRStatementTag.IRAssumeStatement, file, sinfo, undefined, IRErrorCheckStatement.assumeCheckID);
+        this.cond = cond;
+    }
+}
+
 class IRValidateStatement extends IRErrorCheckStatement {
     readonly cond: IRSimpleExpression;
 
@@ -1421,7 +1433,7 @@ export {
     IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement,
     IRTypeDeclInvariantCheckStatement,
     IRPreconditionCheckStatement, IRPostconditionCheckStatement,
-    IRAbortStatement, IRAssertStatement, IRValidateStatement, IRDebugStatement,
+    IRAbortStatement, IRAssertStatement, IRAssumeStatement, IRValidateStatement, IRDebugStatement,
 
     IRBlockStatement
 };
