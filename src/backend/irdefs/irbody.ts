@@ -1,4 +1,4 @@
-import { SourceInfo } from "./irsupport";
+import { IRSourceInfo } from "./irsupport";
 import { IRNominalTypeSignature, IRTypeSignature } from "./irtype";
 
 enum IRExpressionTag {
@@ -266,14 +266,14 @@ abstract class IRReturnWithImplicitStatement extends IRAtomicStatement {
 /* Explicit error condition checks -- all possible error conditions must be made explicit during flattening */
 abstract class IRErrorCheckStatement extends IRAtomicStatement {
     readonly file: string;
-    readonly sinfo: SourceInfo;
+    readonly sinfo: IRSourceInfo;
 
     readonly diagnosticTag: string | undefined;
     readonly checkID: number;
 
     static assumeCheckID: number = -11;
 
-    constructor(tag: IRStatementTag, file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number) {
+    constructor(tag: IRStatementTag, file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number) {
         super(tag);
         this.file = file;
         this.sinfo = sinfo;
@@ -288,7 +288,7 @@ abstract class IRErrorBinArithCheckStatement extends IRErrorCheckStatement {
 
     readonly optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt";
 
-    constructor(tag: IRStatementTag, file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt") {
+    constructor(tag: IRStatementTag, file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt") {
         super(tag, file, sinfo, diagnosticTag, checkID);
         this.left = left;
         this.right = right;
@@ -1258,25 +1258,25 @@ class IRLogicConditionalStatement extends IRStatement {
 }
 
 class IRErrorAdditionBoundsCheckStatement extends IRErrorBinArithCheckStatement {
-    constructor(file: string, sinfo: SourceInfo, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt") {
+    constructor(file: string, sinfo: IRSourceInfo, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt") {
         super(IRStatementTag.IRErrorAdditionBoundsCheckStatement, file, sinfo, undefined, checkID, left, right, optypechk);
     }
 }
 
 class IRErrorSubtractionBoundsCheckStatement extends IRErrorBinArithCheckStatement {
-    constructor(file: string, sinfo: SourceInfo, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt") {
+    constructor(file: string, sinfo: IRSourceInfo, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt") {
         super(IRStatementTag.IRErrorSubtractionBoundsCheckStatement, file, sinfo, undefined, checkID, left, right, optypechk);
     }
 }
 
 class IRErrorMultiplicationBoundsCheckStatement extends IRErrorBinArithCheckStatement {
-    constructor(file: string, sinfo: SourceInfo, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt") {
+    constructor(file: string, sinfo: IRSourceInfo, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt") {
         super(IRStatementTag.IRErrorMultiplicationBoundsCheckStatement, file, sinfo, undefined, checkID, left, right, optypechk);
     }
 }
 
 class IRErrorDivisionByZeroCheckStatement extends IRErrorBinArithCheckStatement {
-    constructor(file: string, sinfo: SourceInfo, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt") {
+    constructor(file: string, sinfo: IRSourceInfo, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt") {
         super(IRStatementTag.IRErrorDivisionByZeroCheckStatement, file, sinfo, undefined, checkID, left, right, optypechk);
     }
 }
@@ -1287,7 +1287,7 @@ class IRTypeDeclInvariantCheckStatement extends IRErrorCheckStatement {
     readonly invariantidx: number;
     readonly targetValue: IRSimpleExpression;
 
-    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, tkey: string, invariantidx: number, targetValue: IRSimpleExpression) {
+    constructor(file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number, tkey: string, invariantidx: number, targetValue: IRSimpleExpression) {
         super(IRStatementTag.IRTypeDeclInvariantCheckStatement, file, sinfo, diagnosticTag, checkID);
         this.tkey = tkey;
         this.invariantidx = invariantidx;
@@ -1301,7 +1301,7 @@ class IRPreconditionCheckStatement extends IRErrorCheckStatement {
     readonly requiresidx: number;
     readonly args: IRSimpleExpression[];
 
-    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, ikey: string, requiresidx: number, args: IRSimpleExpression[]) {
+    constructor(file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number, ikey: string, requiresidx: number, args: IRSimpleExpression[]) {
         super(IRStatementTag.IRPreconditionCheckStatement, file, sinfo, diagnosticTag, checkID);
         this.ikey = ikey;
         this.requiresidx = requiresidx;
@@ -1315,7 +1315,7 @@ class IRPostconditionCheckStatement extends IRErrorCheckStatement {
     readonly ensuresidx: number;
     readonly args: IRSimpleExpression[];
 
-    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, ikey: string, ensuresidx: number, args: IRSimpleExpression[]) {
+    constructor(file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number, ikey: string, ensuresidx: number, args: IRSimpleExpression[]) {
         super(IRStatementTag.IRPostconditionCheckStatement, file, sinfo, diagnosticTag, checkID);
         this.ikey = ikey;
         this.ensuresidx = ensuresidx;
@@ -1324,7 +1324,7 @@ class IRPostconditionCheckStatement extends IRErrorCheckStatement {
 }
 
 class IRAbortStatement extends IRErrorCheckStatement {
-    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number) {
+    constructor(file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number) {
         super(IRStatementTag.IRAbortStatement, file, sinfo, diagnosticTag, checkID);
     }
 }
@@ -1332,7 +1332,7 @@ class IRAbortStatement extends IRErrorCheckStatement {
 class IRAssertStatement extends IRErrorCheckStatement {
     readonly cond: IRSimpleExpression;
 
-    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, cond: IRSimpleExpression) {
+    constructor(file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number, cond: IRSimpleExpression) {
         super(IRStatementTag.IRAssertStatement, file, sinfo, diagnosticTag, checkID);
         this.cond = cond;
     }
@@ -1341,7 +1341,7 @@ class IRAssertStatement extends IRErrorCheckStatement {
 class IRAssumeStatement extends IRErrorCheckStatement {
     readonly cond: IRSimpleExpression;
 
-    constructor(file: string, sinfo: SourceInfo, cond: IRSimpleExpression) {
+    constructor(file: string, sinfo: IRSourceInfo, cond: IRSimpleExpression) {
         super(IRStatementTag.IRAssumeStatement, file, sinfo, undefined, IRErrorCheckStatement.assumeCheckID);
         this.cond = cond;
     }
@@ -1350,7 +1350,7 @@ class IRAssumeStatement extends IRErrorCheckStatement {
 class IRValidateStatement extends IRErrorCheckStatement {
     readonly cond: IRSimpleExpression;
 
-    constructor(file: string, sinfo: SourceInfo, diagnosticTag: string | undefined, checkID: number, cond: IRSimpleExpression) {
+    constructor(file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number, cond: IRSimpleExpression) {
         super(IRStatementTag.IRValidateStatement, file, sinfo, diagnosticTag, checkID);
         this.cond = cond;
     }
@@ -1363,7 +1363,7 @@ class IRDebugStatement extends IRAtomicStatement {
     readonly file: string;
     readonly line: number;
 
-    constructor(oftype: IRTypeSignature, dbgexp: IRSimpleExpression, file: string, sinfo: SourceInfo) {
+    constructor(oftype: IRTypeSignature, dbgexp: IRSimpleExpression, file: string, sinfo: IRSourceInfo) {
         super(IRStatementTag.IRDebugStatement);
         this.oftype = oftype;
         this.dbgexp = dbgexp;

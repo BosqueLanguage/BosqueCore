@@ -1,5 +1,5 @@
 
-class SourceInfo
+class IRSourceInfo
 {
     readonly line: number;
     readonly column: number;
@@ -24,6 +24,6 @@ class IRRegex
 }
 
 export {
-    SourceInfo,
+    IRSourceInfo,
     IRRegex
 };
