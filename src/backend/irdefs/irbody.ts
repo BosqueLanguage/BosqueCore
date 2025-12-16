@@ -65,8 +65,7 @@ enum IRExpressionTag {
     IRTaskAccessIDExpression = "IRTaskAccessIDExpression",
     IRTaskAccessParentIDExpression = "IRTaskAccessParentIDExpression",
 
-    IRAccessNamespaceConstantExpression = "IRAccessNamespaceConstantExpression",
-    IRAccessStaticFieldExpression = "IRAccessStaticFieldExpression",
+    IRAccessConstantExpression = "IRAccessConstantExpression",
     IRAccessEnumExpression = "IRAccessEnumExpression",
 
     IRAccessParameterVariableExpression = "IRAccessParameterVariableExpression",
@@ -824,20 +823,11 @@ class IRTaskAccessParentIDExpression extends IRExpression {
     }
 }
 
-class IRAccessNamespaceConstantExpression extends IRImmediateExpression {
+class IRAccessConstantExpression extends IRImmediateExpression {
     readonly constkey: string; //flattened identifer names
     
     constructor(constkey: string) {
-        super(IRExpressionTag.IRAccessNamespaceConstantExpression);
-        this.constkey = constkey;
-    }
-}
-
-class IRAccessStaticFieldExpression extends IRImmediateExpression {
-    readonly constkey: string; //flattened identifer names
-
-    constructor(constkey: string) {
-        super(IRExpressionTag.IRAccessStaticFieldExpression);
+        super(IRExpressionTag.IRAccessConstantExpression);
         this.constkey = constkey;
     }
 }
@@ -1381,6 +1371,16 @@ class IRBlockStatement {
     }
 }
 
+class IRBody {
+    readonly builtintag: string | undefined;
+    readonly block: IRBlockStatement;
+
+    constructor(builtintag: string | undefined, block: IRBlockStatement) {
+        this.builtintag = builtintag;
+        this.block = block;
+    }
+}
+
 export {
     IRExpressionTag, IRExpression, IRLiteralExpression, IRImmediateExpression, IRSimpleExpression,
     
@@ -1404,7 +1404,7 @@ export {
     IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression,
     IRTaskAccessIDExpression, IRTaskAccessParentIDExpression,
 
-    IRAccessNamespaceConstantExpression, IRAccessStaticFieldExpression, IRAccessEnumExpression,
+    IRAccessConstantExpression, IRAccessEnumExpression,
     IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessTempVariableExpression,
     
     IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression,
@@ -1435,5 +1435,6 @@ export {
     IRPreconditionCheckStatement, IRPostconditionCheckStatement,
     IRAbortStatement, IRAssertStatement, IRAssumeStatement, IRValidateStatement, IRDebugStatement,
 
-    IRBlockStatement
+    IRBlockStatement,
+    IRBody
 };
