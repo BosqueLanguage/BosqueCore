@@ -4552,13 +4552,13 @@ class TypeChecker {
                 this.constraints.pushConstraintScope(mdecl.terms, mdecl.termRestriction);
             }
 
-            const thisvinfo = new VarInfo("this", rcvr, [], true, true, mdecl.isThisRef);
+            const thisvinfo = new VarInfo("this", rcvr, mdecl.isThisRef ? "ref" : "let", true);
 
             this.checkExplicitInvokeDeclSignature(mdecl, [thisvinfo]);
             this.checkExplicitInvokeDeclMetaData(mdecl, [thisvinfo], mdecl.isThisRef ? ["this"] : [], undefined);
 
             const infertype = this.relations.convertTypeSignatureToTypeInferCtx(mdecl.resultType);
-            const env = TypeEnvironment.createInitialStdEnv([thisvinfo, ...mdecl.params.map((p) => new VarInfo(p.name, p.type, [], true, true, p.isRefParam))], mdecl.resultType, infertype);
+            const env = TypeEnvironment.createInitialStdEnv(mdecl.resultType, infertype, [thisvinfo, ...mdecl.params.map((p) => new VarInfo(p.name, p.type, p.pkind || "let", true))]);
             this.checkBodyImplementation(env, mdecl.body);
 
             if(mdecl.terms.length !== 0) {
