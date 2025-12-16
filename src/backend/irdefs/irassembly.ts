@@ -586,340 +586,267 @@ class IRConceptTypeDecl extends IRAbstractConceptTypeDecl {
     }
 }
 
-class DatatypeMemberEntityTypeDecl extends AbstractEntityTypeDecl {
-    readonly fields: MemberFieldDecl[] = [];
-    readonly parentTypeDecl: DatatypeTypeDecl;
-
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, etag: AdditionalTypeDeclTag, parentTypeDecl: DatatypeTypeDecl) {
-        super(file, sinfo, attributes, ns, name, etag);
-
-        this.parentTypeDecl = parentTypeDecl;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        fmt.indentPush();
-        const bg = this.emitBodyGroups(fmt);
-        if(this.fields.length !== 0) {
-            bg.push(this.fields.map((ff) => ff.emit(fmt)));
-        }
-        fmt.indentPop();
-
-        return this.name + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
+class IRDatatypeMemberEntityTypeDecl extends IRAbstractEntityTypeDecl {
+    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], fields: IRMemberFieldDecl[], etag: "std" | "status" | "event", saturatedProvides: IRTypeSignature[], saturatedBFieldInfo: { containingtype: IRNominalTypeSignature, fkey: string }[], allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[], allValidates: { containingtype: IRNominalTypeSignature, ii: number }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
+        super(tkey, invariants, validates, fields, etag, saturatedProvides, saturatedBFieldInfo, allInvariants, allValidates, docstr, metatags, file, sinfo);
     }
 }
 
-class DatatypeTypeDecl extends AbstractConceptTypeDecl {
+class IRDatatypeTypeDecl extends IRAbstractConceptTypeDecl {
+    readonly dataelems: IRTypeSignature[];
+
+    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], fields: IRMemberFieldDecl[], saturatedProvides: IRTypeSignature[], saturatedBFieldInfo: { containingtype: IRNominalTypeSignature, fkey: string }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo, dataelems: IRTypeSignature[]) {
+        super(tkey, invariants, validates, fields, saturatedProvides, saturatedBFieldInfo, docstr, metatags, file, sinfo);
+        this.dataelems = dataelems;
+    }
 }
 
-class EnvironmentVariableInformation {
+class IREnvironmentVariableInformation {
     readonly evname: string; //identifier or cstring
-    readonly evtype: TypeSignature;
+    readonly evtype: IRTypeSignature;
     readonly required: boolean;
-    readonly optdefault: Expression | undefined;
+    readonly optdefault: { stmts: IRStatement[], value: IRSimpleExpression } | undefined;
 
-    constructor(evname: string, evtype: TypeSignature, required: boolean, optdefault: Expression | undefined) {
+    constructor(evname: string, evtype: IRTypeSignature, required: boolean, optdefault: { stmts: IRStatement[], value: IRSimpleExpression } | undefined) {
         this.evname = evname;
         this.evtype = evtype;
         this.required = required;
         this.optdefault = optdefault;
     }
+}
 
-    emit(fmt: CodeFormatter): string {
-        const optional = this.required ? "" : "?";
-        if(this.optdefault === undefined) {
-            return fmt.indent(`${this.evname}${optional}: ${this.evtype.emit()}`);
-        }
-        else {
-            return fmt.indent(`${this.evname}${optional}: ${this.evtype.emit()} = ${this.optdefault.emit(true, fmt)}`);
-        }
+class IRResourceInformation {
+    //TODO: fill this in
+}
+
+
+class IRTaskConfiguration {
+    timeout: number | undefined;
+    retry: {delay: number, tries: number} | undefined;
+    priority: "immediate" | "fast" | "normal" | "longrunning" | "background" | "optional" | undefined;
+
+    constructor(timeout: number | undefined, retry: {delay: number, tries: number} | undefined, priority: "immediate" | "fast" | "normal" | "longrunning" | "background" | "optional" | undefined) {
+        this.timeout = timeout;
+        this.retry = retry;
+        this.priority = priority;
     }
 }
 
-class ResourceInformation {
-    readonly pathglobs: { pg: Expression[], optas: Expression | undefined }[]; //Literal glob, constant refernence, or env var reference
+class IRAPIDecl {
+    readonly ikey: string;
 
-    constructor(pathglobs: { pg: Expression[], optas: Expression | undefined }[]) {
-        this.pathglobs = pathglobs;
-    }
+    readonly params: IRInvokeParameterDecl[];    
+    readonly resultType: IRTypeSignature;
+    readonly eventType: IRTypeSignature | undefined;
 
-    static emitSingleRInfo(fmt: CodeFormatter, pg: Expression[], optas: Expression | undefined): string {
-        if(optas === undefined) {
-            if(pg.length === 1) {
-                return fmt.indent(pg[0].emit(true, fmt));
-            }
-            else {
-                return fmt.indent(`[${pg.map((pge) => pge.emit(true, fmt)).join(", ")}]`);
-            }
-        }
-        else {
-            if(pg.length === 1) {
-                return fmt.indent(`${pg[0].emit(true, fmt)} as ${optas.emit(true, fmt)}`);
-            }
-            else {
-                return fmt.indent(`[${pg.map((pge) => pge.emit(true, fmt)).join(", ")}] as ${optas.emit(true, fmt)}`);
-            }
-        }
-    }
-}
+    readonly preconditions: IRPreConditionDecl[];
+    readonly postconditions: IRPostConditionDecl[];
 
-class APIDecl extends AbstractCoreDecl {
-    readonly params: InvokeParameterDecl[];    
-    readonly resultType: TypeSignature;
-    readonly eventType: TypeSignature | undefined;
+    readonly configs: IRTaskConfiguration;
 
-    readonly preconditions: PreConditionDecl[];
-    readonly postconditions: PostConditionDecl[];
+    readonly statusinfo: IRTypeSignature[];
+    readonly envreqs: IREnvironmentVariableInformation[];
+    readonly resourcereqs: IRResourceInformation;
 
-    readonly configs: TaskConfiguration;
+    readonly body: IRBody;
 
-    readonly statusinfo: TypeSignature[];
-    readonly envreqs: EnvironmentVariableInformation[];
-    readonly resourcereqs: ResourceInformation;
+    readonly docstr: IRDeclarationDocString | undefined;
+    readonly metatags: IRDeclarationMetaTag[];
 
-    readonly body: BodyImplementation;
+    readonly file: string;
+    readonly sinfo: IRSourceInfo;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, params: InvokeParameterDecl[], resultType: TypeSignature, eventType: TypeSignature | undefined, preconds: PreConditionDecl[], postconds: PostConditionDecl[], configs: TaskConfiguration, statusinfo: TypeSignature[], envreqs: EnvironmentVariableInformation[], resourcereqs: ResourceInformation, body: BodyImplementation) {
-        super(file, sinfo, attributes, name);
-
+    constructor(ikey: string, params: IRInvokeParameterDecl[], resultType: IRTypeSignature, eventType: IRTypeSignature | undefined, preconditions: IRPreConditionDecl[], postconditions: IRPostConditionDecl[], configs: IRTaskConfiguration, statusinfo: IRTypeSignature[], envreqs: IREnvironmentVariableInformation[], resourcereqs: IRResourceInformation, body: IRBody, docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
+        this.ikey = ikey;
         this.params = params;
         this.resultType = resultType;
         this.eventType = eventType;
-
-        this.preconditions = preconds;
-        this.postconditions = postconds
-
+        this.preconditions = preconditions;
+        this.postconditions = postconditions;
         this.configs = configs;
-
         this.statusinfo = statusinfo;
         this.envreqs = envreqs;
         this.resourcereqs = resourcereqs;
-
         this.body = body;
-    }
-
-    emitMetaInfo(fmt: CodeFormatter): string | undefined {
-        fmt.indentPush();
-
-        let prec: string[] = [];
-        if(this.preconditions.length !== 0) {
-            prec = this.preconditions.map((pc) => fmt.indent(pc.emit(fmt)));
-        }
-
-        let postc: string[] = [];
-        if(this.postconditions.length !== 0) {
-            postc = this.postconditions.map((pc) => fmt.indent(pc.emit(fmt)));
-        }
-
-        let configs: string[] = [];
-        if(this.configs !== undefined) {
-            configs = [fmt.indent(`configs { ${this.configs.emit()} }`)];
-        }
-
-        let status: string[] = [];
-        if(this.statusinfo.length !== 0) {
-            status = [fmt.indent(`status ${this.statusinfo.map((so) => so.emit()).join(" | ")};`)];
-        }
-
-        let resources: string[] = [];
-        if(this.resourcereqs.pathglobs.length !== 0) {
-            const rrs = this.resourcereqs.pathglobs.map((rr) => ResourceInformation.emitSingleRInfo(fmt, rr.pg, rr.optas));
-            resources = [fmt.indent(`resource { ${rrs.join(", ")} }`)];
-        }
-        
-        let evs: string[] = [];
-        if(this.envreqs.length !== 0) {
-            const vvl = this.envreqs.map((ev) => ev.emit(fmt));
-            evs = [fmt.indent(`env { ${vvl.join(", ")} }`)];
-        }
-
-        fmt.indentPop();
-        if(prec.length === 0 && postc.length === 0 && status.length === 0 && evs.length === 0) {
-            return undefined;
-        }
-        else {
-            return [...prec, ...postc, ...configs, ...status, ...evs, ...resources].join("\n");
-        }
-    }
-
-    emit(fmt: CodeFormatter): string {
-        const attrs = this.emitAttributes();
-
-        const params = this.params.map((p) => p.emit(fmt)).join(", ");
-        const result = this.resultType.emit();
-
-        const minfo = this.emitMetaInfo(fmt);
-        return `${attrs}api ${this.name}(${params}): ${result}${this.eventType !== undefined ? ", " + this.eventType.emit() : ""} ${this.body.emit(fmt, minfo)}`;
+        this.docstr = docstr;
+        this.metatags = metatags;
+        this.file = file;
+        this.sinfo = sinfo;
     }
 }
 
-class AgentDecl extends AbstractCoreDecl {
-    readonly params: InvokeParameterDecl[];    
-    readonly resultType: TypeSignature | undefined; //This may be set on a per call-site basis
-    readonly eventType: TypeSignature | undefined;
+class IRAgentDecl {
+    readonly ikey: string;
 
-    readonly preconditions: PreConditionDecl[];
-    readonly postconditions: PostConditionDecl[];
+    readonly params: IRInvokeParameterDecl[];    
+    readonly resultType: IRTypeSignature | undefined; //This may be set on a per call-site basis
+    readonly eventType: IRTypeSignature | undefined;
 
-    readonly configs: TaskConfiguration;
+    readonly preconditions: IRPreConditionDecl[];
+    readonly postconditions: IRPostConditionDecl[];
 
-    readonly statusinfo: TypeSignature[];
-    readonly envreqs: EnvironmentVariableInformation[];
-    readonly resourcereqs: ResourceInformation;
+    readonly configs: IRTaskConfiguration;
 
-    readonly body: BodyImplementation;
+    readonly statusinfo: IRTypeSignature[];
+    readonly envreqs: IREnvironmentVariableInformation[];
+    readonly resourcereqs: IRResourceInformation;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, params: InvokeParameterDecl[], resultType: TypeSignature | undefined, eventType: TypeSignature | undefined, preconds: PreConditionDecl[], postconds: PostConditionDecl[], configs: TaskConfiguration, statusinfo: TypeSignature[], envreqs: EnvironmentVariableInformation[], resourcereqs: ResourceInformation, body: BodyImplementation) {
-        super(file, sinfo, attributes, name);
+    readonly body: IRBody;
 
+    readonly docstr: IRDeclarationDocString | undefined;
+    readonly metatags: IRDeclarationMetaTag[];
+
+    readonly file: string;
+    readonly sinfo: IRSourceInfo;
+
+    constructor(ikey: string, params: IRInvokeParameterDecl[], resultType: IRTypeSignature | undefined, eventType: IRTypeSignature | undefined, preconditions: IRPreConditionDecl[], postconditions: IRPostConditionDecl[], configs: IRTaskConfiguration, statusinfo: IRTypeSignature[], envreqs: IREnvironmentVariableInformation[], resourcereqs: IRResourceInformation, body: IRBody, docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
+        this.ikey = ikey;
         this.params = params;
         this.resultType = resultType;
         this.eventType = eventType;
-
-        this.preconditions = preconds;
-        this.postconditions = postconds
-
+        this.preconditions = preconditions;
+        this.postconditions = postconditions;
         this.configs = configs;
-
         this.statusinfo = statusinfo;
         this.envreqs = envreqs;
         this.resourcereqs = resourcereqs;
-
         this.body = body;
-    }
-
-    emitMetaInfo(fmt: CodeFormatter): string | undefined {
-        fmt.indentPush();
-
-        let prec: string[] = [];
-        if(this.preconditions.length !== 0) {
-            prec = this.preconditions.map((pc) => fmt.indent(pc.emit(fmt)));
-        }
-
-        let postc: string[] = [];
-        if(this.postconditions.length !== 0) {
-            postc = this.postconditions.map((pc) => fmt.indent(pc.emit(fmt)));
-        }
-
-        let configs: string[] = [];
-        if(this.configs !== undefined) {
-            configs = [fmt.indent(`configs { ${this.configs.emit()} }`)];
-        }
-
-        let status: string[] = [];
-        if(this.statusinfo.length !== 0) {
-            status = [fmt.indent(`status ${this.statusinfo.map((so) => so.emit()).join(" | ")};`)];
-        }
-
-        let resources: string[] = [];
-        if(this.resourcereqs.pathglobs.length !== 0) {
-            const rrs = this.resourcereqs.pathglobs.map((rr) => ResourceInformation.emitSingleRInfo(fmt, rr.pg, rr.optas));
-            resources = [fmt.indent(`resource { ${rrs.join(", ")} }`)];
-        }
-        
-        let evs: string[] = [];
-        if(this.envreqs.length !== 0) {
-            const vvl = this.envreqs.map((ev) => ev.emit(fmt));
-            evs = [fmt.indent(`env{ ${vvl.join(", ")} }`)];
-        }
-
-        fmt.indentPop();
-        if(prec.length === 0 && postc.length === 0 && status.length === 0 && evs.length === 0) {
-            return undefined;
-        }
-        else {
-            return [...prec, ...postc, ...configs, ...status, ...evs, ...resources].join("\n");
-        }
-    }
-
-    emit(fmt: CodeFormatter): string {
-        const attrs = this.emitAttributes();
-
-        const params = this.params.map((p) => p.emit(fmt)).join(", ");
-        const iresult = this.resultType === undefined ? "<T>" : "";
-        const eresult = this.resultType !== undefined ? (": " + this.resultType.emit()) : "";
-        const eevent = this.eventType !== undefined ? (this.resultType !== undefined ? ", " : " ") + this.eventType.emit() : "";
-
-        const minfo = this.emitMetaInfo(fmt);
-        return `${attrs}agent ${this.name}${iresult}(${params})${eresult}${eevent} ${this.body.emit(fmt, minfo)}`;
+        this.docstr = docstr;
+        this.metatags = metatags;
+        this.file = file;
+        this.sinfo = sinfo;
     }
 }
 
-class TaskDecl extends AbstractNominalTypeDecl {
-    readonly fields: MemberFieldDecl[] = [];
-    readonly selfmethods: TaskMethodDecl[] = [];
-    readonly actions: TaskActionDecl[] = [];
+class IRTaskDecl {
+    readonly tkey: string;
 
-    readonly configs: TaskConfiguration = new TaskConfiguration(undefined, undefined, undefined);
+    readonly invariants: IRInvariantDecl[];
+    readonly fields: IRMemberFieldDecl[];
 
-    readonly statusinfo: TypeSignature[] = [];
-    readonly envreqs: EnvironmentVariableInformation[] = [];
-    readonly resourcereqs: ResourceInformation = new ResourceInformation([]);
-    readonly eventinfo: TypeSignature[] = [];
+    readonly docstr: IRDeclarationDocString | undefined;
+    readonly metatags: IRDeclarationMetaTag[];
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string) {
-        super(file, sinfo, attributes, ns, name, AdditionalTypeDeclTag.Std);
-    }
+    readonly file: string;
+    readonly sinfo: IRSourceInfo;
 
-    emit(fmt: CodeFormatter): string {
-        const attrs = this.emitAttributes();
+    readonly configs: IRTaskConfiguration;
 
-        fmt.indentPush();
-        const mg: string[][] = [];
+    readonly statusinfo: IRTypeSignature[];
+    readonly envreqs: IREnvironmentVariableInformation[];
+    readonly resourcereqs: IRResourceInformation;
+    readonly eventinfo: IRTypeSignature[];
+
+    readonly imain: string; //invoke key of main task action
+    readonly icleanup: {
+        onterminate: string | undefined //invoke key of on-terminate action -- when we have a cancel/timeout/or parent abort that we cooperatively check and we are graceful in cleanup
+        onerror: string | undefined //invoke key of on-error action -- when we abort from a runtime failure and we are bailing
+        ondrop: string | undefined //invoke key of on-drop action -- when we have completed but our result is unused and we gracefully clean up
+    };
+
+    constructor(tkey: string, invariants: IRInvariantDecl[], fields: IRMemberFieldDecl[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo, configs: IRTaskConfiguration, statusinfo: IRTypeSignature[], envreqs: IREnvironmentVariableInformation[], resourcereqs: IRResourceInformation, eventinfo: IRTypeSignature[], imain: string, icleanup: { onterminate: string | undefined; onerror: string | undefined; ondrop: string | undefined; }) {
+        this.tkey = tkey;
+        this.invariants = invariants;
+        this.fields = fields;
+        this.docstr = docstr;
+        this.metatags = metatags;
+        this.file = file;
+        this.sinfo = sinfo;
         
-        const confstr = this.configs.emit();
-        if(confstr !== undefined) {
-            mg.push([fmt.indent(`configs { ${confstr} }`)]);
-        }
+        this.configs = configs;
+        this.statusinfo = statusinfo;
+        this.envreqs = envreqs;
+        this.resourcereqs = resourcereqs;
+        this.eventinfo = eventinfo;
 
-        if(this.statusinfo.length !== 0) {
-            mg.push([fmt.indent(`status ${this.statusinfo.map((so) => so.emit()).join(" | ")};`)]);
-        }
-
-        if(this.resourcereqs.pathglobs.length !== 0) {
-            const rrs = this.resourcereqs.pathglobs.map((rr) => ResourceInformation.emitSingleRInfo(fmt, rr.pg, rr.optas));
-            mg.push([fmt.indent(`resource { ${rrs.join(", ")} }`)]);
-        }
-        
-        if(this.envreqs.length !== 0) {
-            const vvl = this.envreqs.map((ev) => ev.emit(fmt));
-            mg.push([fmt.indent(`env{ ${vvl.join(", ")} }`)]);
-        }
-
-        if(this.eventinfo.length !== 0) {
-            mg.push([fmt.indent(`event ${this.eventinfo.map((et) => et.emit()).join(" | ")};`)]);
-        }
-
-        if(this.fields.length !== 0) {
-            mg.push(this.fields.map((ff) => ff.emit(fmt)));
-        }
-        if(this.selfmethods.length !== 0) {
-            mg.push(this.selfmethods.map((sm) => sm.emit(fmt)));
-        }
-        if(this.actions.length !== 0) {
-            mg.push(this.actions.map((act) => act.emit(fmt)));
-        }
-        fmt.indentPop();
-
-        let rootdecl = attrs + "task " + this.name + this.emitTerms(); 
-
-        fmt.indentPush();
-        const bg = this.emitBodyGroups(fmt);
-        fmt.indentPop();
-
-        let etail = "";
-        if(bg.length !== 0) {
-            etail = " {\n" + this.joinBodyGroups([...mg, ...bg]) + fmt.indent("\n}");
-        }
-
-        return `${rootdecl}${etail}`;
+        this.imain = imain;
+        this.icleanup = icleanup;
     }
 }
 
 class IRAssembly {
     readonly regexps: IRRegex[];
 
-    constructor(regexps: IRRegex[]) {
+    readonly constants: IRConstantDecl[];
+
+    readonly tests: IRTestDecl[];
+    readonly examples: IRExampleDecl[];
+
+    readonly predicates: IRPredicateDecl[];
+    readonly invokes: IRInvokeDecl[];
+    readonly taskactions: IRTaskActionDecl[];
+
+    readonly primtives: IRPrimitiveEntityTypeDecl[];
+    readonly constructables: IRConstructableTypeDecl[];
+    readonly collections: IRAbstractCollectionTypeDecl[];
+
+    readonly enums: IREnumTypeDecl[];
+    readonly typedecls: IRTypedeclTypeDecl[];
+    readonly cstringoftypedecls: IRTypedeclCStringDecl[];
+    readonly stringoftypedecls: IRTypedeclStringDecl[];
+
+    readonly entities: IREntityTypeDecl[];
+    readonly datamembers: IRDatatypeMemberEntityTypeDecl[];
+
+    readonly pconcepts: IRInternalConceptTypeDecl[];
+    readonly concepts: IRConceptTypeDecl[];
+    readonly datatypes: IRDatatypeTypeDecl[];
+
+    readonly apis: IRAPIDecl[];
+    readonly agents: IRAgentDecl[];
+    readonly tasks: IRTaskDecl[];
+
+    readonly alltypes: Map<string, IRAbstractNominalTypeDecl>;
+    readonly allinvokes: Map<string, IRInvokeMetaDecl>;
+
+    readonly supertypes: Map<string, IRTypeSignature[]>;
+    readonly subtypes: Map<string, IRTypeSignature[]>;
+
+    readonly concretesubtypes: Map<string, IRTypeSignature[]>; 
+
+    readonly typefieldTopo: IRTypeSignature[][];
+
+    constructor(regexps: IRRegex[], constants: IRConstantDecl[], tests: IRTestDecl[], examples: IRExampleDecl[], predicates: IRPredicateDecl[], invokes: IRInvokeDecl[], taskactions: IRTaskActionDecl[], primtives: IRPrimitiveEntityTypeDecl[], constructables: IRConstructableTypeDecl[], collections: IRAbstractCollectionTypeDecl[], enums: IREnumTypeDecl[], typedecls: IRTypedeclTypeDecl[], cstringoftypedecls: IRTypedeclCStringDecl[], stringoftypedecls: IRTypedeclStringDecl[], entities: IREntityTypeDecl[], datamembers: IRDatatypeMemberEntityTypeDecl[], pconcepts: IRInternalConceptTypeDecl[], concepts: IRConceptTypeDecl[], datatypes: IRDatatypeTypeDecl[], apis: IRAPIDecl[], agents: IRAgentDecl[], tasks: IRTaskDecl[], alltypes: Map<string, IRAbstractNominalTypeDecl>, allinvokes: Map<string, IRInvokeMetaDecl>, supertypes: Map<string, IRTypeSignature[]>, subtypes: Map<string, IRTypeSignature[]>, concretesubtypes: Map<string, IRTypeSignature[]>, typefieldTopo: IRTypeSignature[][]) {
         this.regexps = regexps;
+
+        this.constants = constants;
+
+        this.tests = tests;
+        this.examples = examples;
+
+        this.predicates = predicates;
+        this.invokes = invokes;
+        this.taskactions = taskactions;
+
+        this.primtives = primtives;
+        this.constructables = constructables;
+        this.collections = collections;
+
+        this.enums = enums;
+        this.typedecls = typedecls;
+        this.cstringoftypedecls = cstringoftypedecls;
+        this.stringoftypedecls = stringoftypedecls;
+
+        this.entities = entities;
+        this.datamembers = datamembers;
+
+        this.pconcepts = pconcepts;
+        this.concepts = concepts;
+        this.datatypes = datatypes;
+
+        this.apis = apis;
+        this.agents = agents;
+        this.tasks = tasks;
+
+        this.alltypes = alltypes;
+        this.allinvokes = allinvokes;
+
+        this.supertypes = supertypes;
+        this.subtypes = subtypes;
+
+        this.concretesubtypes = concretesubtypes;
+
+        this.typefieldTopo = typefieldTopo;
     }
 }
 
@@ -943,5 +870,8 @@ export {
     IRAbstractConceptTypeDecl, IRInternalConceptTypeDecl,
     IROptionTypeDecl, IRResultTypeDecl, IRAPIResultTypeDecl, 
     IRConceptTypeDecl,
+    IRDatatypeMemberEntityTypeDecl, IRDatatypeTypeDecl,
+    IREnvironmentVariableInformation, IRResourceInformation, IRTaskConfiguration,
+    IRAPIDecl, IRAgentDecl, IRTaskDecl,
     IRAssembly
 };
