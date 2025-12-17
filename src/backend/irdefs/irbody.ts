@@ -1371,13 +1371,39 @@ class IRBlockStatement {
     }
 }
 
-class IRBody {
-    readonly builtintag: string | undefined;
-    readonly block: IRBlockStatement;
+abstract class IRBody {
+    constructor() {
+    }
+}
 
-    constructor(builtintag: string | undefined, block: IRBlockStatement) {
-        this.builtintag = builtintag;
-        this.block = block;
+class IRBuiltinBody extends IRBody {
+    readonly builtin: string;
+
+    constructor(builtin: string) {
+        super();
+        this.builtin = builtin;
+    }
+}
+
+class IRHoleBody extends IRBody {
+    readonly hname: string | undefined;
+    readonly doccomment: string | undefined;
+    readonly samplesfile: string | undefined;
+    
+    constructor(hname: string | undefined, doccomment: string | undefined, samplesfile: string | undefined) {
+        super();
+        this.hname = hname;
+        this.doccomment = doccomment;
+        this.samplesfile = samplesfile;
+    }
+}
+
+class IRStandardBody extends IRBody {
+    readonly statements: IRStatement[];
+
+    constructor(statements: IRStatement[]) {
+        super();
+        this.statements = statements;
     }
 }
 
@@ -1436,5 +1462,5 @@ export {
     IRAbortStatement, IRAssertStatement, IRAssumeStatement, IRValidateStatement, IRDebugStatement,
 
     IRBlockStatement,
-    IRBody
+    IRBody, IRBuiltinBody, IRHoleBody, IRStandardBody
 };

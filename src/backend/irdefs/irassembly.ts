@@ -1,5 +1,5 @@
 import { IRRegex, IRSourceInfo } from "./irsupport";
-import { IRNominalTypeSignature, IRTypeSignature } from "./irtype";
+import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature } from "./irtype";
 import { IRBlockStatement, IRBody, IRSimpleExpression, IRStatement } from "./irbody";
 
 abstract class IRConditionDecl {
@@ -151,7 +151,7 @@ abstract class IRInvokeMetaDecl {
     }
 }
 
-class TestAssociation {
+class IRTestAssociation {
     readonly file: string | undefined;
     readonly ns: string | undefined;
     readonly ontype: string | undefined;
@@ -164,7 +164,7 @@ class TestAssociation {
         this.onmember = onmember;
     }
 
-    isMatchWith(tmatch: TestAssociation): boolean {
+    isMatchWith(tmatch: IRTestAssociation): boolean {
         if(tmatch.file !== undefined && this.file !== tmatch.file) {
             return false;
         }
@@ -193,7 +193,7 @@ class IRPredicateDecl extends IRInvokeMetaDecl {
 
 class IRTestDecl extends IRInvokeMetaDecl {
     readonly testkind: "errtest" | "chktest";
-    readonly association: TestAssociation[] | undefined;
+    readonly association: IRTestAssociation[] | undefined;
 
     readonly body: IRBody;
 
@@ -206,7 +206,7 @@ class IRTestDecl extends IRInvokeMetaDecl {
 }
 
 class IRExampleDecl extends IRInvokeMetaDecl {
-    readonly association: TestAssociation[] | undefined;
+    readonly association: IRTestAssociation[] | undefined;
 
     readonly body: IRBody;
 
@@ -799,6 +799,11 @@ class IRAssembly {
     readonly alltypes: Map<string, IRAbstractNominalTypeDecl>;
     readonly allinvokes: Map<string, IRInvokeMetaDecl>;
 
+    readonly elists: IREListTypeSignature[];
+    readonly dashtypes: IRDashResultTypeSignature[];
+    readonly formats: IRFormatTypeSignature[];
+    readonly lpacks: IRLambdaParameterPackTypeSignature[];
+
     readonly supertypes: Map<string, IRTypeSignature[]>;
     readonly subtypes: Map<string, IRTypeSignature[]>;
 
@@ -806,7 +811,7 @@ class IRAssembly {
 
     readonly typefieldTopo: IRTypeSignature[][];
 
-    constructor(regexps: IRRegex[], constants: IRConstantDecl[], tests: IRTestDecl[], examples: IRExampleDecl[], predicates: IRPredicateDecl[], invokes: IRInvokeDecl[], taskactions: IRTaskActionDecl[], primtives: IRPrimitiveEntityTypeDecl[], constructables: IRConstructableTypeDecl[], collections: IRAbstractCollectionTypeDecl[], enums: IREnumTypeDecl[], typedecls: IRTypedeclTypeDecl[], cstringoftypedecls: IRTypedeclCStringDecl[], stringoftypedecls: IRTypedeclStringDecl[], entities: IREntityTypeDecl[], datamembers: IRDatatypeMemberEntityTypeDecl[], pconcepts: IRInternalConceptTypeDecl[], concepts: IRConceptTypeDecl[], datatypes: IRDatatypeTypeDecl[], apis: IRAPIDecl[], agents: IRAgentDecl[], tasks: IRTaskDecl[], alltypes: Map<string, IRAbstractNominalTypeDecl>, allinvokes: Map<string, IRInvokeMetaDecl>, supertypes: Map<string, IRTypeSignature[]>, subtypes: Map<string, IRTypeSignature[]>, concretesubtypes: Map<string, IRTypeSignature[]>, typefieldTopo: IRTypeSignature[][]) {
+    constructor(regexps: IRRegex[], constants: IRConstantDecl[], tests: IRTestDecl[], examples: IRExampleDecl[], predicates: IRPredicateDecl[], invokes: IRInvokeDecl[], taskactions: IRTaskActionDecl[], primtives: IRPrimitiveEntityTypeDecl[], constructables: IRConstructableTypeDecl[], collections: IRAbstractCollectionTypeDecl[], enums: IREnumTypeDecl[], typedecls: IRTypedeclTypeDecl[], cstringoftypedecls: IRTypedeclCStringDecl[], stringoftypedecls: IRTypedeclStringDecl[], entities: IREntityTypeDecl[], datamembers: IRDatatypeMemberEntityTypeDecl[], pconcepts: IRInternalConceptTypeDecl[], concepts: IRConceptTypeDecl[], datatypes: IRDatatypeTypeDecl[], apis: IRAPIDecl[], agents: IRAgentDecl[], tasks: IRTaskDecl[], alltypes: Map<string, IRAbstractNominalTypeDecl>, allinvokes: Map<string, IRInvokeMetaDecl>, elists: IREListTypeSignature[], dashtypes: IRDashResultTypeSignature[], formats: IRFormatTypeSignature[], lpacks: IRLambdaParameterPackTypeSignature[], supertypes: Map<string, IRTypeSignature[]>, subtypes: Map<string, IRTypeSignature[]>, concretesubtypes: Map<string, IRTypeSignature[]>, typefieldTopo: IRTypeSignature[][]) {
         this.regexps = regexps;
 
         this.constants = constants;
@@ -841,6 +846,11 @@ class IRAssembly {
         this.alltypes = alltypes;
         this.allinvokes = allinvokes;
 
+        this.elists = elists;
+        this.dashtypes = dashtypes;
+        this.formats = formats;
+        this.lpacks = lpacks;
+
         this.supertypes = supertypes;
         this.subtypes = subtypes;
 
@@ -854,7 +864,7 @@ export {
     IRPreConditionDecl, IRPostConditionDecl, IRInvariantDecl, IRValidateDecl,
     IRDeclarationDocString, IRDeclarationMetaTag,
     IRConstantDecl,
-    IRInvokeParameterDecl, IRInvokeMetaDecl, TestAssociation,
+    IRInvokeParameterDecl, IRInvokeMetaDecl, IRTestAssociation,
     IRPredicateDecl, IRTestDecl, IRExampleDecl, IRInvokeDecl, IRTaskActionDecl,
     IRMemberFieldDecl,
     IRAbstractNominalTypeDecl, IRAbstractEntityTypeDecl, 
