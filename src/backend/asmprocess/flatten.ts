@@ -4,7 +4,7 @@ import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, F
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringTextComponent, HoleBodyImplementation, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PostfixOp, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement } from "../../frontend/body";
 import { AbstractNominalTypeDecl, Assembly, ConstMemberDecl, InvariantDecl, InvokeParameterDecl, MethodDecl, NamespaceFunctionDecl, PostConditionDecl, PreConditionDecl, TaskActionDecl, TaskMethodDecl, TestAssociation, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl } from "../../frontend/assembly";
 
-import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatCStringTypeSignature, IRFormatPathFragmentTypeSignature, IRFormatPathGlobTypeSignature, IRFormatPathTypeSignature, IRFormatStringTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype";
+import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatCStringTypeSignature, IRFormatPathFragmentTypeSignature, IRFormatPathGlobTypeSignature, IRFormatPathTypeSignature, IRFormatStringTypeSignature, IRFormatTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype";
 import { DateRepresentation, DeltaDateRepresentation, DeltaTimeRepresentation, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteBufferExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralCStringExpression, IRLiteralDecimalExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLatLongCoordinateExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralNoneExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralRationalExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRStatement, TimeRepresentation, IRLiteralFormatStringExpression, IRFormatStringTextComponent, IRFormatStringArgComponent, IRFormatStringComponent, IRLiteralFormatCStringExpression, IRLiteralTypedExpression, IRLiteralExpression, IRTypeDeclInvariantCheckStatement, IRLiteralTypedStringExpression, IRLiteralTypedCStringExpression, IRLiteralTypedFormatStringExpression, IRLiteralTypedFormatCStringExpression, IRTaskAccessIDExpression, IRTaskAccessParentIDExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessEnumExpression, IRSimpleExpression, IRPreconditionCheckStatement, IRExpression, IRTempAssignExpressionStatement, IRAccessTempVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessParameterVariableExpression, IRPrefixNotOpExpression, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRErrorAdditionBoundsCheckStatement, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRErrorDivisionByZeroCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRNopStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRReturnVoidSimpleStatement, IRAbortStatement, IRImmediateExpression, IRReturnSimpleStatement, IRReturnValueSimpleStatement, IRBlockStatement, IRChkLogicImpliesShortCircuitStatement, IRInvokeDirectExpression, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRVariableInitializationDirectInvokeStatement, IRInvokeSimpleExpression, IRInvokeImplicitsExpression, IRTempAssignStdInvokeStatement, IRTempAssignRefInvokeStatement, IRReturnDirectInvokeStatement, IRAssertStatement, IRValidateStatement, IRDebugStatement, IRInvokeExpression, IRBody, IRBuiltinBody, IRHoleBody, IRStandardBody } from "../irdefs/irbody";
 import { IRRegex, IRSourceInfo } from "../irdefs/irsupport";
 import { IRConstantDecl, IRDeclarationDocString, IRExampleDecl, IRInvariantDecl, IRInvokeDecl, IRInvokeParameterDecl, IRPostConditionDecl, IRPreConditionDecl, IRPredicateDecl, IRTaskActionDecl, IRTestAssociation, IRTestDecl, IRValidateDecl } from "../irdefs/irassembly";
@@ -17,6 +17,10 @@ class ASMToIRConverter {
     readonly assembly: Assembly;
 
     regexs: IRRegex[];
+    elists: IREListTypeSignature[];
+    dashtypes: IRDashResultTypeSignature[];
+    formats: IRFormatTypeSignature[];
+    lpacks: IRLambdaParameterPackTypeSignature[];
 
     errInfos: { file: string, sinfo: IRSourceInfo, kind: "arith" | "runtime" | "userspec", checkID: number }[];
     errCtr: number;
@@ -39,9 +43,28 @@ class ASMToIRConverter {
         this.assembly = assembly;
         
         this.regexs = [];
+        this.elists = [];
+        this.dashtypes = [];
+        this.formats = [];
+        this.lpacks = [];
 
         this.errInfos = [];
         this.errCtr = 0;
+
+        this.pendingblocks = [];
+        this.rescopeStack = [];
+        this.tmpVarCtr = 0;
+    }
+
+    private initCodeProcessingContext(file: string, isTaskAllowed: boolean, rtype: TypeSignature, implicitreturn: string | undefined, postconds: PostConditionDecl[] | undefined, typeinst: TypeInstantiationInfo | undefined, invokeinst: InvokeInstantiationInfo | undefined) {
+        this.currentFile = file;
+        this.isTaskAllowed = isTaskAllowed;
+        this.currentReturnType = rtype;
+        this.currentImplicitReturnVar = implicitreturn;
+        this.currentPostconditions = postconds;
+
+        this.currentTypeInstantiation = typeinst;
+        this.currentInvokeInstantation = invokeinst;
 
         this.pendingblocks = [];
         this.rescopeStack = [];
@@ -144,7 +167,6 @@ class ASMToIRConverter {
         return bytes;
     }
 
-
     private processTypeSignature(tsig: TypeSignature): IRTypeSignature {
         let rtsig: TypeSignature;
 
@@ -169,11 +191,19 @@ class ASMToIRConverter {
             const elisttsig = rtsig as EListTypeSignature;
             const irents = elisttsig.entries.map<IRTypeSignature>((ent) => this.processTypeSignature(ent));
 
+            if(this.elists.find((el) => el.tkeystr === rtsig.tkeystr) === undefined) {
+                this.elists.push(new IREListTypeSignature(rtsig.tkeystr, irents));
+            }
+
             return new IREListTypeSignature(rtsig.tkeystr, irents);
         }
         else if(rtsig instanceof DashResultTypeSignature) {
             const drtsig = rtsig as DashResultTypeSignature;
             const irents = drtsig.entries.map<IRTypeSignature>((ent) => this.processTypeSignature(ent));
+
+            if(this.dashtypes.find((el) => el.tkeystr === rtsig.tkeystr) === undefined) {
+                this.dashtypes.push(new IRDashResultTypeSignature(rtsig.tkeystr, irents));
+            }
 
             return new IRDashResultTypeSignature(rtsig.tkeystr, irents);
         }
@@ -183,12 +213,18 @@ class ASMToIRConverter {
                 return {argname: term.argname, argtype: this.processTypeSignature(term.argtype)};
             });
 
+            let fsig: IRFormatTypeSignature;
             if(ffmtsig.oftype === "CString") {
-                return new IRFormatCStringTypeSignature(rtsig.tkeystr, this.processTypeSignature(ffmtsig.rtype), irfmts);
+                fsig = new IRFormatCStringTypeSignature(rtsig.tkeystr, this.processTypeSignature(ffmtsig.rtype), irfmts);
             }
             else {
-                return new IRFormatStringTypeSignature(rtsig.tkeystr, this.processTypeSignature(ffmtsig.rtype), irfmts);
+                fsig = new IRFormatStringTypeSignature(rtsig.tkeystr, this.processTypeSignature(ffmtsig.rtype), irfmts);
             }
+
+            if(this.formats.find((el) => el.tkeystr === rtsig.tkeystr) === undefined) {
+                this.formats.push(fsig);
+            }
+            return fsig;
         }
         else if(rtsig instanceof FormatPathTypeSignature) {
             const fpathtsig = rtsig as FormatPathTypeSignature;
@@ -196,15 +232,21 @@ class ASMToIRConverter {
                 return {argname: term.argname, argtype: this.processTypeSignature(term.argtype)};
             });
 
+            let fsig: IRFormatTypeSignature;
             if(fpathtsig.oftype === "Path") {
-                return new IRFormatPathTypeSignature(rtsig.tkeystr, this.processTypeSignature(fpathtsig.rtype), irfmts);
+                fsig = new IRFormatPathTypeSignature(rtsig.tkeystr, this.processTypeSignature(fpathtsig.rtype), irfmts);
             }
             else if(fpathtsig.oftype === "PathFragment") {
-                return new IRFormatPathFragmentTypeSignature(rtsig.tkeystr, this.processTypeSignature(fpathtsig.rtype), irfmts);
+                fsig = new IRFormatPathFragmentTypeSignature(rtsig.tkeystr, this.processTypeSignature(fpathtsig.rtype), irfmts);
             }
             else {
-                return new IRFormatPathGlobTypeSignature(rtsig.tkeystr, this.processTypeSignature(fpathtsig.rtype), irfmts);
+                fsig = new IRFormatPathGlobTypeSignature(rtsig.tkeystr, this.processTypeSignature(fpathtsig.rtype), irfmts);
             }
+
+            if(this.formats.find((el) => el.tkeystr === rtsig.tkeystr) === undefined) {
+                this.formats.push(fsig);
+            }
+            return fsig;
         }
         else {
             assert(false, `ASMToIRConverter: Unsupported type signature -- ${rtsig.tkeystr}`);
@@ -2022,8 +2064,19 @@ class ASMToIRConverter {
         assert(false, "Not implemented -- checkTaskActionDecl");
     }
 
-    private checkConstMemberDecls(tdecl: AbstractNominalTypeDecl, cdecl: ConstMemberDecl): IRConstantDecl {
-        xxxx;
+    private checkConstMemberDecls(tdecl: AbstractNominalTypeDecl, cdecl: ConstMemberDecl, typeinst: TypeInstantiationInfo | undefined): IRConstantDecl {
+        this.initCodeProcessingContext(tdecl.file, false, cdecl.declaredType, undefined, undefined, typeinst, undefined);
+
+        this.pushStatementBlock();
+        const irval = this.flattenExpression(cdecl.value);
+        
+        const doc = cdecl.attributes.find((a) => a.name === "doc");
+        const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
+        
+        const stmts = this.popStatementBlock();
+        const expr = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(irval, cdecl.value.getType()), cdecl.value.getType(), cdecl.declaredType);
+
+        return new IRConstantDecl(cdecl.name, this.processTypeSignature(cdecl.declaredType), stmts, expr, docstring);
     }
 }
 

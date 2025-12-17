@@ -4585,9 +4585,9 @@ class TypeChecker {
 
             if(this.checkTypeSignature(m.declaredType)) {
                 const infertype = this.relations.convertTypeSignatureToTypeInferCtx(m.declaredType);
-                const env = TypeEnvironment.createInitialStdEnv([], m.declaredType, infertype);
+                const env = TypeEnvironment.createInitialStdEnv(m.declaredType, infertype, []);
 
-                const decltype = this.checkExpression(env, m.value.exp, new SimpleTypeInferContext(m.declaredType));
+                const decltype = this.checkExpression(env, m.value, new SimpleTypeInferContext(m.declaredType));
                 this.checkError(m.sinfo, !this.relations.isSubtypeOf(decltype, m.declaredType, this.constraints), `Const initializer does not match declared type -- expected ${m.declaredType.emit()} but got ${decltype.emit()}`);
             }
         }
@@ -4600,9 +4600,13 @@ class TypeChecker {
             if(this.checkTypeSignature(f.declaredType)) {
                 if(f.defaultValue !== undefined) {
                     const infertype = this.relations.convertTypeSignatureToTypeInferCtx(f.declaredType);
-                    const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, bn.type, [], true, true, false)), f.declaredType, infertype);
+                    const env = TypeEnvironment.createInitialStdEnv(f.declaredType, infertype, []).pushNewLocalBinderScope(bnames.map((bn) => new VarInfo("$" + bn.name, bn.type, "let", true)));
 
-                    const decltype = this.checkExpression(env, f.defaultValue.exp, new SimpleTypeInferContext(f.declaredType));
+                    const decltype = this.checkExpression(env, f.defaultValue, new SimpleTypeInferContext(f.declaredType));
+    
+                    const [, binds] = env.popLocalScope();
+                    f.xxx = [...binds.accessed];
+
                     this.checkError(f.sinfo, !this.relations.isSubtypeOf(decltype, f.declaredType, this.constraints), `Field initializer does not match declared type -- expected ${f.declaredType.emit()} but got ${decltype.emit()}`);
                 }
             }
@@ -4715,7 +4719,7 @@ class TypeChecker {
         }
 
         if(tdecl.optofexp !== undefined) {
-            const checkerexp = tdecl.optofexp !== undefined ? this.relations.assembly.resolveValidatorLiteral(tdecl.optofexp.exp) : undefined;
+            const checkerexp = tdecl.optofexp !== undefined ? this.relations.assembly.resolveValidatorLiteral(tdecl.optofexp) : undefined;
             this.checkError(tdecl.sinfo, checkerexp === undefined, `of expression must be regex or glob`);
 
             const typevaluename = (tdecl.valuetype as NominalTypeSignature).decl.name;
@@ -4724,22 +4728,22 @@ class TypeChecker {
                     this.checkError(tdecl.sinfo, checkerexp.tag !== ExpressionTag.LiteralUnicodeRegexExpression, `of expression must be unicode regex`);
                     
                     const uretype = this.getWellKnownType("Regex") as NominalTypeSignature;
-                    this.checkExpression(TypeEnvironment.createInitialStdEnv([], uretype, new SimpleTypeInferContext(uretype)), checkerexp, undefined);
-                    this.checkExpression(TypeEnvironment.createInitialStdEnv([], uretype, new SimpleTypeInferContext(uretype)), tdecl.optofexp.exp, undefined);
+                    this.checkExpression(TypeEnvironment.createInitialStdEnv(uretype, new SimpleTypeInferContext(uretype), []), checkerexp, undefined);
+                    this.checkExpression(TypeEnvironment.createInitialStdEnv(uretype, new SimpleTypeInferContext(uretype), []), tdecl.optofexp, undefined);
                 }
                 else if(typevaluename === "CString") {
                     this.checkError(tdecl.sinfo, checkerexp.tag !== ExpressionTag.LiteralCRegexExpression, `of expression must be char regex`);
 
                     const cretype = this.getWellKnownType("CRegex") as NominalTypeSignature;
-                    this.checkExpression(TypeEnvironment.createInitialStdEnv([], cretype, new SimpleTypeInferContext(cretype)), checkerexp, undefined);
-                    this.checkExpression(TypeEnvironment.createInitialStdEnv([], cretype, new SimpleTypeInferContext(cretype)), tdecl.optofexp.exp, undefined);
+                    this.checkExpression(TypeEnvironment.createInitialStdEnv(cretype, new SimpleTypeInferContext(cretype), []), checkerexp, undefined);
+                    this.checkExpression(TypeEnvironment.createInitialStdEnv(cretype, new SimpleTypeInferContext(cretype), []), tdecl.optofexp, undefined);
                 }
                 else if(typevaluename === "Path") {
                     this.checkError(tdecl.sinfo, checkerexp.tag !== ExpressionTag.LiteralGlobExpression, `of expression must be path glob`);
 
                     const pgretype = this.getWellKnownType("PathGlob") as NominalTypeSignature;
-                    this.checkExpression(TypeEnvironment.createInitialStdEnv([], pgretype, new SimpleTypeInferContext(pgretype)), checkerexp, undefined);
-                    this.checkExpression(TypeEnvironment.createInitialStdEnv([], pgretype, new SimpleTypeInferContext(pgretype)), tdecl.optofexp.exp, undefined);
+                    this.checkExpression(TypeEnvironment.createInitialStdEnv(pgretype, new SimpleTypeInferContext(pgretype), []), checkerexp, undefined);
+                    this.checkExpression(TypeEnvironment.createInitialStdEnv(pgretype, new SimpleTypeInferContext(pgretype), []), tdecl.optofexp, undefined);
                 }
                 else {
                     this.reportError(tdecl.sinfo, `can only use "of" pattern on String/SCtring/Path types`);
@@ -4795,10 +4799,6 @@ class TypeChecker {
     }
 
     private checkPrimitiveEntityTypeDecl(ns: NamespaceDeclaration, tdecl: PrimitiveEntityTypeDecl) {
-        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
-    }
-
-    private checkCRopeIteratorTypeDecl(ns: NamespaceDeclaration, tdecl: CRopeIteratorTypeDecl) {
         this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 

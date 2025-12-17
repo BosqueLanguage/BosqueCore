@@ -1,6 +1,6 @@
 import { IRRegex, IRSourceInfo } from "./irsupport";
 import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature } from "./irtype";
-import { IRBlockStatement, IRBody, IRSimpleExpression, IRStatement } from "./irbody";
+import { IRBody, IRSimpleExpression, IRStatement } from "./irbody";
 
 abstract class IRConditionDecl {
     readonly file: string;
@@ -197,7 +197,7 @@ class IRTestDecl extends IRInvokeMetaDecl {
 
     readonly body: IRBody;
 
-    constructor(ikey: string, recursive: "recursive" | "recursive?" | undefined, params: IRInvokeParameterDecl[], resultType: IRTypeSignature, preconditions: IRPreConditionDecl[], postconditions: IRPostConditionDecl[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, testkind: "errtest" | "chktest", association: TestAssociation[] | undefined, body: IRBody) {
+    constructor(ikey: string, recursive: "recursive" | "recursive?" | undefined, params: IRInvokeParameterDecl[], resultType: IRTypeSignature, preconditions: IRPreConditionDecl[], postconditions: IRPostConditionDecl[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, testkind: "errtest" | "chktest", association: IRTestAssociation[] | undefined, body: IRBody) {
         super(ikey, recursive, params, resultType, preconditions, postconditions, docstr, file, sinfo);
         this.testkind = testkind;
         this.association = association;
@@ -210,7 +210,7 @@ class IRExampleDecl extends IRInvokeMetaDecl {
 
     readonly body: IRBody;
 
-    constructor(ikey: string, recursive: "recursive" | "recursive?" | undefined, params: IRInvokeParameterDecl[], resultType: IRTypeSignature, preconditions: IRPreConditionDecl[], postconditions: IRPostConditionDecl[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, association: TestAssociation[] | undefined, body: IRBody) {
+    constructor(ikey: string, recursive: "recursive" | "recursive?" | undefined, params: IRInvokeParameterDecl[], resultType: IRTypeSignature, preconditions: IRPreConditionDecl[], postconditions: IRPostConditionDecl[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, association: IRTestAssociation[] | undefined, body: IRBody) {
         super(ikey, recursive, params, resultType, preconditions, postconditions, docstr, file, sinfo);
         this.association = association;
         this.body = body;

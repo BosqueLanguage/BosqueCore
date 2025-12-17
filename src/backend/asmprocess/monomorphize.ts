@@ -1822,10 +1822,6 @@ class Monomorphizer {
         this.instantiateInteralSimpleTypeDeclHelper(pdecl, [], undefined);
     }
 
-    private instantiateCRopeIteratorTypeDecl(pdecl: PendingNominalTypeDecl) {
-        this.instantiateInteralSimpleTypeDeclHelper(pdecl, [], undefined);
-    }
-
     private instantiateOkTypeDecl(pdecl: PendingNominalTypeDecl) {
         const stypes = [
             new NominalTypeSignature(pdecl.type.sinfo, undefined, this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Result") as ResultTypeDecl, pdecl.instantiation),
