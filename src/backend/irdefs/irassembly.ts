@@ -765,98 +765,54 @@ class IRTaskDecl {
 }
 
 class IRAssembly {
-    readonly regexps: IRRegex[];
+    readonly regexps: IRRegex[] = [];
 
-    readonly constants: IRConstantDecl[];
+    readonly constants: IRConstantDecl[] = [];
 
-    readonly tests: IRTestDecl[];
-    readonly examples: IRExampleDecl[];
+    readonly tests: IRTestDecl[] = [];
+    readonly examples: IRExampleDecl[] = [];
 
-    readonly predicates: IRPredicateDecl[];
-    readonly invokes: IRInvokeDecl[];
-    readonly taskactions: IRTaskActionDecl[];
+    readonly predicates: IRPredicateDecl[] = [];
+    readonly invokes: IRInvokeDecl[] = [];
+    readonly taskactions: IRTaskActionDecl[] = [];
 
-    readonly primtives: IRPrimitiveEntityTypeDecl[];
-    readonly constructables: IRConstructableTypeDecl[];
-    readonly collections: IRAbstractCollectionTypeDecl[];
+    readonly primitives: IRPrimitiveEntityTypeDecl[] = [];
+    readonly constructables: IRConstructableTypeDecl[] = [];
+    readonly collections: IRAbstractCollectionTypeDecl[] = [];
+    readonly eventlists: IREventListTypeDecl[] = [];
 
-    readonly enums: IREnumTypeDecl[];
-    readonly typedecls: IRTypedeclTypeDecl[];
-    readonly cstringoftypedecls: IRTypedeclCStringDecl[];
-    readonly stringoftypedecls: IRTypedeclStringDecl[];
+    readonly enums: IREnumTypeDecl[] = [];
+    readonly typedecls: IRTypedeclTypeDecl[] = [];
+    readonly cstringoftypedecls: IRTypedeclCStringDecl[] = [];
+    readonly stringoftypedecls: IRTypedeclStringDecl[] = [];
 
-    readonly entities: IREntityTypeDecl[];
-    readonly datamembers: IRDatatypeMemberEntityTypeDecl[];
+    readonly entities: IREntityTypeDecl[] = [];
+    readonly datamembers: IRDatatypeMemberEntityTypeDecl[] = [];
 
-    readonly pconcepts: IRInternalConceptTypeDecl[];
-    readonly concepts: IRConceptTypeDecl[];
-    readonly datatypes: IRDatatypeTypeDecl[];
+    readonly pconcepts: IRInternalConceptTypeDecl[] = [];
+    readonly concepts: IRConceptTypeDecl[] = [];
+    readonly datatypes: IRDatatypeTypeDecl[] = [];
 
-    readonly apis: IRAPIDecl[];
-    readonly agents: IRAgentDecl[];
-    readonly tasks: IRTaskDecl[];
+    readonly apis: IRAPIDecl[] = [];
+    readonly agents: IRAgentDecl[] = [];
+    readonly tasks: IRTaskDecl[] = [];
 
-    readonly alltypes: Map<string, IRAbstractNominalTypeDecl>;
-    readonly allinvokes: Map<string, IRInvokeMetaDecl>;
+    readonly alltypes: Map<string, IRAbstractNominalTypeDecl> = new Map<string, IRAbstractNominalTypeDecl>();
+    readonly allinvokes: Map<string, IRInvokeMetaDecl> = new Map<string, IRInvokeMetaDecl>();
 
-    readonly elists: IREListTypeSignature[];
-    readonly dashtypes: IRDashResultTypeSignature[];
-    readonly formats: IRFormatTypeSignature[];
-    readonly lpacks: IRLambdaParameterPackTypeSignature[];
+    readonly elists: IREListTypeSignature[] = [];
+    readonly dashtypes: IRDashResultTypeSignature[] = [];
+    readonly formats: IRFormatTypeSignature[] = [];
+    readonly lpacks: IRLambdaParameterPackTypeSignature[] = [];
 
-    readonly supertypes: Map<string, IRTypeSignature[]>;
-    readonly subtypes: Map<string, IRTypeSignature[]>;
+    readonly supertypes: Map<string, IRTypeSignature[]> = new Map<string, IRTypeSignature[]>();
+    readonly subtypes: Map<string, IRTypeSignature[]> = new Map<string, IRTypeSignature[]>();
 
-    readonly concretesubtypes: Map<string, IRTypeSignature[]>; 
+    readonly concretesubtypes: Map<string, IRTypeSignature[]> = new Map<string, IRTypeSignature[]>(); 
 
-    readonly typefieldTopo: IRTypeSignature[][];
+    readonly typefieldTopo: IRTypeSignature[][] = [];
 
-    constructor(regexps: IRRegex[], constants: IRConstantDecl[], tests: IRTestDecl[], examples: IRExampleDecl[], predicates: IRPredicateDecl[], invokes: IRInvokeDecl[], taskactions: IRTaskActionDecl[], primtives: IRPrimitiveEntityTypeDecl[], constructables: IRConstructableTypeDecl[], collections: IRAbstractCollectionTypeDecl[], enums: IREnumTypeDecl[], typedecls: IRTypedeclTypeDecl[], cstringoftypedecls: IRTypedeclCStringDecl[], stringoftypedecls: IRTypedeclStringDecl[], entities: IREntityTypeDecl[], datamembers: IRDatatypeMemberEntityTypeDecl[], pconcepts: IRInternalConceptTypeDecl[], concepts: IRConceptTypeDecl[], datatypes: IRDatatypeTypeDecl[], apis: IRAPIDecl[], agents: IRAgentDecl[], tasks: IRTaskDecl[], alltypes: Map<string, IRAbstractNominalTypeDecl>, allinvokes: Map<string, IRInvokeMetaDecl>, elists: IREListTypeSignature[], dashtypes: IRDashResultTypeSignature[], formats: IRFormatTypeSignature[], lpacks: IRLambdaParameterPackTypeSignature[], supertypes: Map<string, IRTypeSignature[]>, subtypes: Map<string, IRTypeSignature[]>, concretesubtypes: Map<string, IRTypeSignature[]>, typefieldTopo: IRTypeSignature[][]) {
-        this.regexps = regexps;
-
-        this.constants = constants;
-
-        this.tests = tests;
-        this.examples = examples;
-
-        this.predicates = predicates;
-        this.invokes = invokes;
-        this.taskactions = taskactions;
-
-        this.primtives = primtives;
-        this.constructables = constructables;
-        this.collections = collections;
-
-        this.enums = enums;
-        this.typedecls = typedecls;
-        this.cstringoftypedecls = cstringoftypedecls;
-        this.stringoftypedecls = stringoftypedecls;
-
-        this.entities = entities;
-        this.datamembers = datamembers;
-
-        this.pconcepts = pconcepts;
-        this.concepts = concepts;
-        this.datatypes = datatypes;
-
-        this.apis = apis;
-        this.agents = agents;
-        this.tasks = tasks;
-
-        this.alltypes = alltypes;
-        this.allinvokes = allinvokes;
-
-        this.elists = elists;
-        this.dashtypes = dashtypes;
-        this.formats = formats;
-        this.lpacks = lpacks;
-
-        this.supertypes = supertypes;
-        this.subtypes = subtypes;
-
-        this.concretesubtypes = concretesubtypes;
-
-        this.typefieldTopo = typefieldTopo;
+    constructor() {
     }
 }
 
