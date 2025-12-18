@@ -11,7 +11,7 @@ import { TypeChecker, TypeError } from "../frontend/checker.js";
 
 const bosque_dir: string = path.join(__dirname, "../../../");
 
-let statusenabled = true;
+let statusenabled = false;
 const Status = {
     output: (msg: string) => {
         if(statusenabled) {
@@ -107,11 +107,14 @@ function generateASMGeneral(usercode: PackageConfig, macrodefs: string[]): [Asse
     return [tasm, parseerrors, typeerrors];
 }
 
-
 function generateASM(usercode: PackageConfig): [Assembly | undefined, ParserError[], TypeError[]]{
     return generateASMGeneral(usercode, ["EXEC_LIBS"]);
 }
 
+function setStatusEnabled(enabled: boolean): void {
+    statusenabled = enabled;
+}
+
 export { 
-    workflowLoadUserSrc, workflowLoadCoreSrc, workflowLoadAllSrc, generateASM
+    workflowLoadUserSrc, workflowLoadCoreSrc, workflowLoadAllSrc, generateASM, setStatusEnabled
 };

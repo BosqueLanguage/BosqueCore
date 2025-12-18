@@ -5,19 +5,20 @@ import { MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_INT } from "../../frontend/assembl
 import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag, IRPrefixNotOpExpression, IRPrefixPlusOpExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRReturnValueSimpleStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement, IRAbortStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRTempAssignExpressionStatement, IRTypeDeclInvariantCheckStatement, IRDebugStatement, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRChkLogicImpliesShortCircuitStatement, IRPreconditionCheckStatement, IRPostconditionCheckStatement, IRVariableInitializationDirectInvokeStatement, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRAssertStatement, IRValidateStatement, IRBody, IRBuiltinBody, IRStandardBody, IRHoleBody } from "../irdefs/irbody.js";
 
 import assert from "node:assert";
-import { IRConstantDecl, IRInvokeDecl, IRInvokeParameterDecl } from "../irdefs/irassembly.js";
+import { IRAssembly, IRConstantDecl, IRInvokeDecl, IRInvokeParameterDecl } from "../irdefs/irassembly.js";
 
 const RUNTIME_NAMESPACE = "ᐸRuntimeᐳ";
 const CLOSURE_CAPTURE_NAME = "ᐸclosureᐳ";
 
 class CPPEmitter {
+    readonly irasm: IRAssembly;
+    readonly typeInfoManager: TypeInfoManager;
+
     //The C++ TaskInfoRepr<U> for accessing the global info for the task we are emitting
-    private cppTaskType: string;
+    private cppTaskType: string | undefined = undefined;
 
-    private typeInfoManager: TypeInfoManager;
-
-    constructor(cppTaskType: string, typeInfoManager: TypeInfoManager) {
-        this.cppTaskType = cppTaskType;
+    constructor(irasm: IRAssembly, typeInfoManager: TypeInfoManager) {
+        this.irasm = irasm;
         this.typeInfoManager = typeInfoManager;
     }
 
@@ -612,6 +613,19 @@ class CPPEmitter {
 
         const bodystr = this.emitBody(invk.body, undefined);
         return `${rettyps} ${TransformCPPNameManager.convertInvokeKey(invk.ikey)}(${paramstrs}) ${bodystr}`;
+    }
+
+    static createEmitter(irasm: IRAssembly): CPPEmitter {
+        //TODO: should initialize TypeInfoManager here...
+        let ee = new CPPEmitter(irasm, new TypeInfoManager());
+
+        return ee;
+    }
+
+    public emitInvokeForKey(ikey: string): string {
+        const invk = this.irasm.invokes.find((v) => v.ikey === ikey);
+
+        return this.emitIRInvokeDecl(invk as IRInvokeDecl);
     }
 }
 

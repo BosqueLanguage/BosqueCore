@@ -2409,7 +2409,7 @@ class ASMToIRConverter {
         }
     }
 
-    static generateIR(assembly: Assembly, asminstantiation: NamespaceInstantiationInfo[], testfilefilter?: string[]): IRAssembly {
+    static generateIR(assembly: Assembly, asminstantiation: NamespaceInstantiationInfo[], testfilefilter: string[] | undefined): IRAssembly {
         const emitter = new ASMToIRConverter(assembly, testfilefilter !== undefined, testfilefilter, undefined);
         const irasm = new IRAssembly();
 
