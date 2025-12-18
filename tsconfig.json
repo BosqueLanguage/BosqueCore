@@ -19,7 +19,8 @@
     },
     "include": [
         "src/frontend/*.ts",
-        "src/cmd/workflows.ts",
+        "src/cmd/*.ts",
+        "src/backend/*/*.ts",
         "test/*/*_nf.ts"
     ]
 }

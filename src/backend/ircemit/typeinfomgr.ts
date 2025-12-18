@@ -1,6 +1,6 @@
 
 import { IRLambdaParameterPackTypeSignature, IRTypeSignature } from "../irdefs/irtype.js";
-import { TransformCPPNameManager } from "./namemgr";
+import { TransformCPPNameManager } from "./namemgr.js";
 
 import assert from "node:assert";
 
@@ -99,36 +99,34 @@ class TypeInfoManager {
         return `constexpr TypeInfo g_typeinfo_${tk} = { ${typeinfo.bsqtypeid}, ${typeinfo.bytesize}, ${typeinfo.slotcount}, LayoutTag::${layouttag}, ${typeinfo.ptrmask ?? "BSQ_PTR_MASK_LEAF"}, "${tk}", nullptr };`;
     }
 
-    emitTypeAsParameter(tkey: string, isconst: boolean, isreftagged: boolean): string {
+    emitTypeAsParameter(tkey: string, isreftagged: boolean): string {
         const typeinfo = this.getTypeInfo(tkey);
 
-        const cspec = (isconst ? "const " : "");
         const rtspec = (isreftagged ? "&" : "");
         if(typeinfo.tag === LayoutTag.Ref) {
-            return cspec + TransformCPPNameManager.convertTypeKey(tkey) + "*" + rtspec;
+            return TransformCPPNameManager.convertTypeKey(tkey) + "*" + rtspec;
         }
         else if(typeinfo.tsig instanceof IRLambdaParameterPackTypeSignature) {
             return "const " + TransformCPPNameManager.convertTypeKey(tkey) + "&";
         }
         else {
             if(typeinfo.bytesize <= TypeInfoManager.c_ref_pass_size) {
-                return cspec + TransformCPPNameManager.convertTypeKey(tkey) + rtspec;
+                return TransformCPPNameManager.convertTypeKey(tkey) + rtspec;
             }
             else {
-                return "const " + TransformCPPNameManager.convertTypeKey(tkey) + "&";                
+                return TransformCPPNameManager.convertTypeKey(tkey) + "&";                
             }
         }
     }
 
-    emitTypeAsReturn(tkey: string, isconst: boolean): string {
+    emitTypeAsReturn(tkey: string): string {
         const typeinfo = this.getTypeInfo(tkey);
 
-        const cspec = (isconst ? "const " : "");
         if(typeinfo.tag !== LayoutTag.Ref) {
-            return cspec + TransformCPPNameManager.convertTypeKey(tkey);
+            return TransformCPPNameManager.convertTypeKey(tkey);
         }
         else {
-            return cspec + TransformCPPNameManager.convertTypeKey(tkey) + "*";            
+            return TransformCPPNameManager.convertTypeKey(tkey) + "*";            
         }
     }
 
@@ -139,15 +137,14 @@ class TypeInfoManager {
         return `${cspec}${lspec}`;
     }
 
-    emitTypeAsStd(tkey: string, isconst: boolean): string {
+    emitTypeAsStd(tkey: string): string {
         const typeinfo = this.getTypeInfo(tkey);
 
-        const cspec = (isconst ? "const " : "");
         if(typeinfo.tag !== LayoutTag.Ref) {
-            return cspec + TransformCPPNameManager.convertTypeKey(tkey);
+            return TransformCPPNameManager.convertTypeKey(tkey);
         }
         else {
-            return cspec + TransformCPPNameManager.convertTypeKey(tkey) + "*";            
+            return TransformCPPNameManager.convertTypeKey(tkey) + "*";            
         }
     }
 }

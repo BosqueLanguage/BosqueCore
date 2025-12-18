@@ -1,5 +1,5 @@
-import { EListTypeSignature, FullyQualifiedNamespace, TemplateNameMapper, TypeSignature } from "../../frontend/type.ts";
-import { IRLambdaParameterPackTypeSignature } from "../irdefs/irtype.ts";
+import { EListTypeSignature, FullyQualifiedNamespace, TemplateNameMapper, TypeSignature } from "../../frontend/type.js";
+import { IRLambdaParameterPackTypeSignature } from "../irdefs/irtype.js";
 
 class InvokeInstantiationInfo {
     readonly newikey: string;

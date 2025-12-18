@@ -1,9 +1,9 @@
 import assert from "node:assert";
 
-import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, AgentDecl, APIDecl, APIDeniedTypeDecl, APIErrorTypeDecl, APIFlaggedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, ExplicitInvokeDecl, FailTypeDecl, InvariantDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskActionDecl, TaskConfiguration, TaskDecl, TaskMethodDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl } from "../../frontend/assembly.js";
+import { AbstractNominalTypeDecl, AgentDecl, APIDecl, APIDeniedTypeDecl, APIErrorTypeDecl, APIFlaggedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, ExplicitInvokeDecl, FailTypeDecl, InvariantDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskActionDecl, TaskConfiguration, TaskDecl, TaskMethodDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl } from "../../frontend/assembly.js";
 import { InvokeInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiations.js";
-import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, ArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, HoleBodyImplementation, HoleExpression, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOfOperator, PostfixOp, PostfixOpTag, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement } from "../../frontend/body.js";
+import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, HoleBodyImplementation, HoleExpression, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOfOperator, PostfixOp, PostfixOpTag, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement } from "../../frontend/body.js";
 import { SourceInfo } from "../../frontend/build_decls.js";
 
 import { IRLambdaParameterPackTypeSignature } from "../irdefs/irtype.js";
@@ -115,9 +115,11 @@ class Monomorphizer {
         return (packs.length !== 0) ? `[${packs.map(lp => lp.pname).join(", ")}]` : "";
     }
 
+    /*
     private getFreshLambdaKey(): string {
         return `lambda_${this.lambdaCtr++}`;
     }
+    */
 
     private computeResolveKeyForInvoke(ikey: string, termcount: number, hasref: boolean, lambdas: boolean): string {
         const tci = (termcount !== 0) ? `*tc_${termcount}_` : "";
@@ -136,12 +138,12 @@ class Monomorphizer {
         const rti = fdecl.params.some((p) => p.pkind !== undefined) ? "#ref" : "";
         return `${rcvrtype.tkeystr}::${fdecl.name}${rti}${Monomorphizer.computeTBindsKey(terms)}${Monomorphizer.computeLambdaKey(lambdas)}`;
     }
-
+/*
     private computeInvokeKeyForTypeMethod(rcvrtype: TypeSignature, mdecl: MethodDecl, terms: TypeSignature[], lambdas: { pname: string, psig: IRLambdaParameterPackTypeSignature, invtrgt: string }[]): string {
         const rti = ((mdecl.isThisRef) || mdecl.params.some((p) => p.pkind !== undefined)) ? "#ref" : "";
         return `${rcvrtype.tkeystr}@${mdecl.name}${rti}${Monomorphizer.computeTBindsKey(terms)}${Monomorphizer.computeLambdaKey(lambdas)}`;
     }
-
+*/
     private getWellKnownType(name: string): TypeSignature {
         assert(this.wellknowntypes.has(name), `Well known type ${name} not found`);
         return this.wellknowntypes.get(name) as TypeSignature;
@@ -150,7 +152,7 @@ class Monomorphizer {
     private isAlreadySeenType(tkey: string): boolean {
         return this.completedInstantiations.has(tkey) || this.pendingNominalTypeDecls.some((pntd) => pntd.tkey === tkey);
     }
-
+/*
     private isAlreadySeenNamespaceFunction(fkey: string): boolean {
         return this.completedNamespaceFunctions.has(fkey) || this.pendingNamespaceFunctions.some((pnf) => pnf.fkey === fkey);
     }
@@ -162,7 +164,7 @@ class Monomorphizer {
     private isAlreadySeenMemberMethod(mkey: string): boolean {
         return this.completedMemberMethods.has(mkey) || this.pendingTypeMethods.some((ptm) => ptm.mkey === mkey);
     }
-
+*/
     //Given a type signature -- instantiate it and all sub-component types
     private instantiateTypeSignature(type: TypeSignature, mapping: TemplateNameMapper | undefined) {
         const rt = mapping !== undefined ? type.remapTemplateBindings(mapping) : type;
@@ -202,6 +204,7 @@ class Monomorphizer {
         }
     }
 
+/*
     //Given a namespace function -- instantiate it
     private instantiateNamespaceFunction(ns: NamespaceDeclaration, fdecl: NamespaceFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psig: IRLambdaParameterPackTypeSignature, invtrgt: string }[]) {
         const tterms = this.currentMapping !== undefined ? terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : terms;
@@ -239,6 +242,7 @@ class Monomorphizer {
 
         this.pendingTypeMethods.push(new PendingTypeMethod(retype, mdecl, tterms, lambdas, mkey));
     }
+*/
 
     private instantiateStringFormatsList(formats: FormatStringComponent[]) {
         for(let i = 0; i < formats.length; ++i) {
@@ -325,7 +329,7 @@ class Monomorphizer {
     }
 
     private instantiateITestGuardSet(tt: ITestGuardSet) {
-        const grenvs = tt.guards.forEach((guard) => this.instantiateITestGuard(guard));
+        tt.guards.forEach((guard) => this.instantiateITestGuard(guard));
     }
 
 /*

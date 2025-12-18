@@ -1,10 +1,11 @@
-import { TransformCPPNameManager } from "./namemgr";
-import { TypeInfoManager } from "./typeinfomgr";
+import { TransformCPPNameManager } from "./namemgr.js";
+import { TypeInfoManager } from "./typeinfomgr.js";
 
-import { MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_INT } from "../../frontend/assembly";
-import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRLiteralByteBufferExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag, IRPrefixNotOpExpression, IRPrefixPlusOpExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRReturnValueSimpleStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement, IRAbortStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRTempAssignExpressionStatement, IRTypeDeclInvariantCheckStatement, IRDebugStatement, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRChkLogicImpliesShortCircuitStatement, IRBlockStatement, IRPreconditionCheckStatement, IRPostconditionCheckStatement, IRVariableInitializationDirectInvokeStatement, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRAssertStatement, IRValidateStatement } from "../irdefs/irbody";
+import { MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_INT } from "../../frontend/assembly.js";
+import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag, IRPrefixNotOpExpression, IRPrefixPlusOpExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRReturnValueSimpleStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement, IRAbortStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRTempAssignExpressionStatement, IRTypeDeclInvariantCheckStatement, IRDebugStatement, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRChkLogicImpliesShortCircuitStatement, IRPreconditionCheckStatement, IRPostconditionCheckStatement, IRVariableInitializationDirectInvokeStatement, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRAssertStatement, IRValidateStatement, IRBody, IRBuiltinBody, IRStandardBody, IRHoleBody } from "../irdefs/irbody.js";
 
 import assert from "node:assert";
+import { IRConstantDecl, IRInvokeDecl, IRInvokeParameterDecl } from "../irdefs/irassembly.js";
 
 const RUNTIME_NAMESPACE = "ᐸRuntimeᐳ";
 const CLOSURE_CAPTURE_NAME = "ᐸclosureᐳ";
@@ -404,7 +405,7 @@ class CPPEmitter {
         else if(ttag === IRStatementTag.IRTempAssignExpressionStatement) {
             const tase = stmt as IRTempAssignExpressionStatement;
             
-            const vdecltype = this.typeInfoManager.emitTypeAsStd(tase.ttype.tkeystr, true);
+            const vdecltype = this.typeInfoManager.emitTypeAsStd(tase.ttype.tkeystr);
             const wval = this.emitExpression(tase.rhs, true);
             return `${vdecltype} ${TransformCPPNameManager.convertIdentifier(tase.tname)} = ${wval};`
         }
@@ -418,20 +419,20 @@ class CPPEmitter {
         else if(ttag === IRStatementTag.IRVariableDeclarationStatement) {
             const vdeclstmt = stmt as IRVariableDeclarationStatement;
 
-            const vdecltype = this.typeInfoManager.emitTypeAsStd(vdeclstmt.vtype.tkeystr, false);
+            const vdecltype = this.typeInfoManager.emitTypeAsStd(vdeclstmt.vtype.tkeystr);
             return `${vdecltype} ${TransformCPPNameManager.convertIdentifier(vdeclstmt.vname)};`
         }
         else if(ttag === IRStatementTag.IRVariableInitializationStatement) {
             const vistmt = stmt as IRVariableInitializationStatement;
 
-            const vdecltype = this.typeInfoManager.emitTypeAsStd(vistmt.vtype.tkeystr, vistmt.isconst);
+            const vdecltype = this.typeInfoManager.emitTypeAsStd(vistmt.vtype.tkeystr);
             const wval = this.emitIRSimpleExpression(vistmt.initexp, true);
             return `${vdecltype} ${TransformCPPNameManager.convertIdentifier(vistmt.vname)} = ${wval};`
         }
         else if(ttag === IRStatementTag.IRVariableInitializationDirectInvokeStatement) {
             const vistmt = stmt as IRVariableInitializationDirectInvokeStatement;
 
-            const vdecltype = this.typeInfoManager.emitTypeAsStd(vistmt.vtype.tkeystr, vistmt.isconst);
+            const vdecltype = this.typeInfoManager.emitTypeAsStd(vistmt.vtype.tkeystr);
             const wval = this.emitExpression(vistmt.initexp, true);
             return `${vdecltype} ${TransformCPPNameManager.convertIdentifier(vistmt.vname)} = ${wval};`
         }
@@ -455,7 +456,7 @@ class CPPEmitter {
             const ilcs = stmt as IRLogicConditionalStatement;
             const tb = this.emitStatementList(ilcs.truestmt, undefined, [`${TransformCPPNameManager.convertIdentifier(ilcs.tvar)} = ${this.emitIRSimpleExpression(ilcs.trueexp, true)};`], undefined);
             const fb = this.emitStatementList(ilcs.falsestmt, undefined, [`${TransformCPPNameManager.convertIdentifier(ilcs.tvar)} = ${this.emitIRSimpleExpression(ilcs.falseexp, true)};`], undefined);
-            return `${this.typeInfoManager.emitTypeAsStd(ilcs.ttype.tkeystr, false)} ${TransformCPPNameManager.convertIdentifier(ilcs.tvar)}; if(${this.emitIRSimpleExpression(ilcs.condition, true)}) ${tb} else ${fb}`;
+            return `${this.typeInfoManager.emitTypeAsStd(ilcs.ttype.tkeystr)} ${TransformCPPNameManager.convertIdentifier(ilcs.tvar)}; if(${this.emitIRSimpleExpression(ilcs.condition, true)}) ${tb} else ${fb}`;
         }
         else if(ttag === IRStatementTag.IRErrorAdditionBoundsCheckStatement) {
             const ieabc = stmt as IRErrorAdditionBoundsCheckStatement;
@@ -542,8 +543,75 @@ class CPPEmitter {
         }
     }
 
+    /*
     private emitBlockStatement(stmts: IRBlockStatement, indent: string | undefined): string {
         return this.emitStatementList(stmts.statements, undefined, undefined, indent);
+    }
+    */
+
+    private emitBuiltinBody(body: IRBuiltinBody, indent: string | undefined): string {
+        assert(false, "CPPEmitter: need to implement builtin body emission");
+    }
+
+    private emitHoleBody(body: IRHoleBody, indent: string | undefined): string {
+        assert(false, "CPPEmitter: need to implement builtin body emission");
+    }
+
+    private emitBody(body: IRBody, indent: string | undefined): string {
+        if(body instanceof IRBuiltinBody) {
+            return this.emitBuiltinBody(body, indent);
+        }
+        else if(body instanceof IRHoleBody) {
+            return this.emitHoleBody(body, indent);
+        }
+        else {
+            const sbody = body as IRStandardBody;
+
+            return this.emitStatementList(sbody.statements, undefined, undefined, indent);
+        }
+    }
+
+    /*
+    private emitPreconditionCheckFunction(ipcs: IRPreConditionDecl, invk: IRInvokeDecl): string {
+        assert(false, "CPPEmitter: need to implement precondition check function emission");
+    }
+
+    private emitPostconditionCheckFunction(ipcs: IRPostConditionDecl, invk: IRInvokeDecl): string {
+        assert(false, "CPPEmitter: need to implement postcondition check function emission");
+    }
+
+    private emitInvariantFunction(iinv: IRInvariantDecl, tdecl: IRAbstractNominalTypeDecl): string {
+        assert(false, "CPPEmitter: need to implement invariant function emission");
+    }
+
+    private emitValidateFunction(ival: IRValidateDecl, tdecl: IRAbstractNominalTypeDecl): string {
+        assert(false, "CPPEmitter: need to implement validate function emission");
+    }
+    */
+
+    emitConstantDecl(iconst: IRConstantDecl): string {
+        const gvname = `BSQ_g_${TransformCPPNameManager.generateNameForConstantKey(iconst.ckey)}`;
+        const staticsstr = `std::optional<${this.typeInfoManager.emitTypeAsStd(iconst.declaredType.tkeystr)}> ${gvname} = std::nullopt;`;
+        
+        const bodystr = this.emitStatementList(iconst.stmts, [`if(${gvname}.has_value()) { return ${gvname}.value(); } `], [`${gvname} = std::make_optional(${this.emitIRSimpleExpression(iconst.value, true)}); return ${gvname}.value();`], undefined);
+        return `${staticsstr}\n${this.typeInfoManager.emitTypeAsStd(iconst.declaredType.tkeystr)} ${TransformCPPNameManager.generateNameForConstantKey(iconst.ckey)}() ${bodystr}`;
+    }
+
+    private emitIRInvokeParameterDecl(iparam: IRInvokeParameterDecl): string {
+        assert(iparam.defaultValue === undefined, "CPPEmitter: need to implement default value handling in invoke parameter decl emission");
+
+        const ptypstr = this.typeInfoManager.emitTypeAsParameter(iparam.type.tkeystr, iparam.pkind !== undefined);
+        return `${ptypstr} ${TransformCPPNameManager.convertIdentifier(iparam.name)}`;
+    }
+
+    emitIRInvokeDecl(invk: IRInvokeDecl): string {
+        assert(invk.preconditions.length === 0 && invk.postconditions.length === 0, "CPPEmitter: need to implement pre/post condition handling in invoke decl emission");
+
+        const paramstrs = invk.params.map((param) => this.emitIRInvokeParameterDecl(param)).join(", ");
+        const rettyps = this.typeInfoManager.emitTypeAsReturn(invk.resultType.tkeystr);
+
+        const bodystr = this.emitBody(invk.body, undefined);
+        return `${rettyps} ${TransformCPPNameManager.convertInvokeKey(invk.ikey)}(${paramstrs}) ${bodystr}`;
     }
 }
 

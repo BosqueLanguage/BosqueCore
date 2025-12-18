@@ -1,20 +1,24 @@
 
-import { SourceInfo } from "../../frontend/build_decls";
-import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, RecursiveAnnotation, TypeSignature, VoidTypeSignature } from "../../frontend/type";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringTextComponent, HoleBodyImplementation, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PostfixOp, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement } from "../../frontend/body";
-import { AbstractNominalTypeDecl, AgentDecl, APIDecl, APIDeniedTypeDecl, APIErrorTypeDecl, APIFlaggedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EventListTypeDecl, FailTypeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TestAssociation, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl } from "../../frontend/assembly";
+import { SourceInfo } from "../../frontend/build_decls.js";
+import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, RecursiveAnnotation, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
+import { AbortStatement, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringTextComponent, HoleBodyImplementation, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PostfixOp, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement } from "../../frontend/body.js";
+import { AgentDecl, APIDecl, APIDeniedTypeDecl, APIErrorTypeDecl, APIFlaggedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EventListTypeDecl, FailTypeDecl, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskDecl, TestAssociation, TypedeclTypeDecl } from "../../frontend/assembly.js";
 
-import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatCStringTypeSignature, IRFormatPathFragmentTypeSignature, IRFormatPathGlobTypeSignature, IRFormatPathTypeSignature, IRFormatStringTypeSignature, IRFormatTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype";
-import { DateRepresentation, DeltaDateRepresentation, DeltaTimeRepresentation, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteBufferExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralCStringExpression, IRLiteralDecimalExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLatLongCoordinateExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralNoneExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralRationalExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRStatement, TimeRepresentation, IRLiteralFormatStringExpression, IRFormatStringTextComponent, IRFormatStringArgComponent, IRFormatStringComponent, IRLiteralFormatCStringExpression, IRLiteralTypedExpression, IRLiteralExpression, IRTypeDeclInvariantCheckStatement, IRLiteralTypedStringExpression, IRLiteralTypedCStringExpression, IRLiteralTypedFormatStringExpression, IRLiteralTypedFormatCStringExpression, IRTaskAccessIDExpression, IRTaskAccessParentIDExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessEnumExpression, IRSimpleExpression, IRPreconditionCheckStatement, IRExpression, IRTempAssignExpressionStatement, IRAccessTempVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessParameterVariableExpression, IRPrefixNotOpExpression, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRErrorAdditionBoundsCheckStatement, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRErrorDivisionByZeroCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRNopStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRReturnVoidSimpleStatement, IRAbortStatement, IRImmediateExpression, IRReturnSimpleStatement, IRReturnValueSimpleStatement, IRBlockStatement, IRChkLogicImpliesShortCircuitStatement, IRInvokeDirectExpression, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRVariableInitializationDirectInvokeStatement, IRInvokeSimpleExpression, IRInvokeImplicitsExpression, IRTempAssignStdInvokeStatement, IRTempAssignRefInvokeStatement, IRReturnDirectInvokeStatement, IRAssertStatement, IRValidateStatement, IRDebugStatement, IRInvokeExpression, IRBody, IRBuiltinBody, IRHoleBody, IRStandardBody } from "../irdefs/irbody";
-import { IRRegex, IRSourceInfo } from "../irdefs/irsupport";
-import { IRAgentDecl, IRAPIDecl, IRAPIDeniedTypeDecl, IRAPIErrorTypeDecl, IRAPIFlaggedTypeDecl, IRAPIRejectedTypeDecl, IRAPIResultTypeDecl, IRAPISuccessTypeDecl, IRAssembly, IRConceptTypeDecl, IRConstantDecl, IRDatatypeMemberEntityTypeDecl, IRDatatypeTypeDecl, IRDeclarationDocString, IREntityTypeDecl, IREnumTypeDecl, IREventListTypeDecl, IRExampleDecl, IRFailTypeDecl, IRInvariantDecl, IRInvokeDecl, IRInvokeParameterDecl, IRListTypeDecl, IRMapEntryTypeDecl, IRMapTypeDecl, IROkTypeDecl, IROptionTypeDecl, IRPostConditionDecl, IRPreConditionDecl, IRPredicateDecl, IRPrimitiveEntityTypeDecl, IRQueueTypeDecl, IRResultTypeDecl, IRSetTypeDecl, IRSomeTypeDecl, IRStackTypeDecl, IRTaskActionDecl, IRTaskDecl, IRTestAssociation, IRTestDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl, IRValidateDecl } from "../irdefs/irassembly";
+import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatCStringTypeSignature, IRFormatPathFragmentTypeSignature, IRFormatPathGlobTypeSignature, IRFormatPathTypeSignature, IRFormatStringTypeSignature, IRFormatTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype.js";
+import { DateRepresentation, DeltaDateRepresentation, DeltaTimeRepresentation, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteBufferExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralCStringExpression, IRLiteralDecimalExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLatLongCoordinateExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralNoneExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralRationalExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRStatement, TimeRepresentation, IRLiteralFormatStringExpression, IRFormatStringTextComponent, IRFormatStringArgComponent, IRFormatStringComponent, IRLiteralFormatCStringExpression, IRLiteralTypedExpression, IRLiteralExpression, IRTypeDeclInvariantCheckStatement, IRLiteralTypedStringExpression, IRLiteralTypedCStringExpression, IRLiteralTypedFormatStringExpression, IRLiteralTypedFormatCStringExpression, IRTaskAccessIDExpression, IRTaskAccessParentIDExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessEnumExpression, IRSimpleExpression, IRPreconditionCheckStatement, IRExpression, IRTempAssignExpressionStatement, IRAccessTempVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessParameterVariableExpression, IRPrefixNotOpExpression, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRErrorAdditionBoundsCheckStatement, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRErrorDivisionByZeroCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRNopStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRReturnVoidSimpleStatement, IRAbortStatement, IRImmediateExpression, IRReturnValueSimpleStatement, IRChkLogicImpliesShortCircuitStatement, IRInvokeDirectExpression, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRVariableInitializationDirectInvokeStatement, IRInvokeSimpleExpression, IRInvokeImplicitsExpression, IRTempAssignStdInvokeStatement, IRTempAssignRefInvokeStatement, IRReturnDirectInvokeStatement, IRAssertStatement, IRValidateStatement, IRDebugStatement, IRBody, IRBuiltinBody, IRHoleBody, IRStandardBody } from "../irdefs/irbody.js";
+import { IRRegex, IRSourceInfo } from "../irdefs/irsupport.js";
+import { IRAgentDecl, IRAPIDecl, IRAPIDeniedTypeDecl, IRAPIErrorTypeDecl, IRAPIFlaggedTypeDecl, IRAPIRejectedTypeDecl, IRAPIResultTypeDecl, IRAPISuccessTypeDecl, IRAssembly, IRConceptTypeDecl, IRConstantDecl, IRDatatypeMemberEntityTypeDecl, IRDatatypeTypeDecl, IRDeclarationDocString, IREntityTypeDecl, IREnumTypeDecl, IREventListTypeDecl, IRExampleDecl, IRFailTypeDecl, IRInvokeDecl, IRInvokeParameterDecl, IRListTypeDecl, IRMapEntryTypeDecl, IRMapTypeDecl, IROkTypeDecl, IROptionTypeDecl, IRPostConditionDecl, IRPreConditionDecl, IRPredicateDecl, IRPrimitiveEntityTypeDecl, IRQueueTypeDecl, IRResultTypeDecl, IRSetTypeDecl, IRSomeTypeDecl, IRStackTypeDecl, IRTaskDecl, IRTestAssociation, IRTestDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl } from "../irdefs/irassembly.js";
 
-import { InvokeInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiations";
+import { InvokeInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiations.js";
 
 import assert from "node:assert";
 
 class ASMToIRConverter {
     readonly assembly: Assembly;
+
+    readonly generateTestInfo: boolean;
+    readonly testfilefilter: string[] | undefined;
+    readonly testfilters: TestAssociation[] | undefined;
 
     regexs: IRRegex[];
     elists: IREListTypeSignature[];
@@ -39,8 +43,11 @@ class ASMToIRConverter {
     rescopeStack: Map<string, string>[]; //Maps from old name to new name
     tmpVarCtr: number;
 
-    constructor(assembly: Assembly) {
+    constructor(assembly: Assembly, generateTestInfo: boolean, testfilefilter: string[] | undefined, testfilters: TestAssociation[] | undefined) {
         this.assembly = assembly;
+        this.generateTestInfo = generateTestInfo;
+        this.testfilefilter = testfilefilter;
+        this.testfilters = testfilters;
         
         this.regexs = [];
         this.elists = [];
@@ -167,6 +174,18 @@ class ASMToIRConverter {
         return bytes;
     }
 
+    private tproc(ttype: TypeSignature): TypeSignature {
+        if(this.currentInvokeInstantation !== undefined) {
+            return this.currentInvokeInstantation.binds !== undefined ? ttype.remapTemplateBindings(this.currentInvokeInstantation.binds) : ttype;
+        }
+        else if(this.currentTypeInstantiation !== undefined) {
+            return this.currentTypeInstantiation.binds !== undefined ? ttype.remapTemplateBindings(this.currentTypeInstantiation.binds) : ttype;
+        }
+        else {
+            return ttype;
+        }
+    }
+
     private processTypeSignature(tsig: TypeSignature): IRTypeSignature {
         let rtsig: TypeSignature;
 
@@ -286,7 +305,10 @@ class ASMToIRConverter {
     }
 
     private makeCoercionExplicitAsNeeded(exp: IRSimpleExpression, fromtype: TypeSignature, totype: TypeSignature): IRSimpleExpression {
-        if(fromtype.tkeystr === totype.tkeystr) {
+        const ftype = this.tproc(fromtype);
+        const ttype = this.tproc(totype);
+
+        if(ftype.tkeystr === ttype.tkeystr) {
             return exp;
         }
         else {
@@ -1963,7 +1985,7 @@ class ASMToIRConverter {
     private generateEnsuresClauseDecl(req: PostConditionDecl): IRPostConditionDecl {
         assert(false, "Not Implemented -- generateEnsuresClauseExplicitInvoke");
     }
-
+/*
     private generateInvariantClauseDecl(containingtype: NominalTypeSignature, req: InvariantDecl): IRInvariantDecl {
         const encltype = this.processTypeSignature(containingtype);
         
@@ -1983,7 +2005,7 @@ class ASMToIRConverter {
 
         return new IRValidateDecl(req.file, this.convertSourceInfo(req.sinfo), req.diagnosticTag, encltype.tkeystr, req.ii, stmts, eexp);
     }
-
+*/
     private processRecursiveInfo(recursive: RecursiveAnnotation): "recursive" | "recursive?" | undefined {
         if(recursive === "yes") {
             return "recursive";
@@ -2048,6 +2070,7 @@ class ASMToIRConverter {
         }
     }
 
+/*
     private generateTypeFunctionDecl(fdecl: TypeFunctionDecl, invks: IRInvokeDecl[], preds: IRPredicateDecl[]) {
         assert(false, "Not Implemented -- generateTypeFunctionDecl");
     }
@@ -2078,7 +2101,7 @@ class ASMToIRConverter {
 
         return new IRConstantDecl(cdecl.name, this.processTypeSignature(cdecl.declaredType), stmts, expr, docstring);
     }
-
+*/
     private generateEnumTypeDecl(tdecl: EnumTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IREnumTypeDecl {
         assert(false, "Not Implemented -- generateEnumTypeDecl");
     }
@@ -2219,7 +2242,7 @@ class ASMToIRConverter {
         return new IRConstantDecl(cdecl.name, this.processTypeSignature(cdecl.declaredType), stmts, expr, docstring);
     }
 
-    private instantiateNamespaceTypeDecl(tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]) {
+    private generateNamespaceTypeDecl(tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]) {
         const tt = (tinst.tsig as NominalTypeSignature).decl;
         if(tt instanceof EnumTypeDecl) {
             irasm.enums.push(this.generateEnumTypeDecl(tt, tinst, irasm, iinfo));
@@ -2310,6 +2333,30 @@ class ASMToIRConverter {
         }
     }
 
+    private testEmitEnabled(fdecl: NamespaceFunctionDecl): boolean {
+        if(!this.generateTestInfo) {
+            return false;
+        }
+
+        if(this.testfilefilter === undefined && this.testfilters === undefined) {
+            return true;
+        }
+
+        let matchfile = false;
+        if(this.testfilefilter !== undefined) {
+            matchfile = this.testfilefilter.some((ff) => fdecl.file.endsWith(ff));
+        }
+
+        let matchfilter = false;
+        if(this.testfilters !== undefined) {
+            const assoc = fdecl.tassoc;
+
+            matchfilter = assoc !== undefined && this.testfilters.some((tmatch) => assoc.some((asc) => asc.isMatchWith(tmatch)));
+        }
+
+        return matchfile || matchfilter;
+    }
+
     private emitNamespaceDeclaration(decl: NamespaceDeclaration, asminstantiation: NamespaceInstantiationInfo, aainsts: NamespaceInstantiationInfo[], irasm: IRAssembly) {
         for(let i = 0; i < decl.subns.length; ++i) {
             const subdecl = decl.subns[i];
@@ -2326,18 +2373,24 @@ class ASMToIRConverter {
 
         for(let i = 0; i < decl.functions.length; ++i) {
             const finst = asminstantiation.functionbinds.get(decl.functions[i].name);
-            if(finst !== undefined) {
+            if(finst !== undefined && (decl.functions[i].fkind !== "predicate" || decl.functions[i].fkind !== "function" || this.testEmitEnabled(decl.functions[i]))) {
                 for(let j = 0; j < finst.length; ++j) {
                     const fdecl = decl.functions[i];
                     const implicitreturn = fdecl.params.find((p) => p.pkind !== undefined);
 
                     this.initCodeProcessingContext(fdecl.file, false, fdecl.resultType, implicitreturn !== undefined ? implicitreturn.name : undefined, fdecl.postconditions,  undefined, finst[j]);
+                    this.generateNamespaceFunctionDecl(fdecl, irasm);
                 }
             }
         }
         
         for(let i = 0; i < decl.typedecls.length; ++i) {
-            this.emitNamespaceTypeDecls(decl, decl.typedecls, asminstantiation, fmt);
+            const tinst = asminstantiation.typebinds.get(decl.typedecls[i].name);
+            if(tinst !== undefined) {
+                for(let j = 0; j < tinst.length; ++j) {
+                    this.generateNamespaceTypeDecl(tinst[j], irasm, aainsts);
+                }
+            }
         }
 
         //apis
@@ -2356,9 +2409,9 @@ class ASMToIRConverter {
         }
     }
 
-    static generateIR(assembly: Assembly, asminstantiation: NamespaceInstantiationInfo[], testfilefilter?: string[]): string {
-        const emitter = new ASMToIRConverter(assembly, asminstantiation, testfilefilter !== undefined, testfilefilter, undefined);
-        emitter.computeSubtypes();
+    static generateIR(assembly: Assembly, asminstantiation: NamespaceInstantiationInfo[], testfilefilter?: string[]): IRAssembly {
+        const emitter = new ASMToIRConverter(assembly, testfilefilter !== undefined, testfilefilter, undefined);
+        const irasm = new IRAssembly();
 
         //emit each of the assemblies
         for(let i = 0; i < assembly.toplevelNamespaces.length; ++i) {
@@ -2366,52 +2419,17 @@ class ASMToIRConverter {
             const nsii = asminstantiation.find((ai) => ai.ns.emit() === nsdecl.fullnamespace.emit());
 
             if(nsii !== undefined) {
-                emitter.currentns = nsdecl;
-                emitter.emitNamespaceDeclaration(nsdecl, nsii, asminstantiation, new BsqonCodeFormatter(2));
+                emitter.emitNamespaceDeclaration(nsdecl, nsii, asminstantiation, irasm);
             }
         }
 
-        const topotypes = emitter.computeTypeGraphTopoOrder();
-        const sccs = emitter.computeTypeGraphSCCS(topotypes);
-        
-        const topoinfo = topotypes.map((t) => `'${t}'<BSQAssembly::TypeKey>`);
-        const sccinfo = sccs.map((scc) => `List<BSQAssembly::TypeKey>{ ${scc.map((s) => `'${s}'<BSQAssembly::TypeKey>`).join(", ")} }`);
-        const cginfo = `BSQAssembly::TypeTopology{ ctopo=List<BSQAssembly::TypeKey>{ ${topoinfo.join(", ")} }, sccs=List<List<BSQAssembly::TypeKey>>{ ${sccinfo.join(", ")} } }`;
+        //TODO: fill in subtypes
 
-        let fmt = new BsqonCodeFormatter(1);
-        return "BSQAssembly::Assembly{\n" +
-            fmt.formatListOf("List<BSQAssembly::NamespaceConstDecl>{", emitter.nsconsts, "},\n") +
-            fmt.formatListOf("List<BSQAssembly::ConstMemberDecl>{", emitter.typeconsts, "},\n") +
+        //TODO: fill in all types
 
-            fmt.formatListOf("Map<BSQAssembly::InvokeKey, BSQAssembly::NamespaceFunctionDecl>{", emitter.nsfuncs, "},\n") +
-            fmt.formatListOf("Map<BSQAssembly::InvokeKey, BSQAssembly::TypeFunctionDecl>{", emitter.typefuncs, "},\n") +
-            
-            fmt.formatListOf("Map<BSQAssembly::InvokeKey, BSQAssembly::MethodDeclAbstract>{", emitter.absmethods, "},\n") +
-            fmt.formatListOf("Map<BSQAssembly::InvokeKey, BSQAssembly::MethodDeclVirtual>{", emitter.virtmethods, "},\n") +
-            fmt.formatListOf("Map<BSQAssembly::InvokeKey, BSQAssembly::MethodDeclOverride>{", emitter.overmethods, "},\n") +
-            fmt.formatListOf("Map<BSQAssembly::InvokeKey, BSQAssembly::MethodDeclStatic>{", emitter.staticmethods, "},\n") +
-            
-            fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::EnumTypeDecl>{", emitter.enums, "},\n") +
-            fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::TypedeclTypeDecl>{", emitter.typedecls, "},\n") +
-            fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::TypedeclStringOfTypeDecl>{", emitter.stringoftypedecls, "},\n") +
-            fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::PrimitiveEntityTypeDecl>{", emitter.primtives, "},\n") +
-            fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::ConstructableTypeDecl>{", emitter.constructables, "},\n") +
-            fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::CollectionTypeDecl>{", emitter.collections, "},\n") +
-            fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::EntityTypeDecl>{", emitter.entities, "},\n") +
-            fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::DatatypeMemberEntityTypeDecl>{", emitter.datamembers, "},\n") +
-            
-            fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::PrimitiveConceptTypeDecl>{", emitter.pconcepts, "},\n") +
-            fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::ConceptTypeDecl>{", emitter.concepts, "},\n") +
-            fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::DatatypeTypeDecl>{", emitter.datatypes, "},\n") +
-            
-            fmt.formatListOf("List<BSQAssembly::InvokeKey>{", emitter.allfuncs, "},\n") +
-            fmt.formatListOf("List<BSQAssembly::InvokeKey>{", emitter.allmethods, "},\n") +
-            fmt.formatListOf("List<BSQAssembly::InvokeKey>{", emitter.allvmethods, "},\n") +
-            
-            fmt.formatListOf("List<BSQAssembly::TypeKey>{", emitter.allconcretetypes, "},\n") +
-            fmt.formatListOf("List<BSQAssembly::TypeKey>{", emitter.allabstracttypes, "},\n") +
-            fmt.indent(cginfo) + "\n" +
-        "}";
+        //TODO: fill in type sorting
+
+        return irasm;
     }
 }
 

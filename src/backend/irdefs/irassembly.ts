@@ -1,6 +1,6 @@
-import { IRRegex, IRSourceInfo } from "./irsupport";
-import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature } from "./irtype";
-import { IRBody, IRSimpleExpression, IRStatement } from "./irbody";
+import { IRRegex, IRSourceInfo } from "./irsupport.js";
+import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature } from "./irtype.js";
+import { IRBody, IRSimpleExpression, IRStatement } from "./irbody.js";
 
 abstract class IRConditionDecl {
     readonly file: string;
