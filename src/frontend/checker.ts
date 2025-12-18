@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import { APIDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, InvokeTemplateTypeRestrictionClause, MAX_SAFE_CHK_NAT, MIN_SAFE_CHK_INT, MAX_SAFE_CHK_INT } from "./assembly.js";
+import { APIDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, InvokeTemplateTypeRestrictionClause, MAX_SAFE_CHK_NAT, MIN_SAFE_CHK_INT, MAX_SAFE_CHK_INT, APIDeniedTypeDecl, APIFlaggedTypeDecl, AgentDecl, TaskConfiguration } from "./assembly.js";
 import { CodeFormatter, SourceInfo } from "./build_decls.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FormatStringTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
 import { APIInvokeExpression, AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, FormatStringTextComponent, HoleBodyImplementation, HoleExpression, HoleStatement, ITest, ITestDenied, ITestError, ITestFail, ITestFlagged, ITestGuard, ITestGuardSet, ITestNone, ITestOk, ITestRejected, ITestSimpleGuard, ITestSome, ITestSuccess, ITestType, IfElifElseStatement, IfElseStatement, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypeDeclValueExpression, LiteralTypedCStringExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RValueExpression, RValueExpressionTag, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VoidRefCallStatement } from "./body.js";
@@ -4605,7 +4605,7 @@ class TypeChecker {
                     const decltype = this.checkExpression(env, f.defaultValue, new SimpleTypeInferContext(f.declaredType));
     
                     const [, binds] = env.popLocalScope();
-                    f.xxx = [...binds.accessed];
+                    f.initdependencies = [...binds.accessed];
 
                     this.checkError(f.sinfo, !this.relations.isSubtypeOf(decltype, f.declaredType, this.constraints), `Field initializer does not match declared type -- expected ${f.declaredType.emit()} but got ${decltype.emit()}`);
                 }
@@ -4810,15 +4810,19 @@ class TypeChecker {
         this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
+    private checkAPIErrorTypeDecl(ns: NamespaceDeclaration, tdecl: APIErrorTypeDecl) {
+        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
+    }
+
     private checkAPIRejectedTypeDecl(ns: NamespaceDeclaration, tdecl: APIRejectedTypeDecl) {
         this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
-    private checkAPIFailedTypeDecl(ns: NamespaceDeclaration, tdecl: APIFailedTypeDecl) {
+    private checkAPIDeniedTypeDecl(ns: NamespaceDeclaration, tdecl: APIDeniedTypeDecl) {
         this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
-    private checkAPIErrorTypeDecl(ns: NamespaceDeclaration, tdecl: APIErrorTypeDecl) {
+    private checkAPIFlaggedTypeDecl(ns: NamespaceDeclaration, tdecl: APIFlaggedTypeDecl) {
         this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
@@ -4835,14 +4839,6 @@ class TypeChecker {
     }
 
     private checkListTypeDecl(ns: NamespaceDeclaration, tdecl: ListTypeDecl) {
-        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
-    }
-
-    private checkCRopeTypeDecl(ns: NamespaceDeclaration, tdecl: CRopeTypeDecl) {
-        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
-    }
-
-    private checkUnicodeRopeTypeDecl(ns: NamespaceDeclaration, tdecl: UnicodeRopeTypeDecl) {
         this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
@@ -4901,14 +4897,17 @@ class TypeChecker {
         this.constraints.pushConstraintScope(tdecl.terms, undefined);
         for(let i = 0; i < tdecl.nestedEntityDecls.length; ++i) {
             const ned = tdecl.nestedEntityDecls[i];
-            if(ned instanceof APIRejectedTypeDecl) {
+            if(ned instanceof APIErrorTypeDecl) {
+                this.checkAPIErrorTypeDecl(ns, ned);
+            }
+            else if(ned instanceof APIRejectedTypeDecl) {
                 this.checkAPIRejectedTypeDecl(ns, ned);
             }
-            else if(ned instanceof APIFailedTypeDecl) {
-                this.checkAPIFailedTypeDecl(ns, ned);
+            else if(ned instanceof APIDeniedTypeDecl) {
+                this.checkAPIDeniedTypeDecl(ns, ned);
             }
-            else if(ned instanceof APIErrorTypeDecl) {
-                this.checkAPIErrorTypeDecl(ns, ned);
+            else if(ned instanceof APIFlaggedTypeDecl) {
+                this.checkAPIFlaggedTypeDecl(ns, ned);
             }
             else {
                 this.checkAPISuccessTypeDecl(ns, ned as APISuccessTypeDecl);
@@ -4946,40 +4945,32 @@ class TypeChecker {
         this.file = CLEAR_FILENAME;
     }
 
-    private checkEventInfo(einfo: TypeSignature) {
-        const oksig = this.checkTypeSignature(einfo);
-        if(oksig) {
-            this.checkError(einfo.sinfo, !this.relations.isEventDataType(einfo), `Event type is not a valid event type -- ${einfo.emit()}`);
-        }
+     private checkConfigsurationParameters(tconfig: TaskConfiguration) {
+        assert(false, "Not implemented -- checkEnvironmentVariableInformation");
     }
 
-    private checkStatusInfo(sinfo: TypeSignature[]) {
-        for(let i = 0; i < sinfo.length; ++i) {
-            const oksig = this.checkTypeSignature(sinfo[i]);
-            if(oksig) {
-                this.checkError(sinfo[i].sinfo, !this.relations.isStatusDataType(sinfo[i]), `Event type is not a valid status type -- ${sinfo[i].emit()}`);
-            }
-        }
+    private checkstatusinfo(status: TypeSignature[]) {
+        assert(false, "Not implemented -- checkStatusInformation");
     }
 
-    private checkEnvironmentVariableInformation(env: EnvironmentVariableInformation[]) {
-        for(let i = 0; i < env.length; ++i) {
-            assert(false, "Not implemented -- checkEnvironmentVariableInformation");
-        }
+    private checkenvreqs(envreqs: EnvironmentVariableInformation[]) {
+        assert(false, "Not implemented -- checkEnvironmentRequirements");
     }
 
-    private checkResourceInformation(res: ResourceInformation[] | "**" | "{}" | "?") {
-        if(res === "**" || res === "{}" || res === "?") {
-            return;
-        }
+    private checkresourcereqs(resourcereqs: ResourceInformation) {
+        assert(false, "Not implemented -- checkResourceRequirements");
+    }
 
-        for(let i = 0; i < res.length; ++i) {
-            assert(false, "Not implemented -- checkResourceInformation");
-        }
+    private checkeventinfo(eventinfo: TypeSignature[]) {
+        assert(false, "Not implemented -- checkEventInformation");
     }
 
     private checkAPIDecl(adecl: APIDecl) {
         assert(false, "Not implemented -- checkAPIDecl");
+    }
+
+    private checkAgentDecl(adecl: AgentDecl) {
+        assert(false, "Not implemented -- checkAgentDecl");
     }
 
     private checkTaskDecl(ns: NamespaceDeclaration, tdecl: TaskDecl) {
@@ -5013,23 +5004,12 @@ class TypeChecker {
 
         this.checkMemberFieldDecls(bnames, tdecl.fields);
 
-        if(tdecl.implementsapi !== undefined) {
-            assert(false, "Not implemented -- checkTaskDecl implementsapi");
-        }
-        else {
-            if(tdecl.eventsInfo !== undefined) {
-                this.checkEventInfo(tdecl.eventsInfo as TypeSignature);
-            }
-            if(tdecl.statusInfo !== undefined) {
-                this.checkStatusInfo(tdecl.statusInfo as TypeSignature[]);
-            }
-            if(tdecl.envVarRequirementInfo !== undefined) {
-                this.checkEnvironmentVariableInformation(tdecl.envVarRequirementInfo as EnvironmentVariableInformation[]);
-            }
-            if(tdecl.resourceImpactInfo !== undefined) {
-                this.checkResourceInformation(tdecl.resourceImpactInfo as ResourceInformation[] | "**" | "{}" | "?");
-            }
-        }
+        this.checkConfigsurationParameters(tdecl.configs);
+
+        this.checkstatusinfo(tdecl.statusinfo);
+        this.checkenvreqs(tdecl.envreqs);
+        this.checkresourcereqs(tdecl.resourcereqs);
+        this.checkeventinfo(tdecl.eventinfo);
 
         if(tdecl.terms.length !== 0) {
             this.constraints.popConstraintScope();
@@ -5044,7 +5024,7 @@ class TypeChecker {
             this.file = m.file;
             if(this.checkTypeSignature(m.declaredType)) {
                 const infertype = this.relations.convertTypeSignatureToTypeInferCtx(m.declaredType);
-                const decltype = this.checkExpression(TypeEnvironment.createInitialStdEnv([], m.declaredType, infertype), m.value.exp, m.declaredType);
+                const decltype = this.checkExpression(TypeEnvironment.createInitialStdEnv(m.declaredType, infertype, []), m.value, m.declaredType);
 
                 this.checkError(m.sinfo, !this.relations.isSubtypeOf(decltype, m.declaredType, this.constraints), `Const initializer does not match declared type -- expected ${m.declaredType.emit()} but got ${decltype.emit()}`);
             }
@@ -5065,23 +5045,23 @@ class TypeChecker {
             else if(tt instanceof PrimitiveEntityTypeDecl) {
                 this.checkPrimitiveEntityTypeDecl(ns, tt);
             }
-            else if(tt instanceof CRopeIteratorTypeDecl) {
-                this.checkCRopeIteratorTypeDecl(ns, tt);
-            }
             else if(tt instanceof OkTypeDecl) {
                 this.checkOkTypeDecl(ns, tt);
             }
             else if(tt instanceof FailTypeDecl) {
                 this.checkFailTypeDecl(ns, tt);
             }
+            else if(tt instanceof APIErrorTypeDecl) {
+                this.checkAPIErrorTypeDecl(ns, tt);
+            }
             else if(tt instanceof APIRejectedTypeDecl) {
                 this.checkAPIRejectedTypeDecl(ns, tt);
             }
-            else if(tt instanceof APIFailedTypeDecl) {
-                this.checkAPIFailedTypeDecl(ns, tt);
+            else if(tt instanceof APIDeniedTypeDecl) {
+                this.checkAPIDeniedTypeDecl(ns, tt);
             }
-            else if(tt instanceof APIErrorTypeDecl) {
-                this.checkAPIErrorTypeDecl(ns, tt);
+            else if(tt instanceof APIFlaggedTypeDecl) {
+                this.checkAPIFlaggedTypeDecl(ns, tt);
             }
             else if(tt instanceof APISuccessTypeDecl) {
                 this.checkAPISuccessTypeDecl(ns, tt);
@@ -5094,12 +5074,6 @@ class TypeChecker {
             }
             else if(tt instanceof ListTypeDecl) {
                 this.checkListTypeDecl(ns, tt);
-            }
-            else if(tt instanceof CRopeTypeDecl) {
-                this.checkCRopeTypeDecl(ns, tt);
-            }
-           else if(tt instanceof UnicodeRopeTypeDecl) {
-                this.checkUnicodeRopeTypeDecl(ns, tt);
             } 
             else if(tt instanceof StackTypeDecl) {
                 this.checkStackTypeDecl(ns, tt);
@@ -5152,6 +5126,10 @@ class TypeChecker {
 
         for(let i = 0; i < decl.apis.length; ++i) {
             this.checkAPIDecl(decl.apis[i]);
+        }
+
+        for(let i = 0; i < decl.agents.length; ++i) {
+            this.checkAgentDecl(decl.agents[i]);
         }
 
         for(let i = 0; i < decl.tasks.length; ++i) {

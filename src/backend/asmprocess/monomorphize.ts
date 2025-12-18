@@ -1,20 +1,22 @@
 import assert from "node:assert";
 
-import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, Assembly, ConstMemberDecl, ExplicitInvokeDecl, InvariantDecl, ListTypeDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, PostConditionDecl, PreConditionDecl, ResultTypeDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl } from "../../frontend/assembly.js";
+import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, AgentDecl, APIDecl, APIDeniedTypeDecl, APIErrorTypeDecl, APIFlaggedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, ExplicitInvokeDecl, FailTypeDecl, InvariantDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskActionDecl, TaskConfiguration, TaskDecl, TaskMethodDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl } from "../../frontend/assembly.js";
 import { InvokeInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiations.js";
-import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaParameterPackTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
+import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, ArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, HoleBodyImplementation, HoleExpression, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOfOperator, PostfixOp, PostfixOpTag, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement } from "../../frontend/body.js";
 import { SourceInfo } from "../../frontend/build_decls.js";
+
+import { IRLambdaParameterPackTypeSignature } from "../irdefs/irtype.js";
 
 class PendingNamespaceFunction {
     readonly namespace: NamespaceDeclaration;
     readonly function: NamespaceFunctionDecl;
     readonly instantiation: TypeSignature[];
-    readonly lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[];
+    readonly lambdas: { pname: string, psig: IRLambdaParameterPackTypeSignature, invtrgt: string }[];
 
     readonly fkey: string;
 
-    constructor(namespace: NamespaceDeclaration, func: NamespaceFunctionDecl, instantiation: TypeSignature[], lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[], fkey: string) {
+    constructor(namespace: NamespaceDeclaration, func: NamespaceFunctionDecl, instantiation: TypeSignature[], lambdas: { pname: string, psig: IRLambdaParameterPackTypeSignature, invtrgt: string }[], fkey: string) {
         this.namespace = namespace;
         this.function = func;
         this.instantiation = instantiation;
@@ -28,11 +30,11 @@ class PendingTypeFunction {
     readonly type: TypeSignature;
     readonly function: TypeFunctionDecl;
     readonly instantiation: TypeSignature[];
-    readonly lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[];
+    readonly lambdas: { pname: string, psig: IRLambdaParameterPackTypeSignature, invtrgt: string }[];
 
     readonly fkey: string;
 
-    constructor(type: TypeSignature, func: TypeFunctionDecl, instantiation: TypeSignature[], lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[], fkey: string) {
+    constructor(type: TypeSignature, func: TypeFunctionDecl, instantiation: TypeSignature[], lambdas: { pname: string, psig: IRLambdaParameterPackTypeSignature, invtrgt: string }[], fkey: string) {
         this.type = type;
         this.function = func;
         this.instantiation = instantiation;
@@ -46,11 +48,11 @@ class PendingTypeMethod {
     readonly type: TypeSignature;
     readonly method: ExplicitInvokeDecl;
     readonly instantiation: TypeSignature[];
-    readonly lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[];
+    readonly lambdas: { pname: string, psig: IRLambdaParameterPackTypeSignature, invtrgt: string }[];
 
     readonly mkey: string;
 
-    constructor(type: TypeSignature, mthd: ExplicitInvokeDecl, instantiation: TypeSignature[], lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[], mkey: string) {
+    constructor(type: TypeSignature, mthd: ExplicitInvokeDecl, instantiation: TypeSignature[], lambdas: { pname: string, psig: IRLambdaParameterPackTypeSignature, invtrgt: string }[], mkey: string) {
         this.type = type;
         this.method = mthd;
         this.instantiation = instantiation;
@@ -109,7 +111,7 @@ class Monomorphizer {
         return (tbinds.length !== 0) ? `<${tbinds.map(t => t.tkeystr).join(", ")}>` : "";
     }
 
-    private static computeLambdaKey(packs: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[]): string {
+    private static computeLambdaKey(packs: { pname: string, psig: IRLambdaParameterPackTypeSignature, invtrgt: string }[]): string {
         return (packs.length !== 0) ? `[${packs.map(lp => lp.pname).join(", ")}]` : "";
     }
 
@@ -125,17 +127,17 @@ class Monomorphizer {
         return `${ikey}${tci}${rfi}${li}`;
     }
 
-    private computeInvokeKeyForNamespaceFunction(ns: NamespaceDeclaration, fdecl: NamespaceFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[]): string {
+    private computeInvokeKeyForNamespaceFunction(ns: NamespaceDeclaration, fdecl: NamespaceFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psig: IRLambdaParameterPackTypeSignature, invtrgt: string }[]): string {
         const rti = fdecl.params.some((p) => p.pkind !== undefined) ? "#ref" : "";
         return `${ns.fullnamespace.emit()}::${fdecl.name}${rti}${Monomorphizer.computeTBindsKey(terms)}${Monomorphizer.computeLambdaKey(lambdas)}`;
     }
 
-    private computeInvokeKeyForTypeFunction(rcvrtype: TypeSignature, fdecl: TypeFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[]): string {
+    private computeInvokeKeyForTypeFunction(rcvrtype: TypeSignature, fdecl: TypeFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psig: IRLambdaParameterPackTypeSignature, invtrgt: string }[]): string {
         const rti = fdecl.params.some((p) => p.pkind !== undefined) ? "#ref" : "";
         return `${rcvrtype.tkeystr}::${fdecl.name}${rti}${Monomorphizer.computeTBindsKey(terms)}${Monomorphizer.computeLambdaKey(lambdas)}`;
     }
 
-    private computeInvokeKeyForTypeMethod(rcvrtype: TypeSignature, mdecl: MethodDecl, terms: TypeSignature[], lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[]): string {
+    private computeInvokeKeyForTypeMethod(rcvrtype: TypeSignature, mdecl: MethodDecl, terms: TypeSignature[], lambdas: { pname: string, psig: IRLambdaParameterPackTypeSignature, invtrgt: string }[]): string {
         const rti = ((mdecl.isThisRef) || mdecl.params.some((p) => p.pkind !== undefined)) ? "#ref" : "";
         return `${rcvrtype.tkeystr}@${mdecl.name}${rti}${Monomorphizer.computeTBindsKey(terms)}${Monomorphizer.computeLambdaKey(lambdas)}`;
     }
@@ -201,7 +203,7 @@ class Monomorphizer {
     }
 
     //Given a namespace function -- instantiate it
-    private instantiateNamespaceFunction(ns: NamespaceDeclaration, fdecl: NamespaceFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[]) {
+    private instantiateNamespaceFunction(ns: NamespaceDeclaration, fdecl: NamespaceFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psig: IRLambdaParameterPackTypeSignature, invtrgt: string }[]) {
         const tterms = this.currentMapping !== undefined ? terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : terms;
         const fkey = this.computeInvokeKeyForNamespaceFunction(ns, fdecl, tterms, lambdas);
 
@@ -213,7 +215,7 @@ class Monomorphizer {
     }
 
     //Given a type function -- instantiate it
-    private instantiateTypeFunction(enclosingType: TypeSignature, fdecl: TypeFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[]) {
+    private instantiateTypeFunction(enclosingType: TypeSignature, fdecl: TypeFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psig: IRLambdaParameterPackTypeSignature, invtrgt: string }[]) {
         const rcvrtype = this.currentMapping !== undefined ? enclosingType.remapTemplateBindings(this.currentMapping) : enclosingType;
         const tterms = this.currentMapping !== undefined ? terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : terms;
         const fkey = this.computeInvokeKeyForTypeFunction(rcvrtype, fdecl, tterms, lambdas);
@@ -226,7 +228,7 @@ class Monomorphizer {
     }
 
     //Given a type method -- instantiate it
-    private instantiateMemberMethod(enclosingType: TypeSignature, mdecl: MethodDecl, terms: TypeSignature[], lambdas: { pname: string, psig: LambdaParameterPackTypeSignature, invtrgt: string }[]) {
+    private instantiateMemberMethod(enclosingType: TypeSignature, mdecl: MethodDecl, terms: TypeSignature[], lambdas: { pname: string, psig: IRLambdaParameterPackTypeSignature, invtrgt: string }[]) {
         const retype = this.currentMapping !== undefined ? enclosingType.remapTemplateBindings(this.currentMapping) : enclosingType;
         const tterms = this.currentMapping !== undefined ? terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : terms;
         const mkey = this.computeInvokeKeyForTypeMethod(retype, mdecl, tterms, lambdas);
@@ -1836,32 +1838,39 @@ class Monomorphizer {
         this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T", "E"], stypes);
     }
 
-    private instantiateAPIRejectedTypeDecl(pdecl: PendingNominalTypeDecl) {
-        const stypes = [
-            new NominalTypeSignature(pdecl.type.sinfo, undefined, this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "APIResult") as ResultTypeDecl, pdecl.instantiation),
-        ];
-        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], stypes);
-    }
-
-    private instantiateAPIFailedTypeDecl(pdecl: PendingNominalTypeDecl) {
-        const stypes = [
-            new NominalTypeSignature(pdecl.type.sinfo, undefined, this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "APIResult") as ResultTypeDecl, pdecl.instantiation),
-        ];
-        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], stypes);
-    }
-
     private instantiateAPIErrorTypeDecl(pdecl: PendingNominalTypeDecl) {
         const stypes = [
             new NominalTypeSignature(pdecl.type.sinfo, undefined, this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "APIResult") as ResultTypeDecl, pdecl.instantiation),
         ];
-        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], stypes);
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T", "E"], stypes);
+    }
+
+    private instantiateAPIRejectedTypeDecl(pdecl: PendingNominalTypeDecl) {
+        const stypes = [
+            new NominalTypeSignature(pdecl.type.sinfo, undefined, this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "APIResult") as ResultTypeDecl, pdecl.instantiation),
+        ];
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T", "E"], stypes);
+    }
+
+    private instantiateAPIDeniedTypeDecl(pdecl: PendingNominalTypeDecl) {
+        const stypes = [
+            new NominalTypeSignature(pdecl.type.sinfo, undefined, this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "APIResult") as ResultTypeDecl, pdecl.instantiation),
+        ];
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T", "E"], stypes);
+    }
+
+    private instantiateAPIFlaggedTypeDecl(pdecl: PendingNominalTypeDecl) {
+        const stypes = [
+            new NominalTypeSignature(pdecl.type.sinfo, undefined, this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "APIResult") as ResultTypeDecl, pdecl.instantiation),
+        ];
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T", "E"], stypes);
     }
 
     private instantiateAPISuccessTypeDecl(pdecl: PendingNominalTypeDecl) {
         const stypes = [
             new NominalTypeSignature(pdecl.type.sinfo, undefined, this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "APIResult") as ResultTypeDecl, pdecl.instantiation),
         ];
-        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], stypes);
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T", "E"], stypes);
     }
 
     private instantiateSomeTypeDecl(pdecl: PendingNominalTypeDecl) {
@@ -1874,14 +1883,6 @@ class Monomorphizer {
 
     private instantiateListTypeDecl(pdecl: PendingNominalTypeDecl) {
         this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], undefined);
-    }
-
-    private instantiateCRopeTypeDecl(pdecl: PendingNominalTypeDecl) {
-        this.instantiateInteralSimpleTypeDeclHelper(pdecl, [], undefined);
-    }
-
-    private instantiateUnicodeRopeTypeDecl(pdecl: PendingNominalTypeDecl) {
-        this.instantiateInteralSimpleTypeDeclHelper(pdecl, [], undefined);
     }
 
     private instantiateStackTypeDecl(pdecl: PendingNominalTypeDecl) {
@@ -1932,9 +1933,10 @@ class Monomorphizer {
             new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.nestedEntityDecls[0], pdecl.instantiation),
             new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.nestedEntityDecls[1], pdecl.instantiation),
             new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.nestedEntityDecls[2], pdecl.instantiation),
-            new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.nestedEntityDecls[3], pdecl.instantiation)
+            new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.nestedEntityDecls[3], pdecl.instantiation),
+            new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.nestedEntityDecls[4], pdecl.instantiation)
         ];
-        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], stypes);
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T", "E"], stypes);
     }
 
     private instantiateConceptTypeDecl(tdecl: ConceptTypeDecl, pdecl: PendingNominalTypeDecl) {
@@ -1951,24 +1953,32 @@ class Monomorphizer {
         this.instantiateAbstractNominalTypeDeclHelper(pdecl, tdecl.terms.map((tt) => tt.name), tdecl.fields, stypes);
     }
 
-    private instantiateEnvironmentVariableInformation(env: EnvironmentVariableInformation[]) {
-        for(let i = 0; i < env.length; ++i) {
-            assert(false, "Not implemented -- checkEnvironmentVariableInformation");
-        }
+    private instantiateConfigsurationParameters(tconfig: TaskConfiguration) {
+        assert(false, "Not implemented -- instantiateEnvironmentVariableInformation");
     }
 
-    private instantiateResourceInformation(res: ResourceInformation[] | "**" | "{}" | "?") {
-        if(res === "**" || res === "{}" || res === "?") {
-            return;
-        }
+    private instantiatestatusinfo(status: TypeSignature[]) {
+        assert(false, "Not implemented -- instantiateStatusInformation");
+    }
 
-        for(let i = 0; i < res.length; ++i) {
-            assert(false, "Not implemented -- checkResourceInformation");
-        }
+    private instantiateenvreqs(envreqs: EnvironmentVariableInformation[]) {
+        assert(false, "Not implemented -- instantiateEnvironmentRequirements");
+    }
+
+    private instantiateresourcereqs(resourcereqs: ResourceInformation) {
+        assert(false, "Not implemented -- instantiateResourceRequirements");
+    }
+
+    private instantiateeventinfo(eventinfo: TypeSignature[]) {
+        assert(false, "Not implemented -- instantiateEventInformation");
     }
 
     private instantiateAPIDecl(adecl: APIDecl) {
         assert(false, "Not implemented -- checkAPIDecl");
+    }
+
+    private instantiateAgentDecl(adecl: AgentDecl) {
+        assert(false, "Not implemented -- checkAgentDecl");
     }
 
     private instantiateTaskDecl(tdecl: TaskDecl, pdecl: PendingNominalTypeDecl) {
@@ -1992,25 +2002,12 @@ class Monomorphizer {
 
         this.instantiateMemberFieldDecls(tdecl.fields);
 
-        if(tdecl.implementsapi !== undefined) {
-            assert(false, "Not implemented -- checkTaskDecl implementsapi");
-        }
-        else {
-            if(tdecl.eventsInfo !== undefined) {
-                this.instantiateTypeSignature(tdecl.eventsInfo, this.currentMapping);
-            }
-            if(tdecl.statusInfo !== undefined) {
-                for(let i = 0; i < tdecl.statusInfo.length; ++i) {
-                    this.instantiateTypeSignature(tdecl.statusInfo[i], this.currentMapping);
-                }
-            }
-            if(tdecl.envVarRequirementInfo !== undefined) {
-                this.instantiateEnvironmentVariableInformation(tdecl.envVarRequirementInfo as EnvironmentVariableInformation[]);
-            }
-            if(tdecl.resourceImpactInfo !== undefined) {
-                this.instantiateResourceInformation(tdecl.resourceImpactInfo as ResourceInformation[] | "**" | "{}" | "?");
-            }
-        }
+        this.instantiateConfigsurationParameters(tdecl.configs);
+
+        this.instantiatestatusinfo(tdecl.statusinfo);
+        this.instantiateenvreqs(tdecl.envreqs);
+        this.instantiateresourcereqs(tdecl.resourcereqs);
+        this.instantiateeventinfo(tdecl.eventinfo);
 
         const cnns = this.currentNSInstantiation as NamespaceInstantiationInfo;
         if(!cnns.typebinds.has(pdecl.type.name)) {
@@ -2019,10 +2016,10 @@ class Monomorphizer {
         const bbl = cnns.typebinds.get(pdecl.type.name) as TypeInstantiationInfo[];
 
         if(tdecl.terms.length === 0) {
-            bbl.push(new TypeInstantiationInfo(pdecl.tkey, pdecl.tsig, undefined, new Map<string, FunctionInstantiationInfo>(), new Map<string, MethodInstantiationInfo>()));
+            bbl.push(new TypeInstantiationInfo(pdecl.tkey, pdecl.tsig, undefined, new Map<string, InvokeInstantiationInfo[]>(), new Map<string, InvokeInstantiationInfo[]>()));
         }
         else {
-            bbl.push(new TypeInstantiationInfo(pdecl.tkey, pdecl.tsig, this.currentMapping as TemplateNameMapper, new Map<string, FunctionInstantiationInfo>(), new Map<string, MethodInstantiationInfo>()));
+            bbl.push(new TypeInstantiationInfo(pdecl.tkey, pdecl.tsig, this.currentMapping as TemplateNameMapper, new Map<string, InvokeInstantiationInfo[]>(), new Map<string, InvokeInstantiationInfo[]>()));
             this.currentMapping = undefined;
         }
     }
@@ -2032,7 +2029,7 @@ class Monomorphizer {
             const m = cdecls[i];
 
             this.instantiateTypeSignature(m.declaredType, this.currentMapping);
-            this.instantiateExpression(m.value.exp);
+            this.instantiateExpression(m.value);
         }
     }
 
@@ -2049,23 +2046,23 @@ class Monomorphizer {
         else if(tt instanceof PrimitiveEntityTypeDecl) {
             this.instantiatePrimitiveEntityTypeDecl(pdecl);
         }
-        else if(tt instanceof CRopeIteratorTypeDecl) {
-            this.instantiateCRopeIteratorTypeDecl(pdecl);
-        }
         else if(tt instanceof OkTypeDecl) {
             this.instantiateOkTypeDecl(pdecl);
         }
         else if(tt instanceof FailTypeDecl) {
             this.instantiateFailTypeDecl(pdecl);
         }
+        else if(tt instanceof APIErrorTypeDecl) {
+            this.instantiateAPIErrorTypeDecl(pdecl);
+        }
         else if(tt instanceof APIRejectedTypeDecl) {
             this.instantiateAPIRejectedTypeDecl(pdecl);
         }
-        else if(tt instanceof APIFailedTypeDecl) {
-            this.instantiateAPIFailedTypeDecl(pdecl);
+        else if(tt instanceof APIDeniedTypeDecl) {
+            this.instantiateAPIDeniedTypeDecl(pdecl);
         }
-        else if(tt instanceof APIErrorTypeDecl) {
-            this.instantiateAPIErrorTypeDecl(pdecl);
+        else if(tt instanceof APIFlaggedTypeDecl) {
+            this.instantiateAPIFlaggedTypeDecl(pdecl);
         }
         else if(tt instanceof APISuccessTypeDecl) {
             this.instantiateAPISuccessTypeDecl(pdecl);
@@ -2078,12 +2075,6 @@ class Monomorphizer {
         }
         else if(tt instanceof ListTypeDecl) {
             this.instantiateListTypeDecl(pdecl);
-        }
-        else if(tt instanceof CRopeTypeDecl) {
-            this.instantiateCRopeTypeDecl(pdecl);
-        }
-        else if(tt instanceof UnicodeRopeTypeDecl) {
-            this.instantiateUnicodeRopeTypeDecl(pdecl);
         }
         else if(tt instanceof StackTypeDecl) {
             this.instantiateStackTypeDecl(pdecl);
@@ -2163,7 +2154,8 @@ class Monomorphizer {
 
         for(let i = 0; i < decl.functions.length; ++i) {
             if(this.shouldInstantiateAsRootInvoke(decl.functions[i])) {
-                this.pendingNamespaceFunctions.push(new PendingNamespaceFunction(decl, decl.functions[i], []));
+                const ikey = this.computeInvokeKeyForNamespaceFunction(decl, decl.functions[i], [], []);
+                this.pendingNamespaceFunctions.push(new PendingNamespaceFunction(decl, decl.functions[i], [], [], ikey));
             }
         }
 
@@ -2176,6 +2168,10 @@ class Monomorphizer {
 
         for(let i = 0; i < decl.apis.length; ++i) {
             this.instantiateAPIDecl(decl.apis[i]);
+        }
+
+        for(let i = 0; i < decl.agents.length; ++i) {
+            this.instantiateAgentDecl(decl.agents[i]);
         }
 
         for(let i = 0; i < decl.tasks.length; ++i) {
@@ -2197,7 +2193,8 @@ class Monomorphizer {
     private instantiateRootNamespaceDeclarationForTest(decl: NamespaceDeclaration) {
         for(let i = 0; i < decl.functions.length; ++i) {
             if(this.shouldInstantiateAsRootInvokeForTest(decl.functions[i])) {
-                this.pendingNamespaceFunctions.push(new PendingNamespaceFunction(decl, decl.functions[i], []));
+                const ikey = this.computeInvokeKeyForNamespaceFunction(decl, decl.functions[i], [], []);
+                this.pendingNamespaceFunctions.push(new PendingNamespaceFunction(decl, decl.functions[i], [], [], ikey));
             }
         }
 
@@ -2227,27 +2224,27 @@ class Monomorphizer {
         let wellknownTypes = new Map<string, TypeSignature>();
         wellknownTypes.set("Void", new VoidTypeSignature(SourceInfo.implicitSourceInfo()));
 
-        InstantiationPropagator.loadWellKnownType(assembly, "None", wellknownTypes);
-        InstantiationPropagator.loadWellKnownType(assembly, "Some", wellknownTypes);
-        InstantiationPropagator.loadWellKnownType(assembly, "Bool", wellknownTypes);
-        InstantiationPropagator.loadWellKnownType(assembly, "Int", wellknownTypes);
-        InstantiationPropagator.loadWellKnownType(assembly, "Nat", wellknownTypes);
-        InstantiationPropagator.loadWellKnownType(assembly, "BigInt", wellknownTypes);
-        InstantiationPropagator.loadWellKnownType(assembly, "BigNat", wellknownTypes);
-        InstantiationPropagator.loadWellKnownType(assembly, "Rational", wellknownTypes);
-        InstantiationPropagator.loadWellKnownType(assembly, "Float", wellknownTypes);
-        InstantiationPropagator.loadWellKnownType(assembly, "Decimal", wellknownTypes);
-        InstantiationPropagator.loadWellKnownType(assembly, "DecimalDegree", wellknownTypes);
-        InstantiationPropagator.loadWellKnownType(assembly, "LatLongCoordinate", wellknownTypes);
-        InstantiationPropagator.loadWellKnownType(assembly, "Complex", wellknownTypes);
+        Monomorphizer.loadWellKnownType(assembly, "None", wellknownTypes);
+        Monomorphizer.loadWellKnownType(assembly, "Some", wellknownTypes);
+        Monomorphizer.loadWellKnownType(assembly, "Bool", wellknownTypes);
+        Monomorphizer.loadWellKnownType(assembly, "Int", wellknownTypes);
+        Monomorphizer.loadWellKnownType(assembly, "Nat", wellknownTypes);
+        Monomorphizer.loadWellKnownType(assembly, "BigInt", wellknownTypes);
+        Monomorphizer.loadWellKnownType(assembly, "BigNat", wellknownTypes);
+        Monomorphizer.loadWellKnownType(assembly, "Rational", wellknownTypes);
+        Monomorphizer.loadWellKnownType(assembly, "Float", wellknownTypes);
+        Monomorphizer.loadWellKnownType(assembly, "Decimal", wellknownTypes);
+        Monomorphizer.loadWellKnownType(assembly, "DecimalDegree", wellknownTypes);
+        Monomorphizer.loadWellKnownType(assembly, "LatLongCoordinate", wellknownTypes);
+        Monomorphizer.loadWellKnownType(assembly, "Complex", wellknownTypes);
 
-        InstantiationPropagator.loadWellKnownType(assembly, "String", wellknownTypes);
-        InstantiationPropagator.loadWellKnownType(assembly, "CString", wellknownTypes);
+        Monomorphizer.loadWellKnownType(assembly, "String", wellknownTypes);
+        Monomorphizer.loadWellKnownType(assembly, "CString", wellknownTypes);
 
-        InstantiationPropagator.loadWellKnownType(assembly, "Regex", wellknownTypes);
-        InstantiationPropagator.loadWellKnownType(assembly, "CRegex", wellknownTypes);
+        Monomorphizer.loadWellKnownType(assembly, "Regex", wellknownTypes);
+        Monomorphizer.loadWellKnownType(assembly, "CRegex", wellknownTypes);
 
-        let iim = new InstantiationPropagator(assembly, wellknownTypes);
+        let iim = new Monomorphizer(assembly, wellknownTypes);
         iim.instantiateTypeSignature(iim.getWellKnownType("None"), undefined);
         iim.instantiateTypeSignature(iim.getWellKnownType("Bool"), undefined);
 

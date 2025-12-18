@@ -317,8 +317,8 @@ class TypeEnvironment {
         return new TypeEnvironment(this.declReturnType, this.inferReturn, this.isnormalflow, this.parent, this.lcaptures, this.args, [...this.locals, new LocalScope(false, [], new Set<string>())]);
     }
 
-    pushNewLocalBinderScope(vname: string, vtype: TypeSignature): TypeEnvironment {
-        return new TypeEnvironment(this.declReturnType, this.inferReturn, this.isnormalflow, this, this.lcaptures, this.args, [...this.locals, new LocalScope(false, [new VarInfo(vname, vtype, "let", true)], new Set<string>())]);
+    pushNewLocalBinderScope(binds: VarInfo[]): TypeEnvironment {
+        return new TypeEnvironment(this.declReturnType, this.inferReturn, this.isnormalflow, this, this.lcaptures, this.args, [...this.locals, new LocalScope(false, binds, new Set<string>())]);
     }
 
     popLocalScope(): [TypeEnvironment, LocalScope] {

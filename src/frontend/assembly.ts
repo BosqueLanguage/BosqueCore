@@ -546,6 +546,8 @@ class MemberFieldDecl extends AbstractCoreDecl {
     readonly defaultValue: Expression | undefined;
     readonly isSpecialAccess: boolean;
 
+    initdependencies: string[] = [];
+
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, dtype: TypeSignature, dvalue: Expression | undefined, isSpecialAccess: boolean) {
         super(file, sinfo, attributes, name);
         

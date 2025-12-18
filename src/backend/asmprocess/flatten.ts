@@ -2,14 +2,14 @@
 import { SourceInfo } from "../../frontend/build_decls";
 import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, RecursiveAnnotation, TypeSignature, VoidTypeSignature } from "../../frontend/type";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringTextComponent, HoleBodyImplementation, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PostfixOp, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement } from "../../frontend/body";
-import { AbstractNominalTypeDecl, Assembly, ConstMemberDecl, InvariantDecl, InvokeParameterDecl, MethodDecl, NamespaceFunctionDecl, PostConditionDecl, PreConditionDecl, TaskActionDecl, TaskMethodDecl, TestAssociation, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl } from "../../frontend/assembly";
+import { AbstractNominalTypeDecl, AgentDecl, APIDecl, APIDeniedTypeDecl, APIErrorTypeDecl, APIFlaggedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EventListTypeDecl, FailTypeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TestAssociation, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl } from "../../frontend/assembly";
 
 import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatCStringTypeSignature, IRFormatPathFragmentTypeSignature, IRFormatPathGlobTypeSignature, IRFormatPathTypeSignature, IRFormatStringTypeSignature, IRFormatTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype";
 import { DateRepresentation, DeltaDateRepresentation, DeltaTimeRepresentation, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteBufferExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralCStringExpression, IRLiteralDecimalExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLatLongCoordinateExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralNoneExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralRationalExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRStatement, TimeRepresentation, IRLiteralFormatStringExpression, IRFormatStringTextComponent, IRFormatStringArgComponent, IRFormatStringComponent, IRLiteralFormatCStringExpression, IRLiteralTypedExpression, IRLiteralExpression, IRTypeDeclInvariantCheckStatement, IRLiteralTypedStringExpression, IRLiteralTypedCStringExpression, IRLiteralTypedFormatStringExpression, IRLiteralTypedFormatCStringExpression, IRTaskAccessIDExpression, IRTaskAccessParentIDExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessEnumExpression, IRSimpleExpression, IRPreconditionCheckStatement, IRExpression, IRTempAssignExpressionStatement, IRAccessTempVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessParameterVariableExpression, IRPrefixNotOpExpression, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRErrorAdditionBoundsCheckStatement, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRErrorDivisionByZeroCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRNopStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRReturnVoidSimpleStatement, IRAbortStatement, IRImmediateExpression, IRReturnSimpleStatement, IRReturnValueSimpleStatement, IRBlockStatement, IRChkLogicImpliesShortCircuitStatement, IRInvokeDirectExpression, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRVariableInitializationDirectInvokeStatement, IRInvokeSimpleExpression, IRInvokeImplicitsExpression, IRTempAssignStdInvokeStatement, IRTempAssignRefInvokeStatement, IRReturnDirectInvokeStatement, IRAssertStatement, IRValidateStatement, IRDebugStatement, IRInvokeExpression, IRBody, IRBuiltinBody, IRHoleBody, IRStandardBody } from "../irdefs/irbody";
 import { IRRegex, IRSourceInfo } from "../irdefs/irsupport";
-import { IRConstantDecl, IRDeclarationDocString, IRExampleDecl, IRInvariantDecl, IRInvokeDecl, IRInvokeParameterDecl, IRPostConditionDecl, IRPreConditionDecl, IRPredicateDecl, IRTaskActionDecl, IRTestAssociation, IRTestDecl, IRValidateDecl } from "../irdefs/irassembly";
+import { IRAgentDecl, IRAPIDecl, IRAPIDeniedTypeDecl, IRAPIErrorTypeDecl, IRAPIFlaggedTypeDecl, IRAPIRejectedTypeDecl, IRAPIResultTypeDecl, IRAPISuccessTypeDecl, IRAssembly, IRConceptTypeDecl, IRConstantDecl, IRDatatypeMemberEntityTypeDecl, IRDatatypeTypeDecl, IRDeclarationDocString, IREntityTypeDecl, IREnumTypeDecl, IREventListTypeDecl, IRExampleDecl, IRFailTypeDecl, IRInvariantDecl, IRInvokeDecl, IRInvokeParameterDecl, IRListTypeDecl, IRMapEntryTypeDecl, IRMapTypeDecl, IROkTypeDecl, IROptionTypeDecl, IRPostConditionDecl, IRPreConditionDecl, IRPredicateDecl, IRPrimitiveEntityTypeDecl, IRQueueTypeDecl, IRResultTypeDecl, IRSetTypeDecl, IRSomeTypeDecl, IRStackTypeDecl, IRTaskActionDecl, IRTaskDecl, IRTestAssociation, IRTestDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl, IRValidateDecl } from "../irdefs/irassembly";
 
-import { InvokeInstantiationInfo, TypeInstantiationInfo } from "./instantiations";
+import { InvokeInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiations";
 
 import assert from "node:assert";
 
@@ -2060,11 +2060,11 @@ class ASMToIRConverter {
         assert(false, "Not implemented -- generateTaskMethodDecl");
     }
 
-    private checkTaskActionDecls(tdecl: AbstractNominalTypeDecl, rcvr: TypeSignature, mdecl: TaskActionDecl, adecls: IRTaskActionDecl[]) {
-        assert(false, "Not implemented -- checkTaskActionDecl");
+    private generateTaskActionDecl(tdecl: AbstractNominalTypeDecl, rcvr: TypeSignature, mdecl: TaskActionDecl, adecls: IRTaskActionDecl[]) {
+        assert(false, "Not implemented -- generateTaskActionDecl");
     }
 
-    private checkConstMemberDecls(tdecl: AbstractNominalTypeDecl, cdecl: ConstMemberDecl, typeinst: TypeInstantiationInfo | undefined): IRConstantDecl {
+    private generateConstMemberDecl(tdecl: AbstractNominalTypeDecl, cdecl: ConstMemberDecl, typeinst: TypeInstantiationInfo | undefined): IRConstantDecl {
         this.initCodeProcessingContext(tdecl.file, false, cdecl.declaredType, undefined, undefined, typeinst, undefined);
 
         this.pushStatementBlock();
@@ -2077,6 +2077,304 @@ class ASMToIRConverter {
         const expr = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(irval, cdecl.value.getType()), cdecl.value.getType(), cdecl.declaredType);
 
         return new IRConstantDecl(cdecl.name, this.processTypeSignature(cdecl.declaredType), stmts, expr, docstring);
+    }
+
+    private generateEnumTypeDecl(tdecl: EnumTypeDecl, tinst: TypeInstantiationInfo): IREnumTypeDecl {
+        assert(false, "Not Implemented -- generateEnumTypeDecl");
+    }
+
+    private generateTypedeclTypeDecl(tdecl: TypedeclTypeDecl, tinst: TypeInstantiationInfo): IRTypedeclTypeDecl {
+        assert(false, "Not Implemented -- generateTypedeclTypeDecl");
+    }
+
+    private generateTypedeclCStringDecl(tdecl: TypedeclTypeDecl, tinst: TypeInstantiationInfo): IRTypedeclCStringDecl {
+        assert(false, "Not Implemented -- generateTypedeclCStringDecl");
+    }
+
+    private generateTypedeclStringDecl(tdecl: TypedeclTypeDecl, tinst: TypeInstantiationInfo): IRTypedeclStringDecl {
+        assert(false, "Not Implemented -- generateTypedeclStringDecl");
+    }
+
+    private generatePrimitiveEntityTypeDecl(tdecl: PrimitiveEntityTypeDecl, tinst: TypeInstantiationInfo): IRPrimitiveEntityTypeDecl {
+        this.initCodeProcessingContext(tdecl.file, false, tinst.tsig, undefined, undefined, tinst, undefined);
+
+        const doc = tdecl.attributes.find((a) => a.name === "doc");
+        const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
+
+        return new IRPrimitiveEntityTypeDecl(tdecl.name, docstring, tdecl.file, this.convertSourceInfo(tdecl.sinfo));
+    }
+
+    private generateOkTypeDecl(tdecl: OkTypeDecl, tinst: TypeInstantiationInfo): IROkTypeDecl {
+        assert(false, "Not Implemented -- generateOkTypeDecl");
+    }
+
+    private generateFailTypeDecl(tdecl: FailTypeDecl, tinst: TypeInstantiationInfo): IRFailTypeDecl {
+        assert(false, "Not Implemented -- generateFailTypeDecl");
+    }
+
+    private generateAPIErrorTypeDecl(tdecl: APIErrorTypeDecl, tinst: TypeInstantiationInfo): IRAPIErrorTypeDecl {
+        assert(false, "Not Implemented -- generateAPIErrorTypeDecl");
+    }
+
+    private generateAPIRejectedTypeDecl(tdecl: APIRejectedTypeDecl, tinst: TypeInstantiationInfo): IRAPIRejectedTypeDecl {
+        assert(false, "Not Implemented -- generateAPIRejectedTypeDecl");
+    }
+
+    private generateAPIDeniedTypeDecl(tdecl: APIDeniedTypeDecl, tinst: TypeInstantiationInfo): IRAPIDeniedTypeDecl {
+        assert(false, "Not Implemented -- generateAPIDeniedTypeDecl");
+    }
+
+    private generateAPIFlaggedTypeDecl(tdecl: APIFlaggedTypeDecl, tinst: TypeInstantiationInfo): IRAPIFlaggedTypeDecl {
+        assert(false, "Not Implemented -- generateAPIFlaggedTypeDecl");
+    }
+
+    private generateAPISuccessTypeDecl(tdecl: APISuccessTypeDecl, tinst: TypeInstantiationInfo): IRAPISuccessTypeDecl {
+        assert(false, "Not Implemented -- generateAPISuccessTypeDecl");
+    }
+
+    private generateSomeTypeDecl(tdecl: SomeTypeDecl, tinst: TypeInstantiationInfo): IRSomeTypeDecl {
+        assert(false, "Not Implemented -- generateSomeTypeDecl");
+    }
+
+    private generateMapEntryTypeDecl(tdecl: MapEntryTypeDecl, tinst: TypeInstantiationInfo): IRMapEntryTypeDecl {
+        assert(false, "Not Implemented -- generateMapEntryTypeDecl");
+    }
+
+    private generateListTypeDecl(tdecl: ListTypeDecl, tinst: TypeInstantiationInfo): IRListTypeDecl {
+        assert(false, "Not Implemented -- generateListTypeDecl");
+    }
+
+    private generateStackTypeDecl(tdecl: StackTypeDecl, tinst: TypeInstantiationInfo): IRStackTypeDecl {
+        assert(false, "Not Implemented -- generateStackTypeDecl");
+    }
+
+    private generateQueueTypeDecl(tdecl: QueueTypeDecl, tinst: TypeInstantiationInfo): IRQueueTypeDecl {
+        assert(false, "Not Implemented -- generateQueueTypeDecl");
+    }
+
+    private generateSetTypeDecl(tdecl: SetTypeDecl, tinst: TypeInstantiationInfo): IRSetTypeDecl {
+        assert(false, "Not Implemented -- generateSetTypeDecl");
+    }
+
+    private generateMapTypeDecl(tdecl: MapTypeDecl, tinst: TypeInstantiationInfo): IRMapTypeDecl {
+        assert(false, "Not Implemented -- generateMapTypeDecl");
+    }
+
+    private generateEventListTypeDecl(tdecl: EventListTypeDecl, tinst: TypeInstantiationInfo): IREventListTypeDecl {
+        assert(false, "Not Implemented -- generateEventListTypeDecl");
+    }
+
+    private generateEntityTypeDecl(tdecl: EntityTypeDecl, tinst: TypeInstantiationInfo): IREntityTypeDecl {
+        assert(false, "Not Implemented -- generateEntityTypeDecl");
+    }
+
+    private generateOptionTypeDecl(tdecl: OptionTypeDecl, tinst: TypeInstantiationInfo): IROptionTypeDecl {
+        assert(false, "Not Implemented -- generateOptionTypeDecl");
+    }
+
+    private generateResultTypeDecl(tdecl: ResultTypeDecl, tinst: TypeInstantiationInfo): IRResultTypeDecl {
+        assert(false, "Not Implemented -- generateResultTypeDecl");
+    }
+
+    private generateAPIResultTypeDecl(tdecl: APIResultTypeDecl, tinst: TypeInstantiationInfo): IRAPIResultTypeDecl {
+        assert(false, "Not Implemented -- generateAPIResultTypeDecl");
+    }
+
+    private generateConceptTypeDecl(tdecl: ConceptTypeDecl, tinst: TypeInstantiationInfo): IRConceptTypeDecl {
+        assert(false, "Not Implemented -- generateConceptTypeDecl");
+    }
+
+    private generateDatatypeMemberEntityTypeDecl(tdecl: DatatypeMemberEntityTypeDecl, tinst: TypeInstantiationInfo): IRDatatypeMemberEntityTypeDecl {
+        assert(false, "Not Implemented -- generateDatatypeMemberEntityTypeDecl");
+    }
+
+    private generateDatatypeTypeDecl(tdecl: DatatypeTypeDecl, tinst: TypeInstantiationInfo): IRDatatypeTypeDecl {
+        assert(false, "Not Implemented -- generateDatatypeTypeDecl");
+    }
+
+    private generateAPIDecl(adecl: APIDecl): IRAPIDecl {
+        assert(false, "Not implemented -- checkAPIDecl");
+    }
+
+    private generateAgentDecl(adecl: AgentDecl): IRAgentDecl {
+        assert(false, "Not implemented -- checkAgentDecl");
+    }
+
+    private generateTaskDecl(tdecl: TaskDecl): IRTaskDecl {
+        assert(false, "Not implemented -- checkTaskDecl");
+    }
+
+    private generateNamespaceConstDecls(cdecl: NamespaceConstDecl): IRConstantDecl {
+        xxxx;
+    }
+
+    private instantiateNamespaceTypeDecl(tinst: TypeInstantiationInfo, irasm: IRAssembly) {
+        const tt = (tinst.tsig as NominalTypeSignature).decl;
+        if(tt instanceof EnumTypeDecl) {
+            irasm.enums.push(this.generateEnumTypeDecl(tt, tinst));
+        }
+        else if(tt instanceof TypedeclTypeDecl) {
+            this.instantiateTypedeclTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof PrimitiveEntityTypeDecl) {
+            this.instantiatePrimitiveEntityTypeDecl(pdecl);
+        }
+        else if(tt instanceof OkTypeDecl) {
+            this.instantiateOkTypeDecl(pdecl);
+        }
+        else if(tt instanceof FailTypeDecl) {
+            this.instantiateFailTypeDecl(pdecl);
+        }
+        else if(tt instanceof APIErrorTypeDecl) {
+            this.instantiateAPIErrorTypeDecl(pdecl);
+        }
+        else if(tt instanceof APIRejectedTypeDecl) {
+            this.instantiateAPIRejectedTypeDecl(pdecl);
+        }
+        else if(tt instanceof APIDeniedTypeDecl) {
+            this.instantiateAPIDeniedTypeDecl(pdecl);
+        }
+        else if(tt instanceof APIFlaggedTypeDecl) {
+            this.instantiateAPIFlaggedTypeDecl(pdecl);
+        }
+        else if(tt instanceof APISuccessTypeDecl) {
+            this.instantiateAPISuccessTypeDecl(pdecl);
+        }
+        else if(tt instanceof SomeTypeDecl) {
+            this.instantiateSomeTypeDecl(pdecl);
+        }
+        else if(tt instanceof MapEntryTypeDecl) {
+            this.instantiateMapEntryTypeDecl(pdecl);
+        }
+        else if(tt instanceof ListTypeDecl) {
+            this.instantiateListTypeDecl(pdecl);
+        }
+        else if(tt instanceof StackTypeDecl) {
+            this.instantiateStackTypeDecl(pdecl);
+        }
+        else if(tt instanceof QueueTypeDecl) {
+            this.instantiateQueueTypeDecl(pdecl);
+        }
+        else if(tt instanceof SetTypeDecl) {
+            this.instantiateSetTypeDecl(pdecl);
+        }
+        else if(tt instanceof MapTypeDecl) {
+            this.instantiateMapTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof EventListTypeDecl) {
+            this.instantiateEventListTypeDecl(pdecl);
+        }
+        else if(tt instanceof EntityTypeDecl) {
+            this.instantiateEntityTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof OptionTypeDecl) {
+            this.instantiateOptionTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof ResultTypeDecl) {
+            this.instantiateResultTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof APIResultTypeDecl) {
+            this.instantiateAPIResultTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof ConceptTypeDecl) {
+            this.instantiateConceptTypeDecl(tt, pdecl);
+
+            if(tt.terms.length === 0) {
+                const ttsig = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), undefined, tt, []);
+                const ntpt = ns.typedecls.filter((tt) => tt.terms.length === 0 && tt.saturatedProvides.some((sp) => sp.tkeystr === ttsig.tkeystr));
+                
+                for(let i = 0; i < ntpt.length; ++i) {
+                    const nnsig = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), undefined, ntpt[i], []);
+                    this.instantiateTypeSignature(nnsig, undefined);
+                }
+            }
+        }
+        else if(tt instanceof DatatypeMemberEntityTypeDecl) {
+            this.instantiateDatatypeMemberEntityTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof DatatypeTypeDecl) {
+            this.instantiateDatatypeTypeDecl(tt, pdecl);
+        }
+        else {
+            assert(false, "Unknown type decl kind");
+        }
+    }
+
+    private emitNamespaceDeclaration(decl: NamespaceDeclaration, asminstantiation: NamespaceInstantiationInfo, aainsts: NamespaceInstantiationInfo[]) {
+        for(let i = 0; i < decl.subns.length; ++i) {
+            const subdecl = decl.subns[i];
+            const nsii = aainsts.find((ai) => ai.ns.emit() === subdecl.fullnamespace.emit());
+            
+            if(nsii !== undefined) {
+                this.emitNamespaceDeclaration(decl.subns[i], nsii, aainsts);
+            }
+        }
+
+        for(let i = 0; i < decl.consts.length; ++i) {
+            this.generateNamespaceConstDecl(decl.fullnamespace, decl.consts);
+        }
+
+        this.emitFunctionDecls(decl.fullnamespace, undefined, decl.functions.map((fd) => [fd, asminstantiation.functionbinds.get(fd.name)]), fmt);
+        
+        this.emitNamespaceTypeDecls(decl, decl.typedecls, asminstantiation, fmt);
+    }
+
+    static generateIR(assembly: Assembly, asminstantiation: NamespaceInstantiationInfo[], testfilefilter?: string[]): string {
+        const emitter = new ASMToIRConverter(assembly, asminstantiation, testfilefilter !== undefined, testfilefilter, undefined);
+        emitter.computeSubtypes();
+
+        //emit each of the assemblies
+        for(let i = 0; i < assembly.toplevelNamespaces.length; ++i) {
+            const nsdecl = assembly.toplevelNamespaces[i];
+            const nsii = asminstantiation.find((ai) => ai.ns.emit() === nsdecl.fullnamespace.emit());
+
+            if(nsii !== undefined) {
+                emitter.currentns = nsdecl;
+                emitter.emitNamespaceDeclaration(nsdecl, nsii, asminstantiation, new BsqonCodeFormatter(2));
+            }
+        }
+
+        const topotypes = emitter.computeTypeGraphTopoOrder();
+        const sccs = emitter.computeTypeGraphSCCS(topotypes);
+        
+        const topoinfo = topotypes.map((t) => `'${t}'<BSQAssembly::TypeKey>`);
+        const sccinfo = sccs.map((scc) => `List<BSQAssembly::TypeKey>{ ${scc.map((s) => `'${s}'<BSQAssembly::TypeKey>`).join(", ")} }`);
+        const cginfo = `BSQAssembly::TypeTopology{ ctopo=List<BSQAssembly::TypeKey>{ ${topoinfo.join(", ")} }, sccs=List<List<BSQAssembly::TypeKey>>{ ${sccinfo.join(", ")} } }`;
+
+        let fmt = new BsqonCodeFormatter(1);
+        return "BSQAssembly::Assembly{\n" +
+            fmt.formatListOf("List<BSQAssembly::NamespaceConstDecl>{", emitter.nsconsts, "},\n") +
+            fmt.formatListOf("List<BSQAssembly::ConstMemberDecl>{", emitter.typeconsts, "},\n") +
+
+            fmt.formatListOf("Map<BSQAssembly::InvokeKey, BSQAssembly::NamespaceFunctionDecl>{", emitter.nsfuncs, "},\n") +
+            fmt.formatListOf("Map<BSQAssembly::InvokeKey, BSQAssembly::TypeFunctionDecl>{", emitter.typefuncs, "},\n") +
+            
+            fmt.formatListOf("Map<BSQAssembly::InvokeKey, BSQAssembly::MethodDeclAbstract>{", emitter.absmethods, "},\n") +
+            fmt.formatListOf("Map<BSQAssembly::InvokeKey, BSQAssembly::MethodDeclVirtual>{", emitter.virtmethods, "},\n") +
+            fmt.formatListOf("Map<BSQAssembly::InvokeKey, BSQAssembly::MethodDeclOverride>{", emitter.overmethods, "},\n") +
+            fmt.formatListOf("Map<BSQAssembly::InvokeKey, BSQAssembly::MethodDeclStatic>{", emitter.staticmethods, "},\n") +
+            
+            fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::EnumTypeDecl>{", emitter.enums, "},\n") +
+            fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::TypedeclTypeDecl>{", emitter.typedecls, "},\n") +
+            fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::TypedeclStringOfTypeDecl>{", emitter.stringoftypedecls, "},\n") +
+            fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::PrimitiveEntityTypeDecl>{", emitter.primtives, "},\n") +
+            fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::ConstructableTypeDecl>{", emitter.constructables, "},\n") +
+            fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::CollectionTypeDecl>{", emitter.collections, "},\n") +
+            fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::EntityTypeDecl>{", emitter.entities, "},\n") +
+            fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::DatatypeMemberEntityTypeDecl>{", emitter.datamembers, "},\n") +
+            
+            fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::PrimitiveConceptTypeDecl>{", emitter.pconcepts, "},\n") +
+            fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::ConceptTypeDecl>{", emitter.concepts, "},\n") +
+            fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::DatatypeTypeDecl>{", emitter.datatypes, "},\n") +
+            
+            fmt.formatListOf("List<BSQAssembly::InvokeKey>{", emitter.allfuncs, "},\n") +
+            fmt.formatListOf("List<BSQAssembly::InvokeKey>{", emitter.allmethods, "},\n") +
+            fmt.formatListOf("List<BSQAssembly::InvokeKey>{", emitter.allvmethods, "},\n") +
+            
+            fmt.formatListOf("List<BSQAssembly::TypeKey>{", emitter.allconcretetypes, "},\n") +
+            fmt.formatListOf("List<BSQAssembly::TypeKey>{", emitter.allabstracttypes, "},\n") +
+            fmt.indent(cginfo) + "\n" +
+        "}";
     }
 }
 
