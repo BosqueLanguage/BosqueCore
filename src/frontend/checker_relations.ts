@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, ErrorTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, LambdaParameterPackTypeSignature, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
+import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, ErrorTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
 import { AbstractConceptTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, FailTypeDecl, InternalEntityTypeDecl, MemberFieldDecl, MethodDecl, OkTypeDecl, OptionTypeDecl, PrimitiveEntityTypeDecl, ResultTypeDecl, SomeTypeDecl, TaskDecl, TemplateTermDeclExtraTag, TypeFunctionDecl, TypedeclTypeDecl, MapEntryTypeDecl, AbstractEntityTypeDecl, ValidateDecl, InvariantDecl, AbstractCollectionTypeDecl, ListTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl, NamespaceDeclaration, EnumTypeDecl, APIResultTypeDecl } from "./assembly.js";
 import { SourceInfo } from "./build_decls.js";
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeInferContext } from "./checker_environment.js";
@@ -146,40 +146,6 @@ class TypeCheckerRelations {
         return true;
     }
 
-    private areSameStdValuesLambdaParameterPack(t1: {vname: string, vtype: TypeSignature}[], t2: {vname: string, vtype: TypeSignature}[]): boolean {
-        if(t1.length !== t2.length) {
-            return false;
-        }
-
-        for(let i = 0; i < t1.length; ++i) {
-            const p1 = t1[i];
-            const p2 = t2.find((p) => p.vname === p1.vname);
-
-            if(p2 === undefined || !this.areSameTypes(p1.vtype, p2.vtype)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private areSameLambdaValuesLambdaParameterPack(t1: {lname: string, ltype: LambdaParameterPackTypeSignature}[], t2: {lname: string, ltype: LambdaParameterPackTypeSignature}[]): boolean {
-        if(t1.length !== t2.length) {
-            return false;
-        }
-
-        for(let i = 0; i < t1.length; ++i) {
-            const p1 = t1[i];
-            const p2 = t2.find((p) => p.lname === p1.lname);
-
-            if(p2 === undefined || !this.areSameTypes(p1.ltype, p2.ltype)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
     //Check if t1 and t2 are the same type -- template types are not expanded in this check
     areSameTypes(t1: TypeSignature, t2: TypeSignature): boolean {
         assert(!(t1 instanceof ErrorTypeSignature) && !(t2 instanceof ErrorTypeSignature), "Checking type same on errors");
@@ -212,9 +178,6 @@ class TypeCheckerRelations {
         }
         else if(t1 instanceof FormatPathTypeSignature && t2 instanceof FormatPathTypeSignature) {
             res = (t1.oftype === t2.oftype) && this.areSameTypes(t1.rtype, t2.rtype) && this.areSameFunctionFormatLists(t1.terms, t2.terms);
-        }
-        else if(t1 instanceof LambdaParameterPackTypeSignature && t2 instanceof LambdaParameterPackTypeSignature) {       
-            res = this.areSameStdValuesLambdaParameterPack(t1.stdvalues, t2.stdvalues) && this.areSameLambdaValuesLambdaParameterPack(t1.lambdavalues, t2.lambdavalues);
         }
         else if(t1 instanceof LambdaTypeSignature && t2 instanceof LambdaTypeSignature) {
             if(t1.name !== t2.name) {
@@ -283,7 +246,7 @@ class TypeCheckerRelations {
     }
 
     flowTypeLUB(sinfo: SourceInfo, lubopt: TypeSignature | undefined, tl: TypeSignature[], tconstrain: TemplateConstraintScope): TypeSignature {
-        if(tl.some((t) => (t instanceof ErrorTypeSignature) || (t instanceof AutoTypeSignature) || (t instanceof VoidTypeSignature) || (t instanceof LambdaTypeSignature) || (t instanceof LambdaParameterPackTypeSignature))) {
+        if(tl.some((t) => (t instanceof ErrorTypeSignature) || (t instanceof AutoTypeSignature) || (t instanceof VoidTypeSignature) || (t instanceof LambdaTypeSignature))) {
             return new ErrorTypeSignature(sinfo, new FullyQualifiedNamespace(["LUB GEN"]));
         }
 

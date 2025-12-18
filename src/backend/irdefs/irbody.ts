@@ -1,5 +1,5 @@
-import { IRSourceInfo } from "./irsupport";
-import { IRNominalTypeSignature, IRTypeSignature } from "./irtype";
+import { IRSourceInfo } from "./irsupport.js";
+import { IRNominalTypeSignature, IRTypeSignature } from "./irtype.js";
 
 enum IRExpressionTag {
     IRLiteralNoneExpression = "IRLiteralNoneExpression",
