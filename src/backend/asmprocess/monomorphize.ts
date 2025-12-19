@@ -2233,8 +2233,8 @@ class Monomorphizer {
         Monomorphizer.loadWellKnownType(assembly, "Bool", wellknownTypes);
         Monomorphizer.loadWellKnownType(assembly, "Int", wellknownTypes);
         Monomorphizer.loadWellKnownType(assembly, "Nat", wellknownTypes);
-        Monomorphizer.loadWellKnownType(assembly, "BigInt", wellknownTypes);
-        Monomorphizer.loadWellKnownType(assembly, "BigNat", wellknownTypes);
+        Monomorphizer.loadWellKnownType(assembly, "ChkInt", wellknownTypes);
+        Monomorphizer.loadWellKnownType(assembly, "ChkNat", wellknownTypes);
         Monomorphizer.loadWellKnownType(assembly, "Rational", wellknownTypes);
         Monomorphizer.loadWellKnownType(assembly, "Float", wellknownTypes);
         Monomorphizer.loadWellKnownType(assembly, "Decimal", wellknownTypes);

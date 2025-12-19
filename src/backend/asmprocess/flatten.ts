@@ -2378,7 +2378,7 @@ class ASMToIRConverter {
                     const fdecl = decl.functions[i];
                     const implicitreturn = fdecl.params.find((p) => p.pkind !== undefined);
 
-                    this.initCodeProcessingContext(fdecl.file, false, fdecl.resultType, implicitreturn !== undefined ? implicitreturn.name : undefined, fdecl.postconditions,  undefined, finst[j]);
+                    this.initCodeProcessingContext(fdecl.file, false, fdecl.resultType, implicitreturn !== undefined ? implicitreturn.name : undefined, fdecl.postconditions.length !== 0 ? fdecl.postconditions : undefined, undefined, finst[j]);
                     this.generateNamespaceFunctionDecl(fdecl, irasm);
                 }
             }
