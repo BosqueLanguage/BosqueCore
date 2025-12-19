@@ -108,7 +108,7 @@ function generateASMGeneral(usercode: PackageConfig, macrodefs: string[]): [Asse
 }
 
 function generateASM(usercode: PackageConfig): [Assembly | undefined, ParserError[], TypeError[]]{
-    return generateASMGeneral(usercode, ["EXEC_LIBS"]);
+    return generateASMGeneral(usercode, ["EXEC_LIBS", "STRIPPED_CORE"]);
 }
 
 function setStatusEnabled(enabled: boolean): void {

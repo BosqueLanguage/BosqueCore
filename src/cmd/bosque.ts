@@ -120,7 +120,7 @@ if(asm === undefined) {
     process.exit(1);
 }
 
-Status.output(`-- JS output directory: ${outdir}\n\n`);
+Status.output(`-- CPP output directory: ${outdir}\n\n`);
 
 fs.rmSync(outdir, { recursive: true, force: true });
 fs.mkdirSync(outdir);
