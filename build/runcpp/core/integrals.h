@@ -30,18 +30,18 @@ namespace ᐸRuntimeᐳ
         inline static void checkOverflowAddition(XNat n1, XNat n2, const char* file, uint32_t line)
         {
             int64_t result = 0;
-            if(!__builtin_add_overflow(n1.value, n2.value, &result) || !(XNat::isValidNat(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Nat addition bounds"); }
+            if(__builtin_add_overflow(n1.value, n2.value, &result) || !(XNat::isValidNat(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Nat addition bounds"); }
         }
         inline static void checkOverflowSubtraction(XNat n1, XNat n2, const char* file, uint32_t line)
         {
             if(n2.value > n1.value) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericUnderflow, nullptr, "Nat subtraction underflow"); }
             int64_t result = 0;
-            if(!__builtin_sub_overflow(n1.value, n2.value, &result) || !(XNat::isValidNat(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Nat subtraction bounds"); }
+            if(__builtin_sub_overflow(n1.value, n2.value, &result) || !(XNat::isValidNat(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Nat subtraction bounds"); }
         }
         inline static void checkOverflowMultiplication(XNat n1, XNat n2, const char* file, uint32_t line)
         {
             int64_t result = 0;
-            if(!__builtin_mul_overflow(n1.value, n2.value, &result) || !(XNat::isValidNat(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Nat multiplication bounds"); }
+            if(__builtin_mul_overflow(n1.value, n2.value, &result) || !(XNat::isValidNat(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Nat multiplication bounds"); }
         }
         inline static void checkDivisionByZero(XNat n2, const char* file, uint32_t line)
         {
@@ -105,18 +105,18 @@ namespace ᐸRuntimeᐳ
         inline static void checkOverflowAddition(XInt n1, XInt n2, const char* file, uint32_t line)
         {
             int64_t result = 0;
-            if(!__builtin_add_overflow(n1.value, n2.value, &result) || !(XInt::isValidInt(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Int addition bounds"); }
+            if(__builtin_add_overflow(n1.value, n2.value, &result) || !(XInt::isValidInt(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Int addition bounds"); }
         }
         inline static void checkOverflowSubtraction(XInt n1, XInt n2, const char* file, uint32_t line)
         {
             if(n2.value > n1.value) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericUnderflow, nullptr, "Int subtraction underflow"); }
             int64_t result = 0;
-            if(!__builtin_sub_overflow(n1.value, n2.value, &result) || !(XInt::isValidInt(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Int subtraction bounds"); }
+            if(__builtin_sub_overflow(n1.value, n2.value, &result) || !(XInt::isValidInt(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Int subtraction bounds"); }
         }
         inline static void checkOverflowMultiplication(XInt n1, XInt n2, const char* file, uint32_t line)
         {
             int64_t result = 0;
-            if(!__builtin_mul_overflow(n1.value, n2.value, &result) || !(XInt::isValidInt(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Int multiplication bounds"); }
+            if(__builtin_mul_overflow(n1.value, n2.value, &result) || !(XInt::isValidInt(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Int multiplication bounds"); }
         }
         inline static void checkDivisionByZero(XInt n2, const char* file, uint32_t line)
         {
@@ -218,7 +218,7 @@ namespace ᐸRuntimeᐳ
             }
 
             __int128_t result = 0;
-            if(!__builtin_add_overflow(lhs.value, rhs.value, &result) && (XChkNat::isValidNat(result))) [[likely]] {
+            if(!__builtin_add_overflow(lhs.value, rhs.value, &result) && XChkNat::isValidNat(result)) [[likely]] {
                 return XChkNat(result);
             }
             else {
@@ -232,7 +232,7 @@ namespace ᐸRuntimeᐳ
             }
 
             __int128_t result = 0;
-            if(!__builtin_sub_overflow(lhs.value, rhs.value, &result) && (XChkNat::isValidNat(result))) [[likely]] {
+            if(!__builtin_sub_overflow(lhs.value, rhs.value, &result) && XChkNat::isValidNat(result)) [[likely]] {
                 return XChkNat(result);
             }
             else {
@@ -254,7 +254,7 @@ namespace ᐸRuntimeᐳ
             }
 
            __int128_t result = 0;
-            if(!__builtin_mul_overflow(lhs.value, rhs.value, &result) && (XChkNat::isValidNat(result))) [[likely]] {
+            if(!__builtin_mul_overflow(lhs.value, rhs.value, &result) && XChkNat::isValidNat(result)) [[likely]] {
                 return XChkNat(result);
             }
             else {
@@ -330,7 +330,7 @@ namespace ᐸRuntimeᐳ
             }
 
             __int128_t result = 0;
-            if(!__builtin_add_overflow(lhs.value, rhs.value, &result) && (XChkInt::isValidInt(result))) [[likely]] {
+            if(!__builtin_add_overflow(lhs.value, rhs.value, &result) && XChkInt::isValidInt(result)) [[likely]] {
                 return XChkInt(result);
             }
             else {
@@ -344,7 +344,7 @@ namespace ᐸRuntimeᐳ
             }
 
             __int128_t result = 0;
-            if(!__builtin_sub_overflow(lhs.value, rhs.value, &result) && (XChkInt::isValidInt(result))) [[likely]] {
+            if(!__builtin_sub_overflow(lhs.value, rhs.value, &result) && XChkInt::isValidInt(result)) [[likely]] {
                 return XChkInt(result);
             }
             else {
@@ -366,7 +366,7 @@ namespace ᐸRuntimeᐳ
             }
 
            __int128_t result = 0;
-            if(!__builtin_mul_overflow(lhs.value, rhs.value, &result) && (XChkInt::isValidInt(result))) [[likely]] {
+            if(!__builtin_mul_overflow(lhs.value, rhs.value, &result) && XChkInt::isValidInt(result)) [[likely]] {
                 return XChkInt(result);
             }
             else {
