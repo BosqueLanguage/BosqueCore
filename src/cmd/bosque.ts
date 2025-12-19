@@ -40,7 +40,7 @@ if(mainnsidx !== -1) {
     fullargs = fullargs.slice(0, mainnsidx).concat(fullargs.slice(mainnsidx + 2));
 }
 
-let outdir = path.join(path.dirname(path.resolve(fullargs[0])), "jsout");
+let outdir = path.join(path.dirname(path.resolve(fullargs[0])), "cppout");
 let outdiridx = fullargs.findIndex((v) => v === "--output");
 if(outdiridx !== -1) {
     outdir = fullargs[outdiridx + 1];

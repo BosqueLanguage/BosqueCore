@@ -1,5 +1,6 @@
 
-import { IRLambdaParameterPackTypeSignature, IRTypeSignature } from "../irdefs/irtype.js";
+import { IRAssembly } from "../irdefs/irassembly.js";
+import { IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature } from "../irdefs/irtype.js";
 import { TransformCPPNameManager } from "./namemgr.js";
 
 import assert from "node:assert";
@@ -146,6 +147,30 @@ class TypeInfoManager {
         else {
             return TransformCPPNameManager.convertTypeKey(tkey) + "*";            
         }
+    }
+
+    static generateTypeInfos(irasm: IRAssembly): TypeInfoManager {
+        const timgr = new TypeInfoManager();
+
+        //setup the well-known primitive types
+        timgr.addTypeInfo("None", new TypeInfo("None", new IRNominalTypeSignature("None"), 0, 8, 1, LayoutTag.Value, undefined, undefined));
+        timgr.addTypeInfo("Bool", new TypeInfo("Bool", new IRNominalTypeSignature("Bool"), 1, 8, 1, LayoutTag.Value, undefined, undefined));
+        timgr.addTypeInfo("Int", new TypeInfo("Int", new IRNominalTypeSignature("Int"), 2, 8, 1, LayoutTag.Value, undefined, undefined));
+        timgr.addTypeInfo("Nat", new TypeInfo("Nat", new IRNominalTypeSignature("Nat"), 3, 8, 1, LayoutTag.Value, undefined, undefined));
+        timgr.addTypeInfo("ChkInt", new TypeInfo("ChkInt", new IRNominalTypeSignature("ChkInt"), 4, 16, 2, LayoutTag.Value, undefined, undefined));
+        timgr.addTypeInfo("ChkNat", new TypeInfo("ChkNat", new IRNominalTypeSignature("ChkNat"), 5, 16, 2, LayoutTag.Value, undefined, undefined));
+        
+        timgr.addTypeInfo("CString", new TypeInfo("CString", new IRNominalTypeSignature("CString"), 8, 24, 3, LayoutTag.Tagged, "200", undefined));
+
+        //TODO: more primitive types
+
+        //TODO enums
+
+        //TODO: typedecls
+
+        //Now handle entities with a recursive walk  
+
+        return timgr;
     }
 }
 

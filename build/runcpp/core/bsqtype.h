@@ -12,14 +12,18 @@ namespace ᐸRuntimeᐳ
 {
     constexpr uint32_t WELL_KNOWN_TYPE_ID_NONE = 0;
     constexpr uint32_t WELL_KNOWN_TYPE_ID_BOOL = 1;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_INT = 2;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_NAT = 3;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_CHKINT = 4;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_CHKNAT = 5;
 
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTRBUFF = 2;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTRNODE = 3;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTRING = 4;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTRBUFF = 6;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTRNODE = 7;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTRING = 8;
 
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERENTRY = 5;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERBLOCK = 6;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFER = 7;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERENTRY = 9;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERBLOCK = 10;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFER = 11;
 
     enum class LayoutTag
     {

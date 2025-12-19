@@ -611,13 +611,13 @@ class CPPEmitter {
         const paramstrs = invk.params.map((param) => this.emitIRInvokeParameterDecl(param)).join(", ");
         const rettyps = this.typeInfoManager.emitTypeAsReturn(invk.resultType.tkeystr);
 
-        const bodystr = this.emitBody(invk.body, undefined);
+        const bodystr = this.emitBody(invk.body, "");
         return `${rettyps} ${TransformCPPNameManager.convertInvokeKey(invk.ikey)}(${paramstrs}) ${bodystr}`;
     }
 
     static createEmitter(irasm: IRAssembly): CPPEmitter {
-        //TODO: should initialize TypeInfoManager here...
-        let ee = new CPPEmitter(irasm, new TypeInfoManager());
+        const tmgr = TypeInfoManager.generateTypeInfos(irasm);
+        const ee = new CPPEmitter(irasm, tmgr);
 
         return ee;
     }

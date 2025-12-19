@@ -730,16 +730,16 @@ class ASMToIRConverter {
             return new IRLiteralBoolExpression((exp as LiteralSimpleExpression).value === "true");
         }
         else if(ttag === ExpressionTag.LiteralNatExpression) {
-            return new IRLiteralNatExpression((exp as LiteralSimpleExpression).value.slice(-1));
+            return new IRLiteralNatExpression((exp as LiteralSimpleExpression).value.slice(0, -1));
         }
         else if(ttag === ExpressionTag.LiteralIntExpression) {
-            return new IRLiteralIntExpression((exp as LiteralSimpleExpression).value.slice(-1));
+            return new IRLiteralIntExpression((exp as LiteralSimpleExpression).value.slice(0, -1));
         }
         else if(ttag === ExpressionTag.LiteralChkNatExpression) {
-            return new IRLiteralChkNatExpression((exp as LiteralSimpleExpression).value.slice(-1));
+            return new IRLiteralChkNatExpression((exp as LiteralSimpleExpression).value.slice(0, -1));
         }
         else if(ttag === ExpressionTag.LiteralChkIntExpression) {
-            return new IRLiteralChkIntExpression((exp as LiteralSimpleExpression).value.slice(-1));
+            return new IRLiteralChkIntExpression((exp as LiteralSimpleExpression).value.slice(0, -1));
         }
         else if(ttag === ExpressionTag.LiteralRationalExpression) {
             const rrval = (exp as LiteralSimpleExpression).value;
