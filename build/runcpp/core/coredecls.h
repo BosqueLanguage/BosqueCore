@@ -11,28 +11,32 @@
 #include "fpoints.h"
 #include "strings.h"
 
-using None = uint64_t;
-constexpr None none = 0ull;
-
-constexpr ᐸRuntimeᐳ::Bool FALSE = ᐸRuntimeᐳ::Bool::from(false);
-constexpr ᐸRuntimeᐳ::Bool TRUE = ᐸRuntimeᐳ::Bool::from(true);
-
-constexpr ᐸRuntimeᐳ::Nat operator""_n(unsigned long long n)
+namespace ᐸRuntimeᐳ
 {
-    return ᐸRuntimeᐳ::Nat(n);
+    using XNone = uint64_t;
 }
 
-constexpr ᐸRuntimeᐳ::Int operator""_i(unsigned long long n)
+constexpr ᐸRuntimeᐳ::XNone none = 0ull;
+
+constexpr ᐸRuntimeᐳ::XBool FALSE = ᐸRuntimeᐳ::XBool::from(false);
+constexpr ᐸRuntimeᐳ::XBool TRUE = ᐸRuntimeᐳ::XBool::from(true);
+
+constexpr ᐸRuntimeᐳ::XNat operator""_n(unsigned long long n)
 {
-    return ᐸRuntimeᐳ::Int(n);
+    return ᐸRuntimeᐳ::XNat(n);
 }
 
-constexpr ᐸRuntimeᐳ::ChkNat operator""_N(unsigned long long n)
+constexpr ᐸRuntimeᐳ::XInt operator""_i(unsigned long long n)
 {
-    return ᐸRuntimeᐳ::ChkNat(n);
+    return ᐸRuntimeᐳ::XInt(n);
+}
+
+constexpr ᐸRuntimeᐳ::XChkNat operator""_N(unsigned long long n)
+{
+    return ᐸRuntimeᐳ::XChkNat(n);
 }
     
-constexpr ᐸRuntimeᐳ::ChkInt operator""_I(unsigned long long n)
+constexpr ᐸRuntimeᐳ::XChkInt operator""_I(unsigned long long n)
 {
-    return ᐸRuntimeᐳ::ChkInt(n);
+    return ᐸRuntimeᐳ::XChkInt(n);
 }

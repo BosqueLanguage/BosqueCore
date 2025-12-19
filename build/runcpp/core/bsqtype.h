@@ -66,8 +66,8 @@ namespace ᐸRuntimeᐳ
 
     constexpr TypeInfo g_typeinfo_None = {
         WELL_KNOWN_TYPE_ID_NONE,
-        sizeof(None),
-        byteSizeToSlotCount(sizeof(None)),
+        8,
+        byteSizeToSlotCount(8),
         LayoutTag::Value,
         BSQ_PTR_MASK_LEAF,
         "None",

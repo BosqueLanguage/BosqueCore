@@ -152,19 +152,19 @@ namespace ᐸRuntimeᐳ
         }
     };
 
-    class ByteBuffer
+    class XByteBuffer
     {
     private:
         BufferTree tree;
         size_t bytesize;
 
     public:
-        constexpr ByteBuffer() : tree(), bytesize(0) {}
-        constexpr ByteBuffer(ByteBufferEntry* b) : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ByteBufferTreeUnion>(&ᐸRuntimeᐳ::g_typeinfo_ByteBufferEntry, ᐸRuntimeᐳ::ByteBufferTreeUnion(b))), bytesize(ByteBufferEntry::BUFFER_ENTRY_SIZE) {}
-        ByteBuffer(ByteBufferBlock* n) : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ByteBufferTreeUnion>(&ᐸRuntimeᐳ::g_typeinfo_ByteBufferBlock, ᐸRuntimeᐳ::ByteBufferTreeUnion(n))), bytesize(0) {}
-        ByteBuffer(const BufferTree& t, size_t b) : tree(t), bytesize(b) {}
-        ByteBuffer(const ByteBuffer& other) = default;
-
+        constexpr XByteBuffer() : tree(), bytesize(0) {}
+        constexpr XByteBuffer(ByteBufferEntry* b) : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ByteBufferTreeUnion>(&ᐸRuntimeᐳ::g_typeinfo_ByteBufferEntry, ᐸRuntimeᐳ::ByteBufferTreeUnion(b))), bytesize(ByteBufferEntry::BUFFER_ENTRY_SIZE) {}
+        XByteBuffer(ByteBufferBlock* n) : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ByteBufferTreeUnion>(&ᐸRuntimeᐳ::g_typeinfo_ByteBufferBlock, ᐸRuntimeᐳ::ByteBufferTreeUnion(n))), bytesize(0) {}
+        XByteBuffer(const BufferTree& t, size_t b) : tree(t), bytesize(b) {}
+        XByteBuffer(const XByteBuffer& other) = default;
+        
         inline constexpr size_t bytes() const { return this->bytesize; }
 
         ByteBufferIterator iterator() const 

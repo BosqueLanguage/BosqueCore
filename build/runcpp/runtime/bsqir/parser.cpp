@@ -12,76 +12,76 @@ namespace ᐸRuntimeᐳ
         this->lexer.release();
     }
 
-    std::optional<None> BSQONParser::parseNone() 
+    std::optional<XNone> BSQONParser::parseNone() 
     {
         if(this->lexer.current().tokentype == BSQONTokenType::LiteralNone) {
             this->lexer.consume();
-            return std::optional<None>(none);
+            return std::optional<XNone>(none);
         }
 
         return std::nullopt;
     }
 
     
-    std::optional<Bool> BSQONParser::parseBool() 
+    std::optional<XBool> BSQONParser::parseBool() 
     {
         if(this->lexer.current().tokentype == BSQONTokenType::LiteralTrue) {
             this->lexer.consume();
-            return std::optional<Bool>(btrue);
+            return std::optional<XBool>(TRUE);
         }
         else if(this->lexer.current().tokentype == BSQONTokenType::LiteralFalse) {
             this->lexer.consume();
-            return std::optional<Bool>(bfalse);
+            return std::optional<XBool>(FALSE);
         }
 
         return std::nullopt;
     }
 
 
-    std::optional<Nat> BSQONParser::parseNat() 
+    std::optional<XNat> BSQONParser::parseNat() 
     {
         if(this->lexer.current().tokentype == BSQONTokenType::LiteralNat) {
             errno = 0;
             char* endptr = nullptr;
             int64_t vv = std::strtoll(this->lexer.current().scvalue, &endptr, 10);
 
-            if(errno != 0 || endptr == this->lexer.current().scvalue || !Nat::isValidNat(vv)) {
+            if(errno != 0 || endptr == this->lexer.current().scvalue || !XNat::isValidNat(vv)) {
                 return std::nullopt;
             }
             else {
                 this->lexer.consume();
-                return std::optional<Nat>(Nat(vv));
+                return std::optional<XNat>(XNat(vv));
             }
         }
 
         return std::nullopt;
     }
 
-    std::optional<Int> BSQONParser::parseInt() 
+    std::optional<XInt> BSQONParser::parseInt() 
     {
         if(this->lexer.current().tokentype == BSQONTokenType::LiteralInt) {
             errno = 0;
             char* endptr = nullptr;
             int64_t vv = std::strtoll(this->lexer.current().scvalue, &endptr, 10);
 
-            if(errno != 0 || endptr == this->lexer.current().scvalue || !Int::isValidInt(vv)) {
+            if(errno != 0 || endptr == this->lexer.current().scvalue || !XInt::isValidInt(vv)) {
                 return std::nullopt;
             }
             else {
                 this->lexer.consume();
-                return std::optional<Int>(Int(vv));
+                return std::optional<XInt>(XInt(vv));
             }
         }
 
         return std::nullopt;
     }
 
-    std::optional<ChkNat> BSQONParser::parseChkNat() 
+    std::optional<XChkNat> BSQONParser::parseChkNat() 
     {
         if(this->lexer.current().tokentype == BSQONTokenType::LiteralChkNat) {
             if(this->lexer.current().scvalue[0] == '#') {
                 this->lexer.consume();
-                return std::optional<ChkNat>(ChkNat::bliteral());
+                return std::optional<XChkNat>(XChkNat::bliteral());
             }
             else {
                 errno = 0;
@@ -91,12 +91,12 @@ namespace ᐸRuntimeᐳ
                 if(errno != ERANGE) {
                     assert(false); // Not Implemented: parsing very large ChkNat values
                 }
-                else if(endptr == this->lexer.current().scvalue || !ChkNat::isValidNat(vv)) {
+                else if(endptr == this->lexer.current().scvalue || !XChkNat::isValidNat(vv)) {
                     return std::nullopt;
                 }
                 else {
                     this->lexer.consume();
-                    return std::optional<ChkNat>(ChkNat(vv));
+                    return std::optional<XChkNat>(XChkNat(vv));
                 }
             }
         }
@@ -104,12 +104,12 @@ namespace ᐸRuntimeᐳ
         return std::nullopt;
     }
 
-    std::optional<ChkInt> BSQONParser::parseChkInt() 
+    std::optional<XChkInt> BSQONParser::parseChkInt() 
     {
         if(this->lexer.current().tokentype == BSQONTokenType::LiteralChkInt) {
             if(this->lexer.current().scvalue[0] == '#') {
                 this->lexer.consume();
-                return std::optional<ChkInt>(ChkInt::bliteral());
+                return std::optional<XChkInt>(XChkInt::bliteral());
             }
             else {
                 errno = 0;
@@ -119,12 +119,12 @@ namespace ᐸRuntimeᐳ
                 if(errno != ERANGE) {
                     assert(false); // Not Implemented: parsing very large ChkNat values
                 }
-                else if(endptr == this->lexer.current().scvalue || !ChkNat::isValidNat(vv)) {
+                else if(endptr == this->lexer.current().scvalue || !XChkInt::isValidInt(vv)) {
                     return std::nullopt;
                 }
                 else {
                     this->lexer.consume();
-                    return std::optional<ChkInt>(ChkInt(vv));
+                    return std::optional<XChkInt>(XChkInt(vv));
                 }
             }
         }

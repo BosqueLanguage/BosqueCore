@@ -97,23 +97,23 @@ namespace ᐸRuntimeᐳ
         nullptr
     };
 
-    class CString
+    class XCString
     {
     private:
         ᐸRuntimeᐳ::CStrTree tree;
 
     public:
-        constexpr CString() : tree() {}
-        constexpr CString(const ᐸRuntimeᐳ::CStrBuff& b) : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::CStrTreeUnion>(&ᐸRuntimeᐳ::g_typeinfo_CStrBuff, ᐸRuntimeᐳ::CStrTreeUnion(b))) {}
-        constexpr CString(ᐸRuntimeᐳ::CStrNode* n) : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::CStrTreeUnion>(&ᐸRuntimeᐳ::g_typeinfo_CStrNode, ᐸRuntimeᐳ::CStrTreeUnion(n))) {}
-        constexpr CString(const ᐸRuntimeᐳ::CStrTree& t) : tree(t) {}
-        constexpr CString(const CString& other) = default;
+        constexpr XCString() : tree() {}
+        constexpr XCString(const ᐸRuntimeᐳ::CStrBuff& b) : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::CStrTreeUnion>(&ᐸRuntimeᐳ::g_typeinfo_CStrBuff, ᐸRuntimeᐳ::CStrTreeUnion(b))) {}
+        constexpr XCString(ᐸRuntimeᐳ::CStrNode* n) : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::CStrTreeUnion>(&ᐸRuntimeᐳ::g_typeinfo_CStrNode, ᐸRuntimeᐳ::CStrTreeUnion(n))) {}
+        constexpr XCString(const ᐸRuntimeᐳ::CStrTree& t) : tree(t) {}
+        constexpr XCString(const XCString& other) = default;
 
         template<size_t len>
-        constexpr static CString smliteral(const char (&cstr)[len])
+        constexpr static XCString smliteral(const char (&cstr)[len])
         {
             static_assert(len - 1 <= ᐸRuntimeᐳ::CStrBuff::CSTR_BUFF_SIZE, "CString literal too large for CStrBuff");
-            return CString(ᐸRuntimeᐳ::CStrBuff::literal(cstr));
+            return XCString(ᐸRuntimeᐳ::CStrBuff::literal(cstr));
         }
 
         size_t size() const
@@ -127,10 +127,10 @@ namespace ᐸRuntimeᐳ
         }
     };
 
-    class String
+    class XString
     {
         //TODO: yeah todo
     };
 
-    constexpr static CString emptycstr(ᐸRuntimeᐳ::CStrBuff::literal(""));
+    constexpr static XCString emptycstr(ᐸRuntimeᐳ::CStrBuff::literal(""));
 }

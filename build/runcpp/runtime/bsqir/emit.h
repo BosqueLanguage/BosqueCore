@@ -133,11 +133,11 @@ namespace ᐸRuntimeᐳ
         BSQONEmitter() : bufferMgr(), sensitiveOutputEnabled(true) {}
 
         void emitNone();
-        void emitBool(Bool b);
-        void emitNat(Nat n);
-        void emitInt(Int i);
-        void emitChkNat(ChkNat n);
-        void emitChkInt(ChkInt i);
+        void emitBool(XBool b);
+        void emitNat(XNat n);
+        void emitInt(XInt i);
+        void emitChkNat(XChkNat n);
+        void emitChkInt(XChkInt i);
 
         void emitRational();
         void emitFloat();
@@ -146,12 +146,12 @@ namespace ᐸRuntimeᐳ
         //Lots more here
         //
 
-        void emitByte(Byte b);
-        void emitCChar(CChar c);
-        void emitUnicodeChar(UnicodeChar c);
+        void emitByte(XByte b);
+        void emitCChar(XCChar c);
+        void emitUnicodeChar(XUnicodeChar c);
 
-        void emitCString(CString s);
-        void emitString(String s);
+        void emitCString(XCString s);
+        void emitString(XString s);
 
         //
         //Lots more here

@@ -7,28 +7,28 @@
 namespace ᐸRuntimeᐳ
 {
     template <typename T>
-    class Option 
+    class XOption 
     {
     public:
         const TypeInfo* typeinfo;
         T data;
     
     private:
-        constexpr Option(const TypeInfo* ti) : typeinfo(ti), data() {}
-        constexpr Option(const TypeInfo* ti, const T& d) : typeinfo(ti), data(d) {}
+        constexpr XOption(const TypeInfo* ti) : typeinfo(ti), data() {}
+        constexpr XOption(const TypeInfo* ti, const T& d) : typeinfo(ti), data(d) {}
 
     public:
-        constexpr Option() : typeinfo(nullptr), data() {};
-        constexpr Option(const Option& other) = default;
+        constexpr XOption() : typeinfo(nullptr), data() {};
+        constexpr XOption(const XOption& other) = default;
         
         // Special none option bits
         constexpr bool isNone() const { return this->typeinfo == &g_typeinfo_None; }
-        static constexpr Option<T> optnone = Option(&g_typeinfo_None);
+        static constexpr XOption<T> optnone = XOption(&g_typeinfo_None);
 
         // Some option bits
         constexpr bool isSome() const { return this->typeinfo != &g_typeinfo_None; }
 
-        static Option<T> makeSome(const TypeInfo* ti, const T& d) { return Option<T>(ti, d); }
+        static XOption<T> makeSome(const TypeInfo* ti, const T& d) { return XOption<T>(ti, d); }
     };
 
     //

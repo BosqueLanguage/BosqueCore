@@ -6,66 +6,66 @@
 
 namespace ᐸRuntimeᐳ 
 {
-    class Byte
+    class XByte
     {
     private:
         uint64_t value; // Stored as uint64_t for alignment reasons
 
     public:
-        constexpr Byte() : value(0) {}
-        constexpr Byte(uint64_t v) : value(v) {}
-        constexpr Byte(uint8_t v) : value((uint64_t)v) {}
-        constexpr Byte(const Byte& other) = default;
+        constexpr XByte() : value(0) {}
+        constexpr XByte(uint64_t v) : value(v) {}
+        constexpr XByte(uint8_t v) : value((uint64_t)v) {}
+        constexpr XByte(const XByte& other) = default;
 
         uint8_t getValue() const { return (uint8_t)(this->value); }
 
-        friend constexpr bool operator<(const Byte &lhs, const Byte &rhs) { return lhs.value < rhs.value; }
-        friend constexpr bool operator==(const Byte &lhs, const Byte &rhs) { return lhs.value == rhs.value; }
-        friend constexpr bool operator>(const Byte &lhs, const Byte &rhs) { return rhs.value < lhs.value; }
-        friend constexpr bool operator!=(const Byte &lhs, const Byte &rhs) { return !(lhs.value == rhs.value); }
-        friend constexpr bool operator<=(const Byte &lhs, const Byte &rhs) { return !(lhs.value > rhs.value); }
-        friend constexpr bool operator>=(const Byte &lhs, const Byte &rhs) { return !(lhs.value < rhs.value); }
+        friend constexpr bool operator<(const XByte &lhs, const XByte &rhs) { return lhs.value < rhs.value; }
+        friend constexpr bool operator==(const XByte &lhs, const XByte &rhs) { return lhs.value == rhs.value; }
+        friend constexpr bool operator>(const XByte &lhs, const XByte &rhs) { return rhs.value < lhs.value; }
+        friend constexpr bool operator!=(const XByte &lhs, const XByte &rhs) { return !(lhs.value == rhs.value); }
+        friend constexpr bool operator<=(const XByte &lhs, const XByte &rhs) { return !(lhs.value > rhs.value); }
+        friend constexpr bool operator>=(const XByte &lhs, const XByte &rhs) { return !(lhs.value < rhs.value); }
     };
 
-    class CChar
+    class XCChar
     {
     private:
         uint64_t value; // Stored as uint64_t for alignment reasons
 
     public:
-        constexpr CChar() : value(0) {}
-        constexpr CChar(uint64_t v) : value(v) {}
-        constexpr CChar(char v) : value((uint64_t)v) {}
-        constexpr CChar(const CChar& other) = default;
+        constexpr XCChar() : value(0) {}
+        constexpr XCChar(uint64_t v) : value(v) {}
+        constexpr XCChar(char v) : value((uint64_t)v) {}
+        constexpr XCChar(const XCChar& other) = default;
 
         char getValue() const { return (char)(this->value); }
 
-        friend constexpr bool operator<(const CChar &lhs, const CChar &rhs) { return lhs.value < rhs.value; }
-        friend constexpr bool operator==(const CChar &lhs, const CChar &rhs) { return lhs.value == rhs.value; }
-        friend constexpr bool operator>(const CChar &lhs, const CChar &rhs) { return rhs.value < lhs.value; }
-        friend constexpr bool operator!=(const CChar &lhs, const CChar &rhs) { return !(lhs.value == rhs.value); }
-        friend constexpr bool operator<=(const CChar &lhs, const CChar &rhs) { return !(lhs.value > rhs.value); }
-        friend constexpr bool operator>=(const CChar &lhs, const CChar &rhs) { return !(lhs.value < rhs.value); }
+        friend constexpr bool operator<(const XCChar &lhs, const XCChar &rhs) { return lhs.value < rhs.value; }
+        friend constexpr bool operator==(const XCChar &lhs, const XCChar &rhs) { return lhs.value == rhs.value; }
+        friend constexpr bool operator>(const XCChar &lhs, const XCChar &rhs) { return rhs.value < lhs.value; }
+        friend constexpr bool operator!=(const XCChar &lhs, const XCChar &rhs) { return !(lhs.value == rhs.value); }
+        friend constexpr bool operator<=(const XCChar &lhs, const XCChar &rhs) { return !(lhs.value > rhs.value); }
+        friend constexpr bool operator>=(const XCChar &lhs, const XCChar &rhs) { return !(lhs.value < rhs.value); }
     };
 
-    class UnicodeChar
+    class XUnicodeChar
     {
     private:
         uint64_t value; // Stored as uint64_t for alignment reasons
 
     public:
-        constexpr UnicodeChar() : value(0) {}
-        constexpr UnicodeChar(uint64_t v) : value(v) {}
-        constexpr UnicodeChar(char v) : value((uint64_t)v) {}
-        constexpr UnicodeChar(const UnicodeChar& other) = default;
+        constexpr XUnicodeChar() : value(0) {}
+        constexpr XUnicodeChar(uint64_t v) : value(v) {}
+        constexpr XUnicodeChar(char v) : value((uint64_t)v) {}
+        constexpr XUnicodeChar(const XUnicodeChar& other) = default;
 
         uint64_t getValue() const { return this->value; }
 
-        friend constexpr bool operator<(const UnicodeChar &lhs, const UnicodeChar &rhs) { return lhs.value < rhs.value; }
-        friend constexpr bool operator==(const UnicodeChar &lhs, const UnicodeChar &rhs) { return lhs.value == rhs.value; }
-        friend constexpr bool operator>(const UnicodeChar &lhs, const UnicodeChar &rhs) { return rhs.value < lhs.value; }
-        friend constexpr bool operator!=(const UnicodeChar &lhs, const UnicodeChar &rhs) { return !(lhs.value == rhs.value); }
-        friend constexpr bool operator<=(const UnicodeChar &lhs, const UnicodeChar &rhs) { return !(lhs.value > rhs.value); }
-        friend constexpr bool operator>=(const UnicodeChar &lhs, const UnicodeChar &rhs) { return !(lhs.value < rhs.value); }
+        friend constexpr bool operator<(const XUnicodeChar &lhs, const XUnicodeChar &rhs) { return lhs.value < rhs.value; }
+        friend constexpr bool operator==(const XUnicodeChar &lhs, const XUnicodeChar &rhs) { return lhs.value == rhs.value; }
+        friend constexpr bool operator>(const XUnicodeChar &lhs, const XUnicodeChar &rhs) { return rhs.value < lhs.value; }
+        friend constexpr bool operator!=(const XUnicodeChar &lhs, const XUnicodeChar &rhs) { return !(lhs.value == rhs.value); }
+        friend constexpr bool operator<=(const XUnicodeChar &lhs, const XUnicodeChar &rhs) { return !(lhs.value > rhs.value); }
+        friend constexpr bool operator>=(const XUnicodeChar &lhs, const XUnicodeChar &rhs) { return !(lhs.value < rhs.value); }
     };
 }

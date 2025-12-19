@@ -13,13 +13,13 @@ namespace ᐸRuntimeᐳ
     {
     public:
         //Make sure to put key and value in special roots list for GC
-        CString key;
+        XCString key;
 
         const TypeInfo* typeinfo; //typeinfo of U
         U value;
 
         constexpr TaskEnvironmentEntry() : key(), typeinfo(nullptr), value(nullptr) {}
-        constexpr TaskEnvironmentEntry(const CString& k, const TypeInfo* ti, const U& u) : key(k), typeinfo(ti), value(u) {}
+        constexpr TaskEnvironmentEntry(const XCString& k, const TypeInfo* ti, const U& u) : key(k), typeinfo(ti), value(u) {}
         constexpr TaskEnvironmentEntry(const TaskEnvironmentEntry& other) = default;
     };
 
@@ -32,17 +32,17 @@ namespace ᐸRuntimeᐳ
         TaskEnvironment() : tenv() {}
         TaskEnvironment(const TaskEnvironment& other) = default;
 
-        bool has(const CString& key)
+        bool has(const XCString& key)
         {
             return std::find(this->tenv.begin(), this->tenv.end(), key) != this->tenv.end();
         }
 
-        void setEntry(const CString& key, const TypeInfo* typeinfo, const U& value)
+        void setEntry(const XCString& key, const TypeInfo* typeinfo, const U& value)
         {
             this->tenv.emplace_front(key, typeinfo, value);
         }
 
-        std::list<TaskEnvironmentEntry<U>>::iterator get(const CString& key)
+        std::list<TaskEnvironmentEntry<U>>::iterator get(const XCString& key)
         {
             return std::find(this->tenv.begin(), this->tenv.end(), key);
         }
@@ -77,7 +77,7 @@ namespace ᐸRuntimeᐳ
     class TaskInfo
     {
     public:
-        UUIDv4 taskid;
+        XUUIDv4 taskid;
         const TaskInfo* parent;
         TaskPriority priority;
 
@@ -85,7 +85,7 @@ namespace ᐸRuntimeᐳ
         std::optional<ErrorInfo> pending_error;
 
         TaskInfo() : taskid(), parent(nullptr), priority(), error_handler(), pending_error() {}
-        TaskInfo(const UUIDv4& tId, const TaskInfo* pTask, TaskPriority prio) : taskid(tId), parent(pTask), priority(prio), error_handler(), pending_error() {}
+        TaskInfo(const XUUIDv4& tId, const TaskInfo* pTask, TaskPriority prio) : taskid(tId), parent(pTask), priority(prio), error_handler(), pending_error() {}
     };
 
     template<ConceptUnionRepr U> //U must be a union of all possible types stored in the environment
@@ -95,7 +95,7 @@ namespace ᐸRuntimeᐳ
         TaskEnvironment<U> environment;
 
         TaskInfoRepr() : TaskInfo(), environment() {}
-        TaskInfoRepr(const UUIDv4& tId, const TaskInfo* pTask, TaskPriority prio) : TaskInfo(tId, pTask, prio), environment() {}
+        TaskInfoRepr(const XUUIDv4& tId, const TaskInfo* pTask, TaskPriority prio) : TaskInfo(tId, pTask, prio), environment() {}
 
         TaskInfoRepr* asRepr(TaskInfo* current_task)
         {

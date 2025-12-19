@@ -6,81 +6,81 @@
 
 namespace ᐸRuntimeᐳ 
 {
-    class Nat
+    class XNat
     {
     public:
         static constexpr int64_t MAX_NAT = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_BASE;
 
         inline constexpr static bool isValidNat(int64_t v)
         {
-            return (0 <= v) & (v <= Nat::MAX_NAT);
+            return (0 <= v) & (v <= XNat::MAX_NAT);
         }
 
     private:
         int64_t value;
 
     public:
-        constexpr Nat() : value(0) {}
-        constexpr Nat(int64_t v) : value(v) {}
-        constexpr Nat(const Nat& other) = default;
+        constexpr XNat() : value(0) {}
+        constexpr XNat(int64_t v) : value(v) {}
+        constexpr XNat(const XNat& other) = default;
 
         inline constexpr int64_t getValue() const { return this->value; }
 
         // Check operators on Nat
-        inline static void checkOverflowAddition(Nat n1, Nat n2, const char* file, uint32_t line)
+        inline static void checkOverflowAddition(XNat n1, XNat n2, const char* file, uint32_t line)
         {
             int64_t result = 0;
-            if(!__builtin_add_overflow(n1.value, n2.value, &result) || !(Nat::isValidNat(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Nat addition bounds"); }
+            if(!__builtin_add_overflow(n1.value, n2.value, &result) || !(XNat::isValidNat(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Nat addition bounds"); }
         }
-        inline static void checkOverflowSubtraction(Nat n1, Nat n2, const char* file, uint32_t line)
+        inline static void checkOverflowSubtraction(XNat n1, XNat n2, const char* file, uint32_t line)
         {
             if(n2.value > n1.value) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericUnderflow, nullptr, "Nat subtraction underflow"); }
             int64_t result = 0;
-            if(!__builtin_sub_overflow(n1.value, n2.value, &result) || !(Nat::isValidNat(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Nat subtraction bounds"); }
+            if(!__builtin_sub_overflow(n1.value, n2.value, &result) || !(XNat::isValidNat(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Nat subtraction bounds"); }
         }
-        inline static void checkOverflowMultiplication(Nat n1, Nat n2, const char* file, uint32_t line)
+        inline static void checkOverflowMultiplication(XNat n1, XNat n2, const char* file, uint32_t line)
         {
             int64_t result = 0;
-            if(!__builtin_mul_overflow(n1.value, n2.value, &result) || !(Nat::isValidNat(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Nat multiplication bounds"); }
+            if(!__builtin_mul_overflow(n1.value, n2.value, &result) || !(XNat::isValidNat(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Nat multiplication bounds"); }
         }
-        inline static void checkDivisionByZero(Nat n2, const char* file, uint32_t line)
+        inline static void checkDivisionByZero(XNat n2, const char* file, uint32_t line)
         {
             if(n2.value == 0) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::DivisionByZero, nullptr, "Nat division by zero"); }
         }
 
         // Overloaded operators on Nat
-        constexpr Nat operator+() const
+        constexpr XNat operator+() const
         {
-            return Nat(this->value);
+            return XNat(this->value);
         }
         // Negation is not defined for Nat
 
-        friend constexpr Nat operator+(Nat lhs, Nat rhs)
+        friend constexpr XNat operator+(XNat lhs, XNat rhs)
         {
-            return Nat(lhs.value + rhs.value);
+            return XNat(lhs.value + rhs.value);
         }
-        friend constexpr Nat operator-(Nat lhs, Nat rhs)
+        friend constexpr XNat operator-(XNat lhs, XNat rhs)
         {
-            return Nat(lhs.value - rhs.value);
+            return XNat(lhs.value - rhs.value);
         }
-        friend constexpr Nat operator/(Nat lhs, Nat rhs)
+        friend constexpr XNat operator/(XNat lhs, XNat rhs)
         {
-           return Nat(lhs.value / rhs.value);
+           return XNat(lhs.value / rhs.value);
         }
-        friend constexpr Nat operator*(Nat lhs, Nat rhs)
+        friend constexpr XNat operator*(XNat lhs, XNat rhs)
         {
-            return Nat(lhs.value * rhs.value);
+            return XNat(lhs.value * rhs.value);
         }
 
-        friend constexpr bool operator<(const Nat &lhs, const Nat &rhs) { return lhs.value < rhs.value; }
-        friend constexpr bool operator==(const Nat &lhs, const Nat &rhs) { return lhs.value == rhs.value; }
-        friend constexpr bool operator>(const Nat &lhs, const Nat &rhs) { return rhs.value < lhs.value; }
-        friend constexpr bool operator!=(const Nat &lhs, const Nat &rhs) { return !(lhs.value == rhs.value); }
-        friend constexpr bool operator<=(const Nat &lhs, const Nat &rhs) { return !(lhs.value > rhs.value); }
-        friend constexpr bool operator>=(const Nat &lhs, const Nat &rhs) { return !(lhs.value < rhs.value); }
+        friend constexpr bool operator<(const XNat &lhs, const XNat &rhs) { return lhs.value < rhs.value; }
+        friend constexpr bool operator==(const XNat &lhs, const XNat &rhs) { return lhs.value == rhs.value; }
+        friend constexpr bool operator>(const XNat &lhs, const XNat &rhs) { return rhs.value < lhs.value; }
+        friend constexpr bool operator!=(const XNat &lhs, const XNat &rhs) { return !(lhs.value == rhs.value); }
+        friend constexpr bool operator<=(const XNat &lhs, const XNat &rhs) { return !(lhs.value > rhs.value); }
+        friend constexpr bool operator>=(const XNat &lhs, const XNat &rhs) { return !(lhs.value < rhs.value); }
     };
 
-    class Int
+    class XInt
     {
     public:
         static constexpr int64_t MIN_INT = -ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_BASE; 
@@ -88,84 +88,84 @@ namespace ᐸRuntimeᐳ
 
         inline constexpr static bool isValidInt(int64_t v)
         {
-            return (Int::MIN_INT <= v) & (v <= Int::MAX_INT);
+            return (XInt::MIN_INT <= v) & (v <= XInt::MAX_INT);
         }
 
     private:
         int64_t value;
 
     public:
-        constexpr Int() : value(0) {}
-        constexpr Int(int64_t v) : value(v) {}
-        constexpr Int(const Int& other) = default;
+        constexpr XInt() : value(0) {}
+        constexpr XInt(int64_t v) : value(v) {}
+        constexpr XInt(const XInt& other) = default;
 
         inline constexpr int64_t getValue() const { return this->value; }
 
         // Check operators on Int
-        inline static void checkOverflowAddition(Int n1, Int n2, const char* file, uint32_t line)
+        inline static void checkOverflowAddition(XInt n1, XInt n2, const char* file, uint32_t line)
         {
             int64_t result = 0;
-            if(!__builtin_add_overflow(n1.value, n2.value, &result) || !(Int::isValidInt(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Int addition bounds"); }
+            if(!__builtin_add_overflow(n1.value, n2.value, &result) || !(XInt::isValidInt(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Int addition bounds"); }
         }
-        inline static void checkOverflowSubtraction(Int n1, Int n2, const char* file, uint32_t line)
+        inline static void checkOverflowSubtraction(XInt n1, XInt n2, const char* file, uint32_t line)
         {
             if(n2.value > n1.value) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericUnderflow, nullptr, "Int subtraction underflow"); }
             int64_t result = 0;
-            if(!__builtin_sub_overflow(n1.value, n2.value, &result) || !(Int::isValidInt(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Int subtraction bounds"); }
+            if(!__builtin_sub_overflow(n1.value, n2.value, &result) || !(XInt::isValidInt(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Int subtraction bounds"); }
         }
-        inline static void checkOverflowMultiplication(Int n1, Int n2, const char* file, uint32_t line)
+        inline static void checkOverflowMultiplication(XInt n1, XInt n2, const char* file, uint32_t line)
         {
             int64_t result = 0;
-            if(!__builtin_mul_overflow(n1.value, n2.value, &result) || !(Int::isValidInt(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Int multiplication bounds"); }
+            if(!__builtin_mul_overflow(n1.value, n2.value, &result) || !(XInt::isValidInt(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Int multiplication bounds"); }
         }
-        inline static void checkDivisionByZero(Int n2, const char* file, uint32_t line)
+        inline static void checkDivisionByZero(XInt n2, const char* file, uint32_t line)
         {
             if(n2.value == 0) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::DivisionByZero, nullptr, "Int division by zero"); }
         }
 
         // Overloaded operators on Int
-        constexpr Int operator+() const
+        constexpr XInt operator+() const
         {
-            return Int(this->value);
+            return XInt(this->value);
         }
-        constexpr Int operator-() const
+        constexpr XInt operator-() const
         {
-            return Int(-this->value);
-        }
-
-        friend constexpr Int operator+(Int lhs, Int rhs)
-        {
-            return Int(lhs.value + rhs.value);
-        }
-        friend constexpr Int operator-(Int lhs, Int rhs)
-        {
-            return Int(lhs.value - rhs.value);
-        }
-        friend constexpr Int operator/(Int lhs, Int rhs)
-        {
-            return Int(lhs.value / rhs.value);
-        }
-        friend constexpr Int operator*(Int lhs, Int rhs)
-        {
-            return Int(lhs.value * rhs.value);
+            return XInt(-this->value);
         }
 
-        friend constexpr bool operator<(const Int &lhs, const Int &rhs) { return lhs.value < rhs.value; }
-        friend constexpr bool operator==(const Int &lhs, const Int &rhs) { return lhs.value == rhs.value; }
-        friend constexpr bool operator>(const Int &lhs, const Int &rhs) { return rhs.value < lhs.value; }
-        friend constexpr bool operator!=(const Int &lhs, const Int &rhs) { return !(lhs.value == rhs.value); }
-        friend constexpr bool operator<=(const Int &lhs, const Int &rhs) { return !(lhs.value > rhs.value); }
-        friend constexpr bool operator>=(const Int &lhs, const Int &rhs) { return !(lhs.value < rhs.value); }
+        friend constexpr XInt operator+(XInt lhs, XInt rhs)
+        {
+            return XInt(lhs.value + rhs.value);
+        }
+        friend constexpr XInt operator-(XInt lhs, XInt rhs)
+        {
+            return XInt(lhs.value - rhs.value);
+        }
+        friend constexpr XInt operator/(XInt lhs, XInt rhs)
+        {
+            return XInt(lhs.value / rhs.value);
+        }
+        friend constexpr XInt operator*(XInt lhs, XInt rhs)
+        {
+            return XInt(lhs.value * rhs.value);
+        }
+
+        friend constexpr bool operator<(const XInt &lhs, const XInt &rhs) { return lhs.value < rhs.value; }
+        friend constexpr bool operator==(const XInt &lhs, const XInt &rhs) { return lhs.value == rhs.value; }
+        friend constexpr bool operator>(const XInt &lhs, const XInt &rhs) { return rhs.value < lhs.value; }
+        friend constexpr bool operator!=(const XInt &lhs, const XInt &rhs) { return !(lhs.value == rhs.value); }
+        friend constexpr bool operator<=(const XInt &lhs, const XInt &rhs) { return !(lhs.value > rhs.value); }
+        friend constexpr bool operator>=(const XInt &lhs, const XInt &rhs) { return !(lhs.value < rhs.value); }
     };
 
-    class ChkNat
+    class XChkNat
     {
     public:
         static constexpr __int128_t MAX_NAT = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED; 
 
         inline constexpr static bool isValidNat(__int128_t v)
         {
-            return (0 <= v) & (v <= ChkNat::MAX_NAT);
+            return (0 <= v) & (v <= XChkNat::MAX_NAT);
         }
 
     private:
@@ -179,98 +179,98 @@ namespace ᐸRuntimeᐳ
         }
 
     public:
-        constexpr ChkNat() : value(0) {}
-        constexpr ChkNat(__int128_t v) : value(v) {}
-        constexpr ChkNat(const ChkNat& other) = default;
+        constexpr XChkNat() : value(0) {}
+        constexpr XChkNat(__int128_t v) : value(v) {}
+        constexpr XChkNat(const XChkNat& other) = default;
 
         inline constexpr __int128_t getValue() const { return this->value; }
 
-        constexpr static ChkNat bliteral()
+        constexpr static XChkNat bliteral()
         {
-            return ChkNat(ChkNat::BOTTOM_VALUE);
+            return XChkNat(XChkNat::BOTTOM_VALUE);
         }
 
         constexpr bool isBottom() const
         {
-            return ChkNat::s_isBottom(this->value);
+            return XChkNat::s_isBottom(this->value);
         }
 
-        inline static void checkOverflowSubtraction(ChkNat n1, ChkNat n2, const char* file, uint32_t line)
+        inline static void checkOverflowSubtraction(XChkNat n1, XChkNat n2, const char* file, uint32_t line)
         {
             if(n2.value > n1.value) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericUnderflow, nullptr, "Nat subtraction underflow"); }
         }
-        inline static void checkDivisionByZero(ChkNat n2, const char* file, uint32_t line)
+        inline static void checkDivisionByZero(XChkNat n2, const char* file, uint32_t line)
         {
             if(n2.value == 0) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::DivisionByZero, nullptr, "Int division by zero"); }
         }
 
         // Overloaded operators on Nat
-        constexpr ChkNat operator+() const
+        constexpr XChkNat operator+() const
         {
-            return ChkNat(this->value);
+            return XChkNat(this->value);
         }
         // Negation is not defined for Nat
 
-        friend constexpr ChkNat operator+(ChkNat lhs, ChkNat rhs)
+        friend constexpr XChkNat operator+(XChkNat lhs, XChkNat rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
-                return ChkNat(ChkNat::BOTTOM_VALUE);
+                return XChkNat(XChkNat::BOTTOM_VALUE);
             }
 
             __int128_t result = 0;
-            if(!__builtin_add_overflow(lhs.value, rhs.value, &result) && (ChkNat::isValidNat(result))) [[likely]] {
-                return ChkNat(result);
+            if(!__builtin_add_overflow(lhs.value, rhs.value, &result) && (XChkNat::isValidNat(result))) [[likely]] {
+                return XChkNat(result);
             }
             else {
-                return ChkNat(ChkNat::BOTTOM_VALUE);
+                return XChkNat(XChkNat::BOTTOM_VALUE);
             }
         }
-        friend constexpr ChkNat operator-(ChkNat lhs, ChkNat rhs)
+        friend constexpr XChkNat operator-(XChkNat lhs, XChkNat rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
-                return ChkNat(ChkNat::BOTTOM_VALUE);
+                return XChkNat(XChkNat::BOTTOM_VALUE);
             }
 
             __int128_t result = 0;
-            if(!__builtin_sub_overflow(lhs.value, rhs.value, &result) && (ChkNat::isValidNat(result))) [[likely]] {
-                return ChkNat(result);
+            if(!__builtin_sub_overflow(lhs.value, rhs.value, &result) && (XChkNat::isValidNat(result))) [[likely]] {
+                return XChkNat(result);
             }
             else {
-                return ChkNat(ChkNat::BOTTOM_VALUE);
+                return XChkNat(XChkNat::BOTTOM_VALUE);
             }
         }
-        friend constexpr ChkNat operator/(ChkNat lhs, ChkNat rhs)
+        friend constexpr XChkNat operator/(XChkNat lhs, XChkNat rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
-                return ChkNat(ChkNat::BOTTOM_VALUE);
+                return XChkNat(XChkNat::BOTTOM_VALUE);
             }
 
-            return ChkNat(lhs.value / rhs.value);
+            return XChkNat(lhs.value / rhs.value);
         }
-        friend constexpr ChkNat operator*(ChkNat lhs, ChkNat rhs)
+        friend constexpr XChkNat operator*(XChkNat lhs, XChkNat rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
-                return ChkNat(ChkNat::BOTTOM_VALUE);
+                return XChkNat(XChkNat::BOTTOM_VALUE);
             }
 
            __int128_t result = 0;
-            if(!__builtin_mul_overflow(lhs.value, rhs.value, &result) && (ChkNat::isValidNat(result))) [[likely]] {
-                return ChkNat(result);
+            if(!__builtin_mul_overflow(lhs.value, rhs.value, &result) && (XChkNat::isValidNat(result))) [[likely]] {
+                return XChkNat(result);
             }
             else {
-                return ChkNat(ChkNat::BOTTOM_VALUE);
+                return XChkNat(XChkNat::BOTTOM_VALUE);
             }
         }
 
-        friend constexpr bool operator<(const ChkNat &lhs, const ChkNat &rhs) { return lhs.value < rhs.value; }
-        friend constexpr bool operator==(const ChkNat &lhs, const ChkNat &rhs) { return lhs.value == rhs.value; }
-        friend constexpr bool operator>(const ChkNat &lhs, const ChkNat &rhs) { return rhs.value < lhs.value; }
-        friend constexpr bool operator!=(const ChkNat &lhs, const ChkNat &rhs) { return !(lhs.value == rhs.value); }
-        friend constexpr bool operator<=(const ChkNat &lhs, const ChkNat &rhs) { return !(lhs.value > rhs.value); }
-        friend constexpr bool operator>=(const ChkNat &lhs, const ChkNat &rhs) { return !(lhs.value < rhs.value); }
+        friend constexpr bool operator<(const XChkNat &lhs, const XChkNat &rhs) { return lhs.value < rhs.value; }
+        friend constexpr bool operator==(const XChkNat &lhs, const XChkNat &rhs) { return lhs.value == rhs.value; }
+        friend constexpr bool operator>(const XChkNat &lhs, const XChkNat &rhs) { return rhs.value < lhs.value; }
+        friend constexpr bool operator!=(const XChkNat &lhs, const XChkNat &rhs) { return !(lhs.value == rhs.value); }
+        friend constexpr bool operator<=(const XChkNat &lhs, const XChkNat &rhs) { return !(lhs.value > rhs.value); }
+        friend constexpr bool operator>=(const XChkNat &lhs, const XChkNat &rhs) { return !(lhs.value < rhs.value); }
     };
 
-    class ChkInt
+    class XChkInt
     {
     public:
         static constexpr __int128_t MIN_INT = -ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED; 
@@ -278,7 +278,7 @@ namespace ᐸRuntimeᐳ
 
         inline constexpr static bool isValidInt(__int128_t v)
         {
-            return (ChkInt::MIN_INT <= v) & (v <= ChkInt::MAX_INT);
+            return (XChkInt::MIN_INT <= v) & (v <= XChkInt::MAX_INT);
         }
 
     private:
@@ -292,98 +292,98 @@ namespace ᐸRuntimeᐳ
         }
 
     public:
-        constexpr ChkInt() : value(0) {}
-        constexpr ChkInt(__int128_t v) : value(v) {}
-        constexpr ChkInt(const ChkInt& other) = default;
+        constexpr XChkInt() : value(0) {}
+        constexpr XChkInt(__int128_t v) : value(v) {}
+        constexpr XChkInt(const XChkInt& other) = default;
 
         inline constexpr __int128_t getValue() const { return this->value; }
 
         constexpr bool isBottom() const
         {
-            return ChkInt::isBottom(this->value);
+            return XChkInt::isBottom(this->value);
         }
 
-        constexpr static ChkInt bliteral()
+        constexpr static XChkInt bliteral()
         {
-            return ChkInt(ChkInt::BOTTOM_VALUE);
+            return XChkInt(XChkInt::BOTTOM_VALUE);
         }
     
-        inline static void checkDivisionByZero(ChkInt n2, const char* file, uint32_t line)
+        inline static void checkDivisionByZero(XChkInt n2, const char* file, uint32_t line)
         {
             if(n2.value == 0) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::DivisionByZero, nullptr, "Int division by zero"); }
         }
 
         // Overloaded operators on Int
-        constexpr ChkInt operator+() const
+        constexpr XChkInt operator+() const
         {
-            return ChkInt(this->value);
+            return XChkInt(this->value);
         }
-        constexpr ChkInt operator-() const
+        constexpr XChkInt operator-() const
         {
-            return ChkInt(-this->value);
+            return XChkInt(-this->value);
         }
 
-        friend constexpr ChkInt operator+(ChkInt lhs, ChkInt rhs)
+        friend constexpr XChkInt operator+(XChkInt lhs, XChkInt rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
-                return ChkInt(ChkInt::BOTTOM_VALUE);
-            }
-
-            __int128_t result = 0;
-            if(!__builtin_add_overflow(lhs.value, rhs.value, &result) && (ChkInt::isValidInt(result))) [[likely]] {
-                return ChkInt(result);
-            }
-            else {
-                return ChkInt(ChkInt::BOTTOM_VALUE);
-            }
-        }
-        friend constexpr ChkInt operator-(ChkInt lhs, ChkInt rhs)
-        {
-            if(lhs.isBottom() | rhs.isBottom()) {
-                return ChkInt(ChkInt::BOTTOM_VALUE);
+                return XChkInt(XChkInt::BOTTOM_VALUE);
             }
 
             __int128_t result = 0;
-            if(!__builtin_sub_overflow(lhs.value, rhs.value, &result) && (ChkInt::isValidInt(result))) [[likely]] {
-                return ChkInt(result);
+            if(!__builtin_add_overflow(lhs.value, rhs.value, &result) && (XChkInt::isValidInt(result))) [[likely]] {
+                return XChkInt(result);
             }
             else {
-                return ChkInt(ChkInt::BOTTOM_VALUE);
+                return XChkInt(XChkInt::BOTTOM_VALUE);
             }
         }
-        friend constexpr ChkInt operator/(ChkInt lhs, ChkInt rhs)
+        friend constexpr XChkInt operator-(XChkInt lhs, XChkInt rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
-                return ChkInt(ChkInt::BOTTOM_VALUE);
+                return XChkInt(XChkInt::BOTTOM_VALUE);
             }
 
-            return ChkInt(lhs.value / rhs.value);
+            __int128_t result = 0;
+            if(!__builtin_sub_overflow(lhs.value, rhs.value, &result) && (XChkInt::isValidInt(result))) [[likely]] {
+                return XChkInt(result);
+            }
+            else {
+                return XChkInt(XChkInt::BOTTOM_VALUE);
+            }
         }
-        friend constexpr ChkInt operator*(ChkInt lhs, ChkInt rhs)
+        friend constexpr XChkInt operator/(XChkInt lhs, XChkInt rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
-                return ChkInt(ChkInt::BOTTOM_VALUE);
+                return XChkInt(XChkInt::BOTTOM_VALUE);
+            }
+
+            return XChkInt(lhs.value / rhs.value);
+        }
+        friend constexpr XChkInt operator*(XChkInt lhs, XChkInt rhs)
+        {
+            if(lhs.isBottom() | rhs.isBottom()) {
+                return XChkInt(XChkInt::BOTTOM_VALUE);
             }
 
            __int128_t result = 0;
-            if(!__builtin_mul_overflow(lhs.value, rhs.value, &result) && (ChkInt::isValidInt(result))) [[likely]] {
-                return ChkInt(result);
+            if(!__builtin_mul_overflow(lhs.value, rhs.value, &result) && (XChkInt::isValidInt(result))) [[likely]] {
+                return XChkInt(result);
             }
             else {
-                return ChkInt(ChkInt::BOTTOM_VALUE);
+                return XChkInt(XChkInt::BOTTOM_VALUE);
             }
         }
 
-        friend constexpr bool operator<(const ChkInt &lhs, const ChkInt &rhs) { return lhs.value < rhs.value; }
-        friend constexpr bool operator==(const ChkInt &lhs, const ChkInt &rhs) { return lhs.value == rhs.value; }
-        friend constexpr bool operator>(const ChkInt &lhs, const ChkInt &rhs) { return rhs.value < lhs.value; }
-        friend constexpr bool operator!=(const ChkInt &lhs, const ChkInt &rhs) { return !(lhs.value == rhs.value); }
-        friend constexpr bool operator<=(const ChkInt &lhs, const ChkInt &rhs) { return !(lhs.value > rhs.value); }
-        friend constexpr bool operator>=(const ChkInt &lhs, const ChkInt &rhs) { return !(lhs.value < rhs.value); }
+        friend constexpr bool operator<(const XChkInt &lhs, const XChkInt &rhs) { return lhs.value < rhs.value; }
+        friend constexpr bool operator==(const XChkInt &lhs, const XChkInt &rhs) { return lhs.value == rhs.value; }
+        friend constexpr bool operator>(const XChkInt &lhs, const XChkInt &rhs) { return rhs.value < lhs.value; }
+        friend constexpr bool operator!=(const XChkInt &lhs, const XChkInt &rhs) { return !(lhs.value == rhs.value); }
+        friend constexpr bool operator<=(const XChkInt &lhs, const XChkInt &rhs) { return !(lhs.value > rhs.value); }
+        friend constexpr bool operator>=(const XChkInt &lhs, const XChkInt &rhs) { return !(lhs.value < rhs.value); }
     };
 
-    static_assert(sizeof(Nat) == sizeof(int64_t), "Nat size incorrect");
-    static_assert(sizeof(Int) == sizeof(int64_t), "Int size incorrect");
-    static_assert(sizeof(ChkNat) == sizeof(__int128_t), "BigNat size incorrect");
-    static_assert(sizeof(ChkInt) == sizeof(__int128_t), "BigInt size incorrect");
+    static_assert(sizeof(XNat) == sizeof(int64_t), "Nat size incorrect");
+    static_assert(sizeof(XInt) == sizeof(int64_t), "Int size incorrect");
+    static_assert(sizeof(XChkNat) == sizeof(__int128_t), "BigNat size incorrect");
+    static_assert(sizeof(XChkInt) == sizeof(__int128_t), "BigInt size incorrect");
 }

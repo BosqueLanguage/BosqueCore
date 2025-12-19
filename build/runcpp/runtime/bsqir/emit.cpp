@@ -62,9 +62,9 @@ namespace ᐸRuntimeᐳ
         this->bufferMgr.writeImmediate("none");
     }
 
-    void BSQONEmitter::emitBool(Bool b)
+    void BSQONEmitter::emitBool(XBool b)
     {
-        if(Bool::toBool(b)) {
+        if(XBool::toBool(b)) {
             this->bufferMgr.writeImmediate("true");
         }
         else {
@@ -72,17 +72,17 @@ namespace ᐸRuntimeᐳ
         }
     }
         
-    void BSQONEmitter::emitNat(Nat n)
+    void BSQONEmitter::emitNat(XNat n)
     {
         this->bufferMgr.writeNumberWFormat("%llin", n.getValue());
     }
 
-    void BSQONEmitter::emitInt(Int i)
+    void BSQONEmitter::emitInt(XInt i)
     {
         this->bufferMgr.writeNumberWFormat("%llii", i.getValue());
     }
 
-    void BSQONEmitter::emitChkNat(ChkNat n)
+    void BSQONEmitter::emitChkNat(XChkNat n)
     {
         if(n.isBottom()) {
             this->bufferMgr.writeImmediate("#");
@@ -97,7 +97,7 @@ namespace ᐸRuntimeᐳ
         }
     }
 
-    void BSQONEmitter::emitChkInt(ChkInt i)
+    void BSQONEmitter::emitChkInt(XChkInt i)
     {
         if(i.isBottom()) {
             this->bufferMgr.writeImmediate("#");
@@ -112,27 +112,27 @@ namespace ᐸRuntimeᐳ
         }
     }
 
-    void BSQONEmitter::emitByte(Byte b)
+    void BSQONEmitter::emitByte(XByte b)
     {
         this->bufferMgr.writeNumberWFormat("0x%x", b.getValue());
     }
 
-    void BSQONEmitter::emitCChar(CChar c)
+    void BSQONEmitter::emitCChar(XCChar c)
     {
         assert(false); // Not Implemented
     }
 
-    void BSQONEmitter::emitUnicodeChar(UnicodeChar c)
+    void BSQONEmitter::emitUnicodeChar(XUnicodeChar c)
     {
         assert(false); // Not Implemented
     }
 
-    void BSQONEmitter::emitCString(CString s)
+    void BSQONEmitter::emitCString(XCString s)
     {
         assert(false); // Not Implemented
     }
 
-    void BSQONEmitter::emitString(String s)
+    void BSQONEmitter::emitString(XString s)
     {
         assert(false); // Not Implemented
     }

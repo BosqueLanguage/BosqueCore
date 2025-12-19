@@ -461,44 +461,44 @@ class CPPEmitter {
         }
         else if(ttag === IRStatementTag.IRErrorAdditionBoundsCheckStatement) {
             const ieabc = stmt as IRErrorAdditionBoundsCheckStatement;
-            return `${RUNTIME_NAMESPACE}::${ieabc.optypechk}::checkOverflowAddition(${this.emitIRSimpleExpression(ieabc.left, true)}, ${this.emitIRSimpleExpression(ieabc.right, true)}, ${ieabc.file}, ${ieabc.sinfo.line});`;
+            return `${RUNTIME_NAMESPACE}::${ieabc.optypechk}::checkOverflowAddition(${this.emitIRSimpleExpression(ieabc.left, true)}, ${this.emitIRSimpleExpression(ieabc.right, true)}, "${ieabc.file}", ${ieabc.sinfo.line});`;
         }
         else if(ttag === IRStatementTag.IRErrorSubtractionBoundsCheckStatement) {
             const iesbc = stmt as IRErrorSubtractionBoundsCheckStatement;
-            return `${RUNTIME_NAMESPACE}::${iesbc.optypechk}::checkOverflowSubtraction(${this.emitIRSimpleExpression(iesbc.left, true)}, ${this.emitIRSimpleExpression(iesbc.right, true)}, ${iesbc.file}, ${iesbc.sinfo.line});`;
+            return `${RUNTIME_NAMESPACE}::${iesbc.optypechk}::checkOverflowSubtraction(${this.emitIRSimpleExpression(iesbc.left, true)}, ${this.emitIRSimpleExpression(iesbc.right, true)}, "${iesbc.file}", ${iesbc.sinfo.line});`;
         }
         else if(ttag === IRStatementTag.IRErrorMultiplicationBoundsCheckStatement) {
             const iembc = stmt as IRErrorMultiplicationBoundsCheckStatement;
-            return `${RUNTIME_NAMESPACE}::${iembc.optypechk}::checkOverflowMultiplication(${this.emitIRSimpleExpression(iembc.left, true)}, ${this.emitIRSimpleExpression(iembc.right, true)}, ${iembc.file}, ${iembc.sinfo.line});`;
+            return `${RUNTIME_NAMESPACE}::${iembc.optypechk}::checkOverflowMultiplication(${this.emitIRSimpleExpression(iembc.left, true)}, ${this.emitIRSimpleExpression(iembc.right, true)}, "${iembc.file}", ${iembc.sinfo.line});`;
         }
         else if(ttag === IRStatementTag.IRErrorDivisionByZeroCheckStatement) {
             const iedzbc = stmt as IRErrorDivisionByZeroCheckStatement;
-            return `${RUNTIME_NAMESPACE}::${iedzbc.optypechk}::checkDivisionByZero(${this.emitIRSimpleExpression(iedzbc.left, true)}, ${iedzbc.file}, ${iedzbc.sinfo.line});`;
+            return `${RUNTIME_NAMESPACE}::${iedzbc.optypechk}::checkDivisionByZero(${this.emitIRSimpleExpression(iedzbc.left, true)}, "${iedzbc.file}", ${iedzbc.sinfo.line});`;
         }
         else if(ttag === IRStatementTag.IRTypeDeclInvariantCheckStatement) {
             const itdics = stmt as IRTypeDeclInvariantCheckStatement;
 
-            const invchk = `${TransformCPPNameManager.generateNameForInvariantFunction(itdics.tkey, itdics.invariantidx)}(${this.emitIRSimpleExpression(itdics.targetValue, true)}, ${itdics.file}, ${itdics.sinfo.line})`
+            const invchk = `${TransformCPPNameManager.generateNameForInvariantFunction(itdics.tkey, itdics.invariantidx)}(${this.emitIRSimpleExpression(itdics.targetValue, true)}, "${itdics.file}", ${itdics.sinfo.line})`
             const dtag = itdics.diagnosticTag !== null ? `"${itdics.diagnosticTag}"` : "nullptr";
             return `ᐸRuntimeᐳ::bsq_invariant(${invchk}, "${itdics.file}", ${itdics.sinfo.line}, ${dtag}, "Failed Invariant");`;
         }
         else if(ttag === IRStatementTag.IRPreconditionCheckStatement) {
             const ipcs = stmt as IRPreconditionCheckStatement;
 
-            const prechk = `${TransformCPPNameManager.generateNameForInvokePreconditionCheck(ipcs.ikey, ipcs.requiresidx)}(${ipcs.args.map((arg) => this.emitIRSimpleExpression(arg, true)).join(", ")}, ${ipcs.file}, ${ipcs.sinfo.line})`
+            const prechk = `${TransformCPPNameManager.generateNameForInvokePreconditionCheck(ipcs.ikey, ipcs.requiresidx)}(${ipcs.args.map((arg) => this.emitIRSimpleExpression(arg, true)).join(", ")}, "${ipcs.file}", ${ipcs.sinfo.line})`
             const dtag = ipcs.diagnosticTag !== null ? `"${ipcs.diagnosticTag}"` : "nullptr";
             return `ᐸRuntimeᐳ::bsq_requires(${prechk}, "${ipcs.file}", ${ipcs.sinfo.line}, ${dtag}, "Failed Requires");`;
         }
         else if(ttag === IRStatementTag.IRPostconditionCheckStatement) {
             const ipcs = stmt as IRPostconditionCheckStatement;
 
-            const postchk = `${TransformCPPNameManager.generateNameForInvokePostconditionCheck(ipcs.ikey, ipcs.ensuresidx)}(${ipcs.args.map((arg) => this.emitIRSimpleExpression(arg, true)).join(", ")}, ${ipcs.file}, ${ipcs.sinfo.line})`
+            const postchk = `${TransformCPPNameManager.generateNameForInvokePostconditionCheck(ipcs.ikey, ipcs.ensuresidx)}(${ipcs.args.map((arg) => this.emitIRSimpleExpression(arg, true)).join(", ")}, "${ipcs.file}", ${ipcs.sinfo.line})`
             const dtag = ipcs.diagnosticTag !== null ? `"${ipcs.diagnosticTag}"` : "nullptr";
             return `ᐸRuntimeᐳ::bsq_ensures(${postchk}, "${ipcs.file}", ${ipcs.sinfo.line}, ${dtag}, "Failed Ensures");`;
         }
         else if(ttag === IRStatementTag.IRAbortStatement) {
             const ias = stmt as IRAbortStatement;
-            return `${RUNTIME_NAMESPACE}::bsq_abort(${ias.file}, ${ias.sinfo.line}, nullptr, nullptr);`;
+            return `${RUNTIME_NAMESPACE}::bsq_abort("${ias.file}", ${ias.sinfo.line}, nullptr, nullptr);`;
         }
         else if(ttag === IRStatementTag.IRAssertStatement) {
             const ias = stmt as IRAssertStatement;
@@ -540,7 +540,7 @@ class CPPEmitter {
         }
         else {
             const bindent = indent + "    ";
-            return `{\n${bindent}${stmtstrs.map((s) => bindent + s).join("\n")}\n${indent}}`;
+            return `{\n${stmtstrs.map((s) => bindent + s).join("\n")}\n${indent}}`;
         }
     }
 
