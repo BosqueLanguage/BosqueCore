@@ -16,7 +16,7 @@ JSON_INCLUDES=-I $(BUILD_DIR)include/json/
 BUILD := debug
 
 CPP=g++ 
-CPP_STDFLAGS=-Wall -Wextra -Wno-unused-parameter -Wuninitialized -Werror -std=gnu++20 -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-stack-protector
+CPP_STDFLAGS=-Wall -Wextra -Wno-unused-parameter -Wuninitialized -Werror -std=gnu++20 -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-stack-protector -fPIC
 
 CPPFLAGS_OPT.debug=-O0 -g -ggdb -fno-omit-frame-pointer -fsanitize=address
 CPPFLAGS_OPT.dev=-O0 -g -ggdb -fno-omit-frame-pointer

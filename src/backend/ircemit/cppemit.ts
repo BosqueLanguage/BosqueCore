@@ -94,7 +94,7 @@ class CPPEmitter {
             assert(false, "Lat/Long coordinates are currently unsupported in CPPEmitter");
         }
         else if(ttag === IRExpressionTag.IRLiteralComplexExpression) {
-            return `${RUNTIME_NAMESPACE}::Complex(${(exp as IRLiteralComplexExpression).real}, ${(exp as IRLiteralComplexExpression).imaginary})`;
+            return `${RUNTIME_NAMESPACE}::XComplex(${(exp as IRLiteralComplexExpression).real}, ${(exp as IRLiteralComplexExpression).imaginary})`;
         }
         else if(ttag === IRExpressionTag.IRLiteralByteBufferExpression) {
             //const bbexp = (exp as IRLiteralByteBufferExpression);
@@ -102,55 +102,55 @@ class CPPEmitter {
         }
         else if(ttag === IRExpressionTag.IRLiteralUUIDv4Expression) {
             const bytes = (exp as IRLiteralUUIDv4Expression).bytes.map((b) => `0x${b.toString(16).padStart(2, '0')}`).join(", ");
-            return `${RUNTIME_NAMESPACE}::UUIDv4(${bytes})`;
+            return `${RUNTIME_NAMESPACE}::XUUIDv4(${bytes})`;
         }
         else if(ttag === IRExpressionTag.IRLiteralUUIDv7Expression) {
             const bytes = (exp as IRLiteralUUIDv7Expression).bytes.map((b) => `0x${b.toString(16).padStart(2, '0')}`).join(", ");
-            return `${RUNTIME_NAMESPACE}::UUIDv7(${bytes})`;
+            return `${RUNTIME_NAMESPACE}::XUUIDv7(${bytes})`;
         }
         else if(ttag === IRExpressionTag.IRLiteralSHAContentHashExpression) {
             const bytes = (exp as IRLiteralSHAContentHashExpression).bytes.map((b) => `0x${b.toString(16).padStart(2, '0')}`).join(", ");
-            return `${RUNTIME_NAMESPACE}::SHAContentHash(${bytes})`;
+            return `${RUNTIME_NAMESPACE}::XSHAContentHash(${bytes})`;
         }
         else if(ttag === IRExpressionTag.IRLiteralTZDateTimeExpression) {
             const dtinfo = (exp as IRLiteralTZDateTimeExpression);
-            return `${RUNTIME_NAMESPACE}::TZDateTime({${dtinfo.date.year}, ${dtinfo.date.month}, ${dtinfo.date.day}}, {${dtinfo.time.hour}, ${dtinfo.time.minute}, ${dtinfo.time.second}}, "${dtinfo.timezone}");`;
+            return `${RUNTIME_NAMESPACE}::XTZDateTime({${dtinfo.date.year}, ${dtinfo.date.month}, ${dtinfo.date.day}}, {${dtinfo.time.hour}, ${dtinfo.time.minute}, ${dtinfo.time.second}}, "${dtinfo.timezone}");`;
         }
         else if(ttag === IRExpressionTag.IRLiteralTAITimeExpression) {
             const taiinfo = (exp as IRLiteralTAITimeExpression);
-            return `${RUNTIME_NAMESPACE}::TAITime({${taiinfo.date.year}, ${taiinfo.date.month}, ${taiinfo.date.day}}, {${taiinfo.time.hour}, ${taiinfo.time.minute}, ${taiinfo.time.second}});`;
+            return `${RUNTIME_NAMESPACE}::XTAITime({${taiinfo.date.year}, ${taiinfo.date.month}, ${taiinfo.date.day}}, {${taiinfo.time.hour}, ${taiinfo.time.minute}, ${taiinfo.time.second}});`;
         }
         else if(ttag === IRExpressionTag.IRLiteralPlainDateExpression) {
             const pdate = (exp as IRLiteralPlainDateExpression);
-            return `${RUNTIME_NAMESPACE}::PlainDate({${pdate.date.year}, ${pdate.date.month}, ${pdate.date.day}})`;
+            return `${RUNTIME_NAMESPACE}::XPlainDate({${pdate.date.year}, ${pdate.date.month}, ${pdate.date.day}})`;
         }
         else if(ttag === IRExpressionTag.IRLiteralPlainTimeExpression) {
             const ptime = (exp as IRLiteralPlainTimeExpression);
-            return `${RUNTIME_NAMESPACE}::PlainTime({${ptime.time.hour}, ${ptime.time.minute}, ${ptime.time.second}})`;
+            return `${RUNTIME_NAMESPACE}::XPlainTime({${ptime.time.hour}, ${ptime.time.minute}, ${ptime.time.second}})`;
         }
         else if(ttag === IRExpressionTag.IRLiteralLogicalTimeExpression) {
             const ltime = (exp as IRLiteralLogicalTimeExpression);
-            return `${RUNTIME_NAMESPACE}::LogicalTime(${ltime.ticks})`;
+            return `${RUNTIME_NAMESPACE}::XLogicalTime(${ltime.ticks})`;
         }
         else if(ttag === IRExpressionTag.IRLiteralISOTimeStampExpression) {
             const isotimestamp = (exp as IRLiteralISOTimeStampExpression);
-            return `${RUNTIME_NAMESPACE}::ISOTimeStamp({${isotimestamp.date.year}, ${isotimestamp.date.month}, ${isotimestamp.date.day}}, {${isotimestamp.time.hour}, ${isotimestamp.time.minute}, ${isotimestamp.time.second}}, ${isotimestamp.milliseconds})`;
+            return `${RUNTIME_NAMESPACE}::XISOTimeStamp({${isotimestamp.date.year}, ${isotimestamp.date.month}, ${isotimestamp.date.day}}, {${isotimestamp.time.hour}, ${isotimestamp.time.minute}, ${isotimestamp.time.second}}, ${isotimestamp.milliseconds})`;
         }
         else if(ttag === IRExpressionTag.IRLiteralDeltaDateTimeExpression) {
             const ddtexp = (exp as IRLiteralDeltaDateTimeExpression);
-            return `${RUNTIME_NAMESPACE}::DeltaDateTime('${ddtexp.sign}', {${ddtexp.deltadate.years}, ${ddtexp.deltadate.months}, ${ddtexp.deltadate.days}}, {${ddtexp.deltatime.hours}, ${ddtexp.deltatime.minutes}, ${ddtexp.deltatime.seconds}})`;
+            return `${RUNTIME_NAMESPACE}::XDeltaDateTime('${ddtexp.sign}', {${ddtexp.deltadate.years}, ${ddtexp.deltadate.months}, ${ddtexp.deltadate.days}}, {${ddtexp.deltatime.hours}, ${ddtexp.deltatime.minutes}, ${ddtexp.deltatime.seconds}})`;
         }
         else if(ttag === IRExpressionTag.IRLiteralDeltaISOTimeStampExpression) {
             const itsexp = (exp as IRLiteralDeltaISOTimeStampExpression);
-            return `${RUNTIME_NAMESPACE}::DeltaISOTimeStamp('${itsexp.sign}', {${itsexp.deltadate.years}, ${itsexp.deltadate.months}, ${itsexp.deltadate.days}}, {${itsexp.deltatime.hours}, ${itsexp.deltatime.minutes}, ${itsexp.deltatime.seconds}}, ${itsexp.deltamilliseconds})`;
+            return `${RUNTIME_NAMESPACE}::XDeltaISOTimeStamp('${itsexp.sign}', {${itsexp.deltadate.years}, ${itsexp.deltadate.months}, ${itsexp.deltadate.days}}, {${itsexp.deltatime.hours}, ${itsexp.deltatime.minutes}, ${itsexp.deltatime.seconds}}, ${itsexp.deltamilliseconds})`;
         }
         else if(ttag === IRExpressionTag.IRLiteralDeltaSecondsExpression) {
             const dsexp = (exp as IRLiteralDeltaSecondsExpression);
-            return `${RUNTIME_NAMESPACE}::DeltaSeconds('${dsexp.sign}', ${dsexp.seconds})`;
+            return `${RUNTIME_NAMESPACE}::XDeltaSeconds('${dsexp.sign}', ${dsexp.seconds})`;
         }
         else if(ttag === IRExpressionTag.IRLiteralDeltaLogicalTimeExpression) {
             const dltexp = (exp as IRLiteralDeltaLogicalTimeExpression);
-            return `${RUNTIME_NAMESPACE}::DeltaLogicalTime('${dltexp.sign}', ${dltexp.ticks})`;
+            return `${RUNTIME_NAMESPACE}::XDeltaLogicalTime('${dltexp.sign}', ${dltexp.ticks})`;
         }
         else if(ttag === IRExpressionTag.IRLiteralUnicodeRegexExpression) {
             return `${RUNTIME_NAMESPACE}::g_regexs[${(exp as IRLiteralUnicodeRegexExpression).regexID}]`;
@@ -160,20 +160,20 @@ class CPPEmitter {
         }
         else if(ttag === IRExpressionTag.IRLiteralByteExpression) {
             const b = (exp as IRLiteralByteExpression).value;
-            return `${RUNTIME_NAMESPACE}::Byte(0x${b.toString(16).padStart(2, '0')})`;
+            return `${RUNTIME_NAMESPACE}::XByte(0x${b.toString(16).padStart(2, '0')})`;
         }
         else if(ttag === IRExpressionTag.IRLiteralCCharExpression) {
             const ccv = (exp as IRLiteralCCharExpression).value;
-            return `${RUNTIME_NAMESPACE}::CChar('${String.fromCodePoint(ccv)}')`;
+            return `${RUNTIME_NAMESPACE}::XCChar('${String.fromCodePoint(ccv)}')`;
         }
         else if(ttag === IRExpressionTag.IRLiteralUnicodeCharExpression) {
             const ucv = (exp as IRLiteralUnicodeCharExpression).value;
-            return (31 < ucv && ucv < 127) ? `${RUNTIME_NAMESPACE}::UnicodeChar('${String.fromCodePoint(ucv)}')` : `${RUNTIME_NAMESPACE}::UnicodeChar(${ucv})`;
+            return (31 < ucv && ucv < 127) ? `${RUNTIME_NAMESPACE}::XUnicodeChar('${String.fromCodePoint(ucv)}')` : `${RUNTIME_NAMESPACE}::XUnicodeChar(${ucv})`;
         }
         else if(ttag === IRExpressionTag.IRLiteralCStringExpression) {
             const cstr = (exp as IRLiteralStringExpression).bytes;
             if(cstr.length <= 24) {
-                return `${RUNTIME_NAMESPACE}::CString::literal(${this.escapeLiteralCString(cstr)})`;
+                return `${RUNTIME_NAMESPACE}::XCString::literal(${this.escapeLiteralCString(cstr)})`;
             }
             else {
                 assert(false, "CPPEmitter: need to do heap allocation for long cstrings");
@@ -204,7 +204,7 @@ class CPPEmitter {
             const cce = TransformCPPNameManager.convertTypeKey(ilte.constype.tkeystr);
 
             if(ilte.bytes.length <= 24) {
-                return `${cce}(${RUNTIME_NAMESPACE}::CString::literal(${this.escapeLiteralCString(ilte.bytes)}))`;
+                return `${cce}(${RUNTIME_NAMESPACE}::XCString::literal(${this.escapeLiteralCString(ilte.bytes)}))`;
             }
             else {
                 assert(false, "CPPEmitter: need to do heap allocation for long cstrings");
@@ -353,30 +353,30 @@ class CPPEmitter {
             
             if(ttag === IRExpressionTag.IRAccessEnvHasExpression) {
                 const iehe = exp as IRAccessEnvHasExpression;
-                return `${this.cppTaskType}::asRepr(&${RUNTIME_NAMESPACE}::tl_info)->environment.has(${RUNTIME_NAMESPACE}::CString::literal(${this.escapeLiteralCString(iehe.keybytes)}))`;
+                return `${this.cppTaskType}::asRepr(&${RUNTIME_NAMESPACE}::tl_info)->environment.has(${RUNTIME_NAMESPACE}::XCString::literal(${this.escapeLiteralCString(iehe.keybytes)}))`;
             }
             else if(ttag === IRExpressionTag.IRAccessEnvGetExpression) {
                 const iege = exp as IRAccessEnvGetExpression;
                 const mname = TransformCPPNameManager.generateNameForUnionMember(iege.oftype.tkeystr);
-                return `${this.cppTaskType}::asRepr(&${RUNTIME_NAMESPACE}::tl_info)->environment.tryGetEntry(${RUNTIME_NAMESPACE}::CString::literal(${this.escapeLiteralCString(iege.keybytes)}))->value.${mname}`;
+                return `${this.cppTaskType}::asRepr(&${RUNTIME_NAMESPACE}::tl_info)->environment.tryGetEntry(${RUNTIME_NAMESPACE}::XCString::literal(${this.escapeLiteralCString(iege.keybytes)}))->value.${mname}`;
             }
             else if(ttag === IRExpressionTag.IRAccessEnvTryGetExpression) {
                 const iege = exp as IRAccessEnvTryGetExpression;
                 const mname = TransformCPPNameManager.generateNameForUnionMember(iege.oftype.tkeystr);
 
-                const chkstr = `${this.cppTaskType}::asRepr(&${RUNTIME_NAMESPACE}::tl_info)->environment.has(${RUNTIME_NAMESPACE}::CString::literal(${this.escapeLiteralCString(iege.keybytes)}))`;
-                const gettype = `${this.cppTaskType}::asRepr(&${RUNTIME_NAMESPACE}::tl_info)->environment.get(${RUNTIME_NAMESPACE}::CString::literal(${this.escapeLiteralCString(iege.keybytes)}))->typeinfo`;
-                const getstr = `${this.cppTaskType}::asRepr(&${RUNTIME_NAMESPACE}::tl_info)->environment.get(${RUNTIME_NAMESPACE}::CString::literal(${this.escapeLiteralCString(iege.keybytes)}))->value.${mname}`;
+                const chkstr = `${this.cppTaskType}::asRepr(&${RUNTIME_NAMESPACE}::tl_info)->environment.has(${RUNTIME_NAMESPACE}::XCString::literal(${this.escapeLiteralCString(iege.keybytes)}))`;
+                const gettype = `${this.cppTaskType}::asRepr(&${RUNTIME_NAMESPACE}::tl_info)->environment.get(${RUNTIME_NAMESPACE}::XCString::literal(${this.escapeLiteralCString(iege.keybytes)}))->typeinfo`;
+                const getstr = `${this.cppTaskType}::asRepr(&${RUNTIME_NAMESPACE}::tl_info)->environment.get(${RUNTIME_NAMESPACE}::XCString::literal(${this.escapeLiteralCString(iege.keybytes)}))->value.${mname}`;
 
-                const makeopt = `${RUNTIME_NAMESPACE}::Option<${TransformCPPNameManager.convertTypeKey(iege.oftype.tkeystr)}>::makeSome(${gettype}, ${getstr})`;
-                const makenone = `${RUNTIME_NAMESPACE}::Option<${TransformCPPNameManager.convertTypeKey(iege.oftype.tkeystr)}>::optnone`;
+                const makeopt = `${RUNTIME_NAMESPACE}::XOption<${TransformCPPNameManager.convertTypeKey(iege.oftype.tkeystr)}>::makeSome(${gettype}, ${getstr})`;
+                const makenone = `${RUNTIME_NAMESPACE}::XOption<${TransformCPPNameManager.convertTypeKey(iege.oftype.tkeystr)}>::optnone`;
                 return `(${chkstr} ? ${makeopt} : ${makenone})`;
             }
             else if(ttag === IRExpressionTag.IRTaskAccessIDExpression) {
                 return `${RUNTIME_NAMESPACE}::tl_info.taskid`;
             }
             else if(ttag === IRExpressionTag.IRTaskAccessParentIDExpression) {
-                return `(${RUNTIME_NAMESPACE}::tl_info.parent !== nullptr ? ${RUNTIME_NAMESPACE}::tl_info.parent->taskid : ${RUNTIME_NAMESPACE}::UUIDv4::nil())`;
+                return `(${RUNTIME_NAMESPACE}::tl_info.parent !== nullptr ? ${RUNTIME_NAMESPACE}::tl_info.parent->taskid : ${RUNTIME_NAMESPACE}::XUUIDv4::nil())`;
             }
             
             else if(ttag === IRExpressionTag.IRInvokeSimpleExpression) {
@@ -461,19 +461,19 @@ class CPPEmitter {
         }
         else if(ttag === IRStatementTag.IRErrorAdditionBoundsCheckStatement) {
             const ieabc = stmt as IRErrorAdditionBoundsCheckStatement;
-            return `${RUNTIME_NAMESPACE}::${ieabc.optypechk}::checkOverflowAddition(${this.emitIRSimpleExpression(ieabc.left, true)}, ${this.emitIRSimpleExpression(ieabc.right, true)}, "${ieabc.file}", ${ieabc.sinfo.line});`;
+            return `${RUNTIME_NAMESPACE}::X${ieabc.optypechk}::checkOverflowAddition(${this.emitIRSimpleExpression(ieabc.left, true)}, ${this.emitIRSimpleExpression(ieabc.right, true)}, "${ieabc.file}", ${ieabc.sinfo.line});`;
         }
         else if(ttag === IRStatementTag.IRErrorSubtractionBoundsCheckStatement) {
             const iesbc = stmt as IRErrorSubtractionBoundsCheckStatement;
-            return `${RUNTIME_NAMESPACE}::${iesbc.optypechk}::checkOverflowSubtraction(${this.emitIRSimpleExpression(iesbc.left, true)}, ${this.emitIRSimpleExpression(iesbc.right, true)}, "${iesbc.file}", ${iesbc.sinfo.line});`;
+            return `${RUNTIME_NAMESPACE}::X${iesbc.optypechk}::checkOverflowSubtraction(${this.emitIRSimpleExpression(iesbc.left, true)}, ${this.emitIRSimpleExpression(iesbc.right, true)}, "${iesbc.file}", ${iesbc.sinfo.line});`;
         }
         else if(ttag === IRStatementTag.IRErrorMultiplicationBoundsCheckStatement) {
             const iembc = stmt as IRErrorMultiplicationBoundsCheckStatement;
-            return `${RUNTIME_NAMESPACE}::${iembc.optypechk}::checkOverflowMultiplication(${this.emitIRSimpleExpression(iembc.left, true)}, ${this.emitIRSimpleExpression(iembc.right, true)}, "${iembc.file}", ${iembc.sinfo.line});`;
+            return `${RUNTIME_NAMESPACE}::X${iembc.optypechk}::checkOverflowMultiplication(${this.emitIRSimpleExpression(iembc.left, true)}, ${this.emitIRSimpleExpression(iembc.right, true)}, "${iembc.file}", ${iembc.sinfo.line});`;
         }
         else if(ttag === IRStatementTag.IRErrorDivisionByZeroCheckStatement) {
             const iedzbc = stmt as IRErrorDivisionByZeroCheckStatement;
-            return `${RUNTIME_NAMESPACE}::${iedzbc.optypechk}::checkDivisionByZero(${this.emitIRSimpleExpression(iedzbc.left, true)}, "${iedzbc.file}", ${iedzbc.sinfo.line});`;
+            return `${RUNTIME_NAMESPACE}::X${iedzbc.optypechk}::checkDivisionByZero(${this.emitIRSimpleExpression(iedzbc.left, true)}, "${iedzbc.file}", ${iedzbc.sinfo.line});`;
         }
         else if(ttag === IRStatementTag.IRTypeDeclInvariantCheckStatement) {
             const itdics = stmt as IRTypeDeclInvariantCheckStatement;
