@@ -104,20 +104,20 @@ __internal __typedeclable __keycomparable entity SHAContentHash {
 
 %** Primitive string value. **%
 __internal __typedeclable __keycomparable entity String {
-    #if STRIPPED_CORE
+#if STRIPPED_CORE
 #else
     %** Check if the string is empty **%
     method empty(): Bool {
         return StringOps::s_empty(this);
     }
 
-    %** Get size of CString **%
+    %** Get size of String in Unicode code points **%
     method size(): Nat {
         return StringOps::s_size(this);
     }
 
-    %** Get size of CString **%
-    method size(): Nat {
+    %** Get size of String in bytes **%
+    method bytes(): Nat {
         return StringOps::s_bytes(this);
     }
 #endif %% STRIPPED_CORE
@@ -191,10 +191,6 @@ __internal concept APIResult<T, E> {
     %** Successful result T contains the value **%
     __internal entity Success provides APIResult<T, E> {
     }
-}
-
-%** Special Dash Result type. **%
-__internal entity DashResult<T> {
 }
 
 namespace Interpolate {

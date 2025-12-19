@@ -1372,8 +1372,9 @@ class Parser {
             }
 
             if(allowcorebi && pscount === 0) {
-                //check for the end of a builtin method "= ID;"
+                //check for the end of a builtin method "= @ID;"
                 if(this.peekTokenKind() === SYM_eq && this.peekTokenKind(1) === SYM_at && this.peekTokenKind(2) === TokenStrings.IdentifierName && this.peekTokenKind(3) === SYM_semicolon) {
+                    this.consumeToken();
                     this.consumeToken();
                     this.consumeToken();
                     this.consumeToken();
@@ -4581,7 +4582,7 @@ class Parser {
             return this.parseConditionalExpressionTail(sinfo, eexpr);
         }
         else {
-            if(eexpr.guards.length !== 1 || !(eexpr.guards[0] instanceof BaseRValueExpression)) {
+            if(eexpr.guards.length !== 1 || !(eexpr.guards[0] instanceof ITestSimpleGuard)) {
                 this.recordErrorGeneral(sinfo, "Guard set found where simple expression expected");
             }
 
@@ -5476,7 +5477,7 @@ class Parser {
             this.ensureAndConsumeTokenAlways(SYM_at, "expression body");
             this.ensureToken(TokenStrings.IdentifierName, "body");
             const iname = this.parseIdentifierAsStdVariable();
-            this.ensureAndConsumeTokenIf(SYM_semicolon, "body");
+            this.ensureAndConsumeTokenAlways(SYM_semicolon, "body");
 
             return new BuiltinBodyImplementation(sinfo, this.env.currentFile, iname);
         }
