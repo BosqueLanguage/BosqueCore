@@ -133,7 +133,7 @@ namespace ᐸRuntimeᐳ
     };
 
 
-    extern thread_local BosqueThreadLocalInfo tl_info;
+    extern thread_local BosqueThreadLocalInfo tl_bosque_info;
 
     //See also allocator/alloc.h for allocator specific thread local and global info -- no other globals should be hanging around!
 }
