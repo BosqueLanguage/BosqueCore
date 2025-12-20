@@ -34,7 +34,7 @@ function buildMainCode(assembly: Assembly): string {
 }
 
 function checkTestEmitMainFunction(code: string, expected: string) {
-    const asm = buildAssembly(code);
+    const asm = buildAssembly("declare namespace Main;" + "\n" + code);
     if(asm === undefined) {
         assert.fail("Assembly generation failed");
     }
