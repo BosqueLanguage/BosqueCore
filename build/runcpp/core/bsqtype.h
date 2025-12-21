@@ -22,10 +22,14 @@ namespace ᐸRuntimeᐳ
     constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTRNODE = 8;
     constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTRING = 9;
 
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERENTRY = 10;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERBLOCK = 11;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFER = 12;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_STRBUFF = 10;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_STRNODE = 11;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_STRING = 12;
 
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERENTRY = 13;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERBLOCK = 14;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFER = 15;
+    
     enum class LayoutTag
     {
         Value,

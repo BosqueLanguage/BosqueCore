@@ -45,6 +45,34 @@ class CPPEmitter {
         return escstr;
     }
 
+    private escapeLiteralString(cstrbytes: number[]): string {
+        let escstr = 'U"';
+        for(const b of cstrbytes) {
+            if(b === 0x5C) {
+                escstr += "\\\\";
+            }
+            else if(b === 0x22) {
+                escstr += '\\"';
+            }
+            else if(b === 0x0A) {
+                escstr += "\\n";
+            }
+            else if(b === 0x09) {
+                escstr += "\\t";
+            }
+            else {
+                if(32 <= b && b < 127) {
+                    escstr += String.fromCodePoint(b);
+                }
+                else {
+                    assert(false, "CPPEmitter: need to do unicode escape for non-ascii characters in string literals");
+                }
+            }
+        }
+        escstr += '"';
+        return escstr;
+    }
+
     private emitIRLiteral(exp: IRLiteralExpression): string {
         const ttag = exp.tag;
 
@@ -184,7 +212,13 @@ class CPPEmitter {
             }
         }
         else if(ttag === IRExpressionTag.IRLiteralStringExpression) {
-            assert(false, "CPPEmitter: need to handle full Unicode string literals");
+            const cstr = (exp as IRLiteralStringExpression).bytes;
+            if(cstr.length <= 24) {
+                return `${RUNTIME_NAMESPACE}::XString::literal(${this.escapeLiteralString(cstr)})`;
+            }
+            else {
+                assert(false, "CPPEmitter: need to do heap allocation for long strings");
+            }
         }
         else if(ttag === IRExpressionTag.IRLiteralFormatStringExpression) {
             //TODO: probably represent this natively as a Bosque List<FormatArgComponent>
