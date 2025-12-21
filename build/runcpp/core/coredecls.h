@@ -40,3 +40,8 @@ constexpr ᐸRuntimeᐳ::XChkInt operator""_I(unsigned long long n)
 {
     return ᐸRuntimeᐳ::XChkInt(n);
 }
+
+constexpr ᐸRuntimeᐳ::XFloat operator""_f(long double n)
+{
+    return ᐸRuntimeᐳ::XFloat(n);
+}

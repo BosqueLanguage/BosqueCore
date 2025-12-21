@@ -16,14 +16,15 @@ namespace ᐸRuntimeᐳ
     constexpr uint32_t WELL_KNOWN_TYPE_ID_NAT = 3;
     constexpr uint32_t WELL_KNOWN_TYPE_ID_CHKINT = 4;
     constexpr uint32_t WELL_KNOWN_TYPE_ID_CHKNAT = 5;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_FLOAT = 6;
 
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTRBUFF = 6;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTRNODE = 7;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTRING = 8;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTRBUFF = 7;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTRNODE = 8;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTRING = 9;
 
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERENTRY = 9;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERBLOCK = 10;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFER = 11;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERENTRY = 10;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERBLOCK = 11;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFER = 12;
 
     enum class LayoutTag
     {

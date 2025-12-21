@@ -35,6 +35,7 @@ namespace ᐸRuntimeᐳ
         inline static void checkOverflowSubtraction(XNat n1, XNat n2, const char* file, uint32_t line)
         {
             if(n2.value > n1.value) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericUnderflow, nullptr, "Nat subtraction underflow"); }
+            
             int64_t result = 0;
             if(__builtin_sub_overflow(n1.value, n2.value, &result) || !(XNat::isValidNat(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Nat subtraction bounds"); }
         }
@@ -109,7 +110,6 @@ namespace ᐸRuntimeᐳ
         }
         inline static void checkOverflowSubtraction(XInt n1, XInt n2, const char* file, uint32_t line)
         {
-            if(n2.value > n1.value) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericUnderflow, nullptr, "Int subtraction underflow"); }
             int64_t result = 0;
             if(__builtin_sub_overflow(n1.value, n2.value, &result) || !(XInt::isValidInt(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Int subtraction bounds"); }
         }
@@ -380,6 +380,46 @@ namespace ᐸRuntimeᐳ
         friend constexpr bool operator!=(const XChkInt &lhs, const XChkInt &rhs) { return !(lhs.value == rhs.value); }
         friend constexpr bool operator<=(const XChkInt &lhs, const XChkInt &rhs) { return !(lhs.value > rhs.value); }
         friend constexpr bool operator>=(const XChkInt &lhs, const XChkInt &rhs) { return !(lhs.value < rhs.value); }
+    };
+
+    constexpr TypeInfo g_typeinfo_Nat = {
+        WELL_KNOWN_TYPE_ID_NAT,
+        sizeof(XNat),
+        byteSizeToSlotCount(sizeof(XNat)),
+        LayoutTag::Value,
+        BSQ_PTR_MASK_LEAF,
+        "Nat",
+        nullptr
+    };
+
+    constexpr TypeInfo g_typeinfo_Int = {
+        WELL_KNOWN_TYPE_ID_INT,
+        sizeof(XInt),
+        byteSizeToSlotCount(sizeof(XInt)),
+        LayoutTag::Value,
+        BSQ_PTR_MASK_LEAF,
+        "Int",
+        nullptr
+    };
+
+    constexpr TypeInfo g_typeinfo_ChkNat = {
+        WELL_KNOWN_TYPE_ID_CHKNAT,
+        sizeof(XChkNat),
+        byteSizeToSlotCount(sizeof(XChkNat)),
+        LayoutTag::Value,
+        BSQ_PTR_MASK_LEAF,
+        "ChkNat",
+        nullptr
+    };
+
+    constexpr TypeInfo g_typeinfo_ChkInt = {
+        WELL_KNOWN_TYPE_ID_CHKINT,
+        sizeof(XChkInt),
+        byteSizeToSlotCount(sizeof(XChkInt)),
+        LayoutTag::Value,
+        BSQ_PTR_MASK_LEAF,
+        "ChkInt",
+        nullptr
     };
 
     static_assert(sizeof(XNat) == sizeof(int64_t), "Nat size incorrect");

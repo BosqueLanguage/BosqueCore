@@ -159,6 +159,8 @@ class TypeInfoManager {
         timgr.addTypeInfo("Nat", new TypeInfo("Nat", new IRNominalTypeSignature("Nat"), 3, 8, 1, LayoutTag.Value, undefined, undefined));
         timgr.addTypeInfo("ChkInt", new TypeInfo("ChkInt", new IRNominalTypeSignature("ChkInt"), 4, 16, 2, LayoutTag.Value, undefined, undefined));
         timgr.addTypeInfo("ChkNat", new TypeInfo("ChkNat", new IRNominalTypeSignature("ChkNat"), 5, 16, 2, LayoutTag.Value, undefined, undefined));
+
+        timgr.addTypeInfo("Float", new TypeInfo("Float", new IRNominalTypeSignature("Float"), 6, 8, 1, LayoutTag.Value, undefined, undefined));
         
         timgr.addTypeInfo("CString", new TypeInfo("CString", new IRNominalTypeSignature("CString"), 8, 24, 3, LayoutTag.Tagged, "200", undefined));
 

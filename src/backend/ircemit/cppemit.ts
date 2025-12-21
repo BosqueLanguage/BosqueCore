@@ -55,24 +55,28 @@ class CPPEmitter {
             return (exp as IRLiteralBoolExpression).value ? "TRUE" : "FALSE";
         }
         else if(ttag === IRExpressionTag.IRLiteralNatExpression) {
-            return `${(exp as IRLiteralNatExpression).value}_n`;
+            const ll = (exp as IRLiteralNatExpression).value;
+            return `${ll.startsWith("+") ? ll.slice(1) : ll}_n`;
         }
         else if(ttag === IRExpressionTag.IRLiteralIntExpression) {
-            return `${(exp as IRLiteralIntExpression).value}_i`;
+            const ll = (exp as IRLiteralIntExpression).value;
+            return `${ll.startsWith("+") ? ll.slice(1) : ll}_i`;
         }
         else if(ttag === IRExpressionTag.IRLiteralChkNatExpression) {
-            const nval = BigInt((exp as IRLiteralChkNatExpression).value);
+            const ll = (exp as IRLiteralChkNatExpression).value;
+            const nval = BigInt(ll.startsWith("+") ? ll.slice(1) : ll);
             if(nval <= MAX_SAFE_NAT) {
-                return `${(exp as IRLiteralChkNatExpression).value}_N`;
+                return `${ll.startsWith("+") ? ll.slice(1) : ll}_N`;
             }
             else {
                 assert(false, `CPPEmitter: need to do bit shift construction for (really big) safe nat -- ${(exp as IRLiteralChkNatExpression).value}`);
             }
         }
         else if(ttag === IRExpressionTag.IRLiteralChkIntExpression) {
-            const ival = BigInt((exp as IRLiteralChkIntExpression).value);
+            const ll = (exp as IRLiteralChkIntExpression).value;
+            const ival = BigInt(ll.startsWith("+") ? ll.slice(1) : ll);
             if(MIN_SAFE_INT <= ival && ival <= MAX_SAFE_INT) {
-                return `${(exp as IRLiteralChkIntExpression).value}_I`;
+                return `${ll.startsWith("+") ? ll.slice(1) : ll}_I`;
             }
             else {
                 assert(false, `CPPEmitter: need to do bit shift construction for (really big) safe int -- ${(exp as IRLiteralChkIntExpression).value}`);

@@ -748,10 +748,10 @@ class ASMToIRConverter {
             return new IRLiteralRationalExpression(rrval.slice(0, slpos), rrval.slice(slpos + 1, -1));
         }
         else if(ttag === ExpressionTag.LiteralFloatExpression) {
-            return new IRLiteralFloatExpression((exp as LiteralSimpleExpression).value);
+            return new IRLiteralFloatExpression((exp as LiteralSimpleExpression).value.slice(0, -1));
         }
         else if(ttag === ExpressionTag.LiteralDecimalExpression) {
-            return new IRLiteralDecimalExpression((exp as LiteralSimpleExpression).value);
+            return new IRLiteralDecimalExpression((exp as LiteralSimpleExpression).value.slice(0, -1));
         }
         else if(ttag === ExpressionTag.LiteralDecimalDegreeExpression) {
             return new IRLiteralDecimalExpression((exp as LiteralSimpleExpression).value.slice(0, -2));
