@@ -660,6 +660,41 @@ class CPPEmitter {
         return ee;
     }
 
+    //Emit the type declarations needed for the .h file
+    public emitTypeDeclarations(): string {
+        xxxx;
+    }
+
+    //Emit the constant declarations needed for the .h file
+    public emitConstantDeclarations(): string {
+        xxxx;
+    }
+
+    //Emit the constant definitions needed for the .cpp file
+    public emitConstantDefinitions(): string {
+        xxxx;
+    }
+
+    //Emit the invoke declarations needed for the .h file
+    public emitInvokeDeclarations(): string {
+        xxxx;
+    }
+
+    //Emit the invoke definitions needed for the .cpp file
+    public emitInvokeDefinitions(): string {
+        xxxx;
+    }
+
+    //Emit the initialization operations needed
+    public emitStaticInitializationOps(): string {
+        xxxx;
+    }
+
+    //Emit command line main
+    public emitCommandLineMain(ikey: string[]): string {
+        xxxx;
+    }
+
     public emitInvokeForKey(ikey: string): string {
         const invk = this.irasm.invokes.find((v) => v.ikey === ikey);
 
