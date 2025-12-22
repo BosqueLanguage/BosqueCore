@@ -56,13 +56,16 @@ function buildExeCode(assembly: Assembly, rootasm: string, outname: string) {
 
     Status.output("Emitting CPP code...\n");
     const cppcode = CPPEmitter.createEmitter(ircode);
-    const maincode = cppcode.emitInvokeForKey(`${mainns}::main`);
+    const maincode = cppcode.emitForCommandLine([`${mainns}::main`]);
 
     Status.output("    Writing CPP code to disk...\n");
     const nndir = path.normalize(outname);
     try {
-        const fname = path.join(nndir, `main.cpp`);
-        fs.writeFileSync(fname, maincode);
+        const hname = path.join(nndir, `app.h`);
+        fs.writeFileSync(hname, maincode[0]);
+
+        const cname = path.join(nndir, `app.cpp`);
+        fs.writeFileSync(cname, maincode[1]);
     }
     catch(e) {      
         Status.error("Failed to write output files!\n");

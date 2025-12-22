@@ -647,7 +647,7 @@ class CPPEmitter {
         return `${ptypstr} ${TransformCPPNameManager.convertIdentifier(iparam.name)}`;
     }
 
-    emitIRInvokeDeclInfo(invk: IRInvokeDecl): [string, string] {
+    private emitIRInvokeDeclInfo(invk: IRInvokeDecl): [string, string] {
         assert(invk.preconditions.length === 0 && invk.postconditions.length === 0, "CPPEmitter: need to implement pre/post condition handling in invoke decl emission");
 
         const paramstrs = invk.params.map((param) => this.emitIRInvokeParameterDecl(param)).join(", ");
@@ -669,21 +669,17 @@ class CPPEmitter {
     }
 
     //Emit the type declarations needed for the .h file
-    public emitTypeDeclInfo(): [string, string] {
+    private emitTypeDeclInfo(): [string, string] {
         const pdecls = "//Primitive decls\n\n" + this.irasm.primitives.map((pdecl) => {
             const tusing = `using ${pdecl.tkey} = ᐸRuntimeᐳ::X${pdecl.tkey};`;
-            const bsqparse = `std::optional<${pdecl.tkey}> BSQ_parse(std::list<uint8_t*>&& iobuffs);`;
-            const bsqemit = `std::list<uint8_t*>&& BSQ_Emit(size_t& bytes);`;
+            const bsqparse = `std::optional<${pdecl.tkey}> BSQ_parse${pdecl.tkey}(std::list<uint8_t*>&& iobuffs);`;
+            const bsqemit = `std::list<uint8_t*>&& BSQ_emit${pdecl.tkey}(size_t& bytes);`;
 
             return [tusing, bsqparse, bsqemit].join("\n");
         }).join("\n");
         const pdefs = "//Primitive defs\n\n" + this.irasm.primitives.map((pdecl) => {
-            const bsqparse = `std::optional<${pdecl.tkey}> BSQ_parse(std::list<uint8_t*>&& iobuffs) {
-            ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.initialize(iobuffs);
-            std::optional<${pdecl.tkey}> cc = ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.parse${pdecl.tkey}();
-            ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.release();
-            }`;
-            const bsqemit = ``;
+            const bsqparse = `std::optional<${pdecl.tkey}> BSQ_parse${pdecl.tkey}(std::list<uint8_t*>&& iobuffs) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.initialize(iobuffs); std::optional<${pdecl.tkey}> cc = ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.parse${pdecl.tkey}(); ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.release(); return cc; }`;
+            const bsqemit = `std::list<uint8_t*>&& BSQ_emit${pdecl.tkey}(size_t& bytes) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emit${pdecl.tkey}(); return ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.completeEmit(bytes); }`;
 
             return [bsqparse, bsqemit].join("\n");
         }).join("\n");
@@ -694,7 +690,18 @@ class CPPEmitter {
         ];
     }
 
-    public generateHeaderSetup(): string {
+    private emitAllInvokeInfo(): [string, string] {
+        assert(this.irasm.predicates.length === 0, "CPPEmitter: need to implement predicate decl emission");
+        const idecls = this.irasm.invokes.map((invk) => this.emitIRInvokeDeclInfo(invk));
+        assert(this.irasm.taskactions.length === 0, "CPPEmitter: need to implement ADT decl emission");
+
+        return [
+            idecls.map((idecl) => idecl[0]).join("\n\n"),
+            idecls.map((idecl) => idecl[1]).join("\n\n")
+        ];
+    }
+
+    private generateHeaderSetup(): string {
         return [
             '#include "./runcpp/common.h"',
             '#include "./runcpp/core/bsqtype.h"',
@@ -706,19 +713,43 @@ class CPPEmitter {
     }
 
     //Emit the initialization operations needed
-    public emitStaticInitializationOps(): string {
+    private emitStaticInitializationOps(): string {
         return '//TODO eventually need to set GC and other info';
     }
 
     //Emit command line main
-    public emitCommandLineMain(ikey: string[]): string {
+    private emitCommandLineMain(ikey: string[]): string {
         return "//TODO ---- ";
     }
 
-    public emitInvokeForKey(ikey: string): string {
+    emitInvokeForKey(ikey: string): string {
         const invk = this.irasm.invokes.find((v) => v.ikey === ikey);
 
         return this.emitIRInvokeDeclInfo(invk as IRInvokeDecl)[1];
+    }
+
+    public emitForCommandLine(ikey: string[]): [string, string] {
+        const typeinfo = this.emitTypeDeclInfo();
+        const iinfo = this.emitAllInvokeInfo();
+
+        const headerstrs = [
+            this.generateHeaderSetup(), '',
+            typeinfo[0], '',
+            iinfo[0],
+        ].join("\n");
+
+        const statisinitstr = this.emitStaticInitializationOps();
+        const mainstr = this.emitCommandLineMain(ikey);
+
+        const implstrs = [
+            '#include "./app.h"', '',
+            typeinfo[1], '',
+            iinfo[1], '',
+            statisinitstr, '',
+            mainstr
+        ].join("\n");
+
+        return [headerstrs, implstrs];
     }
 }
 
