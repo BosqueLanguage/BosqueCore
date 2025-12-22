@@ -726,7 +726,7 @@ class CPPEmitter {
         let dispatchstrs = "";
         if(ikey.length === 1) {
             dispatchstrs = 
-            '    auto iobb = ᐸRuntimeᐳ::g_alloc_info.io_buffer_alloc();\n' + 
+            'auto iobb = ᐸRuntimeᐳ::g_alloc_info.io_buffer_alloc();\n' + 
             '    size_t ibytes = std::strlen(argv[1]);\n' +
             '    std::copy(argv[1], argv[1] + ibytes, iobb);\n\n' +
             '    auto x = BSQ_parseInt({iobb}, ibytes);\n' +

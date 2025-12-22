@@ -1,5 +1,10 @@
 import * as fs from "fs";
 import * as path from "path";
+import { execSync } from "child_process";
+
+
+import { fileURLToPath } from 'url';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 import { Assembly } from "../frontend/assembly.js";
 import { PackageConfig } from "../frontend/build_decls.js";
@@ -7,6 +12,8 @@ import { generateASM, workflowLoadUserSrc, setStatusEnabled } from "./workflows.
 import { Monomorphizer } from "../backend/asmprocess/monomorphize.js";
 import { ASMToIRConverter } from "../backend/asmprocess/flatten.js";
 import { CPPEmitter } from "../backend/ircemit/cppemit.js";
+
+const runcppdir = path.join(__dirname, "../../runcpp/");
 
 let statusenabled = true;
 const Status = {
@@ -74,6 +81,21 @@ function buildExeCode(assembly: Assembly, rootasm: string, outname: string) {
     Status.output(`    Code generation successful -- CPP emitted to ${nndir}\n\n`);
 }
 
+function moveRuntimeFiles(outname: string) {
+    Status.output("    Copying CPP runtime support...\n");
+    const nndir = path.normalize(outname);
+
+    try {
+        const dstpath = path.join(nndir, "runcpp/");
+
+        fs.mkdirSync(dstpath, {recursive: true});
+        execSync(`cp -R ${runcppdir}* ${dstpath}`);
+    }
+    catch(e) {
+        Status.error("Failed to copy runtime files!\n");
+    }
+}
+
 function getSimpleFilename(fn: string): string {
     return path.basename(fn);
 }
@@ -129,4 +151,6 @@ fs.rmSync(outdir, { recursive: true, force: true });
 fs.mkdirSync(outdir);
 
 buildExeCode(asm, mainns, outdir);
+moveRuntimeFiles(outdir);
 
+Status.output("All done!\n");
