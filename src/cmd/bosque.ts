@@ -115,8 +115,8 @@ function emitCommandLineMakefile(optlevel: "debug" | "test" | "release"): string
         '#MAKEFLAGS += -j4\n\n' +
         'all: app\n\n' +
         'app: app.h app.cpp\n' +
-        '   @make -f $(RUNTIME_DIR)makefile BUILD=$(BUILD) all\n' +
-        '   g++ $(CPPFLAGS) -o app $(OBJS) $(JSON_INCLUDES) app.cpp\n';
+        '\t@make -f $(RUNTIME_DIR)makefile BUILD=$(BUILD) all\n' +
+        '\tg++ $(CPPFLAGS) -o app $(OUT_OBJS)* $(JSON_INCLUDES) app.cpp\n';
 }
 
 function getSimpleFilename(fn: string): string {

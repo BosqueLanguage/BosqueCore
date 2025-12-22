@@ -57,7 +57,7 @@ namespace ᐸRuntimeᐳ
         return std::move(this->iobuffs);
     }
 
-    void BSQONEmitter::emitNone()
+    void BSQONEmitter::emitNone(XNone n)
     {
         this->bufferMgr.writeImmediate("none");
     }
