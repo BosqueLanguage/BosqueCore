@@ -9,6 +9,9 @@ namespace ᐸRuntimeᐳ
         this->iobuffs = std::move(iobuffs);
         this->iter.initialize(this->iobuffs.begin(), totalbytes);
         this->ctoken.clear();
+
+        //now "consume" the invalid token to get the first token
+        this->consume(); 
     }
 
     void BSQONLexer::release()
@@ -75,7 +78,6 @@ namespace ᐸRuntimeᐳ
         size_t endidx = std::numeric_limits<size_t>::max();
 
         //This is a simple DFA for nat values (non-negative integers) as a loop with checks
-        REState states;
         constexpr size_t STATE_START = 0;
 
         constexpr size_t STATE_PLUS = 1;
@@ -85,6 +87,9 @@ namespace ᐸRuntimeᐳ
 
         constexpr size_t STATE_SUFFIX = 4;
         constexpr size_t STATE_ACCEPT = 5;
+
+        REState states = {0};
+        states[STATE_START] = 1;
 
         while(std::find(states, states + 32, 1) != (states + 32) && ii.valid()) {
             const char c = (char)ii.get();
@@ -96,6 +101,7 @@ namespace ᐸRuntimeᐳ
                 }
                 if(('1' <= c) & (c <= '9')) {
                     next[STATE_NONZERO] = 1;
+                    next[STATE_SUFFIX] = 1;
                 }
                 if(c == '+') {
                     next[STATE_PLUS] = 1;
@@ -111,6 +117,7 @@ namespace ᐸRuntimeᐳ
                 }
                 if(('1' <= c) & (c <= '9')) {
                     next[STATE_NONZERO] = 1;
+                    next[STATE_SUFFIX] = 1;
                 }
             }
 
@@ -120,14 +127,15 @@ namespace ᐸRuntimeᐳ
                 }
                 if(('1' <= c) & (c <= '9')) {
                     next[STATE_NONZERO] = 1;
+                    next[STATE_SUFFIX] = 1;
                 }
             }
 
             if(states[STATE_NONZERO]) {
                 if(('0' <= c) & (c <= '9')) {
                     next[STATE_NONZERO] = 1;
+                    next[STATE_SUFFIX] = 1;
                 }
-                next[STATE_SUFFIX] = 1;
             }
 
             if(states[STATE_SUFFIX]) {
@@ -137,8 +145,8 @@ namespace ᐸRuntimeᐳ
             }
 
             std::memcpy(states, next, sizeof(REState));
-            if(states[STATE_ACCEPT]) {
-                endidx = ii.getIndex();
+            if(next[STATE_ACCEPT]) {
+                endidx = ii.getIndex() + 1;
             }
 
             ii.next();

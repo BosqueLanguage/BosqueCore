@@ -108,7 +108,7 @@ function emitCommandLineMakefile(optlevel: "debug" | "test" | "release"): string
         `BUILD := ${optlevel}\n\n` + 
         'CPP_STDFLAGS=-Wall -Wextra -Wno-unused-parameter -Wuninitialized -Werror -std=gnu++20 -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-stack-protector -fPIC\n' + 
         'CPPFLAGS_OPT.debug=-O0 -g -ggdb -fno-omit-frame-pointer -fsanitize=address\n' +
-        'CPPFLAGS_OPT.dev=-O0 -g -ggdb -fno-omit-frame-pointer\n' +
+        'CPPFLAGS_OPT.test=-O0 -g -ggdb -fno-omit-frame-pointer\n' +
         'CPPFLAGS_OPT.release=-O3 -march=x86-64-v3\n' +
         'CPPFLAGS=${CPPFLAGS_OPT.${BUILD}} ${CPP_STDFLAGS}\n\n' +
         'HEADERS=$(wildcard $(SRC_DIR)*.h) $(wildcard $(CORE_SRC_DIR)*.h) $(wildcard $(RUNTIME_SRC_DIR)*.h) $(wildcard $(ALLOC_SRC_DIR)*.h) $(wildcard $(BSQIR_SRC_DIR)*.h)\n' +
@@ -174,6 +174,6 @@ fs.rmSync(outdir, { recursive: true, force: true });
 fs.mkdirSync(outdir);
 
 buildExeCode(asm, mainns, outdir);
-moveRuntimeFiles("test", outdir);
+moveRuntimeFiles("debug", outdir);
 
 Status.output("All done!\n");
