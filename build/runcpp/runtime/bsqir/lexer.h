@@ -149,7 +149,7 @@ namespace ᐸRuntimeᐳ
     public:
         BSQONLexer() : iobuffs(), iter(), ctoken() {}
 
-        void initialize(std::list<uint8_t*>&& iobuffs);
+        void initialize(std::list<uint8_t*>&& iobuffs, size_t totalbytes);
         void release();
 
         const BSQONToken& current() const { return this->ctoken; }

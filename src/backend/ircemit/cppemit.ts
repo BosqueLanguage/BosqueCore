@@ -672,13 +672,13 @@ class CPPEmitter {
     private emitTypeDeclInfo(): [string, string] {
         const pdecls = "//Primitive decls\n\n" + this.irasm.primitives.map((pdecl) => {
             const tusing = `using ${pdecl.tkey} = ᐸRuntimeᐳ::X${pdecl.tkey};`;
-            const bsqparse = `std::optional<${pdecl.tkey}> BSQ_parse${pdecl.tkey}(std::list<uint8_t*>&& iobuffs);`;
+            const bsqparse = `std::optional<${pdecl.tkey}> BSQ_parse${pdecl.tkey}(std::list<uint8_t*>&& iobuffs, size_t totalbytes);`;
             const bsqemit = `std::list<uint8_t*>&& BSQ_emit${pdecl.tkey}(size_t& bytes, ${pdecl.tkey} vv);`;
 
             return [tusing, bsqparse, bsqemit].join("\n");
         }).join("\n\n");
         const pdefs = "//Primitive defs\n\n" + this.irasm.primitives.map((pdecl) => {
-            const bsqparse = `std::optional<${pdecl.tkey}> BSQ_parse${pdecl.tkey}(std::list<uint8_t*>&& iobuffs) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.initialize(std::move(iobuffs)); std::optional<${pdecl.tkey}> cc = ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.parse${pdecl.tkey}(); ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.release(); return cc; }`;
+            const bsqparse = `std::optional<${pdecl.tkey}> BSQ_parse${pdecl.tkey}(std::list<uint8_t*>&& iobuffs, size_t totalbytes) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.initialize(std::move(iobuffs), totalbytes); std::optional<${pdecl.tkey}> cc = ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.parse${pdecl.tkey}(); ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.release(); return cc; }`;
             const bsqemit = `std::list<uint8_t*>&& BSQ_emit${pdecl.tkey}(size_t& bytes, ${pdecl.tkey} vv) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emit${pdecl.tkey}(vv); return ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.completeEmit(bytes); }`;
 
             return [bsqparse, bsqemit].join("\n");
@@ -725,7 +725,20 @@ class CPPEmitter {
 
         let dispatchstrs = "";
         if(ikey.length === 1) {
-            dispatchstrs = `    ${this.emitInvokeForKey(ikey[0])}\n`;
+            dispatchstrs = 
+            '    auto iobb = ᐸRuntimeᐳ::g_alloc_info.io_buffer_alloc();\n' + 
+            '    size_t ibytes = std::strlen(argv[1]);\n' +
+            '    std::copy(argv[1], argv[1] + ibytes, iobb);\n\n' +
+            '    auto x = BSQ_parseInt({iobb}, ibytes);\n' +
+            '    if(!x.has_value()) { printf("Error parsing input\\n"); exit(1); }\n\n' +
+            `    auto result = ${TransformCPPNameManager.convertInvokeKey(ikey[0])}(x.value());\n\n` +
+            '    size_t obytes = 0;\n' +
+            '    auto oibb = BSQ_emitInt(obytes, result);\n\n' +
+            '    //TODO assume chars are all printable for now\n' +
+            '    for(size_t i = 0; i < obytes; i++) {\n' +
+            '        printf("%c", static_cast<char>(oibb.front()[i]));\n' +
+            '    }\n' +
+            '    printf("\\n");\n';
         }
         else {
             assert(false, "CPPEmitter: need to implement multi-invoke command line dispatch");

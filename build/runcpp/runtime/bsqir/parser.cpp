@@ -2,9 +2,9 @@
 
 namespace ᐸRuntimeᐳ
 {
-    void BSQONParser::initialize(std::list<uint8_t*>&& iobuffs)
+    void BSQONParser::initialize(std::list<uint8_t*>&& iobuffs, size_t totalbytes)
     {
-        this->lexer.initialize(std::move(iobuffs));
+        this->lexer.initialize(std::move(iobuffs), totalbytes);
     }
 
     void BSQONParser::release()

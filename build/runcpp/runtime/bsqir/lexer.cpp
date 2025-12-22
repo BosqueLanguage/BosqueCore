@@ -4,10 +4,10 @@ namespace ᐸRuntimeᐳ
 {
     using REState = uint8_t[32];
 
-    void BSQONLexer::initialize(std::list<uint8_t*>&& iobuffs)
+    void BSQONLexer::initialize(std::list<uint8_t*>&& iobuffs, size_t totalbytes)
     {
         this->iobuffs = std::move(iobuffs);
-        this->iter.initialize(this->iobuffs.begin(), this->iobuffs.size());
+        this->iter.initialize(this->iobuffs.begin(), totalbytes);
         this->ctoken.clear();
     }
 

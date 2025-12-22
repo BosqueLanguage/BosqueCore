@@ -19,7 +19,7 @@ namespace ᐸRuntimeᐳ
     public:
         BSQONParser() : lexer() {}
 
-        void initialize(std::list<uint8_t*>&& iobuffs);
+        void initialize(std::list<uint8_t*>&& iobuffs, size_t totalbytes);
         void release();
 
         std::optional<XNone> parseNone();
