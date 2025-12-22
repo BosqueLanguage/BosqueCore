@@ -3,6 +3,8 @@
 #include "../../common.h"
 #include "../allocator/alloc.h"
 
+#include "../../core/coredecls.h"
+
 #include "../../core/bools.h"
 #include "../../core/chars.h"
 #include "../../core/integrals.h"
@@ -134,7 +136,7 @@ namespace ᐸRuntimeᐳ
 
         void setSensitiveOutput(bool sensitive) { this->sensitiveOutputEnabled = sensitive; }
 
-        void emitNone();
+        void emitNone(XNone n);
         void emitBool(XBool b);
         void emitNat(XNat n);
         void emitInt(XInt i);

@@ -673,16 +673,16 @@ class CPPEmitter {
         const pdecls = "//Primitive decls\n\n" + this.irasm.primitives.map((pdecl) => {
             const tusing = `using ${pdecl.tkey} = ᐸRuntimeᐳ::X${pdecl.tkey};`;
             const bsqparse = `std::optional<${pdecl.tkey}> BSQ_parse${pdecl.tkey}(std::list<uint8_t*>&& iobuffs);`;
-            const bsqemit = `std::list<uint8_t*>&& BSQ_emit${pdecl.tkey}(size_t& bytes);`;
+            const bsqemit = `std::list<uint8_t*>&& BSQ_emit${pdecl.tkey}(size_t& bytes, ${pdecl.tkey} vv);`;
 
             return [tusing, bsqparse, bsqemit].join("\n");
-        }).join("\n");
+        }).join("\n\n");
         const pdefs = "//Primitive defs\n\n" + this.irasm.primitives.map((pdecl) => {
-            const bsqparse = `std::optional<${pdecl.tkey}> BSQ_parse${pdecl.tkey}(std::list<uint8_t*>&& iobuffs) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.initialize(iobuffs); std::optional<${pdecl.tkey}> cc = ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.parse${pdecl.tkey}(); ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.release(); return cc; }`;
-            const bsqemit = `std::list<uint8_t*>&& BSQ_emit${pdecl.tkey}(size_t& bytes) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emit${pdecl.tkey}(); return ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.completeEmit(bytes); }`;
+            const bsqparse = `std::optional<${pdecl.tkey}> BSQ_parse${pdecl.tkey}(std::list<uint8_t*>&& iobuffs) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.initialize(std::move(iobuffs)); std::optional<${pdecl.tkey}> cc = ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.parse${pdecl.tkey}(); ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.release(); return cc; }`;
+            const bsqemit = `std::list<uint8_t*>&& BSQ_emit${pdecl.tkey}(size_t& bytes, ${pdecl.tkey} vv) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emit${pdecl.tkey}(vv); return ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.completeEmit(bytes); }`;
 
             return [bsqparse, bsqemit].join("\n");
-        }).join("\n");
+        }).join("\n\n");
 
         return [
             [pdecls].join("\n\n"),
@@ -714,12 +714,29 @@ class CPPEmitter {
 
     //Emit the initialization operations needed
     private emitStaticInitializationOps(): string {
-        return '//TODO eventually need to set GC and other info';
+        const stringunion = 'union StdEnvUnion { ᐸRuntimeᐳ::XCString strval; };';
+
+        return [stringunion, '//TODO eventually need to set GC and other info'].join("\n\n");
     }
 
     //Emit command line main
     private emitCommandLineMain(ikey: string[]): string {
-        return "//TODO ---- ";
+        const notes = "//TODO ---- need to dispatch on things and handle useage + agents.md";
+
+        let dispatchstrs = "";
+        if(ikey.length === 1) {
+            dispatchstrs = `    ${this.emitInvokeForKey(ikey[0])}\n`;
+        }
+        else {
+            assert(false, "CPPEmitter: need to implement multi-invoke command line dispatch");
+        }
+
+        return 'int main(int argc, char** argv) {\n' +
+               '    ᐸRuntimeᐳ::TaskInfoRepr<StdEnvUnion> envunion; //and more setup here\n' +
+               '    ᐸRuntimeᐳ::tl_bosque_info.current_task = &envunion;\n\n' +
+               `    ${notes}\n` +
+               `    ${dispatchstrs}\n` +
+               '}\n';
     }
 
     emitInvokeForKey(ikey: string): string {
