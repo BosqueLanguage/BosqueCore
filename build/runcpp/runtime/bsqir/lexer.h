@@ -140,7 +140,7 @@ namespace ᐸRuntimeᐳ
         bool tryLexNone();
         bool tryLexBool();
 
-        bool lexIntegralHelper(bool negok, char suffix);
+        bool lexIntegralHelper(bool negok, char suffix, BSQONTokenType ltoken);
         bool tryLexNat();
         bool tryLexInt();
         bool tryLexChkNat();

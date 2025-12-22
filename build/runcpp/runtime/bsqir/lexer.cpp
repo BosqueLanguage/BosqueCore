@@ -71,7 +71,7 @@ namespace ᐸRuntimeᐳ
         return false;
     }
 
-    bool BSQONLexer::lexIntegralHelper(bool negok, char suffix)
+    bool BSQONLexer::lexIntegralHelper(bool negok, char suffix, BSQONTokenType ltoken)
     {
         BSQLexBufferIterator ii = this->iter;
         size_t startidx = ii.getIndex();
@@ -153,7 +153,7 @@ namespace ᐸRuntimeᐳ
         }
 
         if(endidx != std::numeric_limits<size_t>::max()) {
-            this->ctoken.tokentype = BSQONTokenType::LiteralNat;
+            this->ctoken.tokentype = ltoken;
             this->iter.advanceWithExtract(this->ctoken.startindex, this->ctoken.endindex, this->ctoken.scvalue, endidx - startidx);
             return true;
         }
@@ -163,12 +163,12 @@ namespace ᐸRuntimeᐳ
 
     bool BSQONLexer::tryLexNat()
     {
-        return this->lexIntegralHelper(false, 'n');
+        return this->lexIntegralHelper(false, 'n', BSQONTokenType::LiteralNat);
     }
 
     bool BSQONLexer::tryLexInt()
     {
-        return this->lexIntegralHelper(true, 'i');
+        return this->lexIntegralHelper(true, 'i', BSQONTokenType::LiteralInt);
     }
     
     bool BSQONLexer::tryLexChkNat()
@@ -179,7 +179,7 @@ namespace ᐸRuntimeᐳ
             return true;
         }
 
-        return this->lexIntegralHelper(false, 'N');
+        return this->lexIntegralHelper(false, 'N', BSQONTokenType::LiteralChkNat);
     }
 
     bool BSQONLexer::tryLexChkInt()
@@ -190,7 +190,7 @@ namespace ᐸRuntimeᐳ
             return true;
         }
 
-        return this->lexIntegralHelper(true, 'I');
+        return this->lexIntegralHelper(true, 'I', BSQONTokenType::LiteralChkInt);
     }
 
     void BSQONLexer::consume()
