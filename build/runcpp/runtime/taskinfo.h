@@ -6,6 +6,9 @@
 #include "../core/uuids.h"
 #include "../core/strings.h"
 
+#include "./bsqir/parser.h"
+#include "./bsqir/emit.h"
+
 namespace ᐸRuntimeᐳ
 {
     template<ConceptUnionRepr U>
@@ -54,7 +57,7 @@ namespace ᐸRuntimeᐳ
         uint64_t level;
         const char* description;
 
-        constexpr TaskPriority() : level(0), description("Normal") {}
+        constexpr TaskPriority() : level(50), description("standard") {}
         constexpr TaskPriority(uint64_t lvl, const char* desc) : level(lvl), description(desc) {}
         constexpr TaskPriority(const TaskPriority& other) = default;
 
@@ -68,7 +71,7 @@ namespace ᐸRuntimeᐳ
         
         constexpr static TaskPriority pimmediate() { return TaskPriority(100, "immediate"); }
         constexpr static TaskPriority ppriority() { return TaskPriority(80, "priority"); }
-        constexpr static TaskPriority pstd() { return TaskPriority(50, "std"); }
+        constexpr static TaskPriority pstandard() { return TaskPriority(50, "standard"); }
         constexpr static TaskPriority plongrun() { return TaskPriority(30, "longrun"); }
         constexpr static TaskPriority pbackground() { return TaskPriority(10, "background"); }
         constexpr static TaskPriority poptional() { return TaskPriority(0, "optional"); }
@@ -78,14 +81,18 @@ namespace ᐸRuntimeᐳ
     {
     public:
         XUUIDv4 taskid;
+
         const TaskInfo* parent;
         TaskPriority priority;
+
+        BSQONParser bsqparser;
+        BSQONEmitter bsqemitter;
 
         std::jmp_buf error_handler;
         std::optional<ErrorInfo> pending_error;
 
-        TaskInfo() : taskid(), parent(nullptr), priority(), error_handler(), pending_error() {}
-        TaskInfo(const XUUIDv4& tId, const TaskInfo* pTask, TaskPriority prio) : taskid(tId), parent(pTask), priority(prio), error_handler(), pending_error() {}
+        TaskInfo() : taskid(), parent(nullptr), priority(), bsqparser(), bsqemitter(), error_handler(), pending_error() {}
+        TaskInfo(const XUUIDv4& tId, const TaskInfo* pTask, TaskPriority prio) : taskid(tId), parent(pTask), priority(prio), bsqparser(), bsqemitter(), error_handler(), pending_error() {}
     };
 
     template<ConceptUnionRepr U> //U must be a union of all possible types stored in the environment

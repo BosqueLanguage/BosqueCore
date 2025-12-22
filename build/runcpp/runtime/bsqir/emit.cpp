@@ -136,4 +136,9 @@ namespace ᐸRuntimeᐳ
     {
         assert(false); // Not Implemented
     }
+
+    std::list<uint8_t*>&& BSQONEmitter::completeEmit(size_t& bytes)
+    {
+        return this->bufferMgr.completeEmit(bytes);
+    }
 }

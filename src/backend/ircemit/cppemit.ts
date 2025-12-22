@@ -628,12 +628,16 @@ class CPPEmitter {
     }
     */
 
-    emitConstantDecl(iconst: IRConstantDecl): string {
+    emitConstantDeclInfo(iconst: IRConstantDecl): [string, string] {
         const gvname = `BSQ_g_${TransformCPPNameManager.generateNameForConstantKey(iconst.ckey)}`;
         const staticsstr = `std::optional<${this.typeInfoManager.emitTypeAsStd(iconst.declaredType.tkeystr)}> ${gvname} = std::nullopt;`;
         
         const bodystr = this.emitStatementList(iconst.stmts, [`if(${gvname}.has_value()) { return ${gvname}.value(); } `], [`${gvname} = std::make_optional(${this.emitIRSimpleExpression(iconst.value, true)}); return ${gvname}.value();`], undefined);
-        return `${staticsstr}\n${this.typeInfoManager.emitTypeAsStd(iconst.declaredType.tkeystr)} ${TransformCPPNameManager.generateNameForConstantKey(iconst.ckey)}() ${bodystr}`;
+        
+        const cdeclstr = `${this.typeInfoManager.emitTypeAsStd(iconst.declaredType.tkeystr)} ${TransformCPPNameManager.generateNameForConstantKey(iconst.ckey)}();`;
+        const cdefstr = `${staticsstr}\n${this.typeInfoManager.emitTypeAsStd(iconst.declaredType.tkeystr)} ${TransformCPPNameManager.generateNameForConstantKey(iconst.ckey)}() ${bodystr}`;
+
+        return [cdeclstr, cdefstr];
     }
 
     private emitIRInvokeParameterDecl(iparam: IRInvokeParameterDecl): string {
@@ -643,14 +647,18 @@ class CPPEmitter {
         return `${ptypstr} ${TransformCPPNameManager.convertIdentifier(iparam.name)}`;
     }
 
-    emitIRInvokeDecl(invk: IRInvokeDecl): string {
+    emitIRInvokeDeclInfo(invk: IRInvokeDecl): [string, string] {
         assert(invk.preconditions.length === 0 && invk.postconditions.length === 0, "CPPEmitter: need to implement pre/post condition handling in invoke decl emission");
 
         const paramstrs = invk.params.map((param) => this.emitIRInvokeParameterDecl(param)).join(", ");
         const rettyps = this.typeInfoManager.emitTypeAsReturn(invk.resultType.tkeystr);
 
         const bodystr = this.emitBody(invk.body, "");
-        return `${rettyps} ${TransformCPPNameManager.convertInvokeKey(invk.ikey)}(${paramstrs}) ${bodystr}`;
+        
+        const ideclstr = `${rettyps} ${TransformCPPNameManager.convertInvokeKey(invk.ikey)}(${paramstrs});`;
+        const idefstr = `${rettyps} ${TransformCPPNameManager.convertInvokeKey(invk.ikey)}(${paramstrs}) ${bodystr}`;
+
+        return [ideclstr, idefstr];
     }
 
     static createEmitter(irasm: IRAssembly): CPPEmitter {
@@ -661,44 +669,56 @@ class CPPEmitter {
     }
 
     //Emit the type declarations needed for the .h file
-    public emitTypeDeclarations(): string {
-        xxxx;
+    public emitTypeDeclInfo(): [string, string] {
+        const pdecls = "//Primitive decls\n\n" + this.irasm.primitives.map((pdecl) => {
+            const tusing = `using ${pdecl.tkey} = ᐸRuntimeᐳ::X${pdecl.tkey};`;
+            const bsqparse = `std::optional<${pdecl.tkey}> BSQ_parse(std::list<uint8_t*>&& iobuffs);`;
+            const bsqemit = `std::list<uint8_t*>&& BSQ_Emit(size_t& bytes);`;
+
+            return [tusing, bsqparse, bsqemit].join("\n");
+        }).join("\n");
+        const pdefs = "//Primitive defs\n\n" + this.irasm.primitives.map((pdecl) => {
+            const bsqparse = `std::optional<${pdecl.tkey}> BSQ_parse(std::list<uint8_t*>&& iobuffs) {
+            ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.initialize(iobuffs);
+            std::optional<${pdecl.tkey}> cc = ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.parse${pdecl.tkey}();
+            ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.release();
+            }`;
+            const bsqemit = ``;
+
+            return [bsqparse, bsqemit].join("\n");
+        }).join("\n");
+
+        return [
+            [pdecls].join("\n\n"),
+            [pdefs].join("\n\n")
+        ];
     }
 
-    //Emit the constant declarations needed for the .h file
-    public emitConstantDeclarations(): string {
-        xxxx;
-    }
-
-    //Emit the constant definitions needed for the .cpp file
-    public emitConstantDefinitions(): string {
-        xxxx;
-    }
-
-    //Emit the invoke declarations needed for the .h file
-    public emitInvokeDeclarations(): string {
-        xxxx;
-    }
-
-    //Emit the invoke definitions needed for the .cpp file
-    public emitInvokeDefinitions(): string {
-        xxxx;
+    public generateHeaderSetup(): string {
+        return [
+            '#include "./runcpp/common.h"',
+            '#include "./runcpp/core/bsqtype.h"',
+            '#include "./runcpp/core/integrals.h"',
+            '',
+            '#include "./runcpp/core/coredecls.h"',
+            '#include "./runcpp/runtime/taskinfo.h"'
+        ].join("\n");
     }
 
     //Emit the initialization operations needed
     public emitStaticInitializationOps(): string {
-        xxxx;
+        return '//TODO eventually need to set GC and other info';
     }
 
     //Emit command line main
     public emitCommandLineMain(ikey: string[]): string {
-        xxxx;
+        return "//TODO ---- ";
     }
 
     public emitInvokeForKey(ikey: string): string {
         const invk = this.irasm.invokes.find((v) => v.ikey === ikey);
 
-        return this.emitIRInvokeDecl(invk as IRInvokeDecl);
+        return this.emitIRInvokeDeclInfo(invk as IRInvokeDecl)[1];
     }
 }
 

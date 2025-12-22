@@ -132,6 +132,8 @@ namespace ᐸRuntimeᐳ
     public:
         BSQONEmitter() : bufferMgr(), sensitiveOutputEnabled(true) {}
 
+        void setSensitiveOutput(bool sensitive) { this->sensitiveOutputEnabled = sensitive; }
+
         void emitNone();
         void emitBool(XBool b);
         void emitNat(XNat n);
@@ -156,6 +158,8 @@ namespace ᐸRuntimeᐳ
         //
         //Lots more here
         //
+
+        std::list<uint8_t*>&& completeEmit(size_t& bytes);
     };
 
     class JSONEmitter
