@@ -33,7 +33,7 @@ namespace ᐸRuntimeᐳ
     public:
         BSQEmitBufferMgr() : cpos(nullptr), epos(nullptr), bytes(0), maxbytes(0), indentlevel(0), cdata(nullptr), iobuffs() { }
 
-        void prepForEmit(bool isIOEmit);
+        void prepForEmit();
         
         void increaseIndent() 
         {
@@ -134,7 +134,11 @@ namespace ᐸRuntimeᐳ
     public:
         BSQONEmitter() : bufferMgr(), sensitiveOutputEnabled(true) {}
 
-        void setSensitiveOutput(bool sensitive) { this->sensitiveOutputEnabled = sensitive; }
+        void prepForEmit(bool sensitive) 
+        { 
+            this->sensitiveOutputEnabled = sensitive;
+            this->bufferMgr.prepForEmit(); 
+        }
 
         void emitNone(XNone n);
         void emitBool(XBool b);

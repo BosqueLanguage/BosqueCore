@@ -2,7 +2,7 @@
 
 namespace ᐸRuntimeᐳ
 {
-    void BSQEmitBufferMgr::prepForEmit(bool isIOEmit)
+    void BSQEmitBufferMgr::prepForEmit()
     {
         this->cdata = g_alloc_info.io_buffer_alloc();
 

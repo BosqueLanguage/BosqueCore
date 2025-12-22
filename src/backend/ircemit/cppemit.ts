@@ -733,12 +733,13 @@ class CPPEmitter {
             '    if(!x.has_value()) { printf("Error parsing input\\n"); exit(1); }\n\n' +
             `    auto result = ${TransformCPPNameManager.convertInvokeKey(ikey[0])}(x.value());\n\n` +
             '    size_t obytes = 0;\n' +
+            '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.prepForEmit(true);\n' +
             '    auto oibb = BSQ_emitInt(obytes, result);\n\n' +
             '    //TODO assume chars are all printable for now\n' +
             '    for(size_t i = 0; i < obytes; i++) {\n' +
             '        printf("%c", static_cast<char>(oibb.front()[i]));\n' +
             '    }\n' +
-            '    printf("\\n");\n';
+            '    printf("\\n");';
         }
         else {
             assert(false, "CPPEmitter: need to implement multi-invoke command line dispatch");
