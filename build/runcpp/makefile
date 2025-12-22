@@ -30,11 +30,11 @@ OBJS=$(OUT_OBJ)common.o $(OUT_OBJ)alloc.o $(OUT_OBJ)lexer.o $(OUT_OBJ)parser.o $
 
 all: $(OBJS)
 
-bsqcmd: ${OUT_COMPONENTS}bsqcmd
+app: ${OUT_COMPONENTS}app
 
-${OUT_COMPONENTS}bsqcmd: $(HEADERS) $(OBJS) main.cpp
+${OUT_COMPONENTS}app: $(HEADERS) $(OBJS) app.cpp
 	@mkdir -p $(OUT_COMPONENTS)
-	$(CPP) $(CPPFLAGS) -o ${OUT_COMPONENTS}bsqcmd $(OBJS) $(JSON_INCLUDES) main.cpp
+	$(CPP) $(CPPFLAGS) -o ${OUT_COMPONENTS}app $(OBJS) $(JSON_INCLUDES) app.cpp
 
 $(OUT_OBJ)emit.o: $(HEADERS) $(BSQIR_SRC_DIR)emit.cpp
 	@mkdir -p $(OUT_OBJ)

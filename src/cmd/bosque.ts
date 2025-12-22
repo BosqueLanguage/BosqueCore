@@ -81,19 +81,42 @@ function buildExeCode(assembly: Assembly, rootasm: string, outname: string) {
     Status.output(`    Code generation successful -- CPP emitted to ${nndir}\n\n`);
 }
 
-function moveRuntimeFiles(outname: string) {
+function moveRuntimeFiles(buildlevel: "debug" | "test" | "release", outname: string) {
     Status.output("    Copying CPP runtime support...\n");
     const nndir = path.normalize(outname);
 
+    const makefile = emitCommandLineMakefile(buildlevel);
     try {
         const dstpath = path.join(nndir, "runcpp/");
 
         fs.mkdirSync(dstpath, {recursive: true});
         execSync(`cp -R ${runcppdir}* ${dstpath}`);
+
+        fs.writeFileSync(path.join(nndir, "Makefile"), makefile);
     }
     catch(e) {
         Status.error("Failed to copy runtime files!\n");
     }
+}
+
+function emitCommandLineMakefile(optlevel: "debug" | "test" | "release"): string {
+    return 'MAKE_PATH=$(realpath $(dir $(lastword $(MAKEFILE_LIST))))\n' +
+        'RUNTIME_DIR=$(MAKE_PATH)/runcpp/\n' + 
+        'OUT_OBJS=$(MAKE_PATH)/output/obj/\n\n' +
+        'JSON_INCLUDES=-I $(BUILD_DIR)include/json/\n\n' +
+        '#dev is default, for another flavor : make BUILD=release or debug\n' +
+        `BUILD := ${optlevel}\n\n` + 
+        'CPP_STDFLAGS=-Wall -Wextra -Wno-unused-parameter -Wuninitialized -Werror -std=gnu++20 -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-stack-protector -fPIC\n' + 
+        'CPPFLAGS_OPT.debug=-O0 -g -ggdb -fno-omit-frame-pointer -fsanitize=address\n' +
+        'CPPFLAGS_OPT.dev=-O0 -g -ggdb -fno-omit-frame-pointer\n' +
+        'CPPFLAGS_OPT.release=-O3 -march=x86-64-v3\n' +
+        'CPPFLAGS=${CPPFLAGS_OPT.${BUILD}} ${CPP_STDFLAGS}\n\n' +
+        'HEADERS=$(wildcard $(SRC_DIR)*.h) $(wildcard $(CORE_SRC_DIR)*.h) $(wildcard $(RUNTIME_SRC_DIR)*.h) $(wildcard $(ALLOC_SRC_DIR)*.h) $(wildcard $(BSQIR_SRC_DIR)*.h)\n' +
+        '#MAKEFLAGS += -j4\n\n' +
+        'all: app\n\n' +
+        'app: app.h app.cpp\n' +
+        '   @make -f $(RUNTIME_DIR)makefile BUILD=$(BUILD) all\n' +
+        '   g++ $(CPPFLAGS) -o app $(OBJS) $(JSON_INCLUDES) app.cpp\n';
 }
 
 function getSimpleFilename(fn: string): string {
@@ -151,6 +174,6 @@ fs.rmSync(outdir, { recursive: true, force: true });
 fs.mkdirSync(outdir);
 
 buildExeCode(asm, mainns, outdir);
-moveRuntimeFiles(outdir);
+moveRuntimeFiles("test", outdir);
 
 Status.output("All done!\n");
