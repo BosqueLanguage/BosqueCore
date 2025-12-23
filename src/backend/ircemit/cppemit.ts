@@ -731,6 +731,14 @@ class CPPEmitter {
             '    std::copy(argv[1], argv[1] + ibytes, iobb);\n\n' +
             '    auto x = BSQ_parseInt({iobb}, ibytes);\n' +
             '    if(!x.has_value()) { printf("Error parsing input\\n"); exit(1); }\n\n' +
+            '    if (setjmp(ᐸRuntimeᐳ::tl_bosque_info.current_task->error_handler) > 0) {\n' +
+            '        auto perr = ᐸRuntimeᐳ::tl_bosque_info.current_task->pending_error.value();\n' +
+            '        auto pfile = std::string(perr.file);\n' +
+            '        auto pbfile = std::string(pfile.cbegin() + pfile.find_last_of("/") + 1, pfile.cend());\n' +
+            '        printf("Error on line %d in file %s\\n", perr.line, pbfile.c_str());\n' +
+            '        if(perr.message != nullptr) { printf("  with message: %s\\n", perr.message); }\n' +
+            '        exit(1);\n' +
+            '    }\n\n' +
             `    auto result = ${TransformCPPNameManager.convertInvokeKey(ikey[0])}(x.value());\n\n` +
             '    size_t obytes = 0;\n' +
             '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.prepForEmit(true);\n' +
@@ -739,7 +747,9 @@ class CPPEmitter {
             '    for(size_t i = 0; i < obytes; i++) {\n' +
             '        printf("%c", static_cast<char>(oibb.front()[i]));\n' +
             '    }\n' +
-            '    printf("\\n");';
+            '    printf("\\n");\n\n' +
+            '    ᐸRuntimeᐳ::g_alloc_info.io_buffer_free_list(oibb);\n' +
+            '    oibb.clear();';
         }
         else {
             assert(false, "CPPEmitter: need to implement multi-invoke command line dispatch");

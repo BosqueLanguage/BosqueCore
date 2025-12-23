@@ -48,9 +48,12 @@ namespace ᐸRuntimeᐳ
         
     std::list<uint8_t*>&& BSQEmitBufferMgr::completeEmit(size_t& bytes)
     {
-        this->rotateData();
+        this->iobuffs.push_back(this->cdata);
         bytes = this->bytes;
-        
+     
+        this->cdata = nullptr;
+        this->cpos = nullptr;
+        this->epos = nullptr;
         this->indentlevel = 0;
         this->bytes = 0;
 

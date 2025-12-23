@@ -98,6 +98,17 @@ namespace ᐸRuntimeᐳ
 
             free(ptr);
         }
+
+        void io_buffer_free_list(std::list<uint8_t*>& buflist)
+        {
+            std::lock_guard<std::mutex> lock(this->g_ioalloc_mutex);
+
+            for(auto iter = buflist.begin(); iter != buflist.end(); iter++) {
+                free(*iter);
+            }
+
+            buflist.clear();
+        }   
     };
 
     extern thread_local AllocatorThreadLocalInfo tl_alloc_info;
