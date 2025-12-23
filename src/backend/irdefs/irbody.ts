@@ -833,11 +833,13 @@ class IRAccessConstantExpression extends IRImmediateExpression {
 }
 
 class IRAccessEnumExpression extends IRImmediateExpression {
-    readonly enumkey: string; //flattened identifer names
+    readonly tkey: string;
+    readonly membername: string;
 
-    constructor(enumkey: string) {
+    constructor(tkey: string, membername: string) {
         super(IRExpressionTag.IRAccessEnumExpression);
-        this.enumkey = enumkey;
+        this.tkey = tkey;
+        this.membername = membername;
     }
 }
 

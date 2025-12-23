@@ -140,6 +140,11 @@ namespace ᐸRuntimeᐳ
             this->bufferMgr.prepForEmit(); 
         }
 
+        void emitLiteralContent(const char* lit)
+        {
+            this->bufferMgr.write(lit);
+        }
+
         void emitNone(XNone n);
         void emitBool(XBool b);
         void emitNat(XNat n);

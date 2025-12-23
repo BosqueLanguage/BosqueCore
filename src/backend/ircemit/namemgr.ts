@@ -85,8 +85,8 @@ class TransformCPPNameManager {
         return TransformCPPNameManager.safeifyName(constkey);
     }
 
-    static generateNameForEnumKey(enumkey: string): string {
-        return TransformCPPNameManager.safeifyName(enumkey);
+    static generateNameForEnumKey(tkey: string, emember: string): string {
+        return TransformCPPNameManager.convertTypeKey(tkey) + "::" + TransformCPPNameManager.safeifyName(emember);
     }
 
     static generateNameForConstructor(tkey: string): string {

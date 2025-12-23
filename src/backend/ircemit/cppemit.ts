@@ -3,9 +3,9 @@ import { TypeInfoManager } from "./typeinfomgr.js";
 
 import { MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_INT } from "../../frontend/assembly.js";
 import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag, IRPrefixNotOpExpression, IRPrefixPlusOpExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRReturnValueSimpleStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement, IRAbortStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRTempAssignExpressionStatement, IRTypeDeclInvariantCheckStatement, IRDebugStatement, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRChkLogicImpliesShortCircuitStatement, IRPreconditionCheckStatement, IRPostconditionCheckStatement, IRVariableInitializationDirectInvokeStatement, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRAssertStatement, IRValidateStatement, IRBody, IRBuiltinBody, IRStandardBody, IRHoleBody } from "../irdefs/irbody.js";
+import { IRAssembly, IRConstantDecl, IREnumTypeDecl, IRInvokeDecl, IRInvokeParameterDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl } from "../irdefs/irassembly.js";
 
 import assert from "node:assert";
-import { IRAssembly, IRConstantDecl, IRInvokeDecl, IRInvokeParameterDecl } from "../irdefs/irassembly.js";
 
 const RUNTIME_NAMESPACE = "ᐸRuntimeᐳ";
 const CLOSURE_CAPTURE_NAME = "ᐸclosureᐳ";
@@ -272,7 +272,7 @@ class CPPEmitter {
                 return TransformCPPNameManager.generateNameForConstantKey((exp as IRAccessConstantExpression).constkey) + "()";
             }
             else if(ttag === IRExpressionTag.IRAccessEnumExpression) {
-                return TransformCPPNameManager.generateNameForEnumKey((exp as IRAccessEnumExpression).enumkey);
+                return TransformCPPNameManager.generateNameForEnumKey((exp as IRAccessEnumExpression).tkey, (exp as IRAccessEnumExpression).membername);
             }
             else if (ttag === IRExpressionTag.IRAccessParameterVariableExpression) {
                 return TransformCPPNameManager.convertIdentifier((exp as IRAccessParameterVariableExpression).pname);
@@ -618,16 +618,18 @@ class CPPEmitter {
     private emitPostconditionCheckFunction(ipcs: IRPostConditionDecl, invk: IRInvokeDecl): string {
         assert(false, "CPPEmitter: need to implement postcondition check function emission");
     }
+    */
 
+    /*
     private emitInvariantFunction(iinv: IRInvariantDecl, tdecl: IRAbstractNominalTypeDecl): string {
-        assert(false, "CPPEmitter: need to implement invariant function emission");
+        xxxx;
     }
 
     private emitValidateFunction(ival: IRValidateDecl, tdecl: IRAbstractNominalTypeDecl): string {
-        assert(false, "CPPEmitter: need to implement validate function emission");
+        xxxx;
     }
     */
-
+   
     emitConstantDeclInfo(iconst: IRConstantDecl): [string, string] {
         const gvname = `BSQ_g_${TransformCPPNameManager.generateNameForConstantKey(iconst.ckey)}`;
         const staticsstr = `std::optional<${this.typeInfoManager.emitTypeAsStd(iconst.declaredType.tkeystr)}> ${gvname} = std::nullopt;`;
@@ -668,6 +670,53 @@ class CPPEmitter {
         return ee;
     }
 
+    private emitEnumTypeDeclInfo(eenum: IREnumTypeDecl): [string, string] {
+        const ctname = TransformCPPNameManager.convertTypeKey(eenum.tkey);
+
+        const edecl = `enum class ${ctname} : uint64_t {\n` +
+        `${eenum.members.map((mem, ii) => `    ${TransformCPPNameManager.convertIdentifier(mem)} = ${ii}`).join(",\n")}\n` +
+        `};`;
+        const bsqparsedecl = `std::optional<${ctname}> BSQ_parse${ctname}(std::list<uint8_t*>&& iobuffs, size_t totalbytes);`;
+        const bsqemitdecl = `std::list<uint8_t*>&& BSQ_emit${ctname}(size_t& bytes, ${ctname} vv);`;
+
+        const mmarray = `constexpr std::array<const char*, ${eenum.members.length}> BSQ_enum_values_${ctname} = { ${eenum.members.map((mem) => `${ctname}::${TransformCPPNameManager.convertIdentifier(mem)}`).join(", ")} };`;
+        const bsqparsedef = `std::optional<${ctname}> BSQ_parse${ctname}(std::list<uint8_t*>&& iobuffs, size_t totalbytes) { 
+        ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.initialize(std::move(iobuffs), totalbytes); 
+
+        if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeType("${eenum.tkey}")) { return nullopt; };
+        if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('#')) { return nullopt; };
+        
+        const char* enumstr = ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeIdentifier();
+        if(enumstr == nullptr) { return nullopt; }
+
+        const eiter = std::find_if(BSQ_enum_values_${ctname}.begin(), BSQ_enum_values_${ctname}.end(), [enumstr](const char* ev) { return strcmp(ev, enumstr) == 0; });
+        if(eiter == BSQ_enum_values_${ctname}.end()) { return nullopt; }
+
+        std::optional<${ctname}> cc = std::make_optional(static_cast<${ctname}>(std::distance(BSQ_enum_values_${ctname}.begin(), eiter))); 
+        
+        ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.release(); 
+        return cc; }`;
+        
+        const bsqemitdef = `std::list<uint8_t*>&& BSQ_emit${ctname}(size_t& bytes, ${ctname} vv) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitLiteralContent("${eenum.tkey}#"); ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitLiteralContent(BSQ_enum_values_${ctname}[static_cast<int>(vv)]); return ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.completeEmit(bytes); }`;
+
+        return [
+            ["//Enum Decls\n", edecl, bsqparsedecl, bsqemitdecl].join("\n"), 
+            ["//Enum Defs\n", mmarray, bsqparsedef, bsqemitdef].join("\n")
+        ];
+    }
+
+    private emitGeneralTypeDeclInfo(tdecl: IRTypedeclTypeDecl): [string, string] {
+        assert(false, "CPPEmitter: need to implement general type decl emission");
+    }
+
+    private emitCStringTypeDeclInfo(tcstr: IRTypedeclCStringDecl): [string, string] {
+        assert(false, "CPPEmitter: need to implement cstring type decl emission");
+    }
+
+    private emitStringTypeDeclInfo(tstr: IRTypedeclStringDecl): [string, string] {
+        assert(false, "CPPEmitter: need to implement string type decl emission");
+    }
+
     //Emit the type declarations needed for the .h file
     private emitTypeDeclInfo(): [string, string] {
         const pdecls = "//Primitive decls\n\n" + this.irasm.primitives.map((pdecl) => {
@@ -684,9 +733,15 @@ class CPPEmitter {
             return [bsqparse, bsqemit].join("\n");
         }).join("\n\n");
 
+        const enumdd = this.irasm.enums.map((eden) => this.emitEnumTypeDeclInfo(eden));
+
+        const gtddd = this.irasm.typedecls.map((tgtd) =>  this.emitGeneralTypeDeclInfo(tgtd));
+        const cstringdd = this.irasm.cstringoftypedecls.map((tcstr) => this.emitCStringTypeDeclInfo(tcstr));
+        const stringdd = this.irasm.stringoftypedecls.map((tstr) => this.emitStringTypeDeclInfo(tstr));
+
         return [
-            [pdecls].join("\n\n"),
-            [pdefs].join("\n\n")
+            [...pdecls, ...enumdd.map((tt) => tt[0]), ...gtddd.map((tt) => tt[0]), ...cstringdd.map((tt) => tt[0]), ...stringdd.map((tt) => tt[0])].join("\n\n"),
+            [...pdefs, ...enumdd.map((tt) => tt[1]), ...gtddd.map((tt) => tt[1]), ...cstringdd.map((tt) => tt[1]), ...stringdd.map((tt) => tt[1])].join("\n\n")
         ];
     }
 

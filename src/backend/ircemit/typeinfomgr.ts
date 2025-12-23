@@ -166,7 +166,6 @@ class TypeInfoManager {
         timgr.addTypeInfo("CStrNode", new TypeInfo("CStrNode", new IRNominalTypeSignature("CStrNode"), 8, 32, 4, LayoutTag.Ref, "0011", undefined));
         timgr.addTypeInfo("CString", new TypeInfo("CString", new IRNominalTypeSignature("CString"), 9, 24, 3, LayoutTag.Tagged, "200", undefined));
 
-
         timgr.addTypeInfo("StrBuff", new TypeInfo("StrBuff", new IRNominalTypeSignature("StrBuff"), 10, 32, 4, LayoutTag.Value, undefined, undefined));
         timgr.addTypeInfo("StrNode", new TypeInfo("StrNode", new IRNominalTypeSignature("StrNode"), 11, 32, 4, LayoutTag.Ref, "0011", undefined));
         timgr.addTypeInfo("String", new TypeInfo("String", new IRNominalTypeSignature("CString"), 12, 40, 5, LayoutTag.Tagged, "2000", undefined));

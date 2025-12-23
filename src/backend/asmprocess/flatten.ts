@@ -1090,9 +1090,7 @@ class ASMToIRConverter {
         }
         else if(ttag === ExpressionTag.AccessEnumExpression) {
             const taee = exp as AccessEnumExpression;
-            const flatenumname = `${taee.stype.emit()}::${taee.name}`;
-
-            return new IRAccessEnumExpression(flatenumname);
+            return new IRAccessEnumExpression(taee.stype.tkeystr, taee.name);
         }
         else if(ttag === ExpressionTag.AccessVariableExpression) {
             const tave = exp as AccessVariableExpression;

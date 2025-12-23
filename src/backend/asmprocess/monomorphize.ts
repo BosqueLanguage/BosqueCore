@@ -1818,6 +1818,10 @@ class Monomorphizer {
 
     private instantiateTypedeclTypeDecl(tdecl: TypedeclTypeDecl, pdecl: PendingNominalTypeDecl) {
         this.instantiateAbstractNominalTypeDeclHelper(pdecl, [], undefined, [tdecl.valuetype]);
+
+        if(tdecl.optofexp !== undefined) {
+            this.instantiateExpression(tdecl.optofexp);
+        }
     }
 
     private instantiateInteralSimpleTypeDeclHelper(pdecl: PendingNominalTypeDecl, terms: string[], optreqtypes: TypeSignature[] | undefined) {
