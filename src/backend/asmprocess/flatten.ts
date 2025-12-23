@@ -720,6 +720,29 @@ class ASMToIRConverter {
         return [lres, rres];
     }
 
+    private needsDivCheck(rhs: Expression, opchk: "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float"): boolean {
+        if(!(rhs instanceof LiteralSimpleExpression)) {
+            return true;
+        }
+
+        const rval = (rhs as LiteralSimpleExpression).value;
+        if(opchk === "Nat") {
+            return rval.endsWith("0n");
+        }
+        else if(opchk === "Int") {
+            return rval.endsWith("0i");
+        }
+        else if(opchk === "ChkNat") {
+            return rval.endsWith("0N");
+        }
+        else if(opchk === "ChkInt") {
+            return rval.endsWith("0I");
+        }
+        else {
+            return true;
+        }
+    }
+
     private flattenExpression(exp: Expression): IRExpression {
         const ttag = exp.tag;
 
@@ -1246,9 +1269,11 @@ class ASMToIRConverter {
             
             const [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(bindiv.lhs), this.flattenExpression(bindiv.rhs), leetype, reetype);
 
-            const opchk = (bindiv.opertype as TypeSignature).tkeystr as "Nat" | "Int" | "ChkNat" | "ChkInt";
-            this.pushStatement(new IRErrorDivisionByZeroCheckStatement(this.currentFile as string, this.convertSourceInfo(bindiv.sinfo), this.registerError(this.currentFile as string, this.convertSourceInfo(bindiv.sinfo), "runtime"), lexp, rexp, opchk));
-
+            const opchk = (bindiv.opertype as TypeSignature).tkeystr as "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float";
+            if(this.needsDivCheck(bindiv.rhs, opchk)) {
+                this.pushStatement(new IRErrorDivisionByZeroCheckStatement(this.currentFile as string, this.convertSourceInfo(bindiv.sinfo), this.registerError(this.currentFile as string, this.convertSourceInfo(bindiv.sinfo), "runtime"), lexp, rexp, opchk));
+            }
+            
             if(!(finaltype.decl instanceof TypedeclTypeDecl)) {
                 return new IRBinDivExpression(lexp, rexp, this.processTypeSignature(bindiv.opertype as TypeSignature));
             }

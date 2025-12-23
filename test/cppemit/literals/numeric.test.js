@@ -1,3 +1,5 @@
+"use strict";
+
 import { checkTestEmitMainFunction } from "../../../bin/test/cppemit/cppemit_nf.js";
 import { describe, it } from "node:test";
 

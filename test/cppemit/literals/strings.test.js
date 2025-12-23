@@ -1,6 +1,7 @@
+"use strict";
+
 import { checkTestEmitMainFunction } from "../../../bin/test/cppemit/cppemit_nf.js";
 import { describe, it } from "node:test";
-
 
 describe ("CPPEmit -- String", () => {
     it("should emit simple strings", function () {

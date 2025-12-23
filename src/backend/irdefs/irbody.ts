@@ -285,9 +285,9 @@ abstract class IRErrorBinArithCheckStatement extends IRErrorCheckStatement {
     readonly left: IRImmediateExpression;
     readonly right: IRImmediateExpression;
 
-    readonly optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt";
+    readonly optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float";
 
-    constructor(tag: IRStatementTag, file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt") {
+    constructor(tag: IRStatementTag, file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float") {
         super(tag, file, sinfo, diagnosticTag, checkID);
         this.left = left;
         this.right = right;
@@ -1248,25 +1248,25 @@ class IRLogicConditionalStatement extends IRStatement {
 }
 
 class IRErrorAdditionBoundsCheckStatement extends IRErrorBinArithCheckStatement {
-    constructor(file: string, sinfo: IRSourceInfo, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt") {
+    constructor(file: string, sinfo: IRSourceInfo, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float") {
         super(IRStatementTag.IRErrorAdditionBoundsCheckStatement, file, sinfo, undefined, checkID, left, right, optypechk);
     }
 }
 
 class IRErrorSubtractionBoundsCheckStatement extends IRErrorBinArithCheckStatement {
-    constructor(file: string, sinfo: IRSourceInfo, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt") {
+    constructor(file: string, sinfo: IRSourceInfo, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float") {
         super(IRStatementTag.IRErrorSubtractionBoundsCheckStatement, file, sinfo, undefined, checkID, left, right, optypechk);
     }
 }
 
 class IRErrorMultiplicationBoundsCheckStatement extends IRErrorBinArithCheckStatement {
-    constructor(file: string, sinfo: IRSourceInfo, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt") {
+    constructor(file: string, sinfo: IRSourceInfo, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float") {
         super(IRStatementTag.IRErrorMultiplicationBoundsCheckStatement, file, sinfo, undefined, checkID, left, right, optypechk);
     }
 }
 
 class IRErrorDivisionByZeroCheckStatement extends IRErrorBinArithCheckStatement {
-    constructor(file: string, sinfo: IRSourceInfo, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt") {
+    constructor(file: string, sinfo: IRSourceInfo, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float") {
         super(IRStatementTag.IRErrorDivisionByZeroCheckStatement, file, sinfo, undefined, checkID, left, right, optypechk);
     }
 }
