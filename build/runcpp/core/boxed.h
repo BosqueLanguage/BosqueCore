@@ -1,0 +1,97 @@
+#pragma once
+
+#include "../common.h"
+
+#include "bsqtype.h"
+
+namespace ᐸRuntimeᐳ
+{
+    template <typename T>
+    class XOption 
+    {
+    public:
+        const TypeInfo* typeinfo;
+        T data;
+    
+    private:
+        constexpr XOption(const TypeInfo* ti) : typeinfo(ti), data() {}
+        constexpr XOption(const TypeInfo* ti, const T& d) : typeinfo(ti), data(d) {}
+
+    public:
+        constexpr XOption() : typeinfo(nullptr), data() {};
+        constexpr XOption(const XOption& other) = default;
+        
+        // Special none option bits
+        constexpr bool isNone() const { return this->typeinfo == &g_typeinfo_None; }
+        static constexpr XOption<T> optnone = XOption(&g_typeinfo_None);
+
+        // Some option bits
+        constexpr bool isSome() const { return this->typeinfo != &g_typeinfo_None; }
+
+        static XOption<T> makeSome(const TypeInfo* ti, const T& d) { return XOption<T>(ti, d); }
+    };
+
+    //
+    //TODO: probably want to specialize for option bool, nat/int where we can steal a indicator bit
+    //TODO: Any Option<BoxedUnion> is interesting too (particularly for common case of string), where can can include none in the typeinfo
+    //
+
+    template <ConceptUnionRepr U>
+    class BoxedUnion 
+    {
+    public:
+        const TypeInfo* typeinfo;
+        U data;
+
+    private:
+        static_assert(std::is_union_v<U>, "BoxedUnion requires a union type U");
+        constexpr BoxedUnion(const TypeInfo* ti) : typeinfo(ti), data() {}
+
+    public:
+        constexpr BoxedUnion() : typeinfo(nullptr), data() {};
+        constexpr BoxedUnion(const TypeInfo* ti, const U& d) : typeinfo(ti), data(d) {}
+        constexpr BoxedUnion(const BoxedUnion& other) = default;
+        
+        // Note -- inject and extract are generated for each use based on the generation union type (see strings for example)
+
+        template<typename V>
+        BoxedUnion<V> convert() const 
+        {
+            static_assert(std::is_union_v<V>, "BoxedUnion convert requires a union type V");
+            constexpr size_t copysize = std::min(sizeof(U), sizeof(V));
+
+            BoxedUnion<V> cu(this->typeinfo);
+            std::copy(reinterpret_cast<const uint8_t*>(&this->data), reinterpret_cast<const uint8_t*>(&this->data) + copysize, reinterpret_cast<uint8_t*>(&cu.data));
+            
+            return cu;
+        }
+
+        template<typename T, size_t idx>
+        T accessfield() const 
+        {
+            if(this->typeinfo->tag != LayoutTag::Ref) {
+                //not a pointer, just load the slot index as T
+                return *(reinterpret_cast<const T*>(reinterpret_cast<const uint64_t*>(&this->data) + idx));
+            }
+            else {
+                //dereference pointer in the union and then get the slot at index
+
+                return *(reinterpret_cast<const T*>(reinterpret_cast<const uint64_t*>(this->data) + idx));
+            }
+        }
+
+        template<typename T>
+        T accessfield(size_t idx) const 
+        {
+            if(this->typeinfo->tag != LayoutTag::Ref) {
+                //not a pointer, just load the slot index as T
+                return *(reinterpret_cast<const T*>(reinterpret_cast<const uint64_t*>(&this->data) + idx));
+            }
+            else {
+                //dereference pointer in the union and then get the slot at index
+
+                return *(reinterpret_cast<const T*>(reinterpret_cast<const uint64_t*>(this->data) + idx));
+            }
+        }
+    };
+}

@@ -1,4 +1,0 @@
-namespace Core;
-
-__internal entity Queue<T> {
-}

@@ -1,37 +1,27 @@
 import assert from "node:assert";
 
 import { TypeSignature } from "./type.js";
-import { BinderInfo } from "./body.js";
 
 class VarInfo {
     readonly srcname: string;
     readonly decltype: TypeSignature;
-    readonly itype: { ttype: TypeSignature, specialaccess: string | undefined }[];
 
-    readonly isConst: boolean;
+    readonly vkind: "ref" | "out" | "out?" | "inout" | "let" | "var";
     readonly mustDefined: boolean;
-    readonly isRef: boolean;
 
-    constructor(srcname: string, decltype: TypeSignature, itype: { ttype: TypeSignature, specialaccess: string | undefined }[], isConst: boolean, mustDefined: boolean, isRef: boolean) {
+    constructor(srcname: string, decltype: TypeSignature, vkind: "ref" | "out" | "out?" | "inout" | "let" | "var", mustDefined: boolean) {
         this.srcname = srcname;
         this.decltype = decltype;
-        this.itype = itype;
-
-        this.isConst = isConst;
+        this.vkind = vkind;
         this.mustDefined = mustDefined;
-        this.isRef = isRef;
     }
 
-    updateType(itype: { ttype: TypeSignature, specialaccess: string | undefined }[]): VarInfo {
-        return new VarInfo(this.srcname, this.decltype, itype, this.isConst, this.mustDefined, this.isRef);
-    }
-
-    resetType(itype: { ttype: TypeSignature, specialaccess: string | undefined }[]): VarInfo {
-        return new VarInfo(this.srcname, this.decltype, [...itype], this.isConst, this.mustDefined, this.isRef);
+    clone(): VarInfo {
+        return new VarInfo(this.srcname, this.decltype, this.vkind, this.mustDefined);
     }
 
     updateDefine(): VarInfo {
-        return new VarInfo(this.srcname, this.decltype, this.itype, this.isConst, true, this.isRef);
+        return new VarInfo(this.srcname, this.decltype, this.vkind, true);
     }
 }
 
@@ -73,214 +63,318 @@ class EListStyleTypeInferContext extends TypeInferContext {
     }
 }
 
-class TypeEnvironment {
-    readonly normalflow: boolean;
-    readonly returnflow: boolean;
-    readonly parent: TypeEnvironment | undefined;
+class LocalScope {
+    readonly locals: VarInfo[];
+    
+    readonly binderscope: boolean;
+    readonly accessed: Set<string>; //only for binder scopes
 
-    readonly args: VarInfo[];
+    constructor(binderscope: boolean, locals: VarInfo[], accessed: Set<string>) {
+        this.binderscope = binderscope;
+        this.locals = locals;
+        this.accessed = accessed;
+    }
+
+    clone(): LocalScope {
+        return new LocalScope(this.binderscope, [...this.locals.map((v) => v.clone())], new Set<string>(this.accessed));
+    }
+
+    resolveLocalVarInfoFromSrcName(vname: string): VarInfo | undefined {
+        const vinfo = this.locals.find((v) => v.srcname === vname);
+        if(vinfo !== undefined && this.binderscope) {
+            this.accessed.add(vname);
+        }
+
+        return vinfo
+    }
+
+    assignLocalVariable(vname: string): [LocalScope, boolean] {
+        const vidx = this.locals.findIndex((v) => v.srcname === vname);
+        if(vidx === -1) {
+            return [this, false];
+        }
+        else {
+            let newlocals = [...this.locals];
+            newlocals[vidx] = newlocals[vidx].updateDefine();
+            return [new LocalScope(this.binderscope, newlocals, this.accessed), true];
+        }
+    }
+
+    static mergeLocalScopes(...envs: LocalScope[]): LocalScope {
+        let locals: VarInfo[] = [];
+        for(let i = 0; i < envs[0].locals.length; i++) {
+            const mdef = envs.every((e) => e.locals[i].mustDefined);
+            locals.push(new VarInfo(envs[0].locals[i].srcname, envs[0].locals[i].decltype, envs[0].locals[i].vkind, mdef));
+        }
+        
+        let baccess = new Set<string>();
+        for(let i = 0; i < envs.length; i++) {
+            baccess = new Set<string>([...baccess, ...envs[i].accessed]);
+        }
+
+        return new LocalScope(envs[0].binderscope, locals, baccess);
+    }
+}
+
+
+class TypeTestBindInfo {
+    readonly guardidx: number;
+    readonly bname: string;
+
+    readonly ttrue: TypeSignature | undefined;
+    readonly tfalse: TypeSignature | undefined;
+
+    constructor(guardidx: number, bname: string, ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined) {
+        this.guardidx = guardidx;
+        this.bname = bname;
+        this.ttrue = ttrue;
+        this.tfalse = tfalse;
+    }
+
+    notop(): TypeTestBindInfo {
+        return new TypeTestBindInfo(this.guardidx, this.bname, this.tfalse, this.ttrue);
+    }
+
+    convertToStructInfoTrue(): { gidx: number, bvname: string, tsig: TypeSignature } {
+        return { gidx: this.guardidx, bvname: this.bname, tsig: this.ttrue as TypeSignature };
+    }
+
+    convertToStructInfoFalse(): { gidx: number, bvname: string, tsig: TypeSignature } {
+        return { gidx: this.guardidx, bvname: this.bname, tsig: this.tfalse as TypeSignature };
+    }
+}
+
+class TypeResultWRefVarInfoResult {
+    readonly tsig: TypeSignature;
+    readonly setcondout: {ttrue: string[], tfalse: string[]};
+    readonly setuncond: string[];
+    readonly usemod: string[];
+    readonly bbinds: TypeTestBindInfo[];
+
+    readonly alwaystrue: boolean;
+    readonly alwaysfalse: boolean;
+
+    constructor(tsig: TypeSignature, alwaystrue: boolean, alwaysfalse: boolean, setcondout: {ttrue: string[], tfalse: string[]}, setuncond: string[], usemod: string[], bbinds: TypeTestBindInfo[]) {
+        this.tsig = tsig;
+        this.alwaystrue = alwaystrue;
+        this.alwaysfalse = alwaysfalse;
+        this.setcondout = setcondout;
+        this.setuncond = setuncond;
+        this.usemod = usemod;
+        this.bbinds = bbinds;
+    }
+
+    static makeSimpleResult(tsig: TypeSignature): TypeResultWRefVarInfoResult {
+        return new TypeResultWRefVarInfoResult(tsig, false, false, {ttrue: [], tfalse: []}, [], [], []);
+    }
+
+    static andstates(results: TypeResultWRefVarInfoResult[]): TypeResultWRefVarInfoResult {
+        assert(results.length > 0);
+
+        let ttrue = new Set<string>();
+        let tfalse = new Set<string>();
+        let setuncond = new Set<string>();
+        let usemod = new Set<string>();
+        let bbinds: TypeTestBindInfo[] = [];
+
+        for(let i = 0; i < results.length; i++) {
+            results[i].setcondout.ttrue.forEach((v) => ttrue.add(v));
+            results[i].setcondout.tfalse.forEach((v) => tfalse.add(v));
+            results[i].setuncond.forEach((v) => setuncond.add(v));
+            results[i].usemod.forEach((v) => usemod.add(v));
+            bbinds.push(...results[i].bbinds);
+        }
+
+        return new TypeResultWRefVarInfoResult(
+            results[0].tsig,
+            results.every((r) => r.alwaystrue),
+            results.some((r) => r.alwaysfalse),
+            {ttrue: [...ttrue], tfalse: [...tfalse]},
+            [...setuncond],
+            [...usemod],
+            bbinds
+        );
+    }
+}
+
+class TypeEnvironment {
     readonly declReturnType: TypeSignature;
     readonly inferReturn: TypeInferContext;
 
-    readonly locals: VarInfo[][];
+    readonly isnormalflow: boolean;
 
-    constructor(normalflow: boolean, returnflow: boolean, parent: TypeEnvironment | undefined, args: VarInfo[], returnType: TypeSignature, inferctx: TypeInferContext, locals: VarInfo[][]) {
-        this.normalflow = normalflow;
-        this.returnflow = returnflow;
+    readonly parent: TypeEnvironment | undefined; //undefined for normal scopes and set for lambda scopes
+    readonly lcaptures: {vname: string, vtype: TypeSignature, scopeidx: number}[]; //only set for lambda scopes
+
+    readonly args: VarInfo[];
+    readonly locals: LocalScope[];
+
+    constructor(declReturnType: TypeSignature, inferReturn: TypeInferContext, isnormalflow: boolean, parent: TypeEnvironment | undefined, lcaptures: {vname: string, vtype: TypeSignature, scopeidx: number}[], args: VarInfo[], locals: LocalScope[]) {
+        this.declReturnType = declReturnType;
+        this.inferReturn = inferReturn;
+
+        this.isnormalflow = isnormalflow;
+
         this.parent = parent;
-
+        this.lcaptures = lcaptures;
+        
         this.args = args;
-        this.declReturnType = returnType;
-        this.inferReturn = inferctx;
-
         this.locals = locals;
     }
 
-    private static cloneLocals(locals: VarInfo[][]): VarInfo[][] {
-        return locals.map((l) => [...l]);
+    static createInitialStdEnv(declReturnType: TypeSignature, inferReturn: TypeInferContext,args: VarInfo[]): TypeEnvironment {
+        return new TypeEnvironment(declReturnType, inferReturn, true, undefined, [], args, [new LocalScope(false, [], new Set<string>())]);
     }
 
-    static createInitialStdEnv(args: VarInfo[], declReturnType: TypeSignature, inferReturn: TypeInferContext): TypeEnvironment {
-        return new TypeEnvironment(true, false, undefined, args, declReturnType, inferReturn, [[]]);
+    static createInitialLambdaEnv(declReturnType: TypeSignature, inferReturn: TypeInferContext, args: VarInfo[], enclosing: TypeEnvironment): TypeEnvironment {
+        return new TypeEnvironment(declReturnType, inferReturn, true, enclosing, [], args, [new LocalScope(false, [], new Set<string>())]);
     }
 
-    static createInitialLambdaEnv(args: VarInfo[], declReturnType: TypeSignature, inferReturn: TypeInferContext, enclosing: TypeEnvironment): TypeEnvironment {
-        return new TypeEnvironment(true, false, enclosing, args, declReturnType, inferReturn, [[]]);
+    cloneEnvironment(): TypeEnvironment {
+        return new TypeEnvironment(this.declReturnType, this.inferReturn, this.isnormalflow, this.parent, [...this.lcaptures], [...this.args], [...this.locals].map((l) => l.clone()));
     }
 
-    resolveLambdaCaptureVarInfoFromSrcName(vname: string): VarInfo | undefined {
+    resolveLambdaCaptureVarInfoFromSrcName(vname: string): [VarInfo, number] | undefined {
         const localdef = this.resolveLocalVarInfoFromSrcName(vname);
         if(localdef !== undefined) {
-            return localdef;
+            return [localdef, 0];
         }
 
-        return this.parent !== undefined ? this.parent.resolveLambdaCaptureVarInfoFromSrcName(vname) : undefined;
+        if(this.parent === undefined) {
+            return undefined;
+        }
+
+        const pcapture = this.parent.resolveLambdaCaptureVarInfoFromSrcName(vname);
+        if(pcapture === undefined) {
+            return undefined;
+        }
+
+        const [cinfo, cidx] = pcapture;
+        this.lcaptures.push({vname: cinfo.srcname, vtype: cinfo.decltype, scopeidx: cidx + 1});
+        return [cinfo, cidx + 1];
     }
 
     resolveLocalVarInfoFromSrcName(vname: string): VarInfo | undefined {
         for(let i = this.locals.length - 1; i >= 0; i--) {
-            for(let j = 0; j < this.locals[i].length; j++) {
-                if(this.locals[i][j].srcname === vname) {
-                    return this.locals[i][j];
-                }
+            const vinfo = this.locals[i].resolveLocalVarInfoFromSrcName(vname);
+            if(vinfo !== undefined) {
+                return vinfo;
             }
         }
 
         return this.args.find((v) => v.srcname === vname);
     }
 
-    resolveLocalVarInfoFromSrcNameWithIsParam(vname: string): [VarInfo | undefined, boolean] {
-        for(let i = this.locals.length - 1; i >= 0; i--) {
-            for(let j = 0; j < this.locals[i].length; j++) {
-                if(this.locals[i][j].srcname === vname) {
-                    return [this.locals[i][j], false];
-                }
-            }
-        }
-
-        return [this.args.find((v) => v.srcname === vname), true];
+    isLocalVariableAParameter(vname: string): boolean {
+        return this.args.some((v) => v.srcname === vname);
     }
 
-    addLocalVar(vname: string, vtype: TypeSignature, isConst: boolean, mustDefined: boolean): TypeEnvironment {
-        let newlocals = TypeEnvironment.cloneLocals(this.locals);
-        newlocals[newlocals.length - 1].push(new VarInfo(vname, vtype, [], isConst, mustDefined, false));
+    addLocalVar(vname: string, vtype: TypeSignature, vkind: "let" | "ref" | "var", mustDefined: boolean): TypeEnvironment {
+        let newlocals = [...this.locals.slice(0, this.locals.length - 1), this.locals[this.locals.length - 1].clone()];
+        newlocals[newlocals.length - 1].locals.push(new VarInfo(vname, vtype, vkind, mustDefined));
 
-        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.declReturnType, this.inferReturn, newlocals);
+        return new TypeEnvironment(this.declReturnType, this.inferReturn, this.isnormalflow, this.parent, this.lcaptures, this.args, newlocals);
     }
 
-    addLocalVarSet(vars: {name: string, vtype: TypeSignature}[], isConst: boolean): TypeEnvironment {
-        let newlocals = TypeEnvironment.cloneLocals(this.locals);
-        const newvars = vars.map((v) => new VarInfo(v.name, v.vtype, [], isConst, true, false));
-        newlocals[newlocals.length - 1].push(...newvars);
+    addLocalVarSet(vars: {name: string, vtype: TypeSignature}[], vkind: "let" | "ref" | "var"): TypeEnvironment {
+        let newlocals = [...this.locals.slice(0, this.locals.length - 1), this.locals[this.locals.length - 1].clone()];
+        const newvars = vars.map((v) => new VarInfo(v.name, v.vtype, vkind, true));
+        newlocals[newlocals.length - 1].locals.push(...newvars);
 
-        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.declReturnType, this.inferReturn, newlocals);
+        return new TypeEnvironment(this.declReturnType, this.inferReturn, this.isnormalflow, this.parent, this.lcaptures, this.args, newlocals);
     }
 
     assignLocalVariable(vname: string): TypeEnvironment {
-        let locals: VarInfo[][] = [];
+        let locals: LocalScope[] = [];
+        let assigned = false;
         for(let i = this.locals.length - 1; i >= 0; i--) {
-            let frame: VarInfo[] = [];
-            for(let j = 0; j < this.locals[i].length; j++) {
-                if(this.locals[i][j].srcname !== vname) {
-                    frame.push(this.locals[i][j]);
-                }
-                else {
-                    frame.push(this.locals[i][j].updateDefine());
-                }
-            }
-
-            locals = [frame, ...locals];
-        }
-
-        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.declReturnType, this.inferReturn, locals);
-    }
-
-    retypeLocalVariable(vname: string, itype: { ttype: TypeSignature, specialaccess: string | undefined }[]): TypeEnvironment {
-        let locals: VarInfo[][] = [];
-        for(let i = this.locals.length - 1; i >= 0; i--) {
-            let frame: VarInfo[] = [];
-            for(let j = 0; j < this.locals[i].length; j++) {
-                if(this.locals[i][j].srcname !== vname) {
-                    frame.push(this.locals[i][j]);
-                }
-                else {
-                    frame.push(this.locals[i][j].updateType(itype));
-                }
-            }
-
-            locals = [frame, ...locals];
-        }
-
-        let reflowargs: VarInfo[] = [];
-        for(let i = 0; i < this.args.length; i++) {
-            if(this.args[i].srcname !== vname) {
-                reflowargs.push(this.args[i]);
+            if(assigned) {
+                locals.push(this.locals[i]);
             }
             else {
-                reflowargs.push(this.args[i].updateType(itype));
-            }
+                const [newframe, wasassigned] = this.locals[i].assignLocalVariable(vname);
+                locals.push(newframe);
+                assigned = wasassigned;
+            };
         }
 
-        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, reflowargs, this.declReturnType, this.inferReturn, locals);
+        return new TypeEnvironment(this.declReturnType, this.inferReturn, this.isnormalflow, this.parent, this.lcaptures, this.args, locals);
     }
 
     setDeadFlow(): TypeEnvironment {
-        return new TypeEnvironment(false, false, this.parent, [...this.args], this.declReturnType, this.inferReturn, TypeEnvironment.cloneLocals(this.locals));
+        return new TypeEnvironment(this.declReturnType, this.inferReturn, false, this.parent, this.lcaptures, this.args, this.locals);
     }
 
     setReturnFlow(): TypeEnvironment {
-        return new TypeEnvironment(false, true, this.parent, [...this.args], this.declReturnType, this.inferReturn, TypeEnvironment.cloneLocals(this.locals));
+        return new TypeEnvironment(this.declReturnType, this.inferReturn, false, this.parent, this.lcaptures, this.args, this.locals);
+    }
+
+    setYieldFlow(): TypeEnvironment {
+        return new TypeEnvironment(this.declReturnType, this.inferReturn, false, this.parent, this.lcaptures, this.args, this.locals);
     }
 
     pushNewLocalScope(): TypeEnvironment {
-        return new TypeEnvironment(this.normalflow, this.returnflow, this, [...this.args], this.declReturnType, this.inferReturn, [...TypeEnvironment.cloneLocals(this.locals), []]);
+        return new TypeEnvironment(this.declReturnType, this.inferReturn, this.isnormalflow, this.parent, this.lcaptures, this.args, [...this.locals, new LocalScope(false, [], new Set<string>())]);
     }
 
-    pushNewLocalBinderScope(vname: string, vtype: TypeSignature): TypeEnvironment {
-        return new TypeEnvironment(this.normalflow, this.returnflow, this, [...this.args], this.declReturnType, this.inferReturn, [...TypeEnvironment.cloneLocals(this.locals), [new VarInfo(vname, vtype, [], true, true, false)]]);
+    pushNewLocalBinderScope(binds: VarInfo[]): TypeEnvironment {
+        return new TypeEnvironment(this.declReturnType, this.inferReturn, this.isnormalflow, this, this.lcaptures, this.args, [...this.locals, new LocalScope(false, binds, new Set<string>())]);
     }
 
-    popLocalScope(): TypeEnvironment {
+    popLocalScope(): [TypeEnvironment, LocalScope] {
         assert(this.locals.length > 0);
-        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.declReturnType, this.inferReturn, TypeEnvironment.cloneLocals(this.locals).slice(0, this.locals.length - 1));
-    }
-
-    resetRetypes(origenv: TypeEnvironment): TypeEnvironment {
-        let locals: VarInfo[][] = [];
-        for(let i = 0; i < origenv.locals.length; i++) {
-            let frame: VarInfo[] = [];
-
-            for(let j = 0; j < origenv.locals[i].length; j++) {
-                const ovv = origenv.locals[i][j];
-                const vv = this.locals[i].find((vv) => vv.srcname === ovv.srcname) as VarInfo;
-
-                frame.push(vv.resetType(ovv.itype));
-            }
-
-            locals.push(frame);
-        }
-
-        let args: VarInfo[] = [];
-        for(let i = 0; i < origenv.args.length; i++) {
-            const ovv = origenv.args[i];
-            const vv = this.resolveLocalVarInfoFromSrcName(ovv.srcname) as VarInfo;
-
-            args.push(vv.resetType(ovv.itype));
-        }
-
-        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, args, this.declReturnType, this.inferReturn, locals);
+        return [new TypeEnvironment(this.declReturnType, this.inferReturn, this.isnormalflow, this.parent, this.lcaptures, [...this.args], [...this.locals].slice(0, this.locals.length - 1)), this.locals[this.locals.length - 1]];
     }
 
     static mergeEnvironmentsSimple(origenv: TypeEnvironment, ...envs: TypeEnvironment[]): TypeEnvironment {
-        let locals: VarInfo[][] = [];
-        const normalenvs = envs.filter((e) => e.normalflow);
+        let locals: LocalScope[] = [];
+        const normalenvs = envs.filter((e) => e.isnormalflow);
         for(let i = 0; i < origenv.locals.length; i++) {
-            let frame: VarInfo[] = [];
-
-            for(let j = 0; j < origenv.locals[i].length; j++) {
-                const mdef = normalenvs.every((e) => (e.locals[i].find((vv) => vv.srcname === origenv.locals[i][j].srcname) as VarInfo).mustDefined);
-                frame.push(new VarInfo(origenv.locals[i][j].srcname, origenv.locals[i][j].decltype, origenv.locals[i][j].itype, origenv.locals[i][j].isConst, mdef, origenv.locals[i][j].isRef));
-            }
-
-            locals.push(frame);
+            locals.push(LocalScope.mergeLocalScopes(...normalenvs.map((e) => e.locals[i])));
         }
 
-        const normalflow = envs.some((e) => e.normalflow);
-        const returnflow = envs.every((e) => e.returnflow);
-        return new TypeEnvironment(normalflow, returnflow, origenv.parent, [...origenv.args], origenv.declReturnType, origenv.inferReturn, locals);
+        let lcaptures: {vname: string, vtype: TypeSignature, scopeidx: number}[] = [...origenv.lcaptures];
+        for(let i = 0; i < envs.length; i++) {
+            for(let j = 0; j < envs[i].lcaptures.length; j++) {
+                const cinfo = envs[i].lcaptures[j];
+                if(!lcaptures.some((c) => c.vname === cinfo.vname && c.scopeidx === cinfo.scopeidx)) {
+                    lcaptures.push(cinfo);
+                }
+            }
+        }
+
+        const normalflow = envs.some((e) => e.isnormalflow);
+        return new TypeEnvironment(origenv.declReturnType, origenv.inferReturn, normalflow, origenv.parent, lcaptures, [...origenv.args], locals);
     }
 
-    static mergeEnvironmentsOptBinderFlow(origenv: TypeEnvironment, binfo: BinderInfo, refinetype: { ttype: TypeSignature, specialaccess: string | undefined }, ...envs: TypeEnvironment[]): TypeEnvironment {
-        const menv = TypeEnvironment.mergeEnvironmentsSimple(origenv, ...envs);
-
-        if(!binfo.refineonfollow) {
-            return menv;
-        }
-        else {
-            const refinevar = binfo.srcname.slice(1);
-            const vinfo = origenv.resolveLocalVarInfoFromSrcName(refinevar) as VarInfo;
+    generateBranchFlows(ttre: TypeResultWRefVarInfoResult): [TypeEnvironment, TypeEnvironment] {
+        let tenv = this.cloneEnvironment();
+        let fenv = this.cloneEnvironment();
             
-            return menv.retypeLocalVariable(refinevar, [...vinfo.itype, refinetype]);
+        for(let i = 0; i < ttre.bbinds.length; i++) {
+            const bind = ttre.bbinds[i];
+            if(bind.ttrue !== undefined) {
+                tenv = tenv.addLocalVar(bind.bname, bind.ttrue, "let", true);
+            }
+
+            if(bind.tfalse !== undefined) {
+                fenv = fenv.addLocalVar(bind.bname, bind.tfalse, "let", true);
+            }
+        }
+
+        for(let i = 0; i < ttre.setcondout.ttrue.length; i++) {
+            tenv = tenv.assignLocalVariable(ttre.setcondout.ttrue[i]);
+        }
+        for(let i = 0; i < ttre.setcondout.tfalse.length; i++) {
+            fenv = fenv.assignLocalVariable(ttre.setcondout.tfalse[i]);
+        }
+
+        return [tenv, fenv];
+    }
+
+    updateUsedBindersFromOtherEnv(other: TypeEnvironment): void {[]
+        for(let i = 0 ; i < other.locals.length; i++) {
+            other.locals[i].accessed.forEach((v) => this.locals[i].accessed.add(v));
         }
     }
 }
@@ -288,5 +382,6 @@ class TypeEnvironment {
 export {
     VarInfo,
     TypeInferContext, SimpleTypeInferContext, EListStyleTypeInferContext,
+    TypeTestBindInfo, TypeResultWRefVarInfoResult,
     TypeEnvironment
 };

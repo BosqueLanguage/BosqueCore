@@ -265,11 +265,10 @@ The Z3 theorem prover is provided as a binary dependency in the repo via git LFS
 
 ## Running
 
-The current (and temporary) way to experiment with the Bosque language at this point is through the `bosque` compiler command line tool. After building this tool is available in the `bin/src/cmd/` directory. It is currently very simple with _one_ action which is to take all of the command line arguments and compile them as a single application to produce an set of executable JavaScript files -- using the unique `public function main() ...` as the entrypoint and putting the result in the output folder `jsout`. 
+The current (and temporary) way to experiment with the Bosque language at this point is through the `bosque` compiler command line tool. After building this tool is available in the `bin/src/cmd/` directory. It is currently very simple with _one_ action which is to take all of the command line arguments and compile them as a single application to produce an set of executable JavaScript files -- using the unique `public function main() ...` as the entrypoint and putting the result in the output folder `cppout`. 
 
 ```none
 node bin/src/cmd/bosque.js <source-file.bsq> <source-file.bsq> ...
-node jsout/Main.mjs
 ```
 
 ## Visual Studio Code Integration

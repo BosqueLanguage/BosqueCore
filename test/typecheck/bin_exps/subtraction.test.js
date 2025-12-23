@@ -4,11 +4,10 @@ import { checkTestExp, checkTestExpError } from "../../../bin/test/typecheck/typ
 import { describe, it } from "node:test";
 
 describe ("Checker -- Simple subtraction", () => {
-    it("should check simple nats", function () {
+    it("should check simple ops", function () {
         checkTestExp("1n - 1n", "Nat");
         checkTestExp("+2i - -2i", "Int");
         checkTestExp("+2.0f - 1.0f", "Float");
-        checkTestExp("+2/3R - 1/3R", "Rational");
     });
 
     it("should fail not same type", function () {

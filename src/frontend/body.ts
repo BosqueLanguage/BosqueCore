@@ -82,6 +82,17 @@ class ITestFail extends ITest {
     }
 }
 
+
+class ITestError extends ITest {
+    constructor(isnot: boolean) {
+        super(isnot);
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return `${this.isnot ? "!" : ""}error`;
+    }
+}
+
 class ITestRejected extends ITest {
     constructor(isnot: boolean) {
         super(isnot);
@@ -92,23 +103,23 @@ class ITestRejected extends ITest {
     }
 }
 
-class ITestFailed extends ITest {
+class ITestDenied extends ITest {
     constructor(isnot: boolean) {
         super(isnot);
     }
 
     emit(fmt: CodeFormatter): string {
-        return `${this.isnot ? "!" : ""}failed`;
+        return `${this.isnot ? "!" : ""}denied`;
     }
 }
 
-class ITestError extends ITest {
+class ITestFlagged extends ITest {
     constructor(isnot: boolean) {
         super(isnot);
     }
 
     emit(fmt: CodeFormatter): string {
-        return `${this.isnot ? "!" : ""}error`;
+        return `${this.isnot ? "!" : ""}flagged`;
     }
 }
 
@@ -203,8 +214,9 @@ class FormatStringTextComponent extends FormatStringComponent {
 }
 
 class FormatStringArgComponent extends FormatStringComponent {
-    readonly argPos: string; // number | name
+    readonly argPos: string; //name
     readonly argType: TypeSignature; //can be AutoTypeSignature, string, or typed string
+    resolvedType: TypeSignature | undefined; //after type checking
 
     constructor(argPos: string, argType: TypeSignature) {
         super();
@@ -297,8 +309,8 @@ enum ExpressionTag {
     LiteralBoolExpression = "LiteralBoolExpression",
     LiteralNatExpression = "LiteralNatExpression",
     LiteralIntExpression = "LiteralIntExpression",
-    LiteralBigNatExpression = "LiteralBigNatExpression",
-    LiteralBigIntExpression = "LiteralBigIntExpression",
+    LiteralChkNatExpression = "LiteralChkNatExpression",
+    LiteralChkIntExpression = "LiteralChkIntExpression",
     LiteralRationalExpression = "LiteralRationalExpression",
     LiteralFloatExpression = "LiteralFloatExpression",
     LiteralDecimalExpression = "LiteralDecimalExpression",
@@ -374,8 +386,6 @@ enum ExpressionTag {
     CallTaskActionExpression = "CallTaskActionExpression",
 
     ParseAsTypeExpression = "ParseAsTypeExpression",
-    SafeConvertExpression = "SafeConvertExpression",
-    CreateDirectExpression = "CreateDirectExpression",
 
     InterpolateFormatStringExpression = "InterpolateFormatStringExpression",
 
@@ -572,10 +582,12 @@ class LiteralFormatCStringExpression extends Expression {
 }
 
 class LiteralRegexExpression extends Expression {
+    readonly inns: FullyQualifiedNamespace;
     readonly value: string;
 
-    constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string) {
+    constructor(tag: ExpressionTag, sinfo: SourceInfo, inns: FullyQualifiedNamespace, value: string) {
         super(tag, sinfo);
+        this.inns = inns;
         this.value = value;
     }
 
@@ -769,6 +781,10 @@ class AccessEnvValueExpression extends Expression {
     readonly opname: "has" | "get" | "tryGet" | undefined;
     readonly keyname: string;
 
+    resolvedkey: string | undefined = undefined;
+    optoftype: TypeSignature | undefined = undefined;
+    mustdefined: boolean = false;
+
     constructor(sinfo: SourceInfo, opname: "has" | "get" | "tryGet" | undefined, keyname: string) {
         super(ExpressionTag.AccessEnvValueExpression, sinfo);
         this.opname = opname;
@@ -849,12 +865,13 @@ class AccessEnumExpression extends Expression {
 
 class AccessVariableExpression extends Expression {
     readonly srcname: string; //the name in the source code
-    isCaptured: boolean;
+    isParameter: boolean = false;
+    isCaptured: boolean = false;
+    scopeidx: number | undefined = undefined;
 
     constructor(sinfo: SourceInfo, srcname: string) {
         super(ExpressionTag.AccessVariableExpression, sinfo);
         this.srcname = srcname;
-        this.isCaptured = false;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
@@ -911,12 +928,12 @@ class ConstructorLambdaExpression extends Expression {
 }
 
 class SpecialConstructorExpression extends Expression {
-    readonly rop: "ok" | "fail" | "some" | "rejected" | "failed" | "error" | "success";
+    readonly rop: "ok" | "fail" | "some" | "error" | "rejected" | "denied" | "flagged" | "success";
     readonly arg: Expression;
 
     constype: TypeSignature | undefined = undefined;
 
-    constructor(sinfo: SourceInfo, rop: "ok" | "fail" | "some" | "rejected" | "failed" | "error" | "success", arg: Expression) {
+    constructor(sinfo: SourceInfo, rop: "ok" | "fail" | "some" | "error" | "rejected" | "denied" | "flagged" | "success", arg: Expression) {
         super(ExpressionTag.SpecialConstructorExpression, sinfo);
         this.rop = rop;
         this.arg = arg;
@@ -1120,40 +1137,6 @@ class ParseAsTypeExpression extends Expression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         return `<${this.ttype.emit()}>(${this.exp.emit(toplevel, fmt)})`;
-    }
-}
-
-class SafeConvertExpression extends Expression {
-    readonly exp: Expression;
-    readonly srctype: TypeSignature;
-    readonly trgttype: TypeSignature;
-
-    constructor(sinfo: SourceInfo, exp: Expression, srctype: TypeSignature, trgttype: TypeSignature) {
-        super(ExpressionTag.SafeConvertExpression, sinfo);
-        this.exp = exp;
-        this.srctype = srctype;
-        this.trgttype = trgttype;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `s_safeas<${this.srctype.emit()}, ${this.trgttype.emit()}>(${this.exp.emit(toplevel, fmt)})`;
-    }
-}
-
-class CreateDirectExpression extends Expression {
-    readonly exp: Expression;
-    readonly srctype: TypeSignature;
-    readonly trgttype: TypeSignature;
-
-    constructor(sinfo: SourceInfo, exp: Expression, srctype: TypeSignature, trgttype: TypeSignature) {
-        super(ExpressionTag.CreateDirectExpression, sinfo);
-        this.exp = exp;
-        this.srctype = srctype;
-        this.trgttype = trgttype;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `s_createDirect<${this.srctype.emit()}, ${this.trgttype.emit()}>(${this.exp.emit(toplevel, fmt)})`;
     }
 }
 
@@ -1402,6 +1385,8 @@ class PostfixInvoke extends PostfixOperation {
 abstract class UnaryExpression extends Expression {
     readonly exp: Expression;
 
+    opertype: TypeSignature | undefined = undefined;
+
     constructor(tag: ExpressionTag, sinfo: SourceInfo, exp: Expression) {
         super(tag, sinfo);
         this.exp = exp;
@@ -1419,8 +1404,6 @@ abstract class UnaryExpression extends Expression {
 }
 
 class PrefixNotOpExpression extends UnaryExpression {
-    opertype: TypeSignature | undefined = undefined;
-
     constructor(sinfo: SourceInfo, exp: Expression) {
         super(ExpressionTag.PrefixNotOpExpression, sinfo, exp);
     }
@@ -1432,8 +1415,6 @@ class PrefixNotOpExpression extends UnaryExpression {
 
 class PrefixNegateOrPlusOpExpression extends UnaryExpression {
     readonly op: "-" | "+";
-
-    opertype: TypeSignature | undefined = undefined;
 
     constructor(sinfo: SourceInfo, exp: Expression, op: "-" | "+") {
         super(ExpressionTag.PrefixNegateOrPlusOpExpression, sinfo, exp);
@@ -1660,7 +1641,6 @@ class NumericGreaterEqExpression extends BinaryNumericExpression {
 
 abstract class LogicExpression extends Expression {
     readonly exps: Expression[];
-    purebool: boolean = true;
 
     constructor(tag: ExpressionTag, sinfo: SourceInfo, exps: Expression[]) {
         super(tag, sinfo);
@@ -1780,9 +1760,9 @@ class EmptyEnvironmentExpression extends EnvironmentGenerationExpression {
 }
 
 class InitializeEnvironmentExpression extends EnvironmentGenerationExpression {
-    readonly args: {envkey: string, value: Expression}[];
+    readonly args: {envkey: string, value: RValueExpression}[];
 
-    constructor(sinfo: SourceInfo, args: {envkey: string, value: Expression}[]) {
+    constructor(sinfo: SourceInfo, args: {envkey: string, value: RValueExpression}[]) {
         super(EnvironmentGenerationExpressionTag.InitializeEnvironmentExpression, sinfo);
         this.args = args;
     }
@@ -1844,13 +1824,13 @@ class TaskRunExpression extends TaskInvokeExpression {
 }
 
 class TaskMultiExpression extends TaskInvokeExpression {
-    readonly isparallel: boolean;
+    readonly execmode: "parallel" | "sequential" | "std";
     readonly tasks: [TypeSignature, TaskConfiguration][];
     readonly args: [Expression[], EnvironmentGenerationExpression][];
 
-    constructor(sinfo: SourceInfo, isparallel: boolean, tasks: [TypeSignature, TaskConfiguration][], args: [Expression[], EnvironmentGenerationExpression][]) {
+    constructor(sinfo: SourceInfo, execmode: "parallel" | "sequential" | "std", tasks: [TypeSignature, TaskConfiguration][], args: [Expression[], EnvironmentGenerationExpression][]) {
         super(ExpressionTag.TaskMultiExpression, sinfo);
-        this.isparallel = isparallel;
+        this.execmode = execmode;
         this.tasks = tasks;
         this.args = args;
     }
@@ -1868,20 +1848,20 @@ class TaskMultiExpression extends TaskInvokeExpression {
             return `${envexp}${argexp !== "" ? (", " + argexp) : ""}`;
         });
 
-        return `${this.isparallel ? "parallel " : ""}Task::multi<${taskstrs.join(", ")}>(${argl.join("; ")})`;
+        return `${this.execmode !== "std" ? `${this.execmode} ` : ""}Task::multi<${taskstrs.join(", ")}>(${argl.join("; ")})`;
     }
 }
 
 class TaskAllExpression extends TaskInvokeExpression {
-    readonly isparallel: boolean;
+    readonly execmode: "parallel" | "sequential" | "std";
     readonly task: TypeSignature;
     readonly configs: TaskConfiguration;
     readonly args: Expression;
     readonly envexp: EnvironmentGenerationExpression;
 
-    constructor(sinfo: SourceInfo, isparallel: boolean, task: TypeSignature, args: Expression, envexp: EnvironmentGenerationExpression, configs: TaskConfiguration) {
+    constructor(sinfo: SourceInfo, execmode: "parallel" | "sequential" | "std", task: TypeSignature, args: Expression, envexp: EnvironmentGenerationExpression, configs: TaskConfiguration) {
         super(ExpressionTag.TaskAllExpression, sinfo);
-        this.isparallel = isparallel;
+        this.execmode = execmode;
         this.task = task;
         this.configs = configs;
         this.args = args;
@@ -1893,18 +1873,18 @@ class TaskAllExpression extends TaskInvokeExpression {
         const envexp = this.envexp.emit(fmt);
         const argl = this.args.emit(true, fmt);
 
-        return `${this.isparallel ? "parallel " : ""}Task::all<${this.task.emit()}${configs}>(${envexp}, ${argl})`;
+        return `${this.execmode !== "std" ? `${this.execmode} ` : ""}Task::all<${this.task.emit()}${configs}>(${envexp}, ${argl})`;
     }
 }
 
 class TaskDashExpression extends TaskInvokeExpression {
-    readonly isparallel: boolean;
+    readonly execmode: "parallel" | "sequential" | "std";
     readonly tasks: [TypeSignature, TaskConfiguration][];
     readonly args: [Expression[], EnvironmentGenerationExpression][];
 
-    constructor(sinfo: SourceInfo, isparallel: boolean, tasks: [TypeSignature, TaskConfiguration][], args: [Expression[], EnvironmentGenerationExpression][]) {
+    constructor(sinfo: SourceInfo, execmode: "parallel" | "sequential" | "std", tasks: [TypeSignature, TaskConfiguration][], args: [Expression[], EnvironmentGenerationExpression][]) {
         super(ExpressionTag.TaskDashExpression, sinfo);
-        this.isparallel = isparallel;
+        this.execmode = execmode;
         this.tasks = tasks;
         this.args = args;
     }
@@ -1922,18 +1902,18 @@ class TaskDashExpression extends TaskInvokeExpression {
             return `${envexp}${argexp !== "" ? (", " + argexp) : ""}`;
         });
 
-        return `${this.isparallel ? "parallel " : ""}Task::dash<${taskstrs.join(", ")}>(${argl.join("; ")})`;
+        return `${this.execmode !== "std" ? `${this.execmode} ` : ""}Task::dash<${taskstrs.join(", ")}>(${argl.join("; ")})`;
     }
 }
 
 class TaskDashAnyExpression extends TaskInvokeExpression {
-    readonly isparallel: boolean;
+    readonly execmode: "parallel" | "sequential" | "std";
     readonly tasks: [TypeSignature, TaskConfiguration][];
     readonly args: [Expression[], EnvironmentGenerationExpression][];
 
-    constructor(sinfo: SourceInfo, isparallel: boolean, tasks: [TypeSignature, TaskConfiguration][], args: [Expression[], EnvironmentGenerationExpression][]) {
+    constructor(sinfo: SourceInfo, execmode: "parallel" | "sequential" | "std", tasks: [TypeSignature, TaskConfiguration][], args: [Expression[], EnvironmentGenerationExpression][]) {
         super(ExpressionTag.TaskDashAnyExpression, sinfo);
-        this.isparallel = isparallel;
+        this.execmode = execmode;
         this.tasks = tasks;
         this.args = args;
     }
@@ -1951,20 +1931,20 @@ class TaskDashAnyExpression extends TaskInvokeExpression {
             return `${envexp}${argexp !== "" ? (", " + argexp) : ""}`;
         });
 
-        return `${this.isparallel ? "parallel " : ""}Task::dashAny<${taskstrs.join(", ")}>(${argl.join("; ")})`;
+        return `${this.execmode !== "std" ? `${this.execmode} ` : ""}Task::dashAny<${taskstrs.join(", ")}>(${argl.join("; ")})`;
     }
 }
 
 class TaskRaceExpression extends TaskInvokeExpression {
-    readonly isparallel: boolean;
+    readonly execmode: "parallel" | "sequential" | "std";
     readonly task: TypeSignature;
     readonly configs: TaskConfiguration;
     readonly args: Expression;
     readonly envexp: EnvironmentGenerationExpression;
 
-    constructor(sinfo: SourceInfo, isparallel: boolean, task: TypeSignature, args: Expression, envexp: EnvironmentGenerationExpression, configs: TaskConfiguration) {
+    constructor(sinfo: SourceInfo, execmode: "parallel" | "sequential" | "std", task: TypeSignature, args: Expression, envexp: EnvironmentGenerationExpression, configs: TaskConfiguration) {
         super(ExpressionTag.TaskRaceExpression, sinfo);
-        this.isparallel = isparallel;
+        this.execmode = execmode;
         this.task = task;
         this.configs = configs;
         this.args = args;
@@ -1976,20 +1956,20 @@ class TaskRaceExpression extends TaskInvokeExpression {
         const envexp = this.envexp.emit(fmt);
         const argl = this.args.emit(true, fmt);
 
-        return `${this.isparallel ? "parallel " : ""}Task::race<${this.task.emit()}${configs}>(${envexp}, ${argl})`;
+        return `${this.execmode !== "std" ? `${this.execmode} ` : ""}Task::race<${this.task.emit()}${configs}>(${envexp}, ${argl})`;
     }
 }
 
 class TaskRaceAnyExpression extends TaskInvokeExpression {
-    readonly isparallel: boolean;
+    readonly execmode: "parallel" | "sequential" | "std";
     readonly task: TypeSignature;
     readonly configs: TaskConfiguration;
     readonly args: Expression;
     readonly envexp: EnvironmentGenerationExpression;
 
-    constructor(sinfo: SourceInfo, isparallel: boolean, task: TypeSignature, args: Expression, envexp: EnvironmentGenerationExpression, configs: TaskConfiguration) {
+    constructor(sinfo: SourceInfo, execmode: "parallel" | "sequential" | "std", task: TypeSignature, args: Expression, envexp: EnvironmentGenerationExpression, configs: TaskConfiguration) {
         super(ExpressionTag.TaskRaceAnyExpression, sinfo);
-        this.isparallel = isparallel;
+        this.execmode = execmode;
         this.task = task;
         this.configs = configs;
         this.args = args;
@@ -2001,7 +1981,7 @@ class TaskRaceAnyExpression extends TaskInvokeExpression {
         const envexp = this.envexp.emit(fmt);
         const argl = this.args.emit(true, fmt);
 
-        return `${this.isparallel ? "parallel " : ""}Task::raceAny<${this.task.emit()}${configs}>(${envexp}, ${argl})`;
+        return `${this.execmode !== "std" ? `${this.execmode} ` : ""}Task::raceAny<${this.task.emit()}${configs}>(${envexp}, ${argl})`;
     }
 }
 
@@ -2081,6 +2061,8 @@ class ChkLogicImpliesExpression extends ChkLogicExpression {
     readonly lhs: ITestGuardSet;
     readonly rhs: Expression;
 
+    trueBinders: { gidx: number, bvname: string, tsig: TypeSignature }[] = [];
+
     constructor(sinfo: SourceInfo, lhs: ITestGuardSet, rhs: Expression) {
         super(ChkLogicExpressionTag.ChkLogicImpliesExpression);
 
@@ -2117,6 +2099,8 @@ enum RValueExpressionTag {
 
 abstract class RValueExpression {
     readonly tag: RValueExpressionTag;
+    
+    rtype: TypeSignature | undefined = undefined;
 
     constructor(tag: RValueExpressionTag) {
         this.tag = tag;
@@ -2133,8 +2117,8 @@ class ConditionalValueExpression extends RValueExpression {
     readonly trueValue: Expression
     readonly falseValue: Expression;
 
-    trueBindType: TypeSignature | undefined = undefined;
-    falseBindType: TypeSignature | undefined = undefined
+    trueBinders: { gidx: number, bvname: string, tsig: TypeSignature }[] = [];
+    falseBinders: { gidx: number, bvname: string, tsig: TypeSignature }[] = [];
 
     constructor(sinfo: SourceInfo, guardset: ITestGuardSet, trueValue: Expression, falseValue: Expression) {
         super(RValueExpressionTag.ConditionalValueExpression);
@@ -2940,7 +2924,7 @@ class StandardBodyImplementation extends BodyImplementation {
 
 export {
     RecursiveAnnotation,
-    BinderInfo, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestFail, ITestFailed, ITestRejected, ITestError, ITestSuccess,
+    BinderInfo, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestFail, ITestError, ITestRejected, ITestDenied, ITestFlagged, ITestSuccess,
     ITestGuard, ITestBinderGuard, ITestTypeGuard, ITestSimpleGuard, ITestGuardSet,
     FormatStringComponent, FormatStringTextComponent, FormatStringArgComponent,
     ArgumentValue, PositionalArgumentValue, NamedArgumentValue, SpreadArgumentValue, PassingArgumentValue, ArgumentList,
@@ -2960,7 +2944,7 @@ export {
     CallNamespaceFunctionExpression, CallTypeFunctionExpression, 
     CallRefInvokeExpression, CallRefVariableExpression, CallRefThisExpression, CallRefSelfExpression, 
     CallTaskActionExpression,
-    ParseAsTypeExpression, SafeConvertExpression, CreateDirectExpression,
+    ParseAsTypeExpression,
     InterpolateFormatExpression,
     PostfixOpTag, PostfixOperation, PostfixOp,
     PostfixError, PostfixAccessFromName, PostfixAccessFromIndex, PostfixProjectFromNames,

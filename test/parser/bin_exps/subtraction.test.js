@@ -16,15 +16,14 @@ describe ("Parser -- Nat subtraction", () => {
 });
 
 
-describe ("Parser -- BigInt subtraction", () => {
-    it("should parse simple nats", function () {
-        parseTestExp("0I - 1I", undefined, "BigInt");
-        parseTestExp("+2I - -2I", undefined, "BigInt");
-        parseTestExp("1I - +3I", undefined, "BigInt");
+describe ("Parser -- ChkInt subtraction", () => {
+    it("should parse simple chkint", function () {
+        parseTestExp("0I - 1I", undefined, "ChkInt");
+        parseTestExp("+2I - -2I", undefined, "ChkInt");
+        parseTestExp("1I - +3I", undefined, "ChkInt");
     });
 
     it("should fail stuck signs", function () {
-        parseTestExpError("2I-3I", 'Expected ";" but got "-3I" when parsing "line statement"', "BigInt");
+        parseTestExpError("2I-3I", 'Expected ";" but got "-3I" when parsing "line statement"', "ChkInt");
     });
 });
-

@@ -8,6 +8,8 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const rootsrc = path.join(__dirname, "../", "src");
+const rootbuild = path.join(__dirname, "../", "build");
+
 const rootbin = path.join(__dirname, "../", "bin");
 
 function copyResourceDir(dirfrom, dirto) {
@@ -20,14 +22,21 @@ function copyResourceDir(dirfrom, dirto) {
     execSync(`cp -R ${srcpath}* ${dstpath}`);
 }
 
+function copyBuildResourceDir(dirfrom, dirto) {
+    const srcpath = path.join(rootbuild, dirfrom);
+    const dstpath = path.join(rootbin, dirto);
+
+    process.stdout.write(`Copying ${srcpath} to ${dstpath}\n`);
+    fs.mkdirSync(dstpath, {recursive: true});
+    execSync(`rm -rf ${dstpath}*`);
+    execSync(`cp -R ${srcpath}* ${dstpath}`);
+}
+
 process.stdout.write(`Copying resources...\n`);
 
 copyResourceDir("core/", "core/");
-copyResourceDir("backend/jsemitter/runtime/", "jsruntime/");
-copyResourceDir("backend/smtcore/runtime/", "smtruntime/");
-copyResourceDir("backend/cpp/runtime/", "cppruntime/");
-copyResourceDir("backend/cpp/gc/", "cppruntime/gc/");
-
 copyResourceDir("samples/", "samples/");
+
+copyBuildResourceDir("runcpp/", "runcpp/");
 
 process.stdout.write(`done!\n`);

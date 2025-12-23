@@ -1,0 +1,47 @@
+#pragma once
+
+#include "../common.h"
+
+#include "bsqtype.h"
+#include "boxed.h"
+
+#include "bools.h"
+#include "chars.h"
+#include "integrals.h"
+#include "fpoints.h"
+#include "strings.h"
+
+namespace ᐸRuntimeᐳ
+{
+    using XNone = uint64_t;
+}
+
+constexpr ᐸRuntimeᐳ::XNone none = 0ull;
+
+constexpr ᐸRuntimeᐳ::XBool FALSE = ᐸRuntimeᐳ::XBool::from(false);
+constexpr ᐸRuntimeᐳ::XBool TRUE = ᐸRuntimeᐳ::XBool::from(true);
+
+constexpr ᐸRuntimeᐳ::XNat operator""_n(unsigned long long n)
+{
+    return ᐸRuntimeᐳ::XNat(n);
+}
+
+constexpr ᐸRuntimeᐳ::XInt operator""_i(unsigned long long n)
+{
+    return ᐸRuntimeᐳ::XInt(n);
+}
+
+constexpr ᐸRuntimeᐳ::XChkNat operator""_N(unsigned long long n)
+{
+    return ᐸRuntimeᐳ::XChkNat(n);
+}
+    
+constexpr ᐸRuntimeᐳ::XChkInt operator""_I(unsigned long long n)
+{
+    return ᐸRuntimeᐳ::XChkInt(n);
+}
+
+constexpr ᐸRuntimeᐳ::XFloat operator""_f(long double n)
+{
+    return ᐸRuntimeᐳ::XFloat(n);
+}

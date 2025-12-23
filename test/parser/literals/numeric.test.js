@@ -27,18 +27,18 @@ describe ("Parser -- Int", () => {
     });
 });
 
-describe ("Parser -- BigNat", () => {
+describe ("Parser -- ChkNat", () => {
     it("should parse simple big nats", function () {
-        parseTestExp("0N", undefined, "BigNat");
-        parseTestExp("+2N", undefined, "BigNat");
+        parseTestExp("0N", undefined, "ChkNat");
+        parseTestExp("+2N", undefined, "ChkNat");
     });
 });
 
-describe ("Parser -- BigInt", () => {
+describe ("Parser -- ChkInt", () => {
     it("should parse simple big ints", function () {
-        parseTestExp("0I", undefined, "BigInt");
-        parseTestExp("+2I", undefined, "BigInt");
-        parseTestExp("-2I", undefined, "BigInt");
+        parseTestExp("0I", undefined, "ChkInt");
+        parseTestExp("+2I", undefined, "ChkInt");
+        parseTestExp("-2I", undefined, "ChkInt");
     });
 });
 

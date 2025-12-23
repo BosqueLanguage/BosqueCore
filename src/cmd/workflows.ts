@@ -5,12 +5,25 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 import { CodeFileInfo, PackageConfig } from "../frontend/build_decls.js";
-import { Status } from "./status_output.js";
 import { Assembly } from "../frontend/assembly.js";
 import { Parser, ParserError } from "../frontend/parser.js";
 import { TypeChecker, TypeError } from "../frontend/checker.js";
 
 const bosque_dir: string = path.join(__dirname, "../../../");
+
+let statusenabled = false;
+const Status = {
+    output: (msg: string) => {
+        if(statusenabled) {
+            process.stdout.write(msg);
+        }
+    },
+    error: (msg: string) => {
+        if(statusenabled) {
+            process.stderr.write(msg);
+        }
+    }
+};
 
 function workflowLoadUserSrc(files: string[]): CodeFileInfo[] | undefined {
     try {
@@ -94,21 +107,14 @@ function generateASMGeneral(usercode: PackageConfig, macrodefs: string[]): [Asse
     return [tasm, parseerrors, typeerrors];
 }
 
-
 function generateASM(usercode: PackageConfig): [Assembly | undefined, ParserError[], TypeError[]]{
-    return generateASMGeneral(usercode, ["EXEC_LIBS"]);
+    return generateASMGeneral(usercode, ["EXEC_LIBS", "STRIPPED_CORE"]);
 }
 
-
-function generateASMSMT(usercode: PackageConfig): [Assembly | undefined, ParserError[], TypeError[]]{
-    return generateASMGeneral(usercode, ["SMT_LIBS"]);
-}
-
-// We MAY want to create separate core files for cpp explicitly to easily make stuff builtin, ok for now
-function generateASMCPP(usercode: PackageConfig): [Assembly | undefined, ParserError[], TypeError[]]{
-    return generateASMGeneral(usercode, ["EXEC_LIBS", "CPP_CORE"])
+function setStatusEnabled(enabled: boolean): void {
+    statusenabled = enabled;
 }
 
 export { 
-    workflowLoadUserSrc, workflowLoadCoreSrc, workflowLoadAllSrc, generateASM, generateASMSMT, generateASMCPP
+    workflowLoadUserSrc, workflowLoadCoreSrc, workflowLoadAllSrc, generateASM, setStatusEnabled
 };

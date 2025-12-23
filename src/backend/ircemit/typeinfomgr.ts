@@ -1,0 +1,190 @@
+
+import { IRAssembly } from "../irdefs/irassembly.js";
+import { IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature } from "../irdefs/irtype.js";
+import { TransformCPPNameManager } from "./namemgr.js";
+
+import assert from "node:assert";
+
+class FieldOffsetInfo {
+    readonly fkey: string;
+
+    readonly enclosingtype: IRTypeSignature;
+    readonly fname: string;
+    readonly ftype: IRTypeSignature;
+
+    readonly offset: number;
+
+    constructor(fkey: string, enclosingtype: IRTypeSignature, fname: string, ftype: IRTypeSignature, offset: number) {
+        this.fkey = fkey;
+        this.enclosingtype = enclosingtype;
+        this.fname = fname;
+        this.ftype = ftype;
+        this.offset = offset;
+    }
+}
+
+enum LayoutTag {
+    Value = 0,
+    Ref,
+    Tagged
+}
+
+class TypeInfo {
+    readonly tkey: string;
+    readonly tsig: IRTypeSignature;
+
+    readonly bsqtypeid: number;
+    readonly bytesize: number;
+    readonly slotcount: number;
+    readonly tag: LayoutTag;
+
+    readonly ptrmask: string | undefined; // NULL is for leaf values or structs
+    readonly vtable: FieldOffsetInfo[] | undefined;
+
+    constructor(tkey: string, tsig: IRTypeSignature, bsqtypeid: number, bytesize: number, slotcount: number, tag: LayoutTag, ptrmask: string | undefined, vtable: FieldOffsetInfo[] | undefined) {
+        this.tkey = tkey;
+        this.tsig = tsig;
+
+        this.bsqtypeid = bsqtypeid;
+        this.bytesize = bytesize;
+        this.slotcount = slotcount;
+        this.tag = tag;
+        
+        this.ptrmask = ptrmask;
+        this.vtable = vtable;
+    }
+}
+
+class TypeInfoManager {
+    private typeInfoMap: Map<string, TypeInfo>;
+
+    static readonly c_ref_pass_size: number = 32; //Bytes used for ref passing (pointer + typeid + extra)
+
+    constructor() {
+        this.typeInfoMap = new Map<string, TypeInfo>();
+    }
+
+    hasTypeInfo(tkey: string): boolean {
+        return this.typeInfoMap.has(tkey);
+    }
+
+    getTypeInfo(tkey: string): TypeInfo {
+        assert(this.typeInfoMap.has(tkey), `TypeInfoManager::getTypeInfo - Missing type info for key ${tkey}`);
+        
+        return this.typeInfoMap.get(tkey) as TypeInfo;
+    }
+
+    addTypeInfo(tkey: string, typeInfo: TypeInfo): void {
+        assert(!this.typeInfoMap.has(tkey), `TypeInfoManager::addTypeInfo - Duplicate type info for key ${tkey}`);
+
+        this.typeInfoMap.set(tkey, typeInfo);
+    }
+
+    emitTypeInfoDecl(tkey: string): string {
+        const typeinfo = this.getTypeInfo(tkey);
+        const tk = TransformCPPNameManager.convertTypeKey(tkey);
+        
+        let layouttag = "";
+        if(typeinfo.tag === LayoutTag.Value) {
+            layouttag = "Value";
+        }
+        else if(typeinfo.tag === LayoutTag.Ref) {
+            layouttag = "Ref";
+        }
+        else {
+            layouttag = "Tagged";
+        }
+
+        assert(typeinfo.vtable?.length === 0, `TypeInfoManager::emitTypeInfoDecl - VTable emission not yet supported for type key ${tkey}`);
+
+        return `constexpr TypeInfo g_typeinfo_${tk} = { ${typeinfo.bsqtypeid}, ${typeinfo.bytesize}, ${typeinfo.slotcount}, LayoutTag::${layouttag}, ${typeinfo.ptrmask ?? "BSQ_PTR_MASK_LEAF"}, "${tk}", nullptr };`;
+    }
+
+    emitTypeAsParameter(tkey: string, isreftagged: boolean): string {
+        const typeinfo = this.getTypeInfo(tkey);
+
+        const rtspec = (isreftagged ? "&" : "");
+        if(typeinfo.tag === LayoutTag.Ref) {
+            return TransformCPPNameManager.convertTypeKey(tkey) + "*" + rtspec;
+        }
+        else if(typeinfo.tsig instanceof IRLambdaParameterPackTypeSignature) {
+            return "const " + TransformCPPNameManager.convertTypeKey(tkey) + "&";
+        }
+        else {
+            if(typeinfo.bytesize <= TypeInfoManager.c_ref_pass_size) {
+                return TransformCPPNameManager.convertTypeKey(tkey) + rtspec;
+            }
+            else {
+                return TransformCPPNameManager.convertTypeKey(tkey) + "&";                
+            }
+        }
+    }
+
+    emitTypeAsReturn(tkey: string): string {
+        const typeinfo = this.getTypeInfo(tkey);
+
+        if(typeinfo.tag !== LayoutTag.Ref) {
+            return TransformCPPNameManager.convertTypeKey(tkey);
+        }
+        else {
+            return TransformCPPNameManager.convertTypeKey(tkey) + "*";            
+        }
+    }
+
+    emitTypeAsMemberField(tkey: string, enclosingtinfo: TypeInfo): string {
+        const cspec = (enclosingtinfo.tag === LayoutTag.Ref) ? "const " : "";
+        const lspec = TransformCPPNameManager.convertTypeKey(tkey);
+        
+        return `${cspec}${lspec}`;
+    }
+
+    emitTypeAsStd(tkey: string): string {
+        const typeinfo = this.getTypeInfo(tkey);
+
+        if(typeinfo.tag !== LayoutTag.Ref) {
+            return TransformCPPNameManager.convertTypeKey(tkey);
+        }
+        else {
+            return TransformCPPNameManager.convertTypeKey(tkey) + "*";            
+        }
+    }
+
+    static generateTypeInfos(irasm: IRAssembly): TypeInfoManager {
+        const timgr = new TypeInfoManager();
+
+        //setup the well-known primitive types
+        timgr.addTypeInfo("None", new TypeInfo("None", new IRNominalTypeSignature("None"), 0, 8, 1, LayoutTag.Value, undefined, undefined));
+        timgr.addTypeInfo("Bool", new TypeInfo("Bool", new IRNominalTypeSignature("Bool"), 1, 8, 1, LayoutTag.Value, undefined, undefined));
+        timgr.addTypeInfo("Int", new TypeInfo("Int", new IRNominalTypeSignature("Int"), 2, 8, 1, LayoutTag.Value, undefined, undefined));
+        timgr.addTypeInfo("Nat", new TypeInfo("Nat", new IRNominalTypeSignature("Nat"), 3, 8, 1, LayoutTag.Value, undefined, undefined));
+        timgr.addTypeInfo("ChkInt", new TypeInfo("ChkInt", new IRNominalTypeSignature("ChkInt"), 4, 16, 2, LayoutTag.Value, undefined, undefined));
+        timgr.addTypeInfo("ChkNat", new TypeInfo("ChkNat", new IRNominalTypeSignature("ChkNat"), 5, 16, 2, LayoutTag.Value, undefined, undefined));
+
+        timgr.addTypeInfo("Float", new TypeInfo("Float", new IRNominalTypeSignature("Float"), 6, 8, 1, LayoutTag.Value, undefined, undefined));
+        
+        timgr.addTypeInfo("CStrBuff", new TypeInfo("CStrBuff", new IRNominalTypeSignature("CStrBuff"), 7, 16, 2, LayoutTag.Value, undefined, undefined));
+        timgr.addTypeInfo("CStrNode", new TypeInfo("CStrNode", new IRNominalTypeSignature("CStrNode"), 8, 32, 4, LayoutTag.Ref, "0011", undefined));
+        timgr.addTypeInfo("CString", new TypeInfo("CString", new IRNominalTypeSignature("CString"), 9, 24, 3, LayoutTag.Tagged, "200", undefined));
+
+
+        timgr.addTypeInfo("StrBuff", new TypeInfo("StrBuff", new IRNominalTypeSignature("StrBuff"), 10, 32, 4, LayoutTag.Value, undefined, undefined));
+        timgr.addTypeInfo("StrNode", new TypeInfo("StrNode", new IRNominalTypeSignature("StrNode"), 11, 32, 4, LayoutTag.Ref, "0011", undefined));
+        timgr.addTypeInfo("String", new TypeInfo("String", new IRNominalTypeSignature("CString"), 12, 40, 5, LayoutTag.Tagged, "2000", undefined));
+
+        //TODO: more primitive types
+
+        //TODO enums
+
+        //TODO: typedecls
+
+        //Now handle entities with a recursive walk  
+
+        return timgr;
+    }
+}
+
+export {
+    FieldOffsetInfo, 
+    LayoutTag, TypeInfo,
+    TypeInfoManager
+};
