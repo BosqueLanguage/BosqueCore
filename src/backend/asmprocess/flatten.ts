@@ -727,16 +727,19 @@ class ASMToIRConverter {
 
         const rval = (rhs as LiteralSimpleExpression).value;
         if(opchk === "Nat") {
-            return rval.endsWith("0n");
+            return /[+-]?0n/.test(rval);
         }
         else if(opchk === "Int") {
-            return rval.endsWith("0i");
+            return /[+-]?0i/.test(rval);
         }
         else if(opchk === "ChkNat") {
-            return rval.endsWith("0N");
+            return /[+-]?0N/.test(rval);
         }
         else if(opchk === "ChkInt") {
-            return rval.endsWith("0I");
+            return /[+-]?0I/.test(rval);
+        }
+        else if(opchk === "Float") {
+            return /[+-]?0\.0+f/.test(rval);
         }
         else {
             return true;
