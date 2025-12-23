@@ -705,8 +705,8 @@ class CPPEmitter {
         `}`;
 
         return [
-            ["//Enum Decls\n", edecl, bsqparsedecl, bsqemitdecl].join("\n"), 
-            ["//Enum Defs\n", mmarray, bsqparsedef, bsqemitdef].join("\n")
+            [edecl, bsqparsedecl, bsqemitdecl].join("\n"), 
+            [mmarray, bsqparsedef, bsqemitdef].join("\n")
         ];
     }
 
@@ -745,8 +745,8 @@ class CPPEmitter {
         const stringdd = this.irasm.stringoftypedecls.map((tstr) => this.emitStringTypeDeclInfo(tstr));
 
         return [
-            [...pdecls, ...enumdd.map((tt) => tt[0]), ...gtddd.map((tt) => tt[0]), ...cstringdd.map((tt) => tt[0]), ...stringdd.map((tt) => tt[0])].join("\n\n"),
-            [...pdefs, ...enumdd.map((tt) => tt[1]), ...gtddd.map((tt) => tt[1]), ...cstringdd.map((tt) => tt[1]), ...stringdd.map((tt) => tt[1])].join("\n\n")
+            [pdecls, ...enumdd.map((tt) => tt[0]), ...gtddd.map((tt) => tt[0]), ...cstringdd.map((tt) => tt[0]), ...stringdd.map((tt) => tt[0])].join("\n\n"),
+            [pdefs, ...enumdd.map((tt) => tt[1]), ...gtddd.map((tt) => tt[1]), ...cstringdd.map((tt) => tt[1]), ...stringdd.map((tt) => tt[1])].join("\n\n")
         ];
     }
 
