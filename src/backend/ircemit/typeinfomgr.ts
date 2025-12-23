@@ -173,8 +173,45 @@ class TypeInfoManager {
         //TODO: more primitive types
 
         //TODO enums
+        for(let i = 0; i < irasm.enums.length; ++i) {
+            const etdecl = irasm.enums[i];
+            const etkey = TransformCPPNameManager.convertTypeKey(etdecl.tkey);
+            const etid = timgr.typeInfoMap.size;
+            const enumtd = new TypeInfo(etkey, new IRNominalTypeSignature(etkey), etid, 8, 1, LayoutTag.Value, undefined, undefined);
 
-        //TODO: typedecls
+            timgr.addTypeInfo(etdecl.tkey, enumtd);
+        }
+
+        for(let i = 0; i < irasm.typedecls.length; ++i) {
+            const tdecl = irasm.typedecls[i];
+            const ttkey = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
+            const ttid = timgr.typeInfoMap.size;
+
+            const utypeinfo = timgr.getTypeInfo(TransformCPPNameManager.convertTypeKey(tdecl.valuetype.tkeystr));
+            const typedtd = new TypeInfo(ttkey, new IRNominalTypeSignature(ttkey), ttid, utypeinfo.bytesize, utypeinfo.slotcount, utypeinfo.tag, utypeinfo.ptrmask, undefined);
+            
+            timgr.addTypeInfo(tdecl.tkey, typedtd);
+        }
+
+        const cstringtypeinfo = timgr.getTypeInfo("CString");
+        for(let i = 0; i < irasm.cstringoftypedecls.length; ++i) {
+            const tdecl = irasm.typedecls[i];
+            const ttkey = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
+            const ttid = timgr.typeInfoMap.size;
+            const typedtd = new TypeInfo(ttkey, new IRNominalTypeSignature(ttkey), ttid, cstringtypeinfo.bytesize, cstringtypeinfo.slotcount, cstringtypeinfo.tag, cstringtypeinfo.ptrmask, undefined);
+            
+            timgr.addTypeInfo(tdecl.tkey, typedtd);
+        }
+
+        const stringtypeinfo = timgr.getTypeInfo("CString");
+        for(let i = 0; i < irasm.stringoftypedecls.length; ++i) {
+            const tdecl = irasm.typedecls[i];
+            const ttkey = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
+            const ttid = timgr.typeInfoMap.size;
+            const typedtd = new TypeInfo(ttkey, new IRNominalTypeSignature(ttkey), ttid, stringtypeinfo.bytesize, stringtypeinfo.slotcount, stringtypeinfo.tag, stringtypeinfo.ptrmask, undefined);
+            
+            timgr.addTypeInfo(tdecl.tkey, typedtd);
+        }
 
         //Now handle entities with a recursive walk  
 

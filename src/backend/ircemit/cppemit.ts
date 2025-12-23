@@ -683,14 +683,14 @@ class CPPEmitter {
         const bsqparsedef = `std::optional<${ctname}> BSQ_parse${ctname}(std::list<uint8_t*>&& iobuffs, size_t totalbytes) {\n` + 
         `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.initialize(std::move(iobuffs), totalbytes);\n` +
         '\n' +
-        `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeType("${eenum.tkey}")) { return nullopt; };\n` +
-        `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('#')) { return nullopt; };\n` +
+        `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeType("${eenum.tkey}")) { return std::nullopt; };\n` +
+        `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('#')) { return std::nullopt; };\n` +
         '\n' +
         `    const char* enumstr = ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeIdentifier();\n` +
-        `    if(enumstr == nullptr) { return nullopt; }\n` +
+        `    if(enumstr == nullptr) { return std::nullopt; }\n` +
         '\n' +
-        `    const eiter = std::find_if(BSQ_enum_values_${ctname}.cbegin(), BSQ_enum_values_${ctname}.cend(), [enumstr](const char* ev) { return strcmp(ev, enumstr) == 0; });\n` +
-        `    if(eiter == BSQ_enum_values_${ctname}.cend()) { return nullopt; }\n` +
+        `    auto eiter = std::find_if(BSQ_enum_values_${ctname}.cbegin(), BSQ_enum_values_${ctname}.cend(), [enumstr](const char* ev) { return strcmp(ev, enumstr) == 0; });\n` +
+        `    if(eiter == BSQ_enum_values_${ctname}.cend()) { return std::nullopt; }\n` +
         '\n' +
         `    std::optional<${ctname}> cc = std::make_optional(static_cast<${ctname}>(std::distance(BSQ_enum_values_${ctname}.cbegin(), eiter)));\n` + 
         '\n' +

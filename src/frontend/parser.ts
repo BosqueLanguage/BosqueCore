@@ -1898,7 +1898,7 @@ class Parser {
             this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot use _ as an identifier name -- it is special ignored variable");
         }
         
-        if(!/^[_a-zA-Z][_a-zA-Z0-9]*$/.test(vv)) {
+        if(!/^[_a-zA-Z0-9]+$/.test(vv)) {
             this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Invalid enum member name -- must start with an uppercase letter");
         }
 
@@ -6452,7 +6452,6 @@ class Parser {
             }
 
             const members = this.parseListOf<string>("enum members", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
-                this.ensureToken(TokenStrings.IdentifierName, "enum member");
                 return this.parseIdentifierAsEnumMember();
             });
 
