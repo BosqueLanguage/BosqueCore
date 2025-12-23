@@ -310,8 +310,8 @@ abstract class IRAbstractEntityTypeDecl extends IRAbstractNominalTypeDecl {
 class IREnumTypeDecl extends IRAbstractEntityTypeDecl {
     readonly members: string[];
 
-    constructor(tkey: string, saturatedProvides: IRTypeSignature[], file: string, sinfo: IRSourceInfo, members: string[]) {
-        super(tkey, [], [], [], "std", saturatedProvides, [], [], [], undefined, [], file, sinfo);
+    constructor(tkey: string, docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, members: string[]) {
+        super(tkey, [], [], [], "std", [], [], [], [], docstr, [], file, sinfo);
         this.members = members;
     }
 }
