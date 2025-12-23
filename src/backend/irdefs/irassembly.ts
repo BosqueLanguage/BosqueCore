@@ -1,6 +1,6 @@
 import { IRRegex, IRSourceInfo } from "./irsupport.js";
 import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature } from "./irtype.js";
-import { IRBody, IRSimpleExpression, IRStatement } from "./irbody.js";
+import { IRBody, IRLiteralCRegexExpression, IRLiteralUnicodeRegexExpression, IRSimpleExpression, IRStatement } from "./irbody.js";
 
 abstract class IRConditionDecl {
     readonly file: string;
@@ -326,18 +326,18 @@ class IRTypedeclTypeDecl extends IRAbstractEntityTypeDecl {
 }
 
 class IRTypedeclCStringDecl extends IRAbstractEntityTypeDecl {
-    readonly rechk: IRRegex;
+    readonly rechk: IRLiteralCRegexExpression | undefined;
     
-    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], saturatedProvides: IRTypeSignature[], allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[], allValidates: { containingtype: IRNominalTypeSignature, ii: number }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo, rechk: IRRegex) {
+    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], saturatedProvides: IRTypeSignature[], allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[], allValidates: { containingtype: IRNominalTypeSignature, ii: number }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo, rechk: IRLiteralCRegexExpression | undefined) {
         super(tkey, invariants, validates, [], "std", saturatedProvides, [], allInvariants, allValidates, docstr, metatags, file, sinfo);
         this.rechk = rechk;
     }
 }
 
 class IRTypedeclStringDecl extends IRAbstractEntityTypeDecl {
-    readonly rechk: IRRegex;
+    readonly rechk: IRLiteralUnicodeRegexExpression | undefined;
     
-    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], saturatedProvides: IRTypeSignature[], allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[], allValidates: { containingtype: IRNominalTypeSignature, ii: number }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo, rechk: IRRegex) {
+    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], saturatedProvides: IRTypeSignature[], allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[], allValidates: { containingtype: IRNominalTypeSignature, ii: number }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo, rechk: IRLiteralUnicodeRegexExpression | undefined) {
         super(tkey, invariants, validates, [], "std", saturatedProvides, [], allInvariants, allValidates, docstr, metatags, file, sinfo);
         this.rechk = rechk;
     }

@@ -2171,11 +2171,47 @@ class ASMToIRConverter {
     }
 
     private generateTypedeclCStringDecl(tdecl: TypedeclTypeDecl, tinst: TypeInstantiationInfo): IRTypedeclCStringDecl {
-        assert(false, "Not Implemented -- generateTypedeclCStringDecl");
+        this.initCodeProcessingContext(tdecl.file, false, tinst.tsig, undefined, undefined, tinst, undefined);
+
+        const doc = tdecl.attributes.find((a) => a.name === "doc");
+        const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
+
+        const invariants = tdecl.invariants.map<IRInvariantDecl>((inv) => this.generateInvariantClauseDecl(tinst.tsig as NominalTypeSignature, inv));
+        const validates = tdecl.validates.map<IRValidateDecl>((val) => this.generateValidateClauseDecl(tinst.tsig as NominalTypeSignature, val));
+
+        const saturatedProvides = tdecl.saturatedProvides.map((sp => this.processTypeSignature(sp)));
+
+        const allInvariants = tdecl.allInvariants.map((inv, jj) => {
+            return { containingtype: this.processTypeSignature(inv.containingtype), ii: jj };
+        });
+        const allValidates = tdecl.allValidates.map((val, jj) => {
+            return { containingtype: this.processTypeSignature(val.containingtype), ii: jj };
+        });
+
+        const rechk = tdecl.optofexp !== undefined ? this.flattenExpression(tdecl.optofexp) as IRLiteralCRegexExpression : undefined;
+        return new IRTypedeclCStringDecl(tinst.tkey, invariants, validates, saturatedProvides, allInvariants, allValidates, docstring, this.processMetaDataTags(tdecl.attributes), tdecl.file, this.convertSourceInfo(tdecl.sinfo), rechk);
     }
 
     private generateTypedeclStringDecl(tdecl: TypedeclTypeDecl, tinst: TypeInstantiationInfo): IRTypedeclStringDecl {
-        assert(false, "Not Implemented -- generateTypedeclStringDecl");
+        this.initCodeProcessingContext(tdecl.file, false, tinst.tsig, undefined, undefined, tinst, undefined);
+
+        const doc = tdecl.attributes.find((a) => a.name === "doc");
+        const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
+
+        const invariants = tdecl.invariants.map<IRInvariantDecl>((inv) => this.generateInvariantClauseDecl(tinst.tsig as NominalTypeSignature, inv));
+        const validates = tdecl.validates.map<IRValidateDecl>((val) => this.generateValidateClauseDecl(tinst.tsig as NominalTypeSignature, val));
+
+        const saturatedProvides = tdecl.saturatedProvides.map((sp => this.processTypeSignature(sp)));
+
+        const allInvariants = tdecl.allInvariants.map((inv, jj) => {
+            return { containingtype: this.processTypeSignature(inv.containingtype), ii: jj };
+        });
+        const allValidates = tdecl.allValidates.map((val, jj) => {
+            return { containingtype: this.processTypeSignature(val.containingtype), ii: jj };
+        });
+
+        const rechk = tdecl.optofexp !== undefined ? this.flattenExpression(tdecl.optofexp) as IRLiteralUnicodeRegexExpression : undefined;
+        return new IRTypedeclStringDecl(tinst.tkey, invariants, validates, saturatedProvides, allInvariants, allValidates, docstring, this.processMetaDataTags(tdecl.attributes), tdecl.file, this.convertSourceInfo(tdecl.sinfo), rechk);
     }
 
     private generatePrimitiveEntityTypeDecl(tdecl: PrimitiveEntityTypeDecl, tinst: TypeInstantiationInfo): IRPrimitiveEntityTypeDecl {
