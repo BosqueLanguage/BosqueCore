@@ -680,24 +680,29 @@ class CPPEmitter {
         const bsqemitdecl = `std::list<uint8_t*>&& BSQ_emit${ctname}(size_t& bytes, ${ctname} vv);`;
 
         const mmarray = `constexpr std::array<const char*, ${eenum.members.length}> BSQ_enum_values_${ctname} = { ${eenum.members.map((mem) => `${ctname}::${TransformCPPNameManager.convertIdentifier(mem)}`).join(", ")} };`;
-        const bsqparsedef = `std::optional<${ctname}> BSQ_parse${ctname}(std::list<uint8_t*>&& iobuffs, size_t totalbytes) { 
-        ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.initialize(std::move(iobuffs), totalbytes); 
-
-        if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeType("${eenum.tkey}")) { return nullopt; };
-        if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('#')) { return nullopt; };
+        const bsqparsedef = `std::optional<${ctname}> BSQ_parse${ctname}(std::list<uint8_t*>&& iobuffs, size_t totalbytes) {\n` + 
+        `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.initialize(std::move(iobuffs), totalbytes);\n` +
+        '\n' +
+        `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeType("${eenum.tkey}")) { return nullopt; };\n` +
+        `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('#')) { return nullopt; };\n` +
+        '\n' +
+        `    const char* enumstr = ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeIdentifier();\n` +
+        `    if(enumstr == nullptr) { return nullopt; }\n` +
+        '\n' +
+        `    const eiter = std::find_if(BSQ_enum_values_${ctname}.cbegin(), BSQ_enum_values_${ctname}.cend(), [enumstr](const char* ev) { return strcmp(ev, enumstr) == 0; });\n` +
+        `    if(eiter == BSQ_enum_values_${ctname}.cend()) { return nullopt; }\n` +
+        '\n' +
+        `    std::optional<${ctname}> cc = std::make_optional(static_cast<${ctname}>(std::distance(BSQ_enum_values_${ctname}.cbegin(), eiter)));\n` + 
+        '\n' +
+        `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.release(); \n` +
+        `    return cc;\n` + 
+        `}`;
         
-        const char* enumstr = ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeIdentifier();
-        if(enumstr == nullptr) { return nullopt; }
-
-        const eiter = std::find_if(BSQ_enum_values_${ctname}.begin(), BSQ_enum_values_${ctname}.end(), [enumstr](const char* ev) { return strcmp(ev, enumstr) == 0; });
-        if(eiter == BSQ_enum_values_${ctname}.end()) { return nullopt; }
-
-        std::optional<${ctname}> cc = std::make_optional(static_cast<${ctname}>(std::distance(BSQ_enum_values_${ctname}.begin(), eiter))); 
-        
-        ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.release(); 
-        return cc; }`;
-        
-        const bsqemitdef = `std::list<uint8_t*>&& BSQ_emit${ctname}(size_t& bytes, ${ctname} vv) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitLiteralContent("${eenum.tkey}#"); ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitLiteralContent(BSQ_enum_values_${ctname}[static_cast<int>(vv)]); return ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.completeEmit(bytes); }`;
+        const bsqemitdef = `std::list<uint8_t*>&& BSQ_emit${ctname}(size_t& bytes, ${ctname} vv) {\n` +
+        `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitLiteralContent("${eenum.tkey}#");\n` +
+        `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitLiteralContent(BSQ_enum_values_${ctname}[static_cast<int>(vv)]);\n` +
+        `    return ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.completeEmit(bytes);\n` +
+        `}`;
 
         return [
             ["//Enum Decls\n", edecl, bsqparsedecl, bsqemitdecl].join("\n"), 

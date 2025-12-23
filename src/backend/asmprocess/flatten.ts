@@ -720,6 +720,22 @@ class ASMToIRConverter {
         return [lres, rres];
     }
 
+    private needsAddCheck(opchk: "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float"): boolean {
+        if(opchk === "ChkNat" || opchk === "ChkInt") {
+            return false;
+        }
+
+        return true;
+    }
+
+    private needsMultCheck(opchk: "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float"): boolean {
+        if(opchk === "ChkNat" || opchk === "ChkInt") {
+            return false;
+        }
+
+        return true;
+    }
+
     private needsDivCheck(rhs: Expression, opchk: "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float"): boolean {
         if(!(rhs instanceof LiteralSimpleExpression)) {
             return true;
@@ -1186,7 +1202,7 @@ class ASMToIRConverter {
             
             const [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(binadd.lhs), this.flattenExpression(binadd.rhs), leetype, reetype);
 
-            const opchk = (binadd.opertype as TypeSignature).tkeystr as "Nat" | "Int" | "ChkNat" | "ChkInt";
+            const opchk = (binadd.opertype as TypeSignature).tkeystr as "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float";
             this.pushStatement(new IRErrorAdditionBoundsCheckStatement(this.currentFile as string, binadd.sinfo, this.registerError(this.currentFile as string, binadd.sinfo, "arith"), lexp, rexp, opchk));
 
             if(!(finaltype.decl instanceof TypedeclTypeDecl)) {
@@ -1214,9 +1230,11 @@ class ASMToIRConverter {
             
             const [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(binsub.lhs), this.flattenExpression(binsub.rhs), leetype, reetype);
 
-            const opchk = (binsub.opertype as TypeSignature).tkeystr as "Nat" | "Int" | "ChkNat" | "ChkInt";
-            this.pushStatement(new IRErrorSubtractionBoundsCheckStatement(this.currentFile as string, this.convertSourceInfo(binsub.sinfo), this.registerError(this.currentFile as string, this.convertSourceInfo(binsub.sinfo), (opchk === "Nat" || opchk === "ChkNat") ? "runtime" : "arith"), lexp, rexp, opchk));
-
+            const opchk = (binsub.opertype as TypeSignature).tkeystr as "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float";
+            if(this.needsAddCheck(opchk)) {
+                this.pushStatement(new IRErrorSubtractionBoundsCheckStatement(this.currentFile as string, this.convertSourceInfo(binsub.sinfo), this.registerError(this.currentFile as string, this.convertSourceInfo(binsub.sinfo), (opchk === "Nat" || opchk === "ChkNat") ? "runtime" : "arith"), lexp, rexp, opchk));
+            }
+            
             if(!(finaltype.decl instanceof TypedeclTypeDecl)) {
                 return new IRBinSubExpression(lexp, rexp, this.processTypeSignature(binsub.opertype as TypeSignature));
             }
@@ -1242,9 +1260,11 @@ class ASMToIRConverter {
             
             const [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(binmult.lhs), this.flattenExpression(binmult.rhs), leetype, reetype);
 
-            const opchk = (binmult.opertype as TypeSignature).tkeystr as "Nat" | "Int" | "ChkNat" | "ChkInt";
-            this.pushStatement(new IRErrorMultiplicationBoundsCheckStatement(this.currentFile as string, this.convertSourceInfo(binmult.sinfo), this.registerError(this.currentFile as string, this.convertSourceInfo(binmult.sinfo), "arith"), lexp, rexp, opchk));
-
+            const opchk = (binmult.opertype as TypeSignature).tkeystr as "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float";
+            if(this.needsMultCheck(opchk)) {
+                this.pushStatement(new IRErrorMultiplicationBoundsCheckStatement(this.currentFile as string, this.convertSourceInfo(binmult.sinfo), this.registerError(this.currentFile as string, this.convertSourceInfo(binmult.sinfo), "arith"), lexp, rexp, opchk));
+            }
+            
             if(!(finaltype.decl instanceof TypedeclTypeDecl)) {
                 return new IRBinMultExpression(lexp, rexp, this.processTypeSignature(binmult.opertype as TypeSignature));
             }
