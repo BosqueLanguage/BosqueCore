@@ -22,6 +22,13 @@ namespace ᐸRuntimeᐳ
         void initialize(std::list<uint8_t*>&& iobuffs, size_t totalbytes);
         void release();
 
+        bool ensureAndConsumeType(const char* tname);
+        bool ensureAndConsumeSymbol(char sym);
+        bool ensureAndConsumeSymbol(const char* sym);
+        bool ensureAndConsumeKeyword(const char* kw);
+
+        void ensureAndConsumeIdentifier(char* outident);
+
         std::optional<XNone> parseNone();
         std::optional<XBool> parseBool();
         std::optional<XNat> parseNat();

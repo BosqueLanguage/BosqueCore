@@ -102,7 +102,10 @@ namespace ᐸRuntimeᐳ
         LiteralNat,
         LiteralInt,
         LiteralChkNat,
-        LiteralChkInt
+        LiteralChkInt,
+        LiteralSymbol,
+        LiteralKeyword,
+        Identifier
     };
 
     class BSQONToken
@@ -112,7 +115,7 @@ namespace ᐸRuntimeᐳ
         size_t startindex;
         size_t endindex;
 
-        char scvalue[32]; // Simple constant value storage for small literals (bool, nat, int, uuidv4)
+        char scvalue[40]; // Simple constant value storage for small literals (bool, nat, int, uuidv4)
 
         BSQONToken() : tokentype(BSQONTokenType::Invalid), startindex(0), endindex(0), scvalue{0} {}
         BSQONToken(const BSQONToken& other) = default;
@@ -145,6 +148,10 @@ namespace ᐸRuntimeᐳ
         bool tryLexInt();
         bool tryLexChkNat();
         bool tryLexChkInt();
+
+        bool tryLexSymbol();
+        bool tryLexKeyword();
+        bool tryLexIdentifier();
 
     public:
         BSQONLexer() : iobuffs(), iter(), ctoken() {}

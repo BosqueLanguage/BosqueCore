@@ -4,6 +4,8 @@ namespace ᐸRuntimeᐳ
 {
     using REState = uint8_t[32];
 
+    char BSQONToken::sclongvalue[1024] = {0};
+
     void BSQONLexer::initialize(std::list<uint8_t*>&& iobuffs, size_t totalbytes)
     {
         this->iobuffs = std::move(iobuffs);
@@ -173,7 +175,7 @@ namespace ᐸRuntimeᐳ
     
     bool BSQONLexer::tryLexChkNat()
     {
-        if(this->testchar(this->iter, '#')) {
+        if(this->testchars(this->iter, "ChkNat::npos")) {
             this->ctoken.tokentype = BSQONTokenType::LiteralChkNat;
             this->iter.advanceWithExtract(this->ctoken.startindex, this->ctoken.endindex, this->ctoken.scvalue, 1);
             return true;
@@ -184,13 +186,88 @@ namespace ᐸRuntimeᐳ
 
     bool BSQONLexer::tryLexChkInt()
     {
-        if(this->testchar(this->iter, '#')) {
+        if(this->testchars(this->iter, "ChkInt::npos")) {
             this->ctoken.tokentype = BSQONTokenType::LiteralChkInt;
             this->iter.advanceWithExtract(this->ctoken.startindex, this->ctoken.endindex, this->ctoken.scvalue, 1);
             return true;
         }
 
         return this->lexIntegralHelper(true, 'I', BSQONTokenType::LiteralChkInt);
+    }
+
+    constexpr std::array<const char*, 8> s_symbol_tokens = { "(", ")", "{", "}", "[", "]", ",", "#" };
+    bool BSQONLexer::tryLexSymbol()
+    {
+        if(!this->iter.valid() || (std::find(s_symbol_tokens.cbegin(), s_symbol_tokens.cend(), this->iter.get()) == s_symbol_tokens.cend())) {
+            return false;
+        }
+
+        this->ctoken.tokentype = BSQONTokenType::LiteralSymbol;
+        this->iter.advanceWithExtract(this->ctoken.startindex, this->ctoken.endindex, this->ctoken.scvalue, 1);
+        return true;
+    }
+
+    constexpr std::array<const char*, 9> s_keyword_tokens = { };
+    bool BSQONLexer::tryLexKeyword()
+    {
+        return false;
+    }
+
+    bool BSQONLexer::tryLexIdentifier()
+    {
+        auto ii = this->iter;
+        bool badnest = false;
+        while(ii.valid() && !badnest) {
+            char c = (char)ii.get();
+            bool ischar = (('a' <= c) & (c <= 'z')) || (('A' <= c) & (c <= 'Z')) || (c == '_');
+            bool iscolon = (c == ':');
+            bool isnum = ('0' <= c) & (c <= '9');
+
+            if(ischar | ((isnum | iscolon) && ii.getIndex() != this->iter.getIndex())) {
+                ii.next();
+            }
+            else {
+                if(c != '<') {
+                    break;
+                }
+                else {
+                    //Handle generic type names by skipping to the matching '>'
+                    size_t genericlevel = 1;
+                    ii.next();
+                    while(ii.valid() && genericlevel > 0) {
+                        c = (char)ii.get();
+
+                        if(c == '<') {
+                            genericlevel++;
+                        }
+                        else if(c == '>') {
+                            genericlevel--;
+                        }
+                        else {
+                            bool ischarnested = (('a' <= c) & (c <= 'z')) || (('A' <= c) & (c <= 'Z')) || (c == '_');
+                            bool iscolonnested = (c == ':');
+                            bool isnumnested = ('0' <= c) & (c <= '9');
+                            bool isoksym = (c == ',') || (c == ' ');
+
+                            if(!(ischarnested | iscolonnested | isnumnested | isoksym)) {
+                                break;
+                            }
+                        }
+                        ii.next();
+                    }
+
+                    badnest = badnest || genericlevel != 0;
+                }
+            }
+        }
+
+        if(badnest || ii.getIndex() == this->iter.getIndex()) {
+            return false;
+        }
+        
+        this->ctoken.tokentype = BSQONTokenType::Identifier;
+        this->iter.advanceWithExtract(this->ctoken.startindex, this->ctoken.endindex, BSQONToken::sclongvalue, ii.getIndex() - this->iter.getIndex());
+        return true;
     }
 
     void BSQONLexer::consume()
@@ -207,6 +284,9 @@ namespace ᐸRuntimeᐳ
             return;
         }
         else if(this->tryLexNat() || this->tryLexInt() || this->tryLexChkNat() || this->tryLexChkInt()) {
+            return;
+        }
+        else if(this->tryLexSymbol() || this->tryLexKeyword() || this->tryLexIdentifier()) {
             return;
         }
         else {

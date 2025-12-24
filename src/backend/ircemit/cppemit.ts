@@ -679,16 +679,14 @@ class CPPEmitter {
         const bsqparsedecl = `std::optional<${ctname}> BSQ_parse${ctname}(std::list<uint8_t*>&& iobuffs, size_t totalbytes);`;
         const bsqemitdecl = `std::list<uint8_t*>&& BSQ_emit${ctname}(size_t& bytes, ${ctname} vv);`;
 
-        const mmarray = `constexpr std::array<const char*, ${eenum.members.length}> BSQ_enum_values_${ctname} = { ${eenum.members.map((mem) => `${ctname}::${TransformCPPNameManager.convertIdentifier(mem)}`).join(", ")} };`;
+        const mmarray = `constexpr std::array<const char*, ${eenum.members.length}> BSQ_enum_values_${ctname} = { ${eenum.members.map((mem) => `"${mem}"`).join(", ")} };`;
         const bsqparsedef = `std::optional<${ctname}> BSQ_parse${ctname}(std::list<uint8_t*>&& iobuffs, size_t totalbytes) {\n` + 
         `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.initialize(std::move(iobuffs), totalbytes);\n` +
         '\n' +
         `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeType("${eenum.tkey}")) { return std::nullopt; };\n` +
         `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('#')) { return std::nullopt; };\n` +
         '\n' +
-        `    const char* enumstr = ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeIdentifier();\n` +
-        `    if(enumstr == nullptr) { return std::nullopt; }\n` +
-        '\n' +
+        `    char enumstr[64] = {0}; ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeIdentifier(enumstr);\n` +
         `    auto eiter = std::find_if(BSQ_enum_values_${ctname}.cbegin(), BSQ_enum_values_${ctname}.cend(), [enumstr](const char* ev) { return strcmp(ev, enumstr) == 0; });\n` +
         `    if(eiter == BSQ_enum_values_${ctname}.cend()) { return std::nullopt; }\n` +
         '\n' +
@@ -785,12 +783,16 @@ class CPPEmitter {
 
         let dispatchstrs = "";
         if(ikey.length === 1) {
+            const idecl = this.irasm.invokes.find((v) => v.ikey === ikey[0]) as IRInvokeDecl;
+
             dispatchstrs = 
+            (idecl.params.length === 1 ?
             'auto iobb = ᐸRuntimeᐳ::g_alloc_info.io_buffer_alloc();\n' + 
             '    size_t ibytes = std::strlen(argv[1]);\n' +
             '    std::copy(argv[1], argv[1] + ibytes, iobb);\n\n' +
-            '    auto x = BSQ_parseInt({iobb}, ibytes);\n' +
-            '    if(!x.has_value()) { printf("Error parsing input\\n"); exit(1); }\n\n' +
+            `    auto x = BSQ_parse${TransformCPPNameManager.convertTypeKey(idecl.params[0].type.tkeystr)}({iobb}, ibytes);\n` +
+            '    if(!x.has_value()) { printf("Error parsing input\\n"); exit(1); }\n\n'
+            : '//No args\n\n') +
             '    if (setjmp(ᐸRuntimeᐳ::tl_bosque_info.current_task->error_handler) > 0) {\n' +
             '        auto perr = ᐸRuntimeᐳ::tl_bosque_info.current_task->pending_error.value();\n' +
             '        auto pfile = std::string(perr.file);\n' +
@@ -799,10 +801,10 @@ class CPPEmitter {
             '        if(perr.message != nullptr) { printf("  with message: %s\\n", perr.message); }\n' +
             '        exit(1);\n' +
             '    }\n\n' +
-            `    auto result = ${TransformCPPNameManager.convertInvokeKey(ikey[0])}(x.value());\n\n` +
+            `    auto result = ${TransformCPPNameManager.convertInvokeKey(ikey[0])}(${idecl.params.length === 1 ? 'x.value()' : ''});\n\n` +
             '    size_t obytes = 0;\n' +
             '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.prepForEmit(true);\n' +
-            '    auto oibb = BSQ_emitInt(obytes, result);\n\n' +
+            `    auto oibb = BSQ_emit${TransformCPPNameManager.convertTypeKey(idecl.resultType.tkeystr)}(obytes, result);\n\n` +
             '    //TODO assume chars are all printable for now\n' +
             '    for(size_t i = 0; i < obytes; i++) {\n' +
             '        printf("%c", static_cast<char>(oibb.front()[i]));\n' +

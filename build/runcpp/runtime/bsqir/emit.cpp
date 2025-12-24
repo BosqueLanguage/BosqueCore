@@ -88,7 +88,7 @@ namespace ᐸRuntimeᐳ
     void BSQONEmitter::emitChkNat(XChkNat n)
     {
         if(n.isBottom()) {
-            this->bufferMgr.writeImmediate("#");
+            this->bufferMgr.writeImmediate("ChkNat::npos");
         }
         else {
             if(n.getValue() <= (__int128_t)std::numeric_limits<int64_t>::max()) {
@@ -103,7 +103,7 @@ namespace ᐸRuntimeᐳ
     void BSQONEmitter::emitChkInt(XChkInt i)
     {
         if(i.isBottom()) {
-            this->bufferMgr.writeImmediate("#");
+            this->bufferMgr.writeImmediate("ChkInt::npos");
         }
         else {
             if(((__int128_t)std::numeric_limits<int64_t>::min() <= i.getValue()) & (i.getValue() <= (__int128_t)std::numeric_limits<int64_t>::max())) {

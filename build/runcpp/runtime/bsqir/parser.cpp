@@ -12,6 +12,79 @@ namespace ᐸRuntimeᐳ
         this->lexer.release();
     }
 
+    bool BSQONParser::ensureAndConsumeType(const char* tname)
+    {
+        auto token = this->lexer.current();
+        if(!(token.tokentype == BSQONTokenType::Identifier)) {
+            return false;
+        }
+
+        if(std::strcmp(BSQONToken::sclongvalue, tname) != 0) {
+            return false;
+        }
+
+        this->lexer.consume();
+        return true;
+    }
+
+    bool BSQONParser::ensureAndConsumeSymbol(char sym)
+    {
+        auto token = this->lexer.current();
+        if(!(token.tokentype == BSQONTokenType::LiteralSymbol)) {
+            return false;
+        }
+
+        if(token.scvalue[0] != sym) {
+            return false;
+        }
+
+        this->lexer.consume();
+        return true;
+    }
+
+    bool BSQONParser::ensureAndConsumeSymbol(const char* sym)
+    {
+        auto token = this->lexer.current();
+        if(!(token.tokentype == BSQONTokenType::LiteralSymbol)) {
+            return false;
+        }
+
+        if(std::strcmp(token.scvalue, sym) != 0) {
+            return false;
+        }
+
+        this->lexer.consume();
+        return true;
+    }
+
+    bool BSQONParser::ensureAndConsumeKeyword(const char* kw)
+    {
+        auto token = this->lexer.current();
+        if(!(token.tokentype == BSQONTokenType::LiteralKeyword)) {
+            return false;
+        }
+
+        if(std::strcmp(token.scvalue, kw) != 0) {
+            return false;
+        }
+
+        this->lexer.consume();
+        return true;
+    }
+    
+    void BSQONParser::ensureAndConsumeIdentifier(char* outid)
+    {
+        auto token = this->lexer.current();
+        if(!(token.tokentype == BSQONTokenType::Identifier)) {
+            return;
+        }
+
+        std::strcpy(outid, token.scvalue);
+
+        this->lexer.consume();
+        return;
+    }
+
     std::optional<XNone> BSQONParser::parseNone() 
     {
         if(this->lexer.current().tokentype == BSQONTokenType::LiteralNone) {
