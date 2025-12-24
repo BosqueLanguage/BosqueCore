@@ -195,7 +195,7 @@ namespace ᐸRuntimeᐳ
         return this->lexIntegralHelper(true, 'I', BSQONTokenType::LiteralChkInt);
     }
 
-    constexpr std::array<const char*, 8> s_symbol_tokens = { "(", ")", "{", "}", "[", "]", ",", "#" };
+    constexpr std::array<char, 8> s_symbol_tokens = { '(', ')', '{', '}', '[', ']', ',', '#' };
     bool BSQONLexer::tryLexSymbol()
     {
         if(!this->iter.valid() || (std::find(s_symbol_tokens.cbegin(), s_symbol_tokens.cend(), this->iter.get()) == s_symbol_tokens.cend())) {

@@ -72,14 +72,17 @@ namespace ᐸRuntimeᐳ
         return true;
     }
     
-    void BSQONParser::ensureAndConsumeIdentifier(char* outid)
+    void BSQONParser::ensureAndConsumeIdentifier(char* outid, size_t maxlen)
     {
         auto token = this->lexer.current();
         if(!(token.tokentype == BSQONTokenType::Identifier)) {
             return;
         }
 
-        std::strcpy(outid, token.scvalue);
+        if(strlen(token.sclongvalue) >= maxlen) {
+            return;
+        }
+        std::strncpy(outid, token.sclongvalue, maxlen);
 
         this->lexer.consume();
         return;

@@ -686,7 +686,7 @@ class CPPEmitter {
         `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeType("${eenum.tkey}")) { return std::nullopt; };\n` +
         `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('#')) { return std::nullopt; };\n` +
         '\n' +
-        `    char enumstr[64] = {0}; ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeIdentifier(enumstr);\n` +
+        `    char enumstr[64] = {0}; ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeIdentifier(enumstr, 64);\n` +
         `    auto eiter = std::find_if(BSQ_enum_values_${ctname}.cbegin(), BSQ_enum_values_${ctname}.cend(), [enumstr](const char* ev) { return strcmp(ev, enumstr) == 0; });\n` +
         `    if(eiter == BSQ_enum_values_${ctname}.cend()) { return std::nullopt; }\n` +
         '\n' +

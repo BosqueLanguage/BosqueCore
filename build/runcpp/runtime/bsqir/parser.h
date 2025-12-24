@@ -27,7 +27,7 @@ namespace ᐸRuntimeᐳ
         bool ensureAndConsumeSymbol(const char* sym);
         bool ensureAndConsumeKeyword(const char* kw);
 
-        void ensureAndConsumeIdentifier(char* outident);
+        void ensureAndConsumeIdentifier(char* outident, size_t maxlen);
 
         std::optional<XNone> parseNone();
         std::optional<XBool> parseBool();

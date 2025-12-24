@@ -120,6 +120,8 @@ namespace ᐸRuntimeᐳ
         BSQONToken() : tokentype(BSQONTokenType::Invalid), startindex(0), endindex(0), scvalue{0} {}
         BSQONToken(const BSQONToken& other) = default;
 
+        static char sclongvalue[1024]; // For longer string values, we use a static buffer and extract based on start/end indices
+
         void clear()
         {
             this->tokentype = BSQONTokenType::Invalid;
