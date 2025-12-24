@@ -22,6 +22,8 @@ namespace ᐸRuntimeᐳ
         void initialize(std::list<uint8_t*>&& iobuffs, size_t totalbytes);
         void release();
 
+        bool peekSymbol(char sym);
+
         bool ensureAndConsumeType(const char* tname);
         bool ensureAndConsumeSymbol(char sym);
         bool ensureAndConsumeSymbol(const char* sym);

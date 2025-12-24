@@ -3,9 +3,10 @@ import { TypeInfoManager } from "./typeinfomgr.js";
 
 import { MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_INT } from "../../frontend/assembly.js";
 import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag, IRPrefixNotOpExpression, IRPrefixPlusOpExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRReturnValueSimpleStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement, IRAbortStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRTempAssignExpressionStatement, IRTypeDeclInvariantCheckStatement, IRDebugStatement, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRChkLogicImpliesShortCircuitStatement, IRPreconditionCheckStatement, IRPostconditionCheckStatement, IRVariableInitializationDirectInvokeStatement, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRAssertStatement, IRValidateStatement, IRBody, IRBuiltinBody, IRStandardBody, IRHoleBody } from "../irdefs/irbody.js";
-import { IRAssembly, IRConstantDecl, IREnumTypeDecl, IRInvokeDecl, IRInvokeParameterDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl } from "../irdefs/irassembly.js";
+import { IRAbstractNominalTypeDecl, IRAssembly, IRConstantDecl, IREnumTypeDecl, IRInvariantDecl, IRInvokeDecl, IRInvokeParameterDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl, IRValidateDecl } from "../irdefs/irassembly.js";
 
 import assert from "node:assert";
+import { IRNominalTypeSignature, IRTypeSignature } from "../irdefs/irtype.js";
 
 const RUNTIME_NAMESPACE = "ᐸRuntimeᐳ";
 const CLOSURE_CAPTURE_NAME = "ᐸclosureᐳ";
@@ -620,15 +621,31 @@ class CPPEmitter {
     }
     */
 
-    /*
-    private emitInvariantFunction(iinv: IRInvariantDecl, tdecl: IRAbstractNominalTypeDecl): string {
-        xxxx;
+    private emitInvariantFunction(iinv: IRInvariantDecl, tdecl: IRAbstractNominalTypeDecl, pinfo: {pname: string, ptype: IRTypeSignature}[]): [string, string] {
+        const fname = TransformCPPNameManager.generateNameForInvariantFunction(tdecl.tkey, iinv.invariantidx);
+        const params = pinfo.map((p) => `${this.typeInfoManager.emitTypeAsParameter(p.ptype.tkeystr, false)} ${TransformCPPNameManager.convertIdentifier(p.pname)}`);
+
+        const finalv = `return ${this.emitIRSimpleExpression(iinv.value, true)};`;
+        const bodystr = this.emitStatementList(iinv.stmts, undefined, [finalv], "");
+
+        const ideclstr = `bool ${fname}(${params.join(", ")});`;
+        const idefstr = `bool ${fname}(${params.join(", ")}) ${bodystr}`;
+
+        return [ideclstr, idefstr];
     }
 
-    private emitValidateFunction(ival: IRValidateDecl, tdecl: IRAbstractNominalTypeDecl): string {
-        xxxx;
+    private emitValidateFunction(ival: IRValidateDecl, tdecl: IRAbstractNominalTypeDecl, pinfo: {pname: string, ptype: IRTypeSignature}[]): [string, string] {
+        const fname = TransformCPPNameManager.generateNameForValidateFunction(tdecl.tkey, ival.validateidx);
+        const params = pinfo.map((p) => `${this.typeInfoManager.emitTypeAsParameter(p.ptype.tkeystr, false)} ${TransformCPPNameManager.convertIdentifier(p.pname)}`);
+
+        const finalv = `return ${this.emitIRSimpleExpression(ival.value, true)};`;
+        const bodystr = this.emitStatementList(ival.stmts, undefined, [finalv], "");
+
+        const ideclstr = `bool ${fname}(${params.join(", ")});`;
+        const idefstr = `bool ${fname}(${params.join(", ")}) ${bodystr}`;
+
+        return [ideclstr, idefstr];
     }
-    */
    
     emitConstantDeclInfo(iconst: IRConstantDecl): [string, string] {
         const gvname = `BSQ_g_${TransformCPPNameManager.generateNameForConstantKey(iconst.ckey)}`;
@@ -676,13 +693,11 @@ class CPPEmitter {
         const edecl = `enum class ${ctname} : uint64_t {\n` +
         `${eenum.members.map((mem, ii) => `    ${TransformCPPNameManager.convertIdentifier(mem)} = ${ii}`).join(",\n")}\n` +
         `};`;
-        const bsqparsedecl = `std::optional<${ctname}> BSQ_parse${ctname}(std::list<uint8_t*>&& iobuffs, size_t totalbytes);`;
-        const bsqemitdecl = `std::list<uint8_t*>&& BSQ_emit${ctname}(size_t& bytes, ${ctname} vv);`;
+        const bsqparsedecl = `std::optional<${ctname}> BSQ_parse${ctname}();`;
+        const bsqemitdecl = `void BSQ_emit${ctname}(${ctname} vv);`;
 
         const mmarray = `constexpr std::array<const char*, ${eenum.members.length}> BSQ_enum_values_${ctname} = { ${eenum.members.map((mem) => `"${mem}"`).join(", ")} };`;
-        const bsqparsedef = `std::optional<${ctname}> BSQ_parse${ctname}(std::list<uint8_t*>&& iobuffs, size_t totalbytes) {\n` + 
-        `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.initialize(std::move(iobuffs), totalbytes);\n` +
-        '\n' +
+        const bsqparsedef = `std::optional<${ctname}> BSQ_parse${ctname}() {\n` + 
         `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeType("${eenum.tkey}")) { return std::nullopt; };\n` +
         `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('#')) { return std::nullopt; };\n` +
         '\n' +
@@ -690,16 +705,12 @@ class CPPEmitter {
         `    auto eiter = std::find_if(BSQ_enum_values_${ctname}.cbegin(), BSQ_enum_values_${ctname}.cend(), [enumstr](const char* ev) { return strcmp(ev, enumstr) == 0; });\n` +
         `    if(eiter == BSQ_enum_values_${ctname}.cend()) { return std::nullopt; }\n` +
         '\n' +
-        `    std::optional<${ctname}> cc = std::make_optional(static_cast<${ctname}>(std::distance(BSQ_enum_values_${ctname}.cbegin(), eiter)));\n` + 
-        '\n' +
-        `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.release(); \n` +
-        `    return cc;\n` + 
+        `    return std::make_optional(static_cast<${ctname}>(std::distance(BSQ_enum_values_${ctname}.cbegin(), eiter)));\n` +  
         `}`;
         
-        const bsqemitdef = `std::list<uint8_t*>&& BSQ_emit${ctname}(size_t& bytes, ${ctname} vv) {\n` +
+        const bsqemitdef = `void BSQ_emit${ctname}(${ctname} vv) {\n` +
         `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitLiteralContent("${eenum.tkey}#");\n` +
         `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitLiteralContent(BSQ_enum_values_${ctname}[static_cast<int>(vv)]);\n` +
-        `    return ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.completeEmit(bytes);\n` +
         `}`;
 
         return [
@@ -709,7 +720,58 @@ class CPPEmitter {
     }
 
     private emitGeneralTypeDeclInfo(tdecl: IRTypedeclTypeDecl): [string, string] {
-        assert(false, "CPPEmitter: need to implement general type decl emission");
+        const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
+        const ctrepr = this.typeInfoManager.emitTypeAsStd(tdecl.tkey);
+        const valuetype = this.typeInfoManager.emitTypeAsMemberField(tdecl.valuetype.tkeystr);
+
+        const vfuncinfo = tdecl.invariants.map((inv) => this.emitInvariantFunction(inv, tdecl, [{pname: "value", ptype: new IRNominalTypeSignature(tdecl.tkey)}]));
+        const valfuncinfo = tdecl.validates.map((val) => this.emitValidateFunction(val, tdecl, [{pname: "value", ptype: new IRNominalTypeSignature(tdecl.tkey)}]));
+
+        const tclass = `class ${ctname} {\n` +
+            `public:\n` +
+            `    ${valuetype} value;\n` +
+            `    //All constructor and assignment defaults\n` +
+            (tdecl.iskeytype ? 
+            `    friend constexpr bool operator<(const ${ctname}& lhs, const ${ctname}& rhs) { return lhs.value < rhs.value; }\n` +
+            `    friend constexpr bool operator==(const ${ctname} &lhs, const ${ctname}& rhs) { return lhs.value == rhs.value; }\n` +
+            `    friend constexpr bool operator>(const ${ctname} &lhs, const ${ctname}& rhs) { return rhs.value < lhs.value; }\n` +
+            `    friend constexpr bool operator!=(const ${ctname} &lhs, const ${ctname}& rhs) { return !(lhs.value == rhs.value); }\n` :
+            "") +
+            `};`;
+
+
+        const bsqparsedecl = `std::optional<${ctname}> BSQ_parse${ctname}();`;
+        const bsqemitdecl = `void BSQ_emit${ctname}(${ctname} vv);`;
+
+        const voptttname = TransformCPPNameManager.convertTypeKey(tdecl.valuetype.tkeystr);
+        const voptt = this.typeInfoManager.emitTypeAsStd(tdecl.valuetype.tkeystr)
+        if(vfuncinfo.length === 0 && valfuncinfo.length === 0) {
+            const bsqparsedef = `std::optional<${ctrepr}> BSQ_parse${ctname}() {\n` +
+            `    std::optional<${voptt}> cc = ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.parse${voptttname}();\n` +
+            `    if(!cc.has_value()) { return std::nullopt; }\n` +
+            `    if(ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.peekSymbol('<')) {\n` +
+            `        if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('<')) { return std::nullopt; };\n` +
+            `        if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeType("${tdecl.tkey}")) { return std::nullopt; };\n` +
+            `        if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('>')) { return std::nullopt; };\n` +
+            '    }\n' +
+            `    return std::make_optional<${ctname}>(${ctname}{ cc.value() });\n` +
+            '}';
+
+            const bsqemitdef = `void BSQ_emit${ctname}(${ctname} vv) {\n` +
+            `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emit${valuetype}(vv.value);\n` +
+            '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitLiteralContent("<"); \n' +
+            `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitLiteralContent("${tdecl.tkey}"); \n` +
+            `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitLiteralContent(">"); \n` +
+            `}`;
+
+            return [
+                [tclass, bsqparsedecl, bsqemitdecl].join("\n"), 
+                [bsqparsedef, bsqemitdef].join("\n")
+            ];
+        }
+        else {
+            assert(false, "CPPEmitter: need to implement invariant/validate handling in general type decl emission");
+        }
     }
 
     private emitCStringTypeDeclInfo(tcstr: IRTypedeclCStringDecl): [string, string] {
@@ -724,14 +786,14 @@ class CPPEmitter {
     private emitTypeDeclInfo(): [string, string] {
         const pdecls = "//Primitive decls\n\n" + this.irasm.primitives.map((pdecl) => {
             const tusing = `using ${pdecl.tkey} = ᐸRuntimeᐳ::X${pdecl.tkey};`;
-            const bsqparse = `std::optional<${pdecl.tkey}> BSQ_parse${pdecl.tkey}(std::list<uint8_t*>&& iobuffs, size_t totalbytes);`;
-            const bsqemit = `std::list<uint8_t*>&& BSQ_emit${pdecl.tkey}(size_t& bytes, ${pdecl.tkey} vv);`;
+            const bsqparse = `std::optional<${pdecl.tkey}> BSQ_parse${pdecl.tkey}();`;
+            const bsqemit = `void BSQ_emit${pdecl.tkey}(${pdecl.tkey} vv);`;
 
             return [tusing, bsqparse, bsqemit].join("\n");
         }).join("\n\n");
         const pdefs = "//Primitive defs\n\n" + this.irasm.primitives.map((pdecl) => {
-            const bsqparse = `std::optional<${pdecl.tkey}> BSQ_parse${pdecl.tkey}(std::list<uint8_t*>&& iobuffs, size_t totalbytes) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.initialize(std::move(iobuffs), totalbytes); std::optional<${pdecl.tkey}> cc = ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.parse${pdecl.tkey}(); ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.release(); return cc; }`;
-            const bsqemit = `std::list<uint8_t*>&& BSQ_emit${pdecl.tkey}(size_t& bytes, ${pdecl.tkey} vv) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emit${pdecl.tkey}(vv); return ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.completeEmit(bytes); }`;
+            const bsqparse = `std::optional<${pdecl.tkey}> BSQ_parse${pdecl.tkey}() { return ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.parse${pdecl.tkey}(); }`;
+            const bsqemit = `void BSQ_emit${pdecl.tkey}(${pdecl.tkey} vv) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emit${pdecl.tkey}(vv); }`;
 
             return [bsqparse, bsqemit].join("\n");
         }).join("\n\n");
@@ -790,7 +852,9 @@ class CPPEmitter {
             'auto iobb = ᐸRuntimeᐳ::g_alloc_info.io_buffer_alloc();\n' + 
             '    size_t ibytes = std::strlen(argv[1]);\n' +
             '    std::copy(argv[1], argv[1] + ibytes, iobb);\n\n' +
-            `    auto x = BSQ_parse${TransformCPPNameManager.convertTypeKey(idecl.params[0].type.tkeystr)}({iobb}, ibytes);\n` +
+            '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.initialize({iobb}, ibytes);\n' +
+            `    auto x = BSQ_parse${TransformCPPNameManager.convertTypeKey(idecl.params[0].type.tkeystr)}();\n` +
+            '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.release();\n' +
             '    if(!x.has_value()) { printf("Error parsing input\\n"); exit(1); }\n\n'
             : '//No args\n\n') +
             '    if (setjmp(ᐸRuntimeᐳ::tl_bosque_info.current_task->error_handler) > 0) {\n' +
@@ -804,7 +868,8 @@ class CPPEmitter {
             `    auto result = ${TransformCPPNameManager.convertInvokeKey(ikey[0])}(${idecl.params.length === 1 ? 'x.value()' : ''});\n\n` +
             '    size_t obytes = 0;\n' +
             '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.prepForEmit(true);\n' +
-            `    auto oibb = BSQ_emit${TransformCPPNameManager.convertTypeKey(idecl.resultType.tkeystr)}(obytes, result);\n\n` +
+            `    BSQ_emit${TransformCPPNameManager.convertTypeKey(idecl.resultType.tkeystr)}(result);\n` +
+            '    auto oibb = ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.completeEmit(obytes);\n\n' +
             '    //TODO assume chars are all printable for now\n' +
             '    for(size_t i = 0; i < obytes; i++) {\n' +
             '        printf("%c", static_cast<char>(oibb.front()[i]));\n' +

@@ -187,19 +187,8 @@ class ASMToIRConverter {
     }
 
     private processTypeSignature(tsig: TypeSignature): IRTypeSignature {
-        let rtsig: TypeSignature;
+        let rtsig: TypeSignature = this.tproc(tsig);
 
-        //If an invoke instantiation is active then it subsumes the type instantiation so use it first
-        if(this.currentInvokeInstantation !== undefined) {
-            rtsig = this.currentInvokeInstantation.binds !== undefined ? tsig.remapTemplateBindings(this.currentInvokeInstantation.binds) : tsig;
-        }
-        else if(this.currentTypeInstantiation !== undefined) {
-            rtsig = this.currentTypeInstantiation.binds !== undefined ? tsig.remapTemplateBindings(this.currentTypeInstantiation.binds) : tsig;
-        }
-        else {
-            rtsig = tsig;
-        }
-        
         if(rtsig instanceof VoidTypeSignature) {
             return new IRVoidTypeSignature();
         }
@@ -590,22 +579,22 @@ class ASMToIRConverter {
             case ExpressionTag.CallRefVariableExpression: {
                 const crexp = exp as CallRefVariableExpression;
 
-                return this.coerceToBoolForTest(this.flattenCallRefVariableExpression(crexp), crexp.getType());
+                return this.coerceToBoolForTest(this.flattenCallRefVariableExpression(crexp), this.tproc(crexp.getType()));
             }
             case ExpressionTag.CallRefThisExpression: {
                 const crexp = exp as CallRefThisExpression;
                 
-                return this.coerceToBoolForTest(this.flattenCallRefThisExpression(crexp), crexp.getType());
+                return this.coerceToBoolForTest(this.flattenCallRefThisExpression(crexp), this.tproc(crexp.getType()));
             }
             case ExpressionTag.CallRefSelfExpression: {
                 const crexp = exp as CallRefSelfExpression;
 
-                return this.coerceToBoolForTest(this.flattenCallRefSelfExpression(crexp), crexp.getType());
+                return this.coerceToBoolForTest(this.flattenCallRefSelfExpression(crexp), this.tproc(crexp.getType()));
             }
             case ExpressionTag.CallTaskActionExpression: {
                 const crexp = exp as CallTaskActionExpression;
                 
-                return this.coerceToBoolForTest(this.flattenCallTaskActionExpression(crexp), crexp.getType());
+                return this.coerceToBoolForTest(this.flattenCallTaskActionExpression(crexp), this.tproc(crexp.getType()));
             }
             default: {
                 const ttag = exp.tag;
@@ -613,31 +602,31 @@ class ASMToIRConverter {
                 if(ttag === ExpressionTag.CallNamespaceFunctionExpression) {
                     const crexp = exp as CallNamespaceFunctionExpression;
 
-                    return this.coerceToBoolForTest(this.flattenCallNamespaceFunctionExpression(crexp), crexp.getType());
+                    return this.coerceToBoolForTest(this.flattenCallNamespaceFunctionExpression(crexp), this.tproc(crexp.getType()));
                 }
                 else if(ttag === ExpressionTag.CallTypeFunctionExpression) {
                     const crexp = exp as CallTypeFunctionExpression;
 
-                    return this.coerceToBoolForTest(this.flattenCallTypeFunctionExpression(crexp), crexp.getType());
+                    return this.coerceToBoolForTest(this.flattenCallTypeFunctionExpression(crexp), this.tproc(crexp.getType()));
                 }
                 else if(ttag === ExpressionTag.LambdaInvokeExpression) {
                     const crexp = exp as LambdaInvokeExpression;
 
-                    return this.coerceToBoolForTest(this.flattenLambdaInvokeExpression(crexp), crexp.getType());
+                    return this.coerceToBoolForTest(this.flattenLambdaInvokeExpression(crexp), this.tproc(crexp.getType()));
                 }
                 else if(ttag === ExpressionTag.PostfixOpExpression) {
                     const crexp = exp as PostfixOp;
 
-                    return this.coerceToBoolForTest(this.flattenPostfixOp(crexp), crexp.getType());
+                    return this.coerceToBoolForTest(this.flattenPostfixOp(crexp), this.tproc(crexp.getType()));
                 }
                 else if(ttag === ExpressionTag.PrefixNotOpExpression) {
                     const nexp = exp as PrefixNotOpExpression;
-                    const nval = this.coerceToBoolForTest(this.flattenITestGuardExpression(nexp.exp), nexp.exp.getType());
+                    const nval = this.coerceToBoolForTest(this.flattenITestGuardExpression(nexp.exp), this.tproc(nexp.exp.getType()));
 
                     return new IRPrefixNotOpExpression(nval, this.getSpecialType("Bool"));
                 }
                 else if(ttag === ExpressionTag.LogicAndExpression) {
-                    const aexps = (exp as LogicAndExpression).exps.map((e) => this.coerceToBoolForTest(this.flattenITestGuardExpression(e), e.getType()));
+                    const aexps = (exp as LogicAndExpression).exps.map((e) => this.coerceToBoolForTest(this.flattenITestGuardExpression(e), this.tproc(e.getType())));
                     
                     const mustfalse = aexps.some((aexp) => ASMToIRConverter.isLiteralFalseExpression(aexp));
                     if(mustfalse) {
@@ -657,7 +646,7 @@ class ASMToIRConverter {
                     }
                 }
                 else {
-                    return this.coerceToBoolForTest(this.flattenExpression(exp), exp.getType());
+                    return this.coerceToBoolForTest(this.flattenExpression(exp), this.tproc(exp.getType()));
                 }
             }
         }
@@ -1150,7 +1139,7 @@ class ASMToIRConverter {
         }
         else if(ttag === ExpressionTag.PrefixNotOpExpression) {
             const pfxnot = exp as PrefixNotOpExpression;
-            const eetype = pfxnot.exp.getType() as NominalTypeSignature;
+            const eetype = this.tproc(pfxnot.exp.getType()) as NominalTypeSignature;
             const nexp = this.makeExpressionSimple(this.flattenExpression(pfxnot.exp), eetype);
             
             if(!(eetype.decl instanceof TypedeclTypeDecl)) {
@@ -1173,7 +1162,7 @@ class ASMToIRConverter {
         }
         else if(ttag === ExpressionTag.PrefixNegateOrPlusOpExpression) {
             const pfxneg = exp as PrefixNegateOrPlusOpExpression;
-            const eetype = pfxneg.exp.getType() as NominalTypeSignature;
+            const eetype = this.tproc(pfxneg.exp.getType()) as NominalTypeSignature;
             const nexp = this.makeExpressionSimple(this.flattenExpression(pfxneg.exp), eetype);
             
             if(!(eetype.decl instanceof TypedeclTypeDecl)) {
@@ -1196,9 +1185,9 @@ class ASMToIRConverter {
         }
         else if(ttag === ExpressionTag.BinAddExpression) {
             const binadd = exp as BinAddExpression;
-            const finaltype = binadd.getType() as NominalTypeSignature;
-            const leetype = binadd.lhs.getType() as NominalTypeSignature;
-            const reetype = binadd.rhs.getType() as NominalTypeSignature;
+            const finaltype = this.tproc(binadd.getType()) as NominalTypeSignature;
+            const leetype = this.tproc(binadd.lhs.getType()) as NominalTypeSignature;
+            const reetype = this.tproc(binadd.rhs.getType()) as NominalTypeSignature;
             
             const [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(binadd.lhs), this.flattenExpression(binadd.rhs), leetype, reetype);
 
@@ -1224,9 +1213,9 @@ class ASMToIRConverter {
         }
         else if(ttag === ExpressionTag.BinSubExpression) {
             const binsub = exp as BinSubExpression;
-            const finaltype = binsub.getType() as NominalTypeSignature;
-            const leetype = binsub.lhs.getType() as NominalTypeSignature;
-            const reetype = binsub.rhs.getType() as NominalTypeSignature;
+            const finaltype = this.tproc(binsub.getType()) as NominalTypeSignature;
+            const leetype = this.tproc(binsub.lhs.getType()) as NominalTypeSignature;
+            const reetype = this.tproc(binsub.rhs.getType()) as NominalTypeSignature;
             
             const [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(binsub.lhs), this.flattenExpression(binsub.rhs), leetype, reetype);
 
@@ -1254,9 +1243,9 @@ class ASMToIRConverter {
         }
         else if(ttag === ExpressionTag.BinMultExpression) {
             const binmult = exp as BinMultExpression;
-            const finaltype = binmult.getType() as NominalTypeSignature;
-            const leetype = binmult.lhs.getType() as NominalTypeSignature;
-            const reetype = binmult.rhs.getType() as NominalTypeSignature;
+            const finaltype = this.tproc(binmult.getType()) as NominalTypeSignature;
+            const leetype = this.tproc(binmult.lhs.getType()) as NominalTypeSignature;
+            const reetype = this.tproc(binmult.rhs.getType()) as NominalTypeSignature;
             
             const [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(binmult.lhs), this.flattenExpression(binmult.rhs), leetype, reetype);
 
@@ -1284,9 +1273,9 @@ class ASMToIRConverter {
         }
         else if(ttag === ExpressionTag.BinDivExpression) {
             const bindiv = exp as BinDivExpression;
-            const finaltype = bindiv.getType() as NominalTypeSignature;
-            const leetype = bindiv.lhs.getType() as NominalTypeSignature;
-            const reetype = bindiv.rhs.getType() as NominalTypeSignature;
+            const finaltype = this.tproc(bindiv.getType()) as NominalTypeSignature;
+            const leetype = this.tproc(bindiv.lhs.getType()) as NominalTypeSignature;
+            const reetype = this.tproc(bindiv.rhs.getType()) as NominalTypeSignature;
             
             const [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(bindiv.lhs), this.flattenExpression(bindiv.rhs), leetype, reetype);
 
@@ -1326,8 +1315,8 @@ class ASMToIRConverter {
         }
         else if(ttag === ExpressionTag.NumericEqExpression) {
             const neqexp = exp as NumericEqExpression;
-            const leetype = neqexp.lhs.getType() as NominalTypeSignature;
-            const reetype = neqexp.rhs.getType() as NominalTypeSignature;
+            const leetype = this.tproc(neqexp.lhs.getType()) as NominalTypeSignature;
+            const reetype = this.tproc(neqexp.rhs.getType()) as NominalTypeSignature;
             
             const [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(neqexp.lhs), this.flattenExpression(neqexp.rhs), leetype, reetype);
 
@@ -1335,8 +1324,8 @@ class ASMToIRConverter {
         }
         else if(ttag === ExpressionTag.NumericNeqExpression) {
             const nneqexp = exp as NumericNeqExpression;
-            const leetype = nneqexp.lhs.getType() as NominalTypeSignature;
-            const reetype = nneqexp.rhs.getType() as NominalTypeSignature;
+            const leetype = this.tproc(nneqexp.lhs.getType()) as NominalTypeSignature;
+            const reetype = this.tproc(nneqexp.rhs.getType()) as NominalTypeSignature;
             
             const [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(nneqexp.lhs), this.flattenExpression(nneqexp.rhs), leetype, reetype);
 
@@ -1344,8 +1333,8 @@ class ASMToIRConverter {
         }
         else if(ttag === ExpressionTag.NumericLessExpression) {
             const nless = exp as NumericLessExpression;
-            const leetype = nless.lhs.getType() as NominalTypeSignature;
-            const reetype = nless.rhs.getType() as NominalTypeSignature;
+            const leetype = this.tproc(nless.lhs.getType()) as NominalTypeSignature;
+            const reetype = this.tproc(nless.rhs.getType()) as NominalTypeSignature;
             
             const [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(nless.lhs), this.flattenExpression(nless.rhs), leetype, reetype);
 
@@ -1353,8 +1342,8 @@ class ASMToIRConverter {
         }
         else if(ttag === ExpressionTag.NumericLessEqExpression) {
             const nlesseq = exp as NumericLessEqExpression;
-            const leetype = nlesseq.lhs.getType() as NominalTypeSignature;
-            const reetype = nlesseq.rhs.getType() as NominalTypeSignature;
+            const leetype = this.tproc(nlesseq.lhs.getType()) as NominalTypeSignature;
+            const reetype = this.tproc(nlesseq.rhs.getType()) as NominalTypeSignature;
             
             const [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(nlesseq.lhs), this.flattenExpression(nlesseq.rhs), leetype, reetype);
 
@@ -1362,8 +1351,8 @@ class ASMToIRConverter {
         }
         else if(ttag === ExpressionTag.NumericGreaterExpression) {
             const ngreater = exp as NumericGreaterExpression;
-            const leetype = ngreater.lhs.getType() as NominalTypeSignature;
-            const reetype = ngreater.rhs.getType() as NominalTypeSignature;
+            const leetype = this.tproc(ngreater.lhs.getType()) as NominalTypeSignature;
+            const reetype = this.tproc(ngreater.rhs.getType()) as NominalTypeSignature;
             
             const [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(ngreater.lhs), this.flattenExpression(ngreater.rhs), leetype, reetype);
 
@@ -1371,8 +1360,8 @@ class ASMToIRConverter {
         }
         else if(ttag === ExpressionTag.NumericGreaterEqExpression) {
             const ngreatereq = exp as NumericGreaterEqExpression;
-            const leetype = ngreatereq.lhs.getType() as NominalTypeSignature;
-            const reetype = ngreatereq.rhs.getType() as NominalTypeSignature;
+            const leetype = this.tproc(ngreatereq.lhs.getType()) as NominalTypeSignature;
+            const reetype = this.tproc(ngreatereq.rhs.getType()) as NominalTypeSignature;
             
             const [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(ngreatereq.lhs), this.flattenExpression(ngreatereq.rhs), leetype, reetype);
 
@@ -1380,7 +1369,7 @@ class ASMToIRConverter {
         }
         else if(ttag === ExpressionTag.LogicAndExpression) {
             const landexp = exp as LogicAndExpression;
-            const landargs = landexp.exps.map<[IRExpression, IRTypeSignature]>((argexp) => [this.makeExpressionSimple(this.flattenExpression(argexp), argexp.getType() as NominalTypeSignature), this.processTypeSignature(argexp.getType())]);
+            const landargs = landexp.exps.map<[IRExpression, IRTypeSignature]>((argexp) => [this.makeExpressionSimple(this.flattenExpression(argexp), this.tproc(argexp.getType()) as NominalTypeSignature), this.processTypeSignature(argexp.getType())]);
 
             if(landargs.some((a) => ASMToIRConverter.isLiteralFalseExpression(a[0]))) {
                 //if one arg was a literal bool then the return must also be a bool type (namely false)
@@ -1402,12 +1391,12 @@ class ASMToIRConverter {
                     resbool = new IRLogicAndExpression(allexps);
                 }
 
-                if(exp.getType().tkeystr === "Bool") {
+                if(this.tproc(exp.getType()).tkeystr === "Bool") {
                     return resbool;
                 }
                 else {
-                    if((exp.getType() as NominalTypeSignature).decl.allInvariants.length !== 0) {
-                        const invchecks = (exp.getType() as NominalTypeSignature).decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
+                    if((this.tproc(exp.getType()) as NominalTypeSignature).decl.allInvariants.length !== 0) {
+                        const invchecks = (this.tproc(exp.getType()) as NominalTypeSignature).decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
                             return new IRTypeDeclInvariantCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.tag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), this.processTypeSignature(invdecl.containingtype).tkeystr, invdecl.ii, resbool);
                         });
                 
@@ -1420,7 +1409,7 @@ class ASMToIRConverter {
         }
         else if(ttag === ExpressionTag.LogicOrExpression) {
             const lorexp = exp as LogicOrExpression;
-            const lorargs = lorexp.exps.map<[IRExpression, IRTypeSignature]>((argexp) => [this.makeExpressionSimple(this.flattenExpression(argexp), argexp.getType() as NominalTypeSignature), this.processTypeSignature(argexp.getType())]);
+            const lorargs = lorexp.exps.map<[IRExpression, IRTypeSignature]>((argexp) => [this.makeExpressionSimple(this.flattenExpression(argexp), this.tproc(argexp.getType()) as NominalTypeSignature), this.processTypeSignature(argexp.getType())]);
 
             if(lorargs.some((a) => ASMToIRConverter.isLiteralTrueExpression(a[0]))) {
                 //if one arg was a literal bool then the return must also be a bool type (namely true)
@@ -1442,12 +1431,12 @@ class ASMToIRConverter {
                     resbool = new IRLogicOrExpression(allexps);
                 }
 
-                if(exp.getType().tkeystr === "Bool") {
+                if(this.tproc(exp.getType()).tkeystr === "Bool") {
                     return resbool;
                 }
                 else {
-                    if((exp.getType() as NominalTypeSignature).decl.allInvariants.length !== 0) {
-                        const invchecks = (exp.getType() as NominalTypeSignature).decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
+                    if((this.tproc(exp.getType()) as NominalTypeSignature).decl.allInvariants.length !== 0) {
+                        const invchecks = (this.tproc(exp.getType()) as NominalTypeSignature).decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
                             return new IRTypeDeclInvariantCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.tag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), this.processTypeSignature(invdecl.containingtype).tkeystr, invdecl.ii, resbool);
                         });
                 
@@ -1517,7 +1506,7 @@ class ASMToIRConverter {
         if(exp.tag === ChkLogicExpressionTag.ChkLogicBaseExpression) {
             const cle = exp as ChkLogicBaseExpression;
 
-            return this.coerceToBoolForTest(this.makeExpressionSimple(this.flattenExpression(cle.exp), cle.exp.getType()), cle.exp.getType());
+            return this.coerceToBoolForTest(this.makeExpressionSimple(this.flattenExpression(cle.exp), this.tproc(cle.exp.getType())), this.tproc(cle.exp.getType()));
         }
         else {
             const iiexp = exp as ChkLogicImpliesExpression;
@@ -1529,7 +1518,7 @@ class ASMToIRConverter {
                 }
                 else {
                     this.pushStatementBlock();
-                    const rhs = this.coerceToBoolForTest(this.makeExpressionSimple(this.flattenExpression(iiexp.rhs), iiexp.rhs.getType()), iiexp.rhs.getType());
+                    const rhs = this.coerceToBoolForTest(this.makeExpressionSimple(this.flattenExpression(iiexp.rhs), this.tproc(iiexp.rhs.getType())), this.tproc(iiexp.rhs.getType()));
                     
                     const stmts = this.popStatementBlock();
                     if(stmts.length === 0) {
@@ -1560,18 +1549,18 @@ class ASMToIRConverter {
 
         if(exp.trueBinders.length === 0 && exp.falseBinders.length === 0) {
             if(ASMToIRConverter.isLiteralTrueExpression(renv[0])) {
-                return this.makeExpressionSimple(this.flattenExpression(exp.trueValue), exp.trueValue.getType());
+                return this.makeExpressionSimple(this.flattenExpression(exp.trueValue), this.tproc(exp.trueValue.getType()));
             }
             else if(ASMToIRConverter.isLiteralFalseExpression(renv[0])) {
-                return this.makeExpressionSimple(this.flattenExpression(exp.falseValue), exp.falseValue.getType());
+                return this.makeExpressionSimple(this.flattenExpression(exp.falseValue), this.tproc(exp.falseValue.getType()));
             }
             else {
                 this.pushStatementBlock();
-                const texp = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(this.flattenExpression(exp.trueValue), exp.trueValue.getType()), exp.trueValue.getType(), exp.rtype as TypeSignature);
+                const texp = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(this.flattenExpression(exp.trueValue), this.tproc(exp.trueValue.getType())), this.tproc(exp.trueValue.getType()), exp.rtype as TypeSignature);
                 const fstmts = this.popStatementBlock();
 
                 this.pushStatementBlock();
-                const fexp = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(this.flattenExpression(exp.falseValue), exp.falseValue.getType()), exp.falseValue.getType(), exp.rtype as TypeSignature);
+                const fexp = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(this.flattenExpression(exp.falseValue), this.tproc(exp.falseValue.getType())), this.tproc(exp.falseValue.getType()), exp.rtype as TypeSignature);
                 const tstmts = this.popStatementBlock();
 
                 if(tstmts.length === 0 && fstmts.length === 0) {
@@ -1806,7 +1795,7 @@ class ASMToIRConverter {
     }
 
     private flattenDebugStatement(stmt: DebugStatement) {
-        const irval = this.makeExpressionSimple(this.flattenExpression(stmt.value), stmt.value.getType());
+        const irval = this.makeExpressionSimple(this.flattenExpression(stmt.value), this.tproc(stmt.value.getType()));
         const irtype = this.processTypeSignature(stmt.value.getType());
 
         this.pushStatement(new IRDebugStatement(irtype, irval, this.currentFile as string, this.convertSourceInfo(stmt.sinfo)));
@@ -1992,16 +1981,16 @@ class ASMToIRConverter {
                 const eexp = this.flattenExpression(body.exp);
 
                 if(eexp instanceof IRSimpleExpression) {
-                    const frval = this.makeCoercionExplicitAsNeeded(eexp, body.exp.getType(), this.currentReturnType as TypeSignature);
+                    const frval = this.makeCoercionExplicitAsNeeded(eexp, this.tproc(body.exp.getType()), this.currentReturnType as TypeSignature);
                     this.pushStatement(new IRReturnValueSimpleStatement(frval));
                 }
                 else {
-                    if(eexp instanceof IRInvokeDirectExpression && body.exp.getType().tkeystr === (this.currentReturnType as TypeSignature).tkeystr) {
+                    if(eexp instanceof IRInvokeDirectExpression && this.tproc(body.exp.getType()).tkeystr === (this.currentReturnType as TypeSignature).tkeystr) {
                         this.pushStatement(new IRReturnDirectInvokeStatement(eexp));
                     }
                     else {
-                        const sexp = this.makeExpressionSimple(eexp, body.exp.getType());
-                        const frval = this.makeCoercionExplicitAsNeeded(sexp, body.exp.getType(), this.currentReturnType as TypeSignature);
+                        const sexp = this.makeExpressionSimple(eexp, this.tproc(body.exp.getType()));
+                        const frval = this.makeCoercionExplicitAsNeeded(sexp, this.tproc(body.exp.getType()), this.currentReturnType as TypeSignature);
 
                         this.pushStatement(new IRReturnValueSimpleStatement(frval));
                     }
@@ -2185,7 +2174,7 @@ class ASMToIRConverter {
             return { containingtype: this.processTypeSignature(val.containingtype), ii: jj };
         });
 
-        return new IRTypedeclTypeDecl(tinst.tkey, invariants, validates, saturatedProvides, allInvariants, allValidates, docstring, this.processMetaDataTags(tdecl.attributes), tdecl.file, this.convertSourceInfo(tdecl.sinfo), this.processTypeSignature(tdecl.valuetype as TypeSignature));
+        return new IRTypedeclTypeDecl(tinst.tkey, invariants, validates, saturatedProvides, allInvariants, allValidates, docstring, this.processMetaDataTags(tdecl.attributes), tdecl.file, this.convertSourceInfo(tdecl.sinfo), this.processTypeSignature(tdecl.valuetype as TypeSignature), (tdecl.valuetype as NominalTypeSignature).decl.isKeyTypeRestricted());
     }
 
     private generateTypedeclCStringDecl(tdecl: TypedeclTypeDecl, tinst: TypeInstantiationInfo): IRTypedeclCStringDecl {
@@ -2351,7 +2340,7 @@ class ASMToIRConverter {
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
         
         const stmts = this.popStatementBlock();
-        const expr = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(irval, cdecl.value.getType()), cdecl.value.getType(), cdecl.declaredType);
+        const expr = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(irval, this.tproc(cdecl.value.getType())), this.tproc(cdecl.value.getType()), cdecl.declaredType);
 
         return new IRConstantDecl(cdecl.name, this.processTypeSignature(cdecl.declaredType), stmts, expr, docstring);
     }

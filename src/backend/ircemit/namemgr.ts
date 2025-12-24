@@ -97,6 +97,10 @@ class TransformCPPNameManager {
         return TransformCPPNameManager.convertTypeKey(tkey) + s_specialop_sep + "invariant_" + invariantidx;
     }
 
+    static generateNameForValidateFunction(tkey: string, invariantidx: number): string {
+        return TransformCPPNameManager.convertTypeKey(tkey) + s_specialop_sep + "validate_" + invariantidx;
+    }
+
     static generateNameForBSQONParseFunction(tkey: string): string {
         return TransformCPPNameManager.convertTypeKey(tkey) + s_specialop_sep + "bsqparse";
     }

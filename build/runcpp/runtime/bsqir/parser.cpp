@@ -12,6 +12,16 @@ namespace ᐸRuntimeᐳ
         this->lexer.release();
     }
 
+    bool BSQONParser::peekSymbol(char sym)
+    {
+        auto token = this->lexer.current();
+        if(!(token.tokentype == BSQONTokenType::LiteralSymbol)) {
+            return false;
+        }
+
+        return token.scvalue[0] == sym;
+    }
+
     bool BSQONParser::ensureAndConsumeType(const char* tname)
     {
         auto token = this->lexer.current();

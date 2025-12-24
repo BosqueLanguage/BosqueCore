@@ -131,11 +131,15 @@ class TypeInfoManager {
         }
     }
 
-    emitTypeAsMemberField(tkey: string, enclosingtinfo: TypeInfo): string {
-        const cspec = (enclosingtinfo.tag === LayoutTag.Ref) ? "const " : "";
-        const lspec = TransformCPPNameManager.convertTypeKey(tkey);
-        
-        return `${cspec}${lspec}`;
+    emitTypeAsMemberField(tkey: string): string {
+        const typeinfo = this.getTypeInfo(tkey);
+
+        if(typeinfo.tag !== LayoutTag.Ref) {
+            return TransformCPPNameManager.convertTypeKey(tkey);
+        }
+        else {
+            return TransformCPPNameManager.convertTypeKey(tkey) + "*";            
+        }
     }
 
     emitTypeAsStd(tkey: string): string {

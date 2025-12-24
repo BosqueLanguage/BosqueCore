@@ -215,10 +215,7 @@ const CoreOnlyAttributes = [
     "__typedeclable",
     
     "__keycomparable",
-    "__numeric",
-    
-    "__inline",
-    "__intrinsic_error"
+    "__numeric"
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
 const TermRestrictions = [
