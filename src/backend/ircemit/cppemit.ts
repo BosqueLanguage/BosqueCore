@@ -302,17 +302,15 @@ class CPPEmitter {
             const ttag = exps.tag;
 
             let bstr = "";
-            let skipparens = false;
             if(ttag === IRExpressionTag.IRAccessTypeDeclValueExpression) {
                 const cexp = exps as IRAccessTypeDeclValueExpression;
-                bstr = `(${this.emitIRSimpleExpression(cexp.exp, false)}).value`;
+                bstr = `${this.emitIRSimpleExpression(cexp.exp, false)}.value`;
             }
             else if(ttag === IRExpressionTag.IRConstructSafeTypeDeclExpression) {
                 const cexp = exps as IRConstructSafeTypeDeclExpression;
                 bstr = `${TransformCPPNameManager.generateNameForConstructor(cexp.constype.tkeystr)}(${this.emitIRSimpleExpression(cexp.value, toplevel)})`;
             }
             else if(ttag === IRExpressionTag.IRPrefixNotOpExpression) {
-                skipparens = true;
                 bstr = `!${this.emitIRSimpleExpression((exps as IRPrefixNotOpExpression).exp, false)}`;
             }
             else if(ttag === IRExpressionTag.IRPrefixPlusOpExpression) {
@@ -379,7 +377,7 @@ class CPPEmitter {
                 assert(false, `CPPEmitter: Unsupported IR simple expression type -- ${exps.constructor.name}`);
             }
 
-            return (toplevel || skipparens) ? bstr : `(${bstr})`;
+            return toplevel ? bstr : `(${bstr})`;
         }
     }
 
