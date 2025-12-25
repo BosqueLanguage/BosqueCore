@@ -37,6 +37,8 @@ namespace ᐸRuntimeᐳ
         std::optional<XInt> parseInt();
         std::optional<XChkNat> parseChkNat();
         std::optional<XChkInt> parseChkInt();
+
+        std::optional<XFloat> parseFloat();
     };
 
     class JSONParser

@@ -11,20 +11,12 @@ namespace ᐸRuntimeᐳ
     public:
         static constexpr int64_t MAX_NAT = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_BASE;
 
+        int64_t value;
+
         inline constexpr static bool isValidNat(int64_t v)
         {
             return (0 <= v) & (v <= XNat::MAX_NAT);
         }
-
-    private:
-        int64_t value;
-
-    public:
-        constexpr XNat() : value(0) {}
-        constexpr XNat(int64_t v) : value(v) {}
-        constexpr XNat(const XNat& other) = default;
-
-        inline constexpr int64_t getValue() const { return this->value; }
 
         // Check operators on Nat
         inline static void checkOverflowAddition(XNat n1, XNat n2, const char* file, uint32_t line)
@@ -52,25 +44,25 @@ namespace ᐸRuntimeᐳ
         // Overloaded operators on Nat
         constexpr XNat operator+() const
         {
-            return XNat(this->value);
+            return XNat{this->value};
         }
         // Negation is not defined for Nat
 
         friend constexpr XNat operator+(XNat lhs, XNat rhs)
         {
-            return XNat(lhs.value + rhs.value);
+            return XNat{lhs.value + rhs.value};
         }
         friend constexpr XNat operator-(XNat lhs, XNat rhs)
         {
-            return XNat(lhs.value - rhs.value);
+            return XNat{lhs.value - rhs.value};
         }
         friend constexpr XNat operator/(XNat lhs, XNat rhs)
         {
-           return XNat(lhs.value / rhs.value);
+           return XNat{lhs.value / rhs.value};
         }
         friend constexpr XNat operator*(XNat lhs, XNat rhs)
         {
-            return XNat(lhs.value * rhs.value);
+            return XNat{lhs.value * rhs.value};
         }
 
         friend constexpr bool operator<(const XNat& lhs, const XNat& rhs) { return lhs.value < rhs.value; }
@@ -87,21 +79,13 @@ namespace ᐸRuntimeᐳ
         static constexpr int64_t MIN_INT = -ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_BASE; 
         static constexpr int64_t MAX_INT = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_BASE; 
 
+        int64_t value;
+
         inline constexpr static bool isValidInt(int64_t v)
         {
             return (XInt::MIN_INT <= v) & (v <= XInt::MAX_INT);
         }
-
-    private:
-        int64_t value;
-
-    public:
-        constexpr XInt() : value(0) {}
-        constexpr XInt(int64_t v) : value(v) {}
-        constexpr XInt(const XInt& other) = default;
-
-        inline constexpr int64_t getValue() const { return this->value; }
-
+    
         // Check operators on Int
         inline static void checkOverflowAddition(XInt n1, XInt n2, const char* file, uint32_t line)
         {
@@ -126,28 +110,28 @@ namespace ᐸRuntimeᐳ
         // Overloaded operators on Int
         constexpr XInt operator+() const
         {
-            return XInt(this->value);
+            return XInt{this->value};
         }
         constexpr XInt operator-() const
         {
-            return XInt(-this->value);
+            return XInt{-this->value};
         }
 
         friend constexpr XInt operator+(XInt lhs, XInt rhs)
         {
-            return XInt(lhs.value + rhs.value);
+            return XInt{lhs.value + rhs.value};
         }
         friend constexpr XInt operator-(XInt lhs, XInt rhs)
         {
-            return XInt(lhs.value - rhs.value);
+            return XInt{lhs.value - rhs.value};
         }
         friend constexpr XInt operator/(XInt lhs, XInt rhs)
         {
-            return XInt(lhs.value / rhs.value);
+            return XInt{lhs.value / rhs.value};
         }
         friend constexpr XInt operator*(XInt lhs, XInt rhs)
         {
-            return XInt(lhs.value * rhs.value);
+            return XInt{lhs.value * rhs.value};
         }
 
         friend constexpr bool operator<(const XInt& lhs, const XInt& rhs) { return lhs.value < rhs.value; }
@@ -163,31 +147,23 @@ namespace ᐸRuntimeᐳ
     public:
         static constexpr __int128_t MAX_NAT = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED; 
 
+        __int128_t value;
+
         inline constexpr static bool isValidNat(__int128_t v)
         {
             return (0 <= v) & (v <= XChkNat::MAX_NAT);
         }
 
-    private:
-        __int128_t value;
-
         static constexpr __int128_t BOTTOM_VALUE = (__int128_t(1) << 126);
-
+        
         inline constexpr static bool s_isBottom(__int128_t v)
         {
-            return (v & BOTTOM_VALUE) != 0;
+            return v == BOTTOM_VALUE;
         }
-
-    public:
-        constexpr XChkNat() : value(0) {}
-        constexpr XChkNat(__int128_t v) : value(v) {}
-        constexpr XChkNat(const XChkNat& other) = default;
-
-        inline constexpr __int128_t getValue() const { return this->value; }
 
         constexpr static XChkNat bliteral()
         {
-            return XChkNat(XChkNat::BOTTOM_VALUE);
+            return XChkNat{XChkNat::BOTTOM_VALUE};
         }
 
         constexpr bool isBottom() const
@@ -207,7 +183,7 @@ namespace ᐸRuntimeᐳ
         // Overloaded operators on Nat
         constexpr XChkNat operator+() const
         {
-            return XChkNat(this->value);
+            return XChkNat{this->value};
         }
         // Negation is not defined for Nat
 
@@ -219,38 +195,38 @@ namespace ᐸRuntimeᐳ
 
             __int128_t result = 0;
             if(!__builtin_add_overflow(lhs.value, rhs.value, &result) && XChkNat::isValidNat(result)) [[likely]] {
-                return XChkNat(result);
+                return XChkNat{result};
             }
             else {
-                return XChkNat(XChkNat::BOTTOM_VALUE);
+                return XChkNat{XChkNat::BOTTOM_VALUE};
             }
         }
         friend constexpr XChkNat operator-(XChkNat lhs, XChkNat rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
-                return XChkNat(XChkNat::BOTTOM_VALUE);
+                return XChkNat{XChkNat::BOTTOM_VALUE};
             }
 
             __int128_t result = 0;
             if(!__builtin_sub_overflow(lhs.value, rhs.value, &result) && XChkNat::isValidNat(result)) [[likely]] {
-                return XChkNat(result);
+                return XChkNat{result};
             }
             else {
-                return XChkNat(XChkNat::BOTTOM_VALUE);
+                return XChkNat{XChkNat::BOTTOM_VALUE};
             }
         }
         friend constexpr XChkNat operator/(XChkNat lhs, XChkNat rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
-                return XChkNat(XChkNat::BOTTOM_VALUE);
+                return XChkNat{XChkNat::BOTTOM_VALUE};
             }
 
-            return XChkNat(lhs.value / rhs.value);
+            return XChkNat{lhs.value / rhs.value};
         }
         friend constexpr XChkNat operator*(XChkNat lhs, XChkNat rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
-                return XChkNat(XChkNat::BOTTOM_VALUE);
+                return XChkNat{XChkNat::BOTTOM_VALUE};
             }
 
            __int128_t result = 0;
@@ -258,7 +234,7 @@ namespace ᐸRuntimeᐳ
                 return XChkNat(result);
             }
             else {
-                return XChkNat(XChkNat::BOTTOM_VALUE);
+                return XChkNat{XChkNat::BOTTOM_VALUE};
             }
         }
 
@@ -275,28 +251,20 @@ namespace ᐸRuntimeᐳ
     public:
         static constexpr __int128_t MIN_INT = -ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED; 
         static constexpr __int128_t MAX_INT = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED; 
+                
+        __int128_t value;
 
         inline constexpr static bool isValidInt(__int128_t v)
         {
             return (XChkInt::MIN_INT <= v) & (v <= XChkInt::MAX_INT);
         }
 
-    private:
-        __int128_t value;
-        
         static constexpr __int128_t BOTTOM_VALUE = (__int128_t(1) << 126);
 
         inline constexpr static bool isBottom(__int128_t v)
         {
-            return (v & BOTTOM_VALUE) != 0;
+            return v == BOTTOM_VALUE;
         }
-
-    public:
-        constexpr XChkInt() : value(0) {}
-        constexpr XChkInt(__int128_t v) : value(v) {}
-        constexpr XChkInt(const XChkInt& other) = default;
-
-        inline constexpr __int128_t getValue() const { return this->value; }
 
         constexpr bool isBottom() const
         {
@@ -305,7 +273,7 @@ namespace ᐸRuntimeᐳ
 
         constexpr static XChkInt bliteral()
         {
-            return XChkInt(XChkInt::BOTTOM_VALUE);
+            return XChkInt{XChkInt::BOTTOM_VALUE};
         }
     
         inline static void checkDivisionByZero(XChkInt n2, const char* file, uint32_t line)
@@ -316,61 +284,61 @@ namespace ᐸRuntimeᐳ
         // Overloaded operators on Int
         constexpr XChkInt operator+() const
         {
-            return XChkInt(this->value);
+            return XChkInt{this->value};
         }
         constexpr XChkInt operator-() const
         {
-            return XChkInt(-this->value);
+            return XChkInt{-this->value};
         }
 
         friend constexpr XChkInt operator+(XChkInt lhs, XChkInt rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
-                return XChkInt(XChkInt::BOTTOM_VALUE);
+                return XChkInt{XChkInt::BOTTOM_VALUE};
             }
 
             __int128_t result = 0;
             if(!__builtin_add_overflow(lhs.value, rhs.value, &result) && XChkInt::isValidInt(result)) [[likely]] {
-                return XChkInt(result);
+                return XChkInt{result};
             }
             else {
-                return XChkInt(XChkInt::BOTTOM_VALUE);
+                return XChkInt{XChkInt::BOTTOM_VALUE};
             }
         }
         friend constexpr XChkInt operator-(XChkInt lhs, XChkInt rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
-                return XChkInt(XChkInt::BOTTOM_VALUE);
+                return XChkInt{XChkInt::BOTTOM_VALUE};
             }
 
             __int128_t result = 0;
             if(!__builtin_sub_overflow(lhs.value, rhs.value, &result) && XChkInt::isValidInt(result)) [[likely]] {
-                return XChkInt(result);
+                return XChkInt{result};
             }
             else {
-                return XChkInt(XChkInt::BOTTOM_VALUE);
+                return XChkInt{XChkInt::BOTTOM_VALUE};
             }
         }
         friend constexpr XChkInt operator/(XChkInt lhs, XChkInt rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
-                return XChkInt(XChkInt::BOTTOM_VALUE);
+                return XChkInt{XChkInt::BOTTOM_VALUE};
             }
 
-            return XChkInt(lhs.value / rhs.value);
+            return XChkInt{lhs.value / rhs.value};
         }
         friend constexpr XChkInt operator*(XChkInt lhs, XChkInt rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
-                return XChkInt(XChkInt::BOTTOM_VALUE);
+                return XChkInt{XChkInt::BOTTOM_VALUE};
             }
 
            __int128_t result = 0;
             if(!__builtin_mul_overflow(lhs.value, rhs.value, &result) && XChkInt::isValidInt(result)) [[likely]] {
-                return XChkInt(result);
+                return XChkInt{result};
             }
             else {
-                return XChkInt(XChkInt::BOTTOM_VALUE);
+                return XChkInt{XChkInt::BOTTOM_VALUE};
             }
         }
 

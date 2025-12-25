@@ -8,15 +8,10 @@ namespace ᐸRuntimeᐳ
 {
     class XBool
     {
-    private:
+    public:
         uint64_t value; // Stored as uint64_t for alignment reasons
 
-    public:
-        constexpr XBool() : value(0) {}
-        constexpr XBool(uint64_t v) : value(v) {}
-        constexpr XBool(const XBool& other) = default;
-
-        constexpr static XBool from(bool b) { return XBool(b ? 1ull : 0ull); }
+        constexpr static XBool from(bool b) { return XBool{b ? 1ull : 0ull}; }
         constexpr static bool toBool(XBool b) { return b.value != 0ull; }
 
         friend constexpr bool operator<(const XBool &lhs, const XBool &rhs) { return lhs.value < rhs.value; }

@@ -23,25 +23,25 @@ constexpr ᐸRuntimeᐳ::XBool TRUE = ᐸRuntimeᐳ::XBool::from(true);
 
 constexpr ᐸRuntimeᐳ::XNat operator""_n(unsigned long long n)
 {
-    return ᐸRuntimeᐳ::XNat(n);
+    return ᐸRuntimeᐳ::XNat{(int64_t)n};
 }
 
 constexpr ᐸRuntimeᐳ::XInt operator""_i(unsigned long long n)
 {
-    return ᐸRuntimeᐳ::XInt(n);
+    return ᐸRuntimeᐳ::XInt{(int64_t)n};
 }
 
 constexpr ᐸRuntimeᐳ::XChkNat operator""_N(unsigned long long n)
 {
-    return ᐸRuntimeᐳ::XChkNat(n);
+    return ᐸRuntimeᐳ::XChkNat{(__int128_t)n};
 }
     
 constexpr ᐸRuntimeᐳ::XChkInt operator""_I(unsigned long long n)
 {
-    return ᐸRuntimeᐳ::XChkInt(n);
+    return ᐸRuntimeᐳ::XChkInt{(__int128_t)n};
 }
 
 constexpr ᐸRuntimeᐳ::XFloat operator""_f(long double n)
 {
-    return ᐸRuntimeᐳ::XFloat(n);
+    return ᐸRuntimeᐳ::XFloat{(double)n};
 }

@@ -77,12 +77,12 @@ namespace ᐸRuntimeᐳ
         
     void BSQONEmitter::emitNat(XNat n)
     {
-        this->bufferMgr.writeNumberWFormat("%llin", n.getValue());
+        this->bufferMgr.writeNumberWFormat("%llin", n.value);
     }
 
     void BSQONEmitter::emitInt(XInt i)
     {
-        this->bufferMgr.writeNumberWFormat("%llii", i.getValue());
+        this->bufferMgr.writeNumberWFormat("%llii", i.value);
     }
 
     void BSQONEmitter::emitChkNat(XChkNat n)
@@ -91,8 +91,8 @@ namespace ᐸRuntimeᐳ
             this->bufferMgr.writeImmediate("ChkNat::npos");
         }
         else {
-            if(n.getValue() <= (__int128_t)std::numeric_limits<int64_t>::max()) {
-                this->bufferMgr.writeNumberWFormat("%lliN", static_cast<int64_t>(n.getValue()));
+            if(n.value <= (__int128_t)std::numeric_limits<int64_t>::max()) {
+                this->bufferMgr.writeNumberWFormat("%lliN", static_cast<int64_t>(n.value));
             }
             else {
                 assert(false); // Not Implemented: format for very large ChkNat values
@@ -106,8 +106,8 @@ namespace ᐸRuntimeᐳ
             this->bufferMgr.writeImmediate("ChkInt::npos");
         }
         else {
-            if(((__int128_t)std::numeric_limits<int64_t>::min() <= i.getValue()) & (i.getValue() <= (__int128_t)std::numeric_limits<int64_t>::max())) {
-                this->bufferMgr.writeNumberWFormat("%lliI", static_cast<int64_t>(i.getValue()));
+            if(((__int128_t)std::numeric_limits<int64_t>::min() <= i.value) & (i.value <= (__int128_t)std::numeric_limits<int64_t>::max())) {
+                this->bufferMgr.writeNumberWFormat("%lliI", static_cast<int64_t>(i.value));
             }
             else {
                 assert(false); // Not Implemented: format for very large ChkInt values
@@ -115,9 +115,20 @@ namespace ᐸRuntimeᐳ
         }
     }
 
+    void BSQONEmitter::emitFloat(XFloat f)
+    {
+        if(std::floor(f.value) != f.value) {
+            this->bufferMgr.writeNumberWFormat("%lgf", f.value);
+        }
+        else {
+            //force the decimal and a single trailing 0 for whole numbers
+            this->bufferMgr.writeNumberWFormat("%lg.0f", f.value);
+        }
+    }
+
     void BSQONEmitter::emitByte(XByte b)
     {
-        this->bufferMgr.writeNumberWFormat("0x%x", b.getValue());
+        this->bufferMgr.writeNumberWFormat("0x%x", b.value);
     }
 
     void BSQONEmitter::emitCChar(XCChar c)

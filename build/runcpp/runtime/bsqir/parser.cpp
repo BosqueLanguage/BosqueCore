@@ -165,7 +165,7 @@ namespace ᐸRuntimeᐳ
     std::optional<XChkNat> BSQONParser::parseChkNat() 
     {
         if(this->lexer.current().tokentype == BSQONTokenType::LiteralChkNat) {
-            if(this->lexer.current().scvalue[0] == '#') {
+            if(std::strcmp(this->lexer.current().scvalue, "ChkNat::npos") == 0) {
                 this->lexer.consume();
                 return std::optional<XChkNat>(XChkNat::bliteral());
             }
@@ -193,7 +193,7 @@ namespace ᐸRuntimeᐳ
     std::optional<XChkInt> BSQONParser::parseChkInt() 
     {
         if(this->lexer.current().tokentype == BSQONTokenType::LiteralChkInt) {
-            if(this->lexer.current().scvalue[0] == '#') {
+            if(std::strcmp(this->lexer.current().scvalue, "ChkInt::npos") == 0) {
                 this->lexer.consume();
                 return std::optional<XChkInt>(XChkInt::bliteral());
             }
@@ -216,5 +216,10 @@ namespace ᐸRuntimeᐳ
         }
 
         return std::nullopt;
+    }
+
+    std::optional<XFloat> BSQONParser::parseFloat()
+    {
+        assert(false); // Not Implemented: parsing Float values
     }
 }

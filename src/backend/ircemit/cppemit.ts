@@ -135,55 +135,55 @@ class CPPEmitter {
         }
         else if(ttag === IRExpressionTag.IRLiteralUUIDv4Expression) {
             const bytes = (exp as IRLiteralUUIDv4Expression).bytes.map((b) => `0x${b.toString(16).padStart(2, '0')}`).join(", ");
-            return `${RUNTIME_NAMESPACE}::XUUIDv4(${bytes})`;
+            return `${RUNTIME_NAMESPACE}::XUUIDv4{${bytes}}`;
         }
         else if(ttag === IRExpressionTag.IRLiteralUUIDv7Expression) {
             const bytes = (exp as IRLiteralUUIDv7Expression).bytes.map((b) => `0x${b.toString(16).padStart(2, '0')}`).join(", ");
-            return `${RUNTIME_NAMESPACE}::XUUIDv7(${bytes})`;
+            return `${RUNTIME_NAMESPACE}::XUUIDv7{${bytes}}`;
         }
         else if(ttag === IRExpressionTag.IRLiteralSHAContentHashExpression) {
             const bytes = (exp as IRLiteralSHAContentHashExpression).bytes.map((b) => `0x${b.toString(16).padStart(2, '0')}`).join(", ");
-            return `${RUNTIME_NAMESPACE}::XSHAContentHash(${bytes})`;
+            return `${RUNTIME_NAMESPACE}::XSHAContentHash{${bytes}}`;
         }
         else if(ttag === IRExpressionTag.IRLiteralTZDateTimeExpression) {
             const dtinfo = (exp as IRLiteralTZDateTimeExpression);
-            return `${RUNTIME_NAMESPACE}::XTZDateTime({${dtinfo.date.year}, ${dtinfo.date.month}, ${dtinfo.date.day}}, {${dtinfo.time.hour}, ${dtinfo.time.minute}, ${dtinfo.time.second}}, "${dtinfo.timezone}");`;
+            return `${RUNTIME_NAMESPACE}::XTZDateTime{{${dtinfo.date.year}, ${dtinfo.date.month}, ${dtinfo.date.day}}, {${dtinfo.time.hour}, ${dtinfo.time.minute}, ${dtinfo.time.second}}, "${dtinfo.timezone}"};`;
         }
         else if(ttag === IRExpressionTag.IRLiteralTAITimeExpression) {
             const taiinfo = (exp as IRLiteralTAITimeExpression);
-            return `${RUNTIME_NAMESPACE}::XTAITime({${taiinfo.date.year}, ${taiinfo.date.month}, ${taiinfo.date.day}}, {${taiinfo.time.hour}, ${taiinfo.time.minute}, ${taiinfo.time.second}});`;
+            return `${RUNTIME_NAMESPACE}::XTAITime{{${taiinfo.date.year}, ${taiinfo.date.month}, ${taiinfo.date.day}}, {${taiinfo.time.hour}, ${taiinfo.time.minute}, ${taiinfo.time.second}}};`;
         }
         else if(ttag === IRExpressionTag.IRLiteralPlainDateExpression) {
             const pdate = (exp as IRLiteralPlainDateExpression);
-            return `${RUNTIME_NAMESPACE}::XPlainDate({${pdate.date.year}, ${pdate.date.month}, ${pdate.date.day}})`;
+            return `${RUNTIME_NAMESPACE}::XPlainDate{{${pdate.date.year}, ${pdate.date.month}, ${pdate.date.day}}}`;
         }
         else if(ttag === IRExpressionTag.IRLiteralPlainTimeExpression) {
             const ptime = (exp as IRLiteralPlainTimeExpression);
-            return `${RUNTIME_NAMESPACE}::XPlainTime({${ptime.time.hour}, ${ptime.time.minute}, ${ptime.time.second}})`;
+            return `${RUNTIME_NAMESPACE}::XPlainTime{{${ptime.time.hour}, ${ptime.time.minute}, ${ptime.time.second}}}`;
         }
         else if(ttag === IRExpressionTag.IRLiteralLogicalTimeExpression) {
             const ltime = (exp as IRLiteralLogicalTimeExpression);
-            return `${RUNTIME_NAMESPACE}::XLogicalTime(${ltime.ticks})`;
+            return `${RUNTIME_NAMESPACE}::XLogicalTime{${ltime.ticks}}`;
         }
         else if(ttag === IRExpressionTag.IRLiteralISOTimeStampExpression) {
             const isotimestamp = (exp as IRLiteralISOTimeStampExpression);
-            return `${RUNTIME_NAMESPACE}::XISOTimeStamp({${isotimestamp.date.year}, ${isotimestamp.date.month}, ${isotimestamp.date.day}}, {${isotimestamp.time.hour}, ${isotimestamp.time.minute}, ${isotimestamp.time.second}}, ${isotimestamp.milliseconds})`;
+            return `${RUNTIME_NAMESPACE}::XISOTimeStamp{{${isotimestamp.date.year}, ${isotimestamp.date.month}, ${isotimestamp.date.day}}, {${isotimestamp.time.hour}, ${isotimestamp.time.minute}, ${isotimestamp.time.second}}, ${isotimestamp.milliseconds}}`;
         }
         else if(ttag === IRExpressionTag.IRLiteralDeltaDateTimeExpression) {
             const ddtexp = (exp as IRLiteralDeltaDateTimeExpression);
-            return `${RUNTIME_NAMESPACE}::XDeltaDateTime('${ddtexp.sign}', {${ddtexp.deltadate.years}, ${ddtexp.deltadate.months}, ${ddtexp.deltadate.days}}, {${ddtexp.deltatime.hours}, ${ddtexp.deltatime.minutes}, ${ddtexp.deltatime.seconds}})`;
+            return `${RUNTIME_NAMESPACE}::XDeltaDateTime{'${ddtexp.sign}', {${ddtexp.deltadate.years}, ${ddtexp.deltadate.months}, ${ddtexp.deltadate.days}}, {${ddtexp.deltatime.hours}, ${ddtexp.deltatime.minutes}, ${ddtexp.deltatime.seconds}}}`;
         }
         else if(ttag === IRExpressionTag.IRLiteralDeltaISOTimeStampExpression) {
             const itsexp = (exp as IRLiteralDeltaISOTimeStampExpression);
-            return `${RUNTIME_NAMESPACE}::XDeltaISOTimeStamp('${itsexp.sign}', {${itsexp.deltadate.years}, ${itsexp.deltadate.months}, ${itsexp.deltadate.days}}, {${itsexp.deltatime.hours}, ${itsexp.deltatime.minutes}, ${itsexp.deltatime.seconds}}, ${itsexp.deltamilliseconds})`;
+            return `${RUNTIME_NAMESPACE}::XDeltaISOTimeStamp{'${itsexp.sign}', {${itsexp.deltadate.years}, ${itsexp.deltadate.months}, ${itsexp.deltadate.days}}, {${itsexp.deltatime.hours}, ${itsexp.deltatime.minutes}, ${itsexp.deltatime.seconds}}, ${itsexp.deltamilliseconds}}`;
         }
         else if(ttag === IRExpressionTag.IRLiteralDeltaSecondsExpression) {
             const dsexp = (exp as IRLiteralDeltaSecondsExpression);
-            return `${RUNTIME_NAMESPACE}::XDeltaSeconds('${dsexp.sign}', ${dsexp.seconds})`;
+            return `${RUNTIME_NAMESPACE}::XDeltaSeconds{'${dsexp.sign}', ${dsexp.seconds}}`;
         }
         else if(ttag === IRExpressionTag.IRLiteralDeltaLogicalTimeExpression) {
             const dltexp = (exp as IRLiteralDeltaLogicalTimeExpression);
-            return `${RUNTIME_NAMESPACE}::XDeltaLogicalTime('${dltexp.sign}', ${dltexp.ticks})`;
+            return `${RUNTIME_NAMESPACE}::XDeltaLogicalTime{'${dltexp.sign}', ${dltexp.ticks}}`;
         }
         else if(ttag === IRExpressionTag.IRLiteralUnicodeRegexExpression) {
             return `${RUNTIME_NAMESPACE}::g_regexs[${(exp as IRLiteralUnicodeRegexExpression).regexID}]`;
@@ -193,15 +193,15 @@ class CPPEmitter {
         }
         else if(ttag === IRExpressionTag.IRLiteralByteExpression) {
             const b = (exp as IRLiteralByteExpression).value;
-            return `${RUNTIME_NAMESPACE}::XByte(0x${b.toString(16).padStart(2, '0')})`;
+            return `${RUNTIME_NAMESPACE}::XByte{0x${b.toString(16).padStart(2, '0')}}`;
         }
         else if(ttag === IRExpressionTag.IRLiteralCCharExpression) {
             const ccv = (exp as IRLiteralCCharExpression).value;
-            return `${RUNTIME_NAMESPACE}::XCChar('${String.fromCodePoint(ccv)}')`;
+            return `${RUNTIME_NAMESPACE}::XCChar{'${String.fromCodePoint(ccv)}'}`;
         }
         else if(ttag === IRExpressionTag.IRLiteralUnicodeCharExpression) {
             const ucv = (exp as IRLiteralUnicodeCharExpression).value;
-            return (31 < ucv && ucv < 127) ? `${RUNTIME_NAMESPACE}::XUnicodeChar('${String.fromCodePoint(ucv)}')` : `${RUNTIME_NAMESPACE}::XUnicodeChar(${ucv})`;
+            return (31 < ucv && ucv < 127) ? `${RUNTIME_NAMESPACE}::XUnicodeChar{'${String.fromCodePoint(ucv)}'}` : `${RUNTIME_NAMESPACE}::XUnicodeChar{${ucv}}`;
         }
         else if(ttag === IRExpressionTag.IRLiteralCStringExpression) {
             const cstr = (exp as IRLiteralStringExpression).bytes;

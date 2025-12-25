@@ -104,7 +104,7 @@ namespace ᐸRuntimeᐳ
         template <typename T>
         void writeNumberWFormat(const char* fmt, const T& val)
         {
-            char numbuf[32];
+            char numbuf[64];
             int written = std::snprintf(numbuf, sizeof(numbuf), fmt, val);
             this->write(numbuf, static_cast<size_t>(written));
         }
@@ -152,8 +152,7 @@ namespace ᐸRuntimeᐳ
         void emitChkNat(XChkNat n);
         void emitChkInt(XChkInt i);
 
-        void emitRational();
-        void emitFloat();
+        void emitFloat(XFloat f);
 
         //
         //Lots more here
