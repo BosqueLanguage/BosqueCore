@@ -897,7 +897,7 @@ class IRConstructSafeTypeDeclExpression extends IRSimpleExpression {
     readonly value: IRSimpleExpression;
 
     constructor(constype: IRNominalTypeSignature, value: IRSimpleExpression) {
-        super(IRExpressionTag.IRAccessTypeDeclValueExpression);
+        super(IRExpressionTag.IRConstructSafeTypeDeclExpression);
         this.constype = constype;
         this.value = value;
     }
