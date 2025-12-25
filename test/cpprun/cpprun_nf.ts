@@ -106,7 +106,8 @@ function runCPPBuild(code: string, nndir: string): string | undefined {
                     result = `[FAILED TO MOVE RUNTIME FILES] \n\n ${code}`;
                 }
                 else {
-                    execSync(`make -f ${nndir} all`);
+                    const mfpath = path.join(nndir, "Makefile");
+                    execSync(`make -f ${mfpath} all`);
                 }
             }
         }
@@ -147,7 +148,7 @@ function runTestSet(code: string, normalexecs: [string | undefined, string][], e
         const emssg = runCPPBuild(code, nndir);
         assert.equal(emssg, undefined);
 
-        const exepath = path.join(nndir, "cppout/", "app");
+        const exepath = path.join(nndir, "app");
 
         for(let i = 0; i < normalexecs.length; ++i) {
             const [input, expected] = normalexecs[i];

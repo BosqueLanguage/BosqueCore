@@ -19,14 +19,14 @@ describe ("CPPEmit -- Int", () => {
 });
 
 describe ("CPPEmit -- ChkNat", () => {
-    it("should emit simple big nats", function () {
+    it("should emit simple chk nats", function () {
         checkTestEmitMainFunction("public function main(): ChkNat { return 0N; }", "ChkNat Mainᕒmain() { return 0_N; }");
         checkTestEmitMainFunction("public function main(): ChkNat { return +2N; }", "ChkNat Mainᕒmain() { return 2_N; }");
     });
 });
 
 describe ("CPPEmit -- ChkInt", () => {
-    it("should emit simple big ints", function () {
+    it("should emit simple chk ints", function () {
         checkTestEmitMainFunction("public function main(): ChkInt { return 0I; }", "ChkInt Mainᕒmain() { return 0_I; }");
         checkTestEmitMainFunction("public function main(): ChkInt { return +2I; }", "ChkInt Mainᕒmain() { return 2_I; }");
         checkTestEmitMainFunction("public function main(): ChkInt { return -2I; }", "ChkInt Mainᕒmain() { return -2_I; }");
