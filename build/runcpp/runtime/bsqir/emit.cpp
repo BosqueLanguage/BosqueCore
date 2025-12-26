@@ -159,7 +159,7 @@ namespace ᐸRuntimeᐳ
         while(ii.isValid()) {
             char c = ii.current();
 
-             //TODO: we need to handle escaping correctly
+            //TODO: we need to handle escaping correctly
             assert(std::isalnum(c) || c == ' ');
 
             this->bufferMgr.write(c);
@@ -171,7 +171,20 @@ namespace ᐸRuntimeᐳ
 
     void BSQONEmitter::emitString(XString s)
     {
-        assert(false); // Not Implemented
+        this->bufferMgr.writeImmediate("\"");
+
+        XStringIterator ii = s.iterator();
+        while(ii.isValid()) {
+            char32_t c = ii.current();
+
+            //TODO: we need to handle escaping correctly
+            assert(std::isalnum(c) || c == ' ');
+
+            this->bufferMgr.write(c);
+            ii.advance();
+        }
+
+        this->bufferMgr.writeImmediate("\"");
     }
 
     std::list<uint8_t*>&& BSQONEmitter::completeEmit(size_t& bytes)

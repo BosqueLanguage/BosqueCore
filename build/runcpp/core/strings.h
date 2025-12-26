@@ -108,17 +108,7 @@ namespace ᐸRuntimeᐳ
 
         void initializeFromTree(const CStrTree& tree)
         {
-            CStrTree curr = tree;
-
-            while(true) {
-                if(curr.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) {
-                    this->currbuff = curr.data.buff;
-                    break;
-                }
-                else {
-                    assert(false); // Not Implemented: full iterator for CString trees
-                }
-            }
+            assert(false); // Not Implemented: full iterator for CString trees
         }
 
     public:
@@ -127,7 +117,15 @@ namespace ᐸRuntimeᐳ
 
         XCStringIterator(const CStrTree& tree): index(0), currbuff(), cstack(0), nodestack{}
         {
-            this->initializeFromTree(tree);
+            //Handle empty iterator or small iterator as special case
+            if(tree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) {
+                this->index = tree.data.buff.size() > 0 ? 0 : std::numeric_limits<size_t>::max();
+                this->currbuff = tree.data.buff;
+                return;
+            }
+            else {
+                this->initializeFromTree(tree);
+            }
         }
 
         bool isValid() const
@@ -262,7 +260,7 @@ namespace ᐸRuntimeᐳ
     };
 
     constexpr TypeInfo g_typeinfo_StrBuff = {
-        WELL_KNOWN_TYPE_ID_CSTRBUFF,
+        WELL_KNOWN_TYPE_ID_STRBUFF,
         sizeof(StrBuff),
         byteSizeToSlotCount(sizeof(StrBuff)),
         LayoutTag::Value,
@@ -289,6 +287,70 @@ namespace ᐸRuntimeᐳ
         "20000",
         "String",
         nullptr
+    };
+
+    class XStringIterator
+    {
+    private:
+        size_t index;
+        StrBuff currbuff;
+
+        size_t cstack;
+        std::array<StrNode*, 32> nodestack;
+
+        void initializeFromTree(const StrTree& tree)
+        {
+            assert(false); // Not Implemented: full iterator for CString trees
+        }
+
+    public:
+        XStringIterator(): index(0), currbuff(), cstack(0), nodestack{} {}
+        XStringIterator(const XStringIterator& other) = default;
+
+        XStringIterator(const StrTree& tree): index(0), currbuff(), cstack(0), nodestack{}
+        {
+            //Handle empty iterator or small iterator as special case
+            if(tree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_STRBUFF) {
+                this->index = tree.data.buff.size() > 0 ? 0 : std::numeric_limits<size_t>::max();
+                this->currbuff = tree.data.buff;
+                return;
+            }
+            else {
+                this->initializeFromTree(tree);
+            }
+        }
+
+        bool isValid() const
+        {
+            return this->index != std::numeric_limits<size_t>::max();
+        }
+
+        char32_t current() const
+        {
+            return this->currbuff.at(this->index);
+        }
+
+        void advanceSlow()
+        {        
+            this->index = 0;
+
+            if(this->cstack == 0) {
+                this->index = std::numeric_limits<size_t>::max();
+                return;
+            }
+            else {
+                assert(false); // Not Implemented: full iterator for CString trees
+            }
+
+        }
+
+        void advance()
+        {
+            this->index++;
+            if(this->index >= this->currbuff.size()) {
+                this->advanceSlow();
+            }
+        }
     };
 
     class XString
@@ -328,6 +390,11 @@ namespace ᐸRuntimeᐳ
         size_t bytes() const
         {
             return this->size() * sizeof(char32_t);
+        }
+
+        XStringIterator iterator() const
+        {
+            return XStringIterator(this->tree);
         }
     };
 
