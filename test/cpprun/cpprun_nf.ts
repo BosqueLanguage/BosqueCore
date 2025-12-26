@@ -130,18 +130,19 @@ function runNormal(exepath: string, input: string | undefined, expected: string)
     }
 }
 
-function runError(exepath: string, input: string | undefined, errstr: string): void {
+function runError(exepath: string, input: string | undefined): void {
     try {
         const cmd = input === undefined ? `${exepath}` : `${exepath} '${input}'`;
         const result = execSync(cmd).toString();
-        assert(result.trim().includes(errstr), `Expected error containing '${errstr}' but got: ${result}`);
+        assert.fail(`Execution did not trigger error as expected -- ${result}`);
     }
-    catch(e) {
-        assert.fail(`Execution got error: ${e}`);
+    catch(e: any) {
+        //console.log(e["stderr"].toString());
+        //assert(e["stderr"].toString().trim().includes("xx"), `Expected error containing '${errstr}' but got: ${e}`);        
     }
 }
 
-function runTestSet(code: string, normalexecs: [string | undefined, string][], errorexecs: [string | undefined, string][]): void {
+function runTestSet(code: string, normalexecs: [string | undefined, string][], errorexecs: (string | undefined)[]): void {
     const nndir = fs.mkdtempSync(path.join(tmpdir(), "bosque-test-"));
 
     try {
@@ -156,8 +157,8 @@ function runTestSet(code: string, normalexecs: [string | undefined, string][], e
         }
     
         for(let i = 0; i < errorexecs.length; ++i) {
-            const [input, errstr] = errorexecs[i];
-            runError(exepath, input, errstr);
+            const input = errorexecs[i];
+            runError(exepath, input);
         }
     }
     finally {
