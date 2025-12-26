@@ -11,6 +11,10 @@ import { IRNominalTypeSignature, IRTypeSignature } from "../irdefs/irtype.js";
 const RUNTIME_NAMESPACE = "ᐸRuntimeᐳ";
 const CLOSURE_CAPTURE_NAME = "ᐸclosureᐳ";
 
+//Make sure to keep these in sync with runtime limits
+const SMALL_CSTRING_MAX_SIZE = 15;
+const SMALL_STRING_MAX_SIZE = 7;
+
 class CPPEmitter {
     readonly irasm: IRAssembly;
     readonly typeInfoManager: TypeInfoManager;
@@ -205,8 +209,8 @@ class CPPEmitter {
         }
         else if(ttag === IRExpressionTag.IRLiteralCStringExpression) {
             const cstr = (exp as IRLiteralStringExpression).bytes;
-            if(cstr.length <= 24) {
-                return `${RUNTIME_NAMESPACE}::XCString::literal(${this.escapeLiteralCString(cstr)})`;
+            if(cstr.length <= SMALL_CSTRING_MAX_SIZE) {
+                return `${RUNTIME_NAMESPACE}::XCString::smliteral(${this.escapeLiteralCString(cstr)})`;
             }
             else {
                 assert(false, "CPPEmitter: need to do heap allocation for long cstrings");
@@ -214,8 +218,8 @@ class CPPEmitter {
         }
         else if(ttag === IRExpressionTag.IRLiteralStringExpression) {
             const cstr = (exp as IRLiteralStringExpression).bytes;
-            if(cstr.length <= 24) {
-                return `${RUNTIME_NAMESPACE}::XString::literal(${this.escapeLiteralString(cstr)})`;
+            if(cstr.length <= SMALL_STRING_MAX_SIZE) {
+                return `${RUNTIME_NAMESPACE}::XString::smliteral(${this.escapeLiteralString(cstr)})`;
             }
             else {
                 assert(false, "CPPEmitter: need to do heap allocation for long strings");
@@ -242,8 +246,8 @@ class CPPEmitter {
             const ilte = exp as IRLiteralTypedCStringExpression
             const cce = TransformCPPNameManager.convertTypeKey(ilte.constype.tkeystr);
 
-            if(ilte.bytes.length <= 24) {
-                return `${cce}(${RUNTIME_NAMESPACE}::XCString::literal(${this.escapeLiteralCString(ilte.bytes)}))`;
+            if(ilte.bytes.length <= SMALL_CSTRING_MAX_SIZE) {
+                return `${cce}(${RUNTIME_NAMESPACE}::XCString::smliteral(${this.escapeLiteralCString(ilte.bytes)}))`;
             }
             else {
                 assert(false, "CPPEmitter: need to do heap allocation for long cstrings");
@@ -390,20 +394,20 @@ class CPPEmitter {
             
             if(ttag === IRExpressionTag.IRAccessEnvHasExpression) {
                 const iehe = exp as IRAccessEnvHasExpression;
-                return `${this.cppTaskType}::asRepr(&${RUNTIME_NAMESPACE}::tl_info)->environment.has(${RUNTIME_NAMESPACE}::XCString::literal(${this.escapeLiteralCString(iehe.keybytes)}))`;
+                return `${this.cppTaskType}::asRepr(&${RUNTIME_NAMESPACE}::tl_info)->environment.has(${RUNTIME_NAMESPACE}::XCString::gliteral(${this.escapeLiteralCString(iehe.keybytes)}))`;
             }
             else if(ttag === IRExpressionTag.IRAccessEnvGetExpression) {
                 const iege = exp as IRAccessEnvGetExpression;
                 const mname = TransformCPPNameManager.generateNameForUnionMember(iege.oftype.tkeystr);
-                return `${this.cppTaskType}::asRepr(&${RUNTIME_NAMESPACE}::tl_info)->environment.tryGetEntry(${RUNTIME_NAMESPACE}::XCString::literal(${this.escapeLiteralCString(iege.keybytes)}))->value.${mname}`;
+                return `${this.cppTaskType}::asRepr(&${RUNTIME_NAMESPACE}::tl_info)->environment.tryGetEntry(${RUNTIME_NAMESPACE}::XCString::gliteral(${this.escapeLiteralCString(iege.keybytes)}))->value.${mname}`;
             }
             else if(ttag === IRExpressionTag.IRAccessEnvTryGetExpression) {
                 const iege = exp as IRAccessEnvTryGetExpression;
                 const mname = TransformCPPNameManager.generateNameForUnionMember(iege.oftype.tkeystr);
 
-                const chkstr = `${this.cppTaskType}::asRepr(&${RUNTIME_NAMESPACE}::tl_info)->environment.has(${RUNTIME_NAMESPACE}::XCString::literal(${this.escapeLiteralCString(iege.keybytes)}))`;
-                const gettype = `${this.cppTaskType}::asRepr(&${RUNTIME_NAMESPACE}::tl_info)->environment.get(${RUNTIME_NAMESPACE}::XCString::literal(${this.escapeLiteralCString(iege.keybytes)}))->typeinfo`;
-                const getstr = `${this.cppTaskType}::asRepr(&${RUNTIME_NAMESPACE}::tl_info)->environment.get(${RUNTIME_NAMESPACE}::XCString::literal(${this.escapeLiteralCString(iege.keybytes)}))->value.${mname}`;
+                const chkstr = `${this.cppTaskType}::asRepr(&${RUNTIME_NAMESPACE}::tl_info)->environment.has(${RUNTIME_NAMESPACE}::XCString::gliteral(${this.escapeLiteralCString(iege.keybytes)}))`;
+                const gettype = `${this.cppTaskType}::asRepr(&${RUNTIME_NAMESPACE}::tl_info)->environment.get(${RUNTIME_NAMESPACE}::XCString::gliteral(${this.escapeLiteralCString(iege.keybytes)}))->typeinfo`;
+                const getstr = `${this.cppTaskType}::asRepr(&${RUNTIME_NAMESPACE}::tl_info)->environment.get(${RUNTIME_NAMESPACE}::XCString::gliteral(${this.escapeLiteralCString(iege.keybytes)}))->value.${mname}`;
 
                 const makeopt = `${RUNTIME_NAMESPACE}::XOption<${TransformCPPNameManager.convertTypeKey(iege.oftype.tkeystr)}>::makeSome(${gettype}, ${getstr})`;
                 const makenone = `${RUNTIME_NAMESPACE}::XOption<${TransformCPPNameManager.convertTypeKey(iege.oftype.tkeystr)}>::optnone`;

@@ -222,4 +222,14 @@ namespace ᐸRuntimeᐳ
     {
         assert(false); // Not Implemented: parsing Float values
     }
+
+    std::optional<XCString> BSQONParser::parseCString()
+    {
+        assert(false); // Not Implemented: parsing CString values
+    }
+
+    std::optional<XString> BSQONParser::parseString()
+    {
+        assert(false); // Not Implemented: parsing String values
+    }
 }

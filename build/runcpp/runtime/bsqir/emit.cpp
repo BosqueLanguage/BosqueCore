@@ -133,17 +133,40 @@ namespace ᐸRuntimeᐳ
 
     void BSQONEmitter::emitCChar(XCChar c)
     {
-        assert(false); // Not Implemented
+        //TODO: we need to handle escaping correctly
+        assert(std::isalnum(char(c.value)) || c.value == ' ');
+
+        this->bufferMgr.writeImmediate("c'");
+        this->bufferMgr.write(char(c.value));
+        this->bufferMgr.writeImmediate("'");
     }
 
     void BSQONEmitter::emitUnicodeChar(XUnicodeChar c)
     {
-        assert(false); // Not Implemented
+        //TODO: we need to handle escaping correctly
+        assert(std::isalnum(char(c.value)) || c.value == ' ');
+
+        this->bufferMgr.writeImmediate("c\"");
+        this->bufferMgr.write(char(c.value));
+        this->bufferMgr.writeImmediate("\"");
     }
 
     void BSQONEmitter::emitCString(XCString s)
     {
-        assert(false); // Not Implemented
+        this->bufferMgr.writeImmediate("'");
+
+        XCStringIterator ii = s.iterator();
+        while(ii.isValid()) {
+            char c = ii.current();
+
+             //TODO: we need to handle escaping correctly
+            assert(std::isalnum(c) || c == ' ');
+
+            this->bufferMgr.write(c);
+            ii.advance();
+        }
+
+        this->bufferMgr.writeImmediate("'");
     }
 
     void BSQONEmitter::emitString(XString s)

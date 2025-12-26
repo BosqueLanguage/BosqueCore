@@ -52,7 +52,7 @@ namespace ᐸRuntimeᐳ
         constexpr CStrTreeUnion(const CStrBuff& b) : buff(b) {}
         constexpr CStrTreeUnion(CStrNode* n) : node(n) {}
     };
-    using CStrTree = ᐸRuntimeᐳ::BoxedUnion<CStrTreeUnion>;
+    using CStrTree = BoxedUnion<CStrTreeUnion>;
 
     class CStrNode
     {
@@ -97,33 +97,99 @@ namespace ᐸRuntimeᐳ
         nullptr
     };
 
+    class XCStringIterator
+    {
+    private:
+        size_t index;
+        CStrBuff currbuff;
+
+        size_t cstack;
+        std::array<CStrNode*, 32> nodestack;
+
+        void initializeFromTree(const CStrTree& tree)
+        {
+            CStrTree curr = tree;
+
+            while(true) {
+                if(curr.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) {
+                    this->currbuff = curr.data.buff;
+                    break;
+                }
+                else {
+                    assert(false); // Not Implemented: full iterator for CString trees
+                }
+            }
+        }
+
+    public:
+        XCStringIterator(): index(0), currbuff(), cstack(0), nodestack{} {}
+        XCStringIterator(const XCStringIterator& other) = default;
+
+        XCStringIterator(const CStrTree& tree): index(0), currbuff(), cstack(0), nodestack{}
+        {
+            this->initializeFromTree(tree);
+        }
+
+        bool isValid() const
+        {
+            return this->index != std::numeric_limits<size_t>::max();
+        }
+
+        char current() const
+        {
+            return this->currbuff.at(this->index);
+        }
+
+        void advanceSlow()
+        {        
+            this->index = 0;
+
+            if(this->cstack == 0) {
+                this->index = std::numeric_limits<size_t>::max();
+                return;
+            }
+            else {
+                assert(false); // Not Implemented: full iterator for CString trees
+            }
+
+        }
+
+        void advance()
+        {
+            this->index++;
+            if(this->index >= this->currbuff.size()) {
+                this->advanceSlow();
+            }
+        }
+    };
+
     class XCString
     {
     private:
-        ᐸRuntimeᐳ::CStrTree tree;
+        CStrTree tree;
 
     public:
         constexpr XCString() : tree() {}
-        constexpr XCString(const ᐸRuntimeᐳ::CStrBuff& b) : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::CStrTreeUnion>(&ᐸRuntimeᐳ::g_typeinfo_CStrBuff, ᐸRuntimeᐳ::CStrTreeUnion(b))) {}
-        constexpr XCString(ᐸRuntimeᐳ::CStrNode* n) : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::CStrTreeUnion>(&ᐸRuntimeᐳ::g_typeinfo_CStrNode, ᐸRuntimeᐳ::CStrTreeUnion(n))) {}
-        constexpr XCString(const ᐸRuntimeᐳ::CStrTree& t) : tree(t) {}
+        constexpr XCString(const CStrBuff& b) : tree(BoxedUnion<CStrTreeUnion>(&g_typeinfo_CStrBuff, CStrTreeUnion(b))) {}
+        constexpr XCString(CStrNode* n) : tree(BoxedUnion<CStrTreeUnion>(&g_typeinfo_CStrNode, CStrTreeUnion(n))) {}
+        constexpr XCString(const CStrTree& t) : tree(t) {}
         constexpr XCString(const XCString& other) = default;
 
         template<size_t len>
         constexpr static XCString smliteral(const char (&cstr)[len])
         {
-            static_assert(len - 1 <= ᐸRuntimeᐳ::CStrBuff::CSTR_BUFF_SIZE, "CString literal too large for CStrBuff");
-            return XCString(ᐸRuntimeᐳ::CStrBuff::literal(cstr));
+            static_assert(len - 1 <= CStrBuff::CSTR_BUFF_SIZE, "CString literal too large for CStrBuff");
+            return XCString(CStrBuff::literal(cstr));
         }
 
         bool empty() const
         {
-            return (this->tree.typeinfo->bsqtypeid == ᐸRuntimeᐳ::WELL_KNOWN_TYPE_ID_CSTRBUFF) && this->tree.data.buff.size() == 0;
+            return (this->tree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) && this->tree.data.buff.size() == 0;
         }
 
         size_t size() const
         {
-            if(this->tree.typeinfo->bsqtypeid == ᐸRuntimeᐳ::WELL_KNOWN_TYPE_ID_CSTRBUFF) {
+            if(this->tree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) {
                 return this->tree.data.buff.size();
             }
             else {
@@ -134,6 +200,11 @@ namespace ᐸRuntimeᐳ
         size_t bytes() const
         {
             return this->size() * sizeof(char);
+        }
+
+        XCStringIterator iterator() const
+        {
+            return XCStringIterator(this->tree);
         }
     };
 
@@ -175,7 +246,7 @@ namespace ᐸRuntimeᐳ
         constexpr StrTreeUnion(const StrBuff& b) : buff(b) {}
         constexpr StrTreeUnion(StrNode* n) : node(n) {}
     };
-    using StrTree = ᐸRuntimeᐳ::BoxedUnion<StrTreeUnion>;
+    using StrTree = BoxedUnion<StrTreeUnion>;
 
     class StrNode
     {
@@ -227,26 +298,26 @@ namespace ᐸRuntimeᐳ
 
     public:
         constexpr XString() : tree() {}
-        constexpr XString(const ᐸRuntimeᐳ::StrBuff& b) : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::StrTreeUnion>(&ᐸRuntimeᐳ::g_typeinfo_StrBuff, ᐸRuntimeᐳ::StrTreeUnion(b))) {}
-        constexpr XString(ᐸRuntimeᐳ::StrNode* n) : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::StrTreeUnion>(&ᐸRuntimeᐳ::g_typeinfo_StrNode, ᐸRuntimeᐳ::StrTreeUnion(n))) {}
-        constexpr XString(const ᐸRuntimeᐳ::StrTree& t) : tree(t) {}
+        constexpr XString(const StrBuff& b) : tree(BoxedUnion<StrTreeUnion>(&g_typeinfo_StrBuff, StrTreeUnion(b))) {}
+        constexpr XString(StrNode* n) : tree(BoxedUnion<StrTreeUnion>(&g_typeinfo_StrNode, StrTreeUnion(n))) {}
+        constexpr XString(const StrTree& t) : tree(t) {}
         constexpr XString(const XString& other) = default;
 
         template<size_t len>
         constexpr static XString smliteral(const char32_t (&cstr)[len])
         {
-            static_assert(len - 1 <= ᐸRuntimeᐳ::StrBuff::STR_MAX_SIZE, "String literal too large for StrBuff");
-            return XString(ᐸRuntimeᐳ::StrBuff::literal(cstr));
+            static_assert(len - 1 <= StrBuff::STR_MAX_SIZE, "String literal too large for StrBuff");
+            return XString(StrBuff::literal(cstr));
         }
 
         bool empty() const
         {
-            return (this->tree.typeinfo->bsqtypeid == ᐸRuntimeᐳ::WELL_KNOWN_TYPE_ID_STRBUFF) && this->tree.data.buff.size() == 0;
+            return (this->tree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_STRBUFF) && this->tree.data.buff.size() == 0;
         }
 
         size_t size() const
         {
-            if(this->tree.typeinfo->bsqtypeid == ᐸRuntimeᐳ::WELL_KNOWN_TYPE_ID_STRBUFF) {
+            if(this->tree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_STRBUFF) {
                 return this->tree.data.buff.size();
             }
             else {
@@ -260,5 +331,6 @@ namespace ᐸRuntimeᐳ
         }
     };
 
-    constexpr static XCString emptycstr(ᐸRuntimeᐳ::CStrBuff::literal(""));
+    constexpr static XCString emptycstr(CStrBuff::literal(""));
+    constexpr static XString emptystr(StrBuff::literal(U""));
 }
