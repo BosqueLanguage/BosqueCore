@@ -6,6 +6,8 @@
 
 namespace ᐸRuntimeᐳ
 {
+    using XNone = uint64_t;
+
     template <typename T>
     class XOption 
     {
@@ -29,6 +31,16 @@ namespace ᐸRuntimeᐳ
         constexpr bool isSome() const { return this->typeinfo != &g_typeinfo_None; }
 
         static XOption<T> makeSome(const TypeInfo* ti, const T& d) { return XOption<T>(ti, d); }
+
+        friend constexpr bool operator==(const XOption<T>& lhs, const XNone& rhs) { return lhs.isNone(); }
+        friend constexpr bool operator==(const XNone& lhs, const XOption<T>& rhs) { return rhs.isNone(); }
+        friend constexpr bool operator!=(const XOption<T>& lhs, const XNone& rhs) { return lhs.isSome(); }
+        friend constexpr bool operator!=(const XNone& lhs, const XOption<T>& rhs) { return rhs.isSome(); }
+        
+        friend constexpr bool operator==(const XOption<T>& lhs, const T& rhs) { return lhs.isSome() && lhs.data == rhs; }
+        friend constexpr bool operator==(const T& lhs, const XOption<T>& rhs) { return rhs.isSome() && lhs == rhs.data; }
+        friend constexpr bool operator!=(const XOption<T>& lhs, const T& rhs) { return lhs.isNone() || lhs.data != rhs; }
+        friend constexpr bool operator!=(const T& lhs, const XOption<T>& rhs) { return rhs.isNone() || lhs != rhs.data; }
     };
 
     //

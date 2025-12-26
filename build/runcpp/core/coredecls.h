@@ -11,11 +11,6 @@
 #include "fpoints.h"
 #include "strings.h"
 
-namespace ᐸRuntimeᐳ
-{
-    using XNone = uint64_t;
-}
-
 constexpr ᐸRuntimeᐳ::XNone none = 0ull;
 
 constexpr ᐸRuntimeᐳ::XBool FALSE = ᐸRuntimeᐳ::XBool::from(false);

@@ -80,18 +80,23 @@ false    //false boolean literal
 ```
 
 ### Integral Numbers
-The literals for `Nat`, `Int`, `BigNat`, `BigInt` are of the form `[+-][0-9]+[n|i|N|I]`. The `n`/`i` suffix is used for `Nat` and `Int` values, the `N`/`I` suffix is used for `BigNat` and `BigInt` values. Some examples include:
+The literals for `Nat`, `Int`, `ChkNat`, `ChkInt` are of the form `[+-][0-9]+[n|i|N|I]`. The `n`/`i` suffix is used for `Nat` and `Int` values, the `N`/`I` suffix is used for `ChkNat` and `ChkInt` values. Some examples include:
 
 ```none
 0n       //0 as a Nat
 0i       //0 as an Int
--1I      //-1 as an BigInt
-100N     //100 as a BigNat
+-1I      //-1 as an ChkInt
+100N     //100 as a ChkNat
 ```
 
-Int and BigNat literals cannot have a leading `-` sign, duplicate signs are an error, and the sign is _explicitly_ part of the number literal -- thus `-2i` and `-(2i)` are not the same semantically which is important for literal typedecl values such as `-2i_Foo` where this is the literal `-2i` as a `Foo` _not_ the value `2i_Foo` negated. 
+Nat and ChkNat represent non-negative numbers only -- thus leading `-` signs are an error. Int and Nat represent numbers in the range from -(2^62 - 1) to (2^62 - 1) and 0 to (2^62 - 1). As these ranges are symmetric,  negation and Nat -> Int conversion is always safe. All operations on these types are checked for overflow/underflow and division by zero.
+
+ChkInt and ChkNat have 2x the range of the standard Int and Nat types -- from -(2^124 - 1) to (2^124 - 1) and 0 to (2^126 - 1). As with Int/Nat these ranges are symmetric, negation and ChkNat -> ChkInt conversion is always safe. All operations on these types are saturating to a invalid flag `ChkInt::npos` (`ChkNat::npos`) for overflowing calculations. As opposed to traditional NaN values these can be compared for equality and ordering (with `npos` being larger than all valid values). However, division by zero and `ChkNat` underflow are still errors.
+
+For literals duplicate signs are an error, and the sign is _explicitly_ part of the number literal -- thus `-2i` and `-(2i)` are not the same semantically which is important for literal typedecl values such as `-2i<Fo>` where this is the literal `-2i` as a `Foo` _not_ the value `2i<Foo>` negated. 
 
 ### Real Approximation Numbers
+-- In Progress --
 The literals for `Float` and `Decimal` are of the form `[+-][0-9]+[.][0-9]+[f|d]`. The `f` suffix is used for `Float` values, which are 64bit IEEE values (excluding NaN and Infinities), the `d` suffix is used for base-10 `Decimal` floating point values (also excluding NaN and Infinities). Literal `Rational` values are of the form `[+-][0-9]+(/[0-9]?R` and 
 represent approximate rational values -- with a `BigInt` numerator and a `Nat` denominator. So infinite range and precision of up to 1/(2^63) which is rounded (TODO: what mode).
 
@@ -103,6 +108,7 @@ Some examples include:
 ```
 
 ### Common Special Numerics
+-- In Progress --
 A `DecimalDegree` literal is of the form `[+-][0-9]+[.][0-9]+dd` and represents a decimal degree value in the range [-180.0, 180.0]. A `LatLongCoordinate` literal is of the form `[+-]DDlatDDlong` and represents a pair of decimal degree values for latitude and longitude in the form `<latitude><longitude>` where latitude is in the range [-90.0, 90.0] and longitude is in the range [-180.0, 180.0]. 
 
 Some examples include:
@@ -113,6 +119,7 @@ Some examples include:
 ```
 
 ### Raw Data Literals
+-- In Progress --
 The literals for `Byte` and `ByteBuffer` are based on `Byte` values. A `Byte` literal is of the form `0x[a-zA-Z0-9]{1,2}b` and represents an 8-bit unsigned integer value in the range [0, 255]. A `ByteBuffer` literal is a sequence of hexidecimal values separated by commas. 
 
 Some examples include:
@@ -123,6 +130,7 @@ Some examples include:
 ```
 
 ### UUIDv4 and UUIDv7 Literals
+-- In Progress --
 UUIDv4 literals are of the form `uuid4{xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx}` where `x` is a hexidecimal digit and `y` is one of `8`, `9`, `A`, or `B`. UUIDv7 literals are of the form `uuid7{xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx}` where `x` is a hexidecimal digit and `y` is one of `8`, `9`, `A`, or `B`. 
 
 Some examples include:
@@ -132,10 +140,12 @@ uuid7{550e8400-e29b-71d4-a716-446655440000}  //UUIDv7
 ```
 
 ### SHAHash Literals
+-- In Progress --
 SHAHash literals are of the form `sha3{<hexstring>}` where the hash function use to compute the value is SHA3 256 with  and `<hexstring>` is the hexidecimal representation of the hash value.
 
 
 ### Data and Time Literals
+-- In Progress --
 Time and time values are complex, as such, Bosque provides a number of representations designed to appropriately capture common use cases. These include:
 - `TZDateTime` literals of the form `YYYY-MM-DDTHH:MM:SS[Zone]` representing a date/time with a timezone in ISO 8601 format where timezone is a string enclosed in `{...}` or is a standard `[A-Z]+` timezone abbreviation.
 - `TAIDateTime` literals of the form `YYYY-MM-DDTHH:MM:SS` representing a TAI (International Atomic Time) date/time at UTC.
@@ -147,6 +157,7 @@ In addition, Bosque provides a logical tick-time representation as a monotonic c
 - `LogicalTime` literals of the form `Tl` where `T` is a positive numeric value.
 
 ### Time and Date Delta Literals
+-- In Progress --
 In addition to providing support for date/time instant literals, Bosque also provides delta representations for expressing time differences (or intervals) by adding a 
 sign `[+-]` specifier to indicate the direction of the delta. 
 
@@ -165,6 +176,7 @@ String literals by default can be multi-line and preserve whitespace using trail
 To match strings Bosque provides regular expression literals for both Unicode strings and C-style strings. These literals are enclosed in slashes `/.../` and support the regex syntax described in [BREX](https://github.com/BosqueLanguage/BREX).
 
 ## Path Literals
+-- In Progress --
 In addition to string literals Bosque also provides path, path fragment, and glob literals for working with URI style resource paths. These literals are enclosed in backslashres `\...\`. They support arbitrary resource types and standard URI path syntax. 
 
 Examples include:
@@ -177,6 +189,7 @@ g\file:/path/**/glob/*.ext\
 ```
 
 ## Format String and Path Literals
+-- In Progress --
 Strings and paths can be format literals as well. These are prefixed with a `$` and support embedded typed format components enclosed in `${...}`. These components include an argument index (starting at `0`) and the types of the format components can be specialized with an optional type after a colon `:`.
 
 ```none
@@ -186,10 +199,10 @@ $\file:/path/to/${0}/resource
 ```
 
 ## Parameters/Variables/Captures
-Variables in Bosque are of the form `[_a-z][_a-zA-Z0-9]`. Local variables can be declared using a `let` for immutable bindings or `var` for mutable bindings. Parameters are 
-always immutable -- except for `this` in a `ref` method and `self` in a `ref` method or `action`. Variables and parameters can be captured by lambda constructors and are immutable within the lambda scope. As Bosque is _referentially transparent_ there are no modes that are needed for the lambda captures. See also [let/var bindings](statements.md).
+Variables in Bosque are of the form `[_a-z][_a-zA-Z0-9]`. Local variables can be declared using a `let` for immutable bindings or `var` for mutable bindings. Parameters are always immutable -- except for `this` in a `ref` method and `self` in a `ref` method or `action`. Variables and parameters can be captured by lambda constructors and are immutable within the lambda scope. As Bosque is _referentially transparent_ there are no modes that are needed for the lambda captures. See also [let/var bindings](statements.md).
 
 ## Literal StringOf Expressions
+-- In Progress --
 Typed strings provide a direct way to expose otherwise latent information about the data that is stored in a string -- e.g. a zipcode, CSS attribute, part ID, etc. The format information is given by a `Validator` type (see [Validator Types](types.md)) and a conforming string literal.
 
 ```none
@@ -202,6 +215,7 @@ typedecl ZipcodeUS = /[0-9]{5}(-[0-9]{4})?/;
 ```
 
 ## Literal Typed Expressions
+-- In Progress --
 Typed literals provide a way to express structured information on other primitive data types, such as Bool, Int, Decimal, String, StringOf, UUID, DateTime, etc. These types are created using `type` syntax and literal values are constructed with the form `literal<Type>`. Examples include:
 
 ```none
