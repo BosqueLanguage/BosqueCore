@@ -6,7 +6,7 @@ import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkN
 import { IRAbstractNominalTypeDecl, IRAssembly, IRConstantDecl, IREnumTypeDecl, IRInvariantDecl, IRInvokeDecl, IRInvokeParameterDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl, IRValidateDecl } from "../irdefs/irassembly.js";
 
 import assert from "node:assert";
-import { IRNominalTypeSignature, IRTypeSignature } from "../irdefs/irtype.js";
+import { IRTypeSignature } from "../irdefs/irtype.js";
 
 const RUNTIME_NAMESPACE = "ᐸRuntimeᐳ";
 const CLOSURE_CAPTURE_NAME = "ᐸclosureᐳ";
@@ -519,21 +519,21 @@ class CPPEmitter {
         else if(ttag === IRStatementTag.IRTypeDeclInvariantCheckStatement) {
             const itdics = stmt as IRTypeDeclInvariantCheckStatement;
 
-            const invchk = `${TransformCPPNameManager.generateNameForInvariantFunction(itdics.tkey, itdics.invariantidx)}(${this.emitIRSimpleExpression(itdics.targetValue, true)}, "${itdics.file}", ${itdics.sinfo.line})`
+            const invchk = `${TransformCPPNameManager.generateNameForInvariantFunction(itdics.tkey, itdics.invariantidx)}(${this.emitIRSimpleExpression(itdics.targetValue, true)})`
             const dtag = itdics.diagnosticTag !== null ? `"${itdics.diagnosticTag}"` : "nullptr";
             return `ᐸRuntimeᐳ::bsq_invariant(${invchk}, "${itdics.file}", ${itdics.sinfo.line}, ${dtag}, "Failed Invariant");`;
         }
         else if(ttag === IRStatementTag.IRPreconditionCheckStatement) {
             const ipcs = stmt as IRPreconditionCheckStatement;
 
-            const prechk = `${TransformCPPNameManager.generateNameForInvokePreconditionCheck(ipcs.ikey, ipcs.requiresidx)}(${ipcs.args.map((arg) => this.emitIRSimpleExpression(arg, true)).join(", ")}, "${ipcs.file}", ${ipcs.sinfo.line})`
+            const prechk = `${TransformCPPNameManager.generateNameForInvokePreconditionCheck(ipcs.ikey, ipcs.requiresidx)}(${ipcs.args.map((arg) => this.emitIRSimpleExpression(arg, true)).join(", ")})`
             const dtag = ipcs.diagnosticTag !== null ? `"${ipcs.diagnosticTag}"` : "nullptr";
             return `ᐸRuntimeᐳ::bsq_requires(${prechk}, "${ipcs.file}", ${ipcs.sinfo.line}, ${dtag}, "Failed Requires");`;
         }
         else if(ttag === IRStatementTag.IRPostconditionCheckStatement) {
             const ipcs = stmt as IRPostconditionCheckStatement;
 
-            const postchk = `${TransformCPPNameManager.generateNameForInvokePostconditionCheck(ipcs.ikey, ipcs.ensuresidx)}(${ipcs.args.map((arg) => this.emitIRSimpleExpression(arg, true)).join(", ")}, "${ipcs.file}", ${ipcs.sinfo.line})`
+            const postchk = `${TransformCPPNameManager.generateNameForInvokePostconditionCheck(ipcs.ikey, ipcs.ensuresidx)}(${ipcs.args.map((arg) => this.emitIRSimpleExpression(arg, true)).join(", ")})`
             const dtag = ipcs.diagnosticTag !== null ? `"${ipcs.diagnosticTag}"` : "nullptr";
             return `ᐸRuntimeᐳ::bsq_ensures(${postchk}, "${ipcs.file}", ${ipcs.sinfo.line}, ${dtag}, "Failed Ensures");`;
         }
@@ -724,29 +724,37 @@ class CPPEmitter {
     private emitGeneralTypeDeclInfo(tdecl: IRTypedeclTypeDecl): [string, string] {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
         const ctrepr = this.typeInfoManager.emitTypeAsStd(tdecl.tkey);
+
+        const voptttname = TransformCPPNameManager.convertTypeKey(tdecl.valuetype.tkeystr);
+        const voptt = this.typeInfoManager.emitTypeAsStd(tdecl.valuetype.tkeystr);
         const valuetype = this.typeInfoManager.emitTypeAsMemberField(tdecl.valuetype.tkeystr);
 
-        const vfuncinfo = tdecl.invariants.map((inv) => this.emitInvariantFunction(inv, tdecl, [{pname: "value", ptype: new IRNominalTypeSignature(tdecl.tkey)}]));
-        const valfuncinfo = tdecl.validates.map((val) => this.emitValidateFunction(val, tdecl, [{pname: "value", ptype: new IRNominalTypeSignature(tdecl.tkey)}]));
+        const vfuncinfo = tdecl.invariants.map((inv) => this.emitInvariantFunction(inv, tdecl, [{pname: "$value", ptype: tdecl.valuetype}]));
+        const valfuncinfo = tdecl.validates.map((val) => this.emitValidateFunction(val, tdecl, [{pname: "$value", ptype: tdecl.valuetype}]));
 
         const tclass = `class ${ctname} {\n` +
             `public:\n` +
             `    ${valuetype} value;\n` +
             `    //All constructor and assignment defaults\n` +
             (tdecl.iskeytype ? 
-            `    friend constexpr bool operator<(const ${ctname}& lhs, const ${ctname}& rhs) { return lhs.value < rhs.value; }\n` +
-            `    friend constexpr bool operator==(const ${ctname} &lhs, const ${ctname}& rhs) { return lhs.value == rhs.value; }\n` +
-            `    friend constexpr bool operator>(const ${ctname} &lhs, const ${ctname}& rhs) { return rhs.value < lhs.value; }\n` +
-            `    friend constexpr bool operator!=(const ${ctname} &lhs, const ${ctname}& rhs) { return !(lhs.value == rhs.value); }\n` :
+            `    friend constexpr bool operator<(const ${ctrepr}& lhs, const ${ctrepr}& rhs) { return lhs.value < rhs.value; }\n` +
+            `    friend constexpr bool operator==(const ${ctrepr} &lhs, const ${ctrepr}& rhs) { return lhs.value == rhs.value; }\n` +
+            `    friend constexpr bool operator>(const ${ctrepr} &lhs, const ${ctrepr}& rhs) { return rhs.value < lhs.value; }\n` +
+            `    friend constexpr bool operator!=(const ${ctrepr} &lhs, const ${ctrepr}& rhs) { return !(lhs.value == rhs.value); }\n` :
             "") +
             `};`;
 
 
-        const bsqparsedecl = `std::optional<${ctname}> BSQ_parse${ctname}();`;
-        const bsqemitdecl = `void BSQ_emit${ctname}(${ctname} vv);`;
+        const bsqparsedecl = `std::optional<${ctrepr}> BSQ_parse${ctname}();`;
+        
+        const bsqemitdecl = `void BSQ_emit${ctname}(${ctrepr} vv);`;
+        const bsqemitdef = `void BSQ_emit${ctname}(${ctrepr} vv) {\n` +
+        `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emit${voptttname}(vv.value);\n` +
+        '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitLiteralContent("<"); \n' +
+        `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitLiteralContent("${tdecl.tkey}"); \n` +
+        `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitLiteralContent(">"); \n` +
+        `}`;
 
-        const voptttname = TransformCPPNameManager.convertTypeKey(tdecl.valuetype.tkeystr);
-        const voptt = this.typeInfoManager.emitTypeAsStd(tdecl.valuetype.tkeystr)
         if(vfuncinfo.length === 0 && valfuncinfo.length === 0) {
             const bsqparsedef = `std::optional<${ctrepr}> BSQ_parse${ctname}() {\n` +
             `    std::optional<${voptt}> cc = ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.parse${voptttname}();\n` +
@@ -756,15 +764,8 @@ class CPPEmitter {
             `        if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeType("${tdecl.tkey}")) { return std::nullopt; };\n` +
             `        if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('>')) { return std::nullopt; };\n` +
             '    }\n' +
-            `    return std::make_optional<${ctname}>(${ctname}{ cc.value() });\n` +
+            `    return std::make_optional<${ctrepr}>(${ctname}{ cc.value() });\n` +
             '}';
-
-            const bsqemitdef = `void BSQ_emit${ctname}(${ctname} vv) {\n` +
-            `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emit${valuetype}(vv.value);\n` +
-            '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitLiteralContent("<"); \n' +
-            `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitLiteralContent("${tdecl.tkey}"); \n` +
-            `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitLiteralContent(">"); \n` +
-            `}`;
 
             return [
                 [tclass, bsqparsedecl, bsqemitdecl].join("\n"), 
@@ -772,7 +773,39 @@ class CPPEmitter {
             ];
         }
         else {
-            assert(false, "CPPEmitter: need to implement invariant/validate handling in general type decl emission");
+            const ivdecls = [...vfuncinfo.map((vf) => vf[0]), ...valfuncinfo.map((vf) => vf[0])];
+            const ivdefs = [...vfuncinfo.map((vf) => vf[1]), ...valfuncinfo.map((vf) => vf[1])];
+
+            const allchks = [
+                ...tdecl.allInvariants.map((inv) => {
+                    const ifname = TransformCPPNameManager.generateNameForInvariantFunction(inv.containingtype.tkeystr, inv.ii);
+                    return `if(!${ifname}(vv)) { return std::nullopt; };`;
+                }),
+                ...tdecl.allValidates.map((val) => {
+                    const vfname = TransformCPPNameManager.generateNameForValidateFunction(val.containingtype.tkeystr, val.ii);
+                    return `if(!${vfname}(vv)) { return std::nullopt; };`;
+                })
+            ].join("\n    ");
+
+            const bsqparsedef = `std::optional<${ctrepr}> BSQ_parse${ctname}() {\n` +
+            `    std::optional<${voptt}> cc = ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.parse${voptttname}();\n` +
+            `    if(!cc.has_value()) { return std::nullopt; }\n` +
+            `    if(ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.peekSymbol('<')) {\n` +
+            `        if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('<')) { return std::nullopt; };\n` +
+            `        if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeType("${tdecl.tkey}")) { return std::nullopt; };\n` +
+            `        if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('>')) { return std::nullopt; };\n` +
+            '    }\n\n' +
+            `    ${voptt} vv = cc.value();\n` +
+            `    ${allchks}\n\n` +
+            `    return std::make_optional<${ctrepr}>(${ctname}{ vv });\n` +
+            '}';
+
+            return [
+                [tclass, ivdecls, bsqparsedecl, bsqemitdecl].join("\n"), 
+                [ivdefs, bsqparsedef, bsqemitdef].join("\n")
+            ];
+
+
         }
     }
 
