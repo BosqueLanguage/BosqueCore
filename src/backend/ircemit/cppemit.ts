@@ -514,7 +514,7 @@ class CPPEmitter {
         }
         else if(ttag === IRStatementTag.IRErrorDivisionByZeroCheckStatement) {
             const iedzbc = stmt as IRErrorDivisionByZeroCheckStatement;
-            return `${RUNTIME_NAMESPACE}::X${iedzbc.optypechk}::checkDivisionByZero(${this.emitIRSimpleExpression(iedzbc.left, true)}, "${iedzbc.file}", ${iedzbc.sinfo.line});`;
+            return `${RUNTIME_NAMESPACE}::X${iedzbc.optypechk}::checkDivisionByZero(${this.emitIRSimpleExpression(iedzbc.right, true)}, "${iedzbc.file}", ${iedzbc.sinfo.line});`;
         }
         else if(ttag === IRStatementTag.IRTypeDeclInvariantCheckStatement) {
             const itdics = stmt as IRTypeDeclInvariantCheckStatement;
@@ -861,6 +861,7 @@ class CPPEmitter {
             '#include "./runcpp/common.h"',
             '#include "./runcpp/core/bsqtype.h"',
             '#include "./runcpp/core/integrals.h"',
+            '#include "./runcpp/core/strings.h"',
             '',
             '#include "./runcpp/core/coredecls.h"',
             '#include "./runcpp/runtime/taskinfo.h"'

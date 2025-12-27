@@ -111,10 +111,9 @@ function emitCommandLineMakefile(optlevel: "debug" | "test" | "release"): string
         'CPPFLAGS_OPT.release=-O3 -march=x86-64-v3\n' +
         'CPPFLAGS=${CPPFLAGS_OPT.${BUILD}} ${CPP_STDFLAGS}\n\n' +
         'HEADERS=$(wildcard $(SRC_DIR)*.h) $(wildcard $(CORE_SRC_DIR)*.h) $(wildcard $(RUNTIME_SRC_DIR)*.h) $(wildcard $(ALLOC_SRC_DIR)*.h) $(wildcard $(BSQIR_SRC_DIR)*.h)\n' +
-        '#MAKEFLAGS += -j4\n\n' +
         'all: $(MAKE_PATH)/app\n\n' +
         '$(MAKE_PATH)/app: $(MAKE_PATH)/app.h $(MAKE_PATH)/app.cpp\n' +
-        '\t@make -f $(RUNTIME_DIR)makefile BUILD=$(BUILD) all\n' +
+        '\t@make -f $(RUNTIME_DIR)makefile BUILD=$(BUILD) --jobs=8 all\n' +
         '\tg++ $(CPPFLAGS) -o $(MAKE_PATH)/app $(OUT_OBJS)* $(JSON_INCLUDES) $(MAKE_PATH)/app.cpp\n';
 }
 
