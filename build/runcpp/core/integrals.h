@@ -3,6 +3,7 @@
 #include "../common.h"
 
 #include "bsqtype.h"
+#include "bools.h"
 
 namespace ᐸRuntimeᐳ 
 {
@@ -65,12 +66,12 @@ namespace ᐸRuntimeᐳ
             return XNat{lhs.value * rhs.value};
         }
 
-        friend constexpr bool operator<(const XNat& lhs, const XNat& rhs) { return lhs.value < rhs.value; }
-        friend constexpr bool operator==(const XNat& lhs, const XNat& rhs) { return lhs.value == rhs.value; }
-        friend constexpr bool operator>(const XNat& lhs, const XNat& rhs) { return rhs.value < lhs.value; }
-        friend constexpr bool operator!=(const XNat& lhs, const XNat& rhs) { return !(lhs.value == rhs.value); }
-        friend constexpr bool operator<=(const XNat& lhs, const XNat& rhs) { return !(lhs.value > rhs.value); }
-        friend constexpr bool operator>=(const XNat& lhs, const XNat& rhs) { return !(lhs.value < rhs.value); }
+        friend constexpr XBool operator==(const XNat& lhs, const XNat& rhs) { return XBool::from(lhs.value == rhs.value); }
+        friend constexpr XBool operator<(const XNat& lhs, const XNat& rhs) { return XBool::from(lhs.value < rhs.value); }
+        friend constexpr XBool operator>(const XNat& lhs, const XNat& rhs) { return XBool::from(rhs.value < lhs.value); }
+        friend constexpr XBool operator!=(const XNat& lhs, const XNat& rhs) { return XBool::from(!(lhs.value == rhs.value)); }
+        friend constexpr XBool operator<=(const XNat& lhs, const XNat& rhs) { return XBool::from(!(lhs.value > rhs.value)); }
+        friend constexpr XBool operator>=(const XNat& lhs, const XNat& rhs) { return XBool::from(!(lhs.value < rhs.value)); }
     };
 
     class XInt
@@ -134,12 +135,12 @@ namespace ᐸRuntimeᐳ
             return XInt{lhs.value * rhs.value};
         }
 
-        friend constexpr bool operator<(const XInt& lhs, const XInt& rhs) { return lhs.value < rhs.value; }
-        friend constexpr bool operator==(const XInt& lhs, const XInt& rhs) { return lhs.value == rhs.value; }
-        friend constexpr bool operator>(const XInt& lhs, const XInt& rhs) { return rhs.value < lhs.value; }
-        friend constexpr bool operator!=(const XInt& lhs, const XInt& rhs) { return !(lhs.value == rhs.value); }
-        friend constexpr bool operator<=(const XInt& lhs, const XInt& rhs) { return !(lhs.value > rhs.value); }
-        friend constexpr bool operator>=(const XInt& lhs, const XInt& rhs) { return !(lhs.value < rhs.value); }
+        friend constexpr XBool operator==(const XInt& lhs, const XInt& rhs) { return XBool::from(lhs.value == rhs.value); }
+        friend constexpr XBool operator<(const XInt& lhs, const XInt& rhs) { return XBool::from(lhs.value < rhs.value); }
+        friend constexpr XBool operator>(const XInt& lhs, const XInt& rhs) { return XBool::from(rhs.value < lhs.value); }
+        friend constexpr XBool operator!=(const XInt& lhs, const XInt& rhs) { return XBool::from(!(lhs.value == rhs.value)); }
+        friend constexpr XBool operator<=(const XInt& lhs, const XInt& rhs) { return XBool::from(!(lhs.value > rhs.value)); }
+        friend constexpr XBool operator>=(const XInt& lhs, const XInt& rhs) { return XBool::from(!(lhs.value < rhs.value)); }
     };
 
     class XChkNat
@@ -238,12 +239,12 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        friend constexpr bool operator<(const XChkNat& lhs, const XChkNat& rhs) { return lhs.value < rhs.value; }
-        friend constexpr bool operator==(const XChkNat& lhs, const XChkNat& rhs) { return lhs.value == rhs.value; }
-        friend constexpr bool operator>(const XChkNat& lhs, const XChkNat& rhs) { return rhs.value < lhs.value; }
-        friend constexpr bool operator!=(const XChkNat& lhs, const XChkNat& rhs) { return !(lhs.value == rhs.value); }
-        friend constexpr bool operator<=(const XChkNat& lhs, const XChkNat& rhs) { return !(lhs.value > rhs.value); }
-        friend constexpr bool operator>=(const XChkNat& lhs, const XChkNat& rhs) { return !(lhs.value < rhs.value); }
+        friend constexpr XBool operator==(const XChkNat& lhs, const XChkNat& rhs) { return XBool::from(lhs.value == rhs.value); }
+        friend constexpr XBool operator<(const XChkNat& lhs, const XChkNat& rhs) { return XBool::from(lhs.value < rhs.value); }
+        friend constexpr XBool operator>(const XChkNat& lhs, const XChkNat& rhs) { return XBool::from(rhs.value < lhs.value); }
+        friend constexpr XBool operator!=(const XChkNat& lhs, const XChkNat& rhs) { return XBool::from(!(lhs.value == rhs.value)); }
+        friend constexpr XBool operator<=(const XChkNat& lhs, const XChkNat& rhs) { return XBool::from(!(lhs.value > rhs.value)); }
+        friend constexpr XBool operator>=(const XChkNat& lhs, const XChkNat& rhs) { return XBool::from(!(lhs.value < rhs.value)); }
     };
 
     class XChkInt
@@ -342,12 +343,12 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        friend constexpr bool operator<(const XChkInt& lhs, const XChkInt& rhs) { return lhs.value < rhs.value; }
-        friend constexpr bool operator==(const XChkInt& lhs, const XChkInt& rhs) { return lhs.value == rhs.value; }
-        friend constexpr bool operator>(const XChkInt& lhs, const XChkInt& rhs) { return rhs.value < lhs.value; }
-        friend constexpr bool operator!=(const XChkInt& lhs, const XChkInt& rhs) { return !(lhs.value == rhs.value); }
-        friend constexpr bool operator<=(const XChkInt& lhs, const XChkInt& rhs) { return !(lhs.value > rhs.value); }
-        friend constexpr bool operator>=(const XChkInt& lhs, const XChkInt& rhs) { return !(lhs.value < rhs.value); }
+        friend constexpr XBool operator==(const XChkInt& lhs, const XChkInt& rhs) { return XBool::from(lhs.value == rhs.value); }
+        friend constexpr XBool operator<(const XChkInt& lhs, const XChkInt& rhs) { return XBool::from(lhs.value < rhs.value); }
+        friend constexpr XBool operator>(const XChkInt& lhs, const XChkInt& rhs) { return XBool::from(rhs.value < lhs.value); }
+        friend constexpr XBool operator!=(const XChkInt& lhs, const XChkInt& rhs) { return XBool::from(!(lhs.value == rhs.value)); }
+        friend constexpr XBool operator<=(const XChkInt& lhs, const XChkInt& rhs) { return XBool::from(!(lhs.value > rhs.value)); }
+        friend constexpr XBool operator>=(const XChkInt& lhs, const XChkInt& rhs) { return XBool::from(!(lhs.value < rhs.value)); }
     };
 
     constexpr TypeInfo g_typeinfo_Nat = {

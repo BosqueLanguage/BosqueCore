@@ -3,6 +3,7 @@
 #include "../common.h"
 
 #include "bsqtype.h"
+#include "bools.h"
 
 namespace ᐸRuntimeᐳ 
 {
@@ -61,12 +62,12 @@ namespace ᐸRuntimeᐳ
             return XFloat{lhs.value * rhs.value};
         }
 
-        friend constexpr bool operator<(const XFloat &lhs, const XFloat &rhs) { return lhs.value < rhs.value; }
-        friend constexpr bool operator==(const XFloat &lhs, const XFloat &rhs) { return lhs.value == rhs.value; }
-        friend constexpr bool operator>(const XFloat &lhs, const XFloat &rhs) { return rhs.value < lhs.value; }
-        friend constexpr bool operator!=(const XFloat &lhs, const XFloat &rhs) { return !(lhs.value == rhs.value); }
-        friend constexpr bool operator<=(const XFloat &lhs, const XFloat &rhs) { return !(lhs.value > rhs.value); }
-        friend constexpr bool operator>=(const XFloat &lhs, const XFloat &rhs) { return !(lhs.value < rhs.value); }
+        friend constexpr XBool operator<(const XFloat &lhs, const XFloat &rhs) { return XBool::from(lhs.value < rhs.value); }
+        friend constexpr XBool operator==(const XFloat &lhs, const XFloat &rhs) { return XBool::from(lhs.value == rhs.value); }
+        friend constexpr XBool operator>(const XFloat &lhs, const XFloat &rhs) { return XBool::from(rhs.value < lhs.value); }
+        friend constexpr XBool operator!=(const XFloat &lhs, const XFloat &rhs) { return XBool::from(!(lhs.value == rhs.value)); }
+        friend constexpr XBool operator<=(const XFloat &lhs, const XFloat &rhs) { return XBool::from(!(lhs.value > rhs.value)); }
+        friend constexpr XBool operator>=(const XFloat &lhs, const XFloat &rhs) { return XBool::from(!(lhs.value < rhs.value)); }
     };
 
     constexpr TypeInfo g_typeinfo_Float = {

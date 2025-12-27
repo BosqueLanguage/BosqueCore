@@ -630,8 +630,8 @@ class CPPEmitter {
         const finalv = `return ${this.emitIRSimpleExpression(iinv.value, true)};`;
         const bodystr = this.emitStatementList(iinv.stmts, undefined, [finalv], "");
 
-        const ideclstr = `bool ${fname}(${params.join(", ")});`;
-        const idefstr = `bool ${fname}(${params.join(", ")}) ${bodystr}`;
+        const ideclstr = `Bool ${fname}(${params.join(", ")});`;
+        const idefstr = `Bool ${fname}(${params.join(", ")}) ${bodystr}`;
 
         return [ideclstr, idefstr];
     }
@@ -643,8 +643,8 @@ class CPPEmitter {
         const finalv = `return ${this.emitIRSimpleExpression(ival.value, true)};`;
         const bodystr = this.emitStatementList(ival.stmts, undefined, [finalv], "");
 
-        const ideclstr = `bool ${fname}(${params.join(", ")});`;
-        const idefstr = `bool ${fname}(${params.join(", ")}) ${bodystr}`;
+        const ideclstr = `Bool ${fname}(${params.join(", ")});`;
+        const idefstr = `Bool ${fname}(${params.join(", ")}) ${bodystr}`;
 
         return [ideclstr, idefstr];
     }
@@ -737,10 +737,10 @@ class CPPEmitter {
             `    ${valuetype} value;\n` +
             `    //All constructor and assignment defaults\n` +
             (tdecl.iskeytype ? 
-            `    friend constexpr bool operator<(const ${ctrepr}& lhs, const ${ctrepr}& rhs) { return lhs.value < rhs.value; }\n` +
-            `    friend constexpr bool operator==(const ${ctrepr} &lhs, const ${ctrepr}& rhs) { return lhs.value == rhs.value; }\n` +
-            `    friend constexpr bool operator>(const ${ctrepr} &lhs, const ${ctrepr}& rhs) { return rhs.value < lhs.value; }\n` +
-            `    friend constexpr bool operator!=(const ${ctrepr} &lhs, const ${ctrepr}& rhs) { return !(lhs.value == rhs.value); }\n` :
+            `    friend constexpr Bool operator<(const ${ctrepr}& lhs, const ${ctrepr}& rhs) { return lhs.value < rhs.value; }\n` +
+            `    friend constexpr Bool operator==(const ${ctrepr} &lhs, const ${ctrepr}& rhs) { return lhs.value == rhs.value; }\n` +
+            `    friend constexpr Bool operator>(const ${ctrepr} &lhs, const ${ctrepr}& rhs) { return rhs.value < lhs.value; }\n` +
+            `    friend constexpr Bool operator!=(const ${ctrepr} &lhs, const ${ctrepr}& rhs) { return !(lhs.value == rhs.value); }\n` :
             "") +
             `};`;
 

@@ -3,6 +3,7 @@
 #include "../common.h"
 
 #include "bsqtype.h"
+#include "bools.h"
 
 namespace ᐸRuntimeᐳ
 {
@@ -32,15 +33,15 @@ namespace ᐸRuntimeᐳ
 
         static XOption<T> makeSome(const TypeInfo* ti, const T& d) { return XOption<T>(ti, d); }
 
-        friend constexpr bool operator==(const XOption<T>& lhs, const XNone& rhs) { return lhs.isNone(); }
-        friend constexpr bool operator==(const XNone& lhs, const XOption<T>& rhs) { return rhs.isNone(); }
-        friend constexpr bool operator!=(const XOption<T>& lhs, const XNone& rhs) { return lhs.isSome(); }
-        friend constexpr bool operator!=(const XNone& lhs, const XOption<T>& rhs) { return rhs.isSome(); }
+        friend constexpr XBool operator==(const XOption<T>& lhs, const XNone& rhs) { return XBool::from(lhs.isNone()); }
+        friend constexpr XBool operator==(const XNone& lhs, const XOption<T>& rhs) { return XBool::from(rhs.isNone()); }
+        friend constexpr XBool operator!=(const XOption<T>& lhs, const XNone& rhs) { return XBool::from(lhs.isSome()); }
+        friend constexpr XBool operator!=(const XNone& lhs, const XOption<T>& rhs) { return XBool::from(rhs.isSome()); }
         
-        friend constexpr bool operator==(const XOption<T>& lhs, const T& rhs) { return lhs.isSome() && lhs.data == rhs; }
-        friend constexpr bool operator==(const T& lhs, const XOption<T>& rhs) { return rhs.isSome() && lhs == rhs.data; }
-        friend constexpr bool operator!=(const XOption<T>& lhs, const T& rhs) { return lhs.isNone() || lhs.data != rhs; }
-        friend constexpr bool operator!=(const T& lhs, const XOption<T>& rhs) { return rhs.isNone() || lhs != rhs.data; }
+        friend constexpr XBool operator==(const XOption<T>& lhs, const T& rhs) { return XBool::from(lhs.isSome() && lhs.data == rhs); }
+        friend constexpr XBool operator==(const T& lhs, const XOption<T>& rhs) { return XBool::from(rhs.isSome() && lhs == rhs.data); }
+        friend constexpr XBool operator!=(const XOption<T>& lhs, const T& rhs) { return XBool::from(lhs.isNone() || lhs.data != rhs); }
+        friend constexpr XBool operator!=(const T& lhs, const XOption<T>& rhs) { return XBool::from(rhs.isNone() || lhs != rhs.data); }
     };
 
     //
