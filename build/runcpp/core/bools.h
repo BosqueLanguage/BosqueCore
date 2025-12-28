@@ -17,8 +17,8 @@ namespace ᐸRuntimeᐳ
         constexpr explicit operator bool() const { return this->value != 0ull; }
 
         friend constexpr XBool operator!(const XBool &b) { return XBool::from(!XBool::toBool(b)); }
-        friend constexpr XBool operator&(const XBool &lhs, const XBool &rhs) { return XBool::from(XBool::toBool(lhs) & XBool::toBool(rhs)); }
-        friend constexpr XBool operator|(const XBool &lhs, const XBool &rhs) { return XBool::from(XBool::toBool(lhs) | XBool::toBool(rhs)); }
+        friend constexpr XBool operator&(const XBool &lhs, const XBool &rhs) { return XBool::from(lhs.value & rhs.value); }
+        friend constexpr XBool operator|(const XBool &lhs, const XBool &rhs) { return XBool::from(lhs.value | rhs.value); }
 
         friend constexpr XBool operator==(const XBool &lhs, const XBool &rhs) { return XBool::from(lhs.value == rhs.value); }
         friend constexpr XBool operator<(const XBool &lhs, const XBool &rhs) { return (!lhs) & rhs; }

@@ -521,21 +521,21 @@ class CPPEmitter {
 
             const invchk = `${TransformCPPNameManager.generateNameForInvariantFunction(itdics.tkey, itdics.invariantidx)}(${this.emitIRSimpleExpression(itdics.targetValue, true)})`
             const dtag = itdics.diagnosticTag !== null ? `"${itdics.diagnosticTag}"` : "nullptr";
-            return `ᐸRuntimeᐳ::bsq_invariant(${invchk}, "${itdics.file}", ${itdics.sinfo.line}, ${dtag}, "Failed Invariant");`;
+            return `ᐸRuntimeᐳ::bsq_invariant((bool)(${invchk}), "${itdics.file}", ${itdics.sinfo.line}, ${dtag}, "Failed Invariant");`;
         }
         else if(ttag === IRStatementTag.IRPreconditionCheckStatement) {
             const ipcs = stmt as IRPreconditionCheckStatement;
 
             const prechk = `${TransformCPPNameManager.generateNameForInvokePreconditionCheck(ipcs.ikey, ipcs.requiresidx)}(${ipcs.args.map((arg) => this.emitIRSimpleExpression(arg, true)).join(", ")})`
             const dtag = ipcs.diagnosticTag !== null ? `"${ipcs.diagnosticTag}"` : "nullptr";
-            return `ᐸRuntimeᐳ::bsq_requires(${prechk}, "${ipcs.file}", ${ipcs.sinfo.line}, ${dtag}, "Failed Requires");`;
+            return `ᐸRuntimeᐳ::bsq_requires((bool)(${prechk}), "${ipcs.file}", ${ipcs.sinfo.line}, ${dtag}, "Failed Requires");`;
         }
         else if(ttag === IRStatementTag.IRPostconditionCheckStatement) {
             const ipcs = stmt as IRPostconditionCheckStatement;
 
             const postchk = `${TransformCPPNameManager.generateNameForInvokePostconditionCheck(ipcs.ikey, ipcs.ensuresidx)}(${ipcs.args.map((arg) => this.emitIRSimpleExpression(arg, true)).join(", ")})`
             const dtag = ipcs.diagnosticTag !== null ? `"${ipcs.diagnosticTag}"` : "nullptr";
-            return `ᐸRuntimeᐳ::bsq_ensures(${postchk}, "${ipcs.file}", ${ipcs.sinfo.line}, ${dtag}, "Failed Ensures");`;
+            return `ᐸRuntimeᐳ::bsq_ensures((bool)(${postchk}), "${ipcs.file}", ${ipcs.sinfo.line}, ${dtag}, "Failed Ensures");`;
         }
         else if(ttag === IRStatementTag.IRAbortStatement) {
             const ias = stmt as IRAbortStatement;
@@ -543,14 +543,14 @@ class CPPEmitter {
         }
         else if(ttag === IRStatementTag.IRAssertStatement) {
             const ias = stmt as IRAssertStatement;
-            return `${RUNTIME_NAMESPACE}::bsq_assert(${this.emitIRSimpleExpression(ias.cond, true)}, "${ias.file}", ${ias.sinfo.line}, nullptr, "Assertion Failed");`;
+            return `${RUNTIME_NAMESPACE}::bsq_assert((bool)(${this.emitIRSimpleExpression(ias.cond, true)}), "${ias.file}", ${ias.sinfo.line}, nullptr, "Assertion Failed");`;
         }
         else if(ttag === IRStatementTag.IRAssumeStatement) {
             return ";"; //nop for execution
         }
         else if(ttag === IRStatementTag.IRValidateStatement) {
             const ivs = stmt as IRValidateStatement;
-            return `${RUNTIME_NAMESPACE}::bsq_validate(${this.emitIRSimpleExpression(ivs.cond, true)}, "${ivs.file}", ${ivs.sinfo.line}, nullptr, "Validation Failed");`;
+            return `${RUNTIME_NAMESPACE}::bsq_validate((bool)(${this.emitIRSimpleExpression(ivs.cond, true)}), "${ivs.file}", ${ivs.sinfo.line}, nullptr, "Validation Failed");`;
         }
         else if(ttag === IRStatementTag.IRDebugStatement) {
             const ids = stmt as IRDebugStatement;
@@ -779,11 +779,11 @@ class CPPEmitter {
             const allchks = [
                 ...tdecl.allInvariants.map((inv) => {
                     const ifname = TransformCPPNameManager.generateNameForInvariantFunction(inv.containingtype.tkeystr, inv.ii);
-                    return `if(!${ifname}(vv)) { return std::nullopt; };`;
+                    return `if(!((bool)${ifname}(vv))) { return std::nullopt; };`;
                 }),
                 ...tdecl.allValidates.map((val) => {
                     const vfname = TransformCPPNameManager.generateNameForValidateFunction(val.containingtype.tkeystr, val.ii);
-                    return `if(!${vfname}(vv)) { return std::nullopt; };`;
+                    return `if(!((bool)${vfname}(vv))) { return std::nullopt; };`;
                 })
             ].join("\n    ");
 
@@ -860,6 +860,7 @@ class CPPEmitter {
         return [
             '#include "./runcpp/common.h"',
             '#include "./runcpp/core/bsqtype.h"',
+            '#include "./runcpp/core/bools.h"',
             '#include "./runcpp/core/integrals.h"',
             '#include "./runcpp/core/strings.h"',
             '',
