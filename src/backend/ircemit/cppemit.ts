@@ -520,21 +520,21 @@ class CPPEmitter {
             const itdics = stmt as IRTypeDeclInvariantCheckStatement;
 
             const invchk = `${TransformCPPNameManager.generateNameForInvariantFunction(itdics.tkey, itdics.invariantidx)}(${this.emitIRSimpleExpression(itdics.targetValue, true)})`
-            const dtag = itdics.diagnosticTag !== null ? `"${itdics.diagnosticTag}"` : "nullptr";
+            const dtag = itdics.diagnosticTag !== undefined ? `"${itdics.diagnosticTag}"` : "nullptr";
             return `ᐸRuntimeᐳ::bsq_invariant((bool)(${invchk}), "${itdics.file}", ${itdics.sinfo.line}, ${dtag}, "Failed Invariant");`;
         }
         else if(ttag === IRStatementTag.IRPreconditionCheckStatement) {
             const ipcs = stmt as IRPreconditionCheckStatement;
 
             const prechk = `${TransformCPPNameManager.generateNameForInvokePreconditionCheck(ipcs.ikey, ipcs.requiresidx)}(${ipcs.args.map((arg) => this.emitIRSimpleExpression(arg, true)).join(", ")})`
-            const dtag = ipcs.diagnosticTag !== null ? `"${ipcs.diagnosticTag}"` : "nullptr";
+            const dtag = ipcs.diagnosticTag !== undefined ? `"${ipcs.diagnosticTag}"` : "nullptr";
             return `ᐸRuntimeᐳ::bsq_requires((bool)(${prechk}), "${ipcs.file}", ${ipcs.sinfo.line}, ${dtag}, "Failed Requires");`;
         }
         else if(ttag === IRStatementTag.IRPostconditionCheckStatement) {
             const ipcs = stmt as IRPostconditionCheckStatement;
 
             const postchk = `${TransformCPPNameManager.generateNameForInvokePostconditionCheck(ipcs.ikey, ipcs.ensuresidx)}(${ipcs.args.map((arg) => this.emitIRSimpleExpression(arg, true)).join(", ")})`
-            const dtag = ipcs.diagnosticTag !== null ? `"${ipcs.diagnosticTag}"` : "nullptr";
+            const dtag = ipcs.diagnosticTag !== undefined ? `"${ipcs.diagnosticTag}"` : "nullptr";
             return `ᐸRuntimeᐳ::bsq_ensures((bool)(${postchk}), "${ipcs.file}", ${ipcs.sinfo.line}, ${dtag}, "Failed Ensures");`;
         }
         else if(ttag === IRStatementTag.IRAbortStatement) {

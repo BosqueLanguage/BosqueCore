@@ -717,6 +717,14 @@ class ASMToIRConverter {
         return true;
     }
 
+    private needsSubCheck(opchk: "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float"): boolean {
+        if(opchk === "ChkInt") {
+            return false;
+        }
+
+        return true;
+    }
+
     private needsMultCheck(opchk: "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float"): boolean {
         if(opchk === "ChkNat" || opchk === "ChkInt") {
             return false;
@@ -1192,7 +1200,9 @@ class ASMToIRConverter {
             const [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(binadd.lhs), this.flattenExpression(binadd.rhs), leetype, reetype);
 
             const opchk = (binadd.opertype as TypeSignature).tkeystr as "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float";
-            this.pushStatement(new IRErrorAdditionBoundsCheckStatement(this.currentFile as string, binadd.sinfo, this.registerError(this.currentFile as string, binadd.sinfo, "arith"), lexp, rexp, opchk));
+            if(this.needsAddCheck(opchk)) {
+                this.pushStatement(new IRErrorAdditionBoundsCheckStatement(this.currentFile as string, binadd.sinfo, this.registerError(this.currentFile as string, binadd.sinfo, "arith"), lexp, rexp, opchk));
+            }
 
             if(!(finaltype.decl instanceof TypedeclTypeDecl)) {
                 return new IRBinAddExpression(lexp, rexp, this.processTypeSignature(binadd.opertype as TypeSignature));
@@ -1220,7 +1230,7 @@ class ASMToIRConverter {
             const [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(binsub.lhs), this.flattenExpression(binsub.rhs), leetype, reetype);
 
             const opchk = (binsub.opertype as TypeSignature).tkeystr as "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float";
-            if(this.needsAddCheck(opchk)) {
+            if(this.needsSubCheck(opchk)) {
                 this.pushStatement(new IRErrorSubtractionBoundsCheckStatement(this.currentFile as string, this.convertSourceInfo(binsub.sinfo), this.registerError(this.currentFile as string, this.convertSourceInfo(binsub.sinfo), (opchk === "Nat" || opchk === "ChkNat") ? "runtime" : "arith"), lexp, rexp, opchk));
             }
             
