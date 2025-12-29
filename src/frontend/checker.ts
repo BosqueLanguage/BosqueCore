@@ -2608,7 +2608,7 @@ class TypeChecker {
             res = new ErrorTypeSignature(exp.sinfo, undefined);
         }
 
-        exp.opertype = this.resolveUnderlyingType(res);
+        exp.opertype = !(res instanceof ErrorTypeSignature) ? this.resolveUnderlyingType(res) : res;
         return exp.setType(res);
     }
 
@@ -2647,7 +2647,7 @@ class TypeChecker {
             res = new ErrorTypeSignature(exp.sinfo, undefined);
         }
 
-        exp.opertype = this.resolveUnderlyingType(res);
+        exp.opertype = !(res instanceof ErrorTypeSignature) ? this.resolveUnderlyingType(res) : res;
         return exp.setType(res);
     }
 
