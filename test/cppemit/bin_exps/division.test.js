@@ -18,4 +18,11 @@ describe ("CPPEmit -- Simple division", () => {
     it("should fail div 0", function () {
         checkTestEmitMainFunction("public function main(): Int { return 2i // 0i; }", 'Int Mainᕒmain() { ᐸRuntimeᐳ::XInt::checkDivisionByZero(0_i, "test.bsq", 2); return 2_i / 0_i; }');
     });
+
+    it("should emit type alias ops", function () {
+        checkTestEmitMainFunction("type Foo = Nat; public function main(x: Foo): Foo { return x // 2n; }", 'MainᕒFoo Mainᕒmain(MainᕒFoo x) { return MainᕒFoo((x.value) / 2_n); }');
+        checkTestEmitMainFunction("type Foo = Int; public function main(x: Foo): Int { return 1i<Foo> // x; }", 'Int Mainᕒmain(MainᕒFoo x) { ᐸRuntimeᐳ::XInt::checkDivisionByZero(x.value, "test.bsq", 2); return (MainᕒFoo(1_i).value) / (x.value); }');
+
+        checkTestEmitMainFunction("type Foo = Nat & { invariant $value != 0n; } public function main(x: Foo): Foo { return x // 2n; }", 'MainᕒFoo Mainᕒmain(MainᕒFoo x) { ᐸRuntimeᐳ::bsq_invariant((bool)(MainᕒFooᐤinvariant_0((x.value) / 2_n)), "test.bsq", 2, nullptr, "Failed Invariant"); return MainᕒFoo((x.value) / 2_n); }');
+    });
 });
