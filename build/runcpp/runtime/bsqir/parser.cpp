@@ -174,7 +174,7 @@ namespace ᐸRuntimeᐳ
                 char* endptr = nullptr;
                 __int128_t vv = std::strtoll(this->lexer.current().scvalue, &endptr, 10);
 
-                if(errno != ERANGE) {
+                if(errno == ERANGE) {
                     assert(false); // Not Implemented: parsing very large ChkNat values
                 }
                 else if(endptr == this->lexer.current().scvalue || !XChkNat::isValidNat(vv)) {
@@ -202,7 +202,7 @@ namespace ᐸRuntimeᐳ
                 char* endptr = nullptr;
                 __int128_t vv = std::strtoll(this->lexer.current().scvalue, &endptr, 10);
 
-                if(errno != ERANGE) {
+                if(errno == ERANGE) {
                     assert(false); // Not Implemented: parsing very large ChkNat values
                 }
                 else if(endptr == this->lexer.current().scvalue || !XChkInt::isValidInt(vv)) {
