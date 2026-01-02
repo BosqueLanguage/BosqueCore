@@ -177,7 +177,7 @@ namespace ᐸRuntimeᐳ
     {
         if(this->testchars(this->iter, "ChkNat::npos")) {
             this->ctoken.tokentype = BSQONTokenType::LiteralChkNat;
-            this->iter.advanceWithExtract(this->ctoken.startindex, this->ctoken.endindex, this->ctoken.scvalue, 1);
+            this->iter.advanceWithExtract(this->ctoken.startindex, this->ctoken.endindex, this->ctoken.scvalue, strlen("ChkNat::npos"));
             return true;
         }
 
@@ -188,7 +188,7 @@ namespace ᐸRuntimeᐳ
     {
         if(this->testchars(this->iter, "ChkInt::npos")) {
             this->ctoken.tokentype = BSQONTokenType::LiteralChkInt;
-            this->iter.advanceWithExtract(this->ctoken.startindex, this->ctoken.endindex, this->ctoken.scvalue, 1);
+            this->iter.advanceWithExtract(this->ctoken.startindex, this->ctoken.endindex, this->ctoken.scvalue, strlen("ChkInt::npos"));
             return true;
         }
 

@@ -13,6 +13,6 @@ describe ("CPPExec -- Simple addition", () => {
         runTestSet("type Foo = Nat; public function main(x: Foo): Foo { return x + 2n<Foo>; }", [['0n<Main::Foo>', '2n<Main::Foo>'], ['3n<Main::Foo>', '5n<Main::Foo>']], ['4611686018427387900n<Main::Foo>']);
         runTestSet("type Foo = Int & { invariant $value != 2i; } public function main(x: Foo): Foo { return x + x; }", [['0i<Main::Foo>', '0i<Main::Foo>'], ['-2i<Main::Foo>', '-4i<Main::Foo>']], ['1i<Main::Foo>']);
 
-        runTestSet("type Foo = ChkNat; public function main(x: Foo): Foo { return x + 2N<Foo>; }", [['0N<Main::Foo>', '2N<Main::Foo>'], ['3N<Main::Foo>', '5N<Main::Foo>']], []);
+        runTestSet("type Foo = ChkNat; public function main(x: Foo): Foo { return x + 2N<Foo>; }", [['0N<Main::Foo>', '2N<Main::Foo>'], ['3N<Main::Foo>', '5N<Main::Foo>'], ['ChkNat::npos<Main::Foo>', 'ChkNat::npos<Main::Foo>']], []);
     });
 });
