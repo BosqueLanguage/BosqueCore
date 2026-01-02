@@ -58,6 +58,9 @@ struct FreeListEntry
 };
 static_assert(sizeof(FreeListEntry) <= sizeof(MetaData), "BlockHeader size is not 8 bytes");
 
+////////////////////////////////////////////
+// Page Layout:
+// | Page Header | Objects Metadata | Data |
 class PageInfo
 {
 public:
@@ -81,6 +84,8 @@ public:
     float approx_utilization;
     uint16_t pending_decs_count;
     bool seen; // Have we visited this page while processing decrements?
+ 
+    MetaData* mdata; // Meta data is stored out-of-line
 
     static PageInfo* initialize(void* block, uint16_t allocsize, uint16_t realsize) noexcept;
 
@@ -363,8 +368,8 @@ private:
     // These two get zeroed at a collection
     size_t alloc_count;
     size_t alloc_memory;
-#else 
 #endif
+
     void (*collectfp)();
 
     PageInfo* getFreshPageForAllocator() noexcept; 

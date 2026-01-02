@@ -9,23 +9,23 @@ GlobalDataStorage GlobalDataStorage::g_global_data{};
 #define RESET_META_FROM_FREELIST(E) ZERO_METADATA(reinterpret_cast<MetaData*>(entry));
 #endif
 
+inline void setPageDataStart(PageInfo* pp) noexcept
+{
+    GC_INVARIANT_CHECK(pp->allocsize != 0 && pp->realsize != 0);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
+}
+
 PageInfo* PageInfo::initialize(void* block, uint16_t allocsize, uint16_t realsize) noexcept
 {
-    PageInfo* pp = (PageInfo*)block;
+    PageInfo* pp = static_cast<PageInfo*>(block);
+    *pp = PageInfo{};
 
-    pp->freelist = nullptr;
-    pp->data = ((uint8_t*)block + sizeof(PageInfo));
     pp->allocsize = allocsize;
     pp->realsize = realsize;
-    pp->approx_utilization = 0.0f;
-    pp->pending_decs_count = 0;
-    pp->seen = false;
+    setPageDataStart(pp);
 
-    pp->owner = nullptr;
-    pp->prev = nullptr;
-    pp->next = nullptr;
-
-    pp->entrycount = (BSQ_BLOCK_ALLOCATION_SIZE - (pp->data - (uint8_t*)pp)) / realsize;
+    uint8_t* bpp = static_cast<uint8_t*>(block);
+    pp->entrycount = (BSQ_BLOCK_ALLOCATION_SIZE - (pp->data - bpp)) / realsize;
     pp->freecount = pp->entrycount;
 
     for(int64_t i = pp->entrycount - 1; i >= 0; i--) {
