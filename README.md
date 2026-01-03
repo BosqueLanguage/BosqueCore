@@ -17,11 +17,11 @@ Bosque is a new approach to programming models, development tooling, and runtime
 To [paraphrase](https://doctorow.medium.com/social-quitting-1ce85b67b456) Mr. Doctorow our goal is to drive the "un-shittification" the software stack!
 
 # Current Status
-We are at a major milestone in the Bosque project -- declaring 2.0! 
+We are at a major milestone in the Bosque project -- declaring 2.0 release! 
 
-Now this doesn't mean that Bosque is done, or even that is easily useable, but it does mean that the language is what it is going to be and (bold) engineering teams can write code with some degree of confidence that it will be stable and supported. As part of living this commitment, and moving on to the Bosque 2.0 phase, the goal is to begin implementing the majority of new Bosque code in Bosque itself!
+Since the first announcement in 2019 we have been focused on a North-Star of eliminating extrinsic complexity from the software stack and engineering process. We are excited to announce that after lots of experimentation and experience we are ready to stabilize the language and core platform for general use in the 2.0 release.
 
-The 2.0 release will be focused on a revised version of the [Small Model Verifier](https://discovery.ucl.ac.uk/id/eprint/10146184/1/finir.pdf), the [AOT compiler/runtime](https://bosquelanguage.github.io/2024/10/01/an-omega-c-runtime.html), along with improving the language for self-hosting the compiler and having a stable language for development in general.
+Our #1 priority is to work with the community to start deploying Bosque in the real-world and rapidly address any issues that arise. In addition we plan to invest in building out the ecosystem of tools, libraries, and integrations that will make Bosque a great platform for building high-quality software. This includes the entire gamut of ecosystems from table stakes like LSP support, formal-methods, and workflows for Agentic AI systems!
 
 # Platform Road Map 
 The current (approximate) roadmap for the Bosque project is broken down into a series of major components that are being developed in parallel + smaller but high-impact work items. These cover a range of complexity and required skills, from academic level publication results, through non-trivial software engineering lifts, and into smaller tasks that are good starter projects. If you are interested in one of these please find (or open) an issue for more detail.
