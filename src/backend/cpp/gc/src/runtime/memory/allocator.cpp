@@ -2,17 +2,29 @@
 #include "threadinfo.h"
 
 GlobalDataStorage GlobalDataStorage::g_global_data{};
+GlobalPageGCManager GlobalPageGCManager::g_gc_page_manager{};
 
 #ifdef ALLOC_DEBUG_CANARY
-#define RESET_META_FROM_FREELIST(E) ZERO_METADATA(reinterpret_cast<MetaData*>(reinterpret_cast<uint8_t*>(E) + ALLOC_DEBUG_CANARY_SIZE));
+#define RESET_META_FROM_FREELIST(E) ZERO_METADATA(PageInfo::getObjectMetadataAligned(reinterpret_cast<uint8_t*>(E) + ALLOC_DEBUG_CANARY_SIZE));
 #else
-#define RESET_META_FROM_FREELIST(E) ZERO_METADATA(reinterpret_cast<MetaData*>(entry));
+#define RESET_META_FROM_FREELIST(E) ZERO_METADATA(PageInfo::getObjectMetadataAligned(entry));
 #endif
 
-inline void setPageDataStart(PageInfo* pp) noexcept
+// I wonder if its possible to do this as an equation (no loop)
+static inline void setPageDataStart(PageInfo* pp, uint8_t* bpp) noexcept
 {
     GC_INVARIANT_CHECK(pp->allocsize != 0 && pp->realsize != 0);
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
+
+    uint8_t* objptr = bpp + BSQ_BLOCK_ALLOCATION_SIZE;
+    uint8_t* mdataptr = bpp + sizeof(PageInfo);
+
+    while(objptr > mdataptr) {
+        objptr -= pp->realsize;
+        mdataptr += sizeof(MetaData);
+    }
+
+    pp->mdata = reinterpret_cast<MetaData*>(bpp + sizeof(PageInfo));
+    pp->data = mdataptr - sizeof(MetaData);
 }
 
 PageInfo* PageInfo::initialize(void* block, uint16_t allocsize, uint16_t realsize) noexcept
@@ -22,9 +34,10 @@ PageInfo* PageInfo::initialize(void* block, uint16_t allocsize, uint16_t realsiz
 
     pp->allocsize = allocsize;
     pp->realsize = realsize;
-    setPageDataStart(pp);
 
     uint8_t* bpp = static_cast<uint8_t*>(block);
+    setPageDataStart(pp, bpp);
+
     pp->entrycount = (BSQ_BLOCK_ALLOCATION_SIZE - (pp->data - bpp)) / realsize;
     pp->freecount = pp->entrycount;
 
@@ -60,8 +73,6 @@ void PageInfo::rebuild() noexcept
 
     this->approx_utilization = CALC_APPROX_UTILIZATION(this);
 }
-
-GlobalPageGCManager GlobalPageGCManager::g_gc_page_manager;
 
 PageInfo* GlobalPageGCManager::allocateFreshPage(uint16_t entrysize, uint16_t realsize) noexcept
 {

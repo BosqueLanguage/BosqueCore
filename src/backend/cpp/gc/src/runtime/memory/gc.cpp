@@ -3,13 +3,12 @@
 #include "../support/qsort.h"
 #include "threadinfo.h"
 
-// Used to determine if a pointer points into the data segment of an object
-#define POINTS_TO_DATA_SEG(P) P >= (void*)PAGE_FIND_OBJ_BASE(P) && P < (void*)((char*)PAGE_FIND_OBJ_BASE(P) + PAGE_MASK_EXTRACT_PINFO(P)->entrysize)
+#define METADATA_SEG_SIZE(P) (P->entrycount * sizeof(MetaData))
 
 #ifdef ALLOC_DEBUG_CANARY
-#define GET_SLOT_START_FROM_OFFSET(O) (O - sizeof(PageInfo) - sizeof(MetaData) - ALLOC_DEBUG_CANARY_SIZE) 
+#define GET_SLOT_START_FROM_OFFSET(OFF, P) (OFF - sizeof(PageInfo) - METADATA_SEG_SIZE(P) - ALLOC_DEBUG_CANARY_SIZE) 
 #else 
-#define GET_SLOT_START_FROM_OFFSET(O) (O - sizeof(PageInfo) - sizeof(MetaData)) 
+#define GET_SLOT_START_FROM_OFFSET(OFF, P) (OFF - sizeof(PageInfo) - METADATA_SEG_SIZE(P)) 
 #endif
 
 static void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots, DecsList& list) noexcept;
@@ -231,9 +230,9 @@ static void* forward(void* ptr, BSQMemoryTheadLocalInfo& tinfo)
     GCAllocator* gcalloc = tinfo.getAllocatorForPageSize(p);
     GC_INVARIANT_CHECK(gcalloc != nullptr);
 
-    __CoreGC::TypeInfoBase* type_info = GC_TYPE(ptr);
-    void* nptr = gcalloc->allocateEvacuation(type_info);
-    xmem_copy(ptr, nptr, type_info->slot_size);
+    __CoreGC::TypeInfoBase* typeinfo = GC_TYPE(ptr);
+    void* nptr = gcalloc->allocateEvacuation(typeinfo);
+    xmem_copy(ptr, nptr, typeinfo->slot_size);
 
     // Insert into forward table and update object ensuring future objects update
     MetaData* m = GC_GET_META_DATA_ADDR(ptr); 
@@ -340,17 +339,18 @@ static void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
     GC_REFCT_LOCK_RELEASE();
 }
 
+// Due to how we (currently) setup data and metadata offsets in our page this always fails!
 static inline bool pointsToObjectStart(void* addr) noexcept 
 {
     uintptr_t offset = reinterpret_cast<uintptr_t>(addr) & PAGE_MASK;
-    if(offset < sizeof(PageInfo)) {
-        return false;
-    }
-
     PageInfo* p = PageInfo::extractPageFromPointer(addr);
-    uintptr_t start = GET_SLOT_START_FROM_OFFSET(offset);
+    if(offset < sizeof(PageInfo) + p->entrycount) // check if in page header or metadata
+        return false;
 
-    return start % p->realsize == 0;
+    uintptr_t start = GET_SLOT_START_FROM_OFFSET(offset, p);
+    bool valid = start % p->realsize == 0;
+
+    return valid;
 }
 
 static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexcept
@@ -361,14 +361,12 @@ static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexce
     }
 
     MetaData* meta = PageInfo::getObjectMetadataAligned(addr);
-    void* obj = (void*)((uint8_t*)meta + sizeof(MetaData));
-
     if(GC_SHOULD_PROCESS_AS_ROOT(meta)) { 
         GC_MARK_AS_ROOT(meta);
 
-        tinfo.roots[tinfo.roots_count++] = obj;
+        tinfo.roots[tinfo.roots_count++] = addr;
         if(GC_SHOULD_PROCESS_AS_YOUNG(meta)) {
-            tinfo.pending_roots.push_back(obj);
+            tinfo.pending_roots.push_back(addr);
         } 
     }
 }
