@@ -10,16 +10,14 @@ GlobalPageGCManager GlobalPageGCManager::g_gc_page_manager{};
 #define RESET_META_FROM_FREELIST(E) ZERO_METADATA(PageInfo::getObjectMetadataAligned(entry));
 #endif
 
-// I think our current problems are related to doing objptr from end of page and 
-// mdata ptr from end of page header
-
 // I wonder if its possible to do this as an equation (no loop)
 static inline void setPageDataInfo(PageInfo* pp, uint8_t* bpp) noexcept
 {
     GC_INVARIANT_CHECK(pp->allocsize != 0 && pp->realsize != 0);
 
-    uint8_t* objptr = bpp + BSQ_BLOCK_ALLOCATION_SIZE;
-    uint8_t* mdataptr = bpp + sizeof(PageInfo);
+    pp->mdata = reinterpret_cast<MetaData*>(bpp + sizeof(PageInfo));
+    uint8_t* mdataptr = reinterpret_cast<uint8_t*>(pp->mdata);
+    uint8_t* objptr = bpp + BSQ_BLOCK_ALLOCATION_SIZE - pp->realsize;
 
     int32_t n = 0;
     while(objptr > mdataptr) {
@@ -27,11 +25,10 @@ static inline void setPageDataInfo(PageInfo* pp, uint8_t* bpp) noexcept
         mdataptr += sizeof(MetaData);
         n++;
     }
-
     GC_INVARIANT_CHECK(n > 0);
-    pp->entrycount = n - 1;
+    
+    pp->entrycount = n;
     pp->freecount = pp->entrycount;
-    pp->mdata = reinterpret_cast<MetaData*>(bpp + sizeof(PageInfo));
     pp->data = mdataptr; // Should give us first slot after metadata block is finished
 }
 
