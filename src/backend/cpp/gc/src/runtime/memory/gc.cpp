@@ -344,13 +344,12 @@ static inline bool pointsToObjectStart(void* addr) noexcept
 {
     uintptr_t offset = reinterpret_cast<uintptr_t>(addr) & PAGE_MASK;
     PageInfo* p = PageInfo::extractPageFromPointer(addr);
-    if(offset < sizeof(PageInfo) + METADATA_SEG_SIZE(p)) // check if in page header or metadata
+    if(offset < sizeof(PageInfo) + METADATA_SEG_SIZE(p)) { // check if in page header or metadata
         return false;
+    }
 
     uintptr_t start = GET_SLOT_START_FROM_OFFSET(offset, p);
-    bool valid = start % p->realsize == 0;
-
-    return valid;
+    return start % p->realsize == 0;
 }
 
 static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexcept
