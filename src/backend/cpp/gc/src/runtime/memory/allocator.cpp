@@ -10,11 +10,11 @@ GlobalPageGCManager GlobalPageGCManager::g_gc_page_manager{};
 #define RESET_META_FROM_FREELIST(E) ZERO_METADATA(PageInfo::getObjectMetadataAligned(entry));
 #endif
 
-// I wonder if its possible to do this as an equation (no loop)
-static inline void setPageDataInfo(PageInfo* pp, uint8_t* bpp) noexcept
+static inline void setPageDataInfo(PageInfo* pp) noexcept
 {
     GC_INVARIANT_CHECK(pp->allocsize != 0 && pp->realsize != 0);
 
+    uint8_t* bpp = reinterpret_cast<uint8_t*>(pp);
     pp->mdata = reinterpret_cast<MetaData*>(bpp + sizeof(PageInfo));
     uint8_t* mdataptr = reinterpret_cast<uint8_t*>(pp->mdata);
     uint8_t* objptr = bpp + BSQ_BLOCK_ALLOCATION_SIZE - pp->realsize;
@@ -29,7 +29,7 @@ static inline void setPageDataInfo(PageInfo* pp, uint8_t* bpp) noexcept
     
     pp->entrycount = n;
     pp->freecount = pp->entrycount;
-    pp->data = mdataptr; // Should give us first slot after metadata block is finished
+    pp->data = mdataptr; // First slot after meta
 }
 
 PageInfo* PageInfo::initialize(void* block, uint16_t allocsize, uint16_t realsize) noexcept
@@ -39,9 +39,7 @@ PageInfo* PageInfo::initialize(void* block, uint16_t allocsize, uint16_t realsiz
 
     pp->allocsize = allocsize;
     pp->realsize = realsize;
-
-    uint8_t* bpp = static_cast<uint8_t*>(block);
-    setPageDataInfo(pp, bpp);
+    setPageDataInfo(pp);
 
     for(int64_t i = pp->entrycount - 1; i >= 0; i--) {
         FreeListEntry* entry = pp->getFreelistEntryAtIndex(i);
