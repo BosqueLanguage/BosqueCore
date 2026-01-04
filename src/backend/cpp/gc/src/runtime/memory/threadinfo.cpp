@@ -36,8 +36,8 @@ void BSQMemoryTheadLocalInfo::initialize(size_t ntl_id, void** caller_rbp) noexc
     this->forward_table_index = FWD_TABLE_START;
     xmem_zerofill(this->forward_table, BSQ_MAX_FWD_TABLE_ENTRIES);
 
-    this->g_gcallocs = g_gcallocs_array;
-    xmem_zerofill(this->g_gcallocs, BSQ_MAX_ALLOC_SLOTS);
+    this->gcallocs = g_gcallocs_array;
+    xmem_zerofill(this->gcallocs, BSQ_MAX_ALLOC_SLOTS);
 }
 
 void BSQMemoryTheadLocalInfo::loadNativeRootSet() noexcept

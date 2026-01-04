@@ -147,7 +147,7 @@ struct BSQMemoryTheadLocalInfo
 {
     size_t tl_id; //ID of the thread
 
-    GCAllocator** g_gcallocs;
+    GCAllocator** gcallocs;
 
     ////
     //Mark Phase information
@@ -181,8 +181,8 @@ struct BSQMemoryTheadLocalInfo
 
     size_t max_decrement_count;
 
-    uint8_t g_gcallocs_lookuptable[MAX_ALLOC_LOOKUP_TABLE_SIZE] = {};
-    uint8_t g_gcallocs_idx = 0;
+    uint8_t gcallocs_lookuptable[MAX_ALLOC_LOOKUP_TABLE_SIZE] = {};
+    uint8_t gcallocs_idx = 0;
 
     //We may want this in prod, so i'll have it always be visible
     bool disable_automatic_collections = false;
@@ -193,7 +193,7 @@ struct BSQMemoryTheadLocalInfo
 #endif
 
     BSQMemoryTheadLocalInfo() noexcept : 
-        tl_id(0), g_gcallocs(nullptr), native_stack_base(nullptr), native_stack_contents(), 
+        tl_id(0), gcallocs(nullptr), native_stack_base(nullptr), native_stack_contents(), 
         native_register_contents(), roots_count(0), roots(nullptr), old_roots_count(0), 
         old_roots(nullptr), forward_table_index(FWD_TABLE_START), forward_table(nullptr), 
         decs(), decs_batch(), decd_pages_idx(0), decd_pages(), pending_roots(), 
@@ -202,18 +202,18 @@ struct BSQMemoryTheadLocalInfo
     BSQMemoryTheadLocalInfo(BSQMemoryTheadLocalInfo&) = delete;
 
     inline GCAllocator* getAllocatorForPageSize(PageInfo* page) noexcept {
-        uint8_t idx = this->g_gcallocs_lookuptable[page->allocsize >> 3];
-        return this->g_gcallocs[idx];
+        uint8_t idx = this->gcallocs_lookuptable[page->allocsize >> 3];
+        return this->gcallocs[idx];
     }
 
     inline uint8_t generateAllocLookupIndex(GCAllocator* alloc) noexcept 
     {
         size_t idx = alloc->getAllocSize() >> 3;
-        if(this->g_gcallocs_lookuptable[idx] == 0) {
-            this->g_gcallocs_lookuptable[idx] = this->g_gcallocs_idx++;
+        if(this->gcallocs_lookuptable[idx] == 0) {
+            this->gcallocs_lookuptable[idx] = this->gcallocs_idx++;
         }
 
-        return this->g_gcallocs_lookuptable[idx];
+        return this->gcallocs_lookuptable[idx];
     }
 
     template <size_t NUM>
@@ -222,7 +222,7 @@ struct BSQMemoryTheadLocalInfo
         for(size_t i = 0; i < NUM; i++) {
             GCAllocator* alloc = allocs[i];
             uint8_t idx = generateAllocLookupIndex(alloc);
-            this->g_gcallocs[idx] = alloc;
+            this->gcallocs[idx] = alloc;
         }
     }
 

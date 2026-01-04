@@ -101,9 +101,9 @@ public:
     }
 
     static inline MetaData* getObjectMetadataAligned(void* p) noexcept {
+        size_t idx = PageInfo::getIndexForObjectInPage(p);
         const PageInfo* page = extractPageFromPointer(p);
-        size_t idx = (size_t)((uint8_t*)p - page->data) / (size_t)page->realsize;
-
+        
         return page->getMetaEntryAtIndex(idx);
     }
 

@@ -157,7 +157,7 @@ double calculate_total_collection_time(const size_t* buckets) noexcept;
             duration_cast<std::chrono::duration<double, std::milli>> \
             (now.time_since_epoch()).count() - g_memstats.start_time; \
         for(size_t i = 0; i < BSQ_MAX_ALLOC_SLOTS; i++) { \
-            GCAllocator* alloc = (INFO).g_gcallocs[i]; \
+            GCAllocator* alloc = (INFO).gcallocs[i]; \
             if(alloc != nullptr) { \
                 alloc->updateMemStats(); \
             } \

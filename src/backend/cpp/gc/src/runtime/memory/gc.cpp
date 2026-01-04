@@ -518,7 +518,7 @@ static void processAllocatorsPages()
 {
     UPDATE_TOTAL_LIVE_BYTES(gtl_info, =, 0);
     for(size_t i = 0; i < BSQ_MAX_ALLOC_SLOTS; i++) {
-        GCAllocator* alloc = gtl_info.g_gcallocs[i];
+        GCAllocator* alloc = gtl_info.gcallocs[i];
         if(alloc != nullptr) {
             alloc->processCollectorPages();
         }
