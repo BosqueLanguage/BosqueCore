@@ -15,8 +15,8 @@ static inline void setPageDataInfo(PageInfo* pp) noexcept
     GC_INVARIANT_CHECK(pp->allocsize != 0 && pp->realsize != 0);
 
     uint8_t* bpp = reinterpret_cast<uint8_t*>(pp);
-    pp->mdata = reinterpret_cast<MetaData*>(bpp + sizeof(PageInfo));
-    uint8_t* mdataptr = reinterpret_cast<uint8_t*>(pp->mdata);
+    uint8_t* mdataptr = bpp + sizeof(PageInfo);
+    pp->mdata = reinterpret_cast<MetaData*>(mdataptr);
     uint8_t* objptr = bpp + BSQ_BLOCK_ALLOCATION_SIZE - pp->realsize;
 
     int32_t n = 0;
