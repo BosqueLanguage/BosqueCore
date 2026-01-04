@@ -85,7 +85,7 @@ public:
     uint16_t pending_decs_count;
     bool seen; // Have we visited this page while processing decrements?
  
-    MetaData* mdata; // Meta data is stored out-of-line
+    MetaData* mdata; // Meta data is stored out-of-band
 
     static PageInfo* initialize(void* block, uint16_t allocsize, uint16_t realsize) noexcept;
     void rebuild() noexcept;
