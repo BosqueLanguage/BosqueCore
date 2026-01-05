@@ -1151,7 +1151,15 @@ class ASMToIRConverter {
             const nexp = this.makeExpressionSimple(this.flattenExpression(pfxnot.exp), eetype);
             
             if(!(eetype.decl instanceof TypedeclTypeDecl)) {
-                return new IRPrefixNotOpExpression(nexp, this.processTypeSignature(pfxnot.opertype as TypeSignature));
+                if(nexp instanceof IRPrefixNotOpExpression) {
+                    return nexp.exp; //!!e is e
+                }
+                else if(nexp instanceof IRLiteralBoolExpression) {
+                    return new IRLiteralBoolExpression(!nexp.value); //do the literal negation
+                }
+                else {
+                    return new IRPrefixNotOpExpression(nexp, this.processTypeSignature(pfxnot.opertype as TypeSignature));
+                }
             }
             else {
                 const tdaccess = new IRAccessTypeDeclValueExpression(this.processTypeSignature(eetype), nexp);

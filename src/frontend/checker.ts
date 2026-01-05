@@ -445,8 +445,12 @@ class TypeChecker {
                     return this.checkPostfixOpMaybeRefs(env, exp as PostfixOp, undefined);
                 }
                 else if(ttag === ExpressionTag.PrefixNotOpExpression) {
-                    const tte = this.processITestGuardExpression(env, (exp as PrefixNotOpExpression).exp, false);
+                    const ueexp = exp as PrefixNotOpExpression;
+                    const tte = this.processITestGuardExpression(env, ueexp.exp, false);
                     assert(tte.bbinds.length === 0, "These should be set in the itest part (not the expression part) probably bad nesting");
+
+                    ueexp.opertype = this.resolveUnderlyingType(tte.tsig);
+                    ueexp.setType(tte.tsig);
 
                     return new TypeResultWRefVarInfoResult(tte.tsig, false, false, {ttrue: tte.setcondout.tfalse, tfalse: tte.setcondout.ttrue}, tte.setuncond, tte.usemod, []);
                 }
@@ -3333,8 +3337,12 @@ class TypeChecker {
                     return this.checkPostfixOpMaybeRefs(env, exp as PostfixOp, typeinfer);
                 }
                 else if(ttag === ExpressionTag.PrefixNotOpExpression) {
-                    const tte = this.processITestGuardExpression(env, (exp as PrefixNotOpExpression).exp, false);
+                    const ueexp = exp as PrefixNotOpExpression;
+                    const tte = this.processITestGuardExpression(env, ueexp.exp, false);
                     assert(tte.bbinds.length === 0, "These should be set in the itest part (not the expression part) probably bad nesting");
+
+                    ueexp.opertype = this.resolveUnderlyingType(tte.tsig);
+                    ueexp.setType(tte.tsig);
 
                     return new TypeResultWRefVarInfoResult(tte.tsig, false, false, {ttrue: tte.setcondout.tfalse, tfalse: tte.setcondout.ttrue}, tte.setuncond, tte.usemod, []);
                 }
