@@ -73,20 +73,20 @@ Expressions are a key component in Bosque programming. Thus, Bosque provides a r
 The keywords `none`, `true`, `false` are the unique literal representations for the `None`, and `Boolean` types. 
 
 ```none
-none     //special none value
+none     %%special none value
 
-true     //true boolean literal
-false    //false boolean literal
+true     %%true boolean literal
+false    %%false boolean literal
 ```
 
 ### Integral Numbers
 The literals for `Nat`, `Int`, `ChkNat`, `ChkInt` are of the form `[+-][0-9]+[n|i|N|I]`. The `n`/`i` suffix is used for `Nat` and `Int` values, the `N`/`I` suffix is used for `ChkNat` and `ChkInt` values. Some examples include:
 
 ```none
-0n       //0 as a Nat
-0i       //0 as an Int
--1I      //-1 as an ChkInt
-100N     //100 as a ChkNat
+0n       %%0 as a Nat
+0i       %%0 as an Int
+-1I      %%-1 as an ChkInt
+100N     %%100 as a ChkNat
 ```
 
 Nat and ChkNat represent non-negative numbers only -- thus leading `-` signs are an error. Int and Nat represent numbers in the range from -(2^62 - 1) to (2^62 - 1) and 0 to (2^62 - 1). As these ranges are symmetric,  negation and Nat -> Int conversion is always safe. All operations on these types are checked for overflow/underflow and division by zero.
@@ -102,9 +102,9 @@ represent approximate rational values -- with a `BigInt` numerator and a `Nat` d
 
 Some examples include:
 ```none
-0.5f     //0.0 as a Float
-5.2d     //5.0 as a Decimal
-5/2R     //5/2 as a Rational
+0.5f     %%0.0 as a Float
+5.2d     %%5.0 as a Decimal
+5/2R     %%5/2 as a Rational
 ```
 
 ### Common Special Numerics
@@ -113,9 +113,9 @@ A `DecimalDegree` literal is of the form `[+-][0-9]+[.][0-9]+dd` and represents 
 
 Some examples include:
 ```none
-40.42dd               //40.42 as a DecimalDegree
--3.7dd                //-3.7 as a DecimalDegree
-38.03lat-84.49long    //LatLongCoordinate for Lexington, KY
+40.42dd               %%40.42 as a DecimalDegree
+-3.7dd                %%-3.7 as a DecimalDegree
+38.03lat-84.49long    %%LatLongCoordinate for Lexington, KY
 ```
 
 ### Raw Data Literals
@@ -124,9 +124,9 @@ The literals for `Byte` and `ByteBuffer` are based on `Byte` values. A `Byte` li
 
 Some examples include:
 ```none
-0x0                        //0 as a Byte
-0xFF                       //255 as a Byte
-0x{0x0,0x1,0x2,0x3,0x4,0x5,0x6,0x7,0x8,0x9,0xA}  //ByteBuffer with 11 bytes
+0x0                        %%0 as a Byte
+0xFF                       %%255 as a Byte
+0x{0x0,0x1,0x2,0x3,0x4,0x5,0x6,0x7,0x8,0x9,0xA}  %%ByteBuffer with 11 bytes
 ```
 
 ### UUIDv4 and UUIDv7 Literals
@@ -135,8 +135,8 @@ UUIDv4 literals are of the form `uuid4{xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx}` wh
 
 Some examples include:
 ```none
-uuid4{550e8400-e29b-41d4-a716-446655440000}  //UUIDv4
-uuid7{550e8400-e29b-71d4-a716-446655440000}  //UUIDv7
+uuid4{550e8400-e29b-41d4-a716-446655440000}  %%UUIDv4
+uuid7{550e8400-e29b-71d4-a716-446655440000}  %%UUIDv7
 ```
 
 ### SHAHash Literals
@@ -168,12 +168,12 @@ These include:
 - `DeltaLogicalTime` literals of the form `[+-]Nl` where `N` is a positive numeric value representing a delta in logical time ticks.
 
 ### String Literals
-Bosque provides both explicitly Unicode strings (chars) and C-style strings (CChars) which are limited to printable ASCII values. Unicode String literals are enclosed in double quotes `"` and support numeric escape sequences of the form `%xYY;` where YY is the codepoint value in hexidecimal. Special named escapes are supported as well as described in the [BREX](https://github.com/BosqueLanguage/BREX) library. CChar literals are enclosed in single quotes `'` and support escape sequences as well.
+Bosque provides both explicitly Unicode `String` values (and chars `UnicodeChar`) and C-style `CString` values (and corresponding `CChar` values) which are limited to printable ASCII values. Unicode string literals are enclosed in double quotes `"` and support numeric escape sequences of the form `%xYY;` where YY is the codepoint value in hexidecimal. Special named escapes are supported as well as described in the [BREX](https://github.com/BosqueLanguage/BREX) library. `CString` literals are enclosed in single quotes `'` and support escape sequences as well.
 
 String literals by default can be multi-line and preserve whitespace using trailing backslashes `\` to indicate line continuation -- see [BREX](https://github.com/BosqueLanguage/BREX) for more details.
 
 ## Regular Expression Literals
-To match strings Bosque provides regular expression literals for both Unicode strings and C-style strings. These literals are enclosed in slashes `/.../` and support the regex syntax described in [BREX](https://github.com/BosqueLanguage/BREX).
+To match strings Bosque provides regular expression literals for both Unicode strings and C-style strings. These literals are enclosed in slashes `/.../` for Unicode regular expressions, `/.../c` for regular expressions over `CString` values, and support the regex syntax described in [BREX](https://github.com/BosqueLanguage/BREX).
 
 ## Path Literals
 -- In Progress --
@@ -198,10 +198,25 @@ $"Value is ${0:CStringOf<Temperature>}"
 $\file:/path/to/${0}/resource
 ```
 
-## Parameters/Variables/Captures
-Variables in Bosque are of the form `[_a-z][_a-zA-Z0-9]`. Local variables can be declared using a `let` for immutable bindings or `var` for mutable bindings. Parameters are always immutable -- except for `this` in a `ref` method and `self` in a `ref` method or `action`. Variables and parameters can be captured by lambda constructors and are immutable within the lambda scope. As Bosque is _referentially transparent_ there are no modes that are needed for the lambda captures. See also [let/var bindings](statements.md).
+## Literal Typed Expressions
+Typed literals provide a way to express structured information on other primitive data types, such as `Bool`, `Int`, `ChkInt`, `Decimal`, `UUIDv4`, `DateTime`, etc. These types are created using `type` syntax and literal values are constructed with the form `literal<Type>`. 
 
-## Literal StringOf Expressions
+An example of a simple type alias creation is:
+```none
+type Fahrenheit = Int;
+123i<Fahrenheit>
+
+type UserID = UUIDv4;
+uuid4{4f63660e-e0ad-4d18-93c6-f684faf11e65}<UserID>
+```
+
+These typed literals are strongly typed and do *not* auto-decay to their underlying primitive types. The underlying values can be accessed using the `.value` member. Additionally, invariants, methods, etc. can be associated with the new types via the `& { ... }` syntax. For example:
+```none
+type Percentage = Float & { 
+    invariant 0.0f <= $value && $value <= 100.0f;
+}
+
+## Literal Typed String/Path Expressions
 -- In Progress --
 Typed strings provide a direct way to expose otherwise latent information about the data that is stored in a string -- e.g. a zipcode, CSS attribute, part ID, etc. The format information is given by a `Validator` type (see [Validator Types](types.md)) and a conforming string literal.
 
@@ -211,27 +226,15 @@ typedecl ZipcodeUS = /[0-9]{5}(-[0-9]{4})?/;
 "98052"ZipcodeUS
 "98052-0001"ZipcodeUS
 
-"abc123"ZipcodeUS //type error
+"abc123"ZipcodeUS %%type error
 ```
 
-## Literal Typed Expressions
+## Parameters/Variables/Captures
 -- In Progress --
-Typed literals provide a way to express structured information on other primitive data types, such as Bool, Int, Decimal, String, StringOf, UUID, DateTime, etc. These types are created using `type` syntax and literal values are constructed with the form `literal<Type>`. Examples include:
-
-```none
-123i<Int>
-"abc"<Foo>
-2021-01-01<OrderDate>
-```
-
-In addition to primitives strings and paths (as well as format strings and paths) can also be typed literals:
-
-```none
-"Hello, World!"<Greeting>
-\file:/path/${0}/resource\<ConfigPath>
-```
+Variables in Bosque are of the form `[_a-z][_a-zA-Z0-9]`. Local variables can be declared using a `let` for immutable bindings or `var` for mutable bindings. Parameters are always immutable -- except for `this` in a `ref` method and `self` in a `ref` method or `action`. Variables and parameters can be captured by lambda constructors and are immutable within the lambda scope. As Bosque is _referentially transparent_ there are no modes that are needed for the lambda captures. See also [let/var bindings](statements.md).
 
 ## Namespace Constants
+-- In Progress --
 Constant values can be declared in `namespace` scopes (see [Namespaces](structures.md)). These constants can be used in expressions with the syntax `<namespace>::<constant>` and, when they refer to `literal` values they are then valid `literal` expressions as well (so can be used in switch statements etc.).
 
 ```none
@@ -240,11 +243,12 @@ namespace Ns;
 const c1: Int = 1i;
 const c2: Int = 2i + Ns::c1;
 
-Ns::c1 //1i and is a literal expression
-Ns::c2 //3i but not a literal expression
+Ns::c1 %%1i and is a literal expression
+Ns::c2 %%3i but not a literal expression
 ```
 
 ## Member Constants
+-- In Progress --
 Constant values can be declared in Object-Oriented scopes as well (see [types](types.md)). These constants can be used in expressions with the syntax `<typename>::<constant>` and, when they refer to `literal` values they are then valid `literal` expressions as well (so can be used in switch statements etc.).
 
 In contrast to many languages `const` declarations are dynamically resolved. Thus, any subtype will also have access to the `const` declarations of the supertype. This allows for a more flexible and natural way to define common constants for a set of types.
@@ -259,54 +263,21 @@ entity Bar provides Foo {
     const c3: Int = Foo::c1;
 }
 
-Foo::c1 //1i and is a literal expression
-Bar::c1 //1i as well
+Foo::c1 %%1i and is a literal expression
+Bar::c1 %%1i as well
 
-Bar::c2 //3i but not a literal expression
-Bar::c3 //1i and a literal expression as well (transitively)
-```
-
-## Tuple Constructors
-Bosque tuples are constructed using a basic syntax of `[e1, e2, ..., em]` where the `ei` are expressions. The type of the tuple is implied by the types of the `ei` expressions. Tuples cannot be subtypes of each other (see [tuple types](types.md)). Instead the [type inference system](types.md) will coerce the individual `ei` expressions to the needed types before constructing the tuple if it can.
-
-Basic Tuples:
-```none
-[] //empty tuple
-[1i, 2i, 3i] //tuple of 3 Ints
-[1i, [true]] //tuple of Int and another tuple
-```
-
-Tuple with Inference:
-```none
-function foo(): [Int, Boolean?] {
-    return [3, true]; //expression types are Int and Boolean but inference converts to Int and Boolean?
-}
-```
-
-## Record Constructors
-Bosque records are constructed using a basic syntax of `{p1=e1, p2=e2, ..., pm=em}` where the `pi=ei` are property/expression bindings. The type of the record is implied by the types of the `pi=ei` expressions. Records cannot be subtypes of each other (see [record types](types.md)). Instead the [type inference system](types.md) will coerce the individual `ei` expressions to the needed types before constructing the record if it can.
-
-Basic Records:
-```none
-{} //empty record
-{f=1i, g=2i} //record of 2 Ints (f and g)
-{f=1i, g={h=true}} //record of Int and another record
-```
-
-Record with Inference:
-```none
-function foo(): {f: Int, g: Boolean?} {
-    return {f=3, g=true}; //expression types are Int and Boolean but inference converts to Int and Boolean?
-}
+Bar::c2 %%3i but not a literal expression
+Bar::c3 %%1i and a literal expression as well (transitively)
 ```
 
 ## Entity Constructors
+-- In Progress --
 Object-oriented programming in Bosque is centered around _Concepts_ and _Entities_ (see [Types](types.md)) which roughly correspond to objects and abstract classes/interfaces in other languages. These types can be defined explicitly using `entity` or `concept` declarations and are also implicitly created via `typedecl` or `datatype` declarations. Examples of simple OO construction are:
 ```none
 entity Foo {
     field f: Int;
 }
-Foo{3i} //constructs a Foo where field f has value 3i
+Foo{3i} %%constructs a Foo where field f has value 3i
 
 concept Bar {
     field g: Int;
@@ -314,27 +285,27 @@ concept Bar {
 entity Baz provides Bar {
     field h: Nat;
 }
-Baz{3i, 4n} //constructs a Baz where field g has value 3i and field h has value 4n
+Baz{3i, 4n} %%constructs a Baz where field g has value 3i and field h has value 4n
 
 concept Named {
     field name: String;
 }
 entity Qux provides Named, Bar {
 }
-Qux{"bob", 3i} //constructs a Qux where field name has value "bob" and field g has value 3i
+Qux{"bob", 3i} %%constructs a Qux where field name has value "bob" and field g has value 3i
 ```
 
 Similarly object-oriented types can be defined as `typedecls` or `datatypes` and constructed using the same syntax. For example:
 ```none
 typedecl Fahrenheit = Int;
-Fahrenheit{32i} //constructs a Fahrenheit value for freezing
+Fahrenheit{32i} %%constructs a Fahrenheit value for freezing
 
 typedecl SystemID = /[A-Z]{3}"-"[0-9]+/;
 typedecl PartID = StringOf<SystemID>;
 
-"X-52"_PartID    //fails the invariant on the string
-"ABC-123"_PartID //constructs a literal PartID value with the value ABC-123
-PartID{SystemID::from("ABC-123")} //constructs a PartID value with the value ABC-123
+"X-52"_PartID    %%fails the invariant on the string
+"ABC-123"_PartID %%constructs a literal PartID value with the value ABC-123
+PartID{SystemID::from("ABC-123")} %%constructs a PartID value with the value ABC-123
 
 datatype BoolOp using {
     line: Nat
@@ -345,7 +316,7 @@ datatype BoolOp using {
 | OrOp { larg: BoolOp, rarg: BoolOp }
 ;
 
-NotOp{5n LConst{1n, false}} //constructs a NotOp value
+NotOp{5n LConst{1n, false}} %%constructs a NotOp value
 ```
 
 In all cases they support the use of _data invariants_ of various types (mostly using the `invariant` [member](types.md)). The invariants are checked on construction and result in an error when violated.
@@ -365,57 +336,60 @@ entity Qux provides Named, Bar {
 
     invariant $g < $h;
 }
-Qux{"", 3i, 10i} //fails invariant $name !== ""
-Qux{"bob", 0i, 10i} //fails invariant $g > 0
-Qux{"bob", 4i, 2i} //fails invariant $g < $h
-Qux{"bob", 4i, 10i} //ok
+Qux{"", 3i, 10i} %%fails invariant $name !== ""
+Qux{"bob", 0i, 10i} %%fails invariant $g > 0
+Qux{"bob", 4i, 2i} %%fails invariant $g < $h
+Qux{"bob", 4i, 10i} %%ok
 
 typedecl Percentage = Nat & {
     invariant $value <= 100n;
 }
-Percentage{101n} //fails invariant $value <= 100n
-Percentage{99n}  //ok
+Percentage{101n} %%fails invariant $value <= 100n
+Percentage{99n}  %%ok
 ``` 
 
 ## Special Constructors
+-- In Progress --
 The `Option<T>` and `Result<T, E>` types have special constructor support. In addition to the regular `Something<Int>{3i}` constructor forms they provide short and type inferred forms with the syntax `some(e)`, `ok(e)`, `err(e)` and `result(e)` where `e` is an expression. These forms will infer the appropriate template types and convert the expressions as needed. The `result(e)` type will also insert conversions between compatible result types and construction of result objects from values (see issue #1).
 
 Examples of these special forms include:
 ```none
-let x: Option<Int> = some(3i); //x is a Some<Int> with value 3i
-let y: Option<Int?> = some(5i); //y is a Some<Int?> with value 5i
+let x: Option<Int> = some(3i); %%x is a Some<Int> with value 3i
+let y: Option<Int?> = some(5i); %%y is a Some<Int?> with value 5i
 
 function foo(): Result<Int, String> {
-    return ok(3i); //returns a Result<Int, String> with value 3i
+    return ok(3i); %%returns a Result<Int, String> with value 3i
 }
 
 function bar(): Result<Int, String> {
-    return err("error"); //returns a Result<Int, String> with error "error"
+    return err("error"); %%returns a Result<Int, String> with error "error"
 }
 function baz(): Result<Int, String?> {
-    return result(bar()); //returns a Result<Int, String?> by converting the return of bar into the correct type
+    return result(bar()); %%returns a Result<Int, String?> by converting the return of bar into the correct type
 }
 ```
 
 ## Collection Constructors
+-- In Progress --
 Bosque provides a range of standard collections, including `List<T>`, `Stack<T>`, `Queue<T>`, `Set<T>`, and `Map<K, V>` (more details are available in the collections docs).These collections can be constructed using syntax similar to the entity constructors (but generalized since they may have many elements). For example:
 ```none
-List<Bool>{} //constructs an empty List<Bool>
-List<Int>{1i, 2i, 3i} //constructs a List<Int> with values 1i, 2i, 3i
+List<Bool>{} %%constructs an empty List<Bool>
+List<Int>{1i, 2i, 3i} %%constructs a List<Int> with values 1i, 2i, 3i
 
-Map<Int, String>{} //constructs an empty Map<Int, String>
-Map<Int, String>{MapEntry<Int, String>{1i, "one"}, MapEntry<Int, String>{2i, "two"}} //constructs a Map<Int, String> with entries 1i->"one" and 2i->"two"
+Map<Int, String>{} %%constructs an empty Map<Int, String>
+Map<Int, String>{MapEntry<Int, String>{1i, "one"}, MapEntry<Int, String>{2i, "two"}} %%constructs a Map<Int, String> with entries 1i->"one" and 2i->"two"
 ```
 
 Map (Set) constructors must have `KeyType` values as keys (see [types](types.md)) also do validity checking that there are no duplicate keys. Maps also provide a shorthand syntax for constructing `MapEntry` values:
 ```none
-Map<[Int, Int], String>{} //Type error [Int, Int] is not a KeyType
-Map<Int, String>{MapEntry<Int, String>{1i, "one"}, MapEntry<Int, String>{1i, "two"}} //Error duplicate key values
+Map<[Int, Int], String>{} %%Type error [Int, Int] is not a KeyType
+Map<Int, String>{MapEntry<Int, String>{1i, "one"}, MapEntry<Int, String>{1i, "two"}} %%Error duplicate key values
 
-Map<Int, String>{1i => "one", 2i => "two"} //constructs a Map<Int, String> with entries 1i->"one" and 2i->"two"
+Map<Int, String>{1i => "one", 2i => "two"} %%constructs a Map<Int, String> with entries 1i->"one" and 2i->"two"
 ```
 
 ## Namespace and Member Functions
+-- In Progress --
 Bosque supports simple functions defined at a namespace scope or within a type scope. Namespace functions can be called with or without a namespace qualifier (for functions defined in ths same namespace where they are use). Functions defined in a type scope must always be called with the type qualifier (even within the same type scope).
 
 ```none
@@ -425,8 +399,8 @@ function f(x: Int, y: Int): Int {
     return x + y;
 }
 
-f(1i, 2i) //returns 3i
-Main::f(1i, 2i) //returns 3i
+f(1i, 2i) %%returns 3i
+Main::f(1i, 2i) %%returns 3i
 
 entity Foo {
     function f(x: Int, y: Int): Int {
@@ -434,43 +408,17 @@ entity Foo {
     }
 }
 
-Foo::f(1i, 2i) //returns -1i
+Foo::f(1i, 2i) %%returns -1i
 ```
 
 ## Namespace Operators
+-- In Progress --
 [TODO] Operators allow multiple dynamic dispatch functions to be defined. They are currently partially implemented (see issue #13). 
 
 The declaration of an operator is a virtual or abstract definition which may have Concept or Union typed arguments. Each dispatch implementation must have only unique (non-entity and non-union) typed arguments and must be defined in the same namespace as the operator (this prevents resolution ambiguity and accidental overloading). Arguments may also use literal value dispatch on one argument in the operator. If these are used then each dispatch implementation must provide a literal value for this argument.
 
-## Tuple Index Access
-Tuples are indexed using the syntax `e.i` where `i` is a literal integer value. 
-
-[TODO] Currently only expressions with a unique tuple type can be accessed. Adding virtual tuple access is an open issue and also impacts spread arguments.
-
-Examples of tuple access include:
-```none
-[1n, 2i].0 //returns 1n
-[1n, 2i].1 //returns 2i
-[[1n, 2i], 3i].0.1 //returns 2i
-
-[1n, 2i].2 //error tuple has no index 2
-```
-
-## Record Property Access
-Records properties are accessed using the syntax `e.p` where `p` is a property name. 
-
-[TODO] Currently only expressions with a unique record type can be accessed. Adding virtual record access is an open issue and also impacts spread arguments.
-
-Examples of record access include:
-```none
-{f=1n, g=2i}.f //returns 1n
-{f=1n, g=2i}.g //returns 2i
-{f={g=1n, h=2i}, q=3i}.f.h //returns 2i
-
-{f=1n, g=2i}.h //error record has no property h
-```
-
 ## Field Access
+-- In Progress --
 Fields in Object-Oriented types are accessed using the notation `e.f` where `f` is a field name. Fields accesses can be done on expressions of concrete and abstract types (virtual accesses). These virtual accesses can be on Concepts or Unions -- however all possible resolutions must be to the same definition!
 
 Examples of field access include:
@@ -492,19 +440,20 @@ entity Qaz provides Named, Bar {
 let v1 = Qux{"bob", 1i, 2i};
 let v2 = Qaz{"alice", 3i, 4i};
 
-v1.g //concrete field lookup -- 1i
-v2.g //concrete field lookup -- 3i
+v1.g %%concrete field lookup -- 1i
+v2.g %%concrete field lookup -- 3i
 
 let x: Named = ...;
-x.name //virtual field lookup
-x.h //error -- Named does not have field h
+x.name %%virtual field lookup
+x.h %%error -- Named does not have field h
 
 let y: Qux | Qaz = ...;
-y.g //virtual field lookup
-y.h //error -- Qux, Qaz both have h fields but different declarations
+y.g %%virtual field lookup
+y.h %%error -- Qux, Qaz both have h fields but different declarations
 ```
 
 ## ITest Check
+-- In Progress --
 Bosque provides a unique form of test operators for types/values that generalizes simple type-relations checks. These operators are also used to implement the explicit flow-typing and binding in the language. The full syntax/semantics for these operators are covered in the *ITests* section. Their use for postfix tests uses the following syntax `e?ITest` where `ITest` is an ITest expression. 
 
 Some examples of these tests include:
@@ -524,18 +473,19 @@ entity Qaz provides Named, Bar {
 }
 
 let x: Named = ...;
-x?<Qux> //true if x is a Qux
-x?!<Qux> //true if x is a not a Qux
+x?<Qux> %%true if x is a Qux
+x?!<Qux> %%true if x is a not a Qux
 
 let y: Qux | Qaz | None = ...;
-y?<Qux | Qaz> //true if y is a Qux or Qaz
-y?<None> //true if y is None
-y?none //true y is none
-y?!none //true if y is none
-y?some //true if y is a subtype of Some
+y?<Qux | Qaz> %%true if y is a Qux or Qaz
+y?<None> %%true if y is None
+y?none %%true y is none
+y?!none %%true if y is none
+y?some %%true if y is a subtype of Some
 ```
  
 ## ITest As and Conversion
+-- In Progress --
 Bosque provides a unique form of conversion operators for types/values that generalizes simple type-relations checks. These operators are also used to implement the explicit flow-typing and binding in the language. The full syntax/semantics for these operators are covered in the *ITests* section. Their use for postfix tests uses the following syntax `e@ITest` where `ITest` is an ITest expression. 
 
 Some examples of these tests include:
@@ -555,21 +505,22 @@ entity Qaz provides Named, Bar {
 }
 
 let x: Named = ...;
-x@<Qux> //fails if x is not a Qux and result type is Qux
-x@!<Qux> //fail if x is a not a Qux and result type is Named
+x@<Qux> %%fails if x is not a Qux and result type is Qux
+x@!<Qux> %%fail if x is a not a Qux and result type is Named
 
 let y: Qux | Qaz | None = ...;
-y@<Qux | Qaz> //fails if y is not a Qux or Qaz and result type is Qux | Qaz
-y@!<Qux> //fails if y is a Qux and result type is Qaz | None
-y@!<None> //fails if y is None and result type is Qux | Qaz
-y@some //fails if y is none and result type is Qux | Qaz
+y@<Qux | Qaz> %%fails if y is not a Qux or Qaz and result type is Qux | Qaz
+y@!<Qux> %%fails if y is a Qux and result type is Qaz | None
+y@!<None> %%fails if y is None and result type is Qux | Qaz
+y@some %%fails if y is none and result type is Qux | Qaz
 
 let z: Result<Int, String> = ...;
-z@ok //fails if z is err and result type is Int
-z@err //fails if z is ok and result type is String
+z@ok %%fails if z is err and result type is Int
+z@err %%fails if z is ok and result type is String
 ```
 
 ## Method Call
+-- In Progress --
 Bosque Object-Oriented types support member method definitions. These may be direct (no virtual definitions or dispatch) or virtual. Direct methods are defined on a single type and called directly when the receiver is of that type or a subtype. As with field accesses, if there are multiple types in a union, a method may be invoked provided all possible resolutions are to the same definition.
 
 Examples of direct method calls include:
@@ -599,19 +550,20 @@ entity Qaz provides Bar {
 let v1 = Qux{"bob", 1i, 2i};
 let v2 = Qaz{"alice", 3i, 4i};
 
-v1.get_h() //1i
-v2.get_h() //3i
+v1.get_h() %%1i
+v2.get_h() %%3i
 
 let x: Bar = ...;
-x.get_g() //call to Bar get_g
-x.get_h() //error -- Bar does not have method get_h
+x.get_g() %%call to Bar get_g
+x.get_h() %%error -- Bar does not have method get_h
 
 let y: Qux | Qaz = ...;
-y.get_g() //call to Bar get_g
-y.get_h() //error -- differing declarations of get_h
+y.get_g() %%call to Bar get_g
+y.get_h() %%error -- differing declarations of get_h
 ```
 
 ## Method Call Virtual
+-- In Progress --
 Bosque Object-Oriented types support virtual methods are defined on a single `concept` type using the `abstract` or `virtual` attribute. A virtual method may be defined again in subtypes using the `override` attribute. Virtual methods are dispatched based on the type of the receiver. However, if the receiver is a union type, all the possible resolutions must be to the same definition (although the implementations may differ).
 
 Examples of virtual method calls include:
@@ -645,48 +597,59 @@ entity Qaz provides Bar {
 }
 
 let x: Bar = ...;
-x.get_g() //call to Qux get_g (goes to Bar impl) or Qaz get_g (goes to Qaz override impl)
-x.get_h() //abstract in Bar so dispatches to Qux or Qaz
+x.get_g() %%call to Qux get_g (goes to Bar impl) or Qaz get_g (goes to Qaz override impl)
+x.get_h() %%abstract in Bar so dispatches to Qux or Qaz
 
 let y: Qux | Qaz = ...;
-y.get_g() //call to Qux get_g (goes to Bar impl) or Qaz get_g (goes to Qaz override impl)
-y.get_h() //abstract in Bar so dispatches to Qux or Qaz
+y.get_g() %%call to Qux get_g (goes to Bar impl) or Qaz get_g (goes to Qaz override impl)
+y.get_h() %%abstract in Bar so dispatches to Qux or Qaz
 ```
 
 ## Prefix Boolean Not
+-- In Progress --
 The `!` operator is used to perform a boolean _not_ operation on a boolean expression. 
 
 ```none
-!true //false
-!false //true
+!true %%false
+!false %%true
 ```
 
 ## Prefix Negation
+-- In Progress --
 In Bosque the `-` operator is used to perform a negation operation on a numeric expression. In contrast to most languages the `-` operator is _safe_ for all numeric types. Specifically, as the valid range for Int is symmetric from -(2^53 - 1) to (2^53 - 1)! 
 
 ```none 
--(-1i) // 1i
--(3/2R) // -3/2R
+-(-1i) %% 1i
+-(3/2R) %% -3/2R
 ```
 
 ## Binary numeric arithmetic operators
-Bosque supports the standard set of binary numeric arithmetic operators of `+`, `-`, `*`, and `/`. These are defined for all numeric types and automatically for any `typedecl` of a numeric type. The fixed size `Int` and `Nat` types are checked for overflows while the `Nat` and `BigNat` types are checked for underflow on subtraction. All types are checked for division by zero. 
+Bosque supports the standard set of binary numeric arithmetic operators of `+`, `-`, `*`, and `//`. These are defined for all numeric types and automatically for any `type` alias of a numeric type. The fixed size `Int` and `Nat` types are checked for overflows while the `ChkNat` and `ChkInt` types are checked for underflow on subtraction and division-by-zero (all other overflow types saturate to `ChkInt::npos`/`ChkNat::npos`). All types are checked for division by zero. 
 
 Types are not implicitly converted for arithmetic operations and, if needed, must be explicitly coerced to the same types.
 
 ```none
-typedecl Foo = Nat;
+1i + 2i     %% 3i
+3.5f + 2.5f %% 6.0f
+1i + 2.0f   %% type error -- no implicit conversion
 
-1i + 2i //3i
-3.5f + 2.5f //6.0f
+2n - 1n      %% 1n
+2n - 3n      %% error Nat underflow
+3.0f // 0.0f %% error division by zero (for all types)
+```
 
-2n - 1n //1n
-2n - 3n //error Nat underflow
-3.0f / 0.0f //error division by zero
+In addition to standard numeric types Bosque also supports `type` aliases of numeric types. These aliases support all the same arithmetic operations as their underlying types for basic well-formed (closed) operations. In the case of addition and subtraction this means that both arguments must be of the same `type` alias. For multiplication one argument may be of the `type` alias and the other of the underlying numeric type and for division the numerator must be of the `type` alias while the divisor can be of the `type` alias (yielding a result of the underlying type) or of the underlying type (yielding a result of the `type` alias). 
 
-2n_Foo + 1n_Foo //3n_Foo
-2n_Foo * 3n_Foo //error Foo^2 is not well defined
-2n_Foo * 3n //6n_Foo
+```none
+typedecl Foo = Int;
+
+2i<Foo> + 1i<Foo>  %% 3i<Foo>
+
+2i<Foo> * 3i<Foo>  %% error Foo^2 is not well defined
+2i<Foo> * 3i       %% 6i<Foo>
+
+4i<Foo> // 2i      %% 2i<Foo>
+4i<Foo> // 2i<Foo> %% 2i
 ```
 
 ## Binary numeric comparison operators
@@ -697,15 +660,15 @@ Types are not implicitly converted for comparison operations and, if needed, mus
 ```none
 typedecl Foo = Nat;
 
-1i == 2i //false
-1i != 2i //true
-3.5f <= 2.5f //false
+1i == 2i %%false
+1i != 2i %%true
+3.5f <= 2.5f %%false
 
-2/3R == 4/6R //true
-1/3R < 1/2R //true
+2/3R == 4/6R %%true
+1/3R < 1/2R %%true
 
-2n_Foo > 1n_Foo //true
-2n_Foo !== 3n_Foo //true
+2n_Foo > 1n_Foo %%true
+2n_Foo !== 3n_Foo %%true
 ```
 
 ## Binary KeyType equality operators
@@ -714,54 +677,54 @@ typedecl Foo = Nat;
 Examples of `KeyType` equality operator usage includes:
 
 ```none 
-1i === 1i //true (identical to 1i == 1i)
-"hello" !== "goodbye" //false
-true === none //false
+1i === 1i %%true (identical to 1i == 1i)
+"hello" !== "goodbye" %%false
+true === none %%false
 
 let x: Int | None = 1i;
-x === none //false
-x === 1i //true
-x === 2i //false
+x === none %%false
+x === 1i %%true
+x === 2i %%false
 
 let y: Option<String> = some("hello");
-y === none //error types don't overlap
-y === nothing //true
+y === none %%error types don't overlap
+y === nothing %%true
 
 let p: String | Int = "hello";
 let q: String | Int | None = "hello";
-p === q //true
+p === q %%true
 
 entity Foo {}
 let f: Foo? = Foo{};
 let g: Foo? = none;
 
-f === g //error at least one type must be a KeyType
-f === none //false
-g === none //true
+f === g %%error at least one type must be a KeyType
+f === none %%false
+g === none %%true
 ```
 
 ## Binary Logic `&&`/`||`/`==>` operators
 Bosque provides the standard short-circuiting boolean operators of `&&` and `||`. Bosque also has a logical implication operator `==>` which is short-circuited on the left side when it is `false`. 
 
 ```none
-true && true //true
-true && false //false
-false && (1i / 0i == 1i) //false -- short-circuited
+true && true %%true
+true && false %%false
+false && (1i / 0i == 1i) %%false -- short-circuited
 
-true || false //true -- short-circuited
-false || false //false
+true || false %%true -- short-circuited
+false || false %%false
 
-true ==> true //true
-true ==> false //false
-false ==> (1i / 0i == 1i) //true -- short-circuited
+true ==> true %%true
+true ==> false %%false
+false ==> (1i / 0i == 1i) %%true -- short-circuited
 ```
 
 ## MapEntry Constructor `=>` operator
 The `Map<K, V>` container in Bosque holds values of type `MapEntry<K, V>`. The Map entry constructor `=>` is a shorthand notation for creating `MapEntry` values from a key and value expression. The type of the entry is inferred from the context. 
 
 ```none
-1i => 2i; //MapEntry<Int, Int>{1i, 2i}
-Map<Int, String>{1i => "one", 2i => "two"}; //Map<Int, String>{MapEntry<Int, String>{1i, "one"}, MapEntry<Int, String>{2i, "two"}}
+1i => 2i; %%MapEntry<Int, Int>{1i, 2i}
+Map<Int, String>{1i => "one", 2i => "two"}; %%Map<Int, String>{MapEntry<Int, String>{1i, "one"}, MapEntry<Int, String>{2i, "two"}}
 ```
 
 ## If-Then-Else Expression
@@ -769,27 +732,27 @@ Bosque supports _if-then-elif*-else_ syntax for expressions. The type of the exp
 
 Examples of simple if-then-else expressions:
 ```none
-if (x < 0i) then -x else x //Int
-if (x == 0i) then 0i elif (x < 0i) then -1i else 1i //Int
+if (x < 0i) then -x else x %%Int
+if (x == 0i) then 0i elif (x < 0i) then -1i else 1i %%Int
 
-let yy: Int? = if (x == 0i) then none else x //Inferred as Int? in each branch expression
+let yy: Int? = if (x == 0i) then none else x %%Inferred as Int? in each branch expression
 ```
 
 Examples of if-then-else expressions with ITest expressions:
 ```none
 let x: {f: Int?, g: String} = ...;
 
-if !none (x.f) then //special none ITest form
+if !none (x.f) then %%special none ITest form
     1i 
 else 
     0i
 
-if <None> (x.f) then //typeof form ITest 
+if <None> (x.f) then %%typeof form ITest 
     0i 
 else 
     1i
 
-if [none] (x.f) then //literal equality form ITest
+if [none] (x.f) then %%literal equality form ITest
     0i 
 else 
     1i
@@ -800,14 +763,14 @@ Examples of if-then-else expressions with ITest expressions and binders:
 let x: {f: Int?, g: String} = ...;
 
 if !none (x.f) then 
-    $ //$ is bound to x.f@!none in the branch expression
+    $ %%$ is bound to x.f@!none in the branch expression
 else 
     0i 
 
 if none (x.f) then 
     0i 
 else 
-    $ //$ is bound to false flow (x.f@!none) in the else branch expression
+    $ %%$ is bound to false flow (x.f@!none) in the else branch expression
 ```
 
 ## Switch Expression
@@ -823,18 +786,18 @@ switch (x) {
     |none => 0i
     | 0i => 1i
     | _  => 2i
-} //Int
+} %%Int
 
 let y: Bool = ...;
 switch (y) {
     | true    => 0n
     | false => 1n
-} //Nat
+} %%Nat
 
 let z: Int? = switch(x) {
     | none => 0i
     | _  => 1i
-}; //Int?
+}; %%Int?
 ```
 
 Examples of switch expressions with binders include:
@@ -844,13 +807,13 @@ let x: {f: Nat?, g: Int} = ...;
 switch (x.f) {
     |none => 0n
     | _  => $ + 1n
-} //Int
+} %%Int
 
 let y: Option<Nat> = ...;
 switch (y) {
     | nothing => 0n
     | _  => $.value() + 1n
-} //Nat
+} %%Nat
 ```
 
 ## Match Expression
@@ -866,12 +829,12 @@ match (x) {
     | None  => 0i
     | Int => 1i
     | _   => 2i
-} //Int
+} %%Int
 
 let z: Int? = match(x) {
     | None  => 0i
     | Int => 1i
-}; //Int?
+}; %%Int?
 ```
 
 Examples of match expressions with binders include:
@@ -881,13 +844,13 @@ let x: {f: Nat?, g: Int} = ...;
 match (x.f) {
     None => 0n
     | _  => $ + 1n
-} //Int
+} %%Int
 
 let y: Option<Nat> = ...;
 match (y) {
     Nothing          => 0n
     | Something<Nat> => $.value() + 1n
-} //Nat
+} %%Nat
 ```
 
 # Bosque Expression Components
