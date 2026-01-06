@@ -15,8 +15,8 @@ describe ("CPPEmit -- Simple numeric sign", () => {
     });
 
     it("should emit type alias sign", function () {
-        checkTestEmitMainFunction("type Foo = Int; public function main(x: Foo): Foo { return -x; }", "MainᕒFoo Mainᕒmain(MainᕒFoo x) { return MainᕒFoo(-(x.value)); }");
-        checkTestEmitMainFunction("type Foo = Nat; public function main(x: Foo): Foo { return +x; }", "MainᕒFoo Mainᕒmain(MainᕒFoo x) { return MainᕒFoo(x.value); }");
-        checkTestEmitMainFunction("type Foo = ChkInt; public function main(x: Foo): Foo { return -x; }", "MainᕒFoo Mainᕒmain(MainᕒFoo x) { return MainᕒFoo(-(x.value)); }");
+        checkTestEmitMainFunction("type Foo = Int; public function main(x: Foo): Foo { return -x; }", "MainᕒFoo Mainᕒmain(MainᕒFoo x) { return MainᕒFoo{-(x.value)}; }");
+        checkTestEmitMainFunction("type Foo = Nat; public function main(x: Foo): Foo { return +x; }", "MainᕒFoo Mainᕒmain(MainᕒFoo x) { return MainᕒFoo{x.value}; }");
+        checkTestEmitMainFunction("type Foo = ChkInt; public function main(x: Foo): Foo { return -x; }", "MainᕒFoo Mainᕒmain(MainᕒFoo x) { return MainᕒFoo{-(x.value)}; }");
     });
 });

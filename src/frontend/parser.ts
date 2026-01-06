@@ -351,8 +351,8 @@ class Lexer {
 
     private static readonly _s_intRe = new RegExp(`(${Lexer._s_intValue})i`, "y");
     private static readonly _s_natRe = new RegExp(`(${Lexer._s_intValue})n`, "y");
-    private static readonly _s_chkintRe = new RegExp(`(${Lexer._s_intValue})I`, "y");
-    private static readonly _s_chknatRe = new RegExp(`(${Lexer._s_intValue})N`, "y");
+    private static readonly _s_chkintRe = new RegExp(`ChkInt::npos|(${Lexer._s_intValue})I`, "y");
+    private static readonly _s_chknatRe = new RegExp(`ChkNat::npos|(${Lexer._s_intValue})N`, "y");
 
     private static readonly _s_floatRe = new RegExp(`(${Lexer._s_floatValue})f`, "y");
     private static readonly _s_decimalRe = new RegExp(`(${Lexer._s_floatValue})d`, "y");

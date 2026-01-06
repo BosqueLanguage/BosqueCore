@@ -775,10 +775,12 @@ class ASMToIRConverter {
             return new IRLiteralIntExpression((exp as LiteralSimpleExpression).value.slice(0, -1));
         }
         else if(ttag === ExpressionTag.LiteralChkNatExpression) {
-            return new IRLiteralChkNatExpression((exp as LiteralSimpleExpression).value.slice(0, -1));
+            const ll = (exp as LiteralSimpleExpression).value;
+            return new IRLiteralChkNatExpression(ll === "ChkNat::npos" ? ll : ll.slice(0, -1));
         }
         else if(ttag === ExpressionTag.LiteralChkIntExpression) {
-            return new IRLiteralChkIntExpression((exp as LiteralSimpleExpression).value.slice(0, -1));
+            const ll = (exp as LiteralSimpleExpression).value;
+            return new IRLiteralChkIntExpression(ll === "ChkInt::npos" ? ll : ll.slice(0, -1));
         }
         else if(ttag === ExpressionTag.LiteralRationalExpression) {
             const rrval = (exp as LiteralSimpleExpression).value;

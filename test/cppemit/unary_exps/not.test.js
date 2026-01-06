@@ -15,7 +15,7 @@ describe ("CPPEmit -- Simple Boolean not", () => {
     });
 
     it("should emit type alias not", function () {
-        checkTestEmitMainFunction("type Foo = Bool; public function main(x: Foo): Foo { return !x; }", "MainᕒFoo Mainᕒmain(MainᕒFoo x) { return MainᕒFoo(!(x.value)); }");
-        checkTestEmitMainFunction("type Foo = Bool; public function main(x: Foo): Foo { return !!x; }", "MainᕒFoo Mainᕒmain(MainᕒFoo x) { return MainᕒFoo(!((MainᕒFoo((!(x.value)))).value)); }");
+        checkTestEmitMainFunction("type Foo = Bool; public function main(x: Foo): Foo { return !x; }", "MainᕒFoo Mainᕒmain(MainᕒFoo x) { return MainᕒFoo{!(x.value)}; }");
+        checkTestEmitMainFunction("type Foo = Bool; public function main(x: Foo): Foo { return !!x; }", "MainᕒFoo Mainᕒmain(MainᕒFoo x) { return MainᕒFoo{!((MainᕒFoo{(!(x.value))}).value)}; }");
     });
 });

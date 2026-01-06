@@ -97,22 +97,32 @@ class CPPEmitter {
         }
         else if(ttag === IRExpressionTag.IRLiteralChkNatExpression) {
             const ll = (exp as IRLiteralChkNatExpression).value;
-            const nval = BigInt(ll.startsWith("+") ? ll.slice(1) : ll);
-            if(nval <= MAX_SAFE_NAT) {
-                return `${ll.startsWith("+") ? ll.slice(1) : ll}_N`;
+            if(ll === "ChkNat::npos") {
+                return "ᐸRuntimeᐳ::XChkNat::bliteral()";
             }
             else {
-                assert(false, `CPPEmitter: need to do bit shift construction for (really big) safe nat -- ${(exp as IRLiteralChkNatExpression).value}`);
+                const nval = BigInt(ll.startsWith("+") ? ll.slice(1) : ll);
+                if(nval <= MAX_SAFE_NAT) {
+                    return `${ll.startsWith("+") ? ll.slice(1) : ll}_N`;
+                }
+                else {
+                    assert(false, `CPPEmitter: need to do bit shift construction for (really big) safe nat -- ${(exp as IRLiteralChkNatExpression).value}`);
+                }
             }
         }
         else if(ttag === IRExpressionTag.IRLiteralChkIntExpression) {
             const ll = (exp as IRLiteralChkIntExpression).value;
-            const ival = BigInt(ll.startsWith("+") ? ll.slice(1) : ll);
-            if(MIN_SAFE_INT <= ival && ival <= MAX_SAFE_INT) {
-                return `${ll.startsWith("+") ? ll.slice(1) : ll}_I`;
+            if(ll === "ChkInt::npos") {
+                return "ᐸRuntimeᐳ::XChkInt::bliteral()";
             }
             else {
-                assert(false, `CPPEmitter: need to do bit shift construction for (really big) safe int -- ${(exp as IRLiteralChkIntExpression).value}`);
+                const ival = BigInt(ll.startsWith("+") ? ll.slice(1) : ll);
+                if(MIN_SAFE_INT <= ival && ival <= MAX_SAFE_INT) {
+                    return `${ll.startsWith("+") ? ll.slice(1) : ll}_I`;
+                }
+                else {
+                    assert(false, `CPPEmitter: need to do bit shift construction for (really big) safe int -- ${(exp as IRLiteralChkIntExpression).value}`);
+                }
             }
         }
         else if(ttag === IRExpressionTag.IRLiteralRationalExpression) {
@@ -235,9 +245,9 @@ class CPPEmitter {
         }
         else if(ttag === IRExpressionTag.IRLiteralTypedExpression) {
             const ilte = exp as IRLiteralTypedExpression
-            const cce = TransformCPPNameManager.convertTypeKey(ilte.constype.tkeystr);
+            const cce = TransformCPPNameManager.generateNameForConstructor(ilte.constype.tkeystr);
 
-            return `${cce}(${this.emitIRLiteral(ilte.value as IRLiteralExpression)})`;
+            return `${cce}{${this.emitIRLiteral(ilte.value as IRLiteralExpression)}}`;
         }
         else if(ttag === IRExpressionTag.IRLiteralTypedStringExpression) {
             assert(false, "CPPEmitter: need to handle full Unicode string literals")
@@ -312,7 +322,7 @@ class CPPEmitter {
             }
             else if(ttag === IRExpressionTag.IRConstructSafeTypeDeclExpression) {
                 const cexp = exps as IRConstructSafeTypeDeclExpression;
-                bstr = `${TransformCPPNameManager.generateNameForConstructor(cexp.constype.tkeystr)}(${this.emitIRSimpleExpression(cexp.value, toplevel)})`;
+                bstr = `${TransformCPPNameManager.generateNameForConstructor(cexp.constype.tkeystr)}{${this.emitIRSimpleExpression(cexp.value, toplevel)}}`;
             }
             else if(ttag === IRExpressionTag.IRPrefixNotOpExpression) {
                 bstr = `!${this.emitIRSimpleExpression((exps as IRPrefixNotOpExpression).exp, false)}`;

@@ -1076,18 +1076,22 @@ class TypeChecker {
     }
 
     private checkLiteralChkNatExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
-        const nval = BigInt(exp.value.slice(0, exp.value.length - 1));
-        this.checkError(exp.sinfo, nval < 0n, "ChkNat literal cannot be negative");
-        this.checkError(exp.sinfo, MAX_SAFE_CHK_NAT < nval, "ChkNat literal out of valid range");
+        if(exp.value !== "ChkNat::npos") {
+            const nval = BigInt(exp.value.slice(0, exp.value.length - 1));
+            this.checkError(exp.sinfo, nval < 0n, "ChkNat literal cannot be negative");
+            this.checkError(exp.sinfo, MAX_SAFE_CHK_NAT < nval, "ChkNat literal out of valid range");
+        }
 
         return exp.setType(this.getWellKnownType("ChkNat"));
     }
 
     private checkLiteralChkIntExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
-        const nval = BigInt(exp.value.slice(0, exp.value.length - 1));
-        this.checkError(exp.sinfo, nval < MIN_SAFE_CHK_INT, "ChkInt literal out of valid range");
-        this.checkError(exp.sinfo, MAX_SAFE_CHK_INT < nval, "ChkInt literal out of valid range");
-        
+        if(exp.value !== "ChkInt::npos") {
+            const nval = BigInt(exp.value.slice(0, exp.value.length - 1));
+            this.checkError(exp.sinfo, nval < MIN_SAFE_CHK_INT, "ChkInt literal out of valid range");
+            this.checkError(exp.sinfo, MAX_SAFE_CHK_INT < nval, "ChkInt literal out of valid range");
+        }
+
         return exp.setType(this.getWellKnownType("ChkInt"));
     }
 
