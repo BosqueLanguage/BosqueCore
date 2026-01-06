@@ -45,7 +45,7 @@ namespace ᐸRuntimeᐳ
         // Overloaded operators on Nat
         constexpr XNat operator+() const
         {
-            return XNat{this->value};
+            return *this;
         }
         // Negation is not defined for Nat
 
@@ -111,7 +111,7 @@ namespace ᐸRuntimeᐳ
         // Overloaded operators on Int
         constexpr XInt operator+() const
         {
-            return XInt{this->value};
+            return *this;
         }
         constexpr XInt operator-() const
         {
@@ -184,7 +184,7 @@ namespace ᐸRuntimeᐳ
         // Overloaded operators on Nat
         constexpr XChkNat operator+() const
         {
-            return XChkNat{this->value};
+            return *this;
         }
         // Negation is not defined for Nat
 
@@ -285,11 +285,16 @@ namespace ᐸRuntimeᐳ
         // Overloaded operators on Int
         constexpr XChkInt operator+() const
         {
-            return XChkInt{this->value};
+            return *this;
         }
         constexpr XChkInt operator-() const
         {
-            return XChkInt{-this->value};
+            if(this->isBottom()) {
+                return XChkInt{XChkInt::BOTTOM_VALUE};
+            }
+            else {
+                return XChkInt{-this->value};
+            }
         }
 
         friend constexpr XChkInt operator+(XChkInt lhs, XChkInt rhs)

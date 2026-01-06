@@ -606,22 +606,27 @@ y.get_h() %%abstract in Bar so dispatches to Qux or Qaz
 ```
 
 ## Prefix Boolean Not
--- In Progress --
-The `!` operator is used to perform a boolean _not_ operation on a boolean expression. 
+The `!` operator is used to perform a boolean _not_ operation on a boolean expression. This operator is defined for regular `Boolean` types and `type` aliases _but_ does not apply to other types (e.g. None and there is not notion of falsy conversion as in JavaScript or C style languages).
 
 ```none
-!true %%false
+!true  %%false
 !false %%true
+
+type IsOpEnabled = Boolean;
+!(true<IsOpEnabled>) %%false<IsOpEnabled>
 ```
 
 ## Prefix Negation
--- In Progress --
-In Bosque the `-` operator is used to perform a negation operation on a numeric expression. In contrast to most languages the `-` operator is _safe_ for all numeric types. Specifically, as the valid range for Int is symmetric from -(2^53 - 1) to (2^53 - 1)! 
+In Bosque the `+` and `-` operators are used to perform a unary sign operation on a numeric expression. In contrast to most languages the `-` operator is _safe_ for all numeric types. Specifically, as the valid range for `Int`/`ChkInt` is symmetric! For `Int`/`ChkInt` negation is always valid and for `Nat`/`ChkNat` negation results in a conversion to the corresponding `Int`/`ChkInt` type. The `+` operator is effectively a no-op for the primitive types (but may function differently if/when operator overloading is added).
 
 ```none 
--(-1i) %% 1i
--(3/2R) %% -3/2R
+-(1i)  %% -1i
++(1i)  %% 1i
+
+-ChkInt::npos  %% ChkInt::npos (still npos)
 ```
+
+We distinguish between the following cases `-(5<Foo>)` and `-5<Foo>` -- the former is negating the typed literal value while the latter is negating the underlying value and then constructing a new typed literal value.
 
 ## Binary numeric arithmetic operators
 Bosque supports the standard set of binary numeric arithmetic operators of `+`, `-`, `*`, and `//`. These are defined for all numeric types and automatically for any `type` alias of a numeric type. The fixed size `Int` and `Nat` types are checked for overflows while the `ChkNat` and `ChkInt` types are checked for underflow on subtraction and division-by-zero (all other overflow types saturate to `ChkInt::npos`/`ChkNat::npos`). All types are checked for division by zero. 
@@ -653,6 +658,7 @@ typedecl Foo = Int;
 ```
 
 ## Binary numeric comparison operators
+-- In Progress --
 Bosque supports the standard set of binary numeric comparison operators of `==`, `!=`, `<`, `<=`, `>`, and `>=`. These are defined for all numeric types and automatically for any `typedecl` of a numeric type. 
 
 Types are not implicitly converted for comparison operations and, if needed, must be explicitly coerced to the same types.
