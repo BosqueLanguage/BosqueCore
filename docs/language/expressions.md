@@ -659,22 +659,29 @@ typedecl Foo = Int;
 
 ## Binary numeric comparison operators
 -- In Progress --
-Bosque supports the standard set of binary numeric comparison operators of `==`, `!=`, `<`, `<=`, `>`, and `>=`. These are defined for all numeric types and automatically for any `typedecl` of a numeric type. 
+Bosque supports the standard set of binary numeric comparison operators of `==`, `!=`, `<`, `<=`, `>`, and `>=`. These are defined for all numeric types and automatically for any `type` alias of a numeric type. 
 
 Types are not implicitly converted for comparison operations and, if needed, must be explicitly coerced to the same types.
 
 ```none
-typedecl Foo = Nat;
-
-1i == 2i %%false
-1i != 2i %%true
+1i == 2i     %%false
+1i != 2i     %%true
 3.5f <= 2.5f %%false
 
-2/3R == 4/6R %%true
-1/3R < 1/2R %%true
-
+typedecl Foo = Nat;
 2n_Foo > 1n_Foo %%true
 2n_Foo !== 3n_Foo %%true
+```
+
+In the special case of `ChkInt` and `ChkNat` values, comparisons with `npos` are defined such that `npos` is equal to itself and is greater than all other values of the type.
+
+```none
+ChkInt::npos == ChkInt::npos %%true
+ChkInt::npos > 500i          %%true
+ChkInt::npos > -10i          %%true
+
+ChkNat::npos == ChkNat::npos %%true
+ChkNat::npos > 10n           %%true
 ```
 
 ## Binary KeyType equality operators
