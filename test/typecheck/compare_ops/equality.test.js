@@ -1,6 +1,6 @@
 "use strict";
 
-import { checkTestExp, checkTestExpError } from "../../../bin/test/typecheck/typecheck_nf.js";
+import { checkTestExp, checkTestExpError, checkTestFunctionInFile, checkTestFunctionInFileError } from "../../../bin/test/typecheck/typecheck_nf.js";
 import { describe, it } from "node:test";
 
 describe ("Checker -- basic equals", () => {
@@ -18,6 +18,15 @@ describe ("Checker -- basic equals", () => {
     it("should fail not numeric", function () {
         checkTestExpError("none == true", "Bool", "Binary operator requires a unique numeric type");
     });
+
+    it("should check type alias", function () {
+        checkTestFunctionInFile("type Foo = Int; function main(): Bool { return 5i<Foo> == 5i<Foo>; }");
+    });
+
+    it("should fail type alias", function () {
+        checkTestFunctionInFileError("type Foo = Int; type Bar = Int; function main(): Bool { return 5i<Foo> == 5i<Bar>; }", "Operator == requires 2 arguments of the same type");
+        checkTestFunctionInFileError("type Foo = Int; function main(): Bool { return 5i<Foo> == 5i; }", "Operator == requires 2 arguments of the same type");
+    });
 });
 
 describe ("Checker -- basic !equal", () => {
@@ -34,5 +43,14 @@ describe ("Checker -- basic !equal", () => {
 
     it("should fail not numeric", function () {
         checkTestExpError("none == true", "Bool", "Binary operator requires a unique numeric type");
+    });
+
+    it("should check type alias", function () {
+        checkTestFunctionInFile("type Foo = Int; function main(): Bool { return 5i<Foo> != 5i<Foo>; }");
+    });
+
+    it("should fail type alias", function () {
+        checkTestFunctionInFileError("type Foo = Int; type Bar = Int; function main(): Bool { return 5i<Foo> != 5i<Bar>; }", "Operator != requires 2 arguments of the same type");
+        checkTestFunctionInFileError("type Foo = Int; function main(): Bool { return 5i<Foo> != 5i; }", "Operator != requires 2 arguments of the same type");
     });
 });
