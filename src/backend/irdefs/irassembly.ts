@@ -319,11 +319,13 @@ class IREnumTypeDecl extends IRAbstractEntityTypeDecl {
 class IRTypedeclTypeDecl extends IRAbstractEntityTypeDecl {
     readonly valuetype: IRTypeSignature;
     readonly iskeytype: boolean;
+    readonly isnumerictype: boolean;
     
-    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], saturatedProvides: IRTypeSignature[], allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[], allValidates: { containingtype: IRNominalTypeSignature, ii: number }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo, valuetype: IRTypeSignature, iskeytype: boolean) {
+    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], saturatedProvides: IRTypeSignature[], allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[], allValidates: { containingtype: IRNominalTypeSignature, ii: number }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo, valuetype: IRTypeSignature, iskeytype: boolean, isnumerictype: boolean) {
         super(tkey, invariants, validates, [], "std", saturatedProvides, [], allInvariants, allValidates, docstr, metatags, file, sinfo);
         this.valuetype = valuetype;
         this.iskeytype = iskeytype;
+        this.isnumerictype = isnumerictype;
     }
 }
 

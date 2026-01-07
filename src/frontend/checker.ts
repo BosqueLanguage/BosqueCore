@@ -641,7 +641,6 @@ class TypeChecker {
         }
     }
 
-    /*
     private checkValueEq(lhsexp: Expression, lhs: TypeSignature, rhsexp: Expression, rhs: TypeSignature): ["err" | "lhsnone" | "rhsnone" | "stricteq" | "lhskeyeqoption" | "rhskeyeqoption", TypeSignature] {
         if(!(lhs instanceof NominalTypeSignature) || !(rhs instanceof NominalTypeSignature)) {
             return ["err", new ErrorTypeSignature(lhsexp.sinfo, undefined)];
@@ -685,7 +684,7 @@ class TypeChecker {
 
         }
     }
-
+/*
     private checkTemplateBindingsOnInvoke(sinfo: SourceInfo, env: TypeEnvironment, targs: TypeSignature[], decl: ExplicitInvokeDecl, refinemap: TemplateNameMapper | undefined): TemplateNameMapper | undefined {
         if(targs.length !== decl.terms.length) {
             this.reportError(sinfo, `Invoke ${decl.name} expected ${decl.terms.length} terms but got ${targs.length}`);
@@ -2660,7 +2659,6 @@ class TypeChecker {
     }
 
     private checkBinKeyEqExpression(env: TypeEnvironment, exp: BinKeyEqExpression): TypeSignature {
-        /*
         const lhstype = this.checkExpression(env, exp.lhs, undefined);
         const rhstype = this.checkExpression(env, exp.rhs, undefined);
 
@@ -2678,12 +2676,9 @@ class TypeChecker {
         }
 
         return exp.setType(this.getWellKnownType("Bool"));
-        */
-        assert(false, "Not Implemented -- checkBinKeyEqExpression");
     }
 
     private checkBinKeyNeqExpression(env: TypeEnvironment, exp: BinKeyNeqExpression): TypeSignature {
-        /*
         const lhstype = this.checkExpression(env, exp.lhs, undefined);
         const rhstype = this.checkExpression(env, exp.rhs, undefined);
 
@@ -2701,12 +2696,9 @@ class TypeChecker {
         }
 
         return exp.setType(this.getWellKnownType("Bool"));
-        */
-        assert(false, "Not Implemented -- checkBinKeyNeqExpression");
     }
 
     private checkKeyCompareEqExpression(env: TypeEnvironment, exp: KeyCompareEqExpression): TypeSignature {
-        /*
         const ktypeok = this.checkTypeSignature(exp.ktype);
 
         const tlhs = this.checkExpression(env, exp.lhs, ktypeok ? exp.ktype : undefined);
@@ -2720,12 +2712,9 @@ class TypeChecker {
         }
 
         return exp.setType(this.getWellKnownType("Bool"));
-        */
-        assert(false, "Not Implemented -- checkKeyCompareEqExpression");
     }
 
     private checkKeyCompareLessExpression(env: TypeEnvironment, exp: KeyCompareLessExpression): TypeSignature {
-        /*
         const ktypeok = this.checkTypeSignature(exp.ktype);
 
         const tlhs = this.checkExpression(env, exp.lhs, ktypeok ? exp.ktype : undefined);
@@ -2739,8 +2728,6 @@ class TypeChecker {
         }
 
         return exp.setType(this.getWellKnownType("Bool"));
-        */
-        assert(false, "Not Implemented -- checkKeyCompareLessExpression");
     }
 
     private checkNumericEqExpression(env: TypeEnvironment, exp: NumericEqExpression): TypeSignature {

@@ -746,11 +746,13 @@ class CPPEmitter {
             `public:\n` +
             `    ${valuetype} value;\n` +
             `    //All constructor and assignment defaults\n` +
-            (tdecl.iskeytype ? 
-            `    friend constexpr Bool operator<(const ${ctrepr}& lhs, const ${ctrepr}& rhs) { return lhs.value < rhs.value; }\n` +
+            ((tdecl.iskeytype || tdecl.isnumerictype) ? 
             `    friend constexpr Bool operator==(const ${ctrepr} &lhs, const ${ctrepr}& rhs) { return lhs.value == rhs.value; }\n` +
+            `    friend constexpr Bool operator<(const ${ctrepr}& lhs, const ${ctrepr}& rhs) { return lhs.value < rhs.value; }\n` +
             `    friend constexpr Bool operator>(const ${ctrepr} &lhs, const ${ctrepr}& rhs) { return rhs.value < lhs.value; }\n` +
-            `    friend constexpr Bool operator!=(const ${ctrepr} &lhs, const ${ctrepr}& rhs) { return !(lhs.value == rhs.value); }\n` :
+            `    friend constexpr Bool operator!=(const ${ctrepr} &lhs, const ${ctrepr}& rhs) { return !(lhs.value == rhs.value); }\n` +
+            `    friend constexpr Bool operator<=(const ${ctrepr}& lhs, const ${ctrepr}& rhs) { return !(rhs.value < lhs.value); }\n` +
+            `    friend constexpr Bool operator>=(const ${ctrepr} &lhs, const ${ctrepr}& rhs) { return !(lhs.value < rhs.value); }\n` :
             "") +
             `};`;
 

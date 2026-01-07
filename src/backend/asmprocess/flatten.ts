@@ -2194,7 +2194,7 @@ class ASMToIRConverter {
             return { containingtype: this.processTypeSignature(val.containingtype), ii: jj };
         });
 
-        return new IRTypedeclTypeDecl(tinst.tkey, invariants, validates, saturatedProvides, allInvariants, allValidates, docstring, this.processMetaDataTags(tdecl.attributes), tdecl.file, this.convertSourceInfo(tdecl.sinfo), this.processTypeSignature(tdecl.valuetype as TypeSignature), (tdecl.valuetype as NominalTypeSignature).decl.isKeyTypeRestricted());
+        return new IRTypedeclTypeDecl(tinst.tkey, invariants, validates, saturatedProvides, allInvariants, allValidates, docstring, this.processMetaDataTags(tdecl.attributes), tdecl.file, this.convertSourceInfo(tdecl.sinfo), this.processTypeSignature(tdecl.valuetype as TypeSignature), (tdecl.valuetype as NominalTypeSignature).decl.isKeyTypeRestricted(), (tdecl.valuetype as NominalTypeSignature).decl.isNumericRestricted());
     }
 
     private generateTypedeclCStringDecl(tdecl: TypedeclTypeDecl, tinst: TypeInstantiationInfo): IRTypedeclCStringDecl {
