@@ -121,6 +121,8 @@ namespace ᐸRuntimeᐳ
                 this->treestack = nullptr;
             }
             else {
+                this->buffidx = 0;
+
                 assert(false); // Not Implemented: full iterator for CString trees
             }
         }
@@ -130,7 +132,7 @@ namespace ᐸRuntimeᐳ
         using difference_type = std::ptrdiff_t;
         using iterator_category = std::input_iterator_tag; 
 
-        XCStringInputIterator initializeBegin(CStrTree tree, std::vector<CStrNode*>* treestack)
+        static XCStringInputIterator initializeBegin(CStrTree tree, std::vector<CStrNode*>* treestack)
         {
             //Handle empty iterator or small iterator as special case
             if(tree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) {
@@ -170,16 +172,48 @@ namespace ᐸRuntimeᐳ
         int64_t index;
         CStrTree* currtree;
 
-        constexpr XCStringBidiIterator(int64_t idx, size_t buffidx, CStrBuff* currbuff, CStrTree* currtree) : index(idx), buffidx(buffidx), currbuff(currbuff), currtree(currtree) {}
+        constexpr XCStringBidiIterator(int64_t idx, CStrBuff* currbuff, int64_t index, CStrTree* currtree) : buffidx(idx), currbuff(currbuff), index(index), currtree(currtree) {}
 
         void incrementSlow()
         {        
-            assert(false); // Not Implemented: full iterator for CString trees
+            if(this->currbuff == nullptr) {
+                return;
+            }
+
+            if(this->currtree->typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) {
+                this->currbuff = nullptr;
+            }
+            else {
+                this->buffidx = 0;
+
+                if(this->currtree->data.node->count == this->index) {
+                    this->currbuff = nullptr;
+                }
+                else {
+                    assert(false); // Not Implemented: full iterator for CString trees
+                }
+            }
         }
 
         void decrementSlow()
         {        
-            assert(false); // Not Implemented: full iterator for CString trees
+            if(this->currbuff == nullptr) {
+                return;
+            }
+
+            if(this->currtree->typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) {
+                this->currbuff = nullptr;
+            }
+            else {
+                this->buffidx = 0;
+
+                if(this->index == 0) {
+                    this->currbuff = nullptr;
+                }
+                else {
+                    assert(false); // Not Implemented: full iterator for CString trees
+                }
+            }
         }
 
     public:
@@ -190,16 +224,14 @@ namespace ᐸRuntimeᐳ
         XCStringBidiIterator(): index(0), buffidx(0), currbuff(nullptr), currtree(nullptr) {}
         XCStringBidiIterator(const XCStringBidiIterator& other) = default;
 
-        XCStringBidiIterator initializeBegin(CStrTree* tree)
+        static XCStringBidiIterator initializeBegin(CStrTree* tree)
         {
             //Handle empty iterator or small iterator as special case
             if(tree->typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) {
-                this->index = tree.data.buff.size() > 0 ? 0 : std::numeric_limits<size_t>::max();
-                this->currbuff = tree.data.buff;
-                return;
+                return XCStringBidiIterator(0, &tree->data.buff, 0, tree);
             }
             else {
-                this->initializeFromTree(tree);
+                assert(false); // Not Implemented: full iterator for CString trees
             }
         }
 
@@ -227,7 +259,7 @@ namespace ᐸRuntimeᐳ
         {
             this->index--;
             this->buffidx--;
-            if(this->buffidx >= this->currbuff->size()) {
+            if(this->buffidx < 0) {
                 this->decrementSlow();
             }
 
@@ -287,9 +319,9 @@ namespace ᐸRuntimeᐳ
             return this->size() * sizeof(char);
         }
 
-        XCStringIterator iterator() const
+        XCStringInputIterator input_iterator(std::vector<CStrNode*>* treestack) const
         {
-            return XCStringIterator(this->tree);
+            return XCStringInputIterator::initializeBegin(this->tree, treestack);
         }
 
         xxxx
