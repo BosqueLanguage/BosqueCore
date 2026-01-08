@@ -155,9 +155,10 @@ namespace ᐸRuntimeᐳ
     {
         this->bufferMgr.writeImmediate("'");
 
-        std::stack<CStrNode*> treestack;
+        IterStack<CStrNode*> treestack;
         XCStringInputIterator istart = s.input_iterator_begin(&treestack);
-        XCStringInputIterator iend = s.input_iterator_end();
+        IterStack<CStrNode*> etreestack;
+        XCStringInputIterator iend = s.input_iterator_end(&etreestack);
 
         for(auto ii = istart; ii != iend; ++ii) {
             char c = *ii;
@@ -174,9 +175,10 @@ namespace ᐸRuntimeᐳ
     {
         this->bufferMgr.writeImmediate("\"");
 
-        std::stack<StrNode*> treestack;
+        IterStack<StrNode*> treestack;
         XStringInputIterator istart = s.input_iterator_begin(&treestack);
-        XStringInputIterator iend = s.input_iterator_end();
+        IterStack<StrNode*> etreestack;
+        XStringInputIterator iend = s.input_iterator_end(&etreestack);
 
         for(auto ii = istart; ii != iend; ++ii) {
             char32_t c = *ii;

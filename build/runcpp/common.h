@@ -14,7 +14,6 @@
 #include <string>
 #include <map>
 #include <list>
-#include <stack>
 #include <algorithm>
 
 #include <type_traits>
