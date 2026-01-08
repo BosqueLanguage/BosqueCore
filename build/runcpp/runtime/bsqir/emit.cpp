@@ -155,15 +155,16 @@ namespace ᐸRuntimeᐳ
     {
         this->bufferMgr.writeImmediate("'");
 
-        XCStringIterator ii = s.iterator();
-        while(ii.isValid()) {
-            char c = ii.current();
+        std::stack<CStrNode*> treestack;
+        XCStringInputIterator istart = s.input_iterator_begin(&treestack);
+        XCStringInputIterator iend = s.input_iterator_end();
 
+        for(auto ii = istart; ii != iend; ++ii) {
+            char c = *ii;
             //TODO: we need to handle escaping correctly
             assert(std::isalnum(c) || c == ' ');
 
             this->bufferMgr.write(c);
-            ii.advance();
         }
 
         this->bufferMgr.writeImmediate("'");
@@ -173,15 +174,17 @@ namespace ᐸRuntimeᐳ
     {
         this->bufferMgr.writeImmediate("\"");
 
-        XStringIterator ii = s.iterator();
-        while(ii.isValid()) {
-            char32_t c = ii.current();
+        std::stack<StrNode*> treestack;
+        XStringInputIterator istart = s.input_iterator_begin(&treestack);
+        XStringInputIterator iend = s.input_iterator_end();
+
+        for(auto ii = istart; ii != iend; ++ii) {
+            char32_t c = *ii;
 
             //TODO: we need to handle escaping correctly
             assert(std::isalnum(c) || c == ' ');
 
             this->bufferMgr.write(c);
-            ii.advance();
         }
 
         this->bufferMgr.writeImmediate("\"");
