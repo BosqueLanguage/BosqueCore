@@ -105,6 +105,17 @@ enum IRExpressionTag {
     IRNumericGreaterExpression = "IRNumericGreaterExpression",
     IRNumericGreaterEqExpression = "IRNumericGreaterEqExpression",
 
+    IRIsNoneOptionExpression = "IRIsNoneOptionExpression",
+    IRIsNotNoneOptionExpression = "IRIsNotNoneOptionExpression",
+    IRIsOptionEqValueExpression = "IRIsOptionEqValueExpression",
+    IRIsOptionNeqValueExpression = "IRIsOptionNeqValueExpression",
+    IRIsSomeEqValueExpression = "IRIsSomeEqValueExpression",
+    IRIsSomeNeqValueExpression = "IRIsSomeNeqValueExpression",
+
+    IRBinKeyEqDirectExpression = "IRBinKeyEqDirectExpression",
+    IRBinKeyNeqDirectExpression = "IRBinKeyNeqDirectExpression",
+    IRBinKeyLessDirectExpression = "IRBinKeyLessDirectExpression",
+
     IRLogicAndExpression = "IRLogicAndExpression",
     IRLogicOrExpression = "IRLogicOrExpression",
 
@@ -1060,6 +1071,123 @@ class IRNumericGreaterEqExpression extends IRNumericComparisonExpression {
     }
 }
 
+class IRIsNoneOptionExpression extends IRSimpleExpression {
+    readonly exp: IRSimpleExpression;
+    readonly opttype: IRTypeSignature;
+
+    constructor(exp: IRSimpleExpression, opttype: IRTypeSignature) {
+        super(IRExpressionTag.IRIsNoneOptionExpression);
+        this.exp = exp;
+        this.opttype = opttype;
+    }
+}
+
+class IRIsNotNoneOptionExpression extends IRSimpleExpression {
+    readonly exp: IRSimpleExpression;
+    readonly opttype: IRTypeSignature;
+
+    constructor(exp: IRSimpleExpression, opttype: IRTypeSignature) {
+        super(IRExpressionTag.IRIsNotNoneOptionExpression);
+        this.exp = exp;
+        this.opttype = opttype;
+    }
+}
+
+class IRIsOptionEqValueExpression extends IRSimpleExpression {
+    readonly optexp: IRSimpleExpression;
+    readonly opttype: IRTypeSignature;
+
+    readonly valexp: IRSimpleExpression;
+    readonly valtype: IRTypeSignature;
+
+    constructor(optexp: IRSimpleExpression, opttype: IRTypeSignature, valexp: IRSimpleExpression, valtype: IRTypeSignature) {
+        super(IRExpressionTag.IRIsOptionEqValueExpression);
+        this.optexp = optexp;
+        this.opttype = opttype;
+        this.valexp = valexp;
+        this.valtype = valtype;
+    }
+}
+
+class IRIsOptionNeqValueExpression extends IRSimpleExpression {
+    readonly optexp: IRSimpleExpression;
+    readonly opttype: IRTypeSignature;
+
+    readonly valexp: IRSimpleExpression;
+    readonly valtype: IRTypeSignature;
+
+    constructor(optexp: IRSimpleExpression, opttype: IRTypeSignature, valexp: IRSimpleExpression, valtype: IRTypeSignature) {
+        super(IRExpressionTag.IRIsOptionNeqValueExpression);
+        this.optexp = optexp;
+        this.opttype = opttype;
+        this.valexp = valexp;
+        this.valtype = valtype;
+    }
+}
+
+class IRIsSomeEqValueExpression extends IRSimpleExpression {
+    readonly someexp: IRSimpleExpression;
+    readonly sometype: IRTypeSignature;
+
+    readonly valexp: IRSimpleExpression;
+    readonly valtype: IRTypeSignature;
+
+    constructor(someexp: IRSimpleExpression, sometype: IRTypeSignature, valexp: IRSimpleExpression, valtype: IRTypeSignature) {
+        super(IRExpressionTag.IRIsSomeEqValueExpression);
+        this.someexp = someexp;
+        this.sometype = sometype;
+        this.valexp = valexp;
+        this.valtype = valtype;
+    }
+}
+
+class IRIsSomeNeqValueExpression extends IRSimpleExpression {
+    readonly someexp: IRSimpleExpression;
+    readonly sometype: IRTypeSignature;
+
+    readonly valexp: IRSimpleExpression;
+    readonly valtype: IRTypeSignature;
+
+    constructor(someexp: IRSimpleExpression, sometype: IRTypeSignature, valexp: IRSimpleExpression, valtype: IRTypeSignature) {
+        super(IRExpressionTag.IRIsSomeNeqValueExpression);
+        this.someexp = someexp;
+        this.sometype = sometype;
+        this.valexp = valexp;
+        this.valtype = valtype;
+    }
+}
+
+abstract class IRKeyComparisonExpression extends IRSimpleExpression {
+    readonly left: IRSimpleExpression;
+    readonly right: IRSimpleExpression;
+    readonly opertype: IRTypeSignature;
+
+    constructor(tag: IRExpressionTag, left: IRSimpleExpression, right: IRSimpleExpression, opertype: IRTypeSignature) {
+        super(tag);
+        this.left = left;
+        this.right = right;
+        this.opertype = opertype;
+    }
+}
+
+class IRBinKeyEqDirectExpression extends IRKeyComparisonExpression {
+    constructor(left: IRSimpleExpression, right: IRSimpleExpression, opertype: IRTypeSignature) {
+        super(IRExpressionTag.IRBinKeyEqDirectExpression, left, right, opertype);
+    }
+}
+
+class IRBinKeyNeqDirectExpression extends IRKeyComparisonExpression {
+    constructor(left: IRSimpleExpression, right: IRSimpleExpression, opertype: IRTypeSignature) {
+        super(IRExpressionTag.IRBinKeyNeqDirectExpression, left, right, opertype);
+    }
+}
+
+class IRBinKeyLessExpression extends IRKeyComparisonExpression {
+    constructor(left: IRSimpleExpression, right: IRSimpleExpression, opertype: IRTypeSignature) {
+        super(IRExpressionTag.IRBinKeyLessDirectExpression, left, right, opertype);
+    }
+}
+
 abstract class IRLogicOpExpression extends IRSimpleExpression {
     readonly args: IRSimpleExpression[];
 
@@ -1442,6 +1570,8 @@ export {
     IRUnaryOpExpression, IRPrefixNotOpExpression, IRPrefixNegateOpExpression, IRPrefixPlusOpExpression,
     IRBinOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression,
     IRNumericComparisonExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression,
+    IRIsNoneOptionExpression, IRIsNotNoneOptionExpression, IRIsOptionEqValueExpression, IRIsOptionNeqValueExpression, IRIsSomeEqValueExpression, IRIsSomeNeqValueExpression,
+    IRKeyComparisonExpression, IRBinKeyEqDirectExpression, IRBinKeyNeqDirectExpression, IRBinKeyLessExpression,
     IRLogicOpExpression, IRLogicAndExpression, IRLogicOrExpression,
 
     IRLogicSimpleConditionalExpression,

@@ -8,6 +8,14 @@
 namespace ᐸRuntimeᐳ
 {
     using XNone = uint64_t;
+    constexpr XNone xnone = 0ull;
+
+    template <typename T>
+    class XSome 
+    {
+    public:
+        T value;
+    };
 
     template <typename T>
     class XOption 
@@ -27,11 +35,14 @@ namespace ᐸRuntimeᐳ
         // Special none option bits
         constexpr bool isNone() const { return this->typeinfo == &g_typeinfo_None; }
         static constexpr XOption<T> optnone = XOption(&g_typeinfo_None);
-
+        
         // Some option bits
         constexpr bool isSome() const { return this->typeinfo != &g_typeinfo_None; }
+        static XOption<T> fromSome(const TypeInfo* ti, const XSome<T>& d) { return XOption<T>(ti, d.value); }
 
-        static XOption<T> makeSome(const TypeInfo* ti, const T& d) { return XOption<T>(ti, d); }
+        constexpr XNone safe_none() const { return xnone; }
+        constexpr XSome<T> safe_some() const { return XSome<T>{this->data}; }
+        constexpr T safe_unwrap() const { return this->data; }
 
         friend constexpr XBool operator==(const XOption<T>& lhs, const XNone& rhs) { return XBool::from(lhs.isNone()); }
         friend constexpr XBool operator==(const XNone& lhs, const XOption<T>& rhs) { return XBool::from(rhs.isNone()); }

@@ -1488,7 +1488,7 @@ abstract class BinaryKeyExpression extends Expression {
     readonly lhs: Expression;
     readonly rhs: Expression;
 
-    operkind: "err" | "lhsnone" | "rhsnone" | "stricteq" | "lhskeyeqoption" | "rhskeyeqoption" | undefined;
+    operkind: "err" | "lhsnone" | "rhsnone" | "stricteq" | "lhskeyeqoption" | "rhskeyeqoption" | "lhskeyeqsome" | "rhskeyeqsome" | undefined;
     opertype: TypeSignature | undefined = undefined;
 
     constructor(tag: ExpressionTag, sinfo: SourceInfo, lhs: Expression, rhs: Expression) {

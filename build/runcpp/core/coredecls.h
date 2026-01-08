@@ -11,10 +11,10 @@
 #include "fpoints.h"
 #include "strings.h"
 
-constexpr ᐸRuntimeᐳ::XNone none = 0ull;
+constexpr ᐸRuntimeᐳ::XNone none = ᐸRuntimeᐳ::xnone;
 
-constexpr ᐸRuntimeᐳ::XBool FALSE = ᐸRuntimeᐳ::XBool::from(false);
-constexpr ᐸRuntimeᐳ::XBool TRUE = ᐸRuntimeᐳ::XBool::from(true);
+constexpr ᐸRuntimeᐳ::XBool FALSE = ᐸRuntimeᐳ::XFALSE;
+constexpr ᐸRuntimeᐳ::XBool TRUE = ᐸRuntimeᐳ::XTRUE;
 
 constexpr ᐸRuntimeᐳ::XNat operator""_n(unsigned long long n)
 {

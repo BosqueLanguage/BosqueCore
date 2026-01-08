@@ -641,7 +641,7 @@ class TypeChecker {
         }
     }
 
-    private checkValueEq(lhsexp: Expression, lhs: TypeSignature, rhsexp: Expression, rhs: TypeSignature): ["err" | "lhsnone" | "rhsnone" | "stricteq" | "lhskeyeqoption" | "rhskeyeqoption", TypeSignature] {
+    private checkValueEq(lhsexp: Expression, lhs: TypeSignature, rhsexp: Expression, rhs: TypeSignature): ["err" | "lhsnone" | "rhsnone" | "stricteq" | "lhskeyeqoption" | "rhskeyeqoption" | "lhskeyeqsome" | "rhskeyeqsome", TypeSignature] {
         if(!(lhs instanceof NominalTypeSignature) || !(rhs instanceof NominalTypeSignature)) {
             return ["err", new ErrorTypeSignature(lhsexp.sinfo, undefined)];
         }
@@ -675,6 +675,9 @@ class TypeChecker {
                 }
             }
         }
+
+        xxxx;
+
         else {
             if(!this.relations.isKeyType(lhs, this.constraints) || !this.relations.isKeyType(rhs, this.constraints)) {
                 return ["err", new ErrorTypeSignature(lhsexp.sinfo, undefined)];

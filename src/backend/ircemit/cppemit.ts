@@ -373,6 +373,35 @@ class CPPEmitter {
                 const bexp = exps as IRNumericGreaterEqExpression;
                 bstr = `${this.emitIRSimpleExpression(bexp.left, false)} >= ${this.emitIRSimpleExpression(bexp.right, false)}`;
             }
+
+            else if(ttag === IRExpressionTag.IRIsNoneOptionExpression) {
+                xxxx;
+            }
+            else if(ttag === IRExpressionTag.IRIsNotNoneOptionExpression) {
+                xxxx;
+            }
+            else if(ttag === IRExpressionTag.IRIsOptionEqValueExpression) {
+                xxxx;
+            }
+            else if(ttag === IRExpressionTag.IRIsOptionNeqValueExpression) {
+                xxxx;
+            }
+            else if(ttag === IRExpressionTag.IRIsSomeEqValueExpression) {
+                xxxx;
+            }
+            else if(ttag === IRExpressionTag.IRIsSomeNeqValueExpression) {
+                xxxx;
+            }
+            else if(ttag === IRExpressionTag.IRBinKeyEqDirectExpression) {
+                xxxx;
+            }
+            else if(ttag === IRExpressionTag.IRBinKeyNeqDirectExpression) {
+                xxxx;
+            }
+            else if(ttag === IRExpressionTag.IRBinKeyLessDirectExpression) {
+                xxxx;
+            }
+
             else if(ttag === IRExpressionTag.IRLogicAndExpression) {
                 const bexp = exps as IRLogicAndExpression;
                 const args = bexp.args.map((arg) => this.emitIRSimpleExpression(arg, false));
