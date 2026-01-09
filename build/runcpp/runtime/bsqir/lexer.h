@@ -7,31 +7,22 @@ namespace ᐸRuntimeᐳ
 {
     class BSQLexBufferIterator
     {
-    private:
+    public:
         std::list<uint8_t*>::const_iterator iobuffs;
-        uint8_t* centry;
         size_t cindex;
 
         size_t gindex;
         size_t totalbytes;
 
-    public:
-        void initialize(std::list<uint8_t*>::const_iterator iobuffs, size_t totalbytes) 
-        { 
-            this->iobuffs = iobuffs;
-            this->centry = *iobuffs;
+        BSQLexBufferIterator() : iobuffs(), cindex(0), gindex(0), totalbytes(0) {}
+        BSQLexBufferIterator(std::list<uint8_t*>::const_iterator iobuffs, size_t totalbytes) : iobuffs(iobuffs), cindex(0), gindex(0), totalbytes(totalbytes) {}
+        BSQLexBufferIterator(std::list<uint8_t*>::const_iterator iobuffs, size_t cindex, size_t gindex, size_t totalbytes) : iobuffs(iobuffs), cindex(cindex), gindex(gindex), totalbytes(totalbytes) {}
+
+        void reset()
+        {
             this->cindex = 0;
             this->gindex = 0;
             this->totalbytes = totalbytes;
-        }
-
-        void clear(std::list<uint8_t*>::const_iterator iobuffs)
-        {
-            this->iobuffs = iobuffs;
-            this->centry = nullptr;
-            this->cindex = 0;
-            this->gindex = 0;
-            this->totalbytes = 0;
         }
 
         inline bool valid() const 
@@ -41,7 +32,7 @@ namespace ᐸRuntimeᐳ
 
         inline uint8_t get() const 
         {
-            return this->centry[this->cindex];
+            return (*this->iobuffs)[this->cindex];
         }
 
         inline size_t getIndex() const 
@@ -53,7 +44,6 @@ namespace ᐸRuntimeᐳ
         {
             if(this->gindex < this->totalbytes) {
                 this->iobuffs++;
-                this->centry = *this->iobuffs;
                 this->cindex = 0;            
             }
         }
@@ -70,28 +60,15 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        inline void advance(size_t& startidx, size_t& endidx, size_t count)
+        void advanceConstant(size_t len)
         {
-            startidx = this->gindex;
-            endidx = startidx + count;
-            for(size_t i = 0; i < count; i++) {
+            for(size_t i = 0; i < len; i++) {
                 this->next();
             }
-        }
-
-        inline void advanceWithExtract(size_t& startidx, size_t& endidx, char* outbuf, size_t count)
-        {
-            startidx = this->gindex;
-            endidx = startidx + count;
-            for(size_t i = 0; i < count; i++) {
-                outbuf[i] = (char)this->get();
-                this->next();
-            }
-            outbuf[count] = '\0';
         }
     };
 
-    enum class BSQONTokenType
+    enum class BSQONTokenType : uint64_t
     {
         Invalid = 0,
         ErrorToken,
@@ -103,6 +80,8 @@ namespace ᐸRuntimeᐳ
         LiteralInt,
         LiteralChkNat,
         LiteralChkInt,
+        LiteralCString,
+        LiteralString,
         LiteralSymbol,
         LiteralKeyword,
         Identifier
@@ -112,28 +91,29 @@ namespace ᐸRuntimeᐳ
     {
     public:
         BSQONTokenType tokentype;
+
+        std::list<uint8_t*>::const_iterator iobuff;
+        size_t iobuffoffset;
+
         size_t startindex;
-        size_t endindex;
-
-        char scvalue[40]; // Simple constant value storage for small literals (bool, nat, int, uuidv4)
-
-        BSQONToken() : tokentype(BSQONTokenType::Invalid), startindex(0), endindex(0), scvalue{0} {}
-        BSQONToken(const BSQONToken& other) = default;
-
-        static char sclongvalue[1024]; // For longer string values, we use a static buffer and extract based on start/end indices
+        size_t size;
 
         void clear()
         {
             this->tokentype = BSQONTokenType::Invalid;
-            this->startindex = 0;
-            this->endindex = 0;
-            std::memset(this->scvalue, 0, sizeof(this->scvalue));
+        }
+
+        BSQLexBufferIterator extraction_iterator(size_t totalbytes)
+        {
+            return BSQLexBufferIterator(this->iobuff, this->iobuffoffset, this->startindex, totalbytes);
         }
     };
 
     class BSQONLexer
     {
     private:
+        size_t totalbytes;
+
         std::list<uint8_t*> iobuffs;
         BSQLexBufferIterator iter;
 
@@ -141,6 +121,12 @@ namespace ᐸRuntimeᐳ
 
         static bool testchar(const BSQLexBufferIterator& ii, char c);
         static bool testchars(BSQLexBufferIterator ii, const char* chars);
+
+        void advanceToken(BSQONTokenType tokentype, size_t len)
+        {
+            this->ctoken = {tokentype, this->iter.iobuffs, this->iter.cindex, this->iter.gindex, len};
+            this->iter.advanceConstant(len);
+        }
 
         bool tryLexNone();
         bool tryLexBool();
@@ -151,12 +137,15 @@ namespace ᐸRuntimeᐳ
         bool tryLexChkNat();
         bool tryLexChkInt();
 
+        bool tryLexCString();
+        bool tryLexString();
+
         bool tryLexSymbol();
         bool tryLexKeyword();
         bool tryLexIdentifier();
 
     public:
-        BSQONLexer() : iobuffs(), iter(), ctoken() {}
+        BSQONLexer() : totalbytes(0) {}
 
         void initialize(std::list<uint8_t*>&& iobuffs, size_t totalbytes);
         void release();

@@ -675,9 +675,22 @@ class TypeChecker {
                 }
             }
         }
-
-        xxxx;
-
+        else if(lhs.decl instanceof SomeTypeDecl) {
+            if(!this.relations.isKeyType(rhs, this.constraints)) {
+                return ["err", new ErrorTypeSignature(rhsexp.sinfo, undefined)];
+            }
+            else {
+                return this.relations.areSameTypes(rhs, lhs.alltermargs[0]) ? ["rhskeyeqsome", rhs] : ["err", new ErrorTypeSignature(rhsexp.sinfo, undefined)];
+            }
+        }
+        else if(rhs.decl instanceof SomeTypeDecl) {
+            if(!this.relations.isKeyType(lhs, this.constraints)) {
+                return ["err", new ErrorTypeSignature(lhsexp.sinfo, undefined)];
+            }
+            else {
+                return this.relations.areSameTypes(lhs, rhs.alltermargs[0]) ? ["lhskeyeqsome", lhs] : ["err", new ErrorTypeSignature(lhsexp.sinfo, undefined)];
+            }
+        }
         else {
             if(!this.relations.isKeyType(lhs, this.constraints) || !this.relations.isKeyType(rhs, this.constraints)) {
                 return ["err", new ErrorTypeSignature(lhsexp.sinfo, undefined)];

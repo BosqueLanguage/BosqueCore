@@ -1348,9 +1348,22 @@ class ASMToIRConverter {
 
                 return new IRIsOptionEqValueExpression(optexp, opttype, valexp, valuetype);
             }
+            else if(kkop.operkind === "lhskeyeqsome") {
+                const someexp = this.flattenExpression(kkop.lhs);
+                const sometype = this.processTypeSignature(kkop.lhs.getType());
+                const valexp = this.flattenExpression(kkop.rhs);
+                const valuetype = this.processTypeSignature(kkop.rhs.getType());
 
-            xxxx;
+                return new IRIsSomeEqValueExpression(someexp, sometype, valexp, valuetype);
+            }
+            else if(kkop.operkind === "rhskeyeqsome") {
+                const someexp = this.flattenExpression(kkop.rhs);
+                const sometype = this.processTypeSignature(kkop.rhs.getType());
+                const valexp = this.flattenExpression(kkop.lhs);
+                const valuetype = this.processTypeSignature(kkop.lhs.getType());
 
+                return new IRIsSomeEqValueExpression(someexp, sometype, valexp, valuetype);
+            }
             else {
                 const lhs = this.flattenExpression(kkop.lhs);
                 const rhs = this.flattenExpression(kkop.rhs);
@@ -1385,13 +1398,25 @@ class ASMToIRConverter {
 
                 return new IRIsOptionNeqValueExpression(optexp, opttype, valexp, valuetype);
             }
+            else if(kkop.operkind === "lhskeyeqsome") {
+                const someexp = this.flattenExpression(kkop.lhs);
+                const sometype = this.processTypeSignature(kkop.lhs.getType());
+                const valexp = this.flattenExpression(kkop.rhs);
+                const valuetype = this.processTypeSignature(kkop.rhs.getType());
 
-            xxxx;
+                return new IRIsSomeNeqValueExpression(someexp, sometype, valexp, valuetype);
+            }
+            else if(kkop.operkind === "rhskeyeqsome") {
+                const someexp = this.flattenExpression(kkop.rhs);
+                const sometype = this.processTypeSignature(kkop.rhs.getType());
+                const valexp = this.flattenExpression(kkop.lhs);
+                const valuetype = this.processTypeSignature(kkop.lhs.getType());
 
+                return new IRIsSomeNeqValueExpression(someexp, sometype, valexp, valuetype);
+            }
             else {
                 const lhs = this.flattenExpression(kkop.lhs);
                 const rhs = this.flattenExpression(kkop.rhs);
-                xxxx;
 
                 return new IRBinKeyNeqDirectExpression(lhs, rhs, this.processTypeSignature(kkop.lhs.getType()));
             }

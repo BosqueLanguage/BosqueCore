@@ -15,6 +15,11 @@ namespace ᐸRuntimeᐳ
     {
     public:
         T value;
+        
+        friend constexpr XBool operator==(const XSome<T>& lhs, const T& rhs) { return XBool::from(lhs.value == rhs); }
+        friend constexpr XBool operator==(const T& lhs, const XSome<T>& rhs) { return XBool::from(lhs == rhs.value); }
+        friend constexpr XBool operator!=(const XSome<T>& lhs, const T& rhs) { return XBool::from(lhs.value != rhs); }
+        friend constexpr XBool operator!=(const T& lhs, const XSome<T>& rhs) { return XBool::from(lhs != rhs.value); }
     };
 
     template <typename T>

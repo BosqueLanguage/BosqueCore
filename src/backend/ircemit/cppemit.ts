@@ -2,7 +2,7 @@ import { TransformCPPNameManager } from "./namemgr.js";
 import { TypeInfoManager } from "./typeinfomgr.js";
 
 import { MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_INT } from "../../frontend/assembly.js";
-import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag, IRPrefixNotOpExpression, IRPrefixPlusOpExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRReturnValueSimpleStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement, IRAbortStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRTempAssignExpressionStatement, IRTypeDeclInvariantCheckStatement, IRDebugStatement, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRChkLogicImpliesShortCircuitStatement, IRPreconditionCheckStatement, IRPostconditionCheckStatement, IRVariableInitializationDirectInvokeStatement, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRAssertStatement, IRValidateStatement, IRBody, IRBuiltinBody, IRStandardBody, IRHoleBody } from "../irdefs/irbody.js";
+import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag, IRPrefixNotOpExpression, IRPrefixPlusOpExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRReturnValueSimpleStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement, IRAbortStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRTempAssignExpressionStatement, IRTypeDeclInvariantCheckStatement, IRDebugStatement, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRChkLogicImpliesShortCircuitStatement, IRPreconditionCheckStatement, IRPostconditionCheckStatement, IRVariableInitializationDirectInvokeStatement, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRAssertStatement, IRValidateStatement, IRBody, IRBuiltinBody, IRStandardBody, IRHoleBody, IRIsNoneOptionExpression, IRBinKeyEqDirectExpression, IRIsOptionEqValueExpression, IRIsSomeNeqValueExpression, IRIsOptionNeqValueExpression, IRIsSomeEqValueExpression } from "../irdefs/irbody.js";
 import { IRAbstractNominalTypeDecl, IRAssembly, IRConstantDecl, IREnumTypeDecl, IRInvariantDecl, IRInvokeDecl, IRInvokeParameterDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl, IRValidateDecl } from "../irdefs/irassembly.js";
 
 import assert from "node:assert";
@@ -373,35 +373,56 @@ class CPPEmitter {
                 const bexp = exps as IRNumericGreaterEqExpression;
                 bstr = `${this.emitIRSimpleExpression(bexp.left, false)} >= ${this.emitIRSimpleExpression(bexp.right, false)}`;
             }
-
             else if(ttag === IRExpressionTag.IRIsNoneOptionExpression) {
-                xxxx;
+                const nexp = exps as IRIsNoneOptionExpression;
+                bstr = `${this.emitIRSimpleExpression(nexp.exp, false)}.isNone()`;
             }
             else if(ttag === IRExpressionTag.IRIsNotNoneOptionExpression) {
-                xxxx;
+                const nexp = exps as IRIsNoneOptionExpression;
+                bstr = `!${this.emitIRSimpleExpression(nexp.exp, false)}.isNone()`;
             }
             else if(ttag === IRExpressionTag.IRIsOptionEqValueExpression) {
-                xxxx;
+                const eqvop = exps as IRIsOptionEqValueExpression;
+                const optexp = this.emitIRSimpleExpression(eqvop.optexp, false);
+                const valexp = this.emitIRSimpleExpression(eqvop.valexp, false);
+                bstr = `${optexp} == ${valexp}`;
             }
             else if(ttag === IRExpressionTag.IRIsOptionNeqValueExpression) {
-                xxxx;
+                const eqvop = exps as IRIsOptionNeqValueExpression
+                const optexp = this.emitIRSimpleExpression(eqvop.optexp, false);
+                const valexp = this.emitIRSimpleExpression(eqvop.valexp, false);
+                bstr = `${optexp} != ${valexp}`;
             }
             else if(ttag === IRExpressionTag.IRIsSomeEqValueExpression) {
-                xxxx;
+                const eqvop = exps as IRIsSomeEqValueExpression;
+                const optexp = this.emitIRSimpleExpression(eqvop.someexp, false);
+                const valexp = this.emitIRSimpleExpression(eqvop.valexp, false);
+                bstr = `${optexp} == ${valexp}`;
             }
             else if(ttag === IRExpressionTag.IRIsSomeNeqValueExpression) {
-                xxxx;
+                const eqvop = exps as IRIsSomeNeqValueExpression;
+                const optexp = this.emitIRSimpleExpression(eqvop.someexp, false);
+                const valexp = this.emitIRSimpleExpression(eqvop.valexp, false);
+                bstr = `${optexp} != ${valexp}`;
             }
             else if(ttag === IRExpressionTag.IRBinKeyEqDirectExpression) {
-                xxxx;
+                const bexp = exps as IRBinKeyEqDirectExpression;
+                const leftexp = this.emitIRSimpleExpression(bexp.left, false);
+                const rightexp = this.emitIRSimpleExpression(bexp.right, false);
+                bstr = `${leftexp} == ${rightexp}`;
             }
             else if(ttag === IRExpressionTag.IRBinKeyNeqDirectExpression) {
-                xxxx;
+                const bexp = exps as IRBinKeyEqDirectExpression;
+                const leftexp = this.emitIRSimpleExpression(bexp.left, false);
+                const rightexp = this.emitIRSimpleExpression(bexp.right, false);
+                bstr = `${leftexp} == ${rightexp}`;
             }
             else if(ttag === IRExpressionTag.IRBinKeyLessDirectExpression) {
-                xxxx;
+                const bexp = exps as IRBinKeyEqDirectExpression;
+                const leftexp = this.emitIRSimpleExpression(bexp.left, false);
+                const rightexp = this.emitIRSimpleExpression(bexp.right, false);
+                bstr = `${leftexp} < ${rightexp}`;
             }
-
             else if(ttag === IRExpressionTag.IRLogicAndExpression) {
                 const bexp = exps as IRLogicAndExpression;
                 const args = bexp.args.map((arg) => this.emitIRSimpleExpression(arg, false));
