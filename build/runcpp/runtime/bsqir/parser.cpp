@@ -29,7 +29,7 @@ namespace ᐸRuntimeᐳ
             return false;
         }
 
-        if(!this->lexer.matches(tname)) {
+        if(!this->lexer.current().matches(tname)) {
             return false;
         }
 
@@ -59,7 +59,7 @@ namespace ᐸRuntimeᐳ
             return false;
         }
 
-        if(!this->lexer.matches(sym)) {
+        if(!this->lexer.current().matches(sym)) {
             return false;
         }
 
@@ -74,7 +74,7 @@ namespace ᐸRuntimeᐳ
             return false;
         }
 
-        if(!this->lexer.matches(kw)) {
+        if(!this->lexer.current().matches(kw)) {
             return false;
         }
 
@@ -89,10 +89,10 @@ namespace ᐸRuntimeᐳ
             return false;
         }
 
-        this->lexer.extract(outid, maxlen);
+        this->lexer.current().extract(outid, maxlen);
         
         this->lexer.consume();
-        return;
+        return true;
     }
 
     std::optional<XNone> BSQONParser::parseNone() 
@@ -125,7 +125,7 @@ namespace ᐸRuntimeᐳ
     {
         if(this->lexer.current().tokentype == BSQONTokenType::LiteralNat) {
             char outbuff[32] = {0};
-            this->lexer.extract(outbuff, 32);
+            this->lexer.current().extract(outbuff, 32);
 
             errno = 0;
             char* endptr = nullptr;
@@ -147,7 +147,7 @@ namespace ᐸRuntimeᐳ
     {
         if(this->lexer.current().tokentype == BSQONTokenType::LiteralInt) {
             char outbuff[32] = {0};
-            this->lexer.extract(outbuff, 32);
+            this->lexer.current().extract(outbuff, 32);
 
             errno = 0;
             char* endptr = nullptr;
@@ -169,7 +169,7 @@ namespace ᐸRuntimeᐳ
     {
         if(this->lexer.current().tokentype == BSQONTokenType::LiteralChkNat) {
             char outbuff[64] = {0};
-            this->lexer.extract(outbuff, 64);
+            this->lexer.current().extract(outbuff, 64);
 
             if(std::strcmp(outbuff, "ChkNat::npos") == 0) {
                 this->lexer.consume();
@@ -200,7 +200,7 @@ namespace ᐸRuntimeᐳ
     {
         if(this->lexer.current().tokentype == BSQONTokenType::LiteralChkInt) {
             char outbuff[64] = {0};
-            this->lexer.extract(outbuff, 64);
+            this->lexer.current().extract(outbuff, 64);
 
             if(std::strcmp(outbuff, "ChkInt::npos") == 0) {
                 this->lexer.consume();
@@ -232,21 +232,88 @@ namespace ᐸRuntimeᐳ
         assert(false); // Not Implemented: parsing Float values
     }
 
+    bool isSimpleChar(uint8_t c)
+    {
+        if(c > 126) {
+            return false;
+        }
+        else {
+            return std::isprint(c) || (c == '\t') || (c == '\n');
+        }
+    }
+
+    bool processCCharInString(BSQLexBufferIterator& ii, char* outchar)
+    {
+        if(!ii.valid()) {
+            return false;
+        }
+
+        char c = (char)ii.get();
+        ii.next();
+
+        if(!isSimpleChar(static_cast<uint8_t>(c))) {
+            return false;
+        }
+        
+        if(c != '%') {
+            *outchar = c;
+        }
+        else {
+            assert(false); // Not Implemented: escape sequences in CString
+        }
+
+        return true;
+    }
+
+    bool processUnicodeCharInString(BSQLexBufferIterator& ii, char32_t* outchar)
+    {
+        if(!ii.valid()) {
+            return false;
+        }
+
+        char c = (char)ii.get();
+        ii.next();
+
+        if(!isSimpleChar(static_cast<uint8_t>(c))) {
+            assert(false); // Not Implemented: full unicode support in String
+        }
+        else {
+            if(c != '%') {
+                *outchar = (char32_t)c;
+            }
+            else {
+                assert(false); // Not Implemented: escape sequences in String
+            }
+        }
+
+        return true;
+    }
+
     std::optional<XCString> BSQONParser::parseCString()
     {
         if(this->lexer.current().tokentype != BSQONTokenType::LiteralCString) {
             return std::nullopt;
         }
 
-        if(this->lexer.current().size < CStrBuff::CSTR_MAX_SIZE) {
-            char outbuff[CStrBuff::CSTR_BUFF_SIZE] = {0};
-            this->lexer.extract(outbuff, CStrBuff::CSTR_BUFF_SIZE);
-
+        auto stok = this->lexer.current();
+        if(stok.size < CStrBuff::CSTR_MAX_SIZE) {
             CStrBuff cb;
-            xxxx;
+            size_t ecount = 0;
+            bool extractok = true;
+            BSQLexBufferIterator ii = stok.extraction_iterator();
+            while(ii.valid()) {
+                extractok &= processCCharInString(ii, &cb.data[ecount + 1]);
+                ecount++;
+            }
+            cb.data[0] = static_cast<char>(ecount);
 
             this->lexer.consume();
-            return std::optional<XCString>(XCString(cb));
+            if(!extractok) {
+                return std::nullopt;
+            }
+            else {
+                return std::optional<XCString>(XCString(cb));
+            }
         }
         else {
             assert(false); // Not Implemented: parsing large CString values
@@ -255,6 +322,32 @@ namespace ᐸRuntimeᐳ
 
     std::optional<XString> BSQONParser::parseString()
     {
-        assert(false); // Not Implemented: parsing String values
+        if(this->lexer.current().tokentype != BSQONTokenType::LiteralString) {
+            return std::nullopt;
+        }
+
+        auto stok = this->lexer.current();
+        if(stok.size < StrBuff::STR_MAX_SIZE) {
+            StrBuff cb;
+            size_t ecount = 0;
+            bool extractok = true;
+            BSQLexBufferIterator ii = stok.extraction_iterator();
+            while(ii.valid()) {
+                extractok &= processUnicodeCharInString(ii, &cb.data[ecount + 1]);
+                ecount++;
+            }
+            cb.data[0] = static_cast<char32_t>(ecount);
+
+            this->lexer.consume();
+            if(!extractok) {
+                return std::nullopt;
+            }
+            else {
+                return std::optional<XString>(XString(cb));
+            }
+        }
+        else {
+            assert(false); // Not Implemented: parsing large CString values
+        }
     }
 }

@@ -4,14 +4,14 @@ namespace ᐸRuntimeᐳ
 {
     using REState = uint8_t[32];
 
-    bool BSQONLexer::matches(const char* cchars) const
+    bool BSQONToken::matches(const char* cchars) const
     {
         size_t len = std::strlen(cchars);
-        if(len != this->ctoken.size) {
+        if(len != this->size) {
             return false;
         }
 
-        BSQLexBufferIterator ii = this->ctoken.extraction_iterator(this->totalbytes);
+        BSQLexBufferIterator ii = this->extraction_iterator();
         for(size_t i = 0; i < len; i++) {
             if(ii.get() != static_cast<uint8_t>(cchars[i])) {
                 return false;
@@ -22,12 +22,12 @@ namespace ᐸRuntimeᐳ
         return true;
     }
         
-    void BSQONLexer::extract(char* outchars, size_t maxlen) const
+    void BSQONToken::extract(char* outchars, size_t maxlen) const
     {
-        assert(maxlen < this->ctoken.size);
+        assert(maxlen > this->size);
 
-        BSQLexBufferIterator ii = this->ctoken.extraction_iterator(this->totalbytes);
-        for(size_t i = 0; i < this->ctoken.size; i++) {
+        BSQLexBufferIterator ii = this->extraction_iterator();
+        for(size_t i = 0; i < this->size; i++) {
             outchars[i] = (char)ii.get();
             ii.next();
         }
@@ -199,7 +199,7 @@ namespace ᐸRuntimeᐳ
     bool BSQONLexer::tryLexChkNat()
     {
         if(this->testchars(this->iter, "ChkNat::npos")) {
-            this->advanceToken(BSQONTokenType::LiteralChkNat, strlen("ChkNat::npos") - 1);
+            this->advanceToken(BSQONTokenType::LiteralChkNat, strlen("ChkNat::npos"));
             return true;
         }
 
@@ -209,7 +209,7 @@ namespace ᐸRuntimeᐳ
     bool BSQONLexer::tryLexChkInt()
     {
         if(this->testchars(this->iter, "ChkInt::npos")) {
-            this->advanceToken(BSQONTokenType::LiteralChkInt, strlen("ChkInt::npos") - 1);
+            this->advanceToken(BSQONTokenType::LiteralChkInt, strlen("ChkInt::npos"));
             return true;
         }
 

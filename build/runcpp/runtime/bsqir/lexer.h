@@ -108,10 +108,13 @@ namespace ᐸRuntimeᐳ
             return (*(this->iobuff))[this->iobuffoffset];
         }
 
-        BSQLexBufferIterator extraction_iterator(size_t totalbytes) const
+        BSQLexBufferIterator extraction_iterator() const
         {
-            return BSQLexBufferIterator(this->iobuff, this->iobuffoffset, this->startindex, totalbytes);
+            return BSQLexBufferIterator(this->iobuff, this->iobuffoffset, this->startindex, this->startindex + this->size + 1);
         }
+
+        bool matches(const char* cchars) const;
+        void extract(char* outchars, size_t maxlen) const;
     };
 
     class BSQONLexer
@@ -151,9 +154,6 @@ namespace ᐸRuntimeᐳ
 
     public:
         BSQONLexer() : totalbytes(0) {}
-
-        bool matches(const char* cchars) const;
-        void extract(char* outchars, size_t maxlen) const;
 
         void initialize(std::list<uint8_t*>&& iobuffs, size_t totalbytes);
         void release();
