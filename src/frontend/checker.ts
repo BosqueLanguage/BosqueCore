@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import { APIDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, InvokeTemplateTypeRestrictionClause, MAX_SAFE_CHK_NAT, MIN_SAFE_CHK_INT, MAX_SAFE_CHK_INT, APIDeniedTypeDecl, APIFlaggedTypeDecl, AgentDecl, TaskConfiguration } from "./assembly.js";
+import { APIDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, InvokeTemplateTypeRestrictionClause, MAX_SAFE_CHK_NAT, MIN_SAFE_CHK_INT, MAX_SAFE_CHK_INT, APIDeniedTypeDecl, APIFlaggedTypeDecl, AgentDecl, TaskConfiguration, AbstractCollectionTypeDecl, ConstructableTypeDecl } from "./assembly.js";
 import { CodeFormatter, SourceInfo } from "./build_decls.js";
 import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, ErrorTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
 import { APIInvokeExpression, AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, FormatStringTextComponent, HoleBodyImplementation, HoleExpression, HoleStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, IfElifElseStatement, IfElseStatement, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypeDeclValueExpression, LiteralTypedCStringExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RValueExpression, RValueExpressionTag, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VoidRefCallStatement } from "./body.js";
@@ -1635,8 +1635,8 @@ class TypeChecker {
         }
     }
 
-/*
     private checkCollectionConstructor(env: TypeEnvironment, cdecl: AbstractCollectionTypeDecl, exp: ConstructorPrimaryExpression): TypeSignature {
+        /*
         const etype = this.relations.getExpandoableOfType(exp.ctype) as TypeSignature;
 
         if(exp.args.args.some((arg) => (arg instanceof NamedArgumentValue) || (arg instanceof RefArgumentValue))) {
@@ -1663,58 +1663,11 @@ class TypeChecker {
         exp.elemtype = etype;
         exp.shuffleinfo = shuffleinfo;
         return exp.setType(exp.ctype);
-    }
-
-    private checkPrimitiveConstructor(env: TypeEnvironment, cdecl: PrimitiveEntityTypeDecl, exp: ConstructorPrimaryExpression): TypeSignature {
-        const ctype = exp.ctype as NominalTypeSignature;
-
-        if(exp.args.args.some((arg) => !(arg instanceof PositionalArgumentValue))) {
-            this.reportError(exp.sinfo, `Primitive entity constructor expects only positional arguments`);
-            return exp.setType(ctype);
-        }
-
-        // Note: For now we limit the buffers size to 8
-        if(ctype.tkeystr === "CCharBuffer") {
-            if(exp.args.args.length > 8) {
-                this.reportError(exp.sinfo, `CCharBuffer constructor expects no more than 8 arguments`);
-            }
-            else {
-                for(let i = 0; i < exp.args.args.length; ++i) {
-                    let arg = exp.args.args[i];
-                    if(arg instanceof PositionalArgumentValue) {
-                        let argtype = this.checkExpression(env, arg.exp, new SimpleTypeInferContext(ctype));
-                        this.checkError(arg.exp.sinfo, (argtype instanceof ErrorTypeSignature) || argtype.tkeystr !== "CChar", `Argument ${i} expected type CChar`);
-                    } 
-                    else {
-                        this.reportError(exp.sinfo, `CCharBuffer expects positional arguments`);
-                    }
-                }
-            }
-        }
-
-        if(ctype.tkeystr === "UnicodeCharBuffer") {
-            if(exp.args.args.length > 8) {
-                this.reportError(exp.sinfo, `UnicodeCharBuffer constructor expects no more than 8 arguments`);
-            }
-            else {
-                for(let i = 0; i < exp.args.args.length; ++i) {
-                    let arg = exp.args.args[i];
-                    if(arg instanceof PositionalArgumentValue) {
-                        let argtype = this.checkExpression(env, arg.exp, new SimpleTypeInferContext(ctype));
-                        this.checkError(arg.exp.sinfo, (argtype instanceof ErrorTypeSignature) || argtype.tkeystr !== "UnicodeChar", `Argument ${i} expected type UnicodeChar`);
-                    } 
-                    else {
-                        this.reportError(exp.sinfo, `UnicodeCharBuffer expects positional arguments`);
-                    }
-                }
-            }
-        }
-        
-        return exp.setType(ctype);
+        */
+        assert(false, "Not Implemented -- checkCollectionConstructor");
     }
 
     private checkSpecialConstructableConstructor(env: TypeEnvironment, cdecl: ConstructableTypeDecl, exp: ConstructorPrimaryExpression): TypeSignature {
-        /*
         const ctype = exp.ctype as NominalTypeSignature;
 
         if(exp.args.args.some((arg) => !(arg instanceof PositionalArgumentValue))) {
@@ -1814,6 +1767,7 @@ class TypeChecker {
     }
 
     private checkStandardConstructor(env: TypeEnvironment, fields: MemberFieldDecl[], exp: ConstructorPrimaryExpression): TypeSignature {
+        /*
         const ctype = exp.ctype as NominalTypeSignature;
 
         const imapper = this.checkTemplateBindingsOnConstructor(exp.sinfo, env, ctype.alltermargs, ctype.decl);
@@ -1826,11 +1780,11 @@ class TypeChecker {
 
         exp.shuffleinfo = shuffleinfo;
         return exp.setType(ctype);
-        
+        */
+        assert(false, "Not Implemented -- checkStandardConstructor");
     }
-*/
+
     private checkConstructorPrimaryExpression(env: TypeEnvironment, exp: ConstructorPrimaryExpression): TypeSignature {
-        /*
         const tok = this.checkTypeSignature(exp.ctype);
 
         if(!tok) {
@@ -1844,9 +1798,6 @@ class TypeChecker {
         }
         else if(decl instanceof ConstructableTypeDecl) {
             return this.checkSpecialConstructableConstructor(env, decl, exp);
-        }
-        else if(decl instanceof PrimitiveEntityTypeDecl) {
-            return this.checkPrimitiveConstructor(env, decl, exp);
         }
         else if(decl instanceof TypedeclTypeDecl) {
             return this.checkSpecialTypeDeclConstructor(env, decl, exp);
@@ -1863,8 +1814,6 @@ class TypeChecker {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
         }
-        */
-        assert(false, "Not Implemented -- checkConstructorPrimaryExpression");
     }
     
     private checkConstructorEListExpression(env: TypeEnvironment, exp: ConstructorEListExpression, infertype: TypeInferContext | undefined): TypeSignature {
@@ -2019,7 +1968,7 @@ class TypeChecker {
         */
         assert(false, "Not Implemented -- checkLambdaInvokeExpression");
     }
-/*
+
     private checkSpecialConstructorExpressionNoInfer(env: TypeEnvironment, exp: SpecialConstructorExpression): TypeSignature {
         const corens = this.relations.assembly.getCoreNamespace();
 
@@ -2038,9 +1987,9 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
     }
-*/
+
     private checkSpecialConstructorExpression(env: TypeEnvironment, exp: SpecialConstructorExpression, infertype: TypeSignature | undefined): TypeSignature {
-        /*
+        xxxx;
         if(infertype === undefined || !(infertype instanceof NominalTypeSignature)) {
             return this.checkSpecialConstructorExpressionNoInfer(env, exp);
         }
@@ -2112,8 +2061,6 @@ class TypeChecker {
                 }
             }
         }
-        */
-        assert(false, "Not Implemented -- checkSpecialConstructorExpression");
     }
 
     private checkCallNamespaceFunctionExpression(env: TypeEnvironment, exp: CallNamespaceFunctionExpression, refallowed: boolean): TypeResultWRefVarInfoResult {
