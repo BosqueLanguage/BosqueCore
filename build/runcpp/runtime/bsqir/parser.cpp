@@ -301,7 +301,8 @@ namespace ᐸRuntimeᐳ
             size_t ecount = 0;
             bool extractok = true;
             BSQLexBufferIterator ii = stok.extraction_iterator();
-            while(ii.valid()) {
+            ii.next(); //eat ' and skip final '
+            while(ii.valid() && ii.get() != '\'') {
                 extractok &= processCCharInString(ii, &cb.data[ecount + 1]);
                 ecount++;
             }
@@ -332,7 +333,8 @@ namespace ᐸRuntimeᐳ
             size_t ecount = 0;
             bool extractok = true;
             BSQLexBufferIterator ii = stok.extraction_iterator();
-            while(ii.valid()) {
+            ii.next(); //eat " and skip final "
+            while(ii.valid() && ii.get() != '"') {
                 extractok &= processUnicodeCharInString(ii, &cb.data[ecount + 1]);
                 ecount++;
             }
