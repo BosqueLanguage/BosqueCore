@@ -70,9 +70,6 @@ namespace ᐸRuntimeᐳ
         constexpr size_t size() const { return static_cast<size_t>(this->data[0]); }
         constexpr char at(size_t index) const { return this->data[index + 1]; }
 
-        char* atref(size_t index) { return this->data + (index + 1); }
-        const char* atref(size_t index) const { return this->data + (index + 1); }
-
         constexpr static CStrBuff create_empty() { return CStrBuff(); }
     };
 

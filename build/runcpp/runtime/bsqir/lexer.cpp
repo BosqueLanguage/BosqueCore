@@ -4,6 +4,35 @@ namespace ᐸRuntimeᐳ
 {
     using REState = uint8_t[32];
 
+    bool BSQONLexer::matches(const char* cchars) const
+    {
+        size_t len = std::strlen(cchars);
+        if(len != this->ctoken.size) {
+            return false;
+        }
+
+        BSQLexBufferIterator ii = this->ctoken.extraction_iterator(this->totalbytes);
+        for(size_t i = 0; i < len; i++) {
+            if(ii.get() != static_cast<uint8_t>(cchars[i])) {
+                return false;
+            }
+            ii.next();
+        }
+
+        return true;
+    }
+        
+    void BSQONLexer::extract(char* outchars, size_t maxlen) const
+    {
+        assert(maxlen < this->ctoken.size);
+
+        BSQLexBufferIterator ii = this->ctoken.extraction_iterator(this->totalbytes);
+        for(size_t i = 0; i < this->ctoken.size; i++) {
+            outchars[i] = (char)ii.get();
+            ii.next();
+        }
+    }
+
     void BSQONLexer::initialize(std::list<uint8_t*>&& iobuffs, size_t totalbytes)
     {
         this->iobuffs = std::move(iobuffs);
@@ -246,8 +275,7 @@ namespace ᐸRuntimeᐳ
             return false;
         }
 
-        this->ctoken.tokentype = BSQONTokenType::LiteralSymbol;
-        this->iter.advanceWithExtract(this->ctoken.startindex, this->ctoken.endindex, this->ctoken.scvalue, 1);
+        this->advanceToken(BSQONTokenType::LiteralSymbol, 1);
         return true;
     }
 
@@ -260,9 +288,12 @@ namespace ᐸRuntimeᐳ
     bool BSQONLexer::tryLexIdentifier()
     {
         auto ii = this->iter;
+        size_t idsize = 0;
         bool badnest = false;
         while(ii.valid() && !badnest) {
             char c = (char)ii.get();
+            idsize++;
+
             bool ischar = (('a' <= c) & (c <= 'z')) || (('A' <= c) & (c <= 'Z')) || (c == '_');
             bool iscolon = (c == ':');
             bool isnum = ('0' <= c) & (c <= '9');
@@ -280,6 +311,7 @@ namespace ᐸRuntimeᐳ
                     ii.next();
                     while(ii.valid() && genericlevel > 0) {
                         c = (char)ii.get();
+                        idsize++;
 
                         if(c == '<') {
                             genericlevel++;
@@ -309,8 +341,7 @@ namespace ᐸRuntimeᐳ
             return false;
         }
         
-        this->ctoken.tokentype = BSQONTokenType::Identifier;
-        this->iter.advanceWithExtract(this->ctoken.startindex, this->ctoken.endindex, BSQONToken::sclongvalue, ii.getIndex() - this->iter.getIndex());
+        this->advanceToken(BSQONTokenType::Identifier, idsize);
         return true;
     }
 
@@ -337,8 +368,7 @@ namespace ᐸRuntimeᐳ
             return;
         }
         else {
-            this->ctoken.tokentype = BSQONTokenType::ErrorToken;
-            this->iter.advanceWithExtract(this->ctoken.startindex, this->ctoken.endindex, this->ctoken.scvalue, 1);
+            this->advanceToken(BSQONTokenType::ErrorToken, 1);
             return;
         }
     }

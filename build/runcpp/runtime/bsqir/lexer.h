@@ -103,7 +103,12 @@ namespace ᐸRuntimeᐳ
             this->tokentype = BSQONTokenType::Invalid;
         }
 
-        BSQLexBufferIterator extraction_iterator(size_t totalbytes)
+        uint8_t extract_single() const
+        {
+            return (*(this->iobuff))[this->iobuffoffset];
+        }
+
+        BSQLexBufferIterator extraction_iterator(size_t totalbytes) const
         {
             return BSQLexBufferIterator(this->iobuff, this->iobuffoffset, this->startindex, totalbytes);
         }
@@ -146,6 +151,9 @@ namespace ᐸRuntimeᐳ
 
     public:
         BSQONLexer() : totalbytes(0) {}
+
+        bool matches(const char* cchars) const;
+        void extract(char* outchars, size_t maxlen) const;
 
         void initialize(std::list<uint8_t*>&& iobuffs, size_t totalbytes);
         void release();
