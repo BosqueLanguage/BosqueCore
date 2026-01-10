@@ -82,57 +82,6 @@ class ITestFail extends ITest {
     }
 }
 
-
-class ITestError extends ITest {
-    constructor(isnot: boolean) {
-        super(isnot);
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return `${this.isnot ? "!" : ""}error`;
-    }
-}
-
-class ITestRejected extends ITest {
-    constructor(isnot: boolean) {
-        super(isnot);
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return `${this.isnot ? "!" : ""}rejected`;
-    }
-}
-
-class ITestDenied extends ITest {
-    constructor(isnot: boolean) {
-        super(isnot);
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return `${this.isnot ? "!" : ""}denied`;
-    }
-}
-
-class ITestFlagged extends ITest {
-    constructor(isnot: boolean) {
-        super(isnot);
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return `${this.isnot ? "!" : ""}flagged`;
-    }
-}
-
-class ITestSuccess extends ITest {
-    constructor(isnot: boolean) {
-        super(isnot);
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return `${this.isnot ? "!" : ""}success`;
-    }
-}
-
 abstract class ITestGuard {
     readonly exp: Expression;
     
@@ -928,12 +877,12 @@ class ConstructorLambdaExpression extends Expression {
 }
 
 class SpecialConstructorExpression extends Expression {
-    readonly rop: "ok" | "fail" | "some" | "error" | "rejected" | "denied" | "flagged" | "success";
+    readonly rop: "ok" | "fail" | "some";
     readonly arg: Expression;
 
     constype: TypeSignature | undefined = undefined;
 
-    constructor(sinfo: SourceInfo, rop: "ok" | "fail" | "some" | "error" | "rejected" | "denied" | "flagged" | "success", arg: Expression) {
+    constructor(sinfo: SourceInfo, rop: "ok" | "fail" | "some", arg: Expression) {
         super(ExpressionTag.SpecialConstructorExpression, sinfo);
         this.rop = rop;
         this.arg = arg;
@@ -2924,7 +2873,7 @@ class StandardBodyImplementation extends BodyImplementation {
 
 export {
     RecursiveAnnotation,
-    BinderInfo, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestFail, ITestError, ITestRejected, ITestDenied, ITestFlagged, ITestSuccess,
+    BinderInfo, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestFail,
     ITestGuard, ITestBinderGuard, ITestTypeGuard, ITestSimpleGuard, ITestGuardSet,
     FormatStringComponent, FormatStringTextComponent, FormatStringArgComponent,
     ArgumentValue, PositionalArgumentValue, NamedArgumentValue, SpreadArgumentValue, PassingArgumentValue, ArgumentList,
