@@ -91,11 +91,6 @@ void update_rc_stats(MemStats& ms, double time) noexcept
     update_stats(ms.rc_stats, time);
 }
 
-void update_survival_rate_sum(MemStats& ms) noexcept 
-{
-    ms.survival_rate_sum += static_cast<double>(ms.total_live_objects) / static_cast<double>(ms.total_alloc_count - ms.prev_total_alloc_count);
-}
-
 double calculate_total_collection_time(const size_t* buckets) noexcept
 {
     double curvariance = BUCKET_VARIANCE;

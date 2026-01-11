@@ -37,8 +37,6 @@ struct MemStats {
     double start_time = 0.0;
     double total_time = 0.0;
 
-    double survival_rate_sum = 0.0;
-
     double min_collection_time = 0;
     double max_collection_time = 0;
 
@@ -92,15 +90,16 @@ void update_collection_extrema(MemStats& ms, double time) noexcept;
 void update_collection_stats(MemStats& ms, double time) noexcept;
 void update_nursery_stats(MemStats& ms, double time) noexcept;
 void update_rc_stats(MemStats& ms, double time) noexcept;
-void update_survival_rate_sum(MemStats& ms) noexcept;
 double calculate_total_collection_time(const size_t* buckets) noexcept;
+
+#define TIME(T) std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(T).count()
 
 #define MEM_STATS_START(NAME) \
     auto start_##NAME = std::chrono::high_resolution_clock::now()
 
 #define MEM_STATS_END(BUCKETS, NAME) \
     auto end_##NAME = std::chrono::high_resolution_clock::now(); \
-    double NAME##_ms = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(end_##NAME - start_##NAME).count(); \
+    double NAME##_ms = TIME(end_##NAME - start_##NAME); \
     update_bucket(g_memstats. BUCKETS, NAME##_ms);
 
 #ifdef COLLECTION_STATS_MODE
@@ -162,18 +161,20 @@ double calculate_total_collection_time(const size_t* buckets) noexcept;
 
 #define UPDATE_MEMSTATS_TOTALS(INFO) \
     do { \
-        auto now = std::chrono::high_resolution_clock::now(); \
-        g_memstats.total_time = std::chrono:: \
-            duration_cast<std::chrono::duration<double, std::milli>> \
-            (now.time_since_epoch()).count() - g_memstats.start_time; \
+        auto mstats_compute_start = std::chrono::high_resolution_clock::now(); \
+        UPDATE_NURSERY_TIMES(); \
+        UPDATE_RC_TIMES(); \
+        UPDATE_COLLECTION_TIMES(); \
         for(size_t i = 0; i < BSQ_MAX_ALLOC_SLOTS; i++) { \
             GCAllocator* alloc = (INFO).g_gcallocs[i]; \
             if(alloc != nullptr) { \
                 alloc->updateMemStats(); \
             } \
         } \
-        update_survival_rate_sum(g_memstats); \
-        UPDATE_PREV_TOTAL_ALLOC_COUNT(); \
+        auto mstats_compute_end = std::chrono::high_resolution_clock::now(); \
+        auto mstats_compute_elapsed = TIME(mstats_compute_end - mstats_compute_start); \
+        auto now = std::chrono::high_resolution_clock::now(); \
+        g_memstats.total_time = TIME(now.time_since_epoch()) - g_memstats.start_time - mstats_compute_elapsed; \
     } while(0)
 
 #define PRINT_COLLECTION_TIME() \
@@ -217,7 +218,10 @@ double calculate_total_collection_time(const size_t* buckets) noexcept;
 #define PRINT_MAX_HEAP() \
     std::cout << "Max Live Heap Size: " << g_memstats.max_live_heap << " bytes\n"
 
-// Both wrong, they include time to compute memstats (at end of collection) so they are forcefully skewed
+//
+// TODO: These are _better_ but still not quite what we would expect from doing 'time ./output/memex`, so 
+// we need to pinpoint the hotspots for memstats computation and adjust accordingly
+//
 #define PRINT_TOTAL_TIME() \
     do {\
         std::cout << "Total Time: " << g_memstats.total_time << "ms\n"; \
@@ -225,14 +229,14 @@ double calculate_total_collection_time(const size_t* buckets) noexcept;
     } while(0)
 
 #define PRINT_SURVIVAL_RATE() \
-    std::cout << "Survival Rate: " << (g_memstats.total_promotions / g_memstats.total_alloc_count) * 100.0 << "%\n";
+    std::cout << "Survival Rate: " << ((double)g_memstats.total_promotions / (double)g_memstats.total_alloc_count) * 100.0 << "%\n";
 
 #define MEM_STATS_DUMP() \
     do { \
+        PRINT_TOTAL_TIME(); \
         PRINT_COLLECTION_TIME(); \
         PRINT_NURSERY_TIME(); \
         PRINT_RC_TIME(); \
-        PRINT_TOTAL_TIME(); \
         PRINT_TOTAL_COLLECTIONS(); \
         PRINT_TOTAL_PROMOTIONS(); \
         PRINT_ALLOC_INFO(); \
@@ -262,17 +266,17 @@ struct MemStats {};
 #define MEM_STATS_END(INFO, BUCKETS, NAME)
 
 #define COLLECTION_STATS_START()
-#define COLLECTION_STATS_END(INFO, BUCKETS)
+#define COLLECTION_STATS_END(BUCKETS)
 
 #define NURSERY_STATS_START()
-#define NURSERY_STATS_END(INFO, BUCKETS)
+#define NURSERY_STATS_END(BUCKETS)
 
 #define RC_STATS_START()
-#define RC_STATS_END(INFO, BUCKETS)
+#define RC_STATS_END(BUCKETS)
 
-#define UPDATE_COLLECTION_TIMES(INFO)
-#define UPDATE_NURSERY_TIMES(INFO)
-#define UPDATE_RC_TIMES(INFO)
+#define UPDATE_COLLECTION_TIMES()
+#define UPDATE_NURSERY_TIMES()
+#define UPDATE_RC_TIMES()
 #define UPDATE_MEMSTATS_TOTALS(INFO)
 
 #define UPDATE_ALLOC_STATS(ALLOC, MEMORY_SIZE)

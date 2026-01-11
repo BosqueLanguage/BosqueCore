@@ -557,7 +557,6 @@ void collect() noexcept
     processMarkedYoungObjects(gtl_info);
 
     NURSERY_STATS_END(nursery_times);
-    UPDATE_NURSERY_TIMES();
 
     gtl_info.pending_young.clear();
 
@@ -574,7 +573,6 @@ void collect() noexcept
     tryMergeDecList(gtl_info);
 
     RC_STATS_END(rc_times);
-    UPDATE_RC_TIMES(); 
 
     gtl_info.decs_batch.clear();
 
@@ -583,7 +581,7 @@ void collect() noexcept
     updateRoots();
 
     COLLECTION_STATS_END(collection_times);
-    UPDATE_COLLECTION_TIMES();
+
     UPDATE_MEMSTATS_TOTALS(gtl_info);
 
     gtl_info.decs.resume();
