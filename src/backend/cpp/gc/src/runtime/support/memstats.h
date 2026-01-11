@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <chrono>
+#include <sstream>
 
 // Buckets store BUCKET_VARIANCE ms variance, final entry is for outliers (hopefully never any values present there!)
 #define MAX_MEMSTATS_BUCKETS 10000 + 1
@@ -52,7 +53,6 @@ struct MemStats {
         this->start_time = dur.count();
     }        
 };
-
 extern MemStats g_memstats;
 
 #define COLLECTION_STATS_MODE
@@ -191,32 +191,15 @@ double calculate_total_collection_time(const size_t* buckets) noexcept;
         std::cout << "Collection 95th:    " << calculate_percentile_from_buckets(g_memstats.collection_times, 0.95) << "ms\n"; \
         std::cout << "Collection 99th:    " << calculate_percentile_from_buckets(g_memstats.collection_times, 0.99) << "ms\n"; \
     } while(0)
-#define PRINT_TOTAL_COLLECTIONS() \
-    std::cout << "Total Collections: " << g_memstats.collection_stats.count << "\n"
 
+//
+// TODO: We will want to compute stddv, 50, 95, 99 for these guys too
+//
 #define PRINT_NURSERY_TIME() \
     std::cout << "Nursery Average: " << get_mean_pause(g_memstats.nursery_stats) << "ms\n"
 
 #define PRINT_RC_TIME() \
     std::cout << "RC Average: " << get_mean_pause(g_memstats.rc_stats) << "ms\n"
-
-#define PRINT_TOTAL_PAGES() \
-    std::cout << "Total Pages: " << g_memstats.total_pages << "\n"
-
-#define PRINT_HEAP_SIZE() \
-    std::cout << "Heap Size: " << g_memstats.total_pages * BSQ_BLOCK_ALLOCATION_SIZE << " bytes\n"
-
-#define PRINT_ALLOC_INFO()                                                                     \
-    do {                                                                                        \
-        std::cout << "Total Alloc Count: " << g_memstats.total_alloc_count << "\n";             \
-        std::cout << "Total Allocated Memory: " << g_memstats.total_alloc_memory << " bytes\n"; \
-    } while(0)
-
-#define PRINT_TOTAL_PROMOTIONS() \
-    std::cout << "Total Promotions: " << g_memstats.total_promotions << "\n"
-
-#define PRINT_MAX_HEAP() \
-    std::cout << "Max Live Heap Size: " << g_memstats.max_live_heap << " bytes\n"
 
 //
 // TODO: These are _better_ but still not quite what we would expect from doing 'time ./output/memex`, so 
@@ -228,8 +211,7 @@ double calculate_total_collection_time(const size_t* buckets) noexcept;
         std::cout << "Percentage of Time Collecting: " << (calculate_total_collection_time(g_memstats.collection_times) / g_memstats.total_time) * 100.0 << "%\n";\
     } while(0)
 
-#define PRINT_SURVIVAL_RATE() \
-    std::cout << "Survival Rate: " << ((double)g_memstats.total_promotions / (double)g_memstats.total_alloc_count) * 100.0 << "%\n";
+void statistics_dump();
 
 #define MEM_STATS_DUMP() \
     do { \
@@ -237,13 +219,7 @@ double calculate_total_collection_time(const size_t* buckets) noexcept;
         PRINT_COLLECTION_TIME(); \
         PRINT_NURSERY_TIME(); \
         PRINT_RC_TIME(); \
-        PRINT_TOTAL_COLLECTIONS(); \
-        PRINT_TOTAL_PROMOTIONS(); \
-        PRINT_ALLOC_INFO(); \
-        PRINT_TOTAL_PAGES(); \
-        PRINT_MAX_HEAP(); \
-        PRINT_HEAP_SIZE(); \
-        PRINT_SURVIVAL_RATE(); \
+        statistics_dump(); \
     } while(0)
 
 #else

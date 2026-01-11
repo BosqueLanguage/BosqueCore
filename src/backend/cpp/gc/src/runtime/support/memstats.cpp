@@ -6,6 +6,23 @@
 
 MemStats g_memstats;
 
+void statistics_dump()
+{
+    std::stringstream ss;
+    ss  << "Statistics:\n"
+        << "\tTotal Time        " << g_memstats.total_time << "ms\n"
+        << "\tTotal Collections " << g_memstats.collection_stats.count << std::endl
+        << "\tTime Collecting   " << (calculate_total_collection_time(g_memstats.collection_times) / g_memstats.total_time) * 100.0 << "%\n"
+        << "\tTotal Pages       " << g_memstats.total_pages << std::endl
+        << "\tMax Live Heap     " << g_memstats.max_live_heap << "b\n"
+        << "\tHeap Size         " << g_memstats.total_pages * BSQ_BLOCK_ALLOCATION_SIZE << "b\n"
+        << "\tAlloc Count       " << g_memstats.total_alloc_count << std::endl
+        << "\tAlloc'd Memory    " << g_memstats.total_alloc_memory << "b\n"
+        << "\tSurvival Rate     " << ((double)g_memstats.total_promotions / (double)g_memstats.total_alloc_count) * 100.0 << "%\n";
+
+    std::cout << ss.str();
+}
+
 void update_stats(Stats& stats, double time) noexcept
 {
     // Welford's algorithm
