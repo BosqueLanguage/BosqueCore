@@ -8,6 +8,10 @@
 #include <chrono>
 #include <atomic>
 
+#ifndef MEM_STATS
+#include <iostream>
+#endif
+
 #define InitBSQMemoryTheadLocalInfo() { ALLOC_LOCK_ACQUIRE(); register void** rbp asm("rbp"); gtl_info.initialize(GlobalThreadAllocInfo::s_thread_counter++, rbp); ALLOC_LOCK_RELEASE(); }
 
 #define MAX_ALLOC_LOOKUP_TABLE_SIZE 1024

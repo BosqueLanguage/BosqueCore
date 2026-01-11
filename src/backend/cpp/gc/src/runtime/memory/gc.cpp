@@ -241,7 +241,7 @@ static void* forward(void* ptr, BSQMemoryTheadLocalInfo& tinfo)
     tinfo.forward_table[tinfo.forward_table_index] = nptr;
     tinfo.forward_table_index++;
 
-    UPDATE_TOTAL_PROMOTIONS(gtl_info, +=, 1);
+    UPDATE_TOTAL_PROMOTIONS(+=, 1);
 
     return nptr;
 }
@@ -518,7 +518,7 @@ static void markingWalk(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
 static void processAllocatorsPages()
 {
-    UPDATE_TOTAL_LIVE_BYTES(gtl_info, =, 0);
+    UPDATE_TOTAL_LIVE_BYTES(=, 0);
     for(size_t i = 0; i < BSQ_MAX_ALLOC_SLOTS; i++) {
         GCAllocator* alloc = gtl_info.g_gcallocs[i];
         if(alloc != nullptr) {
@@ -556,8 +556,8 @@ void collect() noexcept
     markingWalk(gtl_info);
     processMarkedYoungObjects(gtl_info);
 
-    NURSERY_STATS_END(gtl_info, nursery_times);
-    UPDATE_NURSERY_TIMES(gtl_info);
+    NURSERY_STATS_END(nursery_times);
+    UPDATE_NURSERY_TIMES();
 
     gtl_info.pending_young.clear();
 
@@ -573,8 +573,8 @@ void collect() noexcept
     tryReprocessDecrementedPages(gtl_info);
     tryMergeDecList(gtl_info);
 
-    RC_STATS_END(gtl_info, rc_times);
-    UPDATE_RC_TIMES(gtl_info); 
+    RC_STATS_END(rc_times);
+    UPDATE_RC_TIMES(); 
 
     gtl_info.decs_batch.clear();
 
@@ -582,8 +582,8 @@ void collect() noexcept
     processAllocatorsPages();
     updateRoots();
 
-    COLLECTION_STATS_END(gtl_info, collection_times);
-    UPDATE_COLLECTION_TIMES(gtl_info);
+    COLLECTION_STATS_END(collection_times);
+    UPDATE_COLLECTION_TIMES();
     UPDATE_MEMSTATS_TOTALS(gtl_info);
 
     gtl_info.decs.resume();

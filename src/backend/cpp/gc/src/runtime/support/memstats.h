@@ -60,29 +60,27 @@ extern MemStats g_memstats;
 #define COLLECTION_STATS_MODE
 #define NURSERY_RC_STATS_MODE
 
-// This E object technically does nothing, but is being left in case
-// we want to roll back to using threadlocal memstats
-#define TOTAL_ALLOC_COUNT(E)      g_memstats.total_alloc_count
-#define PREV_TOTAL_ALLOC_COUNT(E) g_memstats.prev_total_alloc_count
-#define TOTAL_ALLOC_MEMORY(E)     g_memstats.total_alloc_memory
-#define TOTAL_LIVE_BYTES(E)       g_memstats.total_live_bytes
-#define TOTAL_LIVE_OBJECTS(E)     g_memstats.total_live_objects
-#define TOTAL_PROMOTIONS(E)       g_memstats.total_promotions
-#define TOTAL_PAGES(E)            g_memstats.total_pages
-#define MIN_COLLECTION_TIME(E)    g_memstats.min_collection_time
-#define MAX_COLLECTION_TIME(E)    g_memstats.max_collection_time
-#define MAX_LIVE_HEAP(E)          g_memstats.max_live_heap
+#define TOTAL_ALLOC_COUNT()      g_memstats.total_alloc_count
+#define PREV_TOTAL_ALLOC_COUNT() g_memstats.prev_total_alloc_count
+#define TOTAL_ALLOC_MEMORY()     g_memstats.total_alloc_memory
+#define TOTAL_LIVE_BYTES()       g_memstats.total_live_bytes
+#define TOTAL_LIVE_OBJECTS()     g_memstats.total_live_objects
+#define TOTAL_PROMOTIONS()       g_memstats.total_promotions
+#define TOTAL_PAGES()            g_memstats.total_pages
+#define MIN_COLLECTION_TIME()    g_memstats.min_collection_time
+#define MAX_COLLECTION_TIME()    g_memstats.max_collection_time
+#define MAX_LIVE_HEAP()          g_memstats.max_live_heap
 
-#define UPDATE_TOTAL_ALLOC_COUNT(E, OP, ...)      TOTAL_ALLOC_COUNT((E)) OP __VA_ARGS__
-#define UPDATE_PREV_TOTAL_ALLOC_COUNT(E)          PREV_TOTAL_ALLOC_COUNT((E)) = TOTAL_ALLOC_COUNT((E))
-#define UPDATE_TOTAL_ALLOC_MEMORY(E, OP, ...)     TOTAL_ALLOC_MEMORY((E)) OP __VA_ARGS__
-#define UPDATE_TOTAL_LIVE_BYTES(E, OP, ...)       TOTAL_LIVE_BYTES((E)) OP __VA_ARGS__
-#define UPDATE_TOTAL_LIVE_OBJECTS(E, OP, ...)     TOTAL_LIVE_OBJECTS((E)) OP __VA_ARGS__
-#define UPDATE_TOTAL_PROMOTIONS(E, OP, ...)       TOTAL_PROMOTIONS((E)) OP __VA_ARGS__
-#define UPDATE_TOTAL_PAGES(E, OP, ...)            TOTAL_PAGES((E)) OP __VA_ARGS__ 
-#define UPDATE_MIN_COLLECTION_TIME(E, OP, ...)    MIN_COLLECTION_TIME((E)) OP __VA_ARGS__
-#define UPDATE_MAX_COLLECTION_TIME(E, OP, ...)    MAX_COLLECTION_TIME((E)) OP __VA_ARGS__
-#define UPDATE_MAX_LIVE_HEAP(E, OP, ...)          MAX_LIVE_HEAP((E)) OP __VA_ARGS__
+#define UPDATE_TOTAL_ALLOC_COUNT(OP, ...)      TOTAL_ALLOC_COUNT() OP __VA_ARGS__
+#define UPDATE_PREV_TOTAL_ALLOC_COUNT()        PREV_TOTAL_ALLOC_COUNT() = TOTAL_ALLOC_COUNT()
+#define UPDATE_TOTAL_ALLOC_MEMORY(OP, ...)     TOTAL_ALLOC_MEMORY() OP __VA_ARGS__
+#define UPDATE_TOTAL_LIVE_BYTES(OP, ...)       TOTAL_LIVE_BYTES() OP __VA_ARGS__
+#define UPDATE_TOTAL_LIVE_OBJECTS(OP, ...)     TOTAL_LIVE_OBJECTS() OP __VA_ARGS__
+#define UPDATE_TOTAL_PROMOTIONS(OP, ...)       TOTAL_PROMOTIONS() OP __VA_ARGS__
+#define UPDATE_TOTAL_PAGES(OP, ...)            TOTAL_PAGES() OP __VA_ARGS__ 
+#define UPDATE_MIN_COLLECTION_TIME(OP, ...)    MIN_COLLECTION_TIME() OP __VA_ARGS__
+#define UPDATE_MAX_COLLECTION_TIME(OP, ...)    MAX_COLLECTION_TIME() OP __VA_ARGS__
+#define UPDATE_MAX_LIVE_HEAP(OP, ...)          MAX_LIVE_HEAP() OP __VA_ARGS__
 
 void update_stats(Stats& stats, double time) noexcept;
 void update_bucket(size_t* bucket, double time) noexcept;
@@ -100,7 +98,7 @@ double calculate_total_collection_time(const size_t* buckets) noexcept;
 #define MEM_STATS_START(NAME) \
     auto start_##NAME = std::chrono::high_resolution_clock::now()
 
-#define MEM_STATS_END(INFO, BUCKETS, NAME) \
+#define MEM_STATS_END(BUCKETS, NAME) \
     auto end_##NAME = std::chrono::high_resolution_clock::now(); \
     double NAME##_ms = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(end_##NAME - start_##NAME).count(); \
     update_bucket(g_memstats. BUCKETS, NAME##_ms);
@@ -109,45 +107,45 @@ double calculate_total_collection_time(const size_t* buckets) noexcept;
 
 #define COLLECTION_STATS_START() \
     MEM_STATS_START(collection)
-#define COLLECTION_STATS_END(INFO, BUCKETS) \
-    MEM_STATS_END(INFO, BUCKETS, collection)
+#define COLLECTION_STATS_END(BUCKETS) \
+    MEM_STATS_END(BUCKETS, collection)
 
-#define UPDATE_COLLECTION_TIMES(INFO) \
+#define UPDATE_COLLECTION_TIMES() \
     update_collection_stats(g_memstats, collection_ms)
 
 #define NURSERY_STATS_START()
-#define NURSERY_STATS_END(INFO, BUCKETS)
+#define NURSERY_STATS_END(BUCKETS)
 #define RC_STATS_START()
 
-#define RC_STATS_END(INFO, BUCKETS)
-#define UPDATE_NURSERY_TIMES(INFO) 
+#define RC_STATS_END(BUCKETS)
+#define UPDATE_NURSERY_TIMES() 
 
-#define UPDATE_RC_TIMES(INFO)
+#define UPDATE_RC_TIMES()
 
 #elif defined(NURSERY_RC_STATS_MODE) 
 
-#define UPDATE_COLLECTION_TIMES(INFO)
+#define UPDATE_COLLECTION_TIMES()
 #define COLLECTION_STATS_START()
-#define COLLECTION_STATS_END(INFO, BUCKETS)
+#define COLLECTION_STATS_END(BUCKETS)
 
 #define NURSERY_STATS_START() \
     MEM_STATS_START(nursery)
-#define NURSERY_STATS_END(INFO, BUCKETS) \
+#define NURSERY_STATS_END(BUCKETS) \
     MEM_STATS_END(INFO, BUCKETS, nursery)
 
 #define RC_STATS_START() \
     MEM_STATS_START(rc)
-#define RC_STATS_END(INFO, BUCKETS) \
-    MEM_STATS_END(INFO, BUCKETS, rc)
+#define RC_STATS_END(BUCKETS) \
+    MEM_STATS_END(BUCKETS, rc)
 
-#define UPDATE_NURSERY_TIMES(INFO) \
+#define UPDATE_NURSERY_TIMES() \
     update_nursery_stats(g_memstats, nursery_ms)
-#define UPDATE_RC_TIMES(INFO) \
+#define UPDATE_RC_TIMES() \
     update_rc_stats(g_memstats, rc_ms)
 #else
-#define UPDATE_COLLECTION_TIMES(INFO)
-#define UPDATE_NURSERY_TIMES(INFO)
-#define UPDATE_RC_TIMES(INFO)
+#define UPDATE_COLLECTION_TIMES()
+#define UPDATE_NURSERY_TIMES()
+#define UPDATE_RC_TIMES()
 #endif
 
 #define UPDATE_ALLOC_STATS(ALLOC, MEMORY_SIZE) \
@@ -175,10 +173,10 @@ double calculate_total_collection_time(const size_t* buckets) noexcept;
             } \
         } \
         update_survival_rate_sum(g_memstats); \
-        UPDATE_PREV_TOTAL_ALLOC_COUNT(INFO); \
+        UPDATE_PREV_TOTAL_ALLOC_COUNT(); \
     } while(0)
 
-#define PRINT_COLLECTION_TIME(E) \
+#define PRINT_COLLECTION_TIME() \
     do{ \
         double mean = get_mean_pause(g_memstats.collection_stats); \
         double stddev = get_stddev(g_memstats.collection_stats); \
@@ -192,73 +190,73 @@ double calculate_total_collection_time(const size_t* buckets) noexcept;
         std::cout << "Collection 95th:    " << calculate_percentile_from_buckets(g_memstats.collection_times, 0.95) << "ms\n"; \
         std::cout << "Collection 99th:    " << calculate_percentile_from_buckets(g_memstats.collection_times, 0.99) << "ms\n"; \
     } while(0)
-#define PRINT_TOTAL_COLLECTIONS(E) \
+#define PRINT_TOTAL_COLLECTIONS() \
     std::cout << "Total Collections: " << g_memstats.collection_stats.count << "\n"
 
-#define PRINT_NURSERY_TIME(E) \
+#define PRINT_NURSERY_TIME() \
     std::cout << "Nursery Average: " << get_mean_pause(g_memstats.nursery_stats) << "ms\n"
 
-#define PRINT_RC_TIME(E) \
+#define PRINT_RC_TIME() \
     std::cout << "RC Average: " << get_mean_pause(g_memstats.rc_stats) << "ms\n"
 
-#define PRINT_TOTAL_PAGES(E) \
+#define PRINT_TOTAL_PAGES() \
     std::cout << "Total Pages: " << g_memstats.total_pages << "\n"
 
-#define PRINT_HEAP_SIZE(E) \
+#define PRINT_HEAP_SIZE() \
     std::cout << "Heap Size: " << g_memstats.total_pages * BSQ_BLOCK_ALLOCATION_SIZE << " bytes\n"
 
-#define PRINT_ALLOC_INFO(E)                                                                     \
+#define PRINT_ALLOC_INFO()                                                                     \
     do {                                                                                        \
         std::cout << "Total Alloc Count: " << g_memstats.total_alloc_count << "\n";             \
         std::cout << "Total Allocated Memory: " << g_memstats.total_alloc_memory << " bytes\n"; \
     } while(0)
 
-#define PRINT_TOTAL_PROMOTIONS(E) \
+#define PRINT_TOTAL_PROMOTIONS() \
     std::cout << "Total Promotions: " << g_memstats.total_promotions << "\n"
 
-#define PRINT_MAX_HEAP(E) \
+#define PRINT_MAX_HEAP() \
     std::cout << "Max Live Heap Size: " << g_memstats.max_live_heap << " bytes\n"
 
 // Both wrong, they include time to compute memstats (at end of collection) so they are forcefully skewed
-#define PRINT_TOTAL_TIME(E) \
+#define PRINT_TOTAL_TIME() \
     do {\
         std::cout << "Total Time: " << g_memstats.total_time << "ms\n"; \
         std::cout << "Percentage of Time Collecting: " << (calculate_total_collection_time(g_memstats.collection_times) / g_memstats.total_time) * 100.0 << "%\n";\
     } while(0)
 
-#define PRINT_SURVIVAL_RATE(E) \
+#define PRINT_SURVIVAL_RATE() \
     std::cout << "Survival Rate: " << (g_memstats.total_promotions / g_memstats.total_alloc_count) * 100.0 << "%\n";
 
-#define MEM_STATS_DUMP(E) \
+#define MEM_STATS_DUMP() \
     do { \
-        PRINT_COLLECTION_TIME(E); \
-        PRINT_NURSERY_TIME(E); \
-        PRINT_RC_TIME(E); \
-        PRINT_TOTAL_TIME(E); \
-        PRINT_TOTAL_COLLECTIONS(E); \
-        PRINT_TOTAL_PROMOTIONS(E); \
-        PRINT_ALLOC_INFO(E); \
-        PRINT_TOTAL_PAGES(E); \
-        PRINT_MAX_HEAP(E); \
-        PRINT_HEAP_SIZE(E); \
-        PRINT_SURVIVAL_RATE(E); \
+        PRINT_COLLECTION_TIME(); \
+        PRINT_NURSERY_TIME(); \
+        PRINT_RC_TIME(); \
+        PRINT_TOTAL_TIME(); \
+        PRINT_TOTAL_COLLECTIONS(); \
+        PRINT_TOTAL_PROMOTIONS(); \
+        PRINT_ALLOC_INFO(); \
+        PRINT_TOTAL_PAGES(); \
+        PRINT_MAX_HEAP(); \
+        PRINT_HEAP_SIZE(); \
+        PRINT_SURVIVAL_RATE(); \
     } while(0)
 
 #else
 struct MemStats {};
-#define UPDATE_TOTAL_ALLOC_COUNT(E, OP, ...)
-#define UPDATE_TOTAL_ALLOC_MEMORY(E, OP, ...)
-#define UPDATE_TOTAL_LIVE_BYTES(E, OP, ...)
-#define UPDATE_TOTAL_PROMOTIONS(E, OP, ...)
-#define UPDATE_TOTAL_PAGES(E, OP, ...)
-#define UPDATE_MIN_COLLECTION_TIME(E, OP, ...)
-#define UPDATE_MAX_COLLECTION_TIME(E, OP, ...)
-#define UPDATE_MAX_LIVE_HEAP(E, OP, ...)
+#define UPDATE_TOTAL_ALLOC_COUNT(OP, ...)
+#define UPDATE_TOTAL_ALLOC_MEMORY(OP, ...)
+#define UPDATE_TOTAL_LIVE_BYTES(OP, ...)
+#define UPDATE_TOTAL_PROMOTIONS(OP, ...)
+#define UPDATE_TOTAL_PAGES(OP, ...)
+#define UPDATE_MIN_COLLECTION_TIME(OP, ...)
+#define UPDATE_MAX_COLLECTION_TIME(OP, ...)
+#define UPDATE_MAX_LIVE_HEAP(OP, ...)
 
 #define update_bucket (void)sizeof
 #define compute_average_time(B) 0
 #define generate_formatted_memstats(MS) ""
-#define MEM_STATS_DUMP(E)
+#define MEM_STATS_DUMP()
 
 #define MEM_STATS_START(NAME)
 #define MEM_STATS_END(INFO, BUCKETS, NAME)
