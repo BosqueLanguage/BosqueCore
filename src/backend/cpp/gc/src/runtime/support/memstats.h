@@ -10,9 +10,9 @@
 #include <chrono>
 #include <sstream>
 
-// Buckets store BUCKET_VARIANCE ms variance, final entry is for outliers (hopefully never any values present there!)
+// Buckets store BUCKET_VARIANCE us variance, final entry is for outliers (hopefully never any values present there!)
 #define MAX_MEMSTATS_BUCKETS 10000 + 1
-#define BUCKET_VARIANCE 0.001
+#define BUCKET_VARIANCE 10 
 #define BUCKET_AVERAGE ((BUCKET_VARIANCE) / 2)
 
 struct Stats {
@@ -49,7 +49,7 @@ struct MemStats {
 
     MemStats() {
         auto start = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double, std::milli> dur = start.time_since_epoch();
+        std::chrono::duration<double, std::micro> dur = start.time_since_epoch();
         this->start_time = dur.count();
     }        
 };
@@ -83,8 +83,13 @@ enum class Phase {
 #define UPDATE_MAX_COLLECTION_TIME(OP, ...)    MAX_COLLECTION_TIME() OP __VA_ARGS__
 #define UPDATE_MAX_LIVE_HEAP(OP, ...)          MAX_LIVE_HEAP() OP __VA_ARGS__
 
-void perf_dump(Phase p);
-void statistics_dump();
+void printPerfHeader();
+void perfDump(Phase p);
+void statisticsDump();
+void update_stats(Stats& stats, double time) noexcept;
+void update_bucket(size_t* bucket, double time) noexcept;
+double get_mean_pause(Stats& stats) noexcept;
+double get_stddev(const Stats& stats) noexcept;
 std::string generate_formatted_memstats(MemStats& ms) noexcept;
 double calculate_percentile_from_buckets(const size_t* buckets, double percentile) noexcept;
 void update_collection_extrema(MemStats& ms, double time) noexcept;
@@ -93,7 +98,16 @@ void update_nursery_stats(MemStats& ms, double time) noexcept;
 void update_rc_stats(MemStats& ms, double time) noexcept;
 double calculate_total_collection_time(const size_t* buckets) noexcept;
 
-#define TIME(T) std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(T).count()
+#define MEM_STATS_DUMP() \
+    do { \
+        printPerfHeader(); \
+        perfDump(Phase::Collection); \
+        perfDump(Phase::Nursery); \
+        perfDump(Phase::RC_Old); \
+        statisticsDump(); \
+    } while(0)
+
+#define TIME(T) std::chrono::duration_cast<std::chrono::duration<double, std::micro>>(T).count()
 
 #define MEM_STATS_START(NAME) \
     auto start_##NAME = std::chrono::high_resolution_clock::now()
@@ -114,7 +128,7 @@ double calculate_total_collection_time(const size_t* buckets) noexcept;
 #define NURSERY_STATS_START() \
     MEM_STATS_START(nursery)
 #define NURSERY_STATS_END(BUCKETS) \
-    MEM_STATS_END(INFO, BUCKETS, nursery)
+    MEM_STATS_END(BUCKETS, nursery)
 
 #define RC_STATS_START() \
     MEM_STATS_START(rc)
@@ -155,15 +169,6 @@ double calculate_total_collection_time(const size_t* buckets) noexcept;
         auto now = std::chrono::high_resolution_clock::now(); \
         g_memstats.total_time = TIME(now.time_since_epoch()) - g_memstats.start_time - mstats_compute_elapsed; \
     } while(0)
-
-#define MEM_STATS_DUMP() \
-    do { \
-        perf_dump(Phase::Collection); \
-        perf_dump(Phase::Nursery); \
-        perf_dump(Phase::RC_Old); \
-        statistics_dump(); \
-    } while(0)
-
 #else
 struct MemStats {};
 #define UPDATE_TOTAL_ALLOC_COUNT(OP, ...)
@@ -181,7 +186,7 @@ struct MemStats {};
 #define MEM_STATS_DUMP()
 
 #define MEM_STATS_START(NAME)
-#define MEM_STATS_END(INFO, BUCKETS, NAME)
+#define MEM_STATS_END(BUCKETS, NAME)
 
 #define COLLECTION_STATS_START()
 #define COLLECTION_STATS_END(BUCKETS)

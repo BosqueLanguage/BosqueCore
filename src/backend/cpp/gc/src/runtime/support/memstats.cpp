@@ -6,24 +6,102 @@
 
 MemStats g_memstats{};
 
-static void format_perf(const std::string& phase, Stats& s, size_t* time_buckets)
+#define RST  "\x1B[0m"
+#define BOLD(x)	"\x1B[1m" x RST
+#define UNDL(x)	"\x1B[4m" x RST
+
+enum class Unit {
+    Count,
+    Percentage,
+    Microseconds,
+    Bytes
+};
+
+#define WRITE_UNIT(STREAM, V, UNIT, CNT, SEC, BYTE) \
+    do { \
+        switch(UNIT) { \
+            case Unit::Count: { \
+                STREAM << V << CNT; \
+                break; \
+            } \
+            case Unit::Microseconds: { \
+                STREAM << V << SEC; \
+                break; \
+            } \
+            case Unit::Bytes: { \
+                STREAM << V << BYTE; \
+                break; \
+            } \
+            default: break; \
+        } \
+    } while(0)
+
+static std::string printUnit(double v, Unit u)
 {
+    std::stringstream ss;
+    if(u == Unit::Percentage) {
+        ss << v << "%";
+        return ss.str();
+    }
+
+    if(v > 1'000'000'000'000.0) {
+        v /= 1'000'000'000'000.0;
+        WRITE_UNIT(ss, v, u, "T", "Ms", "TB");
+    }
+    else if(v > 1'000'000'000.0) {
+        v /= 1'000'000'000.0;
+        WRITE_UNIT(ss, v, u, "G", "ks", "GB");
+    }
+    else if(v > 1'000'000.0) {
+        v /= 1'000'000.0;
+        WRITE_UNIT(ss, v, u, "M", "s", "MB");
+    }
+    else if(v > 1'000.0) {
+        v /= 1'000.0;
+        WRITE_UNIT(ss, v, u, "K", "ms", "KB");
+    }
+    else {
+        WRITE_UNIT(ss, v, u, " ", "us", "B");
+    }
+
+    return ss.str();
+}
+
+//
+// TODO: Need formatting to 3 sig digs
+//
+
+static void formatPerf(const std::string& phase, Stats& s, size_t* time_buckets)
+{
+    //std::stringstream ss;
     
 }
 
-void perf_dump(Phase p)
+// Need to figure out how to space properly!
+void printPerfHeader()
+{
+    std::cout << BOLD("Performance:\n") 
+        << BOLD("\tMeasurement  ")
+        << BOLD("mean ± σ ")
+        << BOLD("min ... max")
+        << BOLD("50% ")
+        << BOLD("95% ")
+        << BOLD("99%\n");
+}
+
+void perfDump(Phase p)
 {
     switch(p) {
         case Phase::Collection: {
-            format_perf("Collection", g_memstats.collection_stats, g_memstats.collection_times);
+            formatPerf("Collection", g_memstats.collection_stats, g_memstats.collection_times);
             break;
         }
         case Phase::Nursery: {
-            format_perf("Nursery", g_memstats.nursery_stats, g_memstats.nursery_times);
+            formatPerf("Nursery", g_memstats.nursery_stats, g_memstats.nursery_times);
             break;
         }
         case Phase::RC_Old: {
-            format_perf("RC Old", g_memstats.rc_stats, g_memstats.rc_times);           
+            formatPerf("RC Old", g_memstats.rc_stats, g_memstats.rc_times);           
             break;
         }
         default: break;
@@ -34,20 +112,19 @@ void perf_dump(Phase p)
 // TODO: These are _better_ but still not quite what we would expect from doing 'time ./output/memex`, so 
 // we need to pinpoint the hotspots for memstats computation and adjust accordingly
 //
-void statistics_dump()
+void statisticsDump()
 {
     std::stringstream ss;
-    ss  << "Statistics:\n"
-        << "\tTotal Time        " << g_memstats.total_time << "ms\n"
-        << "\tTime Collecting   " << "Percentage of Time Collecting: " << (calculate_total_collection_time(g_memstats.collection_times) / g_memstats.total_time) * 100.0 << "%\n"
-        << "\tTotal Collections " << g_memstats.collection_stats.count << std::endl
-        << "\tTime Collecting   " << (calculate_total_collection_time(g_memstats.collection_times) / g_memstats.total_time) * 100.0 << "%\n"
-        << "\tTotal Pages       " << g_memstats.total_pages << std::endl
-        << "\tMax Live Heap     " << g_memstats.max_live_heap << "b\n"
-        << "\tHeap Size         " << g_memstats.total_pages * BSQ_BLOCK_ALLOCATION_SIZE << "b\n"
-        << "\tAlloc Count       " << g_memstats.total_alloc_count << std::endl
-        << "\tAlloc'd Memory    " << g_memstats.total_alloc_memory << "b\n"
-        << "\tSurvival Rate     " << ((double)g_memstats.total_promotions / (double)g_memstats.total_alloc_count) * 100.0 << "%\n";
+    ss  << BOLD("Statistics:\n")
+        << BOLD("\tTotal Time        ") << printUnit(g_memstats.total_time, Unit::Microseconds) << std::endl 
+        << BOLD("\tTime Collecting   ") << printUnit((g_memstats.collection_stats.total / g_memstats.total_time) * 100.0, Unit::Percentage) << std::endl
+        << BOLD("\tTotal Collections ") << printUnit(g_memstats.collection_stats.count, Unit::Count) << std::endl
+        << BOLD("\tTotal Pages       ") << printUnit(g_memstats.total_pages, Unit::Count) << std::endl
+        << BOLD("\tMax Live Heap     ") << printUnit(g_memstats.max_live_heap, Unit::Bytes) << "\n"
+        << BOLD("\tHeap Size         ") << printUnit(g_memstats.total_pages * BSQ_BLOCK_ALLOCATION_SIZE, Unit::Bytes) << "\n"
+        << BOLD("\tAlloc Count       ") << printUnit(g_memstats.total_alloc_count, Unit::Count) << std::endl
+        << BOLD("\tAlloc'd Memory    ") << printUnit(g_memstats.total_alloc_memory, Unit::Bytes) << "\n"
+        << BOLD("\tSurvival Rate     ") << printUnit(((double)g_memstats.total_promotions / (double)g_memstats.total_alloc_count) * 100.0, Unit::Percentage) << "\n";
 
     std::cout << ss.str();
 }
@@ -60,6 +137,7 @@ void update_stats(Stats& stats, double time) noexcept
     stats.mean += delta / stats.count;
     double delta2 = time - stats.mean;
     stats.M2 += delta * delta2;
+    stats.total += time;
 }
 
 void update_bucket(size_t* bucket, double time) noexcept 
