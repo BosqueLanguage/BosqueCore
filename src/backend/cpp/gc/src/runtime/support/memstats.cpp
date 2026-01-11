@@ -72,10 +72,8 @@ static std::string printUnit(double v, Unit u)
 // TODO: Need formatting to 3 sig digs
 //
 
-//
-// If everything is formatted to 3 sig digs then we know we need at most 
-// 9 spaces to represent a number (3 for pre decimal, decimal, decimal digs, unit)
-//
+#define WIDTH 12 
+#define NAME_WIDTH 15
 
 static void formatPerf(const std::string& phase, Stats& s, size_t* time_buckets)
 {
@@ -88,27 +86,30 @@ static void formatPerf(const std::string& phase, Stats& s, size_t* time_buckets)
     std::string ninetynineth = printUnit(calculate_percentile_from_buckets(time_buckets, 0.99), Unit::Microseconds);
 
     std::stringstream ss;
-    ss  << std::setw(12) << phase
-        << std::setw(9) << mean << " ± " << std::setw(9) << std_dev
-        << std::setw(9) << min << " ... " << std::setw(9) << max
-        << std::setw(9) << fiftyth
-        << std::setw(9) << ninetyfifth
-        << std::setw(95) << ninetynineth;
+    ss  << std::setw(NAME_WIDTH) << phase
+        << std::setw(WIDTH)      << mean 
+        << std::setw(WIDTH)      << std_dev
+        << std::setw(WIDTH)      << min 
+        << std::setw(WIDTH)      << max
+        << std::setw(WIDTH)      << fiftyth
+        << std::setw(WIDTH)      << ninetyfifth
+        << std::setw(WIDTH)      << ninetynineth;
 
     std::cout << ss.str() << std::endl;
 }
 
-// Need to figure out how to space properly!
 void printPerfHeader()
 {
     std::stringstream ss;
     ss  << BOLD("Performance:\n") 
-        << std::setw(12 + 5 + 5) << BOLD("Measurement")
-        << std::setw(9 + 5 + 5) << BOLD("mean ± σ")
-        << std::setw(9 + 5 + 5) << BOLD("min ... max")
-        << std::setw(9 + 5 + 5) << BOLD("50% ")
-        << std::setw(9 + 5 + 5) << BOLD("95% ")
-        << std::setw(9 + 5 + 5) << BOLD("99%");
+        << std::setw(NAME_WIDTH) << "Measurement"
+        << std::setw(WIDTH)      << "Mean"
+        << std::setw(WIDTH)      << "σ"
+        << std::setw(WIDTH)      << "Min"
+        << std::setw(WIDTH)      << "Max"
+        << std::setw(WIDTH)      << "50% "
+        << std::setw(WIDTH)      << "95% "
+        << std::setw(WIDTH)      << "99%";
 
     std::cout << ss.str() << std::endl;
 }
