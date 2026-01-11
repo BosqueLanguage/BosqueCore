@@ -3,6 +3,7 @@
 #ifdef MEM_STATS
 
 #include <cmath>
+#include <iomanip>
 
 MemStats g_memstats{};
 
@@ -71,22 +72,45 @@ static std::string printUnit(double v, Unit u)
 // TODO: Need formatting to 3 sig digs
 //
 
+//
+// If everything is formatted to 3 sig digs then we know we need at most 
+// 9 spaces to represent a number (3 for pre decimal, decimal, decimal digs, unit)
+//
+
 static void formatPerf(const std::string& phase, Stats& s, size_t* time_buckets)
 {
-    //std::stringstream ss;
-    
+    std::string mean = printUnit(get_mean_pause(s), Unit::Microseconds);
+    std::string std_dev = printUnit(get_stddev(s), Unit::Microseconds);
+    std::string min = printUnit(s.min, Unit::Microseconds);
+    std::string max = printUnit(s.max, Unit::Microseconds);
+    std::string fiftyth = printUnit(calculate_percentile_from_buckets(time_buckets, 0.50), Unit::Microseconds);
+    std::string ninetyfifth = printUnit(calculate_percentile_from_buckets(time_buckets, 0.95), Unit::Microseconds);
+    std::string ninetynineth = printUnit(calculate_percentile_from_buckets(time_buckets, 0.99), Unit::Microseconds);
+
+    std::stringstream ss;
+    ss  << std::setw(12) << phase
+        << std::setw(9) << mean << " ± " << std::setw(9) << std_dev
+        << std::setw(9) << min << " ... " << std::setw(9) << max
+        << std::setw(9) << fiftyth
+        << std::setw(9) << ninetyfifth
+        << std::setw(95) << ninetynineth;
+
+    std::cout << ss.str() << std::endl;
 }
 
 // Need to figure out how to space properly!
 void printPerfHeader()
 {
-    std::cout << BOLD("Performance:\n") 
-        << BOLD("\tMeasurement  ")
-        << BOLD("mean ± σ ")
-        << BOLD("min ... max")
-        << BOLD("50% ")
-        << BOLD("95% ")
-        << BOLD("99%\n");
+    std::stringstream ss;
+    ss  << BOLD("Performance:\n") 
+        << std::setw(12 + 5 + 5) << BOLD("Measurement")
+        << std::setw(9 + 5 + 5) << BOLD("mean ± σ")
+        << std::setw(9 + 5 + 5) << BOLD("min ... max")
+        << std::setw(9 + 5 + 5) << BOLD("50% ")
+        << std::setw(9 + 5 + 5) << BOLD("95% ")
+        << std::setw(9 + 5 + 5) << BOLD("99%");
+
+    std::cout << ss.str() << std::endl;
 }
 
 void perfDump(Phase p)
@@ -129,7 +153,17 @@ void statisticsDump()
     std::cout << ss.str();
 }
 
-void update_stats(Stats& stats, double time) noexcept
+static void update_extrema(Stats& s, double time) noexcept 
+{
+    if(time > s.max) { 
+        s.max = time;  
+    }
+    if(time < s.min) { 
+        s.min = time;
+    }
+}
+
+static void update_stats(Stats& stats, double time) noexcept
 {
     // Welford's algorithm
     stats.count++;
@@ -138,6 +172,8 @@ void update_stats(Stats& stats, double time) noexcept
     double delta2 = time - stats.mean;
     stats.M2 += delta * delta2;
     stats.total += time;
+
+    update_extrema(stats, time);
 }
 
 void update_bucket(size_t* bucket, double time) noexcept 
@@ -189,19 +225,8 @@ double calculate_percentile_from_buckets(const size_t* buckets, double percentil
     return (MAX_MEMSTATS_BUCKETS - 1) * BUCKET_VARIANCE;
 }
 
-void update_collection_extrema(MemStats& ms, double time) noexcept 
-{
-    if(time > ms.max_collection_time) { 
-        ms.max_collection_time = time;  
-    }
-    if(time < ms.min_collection_time || ms.min_collection_time < 1e-10) { 
-        ms.min_collection_time = time;
-    }
-}
-
 void update_collection_stats(MemStats& ms, double time) noexcept 
 {
-    update_collection_extrema(ms, time);
     update_stats(ms.collection_stats, time);
 }
 

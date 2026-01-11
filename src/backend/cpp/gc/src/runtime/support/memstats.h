@@ -9,6 +9,7 @@
 #include <iostream>
 #include <chrono>
 #include <sstream>
+#include <float.h>
 
 // Buckets store BUCKET_VARIANCE us variance, final entry is for outliers (hopefully never any values present there!)
 #define MAX_MEMSTATS_BUCKETS 10000 + 1
@@ -20,6 +21,8 @@ struct Stats {
     double mean  = 0.0;
     double M2    = 0.0;
     double total = 0.0;
+    double min   = DBL_MAX;
+    double max   = 0.0;
 };
 
 struct MemStats {
@@ -37,9 +40,6 @@ struct MemStats {
 
     double start_time = 0.0;
     double total_time = 0.0;
-
-    double min_collection_time = 0;
-    double max_collection_time = 0;
 
     size_t max_live_heap = 0;
 
@@ -86,13 +86,11 @@ enum class Phase {
 void printPerfHeader();
 void perfDump(Phase p);
 void statisticsDump();
-void update_stats(Stats& stats, double time) noexcept;
 void update_bucket(size_t* bucket, double time) noexcept;
 double get_mean_pause(Stats& stats) noexcept;
 double get_stddev(const Stats& stats) noexcept;
 std::string generate_formatted_memstats(MemStats& ms) noexcept;
 double calculate_percentile_from_buckets(const size_t* buckets, double percentile) noexcept;
-void update_collection_extrema(MemStats& ms, double time) noexcept;
 void update_collection_stats(MemStats& ms, double time) noexcept;
 void update_nursery_stats(MemStats& ms, double time) noexcept;
 void update_rc_stats(MemStats& ms, double time) noexcept;
