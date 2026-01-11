@@ -1125,7 +1125,7 @@ enum PostfixOpTag {
 
     PostfixAssignFields = "PostfixAssignFields",
 
-    PostfixOfOperator = "PostfixOfOperator",
+    PostfixSliceOperator = "PostfixSliceOperator",
 
     PostfixInvoke = "PostfixInvoke"
 }
@@ -1281,11 +1281,11 @@ class PostfixAssignFields extends PostfixOperation {
     isdirect: boolean = false;
 }
 
-class PostfixOfOperator extends PostfixOperation {
+class PostfixSliceOperator extends PostfixOperation {
     readonly args: ArgumentList;
 
     constructor(sinfo: SourceInfo, args: ArgumentList) {
-        super(sinfo, PostfixOpTag.PostfixOfOperator);
+        super(sinfo, PostfixOpTag.PostfixSliceOperator);
         this.args = args;
     }
 
@@ -2899,7 +2899,7 @@ export {
     PostfixError, PostfixAccessFromName, PostfixAccessFromIndex, PostfixProjectFromNames,
     PostfixIsTest, PostfixAsConvert,
     PostfixAssignFields,
-    PostfixOfOperator,
+    PostfixSliceOperator,
     PostfixInvoke,
     UnaryExpression, PrefixNotOpExpression, PrefixNegateOrPlusOpExpression,
     BinaryArithExpression, BinAddExpression, BinSubExpression, BinMultExpression, BinDivExpression,

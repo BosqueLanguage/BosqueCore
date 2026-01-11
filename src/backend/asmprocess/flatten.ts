@@ -280,7 +280,26 @@ class ASMToIRConverter {
                 this.pushStatement(new IRTempAssignExpressionStatement(tmpname, exp, irtype));
             }
 
-             return new IRAccessTempVariableExpression(tmpname);
+            return new IRAccessTempVariableExpression(tmpname);
+        }
+    }
+
+    //If we flatten an expression but it is nested then we need to simplify it -- this handles that by creating temps!
+    private makeExpressionImmediate(exp: IRExpression, oftype: TypeSignature): IRImmediateExpression {
+        if(exp instanceof IRImmediateExpression) {
+            return exp;
+        }
+        else {
+            if(exp instanceof IRSimpleExpression) {
+                const irtype = this.processTypeSignature(oftype);
+                const tmpname = this.generateTempVarName();
+                this.pushStatement(new IRTempAssignExpressionStatement(tmpname, exp, irtype));
+
+                return new IRAccessTempVariableExpression(tmpname);
+            }
+            else {
+                return this.makeExpressionSimple(exp, oftype) as IRAccessTempVariableExpression;
+            }
         }
     }
 
@@ -1165,7 +1184,8 @@ class ASMToIRConverter {
             }
             else {
                 const tdaccess = new IRAccessTypeDeclValueExpression(this.processTypeSignature(eetype), nexp);
-                const notop = new IRPrefixNotOpExpression(tdaccess, this.processTypeSignature(pfxnot.opertype as TypeSignature));
+                const bnotop = new IRPrefixNotOpExpression(tdaccess, this.processTypeSignature(pfxnot.opertype as TypeSignature));
+                const notop = (eetype.decl.allInvariants.length !== 0) ? this.makeExpressionImmediate(bnotop, this.tproc(pfxnot.opertype as TypeSignature)) : bnotop;
 
                 if(eetype.decl.allInvariants.length !== 0) {
                     const invchecks = eetype.decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
@@ -1188,7 +1208,8 @@ class ASMToIRConverter {
             }
             else {
                 const tdaccess = new IRAccessTypeDeclValueExpression(this.processTypeSignature(eetype), nexp);
-                const nsop = pfxneg.op === "-" ? new IRPrefixNegateOpExpression(tdaccess, this.processTypeSignature(pfxneg.opertype as TypeSignature)) : tdaccess;
+                const bnsop = pfxneg.op === "-" ? new IRPrefixNegateOpExpression(tdaccess, this.processTypeSignature(pfxneg.opertype as TypeSignature)) : tdaccess;
+                const nsop = (eetype.decl.allInvariants.length !== 0) ? this.makeExpressionImmediate(bnsop, this.tproc(pfxneg.opertype as TypeSignature)) : bnsop;
 
                 if(eetype.decl.allInvariants.length !== 0) {
                     const invchecks = eetype.decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
@@ -1207,10 +1228,13 @@ class ASMToIRConverter {
             const leetype = this.tproc(binadd.lhs.getType()) as NominalTypeSignature;
             const reetype = this.tproc(binadd.rhs.getType()) as NominalTypeSignature;
             
-            const [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(binadd.lhs), this.flattenExpression(binadd.rhs), leetype, reetype);
+            let [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(binadd.lhs), this.flattenExpression(binadd.rhs), leetype, reetype);
 
             const opchk = (binadd.opertype as TypeSignature).tkeystr as "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float";
             if(this.needsAddCheck(opchk)) {
+                lexp = this.makeExpressionImmediate(lexp, leetype);
+                rexp = this.makeExpressionImmediate(rexp, reetype);
+
                 this.pushStatement(new IRErrorAdditionBoundsCheckStatement(this.currentFile as string, binadd.sinfo, this.registerError(this.currentFile as string, binadd.sinfo, "arith"), lexp, rexp, opchk));
             }
 
@@ -1218,7 +1242,8 @@ class ASMToIRConverter {
                 return new IRBinAddExpression(lexp, rexp, this.processTypeSignature(binadd.opertype as TypeSignature));
             }
             else {
-                const addop = new IRBinAddExpression(lexp, rexp, this.processTypeSignature(binadd.opertype as TypeSignature));
+                const baddop = new IRBinAddExpression(lexp, rexp, this.processTypeSignature(binadd.opertype as TypeSignature));
+                let addop = (finaltype.decl.allInvariants.length !== 0) ? this.makeExpressionImmediate(baddop, this.tproc(binadd.opertype as TypeSignature)) : baddop;
 
                 if(finaltype.decl.allInvariants.length !== 0) {
                     const invchecks = finaltype.decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
@@ -1237,10 +1262,12 @@ class ASMToIRConverter {
             const leetype = this.tproc(binsub.lhs.getType()) as NominalTypeSignature;
             const reetype = this.tproc(binsub.rhs.getType()) as NominalTypeSignature;
             
-            const [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(binsub.lhs), this.flattenExpression(binsub.rhs), leetype, reetype);
+            let [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(binsub.lhs), this.flattenExpression(binsub.rhs), leetype, reetype);
 
             const opchk = (binsub.opertype as TypeSignature).tkeystr as "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float";
             if(this.needsSubCheck(opchk)) {
+                lexp = this.makeExpressionImmediate(lexp, leetype);
+                rexp = this.makeExpressionImmediate(rexp, reetype);
                 this.pushStatement(new IRErrorSubtractionBoundsCheckStatement(this.currentFile as string, this.convertSourceInfo(binsub.sinfo), this.registerError(this.currentFile as string, this.convertSourceInfo(binsub.sinfo), (opchk === "Nat" || opchk === "ChkNat") ? "runtime" : "arith"), lexp, rexp, opchk));
             }
             
@@ -1248,7 +1275,8 @@ class ASMToIRConverter {
                 return new IRBinSubExpression(lexp, rexp, this.processTypeSignature(binsub.opertype as TypeSignature));
             }
             else {
-                const subop = new IRBinSubExpression(lexp, rexp, this.processTypeSignature(binsub.opertype as TypeSignature));
+                const bsubop = new IRBinSubExpression(lexp, rexp, this.processTypeSignature(binsub.opertype as TypeSignature));
+                let subop = (finaltype.decl.allInvariants.length !== 0) ? this.makeExpressionImmediate(bsubop, this.tproc(binsub.opertype as TypeSignature)) : bsubop;
 
                 if(finaltype.decl.allInvariants.length !== 0) {
                     const invchecks = finaltype.decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
@@ -1267,10 +1295,12 @@ class ASMToIRConverter {
             const leetype = this.tproc(binmult.lhs.getType()) as NominalTypeSignature;
             const reetype = this.tproc(binmult.rhs.getType()) as NominalTypeSignature;
             
-            const [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(binmult.lhs), this.flattenExpression(binmult.rhs), leetype, reetype);
+            let [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(binmult.lhs), this.flattenExpression(binmult.rhs), leetype, reetype);
 
             const opchk = (binmult.opertype as TypeSignature).tkeystr as "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float";
             if(this.needsMultCheck(opchk)) {
+                lexp = this.makeExpressionImmediate(lexp, leetype);
+                rexp = this.makeExpressionImmediate(rexp, reetype);
                 this.pushStatement(new IRErrorMultiplicationBoundsCheckStatement(this.currentFile as string, this.convertSourceInfo(binmult.sinfo), this.registerError(this.currentFile as string, this.convertSourceInfo(binmult.sinfo), "arith"), lexp, rexp, opchk));
             }
             
@@ -1278,7 +1308,8 @@ class ASMToIRConverter {
                 return new IRBinMultExpression(lexp, rexp, this.processTypeSignature(binmult.opertype as TypeSignature));
             }
             else {
-                const multop = new IRBinMultExpression(lexp, rexp, this.processTypeSignature(binmult.opertype as TypeSignature));
+                const bmultop = new IRBinMultExpression(lexp, rexp, this.processTypeSignature(binmult.opertype as TypeSignature));
+                let multop = (finaltype.decl.allInvariants.length !== 0) ? this.makeExpressionImmediate(bmultop, this.tproc(binmult.opertype as TypeSignature)) : bmultop;
 
                 if(finaltype.decl.allInvariants.length !== 0) {
                     const invchecks = finaltype.decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
@@ -1297,10 +1328,12 @@ class ASMToIRConverter {
             const leetype = this.tproc(bindiv.lhs.getType()) as NominalTypeSignature;
             const reetype = this.tproc(bindiv.rhs.getType()) as NominalTypeSignature;
             
-            const [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(bindiv.lhs), this.flattenExpression(bindiv.rhs), leetype, reetype);
+            let [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(bindiv.lhs), this.flattenExpression(bindiv.rhs), leetype, reetype);
 
             const opchk = (bindiv.opertype as TypeSignature).tkeystr as "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float";
             if(this.needsDivCheck(bindiv.rhs, opchk)) {
+                lexp = this.makeExpressionImmediate(lexp, leetype);
+                rexp = this.makeExpressionImmediate(rexp, reetype);
                 this.pushStatement(new IRErrorDivisionByZeroCheckStatement(this.currentFile as string, this.convertSourceInfo(bindiv.sinfo), this.registerError(this.currentFile as string, this.convertSourceInfo(bindiv.sinfo), "runtime"), lexp, rexp, opchk));
             }
             
@@ -1308,7 +1341,8 @@ class ASMToIRConverter {
                 return new IRBinDivExpression(lexp, rexp, this.processTypeSignature(bindiv.opertype as TypeSignature));
             }
             else {
-                const divop = new IRBinDivExpression(lexp, rexp, this.processTypeSignature(bindiv.opertype as TypeSignature));
+                const bdivop = new IRBinDivExpression(lexp, rexp, this.processTypeSignature(bindiv.opertype as TypeSignature));
+                let divop = (finaltype.decl.allInvariants.length !== 0) ? this.makeExpressionImmediate(bdivop, this.tproc(bindiv.opertype as TypeSignature)) : bdivop;
 
                 if(finaltype.decl.allInvariants.length !== 0) {
                     const invchecks = finaltype.decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
@@ -1519,6 +1553,8 @@ class ASMToIRConverter {
                     return resbool;
                 }
                 else {
+                    resbool = (this.tproc(exp.getType()) as NominalTypeSignature).decl.allInvariants.length !== 0 ? this.makeExpressionImmediate(resbool, this.tproc(exp.getType())) : resbool;
+
                     if((this.tproc(exp.getType()) as NominalTypeSignature).decl.allInvariants.length !== 0) {
                         const invchecks = (this.tproc(exp.getType()) as NominalTypeSignature).decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
                             return new IRTypeDeclInvariantCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.tag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), this.processTypeSignature(invdecl.containingtype).tkeystr, invdecl.ii, resbool);
@@ -1559,6 +1595,8 @@ class ASMToIRConverter {
                     return resbool;
                 }
                 else {
+                    resbool = (this.tproc(exp.getType()) as NominalTypeSignature).decl.allInvariants.length !== 0 ? this.makeExpressionImmediate(resbool, this.tproc(exp.getType())) : resbool;
+                    
                     if((this.tproc(exp.getType()) as NominalTypeSignature).decl.allInvariants.length !== 0) {
                         const invchecks = (this.tproc(exp.getType()) as NominalTypeSignature).decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
                             return new IRTypeDeclInvariantCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.tag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), this.processTypeSignature(invdecl.containingtype).tkeystr, invdecl.ii, resbool);
@@ -2319,8 +2357,13 @@ class ASMToIRConverter {
             return { containingtype: this.processTypeSignature(val.containingtype), ii: jj };
         });
 
+        let rngchk: {min: string | undefined, max: string | undefined} | undefined = undefined;
+        if(tdecl.optsizerng !== undefined) {
+            rngchk = {min: tdecl.optsizerng.min, max: tdecl.optsizerng.max};
+        }
         const rechk = tdecl.optofexp !== undefined ? this.flattenExpression(tdecl.optofexp) as IRLiteralCRegexExpression : undefined;
-        return new IRTypedeclCStringDecl(tinst.tkey, invariants, validates, saturatedProvides, allInvariants, allValidates, docstring, this.processMetaDataTags(tdecl.attributes), tdecl.file, this.convertSourceInfo(tdecl.sinfo), rechk);
+
+        return new IRTypedeclCStringDecl(tinst.tkey, invariants, validates, saturatedProvides, allInvariants, allValidates, docstring, this.processMetaDataTags(tdecl.attributes), tdecl.file, this.convertSourceInfo(tdecl.sinfo), rngchk, rechk);
     }
 
     private generateTypedeclStringDecl(tdecl: TypedeclTypeDecl, tinst: TypeInstantiationInfo): IRTypedeclStringDecl {
@@ -2341,8 +2384,13 @@ class ASMToIRConverter {
             return { containingtype: this.processTypeSignature(val.containingtype), ii: jj };
         });
 
+        let rngchk: {min: string | undefined, max: string | undefined} | undefined = undefined;
+        if(tdecl.optsizerng !== undefined) {
+            rngchk = {min: tdecl.optsizerng.min, max: tdecl.optsizerng.max};
+        }
         const rechk = tdecl.optofexp !== undefined ? this.flattenExpression(tdecl.optofexp) as IRLiteralUnicodeRegexExpression : undefined;
-        return new IRTypedeclStringDecl(tinst.tkey, invariants, validates, saturatedProvides, allInvariants, allValidates, docstring, this.processMetaDataTags(tdecl.attributes), tdecl.file, this.convertSourceInfo(tdecl.sinfo), rechk);
+
+        return new IRTypedeclStringDecl(tinst.tkey, invariants, validates, saturatedProvides, allInvariants, allValidates, docstring, this.processMetaDataTags(tdecl.attributes), tdecl.file, this.convertSourceInfo(tdecl.sinfo), rngchk, rechk);
     }
 
     private generatePrimitiveEntityTypeDecl(tdecl: PrimitiveEntityTypeDecl, tinst: TypeInstantiationInfo): IRPrimitiveEntityTypeDecl {

@@ -89,12 +89,46 @@ class TypeChecker {
         return (t.tkeystr === "Void");
     }
 
+    private resolveSizeConstraints(tdecl: TypedeclTypeDecl, rlen: number): {min: bigint, max: bigint} | undefined {
+        if(tdecl.optsizerng === undefined) {
+            return undefined;
+        }
+        else {
+            let min = 0n;
+            if(tdecl.optsizerng.min !== undefined) {
+                try {
+                    min = BigInt(tdecl.optsizerng.min);
+                }
+                catch {
+                    ;
+                }
+            }
+
+            let max = BigInt(rlen);
+            if(tdecl.optsizerng.max !== undefined) {
+                try {
+                    max = BigInt(tdecl.optsizerng.max);
+                }
+                catch {
+                    ;
+                }
+            }
+
+            return { min: min, max: max };
+        }
+    }
+
     private checkTypeDeclOfStringRestrictions(sinfo: SourceInfo, tdecl: TypedeclTypeDecl, value: string): string | undefined {
         const vs = validateStringLiteral(value.slice(1, -1));
         this.checkError(sinfo, vs === null, `Invalid string literal value ${value}`);
 
         if(vs !== null && tdecl.optofexp !== undefined) {
             const vexp = this.relations.assembly.resolveValidatorLiteral(tdecl.optofexp);
+
+            const sbounds = this.resolveSizeConstraints(tdecl, vs.length);
+            if(sbounds !== undefined) {
+                this.checkError(sinfo, BigInt(vs.length) < sbounds.min || BigInt(vs.length) > sbounds.max, `String literal length ${vs.length} out of bounds`);
+            }
 
             if(vexp === undefined || vexp.tag !== ExpressionTag.LiteralUnicodeRegexExpression) {
                 this.reportError(sinfo, `Unable to resolve regex validator`);
@@ -118,6 +152,12 @@ class TypeChecker {
 
         if(vs !== null && tdecl.optofexp !== undefined) {
             const vexp = this.relations.assembly.resolveValidatorLiteral(tdecl.optofexp);
+
+            const sbounds = this.resolveSizeConstraints(tdecl, vs.length);
+            if(sbounds !== undefined) {
+                this.checkError(sinfo, BigInt(vs.length) < sbounds.min || BigInt(vs.length) > sbounds.max, `CString literal length ${vs.length} out of bounds`);
+            }
+
             if(vexp === undefined || vexp.tag !== ExpressionTag.LiteralCRegexExpression) {
                 this.reportError(sinfo, `Unable to resolve cregex validator`);
             }
@@ -141,6 +181,7 @@ class TypeChecker {
                 
         if(vs !== null && tdecl.optofexp !== undefined) {
             const vexp = this.relations.assembly.resolveValidatorLiteral(tdecl.optofexp);
+
             if(vexp === undefined || vexp.tag !== ExpressionTag.LiteralGlobExpression) {
                 this.reportError(sinfo, `Unable to resolve glob validator`);
             }
@@ -2388,8 +2429,8 @@ class TypeChecker {
                     ctype = this.checkPostfixAssignFields(env, op as PostfixAssignFields, ctype);
                     break;
                 }
-                case PostfixOpTag.PostfixOfOperator: {
-                    assert(false, "Of operator not implemented in postfix expressions");
+                case PostfixOpTag.PostfixSliceOperator: {
+                    assert(false, "Slice operator not implemented in postfix expressions");
                     break;
                 }
                 case PostfixOpTag.PostfixInvoke: {
@@ -2450,8 +2491,8 @@ class TypeChecker {
                     ctype = this.checkPostfixAssignFields(env, op as PostfixAssignFields, ctype);
                     break;
                 }
-                case PostfixOpTag.PostfixOfOperator: {
-                    assert(false, "Of operator not implemented in postfix expressions");
+                case PostfixOpTag.PostfixSliceOperator: {
+                    assert(false, "Slice operator not implemented in postfix expressions");
                     break;
                 }
                 case PostfixOpTag.PostfixInvoke: {
@@ -4711,6 +4752,28 @@ class TypeChecker {
         if(!isvalueok) {
             this.reportError(tdecl.sinfo, `In type declaration value type must be simple primitive -- Bool, Int, etc.`);
             return;
+        }
+
+        if(tdecl.optsizerng !== undefined) {
+            if(tdecl.optsizerng.min !== undefined) {
+                try {
+                    const minval = BigInt(tdecl.optsizerng.min);
+                    this.checkError(tdecl.sinfo, minval < BigInt(0), `Size range min cannot be negative`);
+                }
+                catch {
+                    this.reportError(tdecl.sinfo, `Invalid size range min`);
+                }
+            }
+
+            if(tdecl.optsizerng.max !== undefined) {
+                try {
+                    const maxval = BigInt(tdecl.optsizerng.max);
+                    this.checkError(tdecl.sinfo, maxval < BigInt(0) || MAX_SAFE_NAT < maxval, `Size range max cannot be negative or larger than max safe nat`);
+                }
+                catch {
+                    this.reportError(tdecl.sinfo, `Invalid size range max`);
+                }
+            }
         }
 
         if(tdecl.optofexp !== undefined) {

@@ -67,6 +67,7 @@ const KW_invariant = "invariant";
 const KW_method = "method";
 const KW_namespace = "namespace";
 const KW_of = "of";
+const KW_slice = "slice";
 const KW_provides = "provides";
 const KW_requires = "requires";
 const KW_task = "task";
@@ -124,6 +125,7 @@ const KeywordStrings = [
     KW_method,
     KW_namespace,
     KW_none,
+    KW_slice,
     KW_of,
     KW_ok,
     KW_operator,
@@ -403,6 +405,7 @@ export {
     KW_method,
     KW_namespace,
     KW_none,
+    KW_slice,
     KW_of,
     KW_ok,
     // KW_operator, //TODO: reserved for future use

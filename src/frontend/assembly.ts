@@ -703,6 +703,7 @@ class EnumTypeDecl extends AbstractEntityTypeDecl {
 class TypedeclTypeDecl extends AbstractEntityTypeDecl {
     valuetype: TypeSignature;
     optofexp: Expression | undefined; //for strings, cstrings, and paths (but not fragments or globs)
+    optsizerng: {min: string | undefined, max: string | undefined} | undefined;
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, etag: AdditionalTypeDeclTag, valuetype: TypeSignature) {
         super(file, sinfo, attributes, ns, name, etag);
@@ -717,16 +718,23 @@ class TypedeclTypeDecl extends AbstractEntityTypeDecl {
         const bg = this.emitBodyGroups(fmt);
         fmt.indentPop();
 
+        let optsize = "";
+        if(this.optsizerng !== undefined) {
+            const minstr = this.optsizerng.min !== undefined ? this.optsizerng.min : "";
+            const maxstr = this.optsizerng.max !== undefined ? this.optsizerng.max : "";
+            optsize = ` {${minstr},${maxstr}}`;
+        }
+
         let ofexp = "";
         if(this.optofexp !== undefined) {
             ofexp = ` of ${this.optofexp.emit(true, fmt)}`;
         }
 
         if(bg.length === 0 && this.provides.length === 0) {
-            return tdcl + ofexp + ";";
+            return tdcl + ofexp + optsize + ";";
         }
         else {
-            return tdcl + ofexp + " &" + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
+            return tdcl + ofexp + optsize + " &" + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
         }
     }
 }
