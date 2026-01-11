@@ -150,6 +150,18 @@ double calculate_total_collection_time(const size_t* buckets) noexcept;
 #define UPDATE_RC_TIMES(INFO)
 #endif
 
+#define UPDATE_ALLOC_STATS(ALLOC, MEMORY_SIZE) \
+    (ALLOC)->updateAllocInfo(MEMORY_SIZE)
+    
+#define RESET_ALLOC_STATS(ALLOC)   \
+    do {                           \
+        (ALLOC)->alloc_count = 0;  \
+        (ALLOC)->alloc_memory = 0; \
+    } while(0)
+
+#define GET_ALLOC_COUNT(ALLOC)  ((ALLOC)->alloc_count)
+#define GET_ALLOC_MEMORY(ALLOC) ((ALLOC)->alloc_memory)
+
 #define UPDATE_MEMSTATS_TOTALS(INFO) \
     do { \
         auto now = std::chrono::high_resolution_clock::now(); \
@@ -172,28 +184,28 @@ double calculate_total_collection_time(const size_t* buckets) noexcept;
         double stddev = get_stddev(g_memstats.collection_stats); \
         std::cout << "Collection Average: " << mean << "ms\n"; \
         std::cout << "Collection Std Dev: " << stddev << "ms\n"; \
-        std::cout << "Collection 1σ: " << stddev << "ms\n"; \
-        std::cout << "Collection 2σ: " << (2 * stddev) << "ms\n"; \
-        std::cout << "Collection Min: " << g_memstats.min_collection_time << "ms\n"; \
-        std::cout << "Collection Max: " << g_memstats.max_collection_time << "ms\n"; \
-        std::cout << "Collection 50th: " << calculate_percentile_from_buckets(g_memstats.collection_times, 0.50) << "ms\n"; \
-        std::cout << "Collection 95th: " << calculate_percentile_from_buckets(g_memstats.collection_times, 0.95) << "ms\n"; \
-        std::cout << "Collection 99th: " << calculate_percentile_from_buckets(g_memstats.collection_times, 0.99) << "ms\n"; \
+        std::cout << "Collection 1σ:      " << stddev << "ms\n"; \
+        std::cout << "Collection 2σ:      " << (2 * stddev) << "ms\n"; \
+        std::cout << "Collection Min:     " << g_memstats.min_collection_time << "ms\n"; \
+        std::cout << "Collection Max:     " << g_memstats.max_collection_time << "ms\n"; \
+        std::cout << "Collection 50th:    " << calculate_percentile_from_buckets(g_memstats.collection_times, 0.50) << "ms\n"; \
+        std::cout << "Collection 95th:    " << calculate_percentile_from_buckets(g_memstats.collection_times, 0.95) << "ms\n"; \
+        std::cout << "Collection 99th:    " << calculate_percentile_from_buckets(g_memstats.collection_times, 0.99) << "ms\n"; \
     } while(0)
 #define PRINT_TOTAL_COLLECTIONS(E) \
-    (std::cout << "Total Collections: " << g_memstats.collection_stats.count << "\n")
+    std::cout << "Total Collections: " << g_memstats.collection_stats.count << "\n"
 
 #define PRINT_NURSERY_TIME(E) \
-        std::cout << "Nursery Average: " << get_mean_pause(g_memstats.nursery_stats) << "ms\n";
+    std::cout << "Nursery Average: " << get_mean_pause(g_memstats.nursery_stats) << "ms\n"
 
 #define PRINT_RC_TIME(E) \
-    std::cout << "RC Average: " << get_mean_pause(g_memstats.rc_stats) << "ms\n";
+    std::cout << "RC Average: " << get_mean_pause(g_memstats.rc_stats) << "ms\n"
 
 #define PRINT_TOTAL_PAGES(E) \
-    (std::cout << "Total Pages: " << g_memstats.total_pages << "\n")
+    std::cout << "Total Pages: " << g_memstats.total_pages << "\n"
 
 #define PRINT_HEAP_SIZE(E) \
-    (std::cout << "Heap Size: " << g_memstats.total_pages * BSQ_BLOCK_ALLOCATION_SIZE << " bytes\n")
+    std::cout << "Heap Size: " << g_memstats.total_pages * BSQ_BLOCK_ALLOCATION_SIZE << " bytes\n"
 
 #define PRINT_ALLOC_INFO(E)                                                                     \
     do {                                                                                        \
@@ -202,11 +214,12 @@ double calculate_total_collection_time(const size_t* buckets) noexcept;
     } while(0)
 
 #define PRINT_TOTAL_PROMOTIONS(E) \
-    (std::cout << "Total Promotions: " << g_memstats.total_promotions << "\n")
+    std::cout << "Total Promotions: " << g_memstats.total_promotions << "\n"
 
 #define PRINT_MAX_HEAP(E) \
-    (std::cout << "Max Live Heap Size: " << g_memstats.max_live_heap << " bytes\n")
+    std::cout << "Max Live Heap Size: " << g_memstats.max_live_heap << " bytes\n"
 
+// Both wrong, they include time to compute memstats (at end of collection) so they are forcefully skewed
 #define PRINT_TOTAL_TIME(E) \
     do {\
         std::cout << "Total Time: " << g_memstats.total_time << "ms\n"; \
@@ -214,7 +227,7 @@ double calculate_total_collection_time(const size_t* buckets) noexcept;
     } while(0)
 
 #define PRINT_SURVIVAL_RATE(E) \
-    std::cout << "Survival Rate: " << (g_memstats.survival_rate_sum / static_cast<double>(g_memstats.collection_stats.count)) * 100.0 << "%\n";
+    std::cout << "Survival Rate: " << (g_memstats.total_promotions / g_memstats.total_alloc_count) * 100.0 << "%\n";
 
 #define MEM_STATS_DUMP(E) \
     do { \
@@ -263,5 +276,10 @@ struct MemStats {};
 #define UPDATE_NURSERY_TIMES(INFO)
 #define UPDATE_RC_TIMES(INFO)
 #define UPDATE_MEMSTATS_TOTALS(INFO)
+
+#define UPDATE_ALLOC_STATS(ALLOC, MEMORY_SIZE)
+#define RESET_ALLOC_STATS(ALLOC)
+#define GET_ALLOC_COUNT(ALLOC) (0)
+#define GET_ALLOC_MEMORY(ALLOC) (0)
 
 #endif// MEM_STATS
