@@ -4,13 +4,42 @@
 
 #include <cmath>
 
-MemStats g_memstats;
+MemStats g_memstats{};
 
+static void format_perf(const std::string& phase, Stats& s, size_t* time_buckets)
+{
+    
+}
+
+void perf_dump(Phase p)
+{
+    switch(p) {
+        case Phase::Collection: {
+            format_perf("Collection", g_memstats.collection_stats, g_memstats.collection_times);
+            break;
+        }
+        case Phase::Nursery: {
+            format_perf("Nursery", g_memstats.nursery_stats, g_memstats.nursery_times);
+            break;
+        }
+        case Phase::RC_Old: {
+            format_perf("RC Old", g_memstats.rc_stats, g_memstats.rc_times);           
+            break;
+        }
+        default: break;
+    }
+}
+
+//
+// TODO: These are _better_ but still not quite what we would expect from doing 'time ./output/memex`, so 
+// we need to pinpoint the hotspots for memstats computation and adjust accordingly
+//
 void statistics_dump()
 {
     std::stringstream ss;
     ss  << "Statistics:\n"
         << "\tTotal Time        " << g_memstats.total_time << "ms\n"
+        << "\tTime Collecting   " << "Percentage of Time Collecting: " << (calculate_total_collection_time(g_memstats.collection_times) / g_memstats.total_time) * 100.0 << "%\n"
         << "\tTotal Collections " << g_memstats.collection_stats.count << std::endl
         << "\tTime Collecting   " << (calculate_total_collection_time(g_memstats.collection_times) / g_memstats.total_time) * 100.0 << "%\n"
         << "\tTotal Pages       " << g_memstats.total_pages << std::endl
@@ -61,18 +90,18 @@ double get_stddev(const Stats& stats) noexcept
 double calculate_percentile_from_buckets(const size_t* buckets, double percentile) noexcept 
 {
     size_t total = 0;
-    for (int i = 0; i < MAX_MEMSTATS_BUCKETS; i++) {
+    for(int i = 0; i < MAX_MEMSTATS_BUCKETS; i++) {
         total += buckets[i];
     }
     
-    if (total == 0) {
+    if(total == 0) {
         return 0.0;
     }
     
     size_t target_count = static_cast<size_t>(total * percentile);
     size_t cumulative = 0;
     
-    for (int i = 0; i < MAX_MEMSTATS_BUCKETS; i++) {
+    for(int i = 0; i < MAX_MEMSTATS_BUCKETS; i++) {
         cumulative += buckets[i];
         if (cumulative >= target_count) {
             return i * BUCKET_VARIANCE;
@@ -108,6 +137,7 @@ void update_rc_stats(MemStats& ms, double time) noexcept
     update_stats(ms.rc_stats, time);
 }
 
+// We dont need this, just use total from Stats
 double calculate_total_collection_time(const size_t* buckets) noexcept
 {
     double curvariance = BUCKET_VARIANCE;

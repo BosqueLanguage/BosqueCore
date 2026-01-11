@@ -43,9 +43,9 @@ struct MemStats {
 
     size_t max_live_heap = 0;
 
-    size_t collection_times[MAX_MEMSTATS_BUCKETS] { 0 };
-    size_t nursery_times[MAX_MEMSTATS_BUCKETS]    { 0 };
-    size_t rc_times[MAX_MEMSTATS_BUCKETS]         { 0 };
+    size_t collection_times[MAX_MEMSTATS_BUCKETS];
+    size_t nursery_times[MAX_MEMSTATS_BUCKETS];
+    size_t rc_times[MAX_MEMSTATS_BUCKETS];
 
     MemStats() {
         auto start = std::chrono::high_resolution_clock::now();
@@ -55,8 +55,11 @@ struct MemStats {
 };
 extern MemStats g_memstats;
 
-#define COLLECTION_STATS_MODE
-#define NURSERY_RC_STATS_MODE
+enum class Phase {
+    Collection,
+    Nursery,
+    RC_Old
+};
 
 #define TOTAL_ALLOC_COUNT()      g_memstats.total_alloc_count
 #define PREV_TOTAL_ALLOC_COUNT() g_memstats.prev_total_alloc_count
@@ -80,10 +83,8 @@ extern MemStats g_memstats;
 #define UPDATE_MAX_COLLECTION_TIME(OP, ...)    MAX_COLLECTION_TIME() OP __VA_ARGS__
 #define UPDATE_MAX_LIVE_HEAP(OP, ...)          MAX_LIVE_HEAP() OP __VA_ARGS__
 
-void update_stats(Stats& stats, double time) noexcept;
-void update_bucket(size_t* bucket, double time) noexcept;
-double get_mean_pause(Stats& stats) noexcept;
-double get_stddev(const Stats& stats) noexcept;
+void perf_dump(Phase p);
+void statistics_dump();
 std::string generate_formatted_memstats(MemStats& ms) noexcept;
 double calculate_percentile_from_buckets(const size_t* buckets, double percentile) noexcept;
 void update_collection_extrema(MemStats& ms, double time) noexcept;
@@ -102,8 +103,6 @@ double calculate_total_collection_time(const size_t* buckets) noexcept;
     double NAME##_ms = TIME(end_##NAME - start_##NAME); \
     update_bucket(g_memstats. BUCKETS, NAME##_ms);
 
-#ifdef COLLECTION_STATS_MODE
-
 #define COLLECTION_STATS_START() \
     MEM_STATS_START(collection)
 #define COLLECTION_STATS_END(BUCKETS) \
@@ -111,21 +110,6 @@ double calculate_total_collection_time(const size_t* buckets) noexcept;
 
 #define UPDATE_COLLECTION_TIMES() \
     update_collection_stats(g_memstats, collection_ms)
-
-#define NURSERY_STATS_START()
-#define NURSERY_STATS_END(BUCKETS)
-#define RC_STATS_START()
-
-#define RC_STATS_END(BUCKETS)
-#define UPDATE_NURSERY_TIMES() 
-
-#define UPDATE_RC_TIMES()
-
-#elif defined(NURSERY_RC_STATS_MODE) 
-
-#define UPDATE_COLLECTION_TIMES()
-#define COLLECTION_STATS_START()
-#define COLLECTION_STATS_END(BUCKETS)
 
 #define NURSERY_STATS_START() \
     MEM_STATS_START(nursery)
@@ -141,11 +125,6 @@ double calculate_total_collection_time(const size_t* buckets) noexcept;
     update_nursery_stats(g_memstats, nursery_ms)
 #define UPDATE_RC_TIMES() \
     update_rc_stats(g_memstats, rc_ms)
-#else
-#define UPDATE_COLLECTION_TIMES()
-#define UPDATE_NURSERY_TIMES()
-#define UPDATE_RC_TIMES()
-#endif
 
 #define UPDATE_ALLOC_STATS(ALLOC, MEMORY_SIZE) \
     (ALLOC)->updateAllocInfo(MEMORY_SIZE)
@@ -177,48 +156,11 @@ double calculate_total_collection_time(const size_t* buckets) noexcept;
         g_memstats.total_time = TIME(now.time_since_epoch()) - g_memstats.start_time - mstats_compute_elapsed; \
     } while(0)
 
-#define PRINT_COLLECTION_TIME() \
-    do{ \
-        double mean = get_mean_pause(g_memstats.collection_stats); \
-        double stddev = get_stddev(g_memstats.collection_stats); \
-        std::cout << "Collection Average: " << mean << "ms\n"; \
-        std::cout << "Collection Std Dev: " << stddev << "ms\n"; \
-        std::cout << "Collection 1σ:      " << stddev << "ms\n"; \
-        std::cout << "Collection 2σ:      " << (2 * stddev) << "ms\n"; \
-        std::cout << "Collection Min:     " << g_memstats.min_collection_time << "ms\n"; \
-        std::cout << "Collection Max:     " << g_memstats.max_collection_time << "ms\n"; \
-        std::cout << "Collection 50th:    " << calculate_percentile_from_buckets(g_memstats.collection_times, 0.50) << "ms\n"; \
-        std::cout << "Collection 95th:    " << calculate_percentile_from_buckets(g_memstats.collection_times, 0.95) << "ms\n"; \
-        std::cout << "Collection 99th:    " << calculate_percentile_from_buckets(g_memstats.collection_times, 0.99) << "ms\n"; \
-    } while(0)
-
-//
-// TODO: We will want to compute stddv, 50, 95, 99 for these guys too
-//
-#define PRINT_NURSERY_TIME() \
-    std::cout << "Nursery Average: " << get_mean_pause(g_memstats.nursery_stats) << "ms\n"
-
-#define PRINT_RC_TIME() \
-    std::cout << "RC Average: " << get_mean_pause(g_memstats.rc_stats) << "ms\n"
-
-//
-// TODO: These are _better_ but still not quite what we would expect from doing 'time ./output/memex`, so 
-// we need to pinpoint the hotspots for memstats computation and adjust accordingly
-//
-#define PRINT_TOTAL_TIME() \
-    do {\
-        std::cout << "Total Time: " << g_memstats.total_time << "ms\n"; \
-        std::cout << "Percentage of Time Collecting: " << (calculate_total_collection_time(g_memstats.collection_times) / g_memstats.total_time) * 100.0 << "%\n";\
-    } while(0)
-
-void statistics_dump();
-
 #define MEM_STATS_DUMP() \
     do { \
-        PRINT_TOTAL_TIME(); \
-        PRINT_COLLECTION_TIME(); \
-        PRINT_NURSERY_TIME(); \
-        PRINT_RC_TIME(); \
+        perf_dump(Phase::Collection); \
+        perf_dump(Phase::Nursery); \
+        perf_dump(Phase::RC_Old); \
         statistics_dump(); \
     } while(0)
 
