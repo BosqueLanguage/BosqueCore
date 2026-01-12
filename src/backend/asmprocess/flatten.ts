@@ -838,12 +838,23 @@ class ASMToIRConverter {
         }
 
         if(tdecl.optsizerng !== undefined) {
-            this.pushStatement(new IRTypeDeclSizeRangeCheckStatement(tdecl.file, this.convertSourceInfo(tdecl.sinfo), undefined, this.registerError(tdecl.file, this.convertSourceInfo(tdecl.sinfo), "userspec"), this.processTypeSignature(ctype).tkeystr, tdecl.optsizerng.min, tdecl.optsizerng.max cval));
+            if(tdecl.valuetype.tkeystr === "CString") {
+                this.pushStatement(new IRTypeDeclSizeRangeCheckCStringStatement(tdecl.file, this.convertSourceInfo(tdecl.sinfo), undefined, this.registerError(tdecl.file, this.convertSourceInfo(tdecl.sinfo), "userspec"), this.processTypeSignature(ctype).tkeystr, tdecl.optsizerng.min, tdecl.optsizerng.max, cval));
+            }
+            else {
+                this.pushStatement(new IRTypeDeclSizeRangeCheckUnicodeStringStatement(tdecl.file, this.convertSourceInfo(tdecl.sinfo), undefined, this.registerError(tdecl.file, this.convertSourceInfo(tdecl.sinfo), "userspec"), this.processTypeSignature(ctype).tkeystr, tdecl.optsizerng.min, tdecl.optsizerng.max, cval));
+            }
         }
 
         if(tdecl.optofexp !== undefined) {
-            const regex = this.flattenExpression(tdecl.optofexp) as IRImmediateExpression;
-            this.pushStatement(new IRTypeDeclFormatCheckStatement(tdecl.file, this.convertSourceInfo(tdecl.sinfo), undefined, this.registerError(tdecl.file, this.convertSourceInfo(tdecl.sinfo), "userspec"), this.processTypeSignature(ctype).tkeystr, regex as IRImmediateExpression, regex, cval));
+            if(tdecl.valuetype.tkeystr === "CString") {
+                const regex = this.flattenExpression(tdecl.optofexp) as IRLiteralCRegexExpression;
+                this.pushStatement(new IRTypeDeclFormatCheckCStringStatement(tdecl.file, this.convertSourceInfo(tdecl.sinfo), undefined, this.registerError(tdecl.file, this.convertSourceInfo(tdecl.sinfo), "userspec"), this.processTypeSignature(ctype).tkeystr, regex as IRImmediateExpression, regex, cval));
+            }
+            else {
+                const regex = this.flattenExpression(tdecl.optofexp) as IRLiteralUnicodeRegexExpression;
+                this.pushStatement(new IRTypeDeclFormatCheckUnicodeStringStatement(tdecl.file, this.convertSourceInfo(tdecl.sinfo), undefined, this.registerError(tdecl.file, this.convertSourceInfo(tdecl.sinfo), "userspec"), this.processTypeSignature(ctype).tkeystr, regex as IRImmediateExpression, regex, cval));
+            }
         }
 
         if(tdecl.allInvariants.length === 0) {
