@@ -90,7 +90,7 @@ PageInfo* GlobalPageGCManager::allocateFreshPage(uint16_t entrysize, uint16_t re
 
         pp = PageInfo::initialize(page, entrysize, realsize);
 
-        UPDATE_TOTAL_PAGES(gtl_info, +=, 1);
+        UPDATE_TOTAL_PAGES(+=, 1);
     }
 
     GC_MEM_LOCK_RELEASE();
@@ -212,14 +212,14 @@ static inline void process(PageInfo* page) noexcept
     }
    
     uint64_t freecount = getPageFreeCount(page);
-    UPDATE_TOTAL_LIVE_BYTES(gtl_info, +=, (page->allocsize * (page->entrycount - freecount)));
-    UPDATE_TOTAL_LIVE_OBJECTS(gtl_info, +=, (page->entrycount - freecount));
+    UPDATE_TOTAL_LIVE_BYTES(+=, (page->allocsize * (page->entrycount - freecount)));
+    UPDATE_TOTAL_LIVE_OBJECTS(+=, (page->entrycount - freecount));
 }
 
 void GCAllocator::updateMemStats() noexcept
 {
-    UPDATE_TOTAL_ALLOC_COUNT(gtl_info, +=, GET_ALLOC_COUNT(this));
-    UPDATE_TOTAL_ALLOC_MEMORY(gtl_info, +=, GET_ALLOC_MEMORY(this));
+    UPDATE_TOTAL_ALLOC_COUNT(+=, GET_ALLOC_COUNT(this));
+    UPDATE_TOTAL_ALLOC_MEMORY(+=, GET_ALLOC_MEMORY(this));
     RESET_ALLOC_STATS(this);
 
     //compute stats for filled pages
@@ -241,8 +241,8 @@ void GCAllocator::updateMemStats() noexcept
         }
     }
 
-    if(TOTAL_LIVE_BYTES(gtl_info) > MAX_LIVE_HEAP(gtl_info)) {
-        UPDATE_MAX_LIVE_HEAP(gtl_info, =, TOTAL_LIVE_BYTES(gtl_info));
+    if(TOTAL_LIVE_BYTES() > MAX_LIVE_HEAP()) {
+        UPDATE_MAX_LIVE_HEAP(=, TOTAL_LIVE_BYTES());
     }
 }
 

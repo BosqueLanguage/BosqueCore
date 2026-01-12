@@ -310,26 +310,6 @@ T* MEM_ALLOC_CHECK(T* alloc)
 
 #define CALC_APPROX_UTILIZATION(P) 1.0f - ((float)P->freecount / (float)P->entrycount)
 
-#ifdef MEM_STATS
-#define UPDATE_ALLOC_STATS(ALLOC, MEMORY_SIZE) \
-    (ALLOC)->updateAllocInfo(MEMORY_SIZE)
-    
-#define RESET_ALLOC_STATS(ALLOC)   \
-    do {                           \
-        (ALLOC)->alloc_count = 0;  \
-        (ALLOC)->alloc_memory = 0; \
-    } while(0)
-
-#define GET_ALLOC_COUNT(ALLOC)  ((ALLOC)->alloc_count)
-#define GET_ALLOC_MEMORY(ALLOC) ((ALLOC)->alloc_memory)
-
-#else
-#define UPDATE_ALLOC_STATS(ALLOC, MEMORY_SIZE)
-#define RESET_ALLOC_STATS(ALLOC)
-#define GET_ALLOC_COUNT(ALLOC) (0)
-#define GET_ALLOC_MEMORY(ALLOC) (0)
-#endif
-
 #define NUM_LOW_UTIL_BUCKETS 12
 #define NUM_HIGH_UTIL_BUCKETS 6
 #define LOW_UTIL_THRESH 0.60f
@@ -363,8 +343,8 @@ private:
     // These two get zeroed at a collection
     size_t alloc_count;
     size_t alloc_memory;
-#else 
 #endif
+
     void (*collectfp)();
 
     PageInfo* getFreshPageForAllocator() noexcept; 
