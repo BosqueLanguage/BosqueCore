@@ -76,6 +76,11 @@ enum IRExpressionTag {
     IRAccessTypeDeclValueExpression = "IRAccessTypeDeclValueExpression",
     IRConstructSafeTypeDeclExpression = "IRConstructSafeTypeDeclExpression",
     
+    IRConstructorSomeTypeExpression = "IRConstructorSomeTypeExpression",
+    IRConstructorOkTypeExpression = "IRConstructorOkTypeExpression",
+    IRConstructorFailTypeExpression = "IRConstructorFailTypeExpression",
+    IRConstructorMapEntryTypeExpression = "IRConstructorMapEntryTypeExpression",
+
     //
     //TODO: lots more expression types here
     //
@@ -218,6 +223,11 @@ enum IRStatementTag {
     IRErrorMultiplicationBoundsCheckStatement = "IRErrorMultiplicationBoundsCheckStatement",
     IRErrorDivisionByZeroCheckStatement = "IRErrorDivisionByZeroCheckStatement",
 
+    IRTypeDeclSizeRangeCheckCStringStatement = "IRTypeDeclSizeRangeCheckCStringStatement",
+    IRTypeDeclSizeRangeCheckUnicodeStringStatement = "IRTypeDeclSizeRangeCheckUnicodeStringStatement",
+    IRTypeDeclFormatCheckCStringStatement = "IRTypeDeclFormatCheckCStringStatement",
+    IRTypeDeclFormatCheckUnicodeStringStatement = "IRTypeDeclFormatCheckUnicodeStringStatement",
+
     IRTypeDeclInvariantCheckStatement = "IRTypeDeclInvariantCheckStatement",
     IRPreconditionCheckStatement = "IRPreconditionCheckStatement",
     IRPostconditionCheckStatement = "IRPostconditionCheckStatement",
@@ -303,6 +313,15 @@ abstract class IRErrorBinArithCheckStatement extends IRErrorCheckStatement {
         this.left = left;
         this.right = right;
         this.optypechk = optypechk;
+    }
+}
+
+abstract class IRErrorTypedStringCheckStatement extends IRErrorCheckStatement {
+    readonly strexp: IRImmediateExpression;
+    
+    constructor(tag: IRStatementTag, file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number, strexp: IRImmediateExpression) {
+        super(tag, file, sinfo, diagnosticTag, checkID);
+        this.strexp = strexp;
     }
 }
 
@@ -914,6 +933,52 @@ class IRConstructSafeTypeDeclExpression extends IRSimpleExpression {
     }
 }
 
+class IRConstructorSomeTypeExpression extends IRSimpleExpression {
+    readonly oftype: IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(oftype: IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRConstructorSomeTypeExpression);
+        this.oftype = oftype;
+        this.value = value;
+    }
+}
+
+class IRConstructorOkTypeExpression extends IRSimpleExpression {
+    readonly oftype: IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(oftype: IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRConstructorOkTypeExpression);
+        this.oftype = oftype;
+        this.value = value;
+    }
+}
+
+class IRConstructorFailTypeExpression extends IRSimpleExpression {
+    readonly oftype: IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(oftype: IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRConstructorFailTypeExpression);
+        this.oftype = oftype;
+        this.value = value;
+    }
+}
+
+class IRConstructorMapEntryTypeExpression extends IRSimpleExpression {
+    readonly oftype: IRTypeSignature;
+    readonly key: IRSimpleExpression;
+    readonly value: IRSimpleExpression;
+
+    constructor(oftype: IRTypeSignature, key: IRSimpleExpression, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRConstructorMapEntryTypeExpression);
+        this.oftype = oftype;
+        this.key = key;
+        this.value = value;
+    }
+}
+
 //
 //TODO: lots more expression types here
 //
@@ -1401,13 +1466,53 @@ class IRErrorDivisionByZeroCheckStatement extends IRErrorBinArithCheckStatement 
     }
 }
 
+class IRTypeDeclSizeRangeCheckCStringStatement extends IRErrorTypedStringCheckStatement {
+    readonly min: string | undefined;
+    readonly max: string | undefined;
+
+    constructor(file: string, sinfo: IRSourceInfo, checkID: number, min: string | undefined, max: string | undefined, strexp: IRImmediateExpression) {
+        super(IRStatementTag.IRTypeDeclSizeRangeCheckCStringStatement, file, sinfo, undefined, checkID, strexp);
+        this.min = min;
+        this.max = max;
+    }
+}
+
+class IRTypeDeclSizeRangeCheckUnicodeStringStatement extends IRErrorTypedStringCheckStatement {
+    readonly min: string | undefined;
+    readonly max: string | undefined;
+
+    constructor(file: string, sinfo: IRSourceInfo, checkID: number, min: string | undefined, max: string | undefined, strexp: IRImmediateExpression) {
+        super(IRStatementTag.IRTypeDeclSizeRangeCheckUnicodeStringStatement, file, sinfo, undefined, checkID, strexp);
+        this.min = min;
+        this.max = max;
+    }
+}
+
+class IRTypeDeclFormatCheckCStringStatement extends IRErrorTypedStringCheckStatement {
+    readonly re: IRLiteralCRegexExpression;
+
+    constructor(file: string, sinfo: IRSourceInfo, checkID: number, re: IRLiteralCRegexExpression, strexp: IRImmediateExpression) {
+        super(IRStatementTag.IRTypeDeclFormatCheckCStringStatement, file, sinfo, undefined, checkID, strexp);
+        this.re = re;
+    }
+}
+
+class IRTypeDeclFormatCheckUnicodeStringStatement extends IRErrorTypedStringCheckStatement {
+    readonly re: IRLiteralUnicodeRegexExpression;
+
+    constructor(file: string, sinfo: IRSourceInfo, checkID: number, re: IRLiteralUnicodeRegexExpression, strexp: IRImmediateExpression) {
+        super(IRStatementTag.IRTypeDeclFormatCheckUnicodeStringStatement, file, sinfo, undefined, checkID, strexp);
+        this.re = re;
+    }
+}
+
 /* This calls the defined invariant check function for the target type decl on the provided value -- errors are reported from there */
 class IRTypeDeclInvariantCheckStatement extends IRErrorCheckStatement {
     readonly tkey: string;
     readonly invariantidx: number;
-    readonly targetValue: IRSimpleExpression;
+    readonly targetValue: IRImmediateExpression;
 
-    constructor(file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number, tkey: string, invariantidx: number, targetValue: IRSimpleExpression) {
+    constructor(file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number, tkey: string, invariantidx: number, targetValue: IRImmediateExpression) {
         super(IRStatementTag.IRTypeDeclInvariantCheckStatement, file, sinfo, diagnosticTag, checkID);
         this.tkey = tkey;
         this.invariantidx = invariantidx;
@@ -1419,9 +1524,9 @@ class IRTypeDeclInvariantCheckStatement extends IRErrorCheckStatement {
 class IRPreconditionCheckStatement extends IRErrorCheckStatement {
     readonly ikey: string;
     readonly requiresidx: number;
-    readonly args: IRSimpleExpression[];
+    readonly args: IRImmediateExpression[];
 
-    constructor(file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number, ikey: string, requiresidx: number, args: IRSimpleExpression[]) {
+    constructor(file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number, ikey: string, requiresidx: number, args: IRImmediateExpression[]) {
         super(IRStatementTag.IRPreconditionCheckStatement, file, sinfo, diagnosticTag, checkID);
         this.ikey = ikey;
         this.requiresidx = requiresidx;
@@ -1433,9 +1538,9 @@ class IRPreconditionCheckStatement extends IRErrorCheckStatement {
 class IRPostconditionCheckStatement extends IRErrorCheckStatement {
     readonly ikey: string;
     readonly ensuresidx: number;
-    readonly args: IRSimpleExpression[];
+    readonly args: IRImmediateExpression[];
 
-    constructor(file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number, ikey: string, ensuresidx: number, args: IRSimpleExpression[]) {
+    constructor(file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number, ikey: string, ensuresidx: number, args: IRImmediateExpression[]) {
         super(IRStatementTag.IRPostconditionCheckStatement, file, sinfo, diagnosticTag, checkID);
         this.ikey = ikey;
         this.ensuresidx = ensuresidx;
@@ -1565,6 +1670,8 @@ export {
     
     IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression,
 
+    IRConstructorSomeTypeExpression, IRConstructorOkTypeExpression, IRConstructorFailTypeExpression, IRConstructorMapEntryTypeExpression,
+
     IRInvokeExpression, IRInvokeDirectExpression, IRInvokeImplicitsExpression, IRInvokeSimpleExpression, IRInvokeSimpleWithImplicitsExpression, IRInvokeVirtualSimpleExpression, IRInvokeVirtualWithImplicitsExpression,
 
     IRUnaryOpExpression, IRPrefixNotOpExpression, IRPrefixNegateOpExpression, IRPrefixPlusOpExpression,
@@ -1589,6 +1696,8 @@ export {
     IRLogicConditionalStatement,
 
     IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement,
+    IRErrorTypedStringCheckStatement, IRTypeDeclSizeRangeCheckCStringStatement, IRTypeDeclSizeRangeCheckUnicodeStringStatement, IRTypeDeclFormatCheckCStringStatement, IRTypeDeclFormatCheckUnicodeStringStatement,
+
     IRTypeDeclInvariantCheckStatement,
     IRPreconditionCheckStatement, IRPostconditionCheckStatement,
     IRAbortStatement, IRAssertStatement, IRAssumeStatement, IRValidateStatement, IRDebugStatement,
