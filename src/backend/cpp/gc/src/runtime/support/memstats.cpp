@@ -7,6 +7,10 @@
 
 MemStats g_memstats{};
 
+static double get_stddev(const Stats& stats) noexcept;
+static double get_mean_pause(Stats& stats) noexcept;
+static double calculate_percentile_from_buckets(const size_t* buckets, double percentile) noexcept; 
+
 #define RST  "\x1B[0m"
 #define BOLD(x)	"\x1B[1m" x RST
 #define UNDL(x)	"\x1B[4m" x RST
@@ -36,6 +40,13 @@ enum class Unit {
             default: break; \
         } \
     } while(0)
+
+void updateTotalTime()
+{
+    auto now = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<Time, std::micro> dur = now.time_since_epoch();
+    g_memstats.total_time = dur.count() - g_memstats.start_time - g_memstats.overhead_time;
+}
 
 static std::string printUnit(double v, Unit u)
 {
@@ -188,12 +199,12 @@ void update_bucket(size_t* bucket, double time) noexcept
     }
 }
 
-double get_mean_pause(Stats& stats) noexcept
+static double get_mean_pause(Stats& stats) noexcept
 {
     return stats.mean;
 }
 
-double get_stddev(const Stats& stats) noexcept 
+static double get_stddev(const Stats& stats) noexcept 
 {
     if(stats.count < 2) {
         return 0.0;
@@ -202,7 +213,7 @@ double get_stddev(const Stats& stats) noexcept
     return std::sqrt(stats.M2 / stats.count);
 }
 
-double calculate_percentile_from_buckets(const size_t* buckets, double percentile) noexcept 
+static double calculate_percentile_from_buckets(const size_t* buckets, double percentile) noexcept 
 {
     size_t total = 0;
     for(int i = 0; i < MAX_MEMSTATS_BUCKETS; i++) {
@@ -241,20 +252,7 @@ void update_rc_stats(MemStats& ms, double time) noexcept
     update_stats(ms.rc_stats, time);
 }
 
-// We dont need this, just use total from Stats
-double calculate_total_collection_time(const size_t* buckets) noexcept
-{
-    double curvariance = BUCKET_VARIANCE;
-    double total = 0.0;
-    for (int i = 0; i < MAX_MEMSTATS_BUCKETS; i++) {
-        total += buckets[i] * curvariance;
-        curvariance += BUCKET_VARIANCE;
-    }
-
-    return total;
-}
-
-std::string generate_bucket_data(size_t buckets[MAX_MEMSTATS_BUCKETS]) noexcept 
+static std::string generate_bucket_data(size_t buckets[MAX_MEMSTATS_BUCKETS]) noexcept 
 {
     std::string buf = "[";
     for(int i = 0; i < MAX_MEMSTATS_BUCKETS; i++) {
