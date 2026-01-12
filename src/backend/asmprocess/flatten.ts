@@ -834,7 +834,7 @@ class ASMToIRConverter {
         let cval = this.makeExpressionSimple(this.flattenExpression(exp.args.args[0].exp), cargt);
         
         if(tdecl.allInvariants.length !== 0 || tdecl.optofexp !== undefined || tdecl.optsizerng !== undefined) {
-            cval = this.makeExpressionImmediate(cval, cdecl.valuetype);
+            cval = this.makeExpressionImmediate(cval, tdecl.valuetype);
         }
 
         if(tdecl.optsizerng !== undefined) {
@@ -1361,19 +1361,22 @@ class ASMToIRConverter {
             let [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(binadd.lhs), this.flattenExpression(binadd.rhs), leetype, reetype);
 
             const opchk = (binadd.opertype as TypeSignature).tkeystr as "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float";
-            if(this.needsAddCheck(opchk)) {
-                lexp = this.makeExpressionImmediate(lexp, leetype);
-                rexp = this.makeExpressionImmediate(rexp, reetype);
+            const optype = this.tproc(binadd.opertype as TypeSignature);
+            const iropttype = this.processTypeSignature(optype);
 
+            if(this.needsAddCheck(opchk)) {
+                lexp = this.makeExpressionImmediate(lexp, optype);
+                rexp = this.makeExpressionImmediate(rexp, optype);
+                
                 this.pushStatement(new IRErrorAdditionBoundsCheckStatement(this.currentFile as string, binadd.sinfo, this.registerError(this.currentFile as string, binadd.sinfo, "arith"), lexp, rexp, opchk));
             }
 
             if(!(finaltype.decl instanceof TypedeclTypeDecl)) {
-                return new IRBinAddExpression(lexp, rexp, this.processTypeSignature(binadd.opertype as TypeSignature));
+                return new IRBinAddExpression(lexp, rexp, iropttype);
             }
             else {
-                const baddop = new IRBinAddExpression(lexp, rexp, this.processTypeSignature(binadd.opertype as TypeSignature));
-                let addop = (finaltype.decl.allInvariants.length !== 0) ? this.makeExpressionImmediate(baddop, this.tproc(binadd.opertype as TypeSignature)) : baddop;
+                const baddop = new IRBinAddExpression(lexp, rexp, iropttype);
+                let addop = (finaltype.decl.allInvariants.length !== 0) ? this.makeExpressionImmediate(baddop, optype) : baddop;
 
                 if(finaltype.decl.allInvariants.length !== 0) {
                     const invchecks = finaltype.decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
@@ -1395,18 +1398,21 @@ class ASMToIRConverter {
             let [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(binsub.lhs), this.flattenExpression(binsub.rhs), leetype, reetype);
 
             const opchk = (binsub.opertype as TypeSignature).tkeystr as "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float";
+            const optype = this.tproc(binsub.opertype as TypeSignature);
+            const iropttype = this.processTypeSignature(optype);
+
             if(this.needsSubCheck(opchk)) {
-                lexp = this.makeExpressionImmediate(lexp, leetype);
-                rexp = this.makeExpressionImmediate(rexp, reetype);
+                lexp = this.makeExpressionImmediate(lexp, optype);
+                rexp = this.makeExpressionImmediate(rexp, optype);
                 this.pushStatement(new IRErrorSubtractionBoundsCheckStatement(this.currentFile as string, this.convertSourceInfo(binsub.sinfo), this.registerError(this.currentFile as string, this.convertSourceInfo(binsub.sinfo), (opchk === "Nat" || opchk === "ChkNat") ? "runtime" : "arith"), lexp, rexp, opchk));
             }
             
             if(!(finaltype.decl instanceof TypedeclTypeDecl)) {
-                return new IRBinSubExpression(lexp, rexp, this.processTypeSignature(binsub.opertype as TypeSignature));
+                return new IRBinSubExpression(lexp, rexp, iropttype);
             }
             else {
-                const bsubop = new IRBinSubExpression(lexp, rexp, this.processTypeSignature(binsub.opertype as TypeSignature));
-                let subop = (finaltype.decl.allInvariants.length !== 0) ? this.makeExpressionImmediate(bsubop, this.tproc(binsub.opertype as TypeSignature)) : bsubop;
+                const bsubop = new IRBinSubExpression(lexp, rexp, iropttype);
+                let subop = (finaltype.decl.allInvariants.length !== 0) ? this.makeExpressionImmediate(bsubop, optype) : bsubop;
 
                 if(finaltype.decl.allInvariants.length !== 0) {
                     const invchecks = finaltype.decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
@@ -1428,9 +1434,12 @@ class ASMToIRConverter {
             let [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(binmult.lhs), this.flattenExpression(binmult.rhs), leetype, reetype);
 
             const opchk = (binmult.opertype as TypeSignature).tkeystr as "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float";
+            const optype = this.tproc(binmult.opertype as TypeSignature);
+            const iropttype = this.processTypeSignature(optype);
+
             if(this.needsMultCheck(opchk)) {
-                lexp = this.makeExpressionImmediate(lexp, leetype);
-                rexp = this.makeExpressionImmediate(rexp, reetype);
+                lexp = this.makeExpressionImmediate(lexp, optype);
+                rexp = this.makeExpressionImmediate(rexp, optype);
                 this.pushStatement(new IRErrorMultiplicationBoundsCheckStatement(this.currentFile as string, this.convertSourceInfo(binmult.sinfo), this.registerError(this.currentFile as string, this.convertSourceInfo(binmult.sinfo), "arith"), lexp, rexp, opchk));
             }
             
@@ -1438,8 +1447,8 @@ class ASMToIRConverter {
                 return new IRBinMultExpression(lexp, rexp, this.processTypeSignature(binmult.opertype as TypeSignature));
             }
             else {
-                const bmultop = new IRBinMultExpression(lexp, rexp, this.processTypeSignature(binmult.opertype as TypeSignature));
-                let multop = (finaltype.decl.allInvariants.length !== 0) ? this.makeExpressionImmediate(bmultop, this.tproc(binmult.opertype as TypeSignature)) : bmultop;
+                const bmultop = new IRBinMultExpression(lexp, rexp, iropttype);
+                let multop = (finaltype.decl.allInvariants.length !== 0) ? this.makeExpressionImmediate(bmultop, optype) : bmultop;
 
                 if(finaltype.decl.allInvariants.length !== 0) {
                     const invchecks = finaltype.decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
@@ -1461,18 +1470,21 @@ class ASMToIRConverter {
             let [lexp, rexp] = this.unwrapBinArgs(this.flattenExpression(bindiv.lhs), this.flattenExpression(bindiv.rhs), leetype, reetype);
 
             const opchk = (bindiv.opertype as TypeSignature).tkeystr as "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float";
+            const optype = this.tproc(bindiv.opertype as TypeSignature);
+            const iropttype = this.processTypeSignature(optype);
+
             if(this.needsDivCheck(bindiv.rhs, opchk)) {
-                lexp = this.makeExpressionImmediate(lexp, leetype);
-                rexp = this.makeExpressionImmediate(rexp, reetype);
+                lexp = this.makeExpressionImmediate(lexp, optype);
+                rexp = this.makeExpressionImmediate(rexp, optype);
                 this.pushStatement(new IRErrorDivisionByZeroCheckStatement(this.currentFile as string, this.convertSourceInfo(bindiv.sinfo), this.registerError(this.currentFile as string, this.convertSourceInfo(bindiv.sinfo), "runtime"), lexp, rexp, opchk));
             }
             
             if(!(finaltype.decl instanceof TypedeclTypeDecl)) {
-                return new IRBinDivExpression(lexp, rexp, this.processTypeSignature(bindiv.opertype as TypeSignature));
+                return new IRBinDivExpression(lexp, rexp, iropttype);
             }
             else {
-                const bdivop = new IRBinDivExpression(lexp, rexp, this.processTypeSignature(bindiv.opertype as TypeSignature));
-                let divop = (finaltype.decl.allInvariants.length !== 0) ? this.makeExpressionImmediate(bdivop, this.tproc(bindiv.opertype as TypeSignature)) : bdivop;
+                const bdivop = new IRBinDivExpression(lexp, rexp, iropttype);
+                let divop = (finaltype.decl.allInvariants.length !== 0) ? this.makeExpressionImmediate(bdivop, optype) : bdivop;
 
                 if(finaltype.decl.allInvariants.length !== 0) {
                     const invchecks = finaltype.decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
@@ -1683,10 +1695,12 @@ class ASMToIRConverter {
                     return resbool;
                 }
                 else {
-                    resbool = (this.tproc(exp.getType()) as NominalTypeSignature).decl.allInvariants.length !== 0 ? this.makeExpressionImmediate(resbool, this.tproc(exp.getType())) : resbool;
+                    const baliastype = this.tproc(exp.getType()) as NominalTypeSignature;
+                    const vtype = (baliastype.decl as TypedeclTypeDecl).valuetype;
+                    resbool = baliastype.decl.allInvariants.length !== 0 ? this.makeExpressionImmediate(resbool, vtype) : resbool;
 
-                    if((this.tproc(exp.getType()) as NominalTypeSignature).decl.allInvariants.length !== 0) {
-                        const invchecks = (this.tproc(exp.getType()) as NominalTypeSignature).decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
+                    if(baliastype.decl.allInvariants.length !== 0) {
+                        const invchecks = baliastype.decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
                             return new IRTypeDeclInvariantCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.tag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), this.processTypeSignature(invdecl.containingtype).tkeystr, invdecl.ii, resbool);
                         });
                 
@@ -1725,10 +1739,12 @@ class ASMToIRConverter {
                     return resbool;
                 }
                 else {
-                    resbool = (this.tproc(exp.getType()) as NominalTypeSignature).decl.allInvariants.length !== 0 ? this.makeExpressionImmediate(resbool, this.tproc(exp.getType())) : resbool;
+                    const baliastype = this.tproc(exp.getType()) as NominalTypeSignature;
+                    const vtype = (baliastype.decl as TypedeclTypeDecl).valuetype;
+                    resbool = baliastype.decl.allInvariants.length !== 0 ? this.makeExpressionImmediate(resbool, vtype) : resbool;
                     
-                    if((this.tproc(exp.getType()) as NominalTypeSignature).decl.allInvariants.length !== 0) {
-                        const invchecks = (this.tproc(exp.getType()) as NominalTypeSignature).decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
+                    if(baliastype.decl.allInvariants.length !== 0) {
+                        const invchecks = baliastype.decl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
                             return new IRTypeDeclInvariantCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.tag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), this.processTypeSignature(invdecl.containingtype).tkeystr, invdecl.ii, resbool);
                         });
                 
