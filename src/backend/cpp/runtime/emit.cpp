@@ -21,7 +21,7 @@ int wrap_setjmp() {
     // Ensure decs thread stops waiting
     gtl_info.decs.stop();
 
-    MEM_STATS_DUMP();
+    //MEM_STATS_DUMP();
 
     return 0;
 }

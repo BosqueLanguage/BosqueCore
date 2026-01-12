@@ -144,10 +144,6 @@ void perfDump(Phase p)
     }
 }
 
-//
-// TODO: These are _better_ but still not quite what we would expect from doing 'time ./output/memex`, so 
-// we need to pinpoint the hotspots for memstats computation and adjust accordingly
-//
 void statisticsDump()
 {
     std::stringstream ss;
