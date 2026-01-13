@@ -22,6 +22,11 @@ namespace ᐸRuntimeᐳ
         return token.extract_single() == sym;
     }
 
+    BSQONTokenType BSQONParser::peekTokenType()
+    {
+        return this->lexer.current().tokentype;
+    }
+
     bool BSQONParser::ensureAndConsumeType(const char* tname)
     {
         auto token = this->lexer.current();
@@ -30,51 +35,6 @@ namespace ᐸRuntimeᐳ
         }
 
         if(!this->lexer.current().matches(tname)) {
-            return false;
-        }
-
-        this->lexer.consume();
-        return true;
-    }
-
-    bool BSQONParser::ensureAndConsumeSymbol(char sym)
-    {
-        auto token = this->lexer.current();
-        if(!(token.tokentype == BSQONTokenType::LiteralSymbol)) {
-            return false;
-        }
-
-        if(token.extract_single() != sym) {
-            return false;
-        }
-
-        this->lexer.consume();
-        return true;
-    }
-
-    bool BSQONParser::ensureAndConsumeSymbol(const char* sym)
-    {
-        auto token = this->lexer.current();
-        if(token.tokentype != BSQONTokenType::LiteralSymbol) {
-            return false;
-        }
-
-        if(!this->lexer.current().matches(sym)) {
-            return false;
-        }
-
-        this->lexer.consume();
-        return true;
-    }
-
-    bool BSQONParser::ensureAndConsumeKeyword(const char* kw)
-    {
-        auto token = this->lexer.current();
-        if(token.tokentype != BSQONTokenType::LiteralKeyword) {
-            return false;
-        }
-
-        if(!this->lexer.current().matches(kw)) {
             return false;
         }
 

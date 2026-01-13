@@ -115,6 +115,24 @@ namespace ᐸRuntimeᐳ
 
         bool matches(const char* cchars) const;
         void extract(char* outchars, size_t maxlen) const;
+
+        template<size_t len>
+        bool xmatches(const char (&cchars)[len]) const
+        {
+            if(len != this->size) {
+                return false;
+            }
+
+            BSQLexBufferIterator ii = this->extraction_iterator();
+            for(size_t i = 0; i < len; i++) {
+                if(ii.get() != static_cast<uint8_t>(cchars[i])) {
+                    return false;
+                }
+                ii.next();
+            }
+
+            return true;
+        }
     };
 
     class BSQONLexer

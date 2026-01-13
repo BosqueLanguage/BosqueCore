@@ -905,33 +905,65 @@ class CPPEmitter {
         assert(false, "CPPEmitter: need to implement string type decl emission");
     }
 
-    private emitSomeTypeInfo(ttype: IRSomeTypeDecl): [string, string] {
-        const declusing = `using ${ttype.tkey} = ${RUNTIME_NAMESPACE}::XSome<${this.typeInfoManager.emitTypeAsStd(ttype.ttype.tkeystr)}>;`;
-        const declbsqparse = `std::optional<${ttype.tkey}> BSQ_parse${ttype.tkey}();`;
-        const declbsqemit = `void BSQ_emit${ttype.tkey}(${ttype.tkey} vv);`;
+    private emitSomeTypeInfo(tdecl: IRSomeTypeDecl): [string, string] {
+        const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
 
-        const defbsqparse = xxxx;
-        const defbsqemit = xxxx;
+        const voptttname = TransformCPPNameManager.convertTypeKey(tdecl.ttype.tkeystr);
+        const voptt = this.typeInfoManager.emitTypeAsStd(tdecl.ttype.tkeystr);
+        
+        const declusing = `using ${ctname} = ${RUNTIME_NAMESPACE}::XSome<${voptt}>;`;
+        const decltypeinfo = xxxx;
+        const declbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}();`;
+        const declbsqemit = `void BSQ_emit${ctname}(${ctname}& vv);`;
+
+        const defbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}() { if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.ensureAndConsumeKeyword("some")) { return std::nullopt; } if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.ensureAndConsumeSymbol("(")) { return std::nullopt; } auto vval = ${TransformCPPNameManager.generateNameForConstructor(ctname)}{ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.parse${voptttname}()}; if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.ensureAndConsumeSymbol(")")) { return std::nullopt; } return vval; }`;
+        const defbsqemit = `void BSQ_emit${ctname}(${ctname}& vv) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate("some("); ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emit${voptttname}(vv.value); ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate(")"); }`;
         
         return [
-            [declusing, declbsqparse, declbsqemit].join("\n"),
+            [declusing, decltypeinfo, declbsqparse, declbsqemit].join("\n"),
             [defbsqparse, defbsqemit].join("\n")
         ];
     }
 
-    private emitOkTypeInfo(ttype: IROkTypeDecl): [string, string] {
+    private emitOkTypeInfo(tdecl: IROkTypeDecl): [string, string] {
         assert(false, "CPPEmitter: need to implement ok type decl emission");
     }
 
-    private emitFailTypeInfo(ttype: IRFailTypeDecl): [string, string] {
+    private emitFailTypeInfo(tdecl: IRFailTypeDecl): [string, string] {
         assert(false, "CPPEmitter: need to implement fail type decl emission");
     }
 
-    private emitOptionTypeInfo(ttype: IROptionTypeDecl): [string, string] {
+    private emitOptionTypeInfo(tdecl: IROptionTypeDecl): [string, string] {
+        const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
+
+        const voptttname = TransformCPPNameManager.convertTypeKey(tdecl.ttype.tkeystr);
+        const voptt = this.typeInfoManager.emitTypeAsStd(tdecl.ttype.tkeystr);
+        
+        const declusing = `using ${ctname} = ${RUNTIME_NAMESPACE}::XOption<${voptt}>;`;
+        const decltypeinfo = xxxx;
+        const declbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}();`;
+        const declbsqemit = `void BSQ_emit${ctname}(${ctname}& vv);`;
+
         xxxx;
+        const defbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}() {\n` +
+        `    if(ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.peekTokenType() == ᐸRuntimeᐳ::BSQONTokenType::LiteralNone) { return none; }\n` +
+        `    auto somev = BSQ_parseSome<${voptttname}>();\n` +
+        `    if(!somev.has_value()) { return std::nullopt; }\n` +
+        `    return ${TransformCPPNameManager.generateNameForConstructor(ctname)}::fromSome(xxx, somev);\n` +
+        `}`;
+        
+        const defbsqemit = `void BSQ_emit${ctname}(${ctname}& vv) {\n` +
+        `    if(vv.isNone()) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate("none"); }\n` +
+        `    else { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitSome<${voptttname}>(vv.safe_some()); }\n` +
+        `}`;
+        
+        return [
+            [declusing, decltypeinfo, declbsqparse, declbsqemit].join("\n"),
+            [defbsqparse, defbsqemit].join("\n")
+        ];
     }
 
-    private emitResultTypeInfo(ttype: IRResultTypeDecl): [string, string] {
+    private emitResultTypeInfo(tdecl: IRResultTypeDecl): [string, string] {
         assert(false, "CPPEmitter: need to implement result type decl emission");
     }
 

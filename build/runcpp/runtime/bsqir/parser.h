@@ -25,9 +25,53 @@ namespace ᐸRuntimeᐳ
         bool peekSymbol(char sym);
 
         bool ensureAndConsumeType(const char* tname);
-        bool ensureAndConsumeSymbol(char sym);
-        bool ensureAndConsumeSymbol(const char* sym);
-        bool ensureAndConsumeKeyword(const char* kw);
+        
+        bool ensureAndConsumeSymbol(char sym)
+        {
+            auto token = this->lexer.current();
+            if(!(token.tokentype == BSQONTokenType::LiteralSymbol)) {
+                return false;
+            }
+
+            if(token.extract_single() != sym) {
+                return false;
+            }
+
+            this->lexer.consume();
+            return true;
+        }
+        
+        template<size_t len>
+        bool ensureAndConsumeSymbol(const char (&sym)[len])
+        {
+            auto token = this->lexer.current();
+            if(token.tokentype != BSQONTokenType::LiteralSymbol) {
+                return false;
+            }
+
+            if(!this->lexer.current().xmatches(sym)) {
+                return false;
+            }
+
+            this->lexer.consume();
+            return true;
+        }
+
+        template<size_t len>
+        bool ensureAndConsumeKeyword(const char (&kw)[len])
+        {
+            auto token = this->lexer.current();
+            if(token.tokentype != BSQONTokenType::LiteralKeyword) {
+                return false;
+            }
+
+            if(!this->lexer.current().xmatches(kw)) {
+                return false;
+            }
+
+            this->lexer.consume();
+            return true;
+        }
 
         bool ensureAndConsumeIdentifier(char* outident, size_t maxlen);
 
