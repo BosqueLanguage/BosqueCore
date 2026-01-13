@@ -1,5 +1,5 @@
 
-import { IRAssembly } from "../irdefs/irassembly.js";
+import { IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAssembly, IROptionTypeDecl, IRSomeTypeDecl } from "../irdefs/irassembly.js";
 import { IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature } from "../irdefs/irtype.js";
 import { TransformCPPNameManager } from "./namemgr.js";
 
@@ -24,9 +24,9 @@ class FieldOffsetInfo {
 }
 
 enum LayoutTag {
-    Value = 0,
-    Ref,
-    Tagged
+    Value  = "Value",
+    Ref    = "Ref",
+    Tagged = "Tagged"
 }
 
 class TypeInfo {
@@ -153,6 +153,64 @@ class TypeInfoManager {
         }
     }
 
+    private processInfoGenerationForEntity(tdecl: IRAbstractEntityTypeDecl, irasm: IRAssembly): TypeInfo {
+        if(tdecl instanceof IRSomeTypeDecl) {
+            const oftinfo = this.processInfoGenerationForType(tdecl.ttype, irasm);
+
+            const ttid = this.typeInfoMap.size;
+            if(oftinfo.tag === LayoutTag.Ref) {
+                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, 8, 1, LayoutTag.Value, "1", undefined));
+            }
+            else {
+                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, oftinfo.bytesize, oftinfo.slotcount, oftinfo.tag, oftinfo.ptrmask, undefined));
+            }
+            
+            return this.getTypeInfo(tdecl.tkey);
+        }
+        else {
+            assert(false, `TypeInfoManager::processInfoGenerationForEntity - Unsupported entity type declaration for key ${tdecl.tkey}`);
+        }
+    }
+
+    private processInfoGenerationForConcept(tdecl: IRAbstractEntityTypeDecl, irasm: IRAssembly): TypeInfo {
+        if(tdecl instanceof IROptionTypeDecl) {
+            const oftinfo = this.processInfoGenerationForType(tdecl.ttype, irasm);
+
+            const ttid = this.typeInfoMap.size;
+            if(oftinfo.tag === LayoutTag.Ref) {
+                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, 16, 2, LayoutTag.Tagged, "20", undefined));
+            }
+            else {
+                let spm = "2" + Array(oftinfo.slotcount).fill("0").join("");
+                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, oftinfo.bytesize + 8, oftinfo.slotcount + 1, LayoutTag.Tagged, spm, undefined));
+            }
+            
+            return this.getTypeInfo(tdecl.tkey);
+        }
+        else {
+            assert(false, `TypeInfoManager::processInfoGenerationForConcept - Unsupported concept type declaration for key ${tdecl.tkey}`);
+        }
+    }
+
+    private processInfoGenerationForType(ttype: IRTypeSignature, irasm: IRAssembly): TypeInfo {
+        if(this.hasTypeInfo(ttype.tkeystr)) {
+            return this.getTypeInfo(ttype.tkeystr);
+        }
+
+        if(ttype instanceof IRNominalTypeSignature) {
+            const ddecl = irasm.alltypes.get(ttype.tkeystr) as IRAbstractNominalTypeDecl;
+            if(ddecl instanceof IRAbstractEntityTypeDecl) {
+                return this.processInfoGenerationForEntity(ddecl, irasm);
+            }
+            else {
+                return this.processInfoGenerationForConcept(ddecl, irasm);
+            }
+        }
+        else {
+            assert(false, `TypeInfoManager::processInfoGenerationForType - Unsupported type signature for key ${ttype.tkeystr}`);
+        }
+    }
+
     static generateTypeInfos(irasm: IRAssembly): TypeInfoManager {
         const timgr = new TypeInfoManager();
 
@@ -217,7 +275,21 @@ class TypeInfoManager {
             timgr.addTypeInfo(tdecl.tkey, typedtd);
         }
 
-        //Now handle entities with a recursive walk  
+        //Now handle entities with a recursive walk
+        irasm.constructables.forEach((tdecl) => timgr.processInfoGenerationForEntity(tdecl, irasm));
+        irasm.collections.forEach((tdecl) => timgr.processInfoGenerationForEntity(tdecl, irasm));
+        irasm.eventlists.forEach((tdecl) => timgr.processInfoGenerationForEntity(tdecl, irasm));
+        irasm.entities.forEach((tdecl) => timgr.processInfoGenerationForEntity(tdecl, irasm));
+        irasm.datamembers.forEach((tdecl) => timgr.processInfoGenerationForEntity(tdecl, irasm));
+
+        irasm.pconcepts.forEach((cdecl) => timgr.processInfoGenerationForConcept(cdecl, irasm));
+        irasm.concepts.forEach((cdecl) => timgr.processInfoGenerationForConcept(cdecl, irasm));
+        irasm.datatypes.forEach((cdecl) => timgr.processInfoGenerationForConcept(cdecl, irasm));
+
+        irasm.elists.forEach((ttype) => timgr.processInfoGenerationForType(ttype, irasm));
+        irasm.dashtypes.forEach((ttype) => timgr.processInfoGenerationForType(ttype, irasm));
+        irasm.formats.forEach((ttype) => timgr.processInfoGenerationForType(ttype, irasm));
+        irasm.lpacks.forEach((ttype) => timgr.processInfoGenerationForType(ttype, irasm));
 
         return timgr;
     }
