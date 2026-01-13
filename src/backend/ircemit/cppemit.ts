@@ -2,8 +2,8 @@ import { TransformCPPNameManager } from "./namemgr.js";
 import { TypeInfoManager } from "./typeinfomgr.js";
 
 import { MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_INT } from "../../frontend/assembly.js";
-import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag, IRPrefixNotOpExpression, IRPrefixPlusOpExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRReturnValueSimpleStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement, IRAbortStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRTempAssignExpressionStatement, IRTypeDeclInvariantCheckStatement, IRDebugStatement, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRChkLogicImpliesShortCircuitStatement, IRPreconditionCheckStatement, IRPostconditionCheckStatement, IRVariableInitializationDirectInvokeStatement, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRAssertStatement, IRValidateStatement, IRBody, IRBuiltinBody, IRStandardBody, IRHoleBody, IRIsNoneOptionExpression, IRBinKeyEqDirectExpression, IRIsOptionEqValueExpression, IRIsSomeNeqValueExpression, IRIsOptionNeqValueExpression, IRIsSomeEqValueExpression } from "../irdefs/irbody.js";
-import { IRAbstractNominalTypeDecl, IRAssembly, IRConstantDecl, IREnumTypeDecl, IRInvariantDecl, IRInvokeDecl, IRInvokeParameterDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl, IRValidateDecl } from "../irdefs/irassembly.js";
+import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag, IRPrefixNotOpExpression, IRPrefixPlusOpExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRReturnValueSimpleStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement, IRAbortStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRTempAssignExpressionStatement, IRTypeDeclInvariantCheckStatement, IRDebugStatement, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRChkLogicImpliesShortCircuitStatement, IRPreconditionCheckStatement, IRPostconditionCheckStatement, IRVariableInitializationDirectInvokeStatement, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRAssertStatement, IRValidateStatement, IRBody, IRBuiltinBody, IRStandardBody, IRHoleBody, IRIsNoneOptionExpression, IRBinKeyEqDirectExpression, IRIsOptionEqValueExpression, IRIsSomeNeqValueExpression, IRIsOptionNeqValueExpression, IRIsSomeEqValueExpression, IRConstructorSomeTypeExpression } from "../irdefs/irbody.js";
+import { IRAbstractNominalTypeDecl, IRAssembly, IRConstantDecl, IREnumTypeDecl, IRFailTypeDecl, IRInvariantDecl, IRInvokeDecl, IRInvokeParameterDecl, IRMapEntryTypeDecl, IROkTypeDecl, IROptionTypeDecl, IRResultTypeDecl, IRSomeTypeDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl, IRValidateDecl } from "../irdefs/irassembly.js";
 
 import assert from "node:assert";
 import { IRTypeSignature } from "../irdefs/irtype.js";
@@ -324,6 +324,19 @@ class CPPEmitter {
                 const cexp = exps as IRConstructSafeTypeDeclExpression;
                 bstr = `${TransformCPPNameManager.generateNameForConstructor(cexp.constype.tkeystr)}{${this.emitIRSimpleExpression(cexp.value, toplevel)}}`;
             }
+            else if(ttag === IRExpressionTag.IRConstructorSomeTypeExpression) {
+                const cexp = exps as IRConstructorSomeTypeExpression;
+                bstr = `${TransformCPPNameManager.generateNameForConstructor(cexp.oftype.tkeystr)}{${this.emitIRSimpleExpression(cexp.value, false)}}`;
+            }
+            else if(ttag === IRExpressionTag.IRConstructorOkTypeExpression) {
+                assert(false, "CPPEmitter: need to implement ok type expression emission");
+            }
+            else if(ttag === IRExpressionTag.IRConstructorFailTypeExpression) {
+                assert(false, "CPPEmitter: need to implement fail type expression emission");
+            }
+            else if(ttag === IRExpressionTag.IRConstructorMapEntryTypeExpression) {
+                assert(false, "CPPEmitter: need to implement map entry type expression emission");
+            }
             else if(ttag === IRExpressionTag.IRPrefixNotOpExpression) {
                 bstr = `!${this.emitIRSimpleExpression((exps as IRPrefixNotOpExpression).exp, false)}`;
             }
@@ -575,6 +588,18 @@ class CPPEmitter {
         else if(ttag === IRStatementTag.IRErrorDivisionByZeroCheckStatement) {
             const iedzbc = stmt as IRErrorDivisionByZeroCheckStatement;
             return `${RUNTIME_NAMESPACE}::X${iedzbc.optypechk}::checkDivisionByZero(${this.emitIRSimpleExpression(iedzbc.right, true)}, "${iedzbc.file}", ${iedzbc.sinfo.line});`;
+        }
+        else if(ttag === IRStatementTag.IRTypeDeclSizeRangeCheckCStringStatement) {
+            assert(false, "CPPEmitter: need to implement type declaration size range check for cstring");
+        }
+        else if(ttag === IRStatementTag.IRTypeDeclSizeRangeCheckUnicodeStringStatement) {
+            assert(false, "CPPEmitter: need to implement type declaration size range check for unicode string");
+        }
+        else if(ttag === IRStatementTag.IRTypeDeclFormatCheckCStringStatement) {
+            assert(false, "CPPEmitter: need to implement type declaration format check for cstring");
+        }
+        else if(ttag === IRStatementTag.IRTypeDeclFormatCheckUnicodeStringStatement) {
+            assert(false, "CPPEmitter: need to implement type declaration format check for unicode string");
         }
         else if(ttag === IRStatementTag.IRTypeDeclInvariantCheckStatement) {
             const itdics = stmt as IRTypeDeclInvariantCheckStatement;
@@ -880,6 +905,36 @@ class CPPEmitter {
         assert(false, "CPPEmitter: need to implement string type decl emission");
     }
 
+    private emitSomeTypeInfo(ttype: IRSomeTypeDecl): [string, string] {
+        const declusing = `using ${ttype.tkey} = ${RUNTIME_NAMESPACE}::XSome<${this.typeInfoManager.emitTypeAsStd(ttype.ttype.tkeystr)}>;`;
+        const declbsqparse = `std::optional<${ttype.tkey}> BSQ_parse${ttype.tkey}();`;
+        const declbsqemit = `void BSQ_emit${ttype.tkey}(${ttype.tkey} vv);`;
+
+        const defbsqparse = xxxx;
+        const defbsqemit = xxxx;
+        
+        return [
+            [declusing, declbsqparse, declbsqemit].join("\n"),
+            [defbsqparse, defbsqemit].join("\n")
+        ];
+    }
+
+    private emitOkTypeInfo(ttype: IROkTypeDecl): [string, string] {
+        assert(false, "CPPEmitter: need to implement ok type decl emission");
+    }
+
+    private emitFailTypeInfo(ttype: IRFailTypeDecl): [string, string] {
+        assert(false, "CPPEmitter: need to implement fail type decl emission");
+    }
+
+    private emitOptionTypeInfo(ttype: IROptionTypeDecl): [string, string] {
+        xxxx;
+    }
+
+    private emitResultTypeInfo(ttype: IRResultTypeDecl): [string, string] {
+        assert(false, "CPPEmitter: need to implement result type decl emission");
+    }
+
     //Emit the type declarations needed for the .h file
     private emitTypeDeclInfo(): [string, string] {
         const pdecls = "//Primitive decls\n\n" + this.irasm.primitives.map((pdecl) => {
@@ -902,9 +957,39 @@ class CPPEmitter {
         const cstringdd = this.irasm.cstringoftypedecls.map((tcstr) => this.emitCStringTypeDeclInfo(tcstr));
         const stringdd = this.irasm.stringoftypedecls.map((tstr) => this.emitStringTypeDeclInfo(tstr));
 
+        const consdd = this.irasm.constructables.map((ctype) => {
+            if(ctype instanceof IRSomeTypeDecl) {
+                return this.emitSomeTypeInfo(ctype);
+            }
+            else if(ctype instanceof IROkTypeDecl) {
+                return this.emitOkTypeInfo(ctype);
+            }
+            else if(ctype instanceof IRFailTypeDecl) {
+                return this.emitFailTypeInfo(ctype);
+            }
+            else if(ctype instanceof IRMapEntryTypeDecl) {
+                assert(false, "CPPEmitter: need to implement map entry type decl emission");
+            }
+            else {
+                assert(false, "CPPEmitter: unknown constructable type decl emission");
+            }
+        });
+
+        const primitivecptdd = this.irasm.pconcepts.map((pct) => {
+            if(pct instanceof IROptionTypeDecl) {
+                return this.emitOptionTypeInfo(pct);
+            }
+            else if(pct instanceof IRResultTypeDecl) {
+                return this.emitResultTypeInfo(pct);
+            }
+            else {
+                assert(false, "CPPEmitter: unknown primitive concept type decl emission");
+            }
+        });
+
         return [
-            [pdecls, ...enumdd.map((tt) => tt[0]), ...gtddd.map((tt) => tt[0]), ...cstringdd.map((tt) => tt[0]), ...stringdd.map((tt) => tt[0])].join("\n\n"),
-            [pdefs, ...enumdd.map((tt) => tt[1]), ...gtddd.map((tt) => tt[1]), ...cstringdd.map((tt) => tt[1]), ...stringdd.map((tt) => tt[1])].join("\n\n")
+            [pdecls, ...enumdd.map((tt) => tt[0]), ...gtddd.map((tt) => tt[0]), ...cstringdd.map((tt) => tt[0]), ...stringdd.map((tt) => tt[0]), ...consdd.map((tt) => tt[0]), ...primitivecptdd.map((tt) => tt[0])].join("\n\n"),
+            [pdefs, ...enumdd.map((tt) => tt[1]), ...gtddd.map((tt) => tt[1]), ...cstringdd.map((tt) => tt[1]), ...stringdd.map((tt) => tt[1]), ...consdd.map((tt) => tt[1]), ...primitivecptdd.map((tt) => tt[1])].join("\n\n")
         ];
     }
 
