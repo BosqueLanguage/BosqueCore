@@ -6,7 +6,6 @@
 #include <condition_variable>
 #include <thread>
 #include <chrono>
-#include <atomic>
 
 #ifndef MEM_STATS
 #include <iostream>
@@ -68,7 +67,7 @@ struct DecsProcessor {
         Stopping,
         Stopped
     };
-    std::atomic<State> st;
+    State st;
 
     DecsProcessor(): mtx(), cv(), thd(), processDecfp(nullptr), pending(), st(State::Paused) {}
 
@@ -81,13 +80,13 @@ struct DecsProcessor {
 
     void changeStateFromMain(State nst, State ack)
     {
+        std::unique_lock lk(this->mtx);
         this->st = nst;
         this->cv.notify_one();
-        std::unique_lock lk(this->mtx);
         this->cv.wait(lk, [this, ack]{ return this->st == ack; });
     }
 
-    void changeStateFromWorker(State nst, std::unique_lock<std::mutex>& lk)
+    void changeStateFromWorker(State nst)
     {
         this->st = nst;
         this->cv.notify_one();
@@ -95,15 +94,19 @@ struct DecsProcessor {
 
     void pause()
     {
-        if(this->st == State::Paused) {
-            return ;
-        }
+		{
+			std::unique_lock lk(this->mtx);	
+			if(this->st == State::Paused) {
+				return ;
+			}
+		}
         
         this->changeStateFromMain(State::Pausing, State::Paused);
     }
 
     void resume()
     {
+		std::unique_lock lk(this->mtx);
         this->st = State::Running;
         this->cv.notify_one();
     }
@@ -131,17 +134,20 @@ struct DecsProcessor {
             );
 
             if(this->st == State::Stopping) {
-                this->changeStateFromWorker(State::Stopped, lk);
+                this->changeStateFromWorker(State::Stopped);
                 return ;
             }
 
             while(!this->pending.isEmpty()) {
-                if(this->st != State::Running) break;
+                if(this->st != State::Running) {
+					break;
+				}
+
                 void* obj = this->pending.pop_front();
                 this->processDecfp(obj, *tinfo);
             }
             
-            this->changeStateFromWorker(State::Paused, lk);
+            this->changeStateFromWorker(State::Paused);
         }
     }
 };
@@ -183,6 +189,7 @@ struct BSQMemoryTheadLocalInfo
 
     ArrayList<void*> pending_young; //the list of young objects that need to be processed
 
+	size_t bytes_freed; // Number of bytes freed within a collection
     size_t max_decrement_count;
 
     uint8_t g_gcallocs_lookuptable[MAX_ALLOC_LOOKUP_TABLE_SIZE] = {};
@@ -201,7 +208,7 @@ struct BSQMemoryTheadLocalInfo
         native_register_contents(), roots_count(0), roots(nullptr), old_roots_count(0), 
         old_roots(nullptr), forward_table_index(FWD_TABLE_START), forward_table(nullptr), 
         decs(), decs_batch(), decd_pages_idx(0), decd_pages(), pending_roots(), 
-        visit_stack(), pending_young(), max_decrement_count(BSQ_INITIAL_MAX_DECREMENT_COUNT) { }
+        visit_stack(), pending_young(), bytes_freed(0), max_decrement_count(0) { }
     BSQMemoryTheadLocalInfo& operator=(BSQMemoryTheadLocalInfo&) = delete;
     BSQMemoryTheadLocalInfo(BSQMemoryTheadLocalInfo&) = delete;
 

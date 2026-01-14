@@ -27,6 +27,7 @@
 //Memory allocator
 
 class PageList;
+class BSQMemoryTheadLocalInfo;
 
 //global storage for constant data (and testing support)
 //  -- Only a single thread may run while initializing the global roots as they are visible to all threads
@@ -84,7 +85,7 @@ public:
 
     static PageInfo* initialize(void* block, uint16_t allocsize, uint16_t realsize) noexcept;
 
-    void rebuild() noexcept;
+    size_t rebuild() noexcept;
 
     static inline PageInfo* extractPageFromPointer(void* p) noexcept {
         return (PageInfo*)((uintptr_t)(p) & PAGE_ADDR_MASK);
@@ -507,7 +508,7 @@ public:
     void processPage(PageInfo* p) noexcept;
 
     //process all the pending gc pages, the current alloc page, and evac page -- reset for next round
-    void processCollectorPages() noexcept;
+    void processCollectorPages(BSQMemoryTheadLocalInfo* tinfo) noexcept;
 
     //May call collection, insert full alloc page in pending gc pages, get new page
     //To avoid clogging up fast path allocation we initialize high32_typeptr here if needed
