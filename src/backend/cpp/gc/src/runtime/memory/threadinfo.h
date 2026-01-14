@@ -6,7 +6,6 @@
 #include <condition_variable>
 #include <thread>
 #include <chrono>
-#include <atomic>
 
 #ifndef MEM_STATS
 #include <iostream>
@@ -68,7 +67,7 @@ struct DecsProcessor {
         Stopping,
         Stopped
     };
-    std::atomic<State> st;
+    State st;
 
     DecsProcessor(): mtx(), cv(), thd(), processDecfp(nullptr), pending(), st(State::Paused) {}
 
@@ -81,13 +80,13 @@ struct DecsProcessor {
 
     void changeStateFromMain(State nst, State ack)
     {
+        std::unique_lock lk(this->mtx);
         this->st = nst;
         this->cv.notify_one();
-        std::unique_lock lk(this->mtx);
         this->cv.wait(lk, [this, ack]{ return this->st == ack; });
     }
 
-    void changeStateFromWorker(State nst, std::unique_lock<std::mutex>& lk)
+    void changeStateFromWorker(State nst)
     {
         this->st = nst;
         this->cv.notify_one();
@@ -95,15 +94,19 @@ struct DecsProcessor {
 
     void pause()
     {
-        if(this->st == State::Paused) {
-            return ;
-        }
+		{
+			std::unique_lock lk(this->mtx);	
+			if(this->st == State::Paused) {
+				return ;
+			}
+		}
         
         this->changeStateFromMain(State::Pausing, State::Paused);
     }
 
     void resume()
     {
+		std::unique_lock lk(this->mtx);
         this->st = State::Running;
         this->cv.notify_one();
     }
@@ -131,17 +134,20 @@ struct DecsProcessor {
             );
 
             if(this->st == State::Stopping) {
-                this->changeStateFromWorker(State::Stopped, lk);
+                this->changeStateFromWorker(State::Stopped);
                 return ;
             }
 
             while(!this->pending.isEmpty()) {
-                if(this->st != State::Running) break;
+                if(this->st != State::Running) {
+					break;
+				}
+
                 void* obj = this->pending.pop_front();
                 this->processDecfp(obj, *tinfo);
             }
             
-            this->changeStateFromWorker(State::Paused, lk);
+            this->changeStateFromWorker(State::Paused);
         }
     }
 };
