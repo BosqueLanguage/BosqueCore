@@ -38,12 +38,14 @@ PageInfo* PageInfo::initialize(void* block, uint16_t allocsize, uint16_t realsiz
     return pp;
 }
 
-void PageInfo::rebuild() noexcept
+size_t PageInfo::rebuild() noexcept
 {
+	uint16_t pfree = this->freecount;
+
     this->freelist = nullptr;
     this->freecount = 0;
     this->seen = false;
-
+ 
     for(int64_t i = this->entrycount - 1; i >= 0; i--) {
         MetaData* meta = this->getMetaEntryAtIndex(i);
 
@@ -57,8 +59,10 @@ void PageInfo::rebuild() noexcept
             this->freecount++;
         }
     }
-
     this->approx_utilization = CALC_APPROX_UTILIZATION(this);
+	
+	size_t freed = (this->freecount - pfree) * this->allocsize;
+	return freed;
 }
 
 GlobalPageGCManager GlobalPageGCManager::g_gc_page_manager;
@@ -111,10 +115,10 @@ void GCAllocator::processPage(PageInfo* p) noexcept
     this->filled_pages.push(p);
 }
 
-void GCAllocator::processCollectorPages() noexcept
+void GCAllocator::processCollectorPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
 {
     if(this->alloc_page != nullptr) {
-        this->alloc_page->rebuild();
+        tinfo->bytes_freed += this->alloc_page->rebuild();
         this->processPage(this->alloc_page);
 
         this->alloc_page = nullptr;
@@ -122,7 +126,7 @@ void GCAllocator::processCollectorPages() noexcept
     }
     
     if(this->evac_page != nullptr) {
-        this->evac_page->rebuild();
+        tinfo->bytes_freed += this->evac_page->rebuild();
         this->processPage(this->evac_page);
 
         this->evac_page = nullptr;
@@ -131,7 +135,7 @@ void GCAllocator::processCollectorPages() noexcept
 
     while(!this->pendinggc_pages.empty()) {
         PageInfo* p = this->pendinggc_pages.pop();
-        p->rebuild();
+        tinfo->bytes_freed += p->rebuild();
         this->processPage(p);
     }
 }

@@ -18,6 +18,10 @@ static void walkPointerMaskForMarking(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::
 
 static void reprocessPageInfo(PageInfo* page, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
+	// Was already rebuilt in processCollectorPages()
+	if(!page->seen) {
+		return ;
+	}
     // This should not be called on pages that are (1) active allocators or evacuators or (2) pending collection pages
     GCAllocator* gcalloc = tinfo.getAllocatorForPageSize(page);
     PageInfo* npage = gcalloc->tryRemovePage(page);
@@ -516,31 +520,37 @@ static void markingWalk(BSQMemoryTheadLocalInfo& tinfo) noexcept
     gtl_info.pending_roots.clear();
 }
 
-static void processAllocatorsPages()
+static void processAllocatorsPages(BSQMemoryTheadLocalInfo& tinfo)
 {
     UPDATE_TOTAL_LIVE_BYTES(=, 0);
     for(size_t i = 0; i < BSQ_MAX_ALLOC_SLOTS; i++) {
-        GCAllocator* alloc = gtl_info.g_gcallocs[i];
+        GCAllocator* alloc = tinfo.g_gcallocs[i];
         if(alloc != nullptr) {
-            alloc->processCollectorPages();
+            alloc->processCollectorPages(&tinfo);
         }
     }
 }
 
-static void updateRoots()
+static inline void computeMaxDecrementCount(BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
-    xmem_zerofill(gtl_info.old_roots, gtl_info.old_roots_count);
-    gtl_info.old_roots_count = 0;
+	tinfo.max_decrement_count = BSQ_INITIAL_MAX_DECREMENT_COUNT - (tinfo.bytes_freed / BSQ_MEM_ALIGNMENT);
+	tinfo.bytes_freed = 0;
+}
+
+static void updateRoots(BSQMemoryTheadLocalInfo& tinfo)
+{
+    xmem_zerofill(tinfo.old_roots, tinfo.old_roots_count);
+    tinfo.old_roots_count = 0;
 
     for(int32_t i = 0; i < gtl_info.roots_count; i++) {
-        GC_CLEAR_ROOT_MARK(GC_GET_META_DATA_ADDR(gtl_info.roots[i]));
-        GC_CLEAR_YOUNG_MARK(GC_GET_META_DATA_ADDR(gtl_info.roots[i]));
+        GC_CLEAR_ROOT_MARK(GC_GET_META_DATA_ADDR(tinfo.roots[i]));
+        GC_CLEAR_YOUNG_MARK(GC_GET_META_DATA_ADDR(tinfo.roots[i]));
 
-        gtl_info.old_roots[gtl_info.old_roots_count++] = gtl_info.roots[i];
+        tinfo.old_roots[tinfo.old_roots_count++] = tinfo.roots[i];
     }
 
-    xmem_zerofill(gtl_info.roots, gtl_info.roots_count);
-    gtl_info.roots_count = 0;
+    xmem_zerofill(tinfo.roots, tinfo.roots_count);
+    tinfo.roots_count = 0;
 }
 
 void collect() noexcept
@@ -553,10 +563,12 @@ void collect() noexcept
 
     NURSERY_STATS_START();
 
+	// Mark, compact, reprocess pages
     markingWalk(gtl_info);
     processMarkedYoungObjects(gtl_info);
-
-    NURSERY_STATS_END(nursery_times);
+    processAllocatorsPages(gtl_info);
+    
+	NURSERY_STATS_END(nursery_times);
 
     gtl_info.pending_young.clear();
 
@@ -566,7 +578,12 @@ void collect() noexcept
     RC_STATS_START();
 
     gtl_info.decs_batch.initialize();
-    
+
+	computeMaxDecrementCount(gtl_info);
+
+	// Find dead roots, walk object graph from dead roots updating necessary rcs
+	// rebuild pages who saw decs (TODO do this lazily), and merge remainder of decs
+	// (TODO use a single shared list)    
     computeDeadRootsForDecrement(gtl_info);
     processDecrements(gtl_info);
     tryReprocessDecrementedPages(gtl_info);
@@ -577,8 +594,7 @@ void collect() noexcept
     gtl_info.decs_batch.clear();
 
     // Cleanup for next collection
-    processAllocatorsPages();
-    updateRoots();
+    updateRoots(gtl_info);
 
     COLLECTION_STATS_END(collection_times);
 
