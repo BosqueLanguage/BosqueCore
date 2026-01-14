@@ -3,26 +3,19 @@
 #include "../common.h"
 
 #include "bsqtype.h"
+#include "bools.h"
 
 namespace ᐸRuntimeᐳ 
 {
     class XFloat
     {
     public:
+        double value;
+
         inline constexpr static bool isValidFloat(double v)
         {
             return std::isfinite(v);
         }
-
-    private:
-        double value;
-
-    public:
-        constexpr XFloat() : value(0) {}
-        constexpr XFloat(double v) : value(v) {}
-        constexpr XFloat(const XFloat& other) = default;
-
-        inline constexpr double getValue() const { return this->value; }
 
         // Check operators on Float
         inline static void checkOverflowAddition(XFloat n1, XFloat n2, const char* file, uint32_t line)
@@ -45,33 +38,36 @@ namespace ᐸRuntimeᐳ
         // Overloaded operators on Float
         constexpr XFloat operator+() const
         {
-            return XFloat(this->value);
+            return XFloat{this->value};
         }
-        // Negation is not defined for Nat
+        constexpr XFloat operator-() const
+        {
+            return XFloat{-this->value};
+        }
 
         friend constexpr XFloat operator+(XFloat lhs, XFloat rhs)
         {
-            return XFloat(lhs.value + rhs.value);
+            return XFloat{lhs.value + rhs.value};
         }
         friend constexpr XFloat operator-(XFloat lhs, XFloat rhs)
         {
-            return XFloat(lhs.value - rhs.value);
+            return XFloat{lhs.value - rhs.value};
         }
         friend constexpr XFloat operator/(XFloat lhs, XFloat rhs)
         {
-           return XFloat(lhs.value / rhs.value);
+           return XFloat{lhs.value / rhs.value};
         }
         friend constexpr XFloat operator*(XFloat lhs, XFloat rhs)
         {
-            return XFloat(lhs.value * rhs.value);
+            return XFloat{lhs.value * rhs.value};
         }
 
-        friend constexpr bool operator<(const XFloat &lhs, const XFloat &rhs) { return lhs.value < rhs.value; }
-        friend constexpr bool operator==(const XFloat &lhs, const XFloat &rhs) { return lhs.value == rhs.value; }
-        friend constexpr bool operator>(const XFloat &lhs, const XFloat &rhs) { return rhs.value < lhs.value; }
-        friend constexpr bool operator!=(const XFloat &lhs, const XFloat &rhs) { return !(lhs.value == rhs.value); }
-        friend constexpr bool operator<=(const XFloat &lhs, const XFloat &rhs) { return !(lhs.value > rhs.value); }
-        friend constexpr bool operator>=(const XFloat &lhs, const XFloat &rhs) { return !(lhs.value < rhs.value); }
+        friend constexpr XBool operator<(const XFloat &lhs, const XFloat &rhs) { return XBool::from(lhs.value < rhs.value); }
+        friend constexpr XBool operator==(const XFloat &lhs, const XFloat &rhs) { return XBool::from(lhs.value == rhs.value); }
+        friend constexpr XBool operator>(const XFloat &lhs, const XFloat &rhs) { return XBool::from(rhs.value < lhs.value); }
+        friend constexpr XBool operator!=(const XFloat &lhs, const XFloat &rhs) { return XBool::from(!(lhs.value == rhs.value)); }
+        friend constexpr XBool operator<=(const XFloat &lhs, const XFloat &rhs) { return XBool::from(!(lhs.value > rhs.value)); }
+        friend constexpr XBool operator>=(const XFloat &lhs, const XFloat &rhs) { return XBool::from(!(lhs.value < rhs.value)); }
     };
 
     constexpr TypeInfo g_typeinfo_Float = {

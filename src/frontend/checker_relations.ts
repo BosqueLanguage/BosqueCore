@@ -1116,26 +1116,6 @@ class TypeCheckerRelations {
         return {invariants: allinvariants, validators: allvalidators};
     }
 
-    hasChecksOnTypeDeclaredValidation(ttype: NominalTypeSignature, tconstrain: TemplateConstraintScope): boolean {
-        if((ttype.decl as TypedeclTypeDecl).optofexp !== undefined || ttype.decl.validates.length !== 0 || ttype.decl.invariants.length !== 0) {
-            return true;
-        }
-
-        const rchks = (ttype.decl as TypedeclTypeDecl).optofexp !== undefined;
-        const ichecks = this.resolveAllTypeDeclaredValidatorDecls(ttype, tconstrain);
-        return rchks || ichecks.invariants.length !== 0 || ichecks.validators.length !== 0;
-    }
-
-    hasChecksOnTypeDeclaredConstructor(ttype: NominalTypeSignature, tconstrain: TemplateConstraintScope, isliteralcons: boolean): boolean {
-        if((!isliteralcons && (ttype.decl as TypedeclTypeDecl).optofexp !== undefined) || ttype.decl.validates.length !== 0 || ttype.decl.invariants.length !== 0) {
-            return true;
-        }
-
-        const rchks = !isliteralcons && (ttype.decl as TypedeclTypeDecl).optofexp !== undefined;
-        const ichecks = this.resolveAllTypeDeclaredValidatorDecls(ttype, tconstrain);
-        return rchks || ichecks.invariants.length !== 0;
-    }
-
     convertTypeSignatureToTypeInferCtx(tsig: TypeSignature): TypeInferContext {
         if(!(tsig instanceof EListTypeSignature)) {
             return new SimpleTypeInferContext(tsig);

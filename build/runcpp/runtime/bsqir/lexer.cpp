@@ -4,10 +4,39 @@ namespace ᐸRuntimeᐳ
 {
     using REState = uint8_t[32];
 
+    bool BSQONToken::matches(const char* cchars) const
+    {
+        size_t len = std::strlen(cchars);
+        if(len != this->size) {
+            return false;
+        }
+
+        BSQLexBufferIterator ii = this->extraction_iterator();
+        for(size_t i = 0; i < len; i++) {
+            if(ii.get() != static_cast<uint8_t>(cchars[i])) {
+                return false;
+            }
+            ii.next();
+        }
+
+        return true;
+    }
+        
+    void BSQONToken::extract(char* outchars, size_t maxlen) const
+    {
+        assert(maxlen > this->size);
+
+        BSQLexBufferIterator ii = this->extraction_iterator();
+        for(size_t i = 0; i < this->size; i++) {
+            outchars[i] = (char)ii.get();
+            ii.next();
+        }
+    }
+
     void BSQONLexer::initialize(std::list<uint8_t*>&& iobuffs, size_t totalbytes)
     {
         this->iobuffs = std::move(iobuffs);
-        this->iter.initialize(this->iobuffs.begin(), totalbytes);
+        this->iter = BSQLexBufferIterator(this->iobuffs.begin(), totalbytes);
         this->ctoken.clear();
 
         //now "consume" the invalid token to get the first token
@@ -21,7 +50,7 @@ namespace ᐸRuntimeᐳ
         }
 
         this->iobuffs.clear();
-        this->iter.clear(this->iobuffs.end());
+        this->iter.reset();
         this->ctoken.clear();
     }
 
@@ -47,8 +76,7 @@ namespace ᐸRuntimeᐳ
     bool BSQONLexer::tryLexNone()
     {
         if(BSQONLexer::testchars(this->iter, "none")) {
-            this->ctoken.tokentype = BSQONTokenType::LiteralNone;
-            this->iter.advanceWithExtract(this->ctoken.startindex, this->ctoken.endindex, this->ctoken.scvalue, 4);
+            this->advanceToken(BSQONTokenType::LiteralNone, sizeof("none") - 1);
             return true;
         }
 
@@ -58,13 +86,11 @@ namespace ᐸRuntimeᐳ
     bool BSQONLexer::tryLexBool()
     {
         if(BSQONLexer::testchars(this->iter, "true")) {
-            this->ctoken.tokentype = BSQONTokenType::LiteralTrue;
-            this->iter.advanceWithExtract(this->ctoken.startindex, this->ctoken.endindex, this->ctoken.scvalue, 4);
+            this->advanceToken(BSQONTokenType::LiteralTrue, sizeof("true") - 1);
             return true;
         }
         else if(BSQONLexer::testchars(this->iter, "false")) {
-            this->ctoken.tokentype = BSQONTokenType::LiteralFalse;
-            this->iter.advanceWithExtract(this->ctoken.startindex, this->ctoken.endindex, this->ctoken.scvalue, 5);
+            this->advanceToken(BSQONTokenType::LiteralFalse, sizeof("false") - 1);
             return true;
         }
 
@@ -146,15 +172,14 @@ namespace ᐸRuntimeᐳ
 
             std::memcpy(states, next, sizeof(REState));
             if(next[STATE_ACCEPT]) {
-                endidx = ii.getIndex() + 1;
+                endidx = ii.getIndex();
             }
 
             ii.next();
         }
 
         if(endidx != std::numeric_limits<size_t>::max()) {
-            this->ctoken.tokentype = ltoken;
-            this->iter.advanceWithExtract(this->ctoken.startindex, this->ctoken.endindex, this->ctoken.scvalue, endidx - startidx);
+            this->advanceToken(ltoken, endidx - startidx);
             return true;
         }
 
@@ -173,9 +198,8 @@ namespace ᐸRuntimeᐳ
     
     bool BSQONLexer::tryLexChkNat()
     {
-        if(this->testchar(this->iter, '#')) {
-            this->ctoken.tokentype = BSQONTokenType::LiteralChkNat;
-            this->iter.advanceWithExtract(this->ctoken.startindex, this->ctoken.endindex, this->ctoken.scvalue, 1);
+        if(this->testchars(this->iter, "ChkNat::npos")) {
+            this->advanceToken(BSQONTokenType::LiteralChkNat, strlen("ChkNat::npos"));
             return true;
         }
 
@@ -184,13 +208,141 @@ namespace ᐸRuntimeᐳ
 
     bool BSQONLexer::tryLexChkInt()
     {
-        if(this->testchar(this->iter, '#')) {
-            this->ctoken.tokentype = BSQONTokenType::LiteralChkInt;
-            this->iter.advanceWithExtract(this->ctoken.startindex, this->ctoken.endindex, this->ctoken.scvalue, 1);
+        if(this->testchars(this->iter, "ChkInt::npos")) {
+            this->advanceToken(BSQONTokenType::LiteralChkInt, strlen("ChkInt::npos"));
             return true;
         }
 
         return this->lexIntegralHelper(true, 'I', BSQONTokenType::LiteralChkInt);
+    }
+
+    bool BSQONLexer::tryLexCString()
+    {
+        if(!this->iter.valid() || this->iter.get() != '\'') {
+            return false;
+        }
+
+        std::list<uint8_t*>::const_iterator startbuff = this->iter.iobuffs;
+        size_t startcindex = this->iter.cindex;
+        size_t startidx = this->iter.gindex;
+
+        this->iter.next(); //eat opening quote
+        while(this->iter.valid() && this->iter.get() != '\'') {
+            this->iter.next();
+        }
+
+        if(!this->iter.valid()) {
+            this->ctoken = {BSQONTokenType::ErrorToken, startbuff, startcindex, startidx, this->iter.gindex - startidx};
+        }
+        else {
+            this->iter.next(); //eat closing quote
+            this->ctoken = {BSQONTokenType::LiteralCString, startbuff, startcindex, startidx, this->iter.gindex - startidx};
+        }
+        
+        return true;
+    }
+        
+    bool BSQONLexer::tryLexString()
+    {
+        if(!this->iter.valid() || this->iter.get() != '\"') {
+            return false;
+        }
+
+        std::list<uint8_t*>::const_iterator startbuff = this->iter.iobuffs;
+        size_t startcindex = this->iter.cindex;
+        size_t startidx = this->iter.gindex;
+
+        this->iter.next(); //eat opening quote
+        while(this->iter.valid() && this->iter.get() != '\"') {
+            this->iter.next();
+        }
+
+        if(!this->iter.valid()) {
+            this->ctoken = {BSQONTokenType::ErrorToken, startbuff, startcindex, startidx, this->iter.gindex - startidx};
+        }
+        else {
+            this->iter.next(); //eat closing quote
+            this->ctoken = {BSQONTokenType::LiteralString, startbuff, startcindex, startidx, this->iter.gindex - startidx};
+        }
+        
+        return true;
+    }
+
+    constexpr std::array<char, 8> s_symbol_tokens = { '(', ')', '{', '}', '[', ']', ',', '#' };
+    bool BSQONLexer::tryLexSymbol()
+    {
+        if(!this->iter.valid() || (std::find(s_symbol_tokens.cbegin(), s_symbol_tokens.cend(), this->iter.get()) == s_symbol_tokens.cend())) {
+            return false;
+        }
+
+        this->advanceToken(BSQONTokenType::LiteralSymbol, 1);
+        return true;
+    }
+
+    constexpr std::array<const char*, 9> s_keyword_tokens = { };
+    bool BSQONLexer::tryLexKeyword()
+    {
+        return false;
+    }
+
+    bool BSQONLexer::tryLexIdentifier()
+    {
+        auto ii = this->iter;
+        size_t idsize = 0;
+        bool badnest = false;
+        while(ii.valid() && !badnest) {
+            char c = (char)ii.get();
+            idsize++;
+
+            bool ischar = (('a' <= c) & (c <= 'z')) || (('A' <= c) & (c <= 'Z')) || (c == '_');
+            bool iscolon = (c == ':');
+            bool isnum = ('0' <= c) & (c <= '9');
+
+            if(ischar | ((isnum | iscolon) && ii.getIndex() != this->iter.getIndex())) {
+                ii.next();
+            }
+            else {
+                if(c != '<') {
+                    break;
+                }
+                else {
+                    //Handle generic type names by skipping to the matching '>'
+                    size_t genericlevel = 1;
+                    ii.next();
+                    while(ii.valid() && genericlevel > 0) {
+                        c = (char)ii.get();
+                        idsize++;
+
+                        if(c == '<') {
+                            genericlevel++;
+                        }
+                        else if(c == '>') {
+                            genericlevel--;
+                        }
+                        else {
+                            bool ischarnested = (('a' <= c) & (c <= 'z')) || (('A' <= c) & (c <= 'Z')) || (c == '_');
+                            bool iscolonnested = (c == ':');
+                            bool isnumnested = ('0' <= c) & (c <= '9');
+                            bool isoksym = (c == ',') || (c == ' ');
+
+                            if(!(ischarnested | iscolonnested | isnumnested | isoksym)) {
+                                break;
+                            }
+                        }
+                        ii.next();
+                    }
+
+                    badnest = badnest || genericlevel != 0;
+                }
+            }
+        }
+
+        if(badnest || ii.getIndex() == this->iter.getIndex()) {
+            return false;
+        }
+        
+        this->advanceToken(BSQONTokenType::Identifier, idsize);
+        return true;
     }
 
     void BSQONLexer::consume()
@@ -209,9 +361,14 @@ namespace ᐸRuntimeᐳ
         else if(this->tryLexNat() || this->tryLexInt() || this->tryLexChkNat() || this->tryLexChkInt()) {
             return;
         }
+        else if(this->tryLexCString() || this->tryLexString()) {
+            return;
+        }
+        else if(this->tryLexSymbol() || this->tryLexKeyword() || this->tryLexIdentifier()) {
+            return;
+        }
         else {
-            this->ctoken.tokentype = BSQONTokenType::ErrorToken;
-            this->iter.advanceWithExtract(this->ctoken.startindex, this->ctoken.endindex, this->ctoken.scvalue, 1);
+            this->advanceToken(BSQONTokenType::ErrorToken, 1);
             return;
         }
     }

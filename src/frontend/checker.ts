@@ -1,9 +1,9 @@
 import assert from "node:assert";
 
-import { APIDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, InvokeTemplateTypeRestrictionClause, MAX_SAFE_CHK_NAT, MIN_SAFE_CHK_INT, MAX_SAFE_CHK_INT, APIDeniedTypeDecl, APIFlaggedTypeDecl, AgentDecl, TaskConfiguration } from "./assembly.js";
+import { APIDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, InvokeTemplateTypeRestrictionClause, MAX_SAFE_CHK_NAT, MIN_SAFE_CHK_INT, MAX_SAFE_CHK_INT, APIDeniedTypeDecl, APIFlaggedTypeDecl, AgentDecl, TaskConfiguration, AbstractCollectionTypeDecl, ConstructableTypeDecl } from "./assembly.js";
 import { CodeFormatter, SourceInfo } from "./build_decls.js";
 import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, ErrorTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
-import { APIInvokeExpression, AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, FormatStringTextComponent, HoleBodyImplementation, HoleExpression, HoleStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, IfElifElseStatement, IfElseStatement, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypeDeclValueExpression, LiteralTypedCStringExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RValueExpression, RValueExpressionTag, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VoidRefCallStatement } from "./body.js";
+import { APIInvokeExpression, AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, FormatStringTextComponent, HoleBodyImplementation, HoleExpression, HoleStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, IfElifElseStatement, IfElseStatement, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypeDeclValueExpression, LiteralTypedCStringExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RValueExpression, RValueExpressionTag, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VoidRefCallStatement } from "./body.js";
 import { SimpleTypeInferContext, TypeEnvironment, TypeResultWRefVarInfoResult, TypeInferContext, VarInfo } from "./checker_environment.js";
 import { TypeCheckerRelations } from "./checker_relations.js";
 
@@ -89,12 +89,46 @@ class TypeChecker {
         return (t.tkeystr === "Void");
     }
 
+    private resolveSizeConstraints(tdecl: TypedeclTypeDecl, rlen: number): {min: bigint, max: bigint} | undefined {
+        if(tdecl.optsizerng === undefined) {
+            return undefined;
+        }
+        else {
+            let min = 0n;
+            if(tdecl.optsizerng.min !== undefined) {
+                try {
+                    min = BigInt(tdecl.optsizerng.min);
+                }
+                catch {
+                    ;
+                }
+            }
+
+            let max = BigInt(rlen);
+            if(tdecl.optsizerng.max !== undefined) {
+                try {
+                    max = BigInt(tdecl.optsizerng.max);
+                }
+                catch {
+                    ;
+                }
+            }
+
+            return { min: min, max: max };
+        }
+    }
+
     private checkTypeDeclOfStringRestrictions(sinfo: SourceInfo, tdecl: TypedeclTypeDecl, value: string): string | undefined {
         const vs = validateStringLiteral(value.slice(1, -1));
         this.checkError(sinfo, vs === null, `Invalid string literal value ${value}`);
 
         if(vs !== null && tdecl.optofexp !== undefined) {
             const vexp = this.relations.assembly.resolveValidatorLiteral(tdecl.optofexp);
+
+            const sbounds = this.resolveSizeConstraints(tdecl, vs.length);
+            if(sbounds !== undefined) {
+                this.checkError(sinfo, BigInt(vs.length) < sbounds.min || BigInt(vs.length) > sbounds.max, `String literal length ${vs.length} out of bounds`);
+            }
 
             if(vexp === undefined || vexp.tag !== ExpressionTag.LiteralUnicodeRegexExpression) {
                 this.reportError(sinfo, `Unable to resolve regex validator`);
@@ -118,6 +152,12 @@ class TypeChecker {
 
         if(vs !== null && tdecl.optofexp !== undefined) {
             const vexp = this.relations.assembly.resolveValidatorLiteral(tdecl.optofexp);
+
+            const sbounds = this.resolveSizeConstraints(tdecl, vs.length);
+            if(sbounds !== undefined) {
+                this.checkError(sinfo, BigInt(vs.length) < sbounds.min || BigInt(vs.length) > sbounds.max, `CString literal length ${vs.length} out of bounds`);
+            }
+
             if(vexp === undefined || vexp.tag !== ExpressionTag.LiteralCRegexExpression) {
                 this.reportError(sinfo, `Unable to resolve cregex validator`);
             }
@@ -141,6 +181,7 @@ class TypeChecker {
                 
         if(vs !== null && tdecl.optofexp !== undefined) {
             const vexp = this.relations.assembly.resolveValidatorLiteral(tdecl.optofexp);
+
             if(vexp === undefined || vexp.tag !== ExpressionTag.LiteralGlobExpression) {
                 this.reportError(sinfo, `Unable to resolve glob validator`);
             }
@@ -445,8 +486,12 @@ class TypeChecker {
                     return this.checkPostfixOpMaybeRefs(env, exp as PostfixOp, undefined);
                 }
                 else if(ttag === ExpressionTag.PrefixNotOpExpression) {
-                    const tte = this.processITestGuardExpression(env, (exp as PrefixNotOpExpression).exp, false);
+                    const ueexp = exp as PrefixNotOpExpression;
+                    const tte = this.processITestGuardExpression(env, ueexp.exp, false);
                     assert(tte.bbinds.length === 0, "These should be set in the itest part (not the expression part) probably bad nesting");
+
+                    ueexp.opertype = this.resolveUnderlyingType(tte.tsig);
+                    ueexp.setType(tte.tsig);
 
                     return new TypeResultWRefVarInfoResult(tte.tsig, false, false, {ttrue: tte.setcondout.tfalse, tfalse: tte.setcondout.ttrue}, tte.setuncond, tte.usemod, []);
                 }
@@ -637,8 +682,7 @@ class TypeChecker {
         }
     }
 
-    /*
-    private checkValueEq(lhsexp: Expression, lhs: TypeSignature, rhsexp: Expression, rhs: TypeSignature): ["err" | "lhsnone" | "rhsnone" | "stricteq" | "lhskeyeqoption" | "rhskeyeqoption", TypeSignature] {
+    private checkValueEq(lhsexp: Expression, lhs: TypeSignature, rhsexp: Expression, rhs: TypeSignature): ["err" | "lhsnone" | "rhsnone" | "stricteq" | "lhskeyeqoption" | "rhskeyeqoption" | "lhskeyeqsome" | "rhskeyeqsome", TypeSignature] {
         if(!(lhs instanceof NominalTypeSignature) || !(rhs instanceof NominalTypeSignature)) {
             return ["err", new ErrorTypeSignature(lhsexp.sinfo, undefined)];
         }
@@ -672,6 +716,22 @@ class TypeChecker {
                 }
             }
         }
+        else if(lhs.decl instanceof SomeTypeDecl) {
+            if(!this.relations.isKeyType(rhs, this.constraints)) {
+                return ["err", new ErrorTypeSignature(rhsexp.sinfo, undefined)];
+            }
+            else {
+                return this.relations.areSameTypes(rhs, lhs.alltermargs[0]) ? ["rhskeyeqsome", rhs] : ["err", new ErrorTypeSignature(rhsexp.sinfo, undefined)];
+            }
+        }
+        else if(rhs.decl instanceof SomeTypeDecl) {
+            if(!this.relations.isKeyType(lhs, this.constraints)) {
+                return ["err", new ErrorTypeSignature(lhsexp.sinfo, undefined)];
+            }
+            else {
+                return this.relations.areSameTypes(lhs, rhs.alltermargs[0]) ? ["lhskeyeqsome", lhs] : ["err", new ErrorTypeSignature(lhsexp.sinfo, undefined)];
+            }
+        }
         else {
             if(!this.relations.isKeyType(lhs, this.constraints) || !this.relations.isKeyType(rhs, this.constraints)) {
                 return ["err", new ErrorTypeSignature(lhsexp.sinfo, undefined)];
@@ -681,7 +741,7 @@ class TypeChecker {
 
         }
     }
-
+/*
     private checkTemplateBindingsOnInvoke(sinfo: SourceInfo, env: TypeEnvironment, targs: TypeSignature[], decl: ExplicitInvokeDecl, refinemap: TemplateNameMapper | undefined): TemplateNameMapper | undefined {
         if(targs.length !== decl.terms.length) {
             this.reportError(sinfo, `Invoke ${decl.name} expected ${decl.terms.length} terms but got ${targs.length}`);
@@ -1072,18 +1132,22 @@ class TypeChecker {
     }
 
     private checkLiteralChkNatExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
-        const nval = BigInt(exp.value.slice(0, exp.value.length - 1));
-        this.checkError(exp.sinfo, nval < 0n, "ChkNat literal cannot be negative");
-        this.checkError(exp.sinfo, MAX_SAFE_CHK_NAT < nval, "ChkNat literal out of valid range");
+        if(exp.value !== "ChkNat::npos") {
+            const nval = BigInt(exp.value.slice(0, exp.value.length - 1));
+            this.checkError(exp.sinfo, nval < 0n, "ChkNat literal cannot be negative");
+            this.checkError(exp.sinfo, MAX_SAFE_CHK_NAT < nval, "ChkNat literal out of valid range");
+        }
 
         return exp.setType(this.getWellKnownType("ChkNat"));
     }
 
     private checkLiteralChkIntExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
-        const nval = BigInt(exp.value.slice(0, exp.value.length - 1));
-        this.checkError(exp.sinfo, nval < MIN_SAFE_CHK_INT, "ChkInt literal out of valid range");
-        this.checkError(exp.sinfo, MAX_SAFE_CHK_INT < nval, "ChkInt literal out of valid range");
-        
+        if(exp.value !== "ChkInt::npos") {
+            const nval = BigInt(exp.value.slice(0, exp.value.length - 1));
+            this.checkError(exp.sinfo, nval < MIN_SAFE_CHK_INT, "ChkInt literal out of valid range");
+            this.checkError(exp.sinfo, MAX_SAFE_CHK_INT < nval, "ChkInt literal out of valid range");
+        }
+
         return exp.setType(this.getWellKnownType("ChkInt"));
     }
 
@@ -1612,8 +1676,8 @@ class TypeChecker {
         }
     }
 
-/*
     private checkCollectionConstructor(env: TypeEnvironment, cdecl: AbstractCollectionTypeDecl, exp: ConstructorPrimaryExpression): TypeSignature {
+        /*
         const etype = this.relations.getExpandoableOfType(exp.ctype) as TypeSignature;
 
         if(exp.args.args.some((arg) => (arg instanceof NamedArgumentValue) || (arg instanceof RefArgumentValue))) {
@@ -1640,58 +1704,11 @@ class TypeChecker {
         exp.elemtype = etype;
         exp.shuffleinfo = shuffleinfo;
         return exp.setType(exp.ctype);
-    }
-
-    private checkPrimitiveConstructor(env: TypeEnvironment, cdecl: PrimitiveEntityTypeDecl, exp: ConstructorPrimaryExpression): TypeSignature {
-        const ctype = exp.ctype as NominalTypeSignature;
-
-        if(exp.args.args.some((arg) => !(arg instanceof PositionalArgumentValue))) {
-            this.reportError(exp.sinfo, `Primitive entity constructor expects only positional arguments`);
-            return exp.setType(ctype);
-        }
-
-        // Note: For now we limit the buffers size to 8
-        if(ctype.tkeystr === "CCharBuffer") {
-            if(exp.args.args.length > 8) {
-                this.reportError(exp.sinfo, `CCharBuffer constructor expects no more than 8 arguments`);
-            }
-            else {
-                for(let i = 0; i < exp.args.args.length; ++i) {
-                    let arg = exp.args.args[i];
-                    if(arg instanceof PositionalArgumentValue) {
-                        let argtype = this.checkExpression(env, arg.exp, new SimpleTypeInferContext(ctype));
-                        this.checkError(arg.exp.sinfo, (argtype instanceof ErrorTypeSignature) || argtype.tkeystr !== "CChar", `Argument ${i} expected type CChar`);
-                    } 
-                    else {
-                        this.reportError(exp.sinfo, `CCharBuffer expects positional arguments`);
-                    }
-                }
-            }
-        }
-
-        if(ctype.tkeystr === "UnicodeCharBuffer") {
-            if(exp.args.args.length > 8) {
-                this.reportError(exp.sinfo, `UnicodeCharBuffer constructor expects no more than 8 arguments`);
-            }
-            else {
-                for(let i = 0; i < exp.args.args.length; ++i) {
-                    let arg = exp.args.args[i];
-                    if(arg instanceof PositionalArgumentValue) {
-                        let argtype = this.checkExpression(env, arg.exp, new SimpleTypeInferContext(ctype));
-                        this.checkError(arg.exp.sinfo, (argtype instanceof ErrorTypeSignature) || argtype.tkeystr !== "UnicodeChar", `Argument ${i} expected type UnicodeChar`);
-                    } 
-                    else {
-                        this.reportError(exp.sinfo, `UnicodeCharBuffer expects positional arguments`);
-                    }
-                }
-            }
-        }
-        
-        return exp.setType(ctype);
+        */
+        assert(false, "Not Implemented -- checkCollectionConstructor");
     }
 
     private checkSpecialConstructableConstructor(env: TypeEnvironment, cdecl: ConstructableTypeDecl, exp: ConstructorPrimaryExpression): TypeSignature {
-        /*
         const ctype = exp.ctype as NominalTypeSignature;
 
         if(exp.args.args.some((arg) => !(arg instanceof PositionalArgumentValue))) {
@@ -1723,16 +1740,43 @@ class TypeChecker {
                 this.checkError(exp.sinfo, (errarg instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(errarg, errtype, this.constraints), `Err constructor argument is not a subtype of ${errtype.emit()}`);
             }
         }
-        else if((cdecl instanceof APIRejectedTypeDecl) || (cdecl instanceof APIFailedTypeDecl) || (cdecl instanceof APIErrorTypeDecl) || (cdecl instanceof APISuccessTypeDecl)) {
-            if(exp.args.args.length !== 1) {
-                this.reportError(exp.sinfo, `API result constructor expects 1 argument`);
+        else if((cdecl instanceof APIErrorTypeDecl) || (cdecl instanceof APIRejectedTypeDecl) || (cdecl instanceof APIDeniedTypeDecl) || (cdecl instanceof APIFlaggedTypeDecl) || (cdecl instanceof APISuccessTypeDecl)) {
+            if(cdecl instanceof APIFlaggedTypeDecl) {
+                if(exp.args.args.length !== 2) {
+                    this.reportError(exp.sinfo, `API flagged result constructor expects 2 argument`);
+                }
+                else {
+                    const attype = ctype.alltermargs[0];
+                    const aetype = ctype.alltermargs[1];
+                    exp.shuffleinfo = [[0, undefined, "value", attype], [1, undefined, "info", aetype]];
+
+                    const atarg = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(attype));
+                    this.checkError(exp.sinfo, (atarg instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(atarg, attype, this.constraints), `API flagged result first constructor argument is not a subtype of ${attype.emit()}`);
+
+                    const aetarg = this.checkExpression(env, exp.args.args[1].exp, new SimpleTypeInferContext(aetype));
+                    this.checkError(exp.sinfo, (aetarg instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(aetarg, aetype, this.constraints), `API flagged result second constructor argument is not a subtype of ${aetype.emit()}`);
+                }
             }
             else {
-                const apitype = ctype.alltermargs[0];
-                exp.shuffleinfo = [[0, undefined, "value", apitype]];
+                if(exp.args.args.length !== 1) {
+                    this.reportError(exp.sinfo, `API result constructor expects 1 argument`);
+                }
+                else {
+                    if(cdecl instanceof APISuccessTypeDecl) {
+                        const apitype = ctype.alltermargs[0];
+                        exp.shuffleinfo = [[0, undefined, "value", apitype]];
 
-                const apiarg = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(apitype));
-                this.checkError(exp.sinfo, (apiarg instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(apiarg, apitype, this.constraints), `API result constructor argument is not a subtype of ${apitype.emit()}`);
+                        const apiarg = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(apitype));
+                        this.checkError(exp.sinfo, (apiarg instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(apiarg, apitype, this.constraints), `API result constructor argument is not a subtype of ${apitype.emit()}`);
+                    }
+                    else {
+                        const apitype = ctype.alltermargs[1];
+                        exp.shuffleinfo = [[0, undefined, "info", apitype]];
+
+                        const apiarg = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(apitype));
+                        this.checkError(exp.sinfo, (apiarg instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(apiarg, apitype, this.constraints), `API result constructor argument is not a subtype of ${apitype.emit()}`);
+                    }
+                }
             }
         }
         else if(cdecl instanceof SomeTypeDecl) {
@@ -1791,6 +1835,7 @@ class TypeChecker {
     }
 
     private checkStandardConstructor(env: TypeEnvironment, fields: MemberFieldDecl[], exp: ConstructorPrimaryExpression): TypeSignature {
+        /*
         const ctype = exp.ctype as NominalTypeSignature;
 
         const imapper = this.checkTemplateBindingsOnConstructor(exp.sinfo, env, ctype.alltermargs, ctype.decl);
@@ -1803,11 +1848,11 @@ class TypeChecker {
 
         exp.shuffleinfo = shuffleinfo;
         return exp.setType(ctype);
-        
+        */
+        assert(false, "Not Implemented -- checkStandardConstructor");
     }
-*/
+
     private checkConstructorPrimaryExpression(env: TypeEnvironment, exp: ConstructorPrimaryExpression): TypeSignature {
-        /*
         const tok = this.checkTypeSignature(exp.ctype);
 
         if(!tok) {
@@ -1821,9 +1866,6 @@ class TypeChecker {
         }
         else if(decl instanceof ConstructableTypeDecl) {
             return this.checkSpecialConstructableConstructor(env, decl, exp);
-        }
-        else if(decl instanceof PrimitiveEntityTypeDecl) {
-            return this.checkPrimitiveConstructor(env, decl, exp);
         }
         else if(decl instanceof TypedeclTypeDecl) {
             return this.checkSpecialTypeDeclConstructor(env, decl, exp);
@@ -1840,8 +1882,6 @@ class TypeChecker {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
         }
-        */
-        assert(false, "Not Implemented -- checkConstructorPrimaryExpression");
     }
     
     private checkConstructorEListExpression(env: TypeEnvironment, exp: ConstructorEListExpression, infertype: TypeInferContext | undefined): TypeSignature {
@@ -1996,7 +2036,7 @@ class TypeChecker {
         */
         assert(false, "Not Implemented -- checkLambdaInvokeExpression");
     }
-/*
+
     private checkSpecialConstructorExpressionNoInfer(env: TypeEnvironment, exp: SpecialConstructorExpression): TypeSignature {
         const corens = this.relations.assembly.getCoreNamespace();
 
@@ -2011,13 +2051,12 @@ class TypeChecker {
             return exp.setType(exp.constype);
         }
         else {
-            this.reportError(exp.sinfo, "Cannot infer type for special Ok/Err constructor");
+            this.reportError(exp.sinfo, "Cannot infer type for other special constructors");
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
     }
-*/
+
     private checkSpecialConstructorExpression(env: TypeEnvironment, exp: SpecialConstructorExpression, infertype: TypeSignature | undefined): TypeSignature {
-        /*
         if(infertype === undefined || !(infertype instanceof NominalTypeSignature)) {
             return this.checkSpecialConstructorExpressionNoInfer(env, exp);
         }
@@ -2089,8 +2128,6 @@ class TypeChecker {
                 }
             }
         }
-        */
-        assert(false, "Not Implemented -- checkSpecialConstructorExpression");
     }
 
     private checkCallNamespaceFunctionExpression(env: TypeEnvironment, exp: CallNamespaceFunctionExpression, refallowed: boolean): TypeResultWRefVarInfoResult {
@@ -2392,8 +2429,8 @@ class TypeChecker {
                     ctype = this.checkPostfixAssignFields(env, op as PostfixAssignFields, ctype);
                     break;
                 }
-                case PostfixOpTag.PostfixOfOperator: {
-                    assert(false, "Of operator not implemented in postfix expressions");
+                case PostfixOpTag.PostfixSliceOperator: {
+                    assert(false, "Slice operator not implemented in postfix expressions");
                     break;
                 }
                 case PostfixOpTag.PostfixInvoke: {
@@ -2454,8 +2491,8 @@ class TypeChecker {
                     ctype = this.checkPostfixAssignFields(env, op as PostfixAssignFields, ctype);
                     break;
                 }
-                case PostfixOpTag.PostfixOfOperator: {
-                    assert(false, "Of operator not implemented in postfix expressions");
+                case PostfixOpTag.PostfixSliceOperator: {
+                    assert(false, "Slice operator not implemented in postfix expressions");
                     break;
                 }
                 case PostfixOpTag.PostfixInvoke: {
@@ -2608,7 +2645,7 @@ class TypeChecker {
             res = new ErrorTypeSignature(exp.sinfo, undefined);
         }
 
-        exp.opertype = this.resolveUnderlyingType(res);
+        exp.opertype = !(res instanceof ErrorTypeSignature) ? this.resolveUnderlyingType(res) : res;
         return exp.setType(res);
     }
 
@@ -2647,12 +2684,11 @@ class TypeChecker {
             res = new ErrorTypeSignature(exp.sinfo, undefined);
         }
 
-        exp.opertype = this.resolveUnderlyingType(res);
+        exp.opertype = !(res instanceof ErrorTypeSignature) ? this.resolveUnderlyingType(res) : res;
         return exp.setType(res);
     }
 
     private checkBinKeyEqExpression(env: TypeEnvironment, exp: BinKeyEqExpression): TypeSignature {
-        /*
         const lhstype = this.checkExpression(env, exp.lhs, undefined);
         const rhstype = this.checkExpression(env, exp.rhs, undefined);
 
@@ -2670,12 +2706,9 @@ class TypeChecker {
         }
 
         return exp.setType(this.getWellKnownType("Bool"));
-        */
-        assert(false, "Not Implemented -- checkBinKeyEqExpression");
     }
 
     private checkBinKeyNeqExpression(env: TypeEnvironment, exp: BinKeyNeqExpression): TypeSignature {
-        /*
         const lhstype = this.checkExpression(env, exp.lhs, undefined);
         const rhstype = this.checkExpression(env, exp.rhs, undefined);
 
@@ -2693,12 +2726,9 @@ class TypeChecker {
         }
 
         return exp.setType(this.getWellKnownType("Bool"));
-        */
-        assert(false, "Not Implemented -- checkBinKeyNeqExpression");
     }
 
     private checkKeyCompareEqExpression(env: TypeEnvironment, exp: KeyCompareEqExpression): TypeSignature {
-        /*
         const ktypeok = this.checkTypeSignature(exp.ktype);
 
         const tlhs = this.checkExpression(env, exp.lhs, ktypeok ? exp.ktype : undefined);
@@ -2712,12 +2742,9 @@ class TypeChecker {
         }
 
         return exp.setType(this.getWellKnownType("Bool"));
-        */
-        assert(false, "Not Implemented -- checkKeyCompareEqExpression");
     }
 
     private checkKeyCompareLessExpression(env: TypeEnvironment, exp: KeyCompareLessExpression): TypeSignature {
-        /*
         const ktypeok = this.checkTypeSignature(exp.ktype);
 
         const tlhs = this.checkExpression(env, exp.lhs, ktypeok ? exp.ktype : undefined);
@@ -2731,8 +2758,6 @@ class TypeChecker {
         }
 
         return exp.setType(this.getWellKnownType("Bool"));
-        */
-        assert(false, "Not Implemented -- checkKeyCompareLessExpression");
     }
 
     private checkNumericEqExpression(env: TypeEnvironment, exp: NumericEqExpression): TypeSignature {
@@ -3333,8 +3358,12 @@ class TypeChecker {
                     return this.checkPostfixOpMaybeRefs(env, exp as PostfixOp, typeinfer);
                 }
                 else if(ttag === ExpressionTag.PrefixNotOpExpression) {
-                    const tte = this.processITestGuardExpression(env, (exp as PrefixNotOpExpression).exp, false);
+                    const ueexp = exp as PrefixNotOpExpression;
+                    const tte = this.processITestGuardExpression(env, ueexp.exp, false);
                     assert(tte.bbinds.length === 0, "These should be set in the itest part (not the expression part) probably bad nesting");
+
+                    ueexp.opertype = this.resolveUnderlyingType(tte.tsig);
+                    ueexp.setType(tte.tsig);
 
                     return new TypeResultWRefVarInfoResult(tte.tsig, false, false, {ttrue: tte.setcondout.tfalse, tfalse: tte.setcondout.ttrue}, tte.setuncond, tte.usemod, []);
                 }
@@ -4723,6 +4752,28 @@ class TypeChecker {
         if(!isvalueok) {
             this.reportError(tdecl.sinfo, `In type declaration value type must be simple primitive -- Bool, Int, etc.`);
             return;
+        }
+
+        if(tdecl.optsizerng !== undefined) {
+            if(tdecl.optsizerng.min !== undefined) {
+                try {
+                    const minval = BigInt(tdecl.optsizerng.min);
+                    this.checkError(tdecl.sinfo, minval < BigInt(0), `Size range min cannot be negative`);
+                }
+                catch {
+                    this.reportError(tdecl.sinfo, `Invalid size range min`);
+                }
+            }
+
+            if(tdecl.optsizerng.max !== undefined) {
+                try {
+                    const maxval = BigInt(tdecl.optsizerng.max);
+                    this.checkError(tdecl.sinfo, maxval < BigInt(0) || MAX_SAFE_NAT < maxval, `Size range max cannot be negative or larger than max safe nat`);
+                }
+                catch {
+                    this.reportError(tdecl.sinfo, `Invalid size range max`);
+                }
+            }
         }
 
         if(tdecl.optofexp !== undefined) {

@@ -141,12 +141,12 @@ __internal __typedeclable __keycomparable entity CString {
 
 %** Primitive unicode regex value. **%
 __internal entity Regex {
-    __inline function accepts(re: Regex, s: String): Bool = @regex_accepts;
+    function accepts(re: Regex, s: String): Bool = @regex_accepts;
 }
 
 %** Primitive unicode regex value. **%
 __internal entity CRegex {
-    __inline function accepts(re: CRegex, s: CString): Bool = @cregex_accepts;
+    function accepts(re: CRegex, s: CString): Bool = @cregex_accepts;
 }
 
 %** Primitive path value. **%

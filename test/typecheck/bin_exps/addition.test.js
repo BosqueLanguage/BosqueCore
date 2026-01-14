@@ -1,6 +1,6 @@
 "use strict";
 
-import { checkTestExp, checkTestExpError } from "../../../bin/test/typecheck/typecheck_nf.js";
+import { checkTestExp, checkTestExpError, checkTestFunctionInFile, checkTestFunctionInFileError } from "../../../bin/test/typecheck/typecheck_nf.js";
 import { describe, it } from "node:test";
 
 describe ("Checker -- Simple addition", () => {
@@ -16,5 +16,14 @@ describe ("Checker -- Simple addition", () => {
 
     it("should fail not numeric", function () {
         checkTestExpError("none + true", "Nat", "Binary operator requires a unique numeric type");
+    });
+
+    it("should check type alias ops", function () {
+        checkTestFunctionInFile("type Foo = Int; function main(): Foo { return 1i<Foo> + 2i<Foo>; }");
+    });
+
+    it("should fail type alias ops invalid", function () {
+        checkTestFunctionInFileError("type Foo = Int; function main(): Foo { return 1n<Foo> + 2n; }", "Literal value is not the same type (Nat) as the value type (Int)");
+        checkTestFunctionInFileError("type Foo = Int; function main(): Foo { return 1n + 2n<Foo>; }", "Literal value is not the same type (Nat) as the value type (Int)");
     });
 });

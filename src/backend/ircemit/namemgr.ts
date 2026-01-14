@@ -85,8 +85,8 @@ class TransformCPPNameManager {
         return TransformCPPNameManager.safeifyName(constkey);
     }
 
-    static generateNameForEnumKey(enumkey: string): string {
-        return TransformCPPNameManager.safeifyName(enumkey);
+    static generateNameForEnumKey(tkey: string, emember: string): string {
+        return TransformCPPNameManager.convertTypeKey(tkey) + "::" + TransformCPPNameManager.safeifyName(emember);
     }
 
     static generateNameForConstructor(tkey: string): string {
@@ -95,6 +95,10 @@ class TransformCPPNameManager {
 
     static generateNameForInvariantFunction(tkey: string, invariantidx: number): string {
         return TransformCPPNameManager.convertTypeKey(tkey) + s_specialop_sep + "invariant_" + invariantidx;
+    }
+
+    static generateNameForValidateFunction(tkey: string, invariantidx: number): string {
+        return TransformCPPNameManager.convertTypeKey(tkey) + s_specialop_sep + "validate_" + invariantidx;
     }
 
     static generateNameForBSQONParseFunction(tkey: string): string {

@@ -12,15 +12,12 @@ const KW__debug = "_debug";
 const KW_abort = "abort";
 const KW_assert = "assert";
 const KW_configs = "configs";
-const KW_denied = "denied";
 const KW_dispatch = "dispatch";
 const KW_do = "do";
 const KW_elif = "elif";
 const KW_else = "else";
 const KW_env = "env";
-const KW_error = "error";
 const KW_fail = "fail";
-const KW_flagged = "flagged";
 const KW_false = "false";
 const KW_fn = "fn";
 const KW_if = "if";
@@ -35,13 +32,11 @@ const KW_ref = "ref";
 const KW_out = "out";
 const KW_out_q = "out?";
 const KW_inout = "inout";
-const KW_rejected = "rejected";
 const KW_return = "return";
 const KW_some = "some";
 const KW_this = "this";
 const KW_self = "self";
 const KW_switch = "switch";
-const KW_success = "success";
 const KW_true = "true";
 const KW_type = "type";
 const KW_var = "var";
@@ -72,6 +67,7 @@ const KW_invariant = "invariant";
 const KW_method = "method";
 const KW_namespace = "namespace";
 const KW_of = "of";
+const KW_slice = "slice";
 const KW_provides = "provides";
 const KW_requires = "requires";
 const KW_task = "task";
@@ -107,7 +103,6 @@ const KeywordStrings = [
     KW_abort,
     KW_assert,
     KW_concept,
-    KW_denied,
     KW_dispatch,
     KW_const,
     KW_declare,
@@ -118,9 +113,7 @@ const KeywordStrings = [
     KW_env,
     KW_entity,
     KW_ensures,
-    KW_error,
     KW_fail,
-    KW_flagged,
     KW_false,
     KW_field,
     KW_fn,
@@ -132,6 +125,7 @@ const KeywordStrings = [
     KW_method,
     KW_namespace,
     KW_none,
+    KW_slice,
     KW_of,
     KW_ok,
     KW_operator,
@@ -141,7 +135,6 @@ const KeywordStrings = [
     KW_predicate,
     KW_provides,
     KW_ref,
-    KW_rejected,
     KW_out,
     KW_out_q,
     KW_inout,
@@ -153,7 +146,6 @@ const KeywordStrings = [
     KW_safety,
     KW_spec,
     KW_switch,
-    KW_success,
     KW_task,
     KW_test,
     KW_this,
@@ -215,10 +207,7 @@ const CoreOnlyAttributes = [
     "__typedeclable",
     
     "__keycomparable",
-    "__numeric",
-    
-    "__inline",
-    "__intrinsic_error"
+    "__numeric"
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
 const TermRestrictions = [
@@ -390,7 +379,6 @@ export {
     KW_action,
     KW_configs,
     KW__debug,
-    KW_denied,
     KW_do,
     KW_abort,
     KW_assert,
@@ -405,9 +393,7 @@ export {
     KW_env,
     KW_entity,
     KW_ensures,
-    KW_error,
     KW_fail,
-    KW_flagged,
     KW_false,
     KW_field,
     KW_fn,
@@ -419,6 +405,7 @@ export {
     KW_method,
     KW_namespace,
     KW_none,
+    KW_slice,
     KW_of,
     KW_ok,
     // KW_operator, //TODO: reserved for future use
@@ -431,7 +418,6 @@ export {
     KW_out,
     KW_out_q,
     KW_inout,
-    KW_rejected,
     KW_release,
     KW_return,
     KW_requires,
@@ -440,7 +426,6 @@ export {
     KW_safety,
     KW_spec,
     KW_switch,
-    KW_success,
     KW_task,
     KW_Task,
     KW_test,

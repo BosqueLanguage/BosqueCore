@@ -76,6 +76,11 @@ enum IRExpressionTag {
     IRAccessTypeDeclValueExpression = "IRAccessTypeDeclValueExpression",
     IRConstructSafeTypeDeclExpression = "IRConstructSafeTypeDeclExpression",
     
+    IRConstructorSomeTypeExpression = "IRConstructorSomeTypeExpression",
+    IRConstructorOkTypeExpression = "IRConstructorOkTypeExpression",
+    IRConstructorFailTypeExpression = "IRConstructorFailTypeExpression",
+    IRConstructorMapEntryTypeExpression = "IRConstructorMapEntryTypeExpression",
+
     //
     //TODO: lots more expression types here
     //
@@ -105,6 +110,17 @@ enum IRExpressionTag {
     IRNumericGreaterExpression = "IRNumericGreaterExpression",
     IRNumericGreaterEqExpression = "IRNumericGreaterEqExpression",
 
+    IRIsNoneOptionExpression = "IRIsNoneOptionExpression",
+    IRIsNotNoneOptionExpression = "IRIsNotNoneOptionExpression",
+    IRIsOptionEqValueExpression = "IRIsOptionEqValueExpression",
+    IRIsOptionNeqValueExpression = "IRIsOptionNeqValueExpression",
+    IRIsSomeEqValueExpression = "IRIsSomeEqValueExpression",
+    IRIsSomeNeqValueExpression = "IRIsSomeNeqValueExpression",
+
+    IRBinKeyEqDirectExpression = "IRBinKeyEqDirectExpression",
+    IRBinKeyNeqDirectExpression = "IRBinKeyNeqDirectExpression",
+    IRBinKeyLessDirectExpression = "IRBinKeyLessDirectExpression",
+
     IRLogicAndExpression = "IRLogicAndExpression",
     IRLogicOrExpression = "IRLogicOrExpression",
 
@@ -112,7 +128,24 @@ enum IRExpressionTag {
     //TODO: lots more expression types here
     //
 
-    IRLogicSimpleConditionalExpression = "IRLogicSimpleConditionalExpression"
+    IRLogicSimpleConditionalExpression = "IRLogicSimpleConditionalExpression",
+
+    IRLiteralOptionOfNoneExpression = "IRLiteralOptionOfNoneExpression",
+    IRConstructOptionFromSomeExpression = "IRConstructOptionFromSomeExpression",
+    IRExtractSomeFromOptionExpression = "IRExtractSomeFromOptionExpression",
+    IRExtractSomeValueFromOptionExpression = "IRExtractSomeValueFromOptionExpression",
+
+    IRConstructResultFromOkExpression = "IRConstructResultFromOkExpression",
+    IRConstructResultFromFailExpression = "IRConstructResultFromFailExpression",
+    IRExtractOkFromResultExpression = "IRExtractOkFromResultExpression",
+    IRExtractOkValueFromResultExpression = "IRExtractOkValueFromResultExpression",
+    IRExtractFailFromResultExpression = "IRExtractFailFromResultExpression",
+    IRExtractFailValueFromResultExpression = "IRExtractFailValueFromResultExpression",
+
+    IRBoxEntityToConceptRepresentationExpression = "IRBoxEntityToConceptRepresentationExpression",
+    IRUnboxEntityFromConceptRepresentationExpression = "IRUnboxEntityFromConceptRepresentationExpression",
+    IRWidenConceptRepresentationExpression = "IRWidenConceptRepresentationExpression",
+    IRNarrowConceptRepresentationExpression = "IRNarrowConceptRepresentationExpression"
 }
 
 abstract class IRExpression {
@@ -207,6 +240,11 @@ enum IRStatementTag {
     IRErrorMultiplicationBoundsCheckStatement = "IRErrorMultiplicationBoundsCheckStatement",
     IRErrorDivisionByZeroCheckStatement = "IRErrorDivisionByZeroCheckStatement",
 
+    IRTypeDeclSizeRangeCheckCStringStatement = "IRTypeDeclSizeRangeCheckCStringStatement",
+    IRTypeDeclSizeRangeCheckUnicodeStringStatement = "IRTypeDeclSizeRangeCheckUnicodeStringStatement",
+    IRTypeDeclFormatCheckCStringStatement = "IRTypeDeclFormatCheckCStringStatement",
+    IRTypeDeclFormatCheckUnicodeStringStatement = "IRTypeDeclFormatCheckUnicodeStringStatement",
+
     IRTypeDeclInvariantCheckStatement = "IRTypeDeclInvariantCheckStatement",
     IRPreconditionCheckStatement = "IRPreconditionCheckStatement",
     IRPostconditionCheckStatement = "IRPostconditionCheckStatement",
@@ -292,6 +330,15 @@ abstract class IRErrorBinArithCheckStatement extends IRErrorCheckStatement {
         this.left = left;
         this.right = right;
         this.optypechk = optypechk;
+    }
+}
+
+abstract class IRErrorTypedStringCheckStatement extends IRErrorCheckStatement {
+    readonly strexp: IRImmediateExpression;
+    
+    constructor(tag: IRStatementTag, file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number, strexp: IRImmediateExpression) {
+        super(tag, file, sinfo, diagnosticTag, checkID);
+        this.strexp = strexp;
     }
 }
 
@@ -833,11 +880,13 @@ class IRAccessConstantExpression extends IRImmediateExpression {
 }
 
 class IRAccessEnumExpression extends IRImmediateExpression {
-    readonly enumkey: string; //flattened identifer names
+    readonly tkey: string;
+    readonly membername: string;
 
-    constructor(enumkey: string) {
+    constructor(tkey: string, membername: string) {
         super(IRExpressionTag.IRAccessEnumExpression);
-        this.enumkey = enumkey;
+        this.tkey = tkey;
+        this.membername = membername;
     }
 }
 
@@ -895,8 +944,54 @@ class IRConstructSafeTypeDeclExpression extends IRSimpleExpression {
     readonly value: IRSimpleExpression;
 
     constructor(constype: IRNominalTypeSignature, value: IRSimpleExpression) {
-        super(IRExpressionTag.IRAccessTypeDeclValueExpression);
+        super(IRExpressionTag.IRConstructSafeTypeDeclExpression);
         this.constype = constype;
+        this.value = value;
+    }
+}
+
+class IRConstructorSomeTypeExpression extends IRSimpleExpression {
+    readonly oftype: IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(oftype: IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRConstructorSomeTypeExpression);
+        this.oftype = oftype;
+        this.value = value;
+    }
+}
+
+class IRConstructorOkTypeExpression extends IRSimpleExpression {
+    readonly oftype: IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(oftype: IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRConstructorOkTypeExpression);
+        this.oftype = oftype;
+        this.value = value;
+    }
+}
+
+class IRConstructorFailTypeExpression extends IRSimpleExpression {
+    readonly oftype: IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(oftype: IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRConstructorFailTypeExpression);
+        this.oftype = oftype;
+        this.value = value;
+    }
+}
+
+class IRConstructorMapEntryTypeExpression extends IRSimpleExpression {
+    readonly oftype: IRTypeSignature;
+    readonly key: IRSimpleExpression;
+    readonly value: IRSimpleExpression;
+
+    constructor(oftype: IRTypeSignature, key: IRSimpleExpression, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRConstructorMapEntryTypeExpression);
+        this.oftype = oftype;
+        this.key = key;
         this.value = value;
     }
 }
@@ -1058,6 +1153,123 @@ class IRNumericGreaterEqExpression extends IRNumericComparisonExpression {
     }
 }
 
+class IRIsNoneOptionExpression extends IRSimpleExpression {
+    readonly exp: IRSimpleExpression;
+    readonly opttype: IRTypeSignature;
+
+    constructor(exp: IRSimpleExpression, opttype: IRTypeSignature) {
+        super(IRExpressionTag.IRIsNoneOptionExpression);
+        this.exp = exp;
+        this.opttype = opttype;
+    }
+}
+
+class IRIsNotNoneOptionExpression extends IRSimpleExpression {
+    readonly exp: IRSimpleExpression;
+    readonly opttype: IRTypeSignature;
+
+    constructor(exp: IRSimpleExpression, opttype: IRTypeSignature) {
+        super(IRExpressionTag.IRIsNotNoneOptionExpression);
+        this.exp = exp;
+        this.opttype = opttype;
+    }
+}
+
+class IRIsOptionEqValueExpression extends IRSimpleExpression {
+    readonly optexp: IRSimpleExpression;
+    readonly opttype: IRTypeSignature;
+
+    readonly valexp: IRSimpleExpression;
+    readonly valtype: IRTypeSignature;
+
+    constructor(optexp: IRSimpleExpression, opttype: IRTypeSignature, valexp: IRSimpleExpression, valtype: IRTypeSignature) {
+        super(IRExpressionTag.IRIsOptionEqValueExpression);
+        this.optexp = optexp;
+        this.opttype = opttype;
+        this.valexp = valexp;
+        this.valtype = valtype;
+    }
+}
+
+class IRIsOptionNeqValueExpression extends IRSimpleExpression {
+    readonly optexp: IRSimpleExpression;
+    readonly opttype: IRTypeSignature;
+
+    readonly valexp: IRSimpleExpression;
+    readonly valtype: IRTypeSignature;
+
+    constructor(optexp: IRSimpleExpression, opttype: IRTypeSignature, valexp: IRSimpleExpression, valtype: IRTypeSignature) {
+        super(IRExpressionTag.IRIsOptionNeqValueExpression);
+        this.optexp = optexp;
+        this.opttype = opttype;
+        this.valexp = valexp;
+        this.valtype = valtype;
+    }
+}
+
+class IRIsSomeEqValueExpression extends IRSimpleExpression {
+    readonly someexp: IRSimpleExpression;
+    readonly sometype: IRTypeSignature;
+
+    readonly valexp: IRSimpleExpression;
+    readonly valtype: IRTypeSignature;
+
+    constructor(someexp: IRSimpleExpression, sometype: IRTypeSignature, valexp: IRSimpleExpression, valtype: IRTypeSignature) {
+        super(IRExpressionTag.IRIsSomeEqValueExpression);
+        this.someexp = someexp;
+        this.sometype = sometype;
+        this.valexp = valexp;
+        this.valtype = valtype;
+    }
+}
+
+class IRIsSomeNeqValueExpression extends IRSimpleExpression {
+    readonly someexp: IRSimpleExpression;
+    readonly sometype: IRTypeSignature;
+
+    readonly valexp: IRSimpleExpression;
+    readonly valtype: IRTypeSignature;
+
+    constructor(someexp: IRSimpleExpression, sometype: IRTypeSignature, valexp: IRSimpleExpression, valtype: IRTypeSignature) {
+        super(IRExpressionTag.IRIsSomeNeqValueExpression);
+        this.someexp = someexp;
+        this.sometype = sometype;
+        this.valexp = valexp;
+        this.valtype = valtype;
+    }
+}
+
+abstract class IRKeyComparisonExpression extends IRSimpleExpression {
+    readonly left: IRSimpleExpression;
+    readonly right: IRSimpleExpression;
+    readonly opertype: IRTypeSignature;
+
+    constructor(tag: IRExpressionTag, left: IRSimpleExpression, right: IRSimpleExpression, opertype: IRTypeSignature) {
+        super(tag);
+        this.left = left;
+        this.right = right;
+        this.opertype = opertype;
+    }
+}
+
+class IRBinKeyEqDirectExpression extends IRKeyComparisonExpression {
+    constructor(left: IRSimpleExpression, right: IRSimpleExpression, opertype: IRTypeSignature) {
+        super(IRExpressionTag.IRBinKeyEqDirectExpression, left, right, opertype);
+    }
+}
+
+class IRBinKeyNeqDirectExpression extends IRKeyComparisonExpression {
+    constructor(left: IRSimpleExpression, right: IRSimpleExpression, opertype: IRTypeSignature) {
+        super(IRExpressionTag.IRBinKeyNeqDirectExpression, left, right, opertype);
+    }
+}
+
+class IRBinKeyLessExpression extends IRKeyComparisonExpression {
+    constructor(left: IRSimpleExpression, right: IRSimpleExpression, opertype: IRTypeSignature) {
+        super(IRExpressionTag.IRBinKeyLessDirectExpression, left, right, opertype);
+    }
+}
+
 abstract class IRLogicOpExpression extends IRSimpleExpression {
     readonly args: IRSimpleExpression[];
 
@@ -1095,6 +1307,190 @@ class IRLogicSimpleConditionalExpression extends IRSimpleExpression {
 //
 //TODO: lots more expression types here
 //
+
+class IRLiteralOptionOfNoneExpression extends IRLiteralExpression {
+    readonly opttype: IRTypeSignature;
+
+    constructor(opttype: IRTypeSignature) {
+        super(IRExpressionTag.IRLiteralOptionOfNoneExpression);
+        this.opttype = opttype;
+    }
+}
+
+class IRConstructOptionFromSomeExpression extends IRSimpleExpression {
+    readonly opttype: IRTypeSignature;
+    readonly sometype: IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(opttype: IRTypeSignature, sometype: IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRConstructOptionFromSomeExpression);
+        this.opttype = opttype;
+        this.sometype = sometype;
+        this.value = value;
+    }
+}
+
+class IRExtractSomeFromOptionExpression extends IRSimpleExpression {
+    readonly opttype: IRTypeSignature;
+    readonly sometype: IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(opttype: IRTypeSignature, sometype: IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRExtractSomeFromOptionExpression);
+        this.opttype = opttype;
+        this.sometype = sometype;
+        this.value = value;
+    }
+}
+
+class IRExtractSomeValueFromOptionExpression extends IRSimpleExpression {
+    readonly opttype: IRTypeSignature;
+    readonly sometype: IRTypeSignature;
+    readonly ttype : IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(opttype: IRTypeSignature, sometype: IRTypeSignature, ttype : IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRExtractSomeValueFromOptionExpression);
+        this.opttype = opttype;
+        this.sometype = sometype;
+        this.ttype = ttype;
+        this.value = value;
+    }
+}
+
+class IRConstructResultFromOkExpression extends IRSimpleExpression {
+    readonly rtype: IRTypeSignature;
+    readonly oktype: IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(rtype: IRTypeSignature, oktype: IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRConstructResultFromOkExpression);
+        this.rtype = rtype;
+        this.oktype = oktype;
+        this.value = value;
+    }
+}
+
+class IRConstructResultFromFailExpression extends IRSimpleExpression {
+    readonly rtype: IRTypeSignature;
+    readonly failtype: IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(rtype: IRTypeSignature, failtype: IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRConstructResultFromFailExpression);
+        this.rtype = rtype;
+        this.failtype = failtype;
+        this.value = value;
+    }
+}
+
+class IRExtractOkFromResultExpression extends IRSimpleExpression {
+    readonly rtype: IRTypeSignature;
+    readonly oktype: IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(rtype: IRTypeSignature, oktype: IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRExtractOkFromResultExpression);
+        this.rtype = rtype;
+        this.oktype = oktype;
+        this.value = value;
+    }
+}
+
+class IRExtractOkValueFromResultExpression extends IRSimpleExpression {
+    readonly rtype: IRTypeSignature;
+    readonly oktype: IRTypeSignature;
+    readonly ttype : IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(rtype: IRTypeSignature, oktype: IRTypeSignature, ttype : IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRExtractOkValueFromResultExpression);
+        this.rtype = rtype;
+        this.oktype = oktype;
+        this.ttype = ttype;
+        this.value = value;
+    }
+}
+
+class IRExtractFailFromResultExpression extends IRSimpleExpression {
+    readonly rtype: IRTypeSignature;
+    readonly failtype: IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(rtype: IRTypeSignature, failtype: IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRExtractFailFromResultExpression);
+        this.rtype = rtype;
+        this.failtype = failtype;
+        this.value = value;
+    }
+}
+
+class IRExtractFailValueFromResultExpression extends IRSimpleExpression {
+    readonly rtype: IRTypeSignature;
+    readonly failtype: IRTypeSignature;
+    readonly etype : IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(rtype: IRTypeSignature, failtype: IRTypeSignature, etype : IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRExtractFailValueFromResultExpression);
+        this.rtype = rtype;
+        this.failtype = failtype;
+        this.etype = etype;
+        this.value = value;
+    }
+}
+
+class IRBoxEntityToConceptRepresentationExpression extends IRSimpleExpression {
+    readonly totype: IRTypeSignature;
+    readonly fromtype: IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(totype: IRTypeSignature, fromtype: IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRBoxEntityToConceptRepresentationExpression);
+        this.totype = totype;
+        this.fromtype = fromtype;
+        this.value = value;
+    }
+}
+
+class IRUnboxEntityFromConceptRepresentationExpression extends IRSimpleExpression {
+    readonly fromtype: IRTypeSignature;
+    readonly totype: IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(fromtype: IRTypeSignature, totype: IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRUnboxEntityFromConceptRepresentationExpression);
+        this.fromtype = fromtype;
+        this.totype = totype;
+        this.value = value;
+    }
+}
+
+class IRWidenConceptRepresentationExpression extends IRSimpleExpression {
+    readonly fromtype: IRTypeSignature;
+    readonly totype: IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(fromtype: IRTypeSignature, totype: IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRWidenConceptRepresentationExpression);
+        this.fromtype = fromtype;
+        this.totype = totype;
+        this.value = value;
+    }
+}
+
+class IRNarrowConceptRepresentationExpression extends IRSimpleExpression {
+    readonly fromtype: IRTypeSignature;
+    readonly totype: IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(fromtype: IRTypeSignature, totype: IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRNarrowConceptRepresentationExpression);
+        this.fromtype = fromtype;
+        this.totype = totype;
+        this.value = value;
+    }
+}
 
 ////////////////////////////////////////
 //Basic Line statements
@@ -1271,13 +1667,53 @@ class IRErrorDivisionByZeroCheckStatement extends IRErrorBinArithCheckStatement 
     }
 }
 
+class IRTypeDeclSizeRangeCheckCStringStatement extends IRErrorTypedStringCheckStatement {
+    readonly min: string | undefined;
+    readonly max: string | undefined;
+
+    constructor(file: string, sinfo: IRSourceInfo, checkID: number, min: string | undefined, max: string | undefined, strexp: IRImmediateExpression) {
+        super(IRStatementTag.IRTypeDeclSizeRangeCheckCStringStatement, file, sinfo, undefined, checkID, strexp);
+        this.min = min;
+        this.max = max;
+    }
+}
+
+class IRTypeDeclSizeRangeCheckUnicodeStringStatement extends IRErrorTypedStringCheckStatement {
+    readonly min: string | undefined;
+    readonly max: string | undefined;
+
+    constructor(file: string, sinfo: IRSourceInfo, checkID: number, min: string | undefined, max: string | undefined, strexp: IRImmediateExpression) {
+        super(IRStatementTag.IRTypeDeclSizeRangeCheckUnicodeStringStatement, file, sinfo, undefined, checkID, strexp);
+        this.min = min;
+        this.max = max;
+    }
+}
+
+class IRTypeDeclFormatCheckCStringStatement extends IRErrorTypedStringCheckStatement {
+    readonly re: IRLiteralCRegexExpression;
+
+    constructor(file: string, sinfo: IRSourceInfo, checkID: number, re: IRLiteralCRegexExpression, strexp: IRImmediateExpression) {
+        super(IRStatementTag.IRTypeDeclFormatCheckCStringStatement, file, sinfo, undefined, checkID, strexp);
+        this.re = re;
+    }
+}
+
+class IRTypeDeclFormatCheckUnicodeStringStatement extends IRErrorTypedStringCheckStatement {
+    readonly re: IRLiteralUnicodeRegexExpression;
+
+    constructor(file: string, sinfo: IRSourceInfo, checkID: number, re: IRLiteralUnicodeRegexExpression, strexp: IRImmediateExpression) {
+        super(IRStatementTag.IRTypeDeclFormatCheckUnicodeStringStatement, file, sinfo, undefined, checkID, strexp);
+        this.re = re;
+    }
+}
+
 /* This calls the defined invariant check function for the target type decl on the provided value -- errors are reported from there */
 class IRTypeDeclInvariantCheckStatement extends IRErrorCheckStatement {
     readonly tkey: string;
     readonly invariantidx: number;
-    readonly targetValue: IRSimpleExpression;
+    readonly targetValue: IRImmediateExpression;
 
-    constructor(file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number, tkey: string, invariantidx: number, targetValue: IRSimpleExpression) {
+    constructor(file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number, tkey: string, invariantidx: number, targetValue: IRImmediateExpression) {
         super(IRStatementTag.IRTypeDeclInvariantCheckStatement, file, sinfo, diagnosticTag, checkID);
         this.tkey = tkey;
         this.invariantidx = invariantidx;
@@ -1289,9 +1725,9 @@ class IRTypeDeclInvariantCheckStatement extends IRErrorCheckStatement {
 class IRPreconditionCheckStatement extends IRErrorCheckStatement {
     readonly ikey: string;
     readonly requiresidx: number;
-    readonly args: IRSimpleExpression[];
+    readonly args: IRImmediateExpression[];
 
-    constructor(file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number, ikey: string, requiresidx: number, args: IRSimpleExpression[]) {
+    constructor(file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number, ikey: string, requiresidx: number, args: IRImmediateExpression[]) {
         super(IRStatementTag.IRPreconditionCheckStatement, file, sinfo, diagnosticTag, checkID);
         this.ikey = ikey;
         this.requiresidx = requiresidx;
@@ -1303,9 +1739,9 @@ class IRPreconditionCheckStatement extends IRErrorCheckStatement {
 class IRPostconditionCheckStatement extends IRErrorCheckStatement {
     readonly ikey: string;
     readonly ensuresidx: number;
-    readonly args: IRSimpleExpression[];
+    readonly args: IRImmediateExpression[];
 
-    constructor(file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number, ikey: string, ensuresidx: number, args: IRSimpleExpression[]) {
+    constructor(file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number, ikey: string, ensuresidx: number, args: IRImmediateExpression[]) {
         super(IRStatementTag.IRPostconditionCheckStatement, file, sinfo, diagnosticTag, checkID);
         this.ikey = ikey;
         this.ensuresidx = ensuresidx;
@@ -1435,14 +1871,22 @@ export {
     
     IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression,
 
+    IRConstructorSomeTypeExpression, IRConstructorOkTypeExpression, IRConstructorFailTypeExpression, IRConstructorMapEntryTypeExpression,
+
     IRInvokeExpression, IRInvokeDirectExpression, IRInvokeImplicitsExpression, IRInvokeSimpleExpression, IRInvokeSimpleWithImplicitsExpression, IRInvokeVirtualSimpleExpression, IRInvokeVirtualWithImplicitsExpression,
 
     IRUnaryOpExpression, IRPrefixNotOpExpression, IRPrefixNegateOpExpression, IRPrefixPlusOpExpression,
     IRBinOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression,
     IRNumericComparisonExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression,
+    IRIsNoneOptionExpression, IRIsNotNoneOptionExpression, IRIsOptionEqValueExpression, IRIsOptionNeqValueExpression, IRIsSomeEqValueExpression, IRIsSomeNeqValueExpression,
+    IRKeyComparisonExpression, IRBinKeyEqDirectExpression, IRBinKeyNeqDirectExpression, IRBinKeyLessExpression,
     IRLogicOpExpression, IRLogicAndExpression, IRLogicOrExpression,
 
     IRLogicSimpleConditionalExpression,
+
+    IRLiteralOptionOfNoneExpression, IRConstructOptionFromSomeExpression, IRExtractSomeFromOptionExpression, IRExtractSomeValueFromOptionExpression,
+    IRConstructResultFromOkExpression, IRConstructResultFromFailExpression, IRExtractOkFromResultExpression, IRExtractOkValueFromResultExpression, IRExtractFailFromResultExpression, IRExtractFailValueFromResultExpression,
+    IRBoxEntityToConceptRepresentationExpression, IRUnboxEntityFromConceptRepresentationExpression, IRWidenConceptRepresentationExpression, IRNarrowConceptRepresentationExpression,
 
     IRStatementTag, IRStatement, IRAtomicStatement, IRReturnSimpleStatement, IRReturnWithImplicitStatement,
     IRErrorCheckStatement, IRErrorBinArithCheckStatement,
@@ -1457,6 +1901,8 @@ export {
     IRLogicConditionalStatement,
 
     IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement,
+    IRErrorTypedStringCheckStatement, IRTypeDeclSizeRangeCheckCStringStatement, IRTypeDeclSizeRangeCheckUnicodeStringStatement, IRTypeDeclFormatCheckCStringStatement, IRTypeDeclFormatCheckUnicodeStringStatement,
+
     IRTypeDeclInvariantCheckStatement,
     IRPreconditionCheckStatement, IRPostconditionCheckStatement,
     IRAbortStatement, IRAssertStatement, IRAssumeStatement, IRValidateStatement, IRDebugStatement,

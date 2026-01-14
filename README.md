@@ -7,20 +7,21 @@
 
 # The Bosque Project
 
-Bosque is a new approach to programming models, development tooling, and runtime design that is focused on supporting mechanization at scale and establishing a new standard for creating high-reliability software artifacts. The foundational design precepts for Bosque are:
-1. Design for Tooling & Mechanization -- The entire system should be amenable to automated analysis and transformation. Avoid features or behaviors that inhibit analysis and automation.
-2. Total Safety -- Don't just make mistakes hard to make, eliminate them entirely. Whenever possible rule-out entire categories of failures by construction.
-3. WYSIWYG -- Humans and AI Agents understand and make assumptions about the semantics (behavior) of the code from the textual representation (syntax). Minimize the presence of implicit or syntactically hidden behaviors. 
-4. The Ecosystem is the Language -- Modern development at scale is a collaborative process, both working with partner teams or using 3rd party code, via packages and/or APIs. Create a framework that is designed for componentization, composition, and behavioral guarantees.
-5. Reliable Performance at Scale -- At scale worst-case performance behaviors _will_ inevitably occur and are problematic to resolve. Design for low-variance execution and minimize the impacts of worst case behaviors instead of optimizing for the best or average case. 
-6. Failure is Always an Option -- Failure is inevitable and mitigation/recovery is a requirement for reliable and scalable systems. Give un-happy path processing first-class support in the language and ensure observability throughout the system.
+Bosque is a new approach to programming models, development tooling, and runtime design that is focused on supporting mechanization at scale and establishing a new standard for creating efficient and high-reliability software artifacts. 
+- Quality -- reliability and correctness should be opt-out, not opt-in, by default. Doing the simple obvious thing should _just work_ and lead to good outcomes.
+- Efficiency -- software bloat and inefficiency are a major source of cost and complexity in modern systems. Writing simple, clear code, should lead to efficient and predictable systems.
+- Mechanization -- whenever possible we support mechanization of development tasks. We want humans to focus on the creative \& high-level aspects development and let machines handle the tedious parts.
+- AI Agents & APIs -- we want to embrace the use of AI agents and APIs as key parts of the development process. Thus, we support these a first-class parts of the programming and software stack.
+- Development should be Fun! -- the tools and languages we use should make it easy (and fun) to express ideas and solve problems, not get in the way.
+
+To [paraphrase](https://doctorow.medium.com/social-quitting-1ce85b67b456) Mr. Doctorow our goal is to drive the "un-shittification" the software stack!
 
 # Current Status
-We are at a major milestone in the Bosque project -- declaring 1.0! 
+We are at a major milestone in the Bosque project -- declaring 2.0 release! 
 
-Now this doesn't mean that Bosque is done, or even that is easily useable, but it does mean that the language is what it is going to be and (bold) engineering teams can write code with some degree of confidence that it will be stable and supported. As part of living this commitment, and moving on to the Bosque 2.0 phase, the goal is to begin implementing the majority of new Bosque code in Bosque itself!
+Since the first announcement in 2019 we have been focused on a North-Star of eliminating extrinsic complexity from the software stack and engineering process. We are excited to announce that after lots of experimentation and experience we are ready to stabilize the language and core platform for general use in the 2.0 release.
 
-The 2.0 release will be focused on a revised version of the [Small Model Verifier](https://discovery.ucl.ac.uk/id/eprint/10146184/1/finir.pdf), the [AOT compiler/runtime](https://bosquelanguage.github.io/2024/10/01/an-omega-c-runtime.html), along with improving the language for self-hosting the compiler and having a stable language for development in general.
+Our #1 priority is to work with the community to start deploying Bosque in the real-world and rapidly address any issues that arise. In addition we plan to invest in building out the ecosystem of tools, libraries, and integrations that will make Bosque a great platform for building high-quality software. This includes the entire gamut of ecosystems from table stakes like LSP support, formal-methods, and workflows for Agentic AI systems!
 
 # Platform Road Map 
 The current (approximate) roadmap for the Bosque project is broken down into a series of major components that are being developed in parallel + smaller but high-impact work items. These cover a range of complexity and required skills, from academic level publication results, through non-trivial software engineering lifts, and into smaller tasks that are good starter projects. If you are interested in one of these please find (or open) an issue for more detail.
