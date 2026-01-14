@@ -45,9 +45,9 @@ namespace ᐸRuntimeᐳ
         constexpr bool isSome() const { return this->typeinfo != &g_typeinfo_None; }
         static XOption<T> fromSome(const TypeInfo* ti, const XSome<T>& d) { return XOption<T>(ti, d.value); }
 
-        constexpr XNone safe_none() const { return xnone; }
-        constexpr XSome<T> safe_some() const { return XSome<T>{this->data}; }
-        constexpr T safe_unwrap() const { return this->data; }
+        constexpr XNone asNone() const { return xnone; }
+        constexpr XSome<T> asSome() const { return XSome<T>{this->data}; }
+        constexpr T unwrap() const { return this->data; }
 
         friend constexpr XBool operator==(const XOption<T>& lhs, const XNone& rhs) { return XBool::from(lhs.isNone()); }
         friend constexpr XBool operator==(const XNone& lhs, const XOption<T>& rhs) { return XBool::from(rhs.isNone()); }

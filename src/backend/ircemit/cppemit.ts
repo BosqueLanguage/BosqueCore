@@ -2,7 +2,7 @@ import { TransformCPPNameManager } from "./namemgr.js";
 import { TypeInfoManager } from "./typeinfomgr.js";
 
 import { MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_INT } from "../../frontend/assembly.js";
-import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag, IRPrefixNotOpExpression, IRPrefixPlusOpExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRReturnValueSimpleStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement, IRAbortStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRTempAssignExpressionStatement, IRTypeDeclInvariantCheckStatement, IRDebugStatement, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRChkLogicImpliesShortCircuitStatement, IRPreconditionCheckStatement, IRPostconditionCheckStatement, IRVariableInitializationDirectInvokeStatement, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRAssertStatement, IRValidateStatement, IRBody, IRBuiltinBody, IRStandardBody, IRHoleBody, IRIsNoneOptionExpression, IRBinKeyEqDirectExpression, IRIsOptionEqValueExpression, IRIsSomeNeqValueExpression, IRIsOptionNeqValueExpression, IRIsSomeEqValueExpression, IRConstructorSomeTypeExpression } from "../irdefs/irbody.js";
+import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag, IRPrefixNotOpExpression, IRPrefixPlusOpExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRReturnValueSimpleStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement, IRAbortStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRTempAssignExpressionStatement, IRTypeDeclInvariantCheckStatement, IRDebugStatement, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRChkLogicImpliesShortCircuitStatement, IRPreconditionCheckStatement, IRPostconditionCheckStatement, IRVariableInitializationDirectInvokeStatement, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRAssertStatement, IRValidateStatement, IRBody, IRBuiltinBody, IRStandardBody, IRHoleBody, IRIsNoneOptionExpression, IRBinKeyEqDirectExpression, IRIsOptionEqValueExpression, IRIsSomeNeqValueExpression, IRIsOptionNeqValueExpression, IRIsSomeEqValueExpression, IRConstructorSomeTypeExpression, IRLiteralOptionOfNoneExpression, IRConstructOptionFromSomeExpression, IRExtractSomeFromOptionExpression, IRExtractSomeValueFromOptionExpression } from "../irdefs/irbody.js";
 import { IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAssembly, IRConstantDecl, IREnumTypeDecl, IRFailTypeDecl, IRInvariantDecl, IRInvokeDecl, IRInvokeParameterDecl, IRMapEntryTypeDecl, IROkTypeDecl, IROptionTypeDecl, IRResultTypeDecl, IRSomeTypeDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl, IRValidateDecl } from "../irdefs/irassembly.js";
 
 import assert from "node:assert";
@@ -450,6 +450,55 @@ class CPPEmitter {
                 const cexp = exps as IRLogicSimpleConditionalExpression;
                 bstr = `(${this.emitIRSimpleExpression(cexp.condition, false)} ? ${this.emitIRSimpleExpression(cexp.trueexp, false)} : ${this.emitIRSimpleExpression(cexp.falseexp, false)})`;
             }
+            else if(ttag === IRExpressionTag.IRLiteralOptionOfNoneExpression) {
+                const cexp = exps as IRLiteralOptionOfNoneExpression;
+                const octype = TransformCPPNameManager.convertTypeKey(cexp.opttype.tkeystr);
+                bstr = `${octype}::optnone`
+            }
+            else if(ttag === IRExpressionTag.IRConstructOptionFromSomeExpression) {
+                const cexp = exps as IRConstructOptionFromSomeExpression;
+                const octype = TransformCPPNameManager.convertTypeKey(cexp.opttype.tkeystr);
+                const sometypeinfo = TransformCPPNameManager.generateTypeInfoNameForTypeKey(cexp.sometype.tkeystr);
+                bstr = `${octype}::fromSome(${sometypeinfo}, ${this.emitIRSimpleExpression(cexp.value, false)})`;
+            }
+            else if(ttag === IRExpressionTag.IRExtractSomeFromOptionExpression) {
+                const eexp = exps as IRExtractSomeFromOptionExpression;
+                bstr = `${this.emitIRSimpleExpression(eexp.value, false)}.asSome()`;
+            }
+            else if(ttag === IRExpressionTag.IRExtractSomeValueFromOptionExpression) {
+                const eexp = exps as IRExtractSomeValueFromOptionExpression;
+                bstr = `${this.emitIRSimpleExpression(eexp.value, false)}.unwrap()`;
+            }
+            else if(ttag === IRExpressionTag.IRConstructResultFromOkExpression) {
+                assert(false, "CPPEmitter: need to implement construct ok from result expression");
+            }
+            else if(ttag === IRExpressionTag.IRConstructResultFromFailExpression) {
+                assert(false, "CPPEmitter: need to implement construct fail from result expression");
+            }
+            else if(ttag === IRExpressionTag.IRExtractOkFromResultExpression) {
+                assert(false, "CPPEmitter: need to implement extract ok from result expression");
+            }
+            else if(ttag === IRExpressionTag.IRExtractOkValueFromResultExpression) {
+                assert(false, "CPPEmitter: need to implement extract ok value from result expression");
+            }
+            else if(ttag === IRExpressionTag.IRExtractFailFromResultExpression) {
+                assert(false, "CPPEmitter: need to implement extract fail from result expression");
+            }
+            else if(ttag === IRExpressionTag.IRExtractFailValueFromResultExpression) {
+                assert(false, "CPPEmitter: need to implement extract fail value from result expression");
+            }
+            else if(ttag === IRExpressionTag.IRBoxEntityToConceptRepresentationExpression) {
+                assert(false, "CPPEmitter: need to implement box entity to concept representation expression");
+            }
+            else if(ttag === IRExpressionTag.IRUnboxEntityFromConceptRepresentationExpression) {
+                assert(false, "CPPEmitter: need to implement unbox entity from concept representation expression");
+            }
+            else if(ttag === IRExpressionTag.IRWidenConceptRepresentationExpression) {
+                assert(false, "CPPEmitter: need to implement widen concept representation expression");
+            }
+            else if(ttag === IRExpressionTag.IRNarrowConceptRepresentationExpression) {
+                assert(false, "CPPEmitter: need to implement narrow concept representation expression");
+            }
             else {
                 assert(false, `CPPEmitter: Unsupported IR simple expression type -- ${exps.constructor.name}`);
             }
@@ -776,7 +825,7 @@ class CPPEmitter {
         `        ${ttid.bytesize},\n` +
         `        ${ttid.slotcount},\n` +
         `        LayoutTag::${ttid.tag},\n` +
-        `        ${ttid.ptrmask},\n` +
+        `        ${ttid.ptrmask || "nullptr"},\n` +
         `        "${tdecl.tkey}",\n` +
         `        ${ttid.vtable !== undefined ? "" : "nullptr"}\n` +
         `    };\n` +
@@ -792,7 +841,7 @@ class CPPEmitter {
         `        ${ttid.bytesize},\n` +
         `        ${ttid.slotcount},\n` +
         `        LayoutTag::Tagged,\n` +
-        `        ${ttid.ptrmask},\n` +
+        `        ${ttid.ptrmask || "nullptr"},\n` +
         `        "${tdecl.tkey}",\n` +
         `        nullptr\n` +
         `    };\n` +
@@ -882,7 +931,7 @@ class CPPEmitter {
             '}';
 
             return [
-                [tclass, bsqparsedecl, bsqemitdecl].join("\n"), 
+                [tclass, typeinfodecl, bsqparsedecl, bsqemitdecl].join("\n"), 
                 [bsqparsedef, bsqemitdef].join("\n")
             ];
         }
@@ -981,7 +1030,7 @@ class CPPEmitter {
         
         const defbsqemit = `void BSQ_emit${ctname}(${ctname}& vv) {\n` +
         `    if(vv.isNone()) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate("none"); }\n` +
-        `    else { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitSome<${voptttname}>(vv.safe_some()); }\n` +
+        `    else { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitSome<${voptttname}>(vv.asSome()); }\n` +
         `}`;
         
         return [
