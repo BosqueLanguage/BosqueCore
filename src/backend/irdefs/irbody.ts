@@ -128,7 +128,24 @@ enum IRExpressionTag {
     //TODO: lots more expression types here
     //
 
-    IRLogicSimpleConditionalExpression = "IRLogicSimpleConditionalExpression"
+    IRLogicSimpleConditionalExpression = "IRLogicSimpleConditionalExpression",
+
+    IRLiteralOptionOfNoneExpression = "IRLiteralOptionOfNoneExpression",
+    IRConstructOptionFromSomeExpression = "IRConstructOptionFromSomeExpression",
+    IRExtractSomeFromOptionExpression = "IRExtractSomeFromOptionExpression",
+    IRExtractSomeValueFromOptionExpression = "IRExtractSomeValueFromOptionExpression",
+
+    IRConstructResultFromOkExpression = "IRConstructResultFromOkExpression",
+    IRConstructResultFromFailExpression = "IRConstructResultFromFailExpression",
+    IRExtractOkFromResultExpression = "IRExtractOkFromResultExpression",
+    IRExtractOkValueFromResultExpression = "IRExtractOkValueFromResultExpression",
+    IRExtractFailFromResultExpression = "IRExtractFailFromResultExpression",
+    IRExtractFailValueFromResultExpression = "IRExtractFailValueFromResultExpression",
+
+    IRBoxEntityToConceptRepresentationExpression = "IRBoxEntityToConceptRepresentationExpression",
+    IRUnboxEntityFromConceptRepresentationExpression = "IRUnboxEntityFromConceptRepresentationExpression",
+    IRWidenConceptRepresentationExpression = "IRWidenConceptRepresentationExpression",
+    IRNarrowConceptRepresentationExpression = "IRNarrowConceptRepresentationExpression"
 }
 
 abstract class IRExpression {
@@ -1291,6 +1308,190 @@ class IRLogicSimpleConditionalExpression extends IRSimpleExpression {
 //TODO: lots more expression types here
 //
 
+class IRLiteralOptionOfNoneExpression extends IRLiteralExpression {
+    readonly opttype: IRTypeSignature;
+
+    constructor(opttype: IRTypeSignature) {
+        super(IRExpressionTag.IRLiteralOptionOfNoneExpression);
+        this.opttype = opttype;
+    }
+}
+
+class IRConstructOptionFromSomeExpression extends IRSimpleExpression {
+    readonly opttype: IRTypeSignature;
+    readonly sometype: IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(opttype: IRTypeSignature, sometype: IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRConstructOptionFromSomeExpression);
+        this.opttype = opttype;
+        this.sometype = sometype;
+        this.value = value;
+    }
+}
+
+class IRExtractSomeFromOptionExpression extends IRSimpleExpression {
+    readonly opttype: IRTypeSignature;
+    readonly sometype: IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(opttype: IRTypeSignature, sometype: IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRExtractSomeFromOptionExpression);
+        this.opttype = opttype;
+        this.sometype = sometype;
+        this.value = value;
+    }
+}
+
+class IRExtractSomeValueFromOptionExpression extends IRSimpleExpression {
+    readonly opttype: IRTypeSignature;
+    readonly sometype: IRTypeSignature;
+    readonly ttype : IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(opttype: IRTypeSignature, sometype: IRTypeSignature, ttype : IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRExtractSomeValueFromOptionExpression);
+        this.opttype = opttype;
+        this.sometype = sometype;
+        this.ttype = ttype;
+        this.value = value;
+    }
+}
+
+class IRConstructResultFromOkExpression extends IRSimpleExpression {
+    readonly rtype: IRTypeSignature;
+    readonly oktype: IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(rtype: IRTypeSignature, oktype: IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRConstructResultFromOkExpression);
+        this.rtype = rtype;
+        this.oktype = oktype;
+        this.value = value;
+    }
+}
+
+class IRConstructResultFromFailExpression extends IRSimpleExpression {
+    readonly rtype: IRTypeSignature;
+    readonly failtype: IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(rtype: IRTypeSignature, failtype: IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRConstructResultFromFailExpression);
+        this.rtype = rtype;
+        this.failtype = failtype;
+        this.value = value;
+    }
+}
+
+class IRExtractOkFromResultExpression extends IRSimpleExpression {
+    readonly rtype: IRTypeSignature;
+    readonly oktype: IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(rtype: IRTypeSignature, oktype: IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRExtractOkFromResultExpression);
+        this.rtype = rtype;
+        this.oktype = oktype;
+        this.value = value;
+    }
+}
+
+class IRExtractOkValueFromResultExpression extends IRSimpleExpression {
+    readonly rtype: IRTypeSignature;
+    readonly oktype: IRTypeSignature;
+    readonly ttype : IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(rtype: IRTypeSignature, oktype: IRTypeSignature, ttype : IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRExtractOkValueFromResultExpression);
+        this.rtype = rtype;
+        this.oktype = oktype;
+        this.ttype = ttype;
+        this.value = value;
+    }
+}
+
+class IRExtractFailFromResultExpression extends IRSimpleExpression {
+    readonly rtype: IRTypeSignature;
+    readonly failtype: IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(rtype: IRTypeSignature, failtype: IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRExtractFailFromResultExpression);
+        this.rtype = rtype;
+        this.failtype = failtype;
+        this.value = value;
+    }
+}
+
+class IRExtractFailValueFromResultExpression extends IRSimpleExpression {
+    readonly rtype: IRTypeSignature;
+    readonly failtype: IRTypeSignature;
+    readonly etype : IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(rtype: IRTypeSignature, failtype: IRTypeSignature, etype : IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRExtractFailValueFromResultExpression);
+        this.rtype = rtype;
+        this.failtype = failtype;
+        this.etype = etype;
+        this.value = value;
+    }
+}
+
+class IRBoxEntityToConceptRepresentationExpression extends IRSimpleExpression {
+    readonly totype: IRTypeSignature;
+    readonly fromtype: IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(totype: IRTypeSignature, fromtype: IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRBoxEntityToConceptRepresentationExpression);
+        this.totype = totype;
+        this.fromtype = fromtype;
+        this.value = value;
+    }
+}
+
+class IRUnboxEntityFromConceptRepresentationExpression extends IRSimpleExpression {
+    readonly fromtype: IRTypeSignature;
+    readonly totype: IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(fromtype: IRTypeSignature, totype: IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRUnboxEntityFromConceptRepresentationExpression);
+        this.fromtype = fromtype;
+        this.totype = totype;
+        this.value = value;
+    }
+}
+
+class IRWidenConceptRepresentationExpression extends IRSimpleExpression {
+    readonly fromtype: IRTypeSignature;
+    readonly totype: IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(fromtype: IRTypeSignature, totype: IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRWidenConceptRepresentationExpression);
+        this.fromtype = fromtype;
+        this.totype = totype;
+        this.value = value;
+    }
+}
+
+class IRNarrowConceptRepresentationExpression extends IRSimpleExpression {
+    readonly fromtype: IRTypeSignature;
+    readonly totype: IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(fromtype: IRTypeSignature, totype: IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRNarrowConceptRepresentationExpression);
+        this.fromtype = fromtype;
+        this.totype = totype;
+        this.value = value;
+    }
+}
+
 ////////////////////////////////////////
 //Basic Line statements
 
@@ -1682,6 +1883,10 @@ export {
     IRLogicOpExpression, IRLogicAndExpression, IRLogicOrExpression,
 
     IRLogicSimpleConditionalExpression,
+
+    IRLiteralOptionOfNoneExpression, IRConstructOptionFromSomeExpression, IRExtractSomeFromOptionExpression, IRExtractSomeValueFromOptionExpression,
+    IRConstructResultFromOkExpression, IRConstructResultFromFailExpression, IRExtractOkFromResultExpression, IRExtractOkValueFromResultExpression, IRExtractFailFromResultExpression, IRExtractFailValueFromResultExpression,
+    IRBoxEntityToConceptRepresentationExpression, IRUnboxEntityFromConceptRepresentationExpression, IRWidenConceptRepresentationExpression, IRNarrowConceptRepresentationExpression,
 
     IRStatementTag, IRStatement, IRAtomicStatement, IRReturnSimpleStatement, IRReturnWithImplicitStatement,
     IRErrorCheckStatement, IRErrorBinArithCheckStatement,
