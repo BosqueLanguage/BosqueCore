@@ -34,7 +34,8 @@ static void reprocessPageInfo(PageInfo* page, BSQMemoryTheadLocalInfo& tinfo) no
 static inline void pushPendingDecs(BSQMemoryTheadLocalInfo& tinfo, void* obj, DecsList& list)
 {
     // Dead root points to root case, keep the root pointed to alive
-    if(GC_IS_ROOT(obj)) [[unlikely]] {
+	MetaData* m = GC_GET_META_DATA_ADDR(obj);
+    if(GC_IS_ROOT(m)) [[unlikely]] {
         return ;
     }
 
@@ -51,10 +52,10 @@ static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcep
 
     while(oldroots_idx < tinfo.old_roots_count) {
         void* cur_oldroot = tinfo.old_roots[oldroots_idx];
-        
+        MetaData* m = GC_GET_META_DATA_ADDR(cur_oldroot); 
         if(roots_idx >= tinfo.roots_count) {
             // Was dropped from roots
-            if(GC_REF_COUNT(cur_oldroot) == 0) {
+            if(GC_REF_COUNT(m) == 0) {
                 pushPendingDecs(tinfo, cur_oldroot, tinfo.decs_batch);
             }
             oldroots_idx++;
@@ -68,7 +69,7 @@ static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcep
         } 
         else if(cur_oldroot < cur_root) {
             // Was dropped from roots
-            if(GC_REF_COUNT(cur_oldroot) == 0) {
+            if(GC_REF_COUNT(m) == 0) {
                 pushPendingDecs(tinfo, cur_oldroot, tinfo.decs_batch);
             }
             oldroots_idx++;
@@ -140,19 +141,18 @@ static inline void updateDecrementedPages(BSQMemoryTheadLocalInfo& tinfo, PageIn
 
 static inline void decrementObject(void* obj) noexcept 
 {
-    if(GC_REF_COUNT(obj) > 0) {
-        DEC_REF_COUNT(obj);
+	MetaData* m = GC_GET_META_DATA_ADDR(obj);
+    if(GC_REF_COUNT(m) > 0) {
+        DEC_REF_COUNT(m);
     }
 }
 
 static inline void updateDecrementedObject(BSQMemoryTheadLocalInfo& tinfo, void* obj, ArrayList<void*>& list)
 {
-    __CoreGC::TypeInfoBase* typeinfo = GC_TYPE(obj);
-    
-    if(typeinfo->ptr_mask != PTR_MASK_LEAF && GC_REF_COUNT(obj) == 0) {
+    MetaData* m = GC_GET_META_DATA_ADDR(obj); 
+    __CoreGC::TypeInfoBase* typeinfo = GC_TYPE(m);
+    if(typeinfo->ptr_mask != PTR_MASK_LEAF && GC_REF_COUNT(m) == 0) {
         walkPointerMaskForDecrements(tinfo, typeinfo, static_cast<void**>(obj), list);
-
-        MetaData* m = GC_GET_META_DATA_ADDR(obj);
         GC_RESET_ALLOC(m);
     }
 }
@@ -167,7 +167,8 @@ static inline void tryReprocessDecrementedPages(BSQMemoryTheadLocalInfo& tinfo)
 
 void processDec(void* obj, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
-    if(!GC_IS_ALLOCATED(obj)) {
+	MetaData* m = GC_GET_META_DATA_ADDR(obj);	
+    if(!GC_IS_ALLOCATED(m)) {
         return ;
     }
 
@@ -208,8 +209,8 @@ static void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
     size_t deccount = 0;
     while(!tinfo.decs_batch.isEmpty() && (deccount < tinfo.max_decrement_count)) {
         void* obj = tinfo.decs_batch.pop_front();
-
-        if(!GC_IS_ALLOCATED(obj)) {
+	    MetaData* m = GC_GET_META_DATA_ADDR(obj);	
+        if(!GC_IS_ALLOCATED(m)) {
             continue;
         }
 
@@ -235,15 +236,14 @@ static void* forward(void* ptr, BSQMemoryTheadLocalInfo& tinfo)
     GCAllocator* gcalloc = tinfo.getAllocatorForPageSize(p);
     GC_INVARIANT_CHECK(gcalloc != nullptr);
 
-    __CoreGC::TypeInfoBase* type_info = GC_TYPE(ptr);
+    MetaData* m = GC_GET_META_DATA_ADDR(ptr); 
+    __CoreGC::TypeInfoBase* type_info = GC_TYPE(m);
     void* nptr = gcalloc->allocateEvacuation(type_info);
     xmem_copy(ptr, nptr, type_info->slot_size);
 
     // Insert into forward table and update object ensuring future objects update
-    MetaData* m = GC_GET_META_DATA_ADDR(ptr); 
     RESET_METADATA_FOR_OBJECT(m, tinfo.forward_table_index);
-    tinfo.forward_table[tinfo.forward_table_index] = nptr;
-    tinfo.forward_table_index++;
+    tinfo.forward_table[tinfo.forward_table_index++] = nptr;
 
     UPDATE_TOTAL_PROMOTIONS(+=, 1);
 
@@ -255,12 +255,13 @@ static inline void updateRef(void** obj, BSQMemoryTheadLocalInfo& tinfo)
     void* ptr = *obj;
 
     // Root points to root case (may be a false root)
-    if(GC_IS_ROOT(ptr) || !GC_IS_YOUNG(ptr)) {
-        INC_REF_COUNT(ptr);
+	MetaData* m = GC_GET_META_DATA_ADDR(ptr);
+    if(GC_IS_ROOT(m) || !GC_IS_YOUNG(m)) {
+        INC_REF_COUNT(m);
         return ;
     }
 
-    int32_t fwd_index = GC_FWD_INDEX(ptr);
+    int32_t fwd_index = GC_FWD_INDEX(m);
     if(fwd_index == NON_FORWARDED ) {
         *obj = forward(ptr, tinfo); 
     }
@@ -268,7 +269,8 @@ static inline void updateRef(void** obj, BSQMemoryTheadLocalInfo& tinfo)
         *obj = tinfo.forward_table[fwd_index]; 
     }
 
-    INC_REF_COUNT(*obj);
+	MetaData* nm = GC_GET_META_DATA_ADDR(*obj);	
+    INC_REF_COUNT(nm);
 }
 
 static inline void handleTaggedObjectUpdate(void** slots, BSQMemoryTheadLocalInfo& tinfo) noexcept 
@@ -324,20 +326,22 @@ static void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
     while(!tinfo.pending_young.isEmpty()) {
         void* obj = tinfo.pending_young.pop_front(); //ensures non-roots visited first
-        
+		MetaData* m = GC_GET_META_DATA_ADDR(obj);       
+ 
         // A different object may forward this object, update with fwd table
-        int32_t fwdidx = GC_FWD_INDEX(obj);
+        int32_t fwdidx = GC_FWD_INDEX(m);
+		void* nobj = obj;
         if(fwdidx > NON_FORWARDED) {
             GC_INVARIANT_CHECK(fwdidx < gtl_info.forward_table_index);
-            obj = gtl_info.forward_table[fwdidx];
+            nobj = gtl_info.forward_table[fwdidx];
         }
+		
+		MetaData* nm = GC_GET_META_DATA_ADDR(nobj);
+        __CoreGC::TypeInfoBase* typeinfo = GC_TYPE(nm);
+        updatePointers(static_cast<void**>(nobj), typeinfo, tinfo);
 
-        __CoreGC::TypeInfoBase* typeinfo = GC_TYPE(obj);
-        updatePointers((void**)obj, typeinfo, tinfo);
-
-        if(GC_IS_ROOT(obj)) {
-            MetaData* m = GC_GET_META_DATA_ADDR(obj);
-            GC_CLEAR_YOUNG_MARK(m);
+        if(GC_IS_ROOT(nm)) {
+            GC_CLEAR_YOUNG_MARK(nm);
         }
     }
 
@@ -364,14 +368,13 @@ static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexce
             return ;
     }
 
-    MetaData* meta = PageInfo::getObjectMetadataAligned(addr);
-    void* obj = (void*)((uint8_t*)meta + sizeof(MetaData));
+    MetaData* m = PageInfo::getObjectMetadataAligned(addr);
+    void* obj = (void*)((uint8_t*)m + sizeof(MetaData));
 
-    if(GC_SHOULD_PROCESS_AS_ROOT(meta)) { 
-        GC_MARK_AS_ROOT(meta);
-
+    if(GC_SHOULD_PROCESS_AS_ROOT(m)) { 
+        GC_MARK_AS_ROOT(m);
         tinfo.roots[tinfo.roots_count++] = obj;
-        if(GC_SHOULD_PROCESS_AS_YOUNG(meta)) {
+        if(GC_SHOULD_PROCESS_AS_YOUNG(m)) {
             tinfo.pending_roots.push_back(obj);
         } 
     }
@@ -424,11 +427,11 @@ static void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
 static void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
 {
-    MetaData* meta = GC_GET_META_DATA_ADDR(*slots);
-    GC_CHECK_BOOL_BYTES(meta);
+    MetaData* m = GC_GET_META_DATA_ADDR(*slots);
+    GC_CHECK_BOOL_BYTES(m);
     
-    if(GC_SHOULD_VISIT(meta)) { 
-        GC_MARK_AS_MARKED(meta);
+    if(GC_SHOULD_VISIT(m)) { 
+        GC_MARK_AS_MARKED(m);
         tinfo.visit_stack.push_back({*slots, MARK_STACK_NODE_COLOR_GREY});
     }
 }
@@ -484,7 +487,8 @@ static void walkSingleRoot(void* root, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     while(!tinfo.visit_stack.isEmpty()) {
         MarkStackEntry entry = tinfo.visit_stack.pop_back();
-        __CoreGC::TypeInfoBase* typeinfo = GC_TYPE(entry.obj);
+		MetaData* m = GC_GET_META_DATA_ADDR(entry.obj);
+        __CoreGC::TypeInfoBase* typeinfo = GC_TYPE(m);
 
         // Can we process further?
         if((typeinfo->ptr_mask == PTR_MASK_LEAF) || (entry.color == MARK_STACK_NODE_COLOR_BLACK)) {
@@ -507,9 +511,9 @@ static void markingWalk(BSQMemoryTheadLocalInfo& tinfo) noexcept
     // Process the walk stack
     while(!tinfo.pending_roots.isEmpty()) {
         void* obj = tinfo.pending_roots.pop_front();
-        MetaData* meta = GC_GET_META_DATA_ADDR(obj);
-        if(GC_SHOULD_VISIT(meta)) {
-            GC_MARK_AS_MARKED(meta);
+        MetaData* m = GC_GET_META_DATA_ADDR(obj);
+        if(GC_SHOULD_VISIT(m)) {
+            GC_MARK_AS_MARKED(m);
 
             tinfo.visit_stack.push_back({obj, MARK_STACK_NODE_COLOR_GREY});
             walkSingleRoot(obj, tinfo);
@@ -543,10 +547,12 @@ static void updateRoots(BSQMemoryTheadLocalInfo& tinfo)
     tinfo.old_roots_count = 0;
 
     for(int32_t i = 0; i < gtl_info.roots_count; i++) {
-        GC_CLEAR_ROOT_MARK(GC_GET_META_DATA_ADDR(tinfo.roots[i]));
-        GC_CLEAR_YOUNG_MARK(GC_GET_META_DATA_ADDR(tinfo.roots[i]));
+		void* obj = tinfo.roots[i];
+		MetaData* m = GC_GET_META_DATA_ADDR(obj);
+        GC_CLEAR_ROOT_MARK(m);
+        GC_CLEAR_YOUNG_MARK(m);
 
-        tinfo.old_roots[tinfo.old_roots_count++] = tinfo.roots[i];
+        tinfo.old_roots[tinfo.old_roots_count++] = obj;
     }
 
     xmem_zerofill(tinfo.roots, tinfo.roots_count);

@@ -196,21 +196,21 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 
 #ifdef VERBOSE_HEADER
 // Resets an objects metadata and updates with index into forward table
-#define RESET_METADATA_FOR_OBJECT(M, FP) ((*(M)) = { .type=nullptr, .isalloc=false, .isyoung=true, .ismarked=false, .isroot=false, .forward_index=FP, .ref_count=0 })
-#define ZERO_METADATA(M) ((*(M)) = {})
+#define RESET_METADATA_FOR_OBJECT(META, FP) ((*(META)) = { .type=nullptr, .isalloc=false, .isyoung=true, .ismarked=false, .isroot=false, .forward_index=FP, .ref_count=0 })
+#define ZERO_METADATA(META) ((*(META)) = {})
 
-#define GC_IS_MARKED(O) (GC_GET_META_DATA_ADDR(O))->ismarked
-#define GC_IS_YOUNG(O) (GC_GET_META_DATA_ADDR(O))->isyoung
-#define GC_IS_ALLOCATED(O) (GC_GET_META_DATA_ADDR(O))->isalloc
-#define GC_IS_ROOT(O) (GC_GET_META_DATA_ADDR(O))->isroot
+#define GC_IS_MARKED(META)    ((META)->ismarked)
+#define GC_IS_YOUNG(META)     ((META)->isyoung)
+#define GC_IS_ALLOCATED(META) ((META)->isalloc)
+#define GC_IS_ROOT(META)      ((META)->isroot)
 
-#define GC_FWD_INDEX(O) (GC_GET_META_DATA_ADDR(O))->forward_index
-#define GC_REF_COUNT(O) (GC_GET_META_DATA_ADDR(O))->ref_count
+#define GC_FWD_INDEX(META) ((META)->forward_index)
+#define GC_REF_COUNT(META) ((META)->ref_count)
 
-#define GC_TYPE(O) (GC_GET_META_DATA_ADDR(O))->type
+#define GC_TYPE(META) ((META)->type)
 
-#define INC_REF_COUNT(O) (++GC_REF_COUNT(O))
-#define DEC_REF_COUNT(O) (--GC_REF_COUNT(O))
+#define INC_REF_COUNT(META) (++GC_REF_COUNT(META))
+#define DEC_REF_COUNT(META) (--GC_REF_COUNT(META))
 
 #define GC_RESET_ALLOC(META) { (META)->isalloc = false; }
 
@@ -227,12 +227,12 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 
 #define GC_SHOULD_FREE_LIST_ADD(META) (!(META)->isalloc || ((META)->isyoung && (META)->forward_index == NON_FORWARDED))
 
-#define GC_CHECK_BOOL_BYTES(M) \
+#define GC_CHECK_BOOL_BYTES(META) \
 do { \
-    int8_t isalloc_byte = *reinterpret_cast<const int8_t*>(&(M)->isalloc); \
-    int8_t isyoung_byte = *reinterpret_cast<const int8_t*>(&(M)->isyoung); \
-    int8_t ismarked_byte = *reinterpret_cast<const int8_t*>(&(M)->ismarked); \
-    int8_t isroot_byte = *reinterpret_cast<const int8_t*>(&(M)->isroot); \
+    int8_t isalloc_byte = *reinterpret_cast<const int8_t*>(&(META)->isalloc); \
+    int8_t isyoung_byte = *reinterpret_cast<const int8_t*>(&(META)->isyoung); \
+    int8_t ismarked_byte = *reinterpret_cast<const int8_t*>(&(META)->ismarked); \
+    int8_t isroot_byte = *reinterpret_cast<const int8_t*>(&(META)->isroot); \
     GC_INVARIANT_CHECK(isalloc_byte == 0 || isalloc_byte == 1); \
     GC_INVARIANT_CHECK(isyoung_byte == 0 || isyoung_byte == 1); \
     GC_INVARIANT_CHECK(ismarked_byte == 0 || ismarked_byte == 1); \
@@ -241,36 +241,36 @@ do { \
 
 #else
 // Resets an objects metadata and updates with index into forward table
-#define ZERO_METADATA(M) ((M)->raw = 0x0UL)
-#define RESET_METADATA_FOR_OBJECT(M, FP) \
+#define ZERO_METADATA(META) ((META)->raw = 0x0UL)
+#define RESET_METADATA_FOR_OBJECT(META, FP) \
     do { \
-        ZERO_METADATA(M); \
-        (M)->bits.isyoung = 1; \
-        (M)->bits.rc_fwd = FP; \
+        ZERO_METADATA(META); \
+        (META)->bits.isyoung = 1; \
+        (META)->bits.rc_fwd = FP; \
     } while(0); 
 
-#define GC_IS_MARKED(O)    (GC_GET_META_DATA_ADDR(O)->bits.ismarked)
-#define GC_IS_YOUNG(O)     (GC_GET_META_DATA_ADDR(O)->bits.isyoung)
-#define GC_IS_ALLOCATED(O) (GC_GET_META_DATA_ADDR(O)->bits.isalloc)
-#define GC_IS_ROOT(O)      (GC_GET_META_DATA_ADDR(O)->bits.isroot)
+#define GC_IS_MARKED(META)    ((META)->bits.ismarked)
+#define GC_IS_YOUNG(META)     ((META)->bits.isyoung)
+#define GC_IS_ALLOCATED(META) ((META)->bits.isalloc)
+#define GC_IS_ROOT(META)      ((META)->bits.isroot)
 
-#define GC_FWD_INDEX(O)    (GC_GET_META_DATA_ADDR(O)->bits.rc_fwd)
-#define GC_REF_COUNT(O)    (GC_GET_META_DATA_ADDR(O)->bits.rc_fwd)
+#define GC_FWD_INDEX(META)    ((META)->bits.rc_fwd)
+#define GC_REF_COUNT(META)    ((META)->bits.rc_fwd)
 
-#define GET_TYPE_PTR(O)    ((GC_GET_META_DATA_ADDR(O)->bits.typeptr_low) | (g_typeptr_high32 << NUM_TYPEPTR_BITS)) 
-#define GC_TYPE(O)         (reinterpret_cast<__CoreGC::TypeInfoBase*>(GET_TYPE_PTR(O)))
+#define GET_TYPE_PTR(META) (((META)->bits.typeptr_low) | (g_typeptr_high32 << NUM_TYPEPTR_BITS)) 
+#define GC_TYPE(META)      (reinterpret_cast<__CoreGC::TypeInfoBase*>(GET_TYPE_PTR(META)))
 
 // Sets low 32 bits of ptr in meta
 #define SET_TYPE_PTR(META, PTR) ((META)->bits.typeptr_low = reinterpret_cast<uintptr_t>(PTR) & TYPEPTR_MASK)
         
-#define INC_REF_COUNT(O) (++GC_GET_META_DATA_ADDR(O)->bits.rc_fwd)
-#define DEC_REF_COUNT(O) (--GC_GET_META_DATA_ADDR(O)->bits.rc_fwd)
+#define INC_REF_COUNT(META) (++GC_REF_COUNT(META))
+#define DEC_REF_COUNT(META) (--GC_REF_COUNT(META))
 
 #define GC_RESET_ALLOC(META)  ((META)->bits.isalloc = 0) 
-#define GC_SHOULD_VISIT(META) ((META)->bits.isyoung && !(META)->bits.ismarked)
+#define GC_SHOULD_VISIT(META) (GC_IS_YOUNG(META) && !GC_IS_MARKED(META))
 
-#define GC_SHOULD_PROCESS_AS_ROOT(META)  ((META)->bits.isalloc && !(META)->bits.isroot)
-#define GC_SHOULD_PROCESS_AS_YOUNG(META) ((META)->bits.isyoung)
+#define GC_SHOULD_PROCESS_AS_ROOT(META)  (GC_IS_ALLOCATED(META) && !GC_IS_ROOT(META))
+#define GC_SHOULD_PROCESS_AS_YOUNG(META) (GC_IS_YOUNG(META))
 
 #define GC_MARK_AS_ROOT(META)   ((META)->bits.isroot = 1)
 #define GC_MARK_AS_MARKED(META) ((META)->bits.ismarked = 1)
@@ -282,14 +282,14 @@ do { \
         (META)->bits.ismarked = 0; \
     } while(0)
 
-#define GC_SHOULD_FREE_LIST_ADD(META) (!(META)->bits.isalloc || ((META)->bits.isyoung && (META)->bits.rc_fwd == NON_FORWARDED ))
+#define GC_SHOULD_FREE_LIST_ADD(META) (!GC_IS_ALLOCATED(META) || (GC_IS_YOUNG(META) && GC_FWD_INDEX(META) == NON_FORWARDED ))
 
-#define GC_CHECK_BOOL_BYTES(M) \
+#define GC_CHECK_BOOL_BYTES(META) \
 do { \
-    GC_INVARIANT_CHECK((M)->bits.isalloc == 0 || (M)->bits.isalloc == 1); \
-    GC_INVARIANT_CHECK((M)->bits.isyoung == 0 || (M)->bits.isyoung == 1); \
-    GC_INVARIANT_CHECK((M)->bits.ismarked == 0 || (M)->bits.ismarked == 1); \
-    GC_INVARIANT_CHECK((M)->bits.isroot == 0 || (M)->bits.isroot == 1); \
+    GC_INVARIANT_CHECK((META)->bits.isalloc == 0 || (META)->bits.isalloc == 1); \
+    GC_INVARIANT_CHECK((META)->bits.isyoung == 0 || (META)->bits.isyoung == 1); \
+    GC_INVARIANT_CHECK((META)->bits.ismarked == 0 || (META)->bits.ismarked == 1); \
+    GC_INVARIANT_CHECK((META)->bits.isroot == 0 || (META)->bits.isroot == 1); \
 } while(0)
 
 #endif // VERBOSE_HEADER
