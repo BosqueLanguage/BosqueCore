@@ -263,8 +263,8 @@ do { \
 // Sets low 32 bits of ptr in meta
 #define SET_TYPE_PTR(META, PTR) ((META)->bits.typeptr_low = reinterpret_cast<uintptr_t>(PTR) & TYPEPTR_MASK)
         
-#define INC_REF_COUNT(O) (++GC_REF_COUNT(META))
-#define DEC_REF_COUNT(O) (--GC_REF_COUNT(META))
+#define INC_REF_COUNT(META) (++GC_REF_COUNT(META))
+#define DEC_REF_COUNT(META) (--GC_REF_COUNT(META))
 
 #define GC_RESET_ALLOC(META)  ((META)->bits.isalloc = 0) 
 #define GC_SHOULD_VISIT(META) (GC_IS_YOUNG(META) && !GC_IS_MARKED(META))
@@ -282,7 +282,7 @@ do { \
         (META)->bits.ismarked = 0; \
     } while(0)
 
-#define GC_SHOULD_FREE_LIST_ADD(META) (!GC_IS_ALLOC(META) || (GC_IS_YOUNG(META) && GC_FWD_IDX(META) == NON_FORWARDED ))
+#define GC_SHOULD_FREE_LIST_ADD(META) (!GC_IS_ALLOCATED(META) || (GC_IS_YOUNG(META) && GC_FWD_INDEX(META) == NON_FORWARDED ))
 
 #define GC_CHECK_BOOL_BYTES(META) \
 do { \
