@@ -196,7 +196,7 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 
 #ifdef VERBOSE_HEADER
 // Resets an objects metadata and updates with index into forward table
-#define RESET_METADATA_FOR_OBJECT(META, FP) ((*(M)) = { .type=nullptr, .isalloc=false, .isyoung=true, .ismarked=false, .isroot=false, .forward_index=FP, .ref_count=0 })
+#define RESET_METADATA_FOR_OBJECT(META, FP) ((*(META)) = { .type=nullptr, .isalloc=false, .isyoung=true, .ismarked=false, .isroot=false, .forward_index=FP, .ref_count=0 })
 #define ZERO_METADATA(META) ((*(META)) = {})
 
 #define GC_IS_MARKED(META)    ((META)->ismarked)

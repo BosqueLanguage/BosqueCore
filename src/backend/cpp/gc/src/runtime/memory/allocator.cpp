@@ -47,12 +47,12 @@ size_t PageInfo::rebuild() noexcept
     this->seen = false;
  
     for(int64_t i = this->entrycount - 1; i >= 0; i--) {
-        MetaData* meta = this->getMetaEntryAtIndex(i);
+        MetaData* m = this->getMetaEntryAtIndex(i);
 
-        GC_CHECK_BOOL_BYTES(meta);
+        GC_CHECK_BOOL_BYTES(m);
 
-        if(GC_SHOULD_FREE_LIST_ADD(meta)) {
-            ZERO_METADATA(meta);
+        if(GC_SHOULD_FREE_LIST_ADD(m)) {
+            ZERO_METADATA(m);
             FreeListEntry* entry = this->getFreelistEntryAtIndex(i);
             entry->next = this->freelist;
             this->freelist = entry;
@@ -201,7 +201,9 @@ static uint64_t getPageFreeCount(PageInfo* p) noexcept
 {
     uint64_t freecount = 0;
     for(size_t i = 0; i < p->entrycount; i++) {
-        if(!GC_IS_ALLOCATED(p->getObjectAtIndex(i))) {
+        void* obj = p->getObjectAtIndex(i); 
+		MetaData* m = GC_GET_META_DATA_ADDR(obj);
+		if(!GC_IS_ALLOCATED(m)) {
             freecount++;
         }
     }
