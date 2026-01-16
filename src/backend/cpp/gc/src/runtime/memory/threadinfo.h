@@ -178,9 +178,8 @@ struct BSQMemoryTheadLocalInfo
 
     DecsProcessor decs; 
     DecsList decs_batch; // Decrements able to be done without needing decs thread
-
-    uint32_t decd_pages_idx = 0;
-    PageInfo* decd_pages[MAX_DECD_PAGES];
+	
+    ArrayList<PageInfo*> decd_pages;
     
     float nursery_usage = 0.0f;
 
@@ -207,7 +206,7 @@ struct BSQMemoryTheadLocalInfo
         tl_id(0), g_gcallocs(nullptr), native_stack_base(nullptr), native_stack_contents(), 
         native_register_contents(), roots_count(0), roots(nullptr), old_roots_count(0), 
         old_roots(nullptr), forward_table_index(FWD_TABLE_START), forward_table(nullptr), 
-        decs(), decs_batch(), decd_pages_idx(0), decd_pages(), pending_roots(), 
+        decs(), decs_batch(), decd_pages(), pending_roots(), 
         visit_stack(), pending_young(), bytes_freed(0), max_decrement_count(0) { }
     BSQMemoryTheadLocalInfo& operator=(BSQMemoryTheadLocalInfo&) = delete;
     BSQMemoryTheadLocalInfo(BSQMemoryTheadLocalInfo&) = delete;

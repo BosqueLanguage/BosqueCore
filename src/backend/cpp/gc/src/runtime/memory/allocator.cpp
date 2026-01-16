@@ -61,7 +61,7 @@ size_t PageInfo::rebuild() noexcept
     }
     this->approx_utilization = CALC_APPROX_UTILIZATION(this);
 	
-	size_t freed = (this->freecount - pfree) * this->allocsize;
+	size_t freed = this->freecount >= pfree ? (this->freecount - pfree) * this->allocsize : 0;
 	return freed;
 }
 

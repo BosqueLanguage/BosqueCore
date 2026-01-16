@@ -134,8 +134,15 @@ static inline void updateDecrementedPages(BSQMemoryTheadLocalInfo& tinfo, PageIn
 {
     if(p->seen == false) {
         p->seen = true;
-        tinfo.decd_pages[tinfo.decd_pages_idx++] = p;
-        GC_INVARIANT_CHECK(tinfo.decd_pages_idx < MAX_DECD_PAGES);
+		tinfo.decd_pages.push_back(p);
+    }
+}
+
+static inline void tryReprocessDecrementedPages(BSQMemoryTheadLocalInfo& tinfo)
+{
+    while(!tinfo.decd_pages.isEmpty()) {        
+		PageInfo* p = tinfo.decd_pages.pop_front();
+        reprocessPageInfo(p, tinfo);
     }
 }
 
@@ -155,14 +162,6 @@ static inline void updateDecrementedObject(BSQMemoryTheadLocalInfo& tinfo, void*
         walkPointerMaskForDecrements(tinfo, typeinfo, static_cast<void**>(obj), list);
         GC_RESET_ALLOC(m);
     }
-}
-
-static inline void tryReprocessDecrementedPages(BSQMemoryTheadLocalInfo& tinfo)
-{
-    for(uint32_t i = 0; i < tinfo.decd_pages_idx; i++) {        
-        reprocessPageInfo(tinfo.decd_pages[i], tinfo);
-    }
-    tinfo.decd_pages_idx = 0;
 }
 
 void processDec(void* obj, BSQMemoryTheadLocalInfo& tinfo) noexcept
@@ -564,6 +563,11 @@ void collect() noexcept
     COLLECTION_STATS_START();
 
     gtl_info.decs.pause();
+
+	// Temporary until I find a better place to do this
+	if(!gtl_info.decd_pages.isInitialized()) {
+		gtl_info.decd_pages.initialize();
+	}
     
     gtl_info.pending_young.initialize();
 
@@ -581,21 +585,21 @@ void collect() noexcept
     xmem_zerofill(gtl_info.forward_table, gtl_info.forward_table_index);
     gtl_info.forward_table_index = FWD_TABLE_START;
 
-    RC_STATS_START();
-
     gtl_info.decs_batch.initialize();
 
 	computeMaxDecrementCount(gtl_info);
 
 	// Find dead roots, walk object graph from dead roots updating necessary rcs
 	// rebuild pages who saw decs (TODO do this lazily), and merge remainder of decs
-	// (TODO use a single shared list)    
+	// (TODO use a single shared list)    	
+  	RC_STATS_START();
+ 
     computeDeadRootsForDecrement(gtl_info);
-    processDecrements(gtl_info);
+    processDecrements(gtl_info);	
     tryReprocessDecrementedPages(gtl_info);
-    tryMergeDecList(gtl_info);
+	tryMergeDecList(gtl_info);
 
-    RC_STATS_END(rc_times);
+	RC_STATS_END(rc_times);
 
     gtl_info.decs_batch.clear();
 

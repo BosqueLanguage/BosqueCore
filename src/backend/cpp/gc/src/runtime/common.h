@@ -64,10 +64,6 @@
 #define BSQ_INITIAL_MAX_DECREMENT_COUNT \
 	(BSQ_COLLECTION_THRESHOLD * (BSQ_BLOCK_ALLOCATION_SIZE - sizeof(PageInfo)) / (BSQ_MEM_ALIGNMENT + sizeof(MetaData)))
 
-// TODO: Arbitrary size for now
-// -- perhaps use array list?
-#define MAX_DECD_PAGES 50'000
-
 //mem is an 8byte aligned pointer and n is the number of 8byte words to clear
 inline void xmem_zerofill(void* mem, size_t n) noexcept
 {

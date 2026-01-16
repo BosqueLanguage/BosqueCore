@@ -153,6 +153,11 @@ public:
         DSA_INVARIANT_CHECK(this->invariant());
     }
 
+	bool isInitialized() const noexcept
+	{
+		return this->head != nullptr && this->tail != nullptr;	
+	}	
+
     void clear() noexcept
     {
         DSA_INVARIANT_CHECK(this->invariant());
