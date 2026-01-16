@@ -255,7 +255,8 @@ public:
 
     GlobalPageGCManager() noexcept : empty_pages(), pagetable() { }
 
-    PageInfo* allocateFreshPage(uint16_t entrysize, uint16_t realsize) noexcept;
+    PageInfo* getFreshPageFromOS(uint16_t entrysize, uint16_t realsize);
+    PageInfo* tryGetEmptyPage(uint16_t entrysize, uint16_t realsize);
 
     bool pagetableQuery(void* addr) noexcept
     {

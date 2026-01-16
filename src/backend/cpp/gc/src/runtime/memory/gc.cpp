@@ -130,6 +130,9 @@ static void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreG
     }
 }
 
+// I saw some weird stuff earlier with setting up these locks and it seemed
+// the decs processor did not really like to actually obtain (?) the lock so
+// we will need to be careful with race conditions on this shit
 static inline void updateDecrementedPages(BSQMemoryTheadLocalInfo& tinfo, PageInfo* p) noexcept 
 {
     if(p->seen == false) {

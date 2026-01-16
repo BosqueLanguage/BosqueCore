@@ -67,38 +67,39 @@ size_t PageInfo::rebuild() noexcept
 
 GlobalPageGCManager GlobalPageGCManager::g_gc_page_manager;
 
-PageInfo* GlobalPageGCManager::allocateFreshPage(uint16_t entrysize, uint16_t realsize) noexcept
+PageInfo* GlobalPageGCManager::getFreshPageFromOS(uint16_t entrysize, uint16_t realsize)
 {
-    GC_MEM_LOCK_ACQUIRE();
+#ifndef ALLOC_DEBUG_MEM_DETERMINISTIC
+	void* page = mmap(NULL, BSQ_BLOCK_ALLOCATION_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+    assert(((uintptr_t)page & PAGE_MASK) == 0 && "Address is not aligned to page boundary!");
+#else
+    ALLOC_LOCK_ACQUIRE();
 
-    PageInfo* pp = nullptr;
+    void* page = mmap(GlobalThreadAllocInfo::s_current_page_address, BSQ_BLOCK_ALLOCATION_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, 0, 0);
+    GlobalThreadAllocInfo::s_current_page_address = (void*)((uint8_t*)GlobalThreadAllocInfo::s_current_page_address + BSQ_BLOCK_ALLOCATION_SIZE);
+
+    ALLOC_LOCK_RELEASE();    
+#endif
+
+    assert(page != MAP_FAILED);
+    this->pagetableInsert(page);
+
+    PageInfo* pp = PageInfo::initialize(page, entrysize, realsize);
+
+    UPDATE_TOTAL_PAGES(+=, 1);
+	
+	return pp;
+}
+
+PageInfo* GlobalPageGCManager::tryGetEmptyPage(uint16_t entrysize, uint16_t realsize)
+{
+	PageInfo* pp = nullptr;
     if(!this->empty_pages.empty()) {
         void* page = this->empty_pages.pop();
         pp = PageInfo::initialize(page, entrysize, realsize);
     }
-    else {
-#ifndef ALLOC_DEBUG_MEM_DETERMINISTIC
-        void* page = mmap(NULL, BSQ_BLOCK_ALLOCATION_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
-        assert(((uintptr_t)page & PAGE_MASK) == 0 && "Address is not aligned to page boundary!");
-#else
-        ALLOC_LOCK_ACQUIRE();
 
-        void* page = mmap(GlobalThreadAllocInfo::s_current_page_address, BSQ_BLOCK_ALLOCATION_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, 0, 0);
-        GlobalThreadAllocInfo::s_current_page_address = (void*)((uint8_t*)GlobalThreadAllocInfo::s_current_page_address + BSQ_BLOCK_ALLOCATION_SIZE);
-
-        ALLOC_LOCK_RELEASE();    
-#endif
-
-        assert(page != MAP_FAILED);
-        this->pagetableInsert(page);
-
-        pp = PageInfo::initialize(page, entrysize, realsize);
-
-        UPDATE_TOTAL_PAGES(+=, 1);
-    }
-
-    GC_MEM_LOCK_RELEASE();
-    return pp;
+	return pp;
 }
 
 void GCAllocator::processPage(PageInfo* p) noexcept
@@ -140,12 +141,20 @@ void GCAllocator::processCollectorPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
     }
 }
 
+// You may notice we explicitly pause the decs processor whenever we are working through
+// out list of decd pages
+// this is intentional (for now) as I work out exactly where we need to lock, and should make 
+// it easy to ensure i just didnt forget to lock something when testing
+
 PageInfo* GCAllocator::getFreshPageForAllocator() noexcept
 {
     PageInfo* page = this->getLowestLowUtilPage();
     if(page == nullptr) {
-        page = GlobalPageGCManager::g_gc_page_manager.allocateFreshPage(this->allocsize, this->realsize);
+        page = GlobalPageGCManager::g_gc_page_manager.tryGetEmptyPage(this->allocsize, this->realsize);
     }
+	if(page == nullptr) {
+		page = GlobalPageGCManager::g_gc_page_manager.getFreshPageFromOS(this->allocsize, this->realsize);	
+	}
 
     return page;
 }
@@ -155,12 +164,15 @@ PageInfo* GCAllocator::getFreshPageForEvacuation() noexcept
     PageInfo* page = this->getLowestHighUtilPage();
     if(page == nullptr) {
         page = this->getLowestLowUtilPage();
-    }
+    } 
     if(page == nullptr) {
-        page = GlobalPageGCManager::g_gc_page_manager.allocateFreshPage(this->allocsize, this->realsize);
+        page = GlobalPageGCManager::g_gc_page_manager.tryGetEmptyPage(this->allocsize, this->realsize);
     }
+	if(page == nullptr) {
+		page = GlobalPageGCManager::g_gc_page_manager.getFreshPageFromOS(this->allocsize, this->realsize);
+	}
 
-    return page;
+	return page;
 }
 
 void GCAllocator::allocatorRefreshAllocationPage(__CoreGC::TypeInfoBase* typeinfo) noexcept
