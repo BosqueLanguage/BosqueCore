@@ -141,9 +141,8 @@ static inline void updateDecrementedPages(BSQMemoryTheadLocalInfo& tinfo, PageIn
 	// are not... think about this bro we are tired
 	
 	//
-	// NOTE something here or in tryGetPendingRebuildPage is too restrictive and causing
-	// way too many pages to be needed to continue processing. This is hurting our perf
-	// quite a lot
+	// NOTE something here or in tryGetPendingRebuildPage is spending a much of time in sys?
+	// not rlly sure whats going on but it seems to hurt perf
 	//
 
 	if(p->pending_decs_count == 0 && p->owner) {
