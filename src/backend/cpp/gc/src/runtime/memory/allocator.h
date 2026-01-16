@@ -81,7 +81,6 @@ public:
 
     float approx_utilization;
     uint16_t pending_decs_count;
-    bool needs_reprocess; // Do we need to reprocess this page after it had rc decs?
  
     static PageInfo* initialize(void* block, uint16_t allocsize, uint16_t realsize) noexcept;
 
@@ -317,7 +316,7 @@ T* MEM_ALLOC_CHECK(T* alloc)
 #define LOW_UTIL_THRESH 0.60f
 #define HIGH_UTIL_THRESH 0.90f
 #define BUCKET_UTIL_VARIANCE 0.05f
-#define IS_LOW_UTIL(U) (U >= 0.01f && U <= LOW_UTIL_THRESH)
+#define IS_LOW_UTIL(U) (U >= 0.0f && U <= LOW_UTIL_THRESH)
 #define IS_HIGH_UTIL(U) (U > LOW_UTIL_THRESH && U <= HIGH_UTIL_THRESH)
 #define IS_FULL(U) (U > HIGH_UTIL_THRESH && U <= 1.0f)
 
@@ -416,18 +415,6 @@ private:
         return nullptr;
     }
 
-    void removePageFromBucket(PageInfo* p) 
-    {
-        int idx = getBucketIndex(p);
-
-        if(IS_HIGH_UTIL(p->approx_utilization)) {
-            this->high_util_buckets[idx].remove(p);
-        }
-        else {
-            this->low_util_buckets[idx].remove(p);
-        }
-    }   
-
 public:
 #ifdef MEM_STATS
     GCAllocator(uint16_t objsize, uint16_t fullsize, void (*collect)()) noexcept : freelist(nullptr), evacfreelist(nullptr), alloc_page(nullptr), evac_page(nullptr), allocsize(objsize), realsize(fullsize), pendinggc_pages(), filled_pages(), alloc_count(0), alloc_memory(0), collectfp(collect) { }
@@ -453,12 +440,7 @@ public:
             return nullptr;
         }
     
-        if(p->owner == &this->filled_pages) {
-            this->filled_pages.remove(p);
-        }
-        else {
-            this->removePageFromBucket(p);
-        }
+		p->owner->remove(p);
 
         return p;
     }

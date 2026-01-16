@@ -43,7 +43,6 @@ size_t PageInfo::rebuild() noexcept
 
     this->freelist = nullptr;
     this->freecount = 0;
-    this->needs_reprocess = false;
  
     for(int64_t i = this->entrycount - 1; i >= 0; i--) {
         MetaData* m = this->getMetaEntryAtIndex(i);
@@ -140,10 +139,38 @@ void GCAllocator::processCollectorPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
     }
 }
 
+/*
+
 // You may notice we explicitly pause the decs processor whenever we are working through
 // out list of decd pages
 // this is intentional (for now) as I work out exactly where we need to lock, and should make 
 // it easy to ensure i just didnt forget to lock something when testing
+PageInfo* GCAllocator::tryGetPendingRebuildPage()
+{
+	gtl_info.decs_prcsr.pause();
+
+	PageInfo* pp = nullptr;
+	while(!gtl_info.decd_pages.isEmpty()) {
+		PageInfo* p = gtl_info.decd_pages.pop_front();
+		p->rebuild();
+		if(p->freecount == p->entrycount) {
+			pp = PageInfo::initialize(this->allocsize, this->realsize);
+			break;		
+		}
+		
+			
+			this->processPage(p);	
+		}
+	    else {
+	
+		}	
+	}
+
+	gtl_info.decs_prcsr.resume();
+
+	return pp;
+}
+*/
 
 PageInfo* GCAllocator::getFreshPageForAllocator() noexcept
 {

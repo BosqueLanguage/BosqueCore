@@ -18,10 +18,6 @@ static void walkPointerMaskForMarking(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::
 
 static void reprocessPageInfo(PageInfo* page, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
-	if(!page->needs_reprocess) {
-		return ;		
-	}
-
     // This should not be called on pages that are (1) active allocators or evacuators or (2) pending collection pages
     GCAllocator* gcalloc = tinfo.getAllocatorForPageSize(page);
     PageInfo* npage = gcalloc->tryRemovePage(page);
@@ -140,7 +136,6 @@ static void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreG
 static inline void updateDecrementedPages(BSQMemoryTheadLocalInfo& tinfo, PageInfo* p) noexcept 
 {
     if(p->pending_decs_count == 0) {
-		p->needs_reprocess = true;
 		tinfo.decd_pages.push_back(p);
     }
 }
@@ -543,7 +538,7 @@ static void processAllocatorsPages(BSQMemoryTheadLocalInfo& tinfo)
         }
     }
 }
-
+	
 static inline void computeMaxDecrementCount(BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
 	tinfo.max_decrement_count = BSQ_INITIAL_MAX_DECREMENT_COUNT - (tinfo.bytes_freed / BSQ_MEM_ALIGNMENT);
@@ -568,6 +563,12 @@ static void updateRoots(BSQMemoryTheadLocalInfo& tinfo)
     tinfo.roots_count = 0;
 }
 
+// TODO i was thinking and realized its possible we have pages pending gc who
+// get rebuild and reprocessed, but also have pending decs so they end up
+// getting rebuild again when we are rebuilding pages... 
+// a bit akward as we need to rebuild the pending gc pages to determine how 
+// much data we have freed, yet we also need to not excessively rebuild to
+// prevent excess work for decs... hmmmm
 void collect() noexcept
 {
     COLLECTION_STATS_START();
