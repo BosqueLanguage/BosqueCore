@@ -351,6 +351,8 @@ private:
     PageInfo* getFreshPageForAllocator() noexcept; 
     PageInfo* getFreshPageForEvacuation() noexcept;
 
+	PageInfo* tryGetPendingRebuildPage();
+	
     inline void rotateFullAllocPage()
     {
         this->pendinggc_pages.push(this->alloc_page);

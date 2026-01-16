@@ -16,6 +16,7 @@ static void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreG
 static void updatePointers(void** slots, __CoreGC::TypeInfoBase* typeinfo, BSQMemoryTheadLocalInfo& tinfo) noexcept;
 static void walkPointerMaskForMarking(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept; 
 
+/*
 static void reprocessPageInfo(PageInfo* page, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     // This should not be called on pages that are (1) active allocators or evacuators or (2) pending collection pages
@@ -26,6 +27,7 @@ static void reprocessPageInfo(PageInfo* page, BSQMemoryTheadLocalInfo& tinfo) no
         gcalloc->processPage(npage);
     }
 }
+*/
 
 static inline void pushPendingDecs(BSQMemoryTheadLocalInfo& tinfo, void* obj, DecsList& list)
 {
@@ -135,11 +137,15 @@ static void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreG
 // we will need to be careful with race conditions on this shit
 static inline void updateDecrementedPages(BSQMemoryTheadLocalInfo& tinfo, PageInfo* p) noexcept 
 {
-    if(p->pending_decs_count == 0) {
+	// we want to target pages that are stored in filled pages, so ignore those that 
+	// are not... think about this bro we are tired
+	if(p->pending_decs_count == 0 && p->owner) {
+		p->owner->remove(p);
 		tinfo.decd_pages.push_back(p);
     }
 }
 
+/*
 static inline void tryReprocessDecrementedPages(BSQMemoryTheadLocalInfo& tinfo)
 {
     while(!tinfo.decd_pages.isEmpty()) {        
@@ -147,6 +153,7 @@ static inline void tryReprocessDecrementedPages(BSQMemoryTheadLocalInfo& tinfo)
         reprocessPageInfo(p, tinfo);
     }
 }
+*/
 
 static inline void decrementObject(void* obj) noexcept 
 {
@@ -569,6 +576,7 @@ static void updateRoots(BSQMemoryTheadLocalInfo& tinfo)
 // a bit akward as we need to rebuild the pending gc pages to determine how 
 // much data we have freed, yet we also need to not excessively rebuild to
 // prevent excess work for decs... hmmmm
+// -- lets look into this after we get the lazy rebuilding for sure working
 void collect() noexcept
 {
     COLLECTION_STATS_START();
@@ -607,7 +615,6 @@ void collect() noexcept
  
     computeDeadRootsForDecrement(gtl_info);
     processDecrements(gtl_info);	
-    tryReprocessDecrementedPages(gtl_info);
 	tryMergeDecList(gtl_info);
 
 	RC_STATS_END(rc_times);

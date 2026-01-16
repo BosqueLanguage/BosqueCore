@@ -139,44 +139,52 @@ void GCAllocator::processCollectorPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
     }
 }
 
-/*
-
 // You may notice we explicitly pause the decs processor whenever we are working through
 // out list of decd pages
 // this is intentional (for now) as I work out exactly where we need to lock, and should make 
 // it easy to ensure i just didnt forget to lock something when testing
+
+// I am seeign problems (now that we have rolled out the lazy decs) with pages getting corrupted,
+// leading me to believe we are somehow rebuilding gpages that should NOT be touched...
 PageInfo* GCAllocator::tryGetPendingRebuildPage()
 {
-	gtl_info.decs_prcsr.pause();
+	gtl_info.decs.pause();
 
 	PageInfo* pp = nullptr;
 	while(!gtl_info.decd_pages.isEmpty()) {
 		PageInfo* p = gtl_info.decd_pages.pop_front();
-		p->rebuild();
-		if(p->freecount == p->entrycount) {
-			pp = PageInfo::initialize(this->allocsize, this->realsize);
-			break;		
+
+		// temp hack to handle weird case where page is on decd pages list twice	
+		if(p->owner) {
+			continue;
 		}
-		
-			
-			this->processPage(p);	
+	
+		p->rebuild();
+		if(p->allocsize != this->allocsize && p->freecount != p->entrycount) {
+			GCAllocator* gcalloc = gtl_info.getAllocatorForPageSize(p);
+			gcalloc->processPage(p);
 		}
 	    else {
-	
+			// We will want more control over the utilization of a page, but this
+			// should be sufficient for now
+			pp = p;
+			break;		
 		}	
 	}
 
-	gtl_info.decs_prcsr.resume();
+	gtl_info.decs.resume();
 
 	return pp;
 }
-*/
 
 PageInfo* GCAllocator::getFreshPageForAllocator() noexcept
 {
     PageInfo* page = this->getLowestLowUtilPage();
     if(page == nullptr) {
         page = GlobalPageGCManager::g_gc_page_manager.tryGetEmptyPage(this->allocsize, this->realsize);
+    }
+	if(page == nullptr) {
+		page = this->tryGetPendingRebuildPage();
     }
 	if(page == nullptr) {
 		page = GlobalPageGCManager::g_gc_page_manager.getFreshPageFromOS(this->allocsize, this->realsize);	
@@ -193,6 +201,9 @@ PageInfo* GCAllocator::getFreshPageForEvacuation() noexcept
     } 
     if(page == nullptr) {
         page = GlobalPageGCManager::g_gc_page_manager.tryGetEmptyPage(this->allocsize, this->realsize);
+    }
+	if(page == nullptr) {
+		page = this->tryGetPendingRebuildPage();
     }
 	if(page == nullptr) {
 		page = GlobalPageGCManager::g_gc_page_manager.getFreshPageFromOS(this->allocsize, this->realsize);
