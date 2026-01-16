@@ -331,16 +331,16 @@ class ASMToIRConverter {
                     return new IRLiteralOptionOfNoneExpression(this.processTypeSignature(totype));
                 }
                 else if(fromtype.decl instanceof SomeTypeDecl) {
-                    return new IRConstructOptionFromSomeExpression(this.processTypeSignature(fromtype), this.processTypeSignature(totype), exp);
+                    return new IRConstructOptionFromSomeExpression(this.processTypeSignature(totype), this.processTypeSignature(fromtype), exp);
                 }
                 else if(fromtype.decl instanceof OkTypeDecl) {
-                    return new IRConstructResultFromOkExpression(this.processTypeSignature(fromtype), this.processTypeSignature(totype), exp);
+                    return new IRConstructResultFromOkExpression(this.processTypeSignature(totype), this.processTypeSignature(fromtype), exp);
                 }
                 else if(fromtype.decl instanceof FailTypeDecl) {
-                    return new IRConstructResultFromFailExpression(this.processTypeSignature(fromtype), this.processTypeSignature(totype), exp);
+                    return new IRConstructResultFromFailExpression(this.processTypeSignature(totype), this.processTypeSignature(fromtype), exp);
                 }
                 else {
-                    return new IRBoxEntityToConceptRepresentationExpression(this.processTypeSignature(fromtype), this.processTypeSignature(totype), exp);
+                    return new IRBoxEntityToConceptRepresentationExpression(this.processTypeSignature(totype), this.processTypeSignature(fromtype), exp);
                 }
             }
         }
