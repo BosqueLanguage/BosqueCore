@@ -825,7 +825,7 @@ class CPPEmitter {
         `        ${ttid.bytesize},\n` +
         `        ${ttid.slotcount},\n` +
         `        LayoutTag::${ttid.tag},\n` +
-        `        ${ttid.ptrmask || "nullptr"},\n` +
+        `        ${ttid.ptrmask !== undefined ? ('"' + ttid.ptrmask + '"') : "nullptr"},\n` +
         `        "${tdecl.tkey}",\n` +
         `        ${ttid.vtable !== undefined ? "" : "nullptr"}\n` +
         `    };\n` +
@@ -841,7 +841,7 @@ class CPPEmitter {
         `        ${ttid.bytesize},\n` +
         `        ${ttid.slotcount},\n` +
         `        LayoutTag::Tagged,\n` +
-        `        ${ttid.ptrmask || "nullptr"},\n` +
+        `        ${ttid.ptrmask !== undefined ? ('"' + ttid.ptrmask + '"') : "nullptr"},\n` +
         `        "${tdecl.tkey}",\n` +
         `        nullptr\n` +
         `    };\n` +
@@ -897,12 +897,12 @@ class CPPEmitter {
             `    ${valuetype} value;\n` +
             `    //All constructor and assignment defaults\n` +
             ((tdecl.iskeytype || tdecl.isnumerictype) ? 
-            `    friend constexpr Bool operator==(const ${ctrepr} &lhs, const ${ctrepr}& rhs) { return lhs.value == rhs.value; }\n` +
+            `    friend constexpr Bool operator==(const ${ctrepr}& lhs, const ${ctrepr}& rhs) { return lhs.value == rhs.value; }\n` +
             `    friend constexpr Bool operator<(const ${ctrepr}& lhs, const ${ctrepr}& rhs) { return lhs.value < rhs.value; }\n` +
-            `    friend constexpr Bool operator>(const ${ctrepr} &lhs, const ${ctrepr}& rhs) { return rhs.value < lhs.value; }\n` +
-            `    friend constexpr Bool operator!=(const ${ctrepr} &lhs, const ${ctrepr}& rhs) { return !(lhs.value == rhs.value); }\n` +
+            `    friend constexpr Bool operator>(const ${ctrepr}& lhs, const ${ctrepr}& rhs) { return rhs.value < lhs.value; }\n` +
+            `    friend constexpr Bool operator!=(const ${ctrepr}& lhs, const ${ctrepr}& rhs) { return !(lhs.value == rhs.value); }\n` +
             `    friend constexpr Bool operator<=(const ${ctrepr}& lhs, const ${ctrepr}& rhs) { return !(rhs.value < lhs.value); }\n` +
-            `    friend constexpr Bool operator>=(const ${ctrepr} &lhs, const ${ctrepr}& rhs) { return !(lhs.value < rhs.value); }\n` :
+            `    friend constexpr Bool operator>=(const ${ctrepr}& lhs, const ${ctrepr}& rhs) { return !(lhs.value < rhs.value); }\n` :
             "") +
             `};`;
 
@@ -989,10 +989,10 @@ class CPPEmitter {
         const declusing = `using ${ctname} = ${RUNTIME_NAMESPACE}::XSome<${voptt}>;`;
         const decltypeinfo = this.emitEntityTypeInfoDecl(tdecl);
         const declbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}();`;
-        const declbsqemit = `void BSQ_emit${ctname}(${ctname}& vv);`;
+        const declbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv);`;
 
-        const defbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}() { if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.ensureAndConsumeKeyword("some")) { return std::nullopt; } if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.ensureAndConsumeSymbol("(")) { return std::nullopt; } auto vval = ${TransformCPPNameManager.generateNameForConstructor(ctname)}{ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.parse${voptttname}()}; if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.ensureAndConsumeSymbol(")")) { return std::nullopt; } return vval; }`;
-        const defbsqemit = `void BSQ_emit${ctname}(${ctname}& vv) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate("some("); ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emit${voptttname}(vv.value); ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate(")"); }`;
+        const defbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}() { if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeKeyword("some")) { return std::nullopt; } if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol("(")) { return std::nullopt; } auto vval = BSQ_parse${voptttname}(); if(!vval.has_value()) { return std::nullopt; } if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol(")")) { return std::nullopt; } return ${TransformCPPNameManager.generateNameForConstructor(ctname)}{vval.value()}; }`;
+        const defbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate("some("); BSQ_emit${voptttname}(vv.value); ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate(")"); }`;
         
         return [
             [declusing, decltypeinfo, declbsqparse, declbsqemit].join("\n"),
@@ -1017,20 +1017,20 @@ class CPPEmitter {
         const declusing = `using ${ctname} = ${RUNTIME_NAMESPACE}::XOption<${voptt}>;`;
         const decltypeinfo = this.emitConceptTypeInfoDecl(tdecl);
         const declbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}();`;
-        const declbsqemit = `void BSQ_emit${ctname}(${ctname}& vv);`;
+        const declbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv);`;
 
         const sometypeinfo = TransformCPPNameManager.generateTypeInfoNameForTypeKey(tdecl.ttype.tkeystr);
 
         const defbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}() {\n` +
-        `    if(ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.peekTokenType() == ᐸRuntimeᐳ::BSQONTokenType::LiteralNone) { return none; }\n` +
-        `    auto somev = BSQ_parseSome<${voptttname}>();\n` +
+        `    if(ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.peekTokenType() == ᐸRuntimeᐳ::BSQONTokenType::LiteralNone) { return ${ctname}::optnone; }\n` +
+        `    auto somev = BSQ_parseSomeᐸ${voptttname}ᐳ();\n` +
         `    if(!somev.has_value()) { return std::nullopt; }\n` +
-        `    return ${TransformCPPNameManager.generateNameForConstructor(ctname)}::fromSome(${sometypeinfo}, somev);\n` +
+        `    return ${TransformCPPNameManager.generateNameForConstructor(ctname)}::fromSome(&${sometypeinfo}, somev.value());\n` +
         `}`;
         
-        const defbsqemit = `void BSQ_emit${ctname}(${ctname}& vv) {\n` +
+        const defbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv) {\n` +
         `    if(vv.isNone()) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate("none"); }\n` +
-        `    else { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitSome<${voptttname}>(vv.asSome()); }\n` +
+        `    else { BSQ_emitSomeᐸ${voptttname}ᐳ(vv.asSome()); }\n` +
         `}`;
         
         return [

@@ -16,10 +16,10 @@ namespace ᐸRuntimeᐳ
     public:
         T value;
         
-        friend constexpr XBool operator==(const XSome<T>& lhs, const T& rhs) { return XBool::from(lhs.value == rhs); }
-        friend constexpr XBool operator==(const T& lhs, const XSome<T>& rhs) { return XBool::from(lhs == rhs.value); }
-        friend constexpr XBool operator!=(const XSome<T>& lhs, const T& rhs) { return XBool::from(lhs.value != rhs); }
-        friend constexpr XBool operator!=(const T& lhs, const XSome<T>& rhs) { return XBool::from(lhs != rhs.value); }
+        friend constexpr XBool operator==(const XSome<T>& lhs, const T& rhs) { return lhs.value == rhs; }
+        friend constexpr XBool operator==(const T& lhs, const XSome<T>& rhs) { return lhs == rhs.value; }
+        friend constexpr XBool operator!=(const XSome<T>& lhs, const T& rhs) { return lhs.value != rhs; }
+        friend constexpr XBool operator!=(const T& lhs, const XSome<T>& rhs) { return lhs != rhs.value; }
     };
 
     template <typename T>
@@ -48,6 +48,10 @@ namespace ᐸRuntimeᐳ
         constexpr XNone asNone() const { return xnone; }
         constexpr XSome<T> asSome() const { return XSome<T>{this->data}; }
         constexpr T unwrap() const { return this->data; }
+
+        XNone asNone() { return xnone; }
+        XSome<T> asSome() { return XSome<T>{this->data}; }
+        T unwrap() { return this->data; }
 
         friend constexpr XBool operator==(const XOption<T>& lhs, const XNone& rhs) { return XBool::from(lhs.isNone()); }
         friend constexpr XBool operator==(const XNone& lhs, const XOption<T>& rhs) { return XBool::from(rhs.isNone()); }

@@ -145,6 +145,12 @@ namespace ᐸRuntimeᐳ
             this->bufferMgr.write(lit);
         }
 
+        template<size_t len>
+        void writeImmediate(const char (&cstr)[len])
+        {
+            this->bufferMgr.writeImmediate(cstr);
+        }
+
         void emitNone(XNone n);
         void emitBool(XBool b);
         void emitNat(XNat n);

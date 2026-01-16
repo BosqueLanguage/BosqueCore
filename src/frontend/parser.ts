@@ -4883,8 +4883,6 @@ class Parser {
         }
         else if (this.isVarDeclPrefix()) {
             const vtype = this.parseVarDeclKind();
-            
-            this.consumeToken();
             const assigns = this.parseMultiDeclarationVarInfo(true);
 
             if(this.testToken(SYM_semicolon)) {
