@@ -81,8 +81,8 @@ public:
 
     float approx_utilization;
     uint16_t pending_decs_count;
-    bool seen; // Have we visited this page while processing decrements?
-
+    bool needs_reprocess; // Do we need to reprocess this page after it had rc decs?
+ 
     static PageInfo* initialize(void* block, uint16_t allocsize, uint16_t realsize) noexcept;
 
     size_t rebuild() noexcept;

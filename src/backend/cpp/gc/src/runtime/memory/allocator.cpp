@@ -18,8 +18,7 @@ PageInfo* PageInfo::initialize(void* block, uint16_t allocsize, uint16_t realsiz
     pp->allocsize = allocsize;
     pp->realsize = realsize;
     pp->approx_utilization = 0.0f;
-    pp->pending_decs_count = 0;
-    pp->seen = false;
+    pp->pending_decs_count = 0;	
 
     pp->owner = nullptr;
     pp->prev = nullptr;
@@ -44,7 +43,7 @@ size_t PageInfo::rebuild() noexcept
 
     this->freelist = nullptr;
     this->freecount = 0;
-    this->seen = false;
+    this->needs_reprocess = false;
  
     for(int64_t i = this->entrycount - 1; i >= 0; i--) {
         MetaData* m = this->getMetaEntryAtIndex(i);

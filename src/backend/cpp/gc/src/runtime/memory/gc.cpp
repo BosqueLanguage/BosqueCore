@@ -18,10 +18,10 @@ static void walkPointerMaskForMarking(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::
 
 static void reprocessPageInfo(PageInfo* page, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
-	// Was already rebuilt in processCollectorPages()
-	if(!page->seen) {
-		return ;
+	if(!page->needs_reprocess) {
+		return ;		
 	}
+
     // This should not be called on pages that are (1) active allocators or evacuators or (2) pending collection pages
     GCAllocator* gcalloc = tinfo.getAllocatorForPageSize(page);
     PageInfo* npage = gcalloc->tryRemovePage(page);
@@ -38,6 +38,10 @@ static inline void pushPendingDecs(BSQMemoryTheadLocalInfo& tinfo, void* obj, De
     if(GC_IS_ROOT(m)) [[unlikely]] {
         return ;
     }
+
+	// I worry about this hurting perf...
+	PageInfo* p = PageInfo::extractPageFromPointer(obj);
+	p->pending_decs_count++;
 
     list.push_back(obj);
 }
@@ -135,8 +139,8 @@ static void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreG
 // we will need to be careful with race conditions on this shit
 static inline void updateDecrementedPages(BSQMemoryTheadLocalInfo& tinfo, PageInfo* p) noexcept 
 {
-    if(p->seen == false) {
-        p->seen = true;
+    if(p->pending_decs_count == 0) {
+		p->needs_reprocess = true;
 		tinfo.decd_pages.push_back(p);
     }
 }
@@ -167,6 +171,7 @@ static inline void updateDecrementedObject(BSQMemoryTheadLocalInfo& tinfo, void*
     }
 }
 
+// TODO call this inside processDecrements
 void processDec(void* obj, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
 	MetaData* m = GC_GET_META_DATA_ADDR(obj);	
@@ -174,10 +179,11 @@ void processDec(void* obj, BSQMemoryTheadLocalInfo& tinfo) noexcept
         return ;
     }
 
+	PageInfo* p = PageInfo::extractPageFromPointer(obj);
+	p->pending_decs_count--;
+
     decrementObject(obj);
     updateDecrementedObject(tinfo, obj, tinfo.decs.pending);
-
-    PageInfo* p = PageInfo::extractPageFromPointer(obj);
     updateDecrementedPages(tinfo, p);
 }
 
@@ -216,10 +222,11 @@ static void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
             continue;
         }
 
+		PageInfo* p = PageInfo::extractPageFromPointer(obj);
+		p->pending_decs_count--;
+
         decrementObject(obj);
         updateDecrementedObject(tinfo, obj, tinfo.decs_batch);
-
-        PageInfo* p = PageInfo::extractPageFromPointer(obj);
         updateDecrementedPages(tinfo, p);
 
         deccount++;
