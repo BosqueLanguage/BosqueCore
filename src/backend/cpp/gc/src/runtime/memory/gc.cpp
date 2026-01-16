@@ -145,6 +145,13 @@ static inline void updateDecrementedPages(BSQMemoryTheadLocalInfo& tinfo, PageIn
 	// not rlly sure whats going on but it seems to hurt perf
 	//
 
+/*
+real	0m5.085s
+user	0m5.154s
+sys	0m0.349s
+ -- i believe this is caused by excessing decs processor pausing and resuming
+*/
+
 	if(p->pending_decs_count == 0 && p->owner) {
 		p->owner->remove(p);
 		tinfo.decd_pages.push_back(p);
