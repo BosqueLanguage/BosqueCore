@@ -84,6 +84,10 @@ class CPPEmitter {
         if(ttag === IRExpressionTag.IRLiteralNoneExpression) {
             return "none";
         }
+        else if(ttag === IRExpressionTag.IRLiteralOptionOfNoneExpression) {
+            const cexp = exp as IRLiteralOptionOfNoneExpression;
+            return `${TransformCPPNameManager.convertTypeKey(cexp.opttype.tkeystr)}::optnone`
+        }
         else if(ttag === IRExpressionTag.IRLiteralBoolExpression) {
             return (exp as IRLiteralBoolExpression).value ? "TRUE" : "FALSE";
         }
@@ -449,11 +453,6 @@ class CPPEmitter {
             else if(ttag === IRExpressionTag.IRLogicSimpleConditionalExpression) {
                 const cexp = exps as IRLogicSimpleConditionalExpression;
                 bstr = `(${this.emitIRSimpleExpression(cexp.condition, false)} ? ${this.emitIRSimpleExpression(cexp.trueexp, false)} : ${this.emitIRSimpleExpression(cexp.falseexp, false)})`;
-            }
-            else if(ttag === IRExpressionTag.IRLiteralOptionOfNoneExpression) {
-                const cexp = exps as IRLiteralOptionOfNoneExpression;
-                const octype = TransformCPPNameManager.convertTypeKey(cexp.opttype.tkeystr);
-                bstr = `${octype}::optnone`
             }
             else if(ttag === IRExpressionTag.IRConstructOptionFromSomeExpression) {
                 const cexp = exps as IRConstructOptionFromSomeExpression;
