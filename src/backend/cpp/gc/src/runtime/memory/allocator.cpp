@@ -147,9 +147,7 @@ void GCAllocator::processCollectorPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
 // I am seeign problems (now that we have rolled out the lazy decs) with pages getting corrupted,
 // leading me to believe we are somehow rebuilding gpages that should NOT be touched...
 PageInfo* GCAllocator::tryGetPendingRebuildPage()
-{
-	gtl_info.decs.pause();
-
+{	
 	PageInfo* pp = nullptr;
 	while(!gtl_info.decd_pages.isEmpty()) {
 		PageInfo* p = gtl_info.decd_pages.pop_front();
@@ -171,8 +169,6 @@ PageInfo* GCAllocator::tryGetPendingRebuildPage()
 			break;		
 		}	
 	}
-
-	gtl_info.decs.resume();
 
 	return pp;
 }

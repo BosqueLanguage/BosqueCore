@@ -4,7 +4,7 @@
 #include "threadinfo.h"
 
 // Used to determine if a pointer points into the data segment of an object
-#define POINTS_TO_DATA_SEG(P) P >= (void*)PAGE_FIND_OBJ_BASE(P) && P < (void*)((char*)PAGE_FIND_OBJ_BASE(P) + PAGE_MASK_EXTRACT_PINFO(P)->entrysize)
+#define POINTS_TO_DATA_SEG(P) P >=pagelist (void*)PAGE_FIND_OBJ_BASE(P) && P < (void*)((char*)PAGE_FIND_OBJ_BASE(P) + PAGE_MASK_EXTRACT_PINFO(P)->entrysize)
 
 #ifdef ALLOC_DEBUG_CANARY
 #define GET_SLOT_START_FROM_OFFSET(O) (O - sizeof(PageInfo) - sizeof(MetaData) - ALLOC_DEBUG_CANARY_SIZE) 
@@ -135,7 +135,7 @@ static void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreG
 // I saw some weird stuff earlier with setting up these locks and it seemed
 // the decs processor did not really like to actually obtain (?) the lock so
 // we will need to be careful with race conditions on this shit
-static inline void updateDecrementedPages(BSQMemoryTheadLocalInfo& tinfo, PageInfo* p) noexcept 
+static inline void updateDecrementedPages(ArrayList<PageInfo*>& pagelist, PageInfo* p) noexcept 
 {
 	// we want to target pages that are stored in filled pages, so ignore those that 
 	// are not... think about this bro we are tired
@@ -154,7 +154,7 @@ sys	0m0.349s
 
 	if(p->pending_decs_count == 0 && p->owner) {
 		p->owner->remove(p);
-		tinfo.decd_pages.push_back(p);
+		pagelist.push_back(p);
     }
 }
 
@@ -187,7 +187,8 @@ static inline void updateDecrementedObject(BSQMemoryTheadLocalInfo& tinfo, void*
 }
 
 // TODO call this inside processDecrements
-void processDec(void* obj, BSQMemoryTheadLocalInfo& tinfo) noexcept
+// -- and we dont need tinfo here
+void processDec(void* obj, ArrayList<PageInfo*>& pagelist, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
 	MetaData* m = GC_GET_META_DATA_ADDR(obj);	
     if(!GC_IS_ALLOCATED(m)) {
@@ -199,7 +200,7 @@ void processDec(void* obj, BSQMemoryTheadLocalInfo& tinfo) noexcept
 
     decrementObject(obj);
     updateDecrementedObject(tinfo, obj, tinfo.decs.pending);
-    updateDecrementedPages(tinfo, p);
+    updateDecrementedPages(pagelist, p);
 }
 
 static void mergeDecList(BSQMemoryTheadLocalInfo& tinfo)
@@ -242,7 +243,7 @@ static void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
         decrementObject(obj);
         updateDecrementedObject(tinfo, obj, tinfo.decs_batch);
-        updateDecrementedPages(tinfo, p);
+        updateDecrementedPages(tinfo.decd_pages, p);
 
         deccount++;
     }
@@ -595,6 +596,12 @@ void collect() noexcept
     COLLECTION_STATS_START();
 
     gtl_info.decs.pause();
+
+	// TODO find a better home for this code (or maybe a better hueristic
+	// for managing multiple page lists)
+	while(!gtl_info.decs.decd_pages.isEmpty()) {
+		gtl_info.decd_pages.push_back(gtl_info.decs.decd_pages.pop_front());
+	}
 
 	// Temporary until I find a better place to do this
 	if(!gtl_info.decd_pages.isInitialized()) {
