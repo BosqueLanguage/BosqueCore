@@ -4,68 +4,10 @@ Expressions are a key component in Bosque programming. Thus, Bosque provides a r
 
 # Table of Contents
 
-- Pure Bosque Expressions
-    1. Literals
-      - None
-      - Boolean
-      - Int/Nat and BigInt/BigNat
-      - Float, Decimal, Rational, and Complex
-      - Decimal Degree and Latitude/Longitude
-      - Byte, CChar, and UnicodeChar
-      - UUIDv4 and UUIDv7
-      - SHAHash
-      - TZDateTime, TAIDateTime, PlainDate, and PlainTime
-      - LogicalTime
-      - ISOTimeStamp
-      - DeltaDataTime, DeltaISOTimeStamp, DeltaSeconds, DeltaLogicalTime
-      - ByteBuffer
-      - String and CString
-      - Regex and CRegex
-      - Path, PathFragment, and Glob
-    2. Literal StringOf Expressions
-    2. Literal Format String Expressions
-    3. Literal Typed Expressions
-    4. Parameters/Variables/Captures
-    5. Namespace and Member Constants
-    6. Enumerations
-    8. Entity Constructors
-    7. EList Constructors
-    10. Special Constructors
-    11. Collection Constructors
-    12. Namespace and Member Functions
-    13. Namespace Operators
-    14. EList Index Access
-    16. Field Access
-    18. ITest Check
-    19. ITest As and Conversion
-    20. Method Call
-    21. Method Call Virtual
-    22. Prefix `!` operator
-    23. Prefix `-` operator
-    24. Binary arithmetic, `+`/`-`/`*`/`/` operators
-    25. Binary comparison `==`/`!=`/`<`/`<=`/`>`/`>=` operators
-    26. Binary KeyType equality `===`/`!==` operators
-    27. Logic `&&`/`||` operators
-    28. MapEntry Constructor `=>` operator
-- Bosque Expression Components
-    1. ITests
-      - negation and binding
-      - Option -> none & some
-      - Result -> ok & fail
-      - APIResult -> success, error, rejected, failed
-      - Concept Type
-      - Datatype
-    2. Arguments
-    3. Binders
-    4. Lambdas
-    5. Direct Literals
-    6. Regular Expressions
-    7. Path Expressions
+- Core Bosque Expressions
 - Bosque Task Expressions
-    1. Environment Variables
-    2. Task Information
-
-# Pure Bosque Expressions
+    
+# Core Bosque Expressions
 
 ## Literals
 
@@ -349,13 +291,15 @@ Percentage{99n}  %%ok
 ``` 
 
 ## Special Constructors
--- In Progress --
-The `Option<T>` and `Result<T, E>` types have special constructor support. In addition to the regular `Something<Int>{3i}` constructor forms they provide short and type inferred forms with the syntax `some(e)`, `ok(e)`, `err(e)` and `result(e)` where `e` is an expression. These forms will infer the appropriate template types and convert the expressions as needed. The `result(e)` type will also insert conversions between compatible result types and construction of result objects from values (see issue #1).
+The `Option<T>` and `Result<T, E>` types have special constructor support. In addition to the regular `Some<Int>{3i}` constructor forms they provide short and type inferred forms with the syntax `some(e)`, `ok(e)`, `fail(e)` where `e` is an expression. These forms will infer the appropriate template types and convert the expressions as needed. 
 
 Examples of these special forms include:
 ```none
-let x: Option<Int> = some(3i); %%x is a Some<Int> with value 3i
-let y: Option<Int?> = some(5i); %%y is a Some<Int?> with value 5i
+let x: Option<Int> = some(3i); %%s special constructor type inferred from the declaration context
+let y = some(5i); %%y is a Some<Int> with value 5i inferred from the expression context
+
+
+-- In Progress --
 
 function foo(): Result<Int, String> {
     return ok(3i); %%returns a Result<Int, String> with value 3i
@@ -658,7 +602,6 @@ typedecl Foo = Int;
 ```
 
 ## Binary numeric comparison operators
--- In Progress --
 Bosque supports the standard set of binary numeric comparison operators of `==`, `!=`, `<`, `<=`, `>`, and `>=`. These are defined for all numeric types and automatically for any `type` alias of a numeric type. 
 
 Types are not implicitly converted for comparison operations and, if needed, must be explicitly coerced to the same types.
@@ -685,7 +628,11 @@ ChkNat::npos > 10n           %%true
 ```
 
 ## Binary KeyType equality operators
-`KeyType` values play a critical role in Bosque. They are used as keys in `Set<T>` and `Map<K, V>` containers and they are also used for strong equality testing with the `===` and `!==` operators. These operators allow for testing of values when (at least) one of the arguments is a `KeyType` value. The types on the two sides of the operator do not need to be the same but one must be a subtype of the other.
+`KeyType` values play a critical role in Bosque. They are used as keys in `Set<T>` and `Map<K, V>` containers and they are also used for strong equality testing with the `===` and `!==` operators. These operators allow for testing of values when (at least) one of the arguments is a `KeyType` value. 
+
+In general the types of the must be the same. However, Bosque supports two common cases where the types may differ -- first when one argument is of type `Option<T>` and the other is the literal `none` or a value of type `T`, the second is when one argument is of type `Some<T>` and the other is of type `T`. In both cases the comparison is well-defined as the `none` value is the only value of type `None` and the `Option<T>`/`Some<T>` type only contains values of type `T`. In these cases the comparison performs the needed type checks and implicit unboxing, with final comparisons done on the underlying `T` values.
+
+In the case of numeric types that are also KeyTypes (e.g. `Int`, `Nat`, `ChkInt`, `ChkNat`), the semantics of the `===` and `!==` operators are the same as the numeric `==` and `!=` operators.
 
 Examples of `KeyType` equality operator usage includes:
 
@@ -694,29 +641,56 @@ Examples of `KeyType` equality operator usage includes:
 "hello" !== "goodbye" %%false
 true === none %%false
 
-let x: Int | None = 1i;
+let x: Option<Int> = some(1i);
 x === none %%false
 x === 1i %%true
 x === 2i %%false
 
-let y: Option<String> = some("hello");
-y === none %%error types don't overlap
-y === nothing %%true
+let x: Some<Int> = some(1i);
+x === none %%error -- Some<T> cannot be none
+x === 1i %%true
+x === 2i %%false
 
-let p: String | Int = "hello";
-let q: String | Int | None = "hello";
-p === q %%true
+type Foo = ChkInt;
+5I<Foo> === 5I %% error types do not match
+5I<Foo> !== 6I<Foo> %% true
 
-entity Foo {}
-let f: Foo? = Foo{};
-let g: Foo? = none;
+some(2i) !== some(1i) %% error some is not a KeyType
 
-f === g %%error at least one type must be a KeyType
-f === none %%false
-g === none %%true
+3.0f === 3.0f %% error Float is not a KeyType (use == instead)
+
+```
+
+## KeyComparator Operators
+In addition to the standard comparison operators Bosque provides special KeyComparator methods for `KeyType` values. These core operators provide for equality (which is semantically the same as `===` but requires the values to have identical types) and ordering. These operators are used internally by Bosque collections and can also be used for user defined structures (see also `equiv` and `mergable`).
+
+The KeyComparator operators are:
+- `KeyComparator::equal<T: keytype>(a: T, b: T): Bool` -- returns `true` if `a` and `b` are equal (same type).
+- `KeyComparator::less<T: keytype>(a: T, b: T): Bool` -- returns `true` if `a` is less than `b` (same type).
+
+These operators satisfy the standard properties of equality and ordering relations.
+
+Examples of KeyComparator operator usage includes:
+
+```none
+KeyComparator::equal<Int>(1i, 1i) %%true
+KeyComparator::equal<String>("hello", "goodbye") %%false
+
+KeyComparator::less<Nat>(2n, 3n) %%true
+KeyComparator::less<CString>('w, 'ok') %%true -- string length before lexicographic
+KeyComparator::less<CString>('ok', 'ok') %%false -- they are equal
+KeyComparator::less<CString>('ok', 'oz') %%true -- string length same but 'k' before 'z' in lexicographic
+
+KeyComparator::equal<ChkInt>(3I, 2I) %%false
+KeyComparator::equal<ChkInt>(ChkInt::npos, 2I) %%false
+KeyComparator::equal<ChkInt>(ChkInt::npos, ChkInt::npos) %%true
+
+KeyComparator::less<ChkInt>(3I, 2I) %%false
+KeyComparator::equal<ChkInt>(4I, ChkInt::npos) %%true -- npos is greater than all other values (except itself)
 ```
 
 ## Binary Logic `&&`/`||`/`==>` operators
+-- In Progress --
 Bosque provides the standard short-circuiting boolean operators of `&&` and `||`. Bosque also has a logical implication operator `==>` which is short-circuited on the left side when it is `false`. 
 
 ```none
@@ -733,137 +707,12 @@ false ==> (1i / 0i == 1i) %%true -- short-circuited
 ```
 
 ## MapEntry Constructor `=>` operator
+-- In Progress --
 The `Map<K, V>` container in Bosque holds values of type `MapEntry<K, V>`. The Map entry constructor `=>` is a shorthand notation for creating `MapEntry` values from a key and value expression. The type of the entry is inferred from the context. 
 
 ```none
 1i => 2i; %%MapEntry<Int, Int>{1i, 2i}
 Map<Int, String>{1i => "one", 2i => "two"}; %%Map<Int, String>{MapEntry<Int, String>{1i, "one"}, MapEntry<Int, String>{2i, "two"}}
-```
-
-## If-Then-Else Expression
-Bosque supports _if-then-elif*-else_ syntax for expressions. The type of the expression is the union of all the branch expressions (and type inference is applied to each expression if possible). The test conditions include the standard boolean expression form _and_ any _ITest_ expression! When using the ITest expression form it is also possible to use _Binder_ syntax (the `$` variable) in the branch expression which is bound to the value of the expression if the test passes. 
-
-Examples of simple if-then-else expressions:
-```none
-if (x < 0i) then -x else x %%Int
-if (x == 0i) then 0i elif (x < 0i) then -1i else 1i %%Int
-
-let yy: Int? = if (x == 0i) then none else x %%Inferred as Int? in each branch expression
-```
-
-Examples of if-then-else expressions with ITest expressions:
-```none
-let x: {f: Int?, g: String} = ...;
-
-if !none (x.f) then %%special none ITest form
-    1i 
-else 
-    0i
-
-if <None> (x.f) then %%typeof form ITest 
-    0i 
-else 
-    1i
-
-if [none] (x.f) then %%literal equality form ITest
-    0i 
-else 
-    1i
-```
-
-Examples of if-then-else expressions with ITest expressions and binders:
-```none
-let x: {f: Int?, g: String} = ...;
-
-if !none (x.f) then 
-    $ %%$ is bound to x.f@!none in the branch expression
-else 
-    0i 
-
-if none (x.f) then 
-    0i 
-else 
-    $ %%$ is bound to false flow (x.f@!none) in the else branch expression
-```
-
-## Switch Expression
-Bosque provides a `switch` expression for matching against a set of literal cases. The matches in a switch expression can be literals or the special `_` wildcard match. As with if expressions the branch expressions are unioned to determine the type of the switch expression, type inference is applied if possible, and binders can be used in the branch expressions (bound to the switch expression and type refined according to matched/unmatched tests). 
-
-Non-exhaustiveness is not checked from the values but a runtime error will be raised if there is no matching case.
-
-Examples of simple switch expressions include:
-```none
-let x: Int? = ...;
-
-switch (x) {
-    |none => 0i
-    | 0i => 1i
-    | _  => 2i
-} %%Int
-
-let y: Bool = ...;
-switch (y) {
-    | true    => 0n
-    | false => 1n
-} %%Nat
-
-let z: Int? = switch(x) {
-    | none => 0i
-    | _  => 1i
-}; %%Int?
-```
-
-Examples of switch expressions with binders include:
-```none
-let x: {f: Nat?, g: Int} = ...;
-
-switch (x.f) {
-    |none => 0n
-    | _  => $ + 1n
-} %%Int
-
-let y: Option<Nat> = ...;
-switch (y) {
-    | nothing => 0n
-    | _  => $.value() + 1n
-} %%Nat
-```
-
-## Match Expression
-The Bosque `match` expression is similar to the switch expression but uses type tests instead of literal tests. The match expression is a union of the branch expressions and type inference is applied if possible. Binders can be used in the branch expressions (bound to the match expression and type refined according to matched/unmatched tests).
-
-Non-exhaustiveness is not checked from the values but a runtime error will be raised if there is no matching case.
-
-Examples of simple match expressions include:
-```none
-let x: Int | Nat | None = ...;
-
-match (x) {
-    | None  => 0i
-    | Int => 1i
-    | _   => 2i
-} %%Int
-
-let z: Int? = match(x) {
-    | None  => 0i
-    | Int => 1i
-}; %%Int?
-```
-
-Examples of match expressions with binders include:
-```none
-let x: {f: Nat?, g: Int} = ...;
-
-match (x.f) {
-    None => 0n
-    | _  => $ + 1n
-} %%Int
-
-let y: Option<Nat> = ...;
-match (y) {
-    Nothing          => 0n
-    | Something<Nat> => $.value() + 1n
-} %%Nat
 ```
 
 # Bosque Expression Components
