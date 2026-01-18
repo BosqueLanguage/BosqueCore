@@ -438,16 +438,6 @@ public:
     }
 #endif
 
-    PageInfo* tryRemovePage(PageInfo* p) {
-        if(p == alloc_page || p == evac_page || p->owner == &this->pendinggc_pages) {
-            return nullptr;
-        }
-    
-		p->owner->remove(p);
-
-        return p;
-    }
-
     inline void* allocate(__CoreGC::TypeInfoBase* type)
     {
         assert(type->type_size == this->allocsize);

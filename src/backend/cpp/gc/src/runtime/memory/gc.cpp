@@ -591,7 +591,7 @@ void collect() noexcept
 
 	// Find dead roots, walk object graph from dead roots updating necessary rcs
 	// rebuild pages who saw decs (TODO do this lazily), and merge remainder of decs
-	// (TODO use a single shared list)    	
+	// (TODO use a single shared list (?))    	
   	RC_STATS_START();
  
     computeDeadRootsForDecrement(gtl_info);
