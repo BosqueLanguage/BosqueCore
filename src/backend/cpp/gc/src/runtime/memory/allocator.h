@@ -81,7 +81,8 @@ public:
 
     float approx_utilization;
     uint16_t pending_decs_count;
- 
+    bool visited;
+
     static PageInfo* initialize(void* block, uint16_t allocsize, uint16_t realsize) noexcept;
 
     size_t rebuild() noexcept;

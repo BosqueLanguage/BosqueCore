@@ -19,6 +19,7 @@ PageInfo* PageInfo::initialize(void* block, uint16_t allocsize, uint16_t realsiz
     pp->realsize = realsize;
     pp->approx_utilization = 0.0f;
     pp->pending_decs_count = 0;	
+	pp->visited = false;
 
     pp->owner = nullptr;
     pp->prev = nullptr;
@@ -138,28 +139,24 @@ void GCAllocator::processCollectorPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
         this->processPage(p);
     }
 }
-
-// You may notice we explicitly pause the decs processor whenever we are working through
-// out list of decd pages
-// this is intentional (for now) as I work out exactly where we need to lock, and should make 
-// it easy to ensure i just didnt forget to lock something when testing
-
-// I am seeign problems (now that we have rolled out the lazy decs) with pages getting corrupted,
-// leading me to believe we are somehow rebuilding gpages that should NOT be touched...
+	
 PageInfo* GCAllocator::tryGetPendingRebuildPage()
 {	
 	PageInfo* pp = nullptr;
 	while(!gtl_info.decd_pages.isEmpty()) {
-		PageInfo* p = gtl_info.decd_pages.pop_front();
-
-		// temp hack to handle weird case where page is on decd pages list twice	
-		if(p->owner) {
+		PageInfo* p = gtl_info.decd_pages.pop_front();	
+		p->visited = false;	
+	
+		// alloc, evac, or pendinggc pages will be rebuilt in next collection
+		GCAllocator* gcalloc = gtl_info.getAllocatorForPageSize(p);
+		if(p == gcalloc->alloc_page || p == gcalloc->evac_page || p->owner == &gcalloc->pendinggc_pages) {
 			continue;
 		}
-	
+
+		// Move pages who are not correct size
+		p->owner->remove(p);
 		p->rebuild();
 		if(p->allocsize != this->allocsize && p->freecount != p->entrycount) {
-			GCAllocator* gcalloc = gtl_info.getAllocatorForPageSize(p);
 			gcalloc->processPage(p);
 		}
 	    else {

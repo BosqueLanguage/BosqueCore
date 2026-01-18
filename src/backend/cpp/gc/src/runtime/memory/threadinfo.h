@@ -58,14 +58,8 @@ struct DecsProcessor {
     std::thread thd;    
 
     void (*processDecfp)(void*, ArrayList<PageInfo*>&, BSQMemoryTheadLocalInfo&);
-
-	// I think for now we would want to have two storage locations for pages, although
-	// we may be interested in just using two storage locations and swap between
-	// -- basically we just dont want to have to use locks since by doing the decs throttling
-	// stuff we almost 100% ensure there cannot be any starvation for pages, so one list is 
-	// sufficient for the allocator
-	ArrayList<PageInfo*> decd_pages;	
-	DecsList pending;
+	DecsList pending;	
+	ArrayList<PageInfo*> decd_pages;
 
     enum class State {
         Running,
@@ -76,12 +70,12 @@ struct DecsProcessor {
     };
     State st;
 
-    DecsProcessor(): mtx(), cv(), thd(), processDecfp(nullptr), decd_pages(), pending(), st(State::Paused) {}
+    DecsProcessor(): mtx(), cv(), thd(), processDecfp(nullptr), pending(), decd_pages(), st(State::Paused) {}
 
     void initialize(BSQMemoryTheadLocalInfo* tinfo)
     {
         this->pending.initialize();
-		this->decd_pages.initialize();	
+		this->decd_pages.initialize();
 		this->thd = std::thread([this, tinfo] { this->process(tinfo); });
         GlobalThreadAllocInfo::s_thread_counter++;
     }

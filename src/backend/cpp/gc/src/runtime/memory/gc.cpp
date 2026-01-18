@@ -16,19 +16,6 @@ static void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreG
 static void updatePointers(void** slots, __CoreGC::TypeInfoBase* typeinfo, BSQMemoryTheadLocalInfo& tinfo) noexcept;
 static void walkPointerMaskForMarking(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept; 
 
-/*
-static void reprocessPageInfo(PageInfo* page, BSQMemoryTheadLocalInfo& tinfo) noexcept
-{
-    // This should not be called on pages that are (1) active allocators or evacuators or (2) pending collection pages
-    GCAllocator* gcalloc = tinfo.getAllocatorForPageSize(page);
-    PageInfo* npage = gcalloc->tryRemovePage(page);
-    if(npage != nullptr) {
-        npage->rebuild();
-        gcalloc->processPage(npage);
-    }
-}
-*/
-
 static inline void pushPendingDecs(BSQMemoryTheadLocalInfo& tinfo, void* obj, DecsList& list)
 {
     // Dead root points to root case, keep the root pointed to alive
@@ -132,41 +119,16 @@ static void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreG
     }
 }
 
-// I saw some weird stuff earlier with setting up these locks and it seemed
-// the decs processor did not really like to actually obtain (?) the lock so
-// we will need to be careful with race conditions on this shit
 static inline void updateDecrementedPages(ArrayList<PageInfo*>& pagelist, PageInfo* p) noexcept 
 {
-	// we want to target pages that are stored in filled pages, so ignore those that 
-	// are not... think about this bro we are tired
-	
-	//
-	// NOTE something here or in tryGetPendingRebuildPage is spending a much of time in sys?
-	// not rlly sure whats going on but it seems to hurt perf
-	//
-
-/*
-real	0m5.085s
-user	0m5.154s
-sys	0m0.349s
- -- i believe this is caused by excessing decs processor pausing and resuming
-*/
-
-	if(p->pending_decs_count == 0 && p->owner) {
-		p->owner->remove(p);
+	// we may not end up needing the visited bit, but pages can easily be seen 
+	// twice and at both instences have no decs left, so we need some way to track
+	// location
+	if(p->pending_decs_count == 0 && !p->visited) {
+		p->visited = true;
 		pagelist.push_back(p);
     }
 }
-
-/*
-static inline void tryReprocessDecrementedPages(BSQMemoryTheadLocalInfo& tinfo)
-{
-    while(!tinfo.decd_pages.isEmpty()) {        
-		PageInfo* p = tinfo.decd_pages.pop_front();
-        reprocessPageInfo(p, tinfo);
-    }
-}
-*/
 
 static inline void decrementObject(void* obj) noexcept 
 {
@@ -187,7 +149,6 @@ static inline void updateDecrementedObject(BSQMemoryTheadLocalInfo& tinfo, void*
 }
 
 // TODO call this inside processDecrements
-// -- and we dont need tinfo here
 void processDec(void* obj, ArrayList<PageInfo*>& pagelist, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
 	MetaData* m = GC_GET_META_DATA_ADDR(obj);	
@@ -607,7 +568,7 @@ void collect() noexcept
 	if(!gtl_info.decd_pages.isInitialized()) {
 		gtl_info.decd_pages.initialize();
 	}
-    
+
     gtl_info.pending_young.initialize();
 
     NURSERY_STATS_START();
