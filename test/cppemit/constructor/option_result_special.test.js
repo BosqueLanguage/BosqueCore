@@ -10,9 +10,9 @@ describe ("CPPEmit -- Special Constructor Some", () => {
     });
 
     it("should emit nested option return", function () {
-        checkTestEmitMainFunction("public function main(x: None): Option<Option<Int>> { return x; }", "aaa");
-        checkTestEmitMainFunction("public function main(x: Some<Int>): Option<Option<Int>> { return some(x); }", "bbb");
-        checkTestEmitMainFunction("public function main(x: Option<Int>): Option<Option<Int>> { return some(x); }", "ccc");
+        checkTestEmitMainFunction("public function main(x: None): Option<Option<Int>> { return x; }", "OptionᐸOptionᐸIntᐳᐳ Mainᕒmain(None x) { return OptionᐸOptionᐸIntᐳᐳ::optnone; }");
+        checkTestEmitMainFunction("public function main(x: Some<Int>): Option<Option<Int>> { return some(x); }", "OptionᐸOptionᐸIntᐳᐳ Mainᕒmain(SomeᐸIntᐳ x) { return OptionᐸOptionᐸIntᐳᐳ::fromSome(&ᐸRuntimeᐳ::g_typeinfo_SomeᐸOptionᐸIntᐳᐳ, SomeᐸOptionᐸIntᐳᐳ{(OptionᐸIntᐳ::fromSome(&ᐸRuntimeᐳ::g_typeinfo_SomeᐸIntᐳ, x))}); }");
+        checkTestEmitMainFunction("public function main(x: Option<Int>): Option<Option<Int>> { return some(x); }", "OptionᐸOptionᐸIntᐳᐳ Mainᕒmain(OptionᐸIntᐳ x) { return OptionᐸOptionᐸIntᐳᐳ::fromSome(&ᐸRuntimeᐳ::g_typeinfo_SomeᐸOptionᐸIntᐳᐳ, SomeᐸOptionᐸIntᐳᐳ{x}); }");
     });
 });
 

@@ -75,6 +75,10 @@ class TypeInfoManager {
     }
 
     addTypeInfo(tkey: string, typeInfo: TypeInfo): void {
+        if(this.typeInfoMap.has(tkey))  {
+            console.log(this.typeInfoMap.get(tkey));
+        }
+
         assert(!this.typeInfoMap.has(tkey), `TypeInfoManager::addTypeInfo - Duplicate type info for key ${tkey}`);
 
         this.typeInfoMap.set(tkey, typeInfo);
@@ -276,20 +280,20 @@ class TypeInfoManager {
         }
 
         //Now handle entities with a recursive walk
-        irasm.constructables.forEach((tdecl) => timgr.processInfoGenerationForEntity(tdecl, irasm));
-        irasm.collections.forEach((tdecl) => timgr.processInfoGenerationForEntity(tdecl, irasm));
-        irasm.eventlists.forEach((tdecl) => timgr.processInfoGenerationForEntity(tdecl, irasm));
-        irasm.entities.forEach((tdecl) => timgr.processInfoGenerationForEntity(tdecl, irasm));
-        irasm.datamembers.forEach((tdecl) => timgr.processInfoGenerationForEntity(tdecl, irasm));
+        irasm.constructables.forEach((tdecl) => { if(!timgr.hasTypeInfo(tdecl.tkey)) { timgr.processInfoGenerationForEntity(tdecl, irasm); } });
+        irasm.collections.forEach((tdecl) => { if(!timgr.hasTypeInfo(tdecl.tkey)) { timgr.processInfoGenerationForEntity(tdecl, irasm); } });
+        irasm.eventlists.forEach((tdecl) => { if(!timgr.hasTypeInfo(tdecl.tkey)) { timgr.processInfoGenerationForEntity(tdecl, irasm); } });
+        irasm.entities.forEach((tdecl) => { if(!timgr.hasTypeInfo(tdecl.tkey)) { timgr.processInfoGenerationForEntity(tdecl, irasm); } });
+        irasm.datamembers.forEach((tdecl) => { if(!timgr.hasTypeInfo(tdecl.tkey)) { timgr.processInfoGenerationForEntity(tdecl, irasm); } });
 
-        irasm.pconcepts.forEach((cdecl) => timgr.processInfoGenerationForConcept(cdecl, irasm));
-        irasm.concepts.forEach((cdecl) => timgr.processInfoGenerationForConcept(cdecl, irasm));
-        irasm.datatypes.forEach((cdecl) => timgr.processInfoGenerationForConcept(cdecl, irasm));
+        irasm.pconcepts.forEach((cdecl) => { if(!timgr.hasTypeInfo(cdecl.tkey)) { timgr.processInfoGenerationForConcept(cdecl, irasm); } });
+        irasm.concepts.forEach((cdecl) => { if(!timgr.hasTypeInfo(cdecl.tkey)) { timgr.processInfoGenerationForConcept(cdecl, irasm); } });
+        irasm.datatypes.forEach((cdecl) => { if(!timgr.hasTypeInfo(cdecl.tkey)) { timgr.processInfoGenerationForConcept(cdecl, irasm); } });
 
-        irasm.elists.forEach((ttype) => timgr.processInfoGenerationForType(ttype, irasm));
-        irasm.dashtypes.forEach((ttype) => timgr.processInfoGenerationForType(ttype, irasm));
-        irasm.formats.forEach((ttype) => timgr.processInfoGenerationForType(ttype, irasm));
-        irasm.lpacks.forEach((ttype) => timgr.processInfoGenerationForType(ttype, irasm));
+        irasm.elists.forEach((ttype) => { if(!timgr.hasTypeInfo(ttype.tkeystr)) { timgr.processInfoGenerationForType(ttype, irasm); } });
+        irasm.dashtypes.forEach((ttype) => { if(!timgr.hasTypeInfo(ttype.tkeystr)) { timgr.processInfoGenerationForType(ttype, irasm); } });
+        irasm.formats.forEach((ttype) => { if(!timgr.hasTypeInfo(ttype.tkeystr)) { timgr.processInfoGenerationForType(ttype, irasm); } });
+        irasm.lpacks.forEach((ttype) => { if(!timgr.hasTypeInfo(ttype.tkeystr)) { timgr.processInfoGenerationForType(ttype, irasm); } });
 
         return timgr;
     }

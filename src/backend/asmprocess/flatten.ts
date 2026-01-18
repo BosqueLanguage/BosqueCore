@@ -2707,88 +2707,142 @@ class ASMToIRConverter {
     private generateNamespaceTypeDecl(tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]) {
         const tt = (tinst.tsig as NominalTypeSignature).decl;
         if(tt instanceof EnumTypeDecl) {
-            irasm.enums.push(this.generateEnumTypeDecl(tt, tinst));
+            const edecl = this.generateEnumTypeDecl(tt, tinst);
+            irasm.enums.push(edecl);
+            irasm.alltypes.set(edecl.tkey, edecl);
         }
         else if(tt instanceof TypedeclTypeDecl) {
             const oftype = this.processTypeSignature((tt.valuetype as TypeSignature));
             if(oftype.tkeystr === "CString") {
-                irasm.cstringoftypedecls.push(this.generateTypedeclCStringDecl(tt, tinst));
+                const csdecl = this.generateTypedeclCStringDecl(tt, tinst)
+                irasm.cstringoftypedecls.push(csdecl);
+                irasm.alltypes.set(csdecl.tkey, csdecl);
             }
             else if(oftype.tkeystr === "String") {
-                irasm.stringoftypedecls.push(this.generateTypedeclStringDecl(tt, tinst));
+                const sdecl = this.generateTypedeclStringDecl(tt, tinst);
+                irasm.stringoftypedecls.push(sdecl);
+                irasm.alltypes.set(sdecl.tkey, sdecl);
             }
             else {
-                irasm.typedecls.push(this.generateTypedeclTypeDecl(tt, tinst));
+                const ttdecl = this.generateTypedeclTypeDecl(tt, tinst);
+                irasm.typedecls.push(ttdecl);
+                irasm.alltypes.set(ttdecl.tkey, ttdecl);
             }
         }
         else if(tt instanceof PrimitiveEntityTypeDecl) {
-            irasm.primitives.push(this.generatePrimitiveEntityTypeDecl(tt, tinst));
+            const pdecl = this.generatePrimitiveEntityTypeDecl(tt, tinst);
+            irasm.primitives.push(pdecl);
+            irasm.alltypes.set(pdecl.tkey, pdecl);
         }
         else if(tt instanceof OkTypeDecl) {
-            irasm.constructables.push(this.generateOkTypeDecl(tt, tinst, irasm, iinfo));
+            const okdecl = this.generateOkTypeDecl(tt, tinst, irasm, iinfo);
+            irasm.constructables.push(okdecl);
+            irasm.alltypes.set(okdecl.tkey, okdecl);
         }
         else if(tt instanceof FailTypeDecl) {
-            irasm.constructables.push(this.generateFailTypeDecl(tt, tinst, irasm, iinfo));
+            const faildecl = this.generateFailTypeDecl(tt, tinst, irasm, iinfo);
+            irasm.constructables.push(faildecl);
+            irasm.alltypes.set(faildecl.tkey, faildecl);
         }
         else if(tt instanceof APIErrorTypeDecl) {
-            irasm.constructables.push(this.generateAPIErrorTypeDecl(tt, tinst, irasm, iinfo));
+            const errdecl = this.generateAPIErrorTypeDecl(tt, tinst, irasm, iinfo);
+            irasm.constructables.push(errdecl);
+            irasm.alltypes.set(errdecl.tkey, errdecl);
         }
         else if(tt instanceof APIRejectedTypeDecl) {
-            irasm.constructables.push(this.generateAPIRejectedTypeDecl(tt, tinst, irasm, iinfo));
+            const rejecteddecl = this.generateAPIRejectedTypeDecl(tt, tinst, irasm, iinfo);
+            irasm.constructables.push(rejecteddecl);
+            irasm.alltypes.set(rejecteddecl.tkey, rejecteddecl);
         }
         else if(tt instanceof APIDeniedTypeDecl) {
-            irasm.constructables.push(this.generateAPIDeniedTypeDecl(tt, tinst, irasm, iinfo));
+            const denieddecl = this.generateAPIDeniedTypeDecl(tt, tinst, irasm, iinfo);
+            irasm.constructables.push(denieddecl);
+            irasm.alltypes.set(denieddecl.tkey, denieddecl);
         }
         else if(tt instanceof APIFlaggedTypeDecl) {
-            irasm.constructables.push(this.generateAPIFlaggedTypeDecl(tt, tinst, irasm, iinfo));
+            const flaggeddecl = this.generateAPIFlaggedTypeDecl(tt, tinst, irasm, iinfo);
+            irasm.constructables.push(flaggeddecl);
+            irasm.alltypes.set(flaggeddecl.tkey, flaggeddecl);
         }
         else if(tt instanceof APISuccessTypeDecl) {
-            irasm.constructables.push(this.generateAPISuccessTypeDecl(tt, tinst, irasm, iinfo));
+            const successdecl = this.generateAPISuccessTypeDecl(tt, tinst, irasm, iinfo);
+            irasm.constructables.push(successdecl);
+            irasm.alltypes.set(successdecl.tkey, successdecl);
         }
         else if(tt instanceof SomeTypeDecl) {
-            irasm.constructables.push(this.generateSomeTypeDecl(tt, tinst, irasm, iinfo));
+            const somedecl = this.generateSomeTypeDecl(tt, tinst, irasm, iinfo);
+            irasm.constructables.push(somedecl);
+            irasm.alltypes.set(somedecl.tkey, somedecl);
         }
         else if(tt instanceof MapEntryTypeDecl) {
-            irasm.constructables.push(this.generateMapEntryTypeDecl(tt, tinst, irasm, iinfo));
+            const mapdecl = this.generateMapEntryTypeDecl(tt, tinst, irasm, iinfo);
+            irasm.constructables.push(mapdecl);
+            irasm.alltypes.set(mapdecl.tkey, mapdecl);
         }
         else if(tt instanceof ListTypeDecl) {
-            irasm.collections.push(this.generateListTypeDecl(tt, tinst, irasm, iinfo));
+            const listdecl = this.generateListTypeDecl(tt, tinst, irasm, iinfo);
+            irasm.collections.push(listdecl);
+            irasm.alltypes.set(listdecl.tkey, listdecl);
         }
         else if(tt instanceof StackTypeDecl) {
-            irasm.collections.push(this.generateStackTypeDecl(tt, tinst, irasm, iinfo));
+            const stackdecl = this.generateStackTypeDecl(tt, tinst, irasm, iinfo);
+            irasm.collections.push(stackdecl);
+            irasm.alltypes.set(stackdecl.tkey, stackdecl);
         }
         else if(tt instanceof QueueTypeDecl) {
-            irasm.collections.push(this.generateQueueTypeDecl(tt, tinst, irasm, iinfo));
+            const queuedecl = this.generateQueueTypeDecl(tt, tinst, irasm, iinfo);
+            irasm.collections.push(queuedecl);
+            irasm.alltypes.set(queuedecl.tkey, queuedecl);
         }
         else if(tt instanceof SetTypeDecl) {
-            irasm.collections.push(this.generateSetTypeDecl(tt, tinst, irasm, iinfo));
+            const setdecl = this.generateSetTypeDecl(tt, tinst, irasm, iinfo);
+            irasm.collections.push(setdecl);
+            irasm.alltypes.set(setdecl.tkey, setdecl);
         }
         else if(tt instanceof MapTypeDecl) {
-            irasm.collections.push(this.generateMapTypeDecl(tt, tinst, irasm, iinfo));
+            const mapdecl = this.generateMapTypeDecl(tt, tinst, irasm, iinfo);
+            irasm.collections.push(mapdecl);
+            irasm.alltypes.set(mapdecl.tkey, mapdecl);
         }
         else if(tt instanceof EventListTypeDecl) {
-            irasm.eventlists.push(this.generateEventListTypeDecl(tt, tinst, irasm, iinfo));
+            const eldecl = this.generateEventListTypeDecl(tt, tinst, irasm, iinfo);
+            irasm.eventlists.push(eldecl);
+            irasm.alltypes.set(eldecl.tkey, eldecl);
         }
         else if(tt instanceof EntityTypeDecl) {
-            irasm.entities.push(this.generateEntityTypeDecl(tt, tinst, irasm, iinfo));
+            const eedecl = this.generateEntityTypeDecl(tt, tinst, irasm, iinfo);
+            irasm.entities.push(eedecl);
+            irasm.alltypes.set(eedecl.tkey, eedecl);
         }
         else if(tt instanceof OptionTypeDecl) {
-            irasm.pconcepts.push(this.generateOptionTypeDecl(tt, tinst, irasm, iinfo));
+            const optdecl = this.generateOptionTypeDecl(tt, tinst, irasm, iinfo);
+            irasm.pconcepts.push(optdecl);
+            irasm.alltypes.set(optdecl.tkey, optdecl);
         }
         else if(tt instanceof ResultTypeDecl) {
-            irasm.pconcepts.push(this.generateResultTypeDecl(tt, tinst, irasm, iinfo));
+            const resdecl = this.generateResultTypeDecl(tt, tinst, irasm, iinfo);
+            irasm.pconcepts.push(resdecl);
+            irasm.alltypes.set(resdecl.tkey, resdecl);
         }
         else if(tt instanceof APIResultTypeDecl) {
-            irasm.pconcepts.push(this.generateAPIResultTypeDecl(tt, tinst, irasm, iinfo));
+            const apidecl = this.generateAPIResultTypeDecl(tt, tinst, irasm, iinfo);
+            irasm.pconcepts.push(apidecl);
+            irasm.alltypes.set(apidecl.tkey, apidecl);
         }
         else if(tt instanceof ConceptTypeDecl) {
-            irasm.concepts.push(this.generateConceptTypeDecl(tt, tinst, irasm, iinfo));
+            const cptdecl = this.generateConceptTypeDecl(tt, tinst, irasm, iinfo);
+            irasm.concepts.push(cptdecl);
+            irasm.alltypes.set(cptdecl.tkey, cptdecl);
         }
         else if(tt instanceof DatatypeMemberEntityTypeDecl) {
-            irasm.datamembers.push(this.generateDatatypeMemberEntityTypeDecl(tt, tinst, irasm, iinfo));
+            const dmdecl = this.generateDatatypeMemberEntityTypeDecl(tt, tinst, irasm, iinfo);
+            irasm.datamembers.push(dmdecl);
+            irasm.alltypes.set(dmdecl.tkey, dmdecl);
         }
         else if(tt instanceof DatatypeTypeDecl) {
-            irasm.datatypes.push(this.generateDatatypeTypeDecl(tt, tinst, irasm, iinfo));
+            const dtdecl = this.generateDatatypeTypeDecl(tt, tinst, irasm, iinfo);
+            irasm.datatypes.push(dtdecl);
+            irasm.alltypes.set(dtdecl.tkey, dtdecl);
         }
         else {
             assert(false, "Unknown type decl kind");
@@ -2886,8 +2940,6 @@ class ASMToIRConverter {
         }
 
         //TODO: fill in subtypes
-
-        //TODO: fill in all types
 
         //TODO: fill in type sorting
 
