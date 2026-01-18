@@ -3,9 +3,6 @@
 #include "../support/qsort.h"
 #include "threadinfo.h"
 
-// Used to determine if a pointer points into the data segment of an object
-#define POINTS_TO_DATA_SEG(P) P >=pagelist (void*)PAGE_FIND_OBJ_BASE(P) && P < (void*)((char*)PAGE_FIND_OBJ_BASE(P) + PAGE_MASK_EXTRACT_PINFO(P)->entrysize)
-
 #ifdef ALLOC_DEBUG_CANARY
 #define GET_SLOT_START_FROM_OFFSET(O) (O - sizeof(PageInfo) - sizeof(MetaData) - ALLOC_DEBUG_CANARY_SIZE) 
 #else 
