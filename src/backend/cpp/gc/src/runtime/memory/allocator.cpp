@@ -161,7 +161,14 @@ PageInfo* GCAllocator::tryGetPendingRebuildPage()
 	    else {
 			// We will want more control over the utilization of a page, but this
 			// should be sufficient for now
-			pp = p;
+
+			// this is kinda confusing
+			PageInfo* np = p;
+			if(p->freecount == p->entrycount) {
+				np = PageInfo::initialize(p, this->allocsize, this->realsize);
+			}
+			pp = np;
+
 			break;		
 		}	
 	}
