@@ -181,7 +181,11 @@ static void tryMergeDecList(BSQMemoryTheadLocalInfo& tinfo)
 static void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     GC_REFCT_LOCK_ACQUIRE();
-    
+   
+	if(!tinfo.decd_pages.isInitialized()) {
+		tinfo.decd_pages.initialize();
+	}
+
     size_t deccount = 0;
     while(!tinfo.decs_batch.isEmpty() && (deccount < tinfo.max_decrement_count)) {
         void* obj = tinfo.decs_batch.pop_front();
@@ -533,29 +537,14 @@ static void updateRoots(BSQMemoryTheadLocalInfo& tinfo)
     tinfo.roots_count = 0;
 }
 
-// TODO i was thinking and realized its possible we have pages pending gc who
-// get rebuild and reprocessed, but also have pending decs so they end up
-// getting rebuild again when we are rebuilding pages... 
-// a bit akward as we need to rebuild the pending gc pages to determine how 
-// much data we have freed, yet we also need to not excessively rebuild to
-// prevent excess work for decs... hmmmm
-// -- lets look into this after we get the lazy rebuilding for sure working
+// NOTE we need to be weary of the possibility of pages being rebuilt inside of 
+// processAllocatorsPages but also need rebuilding after decs
 void collect() noexcept
 {
     COLLECTION_STATS_START();
 
-    gtl_info.decs.pause();
-
-	// TODO find a better home for this code (or maybe a better hueristic
-	// for managing multiple page lists)
-	while(!gtl_info.decs.decd_pages.isEmpty()) {
-		gtl_info.decd_pages.push_back(gtl_info.decs.decd_pages.pop_front());
-	}
-
-	// Temporary until I find a better place to do this
-	if(!gtl_info.decd_pages.isInitialized()) {
-		gtl_info.decd_pages.initialize();
-	}
+    gtl_info.decs.pause();	
+	gtl_info.decs.mergeDecdPages(gtl_info.decd_pages);
 
     gtl_info.pending_young.initialize();
 

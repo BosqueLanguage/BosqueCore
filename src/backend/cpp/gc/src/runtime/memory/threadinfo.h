@@ -152,6 +152,14 @@ struct DecsProcessor {
             this->changeStateFromWorker(State::Paused);
         }
     }
+
+	void mergeDecdPages(ArrayList<PageInfo*>& dst)
+	{
+		while(!this->decd_pages.isEmpty()) {
+			PageInfo* p = this->decd_pages.pop_front();
+			dst.push_back(p);
+		}
+	}
 };
 
 //All of the data that a thread local allocator needs to run it's operations

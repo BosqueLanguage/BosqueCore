@@ -138,7 +138,7 @@ void GCAllocator::processCollectorPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
         this->processPage(p);
     }
 }
-	
+
 PageInfo* GCAllocator::tryGetPendingRebuildPage(float max_util)
 {	
 	PageInfo* pp = nullptr;
@@ -155,7 +155,7 @@ PageInfo* GCAllocator::tryGetPendingRebuildPage(float max_util)
 		p->owner->remove(p);
 		p->rebuild();
 
-		// Move pages who are not correct size
+		// move pages that are not correct size or too full
 		if((p->allocsize != this->allocsize && p->freecount != p->entrycount)
 			|| p->approx_utilization > max_util) {
 				gcalloc->processPage(p);
