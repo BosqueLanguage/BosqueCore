@@ -24,10 +24,6 @@ static inline void pushPendingDecs(BSQMemoryTheadLocalInfo& tinfo, void* obj, De
         return ;
     }
 
-	// I worry about this hurting perf...
-	PageInfo* p = PageInfo::extractPageFromPointer(obj);
-	p->pending_decs_count++;
-
     list.push_back(obj);
 }
 
@@ -119,12 +115,10 @@ static void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreG
     }
 }
 
-static inline void updateDecrementedPages(ArrayList<PageInfo*>& pagelist, PageInfo* p) noexcept 
+static inline void updateDecrementedPages(ArrayList<PageInfo*>& pagelist, void* obj) noexcept 
 {
-	// we may not end up needing the visited bit, but pages can easily be seen 
-	// twice and at both instences have no decs left, so we need some way to track
-	// location
-	if(p->pending_decs_count == 0 && !p->visited) {
+	PageInfo* p = PageInfo::extractPageFromPointer(obj);
+	if(!p->visited) {
 		p->visited = true;
 		pagelist.push_back(p);
     }
@@ -156,12 +150,9 @@ void processDec(void* obj, ArrayList<PageInfo*>& pagelist, BSQMemoryTheadLocalIn
         return ;
     }
 
-	PageInfo* p = PageInfo::extractPageFromPointer(obj);
-	p->pending_decs_count--;
-
-    decrementObject(obj);
+	decrementObject(obj);
     updateDecrementedObject(tinfo, obj, tinfo.decs.pending);
-    updateDecrementedPages(pagelist, p);
+    updateDecrementedPages(pagelist, obj);
 }
 
 static void mergeDecList(BSQMemoryTheadLocalInfo& tinfo)
@@ -199,12 +190,9 @@ static void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
             continue;
         }
 
-		PageInfo* p = PageInfo::extractPageFromPointer(obj);
-		p->pending_decs_count--;
-
         decrementObject(obj);
         updateDecrementedObject(tinfo, obj, tinfo.decs_batch);
-        updateDecrementedPages(tinfo.decd_pages, p);
+        updateDecrementedPages(tinfo.decd_pages, obj);
 
         deccount++;
     }

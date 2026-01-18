@@ -79,9 +79,9 @@ public:
     uint16_t entrycount; //max number of objects that can be allocated from this Page
     uint16_t freecount;
 
-    float approx_utilization;
-    uint16_t pending_decs_count;
-    bool visited;
+	// NOTE probably could do approx util just as an int
+    float approx_utilization; 
+    bool visited; // has this page been inserted into an array list yet?
 
     static PageInfo* initialize(void* block, uint16_t allocsize, uint16_t realsize) noexcept;
 
@@ -135,13 +135,7 @@ public:
 
         uint64_t* post = (uint64_t*)((uint8_t*)mem + ALLOC_DEBUG_CANARY_SIZE + sizeof(MetaData) + type->type_size);
         *post = ALLOC_DEBUG_CANARY_VALUE;
-    }
-
-    inline void decrementPendingDecs() noexcept 
-    {
-        GC_INVARIANT_CHECK(this->pending_decs_count > 0);
-        this->pending_decs_count--;
-    }
+    }	
 };
 
 struct PageIterator {

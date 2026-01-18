@@ -18,7 +18,6 @@ PageInfo* PageInfo::initialize(void* block, uint16_t allocsize, uint16_t realsiz
     pp->allocsize = allocsize;
     pp->realsize = realsize;
     pp->approx_utilization = 0.0f;
-    pp->pending_decs_count = 0;	
 	pp->visited = false;
 
     pp->owner = nullptr;
