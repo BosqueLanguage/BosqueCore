@@ -9,6 +9,8 @@
     #include "../support/epsilon.h"
 #endif
 
+#include <atomic>
+
 //Can also use other values like 0xFFFFFFFFFFFFFFFFul
 #define ALLOC_DEBUG_MEM_INITIALIZE_VALUE 0x0ul
 
@@ -81,7 +83,7 @@ public:
 
 	// NOTE probably could do approx util just as an int
     float approx_utilization; 
-    bool visited; // has this page been inserted into an array list yet?
+    std::atomic<bool> visited; // has this page been inserted into an array list yet?
 
     static PageInfo* initialize(void* block, uint16_t allocsize, uint16_t realsize) noexcept;
 
@@ -346,7 +348,7 @@ private:
     PageInfo* getFreshPageForAllocator() noexcept; 
     PageInfo* getFreshPageForEvacuation() noexcept;
 
-	PageInfo* tryGetPendingRebuildPage();
+	PageInfo* tryGetPendingRebuildPage(float max_util);
 	
     inline void rotateFullAllocPage()
     {

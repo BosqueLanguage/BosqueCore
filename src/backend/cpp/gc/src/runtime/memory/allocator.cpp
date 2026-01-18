@@ -139,35 +139,32 @@ void GCAllocator::processCollectorPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
     }
 }
 	
-PageInfo* GCAllocator::tryGetPendingRebuildPage()
+PageInfo* GCAllocator::tryGetPendingRebuildPage(float max_util)
 {	
 	PageInfo* pp = nullptr;
 	while(!gtl_info.decd_pages.isEmpty()) {
 		PageInfo* p = gtl_info.decd_pages.pop_front();	
 		p->visited = false;	
-	
+
 		// alloc, evac, or pendinggc pages will be rebuilt in next collection
 		GCAllocator* gcalloc = gtl_info.getAllocatorForPageSize(p);
 		if(p == gcalloc->alloc_page || p == gcalloc->evac_page || p->owner == &gcalloc->pendinggc_pages) {
 			continue;
 		}
 
-		// Move pages who are not correct size
 		p->owner->remove(p);
 		p->rebuild();
-		if(p->allocsize != this->allocsize && p->freecount != p->entrycount) {
-			gcalloc->processPage(p);
+
+		// Move pages who are not correct size
+		if((p->allocsize != this->allocsize && p->freecount != p->entrycount)
+			|| p->approx_utilization > max_util) {
+				gcalloc->processPage(p);
 		}
 	    else {
-			// We will want more control over the utilization of a page, but this
-			// should be sufficient for now
-
-			// this is kinda confusing
-			PageInfo* np = p;
 			if(p->freecount == p->entrycount) {
-				np = PageInfo::initialize(p, this->allocsize, this->realsize);
+				p = PageInfo::initialize(p, this->allocsize, this->realsize);
 			}
-			pp = np;
+			pp = p;
 
 			break;		
 		}	
@@ -183,7 +180,7 @@ PageInfo* GCAllocator::getFreshPageForAllocator() noexcept
         page = GlobalPageGCManager::g_gc_page_manager.tryGetEmptyPage(this->allocsize, this->realsize);
     }
 	if(page == nullptr) {
-		page = this->tryGetPendingRebuildPage();
+		page = this->tryGetPendingRebuildPage(LOW_UTIL_THRESH);
     }
 	if(page == nullptr) {
 		page = GlobalPageGCManager::g_gc_page_manager.getFreshPageFromOS(this->allocsize, this->realsize);	
@@ -202,7 +199,7 @@ PageInfo* GCAllocator::getFreshPageForEvacuation() noexcept
         page = GlobalPageGCManager::g_gc_page_manager.tryGetEmptyPage(this->allocsize, this->realsize);
     }
 	if(page == nullptr) {
-		page = this->tryGetPendingRebuildPage();
+		page = this->tryGetPendingRebuildPage(HIGH_UTIL_THRESH);
     }
 	if(page == nullptr) {
 		page = GlobalPageGCManager::g_gc_page_manager.getFreshPageFromOS(this->allocsize, this->realsize);
