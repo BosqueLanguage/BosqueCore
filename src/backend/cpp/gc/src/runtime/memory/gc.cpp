@@ -3,9 +3,6 @@
 #include "../support/qsort.h"
 #include "threadinfo.h"
 
-// Used to determine if a pointer points into the data segment of an object
-#define POINTS_TO_DATA_SEG(P) P >= (void*)PAGE_FIND_OBJ_BASE(P) && P < (void*)((char*)PAGE_FIND_OBJ_BASE(P) + PAGE_MASK_EXTRACT_PINFO(P)->entrysize)
-
 #ifdef ALLOC_DEBUG_CANARY
 #define GET_SLOT_START_FROM_OFFSET(O) (O - sizeof(PageInfo) - sizeof(MetaData) - ALLOC_DEBUG_CANARY_SIZE) 
 #else 
@@ -15,21 +12,6 @@
 static void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots, DecsList& list) noexcept;
 static void updatePointers(void** slots, __CoreGC::TypeInfoBase* typeinfo, BSQMemoryTheadLocalInfo& tinfo) noexcept;
 static void walkPointerMaskForMarking(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept; 
-
-static void reprocessPageInfo(PageInfo* page, BSQMemoryTheadLocalInfo& tinfo) noexcept
-{
-	// Was already rebuilt in processCollectorPages()
-	if(!page->seen) {
-		return ;
-	}
-    // This should not be called on pages that are (1) active allocators or evacuators or (2) pending collection pages
-    GCAllocator* gcalloc = tinfo.getAllocatorForPageSize(page);
-    PageInfo* npage = gcalloc->tryRemovePage(page);
-    if(npage != nullptr) {
-        npage->rebuild();
-        gcalloc->processPage(npage);
-    }
-}
 
 static inline void pushPendingDecs(BSQMemoryTheadLocalInfo& tinfo, void* obj, DecsList& list)
 {
@@ -130,12 +112,12 @@ static void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreG
     }
 }
 
-static inline void updateDecrementedPages(BSQMemoryTheadLocalInfo& tinfo, PageInfo* p) noexcept 
+static inline void updateDecrementedPages(ArrayList<PageInfo*>& pagelist, void* obj) noexcept 
 {
-    if(p->seen == false) {
-        p->seen = true;
-        tinfo.decd_pages[tinfo.decd_pages_idx++] = p;
-        GC_INVARIANT_CHECK(tinfo.decd_pages_idx < MAX_DECD_PAGES);
+	PageInfo* p = PageInfo::extractPageFromPointer(obj);
+	if(!p->visited) {
+		p->visited = true;
+		pagelist.push_back(p);
     }
 }
 
@@ -157,26 +139,17 @@ static inline void updateDecrementedObject(BSQMemoryTheadLocalInfo& tinfo, void*
     }
 }
 
-static inline void tryReprocessDecrementedPages(BSQMemoryTheadLocalInfo& tinfo)
-{
-    for(uint32_t i = 0; i < tinfo.decd_pages_idx; i++) {        
-        reprocessPageInfo(tinfo.decd_pages[i], tinfo);
-    }
-    tinfo.decd_pages_idx = 0;
-}
-
-void processDec(void* obj, BSQMemoryTheadLocalInfo& tinfo) noexcept
+// TODO call this inside processDecrements
+void processDec(void* obj, ArrayList<PageInfo*>& pagelist, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
 	MetaData* m = GC_GET_META_DATA_ADDR(obj);	
     if(!GC_IS_ALLOCATED(m)) {
         return ;
     }
 
-    decrementObject(obj);
+	decrementObject(obj);
     updateDecrementedObject(tinfo, obj, tinfo.decs.pending);
-
-    PageInfo* p = PageInfo::extractPageFromPointer(obj);
-    updateDecrementedPages(tinfo, p);
+    updateDecrementedPages(pagelist, obj);
 }
 
 static void mergeDecList(BSQMemoryTheadLocalInfo& tinfo)
@@ -205,7 +178,11 @@ static void tryMergeDecList(BSQMemoryTheadLocalInfo& tinfo)
 static void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     GC_REFCT_LOCK_ACQUIRE();
-    
+   
+	if(!tinfo.decd_pages.isInitialized()) {
+		tinfo.decd_pages.initialize();
+	}
+
     size_t deccount = 0;
     while(!tinfo.decs_batch.isEmpty() && (deccount < tinfo.max_decrement_count)) {
         void* obj = tinfo.decs_batch.pop_front();
@@ -216,9 +193,7 @@ static void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
         decrementObject(obj);
         updateDecrementedObject(tinfo, obj, tinfo.decs_batch);
-
-        PageInfo* p = PageInfo::extractPageFromPointer(obj);
-        updateDecrementedPages(tinfo, p);
+        updateDecrementedPages(tinfo.decd_pages, obj);
 
         deccount++;
     }
@@ -534,7 +509,7 @@ static void processAllocatorsPages(BSQMemoryTheadLocalInfo& tinfo)
         }
     }
 }
-
+	
 static inline void computeMaxDecrementCount(BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
 	tinfo.max_decrement_count = BSQ_INITIAL_MAX_DECREMENT_COUNT - (tinfo.bytes_freed / BSQ_MEM_ALIGNMENT);
@@ -559,12 +534,15 @@ static void updateRoots(BSQMemoryTheadLocalInfo& tinfo)
     tinfo.roots_count = 0;
 }
 
+// NOTE we need to be weary of the possibility of pages being rebuilt inside of 
+// processAllocatorsPages but also need rebuilding after decs
 void collect() noexcept
 {
     COLLECTION_STATS_START();
 
-    gtl_info.decs.pause();
-    
+    gtl_info.decs.pause();	
+	gtl_info.decs.mergeDecdPages(gtl_info.decd_pages);
+
     gtl_info.pending_young.initialize();
 
     NURSERY_STATS_START();
@@ -581,21 +559,20 @@ void collect() noexcept
     xmem_zerofill(gtl_info.forward_table, gtl_info.forward_table_index);
     gtl_info.forward_table_index = FWD_TABLE_START;
 
-    RC_STATS_START();
-
     gtl_info.decs_batch.initialize();
 
 	computeMaxDecrementCount(gtl_info);
 
 	// Find dead roots, walk object graph from dead roots updating necessary rcs
 	// rebuild pages who saw decs (TODO do this lazily), and merge remainder of decs
-	// (TODO use a single shared list)    
+	// (TODO use a single shared list (?))    	
+  	RC_STATS_START();
+ 
     computeDeadRootsForDecrement(gtl_info);
-    processDecrements(gtl_info);
-    tryReprocessDecrementedPages(gtl_info);
-    tryMergeDecList(gtl_info);
+    processDecrements(gtl_info);	
+	tryMergeDecList(gtl_info);
 
-    RC_STATS_END(rc_times);
+	RC_STATS_END(rc_times);
 
     gtl_info.decs_batch.clear();
 

@@ -57,8 +57,9 @@ struct DecsProcessor {
     std::condition_variable cv;
     std::thread thd;    
 
-    void (*processDecfp)(void*, BSQMemoryTheadLocalInfo&);
-    DecsList pending;
+    void (*processDecfp)(void*, ArrayList<PageInfo*>&, BSQMemoryTheadLocalInfo&);
+	DecsList pending;	
+	ArrayList<PageInfo*> decd_pages;
 
     enum class State {
         Running,
@@ -69,12 +70,13 @@ struct DecsProcessor {
     };
     State st;
 
-    DecsProcessor(): mtx(), cv(), thd(), processDecfp(nullptr), pending(), st(State::Paused) {}
+    DecsProcessor(): mtx(), cv(), thd(), processDecfp(nullptr), pending(), decd_pages(), st(State::Paused) {}
 
     void initialize(BSQMemoryTheadLocalInfo* tinfo)
     {
         this->pending.initialize();
-        this->thd = std::thread([this, tinfo] { this->process(tinfo); });
+		this->decd_pages.initialize();
+		this->thd = std::thread([this, tinfo] { this->process(tinfo); });
         GlobalThreadAllocInfo::s_thread_counter++;
     }
 
@@ -144,12 +146,20 @@ struct DecsProcessor {
 				}
 
                 void* obj = this->pending.pop_front();
-                this->processDecfp(obj, *tinfo);
+                this->processDecfp(obj, this->decd_pages, *tinfo);
             }
             
             this->changeStateFromWorker(State::Paused);
         }
     }
+
+	void mergeDecdPages(ArrayList<PageInfo*>& dst)
+	{
+		while(!this->decd_pages.isEmpty()) {
+			PageInfo* p = this->decd_pages.pop_front();
+			dst.push_back(p);
+		}
+	}
 };
 
 //All of the data that a thread local allocator needs to run it's operations
@@ -178,9 +188,8 @@ struct BSQMemoryTheadLocalInfo
 
     DecsProcessor decs; 
     DecsList decs_batch; // Decrements able to be done without needing decs thread
-
-    uint32_t decd_pages_idx = 0;
-    PageInfo* decd_pages[MAX_DECD_PAGES];
+	
+    ArrayList<PageInfo*> decd_pages;
     
     float nursery_usage = 0.0f;
 
@@ -207,7 +216,7 @@ struct BSQMemoryTheadLocalInfo
         tl_id(0), g_gcallocs(nullptr), native_stack_base(nullptr), native_stack_contents(), 
         native_register_contents(), roots_count(0), roots(nullptr), old_roots_count(0), 
         old_roots(nullptr), forward_table_index(FWD_TABLE_START), forward_table(nullptr), 
-        decs(), decs_batch(), decd_pages_idx(0), decd_pages(), pending_roots(), 
+        decs(), decs_batch(), decd_pages(), pending_roots(), 
         visit_stack(), pending_young(), bytes_freed(0), max_decrement_count(0) { }
     BSQMemoryTheadLocalInfo& operator=(BSQMemoryTheadLocalInfo&) = delete;
     BSQMemoryTheadLocalInfo(BSQMemoryTheadLocalInfo&) = delete;
