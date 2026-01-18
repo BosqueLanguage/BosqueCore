@@ -879,7 +879,7 @@ class ASMToIRConverter {
             }
         }
 
-        if(tdecl.allInvariants.length === 0) {
+        if(tdecl.allInvariants.length !== 0) {
             const invchecks = tdecl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
                 return new IRTypeDeclInvariantCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.tag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), this.processTypeSignature(invdecl.containingtype).tkeystr, invdecl.ii, cval);
             });

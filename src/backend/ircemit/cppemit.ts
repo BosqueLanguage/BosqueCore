@@ -458,7 +458,7 @@ class CPPEmitter {
                 const cexp = exps as IRConstructOptionFromSomeExpression;
                 const octype = TransformCPPNameManager.convertTypeKey(cexp.opttype.tkeystr);
                 const sometypeinfo = TransformCPPNameManager.generateTypeInfoNameForTypeKey(cexp.sometype.tkeystr);
-                bstr = `${octype}::fromSome(&${sometypeinfo}, ${this.emitIRSimpleExpression(cexp.value, false)})`;
+                bstr = `${octype}::fromSome(&${sometypeinfo}, ${this.emitIRSimpleExpression(cexp.value, true)})`;
             }
             else if(ttag === IRExpressionTag.IRExtractSomeFromOptionExpression) {
                 const eexp = exps as IRExtractSomeFromOptionExpression;

@@ -22,7 +22,6 @@ describe ("Checker -- Special Constructor Optional", () => {
     });
 });
 
-
 describe ("Checker -- Special Constructor infer assign positions", () => {
     it("should check fail with simple infer", function () {
         checkTestFunction("function main(): Option<Int> { let x: Option<Int> = none; return x; }");
