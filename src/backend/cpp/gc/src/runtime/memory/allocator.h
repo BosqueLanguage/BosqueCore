@@ -261,11 +261,8 @@ public:
 
     void addNewPage(PageInfo* newPage) noexcept
     {
-        GC_MEM_LOCK_ACQUIRE();
-
+		std::lock_guard lk(g_gcmemlock);
         this->empty_pages.push(newPage);
-        
-        GC_MEM_LOCK_RELEASE();
     }
 };
 

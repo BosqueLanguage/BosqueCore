@@ -5,8 +5,7 @@ XAllocPageManager XAllocPageManager::g_page_manager;
 
 void* XAllocPageManager::allocatePage_impl() noexcept
 {
-    ALLOC_LOCK_ACQUIRE();
-    
+	std::lock_guard lk(g_alloclock); 
     if(this->freelist == NULL)
     {
 #ifndef ALLOC_DEBUG_MEM_DETERMINISTIC
@@ -28,8 +27,6 @@ void* XAllocPageManager::allocatePage_impl() noexcept
     XAllocPage* xpage = this->freelist;
     this->freelist = this->freelist->next;
 
-    ALLOC_LOCK_RELEASE();
-
     return (void*)xpage;
 }
 
@@ -41,8 +38,7 @@ void XAllocPageManager::freePage_impl(void* page) noexcept
     xmem_zerofillpage(xpage);
 #endif
 
-    ALLOC_LOCK_ACQUIRE();
+    std::lock_guard lk(g_alloclock);
     xpage->next = this->freelist;
     this->freelist = xpage;
-    ALLOC_LOCK_RELEASE();
 }

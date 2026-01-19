@@ -27,7 +27,6 @@ int wrap_setjmp() {
 }
 
 int main() {
-    INIT_LOCKS();   
     InitBSQMemoryTheadLocalInfo();
 
     return wrap_setjmp();
