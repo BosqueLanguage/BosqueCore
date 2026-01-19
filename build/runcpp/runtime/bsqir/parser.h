@@ -35,7 +35,7 @@ namespace ᐸRuntimeᐳ
                 return false;
             }
 
-            if(token.extract_single() != sym) {
+            if(token.extract() != sym) {
                 return false;
             }
 

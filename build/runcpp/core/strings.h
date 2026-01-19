@@ -13,33 +13,6 @@ namespace ᐸRuntimeᐳ
         Black
     };
 
-    template<typename T>
-    class IterStack
-    {
-    private:
-        std::array<T, 32> data;
-        int64_t top;
-
-    public:
-        constexpr IterStack() : data{}, top(0) {}
-        constexpr IterStack(const IterStack& other) = default;
-
-        constexpr bool empty() const { return this->top == 0; }
-        constexpr size_t size() const { return static_cast<size_t>(this->top); }
-
-        constexpr void push(const T& value) 
-        { 
-            this->data[this->top] = value;
-            this->top++;
-        }
-
-        constexpr T pop() 
-        { 
-            this->top--;
-            return this->data[this->top];
-        }
-    };
-
     class CStrNode;
 
     class CStrBuff
@@ -128,101 +101,20 @@ namespace ᐸRuntimeᐳ
         nullptr
     };
 
-    class XCStringInputIterator
+    class XCStringIterator
     {
     private:
         int64_t buffidx;
         CStrBuff currbuff;
 
         int64_t index;
-        IterStack<CStrNode*>* treestack;
+        CStrTree currtree;
 
-        constexpr XCStringInputIterator(int64_t buffidx, CStrBuff currbuff, int64_t index, IterStack<CStrNode*>* treestack) : buffidx(buffidx), currbuff(currbuff), index(index), treestack(treestack) {}
-
-        void advanceSlow()
-        {
-            if(!this->treestack->empty()) {
-                assert(false); // Not Implemented: full iterator for CString trees
-            }
-        }
-
-    public:
-        using value_type = char;
-        using difference_type = std::ptrdiff_t;
-        using iterator_category = std::input_iterator_tag; 
-
-        using pointer = value_type*;
-        using reference = value_type&;
-
-        static XCStringInputIterator initializeBegin(CStrTree tree, IterStack<CStrNode*>* treestack)
-        {
-            //Handle empty iterator or small iterator as special case
-            if(tree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) {
-                return XCStringInputIterator(0, tree.data.buff, 0, treestack);
-            }
-            else {
-                assert(false); // Not Implemented: full iterator for CString trees
-            }
-        }
-
-        static XCStringInputIterator initializeEnd(CStrTree tree, IterStack<CStrNode*>* treestack)
-        {
-            //Handle empty iterator or small iterator as special case
-            if(tree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) {
-                return XCStringInputIterator(tree.data.buff.size(), tree.data.buff, tree.data.buff.size(), treestack);
-            }
-            else {
-                assert(false); // Not Implemented: full iterator for CString trees
-            }
-        }
-
-        value_type operator*() const 
-        { 
-            return this->currbuff.at(this->buffidx); 
-        }
-
-        XCStringInputIterator& operator++()
-        {
-            this->index++;
-            this->buffidx++;
-            if(this->buffidx >= (int64_t)this->currbuff.size()) {
-                this->advanceSlow();
-            }
-
-            return *this;
-        }
- 
-        void operator++(int)
-        {
-            ++*this;
-        }
-
-        friend bool operator==(const XCStringInputIterator& lhs, const XCStringInputIterator& rhs)
-        {
-            return lhs.index == rhs.index;
-        }
-
-        friend bool operator!=(const XCStringInputIterator& lhs, const XCStringInputIterator& rhs) 
-        {
-            return lhs.index != rhs.index;
-        }
-    };
-    static_assert(std::input_iterator<XCStringInputIterator>);
-
-    class XCStringBidiIterator
-    {
-    private:
-        int64_t buffidx;
-        CStrBuff currbuff;
-
-        int64_t index;
-        CStrTree* currtree;
-
-        constexpr XCStringBidiIterator(int64_t idx, CStrBuff currbuff, int64_t index, CStrTree* currtree) : buffidx(idx), currbuff(currbuff), index(index), currtree(currtree) {}
+        constexpr XCStringIterator(int64_t idx, CStrBuff currbuff, int64_t index, CStrTree currtree) : buffidx(idx), currbuff(currbuff), index(index), currtree(currtree) {}
 
         void incrementSlow()
         {        
-            if(this->currtree->typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) {
+            if(this->currtree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) {
                 this->buffidx = this->index;
             }
             else {
@@ -232,7 +124,7 @@ namespace ᐸRuntimeᐳ
 
         void decrementSlow()
         {        
-            if(this->currtree->typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) {
+            if(this->currtree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) {
                 this->buffidx = this->index;
             }
             else {
@@ -248,25 +140,25 @@ namespace ᐸRuntimeᐳ
         using pointer = value_type*;
         using reference = value_type&;
 
-        XCStringBidiIterator(): buffidx(0), currbuff(), index(0), currtree(nullptr) {}
-        XCStringBidiIterator(const XCStringBidiIterator& other) = default;
+        XCStringIterator(): buffidx(0), currbuff(), index(0), currtree() {}
+        XCStringIterator(const XCStringIterator& other) = default;
 
-        static XCStringBidiIterator initializeBegin(CStrTree* tree)
+        static XCStringIterator initializeBegin(CStrTree tree)
         {
             //Handle empty iterator or small iterator as special case
-            if(tree->typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) {
-                return XCStringBidiIterator(0, tree->data.buff, 0, tree);
+            if(tree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) {
+                return XCStringIterator(0, tree.data.buff, 0, tree);
             }
             else {
                 assert(false); // Not Implemented: full iterator for CString trees
             }
         }
 
-        static XCStringBidiIterator initializeEnd(CStrTree* tree)
+        static XCStringIterator initializeEnd(CStrTree tree)
         {
             //Handle empty iterator or small iterator as special case
-            if(tree->typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) {
-                return XCStringBidiIterator(tree->data.buff.size(), tree->data.buff, tree->data.buff.size(), tree);
+            if(tree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) {
+                return XCStringIterator(tree.data.buff.size(), tree.data.buff, tree.data.buff.size(), tree);
             }
             else {
                 assert(false); // Not Implemented: full iterator for CString trees
@@ -278,7 +170,7 @@ namespace ᐸRuntimeᐳ
             return this->currbuff.at(this->buffidx); 
         }
 
-        XCStringBidiIterator& operator++()
+        XCStringIterator& operator++()
         {
             this->index++;
             this->buffidx++;
@@ -289,14 +181,14 @@ namespace ᐸRuntimeᐳ
             return *this;
         }
  
-        XCStringBidiIterator operator++(int)
+        XCStringIterator operator++(int)
         {
             auto tmp = *this;
             ++*this;
             return tmp;
         }
 
-        XCStringBidiIterator& operator--()
+        XCStringIterator& operator--()
         {
             this->index--;
             this->buffidx--;
@@ -307,24 +199,24 @@ namespace ᐸRuntimeᐳ
             return *this;
         }
  
-        XCStringBidiIterator operator--(int)
+        XCStringIterator operator--(int)
         {
             auto tmp = *this;
             --*this;
             return tmp;
         }
  
-        friend bool operator==(const XCStringBidiIterator& lhs, const XCStringBidiIterator& rhs)
+        friend bool operator==(const XCStringIterator& lhs, const XCStringIterator& rhs)
         {
             return lhs.index == rhs.index;
         }
 
-        friend bool operator!=(const XCStringBidiIterator& lhs, const XCStringBidiIterator& rhs) 
+        friend bool operator!=(const XCStringIterator& lhs, const XCStringIterator& rhs) 
         {
             return lhs.index != rhs.index;
         }
     };
-    static_assert(std::bidirectional_iterator<XCStringBidiIterator>);
+    static_assert(std::bidirectional_iterator<XCStringIterator>);
 
     class XCString
     {
@@ -365,26 +257,22 @@ namespace ᐸRuntimeᐳ
             return this->size() * sizeof(char);
         }
 
-        XCStringInputIterator input_iterator_begin(IterStack<CStrNode*>* treestack) const
+        XCStringIterator begin() const
         {
-            return XCStringInputIterator::initializeBegin(this->tree, treestack);
+            return XCStringIterator::initializeBegin(this->tree);
         }
 
-        XCStringInputIterator input_iterator_end(IterStack<CStrNode*>* treestack) const
+        XCStringIterator end() const
         {
-            return XCStringInputIterator::initializeEnd(this->tree, treestack);
+            return XCStringIterator::initializeEnd(this->tree);
         }
 
         friend XBool operator==(const XCString& lhs, const XCString& rhs) 
         { 
-            IterStack<CStrNode*> lhsits;
-            XCStringInputIterator lhsit = lhs.input_iterator_begin(&lhsits);
+            XCStringIterator lhsit = lhs.begin();
+            XCStringIterator elhsit = lhs.end();
 
-            IterStack<CStrNode*> elhsits;
-            XCStringInputIterator elhsit = lhs.input_iterator_end(&elhsits);
-
-            IterStack<CStrNode*> rhsits;
-            XCStringInputIterator rhsit = rhs.input_iterator_begin(&rhsits);
+            XCStringIterator rhsit = rhs.begin();
 
             return XBool::from(std::equal(lhsit, elhsit, rhsit)); 
         }
@@ -395,14 +283,10 @@ namespace ᐸRuntimeᐳ
                 return XBool::from(lhs.size() < rhs.size());
             }
             else {
-                IterStack<CStrNode*> lhsits;
-                XCStringInputIterator lhsit = lhs.input_iterator_begin(&lhsits);
+                XCStringIterator lhsit = lhs.begin();
+                XCStringIterator elhsit = lhs.end();
 
-                IterStack<CStrNode*> elhsits;
-                XCStringInputIterator elhsit = lhs.input_iterator_end(&elhsits);
-
-                IterStack<CStrNode*> rhsits;
-                XCStringInputIterator rhsit = rhs.input_iterator_begin(&rhsits);
+                XCStringIterator rhsit = rhs.begin();
 
                 auto mmpos = std::mismatch(lhsit, elhsit, rhsit);
                 if(mmpos.first == elhsit) {
@@ -420,14 +304,10 @@ namespace ᐸRuntimeᐳ
                 return XBool::from(lhs.size() > rhs.size());
             }
             else {
-                IterStack<CStrNode*> lhsits;
-                XCStringInputIterator lhsit = lhs.input_iterator_begin(&lhsits);
+                XCStringIterator lhsit = lhs.begin();
+                XCStringIterator elhsit = lhs.end();
 
-                IterStack<CStrNode*> elhsits;
-                XCStringInputIterator elhsit = lhs.input_iterator_end(&elhsits);
-
-                IterStack<CStrNode*> rhsits;
-                XCStringInputIterator rhsit = rhs.input_iterator_begin(&rhsits);
+                XCStringIterator rhsit = rhs.begin();
 
                 auto mmpos = std::mismatch(lhsit, elhsit, rhsit);
                 if(mmpos.first == elhsit) {
@@ -531,101 +411,20 @@ namespace ᐸRuntimeᐳ
         nullptr
     };
 
-    class XStringInputIterator
+    class XStringIterator
     {
     private:
         int64_t buffidx;
         StrBuff currbuff;
 
         int64_t index;
-        IterStack<StrNode*>* treestack;
+        StrTree currtree;
 
-        constexpr XStringInputIterator(int64_t buffidx, StrBuff currbuff, int64_t index, IterStack<StrNode*>* treestack) : buffidx(buffidx), currbuff(currbuff), index(index), treestack(treestack) {}
-
-        void advanceSlow()
-        {
-            if(!this->treestack->empty()) {
-                assert(false); // Not Implemented: full iterator for CString trees
-            }
-        }
-
-    public:
-        using value_type = char32_t;
-        using difference_type = std::ptrdiff_t;
-        using iterator_category = std::input_iterator_tag; 
-
-        using pointer = value_type*;
-        using reference = value_type&;
-
-        static XStringInputIterator initializeBegin(StrTree tree, IterStack<StrNode*>* treestack)
-        {
-            //Handle empty iterator or small iterator as special case
-            if(tree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_STRBUFF) {
-                return XStringInputIterator(0, tree.data.buff, 0, treestack);
-            }
-            else {
-                assert(false); // Not Implemented: full iterator for CString trees
-            }
-        }
-
-        static XStringInputIterator initializeEnd(StrTree tree, IterStack<StrNode*>* treestack)
-        {
-            //Handle empty iterator or small iterator as special case
-            if(tree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_STRBUFF) {
-                return XStringInputIterator(tree.data.buff.size(), tree.data.buff, tree.data.buff.size(), treestack);
-            }
-            else {
-                assert(false); // Not Implemented: full iterator for CString trees
-            }
-        }
-
-        value_type operator*() const 
-        { 
-            return this->currbuff.at(this->buffidx); 
-        }
-
-        XStringInputIterator& operator++()
-        {
-            this->index++;
-            this->buffidx++;
-            if(this->buffidx >= (int64_t)this->currbuff.size()) {
-                this->advanceSlow();
-            }
-
-            return *this;
-        }
- 
-        void operator++(int)
-        {
-            ++*this;
-        }
-
-        friend bool operator==(const XStringInputIterator& lhs, const XStringInputIterator& rhs)
-        {
-            return lhs.index == rhs.index;
-        }
-
-        friend bool operator!=(const XStringInputIterator& lhs, const XStringInputIterator& rhs) 
-        {
-            return lhs.index != rhs.index;
-        }
-    };
-    static_assert(std::input_iterator<XStringInputIterator>);
-
-    class XStringBidiIterator
-    {
-    private:
-        int64_t buffidx;
-        StrBuff currbuff;
-
-        int64_t index;
-        StrTree* currtree;
-
-        constexpr XStringBidiIterator(int64_t idx, StrBuff currbuff, int64_t index, StrTree* currtree) : buffidx(idx), currbuff(currbuff), index(index), currtree(currtree) {}
+        constexpr XStringIterator(int64_t idx, StrBuff currbuff, int64_t index, StrTree currtree) : buffidx(idx), currbuff(currbuff), index(index), currtree(currtree) {}
 
         void incrementSlow()
         {        
-            if(this->currtree->typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) {
+            if(this->currtree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) {
                 this->buffidx = this->index;
             }
             else {
@@ -635,7 +434,7 @@ namespace ᐸRuntimeᐳ
 
         void decrementSlow()
         {        
-            if(this->currtree->typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) {
+            if(this->currtree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) {
                 this->buffidx = this->index;
             }
             else {
@@ -651,26 +450,25 @@ namespace ᐸRuntimeᐳ
         using pointer = value_type*;
         using reference = value_type&;
 
+        XStringIterator(): buffidx(0), currbuff(), index(0), currtree() {}
+        XStringIterator(const XStringIterator& other) = default;
 
-        XStringBidiIterator(): buffidx(0), currbuff(), index(0), currtree(nullptr) {}
-        XStringBidiIterator(const XStringBidiIterator& other) = default;
-
-        static XStringBidiIterator initializeBegin(StrTree* tree)
+        static XStringIterator initializeBegin(StrTree tree)
         {
             //Handle empty iterator or small iterator as special case
-            if(tree->typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_STRBUFF) {
-                return XStringBidiIterator(0, tree->data.buff, 0, tree);
+            if(tree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_STRBUFF) {
+                return XStringIterator(0, tree.data.buff, 0, tree);
             }
             else {
                 assert(false); // Not Implemented: full iterator for CString trees
             }
         }
 
-        static XStringBidiIterator initializeEnd(StrTree* tree)
+        static XStringIterator initializeEnd(StrTree tree)
         {
             //Handle empty iterator or small iterator as special case
-            if(tree->typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_STRBUFF) {
-                return XStringBidiIterator(tree->data.buff.size(), tree->data.buff, tree->data.buff.size(), tree);
+            if(tree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_STRBUFF) {
+                return XStringIterator(tree.data.buff.size(), tree.data.buff, tree.data.buff.size(), tree);
             }
             else {
                 assert(false); // Not Implemented: full iterator for CString trees
@@ -682,7 +480,7 @@ namespace ᐸRuntimeᐳ
             return this->currbuff.at(this->buffidx); 
         }
 
-        XStringBidiIterator& operator++()
+        XStringIterator& operator++()
         {
             this->index++;
             this->buffidx++;
@@ -693,14 +491,14 @@ namespace ᐸRuntimeᐳ
             return *this;
         }
  
-        XStringBidiIterator operator++(int)
+        XStringIterator operator++(int)
         {
             auto tmp = *this;
             ++*this;
             return tmp;
         }
 
-        XStringBidiIterator& operator--()
+        XStringIterator& operator--()
         {
             this->index--;
             this->buffidx--;
@@ -711,24 +509,24 @@ namespace ᐸRuntimeᐳ
             return *this;
         }
  
-        XStringBidiIterator operator--(int)
+        XStringIterator operator--(int)
         {
             auto tmp = *this;
             --*this;
             return tmp;
         }
  
-        friend bool operator==(const XStringBidiIterator& lhs, const XStringBidiIterator& rhs)
+        friend bool operator==(const XStringIterator& lhs, const XStringIterator& rhs)
         {
             return lhs.index == rhs.index;
         }
 
-        friend bool operator!=(const XStringBidiIterator& lhs, const XStringBidiIterator& rhs) 
+        friend bool operator!=(const XStringIterator& lhs, const XStringIterator& rhs) 
         {
             return lhs.index != rhs.index;
         }
     };
-    static_assert(std::bidirectional_iterator<XStringBidiIterator>);
+    static_assert(std::bidirectional_iterator<XStringIterator>);
 
     class XString
     {
@@ -769,26 +567,22 @@ namespace ᐸRuntimeᐳ
             return this->size() * sizeof(char32_t);
         }
 
-        XStringInputIterator input_iterator_begin(IterStack<StrNode*>* treestack) const
+        XStringIterator begin() const
         {
-            return XStringInputIterator::initializeBegin(this->tree, treestack);
+            return XStringIterator::initializeBegin(this->tree);
         }
 
-        XStringInputIterator input_iterator_end(IterStack<StrNode*>* treestack) const
+        XStringIterator end() const
         {
-            return XStringInputIterator::initializeEnd(this->tree, treestack);
+            return XStringIterator::initializeEnd(this->tree);
         }
 
         friend XBool operator==(const XString& lhs, const XString& rhs) 
         { 
-            IterStack<StrNode*> lhsits;
-            XStringInputIterator lhsit = lhs.input_iterator_begin(&lhsits);
+            XStringIterator lhsit = lhs.begin();
+            XStringIterator elhsit = lhs.end();
 
-            IterStack<StrNode*> elhsits;
-            XStringInputIterator elhsit = lhs.input_iterator_end(&elhsits);
-
-            IterStack<StrNode*> rhsits;
-            XStringInputIterator rhsit = rhs.input_iterator_begin(&rhsits);
+            XStringIterator rhsit = rhs.begin();
 
             return XBool::from(std::equal(lhsit, elhsit, rhsit)); 
         }
@@ -799,14 +593,10 @@ namespace ᐸRuntimeᐳ
                 return XBool::from(lhs.size() < rhs.size());
             }
             else {
-                IterStack<StrNode*> lhsits;
-                XStringInputIterator lhsit = lhs.input_iterator_begin(&lhsits);
+                XStringIterator lhsit = lhs.begin();
+                XStringIterator elhsit = lhs.end(); 
 
-                IterStack<StrNode*> elhsits;
-                XStringInputIterator elhsit = lhs.input_iterator_end(&elhsits);
-
-                IterStack<StrNode*> rhsits;
-                XStringInputIterator rhsit = rhs.input_iterator_begin(&rhsits);
+                XStringIterator rhsit = rhs.begin();
 
                 auto mmpos = std::mismatch(lhsit, elhsit, rhsit);
                 if(mmpos.first == elhsit) {
@@ -824,14 +614,10 @@ namespace ᐸRuntimeᐳ
                 return XBool::from(lhs.size() > rhs.size());
             }
             else {
-                IterStack<StrNode*> lhsits;
-                XStringInputIterator lhsit = lhs.input_iterator_begin(&lhsits);
+                XStringIterator lhsit = lhs.begin();
+                XStringIterator elhsit = lhs.end(); 
 
-                IterStack<StrNode*> elhsits;
-                XStringInputIterator elhsit = lhs.input_iterator_end(&elhsits);
-
-                IterStack<StrNode*> rhsits;
-                XStringInputIterator rhsit = rhs.input_iterator_begin(&rhsits);
+                XStringIterator rhsit = rhs.begin();
 
                 auto mmpos = std::mismatch(lhsit, elhsit, rhsit);
                 if(mmpos.first == elhsit) {
