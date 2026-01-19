@@ -4,6 +4,7 @@
 #include "./support/memstats.h"
 
 #include <sys/mman.h> //mmap
+#include <mutex>
 
 //DEFAULT ENABLED WHILE LOTS OF DEVELOPMENT!!!!
 // MEM_STATS defined in support/memstats.h

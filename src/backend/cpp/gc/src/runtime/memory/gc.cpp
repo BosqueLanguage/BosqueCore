@@ -177,8 +177,7 @@ static void tryMergeDecList(BSQMemoryTheadLocalInfo& tinfo)
 
 static void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
-    GC_REFCT_LOCK_ACQUIRE();
-   
+	std::lock_guard lk(g_gcrefctlock);   
 	if(!tinfo.decd_pages.isInitialized()) {
 		tinfo.decd_pages.initialize();
 	}
@@ -197,8 +196,6 @@ static void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
         deccount++;
     }
-
-    GC_REFCT_LOCK_RELEASE();
 
     //
     //TODO: we want to do a bit of PID controller here on the max decrement count to ensure that we eventually make it back to stable but keep pauses small
@@ -297,8 +294,7 @@ static void updatePointers(void** slots, __CoreGC::TypeInfoBase* typeinfo, BSQMe
 // Move non root young objects to evacuation page (as needed) then forward pointers and inc ref counts
 static void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept 
 {
-    GC_REFCT_LOCK_ACQUIRE();
-
+	std::lock_guard lk(g_gcrefctlock);
     while(!tinfo.pending_young.isEmpty()) {
         void* obj = tinfo.pending_young.pop_front(); //ensures non-roots visited first
 		MetaData* m = GC_GET_META_DATA_ADDR(obj);       
@@ -319,8 +315,6 @@ static void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
             GC_CLEAR_YOUNG_MARK(nm);
         }
     }
-
-    GC_REFCT_LOCK_RELEASE();
 }
 
 static inline bool pointsToObjectStart(void* addr) noexcept 

@@ -67,20 +67,19 @@ GlobalPageGCManager GlobalPageGCManager::g_gc_page_manager;
 
 PageInfo* GlobalPageGCManager::getFreshPageFromOS(uint16_t entrysize, uint16_t realsize)
 {
+	std::unique_lock lk(g_alloclock);
 #ifndef ALLOC_DEBUG_MEM_DETERMINISTIC
 	void* page = mmap(NULL, BSQ_BLOCK_ALLOCATION_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
     assert(((uintptr_t)page & PAGE_MASK) == 0 && "Address is not aligned to page boundary!");
 #else
-    ALLOC_LOCK_ACQUIRE();
-
     void* page = mmap(GlobalThreadAllocInfo::s_current_page_address, BSQ_BLOCK_ALLOCATION_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, 0, 0);
     GlobalThreadAllocInfo::s_current_page_address = (void*)((uint8_t*)GlobalThreadAllocInfo::s_current_page_address + BSQ_BLOCK_ALLOCATION_SIZE);
-
-    ALLOC_LOCK_RELEASE();    
 #endif
 
     assert(page != MAP_FAILED);
-    this->pagetableInsert(page);
+
+	lk.unlock();
+	this->pagetableInsert(page);
 
     PageInfo* pp = PageInfo::initialize(page, entrysize, realsize);
 
