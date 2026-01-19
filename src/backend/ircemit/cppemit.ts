@@ -3,10 +3,10 @@ import { TypeInfoManager } from "./typeinfomgr.js";
 
 import { MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_INT } from "../../frontend/assembly.js";
 import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag, IRPrefixNotOpExpression, IRPrefixPlusOpExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRReturnValueSimpleStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement, IRAbortStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRTempAssignExpressionStatement, IRTypeDeclInvariantCheckStatement, IRDebugStatement, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRChkLogicImpliesShortCircuitStatement, IRPreconditionCheckStatement, IRPostconditionCheckStatement, IRVariableInitializationDirectInvokeStatement, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRAssertStatement, IRValidateStatement, IRBody, IRBuiltinBody, IRStandardBody, IRHoleBody, IRIsNoneOptionExpression, IRBinKeyEqDirectExpression, IRIsOptionEqValueExpression, IRIsSomeNeqValueExpression, IRIsOptionNeqValueExpression, IRIsSomeEqValueExpression, IRConstructorSomeTypeExpression, IRLiteralOptionOfNoneExpression, IRConstructOptionFromSomeExpression, IRExtractSomeFromOptionExpression, IRExtractSomeValueFromOptionExpression } from "../irdefs/irbody.js";
-import { IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAssembly, IRConstantDecl, IREnumTypeDecl, IRFailTypeDecl, IRInvariantDecl, IRInvokeDecl, IRInvokeParameterDecl, IRMapEntryTypeDecl, IROkTypeDecl, IROptionTypeDecl, IRResultTypeDecl, IRSomeTypeDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl, IRValidateDecl } from "../irdefs/irassembly.js";
+import { IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAssembly, IRConstantDecl, IRConstructableTypeDecl, IREnumTypeDecl, IRFailTypeDecl, IRInternalConceptTypeDecl, IRInvariantDecl, IRInvokeDecl, IRInvokeParameterDecl, IRMapEntryTypeDecl, IROkTypeDecl, IROptionTypeDecl, IRPrimitiveEntityTypeDecl, IRResultTypeDecl, IRSomeTypeDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl, IRValidateDecl } from "../irdefs/irassembly.js";
 
 import assert from "node:assert";
-import { IRTypeSignature } from "../irdefs/irtype.js";
+import { IRNominalTypeSignature, IRTypeSignature } from "../irdefs/irtype.js";
 
 const RUNTIME_NAMESPACE = "ᐸRuntimeᐳ";
 const CLOSURE_CAPTURE_NAME = "ᐸclosureᐳ";
@@ -1064,39 +1064,59 @@ class CPPEmitter {
         const cstringdd = this.irasm.cstringoftypedecls.map((tcstr) => this.emitCStringTypeDeclInfo(tcstr));
         const stringdd = this.irasm.stringoftypedecls.map((tstr) => this.emitStringTypeDeclInfo(tstr));
 
-        const consdd = this.irasm.constructables.map((ctype) => {
-            if(ctype instanceof IRSomeTypeDecl) {
-                return this.emitSomeTypeInfo(ctype);
-            }
-            else if(ctype instanceof IROkTypeDecl) {
-                return this.emitOkTypeInfo(ctype);
-            }
-            else if(ctype instanceof IRFailTypeDecl) {
-                return this.emitFailTypeInfo(ctype);
-            }
-            else if(ctype instanceof IRMapEntryTypeDecl) {
-                assert(false, "CPPEmitter: need to implement map entry type decl emission");
+        const decltdd = this.irasm.typedeporder
+        .filter((ttd) => {
+            if(!(ttd instanceof IRNominalTypeSignature)) {
+                return true;
             }
             else {
-                assert(false, "CPPEmitter: unknown constructable type decl emission");
+                const ctd = this.irasm.alltypes.get((ttd as IRNominalTypeSignature).tkeystr) as IRAbstractNominalTypeDecl;
+                return !((ctd instanceof IRPrimitiveEntityTypeDecl) || (ctd instanceof IREnumTypeDecl) || (ctd instanceof IRTypedeclTypeDecl) || (ctd instanceof IRTypedeclCStringDecl) || (ctd instanceof IRTypedeclStringDecl));
             }
-        });
-
-        const primitivecptdd = this.irasm.pconcepts.map((pct) => {
-            if(pct instanceof IROptionTypeDecl) {
-                return this.emitOptionTypeInfo(pct);
-            }
-            else if(pct instanceof IRResultTypeDecl) {
-                return this.emitResultTypeInfo(pct);
+        })
+        .map((ttd) => {
+            if(!(ttd instanceof IRNominalTypeSignature)) {
+                assert(false, "CPPEmitter: unknown typedeporder (TYPESIG) type decl emission -- " + ttd.tkeystr);
             }
             else {
-                assert(false, "CPPEmitter: unknown primitive concept type decl emission");
+                const ctd = this.irasm.alltypes.get(ttd.tkeystr) as IRAbstractNominalTypeDecl;
+                if (ctd instanceof IRConstructableTypeDecl) {
+                    if (ctd instanceof IRSomeTypeDecl) {
+                        return this.emitSomeTypeInfo(ctd);
+                    }
+                    else if (ctd instanceof IROkTypeDecl) {
+                        return this.emitOkTypeInfo(ctd);
+                    }
+                    else if (ctd instanceof IRFailTypeDecl) {
+                        return this.emitFailTypeInfo(ctd);
+                    }
+                    else if (ctd instanceof IRMapEntryTypeDecl) {
+                        assert(false, "CPPEmitter: need to implement map entry type decl emission");
+                    }
+                    else {
+                        assert(false, "CPPEmitter: unknown constructable type decl emission");
+                    }
+                }
+                else if (ctd instanceof IRInternalConceptTypeDecl) {
+                    if (ctd instanceof IROptionTypeDecl) {
+                        return this.emitOptionTypeInfo(ctd);
+                    }
+                    else if (ctd instanceof IRResultTypeDecl) {
+                        return this.emitResultTypeInfo(ctd);
+                    }
+                    else {
+                        assert(false, "CPPEmitter: unknown primitive concept type decl emission");
+                    }
+                }
+                else {
+                    assert(false, "CPPEmitter: unknown typedeporder (NOMINAL) type decl emission -- " + ttd.tkeystr);
+                }
             }
         });
 
         return [
-            [pdecls, ...enumdd.map((tt) => tt[0]), ...gtddd.map((tt) => tt[0]), ...cstringdd.map((tt) => tt[0]), ...stringdd.map((tt) => tt[0]), ...consdd.map((tt) => tt[0]), ...primitivecptdd.map((tt) => tt[0])].join("\n\n"),
-            [pdefs, ...enumdd.map((tt) => tt[1]), ...gtddd.map((tt) => tt[1]), ...cstringdd.map((tt) => tt[1]), ...stringdd.map((tt) => tt[1]), ...consdd.map((tt) => tt[1]), ...primitivecptdd.map((tt) => tt[1])].join("\n\n")
+            [pdecls, ...enumdd.map((tt) => tt[0]), ...gtddd.map((tt) => tt[0]), ...cstringdd.map((tt) => tt[0]), ...stringdd.map((tt) => tt[0]), ...decltdd.map((tt) => tt[0])].join("\n\n"),
+            [pdefs, ...enumdd.map((tt) => tt[1]), ...gtddd.map((tt) => tt[1]), ...cstringdd.map((tt) => tt[1]), ...stringdd.map((tt) => tt[1]), ...decltdd.map((tt) => tt[1])].join("\n\n")
         ];
     }
 
