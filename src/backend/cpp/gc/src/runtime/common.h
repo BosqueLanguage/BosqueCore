@@ -100,27 +100,13 @@ inline void xmem_copy(void* memsrc, void* memtrgt, size_t n) noexcept
 }
 
 //A global mutex lock that all threads will use when accessing shared page lists 
-extern mtx_t g_alloclock;
-
-#define ALLOC_LOCK_INIT() assert(mtx_init(&g_alloclock, mtx_plain) == thrd_success)
-#define ALLOC_LOCK_ACQUIRE() assert(mtx_lock(&g_alloclock) == thrd_success)
-#define ALLOC_LOCK_RELEASE() assert(mtx_unlock(&g_alloclock) == thrd_success)
+extern std::mutex g_alloclock;
 
 //A global mutex lock that all threads will use when doing shared GC ops (e.g. getting pages or root resolution)
-extern mtx_t g_gcmemlock;
-
-#define GC_MEM_LOCK_INIT() assert(mtx_init(&g_gcmemlock, mtx_plain) == thrd_success)
-#define GC_MEM_LOCK_ACQUIRE() assert(mtx_lock(&g_gcmemlock) == thrd_success)
-#define GC_MEM_LOCK_RELEASE() assert(mtx_unlock(&g_gcmemlock) == thrd_success)
+extern std::mutex g_gcmemlock;
 
 //A global mutex lock that all threads will use when doing shared GC ops (e.g. when doing their inc/dec ref loops)
-extern mtx_t g_gcrefctlock;
-
-#define GC_REFCT_LOCK_INIT() assert(mtx_init(&g_gcrefctlock, mtx_plain) == thrd_success)
-#define GC_REFCT_LOCK_ACQUIRE() assert(mtx_lock(&g_gcrefctlock) == thrd_success)
-#define GC_REFCT_LOCK_RELEASE() assert(mtx_unlock(&g_gcrefctlock) == thrd_success)
-
-#define INIT_LOCKS() { ALLOC_LOCK_INIT(); GC_MEM_LOCK_INIT(); GC_REFCT_LOCK_INIT(); }
+extern std::mutex g_gcrefctlock;
 
 // Track information that needs to be globally accessible for threads
 class GlobalThreadAllocInfo
