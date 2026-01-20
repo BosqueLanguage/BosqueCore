@@ -155,7 +155,7 @@ namespace ᐸRuntimeᐳ
         template<size_t len>
         bool xmatches(const char (&cchars)[len]) const
         {
-            if(len != this->size()) {
+            if((len - 1) != this->size()) {
                 return false;
             }
 
