@@ -23,7 +23,7 @@ describe ("CPPExec -- Special Constructor Option", () => {
 
     it("should exec nested option return", function () {
         runTestSet("public function main(x: None): Option<Option<Int>> { return x; }", [['none', 'none']], []);
-        runTestSet("public function main(x: Some<Int>): Option<Option<Int>> { return some(x); }", [['none', 'none']], []);
+        runTestSet("public function main(x: Some<Int>): Option<Option<Int>> { return some(x); }", [['some(3i)', 'some(some(3i))']], []);
         runTestSet("public function main(x: Option<Int>): Option<Option<Int>> { return some(x); }", [['none', 'some(none)'], ['some(0i)', 'some(some(0i))']], []);
     });
 });

@@ -424,21 +424,21 @@ namespace ᐸRuntimeᐳ
 
         void incrementSlow()
         {        
-            if(this->currtree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) {
+            if(this->currtree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_STRBUFF) {
                 this->buffidx = this->index;
             }
             else {
-                assert(false); // Not Implemented: full iterator for CString trees
+                assert(false); // Not Implemented: full iterator for String trees
             }
         }
 
         void decrementSlow()
         {        
-            if(this->currtree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) {
+            if(this->currtree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_STRBUFF) {
                 this->buffidx = this->index;
             }
             else {
-                assert(false); // Not Implemented: full iterator for CString trees
+                assert(false); // Not Implemented: full iterator for String trees
             }
         }
 
