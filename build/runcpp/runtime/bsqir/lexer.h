@@ -58,7 +58,7 @@ namespace ᐸRuntimeᐳ
         {
             this->gindex++;
             this->cindex++;
-            if(this->cindex >= MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE) {
+            if(this->cindex >= (int64_t)MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE) {
                 this->incrementSlow();
             }
 
@@ -181,6 +181,9 @@ namespace ᐸRuntimeᐳ
 
             this->ctoken = {tokentype, startiter, this->iter};
         }
+
+        bool tryLexWS();
+        bool tryLexComment();
 
         bool tryLexNat();
         bool tryLexInt();

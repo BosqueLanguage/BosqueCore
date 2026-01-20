@@ -4,6 +4,9 @@
 
 namespace ᐸRuntimeᐳ
 {
+    static std::regex s_ws_re("^\\s+", std::regex_constants::nosubs | std::regex_constants::optimize);
+    static std::regex s_line_comment_re("^%%[^\\n]*", std::regex_constants::nosubs | std::regex_constants::optimize);
+
     static std::regex s_nat_re("^(0|[+-]?[1-9][0-9]*)n", std::regex_constants::nosubs | std::regex_constants::optimize);
     static std::regex s_int_re("^(0|[+-]?[1-9][0-9]*)i", std::regex_constants::nosubs | std::regex_constants::optimize);
     static std::regex s_chknat_re("^(ChkNat::npos|((0|[+-]?[1-9][0-9]*)N))", std::regex_constants::nosubs | std::regex_constants::optimize);
@@ -55,10 +58,32 @@ namespace ᐸRuntimeᐳ
         this->ctoken.clear();
     }
 
+    bool BSQONLexer::tryLexWS()
+    {
+        std::match_results<BSQLexBufferIterator> mm;
+        if(!std::regex_search(this->iter, this->iend, mm, s_ws_re)) {
+            return false;
+        }
+
+        std::advance(this->iter, mm[0].length());
+        return true;
+    }
+
+    bool BSQONLexer::tryLexComment()
+    {
+        std::match_results<BSQLexBufferIterator> mm;
+        if(!std::regex_search(this->iter, this->iend, mm, s_line_comment_re)) {
+            return false;
+        }
+
+        std::advance(this->iter, mm[0].length());
+        return true;
+    }
+
     bool BSQONLexer::tryLexNat()
     {
         std::match_results<BSQLexBufferIterator> mm;
-        if(!std::regex_match(this->iter, this->iend, mm, s_nat_re)) {
+        if(!std::regex_search(this->iter, this->iend, mm, s_nat_re)) {
             return false;
         }
 
@@ -69,7 +94,7 @@ namespace ᐸRuntimeᐳ
     bool BSQONLexer::tryLexInt()
     {
         std::match_results<BSQLexBufferIterator> mm;
-        if(!std::regex_match(this->iter, this->iend, mm, s_int_re)) {
+        if(!std::regex_search(this->iter, this->iend, mm, s_int_re)) {
             return false;
         }
 
@@ -80,7 +105,7 @@ namespace ᐸRuntimeᐳ
     bool BSQONLexer::tryLexChkNat()
     {
         std::match_results<BSQLexBufferIterator> mm;
-        if(!std::regex_match(this->iter, this->iend, mm, s_chknat_re)) {
+        if(!std::regex_search(this->iter, this->iend, mm, s_chknat_re)) {
             return false;
         }
 
@@ -91,7 +116,7 @@ namespace ᐸRuntimeᐳ
     bool BSQONLexer::tryLexChkInt()
     {
         std::match_results<BSQLexBufferIterator> mm;
-        if(!std::regex_match(this->iter, this->iend, mm, s_chkint_re)) {
+        if(!std::regex_search(this->iter, this->iend, mm, s_chkint_re)) {
             return false;
         }
 
@@ -155,7 +180,7 @@ namespace ᐸRuntimeᐳ
 
     bool tryLexKeyword(const BSQLexBufferIterator& istart, const BSQLexBufferIterator& iend, size_t len)
     {
-        auto ii = std::find(s_keyword_tokens.cbegin(), s_keyword_tokens.cend(), [istart, iend, len](const char* kw) {
+        auto ii = std::find_if(s_keyword_tokens.cbegin(), s_keyword_tokens.cend(), [istart, iend, len](const char* kw) {
            return std::strlen(kw) == len && std::equal(istart, iend, kw);
         });
 
@@ -229,7 +254,7 @@ namespace ᐸRuntimeᐳ
     bool BSQONLexer::tryLexIdentifierLike()
     {
         std::match_results<BSQLexBufferIterator> mm;
-        if(!std::regex_match(this->iter, this->iend, mm, s_identifierlike_re)) {
+        if(!std::regex_search(this->iter, this->iend, mm, s_identifierlike_re)) {
             return false;
         }
 
@@ -264,6 +289,10 @@ namespace ᐸRuntimeᐳ
 
     void BSQONLexer::consume()
     {
+        while((this->iter != this->iend) && (this->tryLexWS() || this->tryLexComment())) {
+            ;
+        }
+
         if(this->iter == this->iend) {
             this->ctoken.tokentype = BSQONTokenType::EOFToken;
             return;
