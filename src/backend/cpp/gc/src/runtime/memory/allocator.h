@@ -55,6 +55,8 @@ public:
     }
 };
 
+// TODO to prevent having to compute metadata addr for every entry in the freelist we may 
+// be interested in storing a metadata pointer in each FreeListEntry
 struct FreeListEntry
 {
    FreeListEntry* next;
@@ -108,15 +110,13 @@ public:
         return (PageInfo*)((uintptr_t)(p) & PAGE_ADDR_MASK);
     }
 
-    static inline size_t getIndexForObjectInPage(void* p) noexcept {
-        const PageInfo* page = extractPageFromPointer(p);
-        
-        return (size_t)((uint8_t*)p - page->data) / (size_t)page->realsize;
+    static inline size_t getIndexForObjectInPage(void* obj, PageInfo* page) noexcept { 
+        return (size_t)((uint8_t*)obj - page->data) / (size_t)page->realsize;
     }
 
-    static inline MetaData* getObjectMetadataAligned(void* p) noexcept {
-        size_t idx = PageInfo::getIndexForObjectInPage(p);
-        const PageInfo* page = extractPageFromPointer(p);
+    static inline MetaData* getObjectMetadataAligned(void* obj) noexcept { 
+        PageInfo* page = extractPageFromPointer(obj);
+		size_t idx = PageInfo::getIndexForObjectInPage(obj, page);
         
         return page->getMetaEntryAtIndex(idx);
     }
