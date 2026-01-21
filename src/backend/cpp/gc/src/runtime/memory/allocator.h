@@ -89,6 +89,18 @@ public:
     float approx_utilization; 
     std::atomic<bool> visited; // has this page been inserted into an array list yet?
 
+	void zeroInit() noexcept
+	{
+		this->freelist = nullptr;
+		this->owner = nullptr;
+		this->prev = this->next = nullptr;
+		this->data = nullptr;
+		this->mdata = nullptr; 
+		this->allocsize = this->realsize = this->entrycount = this->freecount = 0; 
+		this->approx_utilization = 0.0f;
+		this->visited = false;
+	}
+
     static PageInfo* initialize(void* block, uint16_t allocsize, uint16_t realsize) noexcept;
     size_t rebuild() noexcept;	
 
@@ -262,24 +274,29 @@ public:
     }
 };
 
-#ifndef ALLOC_DEBUG_CANARY
-#define SETUP_ALLOC_LAYOUT_GET_META_PTR(BASEALLOC) PageInfo::getObjectMetadataAligned(BASEALLOC) 
-#define SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(BASEALLOC) (void*)((uint8_t*)(BASEALLOC))
+#define SETUP_ALLOC_LAYOUT_GET_META_PTR(BASEALLOC) \
+	PageInfo::getObjectMetadataAligned(BASEALLOC)
 
+#ifndef ALLOC_DEBUG_CANARY
+#define SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(BASEALLOC) (BASEALLOC)
 #define SET_ALLOC_LAYOUT_HANDLE_CANARY(BASEALLOC, T)
 #else
-#define SETUP_ALLOC_LAYOUT_GET_META_PTR(BASEALLOC) (MetaData*)((uint8_t*)(BASEALLOC) + ALLOC_DEBUG_CANARY_SIZE)
-#define SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(BASEALLOC) (void*)((uint8_t*)(BASEALLOC) + ALLOC_DEBUG_CANARY_SIZE)
-
-#define SET_ALLOC_LAYOUT_HANDLE_CANARY(BASEALLOC, T) PageInfo::initializeWithDebugInfo(BASEALLOC, T)
+#define SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(BASEALLOC) \
+	(void*)((uint8_t*)(BASEALLOC) + ALLOC_DEBUG_CANARY_SIZE)
+#define SET_ALLOC_LAYOUT_HANDLE_CANARY(BASEALLOC, T) \
+	PageInfo::initializeWithDebugInfo(BASEALLOC, T)
 #endif
 
 #ifdef VERBOSE_HEADER
-#define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T) (*(META)) = { .type=(T), .isalloc=true, .isyoung=true, .ismarked=false, .isroot=false, .forward_index=NON_FORWARDED, .ref_count=0 }
-#define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) (*(META)) = { .type=(T), .isalloc=true, .isyoung=false, .ismarked=false, .isroot=false, .forward_index=NON_FORWARDED, .ref_count=0 }
+#define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T) \
+	{ ZERO_METADATA(META); (META)->type = T; (META)->isalloc = true; (META)->isyoung = true; } 
+#define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) \
+	{ ZERO_METADATA(META); (META)->type = T; (META)->isalloc = true; }
 #else
-#define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T)       { ZERO_METADATA(META); SET_TYPE_PTR(META, T); (META)->bits.isalloc = 1; (META)->bits.isyoung = 1; } 
-#define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) { ZERO_METADATA(META); SET_TYPE_PTR(META, T); (META)->bits.isalloc = 1; (META)->bits.isyoung = 0; }
+#define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T) \
+	{ ZERO_METADATA(META); SET_TYPE_PTR(META, T); (META)->bits.isalloc = 1; (META)->bits.isyoung = 1; } 
+#define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) \
+	{ ZERO_METADATA(META); SET_TYPE_PTR(META, T); (META)->bits.isalloc = 1; }
 #endif
 
 template<typename T>

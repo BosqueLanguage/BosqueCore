@@ -175,7 +175,9 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 
 #define NON_FORWARDED 0
 
-#define GC_GET_META_DATA_ADDR(O) ((MetaData*)((uint8_t*)O - sizeof(MetaData)))
+// might be too slow for metadata access
+#define GC_GET_META_DATA_ADDR(O) \
+	PageInfo::getObjectMetadataAligned(O)
 
 #ifdef VERBOSE_HEADER
 // Resets an objects metadata and updates with index into forward table

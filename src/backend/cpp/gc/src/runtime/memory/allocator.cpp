@@ -13,9 +13,11 @@ GlobalDataStorage GlobalDataStorage::g_global_data{};
 
 static void setPageMetaData(PageInfo* pp, uint16_t allocsize, uint16_t realsize) noexcept
 {
+    pp->allocsize = allocsize;
+    pp->realsize = realsize;
     GC_INVARIANT_CHECK(pp->allocsize != 0 && pp->realsize != 0);
-
-    uint8_t* bpp = reinterpret_cast<uint8_t*>(pp);
+    
+	uint8_t* bpp = reinterpret_cast<uint8_t*>(pp);
     uint8_t* mdataptr = bpp + sizeof(PageInfo);
     pp->mdata = reinterpret_cast<MetaData*>(mdataptr);
     uint8_t* objptr = bpp + BSQ_BLOCK_ALLOCATION_SIZE - pp->realsize;
@@ -31,13 +33,12 @@ static void setPageMetaData(PageInfo* pp, uint16_t allocsize, uint16_t realsize)
     pp->entrycount = n;
     pp->freecount = pp->entrycount;
     pp->data = mdataptr; // First slot after meta
-    pp->allocsize = allocsize;
-    pp->realsize = realsize;
 }
 
 PageInfo* PageInfo::initialize(void* block, uint16_t allocsize, uint16_t realsize) noexcept
 {
     PageInfo* pp = static_cast<PageInfo*>(block);
+	pp->zeroInit();
 	setPageMetaData(pp, allocsize, realsize);
 
     for(int64_t i = pp->entrycount - 1; i >= 0; i--) {
