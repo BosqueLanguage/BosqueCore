@@ -6,9 +6,11 @@
 #define METADATA_SEG_SIZE(P) (P->entrycount * sizeof(MetaData)) 
 
 #ifdef ALLOC_DEBUG_CANARY
-#define GET_SLOT_START_FROM_OFFSET(O) (O - sizeof(PageInfo) - ALLOC_DEBUG_CANARY_SIZE) 
+#define GET_SLOT_START_FROM_OFFSET(OFF, P) \
+	(OFF - sizeof(PageInfo) - METADATA_SEG_SIZE(P) - ALLOC_DEBUG_CANARY_SIZE) 
 #else 
-#define GET_SLOT_START_FROM_OFFSET(O) (O - sizeof(PageInfo)) 
+#define GET_SLOT_START_FROM_OFFSET(OFF, P) \
+	(OFF - sizeof(PageInfo) - METADATA_SEG_SIZE(P)) 
 #endif
 
 static void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots, DecsList& list) noexcept;
@@ -327,7 +329,7 @@ static inline bool pointsToObjectStart(void* addr) noexcept
         return false;
     }
 
-    uintptr_t start = GET_SLOT_START_FROM_OFFSET(offset);
+    uintptr_t start = GET_SLOT_START_FROM_OFFSET(offset, p);
 
     return start % p->realsize == 0;
 }
