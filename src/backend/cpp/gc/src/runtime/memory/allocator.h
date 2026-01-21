@@ -291,14 +291,14 @@ public:
 
 #ifdef VERBOSE_HEADER
 #define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T) \
-	{ ZERO_METADATA(META); (META)->type = T; (META)->isalloc = true; (META)->isyoung = true; } 
+	{ (META)->type = T; (META)->isalloc = true; (META)->isyoung = true; } 
 #define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) \
-	{ ZERO_METADATA(META); (META)->type = T; (META)->isalloc = true; }
+	{ (META)->type = T; (META)->isalloc = true; }
 #else
 #define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T) \
-	{ ZERO_METADATA(META); SET_TYPE_PTR(META, T); (META)->bits.isalloc = 1; (META)->bits.isyoung = 1; } 
+	{ SET_TYPE_PTR(META, T); (META)->bits.isalloc = 1; (META)->bits.isyoung = 1; } 
 #define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) \
-	{ ZERO_METADATA(META); SET_TYPE_PTR(META, T); (META)->bits.isalloc = 1; }
+	{ SET_TYPE_PTR(META, T); (META)->bits.isalloc = 1; }
 #endif
 
 template<typename T>
