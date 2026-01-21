@@ -456,7 +456,8 @@ public:
         this->freelist = this->freelist->next;
         
         SET_ALLOC_LAYOUT_HANDLE_CANARY(entry, type);
-        SETUP_ALLOC_INITIALIZE_FRESH_META(SETUP_ALLOC_LAYOUT_GET_META_PTR(entry), type);
+        MetaData* m = SETUP_ALLOC_LAYOUT_GET_META_PTR(entry); 
+		SETUP_ALLOC_INITIALIZE_FRESH_META(m, type);
 
         UPDATE_ALLOC_STATS(this, type->type_size);
 
@@ -475,7 +476,8 @@ public:
         this->evacfreelist = this->evacfreelist->next;
 
         SET_ALLOC_LAYOUT_HANDLE_CANARY(entry, type);
-        SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(SETUP_ALLOC_LAYOUT_GET_META_PTR(entry), type);
+        MetaData* m = SETUP_ALLOC_LAYOUT_GET_META_PTR(entry); 
+		SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(m, type);
 
         return SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(entry);
     }
