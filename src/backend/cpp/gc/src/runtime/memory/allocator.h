@@ -332,7 +332,9 @@ T* MEM_ALLOC_CHECK(T* alloc)
 class GCAllocator
 {
 private:
-    FreeListEntry* freelist;
+    __CoreGC::TypeInfoBase* alloctype; 
+
+	FreeListEntry* freelist;
     FreeListEntry* evacfreelist;
 
     PageInfo* alloc_page; // Page in which we are currently allocating from
@@ -428,9 +430,15 @@ private:
 
 public:
 #ifdef MEM_STATS
-    GCAllocator(uint16_t objsize, uint16_t fullsize, void (*collect)()) noexcept : freelist(nullptr), evacfreelist(nullptr), alloc_page(nullptr), evac_page(nullptr), allocsize(objsize), realsize(fullsize), pendinggc_pages(), filled_pages(), alloc_count(0), alloc_memory(0), collectfp(collect) { }
+    GCAllocator(uint16_t objsize, uint16_t fullsize, __CoreGC::TypeInfoBase* type, void (*collect)()) noexcept : alloctype(nullptr), freelist(nullptr), evacfreelist(nullptr), alloc_page(nullptr), evac_page(nullptr), allocsize(objsize), realsize(fullsize), pendinggc_pages(), filled_pages(), alloc_count(0), alloc_memory(0), collectfp(collect) 
+	{
+		this->alloctype = type;
+	}
 #else 
-    GCAllocator(uint16_t objsize, uint16_t fullsize, void (*collect)()) noexcept : freelist(nullptr), evacfreelist(nullptr), alloc_page(nullptr), evac_page(nullptr), allocsize(objsize), realsize(fullsize), pendinggc_pages(), filled_pages(), collectfp(collect) { }
+    GCAllocator(uint16_t objsize, uint16_t fullsize,  __CoreGC::TypeInfoBase* type, void (*collect)()) noexcept : alloctype(nullptr), freelist(nullptr), evacfreelist(nullptr), alloc_page(nullptr), evac_page(nullptr), allocsize(objsize), realsize(fullsize), pendinggc_pages(), filled_pages(), collectfp(collect) 
+	{
+		this->alloctype = type;
+	}
 #endif
 
     inline size_t getAllocSize() const noexcept
