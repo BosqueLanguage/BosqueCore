@@ -114,6 +114,8 @@ public:
         return (size_t)((uint8_t*)obj - page->data) / (size_t)page->realsize;
     }
 
+	// TODO we should investiage this and see if we can optimize the work needed to 
+	// compute addr of metadata
     static inline MetaData* getObjectMetadataAligned(void* obj) noexcept { 
         PageInfo* page = extractPageFromPointer(obj);
 		size_t idx = PageInfo::getIndexForObjectInPage(obj, page);
