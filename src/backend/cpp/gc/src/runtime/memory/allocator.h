@@ -20,9 +20,9 @@
 
 // Allows us to correctly determine pointer offsets
 #ifdef ALLOC_DEBUG_CANARY
-#define REAL_ENTRY_SIZE(ESIZE) (ALLOC_DEBUG_CANARY_SIZE + ESIZE + sizeof(MetaData) + ALLOC_DEBUG_CANARY_SIZE)
+#define REAL_ENTRY_SIZE(ESIZE) (ALLOC_DEBUG_CANARY_SIZE + ESIZE + ALLOC_DEBUG_CANARY_SIZE)
 #else
-#define REAL_ENTRY_SIZE(ESIZE) (ESIZE + sizeof(MetaData))
+#define REAL_ENTRY_SIZE(ESIZE) (ESIZE)
 #endif
 
 ////////////////////////////////
@@ -61,6 +61,9 @@ struct FreeListEntry
 };
 static_assert(sizeof(FreeListEntry) <= sizeof(MetaData), "BlockHeader size is not 8 bytes");
 
+////////////////////////////////////////////
+// Page Layout:
+// | Page Metadata | Objects Metadata | Data |
 class PageInfo
 {
 public:
@@ -74,6 +77,7 @@ public:
     PageInfo* next;
 
     uint8_t* data; //start of the data block
+    MetaData* mdata; // Meta data is stored out-of-band
 
     uint16_t allocsize; //size of the alloc entries in this page (excluding metadata)
     uint16_t realsize; //size of the alloc entries in this page (including metadata and other stuff)
@@ -86,8 +90,7 @@ public:
     std::atomic<bool> visited; // has this page been inserted into an array list yet?
 
     static PageInfo* initialize(void* block, uint16_t allocsize, uint16_t realsize) noexcept;
-
-    size_t rebuild() noexcept;
+    size_t rebuild() noexcept;	
 
     static inline PageInfo* extractPageFromPointer(void* p) noexcept {
         return (PageInfo*)((uintptr_t)(p) & PAGE_ADDR_MASK);
@@ -100,29 +103,21 @@ public:
     }
 
     static inline MetaData* getObjectMetadataAligned(void* p) noexcept {
+        size_t idx = PageInfo::getIndexForObjectInPage(p);
         const PageInfo* page = extractPageFromPointer(p);
-        size_t idx = (size_t)((uint8_t*)p - page->data) / (size_t)page->realsize;
-
-#ifdef ALLOC_DEBUG_CANARY
-        return (MetaData*)(page->data + idx * page->realsize + ALLOC_DEBUG_CANARY_SIZE);
-#else
-        return (MetaData*)(page->data + idx * page->realsize);
-#endif
+        
+        return page->getMetaEntryAtIndex(idx);
     }
 
     inline MetaData* getMetaEntryAtIndex(size_t idx) const noexcept {
-#ifdef ALLOC_DEBUG_CANARY
-        return (MetaData*)(this->data + idx * this->realsize + ALLOC_DEBUG_CANARY_SIZE);
-#else
-        return (MetaData*)(this->data + idx * this->realsize);
-#endif
+        return this->mdata + idx;
     }
 
     inline void* getObjectAtIndex(size_t idx) const noexcept {
 #ifdef ALLOC_DEBUG_CANARY
-        return reinterpret_cast<void*>(this->data + idx * this->realsize + ALLOC_DEBUG_CANARY_SIZE + sizeof(MetaData));
+        return reinterpret_cast<void*>(this->data + idx * this->realsize + ALLOC_DEBUG_CANARY_SIZE);
 #else
-        return reinterpret_cast<void*>(this->data + idx * this->realsize + sizeof(MetaData));
+        return reinterpret_cast<void*>(this->data + idx * this->realsize);
 #endif
     }
 
@@ -130,14 +125,15 @@ public:
         return (FreeListEntry*)(this->data + idx * this->realsize);
     }
 
+    // May be interested in placing canaries between metadata entries
     static void initializeWithDebugInfo(void* mem, __CoreGC::TypeInfoBase* type) noexcept
     {
         uint64_t* pre = (uint64_t*)mem;
         *pre = ALLOC_DEBUG_CANARY_VALUE;
 
-        uint64_t* post = (uint64_t*)((uint8_t*)mem + ALLOC_DEBUG_CANARY_SIZE + sizeof(MetaData) + type->type_size);
+        uint64_t* post = (uint64_t*)((uint8_t*)mem + ALLOC_DEBUG_CANARY_SIZE + type->type_size);
         *post = ALLOC_DEBUG_CANARY_VALUE;
-    }	
+    }
 };
 
 struct PageIterator {
@@ -267,13 +263,13 @@ public:
 };
 
 #ifndef ALLOC_DEBUG_CANARY
-#define SETUP_ALLOC_LAYOUT_GET_META_PTR(BASEALLOC) (MetaData*)((uint8_t*)(BASEALLOC))
-#define SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(BASEALLOC) (void*)((uint8_t*)(BASEALLOC) + sizeof(MetaData))
+#define SETUP_ALLOC_LAYOUT_GET_META_PTR(BASEALLOC) PageInfo::getObjectMetadataAligned(BASEALLOC) 
+#define SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(BASEALLOC) (void*)((uint8_t*)(BASEALLOC))
 
 #define SET_ALLOC_LAYOUT_HANDLE_CANARY(BASEALLOC, T)
 #else
 #define SETUP_ALLOC_LAYOUT_GET_META_PTR(BASEALLOC) (MetaData*)((uint8_t*)(BASEALLOC) + ALLOC_DEBUG_CANARY_SIZE)
-#define SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(BASEALLOC) (void*)((uint8_t*)(BASEALLOC) + ALLOC_DEBUG_CANARY_SIZE + sizeof(MetaData))
+#define SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(BASEALLOC) (void*)((uint8_t*)(BASEALLOC) + ALLOC_DEBUG_CANARY_SIZE)
 
 #define SET_ALLOC_LAYOUT_HANDLE_CANARY(BASEALLOC, T) PageInfo::initializeWithDebugInfo(BASEALLOC, T)
 #endif

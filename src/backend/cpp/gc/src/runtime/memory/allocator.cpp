@@ -4,28 +4,41 @@
 GlobalDataStorage GlobalDataStorage::g_global_data{};
 
 #ifdef ALLOC_DEBUG_CANARY
-#define RESET_META_FROM_FREELIST(E) ZERO_METADATA(reinterpret_cast<MetaData*>(reinterpret_cast<uint8_t*>(E) + ALLOC_DEBUG_CANARY_SIZE));
+#define RESET_META_FROM_FREELIST(E) \
+	ZERO_METADATA(PageInfo::getObjectMetadataAligned(reinterpret_cast<uint8_t*>(E) + ALLOC_DEBUG_CANARY_SIZE));
 #else
-#define RESET_META_FROM_FREELIST(E) ZERO_METADATA(reinterpret_cast<MetaData*>(entry));
+#define RESET_META_FROM_FREELIST(E) \
+	ZERO_METADATA(PageInfo::getObjectMetadataAligned(E));
 #endif
+
+static void setPageMetaData(PageInfo* pp, uint16_t allocsize, uint16_t realsize) noexcept
+{
+    GC_INVARIANT_CHECK(pp->allocsize != 0 && pp->realsize != 0);
+
+    uint8_t* bpp = reinterpret_cast<uint8_t*>(pp);
+    uint8_t* mdataptr = bpp + sizeof(PageInfo);
+    pp->mdata = reinterpret_cast<MetaData*>(mdataptr);
+    uint8_t* objptr = bpp + BSQ_BLOCK_ALLOCATION_SIZE - pp->realsize;
+
+    int32_t n = 0;
+    while(objptr > mdataptr) {
+        objptr -= pp->realsize;
+        mdataptr += sizeof(MetaData);
+        n++;
+    }
+    GC_INVARIANT_CHECK(n > 0);
+
+    pp->entrycount = n;
+    pp->freecount = pp->entrycount;
+    pp->data = mdataptr; // First slot after meta
+    pp->allocsize = allocsize;
+    pp->realsize = realsize;
+}
 
 PageInfo* PageInfo::initialize(void* block, uint16_t allocsize, uint16_t realsize) noexcept
 {
-    PageInfo* pp = (PageInfo*)block;
-
-    pp->freelist = nullptr;
-    pp->data = ((uint8_t*)block + sizeof(PageInfo));
-    pp->allocsize = allocsize;
-    pp->realsize = realsize;
-    pp->approx_utilization = 0.0f;
-	pp->visited = false;
-
-    pp->owner = nullptr;
-    pp->prev = nullptr;
-    pp->next = nullptr;
-
-    pp->entrycount = (BSQ_BLOCK_ALLOCATION_SIZE - (pp->data - (uint8_t*)pp)) / realsize;
-    pp->freecount = pp->entrycount;
+    PageInfo* pp = static_cast<PageInfo*>(block);
+	setPageMetaData(pp, allocsize, realsize);
 
     for(int64_t i = pp->entrycount - 1; i >= 0; i--) {
         FreeListEntry* entry = pp->getFreelistEntryAtIndex(i);
