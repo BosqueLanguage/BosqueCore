@@ -87,7 +87,7 @@ inline void xmem_zerofillpage(void* mem) noexcept
     }
 }
 
-//mem is an 8byte aligned pointer and n is the number of 8byte words to clear
+// memsrc & memtrgt are 8byte aligned ptrs and n is the number if 8byte words to copy
 inline void xmem_copy(void* memsrc, void* memtrgt, size_t n) noexcept
 {
     void** objsrc = (void**)memsrc;
@@ -175,7 +175,8 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 
 #define NON_FORWARDED 0
 
-#define GC_GET_META_DATA_ADDR(O) ((MetaData*)((uint8_t*)O - sizeof(MetaData)))
+#define GC_GET_META_DATA_ADDR(O) \
+	PageInfo::getObjectMetadataAligned(O)
 
 #ifdef VERBOSE_HEADER
 // Resets an objects metadata and updates with index into forward table

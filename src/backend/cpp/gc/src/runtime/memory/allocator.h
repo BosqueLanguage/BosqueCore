@@ -20,9 +20,9 @@
 
 // Allows us to correctly determine pointer offsets
 #ifdef ALLOC_DEBUG_CANARY
-#define REAL_ENTRY_SIZE(ESIZE) (ALLOC_DEBUG_CANARY_SIZE + ESIZE + sizeof(MetaData) + ALLOC_DEBUG_CANARY_SIZE)
+#define REAL_ENTRY_SIZE(ESIZE) (ALLOC_DEBUG_CANARY_SIZE + ESIZE + ALLOC_DEBUG_CANARY_SIZE)
 #else
-#define REAL_ENTRY_SIZE(ESIZE) (ESIZE + sizeof(MetaData))
+#define REAL_ENTRY_SIZE(ESIZE) (ESIZE)
 #endif
 
 ////////////////////////////////
@@ -55,12 +55,17 @@ public:
     }
 };
 
+// TODO to prevent having to compute metadata addr for every entry in the freelist we may 
+// be interested in storing a metadata pointer in each FreeListEntry
 struct FreeListEntry
 {
    FreeListEntry* next;
 };
 static_assert(sizeof(FreeListEntry) <= sizeof(MetaData), "BlockHeader size is not 8 bytes");
 
+////////////////////////////////////////////
+// Page Layout:
+// | Page Metadata | Objects Metadata | Data |
 class PageInfo
 {
 public:
@@ -74,6 +79,7 @@ public:
     PageInfo* next;
 
     uint8_t* data; //start of the data block
+    MetaData* mdata; // Meta data is stored out-of-band
 
     uint16_t allocsize; //size of the alloc entries in this page (excluding metadata)
     uint16_t realsize; //size of the alloc entries in this page (including metadata and other stuff)
@@ -85,44 +91,47 @@ public:
     float approx_utilization; 
     std::atomic<bool> visited; // has this page been inserted into an array list yet?
 
-    static PageInfo* initialize(void* block, uint16_t allocsize, uint16_t realsize) noexcept;
+	void zeroInit() noexcept
+	{
+		this->freelist = nullptr;
+		this->owner = nullptr;
+		this->prev = this->next = nullptr;
+		this->data = nullptr;
+		this->mdata = nullptr; 
+		this->allocsize = this->realsize = this->entrycount = this->freecount = 0; 
+		this->approx_utilization = 0.0f;
+		this->visited = false;
+	}
 
-    size_t rebuild() noexcept;
+    static PageInfo* initialize(void* block, uint16_t allocsize, uint16_t realsize) noexcept;
+    size_t rebuild() noexcept;	
 
     static inline PageInfo* extractPageFromPointer(void* p) noexcept {
         return (PageInfo*)((uintptr_t)(p) & PAGE_ADDR_MASK);
     }
 
-    static inline size_t getIndexForObjectInPage(void* p) noexcept {
-        const PageInfo* page = extractPageFromPointer(p);
-        
-        return (size_t)((uint8_t*)p - page->data) / (size_t)page->realsize;
+    static inline size_t getIndexForObjectInPage(void* obj, PageInfo* page) noexcept { 
+        return (size_t)((uint8_t*)obj - page->data) / (size_t)page->realsize;
     }
 
-    static inline MetaData* getObjectMetadataAligned(void* p) noexcept {
-        const PageInfo* page = extractPageFromPointer(p);
-        size_t idx = (size_t)((uint8_t*)p - page->data) / (size_t)page->realsize;
-
-#ifdef ALLOC_DEBUG_CANARY
-        return (MetaData*)(page->data + idx * page->realsize + ALLOC_DEBUG_CANARY_SIZE);
-#else
-        return (MetaData*)(page->data + idx * page->realsize);
-#endif
+	// TODO we should investiage this and see if we can optimize the work needed to 
+	// compute addr of metadata
+    static inline MetaData* getObjectMetadataAligned(void* obj) noexcept { 
+        PageInfo* page = extractPageFromPointer(obj);
+		size_t idx = PageInfo::getIndexForObjectInPage(obj, page);
+        
+        return page->getMetaEntryAtIndex(idx);
     }
 
     inline MetaData* getMetaEntryAtIndex(size_t idx) const noexcept {
-#ifdef ALLOC_DEBUG_CANARY
-        return (MetaData*)(this->data + idx * this->realsize + ALLOC_DEBUG_CANARY_SIZE);
-#else
-        return (MetaData*)(this->data + idx * this->realsize);
-#endif
+        return this->mdata + idx;
     }
 
     inline void* getObjectAtIndex(size_t idx) const noexcept {
 #ifdef ALLOC_DEBUG_CANARY
-        return reinterpret_cast<void*>(this->data + idx * this->realsize + ALLOC_DEBUG_CANARY_SIZE + sizeof(MetaData));
+        return reinterpret_cast<void*>(this->data + idx * this->realsize + ALLOC_DEBUG_CANARY_SIZE);
 #else
-        return reinterpret_cast<void*>(this->data + idx * this->realsize + sizeof(MetaData));
+        return reinterpret_cast<void*>(this->data + idx * this->realsize);
 #endif
     }
 
@@ -130,14 +139,15 @@ public:
         return (FreeListEntry*)(this->data + idx * this->realsize);
     }
 
+    // May be interested in placing canaries between metadata entries
     static void initializeWithDebugInfo(void* mem, __CoreGC::TypeInfoBase* type) noexcept
     {
         uint64_t* pre = (uint64_t*)mem;
         *pre = ALLOC_DEBUG_CANARY_VALUE;
 
-        uint64_t* post = (uint64_t*)((uint8_t*)mem + ALLOC_DEBUG_CANARY_SIZE + sizeof(MetaData) + type->type_size);
+        uint64_t* post = (uint64_t*)((uint8_t*)mem + ALLOC_DEBUG_CANARY_SIZE + type->type_size);
         *post = ALLOC_DEBUG_CANARY_VALUE;
-    }	
+    }
 };
 
 struct PageIterator {
@@ -266,24 +276,29 @@ public:
     }
 };
 
-#ifndef ALLOC_DEBUG_CANARY
-#define SETUP_ALLOC_LAYOUT_GET_META_PTR(BASEALLOC) (MetaData*)((uint8_t*)(BASEALLOC))
-#define SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(BASEALLOC) (void*)((uint8_t*)(BASEALLOC) + sizeof(MetaData))
+#define SETUP_ALLOC_LAYOUT_GET_META_PTR(BASEALLOC) \
+	PageInfo::getObjectMetadataAligned(BASEALLOC)
 
+#ifndef ALLOC_DEBUG_CANARY
+#define SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(BASEALLOC) (BASEALLOC)
 #define SET_ALLOC_LAYOUT_HANDLE_CANARY(BASEALLOC, T)
 #else
-#define SETUP_ALLOC_LAYOUT_GET_META_PTR(BASEALLOC) (MetaData*)((uint8_t*)(BASEALLOC) + ALLOC_DEBUG_CANARY_SIZE)
-#define SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(BASEALLOC) (void*)((uint8_t*)(BASEALLOC) + ALLOC_DEBUG_CANARY_SIZE + sizeof(MetaData))
-
-#define SET_ALLOC_LAYOUT_HANDLE_CANARY(BASEALLOC, T) PageInfo::initializeWithDebugInfo(BASEALLOC, T)
+#define SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(BASEALLOC) \
+	(void*)((uint8_t*)(BASEALLOC) + ALLOC_DEBUG_CANARY_SIZE)
+#define SET_ALLOC_LAYOUT_HANDLE_CANARY(BASEALLOC, T) \
+	PageInfo::initializeWithDebugInfo(BASEALLOC, T)
 #endif
 
 #ifdef VERBOSE_HEADER
-#define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T) (*(META)) = { .type=(T), .isalloc=true, .isyoung=true, .ismarked=false, .isroot=false, .forward_index=NON_FORWARDED, .ref_count=0 }
-#define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) (*(META)) = { .type=(T), .isalloc=true, .isyoung=false, .ismarked=false, .isroot=false, .forward_index=NON_FORWARDED, .ref_count=0 }
+#define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T) \
+	{ (META)->type = T; (META)->isalloc = true; (META)->isyoung = true; } 
+#define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) \
+	{ (META)->type = T; (META)->isalloc = true; }
 #else
-#define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T)       { ZERO_METADATA(META); SET_TYPE_PTR(META, T); (META)->bits.isalloc = 1; (META)->bits.isyoung = 1; } 
-#define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) { ZERO_METADATA(META); SET_TYPE_PTR(META, T); (META)->bits.isalloc = 1; (META)->bits.isyoung = 0; }
+#define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T) \
+	{ SET_TYPE_PTR(META, T); (META)->bits.isalloc = 1; (META)->bits.isyoung = 1; } 
+#define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) \
+	{ SET_TYPE_PTR(META, T); (META)->bits.isalloc = 1; }
 #endif
 
 template<typename T>
@@ -443,7 +458,8 @@ public:
         this->freelist = this->freelist->next;
         
         SET_ALLOC_LAYOUT_HANDLE_CANARY(entry, type);
-        SETUP_ALLOC_INITIALIZE_FRESH_META(SETUP_ALLOC_LAYOUT_GET_META_PTR(entry), type);
+        MetaData* m = SETUP_ALLOC_LAYOUT_GET_META_PTR(entry); 
+		SETUP_ALLOC_INITIALIZE_FRESH_META(m, type);
 
         UPDATE_ALLOC_STATS(this, type->type_size);
 
@@ -462,7 +478,8 @@ public:
         this->evacfreelist = this->evacfreelist->next;
 
         SET_ALLOC_LAYOUT_HANDLE_CANARY(entry, type);
-        SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(SETUP_ALLOC_LAYOUT_GET_META_PTR(entry), type);
+        MetaData* m = SETUP_ALLOC_LAYOUT_GET_META_PTR(entry); 
+		SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(m, type);
 
         return SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(entry);
     }

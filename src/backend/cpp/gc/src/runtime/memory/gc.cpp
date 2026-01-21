@@ -3,10 +3,14 @@
 #include "../support/qsort.h"
 #include "threadinfo.h"
 
+#define METADATA_SEG_SIZE(P) (P->entrycount * sizeof(MetaData)) 
+
 #ifdef ALLOC_DEBUG_CANARY
-#define GET_SLOT_START_FROM_OFFSET(O) (O - sizeof(PageInfo) - sizeof(MetaData) - ALLOC_DEBUG_CANARY_SIZE) 
+#define GET_SLOT_START_FROM_OFFSET(OFF, P) \
+	(OFF - sizeof(PageInfo) - METADATA_SEG_SIZE(P) - ALLOC_DEBUG_CANARY_SIZE) 
 #else 
-#define GET_SLOT_START_FROM_OFFSET(O) (O - sizeof(PageInfo) - sizeof(MetaData)) 
+#define GET_SLOT_START_FROM_OFFSET(OFF, P) \
+	(OFF - sizeof(PageInfo) - METADATA_SEG_SIZE(P)) 
 #endif
 
 static void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots, DecsList& list) noexcept;
@@ -319,13 +323,13 @@ static void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
 static inline bool pointsToObjectStart(void* addr) noexcept 
 {
-    uintptr_t offset = reinterpret_cast<uintptr_t>(addr) & PAGE_MASK;
-    if(offset < sizeof(PageInfo)) {
+    uintptr_t offset = reinterpret_cast<uintptr_t>(addr) & PAGE_MASK; 
+    PageInfo* p = PageInfo::extractPageFromPointer(addr);
+	if(offset < (sizeof(PageInfo) + METADATA_SEG_SIZE(p))) {
         return false;
     }
 
-    PageInfo* p = PageInfo::extractPageFromPointer(addr);
-    uintptr_t start = GET_SLOT_START_FROM_OFFSET(offset);
+    uintptr_t start = GET_SLOT_START_FROM_OFFSET(offset, p);
 
     return start % p->realsize == 0;
 }
@@ -338,13 +342,11 @@ static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexce
     }
 
     MetaData* m = PageInfo::getObjectMetadataAligned(addr);
-    void* obj = (void*)((uint8_t*)m + sizeof(MetaData));
-
     if(GC_SHOULD_PROCESS_AS_ROOT(m)) { 
         GC_MARK_AS_ROOT(m);
-        tinfo.roots[tinfo.roots_count++] = obj;
+        tinfo.roots[tinfo.roots_count++] = addr;
         if(GC_SHOULD_PROCESS_AS_YOUNG(m)) {
-            tinfo.pending_roots.push_back(obj);
+            tinfo.pending_roots.push_back(addr);
         } 
     }
 }
