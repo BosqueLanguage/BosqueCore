@@ -815,6 +815,22 @@ class CPPEmitter {
         return [ideclstr, idefstr];
     }
 
+    private emitEnumTypeInfoDecl(tdecl: IREnumTypeDecl): string {
+        const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
+        const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey); 
+
+        return `namespace ᐸRuntimeᐳ { constexpr TypeInfo g_typeinfo_${ctname} = {\n` +
+        `        ${ttid.bsqtypeid},\n` +
+        `        8,\n` +
+        `        1,\n` +
+        `        LayoutTag::Value,\n` +
+        `        nullptr,\n` +
+        `        "${tdecl.tkey}",\n` +
+        `        nullptr\n` +
+        `    };\n` +
+        `}`;
+    }
+
     private emitEntityTypeInfoDecl(tdecl: IRAbstractEntityTypeDecl): string {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
         const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey); 
@@ -850,13 +866,22 @@ class CPPEmitter {
     private emitEnumTypeDeclInfo(eenum: IREnumTypeDecl): [string, string] {
         const ctname = TransformCPPNameManager.convertTypeKey(eenum.tkey);
 
-        const edecl = `enum class ${ctname} : uint64_t {\n` +
-        `${eenum.members.map((mem, ii) => `    ${TransformCPPNameManager.convertIdentifier(mem)} = ${ii}`).join(",\n")}\n` +
+        const edecl = `class ${ctname} {\n` +
+        `public:\n` +
+        `    uint64_t value;\n\n` +
+        `${eenum.members.map((mem) => `    static constinit ${ctname} ${TransformCPPNameManager.convertIdentifier(mem)};`).join("\n")}\n\n` +
+        `    friend constexpr Bool operator==(const ${ctname}& lhs, const ${ctname}& rhs) { return ᐸRuntimeᐳ::XBool::from(lhs.value == rhs.value); }\n` +
+        `    friend constexpr Bool operator<(const ${ctname}& lhs, const ${ctname}& rhs) { return ᐸRuntimeᐳ::XBool::from(lhs.value < rhs.value); }\n` +
+        `    friend constexpr Bool operator>(const ${ctname}& lhs, const ${ctname}& rhs) { return ᐸRuntimeᐳ::XBool::from(rhs.value < lhs.value); }\n` +
+        `    friend constexpr Bool operator!=(const ${ctname}& lhs, const ${ctname}& rhs) { return ᐸRuntimeᐳ::XBool::from(!(lhs.value == rhs.value)); }\n` +
+        `    friend constexpr Bool operator<=(const ${ctname}& lhs, const ${ctname}& rhs) { return ᐸRuntimeᐳ::XBool::from(!(rhs.value < lhs.value)); }\n` +
+        `    friend constexpr Bool operator>=(const ${ctname}& lhs, const ${ctname}& rhs) { return ᐸRuntimeᐳ::XBool::from(!(lhs.value < rhs.value)); }\n` +
         `};`;
         const bsqparsedecl = `std::optional<${ctname}> BSQ_parse${ctname}();`;
         const bsqemitdecl = `void BSQ_emit${ctname}(${ctname} vv);`;
 
         const mmarray = `constexpr std::array<const char*, ${eenum.members.length}> BSQ_enum_values_${ctname} = { ${eenum.members.map((mem) => `"${mem}"`).join(", ")} };`;
+        const mdecls = `${eenum.members.map((mem, ii) => `${ctname} ${ctname}::${TransformCPPNameManager.convertIdentifier(mem)} = ${ctname}{${ii}};`).join("\n")}\n`;
         const bsqparsedef = `std::optional<${ctname}> BSQ_parse${ctname}() {\n` + 
         `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeType("${eenum.tkey}")) { return std::nullopt; };\n` +
         `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('#')) { return std::nullopt; };\n` +
@@ -866,17 +891,17 @@ class CPPEmitter {
         `    auto eiter = std::find_if(BSQ_enum_values_${ctname}.cbegin(), BSQ_enum_values_${ctname}.cend(), [enumstr](const char* ev) { return strcmp(ev, enumstr) == 0; });\n` +
         `    if(eiter == BSQ_enum_values_${ctname}.cend()) { return std::nullopt; }\n` +
         '\n' +
-        `    return std::make_optional(static_cast<${ctname}>(std::distance(BSQ_enum_values_${ctname}.cbegin(), eiter)));\n` +  
+        `    return std::make_optional(${ctname}{(uint64_t)std::distance(BSQ_enum_values_${ctname}.cbegin(), eiter)});\n` +  
         `}`;
         
         const bsqemitdef = `void BSQ_emit${ctname}(${ctname} vv) {\n` +
         `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitLiteralContent("${eenum.tkey}#");\n` +
-        `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitLiteralContent(BSQ_enum_values_${ctname}[static_cast<int>(vv)]);\n` +
+        `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitLiteralContent(BSQ_enum_values_${ctname}[vv.value]);\n` +
         `}`;
 
         return [
-            [edecl, bsqparsedecl, bsqemitdecl].join("\n"), 
-            [mmarray, bsqparsedef, bsqemitdef].join("\n")
+            [edecl,  this.emitEnumTypeInfoDecl(eenum), bsqparsedecl, bsqemitdecl].join("\n"), 
+            [mmarray, mdecls, bsqparsedef, bsqemitdef].join("\n")
         ];
     }
 
@@ -1166,8 +1191,9 @@ class CPPEmitter {
             '    std::copy(argv[1], argv[1] + ibytes, iobb);\n\n' +
             '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.initialize({iobb}, ibytes);\n' +
             `    auto x = BSQ_parse${TransformCPPNameManager.convertTypeKey(idecl.params[0].type.tkeystr)}();\n` +
-            '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.release();\n' +
-            '    if(!x.has_value()) { printf("Error parsing input\\n"); exit(1); }\n\n'
+            '    if(!x.has_value()) { printf("Error parsing input\\n"); exit(1); }\n' +
+            '    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.allInputConsumed()) { printf("Error parsing input -- invaliad data in tail of input\\n"); exit(1); }\n' +
+            '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.release();\n\n'
             : '//No args\n\n') +
             '    if (setjmp(ᐸRuntimeᐳ::tl_bosque_info.current_task->error_handler) > 0) {\n' +
             '        auto perr = ᐸRuntimeᐳ::tl_bosque_info.current_task->pending_error.value();\n' +

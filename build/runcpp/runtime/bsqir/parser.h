@@ -88,6 +88,11 @@ namespace ᐸRuntimeᐳ
 
         std::optional<XCString> parseCString();
         std::optional<XString> parseString();
+
+        bool allInputConsumed()
+        {
+            return this->lexer.current().tokentype == BSQONTokenType::EOFToken;
+        }
     };
 
     class JSONParser
