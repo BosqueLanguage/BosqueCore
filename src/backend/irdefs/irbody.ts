@@ -1264,7 +1264,7 @@ class IRBinKeyNeqDirectExpression extends IRKeyComparisonExpression {
     }
 }
 
-class IRBinKeyLessExpression extends IRKeyComparisonExpression {
+class IRBinKeyLessDirectExpression extends IRKeyComparisonExpression {
     constructor(left: IRSimpleExpression, right: IRSimpleExpression, opertype: IRTypeSignature) {
         super(IRExpressionTag.IRBinKeyLessDirectExpression, left, right, opertype);
     }
@@ -1879,7 +1879,7 @@ export {
     IRBinOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression,
     IRNumericComparisonExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression,
     IRIsNoneOptionExpression, IRIsNotNoneOptionExpression, IRIsOptionEqValueExpression, IRIsOptionNeqValueExpression, IRIsSomeEqValueExpression, IRIsSomeNeqValueExpression,
-    IRKeyComparisonExpression, IRBinKeyEqDirectExpression, IRBinKeyNeqDirectExpression, IRBinKeyLessExpression,
+    IRKeyComparisonExpression, IRBinKeyEqDirectExpression, IRBinKeyNeqDirectExpression, IRBinKeyLessDirectExpression,
     IRLogicOpExpression, IRLogicAndExpression, IRLogicOrExpression,
 
     IRLogicSimpleConditionalExpression,
