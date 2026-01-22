@@ -18,11 +18,11 @@ static void setPageMetaData(PageInfo* pp, __CoreGC::TypeInfoBase* typeinfo) noex
 	uint8_t* bpp = reinterpret_cast<uint8_t*>(pp);
     uint8_t* mdataptr = bpp + sizeof(PageInfo);
     pp->mdata = reinterpret_cast<MetaData*>(mdataptr);
-    uint8_t* objptr = bpp + BSQ_BLOCK_ALLOCATION_SIZE - typeinfo->realsize;
+    uint8_t* objptr = bpp + BSQ_BLOCK_ALLOCATION_SIZE - pp->realsize;
 
     int32_t n = 0;
     while(objptr > mdataptr) {
-        objptr -= realsize;
+        objptr -= pp->realsize;
         mdataptr += sizeof(MetaData);
         n++;
     }
@@ -71,7 +71,8 @@ size_t PageInfo::rebuild() noexcept
     }
     this->approx_utilization = CALC_APPROX_UTILIZATION(this);
 	
-	size_t freed = this->freecount >= pfree ? (this->freecount - pfree) * this->allocsize : 0;
+	size_t freed = this->freecount >= pfree ? 
+		(this->freecount - pfree) * this->typeinfo->type_size : 0;
 	return freed;
 }
 
@@ -166,8 +167,8 @@ PageInfo* GCAllocator::tryGetPendingRebuildPage(float max_util)
 		p->owner->remove(p);
 		p->rebuild();
 
-		// move pages that are not correct size or too full
-		if((p->allocsize != this->allocsize && p->freecount != p->entrycount)
+		// move pages that are not correct type or too full
+		if((p->typeinfo != this->alloctype && p->freecount != p->entrycount)
 			|| p->approx_utilization > max_util) {
 				gcalloc->processPage(p);
 		}
@@ -221,12 +222,6 @@ PageInfo* GCAllocator::getFreshPageForEvacuation() noexcept
 
 void GCAllocator::allocatorRefreshAllocationPage()noexcept
 {
-    // TODO remove this (when we get around to updating the metadata)
-	// Just to make sure high 32 bits are stored
-    if(g_typeptr_high32 == 0) {
-        const_cast<uint64_t&>(g_typeptr_high32) = reinterpret_cast<uint64_t>(this->alloctype) >> NUM_TYPEPTR_BITS;
-    }
-
     if(this->alloc_page != nullptr) {
         gtl_info.updateNurseryUsage(this->alloc_page);
         if(gtl_info.nursery_usage >= BSQ_FULL_NURSERY_THRESHOLD && !gtl_info.disable_automatic_collections) { 

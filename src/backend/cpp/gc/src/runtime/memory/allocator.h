@@ -282,24 +282,24 @@ public:
 
 #ifndef ALLOC_DEBUG_CANARY
 #define SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(BASEALLOC) (BASEALLOC)
-#define SET_ALLOC_LAYOUT_HANDLE_CANARY(BASEALLOC, T)
+#define SET_ALLOC_LAYOUT_HANDLE_CANARY(BASEALLOC, TS)
 #else
 #define SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(BASEALLOC) \
 	(void*)((uint8_t*)(BASEALLOC) + ALLOC_DEBUG_CANARY_SIZE)
-#define SET_ALLOC_LAYOUT_HANDLE_CANARY(BASEALLOC, T) \
-	PageInfo::initializeWithDebugInfo(BASEALLOC, T)
+#define SET_ALLOC_LAYOUT_HANDLE_CANARY(BASEALLOC, TS) \
+	PageInfo::initializeWithDebugInfo(BASEALLOC, TS)
 #endif
 
 #ifdef VERBOSE_HEADER
-#define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T) \
-	{ (META)->type = T; (META)->isalloc = true; (META)->isyoung = true; } 
-#define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) \
-	{ (META)->type = T; (META)->isalloc = true; }
+#define SETUP_ALLOC_INITIALIZE_FRESH_META(META) \
+	{ (META)->isalloc = true; (META)->isyoung = true; } 
+#define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META) \
+	{ (META)->isalloc = true; }
 #else
-#define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T) \
-	{ SET_TYPE_PTR(META, T); (META)->bits.isalloc = 1; (META)->bits.isyoung = 1; } 
-#define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) \
-	{ SET_TYPE_PTR(META, T); (META)->bits.isalloc = 1; }
+#define SETUP_ALLOC_INITIALIZE_FRESH_META(META) \
+	{ (META)->bits.isalloc = 1; (META)->bits.isyoung = 1; } 
+#define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META) \
+	{ (META)->bits.isalloc = 1; }
 #endif
 
 #define CALC_APPROX_UTILIZATION(P) 1.0f - ((float)P->freecount / (float)P->entrycount)
@@ -492,9 +492,7 @@ public:
     void allocatorRefreshEvacuationPage() noexcept;
 };
 
-//
 // Allocation interface used during runtime 
-//
 template<typename T>
 T* MEM_ALLOC_CHECK(T* alloc)
 {

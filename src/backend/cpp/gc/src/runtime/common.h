@@ -200,10 +200,10 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 
 #define GC_CHECK_BOOL_BYTES(META) \
 do { \
-    int8_t isalloc_byte = *reinterpret_cast<int8_t*>(&(META)->isalloc); \
-    int8_t isyoung_byte = *reinterpret_cast<int8_t*>(&(META)->isyoung); \
-    int8_t ismarked_byte = *reinterpret_cast<int8_t*>(&(META)->ismarked); \
-    int8_t isroot_byte = *reinterpret_cast<int8_t*>(&(META)->isroot); \
+    const int8_t isalloc_byte = *reinterpret_cast<const int8_t*>(&(META)->isalloc); \
+    const int8_t isyoung_byte = *reinterpret_cast<const int8_t*>(&(META)->isyoung); \
+    const int8_t ismarked_byte = *reinterpret_cast<const int8_t*>(&(META)->ismarked); \
+    const int8_t isroot_byte = *reinterpret_cast<const int8_t*>(&(META)->isroot); \
     GC_INVARIANT_CHECK(isalloc_byte == 0 || isalloc_byte == 1); \
     GC_INVARIANT_CHECK(isyoung_byte == 0 || isyoung_byte == 1); \
     GC_INVARIANT_CHECK(ismarked_byte == 0 || ismarked_byte == 1); \
