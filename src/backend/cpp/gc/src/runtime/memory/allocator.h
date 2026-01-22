@@ -372,6 +372,7 @@ private:
         this->pendinggc_pages.push(this->alloc_page);
     }
 
+	// NOTE skeptical on some of these floats, take a look later
     static int getBucketIndex(PageInfo* p)
     {
         float util = p->approx_utilization;
@@ -443,6 +444,11 @@ public:
 		this->alloctype = type;
 	}
 #endif
+
+	__CoreGC::TypeInfoBase* getAllocType() const noexcept
+	{
+		return this->alloctype;	
+	}
 
     inline size_t getAllocSize() const noexcept
     {

@@ -230,7 +230,7 @@ struct BSQMemoryTheadLocalInfo
     {
         for(size_t i = 0; i < NUM; i++) {
             GCAllocator* alloc = allocs[i];
-            uint32_t idx = alloc->alloctype->type_id;
+            uint32_t idx = alloc->getAllocType()->type_id;
 			GC_INVARIANT_CHECK(idx < BSQ_MAX_ALLOC_SLOTS);	
 
 			this->g_gcallocs[idx] = alloc;
