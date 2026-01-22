@@ -11,10 +11,11 @@ GlobalDataStorage GlobalDataStorage::g_global_data{};
 	ZERO_METADATA(PageInfo::getObjectMetadataAligned(E));
 #endif
 
-static void setPageMetaData(PageInfo* pp, uint16_t allocsize, uint16_t realsize) noexcept
+static void setPageMetaData(PageInfo* pp, __CoreGC::TypeInfoBase* typeinfo) noexcept
 {
-    pp->allocsize = allocsize;
-    pp->realsize = realsize;
+    pp->typeinfo = typeinfo;
+	pp->allocsize = typeinfo->type_size;
+    pp->realsize = REAL_ENTRY_SIZE(typeinfo->type_size);
     GC_INVARIANT_CHECK(pp->allocsize != 0 && pp->realsize != 0);
     
 	uint8_t* bpp = reinterpret_cast<uint8_t*>(pp);
@@ -35,11 +36,11 @@ static void setPageMetaData(PageInfo* pp, uint16_t allocsize, uint16_t realsize)
     pp->data = mdataptr; // First slot after meta
 }
 
-PageInfo* PageInfo::initialize(void* block, uint16_t allocsize, uint16_t realsize) noexcept
+PageInfo* PageInfo::initialize(void* block, __CoreGC::TypeInfoBase* typeinfo) noexcept
 {
     PageInfo* pp = static_cast<PageInfo*>(block);
 	pp->zeroInit();
-	setPageMetaData(pp, allocsize, realsize);
+	setPageMetaData(pp, typeinfo);
 
     for(int64_t i = pp->entrycount - 1; i >= 0; i--) {
         FreeListEntry* entry = pp->getFreelistEntryAtIndex(i);
@@ -79,7 +80,7 @@ size_t PageInfo::rebuild() noexcept
 
 GlobalPageGCManager GlobalPageGCManager::g_gc_page_manager;
 
-PageInfo* GlobalPageGCManager::getFreshPageFromOS(uint16_t entrysize, uint16_t realsize)
+PageInfo* GlobalPageGCManager::getFreshPageFromOS(__CoreGC::TypeInfoBase* typeinfo)
 {
 	std::unique_lock lk(g_alloclock);
 #ifndef ALLOC_DEBUG_MEM_DETERMINISTIC
@@ -95,19 +96,19 @@ PageInfo* GlobalPageGCManager::getFreshPageFromOS(uint16_t entrysize, uint16_t r
 	lk.unlock();
 	this->pagetableInsert(page);
 
-    PageInfo* pp = PageInfo::initialize(page, entrysize, realsize);
+    PageInfo* pp = PageInfo::initialize(page, typeinfo);
 
     UPDATE_TOTAL_PAGES(+=, 1);
 	
 	return pp;
 }
 
-PageInfo* GlobalPageGCManager::tryGetEmptyPage(uint16_t entrysize, uint16_t realsize)
+PageInfo* GlobalPageGCManager::tryGetEmptyPage(__CoreGC::TypeInfoBase* typeinfo)
 {
 	PageInfo* pp = nullptr;
     if(!this->empty_pages.empty()) {
         void* page = this->empty_pages.pop();
-        pp = PageInfo::initialize(page, entrysize, realsize);
+        pp = PageInfo::initialize(page, typeinfo);
     }
 
 	return pp;
@@ -175,7 +176,7 @@ PageInfo* GCAllocator::tryGetPendingRebuildPage(float max_util)
 		}
 	    else {
 			if(p->freecount == p->entrycount) {
-				p = PageInfo::initialize(p, this->allocsize, this->realsize);
+				p = PageInfo::initialize(p, gcalloc->alloctype);
 			}
 			pp = p;
 
@@ -190,13 +191,13 @@ PageInfo* GCAllocator::getFreshPageForAllocator() noexcept
 {
     PageInfo* page = this->getLowestLowUtilPage();
     if(page == nullptr) {
-        page = GlobalPageGCManager::g_gc_page_manager.tryGetEmptyPage(this->allocsize, this->realsize);
+        page = GlobalPageGCManager::g_gc_page_manager.tryGetEmptyPage(this->alloctype);
     }
 	if(page == nullptr) {
 		page = this->tryGetPendingRebuildPage(LOW_UTIL_THRESH);
     }
 	if(page == nullptr) {
-		page = GlobalPageGCManager::g_gc_page_manager.getFreshPageFromOS(this->allocsize, this->realsize);	
+		page = GlobalPageGCManager::g_gc_page_manager.getFreshPageFromOS(this->alloctype);	
 	}
 
     return page;
@@ -209,23 +210,24 @@ PageInfo* GCAllocator::getFreshPageForEvacuation() noexcept
         page = this->getLowestLowUtilPage();
     } 
     if(page == nullptr) {
-        page = GlobalPageGCManager::g_gc_page_manager.tryGetEmptyPage(this->allocsize, this->realsize);
+        page = GlobalPageGCManager::g_gc_page_manager.tryGetEmptyPage(this->alloctype);
     }
 	if(page == nullptr) {
 		page = this->tryGetPendingRebuildPage(HIGH_UTIL_THRESH);
     }
 	if(page == nullptr) {
-		page = GlobalPageGCManager::g_gc_page_manager.getFreshPageFromOS(this->allocsize, this->realsize);
+		page = GlobalPageGCManager::g_gc_page_manager.getFreshPageFromOS(this->alloctype);
 	}
 
 	return page;
 }
 
-void GCAllocator::allocatorRefreshAllocationPage(__CoreGC::TypeInfoBase* typeinfo) noexcept
+void GCAllocator::allocatorRefreshAllocationPage()noexcept
 {
-    // Just to make sure high 32 bits are stored
+    // TODO remove this (when we get around to updating the metadata)
+	// Just to make sure high 32 bits are stored
     if(g_typeptr_high32 == 0) {
-        const_cast<uint64_t&>(g_typeptr_high32) = reinterpret_cast<uint64_t>(typeinfo) >> NUM_TYPEPTR_BITS;
+        const_cast<uint64_t&>(g_typeptr_high32) = reinterpret_cast<uint64_t>(this->alloctype) >> NUM_TYPEPTR_BITS;
     }
 
     if(this->alloc_page != nullptr) {

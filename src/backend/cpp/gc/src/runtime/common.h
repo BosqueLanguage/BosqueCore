@@ -54,7 +54,7 @@
 #define BSQ_MAX_FWD_TABLE_ENTRIES 524288ul
 
 #define BSQ_MAX_ROOTS 2048ul
-#define BSQ_MAX_ALLOC_SLOTS 64ul
+#define BSQ_MAX_ALLOC_SLOTS 1024ul
 
 //Number of allocation pages we fill up before we start collecting
 #define BSQ_COLLECTION_THRESHOLD 1024 

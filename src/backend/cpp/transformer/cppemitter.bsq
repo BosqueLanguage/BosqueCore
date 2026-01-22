@@ -2585,18 +2585,19 @@ function emitAssembly(asm: CPPAssembly::Assembly): String {
     %% Various size allocators needed for the GC
 	var allocs, allocslist, nvalid_allocs = asm.typeinfos
         .reduce<(|String, List<String>, Nat|)>(fn(acc, tk, ti) => {
-            if(ti.tag !== CPPAssembly::Tag#Ref) {
+            %% skip non ref and elists
+			if(ti.tag !== CPPAssembly::Tag#Ref || ti.typekey.value.startsWithString('(|')) {
                 return acc;
             }
            
-            let gcalloc = generateGCAlloc(ti, ctx);
+            let gcalloc = generateGCAlloc(ti);
             var typename = emitTypeKey(ti.typekey, false, ctx); 
 			typename = emitTypeInfoName(typename);
 			let decl = String::concat("GCAllocator ", gcalloc);
 			let args = String::concat(natToString(ti.typesize), ", REAL_ENTRY_SIZE(", natToString(ti.typesize), "), &", typename, ", collect");
             let cons = String::concat(decl, "(", args, ");%n;");
 
-            return String::concat(acc.0, cons), acc.1.pushBack(String::concat("&", name)), acc.2 + 1n;
+            return String::concat(acc.0, cons), acc.1.pushBack(String::concat("&", gcalloc)), acc.2 + 1n;
         }, (|"", List<String>{}, 0n|));
     let nallocslist = String::concat("GCAllocator* allocs[", natToString(nvalid_allocs), "] = {", String::joinAll(", ", allocslist), "};%n;%n;");
 

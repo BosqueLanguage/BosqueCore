@@ -69,7 +69,8 @@ static_assert(sizeof(FreeListEntry) <= sizeof(MetaData), "BlockHeader size is no
 class PageInfo
 {
 public:
-    FreeListEntry* freelist; //allocate from here until nullptr
+	__CoreGC::TypeInfoBase* typeinfo;
+	FreeListEntry* freelist; //allocate from here until nullptr
    
     // NOTE: as our gc allocators are declared statically, the addresses 
     // of a PageList will not change. However, if PageLists need to be 
@@ -81,8 +82,9 @@ public:
     uint8_t* data; //start of the data block
     MetaData* mdata; // Meta data is stored out-of-band
 
-    uint16_t allocsize; //size of the alloc entries in this page (excluding metadata)
-    uint16_t realsize; //size of the alloc entries in this page (including metadata and other stuff)
+	// again, not sure whether its worth keeping these two here
+    uint16_t allocsize; //size of the alloc entries in this page
+    uint16_t realsize; //size of the alloc entries in this page (including canaries if enabled)
     
     uint16_t entrycount; //max number of objects that can be allocated from this Page
     uint16_t freecount;
@@ -93,6 +95,7 @@ public:
 
 	void zeroInit() noexcept
 	{
+		this->typeinfo = nullptr;
 		this->freelist = nullptr;
 		this->owner = nullptr;
 		this->prev = this->next = nullptr;
@@ -103,7 +106,7 @@ public:
 		this->visited = false;
 	}
 
-    static PageInfo* initialize(void* block, uint16_t allocsize, uint16_t realsize) noexcept;
+    static PageInfo* initialize(void* block, __CoreGC::TypeInfoBase* typeinfo) noexcept;
     size_t rebuild() noexcept;	
 
     static inline PageInfo* extractPageFromPointer(void* p) noexcept {
@@ -261,8 +264,8 @@ public:
 
     GlobalPageGCManager() noexcept : empty_pages(), pagetable() { }
 
-    PageInfo* getFreshPageFromOS(uint16_t entrysize, uint16_t realsize);
-    PageInfo* tryGetEmptyPage(uint16_t entrysize, uint16_t realsize);
+    PageInfo* getFreshPageFromOS(__CoreGC::TypeInfoBase* typeinfo);
+    PageInfo* tryGetEmptyPage(__CoreGC::TypeInfoBase* typeinfo);
 
     bool pagetableQuery(void* addr) noexcept
     {
@@ -459,7 +462,7 @@ public:
         assert(type->type_size == this->allocsize);
 
         if(this->freelist == nullptr) [[unlikely]] { 
-            this->allocatorRefreshAllocationPage(type);
+            this->allocatorRefreshAllocationPage();
         }
         
         void* entry = this->freelist;
@@ -504,13 +507,12 @@ public:
     //process all the pending gc pages, the current alloc page, and evac page -- reset for next round
     void processCollectorPages(BSQMemoryTheadLocalInfo* tinfo) noexcept;
 
-    //May call collection, insert full alloc page in pending gc pages, get new page
-    //To avoid clogging up fast path allocation we initialize high32_typeptr here if needed
-    void allocatorRefreshAllocationPage(__CoreGC::TypeInfoBase* typeinfo) noexcept;
+    void allocatorRefreshAllocationPage() noexcept;
 
     //Get new page for evacuation, append old to filled pages
     void allocatorRefreshEvacuationPage() noexcept;
 };
+
 
 template<typename T, typename... Args>
 inline T* allocTypeImpl(GCAllocator& alloc, __CoreGC::TypeInfoBase* typeinfo, Args... args) 
