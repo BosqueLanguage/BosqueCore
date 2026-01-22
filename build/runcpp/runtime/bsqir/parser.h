@@ -77,6 +77,9 @@ namespace ᐸRuntimeᐳ
 
         bool ensureAndConsumeIdentifier(char* outident, size_t maxlen);
 
+        void consumeTokenAlways();
+        bool testAndConsumeTokenIf(BSQONTokenType ttype);
+
         std::optional<XNone> parseNone();
         std::optional<XBool> parseBool();
         std::optional<XNat> parseNat();

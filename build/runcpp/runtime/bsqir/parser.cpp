@@ -55,6 +55,22 @@ namespace ᐸRuntimeᐳ
         return true;
     }
 
+    void BSQONParser::consumeTokenAlways()
+    {
+        this->lexer.consume();
+    }
+    
+    bool BSQONParser::testAndConsumeTokenIf(BSQONTokenType ttype)
+    {
+        auto token = this->lexer.current();
+        if(token.tokentype != ttype) {
+            return false;
+        }
+
+        this->lexer.consume();
+        return true;
+    }
+
     std::optional<XNone> BSQONParser::parseNone() 
     {
         if(this->lexer.current().tokentype == BSQONTokenType::LiteralNone) {

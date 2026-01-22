@@ -1046,7 +1046,7 @@ class CPPEmitter {
         const sometypeinfo = TransformCPPNameManager.generateTypeInfoNameForTypeKey(tdecl.ttype.tkeystr);
 
         const defbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}() {\n` +
-        `    if(ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.peekTokenType() == ᐸRuntimeᐳ::BSQONTokenType::LiteralNone) { return ${ctname}::optnone; }\n` +
+        `    if(ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.testAndConsumeTokenIf(ᐸRuntimeᐳ::BSQONTokenType::LiteralNone)) { return ${ctname}::optnone; }\n` +
         `    auto somev = BSQ_parseSomeᐸ${voptttname}ᐳ();\n` +
         `    if(!somev.has_value()) { return std::nullopt; }\n` +
         `    return ${TransformCPPNameManager.generateNameForConstructor(ctname)}::fromSome(&${sometypeinfo}, somev.value());\n` +
