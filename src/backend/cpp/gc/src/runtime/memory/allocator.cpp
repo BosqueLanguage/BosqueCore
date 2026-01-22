@@ -14,18 +14,15 @@ GlobalDataStorage GlobalDataStorage::g_global_data{};
 static void setPageMetaData(PageInfo* pp, __CoreGC::TypeInfoBase* typeinfo) noexcept
 {
     pp->typeinfo = typeinfo;
-	pp->allocsize = typeinfo->type_size;
-    pp->realsize = REAL_ENTRY_SIZE(typeinfo->type_size);
-    GC_INVARIANT_CHECK(pp->allocsize != 0 && pp->realsize != 0);
-    
+	pp->realsize = REAL_ENTRY_SIZE(typeinfo->type_size);
 	uint8_t* bpp = reinterpret_cast<uint8_t*>(pp);
     uint8_t* mdataptr = bpp + sizeof(PageInfo);
     pp->mdata = reinterpret_cast<MetaData*>(mdataptr);
-    uint8_t* objptr = bpp + BSQ_BLOCK_ALLOCATION_SIZE - pp->realsize;
+    uint8_t* objptr = bpp + BSQ_BLOCK_ALLOCATION_SIZE - typeinfo->realsize;
 
     int32_t n = 0;
     while(objptr > mdataptr) {
-        objptr -= pp->realsize;
+        objptr -= realsize;
         mdataptr += sizeof(MetaData);
         n++;
     }
@@ -37,12 +34,12 @@ static void setPageMetaData(PageInfo* pp, __CoreGC::TypeInfoBase* typeinfo) noex
 }
 
 PageInfo* PageInfo::initialize(void* block, __CoreGC::TypeInfoBase* typeinfo) noexcept
-{
-    PageInfo* pp = static_cast<PageInfo*>(block);
+{ 
+	PageInfo* pp = static_cast<PageInfo*>(block);	
 	pp->zeroInit();
 	setPageMetaData(pp, typeinfo);
-
-    for(int64_t i = pp->entrycount - 1; i >= 0; i--) {
+    
+	for(int64_t i = pp->entrycount - 1; i >= 0; i--) {
         FreeListEntry* entry = pp->getFreelistEntryAtIndex(i);
         RESET_META_FROM_FREELIST(entry);
         entry->next = pp->freelist;

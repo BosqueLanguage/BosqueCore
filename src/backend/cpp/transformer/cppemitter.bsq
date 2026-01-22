@@ -913,8 +913,7 @@ function generateGCAlloc(ti: CPPAssembly::TypeInfo): String {
 
 function callGCAlloc(ti: CPPAssembly::TypeInfo, constype: String, cons: String): String {
     let alloc = generateGCAlloc(ti);
-    let constypeinfo = emitTypeInfoName(constype);
-    let body = String::concat(constype, ", ", alloc, ", &", constypeinfo);
+    let body = String::concat(constype, ", ", alloc);
     
     return String::concat("𝐀𝐥𝐥𝐨𝐜𝐓𝐲𝐩𝐞( ", body, ", (", cons, ") )");
 }
@@ -2594,7 +2593,7 @@ function emitAssembly(asm: CPPAssembly::Assembly): String {
             var typename = emitTypeKey(ti.typekey, false, ctx); 
 			typename = emitTypeInfoName(typename);
 			let decl = String::concat("GCAllocator ", gcalloc);
-			let args = String::concat(natToString(ti.typesize), ", REAL_ENTRY_SIZE(", natToString(ti.typesize), "), &", typename, ", collect");
+			let args = String::concat("&", typename, ", collect");
             let cons = String::concat(decl, "(", args, ");%n;");
 
             return String::concat(acc.0, cons), acc.1.pushBack(String::concat("&", gcalloc)), acc.2 + 1n;
