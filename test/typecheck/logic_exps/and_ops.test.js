@@ -9,6 +9,6 @@ describe ("Checker -- logical and", () => {
     });
 
     it("should fail wrong type", function () {
-        checkTestExpError("true && 3i", "Bool", "Binary operator requires a Bool type");
+        checkTestExpError("true && 3i", "Bool", "One or more sub-expressions in 'and' expression is not a Bool compatible type");
     });
 });
