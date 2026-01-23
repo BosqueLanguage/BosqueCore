@@ -1700,7 +1700,10 @@ class ASMToIRConverter {
             else {
                 let resbool: IRSimpleExpression;
                 const filteredargs = landargs.filter((a) => !ASMToIRConverter.isLiteralTrueExpression(a[0]));
-                if(filteredargs.length === 1) {
+                if(filteredargs.length === 0) {
+                    resbool = new IRLiteralBoolExpression(true); //all args were true
+                }
+                else if(filteredargs.length === 1) {
                     if(filteredargs[0][1].tkeystr === "Bool") {
                         resbool = filteredargs[0][0];
                     }
@@ -1744,7 +1747,10 @@ class ASMToIRConverter {
             else {
                 let resbool: IRSimpleExpression;
                 const filteredargs = lorargs.filter((a) => !ASMToIRConverter.isLiteralFalseExpression(a[0]));
-                if(filteredargs.length === 1) {
+                if(filteredargs.length === 0) {
+                    resbool = new IRLiteralBoolExpression(false); //all args were false
+                }
+                else if(filteredargs.length === 1) {
                     if(filteredargs[0][1].tkeystr === "Bool") {
                         resbool = filteredargs[0][0];
                     }

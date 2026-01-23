@@ -500,6 +500,14 @@ class TypeChecker {
                     this.checkError(exp.sinfo, !andrefsok, `Nested and-ref expressions are not allowed in guards`);
                     assert(aexps.every((a) => a.bbinds.length === 0), "These should be set in the itest part (not the expression part) probably bad nesting");
 
+                    this.checkError(exp.sinfo, aexps.some((ee) => !this.relations.isBooleanType(ee.tsig)), "One or more sub-expressions in 'and' expression is not a Bool compatible type");
+
+                    const oftype = aexps[0].tsig;
+                    this.checkError(exp.sinfo, aexps.some((ee) => ee.tsig !== undefined && ee.tsig.tkeystr !== oftype.tkeystr), "Logic And expressions require all arguments to be of the same (Bool compatible) type");
+
+                    const ft = aexps.every((ee) => this.relations.isBooleanType(ee.tsig) && ee.tsig.tkeystr === oftype.tkeystr) ? oftype : this.getWellKnownType("Bool");
+                    exp.setType(ft);
+
                     return TypeResultWRefVarInfoResult.andstates(aexps);
                 }
                 else {
@@ -2851,6 +2859,8 @@ class TypeChecker {
             return exp.setType(this.getWellKnownType("Bool"));    
         }
         else {
+            this.checkError(exp.sinfo, etypes.some((t) => t !== undefined && t.tkeystr !== oftype.tkeystr), "Logic And expressions require all arguments to be of the same (Bool compatible) type");
+            
             const ft = etypes.every((t) => t !== undefined && t.tkeystr === oftype.tkeystr) ? oftype : this.getWellKnownType("Bool");
             return exp.setType(ft);
         }
@@ -2864,6 +2874,8 @@ class TypeChecker {
             return exp.setType(this.getWellKnownType("Bool"));    
         }
         else {
+            this.checkError(exp.sinfo, etypes.some((t) => t !== undefined && t.tkeystr !== oftype.tkeystr), "Logic Or expressions require all arguments to be of the same (Bool compatible) type");
+            
             const ft = etypes.every((t) => t !== undefined && t.tkeystr === oftype.tkeystr) ? oftype : this.getWellKnownType("Bool");
             return exp.setType(ft);
         }
@@ -3374,6 +3386,8 @@ class TypeChecker {
                     this.checkError(exp.sinfo, aexps.some((ee) => !this.relations.isBooleanType(ee.tsig)), "One or more sub-expressions in 'and' expression is not a Bool compatible type");
 
                     const oftype = aexps[0].tsig;
+                    this.checkError(exp.sinfo, aexps.some((ee) => ee.tsig !== undefined && ee.tsig.tkeystr !== oftype.tkeystr), "Logic And expressions require all arguments to be of the same (Bool compatible) type");
+
                     const ft = aexps.every((ee) => this.relations.isBooleanType(ee.tsig) && ee.tsig.tkeystr === oftype.tkeystr) ? oftype : this.getWellKnownType("Bool");
                     exp.setType(ft);
 
