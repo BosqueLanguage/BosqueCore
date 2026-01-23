@@ -165,7 +165,7 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 	PageInfo::getObjectMetadataAligned(O)
 
 // dont move typeinfo from first field in a page!!!
-#define GC_TYPE(META) (reinterpret_cast<__CoreGC::TypeInfoBase*>(PageInfo::extractPageFromPointer(META)))
+#define GC_TYPE(META) ((PageInfo::extractPageFromPointer(META))->typeinfo)
 
 #ifdef VERBOSE_HEADER
 // Resets an objects metadata and updates with index into forward table
