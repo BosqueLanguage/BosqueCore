@@ -151,6 +151,9 @@ void GCAllocator::processCollectorPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
     }
 }
 
+// NOTE we need to monitor perf here, we now have significantly more
+// allocators so the likelyhood of burning through a lot of pages before
+// finding one that is either empty or of the correct type is higher
 PageInfo* GCAllocator::tryGetPendingRebuildPage(float max_util)
 {	
 	PageInfo* pp = nullptr;
@@ -174,7 +177,7 @@ PageInfo* GCAllocator::tryGetPendingRebuildPage(float max_util)
 		}
 	    else {
 			if(p->freecount == p->entrycount) {
-				p = PageInfo::initialize(p, gcalloc->alloctype);
+				p = PageInfo::initialize(p, this->alloctype);
 			}
 			pp = p;
 

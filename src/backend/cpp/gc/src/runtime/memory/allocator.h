@@ -69,7 +69,7 @@ static_assert(sizeof(FreeListEntry) <= sizeof(MetaData), "BlockHeader size is no
 class PageInfo
 {
 public:
-	__CoreGC::TypeInfoBase* typeinfo;
+	__CoreGC::TypeInfoBase* typeinfo; //all entries are of same type
 	
 	FreeListEntry* freelist; //allocate from here until nullptr
    
