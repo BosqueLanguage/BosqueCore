@@ -3371,6 +3371,12 @@ class TypeChecker {
                     const aexps = (exp as LogicAndExpression).exps.map((e) => this.processITestGuardExpression(env, e, false));
                     assert(aexps.every((a) => a.bbinds.length === 0), "These should be set in the itest part (not the expression part) probably bad nesting");
 
+                    this.checkError(exp.sinfo, aexps.some((ee) => !this.relations.isBooleanType(ee.tsig)), "One or more sub-expressions in 'and' expression is not a Bool compatible type");
+
+                    const oftype = aexps[0].tsig;
+                    const ft = aexps.every((ee) => this.relations.isBooleanType(ee.tsig) && ee.tsig.tkeystr === oftype.tkeystr) ? oftype : this.getWellKnownType("Bool");
+                    exp.setType(ft);
+
                     return TypeResultWRefVarInfoResult.andstates(aexps);
                 }
                 else {
