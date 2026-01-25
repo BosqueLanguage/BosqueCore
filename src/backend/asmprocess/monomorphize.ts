@@ -1266,53 +1266,45 @@ class Monomorphizer {
     }
 
     private instantiateIfStatement(stmt: IfStatement) {
-        /*
-        this.instantiateExpression(stmt.cond.exp);
+        this.instantiateITestGuardSet(stmt.cond);
         
-        this.instantiateBlockStatement(stmt.trueBlock);
-
-        if(stmt.cond.itestopt !== undefined) {
-            this.processITestAsConvert(stmt.cond.exp.getType(), stmt.cond.itestopt);
-
-            if(stmt.trueBindType !== undefined) {
-                this.instantiateTypeSignature(stmt.trueBindType, this.currentMapping);
+        for(let i = 0; i < stmt.bbinds.length; ++i) {
+            const bb = stmt.bbinds[i];
+            if(bb.ttrue !== undefined) {
+                this.instantiateTypeSignature(bb.ttrue, this.currentMapping);
+            }
+            if(bb.tfalse !== undefined) {
+                this.instantiateTypeSignature(bb.tfalse, this.currentMapping);
             }
         }
-        */
-        assert(false, "Not Implemented -- instantiateIfStatement");
+
+        this.instantiateBlockStatement(stmt.trueBlock);
     }
 
     private instantiateIfElseStatement(stmt: IfElseStatement) {
-        /*
-        this.instantiateExpression(stmt.cond.exp);
+        this.instantiateITestGuardSet(stmt.cond);
+        
+        for(let i = 0; i < stmt.bbinds.length; ++i) {
+            const bb = stmt.bbinds[i];
+            if(bb.ttrue !== undefined) {
+                this.instantiateTypeSignature(bb.ttrue, this.currentMapping);
+            }
+            if(bb.tfalse !== undefined) {
+                this.instantiateTypeSignature(bb.tfalse, this.currentMapping);
+            }
+        }
 
         this.instantiateBlockStatement(stmt.trueBlock);
         this.instantiateBlockStatement(stmt.falseBlock);
-
-        if(stmt.cond.itestopt !== undefined) {
-            this.processITestAsConvert(stmt.cond.exp.getType(), stmt.cond.itestopt);
-
-            if(stmt.trueBindType !== undefined) {
-                this.instantiateTypeSignature(stmt.trueBindType, this.currentMapping);
-            }
-            if(stmt.falseBindType !== undefined) {
-                this.instantiateTypeSignature(stmt.falseBindType, this.currentMapping);
-            }
-        }
-        */
-        assert(false, "Not Implemented -- instantiateIfElseStatement");
     }
 
     private instantiateIfElifElseStatement(stmt: IfElifElseStatement) {
-        /*
         for(let i = 0; i < stmt.condflow.length; ++i) {
             this.instantiateExpression(stmt.condflow[i].cond);
             this.instantiateBlockStatement(stmt.condflow[i].block);
         }
 
         this.instantiateBlockStatement(stmt.elseflow);
-        */
-        assert(false, "Not Implemented -- instantiateIfElifElseStatement");
     }
 
     private instantiateSwitchStatement(stmt: SwitchStatement) {

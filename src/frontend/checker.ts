@@ -508,7 +508,10 @@ class TypeChecker {
                     const ft = aexps.every((ee) => this.relations.isBooleanType(ee.tsig) && ee.tsig.tkeystr === oftype.tkeystr) ? oftype : this.getWellKnownType("Bool");
                     exp.setType(ft);
 
-                    return TypeResultWRefVarInfoResult.andstates(aexps);
+                    const [hasconflicts, res] = TypeResultWRefVarInfoResult.andstates(aexps);
+                    this.checkError(exp.sinfo, hasconflicts, "Cannot have multiple ref/mod uses of a variable in 'and' expression");
+
+                    return res;
                 }
                 else {
                     return TypeResultWRefVarInfoResult.makeSimpleResult(this.checkExpression(env, exp, undefined));
@@ -531,7 +534,11 @@ class TypeChecker {
         const grenvs = tt.guards.map((guard, ii) => this.processITestGuard(sinfo, env, guard, ii, andrefsok));
 
         this.checkError(sinfo, grenvs.some((grenv) => !this.relations.isBooleanType(grenv.tsig)), `Guard expression does not evaluate to boolean`);
-        return TypeResultWRefVarInfoResult.andstates(grenvs);
+        
+        const [hasconflicts, res] = TypeResultWRefVarInfoResult.andstates(grenvs);
+        this.checkError(sinfo, hasconflicts, "Cannot have multiple ref/mod uses of a variable in 'and' expression");
+        
+        return res;
     }
 
     private checkTemplateInstantiationIsOkWithDecls(sinfo: SourceInfo, targs: TypeSignature[], decls: TypeTemplateTermDecl[]): boolean {
@@ -3391,7 +3398,10 @@ class TypeChecker {
                     const ft = aexps.every((ee) => this.relations.isBooleanType(ee.tsig) && ee.tsig.tkeystr === oftype.tkeystr) ? oftype : this.getWellKnownType("Bool");
                     exp.setType(ft);
 
-                    return TypeResultWRefVarInfoResult.andstates(aexps);
+                    const [hasconflicts, res] = TypeResultWRefVarInfoResult.andstates(aexps);
+                    this.checkError(exp.sinfo, hasconflicts, "Cannot have multiple ref/mod uses of a variable in 'and' expression");
+
+                    return res;
                 }
                 else {
                     return TypeResultWRefVarInfoResult.makeSimpleResult(this.checkExpression(env, exp, typeinfer));
@@ -3688,19 +3698,19 @@ class TypeChecker {
 
     private checkIfStatement(env: TypeEnvironment, stmt: IfStatement): TypeEnvironment {
         let eetgr = this.processITestGuardSet(stmt.sinfo, env, stmt.cond);
+        const eetype = (eetgr.tsig instanceof ErrorTypeSignature) ? this.getWellKnownType("Bool") : eetgr.tsig;
         
-        if(stmt.cond.itestopt === undefined) {
-            if(eetype instanceof ErrorTypeSignature) {
-                eetype = this.getWellKnownType("Bool");
-            }
+        stmt.bbinds = eetgr.bbinds;
+        if(eetgr.bbinds.length === 0) {
+            this.checkError(stmt.sinfo, !this.relations.isBooleanType(eetype), "If test requires a Bool type");
 
-            this.checkError(stmt.cond.exp.sinfo, !this.relations.isBooleanType(eetype), "If test requires a Bool type");
-            this.checkError(stmt.cond.exp.sinfo, stmt.binder !== undefined, "Binder is not valid here -- requires use of an ITest");
+            let [aenv, tenv, _] = eetgr.extendEnvironmentWithVarAssignments(env);
 
-            const ttrue = this.checkBlockStatement(env, stmt.trueBlock);
-            return TypeEnvironment.mergeEnvironmentsSimple(env, env, ttrue);
+            const ttrue = this.checkBlockStatement(tenv, stmt.trueBlock);
+            return TypeEnvironment.mergeEnvironmentsSimple(aenv, tenv, ttrue);
         }
         else {
+            /*
             const splits = this.processITestAsConvert(stmt.sinfo, env, eetype, stmt.cond.itestopt);
             this.checkError(stmt.cond.exp.sinfo, splits.ttrue === undefined, "Test is never true -- true branch of if is unreachable");
             this.checkError(stmt.cond.exp.sinfo, splits.tfalse === undefined, "Test is never false -- false branch of if is unreachable");
@@ -3730,25 +3740,27 @@ class TypeChecker {
                     return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: eetype, specialaccess: undefined }, env, ttrue, nenv);    
                 }
             }
+            */
+            assert(false, "Not Implemented -- checkIfStatement with ITest binds");
         }
     }
 
     private checkIfElseStatement(env: TypeEnvironment, stmt: IfElseStatement): TypeEnvironment {
-        let eetype = this.checkExpression(env, stmt.cond.exp, undefined);
+        let eetgr = this.processITestGuardSet(stmt.sinfo, env, stmt.cond);
+        const eetype = (eetgr.tsig instanceof ErrorTypeSignature) ? this.getWellKnownType("Bool") : eetgr.tsig;
 
-        if(stmt.cond.itestopt === undefined) {
-            if(eetype instanceof ErrorTypeSignature) {
-                eetype = this.getWellKnownType("Bool");
-            }
+        stmt.bbinds = eetgr.bbinds;
+        if(eetgr.bbinds.length === 0) {
+            this.checkError(stmt.sinfo, !this.relations.isBooleanType(eetype), "If test requires a Bool type");
+            
+            let [aenv, tenv, fenv] = eetgr.extendEnvironmentWithVarAssignments(env);
 
-            this.checkError(stmt.cond.exp.sinfo, !this.relations.isBooleanType(eetype), "If test requires a Bool type");
-            this.checkError(stmt.cond.exp.sinfo, stmt.binder !== undefined, "Binder is not valid here -- requires use of an ITest");
-
-            const ttrue = this.checkBlockStatement(env, stmt.trueBlock);
-            const tfalse = this.checkBlockStatement(env, stmt.falseBlock);
-            return TypeEnvironment.mergeEnvironmentsSimple(env, ttrue, tfalse);
+            const ttrue = this.checkBlockStatement(tenv, stmt.trueBlock);
+            const tfalse = this.checkBlockStatement(fenv, stmt.falseBlock);
+            return TypeEnvironment.mergeEnvironmentsSimple(aenv, ttrue, tfalse);
         }
         else {
+            /*
             const splits = this.processITestAsConvert(stmt.sinfo, env, eetype, stmt.cond.itestopt);
             this.checkError(stmt.cond.exp.sinfo, splits.ttrue === undefined, "Test is never true -- true branch of if is unreachable");
             this.checkError(stmt.cond.exp.sinfo, splits.tfalse === undefined, "Test is never false -- false branch of if is unreachable");
@@ -3783,6 +3795,8 @@ class TypeChecker {
                     return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: eetype, specialaccess: undefined }, ttrue, tfalse);
                 }
             }
+            */
+            assert(false, "Not Implemented -- checkIfElseStatement with ITest binds");
         }
     }
 

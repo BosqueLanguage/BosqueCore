@@ -1,6 +1,7 @@
 import assert from "node:assert";
 
 import { TypeSignature } from "./type.js";
+import { TypeTestBindInfo } from "./body.js";
 
 class VarInfo {
     readonly srcname: string;
@@ -113,34 +114,6 @@ class LocalScope {
         }
 
         return new LocalScope(envs[0].binderscope, locals, baccess);
-    }
-}
-
-
-class TypeTestBindInfo {
-    readonly guardidx: number;
-    readonly bname: string;
-
-    readonly ttrue: TypeSignature | undefined;
-    readonly tfalse: TypeSignature | undefined;
-
-    constructor(guardidx: number, bname: string, ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined) {
-        this.guardidx = guardidx;
-        this.bname = bname;
-        this.ttrue = ttrue;
-        this.tfalse = tfalse;
-    }
-
-    notop(): TypeTestBindInfo {
-        return new TypeTestBindInfo(this.guardidx, this.bname, this.tfalse, this.ttrue);
-    }
-
-    convertToStructInfoTrue(): { gidx: number, bvname: string, tsig: TypeSignature } {
-        return { gidx: this.guardidx, bvname: this.bname, tsig: this.ttrue as TypeSignature };
-    }
-
-    convertToStructInfoFalse(): { gidx: number, bvname: string, tsig: TypeSignature } {
-        return { gidx: this.guardidx, bvname: this.bname, tsig: this.tfalse as TypeSignature };
     }
 }
 
@@ -280,6 +253,28 @@ class TypeResultWRefVarInfoResult {
         );
 
         return [hasconflicts, nstate];
+    }
+
+
+    extendEnvironmentWithVarAssignments(env: TypeEnvironment): [TypeEnvironment, TypeEnvironment, TypeEnvironment] {
+        let aenv = env;
+        let tenv = env;
+        let fenv = env;
+
+        for(let i = 0; i < this.setcondout.ttrue.length; i++) {
+            tenv = tenv.assignLocalVariable(this.setcondout.ttrue[i]);
+        }
+        for(let i = 0; i < this.setcondout.tfalse.length; i++) {
+            fenv = fenv.assignLocalVariable(this.setcondout.tfalse[i]);
+        }
+
+        for(let i = 0; i < this.setuncond.length; i++) {
+            aenv = aenv.assignLocalVariable(this.setuncond[i]);
+            tenv = tenv.assignLocalVariable(this.setuncond[i]);
+            fenv = fenv.assignLocalVariable(this.setuncond[i]);
+        }
+        
+        return [aenv, tenv, fenv];
     }
 }
 
@@ -468,6 +463,6 @@ class TypeEnvironment {
 export {
     VarInfo,
     TypeInferContext, SimpleTypeInferContext, EListStyleTypeInferContext,
-    TypeTestBindInfo, TypeResultWRefVarInfoResult,
+    TypeResultWRefVarInfoResult,
     TypeEnvironment
 };

@@ -19,6 +19,33 @@ class BinderInfo {
     }
 }
 
+class TypeTestBindInfo {
+    readonly guardidx: number;
+    readonly bname: string;
+
+    readonly ttrue: TypeSignature | undefined;
+    readonly tfalse: TypeSignature | undefined;
+
+    constructor(guardidx: number, bname: string, ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined) {
+        this.guardidx = guardidx;
+        this.bname = bname;
+        this.ttrue = ttrue;
+        this.tfalse = tfalse;
+    }
+
+    notop(): TypeTestBindInfo {
+        return new TypeTestBindInfo(this.guardidx, this.bname, this.tfalse, this.ttrue);
+    }
+
+    convertToStructInfoTrue(): { gidx: number, bvname: string, tsig: TypeSignature } {
+        return { gidx: this.guardidx, bvname: this.bname, tsig: this.ttrue as TypeSignature };
+    }
+
+    convertToStructInfoFalse(): { gidx: number, bvname: string, tsig: TypeSignature } {
+        return { gidx: this.guardidx, bvname: this.bname, tsig: this.tfalse as TypeSignature };
+    }
+}
+
 abstract class ITest {
     readonly isnot: boolean;
 
@@ -2366,8 +2393,8 @@ class ReturnMultiStatement extends Statement {
 class IfStatement extends Statement {
     readonly cond: ITestGuardSet;
     readonly trueBlock: BlockStatement;
-    
-    trueBindType: TypeSignature | undefined = undefined;
+
+    bbinds: TypeTestBindInfo[] = [];
 
     constructor(sinfo: SourceInfo, cond: ITestGuardSet, trueBlock: BlockStatement) {
         super(StatementTag.IfStatement, sinfo);
@@ -2385,8 +2412,7 @@ class IfElseStatement extends Statement {
     readonly trueBlock: BlockStatement;
     readonly falseBlock: BlockStatement;
 
-    trueBindType: TypeSignature | undefined = undefined;
-    falseBindType: TypeSignature | undefined = undefined;
+    bbinds: TypeTestBindInfo[] = [];
 
     constructor(sinfo: SourceInfo, cond: ITestGuardSet, trueBlock: BlockStatement, falseBlock: BlockStatement) {
         super(StatementTag.IfElseStatement, sinfo);
@@ -2873,7 +2899,7 @@ class StandardBodyImplementation extends BodyImplementation {
 
 export {
     RecursiveAnnotation,
-    BinderInfo, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestFail,
+    BinderInfo, TypeTestBindInfo, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestFail,
     ITestGuard, ITestBinderGuard, ITestTypeGuard, ITestSimpleGuard, ITestGuardSet,
     FormatStringComponent, FormatStringTextComponent, FormatStringArgComponent,
     ArgumentValue, PositionalArgumentValue, NamedArgumentValue, SpreadArgumentValue, PassingArgumentValue, ArgumentList,
