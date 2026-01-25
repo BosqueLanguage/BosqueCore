@@ -101,19 +101,27 @@ class LocalScope {
         }
     }
 
-    static mergeLocalScopes(...envs: LocalScope[]): LocalScope {
+    static mergeLocalScopes(origscope: LocalScope, allscopes: LocalScope[], envs: LocalScope[]): LocalScope {
         let locals: VarInfo[] = [];
-        for(let i = 0; i < envs[0].locals.length; i++) {
-            const mdef = envs.every((e) => e.locals[i].mustDefined);
-            locals.push(new VarInfo(envs[0].locals[i].srcname, envs[0].locals[i].decltype, envs[0].locals[i].vkind, mdef));
+
+        if(envs.length === 0) {
+            for(let i = 0; i < origscope.locals.length; i++) {
+                locals.push(new VarInfo(origscope.locals[i].srcname, origscope.locals[i].decltype, origscope.locals[i].vkind, origscope.locals[i].mustDefined));
+            }
+        }
+        else {
+            for(let i = 0; i < origscope.locals.length; i++) {
+                const mdef = envs.every((e) => e.locals[i].mustDefined);
+                locals.push(new VarInfo(envs[0].locals[i].srcname, envs[0].locals[i].decltype, envs[0].locals[i].vkind, mdef));
+            }
         }
         
-        let baccess = new Set<string>();
-        for(let i = 0; i < envs.length; i++) {
-            baccess = new Set<string>([...baccess, ...envs[i].accessed]);
+        let baccess = new Set<string>(origscope.accessed);
+        for(let i = 0; i < allscopes.length; i++) {
+            baccess = new Set<string>([...baccess, ...allscopes[i].accessed]);
         }
 
-        return new LocalScope(envs[0].binderscope, locals, baccess);
+        return new LocalScope(origscope.binderscope, locals, baccess);
     }
 }
 
@@ -411,7 +419,7 @@ class TypeEnvironment {
         let locals: LocalScope[] = [];
         const normalenvs = envs.filter((e) => e.isnormalflow);
         for(let i = 0; i < origenv.locals.length; i++) {
-            locals.push(LocalScope.mergeLocalScopes(...normalenvs.map((e) => e.locals[i])));
+            locals.push(LocalScope.mergeLocalScopes(origenv.locals[i], envs.map((e) => e.locals[i]), normalenvs.map((e) => e.locals[i])));
         }
 
         let lcaptures: {vname: string, vtype: TypeSignature, scopeidx: number}[] = [...origenv.lcaptures];
