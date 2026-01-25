@@ -154,6 +154,69 @@ class TypeResultWRefVarInfoResult {
     readonly alwaystrue: boolean;
     readonly alwaysfalse: boolean;
 
+    private static checkRWVarConflicts(setcondout: {ttrue: string[], tfalse: string[]}, setuncond: string[], usemod: string[]): boolean {
+        //check for conflicts between setcondout/setuncond/usemod
+        let assigned = new Set<string>();
+
+        for(let i = 0; i < setcondout.ttrue.length; i++) {
+            if(assigned.has(setcondout.ttrue[i])) {
+                return false;
+            }
+            assigned.add(setcondout.ttrue[i]);
+        }
+        for(let i = 0; i < setcondout.tfalse.length; i++) {
+            if(assigned.has(setcondout.tfalse[i])) {
+                return false;
+            }
+            assigned.add(setcondout.tfalse[i]);
+        }
+
+        for(let i = 0; i < setuncond.length; i++) {
+            if(assigned.has(setuncond[i])) {
+                return false;
+            }
+            assigned.add(setuncond[i]);
+        }
+
+        for(let i = 0; i < usemod.length; i++) {
+            if(assigned.has(usemod[i])) {
+                return false;
+            }
+            assigned.add(usemod[i]);
+        }
+
+        return true;
+    }
+
+    private checkNewRWVarConflicts(assigned: Set<string>): boolean {
+        //check for conflicts between setcondout/setuncond/usemod
+
+        for(let i = 0; i < this.setcondout.ttrue.length; i++) {
+            if(assigned.has(this.setcondout.ttrue[i])) {
+                return false;
+            }
+        }
+        for(let i = 0; i < this.setcondout.tfalse.length; i++) {
+            if(assigned.has(this.setcondout.tfalse[i])) {
+                return false;
+            }
+        }
+
+        for(let i = 0; i < this.setuncond.length; i++) {
+            if(assigned.has(this.setuncond[i])) {
+                return false;
+            }
+        }
+
+        for(let i = 0; i < this.usemod.length; i++) {
+            if(assigned.has(this.usemod[i])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     constructor(tsig: TypeSignature, alwaystrue: boolean, alwaysfalse: boolean, setcondout: {ttrue: string[], tfalse: string[]}, setuncond: string[], usemod: string[], bbinds: TypeTestBindInfo[]) {
         this.tsig = tsig;
         this.alwaystrue = alwaystrue;
@@ -168,8 +231,19 @@ class TypeResultWRefVarInfoResult {
         return new TypeResultWRefVarInfoResult(tsig, false, false, {ttrue: [], tfalse: []}, [], [], []);
     }
 
-    static andstates(results: TypeResultWRefVarInfoResult[]): TypeResultWRefVarInfoResult {
+    static makeGeneralResult(tsig: TypeSignature, alwaystrue: boolean, alwaysfalse: boolean, setcondout: {ttrue: string[], tfalse: string[]}, setuncond: string[], usemod: string[], bbinds: TypeTestBindInfo[]): TypeResultWRefVarInfoResult | undefined {
+        if(!TypeResultWRefVarInfoResult.checkRWVarConflicts(setcondout, setuncond, usemod)) {
+            return undefined;
+        }
+        
+        return new TypeResultWRefVarInfoResult(tsig, alwaystrue, alwaysfalse, setcondout, setuncond, usemod, bbinds);
+    }
+
+    static andstates(results: TypeResultWRefVarInfoResult[]): [boolean, TypeResultWRefVarInfoResult] {
         assert(results.length > 0);
+
+        let hasconflicts = false;
+        let assigned = new Set<string>();
 
         let ttrue = new Set<string>();
         let tfalse = new Set<string>();
@@ -178,14 +252,24 @@ class TypeResultWRefVarInfoResult {
         let bbinds: TypeTestBindInfo[] = [];
 
         for(let i = 0; i < results.length; i++) {
+            hasconflicts = hasconflicts || !results[i].checkNewRWVarConflicts(assigned);
+            
             results[i].setcondout.ttrue.forEach((v) => ttrue.add(v));
+            results[i].setcondout.tfalse.forEach((v) => assigned.add(v));
+
             results[i].setcondout.tfalse.forEach((v) => tfalse.add(v));
+            results[i].setcondout.ttrue.forEach((v) => assigned.add(v));
+
             results[i].setuncond.forEach((v) => setuncond.add(v));
+            results[i].setuncond.forEach((v) => assigned.add(v));
+
             results[i].usemod.forEach((v) => usemod.add(v));
+            results[i].usemod.forEach((v) => assigned.add(v));
+
             bbinds.push(...results[i].bbinds);
         }
 
-        return new TypeResultWRefVarInfoResult(
+        const nstate = new TypeResultWRefVarInfoResult(
             results[0].tsig,
             results.every((r) => r.alwaystrue),
             results.some((r) => r.alwaysfalse),
@@ -194,6 +278,8 @@ class TypeResultWRefVarInfoResult {
             [...usemod],
             bbinds
         );
+
+        return [hasconflicts, nstate];
     }
 }
 

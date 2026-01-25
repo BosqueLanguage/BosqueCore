@@ -3687,8 +3687,7 @@ class TypeChecker {
     }
 
     private checkIfStatement(env: TypeEnvironment, stmt: IfStatement): TypeEnvironment {
-        /*
-        let eetype = this.checkExpression(env, stmt.cond.exp, undefined);
+        let eetgr = this.processITestGuardSet(stmt.sinfo, env, stmt.cond);
         
         if(stmt.cond.itestopt === undefined) {
             if(eetype instanceof ErrorTypeSignature) {
@@ -3732,12 +3731,9 @@ class TypeChecker {
                 }
             }
         }
-        */
-        assert(false, "Not Implemented -- checkIfStatement");
     }
 
     private checkIfElseStatement(env: TypeEnvironment, stmt: IfElseStatement): TypeEnvironment {
-        /*
         let eetype = this.checkExpression(env, stmt.cond.exp, undefined);
 
         if(stmt.cond.itestopt === undefined) {
@@ -3788,12 +3784,9 @@ class TypeChecker {
                 }
             }
         }
-        */
-        assert(false, "Not Implemented -- checkIfElseStatement");
     }
 
     private checkIfElifElseStatement(env: TypeEnvironment, stmt: IfElifElseStatement): TypeEnvironment {
-        /*
         let branchflows: TypeEnvironment[] = [];
 
         for(let i = 0; i < stmt.condflow.length; ++i) {
@@ -3811,8 +3804,6 @@ class TypeChecker {
         const elseflow = this.checkBlockStatement(env, stmt.elseflow);
 
         return TypeEnvironment.mergeEnvironmentsSimple(env, ...branchflows, elseflow);
-        */
-        assert(false, "Not Implemented -- checkIfElifElseStatement");
     }
 
     private checkSwitchStatement(env: TypeEnvironment, stmt: SwitchStatement): TypeEnvironment {

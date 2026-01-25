@@ -233,6 +233,10 @@ enum IRStatementTag {
 
     IRLogicConditionalStatement = "IRLogicConditionalStatement",
 
+    IRSimpleIfStatement = "IRSimpleIfStatement",
+    IRSimpleIfElseStatement = "IRSimpleIfElseStatement",
+    IRSimpleIfElifElseStatement = "IRSimpleIfElifElseStatement",
+
     //TODO: lots more statement types here
 
     IRErrorAdditionBoundsCheckStatement = "IRErrorAdditionBoundsCheckStatement",
@@ -1643,6 +1647,45 @@ class IRLogicConditionalStatement extends IRStatement {
     }
 }
 
+class IRSimpleIfStatement extends IRStatement {
+    readonly cond: IRSimpleExpression;
+    readonly tblock: IRBlockStatement;
+
+    constructor(cond: IRSimpleExpression, tblock: IRBlockStatement) {
+        super(IRStatementTag.IRSimpleIfStatement);
+        this.cond = cond;
+        this.tblock = tblock;
+    }
+}
+
+class IRSimpleIfElseStatement extends IRStatement {
+    readonly cond: IRSimpleExpression;
+    readonly tblock: IRBlockStatement;
+    readonly eblock: IRBlockStatement;
+
+    constructor(cond: IRSimpleExpression, tblock: IRBlockStatement, eblock: IRBlockStatement) {
+        super(IRStatementTag.IRSimpleIfElseStatement);
+        this.cond = cond;
+        this.tblock = tblock;
+        this.eblock = eblock;
+    }
+}
+
+class IRSimpleIfElifElseStatement extends IRStatement {
+    readonly cond: IRSimpleExpression;
+    readonly ttblock: IRBlockStatement;
+    readonly elifs: {test: IRSimpleExpression, block: IRBlockStatement}[];
+    readonly eblock: IRBlockStatement;
+
+    constructor(cond: IRSimpleExpression, ttblock: IRBlockStatement, elifs: {test: IRSimpleExpression, block: IRBlockStatement}[], eblock: IRBlockStatement) {
+        super(IRStatementTag.IRSimpleIfElifElseStatement);
+        this.cond = cond;
+        this.ttblock = ttblock;
+        this.elifs = elifs;
+        this.eblock = eblock;
+    }
+}
+
 class IRErrorAdditionBoundsCheckStatement extends IRErrorBinArithCheckStatement {
     constructor(file: string, sinfo: IRSourceInfo, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float") {
         super(IRStatementTag.IRErrorAdditionBoundsCheckStatement, file, sinfo, undefined, checkID, left, right, optypechk);
@@ -1899,6 +1942,8 @@ export {
     IRReturnVoidSimpleStatement, IRReturnValueSimpleStatement, IRReturnDirectInvokeStatement,
     IRChkLogicImpliesShortCircuitStatement,
     IRLogicConditionalStatement,
+
+    IRSimpleIfStatement, IRSimpleIfElseStatement, IRSimpleIfElifElseStatement,
 
     IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement,
     IRErrorTypedStringCheckStatement, IRTypeDeclSizeRangeCheckCStringStatement, IRTypeDeclSizeRangeCheckUnicodeStringStatement, IRTypeDeclFormatCheckCStringStatement, IRTypeDeclFormatCheckUnicodeStringStatement,
