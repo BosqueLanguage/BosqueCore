@@ -3831,6 +3831,7 @@ class Parser {
             }
             else {
                 if(closeparen !== undefined) {
+                    this.recordErrorGeneral(this.peekToken(), "Missing closing ')' in expression");
                     this.currentState().moveToRecoverPosition();
                 }
             }
