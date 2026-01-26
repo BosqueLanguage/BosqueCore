@@ -349,17 +349,18 @@ private:
         this->pendinggc_pages.push(this->alloc_page);
     }
 
-	// NOTE skeptical on some of these floats, take a look later
     static int getBucketIndex(PageInfo* p)
     {
-        float util = p->approx_utilization;
-        int idx = 0;
+        float util = p->approx_utilization; 
+	   	DSA_INVARIANT_CHECK(!IS_FULL(util) && util > 0.0f);
+
+		int idx = 0;
         if(IS_LOW_UTIL(util)) {
-            idx = (util - 0.01f) / BUCKET_UTIL_VARIANCE;
+            idx = util / BUCKET_UTIL_VARIANCE;
             DSA_INVARIANT_CHECK(idx < NUM_LOW_UTIL_BUCKETS);
         }
         else {
-            idx = (util - 0.61f) / BUCKET_UTIL_VARIANCE;
+            idx = (util - LOW_UTIL_THRESH) / BUCKET_UTIL_VARIANCE;
             DSA_INVARIANT_CHECK(idx < NUM_HIGH_UTIL_BUCKETS);
         }
 
