@@ -905,13 +905,15 @@ function emitConstructorPrimarySpecialConstructableExpression(exp: CPPAssembly::
 }
 
 function generateGCAlloc(ti: CPPAssembly::TypeInfo): String {
-    return String::concat("alloc", natToString(ti.slotsize));
+	var typename = emitTypeKeyValue(ti.typekey);
+	typename = emitSpecialTemplate(typename);
+	
+	return String::concat("alloc_", typename);
 }
 
 function callGCAlloc(ti: CPPAssembly::TypeInfo, constype: String, cons: String): String {
     let alloc = generateGCAlloc(ti);
-    let constypeinfo = emitTypeInfoName(constype);
-    let body = String::concat(constype, ", ", alloc, ", &", constypeinfo);
+    let body = String::concat(constype, ", ", alloc);
     
     return String::concat("𝐀𝐥𝐥𝐨𝐜𝐓𝐲𝐩𝐞( ", body, ", (", cons, ") )");
 }
@@ -2580,19 +2582,23 @@ function emitAssembly(asm: CPPAssembly::Assembly): String {
     }, "//%n;// Emitted Functions/Methods%n;//%n;");
 
     %% Various size allocators needed for the GC
-    var allocs, allocslist, allocmap = asm.typeinfos
-        .reduce<(|String, List<String>, Map<Nat, String>|)>(fn(acc, tk, ti) => {
-            if(acc.2.has(ti.slotsize) || ti.slotsize == 0n) {
+	var allocs, allocslist, nvalid_allocs = asm.typeinfos
+        .reduce<(|String, List<String>, Nat|)>(fn(acc, tk, ti) => {
+            %% skip non ref and elists
+			if(ti.tag !== CPPAssembly::Tag#Ref || ti.typekey.value.startsWithString('(|')) {
                 return acc;
             }
-            
-            let name = generateGCAlloc(ti);
-            let decl = String::concat("GCAllocator ", name);
-            let cons = String::concat(decl, "(", natToString(ti.typesize), ", REAL_ENTRY_SIZE(", natToString(ti.typesize), "), collect);%n;");
+           
+            let gcalloc = generateGCAlloc(ti);
+            var typename = emitTypeKey(ti.typekey, false, ctx); 
+			typename = emitTypeInfoName(typename);
+			let decl = String::concat("GCAllocator ", gcalloc);
+			let args = String::concat("&", typename, ", collect");
+            let cons = String::concat(decl, "(", args, ");%n;");
 
-            return String::concat(acc.0, cons), acc.1.pushBack(String::concat("&", name)), acc.2.insert(ti.slotsize, name);
-        }, (|"", List<String>{}, Map<Nat, String>{}|));
-    let nallocslist = String::concat("GCAllocator* allocs[", natToString(allocmap.size()), "] = {", String::joinAll(", ", allocslist), "};%n;%n;");
+            return String::concat(acc.0, cons), acc.1.pushBack(String::concat("&", gcalloc)), acc.2 + 1n;
+        }, (|"", List<String>{}, 0n|));
+    let nallocslist = String::concat("GCAllocator* allocs[", natToString(nvalid_allocs), "] = {", String::joinAll(", ", allocslist), "};%n;%n;");
 
     let gcinfo = String::concat(allocs, nallocslist);
 

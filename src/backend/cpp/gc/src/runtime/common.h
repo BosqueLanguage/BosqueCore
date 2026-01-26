@@ -54,7 +54,7 @@
 #define BSQ_MAX_FWD_TABLE_ENTRIES 524288ul
 
 #define BSQ_MAX_ROOTS 2048ul
-#define BSQ_MAX_ALLOC_SLOTS 64ul
+#define BSQ_MAX_ALLOC_SLOTS 1024ul
 
 //Number of allocation pages we fill up before we start collecting
 #define BSQ_COLLECTION_THRESHOLD 1024 
@@ -125,27 +125,14 @@ public:
 
 /////////////////////////////////////////////
 // Packed metadata bit layout
-// - All type information needed for the GC is emitted statically inside the emit.hpp header file
-//   meaning it is stored in the programs data segment. We can take advantage of these objects
-//   residing in the same location by capturing the high order 32 bits of a typeinfo address
-//   then the variant low 32 bits will be stored inside metadata
 // - When we are in the nursery the rc_fwd field will store an index into our forward table
 // - When we are in the old space the rc_fwd field will store a reference count
-//
 
-#define NUM_TYPEPTR_BITS 32
-#define TYPEPTR_MASK 0x0000'0000'FFFF'FFFFUL
-
-// TODO: Temporary hack for getting approximate data seg address
-//       --- used in packed metadata
-static const char* GC_DATA_SEGMENT_ANCHOR = "GC_DATA_SEGMENT_BASE";
-static const uint64_t g_typeptr_high32 = (reinterpret_cast<uint64_t>(&GC_DATA_SEGMENT_ANCHOR) >> NUM_TYPEPTR_BITS);
-
+// TODO we will need a separate rc for threads
 #ifdef VERBOSE_HEADER
 struct MetaData 
 {
     //!!!! alloc info is valid even when this is in a free-list so we need to make sure it does not collide with the free-list data !!!!
-    __CoreGC::TypeInfoBase* type;
     bool isalloc;
     bool isyoung;
     bool ismarked;
@@ -161,12 +148,11 @@ typedef struct MetaData
     union {
         uint64_t raw;
         struct {
-            uint64_t typeptr_low : 32;
             uint64_t isalloc : 1;
             uint64_t isyoung : 1;
             uint64_t ismarked : 1;
             uint64_t isroot : 1;
-            uint64_t rc_fwd : 28;
+            uint64_t rc_fwd : 60;
         } bits;
     };
 } MetaData;
@@ -178,9 +164,11 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 #define GC_GET_META_DATA_ADDR(O) \
 	PageInfo::getObjectMetadataAligned(O)
 
+#define GC_TYPE(META) ((PageInfo::extractPageFromPointer(META))->typeinfo)
+
 #ifdef VERBOSE_HEADER
 // Resets an objects metadata and updates with index into forward table
-#define RESET_METADATA_FOR_OBJECT(META, FP) ((*(META)) = { .type=nullptr, .isalloc=false, .isyoung=true, .ismarked=false, .isroot=false, .forward_index=FP, .ref_count=0 })
+#define RESET_METADATA_FOR_OBJECT(META, FP) ((*(META)) = { .isalloc=false, .isyoung=true, .ismarked=false, .isroot=false, .forward_index=FP, .ref_count=0 })
 #define ZERO_METADATA(META) ((*(META)) = {})
 
 #define GC_IS_MARKED(META)    ((META)->ismarked)
@@ -190,8 +178,6 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 
 #define GC_FWD_INDEX(META) ((META)->forward_index)
 #define GC_REF_COUNT(META) ((META)->ref_count)
-
-#define GC_TYPE(META) ((META)->type)
 
 #define INC_REF_COUNT(META) (++GC_REF_COUNT(META))
 #define DEC_REF_COUNT(META) (--GC_REF_COUNT(META))
@@ -213,10 +199,10 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 
 #define GC_CHECK_BOOL_BYTES(META) \
 do { \
-    int8_t isalloc_byte = *reinterpret_cast<const int8_t*>(&(META)->isalloc); \
-    int8_t isyoung_byte = *reinterpret_cast<const int8_t*>(&(META)->isyoung); \
-    int8_t ismarked_byte = *reinterpret_cast<const int8_t*>(&(META)->ismarked); \
-    int8_t isroot_byte = *reinterpret_cast<const int8_t*>(&(META)->isroot); \
+    int8_t isalloc_byte  = *reinterpret_cast<int8_t*>(&(META)->isalloc); \
+    int8_t isyoung_byte  = *reinterpret_cast<int8_t*>(&(META)->isyoung); \
+    int8_t ismarked_byte = *reinterpret_cast<int8_t*>(&(META)->ismarked); \
+    int8_t isroot_byte   = *reinterpret_cast<int8_t*>(&(META)->isroot); \
     GC_INVARIANT_CHECK(isalloc_byte == 0 || isalloc_byte == 1); \
     GC_INVARIANT_CHECK(isyoung_byte == 0 || isyoung_byte == 1); \
     GC_INVARIANT_CHECK(ismarked_byte == 0 || ismarked_byte == 1); \
@@ -241,12 +227,6 @@ do { \
 #define GC_FWD_INDEX(META)    ((META)->bits.rc_fwd)
 #define GC_REF_COUNT(META)    ((META)->bits.rc_fwd)
 
-#define GET_TYPE_PTR(META) (((META)->bits.typeptr_low) | (g_typeptr_high32 << NUM_TYPEPTR_BITS)) 
-#define GC_TYPE(META)      (reinterpret_cast<__CoreGC::TypeInfoBase*>(GET_TYPE_PTR(META)))
-
-// Sets low 32 bits of ptr in meta
-#define SET_TYPE_PTR(META, PTR) ((META)->bits.typeptr_low = reinterpret_cast<uintptr_t>(PTR) & TYPEPTR_MASK)
-        
 #define INC_REF_COUNT(META) (++GC_REF_COUNT(META))
 #define DEC_REF_COUNT(META) (--GC_REF_COUNT(META))
 

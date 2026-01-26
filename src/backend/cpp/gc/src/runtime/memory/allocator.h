@@ -69,7 +69,9 @@ static_assert(sizeof(FreeListEntry) <= sizeof(MetaData), "BlockHeader size is no
 class PageInfo
 {
 public:
-    FreeListEntry* freelist; //allocate from here until nullptr
+	__CoreGC::TypeInfoBase* typeinfo; //all entries are of same type
+	
+	FreeListEntry* freelist; //allocate from here until nullptr
    
     // NOTE: as our gc allocators are declared statically, the addresses 
     // of a PageList will not change. However, if PageLists need to be 
@@ -78,12 +80,10 @@ public:
     PageInfo* prev;
     PageInfo* next;
 
-    uint8_t* data; //start of the data block
+	uint8_t* data; //start of the data block
     MetaData* mdata; // Meta data is stored out-of-band
 
-    uint16_t allocsize; //size of the alloc entries in this page (excluding metadata)
-    uint16_t realsize; //size of the alloc entries in this page (including metadata and other stuff)
-    
+	uint32_t realsize; //object size including canaries (dont need such a large int)
     uint16_t entrycount; //max number of objects that can be allocated from this Page
     uint16_t freecount;
 
@@ -93,17 +93,19 @@ public:
 
 	void zeroInit() noexcept
 	{
+		this->typeinfo = nullptr;
 		this->freelist = nullptr;
 		this->owner = nullptr;
 		this->prev = this->next = nullptr;
 		this->data = nullptr;
 		this->mdata = nullptr; 
-		this->allocsize = this->realsize = this->entrycount = this->freecount = 0; 
+		this->realsize = 0;
+		this->entrycount = this->freecount = 0; 
 		this->approx_utilization = 0.0f;
 		this->visited = false;
 	}
 
-    static PageInfo* initialize(void* block, uint16_t allocsize, uint16_t realsize) noexcept;
+    static PageInfo* initialize(void* block, __CoreGC::TypeInfoBase* typeinfo) noexcept;
     size_t rebuild() noexcept;	
 
     static inline PageInfo* extractPageFromPointer(void* p) noexcept {
@@ -139,13 +141,12 @@ public:
         return (FreeListEntry*)(this->data + idx * this->realsize);
     }
 
-    // May be interested in placing canaries between metadata entries
-    static void initializeWithDebugInfo(void* mem, __CoreGC::TypeInfoBase* type) noexcept
+    static void initializeWithDebugInfo(void* mem, uint32_t& typesize) noexcept
     {
         uint64_t* pre = (uint64_t*)mem;
         *pre = ALLOC_DEBUG_CANARY_VALUE;
 
-        uint64_t* post = (uint64_t*)((uint8_t*)mem + ALLOC_DEBUG_CANARY_SIZE + type->type_size);
+        uint64_t* post = (uint64_t*)((uint8_t*)mem + ALLOC_DEBUG_CANARY_SIZE + typesize);
         *post = ALLOC_DEBUG_CANARY_VALUE;
     }
 };
@@ -261,8 +262,8 @@ public:
 
     GlobalPageGCManager() noexcept : empty_pages(), pagetable() { }
 
-    PageInfo* getFreshPageFromOS(uint16_t entrysize, uint16_t realsize);
-    PageInfo* tryGetEmptyPage(uint16_t entrysize, uint16_t realsize);
+    PageInfo* getFreshPageFromOS(__CoreGC::TypeInfoBase* typeinfo);
+    PageInfo* tryGetEmptyPage(__CoreGC::TypeInfoBase* typeinfo);
 
     bool pagetableQuery(void* addr) noexcept
     {
@@ -281,42 +282,25 @@ public:
 
 #ifndef ALLOC_DEBUG_CANARY
 #define SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(BASEALLOC) (BASEALLOC)
-#define SET_ALLOC_LAYOUT_HANDLE_CANARY(BASEALLOC, T)
+#define SET_ALLOC_LAYOUT_HANDLE_CANARY(BASEALLOC, TS)
 #else
 #define SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(BASEALLOC) \
 	(void*)((uint8_t*)(BASEALLOC) + ALLOC_DEBUG_CANARY_SIZE)
-#define SET_ALLOC_LAYOUT_HANDLE_CANARY(BASEALLOC, T) \
-	PageInfo::initializeWithDebugInfo(BASEALLOC, T)
+#define SET_ALLOC_LAYOUT_HANDLE_CANARY(BASEALLOC, TS) \
+	PageInfo::initializeWithDebugInfo(BASEALLOC, TS)
 #endif
 
 #ifdef VERBOSE_HEADER
-#define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T) \
-	{ (META)->type = T; (META)->isalloc = true; (META)->isyoung = true; } 
-#define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) \
-	{ (META)->type = T; (META)->isalloc = true; }
+#define SETUP_ALLOC_INITIALIZE_FRESH_META(META) \
+	{ (META)->isalloc = true; (META)->isyoung = true; } 
+#define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META) \
+	{ (META)->isalloc = true; }
 #else
-#define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T) \
-	{ SET_TYPE_PTR(META, T); (META)->bits.isalloc = 1; (META)->bits.isyoung = 1; } 
-#define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) \
-	{ SET_TYPE_PTR(META, T); (META)->bits.isalloc = 1; }
+#define SETUP_ALLOC_INITIALIZE_FRESH_META(META) \
+	{ (META)->bits.isalloc = 1; (META)->bits.isyoung = 1; } 
+#define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META) \
+	{ (META)->bits.isalloc = 1; }
 #endif
-
-template<typename T>
-T* MEM_ALLOC_CHECK(T* alloc)
-{
-    if(alloc == nullptr) {
-        assert(false);
-    }
-    return alloc;
-}
-
-#ifdef EPSILON
-#define GC_ALLOC_OBJECT(A, L) MEM_ALLOC_CHECK(EpsilonAllocator::alloc.allocate((L)))
-#else 
-#define GC_ALLOC_OBJECT(A, L) MEM_ALLOC_CHECK((A).allocate((L)))
-#endif
-
-#define 𝐀𝐥𝐥𝐨𝐜𝐓𝐲𝐩𝐞(T, A, L, ...) (allocTypeImpl<T>(A, L, __VA_ARGS__))
 
 #define CALC_APPROX_UTILIZATION(P) 1.0f - ((float)P->freecount / (float)P->entrycount)
 
@@ -332,15 +316,13 @@ T* MEM_ALLOC_CHECK(T* alloc)
 class GCAllocator
 {
 private:
-    FreeListEntry* freelist;
+    __CoreGC::TypeInfoBase* alloctype; 
+
+	FreeListEntry* freelist;
     FreeListEntry* evacfreelist;
 
     PageInfo* alloc_page; // Page in which we are currently allocating from
     PageInfo* evac_page; // Page in which we are currently evacuating from
-
-    //should match sizes in the page infos
-    uint16_t allocsize; //size of the alloc entries in this page (excluding metadata)
-    uint16_t realsize;  //size of the alloc entries in this page (including metadata and other stuff)
 
     PageList pendinggc_pages; // Pages that are pending GC
     PageList filled_pages; // Pages with over 90% utilization (no need for buckets here)
@@ -369,14 +351,16 @@ private:
 
     static int getBucketIndex(PageInfo* p)
     {
-        float util = p->approx_utilization;
-        int idx = 0;
+        float util = p->approx_utilization; 
+	   	DSA_INVARIANT_CHECK(!IS_FULL(util) && util > 0.0f);
+
+		int idx = 0;
         if(IS_LOW_UTIL(util)) {
-            idx = (util - 0.01f) / BUCKET_UTIL_VARIANCE;
+            idx = util / BUCKET_UTIL_VARIANCE;
             DSA_INVARIANT_CHECK(idx < NUM_LOW_UTIL_BUCKETS);
         }
         else {
-            idx = (util - 0.61f) / BUCKET_UTIL_VARIANCE;
+            idx = (util - LOW_UTIL_THRESH) / BUCKET_UTIL_VARIANCE;
             DSA_INVARIANT_CHECK(idx < NUM_HIGH_UTIL_BUCKETS);
         }
 
@@ -428,14 +412,25 @@ private:
 
 public:
 #ifdef MEM_STATS
-    GCAllocator(uint16_t objsize, uint16_t fullsize, void (*collect)()) noexcept : freelist(nullptr), evacfreelist(nullptr), alloc_page(nullptr), evac_page(nullptr), allocsize(objsize), realsize(fullsize), pendinggc_pages(), filled_pages(), alloc_count(0), alloc_memory(0), collectfp(collect) { }
+    GCAllocator(__CoreGC::TypeInfoBase* _alloctype, void (*collect)()) noexcept :
+		alloctype(_alloctype), freelist(nullptr), evacfreelist(nullptr), 
+		alloc_page(nullptr), evac_page(nullptr), pendinggc_pages(), 
+		filled_pages(), alloc_count(0), alloc_memory(0), collectfp(collect) {}
 #else 
-    GCAllocator(uint16_t objsize, uint16_t fullsize, void (*collect)()) noexcept : freelist(nullptr), evacfreelist(nullptr), alloc_page(nullptr), evac_page(nullptr), allocsize(objsize), realsize(fullsize), pendinggc_pages(), filled_pages(), collectfp(collect) { }
+    GCAllocator( __CoreGC::TypeInfoBase* _alloctype, void (*collect)()) noexcept : 
+		alloctype(_alloctype), freelist(nullptr), evacfreelist(nullptr), 
+		alloc_page(nullptr), evac_page(nullptr), pendinggc_pages(), 
+		filled_pages(), collectfp(collect) {}
 #endif
+
+	__CoreGC::TypeInfoBase* getAllocType() const noexcept
+	{
+		return this->alloctype;	
+	}
 
     inline size_t getAllocSize() const noexcept
     {
-        return this->allocsize;
+        return this->alloctype->type_size;
     }
 
 #ifdef MEM_STATS
@@ -446,30 +441,26 @@ public:
     }
 #endif
 
-    inline void* allocate(__CoreGC::TypeInfoBase* type)
+    inline void* allocate()
     {
-        assert(type->type_size == this->allocsize);
-
         if(this->freelist == nullptr) [[unlikely]] { 
-            this->allocatorRefreshAllocationPage(type);
+            this->allocatorRefreshAllocationPage();
         }
         
         void* entry = this->freelist;
         this->freelist = this->freelist->next;
         
-        SET_ALLOC_LAYOUT_HANDLE_CANARY(entry, type);
+        SET_ALLOC_LAYOUT_HANDLE_CANARY(entry, this->alloctype->type_size);
         MetaData* m = SETUP_ALLOC_LAYOUT_GET_META_PTR(entry); 
-		SETUP_ALLOC_INITIALIZE_FRESH_META(m, type);
+		SETUP_ALLOC_INITIALIZE_FRESH_META(m);
 
-        UPDATE_ALLOC_STATS(this, type->type_size);
+        UPDATE_ALLOC_STATS(this, this->alloctype->type_size);
 
         return SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(entry);
     }
 
-    inline void* allocateEvacuation(__CoreGC::TypeInfoBase* type)
+    inline void* allocateEvacuation()
     {
-        assert(type->type_size == this->allocsize);
-
         if(this->evacfreelist == nullptr) [[unlikely]] {
             this->allocatorRefreshEvacuationPage();
         }
@@ -477,9 +468,9 @@ public:
         void* entry = this->evacfreelist;
         this->evacfreelist = this->evacfreelist->next;
 
-        SET_ALLOC_LAYOUT_HANDLE_CANARY(entry, type);
+        SET_ALLOC_LAYOUT_HANDLE_CANARY(entry, this->alloctype->type_size);
         MetaData* m = SETUP_ALLOC_LAYOUT_GET_META_PTR(entry); 
-		SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(m, type);
+		SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(m);
 
         return SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(entry);
     }
@@ -496,16 +487,32 @@ public:
     //process all the pending gc pages, the current alloc page, and evac page -- reset for next round
     void processCollectorPages(BSQMemoryTheadLocalInfo* tinfo) noexcept;
 
-    //May call collection, insert full alloc page in pending gc pages, get new page
-    //To avoid clogging up fast path allocation we initialize high32_typeptr here if needed
-    void allocatorRefreshAllocationPage(__CoreGC::TypeInfoBase* typeinfo) noexcept;
+    void allocatorRefreshAllocationPage() noexcept;
 
     //Get new page for evacuation, append old to filled pages
     void allocatorRefreshEvacuationPage() noexcept;
 };
 
-template<typename T, typename... Args>
-inline T* allocTypeImpl(GCAllocator& alloc, __CoreGC::TypeInfoBase* typeinfo, Args... args) 
+// Allocation interface used during runtime 
+template<typename T>
+T* MEM_ALLOC_CHECK(T* alloc)
 {
-    return new (GC_ALLOC_OBJECT(alloc, typeinfo)) T(args...);
+    if(alloc == nullptr) {
+        assert(false);
+    }
+    return alloc;
 }
+
+#ifdef EPSILON
+#	define GC_ALLOC_OBJECT(A) MEM_ALLOC_CHECK(EpsilonAllocator::alloc.allocate())
+#else 
+#	define GC_ALLOC_OBJECT(A) MEM_ALLOC_CHECK((A).allocate())
+#endif
+
+template<typename T, typename... Args>
+inline T* allocTypeImpl(GCAllocator& alloc, Args... args) 
+{
+    return new (GC_ALLOC_OBJECT(alloc)) T(args...);
+}
+
+#define 𝐀𝐥𝐥𝐨𝐜𝐓𝐲𝐩𝐞(T, A, ...) (allocTypeImpl<T>(A, __VA_ARGS__))

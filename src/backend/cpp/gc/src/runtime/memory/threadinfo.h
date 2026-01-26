@@ -201,9 +201,6 @@ struct BSQMemoryTheadLocalInfo
 	size_t bytes_freed; // Number of bytes freed within a collection
     size_t max_decrement_count;
 
-    uint8_t g_gcallocs_lookuptable[MAX_ALLOC_LOOKUP_TABLE_SIZE] = {};
-    uint8_t g_gcallocs_idx = 0;
-
     //We may want this in prod, so i'll have it always be visible
     bool disable_automatic_collections = false;
 
@@ -221,19 +218,11 @@ struct BSQMemoryTheadLocalInfo
     BSQMemoryTheadLocalInfo& operator=(BSQMemoryTheadLocalInfo&) = delete;
     BSQMemoryTheadLocalInfo(BSQMemoryTheadLocalInfo&) = delete;
 
-    inline GCAllocator* getAllocatorForPageSize(PageInfo* page) noexcept {
-        uint8_t idx = this->g_gcallocs_lookuptable[page->allocsize >> 3];
-        return this->g_gcallocs[idx];
-    }
+	inline GCAllocator* getAllocatorForPageSize(PageInfo* page) noexcept {
+        uint32_t idx = page->typeinfo->type_id;
+ 		GC_INVARIANT_CHECK(idx < BSQ_MAX_ALLOC_SLOTS);	       
 
-    inline uint8_t generateAllocLookupIndex(GCAllocator* alloc) noexcept 
-    {
-        size_t idx = alloc->getAllocSize() >> 3;
-        if(this->g_gcallocs_lookuptable[idx] == 0) {
-            this->g_gcallocs_lookuptable[idx] = this->g_gcallocs_idx++;
-        }
-
-        return this->g_gcallocs_lookuptable[idx];
+		return this->g_gcallocs[idx];
     }
 
     template <size_t NUM>
@@ -241,8 +230,10 @@ struct BSQMemoryTheadLocalInfo
     {
         for(size_t i = 0; i < NUM; i++) {
             GCAllocator* alloc = allocs[i];
-            uint8_t idx = generateAllocLookupIndex(alloc);
-            this->g_gcallocs[idx] = alloc;
+            uint32_t idx = alloc->getAllocType()->type_id;
+			GC_INVARIANT_CHECK(idx < BSQ_MAX_ALLOC_SLOTS);	
+
+			this->g_gcallocs[idx] = alloc;
         }
     }
 
