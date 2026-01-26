@@ -273,7 +273,7 @@ static inline void process(PageInfo* page) noexcept
     }
    
     uint64_t freecount = getPageFreeCount(page);
-    UPDATE_TOTAL_LIVE_BYTES(+=, (page->allocsize * (page->entrycount - freecount)));
+    UPDATE_TOTAL_LIVE_BYTES(+=, (page->typeinfo->type_size * (page->entrycount - freecount)));
     UPDATE_TOTAL_LIVE_OBJECTS(+=, (page->entrycount - freecount));
 }
 

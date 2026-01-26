@@ -2,7 +2,7 @@
 
 #include "../common.h"
 
-//#define MEM_STATS
+#define MEM_STATS
 
 #ifdef MEM_STATS
 
