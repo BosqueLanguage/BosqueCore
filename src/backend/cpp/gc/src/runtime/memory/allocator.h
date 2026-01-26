@@ -411,15 +411,15 @@ private:
 
 public:
 #ifdef MEM_STATS
-    GCAllocator(__CoreGC::TypeInfoBase* type, void (*collect)()) noexcept : alloctype(nullptr), freelist(nullptr), evacfreelist(nullptr), alloc_page(nullptr), evac_page(nullptr), pendinggc_pages(), filled_pages(), alloc_count(0), alloc_memory(0), collectfp(collect) 
-	{
-		this->alloctype = type;
-	}
+    GCAllocator(__CoreGC::TypeInfoBase* _alloctype, void (*collect)()) noexcept :
+		alloctype(_alloctype), freelist(nullptr), evacfreelist(nullptr), 
+		alloc_page(nullptr), evac_page(nullptr), pendinggc_pages(), 
+		filled_pages(), alloc_count(0), alloc_memory(0), collectfp(collect) {}
 #else 
-    GCAllocator( __CoreGC::TypeInfoBase* type, void (*collect)()) noexcept : alloctype(nullptr), freelist(nullptr), evacfreelist(nullptr), alloc_page(nullptr), evac_page(nullptr), pendinggc_pages(), filled_pages(), collectfp(collect) 
-	{
-		this->alloctype = type;
-	}
+    GCAllocator( __CoreGC::TypeInfoBase* _alloctype, void (*collect)()) noexcept : 
+		alloctype(_alloctype), freelist(nullptr), evacfreelist(nullptr), 
+		alloc_page(nullptr), evac_page(nullptr), pendinggc_pages(), 
+		filled_pages(), collectfp(collect) {}
 #endif
 
 	__CoreGC::TypeInfoBase* getAllocType() const noexcept
