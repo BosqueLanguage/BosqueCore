@@ -308,6 +308,8 @@ class ASMToIRConverter {
             return exp;
         }
         else {
+            //TODO: check if this is a literal typedecl true/false and optimize
+
             return new IRAccessTypeDeclValueExpression(this.processTypeSignature(oftype), exp);
         }
     }
@@ -347,10 +349,12 @@ class ASMToIRConverter {
     }
 
     private static isLiteralFalseExpression(exp: IRExpression): boolean {
+        //TODO: can make this work with literal typedecls too
         return exp instanceof IRLiteralBoolExpression && exp.value === false;
     }
 
     private static isLiteralTrueExpression(exp: IRExpression): boolean {
+        //TODO: can make this work with literal typedecls too
         return exp instanceof IRLiteralBoolExpression && exp.value === true;
     }
 
@@ -664,7 +668,15 @@ class ASMToIRConverter {
                     const nexp = exp as PrefixNotOpExpression;
                     const nval = this.coerceToBoolForTest(this.flattenITestGuardExpression(nexp.exp), this.tproc(nexp.exp.getType()));
 
-                    return new IRPrefixNotOpExpression(nval, this.getSpecialType("Bool"));
+                    if(ASMToIRConverter.isLiteralTrueExpression(nval)) {
+                        return new IRLiteralBoolExpression(false);
+                    }
+                    else if(ASMToIRConverter.isLiteralFalseExpression(nval)) {
+                        return new IRLiteralBoolExpression(true);
+                    }
+                    else {
+                        return new IRPrefixNotOpExpression(nval, this.getSpecialType("Bool"));
+                    }
                 }
                 else if(ttag === ExpressionTag.LogicAndExpression) {
                     const aexps = (exp as LogicAndExpression).exps.map((e) => this.coerceToBoolForTest(this.flattenITestGuardExpression(e), this.tproc(e.getType())));
@@ -1327,14 +1339,19 @@ class ASMToIRConverter {
                 if(nexp instanceof IRPrefixNotOpExpression) {
                     return nexp.exp; //!!e is e
                 }
-                else if(nexp instanceof IRLiteralBoolExpression) {
-                    return new IRLiteralBoolExpression(!nexp.value); //do the literal negation
+                else if(ASMToIRConverter.isLiteralTrueExpression(nexp)) {
+                    return new IRLiteralBoolExpression(false); //do the literal negation
+                }
+                else if(ASMToIRConverter.isLiteralFalseExpression(nexp)) {
+                    return new IRLiteralBoolExpression(true); //do the literal negation
                 }
                 else {
                     return new IRPrefixNotOpExpression(nexp, this.processTypeSignature(pfxnot.opertype as TypeSignature));
                 }
             }
             else {
+                //TODO: check for literal true/false and optimize
+
                 const tdaccess = new IRAccessTypeDeclValueExpression(this.processTypeSignature(eetype), nexp);
                 const bnotop = new IRPrefixNotOpExpression(tdaccess, this.processTypeSignature(pfxnot.opertype as TypeSignature));
                 const notop = (eetype.decl.allInvariants.length !== 0) ? this.makeExpressionImmediate(bnotop, this.tproc(pfxnot.opertype as TypeSignature)) : bnotop;
@@ -2078,59 +2095,79 @@ class ASMToIRConverter {
         assert(false, "Not Implemented -- flattenReturnMultiStatement");
     }
 
-    private flattenIfStatement(stmt: IfStatement) {
+    private flattenIfStatement(stmt: IfStatement): boolean {
         const [texp, ginfos] = this.flattenITestGuardSet(stmt.sinfo, stmt.cond);
         assert(ginfos.length === stmt.bbinds.length, "Internal error: binder info length mismatch");
 
         if(stmt.bbinds.length === 0) {
-            this.pushStatementBlock();
-            this.flattenBlockStatement(stmt.trueBlock);
-            const tblock = this.popStatementBlock();
+            if(ASMToIRConverter.isLiteralFalseExpression(texp)) {
+                return false;
+            }
+            else {
+                if(ASMToIRConverter.isLiteralTrueExpression(texp)) {
+                    return this.flattenBlockStatement(stmt.trueBlock);
+                }
+                else {
+                    this.pushStatementBlock();
+                    this.flattenBlockStatement(stmt.trueBlock);
+                    const tblock = this.popStatementBlock();
 
-            this.pushStatement(new IRSimpleIfStatement(texp, new IRBlockStatement(tblock)));
+                    this.pushStatement(new IRSimpleIfStatement(texp, new IRBlockStatement(tblock)));
+                    return false;
+                }
+            }
         }
         else {
             assert(false, "Not implemented -- IfStatement with binders");
         }
     }
 
-    private flattenIfElseStatement(stmt: IfElseStatement) {
+    private flattenIfElseStatement(stmt: IfElseStatement): boolean {
         const [texp, ginfos] = this.flattenITestGuardSet(stmt.sinfo, stmt.cond);
         assert(ginfos.length === stmt.bbinds.length, "Internal error: binder info length mismatch");
 
         if(stmt.bbinds.length === 0) {
-            this.pushStatementBlock();
-            this.flattenBlockStatement(stmt.trueBlock);
-            const tblock = this.popStatementBlock();
+            if(ASMToIRConverter.isLiteralFalseExpression(texp)) {
+                return this.flattenBlockStatement(stmt.falseBlock);
+            }
+            else if(ASMToIRConverter.isLiteralTrueExpression(texp)) {
+                return this.flattenBlockStatement(stmt.trueBlock);
+            }
+            else {
+                this.pushStatementBlock();
+                this.flattenBlockStatement(stmt.trueBlock);
+                const tblock = this.popStatementBlock();
 
-            this.pushStatementBlock();
-            this.flattenBlockStatement(stmt.falseBlock);
-            const fblock = this.popStatementBlock();
+                this.pushStatementBlock();
+                this.flattenBlockStatement(stmt.falseBlock);
+                const fblock = this.popStatementBlock();
 
-            this.pushStatement(new IRSimpleIfElseStatement(texp, new IRBlockStatement(tblock), new IRBlockStatement(fblock)));
+                this.pushStatement(new IRSimpleIfElseStatement(texp, new IRBlockStatement(tblock), new IRBlockStatement(fblock)));
+                return false;
+            }
         }
         else {
             assert(false, "Not implemented -- IfElseStatement with binders");
         }
     }
 
-    private flattenIfElifElseStatement(stmt: IfElifElseStatement) {
+    private flattenIfElifElseStatement(stmt: IfElifElseStatement): boolean {
         assert(false, "Not Implemented -- flattenIfElifElseStatement");
     }
 
-    private flattenSwitchStatement(stmt: SwitchStatement) {
+    private flattenSwitchStatement(stmt: SwitchStatement): boolean {
         assert(false, "Not Implemented -- flattenSwitchStatement");
     }
 
-    private flattenMatchStatement(stmt: MatchStatement) {
+    private flattenMatchStatement(stmt: MatchStatement): boolean {
         assert(false, "Not Implemented -- flattenMatchStatement");
     }
 
-    private flattenDispatchPatternStatement(stmt: DispatchPatternStatement) {
+    private flattenDispatchPatternStatement(stmt: DispatchPatternStatement): boolean {
         assert(false, "Not Implemented -- flattenDispatchPatternStatement");
     }
 
-    private flattenDispatchTaskStatement(stmt: DispatchTaskStatement) {
+    private flattenDispatchTaskStatement(stmt: DispatchTaskStatement): boolean {
         assert(false, "Not Implemented -- flattenDispatchTaskStatement");
     }
 
@@ -2197,13 +2234,20 @@ class ASMToIRConverter {
         assert(false, "Not Implemented -- flattenTaskYieldStatement");
     }
 
-    private flattenBlockStatement(stmt: BlockStatement) {
+    private flattenBlockStatement(stmt: BlockStatement): boolean {
         for(let i = 0; i < stmt.statements.length; ++i) {
-            this.flattenStatement(stmt.statements[i]);
+            const earlyterm = this.flattenStatement(stmt.statements[i]);
+            if(earlyterm) {
+                return true;
+            }
         }
+
+        return false;
     }
 
-    private flattenStatement(stmt: Statement) {
+    private flattenStatement(stmt: Statement): boolean {
+        let terminal = false;
+
         switch(stmt.tag) {
             case StatementTag.EmptyStatement: {
                 this.flattenEmptyStatement(stmt as EmptyStatement);
@@ -2246,31 +2290,31 @@ class ASMToIRConverter {
                 break;
             }
             case StatementTag.IfStatement: {
-                this.flattenIfStatement(stmt as IfStatement);
+                terminal = this.flattenIfStatement(stmt as IfStatement);
                 break;
             }
             case StatementTag.IfElseStatement: {
-                this.flattenIfElseStatement(stmt as IfElseStatement);
+                terminal = this.flattenIfElseStatement(stmt as IfElseStatement);
                 break;
             }
             case StatementTag.IfElifElseStatement: {
-                this.flattenIfElifElseStatement(stmt as IfElifElseStatement);
+                terminal = this.flattenIfElifElseStatement(stmt as IfElifElseStatement);
                 break;
             }
             case StatementTag.SwitchStatement: {
-                this.flattenSwitchStatement(stmt as SwitchStatement);
+                terminal = this.flattenSwitchStatement(stmt as SwitchStatement);
                 break;
             }
             case StatementTag.MatchStatement: {
-                this.flattenMatchStatement(stmt as MatchStatement);
+                terminal = this.flattenMatchStatement(stmt as MatchStatement);
                 break;
             }
             case StatementTag.DispatchPatternStatement: {
-                this.flattenDispatchPatternStatement(stmt as DispatchPatternStatement);
+                terminal = this.flattenDispatchPatternStatement(stmt as DispatchPatternStatement);
                 break;
             }
             case StatementTag.DispatchTaskStatement: {
-                this.flattenDispatchTaskStatement(stmt as DispatchTaskStatement);
+                terminal = this.flattenDispatchTaskStatement(stmt as DispatchTaskStatement);
                 break;
             }
             case StatementTag.AbortStatement: {
@@ -2329,6 +2373,8 @@ class ASMToIRConverter {
                 assert(false, `Unknown statement kind -- ${stmt.tag}`);
             }
         }
+
+        return terminal;
     }
 
     private processBody(body: BodyImplementation): IRBody {
@@ -2368,7 +2414,10 @@ class ASMToIRConverter {
             
                 this.pushStatementBlock();
                 for(let i = 0; i < body.statements.length; ++i) {
-                    this.flattenStatement(body.statements[i]);
+                    const earlyterm = this.flattenStatement(body.statements[i]);
+                    if(earlyterm) {
+                        break;
+                    }
                 }
                 const stmts = this.popStatementBlock();
 
