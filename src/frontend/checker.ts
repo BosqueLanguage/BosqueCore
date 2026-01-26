@@ -4108,6 +4108,7 @@ class TypeChecker {
             }
         }
 
+        stmt.isterminal = !cenv.isnormalflow;
         return cenv;
     }
 

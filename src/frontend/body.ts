@@ -2733,6 +2733,8 @@ class BlockStatement extends Statement {
     readonly statements: Statement[];
     readonly isScoping: boolean;
 
+    isterminal: boolean = false;
+
     constructor(sinfo: SourceInfo, statements: Statement[], isScoping: boolean) {
         super(StatementTag.BlockStatement, sinfo);
         this.statements = statements;

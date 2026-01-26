@@ -7,6 +7,8 @@ describe ("Checker -- If Statement", () => {
     it("should check simple ifs", function () {
         checkTestFunction("function main(): Int { if(true) { return 3i; } return 1i; }");
 
+        checkTestFunction("function main(b: Bool): Int { if (b) { abort; } return 1i; }");
+
         checkTestFunctionError("function main(): Int { if(3i) { return 3i; } return 1i; }", 'Guard expression does not evaluate to boolean');
         checkTestFunctionError("function main(): Int { if(true) { return true; } return 1i; }", "Expected a return value of type Int but got Bool");
     });

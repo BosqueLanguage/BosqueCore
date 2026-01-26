@@ -109,7 +109,15 @@ class ASMToIRConverter {
     }
 
     private popStatementBlock(): IRStatement[] {
-        return this.pendingblocks.pop() as IRStatement[];
+        const bb = this.pendingblocks.pop() as IRStatement[];
+
+        const abortidx = bb.findIndex((stmt) => stmt instanceof IRAbortStatement);
+        if(abortidx === -1 || abortidx < bb.length - 1) {
+            return bb;
+        }
+        else {
+            return bb.slice(0, abortidx + 1);
+        }
     }
 
     private pushStatement(stmt: IRStatement) {
@@ -2105,7 +2113,7 @@ class ASMToIRConverter {
             }
             else {
                 if(ASMToIRConverter.isLiteralTrueExpression(texp)) {
-                    return this.flattenBlockStatement(stmt.trueBlock);
+                    return this.flattenBlockStatement(stmt.trueBlock) || stmt.trueBlock.isterminal;
                 }
                 else {
                     this.pushStatementBlock();
@@ -2128,10 +2136,10 @@ class ASMToIRConverter {
 
         if(stmt.bbinds.length === 0) {
             if(ASMToIRConverter.isLiteralFalseExpression(texp)) {
-                return this.flattenBlockStatement(stmt.falseBlock);
+                return this.flattenBlockStatement(stmt.falseBlock) || stmt.falseBlock.isterminal;
             }
             else if(ASMToIRConverter.isLiteralTrueExpression(texp)) {
-                return this.flattenBlockStatement(stmt.trueBlock);
+                return this.flattenBlockStatement(stmt.trueBlock) || stmt.trueBlock.isterminal;
             }
             else {
                 this.pushStatementBlock();
