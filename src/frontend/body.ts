@@ -36,14 +36,6 @@ class TypeTestBindInfo {
     notop(): TypeTestBindInfo {
         return new TypeTestBindInfo(this.guardidx, this.bname, this.tfalse, this.ttrue);
     }
-
-    convertToStructInfoTrue(): { gidx: number, bvname: string, tsig: TypeSignature } {
-        return { gidx: this.guardidx, bvname: this.bname, tsig: this.ttrue as TypeSignature };
-    }
-
-    convertToStructInfoFalse(): { gidx: number, bvname: string, tsig: TypeSignature } {
-        return { gidx: this.guardidx, bvname: this.bname, tsig: this.tfalse as TypeSignature };
-    }
 }
 
 abstract class ITest {
@@ -2037,7 +2029,7 @@ class ChkLogicImpliesExpression extends ChkLogicExpression {
     readonly lhs: ITestGuardSet;
     readonly rhs: Expression;
 
-    trueBinders: { gidx: number, bvname: string, tsig: TypeSignature }[] = [];
+    bbinds: TypeTestBindInfo[] = [];
 
     constructor(sinfo: SourceInfo, lhs: ITestGuardSet, rhs: Expression) {
         super(ChkLogicExpressionTag.ChkLogicImpliesExpression);
@@ -2093,8 +2085,7 @@ class ConditionalValueExpression extends RValueExpression {
     readonly trueValue: Expression
     readonly falseValue: Expression;
 
-    trueBinders: { gidx: number, bvname: string, tsig: TypeSignature }[] = [];
-    falseBinders: { gidx: number, bvname: string, tsig: TypeSignature }[] = [];
+    bbinds: TypeTestBindInfo[] = [];
 
     constructor(sinfo: SourceInfo, guardset: ITestGuardSet, trueValue: Expression, falseValue: Expression) {
         super(RValueExpressionTag.ConditionalValueExpression);

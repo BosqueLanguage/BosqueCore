@@ -1093,12 +1093,33 @@ class Monomorphizer {
         else {
             const iiexp = exp as ChkLogicImpliesExpression;
             this.instantiateITestGuardSet(iiexp.lhs);
+
+            for(let i = 0; i < iiexp.bbinds.length; ++i) {
+            const bb = iiexp.bbinds[i];
+            if(bb.ttrue !== undefined) {
+                this.instantiateTypeSignature(bb.ttrue, this.currentMapping);
+            }
+            if(bb.tfalse !== undefined) {
+                this.instantiateTypeSignature(bb.tfalse, this.currentMapping);
+            }
+        }
+
             this.instantiateExpression(iiexp.rhs);
         }
     }
 
     private instantiateConditionalValueExpression(exp: ConditionalValueExpression) {
         this.instantiateITestGuardSet(exp.guardset);
+
+        for(let i = 0; i < exp.bbinds.length; ++i) {
+            const bb = exp.bbinds[i];
+            if(bb.ttrue !== undefined) {
+                this.instantiateTypeSignature(bb.ttrue, this.currentMapping);
+            }
+            if(bb.tfalse !== undefined) {
+                this.instantiateTypeSignature(bb.tfalse, this.currentMapping);
+            }
+        }
 
         this.instantiateExpression(exp.trueValue);
         this.instantiateExpression(exp.falseValue);

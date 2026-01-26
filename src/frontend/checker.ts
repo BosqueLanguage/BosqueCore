@@ -3290,8 +3290,8 @@ class TypeChecker {
             const [nenv] = tenv.popLocalScope();
             env.updateUsedBindersFromOtherEnv(nenv);
 
-            iiexp.trueBinders = renv.bbinds.filter((b) => b.ttrue !== undefined).map((b) => b.convertToStructInfoTrue());
-            
+            iiexp.bbinds = renv.bbinds;
+
             return this.getWellKnownType("Bool");
         }
     }
@@ -3310,8 +3310,7 @@ class TypeChecker {
         env.updateUsedBindersFromOtherEnv(tenv);
         env.updateUsedBindersFromOtherEnv(fenv);
 
-        exp.trueBinders = renv.bbinds.filter((b) => b.ttrue !== undefined).map((b) => b.convertToStructInfoTrue());
-        exp.falseBinders = renv.bbinds.filter((b) => b.tfalse !== undefined).map((b) => b.convertToStructInfoFalse());
+        exp.bbinds = renv.bbinds;
 
         if(ttype instanceof ErrorTypeSignature || ftype instanceof ErrorTypeSignature) {
             exp.rtype = new ErrorTypeSignature(exp.sinfo, undefined);
