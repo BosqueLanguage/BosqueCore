@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../common.h"
+
 #ifdef GC_INVARIANTS
 #define GC_INVARIANT_CHECK(x) assert(x)
 #else

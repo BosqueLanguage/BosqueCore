@@ -1,6 +1,5 @@
 #include "gc.h"
 
-#include "../common.h"
 #include "allocator.h"
 #include "threadinfo.h"
 #include "decsprcsr.h"
