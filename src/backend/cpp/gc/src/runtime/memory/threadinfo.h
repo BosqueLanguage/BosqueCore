@@ -52,6 +52,9 @@ struct BSQMemoryTheadLocalInfo
 
     GCAllocator** g_gcallocs;
 
+// this should only conditionally exist 
+	void* testing_data_storage[16];
+
     ////
     //Mark Phase information
     void** native_stack_base; //the base of the native stack
@@ -91,7 +94,7 @@ struct BSQMemoryTheadLocalInfo
 #endif
 
     BSQMemoryTheadLocalInfo() noexcept : 
-        tl_id(0), g_gcallocs(nullptr), native_stack_base(nullptr), native_stack_contents(), 
+        tl_id(0), g_gcallocs(nullptr), testing_data_storage(), native_stack_base(nullptr), native_stack_contents(), 
         native_register_contents(), roots_count(0), roots(nullptr), old_roots_count(0), 
         old_roots(nullptr), forward_table_index(FWD_TABLE_START), forward_table(nullptr), 
         decs_batch(), decd_pages(), pending_roots(), visit_stack(), pending_young(), 

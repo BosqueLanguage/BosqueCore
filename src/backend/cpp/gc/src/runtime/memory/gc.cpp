@@ -1,4 +1,7 @@
 #include "gc.h"
+
+#include "../common.h"
+#include "allocator.h"
 #include "threadinfo.h"
 #include "decsprcsr.h"
 #include "../support/qsort.h"
@@ -358,6 +361,12 @@ static void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept
         }
         GlobalDataStorage::g_global_data.needs_scanning = false;
     }
+
+	// TODO improve this before PR
+	for(unsigned i = 0; i < 16; i++) {
+		void* cur = tinfo.testing_data_storage[i]; 
+		checkPotentialPtr(cur, tinfo);		
+	}
 
 #ifdef BSQ_GC_CHECK_ENABLED
     if(tinfo.enable_global_rescan) {
