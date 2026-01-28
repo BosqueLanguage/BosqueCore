@@ -1,5 +1,6 @@
 #include "allocator.h"
 #include "threadinfo.h"
+#include "gc.h"
 
 GlobalDataStorage GlobalDataStorage::g_global_data{};
 

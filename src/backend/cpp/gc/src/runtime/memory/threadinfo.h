@@ -2,9 +2,6 @@
 
 #include "allocator.h"
 
-#include <mutex>
-#include <condition_variable>
-#include <thread>
 #include <chrono>
 
 #ifndef MEM_STATS
@@ -19,8 +16,6 @@
 #define MARK_STACK_NODE_COLOR_BLACK 1
 
 #define FWD_TABLE_START 1
-
-struct BSQMemoryTheadLocalInfo;
 
 struct MarkStackEntry
 {
@@ -50,118 +45,6 @@ struct RegisterContents
     void* r15 = nullptr;
 };
 
-// An object for processing RC decrements on separate thread
-typedef ArrayList<void*> DecsList;
-struct DecsProcessor {
-    std::mutex mtx;
-    std::condition_variable cv;
-    std::thread thd;    
-
-    void (*processDecfp)(void*, ArrayList<PageInfo*>&, BSQMemoryTheadLocalInfo&);
-	DecsList pending;	
-	ArrayList<PageInfo*> decd_pages;
-
-    enum class State {
-        Running,
-        Pausing,
-        Paused,
-        Stopping,
-        Stopped
-    };
-    State st;
-
-    DecsProcessor(): mtx(), cv(), thd(), processDecfp(nullptr), pending(), decd_pages(), st(State::Paused) {}
-
-    void initialize(BSQMemoryTheadLocalInfo* tinfo)
-    {
-        this->pending.initialize();
-		this->decd_pages.initialize();
-		this->thd = std::thread([this, tinfo] { this->process(tinfo); });
-        GlobalThreadAllocInfo::s_thread_counter++;
-    }
-
-    void changeStateFromMain(State nst, State ack)
-    {
-        std::unique_lock lk(this->mtx);
-        this->st = nst;
-        this->cv.notify_one();
-        this->cv.wait(lk, [this, ack]{ return this->st == ack; });
-    }
-
-    void changeStateFromWorker(State nst)
-    {
-        this->st = nst;
-        this->cv.notify_one();
-    }
-
-    void pause()
-    {
-		{
-			std::unique_lock lk(this->mtx);	
-			if(this->st == State::Paused) {
-				return ;
-			}
-		}
-        
-        this->changeStateFromMain(State::Pausing, State::Paused);
-    }
-
-    void resume()
-    {
-		std::unique_lock lk(this->mtx);
-        this->st = State::Running;
-        this->cv.notify_one();
-    }
-
-    void stop()
-    {
-        this->pause(); // Ensure we are waiting
-        this->changeStateFromMain(State::Stopping, State::Stopped);
-
-        this->thd.join();
-        if(this->thd.joinable()) {
-            std::cerr << "Thread did not finish joining!\n";
-            std::abort();
-        }
-
-        GlobalThreadAllocInfo::s_thread_counter--;
-    }
-
-    void process(BSQMemoryTheadLocalInfo* tinfo)
-    {
-        std::unique_lock lk(this->mtx);
-        while(true) {
-            this->cv.wait(lk, [this]
-                { return this->st != State::Paused; }
-            );
-
-            if(this->st == State::Stopping) {
-                this->changeStateFromWorker(State::Stopped);
-                return ;
-            }
-
-            while(!this->pending.isEmpty()) {
-                if(this->st != State::Running) {
-					break;
-				}
-
-                void* obj = this->pending.pop_front();
-                this->processDecfp(obj, this->decd_pages, *tinfo);
-            }
-            
-            this->changeStateFromWorker(State::Paused);
-        }
-    }
-
-	void mergeDecdPages(ArrayList<PageInfo*>& dst)
-	{
-		while(!this->decd_pages.isEmpty()) {
-			PageInfo* p = this->decd_pages.pop_front();
-			dst.push_back(p);
-		}
-	}
-};
-
 //All of the data that a thread local allocator needs to run it's operations
 struct BSQMemoryTheadLocalInfo
 {
@@ -186,9 +69,7 @@ struct BSQMemoryTheadLocalInfo
     int32_t forward_table_index;
     void** forward_table;
 
-    DecsProcessor decs; 
-    DecsList decs_batch; // Decrements able to be done without needing decs thread
-	
+    ArrayList<void*> decs_batch; // Decrements able to be done without needing decs thread	
     ArrayList<PageInfo*> decd_pages;
     
     float nursery_usage = 0.0f;
@@ -213,8 +94,8 @@ struct BSQMemoryTheadLocalInfo
         tl_id(0), g_gcallocs(nullptr), native_stack_base(nullptr), native_stack_contents(), 
         native_register_contents(), roots_count(0), roots(nullptr), old_roots_count(0), 
         old_roots(nullptr), forward_table_index(FWD_TABLE_START), forward_table(nullptr), 
-        decs(), decs_batch(), decd_pages(), pending_roots(), 
-        visit_stack(), pending_young(), bytes_freed(0), max_decrement_count(0) { }
+        decs_batch(), decd_pages(), pending_roots(), visit_stack(), pending_young(), 
+		bytes_freed(0), max_decrement_count(0) { }
     BSQMemoryTheadLocalInfo& operator=(BSQMemoryTheadLocalInfo&) = delete;
     BSQMemoryTheadLocalInfo(BSQMemoryTheadLocalInfo&) = delete;
 

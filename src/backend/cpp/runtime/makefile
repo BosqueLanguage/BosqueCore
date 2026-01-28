@@ -36,9 +36,9 @@ SUPPORT_HEADERS=$(RUNTIME_DIR)common.h $(SUPPORT_DIR)xalloc.h $(SUPPORT_DIR)epsi
 SUPPORT_SOURCES=$(RUNTIME_DIR)common.cpp $(SUPPORT_DIR)xalloc.cpp $(SUPPORT_DIR)epsilon.cpp $(SUPPORT_DIR)memstats.cpp
 SUPPORT_OBJS=$(OUT_OBJ)common.o $(OUT_OBJ)xalloc.o $(OUT_OBJ)epsilon.o $(OUT_OBJ)memstats.o
 
-MEMORY_HEADERS=$(RUNTIME_DIR)common.h $(MEMORY_DIR)allocator.h $(MEMORY_DIR)threadinfo.h $(MEMORY_DIR)gc.h
-MEMORY_SOURCES=$(MEMORY_DIR)allocator.cpp $(MEMORY_DIR)threadinfo.cpp $(MEMORY_DIR)gc.cpp
-MEMORY_OBJS=$(OUT_OBJ)allocator.o $(OUT_OBJ)threadinfo.o $(OUT_OBJ)gc.o 
+MEMORY_HEADERS=$(RUNTIME_DIR)common.h $(MEMORY_DIR)allocator.h $(MEMORY_DIR)threadinfo.h $(MEMORY_DIR)decsprcsr.h $(MEMORY_DIR)gc.h
+MEMORY_SOURCES=$(MEMORY_DIR)allocator.cpp $(MEMORY_DIR)threadinfo.cpp $(MEMORY_DIR)decsprcsr.cpp $(MEMORY_DIR)gc.cpp
+MEMORY_OBJS=$(OUT_OBJ)allocator.o $(OUT_OBJ)threadinfo.o $(MEMORY_DIR)decsprcsr.o $(OUT_OBJ)gc.o 
 
 CPPEMIT_HEADERS=$(CPPEMIT_DIR)cppruntime.hpp
 CPPEMIT_OBJS=$(OUT_OBJ)cppruntime.o
@@ -75,6 +75,10 @@ $(OUT_OBJ)threadinfo.o: $(SUPPORT_HEADERS) $(MEMORY_HEADERS) $(MEMORY_DIR)thread
 $(OUT_OBJ)allocator.o: $(SUPPORT_HEADERS) $(MEMORY_HEADERS) $(MEMORY_DIR)allocator.cpp
 	@mkdir -p $(OUT_OBJ)
 	$(CC) $(CFLAGS) -o $(OUT_OBJ)allocator.o -c $(MEMORY_DIR)allocator.cpp
+
+$(OUT_OBJ)decsprcsr.o: $(SUPPORT_HEADERS) $(MEMORY_HEADERS) $(MEMORY_DIR)decsprcsr.cpp
+	@mkdir -p $(OUT_OBJ)
+	$(CC) $(CFLAGS) -o $(OUT_OBJ)decsprcsr.o -c $(MEMORY_DIR)decsprcsr.cpp
 
 $(OUT_OBJ)epsilon.o: $(SUPPORT_HEADERS) $(SUPPORT_DIR)epsilon.cpp 
 	@mkdir -p $(OUT_OBJ)

@@ -6,5 +6,5 @@
 #define GC_INVARIANT_CHECK(x)
 #endif
 
-//This methods drives the collection routine -- uses the thread local information from invoking thread to get pages 
+//This methods drives the collection routine -- uses the thread local information from invoking thread to get pages
 extern void collect() noexcept;
