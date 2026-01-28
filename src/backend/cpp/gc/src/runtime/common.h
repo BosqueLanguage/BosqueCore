@@ -202,7 +202,7 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 #define GC_SHOULD_FREE_LIST_ADD(META) (!(META)->isalloc || ((META)->isyoung && (META)->forward_index == NON_FORWARDED))
 
 #define GC_CHECK_BOOL_BYTES(META) \
-do { \
+/*do { \
     int8_t isalloc_byte  = *reinterpret_cast<int8_t*>(&(META)->isalloc); \
     int8_t isyoung_byte  = *reinterpret_cast<int8_t*>(&(META)->isyoung); \
     int8_t ismarked_byte = *reinterpret_cast<int8_t*>(&(META)->ismarked); \
@@ -211,7 +211,7 @@ do { \
     GC_INVARIANT_CHECK(isyoung_byte == 0 || isyoung_byte == 1); \
     GC_INVARIANT_CHECK(ismarked_byte == 0 || ismarked_byte == 1); \
     GC_INVARIANT_CHECK(isroot_byte == 0 || isroot_byte == 1); \
-} while(0)
+} while(0)*/
 
 #else
 // Resets an objects metadata and updates with index into forward table

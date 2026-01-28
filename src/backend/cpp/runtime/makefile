@@ -33,10 +33,6 @@ CFLAGS_OPT.dev=-O0 -g -ggdb
 CFLAGS_OPT.release=-O2 -march=x86-64-v3
 CFLAGS=${CFLAGS_OPT.${BUILD}} ${CSTDFLAGS} ${INTERNAL_FLAGS.${ALLOC}}
 
-# we need some way to have the gc testing build generate the BUILD=test flags 
-# implicitly
-CFLAGS_TEST=${CFLAGS_OPT.test} ${CSTDFLAGS} ${INTERNAL_FLAGS.${ALLOC}}
-
 SUPPORT_HEADERS=$(RUNTIME_DIR)common.h $(SUPPORT_DIR)xalloc.h $(SUPPORT_DIR)epsilon.h $(SUPPORT_DIR)arraylist.h $(SUPPORT_DIR)pagetable.h $(SUPPORT_DIR)qsort.h $(SUPPORT_DIR)memstats.h
 SUPPORT_SOURCES=$(RUNTIME_DIR)common.cpp $(SUPPORT_DIR)xalloc.cpp $(SUPPORT_DIR)epsilon.cpp $(SUPPORT_DIR)memstats.cpp
 SUPPORT_OBJS=$(OUT_OBJ)common.o $(OUT_OBJ)xalloc.o $(OUT_OBJ)epsilon.o $(OUT_OBJ)memstats.o
@@ -61,7 +57,7 @@ all: $(NEED_CLEAN) $(OUT_EXE)memex
 gc: $(SUPPORT_HEADERS) $(MEMORY_HEADERS) $(CPPEMIT_HEADERS) $(SUPPORT_OBJS) $(MEMORY_OBJS) $(CPPEMIT_OBJS)
 	@mkdir -p $(OUT_EXE)
 	@echo "int main() { return 0; }" > $(OUT_EXE)gcmain.cpp
-	$(CC) $(CFLAGS_TEST) -o $(OUT_EXE)gctest $(SUPPORT_OBJS) $(MEMORY_OBJS) $(CPPEMIT_OBJS) $(OUT_EXE)gcmain.cpp
+	$(CC) $(CFLAGS) -o $(OUT_EXE)gctest $(SUPPORT_OBJS) $(MEMORY_OBJS) $(CPPEMIT_OBJS) $(OUT_EXE)gcmain.cpp
 	@rm $(OUT_EXE)gcmain.cpp
 	@rm $(OUT_EXE)gctest
 

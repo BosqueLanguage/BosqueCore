@@ -65,7 +65,7 @@ function generateCPPFiles(header: string, src: string, cppmain: string, cpp_test
         copyFile(cpp_runtime_header_path, outdir);
         copyFile(cpp_runtime_source_path, outdir);
         copyFile(makefile_path, outdir);
-        copyGC(gc_path, path.join(outdir, "gc/"));
+		copyGC(gc_path, path.join(outdir, "gc/"));
         copyGC(output_path, path.join(outdir, "output/"));
     }
     catch(e) {
@@ -97,7 +97,7 @@ function execMainCode(bsqcode: string, cpp_testcode: string, cppmain: string, ex
                     const output_path = path.join(nndir, "output/memex");
                     
                     try {
-                        execSync(`make`, {cwd: nndir});
+						execSync(`make BUILD=test`, {cwd: nndir});
                     }
                     catch {
                         return `[CPP COMPILATION ERROR] \n\n ${header} ${src} `

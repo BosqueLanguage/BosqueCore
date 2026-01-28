@@ -33,7 +33,12 @@ for(let i = 0; i < allsrcdirs.length; ++i) {
     }
 }
 
-execSync(`make gc`, {cwd: cppruntimedir});
+if(process.argv.slice(2) == "--test") {
+	execSync(`make gc BUILD=test`, {cwd: cppruntimedir});
+}
+else {
+	execSync(`make gc`, {cwd: cppruntimedir});
+}
 
 exec(`node ${cmdpath} --namespace CPPEmitter --output ${binoutdir} ${allsources.join(" ")}`, {cwd: bsqdir}, (err, stdout, stderr) => {
     if(err !== null) {
