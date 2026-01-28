@@ -359,21 +359,20 @@ static void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept
             checkPotentialPtr(*curr, tinfo);
             curr++;
         }
+#ifndef BSQ_GC_TESTING
         GlobalDataStorage::g_global_data.needs_scanning = false;
+#endif
     }
 
-	// TODO improve this before PR
-	for(unsigned i = 0; i < 16; i++) {
-		void* cur = tinfo.testing_data_storage[i]; 
-		checkPotentialPtr(cur, tinfo);		
+#ifdef BSQ_GC_TESTING
+	if(tinfo.thd_testing) {
+		for(unsigned i = 0; i < NUM_THREAD_TESTING_ROOTS; i++) {
+			void* cur = tinfo.thd_testing_data[i]; 
+			checkPotentialPtr(cur, tinfo);		
+		}
 	}
 
-#ifdef BSQ_GC_CHECK_ENABLED
-    if(tinfo.enable_global_rescan) {
-        GlobalDataStorage::g_global_data.needs_scanning = true;
-    }
-
-    if(tinfo.disable_stack_refs_for_tests) {
+    if(tinfo.disable_stack_refs) {
         return;
     }
 #endif

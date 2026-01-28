@@ -52,9 +52,6 @@ struct BSQMemoryTheadLocalInfo
 
     GCAllocator** g_gcallocs;
 
-// this should only conditionally exist 
-	void* testing_data_storage[16];
-
     ////
     //Mark Phase information
     void** native_stack_base; //the base of the native stack
@@ -85,20 +82,23 @@ struct BSQMemoryTheadLocalInfo
 	size_t bytes_freed; // Number of bytes freed within a collection
     size_t max_decrement_count;
 
-    //We may want this in prod, so i'll have it always be visible
-    bool disable_automatic_collections = false;
-
-#ifdef BSQ_GC_CHECK_ENABLED
-    bool disable_stack_refs_for_tests = false;
-    bool enable_global_rescan         = false;
+    bool disable_automatic_collections;
+#ifdef BSQ_GC_TESTING
+    // having thread local storage of root pointers is useful for testing 
+	// interactions of multiple threads (ensuring roots are kept alive if 
+	// still reachable from at least one thread)
+	void* thd_testing_data[NUM_THREAD_TESTING_ROOTS] = { nullptr };
+	bool thd_testing = false;
+	bool disable_stack_refs = false;
 #endif
 
     BSQMemoryTheadLocalInfo() noexcept : 
-        tl_id(0), g_gcallocs(nullptr), testing_data_storage(), native_stack_base(nullptr), native_stack_contents(), 
+        tl_id(0), g_gcallocs(nullptr), native_stack_base(nullptr), native_stack_contents(), 
         native_register_contents(), roots_count(0), roots(nullptr), old_roots_count(0), 
         old_roots(nullptr), forward_table_index(FWD_TABLE_START), forward_table(nullptr), 
-        decs_batch(), decd_pages(), pending_roots(), visit_stack(), pending_young(), 
-		bytes_freed(0), max_decrement_count(0) { }
+        decs_batch(), decd_pages(), nursery_usage(0.0f), pending_roots(), visit_stack(), 
+		pending_young(), bytes_freed(0), max_decrement_count(0), 
+		disable_automatic_collections(false) { }
     BSQMemoryTheadLocalInfo& operator=(BSQMemoryTheadLocalInfo&) = delete;
     BSQMemoryTheadLocalInfo(BSQMemoryTheadLocalInfo&) = delete;
 

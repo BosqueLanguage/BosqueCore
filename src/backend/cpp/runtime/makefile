@@ -16,7 +16,7 @@ MEMORY_TEST_DIR=$(MAKE_PATH)/../test/memory/
 
 LANGUAGE_DIR=$(MAKE_PATH)/../src/language/
 
-#dev is default, for another flavor : make BUILD=release or debug
+#dev is default, for another flavor : make BUILD=release/debug/test
 BUILD := dev
 
 #also support epsilon to disable gc
@@ -28,9 +28,14 @@ CSTDFLAGS=-Wall -Wextra -Wno-unused-parameter -Wuninitialized -Werror -std=gnu++
 INTERNAL_FLAGS.gc= 
 INTERNAL_FLAGS.epsilon=-DEPSILON
 
+CFLAGS_OPT.test=-O0 -g -ggdb -DBSQ_GC_TESTING
 CFLAGS_OPT.dev=-O0 -g -ggdb 
 CFLAGS_OPT.release=-O2 -march=x86-64-v3
-CFLAGS=${CFLAGS_OPT.${BUILD}} ${CSTDFLAGS} ${INTERNAL_FLAGS.${ALLOC}}
+CFLAGS=-O0 -g -ggdb -DBSQ_GC_TESTING ${CSTDFLAGS} ${INTERNAL_FLAGS.${ALLOC}}
+
+# we need some way to have the gc testing build generate the .test flags 
+# implicitly
+CFLAGS_TEST=${CFLAGS_OPT.test} ${CSTDFLAGS} ${INTERNAL_FLAGS.${ALLOC}}
 
 SUPPORT_HEADERS=$(RUNTIME_DIR)common.h $(SUPPORT_DIR)xalloc.h $(SUPPORT_DIR)epsilon.h $(SUPPORT_DIR)arraylist.h $(SUPPORT_DIR)pagetable.h $(SUPPORT_DIR)qsort.h $(SUPPORT_DIR)memstats.h
 SUPPORT_SOURCES=$(RUNTIME_DIR)common.cpp $(SUPPORT_DIR)xalloc.cpp $(SUPPORT_DIR)epsilon.cpp $(SUPPORT_DIR)memstats.cpp
@@ -56,7 +61,7 @@ all: $(NEED_CLEAN) $(OUT_EXE)memex
 gc: $(SUPPORT_HEADERS) $(MEMORY_HEADERS) $(CPPEMIT_HEADERS) $(SUPPORT_OBJS) $(MEMORY_OBJS) $(CPPEMIT_OBJS)
 	@mkdir -p $(OUT_EXE)
 	@echo "int main() { return 0; }" > $(OUT_EXE)gcmain.cpp
-	$(CC) $(CFLAGS) -o $(OUT_EXE)gctest $(SUPPORT_OBJS) $(MEMORY_OBJS) $(CPPEMIT_OBJS) $(OUT_EXE)gcmain.cpp
+	$(CC) $(CFLAGS_TEST) -o $(OUT_EXE)gctest $(SUPPORT_OBJS) $(MEMORY_OBJS) $(CPPEMIT_OBJS) $(OUT_EXE)gcmain.cpp
 	@rm $(OUT_EXE)gcmain.cpp
 	@rm $(OUT_EXE)gctest
 
