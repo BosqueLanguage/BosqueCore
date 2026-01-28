@@ -7,6 +7,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <thread>
+#include <iostream>
 
 // Used for processing RC decrements on a separate thread
 // -- utilized to help clean up heavy rc dec loads after we have freed enough

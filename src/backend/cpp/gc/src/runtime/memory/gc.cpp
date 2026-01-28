@@ -541,10 +541,8 @@ void collect() noexcept
 {
     COLLECTION_STATS_START();
 
-	// leaving the decs processor paused for a full collection is FOR SURE 
-	// an issue that needs to be addressed for multithreaded collections.
-	// since we leave the decs processor paused for the full colllection
-	// there is possibility we have now lost the ability to do async collections
+	// TODO we should explore possibilities for not needing to pause for the
+	// full collection!
     g_decs_prcsr.pause();	
 	g_decs_prcsr.mergeDecdPages(gtl_info.decd_pages);
 

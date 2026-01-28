@@ -31,9 +31,9 @@ INTERNAL_FLAGS.epsilon=-DEPSILON
 CFLAGS_OPT.test=-O0 -g -ggdb -DBSQ_GC_TESTING
 CFLAGS_OPT.dev=-O0 -g -ggdb 
 CFLAGS_OPT.release=-O2 -march=x86-64-v3
-CFLAGS=-O0 -g -ggdb -DBSQ_GC_TESTING ${CSTDFLAGS} ${INTERNAL_FLAGS.${ALLOC}}
+CFLAGS=${CFLAGS_OPT.${BUILD}} ${CSTDFLAGS} ${INTERNAL_FLAGS.${ALLOC}}
 
-# we need some way to have the gc testing build generate the .test flags 
+# we need some way to have the gc testing build generate the BUILD=test flags 
 # implicitly
 CFLAGS_TEST=${CFLAGS_OPT.test} ${CSTDFLAGS} ${INTERNAL_FLAGS.${ALLOC}}
 

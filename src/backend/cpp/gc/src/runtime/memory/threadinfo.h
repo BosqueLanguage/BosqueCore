@@ -4,10 +4,6 @@
 
 #include <chrono>
 
-#ifndef MEM_STATS
-#include <iostream>
-#endif
-
 #define InitBSQMemoryTheadLocalInfo() { std::lock_guard lk(g_alloclock); register void** rbp asm("rbp"); gtl_info.initialize(GlobalThreadAllocInfo::s_thread_counter++, rbp); }
 
 #define MAX_ALLOC_LOOKUP_TABLE_SIZE 1024
