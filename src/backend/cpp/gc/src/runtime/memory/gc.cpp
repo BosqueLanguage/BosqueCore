@@ -39,7 +39,11 @@ static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcep
     while(oldroots_idx < tinfo.old_roots_count) {
         void* cur_oldroot = tinfo.old_roots[oldroots_idx];
         MetaData* m = GC_GET_META_DATA_ADDR(cur_oldroot); 
-        if(roots_idx >= tinfo.roots_count) {
+        
+		// I believe this will not function as intended anymore, we should instead
+		// be checking that both thread count and rc are zero (?)
+
+		if(roots_idx >= tinfo.roots_count) {
             // Was dropped from roots
             if(GC_REF_COUNT(m) == 0) {
                 pushPendingDecs(tinfo, cur_oldroot, tinfo.decs_batch);
@@ -341,7 +345,9 @@ static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexce
     }
 
     MetaData* m = PageInfo::getObjectMetadataAligned(addr);
-    if(GC_SHOULD_PROCESS_AS_ROOT(m)) { 
+    
+	// this likely does not work anymore, or atleast the condition itself
+	if(GC_SHOULD_PROCESS_AS_ROOT(m)) { 
         GC_MARK_AS_ROOT(m);
         tinfo.roots[tinfo.roots_count++] = addr;
         if(GC_SHOULD_PROCESS_AS_YOUNG(m)) {
@@ -511,6 +517,8 @@ static inline void computeMaxDecrementCount(BSQMemoryTheadLocalInfo& tinfo) noex
 	tinfo.bytes_freed = 0;
 }
 
+// This no longer functions as we want if we are using a thread count instead
+// of root bit!
 static void updateRoots(BSQMemoryTheadLocalInfo& tinfo)
 {
     xmem_zerofill(tinfo.old_roots, tinfo.old_roots_count);
