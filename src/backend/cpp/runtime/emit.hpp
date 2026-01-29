@@ -1,3 +1,5 @@
 #include "cppruntime.hpp"
 #include "gc/src/runtime/memory/gc.h"
 #include "gc/src/runtime/memory/threadinfo.h"
+#include "gc/src/runtime/memory/decsprcsr.h"
+#include "gc/src/runtime/support/memstats.h"
