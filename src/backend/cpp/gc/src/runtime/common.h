@@ -26,6 +26,10 @@
 #define GC_INVARIANTS
 #endif
 
+#ifdef BSQ_GC_TESTING
+#define NUM_THREAD_TESTING_ROOTS 16
+#endif
+
 #ifdef ALLOC_DEBUG_MEM_DETERMINISTIC
 #define ALLOC_BASE_ADDRESS ((void*)(0x4000000000ul)) 
 #define ALLOC_ADDRESS_SPAN 2147483648ul
@@ -213,11 +217,11 @@ do { \
 // Resets an objects metadata and updates with index into forward table
 #define ZERO_METADATA(META) ((META)->raw = 0x0UL)
 #define RESET_METADATA_FOR_OBJECT(META, FP) \
-    do { \
-        ZERO_METADATA(META); \
-        (META)->bits.isyoung = 1; \
-        (META)->bits.rc_fwd = FP; \
-    } while(0); 
+do { \
+	ZERO_METADATA(META); \
+	(META)->bits.isyoung = 1; \
+	(META)->bits.rc_fwd = FP; \
+} while(0); 
 
 #define GC_IS_MARKED(META)    ((META)->bits.ismarked)
 #define GC_IS_YOUNG(META)     ((META)->bits.isyoung)

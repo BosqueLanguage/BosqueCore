@@ -2592,7 +2592,7 @@ function emitAssembly(asm: CPPAssembly::Assembly): String {
             let gcalloc = generateGCAlloc(ti);
             var typename = emitTypeKey(ti.typekey, false, ctx); 
 			typename = emitTypeInfoName(typename);
-			let decl = String::concat("GCAllocator ", gcalloc);
+			let decl = String::concat("thread_local GCAllocator ", gcalloc);
 			let args = String::concat("&", typename, ", collect");
             let cons = String::concat(decl, "(", args, ");%n;");
 
