@@ -344,23 +344,44 @@ static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexce
         || !pointsToObjectStart(addr)) {
             return ;
     }
-
-    MetaData* m = PageInfo::getObjectMetadataAligned(addr);
    
-	// I think we want to do binary search on the old root set (since it
-	// should be sorted based on address) and if the ptr is present we just
-	// drop it into the roots set, otherwise we increment its thd_count
-	// and drop it into the root set
+	// we will for sure want to pack this logic into a little `Vector` class
+	// but the idea seems good. we do binary search to see if our addr has been
+	// seen by this thread already, and if not we inc thd_count and see if we 
+	// should reprocess	
 
-	// Whats funny here is we cant just increment the thd_count since the same
-	// thread may visit this object multiple times
-	if(GC_SHOULD_PROCESS_AS_ROOT(m)) { 
-        GC_MARK_AS_ROOT(m);
+	void* root = nullptr;
+	if(tinfo.old_roots_count > 0) {
+		int32_t l = 0, r = tinfo.old_roots_count - 1;
+		while(l < r) {
+			int32_t m = l + (r - l / 2);		
+			void* cur = tinfo.old_roots[m];	
+			if(cur < addr) {
+				l = m - 1; 
+			}
+			else if(cur > addr) { 
+				r = m + 1;
+			}
+			else {
+				root = cur;
+				break;	
+			}
+		}
+	}
+
+	if(root == nullptr) {	
+    	MetaData* m = PageInfo::getObjectMetadataAligned(addr);
+		GC_MARK_AS_ROOT(m);
         tinfo.roots[tinfo.roots_count++] = addr;
-        if(GC_SHOULD_PROCESS_AS_YOUNG(m)) {
-            tinfo.pending_roots.push_back(addr);
-        } 
-    }
+
+		// may be kept alive by another thread, so needs to be young
+		if(GC_SHOULD_PROCESS_AS_YOUNG(m)) {
+			tinfo.pending_roots.push_back(addr);
+		}
+	}
+	else {
+	    tinfo.roots[tinfo.roots_count++] = addr;
+	}
 }
 
 static void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept 
