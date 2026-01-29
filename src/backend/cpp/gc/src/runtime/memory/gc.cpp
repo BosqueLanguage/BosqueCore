@@ -28,9 +28,10 @@ static inline void pushPendingDecs(BSQMemoryTheadLocalInfo& tinfo, void* obj, De
     list.push_back(obj);
 }
 
+// A simple two pointer walk of sets stored based on address to determine
+// whether a root was droped from the previous set
 static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
-    // First we need to sort the roots we find
     qsort(tinfo.roots, 0, tinfo.roots_count - 1, tinfo.roots_count);
 
     int32_t roots_idx = 0;
@@ -345,8 +346,14 @@ static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexce
     }
 
     MetaData* m = PageInfo::getObjectMetadataAligned(addr);
-    
-	// this likely does not work anymore, or atleast the condition itself
+   
+	// I think we want to do binary search on the old root set (since it
+	// should be sorted based on address) and if the ptr is present we just
+	// drop it into the roots set, otherwise we increment its thd_count
+	// and drop it into the root set
+
+	// Whats funny here is we cant just increment the thd_count since the same
+	// thread may visit this object multiple times
 	if(GC_SHOULD_PROCESS_AS_ROOT(m)) { 
         GC_MARK_AS_ROOT(m);
         tinfo.roots[tinfo.roots_count++] = addr;

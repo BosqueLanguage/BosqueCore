@@ -141,12 +141,11 @@ struct MetaData
     int32_t ref_count;
 }; 
 #else
-// NOTE we may be interested in making metadata 32 bits with 21 bits for RC
-typedef struct MetaData 
+// NOTE we may be interested in making metadata 32 bits with 21 bits for rc_fwd
+struct MetaData 
 {
     //!!!! alloc info is valid even when this is in a free-list so we need to make sure it is a 0 bit in the pointer value (low 3) !!!!
     union {
-        uint64_t raw;
         struct {
             uint64_t isalloc  : 1;
             uint64_t isyoung  : 1;
@@ -154,8 +153,9 @@ typedef struct MetaData
             uint64_t thd_count: 7;
             uint64_t rc_fwd   : 54;
         } bits;
+        uint64_t raw;
     };
-} MetaData;
+};
 static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 #endif
 
