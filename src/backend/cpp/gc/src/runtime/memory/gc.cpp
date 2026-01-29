@@ -23,7 +23,7 @@ static inline void pushPendingDecs(void* obj, ArrayList<void*>& list)
 {
     // Dead root points to root case, keep the root pointed to alive
 	MetaData* m = GC_GET_META_DATA_ADDR(obj);
-    if(GC_IS_ROOT(m)) [[unlikely]] {
+    if(GC_IS_ROOT(m)) {
         return ;
     }
 
@@ -42,9 +42,6 @@ static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcep
     while(oldroots_idx < tinfo.old_roots_count) {
         void* cur_oldroot = tinfo.old_roots[oldroots_idx];
         MetaData* m = GC_GET_META_DATA_ADDR(cur_oldroot); 
-        
-		// I believe this will not function as intended anymore, we should instead
-		// be checking that both thread count and rc are zero (?)
 
 		if(roots_idx >= tinfo.roots_count) {
             // Was dropped from roots
@@ -383,6 +380,12 @@ static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexce
 	    tinfo.roots[tinfo.roots_count++] = addr;
 	}
 }
+
+// Im thinking we may be interested in instead doing the two pointer walk
+// again (instead of binary search) to determine whether we have a vaid pointer
+// and if we need to inc its thread count. This would entail building up a
+// worklist of our potential pointers then walking, rather than checking 
+// each pointer individually
 
 static void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept 
 {
