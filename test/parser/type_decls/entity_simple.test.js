@@ -25,7 +25,6 @@ describe ("Parser -- entity decl with default fields", () => {
     });
 });
 
-
 describe ("Parser -- entity decl of number with invariants", () => {
     it("should parse numeric type decls", function () {
         parseTestFunctionInFile('entity Foo { field f: Int; invariant $f > 0i; invariant $f <= 100i; } [FUNC]', 'function main(): Int { let x = Foo{-2i}; return 5i; }');    

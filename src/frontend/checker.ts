@@ -3384,7 +3384,7 @@ class TypeChecker {
 
             let [tenv] = env.generateBranchFlows(renv);
             const tresult = this.checkExpression(tenv, iiexp.rhs, undefined); //tenv is modified in place with used var info
-            this.checkError(iiexp.sinfo, !(tresult instanceof ErrorTypeSignature) && this.relations.isBooleanType(tresult), "Right hand side of 'implies' must be a valid Bool compatible expression");
+            this.checkError(iiexp.sinfo, !(tresult instanceof ErrorTypeSignature) && !this.relations.isBooleanType(tresult), "Right hand side of 'implies' must be a valid Bool compatible expression");
 
             const [nenv] = tenv.popLocalScope();
             env.updateUsedBindersFromOtherEnv(nenv);
