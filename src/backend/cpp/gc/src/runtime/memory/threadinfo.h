@@ -79,6 +79,10 @@ struct BSQMemoryTheadLocalInfo
     size_t max_decrement_count;
 
     bool disable_automatic_collections;
+
+	// NOTE pretty sure the two flags we use here need to be globally visible!
+	// -- they exist inside a thread local object so its posible other threads
+	//    do not reflect these flags
 #ifdef BSQ_GC_TESTING
     // having thread local storage of root pointers is useful for testing 
 	// interactions of multiple threads (ensuring roots are kept alive if 

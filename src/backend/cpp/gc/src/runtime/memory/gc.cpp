@@ -335,6 +335,29 @@ static inline bool pointsToObjectStart(void* addr) noexcept
     return start % p->realsize == 0;
 }
 
+// TODO might be nice to create an `Array<T, N>` class that provides qsort
+// and binary search
+// -- we can have this replace our raw arrays in tinfo
+static bool find(void** arr, int32_t n) noexcept
+{
+	int32_t l = 0, r = tinfo.old_roots_count - 1;
+	while(l < r) {
+		int32_t m = l + (r - l / 2);		
+		void* cur = tinfo.old_roots[m];	
+		if(cur < addr) {
+			l = m - 1; 
+		}
+		else if(cur > addr) { 
+			r = m + 1;
+		}
+		else {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     if(!GlobalPageGCManager::g_gc_page_manager.pagetableQuery(addr) 
@@ -342,50 +365,17 @@ static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexce
             return ;
     }
    
-	// we will for sure want to pack this logic into a little `Vector` class
-	// but the idea seems good. we do binary search to see if our addr has been
-	// seen by this thread already, and if not we inc thd_count and see if we 
-	// should reprocess	
-
-	void* root = nullptr;
-	if(tinfo.old_roots_count > 0) {
-		int32_t l = 0, r = tinfo.old_roots_count - 1;
-		while(l < r) {
-			int32_t m = l + (r - l / 2);		
-			void* cur = tinfo.old_roots[m];	
-			if(cur < addr) {
-				l = m - 1; 
-			}
-			else if(cur > addr) { 
-				r = m + 1;
-			}
-			else {
-				root = cur;
-				break;	
-			}
-		}
-	}
-
-	if(root == nullptr) {	
+	tinfo.roots[tinfo.roots_count++] = addr;
+	if(!find(tinfo.old_roots, tinfo.old_roots_count)) {	
     	MetaData* m = PageInfo::getObjectMetadataAligned(addr);
 		GC_MARK_AS_ROOT(m);
-        tinfo.roots[tinfo.roots_count++] = addr;
 
 		// may be kept alive by another thread, so needs to be young
 		if(GC_SHOULD_PROCESS_AS_YOUNG(m)) {
 			tinfo.pending_roots.push_back(addr);
 		}
 	}
-	else {
-	    tinfo.roots[tinfo.roots_count++] = addr;
-	}
 }
-
-// Im thinking we may be interested in instead doing the two pointer walk
-// again (instead of binary search) to determine whether we have a vaid pointer
-// and if we need to inc its thread count. This would entail building up a
-// worklist of our potential pointers then walking, rather than checking 
-// each pointer individually
 
 static void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept 
 {
