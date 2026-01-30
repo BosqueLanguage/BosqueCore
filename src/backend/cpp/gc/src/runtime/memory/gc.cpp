@@ -19,12 +19,24 @@ static void walkPointerMaskForDecrements(__CoreGC::TypeInfoBase* typeinfo, void*
 static void updatePointers(void** slots, __CoreGC::TypeInfoBase* typeinfo, BSQMemoryTheadLocalInfo& tinfo) noexcept;
 static void walkPointerMaskForMarking(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept; 
 
+//
+// TODO we should change the names of our modification of thread counts!
+// they are still root pointers, but some of our names are confusing
+//
+
 static inline void pushPendingDecs(void* obj, ArrayList<void*>& list)
 {
-    // Dead root points to root case, keep the root pointed to alive
+    // Dead root points to root case (or multiple thd references), keep the root pointed to alive
 	MetaData* m = GC_GET_META_DATA_ADDR(obj);
-    if(GC_IS_ROOT(m)) {
-        return ;
+    
+	// TODO clean this code and remove the invariant, it checks for overflow
+	// but will fail in prod environment
+	if(GC_IS_ROOT(m)) {
+        m->thd_count--;
+		GC_INVARIANT_CHECK(m->thd_count >= 0 && m->thd_count < 32);	
+		if(m-> thd_count > 0) {
+			return ;
+		}
     }
 
     list.push_back(obj);
@@ -338,16 +350,16 @@ static inline bool pointsToObjectStart(void* addr) noexcept
 // TODO might be nice to create an `Array<T, N>` class that provides qsort
 // and binary search
 // -- we can have this replace our raw arrays in tinfo
-static bool find(void** arr, int32_t n) noexcept
+static bool find(void** arr, int32_t n, void* trgt, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
 	int32_t l = 0, r = tinfo.old_roots_count - 1;
 	while(l < r) {
 		int32_t m = l + (r - l / 2);		
 		void* cur = tinfo.old_roots[m];	
-		if(cur < addr) {
+		if(cur < trgt) {
 			l = m - 1; 
 		}
-		else if(cur > addr) { 
+		else if(cur > trgt) { 
 			r = m + 1;
 		}
 		else {
@@ -366,7 +378,7 @@ static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexce
     }
    
 	tinfo.roots[tinfo.roots_count++] = addr;
-	if(!find(tinfo.old_roots, tinfo.old_roots_count)) {	
+	if(!find(tinfo.old_roots, tinfo.old_roots_count, addr, tinfo)) {	
     	MetaData* m = PageInfo::getObjectMetadataAligned(addr);
 		GC_MARK_AS_ROOT(m);
 
@@ -543,8 +555,6 @@ static inline void computeMaxDecrementCount(BSQMemoryTheadLocalInfo& tinfo) noex
 	tinfo.bytes_freed = 0;
 }
 
-// This no longer functions as we want if we are using a thread count instead
-// of root bit!
 static void updateRoots(BSQMemoryTheadLocalInfo& tinfo)
 {
     xmem_zerofill(tinfo.old_roots, tinfo.old_roots_count);
@@ -553,7 +563,6 @@ static void updateRoots(BSQMemoryTheadLocalInfo& tinfo)
     for(int32_t i = 0; i < gtl_info.roots_count; i++) {
 		void* obj = tinfo.roots[i];
 		MetaData* m = GC_GET_META_DATA_ADDR(obj);
-        GC_CLEAR_ROOT_MARK(m);
         GC_CLEAR_YOUNG_MARK(m);
 
         tinfo.old_roots[tinfo.old_roots_count++] = obj;
