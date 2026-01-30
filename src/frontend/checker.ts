@@ -841,8 +841,8 @@ class TypeChecker {
 
         return TemplateNameMapper.createInitialMapping(tmap);
     }
-/*
-    private checkTemplateBindingsOnConstructor(sinfo: SourceInfo, env: TypeEnvironment, targs: TypeSignature[], cdecl: AbstractNominalTypeDecl): TemplateNameMapper | undefined {
+
+    private checkTemplateBindingsOnConstructor(sinfo: SourceInfo, targs: TypeSignature[], cdecl: AbstractNominalTypeDecl): TemplateNameMapper | undefined {
         if(targs.length !== cdecl.terms.length) {
             this.reportError(sinfo, `Constructor ${cdecl.name} expected ${cdecl.terms.length} terms but got ${targs.length}`);
             return undefined;
@@ -870,6 +870,16 @@ class TypeChecker {
                         return undefined;
                     }
                 }
+                if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.Equiv)) {
+                    if(this.checkError(sinfo, !this.relations.isEquivType(targ, this.constraints), `Template argument ${tdecl.name} is not an equiv type`)) {
+                        return undefined;
+                    }
+                }
+                if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.Mergeable)) {
+                    if(this.checkError(sinfo, !this.relations.isMergeableType(targ, this.constraints), `Template argument ${tdecl.name} is not a mergeable type`)) {
+                        return undefined;
+                    }
+                }
             }
 
             tmap.set(tdecl.name, targ);
@@ -877,7 +887,7 @@ class TypeChecker {
 
         return TemplateNameMapper.createInitialMapping(tmap);
     }
-*/
+
     private checkSingleParam(env: TypeEnvironment, arg: ArgumentValue, paramname: string, paramtype: TypeSignature, pkind: "ref" | "out" | "out?" | "inout" | undefined, imapper: TemplateNameMapper): TypeSignature {
         if(arg instanceof SpreadArgumentValue) {
             this.reportError(arg.exp.sinfo, `Spread argument cannot be used except as part of rest args`);
@@ -1126,7 +1136,7 @@ class TypeChecker {
 
         return { arginfo: arginfo, resttype: resttype, restinfo: restinfo };
     }
-
+*/
     private checkConstructorArgumentListStd(sinfo: SourceInfo, env: TypeEnvironment, args: ArgumentValue[], bnames: {name: string, type: TypeSignature, hasdefault: boolean, containingtype: NominalTypeSignature}[], imapper: TemplateNameMapper): [number, TypeSignature, string, TypeSignature][] {
         let argsuffle: (ArgumentValue | undefined)[] = [];
         let argsuffleidx: number[] = [];
@@ -1135,7 +1145,7 @@ class TypeChecker {
             argsuffleidx.push(-1);
         }
 
-        //fill in all the parameter arg shuggle info
+        //fill in all the parameter arg shuffle info
         let nfirst = args.findIndex((arg) => arg instanceof NamedArgumentValue); 
         if(nfirst === -1) {
             nfirst = args.length;
@@ -1145,7 +1155,7 @@ class TypeChecker {
             argsuffle[i] = args[i];
             argsuffleidx[i] = i;
 
-            this.checkError(args[i].exp.sinfo, (args[i] instanceof RefArgumentValue), `Reference argument not allowed in constructors`);
+            this.checkError(args[i].exp.sinfo, (args[i] instanceof PassingArgumentValue), `Passing arguments not allowed in constructors`);
         }
 
         //fill in all the named arguments
@@ -1194,7 +1204,6 @@ class TypeChecker {
 
         return argsuffleidx.map((idx, i) => [idx, bnames[i].containingtype.remapTemplateBindings(imapper), bnames[i].name, bnames[i].type.remapTemplateBindings(imapper)]);
     }
-*/
 
     private checkLiteralNoneExpression(env: TypeEnvironment, exp: LiteralNoneExpression): TypeSignature {
         return exp.setType(this.getWellKnownType("None"));
@@ -1924,10 +1933,9 @@ class TypeChecker {
     }
 
     private checkStandardConstructor(env: TypeEnvironment, fields: MemberFieldDecl[], exp: ConstructorPrimaryExpression): TypeSignature {
-        /*
         const ctype = exp.ctype as NominalTypeSignature;
 
-        const imapper = this.checkTemplateBindingsOnConstructor(exp.sinfo, env, ctype.alltermargs, ctype.decl);
+        const imapper = this.checkTemplateBindingsOnConstructor(exp.sinfo, ctype.alltermargs, ctype.decl);
         if(imapper === undefined) {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
@@ -1937,8 +1945,6 @@ class TypeChecker {
 
         exp.shuffleinfo = shuffleinfo;
         return exp.setType(ctype);
-        */
-        assert(false, "Not Implemented -- checkStandardConstructor");
     }
 
     private checkConstructorPrimaryExpression(env: TypeEnvironment, exp: ConstructorPrimaryExpression): TypeSignature {
