@@ -1775,10 +1775,9 @@ class TypeChecker {
     }
 
     private checkCollectionConstructor(env: TypeEnvironment, cdecl: AbstractCollectionTypeDecl, exp: ConstructorPrimaryExpression): TypeSignature {
-        /*
         const etype = this.relations.getExpandoableOfType(exp.ctype) as TypeSignature;
 
-        if(exp.args.args.some((arg) => (arg instanceof NamedArgumentValue) || (arg instanceof RefArgumentValue))) {
+        if(exp.args.args.some((arg) => (arg instanceof NamedArgumentValue) || (arg instanceof PassingArgumentValue))) {
             this.reportError(exp.sinfo, `Collection constructor expects only positional (or spread) arguments`);
             return exp.setType(exp.ctype);
         }
@@ -1802,8 +1801,6 @@ class TypeChecker {
         exp.elemtype = etype;
         exp.shuffleinfo = shuffleinfo;
         return exp.setType(exp.ctype);
-        */
-        assert(false, "Not Implemented -- checkCollectionConstructor");
     }
 
     private checkSpecialConstructableConstructor(env: TypeEnvironment, cdecl: ConstructableTypeDecl, exp: ConstructorPrimaryExpression): TypeSignature {

@@ -5912,10 +5912,10 @@ class Parser {
         }
 
         if(memberFields === undefined) {
-            this.recordErrorGeneral(sinfo, "Cannot have a const member on this type");
+            this.recordErrorGeneral(sinfo, "Cannot have a field member on this type");
         }
         if(allMemberNames.has(fname)) {
-            this.recordErrorGeneral(sinfo, `Duplicate const member ${fname}`);
+            this.recordErrorGeneral(sinfo, `Duplicate field member ${fname}`);
         }
         allMemberNames.add(fname);
 
