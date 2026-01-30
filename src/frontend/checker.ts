@@ -931,6 +931,9 @@ class TypeChecker {
                         const badvkind = vinfo.vkind === "let";
                         this.checkError(arg.exp.sinfo, badvkind, `Variable ${vname} cannot be passed as ref`);
                         this.checkError(arg.exp.sinfo, !vinfo.mustDefined, `Variable ${vname} must be definitely assigned before it can be passed as ref`);
+
+                        //check if an updatable type
+                        this.checkError(arg.exp.sinfo, !TypeChecker.isTypeUpdatable(vtype)[0], `Variable ${vname} is not of an updatable type and cannot be passed as ref`);
                     }
 
                     argtype = vtype;
@@ -3636,7 +3639,6 @@ class TypeChecker {
     }
 
     private checkVariableAssignmentStatement(env: TypeEnvironment, stmt: VariableAssignmentStatement): TypeEnvironment {
-        /*
         const vinfo = env.resolveLocalVarInfoFromSrcName(stmt.name);
         if(vinfo === undefined && stmt.name !== "_") {
             this.reportError(stmt.sinfo, `Variable ${stmt.name} is not declared`);
@@ -3645,20 +3647,21 @@ class TypeChecker {
 
         let decltype: TypeSignature | undefined = undefined;
         if(vinfo !== undefined) {
-            //TODO: I think we also need to check ref here (we shouldn't assign to those)
+            const badvkind = vinfo.vkind === "let" || vinfo.vkind === "ref";
+            this.checkError(stmt.sinfo, badvkind, `Variable ${stmt.name} cannot be assigned`);
 
-            this.checkError(stmt.sinfo, vinfo.isConst, `Variable ${stmt.name} is declared as const and cannot be assigned`);
             decltype = vinfo.decltype;
         }
 
         const rhs = this.checkExpressionRHS(env, stmt.exp, decltype !== undefined ? new SimpleTypeInferContext(decltype) : undefined);
-
-        this.checkError(stmt.sinfo, decltype !== undefined && !(rhs instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(rhs, decltype, this.constraints), `Expression of type ${TypeChecker.safeTypePrint(rhs)} cannot be assigned to variable of type ${TypeChecker.safeTypePrint(decltype)}`);
+        this.checkError(stmt.sinfo, decltype !== undefined && !(rhs instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(rhs.tsig, decltype, this.constraints), `Expression of type ${TypeChecker.safeTypePrint(rhs.tsig)} cannot be assigned to variable of type ${TypeChecker.safeTypePrint(decltype)}`);
         
-        stmt.vtype = decltype || rhs;
+        for(let i = 0; i < rhs.setuncond.length; ++i) {
+            env = env.assignLocalVariable(rhs.setuncond[i]);
+        }
+
+        stmt.vtype = decltype || rhs.tsig;
         return stmt.name !== "_" ? env.assignLocalVariable(stmt.name) : env;
-        */
-        assert(false, "Not Implemented -- checkVariableAssignmentStatement");
     }
 
     private checkVariableMultiAssignmentStatement(env: TypeEnvironment, stmt: VariableMultiAssignmentStatement): TypeEnvironment {
