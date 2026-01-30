@@ -101,6 +101,7 @@ struct BSQMemoryTheadLocalInfo
 		disable_automatic_collections(false) { }
     BSQMemoryTheadLocalInfo& operator=(BSQMemoryTheadLocalInfo&) = delete;
     BSQMemoryTheadLocalInfo(BSQMemoryTheadLocalInfo&) = delete;
+	~BSQMemoryTheadLocalInfo() { this->cleanup(); }
 
 	inline GCAllocator* getAllocatorForPageSize(PageInfo* page) noexcept {
         uint32_t idx = page->typeinfo->type_id;
@@ -130,6 +131,7 @@ struct BSQMemoryTheadLocalInfo
 
     void loadNativeRootSet() noexcept;
     void unloadNativeRootSet() noexcept;
+	void cleanup() noexcept;
 };
 
 extern thread_local BSQMemoryTheadLocalInfo gtl_info;

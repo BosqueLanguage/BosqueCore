@@ -89,3 +89,15 @@ void BSQMemoryTheadLocalInfo::unloadNativeRootSet() noexcept
 {
     this->native_stack_contents.clear();
 }
+
+void BSQMemoryTheadLocalInfo::cleanup() noexcept
+{
+	for(int32_t i = 0; i < this->old_roots_count; i++) {
+		void* addr = this->old_roots[i];
+		MetaData* m = GC_GET_META_DATA_ADDR(addr);
+	
+		// TODO still need to find a good name here!
+		// -- (and need to lock it)
+		m->thd_count--;
+	}
+}
