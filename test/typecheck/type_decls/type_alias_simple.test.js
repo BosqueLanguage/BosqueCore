@@ -1,6 +1,6 @@
 "use strict";
 
-import { checkTestFunction, checkTestFunctionError } from "../../../bin/test/typecheck/typecheck_nf.js";
+import { checkTestFunction, checkTestFunctionError, checkTestFunctionInFile, checkTestFunctionInFileError } from "../../../bin/test/typecheck/typecheck_nf.js";
 import { describe, it } from "node:test";
 
 describe ("Checker -- type decl of bool", () => {
@@ -40,10 +40,10 @@ describe ("Checker -- type decl of number with invariants", () => {
 
 describe ("Checker -- type decl of number with value", () => {
     it("should check numeric type decls", function () {
-        checkTestFunction('type NVal = Int; function main(): Int { let x = -2i<NVal>; return x.value; }');    
+        checkTestFunction('type NVal = Int; function main(): NVal { let x = -2i<NVal>; return x; }');    
     });
 
     it("should fail not nat", function () {
-        checkTestFunctionError('type NVal = Int; function main(): Nat { let x = -2i<NVal>; return x.value; }', "Expected a return value of type Nat but got Int");
+        checkTestFunctionError('type II = Int; type NVal = II; function main(): Int { return 2i; }', "In type declaration value type must be simple primitive -- Bool, Int, etc.");
     });
 });

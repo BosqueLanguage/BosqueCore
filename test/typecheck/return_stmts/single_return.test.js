@@ -18,7 +18,7 @@ describe ("Checker -- simple return", () => {
         checkTestFunctionInFile('function main(): Option<Int> { let x: Option<Int> = some(3i); return x; }');
 
         checkTestFunctionInFile('concept Baz {} entity Foo provides Baz {} function main(): Baz { return Foo{}; }');
-        checkTestFunctionInFile('concept Baz {} entity Foo provides Baz {} function main(): Baz { let x: Baz = Foo{}; return x; }');
+        checkTestFunctionInFile('concept Baz {} entity Foo provides Baz {} function main(): Baz { let x: Foo = Foo{}; return x; }');
     });
 
     it("should check fail simple returns with coerce", function () {
