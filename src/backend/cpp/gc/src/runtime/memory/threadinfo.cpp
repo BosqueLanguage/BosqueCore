@@ -97,7 +97,7 @@ void BSQMemoryTheadLocalInfo::cleanup() noexcept
 		MetaData* m = GC_GET_META_DATA_ADDR(addr);
 	
 		// TODO still need to find a good name here!
-		// -- (and need to lock it)
+		std::lock_guard(g_gcrefctlock);
 		m->thd_count--;
 	}
 }
