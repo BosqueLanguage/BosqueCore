@@ -2500,8 +2500,10 @@ class ASMToIRConverter {
 
             }
             else {
-                const ll = (this.currentInvokeInstantation as InvokeInstantiationInfo).lambdas.find((li) => li.pname === p.name) as { pname: string, psig: IRLambdaParameterPackTypeSignature, invtrgt: string };
-                return new IRInvokeParameterDecl(p.name, ll.psig, p.pkind, defaultValue);
+                const ll = (this.currentInvokeInstantation as InvokeInstantiationInfo).lambdas.find((li) => li.pname === p.name) as { pname: string, psigkey: string, invtrgt: string };
+                const tlambda = new IRLambdaParameterPackTypeSignature(ll.psigkey);
+                
+                return new IRInvokeParameterDecl(p.name, tlambda, p.pkind, defaultValue);
             }
         });
     }

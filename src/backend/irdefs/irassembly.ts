@@ -749,7 +749,6 @@ class IRResourceInformation {
     //TODO: fill this in
 }
 
-
 class IRTaskConfiguration {
     timeout: number | undefined;
     retry: {delay: number, tries: number} | undefined;
@@ -894,6 +893,21 @@ class IRTaskDecl {
     }
 }
 
+class IRLambdaParameterPackDecl {
+    readonly tkeystr: string;
+    readonly invtrgt: string;
+    readonly stdvalues: {vname: string, vtype: IRTypeSignature}[];
+    readonly lambdavalues: {lname: string, ltypekey: string}[];
+
+    constructor(tkeystr: string, invtrgt: string, stdvalues: {vname: string, vtype: IRTypeSignature}[], lambdavalues: {lname: string, ltypekey: string}[]) {
+        this.tkeystr = tkeystr;
+        this.invtrgt = invtrgt;
+        this.stdvalues = stdvalues;
+        this.lambdavalues = lambdavalues;
+    }
+}
+
+
 class IRAssembly {
     readonly regexps: IRRegex[] = [];
 
@@ -926,14 +940,16 @@ class IRAssembly {
     readonly apis: IRAPIDecl[] = [];
     readonly agents: IRAgentDecl[] = [];
     readonly tasks: IRTaskDecl[] = [];
+    readonly lpackdecls: IRLambdaParameterPackDecl[] = [];
 
     readonly alltypes: Map<string, IRAbstractNominalTypeDecl> = new Map<string, IRAbstractNominalTypeDecl>();
     readonly allinvokes: Map<string, IRInvokeMetaDecl> = new Map<string, IRInvokeMetaDecl>();
+    readonly alllambdas: Map<string, IRLambdaParameterPackDecl> = new Map<string, IRLambdaParameterPackDecl>();
 
     readonly elists: IREListTypeSignature[] = [];
     readonly dashtypes: IRDashResultTypeSignature[] = [];
     readonly formats: IRFormatTypeSignature[] = [];
-    readonly lpacks: IRLambdaParameterPackTypeSignature[] = [];
+    readonly lpacksigs: IRLambdaParameterPackTypeSignature[] = [];
 
     readonly supertypes: Map<string, IRTypeSignature[]> = new Map<string, IRTypeSignature[]>();
     readonly subtypes: Map<string, IRTypeSignature[]> = new Map<string, IRTypeSignature[]>();
@@ -947,12 +963,19 @@ class IRAssembly {
     }
 
     private getTypeDependencyInfo(tsig: IRTypeSignature): IRTypeSignature[] {
-        if(!(tsig instanceof IRNominalTypeSignature)) {
-            return tsig.getDirectDependencyTypes();            
+        if(tsig instanceof IRLambdaParameterPackTypeSignature) {
+            const lsdecl = this.alllambdas.get(tsig.tkeystr) as IRLambdaParameterPackDecl;
+            return [
+                ...lsdecl.stdvalues.map((sv) => sv.vtype),
+                ...lsdecl.lambdavalues.map((lv) => new IRLambdaParameterPackTypeSignature(lv.ltypekey))
+            ];
         }
-        else {
+        else if(tsig instanceof IRNominalTypeSignature) {
             const ttdecl = this.alltypes.get(tsig.tkeystr) as IRAbstractNominalTypeDecl;
             return ttdecl.getDeclDependencyTypes(this.alltypes);
+        }
+        else {
+            return tsig.getDirectDependencyTypes();            
         }
     }
 
@@ -974,7 +997,7 @@ class IRAssembly {
 
     private computeAllTypes(): IRTypeSignature[] {
         const allndecls = [...this.alltypes.values()].map(td => new IRNominalTypeSignature(td.tkey));
-        const allsdtypes = [...this.elists, ...this.dashtypes, ...this.formats];
+        const allsdtypes = [...this.elists, ...this.dashtypes, ...this.formats, ...this.lpacksigs];
 
         return [...allndecls, ...allsdtypes];
     }
@@ -1033,5 +1056,6 @@ export {
     IRDatatypeMemberEntityTypeDecl, IRDatatypeTypeDecl,
     IREnvironmentVariableInformation, IRResourceInformation, IRTaskConfiguration,
     IRAPIDecl, IRAgentDecl, IRTaskDecl,
+    IRLambdaParameterPackDecl,
     IRAssembly
 };

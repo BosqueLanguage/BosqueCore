@@ -293,7 +293,7 @@ class TypeInfoManager {
         irasm.elists.forEach((ttype) => { if(!timgr.hasTypeInfo(ttype.tkeystr)) { timgr.processInfoGenerationForType(ttype, irasm); } });
         irasm.dashtypes.forEach((ttype) => { if(!timgr.hasTypeInfo(ttype.tkeystr)) { timgr.processInfoGenerationForType(ttype, irasm); } });
         irasm.formats.forEach((ttype) => { if(!timgr.hasTypeInfo(ttype.tkeystr)) { timgr.processInfoGenerationForType(ttype, irasm); } });
-        irasm.lpacks.forEach((ttype) => { if(!timgr.hasTypeInfo(ttype.tkeystr)) { timgr.processInfoGenerationForType(ttype, irasm); } });
+        irasm.lpacksigs.forEach((ttype) => { if(!timgr.hasTypeInfo(ttype.tkeystr)) { timgr.processInfoGenerationForType(ttype, irasm); } });
 
         return timgr;
     }

@@ -101,20 +101,12 @@ class IRFormatPathGlobTypeSignature extends IRFormatTypeSignature {
 }
 
 class IRLambdaParameterPackTypeSignature extends IRTypeSignature {
-    readonly stdvalues: {vname: string, vtype: IRTypeSignature}[];
-    readonly lambdavalues: {lname: string, ltype: IRLambdaParameterPackTypeSignature}[];
-
-    constructor(tkeystr: string, stdvalues: {vname: string, vtype: IRTypeSignature}[], lambdavalues: {lname: string, ltype: IRLambdaParameterPackTypeSignature}[]) {
+    constructor(tkeystr: string) {
         super(tkeystr);
-        this.stdvalues = stdvalues;
-        this.lambdavalues = lambdavalues;
     }
 
     getDirectDependencyTypes(): IRTypeSignature[] {
-        return [
-            ...this.stdvalues.map(v => v.vtype),
-            ...this.lambdavalues.map(l => l.ltype)
-        ];
+        return [];
     }
 }
 
