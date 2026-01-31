@@ -820,12 +820,52 @@ class ASMToIRConverter {
         }
     }
 
+    private flattenListConstructor(decl: ListTypeDecl, exp: ConstructorPrimaryExpression): IRSimpleExpression {
+        assert(false, "ASMToIRConverter::flattenListConstructor - Not Implemented");
+    }
+
     private flattenCollectionConstructor(cdecl: AbstractCollectionTypeDecl, exp: ConstructorPrimaryExpression): IRSimpleExpression {
-        assert(false, "ASMToIRConverter::flattenCollectionConstructor - Not Implemented");
+        if(cdecl instanceof ListTypeDecl) {
+            return this.flattenListConstructor(cdecl, exp);
+        }
+        else {
+            assert(false, "ASMToIRConverter::flattenStandardConstructor - Not Implemented");
+        }
     }
     
     private flattenStandardConstructor(decl: AbstractEntityTypeDecl, exp: ConstructorPrimaryExpression): IRSimpleExpression {
-        assert(false, "ASMToIRConverter::flattenStandardConstructor - Not Implemented");
+        const hasinvchks = decl.allInvariants.length !== 0;
+        const bfinfo = decl.saturatedBFieldInfo;
+
+        const aargs: IRSimpleExpression[] = [];
+        for(let i = 0; i < exp.shuffleinfo.length; ++i) {
+            const ii = exp.shuffleinfo[i];
+            if(ii[0] === -1) {
+                const eexp = this.assembly.something((this.tproc(bfinfo[i].containingtype) as NominalTypeSignature).decl, bfinfo[i].name);
+                const crexp = xxxx; //try resolve as const;
+
+                if(crexp !== undefined) {
+                    aargs.push(this.makeExpressionSimple(this.flattenExpression(crexp), bfinfo[i].type));
+                }
+                else {
+                    assert(false, "ASMToIRConverter::flattenStandardConstructor - Invoke computation for default argument not implemented");
+                }
+            }
+            else {
+                const eexp = exp.args.args[ii[0]];
+                const sexp = this.flattenExpression(eexp.exp);
+                const cexp = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(sexp, eexp.exp.getType()), eexp.exp.getType(), bfinfo[i].type);
+
+                const fexp = hasinvchks ? this.makeExpressionImmediate(cexp, bfinfo[i].type) : cexp;
+                aargs.push(fexp);
+            }
+        }
+
+        //do invariants as needed (on appropriate sets of args
+        xxxx;
+        
+        //call constructor
+        return new IRConstructorStandardEntityExpression(this.processTypeSignature(exp.ctype), aargs);
     }
 
     private flattenSpecialConstructableConstructor(cdecl: ConstructableTypeDecl, exp: ConstructorPrimaryExpression): IRSimpleExpression {
