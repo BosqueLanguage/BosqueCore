@@ -838,6 +838,10 @@ class AccessEnumExpression extends Expression {
         this.name = name;
     }
 
+    override isLiteralExpression(): boolean {
+        return true;
+    }
+
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         return `${this.stype.emit()}#${this.name}`;
     }

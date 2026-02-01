@@ -841,11 +841,15 @@ class ASMToIRConverter {
         for(let i = 0; i < exp.shuffleinfo.length; ++i) {
             const ii = exp.shuffleinfo[i];
             if(ii[0] === -1) {
-                const eexp = this.assembly.something((this.tproc(bfinfo[i].containingtype) as NominalTypeSignature).decl, bfinfo[i].name);
-                const crexp = xxxx; //try resolve as const;
+                const eexp = this.assembly.resolveFieldDeclDefaultExpFromTypeSignature(this.tproc(bfinfo[i].containingtype), bfinfo[i].name) as Expression;
+                const crexp = eexp !== undefined ? this.assembly.tryReduceConstantExpression(eexp) : undefined;
 
                 if(crexp !== undefined) {
-                    aargs.push(this.makeExpressionSimple(this.flattenExpression(crexp), bfinfo[i].type));
+                    const sexp = this.flattenExpression(crexp);
+                    const cexp = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(sexp, crexp.getType()), crexp.getType(), bfinfo[i].type);
+
+                    const fexp = hasinvchks ? this.makeExpressionImmediate(cexp, bfinfo[i].type) : cexp;
+                    aargs.push(fexp);
                 }
                 else {
                     assert(false, "ASMToIRConverter::flattenStandardConstructor - Invoke computation for default argument not implemented");
@@ -862,8 +866,17 @@ class ASMToIRConverter {
         }
 
         //do invariants as needed (on appropriate sets of args
-        xxxx;
-        
+        for(let i = 0; i < decl.allInvariants.length; ++i) {
+            const invdecl = decl.allInvariants[i];
+            const chkargt = this.tproc(chk.exp.getType());
+
+            this.pushStatement(new IRInvariantCheckStatement(
+                chk.file, 
+                this.convertSourceInfo(chk.sinfo), 
+                this.registerError(chk.file, this.convertSourceInfo(chk.sinfo), "userspec"), 
+                chktarg));
+        }
+
         //call constructor
         return new IRConstructorStandardEntityExpression(this.processTypeSignature(exp.ctype), aargs);
     }

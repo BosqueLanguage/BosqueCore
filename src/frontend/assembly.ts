@@ -1754,6 +1754,30 @@ class Assembly {
         }
     }
 
+    resolveFieldDeclDefaultExpFromTypeSignature(ts: TypeSignature, fieldname: string): Expression | undefined {
+        if(!(ts instanceof NominalTypeSignature)) {
+            return undefined;
+        }
+
+        const tdecl = ts.decl;
+        let fd: MemberFieldDecl | undefined = undefined;
+        if(tdecl instanceof EntityTypeDecl) {
+            fd = tdecl.fields.find((fd) => fd.name === fieldname);
+        }
+        if(tdecl instanceof ConceptTypeDecl) {
+            fd = tdecl.fields.find((fd) => fd.name === fieldname);
+        }
+        if(tdecl instanceof DatatypeMemberEntityTypeDecl) {
+            fd = tdecl.fields.find((fd) => fd.name === fieldname);
+        }
+        if(tdecl instanceof DatatypeTypeDecl) {
+            fd = tdecl.fields.find((fd) => fd.name === fieldname);
+        }
+        
+
+        return (fd !== undefined) ? fd.defaultValue : undefined;
+    }
+
     static checkFunctionSigMatch(fd1: FunctionInvokeDecl, fd2: FunctionInvokeDecl): boolean {
         if(fd1.name !== fd2.name) {
             return false;
