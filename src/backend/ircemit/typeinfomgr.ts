@@ -1,5 +1,5 @@
 
-import { IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAssembly, IROptionTypeDecl, IRSomeTypeDecl } from "../irdefs/irassembly.js";
+import { IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAssembly, IREntityTypeDecl, IROptionTypeDecl, IRSomeTypeDecl } from "../irdefs/irassembly.js";
 import { IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature } from "../irdefs/irtype.js";
 import { TransformCPPNameManager } from "./namemgr.js";
 
@@ -157,6 +157,14 @@ class TypeInfoManager {
         }
     }
 
+    private isRecursiveType(ttype: IRTypeSignature, irasm: IRAssembly): boolean {
+        xxxx;
+    }
+
+    private isSizeOkForValueLayout(bytesize: number): boolean {
+        xxxx;
+    }
+
     private processInfoGenerationForEntity(tdecl: IRAbstractEntityTypeDecl, irasm: IRAssembly): TypeInfo {
         if(tdecl instanceof IRSomeTypeDecl) {
             const oftinfo = this.processInfoGenerationForType(tdecl.ttype, irasm);
@@ -172,7 +180,43 @@ class TypeInfoManager {
             return this.getTypeInfo(tdecl.tkey);
         }
         else {
-            assert(false, `TypeInfoManager::processInfoGenerationForEntity - Unsupported entity type declaration for key ${tdecl.tkey}`);
+            assert(tdecl instanceof IREntityTypeDecl, `TypeInfoManager::processInfoGenerationForEntity - Unsupported entity type declaration for key ${tdecl.tkey}`);
+
+            const etdecl = tdecl as IREntityTypeDecl;
+            let totalbytesize = 0;
+            let totalslotcount = 0;
+            let ptrmask = "";
+            const vtable: FieldOffsetInfo[] = [];
+
+            for(const fdecl of etdecl.saturatedBFieldInfo) {
+                if(this.isRecursiveType(fdecl.ftype, irasm)) {
+                    totalbytesize += 8;
+                    totalslotcount += 1;
+                    ptrmask += "1";
+                }
+                else {
+                    const ftypeinfo = this.processInfoGenerationForType(fdecl.ftype, irasm);
+                    totalbytesize += ftypeinfo.bytesize;
+                    totalslotcount += ftypeinfo.slotcount;
+
+                    if(ftypeinfo.tag === LayoutTag.Value) {
+                        ptrmask += "0";
+                    }
+                    else if(ftypeinfo.tag === LayoutTag.Ref) {
+                        ptrmask += "1";
+                    }
+                    else {
+                        xxxx;
+                    }
+                }
+            }
+
+            if(this.isRecursiveType(ttype, irasm) || !this.isSizeOkForValueLayout(totalbytesize)) {
+                xxxx;
+            }
+            else {
+                xxxx;
+            }
         }
     }
 
@@ -204,10 +248,10 @@ class TypeInfoManager {
         if(ttype instanceof IRNominalTypeSignature) {
             const ddecl = irasm.alltypes.get(ttype.tkeystr) as IRAbstractNominalTypeDecl;
             if(ddecl instanceof IRAbstractEntityTypeDecl) {
-                return this.processInfoGenerationForEntity(ddecl, irasm);
+                return this.processInfoGenerationForEntity(ttype, ddecl, irasm);
             }
             else {
-                return this.processInfoGenerationForConcept(ddecl, irasm);
+                return this.processInfoGenerationForConcept(ttype, ddecl, irasm);
             }
         }
         else {

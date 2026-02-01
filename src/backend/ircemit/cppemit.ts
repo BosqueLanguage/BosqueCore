@@ -540,7 +540,15 @@ class CPPEmitter {
             else if(ttag === IRExpressionTag.IRTaskAccessParentIDExpression) {
                 return `(${RUNTIME_NAMESPACE}::tl_info.parent !== nullptr ? ${RUNTIME_NAMESPACE}::tl_info.parent->taskid : ${RUNTIME_NAMESPACE}::XUUIDv4::nil())`;
             }
-            
+            else if(ttag === IRExpressionTag.IRConstructorStandardEntityExpression) {
+                assert(false, "CPPEmitter: need to implement standard entity constructor expression");
+            }
+            else if(ttag === IRExpressionTag.IRConstructorListEmptyExpression) {
+                assert(false, "CPPEmitter: need to implement empty list constructor expression");
+            }
+            else if(ttag === IRExpressionTag.IRConstructorListSingletonsExpression) {
+                assert(false, "CPPEmitter: need to implement list from elements constructor expression");
+            }
             else if(ttag === IRExpressionTag.IRInvokeSimpleExpression) {
                 assert(false, "CPPEmitter: need to implement simple invoke expression");
             }
@@ -655,6 +663,9 @@ class CPPEmitter {
             const invchk = `${TransformCPPNameManager.generateNameForInvariantFunction(itdics.tkey, itdics.invariantidx)}(${this.emitIRSimpleExpression(itdics.targetValue, true)})`
             const dtag = itdics.diagnosticTag !== undefined ? `"${itdics.diagnosticTag}"` : "nullptr";
             return `ᐸRuntimeᐳ::bsq_invariant((bool)(${invchk}), "${itdics.file}", ${itdics.sinfo.line}, ${dtag}, "Failed Invariant");`;
+        }
+        else if(ttag === IRStatementTag.IREntityInvariantCheckStatement) {
+            assert(false, "CPPEmitter: need to implement entity invariant check statement");
         }
         else if(ttag === IRStatementTag.IRPreconditionCheckStatement) {
             const ipcs = stmt as IRPreconditionCheckStatement;

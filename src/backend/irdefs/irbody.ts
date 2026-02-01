@@ -81,6 +81,11 @@ enum IRExpressionTag {
     IRConstructorFailTypeExpression = "IRConstructorFailTypeExpression",
     IRConstructorMapEntryTypeExpression = "IRConstructorMapEntryTypeExpression",
 
+    IRConstructorStandardEntityExpression = "IRConstructorStandardEntityExpression",
+
+    IRConstructorListEmptyExpression = "IRConstructorListEmptyExpression",
+    IRConstructorListSingletonsExpression = "IRConstructorListSingletonsExpression",
+
     //
     //TODO: lots more expression types here
     //
@@ -250,6 +255,7 @@ enum IRStatementTag {
     IRTypeDeclFormatCheckUnicodeStringStatement = "IRTypeDeclFormatCheckUnicodeStringStatement",
 
     IRTypeDeclInvariantCheckStatement = "IRTypeDeclInvariantCheckStatement",
+    IREntityInvariantCheckStatement = "IREntityInvariantCheckStatement",
     IRPreconditionCheckStatement = "IRPreconditionCheckStatement",
     IRPostconditionCheckStatement = "IRPostconditionCheckStatement",
 
@@ -997,6 +1003,37 @@ class IRConstructorMapEntryTypeExpression extends IRSimpleExpression {
         this.oftype = oftype;
         this.key = key;
         this.value = value;
+    }
+}
+
+class IRConstructorStandardEntityExpression extends IRSimpleExpression {
+    readonly entitytype: IRNominalTypeSignature;
+    readonly values: IRSimpleExpression[];
+
+    constructor(entitytype: IRNominalTypeSignature, values: IRSimpleExpression[]) {
+        super(IRExpressionTag.IRConstructorStandardEntityExpression);
+        this.entitytype = entitytype;
+        this.values = values;
+    }
+}
+
+class IRConstructorListEmptyExpression extends IRSimpleExpression {
+    readonly ctype: IRNominalTypeSignature;
+
+    constructor(ctype: IRNominalTypeSignature) {
+        super(IRExpressionTag.IRConstructorListEmptyExpression);
+        this.ctype = ctype;
+    }
+}
+
+class IRConstructorListSingletonsExpression extends IRSimpleExpression {
+    readonly ctype: IRNominalTypeSignature;
+    readonly elements: IRSimpleExpression[];
+
+    constructor(ctype: IRNominalTypeSignature, elements: IRSimpleExpression[]) {
+        super(IRExpressionTag.IRConstructorListSingletonsExpression);
+        this.ctype = ctype;
+        this.elements = elements;
     }
 }
 
@@ -1764,6 +1801,19 @@ class IRTypeDeclInvariantCheckStatement extends IRErrorCheckStatement {
     }
 }
 
+class IREntityInvariantCheckStatement extends IRErrorCheckStatement {
+    readonly tkey: string
+    readonly invariantidx: number;
+    readonly args: IRImmediateExpression[];
+
+    constructor(file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number, tkey: string, invariantidx: number, args: IRImmediateExpression[]) {
+        super(IRStatementTag.IREntityInvariantCheckStatement, file, sinfo, diagnosticTag, checkID);
+        this.tkey = tkey;
+        this.invariantidx = invariantidx;
+        this.args = args;
+    }
+}
+
 /* This asserts that the given precondition expression is true */
 class IRPreconditionCheckStatement extends IRErrorCheckStatement {
     readonly ikey: string;
@@ -1916,6 +1966,9 @@ export {
 
     IRConstructorSomeTypeExpression, IRConstructorOkTypeExpression, IRConstructorFailTypeExpression, IRConstructorMapEntryTypeExpression,
 
+    IRConstructorStandardEntityExpression,
+    IRConstructorListEmptyExpression, IRConstructorListSingletonsExpression,
+
     IRInvokeExpression, IRInvokeDirectExpression, IRInvokeImplicitsExpression, IRInvokeSimpleExpression, IRInvokeSimpleWithImplicitsExpression, IRInvokeVirtualSimpleExpression, IRInvokeVirtualWithImplicitsExpression,
 
     IRUnaryOpExpression, IRPrefixNotOpExpression, IRPrefixNegateOpExpression, IRPrefixPlusOpExpression,
@@ -1948,7 +2001,7 @@ export {
     IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement,
     IRErrorTypedStringCheckStatement, IRTypeDeclSizeRangeCheckCStringStatement, IRTypeDeclSizeRangeCheckUnicodeStringStatement, IRTypeDeclFormatCheckCStringStatement, IRTypeDeclFormatCheckUnicodeStringStatement,
 
-    IRTypeDeclInvariantCheckStatement,
+    IRTypeDeclInvariantCheckStatement, IREntityInvariantCheckStatement,
     IRPreconditionCheckStatement, IRPostconditionCheckStatement,
     IRAbortStatement, IRAssertStatement, IRAssumeStatement, IRValidateStatement, IRDebugStatement,
 
