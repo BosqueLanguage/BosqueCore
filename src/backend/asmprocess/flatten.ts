@@ -880,8 +880,8 @@ class ASMToIRConverter {
             this.pushStatement(new IREntityInvariantCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.tag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), this.processTypeSignature(invdecl.containingtype).tkeystr, invdecl.ii, args));
         }
 
-        //call constructor
-        return new IRConstructorStandardEntityExpression(this.processTypeSignature(exp.ctype), aargs);
+        //call constructor -- but always assign to temp variable to ensure home location and alloc ordering
+        return this.makeExpressionImmediate(new IRConstructorStandardEntityExpression(this.processTypeSignature(exp.ctype), aargs), exp.ctype);
     }
 
     private flattenSpecialConstructableConstructor(cdecl: ConstructableTypeDecl, exp: ConstructorPrimaryExpression): IRSimpleExpression {

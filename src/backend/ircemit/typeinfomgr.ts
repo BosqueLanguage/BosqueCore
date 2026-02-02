@@ -204,7 +204,7 @@ class TypeInfoManager {
             let totalbytesize = 0;
             let totalslotcount = 0;
             let eptrmask = "";
-            const vtable: FieldOffsetInfo[] = [];
+            const vtable: FieldOffsetInfo[] | undefined = undefined;
 
             const mustref = this.isRecursiveTypeKey(tdecl.tkey, irasm);
             for(const fdecl of etdecl.saturatedBFieldInfo) {

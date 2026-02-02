@@ -145,6 +145,11 @@ namespace ᐸRuntimeᐳ
             this->bufferMgr.write(lit);
         }
 
+        void emitSymbol(char sym)
+        {
+            this->bufferMgr.write(sym);
+        }
+
         template<size_t len>
         void writeImmediate(const char (&cstr)[len])
         {
