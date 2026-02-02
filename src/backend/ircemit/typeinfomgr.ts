@@ -1,5 +1,5 @@
 
-import { IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAssembly, IREntityTypeDecl, IROptionTypeDecl, IRSomeTypeDecl } from "../irdefs/irassembly.js";
+import { IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAssembly, IRConceptTypeDecl, IRDatatypeTypeDecl, IREntityTypeDecl, IROptionTypeDecl, IRSomeTypeDecl } from "../irdefs/irassembly.js";
 import { IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature } from "../irdefs/irtype.js";
 import { TransformCPPNameManager } from "./namemgr.js";
 
@@ -157,12 +157,30 @@ class TypeInfoManager {
         }
     }
 
-    private isRecursiveType(ttype: IRTypeSignature, irasm: IRAssembly): boolean {
-        xxxx;
+    private isRecursiveTypeKey(tkey: string, irasm: IRAssembly): boolean {
+        return irasm.typedepcycles.some((cycle) => {
+            return cycle.some((tt) => tt.tkeystr === tkey);
+        });
+    }
+
+    private isNominalRecursiveType(ttype: IRTypeSignature, irasm: IRAssembly): boolean {
+        if(!(ttype instanceof IRNominalTypeSignature)) {
+            return false;
+        }
+
+        return this.isRecursiveTypeKey(ttype.tkeystr, irasm);
     }
 
     private isSizeOkForValueLayout(bytesize: number): boolean {
-        xxxx;
+        return bytesize <= 64;
+    }
+
+    private static computeValeMaskOfK(k: number): string {
+        return Array(k).fill("0").join("");
+    }
+
+    private static computeTaggedMaskOfK(k: number): string {
+        return "2" + Array(k).fill("0").join("");
     }
 
     private processInfoGenerationForEntity(tdecl: IRAbstractEntityTypeDecl, irasm: IRAssembly): TypeInfo {
@@ -185,38 +203,53 @@ class TypeInfoManager {
             const etdecl = tdecl as IREntityTypeDecl;
             let totalbytesize = 0;
             let totalslotcount = 0;
-            let ptrmask = "";
+            let eptrmask = "";
             const vtable: FieldOffsetInfo[] = [];
 
+            const mustref = this.isRecursiveTypeKey(tdecl.tkey, irasm);
             for(const fdecl of etdecl.saturatedBFieldInfo) {
-                if(this.isRecursiveType(fdecl.ftype, irasm)) {
-                    totalbytesize += 8;
-                    totalslotcount += 1;
-                    ptrmask += "1";
+                if(this.isNominalRecursiveType(fdecl.ftype, irasm)) {
+                    if((fdecl instanceof IRConceptTypeDecl) || (fdecl instanceof IRDatatypeTypeDecl)) {
+                        totalbytesize += 16;
+                        totalslotcount += 2;
+                        eptrmask += "20";
+                    }
+                    else {
+                        totalbytesize += 8;
+                        totalslotcount += 1;
+                        eptrmask += "1";
+                    }
                 }
                 else {
                     const ftypeinfo = this.processInfoGenerationForType(fdecl.ftype, irasm);
-                    totalbytesize += ftypeinfo.bytesize;
-                    totalslotcount += ftypeinfo.slotcount;
 
-                    if(ftypeinfo.tag === LayoutTag.Value) {
-                        ptrmask += "0";
-                    }
-                    else if(ftypeinfo.tag === LayoutTag.Ref) {
-                        ptrmask += "1";
+                    if(ftypeinfo.tag === LayoutTag.Ref) {
+                        totalbytesize += 8;
+                        totalslotcount += 1;
+                        eptrmask += "1";
                     }
                     else {
-                        xxxx;
+                        totalbytesize += ftypeinfo.bytesize;
+                        totalslotcount += ftypeinfo.slotcount;
+                        eptrmask += ftypeinfo.ptrmask || TypeInfoManager.computeValeMaskOfK(ftypeinfo.slotcount);
                     }
                 }
             }
 
-            if(this.isRecursiveType(ttype, irasm) || !this.isSizeOkForValueLayout(totalbytesize)) {
-                xxxx;
+            let ptrmask: string | undefined = undefined; 
+            if(eptrmask.includes("1") || eptrmask.includes("2")) {
+                ptrmask = eptrmask;
+            }
+
+            const ttid = this.typeInfoMap.size;
+            if(!mustref && this.isSizeOkForValueLayout(totalbytesize)) {
+                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, totalbytesize, totalslotcount, LayoutTag.Value, ptrmask, vtable));
             }
             else {
-                xxxx;
+                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, totalbytesize, totalslotcount, LayoutTag.Ref, ptrmask, vtable));
             }
+
+            return this.getTypeInfo(tdecl.tkey);
         }
     }
 
@@ -229,7 +262,7 @@ class TypeInfoManager {
                 this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, 16, 2, LayoutTag.Tagged, "20", undefined));
             }
             else {
-                let spm = "2" + Array(oftinfo.slotcount).fill("0").join("");
+                let spm = TypeInfoManager.computeTaggedMaskOfK(oftinfo.slotcount);
                 this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, oftinfo.bytesize + 8, oftinfo.slotcount + 1, LayoutTag.Tagged, spm, undefined));
             }
             
@@ -248,10 +281,10 @@ class TypeInfoManager {
         if(ttype instanceof IRNominalTypeSignature) {
             const ddecl = irasm.alltypes.get(ttype.tkeystr) as IRAbstractNominalTypeDecl;
             if(ddecl instanceof IRAbstractEntityTypeDecl) {
-                return this.processInfoGenerationForEntity(ttype, ddecl, irasm);
+                return this.processInfoGenerationForEntity(ddecl, irasm);
             }
             else {
-                return this.processInfoGenerationForConcept(ttype, ddecl, irasm);
+                return this.processInfoGenerationForConcept(ddecl, irasm);
             }
         }
         else {
