@@ -6005,9 +6005,10 @@ class Parser {
 
     private parseInvariantsInto(invs: InvariantDecl[] | undefined, vdates: ValidateDecl[] | undefined, typeTerms: Set<string>) {
         assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParsing));
-        const sinfo = this.peekToken().getSourceInfo();
 
         while (this.testToken(KW_invariant) || this.testToken(KW_validate)) {
+            const sinfo = this.peekToken().getSourceInfo();
+            
             const isvalidate = this.testToken(KW_validate);
             this.consumeToken();
 

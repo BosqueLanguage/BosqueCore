@@ -330,27 +330,27 @@ class ASMToIRConverter {
             return exp;
         }
         else {
-            assert(fromtype instanceof NominalTypeSignature, "ASMToIRConverter::makeCoercionExplicitAsNeeded - fromtype not nominal");
-            assert(totype instanceof NominalTypeSignature, "ASMToIRConverter::makeCoercionExplicitAsNeeded - totype not nominal");
+            assert(ftype instanceof NominalTypeSignature, "ASMToIRConverter::makeCoercionExplicitAsNeeded - fromtype not nominal");
+            assert(ttype instanceof NominalTypeSignature, "ASMToIRConverter::makeCoercionExplicitAsNeeded - totype not nominal");
 
-            if(fromtype.decl instanceof AbstractConceptTypeDecl) {
-                return new IRWidenConceptRepresentationExpression(this.processTypeSignature(fromtype), this.processTypeSignature(totype), exp);
+            if(ftype.decl instanceof AbstractConceptTypeDecl) {
+                return new IRWidenConceptRepresentationExpression(this.processTypeSignature(ftype), this.processTypeSignature(ttype), exp);
             }
             else {
-                if(fromtype.tkeystr === "None") {
-                    return new IRLiteralOptionOfNoneExpression(this.processTypeSignature(totype));
+                if(ftype.tkeystr === "None") {
+                    return new IRLiteralOptionOfNoneExpression(this.processTypeSignature(ttype));
                 }
-                else if(fromtype.decl instanceof SomeTypeDecl) {
-                    return new IRConstructOptionFromSomeExpression(this.processTypeSignature(totype), this.processTypeSignature(fromtype), exp);
+                else if(ftype.decl instanceof SomeTypeDecl) {
+                    return new IRConstructOptionFromSomeExpression(this.processTypeSignature(ttype), this.processTypeSignature(ftype), exp);
                 }
-                else if(fromtype.decl instanceof OkTypeDecl) {
-                    return new IRConstructResultFromOkExpression(this.processTypeSignature(totype), this.processTypeSignature(fromtype), exp);
+                else if(ftype.decl instanceof OkTypeDecl) {
+                    return new IRConstructResultFromOkExpression(this.processTypeSignature(ttype), this.processTypeSignature(ftype), exp);
                 }
-                else if(fromtype.decl instanceof FailTypeDecl) {
-                    return new IRConstructResultFromFailExpression(this.processTypeSignature(totype), this.processTypeSignature(fromtype), exp);
+                else if(ftype.decl instanceof FailTypeDecl) {
+                    return new IRConstructResultFromFailExpression(this.processTypeSignature(ttype), this.processTypeSignature(ftype), exp);
                 }
                 else {
-                    return new IRBoxEntityToConceptRepresentationExpression(this.processTypeSignature(totype), this.processTypeSignature(fromtype), exp);
+                    return new IRBoxEntityToConceptRepresentationExpression(this.processTypeSignature(ttype), this.processTypeSignature(ftype), exp);
                 }
             }
         }
@@ -837,6 +837,8 @@ class ASMToIRConverter {
         const hasinvchks = decl.allInvariants.length !== 0;
         const bfinfo = decl.saturatedBFieldInfo;
 
+xxxx;
+
         const aargs: IRSimpleExpression[] = [];
         for(let i = 0; i < exp.shuffleinfo.length; ++i) {
             const ii = exp.shuffleinfo[i];
@@ -968,7 +970,7 @@ class ASMToIRConverter {
     private flattenConstructorPrimaryExpression(exp: ConstructorPrimaryExpression): IRSimpleExpression {
         const tsig = this.tproc(exp.ctype) as NominalTypeSignature;
         const decl = tsig.decl;
-        
+
         if(decl instanceof AbstractCollectionTypeDecl) {
             return this.flattenCollectionConstructor(decl, exp);
         }
