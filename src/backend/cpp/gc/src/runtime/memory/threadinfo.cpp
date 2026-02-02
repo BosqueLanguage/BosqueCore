@@ -95,9 +95,8 @@ void BSQMemoryTheadLocalInfo::cleanup() noexcept
 	for(int32_t i = 0; i < this->old_roots_count; i++) {
 		void* addr = this->old_roots[i];
 		MetaData* m = GC_GET_META_DATA_ADDR(addr);
-	
-		// TODO still need to find a good name here!
-		std::lock_guard(g_gcrefctlock);
-		m->thd_count--;
+
+		std::lock_guard lk(g_gcrefctlock);
+		GC_DROP_ROOT_REF(m);
 	}
 }
