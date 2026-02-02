@@ -370,19 +370,21 @@ static bool find(void** arr, int32_t n, void* trgt, BSQMemoryTheadLocalInfo& tin
     return false;
 }
 
-// TODO an addr of interest could be stored both in registers and on the stack,
-// the current code will insert it into roots twice!
-// -- does it matter though?
 static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     if(!GlobalPageGCManager::g_gc_page_manager.pagetableQuery(addr) 
         || !pointsToObjectStart(addr)) {
             return ;
     }
-   
+
+    MetaData* m = PageInfo::getObjectMetadataAligned(addr);
+	if(GC_IS_MARKED(m)) {
+		return;	
+	}
+	GC_MARK_AS_MARKED(m);
+
 	tinfo.roots[tinfo.roots_count++] = addr;
 	if(!find(tinfo.old_roots, tinfo.old_roots_count, addr, tinfo)) {	
-    	MetaData* m = PageInfo::getObjectMetadataAligned(addr);
 		GC_MARK_AS_ROOT(m);
 
 		// another thread may reference this root, so needs to be young 
@@ -443,6 +445,13 @@ static void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept
     checkPotentialPtr(tinfo.native_register_contents.r15, tinfo);
 
     tinfo.unloadNativeRootSet();
+
+	// TODO temp hack while we figure out why marking inside checkPotentialPtr
+	// is problematic
+    for(int32_t i = 0; i < tinfo.roots_count; i++) {
+        MetaData* m = GC_GET_META_DATA_ADDR(tinfo.roots[i]);
+        GC_CLEAR_MARKED_MARK(m);
+    }
 }
 
 static void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
@@ -531,13 +540,12 @@ static void markingWalk(BSQMemoryTheadLocalInfo& tinfo) noexcept
     // Process the walk stack
     while(!tinfo.pending_roots.isEmpty()) {
         void* obj = tinfo.pending_roots.pop_front();
-        MetaData* m = GC_GET_META_DATA_ADDR(obj);
-        if(GC_SHOULD_VISIT(m)) {
-            GC_MARK_AS_MARKED(m);
-
-            tinfo.visit_stack.push_back({obj, MARK_STACK_NODE_COLOR_GREY});
-            walkSingleRoot(obj, tinfo);
-        }
+	
+		MetaData* m = GC_GET_META_DATA_ADDR(obj);
+		GC_MARK_AS_MARKED(m);	
+		
+		tinfo.visit_stack.push_back({obj, MARK_STACK_NODE_COLOR_GREY});
+		walkSingleRoot(obj, tinfo);
     }
 
     gtl_info.visit_stack.clear();
