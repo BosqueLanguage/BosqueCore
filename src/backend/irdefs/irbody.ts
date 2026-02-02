@@ -196,6 +196,16 @@ abstract class IRInvokeImplicitsExpression extends IRInvokeExpression {
     }
 }
 
+/* This class represents expressions that construct composite (maybe allocating) values -- can only OOM (otherwise semantically safe) but we want to keep them ordered strongly */
+abstract class IRConstructExpression extends IRExpression {
+    readonly constype: IRNominalTypeSignature;
+
+    constructor(tag: IRExpressionTag, constype: IRNominalTypeSignature) {
+        super(tag);
+        this.constype = constype;
+    }
+}
+
 /* This class represents expressions that are simple and side-effect free (i.e., immediate expressions plus simple operations that we can put into expression trees) */
 abstract class IRSimpleExpression extends IRExpression {
     constructor(tag: IRExpressionTag) {
@@ -227,12 +237,14 @@ enum IRStatementTag {
     IRVariableDeclarationStatement = "IRVariableDeclarationStatement",
     IRVariableInitializationStatement = "IRVariableInitializationStatement",
     IRVariableInitializationDirectInvokeStatement = "IRVariableInitializationDirectInvokeStatement",
+    IRVariableInitializationDirectConstructorStatement = "IRVariableInitializationDirectConstructorStatement",
 
     //TODO: add initialization for ref/condition expression where the rhs is a temp variable
 
     IRReturnVoidSimpleStatement = "IRReturnVoidSimpleStatement",
     IRReturnValueSimpleStatement = "IRReturnValueSimpleStatement",
     IRReturnDirectInvokeStatement = "IRReturnDirectInvokeStatement",
+    IRReturnDirectConstructStatement = "IRReturnDirectConstructStatement",
 
     IRChkLogicImpliesShortCircuitStatement = "IRChkLogicImpliesShortCircuitStatement",
 
@@ -1006,17 +1018,16 @@ class IRConstructorMapEntryTypeExpression extends IRSimpleExpression {
     }
 }
 
-class IRConstructorStandardEntityExpression extends IRExpression {
-    readonly entitytype: IRNominalTypeSignature;
+class IRConstructorStandardEntityExpression extends IRConstructExpression {
     readonly values: IRSimpleExpression[];
 
     constructor(entitytype: IRNominalTypeSignature, values: IRSimpleExpression[]) {
-        super(IRExpressionTag.IRConstructorStandardEntityExpression);
-        this.entitytype = entitytype;
+        super(IRExpressionTag.IRConstructorStandardEntityExpression, entitytype);
         this.values = values;
     }
 }
 
+/* NOTE -- the empty constructor is a simple expression (as it is really a constant) we can place anywhere safely */
 class IRConstructorListEmptyExpression extends IRSimpleExpression {
     readonly ctype: IRNominalTypeSignature;
 
@@ -1026,13 +1037,11 @@ class IRConstructorListEmptyExpression extends IRSimpleExpression {
     }
 }
 
-class IRConstructorListSingletonsExpression extends IRExpression {
-    readonly ctype: IRNominalTypeSignature;
+class IRConstructorListSingletonsExpression extends IRConstructExpression {
     readonly elements: IRSimpleExpression[];
 
     constructor(ctype: IRNominalTypeSignature, elements: IRSimpleExpression[]) {
-        super(IRExpressionTag.IRConstructorListSingletonsExpression);
-        this.ctype = ctype;
+        super(IRExpressionTag.IRConstructorListSingletonsExpression, ctype);
         this.elements = elements;
     }
 }
@@ -1551,7 +1560,6 @@ class IRTempAssignExpressionStatement extends IRTempAssignStatement {
     }
 }
 
-//We may need to check error results on this in smt
 class IRTempAssignStdInvokeStatement extends IRTempAssignStatement {
     readonly rhs: IRInvokeSimpleExpression;
 
@@ -1604,7 +1612,7 @@ class IRVariableInitializationStatement extends IRAtomicStatement {
 }
 
 class IRVariableInitializationDirectInvokeStatement extends IRAtomicStatement {
-    readonly scratchname: string; //a scratch temp variable to hold the direct invoke result if needed
+    readonly scratchname: string; //a scratch temp variable to hold the direct invoke result if needed -- e.g. in SMT place result here, check for errors, then extract to vname
     readonly vname: string;
     readonly vtype: IRTypeSignature;
     readonly initexp: IRInvokeDirectExpression;
@@ -1613,6 +1621,21 @@ class IRVariableInitializationDirectInvokeStatement extends IRAtomicStatement {
     constructor(scratch: string, vname: string, vtype: IRTypeSignature, initexp: IRInvokeDirectExpression, isconst: boolean) {
         super(IRStatementTag.IRVariableInitializationDirectInvokeStatement);
         this.scratchname = scratch;
+        this.vname = vname;
+        this.vtype = vtype;
+        this.initexp = initexp;
+        this.isconst = isconst;
+    }
+}
+
+class IRVariableInitializationDirectConstructorStatement extends IRAtomicStatement {
+    readonly vname: string;
+    readonly vtype: IRTypeSignature;
+    readonly initexp: IRConstructExpression;
+    readonly isconst: boolean;
+
+    constructor(vname: string, vtype: IRTypeSignature, initexp: IRConstructExpression, isconst: boolean) {
+        super(IRStatementTag.IRVariableInitializationDirectConstructorStatement);
         this.vname = vname;
         this.vtype = vtype;
         this.initexp = initexp;
@@ -1644,6 +1667,15 @@ class IRReturnDirectInvokeStatement extends IRReturnSimpleStatement {
 
     constructor(retexp: IRInvokeDirectExpression) {
         super(IRStatementTag.IRReturnDirectInvokeStatement);
+        this.retexp = retexp;
+    }
+}
+
+class IRReturnDirectConstructStatement extends IRReturnSimpleStatement {
+    readonly retexp: IRConstructExpression;
+
+    constructor(retexp: IRConstructExpression) {
+        super(IRStatementTag.IRReturnDirectConstructStatement);
         this.retexp = retexp;
     }
 }
@@ -1966,6 +1998,8 @@ export {
 
     IRConstructorSomeTypeExpression, IRConstructorOkTypeExpression, IRConstructorFailTypeExpression, IRConstructorMapEntryTypeExpression,
 
+    IRConstructExpression,
+
     IRConstructorStandardEntityExpression,
     IRConstructorListEmptyExpression, IRConstructorListSingletonsExpression,
 
@@ -1990,9 +2024,9 @@ export {
     IRNopStatement,
     IRTempAssignExpressionStatement, IRTempAssignStdInvokeStatement, IRTempAssignRefInvokeStatement,
 
-    IRVariableDeclarationStatement, IRVariableInitializationStatement, IRVariableInitializationDirectInvokeStatement,
+    IRVariableDeclarationStatement, IRVariableInitializationStatement, IRVariableInitializationDirectInvokeStatement, IRVariableInitializationDirectConstructorStatement,
     
-    IRReturnVoidSimpleStatement, IRReturnValueSimpleStatement, IRReturnDirectInvokeStatement,
+    IRReturnVoidSimpleStatement, IRReturnValueSimpleStatement, IRReturnDirectInvokeStatement, IRReturnDirectConstructStatement,
     IRChkLogicImpliesShortCircuitStatement,
     IRLogicConditionalStatement,
 
