@@ -190,14 +190,14 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 
 #define GC_SHOULD_VISIT(META) ((META)->isyoung && !(META)->ismarked)
 
-#define GC_SHOULD_PROCESS_AS_ROOT(META) ((META)->isalloc && (META)->thd_count == 0)
 #define GC_SHOULD_PROCESS_AS_YOUNG(META) ((META)->isyoung)
 
 #define GC_MARK_AS_ROOT(META) { (META)->thd_count++; }
 #define GC_DROP_ROOT_REF(META) { (META)->thd_count--; }
 #define GC_MARK_AS_MARKED(META) { (META)->ismarked = true; }
 
-#define GC_CLEAR_YOUNG_MARK(META) { (META)->isyoung = false; }
+#define GC_CLEAR_YOUNG_MARK(META)  { GC_IS_YOUNG(META) = false; }
+#define GC_CLEAR_MARKED_MARK(META) { GC_IS_MARKED(META) = false; }
 
 #define GC_SHOULD_FREE_LIST_ADD(META) \
 	(!GC_IS_ALLOCATED(META) || \
@@ -245,7 +245,8 @@ do { \
 #define GC_DROP_ROOT_REF(META)  { (META)->bits.thd_count--; }
 #define GC_MARK_AS_MARKED(META) { (META)->bits.ismarked = 1; }
 
-#define GC_CLEAR_YOUNG_MARK(META) ((META)->bits.isyoung = 0) 
+#define GC_CLEAR_YOUNG_MARK(META)  { GC_IS_YOUNG(META) = 0; }
+#define GC_CLEAR_MARKED_MARK(META) { GC_IS_MARKED(META) = 0; }
 
 #define GC_SHOULD_FREE_LIST_ADD(META) \
 	(!GC_IS_ALLOCATED(META) || \
