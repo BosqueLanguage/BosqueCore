@@ -19,24 +19,12 @@ static void walkPointerMaskForDecrements(__CoreGC::TypeInfoBase* typeinfo, void*
 static void updatePointers(void** slots, __CoreGC::TypeInfoBase* typeinfo, BSQMemoryTheadLocalInfo& tinfo) noexcept;
 static void walkPointerMaskForMarking(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept; 
 
-//
-// TODO we should change the names of our modification of thread counts!
-// they are still root pointers, but some of our names are confusing
-//
-
 static inline void pushPendingDecs(void* obj, ArrayList<void*>& list)
 {
-    // Dead root points to root case (or multiple thd references), keep the root pointed to alive
-	MetaData* m = GC_GET_META_DATA_ADDR(obj);
-    
-	// TODO clean this code and remove the invariant, it checks for overflow
-	// but will fail in prod environment
+    // Keep pointed to roots alive
+	MetaData* m = GC_GET_META_DATA_ADDR(obj); 
 	if(GC_IS_ROOT(m)) {
-        m->thd_count--;
-		GC_INVARIANT_CHECK(m->thd_count >= 0 && m->thd_count < 32);	
-		if(m-> thd_count > 0) {
-			return ;
-		}
+		return ;
     }
 
     list.push_back(obj);
@@ -51,14 +39,22 @@ static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcep
     int32_t roots_idx = 0;
     int32_t oldroots_idx = 0;
 
+	// TODO we may be interested in using a separate mtx for thdcnt decs/incs
+	std::lock_guard lk(g_gcrefctlock);
     while(oldroots_idx < tinfo.old_roots_count) {
         void* cur_oldroot = tinfo.old_roots[oldroots_idx];
         MetaData* m = GC_GET_META_DATA_ADDR(cur_oldroot); 
 
 		if(roots_idx >= tinfo.roots_count) {
             // Was dropped from roots
-            if(GC_REF_COUNT(m) == 0) {
-                pushPendingDecs(cur_oldroot, tinfo.decs_batch);
+            
+			// TODO before merging lets reorganize
+			if(GC_REF_COUNT(m) == 0) {
+               	if(GC_IS_ROOT(m)) { 
+					GC_DROP_ROOT_REF(m);
+				}
+
+				pushPendingDecs(cur_oldroot, tinfo.decs_batch);
             }
             oldroots_idx++;
             continue;
@@ -71,10 +67,14 @@ static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcep
         } 
         else if(cur_oldroot < cur_root) {
             // Was dropped from roots
-            if(GC_REF_COUNT(m) == 0) {
-                pushPendingDecs(cur_oldroot, tinfo.decs_batch);
-            }
-            oldroots_idx++;
+            if(GC_REF_COUNT(m) == 0) { 
+				if(GC_IS_ROOT(m)) { 
+					GC_DROP_ROOT_REF(m);
+				}
+				pushPendingDecs(cur_oldroot, tinfo.decs_batch);
+			}
+            
+			oldroots_idx++;
         } 
         else {
             // In both lists
@@ -382,7 +382,8 @@ static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexce
     	MetaData* m = PageInfo::getObjectMetadataAligned(addr);
 		GC_MARK_AS_ROOT(m);
 
-		// may be kept alive by another thread, so needs to be young
+		// another thread may reference this root, so needs to be young 
+		// to be eligible for processing
 		if(GC_SHOULD_PROCESS_AS_YOUNG(m)) {
 			tinfo.pending_roots.push_back(addr);
 		}
@@ -391,7 +392,9 @@ static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexce
 
 static void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept 
 {
-    if(GlobalDataStorage::g_global_data.needs_scanning) {
+	std::lock_guard lk(g_gcrefctlock); 
+	
+	if(GlobalDataStorage::g_global_data.needs_scanning) {
         void** curr = GlobalDataStorage::g_global_data.native_global_storage;
         while(curr < GlobalDataStorage::g_global_data.native_global_storage_end) {
             checkPotentialPtr(*curr, tinfo);

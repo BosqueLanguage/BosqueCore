@@ -194,12 +194,14 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 #define GC_SHOULD_PROCESS_AS_YOUNG(META) ((META)->isyoung)
 
 #define GC_MARK_AS_ROOT(META) { (META)->thd_count++; }
+#define GC_DROP_ROOT_REF(META) { (META)->thd_count--; }
 #define GC_MARK_AS_MARKED(META) { (META)->ismarked = true; }
 
 #define GC_CLEAR_YOUNG_MARK(META) { (META)->isyoung = false; }
-#define GC_CLEAR_ROOT_MARK(META) { (META)->ismarked = false; (META)->thd_count--; }
 
-#define GC_SHOULD_FREE_LIST_ADD(META) (!(META)->isalloc || ((META)->isyoung && (META)->forward_index == NON_FORWARDED))
+#define GC_SHOULD_FREE_LIST_ADD(META) \
+	(!GC_IS_ALLOCATED(META) || \
+		(GC_IS_YOUNG(META) && GC_FWD_INDEX(META) == NON_FORWARDED))
 
 #define GC_CHECK_BOOL_BYTES(META) \
 do { \
@@ -237,27 +239,18 @@ do { \
 #define GC_RESET_ALLOC(META)  ((META)->bits.isalloc = 0) 
 #define GC_SHOULD_VISIT(META) (GC_IS_YOUNG(META) && !GC_IS_MARKED(META))
 
-#define GC_SHOULD_PROCESS_AS_ROOT(META)  (GC_IS_ALLOCATED(META) && !GC_IS_ROOT(META))
 #define GC_SHOULD_PROCESS_AS_YOUNG(META) (GC_IS_YOUNG(META))
 
-#define GC_MARK_AS_ROOT(META)   ((META)->bits.thd_count++)
-#define GC_MARK_AS_MARKED(META) ((META)->bits.ismarked = 1)
+#define GC_MARK_AS_ROOT(META)   { (META)->bits.thd_count++; }
+#define GC_DROP_ROOT_REF(META)  { (META)->bits.thd_count--; }
+#define GC_MARK_AS_MARKED(META) { (META)->bits.ismarked = 1; }
 
 #define GC_CLEAR_YOUNG_MARK(META) ((META)->bits.isyoung = 0) 
-#define GC_CLEAR_ROOT_MARK(META) \
-    do { \
-        (META)->bits.thd_count--; \
-        (META)->bits.ismarked = 0; \
-    } while(0)
 
-#define GC_SHOULD_FREE_LIST_ADD(META) (!GC_IS_ALLOCATED(META) || (GC_IS_YOUNG(META) && GC_FWD_INDEX(META) == NON_FORWARDED ))
+#define GC_SHOULD_FREE_LIST_ADD(META) \
+	(!GC_IS_ALLOCATED(META) || \
+		(GC_IS_YOUNG(META) && GC_FWD_INDEX(META) == NON_FORWARDED ))
 
-// wait this does nothing 
-#define GC_CHECK_BOOL_BYTES(META) \
-do { \
-    GC_INVARIANT_CHECK((META)->bits.isalloc == 0 || (META)->bits.isalloc == 1); \
-    GC_INVARIANT_CHECK((META)->bits.isyoung == 0 || (META)->bits.isyoung == 1); \
-    GC_INVARIANT_CHECK((META)->bits.ismarked == 0 || (META)->bits.ismarked == 1); \
-} while(0)
+#define GC_CHECK_BOOL_BYTES(META)
 
 #endif // VERBOSE_HEADER
