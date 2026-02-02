@@ -1006,7 +1006,7 @@ class IRConstructorMapEntryTypeExpression extends IRSimpleExpression {
     }
 }
 
-class IRConstructorStandardEntityExpression extends IRSimpleExpression {
+class IRConstructorStandardEntityExpression extends IRExpression {
     readonly entitytype: IRNominalTypeSignature;
     readonly values: IRSimpleExpression[];
 
@@ -1026,7 +1026,7 @@ class IRConstructorListEmptyExpression extends IRSimpleExpression {
     }
 }
 
-class IRConstructorListSingletonsExpression extends IRSimpleExpression {
+class IRConstructorListSingletonsExpression extends IRExpression {
     readonly ctype: IRNominalTypeSignature;
     readonly elements: IRSimpleExpression[];
 
