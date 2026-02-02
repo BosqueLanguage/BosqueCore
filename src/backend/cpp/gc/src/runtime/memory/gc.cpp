@@ -47,13 +47,12 @@ static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcep
 
 		if(roots_idx >= tinfo.roots_count) {
             // Was dropped from roots
-            
-			// TODO before merging lets reorganize
-			if(GC_REF_COUNT(m) == 0) {
-               	if(GC_IS_ROOT(m)) { 
-					GC_DROP_ROOT_REF(m);
-				}
+			if(GC_IS_ROOT(m)) {
+				GC_DROP_ROOT_REF(m);	
+			}
 
+			// TODO before merging lets reorganize
+			if(GC_REF_COUNT(m) == 0 && !GC_IS_ROOT(m)) {
 				pushPendingDecs(cur_oldroot, tinfo.decs_batch);
             }
             oldroots_idx++;
@@ -65,15 +64,16 @@ static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcep
             // New root in current
             roots_idx++;
         } 
-        else if(cur_oldroot < cur_root) {
-            // Was dropped from roots
-            if(GC_REF_COUNT(m) == 0) { 
-				if(GC_IS_ROOT(m)) { 
-					GC_DROP_ROOT_REF(m);
-				}
-				pushPendingDecs(cur_oldroot, tinfo.decs_batch);
+        else if(cur_oldroot < cur_root) { 
+             // Was dropped from roots
+			if(GC_IS_ROOT(m)) {
+				GC_DROP_ROOT_REF(m);	
 			}
-            
+
+			// TODO before merging lets reorganize
+			if(GC_REF_COUNT(m) == 0 && !GC_IS_ROOT(m)) {
+				pushPendingDecs(cur_oldroot, tinfo.decs_batch);
+            }           
 			oldroots_idx++;
         } 
         else {
@@ -352,24 +352,27 @@ static inline bool pointsToObjectStart(void* addr) noexcept
 // -- we can have this replace our raw arrays in tinfo
 static bool find(void** arr, int32_t n, void* trgt, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
-	int32_t l = 0, r = tinfo.old_roots_count - 1;
-	while(l < r) {
-		int32_t m = l + (r - l / 2);		
-		void* cur = tinfo.old_roots[m];	
-		if(cur < trgt) {
-			l = m - 1; 
-		}
-		else if(cur > trgt) { 
-			r = m + 1;
-		}
-		else {
-			return true;
-		}
-	}
+    int32_t l = 0, r = tinfo.old_roots_count - 1;
+    while(l <= r) {
+        int32_t m = l + (r - l / 2);
+        void* cur = tinfo.old_roots[m];
+        if(cur < trgt) {
+            l = m + 1;
+        }
+        else if(cur > trgt) {
+            r = m - 1;
+        }
+        else {
+            return true;
+        }
+    }
 
-	return false;
+    return false;
 }
 
+// TODO an addr of interest could be stored both in registers and on the stack,
+// the current code will insert it into roots twice!
+// -- does it matter though?
 static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     if(!GlobalPageGCManager::g_gc_page_manager.pagetableQuery(addr) 
@@ -567,6 +570,7 @@ static void updateRoots(BSQMemoryTheadLocalInfo& tinfo)
 		void* obj = tinfo.roots[i];
 		MetaData* m = GC_GET_META_DATA_ADDR(obj);
         GC_CLEAR_YOUNG_MARK(m);
+		GC_CLEAR_MARKED_MARK(m);
 
         tinfo.old_roots[tinfo.old_roots_count++] = obj;
     }
