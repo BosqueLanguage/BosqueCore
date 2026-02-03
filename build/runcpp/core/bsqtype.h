@@ -30,6 +30,12 @@ namespace ᐸRuntimeᐳ
     constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERBLOCK = 14;
     constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFER = 15;
     
+    enum class RColor : uint64_t
+    {
+        Red,
+        Black
+    };
+
     enum class LayoutTag
     {
         Value,

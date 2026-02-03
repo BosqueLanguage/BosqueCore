@@ -7,12 +7,6 @@
 
 namespace ᐸRuntimeᐳ
 {
-    enum class RColor : uint64_t
-    {
-        Red,
-        Black
-    };
-
     class CStrNode;
 
     class CStrBuff
