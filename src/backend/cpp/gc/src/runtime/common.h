@@ -172,6 +172,8 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 
 #define GC_TYPE(META) ((PageInfo::extractPageFromPointer(META))->typeinfo)
 
+// TODO a lot of duplicated code here! we should only have raw field access
+// behind ifdefs
 #ifdef VERBOSE_HEADER
 // Resets an objects metadata and updates with index into forward table
 #define RESET_METADATA_FOR_OBJECT(META, FP) ((*(META)) = { .isalloc=false, .isyoung=true, .ismarked=false, .thd_count=0, .forward_index=FP, .ref_count=0 })
@@ -180,7 +182,8 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 #define GC_IS_MARKED(META)    ((META)->ismarked)
 #define GC_IS_YOUNG(META)     ((META)->isyoung)
 #define GC_IS_ALLOCATED(META) ((META)->isalloc)
-#define GC_IS_ROOT(META)      ((META)->thd_count > 0)
+#define GC_THREAD_COUNT(META) ((META)->thd_count)
+#define GC_IS_ROOT(META)      (GC_THREAD_COUNT(META) > 0)
 
 #define GC_FWD_INDEX(META) ((META)->forward_index)
 #define GC_REF_COUNT(META) ((META)->ref_count)
@@ -230,7 +233,8 @@ do { \
 #define GC_IS_MARKED(META)    ((META)->bits.ismarked)
 #define GC_IS_YOUNG(META)     ((META)->bits.isyoung)
 #define GC_IS_ALLOCATED(META) ((META)->bits.isalloc)
-#define GC_IS_ROOT(META)      ((META)->bits.thd_count > 0)
+#define GC_THREAD_COUNT(META) ((META)->thd_count)
+#define GC_IS_ROOT(META)      (GC_THREAD_COUNT(META) > 0)
 
 #define GC_FWD_INDEX(META)    ((META)->bits.rc_fwd)
 #define GC_REF_COUNT(META)    ((META)->bits.rc_fwd)

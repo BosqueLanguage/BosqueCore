@@ -4,7 +4,12 @@
 
 #include <chrono>
 
-#define InitBSQMemoryTheadLocalInfo() { std::lock_guard lk(g_alloclock); register void** rbp asm("rbp"); gtl_info.initialize(GlobalThreadAllocInfo::s_thread_counter++, rbp); }
+#define InitBSQMemoryTheadLocalInfo(TINFO) \
+do { \
+	std::lock_guard lk(g_alloclock); \
+	register void** rbp asm("rbp"); \
+	TINFO.initialize(GlobalThreadAllocInfo::s_thread_counter++, rbp); \
+} while(0)
 
 #define MAX_ALLOC_LOOKUP_TABLE_SIZE 1024
 
@@ -105,28 +110,32 @@ struct BSQMemoryTheadLocalInfo
 		return this->g_gcallocs[idx];
     }
 
-    template <size_t NUM>
-    void initializeGC(GCAllocator* allocs[NUM]) noexcept
-    {
-        for(size_t i = 0; i < NUM; i++) {
-            GCAllocator* alloc = allocs[i];
-            uint32_t idx = alloc->getAllocType()->type_id;
-			GC_INVARIANT_CHECK(idx < BSQ_MAX_ALLOC_SLOTS);	
-
-			this->g_gcallocs[idx] = alloc;
-        }
-    }
-
     inline void updateNurseryUsage(PageInfo* p) noexcept
     {
         this->nursery_usage += 1.0f - p->approx_utilization;
     }
 
     void initialize(size_t ntl_id, void** caller_rbp) noexcept;
-
     void loadNativeRootSet() noexcept;
     void unloadNativeRootSet() noexcept;
 	void cleanup() noexcept;
 };
+
+// NOTE we may be interested in forcing a collection from this function for 
+// the sake of promoting all visible roots (when a new thread spawns in)
+// to old space (thus incing their thread count)
+template <size_t NUM>
+void initializeGC(GCAllocator* allocs[NUM], BSQMemoryTheadLocalInfo& tinfo) noexcept
+{ 
+	InitBSQMemoryTheadLocalInfo(tinfo);
+
+	for(size_t i = 0; i < NUM; i++) {
+		GCAllocator* alloc = allocs[i];
+		uint32_t idx = alloc->getAllocType()->type_id;
+		GC_INVARIANT_CHECK(idx < BSQ_MAX_ALLOC_SLOTS);	
+
+		tinfo.g_gcallocs[idx] = alloc;
+	}
+}
 
 extern thread_local BSQMemoryTheadLocalInfo gtl_info;
