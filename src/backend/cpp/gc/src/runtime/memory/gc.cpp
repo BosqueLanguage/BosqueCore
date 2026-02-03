@@ -370,10 +370,6 @@ static bool find(void** arr, int32_t n, void* trgt, BSQMemoryTheadLocalInfo& tin
     return false;
 }
 
-#include <set>
-static std::set<void*> g_seen;
-
-// almost 100% sure my idea of marking objects does not work
 static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     if(!GlobalPageGCManager::g_gc_page_manager.pagetableQuery(addr) 
@@ -381,13 +377,14 @@ static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexce
             return ;
     }
 
-	if(g_seen.contains(addr)) {
+	MetaData* m = PageInfo::getObjectMetadataAligned(addr);
+	if(GC_IS_MARKED(m)) {
 		return ;
 	}
+	GC_MARK_AS_MARKED(m);
 
 	tinfo.roots[tinfo.roots_count++] = addr;
 	if(!find(tinfo.old_roots, tinfo.old_roots_count, addr, tinfo)) {		
-		MetaData* m = PageInfo::getObjectMetadataAligned(addr);
 		GC_MARK_AS_ROOT(m);
 
 		// another thread may reference this root, so needs to be young 
@@ -396,8 +393,6 @@ static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexce
 			tinfo.pending_roots.push_back(addr);
 		}
 	}
-
-	g_seen.insert(addr);
 }
 
 static void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept 
@@ -451,7 +446,12 @@ static void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
     tinfo.unloadNativeRootSet();
 
-	g_seen.clear();
+	// TODO temp hack while we determine why marking manually in checkPotentialPtr
+	// is problematic and leads to seg faults!
+	for(int32_t i = 0; i < tinfo.roots_count; i++) {
+		MetaData* m = GC_GET_META_DATA_ADDR(tinfo.roots[i]);
+		GC_CLEAR_MARKED_MARK(m);
+	}
 }
 
 static void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
@@ -459,8 +459,8 @@ static void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
     MetaData* m = GC_GET_META_DATA_ADDR(*slots);
     GC_CHECK_BOOL_BYTES(m);
     
-    if(GC_SHOULD_VISIT(m)) { 
-        GC_MARK_AS_MARKED(m);
+		if(GC_SHOULD_VISIT(m)) { 
+			GC_MARK_AS_MARKED(m);
         tinfo.visit_stack.push_back({*slots, MARK_STACK_NODE_COLOR_GREY});
     }
 }
@@ -540,10 +540,12 @@ static void markingWalk(BSQMemoryTheadLocalInfo& tinfo) noexcept
     // Process the walk stack
     while(!tinfo.pending_roots.isEmpty()) {
         void* obj = tinfo.pending_roots.pop_front();
-	
+
+		// TODO we should take a look here as this is a special case for walking
+		// since we do the marking of pending roots inside checkPotentialPtr 
 		MetaData* m = GC_GET_META_DATA_ADDR(obj);
-		if(GC_SHOULD_VISIT(m)) {	
-			GC_MARK_AS_MARKED(m);	
+		if(GC_SHOULD_VISIT(m)) {
+			GC_MARK_AS_MARKED(m);
 			tinfo.visit_stack.push_back({obj, MARK_STACK_NODE_COLOR_GREY});
 			walkSingleRoot(obj, tinfo);
 		}
