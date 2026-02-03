@@ -698,7 +698,7 @@ class IRConceptTypeDecl extends IRAbstractConceptTypeDecl {
     }
 
     getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
-        return [];
+        return xxx; //should be fields
     }
 }
 

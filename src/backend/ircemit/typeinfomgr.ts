@@ -269,7 +269,20 @@ class TypeInfoManager {
             return this.getTypeInfo(tdecl.tkey);
         }
         else {
-            assert(false, `TypeInfoManager::processInfoGenerationForConcept - Unsupported concept type declaration for key ${tdecl.tkey}`);
+            assert(tdecl instanceof IRConceptTypeDecl, `TypeInfoManager::processInfoGenerationForConcept - Unsupported concept type declaration for key ${tdecl.tkey}`);
+
+            const etdecl = tdecl as IRConceptTypeDecl;
+            let totalbytesize = 0;
+            let totalslotcount = 0;
+
+            const subtypes = irasm.subtypes.get(tdecl.tkey) as IRTypeSignature[];
+            xxxx;
+
+            const ttid = this.typeInfoMap.size;
+            let eptrmask = TypeInfoManager.computeTaggedMaskOfK(totalslotcount);
+            this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, totalbytesize, totalslotcount, LayoutTag.Tagged, eptrmask, undefined));
+
+            return this.getTypeInfo(tdecl.tkey);
         }
     }
 

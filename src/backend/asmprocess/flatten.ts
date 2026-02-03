@@ -2917,7 +2917,27 @@ class ASMToIRConverter {
     }
 
     private generateConceptTypeDecl(tdecl: ConceptTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRConceptTypeDecl {
-        assert(false, "Not Implemented -- generateConceptTypeDecl");
+        this.initCodeProcessingContext(tdecl.file, false, tinst.tsig, undefined, undefined, tinst, undefined);
+
+        const doc = tdecl.attributes.find((a) => a.name === "doc");
+        const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
+
+        const bfinfo = tdecl.saturatedBFieldInfo.map((bf) => {
+            const fkey = `${(tinst.tsig as NominalTypeSignature).tkeystr}--${bf.name}`;
+            return { containingtype: this.processTypeSignature(bf.containingtype), fkey: fkey, fname: bf.name, ftype: this.processTypeSignature(bf.type) };
+        });
+
+        return new IRConceptTypeDecl(tinst.tkey, 
+            tdecl.invariants.map<IRInvariantDecl>((inv) => this.generateInvariantClauseDecl(tinst.tsig as NominalTypeSignature, inv)),
+            tdecl.validates.map<IRValidateDecl>((val) => this.generateValidateClauseDecl(tinst.tsig as NominalTypeSignature, val)),
+            tdecl.fields.map<IRMemberFieldDecl>((f) => this.generateMemberFieldDecl(tinst.tsig as NominalTypeSignature, f)),
+            tdecl.saturatedProvides.map((sp) => this.processTypeSignature(sp)),
+            bfinfo,
+            docstring,
+            this.processMetaDataTags(tdecl.attributes),
+            tdecl.file,
+            this.convertSourceInfo(tdecl.sinfo)
+        );
     }
 
     private generateDatatypeMemberEntityTypeDecl(tdecl: DatatypeMemberEntityTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRDatatypeMemberEntityTypeDecl {
