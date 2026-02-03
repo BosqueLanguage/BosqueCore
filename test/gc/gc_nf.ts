@@ -7,6 +7,8 @@ import { buildMainCode, copyGC, copyFile, buildCppAssembly } from "../cppoutput/
 
 import { fileURLToPath } from 'url';
 import { execSync } from "child_process";
+import { tmpdir } from 'node:os';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const bosque_dir: string = path.join(__dirname, "../../../");
@@ -20,7 +22,11 @@ const gc_path = path.join(bosque_dir, "bin/cppruntime/gc/");
 const output_path = path.join(bosque_dir, "bin/cppruntime/output/");
 const gc_test_path = "bin/cppruntime/gc/test/";
 
-import { tmpdir } from 'node:os';
+// set up global array, disable stack refs
+const base = `__CoreCpp::Bool main() {\n
+	\tGlobalDataStorage::g_global_data.initialize(sizeof(garray), (void**)garray);\n
+	\tg_disable_stack_refs = true;\n`;
+const end = "\n\treturn true;}"
 
 function generateCPPFiles(header: string, src: string, cppmain: string, cpp_testcode: string, outdir: string): boolean {
     const dir = path.normalize(outdir);
@@ -136,4 +142,4 @@ function runMainCodeGC(testname: string, cppmain: string, expected_output: strin
     assert.equal(results, expected_output)
 }
 
-export { runMainCodeGC };
+export { runMainCodeGC, base, end };
