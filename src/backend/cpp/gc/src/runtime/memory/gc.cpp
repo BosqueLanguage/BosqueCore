@@ -21,56 +21,51 @@ static void walkPointerMaskForMarking(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::
 
 static inline void pushPendingDecs(void* obj, ArrayList<void*>& list)
 {
-    // Dead root points to root case, keep the root pointed to alive
-	MetaData* m = GC_GET_META_DATA_ADDR(obj);
-    if(GC_IS_ROOT(m)) [[unlikely]] {
-        return ;
+    // Keep pointed to roots alive
+	MetaData* m = GC_GET_META_DATA_ADDR(obj); 
+	if(GC_IS_ROOT(m)) {
+		return ;
     }
 
     list.push_back(obj);
 }
 
+// A simple two pointer walk of sets stored based on address to determine
+// whether a root was droped from the previous set
 static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
-    // First we need to sort the roots we find
     qsort(tinfo.roots, 0, tinfo.roots_count - 1, tinfo.roots_count);
 
-    int32_t roots_idx = 0;
-    int32_t oldroots_idx = 0;
-
-    while(oldroots_idx < tinfo.old_roots_count) {
+	// TODO we may be interested in using a separate mtx for thdcnt decs/incs
+	std::lock_guard lk(g_gcrefctlock);
+    
+    int32_t roots_idx = 0, oldroots_idx = 0;
+	while(oldroots_idx < tinfo.old_roots_count) {
         void* cur_oldroot = tinfo.old_roots[oldroots_idx];
-        MetaData* m = GC_GET_META_DATA_ADDR(cur_oldroot); 
-        if(roots_idx >= tinfo.roots_count) {
-            // Was dropped from roots
-            if(GC_REF_COUNT(m) == 0) {
-                pushPendingDecs(cur_oldroot, tinfo.decs_batch);
-            }
-            oldroots_idx++;
-            continue;
-        }
-        
-        void* cur_root = tinfo.roots[roots_idx];
+        void* cur_root = roots_idx < tinfo.roots_count ? 
+			tinfo.roots[roots_idx] : static_cast<uint8_t*>(cur_oldroot) + 1;
         if(cur_root < cur_oldroot) {
             // New root in current
             roots_idx++;
         } 
-        else if(cur_oldroot < cur_root) {
-            // Was dropped from roots
-            if(GC_REF_COUNT(m) == 0) {
-                pushPendingDecs(cur_oldroot, tinfo.decs_batch);
-            }
-            oldroots_idx++;
+        else if(cur_root > cur_oldroot) { 
+             // Was dropped from old roots	
+        	MetaData* m = GC_GET_META_DATA_ADDR(cur_oldroot);  
+			GC_DROP_ROOT_REF(m);
+			if(GC_REF_COUNT(m) == 0 && !GC_IS_ROOT(m)) {
+				pushPendingDecs(cur_oldroot, tinfo.decs_batch);
+            }           
+			oldroots_idx++;
         } 
         else {
             // In both lists
-            roots_idx++;
-            oldroots_idx++;
+            roots_idx++, oldroots_idx++;
         }
     }
 
     tinfo.old_roots_count = 0;
 }
+
 
 static inline void handleTaggedObjectDecrement(void** slots, ArrayList<void*>& list) noexcept 
 {
@@ -329,10 +324,34 @@ static inline bool pointsToObjectStart(void* addr) noexcept
     }
 
     uintptr_t start = GET_SLOT_START_FROM_OFFSET(offset, p);
-
     return start % p->realsize == 0;
 }
 
+// TODO might be nice to create an `Array<T, N>` class that provides qsort
+// and binary search
+// -- we can have this replace our raw arrays in tinfo
+static bool find(void** arr, int32_t n, void* trgt, BSQMemoryTheadLocalInfo& tinfo) noexcept
+{
+    int32_t l = 0, r = tinfo.old_roots_count - 1;
+    while(l <= r) {
+        int32_t m = l + (r - l / 2);
+        void* cur = tinfo.old_roots[m];
+        if(cur < trgt) {
+            l = m + 1;
+        }
+        else if(cur > trgt) {
+            r = m - 1;
+        }
+        else {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// NOTE we could sort roots here then do two pointer walk on old roots, building
+// up a set of dead objects to be merged onto decs list later
 static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     if(!GlobalPageGCManager::g_gc_page_manager.pagetableQuery(addr) 
@@ -340,19 +359,29 @@ static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexce
             return ;
     }
 
-    MetaData* m = PageInfo::getObjectMetadataAligned(addr);
-    if(GC_SHOULD_PROCESS_AS_ROOT(m)) { 
-        GC_MARK_AS_ROOT(m);
-        tinfo.roots[tinfo.roots_count++] = addr;
-        if(GC_SHOULD_PROCESS_AS_YOUNG(m)) {
-            tinfo.pending_roots.push_back(addr);
-        } 
-    }
+	MetaData* m = PageInfo::getObjectMetadataAligned(addr);
+	if(GC_IS_MARKED(m)) {
+		return ;
+	}
+	GC_MARK_AS_MARKED(m);
+
+	tinfo.roots[tinfo.roots_count++] = addr;
+	if(!find(tinfo.old_roots, tinfo.old_roots_count, addr, tinfo)) {		
+		GC_MARK_AS_ROOT(m);
+
+		// another thread may reference this root, so needs to be young 
+		// to be eligible for processing
+		if(GC_SHOULD_PROCESS_AS_YOUNG(m)) {
+			tinfo.pending_roots.push_back(addr);
+		}
+	}
 }
 
 static void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept 
 {
-    if(GlobalDataStorage::g_global_data.needs_scanning) {
+	std::lock_guard lk(g_gcrefctlock); 
+	
+	if(GlobalDataStorage::g_global_data.needs_scanning) {
         void** curr = GlobalDataStorage::g_global_data.native_global_storage;
         while(curr < GlobalDataStorage::g_global_data.native_global_storage_end) {
             checkPotentialPtr(*curr, tinfo);
@@ -372,7 +401,7 @@ static void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept
 	}
 
     if(tinfo.disable_stack_refs) {
-        return;
+        goto cleanup;
     }
 #endif
     
@@ -398,6 +427,15 @@ static void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept
     checkPotentialPtr(tinfo.native_register_contents.r15, tinfo);
 
     tinfo.unloadNativeRootSet();
+
+[[maybe_unused]] cleanup:
+	// Mark bit is used to ensure we dont inc thd count multiple times 
+	// (say a root ref is in both registers and stack), so clear before
+	// marking (maybe a cleaner way to handle this?)
+	for(int32_t i = 0; i < tinfo.roots_count; i++) {
+		MetaData* m = GC_GET_META_DATA_ADDR(tinfo.roots[i]);
+		GC_CLEAR_MARKED_MARK(m);
+	}
 }
 
 static void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
@@ -405,9 +443,9 @@ static void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
     MetaData* m = GC_GET_META_DATA_ADDR(*slots);
     GC_CHECK_BOOL_BYTES(m);
     
-    if(GC_SHOULD_VISIT(m)) { 
-        GC_MARK_AS_MARKED(m);
-        tinfo.visit_stack.push_back({*slots, MARK_STACK_NODE_COLOR_GREY});
+	if(GC_SHOULD_VISIT(m)) { 
+		GC_MARK_AS_MARKED(m);
+		tinfo.visit_stack.push_back({*slots, MARK_STACK_NODE_COLOR_GREY});
     }
 }
 
@@ -486,13 +524,12 @@ static void markingWalk(BSQMemoryTheadLocalInfo& tinfo) noexcept
     // Process the walk stack
     while(!tinfo.pending_roots.isEmpty()) {
         void* obj = tinfo.pending_roots.pop_front();
-        MetaData* m = GC_GET_META_DATA_ADDR(obj);
-        if(GC_SHOULD_VISIT(m)) {
-            GC_MARK_AS_MARKED(m);
-
-            tinfo.visit_stack.push_back({obj, MARK_STACK_NODE_COLOR_GREY});
-            walkSingleRoot(obj, tinfo);
-        }
+		MetaData* m = GC_GET_META_DATA_ADDR(obj);
+		if(GC_SHOULD_VISIT(m)) {
+			GC_MARK_AS_MARKED(m);
+			tinfo.visit_stack.push_back({obj, MARK_STACK_NODE_COLOR_GREY});
+			walkSingleRoot(obj, tinfo);
+		}
     }
 
     gtl_info.visit_stack.clear();
@@ -524,8 +561,8 @@ static void updateRoots(BSQMemoryTheadLocalInfo& tinfo)
     for(int32_t i = 0; i < gtl_info.roots_count; i++) {
 		void* obj = tinfo.roots[i];
 		MetaData* m = GC_GET_META_DATA_ADDR(obj);
-        GC_CLEAR_ROOT_MARK(m);
         GC_CLEAR_YOUNG_MARK(m);
+		GC_CLEAR_MARKED_MARK(m);
 
         tinfo.old_roots[tinfo.old_roots_count++] = obj;
     }
