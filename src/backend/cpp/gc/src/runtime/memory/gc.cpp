@@ -370,6 +370,10 @@ static bool find(void** arr, int32_t n, void* trgt, BSQMemoryTheadLocalInfo& tin
     return false;
 }
 
+#include <set>
+static std::set<void*> g_seen;
+
+// almost 100% sure my idea of marking objects does not work
 static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     if(!GlobalPageGCManager::g_gc_page_manager.pagetableQuery(addr) 
@@ -377,14 +381,13 @@ static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexce
             return ;
     }
 
-    MetaData* m = PageInfo::getObjectMetadataAligned(addr);
-	if(GC_IS_MARKED(m)) {
-		return;	
+	if(g_seen.contains(addr)) {
+		return ;
 	}
-	GC_MARK_AS_MARKED(m);
 
 	tinfo.roots[tinfo.roots_count++] = addr;
-	if(!find(tinfo.old_roots, tinfo.old_roots_count, addr, tinfo)) {	
+	if(!find(tinfo.old_roots, tinfo.old_roots_count, addr, tinfo)) {		
+		MetaData* m = PageInfo::getObjectMetadataAligned(addr);
 		GC_MARK_AS_ROOT(m);
 
 		// another thread may reference this root, so needs to be young 
@@ -393,6 +396,8 @@ static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexce
 			tinfo.pending_roots.push_back(addr);
 		}
 	}
+
+	g_seen.insert(addr);
 }
 
 static void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept 
@@ -446,12 +451,7 @@ static void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
     tinfo.unloadNativeRootSet();
 
-	// TODO temp hack while we figure out why marking inside checkPotentialPtr
-	// is problematic
-    for(int32_t i = 0; i < tinfo.roots_count; i++) {
-        MetaData* m = GC_GET_META_DATA_ADDR(tinfo.roots[i]);
-        GC_CLEAR_MARKED_MARK(m);
-    }
+	g_seen.clear();
 }
 
 static void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
@@ -542,10 +542,11 @@ static void markingWalk(BSQMemoryTheadLocalInfo& tinfo) noexcept
         void* obj = tinfo.pending_roots.pop_front();
 	
 		MetaData* m = GC_GET_META_DATA_ADDR(obj);
-		GC_MARK_AS_MARKED(m);	
-		
-		tinfo.visit_stack.push_back({obj, MARK_STACK_NODE_COLOR_GREY});
-		walkSingleRoot(obj, tinfo);
+		if(GC_SHOULD_VISIT(m)) {	
+			GC_MARK_AS_MARKED(m);	
+			tinfo.visit_stack.push_back({obj, MARK_STACK_NODE_COLOR_GREY});
+			walkSingleRoot(obj, tinfo);
+		}
     }
 
     gtl_info.visit_stack.clear();
