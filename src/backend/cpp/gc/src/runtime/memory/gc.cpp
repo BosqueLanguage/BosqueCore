@@ -36,41 +36,22 @@ static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcep
 {
     qsort(tinfo.roots, 0, tinfo.roots_count - 1, tinfo.roots_count);
 
-    int32_t roots_idx = 0;
-    int32_t oldroots_idx = 0;
-
 	// TODO we may be interested in using a separate mtx for thdcnt decs/incs
 	std::lock_guard lk(g_gcrefctlock);
-    while(oldroots_idx < tinfo.old_roots_count) {
+    
+    int32_t roots_idx = 0, oldroots_idx = 0;
+	while(oldroots_idx < tinfo.old_roots_count) {
         void* cur_oldroot = tinfo.old_roots[oldroots_idx];
-        MetaData* m = GC_GET_META_DATA_ADDR(cur_oldroot); 
-
-		if(roots_idx >= tinfo.roots_count) {
-            // Was dropped from roots
-			if(GC_IS_ROOT(m)) {
-				GC_DROP_ROOT_REF(m);	
-			}
-
-			// TODO before merging lets reorganize
-			if(GC_REF_COUNT(m) == 0 && !GC_IS_ROOT(m)) {
-				pushPendingDecs(cur_oldroot, tinfo.decs_batch);
-            }
-            oldroots_idx++;
-            continue;
-        }
-        
-        void* cur_root = tinfo.roots[roots_idx];
+        void* cur_root = roots_idx < tinfo.roots_count ? 
+			tinfo.roots[roots_idx] : static_cast<uint8_t*>(cur_oldroot) + 1;
         if(cur_root < cur_oldroot) {
             // New root in current
             roots_idx++;
         } 
-        else if(cur_oldroot < cur_root) { 
-             // Was dropped from roots
-			if(GC_IS_ROOT(m)) {
-				GC_DROP_ROOT_REF(m);	
-			}
-
-			// TODO before merging lets reorganize
+        else if(cur_root > cur_oldroot) { 
+             // Was dropped from old roots	
+        	MetaData* m = GC_GET_META_DATA_ADDR(cur_oldroot);  
+			GC_DROP_ROOT_REF(m);
 			if(GC_REF_COUNT(m) == 0 && !GC_IS_ROOT(m)) {
 				pushPendingDecs(cur_oldroot, tinfo.decs_batch);
             }           
@@ -78,13 +59,13 @@ static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcep
         } 
         else {
             // In both lists
-            roots_idx++;
-            oldroots_idx++;
+            roots_idx++, oldroots_idx++;
         }
     }
 
     tinfo.old_roots_count = 0;
 }
+
 
 static inline void handleTaggedObjectDecrement(void** slots, ArrayList<void*>& list) noexcept 
 {
@@ -343,7 +324,6 @@ static inline bool pointsToObjectStart(void* addr) noexcept
     }
 
     uintptr_t start = GET_SLOT_START_FROM_OFFSET(offset, p);
-
     return start % p->realsize == 0;
 }
 
@@ -370,6 +350,8 @@ static bool find(void** arr, int32_t n, void* trgt, BSQMemoryTheadLocalInfo& tin
     return false;
 }
 
+// NOTE we could sort roots here then do two pointer walk on old roots, building
+// up a set of dead objects to be merged onto decs list later
 static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     if(!GlobalPageGCManager::g_gc_page_manager.pagetableQuery(addr) 
@@ -419,7 +401,7 @@ static void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept
 	}
 
     if(tinfo.disable_stack_refs) {
-        return;
+        goto cleanup;
     }
 #endif
     
@@ -446,8 +428,10 @@ static void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
     tinfo.unloadNativeRootSet();
 
-	// TODO temp hack while we determine why marking manually in checkPotentialPtr
-	// is problematic and leads to seg faults!
+[[maybe_unused]] cleanup:
+	// Mark bit is used to ensure we dont inc thd count multiple times 
+	// (say a root ref is in both registers and stack), so clear before
+	// marking (maybe a cleaner way to handle this?)
 	for(int32_t i = 0; i < tinfo.roots_count; i++) {
 		MetaData* m = GC_GET_META_DATA_ADDR(tinfo.roots[i]);
 		GC_CLEAR_MARKED_MARK(m);
@@ -459,9 +443,9 @@ static void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
     MetaData* m = GC_GET_META_DATA_ADDR(*slots);
     GC_CHECK_BOOL_BYTES(m);
     
-		if(GC_SHOULD_VISIT(m)) { 
-			GC_MARK_AS_MARKED(m);
-        tinfo.visit_stack.push_back({*slots, MARK_STACK_NODE_COLOR_GREY});
+	if(GC_SHOULD_VISIT(m)) { 
+		GC_MARK_AS_MARKED(m);
+		tinfo.visit_stack.push_back({*slots, MARK_STACK_NODE_COLOR_GREY});
     }
 }
 
@@ -540,9 +524,6 @@ static void markingWalk(BSQMemoryTheadLocalInfo& tinfo) noexcept
     // Process the walk stack
     while(!tinfo.pending_roots.isEmpty()) {
         void* obj = tinfo.pending_roots.pop_front();
-
-		// TODO we should take a look here as this is a special case for walking
-		// since we do the marking of pending roots inside checkPotentialPtr 
 		MetaData* m = GC_GET_META_DATA_ADDR(obj);
 		if(GC_SHOULD_VISIT(m)) {
 			GC_MARK_AS_MARKED(m);
