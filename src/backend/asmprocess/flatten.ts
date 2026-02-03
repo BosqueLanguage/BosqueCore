@@ -1,6 +1,6 @@
 
 import { SourceInfo } from "../../frontend/build_decls.js";
-import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, RecursiveAnnotation, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
+import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, RecursiveAnnotation, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
 import { AbortStatement, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringTextComponent, HoleBodyImplementation, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PostfixOp, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement } from "../../frontend/body.js";
 import { AbstractCollectionTypeDecl, AbstractConceptTypeDecl, AbstractEntityTypeDecl, AdditionalTypeDeclTag, AgentDecl, APIDecl, APIDeniedTypeDecl, APIErrorTypeDecl, APIFlaggedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstructableTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EventListTypeDecl, FailTypeDecl, InvariantDecl, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskDecl, TestAssociation, TypedeclTypeDecl, ValidateDecl } from "../../frontend/assembly.js";
 
@@ -85,6 +85,25 @@ class ASMToIRConverter {
     private registerError(file: string, sinfo: IRSourceInfo, kind: "arith" | "runtime" | "userspec"): number {
         this.errInfos.push({ file: file, sinfo: sinfo, kind: kind, checkID: this.errCtr });
         return this.errCtr++;
+    }
+
+    private generateLocalTemplateMapping(tnames: string[], terms: TypeSignature[]): TemplateNameMapper | undefined {
+        assert(terms.length === tnames.length);
+
+        if(terms.length === 0) {
+            return undefined;
+        }
+
+        let tmap = new Map<string, TypeSignature>();
+        tnames.forEach((t, ii) => {
+            tmap.set(t, terms[ii]);
+        });
+
+        return TemplateNameMapper.createInitialMapping(tmap);
+    }
+
+    private applyLocalTemplateMapping(tsig: TypeSignature, mapper: TemplateNameMapper | undefined): TypeSignature {
+        return mapper !== undefined ? tsig.remapTemplateBindings(mapper) : tsig;
     }
 
     private generateTempVarName(): string {
@@ -837,20 +856,24 @@ class ASMToIRConverter {
         const hasinvchks = decl.allInvariants.length !== 0;
         const bfinfo = decl.saturatedBFieldInfo;
 
-xxxx;
+        const tcons = this.tproc(exp.ctype) as NominalTypeSignature;
+        const imapper = this.generateLocalTemplateMapping(decl.terms.map((t) => t.name), tcons.alltermargs);
 
         const aargs: IRSimpleExpression[] = [];
         for(let i = 0; i < exp.shuffleinfo.length; ++i) {
             const ii = exp.shuffleinfo[i];
+            const finfo = bfinfo[i];
+            const ftype = this.applyLocalTemplateMapping(finfo.type, imapper);
+            
             if(ii[0] === -1) {
-                const eexp = this.assembly.resolveFieldDeclDefaultExpFromTypeSignature(this.tproc(bfinfo[i].containingtype), bfinfo[i].name) as Expression;
+                const eexp = this.assembly.resolveFieldDeclDefaultExpFromTypeSignature(finfo.containingtype, finfo.name) as Expression;
                 const crexp = eexp !== undefined ? this.assembly.tryReduceConstantExpression(eexp) : undefined;
 
                 if(crexp !== undefined) {
                     const sexp = this.flattenExpression(crexp);
-                    const cexp = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(sexp, crexp.getType()), crexp.getType(), bfinfo[i].type);
+                    const cexp = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(sexp, crexp.getType()), crexp.getType(), ftype);
 
-                    const fexp = hasinvchks ? this.makeExpressionImmediate(cexp, bfinfo[i].type) : cexp;
+                    const fexp = hasinvchks ? this.makeExpressionImmediate(cexp, ftype) : cexp;
                     aargs.push(fexp);
                 }
                 else {
@@ -860,9 +883,9 @@ xxxx;
             else {
                 const eexp = exp.args.args[ii[0]];
                 const sexp = this.flattenExpression(eexp.exp);
-                const cexp = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(sexp, eexp.exp.getType()), eexp.exp.getType(), bfinfo[i].type);
+                const cexp = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(sexp, eexp.exp.getType()), eexp.exp.getType(), ftype);
 
-                const fexp = hasinvchks ? this.makeExpressionImmediate(cexp, bfinfo[i].type) : cexp;
+                const fexp = hasinvchks ? this.makeExpressionImmediate(cexp, ftype) : cexp;
                 aargs.push(fexp);
             }
         }

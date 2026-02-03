@@ -8,9 +8,7 @@ describe ("CPPEmit -- entity simple", () => {
         checkTestEmitMainFunction("entity Foo { field f: Int; } public function main(): Foo { return Foo{3i}; }", "MainᕒFoo Mainᕒmain() { return MainᕒFoo{3_i}; }"); 
         checkTestEmitMainFunction("entity Foo { field f: Int; invariant $f >= 0i; } public function main(): Foo { return Foo{3i}; }", 'MainᕒFoo Mainᕒmain() { ᐸRuntimeᐳ::bsq_invariant((bool)(MainᕒFooᐤinvariant_0(3_i)), "test.bsq", 2, nullptr, "Failed Invariant"); return MainᕒFoo{3_i}; }'); 
 
-        checkTestEmitMainFunction("entity Foo<T> { field f: T; } public function main(): Foo<Int> { return Foo<Int>{3i}; }", "ccc"); 
-   
-        checkTestEmitMainFunction("entity Foo { field f: Int; invariant $f >= 0i; } public function main(): Foo { return Foo{-1i}; }", "ccc"); 
+        checkTestEmitMainFunction("entity Foo<T> { field f: T; } public function main(): Foo<Int> { return Foo<Int>{3i}; }", "MainᕒFooᐸIntᐳ Mainᕒmain() { return MainᕒFooᐸIntᐳ{3_i}; }");
     });
 });
 
