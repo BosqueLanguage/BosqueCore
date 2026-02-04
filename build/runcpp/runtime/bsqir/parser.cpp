@@ -27,6 +27,16 @@ namespace ᐸRuntimeᐳ
         return this->lexer.current().tokentype;
     }
 
+    bool BSQONParser::testType(const char* tname)
+    {
+        auto token = this->lexer.current();
+        if(!(token.tokentype == BSQONTokenType::Identifier)) {
+            return false;
+        }
+
+        return this->lexer.current().matches(tname);
+    }
+
     bool BSQONParser::ensureAndConsumeType(const char* tname)
     {
         auto token = this->lexer.current();

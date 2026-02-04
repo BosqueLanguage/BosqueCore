@@ -23,9 +23,9 @@ namespace ᐸRuntimeᐳ
         void release();
 
         bool peekSymbol(char sym);
-        
         BSQONTokenType peekTokenType();
 
+        bool testType(const char* tname);
         bool ensureAndConsumeType(const char* tname);
         
         bool ensureAndConsumeSymbol(char sym)

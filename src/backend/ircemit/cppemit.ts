@@ -1264,7 +1264,6 @@ class CPPEmitter {
         }
     }
 
-
     private emitConceptTypeInfo(tdecl: IRConceptTypeDecl): [string, string] {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
         const uctname = TransformCPPNameManager.generateNameForUnionType(tdecl.tkey);
@@ -1305,12 +1304,30 @@ class CPPEmitter {
         const declbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}();`;
         const declbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv);`;
 
+        const parseops = uoptions.map((opt, ii) => {
+            const fttname = TransformCPPNameManager.convertTypeKey(opt.tkeystr);
+            const ftvar = this.typeInfoManager.emitTypeAsStd(opt.tkeystr);
+            const testop = `ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.testType("${opt.tkeystr}")`;
+            const baseop = `{ std::optional<${ftvar}> vv = BSQ_parse${fttname}(); if(!vv.has_value()) { return std::nullopt; } else { return ${ctname}(vv.value()); } }`;
+            return `    ${ii !== 0 ? "else " : ""}if(${testop}) ${baseop}`;
+        });
+
         const defbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}() {\n` +
-        `    assert(false); return std::nullopt;\n` +
+        parseops.join("\n") +
+        `\n    else { return std::nullopt; }\n` +
         `}`;
         
+        const emitops = uoptions.map((opt) => {
+            const optypeinfo = this.typeInfoManager.getTypeInfo(opt.tkeystr);
+            const fttname = TransformCPPNameManager.convertTypeKey(opt.tkeystr);
+            const umember = TransformCPPNameManager.generateNameForUnionMember(opt.tkeystr);
+            return `    case ${optypeinfo.bsqtypeid}: BSQ_emit${fttname}(vv.uval.data.${umember}); break;`;
+        });
+
         const defbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv) {\n` +
-        `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate("[NOT IMPLEMENTED]");\n` +
+        `    switch(vv.uval.typeinfo->bsqtypeid) {\n` +
+        `${emitops.join("\n")}\n` +
+        `    }\n` +
         `}`;
         
         return [

@@ -34,4 +34,13 @@ describe ("CPPEmit -- Entity w/ Invariant Constructor", () => {
         checkTestEmitMainFunction('entity Foo { field f: Int = 0i; invariant $f != 3i; } public function main(): Foo { return Foo{5i}; }', 'MainᕒFoo Mainᕒmain() { ᐸRuntimeᐳ::bsq_invariant((bool)(MainᕒFooᐤinvariant_0(5_i)), "test.bsq", 2, nullptr, "Failed Invariant"); return MainᕒFoo{5_i}; }');
         checkTestEmitMainFunction('entity Foo { field f: Int = 0i; invariant $f != 3i; } public function main(): Foo { return Foo{}; }', 'MainᕒFoo Mainᕒmain() { ᐸRuntimeᐳ::bsq_invariant((bool)(MainᕒFooᐤinvariant_0(0_i)), "test.bsq", 2, nullptr, "Failed Invariant"); return MainᕒFoo{0_i}; }');
     });
+
+    it.todo("should emit inherits single", function () {
+    });
+
+    it.todo("should emit inherits multiple", function () {
+    });
+
+    it.todo("should emit inherits with invariants too", function () {
+    });
 });

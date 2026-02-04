@@ -15,8 +15,6 @@ describe ("CPPEmit -- simple return", () => {
     it("should emit constructor returns", function () {
         checkTestEmitMainFunction('entity Foo { field f: Int; } public function main(): Foo { return Foo{3i}; }', 'MainᕒFoo Mainᕒmain() { return MainᕒFoo{3_i}; }');
         checkTestEmitMainFunction('entity Foo { field f: Int; invariant $f !== 0i; } public function main(): Foo { return Foo{3i}; }', 'MainᕒFoo Mainᕒmain() { ᐸRuntimeᐳ::bsq_invariant((bool)(MainᕒFooᐤinvariant_0(3_i)), "test.bsq", 2, nullptr, "Failed Invariant"); return MainᕒFoo{3_i}; }');
-        
-        //TODO -- later add a ref version
     });
 
     it.skip("should emit direct returns", function () {
@@ -29,7 +27,7 @@ describe ("CPPEmit -- simple return", () => {
         checkTestEmitMainFunction('public function main(): Option<Int> { return some(3i); }', 'OptionᐸIntᐳ Mainᕒmain() { return OptionᐸIntᐳ::fromSome(&ᐸRuntimeᐳ::g_typeinfo_SomeᐸIntᐳ, SomeᐸIntᐳ{3_i}); }');
         checkTestEmitMainFunction('public function main(): Option<Int> { let x: Option<Int> = some(3i); return x; }', 'OptionᐸIntᐳ Mainᕒmain() { OptionᐸIntᐳ x = OptionᐸIntᐳ::fromSome(&ᐸRuntimeᐳ::g_typeinfo_SomeᐸIntᐳ, SomeᐸIntᐳ{3_i}); return x; }');
 
-        checkTestEmitMainFunction('concept Baz {} entity Foo provides Baz {} public function main(): Baz { return Foo{}; }', 'ppp');
-        checkTestEmitMainFunction('concept Baz {} entity Foo provides Baz {} public function main(): Baz { let x: Foo = Foo{}; return x; }', 'qqq');
+        checkTestEmitMainFunction('concept Baz {} entity Foo provides Baz {} public function main(): Baz { return Foo{}; }', 'MainᕒBaz Mainᕒmain() { MainᕒFoo tmp_0 = MainᕒFoo{}; return MainᕒBaz(tmp_0); }');
+        checkTestEmitMainFunction('concept Baz {} entity Foo provides Baz {} public function main(): Baz { let x: Foo = Foo{}; return x; }', 'MainᕒBaz Mainᕒmain() { MainᕒFoo x = MainᕒFoo{}; return MainᕒBaz(x); }');
     });
 });
