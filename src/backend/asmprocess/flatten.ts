@@ -3210,8 +3210,7 @@ class ASMToIRConverter {
             }
         }
 
-        //TODO: fill in subtypes
-
+        irasm.computeSubtypeInfo();
         irasm.computeTypeDependencyInfo();
 
         return irasm;

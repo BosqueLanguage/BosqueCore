@@ -698,7 +698,13 @@ class IRConceptTypeDecl extends IRAbstractConceptTypeDecl {
     }
 
     getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
-        return xxx; //should be fields
+        const ffdecls = this.saturatedBFieldInfo.map(bf => {
+            const ctt = alltypes.get(bf.containingtype.tkeystr) as IRAbstractNominalTypeDecl;
+            const bfdecl = ctt.fields.find(f => f.fkey === bf.fkey) as IRMemberFieldDecl;
+            return bfdecl.declaredType;
+        });
+
+        return [new IRNominalTypeSignature(this.tkey), ...ffdecls];
     }
 }
 
@@ -727,7 +733,13 @@ class IRDatatypeTypeDecl extends IRAbstractConceptTypeDecl {
     }
 
     getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
-        return this.dataelems;
+        const ffdecls = this.saturatedBFieldInfo.map(bf => {
+            const ctt = alltypes.get(bf.containingtype.tkeystr) as IRAbstractNominalTypeDecl;
+            const bfdecl = ctt.fields.find(f => f.fkey === bf.fkey) as IRMemberFieldDecl;
+            return bfdecl.declaredType;
+        });
+        
+        return [new IRNominalTypeSignature(this.tkey), ...ffdecls];
     }
 }
 
@@ -951,10 +963,8 @@ class IRAssembly {
     readonly formats: IRFormatTypeSignature[] = [];
     readonly lpacksigs: IRLambdaParameterPackTypeSignature[] = [];
 
-    readonly supertypes: Map<string, IRTypeSignature[]> = new Map<string, IRTypeSignature[]>();
-    readonly subtypes: Map<string, IRTypeSignature[]> = new Map<string, IRTypeSignature[]>();
-
-    readonly concretesubtypes: Map<string, IRTypeSignature[]> = new Map<string, IRTypeSignature[]>(); 
+    readonly concretesubtypes: Map<string, IRTypeSignature[]> = new Map<string, IRTypeSignature[]>(); //
+    readonly concretesupertypes: Map<string, IRTypeSignature[]> = new Map<string, IRTypeSignature[]>();
 
     readonly typedeporder: IRTypeSignature[] = [];
     readonly typedepcycles: IRTypeSignature[][] = [];
@@ -962,21 +972,68 @@ class IRAssembly {
     constructor() {
     }
 
+    computeSubtypeInfo() {
+        const alltl = [...this.alltypes.values()];
+
+        for(let i = 0; i < alltl.length; i++) {
+            const ctt = alltl[i];
+
+            if(ctt instanceof IRAbstractConceptTypeDecl) {
+                if(!this.concretesubtypes.has(ctt.tkey)) {
+                    this.concretesubtypes.set(ctt.tkey, []);
+                }
+            }
+            else {
+                if(!this.concretesupertypes.has(ctt.tkey)) {
+                    this.concretesupertypes.set(ctt.tkey, []);
+                }
+                let superl = this.concretesupertypes.get(ctt.tkey) as IRTypeSignature[];
+
+                const cctsig = new IRNominalTypeSignature(ctt.tkey);
+                for(let j = 0; j < ctt.saturatedProvides.length; j++) {
+                    const ssuper = ctt.saturatedProvides[j];
+
+                    if(!this.concretesubtypes.has(ssuper.tkeystr)) {
+                        this.concretesubtypes.set(ssuper.tkeystr, []);
+                    }
+                    (this.concretesubtypes.get(ssuper.tkeystr) as IRTypeSignature[]).push(cctsig);
+                    superl.push(ssuper);
+                }
+            }
+        }
+    }
+
     private getTypeDependencyInfo(tsig: IRTypeSignature): IRTypeSignature[] {
+        let ttl: IRTypeSignature[] = [];
         if(tsig instanceof IRLambdaParameterPackTypeSignature) {
             const lsdecl = this.alllambdas.get(tsig.tkeystr) as IRLambdaParameterPackDecl;
-            return [
+            ttl = [
                 ...lsdecl.stdvalues.map((sv) => sv.vtype),
                 ...lsdecl.lambdavalues.map((lv) => new IRLambdaParameterPackTypeSignature(lv.ltypekey))
             ];
         }
         else if(tsig instanceof IRNominalTypeSignature) {
             const ttdecl = this.alltypes.get(tsig.tkeystr) as IRAbstractNominalTypeDecl;
-            return ttdecl.getDeclDependencyTypes(this.alltypes);
+            ttl = ttdecl.getDeclDependencyTypes(this.alltypes);
         }
         else {
-            return tsig.getDirectDependencyTypes();            
+            ttl = tsig.getDirectDependencyTypes();            
         }
+
+        //now make all the concrete subtypes explicit
+        let allttl: IRTypeSignature[] = [];
+        for(let i = 0; i < ttl.length; i++) {
+            allttl.push(ttl[i]);
+
+            const csubts = this.concretesubtypes.get(ttl[i].tkeystr);
+            if(csubts !== undefined) {
+                for(let j = 0; j < csubts.length; j++) {
+                    allttl.push(csubts[j]);
+                }
+            }
+        }
+
+        return allttl;
     }
 
     private visitType(tsig: IRTypeSignature, visited: Set<string>) {
@@ -1002,31 +1059,36 @@ class IRAssembly {
         return [...allndecls, ...allsdtypes];
     }
 
-    private getRootTypes(): IRTypeSignature[] {
-        const alltypes = this.computeAllTypes();
+    private getTypesCount(visited: Set<string>): [IRTypeSignature, number][] {
+        const allpending = this.computeAllTypes().filter((t) => !visited.has(t.tkeystr));
         const ttcount = new Map<string, number>();
 
-        for(let i = 0; i < alltypes.length; i++) {
-            ttcount.set(alltypes[i].tkeystr, 0);
+        for(let i = 0; i < allpending.length; i++) {
+            ttcount.set(allpending[i].tkeystr, 0);
         }
 
-        for(let i = 0; i < alltypes.length; i++) {
-            const deps = this.getTypeDependencyInfo(alltypes[i]);
+        for(let i = 0; i < allpending.length; i++) {
+            const deps = this.getTypeDependencyInfo(allpending[i]);
             for(let j = 0; j < deps.length; j++) {
-                const ccount = ttcount.get(deps[j].tkeystr) as number;
-                ttcount.set(deps[j].tkeystr, ccount + 1);
+                if(allpending[i].tkeystr !== deps[j].tkeystr) {
+                    const ccount = ttcount.get(deps[j].tkeystr) as number;
+                    ttcount.set(deps[j].tkeystr, ccount + 1);
+                }
             }
         }
 
-        return alltypes.filter(t => ttcount.get(t.tkeystr) === 0);
+        return allpending.map<[IRTypeSignature, number]>((t) => [t, ttcount.get(t.tkeystr) as number]).sort((a, b) => a[1] - b[1]);
     }
 
     computeTypeDependencyInfo() {
-        const roots = this.getRootTypes();
         const visited = new Set<string>();
+        let toproc = this.getTypesCount(visited);
 
-        for(let i = 0; i < roots.length; i++) {
-            this.visitType(roots[i], visited);
+        while(toproc.length !== 0) {
+            const nrval = toproc.shift() as [IRTypeSignature, number];
+            this.visitType(nrval[0], visited);
+
+            toproc = this.getTypesCount(visited);
         }
 
         //TODO: compute cycles

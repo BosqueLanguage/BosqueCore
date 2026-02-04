@@ -271,12 +271,28 @@ class TypeInfoManager {
         else {
             assert(tdecl instanceof IRConceptTypeDecl, `TypeInfoManager::processInfoGenerationForConcept - Unsupported concept type declaration for key ${tdecl.tkey}`);
 
-            const etdecl = tdecl as IRConceptTypeDecl;
             let totalbytesize = 0;
             let totalslotcount = 0;
 
-            const subtypes = irasm.subtypes.get(tdecl.tkey) as IRTypeSignature[];
-            xxxx;
+            const subtypes = irasm.concretesubtypes.get(tdecl.tkey) as IRTypeSignature[];
+            for(const subtt of subtypes) {
+              if(this.isNominalRecursiveType(subtt, irasm)) {
+                    totalbytesize = Math.max(totalbytesize, 8);
+                    totalslotcount = Math.max(totalslotcount, 1);
+                }
+                else {
+                    const ftypeinfo = this.processInfoGenerationForType(subtt, irasm);
+
+                    if(ftypeinfo.tag === LayoutTag.Ref) {
+                        totalbytesize = Math.max(totalbytesize, 8);
+                        totalslotcount = Math.max(totalslotcount, 1);
+                    }
+                    else {
+                        totalbytesize = Math.max(totalbytesize, ftypeinfo.bytesize);
+                        totalslotcount = Math.max(totalslotcount, ftypeinfo.slotcount);
+                    }
+                }
+            }
 
             const ttid = this.typeInfoMap.size;
             let eptrmask = TypeInfoManager.computeTaggedMaskOfK(totalslotcount);
