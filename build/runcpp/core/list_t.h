@@ -114,7 +114,7 @@ namespace ᐸRuntimeᐳ
         };
     }
 
-    template<typename T, size_t BUFF_ID>
+    template<typename T>
     class XListTIterator
     {
     private:
@@ -231,7 +231,58 @@ namespace ᐸRuntimeᐳ
         }
     };
 
+    template<typename T>
+    class XList
+    {
+    private:
+        ᐸRuntimeᐳ::ListTTree<T> tree;
+
+        static TypeInfo* InlineTypeInfo;
+        static TypeInfo* NodeTypeInfo;
+
+    public:
+        constexpr XList() : tree() {}
+        constexpr XList(const TypeInfo* tinfo, const ListTInlineBuff<T>& b) : tree(BoxedUnion<ListTTreeUnion>(tinfo, ListTTreeUnion(b))) {}
+        constexpr XList(const TypeInfo* tinfo, ListTInlineNode<T>* n) : tree(BoxedUnion<ListTTreeUnion>(tinfo, ListTTreeUnion(n))) {}
+        constexpr XList(const ListTTree<T>& t) : tree(t) {}
+        constexpr XList(const XList& other) = default;
+
+        template<size_t len>
+        constexpr static XList smliteral(const TypeInfo* tinfo, const T (&cdata)[len])
+        {
+            static_assert(len <= LIST_T_CAPACITY(sizeof(T)), "List literal too large for ListTInlineBuff");
+            return XList(tinfo, ListTInlineBuff<T>::literal(cdata));
+        }
+
+        bool empty() const
+        {
+            return (this->tree.typeinfo == XList::InlineTypeInfo) && this->tree.data.buff.count == 0;
+        }
+
+        size_t size() const
+        {
+            if(this->tree.typeinfo == XList::InlineTypeInfo) {
+                return this->tree.data.buff.count;
+            }
+            else {
+                return this->tree.data.node->count;
+            }
+        }
+
+        XListTIterator<T> begin() const
+        {
+            return XListTIterator<T>::initializeBegin(this->tree);
+        }
+
+        XListTIterator<T> end() const
+        {
+            return XListTIterator<T>::initializeEnd(this->tree);
+        }
+    };
+
     //TODO -- dummy instantiation to provide quick compile time check -- can remove later once we are a bit more confident
-    using XListTest_IntList = XListTIterator<int64_t, 101>;
-    static_assert(std::bidirectional_iterator<XListTIterator<int64_t, 101>>);
+    using XListTest_IntList = XListTIterator<int64_t>;
+    static_assert(std::bidirectional_iterator<XListTIterator<int64_t>>);
+
+    using XIntList = XList<int64_t>;
 }

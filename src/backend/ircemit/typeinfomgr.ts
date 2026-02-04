@@ -5,6 +5,9 @@ import { TransformCPPNameManager } from "./namemgr.js";
 
 import assert from "node:assert";
 
+//Duplicated from C++ definitions
+const MAX_LIST_INLINE_BYTES = 64;
+
 class FieldOffsetInfo {
     readonly fkey: string;
 
@@ -175,7 +178,7 @@ class TypeInfoManager {
         return bytesize <= 64;
     }
 
-    private static computeValeMaskOfK(k: number): string {
+    private static computeValueMaskOfK(k: number): string {
         return Array(k).fill("0").join("");
     }
 
@@ -199,16 +202,13 @@ class TypeInfoManager {
         }
         else if(tdecl instanceof IRAbstractCollectionTypeDecl) {
             if(tdecl instanceof IRListTypeDecl) {
-                const oftinfo = this.processInfoGenerationForType(tdecl.oftype, irasm);
-
                 const ttid = this.typeInfoMap.size;
-                if(oftinfo.tag === LayoutTag.Ref) {
-                    this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, 16, 2, LayoutTag.Ref, "11", undefined));
-                }
-                else {
-                    xxxx;
-                }
+                const ldatasize = MAX_LIST_INLINE_BYTES;
+                const ltotalsize = 8 + ldatasize; //8 bytes for for the tag
 
+                const mask = TypeInfoManager.computeTaggedMaskOfK(ldatasize / 8);
+                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, ltotalsize, ltotalsize / 8, LayoutTag.Tagged, mask, undefined));
+                
                 return this.getTypeInfo(tdecl.tkey);
             }
             else {
@@ -249,7 +249,7 @@ class TypeInfoManager {
                     else {
                         totalbytesize += ftypeinfo.bytesize;
                         totalslotcount += ftypeinfo.slotcount;
-                        eptrmask += ftypeinfo.ptrmask || TypeInfoManager.computeValeMaskOfK(ftypeinfo.slotcount);
+                        eptrmask += ftypeinfo.ptrmask || TypeInfoManager.computeValueMaskOfK(ftypeinfo.slotcount);
                     }
                 }
             }
