@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { APIDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, InvokeTemplateTypeRestrictionClause, MAX_SAFE_CHK_NAT, MIN_SAFE_CHK_INT, MAX_SAFE_CHK_INT, APIDeniedTypeDecl, APIFlaggedTypeDecl, AgentDecl, TaskConfiguration, AbstractCollectionTypeDecl, ConstructableTypeDecl, InvokeParameterDecl } from "./assembly.js";
 import { CodeFormatter, SourceInfo } from "./build_decls.js";
 import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, ErrorTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
-import { APIInvokeExpression, AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, ArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, FormatStringTextComponent, HoleBodyImplementation, HoleExpression, HoleStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, IfElifElseStatement, IfElseStatement, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypeDeclValueExpression, LiteralTypedCStringExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PassingArgumentValue, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RValueExpression, RValueExpressionTag, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VoidRefCallStatement } from "./body.js";
+import { APIInvokeExpression, AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, AbstractArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, FormatStringTextComponent, HoleBodyImplementation, HoleExpression, HoleStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, IfElifElseStatement, IfElseStatement, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypeDeclValueExpression, LiteralTypedCStringExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PassingArgumentValue, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RValueExpression, RValueExpressionTag, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VoidRefCallStatement, StdArgumentValue, SkipArgumentValue } from "./body.js";
 import { SimpleTypeInferContext, TypeEnvironment, TypeResultWRefVarInfoResult, TypeInferContext, VarInfo } from "./checker_environment.js";
 import { TypeCheckerRelations } from "./checker_relations.js";
 
@@ -888,7 +888,7 @@ class TypeChecker {
         return TemplateNameMapper.createInitialMapping(tmap);
     }
 
-    private checkSingleParam(env: TypeEnvironment, arg: ArgumentValue, paramname: string, paramtype: TypeSignature, pkind: "ref" | "out" | "out?" | "inout" | undefined, imapper: TemplateNameMapper): TypeSignature {
+    private checkSingleParam(env: TypeEnvironment, arg: StdArgumentValue, paramname: string, paramtype: TypeSignature, pkind: "ref" | "out" | "out?" | "inout" | undefined, imapper: TemplateNameMapper): TypeSignature {
         if(arg instanceof SpreadArgumentValue) {
             this.reportError(arg.exp.sinfo, `Spread argument cannot be used except as part of rest args`);
         }
@@ -955,7 +955,7 @@ class TypeChecker {
         return argtype;
     }
 
-    private checkRestParam(env: TypeEnvironment, args: ArgumentValue[], paramname: string, paramtype: TypeSignature, imapper: TemplateNameMapper): [boolean, TypeSignature][] {
+    private checkRestParam(env: TypeEnvironment, args: StdArgumentValue[], paramname: string, paramtype: TypeSignature, imapper: TemplateNameMapper): [boolean, TypeSignature][] {
         const ptype = paramtype.remapTemplateBindings(imapper);
         const etype = this.relations.getExpandoableOfType(ptype);
         if(etype === undefined) {
@@ -989,11 +989,11 @@ class TypeChecker {
         return rtypes;
     }
 
-    private checkArgumentList(sinfo: SourceInfo, env: TypeEnvironment, refok: boolean, args: ArgumentValue[], params: InvokeParameterDecl[], imapper: TemplateNameMapper): { shuffleinfo: [number, TypeSignature][], resttype: TypeSignature | undefined, restinfo: [number, boolean, TypeSignature][] | undefined, setcondout: string[], setuncond: string[], inout: string[], byref: string[] } {
+    private checkArgumentList(sinfo: SourceInfo, env: TypeEnvironment, refok: boolean, args: AbstractArgumentValue[], params: InvokeParameterDecl[], imapper: TemplateNameMapper): { shuffleinfo: [number, TypeSignature][], resttype: TypeSignature | undefined, restinfo: [number, boolean, TypeSignature][] | undefined, setcondout: string[], setuncond: string[], inout: string[], byref: string[] } {
         const nonrestparams = params.filter((p) => !p.isRestParam);
         const restparam = params.find((p) => p.isRestParam); //is only 1 at the end (from parser)
         
-        let argsuffle: (ArgumentValue | undefined)[] = [];
+        let argsuffle: (StdArgumentValue | undefined)[] = [];
         let argsuffleidx: number[] = [];
         for(let i = 0; i < nonrestparams.length; ++i) {
             argsuffle.push(undefined);
@@ -1007,10 +1007,14 @@ class TypeChecker {
         }
 
         for(let i = 0; i < Math.min(nstart, nonrestparams.length); ++i) {
-            argsuffle[i] = args[i];
-            argsuffleidx[i] = i;
+            if(args[i] instanceof StdArgumentValue) {
+                const sarg = args[i] as StdArgumentValue;
 
-            this.checkError(args[i].exp.sinfo, !refok && (args[i] instanceof PassingArgumentValue), `Reference argument only allowed in top-level contexts`);
+                argsuffle[i] = sarg;
+                argsuffleidx[i] = i;
+            
+                this.checkError(sarg.exp.sinfo, !refok && (sarg instanceof PassingArgumentValue), `Reference argument only allowed in top-level contexts`);
+            }
         }
 
         //fill in all the named arguments
@@ -1037,7 +1041,8 @@ class TypeChecker {
             }
         }
 
-        if(restparam === undefined && args.length > params.length) {
+        const realargcount = args.filter((arg) => arg instanceof StdArgumentValue).length;
+        if(restparam === undefined && realargcount > params.length) {
             this.reportError(sinfo, `Too many arguments provided to function`);
         }
         
@@ -1056,7 +1061,7 @@ class TypeChecker {
             }
             else {
                 const pp = nonrestparams[i];
-                argsuffletype[i] = this.checkSingleParam(env, argsuffle[i] as ArgumentValue, pp.name, pp.type, pp.pkind, imapper);
+                argsuffletype[i] = this.checkSingleParam(env, argsuffle[i] as StdArgumentValue, pp.name, pp.type, pp.pkind, imapper);
 
                 if(pp.pkind !== undefined && (argsuffle[i] instanceof PassingArgumentValue) && (argsuffle[i] as PassingArgumentValue).exp instanceof AccessVariableExpression) {
                     const vname = ((argsuffle[i] as PassingArgumentValue).exp as AccessVariableExpression).srcname;
@@ -1082,9 +1087,10 @@ class TypeChecker {
         let restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
         if(restparam !== undefined) {
             let restargs = args.slice(Math.min(nlast, nonrestparams.length));
+            this.checkError(sinfo, restargs.some((ra) => ra instanceof SkipArgumentValue), `Rest parameter requires at least one positional argument`);
             this.checkError(sinfo, restargs.length !== 0 && usingdeafults, `Cannot use (implicit) default arguments with rest parameter as uses are ambigious`);
 
-            const restypes = this.checkRestParam(env, restargs, restparam.name, restparam.type, imapper);
+            const restypes = this.checkRestParam(env, restargs.filter((p) => p instanceof StdArgumentValue), restparam.name, restparam.type, imapper);
 
             resttype = restparam.type.remapTemplateBindings(imapper);
             restinfo = [];
@@ -1137,8 +1143,8 @@ class TypeChecker {
         return { arginfo: arginfo, resttype: resttype, restinfo: restinfo };
     }
 */
-    private checkConstructorArgumentListStd(sinfo: SourceInfo, env: TypeEnvironment, args: ArgumentValue[], bnames: {name: string, type: TypeSignature, hasdefault: boolean, containingtype: NominalTypeSignature}[], imapper: TemplateNameMapper): [number, TypeSignature, string, TypeSignature][] {
-        let argsuffle: (ArgumentValue | undefined)[] = [];
+    private checkConstructorArgumentListStd(sinfo: SourceInfo, env: TypeEnvironment, args: AbstractArgumentValue[], bnames: {name: string, type: TypeSignature, hasdefault: boolean, containingtype: NominalTypeSignature}[], imapper: TemplateNameMapper): [number, TypeSignature, string, TypeSignature][] {
+        let argsuffle: (StdArgumentValue | undefined)[] = [];
         let argsuffleidx: number[] = [];
         for(let i = 0; i < bnames.length; ++i) {
             argsuffle.push(undefined);
@@ -1152,10 +1158,13 @@ class TypeChecker {
         }
 
         for(let i = 0; i < Math.min(bnames.length, nfirst); ++i) {
-            argsuffle[i] = args[i];
-            argsuffleidx[i] = i;
+            if(args[i] instanceof StdArgumentValue) {
+                const sarg = args[i] as StdArgumentValue;
+                argsuffle[i] = sarg;
+                argsuffleidx[i] = i;
 
-            this.checkError(args[i].exp.sinfo, (args[i] instanceof PassingArgumentValue), `Passing arguments not allowed in constructors`);
+                this.checkError(sarg.exp.sinfo, (sarg instanceof PassingArgumentValue), `Passing arguments not allowed in constructors`);
+            }
         }
 
         //fill in all the named arguments
@@ -1188,7 +1197,7 @@ class TypeChecker {
                 this.checkError(sinfo, !bnames[i].hasdefault, `Required argument ${bnames[i].name} not provided`);
             }
             else {
-                const argexp = (argsuffle[i] as ArgumentValue).exp;
+                const argexp = (argsuffle[i] as StdArgumentValue).exp;
                 const argtype = this.checkExpression(env, argexp, new SimpleTypeInferContext(bnames[i].type));
 
                 const ftype = bnames[i].type.remapTemplateBindings(imapper);
@@ -1197,7 +1206,8 @@ class TypeChecker {
             }
         }
 
-        if(args.length > bnames.length) {
+        const realargcount = args.filter((arg) => arg instanceof StdArgumentValue).length;
+        if(realargcount > bnames.length) {
             this.reportError(sinfo, `Too many arguments provided to constructor`);
             return [];
         }
@@ -1777,7 +1787,7 @@ class TypeChecker {
     private checkCollectionConstructor(env: TypeEnvironment, cdecl: AbstractCollectionTypeDecl, exp: ConstructorPrimaryExpression): TypeSignature {
         const etype = this.relations.getExpandoableOfType(exp.ctype) as TypeSignature;
 
-        if(exp.args.args.some((arg) => (arg instanceof NamedArgumentValue) || (arg instanceof PassingArgumentValue))) {
+        if(exp.args.args.some((arg) => (arg instanceof SkipArgumentValue) || (arg instanceof NamedArgumentValue) || (arg instanceof PassingArgumentValue))) {
             this.reportError(exp.sinfo, `Collection constructor expects only positional (or spread) arguments`);
             return exp.setType(exp.ctype);
         }
@@ -1785,7 +1795,7 @@ class TypeChecker {
         let shuffleinfo: [number, TypeSignature | undefined, string, TypeSignature][] = [];
         for(let i = 0; i < exp.args.args.length; ++i) {
             shuffleinfo.push([i, undefined, "_", etype]);
-            const arg = exp.args.args[i];
+            const arg = exp.args.args[i] as StdArgumentValue;
 
             if(arg instanceof PositionalArgumentValue) {
                 const argtype = this.checkExpression(env, arg.exp, new SimpleTypeInferContext(etype));
@@ -1819,7 +1829,7 @@ class TypeChecker {
                 const oktype = ctype.alltermargs[0];
                 exp.shuffleinfo = [[0, undefined, "value", oktype]];
 
-                const okarg = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(oktype));
+                const okarg = this.checkExpression(env, (exp.args.args[0] as StdArgumentValue).exp, new SimpleTypeInferContext(oktype));
                 this.checkError(exp.sinfo, (okarg instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(okarg, oktype, this.constraints), `Ok constructor argument is not a subtype of ${oktype.emit()}`);
             }
         }
@@ -1831,7 +1841,7 @@ class TypeChecker {
                 const errtype = ctype.alltermargs[1];
                 exp.shuffleinfo = [[0, undefined, "value", errtype]];
 
-                const errarg = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(errtype));
+                const errarg = this.checkExpression(env, (exp.args.args[0] as StdArgumentValue).exp, new SimpleTypeInferContext(errtype));
                 this.checkError(exp.sinfo, (errarg instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(errarg, errtype, this.constraints), `Err constructor argument is not a subtype of ${errtype.emit()}`);
             }
         }
@@ -1845,10 +1855,10 @@ class TypeChecker {
                     const aetype = ctype.alltermargs[1];
                     exp.shuffleinfo = [[0, undefined, "value", attype], [1, undefined, "info", aetype]];
 
-                    const atarg = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(attype));
+                    const atarg = this.checkExpression(env, (exp.args.args[0] as StdArgumentValue).exp, new SimpleTypeInferContext(attype));
                     this.checkError(exp.sinfo, (atarg instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(atarg, attype, this.constraints), `API flagged result first constructor argument is not a subtype of ${attype.emit()}`);
 
-                    const aetarg = this.checkExpression(env, exp.args.args[1].exp, new SimpleTypeInferContext(aetype));
+                    const aetarg = this.checkExpression(env, (exp.args.args[1] as StdArgumentValue).exp, new SimpleTypeInferContext(aetype));
                     this.checkError(exp.sinfo, (aetarg instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(aetarg, aetype, this.constraints), `API flagged result second constructor argument is not a subtype of ${aetype.emit()}`);
                 }
             }
@@ -1861,14 +1871,14 @@ class TypeChecker {
                         const apitype = ctype.alltermargs[0];
                         exp.shuffleinfo = [[0, undefined, "value", apitype]];
 
-                        const apiarg = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(apitype));
+                        const apiarg = this.checkExpression(env, (exp.args.args[0] as StdArgumentValue).exp, new SimpleTypeInferContext(apitype));
                         this.checkError(exp.sinfo, (apiarg instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(apiarg, apitype, this.constraints), `API result constructor argument is not a subtype of ${apitype.emit()}`);
                     }
                     else {
                         const apitype = ctype.alltermargs[1];
                         exp.shuffleinfo = [[0, undefined, "info", apitype]];
 
-                        const apiarg = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(apitype));
+                        const apiarg = this.checkExpression(env, (exp.args.args[0] as StdArgumentValue).exp, new SimpleTypeInferContext(apitype));
                         this.checkError(exp.sinfo, (apiarg instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(apiarg, apitype, this.constraints), `API result constructor argument is not a subtype of ${apitype.emit()}`);
                     }
                 }
@@ -1882,7 +1892,7 @@ class TypeChecker {
                 const ttype = ctype.alltermargs[0];
                 exp.shuffleinfo = [[0, undefined, "value", ttype]];
 
-                const etype = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(ttype));
+                const etype = this.checkExpression(env, (exp.args.args[0] as StdArgumentValue).exp, new SimpleTypeInferContext(ttype));
                 this.checkError(exp.sinfo, (etype instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Some constructor argument is not a subtype of ${ttype.emit()}`);
             }
         }
@@ -1893,12 +1903,12 @@ class TypeChecker {
             else {
                 const ktype = ctype.alltermargs[0];
                 exp.shuffleinfo = [[0, undefined, "key", ktype]];
-                const ketype = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(ktype));
+                const ketype = this.checkExpression(env, (exp.args.args[0] as StdArgumentValue).exp, new SimpleTypeInferContext(ktype));
                 this.checkError(exp.sinfo, (ketype instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(ketype, ktype, this.constraints), `MapEntry constructor key argument is not a subtype of ${ktype.emit()}`);
 
                 const vtype = ctype.alltermargs[1];
                 exp.shuffleinfo = [[1, undefined, "value", vtype]];
-                const vetype = this.checkExpression(env, exp.args.args[1].exp, new SimpleTypeInferContext(vtype));
+                const vetype = this.checkExpression(env, (exp.args.args[1] as StdArgumentValue).exp, new SimpleTypeInferContext(vtype));
                 this.checkError(exp.sinfo, (vetype instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(vetype, vtype, this.constraints), `MapEntry constructor value argument is not a subtype of ${vtype.emit()}`);
             }
         }

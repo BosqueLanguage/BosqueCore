@@ -20,6 +20,11 @@ describe ("Checker -- Entity Constructor", () => {
         checkTestFunctionInFile('entity Foo { field f: Int = 0i; field g: Bool; } function main(): Foo { return Foo{g=true}; }');
     });
 
+    it("should check skip positions", function () {
+        checkTestFunctionInFile('entity Foo { field f: Int; field g: Bool; field h: Int; } function main(): Foo { return Foo{1i, _, 5i, g = true}; }');
+        checkTestFunctionInFile('entity Foo { field f: Int; field g: Bool = true; field h: Int; } function main(): Foo { return Foo{1i, _, h = 5i}; }');
+    });
+
     it("should fail positional", function () {
         checkTestFunctionInFileError('entity Foo { field f: Int; } function main(): Foo { return Foo{}; }', 'Required argument f not provided');
     });
@@ -28,6 +33,11 @@ describe ("Checker -- Entity Constructor", () => {
         checkTestFunctionInFileError('entity Foo { field f: Int = 0n; } function main(): Foo { return Foo{}; }', 'Field initializer does not match declared type -- expected Int but got Nat');
         checkTestFunctionInFileError('entity Foo { field f: Int = 0i; field g: Bool; } function main(): Foo { return Foo{true}; }', 'Argument f expected type Int but got Bool');
         checkTestFunctionInFileError('entity Foo { field f: Int = 0i; field g: Bool; } function main(): Foo { return Foo{true, false}; }', 'Argument f expected type Int but got Bool');
+    });
+
+    it("should fail skip positions", function () {
+        checkTestFunctionInFileError('entity Foo { field f: Int; field g: Bool; field h: Int; } function main(): Foo { return Foo{1i, 5i, _, g = true}; }', 'Named argument g already assigned to parameter');
+        checkTestFunctionInFileError('entity Foo { field f: Int; field g: Bool; field h: Int; } function main(): Foo { return Foo{1i, _, 5i}; }', 'Required argument g not provided');
     });
 });
 

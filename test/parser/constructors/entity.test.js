@@ -15,6 +15,11 @@ describe ("Parser -- Entity Constructor", () => {
         parseTestFunctionInFile('entity Foo { field f: Int; field g: Bool; } [FUNC]', 'function main(): Foo { return Foo{g = true, 1i}; }');
     });
 
+    it("should parse skip positions", function () {
+        parseTestFunctionInFile('entity Foo { field f: Int; field g: Bool; field h: Int; } [FUNC]', 'function main(): Foo { return Foo{1i, _, 5i, g = true}; }');
+        parseTestFunctionInFile('entity Foo { field f: Int; field g: Bool = true; field h: Int; } [FUNC]', 'function main(): Foo { return Foo{1i, _, h = 5i}; }');
+    });
+
     it("should parse default", function () {
         parseTestFunctionInFile('entity Foo { field f: Int = 0i; } [FUNC]', 'function main(): Foo { return Foo{}; }');
     });

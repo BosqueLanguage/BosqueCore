@@ -235,9 +235,15 @@ enum IRStatementTag {
     IRTempAssignRefInvokeStatement = "IRTempAssignRefInvokeStatement",
 
     IRVariableDeclarationStatement = "IRVariableDeclarationStatement",
+
     IRVariableInitializationStatement = "IRVariableInitializationStatement",
     IRVariableInitializationDirectInvokeStatement = "IRVariableInitializationDirectInvokeStatement",
     IRVariableInitializationDirectConstructorStatement = "IRVariableInitializationDirectConstructorStatement",
+
+    IRVariableAssignmentStatement = "IRVariableAssignmentStatement",
+    IRVariableAssignmentDirectInvokeStatement = "IRVariableAssignmentDirectInvokeStatement",
+    IRVariableAssignmentDirectConstructorStatement = "IRVariableAssignmentDirectConstructorStatement",
+
 
     //TODO: add initialization for ref/condition expression where the rhs is a temp variable
 
@@ -1018,6 +1024,7 @@ class IRConstructorMapEntryTypeExpression extends IRSimpleExpression {
     }
 }
 
+//TODO: maybe add a specialized version of this that does boxing to a concept as well
 class IRConstructorStandardEntityExpression extends IRConstructExpression {
     readonly values: IRSimpleExpression[];
 
@@ -1643,6 +1650,47 @@ class IRVariableInitializationDirectConstructorStatement extends IRAtomicStateme
     }
 }
 
+class IRVariableAssignmentStatement extends IRAtomicStatement {
+    readonly vname: string;
+    readonly vtype: IRTypeSignature;
+    readonly aexp: IRSimpleExpression;
+
+    constructor(vname: string, vtype: IRTypeSignature, aexp: IRSimpleExpression) {
+        super(IRStatementTag.IRVariableAssignmentStatement);
+        this.vname = vname;
+        this.vtype = vtype;
+        this.aexp = aexp;
+    }
+}
+
+class IRVariableAssignmentDirectInvokeStatement extends IRAtomicStatement {
+    readonly scratchname: string; //a scratch temp variable to hold the direct invoke result if needed -- e.g. in SMT place result here, check for errors, then extract to vname
+    readonly vname: string;
+    readonly vtype: IRTypeSignature;
+    readonly aexp: IRInvokeDirectExpression;
+
+    constructor(scratch: string, vname: string, vtype: IRTypeSignature, aexp: IRInvokeDirectExpression) {
+        super(IRStatementTag.IRVariableAssignmentDirectInvokeStatement);
+        this.scratchname = scratch;
+        this.vname = vname;
+        this.vtype = vtype;
+        this.aexp = aexp;
+    }
+}
+
+class IRVariableAssignmentDirectConstructorStatement extends IRAtomicStatement {
+    readonly vname: string;
+    readonly vtype: IRTypeSignature;
+    readonly aexp: IRConstructExpression;
+
+    constructor(vname: string, vtype: IRTypeSignature, aexp: IRConstructExpression) {
+        super(IRStatementTag.IRVariableAssignmentDirectConstructorStatement);
+        this.vname = vname;
+        this.vtype = vtype;
+        this.aexp = aexp;
+    }
+}
+
 //
 //TODO: lots more statement types here
 //
@@ -2024,7 +2072,9 @@ export {
     IRNopStatement,
     IRTempAssignExpressionStatement, IRTempAssignStdInvokeStatement, IRTempAssignRefInvokeStatement,
 
-    IRVariableDeclarationStatement, IRVariableInitializationStatement, IRVariableInitializationDirectInvokeStatement, IRVariableInitializationDirectConstructorStatement,
+    IRVariableDeclarationStatement, 
+    IRVariableInitializationStatement, IRVariableInitializationDirectInvokeStatement, IRVariableInitializationDirectConstructorStatement,
+    IRVariableAssignmentStatement, IRVariableAssignmentDirectInvokeStatement, IRVariableAssignmentDirectConstructorStatement,
     
     IRReturnVoidSimpleStatement, IRReturnValueSimpleStatement, IRReturnDirectInvokeStatement, IRReturnDirectConstructStatement,
     IRChkLogicImpliesShortCircuitStatement,

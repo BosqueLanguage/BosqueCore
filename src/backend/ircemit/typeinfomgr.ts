@@ -1,5 +1,5 @@
 
-import { IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAssembly, IRConceptTypeDecl, IRDatatypeTypeDecl, IREntityTypeDecl, IROptionTypeDecl, IRSomeTypeDecl } from "../irdefs/irassembly.js";
+import { IRAbstractCollectionTypeDecl, IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAssembly, IRConceptTypeDecl, IRDatatypeTypeDecl, IREntityTypeDecl, IRListTypeDecl, IROptionTypeDecl, IRSomeTypeDecl } from "../irdefs/irassembly.js";
 import { IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature } from "../irdefs/irtype.js";
 import { TransformCPPNameManager } from "./namemgr.js";
 
@@ -196,6 +196,24 @@ class TypeInfoManager {
             }
             
             return this.getTypeInfo(tdecl.tkey);
+        }
+        else if(tdecl instanceof IRAbstractCollectionTypeDecl) {
+            if(tdecl instanceof IRListTypeDecl) {
+                const oftinfo = this.processInfoGenerationForType(tdecl.oftype, irasm);
+
+                const ttid = this.typeInfoMap.size;
+                if(oftinfo.tag === LayoutTag.Ref) {
+                    this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, 16, 2, LayoutTag.Ref, "11", undefined));
+                }
+                else {
+                    xxxx;
+                }
+
+                return this.getTypeInfo(tdecl.tkey);
+            }
+            else {
+                assert(false, `TypeInfoManager::processInfoGenerationForEntity - Unsupported collection type declaration for key ${tdecl.tkey}`);
+            }
         }
         else {
             assert(tdecl instanceof IREntityTypeDecl, `TypeInfoManager::processInfoGenerationForEntity - Unsupported entity type declaration for key ${tdecl.tkey}`);

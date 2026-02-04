@@ -197,17 +197,30 @@ class FormatStringArgComponent extends FormatStringComponent {
     }
 }
 
-abstract class ArgumentValue {
-    readonly exp: Expression;
-
-    constructor(exp: Expression) {
-        this.exp = exp;
-    }
-
+abstract class AbstractArgumentValue {
     abstract emit(fmt: CodeFormatter): string;
 }
 
-class PositionalArgumentValue extends ArgumentValue {
+class SkipArgumentValue extends AbstractArgumentValue {
+    constructor() {
+        super();
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return `_`;
+    }
+}
+
+abstract class StdArgumentValue extends AbstractArgumentValue {
+    readonly exp: Expression;
+
+    constructor(exp: Expression) {
+        super();
+        this.exp = exp;
+    }
+}
+
+class PositionalArgumentValue extends StdArgumentValue {
     constructor(exp: Expression) {
         super(exp);
     }
@@ -217,7 +230,7 @@ class PositionalArgumentValue extends ArgumentValue {
     }
 }
 
-class NamedArgumentValue extends ArgumentValue {
+class NamedArgumentValue extends StdArgumentValue {
     readonly name: string;
 
     constructor(name: string, exp: Expression) {
@@ -230,7 +243,7 @@ class NamedArgumentValue extends ArgumentValue {
     }
 }
 
-class SpreadArgumentValue extends ArgumentValue {
+class SpreadArgumentValue extends StdArgumentValue {
     constructor(exp: Expression) {
         super(exp);
     }
@@ -240,7 +253,7 @@ class SpreadArgumentValue extends ArgumentValue {
     }
 }
 
-class PassingArgumentValue extends ArgumentValue {
+class PassingArgumentValue extends StdArgumentValue {
     readonly kind: "ref" | "out" | "out?" | "inout";
 
     constructor(kind: "ref" | "out" | "out?" | "inout", exp: Expression) {
@@ -254,9 +267,9 @@ class PassingArgumentValue extends ArgumentValue {
 }
 
 class ArgumentList {
-    readonly args: ArgumentValue[];
+    readonly args: AbstractArgumentValue[];
 
-    constructor(args: ArgumentValue[]) {
+    constructor(args: AbstractArgumentValue[]) {
         this.args = args;
     }
 
@@ -267,8 +280,8 @@ class ArgumentList {
     //Get if any simple var args (positional or named) that might be lambdas
     getSimpleVarArgs(): AccessVariableExpression[] {
         return [
-            ...this.args.filter((arg) => (arg instanceof PositionalArgumentValue) && arg.exp instanceof AccessVariableExpression).map((arg) => (arg.exp as AccessVariableExpression)),
-            ...this.args.filter((arg) => (arg instanceof NamedArgumentValue) && arg.exp instanceof AccessVariableExpression).map((arg) => (arg.exp as AccessVariableExpression))
+            ...this.args.filter((arg) => (arg instanceof PositionalArgumentValue) && arg.exp instanceof AccessVariableExpression).map((arg) => ((arg as StdArgumentValue).exp as AccessVariableExpression)),
+            ...this.args.filter((arg) => (arg instanceof NamedArgumentValue) && arg.exp instanceof AccessVariableExpression).map((arg) => ((arg as StdArgumentValue).exp as AccessVariableExpression))
         ];
     }
 
@@ -1132,11 +1145,11 @@ class InterpolateFormatExpression extends Expression {
     readonly kind: "string" | "cstring" | "path" | "fragment" | "glob";
     readonly decloftype: TypeSignature | undefined;
     readonly fmtString: Expression;
-    readonly args: ArgumentValue[];
+    readonly args: AbstractArgumentValue[];
     
     actualoftype: TypeSignature | undefined = undefined;
 
-    constructor(sinfo: SourceInfo, kind: "string" | "cstring" | "path" | "fragment" | "glob", decloftype: TypeSignature | undefined, fmtString: Expression, args: ArgumentValue[]) {
+    constructor(sinfo: SourceInfo, kind: "string" | "cstring" | "path" | "fragment" | "glob", decloftype: TypeSignature | undefined, fmtString: Expression, args: AbstractArgumentValue[]) {
         super(ExpressionTag.InterpolateFormatStringExpression, sinfo);
         this.kind = kind;
         this.decloftype = decloftype;
@@ -2915,7 +2928,7 @@ export {
     BinderInfo, TypeTestBindInfo, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestFail,
     ITestGuard, ITestBinderGuard, ITestTypeGuard, ITestSimpleGuard, ITestGuardSet,
     FormatStringComponent, FormatStringTextComponent, FormatStringArgComponent,
-    ArgumentValue, PositionalArgumentValue, NamedArgumentValue, SpreadArgumentValue, PassingArgumentValue, ArgumentList,
+    AbstractArgumentValue, SkipArgumentValue, StdArgumentValue, PositionalArgumentValue, NamedArgumentValue, SpreadArgumentValue, PassingArgumentValue, ArgumentList,
     ExpressionTag, Expression, ErrorExpression,
     LiteralNoneExpression, LiteralSimpleExpression, 
     LiteralStringExpression, LiteralCStringExpression, LiteralFormatStringExpression, LiteralFormatCStringExpression,

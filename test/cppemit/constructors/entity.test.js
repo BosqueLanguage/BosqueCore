@@ -20,6 +20,11 @@ describe ("CPPEmit -- Entity Constructor", () => {
         checkTestEmitMainFunction('entity Foo { field f: Int = 0i; } public function main(): Foo { return Foo{}; }', "MainᕒFoo Mainᕒmain() { return MainᕒFoo{0_i}; }");
         checkTestEmitMainFunction('entity Foo { field f: Int = 0i; } public function main(): Foo { return Foo{5i}; }', "MainᕒFoo Mainᕒmain() { return MainᕒFoo{5_i}; }");
     });
+
+    it("should emit skip positions", function () {
+        checkTestEmitMainFunction('entity Foo { field f: Int; field g: Bool; field h: Int; } public function main(): Foo { return Foo{1i, _, 5i, g=true}; }', "MainᕒFoo Mainᕒmain() { return MainᕒFoo{1_i, TRUE, 5_i}; }");
+        checkTestEmitMainFunction('entity Foo { field f: Int; field g: Bool = true; field h: Int; } public function main(): Foo { return Foo{1i, _, h=5i}; }', "MainᕒFoo Mainᕒmain() { return MainᕒFoo{1_i, TRUE, 5_i}; }");
+    });
 });
 
 describe ("CPPEmit -- Entity w/ Invariant Constructor", () => {
