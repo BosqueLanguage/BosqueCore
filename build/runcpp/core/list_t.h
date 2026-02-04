@@ -25,6 +25,8 @@ namespace ᐸRuntimeᐳ
         T data[LIST_T_CAPACITY(sizeof(T))];
         size_t count;
 
+        static TypeInfo* s_typeinfo;
+
         constexpr ListTInlineBuff() : data{0}, count(0) {}
         constexpr ListTInlineBuff(const ListTInlineBuff& other) = default;
         constexpr bool empty() const { return this->count== 0; }
@@ -69,6 +71,8 @@ namespace ᐸRuntimeᐳ
         RColor color;
         ListTTree<T>* left;
         ListTTree<T>* right;
+
+        static TypeInfo* s_typeinfo;
 
         constexpr ListTInlineNode() : count(0), color(RColor::Black), left(nullptr), right(nullptr) {}
         constexpr ListTInlineNode(size_t cnt, RColor c, ListTTree<T>* l, ListTTree<T>* r) : count(cnt), color(c), left(l), right(r) {}
@@ -128,7 +132,7 @@ namespace ᐸRuntimeᐳ
 
         void incrementSlow()
         {        
-            if(this->currtree.typeinfo->bsqtypeid == BUFF_ID) {
+            if(this->currtree.typeinfo == ListTInlineBuff<T>::s_typeinfo) {
                 this->buffidx = this->index;
             }
             else {
@@ -138,7 +142,7 @@ namespace ᐸRuntimeᐳ
 
         void decrementSlow()
         {        
-            if(this->currtree.typeinfo->bsqtypeid == BUFF_ID) {
+            if(this->currtree.typeinfo == ListTInlineBuff<T>::s_typeinfo) {
                 this->buffidx = this->index;
             }
             else {
@@ -147,7 +151,7 @@ namespace ᐸRuntimeᐳ
         }
 
     public:
-        using value_type = char;
+        using value_type = T;
         using difference_type = std::ptrdiff_t;
         using iterator_category = std::bidirectional_iterator_tag;
 
@@ -160,7 +164,7 @@ namespace ᐸRuntimeᐳ
         static XListTIterator initializeBegin(ListTTree<T> tree)
         {
             //Handle empty iterator or small iterator as special case
-            if(tree.typeinfo->bsqtypeid == BUFF_ID) {
+            if(tree.typeinfo == ListTInlineBuff<T>::s_typeinfo) {
                 return XListTIterator(0, tree.data.buff, 0, tree);
             }
             else {
@@ -171,7 +175,7 @@ namespace ᐸRuntimeᐳ
         static XListTIterator initializeEnd(ListTTree<T> tree)
         {
             //Handle empty iterator or small iterator as special case
-            if(tree.typeinfo->bsqtypeid == BUFF_ID) {
+            if(tree.typeinfo == ListTInlineBuff<T>::s_typeinfo) {
                 return XListTIterator(tree.data.buff.size(), tree.data.buff, tree.data.buff.size(), tree);
             }
             else {
@@ -237,21 +241,18 @@ namespace ᐸRuntimeᐳ
     private:
         ᐸRuntimeᐳ::ListTTree<T> tree;
 
-        static TypeInfo* InlineTypeInfo;
-        static TypeInfo* NodeTypeInfo;
-
     public:
         constexpr XList() : tree() {}
-        constexpr XList(const TypeInfo* tinfo, const ListTInlineBuff<T>& b) : tree(BoxedUnion<ListTTreeUnion>(tinfo, ListTTreeUnion(b))) {}
-        constexpr XList(const TypeInfo* tinfo, ListTInlineNode<T>* n) : tree(BoxedUnion<ListTTreeUnion>(tinfo, ListTTreeUnion(n))) {}
+        constexpr XList(const ListTInlineBuff<T>& b) : tree(BoxedUnion<ListTTreeUnion>(ListTInlineBuff<T>::s_typeinfo, ListTTreeUnion(b))) {}
+        constexpr XList(ListTInlineNode<T>* n) : tree(BoxedUnion<ListTTreeUnion>(ListTInlineNode<T>::s_typeinfo, ListTTreeUnion(n))) {}
         constexpr XList(const ListTTree<T>& t) : tree(t) {}
         constexpr XList(const XList& other) = default;
 
         template<size_t len>
-        constexpr static XList smliteral(const TypeInfo* tinfo, const T (&cdata)[len])
+        constexpr static XList smliteral(const T (&cdata)[len])
         {
             static_assert(len <= LIST_T_CAPACITY(sizeof(T)), "List literal too large for ListTInlineBuff");
-            return XList(tinfo, ListTInlineBuff<T>::literal(cdata));
+            return XList(ListTInlineBuff<T>::literal(cdata));
         }
 
         bool empty() const
