@@ -1001,6 +1001,14 @@ class IRAssembly {
                 }
             }
         }
+
+        for(const csubts of this.concretesubtypes.values()) {
+            csubts.sort((a, b) => a.tkeystr.localeCompare(b.tkeystr));   
+        }
+
+        for(const csupts of this.concretesupertypes.values()) {
+            csupts.sort((a, b) => a.tkeystr.localeCompare(b.tkeystr));   
+        }
     }
 
     private getTypeDependencyInfo(tsig: IRTypeSignature): IRTypeSignature[] {

@@ -73,8 +73,12 @@ class TransformCPPNameManager {
         return TransformCPPNameManager.safeifyName(ikey);
     }
 
+    static generateNameForUnionType(tkey: string): string {
+        return `${TransformCPPNameManager.convertTypeKey(tkey)}${s_specialop_sep}Union`;
+    }
+
     static generateNameForUnionMember(tkey: string): string {
-        return `${s_runtimename}::${TransformCPPNameManager.convertTypeKey(tkey)}${s_specialop_sep}um`;
+        return `u_${TransformCPPNameManager.convertTypeKey(tkey)}`;
     }
 
     static generateTypeInfoNameForTypeKey(tkey: string): string {
