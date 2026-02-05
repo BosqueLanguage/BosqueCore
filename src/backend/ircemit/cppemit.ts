@@ -1172,7 +1172,22 @@ class CPPEmitter {
         const declbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}();`;
         const declbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv);`;
 
-        const defbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}() { return std::nullopt; }`;
+        const defbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}() {\n` +
+        `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeType("${tdecl.tkey}")) { return std::nullopt; };\n` +
+        `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('{')) { return std::nullopt; };\n` +
+        `    ${voft} varr[16] = {0};\n` +
+        `    size_t count = 0;\n` +
+        `    bool first = true;\n` +
+        `    while(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.peekSymbol('}')) {\n` +
+        `        if(first) { first = false; } else { if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol(',')) { return std::nullopt; }; }\n` +
+        `        std::optional<${this.typeInfoManager.emitTypeAsStd(tdecl.oftype.tkeystr)}> vv = BSQ_parse${TransformCPPNameManager.convertTypeKey(tdecl.oftype.tkeystr)}();\n` +
+        `        if(!vv.has_value()) { return std::nullopt; }\n` +
+        `        varr[count++] = vv.value();\n\n` +
+        `        if(count >= 16) { break; /* TODO: implement dynamic growth */ }\n` +
+        `    }\n` +
+        `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('}')) { return std::nullopt; };\n` +
+        `    return std::make_optional<${ctname}>(${ctname}::palloc(varr, count));\n` +
+        `}`;
 
         const defbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv) {\n` +
         `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitLiteralContent("${tdecl.tkey}"); \n` +

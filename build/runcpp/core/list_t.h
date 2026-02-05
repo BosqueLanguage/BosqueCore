@@ -260,6 +260,19 @@ namespace ᐸRuntimeᐳ
             return XList(ListTInlineBuff<T>::create_empty());
         }
 
+        static XList palloc(T* data, size_t count)
+        {
+            if(count <= LIST_T_CAPACITY(sizeof(T))) {
+                ListTInlineBuff<T> buff;
+                std::copy(data, data + count, buff.data);
+                buff.count = count;
+                return XList(buff);
+            }
+            else {
+                assert(false); // Not Implemented: full palloc for CString trees
+            }
+        }
+
         bool empty() const
         {
             return (this->tree.typeinfo == ListTInlineBuff<T>::s_typeinfo) && this->tree.data.buff.count == 0;
