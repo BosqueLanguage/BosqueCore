@@ -7,7 +7,7 @@ std::condition_variable g_cv;
 bool g_pause = true;	
 
 // roots dropped during BSQMemoryTheadLocalInfo destruction
-template<size_t N>
+template <size_t N>
 static void threadTest(void* testroots[N], size_t nthds) noexcept
 {
 	for(size_t i = 0; i < N; i++) {
@@ -16,28 +16,20 @@ static void threadTest(void* testroots[N], size_t nthds) noexcept
 	}
 }
 
-__CoreCpp::Int sharedBasicTreeTest_1()
+template <size_t N>
+static void runThreadTest(size_t nthds, void* roots[N])
 {	
-	const size_t nroots = 2, nthds = 2;
-	void* roots[nroots] = { 
-		Main::accessNode(Main::makeTree(1_n, 0_n)),
-		Main::accessNode(Main::makeTree(1_n, 0_n))
-	};
-	gtl_info.insertThreadTestData<nroots>(roots);
-
-	// just so things are clear it might be goo if we call init gc here instead
-	// of from the actual cpp main
-
+	gtl_info.insertThreadTestData<N>(roots);
 	gtl_info.collectfp();
 	𝐚𝐬𝐬𝐞𝐫𝐭(g_memstats.total_live_bytes > 0);
 
-	std::thread thd = std::thread([troots = roots]() {
-		for(size_t i = 0; i < nroots; i++) {
+	std::thread thd = std::thread([troots = roots, nthds]() {
+		for(size_t i = 0; i < N; i++) {
 			gtl_info.thd_testing_data[i] = troots[i];
 		} 
 		initializeGC<sizeof(allocs) / sizeof(allocs[0])>(allocs, gtl_info, collect);
 
-		threadTest<nroots>(troots, nthds);
+		threadTest<N>(troots, nthds);
 	
 		std::unique_lock lk(g_mtx);
 		g_pause = false;
@@ -48,7 +40,7 @@ __CoreCpp::Int sharedBasicTreeTest_1()
 		g_cv.wait(lk, []{ return g_pause; });
 
 		// main thread dropped the roots, make sure no one died
-		threadTest<nroots>(troots, nthds - 1);
+		threadTest<N>(troots, nthds - 1);
 	});
 
 	std::unique_lock lk(g_mtx);
@@ -63,6 +55,60 @@ __CoreCpp::Int sharedBasicTreeTest_1()
 	thd.join();
 	gtl_info.collectfp();
 	𝐚𝐬𝐬𝐞𝐫𝐭(g_memstats.total_live_bytes == 0);
-	
+}
+
+__CoreCpp::Int sharedBasicTreeTest_1()
+{	
+	const size_t nroots = 2, nthds = 2;
+	void* roots[nroots] = { 
+		Main::accessNode(Main::makeTree(1_n, 0_n)),
+		Main::accessNode(Main::makeTree(1_n, 0_n))
+	};
+	runThreadTest<nroots>(nthds, roots);
+
+	return 1_i;
+}
+
+__CoreCpp::Int sharedBasicTreeTest_6()
+{	
+	const size_t nroots = 2, nthds = 2;
+	void* roots[nroots] = { 
+		Main::accessNode(Main::makeTree(6_n, 0_n)),
+		Main::accessNode(Main::makeTree(6_n, 0_n))
+	};
+	runThreadTest<nroots>(nthds, roots);
+
+	return 1_i;
+}
+
+__CoreCpp::Int sharedBasicTreeTestMulti_1()
+{	
+	const size_t nroots = 6, nthds = 2;
+	void* roots[nroots] = { 
+		Main::accessNode(Main::makeTree(1_n, 0_n)),
+		Main::accessNode(Main::makeTree(1_n, 0_n)),
+		Main::accessNode(Main::makeTree(1_n, 0_n)),
+		Main::accessNode(Main::makeTree(1_n, 0_n)),
+		Main::accessNode(Main::makeTree(1_n, 0_n)),
+		Main::accessNode(Main::makeTree(1_n, 0_n))
+	};
+	runThreadTest<nroots>(nthds, roots);
+
+	return 1_i;
+}
+
+__CoreCpp::Int sharedBasicTreeTestMulti_6()
+{	
+	const size_t nroots = 6, nthds = 2;
+	void* roots[nroots] = { 
+		Main::accessNode(Main::makeTree(6_n, 0_n)),
+		Main::accessNode(Main::makeTree(6_n, 0_n)),
+		Main::accessNode(Main::makeTree(6_n, 0_n)),
+		Main::accessNode(Main::makeTree(6_n, 0_n)),
+		Main::accessNode(Main::makeTree(6_n, 0_n)),
+		Main::accessNode(Main::makeTree(6_n, 0_n))
+	};
+	runThreadTest<nroots>(nthds, roots);
+
 	return 1_i;
 }

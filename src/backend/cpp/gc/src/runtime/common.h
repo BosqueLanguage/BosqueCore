@@ -234,7 +234,7 @@ do { \
 #define GC_IS_MARKED(META)    ((META)->bits.ismarked)
 #define GC_IS_YOUNG(META)     ((META)->bits.isyoung)
 #define GC_IS_ALLOCATED(META) ((META)->bits.isalloc)
-#define GC_THREAD_COUNT(META) ((META)->thd_count)
+#define GC_THREAD_COUNT(META) ((META)->bits.thd_count)
 #define GC_IS_ROOT(META)      (GC_THREAD_COUNT(META) > 0)
 
 #define GC_FWD_INDEX(META)    ((META)->bits.rc_fwd)
