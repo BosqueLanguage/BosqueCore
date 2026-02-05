@@ -3,8 +3,6 @@
 #include "allocator.h"
 
 #include <chrono>
-#include <mutex>
-#include <condition_variable>
 
 #define InitBSQMemoryTheadLocalInfo(TINFO, COLLECT) \
 do { \
@@ -93,11 +91,7 @@ struct BSQMemoryTheadLocalInfo
 	// interactions of multiple threads (ensuring roots are kept alive if 
 	// still reachable from at least one thread)
 	void* thd_testing_data[NUM_THREAD_TESTING_ROOTS];
-	std::mutex thd_mtx;
-	std::condition_variable thd_cv;
 #endif
-
-#ifndef BSQ_GC_TESTING
     BSQMemoryTheadLocalInfo() noexcept : 
         tl_id(0), g_gcallocs(nullptr), collectfp(nullptr), native_stack_base(nullptr), native_stack_contents(), 
         native_register_contents(), roots_count(0), roots(nullptr), old_roots_count(0), 
@@ -105,15 +99,6 @@ struct BSQMemoryTheadLocalInfo
         decs_batch(), decd_pages(), nursery_usage(0.0f), pending_roots(), visit_stack(), 
 		pending_young(), bytes_freed(0), max_decrement_count(0), 
 		disable_automatic_collections(false) { }
-#else
-    BSQMemoryTheadLocalInfo() noexcept : 
-        tl_id(0), g_gcallocs(nullptr), collectfp(nullptr), native_stack_base(nullptr), native_stack_contents(), 
-        native_register_contents(), roots_count(0), roots(nullptr), old_roots_count(0), 
-        old_roots(nullptr), forward_table_index(FWD_TABLE_START), forward_table(nullptr), 
-        decs_batch(), decd_pages(), nursery_usage(0.0f), pending_roots(), visit_stack(), 
-		pending_young(), bytes_freed(0), max_decrement_count(0), disable_automatic_collections(false),
-		thd_testing_data(nullptr), thd_mtx(), thd_cv() { }
-#endif 
 	BSQMemoryTheadLocalInfo& operator=(BSQMemoryTheadLocalInfo&) = delete;
     BSQMemoryTheadLocalInfo(BSQMemoryTheadLocalInfo&) = delete;
 	~BSQMemoryTheadLocalInfo() { this->cleanup(); }

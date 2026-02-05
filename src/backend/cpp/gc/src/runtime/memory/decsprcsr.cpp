@@ -4,16 +4,14 @@ DecsProcessor g_decs_prcsr;
 
 void DecsProcessor::process()
 {
-	std::unique_lock lk(this->mtx);
-	while(true) {
-		this->cv.wait(lk, [this]
-			{ return this->st != State::Paused; }
-		);
-
-		if(this->st == State::Stopping) {
-			this->changeStateFromWorker(State::Stopped);
-			return ;
-		}
+	while(this->st != State::Stopping) {
+		{	
+			std::unique_lock lk(this->mtx);	
+			this->changeStateFromWorker(State::Paused);
+			this->cv.wait(lk, [this]
+				{ return this->st != State::Paused; }
+			);
+		}	
 
 		while(!this->pending.isEmpty()) {
 			if(this->st != State::Running) {
@@ -23,7 +21,6 @@ void DecsProcessor::process()
 			void* obj = this->pending.pop_front();
 			this->processDecfp(obj, this->pending, this->decd_pages);
 		}
-		
-		this->changeStateFromWorker(State::Paused);
 	}
+	this->changeStateFromWorker(State::Stopped);
 }

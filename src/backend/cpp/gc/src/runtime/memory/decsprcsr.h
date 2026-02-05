@@ -44,7 +44,9 @@ struct DecsProcessor {
     {
         std::unique_lock lk(this->mtx);
         this->st = nst;
+		lk.unlock();
         this->cv.notify_one();
+		lk.lock();
         this->cv.wait(lk, [this, ack]{ return this->st == ack; });
     }
 
@@ -58,7 +60,7 @@ struct DecsProcessor {
     {
 		{
 			std::unique_lock lk(this->mtx);	
-			if(this->st == State::Paused) {
+			if(this->st == State::Paused || this->st == State::Stopped) {
 				return ;
 			}
 		}
@@ -69,8 +71,13 @@ struct DecsProcessor {
     void resume()
     {
 		std::unique_lock lk(this->mtx);
+		if(this->st == State::Stopped) {
+			return ;	
+		}
+
         this->st = State::Running;
-        this->cv.notify_one();
+		lk.unlock(); 
+		this->cv.notify_one();
     }
 
     void stop()

@@ -96,11 +96,30 @@ void BSQMemoryTheadLocalInfo::unloadNativeRootSet() noexcept
 
 void BSQMemoryTheadLocalInfo::cleanup() noexcept
 {
-	for(int32_t i = 0; i < this->old_roots_count; i++) {
-		void* addr = this->old_roots[i];
-		MetaData* m = GC_GET_META_DATA_ADDR(addr);
+    for(int32_t i = 0; i < this->old_roots_count; i++) {
+        void* addr = this->old_roots[i];
+        MetaData* m = GC_GET_META_DATA_ADDR(addr);
 
-		std::lock_guard lk(g_gcrefctlock);
-		GC_DROP_ROOT_REF(m);
-	}
+        std::lock_guard lk(g_gcrefctlock);
+        GC_DROP_ROOT_REF(m);
+    }
+
+    bool prev = g_disable_stack_refs;
+
+	// TODO need a lock here!
+
+	// It is possible this thread is storing the only references to its old
+	// roots, so to ensure they all get collected we need to run a collection
+	// with all stack/testing referneces disabled
+	g_disable_stack_refs = true;
+#ifdef BSQ_GC_TESTING 
+    g_thd_testing = false;
+#endif
+    this->collectfp();
+    g_disable_stack_refs = prev;
+#ifdef BSQ_GC_TESTING 
+    g_thd_testing = true;
+#endif
 }
+
+

@@ -26,10 +26,11 @@
 #define GC_INVARIANTS
 #endif
 
+extern bool g_disable_stack_refs;
+
 #ifdef BSQ_GC_TESTING
 #define NUM_THREAD_TESTING_ROOTS 16
 extern bool g_thd_testing;
-extern bool g_disable_stack_refs;
 #endif
 
 #ifdef ALLOC_DEBUG_MEM_DETERMINISTIC

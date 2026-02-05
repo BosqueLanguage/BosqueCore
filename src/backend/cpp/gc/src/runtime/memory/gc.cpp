@@ -399,11 +399,10 @@ static void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept
 			checkPotentialPtr(cur, tinfo);		
 		}
 	}
-
+#endif
     if(g_disable_stack_refs) {
         goto cleanup;
     }
-#endif
     
     tinfo.loadNativeRootSet();
 
