@@ -7,7 +7,7 @@
 
 namespace ᐸRuntimeᐳ
 {
-    constexpr static size_t MAX_LIST_INLINE_BYTES = 64; //Bytes
+    constexpr static size_t MAX_LIST_INLINE_BYTES = 48; //Bytes -- so 64 total when we add 8 bytes for the size and 8 bytes for the tag or 1 element of the value type if larger!!!
 
     constexpr size_t LIST_T_CAPACITY(size_t elem_size)
     {
@@ -15,9 +15,9 @@ namespace ᐸRuntimeᐳ
     }
 
     template<typename T>
-    class ListTInlineNode;
+    class ListTNode;
 
-    //Inline buffer for small inline values (under 64 bytes total size)
+    //Inline buffer for small inline values (under 56 bytes total size)
     template<typename T>
     class ListTInlineBuff
     {
@@ -25,7 +25,7 @@ namespace ᐸRuntimeᐳ
         T data[LIST_T_CAPACITY(sizeof(T))];
         size_t count;
 
-        static TypeInfo* s_typeinfo;
+        static const TypeInfo* s_typeinfo;
 
         constexpr ListTInlineBuff() : data{0}, count(0) {}
         constexpr ListTInlineBuff(const ListTInlineBuff& other) = default;
@@ -53,18 +53,18 @@ namespace ᐸRuntimeᐳ
     union ListTTreeUnion
     {
         ListTInlineBuff<T> buff;
-        ListTInlineNode<T>* node;
+        ListTNode<T>* node;
 
         constexpr ListTTreeUnion() : buff() {}
         constexpr ListTTreeUnion(const ListTTreeUnion& other) = default;
         constexpr ListTTreeUnion(const ListTInlineBuff<T>& b) : buff(b) {}
-        constexpr ListTTreeUnion(ListTInlineNode<T>* n) : node(n) {}
+        constexpr ListTTreeUnion(ListTNode<T>* n) : node(n) {}
     };
     template<typename T>    
     using ListTTree = BoxedUnion<ListTTreeUnion<T>>;
 
     template<typename T>
-    class ListTInlineNode
+    class ListTNode
     {
     public:
         size_t count;
@@ -72,15 +72,15 @@ namespace ᐸRuntimeᐳ
         ListTTree<T>* left;
         ListTTree<T>* right;
 
-        static TypeInfo* s_typeinfo;
+        static const TypeInfo* s_typeinfo;
 
-        constexpr ListTInlineNode() : count(0), color(RColor::Black), left(nullptr), right(nullptr) {}
-        constexpr ListTInlineNode(size_t cnt, RColor c, ListTTree<T>* l, ListTTree<T>* r) : count(cnt), color(c), left(l), right(r) {}
-        constexpr ListTInlineNode(const ListTInlineNode& other) = default;
+        constexpr ListTNode() : count(0), color(RColor::Black), left(nullptr), right(nullptr) {}
+        constexpr ListTNode(size_t cnt, RColor c, ListTTree<T>* l, ListTTree<T>* r) : count(cnt), color(c), left(l), right(r) {}
+        constexpr ListTNode(const ListTNode& other) = default;
     };
 
     template<typename T>
-    constexpr TypeInfo g_typeinfo_ListTInlineBuff_generate(size_t id, const char* mask, const char* name) {
+    constexpr TypeInfo g_typeinfo_ListTInlineBuff_generate(uint32_t id, const char* mask, const char* name) {
         return {
             id,
             sizeof(ListTInlineBuff<T>),
@@ -93,11 +93,11 @@ namespace ᐸRuntimeᐳ
     }
 
     template<typename T>
-    constexpr TypeInfo g_typeinfo_ListTNode_generate(size_t id, const char* name) {
+    constexpr TypeInfo g_typeinfo_ListTNode_generate(uint32_t id, const char* name) {
         return {
             id,
-            sizeof(ListTInlineNode<T>),
-            byteSizeToSlotCount(sizeof(ListTInlineNode<T>)),
+            sizeof(ListTNode<T>),
+            byteSizeToSlotCount(sizeof(ListTNode<T>)),
             LayoutTag::Ref,
             "0011",
             name,
@@ -106,7 +106,7 @@ namespace ᐸRuntimeᐳ
     }
 
     template<typename T>
-    constexpr TypeInfo g_typeinfo_ListTTree_generate(size_t id, const char* mask, const char* name) {
+    constexpr TypeInfo g_typeinfo_ListTTree_generate(uint32_t id, const char* mask, const char* name) {
         return {
             id,
             sizeof(ListTTree<T>),
@@ -243,8 +243,8 @@ namespace ᐸRuntimeᐳ
 
     public:
         constexpr XList() : tree() {}
-        constexpr XList(const ListTInlineBuff<T>& b) : tree(BoxedUnion<ListTTreeUnion>(ListTInlineBuff<T>::s_typeinfo, ListTTreeUnion(b))) {}
-        constexpr XList(ListTInlineNode<T>* n) : tree(BoxedUnion<ListTTreeUnion>(ListTInlineNode<T>::s_typeinfo, ListTTreeUnion(n))) {}
+        constexpr XList(const ListTInlineBuff<T>& b) : tree(BoxedUnion<ListTTreeUnion<T>>(ListTInlineBuff<T>::s_typeinfo, ListTTreeUnion<T>(b))) {}
+        constexpr XList(ListTNode<T>* n) : tree(BoxedUnion<ListTTreeUnion<T>>(ListTNode<T>::s_typeinfo, ListTTreeUnion<T>(n))) {}
         constexpr XList(const ListTTree<T>& t) : tree(t) {}
         constexpr XList(const XList& other) = default;
 
@@ -255,14 +255,19 @@ namespace ᐸRuntimeᐳ
             return XList(ListTInlineBuff<T>::literal(cdata));
         }
 
+        constexpr static XList make_empty()
+        {
+            return XList(ListTInlineBuff<T>::create_empty());
+        }
+
         bool empty() const
         {
-            return (this->tree.typeinfo == XList::InlineTypeInfo) && this->tree.data.buff.count == 0;
+            return (this->tree.typeinfo == ListTInlineBuff<T>::s_typeinfo) && this->tree.data.buff.count == 0;
         }
 
         size_t size() const
         {
-            if(this->tree.typeinfo == XList::InlineTypeInfo) {
+            if(this->tree.typeinfo == ListTInlineBuff<T>::s_typeinfo) {
                 return this->tree.data.buff.count;
             }
             else {
@@ -280,10 +285,4 @@ namespace ᐸRuntimeᐳ
             return XListTIterator<T>::initializeEnd(this->tree);
         }
     };
-
-    //TODO -- dummy instantiation to provide quick compile time check -- can remove later once we are a bit more confident
-    using XListTest_IntList = XListTIterator<int64_t>;
-    static_assert(std::bidirectional_iterator<XListTIterator<int64_t>>);
-
-    using XIntList = XList<int64_t>;
 }

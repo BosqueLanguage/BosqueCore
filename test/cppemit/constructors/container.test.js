@@ -5,7 +5,7 @@ import { describe, it } from "node:test";
 
 describe ("CPPEmit -- Container Constructor (List)", () => {
     it("should emit simple list constructors", function () {
-        checkTestEmitMainFunction("public function main(): List<Int> { return List<Int>{}; }", "xxxx");
+        checkTestEmitMainFunction("public function main(): List<Int> { return List<Int>{}; }", "ListᐸIntᐳ Mainᕒmain() { return ListᐸIntᐳ::make_empty(); }");
         checkTestEmitMainFunction("public function main(x: Int): List<Int> { return List<Int>{x}; }", "zzz");
         checkTestEmitMainFunction("public function main(x: Int): List<Int> { return List<Int>{1i, x, 3i}; }", "yyyy");
     });

@@ -3,7 +3,7 @@ import { LayoutTag, TypeInfo, TypeInfoManager } from "./typeinfomgr.js";
 
 import { MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_INT } from "../../frontend/assembly.js";
 import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag, IRPrefixNotOpExpression, IRPrefixPlusOpExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRReturnValueSimpleStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement, IRAbortStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRTempAssignExpressionStatement, IRTypeDeclInvariantCheckStatement, IRDebugStatement, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRChkLogicImpliesShortCircuitStatement, IRPreconditionCheckStatement, IRPostconditionCheckStatement, IRVariableInitializationDirectInvokeStatement, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRAssertStatement, IRValidateStatement, IRBody, IRBuiltinBody, IRStandardBody, IRHoleBody, IRIsNoneOptionExpression, IRBinKeyEqDirectExpression, IRIsOptionEqValueExpression, IRIsSomeNeqValueExpression, IRIsOptionNeqValueExpression, IRIsSomeEqValueExpression, IRConstructorSomeTypeExpression, IRLiteralOptionOfNoneExpression, IRConstructOptionFromSomeExpression, IRExtractSomeFromOptionExpression, IRExtractSomeValueFromOptionExpression, IRBinKeyNeqDirectExpression, IRBinKeyLessDirectExpression, IRSimpleIfStatement, IRSimpleIfElseStatement, IRConstructorStandardEntityExpression, IRReturnDirectConstructStatement, IRReturnDirectInvokeStatement, IRVariableInitializationDirectConstructorStatement, IREntityInvariantCheckStatement, IRBoxEntityToConceptRepresentationExpression, IRVariableAssignmentStatement, IRVariableAssignmentDirectInvokeStatement, IRVariableAssignmentDirectConstructorStatement, IRConstructorListEmptyExpression } from "../irdefs/irbody.js";
-import { IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAssembly, IRConceptTypeDecl, IRConstantDecl, IRConstructableTypeDecl, IREntityTypeDecl, IREnumTypeDecl, IRFailTypeDecl, IRInternalConceptTypeDecl, IRInvariantDecl, IRInvokeDecl, IRInvokeParameterDecl, IRMapEntryTypeDecl, IROkTypeDecl, IROptionTypeDecl, IRPrimitiveEntityTypeDecl, IRResultTypeDecl, IRSomeTypeDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl, IRValidateDecl } from "../irdefs/irassembly.js";
+import { IRAbstractCollectionTypeDecl, IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAssembly, IRConceptTypeDecl, IRConstantDecl, IRConstructableTypeDecl, IREntityTypeDecl, IREnumTypeDecl, IRFailTypeDecl, IRInternalConceptTypeDecl, IRInvariantDecl, IRInvokeDecl, IRInvokeParameterDecl, IRListTypeDecl, IRMapEntryTypeDecl, IRMapTypeDecl, IROkTypeDecl, IROptionTypeDecl, IRPrimitiveEntityTypeDecl, IRResultTypeDecl, IRSomeTypeDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl, IRValidateDecl } from "../irdefs/irassembly.js";
 
 import assert from "node:assert";
 import { IRNominalTypeSignature, IRTypeSignature } from "../irdefs/irtype.js";
@@ -503,7 +503,7 @@ class CPPEmitter {
             else if(ttag === IRExpressionTag.IRConstructorListEmptyExpression) {
                 const elcexp = exps as IRConstructorListEmptyExpression;
 
-                bstr = `${TransformCPPNameManager.generateNameForConstructor(elcexp.ctype.tkeystr)}::empty()`;
+                bstr = `${TransformCPPNameManager.generateNameForConstructor(elcexp.ctype.tkeystr)}::make_empty()`;
             }
             else {
                 assert(false, `CPPEmitter: Unsupported IR simple expression type -- ${exps.constructor.name}`);
@@ -921,6 +921,36 @@ class CPPEmitter {
         `}`;
     }
 
+    private emitListTypeInfoDecl(tdecl: IRListTypeDecl): [string, string] {
+        const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
+        const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey);
+
+        const oftrepr = this.typeInfoManager.emitTypeAsStd(tdecl.oftype.tkeystr);
+        const ofttid = this.typeInfoManager.getTypeInfo(tdecl.oftype.tkeystr);
+
+        let ibuffmask = "0";
+        while(ibuffmask.length < ttid.slotcount) {
+            ibuffmask = ibuffmask + (ofttid.tag === LayoutTag.Ref ? "1" : ofttid.ptrmask || "0");
+        }
+        let ptrmask: string | undefined = undefined; 
+        if(ibuffmask.includes("1") || ibuffmask.includes("2")) {
+            ptrmask = ibuffmask;
+        }
+        
+        const tidecls = `namespace ᐸRuntimeᐳ {\n` +
+        `    constexpr TypeInfo g_typeinfo_${ctname}${"ᐤ"}buff = g_typeinfo_ListTInlineBuff_generate<${oftrepr}>(${ttid.bsqtypeid - 2}, ${ptrmask !== undefined ? ('"' + ptrmask + '"') : "nullptr"}, "${"ᐸRuntimeᐳ::ListTInlineBuff<" + oftrepr + ">"}");\n` +
+        `    constexpr TypeInfo g_typeinfo_${ctname}${"ᐤ"}node = g_typeinfo_ListTNode_generate<${oftrepr}>(${ttid.bsqtypeid - 1}, "${"ᐸRuntimeᐳ::ListTNode<" + oftrepr + ">"}");\n` +
+        `    constexpr TypeInfo g_typeinfo_${ctname} = g_typeinfo_ListTTree_generate<${oftrepr}>(${ttid.bsqtypeid}, "${ttid.ptrmask}", "${"ᐸRuntimeᐳ::List<" + oftrepr + ">"}");\n` +
+        `}`;
+
+        const tidefs = `namespace ᐸRuntimeᐳ {\n` +
+        `    template<> const TypeInfo* ListTInlineBuff<${oftrepr}>::s_typeinfo = &g_typeinfo_${ctname}${"ᐤ"}buff;\n` +
+        `    template<> const TypeInfo* ListTNode<${oftrepr}>::s_typeinfo = &g_typeinfo_${ctname}${"ᐤ"}node;\n` +
+        `}`;
+
+        return [tidecls, tidefs];
+    }
+
     private emitEntityTypeInfoDecl(tdecl: IRAbstractEntityTypeDecl): string {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
         const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey); 
@@ -1103,8 +1133,8 @@ class CPPEmitter {
         const declbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}();`;
         const declbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv);`;
 
-        const defbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}() { if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeKeyword("some")) { return std::nullopt; } if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol("(")) { return std::nullopt; } auto vval = BSQ_parse${voptttname}(); if(!vval.has_value()) { return std::nullopt; } if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol(")")) { return std::nullopt; } return ${TransformCPPNameManager.generateNameForConstructor(ctname)}{vval.value()}; }`;
-        const defbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate("some("); BSQ_emit${voptttname}(vv.value); ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate(")"); }`;
+        const defbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}() { if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeKeyword("some")) { return std::nullopt; } if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('(')) { return std::nullopt; } auto vval = BSQ_parse${voptttname}(); if(!vval.has_value()) { return std::nullopt; } if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol(')')) { return std::nullopt; } return ${TransformCPPNameManager.generateNameForConstructor(ctname)}{vval.value()}; }`;
+        const defbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitLiteralContent("some"); ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitSymbol('('); BSQ_emit${voptttname}(vv.value); ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitSymbol(')'); }`;
         
         return [
             [declusing, decltypeinfo, declbsqparse, declbsqemit].join("\n"),
@@ -1118,6 +1148,36 @@ class CPPEmitter {
 
     private emitFailTypeInfo(tdecl: IRFailTypeDecl): [string, string] {
         assert(false, "CPPEmitter: need to implement fail type decl emission");
+    }
+
+    private emitListTypeInfo(tdecl: IRListTypeDecl): [string, string] {
+        const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
+
+        //const oftname = TransformCPPNameManager.convertTypeKey(tdecl.oftype.tkeystr);
+        const voft = this.typeInfoManager.emitTypeAsStd(tdecl.oftype.tkeystr);
+        
+        const declusing = `using ${ctname} = ${RUNTIME_NAMESPACE}::XList<${voft}>;`;
+        const [decltypeinfo, deftypeinfo] = this.emitListTypeInfoDecl(tdecl);
+        const declbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}();`;
+        const declbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv);`;
+
+        const defbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}() { return std::nullopt; }`;
+
+        const defbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv) {\n` +
+        `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitLiteralContent("${tdecl.tkey}"); \n` +
+        `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitSymbol('{'); \n` +
+        `    bool first = true;\n` +
+        `    for(ᐸRuntimeᐳ::XListTIterator<${voft}> iter = vv.begin(); iter != vv.end(); ++iter) {\n` +
+        `        if(!first) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate(", "); }\n` +
+        `        BSQ_emit${TransformCPPNameManager.convertTypeKey(tdecl.oftype.tkeystr)}((*iter));\n` +
+        `    }\n` +
+        `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitSymbol('}'); \n` +
+        `}`;
+        
+        return [
+            [declusing, decltypeinfo, declbsqparse, declbsqemit].join("\n"),
+            [deftypeinfo, defbsqparse, defbsqemit].join("\n")
+        ];
     }
 
     private emitOptionTypeInfo(tdecl: IROptionTypeDecl): [string, string] {
@@ -1411,6 +1471,17 @@ class CPPEmitter {
                         assert(false, "CPPEmitter: unknown constructable type decl emission");
                     }
                 }
+                else if(ctd instanceof IRAbstractCollectionTypeDecl) {
+                    if(ctd instanceof IRListTypeDecl) {
+                        return this.emitListTypeInfo(ctd);
+                    }
+                    else if(ctd instanceof IRMapTypeDecl) {
+                        assert(false, "CPPEmitter: need to implement map type decl emission");
+                    }
+                    else {
+                        assert(false, "CPPEmitter: unknown abstract collection type decl emission");
+                    }
+                }
                 else if(ctd instanceof IREntityTypeDecl) {
                     return this.emitStdEntityTypeInfo(ctd);
                 }
@@ -1455,9 +1526,11 @@ class CPPEmitter {
         return [
             '#include "./runcpp/common.h"',
             '#include "./runcpp/core/bsqtype.h"',
+            '#include "./runcpp/core/boxed.h"',
             '#include "./runcpp/core/bools.h"',
             '#include "./runcpp/core/integrals.h"',
             '#include "./runcpp/core/strings.h"',
+            '#include "./runcpp/core/list_t.h"',
             '',
             '#include "./runcpp/core/coredecls.h"',
             '#include "./runcpp/runtime/taskinfo.h"'

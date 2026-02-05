@@ -6,7 +6,7 @@ import { TransformCPPNameManager } from "./namemgr.js";
 import assert from "node:assert";
 
 //Duplicated from C++ definitions
-const MAX_LIST_INLINE_BYTES = 64;
+const MAX_LIST_INLINE_BYTES = 48; //Bytes -- so 64 total when we add 8 bytes for the size and 8 bytes for the tag
 
 class FieldOffsetInfo {
     readonly fkey: string;
@@ -59,6 +59,7 @@ class TypeInfo {
 }
 
 class TypeInfoManager {
+    private typeInfoOffset: number = 0;
     private typeInfoMap: Map<string, TypeInfo>;
 
     static readonly c_ref_pass_size: number = 32; //Bytes used for ref passing (pointer + typeid + extra)
@@ -190,7 +191,7 @@ class TypeInfoManager {
         if(tdecl instanceof IRSomeTypeDecl) {
             const oftinfo = this.processInfoGenerationForType(tdecl.ttype, irasm);
 
-            const ttid = this.typeInfoMap.size;
+            const ttid = this.typeInfoMap.size + this.typeInfoOffset;
             if(oftinfo.tag === LayoutTag.Ref) {
                 this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, 8, 1, LayoutTag.Value, "1", undefined));
             }
@@ -202,13 +203,15 @@ class TypeInfoManager {
         }
         else if(tdecl instanceof IRAbstractCollectionTypeDecl) {
             if(tdecl instanceof IRListTypeDecl) {
-                const ttid = this.typeInfoMap.size;
-                const ldatasize = MAX_LIST_INLINE_BYTES;
+                const oftinfo = this.processInfoGenerationForType(tdecl.oftype, irasm);
+
+                const ttid = this.typeInfoMap.size + this.typeInfoOffset + 2; //+2 for the buff and node types
+                const ldatasize = Math.max(MAX_LIST_INLINE_BYTES, oftinfo.bytesize);
                 const ltotalsize = 8 + ldatasize; //8 bytes for for the tag
 
-                const mask = TypeInfoManager.computeTaggedMaskOfK(ldatasize / 8);
+                const mask = TypeInfoManager.computeTaggedMaskOfK(ltotalsize / 8);
                 this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, ltotalsize, ltotalsize / 8, LayoutTag.Tagged, mask, undefined));
-                
+
                 return this.getTypeInfo(tdecl.tkey);
             }
             else {
@@ -259,7 +262,7 @@ class TypeInfoManager {
                 ptrmask = eptrmask;
             }
 
-            const ttid = this.typeInfoMap.size;
+            const ttid = this.typeInfoMap.size + this.typeInfoOffset;
             if(!mustref && this.isSizeOkForValueLayout(totalbytesize)) {
                 this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, totalbytesize, totalslotcount, LayoutTag.Value, ptrmask, vtable));
             }
@@ -275,7 +278,7 @@ class TypeInfoManager {
         if(tdecl instanceof IROptionTypeDecl) {
             const oftinfo = this.processInfoGenerationForType(tdecl.ttype, irasm);
 
-            const ttid = this.typeInfoMap.size;
+            const ttid = this.typeInfoMap.size + this.typeInfoOffset;
             if(oftinfo.tag === LayoutTag.Ref) {
                 this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, 16, 2, LayoutTag.Tagged, "20", undefined));
             }
@@ -312,7 +315,7 @@ class TypeInfoManager {
                 }
             }
 
-            const ttid = this.typeInfoMap.size;
+            const ttid = this.typeInfoMap.size + this.typeInfoOffset;
             let eptrmask = TypeInfoManager.computeTaggedMaskOfK(totalslotcount);
             this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, totalbytesize, totalslotcount, LayoutTag.Tagged, eptrmask, undefined));
 
