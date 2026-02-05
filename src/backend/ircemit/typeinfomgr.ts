@@ -8,6 +8,10 @@ import assert from "node:assert";
 //Duplicated from C++ definitions
 const MAX_LIST_INLINE_BYTES = 48; //Bytes -- so 64 total when we add 8 bytes for the size and 8 bytes for the tag
 
+function LIST_T_CAPACITY(elem_size: number): number {
+    return Math.max((MAX_LIST_INLINE_BYTES - 1) / elem_size, 1);
+}
+
 class FieldOffsetInfo {
     readonly fkey: string;
 
@@ -427,6 +431,7 @@ class TypeInfoManager {
 }
 
 export {
+    MAX_LIST_INLINE_BYTES, LIST_T_CAPACITY,
     FieldOffsetInfo, 
     LayoutTag, TypeInfo,
     TypeInfoManager
