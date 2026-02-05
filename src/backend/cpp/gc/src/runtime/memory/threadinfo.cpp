@@ -17,10 +17,14 @@ thread_local BSQMemoryTheadLocalInfo gtl_info;
     native_register_contents.R = NULL;                                        \
     if(PTR_IN_RANGE(R) && PTR_NOT_IN_STACK(BASE, CURR, R)) { native_register_contents.R = R; }
 
-void BSQMemoryTheadLocalInfo::initialize(size_t ntl_id, void** caller_rbp) noexcept
+void BSQMemoryTheadLocalInfo::initialize(size_t ntl_id, void** caller_rbp, 
+	void (*_collectfp)()) noexcept
 {
     assert(caller_rbp != nullptr);
-    
+   	assert(_collectfp != nullptr);
+
+	this->collectfp = _collectfp;
+
     this->tl_id = ntl_id;
     this->native_stack_base = caller_rbp;
 
