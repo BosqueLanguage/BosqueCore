@@ -29,9 +29,7 @@ static void runThreadTest(size_t nthds, void* roots[N])
 	𝐚𝐬𝐬𝐞𝐫𝐭(g_memstats.total_live_bytes > 0);
 
 	std::thread thd = std::thread([troots = roots, nthds]() {
-		for(size_t i = 0; i < N; i++) {
-			gtl_info.thd_testing_data[i] = troots[i];
-		} 
+		gtl_info.insertThreadTestData<N>(troots);
 		initializeGC<sizeof(allocs) / sizeof(allocs[0])>(allocs, gtl_info, collect);
 
 		threadTest<N>(troots, nthds);
