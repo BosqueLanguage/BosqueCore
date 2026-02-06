@@ -1,5 +1,3 @@
-#define verifyTest() do{ collect(); 𝐚𝐬𝐬𝐞𝐫𝐭(g_memstats.total_live_bytes == 0); }while(0)
-
 __CoreCpp::Int wideTreeTest_1()
 {
     garray[0] = Main::accessNode(Main::makeTree(1_n, 0_n));

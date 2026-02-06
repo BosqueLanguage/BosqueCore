@@ -15,15 +15,22 @@
 	(OFF - sizeof(PageInfo) - METADATA_SEG_SIZE(P)) 
 #endif
 
-static void walkPointerMaskForDecrements(__CoreGC::TypeInfoBase* typeinfo, void** slots, ArrayList<void*>& list) noexcept;
-static void updatePointers(void** slots, __CoreGC::TypeInfoBase* typeinfo, BSQMemoryTheadLocalInfo& tinfo) noexcept;
-static void walkPointerMaskForMarking(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept; 
+static void walkPointerMaskForDecrements(__CoreGC::TypeInfoBase* typeinfo, 
+	void** slots, ArrayList<void*>& list) noexcept;
+static void updatePointers(void** slots, __CoreGC::TypeInfoBase* typeinfo, 
+	BSQMemoryTheadLocalInfo& tinfo) noexcept;
+static void walkPointerMaskForMarking(BSQMemoryTheadLocalInfo& tinfo, 
+	__CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept; 
 
 static inline void pushPendingDecs(void* obj, ArrayList<void*>& list)
 {
     // Keep pointed to roots alive
 	MetaData* m = GC_GET_META_DATA_ADDR(obj); 
 	if(GC_IS_ROOT(m)) {
+		// It's a root so still alive, but needs rc update
+		if(GC_REF_COUNT(m) > 0) {
+			DEC_REF_COUNT(m);	
+		}
 		return ;
     }
 
@@ -393,17 +400,16 @@ static void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept
     }
 
 #ifdef BSQ_GC_TESTING
-	if(tinfo.thd_testing) {
+	if(g_thd_testing) {
 		for(unsigned i = 0; i < NUM_THREAD_TESTING_ROOTS; i++) {
 			void* cur = tinfo.thd_testing_data[i]; 
 			checkPotentialPtr(cur, tinfo);		
 		}
 	}
-
-    if(tinfo.disable_stack_refs) {
+#endif
+    if(g_disable_stack_refs) {
         goto cleanup;
     }
-#endif
     
     tinfo.loadNativeRootSet();
 

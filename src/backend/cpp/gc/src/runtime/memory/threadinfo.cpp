@@ -17,10 +17,14 @@ thread_local BSQMemoryTheadLocalInfo gtl_info;
     native_register_contents.R = NULL;                                        \
     if(PTR_IN_RANGE(R) && PTR_NOT_IN_STACK(BASE, CURR, R)) { native_register_contents.R = R; }
 
-void BSQMemoryTheadLocalInfo::initialize(size_t ntl_id, void** caller_rbp) noexcept
+void BSQMemoryTheadLocalInfo::initialize(size_t ntl_id, void** caller_rbp, 
+	void (*_collectfp)()) noexcept
 {
     assert(caller_rbp != nullptr);
-    
+   	assert(_collectfp != nullptr);
+
+	this->collectfp = _collectfp;
+
     this->tl_id = ntl_id;
     this->native_stack_base = caller_rbp;
 
@@ -91,12 +95,19 @@ void BSQMemoryTheadLocalInfo::unloadNativeRootSet() noexcept
 }
 
 void BSQMemoryTheadLocalInfo::cleanup() noexcept
-{
-	for(int32_t i = 0; i < this->old_roots_count; i++) {
-		void* addr = this->old_roots[i];
-		MetaData* m = GC_GET_META_DATA_ADDR(addr);
-
-		std::lock_guard lk(g_gcrefctlock);
-		GC_DROP_ROOT_REF(m);
-	}
+{ 
+	// TODO need a lock here!
+	// Run a collection to update thread counts	
+    bool prev = g_disable_stack_refs;
+	g_disable_stack_refs = true;
+#ifdef BSQ_GC_TESTING 
+    g_thd_testing = false;
+#endif
+    this->collectfp();
+    g_disable_stack_refs = prev;
+#ifdef BSQ_GC_TESTING 
+    g_thd_testing = true;
+#endif
 }
+
+

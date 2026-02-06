@@ -1,5 +1,8 @@
 #include "common.h"
 
+bool g_thd_testing = false;
+bool g_disable_stack_refs = false;
+
 std::mutex g_alloclock;
 std::mutex g_gcmemlock;
 std::mutex g_gcrefctlock;

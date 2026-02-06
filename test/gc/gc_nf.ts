@@ -7,6 +7,8 @@ import { buildMainCode, copyGC, copyFile, buildCppAssembly } from "../cppoutput/
 
 import { fileURLToPath } from 'url';
 import { execSync } from "child_process";
+import { tmpdir } from 'node:os';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const bosque_dir: string = path.join(__dirname, "../../../");
@@ -20,7 +22,16 @@ const gc_path = path.join(bosque_dir, "bin/cppruntime/gc/");
 const output_path = path.join(bosque_dir, "bin/cppruntime/output/");
 const gc_test_path = "bin/cppruntime/gc/test/";
 
-import { tmpdir } from 'node:os';
+// set up global array, disable stack refs
+const main = '__CoreCpp::Bool main() {\n';
+const treebase = main +
+	`\tGlobalDataStorage::g_global_data.initialize(sizeof(garray), (void**)garray);
+	\tg_disable_stack_refs = true;\n`;
+const thdbase = main +
+	`\tg_thd_testing = true;
+	\tg_disable_stack_refs = true;\n`
+const end = "\n\treturn true;}"
+
 
 function generateCPPFiles(header: string, src: string, cppmain: string, cpp_testcode: string, outdir: string): boolean {
     const dir = path.normalize(outdir);
@@ -50,9 +61,10 @@ function generateCPPFiles(header: string, src: string, cppmain: string, cpp_test
         // We may need more slots for heavy testing!
         //
         let garray = "void* garray[15] { nullptr };\n";
-        let tests = garray.concat(cpp_testcode).concat(src);
+        let tests = garray.concat(src);
         const srcname = path.join(dir, "emit.cpp");
         let updated = srcbase.replace("//CODE", tests);
+		updated = updated.replace("//TESTCODE", cpp_testcode);
         let insert = updated.replace(/__CoreCpp::\w+\s+main\s*\([^)]*\)\s*\w*\s*\{[^}]*\}/gs, cppmain);
 
         fs.writeFileSync(srcname, insert);
@@ -127,13 +139,19 @@ function execMainCode(bsqcode: string, cpp_testcode: string, cppmain: string, ex
     return result;
 }
 
-function runMainCodeGC(testname: string, cppmain: string, expected_output: string) {
-    const test_dir = path.join(gc_test_path, `${testname}/`);
-    const test_contents = fs.readFileSync(path.join(test_dir, testname.concat(".bsq"))).toString();
-    const cpp_test_contents = fs.readFileSync(path.join(test_dir, testname.concat(".cpp"))).toString();
+function runMainCodeGC(bsqtestname: string, cpptestname: string, 
+	cppmain: string, expected_output: string) 
+{
+	const cppfolder = cpptestname.startsWith('shared') ? 'thread' : cpptestname;
+
+    const bsq_test_dir = path.join(gc_test_path, `${bsqtestname}/`);
+	const cpp_test_dir = path.join(gc_test_path, `${cppfolder}/`);
+    const test_contents = fs.readFileSync(path.join(bsq_test_dir, bsqtestname.concat(".bsq"))).toString();
+    let cpp_test_contents = fs.readFileSync(path.join(cpp_test_dir, "testing.hpp")).toString();
+	cpp_test_contents = cpp_test_contents.concat(fs.readFileSync(path.join(cpp_test_dir, cpptestname.concat(".cpp"))).toString());
 
     const results = execMainCode(test_contents, cpp_test_contents, cppmain, false);
     assert.equal(results, expected_output)
 }
 
-export { runMainCodeGC };
+export { runMainCodeGC, treebase, thdbase, end };

@@ -4,7 +4,12 @@
 
 #include <chrono>
 
-#define InitBSQMemoryTheadLocalInfo() { std::lock_guard lk(g_alloclock); register void** rbp asm("rbp"); gtl_info.initialize(GlobalThreadAllocInfo::s_thread_counter++, rbp); }
+#define InitBSQMemoryTheadLocalInfo(TINFO, COLLECT) \
+do { \
+	std::lock_guard lk(g_alloclock); \
+	register void** rbp asm("rbp"); \
+	TINFO.initialize(GlobalThreadAllocInfo::s_thread_counter++, rbp, COLLECT); \
+} while(0)
 
 #define MAX_ALLOC_LOOKUP_TABLE_SIZE 1024
 
@@ -47,6 +52,7 @@ struct BSQMemoryTheadLocalInfo
     size_t tl_id; //ID of the thread
 
     GCAllocator** g_gcallocs;
+	void (*collectfp)();
 
     ////
     //Mark Phase information
@@ -80,26 +86,20 @@ struct BSQMemoryTheadLocalInfo
 
     bool disable_automatic_collections;
 
-	// NOTE pretty sure the two flags we use here need to be globally visible!
-	// -- they exist inside a thread local object so its posible other threads
-	//    do not reflect these flags
 #ifdef BSQ_GC_TESTING
     // having thread local storage of root pointers is useful for testing 
 	// interactions of multiple threads (ensuring roots are kept alive if 
 	// still reachable from at least one thread)
-	void* thd_testing_data[NUM_THREAD_TESTING_ROOTS] = { nullptr };
-	bool thd_testing = false;
-	bool disable_stack_refs = false;
+	void* thd_testing_data[NUM_THREAD_TESTING_ROOTS];
 #endif
-
     BSQMemoryTheadLocalInfo() noexcept : 
-        tl_id(0), g_gcallocs(nullptr), native_stack_base(nullptr), native_stack_contents(), 
+        tl_id(0), g_gcallocs(nullptr), collectfp(nullptr), native_stack_base(nullptr), native_stack_contents(), 
         native_register_contents(), roots_count(0), roots(nullptr), old_roots_count(0), 
         old_roots(nullptr), forward_table_index(FWD_TABLE_START), forward_table(nullptr), 
         decs_batch(), decd_pages(), nursery_usage(0.0f), pending_roots(), visit_stack(), 
 		pending_young(), bytes_freed(0), max_decrement_count(0), 
 		disable_automatic_collections(false) { }
-    BSQMemoryTheadLocalInfo& operator=(BSQMemoryTheadLocalInfo&) = delete;
+	BSQMemoryTheadLocalInfo& operator=(BSQMemoryTheadLocalInfo&) = delete;
     BSQMemoryTheadLocalInfo(BSQMemoryTheadLocalInfo&) = delete;
 	~BSQMemoryTheadLocalInfo() { this->cleanup(); }
 
@@ -110,28 +110,53 @@ struct BSQMemoryTheadLocalInfo
 		return this->g_gcallocs[idx];
     }
 
-    template <size_t NUM>
-    void initializeGC(GCAllocator* allocs[NUM]) noexcept
-    {
-        for(size_t i = 0; i < NUM; i++) {
-            GCAllocator* alloc = allocs[i];
-            uint32_t idx = alloc->getAllocType()->type_id;
-			GC_INVARIANT_CHECK(idx < BSQ_MAX_ALLOC_SLOTS);	
-
-			this->g_gcallocs[idx] = alloc;
-        }
-    }
-
     inline void updateNurseryUsage(PageInfo* p) noexcept
     {
         this->nursery_usage += 1.0f - p->approx_utilization;
     }
 
-    void initialize(size_t ntl_id, void** caller_rbp) noexcept;
+#ifdef BSQ_GC_TESTING
+	template <size_t N>
+	void insertThreadTestData(void* testroots[N]) noexcept
+	{
+		static_assert(N < static_cast<size_t>(NUM_THREAD_TESTING_ROOTS));   
+		for(size_t i = 0; i < N; i++) {
+			this->thd_testing_data[i] = testroots[i];
+		}
+	}
 
+	constexpr void clearThreadTestData() noexcept
+	{
+		for(unsigned i = 0; i < NUM_THREAD_TESTING_ROOTS; i++) {
+			this->thd_testing_data[i] = nullptr; 
+		}
+	}
+#endif
+	void initialize(size_t ntl_id, void** caller_rbp, void (*_collectfp)()) noexcept;
     void loadNativeRootSet() noexcept;
     void unloadNativeRootSet() noexcept;
 	void cleanup() noexcept;
 };
+
+template <size_t NUM>
+void initializeGC(GCAllocator* allocs[NUM], BSQMemoryTheadLocalInfo& tinfo, 
+	void (*collectfp)()) noexcept
+{ 
+	InitBSQMemoryTheadLocalInfo(tinfo, collectfp);
+
+	for(size_t i = 0; i < NUM; i++) {
+		GCAllocator* alloc = allocs[i];
+		uint32_t idx = alloc->getAllocType()->type_id;
+		GC_INVARIANT_CHECK(idx < BSQ_MAX_ALLOC_SLOTS);	
+
+		tinfo.g_gcallocs[idx] = alloc;
+	}
+
+	// collect to promote visible roots to old (incing thd counts) and init
+	// data structures
+	// -- also might want to some rampup work here like allocing a nursery	
+	// sized page instead of hitting the os nonstop before first collection 
+	tinfo.collectfp();
+}
 
 extern thread_local BSQMemoryTheadLocalInfo gtl_info;
