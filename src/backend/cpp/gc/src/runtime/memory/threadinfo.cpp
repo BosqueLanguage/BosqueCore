@@ -95,15 +95,7 @@ void BSQMemoryTheadLocalInfo::unloadNativeRootSet() noexcept
 }
 
 void BSQMemoryTheadLocalInfo::cleanup() noexcept
-{
-    for(int32_t i = 0; i < this->old_roots_count; i++) {
-        void* addr = this->old_roots[i];
-        MetaData* m = GC_GET_META_DATA_ADDR(addr);
-
-        std::lock_guard lk(g_gcrefctlock);
-        GC_DROP_ROOT_REF(m);
-    }
-
+{ 
     bool prev = g_disable_stack_refs;
 
 	// TODO need a lock here!

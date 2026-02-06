@@ -333,8 +333,8 @@ private:
 
 #ifdef MEM_STATS
     // These two get zeroed at a collection
-    size_t alloc_count;
-    size_t alloc_memory;
+    size_t alloc_count = 0;
+    size_t alloc_memory = 0;
 #endif
 
     PageInfo* getFreshPageForAllocator() noexcept; 
@@ -409,17 +409,10 @@ private:
     }
 
 public:
-#ifdef MEM_STATS
     GCAllocator(__CoreGC::TypeInfoBase* _alloctype) noexcept :
 		alloctype(_alloctype), freelist(nullptr), evacfreelist(nullptr), 
 		alloc_page(nullptr), evac_page(nullptr), pendinggc_pages(), 
-		filled_pages(), alloc_count(0), alloc_memory(0)  {}
-#else 
-    GCAllocator( __CoreGC::TypeInfoBase* _alloctype) noexcept : 
-		alloctype(_alloctype), freelist(nullptr), evacfreelist(nullptr), 
-		alloc_page(nullptr), evac_page(nullptr), pendinggc_pages(), 
-		filled_pages(), collectfp(collect) {}
-#endif
+		filled_pages()  {}
 
 	__CoreGC::TypeInfoBase* getAllocType() const noexcept
 	{

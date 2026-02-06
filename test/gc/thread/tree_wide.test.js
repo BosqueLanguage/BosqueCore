@@ -10,12 +10,12 @@ const multi_test_1 = thdbase.concat("sharedWideTreeTestMulti_1();", end);
 const multi_test_2 = thdbase.concat("sharedWideTreeTestMulti_2();", end);
 
 describe("GC --- tree_wide", () => {
-    it("wide tree creation and destruction", function () {
+    it("shared wide tree creation and destruction", function () {
         runMainCodeGC("tree_wide", "shared_tree_wide", test_1, "true");
         runMainCodeGC("tree_wide", "shared_tree_wide", test_2, "true");
     });
 
-    it("multiple wide tree creation and destruction", function () {
+    it("shared multiple wide tree creation and destruction", function () {
         runMainCodeGC("tree_wide", "shared_tree_wide", multi_test_1, "true");
         runMainCodeGC("tree_wide", "shared_tree_wide", multi_test_2, "true");
     });

@@ -15,15 +15,22 @@
 	(OFF - sizeof(PageInfo) - METADATA_SEG_SIZE(P)) 
 #endif
 
-static void walkPointerMaskForDecrements(__CoreGC::TypeInfoBase* typeinfo, void** slots, ArrayList<void*>& list) noexcept;
-static void updatePointers(void** slots, __CoreGC::TypeInfoBase* typeinfo, BSQMemoryTheadLocalInfo& tinfo) noexcept;
-static void walkPointerMaskForMarking(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept; 
+static void walkPointerMaskForDecrements(__CoreGC::TypeInfoBase* typeinfo, 
+	void** slots, ArrayList<void*>& list) noexcept;
+static void updatePointers(void** slots, __CoreGC::TypeInfoBase* typeinfo, 
+	BSQMemoryTheadLocalInfo& tinfo) noexcept;
+static void walkPointerMaskForMarking(BSQMemoryTheadLocalInfo& tinfo, 
+	__CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept; 
 
 static inline void pushPendingDecs(void* obj, ArrayList<void*>& list)
 {
     // Keep pointed to roots alive
 	MetaData* m = GC_GET_META_DATA_ADDR(obj); 
 	if(GC_IS_ROOT(m)) {
+		// It's a root so still alive, but needs rc update
+		if(GC_REF_COUNT(m) > 0) {
+			DEC_REF_COUNT(m);	
+		}
 		return ;
     }
 

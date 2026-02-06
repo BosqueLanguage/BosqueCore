@@ -12,8 +12,6 @@ int wrap_setjmp()
         return EXIT_FAILURE;
     }
 
-    initializeGC<sizeof(allocs) / sizeof(allocs[0])>(allocs, gtl_info, collect);
-
     // Calling our emitted main is hardcoded for now
     __CoreCpp::MainType ret = Main::main();
     std::cout << __CoreCpp::to_string(ret) << std::endl;
@@ -28,5 +26,7 @@ int wrap_setjmp()
 
 int main() 
 {
-    return wrap_setjmp();
+    initializeGC<sizeof(allocs) / sizeof(allocs[0])>(allocs, gtl_info, collect);
+    
+	return wrap_setjmp();
 }
