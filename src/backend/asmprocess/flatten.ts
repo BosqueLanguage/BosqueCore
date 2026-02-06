@@ -2720,7 +2720,10 @@ class ASMToIRConverter {
         return params.map<IRInvokeParameterDecl>((p) => {
             let defaultValue: { stmts: IRStatement[], value: IRSimpleExpression } | undefined = undefined;
             if(p.optDefaultValue !== undefined) {
-                assert(false, "Not Implemented -- processInvokeParams default value");
+                const crexp = this.assembly.tryReduceConstantExpression(p.optDefaultValue);
+                if(crexp === undefined) {
+                    assert(false, "Not Implemented -- processInvokeParams default value");
+                }
             }
 
             if(!(p.type instanceof LambdaInvokeExpression)) {
