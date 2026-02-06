@@ -96,13 +96,9 @@ void BSQMemoryTheadLocalInfo::unloadNativeRootSet() noexcept
 
 void BSQMemoryTheadLocalInfo::cleanup() noexcept
 { 
-    bool prev = g_disable_stack_refs;
-
 	// TODO need a lock here!
-
-	// It is possible this thread is storing the only references to its old
-	// roots, so to ensure they all get collected we need to run a collection
-	// with all stack/testing referneces disabled
+	// Run a collection to update thread counts	
+    bool prev = g_disable_stack_refs;
 	g_disable_stack_refs = true;
 #ifdef BSQ_GC_TESTING 
     g_thd_testing = false;
