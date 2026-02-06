@@ -147,7 +147,8 @@ function runMainCodeGC(bsqtestname: string, cpptestname: string,
     const bsq_test_dir = path.join(gc_test_path, `${bsqtestname}/`);
 	const cpp_test_dir = path.join(gc_test_path, `${cppfolder}/`);
     const test_contents = fs.readFileSync(path.join(bsq_test_dir, bsqtestname.concat(".bsq"))).toString();
-    const cpp_test_contents = fs.readFileSync(path.join(cpp_test_dir, cpptestname.concat(".cpp"))).toString();
+    let cpp_test_contents = fs.readFileSync(path.join(cpp_test_dir, "testing.hpp")).toString();
+	cpp_test_contents = cpp_test_contents.concat(fs.readFileSync(path.join(cpp_test_dir, cpptestname.concat(".cpp"))).toString());
 
     const results = execMainCode(test_contents, cpp_test_contents, cppmain, false);
     assert.equal(results, expected_output)

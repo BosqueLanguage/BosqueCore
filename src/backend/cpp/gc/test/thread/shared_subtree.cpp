@@ -1,29 +1,9 @@
-#include <thread>
-#include <mutex>
-#include <condition_variable>
-
-//
-// TODO need to figure out how i dont have to copy all of this every test...
-// maybe we just put everything in one file? for all tests?
-//
-
-std::mutex g_mtx;
-std::condition_variable g_cv;
-bool g_pause = true;	
-
-template <size_t N>
-static void threadTest(void* testroots[N], size_t nthds) noexcept
-{
-	for(size_t i = 0; i < N; i++) {
-		MetaData* m = GC_GET_META_DATA_ADDR(testroots[i]);
-		𝐚𝐬𝐬𝐞𝐫𝐭(static_cast<size_t>(GC_THREAD_COUNT(m)) == nthds && GC_IS_ALLOCATED(m));
-	}
-}
-
 template <size_t NROOTS, size_t NSURVIVE>
 static void runThreadTest(size_t nthds, void* roots[NROOTS], 
 	void* survive[NSURVIVE])
 {	
+	gtl_info.insertThreadTestData<NROOTS>(roots);
+	gtl_info.collectfp();
 	𝐚𝐬𝐬𝐞𝐫𝐭(g_memstats.total_live_bytes > 0);
 
 	std::thread thd = std::thread([troots = survive]() {
@@ -107,9 +87,10 @@ __CoreCpp::Int wideSubtreeTestMulti_2()
 		accessNode(makeTree(2_n, 0_n))
 	};
 
+	// updates all children to old space
 	gtl_info.insertThreadTestData<nroots>(roots);
 	gtl_info.collectfp();
-
+	
 	void* survive[nsurvive] = {
 		accessNode(static_cast<Node*>(roots[0])->n6),
 		accessNode(static_cast<Node*>(roots[0])->n12),
