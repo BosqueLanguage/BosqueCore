@@ -19,6 +19,11 @@ describe ("Checker -- NamespaceFunction (no template)", () => {
         checkTestFunction("function foo(x: Int, y: Bool): Int { return x; } function main(): Int { return foo(y=true, x=1i); }");
     });
 
+    it("should check skip positions", function () {
+        checkTestFunction('function foo(x: Int, y: Bool): Int { return x; } function main(): Int { return foo(1i, _, y = true); }');
+        checkTestFunction('function foo(x: Int, y: Bool): Int { return x; } function main(): Int { return foo(_, false, x = 1i); }');
+    });
+
     it("should fail check mixed (named before positional)", function () {
         checkTestFunctionError("function foo(x: Int, y: Bool): Int { return x; } function main(): Int { return foo(x=1i, true); }", "Required argument y not provided");
     });
@@ -26,6 +31,9 @@ describe ("Checker -- NamespaceFunction (no template)", () => {
     it("should check simple default", function () {
         checkTestFunction("function foo(x: Int, y: Int = $x): Int { return x + y; } function main(): Int { return foo(1i, 2i); }");
         checkTestFunction("function foo(x: Int, y: Int = $x): Int { return x + y; } function main(): Int { return foo(1i); }");
+    });
+
+    it.todo("should check simple rest", function () {
     });
 
     it("should fail simple positional", function () {

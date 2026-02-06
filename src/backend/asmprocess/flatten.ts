@@ -1,6 +1,6 @@
 
 import { SourceInfo } from "../../frontend/build_decls.js";
-import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, RecursiveAnnotation, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
+import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, LambdaTypeSignature, NominalTypeSignature, RecursiveAnnotation, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
 import { AbortStatement, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringTextComponent, HoleBodyImplementation, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PositionalArgumentValue, PostfixOp, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, StdArgumentValue, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement } from "../../frontend/body.js";
 import { AbstractCollectionTypeDecl, AbstractConceptTypeDecl, AbstractEntityTypeDecl, AdditionalTypeDeclTag, AgentDecl, APIDecl, APIDeniedTypeDecl, APIErrorTypeDecl, APIFlaggedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstructableTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EventListTypeDecl, FailTypeDecl, InvariantDecl, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskDecl, TestAssociation, TypedeclTypeDecl, ValidateDecl } from "../../frontend/assembly.js";
 
@@ -764,7 +764,61 @@ class ASMToIRConverter {
     }
 
     private flattenCallNamespaceFunctionExpression(exp: CallNamespaceFunctionExpression): IRExpression {
-        assert(false, "ASMToIRConverter::flattenCallNamespaceFunctionExpression - Not Implemented");
+        const hastemplate = exp.terms.length > 0;
+        const haslambda = exp.args.getSimpleVarArgs().some((arg) => arg.getType() instanceof LambdaTypeSignature);
+        const fdecl = this.assembly.resolveNamespaceFunction(exp.ns, exp.name, hastemplate, haslambda, exp.args.hasSpecialRef()) as NamespaceFunctionDecl;
+
+        const haspreconds = fdecl.preconditions.length > 0;
+        const imapper = this.generateLocalTemplateMapping(fdecl.terms.map((t) => t.name), exp.terms);
+
+        const aargs: IRSimpleExpression[] = [];
+        for(let i = 0; i < exp.shuffleinfo.length; ++i) {
+            const ii = exp.shuffleinfo[i];
+            const pinfo = fdecl.params[i];
+            const ftype = this.applyLocalTemplateMapping(pinfo.type, imapper);
+            
+            if(ii[0] === -1) {
+                const crexp = this.assembly.tryReduceConstantExpression(pinfo.optDefaultValue as Expression);
+
+                if(crexp !== undefined) {
+                    const sexp = this.flattenExpression(crexp);
+                    const cexp = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(sexp, crexp.getType()), crexp.getType(), ftype);
+
+                    const fexp = haspreconds ? this.makeExpressionImmediate(cexp, ftype) : cexp;
+                    aargs.push(fexp);
+                }
+                else {
+                    assert(false, "ASMToIRConverter::flattenCallNamespaceFunctionExpression - Invoke computation for default argument not implemented");
+                }
+            }
+            else {
+                const eexp = exp.args.args[ii[0]] as StdArgumentValue;
+                const sexp = this.flattenExpression(eexp.exp);
+                const cexp = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(sexp, eexp.exp.getType()), eexp.exp.getType(), ftype);
+
+                const fexp = haspreconds ? this.makeExpressionImmediate(cexp, ftype) : cexp;
+                aargs.push(fexp);
+            }
+        }
+
+        //do rest parameter as needed
+        if(exp.resttype !== undefined) {
+            assert(false, "rest parameters not yet implemented in flattenCallNamespaceFunctionExpression");
+        }
+
+        //do preconditions as needed
+        for(let i = 0; i < fdecl.preconditions.length; ++i) {
+            const invdecl = fdecl.preconditions[i];
+            
+            this.pushStatement(new IRPreconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), exp.monomorhphizedkey as string, invdecl.ii, aargs));
+        }
+
+        if(!exp.args.hasSpecialRef()) {
+            return new IRInvokeSimpleExpression(exp.monomorhphizedkey as string, aargs);
+        }
+        else {
+            assert(false, "ASMToIRConverter::flattenCallNamespaceFunctionExpression - Implicit ref parameters not yet implemented");
+        }
     }
 
     private flattenCallTypeFunctionExpression(exp: CallTypeFunctionExpression): IRExpression {
@@ -869,7 +923,7 @@ class ASMToIRConverter {
             return this.flattenListConstructor(cdecl, exp);
         }
         else {
-            assert(false, "ASMToIRConverter::flattenStandardConstructor - Not Implemented");
+            assert(false, "ASMToIRConverter::flattenCollectionConstructor - Not Implemented");
         }
     }
     
@@ -3220,7 +3274,7 @@ class ASMToIRConverter {
         }
 
         for(let i = 0; i < decl.functions.length; ++i) {
-            const finst = asminstantiation.functionbinds.get(decl.functions[i].name);
+            const finst = asminstantiation.functionbinds.get(decl.functions[i].resolvename as string);
             if(finst !== undefined && (decl.functions[i].fkind !== "predicate" || decl.functions[i].fkind !== "function" || this.testEmitEnabled(decl.functions[i]))) {
                 for(let j = 0; j < finst.length; ++j) {
                     const fdecl = decl.functions[i];

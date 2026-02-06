@@ -205,15 +205,16 @@ class Monomorphizer {
     }
 
     //Given a namespace function -- instantiate it
-    private instantiateNamespaceFunction(ns: NamespaceDeclaration, fdecl: NamespaceFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]) {
+    private instantiateNamespaceFunction(ns: NamespaceDeclaration, fdecl: NamespaceFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]): string {
         const tterms = this.currentMapping !== undefined ? terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : terms;
         const fkey = this.computeInvokeKeyForNamespaceFunction(ns, fdecl, tterms, lambdas);
 
         if(this.isAlreadySeenNamespaceFunction(fkey)) {
-            return;
+            return fkey;
         }
 
         this.pendingNamespaceFunctions.push(new PendingNamespaceFunction(ns, fdecl, tterms, lambdas, fkey));
+        return fkey;
     }
 /*
     //Given a type function -- instantiate it
@@ -460,7 +461,10 @@ class Monomorphizer {
         /*
         this.instantiateBodyImplementation(exp.invoke.body);
         */
-       assert(false, "Not Implemented -- instantiateConstructorLambdaExpression");
+
+        //TODO also set the monomorphizedUID uid here for reference
+        
+        assert(false, "Not Implemented -- instantiateConstructorLambdaExpression");
     }
 
     private instantiateLambdaInvokeExpression(exp: LambdaInvokeExpression) {
@@ -522,7 +526,7 @@ class Monomorphizer {
 
         const lambdas: { pname: string, psigkey: string }[] = arglambdainfo;
         
-        this.instantiateNamespaceFunction(nns, nfd, exp.terms, lambdas);
+        exp.monomorhphizedkey = this.instantiateNamespaceFunction(nns, nfd, exp.terms, lambdas);
     }
 
     private instantiateCallTypeFunctionExpression(exp: CallTypeFunctionExpression) {
@@ -1638,7 +1642,8 @@ class Monomorphizer {
 
         const cnns = this.currentNSInstantiation as NamespaceInstantiationInfo;
         const rkey = this.computeResolveKeyForInvoke(fdecl.function.name, fdecl.function.terms.length, fdecl.function.params.some((p) => p.pkind !== undefined), fdecl.function.params.some((p) => p.type instanceof LambdaTypeSignature));
-
+        
+        fdecl.function.resolvename = rkey;
         if(!cnns.functionbinds.has(rkey)) {
             cnns.functionbinds.set(rkey, []);
         }
@@ -1674,6 +1679,7 @@ class Monomorphizer {
 
         const rkey = this.computeResolveKeyForInvoke(fdecl.function.name, fdecl.function.terms.length, fdecl.function.params.some((p) => p.pkind !== undefined), fdecl.function.params.some((p) => p.type instanceof LambdaTypeSignature));
 
+        fdecl.function.resolvename = rkey;
         if(!typeinst.functionbinds.has(rkey)) {
             typeinst.functionbinds.set(rkey, []);
         }

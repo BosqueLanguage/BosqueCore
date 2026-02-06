@@ -914,6 +914,8 @@ class ConstructorEListExpression extends ConstructorExpression {
 class ConstructorLambdaExpression extends Expression {
     readonly invoke: LambdaDecl;
 
+    monomorphizedUID: number | undefined = undefined;
+
     constructor(sinfo: SourceInfo, invoke: LambdaDecl) {
         super(ExpressionTag.ConstructorLambdaExpression, sinfo);
         this.invoke = invoke;
@@ -985,6 +987,8 @@ class CallNamespaceFunctionExpression extends Expression {
     setuncond: string[] = [];
     inout: string[] = [];
     byref: string[] = [];
+
+    monomorhphizedkey: string | undefined = undefined;
 
     constructor(sinfo: SourceInfo, isImplicitNS: boolean, ns: FullyQualifiedNamespace, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
         super(ExpressionTag.CallNamespaceFunctionExpression, sinfo);
