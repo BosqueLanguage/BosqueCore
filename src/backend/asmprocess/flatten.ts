@@ -2302,11 +2302,47 @@ class ASMToIRConverter {
                 }
             }
             else {
-                assert(false, "ASMToIRConverter not implemented: ReturnSingleStatement value is not simple expression");
+                assert(false, "ASMToIRConverter not implemented: unknown ReturnSingleStatement variant");
             }
         }
         else {
-            assert(false, "Not Implemented -- flattenReturnSimpleStatement with implicit return variable");
+            xxxx;
+            if(irval instanceof IRInvokeDirectExpression) {
+                if((stmt.value.rtype as TypeSignature).tkeystr === (this.currentReturnType as TypeSignature).tkeystr) {
+                    this.pushStatement(new IRReturnDirectInvokeStatement(irval));
+                }
+                else {
+                    const sexp = this.makeExpressionSimple(irval, stmt.value.rtype as TypeSignature);
+                    const frval = this.makeCoercionExplicitAsNeeded(sexp, stmt.value.rtype as TypeSignature, this.currentReturnType as TypeSignature);
+
+                    this.pushStatement(new IRReturnValueSimpleStatement(frval));
+                }
+            }
+            else if(irval instanceof IRConstructExpression) {
+                if((stmt.value.rtype as TypeSignature).tkeystr === (this.currentReturnType as TypeSignature).tkeystr) {
+                    this.pushStatement(new IRReturnDirectConstructStatement(irval));
+                }
+                else {
+                    const sexp = this.makeExpressionSimple(irval, stmt.value.rtype as TypeSignature);
+                    const frval = this.makeCoercionExplicitAsNeeded(sexp, stmt.value.rtype as TypeSignature, this.currentReturnType as TypeSignature);
+
+                    this.pushStatement(new IRReturnValueSimpleStatement(frval));
+                }
+            }
+            else if(irval instanceof IRInvokeImplicitsExpression) {
+                if((stmt.value.rtype as TypeSignature).tkeystr === (this.currentReturnType as TypeSignature).tkeystr) {
+                    this.pushStatement(new IRReturnImplicitsInvokeStatement(this.currentImplicitReturnVar, irval));
+                }
+                else {
+                    const sexp = this.makeExpressionSimple(irval, stmt.value.rtype as TypeSignature);
+                    const frval = this.makeCoercionExplicitAsNeeded(sexp, stmt.value.rtype as TypeSignature, this.currentReturnType as TypeSignature);
+
+                    this.pushStatement(new IRReturnValueSimpleStatement(frval));
+                }
+            }
+            else {
+                assert(false, "ASMToIRConverter not implemented: unknown ReturnSingleStatement with refs variant");
+            }
         }
     }
 
