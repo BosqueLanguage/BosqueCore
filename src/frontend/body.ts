@@ -277,14 +277,6 @@ class ArgumentList {
         return lp + this.args.map((arg) => arg.emit(fmt)).join(", ") + rp;
     }
 
-    //Get if any simple var args (positional or named) that might be lambdas
-    getSimpleVarArgs(): AccessVariableExpression[] {
-        return [
-            ...this.args.filter((arg) => (arg instanceof PositionalArgumentValue) && arg.exp instanceof AccessVariableExpression).map((arg) => ((arg as StdArgumentValue).exp as AccessVariableExpression)),
-            ...this.args.filter((arg) => (arg instanceof NamedArgumentValue) && arg.exp instanceof AccessVariableExpression).map((arg) => ((arg as StdArgumentValue).exp as AccessVariableExpression))
-        ];
-    }
-
     hasSpecialRef(): boolean {
         return this.args.some((arg) => arg instanceof PassingArgumentValue);
     }

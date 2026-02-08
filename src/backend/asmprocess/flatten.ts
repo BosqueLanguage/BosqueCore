@@ -1,11 +1,11 @@
 
 import { SourceInfo } from "../../frontend/build_decls.js";
 import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, LambdaTypeSignature, NominalTypeSignature, RecursiveAnnotation, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
-import { AbortStatement, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringTextComponent, HoleBodyImplementation, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PositionalArgumentValue, PostfixOp, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, StdArgumentValue, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement } from "../../frontend/body.js";
+import { AbortStatement, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringTextComponent, HoleBodyImplementation, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PassingArgumentValue, PositionalArgumentValue, PostfixOp, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, StdArgumentValue, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement } from "../../frontend/body.js";
 import { AbstractCollectionTypeDecl, AbstractConceptTypeDecl, AbstractEntityTypeDecl, AdditionalTypeDeclTag, AgentDecl, APIDecl, APIDeniedTypeDecl, APIErrorTypeDecl, APIFlaggedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstructableTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EventListTypeDecl, FailTypeDecl, InvariantDecl, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskDecl, TestAssociation, TypedeclTypeDecl, ValidateDecl } from "../../frontend/assembly.js";
 
 import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatCStringTypeSignature, IRFormatPathFragmentTypeSignature, IRFormatPathGlobTypeSignature, IRFormatPathTypeSignature, IRFormatStringTypeSignature, IRFormatTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype.js";
-import { DateRepresentation, DeltaDateRepresentation, DeltaTimeRepresentation, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteBufferExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralCStringExpression, IRLiteralDecimalExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLatLongCoordinateExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralNoneExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralRationalExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRStatement, TimeRepresentation, IRLiteralFormatStringExpression, IRFormatStringTextComponent, IRFormatStringArgComponent, IRFormatStringComponent, IRLiteralFormatCStringExpression, IRLiteralTypedExpression, IRLiteralExpression, IRTypeDeclInvariantCheckStatement, IRLiteralTypedStringExpression, IRLiteralTypedCStringExpression, IRLiteralTypedFormatStringExpression, IRLiteralTypedFormatCStringExpression, IRTaskAccessIDExpression, IRTaskAccessParentIDExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessEnumExpression, IRSimpleExpression, IRPreconditionCheckStatement, IRExpression, IRTempAssignExpressionStatement, IRAccessTempVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessParameterVariableExpression, IRPrefixNotOpExpression, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRErrorAdditionBoundsCheckStatement, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRErrorDivisionByZeroCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRNopStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRReturnVoidSimpleStatement, IRAbortStatement, IRImmediateExpression, IRReturnValueSimpleStatement, IRChkLogicImpliesShortCircuitStatement, IRInvokeDirectExpression, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRVariableInitializationDirectInvokeStatement, IRInvokeSimpleExpression, IRInvokeImplicitsExpression, IRTempAssignStdInvokeStatement, IRTempAssignRefInvokeStatement, IRReturnDirectInvokeStatement, IRAssertStatement, IRValidateStatement, IRDebugStatement, IRBody, IRBuiltinBody, IRHoleBody, IRStandardBody, IRBinKeyEqDirectExpression, IRBinKeyLessDirectExpression, IRIsNoneOptionExpression, IRIsNotNoneOptionExpression, IRIsOptionEqValueExpression, IRIsOptionNeqValueExpression, IRIsSomeEqValueExpression, IRIsSomeNeqValueExpression, IRBinKeyNeqDirectExpression, IRConstructorOkTypeExpression, IRConstructorFailTypeExpression, IRConstructorSomeTypeExpression, IRConstructorMapEntryTypeExpression, IRLiteralDecimalDegreeExpression, IRTypeDeclSizeRangeCheckCStringStatement, IRTypeDeclSizeRangeCheckUnicodeStringStatement, IRTypeDeclFormatCheckCStringStatement, IRTypeDeclFormatCheckUnicodeStringStatement, IRLiteralOptionOfNoneExpression, IRWidenConceptRepresentationExpression, IRConstructResultFromOkExpression, IRConstructOptionFromSomeExpression, IRConstructResultFromFailExpression, IRBoxEntityToConceptRepresentationExpression, IRSimpleIfStatement, IRBlockStatement, IRSimpleIfElseStatement, IRConstructorStandardEntityExpression, IREntityInvariantCheckStatement, IRConstructExpression, IRVariableInitializationDirectConstructorStatement, IRReturnDirectConstructStatement, IRVariableAssignmentStatement, IRVariableAssignmentDirectInvokeStatement, IRVariableAssignmentDirectConstructorStatement, IRConstructorListEmptyExpression, IRConstructorListSingletonsExpression } from "../irdefs/irbody.js";
+import { DateRepresentation, DeltaDateRepresentation, DeltaTimeRepresentation, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteBufferExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralCStringExpression, IRLiteralDecimalExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLatLongCoordinateExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralNoneExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralRationalExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRStatement, TimeRepresentation, IRLiteralFormatStringExpression, IRFormatStringTextComponent, IRFormatStringArgComponent, IRFormatStringComponent, IRLiteralFormatCStringExpression, IRLiteralTypedExpression, IRLiteralExpression, IRTypeDeclInvariantCheckStatement, IRLiteralTypedStringExpression, IRLiteralTypedCStringExpression, IRLiteralTypedFormatStringExpression, IRLiteralTypedFormatCStringExpression, IRTaskAccessIDExpression, IRTaskAccessParentIDExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessEnumExpression, IRSimpleExpression, IRPreconditionCheckStatement, IRExpression, IRTempAssignExpressionStatement, IRAccessTempVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessParameterVariableExpression, IRPrefixNotOpExpression, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRErrorAdditionBoundsCheckStatement, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRErrorDivisionByZeroCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRNopStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRReturnVoidSimpleStatement, IRAbortStatement, IRImmediateExpression, IRReturnValueSimpleStatement, IRChkLogicImpliesShortCircuitStatement, IRInvokeDirectExpression, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRVariableInitializationDirectInvokeStatement, IRInvokeSimpleExpression, IRInvokeImplicitsExpression, IRTempAssignStdInvokeStatement, IRTempAssignRefInvokeStatement, IRReturnDirectInvokeStatement, IRAssertStatement, IRValidateStatement, IRDebugStatement, IRBody, IRBuiltinBody, IRHoleBody, IRStandardBody, IRBinKeyEqDirectExpression, IRBinKeyLessDirectExpression, IRIsNoneOptionExpression, IRIsNotNoneOptionExpression, IRIsOptionEqValueExpression, IRIsOptionNeqValueExpression, IRIsSomeEqValueExpression, IRIsSomeNeqValueExpression, IRBinKeyNeqDirectExpression, IRConstructorOkTypeExpression, IRConstructorFailTypeExpression, IRConstructorSomeTypeExpression, IRConstructorMapEntryTypeExpression, IRLiteralDecimalDegreeExpression, IRTypeDeclSizeRangeCheckCStringStatement, IRTypeDeclSizeRangeCheckUnicodeStringStatement, IRTypeDeclFormatCheckCStringStatement, IRTypeDeclFormatCheckUnicodeStringStatement, IRLiteralOptionOfNoneExpression, IRWidenConceptRepresentationExpression, IRConstructResultFromOkExpression, IRConstructOptionFromSomeExpression, IRConstructResultFromFailExpression, IRBoxEntityToConceptRepresentationExpression, IRSimpleIfStatement, IRBlockStatement, IRSimpleIfElseStatement, IRConstructorStandardEntityExpression, IREntityInvariantCheckStatement, IRConstructExpression, IRVariableInitializationDirectConstructorStatement, IRReturnDirectConstructStatement, IRVariableAssignmentStatement, IRVariableAssignmentDirectInvokeStatement, IRVariableAssignmentDirectConstructorStatement, IRConstructorListEmptyExpression, IRConstructorListSingletonsExpression, IRReturnVoidWithImplicitStatement, IRReturnValueImplicitStatement, IRReturnDirectInvokeImplicitStatement, IRReturnDirectConstructWithBoxStatement, IRReturnDirectConstructImplicitStatement, IRReturnDirectConstructWithBoxImplicitStatement, IRReturnDirectInvokeImplicitPassThroughStatement, IRVariableInitializationDirectInvokeWithImplicitStatement, IRVariableAssignmentDirectInvokeWithImplicitStatement, IRInvokeSimpleWithImplicitsExpression } from "../irdefs/irbody.js";
 import { IRRegex, IRSourceInfo } from "../irdefs/irsupport.js";
 import { IRAgentDecl, IRAPIDecl, IRAPIDeniedTypeDecl, IRAPIErrorTypeDecl, IRAPIFlaggedTypeDecl, IRAPIRejectedTypeDecl, IRAPIResultTypeDecl, IRAPISuccessTypeDecl, IRAssembly, IRConceptTypeDecl, IRConstantDecl, IRDatatypeMemberEntityTypeDecl, IRDatatypeTypeDecl, IRDeclarationDocString, IRDeclarationMetaTag, IREntityTypeDecl, IREnumTypeDecl, IREventListTypeDecl, IRExampleDecl, IRFailTypeDecl, IRInvariantDecl, IRInvokeDecl, IRInvokeParameterDecl, IRListTypeDecl, IRMapEntryTypeDecl, IRMapTypeDecl, IRMemberFieldDecl, IROkTypeDecl, IROptionTypeDecl, IRPostConditionDecl, IRPreConditionDecl, IRPredicateDecl, IRPrimitiveEntityTypeDecl, IRQueueTypeDecl, IRResultTypeDecl, IRSetTypeDecl, IRSomeTypeDecl, IRStackTypeDecl, IRTaskDecl, IRTestAssociation, IRTestDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl, IRValidateDecl } from "../irdefs/irassembly.js";
 
@@ -651,22 +651,22 @@ class ASMToIRConverter {
             case ExpressionTag.CallRefVariableExpression: {
                 const crexp = exp as CallRefVariableExpression;
 
-                return this.coerceToBoolForTest(this.flattenCallRefVariableExpression(crexp), this.tproc(crexp.getType()));
+                return this.coerceToBoolForTest(this.makeExpressionSimple(this.flattenCallRefVariableExpression(crexp), this.tproc(crexp.getType())), this.tproc(crexp.getType()));
             }
             case ExpressionTag.CallRefThisExpression: {
                 const crexp = exp as CallRefThisExpression;
                 
-                return this.coerceToBoolForTest(this.flattenCallRefThisExpression(crexp), this.tproc(crexp.getType()));
+                return this.coerceToBoolForTest(this.makeExpressionSimple(this.flattenCallRefThisExpression(crexp), this.tproc(crexp.getType())), this.tproc(crexp.getType()));
             }
             case ExpressionTag.CallRefSelfExpression: {
                 const crexp = exp as CallRefSelfExpression;
 
-                return this.coerceToBoolForTest(this.flattenCallRefSelfExpression(crexp), this.tproc(crexp.getType()));
+                return this.coerceToBoolForTest(this.makeExpressionSimple(this.flattenCallRefSelfExpression(crexp), this.tproc(crexp.getType())), this.tproc(crexp.getType()));
             }
             case ExpressionTag.CallTaskActionExpression: {
                 const crexp = exp as CallTaskActionExpression;
                 
-                return this.coerceToBoolForTest(this.flattenCallTaskActionExpression(crexp), this.tproc(crexp.getType()));
+                return this.coerceToBoolForTest(this.makeExpressionSimple(this.flattenCallTaskActionExpression(crexp), this.tproc(crexp.getType())), this.tproc(crexp.getType()));
             }
             default: {
                 const ttag = exp.tag;
@@ -674,22 +674,22 @@ class ASMToIRConverter {
                 if(ttag === ExpressionTag.CallNamespaceFunctionExpression) {
                     const crexp = exp as CallNamespaceFunctionExpression;
 
-                    return this.coerceToBoolForTest(this.flattenCallNamespaceFunctionExpression(crexp), this.tproc(crexp.getType()));
+                    return this.coerceToBoolForTest(this.makeExpressionSimple(this.flattenCallNamespaceFunctionExpression(crexp), this.tproc(crexp.getType())), this.tproc(crexp.getType()));
                 }
                 else if(ttag === ExpressionTag.CallTypeFunctionExpression) {
                     const crexp = exp as CallTypeFunctionExpression;
 
-                    return this.coerceToBoolForTest(this.flattenCallTypeFunctionExpression(crexp), this.tproc(crexp.getType()));
+                    return this.coerceToBoolForTest(this.makeExpressionSimple(this.flattenCallTypeFunctionExpression(crexp), this.tproc(crexp.getType())), this.tproc(crexp.getType()));
                 }
                 else if(ttag === ExpressionTag.LambdaInvokeExpression) {
                     const crexp = exp as LambdaInvokeExpression;
 
-                    return this.coerceToBoolForTest(this.flattenLambdaInvokeExpression(crexp), this.tproc(crexp.getType()));
+                    return this.coerceToBoolForTest(this.makeExpressionSimple(this.flattenLambdaInvokeExpression(crexp), this.tproc(crexp.getType())), this.tproc(crexp.getType()));
                 }
                 else if(ttag === ExpressionTag.PostfixOpExpression) {
                     const crexp = exp as PostfixOp;
 
-                    return this.coerceToBoolForTest(this.flattenPostfixOp(crexp), this.tproc(crexp.getType()));
+                    return this.coerceToBoolForTest(this.makeExpressionSimple(this.flattenPostfixOp(crexp), this.tproc(crexp.getType())), this.tproc(crexp.getType()));
                 }
                 else if(ttag === ExpressionTag.PrefixNotOpExpression) {
                     const nexp = exp as PrefixNotOpExpression;
@@ -726,7 +726,7 @@ class ASMToIRConverter {
                     }
                 }
                 else {
-                    return this.coerceToBoolForTest(this.flattenExpression(exp), this.tproc(exp.getType()));
+                    return this.coerceToBoolForTest(this.makeExpressionSimple(this.flattenExpression(exp), this.tproc(exp.getType())), this.tproc(exp.getType()));
                 }
             }
         }
@@ -765,7 +765,7 @@ class ASMToIRConverter {
 
     private flattenCallNamespaceFunctionExpression(exp: CallNamespaceFunctionExpression): IRExpression {
         const hastemplate = exp.terms.length > 0;
-        const haslambda = exp.args.getSimpleVarArgs().some((arg) => arg.getType() instanceof LambdaTypeSignature);
+        const haslambda = exp.args.args.some((arg) => (arg instanceof StdArgumentValue) && arg.exp.getType() instanceof LambdaTypeSignature);
         const fdecl = this.assembly.resolveNamespaceFunction(exp.ns, exp.name, hastemplate, haslambda, exp.args.hasSpecialRef()) as NamespaceFunctionDecl;
 
         const haspreconds = fdecl.preconditions.length > 0;
@@ -817,7 +817,13 @@ class ASMToIRConverter {
             return new IRInvokeSimpleExpression(exp.monomorhphizedkey as string, aargs);
         }
         else {
-            assert(false, "ASMToIRConverter::flattenCallNamespaceFunctionExpression - Implicit ref parameters not yet implemented");
+            const srpos = exp.shuffleinfo.findIndex((si) => exp.args.args[si[0]] instanceof PassingArgumentValue);
+            const ii = exp.shuffleinfo[srpos][0];
+            const passarg = exp.args.args[ii] as PassingArgumentValue;
+            const ivar = (passarg.exp as AccessVariableExpression).srcname;
+            const ivartype = this.processTypeSignature((passarg.exp as AccessVariableExpression).getType());
+            
+            return new IRInvokeSimpleWithImplicitsExpression(exp.monomorhphizedkey as string, aargs, ii, ivar, ivartype, passarg.kind);
         }
     }
 
@@ -2192,6 +2198,15 @@ class ASMToIRConverter {
                 this.pushStatement(new IRVariableInitializationStatement(this.processLocalVariableName(stmt.name), irvtype, iiexp, stmt.vkind === "let"));
             }
         }
+        else if(irval instanceof IRInvokeImplicitsExpression) {
+            if(irvtype.tkeystr === (stmt.exp.rtype as TypeSignature).tkeystr) {
+                this.pushStatement(new IRVariableInitializationDirectInvokeWithImplicitStatement(this.generateTempVarName(), this.processLocalVariableName(stmt.name), irvtype, irval, stmt.vkind === "let"));
+            }
+            else {
+                const iiexp = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(irval, stmt.exp.rtype as TypeSignature), stmt.exp.rtype as TypeSignature, stmt.actualtype as TypeSignature);
+                this.pushStatement(new IRVariableInitializationStatement(this.processLocalVariableName(stmt.name), irvtype, iiexp, stmt.vkind === "let"));
+            }
+        }
         else if(irval instanceof IRConstructExpression) {
             if(irvtype.tkeystr === (stmt.exp.rtype as TypeSignature).tkeystr) {
                 this.pushStatement(new IRVariableInitializationDirectConstructorStatement(this.processLocalVariableName(stmt.name), irvtype, irval, stmt.vkind === "let"));
@@ -2232,6 +2247,15 @@ class ASMToIRConverter {
                     this.pushStatement(new IRVariableAssignmentStatement(this.processLocalVariableName(stmt.name), irvtype, iiexp));
                 }
             }
+            else if(irval instanceof IRInvokeImplicitsExpression) {
+                if(irvtype.tkeystr === (stmt.exp.rtype as TypeSignature).tkeystr) {
+                    this.pushStatement(new IRVariableAssignmentDirectInvokeWithImplicitStatement(this.generateTempVarName(), this.processLocalVariableName(stmt.name), irvtype, irval));
+                }
+                else {
+                    const iiexp = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(irval, stmt.exp.rtype as TypeSignature), stmt.exp.rtype as TypeSignature, stmt.vtype as TypeSignature);
+                    this.pushStatement(new IRVariableAssignmentStatement(this.processLocalVariableName(stmt.name), irvtype, iiexp));
+                }
+            }
             else if(irval instanceof IRConstructExpression) {
                 if(irvtype.tkeystr === (stmt.exp.rtype as TypeSignature).tkeystr) {
                     this.pushStatement(new IRVariableAssignmentDirectConstructorStatement(this.processLocalVariableName(stmt.name), irvtype, irval));
@@ -2260,7 +2284,7 @@ class ASMToIRConverter {
             this.pushStatement(new IRReturnVoidSimpleStatement());
         }
         else {
-            assert(false, "Not Implemented -- flattenReturnVoidStatement with implicit return variable");
+            this.pushStatement(new IRReturnVoidWithImplicitStatement(this.currentImplicitReturnVar));
         }
     }
 
@@ -2290,15 +2314,18 @@ class ASMToIRConverter {
                     this.pushStatement(new IRReturnValueSimpleStatement(frval));
                 }
             }
+            else if(irval instanceof IRInvokeImplicitsExpression) {
+                const sexp = this.makeExpressionSimple(irval, stmt.value.rtype as TypeSignature);
+                const frval = this.makeCoercionExplicitAsNeeded(sexp, stmt.value.rtype as TypeSignature, this.currentReturnType as TypeSignature);
+
+                this.pushStatement(new IRReturnValueSimpleStatement(frval));
+            }
             else if(irval instanceof IRConstructExpression) {
                 if((stmt.value.rtype as TypeSignature).tkeystr === (this.currentReturnType as TypeSignature).tkeystr) {
                     this.pushStatement(new IRReturnDirectConstructStatement(irval));
                 }
                 else {
-                    const sexp = this.makeExpressionSimple(irval, stmt.value.rtype as TypeSignature);
-                    const frval = this.makeCoercionExplicitAsNeeded(sexp, stmt.value.rtype as TypeSignature, this.currentReturnType as TypeSignature);
-
-                    this.pushStatement(new IRReturnValueSimpleStatement(frval));
+                    this.pushStatement(new IRReturnDirectConstructWithBoxStatement(irval, this.processTypeSignature(stmt.value.rtype as TypeSignature), this.processTypeSignature(this.currentReturnType as TypeSignature)));
                 }
             }
             else {
@@ -2306,38 +2333,38 @@ class ASMToIRConverter {
             }
         }
         else {
-            xxxx;
-            if(irval instanceof IRInvokeDirectExpression) {
+            if(irval instanceof IRSimpleExpression) {
+                const frval = this.makeCoercionExplicitAsNeeded(irval, stmt.value.rtype as TypeSignature, this.currentReturnType as TypeSignature);
+                this.pushStatement(new IRReturnValueImplicitStatement(frval, this.currentImplicitReturnVar));
+            }
+            else if(irval instanceof IRInvokeDirectExpression) {
                 if((stmt.value.rtype as TypeSignature).tkeystr === (this.currentReturnType as TypeSignature).tkeystr) {
-                    this.pushStatement(new IRReturnDirectInvokeStatement(irval));
+                    this.pushStatement(new IRReturnDirectInvokeImplicitStatement(irval, this.currentImplicitReturnVar));
                 }
                 else {
                     const sexp = this.makeExpressionSimple(irval, stmt.value.rtype as TypeSignature);
                     const frval = this.makeCoercionExplicitAsNeeded(sexp, stmt.value.rtype as TypeSignature, this.currentReturnType as TypeSignature);
 
-                    this.pushStatement(new IRReturnValueSimpleStatement(frval));
+                    this.pushStatement(new IRReturnValueImplicitStatement(frval, this.currentImplicitReturnVar));
+                }
+            }
+            else if(irval instanceof IRInvokeImplicitsExpression) {
+                if(((stmt.value.rtype as TypeSignature).tkeystr === (this.currentReturnType as TypeSignature).tkeystr) && (irval.ivar === this.currentImplicitReturnVar)) {
+                    this.pushStatement(new IRReturnDirectInvokeImplicitPassThroughStatement(irval, this.currentImplicitReturnVar));
+                }
+                else {
+                    const sexp = this.makeExpressionSimple(irval, stmt.value.rtype as TypeSignature);
+                    const frval = this.makeCoercionExplicitAsNeeded(sexp, stmt.value.rtype as TypeSignature, this.currentReturnType as TypeSignature);
+
+                    this.pushStatement(new IRReturnValueImplicitStatement(frval, this.currentImplicitReturnVar));
                 }
             }
             else if(irval instanceof IRConstructExpression) {
                 if((stmt.value.rtype as TypeSignature).tkeystr === (this.currentReturnType as TypeSignature).tkeystr) {
-                    this.pushStatement(new IRReturnDirectConstructStatement(irval));
+                    this.pushStatement(new IRReturnDirectConstructImplicitStatement(irval, this.currentImplicitReturnVar));
                 }
                 else {
-                    const sexp = this.makeExpressionSimple(irval, stmt.value.rtype as TypeSignature);
-                    const frval = this.makeCoercionExplicitAsNeeded(sexp, stmt.value.rtype as TypeSignature, this.currentReturnType as TypeSignature);
-
-                    this.pushStatement(new IRReturnValueSimpleStatement(frval));
-                }
-            }
-            else if(irval instanceof IRInvokeImplicitsExpression) {
-                if((stmt.value.rtype as TypeSignature).tkeystr === (this.currentReturnType as TypeSignature).tkeystr) {
-                    this.pushStatement(new IRReturnImplicitsInvokeStatement(this.currentImplicitReturnVar, irval));
-                }
-                else {
-                    const sexp = this.makeExpressionSimple(irval, stmt.value.rtype as TypeSignature);
-                    const frval = this.makeCoercionExplicitAsNeeded(sexp, stmt.value.rtype as TypeSignature, this.currentReturnType as TypeSignature);
-
-                    this.pushStatement(new IRReturnValueSimpleStatement(frval));
+                    this.pushStatement(new IRReturnDirectConstructWithBoxImplicitStatement(irval, this.processTypeSignature(stmt.value.rtype as TypeSignature), this.processTypeSignature(this.currentReturnType as TypeSignature), this.currentImplicitReturnVar));
                 }
             }
             else {
@@ -2648,6 +2675,9 @@ class ASMToIRConverter {
                 if(eexp instanceof IRSimpleExpression) {
                     const frval = this.makeCoercionExplicitAsNeeded(eexp, this.tproc(body.exp.getType()), this.currentReturnType as TypeSignature);
                     this.pushStatement(new IRReturnValueSimpleStatement(frval));
+                }
+                else if(eexp instanceof IRConstructExpression) {
+                    assert(false, "Not implemented -- flattenExpressionBody with construct expression body");
                 }
                 else {
                     if(eexp instanceof IRInvokeDirectExpression && this.tproc(body.exp.getType()).tkeystr === (this.currentReturnType as TypeSignature).tkeystr) {

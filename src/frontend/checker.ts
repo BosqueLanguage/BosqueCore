@@ -905,7 +905,7 @@ class TypeChecker {
         let argtype: TypeSignature = new ErrorTypeSignature(arg.exp.sinfo, undefined);
 
         if(!(arg instanceof PassingArgumentValue)) {
-             argtype = this.checkExpression(env, arg.exp, new SimpleTypeInferContext(ptype));
+            argtype = this.checkExpression(env, arg.exp, new SimpleTypeInferContext(ptype));
         } 
         else {
             this.checkError(arg.exp.sinfo, pkind !== arg.kind, `Parameter ${paramname} passing kind does not match the passing kind of the argument`);
@@ -914,7 +914,6 @@ class TypeChecker {
             if(arg.exp instanceof AccessVariableExpression) {
                 const vname = (arg.exp as AccessVariableExpression).srcname;
                 const vinfo = env.resolveLocalVarInfoFromSrcName(vname);
-
 
                 if(vinfo === undefined) {
                     this.reportError(arg.exp.sinfo, `Variable ${vname} is not declared`);
@@ -948,6 +947,8 @@ class TypeChecker {
 
                     argtype = vtype;
                 }
+
+                arg.exp.setType(argtype);
             }
         }
        
@@ -2234,9 +2235,26 @@ class TypeChecker {
 
     private checkCallNamespaceFunctionExpression(env: TypeEnvironment, exp: CallNamespaceFunctionExpression, refallowed: boolean): TypeResultWRefVarInfoResult {
         const hastemplate = exp.terms.length > 0;
-        const haslambda = exp.args.getSimpleVarArgs().some((arg) => {
-            const atype = this.checkAccessVariableExpression(env, arg);
-            return atype instanceof LambdaTypeSignature;
+        const haslambda = exp.args.args.some((arg) => {
+            if(!(arg instanceof StdArgumentValue)) {
+                return false;
+            }
+
+            if((arg instanceof PassingArgumentValue) && arg.kind === "out?") {
+                return false;
+            }
+
+            const eexp = arg.exp;
+            if(eexp instanceof ConstructorLambdaExpression) {
+                return true;
+            }
+            else if(eexp instanceof AccessVariableExpression) {
+                const atype = this.checkAccessVariableExpression(env, eexp);
+                return atype instanceof LambdaTypeSignature;
+            }
+            else {
+                return false;
+            }
         });
         const fdecl = this.relations.assembly.resolveNamespaceFunction(exp.ns, exp.name, hastemplate, haslambda, exp.args.hasSpecialRef());
 
