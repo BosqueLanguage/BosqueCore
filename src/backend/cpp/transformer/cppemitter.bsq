@@ -2598,7 +2598,7 @@ function emitAssembly(asm: CPPAssembly::Assembly): String {
 
             return String::concat(acc.0, cons), acc.1.pushBack(String::concat("&", gcalloc)), acc.2 + 1n;
         }, (|"", List<String>{}, 0n|));
-    let nallocslist = String::concat("GCAllocator* allocs[", natToString(nvalid_allocs), "] = {", String::joinAll(", ", allocslist), "};%n;%n;");
+    let nallocslist = String::concat("thread_local GCAllocator* allocs[", natToString(nvalid_allocs), "] = {", String::joinAll(", ", allocslist), "};%n;%n;");
 
     let gcinfo = String::concat(allocs, nallocslist, "//TESTCODE");
 

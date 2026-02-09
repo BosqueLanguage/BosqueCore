@@ -44,6 +44,25 @@ void BSQMemoryTheadLocalInfo::initialize(size_t ntl_id, void** caller_rbp,
     xmem_zerofill(this->g_gcallocs, BSQ_MAX_ALLOC_SLOTS);
 }
 
+void BSQMemoryTheadLocalInfo::initializeGC(GCAllocator** allocs, size_t n,                              
+    void (*_collectfp)()) noexcept 
+{   
+    InitBSQMemoryTheadLocalInfo(*this, _collectfp);                                                       
+    for(size_t i = 0; i < n; i++) {
+        GCAllocator* alloc = allocs[i];
+        uint32_t idx = alloc->getAllocType()->type_id;                                                  
+        GC_INVARIANT_CHECK(idx < BSQ_MAX_ALLOC_SLOTS);                                                  
+        
+        this->g_gcallocs[idx] = alloc;                                                                  
+    }                                                                                                   
+    
+    // collect to promote visible roots to old (incing thd counts) and init                             
+    // data structures
+    // -- also might want to some rampup work here like allocing a nursery                              
+    // sized page instead of hitting the os nonstop before first collection                             
+    this->collectfp();                                                                                  
+} 
+
 void BSQMemoryTheadLocalInfo::loadNativeRootSet() noexcept
 {
     this->native_stack_contents.initialize();

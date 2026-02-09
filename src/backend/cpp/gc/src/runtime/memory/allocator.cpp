@@ -14,6 +14,10 @@ GlobalDataStorage GlobalDataStorage::g_global_data{};
 
 static void setPageMetaData(PageInfo* pp, __CoreGC::TypeInfoBase* typeinfo) noexcept
 {
+	std::lock_guard lk(g_alloclock);
+
+	pp->zeroInit();
+
     pp->typeinfo = typeinfo;
 	pp->realsize = REAL_ENTRY_SIZE(typeinfo->type_size);
 	uint8_t* bpp = reinterpret_cast<uint8_t*>(pp);
@@ -37,7 +41,6 @@ static void setPageMetaData(PageInfo* pp, __CoreGC::TypeInfoBase* typeinfo) noex
 PageInfo* PageInfo::initialize(void* block, __CoreGC::TypeInfoBase* typeinfo) noexcept
 { 
 	PageInfo* pp = static_cast<PageInfo*>(block);	
-	pp->zeroInit();
 	setPageMetaData(pp, typeinfo);
     
 	for(int64_t i = pp->entrycount - 1; i >= 0; i--) {
@@ -93,6 +96,9 @@ PageInfo* GlobalPageGCManager::getFreshPageFromOS(__CoreGC::TypeInfoBase* typein
     assert(page != MAP_FAILED);
 
 	lk.unlock();
+
+	// NOTE probably want to move the lock inside pagetableInsert
+	std::lock_guard nlk(g_gcmemlock);
 	this->pagetableInsert(page);
 
     PageInfo* pp = PageInfo::initialize(page, typeinfo);
@@ -104,6 +110,8 @@ PageInfo* GlobalPageGCManager::getFreshPageFromOS(__CoreGC::TypeInfoBase* typein
 
 PageInfo* GlobalPageGCManager::tryGetEmptyPage(__CoreGC::TypeInfoBase* typeinfo)
 {
+	std::lock_guard lk(g_gcmemlock);
+
 	PageInfo* pp = nullptr;
     if(!this->empty_pages.empty()) {
         void* page = this->empty_pages.pop();
@@ -163,10 +171,16 @@ PageInfo* GCAllocator::tryGetPendingRebuildPage(float max_util)
 		p->visited = false;	
 
 		// alloc, evac, or pendinggc pages will be rebuilt in next collection
-		GCAllocator* gcalloc = gtl_info.getAllocatorForPageSize(p);
-		if(p == gcalloc->alloc_page || p == gcalloc->evac_page || p->owner == &gcalloc->pendinggc_pages) {
+		GCAllocator* gcalloc = gtl_info.getAllocatorForType(p);
+		if(p == gcalloc->alloc_page 
+			|| p == gcalloc->evac_page 
+			|| p->owner == &gcalloc->pendinggc_pages) 
+		{
 			continue;
 		}
+
+		// should be removed when update decd pages
+		GC_INVARIANT_CHECK(p->owner == nullptr);
 
 		p->owner->remove(p);
 		p->rebuild();

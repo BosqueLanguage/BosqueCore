@@ -124,6 +124,9 @@ static inline void updateDecrementedPages(void* obj, ArrayList<PageInfo*>& pagel
 {
 	PageInfo* p = PageInfo::extractPageFromPointer(obj);
 	if(!p->visited) {
+		GC_INVARIANT_CHECK(p->owner);
+
+		p->owner->remove(p);
 		p->visited = true;
 		pagelist.push_back(p);
     }
@@ -211,7 +214,7 @@ static void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
 static void* forward(void* ptr, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     PageInfo* p = PageInfo::extractPageFromPointer(ptr);
-    GCAllocator* gcalloc = tinfo.getAllocatorForPageSize(p);
+    GCAllocator* gcalloc = tinfo.getAllocatorForType(p);
     GC_INVARIANT_CHECK(gcalloc != nullptr);
 
     MetaData* m = GC_GET_META_DATA_ADDR(ptr); 
@@ -324,6 +327,9 @@ static void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
 static inline bool pointsToObjectStart(void* addr) noexcept 
 {
+	// page->entrycount may be reset by another thread (setPageMetaData)
+	std::lock_guard lk(g_alloclock);
+
     uintptr_t offset = reinterpret_cast<uintptr_t>(addr) & PAGE_MASK; 
     PageInfo* p = PageInfo::extractPageFromPointer(addr);
 	if(offset < (sizeof(PageInfo) + METADATA_SEG_SIZE(p))) {
