@@ -122,11 +122,16 @@ static void walkPointerMaskForDecrements(__CoreGC::TypeInfoBase* typeinfo, void*
 
 static inline void updateDecrementedPages(void* obj, ArrayList<PageInfo*>& pagelist) noexcept 
 {
+	std::lock_guard lk(g_gcmemlock);
+
 	PageInfo* p = PageInfo::extractPageFromPointer(obj);
 	if(!p->visited) {
-		GC_INVARIANT_CHECK(p->owner);
+        // Page may have been grabbed inside `tryGetPendingRebuildPage` and is                          
+        // now an alloc/evac page (no owner) with objects still needing rc decs 
+        if(p->owner) { 
+            p->owner->remove(p);                                                                        
+        } 
 
-		p->owner->remove(p);
 		p->visited = true;
 		pagelist.push_back(p);
     }

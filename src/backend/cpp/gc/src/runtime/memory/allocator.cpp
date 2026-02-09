@@ -180,9 +180,8 @@ PageInfo* GCAllocator::tryGetPendingRebuildPage(float max_util)
 		}
 
 		// should be removed when update decd pages
-		GC_INVARIANT_CHECK(p->owner == nullptr);
+		GC_INVARIANT_CHECK(p->owner == nullptr && p->prev == nullptr && p->next == nullptr);
 
-		p->owner->remove(p);
 		p->rebuild();
 
 		// move pages that are not correct type or too full
@@ -243,8 +242,8 @@ void GCAllocator::allocatorRefreshAllocationPage()noexcept
     if(this->alloc_page != nullptr) {
         gtl_info.updateNurseryUsage(this->alloc_page);
         if(gtl_info.nursery_usage >= BSQ_FULL_NURSERY_THRESHOLD 
-			&& !gtl_info.disable_automatic_collections
-		) { 
+			&& !gtl_info.disable_automatic_collections) 
+		{ 
             gtl_info.nursery_usage = 0.0f;
             gtl_info.collectfp();
         }
