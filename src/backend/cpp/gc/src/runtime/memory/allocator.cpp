@@ -165,6 +165,11 @@ void GCAllocator::processCollectorPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
 // finding one that is either empty or of the correct type is higher
 PageInfo* GCAllocator::tryGetPendingRebuildPage(float max_util)
 {	
+	// honestly not sure if we need this lock always, it is useful for the 
+	// decs processor as we no longer can race on modifications of ppage storage
+	// but not sure about how this impacts multi-threaded bosque
+	std::lock_guard lk(g_gcmemlock);
+
 	PageInfo* pp = nullptr;
 	while(!gtl_info.decd_pages.isEmpty()) {
 		PageInfo* p = gtl_info.decd_pages.pop_front();	
@@ -179,8 +184,7 @@ PageInfo* GCAllocator::tryGetPendingRebuildPage(float max_util)
 			continue;
 		}
 
-		// should be removed when update decd pages
-		GC_INVARIANT_CHECK(p->owner == nullptr && p->prev == nullptr && p->next == nullptr);
+        GC_INVARIANT_CHECK(p->owner == nullptr && p->prev == nullptr && p->next == nullptr);
 
 		p->rebuild();
 
