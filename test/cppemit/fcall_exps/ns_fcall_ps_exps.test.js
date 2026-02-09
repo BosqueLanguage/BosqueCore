@@ -15,8 +15,8 @@ describe ("CppEmit -- NamespaceFunction Ref Params", () => {
         checkTestEmitMainFunction('function foo(out y: Int): Int { y = 2i; return 1i; } public function main(): Int { var i = 0i; let z = foo(out i); return z; }', "Int Mainᕒmain() { Int i = 0_i; Int z = Mainᕒfooᙾref(i); return z; }");
         checkTestEmitMainFunction('function foo(out y: Int): Int { y = 2i; return 1i; } public function main(): Int { var i = 0i; i = foo(out i); return i; }', "Int Mainᕒmain() { Int i = 0_i; i = Mainᕒfooᙾref(i); return i; }");
         checkTestEmitMainFunction('function foo(inout y: Int): Int { y = y + 2i; return 1i; } public function main(): Int { var i = 0i; i = foo(inout i); return i; }', "Int Mainᕒmain() { Int i = 0_i; i = Mainᕒfooᙾref(i); return i; }");
-        checkTestEmitMainFunction('entity Foo{ } function foo(ref y: Foo) { return; } public function main(): Foo { ref ff = Foo{}; foo(ref ff); return ff; }', "ddd");     
-        checkTestEmitMainFunction('function foo(out y: Int): Int { y = 2i; return 1i; } public function main(): Int { var i = 0i; let x = foo(out i); return x + i; }', "ppp");
+        checkTestEmitMainFunction('entity Foo{ } function foo(ref y: Foo) { return; } public function main(): Foo { ref ff = Foo{}; foo(ref ff); return ff; }', "MainᕒFoo Mainᕒmain() { MainᕒFoo ff = MainᕒFoo{}; Mainᕒfooᙾref(ff); return ff; }");     
+        checkTestEmitMainFunction('function foo(out y: Int): Int { y = 2i; return 1i; } public function main(): Int { var i = 0i; let x = foo(out i); return x + i; }', 'Int Mainᕒmain() { Int i = 0_i; Int x = Mainᕒfooᙾref(i); ᐸRuntimeᐳ::XInt::checkOverflowAddition(x, i, "test.bsq", 2); return x + i; }');
     });
 
     it("should emit simple out?", function () {

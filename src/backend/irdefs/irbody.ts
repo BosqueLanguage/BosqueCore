@@ -259,6 +259,8 @@ enum IRStatementTag {
     IRReturnDirectConstructImplicitStatement = "IRReturnDirectConstructImplicitStatement",
     IRReturnDirectConstructWithBoxImplicitStatement = "IRReturnDirectConstructWithBoxImplicitStatement",
 
+    IRVoidInvokeStatement = "IRVoidInvokeStatement",
+
     IRChkLogicImpliesShortCircuitStatement = "IRChkLogicImpliesShortCircuitStatement",
 
     IRLogicConditionalStatement = "IRLogicConditionalStatement",
@@ -1835,6 +1837,17 @@ class IRReturnDirectConstructWithBoxImplicitStatement extends IRReturnWithImplic
     }
 }
 
+class IRVoidInvokeStatement extends IRAtomicStatement {
+    readonly scratchname: string; //a scratch temp variable to hold the direct invoke result if needed -- e.g. in SMT place result here, check for errors, then extract to vname
+    readonly aexp: IRInvokeImplicitsExpression;
+
+    constructor(scratch: string, aexp: IRInvokeImplicitsExpression) {
+        super(IRStatementTag.IRVoidInvokeStatement);
+        this.scratchname = scratch;
+        this.aexp = aexp;
+    }
+}
+
 class IRChkLogicImpliesShortCircuitStatement extends IRStatement {
     readonly tvar: string; //the temp variable to hold the result
     readonly lhs: IRSimpleExpression;
@@ -2186,6 +2199,8 @@ export {
     IRReturnVoidSimpleStatement, IRReturnValueSimpleStatement, IRReturnDirectInvokeStatement, IRReturnDirectConstructStatement, IRReturnDirectConstructWithBoxStatement,
     IRReturnVoidWithImplicitStatement, IRReturnValueImplicitStatement, IRReturnDirectInvokeImplicitStatement, IRReturnDirectInvokeImplicitPassThroughStatement, IRReturnDirectConstructImplicitStatement, IRReturnDirectConstructWithBoxImplicitStatement,
     
+    IRVoidInvokeStatement,
+
     IRChkLogicImpliesShortCircuitStatement,
     IRLogicConditionalStatement,
 
