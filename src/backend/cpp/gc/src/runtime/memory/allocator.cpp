@@ -166,12 +166,7 @@ void GCAllocator::processCollectorPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
 PageInfo* GCAllocator::tryGetPendingRebuildPage(float max_util)
 {	
 	// TODO we need to figure out some way to not need to lock here, decd_pages
-	// is thread local and it would be great to not have to lock during alloc.
-	// -- this is caused by pages possibly being present on multiple threads
-	//    decd_pages list. Maybe we could turn this into a page list such that
-	//    removal is forcefully visible accross all threads? Then it would be
-	//    impossible for two threads to both have the same page on their lists
-	//    (but doesnt that again force syncronization? or just less?)
+	// is thread local and it would be great to not have to lock during alloc
 	std::lock_guard lk(g_gcmemlock);
 
 	PageInfo* pp = nullptr;

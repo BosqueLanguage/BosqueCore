@@ -58,7 +58,8 @@ static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcep
         else if(cur_root > cur_oldroot) { 
              // Was dropped from old roots	
         	MetaData* m = GC_GET_META_DATA_ADDR(cur_oldroot);  
-			GC_DROP_ROOT_REF(m);
+			GC_INVARIANT_CHECK(GC_THREAD_COUNT(m) > 0);
+			GC_DROP_ROOT_REF(m);	
 			if(GC_REF_COUNT(m) == 0 && !GC_IS_ROOT(m)) {
 				pushPendingDecs(cur_oldroot, tinfo.decs_batch);
             }           
@@ -120,9 +121,6 @@ static void walkPointerMaskForDecrements(__CoreGC::TypeInfoBase* typeinfo, void*
     }
 }
 
-// I believe two threads could simultaneously see a non visited page then no matter the
-// state of visited always push it. Maybe things will work if we just always lock decs 
-// updates?
 static inline void updateDecrementedPages(void* obj, ArrayList<PageInfo*>& pagelist) noexcept 
 {
 	PageInfo* p = PageInfo::extractPageFromPointer(obj);
