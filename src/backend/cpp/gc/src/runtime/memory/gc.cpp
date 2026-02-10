@@ -223,7 +223,7 @@ static void* forward(void* ptr, BSQMemoryTheadLocalInfo& tinfo) noexcept
     RESET_METADATA_FOR_OBJECT(m, tinfo.forward_table_index);
     tinfo.forward_table[tinfo.forward_table_index++] = nptr;
 
-    UPDATE_TOTAL_PROMOTIONS(+=, 1);
+    UPDATE_TOTAL_PROMOTIONS(tinfo.memstats, +=, 1);
 
     return nptr;
 }
@@ -548,7 +548,7 @@ static void markingWalk(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
 static void processAllocatorsPages(BSQMemoryTheadLocalInfo& tinfo)
 {
-    UPDATE_TOTAL_LIVE_BYTES(=, 0);
+    UPDATE_TOTAL_LIVE_BYTES(tinfo.memstats, =, 0);
     for(size_t i = 0; i < BSQ_MAX_ALLOC_SLOTS; i++) {
         GCAllocator* alloc = tinfo.g_gcallocs[i];
         if(alloc != nullptr) {
@@ -598,7 +598,7 @@ void collect() noexcept
 
     gtl_info.pending_young.initialize();
 
-    MEMSTATS_START(Nursery);
+    MEM_STATS_START(Nursery);
 
 	// Mark, compact, reprocess pages
     markingWalk(gtl_info);

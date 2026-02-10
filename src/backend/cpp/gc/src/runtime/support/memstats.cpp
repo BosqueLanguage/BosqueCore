@@ -7,7 +7,7 @@
 
 MemStats g_memstats{};
 
-static double calStddev(const Stats& stats) noexcept;
+static double calcStddev(const Stats& stats) noexcept;
 static double calculate_percentile_from_buckets(const size_t* buckets, double percentile) noexcept; 
 
 #define RST  "\x1B[0m"
@@ -114,7 +114,7 @@ void printPerfHeader()
     std::cout << ss.str() << std::endl;
 }
 
-void perfDump(Phase p)
+void MemStats::perfDump(Phase p)
 {
     switch(p) {
         case Phase::Collection:
@@ -131,19 +131,19 @@ void perfDump(Phase p)
     }
 }
 
-void statisticsDump()
+void MemStats::statisticsDump()
 {
     std::stringstream ss;
     ss  << BOLD("Statistics:\n")
-        << BOLD("\tTotal Time        ") << printUnit(g_memstats.total_time, Unit::Microseconds) << std::endl 
-        << BOLD("\tTime Collecting   ") << printUnit((g_memstats.collection_stats.total / g_memstats.total_time) * 100.0, Unit::Percentage) << std::endl
-        << BOLD("\tTotal Collections ") << printUnit(g_memstats.collection_stats.count, Unit::Count) << std::endl
-        << BOLD("\tTotal Pages       ") << printUnit(g_memstats.total_pages, Unit::Count) << std::endl
-        << BOLD("\tMax Live Heap     ") << printUnit(g_memstats.max_live_heap, Unit::Bytes) << "\n"
-        << BOLD("\tHeap Size         ") << printUnit(g_memstats.total_pages * BSQ_BLOCK_ALLOCATION_SIZE, Unit::Bytes) << "\n"
-        << BOLD("\tAlloc Count       ") << printUnit(g_memstats.total_alloc_count, Unit::Count) << std::endl
-        << BOLD("\tAlloc'd Memory    ") << printUnit(g_memstats.total_alloc_memory, Unit::Bytes) << "\n"
-        << BOLD("\tSurvival Rate     ") << printUnit(((double)g_memstats.total_promotions / (double)g_memstats.total_alloc_count) * 100.0, Unit::Percentage) << "\n";
+        << BOLD("\tTotal Time        ") << printUnit(this->total_time, Unit::Microseconds) << std::endl 
+        << BOLD("\tTime Collecting   ") << printUnit((this->collection_stats.total / g_memstats.total_time) * 100.0, Unit::Percentage) << std::endl
+        << BOLD("\tTotal Collections ") << printUnit(this->collection_stats.count, Unit::Count) << std::endl
+        << BOLD("\tTotal Pages       ") << printUnit(this->total_pages, Unit::Count) << std::endl
+        << BOLD("\tMax Live Heap     ") << printUnit(this->max_live_heap, Unit::Bytes) << "\n"
+        << BOLD("\tHeap Size         ") << printUnit(this->total_pages * BSQ_BLOCK_ALLOCATION_SIZE, Unit::Bytes) << "\n"
+        << BOLD("\tAlloc Count       ") << printUnit(this->total_alloc_count, Unit::Count) << std::endl
+        << BOLD("\tAlloc'd Memory    ") << printUnit(this->total_alloc_memory, Unit::Bytes) << "\n"
+        << BOLD("\tSurvival Rate     ") << printUnit(((double)this->total_promotions / (double)this->total_alloc_count) * 100.0, Unit::Percentage) << "\n";
 
     std::cout << ss.str();
 }

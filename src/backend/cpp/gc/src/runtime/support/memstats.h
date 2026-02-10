@@ -47,7 +47,7 @@ struct MemStats {
 
     Time start_time =    0.0; // initialized at creation of mstats object
     Time overhead_time = 0.0; // just to prevent any akward skew in Time for memory intensive programs
-    Time total_time =    0.0; // walll clock time (not including mstats compute overhead)
+    Time total_time =    0.0; // wall clock time (not including mstats compute overhead)
 
     size_t max_live_heap = 0;
 
@@ -118,7 +118,7 @@ extern MemStats g_memstats;
 #define MEM_STATS_END(PHASE, MS) \
     auto end_##PHASE = std::chrono::high_resolution_clock::now(); \
     Time PHASE##_ms = TIME(end_##PHASE - start_##PHASE); \
-    (MS).updateTelemetry(Phase::##PHASE, PHASE##_ms);
+    (MS).updateTelemetry(Phase:: PHASE, PHASE##_ms);
 
 #define UPDATE_ALLOC_STATS(ALLOC, MEMORY_SIZE) \
     (ALLOC)->updateAllocInfo(MEMORY_SIZE)
@@ -147,8 +147,6 @@ extern MemStats g_memstats;
         g_memstats.overhead_time += mstats_compute_elapsed; \
     } while(0)
 #else
-struct MemStats {};
-
 #define UPDATE_TOTAL_ALLOC_COUNT(MS, OP, ...)
 #define UPDATE_TOTAL_ALLOC_MEMORY(MS, OP, ...)
 #define UPDATE_TOTAL_LIVE_BYTES(MS, OP, ...)
@@ -166,4 +164,4 @@ struct MemStats {};
 
 #define UPDATE_ALLOC_STATS(ALLOC, MEMORY_SIZE)
 
-#endif// MEM_STATS
+#endif // MEM_STATS

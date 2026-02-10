@@ -96,6 +96,8 @@ struct BSQMemoryTheadLocalInfo
 	// still reachable from at least one thread)
 	void* thd_testing_data[NUM_THREAD_TESTING_ROOTS];
 #endif
+
+#ifndef MEM_STATS
     BSQMemoryTheadLocalInfo() noexcept : 
         tl_id(0), g_gcallocs(nullptr), collectfp(nullptr), native_stack_base(nullptr), native_stack_contents(), 
         native_register_contents(), roots_count(0), roots(nullptr), old_roots_count(0), 
@@ -103,6 +105,15 @@ struct BSQMemoryTheadLocalInfo
         decs_batch(), decd_pages(), nursery_usage(0.0f), pending_roots(), visit_stack(), 
 		pending_young(), bytes_freed(0), max_decrement_count(0), 
 		disable_automatic_collections(false) { }
+#else
+    BSQMemoryTheadLocalInfo() noexcept : 
+        tl_id(0), g_gcallocs(nullptr), collectfp(nullptr), native_stack_base(nullptr), native_stack_contents(), 
+        native_register_contents(), roots_count(0), roots(nullptr), old_roots_count(0), 
+        old_roots(nullptr), forward_table_index(FWD_TABLE_START), forward_table(nullptr), 
+        decs_batch(), decd_pages(), nursery_usage(0.0f), pending_roots(), visit_stack(), 
+		pending_young(), bytes_freed(0), max_decrement_count(0), 
+		disable_automatic_collections(false), memstats() { }
+#endif
 	BSQMemoryTheadLocalInfo& operator=(BSQMemoryTheadLocalInfo&) = delete;
     BSQMemoryTheadLocalInfo(BSQMemoryTheadLocalInfo&) = delete;
 	~BSQMemoryTheadLocalInfo() { this->cleanup(); }

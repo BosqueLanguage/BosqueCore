@@ -21,7 +21,7 @@ void* XAllocPageManager::allocatePage_impl() noexcept
 #endif
 
         this->freelist->next = NULL;
-        UPDATE_TOTAL_PAGES(+=, 1);
+        UPDATE_TOTAL_PAGES(gtl_info.memstats, +=, 1);
     }
 
     XAllocPage* xpage = this->freelist;
