@@ -173,15 +173,16 @@ PageInfo* GCAllocator::tryGetPendingRebuildPage(float max_util)
 	while(!gtl_info.decd_pages.isEmpty()) {
 		PageInfo* p = gtl_info.decd_pages.pop_front();
 		
-		// Page was on a different threads decd_pages list and removed
+		// Page was on a different threads decd_pages list and removed or 
+		// alloc/evac page of some threads allocator (as these arent on lists)
 		if(!p->visited || !p->owner) {
 			continue ;	
 		}
 
 		p->visited = false;
-
-		// not a fan of this, owner could be living on another thread
-		p->owner->remove(p);	
+		
+		// May be possible for owner to ne on another thread (ugh)
+		p->owner->remove(p); 
 		p->rebuild();
 
 		// move pages that are not correct type or too full
