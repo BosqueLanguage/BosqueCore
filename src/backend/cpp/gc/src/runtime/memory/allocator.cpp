@@ -165,8 +165,8 @@ void GCAllocator::processCollectorPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
 // finding one that is either empty or of the correct type is higher
 PageInfo* GCAllocator::tryGetPendingRebuildPage(float max_util)
 {	
-	// TODO we need to figure out some way to not need to lock here, decd_pages
-	// is thread local and it would be great to not have to lock during alloc
+	// TODO it would be nice to not need to lock here as this constitutes
+	// the largest pause when doing alloc refresh (unless we bound num rebuilds)
 	std::lock_guard lk(g_gcmemlock);
 
 	PageInfo* pp = nullptr;
@@ -175,6 +175,9 @@ PageInfo* GCAllocator::tryGetPendingRebuildPage(float max_util)
 		
 		// Page was on a different threads decd_pages list and removed or 
 		// alloc/evac page of some threads allocator (as these arent on lists)
+		// -- TODO this wont catch pages on pendinggc lists though as we dont have 
+		//    any way currently to detect this across multiple threads
+		//    (could we store a pointer to pages allocator inside a PageInfo?)
 		if(!p->visited || !p->owner) {
 			continue ;	
 		}
