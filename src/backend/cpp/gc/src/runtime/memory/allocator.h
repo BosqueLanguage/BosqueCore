@@ -343,10 +343,7 @@ private:
 	PageInfo* tryGetPendingRebuildPage(float max_util);
 	
     inline void rotateFullAllocPage()
-    {
-		// to protect against racing with the decs processor
- 		std::lock_guard lk(g_gcmemlock);
-		
+    {	
 		this->pendinggc_pages.push(this->alloc_page);
     }
 
@@ -389,9 +386,6 @@ private:
 
     PageInfo* getLowestLowUtilPage()
     {
-		// to protect against racing with decs processor
-		std::lock_guard lk(g_gcmemlock);
-        
 		for(int i = 0; i < NUM_LOW_UTIL_BUCKETS; i++) {
             if(!this->low_util_buckets[i].empty()) {
                 PageInfo* p = this->low_util_buckets[i].pop();
