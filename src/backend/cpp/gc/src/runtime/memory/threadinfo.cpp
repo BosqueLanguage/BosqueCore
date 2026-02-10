@@ -127,6 +127,8 @@ void BSQMemoryTheadLocalInfo::cleanup() noexcept
 #ifdef BSQ_GC_TESTING 
     g_thd_testing = true;
 #endif
+
+	MERGE_MEMSTATS(this->memstats);
 }
 
 

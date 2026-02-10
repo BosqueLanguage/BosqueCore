@@ -67,6 +67,10 @@ struct MemStats {
 	void statisticsDump();
 	std::string generateFormattedMemstats() noexcept;
 	void updateTelemetry(Phase p, double t) noexcept;
+
+	// Automatically called at the destruction of a thread, will need to be 
+	// manually called when updating with the main threads thread local memstats
+	void merge(MemStats &ms);
 };
 extern MemStats g_memstats;
 
@@ -146,7 +150,11 @@ extern MemStats g_memstats;
         Time mstats_compute_elapsed = TIME(mstats_compute_end - mstats_compute_start); \
         (INFO).memstats.overhead_time += mstats_compute_elapsed; \
     } while(0)
+
+#define MERGE_MEMSTATS(MS) g_memstats.merge(MS)
+
 #else
+
 #define UPDATE_TOTAL_ALLOC_COUNT(MS, OP, ...)
 #define UPDATE_TOTAL_ALLOC_MEMORY(MS, OP, ...)
 #define UPDATE_TOTAL_LIVE_BYTES(MS, OP, ...)
@@ -163,5 +171,7 @@ extern MemStats g_memstats;
 #define UPDATE_MEMSTATS_TOTALS(INFO)
 
 #define UPDATE_ALLOC_STATS(ALLOC, MEMORY_SIZE)
+
+#define MERGE_MEMSTATS(MS)
 
 #endif // MEM_STATS

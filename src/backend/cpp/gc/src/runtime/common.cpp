@@ -6,6 +6,7 @@ bool g_disable_stack_refs = false;
 std::mutex g_alloclock;
 std::mutex g_gcmemlock;
 std::mutex g_gcrefctlock;
+std::mutex g_gctelemetrylock;
 
 size_t GlobalThreadAllocInfo::s_thread_counter = 0;
 

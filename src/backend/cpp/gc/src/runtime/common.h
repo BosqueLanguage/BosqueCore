@@ -116,6 +116,10 @@ extern std::mutex g_gcmemlock;
 //A global mutex lock that all threads will use when doing shared GC ops (e.g. when doing their inc/dec ref loops)
 extern std::mutex g_gcrefctlock;
 
+// A global mutex lock that all threads will use when merging their thread local
+// memstats into the global memstats
+extern std::mutex g_gctelemetrylock;
+
 // Track information that needs to be globally accessible for threads
 class GlobalThreadAllocInfo
 {

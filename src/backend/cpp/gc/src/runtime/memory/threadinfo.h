@@ -151,6 +151,7 @@ struct BSQMemoryTheadLocalInfo
 	void initializeGC(GCAllocator** allocs, size_t n, void (*_collectfp)()) noexcept;
 	void loadNativeRootSet() noexcept;
     void unloadNativeRootSet() noexcept;
+	void updateGlobalMemstats();	
 	void cleanup() noexcept;
 };
 

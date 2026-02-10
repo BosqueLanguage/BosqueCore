@@ -272,4 +272,49 @@ std::string generateFormattedMemstats(MemStats& ms) noexcept
     return header + collection_times + nursery_times + rc_times;
 }
 
+// I believe we cannot safely merge these stats without possibly donking up 
+// the computation for mean, so I am leaning to creating a (thread local) 
+// array of the past N stats (maybe 1000 since these are small) then after 
+// N collections finish we trigger a merging into our main memstats and 
+// clear the list for future modificatoins
+static void mergeStats(Stats& dst, Stats& src) noexcept
+{
+	// hm merging this is weird	
+}
+
+static void mergeBuckets(size_t* dst, size_t* src) noexcept
+{
+	for(unsigned i = 0; i < MAX_MEMSTATS_BUCKETS; i++) {
+		dst[i] = src[i];	
+	}
+}
+
+void MemStats::merge(MemStats& ms)
+{
+	this->total_alloc_count += ms.total_alloc_count;
+	this->total_alloc_memory += ms.total_alloc_memory;
+	this->total_live_bytes += ms.total_live_bytes;
+	this->total_live_objects += ms.total_live_objects;
+	this->total_promotions += ms.total_promotions;
+	this->total_pages += ms.total_pages;
+
+	mergeStats(this->collection_stats, ms.collection_stats);
+	mergeStats(this->nursery_stats. ms.nursery_stats);
+	mergeStats(this->rc_stats, ms.rc_stats);
+
+	this->overhead_time += ms.overhead_time;
+	this->total_time += ms.total_time;
+
+	if(ms.max_live_heap > this->max_live_heap) {
+		this->max_live_heap = ms.max_live_heap;
+	}
+
+	mergeBuckets(this->collection_times, ms.collection_times);
+	mergeBuckets(this->nursery_times, ms.nursery_times);
+	mergeBuckets(this->rc_times, ms.rc_times);
+
+	// Should clear ms (incase we want to merge without killing ms's thread)
+	ms = {0};
+}
+
 #endif // MEM_STATS
