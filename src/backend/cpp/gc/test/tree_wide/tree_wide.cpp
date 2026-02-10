@@ -4,10 +4,10 @@ __CoreCpp::Int wideTreeTest_1()
     garray[1] = Main::accessNode(Main::makeTree(1_n, 0_n));
 
     collect();
-    uint64_t init_bytes = g_memstats.total_live_bytes;
+    uint64_t init_bytes = gtl_info.memstats.total_live_bytes;
     collect();
 
-    𝐚𝐬𝐬𝐞𝐫𝐭(init_bytes == g_memstats.total_live_bytes && g_memstats.total_live_bytes != 0);
+    𝐚𝐬𝐬𝐞𝐫𝐭(init_bytes == gtl_info.memstats.total_live_bytes && gtl_info.memstats.total_live_bytes != 0);
 
     garray[0] = nullptr;
     garray[1] = nullptr;
@@ -23,10 +23,10 @@ __CoreCpp::Int wideTreeTest_2()
     garray[1] = Main::accessNode(Main::makeTree(2_n, 0_n));
 
     collect();
-    uint64_t init_bytes = g_memstats.total_live_bytes;
+    uint64_t init_bytes = gtl_info.memstats.total_live_bytes;
     collect();
 
-    𝐚𝐬𝐬𝐞𝐫𝐭(init_bytes == g_memstats.total_live_bytes && g_memstats.total_live_bytes != 0);
+    𝐚𝐬𝐬𝐞𝐫𝐭(init_bytes == gtl_info.memstats.total_live_bytes && gtl_info.memstats.total_live_bytes != 0);
 
     garray[0] = nullptr;
     garray[1] = nullptr;
@@ -46,10 +46,10 @@ __CoreCpp::Int wideTreeTestMulti_1()
     garray[5] = Main::accessNode(Main::makeTree(1_n, 0_n));
 
     collect();
-    uint64_t init_bytes = g_memstats.total_live_bytes;
+    uint64_t init_bytes = gtl_info.memstats.total_live_bytes;
     collect();
 
-    𝐚𝐬𝐬𝐞𝐫𝐭(init_bytes == g_memstats.total_live_bytes && g_memstats.total_live_bytes != 0);
+    𝐚𝐬𝐬𝐞𝐫𝐭(init_bytes == gtl_info.memstats.total_live_bytes && gtl_info.memstats.total_live_bytes != 0);
 
     garray[0] = nullptr;
     garray[1] = nullptr;
@@ -73,10 +73,10 @@ __CoreCpp::Int wideTreeTestMulti_2()
     garray[5] = Main::accessNode(Main::makeTree(2_n, 0_n));
 
     collect();
-    uint64_t init_bytes = g_memstats.total_live_bytes;
+    uint64_t init_bytes = gtl_info.memstats.total_live_bytes;
     collect();
 
-    𝐚𝐬𝐬𝐞𝐫𝐭(init_bytes == g_memstats.total_live_bytes && g_memstats.total_live_bytes != 0);
+    𝐚𝐬𝐬𝐞𝐫𝐭(init_bytes == gtl_info.memstats.total_live_bytes && gtl_info.memstats.total_live_bytes != 0);
 
     garray[0] = nullptr;
     garray[1] = nullptr;

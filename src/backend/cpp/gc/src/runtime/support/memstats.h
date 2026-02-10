@@ -144,7 +144,7 @@ extern MemStats g_memstats;
         } \
         auto mstats_compute_end = std::chrono::high_resolution_clock::now(); \
         Time mstats_compute_elapsed = TIME(mstats_compute_end - mstats_compute_start); \
-        g_memstats.overhead_time += mstats_compute_elapsed; \
+        (INFO).memstats.overhead_time += mstats_compute_elapsed; \
     } while(0)
 #else
 #define UPDATE_TOTAL_ALLOC_COUNT(MS, OP, ...)
