@@ -585,7 +585,7 @@ static void updateRoots(BSQMemoryTheadLocalInfo& tinfo)
 // processAllocatorsPages but also need rebuilding after decs
 void collect() noexcept
 {
-    COLLECTION_STATS_START();
+    MEM_STATS_START(Collection);
 
 	// TODO pretty sure forcing the decs processor to pause will cause all other
 	// threads needing to collect to wait
@@ -598,14 +598,14 @@ void collect() noexcept
 
     gtl_info.pending_young.initialize();
 
-    NURSERY_STATS_START();
+    MEMSTATS_START(Nursery);
 
 	// Mark, compact, reprocess pages
     markingWalk(gtl_info);
     processMarkedYoungObjects(gtl_info);
     processAllocatorsPages(gtl_info);
     
-	NURSERY_STATS_END(nursery_times);
+	MEM_STATS_END(Nursery, gtl_info.memstats);
 
     gtl_info.pending_young.clear();
 
@@ -619,20 +619,20 @@ void collect() noexcept
 	// Find dead roots, walk object graph from dead roots updating necessary rcs
 	// rebuild pages who saw decs (TODO do this lazily), and merge remainder of decs
 	// (TODO use a single shared list (?))    	
-  	RC_STATS_START();
+  	MEM_STATS_START(RC_Old);
  
     computeDeadRootsForDecrement(gtl_info);
     processDecrements(gtl_info);	
 	tryMergeDecList(gtl_info);
 
-	RC_STATS_END(rc_times);
+	MEM_STATS_END(RC_Old, gtl_info.memstats);
 
     gtl_info.decs_batch.clear();
 
     // Cleanup for next collection
     updateRoots(gtl_info);
 
-    COLLECTION_STATS_END(collection_times);
+    MEM_STATS_END(Collection, gtl_info.memstats);
 
     UPDATE_MEMSTATS_TOTALS(gtl_info);
 

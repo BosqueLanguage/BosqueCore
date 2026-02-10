@@ -86,6 +86,10 @@ struct BSQMemoryTheadLocalInfo
 
     bool disable_automatic_collections;
 
+#ifdef MEM_STATS
+	MemStats memstats;
+#endif
+
 #ifdef BSQ_GC_TESTING
     // having thread local storage of root pointers is useful for testing 
 	// interactions of multiple threads (ensuring roots are kept alive if 

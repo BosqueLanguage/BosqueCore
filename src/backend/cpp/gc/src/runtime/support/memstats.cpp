@@ -7,8 +7,7 @@
 
 MemStats g_memstats{};
 
-static double get_stddev(const Stats& stats) noexcept;
-static double get_mean_pause(Stats& stats) noexcept;
+static double calStddev(const Stats& stats) noexcept;
 static double calculate_percentile_from_buckets(const size_t* buckets, double percentile) noexcept; 
 
 #define RST  "\x1B[0m"
@@ -23,29 +22,19 @@ enum class Unit {
 };
 
 #define WRITE_UNIT(STREAM, V, UNIT, CNT, SEC, BYTE) \
-    do { \
-        switch(UNIT) { \
-            case Unit::Count: { \
-                STREAM << V << CNT; \
-                break; \
-            } \
-            case Unit::Microseconds: { \
-                STREAM << V << SEC; \
-                break; \
-            } \
-            case Unit::Bytes: { \
-                STREAM << V << BYTE; \
-                break; \
-            } \
-            default: break; \
-        } \
-    } while(0)
+	switch(UNIT) { \
+		case Unit::Count:        STREAM << V << CNT; break; \
+		case Unit::Microseconds: STREAM << V << SEC; break; \
+		case Unit::Bytes:        STREAM << V << BYTE; break; \
+		default: break; \
+	} \
 
 void updateTotalTime()
 {
     auto now = std::chrono::high_resolution_clock::now();
     std::chrono::duration<Time, std::micro> dur = now.time_since_epoch();
-    g_memstats.total_time = dur.count() - g_memstats.start_time - g_memstats.overhead_time;
+    g_memstats.total_time = 
+		dur.count() - g_memstats.start_time - g_memstats.overhead_time;
 }
 
 static std::string printUnit(double v, Unit u)
@@ -88,8 +77,8 @@ static std::string printUnit(double v, Unit u)
 
 static void formatPerf(const std::string& phase, Stats& s, size_t* time_buckets)
 {
-    std::string mean = printUnit(get_mean_pause(s), Unit::Microseconds);
-    std::string std_dev = printUnit(get_stddev(s), Unit::Microseconds);
+    std::string mean = printUnit(s.mean, Unit::Microseconds);
+    std::string std_dev = printUnit(calcStddev(s), Unit::Microseconds);
     std::string min = printUnit(s.min, Unit::Microseconds);
     std::string max = printUnit(s.max, Unit::Microseconds);
     std::string fiftyth = printUnit(calculate_percentile_from_buckets(time_buckets, 0.50), Unit::Microseconds);
@@ -128,18 +117,16 @@ void printPerfHeader()
 void perfDump(Phase p)
 {
     switch(p) {
-        case Phase::Collection: {
-            formatPerf("Collection", g_memstats.collection_stats, g_memstats.collection_times);
+        case Phase::Collection:
+            formatPerf("Collection", this->collection_stats, 
+				this->collection_times);
             break;
-        }
-        case Phase::Nursery: {
-            formatPerf("Nursery", g_memstats.nursery_stats, g_memstats.nursery_times);
+        case Phase::Nursery:
+            formatPerf("Nursery", this->nursery_stats, this->nursery_times);
             break;
-        }
-        case Phase::RC_Old: {
-            formatPerf("RC Old", g_memstats.rc_stats, g_memstats.rc_times);           
+        case Phase::RC_Old:
+            formatPerf("RC Old", this->rc_stats, this->rc_times);           
             break;
-        }
         default: break;
     }
 }
@@ -171,7 +158,18 @@ static void update_extrema(Stats& s, double time) noexcept
     }
 }
 
-static void update_stats(Stats& stats, double time) noexcept
+static void updateBucket(size_t* bucket, double time) noexcept 
+{
+    int index = static_cast<int>((time * (1.0 / BUCKET_VARIANCE)) + 0.5);
+    if(index >= MAX_MEMSTATS_BUCKETS) { 
+        bucket[MAX_MEMSTATS_BUCKETS - 1]++;
+    }
+    else {
+        bucket[index]++;
+    }
+}
+
+static void updateStats(Stats& stats, double time) noexcept
 {
     // Welford's algorithm
     stats.count++;
@@ -184,23 +182,27 @@ static void update_stats(Stats& stats, double time) noexcept
     update_extrema(stats, time);
 }
 
-void update_bucket(size_t* bucket, double time) noexcept 
+void MemStats::updateTelemetry(Phase p, double t) noexcept
 {
-    int index = static_cast<int>((time * (1.0 / BUCKET_VARIANCE)) + 0.5);
-    if(index >= MAX_MEMSTATS_BUCKETS) { 
-        bucket[MAX_MEMSTATS_BUCKETS - 1]++;
-    }
-    else {
-        bucket[index]++;
-    }
+	using enum Phase;
+	switch(p) {
+		case Collection: 
+			updateStats(this->collection_stats, t); 
+			updateBucket(this->collection_times, t);
+			break;
+		case Nursery: 
+			updateStats(this->nursery_stats, t); 
+			updateBucket(this->nursery_times, t);
+			break;
+		case RC_Old: 
+			updateStats(this->rc_stats, t); 
+			updateBucket(this->rc_times, t);		
+			break;
+		default: assert(false && "Invalid phase in updateTelemetry!\n");
+	}
 }
 
-static double get_mean_pause(Stats& stats) noexcept
-{
-    return stats.mean;
-}
-
-static double get_stddev(const Stats& stats) noexcept 
+static double calcStddev(const Stats& stats) noexcept 
 {
     if(stats.count < 2) {
         return 0.0;
@@ -233,21 +235,6 @@ static double calculate_percentile_from_buckets(const size_t* buckets, double pe
     return (MAX_MEMSTATS_BUCKETS - 1) * BUCKET_VARIANCE;
 }
 
-void update_collection_stats(MemStats& ms, double time) noexcept 
-{
-    update_stats(ms.collection_stats, time);
-}
-
-void update_nursery_stats(MemStats& ms, double time) noexcept 
-{
-    update_stats(ms.nursery_stats, time);
-}
-
-void update_rc_stats(MemStats& ms, double time) noexcept 
-{
-    update_stats(ms.rc_stats, time);
-}
-
 static std::string generate_bucket_data(size_t buckets[MAX_MEMSTATS_BUCKETS]) noexcept 
 {
     std::string buf = "[";
@@ -268,7 +255,7 @@ static std::string generate_bucket_data(size_t buckets[MAX_MEMSTATS_BUCKETS]) no
 // <Statistic Name>[data, data, data]
 // <Statistic Name>[data, data, data] ...
 //
-std::string generate_formatted_memstats(MemStats& ms) noexcept
+std::string generateFormattedMemstats(MemStats& ms) noexcept
 {
     std::string header = "{" + std::to_string(BUCKET_VARIANCE) 
         + ", " + std::to_string(MAX_MEMSTATS_BUCKETS) + "}\n";
