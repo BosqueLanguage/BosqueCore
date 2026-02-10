@@ -58,7 +58,8 @@ static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcep
         else if(cur_root > cur_oldroot) { 
              // Was dropped from old roots	
         	MetaData* m = GC_GET_META_DATA_ADDR(cur_oldroot);  
-			GC_DROP_ROOT_REF(m);
+			GC_INVARIANT_CHECK(GC_THREAD_COUNT(m) > 0);
+			GC_DROP_ROOT_REF(m);	
 			if(GC_REF_COUNT(m) == 0 && !GC_IS_ROOT(m)) {
 				pushPendingDecs(cur_oldroot, tinfo.decs_batch);
             }           
@@ -211,7 +212,7 @@ static void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
 static void* forward(void* ptr, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     PageInfo* p = PageInfo::extractPageFromPointer(ptr);
-    GCAllocator* gcalloc = tinfo.getAllocatorForPageSize(p);
+    GCAllocator* gcalloc = tinfo.getAllocatorForType(p);
     GC_INVARIANT_CHECK(gcalloc != nullptr);
 
     MetaData* m = GC_GET_META_DATA_ADDR(ptr); 
@@ -324,6 +325,9 @@ static void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
 static inline bool pointsToObjectStart(void* addr) noexcept 
 {
+	// page->entrycount may be reset by another thread (setPageMetaData)
+	std::lock_guard lk(g_alloclock);
+
     uintptr_t offset = reinterpret_cast<uintptr_t>(addr) & PAGE_MASK; 
     PageInfo* p = PageInfo::extractPageFromPointer(addr);
 	if(offset < (sizeof(PageInfo) + METADATA_SEG_SIZE(p))) {
@@ -583,9 +587,13 @@ void collect() noexcept
 {
     COLLECTION_STATS_START();
 
-	// TODO we should explore possibilities for not needing to pause for the
-	// full collection!
-    g_decs_prcsr.pause();	
+	// TODO pretty sure forcing the decs processor to pause will cause all other
+	// threads needing to collect to wait
+    g_decs_prcsr.pause();
+	
+	// TODO this isnt great with multiple threads either as we will randomly
+	// merge the decs processors entire decd_pages list onto one thread, possibly
+	// starving others for pages
 	g_decs_prcsr.mergeDecdPages(gtl_info.decd_pages);
 
     gtl_info.pending_young.initialize();

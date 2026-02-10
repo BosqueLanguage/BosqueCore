@@ -8,7 +8,7 @@
 do { \
 	std::lock_guard lk(g_alloclock); \
 	register void** rbp asm("rbp"); \
-	TINFO.initialize(GlobalThreadAllocInfo::s_thread_counter++, rbp, COLLECT); \
+	(TINFO).initialize(GlobalThreadAllocInfo::s_thread_counter++, rbp, COLLECT); \
 } while(0)
 
 #define MAX_ALLOC_LOOKUP_TABLE_SIZE 1024
@@ -103,7 +103,7 @@ struct BSQMemoryTheadLocalInfo
     BSQMemoryTheadLocalInfo(BSQMemoryTheadLocalInfo&) = delete;
 	~BSQMemoryTheadLocalInfo() { this->cleanup(); }
 
-	inline GCAllocator* getAllocatorForPageSize(PageInfo* page) noexcept {
+	inline GCAllocator* getAllocatorForType(PageInfo* page) noexcept {
         uint32_t idx = page->typeinfo->type_id;
  		GC_INVARIANT_CHECK(idx < BSQ_MAX_ALLOC_SLOTS);	       
 
@@ -133,30 +133,10 @@ struct BSQMemoryTheadLocalInfo
 	}
 #endif
 	void initialize(size_t ntl_id, void** caller_rbp, void (*_collectfp)()) noexcept;
-    void loadNativeRootSet() noexcept;
+	void initializeGC(GCAllocator** allocs, size_t n, void (*_collectfp)()) noexcept;
+	void loadNativeRootSet() noexcept;
     void unloadNativeRootSet() noexcept;
 	void cleanup() noexcept;
 };
-
-template <size_t NUM>
-void initializeGC(GCAllocator* allocs[NUM], BSQMemoryTheadLocalInfo& tinfo, 
-	void (*collectfp)()) noexcept
-{ 
-	InitBSQMemoryTheadLocalInfo(tinfo, collectfp);
-
-	for(size_t i = 0; i < NUM; i++) {
-		GCAllocator* alloc = allocs[i];
-		uint32_t idx = alloc->getAllocType()->type_id;
-		GC_INVARIANT_CHECK(idx < BSQ_MAX_ALLOC_SLOTS);	
-
-		tinfo.g_gcallocs[idx] = alloc;
-	}
-
-	// collect to promote visible roots to old (incing thd counts) and init
-	// data structures
-	// -- also might want to some rampup work here like allocing a nursery	
-	// sized page instead of hitting the os nonstop before first collection 
-	tinfo.collectfp();
-}
 
 extern thread_local BSQMemoryTheadLocalInfo gtl_info;

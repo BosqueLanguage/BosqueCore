@@ -14,6 +14,10 @@ GlobalDataStorage GlobalDataStorage::g_global_data{};
 
 static void setPageMetaData(PageInfo* pp, __CoreGC::TypeInfoBase* typeinfo) noexcept
 {
+	std::lock_guard lk(g_alloclock);
+
+	pp->zeroInit();
+
     pp->typeinfo = typeinfo;
 	pp->realsize = REAL_ENTRY_SIZE(typeinfo->type_size);
 	uint8_t* bpp = reinterpret_cast<uint8_t*>(pp);
@@ -37,7 +41,6 @@ static void setPageMetaData(PageInfo* pp, __CoreGC::TypeInfoBase* typeinfo) noex
 PageInfo* PageInfo::initialize(void* block, __CoreGC::TypeInfoBase* typeinfo) noexcept
 { 
 	PageInfo* pp = static_cast<PageInfo*>(block);	
-	pp->zeroInit();
 	setPageMetaData(pp, typeinfo);
     
 	for(int64_t i = pp->entrycount - 1; i >= 0; i--) {
@@ -93,6 +96,9 @@ PageInfo* GlobalPageGCManager::getFreshPageFromOS(__CoreGC::TypeInfoBase* typein
     assert(page != MAP_FAILED);
 
 	lk.unlock();
+
+	// NOTE probably want to move the lock inside pagetableInsert
+	std::lock_guard nlk(g_gcmemlock);
 	this->pagetableInsert(page);
 
     PageInfo* pp = PageInfo::initialize(page, typeinfo);
@@ -104,6 +110,8 @@ PageInfo* GlobalPageGCManager::getFreshPageFromOS(__CoreGC::TypeInfoBase* typein
 
 PageInfo* GlobalPageGCManager::tryGetEmptyPage(__CoreGC::TypeInfoBase* typeinfo)
 {
+	std::lock_guard lk(g_gcmemlock);
+
 	PageInfo* pp = nullptr;
     if(!this->empty_pages.empty()) {
         void* page = this->empty_pages.pop();
@@ -157,23 +165,33 @@ void GCAllocator::processCollectorPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
 // finding one that is either empty or of the correct type is higher
 PageInfo* GCAllocator::tryGetPendingRebuildPage(float max_util)
 {	
+	// TODO it would be nice to not need to lock here as this constitutes
+	// the largest pause when doing alloc refresh (unless we bound num rebuilds)
+	std::lock_guard lk(g_gcmemlock);
+
 	PageInfo* pp = nullptr;
 	while(!gtl_info.decd_pages.isEmpty()) {
-		PageInfo* p = gtl_info.decd_pages.pop_front();	
-		p->visited = false;	
-
-		// alloc, evac, or pendinggc pages will be rebuilt in next collection
-		GCAllocator* gcalloc = gtl_info.getAllocatorForPageSize(p);
-		if(p == gcalloc->alloc_page || p == gcalloc->evac_page || p->owner == &gcalloc->pendinggc_pages) {
-			continue;
+		PageInfo* p = gtl_info.decd_pages.pop_front();
+		
+		// Page was on a different threads decd_pages list and removed or 
+		// alloc/evac page of some threads allocator (as these arent on lists)
+		// -- TODO this wont catch pages on pendinggc lists though as we dont have 
+		//    any way currently to detect this across multiple threads
+		//    (could we store a pointer to pages allocator inside a PageInfo?)
+		if(!p->visited || !p->owner) {
+			continue ;	
 		}
 
-		p->owner->remove(p);
+		p->visited = false;
+		
+		// May be possible for owner to ne on another thread (ugh)
+		p->owner->remove(p); 
 		p->rebuild();
 
 		// move pages that are not correct type or too full
 		if((p->typeinfo != this->alloctype && p->freecount != p->entrycount)
 			|| p->approx_utilization > max_util) {
+				GCAllocator* gcalloc = gtl_info.getAllocatorForType(p);
 				gcalloc->processPage(p);
 		}
 	    else {
@@ -229,8 +247,8 @@ void GCAllocator::allocatorRefreshAllocationPage()noexcept
     if(this->alloc_page != nullptr) {
         gtl_info.updateNurseryUsage(this->alloc_page);
         if(gtl_info.nursery_usage >= BSQ_FULL_NURSERY_THRESHOLD 
-			&& !gtl_info.disable_automatic_collections
-		) { 
+			&& !gtl_info.disable_automatic_collections) 
+		{ 
             gtl_info.nursery_usage = 0.0f;
             gtl_info.collectfp();
         }

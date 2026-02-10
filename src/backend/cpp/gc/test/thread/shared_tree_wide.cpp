@@ -7,8 +7,7 @@ static void runThreadTest(size_t nthds, void* roots[N])
 
 	std::thread thd = std::thread([troots = roots, nthds]() {
 		gtl_info.insertThreadTestData<N>(troots);
-		initializeGC<sizeof(allocs) / sizeof(allocs[0])>(allocs, gtl_info, collect);
-
+		gtl_info.initializeGC(allocs, sizeof(allocs) / sizeof(allocs[0]), collect);
 		threadTest<N>(troots, nthds);
 	
 		std::unique_lock lk(g_mtx);

@@ -88,8 +88,8 @@ public:
     uint16_t freecount;
 
 	// NOTE probably could do approx util just as an int
-    float approx_utilization; 
-    std::atomic<bool> visited; // has this page been inserted into an array list yet?
+    float approx_utilization;
+	std::atomic<bool> visited;
 
 	void zeroInit() noexcept
 	{
@@ -343,8 +343,8 @@ private:
 	PageInfo* tryGetPendingRebuildPage(float max_util);
 	
     inline void rotateFullAllocPage()
-    {
-        this->pendinggc_pages.push(this->alloc_page);
+    {	
+		this->pendinggc_pages.push(this->alloc_page);
     }
 
     static int getBucketIndex(PageInfo* p)
@@ -386,7 +386,7 @@ private:
 
     PageInfo* getLowestLowUtilPage()
     {
-        for(int i = 0; i < NUM_LOW_UTIL_BUCKETS; i++) {
+		for(int i = 0; i < NUM_LOW_UTIL_BUCKETS; i++) {
             if(!this->low_util_buckets[i].empty()) {
                 PageInfo* p = this->low_util_buckets[i].pop();
                 return p;
