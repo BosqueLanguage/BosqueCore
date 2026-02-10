@@ -165,32 +165,34 @@ void GCAllocator::processCollectorPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
 // finding one that is either empty or of the correct type is higher
 PageInfo* GCAllocator::tryGetPendingRebuildPage(float max_util)
 {	
-	// honestly not sure if we need this lock always, it is useful for the 
-	// decs processor as we no longer can race on modifications of ppage storage
-	// but not sure about how this impacts multi-threaded bosque
+	// TODO we need to figure out some way to not need to lock here, decd_pages
+	// is thread local and it would be great to not have to lock during alloc.
+	// -- this is caused by pages possibly being present on multiple threads
+	//    decd_pages list. Maybe we could turn this into a page list such that
+	//    removal is forcefully visible accross all threads? Then it would be
+	//    impossible for two threads to both have the same page on their lists
+	//    (but doesnt that again force syncronization? or just less?)
 	std::lock_guard lk(g_gcmemlock);
 
 	PageInfo* pp = nullptr;
 	while(!gtl_info.decd_pages.isEmpty()) {
-		PageInfo* p = gtl_info.decd_pages.pop_front();	
-		p->visited = false;	
-
-		// alloc, evac, or pendinggc pages will be rebuilt in next collection
-		GCAllocator* gcalloc = gtl_info.getAllocatorForType(p);
-		if(p == gcalloc->alloc_page 
-			|| p == gcalloc->evac_page 
-			|| p->owner == &gcalloc->pendinggc_pages) 
-		{
-			continue;
+		PageInfo* p = gtl_info.decd_pages.pop_front();
+		
+		// Page was on a different threads decd_pages list and removed
+		if(!p->visited || !p->owner) {
+			continue ;	
 		}
 
-        GC_INVARIANT_CHECK(p->owner == nullptr && p->prev == nullptr && p->next == nullptr);
+		p->visited = false;
 
+		// not a fan of this, owner could be living on another thread
+		p->owner->remove(p);	
 		p->rebuild();
 
 		// move pages that are not correct type or too full
 		if((p->typeinfo != this->alloctype && p->freecount != p->entrycount)
 			|| p->approx_utilization > max_util) {
+				GCAllocator* gcalloc = gtl_info.getAllocatorForType(p);
 				gcalloc->processPage(p);
 		}
 	    else {

@@ -88,8 +88,8 @@ public:
     uint16_t freecount;
 
 	// NOTE probably could do approx util just as an int
-    float approx_utilization; 
-    std::atomic<bool> visited; // has this page been inserted into an array list yet?
+    float approx_utilization;
+	std::atomic<bool> visited;
 
 	void zeroInit() noexcept
 	{

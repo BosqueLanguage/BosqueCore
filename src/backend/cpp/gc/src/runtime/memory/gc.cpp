@@ -120,19 +120,13 @@ static void walkPointerMaskForDecrements(__CoreGC::TypeInfoBase* typeinfo, void*
     }
 }
 
+// I believe two threads could simultaneously see a non visited page then no matter the
+// state of visited always push it. Maybe things will work if we just always lock decs 
+// updates?
 static inline void updateDecrementedPages(void* obj, ArrayList<PageInfo*>& pagelist) noexcept 
 {
-	std::lock_guard lk(g_gcmemlock);
-
 	PageInfo* p = PageInfo::extractPageFromPointer(obj);
 	if(!p->visited) {
-		// If no owner, page must be alloc/evac so ignore as it will be rebuilt
-		// next collection
-        if(!p->owner) { 
-    		return ;
-        } 
-	
-        p->owner->remove(p);                                                                        
 		p->visited = true;
 		pagelist.push_back(p);
     }
@@ -595,9 +589,13 @@ void collect() noexcept
 {
     COLLECTION_STATS_START();
 
-	// TODO we should explore possibilities for not needing to pause for the
-	// full collection!
-    g_decs_prcsr.pause();	
+	// TODO pretty sure forcing the decs processor to pause will cause all other
+	// threads needing to collect to wait
+    g_decs_prcsr.pause();
+	
+	// TODO this isnt great with multiple threads either as we will randomly
+	// merge the decs processors entire decd_pages list onto one thread, possibly
+	// starving others for pages
 	g_decs_prcsr.mergeDecdPages(gtl_info.decd_pages);
 
     gtl_info.pending_young.initialize();
