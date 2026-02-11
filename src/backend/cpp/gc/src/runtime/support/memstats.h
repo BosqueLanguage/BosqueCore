@@ -78,11 +78,13 @@ struct MemStats {
 	void statisticsDump();
 	std::string generateFormattedMemstats() noexcept;
 	void updateTelemetry(Phase p, double t) noexcept;
-	void tryUpdateGlobalStats() noexcept;
+	void processAllTimesLists(Stats& dst) noexcept
+	void mergeNonTimeLists(MemStats& src);
+	void tryMergeTimesLists(MemStats& src, bool is_global_memstats, bool force) noexcept;
 
 	// Automatically called at the destruction of a thread, will need to be 
 	// manually called when updating with the main threads thread local memstats
-	void merge(MemStats &ms);
+	void merge(MemStats& src, bool is_global_memstats, bool force);
 };
 extern MemStats g_memstats;
 
@@ -125,6 +127,8 @@ extern MemStats g_memstats;
         (MS).statisticsDump(); \
     } while(0)
 
+#define MEM_STATS_PRINT(S) std::cout << S
+
 #define TIME(T) \
 	std::chrono::duration_cast<std::chrono::duration<Time, std::micro>>(T).count()
 
@@ -164,7 +168,8 @@ extern MemStats g_memstats;
         (INFO).memstats.overhead_time += mstats_compute_elapsed; \
     } while(0)
 
-#define MERGE_MEMSTATS(MS) g_memstats.merge(MS)
+#define MERGE_MEMSTATS(MS)       g_memstats.merge(MS, true, false)
+#define FORCE_MERGE_MEMSTATS(MS) g_memstats.merge(MS, true, true)
 
 #else
 
@@ -177,6 +182,7 @@ extern MemStats g_memstats;
 #define UPDATE_MAX_LIVE_HEAP(MS, OP, ...)
 
 #define MEM_STATS_DUMP(MS)
+#define MEM_STATS_PRINT(S)
 
 #define MEM_STATS_START(NAME)
 #define MEM_STATS_END(MS, PHASE, NAME)
@@ -186,5 +192,6 @@ extern MemStats g_memstats;
 #define UPDATE_ALLOC_STATS(ALLOC, MEMORY_SIZE)
 
 #define MERGE_MEMSTATS(MS)
+#define FORCE_MERGE_MEMSTATS(MS)
 
 #endif // MEM_STATS

@@ -1,5 +1,6 @@
 #pragma once 
 
+#include "../common.h"
 #include "allocator.h"
 
 #include <chrono>
@@ -104,7 +105,7 @@ struct BSQMemoryTheadLocalInfo
         old_roots(nullptr), forward_table_index(FWD_TABLE_START), forward_table(nullptr), 
         decs_batch(), decd_pages(), nursery_usage(0.0f), pending_roots(), visit_stack(), 
 		pending_young(), bytes_freed(0), max_decrement_count(0), 
-		disable_automatic_collections(false) { }
+		disable_automatic_collections(false) {}
 #else
     BSQMemoryTheadLocalInfo() noexcept : 
         tl_id(0), g_gcallocs(nullptr), collectfp(nullptr), native_stack_base(nullptr), native_stack_contents(), 
@@ -112,7 +113,7 @@ struct BSQMemoryTheadLocalInfo
         old_roots(nullptr), forward_table_index(FWD_TABLE_START), forward_table(nullptr), 
         decs_batch(), decd_pages(), nursery_usage(0.0f), pending_roots(), visit_stack(), 
 		pending_young(), bytes_freed(0), max_decrement_count(0), 
-		disable_automatic_collections(false), memstats() { }
+		disable_automatic_collections(false), memstats() {}
 #endif
 	BSQMemoryTheadLocalInfo& operator=(BSQMemoryTheadLocalInfo&) = delete;
     BSQMemoryTheadLocalInfo(BSQMemoryTheadLocalInfo&) = delete;
