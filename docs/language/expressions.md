@@ -172,11 +172,14 @@ typedecl ZipcodeUS = /[0-9]{5}(-[0-9]{4})?/;
 ```
 
 ## Parameters/Variables/Captures
--- In Progress --
-Variables in Bosque are of the form `[_a-z][_a-zA-Z0-9]`. Local variables can be declared using a `let` for immutable bindings or `var` for mutable bindings. Parameters are always immutable -- except for `this` in a `ref` method and `self` in a `ref` method or `action`. Variables and parameters can be captured by lambda constructors and are immutable within the lambda scope. As Bosque is _referentially transparent_ there are no modes that are needed for the lambda captures. See also [let/var bindings](statements.md).
+Variables in Bosque are of the form `[_a-z][_a-zA-Z0-9]`. Local variables can be declared using a `let` for immutable bindings or `var` for mutable bindings. In addition to these standard modifiers, variables can also be declared with the `ref` modifier which allows them to be modified (see ref updates) in place or passed as reference parameters in calls.
+
+ Parameters are by default immutable. There are explicit passing modifers, `out`, `out?`, `inout`, and `ref` that allow updates in the callee to be reflected in the caller. The `out`, `out?`, `inout` modifiers require the caller to pass a
+ variable that the callee can assign, conditionally assign or read/assign, respectively. The `ref` modifier allows the caller to pass a variable that the callee can ref update.
+ 
+ As Bosque is _referentially transparent_ there are no modes that are needed for the lambda captures -- all values are captured by value and cannot be modified in the lambda body. 
 
 ## Namespace Constants
--- In Progress --
 Constant values can be declared in `namespace` scopes (see [Namespaces](structures.md)). These constants can be used in expressions with the syntax `<namespace>::<constant>` and, when they refer to `literal` values they are then valid `literal` expressions as well (so can be used in switch statements etc.).
 
 ```none
@@ -190,7 +193,6 @@ Ns::c2 %%3i but not a literal expression
 ```
 
 ## Member Constants
--- In Progress --
 Constant values can be declared in Object-Oriented scopes as well (see [types](types.md)). These constants can be used in expressions with the syntax `<typename>::<constant>` and, when they refer to `literal` values they are then valid `literal` expressions as well (so can be used in switch statements etc.).
 
 In contrast to many languages `const` declarations are dynamically resolved. Thus, any subtype will also have access to the `const` declarations of the supertype. This allows for a more flexible and natural way to define common constants for a set of types.
@@ -213,8 +215,7 @@ Bar::c3 %%1i and a literal expression as well (transitively)
 ```
 
 ## Entity Constructors
--- In Progress --
-Object-oriented programming in Bosque is centered around _Concepts_ and _Entities_ (see [Types](types.md)) which roughly correspond to objects and abstract classes/interfaces in other languages. These types can be defined explicitly using `entity` or `concept` declarations and are also implicitly created via `typedecl` or `datatype` declarations. Examples of simple OO construction are:
+Object-oriented programming in Bosque is centered around _Concepts_ and _Entities_ (see [Types](types.md)) which roughly correspond to objects and abstract classes/interfaces in other languages. These types can be defined explicitly using `entity` or `concept` declarations and are also implicitly created via `typed` or `datatype` declarations. Examples of simple OO construction are:
 ```none
 entity Foo {
     field f: Int;
@@ -226,8 +227,13 @@ concept Bar {
 }
 entity Baz provides Bar {
     field h: Nat;
+    field i: Bool;
 }
-Baz{3i, 4n} %%constructs a Baz where field g has value 3i and field h has value 4n
+Baz{3i, 4n, true} %%constructs a Baz where field g has value 3i, field h has value 4n, and field i has value true
+
+Baz{g = 3i, h = 4n, i = true} %%constructs a Baz with the same values as above but with named fields instead of positional fields
+Baz{3i, i = false, h = 4n} %%constructs same Baz as above using mixed named and positional fields
+Baz{_, 4n, true, g = 3i} %%constructs a Baz with the same values but skips the first field (using the `_` placeholder) and later specifies the field value with a named parameter
 
 concept Named {
     field name: String;
@@ -237,18 +243,19 @@ entity Qux provides Named, Bar {
 Qux{"bob", 3i} %%constructs a Qux where field name has value "bob" and field g has value 3i
 ```
 
-Similarly object-oriented types can be defined as `typedecls` or `datatypes` and constructed using the same syntax. For example:
+Similarly object-oriented types can be defined as `type` or `datatypes` and constructed using the same syntax. For example:
 ```none
-typedecl Fahrenheit = Int;
+type Fahrenheit = Int;
 Fahrenheit{32i} %%constructs a Fahrenheit value for freezing
 
-typedecl SystemID = /[A-Z]{3}"-"[0-9]+/;
-typedecl PartID = StringOf<SystemID>;
+type SystemID = /[A-Z]{3}"-"[0-9]+/;
+type PartID = StringOf<SystemID>;
 
-"X-52"_PartID    %%fails the invariant on the string
-"ABC-123"_PartID %%constructs a literal PartID value with the value ABC-123
+"X-52"<PartID>    %%fails the invariant on the string
+"ABC-123"<PartID> %%constructs a literal PartID value with the value ABC-123
 PartID{SystemID::from("ABC-123")} %%constructs a PartID value with the value ABC-123
 
+---In Progress---
 datatype BoolOp using {
     line: Nat
 } of
@@ -283,7 +290,7 @@ Qux{"bob", 0i, 10i} %%fails invariant $g > 0
 Qux{"bob", 4i, 2i} %%fails invariant $g < $h
 Qux{"bob", 4i, 10i} %%ok
 
-typedecl Percentage = Nat & {
+type Percentage = Nat & {
     invariant $value <= 100n;
 }
 Percentage{101n} %%fails invariant $value <= 100n
@@ -298,9 +305,6 @@ Examples of these special forms include:
 let x: Option<Int> = some(3i); %%s special constructor type inferred from the declaration context
 let y = some(5i); %%y is a Some<Int> with value 5i inferred from the expression context
 
-
--- In Progress --
-
 function foo(): Result<Int, String> {
     return ok(3i); %%returns a Result<Int, String> with value 3i
 }
@@ -308,22 +312,25 @@ function foo(): Result<Int, String> {
 function bar(): Result<Int, String> {
     return err("error"); %%returns a Result<Int, String> with error "error"
 }
+
 function baz(): Result<Int, String?> {
     return result(bar()); %%returns a Result<Int, String?> by converting the return of bar into the correct type
 }
 ```
 
 ## Collection Constructors
--- In Progress --
 Bosque provides a range of standard collections, including `List<T>`, `Stack<T>`, `Queue<T>`, `Set<T>`, and `Map<K, V>` (more details are available in the collections docs).These collections can be constructed using syntax similar to the entity constructors (but generalized since they may have many elements). For example:
 ```none
 List<Bool>{} %%constructs an empty List<Bool>
 List<Int>{1i, 2i, 3i} %%constructs a List<Int> with values 1i, 2i, 3i
 
+-- In Progress --
+
 Map<Int, String>{} %%constructs an empty Map<Int, String>
 Map<Int, String>{MapEntry<Int, String>{1i, "one"}, MapEntry<Int, String>{2i, "two"}} %%constructs a Map<Int, String> with entries 1i->"one" and 2i->"two"
 ```
 
+-- In Progress --
 Map (Set) constructors must have `KeyType` values as keys (see [types](types.md)) also do validity checking that there are no duplicate keys. Maps also provide a shorthand syntax for constructing `MapEntry` values:
 ```none
 Map<[Int, Int], String>{} %%Type error [Int, Int] is not a KeyType
@@ -333,7 +340,6 @@ Map<Int, String>{1i => "one", 2i => "two"} %%constructs a Map<Int, String> with 
 ```
 
 ## Namespace and Member Functions
--- In Progress --
 Bosque supports simple functions defined at a namespace scope or within a type scope. Namespace functions can be called with or without a namespace qualifier (for functions defined in ths same namespace where they are use). Functions defined in a type scope must always be called with the type qualifier (even within the same type scope).
 
 ```none
@@ -354,6 +360,8 @@ entity Foo {
 
 Foo::f(1i, 2i) %%returns -1i
 ```
+
+Function parameters expressions that, are by default, passed by value. They can be passed by position or by name (with the syntax `param = value`) and can be optionally skipped (`_`) and filled in by name later in the list. Bosque also supports spread/rest parameters and supports `out`, `out?`, `inout`, `ref` modifiers for parameters that allow the callee to assign/modify values for these parameters that are then reflected in the caller (see [Parameters and Arguments](expressions.md)).
 
 ## Namespace Operators
 -- In Progress --
@@ -590,7 +598,7 @@ Types are not implicitly converted for arithmetic operations and, if needed, mus
 In addition to standard numeric types Bosque also supports `type` aliases of numeric types. These aliases support all the same arithmetic operations as their underlying types for basic well-formed (closed) operations. In the case of addition and subtraction this means that both arguments must be of the same `type` alias. For multiplication one argument may be of the `type` alias and the other of the underlying numeric type and for division the numerator must be of the `type` alias while the divisor can be of the `type` alias (yielding a result of the underlying type) or of the underlying type (yielding a result of the `type` alias). 
 
 ```none
-typedecl Foo = Int;
+type Foo = Int;
 
 2i<Foo> + 1i<Foo>  %% 3i<Foo>
 
@@ -611,7 +619,7 @@ Types are not implicitly converted for comparison operations and, if needed, mus
 1i != 2i     %%true
 3.5f <= 2.5f %%false
 
-typedecl Foo = Nat;
+type Foo = Nat;
 2n_Foo > 1n_Foo %%true
 2n_Foo !== 3n_Foo %%true
 ```
@@ -690,17 +698,22 @@ KeyComparator::equal<ChkInt>(4I, ChkInt::npos) %%true -- npos is greater than al
 ```
 
 ## Binary Logic `&&`/`||`/`==>` operators
--- In Progress --
-Bosque provides the standard short-circuiting boolean operators of `&&` and `||`. Bosque also has a logical implication operator `==>` which is short-circuited on the left side when it is `false`. 
+Bosque provides (slightly non-standard) _non_-short-circuiting boolean operators of `&&` and `||`. 
 
 ```none
-true && true %%true
-true && false %%false
-false && (1i / 0i == 1i) %%false -- short-circuited
+true && true  %%  true
+true && false %% false
+false && (1i / 0i == 1i) %% failure -- NOT short-circuited
 
-true || false %%true -- short-circuited
-false || false %%false
+true || false  %% true
+false || false %% false
+true || (1i / 0i == 1i) %% failure -- NOT short-circuited
+```
 
+-- In Progress --
+Bosque also has a logical implication operator `==>` which is short-circuited on the left side when it is `false`. 
+
+```none
 true ==> true %%true
 true ==> false %%false
 false ==> (1i / 0i == 1i) %%true -- short-circuited
@@ -726,15 +739,12 @@ There are three flavors of ITests in bosque:
 3. **Special Constructor ITests** - These are used to test if an expression is a specific special constructor and then, depending, on the context will also extract and bind values. The syntax for these is:
     - `none` - tests if the expression is `none` and converts the result to a none
     - `some` - tests if the expression is `some` and converts the result to a some
-    - `nothing` - tests if the expression is `nothing` and converts the result to a nothing
-    - `something` - tests if the expression is `something` and converts the result to `T` corresponding to the `Something<T>` type value
     - `ok` - tests if the expression is `ok` and converts the result to `T` corresponding to the `Result<T, E>::Ok` type value
-    - `err` - tests if the expression is `err` and converts the result to `E` corresponding to the `Result<T, E>::Err` type value
-    - `result` - tests if the expression is `result` and converts the result to `Result<U, V>` corresponding to the contextual Result type value
+    - `fail` - tests if the expression is `err` and converts the result to `E` corresponding to the `Result<T, E>::Err` type value
+    
+## Parameters and Arguments
 
-[TODO] the `result` case has missing support in some of the positions.
-
-## Arguments
+-- In Progress --
 
 ## Binders
 
