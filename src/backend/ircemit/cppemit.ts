@@ -845,7 +845,7 @@ class CPPEmitter {
 
         let ichk = " ";
         if(indent !== undefined) {
-            ichk = `\n${indent}`;
+            ichk = `\n${bindent}`;
         }
 
         return `if(${ttest}) ${tbody}${ichk}else ${fbody}${isfinal ? "" : "\n"}`;
