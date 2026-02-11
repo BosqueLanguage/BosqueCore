@@ -119,13 +119,13 @@ void MemStats::perfDump(Phase p)
     switch(p) {
         case Phase::Collection:
             formatPerf("Collection", this->collection_stats, 
-				this->collection_times);
+				this->collection_buckets);
             break;
         case Phase::Nursery:
-            formatPerf("Nursery", this->nursery_stats, this->nursery_times);
+            formatPerf("Nursery", this->nursery_stats, this->nursery_buckets);
             break;
         case Phase::RC_Old:
-            formatPerf("RC Old", this->rc_stats, this->rc_times);           
+            formatPerf("RC Old", this->rc_stats, this->rc_buckets);           
             break;
         default: break;
     }
@@ -177,7 +177,7 @@ void Stats::update(double time) noexcept
     }
 }
 
-void MemStats::updateStats(Stats& trgt, Time* list, double t) noexcept
+static inline void updateStats(Stats& trgt, Time* list, double t) noexcept
 {
 	list[trgt.count % TIMES_LIST_SIZE] = t;
 	trgt.update(t);
@@ -188,15 +188,15 @@ void MemStats::updateTelemetry(Phase p, double t) noexcept
 	using enum Phase;
 	switch(p) {
 		case Collection: 
-			this->updateStats(this->collection, this->collection_times, t); 
+			updateStats(this->collection_stats, this->collection_times, t); 
 			updateBucket(this->collection_buckets, t);
 			break;
 		case Nursery: 
-			this->updateStats(this->nursery, this->nursery_times, t); 
+			updateStats(this->nursery_stats, this->nursery_times, t); 
 			updateBucket(this->nursery_buckets, t);
 			break;
 		case RC_Old: 
-			this->updateStats(this->rc, this->rc_times, t); 
+			updateStats(this->rc_stats, this->rc_times, t); 
 			updateBucket(this->rc_buckets, t);		
 			break;
 		default: assert(false && "Invalid phase in updateTelemetry!\n");
@@ -217,13 +217,15 @@ static inline void processTimesList(Stats& dst, Time* src) noexcept
 // To prevent incorrect mean calculations when merging into our global memstats
 // we maintain lists of stats for each collection phase and periodically work
 // through each stat entry, updating g_memstats 
+// -- and should we really have this explicitly target global memstats? it 
+//    might make more sense to have it just be generic
 void MemStats::tryUpdateGlobalStats() noexcept
 {
 	std::lock_guard lk(g_gctelemetrylock);
-	if(this->collection.count == TIMES_LIST_SIZE) {
-		processTimesList(g_memstats.collection, this->collection_times);	
-		processTimesList(g_memstats.nursery, this->nursery_times);
-		processTimesList(g_memstats.rc, this->rc_times);
+	if(this->collection_stats.count == TIMES_LIST_SIZE) {
+		processTimesList(g_memstats.collection_stats, this->collection_times);	
+		processTimesList(g_memstats.nursery_stats, this->nursery_times);
+		processTimesList(g_memstats.rc_stats, this->rc_times);
 	}
 }
 
@@ -283,14 +285,14 @@ static std::string generate_bucket_data(size_t buckets[MAX_MEMSTATS_BUCKETS]) no
 std::string generateFormattedMemstats(MemStats& ms) noexcept
 {
     std::string header = "{" + std::to_string(BUCKET_VARIANCE) 
-        + ", " + std::to_string(MAX_MEMSTATS_BUCKETS) + "}\n
-    std::string collection_data = generate_bucket_data(ms.collection_times);
+        + ", " + std::to_string(MAX_MEMSTATS_BUCKETS) + "}\n";
+    std::string collection_data = generate_bucket_data(ms.collection_buckets);
     std::string collection_times = "<Collection Times>" + collection_data;
 
-    std::string nursery_data = generate_bucket_data(ms.nursery_times);
+    std::string nursery_data = generate_bucket_data(ms.nursery_buckets);
     std::string nursery_times = "<Nursery Times>" + nursery_data;
 
-    std::string rc_data = generate_bucket_data(ms.rc_times);
+    std::string rc_data = generate_bucket_data(ms.rc_buckets);
     std::string rc_times = "<RC Times>" + rc_data;
 
     return header + collection_times + nursery_times + rc_times;
@@ -303,32 +305,32 @@ static void mergeBuckets(size_t* dst, size_t* src) noexcept
 	}
 }
 
-void MemStats::merge(MemStats& trgt)
+void MemStats::merge(MemStats& src)
 {
-	this->total_alloc_count +=  trgt.total_alloc_count;
-	this->total_alloc_memory += trgt.total_alloc_memory;
-	this->total_live_bytes +=   trgt.total_live_bytes;
-	this->total_live_objects += trgt.total_live_objects;
-	this->total_promotions +=   trgt.total_promotions;
-	this->total_pages +=      	trgt.total_pages;
+	this->total_alloc_count +=  src.total_alloc_count;
+	this->total_alloc_memory += src.total_alloc_memory;
+	this->total_live_bytes +=   src.total_live_bytes;
+	this->total_live_objects += src.total_live_objects;
+	this->total_promotions +=   src.total_promotions;
+	this->total_pages +=      	src.total_pages;
 
-	processTimesList(g_memstats.collection, this->collection_times);	
-	processTimesList(g_memstats.nursery, this->nursery_times);
-	processTimesList(g_memstats.rc, this->rc_times);
+	processTimesList(this->collection_stats, src.collection_times);	
+	processTimesList(this->nursery_stats, src.nursery_times);
+	processTimesList(this->rc_stats, src.rc_times);
 
-	this->overhead_time += trgt.overhead_time;
-	this->total_time += trgt.total_time;
+	this->overhead_time += src.overhead_time;
+	this->total_time += src.total_time;
 
-	if(trgt.max_live_heap > this->max_live_heap) {
-		this->max_live_heap = trgt.max_live_heap;
+	if(src.max_live_heap > this->max_live_heap) {
+		this->max_live_heap = src.max_live_heap;
 	}
 
-	mergeBuckets(this->collection_times, trgt.collection_times);
-	mergeBuckets(this->nursery_times, trgt.nursery_times);
-	mergeBuckets(this->rc_times, trgt.rc_times);
+	mergeBuckets(this->collection_buckets, src.collection_buckets);
+	mergeBuckets(this->nursery_buckets, src.nursery_buckets);
+	mergeBuckets(this->rc_buckets, src.rc_buckets);
 
-	// Should clear ms (incase we want to merge without killing ms's thread)
-	trgt = {0};
+	// TODO Should clear ms (incase we want to merge without killing ms's thread)
+	//src = {0};
 }
 
 #endif // MEM_STATS

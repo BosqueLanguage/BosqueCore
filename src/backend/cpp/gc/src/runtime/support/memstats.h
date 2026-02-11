@@ -34,7 +34,7 @@ struct Stats {
     Time min   = TIME_MAX;
     Time max   = 0.0;
 
-	void update() noexcept;
+	void update(double t) noexcept;
 };
 
 struct MemStats {
@@ -45,9 +45,9 @@ struct MemStats {
     size_t total_promotions   = 0;
     size_t total_pages        = 0;
 
-    Stats collection;
-    Stats nursery;
-    Stats rc;
+    Stats collection_stats = {0};
+    Stats nursery_stats = {0};
+    Stats rc_stats = {0};
 
 	// Not of use to the global memstats, just easier to leave it present
 	Time collection_times[TIMES_LIST_SIZE];
