@@ -50,6 +50,7 @@ struct MemStats {
     Stats rc_stats = {0};
 
 	// Not of use to the global memstats, just easier to leave it present
+	size_t times_count = 0;	
 	Time collection_times[TIMES_LIST_SIZE];
 	Time nursery_times[TIMES_LIST_SIZE];
 	Time rc_times[TIMES_LIST_SIZE];
@@ -78,7 +79,7 @@ struct MemStats {
 	void statisticsDump();
 	std::string generateFormattedMemstats() noexcept;
 	void updateTelemetry(Phase p, double t) noexcept;
-	void processAllTimesLists(Stats& dst) noexcept
+	void processAllTimesLists(MemStats& src, const size_t ntimes) noexcept;
 	void mergeNonTimeLists(MemStats& src);
 	void tryMergeTimesLists(MemStats& src, bool is_global_memstats, bool force) noexcept;
 
@@ -162,7 +163,7 @@ extern MemStats g_memstats;
                 alloc->updateMemStats(); \
             } \
         } \
-		(INFO).memstats.tryUpdateGlobalStats(); \
+		g_memstats.tryMergeTimesLists((INFO).memstats, true, false); \
         auto mstats_compute_end = std::chrono::high_resolution_clock::now(); \
         Time mstats_compute_elapsed = TIME(mstats_compute_end - mstats_compute_start); \
         (INFO).memstats.overhead_time += mstats_compute_elapsed; \

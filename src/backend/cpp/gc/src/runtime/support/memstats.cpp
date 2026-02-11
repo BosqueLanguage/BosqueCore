@@ -177,10 +177,13 @@ void Stats::update(double time) noexcept
     }
 }
 
-static inline void updateStats(Stats& trgt, Time* list, double t) noexcept
+static inline void updateStats(double t, Time* list, const size_t ntimes, 
+	Stats& dst) noexcept
 {
-	list[trgt.count % TIMES_LIST_SIZE] = t;
-	trgt.update(t);
+	// if we increment ntimes here we will do so for all three lists!
+	// -- not rlly sure where is good though :/
+	list[ntimes] = t;
+	dst.update(t);
 }
 
 void MemStats::updateTelemetry(Phase p, double t) noexcept
@@ -188,49 +191,51 @@ void MemStats::updateTelemetry(Phase p, double t) noexcept
 	using enum Phase;
 	switch(p) {
 		case Collection: 
-			updateStats(this->collection_stats, this->collection_times, t); 
+			updateStats(t, this->collection_times, this->times_count, 
+				this->collection_stats); 
 			updateBucket(this->collection_buckets, t);
 			break;
 		case Nursery: 
-			updateStats(this->nursery_stats, this->nursery_times, t); 
+			updateStats(t, this->nursery_times, this->times_count, 
+				this->nursery_stats); 
 			updateBucket(this->nursery_buckets, t);
 			break;
 		case RC_Old: 
-			updateStats(this->rc_stats, this->rc_times, t); 
+			updateStats(t, this->rc_times, this->times_count, this->rc_stats); 
 			updateBucket(this->rc_buckets, t);		
 			break;
 		default: assert(false && "Invalid phase in updateTelemetry!\n");
 	}
 }
 
-// I think this notion of 'dst' is confusing as it would make more sense
-// to merge into 'this'
-
-static inline void processTimesList(Stats& dst, Time* src) noexcept
+static inline void processTimesList(Stats& dst, Time* src, const size_t n) noexcept
 {
-	for(unsigned i = 0; i < ; i++) {
+	assert(n < TIMES_LIST_SIZE);
+	for(size_t i = 0; i < n; i++) {
 		dst.update(src[i]);
 	}
 }
 
-void MemStats::processAllTimesLists(Stats& src) noexcept
+void MemStats::processAllTimesLists(MemStats& src, const size_t ntimes) noexcept
 {
-	processTimesList(this->collection_stats, dst.collection_times);	
-	processTimesList(this->nursery_stats, dst.nursery_times);
-	processTimesList(this->rc_stats, dst.rc_times);
+	processTimesList(this->collection_stats, src.collection_times, ntimes);	
+	processTimesList(this->nursery_stats, src.nursery_times, ntimes);
+	processTimesList(this->rc_stats, src.rc_times, ntimes);
 }
 
 void MemStats::tryMergeTimesLists(MemStats& src, bool is_global_memstats, 
 	bool force) noexcept
 {
-	if(this->collection_stats.count == TIMES_LIST_SIZE || force) {
+	if(this->times_count == TIMES_LIST_SIZE || force) {
 		if(is_global_memstats) {
 			std::lock_guard lk(g_gctelemetrylock);
-			processAllTimesLists(src);
+			this->processAllTimesLists(src, src.times_count);
 		}
 		else {
-			processAllTimesLists(src);	
+			this->processAllTimesLists(src, src.times_count);	
 		}
+
+		src.times_count = 0;
 	}
 }
 
@@ -318,10 +323,6 @@ void MemStats::mergeNonTimeLists(MemStats& src)
 	this->total_live_objects += src.total_live_objects;
 	this->total_promotions +=   src.total_promotions;
 	this->total_pages +=      	src.total_pages;
-
-	processTimesList(this->collection_stats, src.collection_times);	
-	processTimesList(this->nursery_stats, src.nursery_times);
-	processTimesList(this->rc_stats, src.rc_times);
 
 	this->overhead_time += src.overhead_time;
 	this->total_time += src.total_time;
