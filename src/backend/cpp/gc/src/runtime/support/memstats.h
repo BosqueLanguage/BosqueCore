@@ -24,6 +24,8 @@ enum class Phase {
 
 typedef double Time;
 #define TIME_MAX DBL_MAX
+#define TIMES_LIST_SIZE 500
+
 struct Stats {
     size_t count = 0;
     Time mean  = 0.0;
@@ -31,6 +33,8 @@ struct Stats {
     Time total = 0.0;
     Time min   = TIME_MAX;
     Time max   = 0.0;
+
+	void update() noexcept;
 };
 
 struct MemStats {
@@ -41,9 +45,14 @@ struct MemStats {
     size_t total_promotions   = 0;
     size_t total_pages        = 0;
 
-    Stats collection_stats { 0 };
-    Stats nursery_stats    { 0 };
-    Stats rc_stats         { 0 };
+    Stats collection;
+    Stats nursery;
+    Stats rc;
+
+	// Not of use to the global memstats, just easier to leave it present
+	Time collection_times[TIMES_LIST_SIZE];
+	Time nursery_times[TIMES_LIST_SIZE];
+	Time rc_times[TIMES_LIST_SIZE];
 
     Time start_time =    0.0; // initialized at creation of mstats object
     Time overhead_time = 0.0; // just to prevent any akward skew in Time for memory intensive programs
@@ -51,9 +60,11 @@ struct MemStats {
 
     size_t max_live_heap = 0;
 
-    size_t collection_times[MAX_MEMSTATS_BUCKETS];
-    size_t nursery_times[MAX_MEMSTATS_BUCKETS];
-    size_t rc_times[MAX_MEMSTATS_BUCKETS];
+	// Each bucket is a counter for how many times a collection/nursery/rc phase's
+	// time was in this buckets range
+    size_t collection_buckets[MAX_MEMSTATS_BUCKETS];
+    size_t nursery_buckets[MAX_MEMSTATS_BUCKETS];
+    size_t rc_buckets[MAX_MEMSTATS_BUCKETS];
 
     MemStats() {
         auto now = std::chrono::high_resolution_clock::now();
@@ -67,6 +78,7 @@ struct MemStats {
 	void statisticsDump();
 	std::string generateFormattedMemstats() noexcept;
 	void updateTelemetry(Phase p, double t) noexcept;
+	void tryUpdateGlobalStats() noexcept;
 
 	// Automatically called at the destruction of a thread, will need to be 
 	// manually called when updating with the main threads thread local memstats
@@ -146,6 +158,7 @@ extern MemStats g_memstats;
                 alloc->updateMemStats(); \
             } \
         } \
+		(INFO).memstats.tryUpdateGlobalStats(); \
         auto mstats_compute_end = std::chrono::high_resolution_clock::now(); \
         Time mstats_compute_elapsed = TIME(mstats_compute_end - mstats_compute_start); \
         (INFO).memstats.overhead_time += mstats_compute_elapsed; \

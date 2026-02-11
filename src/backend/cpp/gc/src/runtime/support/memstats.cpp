@@ -148,16 +148,6 @@ void MemStats::statisticsDump()
     std::cout << ss.str();
 }
 
-static void update_extrema(Stats& s, double time) noexcept 
-{
-    if(time > s.max) { 
-        s.max = time;  
-    }
-    if(time < s.min) { 
-        s.min = time;
-    }
-}
-
 static void updateBucket(size_t* bucket, double time) noexcept 
 {
     int index = static_cast<int>((time * (1.0 / BUCKET_VARIANCE)) + 0.5);
@@ -169,17 +159,28 @@ static void updateBucket(size_t* bucket, double time) noexcept
     }
 }
 
-static void updateStats(Stats& stats, double time) noexcept
+void Stats::update(double time) noexcept
 {
     // Welford's algorithm
-    stats.count++;
-    double delta = time - stats.mean;
-    stats.mean += delta / stats.count;
-    double delta2 = time - stats.mean;
-    stats.M2 += delta * delta2;
-    stats.total += time;
+    this->count++;
+    double delta = time - this->mean;
+    this->mean += delta / this->count;
+    double delta2 = time - this->mean;
+    this->M2 += delta * delta2;
+    this->total += time;
 
-    update_extrema(stats, time);
+    if(time > this->max) { 
+    	this->max = time;  
+    }
+    if(time < this->min) { 
+        this->min = time;
+    }
+}
+
+void MemStats::updateStats(Stats& trgt, Time* list, double t) noexcept
+{
+	list[trgt.count % TIMES_LIST_SIZE] = t;
+	trgt.update(t);
 }
 
 void MemStats::updateTelemetry(Phase p, double t) noexcept
@@ -187,18 +188,42 @@ void MemStats::updateTelemetry(Phase p, double t) noexcept
 	using enum Phase;
 	switch(p) {
 		case Collection: 
-			updateStats(this->collection_stats, t); 
-			updateBucket(this->collection_times, t);
+			this->updateStats(this->collection, this->collection_times, t); 
+			updateBucket(this->collection_buckets, t);
 			break;
 		case Nursery: 
-			updateStats(this->nursery_stats, t); 
-			updateBucket(this->nursery_times, t);
+			this->updateStats(this->nursery, this->nursery_times, t); 
+			updateBucket(this->nursery_buckets, t);
 			break;
 		case RC_Old: 
-			updateStats(this->rc_stats, t); 
-			updateBucket(this->rc_times, t);		
+			this->updateStats(this->rc, this->rc_times, t); 
+			updateBucket(this->rc_buckets, t);		
 			break;
 		default: assert(false && "Invalid phase in updateTelemetry!\n");
+	}
+}
+
+// I guess someone could use this in the middle of running an application 
+// and not kill the thread which could mess up calculations since we might
+// merge old times twice
+// -- i guess we should just use explicit indexes?
+static inline void processTimesList(Stats& dst, Time* src) noexcept
+{
+	for(unsigned i = 0; i < TIMES_LIST_SIZE; i++) {
+		dst.update(src[i]);
+	}
+}
+
+// To prevent incorrect mean calculations when merging into our global memstats
+// we maintain lists of stats for each collection phase and periodically work
+// through each stat entry, updating g_memstats 
+void MemStats::tryUpdateGlobalStats() noexcept
+{
+	std::lock_guard lk(g_gctelemetrylock);
+	if(this->collection.count == TIMES_LIST_SIZE) {
+		processTimesList(g_memstats.collection, this->collection_times);	
+		processTimesList(g_memstats.nursery, this->nursery_times);
+		processTimesList(g_memstats.rc, this->rc_times);
 	}
 }
 
@@ -258,8 +283,7 @@ static std::string generate_bucket_data(size_t buckets[MAX_MEMSTATS_BUCKETS]) no
 std::string generateFormattedMemstats(MemStats& ms) noexcept
 {
     std::string header = "{" + std::to_string(BUCKET_VARIANCE) 
-        + ", " + std::to_string(MAX_MEMSTATS_BUCKETS) + "}\n";
-
+        + ", " + std::to_string(MAX_MEMSTATS_BUCKETS) + "}\n
     std::string collection_data = generate_bucket_data(ms.collection_times);
     std::string collection_times = "<Collection Times>" + collection_data;
 
@@ -272,16 +296,6 @@ std::string generateFormattedMemstats(MemStats& ms) noexcept
     return header + collection_times + nursery_times + rc_times;
 }
 
-// I believe we cannot safely merge these stats without possibly donking up 
-// the computation for mean, so I am leaning to creating a (thread local) 
-// array of the past N stats (maybe 1000 since these are small) then after 
-// N collections finish we trigger a merging into our main memstats and 
-// clear the list for future modificatoins
-static void mergeStats(Stats& dst, Stats& src) noexcept
-{
-	// hm merging this is weird	
-}
-
 static void mergeBuckets(size_t* dst, size_t* src) noexcept
 {
 	for(unsigned i = 0; i < MAX_MEMSTATS_BUCKETS; i++) {
@@ -289,32 +303,32 @@ static void mergeBuckets(size_t* dst, size_t* src) noexcept
 	}
 }
 
-void MemStats::merge(MemStats& ms)
+void MemStats::merge(MemStats& trgt)
 {
-	this->total_alloc_count += ms.total_alloc_count;
-	this->total_alloc_memory += ms.total_alloc_memory;
-	this->total_live_bytes += ms.total_live_bytes;
-	this->total_live_objects += ms.total_live_objects;
-	this->total_promotions += ms.total_promotions;
-	this->total_pages += ms.total_pages;
+	this->total_alloc_count +=  trgt.total_alloc_count;
+	this->total_alloc_memory += trgt.total_alloc_memory;
+	this->total_live_bytes +=   trgt.total_live_bytes;
+	this->total_live_objects += trgt.total_live_objects;
+	this->total_promotions +=   trgt.total_promotions;
+	this->total_pages +=      	trgt.total_pages;
 
-	mergeStats(this->collection_stats, ms.collection_stats);
-	mergeStats(this->nursery_stats. ms.nursery_stats);
-	mergeStats(this->rc_stats, ms.rc_stats);
+	processTimesList(g_memstats.collection, this->collection_times);	
+	processTimesList(g_memstats.nursery, this->nursery_times);
+	processTimesList(g_memstats.rc, this->rc_times);
 
-	this->overhead_time += ms.overhead_time;
-	this->total_time += ms.total_time;
+	this->overhead_time += trgt.overhead_time;
+	this->total_time += trgt.total_time;
 
-	if(ms.max_live_heap > this->max_live_heap) {
-		this->max_live_heap = ms.max_live_heap;
+	if(trgt.max_live_heap > this->max_live_heap) {
+		this->max_live_heap = trgt.max_live_heap;
 	}
 
-	mergeBuckets(this->collection_times, ms.collection_times);
-	mergeBuckets(this->nursery_times, ms.nursery_times);
-	mergeBuckets(this->rc_times, ms.rc_times);
+	mergeBuckets(this->collection_times, trgt.collection_times);
+	mergeBuckets(this->nursery_times, trgt.nursery_times);
+	mergeBuckets(this->rc_times, trgt.rc_times);
 
 	// Should clear ms (incase we want to merge without killing ms's thread)
-	ms = {0};
+	trgt = {0};
 }
 
 #endif // MEM_STATS
