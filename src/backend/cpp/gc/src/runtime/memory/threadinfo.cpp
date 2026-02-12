@@ -130,7 +130,6 @@ void BSQMemoryTheadLocalInfo::cleanup() noexcept
 
 	MERGE_MEMSTATS(this->memstats);
 #ifndef BSQ_GC_TESTING 
-	// TODO these couts will always be printed...
 	MEM_STATS_PRINT(UNDL("Memory Statistics for Thread ") 
 		<< GlobalThreadAllocInfo::s_thread_counter << ":\n");
 	MEM_STATS_DUMP(this->memstats);

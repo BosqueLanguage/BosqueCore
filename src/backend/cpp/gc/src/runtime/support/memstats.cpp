@@ -144,7 +144,7 @@ void MemStats::statisticsDump()
     std::cout << ss.str();
 }
 
-static void updateBucket(size_t* bucket, double time) noexcept 
+static void updateBucket(size_t* bucket, Time time) noexcept 
 {
     int index = static_cast<int>((time * (1.0 / BUCKET_VARIANCE)) + 0.5);
     if(index >= MAX_MEMSTATS_BUCKETS) { 
@@ -176,13 +176,11 @@ void Stats::update(double time) noexcept
 static inline void updateStats(double t, Time* list, const size_t ntimes, 
 	Stats& dst) noexcept
 {
-	// if we increment ntimes here we will do so for all three lists!
-	// -- not rlly sure where is good though :/
 	list[ntimes] = t;
 	dst.update(t);
 }
 
-void MemStats::updateTelemetry(Phase p, double t) noexcept
+void MemStats::updateTelemetry(Phase p, Time t) noexcept
 {
 	using enum Phase;
 	switch(p) {
@@ -208,6 +206,12 @@ static inline void processTimesList(Stats& dst, Time* src, const size_t n) noexc
 {
 	assert(n <= TIMES_LIST_SIZE);
 	for(size_t i = 0; i < n; i++) {
+		// Our cleanup call to collect may generate a trivially small pause	
+		Time t = src[i];
+		if(!(t > 0.0)) {
+			continue;	
+		}
+
 		dst.update(src[i]);
 	}
 }
@@ -337,6 +341,10 @@ void MemStats::mergeNonTimeLists(MemStats& src)
 	mergeBuckets(this->rc_buckets, src.rc_buckets);
 }
 
+// NOTE if you decide to merge your thread local memstats into g_memstats
+// AND continue running the thread you just merged from, and in the future 
+// merge _again_ into g_memstats you will find wrong values in g_memstats!!!
+// -- Its a bit out of scope for now, so I haven't implemented it...
 void MemStats::merge(MemStats& src, bool is_global_memstats, bool force)
 {
 	if(is_global_memstats) {
@@ -346,10 +354,7 @@ void MemStats::merge(MemStats& src, bool is_global_memstats, bool force)
 	else {
 		this->mergeNonTimeLists(src);
 	}
-	this->tryMergeTimesLists(src, is_global_memstats, force);	
-
-	// TODO Should clear src (incase we want to merge without killing src's thread)
-	//src = {0};
+	this->tryMergeTimesLists(src, is_global_memstats, force);
 }
 
 #endif // MEM_STATS
