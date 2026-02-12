@@ -113,6 +113,9 @@ void BSQMemoryTheadLocalInfo::unloadNativeRootSet() noexcept
     this->native_stack_contents.clear();
 }
 
+// TODO if the decs thread never runs it wont call cleanup (as its gtl_info
+// object was not created) so we will want a simple std::thread wrapper which 
+// we can define a custom destructor for that calls cleanup
 void BSQMemoryTheadLocalInfo::cleanup() noexcept
 { 
 	// TODO need a lock here!
@@ -122,11 +125,15 @@ void BSQMemoryTheadLocalInfo::cleanup() noexcept
 #ifdef BSQ_GC_TESTING 
     g_thd_testing = false;
 #endif
-    this->collectfp();
+	if(this->collectfp != nullptr) {
+    	this->collectfp();
+	}
     g_disable_stack_refs = prev;
 #ifdef BSQ_GC_TESTING 
     g_thd_testing = true;
 #endif
+
+	std::lock_guard lk(g_gctelemetrylock);
 
 	MERGE_MEMSTATS(this->memstats);
 #ifndef BSQ_GC_TESTING 
@@ -137,7 +144,6 @@ void BSQMemoryTheadLocalInfo::cleanup() noexcept
 
 	// If last thread dump global memstats
 	if(GlobalThreadAllocInfo::s_thread_counter == 1) {
-		FORCE_MERGE_TIMESLISTS(this->memstats);
 		MEM_STATS_PRINT(UNDL("Global Memory Statistics: \n"));
 		MEM_STATS_DUMP(g_memstats);
 	}

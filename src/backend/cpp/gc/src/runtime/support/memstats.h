@@ -81,11 +81,10 @@ struct MemStats {
 	void updateTelemetry(Phase p, double t) noexcept;
 	void processAllTimesLists(MemStats& src, const size_t ntimes) noexcept;
 	void mergeNonTimeLists(MemStats& src);
-	void tryMergeTimesLists(MemStats& src, bool is_global_memstats, bool force) noexcept;
+	void tryMergeTimesLists(MemStats& src, bool force) noexcept;
 
-	// Automatically called at the destruction of a thread, will need to be 
-	// manually called when updating with the main threads thread local memstats
-	void merge(MemStats& src, bool is_global_memstats, bool force);
+	// Automatically called at the destruction of a thread
+	void merge(MemStats& src);
 };
 extern MemStats g_memstats;
 
@@ -163,14 +162,16 @@ extern MemStats g_memstats;
                 alloc->updateMemStats(); \
             } \
         } \
-		g_memstats.tryMergeTimesLists((INFO).memstats, true, false); \
+		{\
+			std::lock_guard ms_lk(g_gctelemetrylock);\
+			g_memstats.tryMergeTimesLists((INFO).memstats, false); \
+		}\
         auto mstats_compute_end = std::chrono::high_resolution_clock::now(); \
         Time mstats_compute_elapsed = TIME(mstats_compute_end - mstats_compute_start); \
         (INFO).memstats.overhead_time += mstats_compute_elapsed; \
     } while(0)
 
-#define MERGE_MEMSTATS(MS)        g_memstats.merge(MS, true, false)
-#define FORCE_MERGE_TIMESLISTS(MS) g_memstats.tryMergeTimesLists(MS, true, true)
+#define MERGE_MEMSTATS(MS) g_memstats.merge(MS)
 
 #else
 
@@ -193,6 +194,5 @@ extern MemStats g_memstats;
 #define UPDATE_ALLOC_STATS(ALLOC, MEMORY_SIZE)
 
 #define MERGE_MEMSTATS(MS)
-#define FORCE_MERGE_TIMESLISTS(MS)
 
 #endif // MEM_STATS

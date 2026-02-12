@@ -90,8 +90,6 @@ struct DecsProcessor {
             std::cerr << "Thread did not finish joining!\n";
             std::abort();
         }
-
-        GlobalThreadAllocInfo::s_thread_counter--;
     }
 
 	void mergeDecdPages(ArrayList<PageInfo*>& dst)

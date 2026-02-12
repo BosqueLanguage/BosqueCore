@@ -27,6 +27,11 @@ enum class Unit {
 
 void MemStats::updateTotalTime()
 {
+	// Already computed
+	if(this->total_time > 0.0) {
+		return ;	
+	}
+
     auto now = std::chrono::high_resolution_clock::now();
     std::chrono::duration<Time, std::micro> dur = now.time_since_epoch();
     this->total_time = 
@@ -204,7 +209,7 @@ void MemStats::updateTelemetry(Phase p, Time t) noexcept
 
 static inline void processTimesList(Stats& dst, Time* src, const size_t n) noexcept
 {
-	assert(n <= TIMES_LIST_SIZE);
+	assert(n < TIMES_LIST_SIZE);
 	for(size_t i = 0; i < n; i++) {
 		// Our cleanup call to collect may generate a trivially small pause	
 		Time t = src[i];
@@ -223,23 +228,13 @@ void MemStats::processAllTimesLists(MemStats& src, const size_t ntimes) noexcept
 	processTimesList(this->rc_stats, src.rc_times, ntimes);
 }
 
-void MemStats::tryMergeTimesLists(MemStats& src, bool is_global_memstats, 
-	bool force) noexcept
+void MemStats::tryMergeTimesLists(MemStats& src, bool force) noexcept
 {
-	if(src.times_count == TIMES_LIST_SIZE || force) {
-		if(is_global_memstats) {
-			std::lock_guard lk(g_gctelemetrylock);
-			this->processAllTimesLists(src, src.times_count);
-		}
-		else {
-			this->processAllTimesLists(src, src.times_count);	
-		}
-
+	if(src.times_count == TIMES_LIST_SIZE - 1 || force) {
+		this->processAllTimesLists(src, src.times_count);
 		src.times_count = 0;
 	}
 	else {
-		// do i like this placement? it forces us to assume update memstats totals is
-		// called always after rc collection and nursery is done
 		src.times_count++;	
 	}
 }
@@ -320,6 +315,8 @@ static void mergeBuckets(size_t* dst, size_t* src) noexcept
 	}
 }
 
+// NOTE we need to be a bit careful with how we compute heap size, I worry
+// some pages could be shared between threads and cause this number to inflate
 void MemStats::mergeNonTimeLists(MemStats& src)
 {
 	this->total_alloc_count +=  src.total_alloc_count;
@@ -329,8 +326,13 @@ void MemStats::mergeNonTimeLists(MemStats& src)
 	this->total_promotions +=   src.total_promotions;
 	this->total_pages +=      	src.total_pages;
 
+	// overhead_time needed?
 	this->overhead_time += src.overhead_time;
-	this->total_time += src.total_time;
+
+	// If no collections this thread was not running application code
+	if(src.collection_stats.count > 0) {
+		this->total_time += src.total_time;
+	}	
 
 	if(src.max_live_heap > this->max_live_heap) {
 		this->max_live_heap = src.max_live_heap;
@@ -345,16 +347,11 @@ void MemStats::mergeNonTimeLists(MemStats& src)
 // AND continue running the thread you just merged from, and in the future 
 // merge _again_ into g_memstats you will find wrong values in g_memstats!!!
 // -- Its a bit out of scope for now, so I haven't implemented it...
-void MemStats::merge(MemStats& src, bool is_global_memstats, bool force)
+void MemStats::merge(MemStats& src)
 {
-	if(is_global_memstats) {
-		std::lock_guard lk(g_gctelemetrylock);
-		this->mergeNonTimeLists(src);
-	}
-	else {
-		this->mergeNonTimeLists(src);
-	}
-	this->tryMergeTimesLists(src, is_global_memstats, force);
+	src.updateTotalTime();
+	this->mergeNonTimeLists(src);
+	this->tryMergeTimesLists(src, true);
 }
 
 #endif // MEM_STATS
