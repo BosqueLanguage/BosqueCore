@@ -58,7 +58,7 @@ function emitCommandLineMakefile(): string {
         'JSON_INCLUDES=-I $(BUILD_DIR)include/json/\n\n' +
         '#dev is default, for another flavor : make BUILD=release or debug\n' +
         `BUILD := debug\n\n` + 
-        'CPP_STDFLAGS=-Wall -Wextra -Wno-unused-parameter -Wuninitialized -Werror -std=gnu++20 -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-stack-protector -fPIC\n' + 
+        'CPP_STDFLAGS=-Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable -Wuninitialized -Werror -std=gnu++20 -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-stack-protector -fPIC\n' + 
         'CPPFLAGS_OPT.debug=-O0 -g -ggdb -fno-omit-frame-pointer -fsanitize=address\n' +
         'CPPFLAGS_OPT.test=-O0 -g -ggdb -fno-omit-frame-pointer\n' +
         'CPPFLAGS_OPT.release=-O3 -march=x86-64-v3\n' +

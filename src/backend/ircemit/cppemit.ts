@@ -1330,19 +1330,19 @@ class CPPEmitter {
         const bsqemitdecl = `void BSQ_emit${ctname}(${ctrepr} vv);`;
         const bsqemitdef = `void BSQ_emit${ctname}(${ctrepr} vv) {\n` +
         `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitLiteralContent("${tdecl.tkey}"); \n` +
-        `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitSymbol('{'); \n` +
-        `${tdecl.saturatedBFieldInfo.map((bf) => {
+        `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate("{ "); \n` +
+        `${tdecl.saturatedBFieldInfo.map((bf, ii) => {
             const fname = TransformCPPNameManager.convertIdentifier(bf.fname);
             const fttname = TransformCPPNameManager.convertTypeKey(bf.ftype.tkeystr);
-            return `    BSQ_emit${fttname}(vv${vvaccess}${fname});`;
+            return `    BSQ_emit${fttname}(vv${vvaccess}${fname});${ii !== tdecl.saturatedBFieldInfo.length - 1 ? ' ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate(", ");' : ""}`;
         }).join("\n")}\n` +
-        `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitSymbol('}'); \n` +
+        `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate(" }"); \n` +
         `}`;
 
-        const bfparses = tdecl.saturatedBFieldInfo.map((bf) => {
+        const bfparses = tdecl.saturatedBFieldInfo.map((bf, ii) => {
             const fname = TransformCPPNameManager.convertIdentifier(bf.fname);
             const fttname = TransformCPPNameManager.convertTypeKey(bf.ftype.tkeystr);
-            return `    auto v_${fname} = BSQ_parse${fttname}(); if(!v_${fname}.has_value()) { return std::nullopt; }`;
+            return `    auto v_${fname} = BSQ_parse${fttname}(); if(!v_${fname}.has_value()) { return std::nullopt; } ${ii !== tdecl.saturatedBFieldInfo.length - 1 ? "if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol(',')) { return std::nullopt; };" : ""}`;
         });
 
         const consargs = tdecl.saturatedBFieldInfo.map((bf) => {
