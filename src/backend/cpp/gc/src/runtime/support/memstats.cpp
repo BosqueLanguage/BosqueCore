@@ -315,8 +315,6 @@ static void mergeBuckets(size_t* dst, size_t* src) noexcept
 	}
 }
 
-// NOTE we need to be a bit careful with how we compute heap size, I worry
-// some pages could be shared between threads and cause this number to inflate
 void MemStats::mergeNonTimeLists(MemStats& src)
 {
 	this->total_alloc_count +=  src.total_alloc_count;
