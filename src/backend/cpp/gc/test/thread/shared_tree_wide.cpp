@@ -3,7 +3,7 @@ static void runThreadTest(size_t nthds, void* roots[N])
 {	
 	gtl_info.insertThreadTestData<N>(roots);
 	gtl_info.collectfp();
-	𝐚𝐬𝐬𝐞𝐫𝐭(g_memstats.total_live_bytes > 0);
+	𝐚𝐬𝐬𝐞𝐫𝐭(gtl_info.memstats.total_live_bytes > 0);
 
 	std::thread thd = std::thread([troots = roots, nthds]() {
 		gtl_info.insertThreadTestData<N>(troots);
@@ -33,7 +33,7 @@ static void runThreadTest(size_t nthds, void* roots[N])
 
 	thd.join();
 	gtl_info.collectfp();
-	𝐚𝐬𝐬𝐞𝐫𝐭(g_memstats.total_live_bytes == 0);
+	𝐚𝐬𝐬𝐞𝐫𝐭(gtl_info.memstats.total_live_bytes == 0);
 }
 
 __CoreCpp::Int sharedWideTreeTest_1()

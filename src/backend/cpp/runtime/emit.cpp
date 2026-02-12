@@ -19,8 +19,6 @@ int wrap_setjmp()
     // Ensure decs thread stops waiting
     g_decs_prcsr.stop();
 
-    //MEM_STATS_DUMP();
-
     return 0;
 }
 

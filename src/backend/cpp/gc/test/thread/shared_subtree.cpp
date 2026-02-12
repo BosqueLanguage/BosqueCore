@@ -4,7 +4,7 @@ static void runThreadTest(size_t nthds, void* roots[NROOTS],
 {	
 	gtl_info.insertThreadTestData<NROOTS>(roots);
 	gtl_info.collectfp();
-	𝐚𝐬𝐬𝐞𝐫𝐭(g_memstats.total_live_bytes > 0);
+	𝐚𝐬𝐬𝐞𝐫𝐭(gtl_info.memstats.total_live_bytes > 0);
 
 	std::thread thd = std::thread([troots = survive]() {
 		gtl_info.insertThreadTestData<NSURVIVE>(troots);
@@ -36,7 +36,7 @@ static void runThreadTest(size_t nthds, void* roots[NROOTS],
 
 	thd.join();
 	gtl_info.collectfp();
-	𝐚𝐬𝐬𝐞𝐫𝐭(g_memstats.total_live_bytes == 0);
+	𝐚𝐬𝐬𝐞𝐫𝐭(gtl_info.memstats.total_live_bytes == 0);
 }
 
 __CoreCpp::Int wideSubtreeTest_2()

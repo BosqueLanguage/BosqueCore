@@ -1,5 +1,6 @@
 #pragma once 
 
+#include "../common.h"
 #include "allocator.h"
 
 #include <chrono>
@@ -86,19 +87,34 @@ struct BSQMemoryTheadLocalInfo
 
     bool disable_automatic_collections;
 
+#ifdef MEM_STATS
+	MemStats memstats;
+#endif
+
 #ifdef BSQ_GC_TESTING
     // having thread local storage of root pointers is useful for testing 
 	// interactions of multiple threads (ensuring roots are kept alive if 
 	// still reachable from at least one thread)
 	void* thd_testing_data[NUM_THREAD_TESTING_ROOTS];
 #endif
+
+#ifndef MEM_STATS
     BSQMemoryTheadLocalInfo() noexcept : 
         tl_id(0), g_gcallocs(nullptr), collectfp(nullptr), native_stack_base(nullptr), native_stack_contents(), 
         native_register_contents(), roots_count(0), roots(nullptr), old_roots_count(0), 
         old_roots(nullptr), forward_table_index(FWD_TABLE_START), forward_table(nullptr), 
         decs_batch(), decd_pages(), nursery_usage(0.0f), pending_roots(), visit_stack(), 
 		pending_young(), bytes_freed(0), max_decrement_count(0), 
-		disable_automatic_collections(false) { }
+		disable_automatic_collections(false) {}
+#else
+    BSQMemoryTheadLocalInfo() noexcept : 
+        tl_id(0), g_gcallocs(nullptr), collectfp(nullptr), native_stack_base(nullptr), native_stack_contents(), 
+        native_register_contents(), roots_count(0), roots(nullptr), old_roots_count(0), 
+        old_roots(nullptr), forward_table_index(FWD_TABLE_START), forward_table(nullptr), 
+        decs_batch(), decd_pages(), nursery_usage(0.0f), pending_roots(), visit_stack(), 
+		pending_young(), bytes_freed(0), max_decrement_count(0), 
+		disable_automatic_collections(false), memstats() {}
+#endif
 	BSQMemoryTheadLocalInfo& operator=(BSQMemoryTheadLocalInfo&) = delete;
     BSQMemoryTheadLocalInfo(BSQMemoryTheadLocalInfo&) = delete;
 	~BSQMemoryTheadLocalInfo() { this->cleanup(); }
@@ -136,6 +152,7 @@ struct BSQMemoryTheadLocalInfo
 	void initializeGC(GCAllocator** allocs, size_t n, void (*_collectfp)()) noexcept;
 	void loadNativeRootSet() noexcept;
     void unloadNativeRootSet() noexcept;
+	void updateGlobalMemstats();	
 	void cleanup() noexcept;
 };
 

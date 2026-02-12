@@ -16,8 +16,16 @@
 #define BUCKET_VARIANCE 2
 #define BUCKET_AVERAGE ((BUCKET_VARIANCE) / 2)
 
+enum class Phase {
+	Collection,
+	Nursery,
+	RC_Old
+};
+
 typedef double Time;
 #define TIME_MAX DBL_MAX
+#define TIMES_LIST_SIZE 500
+
 struct Stats {
     size_t count = 0;
     Time mean  = 0.0;
@@ -25,6 +33,8 @@ struct Stats {
     Time total = 0.0;
     Time min   = TIME_MAX;
     Time max   = 0.0;
+
+	void update(double t) noexcept;
 };
 
 struct MemStats {
@@ -35,105 +45,100 @@ struct MemStats {
     size_t total_promotions   = 0;
     size_t total_pages        = 0;
 
-    Stats collection_stats { 0 };
-    Stats nursery_stats    { 0 };
-    Stats rc_stats         { 0 };
+    Stats collection_stats = {0};
+    Stats nursery_stats = {0};
+    Stats rc_stats = {0};
+
+	// Not of use to the global memstats, just easier to leave it present
+	size_t times_count = 0;	
+	Time collection_times[TIMES_LIST_SIZE];
+	Time nursery_times[TIMES_LIST_SIZE];
+	Time rc_times[TIMES_LIST_SIZE];
 
     Time start_time =    0.0; // initialized at creation of mstats object
     Time overhead_time = 0.0; // just to prevent any akward skew in Time for memory intensive programs
-    Time total_time =    0.0; // walll clock time (not including mstats compute overhead)
+    Time total_time =    0.0; // wall clock time (not including mstats compute overhead)
 
     size_t max_live_heap = 0;
 
-    size_t collection_times[MAX_MEMSTATS_BUCKETS];
-    size_t nursery_times[MAX_MEMSTATS_BUCKETS];
-    size_t rc_times[MAX_MEMSTATS_BUCKETS];
+	// Each bucket is a counter for how many times a collection/nursery/rc phase's
+	// time was in this buckets range
+    size_t collection_buckets[MAX_MEMSTATS_BUCKETS];
+    size_t nursery_buckets[MAX_MEMSTATS_BUCKETS];
+    size_t rc_buckets[MAX_MEMSTATS_BUCKETS];
 
     MemStats() {
         auto now = std::chrono::high_resolution_clock::now();
         std::chrono::duration<Time, std::micro> dur = now.time_since_epoch();
         this->start_time = dur.count();
     }        
+
+	void updateTotalTime();
+	void printPerfHeader();
+	void perfDump(Phase p);
+	void statisticsDump();
+	std::string generateFormattedMemstats() noexcept;
+	void updateTelemetry(Phase p, double t) noexcept;
+	void processAllTimesLists(MemStats& src, const size_t ntimes) noexcept;
+	void mergeNonTimeLists(MemStats& src);
+	void tryMergeTimesLists(MemStats& src, bool force) noexcept;
+
+	// Automatically called at the destruction of a thread
+	void merge(MemStats& src);
 };
 extern MemStats g_memstats;
 
-enum class Phase {
-    Collection,
-    Nursery,
-    RC_Old
-};
+#define TOTAL_ALLOC_COUNT(MS)      (MS).total_alloc_count
+#define TOTAL_ALLOC_MEMORY(MS)     (MS).total_alloc_memory
+#define TOTAL_LIVE_BYTES(MS)       (MS).total_live_bytes
+#define TOTAL_LIVE_OBJECTS(MS)     (MS).total_live_objects
+#define TOTAL_PROMOTIONS(MS)       (MS).total_promotions
+#define TOTAL_PAGES(MS)            (MS).total_pages
+#define MIN_COLLECTION_TIME(MS)    (MS).min_collection_time
+#define MAX_COLLECTION_TIME(MS)    (MS).max_collection_time
+#define MAX_LIVE_HEAP(MS)          (MS).max_live_heap
 
-void updateTotalTime();
-void printPerfHeader();
-void perfDump(Phase p);
-void statisticsDump();
-void update_bucket(size_t* bucket, double time) noexcept;
-std::string generate_formatted_memstats(MemStats& ms) noexcept;
-void update_collection_stats(MemStats& ms, double time) noexcept;
-void update_nursery_stats(MemStats& ms, double time) noexcept;
-void update_rc_stats(MemStats& ms, double time) noexcept;
+#define UPDATE_TOTAL_ALLOC_COUNT(MS, OP, ...) \
+	TOTAL_ALLOC_COUNT(MS) OP __VA_ARGS__
+#define UPDATE_TOTAL_ALLOC_MEMORY(MS, OP, ...) \
+	TOTAL_ALLOC_MEMORY(MS) OP __VA_ARGS__
+#define UPDATE_TOTAL_LIVE_BYTES(MS, OP, ...) \
+	TOTAL_LIVE_BYTES(MS) OP __VA_ARGS__
+#define UPDATE_TOTAL_LIVE_OBJECTS(MS, OP, ...) \
+	TOTAL_LIVE_OBJECTS(MS) OP __VA_ARGS__
+#define UPDATE_TOTAL_PROMOTIONS(MS, OP, ...) \
+	TOTAL_PROMOTIONS(MS) OP __VA_ARGS__
+#define UPDATE_TOTAL_PAGES(MS, OP, ...) \
+	TOTAL_PAGES(MS) OP __VA_ARGS__ 
+#define UPDATE_MIN_COLLECTION_TIME(MS, OP, ...) \
+	MIN_COLLECTION_TIME(MS) OP __VA_ARGS__
+#define UPDATE_MAX_COLLECTION_TIME(MS, OP, ...) \
+	MAX_COLLECTION_TIME(MS) OP __VA_ARGS__
+#define UPDATE_MAX_LIVE_HEAP(MS, OP, ...) \
+	MAX_LIVE_HEAP(MS) OP __VA_ARGS__
 
-#define TOTAL_ALLOC_COUNT()      g_memstats.total_alloc_count
-#define TOTAL_ALLOC_MEMORY()     g_memstats.total_alloc_memory
-#define TOTAL_LIVE_BYTES()       g_memstats.total_live_bytes
-#define TOTAL_LIVE_OBJECTS()     g_memstats.total_live_objects
-#define TOTAL_PROMOTIONS()       g_memstats.total_promotions
-#define TOTAL_PAGES()            g_memstats.total_pages
-#define MIN_COLLECTION_TIME()    g_memstats.min_collection_time
-#define MAX_COLLECTION_TIME()    g_memstats.max_collection_time
-#define MAX_LIVE_HEAP()          g_memstats.max_live_heap
-
-#define UPDATE_TOTAL_ALLOC_COUNT(OP, ...)      TOTAL_ALLOC_COUNT() OP __VA_ARGS__
-#define UPDATE_TOTAL_ALLOC_MEMORY(OP, ...)     TOTAL_ALLOC_MEMORY() OP __VA_ARGS__
-#define UPDATE_TOTAL_LIVE_BYTES(OP, ...)       TOTAL_LIVE_BYTES() OP __VA_ARGS__
-#define UPDATE_TOTAL_LIVE_OBJECTS(OP, ...)     TOTAL_LIVE_OBJECTS() OP __VA_ARGS__
-#define UPDATE_TOTAL_PROMOTIONS(OP, ...)       TOTAL_PROMOTIONS() OP __VA_ARGS__
-#define UPDATE_TOTAL_PAGES(OP, ...)            TOTAL_PAGES() OP __VA_ARGS__ 
-#define UPDATE_MIN_COLLECTION_TIME(OP, ...)    MIN_COLLECTION_TIME() OP __VA_ARGS__
-#define UPDATE_MAX_COLLECTION_TIME(OP, ...)    MAX_COLLECTION_TIME() OP __VA_ARGS__
-#define UPDATE_MAX_LIVE_HEAP(OP, ...)          MAX_LIVE_HEAP() OP __VA_ARGS__
-
-#define MEM_STATS_DUMP() \
+#define MEM_STATS_DUMP(MS) \
     do { \
-        updateTotalTime(); \
-        printPerfHeader(); \
-        perfDump(Phase::Collection); \
-        perfDump(Phase::Nursery); \
-        perfDump(Phase::RC_Old); \
-        statisticsDump(); \
+        (MS).updateTotalTime(); \
+        (MS).printPerfHeader(); \
+        (MS).perfDump(Phase::Collection); \
+        (MS).perfDump(Phase::Nursery); \
+        (MS).perfDump(Phase::RC_Old); \
+        (MS).statisticsDump(); \
     } while(0)
 
-#define TIME(T) std::chrono::duration_cast<std::chrono::duration<Time, std::micro>>(T).count()
+#define MEM_STATS_PRINT(S) std::cout << S
 
-#define MEM_STATS_START(NAME) \
-    auto start_##NAME = std::chrono::high_resolution_clock::now()
+#define TIME(T) \
+	std::chrono::duration_cast<std::chrono::duration<Time, std::micro>>(T).count()
 
-#define MEM_STATS_END(BUCKETS, NAME) \
-    auto end_##NAME = std::chrono::high_resolution_clock::now(); \
-    Time NAME##_ms = TIME(end_##NAME - start_##NAME); \
-    update_bucket(g_memstats. BUCKETS, NAME##_ms);
+#define MEM_STATS_START(PHASE) \
+    auto start_##PHASE = std::chrono::high_resolution_clock::now()
 
-#define COLLECTION_STATS_START() \
-    MEM_STATS_START(collection)
-#define COLLECTION_STATS_END(BUCKETS) \
-    MEM_STATS_END(BUCKETS, collection)
-
-#define NURSERY_STATS_START() \
-    MEM_STATS_START(nursery)
-#define NURSERY_STATS_END(BUCKETS) \
-    MEM_STATS_END(BUCKETS, nursery)
-
-#define RC_STATS_START() \
-    MEM_STATS_START(rc)
-#define RC_STATS_END(BUCKETS) \
-    MEM_STATS_END(BUCKETS, rc)
-
-#define UPDATE_NURSERY_TIMES() \
-    update_nursery_stats(g_memstats, nursery_ms)
-#define UPDATE_RC_TIMES() \
-    update_rc_stats(g_memstats, rc_ms)
-#define UPDATE_COLLECTION_TIMES() \
-    update_collection_stats(g_memstats, collection_ms)
+#define MEM_STATS_END(PHASE, MS) \
+    auto end_##PHASE = std::chrono::high_resolution_clock::now(); \
+    Time PHASE##_ms = TIME(end_##PHASE - start_##PHASE); \
+    (MS).updateTelemetry(Phase:: PHASE, PHASE##_ms);
 
 #define UPDATE_ALLOC_STATS(ALLOC, MEMORY_SIZE) \
     (ALLOC)->updateAllocInfo(MEMORY_SIZE)
@@ -147,58 +152,47 @@ void update_rc_stats(MemStats& ms, double time) noexcept;
 #define GET_ALLOC_COUNT(ALLOC)  ((ALLOC)->alloc_count)
 #define GET_ALLOC_MEMORY(ALLOC) ((ALLOC)->alloc_memory)
 
+// TODO pretty sure we need to revisit how we compute the overheads here
 #define UPDATE_MEMSTATS_TOTALS(INFO) \
     do { \
         auto mstats_compute_start = std::chrono::high_resolution_clock::now(); \
-        UPDATE_NURSERY_TIMES(); \
-        UPDATE_RC_TIMES(); \
-        UPDATE_COLLECTION_TIMES(); \
         for(size_t i = 0; i < BSQ_MAX_ALLOC_SLOTS; i++) { \
             GCAllocator* alloc = (INFO).g_gcallocs[i]; \
             if(alloc != nullptr) { \
                 alloc->updateMemStats(); \
             } \
         } \
+		{\
+			std::lock_guard ms_lk(g_gctelemetrylock);\
+			g_memstats.tryMergeTimesLists((INFO).memstats, false); \
+		}\
         auto mstats_compute_end = std::chrono::high_resolution_clock::now(); \
         Time mstats_compute_elapsed = TIME(mstats_compute_end - mstats_compute_start); \
-        g_memstats.overhead_time += mstats_compute_elapsed; \
+        (INFO).memstats.overhead_time += mstats_compute_elapsed; \
     } while(0)
-#else
-struct MemStats {};
-#define UPDATE_TOTAL_ALLOC_COUNT(OP, ...)
-#define UPDATE_TOTAL_ALLOC_MEMORY(OP, ...)
-#define UPDATE_TOTAL_LIVE_BYTES(OP, ...)
-#define UPDATE_TOTAL_PROMOTIONS(OP, ...)
-#define UPDATE_TOTAL_PAGES(OP, ...)
-#define UPDATE_MIN_COLLECTION_TIME(OP, ...)
-#define UPDATE_MAX_COLLECTION_TIME(OP, ...)
-#define UPDATE_MAX_LIVE_HEAP(OP, ...)
 
-#define update_bucket (void)sizeof
-#define compute_average_time(B) 0
-#define generate_formatted_memstats(MS) ""
-#define MEM_STATS_DUMP()
+#define MERGE_MEMSTATS(MS) g_memstats.merge(MS)
+
+#else
+
+#define UPDATE_TOTAL_ALLOC_COUNT(MS, OP, ...)
+#define UPDATE_TOTAL_ALLOC_MEMORY(MS, OP, ...)
+#define UPDATE_TOTAL_LIVE_BYTES(MS, OP, ...)
+#define UPDATE_TOTAL_LIVE_OBJECTS(MS, OP, ...)
+#define UPDATE_TOTAL_PROMOTIONS(MS, OP, ...)
+#define UPDATE_TOTAL_PAGES(MS, OP, ...)
+#define UPDATE_MAX_LIVE_HEAP(MS, OP, ...)
+
+#define MEM_STATS_DUMP(MS)
+#define MEM_STATS_PRINT(S)
 
 #define MEM_STATS_START(NAME)
-#define MEM_STATS_END(BUCKETS, NAME)
+#define MEM_STATS_END(MS, PHASE, NAME)
 
-#define COLLECTION_STATS_START()
-#define COLLECTION_STATS_END(BUCKETS)
-
-#define NURSERY_STATS_START()
-#define NURSERY_STATS_END(BUCKETS)
-
-#define RC_STATS_START()
-#define RC_STATS_END(BUCKETS)
-
-#define UPDATE_COLLECTION_TIMES()
-#define UPDATE_NURSERY_TIMES()
-#define UPDATE_RC_TIMES()
 #define UPDATE_MEMSTATS_TOTALS(INFO)
 
 #define UPDATE_ALLOC_STATS(ALLOC, MEMORY_SIZE)
-#define RESET_ALLOC_STATS(ALLOC)
-#define GET_ALLOC_COUNT(ALLOC) (0)
-#define GET_ALLOC_MEMORY(ALLOC) (0)
 
-#endif// MEM_STATS
+#define MERGE_MEMSTATS(MS)
+
+#endif // MEM_STATS

@@ -33,6 +33,10 @@ extern bool g_disable_stack_refs;
 extern bool g_thd_testing;
 #endif
 
+#define RST  "\x1B[0m"
+#define BOLD(x)	"\x1B[1m" x RST
+#define UNDL(x)	"\x1B[4m" x RST
+
 #ifdef ALLOC_DEBUG_MEM_DETERMINISTIC
 #define ALLOC_BASE_ADDRESS ((void*)(0x4000000000ul)) 
 #define ALLOC_ADDRESS_SPAN 2147483648ul
@@ -115,6 +119,10 @@ extern std::mutex g_gcmemlock;
 
 //A global mutex lock that all threads will use when doing shared GC ops (e.g. when doing their inc/dec ref loops)
 extern std::mutex g_gcrefctlock;
+
+// A global mutex lock that all threads will use when merging their thread local
+// memstats into the global memstats
+extern std::mutex g_gctelemetrylock;
 
 // Track information that needs to be globally accessible for threads
 class GlobalThreadAllocInfo
