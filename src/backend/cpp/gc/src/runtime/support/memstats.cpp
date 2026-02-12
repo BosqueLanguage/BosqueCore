@@ -10,10 +10,6 @@ MemStats g_memstats{};
 static double calcStddev(const Stats& stats) noexcept;
 static double calculate_percentile_from_buckets(const size_t* buckets, double percentile) noexcept; 
 
-#define RST  "\x1B[0m"
-#define BOLD(x)	"\x1B[1m" x RST
-#define UNDL(x)	"\x1B[4m" x RST
-
 enum class Unit {
     Count,
     Percentage,
@@ -210,7 +206,7 @@ void MemStats::updateTelemetry(Phase p, double t) noexcept
 
 static inline void processTimesList(Stats& dst, Time* src, const size_t n) noexcept
 {
-	assert(n < TIMES_LIST_SIZE);
+	assert(n <= TIMES_LIST_SIZE);
 	for(size_t i = 0; i < n; i++) {
 		dst.update(src[i]);
 	}
@@ -226,7 +222,7 @@ void MemStats::processAllTimesLists(MemStats& src, const size_t ntimes) noexcept
 void MemStats::tryMergeTimesLists(MemStats& src, bool is_global_memstats, 
 	bool force) noexcept
 {
-	if(this->times_count == TIMES_LIST_SIZE || force) {
+	if(src.times_count == TIMES_LIST_SIZE || force) {
 		if(is_global_memstats) {
 			std::lock_guard lk(g_gctelemetrylock);
 			this->processAllTimesLists(src, src.times_count);
@@ -236,6 +232,11 @@ void MemStats::tryMergeTimesLists(MemStats& src, bool is_global_memstats,
 		}
 
 		src.times_count = 0;
+	}
+	else {
+		// do i like this placement? it forces us to assume update memstats totals is
+		// called always after rc collection and nursery is done
+		src.times_count++;	
 	}
 }
 
@@ -311,7 +312,7 @@ std::string generateFormattedMemstats(MemStats& ms) noexcept
 static void mergeBuckets(size_t* dst, size_t* src) noexcept
 {
 	for(unsigned i = 0; i < MAX_MEMSTATS_BUCKETS; i++) {
-		dst[i] = src[i];	
+		dst[i] += src[i];	
 	}
 }
 
@@ -347,7 +348,7 @@ void MemStats::merge(MemStats& src, bool is_global_memstats, bool force)
 	}
 	this->tryMergeTimesLists(src, is_global_memstats, force);	
 
-	// TODO Should clear ms (incase we want to merge without killing ms's thread)
+	// TODO Should clear src (incase we want to merge without killing src's thread)
 	//src = {0};
 }
 

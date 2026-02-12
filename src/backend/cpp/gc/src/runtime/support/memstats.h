@@ -169,8 +169,8 @@ extern MemStats g_memstats;
         (INFO).memstats.overhead_time += mstats_compute_elapsed; \
     } while(0)
 
-#define MERGE_MEMSTATS(MS)       g_memstats.merge(MS, true, false)
-#define FORCE_MERGE_MEMSTATS(MS) g_memstats.merge(MS, true, true)
+#define MERGE_MEMSTATS(MS)        g_memstats.merge(MS, true, false)
+#define FORCE_MERGE_TIMESLISTS(MS) g_memstats.tryMergeTimesLists(MS, true, true)
 
 #else
 
@@ -193,6 +193,6 @@ extern MemStats g_memstats;
 #define UPDATE_ALLOC_STATS(ALLOC, MEMORY_SIZE)
 
 #define MERGE_MEMSTATS(MS)
-#define FORCE_MERGE_MEMSTATS(MS)
+#define FORCE_MERGE_TIMESLISTS(MS)
 
 #endif // MEM_STATS
