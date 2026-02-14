@@ -133,13 +133,18 @@ class TypeInfoManager {
     }
 
     emitTypeAsReturn(tkey: string): string {
-        const typeinfo = this.getTypeInfo(tkey);
-
-        if(typeinfo.tag !== LayoutTag.Ref) {
-            return TransformCPPNameManager.convertTypeKey(tkey);
+        if(tkey === "Void") {
+            return "void"; //special case for void functions
         }
         else {
-            return TransformCPPNameManager.convertTypeKey(tkey) + "*";            
+            const typeinfo = this.getTypeInfo(tkey);
+
+            if(typeinfo.tag !== LayoutTag.Ref) {
+                return TransformCPPNameManager.convertTypeKey(tkey);
+            }
+            else {
+                return TransformCPPNameManager.convertTypeKey(tkey) + "*";            
+            }
         }
     }
 
