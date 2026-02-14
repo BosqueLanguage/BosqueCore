@@ -240,11 +240,13 @@ enum IRStatementTag {
     IRVariableInitializationDirectInvokeStatement = "IRVariableInitializationDirectInvokeStatement",
     IRVariableInitializationDirectInvokeWithImplicitStatement = "IRVariableInitializationDirectInvokeWithImplicitStatement",
     IRVariableInitializationDirectConstructorStatement = "IRVariableInitializationDirectConstructorStatement",
+    IRVariableInitializationDirectConstructorWithBoxStatement = "IRVariableInitializationDirectConstructorWithBoxStatement",
 
     IRVariableAssignmentStatement = "IRVariableAssignmentStatement",
     IRVariableAssignmentDirectInvokeStatement = "IRVariableAssignmentDirectInvokeStatement",
     IRVariableAssignmentDirectInvokeWithImplicitStatement = "IRVariableAssignmentDirectInvokeWithImplicitStatement",
     IRVariableAssignmentDirectConstructorStatement = "IRVariableAssignmentDirectConstructorStatement",
+    IRVariableAssignmentDirectConstructorWithBoxStatement = "IRVariableAssignmentDirectConstructorWithBoxStatement",
 
     IRReturnVoidSimpleStatement = "IRReturnVoidSimpleStatement",
     IRReturnValueSimpleStatement = "IRReturnValueSimpleStatement",
@@ -1676,6 +1678,23 @@ class IRVariableInitializationDirectConstructorStatement extends IRAtomicStateme
     }
 }
 
+class IRVariableInitializationDirectConstructorWithBoxStatement extends IRAtomicStatement {
+    readonly vname: string;
+    readonly vtype: IRTypeSignature;
+    readonly fromtype: IRTypeSignature;
+    readonly initexp: IRConstructExpression;
+    readonly isconst: boolean;
+
+    constructor(vname: string, vtype: IRTypeSignature, fromtype: IRTypeSignature, initexp: IRConstructExpression, isconst: boolean) {
+        super(IRStatementTag.IRVariableInitializationDirectConstructorWithBoxStatement);
+        this.vname = vname;
+        this.vtype = vtype;
+        this.fromtype = fromtype;
+        this.initexp = initexp;
+        this.isconst = isconst;
+    }
+}
+
 class IRVariableAssignmentStatement extends IRAtomicStatement {
     readonly vname: string;
     readonly vtype: IRTypeSignature;
@@ -1728,6 +1747,21 @@ class IRVariableAssignmentDirectConstructorStatement extends IRAtomicStatement {
         super(IRStatementTag.IRVariableAssignmentDirectConstructorStatement);
         this.vname = vname;
         this.vtype = vtype;
+        this.aexp = aexp;
+    }
+}
+
+class IRVariableAssignmentDirectConstructorWithBoxStatement extends IRAtomicStatement {
+    readonly vname: string;
+    readonly vtype: IRTypeSignature;
+    readonly fromtype: IRTypeSignature;
+    readonly aexp: IRConstructExpression;
+
+    constructor(vname: string, vtype: IRTypeSignature, fromtype: IRTypeSignature, aexp: IRConstructExpression) {
+        super(IRStatementTag.IRVariableAssignmentDirectConstructorWithBoxStatement);
+        this.vname = vname;
+        this.vtype = vtype;
+        this.fromtype = fromtype;
         this.aexp = aexp;
     }
 }
@@ -2193,8 +2227,8 @@ export {
     IRTempAssignExpressionStatement, IRTempAssignStdInvokeStatement, IRTempAssignRefInvokeStatement,
 
     IRVariableDeclarationStatement, 
-    IRVariableInitializationStatement, IRVariableInitializationDirectInvokeStatement, IRVariableInitializationDirectConstructorStatement, IRVariableInitializationDirectInvokeWithImplicitStatement,
-    IRVariableAssignmentStatement, IRVariableAssignmentDirectInvokeStatement, IRVariableAssignmentDirectConstructorStatement, IRVariableAssignmentDirectInvokeWithImplicitStatement,
+    IRVariableInitializationStatement, IRVariableInitializationDirectInvokeStatement, IRVariableInitializationDirectInvokeWithImplicitStatement, IRVariableInitializationDirectConstructorStatement, IRVariableInitializationDirectConstructorWithBoxStatement,
+    IRVariableAssignmentStatement, IRVariableAssignmentDirectInvokeStatement, IRVariableAssignmentDirectInvokeWithImplicitStatement, IRVariableAssignmentDirectConstructorStatement, IRVariableAssignmentDirectConstructorWithBoxStatement,
     
     IRReturnVoidSimpleStatement, IRReturnValueSimpleStatement, IRReturnDirectInvokeStatement, IRReturnDirectConstructStatement, IRReturnDirectConstructWithBoxStatement,
     IRReturnVoidWithImplicitStatement, IRReturnValueImplicitStatement, IRReturnDirectInvokeImplicitStatement, IRReturnDirectInvokeImplicitPassThroughStatement, IRReturnDirectConstructImplicitStatement, IRReturnDirectConstructWithBoxImplicitStatement,
