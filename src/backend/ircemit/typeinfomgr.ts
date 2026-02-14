@@ -1,9 +1,16 @@
 
-import { IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAssembly, IROptionTypeDecl, IRSomeTypeDecl } from "../irdefs/irassembly.js";
+import { IRAbstractCollectionTypeDecl, IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAssembly, IRConceptTypeDecl, IRDatatypeTypeDecl, IREntityTypeDecl, IRListTypeDecl, IROptionTypeDecl, IRSomeTypeDecl } from "../irdefs/irassembly.js";
 import { IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature } from "../irdefs/irtype.js";
 import { TransformCPPNameManager } from "./namemgr.js";
 
 import assert from "node:assert";
+
+//Duplicated from C++ definitions
+const MAX_LIST_INLINE_BYTES = 48; //Bytes -- so 64 total when we add 8 bytes for the size and 8 bytes for the tag
+
+function LIST_T_CAPACITY(elem_size: number): number {
+    return Math.max((MAX_LIST_INLINE_BYTES - 1) / elem_size, 1);
+}
 
 class FieldOffsetInfo {
     readonly fkey: string;
@@ -56,6 +63,7 @@ class TypeInfo {
 }
 
 class TypeInfoManager {
+    private typeInfoOffset: number = 0;
     private typeInfoMap: Map<string, TypeInfo>;
 
     static readonly c_ref_pass_size: number = 32; //Bytes used for ref passing (pointer + typeid + extra)
@@ -75,6 +83,10 @@ class TypeInfoManager {
     }
 
     addTypeInfo(tkey: string, typeInfo: TypeInfo): void {
+        if(this.typeInfoMap.has(tkey))  {
+            console.log(this.typeInfoMap.get(tkey));
+        }
+
         assert(!this.typeInfoMap.has(tkey), `TypeInfoManager::addTypeInfo - Duplicate type info for key ${tkey}`);
 
         this.typeInfoMap.set(tkey, typeInfo);
@@ -153,11 +165,37 @@ class TypeInfoManager {
         }
     }
 
+    private isRecursiveTypeKey(tkey: string, irasm: IRAssembly): boolean {
+        return irasm.typedepcycles.some((cycle) => {
+            return cycle.some((tt) => tt.tkeystr === tkey);
+        });
+    }
+
+    private isNominalRecursiveType(ttype: IRTypeSignature, irasm: IRAssembly): boolean {
+        if(!(ttype instanceof IRNominalTypeSignature)) {
+            return false;
+        }
+
+        return this.isRecursiveTypeKey(ttype.tkeystr, irasm);
+    }
+
+    private isSizeOkForValueLayout(bytesize: number): boolean {
+        return bytesize <= 64;
+    }
+
+    private static computeValueMaskOfK(k: number): string {
+        return Array(k).fill("0").join("");
+    }
+
+    private static computeTaggedMaskOfK(k: number): string {
+        return "2" + Array(k).fill("0").join("");
+    }
+
     private processInfoGenerationForEntity(tdecl: IRAbstractEntityTypeDecl, irasm: IRAssembly): TypeInfo {
         if(tdecl instanceof IRSomeTypeDecl) {
             const oftinfo = this.processInfoGenerationForType(tdecl.ttype, irasm);
 
-            const ttid = this.typeInfoMap.size;
+            const ttid = this.typeInfoMap.size + this.typeInfoOffset;
             if(oftinfo.tag === LayoutTag.Ref) {
                 this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, 8, 1, LayoutTag.Value, "1", undefined));
             }
@@ -167,8 +205,76 @@ class TypeInfoManager {
             
             return this.getTypeInfo(tdecl.tkey);
         }
+        else if(tdecl instanceof IRAbstractCollectionTypeDecl) {
+            if(tdecl instanceof IRListTypeDecl) {
+                const oftinfo = this.processInfoGenerationForType(tdecl.oftype, irasm);
+
+                const ttid = this.typeInfoMap.size + this.typeInfoOffset + 2; //+2 for the buff and node types
+                const ldatasize = Math.max(MAX_LIST_INLINE_BYTES, oftinfo.bytesize);
+                const ltotalsize = 8 + ldatasize; //8 bytes for for the tag
+
+                const mask = TypeInfoManager.computeTaggedMaskOfK(ltotalsize / 8);
+                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, ltotalsize, ltotalsize / 8, LayoutTag.Tagged, mask, undefined));
+
+                return this.getTypeInfo(tdecl.tkey);
+            }
+            else {
+                assert(false, `TypeInfoManager::processInfoGenerationForEntity - Unsupported collection type declaration for key ${tdecl.tkey}`);
+            }
+        }
         else {
-            assert(false, `TypeInfoManager::processInfoGenerationForEntity - Unsupported entity type declaration for key ${tdecl.tkey}`);
+            assert(tdecl instanceof IREntityTypeDecl, `TypeInfoManager::processInfoGenerationForEntity - Unsupported entity type declaration for key ${tdecl.tkey}`);
+
+            const etdecl = tdecl as IREntityTypeDecl;
+            let totalbytesize = 0;
+            let totalslotcount = 0;
+            let eptrmask = "";
+            const vtable: FieldOffsetInfo[] | undefined = undefined;
+
+            const mustref = this.isRecursiveTypeKey(tdecl.tkey, irasm);
+            for(const fdecl of etdecl.saturatedBFieldInfo) {
+                if(this.isNominalRecursiveType(fdecl.ftype, irasm)) {
+                    if((fdecl instanceof IRConceptTypeDecl) || (fdecl instanceof IRDatatypeTypeDecl)) {
+                        totalbytesize += 16;
+                        totalslotcount += 2;
+                        eptrmask += "20";
+                    }
+                    else {
+                        totalbytesize += 8;
+                        totalslotcount += 1;
+                        eptrmask += "1";
+                    }
+                }
+                else {
+                    const ftypeinfo = this.processInfoGenerationForType(fdecl.ftype, irasm);
+
+                    if(ftypeinfo.tag === LayoutTag.Ref) {
+                        totalbytesize += 8;
+                        totalslotcount += 1;
+                        eptrmask += "1";
+                    }
+                    else {
+                        totalbytesize += ftypeinfo.bytesize;
+                        totalslotcount += ftypeinfo.slotcount;
+                        eptrmask += ftypeinfo.ptrmask || TypeInfoManager.computeValueMaskOfK(ftypeinfo.slotcount);
+                    }
+                }
+            }
+
+            let ptrmask: string | undefined = undefined; 
+            if(eptrmask.includes("1") || eptrmask.includes("2")) {
+                ptrmask = eptrmask;
+            }
+
+            const ttid = this.typeInfoMap.size + this.typeInfoOffset;
+            if(!mustref && this.isSizeOkForValueLayout(totalbytesize)) {
+                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, totalbytesize, totalslotcount, LayoutTag.Value, ptrmask, vtable));
+            }
+            else {
+                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, totalbytesize, totalslotcount, LayoutTag.Ref, ptrmask, vtable));
+            }
+
+            return this.getTypeInfo(tdecl.tkey);
         }
     }
 
@@ -176,19 +282,48 @@ class TypeInfoManager {
         if(tdecl instanceof IROptionTypeDecl) {
             const oftinfo = this.processInfoGenerationForType(tdecl.ttype, irasm);
 
-            const ttid = this.typeInfoMap.size;
+            const ttid = this.typeInfoMap.size + this.typeInfoOffset;
             if(oftinfo.tag === LayoutTag.Ref) {
                 this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, 16, 2, LayoutTag.Tagged, "20", undefined));
             }
             else {
-                let spm = "2" + Array(oftinfo.slotcount).fill("0").join("");
+                let spm = TypeInfoManager.computeTaggedMaskOfK(oftinfo.slotcount);
                 this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, oftinfo.bytesize + 8, oftinfo.slotcount + 1, LayoutTag.Tagged, spm, undefined));
             }
             
             return this.getTypeInfo(tdecl.tkey);
         }
         else {
-            assert(false, `TypeInfoManager::processInfoGenerationForConcept - Unsupported concept type declaration for key ${tdecl.tkey}`);
+            assert(tdecl instanceof IRConceptTypeDecl, `TypeInfoManager::processInfoGenerationForConcept - Unsupported concept type declaration for key ${tdecl.tkey}`);
+
+            let totalbytesize = 0;
+            let totalslotcount = 0;
+
+            const subtypes = irasm.concretesubtypes.get(tdecl.tkey) as IRTypeSignature[];
+            for(const subtt of subtypes) {
+              if(this.isNominalRecursiveType(subtt, irasm)) {
+                    totalbytesize = Math.max(totalbytesize, 8);
+                    totalslotcount = Math.max(totalslotcount, 1);
+                }
+                else {
+                    const ftypeinfo = this.processInfoGenerationForType(subtt, irasm);
+
+                    if(ftypeinfo.tag === LayoutTag.Ref) {
+                        totalbytesize = Math.max(totalbytesize, 8);
+                        totalslotcount = Math.max(totalslotcount, 1);
+                    }
+                    else {
+                        totalbytesize = Math.max(totalbytesize, ftypeinfo.bytesize);
+                        totalslotcount = Math.max(totalslotcount, ftypeinfo.slotcount);
+                    }
+                }
+            }
+
+            const ttid = this.typeInfoMap.size + this.typeInfoOffset;
+            let eptrmask = TypeInfoManager.computeTaggedMaskOfK(totalslotcount);
+            this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, totalbytesize, totalslotcount, LayoutTag.Tagged, eptrmask, undefined));
+
+            return this.getTypeInfo(tdecl.tkey);
         }
     }
 
@@ -276,26 +411,27 @@ class TypeInfoManager {
         }
 
         //Now handle entities with a recursive walk
-        irasm.constructables.forEach((tdecl) => timgr.processInfoGenerationForEntity(tdecl, irasm));
-        irasm.collections.forEach((tdecl) => timgr.processInfoGenerationForEntity(tdecl, irasm));
-        irasm.eventlists.forEach((tdecl) => timgr.processInfoGenerationForEntity(tdecl, irasm));
-        irasm.entities.forEach((tdecl) => timgr.processInfoGenerationForEntity(tdecl, irasm));
-        irasm.datamembers.forEach((tdecl) => timgr.processInfoGenerationForEntity(tdecl, irasm));
+        irasm.constructables.forEach((tdecl) => { if(!timgr.hasTypeInfo(tdecl.tkey)) { timgr.processInfoGenerationForEntity(tdecl, irasm); } });
+        irasm.collections.forEach((tdecl) => { if(!timgr.hasTypeInfo(tdecl.tkey)) { timgr.processInfoGenerationForEntity(tdecl, irasm); } });
+        irasm.eventlists.forEach((tdecl) => { if(!timgr.hasTypeInfo(tdecl.tkey)) { timgr.processInfoGenerationForEntity(tdecl, irasm); } });
+        irasm.entities.forEach((tdecl) => { if(!timgr.hasTypeInfo(tdecl.tkey)) { timgr.processInfoGenerationForEntity(tdecl, irasm); } });
+        irasm.datamembers.forEach((tdecl) => { if(!timgr.hasTypeInfo(tdecl.tkey)) { timgr.processInfoGenerationForEntity(tdecl, irasm); } });
 
-        irasm.pconcepts.forEach((cdecl) => timgr.processInfoGenerationForConcept(cdecl, irasm));
-        irasm.concepts.forEach((cdecl) => timgr.processInfoGenerationForConcept(cdecl, irasm));
-        irasm.datatypes.forEach((cdecl) => timgr.processInfoGenerationForConcept(cdecl, irasm));
+        irasm.pconcepts.forEach((cdecl) => { if(!timgr.hasTypeInfo(cdecl.tkey)) { timgr.processInfoGenerationForConcept(cdecl, irasm); } });
+        irasm.concepts.forEach((cdecl) => { if(!timgr.hasTypeInfo(cdecl.tkey)) { timgr.processInfoGenerationForConcept(cdecl, irasm); } });
+        irasm.datatypes.forEach((cdecl) => { if(!timgr.hasTypeInfo(cdecl.tkey)) { timgr.processInfoGenerationForConcept(cdecl, irasm); } });
 
-        irasm.elists.forEach((ttype) => timgr.processInfoGenerationForType(ttype, irasm));
-        irasm.dashtypes.forEach((ttype) => timgr.processInfoGenerationForType(ttype, irasm));
-        irasm.formats.forEach((ttype) => timgr.processInfoGenerationForType(ttype, irasm));
-        irasm.lpacks.forEach((ttype) => timgr.processInfoGenerationForType(ttype, irasm));
+        irasm.elists.forEach((ttype) => { if(!timgr.hasTypeInfo(ttype.tkeystr)) { timgr.processInfoGenerationForType(ttype, irasm); } });
+        irasm.dashtypes.forEach((ttype) => { if(!timgr.hasTypeInfo(ttype.tkeystr)) { timgr.processInfoGenerationForType(ttype, irasm); } });
+        irasm.formats.forEach((ttype) => { if(!timgr.hasTypeInfo(ttype.tkeystr)) { timgr.processInfoGenerationForType(ttype, irasm); } });
+        irasm.lpacksigs.forEach((ttype) => { if(!timgr.hasTypeInfo(ttype.tkeystr)) { timgr.processInfoGenerationForType(ttype, irasm); } });
 
         return timgr;
     }
 }
 
 export {
+    MAX_LIST_INLINE_BYTES, LIST_T_CAPACITY,
     FieldOffsetInfo, 
     LayoutTag, TypeInfo,
     TypeInfoManager

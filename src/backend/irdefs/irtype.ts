@@ -5,17 +5,27 @@ abstract class IRTypeSignature {
     constructor(tkeystr: string) {
         this.tkeystr = tkeystr;
     }
+
+    abstract getDirectDependencyTypes(): IRTypeSignature[];
 }
 
 class IRVoidTypeSignature extends IRTypeSignature {
     constructor() {
         super("Void");
     }
+
+    getDirectDependencyTypes(): IRTypeSignature[] {
+        return [];
+    }
 }
 
 class IRNominalTypeSignature extends IRTypeSignature {
     constructor(tkeystr: string) {
         super(tkeystr);
+    }
+
+    getDirectDependencyTypes(): IRTypeSignature[] {
+        return [];
     }
 }
 
@@ -26,6 +36,10 @@ class IREListTypeSignature extends IRTypeSignature {
         super(tkeystr);
         this.entries = entries;
     }
+
+    getDirectDependencyTypes(): IRTypeSignature[] {
+        return this.entries;
+    }
 }
 
 class IRDashResultTypeSignature extends IRTypeSignature {
@@ -34,6 +48,10 @@ class IRDashResultTypeSignature extends IRTypeSignature {
     constructor(tkeystr: string, entries: IRTypeSignature[]) {
         super(tkeystr);
         this.entries = entries;
+    }
+
+    getDirectDependencyTypes(): IRTypeSignature[] {
+        return this.entries;
     }
 }
 
@@ -45,6 +63,10 @@ abstract class IRFormatTypeSignature extends IRTypeSignature {
         super(tkeystr);
         this.rtype = rtype;
         this.terms = terms;
+    }
+
+    getDirectDependencyTypes(): IRTypeSignature[] {
+        return [this.rtype, ...this.terms.map(t => t.argtype)];
     }
 }
 
@@ -79,13 +101,12 @@ class IRFormatPathGlobTypeSignature extends IRFormatTypeSignature {
 }
 
 class IRLambdaParameterPackTypeSignature extends IRTypeSignature {
-    readonly stdvalues: {vname: string, vtype: IRTypeSignature}[];
-    readonly lambdavalues: {lname: string, ltype: IRLambdaParameterPackTypeSignature}[];
-
-    constructor(tkeystr: string, stdvalues: {vname: string, vtype: IRTypeSignature}[], lambdavalues: {lname: string, ltype: IRLambdaParameterPackTypeSignature}[]) {
+    constructor(tkeystr: string) {
         super(tkeystr);
-        this.stdvalues = stdvalues;
-        this.lambdavalues = lambdavalues;
+    }
+
+    getDirectDependencyTypes(): IRTypeSignature[] {
+        return [];
     }
 }
 

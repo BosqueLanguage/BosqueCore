@@ -155,10 +155,8 @@ namespace ᐸRuntimeᐳ
     {
         this->bufferMgr.writeImmediate("'");
 
-        IterStack<CStrNode*> treestack;
-        XCStringInputIterator istart = s.input_iterator_begin(&treestack);
-        IterStack<CStrNode*> etreestack;
-        XCStringInputIterator iend = s.input_iterator_end(&etreestack);
+        XCStringIterator istart = s.begin();
+        XCStringIterator iend = s.end();
 
         for(auto ii = istart; ii != iend; ++ii) {
             char c = *ii;
@@ -175,10 +173,8 @@ namespace ᐸRuntimeᐳ
     {
         this->bufferMgr.writeImmediate("\"");
 
-        IterStack<StrNode*> treestack;
-        XStringInputIterator istart = s.input_iterator_begin(&treestack);
-        IterStack<StrNode*> etreestack;
-        XStringInputIterator iend = s.input_iterator_end(&etreestack);
+        XStringIterator istart = s.begin();
+        XStringIterator iend = s.end();
 
         for(auto ii = istart; ii != iend; ++ii) {
             char32_t c = *ii;

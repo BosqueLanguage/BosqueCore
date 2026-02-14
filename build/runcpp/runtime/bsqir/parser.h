@@ -23,9 +23,9 @@ namespace ᐸRuntimeᐳ
         void release();
 
         bool peekSymbol(char sym);
-        
         BSQONTokenType peekTokenType();
 
+        bool testType(const char* tname);
         bool ensureAndConsumeType(const char* tname);
         
         bool ensureAndConsumeSymbol(char sym)
@@ -35,7 +35,7 @@ namespace ᐸRuntimeᐳ
                 return false;
             }
 
-            if(token.extract_single() != sym) {
+            if(token.extract() != sym) {
                 return false;
             }
 
@@ -77,6 +77,9 @@ namespace ᐸRuntimeᐳ
 
         bool ensureAndConsumeIdentifier(char* outident, size_t maxlen);
 
+        void consumeTokenAlways();
+        bool testAndConsumeTokenIf(BSQONTokenType ttype);
+
         std::optional<XNone> parseNone();
         std::optional<XBool> parseBool();
         std::optional<XNat> parseNat();
@@ -88,6 +91,11 @@ namespace ᐸRuntimeᐳ
 
         std::optional<XCString> parseCString();
         std::optional<XString> parseString();
+
+        bool allInputConsumed()
+        {
+            return this->lexer.current().tokentype == BSQONTokenType::EOFToken;
+        }
     };
 
     class JSONParser

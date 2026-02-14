@@ -1,13 +1,12 @@
 import { EListTypeSignature, FullyQualifiedNamespace, TemplateNameMapper, TypeSignature } from "../../frontend/type.js";
-import { IRLambdaParameterPackTypeSignature } from "../irdefs/irtype.js";
 
 class InvokeInstantiationInfo {
     readonly newikey: string;
 
     readonly binds: TemplateNameMapper | undefined;
-    readonly lambdas: { pname: string, psig: IRLambdaParameterPackTypeSignature, invtrgt: string }[];
+    readonly lambdas: { pname: string, psigkey: string }[];
     
-    constructor(newikey: string, binds: TemplateNameMapper | undefined, lambdas: { pname: string, psig: IRLambdaParameterPackTypeSignature, invtrgt: string }[]) {
+    constructor(newikey: string, binds: TemplateNameMapper | undefined, lambdas: { pname: string, psigkey: string }[]) {
         this.newikey = newikey;
         this.binds = binds;
         this.lambdas = lambdas;

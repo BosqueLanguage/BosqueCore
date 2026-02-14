@@ -374,6 +374,8 @@ abstract class ExplicitInvokeDecl extends AbstractInvokeDecl {
     readonly preconditions: PreConditionDecl[];
     readonly postconditions: PostConditionDecl[];
 
+    resolvename: string | undefined;
+
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: InvokeParameterDecl[], resultType: TypeSignature, body: BodyImplementation, terms: InvokeTemplateTermDecl[], termRestriction: InvokeTemplateTypeRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[]) {
         super(file, sinfo, attributes, name, recursive, params, resultType, body);
 
@@ -1752,6 +1754,30 @@ class Assembly {
                 return undefined;
             }
         }
+    }
+
+    resolveFieldDeclDefaultExpFromTypeSignature(ts: TypeSignature, fieldname: string): Expression | undefined {
+        if(!(ts instanceof NominalTypeSignature)) {
+            return undefined;
+        }
+
+        const tdecl = ts.decl;
+        let fd: MemberFieldDecl | undefined = undefined;
+        if(tdecl instanceof EntityTypeDecl) {
+            fd = tdecl.fields.find((fd) => fd.name === fieldname);
+        }
+        if(tdecl instanceof ConceptTypeDecl) {
+            fd = tdecl.fields.find((fd) => fd.name === fieldname);
+        }
+        if(tdecl instanceof DatatypeMemberEntityTypeDecl) {
+            fd = tdecl.fields.find((fd) => fd.name === fieldname);
+        }
+        if(tdecl instanceof DatatypeTypeDecl) {
+            fd = tdecl.fields.find((fd) => fd.name === fieldname);
+        }
+        
+
+        return (fd !== undefined) ? fd.defaultValue : undefined;
     }
 
     static checkFunctionSigMatch(fd1: FunctionInvokeDecl, fd2: FunctionInvokeDecl): boolean {

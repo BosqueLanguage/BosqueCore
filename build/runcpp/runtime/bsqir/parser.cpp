@@ -19,12 +19,22 @@ namespace ᐸRuntimeᐳ
             return false;
         }
 
-        return token.extract_single() == sym;
+        return token.extract() == sym;
     }
 
     BSQONTokenType BSQONParser::peekTokenType()
     {
         return this->lexer.current().tokentype;
+    }
+
+    bool BSQONParser::testType(const char* tname)
+    {
+        auto token = this->lexer.current();
+        if(!(token.tokentype == BSQONTokenType::Identifier)) {
+            return false;
+        }
+
+        return this->lexer.current().matches(tname);
     }
 
     bool BSQONParser::ensureAndConsumeType(const char* tname)
@@ -55,11 +65,27 @@ namespace ᐸRuntimeᐳ
         return true;
     }
 
+    void BSQONParser::consumeTokenAlways()
+    {
+        this->lexer.consume();
+    }
+    
+    bool BSQONParser::testAndConsumeTokenIf(BSQONTokenType ttype)
+    {
+        auto token = this->lexer.current();
+        if(token.tokentype != ttype) {
+            return false;
+        }
+
+        this->lexer.consume();
+        return true;
+    }
+
     std::optional<XNone> BSQONParser::parseNone() 
     {
         if(this->lexer.current().tokentype == BSQONTokenType::LiteralNone) {
             this->lexer.consume();
-            return std::optional<XNone>(none);
+            return std::make_optional(none);
         }
 
         return std::nullopt;
@@ -70,11 +96,11 @@ namespace ᐸRuntimeᐳ
     {
         if(this->lexer.current().tokentype == BSQONTokenType::LiteralTrue) {
             this->lexer.consume();
-            return std::optional<XBool>(TRUE);
+            return std::make_optional(TRUE);
         }
         else if(this->lexer.current().tokentype == BSQONTokenType::LiteralFalse) {
             this->lexer.consume();
-            return std::optional<XBool>(FALSE);
+            return std::make_optional(FALSE);
         }
 
         return std::nullopt;
@@ -96,7 +122,7 @@ namespace ᐸRuntimeᐳ
             }
             else {
                 this->lexer.consume();
-                return std::optional<XNat>(XNat(vv));
+                return std::make_optional(XNat{vv});
             }
         }
 
@@ -118,7 +144,7 @@ namespace ᐸRuntimeᐳ
             }
             else {
                 this->lexer.consume();
-                return std::optional<XInt>(XInt(vv));
+                return std::make_optional(XInt{vv});
             }
         }
 
@@ -133,7 +159,7 @@ namespace ᐸRuntimeᐳ
 
             if(std::strcmp(outbuff, "ChkNat::npos") == 0) {
                 this->lexer.consume();
-                return std::optional<XChkNat>(XChkNat::bliteral());
+                return std::make_optional(XChkNat::bliteral());
             }
             else {
                 errno = 0;
@@ -148,7 +174,7 @@ namespace ᐸRuntimeᐳ
                 }
                 else {
                     this->lexer.consume();
-                    return std::optional<XChkNat>(XChkNat(vv));
+                    return std::make_optional(XChkNat{vv});
                 }
             }
         }
@@ -164,7 +190,7 @@ namespace ᐸRuntimeᐳ
 
             if(std::strcmp(outbuff, "ChkInt::npos") == 0) {
                 this->lexer.consume();
-                return std::optional<XChkInt>(XChkInt::bliteral());
+                return std::make_optional(XChkInt::bliteral());
             }
             else {
                 errno = 0;
@@ -179,7 +205,7 @@ namespace ᐸRuntimeᐳ
                 }
                 else {
                     this->lexer.consume();
-                    return std::optional<XChkInt>(XChkInt(vv));
+                    return std::make_optional(XChkInt{vv});
                 }
             }
         }
@@ -204,12 +230,8 @@ namespace ᐸRuntimeᐳ
 
     bool processCCharInString(BSQLexBufferIterator& ii, char* outchar)
     {
-        if(!ii.valid()) {
-            return false;
-        }
-
-        char c = (char)ii.get();
-        ii.next();
+        char c = *ii;
+        ++ii;
 
         if(!isSimpleChar(static_cast<uint8_t>(c))) {
             return false;
@@ -227,12 +249,8 @@ namespace ᐸRuntimeᐳ
 
     bool processUnicodeCharInString(BSQLexBufferIterator& ii, char32_t* outchar)
     {
-        if(!ii.valid()) {
-            return false;
-        }
-
-        char c = (char)ii.get();
-        ii.next();
+        char c = *ii;
+        ++ii;
 
         if(!isSimpleChar(static_cast<uint8_t>(c))) {
             assert(false); // Not Implemented: full unicode support in String
@@ -256,13 +274,13 @@ namespace ᐸRuntimeᐳ
         }
 
         auto stok = this->lexer.current();
-        if(stok.size < CStrBuff::CSTR_MAX_SIZE) {
+        if(stok.size() < CStrBuff::CSTR_MAX_SIZE) {
             CStrBuff cb;
             size_t ecount = 0;
             bool extractok = true;
-            BSQLexBufferIterator ii = stok.extraction_iterator();
-            ii.next(); //eat ' and skip final '
-            while(ii.valid() && ii.get() != '\'') {
+            BSQLexBufferIterator ii = stok.begin;
+            ++ii; //eat ' and skip final '
+            while(*ii != '\'') {
                 extractok &= processCCharInString(ii, &cb.data[ecount + 1]);
                 ecount++;
             }
@@ -273,7 +291,7 @@ namespace ᐸRuntimeᐳ
                 return std::nullopt;
             }
             else {
-                return std::optional<XCString>(XCString(cb));
+                return std::make_optional(XCString(cb));
             }
         }
         else {
@@ -288,13 +306,13 @@ namespace ᐸRuntimeᐳ
         }
 
         auto stok = this->lexer.current();
-        if(stok.size < StrBuff::STR_MAX_SIZE) {
+        if(stok.size() < StrBuff::STR_MAX_SIZE) {
             StrBuff cb;
             size_t ecount = 0;
             bool extractok = true;
-            BSQLexBufferIterator ii = stok.extraction_iterator();
-            ii.next(); //eat " and skip final "
-            while(ii.valid() && ii.get() != '"') {
+            BSQLexBufferIterator ii = stok.begin;
+            ++ii; //eat " and skip final "
+            while(*ii != '"') {
                 extractok &= processUnicodeCharInString(ii, &cb.data[ecount + 1]);
                 ecount++;
             }
@@ -305,7 +323,7 @@ namespace ᐸRuntimeᐳ
                 return std::nullopt;
             }
             else {
-                return std::optional<XString>(XString(cb));
+                return std::make_optional(XString(cb));
             }
         }
         else {

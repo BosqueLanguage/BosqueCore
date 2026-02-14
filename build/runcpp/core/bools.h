@@ -11,21 +11,21 @@ namespace ᐸRuntimeᐳ
     public:
         uint64_t value; // Stored as uint64_t for alignment reasons
 
-        constexpr static XBool from(bool b) { return XBool{b ? 1ull : 0ull}; }
-        constexpr static bool toBool(XBool b) { return (b.value != 0ull); }
+        constexpr static inline XBool from(bool b) { return XBool{(uint64_t)b}; }
+        constexpr static inline bool toBool(XBool b) { return (bool)b.value; }
 
-        constexpr explicit operator bool() const { return this->value != 0ull; }
+        constexpr explicit inline operator bool() const { return this->value != 0ull; }
 
-        friend constexpr XBool operator!(const XBool &b) { return XBool::from(!XBool::toBool(b)); }
-        friend constexpr XBool operator&(const XBool &lhs, const XBool &rhs) { return XBool::from(lhs.value & rhs.value); }
-        friend constexpr XBool operator|(const XBool &lhs, const XBool &rhs) { return XBool::from(lhs.value | rhs.value); }
+        friend constexpr inline XBool operator!(const XBool &b) { return XBool{(uint64_t)(!b.value)}; }
+        friend constexpr inline XBool operator&(const XBool &lhs, const XBool &rhs) { return XBool{(uint64_t)(lhs.value & rhs.value)}; }
+        friend constexpr inline XBool operator|(const XBool &lhs, const XBool &rhs) { return XBool{(uint64_t)(lhs.value | rhs.value)}; }
 
-        friend constexpr XBool operator==(const XBool &lhs, const XBool &rhs) { return XBool::from(lhs.value == rhs.value); }
-        friend constexpr XBool operator<(const XBool &lhs, const XBool &rhs) { return (!lhs) & rhs; }
-        friend constexpr XBool operator>(const XBool &lhs, const XBool &rhs) { return rhs & (!lhs); }
-        friend constexpr XBool operator!=(const XBool &lhs, const XBool &rhs) { return !(lhs == rhs); }
-        friend constexpr XBool operator<=(const XBool &lhs, const XBool &rhs) { return !(lhs > rhs); }
-        friend constexpr XBool operator>=(const XBool &lhs, const XBool &rhs) { return !(lhs < rhs); }
+        friend constexpr inline XBool operator==(const XBool &lhs, const XBool &rhs) { return XBool{(uint64_t)(lhs.value == rhs.value)}; }
+        friend constexpr inline XBool operator<(const XBool &lhs, const XBool &rhs) { return (!lhs) & rhs; }
+        friend constexpr inline XBool operator>(const XBool &lhs, const XBool &rhs) { return rhs & (!lhs); }
+        friend constexpr inline XBool operator!=(const XBool &lhs, const XBool &rhs) { return XBool{(uint64_t)(lhs.value != rhs.value)}; }
+        friend constexpr inline XBool operator<=(const XBool &lhs, const XBool &rhs) { return !(lhs > rhs); }
+        friend constexpr inline XBool operator>=(const XBool &lhs, const XBool &rhs) { return !(lhs < rhs); }
     };
 
     constexpr XBool XFALSE = XBool::from(false);

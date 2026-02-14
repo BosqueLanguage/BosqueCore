@@ -1,6 +1,7 @@
 import assert from "node:assert";
 
 import { TypeSignature } from "./type.js";
+import { TypeTestBindInfo } from "./body.js";
 
 class VarInfo {
     readonly srcname: string;
@@ -100,47 +101,27 @@ class LocalScope {
         }
     }
 
-    static mergeLocalScopes(...envs: LocalScope[]): LocalScope {
+    static mergeLocalScopes(origscope: LocalScope, allscopes: LocalScope[], envs: LocalScope[]): LocalScope {
         let locals: VarInfo[] = [];
-        for(let i = 0; i < envs[0].locals.length; i++) {
-            const mdef = envs.every((e) => e.locals[i].mustDefined);
-            locals.push(new VarInfo(envs[0].locals[i].srcname, envs[0].locals[i].decltype, envs[0].locals[i].vkind, mdef));
+
+        if(envs.length === 0) {
+            for(let i = 0; i < origscope.locals.length; i++) {
+                locals.push(new VarInfo(origscope.locals[i].srcname, origscope.locals[i].decltype, origscope.locals[i].vkind, origscope.locals[i].mustDefined));
+            }
+        }
+        else {
+            for(let i = 0; i < origscope.locals.length; i++) {
+                const mdef = envs.every((e) => e.locals[i].mustDefined);
+                locals.push(new VarInfo(envs[0].locals[i].srcname, envs[0].locals[i].decltype, envs[0].locals[i].vkind, mdef));
+            }
         }
         
-        let baccess = new Set<string>();
-        for(let i = 0; i < envs.length; i++) {
-            baccess = new Set<string>([...baccess, ...envs[i].accessed]);
+        let baccess = new Set<string>(origscope.accessed);
+        for(let i = 0; i < allscopes.length; i++) {
+            baccess = new Set<string>([...baccess, ...allscopes[i].accessed]);
         }
 
-        return new LocalScope(envs[0].binderscope, locals, baccess);
-    }
-}
-
-
-class TypeTestBindInfo {
-    readonly guardidx: number;
-    readonly bname: string;
-
-    readonly ttrue: TypeSignature | undefined;
-    readonly tfalse: TypeSignature | undefined;
-
-    constructor(guardidx: number, bname: string, ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined) {
-        this.guardidx = guardidx;
-        this.bname = bname;
-        this.ttrue = ttrue;
-        this.tfalse = tfalse;
-    }
-
-    notop(): TypeTestBindInfo {
-        return new TypeTestBindInfo(this.guardidx, this.bname, this.tfalse, this.ttrue);
-    }
-
-    convertToStructInfoTrue(): { gidx: number, bvname: string, tsig: TypeSignature } {
-        return { gidx: this.guardidx, bvname: this.bname, tsig: this.ttrue as TypeSignature };
-    }
-
-    convertToStructInfoFalse(): { gidx: number, bvname: string, tsig: TypeSignature } {
-        return { gidx: this.guardidx, bvname: this.bname, tsig: this.tfalse as TypeSignature };
+        return new LocalScope(origscope.binderscope, locals, baccess);
     }
 }
 
@@ -153,6 +134,69 @@ class TypeResultWRefVarInfoResult {
 
     readonly alwaystrue: boolean;
     readonly alwaysfalse: boolean;
+
+    private static checkRWVarConflicts(setcondout: {ttrue: string[], tfalse: string[]}, setuncond: string[], usemod: string[]): boolean {
+        //check for conflicts between setcondout/setuncond/usemod
+        let assigned = new Set<string>();
+
+        for(let i = 0; i < setcondout.ttrue.length; i++) {
+            if(assigned.has(setcondout.ttrue[i])) {
+                return false;
+            }
+            assigned.add(setcondout.ttrue[i]);
+        }
+        for(let i = 0; i < setcondout.tfalse.length; i++) {
+            if(assigned.has(setcondout.tfalse[i])) {
+                return false;
+            }
+            assigned.add(setcondout.tfalse[i]);
+        }
+
+        for(let i = 0; i < setuncond.length; i++) {
+            if(assigned.has(setuncond[i])) {
+                return false;
+            }
+            assigned.add(setuncond[i]);
+        }
+
+        for(let i = 0; i < usemod.length; i++) {
+            if(assigned.has(usemod[i])) {
+                return false;
+            }
+            assigned.add(usemod[i]);
+        }
+
+        return true;
+    }
+
+    private checkNewRWVarConflicts(assigned: Set<string>): boolean {
+        //check for conflicts between setcondout/setuncond/usemod
+
+        for(let i = 0; i < this.setcondout.ttrue.length; i++) {
+            if(assigned.has(this.setcondout.ttrue[i])) {
+                return false;
+            }
+        }
+        for(let i = 0; i < this.setcondout.tfalse.length; i++) {
+            if(assigned.has(this.setcondout.tfalse[i])) {
+                return false;
+            }
+        }
+
+        for(let i = 0; i < this.setuncond.length; i++) {
+            if(assigned.has(this.setuncond[i])) {
+                return false;
+            }
+        }
+
+        for(let i = 0; i < this.usemod.length; i++) {
+            if(assigned.has(this.usemod[i])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 
     constructor(tsig: TypeSignature, alwaystrue: boolean, alwaysfalse: boolean, setcondout: {ttrue: string[], tfalse: string[]}, setuncond: string[], usemod: string[], bbinds: TypeTestBindInfo[]) {
         this.tsig = tsig;
@@ -168,8 +212,19 @@ class TypeResultWRefVarInfoResult {
         return new TypeResultWRefVarInfoResult(tsig, false, false, {ttrue: [], tfalse: []}, [], [], []);
     }
 
-    static andstates(results: TypeResultWRefVarInfoResult[]): TypeResultWRefVarInfoResult {
+    static makeGeneralResult(tsig: TypeSignature, alwaystrue: boolean, alwaysfalse: boolean, setcondout: {ttrue: string[], tfalse: string[]}, setuncond: string[], usemod: string[], bbinds: TypeTestBindInfo[]): TypeResultWRefVarInfoResult | undefined {
+        if(!TypeResultWRefVarInfoResult.checkRWVarConflicts(setcondout, setuncond, usemod)) {
+            return undefined;
+        }
+        
+        return new TypeResultWRefVarInfoResult(tsig, alwaystrue, alwaysfalse, setcondout, setuncond, usemod, bbinds);
+    }
+
+    static andstates(results: TypeResultWRefVarInfoResult[]): [boolean, TypeResultWRefVarInfoResult] {
         assert(results.length > 0);
+
+        let hasconflicts = false;
+        let assigned = new Set<string>();
 
         let ttrue = new Set<string>();
         let tfalse = new Set<string>();
@@ -178,14 +233,24 @@ class TypeResultWRefVarInfoResult {
         let bbinds: TypeTestBindInfo[] = [];
 
         for(let i = 0; i < results.length; i++) {
+            hasconflicts = hasconflicts || !results[i].checkNewRWVarConflicts(assigned);
+            
             results[i].setcondout.ttrue.forEach((v) => ttrue.add(v));
+            results[i].setcondout.tfalse.forEach((v) => assigned.add(v));
+
             results[i].setcondout.tfalse.forEach((v) => tfalse.add(v));
+            results[i].setcondout.ttrue.forEach((v) => assigned.add(v));
+
             results[i].setuncond.forEach((v) => setuncond.add(v));
+            results[i].setuncond.forEach((v) => assigned.add(v));
+
             results[i].usemod.forEach((v) => usemod.add(v));
+            results[i].usemod.forEach((v) => assigned.add(v));
+
             bbinds.push(...results[i].bbinds);
         }
 
-        return new TypeResultWRefVarInfoResult(
+        const nstate = new TypeResultWRefVarInfoResult(
             results[0].tsig,
             results.every((r) => r.alwaystrue),
             results.some((r) => r.alwaysfalse),
@@ -194,6 +259,30 @@ class TypeResultWRefVarInfoResult {
             [...usemod],
             bbinds
         );
+
+        return [hasconflicts, nstate];
+    }
+
+
+    extendEnvironmentWithVarAssignments(env: TypeEnvironment): [TypeEnvironment, TypeEnvironment, TypeEnvironment] {
+        let aenv = env;
+        let tenv = env;
+        let fenv = env;
+
+        for(let i = 0; i < this.setcondout.ttrue.length; i++) {
+            tenv = tenv.assignLocalVariable(this.setcondout.ttrue[i]);
+        }
+        for(let i = 0; i < this.setcondout.tfalse.length; i++) {
+            fenv = fenv.assignLocalVariable(this.setcondout.tfalse[i]);
+        }
+
+        for(let i = 0; i < this.setuncond.length; i++) {
+            aenv = aenv.assignLocalVariable(this.setuncond[i]);
+            tenv = tenv.assignLocalVariable(this.setuncond[i]);
+            fenv = fenv.assignLocalVariable(this.setuncond[i]);
+        }
+        
+        return [aenv, tenv, fenv];
     }
 }
 
@@ -330,7 +419,7 @@ class TypeEnvironment {
         let locals: LocalScope[] = [];
         const normalenvs = envs.filter((e) => e.isnormalflow);
         for(let i = 0; i < origenv.locals.length; i++) {
-            locals.push(LocalScope.mergeLocalScopes(...normalenvs.map((e) => e.locals[i])));
+            locals.push(LocalScope.mergeLocalScopes(origenv.locals[i], envs.map((e) => e.locals[i]), normalenvs.map((e) => e.locals[i])));
         }
 
         let lcaptures: {vname: string, vtype: TypeSignature, scopeidx: number}[] = [...origenv.lcaptures];
@@ -382,6 +471,6 @@ class TypeEnvironment {
 export {
     VarInfo,
     TypeInferContext, SimpleTypeInferContext, EListStyleTypeInferContext,
-    TypeTestBindInfo, TypeResultWRefVarInfoResult,
+    TypeResultWRefVarInfoResult,
     TypeEnvironment
 };

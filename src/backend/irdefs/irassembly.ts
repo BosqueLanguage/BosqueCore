@@ -268,7 +268,7 @@ abstract class IRAbstractNominalTypeDecl {
     readonly etag: "std" | "status" | "event";
 
     readonly saturatedProvides: IRTypeSignature[];
-    readonly saturatedBFieldInfo: { containingtype: IRNominalTypeSignature, fkey: string }[];
+    readonly saturatedBFieldInfo: { containingtype: IRNominalTypeSignature, fkey: string, fname: string, ftype: IRTypeSignature }[];
 
     readonly allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[];
     readonly allValidates: { containingtype: IRNominalTypeSignature, ii: number }[];
@@ -281,7 +281,7 @@ abstract class IRAbstractNominalTypeDecl {
     readonly file: string;
     readonly sinfo: IRSourceInfo;
 
-    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], fields: IRMemberFieldDecl[], etag: "std" | "status" | "event", saturatedProvides: IRTypeSignature[], saturatedBFieldInfo: { containingtype: IRNominalTypeSignature, fkey: string }[], allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[], allValidates: { containingtype: IRNominalTypeSignature, ii: number }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
+    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], fields: IRMemberFieldDecl[], etag: "std" | "status" | "event", saturatedProvides: IRTypeSignature[], saturatedBFieldInfo: { containingtype: IRNominalTypeSignature, fkey: string, fname: string, ftype: IRTypeSignature }[], allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[], allValidates: { containingtype: IRNominalTypeSignature, ii: number }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
         this.tkey = tkey;
         this.invariants = invariants;
         this.validates = validates;
@@ -299,10 +299,12 @@ abstract class IRAbstractNominalTypeDecl {
         this.file = file;
         this.sinfo = sinfo;
     }
+
+    abstract getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[];
 }
 
 abstract class IRAbstractEntityTypeDecl extends IRAbstractNominalTypeDecl {
-    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], fields: IRMemberFieldDecl[], etag: "std" | "status" | "event", saturatedProvides: IRTypeSignature[], saturatedBFieldInfo: { containingtype: IRNominalTypeSignature, fkey: string }[], allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[], allValidates: { containingtype: IRNominalTypeSignature, ii: number }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
+    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], fields: IRMemberFieldDecl[], etag: "std" | "status" | "event", saturatedProvides: IRTypeSignature[], saturatedBFieldInfo: { containingtype: IRNominalTypeSignature, fkey: string, fname: string, ftype: IRTypeSignature }[], allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[], allValidates: { containingtype: IRNominalTypeSignature, ii: number }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
         super(tkey, invariants, validates, fields, etag, saturatedProvides, saturatedBFieldInfo, allInvariants, allValidates, docstr, metatags, file, sinfo);
     }
 }
@@ -313,6 +315,10 @@ class IREnumTypeDecl extends IRAbstractEntityTypeDecl {
     constructor(tkey: string, docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, members: string[]) {
         super(tkey, [], [], [], "std", [], [], [], [], docstr, [], file, sinfo);
         this.members = members;
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [];
     }
 }
 
@@ -327,6 +333,10 @@ class IRTypedeclTypeDecl extends IRAbstractEntityTypeDecl {
         this.iskeytype = iskeytype;
         this.isnumerictype = isnumerictype;
     }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.valuetype];
+    }
 }
 
 class IRTypedeclCStringDecl extends IRAbstractEntityTypeDecl {
@@ -338,6 +348,10 @@ class IRTypedeclCStringDecl extends IRAbstractEntityTypeDecl {
         this.rngchk = rngchk;
         this.rechk = rechk;
     }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [];
+    }
 }
 
 class IRTypedeclStringDecl extends IRAbstractEntityTypeDecl {
@@ -348,6 +362,10 @@ class IRTypedeclStringDecl extends IRAbstractEntityTypeDecl {
         super(tkey, invariants, validates, [], "std", saturatedProvides, [], allInvariants, allValidates, docstr, metatags, file, sinfo);
         this.rngchk = rngchk;
         this.rechk = rechk;
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [];
     }
 }
 
@@ -362,6 +380,10 @@ abstract class IRInternalEntityTypeDecl extends IRAbstractEntityTypeDecl {
 class IRPrimitiveEntityTypeDecl extends IRInternalEntityTypeDecl {
     constructor(tkey: string, docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo) {
         super(tkey, [], docstr, [], file, sinfo);
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [];
     }
 }
 
@@ -380,6 +402,10 @@ class IROkTypeDecl extends IRConstructableTypeDecl {
         this.ttype = ttype;
         this.etype = etype;
     }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.ttype, this.etype];
+    }
 }
 
 class IRFailTypeDecl extends IRConstructableTypeDecl {
@@ -390,6 +416,10 @@ class IRFailTypeDecl extends IRConstructableTypeDecl {
         super(tkey, saturatedProvides, docstr, file, sinfo);
         this.ttype = ttype;
         this.etype = etype;
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.ttype, this.etype];
     }
 }
 
@@ -402,6 +432,10 @@ class IRAPIErrorTypeDecl extends IRConstructableTypeDecl {
         this.ttype = ttype;
         this.etype = etype;
     }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.ttype, this.etype];
+    }
 }
 
 class IRAPIRejectedTypeDecl extends IRConstructableTypeDecl {
@@ -412,6 +446,10 @@ class IRAPIRejectedTypeDecl extends IRConstructableTypeDecl {
         super(tkey, saturatedProvides, docstr, file, sinfo);
         this.ttype = ttype;
         this.etype = etype;
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.ttype, this.etype];
     }
 }
 
@@ -424,6 +462,10 @@ class IRAPIDeniedTypeDecl extends IRConstructableTypeDecl {
         this.ttype = ttype;
         this.etype = etype;
     }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.ttype, this.etype];
+    }
 }
 
 class IRAPIFlaggedTypeDecl extends IRConstructableTypeDecl {
@@ -434,6 +476,10 @@ class IRAPIFlaggedTypeDecl extends IRConstructableTypeDecl {
         super(tkey, saturatedProvides, docstr, file, sinfo);
         this.ttype = ttype;
         this.etype = etype;
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.ttype, this.etype];
     }
 }
 
@@ -446,6 +492,10 @@ class IRAPISuccessTypeDecl extends IRConstructableTypeDecl {
         this.ttype = ttype;
         this.etype = etype;
     }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.ttype, this.etype];
+    }
 }
 
 class IRSomeTypeDecl extends IRConstructableTypeDecl {
@@ -454,6 +504,10 @@ class IRSomeTypeDecl extends IRConstructableTypeDecl {
     constructor(tkey: string, saturatedProvides: IRTypeSignature[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, ttype: IRTypeSignature) {
         super(tkey, saturatedProvides, docstr, file, sinfo);
         this.ttype = ttype;
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.ttype];
     }
 }
 
@@ -465,6 +519,10 @@ class IRMapEntryTypeDecl extends IRConstructableTypeDecl {
         super(tkey, saturatedProvides, docstr, file, sinfo);
         this.ktype = ktype;
         this.vtype = vtype;
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.ktype, this.vtype];
     }
 }
 
@@ -481,11 +539,19 @@ class IRListTypeDecl extends IRAbstractCollectionTypeDecl {
     constructor(tkey: string, docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, oftype: IRTypeSignature) {
         super(tkey, docstr, file, sinfo, oftype);
     }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.oftype];
+    }
 }
 
 class IRStackTypeDecl extends IRAbstractCollectionTypeDecl {
     constructor(tkey: string, docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, oftype: IRTypeSignature) {
         super(tkey, docstr, file, sinfo, oftype);
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.oftype];
     }
 }
 
@@ -493,11 +559,19 @@ class IRQueueTypeDecl extends IRAbstractCollectionTypeDecl {
     constructor(tkey: string, docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, oftype: IRTypeSignature) {
         super(tkey, docstr, file, sinfo, oftype);
     }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.oftype];
+    }
 }
 
 class IRSetTypeDecl extends IRAbstractCollectionTypeDecl {
     constructor(tkey: string, docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, oftype: IRTypeSignature) {
         super(tkey, docstr, file, sinfo, oftype);
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.oftype];
     }
 }
 
@@ -510,6 +584,10 @@ class IRMapTypeDecl extends IRAbstractCollectionTypeDecl {
         this.ktype = ktype;
         this.vtype = vtype;
     }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+       return [this.oftype, this.ktype, this.vtype];
+    }
 }
 
 class IREventListTypeDecl extends IRInternalEntityTypeDecl {
@@ -519,16 +597,30 @@ class IREventListTypeDecl extends IRInternalEntityTypeDecl {
         super(tkey, [], docstr, [], file, sinfo);
         this.etype = etype;
     }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.etype];
+    }
 }
 
 class IREntityTypeDecl extends IRAbstractEntityTypeDecl {
-    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], fields: IRMemberFieldDecl[], etag: "std" | "status" | "event", saturatedProvides: IRTypeSignature[], saturatedBFieldInfo: { containingtype: IRNominalTypeSignature, fkey: string }[], allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[], allValidates: { containingtype: IRNominalTypeSignature, ii: number }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
+    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], fields: IRMemberFieldDecl[], etag: "std" | "status" | "event", saturatedProvides: IRTypeSignature[], saturatedBFieldInfo: { containingtype: IRNominalTypeSignature, fkey: string, fname: string, ftype: IRTypeSignature }[], allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[], allValidates: { containingtype: IRNominalTypeSignature, ii: number }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
         super(tkey, invariants, validates, fields, etag, saturatedProvides, saturatedBFieldInfo, allInvariants, allValidates, docstr, metatags, file, sinfo);
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        const ffdecls = this.saturatedBFieldInfo.map((bf) => {
+            const ctt = alltypes.get(bf.containingtype.tkeystr) as IRAbstractNominalTypeDecl;
+            const bfdecl = ctt.fields.find(f => f.fkey === bf.fkey) as IRMemberFieldDecl;
+            return bfdecl.declaredType;
+        });
+
+        return ffdecls;
     }
 }
 
 abstract class IRAbstractConceptTypeDecl extends IRAbstractNominalTypeDecl {
-    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], fields: IRMemberFieldDecl[], saturatedProvides: IRTypeSignature[], saturatedBFieldInfo: { containingtype: IRNominalTypeSignature, fkey: string }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
+    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], fields: IRMemberFieldDecl[], saturatedProvides: IRTypeSignature[], saturatedBFieldInfo: { containingtype: IRNominalTypeSignature, fkey: string, fname: string, ftype: IRTypeSignature }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
         super(tkey, invariants, validates, fields, "std", saturatedProvides, saturatedBFieldInfo, [], [], docstr, metatags, file, sinfo);
     }
 }
@@ -548,6 +640,10 @@ class IROptionTypeDecl extends IRInternalConceptTypeDecl {
         this.ttype = ttype;
         this.sometype = sometype;
     }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.ttype, this.sometype];
+    }
 }
 
 class IRResultTypeDecl extends IRInternalConceptTypeDecl {
@@ -563,6 +659,10 @@ class IRResultTypeDecl extends IRInternalConceptTypeDecl {
         this.etype = etype;
         this.oktype = oktype;
         this.failtype = failtype;
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.ttype, this.etype, this.oktype, this.failtype];
     }
 }
 
@@ -586,26 +686,60 @@ class IRAPIResultTypeDecl extends IRInternalConceptTypeDecl {
         this.flaggedtype = flaggedtype;
         this.successtype = successtype;
     }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.ttype, this.etype, this.errortype, this.rejectedtype, this.deniedtype, this.flaggedtype, this.successtype];
+    }
 }
 
 class IRConceptTypeDecl extends IRAbstractConceptTypeDecl {
-    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], fields: IRMemberFieldDecl[], saturatedProvides: IRTypeSignature[], saturatedBFieldInfo: { containingtype: IRNominalTypeSignature, fkey: string }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
+    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], fields: IRMemberFieldDecl[], saturatedProvides: IRTypeSignature[], saturatedBFieldInfo: { containingtype: IRNominalTypeSignature, fkey: string, fname: string, ftype: IRTypeSignature }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
         super(tkey, invariants, validates, fields, saturatedProvides, saturatedBFieldInfo, docstr, metatags, file, sinfo);
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        const ffdecls = this.saturatedBFieldInfo.map(bf => {
+            const ctt = alltypes.get(bf.containingtype.tkeystr) as IRAbstractNominalTypeDecl;
+            const bfdecl = ctt.fields.find(f => f.fkey === bf.fkey) as IRMemberFieldDecl;
+            return bfdecl.declaredType;
+        });
+
+        return [new IRNominalTypeSignature(this.tkey), ...ffdecls];
     }
 }
 
 class IRDatatypeMemberEntityTypeDecl extends IRAbstractEntityTypeDecl {
-    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], fields: IRMemberFieldDecl[], etag: "std" | "status" | "event", saturatedProvides: IRTypeSignature[], saturatedBFieldInfo: { containingtype: IRNominalTypeSignature, fkey: string }[], allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[], allValidates: { containingtype: IRNominalTypeSignature, ii: number }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
+    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], fields: IRMemberFieldDecl[], etag: "std" | "status" | "event", saturatedProvides: IRTypeSignature[], saturatedBFieldInfo: { containingtype: IRNominalTypeSignature, fkey: string, fname: string, ftype: IRTypeSignature }[], allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[], allValidates: { containingtype: IRNominalTypeSignature, ii: number }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
         super(tkey, invariants, validates, fields, etag, saturatedProvides, saturatedBFieldInfo, allInvariants, allValidates, docstr, metatags, file, sinfo);
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        const ffdecls = this.saturatedBFieldInfo.map(bf => {
+            const ctt = alltypes.get(bf.containingtype.tkeystr) as IRAbstractNominalTypeDecl;
+            const bfdecl = ctt.fields.find(f => f.fkey === bf.fkey) as IRMemberFieldDecl;
+            return bfdecl.declaredType;
+        });
+
+        return ffdecls;
     }
 }
 
 class IRDatatypeTypeDecl extends IRAbstractConceptTypeDecl {
     readonly dataelems: IRTypeSignature[];
 
-    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], fields: IRMemberFieldDecl[], saturatedProvides: IRTypeSignature[], saturatedBFieldInfo: { containingtype: IRNominalTypeSignature, fkey: string }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo, dataelems: IRTypeSignature[]) {
+    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], fields: IRMemberFieldDecl[], saturatedProvides: IRTypeSignature[], saturatedBFieldInfo: { containingtype: IRNominalTypeSignature, fkey: string, fname: string, ftype: IRTypeSignature }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo, dataelems: IRTypeSignature[]) {
         super(tkey, invariants, validates, fields, saturatedProvides, saturatedBFieldInfo, docstr, metatags, file, sinfo);
         this.dataelems = dataelems;
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        const ffdecls = this.saturatedBFieldInfo.map(bf => {
+            const ctt = alltypes.get(bf.containingtype.tkeystr) as IRAbstractNominalTypeDecl;
+            const bfdecl = ctt.fields.find(f => f.fkey === bf.fkey) as IRMemberFieldDecl;
+            return bfdecl.declaredType;
+        });
+        
+        return [new IRNominalTypeSignature(this.tkey), ...ffdecls];
     }
 }
 
@@ -626,7 +760,6 @@ class IREnvironmentVariableInformation {
 class IRResourceInformation {
     //TODO: fill this in
 }
-
 
 class IRTaskConfiguration {
     timeout: number | undefined;
@@ -772,6 +905,21 @@ class IRTaskDecl {
     }
 }
 
+class IRLambdaParameterPackDecl {
+    readonly tkeystr: string;
+    readonly invtrgt: string;
+    readonly stdvalues: {vname: string, vtype: IRTypeSignature}[];
+    readonly lambdavalues: {lname: string, ltypekey: string}[];
+
+    constructor(tkeystr: string, invtrgt: string, stdvalues: {vname: string, vtype: IRTypeSignature}[], lambdavalues: {lname: string, ltypekey: string}[]) {
+        this.tkeystr = tkeystr;
+        this.invtrgt = invtrgt;
+        this.stdvalues = stdvalues;
+        this.lambdavalues = lambdavalues;
+    }
+}
+
+
 class IRAssembly {
     readonly regexps: IRRegex[] = [];
 
@@ -804,23 +952,154 @@ class IRAssembly {
     readonly apis: IRAPIDecl[] = [];
     readonly agents: IRAgentDecl[] = [];
     readonly tasks: IRTaskDecl[] = [];
+    readonly lpackdecls: IRLambdaParameterPackDecl[] = [];
 
     readonly alltypes: Map<string, IRAbstractNominalTypeDecl> = new Map<string, IRAbstractNominalTypeDecl>();
     readonly allinvokes: Map<string, IRInvokeMetaDecl> = new Map<string, IRInvokeMetaDecl>();
+    readonly alllambdas: Map<string, IRLambdaParameterPackDecl> = new Map<string, IRLambdaParameterPackDecl>();
 
     readonly elists: IREListTypeSignature[] = [];
     readonly dashtypes: IRDashResultTypeSignature[] = [];
     readonly formats: IRFormatTypeSignature[] = [];
-    readonly lpacks: IRLambdaParameterPackTypeSignature[] = [];
+    readonly lpacksigs: IRLambdaParameterPackTypeSignature[] = [];
 
-    readonly supertypes: Map<string, IRTypeSignature[]> = new Map<string, IRTypeSignature[]>();
-    readonly subtypes: Map<string, IRTypeSignature[]> = new Map<string, IRTypeSignature[]>();
+    readonly concretesubtypes: Map<string, IRTypeSignature[]> = new Map<string, IRTypeSignature[]>(); //
+    readonly concretesupertypes: Map<string, IRTypeSignature[]> = new Map<string, IRTypeSignature[]>();
 
-    readonly concretesubtypes: Map<string, IRTypeSignature[]> = new Map<string, IRTypeSignature[]>(); 
-
-    readonly typefieldTopo: IRTypeSignature[][] = [];
+    readonly typedeporder: IRTypeSignature[] = [];
+    readonly typedepcycles: IRTypeSignature[][] = [];
 
     constructor() {
+    }
+
+    computeSubtypeInfo() {
+        const alltl = [...this.alltypes.values()];
+
+        for(let i = 0; i < alltl.length; i++) {
+            const ctt = alltl[i];
+
+            if(ctt instanceof IRAbstractConceptTypeDecl) {
+                if(!this.concretesubtypes.has(ctt.tkey)) {
+                    this.concretesubtypes.set(ctt.tkey, []);
+                }
+            }
+            else {
+                if(!this.concretesupertypes.has(ctt.tkey)) {
+                    this.concretesupertypes.set(ctt.tkey, []);
+                }
+                let superl = this.concretesupertypes.get(ctt.tkey) as IRTypeSignature[];
+
+                const cctsig = new IRNominalTypeSignature(ctt.tkey);
+                for(let j = 0; j < ctt.saturatedProvides.length; j++) {
+                    const ssuper = ctt.saturatedProvides[j];
+
+                    if(!this.concretesubtypes.has(ssuper.tkeystr)) {
+                        this.concretesubtypes.set(ssuper.tkeystr, []);
+                    }
+                    (this.concretesubtypes.get(ssuper.tkeystr) as IRTypeSignature[]).push(cctsig);
+                    superl.push(ssuper);
+                }
+            }
+        }
+
+        for(const csubts of this.concretesubtypes.values()) {
+            csubts.sort((a, b) => a.tkeystr.localeCompare(b.tkeystr));   
+        }
+
+        for(const csupts of this.concretesupertypes.values()) {
+            csupts.sort((a, b) => a.tkeystr.localeCompare(b.tkeystr));   
+        }
+    }
+
+    private getTypeDependencyInfo(tsig: IRTypeSignature): IRTypeSignature[] {
+        let ttl: IRTypeSignature[] = [];
+        if(tsig instanceof IRLambdaParameterPackTypeSignature) {
+            const lsdecl = this.alllambdas.get(tsig.tkeystr) as IRLambdaParameterPackDecl;
+            ttl = [
+                ...lsdecl.stdvalues.map((sv) => sv.vtype),
+                ...lsdecl.lambdavalues.map((lv) => new IRLambdaParameterPackTypeSignature(lv.ltypekey))
+            ];
+        }
+        else if(tsig instanceof IRNominalTypeSignature) {
+            const ttdecl = this.alltypes.get(tsig.tkeystr) as IRAbstractNominalTypeDecl;
+            ttl = ttdecl.getDeclDependencyTypes(this.alltypes);
+        }
+        else {
+            ttl = tsig.getDirectDependencyTypes();            
+        }
+
+        //now make all the concrete subtypes explicit
+        let allttl: IRTypeSignature[] = [];
+        for(let i = 0; i < ttl.length; i++) {
+            allttl.push(ttl[i]);
+
+            const csubts = this.concretesubtypes.get(ttl[i].tkeystr);
+            if(csubts !== undefined) {
+                for(let j = 0; j < csubts.length; j++) {
+                    allttl.push(csubts[j]);
+                }
+            }
+        }
+
+        return allttl;
+    }
+
+    private visitType(tsig: IRTypeSignature, visited: Set<string>) {
+        if(visited.has(tsig.tkeystr)) {
+            return;
+        }
+
+        //If this is a SCC then we don't revisit this and we need to handle the cycle elsewhere
+        visited.add(tsig.tkeystr);
+
+        const deps = this.getTypeDependencyInfo(tsig);
+        for(let i = 0; i < deps.length; i++) {
+            this.visitType(deps[i], visited);
+        }
+
+        this.typedeporder.push(tsig);
+    }
+
+    private computeAllTypes(): IRTypeSignature[] {
+        const allndecls = [...this.alltypes.values()].map(td => new IRNominalTypeSignature(td.tkey));
+        const allsdtypes = [...this.elists, ...this.dashtypes, ...this.formats, ...this.lpacksigs];
+
+        return [...allndecls, ...allsdtypes];
+    }
+
+    private getTypesCount(visited: Set<string>): [IRTypeSignature, number][] {
+        const allpending = this.computeAllTypes().filter((t) => !visited.has(t.tkeystr));
+        const ttcount = new Map<string, number>();
+
+        for(let i = 0; i < allpending.length; i++) {
+            ttcount.set(allpending[i].tkeystr, 0);
+        }
+
+        for(let i = 0; i < allpending.length; i++) {
+            const deps = this.getTypeDependencyInfo(allpending[i]);
+            for(let j = 0; j < deps.length; j++) {
+                if(allpending[i].tkeystr !== deps[j].tkeystr) {
+                    const ccount = ttcount.get(deps[j].tkeystr) as number;
+                    ttcount.set(deps[j].tkeystr, ccount + 1);
+                }
+            }
+        }
+
+        return allpending.map<[IRTypeSignature, number]>((t) => [t, ttcount.get(t.tkeystr) as number]).sort((a, b) => a[1] - b[1]);
+    }
+
+    computeTypeDependencyInfo() {
+        const visited = new Set<string>();
+        let toproc = this.getTypesCount(visited);
+
+        while(toproc.length !== 0) {
+            const nrval = toproc.shift() as [IRTypeSignature, number];
+            this.visitType(nrval[0], visited);
+
+            toproc = this.getTypesCount(visited);
+        }
+
+        //TODO: compute cycles
     }
 }
 
@@ -847,5 +1126,6 @@ export {
     IRDatatypeMemberEntityTypeDecl, IRDatatypeTypeDecl,
     IREnvironmentVariableInformation, IRResourceInformation, IRTaskConfiguration,
     IRAPIDecl, IRAgentDecl, IRTaskDecl,
+    IRLambdaParameterPackDecl,
     IRAssembly
 };

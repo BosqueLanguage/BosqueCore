@@ -16,10 +16,10 @@ namespace ᐸRuntimeᐳ
     public:
         T value;
         
-        friend constexpr XBool operator==(const XSome<T>& lhs, const T& rhs) { return XBool::from(lhs.value == rhs); }
-        friend constexpr XBool operator==(const T& lhs, const XSome<T>& rhs) { return XBool::from(lhs == rhs.value); }
-        friend constexpr XBool operator!=(const XSome<T>& lhs, const T& rhs) { return XBool::from(lhs.value != rhs); }
-        friend constexpr XBool operator!=(const T& lhs, const XSome<T>& rhs) { return XBool::from(lhs != rhs.value); }
+        friend constexpr XBool operator==(const XSome<T>& lhs, const T& rhs) { return lhs.value == rhs; }
+        friend constexpr XBool operator==(const T& lhs, const XSome<T>& rhs) { return lhs == rhs.value; }
+        friend constexpr XBool operator!=(const XSome<T>& lhs, const T& rhs) { return lhs.value != rhs; }
+        friend constexpr XBool operator!=(const T& lhs, const XSome<T>& rhs) { return lhs != rhs.value; }
     };
 
     template <typename T>
@@ -38,26 +38,30 @@ namespace ᐸRuntimeᐳ
         constexpr XOption(const XOption& other) = default;
         
         // Special none option bits
-        constexpr bool isNone() const { return this->typeinfo == &g_typeinfo_None; }
+        constexpr XBool isNone() const { return XBool::from(this->typeinfo == &g_typeinfo_None); }
         static constexpr XOption<T> optnone = XOption(&g_typeinfo_None);
         
         // Some option bits
-        constexpr bool isSome() const { return this->typeinfo != &g_typeinfo_None; }
+        constexpr XBool isSome() const { return XBool::from(this->typeinfo != &g_typeinfo_None); }
         static XOption<T> fromSome(const TypeInfo* ti, const XSome<T>& d) { return XOption<T>(ti, d.value); }
 
         constexpr XNone asNone() const { return xnone; }
         constexpr XSome<T> asSome() const { return XSome<T>{this->data}; }
         constexpr T unwrap() const { return this->data; }
 
-        friend constexpr XBool operator==(const XOption<T>& lhs, const XNone& rhs) { return XBool::from(lhs.isNone()); }
-        friend constexpr XBool operator==(const XNone& lhs, const XOption<T>& rhs) { return XBool::from(rhs.isNone()); }
-        friend constexpr XBool operator!=(const XOption<T>& lhs, const XNone& rhs) { return XBool::from(lhs.isSome()); }
-        friend constexpr XBool operator!=(const XNone& lhs, const XOption<T>& rhs) { return XBool::from(rhs.isSome()); }
+        XNone asNone() { return xnone; }
+        XSome<T> asSome() { return XSome<T>{this->data}; }
+        T unwrap() { return this->data; }
+
+        friend constexpr XBool operator==(const XOption<T>& lhs, const XNone& rhs) { return lhs.isNone(); }
+        friend constexpr XBool operator==(const XNone& lhs, const XOption<T>& rhs) { return rhs.isNone(); }
+        friend constexpr XBool operator!=(const XOption<T>& lhs, const XNone& rhs) { return lhs.isSome(); }
+        friend constexpr XBool operator!=(const XNone& lhs, const XOption<T>& rhs) { return rhs.isSome(); }
         
-        friend constexpr XBool operator==(const XOption<T>& lhs, const T& rhs) { return XBool::from(lhs.isSome() && lhs.data == rhs); }
-        friend constexpr XBool operator==(const T& lhs, const XOption<T>& rhs) { return XBool::from(rhs.isSome() && lhs == rhs.data); }
-        friend constexpr XBool operator!=(const XOption<T>& lhs, const T& rhs) { return XBool::from(lhs.isNone() || lhs.data != rhs); }
-        friend constexpr XBool operator!=(const T& lhs, const XOption<T>& rhs) { return XBool::from(rhs.isNone() || lhs != rhs.data); }
+        friend constexpr XBool operator==(const XOption<T>& lhs, const T& rhs) { return lhs.isSome() & (lhs.data == rhs); }
+        friend constexpr XBool operator==(const T& lhs, const XOption<T>& rhs) { return rhs.isSome() & (lhs == rhs.data); }
+        friend constexpr XBool operator!=(const XOption<T>& lhs, const T& rhs) { return lhs.isNone() | (lhs.data != rhs); }
+        friend constexpr XBool operator!=(const T& lhs, const XOption<T>& rhs) { return rhs.isNone() | (lhs != rhs.data); }
     };
 
     //

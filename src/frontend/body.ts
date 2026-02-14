@@ -19,6 +19,25 @@ class BinderInfo {
     }
 }
 
+class TypeTestBindInfo {
+    readonly guardidx: number;
+    readonly bname: string;
+
+    readonly ttrue: TypeSignature | undefined;
+    readonly tfalse: TypeSignature | undefined;
+
+    constructor(guardidx: number, bname: string, ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined) {
+        this.guardidx = guardidx;
+        this.bname = bname;
+        this.ttrue = ttrue;
+        this.tfalse = tfalse;
+    }
+
+    notop(): TypeTestBindInfo {
+        return new TypeTestBindInfo(this.guardidx, this.bname, this.tfalse, this.ttrue);
+    }
+}
+
 abstract class ITest {
     readonly isnot: boolean;
 
@@ -178,17 +197,30 @@ class FormatStringArgComponent extends FormatStringComponent {
     }
 }
 
-abstract class ArgumentValue {
-    readonly exp: Expression;
-
-    constructor(exp: Expression) {
-        this.exp = exp;
-    }
-
+abstract class AbstractArgumentValue {
     abstract emit(fmt: CodeFormatter): string;
 }
 
-class PositionalArgumentValue extends ArgumentValue {
+class SkipArgumentValue extends AbstractArgumentValue {
+    constructor() {
+        super();
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return `_`;
+    }
+}
+
+abstract class StdArgumentValue extends AbstractArgumentValue {
+    readonly exp: Expression;
+
+    constructor(exp: Expression) {
+        super();
+        this.exp = exp;
+    }
+}
+
+class PositionalArgumentValue extends StdArgumentValue {
     constructor(exp: Expression) {
         super(exp);
     }
@@ -198,7 +230,7 @@ class PositionalArgumentValue extends ArgumentValue {
     }
 }
 
-class NamedArgumentValue extends ArgumentValue {
+class NamedArgumentValue extends StdArgumentValue {
     readonly name: string;
 
     constructor(name: string, exp: Expression) {
@@ -211,7 +243,7 @@ class NamedArgumentValue extends ArgumentValue {
     }
 }
 
-class SpreadArgumentValue extends ArgumentValue {
+class SpreadArgumentValue extends StdArgumentValue {
     constructor(exp: Expression) {
         super(exp);
     }
@@ -221,7 +253,7 @@ class SpreadArgumentValue extends ArgumentValue {
     }
 }
 
-class PassingArgumentValue extends ArgumentValue {
+class PassingArgumentValue extends StdArgumentValue {
     readonly kind: "ref" | "out" | "out?" | "inout";
 
     constructor(kind: "ref" | "out" | "out?" | "inout", exp: Expression) {
@@ -235,14 +267,18 @@ class PassingArgumentValue extends ArgumentValue {
 }
 
 class ArgumentList {
-    readonly args: ArgumentValue[];
+    readonly args: AbstractArgumentValue[];
 
-    constructor(args: ArgumentValue[]) {
+    constructor(args: AbstractArgumentValue[]) {
         this.args = args;
     }
 
     emit(fmt: CodeFormatter, lp: string, rp: string): string {
         return lp + this.args.map((arg) => arg.emit(fmt)).join(", ") + rp;
+    }
+
+    hasSpecialRef(): boolean {
+        return this.args.some((arg) => arg instanceof PassingArgumentValue);
     }
 
     hasSpread(): boolean {
@@ -807,6 +843,10 @@ class AccessEnumExpression extends Expression {
         this.name = name;
     }
 
+    override isLiteralExpression(): boolean {
+        return true;
+    }
+
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         return `${this.stype.emit()}#${this.name}`;
     }
@@ -865,6 +905,8 @@ class ConstructorEListExpression extends ConstructorExpression {
 
 class ConstructorLambdaExpression extends Expression {
     readonly invoke: LambdaDecl;
+
+    monomorphizedUID: number | undefined = undefined;
 
     constructor(sinfo: SourceInfo, invoke: LambdaDecl) {
         super(ExpressionTag.ConstructorLambdaExpression, sinfo);
@@ -933,6 +975,12 @@ class CallNamespaceFunctionExpression extends Expression {
     shuffleinfo: [number, TypeSignature][] = [];
     resttype: TypeSignature | undefined = undefined;
     restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
+    setcondout: string[] = [];
+    setuncond: string[] = [];
+    inout: string[] = [];
+    byref: string[] = [];
+
+    monomorhphizedkey: string | undefined = undefined;
 
     constructor(sinfo: SourceInfo, isImplicitNS: boolean, ns: FullyQualifiedNamespace, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
         super(ExpressionTag.CallNamespaceFunctionExpression, sinfo);
@@ -1093,11 +1141,11 @@ class InterpolateFormatExpression extends Expression {
     readonly kind: "string" | "cstring" | "path" | "fragment" | "glob";
     readonly decloftype: TypeSignature | undefined;
     readonly fmtString: Expression;
-    readonly args: ArgumentValue[];
+    readonly args: AbstractArgumentValue[];
     
     actualoftype: TypeSignature | undefined = undefined;
 
-    constructor(sinfo: SourceInfo, kind: "string" | "cstring" | "path" | "fragment" | "glob", decloftype: TypeSignature | undefined, fmtString: Expression, args: ArgumentValue[]) {
+    constructor(sinfo: SourceInfo, kind: "string" | "cstring" | "path" | "fragment" | "glob", decloftype: TypeSignature | undefined, fmtString: Expression, args: AbstractArgumentValue[]) {
         super(ExpressionTag.InterpolateFormatStringExpression, sinfo);
         this.kind = kind;
         this.decloftype = decloftype;
@@ -2010,7 +2058,7 @@ class ChkLogicImpliesExpression extends ChkLogicExpression {
     readonly lhs: ITestGuardSet;
     readonly rhs: Expression;
 
-    trueBinders: { gidx: number, bvname: string, tsig: TypeSignature }[] = [];
+    bbinds: TypeTestBindInfo[] = [];
 
     constructor(sinfo: SourceInfo, lhs: ITestGuardSet, rhs: Expression) {
         super(ChkLogicExpressionTag.ChkLogicImpliesExpression);
@@ -2066,8 +2114,7 @@ class ConditionalValueExpression extends RValueExpression {
     readonly trueValue: Expression
     readonly falseValue: Expression;
 
-    trueBinders: { gidx: number, bvname: string, tsig: TypeSignature }[] = [];
-    falseBinders: { gidx: number, bvname: string, tsig: TypeSignature }[] = [];
+    bbinds: TypeTestBindInfo[] = [];
 
     constructor(sinfo: SourceInfo, guardset: ITestGuardSet, trueValue: Expression, falseValue: Expression) {
         super(RValueExpressionTag.ConditionalValueExpression);
@@ -2366,8 +2413,8 @@ class ReturnMultiStatement extends Statement {
 class IfStatement extends Statement {
     readonly cond: ITestGuardSet;
     readonly trueBlock: BlockStatement;
-    
-    trueBindType: TypeSignature | undefined = undefined;
+
+    bbinds: TypeTestBindInfo[] = [];
 
     constructor(sinfo: SourceInfo, cond: ITestGuardSet, trueBlock: BlockStatement) {
         super(StatementTag.IfStatement, sinfo);
@@ -2385,8 +2432,7 @@ class IfElseStatement extends Statement {
     readonly trueBlock: BlockStatement;
     readonly falseBlock: BlockStatement;
 
-    trueBindType: TypeSignature | undefined = undefined;
-    falseBindType: TypeSignature | undefined = undefined;
+    bbinds: TypeTestBindInfo[] = [];
 
     constructor(sinfo: SourceInfo, cond: ITestGuardSet, trueBlock: BlockStatement, falseBlock: BlockStatement) {
         super(StatementTag.IfElseStatement, sinfo);
@@ -2716,6 +2762,8 @@ class BlockStatement extends Statement {
     readonly statements: Statement[];
     readonly isScoping: boolean;
 
+    isterminal: boolean = false;
+
     constructor(sinfo: SourceInfo, statements: Statement[], isScoping: boolean) {
         super(StatementTag.BlockStatement, sinfo);
         this.statements = statements;
@@ -2873,10 +2921,10 @@ class StandardBodyImplementation extends BodyImplementation {
 
 export {
     RecursiveAnnotation,
-    BinderInfo, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestFail,
+    BinderInfo, TypeTestBindInfo, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestFail,
     ITestGuard, ITestBinderGuard, ITestTypeGuard, ITestSimpleGuard, ITestGuardSet,
     FormatStringComponent, FormatStringTextComponent, FormatStringArgComponent,
-    ArgumentValue, PositionalArgumentValue, NamedArgumentValue, SpreadArgumentValue, PassingArgumentValue, ArgumentList,
+    AbstractArgumentValue, SkipArgumentValue, StdArgumentValue, PositionalArgumentValue, NamedArgumentValue, SpreadArgumentValue, PassingArgumentValue, ArgumentList,
     ExpressionTag, Expression, ErrorExpression,
     LiteralNoneExpression, LiteralSimpleExpression, 
     LiteralStringExpression, LiteralCStringExpression, LiteralFormatStringExpression, LiteralFormatCStringExpression,
