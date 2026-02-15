@@ -372,7 +372,7 @@ enum ExpressionTag {
 
     ParseAsTypeExpression = "ParseAsTypeExpression",
 
-    InterpolateFormatStringExpression = "InterpolateFormatStringExpression",
+    InterpolateFormatExpression = "InterpolateFormatExpression",
 
     PostfixOpExpression = "PostfixOpExpression",
 
@@ -1146,7 +1146,7 @@ class InterpolateFormatExpression extends Expression {
     actualoftype: TypeSignature | undefined = undefined;
 
     constructor(sinfo: SourceInfo, kind: "string" | "cstring" | "path" | "fragment" | "glob", decloftype: TypeSignature | undefined, fmtString: Expression, args: AbstractArgumentValue[]) {
-        super(ExpressionTag.InterpolateFormatStringExpression, sinfo);
+        super(ExpressionTag.InterpolateFormatExpression, sinfo);
         this.kind = kind;
         this.decloftype = decloftype;
         this.fmtString = fmtString;
