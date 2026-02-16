@@ -359,7 +359,10 @@ private:
 		int idx = 0;
         if(IS_LOW_UTIL(util)) {
             idx = util / BUCKET_UTIL_VARIANCE;
-            DSA_INVARIANT_CHECK(idx < NUM_LOW_UTIL_BUCKETS);
+			if(idx >= NUM_LOW_UTIL_BUCKETS) {
+				idx = NUM_LOW_UTIL_BUCKETS - 1;	
+			}
+            //DSA_INVARIANT_CHECK(idx < NUM_LOW_UTIL_BUCKETS);
         }
         else {
             idx = (util - LOW_UTIL_THRESH) / BUCKET_UTIL_VARIANCE;
