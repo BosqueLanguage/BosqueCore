@@ -17,9 +17,10 @@ struct DecsProcessor {
     std::condition_variable cv;
     std::thread thd;    
 
-    void (*processDecfp)(void*, ArrayList<void*>&, ArrayList<PageInfo*>&);
-	ArrayList<void*> pending;	
-	ArrayList<PageInfo*> decd_pages;
+    void (*processDecfp)(void*, ArrayList<void*>&, ArrayList<PageInfo*>&) noexcept;
+	void (*tryUpdateDecdPages)(PageInfo*) noexcept;	
+	ArrayList<void*> pending[MAX_THREADS];	
+	ArrayList<PageInfo*> decd_pages[MAX_THREADS];
 
     enum class State {
         Running,
@@ -31,11 +32,9 @@ struct DecsProcessor {
     State st;
 
     DecsProcessor(): 
-		mtx(), cv(), thd(), processDecfp(nullptr), pending(), decd_pages(), 
-		st(State::Paused)
+		mtx(), cv(), thd(), processDecfp(nullptr), tryUpdateDecdPages(nullptr)
+		, pending(), decd_pages(), st(State::Paused)
 	{
-	    this->pending.initialize();
-		this->decd_pages.initialize();
         GlobalThreadAllocInfo::s_thread_counter++;
 		this->thd = std::thread([this] { this->process(); });
 	}
@@ -92,13 +91,13 @@ struct DecsProcessor {
         }
     }
 
-	void mergeDecdPages(ArrayList<PageInfo*>& dst)
-	{
-		while(!this->decd_pages.isEmpty()) {
-			PageInfo* p = this->decd_pages.pop_front();
-			dst.push_back(p);
-		}
-	}
+	// Merge pending decs from tinfo onto appropriate entry in `this->pending`
+	// corresponding to tinfos thread id
+	void mergePendingDecs(BSQMemoryTheadLocalInfo& tinfo) noexcept;
+	
+	// Merge pages with newly dead objects (from rc decrements) onto tinfos
+	// `decd_pages` list
+	void mergeDecdPages(BSQMemoryTheadLocalInfo& tinfo) noexcept;
 
 	void process();
 };

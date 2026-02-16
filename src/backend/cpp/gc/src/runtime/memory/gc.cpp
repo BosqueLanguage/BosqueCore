@@ -26,6 +26,8 @@ static inline void pushPendingDecs(void* obj, ArrayList<void*>& list)
 {
     // Keep pointed to roots alive
 	MetaData* m = GC_GET_META_DATA_ADDR(obj); 
+	GC_INVARIANT_CHECK(GC_IS_ALLOCATED(m));
+
 	if(GC_IS_ROOT(m)) {
 		// It's a root so still alive, but needs rc update
 		if(GC_REF_COUNT(m) > 0) {
@@ -121,15 +123,6 @@ static void walkPointerMaskForDecrements(__CoreGC::TypeInfoBase* typeinfo, void*
     }
 }
 
-static inline void updateDecrementedPages(void* obj, ArrayList<PageInfo*>& pagelist) noexcept 
-{
-	PageInfo* p = PageInfo::extractPageFromPointer(obj);
-	if(!p->visited) {
-		p->visited = true;
-		pagelist.push_back(p);
-    }
-}
-
 static inline void decrementObject(void* obj) noexcept 
 {
 	MetaData* m = GC_GET_META_DATA_ADDR(obj);
@@ -148,60 +141,71 @@ static inline void updateDecrementedObject(void* obj, ArrayList<void*>& list)
     }
 }
 
-// TODO call this inside processDecrements
 void processDec(void* obj, ArrayList<void*>& decslist, ArrayList<PageInfo*>& pagelist) noexcept
 {
-	MetaData* m = GC_GET_META_DATA_ADDR(obj);	
-    if(!GC_IS_ALLOCATED(m)) {
-        return ;
-    }
+	[[maybe_unused]] MetaData* m = GC_GET_META_DATA_ADDR(obj);
+	GC_INVARIANT_CHECK(GC_IS_ALLOCATED(m));
 
 	decrementObject(obj);
     updateDecrementedObject(obj, decslist);
-    updateDecrementedPages(obj, pagelist);
+
+	PageInfo* p = PageInfo::extractPageFromPointer(obj);
+	if(!p->in_decsprcsr_list) {
+		p->in_decsprcsr_list = false;
+		pagelist.push_back(p);
+	}
 }
 
-static inline void mergeDecList(BSQMemoryTheadLocalInfo& tinfo)
+// For a page to be eligible for insertion onto the decd_pages list it
+// must not be an active alloc/evac page (no owner), already on the 
+// pendinggc list (waiting to be rebuild), or already in the decd_pages
+// list
+void tryUpdateDecdPages(PageInfo* p) noexcept
 {
-    while(!tinfo.decs_batch.isEmpty()) {
-        void* obj = tinfo.decs_batch.pop_front();
-        g_decs_prcsr.pending.push_back(obj);
-    }
+	GCAllocator& gcalloc = *p->gcalloc;
+	if(    p->owner != nullptr	
+		&& p->owner != &gcalloc.pendinggc_pages
+		&& p->owner != &gcalloc.decd_pages) 
+	{	
+		p->removeSelfFromStorage();
+		p->in_decsprcsr_list = false;
+		gcalloc.decd_pages.push(p);
+	}
 }
 
-// If we did not finish decs in main thread pause decs thread, merge remaining work,
-// then signal processing can continue
+// TODO: pretty meh name
 static void tryMergeDecList(BSQMemoryTheadLocalInfo& tinfo)
 {
     if(g_decs_prcsr.processDecfp == nullptr) {
         g_decs_prcsr.processDecfp = processDec;
+		g_decs_prcsr.tryUpdateDecdPages = tryUpdateDecdPages;
     }
 
-    if(!tinfo.decs_batch.isEmpty()) {
-        mergeDecList(tinfo);
-    }
+	g_decs_prcsr.mergePendingDecs(tinfo);
 }
 
 static void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
-	std::lock_guard lk(g_gcrefctlock);   
-	if(!tinfo.decd_pages.isInitialized()) {
-		tinfo.decd_pages.initialize();
-	}
+	std::lock_guard lk(g_gcrefctlock);
 
     size_t deccount = 0;
     while(!tinfo.decs_batch.isEmpty() && (deccount < tinfo.max_decrement_count)) {
         void* obj = tinfo.decs_batch.pop_front();
-	    MetaData* m = GC_GET_META_DATA_ADDR(obj);	
-        if(!GC_IS_ALLOCATED(m)) {
-            continue;
-        }
+
+		MetaData* m = GC_GET_META_DATA_ADDR(obj);
+		GC_INVARIANT_CHECK(GC_IS_ALLOCATED(m));
 
         decrementObject(obj);
         updateDecrementedObject(obj, tinfo.decs_batch);
-        updateDecrementedPages(obj, tinfo.decd_pages);
 
         deccount++;
+
+		if(GC_IS_ALLOCATED(m)) {
+			continue;
+		}
+
+		PageInfo* p = PageInfo::extractPageFromPointer(obj);
+		tryUpdateDecdPages(p);
     }
 
     //
@@ -212,11 +216,10 @@ static void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
 static void* forward(void* ptr, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     PageInfo* p = PageInfo::extractPageFromPointer(ptr);
-    GCAllocator* gcalloc = tinfo.getAllocatorForType(p);
-    GC_INVARIANT_CHECK(gcalloc != nullptr);
+    GCAllocator& gcalloc = *p->gcalloc;
 
     MetaData* m = GC_GET_META_DATA_ADDR(ptr); 
-    void* nptr = gcalloc->allocateEvacuation(); 
+    void* nptr = gcalloc.allocateEvacuation(); 
 	xmem_copy(ptr, nptr, p->typeinfo->slot_size);
 
     // Insert into forward table and update object ensuring future objects update
@@ -364,14 +367,16 @@ static bool find(void** arr, int32_t n, void* trgt, BSQMemoryTheadLocalInfo& tin
 // NOTE we could sort roots here then do two pointer walk on old roots, building
 // up a set of dead objects to be merged onto decs list later
 static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexcept
-{
-    if(!GlobalPageGCManager::g_gc_page_manager.pagetableQuery(addr) 
-        || !pointsToObjectStart(addr)) {
-            return ;
+{ 
+	if(!GlobalPageGCManager::g_gc_page_manager.pagetableQuery(addr) 
+        || !pointsToObjectStart(addr))
+	{
+        return ;
     }
 
+
 	MetaData* m = PageInfo::getObjectMetadataAligned(addr);
-	if(GC_IS_MARKED(m)) {
+	if(!GC_IS_ALLOCATED(m) || GC_IS_MARKED(m)) {
 		return ;
 	}
 	GC_MARK_AS_MARKED(m);
@@ -559,7 +564,8 @@ static void processAllocatorsPages(BSQMemoryTheadLocalInfo& tinfo)
 	
 static inline void computeMaxDecrementCount(BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
-	tinfo.max_decrement_count = BSQ_INITIAL_MAX_DECREMENT_COUNT - (tinfo.bytes_freed / BSQ_MEM_ALIGNMENT);
+	tinfo.max_decrement_count = BSQ_INITIAL_MAX_DECREMENT_COUNT 
+		- (tinfo.bytes_freed / BSQ_MEM_ALIGNMENT);
 	tinfo.bytes_freed = 0;
 }
 
@@ -594,7 +600,7 @@ void collect() noexcept
 	// TODO this isnt great with multiple threads either as we will randomly
 	// merge the decs processors entire decd_pages list onto one thread, possibly
 	// starving others for pages
-	g_decs_prcsr.mergeDecdPages(gtl_info.decd_pages);
+	g_decs_prcsr.mergeDecdPages(gtl_info);
 
     gtl_info.pending_young.initialize();
 

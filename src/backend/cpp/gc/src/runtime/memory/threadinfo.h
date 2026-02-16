@@ -73,7 +73,7 @@ struct BSQMemoryTheadLocalInfo
     void** forward_table;
 
     ArrayList<void*> decs_batch; // Decrements able to be done without needing decs thread	
-    ArrayList<PageInfo*> decd_pages;
+    PageList decd_pages; // pages with newly decd (and now dead) objects
     
     float nursery_usage = 0.0f;
 
@@ -118,13 +118,6 @@ struct BSQMemoryTheadLocalInfo
 	BSQMemoryTheadLocalInfo& operator=(BSQMemoryTheadLocalInfo&) = delete;
     BSQMemoryTheadLocalInfo(BSQMemoryTheadLocalInfo&) = delete;
 	~BSQMemoryTheadLocalInfo() { this->cleanup(); }
-
-	inline GCAllocator* getAllocatorForType(PageInfo* page) noexcept {
-        uint32_t idx = page->typeinfo->type_id;
- 		GC_INVARIANT_CHECK(idx < BSQ_MAX_ALLOC_SLOTS);	       
-
-		return this->g_gcallocs[idx];
-    }
 
     inline void updateNurseryUsage(PageInfo* p) noexcept
     {

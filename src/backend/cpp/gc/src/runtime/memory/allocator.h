@@ -28,6 +28,7 @@
 ////////////////////////////////
 //Memory allocator
 
+class GCAllocator;
 class PageList;
 class BSQMemoryTheadLocalInfo;
 
@@ -70,13 +71,14 @@ class PageInfo
 {
 public:
 	__CoreGC::TypeInfoBase* typeinfo; //all entries are of same type
-	
+	GCAllocator* gcalloc; //alloc for this->typeinfo
+
 	FreeListEntry* freelist; //allocate from here until nullptr
    
     // NOTE: as our gc allocators are declared statically, the addresses 
     // of a PageList will not change. However, if PageLists need to be 
     // used elsewhere, extra care will be needed (i.e. stack allocs)
-    PageList* owner; // What list are we in (if any)?
+    std::atomic<PageList*> owner; // What list are we in (if any)?
     PageInfo* prev;
     PageInfo* next;
 
@@ -89,11 +91,18 @@ public:
 
 	// NOTE probably could do approx util just as an int
     float approx_utilization;
-	std::atomic<bool> visited;
+	bool in_decsprcsr_list;
+
+    static PageInfo* initialize(void* block, GCAllocator* gcalloc) noexcept;
+    size_t rebuild() noexcept;
+	
+	// Removes `this` from whatever list it is currently stored in
+	void removeSelfFromStorage();
 
 	void zeroInit() noexcept
 	{
 		this->typeinfo = nullptr;
+		this->gcalloc = nullptr;
 		this->freelist = nullptr;
 		this->owner = nullptr;
 		this->prev = this->next = nullptr;
@@ -102,11 +111,8 @@ public:
 		this->realsize = 0;
 		this->entrycount = this->freecount = 0; 
 		this->approx_utilization = 0.0f;
-		this->visited = false;
+		this->in_decsprcsr_list = false;
 	}
-
-    static PageInfo* initialize(void* block, __CoreGC::TypeInfoBase* typeinfo) noexcept;
-    size_t rebuild() noexcept;	
 
     static inline PageInfo* extractPageFromPointer(void* p) noexcept {
         return (PageInfo*)((uintptr_t)(p) & PAGE_ADDR_MASK);
@@ -262,8 +268,8 @@ public:
 
     GlobalPageGCManager() noexcept : empty_pages(), pagetable() { }
 
-    PageInfo* getFreshPageFromOS(__CoreGC::TypeInfoBase* typeinfo);
-    PageInfo* tryGetEmptyPage(__CoreGC::TypeInfoBase* typeinfo);
+    PageInfo* getFreshPageFromOS(GCAllocator* gcalloc);
+    PageInfo* tryGetEmptyPage(GCAllocator* gcalloc);
 
     bool pagetableQuery(void* addr) noexcept
     {
@@ -324,13 +330,11 @@ private:
     PageInfo* alloc_page; // Page in which we are currently allocating from
     PageInfo* evac_page; // Page in which we are currently evacuating from
 
-    PageList pendinggc_pages; // Pages that are pending GC
     PageList filled_pages; // Pages with over 90% utilization (no need for buckets here)
     //completely empty pages go back to the global pool
 
     PageList low_util_buckets[NUM_LOW_UTIL_BUCKETS]; // Pages with 1-60% utilization (does not hold fully empty)
     PageList high_util_buckets[NUM_HIGH_UTIL_BUCKETS]; // Pages with 61-90% utilization 
-
 #ifdef MEM_STATS
     // These two get zeroed at a collection
     size_t alloc_count = 0;
@@ -409,10 +413,11 @@ private:
     }
 
 public:
-    GCAllocator(__CoreGC::TypeInfoBase* _alloctype) noexcept :
-		alloctype(_alloctype), freelist(nullptr), evacfreelist(nullptr), 
-		alloc_page(nullptr), evac_page(nullptr), pendinggc_pages(), 
-		filled_pages()  {}
+	// TODO: move these somewhere better. Public for now.	
+    PageList pendinggc_pages; // Pages that are pending GC
+	PageList& decd_pages; // ref to gtl_infos decd_pages list
+
+    GCAllocator(__CoreGC::TypeInfoBase* _alloctype) noexcept; 
 
 	__CoreGC::TypeInfoBase* getAllocType() const noexcept
 	{

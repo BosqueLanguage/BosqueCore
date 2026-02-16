@@ -33,6 +33,8 @@ extern bool g_disable_stack_refs;
 extern bool g_thd_testing;
 #endif
 
+#define MAX_THREADS 64 + 1 /*+1 for decs processor*/
+
 #define RST  "\x1B[0m"
 #define BOLD(x)	"\x1B[1m" x RST
 #define UNDL(x)	"\x1B[4m" x RST
@@ -214,8 +216,8 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 #define GC_CLEAR_MARKED_MARK(META) { GC_IS_MARKED(META) = false; }
 
 #define GC_SHOULD_FREE_LIST_ADD(META) \
-	(!GC_IS_ALLOCATED(META) || \
-		(GC_IS_YOUNG(META) && GC_FWD_INDEX(META) == NON_FORWARDED))
+	(!GC_IS_ALLOCATED(META) \
+		|| (GC_IS_YOUNG(META) && GC_FWD_INDEX(META) == NON_FORWARDED))
 
 #define GC_CHECK_BOOL_BYTES(META) \
 do { \
@@ -264,9 +266,18 @@ do { \
 #define GC_CLEAR_MARKED_MARK(META) { GC_IS_MARKED(META) = 0; }
 
 #define GC_SHOULD_FREE_LIST_ADD(META) \
-	(!GC_IS_ALLOCATED(META) || \
-		(GC_IS_YOUNG(META) && GC_FWD_INDEX(META) == NON_FORWARDED ))
+	(!GC_IS_ALLOCATED(META) \
+		|| (GC_IS_YOUNG(META) && GC_FWD_INDEX(META) == NON_FORWARDED))
 
 #define GC_CHECK_BOOL_BYTES(META)
 
 #endif // VERBOSE_HEADER
+
+#define METADATA_DUMP(META) \
+	std::cout << "Meta Data at " << META << ":" << std::endl \
+	<< "\tisalloc: " << GC_IS_ALLOCATED(META) << std::endl \
+	<< "\tisyoung: " << GC_IS_YOUNG(META) << std::endl \
+	<< "\tismarked: " << GC_IS_MARKED(META) << std::endl \
+	<< "\tthread count: " << GC_THREAD_COUNT(META) << std::endl \
+	<< "\tref count: " << GC_REF_COUNT(META) << std::endl \
+	<< "\tforward index: " << GC_FWD_INDEX(META) << std::endl;
