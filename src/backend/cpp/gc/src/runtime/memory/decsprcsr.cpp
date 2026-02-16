@@ -17,14 +17,13 @@ void DecsProcessor::mergePendingDecs(BSQMemoryTheadLocalInfo& tinfo) noexcept
 	}
 }
 
-// TODO: I believe here we need to do the check for owner, pendinggc, wtv like we
-// do in `processDecrements`
 void DecsProcessor::mergeDecdPages(BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
 	ArrayList<PageInfo*>& pages = this->decd_pages[tinfo.tl_id];
+
 	while(!pages.isEmpty()) {
 		PageInfo* p = pages.pop_front();
-		this->tryUpdateDecdPages(p);
+		this->tryUpdateDecdPages(p);	
 	}
 }
 

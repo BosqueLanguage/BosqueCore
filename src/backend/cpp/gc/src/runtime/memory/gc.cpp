@@ -200,7 +200,7 @@ static void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
         deccount++;
 
-		if(!GC_IS_ALLOCATED(m)) {
+		if(GC_IS_ALLOCATED(m)) {
 			continue;
 		}
 

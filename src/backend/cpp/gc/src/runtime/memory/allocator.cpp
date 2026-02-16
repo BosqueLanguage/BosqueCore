@@ -181,10 +181,11 @@ PageInfo* GCAllocator::tryGetPendingRebuildPage(float max_util)
 		PageInfo* p = gtl_info.decd_pages.pop();
 		p->rebuild();
 
-		// move pages that are not correct type or too full
+		// Move pages that are not correct type or too full
 		if((p->typeinfo != this->alloctype && p->freecount != p->entrycount)
-			|| p->approx_utilization > max_util) {
-				p->gcalloc->processPage(p);
+			|| p->approx_utilization > max_util)
+		{
+			p->gcalloc->processPage(p);
 		}
 	    else {
 			if(p->freecount == p->entrycount) {
