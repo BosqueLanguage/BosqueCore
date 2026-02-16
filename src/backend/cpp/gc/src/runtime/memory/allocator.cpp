@@ -49,7 +49,7 @@ PageInfo* PageInfo::initialize(void* block, GCAllocator* gcalloc) noexcept
 	PageInfo* pp = static_cast<PageInfo*>(block);	
 	setPageMetaData(pp, gcalloc);
     
-	for(int64_t i = pp->entrycount - 1; i >= 0; i--) {
+	for(int64_t i = pp->entrycount - 1; i > 0; i--) {
         FreeListEntry* entry = pp->getFreelistEntryAtIndex(i);
         RESET_META_FROM_FREELIST(entry);
         entry->next = pp->freelist;
@@ -66,7 +66,7 @@ size_t PageInfo::rebuild() noexcept
     this->freelist = nullptr;
     this->freecount = 0;
  
-    for(int64_t i = this->entrycount - 1; i >= 0; i--) {
+    for(int64_t i = this->entrycount - 1; i > 0; i--) {
         MetaData* m = this->getMetaEntryAtIndex(i);
 
         GC_CHECK_BOOL_BYTES(m);

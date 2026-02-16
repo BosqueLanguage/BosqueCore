@@ -26,6 +26,8 @@ static inline void pushPendingDecs(void* obj, ArrayList<void*>& list)
 {
     // Keep pointed to roots alive
 	MetaData* m = GC_GET_META_DATA_ADDR(obj); 
+	GC_INVARIANT_CHECK(GC_IS_ALLOCATED(m));
+
 	if(GC_IS_ROOT(m)) {
 		// It's a root so still alive, but needs rc update
 		if(GC_REF_COUNT(m) > 0) {
@@ -561,7 +563,8 @@ static void processAllocatorsPages(BSQMemoryTheadLocalInfo& tinfo)
 	
 static inline void computeMaxDecrementCount(BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
-	tinfo.max_decrement_count = BSQ_INITIAL_MAX_DECREMENT_COUNT - (tinfo.bytes_freed / BSQ_MEM_ALIGNMENT);
+	tinfo.max_decrement_count = BSQ_INITIAL_MAX_DECREMENT_COUNT 
+		- (tinfo.bytes_freed / BSQ_MEM_ALIGNMENT);
 	tinfo.bytes_freed = 0;
 }
 
