@@ -141,7 +141,6 @@ static inline void updateDecrementedObject(void* obj, ArrayList<void*>& list)
     }
 }
 
-// TODO call this inside processDecrements
 void processDec(void* obj, ArrayList<void*>& decslist, ArrayList<PageInfo*>& pagelist) noexcept
 {
 	[[maybe_unused]] MetaData* m = GC_GET_META_DATA_ADDR(obj);
@@ -150,31 +149,39 @@ void processDec(void* obj, ArrayList<void*>& decslist, ArrayList<PageInfo*>& pag
 	decrementObject(obj);
     updateDecrementedObject(obj, decslist);
 
-	// we might need the `visited` atomic for the decs processor
-	// (since it still uses a array list)
-	//PageInfo* p = PageInfo::extractPageFromPointer(obj);
-	assert(false && "unimplemented decs processor procedure!\n");
+	PageInfo* p = PageInfo::extractPageFromPointer(obj);
+	if(!p->in_decsprcsr_list) {
+		p->in_decsprcsr_list = false;
+		pagelist.push_back(p);
+	}
 }
 
-static inline void mergeDecList(BSQMemoryTheadLocalInfo& tinfo)
+// For a page to be eligible for insertion onto the decd_pages list it
+// must not be an active alloc/evac page (no owner), already on the 
+// pendinggc list (waiting to be rebuild), or already in the decd_pages
+// list
+void tryUpdateDecdPages(PageInfo* p) noexcept
 {
-    while(!tinfo.decs_batch.isEmpty()) {
-        void* obj = tinfo.decs_batch.pop_front();
-        g_decs_prcsr.pending.push_back(obj);
-    }
+	GCAllocator& gcalloc = *p->gcalloc;
+	if(    p->owner != nullptr	
+		&& p->owner != &gcalloc.pendinggc_pages
+		&& p->owner != &gcalloc.decd_pages) 
+	{	
+		p->removeSelfFromStorage();
+		p->in_decsprcsr_list = false;
+		gcalloc.decd_pages.push(p);
+	}
 }
 
-// If we did not finish decs in main thread pause decs thread, merge remaining work,
-// then signal processing can continue
+// TODO: pretty meh name
 static void tryMergeDecList(BSQMemoryTheadLocalInfo& tinfo)
 {
     if(g_decs_prcsr.processDecfp == nullptr) {
         g_decs_prcsr.processDecfp = processDec;
+		g_decs_prcsr.tryUpdateDecdPages = tryUpdateDecdPages;
     }
 
-    if(!tinfo.decs_batch.isEmpty()) {
-        mergeDecList(tinfo);
-    }
+	g_decs_prcsr.mergePendingDecs(tinfo);
 }
 
 static void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
@@ -191,22 +198,14 @@ static void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
         decrementObject(obj);
         updateDecrementedObject(obj, tinfo.decs_batch);
 
-		// For a page to be eligible for insertion onto the decd_pages list it
-		// must not be an active alloc/evac page (no owner), already on the 
-		// pendinggc list (waiting to be rebuild), or already in the decd_pages
-		// list
-		PageInfo* p = PageInfo::extractPageFromPointer(obj);
-		GCAllocator& gcalloc = *p->gcalloc;
-		if(!GC_IS_ALLOCATED(m) 
-			&& p->owner
-			&& p->owner != &gcalloc.pendinggc_pages
-			&& p->owner != &gcalloc.decd_pages) 
-		{	
-			p->removeSelfFromStorage();
-			gcalloc.decd_pages.push(p);
+        deccount++;
+
+		if(!GC_IS_ALLOCATED(m)) {
+			continue;
 		}
 
-        deccount++;
+		PageInfo* p = PageInfo::extractPageFromPointer(obj);
+		tryUpdateDecdPages(p);
     }
 
     //
@@ -601,7 +600,7 @@ void collect() noexcept
 	// TODO this isnt great with multiple threads either as we will randomly
 	// merge the decs processors entire decd_pages list onto one thread, possibly
 	// starving others for pages
-	g_decs_prcsr.mergeDecdPages(gtl_info.decd_pages);
+	g_decs_prcsr.mergeDecdPages(gtl_info);
 
     gtl_info.pending_young.initialize();
 

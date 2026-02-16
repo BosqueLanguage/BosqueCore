@@ -33,6 +33,8 @@ extern bool g_disable_stack_refs;
 extern bool g_thd_testing;
 #endif
 
+#define MAX_THREADS 64 + 1 /*+1 for decs processor*/
+
 #define RST  "\x1B[0m"
 #define BOLD(x)	"\x1B[1m" x RST
 #define UNDL(x)	"\x1B[4m" x RST

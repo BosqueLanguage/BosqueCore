@@ -91,6 +91,7 @@ public:
 
 	// NOTE probably could do approx util just as an int
     float approx_utilization;
+	bool in_decsprcsr_list;
 
     static PageInfo* initialize(void* block, GCAllocator* gcalloc) noexcept;
     size_t rebuild() noexcept;
@@ -110,6 +111,7 @@ public:
 		this->realsize = 0;
 		this->entrycount = this->freecount = 0; 
 		this->approx_utilization = 0.0f;
+		this->in_decsprcsr_list = false;
 	}
 
     static inline PageInfo* extractPageFromPointer(void* p) noexcept {
