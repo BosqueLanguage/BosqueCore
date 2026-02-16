@@ -217,7 +217,7 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 
 #define GC_SHOULD_FREE_LIST_ADD(META) \
 	(!GC_IS_ALLOCATED(META) \
-		|| (GC_IS_YOUNG(META) && GC_FWD_INDEX(META) == NON_FORWARDED)
+		|| (GC_IS_YOUNG(META) && GC_FWD_INDEX(META) == NON_FORWARDED))
 
 #define GC_CHECK_BOOL_BYTES(META) \
 do { \
