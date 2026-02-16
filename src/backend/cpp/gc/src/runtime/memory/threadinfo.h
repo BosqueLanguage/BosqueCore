@@ -73,7 +73,7 @@ struct BSQMemoryTheadLocalInfo
     void** forward_table;
 
     ArrayList<void*> decs_batch; // Decrements able to be done without needing decs thread	
-    ArrayList<PageInfo*> decd_pages;
+    PageList decd_pages; // pages with newly decd (and now dead) objects
     
     float nursery_usage = 0.0f;
 

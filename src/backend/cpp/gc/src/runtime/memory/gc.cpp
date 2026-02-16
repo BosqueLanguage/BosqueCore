@@ -121,15 +121,6 @@ static void walkPointerMaskForDecrements(__CoreGC::TypeInfoBase* typeinfo, void*
     }
 }
 
-static inline void updateDecrementedPages(void* obj, ArrayList<PageInfo*>& pagelist) noexcept 
-{
-	PageInfo* p = PageInfo::extractPageFromPointer(obj);
-	if(!p->visited) {
-		p->visited = true;
-		pagelist.push_back(p);
-    }
-}
-
 static inline void decrementObject(void* obj) noexcept 
 {
 	MetaData* m = GC_GET_META_DATA_ADDR(obj);
@@ -151,14 +142,16 @@ static inline void updateDecrementedObject(void* obj, ArrayList<void*>& list)
 // TODO call this inside processDecrements
 void processDec(void* obj, ArrayList<void*>& decslist, ArrayList<PageInfo*>& pagelist) noexcept
 {
-	MetaData* m = GC_GET_META_DATA_ADDR(obj);	
-    if(!GC_IS_ALLOCATED(m)) {
-        return ;
-    }
+	[[maybe_unused]] MetaData* m = GC_GET_META_DATA_ADDR(obj);
+	GC_INVARIANT_CHECK(GC_IS_ALLOCATED(m));
 
 	decrementObject(obj);
     updateDecrementedObject(obj, decslist);
-    updateDecrementedPages(obj, pagelist);
+
+	// we might need the `visited` atomic for the decs processor
+	// (since it still uses a array list)
+	//PageInfo* p = PageInfo::extractPageFromPointer(obj);
+	assert(false && "unimplemented decs processor procedure!\n");
 }
 
 static inline void mergeDecList(BSQMemoryTheadLocalInfo& tinfo)
@@ -184,22 +177,32 @@ static void tryMergeDecList(BSQMemoryTheadLocalInfo& tinfo)
 
 static void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
-	std::lock_guard lk(g_gcrefctlock);   
-	if(!tinfo.decd_pages.isInitialized()) {
-		tinfo.decd_pages.initialize();
-	}
+	std::lock_guard lk(g_gcrefctlock);
 
     size_t deccount = 0;
     while(!tinfo.decs_batch.isEmpty() && (deccount < tinfo.max_decrement_count)) {
         void* obj = tinfo.decs_batch.pop_front();
-	    MetaData* m = GC_GET_META_DATA_ADDR(obj);	
-        if(!GC_IS_ALLOCATED(m)) {
-            continue;
-        }
+
+		MetaData* m = GC_GET_META_DATA_ADDR(obj);
+		GC_INVARIANT_CHECK(GC_IS_ALLOCATED(m));
 
         decrementObject(obj);
         updateDecrementedObject(obj, tinfo.decs_batch);
-        updateDecrementedPages(obj, tinfo.decd_pages);
+
+		// For a page to be eligible for insertion onto the decd_pages list it
+		// must not be an active alloc/evac page (no owner), already on the 
+		// pendinggc list (waiting to be rebuild), or already in the decd_pages
+		// list
+		PageInfo* p = PageInfo::extractPageFromPointer(obj);
+		GCAllocator& gcalloc = *p->gcalloc;
+		if(!GC_IS_ALLOCATED(m) 
+			&& p->owner
+			&& p->owner != &gcalloc.pendinggc_pages
+			&& p->owner != &gcalloc.decd_pages) 
+		{	
+			p->removeSelfFromStorage();
+			gcalloc.decd_pages.push(p);
+		}
 
         deccount++;
     }

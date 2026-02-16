@@ -92,11 +92,11 @@ struct DecsProcessor {
         }
     }
 
-	void mergeDecdPages(ArrayList<PageInfo*>& dst)
+	void mergeDecdPages(PageList& dst)
 	{
 		while(!this->decd_pages.isEmpty()) {
 			PageInfo* p = this->decd_pages.pop_front();
-			dst.push_back(p);
+			dst.push(p);
 		}
 	}
 

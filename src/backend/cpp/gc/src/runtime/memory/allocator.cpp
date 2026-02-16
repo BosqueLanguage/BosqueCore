@@ -12,6 +12,11 @@ GlobalDataStorage GlobalDataStorage::g_global_data{};
 	ZERO_METADATA(PageInfo::getObjectMetadataAligned(E));
 #endif
 
+GCAllocator::GCAllocator(__CoreGC::TypeInfoBase* _alloctype) noexcept :
+	alloctype(_alloctype), freelist(nullptr), evacfreelist(nullptr), 
+	alloc_page(nullptr), evac_page(nullptr), filled_pages(),
+	pendinggc_pages(), decd_pages(gtl_info.decd_pages)  {}
+
 static void setPageMetaData(PageInfo* pp, GCAllocator* gcalloc) noexcept
 {
 	std::lock_guard lk(g_alloclock);
@@ -171,27 +176,9 @@ void GCAllocator::processCollectorPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
 // finding one that is either empty or of the correct type is higher
 PageInfo* GCAllocator::tryGetPendingRebuildPage(float max_util)
 {	
-	// TODO it would be nice to not need to lock here as this constitutes
-	// the largest pause when doing alloc refresh (unless we bound num rebuilds)
-	std::lock_guard lk(g_gcmemlock);
-
 	PageInfo* pp = nullptr;
-	while(!gtl_info.decd_pages.isEmpty()) {
-		PageInfo* p = gtl_info.decd_pages.pop_front();
-		
-		// Page was on a different threads decd_pages list and removed or 
-		// alloc/evac page of some threads allocator (as these arent on lists)
-		// -- TODO this wont catch pages on pendinggc lists though as we dont have 
-		//    any way currently to detect this across multiple threads
-		//    (could we store a pointer to pages allocator inside a PageInfo?)
-		if(!p->visited || !p->owner) {
-			continue ;	
-		}
-
-		p->visited = false;
-		
-		// May be possible for owner to ne on another thread (ugh)
-		p->removeSelfFromStorage();
+	while(!gtl_info.decd_pages.empty()) {
+		PageInfo* p = gtl_info.decd_pages.pop();
 		p->rebuild();
 
 		// move pages that are not correct type or too full
