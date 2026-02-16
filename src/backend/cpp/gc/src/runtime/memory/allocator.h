@@ -78,7 +78,7 @@ public:
     // NOTE: as our gc allocators are declared statically, the addresses 
     // of a PageList will not change. However, if PageLists need to be 
     // used elsewhere, extra care will be needed (i.e. stack allocs)
-    PageList* owner; // What list are we in (if any)?
+    std::atomic<PageList*> owner; // What list are we in (if any)?
     PageInfo* prev;
     PageInfo* next;
 
@@ -92,6 +92,12 @@ public:
 	// NOTE probably could do approx util just as an int
     float approx_utilization;
 	std::atomic<bool> visited;
+
+    static PageInfo* initialize(void* block, GCAllocator* gcalloc) noexcept;
+    size_t rebuild() noexcept;
+	
+	// Removes `this` from whatever list it is currently stored in
+	void removeSelfFromStorage();
 
 	void zeroInit() noexcept
 	{
@@ -107,9 +113,6 @@ public:
 		this->approx_utilization = 0.0f;
 		this->visited = false;
 	}
-
-    static PageInfo* initialize(void* block, GCAllocator* gcalloc) noexcept;
-    size_t rebuild() noexcept;	
 
     static inline PageInfo* extractPageFromPointer(void* p) noexcept {
         return (PageInfo*)((uintptr_t)(p) & PAGE_ADDR_MASK);

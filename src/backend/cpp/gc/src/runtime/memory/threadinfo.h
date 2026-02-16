@@ -119,13 +119,6 @@ struct BSQMemoryTheadLocalInfo
     BSQMemoryTheadLocalInfo(BSQMemoryTheadLocalInfo&) = delete;
 	~BSQMemoryTheadLocalInfo() { this->cleanup(); }
 
-	inline GCAllocator* getAllocatorForType(PageInfo* page) noexcept {
-        uint32_t idx = page->typeinfo->type_id;
- 		GC_INVARIANT_CHECK(idx < BSQ_MAX_ALLOC_SLOTS);	       
-
-		return this->g_gcallocs[idx];
-    }
-
     inline void updateNurseryUsage(PageInfo* p) noexcept
     {
         this->nursery_usage += 1.0f - p->approx_utilization;

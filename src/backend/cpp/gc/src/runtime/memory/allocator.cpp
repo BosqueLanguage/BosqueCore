@@ -81,6 +81,13 @@ size_t PageInfo::rebuild() noexcept
 	return freed;
 }
 
+void PageInfo::removeSelfFromStorage()
+{
+	GC_INVARIANT_CHECK(this->owner != nullptr);
+	this->owner.load()->remove(this);
+	this->owner = nullptr;
+}
+
 GlobalPageGCManager GlobalPageGCManager::g_gc_page_manager;
 
 PageInfo* GlobalPageGCManager::getFreshPageFromOS(GCAllocator* gcalloc)
@@ -184,7 +191,7 @@ PageInfo* GCAllocator::tryGetPendingRebuildPage(float max_util)
 		p->visited = false;
 		
 		// May be possible for owner to ne on another thread (ugh)
-		p->owner->remove(p); 
+		p->removeSelfFromStorage();
 		p->rebuild();
 
 		// move pages that are not correct type or too full

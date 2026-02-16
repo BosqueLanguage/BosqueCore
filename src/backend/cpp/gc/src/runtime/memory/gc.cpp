@@ -212,11 +212,10 @@ static void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
 static void* forward(void* ptr, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     PageInfo* p = PageInfo::extractPageFromPointer(ptr);
-    GCAllocator* gcalloc = tinfo.getAllocatorForType(p);
-    GC_INVARIANT_CHECK(gcalloc != nullptr);
+    GCAllocator& gcalloc = *p->gcalloc;
 
     MetaData* m = GC_GET_META_DATA_ADDR(ptr); 
-    void* nptr = gcalloc->allocateEvacuation(); 
+    void* nptr = gcalloc.allocateEvacuation(); 
 	xmem_copy(ptr, nptr, p->typeinfo->slot_size);
 
     // Insert into forward table and update object ensuring future objects update
