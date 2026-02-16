@@ -368,14 +368,16 @@ static bool find(void** arr, int32_t n, void* trgt, BSQMemoryTheadLocalInfo& tin
 // NOTE we could sort roots here then do two pointer walk on old roots, building
 // up a set of dead objects to be merged onto decs list later
 static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexcept
-{
-    if(!GlobalPageGCManager::g_gc_page_manager.pagetableQuery(addr) 
-        || !pointsToObjectStart(addr)) {
-            return ;
+{ 
+	if(!GlobalPageGCManager::g_gc_page_manager.pagetableQuery(addr) 
+        || !pointsToObjectStart(addr))
+	{
+        return ;
     }
 
+
 	MetaData* m = PageInfo::getObjectMetadataAligned(addr);
-	if(GC_IS_MARKED(m)) {
+	if(!GC_IS_ALLOCATED(m) || GC_IS_MARKED(m)) {
 		return ;
 	}
 	GC_MARK_AS_MARKED(m);

@@ -215,7 +215,7 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 
 #define GC_SHOULD_FREE_LIST_ADD(META) \
 	(!GC_IS_ALLOCATED(META) || \
-		(GC_IS_YOUNG(META) && GC_FWD_INDEX(META) == NON_FORWARDED))
+		(GC_IS_YOUNG(META) && GC_FWD_INDEX(META) == NON_FORWARDED && !GC_IS_ROOT(META)))
 
 #define GC_CHECK_BOOL_BYTES(META) \
 do { \
@@ -265,8 +265,17 @@ do { \
 
 #define GC_SHOULD_FREE_LIST_ADD(META) \
 	(!GC_IS_ALLOCATED(META) || \
-		(GC_IS_YOUNG(META) && GC_FWD_INDEX(META) == NON_FORWARDED ))
+		(GC_IS_YOUNG(META) && GC_FWD_INDEX(META) == NON_FORWARDED && !GC_IS_ROOT(META)))
 
 #define GC_CHECK_BOOL_BYTES(META)
 
 #endif // VERBOSE_HEADER
+
+#define METADATA_DUMP(META) \
+	std::cout << "Meta Data at " << META << ":" << std::endl \
+	<< "\tisalloc: " << GC_IS_ALLOCATED(META) << std::endl \
+	<< "\tisyoung: " << GC_IS_YOUNG(META) << std::endl \
+	<< "\tismarked: " << GC_IS_MARKED(META) << std::endl \
+	<< "\tthread count: " << GC_THREAD_COUNT(META) << std::endl \
+	<< "\tref count: " << GC_REF_COUNT(META) << std::endl \
+	<< "\tforward index: " << GC_FWD_INDEX(META) << std::endl;
