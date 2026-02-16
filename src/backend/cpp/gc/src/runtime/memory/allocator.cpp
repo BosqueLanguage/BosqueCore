@@ -12,14 +12,15 @@ GlobalDataStorage GlobalDataStorage::g_global_data{};
 	ZERO_METADATA(PageInfo::getObjectMetadataAligned(E));
 #endif
 
-static void setPageMetaData(PageInfo* pp, __CoreGC::TypeInfoBase* typeinfo) noexcept
+static void setPageMetaData(PageInfo* pp, GCAllocator* gcalloc) noexcept
 {
 	std::lock_guard lk(g_alloclock);
 
 	pp->zeroInit();
 
-    pp->typeinfo = typeinfo;
-	pp->realsize = REAL_ENTRY_SIZE(typeinfo->type_size);
+    pp->typeinfo = gcalloc->getAllocType();
+	pp->gcalloc = gcalloc;
+	pp->realsize = REAL_ENTRY_SIZE(pp->typeinfo->type_size);
 	uint8_t* bpp = reinterpret_cast<uint8_t*>(pp);
     uint8_t* mdataptr = bpp + sizeof(PageInfo);
     pp->mdata = reinterpret_cast<MetaData*>(mdataptr);
@@ -38,10 +39,10 @@ static void setPageMetaData(PageInfo* pp, __CoreGC::TypeInfoBase* typeinfo) noex
     pp->data = mdataptr; // First slot after meta
 }
 
-PageInfo* PageInfo::initialize(void* block, __CoreGC::TypeInfoBase* typeinfo) noexcept
+PageInfo* PageInfo::initialize(void* block, GCAllocator* gcalloc) noexcept
 { 
 	PageInfo* pp = static_cast<PageInfo*>(block);	
-	setPageMetaData(pp, typeinfo);
+	setPageMetaData(pp, gcalloc);
     
 	for(int64_t i = pp->entrycount - 1; i >= 0; i--) {
         FreeListEntry* entry = pp->getFreelistEntryAtIndex(i);
@@ -82,7 +83,7 @@ size_t PageInfo::rebuild() noexcept
 
 GlobalPageGCManager GlobalPageGCManager::g_gc_page_manager;
 
-PageInfo* GlobalPageGCManager::getFreshPageFromOS(__CoreGC::TypeInfoBase* typeinfo)
+PageInfo* GlobalPageGCManager::getFreshPageFromOS(GCAllocator* gcalloc)
 {
 	std::unique_lock lk(g_alloclock);
 #ifndef ALLOC_DEBUG_MEM_DETERMINISTIC
@@ -97,25 +98,23 @@ PageInfo* GlobalPageGCManager::getFreshPageFromOS(__CoreGC::TypeInfoBase* typein
 
 	lk.unlock();
 
-	// NOTE probably want to move the lock inside pagetableInsert
-	std::lock_guard nlk(g_gcmemlock);
 	this->pagetableInsert(page);
 
-    PageInfo* pp = PageInfo::initialize(page, typeinfo);
+    PageInfo* pp = PageInfo::initialize(page, gcalloc);
 
     UPDATE_TOTAL_PAGES(gtl_info.memstats, +=, 1);
 	
 	return pp;
 }
 
-PageInfo* GlobalPageGCManager::tryGetEmptyPage(__CoreGC::TypeInfoBase* typeinfo)
+PageInfo* GlobalPageGCManager::tryGetEmptyPage(GCAllocator* gcalloc)
 {
 	std::lock_guard lk(g_gcmemlock);
 
 	PageInfo* pp = nullptr;
     if(!this->empty_pages.empty()) {
         void* page = this->empty_pages.pop();
-        pp = PageInfo::initialize(page, typeinfo);
+        pp = PageInfo::initialize(page, gcalloc);
     }
 
 	return pp;
@@ -191,12 +190,11 @@ PageInfo* GCAllocator::tryGetPendingRebuildPage(float max_util)
 		// move pages that are not correct type or too full
 		if((p->typeinfo != this->alloctype && p->freecount != p->entrycount)
 			|| p->approx_utilization > max_util) {
-				GCAllocator* gcalloc = gtl_info.getAllocatorForType(p);
-				gcalloc->processPage(p);
+				p->gcalloc->processPage(p);
 		}
 	    else {
 			if(p->freecount == p->entrycount) {
-				p = PageInfo::initialize(p, this->alloctype);
+				p = PageInfo::initialize(p, this);
 			}
 			pp = p;
 
@@ -211,13 +209,13 @@ PageInfo* GCAllocator::getFreshPageForAllocator() noexcept
 {
     PageInfo* page = this->getLowestLowUtilPage();
     if(page == nullptr) {
-        page = GlobalPageGCManager::g_gc_page_manager.tryGetEmptyPage(this->alloctype);
+        page = GlobalPageGCManager::g_gc_page_manager.tryGetEmptyPage(this);
     }
 	if(page == nullptr) {
 		page = this->tryGetPendingRebuildPage(LOW_UTIL_THRESH);
     }
 	if(page == nullptr) {
-		page = GlobalPageGCManager::g_gc_page_manager.getFreshPageFromOS(this->alloctype);	
+		page = GlobalPageGCManager::g_gc_page_manager.getFreshPageFromOS(this);	
 	}
 
     return page;
@@ -230,13 +228,13 @@ PageInfo* GCAllocator::getFreshPageForEvacuation() noexcept
         page = this->getLowestLowUtilPage();
     } 
     if(page == nullptr) {
-        page = GlobalPageGCManager::g_gc_page_manager.tryGetEmptyPage(this->alloctype);
+        page = GlobalPageGCManager::g_gc_page_manager.tryGetEmptyPage(this);
     }
 	if(page == nullptr) {
 		page = this->tryGetPendingRebuildPage(HIGH_UTIL_THRESH);
     }
 	if(page == nullptr) {
-		page = GlobalPageGCManager::g_gc_page_manager.getFreshPageFromOS(this->alloctype);
+		page = GlobalPageGCManager::g_gc_page_manager.getFreshPageFromOS(this);
 	}
 
 	return page;

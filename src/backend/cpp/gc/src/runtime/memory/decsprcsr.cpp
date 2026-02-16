@@ -1,9 +1,15 @@
 #include "decsprcsr.h"
 
+#include "threadinfo.h"
+
 DecsProcessor g_decs_prcsr;
 
 void DecsProcessor::process()
 {
+	// TODO: tmp hack to ensure memstats gets initialized for the decs thread
+	// for the sake of properly dumping global memstats
+	UPDATE_TOTAL_PAGES(gtl_info.memstats, +=, 0);
+
 	while(this->st != State::Stopping) {
 		{	
 			std::unique_lock lk(this->mtx);	

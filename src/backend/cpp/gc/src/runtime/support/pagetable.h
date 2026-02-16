@@ -44,6 +44,8 @@ public:
 
     void insert(void* addr) noexcept 
     {
+		std::lock_guard lk(g_gcmemlock);
+
         uintptr_t naddr = reinterpret_cast<uintptr_t>(addr);
         void** level = this->root;
         
@@ -69,6 +71,8 @@ public:
 
     bool query(void* addr) noexcept
     {
+		std::lock_guard lk(g_gcmemlock);
+
         uintptr_t naddr = reinterpret_cast<uintptr_t>(addr);
         void** level = this->root;
         

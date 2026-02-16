@@ -28,6 +28,7 @@
 ////////////////////////////////
 //Memory allocator
 
+class GCAllocator;
 class PageList;
 class BSQMemoryTheadLocalInfo;
 
@@ -70,7 +71,8 @@ class PageInfo
 {
 public:
 	__CoreGC::TypeInfoBase* typeinfo; //all entries are of same type
-	
+	GCAllocator* gcalloc; //alloc for this->typeinfo
+
 	FreeListEntry* freelist; //allocate from here until nullptr
    
     // NOTE: as our gc allocators are declared statically, the addresses 
@@ -94,6 +96,7 @@ public:
 	void zeroInit() noexcept
 	{
 		this->typeinfo = nullptr;
+		this->gcalloc = nullptr;
 		this->freelist = nullptr;
 		this->owner = nullptr;
 		this->prev = this->next = nullptr;
@@ -105,7 +108,7 @@ public:
 		this->visited = false;
 	}
 
-    static PageInfo* initialize(void* block, __CoreGC::TypeInfoBase* typeinfo) noexcept;
+    static PageInfo* initialize(void* block, GCAllocator* gcalloc) noexcept;
     size_t rebuild() noexcept;	
 
     static inline PageInfo* extractPageFromPointer(void* p) noexcept {
@@ -262,8 +265,8 @@ public:
 
     GlobalPageGCManager() noexcept : empty_pages(), pagetable() { }
 
-    PageInfo* getFreshPageFromOS(__CoreGC::TypeInfoBase* typeinfo);
-    PageInfo* tryGetEmptyPage(__CoreGC::TypeInfoBase* typeinfo);
+    PageInfo* getFreshPageFromOS(GCAllocator* gcalloc);
+    PageInfo* tryGetEmptyPage(GCAllocator* gcalloc);
 
     bool pagetableQuery(void* addr) noexcept
     {
