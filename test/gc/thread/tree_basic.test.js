@@ -1,13 +1,13 @@
 "use strict";
 
-import { runMainCodeGC, thdbase, end } from "../../../bin/test/gc/gc_nf.js"
+import { runMainCodeGC, base, end } from "../../../bin/test/gc/gc_nf.js"
 import { describe, it } from "node:test";
 
-const test_1 = thdbase.concat("sharedBasicTreeTest_1();", end);
-const test_6 = thdbase.concat("sharedBasicTreeTest_6();", end);
+const test_1 = base.concat("sharedBasicTreeTest_1();", end);
+const test_6 = base.concat("sharedBasicTreeTest_6();", end);
 
-const multi_test_1 = thdbase.concat("sharedBasicTreeTestMulti_1();", end);
-const multi_test_6 = thdbase.concat("sharedBasicTreeTestMulti_6();", end);
+const multi_test_1 = base.concat("sharedBasicTreeTestMulti_1();", end);
+const multi_test_6 = base.concat("sharedBasicTreeTestMulti_6();", end);
 
 describe("GC --- shared_tree_basic", () => {
     it("simple shared tree creation and destruction", function () {

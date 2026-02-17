@@ -8,7 +8,7 @@ static void runThreadTest(size_t nthds, void* roots[NROOTS],
 
 	std::thread thd = std::thread([troots = survive]() {
 		gtl_info.insertThreadTestData<NSURVIVE>(troots);
-		gtl_info.initializeGC(allocs, sizeof(allocs) / sizeof(allocs[0]), collect);
+		gtl_info.initializeGC(allocs, sizeof(allocs) / sizeof(allocs[0]), true, collect);
 
 		// newly found roots on this thread, so one thd count
 		threadTest<NSURVIVE>(troots, 1);
