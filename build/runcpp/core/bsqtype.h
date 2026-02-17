@@ -18,23 +18,19 @@ namespace ᐸRuntimeᐳ
     constexpr uint32_t WELL_KNOWN_TYPE_ID_CHKNAT = 5;
     constexpr uint32_t WELL_KNOWN_TYPE_ID_FLOAT = 6;
 
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTRBUFF = 7;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTRNODE = 8;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTRING = 9;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTR_TREE_LEAF = 7;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTR_TREE_NODE = 8;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTR_INLINE = 9;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTR_TREE = 10;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTRING = 11;
 
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_STRBUFF = 10;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_STRNODE = 11;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_STRING = 12;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_STRBUFF = 12;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_STRNODE = 13;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_STRING = 14;
 
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERENTRY = 13;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERBLOCK = 14;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFER = 15;
-    
-    enum class RColor : uint64_t
-    {
-        Red,
-        Black
-    };
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERENTRY = 15;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERBLOCK = 16;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFER = 17;
 
     enum class LayoutTag
     {

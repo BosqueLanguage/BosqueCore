@@ -406,7 +406,7 @@ class FormatStringTypeSignature extends TypeSignature {
                     return tt.argname + ": " + tt.argtype.emit();
                 }
             }).join(", ");
-            return `F${oftype}<${aargs}, ${rtype.emit()}>`;
+            return `F${oftype}<${rtype.emit()}${aargs.length !== 0 ? `, ${aargs}` : ""}>`;
         }
     }
 
@@ -445,7 +445,7 @@ class FormatPathTypeSignature extends TypeSignature {
                     return tt.argname + ": " + tt.argtype.emit();
                 }
             }).join(", ");
-            return `F${oftype}<${aargs}, ${rtype.emit()}>`;
+            return `F${oftype}<${rtype.emit()}${aargs.length !== 0 ? `, ${aargs}` : ""}>`;
         }
     }
 

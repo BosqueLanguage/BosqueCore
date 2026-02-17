@@ -364,9 +364,11 @@ class TypeInfoManager {
 
         timgr.addTypeInfo("Float", new TypeInfo("Float", new IRNominalTypeSignature("Float"), 6, 8, 1, LayoutTag.Value, undefined, undefined));
         
-        timgr.addTypeInfo("CStrBuff", new TypeInfo("CStrBuff", new IRNominalTypeSignature("CStrBuff"), 7, 16, 2, LayoutTag.Value, undefined, undefined));
-        timgr.addTypeInfo("CStrNode", new TypeInfo("CStrNode", new IRNominalTypeSignature("CStrNode"), 8, 32, 4, LayoutTag.Ref, "0011", undefined));
-        timgr.addTypeInfo("CString", new TypeInfo("CString", new IRNominalTypeSignature("CString"), 9, 24, 3, LayoutTag.Tagged, "200", undefined));
+        timgr.addTypeInfo("CStrTreeLeaf", new TypeInfo("CStrTreeLeaf", new IRNominalTypeSignature("CStrTreeLeaf"), 7, 48, 6, LayoutTag.Ref, undefined, undefined));
+        timgr.addTypeInfo("CStrTreeNode", new TypeInfo("CStrTreeNode", new IRNominalTypeSignature("CStrTreeNode"), 8, 40, 5, LayoutTag.Ref, "00011", undefined));
+        timgr.addTypeInfo("CStrInline", new TypeInfo("CStrInline", new IRNominalTypeSignature("CStrInline"), 9, 16, 2, LayoutTag.Value, undefined, undefined));
+        timgr.addTypeInfo("CStrTree", new TypeInfo("CStrTree", new IRNominalTypeSignature("CStrTree"), 10, 8, 1, LayoutTag.Ref, "1", undefined));
+        timgr.addTypeInfo("CString", new TypeInfo("CString", new IRNominalTypeSignature("CString"), 11, 24, 3, LayoutTag.Tagged, "200", undefined));
 
         timgr.addTypeInfo("StrBuff", new TypeInfo("StrBuff", new IRNominalTypeSignature("StrBuff"), 10, 32, 4, LayoutTag.Value, undefined, undefined));
         timgr.addTypeInfo("StrNode", new TypeInfo("StrNode", new IRNominalTypeSignature("StrNode"), 11, 32, 4, LayoutTag.Ref, "0011", undefined));

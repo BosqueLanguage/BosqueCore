@@ -5,11 +5,11 @@
 #include "bsqtype.h"
 #include "boxed.h"
 
+#include "postree.h"
+
 namespace ᐸRuntimeᐳ
 {
-    class CStrNode;
-
-    class CStrBuff
+    class CStrRootInlineContent
     {
     public:
         constexpr static size_t CSTR_BUFF_SIZE = 16;
@@ -17,17 +17,17 @@ namespace ᐸRuntimeᐳ
 
         char data[CSTR_BUFF_SIZE];
 
-        constexpr CStrBuff() : data{0} {}
-        constexpr CStrBuff(const CStrBuff& other) = default;
+        constexpr CStrRootInlineContent() : data{0} {}
+        constexpr CStrRootInlineContent(const CStrRootInlineContent& other) = default;
 
         constexpr bool empty() const { return static_cast<size_t>(this->data[0]) == 0; }
 
         template<size_t len>
-        constexpr static CStrBuff literal(const char (&cstr)[len])
+        constexpr static CStrRootInlineContent literal(const char (&cstr)[len])
         {
-            static_assert(len - 1 <= ᐸRuntimeᐳ::CStrBuff::CSTR_MAX_SIZE, "CString literal too large for CStrBuff");
+            static_assert(len - 1 <= ᐸRuntimeᐳ::CStrRootInlineContent::CSTR_MAX_SIZE, "CString literal too large for CStrRootInlineContent");
 
-            CStrBuff cb;
+            CStrRootInlineContent cb;
             cb.data[0] = static_cast<char>(len - 1); //store length
             std::copy(cstr, cstr + len - 1, cb.data + 1);
 
@@ -37,96 +37,85 @@ namespace ᐸRuntimeᐳ
         constexpr size_t size() const { return static_cast<size_t>(this->data[0]); }
         constexpr char at(size_t index) const { return this->data[index + 1]; }
 
-        constexpr static CStrBuff create_empty() { return CStrBuff(); }
+        constexpr static CStrRootInlineContent create_empty() { return CStrRootInlineContent(); }
+    };
+
+    class CStrRootTreeContent
+    {
+    public:
+        constexpr static size_t CSTR_MAX_LEAF_SIZE = CStrRootInlineContent::CSTR_BUFF_SIZE * 2;
+
+        PosRBTree<char, CSTR_MAX_LEAF_SIZE>* postree;
     };
 
     union CStrTreeUnion
     {
-        CStrBuff buff;
-        CStrNode* node;
+        CStrRootInlineContent inlinecstr;
+        CStrRootTreeContent treecstr;
 
-        constexpr CStrTreeUnion() : buff() {}
+        constexpr CStrTreeUnion() : inlinecstr() {}
         constexpr CStrTreeUnion(const CStrTreeUnion& other) = default;
-        constexpr CStrTreeUnion(const CStrBuff& b) : buff(b) {}
-        constexpr CStrTreeUnion(CStrNode* n) : node(n) {}
-    };
-    using CStrTree = BoxedUnion<CStrTreeUnion>;
-
-    class CStrNode
-    {
-    public:
-        size_t count;
-        RColor color;
-        CStrTree* left;
-        CStrTree* right;
-
-        constexpr CStrNode() : count(0), color(RColor::Black), left(nullptr), right(nullptr) {}
-        constexpr CStrNode(size_t cnt, RColor c, CStrTree* l, CStrTree* r) : count(cnt), color(c), left(l), right(r) {}
-        constexpr CStrNode(const CStrNode& other) = default;
+        constexpr CStrTreeUnion(const CStrRootInlineContent& c) : inlinecstr(c) {}
+        constexpr CStrTreeUnion(const CStrRootTreeContent& c) : treecstr(c) {}
     };
 
-    constexpr TypeInfo g_typeinfo_CStrBuff = {
-        WELL_KNOWN_TYPE_ID_CSTRBUFF,
-        sizeof(CStrBuff),
-        byteSizeToSlotCount(sizeof(CStrBuff)),
-        LayoutTag::Value,
+    constexpr TypeInfo g_typeinfo_CStrTreeLeaf = {
+        WELL_KNOWN_TYPE_ID_CSTR_TREE_LEAF,
+        sizeof(PosRBTreeTag) + sizeof(PosRBTreeLeaf<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>),
+        byteSizeToSlotCount(sizeof(PosRBTreeTag) + sizeof(PosRBTreeLeaf<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>)),
+        LayoutTag::Ref,
         BSQ_PTR_MASK_LEAF,
-        "CStrBuff",
+        "CStrTreeLeaf",
         nullptr
     };
 
-    constexpr TypeInfo g_typeinfo_CStrNode = {
-        WELL_KNOWN_TYPE_ID_CSTRNODE,
-        sizeof(CStrNode),
-        byteSizeToSlotCount(sizeof(CStrNode)),
+    constexpr TypeInfo g_typeinfo_CStrTreeNode = {
+        WELL_KNOWN_TYPE_ID_CSTR_TREE_NODE,
+        sizeof(PosRBTreeTag) + sizeof(PosRBTreeNode<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>),
+        byteSizeToSlotCount(sizeof(PosRBTreeTag) + sizeof(PosRBTreeNode<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>)),
         LayoutTag::Ref,
-        "0011",
-        "CStrNode",
+        "00011",
+        "CStrTreeNode",
+        nullptr
+    };
+
+    constexpr TypeInfo g_typeinfo_CStrInline = {
+        WELL_KNOWN_TYPE_ID_CSTR_INLINE,
+        sizeof(CStrRootInlineContent),
+        byteSizeToSlotCount(sizeof(CStrRootInlineContent)),
+        LayoutTag::Value,
+        BSQ_PTR_MASK_LEAF,
+        "CStrInline",
+        nullptr
+    };
+
+    constexpr TypeInfo g_typeinfo_CStrTree = {
+        WELL_KNOWN_TYPE_ID_CSTR_TREE,
+        sizeof(CStrRootTreeContent),
+        byteSizeToSlotCount(sizeof(CStrRootTreeContent)),
+        LayoutTag::Value,
+        "1",
+        "CStrTree",
         nullptr
     };
 
     constexpr TypeInfo g_typeinfo_CString = {
         WELL_KNOWN_TYPE_ID_CSTRING,
-        sizeof(CStrTree),
-        byteSizeToSlotCount(sizeof(CStrTree)),
+        sizeof(BoxedUnion<CStrTreeUnion>),
+        byteSizeToSlotCount(sizeof(BoxedUnion<CStrTreeUnion>)),
         LayoutTag::Tagged,
         "200",
         "CString",
         nullptr
     };
 
+    //TODO: this is currently n * ln(n) for iteration and access -- definitely want to speed this up later
     class XCStringIterator
     {
-    private:
-        int64_t buffidx;
-        CStrBuff currbuff;
-
-        int64_t index;
-        CStrTree currtree;
-
-        constexpr XCStringIterator(int64_t idx, CStrBuff currbuff, int64_t index, CStrTree currtree) : buffidx(idx), currbuff(currbuff), index(index), currtree(currtree) {}
-
-        void incrementSlow()
-        {        
-            if(this->currtree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) {
-                this->buffidx = this->index;
-            }
-            else {
-                assert(false); // Not Implemented: full iterator for CString trees
-            }
-        }
-
-        void decrementSlow()
-        {        
-            if(this->currtree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) {
-                this->buffidx = this->index;
-            }
-            else {
-                assert(false); // Not Implemented: full iterator for CString trees
-            }
-        }
-
     public:
+        int64_t index;
+        BoxedUnion<CStrTreeUnion> tree;
+
         using value_type = char;
         using difference_type = std::ptrdiff_t;
         using iterator_category = std::bidirectional_iterator_tag;
@@ -134,44 +123,19 @@ namespace ᐸRuntimeᐳ
         using pointer = value_type*;
         using reference = value_type&;
 
-        XCStringIterator(): buffidx(0), currbuff(), index(0), currtree() {}
-        XCStringIterator(const XCStringIterator& other) = default;
-
-        static XCStringIterator initializeBegin(CStrTree tree)
-        {
-            //Handle empty iterator or small iterator as special case
-            if(tree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) {
-                return XCStringIterator(0, tree.data.buff, 0, tree);
-            }
-            else {
-                assert(false); // Not Implemented: full iterator for CString trees
-            }
-        }
-
-        static XCStringIterator initializeEnd(CStrTree tree)
-        {
-            //Handle empty iterator or small iterator as special case
-            if(tree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) {
-                return XCStringIterator(tree.data.buff.size(), tree.data.buff, tree.data.buff.size(), tree);
-            }
-            else {
-                assert(false); // Not Implemented: full iterator for CString trees
-            }
-        }
-
         value_type operator*() const 
         { 
-            return this->currbuff.at(this->buffidx); 
+            if(this->tree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTR_INLINE) {
+                return this->tree.data.inlinecstr.at(this->index);
+            }
+            else {
+                return this->tree.data.treecstr.postree->get(this->index);
+            }
         }
 
         XCStringIterator& operator++()
         {
             this->index++;
-            this->buffidx++;
-            if(this->buffidx >= (int64_t)this->currbuff.size()) {
-                this->incrementSlow();
-            }
-
             return *this;
         }
  
@@ -185,11 +149,6 @@ namespace ᐸRuntimeᐳ
         XCStringIterator& operator--()
         {
             this->index--;
-            this->buffidx--;
-            if(this->buffidx < 0) {
-                this->decrementSlow();
-            }
-
             return *this;
         }
  
@@ -215,34 +174,33 @@ namespace ᐸRuntimeᐳ
     class XCString
     {
     private:
-        CStrTree tree;
+        BoxedUnion<CStrTreeUnion> tree;
 
     public:
         constexpr XCString() : tree() {}
-        constexpr XCString(const CStrBuff& b) : tree(BoxedUnion<CStrTreeUnion>(&g_typeinfo_CStrBuff, CStrTreeUnion(b))) {}
-        constexpr XCString(CStrNode* n) : tree(BoxedUnion<CStrTreeUnion>(&g_typeinfo_CStrNode, CStrTreeUnion(n))) {}
-        constexpr XCString(const CStrTree& t) : tree(t) {}
+        constexpr XCString(const CStrRootInlineContent& b) : tree(BoxedUnion<CStrTreeUnion>(&g_typeinfo_CStrInline, CStrTreeUnion(b))) {}
+        constexpr XCString(CStrRootTreeContent& n) : tree(BoxedUnion<CStrTreeUnion>(&g_typeinfo_CStrTree, CStrTreeUnion(n))) {}
         constexpr XCString(const XCString& other) = default;
 
         template<size_t len>
         constexpr static XCString smliteral(const char (&cstr)[len])
         {
-            static_assert(len - 1 <= CStrBuff::CSTR_BUFF_SIZE, "CString literal too large for CStrBuff");
-            return XCString(CStrBuff::literal(cstr));
+            static_assert(len - 1 <= CStrRootInlineContent::CSTR_MAX_SIZE, "CString literal too large for CStrRootInlineContent");
+            return XCString(CStrRootInlineContent::literal(cstr));
         }
 
         bool empty() const
         {
-            return (this->tree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) && this->tree.data.buff.size() == 0;
+            return (this->tree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTR_INLINE) && this->tree.data.inlinecstr.size() == 0;
         }
 
         size_t size() const
         {
-            if(this->tree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRBUFF) {
-                return this->tree.data.buff.size();
+            if(this->tree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTR_INLINE) {
+                return this->tree.data.inlinecstr.size();
             }
             else {
-                return this->tree.data.node->count;
+                return this->tree.data.treecstr.postree->count();
             }
         }
 
@@ -253,22 +211,17 @@ namespace ᐸRuntimeᐳ
 
         XCStringIterator begin() const
         {
-            return XCStringIterator::initializeBegin(this->tree);
+            return XCStringIterator{0, this->tree};
         }
 
         XCStringIterator end() const
         {
-            return XCStringIterator::initializeEnd(this->tree);
+            return XCStringIterator{(int64_t)this->size(), this->tree};
         }
 
         friend XBool operator==(const XCString& lhs, const XCString& rhs) 
         { 
-            XCStringIterator lhsit = lhs.begin();
-            XCStringIterator elhsit = lhs.end();
-
-            XCStringIterator rhsit = rhs.begin();
-
-            return XBool::from(std::equal(lhsit, elhsit, rhsit)); 
+            return XBool::from(std::equal(lhs.begin(), lhs.end(), rhs.begin())); 
         }
 
         friend XBool operator<(const XCString& lhs, const XCString& rhs) 
@@ -277,13 +230,8 @@ namespace ᐸRuntimeᐳ
                 return XBool::from(lhs.size() < rhs.size());
             }
             else {
-                XCStringIterator lhsit = lhs.begin();
-                XCStringIterator elhsit = lhs.end();
-
-                XCStringIterator rhsit = rhs.begin();
-
-                auto mmpos = std::mismatch(lhsit, elhsit, rhsit);
-                if(mmpos.first == elhsit) {
+                auto mmpos = std::mismatch(lhs.begin(), lhs.end(), rhs.begin());
+                if(mmpos.first == lhs.end()) {
                     return XBool::from(false);
                 }
                 else {
@@ -298,13 +246,8 @@ namespace ᐸRuntimeᐳ
                 return XBool::from(lhs.size() > rhs.size());
             }
             else {
-                XCStringIterator lhsit = lhs.begin();
-                XCStringIterator elhsit = lhs.end();
-
-                XCStringIterator rhsit = rhs.begin();
-
-                auto mmpos = std::mismatch(lhsit, elhsit, rhsit);
-                if(mmpos.first == elhsit) {
+                auto mmpos = std::mismatch(lhs.begin(), lhs.end(), rhs.begin());
+                if(mmpos.first == lhs.end()) {
                     return XBool::from(false);
                 }
                 else {
@@ -628,6 +571,6 @@ namespace ᐸRuntimeᐳ
         friend XBool operator>=(const XString& lhs, const XString& rhs) { return !(lhs < rhs); }
     };
 
-    constexpr static XCString emptycstr(CStrBuff::literal(""));
+    constexpr static XCString emptycstr(CStrRootInlineContent::literal(""));
     constexpr static XString emptystr(StrBuff::literal(U""));
 }
