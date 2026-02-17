@@ -182,7 +182,7 @@ class FormatStringTextComponent extends FormatStringComponent {
 }
 
 class FormatStringArgComponent extends FormatStringComponent {
-    readonly argPos: string; //name
+    readonly argPos: string; //name or index
     readonly argType: TypeSignature; //can be AutoTypeSignature, string, or typed string
     resolvedType: TypeSignature | undefined; //after type checking
 

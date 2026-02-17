@@ -1512,6 +1512,30 @@ class TypeChecker {
             }
         }
 
+        fmttypes.sort((a, b) => a.argname.localeCompare(b.argname));
+
+        const allidxs = fmttypes.every((fmt) => /$[0-9]+^/.test(fmt.argname));
+        const allnames = fmttypes.every((fmt) => !/$[0-9]+^/.test(fmt.argname));
+        if(!allidxs && !allnames) {
+            this.reportError(sinfo, `Format string arguments must be either all indexed or all named`);
+        }
+
+        if(allidxs) {
+            const idxs = fmttypes.map((fmt) => Number.parseInt(fmt.argname));
+            this.checkError(sinfo, idxs.some((idx) => idx < 0), `Format string argument indexes must be non-negative integers`);
+            this.checkError(sinfo, idxs.some((idx, ii) => idx !== ii), `Format string argument index arguments must cover the range from 0 to the number of arguments -1 without duplicates`);
+
+            fmttypes = fmttypes.map((fmt) => ({argname: "_", argtype: fmt.argtype}));
+        }
+
+        if(allnames) {
+            const names = new Set<string>();
+            for(let i = 0; i < fmttypes.length; ++i) {
+                this.checkError(sinfo, names.has(fmttypes[i].argname), `Duplicate format string argument name ${fmttypes[i].argname}`);
+                names.add(fmttypes[i].argname);
+            }
+        }
+
         return fmttypes;
     }
 
@@ -2370,15 +2394,71 @@ class TypeChecker {
         assert(false, "Not Implemented -- checkParseAsTypeExpression");
     }
 
+    private checkInterpolationArguments(sinfo: SourceInfo, env: TypeEnvironment, args: AbstractArgumentValue[], fmtparams: {argname: string, argtype: TypeSignature}[]) {
+        if(args.length !== fmtparams.length) {
+            this.reportError(sinfo, `InterpolateFormatExpression with kind "cstring" must have ${fmtparams.length} arguments`);
+            return;
+        }
+        const argsallnamed = args.every((arg) => arg instanceof NamedArgumentValue);
+        
+        const paramsallpositional = fmtparams.every((p) => p.argname === "_");
+        const paramsallnamed = fmtparams.every((p) => p.argname !== "_");
+
+        if(paramsallpositional) {
+            const argsallpositional = args.every((arg) => arg instanceof PositionalArgumentValue);
+            if(!argsallpositional) {
+                this.reportError(sinfo, `InterpolateFormatExpression with positional format parameters must have all positional arguments`);
+                return;
+            }
+
+            for(let i = 0; i < args.length; i++) {
+                const argtype = this.checkExpression(env, args[i].exp, fmtparams[i].argtype);
+                this.checkError(sinfo, argtype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(argtype, fmtparams[i].argtype, this.constraints), `Interpolation argument ${i} is not a subtype of ${fmtparams[i].argtype.emit()}`);
+            }
+        }
+
+        if(paramsallnamed) {
+            if(!argsallnamed) {
+                this.reportError(sinfo, `InterpolateFormatExpression with named format parameters must have all named arguments`);
+                return;
+            }
+
+            for(let i = 0; i < args.length; i++) {
+                const arg = args[i] as NamedArgumentValue;
+                const param = fmtparams.find((p) => p.argname === arg.name);
+                if(param === undefined) {
+                    this.reportError(sinfo, `Interpolation argument ${arg.name} does not match any format parameter`);
+                    continue;
+                }
+
+                const argtype = this.checkExpression(env, arg.exp, param.argtype);
+                this.checkError(sinfo, argtype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(argtype, param.argtype, this.constraints), `Interpolation argument ${arg.name} is not a subtype of ${param.argtype.emit()}`);
+            }
+        }
+    }
+
     private checkInterpolateFormatExpression(env: TypeEnvironment, exp: InterpolateFormatExpression): TypeSignature {
         const fmtkind = this.checkExpression(env, exp.fmtString, undefined);
-        this.checkError(exp.sinfo, exp.args.length === exp.fmtString.);
 
         if(exp.kind === "cstring") {
-            xxxx;
+            if(!(fmtkind instanceof FormatStringTypeSignature) || fmtkind.oftype !== "CString") {
+                this.reportError(exp.sinfo, `InterpolateFormatExpression with kind "cstring" must have a CString format string`);
+                return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            }
+
+            this.checkTypeSignature(fmtkind.rtype);
+            this.checkInterpolationArguments(exp.sinfo, env, exp.args, fmtkind.terms);
+            return exp.setType(fmtkind.rtype);
         }
         else if(exp.kind === "string") {
-            xxxx;
+            if(!(fmtkind instanceof FormatStringTypeSignature) || fmtkind.oftype !== "String") {
+                this.reportError(exp.sinfo, `InterpolateFormatExpression with kind "string" must have a String format string`);
+                return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            }
+
+            this.checkTypeSignature(fmtkind.rtype);
+            this.checkInterpolationArguments(exp.sinfo, env, exp.args, fmtkind.terms);
+            return exp.setType(fmtkind.rtype);
         }
         else if(exp.kind === "path") {
             assert(false, "Not Implemented -- checkInterpolateFormatExpression for path");
