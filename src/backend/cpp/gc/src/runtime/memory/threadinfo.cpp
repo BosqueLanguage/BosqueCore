@@ -8,6 +8,13 @@ thread_local GCAllocator* g_gcallocs_array[BSQ_MAX_ALLOC_SLOTS];
 
 thread_local BSQMemoryTheadLocalInfo gtl_info;
 
+#define InitBSQMemoryTheadLocalInfo(TINFO, COLLECT) \
+do { \
+	std::lock_guard lk(g_alloclock); \
+	register void** rbp asm("rbp"); \
+	(TINFO).initialize(GlobalThreadAllocInfo::s_thread_counter++, rbp, COLLECT); \
+} while(0)
+
 #define PTR_IN_RANGE(V) ((MIN_ALLOCATED_ADDRESS <= V) && (V <= MAX_ALLOCATED_ADDRESS))
 #define PTR_NOT_IN_STACK(BASE, CURR, V) ((((void*)V) < ((void*)CURR)) || (((void*)BASE) < ((void*)V)))
 #define IS_ALIGNED(V) (((uintptr_t)(V) % sizeof(void*)) == 0)
@@ -44,8 +51,8 @@ void BSQMemoryTheadLocalInfo::initialize(size_t ntl_id, void** caller_rbp,
     xmem_zerofill(this->g_gcallocs, BSQ_MAX_ALLOC_SLOTS);
 }
 
-void BSQMemoryTheadLocalInfo::initializeGC(GCAllocator** allocs, size_t n,                              
-    void (*_collectfp)()) noexcept 
+void BSQMemoryTheadLocalInfo::initializeGC(GCAllocator** allocs, size_t n
+    , bool _disable_stack_refs, void (*_collectfp)()) noexcept 
 {   
     InitBSQMemoryTheadLocalInfo(*this, _collectfp);                                                       
     for(size_t i = 0; i < n; i++) {
@@ -55,7 +62,9 @@ void BSQMemoryTheadLocalInfo::initializeGC(GCAllocator** allocs, size_t n,
         
         this->g_gcallocs[idx] = alloc;                                                                  
     }                                                                                                   
-    
+
+	this->disable_stack_refs = _disable_stack_refs;
+
     // collect to promote visible roots to old (incing thd counts) and init                             
     // data structures
     // -- also might want to some rampup work here like allocing a nursery                              
@@ -118,19 +127,18 @@ void BSQMemoryTheadLocalInfo::unloadNativeRootSet() noexcept
 // we can define a custom destructor for that calls cleanup
 void BSQMemoryTheadLocalInfo::cleanup() noexcept
 { 
-	// TODO need a lock here!
 	// Run a collection to update thread counts	
-    bool prev = g_disable_stack_refs;
-	g_disable_stack_refs = true;
+    bool prev = this->disable_stack_refs;
+	this->disable_stack_refs = true;
 #ifdef BSQ_GC_TESTING 
-    g_thd_testing = false;
+    this->thd_testing = false;
 #endif
 	if(this->collectfp != nullptr) {
     	this->collectfp();
 	}
-    g_disable_stack_refs = prev;
+    this->disable_stack_refs = prev;
 #ifdef BSQ_GC_TESTING 
-    g_thd_testing = true;
+    this->thd_testing = true;
 #endif
 
 	std::lock_guard lk(g_gctelemetrylock);

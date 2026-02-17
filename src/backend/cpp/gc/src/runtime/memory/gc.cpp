@@ -409,14 +409,14 @@ static void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept
     }
 
 #ifdef BSQ_GC_TESTING
-	if(g_thd_testing) {
+	if(tinfo.thd_testing) {
 		for(unsigned i = 0; i < NUM_THREAD_TESTING_ROOTS; i++) {
 			void* cur = tinfo.thd_testing_data[i]; 
 			checkPotentialPtr(cur, tinfo);		
 		}
 	}
 #endif
-    if(g_disable_stack_refs) {
+    if(tinfo.disable_stack_refs) {
         goto cleanup;
     }
     

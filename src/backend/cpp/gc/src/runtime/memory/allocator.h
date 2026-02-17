@@ -315,9 +315,9 @@ public:
 #define LOW_UTIL_THRESH 0.60f
 #define HIGH_UTIL_THRESH 0.90f
 #define BUCKET_UTIL_VARIANCE 0.05f
-#define IS_LOW_UTIL(U) (U > 0.0f && U <= LOW_UTIL_THRESH)
-#define IS_HIGH_UTIL(U) (U > LOW_UTIL_THRESH && U <= HIGH_UTIL_THRESH)
-#define IS_FULL(U) (U > HIGH_UTIL_THRESH && U <= 1.0f)
+#define IS_LOW_UTIL(U) (U > 0.0f && U < LOW_UTIL_THRESH)
+#define IS_HIGH_UTIL(U) (U >= LOW_UTIL_THRESH && U < HIGH_UTIL_THRESH)
+#define IS_FULL(U) (U >= HIGH_UTIL_THRESH && U <= 1.0f)
 
 class GCAllocator
 {

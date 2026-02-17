@@ -24,14 +24,9 @@ const gc_test_path = "bin/cppruntime/gc/test/";
 
 // set up global array, disable stack refs
 const main = '__CoreCpp::Bool main() {\n';
-const treebase = main +
-	`\tGlobalDataStorage::g_global_data.initialize(sizeof(garray), (void**)garray);
-	\tg_disable_stack_refs = true;\n`;
-const thdbase = main +
-	`\tg_thd_testing = true;
-	\tg_disable_stack_refs = true;\n`
+const base = main +
+	"\tGlobalDataStorage::g_global_data.initialize(sizeof(garray), (void**)garray);"
 const end = "\n\treturn true;}"
-
 
 function generateCPPFiles(header: string, src: string, cppmain: string, cpp_testcode: string, outdir: string): boolean {
     const dir = path.normalize(outdir);
@@ -154,4 +149,4 @@ function runMainCodeGC(bsqtestname: string, cpptestname: string,
     assert.equal(results, expected_output)
 }
 
-export { runMainCodeGC, treebase, thdbase, end };
+export { runMainCodeGC, base, end };

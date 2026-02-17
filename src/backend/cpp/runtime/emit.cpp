@@ -24,7 +24,13 @@ int wrap_setjmp()
 
 int main() 
 {
-    gtl_info.initializeGC(allocs, sizeof(allocs) / sizeof(allocs[0]), collect);
+#ifdef BSQ_GC_TESTING
+    gtl_info.initializeGC(allocs, sizeof(allocs) / sizeof(allocs[0]), true 
+		, collect);
+#else
+    gtl_info.initializeGC(allocs, sizeof(allocs) / sizeof(allocs[0]), false 
+		, collect);
+#endif
     
 	return wrap_setjmp();
 }

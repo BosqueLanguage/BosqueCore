@@ -5,13 +5,6 @@
 
 #include <chrono>
 
-#define InitBSQMemoryTheadLocalInfo(TINFO, COLLECT) \
-do { \
-	std::lock_guard lk(g_alloclock); \
-	register void** rbp asm("rbp"); \
-	(TINFO).initialize(GlobalThreadAllocInfo::s_thread_counter++, rbp, COLLECT); \
-} while(0)
-
 #define MAX_ALLOC_LOOKUP_TABLE_SIZE 1024
 
 #define MARK_STACK_NODE_COLOR_GREY 0
@@ -86,7 +79,7 @@ struct BSQMemoryTheadLocalInfo
     size_t max_decrement_count;
 
     bool disable_automatic_collections;
-
+	bool disable_stack_refs = false;
 #ifdef MEM_STATS
 	MemStats memstats;
 #endif
@@ -96,6 +89,7 @@ struct BSQMemoryTheadLocalInfo
 	// interactions of multiple threads (ensuring roots are kept alive if 
 	// still reachable from at least one thread)
 	void* thd_testing_data[NUM_THREAD_TESTING_ROOTS];
+	bool thd_testing = true;
 #endif
 
 #ifndef MEM_STATS
@@ -142,7 +136,8 @@ struct BSQMemoryTheadLocalInfo
 	}
 #endif
 	void initialize(size_t ntl_id, void** caller_rbp, void (*_collectfp)()) noexcept;
-	void initializeGC(GCAllocator** allocs, size_t n, void (*_collectfp)()) noexcept;
+	void initializeGC(GCAllocator** allocs, size_t n, bool _disable_stack_refs
+		, void (*_collectfp)()) noexcept;
 	void loadNativeRootSet() noexcept;
     void unloadNativeRootSet() noexcept;
 	void updateGlobalMemstats();	
