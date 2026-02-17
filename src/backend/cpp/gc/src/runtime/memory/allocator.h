@@ -315,9 +315,9 @@ public:
 #define LOW_UTIL_THRESH 0.60f
 #define HIGH_UTIL_THRESH 0.90f
 #define BUCKET_UTIL_VARIANCE 0.05f
-#define IS_LOW_UTIL(U) (U > 0.0f && U <= LOW_UTIL_THRESH)
-#define IS_HIGH_UTIL(U) (U > LOW_UTIL_THRESH && U <= HIGH_UTIL_THRESH)
-#define IS_FULL(U) (U > HIGH_UTIL_THRESH && U <= 1.0f)
+#define IS_LOW_UTIL(U) (U > 0.0f && U < LOW_UTIL_THRESH)
+#define IS_HIGH_UTIL(U) (U >= LOW_UTIL_THRESH && U < HIGH_UTIL_THRESH)
+#define IS_FULL(U) (U >= HIGH_UTIL_THRESH && U <= 1.0f)
 
 class GCAllocator
 {
@@ -359,10 +359,7 @@ private:
 		int idx = 0;
         if(IS_LOW_UTIL(util)) {
             idx = util / BUCKET_UTIL_VARIANCE;
-			if(idx >= NUM_LOW_UTIL_BUCKETS) {
-				idx = NUM_LOW_UTIL_BUCKETS - 1;	
-			}
-            //DSA_INVARIANT_CHECK(idx < NUM_LOW_UTIL_BUCKETS);
+            DSA_INVARIANT_CHECK(idx < NUM_LOW_UTIL_BUCKETS);
         }
         else {
             idx = (util - LOW_UTIL_THRESH) / BUCKET_UTIL_VARIANCE;

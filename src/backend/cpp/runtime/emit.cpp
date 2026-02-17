@@ -24,7 +24,8 @@ int wrap_setjmp()
 
 int main() 
 {
-    gtl_info.initializeGC(allocs, sizeof(allocs) / sizeof(allocs[0]), collect);
+    gtl_info.initializeGC(allocs, sizeof(allocs) / sizeof(allocs[0]), false
+		, collect);
     
 	return wrap_setjmp();
 }
