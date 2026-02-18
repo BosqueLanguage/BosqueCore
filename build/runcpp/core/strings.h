@@ -261,6 +261,44 @@ namespace ᐸRuntimeᐳ
         friend XBool operator>=(const XCString& lhs, const XCString& rhs) { return !(lhs < rhs); }
     };
 
+    template<size_t K>
+    class XFCStringRepr 
+    {
+    public:
+        const char* strcomps[K];
+        bool hasprefix;
+        bool hassuffix;
+
+        size_t cmpsize;
+        size_t fcid;
+    };
+
+    class XFCString
+    {
+    public:
+        size_t fcid;
+
+        template<size_t K>
+        static XCString interpolate(XFCStringRepr<K>* repr, XCString (&cstr)[K])
+        {
+            size_t total_size = repr->cmpsize;
+            for(size_t i = 0; i < K; i++) {
+                total_size += cstr[i].size();
+            }
+
+            if(total_size <= CStrRootInlineContent::CSTR_MAX_SIZE) {
+                char inlined[total_size + 1] = {0};
+                
+                xxxx;
+                
+                return XCString::smliteral(inlined);
+            }
+            else {
+                assert(false); // Not Implemented: full support for FString interpolation
+            }
+        }
+    };
+
     class StrNode;
 
     class StrBuff
