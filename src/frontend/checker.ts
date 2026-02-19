@@ -2401,8 +2401,8 @@ class TypeChecker {
         }
         const argsallnamed = args.every((arg) => arg instanceof NamedArgumentValue);
         
-        const paramsallpositional = fmtparams.every((p) => p.argname === "_");
-        const paramsallnamed = fmtparams.every((p) => p.argname !== "_");
+        const paramsallpositional = fmtparams.every((p) => /[0-9]+/.test(p.argname));
+        const paramsallnamed = fmtparams.every((p) => !/[0-9]+/.test(p.argname));
 
         if(paramsallpositional) {
             const argsallpositional = args.every((arg) => arg instanceof PositionalArgumentValue);

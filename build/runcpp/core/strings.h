@@ -278,19 +278,39 @@ namespace ᐸRuntimeᐳ
     public:
         size_t fcid;
 
-        template<size_t K>
-        static XCString interpolate(XFCStringRepr<K>* repr, XCString (&cstr)[K])
+        template<size_t K, size_t M>
+        static XCString interpolate(XFCStringRepr<K>* repr, XCString (&cstr)[M])
         {
+            static_assert(K + 2 <= M, "Not enough components provided for interpolation");
+
             size_t total_size = repr->cmpsize;
-            for(size_t i = 0; i < K; i++) {
+            for(size_t i = 0; i < M; i++) {
                 total_size += cstr[i].size();
             }
 
             if(total_size <= CStrRootInlineContent::CSTR_MAX_SIZE) {
                 char inlined[total_size + 1] = {0};
+                char* ptr = inlined;
+
+                if(this->hasprefix) {
+                    std::copy(cstr[0].begin(), cstr[0].end(), ptr);
+                    ptr += cstr[0].size();
+                }
+
+                size_t moffset = this->hasprefix ? 1 : 0;
+                for(size_t i = 0; i < K - 1; i++) {
+                    size_t cmp_size = std::strlen(repr->strcomps[i]);
+                    std::copy(repr->strcomps[i], repr->strcomps[i] + cmp_size, ptr);
+                    ptr += cmp_size;
+
+                    std::copy(cstr[i + moffset].begin(), cstr[i + moffset].end(), ptr);
+                    ptr += cstr[i + moffset].size();
+                }
                 
-                xxxx;
-                
+                if(this->hassuffix) {
+                    std::copy(cstr[M - 1].begin(), cstr[M - 1].end(), ptr);
+                }
+
                 return XCString::smliteral(inlined);
             }
             else {
