@@ -326,16 +326,13 @@ namespace ᐸRuntimeᐳ
                     std::copy(repr.strcomps[i], repr.strcomps[i] + cmp_size, ptr);
                     ptr += cmp_size;
 
-                    const size_t kidx = repr.argidx[i + moffset];
-                    std::copy(cstr[kidx].begin(), cstr[kidx].end(), ptr);
-                    ptr += cstr[kidx].size();
+                    if(i < repr.strcomps.size() - 1 || repr.hassuffix) {
+                        const size_t kidx = repr.argidx[i + moffset];
+                        std::copy(cstr[kidx].begin(), cstr[kidx].end(), ptr);
+                        ptr += cstr[kidx].size();
+                    }
                 }
                 
-                if(repr.hassuffix) {
-                    size_t kidx = repr.argidx[K - 1];
-                    std::copy(cstr[kidx].begin(), cstr[kidx].end(), ptr);
-                }
-
                 return XCString::smliteraldynamic(inlined, total_size);
             }
             else {

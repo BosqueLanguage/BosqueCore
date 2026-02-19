@@ -26,8 +26,8 @@ class ASMToIRConverter {
     formats: IRFormatTypeSignature[];
     lpacks: IRLambdaParameterPackTypeSignature[];
 
-    formatCStrings: IRLiteralFormatCStringExpression[] = [];
-    formatStrings: IRLiteralFormatStringExpression[] = [];
+    formatcstrings: IRLiteralFormatCStringExpression[] = [];
+    formatstrings: IRLiteralFormatStringExpression[] = [];
 
     errInfos: { file: string, sinfo: IRSourceInfo, kind: "arith" | "runtime" | "userspec", checkID: number }[];
     errCtr: number;
@@ -1315,9 +1315,9 @@ class ASMToIRConverter {
                 }
             });
 
-            const iidx = this.formatStrings.length;
+            const iidx = this.formatstrings.length;
             const fstring = new IRLiteralFormatStringExpression(iidx, fmts);
-            this.formatStrings.push(fstring);
+            this.formatstrings.push(fstring);
 
             return fstring;
         }
@@ -1346,9 +1346,9 @@ class ASMToIRConverter {
                 }
             });
 
-            const iidx = this.formatCStrings.length;
+            const iidx = this.formatcstrings.length;
             const fstring = new IRLiteralFormatCStringExpression(iidx, fmts);
-            this.formatCStrings.push(fstring);
+            this.formatcstrings.push(fstring);
 
             return fstring;
         }
@@ -1426,9 +1426,9 @@ class ASMToIRConverter {
                 }
             });
 
-            const iidx = this.formatCStrings.length;
-            const fstring = new IRLiteralFormatCStringExpression(iidx, fmts);
-            this.formatCStrings.push(fstring);
+            const iidx = this.formatstrings.length;
+            const fstring = new IRLiteralFormatStringExpression(iidx, fmts);
+            this.formatstrings.push(fstring);
 
             return fstring;
         }
@@ -1457,9 +1457,9 @@ class ASMToIRConverter {
                 }
             });
 
-            const iidx = this.formatStrings.length;
-            const fstring = new IRLiteralFormatStringExpression(iidx, fmts);
-            this.formatCStrings.push(fstring);
+            const iidx = this.formatcstrings.length;
+            const fstring = new IRLiteralFormatCStringExpression(iidx, fmts);
+            this.formatcstrings.push(fstring);
 
             return fstring;
         } 
@@ -1560,7 +1560,15 @@ class ASMToIRConverter {
             const fop = this.makeExpressionSimple(this.flattenExpression(ifexp.fmtString), ifexp.fmtString.getType());
             const fargs: IRSimpleExpression[] = [];
             for(let i = 0; i < ifexp.args.length; i++) {
-                fargs.push(this.makeExpressionSimple(this.flattenExpression(ifexp.args[i].exp), this.tproc(ifexp.args[i].exp.getType())));
+                const argtype = this.tproc(ifexp.args[i].exp.getType()) as NominalTypeSignature;
+                const barg = this.makeExpressionSimple(this.flattenExpression(ifexp.args[i].exp), this.tproc(ifexp.args[i].exp.getType()))
+                if(!(argtype.decl instanceof TypedeclTypeDecl)) {
+                    fargs.push(barg);
+                }
+                else {
+                    const tdaccess = new IRAccessTypeDeclValueExpression(this.processTypeSignature(argtype), barg);
+                    fargs.push(tdaccess);
+                }
             }
 
             let interpop: IRConstructExpression;
@@ -3485,6 +3493,9 @@ class ASMToIRConverter {
                 emitter.emitNamespaceDeclaration(nsdecl, nsii, asminstantiation, irasm);
             }
         }
+
+        irasm.formatcstrings.push(...emitter.formatcstrings);
+        irasm.formatstrings.push(...emitter.formatstrings);
 
         irasm.computeSubtypeInfo();
         irasm.computeTypeDependencyInfo();

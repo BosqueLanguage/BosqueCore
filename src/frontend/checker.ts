@@ -2394,7 +2394,7 @@ class TypeChecker {
         assert(false, "Not Implemented -- checkParseAsTypeExpression");
     }
 
-    private checkInterpolationArguments(sinfo: SourceInfo, env: TypeEnvironment, args: AbstractArgumentValue[], fmtparams: {argname: string, argtype: TypeSignature}[]) {
+    private checkInterpolationArguments(sinfo: SourceInfo, iscstrunderly: boolean, env: TypeEnvironment, args: AbstractArgumentValue[], fmtparams: {argname: string, argtype: TypeSignature}[]) {
         if(args.length !== fmtparams.length) {
             this.reportError(sinfo, `InterpolateFormatExpression with kind "cstring" must have ${fmtparams.length} arguments`);
             return;
@@ -2413,7 +2413,25 @@ class TypeChecker {
 
             for(let i = 0; i < args.length; i++) {
                 const argtype = this.checkExpression(env, args[i].exp, fmtparams[i].argtype);
-                this.checkError(sinfo, argtype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(argtype, fmtparams[i].argtype, this.constraints), `Interpolation argument ${i} is not a subtype of ${fmtparams[i].argtype.emit()}`);
+
+                if(iscstrunderly) {
+                    if(this.relations.isSubtypeOf(fmtparams[i].argtype, this.getWellKnownType("CString"), this.constraints)) {
+                        const btype = !(argtype instanceof ErrorTypeSignature) ? this.resolveUnderlyingType(argtype) || argtype : argtype;
+                        this.checkError(sinfo, btype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(btype, this.getWellKnownType("CString"), this.constraints), `Interpolation argument ${i} is not a subtype of CString as required for CString format string`);
+                    }
+                    else {
+                        this.checkError(sinfo, argtype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(argtype, fmtparams[i].argtype, this.constraints), `Interpolation argument ${i} is not a subtype of ${fmtparams[i].argtype.emit()}`);
+                    }
+                }
+                else {
+                    if(this.relations.isSubtypeOf(fmtparams[i].argtype, this.getWellKnownType("String"), this.constraints)) {
+                        const btype = !(argtype instanceof ErrorTypeSignature) ? this.resolveUnderlyingType(argtype) || argtype : argtype;
+                        this.checkError(sinfo, btype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(btype, this.getWellKnownType("String"), this.constraints), `Interpolation argument ${i} is not a subtype of String as required for String format string`);
+                    }
+                    else {
+                        this.checkError(sinfo, argtype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(argtype, fmtparams[i].argtype, this.constraints), `Interpolation argument ${i} is not a subtype of ${fmtparams[i].argtype.emit()}`);
+                    }
+                }
             }
         }
 
@@ -2459,7 +2477,7 @@ class TypeChecker {
             }
 
             this.checkTypeSignature(fmtkind.rtype);
-            this.checkInterpolationArguments(exp.sinfo, env, exp.args, fmtkind.terms);
+            this.checkInterpolationArguments(exp.sinfo, true, env, exp.args, fmtkind.terms);
 
             exp.actualoftype = fmtkind.rtype;
             return exp.setType(fmtkind.rtype);
@@ -2483,7 +2501,7 @@ class TypeChecker {
             }
 
             this.checkTypeSignature(fmtkind.rtype);
-            this.checkInterpolationArguments(exp.sinfo, env, exp.args, fmtkind.terms);
+            this.checkInterpolationArguments(exp.sinfo, false, env, exp.args, fmtkind.terms);
 
             exp.actualoftype = fmtkind.rtype;
             return exp.setType(fmtkind.rtype);
