@@ -1,6 +1,6 @@
 import { IRRegex, IRSourceInfo } from "./irsupport.js";
 import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature } from "./irtype.js";
-import { IRBody, IRLiteralCRegexExpression, IRLiteralUnicodeRegexExpression, IRSimpleExpression, IRStatement } from "./irbody.js";
+import { IRBody, IRLiteralCRegexExpression, IRLiteralFormatCStringExpression, IRLiteralFormatStringExpression, IRLiteralUnicodeRegexExpression, IRSimpleExpression, IRStatement } from "./irbody.js";
 
 abstract class IRConditionDecl {
     readonly file: string;
@@ -963,6 +963,9 @@ class IRAssembly {
     readonly formats: IRFormatTypeSignature[] = [];
     readonly lpacksigs: IRLambdaParameterPackTypeSignature[] = [];
 
+    readonly formatCStrings: IRLiteralFormatCStringExpression[] = [];
+    readonly formatStrings: IRLiteralFormatStringExpression[] = [];
+
     readonly concretesubtypes: Map<string, IRTypeSignature[]> = new Map<string, IRTypeSignature[]>(); //
     readonly concretesupertypes: Map<string, IRTypeSignature[]> = new Map<string, IRTypeSignature[]>();
 
@@ -1096,7 +1099,9 @@ class IRAssembly {
             const nrval = toproc.shift() as [IRTypeSignature, number];
             this.visitType(nrval[0], visited);
 
-            toproc = this.getTypesCount(visited);
+            if(nrval[1] !== 0) {
+                toproc = this.getTypesCount(visited);
+            }
         }
 
         //TODO: compute cycles

@@ -2446,8 +2446,22 @@ class TypeChecker {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
 
+            if(exp.decloftype !== undefined) {
+                this.checkTypeSignature(exp.decloftype);
+
+                const isresultsimple = this.relations.isSubtypeOf(exp.decloftype, this.getWellKnownType("CString"), this.constraints);
+                const isformatsimple = this.relations.isSubtypeOf(fmtkind.rtype, this.getWellKnownType("CString"), this.constraints);
+
+                //if either is simple then we always allow it
+                if(!isresultsimple && !isformatsimple) {
+                    this.checkError(exp.sinfo, !this.relations.isSubtypeOf(exp.decloftype, fmtkind.rtype, this.constraints), `Declared oftype ${exp.decloftype.emit()} is not compatible with format string result type ${fmtkind.rtype.emit()}`);
+                }
+            }
+
             this.checkTypeSignature(fmtkind.rtype);
             this.checkInterpolationArguments(exp.sinfo, env, exp.args, fmtkind.terms);
+
+            exp.actualoftype = fmtkind.rtype;
             return exp.setType(fmtkind.rtype);
         }
         else if(exp.kind === "string") {
@@ -2456,21 +2470,26 @@ class TypeChecker {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
 
+            if(exp.decloftype !== undefined) {
+                this.checkTypeSignature(exp.decloftype);
+
+                const isresultsimple = this.relations.isSubtypeOf(exp.decloftype, this.getWellKnownType("String"), this.constraints);
+                const isformatsimple = this.relations.isSubtypeOf(fmtkind.rtype, this.getWellKnownType("String"), this.constraints);
+
+                //if either is simple then we always allow it
+                if(!isresultsimple && !isformatsimple) {
+                    this.checkError(exp.sinfo, !this.relations.isSubtypeOf(exp.decloftype, fmtkind.rtype, this.constraints), `Declared oftype ${exp.decloftype.emit()} is not compatible with format string result type ${fmtkind.rtype.emit()}`);
+                }
+            }
+
             this.checkTypeSignature(fmtkind.rtype);
             this.checkInterpolationArguments(exp.sinfo, env, exp.args, fmtkind.terms);
+
+            exp.actualoftype = fmtkind.rtype;
             return exp.setType(fmtkind.rtype);
         }
-        else if(exp.kind === "path") {
-            assert(false, "Not Implemented -- checkInterpolateFormatExpression for path");
-        }
-        else if(exp.kind === 'fragment') {
-            assert(false, "Not Implemented -- checkInterpolateFormatExpression for fragment");
-        }
-        else if(exp.kind === 'glob') {
-            assert(false, "Not Implemented -- checkInterpolateFormatExpression for glob");
-        }
         else {
-            assert(false, "Not Implemented -- checkInterpolateFormatExpression for unknown kind");
+            assert(false, "checkInterpolateFormatExpression -- unknown kind");
         }
     }
 

@@ -34,6 +34,17 @@ namespace ᐸRuntimeᐳ
             return cb;
         }
 
+        static CStrRootInlineContent literaldynamic(const char* cstr, size_t len)
+        {
+            assert(len <= ᐸRuntimeᐳ::CStrRootInlineContent::CSTR_MAX_SIZE);
+
+            CStrRootInlineContent cb;
+            cb.data[0] = static_cast<char>(len); //store length
+            std::copy(cstr, cstr + len, cb.data + 1);
+
+            return cb;
+        }
+
         constexpr size_t size() const { return static_cast<size_t>(this->data[0]); }
         constexpr char at(size_t index) const { return this->data[index + 1]; }
 
@@ -189,6 +200,12 @@ namespace ᐸRuntimeᐳ
             return XCString(CStrRootInlineContent::literal(cstr));
         }
 
+        static XCString smliteraldynamic(const char* cstr, size_t len)
+        {
+            assert(len <= CStrRootInlineContent::CSTR_MAX_SIZE);
+            return XCString(CStrRootInlineContent::literaldynamic(cstr, len));
+        }
+
         bool empty() const
         {
             return (this->tree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTR_INLINE) && this->tree.data.inlinecstr.size() == 0;
@@ -261,11 +278,12 @@ namespace ᐸRuntimeᐳ
         friend XBool operator>=(const XCString& lhs, const XCString& rhs) { return !(lhs < rhs); }
     };
 
-    template<size_t K>
     class XFCStringRepr 
     {
     public:
-        const char* strcomps[K];
+        std::vector<const char*> strcomps;
+        std::vector<uint8_t> argidx;
+
         bool hasprefix;
         bool hassuffix;
 
@@ -278,13 +296,16 @@ namespace ᐸRuntimeᐳ
     public:
         size_t fcid;
 
-        template<size_t K, size_t M>
-        static XCString interpolate(XFCStringRepr<K>* repr, XCString (&cstr)[M])
-        {
-            static_assert(K + 2 <= M, "Not enough components provided for interpolation");
+        static std::vector<XFCStringRepr> g_formatStringReprs;
 
-            size_t total_size = repr->cmpsize;
-            for(size_t i = 0; i < M; i++) {
+        template<size_t K>
+        static XCString interpolate(size_t reprid, std::array<XCString, K> cstr)
+        {
+            const XFCStringRepr& repr = XFCString::g_formatStringReprs[reprid];
+            assert(K == repr.argidx.size());
+
+            size_t total_size = repr.cmpsize;
+            for(size_t i = 0; i < K; i++) {
                 total_size += cstr[i].size();
             }
 
@@ -292,26 +313,30 @@ namespace ᐸRuntimeᐳ
                 char inlined[total_size + 1] = {0};
                 char* ptr = inlined;
 
-                if(this->hasprefix) {
-                    std::copy(cstr[0].begin(), cstr[0].end(), ptr);
-                    ptr += cstr[0].size();
+                if(repr.hasprefix) {
+                    size_t kidx = repr.argidx[0];
+
+                    std::copy(cstr[kidx].begin(), cstr[kidx].end(), ptr);
+                    ptr += cstr[kidx].size();
                 }
 
-                size_t moffset = this->hasprefix ? 1 : 0;
-                for(size_t i = 0; i < K - 1; i++) {
-                    size_t cmp_size = std::strlen(repr->strcomps[i]);
-                    std::copy(repr->strcomps[i], repr->strcomps[i] + cmp_size, ptr);
+                size_t moffset = repr.hasprefix ? 1 : 0;
+                for(size_t i = 0; i < repr.strcomps.size(); i++) {
+                    size_t cmp_size = std::strlen(repr.strcomps[i]);
+                    std::copy(repr.strcomps[i], repr.strcomps[i] + cmp_size, ptr);
                     ptr += cmp_size;
 
-                    std::copy(cstr[i + moffset].begin(), cstr[i + moffset].end(), ptr);
-                    ptr += cstr[i + moffset].size();
+                    const size_t kidx = repr.argidx[i + moffset];
+                    std::copy(cstr[kidx].begin(), cstr[kidx].end(), ptr);
+                    ptr += cstr[kidx].size();
                 }
                 
-                if(this->hassuffix) {
-                    std::copy(cstr[M - 1].begin(), cstr[M - 1].end(), ptr);
+                if(repr.hassuffix) {
+                    size_t kidx = repr.argidx[K - 1];
+                    std::copy(cstr[kidx].begin(), cstr[kidx].end(), ptr);
                 }
 
-                return XCString::smliteral(inlined);
+                return XCString::smliteraldynamic(inlined, total_size);
             }
             else {
                 assert(false); // Not Implemented: full support for FString interpolation

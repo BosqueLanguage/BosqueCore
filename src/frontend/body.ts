@@ -1138,14 +1138,14 @@ class ParseAsTypeExpression extends Expression {
 }
 
 class InterpolateFormatExpression extends Expression {
-    readonly kind: "string" | "cstring" | "path" | "fragment" | "glob";
+    readonly kind: "string" | "cstring";
     readonly decloftype: TypeSignature | undefined;
     readonly fmtString: Expression;
-    readonly args: AbstractArgumentValue[];
+    readonly args: StdArgumentValue[];
     
     actualoftype: TypeSignature | undefined = undefined;
 
-    constructor(sinfo: SourceInfo, kind: "string" | "cstring" | "path" | "fragment" | "glob", decloftype: TypeSignature | undefined, fmtString: Expression, args: AbstractArgumentValue[]) {
+    constructor(sinfo: SourceInfo, kind: "string" | "cstring", decloftype: TypeSignature | undefined, fmtString: Expression, args: StdArgumentValue[]) {
         super(ExpressionTag.InterpolateFormatExpression, sinfo);
         this.kind = kind;
         this.decloftype = decloftype;
