@@ -15,7 +15,8 @@ GlobalDataStorage GlobalDataStorage::g_global_data{};
 GCAllocator::GCAllocator(__CoreGC::TypeInfoBase* _alloctype) noexcept :
 	alloctype(_alloctype), freelist(nullptr), evacfreelist(nullptr), 
 	alloc_page(nullptr), evac_page(nullptr), filled_pages(),
-	pendinggc_pages(), decd_pages(gtl_info.decd_pages)  {}
+	freshly_filled_pages(), pendinggc_pages()
+	, decd_pages(gtl_info.decd_pages)  {}
 
 static void setPageMetaData(PageInfo* pp, GCAllocator* gcalloc) noexcept
 {
@@ -149,39 +150,32 @@ void GCAllocator::processPage(PageInfo* p) noexcept
 void GCAllocator::processCollectorPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
 {
     if(this->alloc_page != nullptr) {
-        tinfo->bytes_freed += this->alloc_page->rebuild();
-        this->processPage(this->alloc_page);
-
+		this->pendinggc_pages.push(this->alloc_page);
         this->alloc_page = nullptr;
         this->freelist = nullptr;
     }
     
     if(this->evac_page != nullptr) {
-        tinfo->bytes_freed += this->evac_page->rebuild();
-        this->processPage(this->evac_page);
-
+		this->pendinggc_pages.push(this->evac_page);
         this->evac_page = nullptr;
         this->evacfreelist = nullptr;
     }
 
-    while(!this->pendinggc_pages.empty()) {
-        PageInfo* p = this->pendinggc_pages.pop();
-        tinfo->bytes_freed += p->rebuild();
-        this->processPage(p);
-    }
+	// Place pages who are freshly filled (allocated between last collection
+	// and current) onto the pendinggc list for lazy rebuilding
+	while(!this->freshly_filled_pages.empty()) {
+		PageInfo* p = this->freshly_filled_pages.pop();
+		this->pendinggc_pages.push(p);
+	} 
 }
 
-/*
-PageInfo* GCAllocator::tryGetPendingGCPage(float max_util) noexcept
+
+PageInfo* GCAllocator::tryGetPendingGCPage(const float max_util) noexcept
 {
 	PageInfo* pp = nullptr;
 	while(!this->pendinggc_pages.empty()) {
-		PageInfo* p = this->pendinggc_pages.pop_front();	
-		assert(p->gcalloc == this);
-
+		PageInfo* p = this->pendinggc_pages.pop();
 		p->rebuild();
-
-		std::cout << "rebuilt page " << p << " lazily from the pendingc list!\n";
 
 		if(p->approx_utilization < max_util) {
 			pp = p;
@@ -194,12 +188,11 @@ PageInfo* GCAllocator::tryGetPendingGCPage(float max_util) noexcept
 
 	return pp;
 }
-*/
 
 // NOTE we need to monitor perf here, we now have significantly more
 // allocators so the likelyhood of burning through a lot of pages before
 // finding one that is either empty or of the correct type is higher
-PageInfo* GCAllocator::tryGetPendingRebuildPage(float max_util)
+PageInfo* GCAllocator::tryGetPendingRebuildPage(const float max_util)
 {	
 	PageInfo* pp = nullptr;
 	while(!gtl_info.decd_pages.empty()) {
@@ -225,14 +218,20 @@ PageInfo* GCAllocator::tryGetPendingRebuildPage(float max_util)
 	return pp;
 }
 
+// We always want to get pending gc/pages with freshly dead objects from rc
+// decs before others as they have not been rebuit yet; rebuilding then 
+// allocating right away will help keep their freelist cached
 PageInfo* GCAllocator::getFreshPageForAllocator() noexcept
 {
-    PageInfo* page = this->getLowestLowUtilPage();
+	PageInfo* page = this->tryGetPendingGCPage(LOW_UTIL_THRESH);
+   	if(page == nullptr) {
+		page = this->tryGetPendingRebuildPage(LOW_UTIL_THRESH);
+    }
+	if(page == nullptr) { 
+		page = this->getLowestLowUtilPage();
+	}
     if(page == nullptr) {
         page = GlobalPageGCManager::g_gc_page_manager.tryGetEmptyPage(this);
-    }
-	if(page == nullptr) {
-		page = this->tryGetPendingRebuildPage(LOW_UTIL_THRESH);
     }
 	if(page == nullptr) {
 		page = GlobalPageGCManager::g_gc_page_manager.getFreshPageFromOS(this);	
@@ -243,16 +242,17 @@ PageInfo* GCAllocator::getFreshPageForAllocator() noexcept
 
 PageInfo* GCAllocator::getFreshPageForEvacuation() noexcept
 {
-    PageInfo* page = this->getLowestHighUtilPage();
+
+	PageInfo* page = this->tryGetPendingRebuildPage(HIGH_UTIL_THRESH);
+   	if(page == nullptr) { 
+		page = this->getLowestHighUtilPage();
+	}	
     if(page == nullptr) {
         page = this->getLowestLowUtilPage();
     } 
     if(page == nullptr) {
         page = GlobalPageGCManager::g_gc_page_manager.tryGetEmptyPage(this);
-    }
-	if(page == nullptr) {
-		page = this->tryGetPendingRebuildPage(HIGH_UTIL_THRESH);
-    }
+    }	
 	if(page == nullptr) {
 		page = GlobalPageGCManager::g_gc_page_manager.getFreshPageFromOS(this);
 	}

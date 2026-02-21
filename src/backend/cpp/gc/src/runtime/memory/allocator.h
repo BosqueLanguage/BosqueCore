@@ -344,11 +344,12 @@ private:
     PageInfo* getFreshPageForAllocator() noexcept; 
     PageInfo* getFreshPageForEvacuation() noexcept;
 
-	PageInfo* tryGetPendingRebuildPage(float max_util);
+	PageInfo* tryGetPendingGCPage(const float max_util) noexcept;
+	PageInfo* tryGetPendingRebuildPage(const float max_util) noexcept;
 	
     inline void rotateFullAllocPage()
     {	
-		this->pendinggc_pages.push(this->alloc_page);
+		this->freshly_filled_pages.push(this->alloc_page);
     }
 
     static int getBucketIndex(PageInfo* p)
@@ -414,6 +415,7 @@ private:
 
 public:
 	// TODO: move these somewhere better. Public for now.	
+	PageList freshly_filled_pages; // Pages that have been filled and not gc'd	
     PageList pendinggc_pages; // Pages that are pending GC
 	PageList& decd_pages; // ref to gtl_infos decd_pages list
 
