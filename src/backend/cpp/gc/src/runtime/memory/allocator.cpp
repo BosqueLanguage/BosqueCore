@@ -171,6 +171,31 @@ void GCAllocator::processCollectorPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
     }
 }
 
+/*
+PageInfo* GCAllocator::tryGetPendingGCPage(float max_util) noexcept
+{
+	PageInfo* pp = nullptr;
+	while(!this->pendinggc_pages.empty()) {
+		PageInfo* p = this->pendinggc_pages.pop_front();	
+		assert(p->gcalloc == this);
+
+		p->rebuild();
+
+		std::cout << "rebuilt page " << p << " lazily from the pendingc list!\n";
+
+		if(p->approx_utilization < max_util) {
+			pp = p;
+			break;
+		}
+		else {
+			this->processPage(p);	
+		}
+	}
+
+	return pp;
+}
+*/
+
 // NOTE we need to monitor perf here, we now have significantly more
 // allocators so the likelyhood of burning through a lot of pages before
 // finding one that is either empty or of the correct type is higher
