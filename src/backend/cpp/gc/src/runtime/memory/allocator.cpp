@@ -319,7 +319,7 @@ static uint64_t getPageFreeCount(PageInfo* p) noexcept
     for(size_t i = 0; i < p->entrycount; i++) {
         void* obj = p->getObjectAtIndex(i); 
 		MetaData* m = GC_GET_META_DATA_ADDR(obj);
-		if(!GC_IS_ALLOCATED(m)) {
+		if(GC_SHOULD_FREE_LIST_ADD(m)) {
             freecount++;
         }
     }
@@ -365,6 +365,12 @@ void GCAllocator::updateMemStats(BSQMemoryTheadLocalInfo& tinfo) noexcept
             process(p);
         }
     }
+
+	// All pages should have been merged onto the pending gc list at this point
+	// (if we are not running the testing build)
+	for(PageInfo* p : this->pendinggc_pages) {
+		process(p);	
+	}
 
     if(TOTAL_LIVE_BYTES(gtl_info.memstats) > MAX_LIVE_HEAP(gtl_info.memstats)) {
         UPDATE_MAX_LIVE_HEAP(gtl_info.memstats, =, 
