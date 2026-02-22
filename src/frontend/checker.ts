@@ -1528,15 +1528,18 @@ class TypeChecker {
             fmttypes = fmttypes.map((fmt) => ({argname: "_", argtype: fmt.argtype}));
         }
 
-        if(allnames) {
-            const names = new Set<string>();
-            for(let i = 0; i < fmttypes.length; ++i) {
-                this.checkError(sinfo, names.has(fmttypes[i].argname), `Duplicate format string argument name ${fmttypes[i].argname}`);
-                names.add(fmttypes[i].argname);
+        let uniquefmttypes: {argname: string, argtype: TypeSignature}[] = [];
+        for(let i = 0; i < fmttypes.length; ++i) {
+            const mmtype = uniquefmttypes.find((uft) => uft.argname === fmttypes[i].argname);
+            if(mmtype === undefined) {
+                uniquefmttypes.push(fmttypes[i]);
+            }
+            else {
+                this.checkError(sinfo, !this.relations.areSameTypes(mmtype.argtype, fmttypes[i].argtype), `Multiple format string arguments with name ${fmttypes[i].argname} must have the same type`);
             }
         }
 
-        return fmttypes;
+        return uniquefmttypes;
     }
 
     private checkLiteralFormatStringExpression(env: TypeEnvironment, exp: LiteralFormatStringExpression): TypeSignature {
@@ -2396,13 +2399,13 @@ class TypeChecker {
 
     private checkInterpolationArguments(sinfo: SourceInfo, iscstrunderly: boolean, env: TypeEnvironment, args: AbstractArgumentValue[], fmtparams: {argname: string, argtype: TypeSignature}[]) {
         if(args.length !== fmtparams.length) {
-            this.reportError(sinfo, `InterpolateFormatExpression with kind "cstring" must have ${fmtparams.length} arguments`);
+            this.reportError(sinfo, `Interpolate must have same number of parameters and arguments`);
             return;
         }
         const argsallnamed = args.every((arg) => arg instanceof NamedArgumentValue);
         
-        const paramsallpositional = fmtparams.every((p) => /[0-9]+/.test(p.argname));
-        const paramsallnamed = fmtparams.every((p) => !/[0-9]+/.test(p.argname));
+        const paramsallpositional = fmtparams.every((p) => /^[0-9]+$/.test(p.argname));
+        const paramsallnamed = fmtparams.every((p) => !/^[0-9]+$/.test(p.argname));
 
         if(paramsallpositional) {
             const argsallpositional = args.every((arg) => arg instanceof PositionalArgumentValue);

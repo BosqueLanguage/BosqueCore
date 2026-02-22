@@ -1211,14 +1211,19 @@ class CPPEmitter {
 
     private emitFCStringDefInfo(tfcstr: IRLiteralFormatCStringExpression[]): string {
         const ddefs = tfcstr.map((def) => {
-            const strcmps = def.fmts.filter((ff) => ff instanceof IRFormatStringTextComponent).map((ff) => `${this.escapeLiteralCString(ff.bytes)}`);
-            const argidx = def.fmts.filter((ff) => ff instanceof IRFormatStringArgComponent).map((ff) => (ff as IRFormatStringArgComponent).aidx);
+            const fmts = def.fmts.map((ff) => {
+                if(ff instanceof IRFormatStringTextComponent) {
+                    return `std::make_pair(0, ${this.escapeLiteralCString(ff.bytes)})`;
+                }
+                else {
+                    const ffarg = ff as IRFormatStringArgComponent;
+                    return `std::make_pair(${ffarg.aidx}, nullptr)`;
+                }
+            });
 
-            const hasprefix = def.fmts[0] instanceof IRFormatStringArgComponent;
-            const haspostfix = def.fmts[def.fmts.length - 1] instanceof IRFormatStringArgComponent;
             const cmpsize = def.fmts.filter((ff) => ff instanceof IRFormatStringTextComponent).reduce((acc, ff) => acc + ff.bytes.length, 0);
 
-            return `        XFCStringRepr{ { ${strcmps.join(", ")} }, { ${argidx.join(", ")} }, ${hasprefix}, ${haspostfix}, ${cmpsize}, ${def.fmtid} }`;
+            return `        XFCStringRepr{ { ${fmts.join(", ")} }, ${cmpsize}, ${def.fmtid} }`;
         });
 
         return `namespace ᐸRuntimeᐳ {\n` +

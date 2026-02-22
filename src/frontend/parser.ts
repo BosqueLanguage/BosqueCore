@@ -1480,7 +1480,7 @@ class Parser {
     }
 
     private processFormatArguments(contents: string, sinfo: SourceInfo): FormatStringComponent[] {
-        const parts = contents.slice(2, -1).split(/(\$\{[0-9a-zA-Z:]+\})/);
+        const parts = contents.slice(2, -1).split(/(\$\{[0-9a-zA-Z:]+\})/).filter((cc) => cc !== "");
 
         return parts.map((part) => {
             if(!part.startsWith("${")) {

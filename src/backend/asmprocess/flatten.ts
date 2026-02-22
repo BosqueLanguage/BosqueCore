@@ -1304,7 +1304,7 @@ class ASMToIRConverter {
                 else {
                     const argexp = fmtcomp as FormatStringArgComponent;
                     let apos: number;
-                    if(/[0-9]+/.test(argexp.argPos)) {
+                    if(/^[0-9]+$/.test(argexp.argPos)) {
                         apos = Number.parseInt(argexp.argPos, 10);
                     }
                     else {
@@ -1335,7 +1335,7 @@ class ASMToIRConverter {
                 else {
                     const argexp = fmtcomp as FormatStringArgComponent;
                     let apos: number;
-                    if(/[0-9]+/.test(argexp.argPos)) {
+                    if(/^[0-9]+$/.test(argexp.argPos)) {
                         apos = Number.parseInt(argexp.argPos, 10);
                     }
                     else {
@@ -1415,7 +1415,7 @@ class ASMToIRConverter {
                 else {
                     const argexp = fmtcomp as FormatStringArgComponent;
                     let apos: number;
-                    if(/[0-9]+/.test(argexp.argPos)) {
+                    if(/^[0-9]+$/.test(argexp.argPos)) {
                         apos = Number.parseInt(argexp.argPos, 10);
                     }
                     else {
@@ -1446,7 +1446,7 @@ class ASMToIRConverter {
                 else {
                     const argexp = fmtcomp as FormatStringArgComponent;
                     let apos: number;
-                    if(/[0-9]+/.test(argexp.argPos)) {
+                    if(/^[0-9]+$/.test(argexp.argPos)) {
                         apos = Number.parseInt(argexp.argPos, 10);
                     }
                     else {

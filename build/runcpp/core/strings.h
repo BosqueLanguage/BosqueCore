@@ -281,12 +281,8 @@ namespace ᐸRuntimeᐳ
     class XFCStringRepr 
     {
     public:
-        std::vector<const char*> strcomps;
-        std::vector<uint8_t> argidx;
-
-        bool hasprefix;
-        bool hassuffix;
-
+        std::vector<std::pair<uint8_t, const char*>> strcomps;
+        
         size_t cmpsize;
         size_t fcid;
     };
@@ -302,34 +298,32 @@ namespace ᐸRuntimeᐳ
         static XCString interpolate(size_t reprid, std::array<XCString, K> cstr)
         {
             const XFCStringRepr& repr = XFCString::g_formatStringReprs[reprid];
-            assert(K == repr.argidx.size());
-
+            
             size_t total_size = repr.cmpsize;
-            for(size_t i = 0; i < K; i++) {
-                total_size += cstr[i].size();
+            for(size_t i = 0; i < repr.strcomps.size(); i++) {
+                if(repr.strcomps[i].second == nullptr) {
+                    uint8_t argpos = repr.strcomps[i].first;
+
+                    assert(argpos < K);
+                    total_size += cstr[argpos].size();
+                }
             }
 
             if(total_size <= CStrRootInlineContent::CSTR_MAX_SIZE) {
                 char inlined[total_size + 1] = {0};
                 char* ptr = inlined;
 
-                if(repr.hasprefix) {
-                    size_t kidx = repr.argidx[0];
-
-                    std::copy(cstr[kidx].begin(), cstr[kidx].end(), ptr);
-                    ptr += cstr[kidx].size();
-                }
-
-                size_t moffset = repr.hasprefix ? 1 : 0;
                 for(size_t i = 0; i < repr.strcomps.size(); i++) {
-                    size_t cmp_size = std::strlen(repr.strcomps[i]);
-                    std::copy(repr.strcomps[i], repr.strcomps[i] + cmp_size, ptr);
-                    ptr += cmp_size;
-
-                    if(i < repr.strcomps.size() - 1 || repr.hassuffix) {
-                        const size_t kidx = repr.argidx[i + moffset];
-                        std::copy(cstr[kidx].begin(), cstr[kidx].end(), ptr);
-                        ptr += cstr[kidx].size();
+                    const std::pair<uint8_t, const char*>& comp = repr.strcomps[i];
+                    if(comp.second != nullptr) {
+                        size_t cmp_size = std::strlen(comp.second);
+                        std::copy(comp.second, comp.second + cmp_size, ptr);
+                        ptr += cmp_size;
+                    }
+                    else {
+                        uint8_t argpos = comp.first;
+                        std::copy(cstr[argpos].begin(), cstr[argpos].end(), ptr);
+                        ptr += cstr[argpos].size();
                     }
                 }
                 
