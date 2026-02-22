@@ -94,7 +94,7 @@ public:
 	bool in_decsprcsr_list;
 
     static PageInfo* initialize(void* block, GCAllocator* gcalloc) noexcept;
-    size_t rebuild() noexcept;
+    void rebuild() noexcept;
 	
 	// Removes `this` from whatever list it is currently stored in
 	void removeSelfFromStorage();
@@ -474,22 +474,21 @@ public:
     }
 
 #ifdef MEM_STATS
-    void updateMemStats() noexcept;
+    void updateMemStats(BSQMemoryTheadLocalInfo& tinfo) noexcept;
 #else 
-    inline void updateMemStats() noexcept {};
+    inline void updateMemStats(BSQMemoryTheadLocalInfo& tinfo) noexcept {};
 #endif
 
     //Take a page (that may be in of the page sets -- or may not -- if it is a alloc or evac page) and move it to the appropriate page set
     void processPage(PageInfo* p) noexcept;
 
-#ifdef BSQ_GC_TESTING
-    //sweep the pending gc pages, the current alloc page, and evac page -- reset for next round
-    void sweepPages(BSQMemoryTheadLocalInfo* tinfo) noexcept;
-#endif
 
-	// Merges mutated pages needing to be swept and freelists rebuilt onto the 
-	// pendinggc_pages list (freshly_filled_pages, alloc_page, evac_page)
-	void mergeNewlyPendingGCPages(BSQMemoryTheadLocalInfo* tinfo) noexcept;
+    // If running gc tests: 
+	//   Sweep the pending gc pages, the current alloc page, and evac page 
+	// If normal build: 
+	//   Merges mutated pages needing to be swept and freelists rebuilt onto 
+	//   the pendinggc_pages list (freshly_filled_pages, alloc_page, evac_page)
+	void processPages(BSQMemoryTheadLocalInfo* tinfo) noexcept;
 
     void allocatorRefreshAllocationPage() noexcept;
 

@@ -157,7 +157,7 @@ extern MemStats g_memstats;
         for(size_t i = 0; i < BSQ_MAX_ALLOC_SLOTS; i++) { \
             GCAllocator* alloc = (INFO).g_gcallocs[i]; \
             if(alloc != nullptr) { \
-                alloc->updateMemStats(); \
+                alloc->updateMemStats(INFO); \
             } \
         } \
 		{\

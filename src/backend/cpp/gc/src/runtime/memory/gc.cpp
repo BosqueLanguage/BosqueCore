@@ -551,39 +551,14 @@ static void markingWalk(BSQMemoryTheadLocalInfo& tinfo) noexcept
     gtl_info.pending_roots.clear();
 }
 
-#ifndef BSQ_GC_TESTING
 static void processAllocatorsPages(BSQMemoryTheadLocalInfo& tinfo)
 {
-    UPDATE_TOTAL_LIVE_BYTES(tinfo.memstats, =, 0);
     for(size_t i = 0; i < BSQ_MAX_ALLOC_SLOTS; i++) {
         GCAllocator* alloc = tinfo.g_gcallocs[i];
         if(alloc != nullptr) {
-            alloc->mergeNewlyPendingGCPages(&tinfo);
+            alloc->processPages(&tinfo);
         }
     }
-}
-
-#else
-
-// Our tests rely on automatic sweeping during a collection (to reliably
-// compute live bytes)
-static void processAllocatorsPages(BSQMemoryTheadLocalInfo& tinfo)
-{
-    UPDATE_TOTAL_LIVE_BYTES(tinfo.memstats, =, 0);
-    for(size_t i = 0; i < BSQ_MAX_ALLOC_SLOTS; i++) {
-        GCAllocator* alloc = tinfo.g_gcallocs[i];
-        if(alloc != nullptr) {
-            alloc->sweepPages(&tinfo);
-        }
-    }
-}
-#endif
-
-static inline void computeMaxDecrementCount(BSQMemoryTheadLocalInfo& tinfo) noexcept
-{
-	tinfo.max_decrement_count = BSQ_INITIAL_MAX_DECREMENT_COUNT 
-		- (tinfo.bytes_freed / BSQ_MEM_ALIGNMENT);
-	tinfo.bytes_freed = 0;
 }
 
 static void updateRoots(BSQMemoryTheadLocalInfo& tinfo)
@@ -636,8 +611,6 @@ void collect() noexcept
     gtl_info.forward_table_index = FWD_TABLE_START;
 
     gtl_info.decs_batch.initialize();
-
-	computeMaxDecrementCount(gtl_info);
 
 	// Find dead roots, walk object graph from dead roots updating necessary rcs
 	// rebuild pages who saw decs (TODO do this lazily), and merge remainder of decs

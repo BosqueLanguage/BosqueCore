@@ -60,10 +60,8 @@ PageInfo* PageInfo::initialize(void* block, GCAllocator* gcalloc) noexcept
     return pp;
 }
 
-size_t PageInfo::rebuild() noexcept
+void PageInfo::rebuild() noexcept
 {
-	uint16_t pfree = this->freecount;
-
     this->freelist = nullptr;
     this->freecount = 0;
  
@@ -81,10 +79,6 @@ size_t PageInfo::rebuild() noexcept
         }
     }
     this->approx_utilization = CALC_APPROX_UTILIZATION(this);
-	
-	size_t freed = this->freecount >= pfree ? 
-		(this->freecount - pfree) * this->typeinfo->type_size : 0;
-	return freed;
 }
 
 void PageInfo::removeSelfFromStorage()
@@ -147,7 +141,8 @@ void GCAllocator::processPage(PageInfo* p) noexcept
     this->filled_pages.push(p);
 }
 
-void GCAllocator::mergeNewlyPendingGCPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
+#ifndef BSQ_GC_TESTING
+void GCAllocator::processPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
 {
     if(this->alloc_page != nullptr) {
 		this->pendinggc_pages.push(this->alloc_page);
@@ -169,11 +164,12 @@ void GCAllocator::mergeNewlyPendingGCPages(BSQMemoryTheadLocalInfo* tinfo) noexc
 	} 
 }
 
-#ifdef BSQ_GC_TESTING
-void GCAllocator::sweepPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
+#else
+
+void GCAllocator::processPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
 {
     if(this->alloc_page != nullptr) {
-        tinfo->bytes_freed += this->alloc_page->rebuild();
+        this->alloc_page->rebuild();
         this->processPage(this->alloc_page);
 
         this->alloc_page = nullptr;
@@ -181,7 +177,7 @@ void GCAllocator::sweepPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
     }
     
     if(this->evac_page != nullptr) {
-        tinfo->bytes_freed += this->evac_page->rebuild();
+        this->evac_page->rebuild();
         this->processPage(this->evac_page);
 
         this->evac_page = nullptr;
@@ -190,7 +186,7 @@ void GCAllocator::sweepPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
 
     while(!this->pendinggc_pages.empty()) {
         PageInfo* p = this->pendinggc_pages.pop();
-        tinfo->bytes_freed += p->rebuild();
+        p->rebuild();
         this->processPage(p);
     }
 }
@@ -344,8 +340,9 @@ static inline void process(PageInfo* page) noexcept
 		(page->entrycount - freecount));
 }
 
-void GCAllocator::updateMemStats() noexcept
+void GCAllocator::updateMemStats(BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
+    UPDATE_TOTAL_LIVE_BYTES(tinfo.memstats, =, 0);
     UPDATE_TOTAL_ALLOC_COUNT(gtl_info.memstats, +=, GET_ALLOC_COUNT(this));
     UPDATE_TOTAL_ALLOC_MEMORY(gtl_info.memstats, +=, GET_ALLOC_MEMORY(this));
     RESET_ALLOC_STATS(this);
