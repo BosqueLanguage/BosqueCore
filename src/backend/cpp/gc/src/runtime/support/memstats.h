@@ -2,8 +2,6 @@
 
 #include "../common.h"
 
-#define MEM_STATS
-
 #ifdef MEM_STATS
 
 #include <iostream>
@@ -159,7 +157,7 @@ extern MemStats g_memstats;
         for(size_t i = 0; i < BSQ_MAX_ALLOC_SLOTS; i++) { \
             GCAllocator* alloc = (INFO).g_gcallocs[i]; \
             if(alloc != nullptr) { \
-                alloc->updateMemStats(); \
+                alloc->updateMemStats(INFO); \
             } \
         } \
 		{\
@@ -187,7 +185,7 @@ extern MemStats g_memstats;
 #define MEM_STATS_PRINT(S)
 
 #define MEM_STATS_START(NAME)
-#define MEM_STATS_END(MS, PHASE, NAME)
+#define MEM_STATS_END(PHASE, MS)
 
 #define UPDATE_MEMSTATS_TOTALS(INFO)
 

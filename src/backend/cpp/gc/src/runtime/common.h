@@ -6,10 +6,19 @@
 #include <sys/mman.h> //mmap
 #include <mutex>
 
-//DEFAULT ENABLED WHILE LOTS OF DEVELOPMENT!!!!
-// MEM_STATS defined in support/memstats.h
-#define BSQ_GC_CHECK_ENABLED
-#define VERBOSE_HEADER
+/////////////////////////////////////////////////
+// - Building `debug` (make BUILD=debug) enables MEM_STATS, BSQ_GC_CHECK_ENABLED
+//   , and VERBOSE_HEADER (all flags, most debug output and uses -O0)
+// - Building `dev` (make BUILD=dev) disables all flags and builds with -O0
+// - Building `release` (make BUILD=release) disables all flags and builds 
+//   with -O2
+// - If finer flag control is desired compiliation, options `-DMEM_STATS`
+//   , `-DBSQ_GC_CHECK_ENABLED` and `-DVERBOSE_HEADER` may be specified
+//   and enabled through the cli argument `OPTIONS` 
+//   (i.e. make BUILD=release OPTIONS="-DMEM_STATS -DVERBOSE_HEADER")
+// - The experimental `epsilon` allocator may be used for comparison of 
+//   GC performance to a simple bump-pointer allocator (no gc). To enable add
+//   the CLI argument `ALLOC=epsilon`
 
 //
 // Note: If we are deterministic the base addresses for our pages
@@ -222,10 +231,10 @@ do { \
     int8_t isyoung_byte  = *reinterpret_cast<int8_t*>(&(META)->isyoung); \
     int8_t ismarked_byte = *reinterpret_cast<int8_t*>(&(META)->ismarked); \
     int8_t thd_count_raw = *reinterpret_cast<int8_t*>(&(META)->thd_count); \
-	GC_INVARIANT_CHECK(isalloc_byte == 0 || isalloc_byte == 1); \
-    GC_INVARIANT_CHECK(isyoung_byte == 0 || isyoung_byte == 1); \
-    GC_INVARIANT_CHECK(ismarked_byte == 0 || ismarked_byte == 1); \
-    GC_INVARIANT_CHECK(thd_count_raw >= 0); \
+	assert(isalloc_byte == 0 || isalloc_byte == 1); \
+    assert(isyoung_byte == 0 || isyoung_byte == 1); \
+    assert(ismarked_byte == 0 || ismarked_byte == 1); \
+    assert(thd_count_raw >= 0); \
 } while(0)
 
 #else

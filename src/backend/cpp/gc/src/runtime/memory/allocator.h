@@ -94,7 +94,7 @@ public:
 	bool in_decsprcsr_list;
 
     static PageInfo* initialize(void* block, GCAllocator* gcalloc) noexcept;
-    size_t rebuild() noexcept;
+    void rebuild() noexcept;
 	
 	// Removes `this` from whatever list it is currently stored in
 	void removeSelfFromStorage();
@@ -344,11 +344,12 @@ private:
     PageInfo* getFreshPageForAllocator() noexcept; 
     PageInfo* getFreshPageForEvacuation() noexcept;
 
-	PageInfo* tryGetPendingRebuildPage(float max_util);
+	PageInfo* tryGetPendingGCPage(const float max_util) noexcept;
+	PageInfo* tryGetPendingRebuildPage(const float max_util) noexcept;
 	
     inline void rotateFullAllocPage()
     {	
-		this->pendinggc_pages.push(this->alloc_page);
+		this->freshly_filled_pages.push(this->alloc_page);
     }
 
     static int getBucketIndex(PageInfo* p)
@@ -414,6 +415,7 @@ private:
 
 public:
 	// TODO: move these somewhere better. Public for now.	
+	PageList freshly_filled_pages; // Pages that have been filled and not gc'd	
     PageList pendinggc_pages; // Pages that are pending GC
 	PageList& decd_pages; // ref to gtl_infos decd_pages list
 
@@ -472,16 +474,21 @@ public:
     }
 
 #ifdef MEM_STATS
-    void updateMemStats() noexcept;
+    void updateMemStats(BSQMemoryTheadLocalInfo& tinfo) noexcept;
 #else 
-    inline void updateMemStats() noexcept {};
+    inline void updateMemStats(BSQMemoryTheadLocalInfo& tinfo) noexcept {};
 #endif
 
     //Take a page (that may be in of the page sets -- or may not -- if it is a alloc or evac page) and move it to the appropriate page set
     void processPage(PageInfo* p) noexcept;
 
-    //process all the pending gc pages, the current alloc page, and evac page -- reset for next round
-    void processCollectorPages(BSQMemoryTheadLocalInfo* tinfo) noexcept;
+
+    // If running gc tests: 
+	//   Sweep the pending gc pages, the current alloc page, and evac page 
+	// If normal build: 
+	//   Merges mutated pages needing to be swept and freelists rebuilt onto 
+	//   the pendinggc_pages list (freshly_filled_pages, alloc_page, evac_page)
+	void processPages(BSQMemoryTheadLocalInfo* tinfo) noexcept;
 
     void allocatorRefreshAllocationPage() noexcept;
 

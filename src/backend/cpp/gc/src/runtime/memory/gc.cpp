@@ -553,20 +553,12 @@ static void markingWalk(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
 static void processAllocatorsPages(BSQMemoryTheadLocalInfo& tinfo)
 {
-    UPDATE_TOTAL_LIVE_BYTES(tinfo.memstats, =, 0);
     for(size_t i = 0; i < BSQ_MAX_ALLOC_SLOTS; i++) {
         GCAllocator* alloc = tinfo.g_gcallocs[i];
         if(alloc != nullptr) {
-            alloc->processCollectorPages(&tinfo);
+            alloc->processPages(&tinfo);
         }
     }
-}
-	
-static inline void computeMaxDecrementCount(BSQMemoryTheadLocalInfo& tinfo) noexcept
-{
-	tinfo.max_decrement_count = BSQ_INITIAL_MAX_DECREMENT_COUNT 
-		- (tinfo.bytes_freed / BSQ_MEM_ALIGNMENT);
-	tinfo.bytes_freed = 0;
 }
 
 static void updateRoots(BSQMemoryTheadLocalInfo& tinfo)
@@ -606,10 +598,10 @@ void collect() noexcept
 
     MEM_STATS_START(Nursery);
 
-	// Mark, compact, reprocess pages
+	// Mark, compact, reprocess(sweep or move) pages
     markingWalk(gtl_info);
     processMarkedYoungObjects(gtl_info);
-    processAllocatorsPages(gtl_info);
+	processAllocatorsPages(gtl_info);
     
 	MEM_STATS_END(Nursery, gtl_info.memstats);
 
@@ -619,8 +611,6 @@ void collect() noexcept
     gtl_info.forward_table_index = FWD_TABLE_START;
 
     gtl_info.decs_batch.initialize();
-
-	computeMaxDecrementCount(gtl_info);
 
 	// Find dead roots, walk object graph from dead roots updating necessary rcs
 	// rebuild pages who saw decs (TODO do this lazily), and merge remainder of decs

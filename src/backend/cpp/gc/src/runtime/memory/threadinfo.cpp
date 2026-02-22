@@ -144,6 +144,8 @@ void BSQMemoryTheadLocalInfo::cleanup() noexcept
 	std::lock_guard lk(g_gctelemetrylock);
 
 	MERGE_MEMSTATS(this->memstats);
+
+	// Printing memstats will donk up CI result comparisons
 #ifndef BSQ_GC_TESTING 
 	MEM_STATS_PRINT(UNDL("Memory Statistics for Thread ") 
 		<< GlobalThreadAllocInfo::s_thread_counter << ":\n");

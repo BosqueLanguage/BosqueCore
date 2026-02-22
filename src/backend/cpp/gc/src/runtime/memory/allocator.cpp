@@ -15,7 +15,8 @@ GlobalDataStorage GlobalDataStorage::g_global_data{};
 GCAllocator::GCAllocator(__CoreGC::TypeInfoBase* _alloctype) noexcept :
 	alloctype(_alloctype), freelist(nullptr), evacfreelist(nullptr), 
 	alloc_page(nullptr), evac_page(nullptr), filled_pages(),
-	pendinggc_pages(), decd_pages(gtl_info.decd_pages)  {}
+	freshly_filled_pages(), pendinggc_pages()
+	, decd_pages(gtl_info.decd_pages)  {}
 
 static void setPageMetaData(PageInfo* pp, GCAllocator* gcalloc) noexcept
 {
@@ -59,10 +60,8 @@ PageInfo* PageInfo::initialize(void* block, GCAllocator* gcalloc) noexcept
     return pp;
 }
 
-size_t PageInfo::rebuild() noexcept
+void PageInfo::rebuild() noexcept
 {
-	uint16_t pfree = this->freecount;
-
     this->freelist = nullptr;
     this->freecount = 0;
  
@@ -80,10 +79,6 @@ size_t PageInfo::rebuild() noexcept
         }
     }
     this->approx_utilization = CALC_APPROX_UTILIZATION(this);
-	
-	size_t freed = this->freecount >= pfree ? 
-		(this->freecount - pfree) * this->typeinfo->type_size : 0;
-	return freed;
 }
 
 void PageInfo::removeSelfFromStorage()
@@ -146,10 +141,35 @@ void GCAllocator::processPage(PageInfo* p) noexcept
     this->filled_pages.push(p);
 }
 
-void GCAllocator::processCollectorPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
+#ifndef BSQ_GC_TESTING
+void GCAllocator::processPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
 {
     if(this->alloc_page != nullptr) {
-        tinfo->bytes_freed += this->alloc_page->rebuild();
+		this->pendinggc_pages.push(this->alloc_page);
+        this->alloc_page = nullptr;
+        this->freelist = nullptr;
+    }
+    
+    if(this->evac_page != nullptr) {
+		this->pendinggc_pages.push(this->evac_page);
+        this->evac_page = nullptr;
+        this->evacfreelist = nullptr;
+    }
+
+	// Place pages who are freshly filled (allocated between last collection
+	// and current) onto the pendinggc list for lazy rebuilding
+	while(!this->freshly_filled_pages.empty()) {
+		PageInfo* p = this->freshly_filled_pages.pop();
+		this->pendinggc_pages.push(p);
+	} 
+}
+
+#else
+
+void GCAllocator::processPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
+{
+    if(this->alloc_page != nullptr) {
+        this->alloc_page->rebuild();
         this->processPage(this->alloc_page);
 
         this->alloc_page = nullptr;
@@ -157,24 +177,49 @@ void GCAllocator::processCollectorPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
     }
     
     if(this->evac_page != nullptr) {
-        tinfo->bytes_freed += this->evac_page->rebuild();
+        this->evac_page->rebuild();
         this->processPage(this->evac_page);
 
         this->evac_page = nullptr;
         this->evacfreelist = nullptr;
     }
 
-    while(!this->pendinggc_pages.empty()) {
-        PageInfo* p = this->pendinggc_pages.pop();
-        tinfo->bytes_freed += p->rebuild();
+	// When testing we just process the freshly filled pages list directly
+    while(!this->freshly_filled_pages.empty()) {
+        PageInfo* p = this->freshly_filled_pages.pop();
+        p->rebuild();
         this->processPage(p);
     }
+}
+#endif
+
+PageInfo* GCAllocator::tryGetPendingGCPage(const float max_util) noexcept
+{
+#ifdef BSQ_GC_TESTING
+	return nullptr;
+#endif
+
+	PageInfo* pp = nullptr;
+	while(!this->pendinggc_pages.empty()) {
+		PageInfo* p = this->pendinggc_pages.pop();
+		p->rebuild();
+
+		if(p->approx_utilization < max_util) {
+			pp = p;
+			break;
+		}
+		else {
+			this->processPage(p);	
+		}
+	}
+
+	return pp;
 }
 
 // NOTE we need to monitor perf here, we now have significantly more
 // allocators so the likelyhood of burning through a lot of pages before
 // finding one that is either empty or of the correct type is higher
-PageInfo* GCAllocator::tryGetPendingRebuildPage(float max_util)
+PageInfo* GCAllocator::tryGetPendingRebuildPage(const float max_util)
 {	
 	PageInfo* pp = nullptr;
 	while(!gtl_info.decd_pages.empty()) {
@@ -200,14 +245,20 @@ PageInfo* GCAllocator::tryGetPendingRebuildPage(float max_util)
 	return pp;
 }
 
+// We always want to get pending gc/pages with freshly dead objects from rc
+// decs before others as they have not been rebuit yet; rebuilding then 
+// allocating right away will help keep their freelist cached
 PageInfo* GCAllocator::getFreshPageForAllocator() noexcept
 {
-    PageInfo* page = this->getLowestLowUtilPage();
+	PageInfo* page = this->tryGetPendingGCPage(LOW_UTIL_THRESH);
+   	if(page == nullptr) {
+		page = this->tryGetPendingRebuildPage(LOW_UTIL_THRESH);
+    }
+	if(page == nullptr) { 
+		page = this->getLowestLowUtilPage();
+	}
     if(page == nullptr) {
         page = GlobalPageGCManager::g_gc_page_manager.tryGetEmptyPage(this);
-    }
-	if(page == nullptr) {
-		page = this->tryGetPendingRebuildPage(LOW_UTIL_THRESH);
     }
 	if(page == nullptr) {
 		page = GlobalPageGCManager::g_gc_page_manager.getFreshPageFromOS(this);	
@@ -218,16 +269,17 @@ PageInfo* GCAllocator::getFreshPageForAllocator() noexcept
 
 PageInfo* GCAllocator::getFreshPageForEvacuation() noexcept
 {
-    PageInfo* page = this->getLowestHighUtilPage();
+
+	PageInfo* page = this->tryGetPendingRebuildPage(HIGH_UTIL_THRESH);
+   	if(page == nullptr) { 
+		page = this->getLowestHighUtilPage();
+	}	
     if(page == nullptr) {
         page = this->getLowestLowUtilPage();
     } 
     if(page == nullptr) {
         page = GlobalPageGCManager::g_gc_page_manager.tryGetEmptyPage(this);
-    }
-	if(page == nullptr) {
-		page = this->tryGetPendingRebuildPage(HIGH_UTIL_THRESH);
-    }
+    }	
 	if(page == nullptr) {
 		page = GlobalPageGCManager::g_gc_page_manager.getFreshPageFromOS(this);
 	}
@@ -272,7 +324,7 @@ static uint64_t getPageFreeCount(PageInfo* p) noexcept
     for(size_t i = 0; i < p->entrycount; i++) {
         void* obj = p->getObjectAtIndex(i); 
 		MetaData* m = GC_GET_META_DATA_ADDR(obj);
-		if(!GC_IS_ALLOCATED(m)) {
+		if(GC_SHOULD_FREE_LIST_ADD(m)) {
             freecount++;
         }
     }
@@ -293,8 +345,9 @@ static inline void process(PageInfo* page) noexcept
 		(page->entrycount - freecount));
 }
 
-void GCAllocator::updateMemStats() noexcept
+void GCAllocator::updateMemStats(BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
+    UPDATE_TOTAL_LIVE_BYTES(tinfo.memstats, =, 0);
     UPDATE_TOTAL_ALLOC_COUNT(gtl_info.memstats, +=, GET_ALLOC_COUNT(this));
     UPDATE_TOTAL_ALLOC_MEMORY(gtl_info.memstats, +=, GET_ALLOC_MEMORY(this));
     RESET_ALLOC_STATS(this);
@@ -317,6 +370,12 @@ void GCAllocator::updateMemStats() noexcept
             process(p);
         }
     }
+
+	// All pages should have been merged onto the pending gc list at this point
+	// (if we are not running the testing build)
+	for(PageInfo* p : this->pendinggc_pages) {
+		process(p);	
+	}
 
     if(TOTAL_LIVE_BYTES(gtl_info.memstats) > MAX_LIVE_HEAP(gtl_info.memstats)) {
         UPDATE_MAX_LIVE_HEAP(gtl_info.memstats, =, 
