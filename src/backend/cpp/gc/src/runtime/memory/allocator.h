@@ -482,8 +482,14 @@ public:
     //Take a page (that may be in of the page sets -- or may not -- if it is a alloc or evac page) and move it to the appropriate page set
     void processPage(PageInfo* p) noexcept;
 
-    //process all the pending gc pages, the current alloc page, and evac page -- reset for next round
-    void processCollectorPages(BSQMemoryTheadLocalInfo* tinfo) noexcept;
+#ifdef BSQ_GC_TESTING
+    //sweep the pending gc pages, the current alloc page, and evac page -- reset for next round
+    void sweepPages(BSQMemoryTheadLocalInfo* tinfo) noexcept;
+#endif
+
+	// Merges mutated pages needing to be swept and freelists rebuilt onto the 
+	// pendinggc_pages list (freshly_filled_pages, alloc_page, evac_page)
+	void mergeNewlyPendingGCPages(BSQMemoryTheadLocalInfo* tinfo) noexcept;
 
     void allocatorRefreshAllocationPage() noexcept;
 

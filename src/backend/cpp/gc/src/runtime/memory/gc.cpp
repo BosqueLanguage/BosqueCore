@@ -551,17 +551,34 @@ static void markingWalk(BSQMemoryTheadLocalInfo& tinfo) noexcept
     gtl_info.pending_roots.clear();
 }
 
+#ifndef BSQ_GC_TESTING
 static void processAllocatorsPages(BSQMemoryTheadLocalInfo& tinfo)
 {
     UPDATE_TOTAL_LIVE_BYTES(tinfo.memstats, =, 0);
     for(size_t i = 0; i < BSQ_MAX_ALLOC_SLOTS; i++) {
         GCAllocator* alloc = tinfo.g_gcallocs[i];
         if(alloc != nullptr) {
-            alloc->processCollectorPages(&tinfo);
+            alloc->mergeNewlyPendingGCPages(&tinfo);
         }
     }
 }
-	
+
+#else
+
+// Our tests rely on automatic sweeping during a collection (to reliably
+// compute live bytes)
+static void processAllocatorsPages(BSQMemoryTheadLocalInfo& tinfo)
+{
+    UPDATE_TOTAL_LIVE_BYTES(tinfo.memstats, =, 0);
+    for(size_t i = 0; i < BSQ_MAX_ALLOC_SLOTS; i++) {
+        GCAllocator* alloc = tinfo.g_gcallocs[i];
+        if(alloc != nullptr) {
+            alloc->sweepPages(&tinfo);
+        }
+    }
+}
+#endif
+
 static inline void computeMaxDecrementCount(BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
 	tinfo.max_decrement_count = BSQ_INITIAL_MAX_DECREMENT_COUNT 
@@ -606,10 +623,10 @@ void collect() noexcept
 
     MEM_STATS_START(Nursery);
 
-	// Mark, compact, reprocess pages
+	// Mark, compact, reprocess(sweep or move) pages
     markingWalk(gtl_info);
     processMarkedYoungObjects(gtl_info);
-    processAllocatorsPages(gtl_info);
+	processAllocatorsPages(gtl_info);
     
 	MEM_STATS_END(Nursery, gtl_info.memstats);
 

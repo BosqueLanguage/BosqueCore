@@ -147,7 +147,7 @@ void GCAllocator::processPage(PageInfo* p) noexcept
     this->filled_pages.push(p);
 }
 
-void GCAllocator::processCollectorPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
+void GCAllocator::mergeNewlyPendingGCPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
 {
     if(this->alloc_page != nullptr) {
 		this->pendinggc_pages.push(this->alloc_page);
@@ -169,6 +169,32 @@ void GCAllocator::processCollectorPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
 	} 
 }
 
+#ifdef BSQ_GC_TESTING
+void GCAllocator::sweepPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
+{
+    if(this->alloc_page != nullptr) {
+        tinfo->bytes_freed += this->alloc_page->rebuild();
+        this->processPage(this->alloc_page);
+
+        this->alloc_page = nullptr;
+        this->freelist = nullptr;
+    }
+    
+    if(this->evac_page != nullptr) {
+        tinfo->bytes_freed += this->evac_page->rebuild();
+        this->processPage(this->evac_page);
+
+        this->evac_page = nullptr;
+        this->evacfreelist = nullptr;
+    }
+
+    while(!this->pendinggc_pages.empty()) {
+        PageInfo* p = this->pendinggc_pages.pop();
+        tinfo->bytes_freed += p->rebuild();
+        this->processPage(p);
+    }
+}
+#endif
 
 PageInfo* GCAllocator::tryGetPendingGCPage(const float max_util) noexcept
 {
