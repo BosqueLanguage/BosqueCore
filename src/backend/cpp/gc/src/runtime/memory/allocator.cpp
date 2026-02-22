@@ -184,8 +184,9 @@ void GCAllocator::processPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
         this->evacfreelist = nullptr;
     }
 
-    while(!this->pendinggc_pages.empty()) {
-        PageInfo* p = this->pendinggc_pages.pop();
+	// When testing we just process the freshly filled pages list directly
+    while(!this->freshly_filled_pages.empty()) {
+        PageInfo* p = this->freshly_filled_pages.pop();
         p->rebuild();
         this->processPage(p);
     }
@@ -194,6 +195,10 @@ void GCAllocator::processPages(BSQMemoryTheadLocalInfo* tinfo) noexcept
 
 PageInfo* GCAllocator::tryGetPendingGCPage(const float max_util) noexcept
 {
+#ifdef BSQ_GC_TESTING
+	return nullptr;
+#endif
+
 	PageInfo* pp = nullptr;
 	while(!this->pendinggc_pages.empty()) {
 		PageInfo* p = this->pendinggc_pages.pop();

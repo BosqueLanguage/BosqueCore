@@ -173,7 +173,7 @@ function execMainCode(bsqcode: string, expect_err: boolean) {
                     const output_path = path.join(nndir, "output/memex");
                     
                     try {
-                        execSync(`make`, {cwd: nndir});
+                        execSync(`make BUILD=test`, {cwd: nndir});
                     }
                     catch {
                         return `[CPP COMPILATION ERROR] \n\n ${header} ${src} `
