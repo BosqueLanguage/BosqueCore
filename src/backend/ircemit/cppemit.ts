@@ -1229,7 +1229,7 @@ class CPPEmitter {
         return `namespace ᐸRuntimeᐳ {\n` +
         `    std::vector<XFCStringRepr> XFCString::g_formatStringReprs = {\n` +
         ddefs.join(",\n") + "\n" +
-        `    };` +
+        `    };\n` +
         `}`;
     }
 

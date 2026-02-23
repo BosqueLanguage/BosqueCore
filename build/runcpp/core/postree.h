@@ -26,6 +26,19 @@ namespace ᐸRuntimeᐳ
     class PosRBTreeLeafEmpty 
     {
     };
+    
+    constexpr TypeInfo g_typeinfo_PosRBTreeLeafEmpty_generate(uint32_t tid, const char* tname)
+    {
+        return TypeInfo {
+            tid,
+            8,
+            1,
+            LayoutTag::Value,
+            BSQ_PTR_MASK_LEAF,
+            tname,
+            nullptr
+        };
+    }
 
     template<typename T, size_t K> 
     class PosRBTreeLeaf
@@ -34,6 +47,20 @@ namespace ᐸRuntimeᐳ
         size_t count;
         T data[K];
     };
+
+    template<typename T, size_t K>
+    constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_generate(uint32_t tid, const char* tname)
+    {
+        return TypeInfo {
+            tid,
+            sizeof(PosRBTreeLeaf<T, K>),
+            byteSizeToSlotCount(sizeof(PosRBTreeLeaf<T, K>)),
+            LayoutTag::Ref,
+            BSQ_PTR_MASK_LEAF,
+            tname,
+            nullptr
+        };
+    }
 
     template<typename T, size_t K>
     union PosRBTreeUnion
@@ -59,6 +86,19 @@ namespace ᐸRuntimeᐳ
         RColor color;
         PosRBTreeRepr<T, K> left;
         PosRBTreeRepr<T, K> right;
+
+        constexpr TypeInfo generateTypeInfo(uint32_t tid, const char* tname) const
+        {
+            return TypeInfo {
+                tid,
+                sizeof(PosRBTreeNode<T, K>),
+                byteSizeToSlotCount(sizeof(PosRBTreeNode<T, K>)),
+                LayoutTag::Ref,
+                "002020",
+                tname,
+                nullptr
+            };
+        }
     };
 
     template<typename T, size_t K>
@@ -71,21 +111,37 @@ namespace ᐸRuntimeᐳ
         
         PosRBTreeRepr<T, K> repr;
         
+        constexpr TypeInfo generateTypeInfo(uint32_t tid, const char* tname) const
+        {
+            return TypeInfo {
+                tid,
+                sizeof(PosRBTreeRepr<T, K>),
+                byteSizeToSlotCount(sizeof(PosRBTreeRepr<T, K>)),
+                LayoutTag::Ref,
+                "002020",
+                tname,
+                nullptr
+            };
+        }
+
         constexpr size_t count() const
         {
-            if(tree->repr.xxxx == PosRBTreeTag::Leaf) {
-                return tree->repr.cstrtree.leaf.count;
+            if(this->repr.typeinfo == PosRBTree<T, K>::bbleaftype) {
+                return 0;
+            }
+            else if(this->repr.typeinfo == PosRBTree<T, K>::leaftype) {
+                return this->repr.leaf->count;
             }
             else {
-                return tree->cstrtree.node.count;
+                return this->repr.node->count;
             }
         }
 
         template<typename T, size_t K>
         PosRBTreeLeaf<T, K>* getLeaf(const PosRBTree<T, K>* tree, size_t index) const
         {
-            if(tree->tag == PosRBTreeTag::Leaf) {
-                return &tree->cstrtree.leaf;
+            if(this->repr.typeinfo == PosRBTree<T, K>::leaftype) {
+                return this->repr.leaf;
             }
             else {
                 assert(false); // Not Implemented: full getLeaf for PosRBTree
@@ -96,11 +152,12 @@ namespace ᐸRuntimeᐳ
         template<typename T, size_t K>
         T& get(const PosRBTree<T, K>* tree, size_t index)
         {
-            if(tree->tag == PosRBTreeTag::Leaf) {
-                return tree->cstrtree.leaf.data[index];
+            if(this->repr.typeinfo == PosRBTree<T, K>::leaftype) {
+                return this->repr.leaf->data[index];
             }
             else {
-                assert(false); // Not Implemented: full get for PosRBTree
+                assert(false); // Not Implemented: full getLeaf for PosRBTree
+                return nullptr;
             }
         }
     };
