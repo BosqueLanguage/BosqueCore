@@ -371,10 +371,43 @@ class LambdaTypeSignature extends TypeSignature {
     }
 }
 
+class FormatStringTypeSignature extends TypeSignature {
+    readonly oftype: "CString";
+    readonly rtype: TypeSignature;
+    readonly terms: {argname: string, argtype: TypeSignature}[];
+
+    private static buildkstr(oftype: "CString", rtype: TypeSignature, terms: {argname: string | undefined, argtype: TypeSignature}[]): string {
+        if(terms.length === 0) {
+            return `F${oftype}<${rtype.emit()}>`
+        }
+        else {
+            const aargs = terms.map((tt) => tt.argname + ": " + tt.argtype.emit()).join(", ");
+            return `F${oftype}<${aargs}, ${rtype.emit()}>`;
+        }
+    }
+
+    constructor(sinfo: SourceInfo, oftype: "CString", rtype: TypeSignature, terms: {argname: string, argtype: TypeSignature}[]) {
+        super(sinfo, FormatStringTypeSignature.buildkstr(oftype, rtype, terms));
+        this.oftype = oftype;
+        this.rtype = rtype;
+        this.terms = terms;
+    }
+
+    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
+        const ttrmp = this.terms.map((tt) => { return {argname: tt.argname, argtype: tt.argtype.remapTemplateBindings(mapper)}; });
+        return new FormatStringTypeSignature(this.sinfo, this.oftype, this.rtype.remapTemplateBindings(mapper), ttrmp);
+    }
+
+    emit(): string {
+        return this.tkeystr;
+    }
+}
+
 export {
     FullyQualifiedNamespace, TemplateConstraintScope, TemplateNameMapper,
     TypeSignature, ErrorTypeSignature, VoidTypeSignature, AutoTypeSignature, 
     TemplateTypeSignature, NominalTypeSignature, 
     EListTypeSignature,
-    RecursiveAnnotation, LambdaParameterSignature, LambdaTypeSignature
+    RecursiveAnnotation, LambdaParameterSignature, LambdaTypeSignature,
+	FormatStringTypeSignature
 };
