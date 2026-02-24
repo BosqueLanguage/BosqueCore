@@ -1147,6 +1147,9 @@ class TypeChecker {
                 try {
                     const vs = validateStringLiteral(ffmt.text);
                     ffmt.resolvedValue = vs;
+
+					console.log(vs);
+
                 } catch(err) {
                     this.reportError(sinfo, (err as Error).message);
                 }
@@ -1175,7 +1178,9 @@ class TypeChecker {
 
     private checkLiteralFormatCStringExpression(env: TypeEnvironment, exp: LiteralFormatCStringExpression): TypeSignature {
         const fmttypes = this.computeFormatArgsTypes(exp.sinfo, exp.fmts, this.getWellKnownType("CString"));
-        
+       
+		console.log("values" + exp.value);
+
         return exp.setType(new FormatStringTypeSignature(exp.sinfo, "CString", this.getWellKnownType("CString"), fmttypes));
     }	
 

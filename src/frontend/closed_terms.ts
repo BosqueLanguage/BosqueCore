@@ -174,6 +174,11 @@ class InstantiationPropagator {
             rt.alltermargs.forEach((tt) => this.instantiateTypeSignature(tt, mapping));
             this.pendingNominalTypeDecls.push(new PendingNominalTypeDecl(rt.tkeystr, rt, rt.decl, rt.alltermargs));
         }
+
+		//
+		// TODO: Add support for format cstring here!
+		//	
+
         else if(rt instanceof EListTypeSignature) {
             rt.entries.forEach((tt) => this.instantiateTypeSignature(tt, mapping));
             (this.currentNSInstantiation as NamespaceInstantiationInfo).elists.set(rt.tkeystr, rt);
