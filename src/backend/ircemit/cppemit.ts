@@ -1226,11 +1226,16 @@ class CPPEmitter {
             return `        XFCStringRepr{ { ${fmts.join(", ")} }, ${cmpsize}, ${def.fmtid} }`;
         });
 
-        return `namespace ᐸRuntimeᐳ {\n` +
-        `    std::vector<XFCStringRepr> XFCString::g_formatStringReprs = {\n` +
-        ddefs.join(",\n") + "\n" +
-        `    };\n` +
-        `}`;
+        if(ddefs.length === 0) {
+            return "namespace ᐸRuntimeᐳ { std::vector<XFCStringRepr> XFCString::g_formatStringReprs = {}; }";
+        }
+        else {
+            return `namespace ᐸRuntimeᐳ {\n` +
+            `    std::vector<XFCStringRepr> XFCString::g_formatStringReprs = {\n` +
+            ddefs.join(",\n") + "\n" +
+            `    };\n` +
+            `}`;
+        }
     }
 
     private emitFStringDefInfo(tfstr: IRLiteralFormatStringExpression[]): string {
