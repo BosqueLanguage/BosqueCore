@@ -182,7 +182,7 @@ class FormatStringTextComponent extends FormatStringComponent {
 }
 
 class FormatStringArgComponent extends FormatStringComponent {
-    readonly argPos: string; //name
+    readonly argPos: string; //name or index
     readonly argType: TypeSignature; //can be AutoTypeSignature, string, or typed string
     resolvedType: TypeSignature | undefined; //after type checking
 
@@ -372,7 +372,7 @@ enum ExpressionTag {
 
     ParseAsTypeExpression = "ParseAsTypeExpression",
 
-    InterpolateFormatStringExpression = "InterpolateFormatStringExpression",
+    InterpolateFormatExpression = "InterpolateFormatExpression",
 
     PostfixOpExpression = "PostfixOpExpression",
 
@@ -1138,15 +1138,15 @@ class ParseAsTypeExpression extends Expression {
 }
 
 class InterpolateFormatExpression extends Expression {
-    readonly kind: "string" | "cstring" | "path" | "fragment" | "glob";
+    readonly kind: "string" | "cstring";
     readonly decloftype: TypeSignature | undefined;
     readonly fmtString: Expression;
-    readonly args: AbstractArgumentValue[];
+    readonly args: StdArgumentValue[];
     
     actualoftype: TypeSignature | undefined = undefined;
 
-    constructor(sinfo: SourceInfo, kind: "string" | "cstring" | "path" | "fragment" | "glob", decloftype: TypeSignature | undefined, fmtString: Expression, args: AbstractArgumentValue[]) {
-        super(ExpressionTag.InterpolateFormatStringExpression, sinfo);
+    constructor(sinfo: SourceInfo, kind: "string" | "cstring", decloftype: TypeSignature | undefined, fmtString: Expression, args: StdArgumentValue[]) {
+        super(ExpressionTag.InterpolateFormatExpression, sinfo);
         this.kind = kind;
         this.decloftype = decloftype;
         this.fmtString = fmtString;

@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { APIDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, InvokeTemplateTypeRestrictionClause, MAX_SAFE_CHK_NAT, MIN_SAFE_CHK_INT, MAX_SAFE_CHK_INT, APIDeniedTypeDecl, APIFlaggedTypeDecl, AgentDecl, TaskConfiguration, AbstractCollectionTypeDecl, ConstructableTypeDecl, InvokeParameterDecl } from "./assembly.js";
 import { CodeFormatter, SourceInfo } from "./build_decls.js";
 import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, ErrorTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
-import { APIInvokeExpression, AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, AbstractArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, FormatStringTextComponent, HoleBodyImplementation, HoleExpression, HoleStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, IfElifElseStatement, IfElseStatement, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypeDeclValueExpression, LiteralTypedCStringExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PassingArgumentValue, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RValueExpression, RValueExpressionTag, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VoidRefCallStatement, StdArgumentValue, SkipArgumentValue } from "./body.js";
+import { APIInvokeExpression, AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, AbstractArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, FormatStringTextComponent, HoleBodyImplementation, HoleExpression, HoleStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, IfElifElseStatement, IfElseStatement, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypeDeclValueExpression, LiteralTypedCStringExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PassingArgumentValue, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RValueExpression, RValueExpressionTag, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VoidRefCallStatement, StdArgumentValue, SkipArgumentValue, InterpolateFormatExpression } from "./body.js";
 import { SimpleTypeInferContext, TypeEnvironment, TypeResultWRefVarInfoResult, TypeInferContext, VarInfo } from "./checker_environment.js";
 import { TypeCheckerRelations } from "./checker_relations.js";
 
@@ -1512,7 +1512,34 @@ class TypeChecker {
             }
         }
 
-        return fmttypes;
+        fmttypes.sort((a, b) => a.argname.localeCompare(b.argname));
+
+        const allidxs = fmttypes.every((fmt) => /$[0-9]+^/.test(fmt.argname));
+        const allnames = fmttypes.every((fmt) => !/$[0-9]+^/.test(fmt.argname));
+        if(!allidxs && !allnames) {
+            this.reportError(sinfo, `Format string arguments must be either all indexed or all named`);
+        }
+
+        if(allidxs) {
+            const idxs = fmttypes.map((fmt) => Number.parseInt(fmt.argname));
+            this.checkError(sinfo, idxs.some((idx) => idx < 0), `Format string argument indexes must be non-negative integers`);
+            this.checkError(sinfo, idxs.some((idx, ii) => idx !== ii), `Format string argument index arguments must cover the range from 0 to the number of arguments -1 without duplicates`);
+
+            fmttypes = fmttypes.map((fmt) => ({argname: "_", argtype: fmt.argtype}));
+        }
+
+        let uniquefmttypes: {argname: string, argtype: TypeSignature}[] = [];
+        for(let i = 0; i < fmttypes.length; ++i) {
+            const mmtype = uniquefmttypes.find((uft) => uft.argname === fmttypes[i].argname);
+            if(mmtype === undefined) {
+                uniquefmttypes.push(fmttypes[i]);
+            }
+            else {
+                this.checkError(sinfo, !this.relations.areSameTypes(mmtype.argtype, fmttypes[i].argtype), `Multiple format string arguments with name ${fmttypes[i].argname} must have the same type`);
+            }
+        }
+
+        return uniquefmttypes;
     }
 
     private checkLiteralFormatStringExpression(env: TypeEnvironment, exp: LiteralFormatStringExpression): TypeSignature {
@@ -2370,6 +2397,123 @@ class TypeChecker {
         assert(false, "Not Implemented -- checkParseAsTypeExpression");
     }
 
+    private checkInterpolationArguments(sinfo: SourceInfo, iscstrunderly: boolean, env: TypeEnvironment, args: AbstractArgumentValue[], fmtparams: {argname: string, argtype: TypeSignature}[]) {
+        if(args.length !== fmtparams.length) {
+            this.reportError(sinfo, `Interpolate must have same number of parameters and arguments`);
+            return;
+        }
+        const argsallnamed = args.every((arg) => arg instanceof NamedArgumentValue);
+        
+        const paramsallpositional = fmtparams.every((p) => /^[0-9]+$/.test(p.argname));
+        const paramsallnamed = fmtparams.every((p) => !/^[0-9]+$/.test(p.argname));
+
+        if(paramsallpositional) {
+            const argsallpositional = args.every((arg) => arg instanceof PositionalArgumentValue);
+            if(!argsallpositional) {
+                this.reportError(sinfo, `InterpolateFormatExpression with positional format parameters must have all positional arguments`);
+                return;
+            }
+
+            for(let i = 0; i < args.length; i++) {
+                const argtype = this.checkExpression(env, args[i].exp, fmtparams[i].argtype);
+
+                if(iscstrunderly) {
+                    if(this.relations.isSubtypeOf(fmtparams[i].argtype, this.getWellKnownType("CString"), this.constraints)) {
+                        const btype = !(argtype instanceof ErrorTypeSignature) ? this.resolveUnderlyingType(argtype) || argtype : argtype;
+                        this.checkError(sinfo, btype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(btype, this.getWellKnownType("CString"), this.constraints), `Interpolation argument ${i} is not a subtype of CString as required for CString format string`);
+                    }
+                    else {
+                        this.checkError(sinfo, argtype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(argtype, fmtparams[i].argtype, this.constraints), `Interpolation argument ${i} is not a subtype of ${fmtparams[i].argtype.emit()}`);
+                    }
+                }
+                else {
+                    if(this.relations.isSubtypeOf(fmtparams[i].argtype, this.getWellKnownType("String"), this.constraints)) {
+                        const btype = !(argtype instanceof ErrorTypeSignature) ? this.resolveUnderlyingType(argtype) || argtype : argtype;
+                        this.checkError(sinfo, btype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(btype, this.getWellKnownType("String"), this.constraints), `Interpolation argument ${i} is not a subtype of String as required for String format string`);
+                    }
+                    else {
+                        this.checkError(sinfo, argtype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(argtype, fmtparams[i].argtype, this.constraints), `Interpolation argument ${i} is not a subtype of ${fmtparams[i].argtype.emit()}`);
+                    }
+                }
+            }
+        }
+
+        if(paramsallnamed) {
+            if(!argsallnamed) {
+                this.reportError(sinfo, `InterpolateFormatExpression with named format parameters must have all named arguments`);
+                return;
+            }
+
+            for(let i = 0; i < args.length; i++) {
+                const arg = args[i] as NamedArgumentValue;
+                const param = fmtparams.find((p) => p.argname === arg.name);
+                if(param === undefined) {
+                    this.reportError(sinfo, `Interpolation argument ${arg.name} does not match any format parameter`);
+                    continue;
+                }
+
+                const argtype = this.checkExpression(env, arg.exp, param.argtype);
+                this.checkError(sinfo, argtype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(argtype, param.argtype, this.constraints), `Interpolation argument ${arg.name} is not a subtype of ${param.argtype.emit()}`);
+            }
+        }
+    }
+
+    private checkInterpolateFormatExpression(env: TypeEnvironment, exp: InterpolateFormatExpression): TypeSignature {
+        const fmtkind = this.checkExpression(env, exp.fmtString, undefined);
+
+        if(exp.kind === "cstring") {
+            if(!(fmtkind instanceof FormatStringTypeSignature) || fmtkind.oftype !== "CString") {
+                this.reportError(exp.sinfo, `InterpolateFormatExpression with kind "cstring" must have a CString format string`);
+                return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            }
+
+            if(exp.decloftype !== undefined) {
+                this.checkTypeSignature(exp.decloftype);
+
+                const isresultsimple = this.relations.isSubtypeOf(exp.decloftype, this.getWellKnownType("CString"), this.constraints);
+                const isformatsimple = this.relations.isSubtypeOf(fmtkind.rtype, this.getWellKnownType("CString"), this.constraints);
+
+                //if either is simple then we always allow it
+                if(!isresultsimple && !isformatsimple) {
+                    this.checkError(exp.sinfo, !this.relations.isSubtypeOf(exp.decloftype, fmtkind.rtype, this.constraints), `Declared oftype ${exp.decloftype.emit()} is not compatible with format string result type ${fmtkind.rtype.emit()}`);
+                }
+            }
+
+            this.checkTypeSignature(fmtkind.rtype);
+            this.checkInterpolationArguments(exp.sinfo, true, env, exp.args, fmtkind.terms);
+
+            exp.actualoftype = fmtkind.rtype;
+            return exp.setType(fmtkind.rtype);
+        }
+        else if(exp.kind === "string") {
+            if(!(fmtkind instanceof FormatStringTypeSignature) || fmtkind.oftype !== "String") {
+                this.reportError(exp.sinfo, `InterpolateFormatExpression with kind "string" must have a String format string`);
+                return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            }
+
+            if(exp.decloftype !== undefined) {
+                this.checkTypeSignature(exp.decloftype);
+
+                const isresultsimple = this.relations.isSubtypeOf(exp.decloftype, this.getWellKnownType("String"), this.constraints);
+                const isformatsimple = this.relations.isSubtypeOf(fmtkind.rtype, this.getWellKnownType("String"), this.constraints);
+
+                //if either is simple then we always allow it
+                if(!isresultsimple && !isformatsimple) {
+                    this.checkError(exp.sinfo, !this.relations.isSubtypeOf(exp.decloftype, fmtkind.rtype, this.constraints), `Declared oftype ${exp.decloftype.emit()} is not compatible with format string result type ${fmtkind.rtype.emit()}`);
+                }
+            }
+
+            this.checkTypeSignature(fmtkind.rtype);
+            this.checkInterpolationArguments(exp.sinfo, false, env, exp.args, fmtkind.terms);
+
+            exp.actualoftype = fmtkind.rtype;
+            return exp.setType(fmtkind.rtype);
+        }
+        else {
+            assert(false, "checkInterpolateFormatExpression -- unknown kind");
+        }
+    }
+
     ////////
     // Postfix Expressions
     private checkPostfixAccessFromName(env: TypeEnvironment, exp: PostfixAccessFromName, rcvrtype: TypeSignature): TypeSignature {
@@ -3216,6 +3360,9 @@ class TypeChecker {
             }
             case ExpressionTag.ParseAsTypeExpression: {
                 return this.checkParseAsTypeExpression(env, exp as ParseAsTypeExpression);
+            }
+            case ExpressionTag.InterpolateFormatExpression: {
+                return this.checkInterpolateFormatExpression(env, exp as InterpolateFormatExpression);
             }
             case ExpressionTag.PostfixOpExpression: {
                 return this.checkPostfixOp(env, exp as PostfixOp, typeinfer);

@@ -53,9 +53,6 @@ enum IRExpressionTag {
     IRLiteralTypedStringExpression = "IRLiteralTypedStringExpression",
     IRLiteralTypedCStringExpression = "IRLiteralTypedCStringExpression",
 
-    IRLiteralTypedFormatStringExpression = "IRLiteralTypedFormatStringExpression",
-    IRLiteralTypedFormatCStringExpression = "IRLiteralTypedFormatCStringExpression",
-
     //TODO: path typed literal and -format- options here
 
     IRAccessEnvHasExpression = "IRAccessEnvHasExpression",
@@ -94,6 +91,9 @@ enum IRExpressionTag {
     IRInvokeSimpleWithImplicitsExpression = "IRInvokeSimpleWithImplicitsExpression",
     IRInvokeVirtualSimpleExpression = "IRInvokeVirtualSimpleExpression",
     IRInvokeVirtualWithImplicitsExpression = "IRInvokeVirtualWithImplicitsExpression",
+
+    IRInterpolateFormatCStringExpression = "IRInterpolateFormatCStringExpression",
+    IRInterpolateFormatStringExpression = "IRInterpolateFormatStringExpression",
 
     IRPrefixNotOpExpression = "IRPrefixNotOpExpression",
     IRPrefixNegateOpExpression = "IRPrefixNegateOrPlusOpExpression",
@@ -768,40 +768,40 @@ class IRFormatStringTextComponent extends IRFormatStringComponent {
 }
 
 class IRFormatStringArgComponent extends IRFormatStringComponent {
-    readonly argName: string;
-    readonly argType: IRTypeSignature;
+    readonly aidx: number;
+    readonly atype: IRTypeSignature;
 
-    constructor(argName: string, argType: IRTypeSignature) {
+    constructor(aidx: number, atype: IRTypeSignature) {
         super();
-        this.argName = argName;
-        this.argType = argType;
+        this.aidx = aidx;
+        this.atype = atype;
     }
 }
 
 class IRLiteralFormatStringExpression extends IRLiteralExpression {
+    readonly fmtid: number; //the format string ID assigned during flattening
     readonly fmts: IRFormatStringComponent[];
 
-    constructor(fmts: IRFormatStringComponent[]) {
+    constructor(fmtid: number, fmts: IRFormatStringComponent[]) {
         super(IRExpressionTag.IRLiteralFormatStringExpression);
+        this.fmtid = fmtid;
         this.fmts = fmts;
     }
 }
 
 class IRLiteralFormatCStringExpression extends IRLiteralExpression {
+    readonly fmtid: number; //the format string ID assigned during flattening
     readonly fmts: IRFormatStringComponent[];
 
-    constructor(fmts: IRFormatStringComponent[]) {
+    constructor(fmtid: number, fmts: IRFormatStringComponent[]) {
         super(IRExpressionTag.IRLiteralFormatCStringExpression);
+        this.fmtid = fmtid;
         this.fmts = fmts;
     }
 }
 
 //
 //TODO: Path literal expressions here
-//
-
-//
-//TODO: Path literal -format- expressions here
 //
 
 class IRLiteralTypedExpression extends IRLiteralExpression {
@@ -836,33 +836,6 @@ class IRLiteralTypedCStringExpression extends IRLiteralExpression {
         this.constype = constype;
     }
 }
-
-class IRLiteralTypedFormatStringExpression extends IRLiteralExpression {
-    readonly oftype: IRTypeSignature;
-    readonly fmts: IRFormatStringComponent[];
-
-    constructor(oftype: IRTypeSignature, fmts: IRFormatStringComponent[]) {
-        super(IRExpressionTag.IRLiteralTypedFormatStringExpression);
-        this.oftype = oftype;
-        this.fmts = fmts;
-    }
-}
-
-class IRLiteralTypedFormatCStringExpression extends IRLiteralExpression {
-    readonly oftype: IRTypeSignature;
-    readonly fmts: IRFormatStringComponent[];
-
-    constructor(oftype: IRTypeSignature, fmts: IRFormatStringComponent[]) {
-        super(IRExpressionTag.IRLiteralTypedFormatCStringExpression);
-        this.oftype = oftype;
-        this.fmts = fmts;
-    }
-}
-
-
-//
-//TODO: Path typed literal and -format- expressions here
-//
 
 class IRAccessEnvHasExpression extends IRExpression {
     readonly keybytes: number[];
@@ -1099,6 +1072,28 @@ class IRInvokeVirtualWithImplicitsExpression extends IRInvokeImplicitsExpression
     constructor(ikey: string, rcvr: IRImmediateExpression, args: IRSimpleExpression[], implicitidx: number, ivar: string, ivartype: IRTypeSignature, passkind: "ref" | "out" | "out?" | "inout") {
         super(IRExpressionTag.IRInvokeVirtualWithImplicitsExpression, ikey, args, implicitidx, ivar, ivartype, passkind);
         this.rcvr = rcvr;
+    }
+}
+
+class IRInterpolateFormatCStringExpression extends IRConstructExpression {
+    readonly fmtString: IRSimpleExpression;
+    readonly args: IRSimpleExpression[];
+    
+    constructor(fmtString: IRSimpleExpression, args: IRSimpleExpression[]) {
+        super(IRExpressionTag.IRInterpolateFormatCStringExpression, new IRNominalTypeSignature("CString"));
+        this.fmtString = fmtString;
+        this.args = args;
+    }
+}
+
+class IRInterpolateFormatStringExpression extends IRConstructExpression {
+    readonly fmtString: IRSimpleExpression;
+    readonly args: IRSimpleExpression[];
+    
+    constructor(fmtString: IRSimpleExpression, args: IRSimpleExpression[]) {
+        super(IRExpressionTag.IRInterpolateFormatCStringExpression, new IRNominalTypeSignature("String"));
+        this.fmtString = fmtString;
+        this.args = args;
     }
 }
 
@@ -2188,7 +2183,6 @@ export {
     IRFormatStringComponent, IRFormatStringTextComponent, IRFormatStringArgComponent,
     IRLiteralFormatStringExpression, IRLiteralFormatCStringExpression,
     IRLiteralTypedExpression, IRLiteralTypedStringExpression, IRLiteralTypedCStringExpression,
-    IRLiteralTypedFormatStringExpression, IRLiteralTypedFormatCStringExpression,
 
     IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression,
     IRTaskAccessIDExpression, IRTaskAccessParentIDExpression,
@@ -2206,6 +2200,8 @@ export {
     IRConstructorListEmptyExpression, IRConstructorListSingletonsExpression,
 
     IRInvokeExpression, IRInvokeDirectExpression, IRInvokeImplicitsExpression, IRInvokeSimpleExpression, IRInvokeSimpleWithImplicitsExpression, IRInvokeVirtualSimpleExpression, IRInvokeVirtualWithImplicitsExpression,
+
+    IRInterpolateFormatCStringExpression, IRInterpolateFormatStringExpression,
 
     IRUnaryOpExpression, IRPrefixNotOpExpression, IRPrefixNegateOpExpression, IRPrefixPlusOpExpression,
     IRBinOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression,

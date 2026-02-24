@@ -398,8 +398,15 @@ class FormatStringTypeSignature extends TypeSignature {
             return `F${oftype}<${rtype.emit()}>`
         }
         else {
-            const aargs = terms.map((tt) => tt.argname + ": " + tt.argtype.emit()).join(", ");
-            return `F${oftype}<${aargs}, ${rtype.emit()}>`;
+            const aargs = terms.map((tt) => { 
+                if(tt.argname === "_") {
+                    return tt.argtype.emit();
+                }
+                else {
+                    return tt.argname + ": " + tt.argtype.emit();
+                }
+            }).join(", ");
+            return `F${oftype}<${rtype.emit()}${aargs.length !== 0 ? `, ${aargs}` : ""}>`;
         }
     }
 
@@ -430,8 +437,15 @@ class FormatPathTypeSignature extends TypeSignature {
             return `F${oftype}<${rtype.emit()}>`
         }
         else {
-            const aargs = terms.map((tt) => tt.argname + ": " + tt.argtype.emit()).join(", ");
-            return `F${oftype}<${aargs}, ${rtype.emit()}>`;
+            const aargs = terms.map((tt) => { 
+                if(tt.argname === "_") {
+                    return tt.argtype.emit();
+                }
+                else {
+                    return tt.argname + ": " + tt.argtype.emit();
+                }
+            }).join(", ");
+            return `F${oftype}<${rtype.emit()}${aargs.length !== 0 ? `, ${aargs}` : ""}>`;
         }
     }
 

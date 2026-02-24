@@ -270,12 +270,14 @@ namespace ᐸRuntimeᐳ
     std::optional<XCString> BSQONParser::parseCString()
     {
         if(this->lexer.current().tokentype != BSQONTokenType::LiteralCString) {
-            return std::nullopt;
+            if(!this->sloppystrings || this->lexer.current().tokentype != BSQONTokenType::LiteralString) {
+                return std::nullopt;
+            }
         }
 
         auto stok = this->lexer.current();
-        if(stok.size() < CStrBuff::CSTR_MAX_SIZE) {
-            CStrBuff cb;
+        if(stok.size() < CStrRootInlineContent::CSTR_MAX_SIZE) {
+            CStrRootInlineContent cb;
             size_t ecount = 0;
             bool extractok = true;
             BSQLexBufferIterator ii = stok.begin;
@@ -302,7 +304,9 @@ namespace ᐸRuntimeᐳ
     std::optional<XString> BSQONParser::parseString()
     {
         if(this->lexer.current().tokentype != BSQONTokenType::LiteralString) {
-            return std::nullopt;
+            if(!this->sloppystrings || this->lexer.current().tokentype != BSQONTokenType::LiteralCString) {
+                return std::nullopt;
+            }
         }
 
         auto stok = this->lexer.current();
