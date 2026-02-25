@@ -59,23 +59,23 @@ namespace ᐸRuntimeᐳ
         PosRBTree<char, CSTR_MAX_LEAF_SIZE> postree;
     };
 
-    constexpr TypeInfo g_typeinfo_PosRBTreeLeafEmpty_CString = g_typeinfo_PosRBTreeLeafEmpty_generate(WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_EMPTY_CSTRING, "PosRBTreeLeafEmpty_CString");
-    constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_CString = g_typeinfo_PosRBTreeLeaf_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_CSTRING, BSQ_PTR_MASK_LEAF, "PosRBTreeLeaf_CString");
-    constexpr TypeInfo g_typeinfo_PosRBTreeNode_CString = g_typeinfo_PosRBTreeNode_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_NODE_CSTRING, "PosRBTreeNode_CString");
-    constexpr TypeInfo g_typeinfo_PosRBTree_CString = g_typeinfo_PosRBTree_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING, "PosRBTree_CString");
+    inline constexpr TypeInfo g_typeinfo_PosRBTreeLeafEmpty_CString = g_typeinfo_PosRBTreeLeafEmpty_generate(WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_EMPTY_CSTRING, "PosRBTreeLeafEmpty_CString");
+    inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_CString = g_typeinfo_PosRBTreeLeaf_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_CSTRING, BSQ_PTR_MASK_LEAF, "PosRBTreeLeaf_CString");
+    inline constexpr TypeInfo g_typeinfo_PosRBTreeNode_CString = g_typeinfo_PosRBTreeNode_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_NODE_CSTRING, "PosRBTreeNode_CString");
+    inline constexpr TypeInfo g_typeinfo_PosRBTree_CString = g_typeinfo_PosRBTree_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING, "PosRBTree_CString");
 
-    union CStrTreeUnion
+    union CStringUnion
     {
         CStrRootInlineContent inlinecstr;
         CStrRootTreeContent treecstr;
 
-        constexpr CStrTreeUnion() : inlinecstr() {}
-        constexpr CStrTreeUnion(const CStrTreeUnion& other) = default;
-        constexpr CStrTreeUnion(const CStrRootInlineContent& c) : inlinecstr(c) {}
-        constexpr CStrTreeUnion(const CStrRootTreeContent& c) : treecstr(c) {}
+        constexpr CStringUnion() : inlinecstr() {}
+        constexpr CStringUnion(const CStringUnion& other) = default;
+        constexpr CStringUnion(const CStrRootInlineContent& c) : inlinecstr(c) {}
+        constexpr CStringUnion(const CStrRootTreeContent& c) : treecstr(c) {}
     };
 
-    constexpr TypeInfo g_typeinfo_CStringInline = {
+    inline constexpr TypeInfo g_typeinfo_CStringInline = {
         WELL_KNOWN_TYPE_ID_CSTRING_INLINE,
         sizeof(CStrRootInlineContent),
         byteSizeToSlotCount(sizeof(CStrRootInlineContent)),
@@ -85,7 +85,7 @@ namespace ᐸRuntimeᐳ
         nullptr
     };
 
-    constexpr TypeInfo g_typeinfo_CStringTree = {
+    inline constexpr TypeInfo g_typeinfo_CStringTree = {
         WELL_KNOWN_TYPE_ID_CSTRING_TREE,
         sizeof(CStrRootTreeContent),
         byteSizeToSlotCount(sizeof(CStrRootTreeContent)),
@@ -95,10 +95,10 @@ namespace ᐸRuntimeᐳ
         nullptr
     };
 
-    constexpr TypeInfo g_typeinfo_CString = {
+    inline constexpr TypeInfo g_typeinfo_CString = {
         WELL_KNOWN_TYPE_ID_CSTRING,
-        sizeof(BoxedUnion<CStrTreeUnion>),
-        byteSizeToSlotCount(sizeof(BoxedUnion<CStrTreeUnion>)),
+        sizeof(BoxedUnion<CStringUnion>),
+        byteSizeToSlotCount(sizeof(BoxedUnion<CStringUnion>)),
         LayoutTag::Tagged,
         "200",
         "CString",
@@ -110,7 +110,7 @@ namespace ᐸRuntimeᐳ
     {
     public:
         int64_t index;
-        BoxedUnion<CStrTreeUnion> tree;
+        BoxedUnion<CStringUnion> tree;
 
         using value_type = char;
         using difference_type = std::ptrdiff_t;
@@ -170,12 +170,12 @@ namespace ᐸRuntimeᐳ
     class XCString
     {
     private:
-        BoxedUnion<CStrTreeUnion> tree;
+        BoxedUnion<CStringUnion> tree;
 
     public:
         constexpr XCString() : tree() {}
-        constexpr XCString(const CStrRootInlineContent& b) : tree(BoxedUnion<CStrTreeUnion>(&g_typeinfo_CStringInline, CStrTreeUnion(b))) {}
-        constexpr XCString(CStrRootTreeContent& n) : tree(BoxedUnion<CStrTreeUnion>(&g_typeinfo_CStringTree, CStrTreeUnion(n))) {}
+        constexpr XCString(const CStrRootInlineContent& b) : tree(BoxedUnion<CStringUnion>(&g_typeinfo_CStringInline, CStringUnion(b))) {}
+        constexpr XCString(CStrRootTreeContent& n) : tree(BoxedUnion<CStringUnion>(&g_typeinfo_CStringTree, CStringUnion(n))) {}
         constexpr XCString(const XCString& other) = default;
 
         template<size_t len>
@@ -377,7 +377,7 @@ namespace ᐸRuntimeᐳ
         constexpr StrNode(const StrNode& other) = default;
     };
 
-    constexpr TypeInfo g_typeinfo_StrBuff = {
+    inline constexpr TypeInfo g_typeinfo_StrBuff = {
         WELL_KNOWN_TYPE_ID_STRBUFF,
         sizeof(StrBuff),
         byteSizeToSlotCount(sizeof(StrBuff)),
@@ -387,7 +387,7 @@ namespace ᐸRuntimeᐳ
         nullptr
     };
 
-    constexpr TypeInfo g_typeinfo_StrNode = {
+    inline constexpr TypeInfo g_typeinfo_StrNode = {
         WELL_KNOWN_TYPE_ID_STRNODE,
         sizeof(StrNode),
         byteSizeToSlotCount(sizeof(StrNode)),
@@ -397,7 +397,7 @@ namespace ᐸRuntimeᐳ
         nullptr
     };
 
-    constexpr TypeInfo g_typeinfo_String = {
+    inline constexpr TypeInfo g_typeinfo_String = {
         WELL_KNOWN_TYPE_ID_STRING,
         sizeof(StrTree),
         byteSizeToSlotCount(sizeof(StrTree)),
@@ -630,6 +630,6 @@ namespace ᐸRuntimeᐳ
         friend XBool operator>=(const XString& lhs, const XString& rhs) { return !(lhs < rhs); }
     };
 
-    constexpr static XCString emptycstr(CStrRootInlineContent::literal(""));
-    constexpr static XString emptystr(StrBuff::literal(U""));
+    inline constexpr XCString emptycstr(CStrRootInlineContent::literal(""));
+    inline constexpr XString emptystr(StrBuff::literal(U""));
 }

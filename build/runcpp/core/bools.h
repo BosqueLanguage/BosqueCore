@@ -28,10 +28,10 @@ namespace ᐸRuntimeᐳ
         friend constexpr inline XBool operator>=(const XBool &lhs, const XBool &rhs) { return !(lhs < rhs); }
     };
 
-    constexpr XBool XFALSE = XBool::from(false);
-    constexpr XBool XTRUE = XBool::from(true);
+    inline constexpr XBool XFALSE = XBool::from(false);
+    inline constexpr XBool XTRUE = XBool::from(true);
 
-    constexpr TypeInfo g_typeinfo_Bool = {
+    inline constexpr TypeInfo g_typeinfo_Bool = {
         WELL_KNOWN_TYPE_ID_BOOL,
         sizeof(XBool),
         byteSizeToSlotCount(sizeof(XBool)),

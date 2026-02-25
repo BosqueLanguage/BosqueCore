@@ -70,7 +70,7 @@ namespace ᐸRuntimeᐳ
         friend constexpr XBool operator>=(const XFloat &lhs, const XFloat &rhs) { return XBool::from(!(lhs.value < rhs.value)); }
     };
 
-    constexpr TypeInfo g_typeinfo_Float = {
+    inline constexpr TypeInfo g_typeinfo_Float = {
         WELL_KNOWN_TYPE_ID_FLOAT,
         sizeof(XFloat),
         byteSizeToSlotCount(sizeof(XFloat)),

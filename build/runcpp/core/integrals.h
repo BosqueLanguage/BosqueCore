@@ -356,7 +356,7 @@ namespace ᐸRuntimeᐳ
         friend constexpr XBool operator>=(const XChkInt& lhs, const XChkInt& rhs) { return XBool::from(!(lhs.value < rhs.value)); }
     };
 
-    constexpr TypeInfo g_typeinfo_Nat = {
+    inline constexpr TypeInfo g_typeinfo_Nat = {
         WELL_KNOWN_TYPE_ID_NAT,
         sizeof(XNat),
         byteSizeToSlotCount(sizeof(XNat)),
@@ -366,7 +366,7 @@ namespace ᐸRuntimeᐳ
         nullptr
     };
 
-    constexpr TypeInfo g_typeinfo_Int = {
+    inline constexpr TypeInfo g_typeinfo_Int = {
         WELL_KNOWN_TYPE_ID_INT,
         sizeof(XInt),
         byteSizeToSlotCount(sizeof(XInt)),
@@ -376,7 +376,7 @@ namespace ᐸRuntimeᐳ
         nullptr
     };
 
-    constexpr TypeInfo g_typeinfo_ChkNat = {
+    inline constexpr TypeInfo g_typeinfo_ChkNat = {
         WELL_KNOWN_TYPE_ID_CHKNAT,
         sizeof(XChkNat),
         byteSizeToSlotCount(sizeof(XChkNat)),
@@ -386,7 +386,7 @@ namespace ᐸRuntimeᐳ
         nullptr
     };
 
-    constexpr TypeInfo g_typeinfo_ChkInt = {
+    inline constexpr TypeInfo g_typeinfo_ChkInt = {
         WELL_KNOWN_TYPE_ID_CHKINT,
         sizeof(XChkInt),
         byteSizeToSlotCount(sizeof(XChkInt)),

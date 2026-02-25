@@ -63,7 +63,7 @@ namespace ᐸRuntimeᐳ
     };
     using BufferTree = ᐸRuntimeᐳ::BoxedUnion<ByteBufferTreeUnion>;
 
-    constexpr TypeInfo g_typeinfo_ByteBufferEntry = {
+    inline constexpr TypeInfo g_typeinfo_ByteBufferEntry = {
         WELL_KNOWN_TYPE_ID_BYTEBUFFERENTRY,
         sizeof(ByteBufferEntry),
         byteSizeToSlotCount(sizeof(ByteBufferEntry)),
@@ -73,7 +73,7 @@ namespace ᐸRuntimeᐳ
         nullptr
     };
 
-    constexpr TypeInfo g_typeinfo_ByteBufferBlock = {
+    inline constexpr TypeInfo g_typeinfo_ByteBufferBlock = {
         WELL_KNOWN_TYPE_ID_BYTEBUFFERBLOCK,
         sizeof(ByteBufferBlock),
         byteSizeToSlotCount(sizeof(ByteBufferBlock)),
@@ -83,7 +83,7 @@ namespace ᐸRuntimeᐳ
         nullptr
     };
 
-    constexpr TypeInfo g_typeinfo_ByteBuffer = {
+    inline constexpr TypeInfo g_typeinfo_ByteBuffer = {
         WELL_KNOWN_TYPE_ID_BYTEBUFFER,
         sizeof(BufferTree) + sizeof(size_t),
         byteSizeToSlotCount(sizeof(BufferTree) + sizeof(size_t)),
