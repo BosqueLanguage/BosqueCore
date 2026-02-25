@@ -223,8 +223,8 @@ static void* forward(void* ptr, BSQMemoryTheadLocalInfo& tinfo) noexcept
 	xmem_copy(ptr, nptr, p->typeinfo->slot_size);
 
     // Insert into forward table and update object ensuring future objects update
-    RESET_METADATA_FOR_OBJECT(m, tinfo.forward_table_index);
-    tinfo.forward_table[tinfo.forward_table_index++] = nptr;
+    int32_t fwdidx = tinfo.forward_table.insert(nptr);
+    RESET_METADATA_FOR_OBJECT(m, fwdidx);
 
     UPDATE_TOTAL_PROMOTIONS(tinfo.memstats, +=, 1);
 
@@ -247,7 +247,7 @@ static inline void updateRef(void** obj, BSQMemoryTheadLocalInfo& tinfo)
         *obj = forward(ptr, tinfo); 
     }
     else {
-        *obj = tinfo.forward_table[fwd_index]; 
+        *obj = tinfo.forward_table.query(fwd_index); 
     }
 
 	MetaData* nm = GC_GET_META_DATA_ADDR(*obj);	
@@ -312,8 +312,7 @@ static void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
         int32_t fwdidx = GC_FWD_INDEX(m);
 		void* nobj = obj;
         if(fwdidx > NON_FORWARDED) {
-            GC_INVARIANT_CHECK(fwdidx < gtl_info.forward_table_index);
-            nobj = gtl_info.forward_table[fwdidx];
+            nobj = gtl_info.forward_table.query(fwdidx);
         }
 		
 		MetaData* nm = GC_GET_META_DATA_ADDR(nobj);
@@ -457,7 +456,18 @@ static void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
 {
     MetaData* m = GC_GET_META_DATA_ADDR(*slots);
     GC_CHECK_BOOL_BYTES(m);
-    
+
+	// If we are seeing a young->old pointer just update rc of whatever pointer
+	// is in forward table, as it has already been processed in a prev collection
+	int32_t fwdidx = GC_FWD_INDEX(m);
+	if(fwdidx > NON_FORWARDED) {
+		void* nobj = gtl_info.forward_table.query(fwdidx);	
+		MetaData* nm = GC_GET_META_DATA_ADDR(nobj);
+		INC_REF_COUNT(nm);
+
+		return ;
+	}
+
 	if(GC_SHOULD_VISIT(m)) { 
 		GC_MARK_AS_MARKED(m);
 		tinfo.visit_stack.push_back({*slots, MARK_STACK_NODE_COLOR_GREY});
@@ -606,10 +616,6 @@ void collect() noexcept
 	MEM_STATS_END(Nursery, gtl_info.memstats);
 
     gtl_info.pending_young.clear();
-
-    xmem_zerofill(gtl_info.forward_table, gtl_info.forward_table_index);
-    gtl_info.forward_table_index = FWD_TABLE_START;
-
     gtl_info.decs_batch.initialize();
 
 	// Find dead roots, walk object graph from dead roots updating necessary rcs

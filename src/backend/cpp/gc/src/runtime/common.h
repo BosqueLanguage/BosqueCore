@@ -64,14 +64,6 @@
 #define PAGE_MASK ((1ul << BITS_IN_ADDR_FOR_PAGE) - 1ul)
 #define PAGE_ADDR_MASK (~PAGE_MASK)
 
-//
-//worst possible case where every entry has to be inserted into fwd table:
-//BSQ_BLOCK_ALLOCATION_SIZE / 8 = 512 (assumes every entry is exactly 8 bytes with no padding);
-//then BSQ_COLLECTION_THRESHOLD * (BSQ_BLOCK_ALLOCATION_SIZE / 8 ) = 524288, thus max possible
-//entries before triggering a collection 
-//
-#define BSQ_MAX_FWD_TABLE_ENTRIES 524288ul
-
 #define BSQ_MAX_ROOTS 2048ul
 #define BSQ_MAX_ALLOC_SLOTS 1024ul
 

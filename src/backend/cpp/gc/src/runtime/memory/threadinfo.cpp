@@ -2,7 +2,6 @@
 
 thread_local void* roots_array[BSQ_MAX_ROOTS];
 thread_local void* old_roots_array[BSQ_MAX_ROOTS];
-thread_local void* forward_table_array[BSQ_MAX_FWD_TABLE_ENTRIES];
 
 thread_local GCAllocator* g_gcallocs_array[BSQ_MAX_ALLOC_SLOTS];
 
@@ -24,6 +23,9 @@ do { \
     native_register_contents.R = NULL;                                        \
     if(PTR_IN_RANGE(R) && PTR_NOT_IN_STACK(BASE, CURR, R)) { native_register_contents.R = R; }
 
+#define MARK_STACK_NODE_COLOR_GREY 0
+#define MARK_STACK_NODE_COLOR_BLACK 1
+
 void BSQMemoryTheadLocalInfo::initialize(size_t ntl_id, void** caller_rbp, 
 	void (*_collectfp)()) noexcept
 {
@@ -42,10 +44,6 @@ void BSQMemoryTheadLocalInfo::initialize(size_t ntl_id, void** caller_rbp,
     this->old_roots = old_roots_array;
     this->old_roots_count = 0;
     xmem_zerofill(this->old_roots, BSQ_MAX_ROOTS);
-
-    this->forward_table = forward_table_array;
-    this->forward_table_index = FWD_TABLE_START;
-    xmem_zerofill(this->forward_table, BSQ_MAX_FWD_TABLE_ENTRIES);
 
     this->g_gcallocs = g_gcallocs_array;
     xmem_zerofill(this->g_gcallocs, BSQ_MAX_ALLOC_SLOTS);
