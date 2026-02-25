@@ -8,7 +8,7 @@
 namespace ᐸRuntimeᐳ
 {
     using XNone = uint64_t;
-    inline constexpr XNone xnone = 0ull;
+    constexpr XNone xnone = 0ull;
 
     template <typename T>
     class XSome 

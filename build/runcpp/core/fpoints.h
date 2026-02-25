@@ -12,27 +12,27 @@ namespace ᐸRuntimeᐳ
     public:
         double value;
 
-        inline constexpr static bool isValidFloat(double v)
+        constexpr static bool isValidFloat(double v)
         {
             return std::isfinite(v);
         }
 
         // Check operators on Float
-        inline static void checkOverflowAddition(XFloat n1, XFloat n2, const char* file, uint32_t line)
+        constexpr static void checkOverflowAddition(XFloat n1, XFloat n2, const char* file, uint32_t line)
         {
             if(!(XFloat::isValidFloat(n1.value + n2.value))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Float addition bounds"); }
         }
-        inline static void checkOverflowSubtraction(XFloat n1, XFloat n2, const char* file, uint32_t line)
+        constexpr static void checkOverflowSubtraction(XFloat n1, XFloat n2, const char* file, uint32_t line)
         {
             if(!(XFloat::isValidFloat(n1.value - n2.value))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Float subtraction bounds"); }
         }
-        inline static void checkOverflowMultiplication(XFloat n1, XFloat n2, const char* file, uint32_t line)
+        constexpr static void checkOverflowMultiplication(XFloat n1, XFloat n2, const char* file, uint32_t line)
         {
             if(!(XFloat::isValidFloat(n1.value * n2.value))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Float multiplication bounds"); }
         }
-        inline static void checkDivisionByZero(XFloat n2, const char* file, uint32_t line)
+        constexpr static void checkDivisionByZero(XFloat n2, const char* file, uint32_t line)
         {
-            if(n2.value == 0.0) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::DivisionByZero, nullptr, "Nat division by zero"); }
+            if(n2.value == 0.0) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::DivisionByZero, nullptr, "Float division by zero"); }
         }
 
         // Overloaded operators on Float
