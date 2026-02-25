@@ -23,9 +23,6 @@ do { \
     native_register_contents.R = NULL;                                        \
     if(PTR_IN_RANGE(R) && PTR_NOT_IN_STACK(BASE, CURR, R)) { native_register_contents.R = R; }
 
-#define MARK_STACK_NODE_COLOR_GREY 0
-#define MARK_STACK_NODE_COLOR_BLACK 1
-
 void BSQMemoryTheadLocalInfo::initialize(size_t ntl_id, void** caller_rbp, 
 	void (*_collectfp)()) noexcept
 {

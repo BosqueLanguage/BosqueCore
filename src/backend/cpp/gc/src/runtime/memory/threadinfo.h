@@ -36,40 +36,34 @@ struct RegisterContents
 
 class ForwardTable {
 	// TODO: This is arbitrary for now --- need to find upper bound
-	static constexpr size_t MAX_ENTRIES = 1 << 18;
+	static constexpr size_t MAX_ENTRIES = 1 << 19;
+	static constexpr uint32_t START = 1;
 
+	// TODO: Ring buffer is just a hack to keep things moving
 	void* table[ForwardTable::MAX_ENTRIES];
-	int32_t positions[ForwardTable::MAX_ENTRIES];
-	int32_t index;
+	uint32_t index;
 
 public:
-	ForwardTable() noexcept : table(), positions(), index(0) 
-	{
-		for(size_t i = 0; i < ForwardTable::MAX_ENTRIES; i++) {
-			this->positions[i] = i;	
-		}
-	}
+	ForwardTable() noexcept : table(), index(ForwardTable::START) {}
 
-	int32_t insert(void* addr) noexcept
+	uint32_t insert(void* addr) noexcept
 	{
-		int32_t idx = this->positions[this->index++];
-		assert(static_cast<size_t>(idx) < ForwardTable::MAX_ENTRIES);		
-		
+		uint32_t idx = this->index++;	
 		this->table[idx] = addr;
-
+		if(this->index >= ForwardTable::MAX_ENTRIES) {
+			this->index = ForwardTable::START;	
+		}
+	
 		return idx;
 	}
 
-	void remove(int32_t idx) noexcept
+	void* query(uint32_t idx) const noexcept
 	{
-		this->positions[--this->index] = idx;
-		assert(this->index >= 0);
-	}
+		assert(idx < ForwardTable::MAX_ENTRIES && idx > 0);
+		void* obj = this->table[idx];
+		assert(obj != nullptr);
 
-	void* query(int32_t idx) const noexcept
-	{
-		assert(static_cast<size_t>(idx) < ForwardTable::MAX_ENTRIES);
-		return this->table[idx];	
+		return obj;
 	}
 };
 

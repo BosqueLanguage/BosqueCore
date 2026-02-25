@@ -242,8 +242,8 @@ static inline void updateRef(void** obj, BSQMemoryTheadLocalInfo& tinfo)
         return ;
     }
 
-    int32_t fwd_index = GC_FWD_INDEX(m);
-    if(fwd_index == NON_FORWARDED ) {
+    uint32_t fwd_index = GC_FWD_INDEX(m);
+    if(fwd_index == NON_FORWARDED) {
         *obj = forward(ptr, tinfo); 
     }
     else {
