@@ -269,8 +269,10 @@ PageInfo* GCAllocator::getFreshPageForAllocator() noexcept
 
 PageInfo* GCAllocator::getFreshPageForEvacuation() noexcept
 {
-
-	PageInfo* page = this->tryGetPendingRebuildPage(HIGH_UTIL_THRESH);
+	PageInfo* page = this->tryGetPendingGCPage(LOW_UTIL_THRESH);
+   	if(page == nullptr) {
+		page = this->tryGetPendingRebuildPage(LOW_UTIL_THRESH);
+    }
    	if(page == nullptr) { 
 		page = this->getLowestHighUtilPage();
 	}	
