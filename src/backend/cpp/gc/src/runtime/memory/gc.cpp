@@ -457,6 +457,11 @@ static void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
     MetaData* m = GC_GET_META_DATA_ADDR(*slots);
     GC_CHECK_BOOL_BYTES(m);
 
+	if(!GC_IS_YOUNG(m)) {
+		INC_REF_COUNT(m);
+		return ;
+	}
+
 	// If we are seeing a young->old pointer just update rc of whatever pointer
 	// is in forward table, as it has already been processed in a prev collection
 	int32_t fwdidx = GC_FWD_INDEX(m);
