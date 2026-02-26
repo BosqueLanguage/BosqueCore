@@ -1147,9 +1147,6 @@ class TypeChecker {
                 try {
                     const vs = validateStringLiteral(ffmt.text);
                     ffmt.resolvedValue = vs;
-
-					console.log(vs);
-
                 } catch(err) {
                     this.reportError(sinfo, (err as Error).message);
                 }
