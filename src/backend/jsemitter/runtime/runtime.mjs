@@ -344,6 +344,12 @@ function _$accepts(pattern, input, inns) {
     }
 }
 
+function _$format(str, ...values) {
+	return str.replace(/{(\d+)}/g, function(match, index) {
+		return values[index];
+	});
+}
+
 export {
     $VRepr,
     _$softfails,
@@ -358,5 +364,6 @@ export {
     _$exhaustive,
     _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond,
     _$memoconstval,
-    _$accepts
+    _$accepts,
+	_$format
 };
