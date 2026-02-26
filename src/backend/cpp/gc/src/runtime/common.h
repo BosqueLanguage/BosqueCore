@@ -213,10 +213,6 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 #define GC_CLEAR_YOUNG_MARK(META)  { GC_IS_YOUNG(META) = false; }
 #define GC_CLEAR_MARKED_MARK(META) { GC_IS_MARKED(META) = false; }
 
-#define GC_SHOULD_FREE_LIST_ADD(META) \
-	(!GC_IS_ALLOCATED(META) \
-		|| (GC_IS_YOUNG(META) && GC_FWD_INDEX(META) == NON_FORWARDED))
-
 #define GC_CHECK_BOOL_BYTES(META) \
 do { \
     int8_t isalloc_byte  = *reinterpret_cast<int8_t*>(&(META)->isalloc); \
@@ -263,13 +259,13 @@ do { \
 #define GC_CLEAR_YOUNG_MARK(META)  { GC_IS_YOUNG(META) = 0; }
 #define GC_CLEAR_MARKED_MARK(META) { GC_IS_MARKED(META) = 0; }
 
-#define GC_SHOULD_FREE_LIST_ADD(META) \
-	(!GC_IS_ALLOCATED(META) \
-		|| (GC_IS_YOUNG(META) && GC_FWD_INDEX(META) == NON_FORWARDED))
-
 #define GC_CHECK_BOOL_BYTES(META)
 
 #endif // VERBOSE_HEADER
+
+#define GC_SHOULD_FREE_LIST_ADD(META) \
+	(!GC_IS_ALLOCATED(META) \
+		|| (GC_IS_YOUNG(META) && GC_FWD_INDEX(META) == NON_FORWARDED && !GC_IS_ROOT(META)))
 
 #define METADATA_DUMP(META) \
 	std::cout << "Meta Data at " << META << ":" << std::endl \

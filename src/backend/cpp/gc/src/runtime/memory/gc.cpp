@@ -457,15 +457,6 @@ static void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
     MetaData* m = GC_GET_META_DATA_ADDR(*slots);
     GC_CHECK_BOOL_BYTES(m);
 
-	// TODO: This gets triggered!!!!
-	// -- seems we allocate an object pointing to the old location of one 
-	//    already forwarded (and this location was placed on freelist in a 
-	//    prev collection too)
-    if(!GC_IS_ALLOCATED(m) && !GC_IS_YOUNG(m) && GC_REF_COUNT(m) == 0) {
-        METADATA_DUMP(m);
-        assert(false);
-    }
-
 	// If we are seeing a young->old pointer we need to either:
 	// - Simply increment the pointed to objects RC
 	// - Look into the forward table (pointed to old memory location) and 
