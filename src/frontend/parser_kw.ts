@@ -312,14 +312,6 @@ const ParenSymbols = [
     ...RightScanParens
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
-const SpecialStringFormatTypes = [
-    "FCString"
-];
-
-const SpecialNominalTypes = [
-    ...SpecialStringFormatTypes
-];
-
 export {
     KeywordStrings,
     GeneralAttributes, APIDeclAttributes, InvokeAttributes, AllAttributes, CoreOnlyAttributes,
@@ -447,8 +439,5 @@ export {
     SYM_gteq,
     SYM_minus,
     SYM_times,
-    SYM_div,
-
-	SpecialNominalTypes,
-	SpecialStringFormatTypes
+    SYM_div
 };
