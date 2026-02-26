@@ -372,11 +372,11 @@ class LambdaTypeSignature extends TypeSignature {
 }
 
 class FormatStringTypeSignature extends TypeSignature {
-    readonly oftype: "CString";
+    readonly oftype: "String" | "CString";
     readonly rtype: TypeSignature;
     readonly terms: {argname: string, argtype: TypeSignature}[];
 
-    private static buildkstr(oftype: "CString", rtype: TypeSignature, terms: {argname: string | undefined, argtype: TypeSignature}[]): string {
+    private static buildkstr(oftype: "String" | "CString", rtype: TypeSignature, terms: {argname: string | undefined, argtype: TypeSignature}[]): string {
         if(terms.length === 0) {
             return `F${oftype}<${rtype.emit()}>`
         }
@@ -386,7 +386,7 @@ class FormatStringTypeSignature extends TypeSignature {
         }
     }
 
-    constructor(sinfo: SourceInfo, oftype: "CString", rtype: TypeSignature, terms: {argname: string, argtype: TypeSignature}[]) {
+    constructor(sinfo: SourceInfo, oftype: "String" | "CString", rtype: TypeSignature, terms: {argname: string, argtype: TypeSignature}[]) {
         super(sinfo, FormatStringTypeSignature.buildkstr(oftype, rtype, terms));
         this.oftype = oftype;
         this.rtype = rtype;

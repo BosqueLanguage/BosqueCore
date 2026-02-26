@@ -192,6 +192,7 @@ enum ExpressionTag {
 
     LiteralStringExpression = "LiteralStringExpression",
     LiteralCStringExpression = "LiteralCStringExpression",
+    LiteralFormatStringExpression = "LiteralFormatStringExpression",
     LiteralFormatCStringExpression = "LiteralFormatCStringExpression",
 
     LiteralPathExpression = "LiteralPathExpression",
@@ -199,9 +200,6 @@ enum ExpressionTag {
     LiteralGlobExpression = "LiteralGlobExpression",
 
     LiteralTypeDeclValueExpression = "LiteralTypeDeclValueExpression",
-
-	// NOTE: May not be needed
-    LiteralTypedFormatCStringExpression = "LiteralTypedFormatCStringExpression",
 
     HasEnvValueExpression = "HasEnvValueExpression",
     AccessEnvValueExpression = "AccessEnvValueExpression",
@@ -419,6 +417,25 @@ class FormatStringArgComponent extends FormatStringComponent {
     }
 }
 
+class LiteralFormatStringExpression extends Expression {
+    readonly value: string;
+    readonly fmts: FormatStringComponent[];
+
+    constructor(sinfo: SourceInfo, value: string, fmts: FormatStringComponent[]) {
+        super(ExpressionTag.LiteralFormatStringExpression, sinfo);
+        this.value = value;
+        this.fmts = fmts;
+    }
+
+    override isLiteralExpression(): boolean {
+        return true;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.value
+    }
+}
+
 class LiteralFormatCStringExpression extends Expression {
     readonly value: string;
     readonly fmts: FormatStringComponent[];
@@ -438,36 +455,15 @@ class LiteralFormatCStringExpression extends Expression {
     }
 }
 
-class LiteralTypedFormatCStringExpression extends Expression {
-    readonly value: string;
-    readonly fmts: FormatStringComponent[];
-    readonly constype: TypeSignature;
-
-    constructor(sinfo: SourceInfo, value: string, fmts: FormatStringComponent[], constype: TypeSignature) {
-        super(ExpressionTag.LiteralTypedFormatCStringExpression, sinfo);
-        this.value = value;
-        this.fmts = fmts;
-        this.constype = constype;
-    }
-
-    override isLiteralExpression(): boolean {
-        return true;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `'${this.value}'<${this.constype.emit()}>`;
-    }
-}
-
 class InterpolateFormatExpression extends Expression {
-    readonly kind: "cstring";
+    readonly kind: "string" | "cstring";
     readonly decloftype: TypeSignature | undefined;
     readonly fmtString: Expression;
     readonly args: ArgumentValue[];
     
     actualoftype: TypeSignature | undefined = undefined;
 
-    constructor(sinfo: SourceInfo, kind: "cstring", decloftype: TypeSignature | undefined, fmtString: Expression, args: ArgumentValue[]) {
+    constructor(sinfo: SourceInfo, kind: "string" | "cstring", decloftype: TypeSignature | undefined, fmtString: Expression, args: ArgumentValue[]) {
         super(ExpressionTag.InterpolateFormatExpression, sinfo);
         this.kind = kind;
         this.decloftype = decloftype;
@@ -2449,8 +2445,8 @@ export {
     RecursiveAnnotation,
     BinderInfo, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestFail,
     FormatStringComponent, FormatStringTextComponent, FormatStringArgComponent, 
-	LiteralTypedFormatCStringExpression,
 	LiteralFormatCStringExpression,
+	LiteralFormatStringExpression,
 	InterpolateFormatExpression,
 	ArgumentValue, RefArgumentValue, PositionalArgumentValue, NamedArgumentValue, SpreadArgumentValue, ArgumentList,
     ExpressionTag, Expression, ErrorExpression, LiteralExpressionValue, ConstantExpressionValue,
