@@ -47,9 +47,8 @@ const TokenStrings = {
 
     String: "[LITERAL_STRING]",
     CString: "[LITERAL_EX_STRING]",
-    TemplateString: "[LITERAL_TEMPLATE_STRING]",
-    TemplateCString: "[LITERAL_TEMPLATE_EX_STRING]",
-    FormatCString: "[LITERAL_FORMAT_EX_STRING]",
+   	FormatString: "[LITERAL_FORMAT_STRING]",
+	FormatCString: "[LITERAL_FORMAT_EX_STRING]",
 
     Regex: "[LITERAL_REGEX]",
     PathItem: "[LITERAL_PATH_ITEM]",
@@ -619,7 +618,7 @@ class Lexer {
             let strval = this.input.slice(this.jsStrPos, jepos);
 
             this.updatePositionInfo(this.jsStrPos, jepos);
-            this.recordLexTokenWData(jepos, istemplate ? TokenStrings.TemplateString : TokenStrings.String, strval);
+            this.recordLexTokenWData(jepos, istemplate ? TokenStrings.FormatString : TokenStrings.String, strval);
             return true;
         }
     }
@@ -1458,9 +1457,8 @@ class Parser {
         }
     }
 
-    static _s_formatArgRe = /\$\{[_a-zA-Z][_a-zA-Z0-9]*(?:[:] *[A-Za-z_0-9:]+)?\}$/;
     private processFormatArguments(contents: string, sinfo: SourceInfo): FormatStringComponent[] {
-        const parts = contents.split(/(\{[0-9]+\})/);
+        const parts = contents.slice(2, -1).split(/(\$\{[0-9a-zA-Z:]+\})/).filter((cc) => cc !== "");
 
         return parts.map((part) => {
             if(!part.startsWith("${")) {
@@ -2620,26 +2618,43 @@ class Parser {
 
     private parseFormatTypeTermList(sinfo: SourceInfo): [TypeSignature, {argname: string, argtype: TypeSignature}[]] {
         this.ensureAndConsumeTokenAlways(SYM_langle, "format type term list");
+
+        let rtype = this.parseStdTypeSignature();
         let terms: {argname: string, argtype: TypeSignature}[] = [];
 
-        while(!this.testToken(SYM_rangle)) {
-            this.ensureToken(TokenStrings.IdentifierName, "format type term");
-            
-            const argname = this.consumeTokenAndGetValue();
-            this.ensureAndConsumeTokenAlways(SYM_colon, "format type term");
-            const rtype = this.parseStdTypeSignature();
+		console.log("Attempting to parseFormatTypeTermList");
+		console.log(terms);
 
+        let ncount = 0;
+        while(!this.testToken(SYM_rangle)) {
+            let argname: string = "_";
+
+            if(this.testToken(TokenStrings.IdentifierName)) {
+                ncount++;
+                argname = this.consumeTokenAndGetValue();
+                this.ensureAndConsumeTokenAlways(SYM_colon, "format type term");
+            }
+            
+            const rtype = this.parseStdTypeSignature();
             terms.push({argname: argname, argtype: rtype});
         }
 
         this.ensureAndConsumeTokenAlways(SYM_rangle, "format type term list");
-        
+
         if(terms.length === 0) {
             this.recordErrorGeneral(this.peekToken(), "Format type term list cannot be empty");
             return [new ErrorTypeSignature(sinfo, undefined), []];
         }
 
-        return [terms[0].argtype, terms.slice(1)];
+        if(ncount !== terms.length) {
+            this.recordErrorGeneral(sinfo, "All format type terms must *either* be named or be positional");
+        }
+
+        if(ncount !== 0) {
+            terms = terms.sort((a, b) => a.argname.localeCompare(b.argname));
+        }
+
+        return [rtype, terms];
     }
 
     private parseNominalType(): TypeSignature {
@@ -2650,6 +2665,9 @@ class Parser {
             const stype = this.consumeTokenAndGetValue();
 
             if(SpecialStringFormatTypes.includes(stype)) {
+
+				console.log("found special string format type!");
+
                 const [rtype, terms] = this.parseFormatTypeTermList(sinfo);
 				const fmttype = stype.slice(1);
 				assert(fmttype != "String"); // Only need CString for smtemit stuff
