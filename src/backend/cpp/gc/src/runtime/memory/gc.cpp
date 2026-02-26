@@ -457,24 +457,6 @@ static void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
     MetaData* m = GC_GET_META_DATA_ADDR(*slots);
     GC_CHECK_BOOL_BYTES(m);
 
-	// If we are seeing a young->old pointer we need to either:
-	// - Simply increment the pointed to objects RC
-	// - Look into the forward table (pointed to old memory location) and 
-	//   increment the appropriate RC
-	if(!GC_IS_YOUNG(m)) {
-		INC_REF_COUNT(m);
-		return ;
-	}
-
-	int32_t fwdidx = GC_FWD_INDEX(m);
-	if(fwdidx > NON_FORWARDED) {
-		void* nobj = gtl_info.forward_table.query(fwdidx);	
-		MetaData* nm = GC_GET_META_DATA_ADDR(nobj);
-		INC_REF_COUNT(nm);
-
-		return ;
-	}
-
 	if(GC_SHOULD_VISIT(m)) { 
 		GC_MARK_AS_MARKED(m);
 		tinfo.visit_stack.push_back({*slots, MARK_STACK_NODE_COLOR_GREY});
