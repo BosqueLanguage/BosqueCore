@@ -192,7 +192,9 @@ enum ExpressionTag {
 
     LiteralStringExpression = "LiteralStringExpression",
     LiteralCStringExpression = "LiteralCStringExpression",
-    
+    LiteralFormatStringExpression = "LiteralFormatStringExpression",
+    LiteralFormatCStringExpression = "LiteralFormatCStringExpression",
+
     LiteralPathExpression = "LiteralPathExpression",
     LiteralPathItemExpression = "LiteralPathItemExpression",
     LiteralGlobExpression = "LiteralGlobExpression",
@@ -224,6 +226,8 @@ enum ExpressionTag {
     ParseAsTypeExpression = "ParseAsTypeExpression",
     SafeConvertExpression = "SafeConvertExpression",
     CreateDirectExpression = "CreateDirectExpression",
+
+    InterpolateFormatExpression = "InterpolateFormatExpression",
 
     PostfixOpExpression = "PostfixOpExpression",
 
@@ -369,13 +373,108 @@ class LiteralSimpleExpression extends Expression {
 class LiteralRegexExpression extends Expression {
     readonly value: string;
 
-    constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string) {
+		constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string) {
         super(tag, sinfo);
         this.value = value;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         return this.value;
+    }
+}
+
+abstract class FormatStringComponent {
+    abstract emit(): string;
+}
+
+class FormatStringTextComponent extends FormatStringComponent {
+    readonly text: string;
+    resolvedValue: string | undefined = undefined; //after unescaping
+
+    constructor(text: string) {
+        super();
+        this.text = text;
+    }
+
+    emit(): string {
+        return this.text;
+    }
+}
+
+class FormatStringArgComponent extends FormatStringComponent {
+    readonly argPos: string; //name
+    readonly argType: TypeSignature; //can be AutoTypeSignature, string, or typed string
+    resolvedType: TypeSignature | undefined; //after type checking
+
+    constructor(argPos: string, argType: TypeSignature) {
+        super();
+        this.argPos = argPos;
+        this.argType = argType;
+    }
+
+    emit(): string {
+        return `%{${this.argPos}: ${this.argType.emit()}}`;
+    }
+}
+
+class LiteralFormatStringExpression extends Expression {
+    readonly value: string;
+    readonly fmts: FormatStringComponent[];
+
+    constructor(sinfo: SourceInfo, value: string, fmts: FormatStringComponent[]) {
+        super(ExpressionTag.LiteralFormatStringExpression, sinfo);
+        this.value = value;
+        this.fmts = fmts;
+    }
+
+    override isLiteralExpression(): boolean {
+        return true;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.value
+    }
+}
+
+class LiteralFormatCStringExpression extends Expression {
+    readonly value: string;
+    readonly fmts: FormatStringComponent[];
+
+    constructor(sinfo: SourceInfo, value: string, fmts: FormatStringComponent[]) {
+        super(ExpressionTag.LiteralFormatCStringExpression, sinfo);
+        this.value = value;
+        this.fmts = fmts;
+    }
+
+    override isLiteralExpression(): boolean {
+        return true;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.value;
+    }
+}
+
+class InterpolateFormatExpression extends Expression {
+    readonly kind: "string" | "cstring";
+    readonly decloftype: TypeSignature | undefined;
+    readonly fmtString: Expression;
+    readonly args: ArgumentValue[];
+    
+    actualoftype: TypeSignature | undefined = undefined;
+
+    constructor(sinfo: SourceInfo, kind: "string" | "cstring", decloftype: TypeSignature | undefined, fmtString: Expression, args: ArgumentValue[]) {
+        super(ExpressionTag.InterpolateFormatExpression, sinfo);
+        this.kind = kind;
+        this.decloftype = decloftype;
+        this.fmtString = fmtString;
+        this.args = args;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        const fmtStr = this.fmtString.emit(true, fmt);
+        const argsStr = this.args.map((a) => a.emit(fmt)).join(", ");
+        return `Interpolate::${this.kind}${this.decloftype !== undefined ? `<${this.decloftype.emit()}>` : ""}(${fmtStr}, ${argsStr})`;
     }
 }
 
@@ -2345,7 +2444,11 @@ class StandardBodyImplementation extends BodyImplementation {
 export {
     RecursiveAnnotation,
     BinderInfo, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestFail,
-    ArgumentValue, RefArgumentValue, PositionalArgumentValue, NamedArgumentValue, SpreadArgumentValue, ArgumentList,
+    FormatStringComponent, FormatStringTextComponent, FormatStringArgComponent, 
+	LiteralFormatCStringExpression,
+	LiteralFormatStringExpression,
+	InterpolateFormatExpression,
+	ArgumentValue, RefArgumentValue, PositionalArgumentValue, NamedArgumentValue, SpreadArgumentValue, ArgumentList,
     ExpressionTag, Expression, ErrorExpression, LiteralExpressionValue, ConstantExpressionValue,
     LiteralNoneExpression, LiteralSimpleExpression, LiteralRegexExpression,
     LiteralTypeDeclValueExpression,
