@@ -3,14 +3,8 @@
 #include "../common.h"
 #include "allocator.h"
 
-#include <chrono>
-
-#define MAX_ALLOC_LOOKUP_TABLE_SIZE 1024
-
 #define MARK_STACK_NODE_COLOR_GREY 0
 #define MARK_STACK_NODE_COLOR_BLACK 1
-
-#define FWD_TABLE_START 1
 
 struct MarkStackEntry
 {
@@ -40,6 +34,39 @@ struct RegisterContents
     void* r15 = nullptr;
 };
 
+class ForwardTable {
+	// TODO: This is arbitrary for now --- need to find upper bound
+	static constexpr size_t MAX_ENTRIES = 1 << 19;
+	static constexpr uint32_t START = 1;
+
+	// TODO: Ring buffer is just a hack to keep things moving
+	void* table[ForwardTable::MAX_ENTRIES];
+	uint32_t index;
+
+public:
+	ForwardTable() noexcept : table(), index(ForwardTable::START) {}
+
+	uint32_t insert(void* addr) noexcept
+	{
+		uint32_t idx = this->index++;	
+		this->table[idx] = addr;
+		if(this->index >= ForwardTable::MAX_ENTRIES) {
+			this->index = ForwardTable::START;	
+		}
+	
+		return idx;
+	}
+
+	void* query(uint32_t idx) const noexcept
+	{
+		assert(idx < ForwardTable::MAX_ENTRIES && idx > 0);
+		void* obj = this->table[idx];
+		assert(obj != nullptr);
+
+		return obj;
+	}
+};
+
 //All of the data that a thread local allocator needs to run it's operations
 struct BSQMemoryTheadLocalInfo
 {
@@ -62,8 +89,7 @@ struct BSQMemoryTheadLocalInfo
     int32_t old_roots_count;
     void** old_roots;
 
-    int32_t forward_table_index;
-    void** forward_table;
+	ForwardTable forward_table;
 
     ArrayList<void*> decs_batch; // Decrements able to be done without needing decs thread	
     PageList decd_pages; // pages with newly decd (and now dead) objects
@@ -95,7 +121,7 @@ struct BSQMemoryTheadLocalInfo
     BSQMemoryTheadLocalInfo() noexcept : 
         tl_id(0), g_gcallocs(nullptr), collectfp(nullptr), native_stack_base(nullptr), native_stack_contents(), 
         native_register_contents(), roots_count(0), roots(nullptr), old_roots_count(0), 
-        old_roots(nullptr), forward_table_index(FWD_TABLE_START), forward_table(nullptr), 
+        old_roots(nullptr), forward_table(), 
         decs_batch(), decd_pages(), nursery_usage(0.0f), pending_roots(), visit_stack(), 
 		pending_young(), max_decrement_count(BSQ_INITIAL_MAX_DECREMENT_COUNT), 
 		disable_automatic_collections(false) {}
@@ -103,7 +129,7 @@ struct BSQMemoryTheadLocalInfo
     BSQMemoryTheadLocalInfo() noexcept : 
         tl_id(0), g_gcallocs(nullptr), collectfp(nullptr), native_stack_base(nullptr), native_stack_contents(), 
         native_register_contents(), roots_count(0), roots(nullptr), old_roots_count(0), 
-        old_roots(nullptr), forward_table_index(FWD_TABLE_START), forward_table(nullptr), 
+        old_roots(nullptr), forward_table(), 
         decs_batch(), decd_pages(), nursery_usage(0.0f), pending_roots(), visit_stack(), 
 		pending_young(), max_decrement_count(BSQ_INITIAL_MAX_DECREMENT_COUNT), 
 		disable_automatic_collections(false), memstats() {}
