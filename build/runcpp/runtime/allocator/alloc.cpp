@@ -25,4 +25,9 @@ namespace ᐸRuntimeᐳ
     
         this->gcallocs.clear();
     }
+
+    void collect()
+    {
+        ;
+    }
 }

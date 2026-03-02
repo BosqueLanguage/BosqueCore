@@ -92,6 +92,41 @@ class TypeInfoManager {
         this.typeInfoMap.set(tkey, typeInfo);
     }
 
+    generateAllocatorNameForTypeKeyGeneral(tkey: string): string | undefined {
+        const tii = this.getTypeInfo(tkey);
+        if(tii.tag !== LayoutTag.Ref) {
+            return undefined;
+        }
+
+        return TransformCPPNameManager.convertTypeKey(tkey) + "_allocator";
+    }
+
+    generateAllocatorNameForTypeKeySpecial(tkey: string): string[] | undefined {
+        const tii = this.getTypeInfo(tkey);
+        if(tii.tag !== LayoutTag.Ref) {
+            return undefined;
+        }
+
+        if(tii.tkey === "Ctring") {
+            return [
+                `PosRBTreeLeaf_CString_allocator`,
+                `PosRBTreeNode_CString_allocator`
+            ];
+        }
+        else if (tii.tkey === "String") {
+            return [
+                `PosRBTreeLeaf_String_allocator`,
+                `PosRBTreeNode_String_allocator`
+            ];
+        }
+        else if (tii.tkey.startsWith("List")) {
+            assert(false, `TypeInfoManager::generateAllocatorNameForTypeKeySpecial - List allocator generation not yet implemented for type key ${tkey}`);
+        }
+        else {
+            assert(false, `TypeInfoManager::generateAllocatorNameForTypeKeySpecial - No special allocator for type key ${tkey}`);
+        }
+    }
+
     emitTypeInfoDecl(tkey: string): string {
         const typeinfo = this.getTypeInfo(tkey);
         const tk = TransformCPPNameManager.convertTypeKey(tkey);

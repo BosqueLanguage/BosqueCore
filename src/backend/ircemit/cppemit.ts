@@ -1727,9 +1727,25 @@ class CPPEmitter {
             assert(false, "CPPEmitter: need to implement multi-invoke command line dispatch");
         }
 
+        const allocs = [
+            ...(this.irasm.primitives.map((pdcl) => this.typeInfoManager.generateAllocatorNameForTypeKeySpecial(pdcl.tkey)).filter((aa) => aa !== undefined) as string[][]),
+            ...(this.irasm.collections.map((cdcl) => this.typeInfoManager.generateAllocatorNameForTypeKeySpecial(cdcl.tkey)).filter((aa) => aa !== undefined) as string[][]),
+            ...(this.irasm.eventlists.map((ccdl) => this.typeInfoManager.generateAllocatorNameForTypeKeySpecial(ccdl.tkey)).filter((aa) => aa !== undefined) as string[][]),
+
+            ...(this.irasm.entities.map((edcl) => this.typeInfoManager.generateAllocatorNameForTypeKeyGeneral(edcl.tkey)).filter((aa) => aa !== undefined) as string[]),
+            ...(this.irasm.datamembers.map((cdcl) => this.typeInfoManager.generateAllocatorNameForTypeKeyGeneral(cdcl.tkey)).filter((aa) => aa !== undefined) as string[])
+        ].map((aa) => `&ᐸRuntimeᐳ::${aa}`);
+
+        const initializegc = '{\n' +
+        '    //always thread safe on this initialization phase since we have not started any other threads yet\n' +
+        '    register void** rbp asm("rbp");\n' +
+        `    ᐸRuntimeᐳ::tl_alloc_info.initialize(caller_rbp, ᐸRuntimeᐳ::collect, {${allocs.join(', ')}});` +
+        '}';
+
         return 'int main(int argc, char** argv) {\n' +
-               '    ᐸRuntimeᐳ::TaskInfoRepr<StdEnvUnion> envunion; //and more setup here\n' +
+               '    ᐸRuntimeᐳ::TaskInfoRepr<StdEnvUnion> envunion;\n' +
                '    ᐸRuntimeᐳ::tl_bosque_info.current_task = &envunion;\n\n' +
+               `    ${initializegc}\n` +
                `    ${notes}\n` +
                `    ${dispatchstrs}\n` +
                '}\n';

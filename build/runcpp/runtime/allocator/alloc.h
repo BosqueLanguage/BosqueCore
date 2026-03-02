@@ -156,5 +156,7 @@ namespace ᐸRuntimeᐳ
 
     extern thread_local AllocatorThreadLocalInfo tl_alloc_info;
     extern AllocatorGlobalInfo g_alloc_info;
+
+    extern void collect();
 }
 
