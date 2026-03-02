@@ -276,7 +276,7 @@ namespace ᐸRuntimeᐳ
         }
 
         auto stok = this->lexer.current();
-        if(stok.size() < CStrRootInlineContent::CSTR_MAX_SIZE) {
+        if(stok.size() <= CStrRootInlineContent::CSTR_MAX_SIZE) {
             CStrRootInlineContent cb;
             size_t ecount = 0;
             bool extractok = true;
@@ -310,7 +310,7 @@ namespace ᐸRuntimeᐳ
         }
 
         auto stok = this->lexer.current();
-        if(stok.size() < StrBuff::STR_MAX_SIZE) {
+        if(stok.size() <= StrBuff::STR_MAX_SIZE) {
             StrBuff cb;
             size_t ecount = 0;
             bool extractok = true;

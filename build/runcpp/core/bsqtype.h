@@ -35,6 +35,9 @@ namespace ᐸRuntimeᐳ
     constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERBLOCK = 18;
     constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFER = 19;
 
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_UUIDV4 = 20;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_UUIDV7 = 21;
+
     enum class LayoutTag
     {
         Value,

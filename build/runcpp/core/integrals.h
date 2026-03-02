@@ -339,7 +339,7 @@ namespace ᐸRuntimeᐳ
                 return XChkInt{XChkInt::BOTTOM_VALUE};
             }
 
-           __int128_t result = 0;
+            __int128_t result = 0;
             if(!__builtin_mul_overflow(lhs.value, rhs.value, &result) && XChkInt::isValidInt(result)) [[likely]] {
                 return XChkInt{result};
             }

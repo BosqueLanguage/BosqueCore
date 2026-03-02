@@ -193,12 +193,12 @@ namespace ᐸRuntimeᐳ
 
         bool empty() const
         {
-            return (this->tree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRING_INLINE) && this->tree.data.inlinecstr.size() == 0;
+            return (this->tree.typeinfo == &g_typeinfo_CStringInline) && this->tree.data.inlinecstr.size() == 0;
         }
 
         int64_t size() const
         {
-            if(this->tree.typeinfo->bsqtypeid == WELL_KNOWN_TYPE_ID_CSTRING_INLINE) {
+            if(this->tree.typeinfo == &g_typeinfo_CStringInline) {
                 return this->tree.data.inlinecstr.size();
             }
             else {
@@ -301,7 +301,7 @@ namespace ᐸRuntimeᐳ
                 for(size_t i = 0; i < repr.strcomps.size(); i++) {
                     const std::pair<uint8_t, const char*>& comp = repr.strcomps[i];
                     if(comp.second != nullptr) {
-                        size_t cmp_size = std::strlen(comp.second);
+                        size_t cmp_size = std::char_traits<char>::length(comp.second);
                         std::copy(comp.second, comp.second + cmp_size, ptr);
                         ptr += cmp_size;
                     }

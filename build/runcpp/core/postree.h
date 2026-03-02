@@ -27,7 +27,7 @@ namespace ᐸRuntimeᐳ
     {
     };
     
-    constexpr TypeInfo g_typeinfo_PosRBTreeLeafEmpty_generate(uint32_t tid, const char* tname)
+    consteval TypeInfo g_typeinfo_PosRBTreeLeafEmpty_generate(uint32_t tid, const char* tname)
     {
         return TypeInfo {
             tid,
@@ -49,7 +49,7 @@ namespace ᐸRuntimeᐳ
     };
 
     template<typename T, int64_t K>
-    constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_generate(uint32_t tid, const char* mask, const char* tname)
+    consteval TypeInfo g_typeinfo_PosRBTreeLeaf_generate(uint32_t tid, const char* mask, const char* tname)
     {
         return TypeInfo {
             tid,
@@ -89,7 +89,7 @@ namespace ᐸRuntimeᐳ
     };
 
     template<typename T, int64_t K> 
-    constexpr TypeInfo g_typeinfo_PosRBTreeNode_generate(uint32_t tid, const char* tname)
+    consteval TypeInfo g_typeinfo_PosRBTreeNode_generate(uint32_t tid, const char* tname)
     {
         return TypeInfo {
             tid,
@@ -106,18 +106,18 @@ namespace ᐸRuntimeᐳ
     class PosRBTree
     {
     public:
-        static uint32_t bbleaftypeid;
-        static uint32_t leaftypeid;
-        static uint32_t nodetypeid;
+        static const TypeInfo* bbleaftype;
+        static const TypeInfo* leaftype;
+        static const TypeInfo* nodetype;
         
         PosRBTreeRepr<T, K> repr;
 
         constexpr int64_t count() const
         {
-            if(this->repr.typeinfo->bsqtypeid == PosRBTree<T, K>::bbleaftypeid) {
+            if(this->repr.typeinfo == PosRBTree<T, K>::bbleaftype) {
                 return 0;
             }
-            else if(this->repr.typeinfo->bsqtypeid == PosRBTree<T, K>::leaftypeid) {
+            else if(this->repr.typeinfo == PosRBTree<T, K>::leaftype) {
                 return this->repr.data.leaf->count;
             }
             else {
@@ -127,7 +127,7 @@ namespace ᐸRuntimeᐳ
 
         PosRBTreeLeaf<T, K>* getLeaf(int64_t index) const
         {
-            if(this->repr.typeinfo->bsqtypeid == PosRBTree<T, K>::leaftypeid) {
+            if(this->repr.typeinfo == PosRBTree<T, K>::leaftype) {
                 return this->repr.data.leaf;
             }
             else {
@@ -138,7 +138,7 @@ namespace ᐸRuntimeᐳ
 
         T& get(int64_t index) const
         {
-            if(this->repr.typeinfo->bsqtypeid == PosRBTree<T, K>::leaftypeid) {
+            if(this->repr.typeinfo == PosRBTree<T, K>::leaftype) {
                 return this->repr.data.leaf->data[index];
             }
             else {
@@ -148,7 +148,7 @@ namespace ᐸRuntimeᐳ
     };
 
     template<typename T, int64_t K> 
-    constexpr TypeInfo g_typeinfo_PosRBTree_generate(uint32_t tid, const char* tname)
+    consteval TypeInfo g_typeinfo_PosRBTree_generate(uint32_t tid, const char* tname)
     {
         return TypeInfo {
             tid,
