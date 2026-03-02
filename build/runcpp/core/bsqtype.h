@@ -27,16 +27,21 @@ namespace ᐸRuntimeᐳ
     constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTRING_TREE = 12;
     constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTRING = 13;
 
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_STRBUFF = 14;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_STRNODE = 15;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_STRING = 16;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_EMPTY_STRING = 14;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_STRING = 15;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_POSRB_TREE_NODE_STRING = 16;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING = 17;
 
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERENTRY = 17;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERBLOCK = 18;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFER = 19;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_STRING_INLINE = 18;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_STRING_TREE = 19;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_STRING = 20;
 
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_UUIDV4 = 20;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_UUIDV7 = 21;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERENTRY = 21;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERBLOCK = 22;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFER = 23;
+
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_UUIDV4 = 24;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_UUIDV7 = 25;
 
     enum class LayoutTag
     {

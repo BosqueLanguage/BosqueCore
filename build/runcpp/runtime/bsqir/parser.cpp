@@ -310,8 +310,8 @@ namespace ᐸRuntimeᐳ
         }
 
         auto stok = this->lexer.current();
-        if(stok.size() <= StrBuff::STR_MAX_SIZE) {
-            StrBuff cb;
+        if(stok.size() <= StrRootInlineContent::STR_MAX_SIZE) {
+            StrRootInlineContent cb;
             size_t ecount = 0;
             bool extractok = true;
             BSQLexBufferIterator ii = stok.begin;
