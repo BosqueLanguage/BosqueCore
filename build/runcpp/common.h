@@ -25,6 +25,11 @@
 //Only for internal diagnostics
 #include <assert.h>
 
+////
+//TODO: for now the default allocator is #define set to malloc/free
+#define BSQ_ALLOCATOR_USE_MALLOC 1
+////
+
 namespace ᐸRuntimeᐳ
 {
     constexpr int64_t BSQ_NUMERIC_DYNAMIC_RANGE_BASE = 4611686018427387903ll;
