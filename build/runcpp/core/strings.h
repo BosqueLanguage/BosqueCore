@@ -379,6 +379,9 @@ namespace ᐸRuntimeᐳ
     inline constexpr TypeInfo g_typeinfo_PosRBTreeNode_String = g_typeinfo_PosRBTreeNode_generate<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_NODE_STRING, "PosRBTreeNode_String");
     inline constexpr TypeInfo g_typeinfo_PosRBTree_String = g_typeinfo_PosRBTree_generate<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>(WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING, "PosRBTree_String");
 
+    extern thread_local GCAllocator<PosRBTreeLeaf<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE>> PosRBTreeLeaf_String_allocator;
+    extern thread_local GCAllocator<PosRBTreeNode<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE>> PosRBTreeNode_String_allocator;
+
     union StringUnion
     {
         StrRootInlineContent inlinecstr;
