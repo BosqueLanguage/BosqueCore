@@ -62,7 +62,7 @@ function buildExeCode(assembly: Assembly, rootasm: string, outname: string) {
 
     Status.output("Emitting CPP code...\n");
     const cppcode = CPPEmitter.createEmitter(ircode);
-    const maincode = cppcode.emitForCommandLine([`${mainns}::main`]);
+    const maincode = cppcode.emitForCommandLine(`${mainns}::main`);
 
     Status.output("    Writing CPP code to disk...\n");
     const nndir = path.normalize(outname);

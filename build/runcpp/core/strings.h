@@ -6,7 +6,7 @@
 #include "boxed.h"
 
 #include "postree.h"
-#include "alloc.h"
+#include "../runtime/allocator/alloc.h"
 
 namespace ᐸRuntimeᐳ
 {

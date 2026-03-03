@@ -1683,26 +1683,40 @@ class CPPEmitter {
         return [stringunion, '//TODO eventually need to set GC and other info'].join("\n\n");
     }
 
-    //Emit command line main
-    private emitCommandLineMain(ikey: string[]): string {
-        const notes = "//TODO ---- need to dispatch on things and handle useage + agents.md";
-
-        let dispatchstrs = "";
-        if(ikey.length === 1) {
-            const idecl = this.irasm.invokes.find((v) => v.ikey === ikey[0]) as IRInvokeDecl;
-
-            dispatchstrs = 
-            (idecl.params.length === 1 ?
-            'auto iobb = ᐸRuntimeᐳ::g_alloc_info.io_buffer_alloc();\n' + 
+    ////
+    //Emit command line main support
+    private emitParseArgsMain(idecl: IRInvokeDecl): string {
+        if(idecl.params.length === 0) {
+            return '    //No args';
+        }
+        else {
+            const initforparse = 
+            '    auto iobb = ᐸRuntimeᐳ::g_alloc_info.io_buffer_alloc();\n' + 
             '    size_t ibytes = std::strlen(argv[1]);\n' +
             '    std::copy(argv[1], argv[1] + ibytes, iobb);\n\n' +
             '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.initialize({iobb}, ibytes);\n' +
-            `    auto x = BSQ_parse${TransformCPPNameManager.convertTypeKey(idecl.params[0].type.tkeystr)}();\n` +
-            '    if(!x.has_value()) { printf("Error parsing input\\n"); exit(1); }\n' +
+            '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.setSloppyStringParsing(true);\n';
+
+            const pargs = idecl.params.map((p) => {
+                const vname = TransformCPPNameManager.convertIdentifier(p.name);
+                const parsekey = TransformCPPNameManager.convertTypeKey(p.type.tkeystr);
+
+                return `    auto ${vname} = BSQ_parse${parsekey}(); if(!${vname}.has_value()) { printf("Error parsing input\\n"); exit(1); }\n`;
+            }).join("\n") + "\n";
+
+            const finalizeparse = 
             '    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.allInputConsumed()) { printf("Error parsing input -- invaliad data in tail of input\\n"); exit(1); }\n' +
-            '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.release();\n\n'
-            : '//No args\n\n') +
-            '    if (setjmp(ᐸRuntimeᐳ::tl_bosque_info.current_task->error_handler) > 0) {\n' +
+            '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.release();\n';
+
+            return [initforparse, pargs, finalizeparse].join("\n");
+        }
+    }
+
+    private emitMMain(idecl: IRInvokeDecl): string {
+        const parse = this.emitParseArgsMain(idecl);
+
+        const invokeargs = idecl.params.map((p) => TransformCPPNameManager.convertIdentifier(p.name) + ".value()").join(", ");
+        const invoke = '    if (setjmp(ᐸRuntimeᐳ::tl_bosque_info.current_task->error_handler) > 0) {\n' +
             '        auto perr = ᐸRuntimeᐳ::tl_bosque_info.current_task->pending_error.value();\n' +
             '        auto pfile = std::string(perr.file);\n' +
             '        auto pbfile = std::string(pfile.cbegin() + pfile.find_last_of("/") + 1, pfile.cend());\n' +
@@ -1710,8 +1724,9 @@ class CPPEmitter {
             '        if(perr.message != nullptr) { printf("  with message: %s\\n", perr.message); }\n' +
             '        exit(1);\n' +
             '    }\n\n' +
-            `    auto result = ${TransformCPPNameManager.convertInvokeKey(ikey[0])}(${idecl.params.length === 1 ? 'x.value()' : ''});\n\n` +
-            '    size_t obytes = 0;\n' +
+            `    auto result = ${TransformCPPNameManager.convertInvokeKey(idecl.ikey)}(${invokeargs});\n`;
+
+        const print = '    size_t obytes = 0;\n' +
             '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.prepForEmit(true);\n' +
             `    BSQ_emit${TransformCPPNameManager.convertTypeKey(idecl.resultType.tkeystr)}(result);\n` +
             '    auto oibb = ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.completeEmit(obytes);\n\n' +
@@ -1722,32 +1737,47 @@ class CPPEmitter {
             '    printf("\\n");\n\n' +
             '    ᐸRuntimeᐳ::g_alloc_info.io_buffer_free_list(oibb);\n' +
             '    oibb.clear();';
-        }
-        else {
-            assert(false, "CPPEmitter: need to implement multi-invoke command line dispatch");
-        }
+
+        return `int mmain(int argc, char** argv)\n` +
+        `{\n` +
+        parse + "\n" +
+        invoke + "\n" +
+        print + "\n" +
+        `    return 0;\n` +
+        `}`;
+    }
+
+    private emitCommandLineMain(ikey: string): string {
+        const idecl = this.irasm.invokes.find((v) => v.ikey === ikey) as IRInvokeDecl;
+
+        const mmain = this.emitMMain(idecl);
+
+        const sallocs = [
+            ...(this.irasm.primitives.map((pdcl) => this.typeInfoManager.generateAllocatorNameForTypeKeySpecialMapEntry(pdcl.tkey)).filter((aa) => aa !== undefined) as string[][]),
+            ...(this.irasm.collections.map((cdcl) => this.typeInfoManager.generateAllocatorNameForTypeKeySpecialMapEntry(cdcl.tkey)).filter((aa) => aa !== undefined) as string[][]),
+            ...(this.irasm.eventlists.map((ccdl) => this.typeInfoManager.generateAllocatorNameForTypeKeySpecialMapEntry(ccdl.tkey)).filter((aa) => aa !== undefined) as string[][]),
+        ].flat();
 
         const allocs = [
-            ...(this.irasm.primitives.map((pdcl) => this.typeInfoManager.generateAllocatorNameForTypeKeySpecial(pdcl.tkey)).filter((aa) => aa !== undefined) as string[][]),
-            ...(this.irasm.collections.map((cdcl) => this.typeInfoManager.generateAllocatorNameForTypeKeySpecial(cdcl.tkey)).filter((aa) => aa !== undefined) as string[][]),
-            ...(this.irasm.eventlists.map((ccdl) => this.typeInfoManager.generateAllocatorNameForTypeKeySpecial(ccdl.tkey)).filter((aa) => aa !== undefined) as string[][]),
-
-            ...(this.irasm.entities.map((edcl) => this.typeInfoManager.generateAllocatorNameForTypeKeyGeneral(edcl.tkey)).filter((aa) => aa !== undefined) as string[]),
-            ...(this.irasm.datamembers.map((cdcl) => this.typeInfoManager.generateAllocatorNameForTypeKeyGeneral(cdcl.tkey)).filter((aa) => aa !== undefined) as string[])
-        ].map((aa) => `&ᐸRuntimeᐳ::${aa}`);
+            ...(this.irasm.entities.map((edcl) => this.typeInfoManager.generateAllocatorNameForTypeKeyGeneralMapEntry(edcl.tkey)).filter((aa) => aa !== undefined) as string[]),
+            ...(this.irasm.datamembers.map((cdcl) => this.typeInfoManager.generateAllocatorNameForTypeKeyGeneralMapEntry(cdcl.tkey)).filter((aa) => aa !== undefined) as string[])
+        ];
 
         const initializegc = '{\n' +
-        '    //always thread safe on this initialization phase since we have not started any other threads yet\n' +
-        '    register void** rbp asm("rbp");\n' +
-        `    ᐸRuntimeᐳ::tl_alloc_info.initialize(caller_rbp, ᐸRuntimeᐳ::collect, {${allocs.join(', ')}});` +
-        '}';
+        '        //always thread safe on this initialization phase since we have not started any other threads yet\n' +
+        '        register void** rbp asm("rbp");\n' +
+        `        ᐸRuntimeᐳ::tl_alloc_info.initialize(rbp, ᐸRuntimeᐳ::collect, {${[...sallocs, ...allocs].join(', ')}});\n` +
+        '    }\n';
 
-        return 'int main(int argc, char** argv) {\n' +
-               '    ᐸRuntimeᐳ::TaskInfoRepr<StdEnvUnion> envunion;\n' +
-               '    ᐸRuntimeᐳ::tl_bosque_info.current_task = &envunion;\n\n' +
+        const notes = "//TODO ---- need to dispatch on things and handle useage + agents.md";
+
+        return mmain + "\n\n" +
+               'int main(int argc, char** argv) {\n' +
+               '    ᐸRuntimeᐳ::TaskInfoRepr<StdEnvUnion> maintask;\n' +
+               '    ᐸRuntimeᐳ::tl_bosque_info.current_task = &maintask;\n\n' +
                `    ${initializegc}\n` +
                `    ${notes}\n` +
-               `    ${dispatchstrs}\n` +
+               `    return mmain(argc, argv);\n` +
                '}\n';
     }
 
@@ -1757,7 +1787,7 @@ class CPPEmitter {
         return this.emitIRInvokeDeclInfo(invk as IRInvokeDecl)[1];
     }
 
-    public emitForCommandLine(ikey: string[]): [string, string] {
+    public emitForCommandLine(ikey: string): [string, string] {
         const typeinfo = this.emitTypeDeclInfo();
         const iinfo = this.emitAllInvokeInfo();
 

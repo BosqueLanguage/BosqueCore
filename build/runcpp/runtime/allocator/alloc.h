@@ -66,7 +66,7 @@ namespace ᐸRuntimeᐳ
         AllocatorThreadLocalInfo() : gcallocs(), collectfp(nullptr) {}
         ~AllocatorThreadLocalInfo();
 
-        void initialize(void** caller_rbp, void (*_collectfp)(), std::map<uint32_t, GCAllocatorImpl*>&& gcallocs);
+        void initialize(void** caller_rbp, void (*_collectfp)(), const std::map<uint32_t, GCAllocatorImpl*>& gcallocs);
         void cleanup();
     };
 

@@ -103,11 +103,8 @@ class TypeInfoManager {
 
     generateAllocatorNameForTypeKeySpecial(tkey: string): string[] | undefined {
         const tii = this.getTypeInfo(tkey);
-        if(tii.tag !== LayoutTag.Ref) {
-            return undefined;
-        }
 
-        if(tii.tkey === "Ctring") {
+        if(tii.tkey === "CString") {
             return [
                 `PosRBTreeLeaf_CString_allocator`,
                 `PosRBTreeNode_CString_allocator`
@@ -123,6 +120,46 @@ class TypeInfoManager {
             assert(false, `TypeInfoManager::generateAllocatorNameForTypeKeySpecial - List allocator generation not yet implemented for type key ${tkey}`);
         }
         else {
+            if(tii.tag !== LayoutTag.Ref) {
+                return undefined;
+            }
+
+            assert(false, `TypeInfoManager::generateAllocatorNameForTypeKeySpecial - No special allocator for type key ${tkey}`);
+        }
+    }
+
+    generateAllocatorNameForTypeKeyGeneralMapEntry(tkey: string): string | undefined {
+        const tii = this.getTypeInfo(tkey);
+        if(tii.tag !== LayoutTag.Ref) {
+            return undefined;
+        }
+
+        return `{ ${tii.bsqtypeid}, &ᐸRuntimeᐳ::${TransformCPPNameManager.convertTypeKey(tkey) + "_allocator"} }`;
+    }
+
+    generateAllocatorNameForTypeKeySpecialMapEntry(tkey: string): string[] | undefined {
+        const tii = this.getTypeInfo(tkey);
+
+        if(tii.tkey === "CString") {
+            return [
+                `{ ᐸRuntimeᐳ::WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_CSTRING, &ᐸRuntimeᐳ::PosRBTreeLeaf_CString_allocator }`,
+                `{ ᐸRuntimeᐳ::WELL_KNOWN_TYPE_ID_POSRB_TREE_NODE_CSTRING, &ᐸRuntimeᐳ::PosRBTreeNode_CString_allocator }`
+            ];
+        }
+        else if (tii.tkey === "String") {
+            return [
+                `{ ᐸRuntimeᐳ::WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_STRING, &ᐸRuntimeᐳ::PosRBTreeLeaf_String_allocator }`,
+                `{ ᐸRuntimeᐳ::WELL_KNOWN_TYPE_ID_POSRB_TREE_NODE_STRING, &ᐸRuntimeᐳ::PosRBTreeNode_String_allocator }`
+            ];
+        }
+        else if (tii.tkey.startsWith("List")) {
+            assert(false, `TypeInfoManager::generateAllocatorNameForTypeKeySpecial - List allocator generation not yet implemented for type key ${tkey}`);
+        }
+        else {
+            if(tii.tag !== LayoutTag.Ref) {
+                return undefined;
+            }
+
             assert(false, `TypeInfoManager::generateAllocatorNameForTypeKeySpecial - No special allocator for type key ${tkey}`);
         }
     }

@@ -11,10 +11,10 @@ namespace ᐸRuntimeᐳ
         this->cleanup();
     }
 
-    void AllocatorThreadLocalInfo::initialize(void** caller_rbp, void (*_collectfp)(), std::map<uint32_t, GCAllocatorImpl*>&& gcallocs)
+    void AllocatorThreadLocalInfo::initialize(void** caller_rbp, void (*_collectfp)(), const std::map<uint32_t, GCAllocatorImpl*>& gcallocs)
     {
         this->collectfp = _collectfp;
-        this->gcallocs = std::move(gcallocs);
+        this->gcallocs = gcallocs;
     }
 	
     void AllocatorThreadLocalInfo::cleanup()
