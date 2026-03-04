@@ -23,23 +23,6 @@ namespace ᐸRuntimeᐳ
 
     template<typename T, int64_t K> class PosRBTreeNode;
 
-    class PosRBTreeLeafEmpty 
-    {
-    };
-    
-    consteval TypeInfo g_typeinfo_PosRBTreeLeafEmpty_generate(uint32_t tid, const char* tname)
-    {
-        return TypeInfo{
-            tid,
-            8,
-            1,
-            LayoutTag::Value,
-            BSQ_PTR_MASK_LEAF,
-            tname,
-            nullptr
-        };
-    }
-
     template<typename T, int64_t K> 
     class PosRBTreeLeaf
     {
@@ -65,13 +48,12 @@ namespace ᐸRuntimeᐳ
     template<typename T, int64_t K>
     union PosRBTreeUnion
     {
-        PosRBTreeLeafEmpty emptyleaf;
+        //empty tree is where boxed union typeinfo is nullptr
         PosRBTreeLeaf<T, K>* leaf;
         PosRBTreeNode<T, K>* node;
 
         constexpr PosRBTreeUnion() : leaf() {}
         constexpr PosRBTreeUnion(const PosRBTreeUnion& other) = default;
-        constexpr PosRBTreeUnion(PosRBTreeLeafEmpty l) : emptyleaf(l) {}
         constexpr PosRBTreeUnion(PosRBTreeLeaf<T, K>* l) : leaf(l) {}
         constexpr PosRBTreeUnion(PosRBTreeNode<T, K>* n) : node(n) {}
     };
@@ -102,32 +84,40 @@ namespace ᐸRuntimeᐳ
         };
     }
 
+    ////
+    //Note that we tag each template to keep the types distinct because we have the static allocator/type info! 
+    //For now we probably want to mostly PIMPL the persistent tree logic and keep wrappers in the class to avoid code bloat but we can always change this later.
+    ////
     template<typename T, int64_t K, uint32_t TreeID>
     class PosRBTree
     {
     public:
         PosRBTreeRepr<T, K> repr;
 
-        inline static consteval uint32_t getEmptyLeafIDFrom(uint32_t treeid) { return treeid - 3; }
-        inline static consteval uint32_t getLeafIDFrom(uint32_t treeid) { return treeid - 2; }
-        inline static consteval uint32_t getNodeIDFrom(uint32_t treeid) { return treeid - 1; }
+        static const TypeInfo* s_leaftypeinfo;
+        thread_local static GCAllocator<PosRBTreeLeaf<T, K>>* s_leafallocator;
 
+        static const TypeInfo* s_nodetypeinfo;
+        thread_local static GCAllocator<PosRBTreeNode<T, K>>* s_nodeallocator;
+        
         constexpr int64_t count() const
         {
-            if(this->repr.typeinfo->bsqtypeid == getEmptyLeafIDFrom(TreeID)) {
+            if(this->repr.typeinfo == nullptr) {
                 return 0;
             }
-            else if(this->repr.typeinfo->bsqtypeid == getLeafIDFrom(TreeID)) {
-                return this->repr.data.leaf->count;
-            }
             else {
-                return this->repr.data.node->count;
+                if(this->repr.typeinfo == s_leaftypeinfo) {
+                    return this->repr.data.leaf->count;
+                }
+                else {
+                    return this->repr.data.node->count;
+                }
             }
         }
 
         PosRBTreeLeaf<T, K>* getLeaf(int64_t index) const
         {
-            if(this->repr.typeinfo->bsqtypeid == getLeafIDFrom(TreeID)) {
+            if(this->repr.typeinfo == s_leaftypeinfo) {
                 return this->repr.data.leaf;
             }
             else {
@@ -138,7 +128,7 @@ namespace ᐸRuntimeᐳ
 
         T& get(int64_t index) const
         {
-            if(this->repr.typeinfo->bsqtypeid == getLeafIDFrom(TreeID)) {
+            if(this->repr.typeinfo == s_leaftypeinfo) {
                 return this->repr.data.leaf->data[index];
             }
             else {
