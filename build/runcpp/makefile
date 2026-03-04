@@ -46,6 +46,10 @@ $(OUT_OBJ)lexer.o: $(HEADERS) $(BSQIR_SRC_DIR)lexer.cpp
 	@mkdir -p $(OUT_OBJ)
 	$(CPP) $(CPPFLAGS) -o $(OUT_OBJ)lexer.o -c $(BSQIR_SRC_DIR)lexer.cpp
 
+$(OUT_OBJ)list_t.o: $(HEADERS) $(CORE_SRC_DIR)list_t.cpp
+	@mkdir -p $(OUT_OBJ)
+	$(CPP) $(CPPFLAGS) -o $(OUT_OBJ)list_t.o -c $(CORE_SRC_DIR)list_t.cpp
+
 $(OUT_OBJ)strings.o: $(HEADERS) $(CORE_SRC_DIR)strings.cpp
 	@mkdir -p $(OUT_OBJ)
 	$(CPP) $(CPPFLAGS) -o $(OUT_OBJ)strings.o -c $(CORE_SRC_DIR)strings.cpp

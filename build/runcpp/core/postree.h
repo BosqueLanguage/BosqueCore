@@ -29,7 +29,7 @@ namespace ᐸRuntimeᐳ
     
     consteval TypeInfo g_typeinfo_PosRBTreeLeafEmpty_generate(uint32_t tid, const char* tname)
     {
-        return TypeInfo {
+        return TypeInfo{
             tid,
             8,
             1,
@@ -51,7 +51,7 @@ namespace ᐸRuntimeᐳ
     template<typename T, int64_t K>
     consteval TypeInfo g_typeinfo_PosRBTreeLeaf_generate(uint32_t tid, const char* mask, const char* tname)
     {
-        return TypeInfo {
+        return TypeInfo{
             tid,
             sizeof(PosRBTreeLeaf<T, K>),
             byteSizeToSlotCount(sizeof(PosRBTreeLeaf<T, K>)),
@@ -91,7 +91,7 @@ namespace ᐸRuntimeᐳ
     template<typename T, int64_t K> 
     consteval TypeInfo g_typeinfo_PosRBTreeNode_generate(uint32_t tid, const char* tname)
     {
-        return TypeInfo {
+        return TypeInfo{
             tid,
             sizeof(PosRBTreeNode<T, K>),
             byteSizeToSlotCount(sizeof(PosRBTreeNode<T, K>)),
