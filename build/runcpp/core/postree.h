@@ -5,6 +5,8 @@
 #include "bsqtype.h"
 #include "boxed.h"
 
+#include "../runtime/allocator/alloc.h"
+
 namespace ᐸRuntimeᐳ
 {
     enum class RColor : uint64_t

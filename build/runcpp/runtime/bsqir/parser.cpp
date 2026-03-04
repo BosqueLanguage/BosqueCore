@@ -276,7 +276,11 @@ namespace ᐸRuntimeᐳ
         }
 
         auto stok = this->lexer.current();
-        if(stok.size() <= CStrRootInlineContent::CSTR_MAX_SIZE) {
+        if(stok.size() == 2) {
+            this->lexer.consume();
+            return std::make_optional(XCString());
+        }
+        else if(stok.size() - 2 <= CStrRootInlineContent::CSTR_MAX_SIZE) {
             CStrRootInlineContent cb;
             size_t ecount = 0;
             bool extractok = true;
@@ -310,7 +314,11 @@ namespace ᐸRuntimeᐳ
         }
 
         auto stok = this->lexer.current();
-        if(stok.size() <= StrRootInlineContent::STR_MAX_SIZE) {
+        if(stok.size() == 2) {
+            this->lexer.consume();
+            return std::make_optional(XString());
+        }
+        else if(stok.size() - 2 <= StrRootInlineContent::STR_MAX_SIZE) {
             StrRootInlineContent cb;
             size_t ecount = 0;
             bool extractok = true;

@@ -6,7 +6,6 @@
 #include "boxed.h"
 
 #include "postree.h"
-#include "../runtime/allocator/alloc.h"
 
 namespace ᐸRuntimeᐳ
 {
@@ -189,12 +188,12 @@ namespace ᐸRuntimeᐳ
         {
             static_assert(len - 1 <= CStrRootInlineContent::CSTR_MAX_SIZE, "CString literal too large for CStrRootInlineContent");
 
-            if(len - 1 == 0) {
-                return XCString();
-            }
-            else {
-                return XCString(CStrRootInlineContent::literal(cstr));
-            }
+            return XCString(CStrRootInlineContent::literal(cstr));
+        }
+
+        constexpr static XCString smliteral(const char (&cstr)[1])
+        {
+            return XCString();
         }
 
         static XCString smliteraldynamic(const char* cstr, size_t len)
@@ -522,12 +521,12 @@ namespace ᐸRuntimeᐳ
         {
             static_assert(len - 1 <= StrRootInlineContent::STR_MAX_SIZE, "String literal too large for StrRootInlineContent");
 
-            if(len - 1 == 0) {
-                return XString();
-            }
-            else {
-                return XString(StrRootInlineContent::literal(str));
-            }
+            return XString(StrRootInlineContent::literal(str));
+        }
+
+        constexpr static XString smliteral(const char32_t (&str)[1])
+        {
+            return XString();
         }
 
         static XString smliteraldynamic(const char32_t* str, size_t len)

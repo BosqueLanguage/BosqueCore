@@ -6,7 +6,6 @@
 #include "boxed.h"
 
 #include "postree.h"
-#include "../runtime/allocator/alloc.h"
 
 namespace ᐸRuntimeᐳ
 {
@@ -213,14 +212,14 @@ namespace ᐸRuntimeᐳ
         template<size_t len>
         constexpr static XList smliteral(const T (&cdata)[len], const TypeInfo* inlinetypeinfo)
         {
-            static_assert(len <= LIST_T_CAPACITY(sizeof(T)), "List literal too large for ListTInlineBuff");
+            static_assert(len <= LIST_T_CAPACITY(sizeof(T)), "List literal too large for ListTInlineContent");
 
-            if(len == 0) {
-                return XList();
-            }
-            else {
-                return XList(ListTInlineBuff<T>::literal(cdata), inlinetypeinfo);
-            }
+            return XList(ListTInlineContent<T>::literal(cdata), inlinetypeinfo);
+        }
+
+        constexpr static XList make_empty()
+        {
+            return XList();
         }
 
         static XList palloc(T* data, size_t count)
@@ -264,12 +263,12 @@ namespace ᐸRuntimeᐳ
 
         XListTIterator<T, getPosTreeIDFrom(TYPE_ID_LIST_T), getPosInlineIDFrom(TYPE_ID_LIST_T)> begin() const
         {
-            return XListTIterator<T>::initializeBegin<getPosTreeIDFrom(TYPE_ID_LIST_T), getPosInlineIDFrom(TYPE_ID_LIST_T)>(this->tree);
+            return XListTIterator<T, getPosTreeIDFrom(TYPE_ID_LIST_T), getPosInlineIDFrom(TYPE_ID_LIST_T)>::initializeBegin(this->tree);
         }
 
         XListTIterator<T, getPosTreeIDFrom(TYPE_ID_LIST_T), getPosInlineIDFrom(TYPE_ID_LIST_T)> end() const
         {
-            return XListTIterator<T>::initializeEnd<getPosTreeIDFrom(TYPE_ID_LIST_T), getPosInlineIDFrom(TYPE_ID_LIST_T)>(this->tree);
+            return XListTIterator<T, getPosTreeIDFrom(TYPE_ID_LIST_T), getPosInlineIDFrom(TYPE_ID_LIST_T)>::initializeEnd(this->tree);
         }
     };
 }

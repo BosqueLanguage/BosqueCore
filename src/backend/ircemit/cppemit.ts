@@ -560,7 +560,7 @@ class CPPEmitter {
                 const ldecl = this.irasm.alltypes.get(iclse.constype.tkeystr) as IRListTypeDecl;
                 const tinfot = this.typeInfoManager.getTypeInfo(ldecl.oftype.tkeystr);
                 if(iclse.elements.length <= LIST_T_CAPACITY(tinfot.bytesize)) {
-                    return `${cce}::smliteral({${args}})`;
+                    return `${cce}::smliteral({${args}}, &${TransformCPPNameManager.generateTypeInfoNameForTypeKey(ldecl.oftype.tkeystr)})`;
                 }
                 else {
                     assert(false, "CPPEmitter: need to implement list singleton construction for larger allocation");
