@@ -13,7 +13,7 @@ namespace ᐸRuntimeᐳ
 
     constexpr size_t LIST_T_CAPACITY(size_t elem_size)
     {
-        return std::max((MAX_LIST_INLINE_BYTES - sizeof(size_t)) / elem_size, (size_t)1);
+        return std::max(MAX_LIST_INLINE_BYTES / elem_size, (size_t)1);
     }
 
     template<typename T>
@@ -22,10 +22,10 @@ namespace ᐸRuntimeᐳ
     public:
         constexpr static int64_t LIST_T_BUFF_SIZE = LIST_T_CAPACITY(sizeof(T));
 
-        T data[LIST_T_CAPACITY(sizeof(T))];
         size_t count;
+        std::array<T, LIST_T_CAPACITY(sizeof(T))> data;
 
-        constexpr ListTInlineContent() : data{0}, count(0) {}
+        constexpr ListTInlineContent() : count(0) {}
         constexpr ListTInlineContent(const ListTInlineContent& other) = default;
 
         constexpr bool empty() const { return this->count == 0; }

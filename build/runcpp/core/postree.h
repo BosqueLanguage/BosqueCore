@@ -30,7 +30,7 @@ namespace ᐸRuntimeᐳ
     {
     public:
         int64_t count;
-        T data[K];
+        std::array<T, K> data;
     };
 
     template<typename T, int64_t K>
