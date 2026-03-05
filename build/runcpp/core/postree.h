@@ -31,6 +31,9 @@ namespace ᐸRuntimeᐳ
     public:
         int64_t count;
         std::array<T, K> data;
+
+        constexpr PosRBTreeLeaf() : count(0), data{} {}
+        constexpr PosRBTreeLeaf(const PosRBTreeLeaf& other) = default;
     };
 
     template<typename T, int64_t K>

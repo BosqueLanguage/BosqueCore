@@ -1322,7 +1322,7 @@ class CPPEmitter {
         const defbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}() {\n` +
         `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeType("${tdecl.tkey}")) { return std::nullopt; };\n` +
         `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('{')) { return std::nullopt; };\n` +
-        `    ${voft} varr[16] = {0};\n` +
+        `    ${voft} varr[16] = {};\n` +
         `    size_t count = 0;\n` +
         `    bool first = true;\n` +
         `    while(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.peekSymbol('}')) {\n` +

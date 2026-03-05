@@ -25,7 +25,7 @@ namespace ᐸRuntimeᐳ
         size_t count;
         std::array<T, LIST_T_CAPACITY(sizeof(T))> data;
 
-        constexpr ListTInlineContent() : count(0) {}
+        constexpr ListTInlineContent() : count(0), data{} {}
         constexpr ListTInlineContent(const ListTInlineContent& other) = default;
 
         constexpr bool empty() const { return this->count == 0; }
@@ -37,7 +37,7 @@ namespace ᐸRuntimeᐳ
             static_assert(len <= LIST_T_CAPACITY(sizeof(T)), "Literal too large for ListTInlineContent");
 
             ListTInlineContent cb;
-            std::copy(elems, elems + len, cb.data);
+            std::copy(elems, elems + len, cb.data.begin());
             cb.count = len;
 
             return cb;
@@ -49,7 +49,7 @@ namespace ᐸRuntimeᐳ
             assert(len <= LIST_T_CAPACITY(sizeof(T)));
 
             ListTInlineContent cb;
-            std::copy(elems, elems + len, cb.data);
+            std::copy(elems, elems + len, cb.data.begin());
             cb.count = len;
 
             return cb;
@@ -230,7 +230,7 @@ namespace ᐸRuntimeᐳ
             else {
                 if(count <= LIST_T_CAPACITY(sizeof(T))) {
                     ListTInlineContent<T> buff;
-                    std::copy(data, data + count, buff.data);
+                    std::copy(data, data + count, buff.data.begin());
                     buff.count = count;
 
                     return XList(buff);

@@ -15,9 +15,9 @@ namespace ᐸRuntimeᐳ
         constexpr static int64_t CSTR_BUFF_SIZE = 16;
         constexpr static int64_t CSTR_MAX_SIZE = CSTR_BUFF_SIZE - 1;
 
-        char data[CSTR_BUFF_SIZE];
+        std::array<char, CSTR_BUFF_SIZE> data;
 
-        constexpr CStrRootInlineContent() : data{0} {}
+        constexpr CStrRootInlineContent() : data{} {}
         constexpr CStrRootInlineContent(const CStrRootInlineContent& other) = default;
 
         constexpr bool empty() const { return static_cast<int64_t>(this->data[0]) == 0; }
@@ -30,7 +30,7 @@ namespace ᐸRuntimeᐳ
 
             CStrRootInlineContent cb;
             cb.data[0] = static_cast<char>(len - 1); //store length
-            std::copy(cstr, cstr + len - 1, cb.data + 1);
+            std::copy(cstr, cstr + len - 1, cb.data.begin() + 1);
 
             return cb;
         }
@@ -42,7 +42,7 @@ namespace ᐸRuntimeᐳ
 
             CStrRootInlineContent cb;
             cb.data[0] = static_cast<char>(len); //store length
-            std::copy(cstr, cstr + len, cb.data + 1);
+            std::copy(cstr, cstr + len, cb.data.begin() + 1);
 
             return cb;
         }
@@ -353,9 +353,9 @@ namespace ᐸRuntimeᐳ
         constexpr static int64_t STR_BUFF_SIZE = 8;
         constexpr static int64_t STR_MAX_SIZE = STR_BUFF_SIZE - 1;
 
-        char32_t data[STR_BUFF_SIZE];
+        std::array<char32_t, STR_BUFF_SIZE> data;
 
-        constexpr StrRootInlineContent() : data{0} {}
+        constexpr StrRootInlineContent() : data{} {}
         constexpr StrRootInlineContent(const StrRootInlineContent& other) = default;
 
         constexpr bool empty() const { return static_cast<int64_t>(this->data[0]) == 0; }
@@ -368,7 +368,7 @@ namespace ᐸRuntimeᐳ
 
             StrRootInlineContent cb;
             cb.data[0] = static_cast<uint32_t>(len - 1); //store length
-            std::copy(str, str + len - 1, cb.data + 1);
+            std::copy(str, str + len - 1, cb.data.begin() + 1);
 
             return cb;
         }
@@ -380,7 +380,7 @@ namespace ᐸRuntimeᐳ
 
             StrRootInlineContent cb;
             cb.data[0] = static_cast<uint32_t>(len); //store length
-            std::copy(str, str + len, cb.data + 1);
+            std::copy(str, str + len, cb.data.begin() + 1);
 
             return cb;
         }
