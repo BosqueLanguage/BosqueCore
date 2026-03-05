@@ -441,39 +441,19 @@ class TypeInfoManager {
 
         timgr.addTypeInfo("Float", new TypeInfo("Float", new IRNominalTypeSignature("Float"), 6, 8, 1, LayoutTag.Value, undefined, undefined));
         
-        inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_CString = g_typeinfo_PosRBTreeLeaf_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_CSTRING, BSQ_PTR_MASK_LEAF, "PosRBTreeLeaf_CString");
-    inline constexpr TypeInfo g_typeinfo_PosRBTreeNode_CString = g_typeinfo_PosRBTreeNode_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_NODE_CSTRING, "PosRBTreeNode_CString");
-    inline constexpr TypeInfo g_typeinfo_PosRBTree_CString = g_typeinfo_PosRBTree_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>(WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING, "PosRBTree_CString");
+        timgr.addTypeInfo("PosRBTreeLeaf_CString", new TypeInfo("PosRBTreeLeaf_CString", new IRNominalTypeSignature("PosRBTreeLeaf_CString"), 7, 40, 5, LayoutTag.Ref, undefined, undefined));
+        timgr.addTypeInfo("PosRBTreeNode_CString", new TypeInfo("PosRBTreeNode_CString", new IRNominalTypeSignature("PosRBTreeNode_CString"), 8, 48, 6, LayoutTag.Ref, "002020", undefined));
+        timgr.addTypeInfo("PosRBTree_CString", new TypeInfo("PosRBTree_CString", new IRNominalTypeSignature("PosRBTree_CString"), 9, 16, 2, LayoutTag.Tagged, "20", undefined));
+        timgr.addTypeInfo("CStringInline", new TypeInfo("CStringInline", new IRNominalTypeSignature("CStringInline"), 10, 16, 2, LayoutTag.Value, undefined, undefined));
+        timgr.addTypeInfo("CStringTree", new TypeInfo("CStringTree", new IRNominalTypeSignature("CStringTree"), 11, 16, 2, LayoutTag.Tagged, "20", undefined));
+        timgr.addTypeInfo("CString", new TypeInfo("CString", new IRNominalTypeSignature("CString"), 12, 24, 3, LayoutTag.Tagged, "200", undefined));
 
-    inline constexpr TypeInfo g_typeinfo_CStringInline = {
-        WELL_KNOWN_TYPE_ID_CSTRING_INLINE,
-        sizeof(CStrRootInlineContent),
-        byteSizeToSlotCount(sizeof(CStrRootInlineContent)),
-        LayoutTag::Value,
-        BSQ_PTR_MASK_LEAF,
-        "CStringInline",
-        nullptr
-    };
-
-    inline constexpr TypeInfo g_typeinfo_CStringTree = {
-        WELL_KNOWN_TYPE_ID_CSTRING_TREE,
-        sizeof(CStrRootTreeContent),
-        byteSizeToSlotCount(sizeof(CStrRootTreeContent)),
-        LayoutTag::Tagged,
-        "20",
-        "CStringTree",
-        nullptr
-    };
-
-    inline constexpr TypeInfo g_typeinfo_CString = {
-        WELL_KNOWN_TYPE_ID_CSTRING,
-        sizeof(BoxedUnion<CStringUnion>),
-        byteSizeToSlotCount(sizeof(BoxedUnion<CStringUnion>)),
-        LayoutTag::Tagged,
-        "200",
-        "CString",
-        nullptr
-    };
+        timgr.addTypeInfo("PosRBTreeLeaf_String", new TypeInfo("PosRBTreeLeaf_String", new IRNominalTypeSignature("PosRBTreeLeaf_String"), 13, 40, 5, LayoutTag.Ref, undefined, undefined));
+        timgr.addTypeInfo("PosRBTreeNode_String", new TypeInfo("PosRBTreeNode_String", new IRNominalTypeSignature("PosRBTreeNode_String"), 14, 48, 6, LayoutTag.Ref, "002020", undefined));
+        timgr.addTypeInfo("PosRBTree_String", new TypeInfo("PosRBTree_String", new IRNominalTypeSignature("PosRBTree_String"), 15, 16, 2, LayoutTag.Tagged, "20", undefined));
+        timgr.addTypeInfo("StringInline", new TypeInfo("StringInline", new IRNominalTypeSignature("StringInline"), 16, 32, 4, LayoutTag.Value, undefined, undefined));
+        timgr.addTypeInfo("StringTree", new TypeInfo("StringTree", new IRNominalTypeSignature("StringTree"), 17, 16, 2, LayoutTag.Tagged, "20", undefined));
+        timgr.addTypeInfo("String", new TypeInfo("String", new IRNominalTypeSignature("String"), 18, 40, 5, LayoutTag.Tagged, "20000", undefined));
 
     constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERENTRY = 19;
     constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERBLOCK = 20;
