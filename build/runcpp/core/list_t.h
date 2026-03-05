@@ -143,7 +143,7 @@ namespace ᐸRuntimeᐳ
         { 
             assert(this->ulistt.typeinfo != nullptr);
             
-            if(this->ulistt.typeinfo.bsqtypeid == TYPE_ID_INLINE_CONTENT) {
+            if(this->ulistt.typeinfo->bsqtypeid == TYPE_ID_INLINE_CONTENT) {
                 return this->ulistt.data.inlinelist.at(this->index);
             }
             else {
@@ -243,32 +243,32 @@ namespace ᐸRuntimeᐳ
 
         bool empty() const
         {
-            return this->tree.typeinfo == nullptr;
+            return this->ulist.typeinfo == nullptr;
         }
 
         size_t size() const
         {
-            if(this->tree.typeinfo == nullptr) {
+            if(this->ulist.typeinfo == nullptr) {
                 return 0;
             }
             else {
-                if(this->tree.typeinfo == s_inlinetypeinfo) {
-                    return this->tree.data.buff.count;
+                if(this->ulist.typeinfo == s_inlinetypeinfo) {
+                    return this->ulist.data.inlinelist.count;
                 }
                 else {
-                    return this->tree.data.node->count;
+                    return this->ulist.data.treelist.postree.count();
                 }
             }
         }
 
         XListTIterator<T, getPosTreeIDFrom(TYPE_ID_LIST_T), getPosInlineIDFrom(TYPE_ID_LIST_T)> begin() const
         {
-            return XListTIterator<T, getPosTreeIDFrom(TYPE_ID_LIST_T), getPosInlineIDFrom(TYPE_ID_LIST_T)>::initializeBegin(this->tree);
+            return XListTIterator<T, getPosTreeIDFrom(TYPE_ID_LIST_T), getPosInlineIDFrom(TYPE_ID_LIST_T)>{0, this->ulist};
         }
 
         XListTIterator<T, getPosTreeIDFrom(TYPE_ID_LIST_T), getPosInlineIDFrom(TYPE_ID_LIST_T)> end() const
         {
-            return XListTIterator<T, getPosTreeIDFrom(TYPE_ID_LIST_T), getPosInlineIDFrom(TYPE_ID_LIST_T)>::initializeEnd(this->tree);
+            return XListTIterator<T, getPosTreeIDFrom(TYPE_ID_LIST_T), getPosInlineIDFrom(TYPE_ID_LIST_T)>{(int64_t)this->size(), this->ulist};
         }
     };
 }

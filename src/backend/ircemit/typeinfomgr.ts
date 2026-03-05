@@ -455,12 +455,12 @@ class TypeInfoManager {
         timgr.addTypeInfo("StringTree", new TypeInfo("StringTree", new IRNominalTypeSignature("StringTree"), 17, 16, 2, LayoutTag.Tagged, "20", undefined));
         timgr.addTypeInfo("String", new TypeInfo("String", new IRNominalTypeSignature("String"), 18, 40, 5, LayoutTag.Tagged, "20000", undefined));
 
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERENTRY = 19;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERBLOCK = 20;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFER = 21;
+        timgr.addTypeInfo("ByteBufferEntry", new TypeInfo("ByteBufferEntry", new IRNominalTypeSignature("ByteBufferEntry"), 19, 512, 64, LayoutTag.Ref, undefined, undefined));
+        timgr.addTypeInfo("ByteBufferBlock", new TypeInfo("ByteBufferBlock", new IRNominalTypeSignature("ByteBufferBlock"), 20, 512, 64, LayoutTag.Ref, "1111111111111111111111111111111111111111111111111111111111111111", undefined));
+        timgr.addTypeInfo("ByteBuffer", new TypeInfo("ByteBuffer", new IRNominalTypeSignature("ByteBuffer"), 21, 24, 3, LayoutTag.Value, "200", undefined));
 
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_UUIDV4 = 22;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_UUIDV7 = 23;
+        timgr.addTypeInfo("UUIDV4", new TypeInfo("UUIDV4", new IRNominalTypeSignature("UUIDV4"), 22, 16, 2, LayoutTag.Value, undefined, undefined));
+        timgr.addTypeInfo("UUIDV7", new TypeInfo("UUIDV7", new IRNominalTypeSignature("UUIDV7"), 23, 16, 2, LayoutTag.Value, undefined, undefined));
 
         //TODO: more primitive types
 

@@ -1015,13 +1015,26 @@ class CPPEmitter {
         const oftrepr = this.typeInfoManager.emitTypeAsStd(tdecl.oftype.tkeystr);
         const ofttid = this.typeInfoManager.getTypeInfo(tdecl.oftype.tkeystr);
 
-        let ibuffmask = "0";
-        while(ibuffmask.length < xxxx) {
-            ibuffmask = ibuffmask + (ofttid.tag === LayoutTag.Ref ? "1" : ofttid.ptrmask || "0");
+        let eemask: string;
+        if(ofttid.tag === LayoutTag.Ref) {
+            eemask = "1";
         }
-        let ptrmask: string | undefined = undefined; 
-        if(ibuffmask.includes("1") || ibuffmask.includes("2")) {
-            ptrmask = ibuffmask;
+        else {
+            if(ofttid.ptrmask !== undefined) {
+                eemask = ofttid.ptrmask;
+            }
+            else {
+                eemask = Array(ofttid.slotcount).fill("0").join("");
+            }
+        }
+        
+        let inlinemask: string | undefined = undefined; 
+        let leafmask: string | undefined = undefined;
+        if(eemask.includes("1") || eemask.includes("2")) {
+            const icapacity = LIST_T_CAPACITY(ofttid.bytesize);
+
+            inlinemask = "0" + Array(icapacity).fill(eemask).join("");
+            leafmask = Array(2 * icapacity).fill(eemask).join("");
         }
         
         const posrb_treeleafid = ttid.bsqtypeid - 5;
@@ -1032,21 +1045,25 @@ class CPPEmitter {
         const listtreeid = ttid.bsqtypeid - 1;
 
         const tidecls = `namespace ᐸRuntimeᐳ {\n` +
-        `    inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_${ctname} = g_typeinfo_PosRBTreeLeaf_generate<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>(${posrb_treeleafid}, ${lptrmask ?? "nullptr"}, "PosRBTreeLeaf_${ctname}");\n` +
+        `    inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_${ctname} = g_typeinfo_PosRBTreeLeaf_generate<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>(${posrb_treeleafid}, ${leafmask ?? "nullptr"}, "PosRBTreeLeaf_${ctname}");\n` +
         `    inline constexpr TypeInfo g_typeinfo_PosRBTreeNode_${ctname} = g_typeinfo_PosRBTreeNode_generate<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>(${posrb_treenodeid}, "PosRBTreeNode_${ctname}");\n` +
         `    inline constexpr TypeInfo g_typeinfo_PosRBTree_${ctname} = g_typeinfo_PosRBTree_generate<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE, ${posrb_treeid}>(${posrb_treeid}, "PosRBTree_${ctname}");\n` +
 
         `    extern thread_local GCAllocator<PosRBTreeLeaf<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>> PosRBTreeLeaf_${ctname}_allocator;\n` +
         `    extern thread_local GCAllocator<PosRBTreeNode<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>> PosRBTreeNode_${ctname}_allocator;\n` +
 
-        `    inline constexpr TypeInfo g_typeinfo_${ctname}Inline = g_typeinfo_ListTInlineContent_generate<${oftrepr}(${listinlineid}, ${iptrmask ?? "nullptr"}, ${ctname}Inline);\n` +
+        `    inline constexpr TypeInfo g_typeinfo_${ctname}Inline = g_typeinfo_ListTInlineContent_generate<${oftrepr}>(${listinlineid}, ${inlinemask ?? "nullptr"}, "${ctname}Inline");\n` +
         `    inline constexpr TypeInfo g_typeinfo_${ctname}Tree = g_typeinfo_ListTTreeContent<${oftrepr}, ${posrb_treeid}>(${listtreeid}, "${ctname}TreeContent");\n` +
         `    inline constexpr TypeInfo g_typeinfo_${ctname} = g_typeinfo_ListT_generate<${oftrepr}, ${posrb_treeid}>(${ttid.bsqtypeid}, "${ctname}");\n` +
         `}`;
 
         const tidefs = `namespace ᐸRuntimeᐳ {\n` +
-        `    template<> const TypeInfo* ListTInlineBuff<${oftrepr}>::s_typeinfo = &g_typeinfo_${ctname}${"ᐤ"}buff;\n` +
-        `    template<> const TypeInfo* ListTNode<${oftrepr}>::s_typeinfo = &g_typeinfo_${ctname}${"ᐤ"}node;\n` +
+        `    thread_local GCAllocator<PosRBTreeLeaf<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>> PosRBTreeLeaf_${ctname}_allocator(&g_typeinfo_PosRBTreeLeaf_${ctname});\n` +
+        `    thread_local GCAllocator<PosRBTreeNode<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>> PosRBTreeNode_${ctname}_allocator(&g_typeinfo_PosRBTreeNode_${ctname});\n` +
+        `    template<> const TypeInfo* PosRBTree<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE, ${posrb_treeid}>::s_leaftypeinfo = &g_typeinfo_PosRBTreeLeaf_${ctname};\n` +
+        `    template<> thread_local GCAllocator<PosRBTreeLeaf<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>>* PosRBTree<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE, ${posrb_treeid}>::s_leafallocator = &PosRBTreeLeaf_${ctname}_allocator;\n` +
+        `    template<> const TypeInfo* PosRBTree<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE, ${posrb_treeid}>::s_nodetypeinfo = &g_typeinfo_PosRBTreeNode_${ctname};\n` +
+        `    template<> thread_local GCAllocator<PosRBTreeNode<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>>* PosRBTree<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE, ${posrb_treeid}>::s_nodeallocator = &PosRBTreeNode_${ctname}_allocator;\n` +
         `}`;
 
         return [tidecls, tidefs];
@@ -1318,7 +1335,7 @@ class CPPEmitter {
         `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitLiteralContent("${tdecl.tkey}"); \n` +
         `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitSymbol('{'); \n` +
         `    bool first = true;\n` +
-        `    for(ᐸRuntimeᐳ::XListTIterator<${voft}> iter = vv.begin(); iter != vv.end(); ++iter) {\n` +
+        `    for(auto iter = vv.begin(); iter != vv.end(); ++iter) {\n` +
         `        if(first) { first = false; } else { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate(", "); }\n` +
         `        BSQ_emit${TransformCPPNameManager.convertTypeKey(tdecl.oftype.tkeystr)}((*iter));\n` +
         `    }\n` +
