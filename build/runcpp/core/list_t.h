@@ -25,7 +25,7 @@ namespace ᐸRuntimeᐳ
         size_t count;
         std::array<T, LIST_T_CAPACITY(sizeof(T))> data;
 
-        constexpr ListTInlineContent() : count(0), data{} {}
+        constexpr ListTInlineContent() : count(0) { std::memset((void*)this->data.data(), 0, sizeof(T) * LIST_T_CAPACITY(sizeof(T))); }
         constexpr ListTInlineContent(const ListTInlineContent& other) = default;
 
         constexpr bool empty() const { return this->count == 0; }

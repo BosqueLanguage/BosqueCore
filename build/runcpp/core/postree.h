@@ -32,7 +32,7 @@ namespace ᐸRuntimeᐳ
         int64_t count;
         std::array<T, K> data;
 
-        constexpr PosRBTreeLeaf() : count(0), data{} {}
+        constexpr PosRBTreeLeaf() : count(0) { std::memset((void*)this->data.data(), 0, sizeof(T) * K); }
         constexpr PosRBTreeLeaf(const PosRBTreeLeaf& other) = default;
     };
 
