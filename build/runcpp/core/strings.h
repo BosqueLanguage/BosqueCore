@@ -245,7 +245,12 @@ namespace ᐸRuntimeᐳ
 
         friend XBool operator==(const XCString& lhs, const XCString& rhs) 
         { 
-            return XBool::from(std::equal(lhs.begin(), lhs.end(), rhs.begin())); 
+            if(lhs.size() != rhs.size()) {
+                return XFALSE;
+            }
+            else {
+                return XBool::from(std::equal(lhs.begin(), lhs.end(), rhs.begin())); 
+            }
         }
 
         friend XBool operator<(const XCString& lhs, const XCString& rhs) 
@@ -577,8 +582,13 @@ namespace ᐸRuntimeᐳ
         }
 
         friend XBool operator==(const XString& lhs, const XString& rhs) 
-        { 
-            return XBool::from(std::equal(lhs.begin(), lhs.end(), rhs.begin())); 
+        {
+            if(lhs.size() != rhs.size()) {
+                return XFALSE;
+            }
+            else {
+                return XBool::from(std::equal(lhs.begin(), lhs.end(), rhs.begin()));
+            }
         }
 
         friend XBool operator<(const XString& lhs, const XString& rhs) 

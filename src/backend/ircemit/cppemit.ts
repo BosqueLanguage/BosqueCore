@@ -1016,7 +1016,7 @@ class CPPEmitter {
         const ofttid = this.typeInfoManager.getTypeInfo(tdecl.oftype.tkeystr);
 
         let ibuffmask = "0";
-        while(ibuffmask.length < ttid.slotcount) {
+        while(ibuffmask.length < xxxx) {
             ibuffmask = ibuffmask + (ofttid.tag === LayoutTag.Ref ? "1" : ofttid.ptrmask || "0");
         }
         let ptrmask: string | undefined = undefined; 
@@ -1024,10 +1024,24 @@ class CPPEmitter {
             ptrmask = ibuffmask;
         }
         
+        const posrb_treeleafid = ttid.bsqtypeid - 5;
+        const posrb_treenodeid = ttid.bsqtypeid - 4;
+        const posrb_treeid = ttid.bsqtypeid - 3;
+
+        const listinlineid = ttid.bsqtypeid - 2;
+        const listtreeid = ttid.bsqtypeid - 1;
+
         const tidecls = `namespace ᐸRuntimeᐳ {\n` +
-        `    inline constexpr TypeInfo g_typeinfo_${ctname}${"ᐤ"}buff = g_typeinfo_ListTInlineBuff_generate<${oftrepr}>(${ttid.bsqtypeid - 2}, ${ptrmask !== undefined ? ('"' + ptrmask + '"') : "nullptr"}, "${"ᐸRuntimeᐳ::ListTInlineBuff<" + oftrepr + ">"}");\n` +
-        `    inline constexpr TypeInfo g_typeinfo_${ctname}${"ᐤ"}node = g_typeinfo_ListTNode_generate<${oftrepr}>(${ttid.bsqtypeid - 1}, "${"ᐸRuntimeᐳ::ListTNode<" + oftrepr + ">"}");\n` +
-        `    inline constexpr TypeInfo g_typeinfo_${ctname} = g_typeinfo_ListTTree_generate<${oftrepr}>(${ttid.bsqtypeid}, "${ttid.ptrmask}", "${"ᐸRuntimeᐳ::List<" + oftrepr + ">"}");\n` +
+        `    inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_${ctname} = g_typeinfo_PosRBTreeLeaf_generate<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>(${posrb_treeleafid}, ${lptrmask ?? "nullptr"}, "PosRBTreeLeaf_${ctname}");\n` +
+        `    inline constexpr TypeInfo g_typeinfo_PosRBTreeNode_${ctname} = g_typeinfo_PosRBTreeNode_generate<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>(${posrb_treenodeid}, "PosRBTreeNode_${ctname}");\n` +
+        `    inline constexpr TypeInfo g_typeinfo_PosRBTree_${ctname} = g_typeinfo_PosRBTree_generate<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE, ${posrb_treeid}>(${posrb_treeid}, "PosRBTree_${ctname}");\n` +
+
+        `    extern thread_local GCAllocator<PosRBTreeLeaf<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>> PosRBTreeLeaf_${ctname}_allocator;\n` +
+        `    extern thread_local GCAllocator<PosRBTreeNode<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>> PosRBTreeNode_${ctname}_allocator;\n` +
+
+        `    inline constexpr TypeInfo g_typeinfo_${ctname}Inline = g_typeinfo_ListTInlineContent_generate<${oftrepr}(${listinlineid}, ${iptrmask ?? "nullptr"}, ${ctname}Inline);\n` +
+        `    inline constexpr TypeInfo g_typeinfo_${ctname}Tree = g_typeinfo_ListTTreeContent<${oftrepr}, ${posrb_treeid}>(${listtreeid}, "${ctname}TreeContent");\n` +
+        `    inline constexpr TypeInfo g_typeinfo_${ctname} = g_typeinfo_ListT_generate<${oftrepr}, ${posrb_treeid}>(${ttid.bsqtypeid}, "${ctname}");\n` +
         `}`;
 
         const tidefs = `namespace ᐸRuntimeᐳ {\n` +
@@ -1273,11 +1287,12 @@ class CPPEmitter {
 
     private emitListTypeInfo(tdecl: IRListTypeDecl): [string, string] {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
+        const tinfo = this.typeInfoManager.getTypeInfo(tdecl.tkey);
 
         //const oftname = TransformCPPNameManager.convertTypeKey(tdecl.oftype.tkeystr);
         const voft = this.typeInfoManager.emitTypeAsStd(tdecl.oftype.tkeystr);
         
-        const declusing = `using ${ctname} = ${RUNTIME_NAMESPACE}::XList<${voft}>;`;
+        const declusing = `using ${ctname} = ${RUNTIME_NAMESPACE}::XList<${voft}, ${tinfo.bsqtypeid}>;`;
         const [decltypeinfo, deftypeinfo] = this.emitListTypeInfoDecl(tdecl);
         const declbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}();`;
         const declbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv);`;

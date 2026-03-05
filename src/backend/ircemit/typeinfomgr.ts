@@ -63,7 +63,6 @@ class TypeInfo {
 }
 
 class TypeInfoManager {
-    private typeInfoOffset: number = 0;
     private typeInfoMap: Map<string, TypeInfo>;
 
     static readonly c_ref_pass_size: number = 32; //Bytes used for ref passing (pointer + typeid + extra)
@@ -117,7 +116,10 @@ class TypeInfoManager {
             ];
         }
         else if (tii.tkey.startsWith("List")) {
-            assert(false, `TypeInfoManager::generateAllocatorNameForTypeKeySpecial - List allocator generation not yet implemented for type key ${tkey}`);
+            return [
+                `PosRBTreeLeaf_${TransformCPPNameManager.convertTypeKey(tkey)}_allocator`,
+                `PosRBTreeNode_${TransformCPPNameManager.convertTypeKey(tkey)}_allocator`
+            ];
         }
         else {
             if(tii.tag !== LayoutTag.Ref) {
@@ -153,7 +155,10 @@ class TypeInfoManager {
             ];
         }
         else if (tii.tkey.startsWith("List")) {
-            assert(false, `TypeInfoManager::generateAllocatorNameForTypeKeySpecial - List allocator generation not yet implemented for type key ${tkey}`);
+            return [
+                `{ ${tii.bsqtypeid}, &ᐸRuntimeᐳ::PosRBTreeLeaf_${TransformCPPNameManager.convertTypeKey(tkey)}_allocator }`,
+                `{ ${tii.bsqtypeid}, &ᐸRuntimeᐳ::PosRBTreeNode_${TransformCPPNameManager.convertTypeKey(tkey)}_allocator }`
+            ];
         }
         else {
             if(tii.tag !== LayoutTag.Ref) {
@@ -272,7 +277,7 @@ class TypeInfoManager {
         if(tdecl instanceof IRSomeTypeDecl) {
             const oftinfo = this.processInfoGenerationForType(tdecl.ttype, irasm);
 
-            const ttid = this.typeInfoMap.size + this.typeInfoOffset;
+            const ttid = this.typeInfoMap.size;
             if(oftinfo.tag === LayoutTag.Ref) {
                 this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, 8, 1, LayoutTag.Value, "1", undefined));
             }
@@ -286,7 +291,7 @@ class TypeInfoManager {
             if(tdecl instanceof IRListTypeDecl) {
                 const oftinfo = this.processInfoGenerationForType(tdecl.oftype, irasm);
 
-                const ttid = this.typeInfoMap.size + this.typeInfoOffset + 2; //+2 for the buff and node types
+                const ttid = this.typeInfoMap.size + 5; //+5 for the leaf, node, tree, inline, and tree repr type infos we need to generate for all the parts in the list
                 const ldatasize = Math.max(MAX_LIST_INLINE_BYTES, oftinfo.bytesize);
                 const ltotalsize = 8 + ldatasize; //8 bytes for for the tag
 
@@ -343,7 +348,7 @@ class TypeInfoManager {
                 ptrmask = eptrmask;
             }
 
-            const ttid = this.typeInfoMap.size + this.typeInfoOffset;
+            const ttid = this.typeInfoMap.size;
             if(!mustref && this.isSizeOkForValueLayout(totalbytesize)) {
                 this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, totalbytesize, totalslotcount, LayoutTag.Value, ptrmask, vtable));
             }
@@ -359,7 +364,7 @@ class TypeInfoManager {
         if(tdecl instanceof IROptionTypeDecl) {
             const oftinfo = this.processInfoGenerationForType(tdecl.ttype, irasm);
 
-            const ttid = this.typeInfoMap.size + this.typeInfoOffset;
+            const ttid = this.typeInfoMap.size;
             if(oftinfo.tag === LayoutTag.Ref) {
                 this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, 16, 2, LayoutTag.Tagged, "20", undefined));
             }
@@ -396,7 +401,7 @@ class TypeInfoManager {
                 }
             }
 
-            const ttid = this.typeInfoMap.size + this.typeInfoOffset;
+            const ttid = this.typeInfoMap.size;
             let eptrmask = TypeInfoManager.computeTaggedMaskOfK(totalslotcount);
             this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, totalbytesize, totalslotcount, LayoutTag.Tagged, eptrmask, undefined));
 
@@ -436,15 +441,46 @@ class TypeInfoManager {
 
         timgr.addTypeInfo("Float", new TypeInfo("Float", new IRNominalTypeSignature("Float"), 6, 8, 1, LayoutTag.Value, undefined, undefined));
         
-        timgr.addTypeInfo("CStrTreeLeaf", new TypeInfo("CStrTreeLeaf", new IRNominalTypeSignature("CStrTreeLeaf"), 7, 48, 6, LayoutTag.Ref, undefined, undefined));
-        timgr.addTypeInfo("CStrTreeNode", new TypeInfo("CStrTreeNode", new IRNominalTypeSignature("CStrTreeNode"), 8, 40, 5, LayoutTag.Ref, "00011", undefined));
-        timgr.addTypeInfo("CStrInline", new TypeInfo("CStrInline", new IRNominalTypeSignature("CStrInline"), 9, 16, 2, LayoutTag.Value, undefined, undefined));
-        timgr.addTypeInfo("CStrTree", new TypeInfo("CStrTree", new IRNominalTypeSignature("CStrTree"), 10, 8, 1, LayoutTag.Ref, "1", undefined));
-        timgr.addTypeInfo("CString", new TypeInfo("CString", new IRNominalTypeSignature("CString"), 11, 24, 3, LayoutTag.Tagged, "200", undefined));
+        inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_CString = g_typeinfo_PosRBTreeLeaf_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_CSTRING, BSQ_PTR_MASK_LEAF, "PosRBTreeLeaf_CString");
+    inline constexpr TypeInfo g_typeinfo_PosRBTreeNode_CString = g_typeinfo_PosRBTreeNode_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_NODE_CSTRING, "PosRBTreeNode_CString");
+    inline constexpr TypeInfo g_typeinfo_PosRBTree_CString = g_typeinfo_PosRBTree_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>(WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING, "PosRBTree_CString");
 
-        timgr.addTypeInfo("StrBuff", new TypeInfo("StrBuff", new IRNominalTypeSignature("StrBuff"), 10, 32, 4, LayoutTag.Value, undefined, undefined));
-        timgr.addTypeInfo("StrNode", new TypeInfo("StrNode", new IRNominalTypeSignature("StrNode"), 11, 32, 4, LayoutTag.Ref, "0011", undefined));
-        timgr.addTypeInfo("String", new TypeInfo("String", new IRNominalTypeSignature("CString"), 12, 40, 5, LayoutTag.Tagged, "2000", undefined));
+    inline constexpr TypeInfo g_typeinfo_CStringInline = {
+        WELL_KNOWN_TYPE_ID_CSTRING_INLINE,
+        sizeof(CStrRootInlineContent),
+        byteSizeToSlotCount(sizeof(CStrRootInlineContent)),
+        LayoutTag::Value,
+        BSQ_PTR_MASK_LEAF,
+        "CStringInline",
+        nullptr
+    };
+
+    inline constexpr TypeInfo g_typeinfo_CStringTree = {
+        WELL_KNOWN_TYPE_ID_CSTRING_TREE,
+        sizeof(CStrRootTreeContent),
+        byteSizeToSlotCount(sizeof(CStrRootTreeContent)),
+        LayoutTag::Tagged,
+        "20",
+        "CStringTree",
+        nullptr
+    };
+
+    inline constexpr TypeInfo g_typeinfo_CString = {
+        WELL_KNOWN_TYPE_ID_CSTRING,
+        sizeof(BoxedUnion<CStringUnion>),
+        byteSizeToSlotCount(sizeof(BoxedUnion<CStringUnion>)),
+        LayoutTag::Tagged,
+        "200",
+        "CString",
+        nullptr
+    };
+
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERENTRY = 19;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERBLOCK = 20;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFER = 21;
+
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_UUIDV4 = 22;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_UUIDV7 = 23;
 
         //TODO: more primitive types
 
