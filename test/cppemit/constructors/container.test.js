@@ -8,7 +8,8 @@ describe ("CPPEmit -- Container Constructor (List)", () => {
         checkTestEmitMainFunction("public function main(): List<Int> { return List<Int>{}; }", "ListᐸIntᐳ Mainᕒmain() { return ListᐸIntᐳ::make_empty(); }");
         checkTestEmitMainFunction("public function main(x: Int): List<Int> { return List<Int>{x}; }", "ListᐸIntᐳ Mainᕒmain(Int x) { return ListᐸIntᐳ::smliteral({x}, &ᐸRuntimeᐳ::g_typeinfo_ListᐸIntᐳInline); }");
         checkTestEmitMainFunction("public function main(x: Int): List<Int> { return List<Int>{1i, x, 3i}; }", "ListᐸIntᐳ Mainᕒmain(Int x) { return ListᐸIntᐳ::smliteral({1_i, x, 3_i}, &ᐸRuntimeᐳ::g_typeinfo_ListᐸIntᐳInline); }");
-    });
+    
+        checkTestEmitMainFunction("public function main(): List<CString> { let s = 'ok'; return List<CString>{'a', s}; }", 'vvvv');
 
     it.skip("should emit spread and mixed list constructors", function () {
         checkTestEmitMainFunction("public function main(l: List<Int>): List<Int> { return List<Int>{...l}; }", "aaa");
