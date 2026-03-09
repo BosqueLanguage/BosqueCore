@@ -1480,13 +1480,18 @@ class Parser {
     }
 
     private processFormatArguments(contents: string, sinfo: SourceInfo): FormatStringComponent[] {
-        const parts = contents.slice(2, -1).split(/(\$\{[0-9a-zA-Z:]+\})/).filter((cc) => cc !== "");
+        const parts = contents.slice(2, -1).split(/(\$\{[0-9a-zA-Z: ]+\})/).filter((cc) => cc !== "");
 
         return parts.map((part) => {
             if(!part.startsWith("${")) {
                 return new FormatStringTextComponent(part);
             }
             else {
+                if(!part.endsWith("}")) {
+                    this.recordErrorGeneral(sinfo, "Unterminated format string argument");
+                    return new FormatStringTextComponent(part);
+                }
+
                 const tpos = part.indexOf(":");
                 if(tpos === -1) {
                     const argpos = part.slice(2, part.length - 1);
@@ -1494,7 +1499,7 @@ class Parser {
                 }
                 else {
                     const argpos = part.slice(2, tpos);
-                    const fmtstr = part.slice(tpos + 1, part.length - 1);
+                    const fmtstr = part.slice(tpos + 1, part.length - 1).trim();
                     
                     const fsig = this.FA_TSigLookup(sinfo, fmtstr);
                     if(fsig !== undefined) {
