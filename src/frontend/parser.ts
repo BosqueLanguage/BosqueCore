@@ -2684,33 +2684,32 @@ class Parser {
     }
 
     private parseFormatTypeTermList(sinfo: SourceInfo): [TypeSignature, {argname: string, argtype: TypeSignature}[]] {
-        this.ensureAndConsumeTokenAlways(SYM_langle, "format type term list");
-
-        let rtype = this.parseStdTypeSignature();
-        let terms: {argname: string, argtype: TypeSignature}[] = [];
-
-        let ncount = 0;
-        while(!this.testToken(SYM_rangle)) {
+        const allterms = this.parseListOf<{argname: string, argtype: TypeSignature}>("format type term list", SYM_langle, SYM_rangle, SYM_coma, () => {
             let argname: string = "_";
 
-            if(this.testToken(TokenStrings.IdentifierName)) {
-                ncount++;
+            if(this.testFollows(TokenStrings.IdentifierName, SYM_colon)) {
                 argname = this.consumeTokenAndGetValue();
                 this.ensureAndConsumeTokenAlways(SYM_colon, "format type term");
             }
             
             const rtype = this.parseStdTypeSignature();
-            terms.push({argname: argname, argtype: rtype});
-        }
+            return {argname: argname, argtype: rtype};
+        });
 
-        this.ensureAndConsumeTokenAlways(SYM_rangle, "format type term list");
+        if(allterms.length !== 0 && allterms[0].argname !== "_") {
+            this.recordErrorGeneral(sinfo, "Format type first term is result type and cannot be named");
+        }
+        const rtype = allterms[0] || new ErrorTypeSignature(sinfo, undefined);
+
+        let terms = allterms.slice(1);
+        const ncount = terms.filter((t) => t.argname !== "_").length;
 
         if(terms.length === 0) {
             this.recordErrorGeneral(this.peekToken(), "Format type term list cannot be empty");
             return [new ErrorTypeSignature(sinfo, undefined), []];
         }
 
-        if(ncount !== terms.length) {
+        if(ncount !== 0 && ncount !== terms.length) {
             this.recordErrorGeneral(sinfo, "All format type terms must *either* be named or be positional");
         }
 
@@ -2718,7 +2717,7 @@ class Parser {
             terms = terms.sort((a, b) => a.argname.localeCompare(b.argname));
         }
 
-        return [rtype, terms];
+        return [rtype.argtype, terms];
     }
 
     private parseNominalType(): TypeSignature {
@@ -3251,6 +3250,7 @@ class Parser {
 
             if(args.args.length === 0 || !(args.args[0] instanceof PositionalArgumentValue)) {
                 this.recordErrorGeneral(sinfo, "Interpolate expects the format string as the first (positional) argument");
+                return new ErrorExpression(sinfo, undefined, undefined);
             }
 
             const farg = (args.args[0] as PositionalArgumentValue).exp;
