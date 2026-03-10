@@ -275,6 +275,11 @@ namespace ᐸRuntimeᐳ
             }
         }
 
+        char etok = '\'';
+        if(this->sloppystrings && this->lexer.current().tokentype == BSQONTokenType::LiteralString) {
+            etok = '"';
+        }
+
         auto stok = this->lexer.current();
         if(stok.size() == 2) {
             this->lexer.consume();
@@ -286,7 +291,7 @@ namespace ᐸRuntimeᐳ
             bool extractok = true;
             BSQLexBufferIterator ii = stok.begin;
             ++ii; //eat ' and skip final '
-            while(*ii != '\'') {
+            while(*ii != etok) {
                 extractok &= processCCharInString(ii, &cb.data[ecount + 1]);
                 ecount++;
             }
@@ -308,11 +313,9 @@ namespace ᐸRuntimeᐳ
     std::optional<XString> BSQONParser::parseString()
     {
         if(this->lexer.current().tokentype != BSQONTokenType::LiteralString) {
-            if(!this->sloppystrings || this->lexer.current().tokentype != BSQONTokenType::LiteralCString) {
-                return std::nullopt;
-            }
+            return std::nullopt;
         }
-
+        
         auto stok = this->lexer.current();
         if(stok.size() == 2) {
             this->lexer.consume();

@@ -1,6 +1,6 @@
 
 import { IRAbstractCollectionTypeDecl, IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAssembly, IRConceptTypeDecl, IRDatatypeTypeDecl, IREntityTypeDecl, IRListTypeDecl, IROptionTypeDecl, IRSomeTypeDecl } from "../irdefs/irassembly.js";
-import { IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature } from "../irdefs/irtype.js";
+import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype.js";
 import { TransformCPPNameManager } from "./namemgr.js";
 
 import assert from "node:assert";
@@ -409,6 +409,13 @@ class TypeInfoManager {
         }
     }
 
+    private processInfoGenerationForFormat(ttype: IRFormatTypeSignature, irasm: IRAssembly): TypeInfo {
+        const ttid = this.typeInfoMap.size;
+        this.addTypeInfo(ttype.tkeystr, new TypeInfo(ttype.tkeystr, ttype, ttid, 8, 1, LayoutTag.Value, undefined, undefined));
+
+        return this.getTypeInfo(ttype.tkeystr);
+    }
+
     private processInfoGenerationForType(ttype: IRTypeSignature, irasm: IRAssembly): TypeInfo {
         if(this.hasTypeInfo(ttype.tkeystr)) {
             return this.getTypeInfo(ttype.tkeystr);
@@ -424,7 +431,23 @@ class TypeInfoManager {
             }
         }
         else {
-            assert(false, `TypeInfoManager::processInfoGenerationForType - Unsupported type signature for key ${ttype.tkeystr}`);
+            assert(!(ttype instanceof IRVoidTypeSignature), "Don't think we should ever be doing this...");
+
+            if(ttype instanceof IREListTypeSignature) {
+                assert(false, `TypeInfoManager::processInfoGenerationForType - Unsupported elist type signature for key ${ttype.tkeystr}`);
+            }
+            else if(ttype instanceof IRDashResultTypeSignature) {
+                assert(false, `TypeInfoManager::processInfoGenerationForType - Unsupported dash result type signature for key ${ttype.tkeystr}`);
+            }
+            else if(ttype instanceof IRFormatTypeSignature) {
+                return this.processInfoGenerationForFormat(ttype, irasm);
+            }
+            else if(ttype instanceof IRLambdaParameterPackTypeSignature) {
+                assert(false, `TypeInfoManager::processInfoGenerationForType - Unsupported lambda parameter pack type signature for key ${ttype.tkeystr}`);
+            }
+            else {
+                assert(false, `TypeInfoManager::processInfoGenerationForType - Unsupported type signature for key ${ttype.tkeystr}`);
+            }
         }
     }
 

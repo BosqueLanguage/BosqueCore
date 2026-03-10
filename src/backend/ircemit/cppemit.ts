@@ -6,7 +6,7 @@ import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkN
 import { IRAbstractCollectionTypeDecl, IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAssembly, IRConceptTypeDecl, IRConstantDecl, IRConstructableTypeDecl, IREntityTypeDecl, IREnumTypeDecl, IRFailTypeDecl, IRInternalConceptTypeDecl, IRInvariantDecl, IRInvokeDecl, IRInvokeParameterDecl, IRListTypeDecl, IRMapEntryTypeDecl, IRMapTypeDecl, IROkTypeDecl, IROptionTypeDecl, IRPrimitiveEntityTypeDecl, IRResultTypeDecl, IRSomeTypeDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl, IRValidateDecl } from "../irdefs/irassembly.js";
 
 import assert from "node:assert";
-import { IRNominalTypeSignature, IRTypeSignature } from "../irdefs/irtype.js";
+import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatCStringTypeSignature, IRFormatStringTypeSignature, IRFormatTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype.js";
 
 const RUNTIME_NAMESPACE = "ᐸRuntimeᐳ";
 const CLOSURE_CAPTURE_NAME = "ᐸclosureᐳ";
@@ -1589,6 +1589,24 @@ class CPPEmitter {
         ];
     }
 
+    private emitFormatTypeInfo(tdecl: IRFormatTypeSignature): [string, string] {
+        //just a using decl for now -- eventually we will need to support parsing and emitting of format types as well
+        const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkeystr);
+
+        let declusing = "";
+        if(tdecl instanceof IRFormatCStringTypeSignature) {
+            declusing = `using ${ctname} = ${RUNTIME_NAMESPACE}::XFCString;`;
+        }
+        else if(tdecl instanceof IRFormatStringTypeSignature) {
+            declusing = `using ${ctname} = ${RUNTIME_NAMESPACE}::XFString;`;
+        }
+        else {
+            assert(false, "CPPEmitter: unknown format type signature emission for key " + tdecl.tkeystr);
+        }
+        
+        return [declusing, "//TODO: need to implement format type info emission"];
+    }
+
     //Emit the type declarations needed for the .h file
     private emitTypeDeclInfo(): [string, string] {
         const pdecls = "//Primitive decls\n\n" + this.irasm.primitives.map((pdecl) => {
@@ -1626,7 +1644,23 @@ class CPPEmitter {
         })
         .map((ttd) => {
             if(!(ttd instanceof IRNominalTypeSignature)) {
-                assert(false, "CPPEmitter: unknown typedeporder (TYPESIG) type decl emission -- " + ttd.tkeystr);
+                assert(!(ttd instanceof IRVoidTypeSignature), "Don't think we should ever be doing this...");
+
+                if(ttd instanceof IREListTypeSignature) {
+                    assert(false, `CPPEmitter: need to implement EList type signature emission for key ${ttd.tkeystr}`);
+                }
+                else if(ttd instanceof IRDashResultTypeSignature) {
+                    assert(false, `CPPEmitter: need to implement DashResult type signature emission for key ${ttd.tkeystr}`);
+                }
+                else if(ttd instanceof IRFormatTypeSignature) {
+                    return this.emitFormatTypeInfo(ttd);
+                }
+                else if(ttd instanceof IRLambdaParameterPackTypeSignature) {
+                    assert(false, `CPPEmitter: need to implement lambda parameter pack type signature emission for key ${ttd.tkeystr}`);
+                }
+                else {
+                    assert(false, "CPPEmitter: unknown typedeporder (TYPESIG) type decl emission -- " + ttd.tkeystr);
+                }    
             }
             else {
                 const ctd = this.irasm.alltypes.get(ttd.tkeystr) as IRAbstractNominalTypeDecl;

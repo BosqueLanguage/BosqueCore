@@ -3494,6 +3494,8 @@ class ASMToIRConverter {
             }
         }
 
+        irasm.formats.push(...emitter.formats);
+
         irasm.formatcstrings.push(...emitter.formatcstrings);
         irasm.formatstrings.push(...emitter.formatstrings);
 

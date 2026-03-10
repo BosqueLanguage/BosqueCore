@@ -1,5 +1,6 @@
 
 const s_coloncolon_repl = "ᕒ";
+const s_colon_repl = "ᕀ";
 const s_hash_repl = "ᙾ";
 const s_comma_repl = "ᐪ";
 const s_BSQ_tag = "ᗑ";
@@ -17,14 +18,15 @@ class TransformCPPNameManager {
     private static resymbol(cstr: string): string {
         const bb = cstr
             .replace(/::/g, s_coloncolon_repl)
+            .replace(/: */g, s_colon_repl)
             .replace(/#/g, s_hash_repl)
             .replace(/, */g, s_comma_repl)
-            .replace(/</g, "ᐸ")
-            .replace(/>/g, "ᐳ")
-            .replace(/\[/g, "ᑅ")
-            .replace(/\]/g, "ᑀ")
-            .replace(/\(\|/g, "ᐸRuntimeᐳ::EList<")
-            .replace(/\|\)/g, ">");
+            .replace(/< */g, "ᐸ")
+            .replace(/ *>/g, "ᐳ")
+            .replace(/\[ */g, "ᑅ")
+            .replace(/\] */g, "ᑀ")
+            .replace(/\(\| */g, "ᐸRuntimeᐳ::EList<")
+            .replace(/ *\|\)/g, ">");
 
         if(bb.startsWith("lambda_")) {
             return "lambda_" + s_BSQ_tag + bb.slice(6);
