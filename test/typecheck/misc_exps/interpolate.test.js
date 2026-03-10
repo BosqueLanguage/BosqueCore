@@ -6,9 +6,9 @@ import { describe, it } from "node:test";
 describe ("Checker -- interpolate cstring", () => {
     it("should check simple interpolate cstring", function () {
         checkTestExp("Interpolate::cstring($'-${0}-', 'a')", "CString");
-        //checkTestExp("Interpolate::cstring($'${0}-${1}', 'a', 'b')", "CString");
+        checkTestExp("Interpolate::cstring($'${0}-${1}', 'a', 'b')", "CString");
 
-        //checkTestExp("Interpolate::cstring<CString>($'${0}-${1}', 'a', 'b')", "CString");
+        checkTestExp("Interpolate::cstring<CString>($'${0}-${1}', 'a', 'b')", "CString");
     });
 
     it("should fail bad index/names", function () {
