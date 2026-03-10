@@ -12,13 +12,11 @@ describe ("Checker -- interpolate cstring", () => {
     });
 
     it("should fail bad index/names", function () {
-        checkTestExpError("Interpolate::cstring($'${1}', 'aa')", "CString", "aaa");
-        //checkTestExpError("Interpolate::cstring($'${-1}', 'aa')", "CString", "bbb");
+        checkTestExpError("Interpolate::cstring($'${1}', 'aa')", "CString", "If format string argument indexes are used, then they must start at 0 (unless being matched to an inferred type)");
+        checkTestExpError("Interpolate::cstring($'${-1}', 'aa')", "CString", "InterpolateFormatExpression with named format parameters must have all named arguments");
 
-        //checkTestExpError("Interpolate::cstring($'${0}', val = 'aa')", "CString", "ddd");
-
-        //checkTestExpError("Interpolate::cstring($'${arg: y}', 'aa')", "CString", "ccc");
-        //checkTestExpError("Interpolate::cstring($'${arg: y}', val = 'aa')", "CString", "ccc");
+        checkTestExpError("Interpolate::cstring($'${0}', val = 'aa')", "CString", "InterpolateFormatExpression with positional format parameters must have all positional arguments");
+        checkTestExpError("Interpolate::cstring($'${arg}', val = 'aa')", "CString", "Interpolation argument val does not match any format parameter");
     });
 });
 

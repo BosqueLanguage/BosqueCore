@@ -14,8 +14,8 @@ describe ("Checker -- FCString", () => {
     });
 
     it("should fail duplicate names/bad count", function () {
-        checkTestExpError("$'${0}-${1}'", "FCString<CString, CString>", "Expected a return value of type FCString<CString, CString> but got FCString<CString, CString, CString>");
-        checkTestExpError("$'${a}-${b}'", "FCString<CString, a: CString, a: CString>", "Expected a return value of type FCString<CString, a: CString, a: CString> but got FCString<CString, a: CString, b: CString>");
+        checkTestExpError("$'${0}-${1}'", "FCString<CString, CString>", "Inferred format string type FCString<CString, CString> does not have all the required argument indexes");
+        checkTestExpError("$'${a}-${b}'", "FCString<CString, a: CString, a: CString>", "Format string literal uses names not found in inferred type FCString<CString, a: CString, a: CString>");
     });
 });
 

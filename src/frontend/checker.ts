@@ -1542,15 +1542,15 @@ class TypeChecker {
                     return ii;
                 });
 
-                this.checkError(sinfo, allidxs[0] === 0, `If format string argument indexes are used, then they must start at 0 (unless being matched to an inferred type)`);
-                this.checkError(sinfo, allidxs.slice(1).some((idx, ii) => idx === allidxs[ii - 1]), `Format string argument indexes cannot have gaps (unless being matched to an inferred type)`);
+                this.checkError(sinfo, allidxs[0] !== 0, `If format string argument indexes are used, then they must start at 0 (unless being matched to an inferred type)`);
+                this.checkError(sinfo, allidxs.slice(1).some((idx, ii) => idx - 1 !== allidxs[ii]), `Format string argument indexes cannot have gaps (unless being matched to an inferred type)`);
             }
         }
         else {
             if(allidxs) {
                 const allidxsfound = fmttypes.every((fmt) => {
                     let iidx = -1;
-                    try { Number.parseInt(fmt.argname) } catch(err) { ; }
+                    try { iidx = Number.parseInt(fmt.argname) } catch(err) { ; }
 
                     return iidx !== -1 && iidx < itype.terms.length;
                 });
