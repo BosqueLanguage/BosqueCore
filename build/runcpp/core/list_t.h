@@ -31,7 +31,7 @@ namespace ᐸRuntimeᐳ
         constexpr bool empty() const { return this->count == 0; }
 
         template<size_t len>
-        constexpr static ListTInlineContent literal(const T (&elems)[len])
+        constexpr static ListTInlineContent smliteral(const T (&elems)[len])
         {
             static_assert(len != 0, "ListT inline literal should not be empty");
             static_assert(len <= LIST_T_CAPACITY(sizeof(T)), "Literal too large for ListTInlineContent");
@@ -66,6 +66,12 @@ namespace ᐸRuntimeᐳ
         constexpr static int64_t LIST_T_MAX_LEAF_SIZE = ListTInlineContent<T>::LIST_T_BUFF_SIZE * 2;
 
         PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T> postree;
+
+        template<size_t len>
+        constexpr static ListTTreeContent smliteral(const T (&elems)[len])
+        {
+            xxxx;
+        }
     };
 
     template<typename T, uint32_t TYPE_ID_POS_TREE_T>
@@ -215,6 +221,14 @@ namespace ᐸRuntimeᐳ
             static_assert(len <= LIST_T_CAPACITY(sizeof(T)), "List literal too large for ListTInlineContent");
 
             return XList(ListTInlineContent<T>::literal(cdata), inlinetypeinfo);
+        }
+
+        template<size_t len>
+        constexpr static XList slliteral(const T (&cdata)[len], const TypeInfo* treetypeinfo)
+        {
+            static_assert(len <= 2 * LIST_T_CAPACITY(sizeof(T)), "List literal too large for Single Leaf ");
+
+            return XList(ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::smliteral(cdata), treetypeinfo);
         }
 
         constexpr static XList make_empty()

@@ -563,6 +563,10 @@ class CPPEmitter {
                     const inlinetypeinfo = `ᐸRuntimeᐳ::g_typeinfo_${cce}Inline`;
                     return `${cce}::smliteral({${args}}, &${inlinetypeinfo})`;
                 }
+                else if(iclse.elements.length <= 2 * LIST_T_CAPACITY(tinfot.bytesize)) {
+                    const treetypeinfo = `ᐸRuntimeᐳ::g_typeinfo_${cce}Tree`;
+                    return `${cce}::slliteral({${args}}, &${treetypeinfo})`;
+                }
                 else {
                     assert(false, "CPPEmitter: need to implement list singleton construction for larger allocation");
                 }
