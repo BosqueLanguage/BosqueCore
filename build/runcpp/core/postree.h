@@ -35,17 +35,15 @@ namespace ᐸRuntimeᐳ
         constexpr PosRBTreeLeaf() : count(0) { std::memset((void*)this->data.data(), 0, sizeof(T) * K); }
         constexpr PosRBTreeLeaf(const PosRBTreeLeaf& other) = default;
 
-        template<size_t len>
-        constexpr static PosRBTreeLeaf literal(const T (&elems)[len])
+        PosRBTreeLeaf(std::initializer_list<T> args)
         {
-            static_assert(len != 0, "PosRBTreeLeaf inline literal should not be empty");
-            static_assert(len <= K, "Literal too large for PosRBTreeLeaf");
+            assert(args.size() != 0);
+            assert(args.size() <= K);
 
-            PosRBTreeLeaf ll;
-            std::copy(elems, elems + len, ll.data.begin());
-            ll.count = len;
+            std::memset((void*)this->data.data(), 0, sizeof(T) * K);
+            std::copy(args.begin(), args.end(), this->data.begin());
 
-            return ll;
+            this->count = args.size();
         }
     };
 
@@ -117,6 +115,11 @@ namespace ᐸRuntimeᐳ
 
         static const TypeInfo* s_nodetypeinfo;
         thread_local static GCAllocator<PosRBTreeNode<T, K>>* s_nodeallocator;
+
+        static PosRBTree<T, K, TreeID> mkwleaf(PosRBTreeLeaf<T, K>* leaf) 
+        {
+            return PosRBTree<T, K, TreeID>(BoxedUnion<PosRBTreeUnion<T, K>>(s_leaftypeinfo, PosRBTreeUnion<T, K>(leaf)));
+        }
 
         constexpr int64_t count() const
         {

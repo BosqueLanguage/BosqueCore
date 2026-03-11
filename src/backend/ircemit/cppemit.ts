@@ -1813,12 +1813,11 @@ class CPPEmitter {
             '    ᐸRuntimeᐳ::g_alloc_info.io_buffer_free_list(oibb);\n' +
             '    oibb.clear();';
 
-        return `int mmain(int argc, char** argv)\n` +
+        return `void mmain(int argc, char** argv)\n` +
         `{\n` +
         parse + "\n" +
         invoke + "\n" +
         print + "\n" +
-        `    return 0;\n` +
         `}`;
     }
 
@@ -1852,7 +1851,10 @@ class CPPEmitter {
                '    ᐸRuntimeᐳ::tl_bosque_info.current_task = &maintask;\n\n' +
                `    ${initializegc}\n` +
                `    ${notes}\n` +
-               `    return mmain(argc, argv);\n` +
+               `    mmain(argc, argv);\n` +
+               '\n' +
+               `    ᐸRuntimeᐳ::tl_alloc_info.cleanup();\n` +
+               `    return 0;\n` +
                '}\n';
     }
 

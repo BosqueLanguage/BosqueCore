@@ -67,10 +67,9 @@ namespace ᐸRuntimeᐳ
 
         PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T> postree;
 
-        template<size_t len>
-        constexpr static ListTTreeContent smliteral(const T (&elems)[len])
+        static ListTTreeContent smliteral(std::initializer_list<T> elems)
         {
-            xxxx;
+            return ListTTreeContent{PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::mkwleaf(PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::s_leafallocator->allocate(elems))};
         }
     };
 
@@ -223,12 +222,12 @@ namespace ᐸRuntimeᐳ
             return XList(ListTInlineContent<T>::literal(cdata), inlinetypeinfo);
         }
 
-        template<size_t len>
-        constexpr static XList slliteral(const T (&cdata)[len], const TypeInfo* treetypeinfo)
+        static XList slliteral(std::initializer_list<T> elems, const TypeInfo* treetypeinfo)
         {
-            static_assert(len <= 2 * LIST_T_CAPACITY(sizeof(T)), "List literal too large for Single Leaf ");
+            assert(elems.size() != 0);
+            assert(elems.size() <= 2 * LIST_T_CAPACITY(sizeof(T)));
 
-            return XList(ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::smliteral(cdata), treetypeinfo);
+            return XList(ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::smliteral(elems), treetypeinfo);
         }
 
         constexpr static XList make_empty()

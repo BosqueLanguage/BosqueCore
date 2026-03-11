@@ -155,9 +155,12 @@ class TypeInfoManager {
             ];
         }
         else if (tii.tkey.startsWith("List")) {
+            const posrb_treeleafid = tii.bsqtypeid - 5;
+            const posrb_treenodeid = tii.bsqtypeid - 4;
+        
             return [
-                `{ ${tii.bsqtypeid}, &ᐸRuntimeᐳ::PosRBTreeLeaf_${TransformCPPNameManager.convertTypeKey(tkey)}_allocator }`,
-                `{ ${tii.bsqtypeid}, &ᐸRuntimeᐳ::PosRBTreeNode_${TransformCPPNameManager.convertTypeKey(tkey)}_allocator }`
+                `{ ${posrb_treeleafid}, &ᐸRuntimeᐳ::PosRBTreeLeaf_${TransformCPPNameManager.convertTypeKey(tkey)}_allocator }`,
+                `{ ${posrb_treenodeid}, &ᐸRuntimeᐳ::PosRBTreeNode_${TransformCPPNameManager.convertTypeKey(tkey)}_allocator }`
             ];
         }
         else {
