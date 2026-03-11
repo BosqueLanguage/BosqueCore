@@ -15,10 +15,10 @@ describe ("CPPExec -- interpolate cstring", () => {
 
     it("should exec simple interpolate cstring (var)", function () {
         runTestSet("public function main(s: CString): CString { let fs = $'-${0}-'; return Interpolate::cstring(fs, s); }", [['"x"', "'-x-'"]], []);
-        runTestSet("public function main(s: CString): CString { let fs = $'${0}-${1}'; return Interpolate::cstring(fs, 'a', 'b'); }", [['"x"', "'x-b'"]], []);
+        runTestSet("public function main(s: CString): CString { let fs = $'${0}-${1}'; return Interpolate::cstring(fs, s, 'b'); }", [['"x"', "'x-b'"]], []);
 
-        runTestSet("public function main(s: CString): CString { let fs = $'${0}-${0}'; return Interpolate::cstring<CString>(fs, 'a'); }", [['"x"', "'x-x'"]], []);
-        runTestSet("public function main(s: CString): CString { let fs = $'${arg2}-${arg1}'; return Interpolate::cstring<CString>(fs, arg1 = 'a', arg2 = 'b'); }", [['"x"', "'b-x'"]], []);
+        runTestSet("public function main(s: CString): CString { let fs = $'${0}-${0}'; return Interpolate::cstring<CString>(fs, s); }", [['"x"', "'x-x'"]], []);
+        runTestSet("public function main(s: CString): CString { let fs = $'${arg2}-${arg1}'; return Interpolate::cstring<CString>(fs, arg1 = s, arg2 = 'b'); }", [['"x"', "'b-x'"]], []);
     });
 });
 
