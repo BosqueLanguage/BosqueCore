@@ -275,14 +275,23 @@ namespace ᐸRuntimeᐳ
             }
         }
 
+        char etok = '\'';
+        if(this->sloppystrings && this->lexer.current().tokentype == BSQONTokenType::LiteralString) {
+            etok = '"';
+        }
+
         auto stok = this->lexer.current();
-        if(stok.size() < CStrRootInlineContent::CSTR_MAX_SIZE) {
+        if(stok.size() == 2) {
+            this->lexer.consume();
+            return std::make_optional(XCString());
+        }
+        else if(stok.size() - 2 <= CStrRootInlineContent::CSTR_MAX_SIZE) {
             CStrRootInlineContent cb;
             size_t ecount = 0;
             bool extractok = true;
             BSQLexBufferIterator ii = stok.begin;
             ++ii; //eat ' and skip final '
-            while(*ii != '\'') {
+            while(*ii != etok) {
                 extractok &= processCCharInString(ii, &cb.data[ecount + 1]);
                 ecount++;
             }
@@ -304,14 +313,16 @@ namespace ᐸRuntimeᐳ
     std::optional<XString> BSQONParser::parseString()
     {
         if(this->lexer.current().tokentype != BSQONTokenType::LiteralString) {
-            if(!this->sloppystrings || this->lexer.current().tokentype != BSQONTokenType::LiteralCString) {
-                return std::nullopt;
-            }
+            return std::nullopt;
         }
-
+        
         auto stok = this->lexer.current();
-        if(stok.size() < StrBuff::STR_MAX_SIZE) {
-            StrBuff cb;
+        if(stok.size() == 2) {
+            this->lexer.consume();
+            return std::make_optional(XString());
+        }
+        else if(stok.size() - 2 <= StrRootInlineContent::STR_MAX_SIZE) {
+            StrRootInlineContent cb;
             size_t ecount = 0;
             bool extractok = true;
             BSQLexBufferIterator ii = stok.begin;

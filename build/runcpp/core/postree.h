@@ -5,6 +5,8 @@
 #include "bsqtype.h"
 #include "boxed.h"
 
+#include "../runtime/allocator/alloc.h"
+
 namespace ᐸRuntimeᐳ
 {
     enum class RColor : uint64_t
@@ -23,35 +25,32 @@ namespace ᐸRuntimeᐳ
 
     template<typename T, int64_t K> class PosRBTreeNode;
 
-    class PosRBTreeLeafEmpty 
-    {
-    };
-    
-    constexpr TypeInfo g_typeinfo_PosRBTreeLeafEmpty_generate(uint32_t tid, const char* tname)
-    {
-        return TypeInfo {
-            tid,
-            8,
-            1,
-            LayoutTag::Value,
-            BSQ_PTR_MASK_LEAF,
-            tname,
-            nullptr
-        };
-    }
-
     template<typename T, int64_t K> 
     class PosRBTreeLeaf
     {
     public:
         int64_t count;
-        T data[K];
+        std::array<T, K> data;
+
+        constexpr PosRBTreeLeaf() : count(0) { std::memset((void*)this->data.data(), 0, sizeof(T) * K); }
+        constexpr PosRBTreeLeaf(const PosRBTreeLeaf& other) = default;
+
+        PosRBTreeLeaf(std::initializer_list<T> args)
+        {
+            assert(args.size() != 0);
+            assert(args.size() <= K);
+
+            std::memset((void*)this->data.data(), 0, sizeof(T) * K);
+            std::copy(args.begin(), args.end(), this->data.begin());
+
+            this->count = args.size();
+        }
     };
 
     template<typename T, int64_t K>
-    constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_generate(uint32_t tid, const char* mask, const char* tname)
+    consteval TypeInfo g_typeinfo_PosRBTreeLeaf_generate(uint32_t tid, const char* mask, const char* tname)
     {
-        return TypeInfo {
+        return TypeInfo{
             tid,
             sizeof(PosRBTreeLeaf<T, K>),
             byteSizeToSlotCount(sizeof(PosRBTreeLeaf<T, K>)),
@@ -65,13 +64,12 @@ namespace ᐸRuntimeᐳ
     template<typename T, int64_t K>
     union PosRBTreeUnion
     {
-        PosRBTreeLeafEmpty bbleaf;
+        //empty tree is where boxed union typeinfo is nullptr
         PosRBTreeLeaf<T, K>* leaf;
         PosRBTreeNode<T, K>* node;
 
         constexpr PosRBTreeUnion() : leaf() {}
         constexpr PosRBTreeUnion(const PosRBTreeUnion& other) = default;
-        constexpr PosRBTreeUnion(PosRBTreeLeafEmpty l) : bbleaf(l) {}
         constexpr PosRBTreeUnion(PosRBTreeLeaf<T, K>* l) : leaf(l) {}
         constexpr PosRBTreeUnion(PosRBTreeNode<T, K>* n) : node(n) {}
     };
@@ -89,9 +87,9 @@ namespace ᐸRuntimeᐳ
     };
 
     template<typename T, int64_t K> 
-    constexpr TypeInfo g_typeinfo_PosRBTreeNode_generate(uint32_t tid, const char* tname)
+    consteval TypeInfo g_typeinfo_PosRBTreeNode_generate(uint32_t tid, const char* tname)
     {
-        return TypeInfo {
+        return TypeInfo{
             tid,
             sizeof(PosRBTreeNode<T, K>),
             byteSizeToSlotCount(sizeof(PosRBTreeNode<T, K>)),
@@ -102,32 +100,45 @@ namespace ᐸRuntimeᐳ
         };
     }
 
-    template<typename T, int64_t K>
+    ////
+    //Note that we tag each template to keep the types distinct because we have the static allocator/type info! 
+    //For now we probably want to mostly PIMPL the persistent tree logic and keep wrappers in the class to avoid code bloat but we can always change this later.
+    ////
+    template<typename T, int64_t K, uint32_t TreeID>
     class PosRBTree
     {
     public:
-        static uint32_t bbleaftypeid;
-        static uint32_t leaftypeid;
-        static uint32_t nodetypeid;
-        
         PosRBTreeRepr<T, K> repr;
+
+        static const TypeInfo* s_leaftypeinfo;
+        thread_local static GCAllocator<PosRBTreeLeaf<T, K>>* s_leafallocator;
+
+        static const TypeInfo* s_nodetypeinfo;
+        thread_local static GCAllocator<PosRBTreeNode<T, K>>* s_nodeallocator;
+
+        static PosRBTree<T, K, TreeID> mkwleaf(PosRBTreeLeaf<T, K>* leaf) 
+        {
+            return PosRBTree<T, K, TreeID>(BoxedUnion<PosRBTreeUnion<T, K>>(s_leaftypeinfo, PosRBTreeUnion<T, K>(leaf)));
+        }
 
         constexpr int64_t count() const
         {
-            if(this->repr.typeinfo->bsqtypeid == PosRBTree<T, K>::bbleaftypeid) {
+            if(this->repr.typeinfo == nullptr) {
                 return 0;
             }
-            else if(this->repr.typeinfo->bsqtypeid == PosRBTree<T, K>::leaftypeid) {
-                return this->repr.data.leaf->count;
-            }
             else {
-                return this->repr.data.node->count;
+                if(this->repr.typeinfo == s_leaftypeinfo) {
+                    return this->repr.data.leaf->count;
+                }
+                else {
+                    return this->repr.data.node->count;
+                }
             }
         }
 
         PosRBTreeLeaf<T, K>* getLeaf(int64_t index) const
         {
-            if(this->repr.typeinfo->bsqtypeid == PosRBTree<T, K>::leaftypeid) {
+            if(this->repr.typeinfo == s_leaftypeinfo) {
                 return this->repr.data.leaf;
             }
             else {
@@ -138,7 +149,7 @@ namespace ᐸRuntimeᐳ
 
         T& get(int64_t index) const
         {
-            if(this->repr.typeinfo->bsqtypeid == PosRBTree<T, K>::leaftypeid) {
+            if(this->repr.typeinfo == s_leaftypeinfo) {
                 return this->repr.data.leaf->data[index];
             }
             else {
@@ -147,13 +158,13 @@ namespace ᐸRuntimeᐳ
         }
     };
 
-    template<typename T, int64_t K> 
-    constexpr TypeInfo g_typeinfo_PosRBTree_generate(uint32_t tid, const char* tname)
+    template<typename T, int64_t K, uint32_t TreeID> 
+    consteval TypeInfo g_typeinfo_PosRBTree_generate(uint32_t tid, const char* tname)
     {
         return TypeInfo {
             tid,
-            sizeof(PosRBTree<T, K>),
-            byteSizeToSlotCount(sizeof(PosRBTree<T, K>)),
+            sizeof(PosRBTree<T, K, TreeID>),
+            byteSizeToSlotCount(sizeof(PosRBTree<T, K, TreeID>)),
             LayoutTag::Tagged,
             "20",
             tname,

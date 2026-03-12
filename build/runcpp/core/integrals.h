@@ -14,30 +14,30 @@ namespace ᐸRuntimeᐳ
 
         int64_t value;
 
-        inline constexpr static bool isValidNat(int64_t v)
+        constexpr static bool isValidNat(int64_t v)
         {
             return (0 <= v) & (v <= XNat::MAX_NAT);
         }
 
         // Check operators on Nat
-        inline static void checkOverflowAddition(XNat n1, XNat n2, const char* file, uint32_t line)
+        constexpr static void checkOverflowAddition(XNat n1, XNat n2, const char* file, uint32_t line)
         {
             int64_t result = 0;
             if(__builtin_add_overflow(n1.value, n2.value, &result) || !(XNat::isValidNat(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Nat addition bounds"); }
         }
-        inline static void checkOverflowSubtraction(XNat n1, XNat n2, const char* file, uint32_t line)
+        constexpr static void checkOverflowSubtraction(XNat n1, XNat n2, const char* file, uint32_t line)
         {
             if(n2.value > n1.value) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericUnderflow, nullptr, "Nat subtraction underflow"); }
             
             int64_t result = 0;
             if(__builtin_sub_overflow(n1.value, n2.value, &result) || !(XNat::isValidNat(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Nat subtraction bounds"); }
         }
-        inline static void checkOverflowMultiplication(XNat n1, XNat n2, const char* file, uint32_t line)
+        constexpr static void checkOverflowMultiplication(XNat n1, XNat n2, const char* file, uint32_t line)
         {
             int64_t result = 0;
             if(__builtin_mul_overflow(n1.value, n2.value, &result) || !(XNat::isValidNat(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Nat multiplication bounds"); }
         }
-        inline static void checkDivisionByZero(XNat n2, const char* file, uint32_t line)
+        constexpr static void checkDivisionByZero(XNat n2, const char* file, uint32_t line)
         {
             if(n2.value == 0) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::DivisionByZero, nullptr, "Nat division by zero"); }
         }
@@ -82,28 +82,28 @@ namespace ᐸRuntimeᐳ
 
         int64_t value;
 
-        inline constexpr static bool isValidInt(int64_t v)
+        constexpr static bool isValidInt(int64_t v)
         {
             return (XInt::MIN_INT <= v) & (v <= XInt::MAX_INT);
         }
     
         // Check operators on Int
-        inline static void checkOverflowAddition(XInt n1, XInt n2, const char* file, uint32_t line)
+        constexpr static void checkOverflowAddition(XInt n1, XInt n2, const char* file, uint32_t line)
         {
             int64_t result = 0;
             if(__builtin_add_overflow(n1.value, n2.value, &result) || !(XInt::isValidInt(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Int addition bounds"); }
         }
-        inline static void checkOverflowSubtraction(XInt n1, XInt n2, const char* file, uint32_t line)
+        constexpr static void checkOverflowSubtraction(XInt n1, XInt n2, const char* file, uint32_t line)
         {
             int64_t result = 0;
             if(__builtin_sub_overflow(n1.value, n2.value, &result) || !(XInt::isValidInt(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Int subtraction bounds"); }
         }
-        inline static void checkOverflowMultiplication(XInt n1, XInt n2, const char* file, uint32_t line)
+        constexpr static void checkOverflowMultiplication(XInt n1, XInt n2, const char* file, uint32_t line)
         {
             int64_t result = 0;
             if(__builtin_mul_overflow(n1.value, n2.value, &result) || !(XInt::isValidInt(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Int multiplication bounds"); }
         }
-        inline static void checkDivisionByZero(XInt n2, const char* file, uint32_t line)
+        constexpr static void checkDivisionByZero(XInt n2, const char* file, uint32_t line)
         {
             if(n2.value == 0) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::DivisionByZero, nullptr, "Int division by zero"); }
         }
@@ -150,14 +150,14 @@ namespace ᐸRuntimeᐳ
 
         __int128_t value;
 
-        inline constexpr static bool isValidNat(__int128_t v)
+        constexpr static bool isValidNat(__int128_t v)
         {
             return (0 <= v) & (v <= XChkNat::MAX_NAT);
         }
 
         static constexpr __int128_t BOTTOM_VALUE = (__int128_t(1) << 126);
         
-        inline constexpr static bool s_isBottom(__int128_t v)
+        constexpr static bool s_isBottom(__int128_t v)
         {
             return v == BOTTOM_VALUE;
         }
@@ -172,11 +172,11 @@ namespace ᐸRuntimeᐳ
             return XChkNat::s_isBottom(this->value);
         }
 
-        inline static void checkOverflowSubtraction(XChkNat n1, XChkNat n2, const char* file, uint32_t line)
+        constexpr static void checkOverflowSubtraction(XChkNat n1, XChkNat n2, const char* file, uint32_t line)
         {
             if(n2.value > n1.value) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericUnderflow, nullptr, "Nat subtraction underflow"); }
         }
-        inline static void checkDivisionByZero(XChkNat n2, const char* file, uint32_t line)
+        constexpr static void checkDivisionByZero(XChkNat n2, const char* file, uint32_t line)
         {
             if(n2.value == 0) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::DivisionByZero, nullptr, "Int division by zero"); }
         }
@@ -255,14 +255,14 @@ namespace ᐸRuntimeᐳ
                 
         __int128_t value;
 
-        inline constexpr static bool isValidInt(__int128_t v)
+        constexpr static bool isValidInt(__int128_t v)
         {
             return (XChkInt::MIN_INT <= v) & (v <= XChkInt::MAX_INT);
         }
 
         static constexpr __int128_t BOTTOM_VALUE = (__int128_t(1) << 126);
 
-        inline constexpr static bool isBottom(__int128_t v)
+        constexpr static bool isBottom(__int128_t v)
         {
             return v == BOTTOM_VALUE;
         }
@@ -277,7 +277,7 @@ namespace ᐸRuntimeᐳ
             return XChkInt{XChkInt::BOTTOM_VALUE};
         }
     
-        inline static void checkDivisionByZero(XChkInt n2, const char* file, uint32_t line)
+        constexpr static void checkDivisionByZero(XChkInt n2, const char* file, uint32_t line)
         {
             if(n2.value == 0) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::DivisionByZero, nullptr, "Int division by zero"); }
         }
@@ -339,7 +339,7 @@ namespace ᐸRuntimeᐳ
                 return XChkInt{XChkInt::BOTTOM_VALUE};
             }
 
-           __int128_t result = 0;
+            __int128_t result = 0;
             if(!__builtin_mul_overflow(lhs.value, rhs.value, &result) && XChkInt::isValidInt(result)) [[likely]] {
                 return XChkInt{result};
             }
@@ -356,7 +356,7 @@ namespace ᐸRuntimeᐳ
         friend constexpr XBool operator>=(const XChkInt& lhs, const XChkInt& rhs) { return XBool::from(!(lhs.value < rhs.value)); }
     };
 
-    constexpr TypeInfo g_typeinfo_Nat = {
+    inline constexpr TypeInfo g_typeinfo_Nat = {
         WELL_KNOWN_TYPE_ID_NAT,
         sizeof(XNat),
         byteSizeToSlotCount(sizeof(XNat)),
@@ -366,7 +366,7 @@ namespace ᐸRuntimeᐳ
         nullptr
     };
 
-    constexpr TypeInfo g_typeinfo_Int = {
+    inline constexpr TypeInfo g_typeinfo_Int = {
         WELL_KNOWN_TYPE_ID_INT,
         sizeof(XInt),
         byteSizeToSlotCount(sizeof(XInt)),
@@ -376,7 +376,7 @@ namespace ᐸRuntimeᐳ
         nullptr
     };
 
-    constexpr TypeInfo g_typeinfo_ChkNat = {
+    inline constexpr TypeInfo g_typeinfo_ChkNat = {
         WELL_KNOWN_TYPE_ID_CHKNAT,
         sizeof(XChkNat),
         byteSizeToSlotCount(sizeof(XChkNat)),
@@ -386,7 +386,7 @@ namespace ᐸRuntimeᐳ
         nullptr
     };
 
-    constexpr TypeInfo g_typeinfo_ChkInt = {
+    inline constexpr TypeInfo g_typeinfo_ChkInt = {
         WELL_KNOWN_TYPE_ID_CHKINT,
         sizeof(XChkInt),
         byteSizeToSlotCount(sizeof(XChkInt)),

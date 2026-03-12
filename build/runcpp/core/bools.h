@@ -31,7 +31,7 @@ namespace ᐸRuntimeᐳ
     constexpr XBool XFALSE = XBool::from(false);
     constexpr XBool XTRUE = XBool::from(true);
 
-    constexpr TypeInfo g_typeinfo_Bool = {
+    inline constexpr TypeInfo g_typeinfo_Bool = {
         WELL_KNOWN_TYPE_ID_BOOL,
         sizeof(XBool),
         byteSizeToSlotCount(sizeof(XBool)),

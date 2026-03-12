@@ -1481,7 +1481,10 @@ class TypeChecker {
         return exp.setType(this.getWellKnownType("CString"));
     }
 
-    private computeFormatArgsTypes(sinfo: SourceInfo, fmts: FormatStringComponent[], defaulttype: TypeSignature): {argname: string, argtype: TypeSignature}[] {
+    private computeFormatArgsTypes(sinfo: SourceInfo, fmts: FormatStringComponent[], defaulttype: TypeSignature, infertype: TypeSignature | undefined): {argname: string, argtype: TypeSignature}[] {
+        this.checkError(sinfo, infertype !== undefined && !(infertype instanceof ErrorTypeSignature) && !(infertype instanceof FormatStringTypeSignature), `Inferred type for format string must be a format string type`);
+        const itype = infertype instanceof FormatStringTypeSignature ? infertype : undefined;
+
         let fmttypes: {argname: string, argtype: TypeSignature}[] = [];
         for(let i = 0; i < fmts.length; ++i) {
             const ffmt = fmts[i];
@@ -1514,18 +1517,10 @@ class TypeChecker {
 
         fmttypes.sort((a, b) => a.argname.localeCompare(b.argname));
 
-        const allidxs = fmttypes.every((fmt) => /$[0-9]+^/.test(fmt.argname));
-        const allnames = fmttypes.every((fmt) => !/$[0-9]+^/.test(fmt.argname));
+        const allidxs = fmttypes.every((fmt) => /^[0-9]+$/.test(fmt.argname));
+        const allnames = fmttypes.every((fmt) => !/^[0-9]+$/.test(fmt.argname));
         if(!allidxs && !allnames) {
             this.reportError(sinfo, `Format string arguments must be either all indexed or all named`);
-        }
-
-        if(allidxs) {
-            const idxs = fmttypes.map((fmt) => Number.parseInt(fmt.argname));
-            this.checkError(sinfo, idxs.some((idx) => idx < 0), `Format string argument indexes must be non-negative integers`);
-            this.checkError(sinfo, idxs.some((idx, ii) => idx !== ii), `Format string argument index arguments must cover the range from 0 to the number of arguments -1 without duplicates`);
-
-            fmttypes = fmttypes.map((fmt) => ({argname: "_", argtype: fmt.argtype}));
         }
 
         let uniquefmttypes: {argname: string, argtype: TypeSignature}[] = [];
@@ -1539,19 +1534,56 @@ class TypeChecker {
             }
         }
 
+        if(itype === undefined) {
+            if(allidxs) {
+                const allidxs = uniquefmttypes.map((fmt) => {
+                    let ii = -1;
+                    try { ii = Number.parseInt(fmt.argname) } catch(err) { ; }
+                    return ii;
+                });
+
+                this.checkError(sinfo, allidxs[0] !== 0, `If format string argument indexes are used, then they must start at 0 (unless being matched to an inferred type)`);
+                this.checkError(sinfo, allidxs.slice(1).some((idx, ii) => idx - 1 !== allidxs[ii]), `Format string argument indexes cannot have gaps (unless being matched to an inferred type)`);
+            }
+        }
+        else {
+            if(allidxs) {
+                const allidxsfound = fmttypes.every((fmt) => {
+                    let iidx = -1;
+                    try { iidx = Number.parseInt(fmt.argname) } catch(err) { ; }
+
+                    return iidx !== -1 && iidx < itype.terms.length;
+                });
+                this.checkError(sinfo, !allidxsfound, `Inferred format string type ${itype.emit()} does not have all the required argument indexes`);
+            }
+            else {
+                const allnamesfound = fmttypes.every((fmt) => {
+                    return itype.terms.some((term) => term.argname === fmt.argname);
+                });
+                this.checkError(sinfo, !allnamesfound, `Format string literal uses names not found in inferred type ${itype.emit()}`);
+            }
+        }
+
+        if(allidxs) {
+            const idxs = fmttypes.map((fmt) => Number.parseInt(fmt.argname));
+            this.checkError(sinfo, idxs.some((idx) => idx < 0), `Format string argument indexes must be non-negative integers`);
+            
+            uniquefmttypes = uniquefmttypes.map((fmt) => ({argname: "_", argtype: fmt.argtype}));
+        }
+
         return uniquefmttypes;
     }
 
-    private checkLiteralFormatStringExpression(env: TypeEnvironment, exp: LiteralFormatStringExpression): TypeSignature {
-        const fmttypes = this.computeFormatArgsTypes(exp.sinfo, exp.fmts, this.getWellKnownType("String"));
+    private checkLiteralFormatStringExpression(env: TypeEnvironment, exp: LiteralFormatStringExpression, infertype: TypeSignature | undefined): TypeSignature {
+        const fmttypes = this.computeFormatArgsTypes(exp.sinfo, exp.fmts, this.getWellKnownType("String"), infertype);
         
-        return exp.setType(new FormatStringTypeSignature(exp.sinfo, "String", this.getWellKnownType("String"), fmttypes));
+        return exp.setType(infertype || new FormatStringTypeSignature(exp.sinfo, "String", this.getWellKnownType("String"), fmttypes));
     }
 
-    private checkLiteralFormatCStringExpression(env: TypeEnvironment, exp: LiteralFormatCStringExpression): TypeSignature {
-        const fmttypes = this.computeFormatArgsTypes(exp.sinfo, exp.fmts, this.getWellKnownType("CString"));
+    private checkLiteralFormatCStringExpression(env: TypeEnvironment, exp: LiteralFormatCStringExpression, infertype: TypeSignature | undefined): TypeSignature {
+        const fmttypes = this.computeFormatArgsTypes(exp.sinfo, exp.fmts, this.getWellKnownType("CString"), infertype);
         
-        return exp.setType(new FormatStringTypeSignature(exp.sinfo, "CString", this.getWellKnownType("CString"), fmttypes));
+        return exp.setType(infertype || new FormatStringTypeSignature(exp.sinfo, "CString", this.getWellKnownType("CString"), fmttypes));
     }
 
     private checkLiteralPathExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
@@ -1631,7 +1663,7 @@ class TypeChecker {
         return exp.setType(exp.constype);
     }
 
-    private checkLiteralTypedFormatStringExpression(env: TypeEnvironment, exp: LiteralTypedFormatStringExpression): TypeSignature {
+    private checkLiteralTypedFormatStringExpression(env: TypeEnvironment, exp: LiteralTypedFormatStringExpression, infertype: TypeSignature | undefined): TypeSignature {
         if(!this.checkTypeSignature(exp.constype)) {
             return exp.setType(exp.constype);
         }
@@ -1647,12 +1679,12 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
-        const fmttypes = this.computeFormatArgsTypes(exp.sinfo, exp.fmts, this.getWellKnownType("String"));
+        const fmttypes = this.computeFormatArgsTypes(exp.sinfo, exp.fmts, this.getWellKnownType("String"), infertype);
         
-        return exp.setType(new FormatStringTypeSignature(exp.sinfo, "String", exp.constype, fmttypes));
+        return exp.setType(infertype || new FormatStringTypeSignature(exp.sinfo, "String", exp.constype, fmttypes));
     }
 
-    private checkLiteralTypedFormatCStringExpression(env: TypeEnvironment, exp: LiteralTypedFormatCStringExpression): TypeSignature {
+    private checkLiteralTypedFormatCStringExpression(env: TypeEnvironment, exp: LiteralTypedFormatCStringExpression, infertype: TypeSignature | undefined): TypeSignature {
         if(!this.checkTypeSignature(exp.constype)) {
             return exp.setType(exp.constype);
         }
@@ -1668,9 +1700,9 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
-        const fmttypes = this.computeFormatArgsTypes(exp.sinfo, exp.fmts, this.getWellKnownType("CString"));
+        const fmttypes = this.computeFormatArgsTypes(exp.sinfo, exp.fmts, this.getWellKnownType("CString"), infertype);
         
-        return exp.setType(new FormatStringTypeSignature(exp.sinfo, "CString", exp.constype, fmttypes));
+        return exp.setType(infertype || new FormatStringTypeSignature(exp.sinfo, "CString", exp.constype, fmttypes));
     }
 
     private checkAccessEnvValueExpression(env: TypeEnvironment, exp: AccessEnvValueExpression): TypeSignature {
@@ -2404,8 +2436,8 @@ class TypeChecker {
         }
         const argsallnamed = args.every((arg) => arg instanceof NamedArgumentValue);
         
-        const paramsallpositional = fmtparams.every((p) => /^[0-9]+$/.test(p.argname));
-        const paramsallnamed = fmtparams.every((p) => !/^[0-9]+$/.test(p.argname));
+        const paramsallpositional = fmtparams.every((p) => p.argname === "_");
+        const paramsallnamed = fmtparams.every((p) => p.argname !== "_");
 
         if(paramsallpositional) {
             const argsallpositional = args.every((arg) => arg instanceof PositionalArgumentValue);
@@ -3290,10 +3322,12 @@ class TypeChecker {
                 return this.checkLiteralCStringExpression(env, exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralFormatStringExpression: {
-                return this.checkLiteralFormatStringExpression(env, exp as LiteralFormatStringExpression);
+                const itype = TypeInferContext.asSimpleType(typeinfer);
+                return this.checkLiteralFormatStringExpression(env, exp as LiteralFormatStringExpression, itype);
             }
             case ExpressionTag.LiteralFormatCStringExpression: {
-                return this.checkLiteralFormatCStringExpression(env, exp as LiteralFormatCStringExpression);
+                const itype = TypeInferContext.asSimpleType(typeinfer);
+                return this.checkLiteralFormatCStringExpression(env, exp as LiteralFormatCStringExpression, itype);
             }
             case ExpressionTag.LiteralPathExpression: {
                 return this.checkLiteralPathExpression(env, exp as LiteralSimpleExpression);
@@ -3314,10 +3348,12 @@ class TypeChecker {
                 return this.checkLiteralTypedCStringExpression(env, exp as LiteralTypedCStringExpression);
             }
             case ExpressionTag.LiteralTypedFormatStringExpression: {
-                return this.checkLiteralTypedFormatStringExpression(env, exp as LiteralTypedFormatStringExpression);
+                const itype = TypeInferContext.asSimpleType(typeinfer);
+                return this.checkLiteralTypedFormatStringExpression(env, exp as LiteralTypedFormatStringExpression, itype);
             }
             case ExpressionTag.LiteralTypedFormatCStringExpression: {
-                return this.checkLiteralTypedFormatCStringExpression(env, exp as LiteralTypedFormatCStringExpression);
+                const itype = TypeInferContext.asSimpleType(typeinfer);
+                return this.checkLiteralTypedFormatCStringExpression(env, exp as LiteralTypedFormatCStringExpression, itype);
             }
             case ExpressionTag.AccessEnvValueExpression: {
                 return this.checkAccessEnvValueExpression(env, exp as AccessEnvValueExpression);

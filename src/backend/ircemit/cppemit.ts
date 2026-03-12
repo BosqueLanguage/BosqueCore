@@ -6,7 +6,7 @@ import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkN
 import { IRAbstractCollectionTypeDecl, IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAssembly, IRConceptTypeDecl, IRConstantDecl, IRConstructableTypeDecl, IREntityTypeDecl, IREnumTypeDecl, IRFailTypeDecl, IRInternalConceptTypeDecl, IRInvariantDecl, IRInvokeDecl, IRInvokeParameterDecl, IRListTypeDecl, IRMapEntryTypeDecl, IRMapTypeDecl, IROkTypeDecl, IROptionTypeDecl, IRPrimitiveEntityTypeDecl, IRResultTypeDecl, IRSomeTypeDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl, IRValidateDecl } from "../irdefs/irassembly.js";
 
 import assert from "node:assert";
-import { IRNominalTypeSignature, IRTypeSignature } from "../irdefs/irtype.js";
+import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatCStringTypeSignature, IRFormatStringTypeSignature, IRFormatTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype.js";
 
 const RUNTIME_NAMESPACE = "ᐸRuntimeᐳ";
 const CLOSURE_CAPTURE_NAME = "ᐸclosureᐳ";
@@ -549,7 +549,9 @@ class CPPEmitter {
                     return `${cce}{${args}}`;
                 }
                 else {
-                    assert(false, "CPPEmitter: need to implement standard entity construction for heap allocation");
+                    const cce = TransformCPPNameManager.generateNameForConstructor(iccse.constype.tkeystr);
+                    const args = iccse.values.map((vv) => this.emitIRSimpleExpression(vv, true)).join(", ");
+                    return `ᐸRuntimeᐳ::${cce}_allocator.allocate(${args})`;
                 }
             }
             else if(ttag === IRExpressionTag.IRConstructorListSingletonsExpression) {
@@ -560,7 +562,12 @@ class CPPEmitter {
                 const ldecl = this.irasm.alltypes.get(iclse.constype.tkeystr) as IRListTypeDecl;
                 const tinfot = this.typeInfoManager.getTypeInfo(ldecl.oftype.tkeystr);
                 if(iclse.elements.length <= LIST_T_CAPACITY(tinfot.bytesize)) {
-                    return `${cce}::smliteral({${args}})`;
+                    const inlinetypeinfo = `ᐸRuntimeᐳ::g_typeinfo_${cce}Inline`;
+                    return `${cce}::smliteral({${args}}, &${inlinetypeinfo})`;
+                }
+                else if(iclse.elements.length <= 2 * LIST_T_CAPACITY(tinfot.bytesize)) {
+                    const treetypeinfo = `ᐸRuntimeᐳ::g_typeinfo_${cce}Tree`;
+                    return `${cce}::slliteral({${args}}, &${treetypeinfo})`;
                 }
                 else {
                     assert(false, "CPPEmitter: need to implement list singleton construction for larger allocation");
@@ -996,7 +1003,7 @@ class CPPEmitter {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
         const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey); 
 
-        return `namespace ᐸRuntimeᐳ { constexpr TypeInfo g_typeinfo_${ctname} = {\n` +
+        return `namespace ᐸRuntimeᐳ { inline constexpr TypeInfo g_typeinfo_${ctname} = {\n` +
         `        ${ttid.bsqtypeid},\n` +
         `        8,\n` +
         `        1,\n` +
@@ -1015,24 +1022,59 @@ class CPPEmitter {
         const oftrepr = this.typeInfoManager.emitTypeAsStd(tdecl.oftype.tkeystr);
         const ofttid = this.typeInfoManager.getTypeInfo(tdecl.oftype.tkeystr);
 
-        let ibuffmask = "0";
-        while(ibuffmask.length < ttid.slotcount) {
-            ibuffmask = ibuffmask + (ofttid.tag === LayoutTag.Ref ? "1" : ofttid.ptrmask || "0");
+        let eemask: string;
+        if(ofttid.tag === LayoutTag.Ref) {
+            eemask = "1";
         }
-        let ptrmask: string | undefined = undefined; 
-        if(ibuffmask.includes("1") || ibuffmask.includes("2")) {
-            ptrmask = ibuffmask;
+        else {
+            if(ofttid.ptrmask !== undefined) {
+                eemask = ofttid.ptrmask;
+            }
+            else {
+                eemask = Array(ofttid.slotcount).fill("0").join("");
+            }
         }
         
+        let inlinemask: string | undefined = undefined; 
+        let leafmask: string | undefined = undefined;
+        if(eemask.includes("1") || eemask.includes("2")) {
+            const icapacity = LIST_T_CAPACITY(ofttid.bytesize);
+
+            inlinemask = "0" + Array(icapacity).fill(eemask).join("");
+            leafmask = "0" + Array(2 * icapacity).fill(eemask).join("");
+        }
+        
+        const posrb_treeleafid = ttid.bsqtypeid - 5;
+        const posrb_treenodeid = ttid.bsqtypeid - 4;
+        const posrb_treeid = ttid.bsqtypeid - 3;
+
+        const listinlineid = ttid.bsqtypeid - 2;
+        const listtreeid = ttid.bsqtypeid - 1;
+
         const tidecls = `namespace ᐸRuntimeᐳ {\n` +
-        `    constexpr TypeInfo g_typeinfo_${ctname}${"ᐤ"}buff = g_typeinfo_ListTInlineBuff_generate<${oftrepr}>(${ttid.bsqtypeid - 2}, ${ptrmask !== undefined ? ('"' + ptrmask + '"') : "nullptr"}, "${"ᐸRuntimeᐳ::ListTInlineBuff<" + oftrepr + ">"}");\n` +
-        `    constexpr TypeInfo g_typeinfo_${ctname}${"ᐤ"}node = g_typeinfo_ListTNode_generate<${oftrepr}>(${ttid.bsqtypeid - 1}, "${"ᐸRuntimeᐳ::ListTNode<" + oftrepr + ">"}");\n` +
-        `    constexpr TypeInfo g_typeinfo_${ctname} = g_typeinfo_ListTTree_generate<${oftrepr}>(${ttid.bsqtypeid}, "${ttid.ptrmask}", "${"ᐸRuntimeᐳ::List<" + oftrepr + ">"}");\n` +
+        `    inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_${ctname} = g_typeinfo_PosRBTreeLeaf_generate<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>(${posrb_treeleafid}, ${leafmask !== undefined ? `"${leafmask}"` : "nullptr"}, "PosRBTreeLeaf_${ctname}");\n` +
+        `    inline constexpr TypeInfo g_typeinfo_PosRBTreeNode_${ctname} = g_typeinfo_PosRBTreeNode_generate<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>(${posrb_treenodeid}, "PosRBTreeNode_${ctname}");\n` +
+        `    inline constexpr TypeInfo g_typeinfo_PosRBTree_${ctname} = g_typeinfo_PosRBTree_generate<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE, ${posrb_treeid}>(${posrb_treeid}, "PosRBTree_${ctname}");\n` +
+        '\n' +
+        `    extern thread_local GCAllocator<PosRBTreeLeaf<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>> PosRBTreeLeaf_${ctname}_allocator;\n` +
+        `    extern thread_local GCAllocator<PosRBTreeNode<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>> PosRBTreeNode_${ctname}_allocator;\n` +
+        '\n' +
+        `    inline constexpr TypeInfo g_typeinfo_${ctname}Inline = g_typeinfo_ListTInlineContent_generate<${oftrepr}>(${listinlineid}, ${inlinemask !== undefined ? `"${inlinemask}"` : "nullptr"}, "${ctname}Inline");\n` +
+        `    inline constexpr TypeInfo g_typeinfo_${ctname}Tree = g_typeinfo_ListTTreeContent<${oftrepr}, ${posrb_treeid}>(${listtreeid}, "${ctname}TreeContent");\n` +
+        `    inline constexpr TypeInfo g_typeinfo_${ctname} = g_typeinfo_ListT_generate<${oftrepr}, ${posrb_treeid}>(${ttid.bsqtypeid}, "${ctname}");\n` +
         `}`;
 
         const tidefs = `namespace ᐸRuntimeᐳ {\n` +
-        `    template<> const TypeInfo* ListTInlineBuff<${oftrepr}>::s_typeinfo = &g_typeinfo_${ctname}${"ᐤ"}buff;\n` +
-        `    template<> const TypeInfo* ListTNode<${oftrepr}>::s_typeinfo = &g_typeinfo_${ctname}${"ᐤ"}node;\n` +
+        `    template<> const TypeInfo* XList<${oftrepr}, ${ttid.bsqtypeid}>::s_inlinetypeinfo = &g_typeinfo_${ctname}Inline;\n` +
+        `    template<> const TypeInfo* XList<${oftrepr}, ${ttid.bsqtypeid}>::s_treetypeinfo = &g_typeinfo_${ctname}Tree;\n` +
+        '\n' +
+        `    thread_local GCAllocator<PosRBTreeLeaf<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>> PosRBTreeLeaf_${ctname}_allocator(&g_typeinfo_PosRBTreeLeaf_${ctname});\n` +
+        `    thread_local GCAllocator<PosRBTreeNode<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>> PosRBTreeNode_${ctname}_allocator(&g_typeinfo_PosRBTreeNode_${ctname});\n` +
+        '\n' +
+        `    template<> const TypeInfo* PosRBTree<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE, ${posrb_treeid}>::s_leaftypeinfo = &g_typeinfo_PosRBTreeLeaf_${ctname};\n` +
+        `    template<> thread_local GCAllocator<PosRBTreeLeaf<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>>* PosRBTree<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE, ${posrb_treeid}>::s_leafallocator = &PosRBTreeLeaf_${ctname}_allocator;\n` +
+        `    template<> const TypeInfo* PosRBTree<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE, ${posrb_treeid}>::s_nodetypeinfo = &g_typeinfo_PosRBTreeNode_${ctname};\n` +
+        `    template<> thread_local GCAllocator<PosRBTreeNode<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>>* PosRBTree<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE, ${posrb_treeid}>::s_nodeallocator = &PosRBTreeNode_${ctname}_allocator;\n` +
         `}`;
 
         return [tidecls, tidefs];
@@ -1042,7 +1084,8 @@ class CPPEmitter {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
         const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey); 
 
-        return `namespace ᐸRuntimeᐳ { constexpr TypeInfo g_typeinfo_${ctname} = {\n` +
+        return `namespace ᐸRuntimeᐳ {\n` +
+        `    inline constexpr TypeInfo g_typeinfo_${ctname} = {\n` +
         `        ${ttid.bsqtypeid},\n` +
         `        ${ttid.bytesize},\n` +
         `        ${ttid.slotcount},\n` +
@@ -1054,11 +1097,31 @@ class CPPEmitter {
         `}`;
     }
 
+     private emitEntityTypeInfoWAllocInfo(tdecl: IRAbstractEntityTypeDecl): [string, string] {
+        const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
+        const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey); 
+
+        return [`namespace ᐸRuntimeᐳ {\n` +
+            `    inline constexpr TypeInfo g_typeinfo_${ctname} = {\n` +
+            `        ${ttid.bsqtypeid},\n` +
+            `        ${ttid.bytesize},\n` +
+            `        ${ttid.slotcount},\n` +
+            `        LayoutTag::${ttid.tag},\n` +
+            `        ${ttid.ptrmask !== undefined ? ('"' + ttid.ptrmask + '"') : "nullptr"},\n` +
+            `        "${tdecl.tkey}",\n` +
+            `        ${ttid.vtable !== undefined ? "" : "nullptr"}\n` +
+            `    };\n` +
+            `    extern thread_local GCAllocator<${ctname}> ${ctname}_allocator;\n` +
+            `}`,
+            `namespace ᐸRuntimeᐳ { thread_local GCAllocator<${ctname}> ${ctname}_allocator(&g_typeinfo_${ctname}); }`
+        ];
+    }
+
     private emitConceptTypeInfoDecl(tdecl: IRAbstractEntityTypeDecl): string {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
         const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey); 
 
-        return `namespace ᐸRuntimeᐳ { constexpr TypeInfo g_typeinfo_${ctname} = {\n` +
+        return `namespace ᐸRuntimeᐳ { inline constexpr TypeInfo g_typeinfo_${ctname} = {\n` +
         `        ${ttid.bsqtypeid},\n` +
         `        ${ttid.bytesize},\n` +
         `        ${ttid.slotcount},\n` +
@@ -1087,7 +1150,7 @@ class CPPEmitter {
         const bsqparsedecl = `std::optional<${ctname}> BSQ_parse${ctname}();`;
         const bsqemitdecl = `void BSQ_emit${ctname}(${ctname} vv);`;
 
-        const mmarray = `constexpr std::array<const char*, ${eenum.members.length}> BSQ_enum_values_${ctname} = { ${eenum.members.map((mem) => `"${mem}"`).join(", ")} };`;
+        const mmarray = `inline constexpr std::array<const char*, ${eenum.members.length}> BSQ_enum_values_${ctname} = { ${eenum.members.map((mem) => `"${mem}"`).join(", ")} };`;
         const mdecls = `${eenum.members.map((mem, ii) => `${ctname} ${ctname}::${TransformCPPNameManager.convertIdentifier(mem)} = ${ctname}{${ii}};`).join("\n")}\n`;
         const bsqparsedef = `std::optional<${ctname}> BSQ_parse${ctname}() {\n` + 
         `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeType("${eenum.tkey}")) { return std::nullopt; };\n` +
@@ -1273,11 +1336,12 @@ class CPPEmitter {
 
     private emitListTypeInfo(tdecl: IRListTypeDecl): [string, string] {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
+        const tinfo = this.typeInfoManager.getTypeInfo(tdecl.tkey);
 
         //const oftname = TransformCPPNameManager.convertTypeKey(tdecl.oftype.tkeystr);
         const voft = this.typeInfoManager.emitTypeAsStd(tdecl.oftype.tkeystr);
         
-        const declusing = `using ${ctname} = ${RUNTIME_NAMESPACE}::XList<${voft}>;`;
+        const declusing = `using ${ctname} = ${RUNTIME_NAMESPACE}::XList<${voft}, ${tinfo.bsqtypeid}>;`;
         const [decltypeinfo, deftypeinfo] = this.emitListTypeInfoDecl(tdecl);
         const declbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}();`;
         const declbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv);`;
@@ -1285,7 +1349,7 @@ class CPPEmitter {
         const defbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}() {\n` +
         `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeType("${tdecl.tkey}")) { return std::nullopt; };\n` +
         `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('{')) { return std::nullopt; };\n` +
-        `    ${voft} varr[16] = {0};\n` +
+        `    ${voft} varr[16] = {};\n` +
         `    size_t count = 0;\n` +
         `    bool first = true;\n` +
         `    while(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.peekSymbol('}')) {\n` +
@@ -1303,7 +1367,7 @@ class CPPEmitter {
         `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitLiteralContent("${tdecl.tkey}"); \n` +
         `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitSymbol('{'); \n` +
         `    bool first = true;\n` +
-        `    for(ᐸRuntimeᐳ::XListTIterator<${voft}> iter = vv.begin(); iter != vv.end(); ++iter) {\n` +
+        `    for(auto iter = vv.begin(); iter != vv.end(); ++iter) {\n` +
         `        if(first) { first = false; } else { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate(", "); }\n` +
         `        BSQ_emit${TransformCPPNameManager.convertTypeKey(tdecl.oftype.tkeystr)}((*iter));\n` +
         `    }\n` +
@@ -1351,13 +1415,19 @@ class CPPEmitter {
         assert(false, "CPPEmitter: need to implement result type decl emission");
     }
 
-    private emitStdCommonEntityTypeInfo(tdecl: IREntityTypeDecl, tlinfo: TypeInfo): [string, string] {
+    private emitStdCommonEntityTypeInfo(tdecl: IREntityTypeDecl, tlinfo: TypeInfo, isRef: boolean): [string, string] {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
         const ctrepr = this.typeInfoManager.emitTypeAsStd(tdecl.tkey);
 
         const vvaccess = tlinfo.tag === LayoutTag.Value ? "." : "->";
-        const vvcons: [string, string] = tlinfo.tag === LayoutTag.Value ? [ctname + "{", "}"] : ["[TODO--IMPLEMENT](", ")"];
-
+        let vvcons: [string, string];
+        if(tlinfo.tag === LayoutTag.Value) {
+            vvcons = [`${ctname}{`, `}`];
+        }
+        else {
+            vvcons = [`ᐸRuntimeᐳ::${ctname}_allocator.allocate(` , ")"];
+        }
+        
         const iifieldargl = tdecl.saturatedBFieldInfo.map((bf) => { return {pname: `${TransformCPPNameManager.convertIdentifier("$" + bf.fname)}`, ptype: bf.ftype}; }); 
         const vfuncinfo = tdecl.invariants.map((inv) => this.emitInvariantFunction(inv, tdecl, iifieldargl));
         const valfuncinfo = tdecl.validates.map((val) => this.emitValidateFunction(val, tdecl, iifieldargl));
@@ -1365,15 +1435,23 @@ class CPPEmitter {
         const fdecllist = tdecl.saturatedBFieldInfo.map((bf) => {
             const ftypstr = this.typeInfoManager.emitTypeAsMemberField(bf.ftype.tkeystr);
             const fname = TransformCPPNameManager.convertIdentifier(bf.fname);
-            return `${ftypstr} ${fname};`;
+            return `    ${ftypstr} ${fname};`;
         });
         const tclass = `class ${ctname} {\n` +
             `public:\n` +
-            `    ${fdecllist.join("    \n")}\n` +
+            `${fdecllist.join("    \n")}\n` +
             `    //All constructor and assignment defaults\n` +
             `};`;
 
-        const typeinfodecl = this.emitEntityTypeInfoDecl(tdecl);
+        let typeinfodecl: string;
+        let typeinfodef: string;
+        if(isRef) {
+            [typeinfodecl, typeinfodef] = this.emitEntityTypeInfoWAllocInfo(tdecl);
+        }
+        else {
+            typeinfodecl = this.emitEntityTypeInfoDecl(tdecl);
+            typeinfodef = "//No allocator needed for value type";
+        }
 
         const bsqparsedecl = `std::optional<${ctrepr}> BSQ_parse${ctname}();`;
         
@@ -1411,7 +1489,7 @@ class CPPEmitter {
 
             return [
                 [tclass, typeinfodecl, bsqparsedecl, bsqemitdecl].join("\n"), 
-                [bsqparsedef, bsqemitdef].join("\n")
+                [typeinfodef, bsqparsedef, bsqemitdef].join("\n")
             ];
         }
         else {
@@ -1456,17 +1534,17 @@ class CPPEmitter {
 
             return [
                 [tclass, typeinfodecl, ivdecls, bsqparsedecl, bsqemitdecl].join("\n"), 
-                [ivdefs, bsqparsedef, bsqemitdef].join("\n")
+                [typeinfodef, ivdefs, bsqparsedef, bsqemitdef].join("\n")
             ];
         }
     }
 
     private emitStdValueEntityTypeInfo(tdecl: IREntityTypeDecl, tlinfo: TypeInfo): [string, string] {
-        return this.emitStdCommonEntityTypeInfo(tdecl, tlinfo);
+        return this.emitStdCommonEntityTypeInfo(tdecl, tlinfo, false);
     }
 
     private emitStdRefEntityTypeInfo(tdecl: IREntityTypeDecl, tlinfo: TypeInfo): [string, string] {
-        assert(false, "CPPEmitter: need to implement std ref entity type decl emission");
+        return this.emitStdCommonEntityTypeInfo(tdecl, tlinfo, true);
     }
 
     private emitStdEntityTypeInfo(tdecl: IREntityTypeDecl): [string, string] {
@@ -1552,6 +1630,24 @@ class CPPEmitter {
         ];
     }
 
+    private emitFormatTypeInfo(tdecl: IRFormatTypeSignature): [string, string] {
+        //just a using decl for now -- eventually we will need to support parsing and emitting of format types as well
+        const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkeystr);
+
+        let declusing = "";
+        if(tdecl instanceof IRFormatCStringTypeSignature) {
+            declusing = `using ${ctname} = ${RUNTIME_NAMESPACE}::XFCString;`;
+        }
+        else if(tdecl instanceof IRFormatStringTypeSignature) {
+            declusing = `using ${ctname} = ${RUNTIME_NAMESPACE}::XFString;`;
+        }
+        else {
+            assert(false, "CPPEmitter: unknown format type signature emission for key " + tdecl.tkeystr);
+        }
+        
+        return [declusing, "//TODO: need to implement format type info emission"];
+    }
+
     //Emit the type declarations needed for the .h file
     private emitTypeDeclInfo(): [string, string] {
         const pdecls = "//Primitive decls\n\n" + this.irasm.primitives.map((pdecl) => {
@@ -1589,7 +1685,23 @@ class CPPEmitter {
         })
         .map((ttd) => {
             if(!(ttd instanceof IRNominalTypeSignature)) {
-                assert(false, "CPPEmitter: unknown typedeporder (TYPESIG) type decl emission -- " + ttd.tkeystr);
+                assert(!(ttd instanceof IRVoidTypeSignature), "Don't think we should ever be doing this...");
+
+                if(ttd instanceof IREListTypeSignature) {
+                    assert(false, `CPPEmitter: need to implement EList type signature emission for key ${ttd.tkeystr}`);
+                }
+                else if(ttd instanceof IRDashResultTypeSignature) {
+                    assert(false, `CPPEmitter: need to implement DashResult type signature emission for key ${ttd.tkeystr}`);
+                }
+                else if(ttd instanceof IRFormatTypeSignature) {
+                    return this.emitFormatTypeInfo(ttd);
+                }
+                else if(ttd instanceof IRLambdaParameterPackTypeSignature) {
+                    assert(false, `CPPEmitter: need to implement lambda parameter pack type signature emission for key ${ttd.tkeystr}`);
+                }
+                else {
+                    assert(false, "CPPEmitter: unknown typedeporder (TYPESIG) type decl emission -- " + ttd.tkeystr);
+                }    
             }
             else {
                 const ctd = this.irasm.alltypes.get(ttd.tkeystr) as IRAbstractNominalTypeDecl;
@@ -1683,26 +1795,40 @@ class CPPEmitter {
         return [stringunion, '//TODO eventually need to set GC and other info'].join("\n\n");
     }
 
-    //Emit command line main
-    private emitCommandLineMain(ikey: string[]): string {
-        const notes = "//TODO ---- need to dispatch on things and handle useage + agents.md";
-
-        let dispatchstrs = "";
-        if(ikey.length === 1) {
-            const idecl = this.irasm.invokes.find((v) => v.ikey === ikey[0]) as IRInvokeDecl;
-
-            dispatchstrs = 
-            (idecl.params.length === 1 ?
-            'auto iobb = ᐸRuntimeᐳ::g_alloc_info.io_buffer_alloc();\n' + 
+    ////
+    //Emit command line main support
+    private emitParseArgsMain(idecl: IRInvokeDecl): string {
+        if(idecl.params.length === 0) {
+            return '    //No args';
+        }
+        else {
+            const initforparse = 
+            '    auto iobb = ᐸRuntimeᐳ::g_alloc_info.io_buffer_alloc();\n' + 
             '    size_t ibytes = std::strlen(argv[1]);\n' +
             '    std::copy(argv[1], argv[1] + ibytes, iobb);\n\n' +
             '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.initialize({iobb}, ibytes);\n' +
-            `    auto x = BSQ_parse${TransformCPPNameManager.convertTypeKey(idecl.params[0].type.tkeystr)}();\n` +
-            '    if(!x.has_value()) { printf("Error parsing input\\n"); exit(1); }\n' +
+            '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.setSloppyStringParsing(true);\n';
+
+            const pargs = idecl.params.map((p) => {
+                const vname = TransformCPPNameManager.convertIdentifier(p.name);
+                const parsekey = TransformCPPNameManager.convertTypeKey(p.type.tkeystr);
+
+                return `    auto ${vname} = BSQ_parse${parsekey}(); if(!${vname}.has_value()) { printf("Error parsing input\\n"); exit(1); }\n`;
+            }).join("\n") + "\n";
+
+            const finalizeparse = 
             '    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.allInputConsumed()) { printf("Error parsing input -- invaliad data in tail of input\\n"); exit(1); }\n' +
-            '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.release();\n\n'
-            : '//No args\n\n') +
-            '    if (setjmp(ᐸRuntimeᐳ::tl_bosque_info.current_task->error_handler) > 0) {\n' +
+            '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.release();\n';
+
+            return [initforparse, pargs, finalizeparse].join("\n");
+        }
+    }
+
+    private emitMMain(idecl: IRInvokeDecl): string {
+        const parse = this.emitParseArgsMain(idecl);
+
+        const invokeargs = idecl.params.map((p) => TransformCPPNameManager.convertIdentifier(p.name) + ".value()").join(", ");
+        const invoke = '    if (setjmp(ᐸRuntimeᐳ::tl_bosque_info.current_task->error_handler) > 0) {\n' +
             '        auto perr = ᐸRuntimeᐳ::tl_bosque_info.current_task->pending_error.value();\n' +
             '        auto pfile = std::string(perr.file);\n' +
             '        auto pbfile = std::string(pfile.cbegin() + pfile.find_last_of("/") + 1, pfile.cend());\n' +
@@ -1710,8 +1836,9 @@ class CPPEmitter {
             '        if(perr.message != nullptr) { printf("  with message: %s\\n", perr.message); }\n' +
             '        exit(1);\n' +
             '    }\n\n' +
-            `    auto result = ${TransformCPPNameManager.convertInvokeKey(ikey[0])}(${idecl.params.length === 1 ? 'x.value()' : ''});\n\n` +
-            '    size_t obytes = 0;\n' +
+            `    auto result = ${TransformCPPNameManager.convertInvokeKey(idecl.ikey)}(${invokeargs});\n`;
+
+        const print = '    size_t obytes = 0;\n' +
             '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.prepForEmit(true);\n' +
             `    BSQ_emit${TransformCPPNameManager.convertTypeKey(idecl.resultType.tkeystr)}(result);\n` +
             '    auto oibb = ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.completeEmit(obytes);\n\n' +
@@ -1722,16 +1849,49 @@ class CPPEmitter {
             '    printf("\\n");\n\n' +
             '    ᐸRuntimeᐳ::g_alloc_info.io_buffer_free_list(oibb);\n' +
             '    oibb.clear();';
-        }
-        else {
-            assert(false, "CPPEmitter: need to implement multi-invoke command line dispatch");
-        }
 
-        return 'int main(int argc, char** argv) {\n' +
-               '    ᐸRuntimeᐳ::TaskInfoRepr<StdEnvUnion> envunion; //and more setup here\n' +
-               '    ᐸRuntimeᐳ::tl_bosque_info.current_task = &envunion;\n\n' +
+        return `void mmain(int argc, char** argv)\n` +
+        `{\n` +
+        parse + "\n" +
+        invoke + "\n" +
+        print + "\n" +
+        `}`;
+    }
+
+    private emitCommandLineMain(ikey: string): string {
+        const idecl = this.irasm.invokes.find((v) => v.ikey === ikey) as IRInvokeDecl;
+
+        const mmain = this.emitMMain(idecl);
+
+        const sallocs = [
+            ...(this.irasm.primitives.map((pdcl) => this.typeInfoManager.generateAllocatorNameForTypeKeySpecialMapEntry(pdcl.tkey)).filter((aa) => aa !== undefined) as string[][]),
+            ...(this.irasm.collections.map((cdcl) => this.typeInfoManager.generateAllocatorNameForTypeKeySpecialMapEntry(cdcl.tkey)).filter((aa) => aa !== undefined) as string[][]),
+            ...(this.irasm.eventlists.map((ccdl) => this.typeInfoManager.generateAllocatorNameForTypeKeySpecialMapEntry(ccdl.tkey)).filter((aa) => aa !== undefined) as string[][]),
+        ].flat();
+
+        const allocs = [
+            ...(this.irasm.entities.map((edcl) => this.typeInfoManager.generateAllocatorNameForTypeKeyGeneralMapEntry(edcl.tkey)).filter((aa) => aa !== undefined) as string[]),
+            ...(this.irasm.datamembers.map((cdcl) => this.typeInfoManager.generateAllocatorNameForTypeKeyGeneralMapEntry(cdcl.tkey)).filter((aa) => aa !== undefined) as string[])
+        ];
+
+        const initializegc = '{\n' +
+        '        //always thread safe on this initialization phase since we have not started any other threads yet\n' +
+        '        register void** rbp asm("rbp");\n' +
+        `        ᐸRuntimeᐳ::tl_alloc_info.initialize(rbp, ᐸRuntimeᐳ::collect, {${[...sallocs, ...allocs].join(', ')}});\n` +
+        '    }\n';
+
+        const notes = "//TODO ---- need to dispatch on things and handle useage + agents.md";
+
+        return mmain + "\n\n" +
+               'int main(int argc, char** argv) {\n' +
+               '    ᐸRuntimeᐳ::TaskInfoRepr<StdEnvUnion> maintask;\n' +
+               '    ᐸRuntimeᐳ::tl_bosque_info.current_task = &maintask;\n\n' +
+               `    ${initializegc}\n` +
                `    ${notes}\n` +
-               `    ${dispatchstrs}\n` +
+               `    mmain(argc, argv);\n` +
+               '\n' +
+               `    ᐸRuntimeᐳ::tl_alloc_info.cleanup();\n` +
+               `    return 0;\n` +
                '}\n';
     }
 
@@ -1741,7 +1901,7 @@ class CPPEmitter {
         return this.emitIRInvokeDeclInfo(invk as IRInvokeDecl)[1];
     }
 
-    public emitForCommandLine(ikey: string[]): [string, string] {
+    public emitForCommandLine(ikey: string): [string, string] {
         const typeinfo = this.emitTypeDeclInfo();
         const iinfo = this.emitAllInvokeInfo();
 
