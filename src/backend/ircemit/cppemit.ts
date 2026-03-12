@@ -549,7 +549,9 @@ class CPPEmitter {
                     return `${cce}{${args}}`;
                 }
                 else {
-                    assert(false, "CPPEmitter: need to implement standard entity construction for heap allocation");
+                    const cce = TransformCPPNameManager.generateNameForConstructor(iccse.constype.tkeystr);
+                    const args = iccse.values.map((vv) => this.emitIRSimpleExpression(vv, true)).join(", ");
+                    return `ᐸRuntimeᐳ::${cce}_allocator.allocate(${args})`;
                 }
             }
             else if(ttag === IRExpressionTag.IRConstructorListSingletonsExpression) {
@@ -1082,7 +1084,8 @@ class CPPEmitter {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
         const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey); 
 
-        return `namespace ᐸRuntimeᐳ { inline constexpr TypeInfo g_typeinfo_${ctname} = {\n` +
+        return `namespace ᐸRuntimeᐳ {\n` +
+        `    inline constexpr TypeInfo g_typeinfo_${ctname} = {\n` +
         `        ${ttid.bsqtypeid},\n` +
         `        ${ttid.bytesize},\n` +
         `        ${ttid.slotcount},\n` +
@@ -1092,6 +1095,26 @@ class CPPEmitter {
         `        ${ttid.vtable !== undefined ? "" : "nullptr"}\n` +
         `    };\n` +
         `}`;
+    }
+
+     private emitEntityTypeInfoWAllocInfo(tdecl: IRAbstractEntityTypeDecl): [string, string] {
+        const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
+        const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey); 
+
+        return [`namespace ᐸRuntimeᐳ {\n` +
+            `    inline constexpr TypeInfo g_typeinfo_${ctname} = {\n` +
+            `        ${ttid.bsqtypeid},\n` +
+            `        ${ttid.bytesize},\n` +
+            `        ${ttid.slotcount},\n` +
+            `        LayoutTag::${ttid.tag},\n` +
+            `        ${ttid.ptrmask !== undefined ? ('"' + ttid.ptrmask + '"') : "nullptr"},\n` +
+            `        "${tdecl.tkey}",\n` +
+            `        ${ttid.vtable !== undefined ? "" : "nullptr"}\n` +
+            `    };\n` +
+            `    extern thread_local GCAllocator<${ctname}> ${ctname}_allocator;\n` +
+            `}`,
+            `namespace ᐸRuntimeᐳ { thread_local GCAllocator<${ctname}> ${ctname}_allocator(&g_typeinfo_${ctname}); }`
+        ];
     }
 
     private emitConceptTypeInfoDecl(tdecl: IRAbstractEntityTypeDecl): string {
@@ -1392,13 +1415,19 @@ class CPPEmitter {
         assert(false, "CPPEmitter: need to implement result type decl emission");
     }
 
-    private emitStdCommonEntityTypeInfo(tdecl: IREntityTypeDecl, tlinfo: TypeInfo): [string, string] {
+    private emitStdCommonEntityTypeInfo(tdecl: IREntityTypeDecl, tlinfo: TypeInfo, isRef: boolean): [string, string] {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
         const ctrepr = this.typeInfoManager.emitTypeAsStd(tdecl.tkey);
 
         const vvaccess = tlinfo.tag === LayoutTag.Value ? "." : "->";
-        const vvcons: [string, string] = tlinfo.tag === LayoutTag.Value ? [ctname + "{", "}"] : ["[TODO--IMPLEMENT](", ")"];
-
+        let vvcons: [string, string];
+        if(tlinfo.tag === LayoutTag.Value) {
+            vvcons = [`${ctname}{`, `}`];
+        }
+        else {
+            vvcons = [`ᐸRuntimeᐳ::${ctname}_allocator.allocate(` , ")"];
+        }
+        
         const iifieldargl = tdecl.saturatedBFieldInfo.map((bf) => { return {pname: `${TransformCPPNameManager.convertIdentifier("$" + bf.fname)}`, ptype: bf.ftype}; }); 
         const vfuncinfo = tdecl.invariants.map((inv) => this.emitInvariantFunction(inv, tdecl, iifieldargl));
         const valfuncinfo = tdecl.validates.map((val) => this.emitValidateFunction(val, tdecl, iifieldargl));
@@ -1406,15 +1435,23 @@ class CPPEmitter {
         const fdecllist = tdecl.saturatedBFieldInfo.map((bf) => {
             const ftypstr = this.typeInfoManager.emitTypeAsMemberField(bf.ftype.tkeystr);
             const fname = TransformCPPNameManager.convertIdentifier(bf.fname);
-            return `${ftypstr} ${fname};`;
+            return `    ${ftypstr} ${fname};`;
         });
         const tclass = `class ${ctname} {\n` +
             `public:\n` +
-            `    ${fdecllist.join("    \n")}\n` +
+            `${fdecllist.join("    \n")}\n` +
             `    //All constructor and assignment defaults\n` +
             `};`;
 
-        const typeinfodecl = this.emitEntityTypeInfoDecl(tdecl);
+        let typeinfodecl: string;
+        let typeinfodef: string;
+        if(isRef) {
+            [typeinfodecl, typeinfodef] = this.emitEntityTypeInfoWAllocInfo(tdecl);
+        }
+        else {
+            typeinfodecl = this.emitEntityTypeInfoDecl(tdecl);
+            typeinfodef = "//No allocator needed for value type";
+        }
 
         const bsqparsedecl = `std::optional<${ctrepr}> BSQ_parse${ctname}();`;
         
@@ -1452,7 +1489,7 @@ class CPPEmitter {
 
             return [
                 [tclass, typeinfodecl, bsqparsedecl, bsqemitdecl].join("\n"), 
-                [bsqparsedef, bsqemitdef].join("\n")
+                [typeinfodef, bsqparsedef, bsqemitdef].join("\n")
             ];
         }
         else {
@@ -1497,17 +1534,17 @@ class CPPEmitter {
 
             return [
                 [tclass, typeinfodecl, ivdecls, bsqparsedecl, bsqemitdecl].join("\n"), 
-                [ivdefs, bsqparsedef, bsqemitdef].join("\n")
+                [typeinfodef, ivdefs, bsqparsedef, bsqemitdef].join("\n")
             ];
         }
     }
 
     private emitStdValueEntityTypeInfo(tdecl: IREntityTypeDecl, tlinfo: TypeInfo): [string, string] {
-        return this.emitStdCommonEntityTypeInfo(tdecl, tlinfo);
+        return this.emitStdCommonEntityTypeInfo(tdecl, tlinfo, false);
     }
 
     private emitStdRefEntityTypeInfo(tdecl: IREntityTypeDecl, tlinfo: TypeInfo): [string, string] {
-        assert(false, "CPPEmitter: need to implement std ref entity type decl emission");
+        return this.emitStdCommonEntityTypeInfo(tdecl, tlinfo, true);
     }
 
     private emitStdEntityTypeInfo(tdecl: IREntityTypeDecl): [string, string] {

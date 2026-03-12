@@ -219,7 +219,7 @@ namespace ᐸRuntimeᐳ
         {
             static_assert(len <= LIST_T_CAPACITY(sizeof(T)), "List literal too large for ListTInlineContent");
 
-            return XList(ListTInlineContent<T>::literal(cdata), inlinetypeinfo);
+            return XList(ListTInlineContent<T>::smliteral(cdata), inlinetypeinfo);
         }
 
         static XList slliteral(std::initializer_list<T> elems, const TypeInfo* treetypeinfo)
