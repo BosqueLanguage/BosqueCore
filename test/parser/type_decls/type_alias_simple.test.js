@@ -110,3 +110,43 @@ describe ("Parser -- type decl string range still works", () => {
         parseTestFunctionInFile('type ShortName = String{1n, 20n}; [FUNC]', 'function main(): ShortName { return "bob"<ShortName>; }');
     });
 });
+
+describe ("Parser -- type decl single-value range (exact type)", () => {
+    it("should parse Int with single exact value", function () {
+        parseTestFunctionInFile('type ExactFive = Int{5i}; [FUNC]', 'function main(): ExactFive { return 5i<ExactFive>; }');
+    });
+
+    it("should parse Nat with single exact value", function () {
+        parseTestFunctionInFile('type ExactTen = Nat{10n}; [FUNC]', 'function main(): ExactTen { return 10n<ExactTen>; }');
+    });
+
+    it("should parse Float with single exact value", function () {
+        parseTestFunctionInFile('type ExactHalf = Float{0.5f}; [FUNC]', 'function main(): ExactHalf { return 0.5f<ExactHalf>; }');
+    });
+
+    it("should parse Decimal with single exact value", function () {
+        parseTestFunctionInFile('type ExactDec = Decimal{1.0d}; [FUNC]', 'function main(): ExactDec { return 1.0d<ExactDec>; }');
+    });
+
+    it("should reject wrong literal type in single-value range", function () {
+        parseTestFunctionInFileError('type Bad = Int{5n}; function main(): Int { return 0i; }', "Range bound literal must match type Int");
+    });
+});
+
+describe ("Parser -- type decl with ChkInt and ChkNat range bounds", () => {
+    it("should parse ChkInt with both bounds", function () {
+        parseTestFunctionInFile('type BoundedChk = ChkInt{-100I, 100I}; [FUNC]', 'function main(): BoundedChk { return 0I<BoundedChk>; }');
+    });
+
+    it("should parse ChkNat with both bounds", function () {
+        parseTestFunctionInFile('type SmallChkNat = ChkNat{0N, 1000N}; [FUNC]', 'function main(): SmallChkNat { return 500N<SmallChkNat>; }');
+    });
+
+    it("should parse ChkInt with single exact value", function () {
+        parseTestFunctionInFile('type ExactChk = ChkInt{42I}; [FUNC]', 'function main(): ExactChk { return 42I<ExactChk>; }');
+    });
+
+    it("should reject wrong literal type in ChkInt range", function () {
+        parseTestFunctionInFileError('type Bad = ChkInt{5i}; function main(): Int { return 0i; }', "Range bound literal must match type ChkInt");
+    });
+});

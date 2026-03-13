@@ -6465,19 +6465,20 @@ class Parser {
         return tk === TokenStrings.Nat || tk === TokenStrings.Int
             || tk === TokenStrings.ChkNat || tk === TokenStrings.ChkInt
             || tk === TokenStrings.Float || tk === TokenStrings.Decimal
-            || tk === TokenStrings.Rational || tk === TokenStrings.DecimalDegree
-            || tk === TokenStrings.Complex || tk === TokenStrings.NumberinoInt
-            || tk === TokenStrings.NumberinoFloat || tk === TokenStrings.NumberinoRational;
+            || tk === TokenStrings.Rational;
     }
 
     private expectedRangeLiteralToken(typeName: string): string | undefined {
         switch(typeName) {
             case "Int": return TokenStrings.Int;
             case "Nat": return TokenStrings.Nat;
+            case "ChkInt": return TokenStrings.ChkInt;
+            case "ChkNat": return TokenStrings.ChkNat;
             case "Float": return TokenStrings.Float;
             case "Decimal": return TokenStrings.Decimal;
             case "Rational": return TokenStrings.Rational;
             case "String": return TokenStrings.Nat;
+            case "CString": return TokenStrings.Nat;
             default: return undefined;
         }
     }
@@ -6508,8 +6509,9 @@ class Parser {
                 if(this.isLiteralNumericToken(this.peekTokenKind(1)) || this.peekTokenKind(1) === SYM_coma) {
                     this.consumeToken();
                     if(this.isLiteralNumericToken()) { this.consumeToken(); }
-                    this.ensureAndConsumeTokenAlways(SYM_coma, "type declaration size range");
-                    if(this.isLiteralNumericToken()) { this.consumeToken(); }
+                    if(this.testAndConsumeTokenIf(SYM_coma)) {
+                        if(this.isLiteralNumericToken()) { this.consumeToken(); }
+                    }
                     this.ensureAndConsumeTokenAlways(SYM_rbrace, "type declaration size range");
                 }
 
@@ -6535,12 +6537,16 @@ class Parser {
                     }
                     min = this.consumeTokenAndGetValue();
                 }
-                this.ensureAndConsumeTokenAlways(SYM_coma, "type declaration size range");
-                if(this.isLiteralNumericToken()) {
-                    if(expectedToken !== undefined && this.peekTokenKind() !== expectedToken) {
-                        this.recordErrorGeneral(this.peekToken().getSourceInfo(), `Range bound literal must match type ${(ttype as NominalTypeSignature).decl.name}`);
+                if(this.testAndConsumeTokenIf(SYM_coma)) {
+                    if(this.isLiteralNumericToken()) {
+                        if(expectedToken !== undefined && this.peekTokenKind() !== expectedToken) {
+                            this.recordErrorGeneral(this.peekToken().getSourceInfo(), `Range bound literal must match type ${(ttype as NominalTypeSignature).decl.name}`);
+                        }
+                        max = this.consumeTokenAndGetValue();
                     }
-                    max = this.consumeTokenAndGetValue();
+                }
+                else {
+                    max = min;
                 }
 
                 this.ensureAndConsumeTokenAlways(SYM_rbrace, "type declaration size range");
