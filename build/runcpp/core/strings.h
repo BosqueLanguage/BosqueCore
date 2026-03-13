@@ -288,6 +288,22 @@ namespace ᐸRuntimeᐳ
         friend XBool operator!=(const XCString& lhs, const XCString& rhs) { return !(lhs == rhs); }
         friend XBool operator<=(const XCString& lhs, const XCString& rhs) { return !(lhs > rhs); }
         friend XBool operator>=(const XCString& lhs, const XCString& rhs) { return !(lhs < rhs); }
+
+        static void checkSizeMin(XCString s, int64_t min, const char* file, uint32_t line)
+        {
+            if(s.size() < min) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::StringBounds, nullptr, "CString length below minimum"); }
+        }
+
+        static void checkSizeMax(XCString s, int64_t max, const char* file, uint32_t line)
+        {
+            if(s.size() > max) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::StringBounds, nullptr, "CString length above maximum"); }
+        }
+
+        static void checkSizeRange(XCString s, int64_t min, int64_t max, const char* file, uint32_t line)
+        {
+            if(s.size() < min) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::StringBounds, nullptr, "CString length below minimum"); }
+            if(s.size() > max) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::StringBounds, nullptr, "CString length above maximum"); }
+        }
     };
 
     class XFCStringRepr 
@@ -626,6 +642,22 @@ namespace ᐸRuntimeᐳ
         friend XBool operator!=(const XString& lhs, const XString& rhs) { return !(lhs == rhs); }
         friend XBool operator<=(const XString& lhs, const XString& rhs) { return !(lhs > rhs); }
         friend XBool operator>=(const XString& lhs, const XString& rhs) { return !(lhs < rhs); }
+
+        static void checkSizeMin(XString s, int64_t min, const char* file, uint32_t line)
+        {
+            if(s.size() < min) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::StringBounds, nullptr, "String length below minimum"); }
+        }
+
+        static void checkSizeMax(XString s, int64_t max, const char* file, uint32_t line)
+        {
+            if(s.size() > max) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::StringBounds, nullptr, "String length above maximum"); }
+        }
+
+        static void checkSizeRange(XString s, int64_t min, int64_t max, const char* file, uint32_t line)
+        {
+            if(s.size() < min) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::StringBounds, nullptr, "String length below minimum"); }
+            if(s.size() > max) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::StringBounds, nullptr, "String length above maximum"); }
+        }
     };
 
     class XFStringRepr 

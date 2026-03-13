@@ -45,6 +45,8 @@ namespace ᐸRuntimeᐳ
         NumericUnderflow,
         DivisionByZero,
 
+        StringBounds,
+
         InvalidCast,
 
         UserAbort,
