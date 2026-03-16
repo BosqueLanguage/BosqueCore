@@ -513,7 +513,7 @@ class TypeInfoManager {
 
         const cstringtypeinfo = timgr.getTypeInfo("CString");
         for(let i = 0; i < irasm.cstringoftypedecls.length; ++i) {
-            const tdecl = irasm.typedecls[i];
+            const tdecl = irasm.cstringoftypedecls[i];
             const ttkey = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
             const ttid = timgr.typeInfoMap.size;
             const typedtd = new TypeInfo(ttkey, new IRNominalTypeSignature(ttkey), ttid, cstringtypeinfo.bytesize, cstringtypeinfo.slotcount, cstringtypeinfo.tag, cstringtypeinfo.ptrmask, undefined);

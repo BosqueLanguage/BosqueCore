@@ -6493,12 +6493,15 @@ class Parser {
                 if(this.peekTokenKind(1) === TokenStrings.Nat || this.peekTokenKind(1) === SYM_coma) {
                     this.consumeToken();
                     this.ensureAndConsumeTokenIf(TokenStrings.Nat, "type declaration size min");
-                    this.ensureAndConsumeTokenAlways(SYM_coma, "type declaration size range");
+                    this.ensureAndConsumeTokenIf(SYM_coma, "type declaration size range");
                     this.ensureAndConsumeTokenIf(TokenStrings.Nat, "type declaration size max");
                     this.ensureAndConsumeTokenAlways(SYM_rbrace, "type declaration size range");
                 }
 
-                this.scanOverBraceDelimitedDeclaration();
+                this.scanToKWOptsInDeclaration(SYM_lbrace, SYM_semicolon);
+                if(!this.testAndConsumeTokenIf(SYM_semicolon)) {
+                    this.scanOverBraceDelimitedDeclaration();
+                }
             }
         }
         else {
@@ -6515,9 +6518,15 @@ class Parser {
                 if(this.testToken(TokenStrings.Nat)) {
                     min = this.consumeTokenAndGetValue();
                 }
-                this.ensureAndConsumeTokenAlways(SYM_coma, "type declaration size range");
-                if(this.testToken(TokenStrings.Nat)) {
-                    max = this.consumeTokenAndGetValue();
+                
+                if(!this.testToken(SYM_coma)) {
+                    max = min;
+                }
+                else {
+                    this.consumeToken();
+                    if(this.testToken(TokenStrings.Nat)) {
+                        max = this.consumeTokenAndGetValue();
+                    }
                 }
 
                 this.ensureAndConsumeTokenAlways(SYM_rbrace, "type declaration size range");

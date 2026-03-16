@@ -11,9 +11,10 @@ class IRSourceInfo
     }
 }
 
-class IRRegex
+class IRCRegex
 {
     readonly regexID: number;
+
     readonly bsqregex: string;
     readonly smtregex: string;
     readonly cppregex: string;
@@ -21,6 +22,25 @@ class IRRegex
     constructor(regexID: number, bsqregex: string, smtregex: string, cppregex: string)
     {
         this.regexID = regexID;
+
+        this.bsqregex = bsqregex;
+        this.smtregex = smtregex;
+        this.cppregex = cppregex;
+    }
+}
+
+class IRURegex
+{
+    readonly regexID: number;
+
+    readonly bsqregex: string;
+    readonly smtregex: string;
+    readonly cppregex: string;
+
+    constructor(regexID: number, bsqregex: string, smtregex: string, cppregex: string)
+    {
+        this.regexID = regexID;
+
         this.bsqregex = bsqregex;
         this.smtregex = smtregex;
         this.cppregex = cppregex;
@@ -29,5 +49,6 @@ class IRRegex
 
 export {
     IRSourceInfo,
-    IRRegex
+    IRCRegex,
+    IRURegex
 };

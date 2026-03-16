@@ -291,18 +291,18 @@ namespace ᐸRuntimeᐳ
 
         static void checkSizeMin(XCString s, int64_t min, const char* file, uint32_t line)
         {
-            if(s.size() < min) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::StringBounds, nullptr, "CString length below minimum"); }
+            if(s.size() < min) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "CString length below minimum"); }
         }
 
         static void checkSizeMax(XCString s, int64_t max, const char* file, uint32_t line)
         {
-            if(s.size() > max) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::StringBounds, nullptr, "CString length above maximum"); }
+            if(s.size() > max) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "CString length above maximum"); }
         }
 
         static void checkSizeRange(XCString s, int64_t min, int64_t max, const char* file, uint32_t line)
         {
-            if(s.size() < min) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::StringBounds, nullptr, "CString length below minimum"); }
-            if(s.size() > max) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::StringBounds, nullptr, "CString length above maximum"); }
+            if(s.size() < min) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "CString length below minimum"); }
+            if(s.size() > max) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "CString length above maximum"); }
         }
     };
 
@@ -643,7 +643,7 @@ namespace ᐸRuntimeᐳ
         friend XBool operator<=(const XString& lhs, const XString& rhs) { return !(lhs > rhs); }
         friend XBool operator>=(const XString& lhs, const XString& rhs) { return !(lhs < rhs); }
 
-        static void checkFormat(XString s, const std::basic_regex<char>& re, const char* file, uint32_t line)
+        static void checkFormat(XString s, const std::basic_regex<char32_t>& re, const char* file, uint32_t line)
         {
             if(!std::regex_match(s.begin(), s.end(), re)) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "String does not match format"); }
         }

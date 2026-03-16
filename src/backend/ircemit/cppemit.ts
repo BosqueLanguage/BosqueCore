@@ -7,7 +7,7 @@ import { IRAbstractCollectionTypeDecl, IRAbstractEntityTypeDecl, IRAbstractNomin
 
 import assert from "node:assert";
 import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatCStringTypeSignature, IRFormatStringTypeSignature, IRFormatTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype.js";
-import { IRRegex } from "../irdefs/irsupport.js";
+import { IRCRegex, IRURegex } from "../irdefs/irsupport.js";
 
 const RUNTIME_NAMESPACE = "ᐸRuntimeᐳ";
 const CLOSURE_CAPTURE_NAME = "ᐸclosureᐳ";
@@ -205,10 +205,10 @@ class CPPEmitter {
             return `${RUNTIME_NAMESPACE}::XDeltaLogicalTime{'${dltexp.sign}', ${dltexp.ticks}}`;
         }
         else if(ttag === IRExpressionTag.IRLiteralUnicodeRegexExpression) {
-            return `${RUNTIME_NAMESPACE}::g_regexs[${(exp as IRLiteralUnicodeRegexExpression).regexID}]`;
+            return `${RUNTIME_NAMESPACE}::g_uregexs[${(exp as IRLiteralUnicodeRegexExpression).regexID}]`;
         }
         else if(ttag === IRExpressionTag.IRLiteralCRegexExpression) {
-            return `${RUNTIME_NAMESPACE}::g_regexs[${(exp as IRLiteralCRegexExpression).regexID}]`;
+            return `${RUNTIME_NAMESPACE}::g_cregexs[${(exp as IRLiteralCRegexExpression).regexID}]`;
         }
         else if(ttag === IRExpressionTag.IRLiteralByteExpression) {
             const b = (exp as IRLiteralByteExpression).value;
@@ -819,7 +819,7 @@ class CPPEmitter {
         }
         else if(ttag === IRStatementTag.IRTypeDeclFormatCheckCStringStatement) {
             const vvexp = stmt as IRTypeDeclFormatCheckCStringStatement;
-            const reval = `${RUNTIME_NAMESPACE}::g_regexs[${vvexp.re.regexID}]`;
+            const reval = `${RUNTIME_NAMESPACE}::g_cregexs[${vvexp.re.regexID}]`;
 
             return `${RUNTIME_NAMESPACE}::XCString::checkFormat(${this.emitIRImmediateExpression(vvexp.strexp)}, ${reval}, "${vvexp.file}", ${vvexp.sinfo.line});`;
         }
@@ -999,7 +999,6 @@ class CPPEmitter {
     }
    
     emitConstantDeclInfo(iconst: IRConstantDecl): [string, string] {
-        xxxx; //this isn't called anywhere!!! need to fix that
         const gvname = `BSQ_g_${TransformCPPNameManager.generateNameForConstantKey(iconst.ckey)}`;
         const staticsstr = `std::optional<${this.typeInfoManager.emitTypeAsStd(iconst.declaredType.tkeystr)}> ${gvname} = std::nullopt;`;
         
@@ -1166,8 +1165,20 @@ class CPPEmitter {
         `}`;
     }
 
-    private emitRegexInfos(regexes: IRRegex[]): [string, string] {
-        xxxx;
+    private emitRegexInfos(cregexs: IRCRegex[], uregexs: IRURegex[]): [string, string] {
+        const redecl = `namespace ᐸRuntimeᐳ {\n` +
+        `    extern std::array<std::basic_regex<char>, ${cregexs.length}> g_cregexs;\n` +
+        `    extern std::array<std::basic_regex<char32_t>, ${uregexs.length}> g_uregexs;\n` +
+        `\n}`;
+
+        const cflags = "std::regex::ECMAScript | std::regex::nosubs";
+        const uflags = "std::regex::ECMAScript | std::regex::nosubs";
+        const redef = `namespace ᐸRuntimeᐳ {\n` +
+        `    std::array<std::regex, ${cregexs.length}> g_cregexs = { ${cregexs.map((re) => `std::basic_regex<char>(${re.cppregex}, ${cflags})`).join(", ")} };\n` +
+        `    std::array<std::regex, ${uregexs.length}> g_uregexs = { ${uregexs.map((re) => `std::basic_regex<char32_t>(U${re.cppregex}, ${uflags})`).join(", ")} };\n` +
+        `\n}`;
+
+        return [redecl, redef];
     }
 
     private emitEnumTypeDeclInfo(eenum: IREnumTypeDecl): [string, string] {
@@ -1212,7 +1223,7 @@ class CPPEmitter {
         ];
     }
 
-    private emitGeneralTypeDeclInfo(tdecl: IRTypedeclTypeDecl): [string, string] {
+    private emitGeneralTypeDeclInfo(tdecl: IRTypedeclTypeDecl, chkextra: string[] | undefined): [string, string] {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
         const ctrepr = this.typeInfoManager.emitTypeAsStd(tdecl.tkey);
 
@@ -1249,7 +1260,7 @@ class CPPEmitter {
         `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitSymbol('>'); \n` +
         `}`;
 
-        if(vfuncinfo.length === 0 && valfuncinfo.length === 0) {
+        if(vfuncinfo.length === 0 && valfuncinfo.length === 0 && chkextra === undefined) {
             const bsqparsedef = `std::optional<${ctrepr}> BSQ_parse${ctname}() {\n` +
             `    std::optional<${voptt}> cc = ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.parse${voptttname}();\n` +
             `    if(!cc.has_value()) { return std::nullopt; }\n` +
@@ -1271,6 +1282,7 @@ class CPPEmitter {
             const ivdefs = [...vfuncinfo.map((vf) => vf[1]), ...valfuncinfo.map((vf) => vf[1])];
 
             const allchks = [
+                ...(chkextra || []),
                 ...tdecl.allInvariants.map((inv) => {
                     const ifname = TransformCPPNameManager.generateNameForInvariantFunction(inv.containingtype.tkeystr, inv.ii);
                     return `if(!((bool)${ifname}(vv))) { return std::nullopt; };`;
@@ -1302,8 +1314,23 @@ class CPPEmitter {
     }
 
     private emitCStringTypeDeclInfo(tcstr: IRTypedeclCStringDecl): [string, string] {
-        xxxx;
-        assert(false, "CPPEmitter: need to implement cstring type decl emission");
+        let echks: string[] = [];
+        if(tcstr.rngchk !== undefined) {
+            if(tcstr.rngchk.min === undefined) {
+                echks.push(`if(${tcstr.rngchk.max} < vv.value().size()) { return std::nullopt; };`);
+            }
+            else if(tcstr.rngchk.max === undefined) {
+                echks.push(`if(vv.value().size() < ${tcstr.rngchk.min}) { return std::nullopt; };`);
+            }
+            else {
+                echks.push(`if((vv.value().size() < ${tcstr.rngchk.min}) || (${tcstr.rngchk.max} < vv.value().size())) { return std::nullopt; };`);
+            }
+        }
+        if(tcstr.rechk !== undefined) {
+            echks.push(`if(!std::regex_match(vv.value(), ᐸRuntimeᐳ::g_cregex[${tcstr.rechk}])) { return std::nullopt; };`);
+        }
+
+        return this.emitGeneralTypeDeclInfo(tcstr, echks);
     }
 
     private emitStringTypeDeclInfo(tstr: IRTypedeclStringDecl): [string, string] {
@@ -1702,11 +1729,11 @@ class CPPEmitter {
             return [bsqparse, bsqemit].join("\n");
         }).join("\n\n");
 
-        const [redecls, redefs] = this.emitRegexInfos(this.irasm.regexps);
+        const [redecls, redefs] = this.emitRegexInfos(this.irasm.cregexps, this.irasm.uregexps);
         
         const enumdd = this.irasm.enums.map((eden) => this.emitEnumTypeDeclInfo(eden));
 
-        const gtddd = this.irasm.typedecls.map((tgtd) =>  this.emitGeneralTypeDeclInfo(tgtd));
+        const gtddd = this.irasm.typedecls.map((tgtd) =>  this.emitGeneralTypeDeclInfo(tgtd, undefined));
         const cstringdd = this.irasm.cstringoftypedecls.map((tcstr) => this.emitCStringTypeDeclInfo(tcstr));
         const stringdd = this.irasm.stringoftypedecls.map((tstr) => this.emitStringTypeDeclInfo(tstr));
 
@@ -1807,11 +1834,11 @@ class CPPEmitter {
         const idecls = this.irasm.invokes.map((invk) => this.emitIRInvokeDeclInfo(invk));
         assert(this.irasm.taskactions.length === 0, "CPPEmitter: need to implement ADT decl emission");
 
-        xxxx; //TODO call emit constant decls here as well
+        const constdecls = this.irasm.constants.map((c) => this.emitConstantDeclInfo(c));
 
         return [
-            idecls.map((idecl) => idecl[0]).join("\n\n"),
-            idecls.map((idecl) => idecl[1]).join("\n\n")
+            [...idecls.map((idecl) => idecl[0]), ...constdecls.map((cdecl) => cdecl[0])].join("\n\n"),
+            [...idecls.map((idecl) => idecl[1]), ...constdecls.map((cdecl) => cdecl[1])].join("\n\n")
         ];
     }
 
