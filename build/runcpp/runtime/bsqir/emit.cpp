@@ -184,6 +184,16 @@ namespace ᐸRuntimeᐳ
         this->bufferMgr.writeImmediate("\"");
     }
 
+    void BSQONEmitter::emitCRegex(XCRegex r)
+    {
+        assert(false); // Not Implemented: emitting CRegex values
+    }
+    
+    void emitRegex(XRegex r)
+    {
+        assert(false); // Not Implemented: emitting Regex values
+    }
+
     std::list<uint8_t*>&& BSQONEmitter::completeEmit(size_t& bytes)
     {
         return this->bufferMgr.completeEmit(bytes);

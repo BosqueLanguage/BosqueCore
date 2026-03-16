@@ -488,6 +488,9 @@ class TypeInfoManager {
         timgr.addTypeInfo("UUIDV4", new TypeInfo("UUIDV4", new IRNominalTypeSignature("UUIDV4"), 22, 16, 2, LayoutTag.Value, undefined, undefined));
         timgr.addTypeInfo("UUIDV7", new TypeInfo("UUIDV7", new IRNominalTypeSignature("UUIDV7"), 23, 16, 2, LayoutTag.Value, undefined, undefined));
 
+        timgr.addTypeInfo("CRegex", new TypeInfo("CRegex", new IRNominalTypeSignature("CRegex"), 24, 8, 1, LayoutTag.Value, undefined, undefined));
+        timgr.addTypeInfo("Regex", new TypeInfo("Regex", new IRNominalTypeSignature("Regex"), 25, 8, 1, LayoutTag.Value, undefined, undefined));
+
         //TODO: more primitive types
 
         //TODO enums

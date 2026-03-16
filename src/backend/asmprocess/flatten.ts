@@ -191,28 +191,40 @@ class ASMToIRConverter {
         return new DeltaTimeRepresentation(h, m, s);
     }
 
-    private processCRegex(inns: FullyQualifiedNamespace, regexstr: string, isunicode: boolean): IRCRegex {
+    private processCRegex(inns: FullyQualifiedNamespace, regexstr: string): IRCRegex {
         const fullre = getBSQIRForm(regexstr, inns.emit());
-        const smtre = getSMTForm(regexstr, inns.emit());
-        const cppre = getCPPForm(regexstr, inns.emit());
+
+        if(this.cregexs.has(fullre)) {
+            return this.cregexs.get(fullre) as IRCRegex;
+        }
+        else {
+            const smtre = getSMTForm(regexstr, inns.emit());
+            const cppre = getCPPForm(regexstr, inns.emit());
             
-        const rectr = this.cregexs.size;
-        const inst: IRCRegex = new IRCRegex(rectr, fullre, smtre, cppre);
-        this.cregexs.set(regexstr, inst);
+            const rectr = this.cregexs.size;
+            const inst: IRCRegex = new IRCRegex(rectr, fullre, smtre, cppre);
+            this.cregexs.set(fullre, inst);
         
-        return inst;
+            return inst;
+        }
     }
 
-    private processURegex(inns: FullyQualifiedNamespace, regexstr: string, isunicode: boolean): IRURegex {
+    private processURegex(inns: FullyQualifiedNamespace, regexstr: string): IRURegex {
         const fullre = getBSQIRForm(regexstr, inns.emit());
-        const smtre = getSMTForm(regexstr, inns.emit());
-        const cppre = getCPPForm(regexstr, inns.emit());
 
-        const rectr = this.uregexs.size;
-        const inst: IRURegex = new IRURegex(rectr, fullre, smtre, cppre);
-        this.uregexs.set(regexstr, inst);
+        if(this.uregexs.has(fullre)) {
+            return this.uregexs.get(fullre) as IRURegex;
+        }
+        else {
+            const smtre = getSMTForm(regexstr, inns.emit());
+            const cppre = getCPPForm(regexstr, inns.emit());
 
-        return inst;
+            const rectr = this.uregexs.size;
+            const inst: IRURegex = new IRURegex(rectr, fullre, smtre, cppre);
+            this.uregexs.set(fullre, inst);
+
+            return inst;
+        }
     }
 
     private processStringBytes(sval: string): number[] {
@@ -1278,13 +1290,13 @@ class ASMToIRConverter {
         }
         else if(ttag === ExpressionTag.LiteralUnicodeRegexExpression) {
             const rexp = (exp as LiteralRegexExpression);
-            const regexinst = this.processURegex(rexp.inns, rexp.value, true);
+            const regexinst = this.processURegex(rexp.inns, rexp.value);
 
             return new IRLiteralUnicodeRegexExpression(regexinst.regexID, rexp.value);
         }
         else if(ttag === ExpressionTag.LiteralCRegexExpression) {
             const rexp = (exp as LiteralRegexExpression);
-            const regexinst = this.processCRegex(rexp.inns, rexp.value, false);
+            const regexinst = this.processCRegex(rexp.inns, rexp.value);
 
             return new IRLiteralCRegexExpression(regexinst.regexID, rexp.value);
         }
@@ -3265,7 +3277,7 @@ class ASMToIRConverter {
         assert(false, "Not implemented -- checkTaskDecl");
     }
 
-    private generateNamespaceConstDecl(cdecl: NamespaceConstDecl): IRConstantDecl {
+    private generateNamespaceConstDecl(ns: FullyQualifiedNamespace, cdecl: NamespaceConstDecl): IRConstantDecl {
         this.initCodeProcessingContext(cdecl.file, false, cdecl.declaredType, undefined, undefined, undefined, undefined);
 
         this.pushStatementBlock();
@@ -3277,7 +3289,7 @@ class ASMToIRConverter {
         const stmts = this.popStatementBlock();
         const expr = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(irval, this.tproc(cdecl.value.getType())), this.tproc(cdecl.value.getType()), cdecl.declaredType);
 
-        return new IRConstantDecl(cdecl.name, this.processTypeSignature(cdecl.declaredType), stmts, expr, docstring);
+        return new IRConstantDecl(ns.emit() + "::" + cdecl.name, this.processTypeSignature(cdecl.declaredType), stmts, expr, docstring);
     }
 
     private generateNamespaceTypeDecl(tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]) {
@@ -3462,7 +3474,7 @@ class ASMToIRConverter {
         for(let i = 0; i < decl.consts.length; ++i) {
             const ntcd = this.assembly.resolveNamespaceConstant(decl.fullnamespace, decl.consts[i].name);
             if(ntcd !== undefined) {
-                this.constants.push(this.generateNamespaceConstDecl(decl.consts[i]));
+                this.constants.push(this.generateNamespaceConstDecl(decl.fullnamespace, decl.consts[i]));
             }
         }
 

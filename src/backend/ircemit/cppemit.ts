@@ -205,10 +205,10 @@ class CPPEmitter {
             return `${RUNTIME_NAMESPACE}::XDeltaLogicalTime{'${dltexp.sign}', ${dltexp.ticks}}`;
         }
         else if(ttag === IRExpressionTag.IRLiteralUnicodeRegexExpression) {
-            return `${RUNTIME_NAMESPACE}::g_uregexs[${(exp as IRLiteralUnicodeRegexExpression).regexID}]`;
+            return `Regex{${RUNTIME_NAMESPACE}::g_uregexs[${(exp as IRLiteralUnicodeRegexExpression).regexID}]}`;
         }
         else if(ttag === IRExpressionTag.IRLiteralCRegexExpression) {
-            return `${RUNTIME_NAMESPACE}::g_cregexs[${(exp as IRLiteralCRegexExpression).regexID}]`;
+            return `CRegex{${RUNTIME_NAMESPACE}::g_cregexs[${(exp as IRLiteralCRegexExpression).regexID}]}`;
         }
         else if(ttag === IRExpressionTag.IRLiteralByteExpression) {
             const b = (exp as IRLiteralByteExpression).value;
@@ -788,13 +788,13 @@ class CPPEmitter {
             const strarg = this.emitIRImmediateExpression(itdsrcc.strexp);
             const loc = `"${itdsrcc.file}", ${itdsrcc.sinfo.line}`;
             if(itdsrcc.min !== undefined && itdsrcc.max !== undefined) {
-                return `${RUNTIME_NAMESPACE}::XCString::checkSizeRange(${strarg}, ${itdsrcc.min}, ${itdsrcc.max}, ${loc});`;
+                return `${RUNTIME_NAMESPACE}::XCString::checkSizeRange(${strarg}, ${itdsrcc.min.slice(0, -1)}, ${itdsrcc.max.slice(0, -1)}, ${loc});`;
             }
             else if(itdsrcc.min !== undefined) {
-                return `${RUNTIME_NAMESPACE}::XCString::checkSizeMin(${strarg}, ${itdsrcc.min}, ${loc});`;
+                return `${RUNTIME_NAMESPACE}::XCString::checkSizeMin(${strarg}, ${itdsrcc.min.slice(0, -1)}, ${loc});`;
             }
             else if(itdsrcc.max !== undefined) {
-                return `${RUNTIME_NAMESPACE}::XCString::checkSizeMax(${strarg}, ${itdsrcc.max}, ${loc});`;
+                return `${RUNTIME_NAMESPACE}::XCString::checkSizeMax(${strarg}, ${itdsrcc.max.slice(0, -1)}, ${loc});`;
             }
             else {
                 assert(false, "CPPEmitter: IRTypeDeclSizeRangeCheckCStringStatement with no min or max bound");
@@ -805,13 +805,13 @@ class CPPEmitter {
             const strarg = this.emitIRImmediateExpression(itdsrcu.strexp);
             const loc = `"${itdsrcu.file}", ${itdsrcu.sinfo.line}`;
             if(itdsrcu.min !== undefined && itdsrcu.max !== undefined) {
-                return `${RUNTIME_NAMESPACE}::XString::checkSizeRange(${strarg}, ${itdsrcu.min}, ${itdsrcu.max}, ${loc});`;
+                return `${RUNTIME_NAMESPACE}::XString::checkSizeRange(${strarg}, ${itdsrcu.min.slice(0, -1)}, ${itdsrcu.max.slice(0, -1)}, ${loc});`;
             }
             else if(itdsrcu.min !== undefined) {
-                return `${RUNTIME_NAMESPACE}::XString::checkSizeMin(${strarg}, ${itdsrcu.min}, ${loc});`;
+                return `${RUNTIME_NAMESPACE}::XString::checkSizeMin(${strarg}, ${itdsrcu.min.slice(0, -1)}, ${loc});`;
             }
             else if(itdsrcu.max !== undefined) {
-                return `${RUNTIME_NAMESPACE}::XString::checkSizeMax(${strarg}, ${itdsrcu.max}, ${loc});`;
+                return `${RUNTIME_NAMESPACE}::XString::checkSizeMax(${strarg}, ${itdsrcu.max.slice(0, -1)}, ${loc});`;
             }
             else {
                 assert(false, "CPPEmitter: IRTypeDeclSizeRangeCheckUnicodeStringStatement with no min or max bound");
@@ -1005,7 +1005,7 @@ class CPPEmitter {
         const bodystr = this.emitStatementList(iconst.stmts, [`if(${gvname}.has_value()) { return ${gvname}.value(); } `], [`${gvname} = std::make_optional(${this.emitIRSimpleExpression(iconst.value, true)}); return ${gvname}.value();`], undefined);
         
         const cdeclstr = `${this.typeInfoManager.emitTypeAsStd(iconst.declaredType.tkeystr)} ${TransformCPPNameManager.generateNameForConstantKey(iconst.ckey)}();`;
-        const cdefstr = `${staticsstr}\n${this.typeInfoManager.emitTypeAsStd(iconst.declaredType.tkeystr)} ${TransformCPPNameManager.generateNameForConstantKey(iconst.ckey)}() ${bodystr}`;
+        const cdefstr = `${staticsstr}\n${this.typeInfoManager.emitTypeAsStd(iconst.declaredType.tkeystr)} ${TransformCPPNameManager.generateNameForConstantKey(iconst.ckey)}() { ${bodystr} }`;
 
         return [cdeclstr, cdefstr];
     }
@@ -1169,14 +1169,14 @@ class CPPEmitter {
         const redecl = `namespace ᐸRuntimeᐳ {\n` +
         `    extern std::array<std::basic_regex<char>, ${cregexs.length}> g_cregexs;\n` +
         `    extern std::array<std::basic_regex<char32_t>, ${uregexs.length}> g_uregexs;\n` +
-        `\n}`;
+        `}`;
 
         const cflags = "std::regex::ECMAScript | std::regex::nosubs";
         const uflags = "std::regex::ECMAScript | std::regex::nosubs";
         const redef = `namespace ᐸRuntimeᐳ {\n` +
-        `    std::array<std::regex, ${cregexs.length}> g_cregexs = { ${cregexs.map((re) => `std::basic_regex<char>(${re.cppregex}, ${cflags})`).join(", ")} };\n` +
-        `    std::array<std::regex, ${uregexs.length}> g_uregexs = { ${uregexs.map((re) => `std::basic_regex<char32_t>(U${re.cppregex}, ${uflags})`).join(", ")} };\n` +
-        `\n}`;
+        `    std::array<std::basic_regex<char>, ${cregexs.length}> g_cregexs = { ${cregexs.map((re) => `std::basic_regex<char>("${re.cppregex}", ${cflags})`).join(", ")} };\n` +
+        `    std::array<std::basic_regex<char32_t>, ${uregexs.length}> g_uregexs = { ${uregexs.map((re) => `std::basic_regex<char32_t>(U"${re.cppregex}", ${uflags})`).join(", ")} };\n` +
+        `}`;
 
         return [redecl, redef];
     }
@@ -1317,17 +1317,17 @@ class CPPEmitter {
         let echks: string[] = [];
         if(tcstr.rngchk !== undefined) {
             if(tcstr.rngchk.min === undefined) {
-                echks.push(`if(${tcstr.rngchk.max} < vv.value().size()) { return std::nullopt; };`);
+                echks.push(`if(${(tcstr.rngchk.max as string).slice(0, -1)} < vv.size()) { return std::nullopt; };`);
             }
             else if(tcstr.rngchk.max === undefined) {
-                echks.push(`if(vv.value().size() < ${tcstr.rngchk.min}) { return std::nullopt; };`);
+                echks.push(`if(vv.size() < ${(tcstr.rngchk.min as string).slice(0, -1)}) { return std::nullopt; };`);
             }
             else {
-                echks.push(`if((vv.value().size() < ${tcstr.rngchk.min}) || (${tcstr.rngchk.max} < vv.value().size())) { return std::nullopt; };`);
+                echks.push(`if((vv.size() < ${(tcstr.rngchk.min as string).slice(0, -1)}) || (${(tcstr.rngchk.max as string).slice(0, -1)} < vv.size())) { return std::nullopt; };`);
             }
         }
         if(tcstr.rechk !== undefined) {
-            echks.push(`if(!std::regex_match(vv.value(), ᐸRuntimeᐳ::g_cregex[${tcstr.rechk}])) { return std::nullopt; };`);
+            echks.push(`if(!std::regex_match(vv.begin(), vv.end(), ᐸRuntimeᐳ::g_cregexs[${tcstr.rechk.regexID}])) { return std::nullopt; };`);
         }
 
         return this.emitGeneralTypeDeclInfo(tcstr, echks);

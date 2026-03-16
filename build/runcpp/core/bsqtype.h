@@ -41,6 +41,9 @@ namespace ᐸRuntimeᐳ
     constexpr uint32_t WELL_KNOWN_TYPE_ID_UUIDV4 = 22;
     constexpr uint32_t WELL_KNOWN_TYPE_ID_UUIDV7 = 23;
 
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_CREGEX = 24;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_REGEX = 25;
+
     enum class LayoutTag
     {
         Value,

@@ -289,6 +289,11 @@ namespace ᐸRuntimeᐳ
         friend XBool operator<=(const XCString& lhs, const XCString& rhs) { return !(lhs > rhs); }
         friend XBool operator>=(const XCString& lhs, const XCString& rhs) { return !(lhs < rhs); }
 
+        static void checkFormat(XCString s, const std::basic_regex<char>& re, const char* file, uint32_t line)
+        {
+            if(!std::regex_match(s.begin(), s.end(), re)) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "CString does not match format"); }
+        }
+
         static void checkSizeMin(XCString s, int64_t min, const char* file, uint32_t line)
         {
             if(s.size() < min) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "CString length below minimum"); }
@@ -296,13 +301,13 @@ namespace ᐸRuntimeᐳ
 
         static void checkSizeMax(XCString s, int64_t max, const char* file, uint32_t line)
         {
-            if(s.size() > max) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "CString length above maximum"); }
+            if(max < s.size()) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "CString length above maximum"); }
         }
 
         static void checkSizeRange(XCString s, int64_t min, int64_t max, const char* file, uint32_t line)
         {
             if(s.size() < min) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "CString length below minimum"); }
-            if(s.size() > max) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "CString length above maximum"); }
+            if(max < s.size()) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "CString length above maximum"); }
         }
     };
 
@@ -361,6 +366,12 @@ namespace ᐸRuntimeᐳ
                 assert(false); // Not Implemented: full support for FString interpolation
             }
         }
+    };
+
+    class XCRegex
+    {
+    public:
+        size_t regexid;
     };
 
     class StrRootInlineContent
@@ -655,13 +666,13 @@ namespace ᐸRuntimeᐳ
 
         static void checkSizeMax(XString s, int64_t max, const char* file, uint32_t line)
         {
-            if(s.size() > max) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "String length above maximum"); }
+            if(max < s.size()) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "String length above maximum"); }
         }
 
         static void checkSizeRange(XString s, int64_t min, int64_t max, const char* file, uint32_t line)
         {
             if(s.size() < min) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "String length below minimum"); }
-            if(s.size() > max) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "String length above maximum"); }
+            if(max < s.size()) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "String length above maximum"); }
         }
     };
 
@@ -720,6 +731,12 @@ namespace ᐸRuntimeᐳ
                 assert(false); // Not Implemented: full support for FString interpolation
             }
         }
+    };
+
+    class XRegex
+    {
+    public:
+        size_t regexid;
     };
 
     inline constexpr XCString emptycstr();
