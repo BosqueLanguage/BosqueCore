@@ -16,6 +16,8 @@
 #include <list>
 #include <algorithm>
 
+#include <regex>
+
 #include <type_traits>
 #include <concepts>
 
@@ -44,8 +46,6 @@ namespace ᐸRuntimeᐳ
         NumericBounds,
         NumericUnderflow,
         DivisionByZero,
-
-        StringBounds,
 
         InvalidCast,
 

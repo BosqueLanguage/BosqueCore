@@ -14,12 +14,16 @@ class IRSourceInfo
 class IRRegex
 {
     readonly regexID: number;
+    readonly bsqregex: string;
+    readonly smtregex: string;
+    readonly cppregex: string;
 
-    //TODO: we need to store the (resolved) regex AST and compile later
-
-    constructor(regexID: number)
+    constructor(regexID: number, bsqregex: string, smtregex: string, cppregex: string)
     {
         this.regexID = regexID;
+        this.bsqregex = bsqregex;
+        this.smtregex = smtregex;
+        this.cppregex = cppregex;
     }
 }
 
