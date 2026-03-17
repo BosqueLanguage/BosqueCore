@@ -90,7 +90,7 @@ namespace ᐸRuntimeᐳ
     template<typename T>
     constexpr TypeInfo g_typeinfo_ListTInlineContent_generate(uint32_t id, const char* mask, const char* name) 
     {
-        return  TypeInfo{
+        return TypeInfo{
             id,
             sizeof(ListTInlineContent<T>),
             byteSizeToSlotCount(sizeof(ListTInlineContent<T>)),
