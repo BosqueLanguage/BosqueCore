@@ -6492,8 +6492,18 @@ class Parser {
             if(!this.testAndConsumeTokenIf(SYM_semicolon)) {
                 if(this.peekTokenKind(1) === TokenStrings.Nat || this.peekTokenKind(1) === SYM_coma) {
                     this.consumeToken();
+
+                    if(this.testToken(TokenStrings.NumberinoInt)) {
+                        this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Must use numeric extension on bounds value (n|i|N|I|...");
+                    }
+
                     this.ensureAndConsumeTokenIf(TokenStrings.Nat, "type declaration size min");
                     this.ensureAndConsumeTokenIf(SYM_coma, "type declaration size range");
+
+                    if(this.testToken(TokenStrings.NumberinoInt)) {
+                        this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Must use numeric extension on bounds value (n|i|N|I|...");
+                    }
+
                     this.ensureAndConsumeTokenIf(TokenStrings.Nat, "type declaration size max");
                     this.ensureAndConsumeTokenAlways(SYM_rbrace, "type declaration size range");
                 }

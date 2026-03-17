@@ -97,20 +97,20 @@ class TypeChecker {
             let min = 0n;
             if(tdecl.optsizerng.min !== undefined) {
                 try {
-                    min = BigInt(tdecl.optsizerng.min);
+                    min = BigInt(tdecl.optsizerng.min.slice(0, -1)); //remove the 'n' at the end
                 }
                 catch {
-                    ;
+                    this.reportError(tdecl.sinfo, `Invalid size constraint min value ${tdecl.optsizerng.min}`); //TODO: should this be an error or just ignore the constraint?
                 }
             }
 
             let max = BigInt(rlen);
             if(tdecl.optsizerng.max !== undefined) {
                 try {
-                    max = BigInt(tdecl.optsizerng.max);
+                    max = BigInt(tdecl.optsizerng.max.slice(0, -1)); //remove the 'n' at the end
                 }
                 catch {
-                    ;
+                    this.reportError(tdecl.sinfo, `Invalid size constraint max value ${tdecl.optsizerng.max}`); //TODO: should this be an error or just ignore the constraint?
                 }
             }
 
@@ -1632,7 +1632,7 @@ class TypeChecker {
         }
 
         const vs = this.checkTypeDeclOfStringRestrictions(exp.sinfo, exp.constype.decl as TypedeclTypeDecl, exp.value);
-        if(vs === null) {
+        if(vs !== null) {
             exp.resolvedValue = vs;
         }
             
@@ -1656,7 +1656,7 @@ class TypeChecker {
         }
 
         const vs = this.checkTypeDeclOfCStringRestrictions(exp.sinfo, exp.constype.decl as TypedeclTypeDecl, exp.value);
-        if(vs === null) {
+        if(vs !== null) {
             exp.resolvedValue = vs;
         }
             
