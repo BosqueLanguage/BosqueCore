@@ -176,6 +176,9 @@ namespace ᐸRuntimeᐳ
         void emitCString(XCString s);
         void emitString(XString s);
 
+        void emitCRegex(XCRegex r);
+        void emitRegex(XRegex r);
+
         //
         //Lots more here
         //

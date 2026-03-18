@@ -41,10 +41,15 @@ namespace ᐸRuntimeᐳ
     constexpr uint32_t WELL_KNOWN_TYPE_ID_UUIDV4 = 22;
     constexpr uint32_t WELL_KNOWN_TYPE_ID_UUIDV7 = 23;
 
-    enum class LayoutTag
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_CREGEX = 24;
+    constexpr uint32_t WELL_KNOWN_TYPE_ID_REGEX = 25;
+
+    enum class LayoutTag : uint16_t
     {
         Value,
         Ref,
+        ArrayInline,
+        ArrayRef,
         Tagged
     };
 
@@ -64,6 +69,7 @@ namespace ᐸRuntimeᐳ
         uint32_t bytesize;
         uint32_t slotcount;
         LayoutTag tag;
+        uint16_t slotct; //For array entries this is the number of slots each entry takes (so don't scan more than eslotct * size slots)
 
         const char* ptrmask; // NULL is for leaf values or structs
         const char* typekey;
@@ -80,11 +86,14 @@ namespace ᐸRuntimeᐳ
         return slotcount * sizeof(uint64_t);
     }
 
+    constexpr uint16_t BSQ_TYPEINFO_NO_ESLOT = 0x0;
+
     inline constexpr TypeInfo g_typeinfo_None = {
         WELL_KNOWN_TYPE_ID_NONE,
         8,
         byteSizeToSlotCount(8),
         LayoutTag::Value,
+        BSQ_TYPEINFO_NO_ESLOT,
         BSQ_PTR_MASK_LEAF,
         "None",
         nullptr

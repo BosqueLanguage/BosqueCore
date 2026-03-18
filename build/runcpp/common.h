@@ -16,6 +16,8 @@
 #include <list>
 #include <algorithm>
 
+#include <regex>
+
 #include <type_traits>
 #include <concepts>
 

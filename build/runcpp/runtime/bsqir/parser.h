@@ -100,6 +100,9 @@ namespace ᐸRuntimeᐳ
         std::optional<XCString> parseCString();
         std::optional<XString> parseString();
 
+        std::optional<XCRegex> parseCRegex();
+        std::optional<XRegex> parseRegex();
+
         bool allInputConsumed()
         {
             return this->lexer.current().tokentype == BSQONTokenType::EOFToken;

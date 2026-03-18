@@ -6515,14 +6515,30 @@ class Parser {
             if(!this.testAndConsumeTokenIf(SYM_semicolon)) {
                 if(this.isLiteralNumericToken(this.peekTokenKind(1)) || this.peekTokenKind(1) === SYM_coma) {
                     this.consumeToken();
-                    if(this.isLiteralNumericToken()) { this.consumeToken(); }
-                    if(this.testAndConsumeTokenIf(SYM_coma)) {
-                        if(this.isLiteralNumericToken()) { this.consumeToken(); }
+
+                    if(this.testToken(TokenStrings.NumberinoInt)) {
+                        this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Must use numeric extension on bounds value (n|i|N|I|...");
                     }
+                    if(this.isLiteralNumericToken()) { 
+                        this.consumeToken(); 
+                    }
+
+                    this.consumeTokenIf(SYM_coma);
+
+                    if(this.testToken(TokenStrings.NumberinoInt)) {
+                        this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Must use numeric extension on bounds value (n|i|N|I|...");
+                    }
+                    if(this.isLiteralNumericToken()) { 
+                        this.consumeToken(); 
+                    }
+
                     this.ensureAndConsumeTokenAlways(SYM_rbrace, "type declaration size range");
                 }
 
-                this.scanOverBraceDelimitedDeclaration();
+                this.scanToKWOptsInDeclaration(SYM_lbrace, SYM_semicolon);
+                if(!this.testAndConsumeTokenIf(SYM_semicolon)) {
+                    this.scanOverBraceDelimitedDeclaration();
+                }
             }
         }
         else {
@@ -6544,16 +6560,18 @@ class Parser {
                     }
                     min = this.consumeTokenAndGetValue();
                 }
-                if(this.testAndConsumeTokenIf(SYM_coma)) {
+                
+                if(!this.testToken(SYM_coma)) {
+                    max = min;
+                }
+                else {
+                    this.consumeToken();
                     if(this.isLiteralNumericToken()) {
                         if(expectedToken !== undefined && this.peekTokenKind() !== expectedToken) {
                             this.recordErrorGeneral(this.peekToken().getSourceInfo(), `Range bound literal must match type ${(ttype as NominalTypeSignature).decl.name}`);
                         }
                         max = this.consumeTokenAndGetValue();
                     }
-                }
-                else {
-                    max = min;
                 }
 
                 this.ensureAndConsumeTokenAlways(SYM_rbrace, "type declaration size range");

@@ -42,6 +42,7 @@ namespace ᐸRuntimeᐳ
         sizeof(XUUIDv4),
         byteSizeToSlotCount(sizeof(XUUIDv4)),
         LayoutTag::Value,
+        BSQ_TYPEINFO_NO_ESLOT,
         BSQ_PTR_MASK_LEAF,
         "UUIDv4",
         nullptr
@@ -52,6 +53,7 @@ namespace ᐸRuntimeᐳ
         sizeof(XUUIDv7),
         byteSizeToSlotCount(sizeof(XUUIDv7)),
         LayoutTag::Value,
+        BSQ_TYPEINFO_NO_ESLOT,
         BSQ_PTR_MASK_LEAF,
         "UUIDv7",
         nullptr

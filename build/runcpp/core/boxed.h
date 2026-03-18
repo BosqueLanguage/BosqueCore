@@ -107,8 +107,9 @@ namespace ᐸRuntimeᐳ
                 return *(reinterpret_cast<const T*>(reinterpret_cast<const uint64_t*>(&this->data) + idx));
             }
             else {
-                //dereference pointer in the union and then get the slot at index
+                assert(this->typeinfo->tag == LayoutTag::Ref);
 
+                //dereference pointer in the union and then get the slot at index
                 return *(reinterpret_cast<const T*>(reinterpret_cast<const uint64_t*>(this->data) + idx));
             }
         }
@@ -121,8 +122,9 @@ namespace ᐸRuntimeᐳ
                 return *(reinterpret_cast<const T*>(reinterpret_cast<const uint64_t*>(&this->data) + idx));
             }
             else {
+                assert(this->typeinfo->tag == LayoutTag::Ref);
+                
                 //dereference pointer in the union and then get the slot at index
-
                 return *(reinterpret_cast<const T*>(reinterpret_cast<const uint64_t*>(this->data) + idx));
             }
         }

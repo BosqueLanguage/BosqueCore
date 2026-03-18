@@ -345,4 +345,14 @@ namespace ᐸRuntimeᐳ
             assert(false); // Not Implemented: parsing large CString values
         }
     }
+
+    std::optional<XCRegex> BSQONParser::parseCRegex()
+    {
+        assert(false); // Not Implemented: parsing CRegex values
+    }
+
+    std::optional<XRegex> BSQONParser::parseRegex()
+    {
+        assert(false); // Not Implemented: parsing Regex values
+    }
 }

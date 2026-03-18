@@ -1,4 +1,4 @@
-import { IRRegex, IRSourceInfo } from "./irsupport.js";
+import { IRCRegex, IRURegex, IRSourceInfo } from "./irsupport.js";
 import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature } from "./irtype.js";
 import { IRBody, IRLiteralCRegexExpression, IRLiteralFormatCStringExpression, IRLiteralFormatStringExpression, IRLiteralUnicodeRegexExpression, IRSimpleExpression, IRStatement } from "./irbody.js";
 
@@ -335,37 +335,29 @@ class IRTypedeclTypeDecl extends IRAbstractEntityTypeDecl {
     }
 
     getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
-        return [this.valuetype];
+        return [];
     }
 }
 
-class IRTypedeclCStringDecl extends IRAbstractEntityTypeDecl {
+class IRTypedeclCStringDecl extends IRTypedeclTypeDecl {
     readonly rngchk: {min: string | undefined, max: string | undefined} | undefined;
     readonly rechk: IRLiteralCRegexExpression | undefined;
     
     constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], saturatedProvides: IRTypeSignature[], allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[], allValidates: { containingtype: IRNominalTypeSignature, ii: number }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo, rngchk: {min: string | undefined, max: string | undefined} | undefined, rechk: IRLiteralCRegexExpression | undefined) {
-        super(tkey, invariants, validates, [], "std", saturatedProvides, [], allInvariants, allValidates, docstr, metatags, file, sinfo);
+        super(tkey, invariants, validates, saturatedProvides, allInvariants, allValidates, docstr, [], file, sinfo, new IRNominalTypeSignature("CString"), true, false);
         this.rngchk = rngchk;
         this.rechk = rechk;
     }
-
-    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
-        return [];
-    }
 }
 
-class IRTypedeclStringDecl extends IRAbstractEntityTypeDecl {
+class IRTypedeclStringDecl extends IRTypedeclTypeDecl {
     readonly rngchk: {min: string | undefined, max: string | undefined} | undefined;
     readonly rechk: IRLiteralUnicodeRegexExpression | undefined;
     
     constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], saturatedProvides: IRTypeSignature[], allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[], allValidates: { containingtype: IRNominalTypeSignature, ii: number }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo, rngchk: {min: string | undefined, max: string | undefined} | undefined, rechk: IRLiteralUnicodeRegexExpression | undefined) {
-        super(tkey, invariants, validates, [], "std", saturatedProvides, [], allInvariants, allValidates, docstr, metatags, file, sinfo);
+        super(tkey, invariants, validates, saturatedProvides, allInvariants, allValidates, docstr, [], file, sinfo, new IRNominalTypeSignature("String"), true, false);
         this.rngchk = rngchk;
         this.rechk = rechk;
-    }
-
-    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
-        return [];
     }
 }
 
@@ -921,7 +913,8 @@ class IRLambdaParameterPackDecl {
 
 
 class IRAssembly {
-    readonly regexps: IRRegex[] = [];
+    readonly cregexps: IRCRegex[] = [];
+    readonly uregexps: IRURegex[] = [];
 
     readonly constants: IRConstantDecl[] = [];
 

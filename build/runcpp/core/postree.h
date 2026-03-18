@@ -48,13 +48,14 @@ namespace ᐸRuntimeᐳ
     };
 
     template<typename T, int64_t K>
-    consteval TypeInfo g_typeinfo_PosRBTreeLeaf_generate(uint32_t tid, const char* mask, const char* tname)
+    consteval TypeInfo g_typeinfo_PosRBTreeLeaf_generate(uint32_t tid, uint16_t tslots, const char* mask, const char* tname)
     {
         return TypeInfo{
             tid,
             sizeof(PosRBTreeLeaf<T, K>),
             byteSizeToSlotCount(sizeof(PosRBTreeLeaf<T, K>)),
-            LayoutTag::Ref,
+            LayoutTag::ArrayRef,
+            tslots,
             mask,
             tname,
             nullptr
@@ -94,6 +95,7 @@ namespace ᐸRuntimeᐳ
             sizeof(PosRBTreeNode<T, K>),
             byteSizeToSlotCount(sizeof(PosRBTreeNode<T, K>)),
             LayoutTag::Ref,
+            BSQ_TYPEINFO_NO_ESLOT,
             "002020",
             tname,
             nullptr
@@ -166,6 +168,7 @@ namespace ᐸRuntimeᐳ
             sizeof(PosRBTree<T, K, TreeID>),
             byteSizeToSlotCount(sizeof(PosRBTree<T, K, TreeID>)),
             LayoutTag::Tagged,
+            BSQ_TYPEINFO_NO_ESLOT,
             "20",
             tname,
             nullptr

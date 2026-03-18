@@ -88,13 +88,14 @@ namespace ᐸRuntimeᐳ
     };
 
     template<typename T>
-    constexpr TypeInfo g_typeinfo_ListTInlineContent_generate(uint32_t id, const char* mask, const char* name) 
+    constexpr TypeInfo g_typeinfo_ListTInlineContent_generate(uint32_t id, uint16_t tslots, const char* mask, const char* name) 
     {
-        return  TypeInfo{
+        return TypeInfo{
             id,
             sizeof(ListTInlineContent<T>),
             byteSizeToSlotCount(sizeof(ListTInlineContent<T>)),
-            LayoutTag::Value,
+            LayoutTag::ArrayInline,
+            tslots,
             mask,
             name,
             nullptr
@@ -109,6 +110,7 @@ namespace ᐸRuntimeᐳ
             sizeof(ListTTreeContent<T, TYPE_ID_POS_TREE_T>),
             byteSizeToSlotCount(sizeof(ListTTreeContent<T, TYPE_ID_POS_TREE_T>)),
             LayoutTag::Tagged,
+            BSQ_TYPEINFO_NO_ESLOT,
             "20",
             name,
             nullptr
@@ -123,6 +125,7 @@ namespace ᐸRuntimeᐳ
             sizeof(BoxedUnion<ListTUnion<T, TYPE_ID_POS_TREE_T>>),
             byteSizeToSlotCount(sizeof(BoxedUnion<ListTUnion<T, TYPE_ID_POS_TREE_T>>)),
             LayoutTag::Tagged,
+            BSQ_TYPEINFO_NO_ESLOT,
             "200",
             name,
             nullptr

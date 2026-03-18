@@ -97,20 +97,20 @@ class TypeChecker {
             let min = 0n;
             if(tdecl.optsizerng.min !== undefined) {
                 try {
-                    min = BigInt(tdecl.optsizerng.min);
+                    min = BigInt(tdecl.optsizerng.min.slice(0, -1)); //remove the 'n' at the end
                 }
                 catch {
-                    ;
+                    this.reportError(tdecl.sinfo, `Invalid size constraint min value ${tdecl.optsizerng.min}`); //TODO: should this be an error or just ignore the constraint?
                 }
             }
 
             let max = BigInt(rlen);
             if(tdecl.optsizerng.max !== undefined) {
                 try {
-                    max = BigInt(tdecl.optsizerng.max);
+                    max = BigInt(tdecl.optsizerng.max.slice(0, -1)); //remove the 'n' at the end
                 }
                 catch {
-                    ;
+                    this.reportError(tdecl.sinfo, `Invalid size constraint max value ${tdecl.optsizerng.max}`); //TODO: should this be an error or just ignore the constraint?
                 }
             }
 
@@ -138,7 +138,7 @@ class TypeChecker {
                     this.reportError(sinfo, `Invalid regex validator -- expected literal or namespace constant`);
                 }
                 else {
-                    this.doRegexValidation(sinfo, vexp, tdecl.ns.ns.join("::"), vs, value.slice(1, -1));
+                    this.doRegexValidation(sinfo, vexp, tdecl.ns.emit(), vs, value.slice(1, -1));
                 }
             }
         }
@@ -166,7 +166,7 @@ class TypeChecker {
                     this.reportError(sinfo, `Invalid regex validator -- expected literal or namespace constant`);
                 }
                 else {
-                    this.doRegexValidation(sinfo, vexp, tdecl.ns.ns.join("::"), vs, value.slice(1, -1));
+                    this.doRegexValidation(sinfo, vexp, tdecl.ns.emit(), vs, value.slice(1, -1));
                 }
             }
         }
@@ -190,7 +190,7 @@ class TypeChecker {
                     this.reportError(sinfo, `Invalid glob validator -- expected literal or namespace constant`);
                 }
                 else {
-                    this.doGlobValidation(sinfo, vexp, tdecl.ns.ns.join("::"), vs, value.slice(1, -1));
+                    this.doGlobValidation(sinfo, vexp, tdecl.ns.emit(), vs, value.slice(1, -1));
                 }
             }
         }
@@ -1632,7 +1632,7 @@ class TypeChecker {
         }
 
         const vs = this.checkTypeDeclOfStringRestrictions(exp.sinfo, exp.constype.decl as TypedeclTypeDecl, exp.value);
-        if(vs === null) {
+        if(vs !== null) {
             exp.resolvedValue = vs;
         }
             
@@ -1656,7 +1656,7 @@ class TypeChecker {
         }
 
         const vs = this.checkTypeDeclOfCStringRestrictions(exp.sinfo, exp.constype.decl as TypedeclTypeDecl, exp.value);
-        if(vs === null) {
+        if(vs !== null) {
             exp.resolvedValue = vs;
         }
             
@@ -5107,7 +5107,7 @@ class TypeChecker {
         if(tdecl.optsizerng !== undefined) {
             if(tdecl.optsizerng.min !== undefined) {
                 try {
-                    const minval = BigInt(tdecl.optsizerng.min);
+                    const minval = BigInt(tdecl.optsizerng.min.slice(0, -1));
                     this.checkError(tdecl.sinfo, minval < BigInt(0), `Size range min cannot be negative`);
                 }
                 catch {
@@ -5117,7 +5117,7 @@ class TypeChecker {
 
             if(tdecl.optsizerng.max !== undefined) {
                 try {
-                    const maxval = BigInt(tdecl.optsizerng.max);
+                    const maxval = BigInt(tdecl.optsizerng.max.slice(0, -1));
                     this.checkError(tdecl.sinfo, maxval < BigInt(0) || MAX_SAFE_NAT < maxval, `Size range max cannot be negative or larger than max safe nat`);
                 }
                 catch {

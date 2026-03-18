@@ -11,19 +11,44 @@ class IRSourceInfo
     }
 }
 
-class IRRegex
+class IRCRegex
 {
     readonly regexID: number;
 
-    //TODO: we need to store the (resolved) regex AST and compile later
+    readonly bsqregex: string;
+    readonly smtregex: string;
+    readonly cppregex: string;
 
-    constructor(regexID: number)
+    constructor(regexID: number, bsqregex: string, smtregex: string, cppregex: string)
     {
         this.regexID = regexID;
+
+        this.bsqregex = bsqregex;
+        this.smtregex = smtregex;
+        this.cppregex = cppregex;
+    }
+}
+
+class IRURegex
+{
+    readonly regexID: number;
+
+    readonly bsqregex: string;
+    readonly smtregex: string;
+    readonly cppregex: string;
+
+    constructor(regexID: number, bsqregex: string, smtregex: string, cppregex: string)
+    {
+        this.regexID = regexID;
+
+        this.bsqregex = bsqregex;
+        this.smtregex = smtregex;
+        this.cppregex = cppregex;
     }
 }
 
 export {
     IRSourceInfo,
-    IRRegex
+    IRCRegex,
+    IRURegex
 };

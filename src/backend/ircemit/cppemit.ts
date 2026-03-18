@@ -2,11 +2,12 @@ import { TransformCPPNameManager } from "./namemgr.js";
 import { LayoutTag, LIST_T_CAPACITY, TypeInfo, TypeInfoManager } from "./typeinfomgr.js";
 
 import { MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_INT } from "../../frontend/assembly.js";
-import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag, IRPrefixNotOpExpression, IRPrefixPlusOpExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRReturnValueSimpleStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement, IRAbortStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRTempAssignExpressionStatement, IRTypeDeclInvariantCheckStatement, IRDebugStatement, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRChkLogicImpliesShortCircuitStatement, IRPreconditionCheckStatement, IRPostconditionCheckStatement, IRVariableInitializationDirectInvokeStatement, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRAssertStatement, IRValidateStatement, IRBody, IRBuiltinBody, IRStandardBody, IRHoleBody, IRIsNoneOptionExpression, IRBinKeyEqDirectExpression, IRIsOptionEqValueExpression, IRIsSomeNeqValueExpression, IRIsOptionNeqValueExpression, IRIsSomeEqValueExpression, IRConstructorSomeTypeExpression, IRLiteralOptionOfNoneExpression, IRConstructOptionFromSomeExpression, IRExtractSomeFromOptionExpression, IRExtractSomeValueFromOptionExpression, IRBinKeyNeqDirectExpression, IRBinKeyLessDirectExpression, IRSimpleIfStatement, IRSimpleIfElseStatement, IRConstructorStandardEntityExpression, IRReturnDirectConstructStatement, IRReturnDirectInvokeStatement, IRVariableInitializationDirectConstructorStatement, IREntityInvariantCheckStatement, IRBoxEntityToConceptRepresentationExpression, IRVariableAssignmentStatement, IRVariableAssignmentDirectInvokeStatement, IRVariableAssignmentDirectConstructorStatement, IRConstructorListEmptyExpression, IRConstructorListSingletonsExpression, IRInvokeSimpleExpression, IRVariableInitializationDirectInvokeWithImplicitStatement, IRVariableAssignmentDirectInvokeWithImplicitStatement, IRReturnDirectConstructWithBoxStatement, IRReturnValueImplicitStatement, IRReturnDirectInvokeImplicitStatement, IRReturnDirectInvokeImplicitPassThroughStatement, IRReturnDirectConstructImplicitStatement, IRReturnDirectConstructWithBoxImplicitStatement, IRInvokeSimpleWithImplicitsExpression, IRTempAssignRefInvokeStatement, IRTempAssignStdInvokeStatement, IRVoidInvokeStatement, IRVariableInitializationDirectConstructorWithBoxStatement, IRVariableAssignmentDirectConstructorWithBoxStatement, IRLiteralFormatCStringExpression, IRLiteralFormatStringExpression, IRInterpolateFormatCStringExpression, IRFormatStringTextComponent, IRFormatStringArgComponent } from "../irdefs/irbody.js";
+import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag, IRPrefixNotOpExpression, IRPrefixPlusOpExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRReturnValueSimpleStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement, IRTypeDeclSizeRangeCheckCStringStatement, IRTypeDeclSizeRangeCheckUnicodeStringStatement, IRAbortStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRTempAssignExpressionStatement, IRTypeDeclInvariantCheckStatement, IRDebugStatement, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRChkLogicImpliesShortCircuitStatement, IRPreconditionCheckStatement, IRPostconditionCheckStatement, IRVariableInitializationDirectInvokeStatement, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRAssertStatement, IRValidateStatement, IRBody, IRBuiltinBody, IRStandardBody, IRHoleBody, IRIsNoneOptionExpression, IRBinKeyEqDirectExpression, IRIsOptionEqValueExpression, IRIsSomeNeqValueExpression, IRIsOptionNeqValueExpression, IRIsSomeEqValueExpression, IRConstructorSomeTypeExpression, IRLiteralOptionOfNoneExpression, IRConstructOptionFromSomeExpression, IRExtractSomeFromOptionExpression, IRExtractSomeValueFromOptionExpression, IRBinKeyNeqDirectExpression, IRBinKeyLessDirectExpression, IRSimpleIfStatement, IRSimpleIfElseStatement, IRConstructorStandardEntityExpression, IRReturnDirectConstructStatement, IRReturnDirectInvokeStatement, IRVariableInitializationDirectConstructorStatement, IREntityInvariantCheckStatement, IRBoxEntityToConceptRepresentationExpression, IRVariableAssignmentStatement, IRVariableAssignmentDirectInvokeStatement, IRVariableAssignmentDirectConstructorStatement, IRConstructorListEmptyExpression, IRConstructorListSingletonsExpression, IRInvokeSimpleExpression, IRVariableInitializationDirectInvokeWithImplicitStatement, IRVariableAssignmentDirectInvokeWithImplicitStatement, IRReturnDirectConstructWithBoxStatement, IRReturnValueImplicitStatement, IRReturnDirectInvokeImplicitStatement, IRReturnDirectInvokeImplicitPassThroughStatement, IRReturnDirectConstructImplicitStatement, IRReturnDirectConstructWithBoxImplicitStatement, IRInvokeSimpleWithImplicitsExpression, IRTempAssignRefInvokeStatement, IRTempAssignStdInvokeStatement, IRVoidInvokeStatement, IRVariableInitializationDirectConstructorWithBoxStatement, IRVariableAssignmentDirectConstructorWithBoxStatement, IRLiteralFormatCStringExpression, IRLiteralFormatStringExpression, IRInterpolateFormatCStringExpression, IRFormatStringTextComponent, IRFormatStringArgComponent, IRTypeDeclFormatCheckCStringStatement } from "../irdefs/irbody.js";
 import { IRAbstractCollectionTypeDecl, IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAssembly, IRConceptTypeDecl, IRConstantDecl, IRConstructableTypeDecl, IREntityTypeDecl, IREnumTypeDecl, IRFailTypeDecl, IRInternalConceptTypeDecl, IRInvariantDecl, IRInvokeDecl, IRInvokeParameterDecl, IRListTypeDecl, IRMapEntryTypeDecl, IRMapTypeDecl, IROkTypeDecl, IROptionTypeDecl, IRPrimitiveEntityTypeDecl, IRResultTypeDecl, IRSomeTypeDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl, IRValidateDecl } from "../irdefs/irassembly.js";
 
 import assert from "node:assert";
 import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatCStringTypeSignature, IRFormatStringTypeSignature, IRFormatTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype.js";
+import { IRCRegex, IRURegex } from "../irdefs/irsupport.js";
 
 const RUNTIME_NAMESPACE = "ᐸRuntimeᐳ";
 const CLOSURE_CAPTURE_NAME = "ᐸclosureᐳ";
@@ -204,10 +205,10 @@ class CPPEmitter {
             return `${RUNTIME_NAMESPACE}::XDeltaLogicalTime{'${dltexp.sign}', ${dltexp.ticks}}`;
         }
         else if(ttag === IRExpressionTag.IRLiteralUnicodeRegexExpression) {
-            return `${RUNTIME_NAMESPACE}::g_regexs[${(exp as IRLiteralUnicodeRegexExpression).regexID}]`;
+            return `Regex{${RUNTIME_NAMESPACE}::g_uregexs[${(exp as IRLiteralUnicodeRegexExpression).regexID}]}`;
         }
         else if(ttag === IRExpressionTag.IRLiteralCRegexExpression) {
-            return `${RUNTIME_NAMESPACE}::g_regexs[${(exp as IRLiteralCRegexExpression).regexID}]`;
+            return `CRegex{${RUNTIME_NAMESPACE}::g_cregexs[${(exp as IRLiteralCRegexExpression).regexID}]}`;
         }
         else if(ttag === IRExpressionTag.IRLiteralByteExpression) {
             const b = (exp as IRLiteralByteExpression).value;
@@ -783,13 +784,44 @@ class CPPEmitter {
             return `${RUNTIME_NAMESPACE}::X${iedzbc.optypechk}::checkDivisionByZero(${this.emitIRSimpleExpression(iedzbc.right, true)}, "${iedzbc.file}", ${iedzbc.sinfo.line});`;
         }
         else if(ttag === IRStatementTag.IRTypeDeclSizeRangeCheckCStringStatement) {
-            assert(false, "CPPEmitter: need to implement type declaration size range check for cstring");
+            const itdsrcc = stmt as IRTypeDeclSizeRangeCheckCStringStatement;
+            const strarg = this.emitIRImmediateExpression(itdsrcc.strexp);
+            const loc = `"${itdsrcc.file}", ${itdsrcc.sinfo.line}`;
+            if(itdsrcc.min !== undefined && itdsrcc.max !== undefined) {
+                return `${RUNTIME_NAMESPACE}::XCString::checkSizeRange(${strarg}, ${itdsrcc.min.slice(0, -1)}, ${itdsrcc.max.slice(0, -1)}, ${loc});`;
+            }
+            else if(itdsrcc.min !== undefined) {
+                return `${RUNTIME_NAMESPACE}::XCString::checkSizeMin(${strarg}, ${itdsrcc.min.slice(0, -1)}, ${loc});`;
+            }
+            else if(itdsrcc.max !== undefined) {
+                return `${RUNTIME_NAMESPACE}::XCString::checkSizeMax(${strarg}, ${itdsrcc.max.slice(0, -1)}, ${loc});`;
+            }
+            else {
+                assert(false, "CPPEmitter: IRTypeDeclSizeRangeCheckCStringStatement with no min or max bound");
+            }
         }
         else if(ttag === IRStatementTag.IRTypeDeclSizeRangeCheckUnicodeStringStatement) {
-            assert(false, "CPPEmitter: need to implement type declaration size range check for unicode string");
+            const itdsrcu = stmt as IRTypeDeclSizeRangeCheckUnicodeStringStatement;
+            const strarg = this.emitIRImmediateExpression(itdsrcu.strexp);
+            const loc = `"${itdsrcu.file}", ${itdsrcu.sinfo.line}`;
+            if(itdsrcu.min !== undefined && itdsrcu.max !== undefined) {
+                return `${RUNTIME_NAMESPACE}::XString::checkSizeRange(${strarg}, ${itdsrcu.min.slice(0, -1)}, ${itdsrcu.max.slice(0, -1)}, ${loc});`;
+            }
+            else if(itdsrcu.min !== undefined) {
+                return `${RUNTIME_NAMESPACE}::XString::checkSizeMin(${strarg}, ${itdsrcu.min.slice(0, -1)}, ${loc});`;
+            }
+            else if(itdsrcu.max !== undefined) {
+                return `${RUNTIME_NAMESPACE}::XString::checkSizeMax(${strarg}, ${itdsrcu.max.slice(0, -1)}, ${loc});`;
+            }
+            else {
+                assert(false, "CPPEmitter: IRTypeDeclSizeRangeCheckUnicodeStringStatement with no min or max bound");
+            }
         }
         else if(ttag === IRStatementTag.IRTypeDeclFormatCheckCStringStatement) {
-            assert(false, "CPPEmitter: need to implement type declaration format check for cstring");
+            const vvexp = stmt as IRTypeDeclFormatCheckCStringStatement;
+            const reval = `${RUNTIME_NAMESPACE}::g_cregexs[${vvexp.re.regexID}]`;
+
+            return `${RUNTIME_NAMESPACE}::XCString::checkFormat(${this.emitIRImmediateExpression(vvexp.strexp)}, ${reval}, "${vvexp.file}", ${vvexp.sinfo.line});`;
         }
         else if(ttag === IRStatementTag.IRTypeDeclFormatCheckUnicodeStringStatement) {
             assert(false, "CPPEmitter: need to implement type declaration format check for unicode string");
@@ -973,7 +1005,7 @@ class CPPEmitter {
         const bodystr = this.emitStatementList(iconst.stmts, [`if(${gvname}.has_value()) { return ${gvname}.value(); } `], [`${gvname} = std::make_optional(${this.emitIRSimpleExpression(iconst.value, true)}); return ${gvname}.value();`], undefined);
         
         const cdeclstr = `${this.typeInfoManager.emitTypeAsStd(iconst.declaredType.tkeystr)} ${TransformCPPNameManager.generateNameForConstantKey(iconst.ckey)}();`;
-        const cdefstr = `${staticsstr}\n${this.typeInfoManager.emitTypeAsStd(iconst.declaredType.tkeystr)} ${TransformCPPNameManager.generateNameForConstantKey(iconst.ckey)}() ${bodystr}`;
+        const cdefstr = `${staticsstr}\n${this.typeInfoManager.emitTypeAsStd(iconst.declaredType.tkeystr)} ${TransformCPPNameManager.generateNameForConstantKey(iconst.ckey)}() { ${bodystr} }`;
 
         return [cdeclstr, cdefstr];
     }
@@ -1008,6 +1040,7 @@ class CPPEmitter {
         `        8,\n` +
         `        1,\n` +
         `        LayoutTag::Value,\n` +
+        `        BSQ_TYPEINFO_NO_ESLOT,\n` +
         `        nullptr,\n` +
         `        "${tdecl.tkey}",\n` +
         `        nullptr\n` +
@@ -1052,14 +1085,14 @@ class CPPEmitter {
         const listtreeid = ttid.bsqtypeid - 1;
 
         const tidecls = `namespace ᐸRuntimeᐳ {\n` +
-        `    inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_${ctname} = g_typeinfo_PosRBTreeLeaf_generate<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>(${posrb_treeleafid}, ${leafmask !== undefined ? `"${leafmask}"` : "nullptr"}, "PosRBTreeLeaf_${ctname}");\n` +
+        `    inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_${ctname} = g_typeinfo_PosRBTreeLeaf_generate<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>(${posrb_treeleafid}, ${ofttid.slotcount}, ${leafmask !== undefined ? `"${leafmask}"` : "nullptr"}, "PosRBTreeLeaf_${ctname}");\n` +
         `    inline constexpr TypeInfo g_typeinfo_PosRBTreeNode_${ctname} = g_typeinfo_PosRBTreeNode_generate<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>(${posrb_treenodeid}, "PosRBTreeNode_${ctname}");\n` +
         `    inline constexpr TypeInfo g_typeinfo_PosRBTree_${ctname} = g_typeinfo_PosRBTree_generate<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE, ${posrb_treeid}>(${posrb_treeid}, "PosRBTree_${ctname}");\n` +
         '\n' +
         `    extern thread_local GCAllocator<PosRBTreeLeaf<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>> PosRBTreeLeaf_${ctname}_allocator;\n` +
         `    extern thread_local GCAllocator<PosRBTreeNode<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>> PosRBTreeNode_${ctname}_allocator;\n` +
         '\n' +
-        `    inline constexpr TypeInfo g_typeinfo_${ctname}Inline = g_typeinfo_ListTInlineContent_generate<${oftrepr}>(${listinlineid}, ${inlinemask !== undefined ? `"${inlinemask}"` : "nullptr"}, "${ctname}Inline");\n` +
+        `    inline constexpr TypeInfo g_typeinfo_${ctname}Inline = g_typeinfo_ListTInlineContent_generate<${oftrepr}>(${listinlineid}, ${ofttid.slotcount}, ${inlinemask !== undefined ? `"${inlinemask}"` : "nullptr"}, "${ctname}Inline");\n` +
         `    inline constexpr TypeInfo g_typeinfo_${ctname}Tree = g_typeinfo_ListTTreeContent<${oftrepr}, ${posrb_treeid}>(${listtreeid}, "${ctname}TreeContent");\n` +
         `    inline constexpr TypeInfo g_typeinfo_${ctname} = g_typeinfo_ListT_generate<${oftrepr}, ${posrb_treeid}>(${ttid.bsqtypeid}, "${ctname}");\n` +
         `}`;
@@ -1090,6 +1123,7 @@ class CPPEmitter {
         `        ${ttid.bytesize},\n` +
         `        ${ttid.slotcount},\n` +
         `        LayoutTag::${ttid.tag},\n` +
+        `        BSQ_TYPEINFO_NO_ESLOT,\n` +
         `        ${ttid.ptrmask !== undefined ? ('"' + ttid.ptrmask + '"') : "nullptr"},\n` +
         `        "${tdecl.tkey}",\n` +
         `        ${ttid.vtable !== undefined ? "" : "nullptr"}\n` +
@@ -1107,6 +1141,7 @@ class CPPEmitter {
             `        ${ttid.bytesize},\n` +
             `        ${ttid.slotcount},\n` +
             `        LayoutTag::${ttid.tag},\n` +
+            `        BSQ_TYPEINFO_NO_ESLOT,\n` +
             `        ${ttid.ptrmask !== undefined ? ('"' + ttid.ptrmask + '"') : "nullptr"},\n` +
             `        "${tdecl.tkey}",\n` +
             `        ${ttid.vtable !== undefined ? "" : "nullptr"}\n` +
@@ -1126,11 +1161,28 @@ class CPPEmitter {
         `        ${ttid.bytesize},\n` +
         `        ${ttid.slotcount},\n` +
         `        LayoutTag::Tagged,\n` +
+        `        BSQ_TYPEINFO_NO_ESLOT,\n` +
         `        ${ttid.ptrmask !== undefined ? ('"' + ttid.ptrmask + '"') : "nullptr"},\n` +
         `        "${tdecl.tkey}",\n` +
         `        nullptr\n` +
         `    };\n` +
         `}`;
+    }
+
+    private emitRegexInfos(cregexs: IRCRegex[], uregexs: IRURegex[]): [string, string] {
+        const redecl = `namespace ᐸRuntimeᐳ {\n` +
+        `    extern std::array<std::basic_regex<char>, ${cregexs.length}> g_cregexs;\n` +
+        `    extern std::array<std::basic_regex<char32_t>, ${uregexs.length}> g_uregexs;\n` +
+        `}`;
+
+        const cflags = "std::regex::ECMAScript | std::regex::nosubs";
+        const uflags = "std::regex::ECMAScript | std::regex::nosubs";
+        const redef = `namespace ᐸRuntimeᐳ {\n` +
+        `    std::array<std::basic_regex<char>, ${cregexs.length}> g_cregexs = { ${cregexs.map((re) => `std::basic_regex<char>("${re.cppregex}", ${cflags})`).join(", ")} };\n` +
+        `    std::array<std::basic_regex<char32_t>, ${uregexs.length}> g_uregexs = { ${uregexs.map((re) => `std::basic_regex<char32_t>(U"${re.cppregex}", ${uflags})`).join(", ")} };\n` +
+        `}`;
+
+        return [redecl, redef];
     }
 
     private emitEnumTypeDeclInfo(eenum: IREnumTypeDecl): [string, string] {
@@ -1175,7 +1227,7 @@ class CPPEmitter {
         ];
     }
 
-    private emitGeneralTypeDeclInfo(tdecl: IRTypedeclTypeDecl): [string, string] {
+    private emitGeneralTypeDeclInfo(tdecl: IRTypedeclTypeDecl, chkextra: string[] | undefined): [string, string] {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
         const ctrepr = this.typeInfoManager.emitTypeAsStd(tdecl.tkey);
 
@@ -1212,7 +1264,7 @@ class CPPEmitter {
         `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitSymbol('>'); \n` +
         `}`;
 
-        if(vfuncinfo.length === 0 && valfuncinfo.length === 0) {
+        if(vfuncinfo.length === 0 && valfuncinfo.length === 0 && chkextra === undefined) {
             const bsqparsedef = `std::optional<${ctrepr}> BSQ_parse${ctname}() {\n` +
             `    std::optional<${voptt}> cc = ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.parse${voptttname}();\n` +
             `    if(!cc.has_value()) { return std::nullopt; }\n` +
@@ -1234,6 +1286,7 @@ class CPPEmitter {
             const ivdefs = [...vfuncinfo.map((vf) => vf[1]), ...valfuncinfo.map((vf) => vf[1])];
 
             const allchks = [
+                ...(chkextra || []),
                 ...tdecl.allInvariants.map((inv) => {
                     const ifname = TransformCPPNameManager.generateNameForInvariantFunction(inv.containingtype.tkeystr, inv.ii);
                     return `if(!((bool)${ifname}(vv))) { return std::nullopt; };`;
@@ -1265,7 +1318,23 @@ class CPPEmitter {
     }
 
     private emitCStringTypeDeclInfo(tcstr: IRTypedeclCStringDecl): [string, string] {
-        assert(false, "CPPEmitter: need to implement cstring type decl emission");
+        let echks: string[] = [];
+        if(tcstr.rngchk !== undefined) {
+            if(tcstr.rngchk.min === undefined) {
+                echks.push(`if(${(tcstr.rngchk.max as string).slice(0, -1)} < vv.size()) { return std::nullopt; };`);
+            }
+            else if(tcstr.rngchk.max === undefined) {
+                echks.push(`if(vv.size() < ${(tcstr.rngchk.min as string).slice(0, -1)}) { return std::nullopt; };`);
+            }
+            else {
+                echks.push(`if((vv.size() < ${(tcstr.rngchk.min as string).slice(0, -1)}) || (${(tcstr.rngchk.max as string).slice(0, -1)} < vv.size())) { return std::nullopt; };`);
+            }
+        }
+        if(tcstr.rechk !== undefined) {
+            echks.push(`if(!std::regex_match(vv.begin(), vv.end(), ᐸRuntimeᐳ::g_cregexs[${tcstr.rechk.regexID}])) { return std::nullopt; };`);
+        }
+
+        return this.emitGeneralTypeDeclInfo(tcstr, echks);
     }
 
     private emitStringTypeDeclInfo(tstr: IRTypedeclStringDecl): [string, string] {
@@ -1664,9 +1733,11 @@ class CPPEmitter {
             return [bsqparse, bsqemit].join("\n");
         }).join("\n\n");
 
+        const [redecls, redefs] = this.emitRegexInfos(this.irasm.cregexps, this.irasm.uregexps);
+        
         const enumdd = this.irasm.enums.map((eden) => this.emitEnumTypeDeclInfo(eden));
 
-        const gtddd = this.irasm.typedecls.map((tgtd) =>  this.emitGeneralTypeDeclInfo(tgtd));
+        const gtddd = this.irasm.typedecls.map((tgtd) =>  this.emitGeneralTypeDeclInfo(tgtd, undefined));
         const cstringdd = this.irasm.cstringoftypedecls.map((tcstr) => this.emitCStringTypeDeclInfo(tcstr));
         const stringdd = this.irasm.stringoftypedecls.map((tstr) => this.emitStringTypeDeclInfo(tstr));
 
@@ -1757,8 +1828,8 @@ class CPPEmitter {
         });
 
         return [
-            [pdecls, ...enumdd.map((tt) => tt[0]), ...gtddd.map((tt) => tt[0]), ...cstringdd.map((tt) => tt[0]), ...stringdd.map((tt) => tt[0]), ...decltdd.map((tt) => tt[0])].join("\n\n"),
-            [pdefs, ...enumdd.map((tt) => tt[1]), ...gtddd.map((tt) => tt[1]), ...cstringdd.map((tt) => tt[1]), ...stringdd.map((tt) => tt[1]), fcstringdd, fstringdd, ...decltdd.map((tt) => tt[1])].join("\n\n")
+            [pdecls, redecls, ...enumdd.map((tt) => tt[0]), ...gtddd.map((tt) => tt[0]), ...cstringdd.map((tt) => tt[0]), ...stringdd.map((tt) => tt[0]), ...decltdd.map((tt) => tt[0])].join("\n\n"),
+            [pdefs, redefs, ...enumdd.map((tt) => tt[1]), ...gtddd.map((tt) => tt[1]), ...cstringdd.map((tt) => tt[1]), ...stringdd.map((tt) => tt[1]), fcstringdd, fstringdd, ...decltdd.map((tt) => tt[1])].join("\n\n")
         ];
     }
 
@@ -1767,9 +1838,11 @@ class CPPEmitter {
         const idecls = this.irasm.invokes.map((invk) => this.emitIRInvokeDeclInfo(invk));
         assert(this.irasm.taskactions.length === 0, "CPPEmitter: need to implement ADT decl emission");
 
+        const constdecls = this.irasm.constants.map((c) => this.emitConstantDeclInfo(c));
+
         return [
-            idecls.map((idecl) => idecl[0]).join("\n\n"),
-            idecls.map((idecl) => idecl[1]).join("\n\n")
+            [...idecls.map((idecl) => idecl[0]), ...constdecls.map((cdecl) => cdecl[0])].join("\n\n"),
+            [...idecls.map((idecl) => idecl[1]), ...constdecls.map((cdecl) => cdecl[1])].join("\n\n")
         ];
     }
 

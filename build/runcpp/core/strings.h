@@ -59,7 +59,7 @@ namespace ᐸRuntimeᐳ
         PosRBTree<char, CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING> postree;
     };
 
-    inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_CString = g_typeinfo_PosRBTreeLeaf_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_CSTRING, BSQ_PTR_MASK_LEAF, "PosRBTreeLeaf_CString");
+    inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_CString = g_typeinfo_PosRBTreeLeaf_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_CSTRING, 1, BSQ_PTR_MASK_LEAF, "PosRBTreeLeaf_CString");
     inline constexpr TypeInfo g_typeinfo_PosRBTreeNode_CString = g_typeinfo_PosRBTreeNode_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_NODE_CSTRING, "PosRBTreeNode_CString");
     inline constexpr TypeInfo g_typeinfo_PosRBTree_CString = g_typeinfo_PosRBTree_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>(WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING, "PosRBTree_CString");
 
@@ -83,6 +83,7 @@ namespace ᐸRuntimeᐳ
         sizeof(CStrRootInlineContent),
         byteSizeToSlotCount(sizeof(CStrRootInlineContent)),
         LayoutTag::Value,
+        BSQ_TYPEINFO_NO_ESLOT, //since always a leaf of values we just ignore
         BSQ_PTR_MASK_LEAF,
         "CStringInline",
         nullptr
@@ -93,6 +94,7 @@ namespace ᐸRuntimeᐳ
         sizeof(CStrRootTreeContent),
         byteSizeToSlotCount(sizeof(CStrRootTreeContent)),
         LayoutTag::Tagged,
+        BSQ_TYPEINFO_NO_ESLOT,
         "20",
         "CStringTree",
         nullptr
@@ -103,6 +105,7 @@ namespace ᐸRuntimeᐳ
         sizeof(BoxedUnion<CStringUnion>),
         byteSizeToSlotCount(sizeof(BoxedUnion<CStringUnion>)),
         LayoutTag::Tagged,
+        BSQ_TYPEINFO_NO_ESLOT,
         "200",
         "CString",
         nullptr
@@ -288,6 +291,27 @@ namespace ᐸRuntimeᐳ
         friend XBool operator!=(const XCString& lhs, const XCString& rhs) { return !(lhs == rhs); }
         friend XBool operator<=(const XCString& lhs, const XCString& rhs) { return !(lhs > rhs); }
         friend XBool operator>=(const XCString& lhs, const XCString& rhs) { return !(lhs < rhs); }
+
+        static void checkFormat(XCString s, const std::basic_regex<char>& re, const char* file, uint32_t line)
+        {
+            if(!std::regex_match(s.begin(), s.end(), re)) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "CString does not match format"); }
+        }
+
+        static void checkSizeMin(XCString s, int64_t min, const char* file, uint32_t line)
+        {
+            if(s.size() < min) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "CString length below minimum"); }
+        }
+
+        static void checkSizeMax(XCString s, int64_t max, const char* file, uint32_t line)
+        {
+            if(max < s.size()) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "CString length above maximum"); }
+        }
+
+        static void checkSizeRange(XCString s, int64_t min, int64_t max, const char* file, uint32_t line)
+        {
+            if(s.size() < min) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "CString length below minimum"); }
+            if(max < s.size()) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "CString length above maximum"); }
+        }
     };
 
     class XFCStringRepr 
@@ -347,6 +371,12 @@ namespace ᐸRuntimeᐳ
         }
     };
 
+    class XCRegex
+    {
+    public:
+        size_t regexid;
+    };
+
     class StrRootInlineContent
     {
     public:
@@ -397,7 +427,7 @@ namespace ᐸRuntimeᐳ
         PosRBTree<char32_t, STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING> postree;
     };
 
-    inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_String = g_typeinfo_PosRBTreeLeaf_generate<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_STRING, BSQ_PTR_MASK_LEAF, "PosRBTreeLeaf_String");
+    inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_String = g_typeinfo_PosRBTreeLeaf_generate<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_STRING, 1, BSQ_PTR_MASK_LEAF, "PosRBTreeLeaf_String");
     inline constexpr TypeInfo g_typeinfo_PosRBTreeNode_String = g_typeinfo_PosRBTreeNode_generate<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_NODE_STRING, "PosRBTreeNode_String");
     inline constexpr TypeInfo g_typeinfo_PosRBTree_String = g_typeinfo_PosRBTree_generate<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>(WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING, "PosRBTree_String");
 
@@ -421,6 +451,7 @@ namespace ᐸRuntimeᐳ
         sizeof(StrRootInlineContent),
         byteSizeToSlotCount(sizeof(StrRootInlineContent)),
         LayoutTag::Value,
+        BSQ_TYPEINFO_NO_ESLOT, //since always a leaf of values we just ignore
         BSQ_PTR_MASK_LEAF,
         "StringInline",
         nullptr
@@ -431,6 +462,7 @@ namespace ᐸRuntimeᐳ
         sizeof(StrRootTreeContent),
         byteSizeToSlotCount(sizeof(StrRootTreeContent)),
         LayoutTag::Tagged,
+        BSQ_TYPEINFO_NO_ESLOT,
         "20",
         "StringTree",
         nullptr
@@ -441,6 +473,7 @@ namespace ᐸRuntimeᐳ
         sizeof(BoxedUnion<StringUnion>),
         byteSizeToSlotCount(sizeof(BoxedUnion<StringUnion>)),
         LayoutTag::Tagged,
+        BSQ_TYPEINFO_NO_ESLOT,
         "20000",
         "String",
         nullptr
@@ -626,6 +659,27 @@ namespace ᐸRuntimeᐳ
         friend XBool operator!=(const XString& lhs, const XString& rhs) { return !(lhs == rhs); }
         friend XBool operator<=(const XString& lhs, const XString& rhs) { return !(lhs > rhs); }
         friend XBool operator>=(const XString& lhs, const XString& rhs) { return !(lhs < rhs); }
+
+        static void checkFormat(XString s, const std::basic_regex<char32_t>& re, const char* file, uint32_t line)
+        {
+            if(!std::regex_match(s.begin(), s.end(), re)) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "String does not match format"); }
+        }
+
+        static void checkSizeMin(XString s, int64_t min, const char* file, uint32_t line)
+        {
+            if(s.size() < min) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "String length below minimum"); }
+        }
+
+        static void checkSizeMax(XString s, int64_t max, const char* file, uint32_t line)
+        {
+            if(max < s.size()) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "String length above maximum"); }
+        }
+
+        static void checkSizeRange(XString s, int64_t min, int64_t max, const char* file, uint32_t line)
+        {
+            if(s.size() < min) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "String length below minimum"); }
+            if(max < s.size()) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "String length above maximum"); }
+        }
     };
 
     class XFStringRepr 
@@ -683,6 +737,12 @@ namespace ᐸRuntimeᐳ
                 assert(false); // Not Implemented: full support for FString interpolation
             }
         }
+    };
+
+    class XRegex
+    {
+    public:
+        size_t regexid;
     };
 
     inline constexpr XCString emptycstr();
