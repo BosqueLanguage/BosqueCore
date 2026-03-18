@@ -6467,6 +6467,29 @@ class Parser {
         }
     }
 
+    private isLiteralNumericToken(kind?: string): boolean {
+        const tk = kind ?? this.peekTokenKind();
+        return tk === TokenStrings.Nat || tk === TokenStrings.Int
+            || tk === TokenStrings.ChkNat || tk === TokenStrings.ChkInt
+            || tk === TokenStrings.Float || tk === TokenStrings.Decimal
+            || tk === TokenStrings.Rational;
+    }
+
+    private expectedRangeLiteralToken(typeName: string): string | undefined {
+        switch(typeName) {
+            case "Int": return TokenStrings.Int;
+            case "Nat": return TokenStrings.Nat;
+            case "ChkInt": return TokenStrings.ChkInt;
+            case "ChkNat": return TokenStrings.ChkNat;
+            case "Float": return TokenStrings.Float;
+            case "Decimal": return TokenStrings.Decimal;
+            case "Rational": return TokenStrings.Rational;
+            case "String": return TokenStrings.Nat;
+            case "CString": return TokenStrings.Nat;
+            default: return undefined;
+        }
+    }
+
     private parseTypeDecl(attributes: DeclarationAttibute[]) {
         const sinfo = this.peekToken().getSourceInfo();
 
@@ -6490,21 +6513,25 @@ class Parser {
 
             this.scanToKWOptsInDeclaration(SYM_lbrace, SYM_semicolon);
             if(!this.testAndConsumeTokenIf(SYM_semicolon)) {
-                if(this.peekTokenKind(1) === TokenStrings.Nat || this.peekTokenKind(1) === SYM_coma) {
+                if(this.isLiteralNumericToken(this.peekTokenKind(1)) || this.peekTokenKind(1) === SYM_coma) {
                     this.consumeToken();
 
                     if(this.testToken(TokenStrings.NumberinoInt)) {
                         this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Must use numeric extension on bounds value (n|i|N|I|...");
                     }
+                    if(this.isLiteralNumericToken()) { 
+                        this.consumeToken(); 
+                    }
 
-                    this.ensureAndConsumeTokenIf(TokenStrings.Nat, "type declaration size min");
-                    this.ensureAndConsumeTokenIf(SYM_coma, "type declaration size range");
+                    this.consumeTokenIf(SYM_coma);
 
                     if(this.testToken(TokenStrings.NumberinoInt)) {
                         this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Must use numeric extension on bounds value (n|i|N|I|...");
                     }
+                    if(this.isLiteralNumericToken()) { 
+                        this.consumeToken(); 
+                    }
 
-                    this.ensureAndConsumeTokenIf(TokenStrings.Nat, "type declaration size max");
                     this.ensureAndConsumeTokenAlways(SYM_rbrace, "type declaration size range");
                 }
 
@@ -6521,11 +6548,16 @@ class Parser {
             const ttype = this.parseTypedeclRHSSignature();
             (tdecl as TypedeclTypeDecl).valuetype = ttype;
 
-            if(this.testAndConsumeTokenIf(SYM_lbrace)) {;
+            if(this.testAndConsumeTokenIf(SYM_lbrace)) {
                 let min: string | undefined = undefined;
                 let max: string | undefined = undefined;
 
-                if(this.testToken(TokenStrings.Nat)) {
+                const expectedToken = (ttype instanceof NominalTypeSignature) ? this.expectedRangeLiteralToken(ttype.decl.name) : undefined;
+
+                if(this.isLiteralNumericToken()) {
+                    if(expectedToken !== undefined && this.peekTokenKind() !== expectedToken) {
+                        this.recordErrorGeneral(this.peekToken().getSourceInfo(), `Range bound literal must match type ${(ttype as NominalTypeSignature).decl.name}`);
+                    }
                     min = this.consumeTokenAndGetValue();
                 }
                 
@@ -6534,7 +6566,10 @@ class Parser {
                 }
                 else {
                     this.consumeToken();
-                    if(this.testToken(TokenStrings.Nat)) {
+                    if(this.isLiteralNumericToken()) {
+                        if(expectedToken !== undefined && this.peekTokenKind() !== expectedToken) {
+                            this.recordErrorGeneral(this.peekToken().getSourceInfo(), `Range bound literal must match type ${(ttype as NominalTypeSignature).decl.name}`);
+                        }
                         max = this.consumeTokenAndGetValue();
                     }
                 }
