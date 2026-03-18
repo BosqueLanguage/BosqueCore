@@ -33,6 +33,8 @@ class FieldOffsetInfo {
 enum LayoutTag {
     Value  = "Value",
     Ref    = "Ref",
+    ArrayInline = "ArrayInline",
+    ArrayRef = "ArrayRef",
     Tagged = "Tagged"
 }
 
@@ -44,11 +46,12 @@ class TypeInfo {
     readonly bytesize: number;
     readonly slotcount: number;
     readonly tag: LayoutTag;
+    readonly eslotct: number; //For array entries this is the number of slots each entry takes (so don't scan more than eslotct * size slots)
 
     readonly ptrmask: string | undefined; // NULL is for leaf values or structs
     readonly vtable: FieldOffsetInfo[] | undefined;
 
-    constructor(tkey: string, tsig: IRTypeSignature, bsqtypeid: number, bytesize: number, slotcount: number, tag: LayoutTag, ptrmask: string | undefined, vtable: FieldOffsetInfo[] | undefined) {
+    constructor(tkey: string, tsig: IRTypeSignature, bsqtypeid: number, bytesize: number, slotcount: number, tag: LayoutTag, eslotct: number, ptrmask: string | undefined, vtable: FieldOffsetInfo[] | undefined) {
         this.tkey = tkey;
         this.tsig = tsig;
 
@@ -56,7 +59,8 @@ class TypeInfo {
         this.bytesize = bytesize;
         this.slotcount = slotcount;
         this.tag = tag;
-        
+        this.eslotct = eslotct;
+
         this.ptrmask = ptrmask;
         this.vtable = vtable;
     }
@@ -93,7 +97,7 @@ class TypeInfoManager {
 
     generateAllocatorNameForTypeKeyGeneral(tkey: string): string | undefined {
         const tii = this.getTypeInfo(tkey);
-        if(tii.tag !== LayoutTag.Ref) {
+        if(tii.tag !== LayoutTag.Ref && tii.tag !== LayoutTag.ArrayRef) {
             return undefined;
         }
 
@@ -132,7 +136,7 @@ class TypeInfoManager {
 
     generateAllocatorNameForTypeKeyGeneralMapEntry(tkey: string): string | undefined {
         const tii = this.getTypeInfo(tkey);
-        if(tii.tag !== LayoutTag.Ref) {
+        if(tii.tag !== LayoutTag.Ref && tii.tag !== LayoutTag.ArrayRef) {
             return undefined;
         }
 
@@ -189,7 +193,7 @@ class TypeInfoManager {
 
         assert(typeinfo.vtable?.length === 0, `TypeInfoManager::emitTypeInfoDecl - VTable emission not yet supported for type key ${tkey}`);
 
-        return `constexpr TypeInfo g_typeinfo_${tk} = { ${typeinfo.bsqtypeid}, ${typeinfo.bytesize}, ${typeinfo.slotcount}, LayoutTag::${layouttag}, ${typeinfo.ptrmask ?? "BSQ_PTR_MASK_LEAF"}, "${tk}", nullptr };`;
+        return `constexpr TypeInfo g_typeinfo_${tk} = { ${typeinfo.bsqtypeid}, ${typeinfo.bytesize}, ${typeinfo.slotcount}, LayoutTag::${layouttag}, BSQ_TYPEINFO_NO_ESLOT, ${typeinfo.ptrmask ?? "BSQ_PTR_MASK_LEAF"}, "${tk}", nullptr };`;
     }
 
     emitTypeAsParameter(tkey: string, isreftagged: boolean): string {
@@ -282,10 +286,10 @@ class TypeInfoManager {
 
             const ttid = this.typeInfoMap.size;
             if(oftinfo.tag === LayoutTag.Ref) {
-                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, 8, 1, LayoutTag.Value, "1", undefined));
+                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, 8, 1, LayoutTag.Value, 0, "1", undefined));
             }
             else {
-                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, oftinfo.bytesize, oftinfo.slotcount, oftinfo.tag, oftinfo.ptrmask, undefined));
+                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, oftinfo.bytesize, oftinfo.slotcount, oftinfo.tag, 0, oftinfo.ptrmask, undefined));
             }
             
             return this.getTypeInfo(tdecl.tkey);
@@ -298,8 +302,9 @@ class TypeInfoManager {
                 const ldatasize = Math.max(MAX_LIST_INLINE_BYTES, oftinfo.bytesize);
                 const ltotalsize = 8 + ldatasize; //8 bytes for for the tag
 
+                xxxx; //Why do we need this here?? Isn't the list type just the Tagged layout??
                 const mask = TypeInfoManager.computeTaggedMaskOfK(ltotalsize / 8);
-                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, ltotalsize, ltotalsize / 8, LayoutTag.Tagged, mask, undefined));
+                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, ltotalsize, ltotalsize / 8, LayoutTag.Tagged, 0, mask, undefined));
 
                 return this.getTypeInfo(tdecl.tkey);
             }
@@ -353,10 +358,10 @@ class TypeInfoManager {
 
             const ttid = this.typeInfoMap.size;
             if(!mustref && this.isSizeOkForValueLayout(totalbytesize)) {
-                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, totalbytesize, totalslotcount, LayoutTag.Value, ptrmask, vtable));
+                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, totalbytesize, totalslotcount, LayoutTag.Value, 0, ptrmask, vtable));
             }
             else {
-                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, totalbytesize, totalslotcount, LayoutTag.Ref, ptrmask, vtable));
+                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, totalbytesize, totalslotcount, LayoutTag.Ref, 0, ptrmask, vtable));
             }
 
             return this.getTypeInfo(tdecl.tkey);
@@ -369,11 +374,11 @@ class TypeInfoManager {
 
             const ttid = this.typeInfoMap.size;
             if(oftinfo.tag === LayoutTag.Ref) {
-                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, 16, 2, LayoutTag.Tagged, "20", undefined));
+                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, 16, 2, LayoutTag.Tagged, 0, "20", undefined));
             }
             else {
                 let spm = TypeInfoManager.computeTaggedMaskOfK(oftinfo.slotcount);
-                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, oftinfo.bytesize + 8, oftinfo.slotcount + 1, LayoutTag.Tagged, spm, undefined));
+                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, oftinfo.bytesize + 8, oftinfo.slotcount + 1, LayoutTag.Tagged, 0, spm, undefined));
             }
             
             return this.getTypeInfo(tdecl.tkey);
@@ -406,7 +411,7 @@ class TypeInfoManager {
 
             const ttid = this.typeInfoMap.size;
             let eptrmask = TypeInfoManager.computeTaggedMaskOfK(totalslotcount);
-            this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, totalbytesize, totalslotcount, LayoutTag.Tagged, eptrmask, undefined));
+            this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, totalbytesize, totalslotcount, LayoutTag.Tagged, 0, eptrmask, undefined));
 
             return this.getTypeInfo(tdecl.tkey);
         }
@@ -414,7 +419,7 @@ class TypeInfoManager {
 
     private processInfoGenerationForFormat(ttype: IRFormatTypeSignature, irasm: IRAssembly): TypeInfo {
         const ttid = this.typeInfoMap.size;
-        this.addTypeInfo(ttype.tkeystr, new TypeInfo(ttype.tkeystr, ttype, ttid, 8, 1, LayoutTag.Value, undefined, undefined));
+        this.addTypeInfo(ttype.tkeystr, new TypeInfo(ttype.tkeystr, ttype, ttid, 8, 1, LayoutTag.Value, 0, undefined, undefined));
 
         return this.getTypeInfo(ttype.tkeystr);
     }

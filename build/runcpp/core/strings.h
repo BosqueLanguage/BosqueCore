@@ -83,6 +83,7 @@ namespace ᐸRuntimeᐳ
         sizeof(CStrRootInlineContent),
         byteSizeToSlotCount(sizeof(CStrRootInlineContent)),
         LayoutTag::Value,
+        BSQ_TYPEINFO_NO_ESLOT, //since always a leaf of values we just ignore
         BSQ_PTR_MASK_LEAF,
         "CStringInline",
         nullptr
@@ -93,6 +94,7 @@ namespace ᐸRuntimeᐳ
         sizeof(CStrRootTreeContent),
         byteSizeToSlotCount(sizeof(CStrRootTreeContent)),
         LayoutTag::Tagged,
+        BSQ_TYPEINFO_NO_ESLOT,
         "20",
         "CStringTree",
         nullptr
@@ -102,6 +104,7 @@ namespace ᐸRuntimeᐳ
         WELL_KNOWN_TYPE_ID_CSTRING,
         sizeof(BoxedUnion<CStringUnion>),
         byteSizeToSlotCount(sizeof(BoxedUnion<CStringUnion>)),
+        BSQ_TYPEINFO_NO_ESLOT,
         LayoutTag::Tagged,
         "200",
         "CString",
@@ -448,6 +451,7 @@ namespace ᐸRuntimeᐳ
         sizeof(StrRootInlineContent),
         byteSizeToSlotCount(sizeof(StrRootInlineContent)),
         LayoutTag::Value,
+        BSQ_TYPEINFO_NO_ESLOT, //since always a leaf of values we just ignore
         BSQ_PTR_MASK_LEAF,
         "StringInline",
         nullptr
@@ -458,6 +462,7 @@ namespace ᐸRuntimeᐳ
         sizeof(StrRootTreeContent),
         byteSizeToSlotCount(sizeof(StrRootTreeContent)),
         LayoutTag::Tagged,
+        BSQ_TYPEINFO_NO_ESLOT,
         "20",
         "StringTree",
         nullptr
@@ -468,6 +473,7 @@ namespace ᐸRuntimeᐳ
         sizeof(BoxedUnion<StringUnion>),
         byteSizeToSlotCount(sizeof(BoxedUnion<StringUnion>)),
         LayoutTag::Tagged,
+        BSQ_TYPEINFO_NO_ESLOT,
         "20000",
         "String",
         nullptr

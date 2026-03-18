@@ -68,6 +68,7 @@ namespace ᐸRuntimeᐳ
         sizeof(ByteBufferEntry),
         byteSizeToSlotCount(sizeof(ByteBufferEntry)),
         LayoutTag::Ref,
+        BSQ_TYPEINFO_NO_ESLOT,
         BSQ_PTR_MASK_LEAF,
         "ByteBufferEntry",
         nullptr
@@ -77,7 +78,8 @@ namespace ᐸRuntimeᐳ
         WELL_KNOWN_TYPE_ID_BYTEBUFFERBLOCK,
         sizeof(ByteBufferBlock),
         byteSizeToSlotCount(sizeof(ByteBufferBlock)),
-        LayoutTag::Ref,
+        LayoutTag::ArrayRef,
+        1,
         "1111111111111111111111111111111111111111111111111111111111111111",
         "ByteBufferBlock",
         nullptr
@@ -88,6 +90,7 @@ namespace ᐸRuntimeᐳ
         sizeof(BufferTree) + sizeof(size_t),
         byteSizeToSlotCount(sizeof(BufferTree) + sizeof(size_t)),
         LayoutTag::Tagged,
+        BSQ_TYPEINFO_NO_ESLOT,
         "200",
         "ByteBuffer",
         nullptr

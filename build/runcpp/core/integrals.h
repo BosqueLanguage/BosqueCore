@@ -361,6 +361,7 @@ namespace ᐸRuntimeᐳ
         sizeof(XNat),
         byteSizeToSlotCount(sizeof(XNat)),
         LayoutTag::Value,
+        BSQ_TYPEINFO_NO_ESLOT,
         BSQ_PTR_MASK_LEAF,
         "Nat",
         nullptr
@@ -371,6 +372,7 @@ namespace ᐸRuntimeᐳ
         sizeof(XInt),
         byteSizeToSlotCount(sizeof(XInt)),
         LayoutTag::Value,
+        BSQ_TYPEINFO_NO_ESLOT,
         BSQ_PTR_MASK_LEAF,
         "Int",
         nullptr
@@ -381,6 +383,7 @@ namespace ᐸRuntimeᐳ
         sizeof(XChkNat),
         byteSizeToSlotCount(sizeof(XChkNat)),
         LayoutTag::Value,
+        BSQ_TYPEINFO_NO_ESLOT,
         BSQ_PTR_MASK_LEAF,
         "ChkNat",
         nullptr
@@ -391,6 +394,7 @@ namespace ᐸRuntimeᐳ
         sizeof(XChkInt),
         byteSizeToSlotCount(sizeof(XChkInt)),
         LayoutTag::Value,
+        BSQ_TYPEINFO_NO_ESLOT,
         BSQ_PTR_MASK_LEAF,
         "ChkInt",
         nullptr
