@@ -89,46 +89,43 @@ class TypeChecker {
         return (t.tkeystr === "Void");
     }
 
-    private resolveSizeConstraints(tdecl: TypedeclTypeDecl, rlen: number): {min: bigint, max: bigint} | undefined {
-        if(tdecl.optsizerng === undefined) {
-            return undefined;
-        }
-        else {
-            let min = 0n;
-            if(tdecl.optsizerng.min !== undefined) {
-                try {
-                    min = BigInt(tdecl.optsizerng.min.slice(0, -1)); //remove the 'n' at the end
-                }
-                catch {
-                    this.reportError(tdecl.sinfo, `Invalid size constraint min value ${tdecl.optsizerng.min}`); //TODO: should this be an error or just ignore the constraint?
-                }
-            }
+    private resolveSizeConstraints(tdecl: TypedeclTypeDecl, rlen: number): {min: bigint, max: bigint} {
+        assert(tdecl.optsizerng !== undefined, "size constraints should be defined to call resolveSizeConstraints");
 
-            let max = BigInt(rlen);
-            if(tdecl.optsizerng.max !== undefined) {
-                try {
-                    max = BigInt(tdecl.optsizerng.max.slice(0, -1)); //remove the 'n' at the end
-                }
-                catch {
-                    this.reportError(tdecl.sinfo, `Invalid size constraint max value ${tdecl.optsizerng.max}`); //TODO: should this be an error or just ignore the constraint?
-                }
+        let min = 0n;
+        if(tdecl.optsizerng.min !== undefined) {
+            try {
+                min = BigInt(tdecl.optsizerng.min.slice(0, -1)); //remove the 'n' at the end
             }
-
-            return { min: min, max: max };
+            catch {
+                //just ignore the constraint and report error at definition
+            }
         }
+
+        let max = BigInt(rlen);
+        if(tdecl.optsizerng.max !== undefined) {
+            try {
+                max = BigInt(tdecl.optsizerng.max.slice(0, -1)); //remove the 'n' at the end
+            }
+            catch {
+                //just ignore the constraint and report error at definition
+            }
+        }
+
+        return { min: min, max: max };
     }
 
     private checkTypeDeclOfStringRestrictions(sinfo: SourceInfo, tdecl: TypedeclTypeDecl, value: string): string | undefined {
         const vs = validateStringLiteral(value.slice(1, -1));
         this.checkError(sinfo, vs === null, `Invalid string literal value ${value}`);
 
+        if(vs !== null && tdecl.optsizerng !== undefined) {
+            const sbounds = this.resolveSizeConstraints(tdecl, vs.length);
+            this.checkError(sinfo, BigInt(vs.length) < sbounds.min || BigInt(vs.length) > sbounds.max, `String literal length ${vs.length} out of bounds`);
+        }
+
         if(vs !== null && tdecl.optofexp !== undefined) {
             const vexp = this.relations.assembly.resolveValidatorLiteral(tdecl.optofexp);
-
-            const sbounds = this.resolveSizeConstraints(tdecl, vs.length);
-            if(sbounds !== undefined) {
-                this.checkError(sinfo, BigInt(vs.length) < sbounds.min || BigInt(vs.length) > sbounds.max, `String literal length ${vs.length} out of bounds`);
-            }
 
             if(vexp === undefined || vexp.tag !== ExpressionTag.LiteralUnicodeRegexExpression) {
                 this.reportError(sinfo, `Unable to resolve regex validator`);
@@ -150,13 +147,13 @@ class TypeChecker {
         const vs = validateCStringLiteral(value.slice(1, -1));
         this.checkError(sinfo, vs === null, `Invalid cstring literal value ${value}`);
 
+        if(vs !== null && tdecl.optsizerng !== undefined) {
+            const sbounds = this.resolveSizeConstraints(tdecl, vs.length);
+            this.checkError(sinfo, BigInt(vs.length) < sbounds.min || BigInt(vs.length) > sbounds.max, `CString literal length ${vs.length} out of bounds`);
+        }
+
         if(vs !== null && tdecl.optofexp !== undefined) {
             const vexp = this.relations.assembly.resolveValidatorLiteral(tdecl.optofexp);
-
-            const sbounds = this.resolveSizeConstraints(tdecl, vs.length);
-            if(sbounds !== undefined) {
-                this.checkError(sinfo, BigInt(vs.length) < sbounds.min || BigInt(vs.length) > sbounds.max, `CString literal length ${vs.length} out of bounds`);
-            }
 
             if(vexp === undefined || vexp.tag !== ExpressionTag.LiteralCRegexExpression) {
                 this.reportError(sinfo, `Unable to resolve cregex validator`);
@@ -5105,6 +5102,10 @@ class TypeChecker {
         }
 
         if(tdecl.optsizerng !== undefined) {
+            if(tdecl.optsizerng.min === undefined && tdecl.optsizerng.max === undefined) {
+                this.reportError(tdecl.sinfo, `Invalid size range max and min -- at least one must be defined`);
+            }
+
             if(tdecl.optsizerng.min !== undefined) {
                 try {
                     const minval = BigInt(tdecl.optsizerng.min.slice(0, -1));
@@ -5122,6 +5123,17 @@ class TypeChecker {
                 }
                 catch {
                     this.reportError(tdecl.sinfo, `Invalid size range max`);
+                }
+            }
+
+            if(tdecl.optsizerng.min !== undefined && tdecl.optsizerng.max !== undefined) {
+                try {
+                    const minval = BigInt(tdecl.optsizerng.min.slice(0, -1));
+                    const maxval = BigInt(tdecl.optsizerng.max.slice(0, -1));
+                    this.checkError(tdecl.sinfo, minval > maxval, `Size range min cannot be larger than size range max`);
+                }
+                catch {
+                    //ignore -- already reported as invalid
                 }
             }
         }
