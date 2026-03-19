@@ -219,10 +219,10 @@ class CPPEmitter {
             return `${RUNTIME_NAMESPACE}::XDeltaLogicalTime{'${dltexp.sign}', ${dltexp.ticks}}`;
         }
         else if(ttag === IRExpressionTag.IRLiteralUnicodeRegexExpression) {
-            return `Regex{${RUNTIME_NAMESPACE}::g_uregexs[${(exp as IRLiteralUnicodeRegexExpression).regexID}]}`;
+            return `Regex{${(exp as IRLiteralUnicodeRegexExpression).regexID}}`;
         }
         else if(ttag === IRExpressionTag.IRLiteralCRegexExpression) {
-            return `CRegex{${RUNTIME_NAMESPACE}::g_cregexs[${(exp as IRLiteralCRegexExpression).regexID}]}`;
+            return `CRegex{${(exp as IRLiteralCRegexExpression).regexID}}`;
         }
         else if(ttag === IRExpressionTag.IRLiteralByteExpression) {
             const b = (exp as IRLiteralByteExpression).value;
@@ -1371,7 +1371,7 @@ class CPPEmitter {
         const ddefs = tfcstr.map((def) => {
             const fmts = def.fmts.map((ff) => {
                 if(ff instanceof IRFormatStringTextComponent) {
-                    return `std::make_pair(0, ${this.escapeLiteralCString(ff.bytes)})`;
+                    return `std::make_pair(0, ${this.escapeLiteralCString(ff.bytes)[0]})`;
                 }
                 else {
                     const ffarg = ff as IRFormatStringArgComponent;
