@@ -15,7 +15,6 @@ describe ("CPPEmit -- type decl of number", () => {
     });
 });
 
-
 describe ("CPPEmit -- type decl of number with invariants", () => {
     it("should emit positional", function () {
         checkTestEmitMainFunction('type Foo = Int & { invariant $value > 3i; } public function main(): Foo { let e = Foo{5i}; return e; }', 'MainᕒFoo Mainᕒmain() { ᐸRuntimeᐳ::bsq_invariant((bool)(MainᕒFooᐤinvariant_0(5_i)), "test.bsq", 2, nullptr, "Failed Invariant"); MainᕒFoo e = MainᕒFoo{5_i}; return e; }');
