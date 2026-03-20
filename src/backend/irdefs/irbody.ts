@@ -86,6 +86,11 @@ enum IRExpressionTag {
     //
     //TODO: lots more expression types here
     //
+    IRAccessFieldSpecialExpression = "IRAccessFieldSpecialExpression",
+    IRAccessFieldDirectExpression = "IRAccessFieldDirectExpression",
+    IRAccessFieldVirtualFixedExpression = "IRAccessFieldVirtualFixedExpression",
+    IRAccessFieldVirtualExpression = "IRAccessFieldVirtualExpression",
+
 
     IRInvokeSimpleExpression = "IRInvokeSimpleExpression",
     IRInvokeSimpleWithImplicitsExpression = "IRInvokeSimpleWithImplicitsExpression",
@@ -224,6 +229,20 @@ abstract class IRImmediateExpression extends IRSimpleExpression {
 abstract class IRLiteralExpression extends IRImmediateExpression {
     constructor(tag: IRExpressionTag) {
         super(tag);
+    }
+}
+
+/* This class represents expressions that access field values */
+abstract class IRAccessFieldExpression extends IRSimpleExpression {
+    readonly eexp: IRSimpleExpression;
+    readonly intype: IRNominalTypeSignature;
+    readonly fieldname: string;
+
+    constructor(tag: IRExpressionTag, eexp: IRSimpleExpression, intype: IRNominalTypeSignature, fieldname: string) {
+        super(tag);
+        this.eexp = eexp;
+        this.intype = intype;
+        this.fieldname = fieldname;
     }
 }
 
@@ -1040,6 +1059,30 @@ class IRConstructorListSingletonsExpression extends IRConstructExpression {
 //
 //TODO: lots more expression types here
 //
+
+class IRAccessFieldSpecialExpression extends IRAccessFieldExpression {
+    constructor(eexp: IRSimpleExpression, intype: IRNominalTypeSignature, fieldname: string) {
+        super(IRExpressionTag.IRAccessFieldSpecialExpression, eexp, intype, fieldname);
+    }
+}
+
+class IRAccessFieldDirectExpression extends IRAccessFieldExpression {
+    constructor(eexp: IRSimpleExpression, intype: IRNominalTypeSignature, fieldname: string) {
+        super(IRExpressionTag.IRAccessFieldDirectExpression, eexp, intype, fieldname);
+    }
+}
+
+class IRAccessFieldVirtualFixedExpression extends IRAccessFieldExpression {
+    constructor(eexp: IRSimpleExpression, intype: IRNominalTypeSignature, fieldname: string) {
+        super(IRExpressionTag.IRAccessFieldVirtualFixedExpression, eexp, intype, fieldname);
+    }
+}
+ 
+class IRAccessFieldVirtualExpression extends IRAccessFieldExpression {
+    constructor(eexp: IRSimpleExpression, intype: IRNominalTypeSignature, fieldname: string) {
+        super(IRExpressionTag.IRAccessFieldVirtualExpression, eexp, intype, fieldname);
+    }
+}
 
 /** Simple invocations functions/methods/lambdas that do not have any special parameters **/
 class IRInvokeSimpleExpression extends IRInvokeDirectExpression {
@@ -2198,6 +2241,8 @@ export {
 
     IRConstructorStandardEntityExpression,
     IRConstructorListEmptyExpression, IRConstructorListSingletonsExpression,
+
+    IRAccessFieldExpression, IRAccessFieldSpecialExpression, IRAccessFieldDirectExpression, IRAccessFieldVirtualFixedExpression, IRAccessFieldVirtualExpression,
 
     IRInvokeExpression, IRInvokeDirectExpression, IRInvokeImplicitsExpression, IRInvokeSimpleExpression, IRInvokeSimpleWithImplicitsExpression, IRInvokeVirtualSimpleExpression, IRInvokeVirtualWithImplicitsExpression,
 
