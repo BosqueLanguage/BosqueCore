@@ -592,7 +592,7 @@ class Monomorphizer {
     }
 
     private instantiatePostfixAccessFromIndex(exp: PostfixAccessFromIndex) {
-        assert(false, "Not Implemented -- instantiatePostfixAccessFromIndex");
+        //no need to do anything extra here
     }
 
     private instantiatePostfixIsTest(exp: PostfixIsTest) {

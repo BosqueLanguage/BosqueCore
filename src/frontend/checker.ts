@@ -2554,6 +2554,8 @@ class TypeChecker {
         else {
             exp.declaredInType = finfo.typeinfo.tsig;
             exp.fieldDecl = finfo.member;
+
+            exp.isdirect = this.relations.isDirectNominalType(rcvrtype as NominalTypeSignature);
         }
 
         return exp.setType(finfo.member.declaredType.remapTemplateBindings(finfo.typeinfo.mapping));

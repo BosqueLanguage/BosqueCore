@@ -398,6 +398,14 @@ class TypeCheckerRelations {
         return t.decl.attributes.find((attr) => attr.name === "__typedeclable") !== undefined;
     }
 
+    isDirectNominalType(t: NominalTypeSignature): boolean {
+        return t.decl instanceof AbstractEntityTypeDecl;
+    }
+
+    isMultiOptionNominalType(t: NominalTypeSignature): boolean {
+        return (t.decl instanceof AbstractConceptTypeDecl);
+    }
+
     //Check if this type is a valid event type
     isEventDataType(t: TypeSignature): boolean {
         assert(!(t instanceof ErrorTypeSignature), "Checking event on errors");

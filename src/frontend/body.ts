@@ -1248,6 +1248,7 @@ class PostfixAccessFromName extends PostfixOperation {
     
     declaredInType: TypeSignature | undefined = undefined;
     fieldDecl: MemberFieldDecl | undefined = undefined;
+    isdirect: boolean = false;
 
     constructor(sinfo: SourceInfo, name: string) {
         super(sinfo, PostfixOpTag.PostfixAccessFromName);
