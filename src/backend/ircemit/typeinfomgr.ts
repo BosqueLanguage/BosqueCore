@@ -64,6 +64,10 @@ class TypeInfo {
         this.ptrmask = ptrmask;
         this.vtable = vtable;
     }
+
+    getAccessor(): string {
+        return this.tag === LayoutTag.Ref ? "->" : ".";
+    }
 }
 
 class TypeInfoManager {

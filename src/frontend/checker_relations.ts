@@ -398,12 +398,14 @@ class TypeCheckerRelations {
         return t.decl.attributes.find((attr) => attr.name === "__typedeclable") !== undefined;
     }
 
-    isDirectNominalType(t: NominalTypeSignature): boolean {
-        return t.decl instanceof AbstractEntityTypeDecl;
+    isDirectNominalType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
+        const tres = this.resolveTemplateAsNeededForNameLookup(t, tconstrain);
+        return tres !== undefined && (tres instanceof NominalTypeSignature) && tres.decl instanceof AbstractEntityTypeDecl;
     }
 
-    isMultiOptionNominalType(t: NominalTypeSignature): boolean {
-        return (t.decl instanceof AbstractConceptTypeDecl);
+    isMultiOptionNominalType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
+        const tres = this.resolveTemplateAsNeededForNameLookup(t, tconstrain);
+        return tres !== undefined && (tres instanceof NominalTypeSignature) && (tres.decl instanceof AbstractConceptTypeDecl);
     }
 
     //Check if this type is a valid event type
