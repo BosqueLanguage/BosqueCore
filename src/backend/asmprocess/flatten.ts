@@ -876,15 +876,16 @@ class ASMToIRConverter {
         const indecl = this.tproc(exp.declaredInType as TypeSignature) as NominalTypeSignature;
 
         const irroottype = this.processTypeSignature(roottype) as IRNominalTypeSignature;
+        const ftype = this.processTypeSignature(fdecl.declaredType);
         if(fdecl.isSpecialAccess) {
-            return new IRAccessFieldSpecialExpression(irroottype, rootexp, irroottype, fdecl.name);
+            return new IRAccessFieldSpecialExpression(irroottype, rootexp, irroottype, fdecl.name, ftype);
         }
         else {
             if(exp.isdirect) {
-                return new IRAccessFieldDirectExpression(irroottype, rootexp, this.processTypeSignature(indecl), fdecl.name);
+                return new IRAccessFieldDirectExpression(irroottype, rootexp, this.processTypeSignature(indecl), fdecl.name, ftype);
             }
             else {
-                return new IRAccessFieldVirtualExpression(irroottype, rootexp, this.processTypeSignature(indecl), fdecl.name);
+                return new IRAccessFieldVirtualExpression(irroottype, rootexp, this.processTypeSignature(indecl), fdecl.name, ftype);
             }
         }
     }

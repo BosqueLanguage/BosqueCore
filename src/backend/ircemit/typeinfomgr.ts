@@ -12,6 +12,19 @@ function LIST_T_CAPACITY(elem_size: number): number {
     return Math.max(Math.floor(MAX_LIST_INLINE_BYTES / elem_size), 1);
 }
 
+class VirtualInvokeInfo {
+    readonly ikey: string;
+
+    readonly enclosingtype: IRTypeSignature;
+    readonly fname: string;
+
+    constructor(ikey: string, enclosingtype: IRTypeSignature, fname: string) {
+        this.ikey = ikey;
+        this.enclosingtype = enclosingtype;
+        this.fname = fname;
+    }
+}
+
 class FieldOffsetInfo {
     readonly fkey: string;
 
@@ -49,9 +62,11 @@ class TypeInfo {
     readonly eslotct: number; //For array entries this is the number of slots each entry takes (so don't scan more than eslotct * size slots)
 
     readonly ptrmask: string | undefined; // NULL is for leaf values or structs
-    readonly vtable: FieldOffsetInfo[] | undefined;
 
-    constructor(tkey: string, tsig: IRTypeSignature, bsqtypeid: number, bytesize: number, slotcount: number, tag: LayoutTag, eslotct: number, ptrmask: string | undefined, vtable: FieldOffsetInfo[] | undefined) {
+    readonly itable: VirtualInvokeInfo[] = [];
+    readonly ftable: FieldOffsetInfo[]  = [];
+
+    constructor(tkey: string, tsig: IRTypeSignature, bsqtypeid: number, bytesize: number, slotcount: number, tag: LayoutTag, eslotct: number, ptrmask: string | undefined) {
         this.tkey = tkey;
         this.tsig = tsig;
 
@@ -62,7 +77,6 @@ class TypeInfo {
         this.eslotct = eslotct;
 
         this.ptrmask = ptrmask;
-        this.vtable = vtable;
     }
 
     getAccessor(): string {
@@ -195,7 +209,7 @@ class TypeInfoManager {
             layouttag = "Tagged";
         }
 
-        assert(typeinfo.vtable?.length === 0, `TypeInfoManager::emitTypeInfoDecl - VTable emission not yet supported for type key ${tkey}`);
+        assert(typeinfo.itable.length === 0, `TypeInfoManager::emitTypeInfoDecl - ITable emission not yet supported for type key ${tkey}`);
 
         return `constexpr TypeInfo g_typeinfo_${tk} = { ${typeinfo.bsqtypeid}, ${typeinfo.bytesize}, ${typeinfo.slotcount}, LayoutTag::${layouttag}, BSQ_TYPEINFO_NO_ESLOT, ${typeinfo.ptrmask ?? "BSQ_PTR_MASK_LEAF"}, "${tk}", nullptr };`;
     }
@@ -290,10 +304,10 @@ class TypeInfoManager {
 
             const ttid = this.typeInfoMap.size;
             if(oftinfo.tag === LayoutTag.Ref) {
-                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, 8, 1, LayoutTag.Value, 0, "1", undefined));
+                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, 8, 1, LayoutTag.Value, 0, "1"));
             }
             else {
-                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, oftinfo.bytesize, oftinfo.slotcount, oftinfo.tag, 0, oftinfo.ptrmask, undefined));
+                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, oftinfo.bytesize, oftinfo.slotcount, oftinfo.tag, 0, oftinfo.ptrmask));
             }
             
             return this.getTypeInfo(tdecl.tkey);
@@ -307,7 +321,7 @@ class TypeInfoManager {
                 const ltotalsize = 8 + ldatasize; //8 for the count field
 
                 const mask = TypeInfoManager.computeTaggedMaskOfK(ltotalsize / 8);
-                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, ltotalsize + 8, (ltotalsize / 8) + 1, LayoutTag.Tagged, 0, mask, undefined));
+                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, ltotalsize + 8, (ltotalsize / 8) + 1, LayoutTag.Tagged, 0, mask));
 
                 return this.getTypeInfo(tdecl.tkey);
             }
@@ -322,7 +336,6 @@ class TypeInfoManager {
             let totalbytesize = 0;
             let totalslotcount = 0;
             let eptrmask = "";
-            const vtable: FieldOffsetInfo[] | undefined = undefined;
 
             const mustref = this.isRecursiveTypeKey(tdecl.tkey, irasm);
             for(const fdecl of etdecl.saturatedBFieldInfo) {
@@ -361,13 +374,26 @@ class TypeInfoManager {
 
             const ttid = this.typeInfoMap.size;
             if(!mustref && this.isSizeOkForValueLayout(totalbytesize)) {
-                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, totalbytesize, totalslotcount, LayoutTag.Value, 0, ptrmask, vtable));
+                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, totalbytesize, totalslotcount, LayoutTag.Value, 0, ptrmask));
             }
             else {
-                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, totalbytesize, totalslotcount, LayoutTag.Ref, 0, ptrmask, vtable));
+                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, totalbytesize, totalslotcount, LayoutTag.Ref, 0, ptrmask));
             }
 
             return this.getTypeInfo(tdecl.tkey);
+        }
+    }
+
+    private processFieldInfoGenerationForEntity(tdecl: IRAbstractEntityTypeDecl, irasm: IRAssembly): void {
+        const typeinfo = this.getTypeInfo(tdecl.tkey);
+
+        let slpos = 0;
+        for(let i = 0; i < tdecl.saturatedBFieldInfo.length; i++) {
+            const fdecl = tdecl.saturatedBFieldInfo[i];
+            typeinfo.ftable.push(new FieldOffsetInfo(fdecl.fkey, new IRNominalTypeSignature(fdecl.containingtype.tkeystr), fdecl.fname, fdecl.ftype, slpos));
+
+            const ftinfo = this.getTypeInfo(fdecl.ftype.tkeystr);
+            slpos += ftinfo.slotcount;
         }
     }
 
@@ -377,11 +403,11 @@ class TypeInfoManager {
 
             const ttid = this.typeInfoMap.size;
             if(oftinfo.tag === LayoutTag.Ref) {
-                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, 16, 2, LayoutTag.Tagged, 0, "20", undefined));
+                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, 16, 2, LayoutTag.Tagged, 0, "20"));
             }
             else {
                 let spm = TypeInfoManager.computeTaggedMaskOfK(oftinfo.slotcount);
-                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, oftinfo.bytesize + 8, oftinfo.slotcount + 1, LayoutTag.Tagged, 0, spm, undefined));
+                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, oftinfo.bytesize + 8, oftinfo.slotcount + 1, LayoutTag.Tagged, 0, spm));
             }
             
             return this.getTypeInfo(tdecl.tkey);
@@ -414,7 +440,7 @@ class TypeInfoManager {
 
             const ttid = this.typeInfoMap.size;
             let eptrmask = TypeInfoManager.computeTaggedMaskOfK(totalslotcount);
-            this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, totalbytesize + 8, totalslotcount + 1, LayoutTag.Tagged, 0, eptrmask, undefined));
+            this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, totalbytesize + 8, totalslotcount + 1, LayoutTag.Tagged, 0, eptrmask));
 
             return this.getTypeInfo(tdecl.tkey);
         }
@@ -422,7 +448,7 @@ class TypeInfoManager {
 
     private processInfoGenerationForFormat(ttype: IRFormatTypeSignature, irasm: IRAssembly): TypeInfo {
         const ttid = this.typeInfoMap.size;
-        this.addTypeInfo(ttype.tkeystr, new TypeInfo(ttype.tkeystr, ttype, ttid, 8, 1, LayoutTag.Value, 0, undefined, undefined));
+        this.addTypeInfo(ttype.tkeystr, new TypeInfo(ttype.tkeystr, ttype, ttid, 8, 1, LayoutTag.Value, 0, undefined));
 
         return this.getTypeInfo(ttype.tkeystr);
     }
@@ -466,38 +492,38 @@ class TypeInfoManager {
         const timgr = new TypeInfoManager();
 
         //setup the well-known primitive types
-        timgr.addTypeInfo("None", new TypeInfo("None", new IRNominalTypeSignature("None"), 0, 8, 1, LayoutTag.Value, 0, undefined, undefined));
-        timgr.addTypeInfo("Bool", new TypeInfo("Bool", new IRNominalTypeSignature("Bool"), 1, 8, 1, LayoutTag.Value, 0, undefined, undefined));
-        timgr.addTypeInfo("Int", new TypeInfo("Int", new IRNominalTypeSignature("Int"), 2, 8, 1, LayoutTag.Value, 0, undefined, undefined));
-        timgr.addTypeInfo("Nat", new TypeInfo("Nat", new IRNominalTypeSignature("Nat"), 3, 8, 1, LayoutTag.Value, 0, undefined, undefined));
-        timgr.addTypeInfo("ChkInt", new TypeInfo("ChkInt", new IRNominalTypeSignature("ChkInt"), 4, 16, 2, LayoutTag.Value, 0, undefined, undefined));
-        timgr.addTypeInfo("ChkNat", new TypeInfo("ChkNat", new IRNominalTypeSignature("ChkNat"), 5, 16, 2, LayoutTag.Value, 0, undefined, undefined));
+        timgr.addTypeInfo("None", new TypeInfo("None", new IRNominalTypeSignature("None"), 0, 8, 1, LayoutTag.Value, 0, undefined));
+        timgr.addTypeInfo("Bool", new TypeInfo("Bool", new IRNominalTypeSignature("Bool"), 1, 8, 1, LayoutTag.Value, 0, undefined));
+        timgr.addTypeInfo("Int", new TypeInfo("Int", new IRNominalTypeSignature("Int"), 2, 8, 1, LayoutTag.Value, 0, undefined));
+        timgr.addTypeInfo("Nat", new TypeInfo("Nat", new IRNominalTypeSignature("Nat"), 3, 8, 1, LayoutTag.Value, 0, undefined));
+        timgr.addTypeInfo("ChkInt", new TypeInfo("ChkInt", new IRNominalTypeSignature("ChkInt"), 4, 16, 2, LayoutTag.Value, 0, undefined));
+        timgr.addTypeInfo("ChkNat", new TypeInfo("ChkNat", new IRNominalTypeSignature("ChkNat"), 5, 16, 2, LayoutTag.Value, 0, undefined));
 
-        timgr.addTypeInfo("Float", new TypeInfo("Float", new IRNominalTypeSignature("Float"), 6, 8, 1, LayoutTag.Value, 0, undefined, undefined));
+        timgr.addTypeInfo("Float", new TypeInfo("Float", new IRNominalTypeSignature("Float"), 6, 8, 1, LayoutTag.Value, 0, undefined));
         
-        timgr.addTypeInfo("PosRBTreeLeaf_CString", new TypeInfo("PosRBTreeLeaf_CString", new IRNominalTypeSignature("PosRBTreeLeaf_CString"), 7, 40, 5, LayoutTag.ArrayRef, 1, undefined, undefined));
-        timgr.addTypeInfo("PosRBTreeNode_CString", new TypeInfo("PosRBTreeNode_CString", new IRNominalTypeSignature("PosRBTreeNode_CString"), 8, 48, 6, LayoutTag.Ref, 0, undefined, undefined));
-        timgr.addTypeInfo("PosRBTree_CString", new TypeInfo("PosRBTree_CString", new IRNominalTypeSignature("PosRBTree_CString"), 9, 16, 2, LayoutTag.Tagged, 0, undefined, undefined));
-        timgr.addTypeInfo("CStringInline", new TypeInfo("CStringInline", new IRNominalTypeSignature("CStringInline"), 10, 16, 2, LayoutTag.Value, 0, undefined, undefined));
-        timgr.addTypeInfo("CStringTree", new TypeInfo("CStringTree", new IRNominalTypeSignature("CStringTree"), 11, 16, 2, LayoutTag.Tagged, 0, undefined, undefined));
-        timgr.addTypeInfo("CString", new TypeInfo("CString", new IRNominalTypeSignature("CString"), 12, 24, 3, LayoutTag.Tagged, 0, undefined, undefined));
+        timgr.addTypeInfo("PosRBTreeLeaf_CString", new TypeInfo("PosRBTreeLeaf_CString", new IRNominalTypeSignature("PosRBTreeLeaf_CString"), 7, 40, 5, LayoutTag.ArrayRef, 1, undefined));
+        timgr.addTypeInfo("PosRBTreeNode_CString", new TypeInfo("PosRBTreeNode_CString", new IRNominalTypeSignature("PosRBTreeNode_CString"), 8, 48, 6, LayoutTag.Ref, 0, undefined));
+        timgr.addTypeInfo("PosRBTree_CString", new TypeInfo("PosRBTree_CString", new IRNominalTypeSignature("PosRBTree_CString"), 9, 16, 2, LayoutTag.Tagged, 0, undefined));
+        timgr.addTypeInfo("CStringInline", new TypeInfo("CStringInline", new IRNominalTypeSignature("CStringInline"), 10, 16, 2, LayoutTag.Value, 0, undefined));
+        timgr.addTypeInfo("CStringTree", new TypeInfo("CStringTree", new IRNominalTypeSignature("CStringTree"), 11, 16, 2, LayoutTag.Tagged, 0, undefined));
+        timgr.addTypeInfo("CString", new TypeInfo("CString", new IRNominalTypeSignature("CString"), 12, 24, 3, LayoutTag.Tagged, 0, undefined));
 
-        timgr.addTypeInfo("PosRBTreeLeaf_String", new TypeInfo("PosRBTreeLeaf_String", new IRNominalTypeSignature("PosRBTreeLeaf_String"), 13, 40, 5, LayoutTag.ArrayRef, 1, undefined, undefined));
-        timgr.addTypeInfo("PosRBTreeNode_String", new TypeInfo("PosRBTreeNode_String", new IRNominalTypeSignature("PosRBTreeNode_String"), 14, 48, 6, LayoutTag.Ref, 0, "002020", undefined));
-        timgr.addTypeInfo("PosRBTree_String", new TypeInfo("PosRBTree_String", new IRNominalTypeSignature("PosRBTree_String"), 15, 16, 2, LayoutTag.Tagged, 0, "20", undefined));
-        timgr.addTypeInfo("StringInline", new TypeInfo("StringInline", new IRNominalTypeSignature("StringInline"), 16, 32, 4, LayoutTag.Value, 0, undefined, undefined));
-        timgr.addTypeInfo("StringTree", new TypeInfo("StringTree", new IRNominalTypeSignature("StringTree"), 17, 16, 2, LayoutTag.Tagged, 0, "20", undefined));
-        timgr.addTypeInfo("String", new TypeInfo("String", new IRNominalTypeSignature("String"), 18, 40, 5, LayoutTag.Tagged, 0, "20000", undefined));
+        timgr.addTypeInfo("PosRBTreeLeaf_String", new TypeInfo("PosRBTreeLeaf_String", new IRNominalTypeSignature("PosRBTreeLeaf_String"), 13, 40, 5, LayoutTag.ArrayRef, 1, undefined));
+        timgr.addTypeInfo("PosRBTreeNode_String", new TypeInfo("PosRBTreeNode_String", new IRNominalTypeSignature("PosRBTreeNode_String"), 14, 48, 6, LayoutTag.Ref, 0, "002020"));
+        timgr.addTypeInfo("PosRBTree_String", new TypeInfo("PosRBTree_String", new IRNominalTypeSignature("PosRBTree_String"), 15, 16, 2, LayoutTag.Tagged, 0, "20"));
+        timgr.addTypeInfo("StringInline", new TypeInfo("StringInline", new IRNominalTypeSignature("StringInline"), 16, 32, 4, LayoutTag.Value, 0, undefined));
+        timgr.addTypeInfo("StringTree", new TypeInfo("StringTree", new IRNominalTypeSignature("StringTree"), 17, 16, 2, LayoutTag.Tagged, 0, "20"));
+        timgr.addTypeInfo("String", new TypeInfo("String", new IRNominalTypeSignature("String"), 18, 40, 5, LayoutTag.Tagged, 0, "20000"));
 
-        timgr.addTypeInfo("ByteBufferEntry", new TypeInfo("ByteBufferEntry", new IRNominalTypeSignature("ByteBufferEntry"), 19, 512, 64, LayoutTag.Ref, 0, undefined, undefined));
-        timgr.addTypeInfo("ByteBufferBlock", new TypeInfo("ByteBufferBlock", new IRNominalTypeSignature("ByteBufferBlock"), 20, 512, 64, LayoutTag.ArrayRef, 1, "1111111111111111111111111111111111111111111111111111111111111111", undefined));
-        timgr.addTypeInfo("ByteBuffer", new TypeInfo("ByteBuffer", new IRNominalTypeSignature("ByteBuffer"), 21, 24, 3, LayoutTag.Value, 0, "200", undefined));
+        timgr.addTypeInfo("ByteBufferEntry", new TypeInfo("ByteBufferEntry", new IRNominalTypeSignature("ByteBufferEntry"), 19, 512, 64, LayoutTag.Ref, 0, undefined));
+        timgr.addTypeInfo("ByteBufferBlock", new TypeInfo("ByteBufferBlock", new IRNominalTypeSignature("ByteBufferBlock"), 20, 512, 64, LayoutTag.ArrayRef, 1, "1111111111111111111111111111111111111111111111111111111111111111"));
+        timgr.addTypeInfo("ByteBuffer", new TypeInfo("ByteBuffer", new IRNominalTypeSignature("ByteBuffer"), 21, 24, 3, LayoutTag.Value, 0, "200"));
 
-        timgr.addTypeInfo("UUIDV4", new TypeInfo("UUIDV4", new IRNominalTypeSignature("UUIDV4"), 22, 16, 2, LayoutTag.Value, 0, undefined, undefined));
-        timgr.addTypeInfo("UUIDV7", new TypeInfo("UUIDV7", new IRNominalTypeSignature("UUIDV7"), 23, 16, 2, LayoutTag.Value, 0, undefined, undefined));
+        timgr.addTypeInfo("UUIDV4", new TypeInfo("UUIDV4", new IRNominalTypeSignature("UUIDV4"), 22, 16, 2, LayoutTag.Value, 0, undefined));
+        timgr.addTypeInfo("UUIDV7", new TypeInfo("UUIDV7", new IRNominalTypeSignature("UUIDV7"), 23, 16, 2, LayoutTag.Value, 0, undefined));
 
-        timgr.addTypeInfo("CRegex", new TypeInfo("CRegex", new IRNominalTypeSignature("CRegex"), 24, 8, 1, LayoutTag.Value, 0, undefined, undefined));
-        timgr.addTypeInfo("Regex", new TypeInfo("Regex", new IRNominalTypeSignature("Regex"), 25, 8, 1, LayoutTag.Value, 0, undefined, undefined));
+        timgr.addTypeInfo("CRegex", new TypeInfo("CRegex", new IRNominalTypeSignature("CRegex"), 24, 8, 1, LayoutTag.Value, 0, undefined));
+        timgr.addTypeInfo("Regex", new TypeInfo("Regex", new IRNominalTypeSignature("Regex"), 25, 8, 1, LayoutTag.Value, 0, undefined));
 
         //TODO: more primitive types
 
@@ -506,7 +532,7 @@ class TypeInfoManager {
             const etdecl = irasm.enums[i];
             const etkey = TransformCPPNameManager.convertTypeKey(etdecl.tkey);
             const etid = timgr.typeInfoMap.size;
-            const enumtd = new TypeInfo(etkey, new IRNominalTypeSignature(etkey), etid, 8, 1, LayoutTag.Value, 0, undefined, undefined);
+            const enumtd = new TypeInfo(etkey, new IRNominalTypeSignature(etkey), etid, 8, 1, LayoutTag.Value, 0, undefined);
 
             timgr.addTypeInfo(etdecl.tkey, enumtd);
         }
@@ -517,7 +543,7 @@ class TypeInfoManager {
             const ttid = timgr.typeInfoMap.size;
 
             const utypeinfo = timgr.getTypeInfo(TransformCPPNameManager.convertTypeKey(tdecl.valuetype.tkeystr));
-            const typedtd = new TypeInfo(ttkey, new IRNominalTypeSignature(ttkey), ttid, utypeinfo.bytesize, utypeinfo.slotcount, utypeinfo.tag, 0, utypeinfo.ptrmask, undefined);
+            const typedtd = new TypeInfo(ttkey, new IRNominalTypeSignature(ttkey), ttid, utypeinfo.bytesize, utypeinfo.slotcount, utypeinfo.tag, 0, utypeinfo.ptrmask);
             
             timgr.addTypeInfo(tdecl.tkey, typedtd);
         }
@@ -527,7 +553,7 @@ class TypeInfoManager {
             const tdecl = irasm.cstringoftypedecls[i];
             const ttkey = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
             const ttid = timgr.typeInfoMap.size;
-            const typedtd = new TypeInfo(ttkey, new IRNominalTypeSignature(ttkey), ttid, cstringtypeinfo.bytesize, cstringtypeinfo.slotcount, cstringtypeinfo.tag, 0, cstringtypeinfo.ptrmask, undefined);
+            const typedtd = new TypeInfo(ttkey, new IRNominalTypeSignature(ttkey), ttid, cstringtypeinfo.bytesize, cstringtypeinfo.slotcount, cstringtypeinfo.tag, 0, cstringtypeinfo.ptrmask);
             
             timgr.addTypeInfo(tdecl.tkey, typedtd);
         }
@@ -537,7 +563,7 @@ class TypeInfoManager {
             const tdecl = irasm.stringoftypedecls[i];
             const ttkey = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
             const ttid = timgr.typeInfoMap.size;
-            const typedtd = new TypeInfo(ttkey, new IRNominalTypeSignature(ttkey), ttid, stringtypeinfo.bytesize, stringtypeinfo.slotcount, stringtypeinfo.tag, 0, stringtypeinfo.ptrmask, undefined);
+            const typedtd = new TypeInfo(ttkey, new IRNominalTypeSignature(ttkey), ttid, stringtypeinfo.bytesize, stringtypeinfo.slotcount, stringtypeinfo.tag, 0, stringtypeinfo.ptrmask);
             
             timgr.addTypeInfo(tdecl.tkey, typedtd);
         }
@@ -558,13 +584,16 @@ class TypeInfoManager {
         irasm.formats.forEach((ttype) => { if(!timgr.hasTypeInfo(ttype.tkeystr)) { timgr.processInfoGenerationForType(ttype, irasm); } });
         irasm.lpacksigs.forEach((ttype) => { if(!timgr.hasTypeInfo(ttype.tkeystr)) { timgr.processInfoGenerationForType(ttype, irasm); } });
 
+        irasm.entities.forEach((tdecl) => { timgr.processFieldInfoGenerationForEntity(tdecl, irasm); });
+        irasm.datamembers.forEach((tdecl) => { timgr.processFieldInfoGenerationForEntity(tdecl, irasm); });
+
         return timgr;
     }
 }
 
 export {
     MAX_LIST_INLINE_BYTES, LIST_T_CAPACITY,
-    FieldOffsetInfo, 
+    VirtualInvokeInfo, FieldOffsetInfo, 
     LayoutTag, TypeInfo,
     TypeInfoManager
 };

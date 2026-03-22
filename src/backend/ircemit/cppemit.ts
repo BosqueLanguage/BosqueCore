@@ -560,7 +560,32 @@ class CPPEmitter {
                 }
                 else {
                     const allsubs = this.getAllConcreteSubtypeOptionsForNominalType(afse.eexptype as IRNominalTypeSignature);
-                    xxxx;
+                    const fieldpfxs = allsubs.map((tt) => {
+                        const fidx = tt.saturatedBFieldInfo.findIndex((bf) => bf.fname === afse.fieldname);
+                        return tt.saturatedBFieldInfo.slice(0, fidx + 1);
+                    });
+
+                    const ffp = fieldpfxs[0];
+                    const safepfxs = fieldpfxs.every((fp) => {
+                        if(fp.length !== ffp.length) {
+                            return false;
+                        }
+                        for(let i = 0; i < fp.length; i++) {
+                            if(fp[i].fkey !== ffp[i].fkey) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    });
+
+                    if(safepfxs) {
+                        const rtype = this.typeInfoManager.emitTypeAsStd(afse.fieldtype.tkeystr);
+                        const offset = ffp.slice(0, -1).map((bf) => this.typeInfoManager.getTypeInfo(bf.ftype.tkeystr).slotcount).reduce((a, b) => a + b, 0);
+                        return `${this.emitIRSimpleExpression(afse.eexp, false)}.accessfield<${rtype}, ${offset}>()`;
+                    }
+                    else {
+                        assert(false, "CPPEmitter: need to implement safe virtual field access for non-unique entity nominal types");
+                    }
                 }
             }
             else {
@@ -1191,7 +1216,7 @@ class CPPEmitter {
         `        BSQ_TYPEINFO_NO_ESLOT,\n` +
         `        ${ttid.ptrmask !== undefined ? ('"' + ttid.ptrmask + '"') : "nullptr"},\n` +
         `        "${tdecl.tkey}",\n` +
-        `        ${ttid.vtable !== undefined ? "" : "nullptr"}\n` +
+        `        ${ttid.itable.length !== 0 ? "xxx" : "nullptr"}\n` +
         `    };\n` +
         `}`;
     }
@@ -1209,7 +1234,7 @@ class CPPEmitter {
             `        BSQ_TYPEINFO_NO_ESLOT,\n` +
             `        ${ttid.ptrmask !== undefined ? ('"' + ttid.ptrmask + '"') : "nullptr"},\n` +
             `        "${tdecl.tkey}",\n` +
-            `        ${ttid.vtable !== undefined ? "" : "nullptr"}\n` +
+            `        ${ttid.itable.length !== 0 ? "xxx" : "nullptr"}\n` +
             `    };\n` +
             `    extern thread_local GCAllocator<${ctname}> ${ctname}_allocator;\n` +
             `}`,

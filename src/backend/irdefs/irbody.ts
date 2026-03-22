@@ -237,13 +237,15 @@ abstract class IRAccessFieldExpression extends IRSimpleExpression {
     readonly eexp: IRSimpleExpression;
     readonly intype: IRNominalTypeSignature;
     readonly fieldname: string;
+    readonly fieldtype: IRTypeSignature;
 
-    constructor(tag: IRExpressionTag, eexptype: IRNominalTypeSignature, eexp: IRSimpleExpression, intype: IRNominalTypeSignature, fieldname: string) {
+    constructor(tag: IRExpressionTag, eexptype: IRNominalTypeSignature, eexp: IRSimpleExpression, intype: IRNominalTypeSignature, fieldname: string, fieldtype: IRTypeSignature) {
         super(tag);
         this.eexptype = eexptype;
         this.eexp = eexp;
         this.intype = intype;
         this.fieldname = fieldname;
+        this.fieldtype = fieldtype;
     }
 }
 
@@ -1062,20 +1064,20 @@ class IRConstructorListSingletonsExpression extends IRConstructExpression {
 //
 
 class IRAccessFieldSpecialExpression extends IRAccessFieldExpression {
-    constructor(eexptype: IRNominalTypeSignature, eexp: IRSimpleExpression, intype: IRNominalTypeSignature, fieldname: string) {
-        super(IRExpressionTag.IRAccessFieldSpecialExpression, eexptype, eexp, intype, fieldname);
+    constructor(eexptype: IRNominalTypeSignature, eexp: IRSimpleExpression, intype: IRNominalTypeSignature, fieldname: string, fieldtype: IRTypeSignature) {
+        super(IRExpressionTag.IRAccessFieldSpecialExpression, eexptype, eexp, intype, fieldname, fieldtype);
     }
 }
 
 class IRAccessFieldDirectExpression extends IRAccessFieldExpression {
-    constructor(eexptype: IRNominalTypeSignature, eexp: IRSimpleExpression, intype: IRNominalTypeSignature, fieldname: string) {
-        super(IRExpressionTag.IRAccessFieldDirectExpression, eexptype, eexp, intype, fieldname);
+    constructor(eexptype: IRNominalTypeSignature, eexp: IRSimpleExpression, intype: IRNominalTypeSignature, fieldname: string, fieldtype: IRTypeSignature) {
+        super(IRExpressionTag.IRAccessFieldDirectExpression, eexptype, eexp, intype, fieldname, fieldtype);
     }
 }
 
 class IRAccessFieldVirtualExpression extends IRAccessFieldExpression {
-    constructor(eexptype: IRNominalTypeSignature, eexp: IRSimpleExpression, intype: IRNominalTypeSignature, fieldname: string) {
-        super(IRExpressionTag.IRAccessFieldVirtualExpression, eexptype, eexp, intype, fieldname);
+    constructor(eexptype: IRNominalTypeSignature, eexp: IRSimpleExpression, intype: IRNominalTypeSignature, fieldname: string, fieldtype: IRTypeSignature) {
+        super(IRExpressionTag.IRAccessFieldVirtualExpression, eexptype, eexp, intype, fieldname, fieldtype);
     }
 }
 
