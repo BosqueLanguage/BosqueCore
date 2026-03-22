@@ -104,13 +104,13 @@ namespace ᐸRuntimeᐳ
         {
             if(this->typeinfo->tag != LayoutTag::Ref) {
                 //not a pointer, just load the slot index as T
-                return *(reinterpret_cast<const T*>(reinterpret_cast<const uint64_t*>(&this->data) + idx));
+                return *(reinterpret_cast<const T*>(reinterpret_cast<uint64_t*>(const_cast<U*>(&this->data)) + idx));
             }
             else {
                 assert(this->typeinfo->tag == LayoutTag::Ref);
 
                 //dereference pointer in the union and then get the slot at index
-                return *(reinterpret_cast<const T*>(reinterpret_cast<const uint64_t*>(this->data) + idx));
+                return *(reinterpret_cast<const T*>(reinterpret_cast<uint64_t*>(const_cast<U*>(&this->data)) + idx));
             }
         }
 
@@ -119,13 +119,13 @@ namespace ᐸRuntimeᐳ
         {
             if(this->typeinfo->tag != LayoutTag::Ref) {
                 //not a pointer, just load the slot index as T
-                return *(reinterpret_cast<const T*>(reinterpret_cast<const uint64_t*>(&this->data) + idx));
+                return *(reinterpret_cast<const T*>(reinterpret_cast<uint64_t*>(const_cast<U*>(&this->data)) + idx));
             }
             else {
                 assert(this->typeinfo->tag == LayoutTag::Ref);
                 
                 //dereference pointer in the union and then get the slot at index
-                return *(reinterpret_cast<const T*>(reinterpret_cast<const uint64_t*>(this->data) + idx));
+                return *(reinterpret_cast<const T*>(reinterpret_cast<uint64_t*>(const_cast<U*>(&this->data)) + idx));
             }
         }
     };

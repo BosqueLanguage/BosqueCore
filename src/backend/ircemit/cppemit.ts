@@ -1750,7 +1750,9 @@ class CPPEmitter {
         `public:\n` +
         `    ${RUNTIME_NAMESPACE}::BoxedUnion<${uctname}> uval;\n\n` +
         `    constexpr ${ctname}() = default;\n` +
-        `    constexpr ${ctname}(const ${ctname}& other) = default;\n` +
+        `    constexpr ${ctname}(const ${ctname}& other) = default;\n\n` +
+        '    template<typename T, size_t idx> inline T accessfield() const { return this->uval.accessfield<T, idx>(); }\n' +
+        '    //TODO: implement access field truly virtual -- with dynamic field offset lookup \n\n' +
         `${ccons.join("\n")}\n` +
         `};`;
         const decltypeinfo = this.emitConceptTypeInfoDecl(tdecl);
