@@ -12,18 +12,18 @@ describe ("CPPEmit -- simple abort", () => {
 describe ("CPPEmit -- simple assert", () => {
     it("should emit simple assert", function () {
         checkTestEmitMainFunction("public function main(x: Int): Int { assert x > 0i; return 1i; }", 'Int Mainᕒmain(Int x) { ᐸRuntimeᐳ::bsq_assert((bool)(x > 0_i), "test.bsq", 2, nullptr, "Assertion Failed"); return 1_i; }');
-        checkTestEmitMainFunction("public function main(x: Int): Int { assert debug true; return 1i; }", "ccc");
+        checkTestEmitMainFunction("public function main(x: Int): Int { assert debug true; return 1i; }", "Int Mainᕒmain(Int x) { return 1_i; }");
 
-        checkTestEmitMainFunction("public function main(x: Int): Int { validate x > 0i || true; return 1i; }", "ddd");
+        checkTestEmitMainFunction("public function main(x: Int): Int { validate x > 0i || true; return 1i; }", "Int Mainᕒmain(Int x) { return 1_i; }");
     });
 });
 
 describe ("CPPEmit -- simple validate", () => {
     it("should emit simple validate", function () {
         checkTestEmitMainFunction("public function main(x: Int): Int { validate x == 3i; return 1i; }", 'Int Mainᕒmain(Int x) { ᐸRuntimeᐳ::bsq_validate((bool)(x == 3_i), "test.bsq", 2, nullptr, "Validation Failed"); return 1_i; }');
-        checkTestEmitMainFunction("public function main(x: Int): Int { validate x > 0i || false; return 1i; }", "fff");
+        checkTestEmitMainFunction("public function main(x: Int): Int { validate x > 0i || false; return 1i; }", 'Int Mainᕒmain(Int x) { ᐸRuntimeᐳ::bsq_validate((bool)(x > 0_i), "test.bsq", 2, nullptr, "Validation Failed"); return 1_i; }');
 
-        checkTestEmitMainFunction("public function main(x: Int): Int { validate x > (1i + 2i); return 1i; }", "ggg");
-        checkTestEmitMainFunction("public function main(b: Bool): Int { validate['ec-0'] b; return 1i; }", "hhh");
+        checkTestEmitMainFunction("public function main(x: Int): Int { validate x > (1i + 2i); return 1i; }", 'Int Mainᕒmain(Int x) { ᐸRuntimeᐳ::XInt::checkOverflowAddition(1_i, 2_i, "test.bsq", 2); ᐸRuntimeᐳ::bsq_validate((bool)(x > (1_i + 2_i)), "test.bsq", 2, nullptr, "Validation Failed"); return 1_i; }');
+        checkTestEmitMainFunction("public function main(b: Bool): Int { validate['ec-0'] b; return 1i; }", 'Int Mainᕒmain(Bool b) { ᐸRuntimeᐳ::bsq_validate((bool)(b), "test.bsq", 2, "ec-0", "Validation Failed"); return 1_i; }');
     });
 });
