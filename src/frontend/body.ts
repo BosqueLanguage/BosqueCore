@@ -2130,7 +2130,7 @@ class ConditionalValueExpression extends RValueExpression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         const ttest = this.guardset.emit(fmt);
-        return `${ttest} ? ${this.trueValue.emit(true, fmt)} : ${this.falseValue.emit(true, fmt)}`;
+        return `${ttest} ?? ${this.trueValue.emit(true, fmt)} : ${this.falseValue.emit(true, fmt)}`;
     }
 }
 

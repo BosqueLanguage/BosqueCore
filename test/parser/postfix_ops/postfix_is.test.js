@@ -13,7 +13,7 @@ describe ("Parser -- Postfix ?", () => {
     });
 
     it("should parse postfix ? option fails", function () {
-        parseTestFunctionError("function main(x: Option<Int>): Bool { return x??none; }", "Expected ITest");
+        parseTestFunctionError("function main(x: Option<Int>): Bool { return x??none; }", 'Expected ":" but got ";" when parsing "conditional expression"');
         parseTestFunctionError("function main(x: Option<Int>): Bool { return x?!!none; }", "Expected ITest");
     });
 
