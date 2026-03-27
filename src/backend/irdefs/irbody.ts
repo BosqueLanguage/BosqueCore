@@ -83,13 +83,9 @@ enum IRExpressionTag {
     IRConstructorListEmptyExpression = "IRConstructorListEmptyExpression",
     IRConstructorListSingletonsExpression = "IRConstructorListSingletonsExpression",
 
-    //
-    //TODO: lots more expression types here
-    //
     IRAccessFieldSpecialExpression = "IRAccessFieldSpecialExpression",
     IRAccessFieldDirectExpression = "IRAccessFieldDirectExpression",
     IRAccessFieldVirtualExpression = "IRAccessFieldVirtualExpression",
-
 
     IRInvokeSimpleExpression = "IRInvokeSimpleExpression",
     IRInvokeSimpleWithImplicitsExpression = "IRInvokeSimpleWithImplicitsExpression",
@@ -107,10 +103,6 @@ enum IRExpressionTag {
     IRBinSubExpression = "IRBinSubExpression",
     IRBinMultExpression = "IRBinMultExpression",
     IRBinDivExpression = "IRBinDivExpression",
-
-    //
-    //TODO: lots more expression types here
-    //
 
     IRNumericEqExpression = "IRNumericEqExpression",
     IRNumericNeqExpression = "IRNumericNeqExpression",
@@ -133,10 +125,6 @@ enum IRExpressionTag {
     IRLogicAndExpression = "IRLogicAndExpression",
     IRLogicOrExpression = "IRLogicOrExpression",
 
-    //
-    //TODO: lots more expression types here
-    //
-
     IRLogicSimpleConditionalExpression = "IRLogicSimpleConditionalExpression",
 
     IRLiteralOptionOfNoneExpression = "IRLiteralOptionOfNoneExpression",
@@ -150,6 +138,13 @@ enum IRExpressionTag {
     IRExtractOkValueFromResultExpression = "IRExtractOkValueFromResultExpression",
     IRExtractFailFromResultExpression = "IRExtractFailFromResultExpression",
     IRExtractFailValueFromResultExpression = "IRExtractFailValueFromResultExpression",
+
+    IRIsConceptRepresentationOfTypeExpression = "IRIsConceptRepresentationOfTypeExpression",
+    IRIsNotConceptRepresentationOfTypeExpression = "IRIsNotConceptRepresentationOfTypeExpression",
+    IRIsConceptRepresentationSubtypeOfTypeExpression = "IRIsConceptRepresentationSubtypeOfTypeExpression",
+    IRIsNotConceptRepresentationSubtypeOfTypeExpression = "IRIsNotConceptRepresentationSubtypeOfTypeExpression",
+
+    IRStaticIsTypeSubtypeOfExpression = "IRStaticIsTypeSubtypeOfExpression",
 
     IRBoxEntityToConceptRepresentationExpression = "IRBoxEntityToConceptRepresentationExpression",
     IRUnboxEntityFromConceptRepresentationExpression = "IRUnboxEntityFromConceptRepresentationExpression",
@@ -1203,10 +1198,6 @@ class IRBinDivExpression extends IRBinOpExpression {
     }
 }
 
-//
-//TODO: lots more expression types here
-//
-
 abstract class IRNumericComparisonExpression extends IRSimpleExpression {
     readonly left: IRSimpleExpression;
     readonly right: IRSimpleExpression;
@@ -1407,10 +1398,6 @@ class IRLogicSimpleConditionalExpression extends IRSimpleExpression {
     }
 }
 
-//
-//TODO: lots more expression types here
-//
-
 class IRLiteralOptionOfNoneExpression extends IRLiteralExpression {
     readonly opttype: IRTypeSignature;
 
@@ -1540,6 +1527,57 @@ class IRExtractFailValueFromResultExpression extends IRSimpleExpression {
         this.failtype = failtype;
         this.etype = etype;
         this.value = value;
+    }
+}
+
+abstract class IRConceptRepresentationOfTypeExpression extends IRSimpleExpression {
+    readonly exp: IRSimpleExpression;
+    readonly exptype: IRTypeSignature;
+    readonly targettype: IRTypeSignature;
+
+    constructor(tag: IRExpressionTag, exp: IRSimpleExpression, exptype: IRTypeSignature, targettype: IRTypeSignature) {
+        super(tag);
+        this.exp = exp;
+        this.exptype = exptype;
+        this.targettype = targettype;
+    }
+}
+
+class IRIsConceptRepresentationOfTypeExpression extends IRConceptRepresentationOfTypeExpression {
+    constructor(exp: IRSimpleExpression, exptype: IRTypeSignature, targettype: IRTypeSignature) {
+        super(IRExpressionTag.IRIsConceptRepresentationOfTypeExpression, exp, exptype, targettype);
+    }
+}
+
+class IRIsNotConceptRepresentationOfTypeExpression extends IRConceptRepresentationOfTypeExpression {
+    constructor(exp: IRSimpleExpression, exptype: IRTypeSignature, targettype: IRTypeSignature) {
+        super(IRExpressionTag.IRIsNotConceptRepresentationOfTypeExpression, exp, exptype, targettype);
+    }
+}
+
+class IRIsConceptRepresentationSubtypeOfTypeExpression extends IRConceptRepresentationOfTypeExpression {
+    constructor(exp: IRSimpleExpression, exptype: IRTypeSignature, targettype: IRTypeSignature) {
+        super(IRExpressionTag.IRIsConceptRepresentationSubtypeOfTypeExpression, exp, exptype, targettype);
+    }
+}
+
+class IRIsNotConceptRepresentationSubtypeOfTypeExpression extends IRConceptRepresentationOfTypeExpression {
+    constructor(exp: IRSimpleExpression, exptype: IRTypeSignature, targettype: IRTypeSignature) {
+        super(IRExpressionTag.IRIsNotConceptRepresentationSubtypeOfTypeExpression, exp, exptype, targettype);
+    }
+}
+
+class IRStaticIsTypeSubtypeOfExpression extends IRSimpleExpression {
+    readonly isnot: boolean; //true if this check is negated
+
+    readonly exptype: IRTypeSignature;
+    readonly targettype: IRTypeSignature;
+
+    constructor(exptype: IRTypeSignature, targettype: IRTypeSignature, isnot: boolean) {
+        super(IRExpressionTag.IRStaticIsTypeSubtypeOfExpression);
+        this.exptype = exptype;
+        this.targettype = targettype;
+        this.isnot = isnot;
     }
 }
 
@@ -2256,6 +2294,7 @@ export {
 
     IRLiteralOptionOfNoneExpression, IRConstructOptionFromSomeExpression, IRExtractSomeFromOptionExpression, IRExtractSomeValueFromOptionExpression,
     IRConstructResultFromOkExpression, IRConstructResultFromFailExpression, IRExtractOkFromResultExpression, IRExtractOkValueFromResultExpression, IRExtractFailFromResultExpression, IRExtractFailValueFromResultExpression,
+    IRConceptRepresentationOfTypeExpression, IRIsConceptRepresentationOfTypeExpression, IRIsNotConceptRepresentationOfTypeExpression, IRIsConceptRepresentationSubtypeOfTypeExpression, IRIsNotConceptRepresentationSubtypeOfTypeExpression, IRStaticIsTypeSubtypeOfExpression,
     IRBoxEntityToConceptRepresentationExpression, IRUnboxEntityFromConceptRepresentationExpression, IRWidenConceptRepresentationExpression, IRNarrowConceptRepresentationExpression,
 
     IRStatementTag, IRStatement, IRAtomicStatement, IRReturnSimpleStatement, IRReturnWithImplicitStatement,

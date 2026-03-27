@@ -519,6 +519,21 @@ class CPPEmitter {
             else if(ttag === IRExpressionTag.IRExtractFailValueFromResultExpression) {
                 assert(false, "CPPEmitter: need to implement extract fail value from result expression");
             }
+            else if(ttag === IRExpressionTag.IRIsConceptRepresentationOfTypeExpression) {
+                assert(false, "CPPEmitter: need to implement is concept representation of type expression");
+            }
+            else if(ttag === IRExpressionTag.IRIsNotConceptRepresentationOfTypeExpression) {
+                assert(false, "CPPEmitter: need to implement is not concept representation of type expression");
+            }
+            else if(ttag === IRExpressionTag.IRIsConceptRepresentationSubtypeOfTypeExpression) {
+                assert(false, "CPPEmitter: need to implement is concept representation subtype of type expression");
+            }
+            else if(ttag === IRExpressionTag.IRIsNotConceptRepresentationSubtypeOfTypeExpression) {
+                assert(false, "CPPEmitter: need to implement is not concept representation subtype of type expression");
+            }
+            else if(ttag === IRExpressionTag.IRStaticIsTypeSubtypeOfExpression) {
+                assert(false, "CPPEmitter: need to implement static is type subtype of expression");
+            }
             else if(ttag === IRExpressionTag.IRBoxEntityToConceptRepresentationExpression) {
                 const bexp = exps as IRBoxEntityToConceptRepresentationExpression;
                 const ctype = TransformCPPNameManager.convertTypeKey(bexp.totype.tkeystr); 

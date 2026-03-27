@@ -1,17 +1,18 @@
 "use strict";
 
-import { checkTestFunctionInFile, checkTestFunctionInFileError } from "../../../bin/test/typecheck/typecheck_nf.js";
+import { checkTestEmitMainFunction } from "../../../bin/test/cppemit/cppemit_nf.js";
 import { describe, it } from "node:test";
 
-describe ("Checker -- entity as", () => {
-    it("should check postfix @ option", function () {
-        checkTestFunctionInFile("function main(x: Option<Int>): None { return x@none; }");
-        checkTestFunctionInFile("function main(x: Option<Int>): Int { return x@!none; }");
+describe ("CPPEmit -- entity as", () => {
+    it("should emit postfix @ option", function () {
+        checkTestEmitMainFunction("public function main(x: Option<Int>): None { return x@none; }", "xxx");
+        checkTestEmitMainFunction("public function main(x: Option<Int>): Int { return x@!none; }", "yyy");
 
-        checkTestFunctionInFile("function main(x: Option<Int>): Int { return x@some; }");
-        checkTestFunctionInFile("function main(x: Option<Int>): None { return x@!some; }");
+        checkTestEmitMainFunction("public function main(x: Option<Int>): Int { return x@some; }", "zzz");
+        checkTestEmitMainFunction("public function main(x: Option<Int>): None { return x@!some; }", "qqq");
     });
 
+    /*
     it("should check postfix @ option fail", function () {
         checkTestFunctionInFileError("function main(x: Some<Int>): None { return x@none; }", "Convert always fails");
         checkTestFunctionInFileError("function main(x: Some<Int>): None { return x@!some; }", "Convert always fails");
@@ -40,4 +41,5 @@ describe ("Checker -- entity as", () => {
 
     it.skip("should check postfix @ types ADT fail", function () {
     });
+    */
 });
