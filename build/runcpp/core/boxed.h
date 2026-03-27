@@ -9,9 +9,8 @@ namespace ᐸRuntimeᐳ
 {
     constexpr XBool isSubtypeOf(const TypeInfo* etype, const TypeInfo* oftype)
     {
-        
+        xxxx;
     }
-
 
     using XNone = uint64_t;
     constexpr XNone xnone = 0ull;
