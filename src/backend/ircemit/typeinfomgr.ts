@@ -27,6 +27,7 @@ class VirtualInvokeInfo {
 
 class FieldOffsetInfo {
     readonly fkey: string;
+    readonly fid: number;
 
     readonly enclosingtype: IRTypeSignature;
     readonly fname: string;
@@ -34,8 +35,9 @@ class FieldOffsetInfo {
 
     readonly offset: number;
 
-    constructor(fkey: string, enclosingtype: IRTypeSignature, fname: string, ftype: IRTypeSignature, offset: number) {
+    constructor(fkey: string, fid: number, enclosingtype: IRTypeSignature, fname: string, ftype: IRTypeSignature, offset: number) {
         this.fkey = fkey;
+        this.fid = fid;
         this.enclosingtype = enclosingtype;
         this.fname = fname;
         this.ftype = ftype;
@@ -86,6 +88,7 @@ class TypeInfo {
 
 class TypeInfoManager {
     private typeInfoMap: Map<string, TypeInfo>;
+    private fieldidctr = 0;
 
     static readonly c_ref_pass_size: number = 32; //Bytes used for ref passing (pointer + typeid + extra)
 
@@ -390,7 +393,7 @@ class TypeInfoManager {
         let slpos = 0;
         for(let i = 0; i < tdecl.saturatedBFieldInfo.length; i++) {
             const fdecl = tdecl.saturatedBFieldInfo[i];
-            typeinfo.ftable.push(new FieldOffsetInfo(fdecl.fkey, new IRNominalTypeSignature(fdecl.containingtype.tkeystr), fdecl.fname, fdecl.ftype, slpos));
+            typeinfo.ftable.push(new FieldOffsetInfo(fdecl.fkey, this.fieldidctr++, new IRNominalTypeSignature(fdecl.containingtype.tkeystr), fdecl.fname, fdecl.ftype, slpos));
 
             const ftinfo = this.getTypeInfo(fdecl.ftype.tkeystr);
             slpos += ftinfo.slotcount;

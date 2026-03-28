@@ -62,7 +62,7 @@ namespace ᐸRuntimeᐳ
         uint32_t slotoffset;
 
         const char* fieldkey;
-        const char* srcname;
+        const char* fname;
     };
 
     using VInvokePtr = void(*)(void);
@@ -73,7 +73,6 @@ namespace ᐸRuntimeᐳ
         VInvokePtr invokeptr;
 
         const char* invokekey;
-        const char* srcname;
     };
 
     class TypeInfo
@@ -95,7 +94,6 @@ namespace ᐸRuntimeᐳ
         const uint32_t vitablecount;
 
         const char* typekey;
-        const char* srcname;
     };
 
     constexpr uint32_t byteSizeToSlotCount(size_t bytesize)
@@ -117,7 +115,12 @@ namespace ᐸRuntimeᐳ
         LayoutTag::Value,
         BSQ_TYPEINFO_NO_ESLOT,
         BSQ_PTR_MASK_LEAF,
-        "None",
-        nullptr
+        nullptr,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        0,
+        "None"
     };
 }

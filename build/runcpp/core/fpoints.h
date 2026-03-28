@@ -77,8 +77,13 @@ namespace ᐸRuntimeᐳ
         LayoutTag::Value,
         BSQ_TYPEINFO_NO_ESLOT,
         BSQ_PTR_MASK_LEAF,
-        "Float",
-        nullptr
+        nullptr,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        0,
+        "Float"
     };
 
     static_assert(sizeof(XFloat) == sizeof(double), "Float size incorrect");

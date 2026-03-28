@@ -97,8 +97,13 @@ namespace ᐸRuntimeᐳ
             LayoutTag::ArrayInline,
             tslots,
             mask,
-            name,
-            nullptr
+            nullptr,
+            0,
+            nullptr,
+            0,
+            nullptr,
+            0,
+            name
         };
     }
 
@@ -112,8 +117,13 @@ namespace ᐸRuntimeᐳ
             LayoutTag::Tagged,
             BSQ_TYPEINFO_NO_ESLOT,
             "20",
-            name,
-            nullptr
+            nullptr,
+            0,
+            nullptr,
+            0,
+            nullptr,
+            0,
+            name
         };
     }
 
@@ -127,8 +137,13 @@ namespace ᐸRuntimeᐳ
             LayoutTag::Tagged,
             BSQ_TYPEINFO_NO_ESLOT,
             "200",
-            name,
-            nullptr
+            nullptr,
+            0,
+            nullptr,
+            0,
+            nullptr,
+            0,
+            name
         };
     }
 

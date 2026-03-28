@@ -9,7 +9,8 @@ namespace ᐸRuntimeᐳ
 {
     constexpr XBool isSubtypeOf(const TypeInfo* etype, const TypeInfo* oftype)
     {
-        xxxx;
+        auto ii = std::find(etype->supertypes, etype->supertypes + etype->supertypescount, oftype->bsqtypeid);
+        return XBool::from(ii != (etype->supertypes + etype->supertypescount));
     }
 
     using XNone = uint64_t;
@@ -91,6 +92,9 @@ namespace ᐸRuntimeᐳ
         constexpr BoxedUnion(const BoxedUnion& other) = default;
         
         // Note -- inject and extract are generated for each use based on the generation union type (see strings for example)
+
+        constexpr XBool isTypeOf(const TypeInfo* ti) const { return XBool::from(this->typeinfo == ti); }
+        constexpr XBool isSubTypeOf(const TypeInfo* ti) const { return isSubtypeOf(this->typeinfo, ti); }
 
         template<typename V>
         BoxedUnion<V> convert() const 

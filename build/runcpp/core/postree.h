@@ -57,8 +57,13 @@ namespace ᐸRuntimeᐳ
             LayoutTag::ArrayRef,
             tslots,
             mask,
-            tname,
-            nullptr
+            nullptr,
+            0,
+            nullptr,
+            0,
+            nullptr,
+            0,
+            tname
         };
     }
 
@@ -97,8 +102,13 @@ namespace ᐸRuntimeᐳ
             LayoutTag::Ref,
             BSQ_TYPEINFO_NO_ESLOT,
             "002020",
-            tname,
-            nullptr
+            nullptr,
+            0,
+            nullptr,
+            0,
+            nullptr,
+            0,
+            tname
         };
     }
 
@@ -170,8 +180,13 @@ namespace ᐸRuntimeᐳ
             LayoutTag::Tagged,
             BSQ_TYPEINFO_NO_ESLOT,
             "20",
-            tname,
-            nullptr
+            nullptr,
+            0,
+            nullptr,
+            0,
+            nullptr,
+            0,
+            tname
         };
     }
 }

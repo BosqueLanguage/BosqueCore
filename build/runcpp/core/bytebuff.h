@@ -70,8 +70,13 @@ namespace ᐸRuntimeᐳ
         LayoutTag::Ref,
         BSQ_TYPEINFO_NO_ESLOT,
         BSQ_PTR_MASK_LEAF,
-        "ByteBufferEntry",
-        nullptr
+        nullptr,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        0,
+        "ByteBufferEntry"
     };
 
     inline constexpr TypeInfo g_typeinfo_ByteBufferBlock = {
@@ -81,8 +86,13 @@ namespace ᐸRuntimeᐳ
         LayoutTag::ArrayRef,
         1,
         "1111111111111111111111111111111111111111111111111111111111111111",
-        "ByteBufferBlock",
-        nullptr
+        nullptr,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        0,
+        "ByteBufferBlock"
     };
 
     inline constexpr TypeInfo g_typeinfo_ByteBuffer = {
@@ -92,8 +102,13 @@ namespace ᐸRuntimeᐳ
         LayoutTag::Tagged,
         BSQ_TYPEINFO_NO_ESLOT,
         "200",
-        "ByteBuffer",
-        nullptr
+        nullptr,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        0,
+        "ByteBuffer"
     };
 
     class ByteBufferIterator

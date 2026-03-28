@@ -2,7 +2,7 @@ import { TransformCPPNameManager } from "./namemgr.js";
 import { LayoutTag, LIST_T_CAPACITY, TypeInfo, TypeInfoManager } from "./typeinfomgr.js";
 
 import { MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_INT } from "../../frontend/assembly.js";
-import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag, IRPrefixNotOpExpression, IRPrefixPlusOpExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRReturnValueSimpleStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement, IRTypeDeclSizeRangeCheckCStringStatement, IRTypeDeclSizeRangeCheckUnicodeStringStatement, IRAbortStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRTempAssignExpressionStatement, IRTypeDeclInvariantCheckStatement, IRDebugStatement, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRChkLogicImpliesShortCircuitStatement, IRPreconditionCheckStatement, IRPostconditionCheckStatement, IRVariableInitializationDirectInvokeStatement, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRAssertStatement, IRValidateStatement, IRBody, IRBuiltinBody, IRStandardBody, IRHoleBody, IRIsNoneOptionExpression, IRBinKeyEqDirectExpression, IRIsOptionEqValueExpression, IRIsSomeNeqValueExpression, IRIsOptionNeqValueExpression, IRIsSomeEqValueExpression, IRConstructorSomeTypeExpression, IRLiteralOptionOfNoneExpression, IRConstructOptionFromSomeExpression, IRExtractSomeFromOptionExpression, IRExtractSomeValueFromOptionExpression, IRBinKeyNeqDirectExpression, IRBinKeyLessDirectExpression, IRSimpleIfStatement, IRSimpleIfElseStatement, IRConstructorStandardEntityExpression, IRReturnDirectConstructStatement, IRReturnDirectInvokeStatement, IRVariableInitializationDirectConstructorStatement, IREntityInvariantCheckStatement, IRBoxEntityToConceptRepresentationExpression, IRVariableAssignmentStatement, IRVariableAssignmentDirectInvokeStatement, IRVariableAssignmentDirectConstructorStatement, IRConstructorListEmptyExpression, IRConstructorListSingletonsExpression, IRInvokeSimpleExpression, IRVariableInitializationDirectInvokeWithImplicitStatement, IRVariableAssignmentDirectInvokeWithImplicitStatement, IRReturnDirectConstructWithBoxStatement, IRReturnValueImplicitStatement, IRReturnDirectInvokeImplicitStatement, IRReturnDirectInvokeImplicitPassThroughStatement, IRReturnDirectConstructImplicitStatement, IRReturnDirectConstructWithBoxImplicitStatement, IRInvokeSimpleWithImplicitsExpression, IRTempAssignRefInvokeStatement, IRTempAssignStdInvokeStatement, IRVoidInvokeStatement, IRVariableInitializationDirectConstructorWithBoxStatement, IRVariableAssignmentDirectConstructorWithBoxStatement, IRLiteralFormatCStringExpression, IRLiteralFormatStringExpression, IRInterpolateFormatCStringExpression, IRFormatStringTextComponent, IRFormatStringArgComponent, IRTypeDeclFormatCheckCStringStatement, IRLiteralTypedStringExpression, IRAccessFieldSpecialExpression, IRAccessFieldVirtualExpression } from "../irdefs/irbody.js";
+import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag, IRPrefixNotOpExpression, IRPrefixPlusOpExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRReturnValueSimpleStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement, IRTypeDeclSizeRangeCheckCStringStatement, IRTypeDeclSizeRangeCheckUnicodeStringStatement, IRAbortStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRTempAssignExpressionStatement, IRTypeDeclInvariantCheckStatement, IRDebugStatement, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRChkLogicImpliesShortCircuitStatement, IRPreconditionCheckStatement, IRPostconditionCheckStatement, IRVariableInitializationDirectInvokeStatement, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRAssertStatement, IRValidateStatement, IRBody, IRBuiltinBody, IRStandardBody, IRHoleBody, IRIsNoneOptionExpression, IRBinKeyEqDirectExpression, IRIsOptionEqValueExpression, IRIsSomeNeqValueExpression, IRIsOptionNeqValueExpression, IRIsSomeEqValueExpression, IRConstructorSomeTypeExpression, IRLiteralOptionOfNoneExpression, IRConstructOptionFromSomeExpression, IRExtractSomeFromOptionExpression, IRExtractSomeValueFromOptionExpression, IRBinKeyNeqDirectExpression, IRBinKeyLessDirectExpression, IRSimpleIfStatement, IRSimpleIfElseStatement, IRConstructorStandardEntityExpression, IRReturnDirectConstructStatement, IRReturnDirectInvokeStatement, IRVariableInitializationDirectConstructorStatement, IREntityInvariantCheckStatement, IRBoxEntityToConceptRepresentationExpression, IRVariableAssignmentStatement, IRVariableAssignmentDirectInvokeStatement, IRVariableAssignmentDirectConstructorStatement, IRConstructorListEmptyExpression, IRConstructorListSingletonsExpression, IRInvokeSimpleExpression, IRVariableInitializationDirectInvokeWithImplicitStatement, IRVariableAssignmentDirectInvokeWithImplicitStatement, IRReturnDirectConstructWithBoxStatement, IRReturnValueImplicitStatement, IRReturnDirectInvokeImplicitStatement, IRReturnDirectInvokeImplicitPassThroughStatement, IRReturnDirectConstructImplicitStatement, IRReturnDirectConstructWithBoxImplicitStatement, IRInvokeSimpleWithImplicitsExpression, IRTempAssignRefInvokeStatement, IRTempAssignStdInvokeStatement, IRVoidInvokeStatement, IRVariableInitializationDirectConstructorWithBoxStatement, IRVariableAssignmentDirectConstructorWithBoxStatement, IRLiteralFormatCStringExpression, IRLiteralFormatStringExpression, IRInterpolateFormatCStringExpression, IRFormatStringTextComponent, IRFormatStringArgComponent, IRTypeDeclFormatCheckCStringStatement, IRLiteralTypedStringExpression, IRAccessFieldSpecialExpression, IRAccessFieldVirtualExpression, IRIsConceptRepresentationOfTypeExpression } from "../irdefs/irbody.js";
 import { IRAbstractCollectionTypeDecl, IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAssembly, IRConceptTypeDecl, IRConstantDecl, IRConstructableTypeDecl, IREntityTypeDecl, IREnumTypeDecl, IRFailTypeDecl, IRInternalConceptTypeDecl, IRInvariantDecl, IRInvokeDecl, IRInvokeParameterDecl, IRListTypeDecl, IRMapEntryTypeDecl, IRMapTypeDecl, IROkTypeDecl, IROptionTypeDecl, IRPrimitiveEntityTypeDecl, IRResultTypeDecl, IRSomeTypeDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl, IRValidateDecl } from "../irdefs/irassembly.js";
 
 import assert from "node:assert";
@@ -520,7 +520,9 @@ class CPPEmitter {
                 assert(false, "CPPEmitter: need to implement extract fail value from result expression");
             }
             else if(ttag === IRExpressionTag.IRIsConceptRepresentationOfTypeExpression) {
-                assert(false, "CPPEmitter: need to implement is concept representation of type expression");
+                const crep = exps as IRIsConceptRepresentationOfTypeExpression;
+                const gmgr = TransformCPPNameManager.generateTypeInfoNameForTypeKey(crep.targettype.tkeystr);
+                bstr = `${this.emitIRSimpleExpression(crep.exp, false)}.uval.isTypeOf(&${gmgr})`;
             }
             else if(ttag === IRExpressionTag.IRIsNotConceptRepresentationOfTypeExpression) {
                 assert(false, "CPPEmitter: need to implement is not concept representation of type expression");
@@ -1148,8 +1150,13 @@ class CPPEmitter {
         `        LayoutTag::Value,\n` +
         `        BSQ_TYPEINFO_NO_ESLOT,\n` +
         `        nullptr,\n` +
-        `        "${tdecl.tkey}",\n` +
-        `        nullptr\n` +
+        `        nullptr,\n` +
+        `        0,\n` +
+        `        nullptr,\n` +
+        `        0,\n` +
+        `        nullptr,\n` +
+        `        0,` +
+        `        "${tdecl.tkey}"\n` +
         `    };\n` +
         `}`;
     }
@@ -1221,27 +1228,31 @@ class CPPEmitter {
 
     private emitEntityTypeInfoDecl(tdecl: IRAbstractEntityTypeDecl): string {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
-        const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey); 
+        const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey);
+
+        const superlist = (this.irasm.concretesupertypes.get(tdecl.tkey) as IRTypeSignature[]).map((tt) => this.typeInfoManager.getTypeInfo(tt.tkeystr).bsqtypeid).sort();
+        let superdecl = "";
+        let supertable = "nullptr";
+        if(superlist.length !== 0) {
+            superdecl = `    inline constexpr uint32_t g_supertypes_${ctname}[${superlist.length}] = { ${superlist.join(", ")} };\n`;
+            supertable = `g_supertypes_${ctname}`;
+        }
+        
+        let ftdecl = "";
+        let ftable = "nullptr";
+        if(ttid.ftable.length !== 0) {
+            ftdecl = `    inline constexpr FieldOffsetInfo g_ftable_${ctname}[${ttid.ftable.length}] = {\n` +
+            ttid.ftable.map((fte) => {
+                const fttid = this.typeInfoManager.getTypeInfo(fte.ftype.tkeystr);
+                return `        { ${fte.fid}, ${fttid.bsqtypeid}, ${fte.offset * 8}, ${fte.offset}, "${fte.fkey}", "${fte.fname}" }`;
+            }).join(",\n") + "\n" +
+            `    };\n`;
+            ftable = `g_ftable_${ctname}`;
+        }
 
         return `namespace ᐸRuntimeᐳ {\n` +
-        `    inline constexpr TypeInfo g_typeinfo_${ctname} = {\n` +
-        `        ${ttid.bsqtypeid},\n` +
-        `        ${ttid.bytesize},\n` +
-        `        ${ttid.slotcount},\n` +
-        `        LayoutTag::${ttid.tag},\n` +
-        `        BSQ_TYPEINFO_NO_ESLOT,\n` +
-        `        ${ttid.ptrmask !== undefined ? ('"' + ttid.ptrmask + '"') : "nullptr"},\n` +
-        `        "${tdecl.tkey}",\n` +
-        `        ${ttid.itable.length !== 0 ? "xxx" : "nullptr"}\n` +
-        `    };\n` +
-        `}`;
-    }
-
-     private emitEntityTypeInfoWAllocInfo(tdecl: IRAbstractEntityTypeDecl): [string, string] {
-        const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
-        const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey); 
-
-        return [`namespace ᐸRuntimeᐳ {\n` +
+            superdecl +
+            ftdecl +
             `    inline constexpr TypeInfo g_typeinfo_${ctname} = {\n` +
             `        ${ttid.bsqtypeid},\n` +
             `        ${ttid.bytesize},\n` +
@@ -1249,8 +1260,58 @@ class CPPEmitter {
             `        LayoutTag::${ttid.tag},\n` +
             `        BSQ_TYPEINFO_NO_ESLOT,\n` +
             `        ${ttid.ptrmask !== undefined ? ('"' + ttid.ptrmask + '"') : "nullptr"},\n` +
-            `        "${tdecl.tkey}",\n` +
-            `        ${ttid.itable.length !== 0 ? "xxx" : "nullptr"}\n` +
+            `        ${supertable},\n` +
+            `        ${superlist.length},\n` +
+            `        ${ftable},\n` +
+            `        ${ttid.ftable.length},\n` +
+            `        ${ttid.itable.length !== 0 ? "xxx" : "nullptr"},\n` +
+            `        ${ttid.itable.length},\n` +
+            `        "${tdecl.tkey}"\n` +
+            `    };\n` +
+            `}`;
+    }
+
+     private emitEntityTypeInfoWAllocInfo(tdecl: IRAbstractEntityTypeDecl): [string, string] {
+        const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
+        const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey); 
+
+        const superlist = (this.irasm.concretesupertypes.get(tdecl.tkey) as IRTypeSignature[]).map((tt) => this.typeInfoManager.getTypeInfo(tt.tkeystr).bsqtypeid).sort();
+        let superdecl = "";
+        let supertable = "nullptr";
+        if(superlist.length !== 0) {
+            superdecl = `    inline constexpr uint32_t g_supertypes_${ctname}[${superlist.length}] = { ${superlist.join(", ")} };\n`;
+            supertable = `&g_supertypes_${ctname}`;
+        }
+
+        let ftdecl = "";
+        let ftable = "nullptr";
+        if(ttid.ftable.length !== 0) {
+            ftdecl = `    inline constexpr FieldOffsetInfo g_ftable_${ctname}[${ttid.ftable.length}] = {\n` +
+            ttid.ftable.map((fte) => {
+                const fttid = this.typeInfoManager.getTypeInfo(fte.ftype.tkeystr);
+                return `        { ${fte.fid}, ${fttid.bsqtypeid}, ${fte.offset * 8}, ${fte.offset}, "${fte.fkey}", "${fte.fname}" }`;
+            }).join(",\n") + "\n" +
+            `    };\n`;
+            ftable = `g_ftable_${ctname}`;
+        }
+
+        return [`namespace ᐸRuntimeᐳ {\n` +
+            superdecl +
+            ftdecl +
+            `    inline constexpr TypeInfo g_typeinfo_${ctname} = {\n` +
+            `        ${ttid.bsqtypeid},\n` +
+            `        ${ttid.bytesize},\n` +
+            `        ${ttid.slotcount},\n` +
+            `        LayoutTag::${ttid.tag},\n` +
+            `        BSQ_TYPEINFO_NO_ESLOT,\n` +
+            `        ${ttid.ptrmask !== undefined ? ('"' + ttid.ptrmask + '"') : "nullptr"},\n` +
+            `        ${supertable},\n` +
+            `        ${superlist.length},\n` +
+            `        ${ftable},\n` +
+            `        ${ttid.ftable.length},\n` +
+            `        ${ttid.itable.length !== 0 ? "xxx" : "nullptr"},\n` +
+            `        ${ttid.itable.length},\n` +
+            `        "${tdecl.tkey}"\n` +
             `    };\n` +
             `    extern thread_local GCAllocator<${ctname}> ${ctname}_allocator;\n` +
             `}`,
@@ -1263,16 +1324,21 @@ class CPPEmitter {
         const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey); 
 
         return `namespace ᐸRuntimeᐳ { inline constexpr TypeInfo g_typeinfo_${ctname} = {\n` +
-        `        ${ttid.bsqtypeid},\n` +
-        `        ${ttid.bytesize},\n` +
-        `        ${ttid.slotcount},\n` +
-        `        LayoutTag::Tagged,\n` +
-        `        BSQ_TYPEINFO_NO_ESLOT,\n` +
-        `        ${ttid.ptrmask !== undefined ? ('"' + ttid.ptrmask + '"') : "nullptr"},\n` +
-        `        "${tdecl.tkey}",\n` +
-        `        nullptr\n` +
-        `    };\n` +
-        `}`;
+            `        ${ttid.bsqtypeid},\n` +
+            `        ${ttid.bytesize},\n` +
+            `        ${ttid.slotcount},\n` +
+            `        LayoutTag::Tagged,\n` +
+            `        BSQ_TYPEINFO_NO_ESLOT,\n` +
+            `        ${ttid.ptrmask !== undefined ? ('"' + ttid.ptrmask + '"') : "nullptr"},\n` +
+            `        nullptr,\n` +
+            `        0,\n` +
+            `        nullptr,\n` +
+            `        0,\n` +
+            `        nullptr,\n` +
+            `        0,\n` +
+            `        "${tdecl.tkey}"\n` +
+            `    };\n` +
+            `}`;
     }
 
     private emitRegexInfos(cregexs: IRCRegex[], uregexs: IRURegex[]): [string, string] {

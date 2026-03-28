@@ -6,7 +6,7 @@ import { describe, it } from "node:test";
 describe ("CPPEmit -- entity is", () => {
     it("should emit postfix ? option", function () {
         checkTestEmitMainFunction("public function main(x: Option<Int>): Bool { return x?none; }", "Bool Mainᕒmain(OptionᐸIntᐳ x) { return x.isNone(); }");
-        checkTestEmitMainFunction("public function main(x: Option<Int>): Bool { return x?!none; }", "bbb");
+        checkTestEmitMainFunction("public function main(x: Option<Int>): Bool { return x?!none; }", "Bool Mainᕒmain(OptionᐸIntᐳ x) { return !x.isNone(); }");
 
         checkTestEmitMainFunction("public function main(x: Option<Int>): Bool { return x?some; }", "ccc");
         checkTestEmitMainFunction("public function main(x: Option<Int>): Bool { return x?!some; }", "ddd");
@@ -31,8 +31,8 @@ describe ("CPPEmit -- entity is", () => {
     });
     */
     it("should check postfix ? types", function () {
-        checkTestEmitMainFunction("concept Bar {} entity Foo provides Bar { field f: Int; } function main(x: Bar): Bool { return x?<Foo>; }", "ppp");
-        checkTestEmitMainFunction("concept Bar {} entity Foo provides Bar { field f: Int; } function main(x: Bar): Bool { return x?!<Foo>; }", "qqq");
+        checkTestEmitMainFunction("concept Bar {} entity Foo provides Bar { field f: Int; } public function main(x: Bar): Bool { return x?<Foo>; }", "Bool Mainᕒmain(MainᕒBar x) { return x.uval.isTypeOf(&ᐸRuntimeᐳ::g_typeinfo_MainᕒFoo); }");
+        checkTestEmitMainFunction("concept Bar {} entity Foo provides Bar { field f: Int; } public function main(x: Bar): Bool { return x?!<Foo>; }", "qqq");
     });
     /*
     it("should check postfix ? types fail", function () {

@@ -959,7 +959,7 @@ class IRAssembly {
     readonly formatcstrings: IRLiteralFormatCStringExpression[] = [];
     readonly formatstrings: IRLiteralFormatStringExpression[] = [];
 
-    readonly concretesubtypes: Map<string, IRTypeSignature[]> = new Map<string, IRTypeSignature[]>(); //
+    readonly concretesubtypes: Map<string, IRTypeSignature[]> = new Map<string, IRTypeSignature[]>();
     readonly concretesupertypes: Map<string, IRTypeSignature[]> = new Map<string, IRTypeSignature[]>();
 
     readonly typedeporder: IRTypeSignature[] = [];
