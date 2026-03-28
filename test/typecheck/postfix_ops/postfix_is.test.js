@@ -29,6 +29,8 @@ describe ("Checker -- entity is", () => {
     it("should check postfix ? types", function () {
         checkTestFunctionInFile("concept Bar {} entity Foo provides Bar { field f: Int; } function main(x: Bar): Bool { return x?<Foo>; }");
         checkTestFunctionInFile("concept Bar {} entity Foo provides Bar { field f: Int; } function main(x: Bar): Bool { return x?!<Foo>; }");
+
+        checkTestFunctionInFile("concept Bar {} concept Baz provides Bar {} entity Foo provides Baz { field f: Int; } public function main(x: Bar): Bool { return x?<Baz>; }");
     });
 
     it("should check postfix ? types fail", function () {
@@ -37,5 +39,7 @@ describe ("Checker -- entity is", () => {
 
         checkTestFunctionInFileError("concept Bar {} entity Foo provides Bar { field f: Int; } function main(x: Foo): Bool { return x?!<Foo>; }", "Test is never true");
         checkTestFunctionInFileError("concept Bar {} concept Baz {} entity Foo provides Bar { field f: Int; } function main(x: Baz): Bool { return x?<Foo>; }", "Test is never true");
+
+        checkTestFunctionInFileError("concept Bar {} concept Baz provides Bar {} entity Foo provides Baz { field f: Int; } public function main(x: Baz): Bool { return x?<Bar>; }", "Test is never false");
     });
 });

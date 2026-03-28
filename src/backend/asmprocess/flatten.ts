@@ -425,7 +425,7 @@ class ASMToIRConverter {
         return new IRNominalTypeSignature(tname);
     }
 
-    private processITest_None(src: TypeSignature, sexp: IRSimpleExpression, isnot: boolean): IRSimpleExpression {
+    private processITestCond_None(src: TypeSignature, sexp: IRSimpleExpression, isnot: boolean): IRSimpleExpression {
         const srctype = src as NominalTypeSignature;
 
         //!none === some
@@ -450,7 +450,7 @@ class ASMToIRConverter {
         }
     }
 
-    private processITest_Some(src: TypeSignature, sexp: IRSimpleExpression, isnot: boolean): IRSimpleExpression {
+    private processITestCond_Some(src: TypeSignature, sexp: IRSimpleExpression, isnot: boolean): IRSimpleExpression {
         const srctype = src as NominalTypeSignature;
 
         //!some === none
@@ -474,7 +474,7 @@ class ASMToIRConverter {
         }
     }
 
-    private processITest_Ok(src: TypeSignature, sexp: IRSimpleExpression, isnot: boolean): IRSimpleExpression {
+    private processITestCond_Ok(src: TypeSignature, sexp: IRSimpleExpression, isnot: boolean): IRSimpleExpression {
         //!ok === fail
         /*
         if(isnot) {
@@ -501,7 +501,7 @@ class ASMToIRConverter {
        assert(false, "Not implemented yet -- flatten ok/fail");
     }
 
-    private processITest_Fail(src: TypeSignature, sexp: IRSimpleExpression, isnot: boolean): IRSimpleExpression {
+    private processITestCond_Fail(src: TypeSignature, sexp: IRSimpleExpression, isnot: boolean): IRSimpleExpression {
         //!fail === ok
         /*
         if(isnot) {
@@ -528,18 +528,18 @@ class ASMToIRConverter {
        assert(false, "Not implemented yet -- flatten ok/fail");
     }
 
-    private processITest_Type(src: TypeSignature, sexp: IRSimpleExpression, oftype: TypeSignature, isnot: boolean): IRSimpleExpression {
+    private processITestCond_Type(src: TypeSignature, sexp: IRSimpleExpression, oftype: TypeSignature, isnot: boolean): IRSimpleExpression {
         if(oftype.tkeystr === "None") {
-            return this.processITest_None(src, sexp, isnot);
+            return this.processITestCond_None(src, sexp, isnot);
         }
         else if((oftype instanceof NominalTypeSignature) && (oftype.decl instanceof SomeTypeDecl)) {
-            return this.processITest_Some(src, sexp, isnot);
+            return this.processITestCond_Some(src, sexp, isnot);
         }
         else if((oftype instanceof NominalTypeSignature) && (oftype.decl instanceof OkTypeDecl)) {
-            return this.processITest_Ok(src, sexp, isnot);
+            return this.processITestCond_Ok(src, sexp, isnot);
         }
         else if((oftype instanceof NominalTypeSignature) && (oftype.decl instanceof FailTypeDecl)) {
-            return this.processITest_Fail(src, sexp, isnot);
+            return this.processITestCond_Fail(src, sexp, isnot);
         }
         else {
             if(!(oftype instanceof NominalTypeSignature) || !(oftype.decl instanceof AbstractConceptTypeDecl)) {
@@ -599,97 +599,219 @@ class ASMToIRConverter {
     
     private processITestAsBoolean(src: TypeSignature, sexp: IRSimpleExpression, tt: ITest): IRSimpleExpression {
         if(tt instanceof ITestType) {
-            return this.processITest_Type(src, sexp, this.tproc(tt.ttype), tt.isnot);
+            return this.processITestCond_Type(src, sexp, this.tproc(tt.ttype), tt.isnot);
         }
         else {
             if(tt instanceof ITestNone) {
-                return this.processITest_None(src, sexp, tt.isnot);
+                return this.processITestCond_None(src, sexp, tt.isnot);
             }
             else if(tt instanceof ITestSome) {
-                return this.processITest_Some(src, sexp, tt.isnot);
+                return this.processITestCond_Some(src, sexp, tt.isnot);
             }
             else if(tt instanceof ITestOk) {
-                return this.processITest_Ok(src, sexp, tt.isnot);
+                return this.processITestCond_Ok(src, sexp, tt.isnot);
             }
             else {
                 assert(tt instanceof ITestFail, "missing case in ITest");
-                return this.processITest_Fail(src, sexp, tt.isnot);
+                return this.processITestCond_Fail(src, sexp, tt.isnot);
             }
         }
     }
-/*
-    private processITestConvertLUB(sinfo: SourceInfo, opts: TypeSignature[], lubtype: TypeSignature): TypeSignature | undefined {
-        const flowlub = this.relations.flowTypeLUB(sinfo, lubtype, opts, this.constraints);
-        if(flowlub instanceof ErrorTypeSignature) {
-            return lubtype;
-        }
-        else {
-            return flowlub;
-        }
-    }
 
-    private processITestAsConvert(sinfo: SourceInfo, env: TypeEnvironment, src: TypeSignature, tt: ITest): { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined } {
-        if(tt instanceof ITestType) {
-            if(!this.checkTypeSignature(tt.ttype)) {
-                return { ttrue: undefined, tfalse: undefined };
+    private processITestConvert_None(src: TypeSignature, sexp: IRSimpleExpression, isnot: boolean): [IRSimpleExpression | undefined, IRSimpleExpression] {
+        const srctype = src as NominalTypeSignature;
+
+        //!none === some
+        if(isnot) {
+            //if srctype is none or Some<...> then we can constant fold, otherwise we need to generate a test
+            if(srctype.decl instanceof AbstractEntityTypeDecl) {
+                return new IRLiteralBoolExpression(srctype.tkeystr !== "None");
             }
             else {
-                const tres = this.processITest_Type(src, tt.ttype);
-                if(tt.isnot) {
-                    const ttrue = tres.tfalse.length !== 0 ? this.processITestConvertLUB(sinfo, tres.tfalse, src) : undefined; //negate takes the remain and lubs to the src
-                    const tfalse = tres.ttrue.length !== 0 ? tt.ttype : undefined; //overlap and passes as the user spec type -- does not matter now but short circuiting return will use this
+                return new IRIsNotNoneOptionExpression(sexp, this.processTypeSignature(srctype));
 
-                    return { ttrue: ttrue, tfalse: tfalse };
+            }
+        }
+        else {
+            //if srctype is none then we can constant fold, if it is Some<...> then we can constant fold, otherwise we need to generate a test
+            if(srctype.decl instanceof AbstractEntityTypeDecl) {
+                return new IRLiteralBoolExpression(srctype.tkeystr === "None");
+            }
+            else {
+                return new IRIsNoneOptionExpression(sexp, this.processTypeSignature(srctype));
+            }
+        }
+    }
+
+    private processITestConvert_Some(src: TypeSignature, sexp: IRSimpleExpression, isnot: boolean): [IRSimpleExpression | undefined, IRSimpleExpression] {
+        const srctype = src as NominalTypeSignature;
+
+        //!some === none
+        if(isnot) {
+            //if srctype is none or Some<...> then we can constant fold, otherwise we need to generate a test
+            if(srctype.decl instanceof AbstractEntityTypeDecl) {
+                return new IRLiteralBoolExpression(srctype.tkeystr === "None");
+            }
+            else {
+                return new IRIsNoneOptionExpression(sexp, this.processTypeSignature(srctype));
+            }
+        }
+        else {
+            //if srctype is none then we can constant fold, if it is Some<...> then we can constant fold, otherwise we need to generate a test
+            if(srctype.decl instanceof AbstractEntityTypeDecl) {
+                return new IRLiteralBoolExpression(srctype.tkeystr !== "None");
+            }
+            else {
+                return new IRIsNotNoneOptionExpression(sexp, this.processTypeSignature(srctype));
+            }
+        }
+    }
+
+    private processITestConvert_Ok(src: TypeSignature, sexp: IRSimpleExpression, isnot: boolean): [IRSimpleExpression | undefined, IRSimpleExpression] {
+        //!ok === fail
+        /*
+        if(isnot) {
+            const rinfo = this.relations.splitOnErr(src, this.constraints);
+            if(rinfo === undefined) {
+                this.reportError(src.sinfo, `Unable to err-split type ${src.emit()}`);
+                return { bindtrue: undefined, bindfalse: undefined };
+            }
+            else {
+                return { bindtrue: rinfo.overlapErrE, bindfalse: rinfo.remainOkT };
+            }
+        }
+        else {
+            const rinfo = this.relations.splitOnOk(src, this.constraints);
+            if(rinfo === undefined) {
+                this.reportError(src.sinfo, `Unable to nothing-split type ${src.emit()}`);
+                return { bindtrue: undefined, bindfalse: undefined };
+            }
+            else {
+                return { bindtrue: rinfo.overlapOkT, bindfalse: rinfo.remainErrE };
+            }
+        }
+        */
+       assert(false, "Not implemented yet -- flatten ok/fail");
+    }
+
+    private processITestConvert_Fail(src: TypeSignature, sexp: IRSimpleExpression, isnot: boolean): [IRSimpleExpression | undefined, IRSimpleExpression] {
+        //!fail === ok
+        /*
+        if(isnot) {
+            const rinfo = this.relations.splitOnOk(src, this.constraints);
+            if(rinfo === undefined) {
+                this.reportError(src.sinfo, `Unable to err-split type ${src.emit()}`);
+                return { bindtrue: undefined, bindfalse: undefined };
+            }
+            else {
+                return { bindtrue: rinfo.overlapOkT, bindfalse: rinfo.remainErrE };
+            }
+        }
+        else {
+            const rinfo = this.relations.splitOnErr(src, this.constraints);
+            if(rinfo === undefined) {
+                this.reportError(src.sinfo, `Unable to nothing-split type ${src.emit()}`);
+                return { bindtrue: undefined, bindfalse: undefined };
+            }
+            else {
+                return { bindtrue: rinfo.overlapErrE, bindfalse: rinfo.remainOkT };
+            }
+        }
+        */
+       assert(false, "Not implemented yet -- flatten ok/fail");
+    }
+
+    private processITestConvert_Type(src: TypeSignature, sexp: IRSimpleExpression, oftype: TypeSignature, isnot: boolean): [IRSimpleExpression | undefined, IRSimpleExpression] {
+        if(oftype.tkeystr === "None") {
+            return this.processITestConvert_None(src, sexp, isnot);
+        }
+        else if((oftype instanceof NominalTypeSignature) && (oftype.decl instanceof SomeTypeDecl)) {
+            return this.processITestConvert_Some(src, sexp, isnot);
+        }
+        else if((oftype instanceof NominalTypeSignature) && (oftype.decl instanceof OkTypeDecl)) {
+            return this.processITestConvert_Ok(src, sexp, isnot);
+        }
+        else if((oftype instanceof NominalTypeSignature) && (oftype.decl instanceof FailTypeDecl)) {
+            return this.processITestConvert_Fail(src, sexp, isnot);
+        }
+        else {
+            if(!(oftype instanceof NominalTypeSignature) || !(oftype.decl instanceof AbstractConceptTypeDecl)) {
+                //oftype is conrete entity or special concrete typesig
+
+                if(!(src instanceof NominalTypeSignature)) {
+                    //then this is is the special typesig types case and just depends on the names
+                    const aresame = (src.tkeystr === oftype.tkeystr);
+                    return new IRLiteralBoolExpression(isnot ? !aresame : aresame);
                 }
                 else {
-                    const ttrue = tres.ttrue.length !== 0 ? tt.ttype : undefined; //always cast to what the user asked for
-                    const tfalse = tres.tfalse.length !== 0 ? this.processITestConvertLUB(sinfo, tres.tfalse, src) : undefined; //cast to the LUB of the remaining types (with src as a default option)
+                    if(src.decl instanceof AbstractEntityTypeDecl) {
+                        //then just depends on the names at compile time
+                        const aresame = (src.tkeystr === oftype.tkeystr);
+                        return new IRLiteralBoolExpression(isnot ? !aresame : aresame);
+                    }
+                    else {
+                        //Handle concrete oftype and abstract arg
+                        if(isnot) {
+                            // Handle negation of type test for non-abstract concept types
+                            return new IRIsNotConceptRepresentationOfTypeExpression(sexp, this.processTypeSignature(src), this.processTypeSignature(oftype));
+                        }
+                        else {
+                            // Handle type test for non-abstract concept types
+                            return new IRIsConceptRepresentationOfTypeExpression(sexp, this.processTypeSignature(src), this.processTypeSignature(oftype));
+                        }
+                    }
+                }
+            }
+            else {
+                //oftype is concept
 
-                    return { ttrue: ttrue, tfalse: tfalse };
+                if(!(src instanceof NominalTypeSignature)) {
+                    //then this is is the special typesig types case -- special typesigs can never be of concept types!
+                    return new IRLiteralBoolExpression(isnot);
+                }
+                else {
+                    if(src.decl instanceof AbstractEntityTypeDecl) {
+                        //emit subtype test but it is static since we know the concrete type at compile time
+                        return new IRStaticIsTypeSubtypeOfExpression(this.processTypeSignature(src), this.processTypeSignature(oftype), isnot);
+                    }
+                    else {
+                        //handle abstract oftype and abstract arg
+                        if(isnot) {
+                            // Handle negation of type test for abstract concept types
+                            return new IRIsNotConceptRepresentationSubtypeOfTypeExpression(sexp, this.processTypeSignature(src), this.processTypeSignature(oftype));
+                        }
+                        else {
+                            // Handle type test for abstract concept types
+                            return new IRIsConceptRepresentationSubtypeOfTypeExpression(sexp, this.processTypeSignature(src), this.processTypeSignature(oftype));
+                        }
+                    }
                 }
             }
         }
+    }
+
+    //Return 2 expressions -- the first is the boolean test (or undefined if always true) and the second is the expression to convert to the type (assuming the test is true)
+    private processITestAsConvert(src: TypeSignature, sexp: IRSimpleExpression, tt: ITest): [IRSimpleExpression | undefined, IRSimpleExpression] {
+        if(tt instanceof ITestType) {
+            return this.processITestConvert_Type(src, sexp, this.tproc(tt.ttype), tt.isnot);
+        }
         else {
             if(tt instanceof ITestNone) {
-                const tres = this.processITest_None(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
+                return this.processITestConvert_None(src, sexp, tt.isnot);
             }
             else if(tt instanceof ITestSome) {
-                const tres = this.processITest_Some(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
+                return this.processITestConvert_Some(src, sexp, tt.isnot);
             }
             else if(tt instanceof ITestOk) {
-                const tres = this.processITest_Ok(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
-            }
-            else if(tt instanceof ITestError) {
-                const tres = this.processITest_Error(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
-            }
-            else if(tt instanceof ITestRejected) {
-                const tres = this.processITest_Rejected(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
-            }
-            else if(tt instanceof ITestDenied) {
-                const tres = this.processITest_Denied(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
-            }
-            else if(tt instanceof ITestFlagged) {
-                const tres = this.processITest_Flagged(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
-            }
-            else if(tt instanceof ITestSuccess) {
-                const tres = this.processITest_Success(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
+                return this.processITestConvert_Ok(src, sexp, tt.isnot);
             }
             else {
                 assert(tt instanceof ITestFail, "missing case in ITest");
-                const tres = this.processITest_Err(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
+                return this.processITestConvert_Fail(src, sexp, tt.isnot);
             }
         }
     }
-    */
+
     private flattenITestGuardExpression(exp: Expression): IRSimpleExpression {
         switch (exp.tag) {
             case ExpressionTag.CallRefVariableExpression: {
@@ -911,7 +1033,7 @@ class ASMToIRConverter {
     }
 
     private flattenPostfixAsConvert(exp: PostfixAsConvert, rootexp: IRSimpleExpression, roottype: TypeSignature): IRExpression {
-        assert(false, "ASMToIRConverter::flattenPostfixAsConvert - Not Implemented");
+        return this.processITestAsConvert(roottype, rootexp, exp.ttest);
     }
 
     private flattenPostfixAssignFields(exp: PostfixAssignFields, rootexp: IRSimpleExpression, roottype: TypeSignature): IRExpression {
