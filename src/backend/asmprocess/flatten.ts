@@ -618,32 +618,47 @@ class ASMToIRConverter {
         }
     }
 
-    private processITestConvert_None(src: TypeSignature, sexp: IRSimpleExpression, isnot: boolean): [IRSimpleExpression | undefined, IRSimpleExpression] {
+    private processITestConvert_None(src: TypeSignature, sexp: IRSimpleExpression, isnot: boolean): [IRSimpleExpression | undefined, IRSimpleExpression | undefined] {
         const srctype = src as NominalTypeSignature;
 
         //!none === some
         if(isnot) {
             //if srctype is none or Some<...> then we can constant fold, otherwise we need to generate a test
             if(srctype.decl instanceof AbstractEntityTypeDecl) {
-                return new IRLiteralBoolExpression(srctype.tkeystr !== "None");
+                if(srctype.tkeystr !== "None") {
+                    return [undefined, sexp];
+                }
+                else {
+                    return [new IRLiteralBoolExpression(false), undefined];
+                }
             }
             else {
-                return new IRIsNotNoneOptionExpression(sexp, this.processTypeSignature(srctype));
-
+                const testop = new IRIsNotNoneOptionExpression(sexp, this.processTypeSignature(srctype));
+                const convop = xxxx;
+                
+                return [testop, convop];
             }
         }
         else {
             //if srctype is none then we can constant fold, if it is Some<...> then we can constant fold, otherwise we need to generate a test
             if(srctype.decl instanceof AbstractEntityTypeDecl) {
+                if(srctype.tkeystr === "None") {
+                }
+                else {
+
+                }
                 return new IRLiteralBoolExpression(srctype.tkeystr === "None");
             }
             else {
+                const testop = xxxx;
+                const convop = xxxx;
+
                 return new IRIsNoneOptionExpression(sexp, this.processTypeSignature(srctype));
             }
         }
     }
 
-    private processITestConvert_Some(src: TypeSignature, sexp: IRSimpleExpression, isnot: boolean): [IRSimpleExpression | undefined, IRSimpleExpression] {
+    private processITestConvert_Some(src: TypeSignature, sexp: IRSimpleExpression, isnot: boolean): [IRSimpleExpression | undefined, IRSimpleExpression | undefined] {
         const srctype = src as NominalTypeSignature;
 
         //!some === none
@@ -667,7 +682,7 @@ class ASMToIRConverter {
         }
     }
 
-    private processITestConvert_Ok(src: TypeSignature, sexp: IRSimpleExpression, isnot: boolean): [IRSimpleExpression | undefined, IRSimpleExpression] {
+    private processITestConvert_Ok(src: TypeSignature, sexp: IRSimpleExpression, isnot: boolean): [IRSimpleExpression | undefined, IRSimpleExpression | undefined] {
         //!ok === fail
         /*
         if(isnot) {
@@ -694,7 +709,7 @@ class ASMToIRConverter {
        assert(false, "Not implemented yet -- flatten ok/fail");
     }
 
-    private processITestConvert_Fail(src: TypeSignature, sexp: IRSimpleExpression, isnot: boolean): [IRSimpleExpression | undefined, IRSimpleExpression] {
+    private processITestConvert_Fail(src: TypeSignature, sexp: IRSimpleExpression, isnot: boolean): [IRSimpleExpression | undefined, IRSimpleExpression | undefined] {
         //!fail === ok
         /*
         if(isnot) {
@@ -721,7 +736,7 @@ class ASMToIRConverter {
        assert(false, "Not implemented yet -- flatten ok/fail");
     }
 
-    private processITestConvert_Type(src: TypeSignature, sexp: IRSimpleExpression, oftype: TypeSignature, isnot: boolean): [IRSimpleExpression | undefined, IRSimpleExpression] {
+    private processITestConvert_Type(src: TypeSignature, sexp: IRSimpleExpression, oftype: TypeSignature, isnot: boolean): [IRSimpleExpression | undefined, IRSimpleExpression | undefined] {
         if(oftype.tkeystr === "None") {
             return this.processITestConvert_None(src, sexp, isnot);
         }
@@ -790,8 +805,8 @@ class ASMToIRConverter {
         }
     }
 
-    //Return 2 expressions -- the first is the boolean test (or undefined if always true) and the second is the expression to convert to the type (assuming the test is true)
-    private processITestAsConvert(src: TypeSignature, sexp: IRSimpleExpression, tt: ITest): [IRSimpleExpression | undefined, IRSimpleExpression] {
+    //Return 2 expressions -- the first is the boolean test (or undefined if always true) and the second is the expression to convert to the type (assuming the test is true) and undefined if the test is known to always be false
+    private processITestAsConvert(src: TypeSignature, sexp: IRSimpleExpression, tt: ITest): [IRSimpleExpression | undefined, IRSimpleExpression | undefined] {
         if(tt instanceof ITestType) {
             return this.processITestConvert_Type(src, sexp, this.tproc(tt.ttype), tt.isnot);
         }
