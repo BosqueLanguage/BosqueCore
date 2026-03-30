@@ -21,4 +21,10 @@ describe ("CPPEmit -- entity is", () => {
 
         checkTestEmitMainFunction("concept Bar {} concept Baz provides Bar {} entity Foo provides Baz { field f: Int; } public function main(x: Bar): Bool { return x?<Baz>; }", "Bool Mainᕒmain(MainᕒBar x) { return x.uval.isSubtypeOf(&ᐸRuntimeᐳ::g_typeinfo_MainᕒBaz); }");
     });
+
+    it.skip("should check postfix ? types ADT", function () {
+    });
+
+    it.skip("should check postfix ? types ADT fail", function () {
+    });
 });
