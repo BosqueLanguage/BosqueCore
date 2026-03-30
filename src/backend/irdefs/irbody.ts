@@ -294,6 +294,7 @@ enum IRStatementTag {
     IRErrorSubtractionBoundsCheckStatement = "IRErrorSubtractionBoundsCheckStatement",
     IRErrorMultiplicationBoundsCheckStatement = "IRErrorMultiplicationBoundsCheckStatement",
     IRErrorDivisionByZeroCheckStatement = "IRErrorDivisionByZeroCheckStatement",
+    IRErrorTypeAssertionCheckStatement = "IRErrorTypeAssertionCheckStatement",
 
     IRTypeDeclSizeRangeCheckCStringStatement = "IRTypeDeclSizeRangeCheckCStringStatement",
     IRTypeDeclSizeRangeCheckUnicodeStringStatement = "IRTypeDeclSizeRangeCheckUnicodeStringStatement",
@@ -2054,6 +2055,15 @@ class IRErrorDivisionByZeroCheckStatement extends IRErrorBinArithCheckStatement 
     }
 }
 
+class IRErrorTypeAssertionCheckStatement extends IRErrorCheckStatement {
+    readonly typeok: IRSimpleExpression;
+
+    constructor(file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number, typeok: IRSimpleExpression) {
+        super(IRStatementTag.IRErrorTypeAssertionCheckStatement, file, sinfo, diagnosticTag, checkID);
+        this.typeok = typeok;
+    }
+}
+
 class IRTypeDeclSizeRangeCheckCStringStatement extends IRErrorTypedStringCheckStatement {
     readonly min: string | undefined;
     readonly max: string | undefined;
@@ -2318,6 +2328,7 @@ export {
     IRSimpleIfStatement, IRSimpleIfElseStatement, IRSimpleIfElifElseStatement,
 
     IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement,
+    IRErrorTypeAssertionCheckStatement,
     IRErrorTypedStringCheckStatement, IRTypeDeclSizeRangeCheckCStringStatement, IRTypeDeclSizeRangeCheckUnicodeStringStatement, IRTypeDeclFormatCheckCStringStatement, IRTypeDeclFormatCheckUnicodeStringStatement,
 
     IRTypeDeclInvariantCheckStatement, IREntityInvariantCheckStatement,
