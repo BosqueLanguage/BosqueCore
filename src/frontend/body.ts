@@ -1301,6 +1301,7 @@ class PostfixIsTest extends PostfixOperation {
 
 class PostfixAsConvert extends PostfixOperation {
     readonly ttest: ITest;
+    alwaysSucceeds: boolean = false;
 
     constructor(sinfo: SourceInfo, ttest: ITest) {
         super(sinfo, PostfixOpTag.PostfixAsConvert);

@@ -2531,7 +2531,9 @@ class TypeChecker {
     private checkPostfixAsConvert(env: TypeEnvironment, exp: PostfixAsConvert, rcvrtype: TypeSignature): TypeSignature {
         const splits = this.processITestAsConvert(exp.sinfo, env, rcvrtype, exp.ttest);
         this.checkError(exp.sinfo, splits.ttrue === undefined, "Convert always fails");
+
         //if always true then this is an upcast and OK!
+        exp.alwaysSucceeds = splits.tfalse === undefined;
 
         return exp.setType(splits.ttrue || new ErrorTypeSignature(exp.sinfo, undefined));
     }

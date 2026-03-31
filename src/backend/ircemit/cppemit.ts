@@ -557,11 +557,8 @@ class CPPEmitter {
                 const member = TransformCPPNameManager.generateNameForUnionMember(ubexp.totype.tkeystr)
                 bstr = `${this.emitIRSimpleExpression(ubexp.value, false)}.uval.data.${member}`;
             }
-            else if(ttag === IRExpressionTag.IRWidenConceptRepresentationExpression) {
-                assert(false, "CPPEmitter: need to implement widen concept representation expression");
-            }
-            else if(ttag === IRExpressionTag.IRNarrowConceptRepresentationExpression) {
-                assert(false, "CPPEmitter: need to implement narrow concept representation expression");
+            else if(ttag === IRExpressionTag.IRConvertConceptRepresentationExpression) {
+                assert(false, "CPPEmitter: need to implement convert concept representation expression");
             }
             else if(ttag === IRExpressionTag.IRConstructorListEmptyExpression) {
                 const elcexp = exps as IRConstructorListEmptyExpression;

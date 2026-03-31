@@ -18,13 +18,13 @@ describe ("CPPEmit -- entity as", () => {
     });
 
     it("should emit postfix @ types", function () {
-        checkTestEmitMainFunction("concept Bar {} entity Foo provides Bar { field f: Int; } public function main(x: Bar): Foo { return x@<Foo>; }", 'aaa');
-        checkTestEmitMainFunction("concept Bar {} entity Foo provides Bar { field f: Int; } public function main(x: Bar): Bar { return x@!<Foo>; }", 'bbb');
+        checkTestEmitMainFunction("concept Bar {} entity Foo provides Bar { field f: Int; } public function main(x: Bar): Foo { return x@<Foo>; }", 'MainᕒFoo Mainᕒmain(MainᕒBar x) { ᐸRuntimeᐳ::bsq_typeassert((bool)(x.uval.isTypeOf(&ᐸRuntimeᐳ::g_typeinfo_MainᕒFoo)), "test.bsq", 2, "Type assertion failed", "Type assertion failed"); return x.uval.data.u_MainᕒFoo; }');
+        checkTestEmitMainFunction("concept Bar {} entity Foo provides Bar { field f: Int; } public function main(x: Bar): Bar { return x@!<Foo>; }", 'MainᕒBar Mainᕒmain(MainᕒBar x) { ᐸRuntimeᐳ::bsq_typeassert((bool)(x.uval.isNotTypeOf(&ᐸRuntimeᐳ::g_typeinfo_MainᕒFoo)), "test.bsq", 2, "Type assertion failed", "Type assertion failed"); return x; }');
 
-        checkTestEmitMainFunction("concept Bar {} entity Foo provides Bar { field f: Int; } public function main(x: Foo): Foo { return x@<Foo>; }", 'ccc');
-        checkTestEmitMainFunction("concept Bar {} entity Foo provides Bar { field f: Int; } public function main(x: Foo): Bar { return x@<Bar>; }", 'ddd');
+        checkTestEmitMainFunction("concept Bar {} entity Foo provides Bar { field f: Int; } public function main(x: Foo): Foo { return x@<Foo>; }", 'MainᕒFoo Mainᕒmain(MainᕒFoo x) { return x; }');
+        checkTestEmitMainFunction("concept Bar {} entity Foo provides Bar { field f: Int; } public function main(x: Foo): Bar { return x@<Bar>; }", 'MainᕒBar Mainᕒmain(MainᕒFoo x) { return MainᕒBar(x); }');
 
-        checkTestEmitMainFunction("concept Bar {} concept Baz {} entity Foo provides Bar { field f: Int; } public function main(x: Baz): Baz { return x@!<Foo>; }", 'eee');
+        checkTestEmitMainFunction("concept Bar {} concept Baz {} entity Foo provides Bar { field f: Int; } public function main(x: Baz): Baz { return x@!<Foo>; }", 'MainᕒBaz Mainᕒmain(MainᕒBaz x) { return x; }');
         checkTestEmitMainFunction("concept Bar {} concept Baz {} entity Foo provides Bar { field f: Int; } public function main(x: Baz): Bar { return x@<Bar>; }", 'fff');
 
         checkTestEmitMainFunction("concept Bar {} entity Foo provides Bar { field f: Int; } public function main(x: Bar): Foo { return x@<Foo>; }", 'ppp');

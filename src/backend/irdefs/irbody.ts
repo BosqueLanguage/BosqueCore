@@ -148,8 +148,7 @@ enum IRExpressionTag {
 
     IRBoxEntityToConceptRepresentationExpression = "IRBoxEntityToConceptRepresentationExpression",
     IRUnboxEntityFromConceptRepresentationExpression = "IRUnboxEntityFromConceptRepresentationExpression",
-    IRWidenConceptRepresentationExpression = "IRWidenConceptRepresentationExpression",
-    IRNarrowConceptRepresentationExpression = "IRNarrowConceptRepresentationExpression"
+    IRConvertConceptRepresentationExpression = "IRConvertConceptRepresentationExpression"
 }
 
 abstract class IRExpression {
@@ -1608,26 +1607,13 @@ class IRUnboxEntityFromConceptRepresentationExpression extends IRSimpleExpressio
     }
 }
 
-class IRWidenConceptRepresentationExpression extends IRSimpleExpression {
+class IRConvertConceptRepresentationExpression extends IRSimpleExpression {
     readonly fromtype: IRTypeSignature;
     readonly totype: IRTypeSignature;
     readonly value: IRSimpleExpression;
 
     constructor(fromtype: IRTypeSignature, totype: IRTypeSignature, value: IRSimpleExpression) {
-        super(IRExpressionTag.IRWidenConceptRepresentationExpression);
-        this.fromtype = fromtype;
-        this.totype = totype;
-        this.value = value;
-    }
-}
-
-class IRNarrowConceptRepresentationExpression extends IRSimpleExpression {
-    readonly fromtype: IRTypeSignature;
-    readonly totype: IRTypeSignature;
-    readonly value: IRSimpleExpression;
-
-    constructor(fromtype: IRTypeSignature, totype: IRTypeSignature, value: IRSimpleExpression) {
-        super(IRExpressionTag.IRNarrowConceptRepresentationExpression);
+        super(IRExpressionTag.IRConvertConceptRepresentationExpression);
         this.fromtype = fromtype;
         this.totype = totype;
         this.value = value;
@@ -2305,7 +2291,7 @@ export {
     IRLiteralOptionOfNoneExpression, IRConstructOptionFromSomeExpression, IRExtractSomeFromOptionExpression, IRExtractSomeValueFromOptionExpression,
     IRConstructResultFromOkExpression, IRConstructResultFromFailExpression, IRExtractOkFromResultExpression, IRExtractOkValueFromResultExpression, IRExtractFailFromResultExpression, IRExtractFailValueFromResultExpression,
     IRConceptRepresentationOfTypeExpression, IRIsConceptRepresentationOfTypeExpression, IRIsNotConceptRepresentationOfTypeExpression, IRIsConceptRepresentationSubtypeOfTypeExpression, IRIsNotConceptRepresentationSubtypeOfTypeExpression, IRStaticIsTypeSubtypeOfExpression,
-    IRBoxEntityToConceptRepresentationExpression, IRUnboxEntityFromConceptRepresentationExpression, IRWidenConceptRepresentationExpression, IRNarrowConceptRepresentationExpression,
+    IRBoxEntityToConceptRepresentationExpression, IRUnboxEntityFromConceptRepresentationExpression, IRConvertConceptRepresentationExpression,
 
     IRStatementTag, IRStatement, IRAtomicStatement, IRReturnSimpleStatement, IRReturnWithImplicitStatement,
     IRErrorCheckStatement, IRErrorBinArithCheckStatement,
