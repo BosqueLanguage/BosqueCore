@@ -87,13 +87,10 @@ namespace ᐸRuntimeᐳ
     public:
         const TypeInfo* typeinfo;
         U data;
-
-    private:
         static_assert(std::is_union_v<U>, "BoxedUnion requires a union type U");
-        constexpr BoxedUnion(const TypeInfo* ti) : typeinfo(ti), data() {}
-
-    public:
+        
         constexpr BoxedUnion() : typeinfo(nullptr), data() {};
+        constexpr BoxedUnion(const TypeInfo* ti) : typeinfo(ti), data() {}
         constexpr BoxedUnion(const TypeInfo* ti, const U& d) : typeinfo(ti), data(d) {}
         constexpr BoxedUnion(const BoxedUnion& other) = default;
         
@@ -102,8 +99,8 @@ namespace ᐸRuntimeᐳ
         constexpr XBool isTypeOf(const TypeInfo* ti) const { return XBool::from(this->typeinfo == ti); }
         constexpr XBool isNotTypeOf(const TypeInfo* ti) const { return XBool::from(this->typeinfo != ti); }
 
-        constexpr XBool isSubTypeOf(const TypeInfo* ti) const { return isSubtypeOf(this->typeinfo, ti); }
-        constexpr XBool isNotSubTypeOf(const TypeInfo* ti) const { return isNotSubtypeOf(this->typeinfo, ti); }
+        constexpr XBool isSubtypeOf(const TypeInfo* ti) const { return ᐸRuntimeᐳ::isSubtypeOf(this->typeinfo, ti); }
+        constexpr XBool isNotSubtypeOf(const TypeInfo* ti) const { return ᐸRuntimeᐳ::isNotSubtypeOf(this->typeinfo, ti); }
 
         template<typename V>
         BoxedUnion<V> convert() const 

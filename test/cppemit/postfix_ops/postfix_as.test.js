@@ -25,12 +25,15 @@ describe ("CPPEmit -- entity as", () => {
         checkTestEmitMainFunction("concept Bar {} entity Foo provides Bar { field f: Int; } public function main(x: Foo): Bar { return x@<Bar>; }", 'MainᕒBar Mainᕒmain(MainᕒFoo x) { return MainᕒBar(x); }');
 
         checkTestEmitMainFunction("concept Bar {} concept Baz {} entity Foo provides Bar { field f: Int; } public function main(x: Baz): Baz { return x@!<Foo>; }", 'MainᕒBaz Mainᕒmain(MainᕒBaz x) { return x; }');
-        checkTestEmitMainFunction("concept Bar {} concept Baz {} entity Foo provides Bar { field f: Int; } public function main(x: Baz): Bar { return x@<Bar>; }", 'fff');
+        
+        checkTestEmitMainFunction("concept Bar {} concept Baz {} entity Foo provides Bar { field f: Int; } public function main(x: Baz): Bar { return x@<Bar>; }", 'MainᕒBar Mainᕒmain(MainᕒBaz x) { ᐸRuntimeᐳ::bsq_typeassert((bool)(x.uval.isSubtypeOf(&ᐸRuntimeᐳ::g_typeinfo_MainᕒBar)), "test.bsq", 2, "Type assertion failed", "Type assertion failed"); return x.convert<MainᕒBar, MainᕒBarᐤUnion>(); }');
+        checkTestEmitMainFunction("concept Bar {} concept Baz {} entity Foo provides Bar, Baz { field f: Int; } public function main(x: Baz): Bar { return x@<Bar>; }", 'MainᕒBar Mainᕒmain(MainᕒBaz x) { ᐸRuntimeᐳ::bsq_typeassert((bool)(x.uval.isSubtypeOf(&ᐸRuntimeᐳ::g_typeinfo_MainᕒBar)), "test.bsq", 2, "Type assertion failed", "Type assertion failed"); return x.convert<MainᕒBar, MainᕒBarᐤUnion>(); }');
+        
+        checkTestEmitMainFunction("concept Bar {} concept Baz provides Bar {} entity Foo provides Baz { field f: Int; } public function main(x: Bar): Baz { return x@<Baz>; }", 'MainᕒBaz Mainᕒmain(MainᕒBar x) { ᐸRuntimeᐳ::bsq_typeassert((bool)(x.uval.isSubtypeOf(&ᐸRuntimeᐳ::g_typeinfo_MainᕒBaz)), "test.bsq", 2, "Type assertion failed", "Type assertion failed"); return x.convert<MainᕒBaz, MainᕒBazᐤUnion>(); }');
+        checkTestEmitMainFunction("concept Bar {} concept Baz provides Bar {} entity Foo provides Baz { field f: Int; } public function main(x: Baz): Bar { return x@<Bar>; }", 'MainᕒBar Mainᕒmain(MainᕒBaz x) { return x.convert<MainᕒBar, MainᕒBarᐤUnion>(); }');
 
-        checkTestEmitMainFunction("concept Bar {} entity Foo provides Bar { field f: Int; } public function main(x: Bar): Foo { return x@<Foo>; }", 'ppp');
-        checkTestEmitMainFunction("concept Bar {} entity Foo provides Bar { field f: Int; } public function main(x: Bar): Bar { return x@!<Foo>; }", 'qqq');
-
-        checkTestEmitMainFunction("concept Bar {} concept Baz provides Bar {} entity Foo provides Baz { field f: Int; } public function main(x: Bar): Baz { return x@<Baz>; }", 'rrr');
+        checkTestEmitMainFunction("concept Bar {} entity Foo provides Bar { field f: Int; } public function main(x: Bar): Foo { return x@<Foo>; }", 'MainᕒFoo Mainᕒmain(MainᕒBar x) { ᐸRuntimeᐳ::bsq_typeassert((bool)(x.uval.isTypeOf(&ᐸRuntimeᐳ::g_typeinfo_MainᕒFoo)), "test.bsq", 2, "Type assertion failed", "Type assertion failed"); return x.uval.data.u_MainᕒFoo; }');
+        checkTestEmitMainFunction("concept Bar {} entity Foo provides Bar { field f: Int; } public function main(x: Bar): Bar { return x@!<Foo>; }", 'MainᕒBar Mainᕒmain(MainᕒBar x) { ᐸRuntimeᐳ::bsq_typeassert((bool)(x.uval.isNotTypeOf(&ᐸRuntimeᐳ::g_typeinfo_MainᕒFoo)), "test.bsq", 2, "Type assertion failed", "Type assertion failed"); return x; }');
     });
 
     it.skip("should check postfix @ types ADT", function () {
