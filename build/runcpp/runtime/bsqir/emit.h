@@ -184,6 +184,8 @@ namespace ᐸRuntimeᐳ
         //
 
         std::list<uint8_t*>&& completeEmit(size_t& bytes);
+
+        void debug_emit(const std::function<void()>& emitter);
     };
 
     class JSONEmitter

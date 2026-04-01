@@ -198,4 +198,21 @@ namespace ᐸRuntimeᐳ
     {
         return this->bufferMgr.completeEmit(bytes);
     }
+
+    void BSQONEmitter::debug_emit(const std::function<void()>& emitter)
+    {
+        size_t obytes = 0;
+        this->prepForEmit(true);
+        emitter();
+        auto oibb = this->completeEmit(obytes);
+
+        //TODO assume chars are all printable for now
+        for(size_t i = 0; i < obytes; i++) {
+            printf("%c", static_cast<char>(oibb.front()[i]));
+        }
+        printf("\n");
+
+        ᐸRuntimeᐳ::g_alloc_info.io_buffer_free_list(oibb);
+        oibb.clear();
+    }
 }

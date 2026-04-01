@@ -25,7 +25,7 @@
         "test-parser": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/parser/*/*.test.js",
         "test-typecheck": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/typecheck/*/*.test.js",
         "test-cppemit": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/cppemit/*/*.test.js",
-        "test-cpprun": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/cpprun/*/*.test.js"
+        "test-cpprun": "node ./build/build_all.js && node --test-concurrency=16 --test ./test/cpprun/*/*.test.js"
     },
     "files": [
         "bin/*"

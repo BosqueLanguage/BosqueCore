@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, AgentDecl, APIDecl, APIDeniedTypeDecl, APIErrorTypeDecl, APIFlaggedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, ExplicitInvokeDecl, FailTypeDecl, InvariantDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskActionDecl, TaskConfiguration, TaskDecl, TaskMethodDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl } from "../../frontend/assembly.js";
 import { InvokeInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiations.js";
 import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, AbstractArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, HoleBodyImplementation, HoleExpression, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixSliceOperator, PostfixOp, PostfixOpTag, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement, StdArgumentValue, InterpolateFormatExpression } from "../../frontend/body.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, AbstractArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, HoleBodyImplementation, HoleExpression, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixSliceOperator, PostfixOp, PostfixOpTag, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement, StdArgumentValue, InterpolateFormatExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixProjectFromNames, ITest, ITestType } from "../../frontend/body.js";
 import { SourceInfo } from "../../frontend/build_decls.js";
 
 class PendingNamespaceFunction {
@@ -253,7 +253,6 @@ class Monomorphizer {
         }
     }
 
-/*
     private processITestAsBoolean(src: TypeSignature, tt: ITest) {
         this.instantiateTypeSignature(src, this.currentMapping);
         
@@ -275,7 +274,6 @@ class Monomorphizer {
             ; //any needed instantiations will happen in the specific type processing (e.g. Option<T> will also force processing Some<T> and None)
         }
     }
-*/
 
     private instantiateITestGuardExpression(exp: Expression) {
         switch (exp.tag) {
@@ -583,18 +581,24 @@ class Monomorphizer {
         }
     }
 
+    private instantiatePostfixAccessFromName(exp: PostfixAccessFromName) {
+        this.instantiateTypeSignature(exp.declaredInType as TypeSignature, this.currentMapping);
+    }
+
+    private instantiatePostfixProjectFromNames(exp: PostfixProjectFromNames) {
+        assert(false, "Not Implemented -- instantiatePostfixProjectFromNames");
+    }
+
+    private instantiatePostfixAccessFromIndex(exp: PostfixAccessFromIndex) {
+        //no need to do anything extra here
+    }
+
     private instantiatePostfixIsTest(exp: PostfixIsTest) {
-        /*
         this.processITestAsBoolean(exp.getRcvrType(), exp.ttest);
-        */
-        assert(false, "Not Implemented -- instantiatePostfixIsTest");
     }
 
     private instantiatePostfixAsConvert(exp: PostfixAsConvert) {
-        /*
         this.processITestAsConvert(exp.getRcvrType(), exp.ttest);
-        */
-        assert(false, "Not Implemented -- instantiatePostfixAsConvert");
     }
 
     private instantiatePostfixAssignFields(exp: PostfixAssignFields) {
@@ -660,6 +664,18 @@ class Monomorphizer {
             this.instantiateTypeSignature(op.getRcvrType(), this.currentMapping);
 
             switch(op.tag) {
+                case PostfixOpTag.PostfixAccessFromName: {
+                    this.instantiatePostfixAccessFromName(op as PostfixAccessFromName);
+                    break;
+                }
+                case PostfixOpTag.PostfixProjectFromNames: {
+                    this.instantiatePostfixProjectFromNames(op as PostfixProjectFromNames);
+                    break;
+                }
+                case PostfixOpTag.PostfixAccessFromIndex: {
+                    this.instantiatePostfixAccessFromIndex(op as PostfixAccessFromIndex);
+                    break;
+                }
                 case PostfixOpTag.PostfixIsTest: {
                     this.instantiatePostfixIsTest(op as PostfixIsTest);
                     break;
@@ -681,7 +697,7 @@ class Monomorphizer {
                     break;
                 }
                 default: {
-                    break; //instantiation handled by standard type signature instantiation
+                    assert(false, "Unknown PostfixOpTag -- " + op.tag);
                 }
             }
         }

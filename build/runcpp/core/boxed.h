@@ -7,6 +7,18 @@
 
 namespace ᐸRuntimeᐳ
 {
+    constexpr XBool isSubtypeOf(const TypeInfo* etype, const TypeInfo* oftype)
+    {
+        auto ii = std::find(etype->supertypes, etype->supertypes + etype->supertypescount, oftype->bsqtypeid);
+        return XBool::from(ii != (etype->supertypes + etype->supertypescount));
+    }
+
+    constexpr XBool isNotSubtypeOf(const TypeInfo* etype, const TypeInfo* oftype)
+    {
+        auto ii = std::find(etype->supertypes, etype->supertypes + etype->supertypescount, oftype->bsqtypeid);
+        return XBool::from(ii == (etype->supertypes + etype->supertypescount));
+    }
+
     using XNone = uint64_t;
     constexpr XNone xnone = 0ull;
 
@@ -75,17 +87,20 @@ namespace ᐸRuntimeᐳ
     public:
         const TypeInfo* typeinfo;
         U data;
-
-    private:
         static_assert(std::is_union_v<U>, "BoxedUnion requires a union type U");
-        constexpr BoxedUnion(const TypeInfo* ti) : typeinfo(ti), data() {}
-
-    public:
+        
         constexpr BoxedUnion() : typeinfo(nullptr), data() {};
+        constexpr BoxedUnion(const TypeInfo* ti) : typeinfo(ti), data() {}
         constexpr BoxedUnion(const TypeInfo* ti, const U& d) : typeinfo(ti), data(d) {}
         constexpr BoxedUnion(const BoxedUnion& other) = default;
         
         // Note -- inject and extract are generated for each use based on the generation union type (see strings for example)
+
+        constexpr XBool isTypeOf(const TypeInfo* ti) const { return XBool::from(this->typeinfo == ti); }
+        constexpr XBool isNotTypeOf(const TypeInfo* ti) const { return XBool::from(this->typeinfo != ti); }
+
+        constexpr XBool isSubtypeOf(const TypeInfo* ti) const { return ᐸRuntimeᐳ::isSubtypeOf(this->typeinfo, ti); }
+        constexpr XBool isNotSubtypeOf(const TypeInfo* ti) const { return ᐸRuntimeᐳ::isNotSubtypeOf(this->typeinfo, ti); }
 
         template<typename V>
         BoxedUnion<V> convert() const 
@@ -104,13 +119,13 @@ namespace ᐸRuntimeᐳ
         {
             if(this->typeinfo->tag != LayoutTag::Ref) {
                 //not a pointer, just load the slot index as T
-                return *(reinterpret_cast<const T*>(reinterpret_cast<const uint64_t*>(&this->data) + idx));
+                return *(reinterpret_cast<const T*>(reinterpret_cast<uint64_t*>(const_cast<U*>(&this->data)) + idx));
             }
             else {
                 assert(this->typeinfo->tag == LayoutTag::Ref);
 
                 //dereference pointer in the union and then get the slot at index
-                return *(reinterpret_cast<const T*>(reinterpret_cast<const uint64_t*>(this->data) + idx));
+                return *(reinterpret_cast<const T*>(reinterpret_cast<uint64_t*>(const_cast<U*>(&this->data)) + idx));
             }
         }
 
@@ -119,13 +134,13 @@ namespace ᐸRuntimeᐳ
         {
             if(this->typeinfo->tag != LayoutTag::Ref) {
                 //not a pointer, just load the slot index as T
-                return *(reinterpret_cast<const T*>(reinterpret_cast<const uint64_t*>(&this->data) + idx));
+                return *(reinterpret_cast<const T*>(reinterpret_cast<uint64_t*>(const_cast<U*>(&this->data)) + idx));
             }
             else {
                 assert(this->typeinfo->tag == LayoutTag::Ref);
                 
                 //dereference pointer in the union and then get the slot at index
-                return *(reinterpret_cast<const T*>(reinterpret_cast<const uint64_t*>(this->data) + idx));
+                return *(reinterpret_cast<const T*>(reinterpret_cast<uint64_t*>(const_cast<U*>(&this->data)) + idx));
             }
         }
     };

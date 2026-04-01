@@ -363,8 +363,13 @@ namespace ᐸRuntimeᐳ
         LayoutTag::Value,
         BSQ_TYPEINFO_NO_ESLOT,
         BSQ_PTR_MASK_LEAF,
-        "Nat",
-        nullptr
+        nullptr,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        0,
+        "Nat"
     };
 
     inline constexpr TypeInfo g_typeinfo_Int = {
@@ -374,8 +379,13 @@ namespace ᐸRuntimeᐳ
         LayoutTag::Value,
         BSQ_TYPEINFO_NO_ESLOT,
         BSQ_PTR_MASK_LEAF,
-        "Int",
-        nullptr
+        nullptr,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        0,
+        "Int"
     };
 
     inline constexpr TypeInfo g_typeinfo_ChkNat = {
@@ -385,8 +395,13 @@ namespace ᐸRuntimeᐳ
         LayoutTag::Value,
         BSQ_TYPEINFO_NO_ESLOT,
         BSQ_PTR_MASK_LEAF,
-        "ChkNat",
-        nullptr
+        nullptr,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        0,
+        "ChkNat"
     };
 
     inline constexpr TypeInfo g_typeinfo_ChkInt = {
@@ -396,8 +411,13 @@ namespace ᐸRuntimeᐳ
         LayoutTag::Value,
         BSQ_TYPEINFO_NO_ESLOT,
         BSQ_PTR_MASK_LEAF,
-        "ChkInt",
-        nullptr
+        nullptr,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        0,
+        "ChkInt"
     };
 
     static_assert(sizeof(XNat) == sizeof(int64_t), "Nat size incorrect");

@@ -85,8 +85,13 @@ namespace ᐸRuntimeᐳ
         LayoutTag::Value,
         BSQ_TYPEINFO_NO_ESLOT, //since always a leaf of values we just ignore
         BSQ_PTR_MASK_LEAF,
-        "CStringInline",
-        nullptr
+        nullptr,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        0,
+        "CStringInline"
     };
 
     inline constexpr TypeInfo g_typeinfo_CStringTree = {
@@ -96,8 +101,13 @@ namespace ᐸRuntimeᐳ
         LayoutTag::Tagged,
         BSQ_TYPEINFO_NO_ESLOT,
         "20",
-        "CStringTree",
-        nullptr
+        nullptr,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        0,
+        "CStringTree"
     };
 
     inline constexpr TypeInfo g_typeinfo_CString = {
@@ -107,8 +117,13 @@ namespace ᐸRuntimeᐳ
         LayoutTag::Tagged,
         BSQ_TYPEINFO_NO_ESLOT,
         "200",
-        "CString",
-        nullptr
+        nullptr,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        0,
+        "CString"
     };
 
     //TODO: this is currently n * ln(n) for iteration and access -- definitely want to speed this up later
@@ -453,8 +468,13 @@ namespace ᐸRuntimeᐳ
         LayoutTag::Value,
         BSQ_TYPEINFO_NO_ESLOT, //since always a leaf of values we just ignore
         BSQ_PTR_MASK_LEAF,
-        "StringInline",
-        nullptr
+        nullptr,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        0,
+        "StringInline"
     };
 
     inline constexpr TypeInfo g_typeinfo_StringTree = {
@@ -464,8 +484,13 @@ namespace ᐸRuntimeᐳ
         LayoutTag::Tagged,
         BSQ_TYPEINFO_NO_ESLOT,
         "20",
-        "StringTree",
-        nullptr
+        nullptr,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        0,
+        "StringTree"
     };
 
     inline constexpr TypeInfo g_typeinfo_String = {
@@ -475,8 +500,13 @@ namespace ᐸRuntimeᐳ
         LayoutTag::Tagged,
         BSQ_TYPEINFO_NO_ESLOT,
         "20000",
-        "String",
-        nullptr
+        nullptr,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        0,
+        "String"
     };
 
     //TODO: this is currently n * ln(n) for iteration and access -- definitely want to speed this up later

@@ -1,7 +1,7 @@
 import assert from "node:assert";
 
 import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, ErrorTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
-import { AbstractConceptTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, FailTypeDecl, InternalEntityTypeDecl, MemberFieldDecl, MethodDecl, OkTypeDecl, OptionTypeDecl, PrimitiveEntityTypeDecl, ResultTypeDecl, SomeTypeDecl, TaskDecl, TemplateTermDeclExtraTag, TypeFunctionDecl, TypedeclTypeDecl, MapEntryTypeDecl, AbstractEntityTypeDecl, ValidateDecl, InvariantDecl, AbstractCollectionTypeDecl, ListTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl, NamespaceDeclaration, EnumTypeDecl, APIResultTypeDecl } from "./assembly.js";
+import { AbstractConceptTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, FailTypeDecl, InternalEntityTypeDecl, MemberFieldDecl, MethodDecl, OkTypeDecl, OptionTypeDecl, PrimitiveEntityTypeDecl, ResultTypeDecl, SomeTypeDecl, TaskDecl, TemplateTermDeclExtraTag, TypeFunctionDecl, TypedeclTypeDecl, MapEntryTypeDecl, AbstractEntityTypeDecl, ValidateDecl, InvariantDecl, AbstractCollectionTypeDecl, ListTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl, EnumTypeDecl, APIResultTypeDecl } from "./assembly.js";
 import { SourceInfo } from "./build_decls.js";
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeInferContext } from "./checker_environment.js";
 
@@ -396,6 +396,16 @@ class TypeCheckerRelations {
         }
 
         return t.decl.attributes.find((attr) => attr.name === "__typedeclable") !== undefined;
+    }
+
+    isDirectNominalType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
+        const tres = this.resolveTemplateAsNeededForNameLookup(t, tconstrain);
+        return tres !== undefined && (tres instanceof NominalTypeSignature) && tres.decl instanceof AbstractEntityTypeDecl;
+    }
+
+    isMultiOptionNominalType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
+        const tres = this.resolveTemplateAsNeededForNameLookup(t, tconstrain);
+        return tres !== undefined && (tres instanceof NominalTypeSignature) && (tres.decl instanceof AbstractConceptTypeDecl);
     }
 
     //Check if this type is a valid event type
@@ -870,22 +880,6 @@ class TypeCheckerRelations {
                 }
                 if(name === "value") {
                     cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "value", tn.alltermargs[1], undefined, true);
-                }
-            }
-            else if(tn.decl instanceof ListTypeDecl) {
-                if(name === "value") {
-                    const tlva = (this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "ListOps") as NamespaceDeclaration).typedecls.find((tdecl) => tdecl.name === "Tree" || tdecl.name === "Vector") as DatatypeTypeDecl;
-                    const vtype = new NominalTypeSignature(tn.decl.sinfo, undefined, tlva, [tn.alltermargs[0]]);
-                    
-                    cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "value", vtype, undefined, true);
-                }
-            }
-            else if(tn.decl instanceof MapTypeDecl) {
-                if(name === "value") {
-                    const tlva = (this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "MapOps") as NamespaceDeclaration).typedecls.find((tdecl) => tdecl.name === "Tree" || tdecl.name === "Vector") as DatatypeTypeDecl;
-                    const vtype = new NominalTypeSignature(tn.decl.sinfo, undefined, tlva, [tn.alltermargs[0], tn.alltermargs[1]]);
-                    
-                    cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "value", vtype, undefined, true);
                 }
             }
             else {

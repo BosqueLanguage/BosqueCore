@@ -1248,6 +1248,7 @@ class PostfixAccessFromName extends PostfixOperation {
     
     declaredInType: TypeSignature | undefined = undefined;
     fieldDecl: MemberFieldDecl | undefined = undefined;
+    isdirect: boolean = false;
 
     constructor(sinfo: SourceInfo, name: string) {
         super(sinfo, PostfixOpTag.PostfixAccessFromName);
@@ -1300,6 +1301,7 @@ class PostfixIsTest extends PostfixOperation {
 
 class PostfixAsConvert extends PostfixOperation {
     readonly ttest: ITest;
+    alwaysSucceeds: boolean = false;
 
     constructor(sinfo: SourceInfo, ttest: ITest) {
         super(sinfo, PostfixOpTag.PostfixAsConvert);
@@ -2129,7 +2131,7 @@ class ConditionalValueExpression extends RValueExpression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         const ttest = this.guardset.emit(fmt);
-        return `${ttest} ? ${this.trueValue.emit(true, fmt)} : ${this.falseValue.emit(true, fmt)}`;
+        return `${ttest} ?? ${this.trueValue.emit(true, fmt)} : ${this.falseValue.emit(true, fmt)}`;
     }
 }
 

@@ -107,14 +107,6 @@ class TransformCPPNameManager {
         return TransformCPPNameManager.convertTypeKey(tkey) + s_specialop_sep + "validate_" + invariantidx;
     }
 
-    static generateNameForBSQONParseFunction(tkey: string): string {
-        return TransformCPPNameManager.convertTypeKey(tkey) + s_specialop_sep + "bsqparse";
-    }
-
-    static generateNameForBSQONEmitFunction(tkey: string): string {
-        return TransformCPPNameManager.convertTypeKey(tkey) + s_specialop_sep + "bsqemit";
-    }
-
     static generateNameForFieldDefaultFunction(tkey: string, fname: string): string {
         return TransformCPPNameManager.convertTypeKey(tkey) + s_specialop_sep + "default" + s_specialop_sep + TransformCPPNameManager.safeifyName(fname);
     }

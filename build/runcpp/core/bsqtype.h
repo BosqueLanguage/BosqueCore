@@ -60,6 +60,19 @@ namespace ᐸRuntimeᐳ
         uint32_t fieldbsqtypeid;
         uint32_t byteoffset;
         uint32_t slotoffset;
+
+        const char* fieldkey;
+        const char* fname;
+    };
+
+    using VInvokePtr = void(*)(void);
+    class VInvokeTargetInfo
+    {
+    public:
+        uint32_t invokeid;
+        VInvokePtr invokeptr;
+
+        const char* invokekey;
     };
 
     class TypeInfo
@@ -72,8 +85,15 @@ namespace ᐸRuntimeᐳ
         uint16_t slotct; //For array entries this is the number of slots each entry takes (so don't scan more than eslotct * size slots)
 
         const char* ptrmask; // NULL is for leaf values or structs
+
+        const uint32_t* supertypes;
+        const uint32_t supertypescount;
+        const FieldOffsetInfo* ftable;
+        const uint32_t ftablecount;
+        const VInvokeTargetInfo* vitable;
+        const uint32_t vitablecount;
+
         const char* typekey;
-        const FieldOffsetInfo* vtable;
     };
 
     constexpr uint32_t byteSizeToSlotCount(size_t bytesize)
@@ -95,7 +115,12 @@ namespace ᐸRuntimeᐳ
         LayoutTag::Value,
         BSQ_TYPEINFO_NO_ESLOT,
         BSQ_PTR_MASK_LEAF,
-        "None",
-        nullptr
+        nullptr,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        0,
+        "None"
     };
 }

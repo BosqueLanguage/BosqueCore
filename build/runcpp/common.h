@@ -74,6 +74,14 @@ namespace ᐸRuntimeᐳ
     //slow path error handler
     [[noreturn]] void bsq_handle_error(const char* file, uint32_t line, ErrorKind kerror, const char* tag, const char* message);
 
+
+    inline void bsq_typeassert(bool cond, const char* file, uint32_t line, const char* tag, const char* message)
+    {
+        if(!cond) [[unlikely]] {
+            bsq_handle_error(file, line, ErrorKind::InvalidCast, tag, message);
+        }
+    }
+
     [[noreturn]] inline void bsq_abort(const char* file, uint32_t line, const char* tag, const char* message)
     {
         bsq_handle_error(file, line, ErrorKind::UserAbort, tag, message);
