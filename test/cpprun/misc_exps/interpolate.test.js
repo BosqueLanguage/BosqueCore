@@ -1,6 +1,5 @@
 "use strict";
 
-
 import { runTestSet } from "../../../bin/test/cpprun/cpprun_nf.js";
 import { describe, it } from "node:test";
 
