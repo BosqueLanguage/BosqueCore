@@ -905,7 +905,6 @@ class ConstructorEListExpression extends ConstructorExpression {
 
 class ConstructorLambdaExpression extends Expression {
     readonly invoke: LambdaDecl;
-
     monomorphizedUID: number | undefined = undefined;
 
     constructor(sinfo: SourceInfo, invoke: LambdaDecl) {
