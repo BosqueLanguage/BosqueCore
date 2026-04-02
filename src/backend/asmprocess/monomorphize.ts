@@ -216,7 +216,7 @@ class Monomorphizer {
     }
 
     //Given a namespace function -- instantiate it
-    private instantiateNamespaceFunction(ns: NamespaceDeclaration, fdecl: NamespaceFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]): string {
+    private instantiateNamespaceFunction(ns: NamespaceDeclaration, fdecl: NamespaceFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]) {
         const tterms = this.currentMapping !== undefined ? terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : terms;
         const fkey = this.computeInvokeKeyForNamespaceFunction(ns, fdecl, tterms, lambdas);
 
@@ -225,7 +225,6 @@ class Monomorphizer {
         }
 
         this.pendingNamespaceFunctions.push(new PendingNamespaceFunction(ns, fdecl, tterms, lambdas, fkey));
-        return fkey;
     }
 /*
     //Given a type function -- instantiate it
