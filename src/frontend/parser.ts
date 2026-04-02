@@ -3062,6 +3062,8 @@ class Parser {
     private parseArgumentsCallLambda(refok: boolean): ArgumentList {
         const args = this.parseListOf<AbstractArgumentValue>("argument list", SYM_lparen, SYM_rparen, SYM_coma, () => {
             if(this.testToken(KW_under)) {
+                this.recordErrorGeneral(this.peekToken(), "Cannot have skip arguments in lambda call context");
+
                 this.consumeToken();
                 return new SkipArgumentValue();
             }

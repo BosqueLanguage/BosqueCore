@@ -940,10 +940,18 @@ class LambdaInvokeExpression extends Expression {
     readonly args: ArgumentList;
 
     isCapturedLambda: boolean = false;
+    scopeidx: number | undefined = undefined;
     lambda: LambdaTypeSignature | undefined = undefined;
     arginfo: TypeSignature[] = [];
     resttype: TypeSignature | undefined = undefined;
     restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
+
+    setcondout: string[] = [];
+    setuncond: string[] = [];
+    inout: string[] = [];
+    byref: string[] = [];
+
+    monomorhphizedkey: string | undefined = undefined;
 
     constructor(sinfo: SourceInfo, name: string, rec: RecursiveAnnotation, args: ArgumentList) {
         super(ExpressionTag.LambdaInvokeExpression, sinfo);

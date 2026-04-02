@@ -32,6 +32,7 @@ class TypeChecker {
 
     isTaskScope: boolean = false;
     envDecl: EnvironmentVariableInformation[] = [];
+    lambdaCtr: number = 0;
 
     constructor(constraints: TemplateConstraintScope, relations: TypeCheckerRelations) {
         this.constraints = constraints;
@@ -1043,8 +1044,12 @@ class TypeChecker {
 
         return { shuffleinfo: shuffleinfo, resttype: resttype, restinfo: restinfo, setcondout: setcondout, setuncond: setuncond, inout: inout, byref: byref };
     }
-/*
-    private checkLambdaArgumentList(sinfo: SourceInfo, env: TypeEnvironment, refok: boolean, args: ArgumentValue[], params: LambdaParameterSignature[]): { arginfo: TypeSignature[], resttype: TypeSignature | undefined, restinfo: [number, boolean, TypeSignature][] | undefined } {
+
+    private checkLambdaArgumentList(sinfo: SourceInfo, env: TypeEnvironment, refok: boolean, args: AbstractArgumentValue[], params: LambdaParameterSignature[]): { arginfo: TypeSignature[], resttype: TypeSignature | undefined, restinfo: [number, boolean, TypeSignature][] | undefined, setcondout: string[], setuncond: string[], inout: string[], byref: string[] } {
+        if(args.some((av) => av instanceof SkipArgumentValue)) {
+            this.reportError(sinfo, `Skip arguments not allowed in lambda argument list`);
+        }
+        
         if(args.some((av) => av instanceof NamedArgumentValue)) {
             this.reportError(sinfo, `Named arguments not allowed in lambda argument list`);
         }
@@ -1057,15 +1062,41 @@ class TypeChecker {
         }
 
         let arginfo: TypeSignature[] = [];
+        let setcond: string[] = [];
+        let setuncond: string[] = [];
+        let inout: string[] = [];
+        let byref: string[] = [];
+
         for(let i = 0; i < nonrestparams.length && i < args.length; ++i) {
-            const argtype = this.checkSingleParam(env, args[i], "[lambda_param]", nonrestparams[i].type, nonrestparams[i].isRefParam, TemplateNameMapper.createEmpty());
-            arginfo.push(argtype);
+            const pp = nonrestparams[i];
+            if(!(args[i] instanceof SkipArgumentValue)) {
+                this.checkError(sinfo, !refok && (args[i] instanceof PassingArgumentValue), `Reference argument only allowed in top-level contexts`);
+                const argtype = this.checkSingleParam(env, args[i] as StdArgumentValue, "[lambda_param]", nonrestparams[i].type, nonrestparams[i].pkind, TemplateNameMapper.createEmpty());
+            
+                arginfo.push(argtype);
+                if(pp.pkind !== undefined && (args[i] instanceof PassingArgumentValue) && (args[i] as PassingArgumentValue).exp instanceof AccessVariableExpression) {
+                    const vname = ((args[i] as PassingArgumentValue).exp as AccessVariableExpression).srcname;
+                    if(pp.pkind === "out?") {
+                        setcond.push(vname);
+                    }
+                    else if(pp.pkind === "out") {
+                        setuncond.push(vname);
+                    }
+                    else if(pp.pkind === "inout") {
+                        inout.push(vname);
+                    }
+                    else {
+                        //ref param
+                        byref.push(vname);
+                    }
+                }
+            }
         }
 
         let resttype: TypeSignature | undefined = undefined;
         let restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
         if(restparam !== undefined) {
-            let restargs = args.slice(nonrestparams.length);
+            let restargs = args.slice(nonrestparams.length) as StdArgumentValue[];
             const restypes = this.checkRestParam(env, restargs, "[lambda_param]", restparam.type, TemplateNameMapper.createEmpty());
 
             resttype = restparam.type;
@@ -1076,9 +1107,9 @@ class TypeChecker {
             }
         }
 
-        return { arginfo: arginfo, resttype: resttype, restinfo: restinfo };
+        return { arginfo: arginfo, resttype: resttype, restinfo: restinfo, setcondout: setcond, setuncond: setuncond, inout: inout, byref: byref };
     }
-*/
+
     private checkConstructorArgumentListStd(sinfo: SourceInfo, env: TypeEnvironment, args: AbstractArgumentValue[], bnames: {name: string, type: TypeSignature, hasdefault: boolean, containingtype: NominalTypeSignature}[], imapper: TemplateNameMapper): [number, TypeSignature, string, TypeSignature][] {
         let argsuffle: (StdArgumentValue | undefined)[] = [];
         let argsuffleidx: number[] = [];
@@ -2038,7 +2069,7 @@ class TypeChecker {
         
         let argsok = true;
         let args: VarInfo[] = [];
-        let params: LambdaParameterSignature[] = [];
+        let params: InvokeParameterDecl[] = [];
         let rtype: TypeSignature = new ErrorTypeSignature(exp.sinfo, undefined);
 
         if(exp.invoke.isAuto) {
@@ -2052,7 +2083,7 @@ class TypeChecker {
                     const ipdecl = exp.invoke.params[i];
 
                     args.push(new VarInfo(ipdecl.name, iptype.type, ipdecl.pkind || "let", true));
-                    params.push(new LambdaParameterSignature(ipdecl.name, iptype.type, ipdecl.pkind, ipdecl.isRestParam));
+                    params.push(new InvokeParameterDecl(ipdecl.name, iptype.type, undefined, ipdecl.pkind, ipdecl.isRestParam));
                 }
             }
         }
@@ -2061,7 +2092,7 @@ class TypeChecker {
                 const ipdecl = exp.invoke.params[i];
 
                 args.push(new VarInfo(ipdecl.name, ipdecl.type, ipdecl.pkind || "let", true));
-                params.push(new LambdaParameterSignature(ipdecl.name, ipdecl.type, ipdecl.pkind, ipdecl.isRestParam));
+                params.push(new InvokeParameterDecl(ipdecl.name, ipdecl.type, undefined, ipdecl.pkind, ipdecl.isRestParam));
             }
         }
 
@@ -2090,13 +2121,14 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
         else {
-            const ltype = new LambdaTypeSignature(exp.sinfo, exp.invoke.recursive, exp.invoke.name as "fn" | "pred", params, rtype);
+            const lparams = params.map((p) => new LambdaParameterSignature(p.name, p.type, p.pkind, p.isRestParam));
+            const ltype = new LambdaTypeSignature(exp.sinfo, exp.invoke.recursive, exp.invoke.name as "fn" | "pred", lparams, rtype);
 
             const ireturn = this.relations.convertTypeSignatureToTypeInferCtx(rtype);
-            const lenv = TypeEnvironment.createInitialLambdaEnv(args, rtype, ireturn, env);
-            this.checkBodyImplementation(lenv, exp.invoke.body);
+            const lenv = TypeEnvironment.createInitialLambdaEnv(rtype, ireturn, args, env);
+            this.checkBodyImplementation(lenv, exp.invoke.body, params);
             
-            exp.monomorphizedUID = xxxx;
+            exp.monomorphizedUID = this.lambdaCtr++;
             return exp.setType(ltype);
         }
     }
@@ -2104,29 +2136,50 @@ class TypeChecker {
     private checkLambdaInvokeExpression(env: TypeEnvironment, exp: LambdaInvokeExpression, refallowed: boolean): TypeResultWRefVarInfoResult {
         let llvar = env.resolveLocalVarInfoFromSrcName(exp.name);
         if(llvar === undefined) {
-            exp.isCapturedLambda = true;
-            llvar = env.resolveLambdaCaptureVarInfoFromSrcName(exp.name);
-        }
+            const clvar = env.resolveLambdaCaptureVarInfoFromSrcName(exp.name);
 
-        if(llvar === undefined) {
-            this.reportError(exp.sinfo, `Could not find lambda variable ${exp.name}`);
-            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            if(clvar === undefined) {
+                this.reportError(exp.sinfo, `Could not find lambda variable ${exp.name}`);
+                return TypeResultWRefVarInfoResult.makeSimpleResult(new ErrorTypeSignature(exp.sinfo, undefined));
+            }
+            else {
+                llvar = clvar[0];
+                exp.isCapturedLambda = true;
+                exp.scopeidx = clvar[1];
+            }
         }
 
         if(!(llvar.decltype instanceof LambdaTypeSignature)) {
             this.reportError(exp.sinfo, `Variable ${exp.name} is not a lambda value`);
-            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            return TypeResultWRefVarInfoResult.makeSimpleResult(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
         const lsig = llvar.decltype as LambdaTypeSignature;
 
-        const arginfo = this.checkLambdaArgumentList(exp.sinfo, env, refok, exp.args.args, lsig.params);
+        const arginfo = this.checkLambdaArgumentList(exp.sinfo, env, refallowed, exp.args.args, lsig.params);
         exp.lambda = llvar.decltype;
         exp.arginfo = arginfo.arginfo;
         exp.resttype = arginfo.resttype;
         exp.restinfo = arginfo.restinfo;
+        exp.setcondout = arginfo.setcondout;
+        exp.setuncond = arginfo.setuncond;
+        exp.inout = arginfo.inout;
+        exp.byref = arginfo.byref;
 
-        return exp.setType(lsig.resultType);
+        const rrt = TypeResultWRefVarInfoResult.makeGeneralResult(
+            exp.setType(lsig.resultType), false, false,
+            { ttrue: [...arginfo.setcondout], tfalse: [] },
+            [...arginfo.setuncond],
+            [...arginfo.inout, ...arginfo.byref],
+            []
+        );
+
+        if(rrt !== undefined) {
+            return rrt;
+        }
+        else {
+            return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
+        }
     }
 
     private checkSpecialConstructorExpressionNoInfer(env: TypeEnvironment, exp: SpecialConstructorExpression): TypeSignature {
