@@ -1009,8 +1009,9 @@ class ASMToIRConverter {
             this.pushStatement(new IRPreconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), exp.monomorhphizedkey as string, invdecl.ii, aargs));
         }
 
+        const iname = exp.monomorhphizedkey as string;
         if(!exp.args.hasSpecialRef()) {
-            return new IRInvokeSimpleExpression(exp.monomorhphizedkey as string, aargs);
+            return new IRInvokeSimpleExpression(iname, aargs);
         }
         else {
             const srpos = exp.shuffleinfo.findIndex((si) => exp.args.args[si[0]] instanceof PassingArgumentValue);
@@ -1019,7 +1020,7 @@ class ASMToIRConverter {
             const ivar = (passarg.exp as AccessVariableExpression).srcname;
             const ivartype = this.processTypeSignature((passarg.exp as AccessVariableExpression).getType());
             
-            return new IRInvokeSimpleWithImplicitsExpression(exp.monomorhphizedkey as string, aargs, ii, ivar, ivartype, passarg.kind);
+            return new IRInvokeSimpleWithImplicitsExpression(iname, aargs, ii, ivar, ivartype, passarg.kind);
         }
     }
 
@@ -1028,7 +1029,34 @@ class ASMToIRConverter {
     }
 
     private flattenLambdaInvokeExpression(exp: LambdaInvokeExpression): IRExpression {
-        assert(false, "ASMToIRConverter::flattenLambdaInvokeExpression - Not Implemented");
+        const aargs: IRSimpleExpression[] = [];
+        for(let i = 0; i < exp.args.args.length; ++i) {
+            const ftype = this.tproc((exp.lambda as LambdaTypeSignature).params[i].type);
+            
+            const eexp = exp.args.args[i] as StdArgumentValue;
+            const sexp = this.flattenExpression(eexp.exp);
+            const cexp = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(sexp, eexp.exp.getType()), eexp.exp.getType(), ftype);
+
+            aargs.push(cexp);
+        }
+
+        //do rest parameter as needed
+        if(exp.resttype !== undefined) {
+            assert(false, "rest parameters not yet implemented in flattenCallNamespaceFunctionExpression");
+        }
+
+        const iname = "-[LAMBDA]-"; //exp.monomorhphizedkey as string
+        if(!exp.args.hasSpecialRef()) {
+            return new IRInvokeSimpleExpression(iname, aargs);
+        }
+        else {
+            const srpos = exp.args.args.findIndex((si) => si instanceof PassingArgumentValue);
+            const passarg = exp.args.args[srpos] as PassingArgumentValue;
+            const ivar = (passarg.exp as AccessVariableExpression).srcname;
+            const ivartype = this.processTypeSignature((passarg.exp as AccessVariableExpression).getType());
+            
+            return new IRInvokeSimpleWithImplicitsExpression(iname, aargs, srpos, ivar, ivartype, passarg.kind);
+        }
     }
 
     private flattenPostfixAccessFromName(exp: PostfixAccessFromName, rootexp: IRSimpleExpression, roottype: TypeSignature): IRExpression {
@@ -3194,9 +3222,8 @@ class ASMToIRConverter {
                 }
             }
 
-            if(!(p.type instanceof LambdaInvokeExpression)) {
+            if(!(p.type instanceof LambdaTypeSignature)) {
                 return new IRInvokeParameterDecl(p.name, this.processTypeSignature(p.type), p.pkind, defaultValue);
-
             }
             else {
                 const ll = (this.currentInvokeInstantation as InvokeInstantiationInfo).lambdas.find((li) => li.pname === p.name) as { pname: string, psigkey: string, invtrgt: string };

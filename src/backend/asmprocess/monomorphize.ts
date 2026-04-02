@@ -5,6 +5,7 @@ import { InvokeInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationI
 import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, AbstractArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, HoleBodyImplementation, HoleExpression, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixSliceOperator, PostfixOp, PostfixOpTag, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement, StdArgumentValue, InterpolateFormatExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixProjectFromNames, ITest, ITestType } from "../../frontend/body.js";
 import { SourceInfo } from "../../frontend/build_decls.js";
+import { VarInfo } from "../../frontend/checker_environment.js";
 
 class PendingNamespaceFunction {
     readonly namespace: NamespaceDeclaration;
@@ -76,11 +77,21 @@ class PendingNominalTypeDecl {
     }
 }
 
+class ScopeUseFrame {
+    capturedVars: VarInfo[] = [];
+    capturedLambdas: LambdaInvokeExpression[] = [];
+    capturedTemplateNames: string[] = [];
+
+    constructor() {
+    }
+}
+
 class Monomorphizer {
     readonly assembly: Assembly;
     readonly instantiation: NamespaceInstantiationInfo[];
 
     lambdaCtr: number = 0;
+    lambdaScopes: ScopeUseFrame[] = [];
 
     readonly wellknowntypes: Map<string, TypeSignature>;
 
@@ -330,19 +341,25 @@ class Monomorphizer {
         tt.guards.forEach((guard) => this.instantiateITestGuard(guard));
     }
 
-    private instantiateArgumentList(args: AbstractArgumentValue[], shuffleinfo: [number, TypeSignature][]): { pname: string, psigkey: string }[] {
-        args.forEach((arg) => {
-            if(arg instanceof StdArgumentValue) { 
-                this.instantiateExpression(arg.exp);
+    private instantiateArgumentList(args: AbstractArgumentValue[], pnames: string[], shuffleinfo: [number, TypeSignature][]): { pname: string, psigkey: string }[] {
+        let linfos: { pname: string, psigkey: string }[] = [];
+
+        for(let i = 0; i < shuffleinfo.length; ++i) {
+            const [idx, tsig] = shuffleinfo[i];
+            const arg = args[idx];
+
+            if(!(tsig instanceof LambdaTypeSignature)) {
+                if(arg instanceof StdArgumentValue) { 
+                    this.instantiateExpression(arg.exp);
+                }
             }
-        });
+            else {
+                const lkey = this.instantiateConstructorLambdaExpression((arg as StdArgumentValue).exp as ConstructorLambdaExpression);
+                linfos.push({pname: pnames[idx], psigkey: lkey});
+            }
+        }
 
-        //TODO: need to handle lambdas
-        //-- go and instantiate a new one with a fresh name etc. for each lambda
-        //-- need to link instantiation to this specific lambda instance (let's be bad and use actual pointer equality)
-        assert(shuffleinfo.every((si) => !(si[1] instanceof LambdaTypeSignature)), "LambdaTypeSignatures not supported in argument shuffle info");
-
-        return [];
+        return linfos;
     }
 
     private instantiateConstructorArgumentList(args: AbstractArgumentValue[]) {
@@ -455,28 +472,34 @@ class Monomorphizer {
         }
     }
 
-    private instantiateConstructorLambdaExpression(exp: ConstructorLambdaExpression) {
-        /*
-        this.instantiateBodyImplementation(exp.invoke.body);
-        */
+    private instantiateConstructorLambdaExpression(exp: ConstructorLambdaExpression): string {
+        this.lambdaScopes.push(new ScopeUseFrame());
 
-        //TODO also set the monomorphizedUID uid here for reference
-        
-        assert(false, "Not Implemented -- instantiateConstructorLambdaExpression");
+        this.instantiateBodyImplementation(exp.invoke.body);
+
+        const linfo = this.lambdaScopes.pop() as ScopeUseFrame;
+        if(linfo.capturedTemplateNames.length === 0 && linfo.capturedLambdas.length === 0) {
+            console.log(`Lambda constructor ${exp.monomorphizedUID}}`);
+
+            return `fn_${exp.monomorphizedUID}`;
+        }
+        else {
+            assert(false, "Not Implemented -- captured template names and lambdas in constructor lambda expressions");
+        }
     }
 
     private instantiateLambdaInvokeExpression(exp: LambdaInvokeExpression) {
-        /*
         this.instantiateTypeSignature(exp.lambda as LambdaTypeSignature, this.currentMapping);
 
-        this.instantiateArgumentList(exp.args.args);
+        this.instantiateArgumentList(exp.args.args, (exp.lambda as LambdaTypeSignature).params.map((p) => p.name || "_"), exp.arginfo.map((ai, ii) => [ii, ai]));
 
         for(let i = 0; i < exp.arginfo.length; ++i) {
             this.instantiateTypeSignature(exp.arginfo[i], this.currentMapping);
         }
+
         if(exp.restinfo !== undefined) {
             const rparamtype = (this.currentMapping !== undefined ? (exp.resttype as TypeSignature).remapTemplateBindings(this.currentMapping) : (exp.resttype as TypeSignature)) as NominalTypeSignature;
-            let rargs: ArgumentValue[] = [];
+            let rargs: AbstractArgumentValue[] = [];
 
             for(let i = 0; i < exp.restinfo.length; ++i) {
                 this.instantiateTypeSignature(exp.restinfo[i][2], this.currentMapping);
@@ -485,8 +508,10 @@ class Monomorphizer {
 
             this.instantiateCollectionConstructor(rparamtype.decl as AbstractCollectionTypeDecl, rparamtype, rargs);
         }
-        */
-       assert(false, "Not Implemented -- instantiateLambdaInvokeExpression");
+
+        if(this.lambdaScopes.length > 0) {
+            this.lambdaScopes[this.lambdaScopes.length - 1].capturedLambdas.push(exp);
+        }
     }
 
     private instantiateSpecialConstructorExpression(exp: SpecialConstructorExpression) {
@@ -499,7 +524,13 @@ class Monomorphizer {
             this.instantiateTypeSignature(exp.terms[i], this.currentMapping);
         }
 
-        let arglambdainfo = this.instantiateArgumentList(exp.args.args, exp.shuffleinfo);
+        const nns = this.assembly.resolveNamespaceDecl(exp.ns.ns) as NamespaceDeclaration;
+
+        const hastemplate = exp.terms.length > 0;
+        const haslambda = exp.shuffleinfo.some((si) => si[1] instanceof LambdaTypeSignature);
+        const nfd = this.assembly.resolveNamespaceFunction(exp.ns, exp.name, hastemplate, haslambda, exp.args.hasSpecialRef()) as NamespaceFunctionDecl;
+
+        const lambdas = this.instantiateArgumentList(exp.args.args, nfd.params.map((p) => p.name || "_"), exp.shuffleinfo);
 
         for(let i = 0; i < exp.shuffleinfo.length; ++i) {
             this.instantiateTypeSignature(exp.shuffleinfo[i][1], this.currentMapping);
@@ -516,14 +547,6 @@ class Monomorphizer {
             this.instantiateCollectionConstructor(rparamtype.decl as AbstractCollectionTypeDecl, rparamtype, rargs);
         }
 
-        const nns = this.assembly.resolveNamespaceDecl(exp.ns.ns) as NamespaceDeclaration;
-
-        const hastemplate = exp.terms.length > 0;
-        const haslambda = exp.shuffleinfo.some((si) => si[1] instanceof LambdaTypeSignature);
-        const nfd = this.assembly.resolveNamespaceFunction(exp.ns, exp.name, hastemplate, haslambda, exp.args.hasSpecialRef()) as NamespaceFunctionDecl;
-
-        const lambdas: { pname: string, psigkey: string }[] = arglambdainfo;
-        
         exp.monomorhphizedkey = this.instantiateNamespaceFunction(nns, nfd, exp.terms, lambdas);
     }
 
