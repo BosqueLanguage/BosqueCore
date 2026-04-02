@@ -595,6 +595,7 @@ class IREventListTypeDecl extends IRInternalEntityTypeDecl {
     }
 }
 
+// hmm me thinks this is where we should start
 class IREntityTypeDecl extends IRAbstractEntityTypeDecl {
     constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], fields: IRMemberFieldDecl[], etag: "std" | "status" | "event", saturatedProvides: IRTypeSignature[], saturatedBFieldInfo: { containingtype: IRNominalTypeSignature, fkey: string, fname: string, ftype: IRTypeSignature }[], allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[], allValidates: { containingtype: IRNominalTypeSignature, ii: number }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
         super(tkey, invariants, validates, fields, etag, saturatedProvides, saturatedBFieldInfo, allInvariants, allValidates, docstr, metatags, file, sinfo);
@@ -608,6 +609,10 @@ class IREntityTypeDecl extends IRAbstractEntityTypeDecl {
         });
 
         return ffdecls;
+    }
+
+    emitBAPI(): string {
+        return "";
     }
 }
 
