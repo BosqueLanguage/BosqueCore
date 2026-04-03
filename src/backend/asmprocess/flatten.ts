@@ -7,9 +7,9 @@ import { AbstractCollectionTypeDecl, AbstractConceptTypeDecl, AbstractEntityType
 import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatCStringTypeSignature, IRFormatPathFragmentTypeSignature, IRFormatPathGlobTypeSignature, IRFormatPathTypeSignature, IRFormatStringTypeSignature, IRFormatTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype.js";
 import { DateRepresentation, DeltaDateRepresentation, DeltaTimeRepresentation, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteBufferExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralCStringExpression, IRLiteralDecimalExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLatLongCoordinateExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralNoneExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralRationalExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRStatement, TimeRepresentation, IRLiteralFormatStringExpression, IRFormatStringTextComponent, IRFormatStringArgComponent, IRFormatStringComponent, IRLiteralFormatCStringExpression, IRLiteralTypedExpression, IRLiteralExpression, IRTypeDeclInvariantCheckStatement, IRLiteralTypedStringExpression, IRLiteralTypedCStringExpression, IRTaskAccessIDExpression, IRTaskAccessParentIDExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessEnumExpression, IRSimpleExpression, IRPreconditionCheckStatement, IRExpression, IRTempAssignExpressionStatement, IRAccessTempVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessParameterVariableExpression, IRPrefixNotOpExpression, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRErrorAdditionBoundsCheckStatement, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRErrorDivisionByZeroCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRNopStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRReturnVoidSimpleStatement, IRAbortStatement, IRImmediateExpression, IRReturnValueSimpleStatement, IRChkLogicImpliesShortCircuitStatement, IRInvokeDirectExpression, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRVariableInitializationDirectInvokeStatement, IRInvokeSimpleExpression, IRInvokeImplicitsExpression, IRTempAssignStdInvokeStatement, IRTempAssignRefInvokeStatement, IRReturnDirectInvokeStatement, IRAssertStatement, IRValidateStatement, IRDebugStatement, IRBody, IRBuiltinBody, IRHoleBody, IRStandardBody, IRBinKeyEqDirectExpression, IRBinKeyLessDirectExpression, IRIsNoneOptionExpression, IRIsNotNoneOptionExpression, IRIsOptionEqValueExpression, IRIsOptionNeqValueExpression, IRIsSomeEqValueExpression, IRIsSomeNeqValueExpression, IRBinKeyNeqDirectExpression, IRConstructorOkTypeExpression, IRConstructorFailTypeExpression, IRConstructorSomeTypeExpression, IRConstructorMapEntryTypeExpression, IRLiteralDecimalDegreeExpression, IRTypeDeclSizeRangeCheckCStringStatement, IRTypeDeclSizeRangeCheckUnicodeStringStatement, IRTypeDeclFormatCheckCStringStatement, IRTypeDeclFormatCheckUnicodeStringStatement, IRLiteralOptionOfNoneExpression, IRConvertConceptRepresentationExpression, IRConstructResultFromOkExpression, IRConstructOptionFromSomeExpression, IRConstructResultFromFailExpression, IRBoxEntityToConceptRepresentationExpression, IRSimpleIfStatement, IRBlockStatement, IRSimpleIfElseStatement, IRConstructorStandardEntityExpression, IREntityInvariantCheckStatement, IRConstructExpression, IRVariableInitializationDirectConstructorStatement, IRReturnDirectConstructStatement, IRVariableAssignmentStatement, IRVariableAssignmentDirectInvokeStatement, IRVariableAssignmentDirectConstructorStatement, IRConstructorListEmptyExpression, IRConstructorListSingletonsExpression, IRReturnVoidWithImplicitStatement, IRReturnValueImplicitStatement, IRReturnDirectInvokeImplicitStatement, IRReturnDirectConstructWithBoxStatement, IRReturnDirectConstructImplicitStatement, IRReturnDirectConstructWithBoxImplicitStatement, IRReturnDirectInvokeImplicitPassThroughStatement, IRVariableInitializationDirectInvokeWithImplicitStatement, IRVariableAssignmentDirectInvokeWithImplicitStatement, IRInvokeSimpleWithImplicitsExpression, IRVoidInvokeStatement, IRVariableInitializationDirectConstructorWithBoxStatement, IRVariableAssignmentDirectConstructorWithBoxStatement, IRInterpolateFormatStringExpression, IRInterpolateFormatCStringExpression, IRAccessFieldSpecialExpression, IRAccessFieldDirectExpression, IRAccessFieldVirtualExpression, IRStaticIsTypeSubtypeOfExpression, IRIsConceptRepresentationOfTypeExpression, IRIsNotConceptRepresentationOfTypeExpression, IRIsNotConceptRepresentationSubtypeOfTypeExpression, IRIsConceptRepresentationSubtypeOfTypeExpression, IRExtractSomeFromOptionExpression, IRExtractSomeValueFromOptionExpression, IRErrorTypeAssertionCheckStatement, IRUnboxEntityFromConceptRepresentationExpression, IRConstructorLambdaExpression } from "../irdefs/irbody.js";
 import { IRCRegex, IRURegex, IRSourceInfo } from "../irdefs/irsupport.js";
-import { IRAgentDecl, IRAPIDecl, IRAPIDeniedTypeDecl, IRAPIErrorTypeDecl, IRAPIFlaggedTypeDecl, IRAPIRejectedTypeDecl, IRAPIResultTypeDecl, IRAPISuccessTypeDecl, IRAssembly, IRConceptTypeDecl, IRConstantDecl, IRDatatypeMemberEntityTypeDecl, IRDatatypeTypeDecl, IRDeclarationDocString, IRDeclarationMetaTag, IREntityTypeDecl, IREnumTypeDecl, IREventListTypeDecl, IRExampleDecl, IRFailTypeDecl, IRInvariantDecl, IRInvokeDecl, IRInvokeParameterDecl, IRListTypeDecl, IRMapEntryTypeDecl, IRMapTypeDecl, IRMemberFieldDecl, IROkTypeDecl, IROptionTypeDecl, IRPostConditionDecl, IRPreConditionDecl, IRPredicateDecl, IRPrimitiveEntityTypeDecl, IRQueueTypeDecl, IRResultTypeDecl, IRSetTypeDecl, IRSomeTypeDecl, IRStackTypeDecl, IRTaskDecl, IRTestAssociation, IRTestDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl, IRValidateDecl } from "../irdefs/irassembly.js";
+import { IRAgentDecl, IRAPIDecl, IRAPIDeniedTypeDecl, IRAPIErrorTypeDecl, IRAPIFlaggedTypeDecl, IRAPIRejectedTypeDecl, IRAPIResultTypeDecl, IRAPISuccessTypeDecl, IRAssembly, IRConceptTypeDecl, IRConstantDecl, IRDatatypeMemberEntityTypeDecl, IRDatatypeTypeDecl, IRDeclarationDocString, IRDeclarationMetaTag, IREntityTypeDecl, IREnumTypeDecl, IREventListTypeDecl, IRExampleDecl, IRFailTypeDecl, IRInvariantDecl, IRInvokeDecl, IRInvokeParameterDecl, IRLambdaParameterPackDecl, IRListTypeDecl, IRMapEntryTypeDecl, IRMapTypeDecl, IRMemberFieldDecl, IROkTypeDecl, IROptionTypeDecl, IRPostConditionDecl, IRPreConditionDecl, IRPredicateDecl, IRPrimitiveEntityTypeDecl, IRQueueTypeDecl, IRResultTypeDecl, IRSetTypeDecl, IRSomeTypeDecl, IRStackTypeDecl, IRTaskDecl, IRTestAssociation, IRTestDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl, IRValidateDecl } from "../irdefs/irassembly.js";
 
-import { InvokeInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiations.js";
+import { InvokeInstantiationInfo, LambdaInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiations.js";
 import { getBSQIRForm, getCPPForm, getSMTForm } from "@bosque/jsbrex";
 
 import assert from "node:assert";
@@ -1043,7 +1043,7 @@ class ASMToIRConverter {
     private flattenLambdaInvokeExpression(exp: LambdaInvokeExpression): IRExpression {
         const iname = (this.currentInvokeInstantation as InvokeInstantiationInfo).monoinvids.get(exp.monoinvid as number) as string;
 
-        const aargs: IRSimpleExpression[] = [new IRAccessParameterVariableExpression(`${iname}_data`)];
+        const aargs: IRSimpleExpression[] = [exp.isCapturedLambda ? new IRAccessCapturedVariableExpression(exp.scopeidx as number, exp.name) :  new IRAccessParameterVariableExpression(exp.name)];
         for(let i = 0; i < exp.args.args.length; ++i) {
             const ftype = this.tproc((exp.lambda as LambdaTypeSignature).params[i].type);
             
@@ -3277,6 +3277,27 @@ class ASMToIRConverter {
         }
     }
 
+    private generateLambdaInvokeDecl(linst: LambdaInstantiationInfo): IRInvokeDecl {
+        const recursive = this.processRecursiveInfo(linst.body.recursive);
+
+        const params = [
+            new IRInvokeParameterDecl(linst.newikey + "_lcapture_", new IRLambdaParameterPackTypeSignature(linst.newikey), undefined, undefined) , 
+            ...this.processInvokeParams(linst.lsig.params.map((p) => new InvokeParameterDecl(p.name as string, p.type, undefined, p.pkind, p.isRestParam)))
+        ];
+
+        return new IRInvokeDecl(linst.newikey, 
+            recursive, 
+            params, 
+            this.processTypeSignature(linst.lsig.resultType), 
+            [],
+            [], 
+            undefined, 
+            linst.body.file, 
+            this.convertSourceInfo(linst.body.sinfo), 
+            this.processBody(linst.body.body)
+        );
+    }
+
 /*
     private generateTypeFunctionDecl(fdecl: TypeFunctionDecl, invks: IRInvokeDecl[], preds: IRPredicateDecl[]) {
         assert(false, "Not Implemented -- generateTypeFunctionDecl");
@@ -3519,6 +3540,17 @@ class ASMToIRConverter {
             tdecl.file,
             this.convertSourceInfo(tdecl.sinfo)
         );
+    }
+
+    private generateLambdaDataDecl(linst: LambdaInstantiationInfo): IRLambdaParameterPackDecl {
+        const stdvalues: {vname: string, vtype: IRTypeSignature}[] = linst.capturedVars
+            .filter((cv) => cv[2] === 0)
+            .map((cv) => { return { vname: cv[0], vtype: this.processTypeSignature(cv[1]) }; });
+
+        assert(linst.capturedLambdas.length === 0, "Not Implemented -- generateLambdaDataDecl for captured lambdas");
+        const lambdavalues: {lname: string, ltypekey: string}[] = [];
+
+        return new IRLambdaParameterPackDecl(linst.newikey, linst.newikey, stdvalues, lambdavalues);
     }
 
     private generateOptionTypeDecl(tdecl: OptionTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IROptionTypeDecl {
@@ -3786,6 +3818,18 @@ class ASMToIRConverter {
             if(ntcd !== undefined) {
                 this.constants.push(this.generateNamespaceConstDecl(decl.fullnamespace, decl.consts[i]));
             }
+        }
+
+        const llist = [...asminstantiation.lambdas.values()].sort((a, b) => a.newikey.localeCompare(b.newikey));
+        for(let i = 0; i < llist.length; ++i) {
+            const linst = llist[i];
+            irasm.lpacksigs.push(new IRLambdaParameterPackTypeSignature(linst.newikey));
+
+            const ldecl = this.generateLambdaDataDecl(linst);
+            irasm.alllambdas.set(ldecl.tkeystr, ldecl);
+
+            const linv = this.generateLambdaInvokeDecl(linst);
+            irasm.invokes.push(linv);
         }
 
         for(let i = 0; i < decl.functions.length; ++i) {

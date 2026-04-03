@@ -1,6 +1,6 @@
 
 import { IRAbstractCollectionTypeDecl, IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAssembly, IRConceptTypeDecl, IRDatatypeTypeDecl, IREntityTypeDecl, IRListTypeDecl, IROptionTypeDecl, IRSomeTypeDecl } from "../irdefs/irassembly.js";
-import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype.js";
+import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype.js";
 import { TransformCPPNameManager } from "./namemgr.js";
 
 import assert from "node:assert";
@@ -219,7 +219,7 @@ class TypeInfoManager {
 
     emitTypeAsParameter(tkey: string, isreftagged: boolean, islambda: boolean): string {
         if(islambda) {
-            return "const " + TransformCPPNameManager.convertTypeKey(tkey) + "_data&";
+            return "const " + TransformCPPNameManager.convertTypeKey(tkey) + "_ldata_&";
         }
         else {
             const typeinfo = this.getTypeInfo(tkey);
@@ -484,9 +484,6 @@ class TypeInfoManager {
             else if(ttype instanceof IRFormatTypeSignature) {
                 return this.processInfoGenerationForFormat(ttype, irasm);
             }
-            else if(ttype instanceof IRLambdaParameterPackTypeSignature) {
-                assert(false, `TypeInfoManager::processInfoGenerationForType - Unsupported lambda parameter pack type signature for key ${ttype.tkeystr}`);
-            }
             else {
                 assert(false, `TypeInfoManager::processInfoGenerationForType - Unsupported type signature for key ${ttype.tkeystr}`);
             }
@@ -587,7 +584,6 @@ class TypeInfoManager {
         irasm.elists.forEach((ttype) => { if(!timgr.hasTypeInfo(ttype.tkeystr)) { timgr.processInfoGenerationForType(ttype, irasm); } });
         irasm.dashtypes.forEach((ttype) => { if(!timgr.hasTypeInfo(ttype.tkeystr)) { timgr.processInfoGenerationForType(ttype, irasm); } });
         irasm.formats.forEach((ttype) => { if(!timgr.hasTypeInfo(ttype.tkeystr)) { timgr.processInfoGenerationForType(ttype, irasm); } });
-        irasm.lpacksigs.forEach((ttype) => { if(!timgr.hasTypeInfo(ttype.tkeystr)) { timgr.processInfoGenerationForType(ttype, irasm); } });
 
         irasm.entities.forEach((tdecl) => { timgr.processFieldInfoGenerationForEntity(tdecl, irasm); });
         irasm.datamembers.forEach((tdecl) => { timgr.processFieldInfoGenerationForEntity(tdecl, irasm); });

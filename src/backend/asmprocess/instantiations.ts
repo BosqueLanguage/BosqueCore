@@ -1,6 +1,5 @@
-import { MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, TypeFunctionDecl } from "../../frontend/assembly.js";
-import { VarInfo } from "../../frontend/checker_environment.js";
-import { EListTypeSignature, FullyQualifiedNamespace, TemplateNameMapper, TypeSignature } from "../../frontend/type.js";
+import { LambdaDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, TypeFunctionDecl } from "../../frontend/assembly.js";
+import { EListTypeSignature, FullyQualifiedNamespace, LambdaTypeSignature, TemplateNameMapper, TypeSignature } from "../../frontend/type.js";
 
 class LambdaInstantiationInfo {
     readonly newikey: string;
@@ -8,15 +7,22 @@ class LambdaInstantiationInfo {
     readonly binds: TemplateNameMapper | undefined;
     readonly lambdacons: Map<number, string>;
 
-    readonly capturedVars: VarInfo[];
+    readonly capturedVars: [string, TypeSignature, number][];
     readonly capturedLambdas: { pname: string, psigkey: string }[];
+    readonly capturedTemplateNames: string[];
 
-    constructor(newikey: string, binds: TemplateNameMapper | undefined, lambdacons: Map<number, string>, capturedVars: VarInfo[], capturedLambdas: { pname: string, psigkey: string }[]) {
+    readonly lsig: LambdaTypeSignature;
+    readonly body: LambdaDecl;
+
+    constructor(newikey: string, binds: TemplateNameMapper | undefined, lambdacons: Map<number, string>, capturedVars: [string, TypeSignature, number][], capturedLambdas: { pname: string, psigkey: string }[], capturedTemplateNames: string[], lsig: LambdaTypeSignature, body: LambdaDecl) {
         this.newikey = newikey;
         this.binds = binds;
         this.lambdacons = lambdacons;
         this.capturedVars = capturedVars;
         this.capturedLambdas = capturedLambdas;
+        this.capturedTemplateNames = capturedTemplateNames;
+        this.lsig = lsig;
+        this.body = body;
     }
 }
 
@@ -67,6 +73,7 @@ class NamespaceInstantiationInfo {
     readonly typebinds: Map<string, TypeInstantiationInfo[]>;
 
     readonly elists: Map<string, EListTypeSignature>;
+    readonly lambdas: Map<string, LambdaInstantiationInfo>;
 
     constructor(ns: FullyQualifiedNamespace) {
         this.ns = ns;
@@ -74,6 +81,7 @@ class NamespaceInstantiationInfo {
         this.functionbinds = new Map<string, InvokeInstantiationInfo[]>();
         this.typebinds = new Map<string, TypeInstantiationInfo[]>();
         this.elists = new Map<string, EListTypeSignature>();
+        this.lambdas = new Map<string, LambdaInstantiationInfo>();
     }
 }
 

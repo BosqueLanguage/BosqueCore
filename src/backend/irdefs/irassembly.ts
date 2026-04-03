@@ -945,7 +945,6 @@ class IRAssembly {
     readonly apis: IRAPIDecl[] = [];
     readonly agents: IRAgentDecl[] = [];
     readonly tasks: IRTaskDecl[] = [];
-    readonly lpackdecls: IRLambdaParameterPackDecl[] = [];
 
     readonly alltypes: Map<string, IRAbstractNominalTypeDecl> = new Map<string, IRAbstractNominalTypeDecl>();
     readonly allinvokes: Map<string, IRInvokeMetaDecl> = new Map<string, IRInvokeMetaDecl>();

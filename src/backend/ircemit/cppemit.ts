@@ -3,7 +3,7 @@ import { LayoutTag, LIST_T_CAPACITY, TypeInfo, TypeInfoManager } from "./typeinf
 
 import { MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_INT } from "../../frontend/assembly.js";
 import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag, IRPrefixNotOpExpression, IRPrefixPlusOpExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRReturnValueSimpleStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement, IRTypeDeclSizeRangeCheckCStringStatement, IRTypeDeclSizeRangeCheckUnicodeStringStatement, IRAbortStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRTempAssignExpressionStatement, IRTypeDeclInvariantCheckStatement, IRDebugStatement, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRChkLogicImpliesShortCircuitStatement, IRPreconditionCheckStatement, IRPostconditionCheckStatement, IRVariableInitializationDirectInvokeStatement, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRAssertStatement, IRValidateStatement, IRBody, IRBuiltinBody, IRStandardBody, IRHoleBody, IRIsNoneOptionExpression, IRBinKeyEqDirectExpression, IRIsOptionEqValueExpression, IRIsSomeNeqValueExpression, IRIsOptionNeqValueExpression, IRIsSomeEqValueExpression, IRConstructorSomeTypeExpression, IRLiteralOptionOfNoneExpression, IRConstructOptionFromSomeExpression, IRExtractSomeFromOptionExpression, IRExtractSomeValueFromOptionExpression, IRBinKeyNeqDirectExpression, IRBinKeyLessDirectExpression, IRSimpleIfStatement, IRSimpleIfElseStatement, IRConstructorStandardEntityExpression, IRReturnDirectConstructStatement, IRReturnDirectInvokeStatement, IRVariableInitializationDirectConstructorStatement, IREntityInvariantCheckStatement, IRBoxEntityToConceptRepresentationExpression, IRVariableAssignmentStatement, IRVariableAssignmentDirectInvokeStatement, IRVariableAssignmentDirectConstructorStatement, IRConstructorListEmptyExpression, IRConstructorListSingletonsExpression, IRInvokeSimpleExpression, IRVariableInitializationDirectInvokeWithImplicitStatement, IRVariableAssignmentDirectInvokeWithImplicitStatement, IRReturnDirectConstructWithBoxStatement, IRReturnValueImplicitStatement, IRReturnDirectInvokeImplicitStatement, IRReturnDirectInvokeImplicitPassThroughStatement, IRReturnDirectConstructImplicitStatement, IRReturnDirectConstructWithBoxImplicitStatement, IRInvokeSimpleWithImplicitsExpression, IRTempAssignRefInvokeStatement, IRTempAssignStdInvokeStatement, IRVoidInvokeStatement, IRVariableInitializationDirectConstructorWithBoxStatement, IRVariableAssignmentDirectConstructorWithBoxStatement, IRLiteralFormatCStringExpression, IRLiteralFormatStringExpression, IRInterpolateFormatCStringExpression, IRFormatStringTextComponent, IRFormatStringArgComponent, IRTypeDeclFormatCheckCStringStatement, IRLiteralTypedStringExpression, IRAccessFieldSpecialExpression, IRAccessFieldVirtualExpression, IRIsConceptRepresentationOfTypeExpression, IRIsConceptRepresentationSubtypeOfTypeExpression, IRIsNotConceptRepresentationSubtypeOfTypeExpression, IRStaticIsTypeSubtypeOfExpression, IRErrorTypeAssertionCheckStatement, IRUnboxEntityFromConceptRepresentationExpression, IRConvertConceptRepresentationExpression, IRConstructorLambdaExpression } from "../irdefs/irbody.js";
-import { IRAbstractCollectionTypeDecl, IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAssembly, IRConceptTypeDecl, IRConstantDecl, IRConstructableTypeDecl, IREntityTypeDecl, IREnumTypeDecl, IRFailTypeDecl, IRInternalConceptTypeDecl, IRInvariantDecl, IRInvokeDecl, IRInvokeParameterDecl, IRListTypeDecl, IRMapEntryTypeDecl, IRMapTypeDecl, IROkTypeDecl, IROptionTypeDecl, IRPrimitiveEntityTypeDecl, IRResultTypeDecl, IRSomeTypeDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl, IRValidateDecl } from "../irdefs/irassembly.js";
+import { IRAbstractCollectionTypeDecl, IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAssembly, IRConceptTypeDecl, IRConstantDecl, IRConstructableTypeDecl, IREntityTypeDecl, IREnumTypeDecl, IRFailTypeDecl, IRInternalConceptTypeDecl, IRInvariantDecl, IRInvokeDecl, IRInvokeParameterDecl, IRLambdaParameterPackDecl, IRListTypeDecl, IRMapEntryTypeDecl, IRMapTypeDecl, IROkTypeDecl, IROptionTypeDecl, IRPrimitiveEntityTypeDecl, IRResultTypeDecl, IRSomeTypeDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl, IRValidateDecl } from "../irdefs/irassembly.js";
 
 import assert from "node:assert";
 import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatCStringTypeSignature, IRFormatStringTypeSignature, IRFormatTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype.js";
@@ -566,7 +566,7 @@ class CPPEmitter {
             else if(ttag === IRExpressionTag.IRConstructorLambdaExpression) {
                 const clexp = exps as IRConstructorLambdaExpression;
                 const ctype = TransformCPPNameManager.convertTypeKey(clexp.ltype.tkeystr);
-                bstr = `${ctype}_data{${clexp.values.map((v) => this.emitIRSimpleExpression(v, false)).join(", ")}}`;
+                bstr = `${ctype}_ldata_{${clexp.values.map((v) => this.emitIRSimpleExpression(v, false)).join(", ")}}`;
             }
             else if(ttag === IRExpressionTag.IRConstructorListEmptyExpression) {
                 const elcexp = exps as IRConstructorListEmptyExpression;
@@ -1928,6 +1928,23 @@ class CPPEmitter {
         return [declusing, "//TODO: need to implement format type info emission"];
     }
 
+    private emitLambdaParameterPackTypeInfo(tdecl: IRLambdaParameterPackTypeSignature): [string, string] {
+        const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkeystr);
+        const ddecl = this.irasm.alllambdas.get(tdecl.tkeystr) as IRLambdaParameterPackDecl;
+        
+        assert(ddecl.lambdavalues.length === 0, "CPPEmitter: lambda parameter packs with captured lambda values not yet supported");
+
+        const ldatadecl = `struct ${ctname}_ldata_ {\n` +
+        ddecl.stdvalues.map((stdv) => {
+            const vname = TransformCPPNameManager.convertIdentifier(stdv.vname);
+            const vtype = this.typeInfoManager.emitTypeAsMemberField(stdv.vtype.tkeystr);
+            return `    ${vtype} ${vname};`;
+        }).join("\n") +
+        '};';
+
+        return [ldatadecl, ""];
+    }
+
     //Emit the type declarations needed for the .h file
     private emitTypeDeclInfo(): [string, string] {
         const pdecls = "//Primitive decls\n\n" + this.irasm.primitives.map((pdecl) => {
@@ -1979,7 +1996,7 @@ class CPPEmitter {
                     return this.emitFormatTypeInfo(ttd);
                 }
                 else if(ttd instanceof IRLambdaParameterPackTypeSignature) {
-                    assert(false, `CPPEmitter: need to implement lambda parameter pack type signature emission for key ${ttd.tkeystr}`);
+                    return this.emitLambdaParameterPackTypeInfo(ttd);
                 }
                 else {
                     assert(false, "CPPEmitter: unknown typedeporder (TYPESIG) type decl emission -- " + ttd.tkeystr);
@@ -2204,7 +2221,7 @@ class CPPEmitter {
             iinfo[1], '',
             statisinitstr, '',
             mainstr
-        ].join("\n");
+        ].filter((s) => s.length !== 0).join("\n");
 
         return [headerstrs, implstrs];
     }
