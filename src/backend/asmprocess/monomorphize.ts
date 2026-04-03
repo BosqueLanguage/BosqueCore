@@ -1,7 +1,7 @@
 import assert from "node:assert";
 
 import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, AgentDecl, APIDecl, APIDeniedTypeDecl, APIErrorTypeDecl, APIFlaggedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, ExplicitInvokeDecl, FailTypeDecl, InvariantDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskActionDecl, TaskConfiguration, TaskDecl, TaskMethodDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl } from "../../frontend/assembly.js";
-import { InvokeInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiations.js";
+import { computeInvokeKeyForNamespaceFunction, computeInvokeKeyForTypeFunction, computeResolveKeyForInvoke, InvokeInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiations.js";
 import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, AbstractArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, HoleBodyImplementation, HoleExpression, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixSliceOperator, PostfixOp, PostfixOpTag, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement, StdArgumentValue, InterpolateFormatExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixProjectFromNames, ITest, ITestType } from "../../frontend/body.js";
 import { SourceInfo } from "../../frontend/build_decls.js";
@@ -79,7 +79,7 @@ class PendingNominalTypeDecl {
 
 class ScopeUseFrame {
     capturedVars: VarInfo[] = [];
-    capturedLambdas: LambdaInvokeExpression[] = [];
+    capturedLambdas: { pname: string, psigkey: string }[] = [];
     capturedTemplateNames: string[] = [];
 
     constructor() {
@@ -92,6 +92,8 @@ class Monomorphizer {
 
     lambdaCtr: number = 0;
     lambdaScopes: ScopeUseFrame[] = [];
+    lambdamap: Map<number, string> = new Map<number, string>();
+    callinstmap: Map<number, string> = new Map<number, string>();
 
     readonly wellknowntypes: Map<string, TypeSignature>;
 
@@ -117,44 +119,12 @@ class Monomorphizer {
         this.wellknowntypes = wellknowntypes;
     }
 
-
-    private static computeTBindsKey(tbinds: TypeSignature[]): string {
-        return (tbinds.length !== 0) ? `<${tbinds.map(t => t.tkeystr).join(", ")}>` : "";
-    }
-
-    private static computeLambdaKey(packs: { pname: string, psigkey: string }[]): string {
-        return (packs.length !== 0) ? `[${packs.map(lp => lp.psigkey).join(", ")}]` : "";
-    }
-
     /*
     private getFreshLambdaKey(): string {
         return `lambda_${this.lambdaCtr++}`;
     }
     */
 
-    private computeResolveKeyForInvoke(ikey: string, termcount: number, hasref: boolean, lambdas: boolean): string {
-        const tci = (termcount !== 0) ? `*tc_${termcount}_` : "";
-        const rfi = (hasref ? "*_ref_" : "");
-        const li = (lambdas ? "*_lambdas_" : "");
-
-        return `${ikey}${tci}${rfi}${li}`;
-    }
-
-    private computeInvokeKeyForNamespaceFunction(ns: NamespaceDeclaration, fdecl: NamespaceFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]): string {
-        const rti = fdecl.params.some((p) => p.pkind !== undefined) ? "#ref" : "";
-        return `${ns.fullnamespace.emit()}::${fdecl.name}${rti}${Monomorphizer.computeTBindsKey(terms)}${Monomorphizer.computeLambdaKey(lambdas)}`;
-    }
-
-    private computeInvokeKeyForTypeFunction(rcvrtype: TypeSignature, fdecl: TypeFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]): string {
-        const rti = fdecl.params.some((p) => p.pkind !== undefined) ? "#ref" : "";
-        return `${rcvrtype.tkeystr}::${fdecl.name}${rti}${Monomorphizer.computeTBindsKey(terms)}${Monomorphizer.computeLambdaKey(lambdas)}`;
-    }
-/*
-    private computeInvokeKeyForTypeMethod(rcvrtype: TypeSignature, mdecl: MethodDecl, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]): string {
-        const rti = ((mdecl.isThisRef) || mdecl.params.some((p) => p.pkind !== undefined)) ? "#ref" : "";
-        return `${rcvrtype.tkeystr}@${mdecl.name}${rti}${Monomorphizer.computeTBindsKey(terms)}${Monomorphizer.computeLambdaKey(lambdas)}`;
-    }
-*/
     private getWellKnownType(name: string): TypeSignature {
         assert(this.wellknowntypes.has(name), `Well known type ${name} not found`);
         return this.wellknowntypes.get(name) as TypeSignature;
@@ -182,6 +152,8 @@ class Monomorphizer {
         if(this.isAlreadySeenType(rt.tkeystr)) {
             return;
         }
+
+        xxxx; //get captured template types
 
         if(rt instanceof VoidTypeSignature) {
             ; //nothing to do
@@ -218,10 +190,10 @@ class Monomorphizer {
     //Given a namespace function -- instantiate it
     private instantiateNamespaceFunction(ns: NamespaceDeclaration, fdecl: NamespaceFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]) {
         const tterms = this.currentMapping !== undefined ? terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : terms;
-        const fkey = this.computeInvokeKeyForNamespaceFunction(ns, fdecl, tterms, lambdas);
+        const fkey = computeInvokeKeyForNamespaceFunction(ns, fdecl, tterms, lambdas);
 
         if(this.isAlreadySeenNamespaceFunction(fkey)) {
-            return fkey;
+            return;
         }
 
         this.pendingNamespaceFunctions.push(new PendingNamespaceFunction(ns, fdecl, tterms, lambdas, fkey));
@@ -416,6 +388,7 @@ class Monomorphizer {
     }
 
     private instantiateAccessVariableExpression(exp: AccessVariableExpression) {
+        xxxx; //set the captured variable/lambda info
         return;
     }
 
@@ -480,7 +453,13 @@ class Monomorphizer {
         if(linfo.capturedTemplateNames.length === 0 && linfo.capturedLambdas.length === 0) {
             console.log(`Lambda constructor ${exp.monomorphizedUID}}`);
 
-            return `fn_${exp.monomorphizedUID}`;
+            //TODO: add the LambdaInstantiationInfo to the set of generated instantiations so we can generate later
+
+            const psigkey = `fn_${exp.monomorphizedUID}`;
+            this.lambdamap.set(exp.monomorphizedUID as number, psigkey);
+            this.currentMapping
+
+            return psigkey;
         }
         else {
             assert(false, "Not Implemented -- captured template names and lambdas in constructor lambda expressions");
@@ -508,8 +487,15 @@ class Monomorphizer {
             this.instantiateCollectionConstructor(rparamtype.decl as AbstractCollectionTypeDecl, rparamtype, rargs);
         }
 
-        if(this.lambdaScopes.length > 0) {
+        const vname = exp.name
+        if(exp.isCapturedLambda) {
+            const psigkey = xxxx;
             this.lambdaScopes[this.lambdaScopes.length - 1].capturedLambdas.push(exp);
+            this.callinstmap.set(exp.monoinvid as number, psigkey);
+        }
+        else {
+            const psigkey = computeInvokeKeyForLambdaCallFunction(exp.monoinvid, xxx);
+            this.callinstmap.set(exp.monoinvid as number, psigkey);
         }
     }
 
@@ -546,7 +532,8 @@ class Monomorphizer {
             this.instantiateCollectionConstructor(rparamtype.decl as AbstractCollectionTypeDecl, rparamtype, rargs);
         }
 
-        exp.monomorhphizedkey = this.instantiateNamespaceFunction(nns, nfd, exp.terms, lambdas);
+        this.callinstmap.set(exp.monoinvid as number, computeInvokeKeyForNamespaceFunction(nns, nfd, exp.terms, lambdas));
+        this.instantiateNamespaceFunction(nns, nfd, exp.terms, lambdas);
     }
 
     private instantiateCallTypeFunctionExpression(exp: CallTypeFunctionExpression) {
@@ -1683,6 +1670,7 @@ class Monomorphizer {
         this.instantiateNamespaceDeclaration(ns);
 
         this.currentMapping = undefined;
+        this.lambdamap = new Map<number, string>();
         if(fdecl.function.terms.length !== 0) {
             let tmap = new Map<string, TypeSignature>();
             fdecl.function.terms.forEach((t, ii) => {
@@ -1698,17 +1686,18 @@ class Monomorphizer {
         this.instantiateBodyImplementation(fdecl.function.body);
 
         const cnns = this.currentNSInstantiation as NamespaceInstantiationInfo;
-        const rkey = this.computeResolveKeyForInvoke(fdecl.function.name, fdecl.function.terms.length, fdecl.function.params.some((p) => p.pkind !== undefined), fdecl.function.params.some((p) => p.type instanceof LambdaTypeSignature));
+        const rkey = computeResolveKeyForInvoke(fdecl.function.name, fdecl.function.terms.length, fdecl.function.params.some((p) => p.pkind !== undefined), fdecl.function.params.some((p) => p.type instanceof LambdaTypeSignature));
         
         fdecl.function.resolvename = rkey;
         if(!cnns.functionbinds.has(rkey)) {
             cnns.functionbinds.set(rkey, []);
         }
 
-        const ikey = this.computeInvokeKeyForNamespaceFunction(ns, fdecl.function, fdecl.instantiation, fdecl.lambdas);
-        (cnns.functionbinds.get(rkey) as InvokeInstantiationInfo[]).push(new InvokeInstantiationInfo(ikey, this.currentMapping as TemplateNameMapper, fdecl.lambdas));
+        const ikey = computeInvokeKeyForNamespaceFunction(ns, fdecl.function, fdecl.instantiation, fdecl.lambdas);
+        (cnns.functionbinds.get(rkey) as InvokeInstantiationInfo[]).push(new InvokeInstantiationInfo(ikey, this.currentMapping as TemplateNameMapper, fdecl.lambdas, this.lambdamap));
 
         this.currentMapping = undefined;
+        this.lambdamap = new Map<number, string>();
     }
 
     private instantiateTypeFunctionDecl(tdecl: AbstractNominalTypeDecl, fdecl: PendingTypeFunction) {
@@ -1717,6 +1706,7 @@ class Monomorphizer {
         const typeinst = ((this.currentNSInstantiation as NamespaceInstantiationInfo).typebinds.get(tdecl.name) as TypeInstantiationInfo[]).find((ti) => ti.tkey === fdecl.type.tkeystr) as TypeInstantiationInfo;
 
         this.currentMapping = undefined;
+        this.lambdamap = new Map<number, string>();
         if(fdecl.function.terms.length === 0) {
             this.currentMapping = typeinst.binds;
         }
@@ -1734,17 +1724,18 @@ class Monomorphizer {
 
         this.instantiateBodyImplementation(fdecl.function.body);
 
-        const rkey = this.computeResolveKeyForInvoke(fdecl.function.name, fdecl.function.terms.length, fdecl.function.params.some((p) => p.pkind !== undefined), fdecl.function.params.some((p) => p.type instanceof LambdaTypeSignature));
+        const rkey = computeResolveKeyForInvoke(fdecl.function.name, fdecl.function.terms.length, fdecl.function.params.some((p) => p.pkind !== undefined), fdecl.function.params.some((p) => p.type instanceof LambdaTypeSignature));
 
         fdecl.function.resolvename = rkey;
         if(!typeinst.functionbinds.has(rkey)) {
             typeinst.functionbinds.set(rkey, []);
         }
 
-        const ikey = this.computeInvokeKeyForTypeFunction(fdecl.type, fdecl.function, fdecl.instantiation, fdecl.lambdas);
-        (typeinst.functionbinds.get(rkey) as InvokeInstantiationInfo[]).push(new InvokeInstantiationInfo(ikey, this.currentMapping as TemplateNameMapper, fdecl.lambdas));
+        const ikey = computeInvokeKeyForTypeFunction(fdecl.type, fdecl.function, fdecl.instantiation, fdecl.lambdas);
+        (typeinst.functionbinds.get(rkey) as InvokeInstantiationInfo[]).push(new InvokeInstantiationInfo(ikey, this.currentMapping as TemplateNameMapper, fdecl.lambdas, this.lambdamap));
 
         this.currentMapping = undefined;
+        this.lambdamap = new Map<number, string>();
     }
 
     private instantiateMethodDecl(tdecl: AbstractNominalTypeDecl, mdecl: PendingTypeMethod) {
@@ -1754,6 +1745,7 @@ class Monomorphizer {
         const typeinst = ((this.currentNSInstantiation as NamespaceInstantiationInfo).typebinds.get(tdecl.name) as TypeInstantiationInfo[]).find((ti) => ti.tkey === mdecl.type.tkeystr) as TypeInstantiationInfo;
 
         this.currentMapping = undefined;
+        this.lambdamap = new Map<number, string>();
         if(mdecl.method.terms.length === 0) {
             this.currentMapping = typeinst.binds;
         }
@@ -1780,6 +1772,7 @@ class Monomorphizer {
         }
 
         this.currentMapping = undefined;
+        this.lambdamap = new Map<number, string>();
         */
         assert(false, "Not implemented -- instantiateMethodDecl");
     }
@@ -2213,7 +2206,7 @@ class Monomorphizer {
 
         for(let i = 0; i < decl.functions.length; ++i) {
             if(this.shouldInstantiateAsRootInvoke(decl.functions[i])) {
-                const ikey = this.computeInvokeKeyForNamespaceFunction(decl, decl.functions[i], [], []);
+                const ikey = computeInvokeKeyForNamespaceFunction(decl, decl.functions[i], [], []);
                 this.pendingNamespaceFunctions.push(new PendingNamespaceFunction(decl, decl.functions[i], [], [], ikey));
             }
         }
@@ -2252,7 +2245,7 @@ class Monomorphizer {
     private instantiateRootNamespaceDeclarationForTest(decl: NamespaceDeclaration) {
         for(let i = 0; i < decl.functions.length; ++i) {
             if(this.shouldInstantiateAsRootInvokeForTest(decl.functions[i])) {
-                const ikey = this.computeInvokeKeyForNamespaceFunction(decl, decl.functions[i], [], []);
+                const ikey = computeInvokeKeyForNamespaceFunction(decl, decl.functions[i], [], []);
                 this.pendingNamespaceFunctions.push(new PendingNamespaceFunction(decl, decl.functions[i], [], [], ikey));
             }
         }

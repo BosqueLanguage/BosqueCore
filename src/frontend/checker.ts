@@ -33,6 +33,7 @@ class TypeChecker {
     isTaskScope: boolean = false;
     envDecl: EnvironmentVariableInformation[] = [];
     lambdaCtr: number = 0;
+    invidCtr = 0;
 
     constructor(constraints: TemplateConstraintScope, relations: TypeCheckerRelations) {
         this.constraints = constraints;
@@ -2166,6 +2167,8 @@ class TypeChecker {
         exp.inout = arginfo.inout;
         exp.byref = arginfo.byref;
 
+        exp.monoinvid = this.invidCtr++;
+
         const rrt = TypeResultWRefVarInfoResult.makeGeneralResult(
             exp.setType(lsig.resultType), false, false,
             { ttrue: [...arginfo.setcondout], tfalse: [] },
@@ -2320,6 +2323,8 @@ class TypeChecker {
         exp.setuncond = arginfo.setuncond;
         exp.inout = arginfo.inout;
         exp.byref = arginfo.byref;
+
+        exp.monoinvid = this.invidCtr++;
 
         const rrt = TypeResultWRefVarInfoResult.makeGeneralResult(
             exp.setType(fdecl.resultType.remapTemplateBindings(imapper)), false, false,

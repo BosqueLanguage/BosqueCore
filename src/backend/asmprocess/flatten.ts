@@ -967,6 +967,8 @@ class ASMToIRConverter {
         const haspreconds = fdecl.preconditions.length > 0;
         const imapper = this.generateLocalTemplateMapping(fdecl.terms.map((t) => t.name), exp.terms);
 
+        const iname = (this.currentInvokeInstantation as InvokeInstantiationInfo).monoinvids.get(exp.monoinvid as number) as string;
+
         const aargs: IRSimpleExpression[] = [];
         for(let i = 0; i < exp.shuffleinfo.length; ++i) {
             const ii = exp.shuffleinfo[i];
@@ -1006,10 +1008,11 @@ class ASMToIRConverter {
         for(let i = 0; i < fdecl.preconditions.length; ++i) {
             const invdecl = fdecl.preconditions[i];
             
-            this.pushStatement(new IRPreconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), exp.monomorhphizedkey as string, invdecl.ii, aargs));
+            this.pushStatement(new IRPreconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), iname, invdecl.ii, aargs));
         }
 
-        const iname = exp.monomorhphizedkey as string;
+        //TODO: handle postcondition here  <---------------------------------  
+
         if(!exp.args.hasSpecialRef()) {
             return new IRInvokeSimpleExpression(iname, aargs);
         }
@@ -1045,7 +1048,7 @@ class ASMToIRConverter {
             assert(false, "rest parameters not yet implemented in flattenCallNamespaceFunctionExpression");
         }
 
-        const iname = "-[LAMBDA]-"; //exp.monomorhphizedkey as string
+        const iname = (this.currentInvokeInstantation as InvokeInstantiationInfo).monoinvids.get(exp.monoinvid as number) as string;
         if(!exp.args.hasSpecialRef()) {
             return new IRInvokeSimpleExpression(iname, aargs);
         }
@@ -3226,7 +3229,7 @@ class ASMToIRConverter {
                 return new IRInvokeParameterDecl(p.name, this.processTypeSignature(p.type), p.pkind, defaultValue);
             }
             else {
-                const ll = (this.currentInvokeInstantation as InvokeInstantiationInfo).lambdas.find((li) => li.pname === p.name) as { pname: string, psigkey: string, invtrgt: string };
+                const ll = (this.currentInvokeInstantation as InvokeInstantiationInfo).lambdaargs.find((li) => li.pname === p.name) as { pname: string, psigkey: string, invtrgt: string };
                 const tlambda = new IRLambdaParameterPackTypeSignature(ll.psigkey);
                 
                 return new IRInvokeParameterDecl(p.name, tlambda, p.pkind, defaultValue);

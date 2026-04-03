@@ -1,15 +1,40 @@
+import { MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, TypeFunctionDecl } from "../../frontend/assembly.js";
+import { VarInfo } from "../../frontend/checker_environment.js";
 import { EListTypeSignature, FullyQualifiedNamespace, TemplateNameMapper, TypeSignature } from "../../frontend/type.js";
+
+class LambdaInstantiationInfo {
+    readonly newikey: string;
+
+    readonly binds: TemplateNameMapper | undefined;
+    readonly lambdacons: Map<number, string>;
+
+    readonly capturedVars: VarInfo[];
+    readonly capturedLambdas: { pname: string, psigkey: string }[];
+
+    constructor(newikey: string, binds: TemplateNameMapper | undefined, lambdacons: Map<number, string>, capturedVars: VarInfo[], capturedLambdas: { pname: string, psigkey: string }[]) {
+        this.newikey = newikey;
+        this.binds = binds;
+        this.lambdacons = lambdacons;
+        this.capturedVars = capturedVars;
+        this.capturedLambdas = capturedLambdas;
+    }
+}
 
 class InvokeInstantiationInfo {
     readonly newikey: string;
 
     readonly binds: TemplateNameMapper | undefined;
-    readonly lambdas: { pname: string, psigkey: string }[];
-    
-    constructor(newikey: string, binds: TemplateNameMapper | undefined, lambdas: { pname: string, psigkey: string }[]) {
+    readonly lambdaargs: { pname: string, psigkey: string }[]; //string corresponds to a lambda instantation info
+    readonly lambdacons: Map<number, string>; //string corresponds to a lambda instantation info
+
+    readonly monoinvids: Map<number, string>;
+
+    constructor(newikey: string, binds: TemplateNameMapper | undefined, lambdaargs: { pname: string, psigkey: string }[], lambdacons: Map<number, string>, monoinvids: Map<number, string>) {
         this.newikey = newikey;
         this.binds = binds;
-        this.lambdas = lambdas;
+        this.lambdaargs = lambdaargs;
+        this.lambdacons = lambdacons;
+        this.monoinvids = monoinvids;
     }
 }
 
@@ -52,9 +77,42 @@ class NamespaceInstantiationInfo {
     }
 }
 
+function computeTBindsKey(tbinds: TypeSignature[]): string {
+    return (tbinds.length !== 0) ? `<${tbinds.map(t => t.tkeystr).join(", ")}>` : "";
+}
+
+function computeLambdaKey(packs: { pname: string, psigkey: string }[]): string {
+    return (packs.length !== 0) ? `[${packs.map(lp => lp.psigkey).join(", ")}]` : "";
+}
+
+function computeResolveKeyForInvoke(ikey: string, termcount: number, hasref: boolean, lambdas: boolean): string {
+    const tci = (termcount !== 0) ? `*tc_${termcount}_` : "";
+    const rfi = (hasref ? "*_ref_" : "");
+    const li = (lambdas ? "*_lambdas_" : "");
+
+    return `${ikey}${tci}${rfi}${li}`;
+}
+
+function computeInvokeKeyForNamespaceFunction(ns: NamespaceDeclaration, fdecl: NamespaceFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]): string {
+    const rti = fdecl.params.some((p) => p.pkind !== undefined) ? "#ref" : "";
+    return `${ns.fullnamespace.emit()}::${fdecl.name}${rti}${computeTBindsKey(terms)}${computeLambdaKey(lambdas)}`;
+}
+
+function computeInvokeKeyForTypeFunction(rcvrtype: TypeSignature, fdecl: TypeFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]): string {
+    const rti = fdecl.params.some((p) => p.pkind !== undefined) ? "#ref" : "";
+    return `${rcvrtype.tkeystr}::${fdecl.name}${rti}${computeTBindsKey(terms)}${computeLambdaKey(lambdas)}`;
+}
+
+function computeInvokeKeyForTypeMethod(rcvrtype: TypeSignature, mdecl: MethodDecl, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]): string {
+    const rti = ((mdecl.isThisRef) || mdecl.params.some((p) => p.pkind !== undefined)) ? "#ref" : "";
+    return `${rcvrtype.tkeystr}@${mdecl.name}${rti}${computeTBindsKey(terms)}${computeLambdaKey(lambdas)}`;
+}
 
 export {
+    LambdaInstantiationInfo,
     InvokeInstantiationInfo,
     TypeInstantiationInfo,
-    NamespaceInstantiationInfo
+    NamespaceInstantiationInfo,
+    computeTBindsKey, computeLambdaKey, computeResolveKeyForInvoke, 
+    computeInvokeKeyForNamespaceFunction, computeInvokeKeyForTypeFunction, computeInvokeKeyForTypeMethod
 };

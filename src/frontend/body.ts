@@ -951,6 +951,8 @@ class LambdaInvokeExpression extends Expression {
     inout: string[] = [];
     byref: string[] = [];
 
+    monoinvid: number | undefined = undefined;
+
     constructor(sinfo: SourceInfo, name: string, rec: RecursiveAnnotation, args: ArgumentList) {
         super(ExpressionTag.LambdaInvokeExpression, sinfo);
         this.name = name;
@@ -984,6 +986,8 @@ class CallNamespaceFunctionExpression extends Expression {
     setuncond: string[] = [];
     inout: string[] = [];
     byref: string[] = [];
+
+    monoinvid: number | undefined = undefined;
 
     constructor(sinfo: SourceInfo, isImplicitNS: boolean, ns: FullyQualifiedNamespace, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
         super(ExpressionTag.CallNamespaceFunctionExpression, sinfo);
