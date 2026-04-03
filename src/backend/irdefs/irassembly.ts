@@ -612,7 +612,7 @@ class IREntityTypeDecl extends IRAbstractEntityTypeDecl {
     }
 
     emitBAPI(): string {
-        return "";
+        return "borf";
     }
 }
 
