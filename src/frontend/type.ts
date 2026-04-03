@@ -174,6 +174,7 @@ abstract class TypeSignature {
     }
 
     abstract remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature;
+    abstract gatherTemplateBindings(tnames: Set<string>): void;
 
     abstract emit(): string;
 }
@@ -191,6 +192,10 @@ class ErrorTypeSignature extends TypeSignature {
         return this;
     }
 
+    gatherTemplateBindings(tnames: Set<string>) {
+        ;
+    }
+
     emit(): string {
         return this.tkeystr;
     }
@@ -205,6 +210,10 @@ class VoidTypeSignature extends TypeSignature {
         return this;
     }
 
+    gatherTemplateBindings(tnames: Set<string>) {
+        ;
+    }
+
     emit(): string {
         return "Void";
     }
@@ -217,6 +226,10 @@ class AutoTypeSignature extends TypeSignature {
 
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
         return this;
+    }
+
+    gatherTemplateBindings(tnames: Set<string>) {
+        ;
     }
 
     emit(): string {
@@ -234,6 +247,10 @@ class TemplateTypeSignature extends TypeSignature {
 
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
         return mapper.resolveTemplateMapping(this);
+    }
+
+    gatherTemplateBindings(tnames: Set<string>) {
+        tnames.add(this.name);
     }
 
     emit(): string {
@@ -280,6 +297,10 @@ class NominalTypeSignature extends TypeSignature {
         return new NominalTypeSignature(this.sinfo, this.altns, this.decl, rtall);
     }
 
+    gatherTemplateBindings(tnames: Set<string>) {
+        this.alltermargs.forEach((tt) => tt.gatherTemplateBindings(tnames));
+    }
+
     emit(): string {
         const tscope = this.alltermargs.length !== 0 ? ("<" + this.alltermargs.map((tt) => tt.emit()).join(", ") + ">") : "";
         if(this.decl.isSpecialResultEntity()) {
@@ -314,6 +335,10 @@ class EListTypeSignature extends TypeSignature {
         return new EListTypeSignature(this.sinfo, this.entries.map((tt) => tt.remapTemplateBindings(mapper)));
     }
 
+    gatherTemplateBindings(tnames: Set<string>) {
+        this.entries.forEach((tt) => tt.gatherTemplateBindings(tnames));
+    }
+
     emit(): string {
         return `(|${this.entries.map((tt) => tt.emit()).join(", ")}|)`;
     }
@@ -329,6 +354,10 @@ class DashResultTypeSignature extends TypeSignature {
 
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
         return new DashResultTypeSignature(this.sinfo, this.entries.map((tt) => tt.remapTemplateBindings(mapper)));
+    }
+
+    gatherTemplateBindings(tnames: Set<string>) {
+        this.entries.forEach((tt) => tt.gatherTemplateBindings(tnames));
     }
 
     emit(): string {
@@ -373,6 +402,11 @@ class LambdaTypeSignature extends TypeSignature {
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
         const rbparams = this.params.map((pp) => new LambdaParameterSignature(pp.name, pp.type.remapTemplateBindings(mapper), pp.pkind, pp.isRestParam));
         return new LambdaTypeSignature(this.sinfo, this.recursive, this.name, rbparams, this.resultType.remapTemplateBindings(mapper));
+    }
+
+    gatherTemplateBindings(tnames: Set<string>) {
+        this.params.forEach((pp) => pp.type.gatherTemplateBindings(tnames));
+        this.resultType.gatherTemplateBindings(tnames);
     }
 
     emit(): string {
@@ -422,6 +456,10 @@ class FormatStringTypeSignature extends TypeSignature {
         return new FormatStringTypeSignature(this.sinfo, this.oftype, this.rtype.remapTemplateBindings(mapper), ttrmp);
     }
 
+    gatherTemplateBindings(tnames: Set<string>) {
+        this.terms.forEach((tt) => tt.argtype.gatherTemplateBindings(tnames));
+    }
+
     emit(): string {
         return this.tkeystr;
     }
@@ -459,6 +497,10 @@ class FormatPathTypeSignature extends TypeSignature {
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
         const ttrmp = this.terms.map((tt) => { return {argname: tt.argname, argtype: tt.argtype.remapTemplateBindings(mapper)}; });
         return new FormatPathTypeSignature(this.sinfo, this.oftype, this.rtype.remapTemplateBindings(mapper), ttrmp);
+    }
+
+    gatherTemplateBindings(tnames: Set<string>) {
+        this.terms.forEach((tt) => tt.argtype.gatherTemplateBindings(tnames));
     }
 
     emit(): string {
