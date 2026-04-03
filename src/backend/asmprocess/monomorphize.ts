@@ -479,8 +479,6 @@ class Monomorphizer {
 
         const linfo = this.lambdaScopes.pop() as ScopeUseFrame;
         if(linfo.capturedTemplateNames.length === 0 && linfo.capturedLambdas.length === 0) {
-            console.log(`Lambda constructor ${exp.monomorphizedUID}}`);
-
             //TODO: add the LambdaInstantiationInfo to the set of generated instantiations so we can generate later
 
             const psigkey = `fn_${exp.monomorphizedUID}`;

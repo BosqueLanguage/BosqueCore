@@ -217,22 +217,24 @@ class TypeInfoManager {
         return `constexpr TypeInfo g_typeinfo_${tk} = { ${typeinfo.bsqtypeid}, ${typeinfo.bytesize}, ${typeinfo.slotcount}, LayoutTag::${layouttag}, BSQ_TYPEINFO_NO_ESLOT, ${typeinfo.ptrmask ?? "BSQ_PTR_MASK_LEAF"}, "${tk}", nullptr };`;
     }
 
-    emitTypeAsParameter(tkey: string, isreftagged: boolean): string {
-        const typeinfo = this.getTypeInfo(tkey);
-
-        const rtspec = (isreftagged ? "&" : "");
-        if(typeinfo.tag === LayoutTag.Ref) {
-            return TransformCPPNameManager.convertTypeKey(tkey) + "*" + rtspec;
-        }
-        else if(typeinfo.tsig instanceof IRLambdaParameterPackTypeSignature) {
-            return "const " + TransformCPPNameManager.convertTypeKey(tkey) + "&";
+    emitTypeAsParameter(tkey: string, isreftagged: boolean, islambda: boolean): string {
+        if(islambda) {
+            return "const " + TransformCPPNameManager.convertTypeKey(tkey) + "_data&";
         }
         else {
-            if(typeinfo.bytesize <= TypeInfoManager.c_ref_pass_size) {
-                return TransformCPPNameManager.convertTypeKey(tkey) + rtspec;
+            const typeinfo = this.getTypeInfo(tkey);
+
+            const rtspec = (isreftagged ? "&" : "");
+            if(typeinfo.tag === LayoutTag.Ref) {
+                return TransformCPPNameManager.convertTypeKey(tkey) + "*" + rtspec;
             }
             else {
-                return TransformCPPNameManager.convertTypeKey(tkey) + "&";                
+                if(typeinfo.bytesize <= TypeInfoManager.c_ref_pass_size) {
+                    return TransformCPPNameManager.convertTypeKey(tkey) + rtspec;
+                }
+                else {
+                    return TransformCPPNameManager.convertTypeKey(tkey) + "&";                
+                }
             }
         }
     }
