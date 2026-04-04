@@ -1,8 +1,8 @@
 import assert from "node:assert";
 
 import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, AgentDecl, APIDecl, APIDeniedTypeDecl, APIErrorTypeDecl, APIFlaggedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, ExplicitInvokeDecl, FailTypeDecl, InvariantDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskActionDecl, TaskConfiguration, TaskDecl, TaskMethodDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl } from "../../frontend/assembly.js";
-import { computeInvokeKeyForNamespaceFunction, computeInvokeKeyForTypeFunction, computeResolveKeyForInvoke, InvokeInstantiationInfo, LambdaInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiations.js";
-import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
+import { computeInvokeKeyForLambdaFunction, computeInvokeKeyForNamespaceFunction, computeInvokeKeyForTypeFunction, computeResolveKeyForInvoke, InvokeInstantiationInfo, LambdaInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiations.js";
+import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, AbstractArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, HoleBodyImplementation, HoleExpression, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixSliceOperator, PostfixOp, PostfixOpTag, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement, StdArgumentValue, InterpolateFormatExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixProjectFromNames, ITest, ITestType } from "../../frontend/body.js";
 import { SourceInfo } from "../../frontend/build_decls.js";
 
@@ -152,14 +152,9 @@ class Monomorphizer {
             return;
         }
 
-        const rt = mapping !== undefined ? type.remapTemplateBindings(mapping) : type;
-        if(this.isAlreadySeenType(rt.tkeystr)) {
-            return;
-        }
-
         if(this.lambdaScopes.length > 0) {
             let tnames: Set<string> = new Set<string>();
-            rt.gatherTemplateBindings(tnames);
+            type.gatherTemplateBindings(tnames);
 
             const sscope = this.lambdaScopes[this.lambdaScopes.length - 1];
             tnames.forEach((tn) => {
@@ -168,6 +163,12 @@ class Monomorphizer {
                 }
             });
         }
+
+        const rt = mapping !== undefined ? type.remapTemplateBindings(mapping) : type;
+        if(this.isAlreadySeenType(rt.tkeystr)) {
+            return;
+        }
+
         else if(rt instanceof NominalTypeSignature) {
             rt.alltermargs.forEach((tt) => this.instantiateTypeSignature(tt, mapping));
             this.pendingNominalTypeDecls.push(new PendingNominalTypeDecl(rt.tkeystr, rt, rt.decl, rt.alltermargs));
@@ -475,21 +476,40 @@ class Monomorphizer {
     private instantiateConstructorLambdaExpression(exp: ConstructorLambdaExpression): string {
         this.lambdaScopes.push(new ScopeUseFrame());
 
+        const olcons = this.lambdamap;
+        const nlcons = new Map<number, string>();
+        this.lambdamap = nlcons;
+
+        const ominvmap = this.callinstmap;
+        const nlinvmap = new Map<number, string>();
+        this.callinstmap = nlinvmap;
+
         this.instantiateBodyImplementation(exp.invoke.body);
+
+        this.lambdamap = olcons;
+        this.callinstmap = ominvmap;
 
         const linfo = this.lambdaScopes.pop() as ScopeUseFrame;
         if(linfo.capturedTemplateNames.length === 0 && linfo.capturedLambdas.length === 0) {
             const psigkey = `fn_${exp.monomorphizedUID}`;
 
-            const linst = new LambdaInstantiationInfo(psigkey, undefined, new Map<number, string>(), [...linfo.capturedVars], [], [], exp.getType() as LambdaTypeSignature, exp.invoke);
+            const linst = new LambdaInstantiationInfo(psigkey, undefined, nlcons, nlinvmap, [...linfo.capturedVars], [], [], exp.getType() as LambdaTypeSignature, exp.invoke);
 
             this.lambdamap.set(exp.monomorphizedUID as number, psigkey);
-            (this.currentNSInstantiation as NamespaceInstantiationInfo).lambdas.set(`fn_${exp.monomorphizedUID}`, linst);
+            (this.currentNSInstantiation as NamespaceInstantiationInfo).lambdas.set(psigkey, linst);
 
             return psigkey;
         }
         else {
-            assert(false, "Not Implemented -- captured template names and lambdas in constructor lambda expressions");
+            const tbinds = linfo.capturedTemplateNames.map((ctn) => (this.currentMapping as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(exp.sinfo, ctn)));
+            const psigkey = computeInvokeKeyForLambdaFunction(`fn_${exp.monomorphizedUID}`, tbinds, linfo.capturedLambdas);
+
+            const linst = new LambdaInstantiationInfo(psigkey, undefined, nlcons, nlinvmap, [...linfo.capturedVars], linfo.capturedLambdas, linfo.capturedTemplateNames, exp.getType() as LambdaTypeSignature, exp.invoke);
+
+            this.lambdamap.set(exp.monomorphizedUID as number, psigkey);
+            (this.currentNSInstantiation as NamespaceInstantiationInfo).lambdas.set(psigkey, linst);
+
+            return psigkey;
         }
     }
 

@@ -6,6 +6,7 @@ class LambdaInstantiationInfo {
 
     readonly binds: TemplateNameMapper | undefined;
     readonly lambdacons: Map<number, string>;
+    readonly monoinvids: Map<number, string>;
 
     readonly capturedVars: [string, TypeSignature, "outer" | "local" | "param"][];
     readonly capturedLambdas: { pname: string, psigkey: string }[];
@@ -14,10 +15,11 @@ class LambdaInstantiationInfo {
     readonly lsig: LambdaTypeSignature;
     readonly body: LambdaDecl;
 
-    constructor(newikey: string, binds: TemplateNameMapper | undefined, lambdacons: Map<number, string>, capturedVars: [string, TypeSignature, "outer" | "local" | "param"][], capturedLambdas: { pname: string, psigkey: string }[], capturedTemplateNames: string[], lsig: LambdaTypeSignature, body: LambdaDecl) {
+    constructor(newikey: string, binds: TemplateNameMapper | undefined, lambdacons: Map<number, string>, monoinvids: Map<number, string>, capturedVars: [string, TypeSignature, "outer" | "local" | "param"][], capturedLambdas: { pname: string, psigkey: string }[], capturedTemplateNames: string[], lsig: LambdaTypeSignature, body: LambdaDecl) {
         this.newikey = newikey;
         this.binds = binds;
         this.lambdacons = lambdacons;
+        this.monoinvids = monoinvids;
         this.capturedVars = capturedVars;
         this.capturedLambdas = capturedLambdas;
         this.capturedTemplateNames = capturedTemplateNames;
@@ -116,11 +118,15 @@ function computeInvokeKeyForTypeMethod(rcvrtype: TypeSignature, mdecl: MethodDec
     return `${rcvrtype.tkeystr}@${mdecl.name}${rti}${computeTBindsKey(terms)}${computeLambdaKey(lambdas)}`;
 }
 
+function computeInvokeKeyForLambdaFunction(basefn: string, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]): string {
+    return `${basefn}${computeTBindsKey(terms)}${computeLambdaKey(lambdas)}`;
+}
+
 export {
     LambdaInstantiationInfo,
     InvokeInstantiationInfo,
     TypeInstantiationInfo,
     NamespaceInstantiationInfo,
     computeTBindsKey, computeLambdaKey, computeResolveKeyForInvoke, 
-    computeInvokeKeyForNamespaceFunction, computeInvokeKeyForTypeFunction, computeInvokeKeyForTypeMethod
+    computeInvokeKeyForNamespaceFunction, computeInvokeKeyForTypeFunction, computeInvokeKeyForTypeMethod, computeInvokeKeyForLambdaFunction
 };

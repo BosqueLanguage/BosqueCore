@@ -1,6 +1,6 @@
 
 import { SourceInfo } from "../../frontend/build_decls.js";
-import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, LambdaTypeSignature, NominalTypeSignature, RecursiveAnnotation, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
+import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, RecursiveAnnotation, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
 import { AbortStatement, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringTextComponent, HoleBodyImplementation, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, InterpolateFormatExpression, ITest, ITestFail, ITestGuard, ITestGuardSet, ITestNone, ITestOk, ITestSimpleGuard, ITestSome, ITestType, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PassingArgumentValue, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PostfixSliceOperator, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, StdArgumentValue, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement } from "../../frontend/body.js";
 import { AbstractCollectionTypeDecl, AbstractConceptTypeDecl, AbstractEntityTypeDecl, AdditionalTypeDeclTag, AgentDecl, APIDecl, APIDeniedTypeDecl, APIErrorTypeDecl, APIFlaggedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstructableTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EventListTypeDecl, FailTypeDecl, InvariantDecl, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskDecl, TestAssociation, TypedeclTypeDecl, ValidateDecl } from "../../frontend/assembly.js";
 
@@ -46,6 +46,11 @@ class ASMToIRConverter {
     currentNamespaceInstantiation: NamespaceInstantiationInfo | undefined;
     currentTypeInstantiation: TypeInstantiationInfo | undefined;
     currentInvokeInstantation: InvokeInstantiationInfo | undefined;
+    currentLambdaInstantiation: LambdaInstantiationInfo | undefined;
+
+    currentBinds: TemplateNameMapper | undefined;
+    currentLambdaConsMap: Map<number, string> | undefined;
+    currentMonoInvIdMap: Map<number, string> | undefined;
 
     pendingblocks: IRStatement[][];
     rescopeStack: Map<string, string>[]; //Maps from old name to new name
@@ -74,19 +79,68 @@ class ASMToIRConverter {
         this.tmpVarCtr = 0;
     }
 
-    private initCodeProcessingContext(file: string, isTaskAllowed: boolean, rtype: TypeSignature, implicitreturn: string | undefined, postconds: PostConditionDecl[] | undefined, typeinst: TypeInstantiationInfo | undefined, invokeinst: InvokeInstantiationInfo | undefined) {
+    private initCodeTypeProcessingContext(file: string, isTaskAllowed: boolean, typeinst: TypeInstantiationInfo) {
         this.currentFile = file;
         this.isTaskAllowed = isTaskAllowed;
-        this.currentReturnType = rtype;
-        this.currentImplicitReturnVar = implicitreturn;
-        this.currentPostconditions = postconds;
+        this.currentReturnType = undefined;
+        this.currentImplicitReturnVar = undefined;
+        this.currentPostconditions = undefined;
 
         this.currentTypeInstantiation = typeinst;
-        this.currentInvokeInstantation = invokeinst;
+        this.currentInvokeInstantation = undefined;
+        this.currentLambdaInstantiation = undefined;
+
+        this.currentBinds = typeinst.binds;
+        this.currentLambdaConsMap = undefined;
+        this.currentMonoInvIdMap = undefined;
 
         this.pendingblocks = [];
         this.rescopeStack = [];
         this.tmpVarCtr = 0;
+    }
+
+    private initCodeInvokeProcessingContext(file: string, isTaskAllowed: boolean, rtype: TypeSignature, implicitreturn: InvokeParameterDecl | undefined, postconds: PostConditionDecl[] | undefined, invokeinst: InvokeInstantiationInfo) {
+        this.currentFile = file;
+        this.isTaskAllowed = isTaskAllowed;
+        this.currentReturnType = rtype;
+        this.currentImplicitReturnVar = implicitreturn !== undefined ? implicitreturn.name : undefined;
+        this.currentPostconditions = postconds;
+
+        this.currentTypeInstantiation = undefined;
+        this.currentInvokeInstantation = invokeinst;
+        this.currentLambdaInstantiation = undefined;
+
+        this.currentBinds = invokeinst.binds;
+        this.currentLambdaConsMap = invokeinst.lambdacons;
+        this.currentMonoInvIdMap = invokeinst.monoinvids;
+
+        this.pendingblocks = [];
+        this.rescopeStack = [];
+        this.tmpVarCtr = 0;
+    }
+
+    private initCodeLambdaProcessingContext(file: string, rtype: TypeSignature, implicitreturn: LambdaParameterSignature | undefined, lambdainst: LambdaInstantiationInfo) {
+        this.currentFile = file;
+        this.isTaskAllowed = false;
+        this.currentReturnType = rtype;
+        this.currentImplicitReturnVar = implicitreturn !== undefined ? implicitreturn.name : undefined;
+        this.currentPostconditions = undefined;
+
+        this.currentTypeInstantiation = undefined;
+        this.currentInvokeInstantation = undefined;
+        this.currentLambdaInstantiation = lambdainst;
+
+        this.currentBinds = lambdainst.binds;
+        this.currentLambdaConsMap = lambdainst.lambdacons;
+        this.currentMonoInvIdMap = lambdainst.monoinvids;
+
+        this.pendingblocks = [];
+        this.rescopeStack = [];
+        this.tmpVarCtr = 0;
+    }
+
+    private extendProcessingContextForExpEval(rtype: TypeSignature) {
+        this.currentReturnType = rtype;
     }
 
     private convertSourceInfo(sinfo: SourceInfo): IRSourceInfo {
@@ -239,15 +293,7 @@ class ASMToIRConverter {
     }
 
     private tproc(ttype: TypeSignature): TypeSignature {
-        if(this.currentInvokeInstantation !== undefined) {
-            return this.currentInvokeInstantation.binds !== undefined ? ttype.remapTemplateBindings(this.currentInvokeInstantation.binds) : ttype;
-        }
-        else if(this.currentTypeInstantiation !== undefined) {
-            return this.currentTypeInstantiation.binds !== undefined ? ttype.remapTemplateBindings(this.currentTypeInstantiation.binds) : ttype;
-        }
-        else {
-            return ttype;
-        }
+        return this.currentBinds !== undefined ? ttype.remapTemplateBindings(this.currentBinds) : ttype;
     }
 
     private processTypeSignature(tsig: TypeSignature): IRTypeSignature {
@@ -968,7 +1014,7 @@ class ASMToIRConverter {
         const haspreconds = fdecl.preconditions.length > 0;
         const imapper = this.generateLocalTemplateMapping(fdecl.terms.map((t) => t.name), exp.terms);
 
-        const iname = (this.currentInvokeInstantation as InvokeInstantiationInfo).monoinvids.get(exp.monoinvid as number) as string;
+        const iname = (this.currentMonoInvIdMap as Map<number, string>).get(exp.monoinvid as number) as string;
 
         const aargs: IRSimpleExpression[] = [];
         for(let i = 0; i < exp.shuffleinfo.length; ++i) {
@@ -1033,7 +1079,7 @@ class ASMToIRConverter {
     }
 
     private flattenConstructorLambdaExpression(exp: ConstructorLambdaExpression): IRExpression {
-        const lptype = new IRLambdaParameterPackTypeSignature((this.currentInvokeInstantation as InvokeInstantiationInfo).lambdacons.get(exp.monomorphizedUID as number) as string);
+        const lptype = new IRLambdaParameterPackTypeSignature((this.currentLambdaConsMap as Map<number, string>).get(exp.monomorphizedUID as number) as string);
         this.lpacks.push(lptype);
 
         const iidecl = (this.currentNamespaceInstantiation as NamespaceInstantiationInfo).lambdas.get(lptype.tkeystr) as LambdaInstantiationInfo;
@@ -1053,7 +1099,7 @@ class ASMToIRConverter {
     }
 
     private flattenLambdaInvokeExpression(exp: LambdaInvokeExpression): IRExpression {
-        const iname = (this.currentInvokeInstantation as InvokeInstantiationInfo).monoinvids.get(exp.monoinvid as number) as string;
+        const iname = (this.currentMonoInvIdMap as Map<number, string>).get(exp.monoinvid as number) as string;
 
         const aargs: IRSimpleExpression[] = [exp.isCapturedLambda ? new IRAccessCapturedVariableExpression(exp.name) :  new IRAccessParameterVariableExpression(exp.name)];
         for(let i = 0; i < exp.args.args.length; ++i) {
@@ -3251,6 +3297,7 @@ class ASMToIRConverter {
                 return new IRInvokeParameterDecl(p.name, this.processTypeSignature(p.type), p.pkind, undefined, defaultValue);
             }
             else {
+                //This is ok since lambda params can only be on an invoke (not on another lambda)
                 const ll = (this.currentInvokeInstantation as InvokeInstantiationInfo).lambdaargs.find((li) => li.pname === p.name) as { pname: string, psigkey: string, invtrgt: string };
                 const tlambda = new IRLambdaParameterPackTypeSignature(ll.psigkey);
                 
@@ -3343,7 +3390,7 @@ class ASMToIRConverter {
     }
 */
     private generateEnumTypeDecl(tdecl: EnumTypeDecl, tinst: TypeInstantiationInfo): IREnumTypeDecl {
-        this.initCodeProcessingContext(tdecl.file, false, tinst.tsig, undefined, undefined, tinst, undefined);
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
 
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
@@ -3352,7 +3399,7 @@ class ASMToIRConverter {
     }
 
     private generateTypedeclTypeDecl(tdecl: TypedeclTypeDecl, tinst: TypeInstantiationInfo): IRTypedeclTypeDecl {
-        this.initCodeProcessingContext(tdecl.file, false, tinst.tsig, undefined, undefined, tinst, undefined);
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
 
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
@@ -3373,7 +3420,7 @@ class ASMToIRConverter {
     }
 
     private generateTypedeclCStringDecl(tdecl: TypedeclTypeDecl, tinst: TypeInstantiationInfo): IRTypedeclCStringDecl {
-        this.initCodeProcessingContext(tdecl.file, false, tinst.tsig, undefined, undefined, tinst, undefined);
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
 
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
@@ -3400,7 +3447,7 @@ class ASMToIRConverter {
     }
 
     private generateTypedeclStringDecl(tdecl: TypedeclTypeDecl, tinst: TypeInstantiationInfo): IRTypedeclStringDecl {
-        this.initCodeProcessingContext(tdecl.file, false, tinst.tsig, undefined, undefined, tinst, undefined);
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
 
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
@@ -3427,7 +3474,7 @@ class ASMToIRConverter {
     }
 
     private generatePrimitiveEntityTypeDecl(tdecl: PrimitiveEntityTypeDecl, tinst: TypeInstantiationInfo): IRPrimitiveEntityTypeDecl {
-        this.initCodeProcessingContext(tdecl.file, false, tinst.tsig, undefined, undefined, tinst, undefined);
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
 
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
@@ -3464,7 +3511,7 @@ class ASMToIRConverter {
     }
 
     private generateSomeTypeDecl(tdecl: SomeTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRSomeTypeDecl {
-        this.initCodeProcessingContext(tdecl.file, false, tinst.tsig, undefined, undefined, tinst, undefined);
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
         
         const encloption = tdecl.saturatedProvides.map((sp) => this.processTypeSignature(sp));
 
@@ -3481,7 +3528,7 @@ class ASMToIRConverter {
     }
 
     private generateListTypeDecl(tdecl: ListTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRListTypeDecl {
-        this.initCodeProcessingContext(tdecl.file, false, tinst.tsig, undefined, undefined, tinst, undefined);
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
 
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
@@ -3512,7 +3559,7 @@ class ASMToIRConverter {
     }
 
     private generateEntityTypeDecl(tdecl: EntityTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IREntityTypeDecl {
-        this.initCodeProcessingContext(tdecl.file, false, tinst.tsig, undefined, undefined, tinst, undefined);
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
 
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
@@ -3565,7 +3612,7 @@ class ASMToIRConverter {
     }
 
     private generateOptionTypeDecl(tdecl: OptionTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IROptionTypeDecl {
-        this.initCodeProcessingContext(tdecl.file, false, tinst.tsig, undefined, undefined, tinst, undefined);
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
 
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
@@ -3587,7 +3634,7 @@ class ASMToIRConverter {
     }
 
     private generateConceptTypeDecl(tdecl: ConceptTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRConceptTypeDecl {
-        this.initCodeProcessingContext(tdecl.file, false, tinst.tsig, undefined, undefined, tinst, undefined);
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
 
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
@@ -3631,7 +3678,7 @@ class ASMToIRConverter {
     }
 
     private generateNamespaceConstDecl(ns: FullyQualifiedNamespace, cdecl: NamespaceConstDecl): IRConstantDecl {
-        this.initCodeProcessingContext(cdecl.file, false, cdecl.declaredType, undefined, undefined, undefined, undefined);
+        this.extendProcessingContextForExpEval(cdecl.declaredType);
 
         this.pushStatementBlock();
         const irval = this.flattenExpression(cdecl.value);
@@ -3842,6 +3889,9 @@ class ASMToIRConverter {
             const ldecl = this.generateLambdaDataDecl(linst);
             irasm.alllambdas.set(ldecl.tkeystr, ldecl);
 
+            const implicitreturn = linst.lsig.params.find((p) => p.pkind !== undefined);
+            this.initCodeLambdaProcessingContext(linst.body.file, linst.lsig.resultType, implicitreturn, linst);
+                    
             const linv = this.generateLambdaInvokeDecl(linst);
             irasm.invokes.push(linv);
         }
@@ -3853,7 +3903,7 @@ class ASMToIRConverter {
                     const fdecl = decl.functions[i];
                     const implicitreturn = fdecl.params.find((p) => p.pkind !== undefined);
 
-                    this.initCodeProcessingContext(fdecl.file, false, fdecl.resultType, implicitreturn !== undefined ? implicitreturn.name : undefined, fdecl.postconditions.length !== 0 ? fdecl.postconditions : undefined, undefined, finst[j]);
+                    this.initCodeInvokeProcessingContext(fdecl.file, false, fdecl.resultType, implicitreturn, fdecl.postconditions.length !== 0 ? fdecl.postconditions : undefined, finst[j]);
                     this.generateNamespaceFunctionDecl(fdecl, irasm);
                 }
             }
