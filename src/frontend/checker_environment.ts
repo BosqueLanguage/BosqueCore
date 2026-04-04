@@ -293,12 +293,12 @@ class TypeEnvironment {
     readonly isnormalflow: boolean;
 
     readonly parent: TypeEnvironment | undefined; //undefined for normal scopes and set for lambda scopes
-    readonly lcaptures: {vname: string, vtype: TypeSignature, scopeidx: number}[]; //only set for lambda scopes
+    readonly lcaptures: {vname: string, vtype: TypeSignature}[]; //only set for lambda scopes
 
     readonly args: VarInfo[];
     readonly locals: LocalScope[];
 
-    constructor(declReturnType: TypeSignature, inferReturn: TypeInferContext, isnormalflow: boolean, parent: TypeEnvironment | undefined, lcaptures: {vname: string, vtype: TypeSignature, scopeidx: number}[], args: VarInfo[], locals: LocalScope[]) {
+    constructor(declReturnType: TypeSignature, inferReturn: TypeInferContext, isnormalflow: boolean, parent: TypeEnvironment | undefined, lcaptures: {vname: string, vtype: TypeSignature}[], args: VarInfo[], locals: LocalScope[]) {
         this.declReturnType = declReturnType;
         this.inferReturn = inferReturn;
 
@@ -323,10 +323,10 @@ class TypeEnvironment {
         return new TypeEnvironment(this.declReturnType, this.inferReturn, this.isnormalflow, this.parent, [...this.lcaptures], [...this.args], [...this.locals].map((l) => l.clone()));
     }
 
-    resolveLambdaCaptureVarInfoFromSrcName(vname: string): [VarInfo, number] | undefined {
+    resolveLambdaCaptureVarInfoFromSrcName(vname: string): VarInfo | undefined {
         const localdef = this.resolveLocalVarInfoFromSrcName(vname);
         if(localdef !== undefined) {
-            return [localdef, 0];
+            return localdef;
         }
 
         if(this.parent === undefined) {
@@ -338,9 +338,8 @@ class TypeEnvironment {
             return undefined;
         }
 
-        const [cinfo, cidx] = pcapture;
-        this.lcaptures.push({vname: cinfo.srcname, vtype: cinfo.decltype, scopeidx: cidx + 1});
-        return [cinfo, cidx + 1];
+        this.lcaptures.push({vname: pcapture.srcname, vtype: pcapture.decltype});
+        return pcapture;
     }
 
     resolveLocalVarInfoFromSrcName(vname: string): VarInfo | undefined {
@@ -422,11 +421,11 @@ class TypeEnvironment {
             locals.push(LocalScope.mergeLocalScopes(origenv.locals[i], envs.map((e) => e.locals[i]), normalenvs.map((e) => e.locals[i])));
         }
 
-        let lcaptures: {vname: string, vtype: TypeSignature, scopeidx: number}[] = [...origenv.lcaptures];
+        let lcaptures: {vname: string, vtype: TypeSignature}[] = [...origenv.lcaptures];
         for(let i = 0; i < envs.length; i++) {
             for(let j = 0; j < envs[i].lcaptures.length; j++) {
                 const cinfo = envs[i].lcaptures[j];
-                if(!lcaptures.some((c) => c.vname === cinfo.vname && c.scopeidx === cinfo.scopeidx)) {
+                if(!lcaptures.some((c) => c.vname === cinfo.vname)) {
                     lcaptures.push(cinfo);
                 }
             }

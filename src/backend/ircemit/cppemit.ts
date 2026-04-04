@@ -334,7 +334,7 @@ class CPPEmitter {
             }
             else if(ttag === IRExpressionTag.IRAccessCapturedVariableExpression) {
                 const cve = exp as IRAccessCapturedVariableExpression;
-                return `${CLOSURE_CAPTURE_NAME}.scope${cve.scope}.${TransformCPPNameManager.convertIdentifier(cve.vname)}`;
+                return `${CLOSURE_CAPTURE_NAME}.${TransformCPPNameManager.convertIdentifier(cve.vname)}`;
             }
             else if(ttag === IRExpressionTag.IRAccessTempVariableExpression) {
                 return TransformCPPNameManager.convertIdentifier((exp as IRAccessTempVariableExpression).vname);
@@ -1144,7 +1144,17 @@ class CPPEmitter {
         assert(iparam.defaultValue === undefined, "CPPEmitter: need to implement default value handling in invoke parameter decl emission");
 
         const ptypstr = this.typeInfoManager.emitTypeAsParameter(iparam.type.tkeystr, iparam.pkind !== undefined, iparam.type instanceof IRLambdaParameterPackTypeSignature);
-        return `${ptypstr} ${TransformCPPNameManager.convertIdentifier(iparam.name)}`;
+        if(iparam.skind === undefined) {
+            return `${ptypstr} ${TransformCPPNameManager.convertIdentifier(iparam.name)}`;
+        }
+        else {
+            if(iparam.skind === "lcapture") {
+                return `${ptypstr} ${CLOSURE_CAPTURE_NAME}`;
+            }
+            else {
+                assert(false, "CPPEmitter: need to implement support for non-lcapture special parameter kinds in invoke parameter decl emission");
+            }
+        }
     }
 
     private emitIRInvokeDeclInfo(invk: IRInvokeDecl): [string, string] {

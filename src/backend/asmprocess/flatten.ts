@@ -1043,7 +1043,7 @@ class ASMToIRConverter {
     private flattenLambdaInvokeExpression(exp: LambdaInvokeExpression): IRExpression {
         const iname = (this.currentInvokeInstantation as InvokeInstantiationInfo).monoinvids.get(exp.monoinvid as number) as string;
 
-        const aargs: IRSimpleExpression[] = [exp.isCapturedLambda ? new IRAccessCapturedVariableExpression(exp.scopeidx as number, exp.name) :  new IRAccessParameterVariableExpression(exp.name)];
+        const aargs: IRSimpleExpression[] = [exp.isCapturedLambda ? new IRAccessCapturedVariableExpression(exp.name) :  new IRAccessParameterVariableExpression(exp.name)];
         for(let i = 0; i < exp.args.args.length; ++i) {
             const ftype = this.tproc((exp.lambda as LambdaTypeSignature).params[i].type);
             
@@ -1867,7 +1867,7 @@ class ASMToIRConverter {
                 return new IRAccessParameterVariableExpression(tave.srcname);
             }
             else if(tave.isCaptured) {
-                return new IRAccessCapturedVariableExpression(tave.scopeidx as number, this.processLocalVariableName(tave.srcname));
+                return new IRAccessCapturedVariableExpression(this.processLocalVariableName(tave.srcname));
             }
             else {
                 return new IRAccessLocalVariableExpression(this.processLocalVariableName(tave.srcname));
@@ -3236,13 +3236,13 @@ class ASMToIRConverter {
             }
 
             if(!(p.type instanceof LambdaTypeSignature)) {
-                return new IRInvokeParameterDecl(p.name, this.processTypeSignature(p.type), p.pkind, defaultValue);
+                return new IRInvokeParameterDecl(p.name, this.processTypeSignature(p.type), p.pkind, undefined, defaultValue);
             }
             else {
                 const ll = (this.currentInvokeInstantation as InvokeInstantiationInfo).lambdaargs.find((li) => li.pname === p.name) as { pname: string, psigkey: string, invtrgt: string };
                 const tlambda = new IRLambdaParameterPackTypeSignature(ll.psigkey);
                 
-                return new IRInvokeParameterDecl(p.name, tlambda, p.pkind, defaultValue);
+                return new IRInvokeParameterDecl(p.name, tlambda, p.pkind, undefined, defaultValue);
             }
         });
     }
@@ -3281,7 +3281,7 @@ class ASMToIRConverter {
         const recursive = this.processRecursiveInfo(linst.body.recursive);
 
         const params = [
-            new IRInvokeParameterDecl(linst.newikey + "_lcapture_", new IRLambdaParameterPackTypeSignature(linst.newikey), undefined, undefined) , 
+            new IRInvokeParameterDecl(linst.newikey, new IRLambdaParameterPackTypeSignature(linst.newikey), undefined, "lcapture", undefined) , 
             ...this.processInvokeParams(linst.lsig.params.map((p) => new InvokeParameterDecl(p.name as string, p.type, undefined, p.pkind, p.isRestParam)))
         ];
 
@@ -3544,7 +3544,6 @@ class ASMToIRConverter {
 
     private generateLambdaDataDecl(linst: LambdaInstantiationInfo): IRLambdaParameterPackDecl {
         const stdvalues: {vname: string, vtype: IRTypeSignature}[] = linst.capturedVars
-            .filter((cv) => cv[2] === 0)
             .map((cv) => { return { vname: cv[0], vtype: this.processTypeSignature(cv[1]) }; });
 
         assert(linst.capturedLambdas.length === 0, "Not Implemented -- generateLambdaDataDecl for captured lambdas");

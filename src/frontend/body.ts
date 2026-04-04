@@ -856,7 +856,6 @@ class AccessVariableExpression extends Expression {
     readonly srcname: string; //the name in the source code
     isParameter: boolean = false;
     isCaptured: boolean = false;
-    scopeidx: number | undefined = undefined;
 
     constructor(sinfo: SourceInfo, srcname: string) {
         super(ExpressionTag.AccessVariableExpression, sinfo);
@@ -940,7 +939,6 @@ class LambdaInvokeExpression extends Expression {
     readonly args: ArgumentList;
 
     isCapturedLambda: boolean = false;
-    scopeidx: number | undefined = undefined;
     lambda: LambdaTypeSignature | undefined = undefined;
     arginfo: TypeSignature[] = [];
     resttype: TypeSignature | undefined = undefined;

@@ -940,12 +940,10 @@ class IRAccessLocalVariableExpression extends IRImmediateExpression {
 }
 
 class IRAccessCapturedVariableExpression extends IRImmediateExpression {
-    readonly scope: number;
     readonly vname: string;
 
-    constructor(scope: number, vname: string) {
+    constructor(vname: string) {
         super(IRExpressionTag.IRAccessCapturedVariableExpression);
-        this.scope = scope;
         this.vname = vname;
     }
 }
