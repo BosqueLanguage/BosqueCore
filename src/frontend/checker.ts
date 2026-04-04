@@ -1805,6 +1805,7 @@ class TypeChecker {
                 this.checkError(exp.sinfo, !cinfo.mustDefined, `Variable ${exp.srcname} may not be defined on all control flow paths`);
 
                 exp.isCaptured = true;
+                exp.ocapture = env.resolveOCaptureInfoFromSrcName(exp.srcname);
                 return exp.setType(cinfo.decltype);
             }
         }

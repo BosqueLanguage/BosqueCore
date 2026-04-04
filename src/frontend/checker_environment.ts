@@ -342,6 +342,24 @@ class TypeEnvironment {
         return pcapture;
     }
 
+    resolveOCaptureInfoFromSrcName(vname: string): "outer" | "local" | "param" {
+        const pscope = this.parent as TypeEnvironment;
+
+        for(let i = pscope.locals.length - 1; i >= 0; i--) {
+            const vinfo = pscope.locals[i].resolveLocalVarInfoFromSrcName(vname);
+            if(vinfo !== undefined) {
+                return "local";
+            }
+        }
+
+        if(pscope.args.find((v) => v.srcname === vname) !== undefined) {
+            return "param";
+        }
+        else {
+            return "outer";
+        }
+    }
+
     resolveLocalVarInfoFromSrcName(vname: string): VarInfo | undefined {
         for(let i = this.locals.length - 1; i >= 0; i--) {
             const vinfo = this.locals[i].resolveLocalVarInfoFromSrcName(vname);

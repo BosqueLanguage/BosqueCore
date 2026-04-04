@@ -77,7 +77,7 @@ class PendingNominalTypeDecl {
 }
 
 class ScopeUseFrame {
-    capturedVars: [string, TypeSignature][] = [];
+    capturedVars: [string, TypeSignature, "outer" | "local" | "param"][] = [];
     capturedLambdas: { pname: string, psigkey: string }[] = [];
     capturedTemplateNames: string[] = [];
 
@@ -407,7 +407,7 @@ class Monomorphizer {
         if(exp.isCaptured) {
             if(!(exp.getType() instanceof LambdaTypeSignature)) {
                 if(this.lambdaScopes[this.lambdaScopes.length - 1].capturedVars.find((ctn) => ctn[0] === exp.srcname) === undefined) {
-                    this.lambdaScopes[this.lambdaScopes.length - 1].capturedVars.push([exp.srcname, exp.getType()]);
+                    this.lambdaScopes[this.lambdaScopes.length - 1].capturedVars.push([exp.srcname, exp.getType(), exp.ocapture as "outer" | "local" | "param"]);
                 }
             }
             else {

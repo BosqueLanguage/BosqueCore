@@ -856,6 +856,7 @@ class AccessVariableExpression extends Expression {
     readonly srcname: string; //the name in the source code
     isParameter: boolean = false;
     isCaptured: boolean = false;
+    ocapture: "outer" | "local" | "param" | undefined = undefined;
 
     constructor(sinfo: SourceInfo, srcname: string) {
         super(ExpressionTag.AccessVariableExpression, sinfo);

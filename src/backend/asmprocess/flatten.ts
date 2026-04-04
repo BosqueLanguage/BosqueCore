@@ -43,6 +43,7 @@ class ASMToIRConverter {
     currentImplicitReturnVar: string | undefined;
     currentPostconditions: PostConditionDecl[] | undefined
 
+    currentNamespaceInstantiation: NamespaceInstantiationInfo | undefined;
     currentTypeInstantiation: TypeInstantiationInfo | undefined;
     currentInvokeInstantation: InvokeInstantiationInfo | undefined;
 
@@ -1035,9 +1036,20 @@ class ASMToIRConverter {
         const lptype = new IRLambdaParameterPackTypeSignature((this.currentInvokeInstantation as InvokeInstantiationInfo).lambdacons.get(exp.monomorphizedUID as number) as string);
         this.lpacks.push(lptype);
 
-        //TODO: need to handle the captures here...
+        const iidecl = (this.currentNamespaceInstantiation as NamespaceInstantiationInfo).lambdas.get(lptype.tkeystr) as LambdaInstantiationInfo;
+        const iexps = iidecl.capturedVars.map((vv) => {
+            if(vv[2] === "outer") {
+                return new IRAccessCapturedVariableExpression(vv[0]);
+            }
+            else if(vv[2] === "param") {
+                return new IRAccessParameterVariableExpression(vv[0]);
+            }
+            else {
+                return new IRAccessLocalVariableExpression(vv[0]);
+            }
+        });
 
-        return new IRConstructorLambdaExpression(lptype, []);
+        return new IRConstructorLambdaExpression(lptype, iexps);
     }
 
     private flattenLambdaInvokeExpression(exp: LambdaInvokeExpression): IRExpression {
@@ -3812,6 +3824,9 @@ class ASMToIRConverter {
             }
         }
 
+        //don't want subnamespace decls to overwrite the current namespace instantiation
+        this.currentNamespaceInstantiation = asminstantiation;
+
         for(let i = 0; i < decl.consts.length; ++i) {
             const ntcd = this.assembly.resolveNamespaceConstant(decl.fullnamespace, decl.consts[i].name);
             if(ntcd !== undefined) {
@@ -3867,6 +3882,8 @@ class ASMToIRConverter {
         for(let i = 0; i < decl.tasks.length; ++i) {
             irasm.tasks.push(this.generateTaskDecl(decl.tasks[i], irasm, aainsts));
         }
+
+        this.currentNamespaceInstantiation = undefined;
     }
 
     static generateIR(assembly: Assembly, asminstantiation: NamespaceInstantiationInfo[], testfilefilter: string[] | undefined): IRAssembly {

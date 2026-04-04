@@ -1944,12 +1944,14 @@ class CPPEmitter {
         
         assert(ddecl.lambdavalues.length === 0, "CPPEmitter: lambda parameter packs with captured lambda values not yet supported");
 
-        const ldatadecl = `struct ${ctname}_ldata_ {\n` +
-        ddecl.stdvalues.map((stdv) => {
+        const fdecls = ddecl.stdvalues.map((stdv) => {
             const vname = TransformCPPNameManager.convertIdentifier(stdv.vname);
             const vtype = this.typeInfoManager.emitTypeAsMemberField(stdv.vtype.tkeystr);
             return `    ${vtype} ${vname};`;
-        }).join("\n") +
+        });
+
+        const ldatadecl = `struct ${ctname}_ldata_ {\n` +
+        (fdecls.length !== 0 ? fdecls.join("\n") + '\n' : '') +
         '};';
 
         return [ldatadecl, ""];
