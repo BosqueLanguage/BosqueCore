@@ -2927,6 +2927,16 @@ class Parser {
         }
         else {
             const isparened = this.testToken(SYM_lparen);
+            if(!isparened) {
+                return new ITestSimpleGuard(this.parseRValueInTopTestExpression());
+            }
+            else {
+                const epos = this.scanMatchingParens(SYM_lparen, SYM_rparen);
+                xxxx;
+            }
+
+
+            xxxx;
             const bexp = this.parseRValueInTopTestExpression();
             
             if((this.testToken(SYM_at) || this.checkITestFirstToken()) && !isparened) {
