@@ -112,13 +112,15 @@ class IRInvokeParameterDecl {
     readonly name: string;
     readonly type: IRTypeSignature;
     readonly pkind: "ref" | "out" | "out?" | "inout" | undefined;
+    readonly skind: "lcapture" | "this" | "self" | undefined;
 
     readonly defaultValue: { stmts: IRStatement[], value: IRSimpleExpression } | undefined;
     
-    constructor(name: string, type: IRTypeSignature, pkind: "ref" | "out" | "out?" | "inout" | undefined, defaultValue: { stmts: IRStatement[], value: IRSimpleExpression } | undefined) {
+    constructor(name: string, type: IRTypeSignature, pkind: "ref" | "out" | "out?" | "inout" | undefined, skind: "lcapture" | "this" | "self" | undefined, defaultValue: { stmts: IRStatement[], value: IRSimpleExpression } | undefined) {
         this.name = name;
         this.type = type;
         this.pkind = pkind;
+        this.skind = skind;
         this.defaultValue = defaultValue;
     }
 }
@@ -945,7 +947,6 @@ class IRAssembly {
     readonly apis: IRAPIDecl[] = [];
     readonly agents: IRAgentDecl[] = [];
     readonly tasks: IRTaskDecl[] = [];
-    readonly lpackdecls: IRLambdaParameterPackDecl[] = [];
 
     readonly alltypes: Map<string, IRAbstractNominalTypeDecl> = new Map<string, IRAbstractNominalTypeDecl>();
     readonly allinvokes: Map<string, IRInvokeMetaDecl> = new Map<string, IRInvokeMetaDecl>();

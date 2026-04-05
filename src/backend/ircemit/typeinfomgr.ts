@@ -1,6 +1,6 @@
 
 import { IRAbstractCollectionTypeDecl, IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAssembly, IRConceptTypeDecl, IRDatatypeTypeDecl, IREntityTypeDecl, IRListTypeDecl, IROptionTypeDecl, IRSomeTypeDecl } from "../irdefs/irassembly.js";
-import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype.js";
+import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype.js";
 import { TransformCPPNameManager } from "./namemgr.js";
 
 import assert from "node:assert";
@@ -217,22 +217,24 @@ class TypeInfoManager {
         return `constexpr TypeInfo g_typeinfo_${tk} = { ${typeinfo.bsqtypeid}, ${typeinfo.bytesize}, ${typeinfo.slotcount}, LayoutTag::${layouttag}, BSQ_TYPEINFO_NO_ESLOT, ${typeinfo.ptrmask ?? "BSQ_PTR_MASK_LEAF"}, "${tk}", nullptr };`;
     }
 
-    emitTypeAsParameter(tkey: string, isreftagged: boolean): string {
-        const typeinfo = this.getTypeInfo(tkey);
-
-        const rtspec = (isreftagged ? "&" : "");
-        if(typeinfo.tag === LayoutTag.Ref) {
-            return TransformCPPNameManager.convertTypeKey(tkey) + "*" + rtspec;
-        }
-        else if(typeinfo.tsig instanceof IRLambdaParameterPackTypeSignature) {
-            return "const " + TransformCPPNameManager.convertTypeKey(tkey) + "&";
+    emitTypeAsParameter(tkey: string, isreftagged: boolean, islambda: boolean): string {
+        if(islambda) {
+            return "const " + TransformCPPNameManager.convertTypeKey(tkey) + "_ldata_&";
         }
         else {
-            if(typeinfo.bytesize <= TypeInfoManager.c_ref_pass_size) {
-                return TransformCPPNameManager.convertTypeKey(tkey) + rtspec;
+            const typeinfo = this.getTypeInfo(tkey);
+
+            const rtspec = (isreftagged ? "&" : "");
+            if(typeinfo.tag === LayoutTag.Ref) {
+                return TransformCPPNameManager.convertTypeKey(tkey) + "*" + rtspec;
             }
             else {
-                return TransformCPPNameManager.convertTypeKey(tkey) + "&";                
+                if(typeinfo.bytesize <= TypeInfoManager.c_ref_pass_size) {
+                    return TransformCPPNameManager.convertTypeKey(tkey) + rtspec;
+                }
+                else {
+                    return TransformCPPNameManager.convertTypeKey(tkey) + "&";                
+                }
             }
         }
     }
@@ -482,9 +484,6 @@ class TypeInfoManager {
             else if(ttype instanceof IRFormatTypeSignature) {
                 return this.processInfoGenerationForFormat(ttype, irasm);
             }
-            else if(ttype instanceof IRLambdaParameterPackTypeSignature) {
-                assert(false, `TypeInfoManager::processInfoGenerationForType - Unsupported lambda parameter pack type signature for key ${ttype.tkeystr}`);
-            }
             else {
                 assert(false, `TypeInfoManager::processInfoGenerationForType - Unsupported type signature for key ${ttype.tkeystr}`);
             }
@@ -585,7 +584,6 @@ class TypeInfoManager {
         irasm.elists.forEach((ttype) => { if(!timgr.hasTypeInfo(ttype.tkeystr)) { timgr.processInfoGenerationForType(ttype, irasm); } });
         irasm.dashtypes.forEach((ttype) => { if(!timgr.hasTypeInfo(ttype.tkeystr)) { timgr.processInfoGenerationForType(ttype, irasm); } });
         irasm.formats.forEach((ttype) => { if(!timgr.hasTypeInfo(ttype.tkeystr)) { timgr.processInfoGenerationForType(ttype, irasm); } });
-        irasm.lpacksigs.forEach((ttype) => { if(!timgr.hasTypeInfo(ttype.tkeystr)) { timgr.processInfoGenerationForType(ttype, irasm); } });
 
         irasm.entities.forEach((tdecl) => { timgr.processFieldInfoGenerationForEntity(tdecl, irasm); });
         irasm.datamembers.forEach((tdecl) => { timgr.processFieldInfoGenerationForEntity(tdecl, irasm); });

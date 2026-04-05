@@ -1,5 +1,5 @@
 import { IRSourceInfo } from "./irsupport.js";
-import { IRNominalTypeSignature, IRTypeSignature } from "./irtype.js";
+import { IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature } from "./irtype.js";
 
 enum IRExpressionTag {
     IRLiteralNoneExpression = "IRLiteralNoneExpression",
@@ -79,6 +79,8 @@ enum IRExpressionTag {
     IRConstructorMapEntryTypeExpression = "IRConstructorMapEntryTypeExpression",
 
     IRConstructorStandardEntityExpression = "IRConstructorStandardEntityExpression",
+
+    IRConstructorLambdaExpression = "IRConstructorLambdaExpression",
 
     IRConstructorListEmptyExpression = "IRConstructorListEmptyExpression",
     IRConstructorListSingletonsExpression = "IRConstructorListSingletonsExpression",
@@ -938,12 +940,10 @@ class IRAccessLocalVariableExpression extends IRImmediateExpression {
 }
 
 class IRAccessCapturedVariableExpression extends IRImmediateExpression {
-    readonly scope: number;
     readonly vname: string;
 
-    constructor(scope: number, vname: string) {
+    constructor(vname: string) {
         super(IRExpressionTag.IRAccessCapturedVariableExpression);
-        this.scope = scope;
         this.vname = vname;
     }
 }
@@ -1031,6 +1031,18 @@ class IRConstructorStandardEntityExpression extends IRConstructExpression {
 
     constructor(entitytype: IRNominalTypeSignature, values: IRSimpleExpression[]) {
         super(IRExpressionTag.IRConstructorStandardEntityExpression, entitytype);
+        this.values = values;
+    }
+}
+
+//TODO: maybe add a specialized version of this that does boxing to a concept as well
+class IRConstructorLambdaExpression extends IRSimpleExpression {
+    readonly ltype: IRLambdaParameterPackTypeSignature;
+    readonly values: IRSimpleExpression[];
+    
+    constructor(entitytype: IRLambdaParameterPackTypeSignature, values: IRSimpleExpression[]) {
+        super(IRExpressionTag.IRConstructorLambdaExpression);
+        this.ltype = entitytype;
         this.values = values;
     }
 }
@@ -2271,6 +2283,7 @@ export {
     IRConstructExpression,
 
     IRConstructorStandardEntityExpression,
+    IRConstructorLambdaExpression,
     IRConstructorListEmptyExpression, IRConstructorListSingletonsExpression,
 
     IRAccessFieldExpression, IRAccessFieldSpecialExpression, IRAccessFieldDirectExpression, IRAccessFieldVirtualExpression,

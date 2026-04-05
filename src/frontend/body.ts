@@ -856,7 +856,7 @@ class AccessVariableExpression extends Expression {
     readonly srcname: string; //the name in the source code
     isParameter: boolean = false;
     isCaptured: boolean = false;
-    scopeidx: number | undefined = undefined;
+    ocapture: "outer" | "local" | "param" | undefined = undefined;
 
     constructor(sinfo: SourceInfo, srcname: string) {
         super(ExpressionTag.AccessVariableExpression, sinfo);
@@ -905,7 +905,6 @@ class ConstructorEListExpression extends ConstructorExpression {
 
 class ConstructorLambdaExpression extends Expression {
     readonly invoke: LambdaDecl;
-
     monomorphizedUID: number | undefined = undefined;
 
     constructor(sinfo: SourceInfo, invoke: LambdaDecl) {
@@ -941,10 +940,19 @@ class LambdaInvokeExpression extends Expression {
     readonly args: ArgumentList;
 
     isCapturedLambda: boolean = false;
+    ocapture: "outer" | "local" | "param" | undefined = undefined;
+    
     lambda: LambdaTypeSignature | undefined = undefined;
     arginfo: TypeSignature[] = [];
     resttype: TypeSignature | undefined = undefined;
     restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
+
+    setcondout: string[] = [];
+    setuncond: string[] = [];
+    inout: string[] = [];
+    byref: string[] = [];
+
+    monoinvid: number | undefined = undefined;
 
     constructor(sinfo: SourceInfo, name: string, rec: RecursiveAnnotation, args: ArgumentList) {
         super(ExpressionTag.LambdaInvokeExpression, sinfo);
@@ -980,7 +988,7 @@ class CallNamespaceFunctionExpression extends Expression {
     inout: string[] = [];
     byref: string[] = [];
 
-    monomorhphizedkey: string | undefined = undefined;
+    monoinvid: number | undefined = undefined;
 
     constructor(sinfo: SourceInfo, isImplicitNS: boolean, ns: FullyQualifiedNamespace, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
         super(ExpressionTag.CallNamespaceFunctionExpression, sinfo);
