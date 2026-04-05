@@ -9,13 +9,13 @@ class LambdaInstantiationInfo {
     readonly monoinvids: Map<number, string>;
 
     readonly capturedVars: [string, TypeSignature, "outer" | "local" | "param"][];
-    readonly capturedLambdas: { pname: string, psigkey: string }[];
+    readonly capturedLambdas: { pname: string, psigkey: string, rpos: "outer" | "local" | "param"}[];
     readonly capturedTemplateNames: string[];
 
     readonly lsig: LambdaTypeSignature;
     readonly body: LambdaDecl;
 
-    constructor(newikey: string, binds: TemplateNameMapper | undefined, lambdacons: Map<number, string>, monoinvids: Map<number, string>, capturedVars: [string, TypeSignature, "outer" | "local" | "param"][], capturedLambdas: { pname: string, psigkey: string }[], capturedTemplateNames: string[], lsig: LambdaTypeSignature, body: LambdaDecl) {
+    constructor(newikey: string, binds: TemplateNameMapper | undefined, lambdacons: Map<number, string>, monoinvids: Map<number, string>, capturedVars: [string, TypeSignature, "outer" | "local" | "param"][], capturedLambdas: { pname: string, psigkey: string, rpos: "outer" | "local" | "param"}[], capturedTemplateNames: string[], lsig: LambdaTypeSignature, body: LambdaDecl) {
         this.newikey = newikey;
         this.binds = binds;
         this.lambdacons = lambdacons;

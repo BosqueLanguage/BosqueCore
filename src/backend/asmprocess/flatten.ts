@@ -1083,7 +1083,8 @@ class ASMToIRConverter {
         this.lpacks.push(lptype);
 
         const iidecl = (this.currentNamespaceInstantiation as NamespaceInstantiationInfo).lambdas.get(lptype.tkeystr) as LambdaInstantiationInfo;
-        const iexps = iidecl.capturedVars.map((vv) => {
+        
+        const vexps = iidecl.capturedVars.map((vv) => {
             if(vv[2] === "outer") {
                 return new IRAccessCapturedVariableExpression(vv[0]);
             }
@@ -1094,8 +1095,19 @@ class ASMToIRConverter {
                 return new IRAccessLocalVariableExpression(vv[0]);
             }
         });
+        const lexps = iidecl.capturedLambdas.map((vv) => {
+            if(vv.rpos === "outer") {
+                return new IRAccessCapturedVariableExpression(vv.pname);
+            }
+            else if(vv.rpos === "param") {
+                return new IRAccessParameterVariableExpression(vv.pname);
+            }
+            else {
+                return new IRAccessLocalVariableExpression(vv.pname);
+            }
+        });
 
-        return new IRConstructorLambdaExpression(lptype, iexps);
+        return new IRConstructorLambdaExpression(lptype, [...vexps, ...lexps]);
     }
 
     private flattenLambdaInvokeExpression(exp: LambdaInvokeExpression): IRExpression {
@@ -3605,8 +3617,7 @@ class ASMToIRConverter {
         const stdvalues: {vname: string, vtype: IRTypeSignature}[] = linst.capturedVars
             .map((cv) => { return { vname: cv[0], vtype: this.processTypeSignature(cv[1]) }; });
 
-        assert(linst.capturedLambdas.length === 0, "Not Implemented -- generateLambdaDataDecl for captured lambdas");
-        const lambdavalues: {lname: string, ltypekey: string}[] = [];
+        const lambdavalues: {lname: string, ltypekey: string}[] = linst.capturedLambdas.map((cl) => { return { lname: cl.pname, ltypekey: cl.psigkey }; });
 
         return new IRLambdaParameterPackDecl(linst.newikey, linst.newikey, stdvalues, lambdavalues);
     }
@@ -3886,11 +3897,11 @@ class ASMToIRConverter {
             const linst = llist[i];
             irasm.lpacksigs.push(new IRLambdaParameterPackTypeSignature(linst.newikey));
 
-            const ldecl = this.generateLambdaDataDecl(linst);
-            irasm.alllambdas.set(ldecl.tkeystr, ldecl);
-
             const implicitreturn = linst.lsig.params.find((p) => p.pkind !== undefined);
             this.initCodeLambdaProcessingContext(linst.body.file, linst.lsig.resultType, implicitreturn, linst);
+
+            const ldecl = this.generateLambdaDataDecl(linst);
+            irasm.alllambdas.set(ldecl.tkeystr, ldecl);
                     
             const linv = this.generateLambdaInvokeDecl(linst);
             irasm.invokes.push(linv);

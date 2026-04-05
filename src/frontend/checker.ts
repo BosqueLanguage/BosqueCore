@@ -2146,6 +2146,7 @@ class TypeChecker {
             else {
                 llvar = clvar;
                 exp.isCapturedLambda = true;
+                exp.ocapture = env.resolveOCaptureInfoFromSrcName(exp.name);
             }
         }
 

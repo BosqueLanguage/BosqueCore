@@ -940,6 +940,8 @@ class LambdaInvokeExpression extends Expression {
     readonly args: ArgumentList;
 
     isCapturedLambda: boolean = false;
+    ocapture: "outer" | "local" | "param" | undefined = undefined;
+    
     lambda: LambdaTypeSignature | undefined = undefined;
     arginfo: TypeSignature[] = [];
     resttype: TypeSignature | undefined = undefined;

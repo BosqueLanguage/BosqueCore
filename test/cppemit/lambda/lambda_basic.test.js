@@ -18,7 +18,7 @@ describe ("CPPEmit -- Lambda calls (with template)", () => {
         checkTestEmitMainFunction("function foo<T>(x: T, f: fn(T) -> T): T { return f(x); } public function main(): Int { return foo<Int>(3i, fn(x) => x); }", 'Int Mainᕒmain() { return MainᕒfooᐸIntᐳᑅfn_0ᑀ(3_i, fn_0_ldata_{}); }');
         checkTestEmitMainFunction("function foo<T>(x: T, f: fn(T) -> T): T { return f(x); } public function main(): Nat { if(foo<Int>(3i, fn(x) => x) > 0i) { return foo<Nat>(3n, fn(x) => x); } return 0n; }", 'Nat Mainᕒmain() { Int tmp_0 = MainᕒfooᐸIntᐳᑅfn_0ᑀ(3_i, fn_0_ldata_{}); if(tmp_0 > 0_i) { return MainᕒfooᐸNatᐳᑅfn_1ᑀ(3_n, fn_1_ldata_{}); } return 0_n; }');
 
-        checkTestEmitMainFunction("function xis<T>(x: T, f: fn(T) -> T): T { return f(x); } function foo<T>(v: T): T { return xis<T>(v, fn(x) => x@<T>); } public function main(): Int { return foo<Int>(3i); }", 'www');
+        checkTestEmitMainFunction("function xis<T>(x: T, f: fn(T) -> T): T { return f(x); } function foo<T>(v: T): T { return xis<T>(v, fn(x) => x@<T>); } public function main(): Int { return foo<Int>(3i); }", 'Int Mainᕒmain() { return MainᕒfooᐸIntᐳ(3_i); }');
     });
 });
 

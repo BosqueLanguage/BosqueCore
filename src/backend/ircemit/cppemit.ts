@@ -1942,16 +1942,21 @@ class CPPEmitter {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkeystr);
         const ddecl = this.irasm.alllambdas.get(tdecl.tkeystr) as IRLambdaParameterPackDecl;
         
-        assert(ddecl.lambdavalues.length === 0, "CPPEmitter: lambda parameter packs with captured lambda values not yet supported");
-
         const fdecls = ddecl.stdvalues.map((stdv) => {
             const vname = TransformCPPNameManager.convertIdentifier(stdv.vname);
             const vtype = this.typeInfoManager.emitTypeAsMemberField(stdv.vtype.tkeystr);
             return `    ${vtype} ${vname};`;
         });
 
+        const ldecls = ddecl.lambdavalues.map((lambdav) => {
+            const vname = TransformCPPNameManager.convertIdentifier(lambdav.lname);
+            const vtype = TransformCPPNameManager.convertTypeKey(lambdav.ltypekey) + "_ldata_";
+            return `    ${vtype} ${vname};`;
+        });
+
         const ldatadecl = `struct ${ctname}_ldata_ {\n` +
         (fdecls.length !== 0 ? fdecls.join("\n") + '\n' : '') +
+        (ldecls.length !== 0 ? ldecls.join("\n") + '\n' : '') +
         '};';
 
         return [ldatadecl, ""];

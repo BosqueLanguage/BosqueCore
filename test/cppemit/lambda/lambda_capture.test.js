@@ -10,6 +10,6 @@ describe ("CPPEmit -- Lambda calls (no template)", () => {
     });
 
     it("should emit nested lambda capture", function () {
-        checkTestEmitMainFunction('function foo(f: fn(Int) -> Int): Int { return f(1i); } function bar(g: fn(Int) -> Int, k: Int): Int { return foo(fn(y) => g(y) + k); } public function main(): Int { let y = 1i; return bar(fn(x) => { return x + y; }, 2i); }', 'zzzz');
+        checkTestEmitMainFunction('function foo(f: fn(Int) -> Int): Int { return f(1i); } function bar(g: fn(Int) -> Int, k: Int): Int { return foo(fn(y) => g(y) + k); } public function main(): Int { let y = 1i; return bar(fn(x) => { return x + y; }, 2i); }', 'Int Mainᕒmain() { Int y = 1_i; return Mainᕒbarᑅfn_1ᑀ(fn_1_ldata_{y}, 2_i); }');
     });
 });
