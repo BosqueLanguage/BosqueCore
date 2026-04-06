@@ -4,7 +4,7 @@ import { parseTestFunction, parseTestFunctionError } from "../../../bin/test/par
 import { describe, it } from "node:test";
 
 describe ("Parser -- IfElse Statement", () => {
-    it("should parse simple ifs", function () {
+    it("should parse simple if-else statements", function () {
         parseTestFunction("function main(): Int { if (true) { return 3i; } else { return 1i; } }", undefined);
         parseTestFunction("function main(): Int { if (true || false) { return 3i; } else { return 1i; } }", undefined);
 
@@ -14,6 +14,6 @@ describe ("Parser -- IfElse Statement", () => {
 
         parseTestFunctionError("function main(): Int { if(true) return 3i; else { return 1i; } }", 'Expected "{" but got "return" when parsing "block statement"');
         parseTestFunctionError("function main(): Int { if(true) { return 3i; } else return 1i; }", 'Expected "{" but got "return" when parsing "block statement"');
-        parseTestFunctionError("function main(): Int { if true return 3i; else { return 1i; } }", 'Expected "{" but got "return" when parsing "block statement"');
+        parseTestFunctionError("function main(): Int { if true return 3i; else { return 1i; } }", 'Expected "(" but got "true" when parsing "if statement cond"');
     });
 });

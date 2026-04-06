@@ -13,7 +13,7 @@ describe ("Parser -- If Statement", () => {
         parseTestFunctionError("function main(): Int { if (true) { }; return 1i; }", "Empty block statement -- should include a ';' to indicate intentionally empty block");
 
         parseTestFunctionError("function main(): Int { if (true) return 3i; return 1i; }", 'Expected "{" but got "return" when parsing "block statement"');
-        parseTestFunctionError("function main(): Int { if true return 3i; return 1i; }", 'Expected "{" but got "return" when parsing "block statement"');
+        parseTestFunctionError("function main(): Int { if true { return 3i; } return 1i; }", 'Expected "(" but got "true" when parsing "if statement cond"');
     });
 
     it("should parse ifs w/ single itest specials", function () {
