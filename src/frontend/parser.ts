@@ -1214,15 +1214,6 @@ class Parser {
         }
     }
 
-    private peekTokenAbsolute(pos: number | undefined): Token {
-        if(pos === undefined || pos >= this.tokens.length) {
-            return this.tokens[this.tokens.length - 1]; //EOF
-        }
-        else {
-            return this.tokens[pos];
-        }
-    }
-
     private peekTokenKind(pos?: number): string {
         return this.peekToken(pos || 0).kind;
     }
@@ -2906,8 +2897,8 @@ class Parser {
         }
     }
 
-    private checkITestFirstToken(tok: Token): boolean {
-        return (tok.kind === SYM_bang) || (tok.kind === SYM_langle) || (tok.kind === KW_none) || (tok.kind === KW_some) || (tok.kind === KW_ok) || (tok.kind === KW_fail);
+    private checkITestFirstToken(): boolean {
+        return this.testToken(SYM_bang) || this.testToken(SYM_langle) || this.testToken(KW_none) || this.testToken(KW_some) || this.testToken(KW_ok) || this.testToken(KW_fail);
     }
 
     private parseRValueInTopTestExpression(): Expression {
@@ -2936,35 +2927,28 @@ class Parser {
         }
         else {
             const isparened = this.testToken(SYM_lparen);
-            if(!isparened) {
-                return new ITestSimpleGuard(this.parseRValueInTopTestExpression());
+            const bexp = this.parseRValueInTopTestExpression();
+            
+            if((this.testToken(SYM_at) || this.checkITestFirstToken()) && !isparened) {
+                this.recordErrorGeneral(bexp.sinfo, "ITest guard expression is missing parentheses");
+            }
+
+            if(this.testToken(SYM_at)) {
+                let stdbindname = "$_";
+                if(bexp instanceof AccessVariableExpression) {
+                    stdbindname = "$" + bexp.srcname;
+                }
+
+                this.consumeToken();
+                const itest = this.parseITest() as ITest;
+                return new ITestBinderGuard(bexp, itest, new BinderInfo(stdbindname, true));
+            }
+            else if(this.checkITestFirstToken()) {
+                const itest = this.parseITest() as ITest;
+                return new ITestTypeGuard(bexp, itest);
             }
             else {
-                const epos = this.scanMatchingParens(SYM_lparen, SYM_rparen);
-                const peektok = this.peekTokenAbsolute(epos);
-                if(!this.checkITestFirstToken(peektok)) {
-                    return new ITestSimpleGuard(this.parseRValueInTopTestExpression());
-                }
-                else {
-                    this.consumeToken();
-                    const bexp = this.parseExpression();
-                    this.consumeToken();
-
-                    if(this.testToken(SYM_at)) {
-                        let stdbindname = "$_";
-                        if(bexp instanceof AccessVariableExpression) {
-                            stdbindname = "$" + bexp.srcname;
-                        }
-
-                        this.consumeToken();
-                        const itest = this.parseITest() as ITest;
-                        return new ITestBinderGuard(bexp, itest, new BinderInfo(stdbindname, true));
-                    }
-                    else {
-                        const itest = this.parseITest() as ITest;
-                        return new ITestTypeGuard(bexp, itest);
-                    }
-                }
+                return new ITestSimpleGuard(bexp);
             }
         }
     }
@@ -3907,8 +3891,9 @@ class Parser {
         let rootexp = this.parsePrimaryExpression();
 
         let ops: PostfixOperation[] = [];
-        while (this.testToken(SYM_dot) || this.testToken(SYM_question) || this.testToken(SYM_at) || this.testToken(SYM_lbrack)) {
+        while (this.testToken(SYM_dot)) {
             const sinfo = this.peekToken().getSourceInfo();
+            this.consumeToken(); //always consume the dot first
 
             if(this.testToken(SYM_question)) {
                 this.consumeToken();
@@ -3934,45 +3919,41 @@ class Parser {
                     ops.push(new PostfixAssignFields(sinfo, updates));
                 }
             }
+            else if(this.testToken(SYM_lparenbar)) {
+                assert(false, "Not implemented yet -- project fields");
+            }
+            else if(this.testToken(KW_slice)) {
+                this.consumeToken();
+                const args = this.parseArgumentsCallStd(false);
+                ops.push(new PostfixSliceOperator(sinfo, args));
+            }
+            else if(this.testToken(TokenStrings.NumberinoInt)) {
+                const nval = this.consumeTokenAndGetValue();
+                ops.push(new PostfixAccessFromIndex(sinfo, parseInt(nval)));
+            }
             else {
-                this.ensureAndConsumeTokenAlways(SYM_dot, "postfix access/update/invoke");
+                this.ensureToken(TokenStrings.IdentifierName, "postfix access/invoke");
+            
+                let resolvedScope: TypeSignature | undefined = undefined;
+                if(this.peekTokenKind(1) === SYM_coloncolon) { //it is either T::f or N::T...::f
+                    resolvedScope = this.parseNominalType();
+                    this.ensureToken(SYM_coloncolon, "postfix access");
+                }
 
-                if(this.testToken(SYM_lparenbar)) {
-                    assert(false, "Not implemented yet -- project fields");
-                }
-                else if(this.testToken(KW_slice)) {
-                    this.consumeToken();
-                    const args = this.parseArgumentsCallStd(false);
-                    ops.push(new PostfixSliceOperator(sinfo, args));
-                }
-                else if(this.testToken(TokenStrings.NumberinoInt)) {
-                    const nval = this.consumeTokenAndGetValue();
-                    ops.push(new PostfixAccessFromIndex(sinfo, parseInt(nval)));
+                const name = this.parseIdentifierAsStdVariable();
+                if(!this.testPostfixInvokePrefix()) {
+                    if(resolvedScope !== undefined) {
+                        this.recordErrorGeneral(sinfo, "Encountered named access but given type resolver (only valid on method calls)");
+                    }
+
+                    ops.push(new PostfixAccessFromName(sinfo, name));
                 }
                 else {
-                    this.ensureToken(TokenStrings.IdentifierName, "postfix access/invoke");
-                    
-                    let resolvedScope: TypeSignature | undefined = undefined;
-                    if(this.peekTokenKind(1) === SYM_coloncolon) { //it is either T::f or N::T...::f
-                        resolvedScope = this.parseNominalType();
-                        this.ensureToken(SYM_coloncolon, "postfix access");
-                    }
+                    const rec = this.parseInvokeRecursiveArgs();
+                    const targs = this.parseInvokeTemplateArguments();
+                    const args = this.parseArgumentsCallStd(true);
 
-                    const name = this.parseIdentifierAsStdVariable();
-                    if(!this.testPostfixInvokePrefix()) {
-                        if(resolvedScope !== undefined) {
-                            this.recordErrorGeneral(sinfo, "Encountered named access but given type resolver (only valid on method calls)");
-                        }
-
-                        ops.push(new PostfixAccessFromName(sinfo, name));
-                    }
-                    else {
-                        const rec = this.parseInvokeRecursiveArgs();
-                        const targs = this.parseInvokeTemplateArguments();
-                        const args = this.parseArgumentsCallStd(true);
-
-                        ops.push(new PostfixInvoke(sinfo, resolvedScope, name, targs, rec, args));
-                    }
+                    ops.push(new PostfixInvoke(sinfo, resolvedScope, name, targs, rec, args));
                 }
             }
         }
@@ -5258,6 +5239,7 @@ class Parser {
         const sinfo = this.peekToken().getSourceInfo();
 
         this.ensureAndConsumeTokenAlways(KW_if, "if statement cond");
+        this.ensureToken(SYM_lparen, "if statement cond"); //always need parens here
 
         const itest = this.parseITestGuardSet();
         const ifbody = this.parseScopedBlockStatement();
@@ -5331,6 +5313,7 @@ class Parser {
         const sinfo = this.peekToken().getSourceInfo();
         
         this.ensureAndConsumeTokenAlways(KW_match, "match statement dispatch value");
+        this.ensureToken(SYM_lparen, "match statement cond"); //always need parens here
 
         const sguard = this.parseITestGuard();
 
@@ -5362,6 +5345,7 @@ class Parser {
         const sinfo = this.peekToken().getSourceInfo();
 
         this.ensureAndConsumeTokenAlways(KW_dispatch, "dispatch statement target");
+        this.ensureToken(SYM_lparen, "dispatch statement cond"); //always need parens here
 
         const dguard = this.parseITestGuard();
 

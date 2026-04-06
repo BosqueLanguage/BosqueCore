@@ -1303,7 +1303,7 @@ class PostfixIsTest extends PostfixOperation {
     }
 
     emit(fmt: CodeFormatter): string {
-        return "?" + this.ttest.emit(fmt);
+        return ".?" + this.ttest.emit(fmt);
     }
 }
 
@@ -1317,7 +1317,7 @@ class PostfixAsConvert extends PostfixOperation {
     }
 
     emit(fmt: CodeFormatter): string {
-        return "@" + this.ttest.emit(fmt);
+        return ".@" + this.ttest.emit(fmt);
     }
 }
 
