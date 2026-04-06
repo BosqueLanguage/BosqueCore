@@ -1104,6 +1104,11 @@ class IRAssembly {
 
         //TODO: compute cycles
     }
+
+    emitBAPI() {
+        let v = this.entities.map<string>(e => e.emitBAPI()); 
+        return v.join();
+    }
 }
 
 export {
