@@ -8,7 +8,6 @@ import { ASMToIRConverter } from "../backend/asmprocess/flatten.js";
 import { Status } from "./status_output.js"
 
 const [fullargs, mainns, outdir] = parseArgv("smtout", ...process.argv);
-Status.enable();
 
 function buildBAPIAssembly(assembly: Assembly, rootasm: string, outname: string) { 
     Status.output("Monomorphizing code...\n");
