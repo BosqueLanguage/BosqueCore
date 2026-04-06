@@ -152,7 +152,7 @@ function getSimpleFilename(fn: string): string {
     return path.basename(fn);
 }
 
-function checkAssembly(srcfiles: string[], issmt: Boolean): Assembly | undefined {
+function checkAssembly(srcfiles: string[], asmtype: "smt" | "cpp"): Assembly | undefined {
     const lstart = Date.now();
     status.output("Loading user sources...\n");
     const usersrcinfo = workflowLoadUserSrc(srcfiles);
@@ -164,7 +164,7 @@ function checkAssembly(srcfiles: string[], issmt: Boolean): Assembly | undefined
     status.output(`    User sources loaded [${(dend - lstart) / 1000}s]\n\n`);
 
     const userpackage = new PackageConfig([], usersrcinfo)
-    const [asm, perrors, terrors] = !issmt
+    const [asm, perrors, terrors] = asmtype === "cpp"
         ? generateASM(userpackage) 
         : generateASMSMT(userpackage);
 

@@ -309,7 +309,7 @@ abstract class IRAbstractEntityTypeDecl extends IRAbstractNominalTypeDecl {
     }
 
     static emitBAPI(): string {
-        return "blorp";
+        return "Not Implemented: BAPI emission for abstract entities!";
     }
 }
 

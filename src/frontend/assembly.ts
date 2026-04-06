@@ -678,8 +678,6 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
     }
 }
 
-// TODO: I _believe_ we can just add a method to this class, emitBAPI() instead of making a new file
-// -- although im not sure how to structure the actual emission, perhaps we just create a function called convertASMToBAPI() or something?
 abstract class AbstractEntityTypeDecl extends AbstractNominalTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, etag: AdditionalTypeDeclTag) {
         super(file, sinfo, attributes, ns, name, etag);

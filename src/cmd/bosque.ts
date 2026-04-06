@@ -83,7 +83,7 @@ function emitCommandLineMakefile(optlevel: "debug" | "test" | "release"): string
 //////////////////////////////
 status.enable();
 
-const asm = checkAssembly(fullargs, false);
+const asm = checkAssembly(fullargs, "cpp");
 if(asm === undefined) {
     process.exit(1);
 }

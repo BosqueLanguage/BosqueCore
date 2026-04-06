@@ -32,7 +32,7 @@ function buildBAPIAssembly(assembly: Assembly, rootasm: string, outname: string)
     status.output(`    IR generation successful -- emitted to ${nndir}\n\n`);
 }
 
-const asm = checkAssembly(fullargs, true);
+const asm = checkAssembly(fullargs, "smt");
 if(asm === undefined) {
     process.exit(1);
 }
