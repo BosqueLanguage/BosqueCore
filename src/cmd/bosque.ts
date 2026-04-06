@@ -15,7 +15,6 @@ import { Status } from "./status_output.js"
 const runcppdir = path.join(__dirname, "../../runcpp/");
 
 const [fullargs, mainns, outdir] = parseArgv("cppout", ...process.argv);
-Status.enable();
 
 function buildExeCode(assembly: Assembly, rootasm: string, outname: string) {
     Status.output("Monomorphizing code...\n");
