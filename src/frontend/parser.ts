@@ -1214,6 +1214,15 @@ class Parser {
         }
     }
 
+    private peekTokenAbsolute(pos: number | undefined): Token {
+        if(pos === undefined || pos >= this.tokens.length) {
+            return this.tokens[this.tokens.length - 1]; //EOF
+        }
+        else {
+            return this.tokens[pos];
+        }
+    }
+
     private peekTokenKind(pos?: number): string {
         return this.peekToken(pos || 0).kind;
     }
@@ -2897,8 +2906,8 @@ class Parser {
         }
     }
 
-    private checkITestFirstToken(): boolean {
-        return this.testToken(SYM_bang) || this.testToken(SYM_langle) || this.testToken(KW_none) || this.testToken(KW_some) || this.testToken(KW_ok) || this.testToken(KW_fail);
+    private checkITestFirstToken(tok: Token): boolean {
+        return (tok.kind === SYM_bang) || (tok.kind === SYM_langle) || (tok.kind === KW_none) || (tok.kind === KW_some) || (tok.kind === KW_ok) || (tok.kind === KW_fail);
     }
 
     private parseRValueInTopTestExpression(): Expression {
@@ -2932,33 +2941,30 @@ class Parser {
             }
             else {
                 const epos = this.scanMatchingParens(SYM_lparen, SYM_rparen);
-                xxxx;
-            }
-
-
-            xxxx;
-            const bexp = this.parseRValueInTopTestExpression();
-            
-            if((this.testToken(SYM_at) || this.checkITestFirstToken()) && !isparened) {
-                this.recordErrorGeneral(bexp.sinfo, "ITest guard expression is missing parentheses");
-            }
-
-            if(this.testToken(SYM_at)) {
-                let stdbindname = "$_";
-                if(bexp instanceof AccessVariableExpression) {
-                    stdbindname = "$" + bexp.srcname;
+                const peektok = this.peekTokenAbsolute(epos);
+                if(!this.checkITestFirstToken(peektok)) {
+                    return new ITestSimpleGuard(this.parseRValueInTopTestExpression());
                 }
+                else {
+                    this.consumeToken();
+                    const bexp = this.parseExpression();
+                    this.consumeToken();
 
-                this.consumeToken();
-                const itest = this.parseITest() as ITest;
-                return new ITestBinderGuard(bexp, itest, new BinderInfo(stdbindname, true));
-            }
-            else if(this.checkITestFirstToken()) {
-                const itest = this.parseITest() as ITest;
-                return new ITestTypeGuard(bexp, itest);
-            }
-            else {
-                return new ITestSimpleGuard(bexp);
+                    if(this.testToken(SYM_at)) {
+                        let stdbindname = "$_";
+                        if(bexp instanceof AccessVariableExpression) {
+                            stdbindname = "$" + bexp.srcname;
+                        }
+
+                        this.consumeToken();
+                        const itest = this.parseITest() as ITest;
+                        return new ITestBinderGuard(bexp, itest, new BinderInfo(stdbindname, true));
+                    }
+                    else {
+                        const itest = this.parseITest() as ITest;
+                        return new ITestTypeGuard(bexp, itest);
+                    }
+                }
             }
         }
     }
