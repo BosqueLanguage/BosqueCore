@@ -6,28 +6,29 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 import { Assembly } from "../frontend/assembly.js";
-import { checkAssembly, parseArgv, Status } from "./workflows.js";
+import { checkAssembly, parseArgv } from "./workflows.js";
 import { Monomorphizer } from "../backend/asmprocess/monomorphize.js";
 import { ASMToIRConverter } from "../backend/asmprocess/flatten.js";
 import { CPPEmitter } from "../backend/ircemit/cppemit.js";
+import { Status } from "./status_output.js"
 
 const runcppdir = path.join(__dirname, "../../runcpp/");
 
 const [fullargs, mainns, outdir] = parseArgv("cppout", ...process.argv);
-let status = new Status();
+Status.enable();
 
 function buildExeCode(assembly: Assembly, rootasm: string, outname: string) {
-    status.output("Monomorphizing code...\n");
+    Status.output("Monomorphizing code...\n");
     const iim = Monomorphizer.computeExecutableInstantiations(assembly, [rootasm]);
 
-    status.output("Generating IR code...\n");
+    Status.output("Generating IR code...\n");
     const ircode = ASMToIRConverter.generateIR(assembly, iim, undefined);
 
-    status.output("Emitting CPP code...\n");
+    Status.output("Emitting CPP code...\n");
     const cppcode = CPPEmitter.createEmitter(ircode);
     const maincode = cppcode.emitForCommandLine(`${mainns}::main`);
 
-    status.output("    Writing CPP code to disk...\n");
+    Status.output("    Writing CPP code to disk...\n");
     const nndir = path.normalize(outname);
     try {
         const hname = path.join(nndir, `app.h`);
@@ -37,14 +38,14 @@ function buildExeCode(assembly: Assembly, rootasm: string, outname: string) {
         fs.writeFileSync(cname, maincode[1]);
     }
     catch(e) {      
-        status.error("Failed to write output files!\n");
+        Status.error("Failed to write output files!\n");
     }
 
-    status.output(`    Code generation successful -- CPP emitted to ${nndir}\n\n`);
+    Status.output(`    Code generation successful -- CPP emitted to ${nndir}\n\n`);
 }
 
 function moveRuntimeFiles(buildlevel: "debug" | "test" | "release", outname: string) {
-    status.output("    Copying CPP runtime support...\n");
+    Status.output("    Copying CPP runtime support...\n");
     const nndir = path.normalize(outname);
 
     const makefile = emitCommandLineMakefile(buildlevel);
@@ -57,7 +58,7 @@ function moveRuntimeFiles(buildlevel: "debug" | "test" | "release", outname: str
         fs.writeFileSync(path.join(nndir, "Makefile"), makefile);
     }
     catch(e) {
-        status.error("Failed to copy runtime files!\n");
+        Status.error("Failed to copy runtime files!\n");
     }
 }
 
@@ -81,14 +82,14 @@ function emitCommandLineMakefile(optlevel: "debug" | "test" | "release"): string
 }
 
 //////////////////////////////
-status.enable();
+Status.enable();
 
 const asm = checkAssembly(fullargs, "cpp");
 if(asm === undefined) {
     process.exit(1);
 }
 
-status.output(`-- CPP output directory: ${outdir}\n\n`);
+Status.output(`-- CPP output directory: ${outdir}\n\n`);
 
 fs.rmSync(outdir, { recursive: true, force: true });
 fs.mkdirSync(outdir);
@@ -96,4 +97,4 @@ fs.mkdirSync(outdir);
 buildExeCode(asm, mainns, outdir);
 moveRuntimeFiles("debug", outdir);
 
-status.output("All done!\n");
+Status.output("All done!\n");
