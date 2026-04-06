@@ -309,6 +309,10 @@ abstract class IRAbstractEntityTypeDecl extends IRAbstractNominalTypeDecl {
     constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], fields: IRMemberFieldDecl[], etag: "std" | "status" | "event", saturatedProvides: IRTypeSignature[], saturatedBFieldInfo: { containingtype: IRNominalTypeSignature, fkey: string, fname: string, ftype: IRTypeSignature }[], allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[], allValidates: { containingtype: IRNominalTypeSignature, ii: number }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
         super(tkey, invariants, validates, fields, etag, saturatedProvides, saturatedBFieldInfo, allInvariants, allValidates, docstr, metatags, file, sinfo);
     }
+
+    static emitBAPI(): string {
+        return "Not Implemented: BAPI emission for abstract entities!";
+    }
 }
 
 class IREnumTypeDecl extends IRAbstractEntityTypeDecl {
@@ -610,6 +614,11 @@ class IREntityTypeDecl extends IRAbstractEntityTypeDecl {
         });
 
         return ffdecls;
+    }
+
+    emitBAPI(): string {
+        const base = IRAbstractEntityTypeDecl.emitBAPI();
+        return `'${this.tkey}'<IRAssembly::TypeKey> => IRAssembly::EntityTypeDecl{ ${base} }`;
     }
 }
 
@@ -1099,6 +1108,11 @@ class IRAssembly {
         }
 
         //TODO: compute cycles
+    }
+
+    emitBAPI() {
+        let v = this.entities.map<string>(e => e.emitBAPI()); 
+        return v.join();
     }
 }
 
