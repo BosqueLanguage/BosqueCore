@@ -1,0 +1,34 @@
+namespace IRAssembly;
+
+
+%%
+%% NOTE: These are copied verbatim from 1.0... Pretty sure nothing changed!
+%%
+
+const min_safe_int: Int = -4611686018427387903i;
+const max_safe_int: Int = 4611686018427387903i;
+
+%%negation and conversion are always safe
+const max_safe_nat: Nat = 4611686018427387903n;
+
+const namespaceComponentRE: CRegex = /[A-Z][_a-zA-Z0-9]+/c;
+const namespaceKeyRE: CRegex = /(${IRAssembly::namespaceComponentRE}'::')*${IRAssembly::namespaceComponentRE}/c; %%Core is explicit here
+type IRNamespaceComponentKey = CString of IRAssembly::namespaceComponentRE;
+type IRNamespaceKey = CString of IRAssembly::namespaceKeyRE; %%Core is implicit here
+
+const basicNominalTypeKeyRE: CRegex = /(${IRAssembly::namespaceKeyRE}'::')?[A-Z][_a-zA-Z0-9]+('<'.+'>')?/c; %%Core is implicit here
+const specialScopedTypeKeyRE: CRegex = /('Result'|'APIResult')'<'.+'>''::'('Ok'|'Fail'|'Rejected'|'Failed'|'Error'|'Success')/c; %%Core is implicit here
+const nominalTypeKeyRE: CRegex = /(${IRAssembly::basicNominalTypeKeyRE}|${IRAssembly::specialScopedTypeKeyRE})/c; %%a bit rough but helps prevent mistakes
+const elistTypeKeyRE: CRegex = /'(|'.*'|)'/c;
+
+const lambdaTypeKeyRE: CRegex = /('fn'|'pred') '('.*')' '->' (${IRAssembly::nominalTypeKeyRE}|${IRAssembly::elistTypeKeyRE})/c;
+const typeKeyRE: CRegex = /${IRAssembly::nominalTypeKeyRE}|${IRAssembly::elistTypeKeyRE}|${IRAssembly::lambdaTypeKeyRE}/c; 
+type IRTypeKey = CString of IRAssembly::typeKeyRE;
+
+const invokeKeyRE: CRegex = /(${IRAssembly::namespaceKeyRE}|${IRAssembly::nominalTypeKeyRE})'::'[_a-zA-Z0-9$-]+('<'.+'>')?/c;
+type IRInvokeKey = CString of IRAssembly::invokeKeyRE;
+
+const identifierRE: CRegex = /[_a-z][_a-zA-Z0-9$]*/c; %%we allow & inside these identifiers so we can make special names
+const videntifierRE: CRegex = /'$'?[_a-z][_a-zA-Z0-9$]*/c; %%we allow & inside these identifiers so we can make special names
+type IRIdentifier = CString of IRAssembly::identifierRE;
+type IRVarIdentifier = CString of IRAssembly::videntifierRE;

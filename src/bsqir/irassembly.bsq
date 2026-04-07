@@ -1,0 +1,29 @@
+declare namespace IRAssembly;
+
+concept IRAbstractNominalTypeDecl {
+    field tkey: TypeKey;
+
+    %%field invariants: List<IRInvariantDecl>;
+    %%field validates: List<IRValidateDecl>;
+    field fields: List<IRMemberFieldDecl>;
+
+    %%field etag: ...;
+
+    %%field saturatedProvides: List<IRTypeSignature>;
+    %%field saturatedBFieldInfo: List<(|IRNominalTypeSignature, CString, CString, IRTypeSignature|)>; %% (|containingtype, fkey, fname, ftype|)
+ 
+    %%field allInvariants: List<(|IRNominalTypeSignature, Nat|)>; %%(|containingtype, ii|)
+    %%field allValidates: List<(|IRNominalTypeSignature, Nat|)>; %%(|containingtype, ii|)
+
+    %%field docstr: Option<IRDeclarationDocString>;
+    %%field metatags: List<IRDeclarationMetaTag>;
+
+    field file: CString;
+    field sinfo: IRSourceInfo;
+
+    abstract method getDeclDependencyTypes(alltypes: Map<CString, IRAbstractNominalTypeDecl>): List<IRTypeSignature>;
+}
+
+concept IRAbstractEntityTypeDecl ... {
+
+}
