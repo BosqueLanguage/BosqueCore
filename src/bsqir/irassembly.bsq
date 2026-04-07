@@ -13,7 +13,7 @@ entity IRMemberFieldDecl {
 }
 
 concept IRAbstractNominalTypeDecl {
-    field tkey: TypeKey;
+    field tkey: IRTypeKey;
 
     %%field invariants: List<IRInvariantDecl>;
     %%field validates: List<IRValidateDecl>;
@@ -39,7 +39,7 @@ concept IRAbstractNominalTypeDecl {
 concept IRAbstractEntityTypeDecl {
 }
 
-class IREntityTypeDecl provides IRAbstractEntityTypeDecl {
+entity IREntityTypeDecl provides IRAbstractEntityTypeDecl {
     %*
     override method getDeclDependencyTypes(alltypes: Map<CString, IRAbstractNominalTypeDecl>): List<IRTypeSignature> {
         let ffdecls = this.saturatedBFieldInfo.map<IRTypeSignature>(fn(bf) => {

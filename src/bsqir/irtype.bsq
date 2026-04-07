@@ -39,9 +39,11 @@ concept IRFormatTypeSignature provides IRTypeSignature {
     field rtype: IRTypeSignature;
     field terms: (|IRIdentifier, IRTypeSignature|);
 
+%*
     override method getDirectDependencyTypes(): List<IRTypeSignature> {
         return this.terms.map<IRTypeSignature>(fn(term) => term.1);
     }
+*%
 }
 
 entity IRFormatCStringTypeSignature provides IRFormatTypeSignature {
