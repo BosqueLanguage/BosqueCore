@@ -1,5 +1,17 @@
 declare namespace IRAssembly;
 
+entity IRMemberFieldDecl {
+    field fkey: IRIdentifier;
+
+    field enclosingType: IRNominalTypeSignature;
+    field name: CString;
+    field declaredType: IRTypeSignature;
+    %%field defaultValue: Option<(|List<IRStatement>, IRSimpleExpression|);
+
+    %%field docstr: Option<IRDeclarationDocString>;
+    %%field metatags: List<IRDeclarationMetaTag>;
+}
+
 concept IRAbstractNominalTypeDecl {
     field tkey: TypeKey;
 
@@ -7,7 +19,7 @@ concept IRAbstractNominalTypeDecl {
     %%field validates: List<IRValidateDecl>;
     field fields: List<IRMemberFieldDecl>;
 
-    %%field etag: ...;
+    %%field etag: "std" | "status" | "event";
 
     %%field saturatedProvides: List<IRTypeSignature>;
     %%field saturatedBFieldInfo: List<(|IRNominalTypeSignature, CString, CString, IRTypeSignature|)>; %% (|containingtype, fkey, fname, ftype|)
@@ -24,6 +36,19 @@ concept IRAbstractNominalTypeDecl {
     abstract method getDeclDependencyTypes(alltypes: Map<CString, IRAbstractNominalTypeDecl>): List<IRTypeSignature>;
 }
 
-concept IRAbstractEntityTypeDecl ... {
+concept IRAbstractEntityTypeDecl {
+}
 
+class IREntityTypeDecl provides IRAbstractEntityTypeDecl {
+    %*
+    override method getDeclDependencyTypes(alltypes: Map<CString, IRAbstractNominalTypeDecl>): List<IRTypeSignature> {
+        let ffdecls = this.saturatedBFieldInfo.map<IRTypeSignature>(fn(bf) => {
+            let ctt = ...;
+            let bfdecl = ctt.fields. ...;
+            return bfdecl.declaredType;
+        });
+
+        return ffdecls;
+    }
+    *%
 }
