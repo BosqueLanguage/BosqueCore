@@ -16,4 +16,22 @@ describe ("Parser -- IfElse Statement", () => {
         parseTestFunctionError("function main(): Int { if(true) { return 3i; } else return 1i; }", 'Expected "{" but got "return" when parsing "block statement"');
         parseTestFunctionError("function main(): Int { if true return 3i; else { return 1i; } }", 'Expected "(" but got "true" when parsing "if statement cond"');
     });
+
+    it("should parse if-else w/ single itest specials", function () {
+        parseTestFunction("public function main(x: Option<Int>): Int { if (x)!none { return 1i; } else { return 3i; } }", undefined);
+        parseTestFunction("public function main(x: Option<Int>): Int { if (x)some { return 1i; } else { return 3i; } }", undefined);
+        
+        parseTestFunction("public function main(x: Option<Int>): Int { if (x)@!none { return $x; } else { return 3i; } }", undefined);
+        parseTestFunction("public function main(x: Option<Int>): Int { if (x)@some { return $x; } else { return 3i; } }", undefined);
+        parseTestFunction("public function main(x: Option<Int>): Int { if ($z = x)@some { return $z; } else { return 3i; } }", undefined);
+
+        parseTestFunction("public function main(x: Option<Int>): Int { if (x)@none { return 3i; } else { return $x; } }", undefined);
+        parseTestFunction("public function main(x: Option<Int>): Int { if (x)@!some { return 3i; } else { return $x; } }", undefined);
+        parseTestFunction("public function main(x: Option<Int>): Int { if ($z = x)@!some { return 3i; } else { return $z; } }", undefined);
+
+        parseTestFunction("function main(): Int { let x: Option<Int> = some(3i); if (x)@some { return $x; } else { return 1i; } }", undefined);
+        parseTestFunction("function main(): Int { let x: Option<Int> = some(3i); if ($y = x)@some { return $y; } else { return 1i; } }", undefined);
+
+        parseTestFunction("public function main(x: Option<Option<Int>>): Int { if (x.@some)@!some { return 3i; } else { return $_; } }", undefined);
+    });
 });

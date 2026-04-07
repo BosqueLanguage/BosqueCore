@@ -26,6 +26,8 @@ describe ("Parser -- If Statement", () => {
 
         parseTestFunction("function main(): Int { let x: Option<Int> = some(3i); if (x)@some { return $x; } return 1i; }", undefined);
         parseTestFunction("function main(): Int { let x: Option<Int> = some(3i); if ($y = x)@some { return $y; } return 1i; }", undefined);
+    
+        parseTestFunction("public function main(x: Option<Option<Int>>): Int { if (x.@some)@some { return $_; } return 3i; }", undefined);
     });
 
     it("should parse ifs w/ single itest specials fails", function () {
