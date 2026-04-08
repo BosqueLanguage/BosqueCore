@@ -38,15 +38,15 @@ describe ("Parser -- If Statement", () => {
         parseTestFunction("function main(x: Option<Int>): Int { if (x)<Some> { return 1i; } return 3i; }", undefined);
 
         parseTestFunction("function main(x: Option<Int>): Some<Int> { if (x)@!<None> { return $x; } return some(3i); }", undefined);
-        parseTestFunction("function main(x: Option<Int>): Some<Int> { if ($y = x)@<Some> { return $y; } return some(3i); }", undefined);
+        parseTestFunction("function main(x: Option<Int>): Some<Int> { if ($y = x)@<Some<Int>> { return $y.value; } return some(3i); }", undefined);
 
-        parseTestFunction("function main(): Int { let x: Option<Int> = some(3i); if (x)@some { return $x; } return 1i; }", undefined);
-        parseTestFunction("function main(): Int { let x: Option<Int> = some(3i); if ($y = x)@some { return $y; } return 1i; }", undefined);
+        parseTestFunction("function main(): Int { let x: Option<Int> = some(3i); if (x)@<Some<Int>> { return $x.value; } return 1i; }", undefined);
+        parseTestFunction("function main(): Int { let x: Option<Int> = some(3i); if ($y = x)@<Some<Int>> { return $y.value; } return 1i; }", undefined);
     });
 
-    it("should parse ifs w/ multi itest", function () {
+    it.todo("should parse ifs w/ multi itest", function () {
     });
 
-    it("should parse ifs w/ passing params", function () {
+    it.todo("should parse ifs w/ passing params", function () {
     });
 });

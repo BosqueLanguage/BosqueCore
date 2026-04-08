@@ -34,4 +34,20 @@ describe ("Parser -- IfElse Statement", () => {
 
         parseTestFunction("public function main(x: Option<Option<Int>>): Int { if (x.@some)@!some { return 3i; } else { return $_; } }", undefined);
     });
+
+    it("should parse ifs w/ single itest types", function () {
+        parseTestFunction("function main(x: Option<Int>): Int { if (x)<Some<Int>> { return 1i; } else { return 3i; } }", undefined);
+
+        parseTestFunction("function main(x: Option<Int>): Some<Int> { if (x)@!<None> { return $x; } else { return some(3i); } }", undefined);
+        parseTestFunction("function main(x: Option<Int>): Some<Int> { if ($y = x)@<Some<Int>> { return $y.value; } else { return some(3i); } }", undefined);
+
+        parseTestFunction("function main(): Int { let x: Option<Int> = some(3i); if (x)@<Some<Int>> { return $x.value; } else { return 1i; } }", undefined);
+        parseTestFunction("function main(): Int { let x: Option<Int> = some(3i); if ($y = x)@!<Some<Int>> { return 3i; } else { return $y.value; } }", undefined);
+    });
+
+    it.todo("should parse if-else w/ multi itest", function () {
+    });
+
+    it.todo("should parse if-else w/ passing params", function () {
+    });
 });
