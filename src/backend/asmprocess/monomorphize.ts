@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, AgentDecl, APIDecl, APIDeniedTypeDecl, APIErrorTypeDecl, APIFlaggedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, ExplicitInvokeDecl, FailTypeDecl, InvariantDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskActionDecl, TaskConfiguration, TaskDecl, TaskMethodDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl } from "../../frontend/assembly.js";
 import { computeInvokeKeyForLambdaFunction, computeInvokeKeyForNamespaceFunction, computeInvokeKeyForTypeFunction, computeResolveKeyForInvoke, InvokeInstantiationInfo, LambdaInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiations.js";
 import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, AbstractArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, HoleBodyImplementation, HoleExpression, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixSliceOperator, PostfixOp, PostfixOpTag, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement, StdArgumentValue, InterpolateFormatExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixProjectFromNames, ITest, ITestType } from "../../frontend/body.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, AbstractArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, HoleBodyImplementation, HoleExpression, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, ITestGuard, ITestGuardSet, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixSliceOperator, PostfixOp, PostfixOpTag, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement, StdArgumentValue, InterpolateFormatExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixProjectFromNames, ITest, ITestType, ITestTypeGuard, ITestBinderGuard } from "../../frontend/body.js";
 import { SourceInfo } from "../../frontend/build_decls.js";
 
 class PendingNamespaceFunction {
@@ -271,31 +271,31 @@ class Monomorphizer {
     private instantiateITestGuardExpression(exp: Expression) {
         switch (exp.tag) {
             case ExpressionTag.CallRefVariableExpression: {
-                return this.instantiateCallRefVariableExpression(exp as CallRefVariableExpression);
+                this.instantiateCallRefVariableExpression(exp as CallRefVariableExpression);
             }
             case ExpressionTag.CallRefThisExpression: {
-                return this.instantiateCallRefThisExpression(exp as CallRefThisExpression);
+                this.instantiateCallRefThisExpression(exp as CallRefThisExpression);
             }
             case ExpressionTag.CallRefSelfExpression: {
-                return this.instantiateCallRefSelfExpression(exp as CallRefSelfExpression);
+                this.instantiateCallRefSelfExpression(exp as CallRefSelfExpression);
             }
             case ExpressionTag.CallTaskActionExpression: {
-                return this.instantiateCallTaskActionExpression(exp as CallTaskActionExpression);
+                this.instantiateCallTaskActionExpression(exp as CallTaskActionExpression);
             }
             default: {
                 const ttag = exp.tag;
 
                 if(ttag === ExpressionTag.CallNamespaceFunctionExpression) {
-                    return this.instantiateCallNamespaceFunctionExpression(exp as CallNamespaceFunctionExpression);
+                    this.instantiateCallNamespaceFunctionExpression(exp as CallNamespaceFunctionExpression);
                 }
                 else if(ttag === ExpressionTag.CallTypeFunctionExpression) {
-                    return this.instantiateCallTypeFunctionExpression(exp as CallTypeFunctionExpression);
+                    this.instantiateCallTypeFunctionExpression(exp as CallTypeFunctionExpression);
                 }
                 else if(ttag === ExpressionTag.LambdaInvokeExpression) {
-                    return this.instantiateLambdaInvokeExpression(exp as LambdaInvokeExpression);
+                    this.instantiateLambdaInvokeExpression(exp as LambdaInvokeExpression);
                 }
                 else if(ttag === ExpressionTag.PostfixOpExpression) {
-                    return this.instantiatePostfixOp(exp as PostfixOp);
+                    this.instantiatePostfixOp(exp as PostfixOp);
                 }
                 else if(ttag === ExpressionTag.PrefixNotOpExpression) {
                     this.instantiateITestGuardExpression((exp as PrefixNotOpExpression).exp);
@@ -304,18 +304,20 @@ class Monomorphizer {
                     (exp as LogicAndExpression).exps.forEach((e) => this.instantiateITestGuardExpression(e));
                 }
                 else {
-                    return this.instantiateExpression(exp);
+                    this.instantiateExpression(exp);
                 }
             }
         }
     }
 
     private instantiateITestGuard(tt: ITestGuard) {
-        if(tt instanceof ITestSimpleGuard) {
-            return this.instantiateITestGuardExpression(tt.exp);
+        this.instantiateITestGuardExpression(tt.exp);
+
+        if(tt instanceof ITestTypeGuard) {
+            this.processITestAsBoolean(tt.exp.getType(), tt.itest);
         }
-        else {
-            assert(false, "Unknown ITestGuard type"); //TODO check and do binders here!!!
+        if(tt instanceof ITestBinderGuard) {
+            this.processITestAsConvert(tt.exp.getType(), tt.itest);
         }
     }
 
