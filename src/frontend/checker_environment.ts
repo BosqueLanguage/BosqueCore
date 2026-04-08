@@ -424,7 +424,7 @@ class TypeEnvironment {
     }
 
     pushNewLocalBinderScope(binds: VarInfo[]): TypeEnvironment {
-        return new TypeEnvironment(this.declReturnType, this.inferReturn, this.isnormalflow, this, this.lcaptures, this.args, [...this.locals, new LocalScope(false, binds, new Set<string>())]);
+        return new TypeEnvironment(this.declReturnType, this.inferReturn, this.isnormalflow, this, this.lcaptures, this.args, [...this.locals, new LocalScope(true, binds, new Set<string>())]);
     }
 
     popLocalScope(): [TypeEnvironment, LocalScope] {
