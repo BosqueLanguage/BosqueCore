@@ -54,5 +54,7 @@ entity IREntityTypeDecl provides IRAbstractEntityTypeDecl {
 }
 
 entity IRAssembly {
+    %% TODO: entities should be a map
+    %%field entities: Map<IRTypeKey, IREntityTypeDecl>; 
     field entities: List<IREntityTypeDecl>;
 }
