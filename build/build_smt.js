@@ -13,7 +13,6 @@ const cmdpath = path.join(bsqdir, "bin/src/cmd/bosque.js");
 
 const binoutdir = path.join(bsqdir, "bin/smtemit");
 
-// Do we need the simplifiers? Does flattening do this for us?
 const allsrcdirs = [
     path.join(bsqdir, "src/bsqir"),
     //,path.join(bsqdir, "src/bsqir/simplifier"),
