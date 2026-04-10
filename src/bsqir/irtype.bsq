@@ -1,0 +1,68 @@
+namespace IRAssembly;
+
+concept IRTypeSignature {
+    field tkeystr: IRTypeKey;
+
+    abstract method getDirectDependencyTypes(): List<IRTypeSignature>; 
+}
+
+entity IRVoidTypeSignature provides IRTypeSignature {
+    override method getDirectDependencyTypes(): List<IRTypeSignature> {
+        return List<IRTypeSignature>{};
+    }
+}
+
+entity IRNominalTypeSignature provides IRTypeSignature {
+    override method getDirectDependencyTypes(): List<IRTypeSignature> {
+        return List<IRTypeSignature>{};
+    }
+}
+
+entity IREListTypeSignature provides IRTypeSignature {
+    field entries: List<IRTypeSignature>;
+
+    override method getDirectDependencyTypes(): List<IRTypeSignature> {
+        return this.entries;
+    }
+}
+
+entity IRDashResultTypeSignature provides IRTypeSignature {
+    field entries: List<IRTypeSignature>;
+
+    override method getDirectDependencyTypes(): List<IRTypeSignature> {
+        return this.entries;
+    }   
+}
+
+%% Would like to use a datatype here but pretty sure the method makes it impossible
+concept IRFormatTypeSignature provides IRTypeSignature {
+    field rtype: IRTypeSignature;
+    field terms: (|IRIdentifier, IRTypeSignature|);
+
+%*
+    override method getDirectDependencyTypes(): List<IRTypeSignature> {
+        return this.terms.map<IRTypeSignature>(fn(term) => term.1);
+    }
+*%
+}
+
+entity IRFormatCStringTypeSignature provides IRFormatTypeSignature {
+}
+
+entity IRFormatStringTypeSignature provides IRFormatTypeSignature {
+}
+
+entity IRFormatPathTypeSignature provides IRFormatTypeSignature {
+}
+
+entity IRFormatPathFragmentTypeSignature provides IRFormatTypeSignature {
+}
+
+entity IRFormatPathGlobTypeSignature provides IRFormatTypeSignature {
+}
+
+entity IRLambdaParameterPackTypeSignature provides IRTypeSignature {
+    override method getDirectDependencyTypes(): List<IRTypeSignature> {
+        return List<IRTypeSignature>{};
+    }
+}

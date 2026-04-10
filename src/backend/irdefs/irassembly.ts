@@ -1111,8 +1111,9 @@ class IRAssembly {
     }
 
     emitBAPI() {
-        let v = this.entities.map<string>(e => e.emitBAPI()); 
-        return v.join();
+        return "IRAssembly::IRAssembly{\n" 
+            + `\tMap<IRAssembly::IREntityTypeDecl>{ ${this.entities.map<string>(e => e.emitBAPI()).join()} }\n`
+        + "}\n";
     }
 }
 

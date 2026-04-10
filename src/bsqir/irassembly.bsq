@@ -1,0 +1,60 @@
+declare namespace IRAssembly;
+
+entity IRMemberFieldDecl {
+    field fkey: IRIdentifier;
+
+    field enclosingType: IRNominalTypeSignature;
+    field name: CString;
+    field declaredType: IRTypeSignature;
+    %%field defaultValue: Option<(|List<IRStatement>, IRSimpleExpression|);
+
+    %%field docstr: Option<IRDeclarationDocString>;
+    %%field metatags: List<IRDeclarationMetaTag>;
+}
+
+concept IRAbstractNominalTypeDecl {
+    field tkey: IRTypeKey;
+
+    %%field invariants: List<IRInvariantDecl>;
+    %%field validates: List<IRValidateDecl>;
+    field fields: List<IRMemberFieldDecl>;
+
+    %%field etag: "std" | "status" | "event";
+
+    %%field saturatedProvides: List<IRTypeSignature>;
+    %%field saturatedBFieldInfo: List<(|IRNominalTypeSignature, CString, CString, IRTypeSignature|)>; %% (|containingtype, fkey, fname, ftype|)
+ 
+    %%field allInvariants: List<(|IRNominalTypeSignature, Nat|)>; %%(|containingtype, ii|)
+    %%field allValidates: List<(|IRNominalTypeSignature, Nat|)>; %%(|containingtype, ii|)
+
+    %%field docstr: Option<IRDeclarationDocString>;
+    %%field metatags: List<IRDeclarationMetaTag>;
+
+    field file: CString;
+    field sinfo: IRSourceInfo;
+
+    abstract method getDeclDependencyTypes(alltypes: Map<CString, IRAbstractNominalTypeDecl>): List<IRTypeSignature>;
+}
+
+concept IRAbstractEntityTypeDecl {
+}
+
+entity IREntityTypeDecl provides IRAbstractEntityTypeDecl {
+    %*
+    override method getDeclDependencyTypes(alltypes: Map<CString, IRAbstractNominalTypeDecl>): List<IRTypeSignature> {
+        let ffdecls = this.saturatedBFieldInfo.map<IRTypeSignature>(fn(bf) => {
+            let ctt = ...;
+            let bfdecl = ctt.fields. ...;
+            return bfdecl.declaredType;
+        });
+
+        return ffdecls;
+    }
+    *%
+}
+
+entity IRAssembly {
+    %% TODO: entities should be a map
+    %%field entities: Map<IRTypeKey, IREntityTypeDecl>; 
+    field entities: List<IREntityTypeDecl>;
+}
