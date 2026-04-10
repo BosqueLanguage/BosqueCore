@@ -52,3 +52,7 @@ entity IREntityTypeDecl provides IRAbstractEntityTypeDecl {
     }
     *%
 }
+
+entity IRAssembly {
+    field entities: List<IREntityTypeDecl>;
+}

@@ -15,10 +15,11 @@ const binoutdir = path.join(bsqdir, "bin/smtemit");
 
 // Do we need the simplifiers? Does flattening do this for us?
 const allsrcdirs = [
-    path.join(bsqdir, "src/bsqir")
+    path.join(bsqdir, "src/bsqir"),
     //,path.join(bsqdir, "src/bsqir/simplifier"),
     //path.join(bsqdir, "src/backend/smtcore/transformer"),
     //path.join(bsqdir, "src/backend/smtcore/smtrepr")
+    path.join(bsqdir, "src/backend/smtcore")
 ];
 
 let allsources = [];

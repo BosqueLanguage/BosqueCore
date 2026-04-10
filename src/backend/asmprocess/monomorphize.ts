@@ -2274,10 +2274,6 @@ class Monomorphizer {
     }
 
     private instantiateRootNamespaceDeclaration(decl: NamespaceDeclaration) {
-        //
-        // TODO: It seems the transpiled javascript does not contain a definition of NamespaceDeclaration,
-        // hence our error of decl.consts being undefined...
-        //
         this.instantiateNamespaceConstDecls(decl.consts);
 
         for(let i = 0; i < decl.functions.length; ++i) {
