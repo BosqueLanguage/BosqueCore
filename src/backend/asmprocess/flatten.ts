@@ -975,24 +975,30 @@ class ASMToIRConverter {
         }
     }
 
-    private flattenITestGuard(sinfo: SourceInfo, tt: ITestGuard, gidx: number): [IRSimpleExpression, { ee: IRImmediateExpression, gidx: number } | undefined] {
+    private flattenITestGuard(sinfo: SourceInfo, tt: ITestGuard, gidx: number): [IRSimpleExpression, { ee: IRSimpleExpression, srctype: TypeSignature, itest: ITest } | undefined] {
         if(tt instanceof ITestSimpleGuard) {
             return [this.flattenITestGuardExpression(tt.exp), undefined];
         }
         else if(tt instanceof ITestTypeGuard) {
-            xxxx;
+            const texp = this.flattenExpression(tt.exp);
+            const sexp = this.makeExpressionSimple(texp, tt.exp.getType());
+
+            return [this.processITestAsBoolean(tt.exp.getType(), sexp, tt.itest), { ee: sexp, srctype: tt.exp.getType(), itest: tt.itest }];
         }
         else if(tt instanceof ITestBinderGuard) {
-            xxxx;
+            const texp = this.flattenExpression(tt.exp);
+            const iexp = this.makeExpressionImmediate(texp, tt.exp.getType());
+
+            return [this.processITestAsBoolean(tt.exp.getType(), iexp, tt.itest), { ee: iexp, srctype: tt.exp.getType(), itest: tt.itest }];
         }
         else {
             assert(false, "Unknown ITestGuard type"); //TODO check and do binders here!!!
         }
     }
 
-    private flattenITestGuardSet(sinfo: SourceInfo, tt: ITestGuardSet): [IRSimpleExpression, { ee: IRImmediateExpression, gidx: number }[]] {
+    private flattenITestGuardSet(sinfo: SourceInfo, tt: ITestGuardSet): [IRSimpleExpression, { ee: IRSimpleExpression, srctype: TypeSignature, itest: ITest }[]] {
         const grenvs = tt.guards.map((guard, ii) => this.flattenITestGuard(sinfo, guard, ii));
-        const iebinds = grenvs.map((ginfo) => ginfo[1]).filter((gbi) => gbi !== undefined) as { ee: IRImmediateExpression, gidx: number }[];
+        const iebinds = grenvs.map((ginfo) => ginfo[1]).filter((gbi) => gbi !== undefined) as { ee: IRSimpleExpression, srctype: TypeSignature, itest: ITest }[];
 
         const mustfalse = grenvs.some((aexp) => ASMToIRConverter.isLiteralFalseExpression(aexp[0]));
         if(mustfalse) {
@@ -2894,26 +2900,47 @@ class ASMToIRConverter {
         const [texp, ginfos] = this.flattenITestGuardSet(stmt.sinfo, stmt.cond);
         assert(ginfos.length === stmt.bbinds.length, "Internal error: binder info length mismatch");
 
+        if(ASMToIRConverter.isLiteralFalseExpression(texp)) {
+            return false;
+        }
+
         if(stmt.bbinds.length === 0) {
-            if(ASMToIRConverter.isLiteralFalseExpression(texp)) {
-                return false;
+            if(ASMToIRConverter.isLiteralTrueExpression(texp)) {
+                return this.flattenBlockStatement(stmt.trueBlock) || stmt.trueBlock.isterminal;
             }
             else {
-                if(ASMToIRConverter.isLiteralTrueExpression(texp)) {
-                    return this.flattenBlockStatement(stmt.trueBlock) || stmt.trueBlock.isterminal;
-                }
-                else {
-                    this.pushStatementBlock();
-                    this.flattenBlockStatement(stmt.trueBlock);
-                    const tblock = this.popStatementBlock();
+                this.pushStatementBlock();
+                this.flattenBlockStatement(stmt.trueBlock);
+                const tblock = this.popStatementBlock();
 
-                    this.pushStatement(new IRSimpleIfStatement(texp, new IRBlockStatement(tblock)));
-                    return false;
-                }
+                this.pushStatement(new IRSimpleIfStatement(texp, new IRBlockStatement(tblock)));
+                return false;
             }
         }
         else {
-            assert(false, "Not implemented -- IfStatement with binders");
+            if(ASMToIRConverter.isLiteralTrueExpression(texp)) {
+                for(let i = 0; i < ginfos.length; ++i) {
+                    const bvar = this.processLocalVariableName(stmt.bbinds[i].bname);
+                    const btype = stmt.bbinds[i].ttrue as TypeSignature;
+                    const bexp = this.processITestAsConvert_True(ginfos[i].srctype, ginfos[i].ee, ginfos[i].itest, btype, true);
+                    this.pushStatement(new IRVariableInitializationStatement(bvar, this.processTypeSignature(btype), bexp[1], true));
+                }
+                return this.flattenBlockStatement(stmt.trueBlock) || stmt.trueBlock.isterminal;
+            }
+            else {
+                this.pushStatementBlock();
+                for(let i = 0; i < ginfos.length; ++i) {
+                    const bvar = this.processLocalVariableName(stmt.bbinds[i].bname);
+                    const btype = stmt.bbinds[i].ttrue as TypeSignature;
+                    const bexp = this.processITestAsConvert_True(ginfos[i].srctype, ginfos[i].ee, ginfos[i].itest, btype, true);
+                    this.pushStatement(new IRVariableInitializationStatement(bvar, this.processTypeSignature(btype), bexp[1], true));
+                }
+                this.flattenBlockStatement(stmt.trueBlock);
+                const tblock = this.popStatementBlock();
+
+                this.pushStatement(new IRSimpleIfStatement(texp, new IRBlockStatement(tblock)));
+                return false;
+            }
         }
     }
 
