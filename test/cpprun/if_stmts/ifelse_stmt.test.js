@@ -19,4 +19,24 @@ describe ("CPPExec -- ElseIf Statement", () => {
     it("should exec type alias else ifs", function () {
         runTestSet("type Foo = Bool; public function main(b: Foo): Int { if(b || !!b) { return 3i; } else { return 1i; } }", [['true<Main::Foo>', '3i'], ['false<Main::Foo>', '1i']], []);
     });
+
+    it("should exec if-else w/ single itest specials", function () {
+        runTestSet("public function main(x: Option<Int>): Int { if (x)!none { return 1i; } else { return 3i; } }", [['some(3i)', '1i'], ['none', '3i']], []);
+        runTestSet("public function main(x: Option<Int>): Int { if ($z = x)@some { return $z; } else { return 3i; } }", [['some(1i)', '1i'], ['none', '3i']], []);
+
+        runTestSet("public function main(x: Option<Option<Int>>): Int { if (x.@some)@some { return $_; } else { return 3i; } }", [['some(some(0i))', '0i'], ['some(none)', '3i']], ['none']);
+    });
+
+    it("should exec if-else w/ single itest types", function () {
+        runTestSet("concept Bar {} entity Foo provides Bar { field f: Int; } public function main(x: Bar): Int { if (x)!<Foo> { return 1i; } else { return 3i; } }", [['Main::Foo{0i}', '3i']], []);
+        runTestSet("concept Bar {} entity Foo provides Bar { field f: Int; } public function main(x: Bar): Int { if (x)@<Foo> { return $x.f; } else { return 3i; } }", [['Main::Foo{0i}', '0i']], []);
+    
+        runTestSet("public function main(x: Option<Int>): Int { if ($y = x)@<Some<Int>> { return $y.value; } else { return 1i; } }", [['some(0i)', '0i'], ['none', '1i']], []);
+    });
+
+    it.todo("should exec if-else w/ multi itest", function () {
+    });
+
+    it.todo("should exec if-else w/ passing params", function () {
+    });
 });
