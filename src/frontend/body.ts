@@ -2499,13 +2499,14 @@ class SwitchStatement extends Statement {
         const ttmf = this.switchflow.map((sf) => `${sf.lval ? sf.lval.emit(true, fmt) : "_"} => ${sf.value.emit(fmt)}`);
         fmt.indentPop();
 
-        const iir = ttmf.map((cc) => fmt.indent("| " + cc));
+        const iir = ttmf.map((cc) => fmt.indent("    " + cc));
         return `${mheader} {\n${iir.join("\n")}\n${fmt.indent("}")}`;
     }
 }
 
 class MatchStatement extends Statement {
-    readonly sval: ITestGuard;
+    readonly sval: Expression;
+    readonly bindervar: string;
     readonly matchflow: {mtype: TypeSignature | undefined, value: BlockStatement}[];
 
     mustExhaustive: boolean = false;
@@ -2523,7 +2524,7 @@ class MatchStatement extends Statement {
         const ttmf = this.matchflow.map((mf) => `${mf.mtype ? mf.mtype.emit() : "_"} => ${mf.value.emit(fmt)}`);
         fmt.indentPop();
 
-        const iir = ttmf.map((cc) => fmt.indent("| " + cc));
+        const iir = ttmf.map((cc) => fmt.indent("    " + cc));
         return `${mheader} {\n${iir.join("\n")}\n${fmt.indent("}")}`;
     }
 }
@@ -2547,7 +2548,7 @@ class DispatchPatternStatement extends Statement {
         const ttdf = this.dispatchflow.map((df) => `${df.kidx ? df.kidx.emit(true, fmt) : "_"} => ${df.value.emit(fmt)}`);
         fmt.indentPop();
 
-        const iir = ttdf.map((cc) => fmt.indent("| " + cc));
+        const iir = ttdf.map((cc) => fmt.indent("    " + cc));
         return `${dheader} {\n${iir.join("\n")}\n${fmt.indent("}")}`;
     }
 }
