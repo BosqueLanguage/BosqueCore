@@ -218,6 +218,7 @@ namespace ᐸRuntimeᐳ
         inline static consteval uint32_t getPosInlineIDFrom(uint32_t treeid) { return treeid - 2; }
         inline static consteval uint32_t getPosTreeIDFrom(uint32_t treeid) { return treeid - 3; }
 
+        // contains either an inline list (just a buffer) or rb tree
         BoxedUnion<ListTUnion<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>> ulist;
 
     public:
@@ -288,6 +289,41 @@ namespace ᐸRuntimeᐳ
                 }
                 else {
                     return this->ulist.data.treelist.postree.count();
+                }
+            }
+        }
+
+        // not 100% sure but this being a copy sounds right (why give the user the possibility 
+        // of accidential mutation?)
+        T front() const 
+        {
+            assert(this->size() > 0);
+
+            if(this->ulist.typeinfo == s_inlinetypeinfo) {
+                return this->ulist.data.inlinelist.at(0);
+            }
+            else {
+                return this->ulist.data.treelist.postree.get(0);
+            }
+        }
+
+        XList insert(int64_t index, T value) const
+        {
+            if(this->ulist.typeinfo == nullptr) {
+                assert(index == 0);
+                return XList(ListTInlineContent<T>::literaldynamic(&value, 1));
+            }
+            else {
+                if(this->ulist.typeinfo == s_inlinetypeinfo) {
+                    // try to insert into the inline buffer
+                    // if impossible promote to pos tree and split the inline 
+                    // buffer into two leaves
+                    assert(false);
+                }
+                else {
+                    // normal persistent rb tree insertion (well sorta normal, 
+                    // hopefully the leaves dont make us mad)
+                    assert(false);
                 }
             }
         }
