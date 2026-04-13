@@ -55,6 +55,22 @@ namespace ᐸRuntimeᐳ
             return cb;
         }
 
+        static ListTInlineContent insert(int64_t index, const T& value, const ListTInlineContent& pb)
+        {
+            assert(pb.size() < LIST_T_BUFF_SIZE);
+            assert(index < LIST_T_BUFF_SIZE);
+            
+            ListTInlineContent nb;
+            if(index > 0) {
+                std::copy(pb.data.begin(), pb.data.begin() + index, nb.data.begin());
+            }
+            std::copy(pb.data.begin() + index, pb.data.end() - 1, nb.data.begin() + index + 1);
+            nb.data[index] = value;
+            nb.count = pb.size() + 1;
+
+            return nb;
+        }
+
         constexpr int64_t size() const { return this->count; }
         constexpr T at(size_t index) const { return this->data[index]; }
     };
@@ -293,18 +309,24 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        // not 100% sure but this being a copy sounds right (why give the user the possibility 
-        // of accidential mutation?)
+        // not sure if we should make get and front return references to prevent 
+        // excessive copying of intermediate steps... i think so?
+        T get(int64_t index) const
+        {
+            assert((size_t)index < this->size());
+
+            if(this->ulist.typeinfo == s_inlinetypeinfo) {
+                return this->ulist.data.inlinelist.at(index);
+            }
+            else {
+                return this->ulist.data.treelist.postree.get(index);
+            }
+        }
+
         T front() const 
         {
             assert(this->size() > 0);
-
-            if(this->ulist.typeinfo == s_inlinetypeinfo) {
-                return this->ulist.data.inlinelist.at(0);
-            }
-            else {
-                return this->ulist.data.treelist.postree.get(0);
-            }
+            return this->get(0);
         }
 
         XList insert(int64_t index, T value) const
@@ -315,10 +337,14 @@ namespace ᐸRuntimeᐳ
             }
             else {
                 if(this->ulist.typeinfo == s_inlinetypeinfo) {
-                    // try to insert into the inline buffer
-                    // if impossible promote to pos tree and split the inline 
-                    // buffer into two leaves
-                    assert(false);
+                    // not totally sure how we want to handle this constructor
+                    if(this->ulist.data.inlinelist.size() < ListTInlineContent<T>::LIST_T_BUFF_SIZE) {
+                        return XList(ListTInlineContent<T>::insert(index, value, this->ulist.data.inlinelist));
+                    }
+                    else {
+                        // need to construct a tree
+                        assert(false);
+                    }
                 }
                 else {
                     // normal persistent rb tree insertion (well sorta normal, 
