@@ -4137,15 +4137,14 @@ class TypeChecker {
     }
 
     private checkMatchStatement(env: TypeEnvironment, stmt: MatchStatement): TypeEnvironment {
-        /*
-        const eetype = this.checkExpression(env, stmt.sval[0], undefined);
+        const eetype = this.checkExpression(env, stmt.sval, undefined);
         if(eetype instanceof ErrorTypeSignature) {
             return env;
         }
 
         let ctype = this.relations.decomposeType(eetype) || [];
         if(ctype.length === 0) {
-            this.reportError(stmt.sval[0].sinfo, `Match statement requires a decomposable type but got ${eetype.emit()}`);
+            this.reportError(stmt.sval.sinfo, `Match statement requires a decomposable type but got ${eetype.emit()}`);
             return env;
         }
         
@@ -4164,16 +4163,10 @@ class TypeChecker {
                 const defaulttype = (lubattempt instanceof ErrorTypeSignature) ? eetype : lubattempt;
                 stmt.implicitFinalType = defaulttype;
 
-                let cenv = env;
-                if(stmt.sval[1] !== undefined) {
-                    cenv = env.pushNewLocalBinderScope(stmt.sval[1].srcname, defaulttype)
-                }
-                
+                let cenv = env.pushNewLocalBinderScope([new VarInfo(stmt.bindervar, defaulttype, "let", true)]);
                 cenv = this.checkBlockStatement(cenv, stmt.matchflow[i].value);
-
-                if(stmt.sval[1] !== undefined) {
-                    cenv = cenv.popLocalScope();
-                }
+                cenv = cenv.popLocalScope()[0];
+                
                 results.push(cenv);
             }
             else {
@@ -4194,15 +4187,10 @@ class TypeChecker {
                     exhaustive = splits.remain.length === 0;
                     this.checkError(stmt.matchflow[i].value.sinfo, exhaustive && i !== stmt.matchflow.length - 1, `Test is never false -- but there were ${stmt.matchflow.length - (i + 1)} more that are unreachable`);
 
-                    let cenv = env;
-                    if(stmt.sval[1] !== undefined) {
-                        cenv = env.pushNewLocalBinderScope(stmt.sval[1].srcname, mtype);
-                    }
+                    let cenv = env.pushNewLocalBinderScope([new VarInfo(stmt.bindervar, mtype, "let", true)]);
                     cenv = this.checkBlockStatement(cenv, stmt.matchflow[i].value);
-
-                    if(stmt.sval[1] !== undefined) {
-                        cenv = cenv.popLocalScope();
-                    }
+                    cenv = cenv.popLocalScope()[0];
+                    
                     ctype = splits.remain || ctype;
                     results.push(cenv);
                 }
@@ -4211,9 +4199,6 @@ class TypeChecker {
         
         stmt.mustExhaustive = exhaustive;
         return TypeEnvironment.mergeEnvironmentsSimple(env, ...results);
-
-        */
-        assert(false, "Not Implemented -- checkMatchStatement");
     }
 
     private checkDispatchPatternStatement(env: TypeEnvironment, stmt: DispatchPatternStatement): TypeEnvironment {

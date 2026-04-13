@@ -5313,14 +5313,35 @@ class Parser {
         return new SwitchStatement(sinfo, sexp, entries);
     }
 
+    private parseMatchOrDispatchGuard(): [string, Expression] {
+        if(this.testFollows(SYM_lparen, TokenStrings.IdentifierName, SYM_eq)) {
+            this.consumeToken();
+            const binfo = this.parseBinderInfo();
+            this.ensureAndConsumeTokenAlways(SYM_eq, "binder in ITest guard");
+            const bexp = this.parseRValueInTopTestExpression();
+            this.ensureAndConsumeTokenAlways(SYM_rparen, "binder in ITest guard");
+
+            return [binfo as string, bexp];
+        }
+        else {
+            this.ensureAndConsumeTokenAlways(SYM_lparen, "binder in ITest guard");
+            const bexp = this.parseRValueInTopTestExpression();
+            this.ensureAndConsumeTokenAlways(SYM_rparen, "binder in ITest guard");
+
+            let stdbindname = "$_";
+            if(bexp instanceof AccessVariableExpression) {
+                stdbindname = "$" + bexp.srcname;
+            }
+
+            return [stdbindname, bexp];
+        }
+    }
+
     private parseMatchStatement(): Statement {
         const sinfo = this.peekToken().getSourceInfo();
         
         this.ensureAndConsumeTokenAlways(KW_match, "match statement dispatch value");
-        
-        this.ensureAndConsumeTokenAlways(SYM_lparen, "match statement dispatch value");
-        const sguard = xxxx;
-        this.ensureAndConsumeTokenAlways(SYM_rparen, "match statement dispatch value");
+        const sguard = this.parseMatchOrDispatchGuard();
 
         let entries: { mtype: TypeSignature | undefined, value: BlockStatement }[] = [];
         this.ensureAndConsumeTokenAlways(SYM_lbrace, "match statement options");
@@ -5343,16 +5364,14 @@ class Parser {
         }
         this.ensureAndConsumeTokenAlways(SYM_rbrace, "switch statment options");
 
-        return new MatchStatement(sinfo, sguard, entries);
+        return new MatchStatement(sinfo, sguard[1], sguard[0], entries);
     }
 
     private parseDispatchStatement(): Statement {
         const sinfo = this.peekToken().getSourceInfo();
 
         this.ensureAndConsumeTokenAlways(KW_dispatch, "dispatch statement target");
-        this.ensureToken(SYM_lparen, "dispatch statement cond"); //always need parens here
-
-        const dguard = this.parseITestGuard();
+        const dguard = this.parseMatchOrDispatchGuard();
 
         this.ensureAndConsumeTokenAlways(SYM_lbrace, "dispatch statement options");
 
@@ -5389,7 +5408,7 @@ class Parser {
             }
             this.ensureAndConsumeTokenAlways(SYM_rbrace, "dispatch statement options");
 
-            return new DispatchTaskStatement(sinfo, dguard, entries);
+            return new DispatchTaskStatement(sinfo, dguard[1], dguard[0], entries);
         }
         else {
             let entries: { kidx: Expression | undefined, value: BlockStatement }[] = [];
@@ -5420,7 +5439,7 @@ class Parser {
             }
             this.ensureAndConsumeTokenAlways(SYM_rbrace, "dispatch statement options");
 
-            return new DispatchPatternStatement(sinfo, dguard, entries);
+            return new DispatchPatternStatement(sinfo, dguard[1], dguard[0], entries);
         }
     }
 

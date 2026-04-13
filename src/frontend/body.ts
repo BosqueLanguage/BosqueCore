@@ -2512,14 +2512,15 @@ class MatchStatement extends Statement {
     mustExhaustive: boolean = false;
     implicitFinalType: TypeSignature | undefined = undefined;
 
-    constructor(sinfo: SourceInfo, sval: ITestGuard, flow: {mtype: TypeSignature | undefined, value: BlockStatement}[]) {
+    constructor(sinfo: SourceInfo, sval: Expression, bindername: string, flow: {mtype: TypeSignature | undefined, value: BlockStatement}[]) {
         super(StatementTag.MatchStatement, sinfo);
         this.sval = sval;
+        this.bindervar = bindername;
         this.matchflow = flow;
     }
 
     emit(fmt: CodeFormatter): string {
-        const mheader = `match${this.sval.emit(true, fmt)}`;
+        const mheader = `match(${this.sval.emit(true, fmt)})`;
         fmt.indentPush();
         const ttmf = this.matchflow.map((mf) => `${mf.mtype ? mf.mtype.emit() : "_"} => ${mf.value.emit(fmt)}`);
         fmt.indentPop();
@@ -2530,20 +2531,22 @@ class MatchStatement extends Statement {
 }
 
 class DispatchPatternStatement extends Statement {
-    readonly sval: ITestGuard;
+    readonly sval: Expression;
+    readonly bindername: string;
     readonly dispatchflow: {kidx: Expression | undefined, value: BlockStatement}[];
     //always must exhaustive
 
     implicitFinalType: TypeSignature | undefined = undefined;
 
-    constructor(sinfo: SourceInfo, sval: ITestGuard, dispatchflow: {kidx: Expression | undefined, value: BlockStatement}[]) {
+    constructor(sinfo: SourceInfo, sval: Expression, bindername: string, dispatchflow: {kidx: Expression | undefined, value: BlockStatement}[]) {
         super(StatementTag.DispatchPatternStatement, sinfo);
         this.sval = sval;
+        this.bindername = bindername;
         this.dispatchflow = dispatchflow;
     }
 
     emit(fmt: CodeFormatter): string {
-        const dheader = `dispatch${this.sval.emit(true, fmt)}`;
+        const dheader = `dispatch(${this.sval.emit(true, fmt)})`;
         fmt.indentPush();
         const ttdf = this.dispatchflow.map((df) => `${df.kidx ? df.kidx.emit(true, fmt) : "_"} => ${df.value.emit(fmt)}`);
         fmt.indentPop();
@@ -2554,20 +2557,22 @@ class DispatchPatternStatement extends Statement {
 }
 
 class DispatchTaskStatement extends Statement {
-    readonly sval: ITestGuard;
+    readonly sval: Expression;
+    readonly bindername: string;
     readonly dispatchflow: {kidx: string | undefined, value: BlockStatement}[];
     //always must exhaustive
 
     implicitFinalType: TypeSignature | undefined = undefined;
 
-    constructor(sinfo: SourceInfo, sval: ITestGuard, dispatchflow: {kidx: string | undefined, value: BlockStatement}[]) {
+    constructor(sinfo: SourceInfo, sval: Expression, bindername: string, dispatchflow: {kidx: string | undefined, value: BlockStatement}[]) {
         super(StatementTag.DispatchTaskStatement, sinfo);
         this.sval = sval;
+        this.bindername = bindername;
         this.dispatchflow = dispatchflow;
     }
 
     emit(fmt: CodeFormatter): string {
-        const dheader = `dispatch${this.sval.emit(true, fmt)}`;
+        const dheader = `dispatch(${this.sval.emit(true, fmt)})`;
         fmt.indentPush();
         const ttdf = this.dispatchflow.map((df) => `${df.kidx ? df.kidx : "_"} => ${df.value.emit(fmt)}`);
         fmt.indentPop();
