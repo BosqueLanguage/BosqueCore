@@ -168,6 +168,18 @@ namespace ᐸRuntimeᐳ
                 assert(false); // Not Implemented: full getLeaf for PosRBTree
             }
         }
+
+        static PosRBTree<T, K, TreeID> insert(int64_t index, T& value, const PosRBTree<T, K, TreeID>& ptree) 
+        {
+            assert(false + "not implemented!");
+        }
+
+        //
+        // i believe in our rebalance we can set things up to where leaves with 
+        // unfilled slots in their data get populated to ensure things dont
+        // become sparse (if we dont its possible for each leaf to hold only 8 bytes
+        // and that would sux)
+        //
     };
 
     template<typename T, int64_t K, uint32_t TreeID> 

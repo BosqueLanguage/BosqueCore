@@ -234,7 +234,6 @@ namespace ᐸRuntimeᐳ
         inline static consteval uint32_t getPosInlineIDFrom(uint32_t treeid) { return treeid - 2; }
         inline static consteval uint32_t getPosTreeIDFrom(uint32_t treeid) { return treeid - 3; }
 
-        // contains either an inline list (just a buffer) or rb tree
         BoxedUnion<ListTUnion<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>> ulist;
 
     public:
@@ -329,7 +328,7 @@ namespace ᐸRuntimeᐳ
             return this->get(0);
         }
 
-        XList insert(int64_t index, T value) const
+        XList insert(int64_t index, const T& value) const
         {
             if(this->ulist.typeinfo == nullptr) {
                 assert(index == 0);
@@ -337,18 +336,17 @@ namespace ᐸRuntimeᐳ
             }
             else {
                 if(this->ulist.typeinfo == s_inlinetypeinfo) {
-                    // not totally sure how we want to handle this constructor
                     if(this->ulist.data.inlinelist.size() < ListTInlineContent<T>::LIST_T_BUFF_SIZE) {
+                        // we still need to sort how we are going to handle the creation of a leaf and insertion
+                        // of our element (i believe we should place it in the buffer before leaf creation)
                         return XList(ListTInlineContent<T>::insert(index, value, this->ulist.data.inlinelist));
                     }
                     else {
-                        // need to construct a tree
-                        assert(false);
+                        return XList(ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::mkwleaf(this.ulist.data.inlinelist.data));
                     }
                 }
                 else {
-                    // normal persistent rb tree insertion (well sorta normal, 
-                    // hopefully the leaves dont make us mad)
+                    //return XList(PosRBTree<T, this->size() + 1, getPosTreeIDFrom(TYPE_ID_LIST_T)>::insert(index, value, this->ulist.data.postree));
                     assert(false);
                 }
             }
