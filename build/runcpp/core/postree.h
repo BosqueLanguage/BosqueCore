@@ -45,6 +45,22 @@ namespace ᐸRuntimeᐳ
 
             this->count = args.size();
         }
+
+        // TODO: we need to investigate whether we should really have insert be void
+        //       and modify the contents of data
+        void insert(int64_t index, const T& value)
+        {
+            assert(index < K);
+            assert(this->count < K);
+
+            if(index > 0) {
+                std::copy(this->data.begin(), this->data.begin() + index, this->data.begin());
+            }
+            std::copy(this->data.begin() + index, this->data.end() - 1, this->data.begin() + index + 1);
+
+            this->data[index] = value;
+            this->count++;
+        }
     };
 
     template<typename T, int64_t K>
@@ -169,9 +185,15 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        static PosRBTree<T, K, TreeID> insert(int64_t index, T& value, const PosRBTree<T, K, TreeID>& ptree) 
+        PosRBTree<T, K, TreeID> insert(int64_t index, const T& value) 
         {
+            if(this->repr.typeinfo == s_leaftypeinfo && this->repr.data.leaf->count < K) {
+                this->repr.data.leaf->insert(index, value);
+                return PosRBTree::mkwleaf(this->repr.data.leaf);
+            }
+
             assert(false + "not implemented!");
+            return PosRBTree::mkwleaf(nullptr);
         }
 
         //

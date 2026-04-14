@@ -87,6 +87,24 @@ namespace ᐸRuntimeᐳ
         {
             return ListTTreeContent{PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::mkwleaf(PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::s_leafallocator->allocate(elems))};
         }
+
+        // TODO: we should explore possibilities to use a leaf constructor from array instead of
+        // doing it manually here
+        static ListTTreeContent fromInlineList(const ListTInlineContent<T>& prev)
+        {
+            auto leaf = PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::s_leafallocator->allocate();
+            
+            std::memset((void*)leaf->data.data(), 0, sizeof(T) * LIST_T_MAX_LEAF_SIZE);
+            std::copy(prev.data.begin(), prev.data.end(), leaf->data.begin());
+            leaf->count = prev.size();
+
+            return ListTTreeContent{ PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::mkwleaf(leaf) };
+        }
+
+        ListTTreeContent insert(int64_t index, const T& value)
+        {
+            return ListTTreeContent{ this->postree.insert(index, value) };
+        }
     };
 
     template<typename T, uint32_t TYPE_ID_POS_TREE_T>
@@ -337,17 +355,15 @@ namespace ᐸRuntimeᐳ
             else {
                 if(this->ulist.typeinfo == s_inlinetypeinfo) {
                     if(this->ulist.data.inlinelist.size() < ListTInlineContent<T>::LIST_T_BUFF_SIZE) {
-                        // we still need to sort how we are going to handle the creation of a leaf and insertion
-                        // of our element (i believe we should place it in the buffer before leaf creation)
                         return XList(ListTInlineContent<T>::insert(index, value, this->ulist.data.inlinelist));
                     }
                     else {
-                        return XList(ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::mkwleaf(this.ulist.data.inlinelist.data));
+                        return ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::fromInlineList(this->ulist.data.inlinelist).insert(index, value);
                     }
                 }
                 else {
                     //return XList(PosRBTree<T, this->size() + 1, getPosTreeIDFrom(TYPE_ID_LIST_T)>::insert(index, value, this->ulist.data.postree));
-                    assert(false);
+                        assert(false);
                 }
             }
         }
