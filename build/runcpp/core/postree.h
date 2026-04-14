@@ -149,6 +149,57 @@ namespace ᐸRuntimeᐳ
             return PosRBTree<T, K, TreeID>(BoxedUnion<PosRBTreeUnion<T, K>>(s_leaftypeinfo, PosRBTreeUnion<T, K>(leaf)));
         }
 
+        static int64_t checkRBPathLengthInvariant(const PosRBTreeRepr<T, K>& t)
+        {
+            if(t.typeinfo == s_leaftypeinfo) {
+                return 0;
+            }
+            
+            const int lc = checkRBPathLengthInvariant(t.data.node->right);
+            if(lc == -1) {
+                return -1;
+            }
+
+            const int rc = checkRBPathLengthInvariant(t.data.node->right);
+            if(rc == -1) {
+                return -1;
+            }
+
+            if(lc != rc) { // black height mismatch
+                return -1;
+            }
+
+            return t.data.node->color == RColor::Black 
+                ? lc + 1
+                : lc;
+        }
+
+        static bool checkRBChildColorInvariant(const PosRBTreeRepr<T, K>& t)
+        {
+            if(t.typeinfo != s_nodetypeinfo) {
+                return true;
+            }
+
+            if(t.data.node->color == RColor::Red) {
+                const bool islred = t.typeinfo == s_nodetypeinfo 
+                    ? t.data.node->left.data.node->color == RColor::Red
+                    : false;
+                const bool isrred = t.typeinfo == s_nodetypeinfo 
+                    ? t.data.node->right.data.node->color == RColor::Red
+                    : false;
+
+                return !(islred || isrred);
+            }
+
+            return checkRBChildColorInvariant(t.data.node->left)
+                && checkRBChildColorInvariant(t.data.node->left);
+        }
+
+        static bool checkRBInvariants(const PosRBTreeRepr<T, K>& t)
+        {
+            return checkRBChildColorInvariant(t) && checkRBPathLengthInvariant(t) >= 0;
+        }
+
         constexpr int64_t count() const
         {
             if(this->repr.typeinfo == nullptr) {
@@ -185,15 +236,21 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        PosRBTree<T, K, TreeID> insert(int64_t index, const T& value) 
+        static PosRBTree<T, K, TreeID> insert(int64_t index, const T& value, const PosRBTreeRepr<T, K>& t) 
         {
-            if(this->repr.typeinfo == s_leaftypeinfo && this->repr.data.leaf->count < K) {
-                this->repr.data.leaf->insert(index, value);
-                return PosRBTree::mkwleaf(this->repr.data.leaf);
+            // i think we will need this more generically 
+            PosRBTree<T, K, TreeID> res;
+            if(t.typeinfo == s_leaftypeinfo && t.data.leaf->count < K) {
+                t.data.leaf->insert(index, value);
+                res = PosRBTree::mkwleaf(t.data.leaf);
+            }
+            else {
+                res = PosRBTree::mkwleaf(nullptr);
             }
 
-            assert(false + "not implemented!");
-            return PosRBTree::mkwleaf(nullptr);
+            assert(checkRBInvariants(res.repr));
+
+            return res;
         }
 
         //

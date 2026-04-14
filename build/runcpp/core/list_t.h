@@ -7,6 +7,8 @@
 
 #include "postree.h"
 
+#include <iostream>
+
 namespace ᐸRuntimeᐳ
 {
     constexpr static size_t MAX_LIST_INLINE_BYTES = 48; //Bytes -- so 64 total when we add 8 bytes for the size and 8 bytes for the tag or 1 element of the value type if larger!!!
@@ -101,9 +103,9 @@ namespace ᐸRuntimeᐳ
             return ListTTreeContent{ PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::mkwleaf(leaf) };
         }
 
-        ListTTreeContent insert(int64_t index, const T& value)
+        static ListTTreeContent insert(int64_t index, const T& value, const ListTTreeContent& t)
         {
-            return ListTTreeContent{ this->postree.insert(index, value) };
+            return ListTTreeContent{ PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::insert(index, value, t.postree.repr) };
         }
     };
 
@@ -252,6 +254,7 @@ namespace ᐸRuntimeᐳ
         inline static consteval uint32_t getPosInlineIDFrom(uint32_t treeid) { return treeid - 2; }
         inline static consteval uint32_t getPosTreeIDFrom(uint32_t treeid) { return treeid - 3; }
 
+        // contains either an inline list (just a buffer) or rb tree
         BoxedUnion<ListTUnion<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>> ulist;
 
     public:
@@ -358,12 +361,12 @@ namespace ᐸRuntimeᐳ
                         return XList(ListTInlineContent<T>::insert(index, value, this->ulist.data.inlinelist));
                     }
                     else {
-                        return ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::fromInlineList(this->ulist.data.inlinelist).insert(index, value);
+                        auto leaf = ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::fromInlineList(this->ulist.data.inlinelist);
+                        return ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::insert(index, value, leaf);
                     }
                 }
                 else {
-                    //return XList(PosRBTree<T, this->size() + 1, getPosTreeIDFrom(TYPE_ID_LIST_T)>::insert(index, value, this->ulist.data.postree));
-                        assert(false);
+                    return ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::insert(index, value, this->ulist.data.treelist);
                 }
             }
         }
