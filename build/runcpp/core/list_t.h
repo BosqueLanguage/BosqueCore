@@ -105,7 +105,7 @@ namespace ᐸRuntimeᐳ
 
         static ListTTreeContent insert(int64_t index, const T& value, const ListTTreeContent& t)
         {
-            return ListTTreeContent{ PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::insert(index, value, t.postree.repr) };
+            return ListTTreeContent{ PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::insert(index, value, t.postree) };
         }
     };
 

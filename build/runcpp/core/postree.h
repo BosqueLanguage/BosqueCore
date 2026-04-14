@@ -149,6 +149,11 @@ namespace ᐸRuntimeᐳ
             return PosRBTree<T, K, TreeID>(BoxedUnion<PosRBTreeUnion<T, K>>(s_leaftypeinfo, PosRBTreeUnion<T, K>(leaf)));
         }
 
+       static PosRBTree<T, K, TreeID> mkwnode(PosRBTreeNode<T, K>* node) 
+        {
+            return PosRBTree<T, K, TreeID>(BoxedUnion<PosRBTreeUnion<T, K>>(s_nodetypeinfo, PosRBTreeUnion<T, K>(node)));
+        }
+
         static int64_t checkRBPathLengthInvariant(const PosRBTreeRepr<T, K>& t)
         {
             if(t.typeinfo == s_leaftypeinfo) {
@@ -236,29 +241,36 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        static PosRBTree<T, K, TreeID> insert(int64_t index, const T& value, const PosRBTreeRepr<T, K>& t) 
+        static PosRBTree<T, K, TreeID> insert_helper(int64_t index, const T& value, const PosRBTree<T, K, TreeID>& t)
         {
-            // i think we will need this more generically 
-            PosRBTree<T, K, TreeID> res;
-            if(t.typeinfo == s_leaftypeinfo && t.data.leaf->count < K) {
-                t.data.leaf->insert(index, value);
-                res = PosRBTree::mkwleaf(t.data.leaf);
+            if(t.repr.typeinfo == s_leaftypeinfo) {
+                // dont create a new node, our target leaf has enough space
+                if(t.repr.data.leaf->count < K) {
+                    t.repr.data.leaf->insert(index, value);
+                    return PosRBTree::mkwleaf(t.repr.data.leaf);
+                }
+                else {
+                    // create a new red node with l == tree.left and r == value
+                    PosRBTreeLeaf<T, K>* nr = s_leafallocator->allocate(1, value);
+
+                    // we need these leaves to be PosRBTreeReprs... hm
+                    PosRBTreeNode<T, K>* nn = s_nodeallocator->allocate(t.repr.data.leaf->count, RColor::Red, t.repr.data.leaf, nr);
+                    return PosRBTree<T, K, TreeID>::mkwnode(nn);
+                }
             }
-            else {
-                res = PosRBTree::mkwleaf(nullptr);
-            }
+            
+            assert(false);
+            return PosRBTree<T, K, TreeID>::mkwleaf(nullptr);
+        }
+
+        static PosRBTree<T, K, TreeID> insert(int64_t index, const T& value, const PosRBTree<T, K, TreeID>& t) 
+        {
+            PosRBTree<T, K, TreeID> res(insert_helper(index, value, t));
 
             assert(checkRBInvariants(res.repr));
 
             return res;
         }
-
-        //
-        // i believe in our rebalance we can set things up to where leaves with 
-        // unfilled slots in their data get populated to ensure things dont
-        // become sparse (if we dont its possible for each leaf to hold only 8 bytes
-        // and that would sux)
-        //
     };
 
     template<typename T, int64_t K, uint32_t TreeID> 
