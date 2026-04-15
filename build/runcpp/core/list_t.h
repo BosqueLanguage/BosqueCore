@@ -66,7 +66,7 @@ namespace ᐸRuntimeᐳ
             if(index > 0) {
                 std::copy(pb.data.begin(), pb.data.begin() + index, nb.data.begin());
             }
-            std::copy(pb.data.begin() + index, pb.data.end() - 1, nb.data.begin() + index + 1);
+            std::copy(pb.data.begin() + index, pb.data.end(), nb.data.begin() + index + 1);
             nb.data[index] = value;
             nb.count = pb.size() + 1;
 
@@ -329,27 +329,26 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        // not sure if we should make get and front return references to prevent 
-        // excessive copying of intermediate steps... i think so?
-        T get(int64_t index) const
+        static const T& gethelper(int64_t index, const XList& list) 
         {
-            // TODO: the purpose of the count field is to represent the number of elements in left sub tree
-            //  so calling the count method wont work here, we would have to traverse the right subtree to find
-            // the size which sux...
-            //assert((size_t)index < this->size());
-
-            if(this->ulist.typeinfo == s_inlinetypeinfo) {
-                return this->ulist.data.inlinelist.at(index);
+            if(list.ulist.typeinfo == s_inlinetypeinfo) {
+                return list.ulist.data.inlinelist.data[index];
             }
             else {
-                return this->ulist.data.treelist.postree.get(index);
+                return list.ulist.data.treelist.postree.get(index);
             }
         }
 
-        T front() const 
+        T get(int64_t index) const
+        {
+            assert((size_t)index < this->size());
+            return gethelper(index, *this);
+        }
+
+        T front() const
         {
             assert(this->size() > 0);
-            return this->get(0);
+            return gethelper(0, *this);
         }
 
         XList insert(int64_t index, const T& value) const
