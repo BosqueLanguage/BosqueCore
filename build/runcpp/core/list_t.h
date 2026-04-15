@@ -341,7 +341,7 @@ namespace ᐸRuntimeᐳ
 
         T get(int64_t index) const
         {
-            assert((size_t)index < this->size());
+            assert((size_t)index <= this->size());
             return gethelper(index, *this);
         }
 

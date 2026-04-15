@@ -46,12 +46,14 @@ namespace ᐸRuntimeᐳ
             this->count = args.size();
         }
 
-        // TODO: we need to investigate whether we should really have insert be void
-        //       and modify the contents of data
         void insert(int64_t index, const T& value)
         {
             assert(index < K);
             assert(this->count < K);
+            
+            if(index < this->count) {
+                std::copy(this->data.begin() + index, this->data.end() - 1, this->data.begin() + index + 1);               
+            }
 
             this->data[index] = value;
             this->count++;
@@ -65,8 +67,7 @@ namespace ᐸRuntimeᐳ
             if constexpr (K > 1) {
                 std::copy(this->data.begin() + index, this->data.end() - 1, this->data.begin() + index + 1);
             }
-            this->count--;
-            this->insert(index, value);
+            this->data[index] = value;           
 
             return excess;
         }
@@ -222,6 +223,12 @@ namespace ᐸRuntimeᐳ
             return gethelper(index, this->repr);
         }
 
+        // i believe what we need to do is store(?) the next leaf (prob an argument) then
+        // when we get to the case of needing a shiftinsert we check if the next leaf
+        // has some open space and place it there. if it doesnt we create a new leaf
+        
+        // NOTE(to self): check my `share` repository for a copy of the testing main
+        // and == overload
         static PosRBTree<T, K, TreeID> inserthelper(int64_t index, const T& value, const PosRBTreeRepr<T, K>& t)
         {
             assert(t.typeinfo != nullptr);
@@ -235,6 +242,8 @@ namespace ᐸRuntimeᐳ
                 else {
                     PosRBTreeLeaf<T, K>* nrleaf;
                     if(index < cur_count) {
+                        // TODO: do that weird "next leaf is not empty, insert here, 
+                        // otherwise create a new leaf containing excess" check here
                         const T& excess = t.data.leaf->shiftinsert(index, value);
                         nrleaf = s_leafallocator->allocate(excess);
                     }
@@ -253,7 +262,7 @@ namespace ᐸRuntimeᐳ
                 PosRBTreeNode<T, K>* nn;
                 if(index < lcount) {
                     auto nl = inserthelper(index, value, t.data.node->left);
-                    const int64_t ncount = nl.repr.data.node->count + t.data.node->left.data.node->count;
+                    const int64_t ncount = nl.repr.data.node->count + t.data.node->right.data.node->count;
                     nn = s_nodeallocator->allocate(nl.repr.data.node->count, RColor::Red, nl.repr, t.data.node->right);
                 }
                 else {
