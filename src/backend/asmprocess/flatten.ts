@@ -3013,7 +3013,7 @@ class ASMToIRConverter {
     }
 
     private flattenMatchStatement(stmt: MatchStatement): boolean {
-        assert(false, "Not Implemented -- flattenMatchStatement");
+        xxxx;
     }
 
     private flattenDispatchPatternStatement(stmt: DispatchPatternStatement): boolean {

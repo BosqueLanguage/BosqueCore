@@ -289,7 +289,8 @@ enum IRStatementTag {
     IRSimpleIfElseStatement = "IRSimpleIfElseStatement",
     IRSimpleIfElifElseStatement = "IRSimpleIfElifElseStatement",
 
-    //TODO: lots more statement types here
+    IRMatchExactStatement = "IRMatchExactStatement",
+    IRMatchGeneralStatement = "IRMatchGeneralStatement",
 
     IRErrorAdditionBoundsCheckStatement = "IRErrorAdditionBoundsCheckStatement",
     IRErrorSubtractionBoundsCheckStatement = "IRErrorSubtractionBoundsCheckStatement",
@@ -2029,6 +2030,42 @@ class IRSimpleIfElifElseStatement extends IRStatement {
     }
 }
 
+class IRMatchExactStatement extends IRStatement {
+    readonly sval: IRImmediateExpression;
+    readonly bindervar: string;
+    readonly matchflow: {mtype: IRTypeSignature | undefined, value: IRBlockStatement}[];
+
+    mustExhaustive: boolean;
+    implicitFinalType: IRTypeSignature | undefined;
+
+    constructor(sval: IRImmediateExpression, bindername: string, flow: {mtype: IRTypeSignature | undefined, value: IRBlockStatement}[], mustExhaustive: boolean, implicitFinalType: IRTypeSignature | undefined) {
+        super(IRStatementTag.IRMatchExactStatement);
+        this.sval = sval;
+        this.bindervar = bindername;
+        this.matchflow = flow;
+        this.mustExhaustive = mustExhaustive;
+        this.implicitFinalType = implicitFinalType;
+    }
+}
+
+class IRMatchGeneralStatement extends IRStatement {
+    readonly sval: IRImmediateExpression;
+    readonly bindervar: string;
+    readonly matchflow: {mtype: IRTypeSignature | undefined, value: IRBlockStatement}[];
+
+    mustExhaustive: boolean;
+    implicitFinalType: IRTypeSignature | undefined;
+
+    constructor(sval: IRImmediateExpression, bindername: string, flow: {mtype: IRTypeSignature | undefined, value: IRBlockStatement}[], mustExhaustive: boolean, implicitFinalType: IRTypeSignature) {
+        super(IRStatementTag.IRMatchGeneralStatement);
+        this.sval = sval;
+        this.bindervar = bindername;
+        this.matchflow = flow;
+        this.mustExhaustive = mustExhaustive;
+        this.implicitFinalType = implicitFinalType;
+    }
+}
+
 class IRErrorAdditionBoundsCheckStatement extends IRErrorBinArithCheckStatement {
     constructor(file: string, sinfo: IRSourceInfo, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float") {
         super(IRStatementTag.IRErrorAdditionBoundsCheckStatement, file, sinfo, undefined, checkID, left, right, optypechk);
@@ -2325,6 +2362,7 @@ export {
     IRLogicConditionalStatement,
 
     IRSimpleIfStatement, IRSimpleIfElseStatement, IRSimpleIfElifElseStatement,
+    IRMatchExactStatement, IRMatchGeneralStatement,
 
     IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement,
     IRErrorTypeAssertionCheckStatement,
