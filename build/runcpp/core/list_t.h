@@ -333,7 +333,10 @@ namespace ᐸRuntimeᐳ
         // excessive copying of intermediate steps... i think so?
         T get(int64_t index) const
         {
-            assert((size_t)index < this->size());
+            // TODO: the purpose of the count field is to represent the number of elements in left sub tree
+            //  so calling the count method wont work here, we would have to traverse the right subtree to find
+            // the size which sux...
+            //assert((size_t)index < this->size());
 
             if(this->ulist.typeinfo == s_inlinetypeinfo) {
                 return this->ulist.data.inlinelist.at(index);

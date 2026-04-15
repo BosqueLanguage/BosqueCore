@@ -53,11 +53,6 @@ namespace ᐸRuntimeᐳ
             assert(index < K);
             assert(this->count < K);
 
-            if(index > 0) {
-                std::copy(this->data.begin(), this->data.begin() + index, this->data.begin());
-            }
-            std::copy(this->data.begin() + index, this->data.end() - 1, this->data.begin() + index + 1);
-
             this->data[index] = value;
             this->count++;
         }
@@ -144,14 +139,24 @@ namespace ᐸRuntimeᐳ
         static const TypeInfo* s_nodetypeinfo;
         thread_local static GCAllocator<PosRBTreeNode<T, K>>* s_nodeallocator;
 
+        static PosRBTreeRepr<T, K> mkwleaf_repr(PosRBTreeLeaf<T, K>* leaf) 
+        {
+            return PosRBTreeRepr<T, K>(s_leaftypeinfo, PosRBTreeUnion<T, K>(leaf));
+        }
+
+        static PosRBTreeRepr<T, K> mkwnode_repr(PosRBTreeNode<T, K>* node) 
+        {
+            return PosRBTreeRepr<T, K>(s_nodetypeinfo, PosRBTreeUnion<T, K>(node));
+        }
+
         static PosRBTree<T, K, TreeID> mkwleaf(PosRBTreeLeaf<T, K>* leaf) 
         {
-            return PosRBTree<T, K, TreeID>(BoxedUnion<PosRBTreeUnion<T, K>>(s_leaftypeinfo, PosRBTreeUnion<T, K>(leaf)));
+            return PosRBTree<T, K, TreeID>(mkwleaf_repr(leaf));
         }
 
        static PosRBTree<T, K, TreeID> mkwnode(PosRBTreeNode<T, K>* node) 
         {
-            return PosRBTree<T, K, TreeID>(BoxedUnion<PosRBTreeUnion<T, K>>(s_nodetypeinfo, PosRBTreeUnion<T, K>(node)));
+            return PosRBTree<T, K, TreeID>(mkwnode_repr(node));
         }
 
         static int64_t checkRBPathLengthInvariant(const PosRBTreeRepr<T, K>& t)
@@ -186,10 +191,10 @@ namespace ᐸRuntimeᐳ
             }
 
             if(t.data.node->color == RColor::Red) {
-                const bool islred = t.typeinfo == s_nodetypeinfo 
+                const bool islred = t.data.node->left.typeinfo == s_nodetypeinfo 
                     ? t.data.node->left.data.node->color == RColor::Red
                     : false;
-                const bool isrred = t.typeinfo == s_nodetypeinfo 
+                const bool isrred = t.data.node->right.typeinfo == s_nodetypeinfo 
                     ? t.data.node->right.data.node->color == RColor::Red
                     : false;
 
@@ -197,7 +202,7 @@ namespace ᐸRuntimeᐳ
             }
 
             return checkRBChildColorInvariant(t.data.node->left)
-                && checkRBChildColorInvariant(t.data.node->left);
+                && checkRBChildColorInvariant(t.data.node->right);
         }
 
         static bool checkRBInvariants(const PosRBTreeRepr<T, K>& t)
@@ -231,41 +236,83 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        T& get(int64_t index) const
+        static T& get_helper(int64_t index, const PosRBTreeRepr<T, K>& cur) 
         {
-            if(this->repr.typeinfo == s_leaftypeinfo) {
-                return this->repr.data.leaf->data[index];
+            assert(cur.typeinfo != nullptr);
+
+            if(cur.typeinfo == s_leaftypeinfo) {
+                return cur.data.leaf->data[index];
             }
             else {
-                assert(false); // Not Implemented: full getLeaf for PosRBTree
+                const int64_t count = cur.data.node->count;
+                if(index < count) {
+                    return get_helper(index, cur.data.node->left);
+                }
+                else {
+                    return get_helper(index - count, cur.data.node->right);
+                }
             }
         }
 
-        static PosRBTree<T, K, TreeID> insert_helper(int64_t index, const T& value, const PosRBTree<T, K, TreeID>& t)
+        T& get(int64_t index) const
         {
-            if(t.repr.typeinfo == s_leaftypeinfo) {
-                // dont create a new node, our target leaf has enough space
-                if(t.repr.data.leaf->count < K) {
-                    t.repr.data.leaf->insert(index, value);
-                    return PosRBTree::mkwleaf(t.repr.data.leaf);
+            return get_helper(index, this->repr);
+        }
+
+        static PosRBTree<T, K, TreeID> insert_helper(int64_t index, const T& value, const PosRBTreeRepr<T, K>& t)
+        {
+            assert(t.typeinfo != nullptr);
+
+            if(t.typeinfo == s_leaftypeinfo) {
+                if(t.data.leaf->count < K) {
+                    // dont create a new node, our target leaf has enough space
+                    t.data.leaf->insert(index, value);
+                    return mkwleaf(t.data.leaf);
                 }
                 else {
-                    // create a new red node with l == tree.left and r == value
-                    PosRBTreeLeaf<T, K>* nr = s_leafallocator->allocate(1, value);
+                    PosRBTreeLeaf<T, K>* nleaf;
+                    if(index < t.data.leaf->count) {
+                        // create new node containing only last element of full leaf
+                        const T& last = t.data.leaf->data.back();
+                        nleaf = s_leafallocator->allocate(last);
 
-                    // we need these leaves to be PosRBTreeReprs... hm
-                    PosRBTreeNode<T, K>* nn = s_nodeallocator->allocate(t.repr.data.leaf->count, RColor::Red, t.repr.data.leaf, nr);
-                    return PosRBTree<T, K, TreeID>::mkwnode(nn);
+                        // shift and insert
+                        std::copy(t.data.leaf->data.begin() + index,t.data.leaf->data.end() - 1, t.data.leaf->data.begin() + index + 1);
+                        t.data.leaf->count--;
+                        t.data.leaf->insert(index, value);
+                    }
+                    else {
+                        nleaf = s_leafallocator->allocate(value);
+                    }
+
+                    PosRBTreeNode<T, K>* nn = s_nodeallocator->allocate(t.data.leaf->count, RColor::Red, t, mkwleaf_repr(nleaf));
+                    return mkwnode(nn);
                 }
             }
-            
-            assert(false);
-            return PosRBTree<T, K, TreeID>::mkwleaf(nullptr);
+            else {
+                // !!!!!! TODO: need balancing !!!!!!!
+                const int64_t count = t.data.node->count;
+                PosRBTreeNode<T, K>* nn;
+
+                // !!!!! TODO: need to improve the count thing and document its purpose !!!!!!
+                // (grabbing the count fields value from a node or leaf here feels weird since we dont
+                // know the type of that subtree and just rely on its positioning for that to work)
+                if(index < count) {
+                    auto nl = insert_helper(index, value, t.data.node->left);
+                    nn = s_nodeallocator->allocate(nl.repr.data.node->count, RColor::Red, nl.repr, t.data.node->right);
+                }
+                else {
+                    auto nr = insert_helper(index - count, value, t.data.node->right);
+                    nn =  s_nodeallocator->allocate(t.data.node->count, RColor::Red, t.data.node->left, nr.repr);
+                }
+
+                return mkwnode(nn);
+            }
         }
 
         static PosRBTree<T, K, TreeID> insert(int64_t index, const T& value, const PosRBTree<T, K, TreeID>& t) 
         {
-            PosRBTree<T, K, TreeID> res(insert_helper(index, value, t));
+            PosRBTree<T, K, TreeID> res(insert_helper(index, value, t.repr));
 
             assert(checkRBInvariants(res.repr));
 
