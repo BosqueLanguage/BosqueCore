@@ -292,11 +292,15 @@ enum IRStatementTag {
     IRMatchExactStatement = "IRMatchExactStatement",
     IRMatchGeneralStatement = "IRMatchGeneralStatement",
 
+    IRBlockStatement = "IRBlockStatement",
+
     IRErrorAdditionBoundsCheckStatement = "IRErrorAdditionBoundsCheckStatement",
     IRErrorSubtractionBoundsCheckStatement = "IRErrorSubtractionBoundsCheckStatement",
     IRErrorMultiplicationBoundsCheckStatement = "IRErrorMultiplicationBoundsCheckStatement",
     IRErrorDivisionByZeroCheckStatement = "IRErrorDivisionByZeroCheckStatement",
     IRErrorTypeAssertionCheckStatement = "IRErrorTypeAssertionCheckStatement",
+
+    IRErrorExhaustiveStatement = "IRErrorExhaustiveStatement",
 
     IRTypeDeclSizeRangeCheckCStringStatement = "IRTypeDeclSizeRangeCheckCStringStatement",
     IRTypeDeclSizeRangeCheckUnicodeStringStatement = "IRTypeDeclSizeRangeCheckUnicodeStringStatement",
@@ -2034,16 +2038,13 @@ class IRMatchExactStatement extends IRStatement {
     readonly sval: IRImmediateExpression;
     readonly bindervar: string;
     readonly matchflow: {mtype: IRTypeSignature | undefined, value: IRBlockStatement}[];
+    implicitFinalType: IRTypeSignature;
 
-    mustExhaustive: boolean;
-    implicitFinalType: IRTypeSignature | undefined;
-
-    constructor(sval: IRImmediateExpression, bindername: string, flow: {mtype: IRTypeSignature | undefined, value: IRBlockStatement}[], mustExhaustive: boolean, implicitFinalType: IRTypeSignature | undefined) {
+    constructor(sval: IRImmediateExpression, bindername: string, flow: {mtype: IRTypeSignature | undefined, value: IRBlockStatement}[], implicitFinalType: IRTypeSignature) {
         super(IRStatementTag.IRMatchExactStatement);
         this.sval = sval;
         this.bindervar = bindername;
         this.matchflow = flow;
-        this.mustExhaustive = mustExhaustive;
         this.implicitFinalType = implicitFinalType;
     }
 }
@@ -2052,16 +2053,13 @@ class IRMatchGeneralStatement extends IRStatement {
     readonly sval: IRImmediateExpression;
     readonly bindervar: string;
     readonly matchflow: {mtype: IRTypeSignature | undefined, value: IRBlockStatement}[];
+    implicitFinalType: IRTypeSignature;
 
-    mustExhaustive: boolean;
-    implicitFinalType: IRTypeSignature | undefined;
-
-    constructor(sval: IRImmediateExpression, bindername: string, flow: {mtype: IRTypeSignature | undefined, value: IRBlockStatement}[], mustExhaustive: boolean, implicitFinalType: IRTypeSignature) {
+    constructor(sval: IRImmediateExpression, bindername: string, flow: {mtype: IRTypeSignature | undefined, value: IRBlockStatement}[], implicitFinalType: IRTypeSignature) {
         super(IRStatementTag.IRMatchGeneralStatement);
         this.sval = sval;
         this.bindervar = bindername;
         this.matchflow = flow;
-        this.mustExhaustive = mustExhaustive;
         this.implicitFinalType = implicitFinalType;
     }
 }
@@ -2096,6 +2094,12 @@ class IRErrorTypeAssertionCheckStatement extends IRErrorCheckStatement {
     constructor(file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number, typeok: IRSimpleExpression) {
         super(IRStatementTag.IRErrorTypeAssertionCheckStatement, file, sinfo, diagnosticTag, checkID);
         this.typeok = typeok;
+    }
+}
+
+class IRErrorExhaustiveStatement extends IRErrorCheckStatement {
+    constructor(file: string, sinfo: IRSourceInfo, checkID: number) {
+        super(IRStatementTag.IRErrorExhaustiveStatement, file, sinfo, undefined, checkID);
     }
 }
 
@@ -2244,10 +2248,11 @@ class IRDebugStatement extends IRAtomicStatement {
     }
 }
 
-class IRBlockStatement {
+class IRBlockStatement extends IRStatement {
     readonly statements: IRStatement[];
 
     constructor(statements: IRStatement[]) {
+        super(IRStatementTag.IRBlockStatement);
         this.statements = statements;
     }
 }
@@ -2365,7 +2370,7 @@ export {
     IRMatchExactStatement, IRMatchGeneralStatement,
 
     IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement,
-    IRErrorTypeAssertionCheckStatement,
+    IRErrorTypeAssertionCheckStatement, IRErrorExhaustiveStatement,
     IRErrorTypedStringCheckStatement, IRTypeDeclSizeRangeCheckCStringStatement, IRTypeDeclSizeRangeCheckUnicodeStringStatement, IRTypeDeclFormatCheckCStringStatement, IRTypeDeclFormatCheckUnicodeStringStatement,
 
     IRTypeDeclInvariantCheckStatement, IREntityInvariantCheckStatement,

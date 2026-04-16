@@ -48,6 +48,7 @@ namespace ᐸRuntimeᐳ
         DivisionByZero,
 
         InvalidCast,
+        ExhaustiveCheck,
 
         UserAbort,
         UserAssertion,
@@ -80,6 +81,11 @@ namespace ᐸRuntimeᐳ
         if(!cond) [[unlikely]] {
             bsq_handle_error(file, line, ErrorKind::InvalidCast, tag, message);
         }
+    }
+
+    inline void bsq_exhaustive(const char* file, uint32_t line, const char* message)
+    {
+        bsq_handle_error(file, line, ErrorKind::ExhaustiveCheck, nullptr, message);
     }
 
     [[noreturn]] inline void bsq_abort(const char* file, uint32_t line, const char* tag, const char* message)

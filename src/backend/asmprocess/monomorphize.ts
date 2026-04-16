@@ -1426,8 +1426,7 @@ class Monomorphizer {
     }
 
     private instantiateMatchStatement(stmt: MatchStatement) {
-        /*
-        this.instantiateExpression(stmt.sval[0]);
+        this.instantiateExpression(stmt.sval);
         
         for(let i = 0; i < stmt.matchflow.length; ++i) {
             this.instantiateBlockStatement(stmt.matchflow[i].value);
@@ -1441,8 +1440,6 @@ class Monomorphizer {
         if(stmt.implicitFinalType !== undefined) {
             this.instantiateTypeSignature(stmt.implicitFinalType, this.currentMapping);
         }
-        */
-        assert(false, "Not Implemented -- instantiateMatchStatement");
     }
 
     private instantiateDispatchPatternStatement(stmt: DispatchPatternStatement) {
