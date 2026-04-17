@@ -1,6 +1,6 @@
 
 import { SourceInfo } from "../../frontend/build_decls.js";
-import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, RecursiveAnnotation, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
+import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, RecursiveAnnotation, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
 import { AbortStatement, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringTextComponent, HoleBodyImplementation, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, InterpolateFormatExpression, ITest, ITestBinderGuard, ITestFail, ITestGuard, ITestGuardSet, ITestNone, ITestOk, ITestSimpleGuard, ITestSome, ITestType, ITestTypeGuard, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PassingArgumentValue, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PostfixSliceOperator, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, StdArgumentValue, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement } from "../../frontend/body.js";
 import { AbstractCollectionTypeDecl, AbstractConceptTypeDecl, AbstractEntityTypeDecl, AdditionalTypeDeclTag, AgentDecl, APIDecl, APIDeniedTypeDecl, APIErrorTypeDecl, APIFlaggedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstructableTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EventListTypeDecl, FailTypeDecl, InvariantDecl, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskDecl, TestAssociation, TypedeclTypeDecl, ValidateDecl } from "../../frontend/assembly.js";
 
@@ -3778,11 +3778,76 @@ class ASMToIRConverter {
     }
 
     private generateDatatypeMemberEntityTypeDecl(tdecl: DatatypeMemberEntityTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRDatatypeMemberEntityTypeDecl {
-        assert(false, "Not Implemented -- generateDatatypeMemberEntityTypeDecl");
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
+
+        const doc = tdecl.attributes.find((a) => a.name === "doc");
+        const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
+
+        let etag: "std" | "status" | "event" = "std";
+        if(tdecl.etag === AdditionalTypeDeclTag.Status) {
+            etag = "status";
+        }
+        if(tdecl.etag === AdditionalTypeDeclTag.Event) {
+            etag = "event";
+        }
+
+        const bfinfo = tdecl.saturatedBFieldInfo.map((bf) => {
+            const bfirt = this.processTypeSignature(bf.containingtype);
+            const fkey = `${bfirt.tkeystr}--${bf.name}`;
+            return { containingtype: bfirt, fkey: fkey, fname: bf.name, ftype: this.processTypeSignature(bf.type) };
+        });
+
+        const allInvariants = tdecl.allInvariants.map((vv) => {
+            return { containingtype: this.processTypeSignature(vv.containingtype), ii: vv.ii };
+        });
+        const allValidates = tdecl.allValidates.map((vv) => {
+            return { containingtype: this.processTypeSignature(vv.containingtype), ii: vv.ii };
+        });
+
+        return new IRDatatypeMemberEntityTypeDecl(tinst.tkey, 
+            tdecl.invariants.map<IRInvariantDecl>((inv) => this.generateInvariantClauseDecl(tinst.tsig as NominalTypeSignature, inv)),
+            tdecl.validates.map<IRValidateDecl>((val) => this.generateValidateClauseDecl(tinst.tsig as NominalTypeSignature, val)),
+            tdecl.fields.map<IRMemberFieldDecl>((f) => this.generateMemberFieldDecl(tinst.tsig as NominalTypeSignature, f)),
+            etag,
+            tdecl.saturatedProvides.map((sp) => this.processTypeSignature(sp)),
+            bfinfo,
+            allInvariants,
+            allValidates,
+            docstring,
+            this.processMetaDataTags(tdecl.attributes),
+            tdecl.file,
+            this.convertSourceInfo(tdecl.sinfo)
+        );
     }
 
     private generateDatatypeTypeDecl(tdecl: DatatypeTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRDatatypeTypeDecl {
-        assert(false, "Not Implemented -- generateDatatypeTypeDecl");
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
+
+        const doc = tdecl.attributes.find((a) => a.name === "doc");
+        const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
+
+        const bfinfo = tdecl.saturatedBFieldInfo.map((bf) => {
+            const fkey = `${(tinst.tsig as NominalTypeSignature).tkeystr}--${bf.name}`;
+            return { containingtype: this.processTypeSignature(bf.containingtype), fkey: fkey, fname: bf.name, ftype: this.processTypeSignature(bf.type) };
+        });
+
+        const assocdecls = tdecl.associatedMemberEntityDecls.map((md) => {
+            const tsig = new NominalTypeSignature(md.sinfo, undefined, md, tdecl.terms.map((ta) => new TemplateTypeSignature(md.sinfo, ta.name)));
+            return this.processTypeSignature(tsig);
+        });
+
+        return new IRDatatypeTypeDecl(tinst.tkey, 
+            tdecl.invariants.map<IRInvariantDecl>((inv) => this.generateInvariantClauseDecl(tinst.tsig as NominalTypeSignature, inv)),
+            tdecl.validates.map<IRValidateDecl>((val) => this.generateValidateClauseDecl(tinst.tsig as NominalTypeSignature, val)),
+            tdecl.fields.map<IRMemberFieldDecl>((f) => this.generateMemberFieldDecl(tinst.tsig as NominalTypeSignature, f)),
+            tdecl.saturatedProvides.map((sp) => this.processTypeSignature(sp)),
+            bfinfo,
+            docstring,
+            this.processMetaDataTags(tdecl.attributes),
+            tdecl.file,
+            this.convertSourceInfo(tdecl.sinfo),
+            assocdecls
+        );
     }
 
     private generateAPIDecl(adecl: APIDecl, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRAPIDecl {
