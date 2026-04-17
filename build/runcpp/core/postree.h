@@ -48,29 +48,56 @@ namespace ᐸRuntimeᐳ
 
         T& back()
         {
-            assert(this->count > 0);
             return this->data.back();
         }
 
-        PosRBTreeLeaf& insert(int64_t index, const T& value)
+        PosRBTreeLeaf subset(int64_t index, int64_t length)
+        {
+            PosRBTreeLeaf nleaf = PosRBTreeLeaf();
+            std::copy(this->data.begin() + index, this->data.begin() + index + length, nleaf.data.begin());
+            nleaf.count = length;
+
+            return nleaf;
+        }
+
+        PosRBTreeLeaf subsetinsert(int64_t subset_index, int64_t insert_index, int64_t length, const T& value)
+        {
+            assert(insert_index < K);
+            assert(subset_index + length < K);
+            assert(this->count <= K);
+
+            PosRBTreeLeaf nleaf = PosRBTreeLeaf();
+            std::copy(this->data.begin() + subset_index, 
+                      this->data.begin() + subset_index + insert_index, 
+                      nleaf.data.begin());
+            std::copy(this->data.begin() + subset_index + insert_index, 
+                      this->data.begin() + subset_index + length, 
+                      nleaf.data.begin() + insert_index + 1);
+
+            nleaf.data[insert_index] = value;
+            nleaf.count = length + 1;
+
+            return nleaf;
+        }
+
+        PosRBTreeLeaf insert(int64_t index, const T& value)
         {
             assert(index < K);
             assert(this->count <= K);
-           
-            bool grew = true;
+          
+            PosRBTreeLeaf nleaf = PosRBTreeLeaf();
+            if(index > 0) {
+                std::copy(this->data.begin(), this->data.begin() + index, nleaf.data.begin());
+            }
+
             if(index < this->count) {
-                if(this->count == K) {
-                    grew = false; 
-                }
-                std::copy(this->data.begin() + index, this->data.end() - 1, this->data.begin() + index + 1);               
+                std::copy(this->data.begin() + index, this->data.end() - 1, nleaf.data.begin() + index + 1);               
             }
 
-            this->data[index] = value;
-            if(grew) {
-                this->count++;
-            }
+            nleaf.data[index] = value;
+            nleaf.count = this->count + 1;
 
-            return *this;
+            return nleaf;
         }
     };
 
@@ -231,7 +258,7 @@ namespace ᐸRuntimeᐳ
             if(cur.typeinfo == s_leaftypeinfo) {
                 const int64_t cur_count = cur.data.leaf->count;
                 if(cur_count < K) {
-                    PosRBTreeLeaf<T, K>& nleaf = cur.data.leaf->insert(index, value);
+                    PosRBTreeLeaf<T, K> nleaf = cur.data.leaf->insert(index, value);
                     return mkwleafRepr(s_leafallocator->allocate(nleaf));
                 }
                 else {
@@ -245,10 +272,19 @@ namespace ᐸRuntimeᐳ
                         nr = mkwleafRepr(s_leafallocator->allocate(value));
                     }
                     else {
-                        const T excess = cur.data.leaf->back();
-                        PosRBTreeLeaf<T, K>& nleaf = cur.data.leaf->insert(index, value);
-                        nl = mkwleafRepr(s_leafallocator->allocate(nleaf));
-                        nr = mkwleafRepr(s_leafallocator->allocate(excess));
+                        PosRBTreeLeaf<T, K> nlleaf, nrleaf;
+                        const int64_t midpt = cur.data.leaf->count / 2;
+                        if(index < midpt) {
+                            nlleaf = cur.data.leaf->subsetinsert(0, index, midpt, value);
+                            nrleaf = cur.data.leaf->subset(midpt, K - midpt);
+                        }
+                        else {
+                            nlleaf = cur.data.leaf->subset(0, midpt);
+                            nrleaf = cur.data.leaf->subsetinsert(midpt, index, K - midpt, value);
+                        }
+
+                        nl = mkwleafRepr(s_leafallocator->allocate(nlleaf));
+                        nr = mkwleafRepr(s_leafallocator->allocate(nrleaf));
                     }
 
                     PosRBTreeNode<T, K>* nn = s_nodeallocator->allocate(cur_count + 1, RColor::Red, nl, nr); 
