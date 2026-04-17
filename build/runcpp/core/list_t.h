@@ -92,15 +92,17 @@ namespace ᐸRuntimeᐳ
 
         PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T> postree;
 
-        ListTTreeContent(PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T> _postree): postree(_postree) {}
-        
+        static ListTTreeContent mkwpostree(PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T> postree) 
+        {
+            return ListTTreeContent{ postree };
+        } 
         static ListTTreeContent fromInlineList(const ListTInlineContent<T>& inlcnt)
         {
             PosRBTreeLeaf<T, LIST_T_MAX_LEAF_SIZE>* leaf = PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::s_leafallocator->allocate();
             std::copy(inlcnt.data.begin(), inlcnt.data.end(), leaf->data.begin());
             leaf->count = inlcnt.size();
 
-            return PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::mkwleaf(leaf);
+            return mkwpostree(PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::mkwleaf(leaf));
         }
 
         static ListTTreeContent smliteral(std::initializer_list<T> elems)
