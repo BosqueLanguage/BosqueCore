@@ -56,17 +56,19 @@ namespace ᐸRuntimeᐳ
         {
             assert(index < K);
             assert(this->count <= K);
-            
+           
+            bool grew = true;
             if(index < this->count) {
-                // TODO we should think about this some more before merging
                 if(this->count == K) {
-                    this->count--;
+                    grew = false; 
                 }
                 std::copy(this->data.begin() + index, this->data.end() - 1, this->data.begin() + index + 1);               
             }
 
             this->data[index] = value;
-            this->count++;
+            if(grew) {
+                this->count++;
+            }
 
             return *this;
         }
@@ -229,7 +231,7 @@ namespace ᐸRuntimeᐳ
             if(cur.typeinfo == s_leaftypeinfo) {
                 const int64_t cur_count = cur.data.leaf->count;
                 if(cur_count < K) {
-                    auto nleaf = cur.data.leaf->insert(index, value);
+                    PosRBTreeLeaf<T, K>& nleaf = cur.data.leaf->insert(index, value);
                     return mkwleafRepr(s_leafallocator->allocate(nleaf));
                 }
                 else {
@@ -243,8 +245,8 @@ namespace ᐸRuntimeᐳ
                         nr = mkwleafRepr(s_leafallocator->allocate(value));
                     }
                     else {
-                        const T& excess = cur.data.leaf->back();
-                        auto nleaf = cur.data.leaf->insert(index, value);
+                        const T excess = cur.data.leaf->back();
+                        PosRBTreeLeaf<T, K>& nleaf = cur.data.leaf->insert(index, value);
                         nl = mkwleafRepr(s_leafallocator->allocate(nleaf));
                         nr = mkwleafRepr(s_leafallocator->allocate(excess));
                     }

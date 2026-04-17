@@ -55,6 +55,12 @@ namespace ᐸRuntimeᐳ
             return cb;
         }
 
+        ListTInlineContent(const T& value) 
+        {
+            this->data[0] = value;
+            this->count++;
+        }
+
         ListTInlineContent& insert(int64_t index, const T& value)
         {
             assert(this->size() < LIST_T_BUFF_SIZE);
@@ -350,7 +356,7 @@ namespace ᐸRuntimeᐳ
         {
             if(this->ulist.typeinfo == nullptr) {
                 assert(index == 0);
-                return XList(ListTInlineContent<T>::literaldynamic(&value, 1));
+                return XList(ListTInlineContent<T>(value));
             }
             else {
                 if(this->ulist.typeinfo == s_inlinetypeinfo) {
@@ -359,11 +365,11 @@ namespace ᐸRuntimeᐳ
                     }
                     else {
                         auto leaf = ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>(this->ulist.data.inlinelist);
-                        return leaf.insert(index, value);
+                        return XList(leaf.insert(index, value));
                     }
                 }
                 else {
-                    return this->ulist.data.treelist.insert(index, value);
+                    return XList(this->ulist.data.treelist.insert(index, value));
                 }
             }
         }
