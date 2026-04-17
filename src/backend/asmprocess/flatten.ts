@@ -1159,16 +1159,16 @@ class ASMToIRConverter {
         const indecl = this.tproc(exp.declaredInType as TypeSignature) as NominalTypeSignature;
 
         const irroottype = this.processTypeSignature(roottype) as IRNominalTypeSignature;
-        const ftype = this.processTypeSignature(fdecl.declaredType);
+        const irftype = this.processTypeSignature(exp.fieldType as TypeSignature);
         if(fdecl.isSpecialAccess) {
-            return new IRAccessFieldSpecialExpression(irroottype, rootexp, irroottype, fdecl.name, ftype);
+            return new IRAccessFieldSpecialExpression(irroottype, rootexp, irroottype, fdecl.name, irftype);
         }
         else {
             if(exp.isdirect) {
-                return new IRAccessFieldDirectExpression(irroottype, rootexp, this.processTypeSignature(indecl), fdecl.name, ftype);
+                return new IRAccessFieldDirectExpression(irroottype, rootexp, this.processTypeSignature(indecl), fdecl.name, irftype);
             }
             else {
-                return new IRAccessFieldVirtualExpression(irroottype, rootexp, this.processTypeSignature(indecl), fdecl.name, ftype);
+                return new IRAccessFieldVirtualExpression(irroottype, rootexp, this.processTypeSignature(indecl), fdecl.name, irftype);
             }
         }
     }
@@ -3014,6 +3014,7 @@ class ASMToIRConverter {
 
     private flattenMatchStatement(stmt: MatchStatement): boolean {
         const sval = this.makeExpressionImmediate(this.flattenExpression(stmt.sval), this.tproc(stmt.sval.getType()));
+        const svaltype = this.processTypeSignature(stmt.sval.getType());
         const implicitfinal = this.processTypeSignature(stmt.implicitFinalType || stmt.sval.getType());
         
         const flows = stmt.matchflow.map((mf) => {
@@ -3045,12 +3046,12 @@ class ASMToIRConverter {
         });
 
         if(!allexact) {
-            this.pushStatement(new IRMatchGeneralStatement(sval, stmt.bindervar, flows, implicitfinal));
+            this.pushStatement(new IRMatchGeneralStatement(sval, svaltype, stmt.bindervar, flows, implicitfinal));
         }
         else {
             const svtype = this.tproc(stmt.sval.getType());
             if((svtype instanceof NominalTypeSignature) && (svtype.decl instanceof AbstractConceptTypeDecl)) {
-                this.pushStatement(new IRMatchExactStatement(sval, stmt.bindervar, flows, implicitfinal));
+                this.pushStatement(new IRMatchExactStatement(sval, svaltype, stmt.bindervar, flows, implicitfinal));
             }
             else {
                 const eflow = stmt.matchflow.findIndex((f) => f.mtype === undefined || svtype.tkeystr === this.tproc(f.mtype).tkeystr);

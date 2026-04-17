@@ -1043,9 +1043,9 @@ class CPPEmitter {
     private emitIRMatchExactStatement(mstmt: IRMatchExactStatement, isfinal: boolean, indent: string | undefined): string {
         const sval = this.emitIRImmediateExpression(mstmt.sval);
 
-        const findent = indent !== undefined ? "\n" + indent : undefined;
         const bindent = indent !== undefined ? indent + "    " : undefined;
-
+        const findent = indent !== undefined ? "\n" + bindent : undefined;
+        
         let ichk = " ";
         if(indent !== undefined) {
             ichk = `\n${bindent}`;
@@ -1061,11 +1061,22 @@ class CPPEmitter {
                 chk = `case ${tinfo.bsqtypeid} /** ${tinfo.tkey} **/:`;
             }
             
-            const body = this.emitStatementList(mf.value.statements, undefined, ["break;"], bindent);
+            const suffix = mf.value.isTerminalStatement() ? undefined : ["break;"];
+            const body = this.emitStatementList(mf.value.statements, undefined, suffix, bindent);
             return `${ichk}${chk} ${body}`;
         });
 
-        return `switch(${sval}.uval.typeinfo->bsqtypeid) {${ops.join("")}${findent}}${isfinal ? "" : "\n"}`;
+        var typeidextract: string;
+        const stdecl = this.irasm.alltypes.get(mstmt.svaltype.tkeystr);
+        if(stdecl instanceof IROptionTypeDecl) {
+            typeidextract = `${sval}.typeinfo->bsqtypeid`;
+        }
+        else {
+            assert((stdecl instanceof IRConceptTypeDecl) || (stdecl instanceof IRDatatypeTypeDecl), "CPPEmitter: expected match exact statement sval type to be union or option");
+            typeidextract = `${sval}.uval.typeinfo->bsqtypeid`;
+        }
+
+        return `switch(${typeidextract}) {${ops.join("")}${findent}}${isfinal ? "" : "\n"}`;
     }
 
     private emitIRMatchGeneralStatement(mstmt: IRMatchGeneralStatement, isfinal: boolean, indent: string | undefined): string {

@@ -395,11 +395,11 @@ class TypeEnvironment {
         let assigned = false;
         for(let i = this.locals.length - 1; i >= 0; i--) {
             if(assigned) {
-                locals.push(this.locals[i]);
+                locals.unshift(this.locals[i]);
             }
             else {
                 const [newframe, wasassigned] = this.locals[i].assignLocalVariable(vname);
-                locals.push(newframe);
+                locals.unshift(newframe);
                 assigned = wasassigned;
             };
         }

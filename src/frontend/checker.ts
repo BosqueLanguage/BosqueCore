@@ -2572,6 +2572,7 @@ class TypeChecker {
         else {
             exp.declaredInType = finfo.typeinfo.tsig;
             exp.fieldDecl = finfo.member;
+            exp.fieldType = finfo.member.declaredType.remapTemplateBindings(finfo.typeinfo.mapping);
 
             exp.isdirect = this.relations.isDirectNominalType(finfo.typeinfo.tsig, this.constraints);
         }
