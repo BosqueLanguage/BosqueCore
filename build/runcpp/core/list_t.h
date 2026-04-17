@@ -55,20 +55,19 @@ namespace ᐸRuntimeᐳ
             return cb;
         }
 
-        static ListTInlineContent insert(int64_t index, const T& value, const ListTInlineContent& pb)
+        ListTInlineContent& insert(int64_t index, const T& value)
         {
-            assert(pb.size() < LIST_T_BUFF_SIZE);
+            assert(this->size() < LIST_T_BUFF_SIZE);
             assert(index < LIST_T_BUFF_SIZE);
             
-            ListTInlineContent nb;
             if(index > 0) {
-                std::copy(pb.data.begin(), pb.data.begin() + index, nb.data.begin());
+                std::copy(this->data.begin() + index, this->data.end() - 1, this->data.begin() + index + 1);
             }
-            std::copy(pb.data.begin() + index, pb.data.end(), nb.data.begin() + index + 1);
-            nb.data[index] = value;
-            nb.count = pb.size() + 1;
 
-            return nb;
+            this->data[index] = value;
+            this->count++;
+
+            return *this;
         }
 
         constexpr int64_t size() const { return this->count; }
@@ -99,9 +98,9 @@ namespace ᐸRuntimeᐳ
             return ListTTreeContent(PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::mkwleaf(PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::s_leafallocator->allocate(elems)));
         }
 
-        static ListTTreeContent insert(int64_t index, const T& value, const ListTTreeContent& t)
+        ListTTreeContent insert(int64_t index, const T& value)
         {
-            return ListTTreeContent(PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::insert(index, value, t.postree));
+            return ListTTreeContent(this->postree.insert(index, value));
         }
     };
 
@@ -347,7 +346,7 @@ namespace ᐸRuntimeᐳ
             return gethelper(0, *this);
         }
 
-        XList insert(int64_t index, const T& value) const
+        XList insert(int64_t index, const T& value)
         {
             if(this->ulist.typeinfo == nullptr) {
                 assert(index == 0);
@@ -356,15 +355,15 @@ namespace ᐸRuntimeᐳ
             else {
                 if(this->ulist.typeinfo == s_inlinetypeinfo) {
                     if(this->ulist.data.inlinelist.size() < ListTInlineContent<T>::LIST_T_BUFF_SIZE) {
-                        return XList(ListTInlineContent<T>::insert(index, value, this->ulist.data.inlinelist));
+                        return XList(this->ulist.data.inlinelist.insert(index, value));
                     }
                     else {
                         auto leaf = ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>(this->ulist.data.inlinelist);
-                        return ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::insert(index, value, leaf);
+                        return leaf.insert(index, value);
                     }
                 }
                 else {
-                    return ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::insert(index, value, this->ulist.data.treelist);
+                    return this->ulist.data.treelist.insert(index, value);
                 }
             }
         }
