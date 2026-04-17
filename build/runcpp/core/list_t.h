@@ -63,12 +63,10 @@ namespace ᐸRuntimeᐳ
 
         ListTInlineContent& insert(int64_t index, const T& value)
         {
-            assert(this->size() < LIST_T_BUFF_SIZE);
+            assert(this->count < LIST_T_BUFF_SIZE);
             assert(index < LIST_T_BUFF_SIZE);
             
-            if(index > 0) {
-                std::copy(this->data.begin() + index, this->data.end() - 1, this->data.begin() + index + 1);
-            }
+            std::copy(this->data.begin() + index, this->data.end() - 1, this->data.begin() + index + 1);
 
             this->data[index] = value;
             this->count++;
@@ -91,7 +89,7 @@ namespace ᐸRuntimeᐳ
         ListTTreeContent(PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T> _postree): postree(_postree) {}
         ListTTreeContent(const ListTInlineContent<T>& prev)
         {
-            auto leaf = PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::s_leafallocator->allocate();
+            PosRBTreeLeaf<T, LIST_T_MAX_LEAF_SIZE>* leaf = PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::s_leafallocator->allocate();
             
             std::memset((void*)leaf->data.data(), 0, sizeof(T) * LIST_T_MAX_LEAF_SIZE);
             std::copy(prev.data.begin(), prev.data.end(), leaf->data.begin());
@@ -255,7 +253,6 @@ namespace ᐸRuntimeᐳ
         inline static consteval uint32_t getPosInlineIDFrom(uint32_t treeid) { return treeid - 2; }
         inline static consteval uint32_t getPosTreeIDFrom(uint32_t treeid) { return treeid - 3; }
 
-        // contains either an inline list (just a buffer) or rb tree
         BoxedUnion<ListTUnion<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>> ulist;
 
     public:
