@@ -276,8 +276,7 @@ namespace ᐸRuntimeᐳ
         {
             PosRBTree<T, K, TreeID> res(inserthelper(index, value, t.repr));
 
-            std::cout << "K: " << K << std::endl;
-            std::cout << "tree size: " << t.count() << std::endl;
+            // TODO: assert(checkRBInvariants(res));
 
             return res;
         }
