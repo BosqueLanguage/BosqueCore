@@ -1,5 +1,5 @@
 
-import { IRAbstractCollectionTypeDecl, IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAssembly, IRConceptTypeDecl, IRDatatypeTypeDecl, IREntityTypeDecl, IRListTypeDecl, IROptionTypeDecl, IRSomeTypeDecl } from "../irdefs/irassembly.js";
+import { IRAbstractCollectionTypeDecl, IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAssembly, IRConceptTypeDecl, IRDatatypeMemberEntityTypeDecl, IRDatatypeTypeDecl, IREntityTypeDecl, IRListTypeDecl, IROptionTypeDecl, IRSomeTypeDecl } from "../irdefs/irassembly.js";
 import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype.js";
 import { TransformCPPNameManager } from "./namemgr.js";
 
@@ -335,15 +335,14 @@ class TypeInfoManager {
             }
         }
         else {
-            assert(tdecl instanceof IREntityTypeDecl, `TypeInfoManager::processInfoGenerationForEntity - Unsupported entity type declaration for key ${tdecl.tkey}`);
+            assert((tdecl instanceof IREntityTypeDecl) || (tdecl instanceof IRDatatypeMemberEntityTypeDecl), `TypeInfoManager::processInfoGenerationForEntity - Unsupported entity type declaration for key ${tdecl.tkey}`);
 
-            const etdecl = tdecl as IREntityTypeDecl;
             let totalbytesize = 0;
             let totalslotcount = 0;
             let eptrmask = "";
 
             const mustref = this.isRecursiveTypeKey(tdecl.tkey, irasm);
-            for(const fdecl of etdecl.saturatedBFieldInfo) {
+            for(const fdecl of tdecl.saturatedBFieldInfo) {
                 if(this.isNominalRecursiveType(fdecl.ftype, irasm)) {
                     if((fdecl instanceof IRConceptTypeDecl) || (fdecl instanceof IRDatatypeTypeDecl)) {
                         totalbytesize += 16;
@@ -418,7 +417,7 @@ class TypeInfoManager {
             return this.getTypeInfo(tdecl.tkey);
         }
         else {
-            assert(tdecl instanceof IRConceptTypeDecl, `TypeInfoManager::processInfoGenerationForConcept - Unsupported concept type declaration for key ${tdecl.tkey}`);
+            assert((tdecl instanceof IRConceptTypeDecl) || (tdecl instanceof IRDatatypeTypeDecl), `TypeInfoManager::processInfoGenerationForConcept - Unsupported concept type declaration for key ${tdecl.tkey}`);
 
             let totalbytesize = 0;
             let totalslotcount = 0;

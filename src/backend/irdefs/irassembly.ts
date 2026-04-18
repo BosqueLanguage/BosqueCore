@@ -241,17 +241,17 @@ class IRMemberFieldDecl {
     readonly fkey: string;
 
     readonly enclosingType: IRNominalTypeSignature;
-    readonly name: string;
+    readonly fname: string;
     readonly declaredType: IRTypeSignature;
     readonly defaultValue: { stmts: IRStatement[], value: IRSimpleExpression } | undefined;
 
     readonly docstr: IRDeclarationDocString | undefined;
     readonly metatags: IRDeclarationMetaTag[];
 
-    constructor(fkey: string, enclosingType: IRNominalTypeSignature, name: string, declaredType: IRTypeSignature, defaultValue: { stmts: IRStatement[], value: IRSimpleExpression } | undefined, docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[]) {
+    constructor(fkey: string, enclosingType: IRNominalTypeSignature, fname: string, declaredType: IRTypeSignature, defaultValue: { stmts: IRStatement[], value: IRSimpleExpression } | undefined, docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[]) {
         this.fkey = fkey;
         this.enclosingType = enclosingType;
-        this.name = name;
+        this.fname = fname;
         this.declaredType = declaredType;
         this.defaultValue = defaultValue;
 
@@ -1111,8 +1111,9 @@ class IRAssembly {
     }
 
     emitBAPI() {
-        let v = this.entities.map<string>(e => e.emitBAPI()); 
-        return v.join();
+        return "IRAssembly::IRAssembly{\n" 
+            + `\tMap<IRAssembly::IREntityTypeDecl>{ ${this.entities.map<string>(e => e.emitBAPI()).join()} }\n`
+        + "}\n";
     }
 }
 

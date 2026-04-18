@@ -395,11 +395,11 @@ class TypeEnvironment {
         let assigned = false;
         for(let i = this.locals.length - 1; i >= 0; i--) {
             if(assigned) {
-                locals.push(this.locals[i]);
+                locals.unshift(this.locals[i]);
             }
             else {
                 const [newframe, wasassigned] = this.locals[i].assignLocalVariable(vname);
-                locals.push(newframe);
+                locals.unshift(newframe);
                 assigned = wasassigned;
             };
         }
@@ -424,7 +424,7 @@ class TypeEnvironment {
     }
 
     pushNewLocalBinderScope(binds: VarInfo[]): TypeEnvironment {
-        return new TypeEnvironment(this.declReturnType, this.inferReturn, this.isnormalflow, this, this.lcaptures, this.args, [...this.locals, new LocalScope(false, binds, new Set<string>())]);
+        return new TypeEnvironment(this.declReturnType, this.inferReturn, this.isnormalflow, this, this.lcaptures, this.args, [...this.locals, new LocalScope(true, binds, new Set<string>())]);
     }
 
     popLocalScope(): [TypeEnvironment, LocalScope] {

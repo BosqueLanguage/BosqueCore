@@ -289,13 +289,18 @@ enum IRStatementTag {
     IRSimpleIfElseStatement = "IRSimpleIfElseStatement",
     IRSimpleIfElifElseStatement = "IRSimpleIfElifElseStatement",
 
-    //TODO: lots more statement types here
+    IRMatchExactStatement = "IRMatchExactStatement",
+    IRMatchGeneralStatement = "IRMatchGeneralStatement",
+
+    IRBlockStatement = "IRBlockStatement",
 
     IRErrorAdditionBoundsCheckStatement = "IRErrorAdditionBoundsCheckStatement",
     IRErrorSubtractionBoundsCheckStatement = "IRErrorSubtractionBoundsCheckStatement",
     IRErrorMultiplicationBoundsCheckStatement = "IRErrorMultiplicationBoundsCheckStatement",
     IRErrorDivisionByZeroCheckStatement = "IRErrorDivisionByZeroCheckStatement",
     IRErrorTypeAssertionCheckStatement = "IRErrorTypeAssertionCheckStatement",
+
+    IRErrorExhaustiveStatement = "IRErrorExhaustiveStatement",
 
     IRTypeDeclSizeRangeCheckCStringStatement = "IRTypeDeclSizeRangeCheckCStringStatement",
     IRTypeDeclSizeRangeCheckUnicodeStringStatement = "IRTypeDeclSizeRangeCheckUnicodeStringStatement",
@@ -320,6 +325,8 @@ abstract class IRStatement {
     constructor(tag: IRStatementTag) {
         this.tag = tag;
     }
+
+    isTerminalStatement(): boolean { return false; }
 }
 
 /* This class represents statements that are atomic (line statements) and don't have control flow or sub blocks */
@@ -346,6 +353,8 @@ abstract class IRReturnSimpleStatement extends IRAtomicStatement {
     constructor(tag: IRStatementTag) {
         super(tag);
     }
+
+    override isTerminalStatement(): boolean { return true; }
 }
 
 /* Represent return statement that involve ref/out/out?/inout parameters and thus have an implicit variable to hold the returned value */
@@ -356,6 +365,8 @@ abstract class IRReturnWithImplicitStatement extends IRAtomicStatement {
         super(tag);
         this.implicitvar = implicitvar;
     }
+
+    override isTerminalStatement(): boolean { return true; }
 }
 
 /* Explicit error condition checks -- all possible error conditions must be made explicit during flattening */
@@ -2012,6 +2023,8 @@ class IRSimpleIfElseStatement extends IRStatement {
         this.tblock = tblock;
         this.eblock = eblock;
     }
+
+    override isTerminalStatement(): boolean { return this.tblock.isTerminalStatement() && this.eblock.isTerminalStatement(); }
 }
 
 class IRSimpleIfElifElseStatement extends IRStatement {
@@ -2027,6 +2040,46 @@ class IRSimpleIfElifElseStatement extends IRStatement {
         this.elifs = elifs;
         this.eblock = eblock;
     }
+
+    override isTerminalStatement(): boolean { return this.ttblock.isTerminalStatement() && this.elifs.every(e => e.block.isTerminalStatement()) && this.eblock.isTerminalStatement(); }
+}
+
+class IRMatchExactStatement extends IRStatement {
+    readonly sval: IRImmediateExpression;
+    readonly svaltype: IRTypeSignature;
+    readonly bindervar: string;
+    readonly matchflow: {mtype: IRTypeSignature | undefined, value: IRBlockStatement}[];
+    implicitFinalType: IRTypeSignature;
+
+    constructor(sval: IRImmediateExpression, svaltype: IRTypeSignature, bindername: string, flow: {mtype: IRTypeSignature | undefined, value: IRBlockStatement}[], implicitFinalType: IRTypeSignature) {
+        super(IRStatementTag.IRMatchExactStatement);
+        this.sval = sval;
+        this.svaltype = svaltype;
+        this.bindervar = bindername;
+        this.matchflow = flow;
+        this.implicitFinalType = implicitFinalType;
+    }
+
+    override isTerminalStatement(): boolean { return this.matchflow.every(f => f.value.isTerminalStatement()); }
+}
+
+class IRMatchGeneralStatement extends IRStatement {
+    readonly sval: IRImmediateExpression;
+    readonly svaltype: IRTypeSignature;
+    readonly bindervar: string;
+    readonly matchflow: {mtype: IRTypeSignature | undefined, value: IRBlockStatement}[];
+    implicitFinalType: IRTypeSignature;
+
+    constructor(sval: IRImmediateExpression, svaltype: IRTypeSignature, bindername: string, flow: {mtype: IRTypeSignature | undefined, value: IRBlockStatement}[], implicitFinalType: IRTypeSignature) {
+        super(IRStatementTag.IRMatchGeneralStatement);
+        this.sval = sval;
+        this.svaltype = svaltype;
+        this.bindervar = bindername;
+        this.matchflow = flow;
+        this.implicitFinalType = implicitFinalType;
+    }
+
+    override isTerminalStatement(): boolean { return this.matchflow.every(f => f.value.isTerminalStatement()); }
 }
 
 class IRErrorAdditionBoundsCheckStatement extends IRErrorBinArithCheckStatement {
@@ -2060,6 +2113,14 @@ class IRErrorTypeAssertionCheckStatement extends IRErrorCheckStatement {
         super(IRStatementTag.IRErrorTypeAssertionCheckStatement, file, sinfo, diagnosticTag, checkID);
         this.typeok = typeok;
     }
+}
+
+class IRErrorExhaustiveStatement extends IRErrorCheckStatement {
+    constructor(file: string, sinfo: IRSourceInfo, checkID: number) {
+        super(IRStatementTag.IRErrorExhaustiveStatement, file, sinfo, undefined, checkID);
+    }
+
+    override isTerminalStatement(): boolean { return true; }
 }
 
 class IRTypeDeclSizeRangeCheckCStringStatement extends IRErrorTypedStringCheckStatement {
@@ -2161,6 +2222,8 @@ class IRAbortStatement extends IRErrorCheckStatement {
     constructor(file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number) {
         super(IRStatementTag.IRAbortStatement, file, sinfo, diagnosticTag, checkID);
     }
+
+    override isTerminalStatement(): boolean { return true; }
 }
 
 class IRAssertStatement extends IRErrorCheckStatement {
@@ -2207,12 +2270,15 @@ class IRDebugStatement extends IRAtomicStatement {
     }
 }
 
-class IRBlockStatement {
+class IRBlockStatement extends IRStatement {
     readonly statements: IRStatement[];
 
     constructor(statements: IRStatement[]) {
+        super(IRStatementTag.IRBlockStatement);
         this.statements = statements;
     }
+
+    override isTerminalStatement(): boolean { return this.statements.length > 0 && this.statements[this.statements.length - 1].isTerminalStatement(); }
 }
 
 abstract class IRBody {
@@ -2325,9 +2391,10 @@ export {
     IRLogicConditionalStatement,
 
     IRSimpleIfStatement, IRSimpleIfElseStatement, IRSimpleIfElifElseStatement,
+    IRMatchExactStatement, IRMatchGeneralStatement,
 
     IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement,
-    IRErrorTypeAssertionCheckStatement,
+    IRErrorTypeAssertionCheckStatement, IRErrorExhaustiveStatement,
     IRErrorTypedStringCheckStatement, IRTypeDeclSizeRangeCheckCStringStatement, IRTypeDeclSizeRangeCheckUnicodeStringStatement, IRTypeDeclFormatCheckCStringStatement, IRTypeDeclFormatCheckUnicodeStringStatement,
 
     IRTypeDeclInvariantCheckStatement, IREntityInvariantCheckStatement,

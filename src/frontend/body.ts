@@ -1256,6 +1256,7 @@ class PostfixAccessFromName extends PostfixOperation {
     
     declaredInType: TypeSignature | undefined = undefined;
     fieldDecl: MemberFieldDecl | undefined = undefined;
+    fieldType: TypeSignature | undefined = undefined;
     isdirect: boolean = false;
 
     constructor(sinfo: SourceInfo, name: string) {
@@ -1303,7 +1304,7 @@ class PostfixIsTest extends PostfixOperation {
     }
 
     emit(fmt: CodeFormatter): string {
-        return "?" + this.ttest.emit(fmt);
+        return ".?" + this.ttest.emit(fmt);
     }
 }
 
@@ -1317,7 +1318,7 @@ class PostfixAsConvert extends PostfixOperation {
     }
 
     emit(fmt: CodeFormatter): string {
-        return "@" + this.ttest.emit(fmt);
+        return ".@" + this.ttest.emit(fmt);
     }
 }
 
@@ -2499,74 +2500,80 @@ class SwitchStatement extends Statement {
         const ttmf = this.switchflow.map((sf) => `${sf.lval ? sf.lval.emit(true, fmt) : "_"} => ${sf.value.emit(fmt)}`);
         fmt.indentPop();
 
-        const iir = ttmf.map((cc) => fmt.indent("| " + cc));
+        const iir = ttmf.map((cc) => fmt.indent("    " + cc));
         return `${mheader} {\n${iir.join("\n")}\n${fmt.indent("}")}`;
     }
 }
 
 class MatchStatement extends Statement {
-    readonly sval: ITestGuard;
+    readonly sval: Expression;
+    readonly bindervar: string;
     readonly matchflow: {mtype: TypeSignature | undefined, value: BlockStatement}[];
 
     mustExhaustive: boolean = false;
     implicitFinalType: TypeSignature | undefined = undefined;
 
-    constructor(sinfo: SourceInfo, sval: ITestGuard, flow: {mtype: TypeSignature | undefined, value: BlockStatement}[]) {
+    constructor(sinfo: SourceInfo, sval: Expression, bindername: string, flow: {mtype: TypeSignature | undefined, value: BlockStatement}[]) {
         super(StatementTag.MatchStatement, sinfo);
         this.sval = sval;
+        this.bindervar = bindername;
         this.matchflow = flow;
     }
 
     emit(fmt: CodeFormatter): string {
-        const mheader = `match${this.sval.emit(true, fmt)}`;
+        const mheader = `match(${this.sval.emit(true, fmt)})`;
         fmt.indentPush();
         const ttmf = this.matchflow.map((mf) => `${mf.mtype ? mf.mtype.emit() : "_"} => ${mf.value.emit(fmt)}`);
         fmt.indentPop();
 
-        const iir = ttmf.map((cc) => fmt.indent("| " + cc));
+        const iir = ttmf.map((cc) => fmt.indent("    " + cc));
         return `${mheader} {\n${iir.join("\n")}\n${fmt.indent("}")}`;
     }
 }
 
 class DispatchPatternStatement extends Statement {
-    readonly sval: ITestGuard;
+    readonly sval: Expression;
+    readonly bindername: string;
     readonly dispatchflow: {kidx: Expression | undefined, value: BlockStatement}[];
     //always must exhaustive
 
     implicitFinalType: TypeSignature | undefined = undefined;
 
-    constructor(sinfo: SourceInfo, sval: ITestGuard, dispatchflow: {kidx: Expression | undefined, value: BlockStatement}[]) {
+    constructor(sinfo: SourceInfo, sval: Expression, bindername: string, dispatchflow: {kidx: Expression | undefined, value: BlockStatement}[]) {
         super(StatementTag.DispatchPatternStatement, sinfo);
         this.sval = sval;
+        this.bindername = bindername;
         this.dispatchflow = dispatchflow;
     }
 
     emit(fmt: CodeFormatter): string {
-        const dheader = `dispatch${this.sval.emit(true, fmt)}`;
+        const dheader = `dispatch(${this.sval.emit(true, fmt)})`;
         fmt.indentPush();
         const ttdf = this.dispatchflow.map((df) => `${df.kidx ? df.kidx.emit(true, fmt) : "_"} => ${df.value.emit(fmt)}`);
         fmt.indentPop();
 
-        const iir = ttdf.map((cc) => fmt.indent("| " + cc));
+        const iir = ttdf.map((cc) => fmt.indent("    " + cc));
         return `${dheader} {\n${iir.join("\n")}\n${fmt.indent("}")}`;
     }
 }
 
 class DispatchTaskStatement extends Statement {
-    readonly sval: ITestGuard;
+    readonly sval: Expression;
+    readonly bindername: string;
     readonly dispatchflow: {kidx: string | undefined, value: BlockStatement}[];
     //always must exhaustive
 
     implicitFinalType: TypeSignature | undefined = undefined;
 
-    constructor(sinfo: SourceInfo, sval: ITestGuard, dispatchflow: {kidx: string | undefined, value: BlockStatement}[]) {
+    constructor(sinfo: SourceInfo, sval: Expression, bindername: string, dispatchflow: {kidx: string | undefined, value: BlockStatement}[]) {
         super(StatementTag.DispatchTaskStatement, sinfo);
         this.sval = sval;
+        this.bindername = bindername;
         this.dispatchflow = dispatchflow;
     }
 
     emit(fmt: CodeFormatter): string {
-        const dheader = `dispatch${this.sval.emit(true, fmt)}`;
+        const dheader = `dispatch(${this.sval.emit(true, fmt)})`;
         fmt.indentPush();
         const ttdf = this.dispatchflow.map((df) => `${df.kidx ? df.kidx : "_"} => ${df.value.emit(fmt)}`);
         fmt.indentPop();
