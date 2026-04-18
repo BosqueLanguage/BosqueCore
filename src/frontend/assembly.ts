@@ -1145,7 +1145,7 @@ class DatatypeTypeDecl extends AbstractConceptTypeDecl {
             usingdecl = " using {\n" + this.joinBodyGroups(mg) + fmt.indent("\n}\nof\n");
         }
 
-        const edecls = this.associatedMemberEntityDecls.map((aed) => aed.emit(fmt)).join("\n| ");
+        const edecls = this.associatedMemberEntityDecls.map((aed) => aed.emit(fmt)).join("\n  ");
 
         let etail = ";";
         if(bg.length !== 0) {

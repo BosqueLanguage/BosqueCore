@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { APIDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, InvokeTemplateTypeRestrictionClause, MAX_SAFE_CHK_NAT, MIN_SAFE_CHK_INT, MAX_SAFE_CHK_INT, APIDeniedTypeDecl, APIFlaggedTypeDecl, AgentDecl, TaskConfiguration, AbstractCollectionTypeDecl, ConstructableTypeDecl, InvokeParameterDecl } from "./assembly.js";
 import { CodeFormatter, SourceInfo } from "./build_decls.js";
 import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, ErrorTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
-import { APIInvokeExpression, AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, AbstractArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, FormatStringTextComponent, HoleBodyImplementation, HoleExpression, HoleStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, IfElifElseStatement, IfElseStatement, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypeDeclValueExpression, LiteralTypedCStringExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PassingArgumentValue, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RValueExpression, RValueExpressionTag, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VoidRefCallStatement, StdArgumentValue, SkipArgumentValue, InterpolateFormatExpression, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestFail } from "./body.js";
+import { APIInvokeExpression, AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, AbstractArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, FormatStringTextComponent, HoleBodyImplementation, HoleExpression, HoleStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, IfElifElseStatement, IfElseStatement, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypeDeclValueExpression, LiteralTypedCStringExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PassingArgumentValue, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RValueExpression, RValueExpressionTag, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VoidRefCallStatement, StdArgumentValue, SkipArgumentValue, InterpolateFormatExpression, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestFail, ITestTypeGuard, ITestBinderGuard, TypeTestBindInfo } from "./body.js";
 import { SimpleTypeInferContext, TypeEnvironment, TypeResultWRefVarInfoResult, TypeInferContext, VarInfo } from "./checker_environment.js";
 import { TypeCheckerRelations } from "./checker_relations.js";
 
@@ -460,6 +460,33 @@ class TypeChecker {
     private processITestGuard(sinfo: SourceInfo, env: TypeEnvironment, tt: ITestGuard, gidx: number, andrefsok: boolean): TypeResultWRefVarInfoResult {
         if(tt instanceof ITestSimpleGuard) {
             return this.processITestGuardExpression(env, tt.exp, andrefsok);
+        }
+        else if(tt instanceof ITestTypeGuard) {
+            const evinfo = this.processITestGuardExpression(env, tt.exp, andrefsok);
+            if(evinfo.tsig instanceof ErrorTypeSignature) {
+                return TypeResultWRefVarInfoResult.makeSimpleResult(this.getWellKnownType("Bool"));
+            }
+            else {
+                const splits = this.processITestAsBoolean(tt.exp.sinfo, env, evinfo.tsig, tt.itest);
+                this.checkError(tt.exp.sinfo, !splits.ttrue, "Test is never true");
+                this.checkError(tt.exp.sinfo, !splits.tfalse, "Test is never false");
+
+                return new TypeResultWRefVarInfoResult(this.getWellKnownType("Bool"), false, false, evinfo.setcondout, evinfo.setuncond, evinfo.usemod, evinfo.bbinds);
+            }
+        }
+        else if(tt instanceof ITestBinderGuard) {
+            const evinfo = this.processITestGuardExpression(env, tt.exp, andrefsok);
+            if(evinfo.tsig instanceof ErrorTypeSignature) {
+                return TypeResultWRefVarInfoResult.makeSimpleResult(this.getWellKnownType("Bool"));
+            }
+            else {
+                const splits = this.processITestAsConvert(tt.exp.sinfo, env, evinfo.tsig, tt.itest);
+                this.checkError(tt.exp.sinfo, splits.ttrue === undefined, "Test is never true");
+                this.checkError(tt.exp.sinfo, splits.tfalse === undefined, "Test is never false");
+
+                const nbind: TypeTestBindInfo = new TypeTestBindInfo(gidx, tt.bindinfo.srcname, splits.ttrue || evinfo.tsig, splits.tfalse || evinfo.tsig);
+                return new TypeResultWRefVarInfoResult(this.getWellKnownType("Bool"), false, false, evinfo.setcondout, evinfo.setuncond, evinfo.usemod, [nbind, ...evinfo.bbinds]);
+            }
         }
         else {
             assert(false, "Unknown ITestGuard type"); //TODO check and do binders here!!!
@@ -2545,6 +2572,7 @@ class TypeChecker {
         else {
             exp.declaredInType = finfo.typeinfo.tsig;
             exp.fieldDecl = finfo.member;
+            exp.fieldType = finfo.member.declaredType.remapTemplateBindings(finfo.typeinfo.mapping);
 
             exp.isdirect = this.relations.isDirectNominalType(finfo.typeinfo.tsig, this.constraints);
         }
@@ -3995,45 +4023,20 @@ class TypeChecker {
         stmt.bbinds = eetgr.bbinds;
         if(eetgr.bbinds.length === 0) {
             this.checkError(stmt.sinfo, !this.relations.isBooleanType(eetype), "If test requires a Bool type");
-
             let [aenv, tenv, _] = eetgr.extendEnvironmentWithVarAssignments(env);
 
             const ttrue = this.checkBlockStatement(tenv, stmt.trueBlock);
             return TypeEnvironment.mergeEnvironmentsSimple(aenv, tenv, ttrue);
         }
         else {
-            /*
-            const splits = this.processITestAsConvert(stmt.sinfo, env, eetype, stmt.cond.itestopt);
-            this.checkError(stmt.cond.exp.sinfo, splits.ttrue === undefined, "Test is never true -- true branch of if is unreachable");
-            this.checkError(stmt.cond.exp.sinfo, splits.tfalse === undefined, "Test is never false -- false branch of if is unreachable");
+            this.checkError(stmt.sinfo, !this.relations.isBooleanType(eetype), "If test requires a Bool type");
+            let [aenv, tenv, _] = eetgr.extendEnvironmentWithVarAssignments(env);
 
-            if(stmt.binder === undefined) {
-                const ttrue = this.checkBlockStatement(env, stmt.trueBlock);
-                return TypeEnvironment.mergeEnvironmentsSimple(env, env, ttrue);
-            }
-            else {
-                stmt.trueBindType = splits.ttrue || eetype;
+            //update the true branch with any binders from the itest
+            tenv = tenv.pushNewLocalBinderScope(stmt.bbinds.map((bb) => new VarInfo(bb.bname, bb.ttrue as TypeSignature, "let", true)));
 
-                const nenv = env.pushNewLocalBinderScope(stmt.binder.srcname, splits.ttrue || eetype);
-                const ttrue = this.checkStatement(nenv, stmt.trueBlock).popLocalScope();
-
-                const retypename = stmt.binder.srcname.slice(1);
-                this.checkFlowRebinder(stmt.sinfo, stmt.binder, retypename, env);
-                if(ttrue.normalflow && splits.tfalse !== undefined) {
-                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: eetype, specialaccess: undefined }, env, ttrue, nenv);
-                }
-                else if(ttrue.normalflow) {
-                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: splits.ttrue as TypeSignature, specialaccess: splits.tspecialfubx }, env, ttrue, nenv);
-                }
-                else if(splits.tfalse !== undefined) {
-                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: splits.tfalse as TypeSignature, specialaccess: splits.fspecialfubx }, env, ttrue, nenv);
-                }
-                else {
-                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: eetype, specialaccess: undefined }, env, ttrue, nenv);    
-                }
-            }
-            */
-            assert(false, "Not Implemented -- checkIfStatement with ITest binds");
+            const ttrue = this.checkBlockStatement(tenv, stmt.trueBlock);
+            return TypeEnvironment.mergeEnvironmentsSimple(aenv, tenv, ttrue);
         }
     }
 
@@ -4052,43 +4055,19 @@ class TypeChecker {
             return TypeEnvironment.mergeEnvironmentsSimple(aenv, ttrue, tfalse);
         }
         else {
-            /*
-            const splits = this.processITestAsConvert(stmt.sinfo, env, eetype, stmt.cond.itestopt);
-            this.checkError(stmt.cond.exp.sinfo, splits.ttrue === undefined, "Test is never true -- true branch of if is unreachable");
-            this.checkError(stmt.cond.exp.sinfo, splits.tfalse === undefined, "Test is never false -- false branch of if is unreachable");
+            this.checkError(stmt.sinfo, !this.relations.isBooleanType(eetype), "If test requires a Bool type");
+            
+            let [aenv, tenv, fenv] = eetgr.extendEnvironmentWithVarAssignments(env);
 
-            if(stmt.binder === undefined) {
-                const ttrue = this.checkBlockStatement(env, stmt.trueBlock);
-                const tfalse = this.checkBlockStatement(env, stmt.falseBlock);
-                return TypeEnvironment.mergeEnvironmentsSimple(env, ttrue, tfalse);
-            }
-            else {
-                stmt.trueBindType = splits.ttrue || eetype;
-                stmt.falseBindType = splits.tfalse || eetype;
+            //update the true branch with any binders from the itest
+            tenv = tenv.pushNewLocalBinderScope(stmt.bbinds.map((bb) => new VarInfo(bb.bname, bb.ttrue as TypeSignature, "let", true)));
+            const ttrue = this.checkBlockStatement(tenv, stmt.trueBlock);
 
-                const tenv = env.pushNewLocalBinderScope(stmt.binder.srcname, splits.ttrue || eetype);
-                const ttrue = this.checkStatement(tenv, stmt.trueBlock).popLocalScope();
-
-                const fenv = env.pushNewLocalBinderScope(stmt.binder.srcname, splits.tfalse || eetype);
-                const tfalse = this.checkStatement(fenv, stmt.falseBlock).popLocalScope();
-
-                const retypename = stmt.binder.srcname.slice(1);
-                this.checkFlowRebinder(stmt.sinfo, stmt.binder, retypename, env);
-                if(ttrue.normalflow && tfalse.normalflow) {
-                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: eetype, specialaccess: undefined }, ttrue, tfalse);
-                }
-                else if(ttrue.normalflow) {
-                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: splits.ttrue as TypeSignature, specialaccess: splits.tspecialfubx }, ttrue, tfalse);
-                }
-                else if(tfalse.normalflow) {
-                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: splits.tfalse as TypeSignature, specialaccess: splits.fspecialfubx }, ttrue, tfalse);
-                }
-                else {
-                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: eetype, specialaccess: undefined }, ttrue, tfalse);
-                }
-            }
-            */
-            assert(false, "Not Implemented -- checkIfElseStatement with ITest binds");
+            //update the false branch with any binders from the itest
+            fenv = fenv.pushNewLocalBinderScope(stmt.bbinds.map((bb) => new VarInfo(bb.bname, bb.tfalse as TypeSignature, "let", true)));
+            const tfalse = this.checkBlockStatement(fenv, stmt.falseBlock);
+            
+            return TypeEnvironment.mergeEnvironmentsSimple(aenv, ttrue, tfalse);
         }
     }
 
@@ -4159,15 +4138,14 @@ class TypeChecker {
     }
 
     private checkMatchStatement(env: TypeEnvironment, stmt: MatchStatement): TypeEnvironment {
-        /*
-        const eetype = this.checkExpression(env, stmt.sval[0], undefined);
+        const eetype = this.checkExpression(env, stmt.sval, undefined);
         if(eetype instanceof ErrorTypeSignature) {
             return env;
         }
 
         let ctype = this.relations.decomposeType(eetype) || [];
         if(ctype.length === 0) {
-            this.reportError(stmt.sval[0].sinfo, `Match statement requires a decomposable type but got ${eetype.emit()}`);
+            this.reportError(stmt.sval.sinfo, `Match statement requires a decomposable type but got ${eetype.emit()}`);
             return env;
         }
         
@@ -4186,16 +4164,10 @@ class TypeChecker {
                 const defaulttype = (lubattempt instanceof ErrorTypeSignature) ? eetype : lubattempt;
                 stmt.implicitFinalType = defaulttype;
 
-                let cenv = env;
-                if(stmt.sval[1] !== undefined) {
-                    cenv = env.pushNewLocalBinderScope(stmt.sval[1].srcname, defaulttype)
-                }
-                
+                let cenv = env.pushNewLocalBinderScope([new VarInfo(stmt.bindervar, defaulttype, "let", true)]);
                 cenv = this.checkBlockStatement(cenv, stmt.matchflow[i].value);
-
-                if(stmt.sval[1] !== undefined) {
-                    cenv = cenv.popLocalScope();
-                }
+                cenv = cenv.popLocalScope()[0];
+                
                 results.push(cenv);
             }
             else {
@@ -4216,15 +4188,10 @@ class TypeChecker {
                     exhaustive = splits.remain.length === 0;
                     this.checkError(stmt.matchflow[i].value.sinfo, exhaustive && i !== stmt.matchflow.length - 1, `Test is never false -- but there were ${stmt.matchflow.length - (i + 1)} more that are unreachable`);
 
-                    let cenv = env;
-                    if(stmt.sval[1] !== undefined) {
-                        cenv = env.pushNewLocalBinderScope(stmt.sval[1].srcname, mtype);
-                    }
+                    let cenv = env.pushNewLocalBinderScope([new VarInfo(stmt.bindervar, mtype, "let", true)]);
                     cenv = this.checkBlockStatement(cenv, stmt.matchflow[i].value);
-
-                    if(stmt.sval[1] !== undefined) {
-                        cenv = cenv.popLocalScope();
-                    }
+                    cenv = cenv.popLocalScope()[0];
+                    
                     ctype = splits.remain || ctype;
                     results.push(cenv);
                 }
@@ -4233,9 +4200,6 @@ class TypeChecker {
         
         stmt.mustExhaustive = exhaustive;
         return TypeEnvironment.mergeEnvironmentsSimple(env, ...results);
-
-        */
-        assert(false, "Not Implemented -- checkMatchStatement");
     }
 
     private checkDispatchPatternStatement(env: TypeEnvironment, stmt: DispatchPatternStatement): TypeEnvironment {

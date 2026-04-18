@@ -32,7 +32,7 @@ namespace ᐸRuntimeᐳ
         int64_t count;
         std::array<T, K> data;
 
-        constexpr PosRBTreeLeaf() : count(0) { std::memset((void*)this->data.data(), 0, sizeof(T) * K); }
+        constexpr PosRBTreeLeaf() : count(0) { ; }
         constexpr PosRBTreeLeaf(const PosRBTreeLeaf& other) = default;
 
         PosRBTreeLeaf(std::initializer_list<T> args)
@@ -40,9 +40,7 @@ namespace ᐸRuntimeᐳ
             assert(args.size() != 0);
             assert(args.size() <= K);
 
-            std::memset((void*)this->data.data(), 0, sizeof(T) * K);
             std::copy(args.begin(), args.end(), this->data.begin());
-
             this->count = args.size();
         }
     };

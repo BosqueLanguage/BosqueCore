@@ -2815,46 +2815,49 @@ class Parser {
         }
     }
 
-    private parseMatchTypeGuard(): TypeSignature | undefined {
+    private parseMatchTypeGuard(): [boolean, TypeSignature | undefined] {
         if (this.testAndConsumeTokenIf(KW_under)) {
-            return undefined;
+            return [true, undefined];
         }
         else {
-            return this.parseStdTypeSignature();
+            const tsig = this.parseStdTypeSignature();
+            return [!(tsig instanceof ErrorTypeSignature), tsig];
         }
     }
 
-    private parseSwitchLiteralGuard(): Expression | undefined {
+    private parseSwitchLiteralGuard(): [boolean, Expression | undefined] {
         if (this.testAndConsumeTokenIf(KW_under)) {
-            return undefined;
+            return [true, undefined];
         }
         else {
             const exp = this.parseExpression();
     
             if(!exp.isLiteralExpression() && !(exp instanceof AccessNamespaceConstantExpression) && !(exp instanceof AccessStaticFieldExpression) && !(exp instanceof AccessEnumExpression)) {
-                this.recordErrorGeneral(exp.sinfo, "Expected literal expression")
+                this.recordErrorGeneral(exp.sinfo, "Expected literal expression");
+                return [false, exp];
             }
 
-            return exp;
+            return [true, exp];
         }
     }
 
-    private parseDispatchGuard(): Expression | string[] | undefined {
+    private parseDispatchGuard(): [boolean, Expression | string | undefined] {
         if (this.testAndConsumeTokenIf(KW_under)) {
-            return undefined;
+            return [false, undefined];
         }
         else {
             if(this.testAndConsumeTokenIf(TokenStrings.AtDexNumber)) {
-                return [this.consumeTokenAndGetValue()];
+                return [true, this.consumeTokenAndGetValue()];
             }
             else {
                 const exp = this.parseExpression();
         
                 if(!exp.isLiteralExpression() && !(exp instanceof AccessNamespaceConstantExpression) && !(exp instanceof AccessStaticFieldExpression)) {
-                    this.recordErrorGeneral(exp.sinfo, "Expected literal expression or binder variable")
+                    this.recordErrorGeneral(exp.sinfo, "Expected literal expression or binder variable");
+                    return [false, exp];
                 }
 
-                return exp;
+                return [true, exp];
             }
         }
     }
@@ -3891,8 +3894,9 @@ class Parser {
         let rootexp = this.parsePrimaryExpression();
 
         let ops: PostfixOperation[] = [];
-        while (this.testToken(SYM_dot) || this.testToken(SYM_question) || this.testToken(SYM_at) || this.testToken(SYM_lbrack)) {
+        while (this.testToken(SYM_dot)) {
             const sinfo = this.peekToken().getSourceInfo();
+            this.consumeToken(); //always consume the dot first
 
             if(this.testToken(SYM_question)) {
                 this.consumeToken();
@@ -3918,45 +3922,41 @@ class Parser {
                     ops.push(new PostfixAssignFields(sinfo, updates));
                 }
             }
+            else if(this.testToken(SYM_lparenbar)) {
+                assert(false, "Not implemented yet -- project fields");
+            }
+            else if(this.testToken(KW_slice)) {
+                this.consumeToken();
+                const args = this.parseArgumentsCallStd(false);
+                ops.push(new PostfixSliceOperator(sinfo, args));
+            }
+            else if(this.testToken(TokenStrings.NumberinoInt)) {
+                const nval = this.consumeTokenAndGetValue();
+                ops.push(new PostfixAccessFromIndex(sinfo, parseInt(nval)));
+            }
             else {
-                this.ensureAndConsumeTokenAlways(SYM_dot, "postfix access/update/invoke");
+                this.ensureToken(TokenStrings.IdentifierName, "postfix access/invoke");
+            
+                let resolvedScope: TypeSignature | undefined = undefined;
+                if(this.peekTokenKind(1) === SYM_coloncolon) { //it is either T::f or N::T...::f
+                    resolvedScope = this.parseNominalType();
+                    this.ensureToken(SYM_coloncolon, "postfix access");
+                }
 
-                if(this.testToken(SYM_lparenbar)) {
-                    assert(false, "Not implemented yet -- project fields");
-                }
-                else if(this.testToken(KW_slice)) {
-                    this.consumeToken();
-                    const args = this.parseArgumentsCallStd(false);
-                    ops.push(new PostfixSliceOperator(sinfo, args));
-                }
-                else if(this.testToken(TokenStrings.NumberinoInt)) {
-                    const nval = this.consumeTokenAndGetValue();
-                    ops.push(new PostfixAccessFromIndex(sinfo, parseInt(nval)));
+                const name = this.parseIdentifierAsStdVariable();
+                if(!this.testPostfixInvokePrefix()) {
+                    if(resolvedScope !== undefined) {
+                        this.recordErrorGeneral(sinfo, "Encountered named access but given type resolver (only valid on method calls)");
+                    }
+
+                    ops.push(new PostfixAccessFromName(sinfo, name));
                 }
                 else {
-                    this.ensureToken(TokenStrings.IdentifierName, "postfix access/invoke");
-                    
-                    let resolvedScope: TypeSignature | undefined = undefined;
-                    if(this.peekTokenKind(1) === SYM_coloncolon) { //it is either T::f or N::T...::f
-                        resolvedScope = this.parseNominalType();
-                        this.ensureToken(SYM_coloncolon, "postfix access");
-                    }
+                    const rec = this.parseInvokeRecursiveArgs();
+                    const targs = this.parseInvokeTemplateArguments();
+                    const args = this.parseArgumentsCallStd(true);
 
-                    const name = this.parseIdentifierAsStdVariable();
-                    if(!this.testPostfixInvokePrefix()) {
-                        if(resolvedScope !== undefined) {
-                            this.recordErrorGeneral(sinfo, "Encountered named access but given type resolver (only valid on method calls)");
-                        }
-
-                        ops.push(new PostfixAccessFromName(sinfo, name));
-                    }
-                    else {
-                        const rec = this.parseInvokeRecursiveArgs();
-                        const targs = this.parseInvokeTemplateArguments();
-                        const args = this.parseArgumentsCallStd(true);
-
-                        ops.push(new PostfixInvoke(sinfo, resolvedScope, name, targs, rec, args));
-                    }
+                    ops.push(new PostfixInvoke(sinfo, resolvedScope, name, targs, rec, args));
                 }
             }
         }
@@ -5242,6 +5242,7 @@ class Parser {
         const sinfo = this.peekToken().getSourceInfo();
 
         this.ensureAndConsumeTokenAlways(KW_if, "if statement cond");
+        this.ensureToken(SYM_lparen, "if statement cond"); //always need parens here
 
         const itest = this.parseITestGuardSet();
         const ifbody = this.parseScopedBlockStatement();
@@ -5291,16 +5292,17 @@ class Parser {
         let entries: { lval: Expression | undefined, value: BlockStatement }[] = [];
         this.ensureAndConsumeTokenAlways(SYM_lbrace, "switch statement options");
         
-        this.ensureAndConsumeTokenAlways(SYM_bar, "switch statement entry");
-        const swlit = this.parseSwitchLiteralGuard();
+        const [_, swlit] = this.parseSwitchLiteralGuard();
         this.ensureAndConsumeTokenIf(SYM_bigarrow, "switch statement entry");
         const svalue = this.parseScopedBlockStatement();
 
         entries.push({ lval: swlit, value: svalue });
-        while (this.testToken(SYM_bar)) {
-            this.consumeToken();
+        while (!this.testToken(SYM_rbrace)) {
+            const [okv, swlitx] = this.parseSwitchLiteralGuard();
+            if(!okv) {
+                break;
+            }
 
-            const swlitx = this.parseSwitchLiteralGuard();
             this.ensureAndConsumeTokenIf(SYM_bigarrow, "switch statement entry");
             const svaluex = this.parseScopedBlockStatement();
 
@@ -5311,26 +5313,50 @@ class Parser {
         return new SwitchStatement(sinfo, sexp, entries);
     }
 
+    private parseMatchOrDispatchGuard(): [string, Expression] {
+        if(this.testFollows(SYM_lparen, TokenStrings.IdentifierName, SYM_eq)) {
+            this.consumeToken();
+            const binfo = this.parseBinderInfo();
+            this.ensureAndConsumeTokenAlways(SYM_eq, "binder in ITest guard");
+            const bexp = this.parseRValueInTopTestExpression();
+            this.ensureAndConsumeTokenAlways(SYM_rparen, "binder in ITest guard");
+
+            return [binfo as string, bexp];
+        }
+        else {
+            this.ensureAndConsumeTokenAlways(SYM_lparen, "binder in ITest guard");
+            const bexp = this.parseRValueInTopTestExpression();
+            this.ensureAndConsumeTokenAlways(SYM_rparen, "binder in ITest guard");
+
+            let stdbindname = "$_";
+            if(bexp instanceof AccessVariableExpression) {
+                stdbindname = "$" + bexp.srcname;
+            }
+
+            return [stdbindname, bexp];
+        }
+    }
+
     private parseMatchStatement(): Statement {
         const sinfo = this.peekToken().getSourceInfo();
         
         this.ensureAndConsumeTokenAlways(KW_match, "match statement dispatch value");
-
-        const sguard = this.parseITestGuard();
+        const sguard = this.parseMatchOrDispatchGuard();
 
         let entries: { mtype: TypeSignature | undefined, value: BlockStatement }[] = [];
         this.ensureAndConsumeTokenAlways(SYM_lbrace, "match statement options");
 
-        this.ensureAndConsumeTokenAlways(SYM_bar, "match statement entry");
-        const mtype = this.parseMatchTypeGuard();
+        const [_, mtype] = this.parseMatchTypeGuard();
         this.ensureAndConsumeTokenIf(SYM_bigarrow, "match statement entry");
         const mvalue = this.parseScopedBlockStatement();
 
         entries.push({ mtype: mtype, value: mvalue });
-        while (this.testToken(SYM_bar)) {
-            this.consumeToken();
-            
-            const mtypex = this.parseMatchTypeGuard();
+        while (!this.testToken(SYM_rbrace)) {
+            const [okv, mtypex] = this.parseMatchTypeGuard();
+            if(!okv) {
+                break;
+            }
+
             this.ensureAndConsumeTokenIf(SYM_bigarrow, "match statement entry");
             const mvaluex = this.parseScopedBlockStatement();
 
@@ -5338,66 +5364,36 @@ class Parser {
         }
         this.ensureAndConsumeTokenAlways(SYM_rbrace, "switch statment options");
 
-
-        return new MatchStatement(sinfo, sguard, entries);
+        return new MatchStatement(sinfo, sguard[1], sguard[0], entries);
     }
 
     private parseDispatchStatement(): Statement {
         const sinfo = this.peekToken().getSourceInfo();
 
         this.ensureAndConsumeTokenAlways(KW_dispatch, "dispatch statement target");
-
-        const dguard = this.parseITestGuard();
+        const dguard = this.parseMatchOrDispatchGuard();
 
         this.ensureAndConsumeTokenAlways(SYM_lbrace, "dispatch statement options");
 
-        this.ensureAndConsumeTokenAlways(SYM_bar, "dispatch statement entry");
-        const dtype = this.parseDispatchGuard();
+        const [_, dtype] = this.parseDispatchGuard();
         this.ensureAndConsumeTokenIf(SYM_bigarrow, "dispatch statement entry");
         const dvalue = this.parseScopedBlockStatement();
 
-        if(dtype === undefined || Array.isArray(dtype)) {
+        if(dtype === undefined || typeof(dtype) === "string") {
             let entries: { kidx: string | undefined, value: BlockStatement }[] = [];
             entries.push({ kidx: dtype !== undefined ? dtype[0] : undefined, value: dvalue });
 
-            while (this.testToken(SYM_bar)) {
-                this.consumeToken();
+            while (!this.testToken(SYM_rbrace)) {
+                const [okv, dtypex] = this.parseDispatchGuard();
+                if(!okv) {
+                    break;
+                }
 
-                const dtypex = this.parseDispatchGuard();
                 let dd: string | undefined;
                 if(dtypex === undefined) {
                     dd = undefined;
                 }
-                else if(Array.isArray(dtypex)) {
-                    dd = dtypex[0];
-                }
-                else {
-                    this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Mixed dispatch type guard styles in dispatch statement");
-                    dd = undefined;
-                }
-
-                this.ensureAndConsumeTokenIf(SYM_bigarrow, "dispatch statement entry");
-                const dvaluex = this.parseScopedBlockStatement();
-
-                entries.push({ kidx: dd, value: dvaluex });
-            }
-            this.ensureAndConsumeTokenAlways(SYM_rbrace, "dispatch statement options");
-
-            return new DispatchTaskStatement(sinfo, dguard, entries);
-        }
-        else {
-            let entries: { kidx: Expression | undefined, value: BlockStatement }[] = [];
-            entries.push({ kidx: dtype, value: dvalue });
-
-            while (this.testToken(SYM_bar)) {
-                this.consumeToken();
-
-                const dtypex = this.parseDispatchGuard();
-                let dd: Expression | undefined;
-                if(dtypex === undefined) {
-                    dd = undefined;
-                }
-                else if(!Array.isArray(dtypex)) {
+                else if(typeof(dtypex) === "string") {
                     dd = dtypex;
                 }
                 else {
@@ -5412,7 +5408,38 @@ class Parser {
             }
             this.ensureAndConsumeTokenAlways(SYM_rbrace, "dispatch statement options");
 
-            return new DispatchPatternStatement(sinfo, dguard, entries);
+            return new DispatchTaskStatement(sinfo, dguard[1], dguard[0], entries);
+        }
+        else {
+            let entries: { kidx: Expression | undefined, value: BlockStatement }[] = [];
+            entries.push({ kidx: dtype, value: dvalue });
+
+            while (!this.testToken(SYM_rbrace)) {
+                const [okv, dtypex] = this.parseDispatchGuard();
+                if(!okv) {
+                    break;
+                }
+
+                let dd: Expression | undefined;
+                if(dtypex === undefined) {
+                    dd = undefined;
+                }
+                else if(typeof(dtypex) !== "string") {
+                    dd = dtypex;
+                }
+                else {
+                    this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Mixed dispatch type guard styles in dispatch statement");
+                    dd = undefined;
+                }
+
+                this.ensureAndConsumeTokenIf(SYM_bigarrow, "dispatch statement entry");
+                const dvaluex = this.parseScopedBlockStatement();
+
+                entries.push({ kidx: dd, value: dvaluex });
+            }
+            this.ensureAndConsumeTokenAlways(SYM_rbrace, "dispatch statement options");
+
+            return new DispatchPatternStatement(sinfo, dguard[1], dguard[0], entries);
         }
     }
 
@@ -6722,7 +6749,6 @@ class Parser {
         }
 
         while (!this.testToken(SYM_semicolon) && !this.testToken(SYM_amp) && !this.testToken(TokenStrings.EndOfStream) && !this.testToken(TokenStrings.Recover)) {
-            this.ensureAndConsumeTokenAlways(SYM_bar, "datatype member");
             this.parseDatatypeMemberEntityTypeDecl(attributes, tdecl, hasTerms, etag);
         }
 
