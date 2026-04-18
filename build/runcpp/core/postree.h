@@ -35,6 +35,16 @@ namespace ᐸRuntimeᐳ
         constexpr PosRBTreeLeaf() : count(0) { ; }
         constexpr PosRBTreeLeaf(const PosRBTreeLeaf& other) = default;
 
+        template<typename Iter>
+        requires std::random_access_iterator<Iter>
+        PosRBTreeLeaf(Iter start, Iter end) 
+        { 
+            const int64_t size = std::distance(start, end);
+            assert(size <= K);
+            std::copy(start, end, this->data.begin());
+            this->count = size; 
+        }
+
         PosRBTreeLeaf(std::initializer_list<T> args)
         {
             assert(args.size() != 0);
@@ -51,10 +61,7 @@ namespace ᐸRuntimeᐳ
 
         PosRBTreeLeaf subset(int64_t index, int64_t length)
         {
-            PosRBTreeLeaf nleaf = PosRBTreeLeaf();
-            std::copy(this->data.begin() + index, this->data.begin() + index + length, nleaf.data.begin());
-            nleaf.count = length;
-
+            PosRBTreeLeaf nleaf = PosRBTreeLeaf(this->data.begin() + index, this->data.begin() + index + length);
             return nleaf;
         }
 
@@ -81,15 +88,15 @@ namespace ᐸRuntimeᐳ
         PosRBTreeLeaf insert(int64_t index, const T& value)
         {
             assert(index < K);
-            assert(this->count <= K);
+            assert(this->count < K);
           
             PosRBTreeLeaf nleaf = PosRBTreeLeaf();
             if(index > 0) {
-                std::copy(this->data.begin(), this->data.begin() + index, nleaf.data.begin());
+                std::copy(this->data.cbegin(), this->data.cbegin() + index, nleaf.data.begin());
             }
 
             if(index < this->count) {
-                std::copy(this->data.begin() + index, this->data.end() - 1, nleaf.data.begin() + index + 1);               
+                std::copy(this->data.cbegin() + index, this->data.cbegin() + this->count, nleaf.data.begin() + index + 1);               
             }
 
             nleaf.data[index] = value;
@@ -307,7 +314,7 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        PosRBTree<T, K, TreeID> insert(int64_t index, const T& value) 
+        PosRBTree<T, K, TreeID> insert(int64_t index, const T& value) const
         {
             PosRBTree<T, K, TreeID> res(inserthelper(index, value, this->repr));
 

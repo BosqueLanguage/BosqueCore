@@ -66,12 +66,12 @@ namespace ᐸRuntimeᐳ
             assert(this->count < LIST_T_BUFF_SIZE);
             assert(index < LIST_T_BUFF_SIZE);
            
-            ListTInlineContent ninlcnt = ListTInlineContent();
+            ListTInlineContent ninlcnt;
             if(index > 0) {
-                std::copy(this->data.begin(), this->data.begin() + index, ninlcnt.data.begin());
+                std::copy(this->data.cbegin(), this->data.cbegin() + index, ninlcnt.data.begin());
             }
             if(index < (int64_t)this->count) {
-                std::copy(this->data.begin() + index, this->data.end() - 1, ninlcnt.data.begin() + index + 1);
+                std::copy(this->data.cbegin() + index, this->data.cbegin() + this->count, ninlcnt.data.begin() + index + 1);
             }
 
             ninlcnt.data[index] = value;
@@ -98,19 +98,16 @@ namespace ᐸRuntimeᐳ
         } 
         static ListTTreeContent fromInlineList(const ListTInlineContent<T>& inlcnt)
         {
-            PosRBTreeLeaf<T, LIST_T_MAX_LEAF_SIZE>* leaf = PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::s_leafallocator->allocate();
-            std::copy(inlcnt.data.begin(), inlcnt.data.end(), leaf->data.begin());
-            leaf->count = inlcnt.size();
-
+            PosRBTreeLeaf<T, LIST_T_MAX_LEAF_SIZE>* leaf = PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::s_leafallocator->allocate(inlcnt.data.begin(), inlcnt.data.end());
             return mkwpostree(PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::mkwleaf(leaf));
         }
 
         static ListTTreeContent smliteral(std::initializer_list<T> elems)
         {
-            return ListTTreeContent(PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::mkwleaf(PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::s_leafallocator->allocate(elems)));
+            return ListTTreeContent{PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::mkwleaf(PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::s_leafallocator->allocate(elems))};
         }
 
-        ListTTreeContent insert(int64_t index, const T& value)
+        ListTTreeContent insert(int64_t index, const T& value) const
         {
             return ListTTreeContent(this->postree.insert(index, value));
         }
