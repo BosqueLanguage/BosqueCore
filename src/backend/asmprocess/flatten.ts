@@ -3761,8 +3761,9 @@ class ASMToIRConverter {
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
 
         const bfinfo = tdecl.saturatedBFieldInfo.map((bf) => {
-            const fkey = `${(tinst.tsig as NominalTypeSignature).tkeystr}--${bf.name}`;
-            return { containingtype: this.processTypeSignature(bf.containingtype), fkey: fkey, fname: bf.name, ftype: this.processTypeSignature(bf.type) };
+            const bfirt = this.processTypeSignature(bf.containingtype);
+            const fkey = `${bfirt.tkeystr}--${bf.name}`;
+            return { containingtype: bfirt, fkey: fkey, fname: bf.name, ftype: this.processTypeSignature(bf.type) };
         });
 
         return new IRConceptTypeDecl(tinst.tkey, 
@@ -3828,8 +3829,9 @@ class ASMToIRConverter {
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
 
         const bfinfo = tdecl.saturatedBFieldInfo.map((bf) => {
-            const fkey = `${(tinst.tsig as NominalTypeSignature).tkeystr}--${bf.name}`;
-            return { containingtype: this.processTypeSignature(bf.containingtype), fkey: fkey, fname: bf.name, ftype: this.processTypeSignature(bf.type) };
+            const bfirt = this.processTypeSignature(bf.containingtype);
+            const fkey = `${bfirt.tkeystr}--${bf.name}`;
+            return { containingtype: bfirt, fkey: fkey, fname: bf.name, ftype: this.processTypeSignature(bf.type) };
         });
 
         const assocdecls = tdecl.associatedMemberEntityDecls.map((md) => {

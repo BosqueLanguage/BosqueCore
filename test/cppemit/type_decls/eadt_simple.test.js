@@ -29,6 +29,6 @@ describe ("Checker -- entity decl inherits", () => {
 
         checkTestEmitMainFunction('datatype Foo<T> using { field f: T; } of F1 { } F2 { }; public function main(): Int { return F1<Int>{3i}.f; }', 'Int Mainᕒmain() { MainᕒF1ᐸIntᐳ tmp_0 = MainᕒF1ᐸIntᐳ{3_i}; return tmp_0.f; }'); 
 
-        checkTestEmitMainFunction('concept Bar<U> { field f: U; } datatype Foo provides Bar<Int> using { field g: Bool; } of F1 { invariant $g ==> $f >= 0i; } F2 { }; public function main(): Int { return F1{3i, true}.f; }', 'ddd'); 
+        checkTestEmitMainFunction('concept Bar<U> { field f: U; } datatype Foo provides Bar<Int> using { field g: Bool; } of F1 { invariant $g ==> $f >= 0i; } F2 { }; public function main(): Int { return F1{3i, true}.f; }', 'Int Mainᕒmain() { ᐸRuntimeᐳ::bsq_invariant((bool)(MainᕒF1ᐤinvariant_0(3_i, TRUE)), "test.bsq", 2, nullptr, "Failed Invariant"); MainᕒF1 tmp_0 = MainᕒF1{3_i, TRUE}; return tmp_0.f; }'); 
     });
 });
