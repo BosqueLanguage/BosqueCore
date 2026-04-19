@@ -556,7 +556,7 @@ class IRLiteralSHAContentHashExpression extends IRLiteralExpression {
     }
 }
 
-class DateRepresentation {
+class IRDateRepresentation {
     readonly year: number; //1900 to 2299
     readonly month: number;
     readonly day: number;
@@ -568,7 +568,7 @@ class DateRepresentation {
     }
 }
 
-class TimeRepresentation {
+class IRTimeRepresentation {
     readonly hour: number;
     readonly minute: number;
     readonly second: number;
@@ -581,11 +581,11 @@ class TimeRepresentation {
 }
 
 class IRLiteralTZDateTimeExpression extends IRLiteralExpression {
-    readonly date: DateRepresentation;
-    readonly time: TimeRepresentation;
+    readonly date: IRDateRepresentation;
+    readonly time: IRTimeRepresentation;
     readonly timezone: string; //IANA timezone as well as freeform with printable ascii
     
-    constructor(date: DateRepresentation, time: TimeRepresentation, timezone: string) {
+    constructor(date: IRDateRepresentation, time: IRTimeRepresentation, timezone: string) {
         super(IRExpressionTag.IRLiteralTZDateTimeExpression);
         this.date = date;
         this.time = time;
@@ -594,10 +594,10 @@ class IRLiteralTZDateTimeExpression extends IRLiteralExpression {
 }
 
 class IRLiteralTAITimeExpression extends IRLiteralExpression {
-    readonly date: DateRepresentation;
-    readonly time: TimeRepresentation;
+    readonly date: IRDateRepresentation;
+    readonly time: IRTimeRepresentation;
 
-    constructor(date: DateRepresentation, time: TimeRepresentation) {
+    constructor(date: IRDateRepresentation, time: IRTimeRepresentation) {
         super(IRExpressionTag.IRLiteralTAITimeExpression);
         this.date = date;
         this.time = time;
@@ -605,18 +605,18 @@ class IRLiteralTAITimeExpression extends IRLiteralExpression {
 }
 
 class IRLiteralPlainDateExpression extends IRLiteralExpression {
-    readonly date: DateRepresentation;
+    readonly date: IRDateRepresentation;
 
-    constructor(date: DateRepresentation) {
+    constructor(date: IRDateRepresentation) {
         super(IRExpressionTag.IRLiteralPlainDateExpression);
         this.date = date;
     }
 }
 
 class IRLiteralPlainTimeExpression extends IRLiteralExpression {
-    readonly time: TimeRepresentation;
+    readonly time: IRTimeRepresentation;
 
-    constructor(time: TimeRepresentation) {
+    constructor(time: IRTimeRepresentation) {
         super(IRExpressionTag.IRLiteralPlainTimeExpression);
         this.time = time;
     }
@@ -632,11 +632,11 @@ class IRLiteralLogicalTimeExpression extends IRLiteralExpression {
 }
 
 class IRLiteralISOTimeStampExpression extends IRLiteralExpression {
-    readonly date: DateRepresentation;
-    readonly time: TimeRepresentation;
+    readonly date: IRDateRepresentation;
+    readonly time: IRTimeRepresentation;
     readonly milliseconds: number;
 
-    constructor(date: DateRepresentation, time: TimeRepresentation, milliseconds: number) {
+    constructor(date: IRDateRepresentation, time: IRTimeRepresentation, milliseconds: number) {
         super(IRExpressionTag.IRLiteralISOTimeStampExpression);
         this.date = date;
         this.time = time;
@@ -644,7 +644,7 @@ class IRLiteralISOTimeStampExpression extends IRLiteralExpression {
     }
 }
 
-class DeltaDateRepresentation {
+class IRDeltaDateRepresentation {
     readonly years: number;
     readonly months: number;
     readonly days: number;
@@ -656,7 +656,7 @@ class DeltaDateRepresentation {
     }
 }
 
-class DeltaTimeRepresentation {
+class IRDeltaTimeRepresentation {
     readonly hours: number;
     readonly minutes: number;
     readonly seconds: number;
@@ -670,10 +670,10 @@ class DeltaTimeRepresentation {
 
 class IRLiteralDeltaDateTimeExpression extends IRLiteralExpression {
     readonly sign: "+" | "-";
-    readonly deltadate: DeltaDateRepresentation;
-    readonly deltatime: DeltaTimeRepresentation;
+    readonly deltadate: IRDeltaDateRepresentation;
+    readonly deltatime: IRDeltaTimeRepresentation;
 
-    constructor(sign: "+" | "-", deltadate: DeltaDateRepresentation, deltatime: DeltaTimeRepresentation) {
+    constructor(sign: "+" | "-", deltadate: IRDeltaDateRepresentation, deltatime: IRDeltaTimeRepresentation) {
         super(IRExpressionTag.IRLiteralDeltaDateTimeExpression);
         this.sign = sign;
         this.deltadate = deltadate;
@@ -683,11 +683,11 @@ class IRLiteralDeltaDateTimeExpression extends IRLiteralExpression {
  
 class IRLiteralDeltaISOTimeStampExpression extends IRLiteralExpression {
     readonly sign: "+" | "-";
-    readonly deltadate: DeltaDateRepresentation;
-    readonly deltatime: DeltaTimeRepresentation;
+    readonly deltadate: IRDeltaDateRepresentation;
+    readonly deltatime: IRDeltaTimeRepresentation;
     readonly deltamilliseconds: BigInt;
 
-    constructor(sign: "+" | "-", deltadate: DeltaDateRepresentation, deltatime: DeltaTimeRepresentation, deltamilliseconds: BigInt) {
+    constructor(sign: "+" | "-", deltadate: IRDeltaDateRepresentation, deltatime: IRDeltaTimeRepresentation, deltamilliseconds: BigInt) {
         super(IRExpressionTag.IRLiteralDeltaISOTimeStampExpression);
         this.sign = sign;
         this.deltadate = deltadate;
@@ -2326,8 +2326,8 @@ export {
     IRLiteralDecimalDegreeExpression, IRLiteralLatLongCoordinateExpression, IRLiteralComplexExpression,
     IRLiteralByteBufferExpression, 
     IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralSHAContentHashExpression,
-    DateRepresentation, TimeRepresentation, IRLiteralTZDateTimeExpression, IRLiteralTAITimeExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralLogicalTimeExpression, IRLiteralISOTimeStampExpression,
-    DeltaDateRepresentation, DeltaTimeRepresentation, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaSecondsExpression, IRLiteralDeltaLogicalTimeExpression,
+    IRDateRepresentation, IRTimeRepresentation, IRLiteralTZDateTimeExpression, IRLiteralTAITimeExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralLogicalTimeExpression, IRLiteralISOTimeStampExpression,
+    IRDeltaDateRepresentation, IRDeltaTimeRepresentation, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaSecondsExpression, IRLiteralDeltaLogicalTimeExpression,
     IRLiteralUnicodeRegexExpression, IRLiteralCRegexExpression,
     IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralUnicodeCharExpression,
     IRLiteralCStringExpression, IRLiteralStringExpression,
