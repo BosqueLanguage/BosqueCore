@@ -54,24 +54,23 @@ namespace ᐸRuntimeᐳ
             this->count = args.size();
         }
 
-        T& back()
+        T back() const
         {
             return this->data.back();
         }
 
-        PosRBTreeLeaf subset(int64_t index, int64_t length)
+        PosRBTreeLeaf subset(int64_t index, int64_t length) const
         {
-            PosRBTreeLeaf nleaf = PosRBTreeLeaf(this->data.begin() + index, this->data.begin() + index + length);
-            return nleaf;
+            return PosRBTreeLeaf(this->data.begin() + index, this->data.begin() + index + length);
         }
 
-        PosRBTreeLeaf subsetinsert(int64_t subset_index, int64_t insert_index, int64_t length, const T& value)
+        PosRBTreeLeaf subsetinsert(int64_t subset_index, int64_t insert_index, int64_t length, const T& value) const
         {
             assert(insert_index < K);
             assert(subset_index + length < K);
             assert(this->count <= K);
 
-            PosRBTreeLeaf nleaf = PosRBTreeLeaf();
+            PosRBTreeLeaf nleaf;
             std::copy(this->data.begin() + subset_index, 
                       this->data.begin() + subset_index + insert_index, 
                       nleaf.data.begin());
@@ -85,12 +84,12 @@ namespace ᐸRuntimeᐳ
             return nleaf;
         }
 
-        PosRBTreeLeaf insert(int64_t index, const T& value)
+        PosRBTreeLeaf insert(int64_t index, const T& value) const
         {
             assert(index < K);
             assert(this->count < K);
           
-            PosRBTreeLeaf nleaf = PosRBTreeLeaf();
+            PosRBTreeLeaf nleaf;
             if(index > 0) {
                 std::copy(this->data.cbegin(), this->data.cbegin() + index, nleaf.data.begin());
             }
@@ -233,7 +232,7 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        static T& gethelper(int64_t index, const PosRBTreeRepr<T, K>& cur) 
+        static T gethelper(int64_t index, const PosRBTreeRepr<T, K>& cur) 
         {
             assert(cur.typeinfo != nullptr);
 
@@ -251,7 +250,7 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        T& get(int64_t index) const
+        T get(int64_t index) const
         {
             return gethelper(index, this->repr);
         }
@@ -263,8 +262,7 @@ namespace ᐸRuntimeᐳ
             if(cur.typeinfo == s_leaftypeinfo) {
                 const int64_t cur_count = cur.data.leaf->count;
                 if(cur_count < K) {
-                    PosRBTreeLeaf<T, K> nleaf = cur.data.leaf->insert(index, value);
-                    return mkwleafRepr(s_leafallocator->allocate(nleaf));
+                    return mkwleafRepr(s_leafallocator->allocate(cur.data.leaf->insert(index, value)));
                 }
                 else {
                     PosRBTreeRepr<T, K> nl, nr;
@@ -292,8 +290,7 @@ namespace ᐸRuntimeᐳ
                         nr = mkwleafRepr(s_leafallocator->allocate(nrleaf));
                     }
 
-                    PosRBTreeNode<T, K>* nn = s_nodeallocator->allocate(cur_count + 1, RColor::Red, nl, nr); 
-                    return mkwnodeRepr(nn);
+                    return mkwnodeRepr(s_nodeallocator->allocate(cur_count + 1, RColor::Red, nl, nr)); 
                 }
             }
             else {
@@ -309,8 +306,7 @@ namespace ᐸRuntimeᐳ
                     nr = inserthelper(index - lcount, value, cur.data.node->right); 
                 }
 
-                PosRBTreeNode<T, K>* nn = s_nodeallocator->allocate(nl.data.node->count + nr.data.node->count, RColor::Red, nl, nr);
-                return mkwnodeRepr(nn);
+                return mkwnodeRepr(s_nodeallocator->allocate(nl.data.node->count + nr.data.node->count, RColor::Red, nl, nr));
             }
         }
 

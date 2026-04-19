@@ -55,13 +55,12 @@ namespace ᐸRuntimeᐳ
             return cb;
         }
 
-        ListTInlineContent(const T& value) 
+        constexpr ListTInlineContent(const T& value): count(1)
         {
             this->data[0] = value;
-            this->count++;
         }
 
-        ListTInlineContent insert(int64_t index, const T& value)
+        ListTInlineContent insert(int64_t index, const T& value) const
         {
             assert(this->count < LIST_T_BUFF_SIZE);
             assert(index < LIST_T_BUFF_SIZE);
@@ -109,7 +108,7 @@ namespace ᐸRuntimeᐳ
 
         ListTTreeContent insert(int64_t index, const T& value) const
         {
-            return ListTTreeContent(this->postree.insert(index, value));
+            return ListTTreeContent{this->postree.insert(index, value)};
         }
     };
 
@@ -332,7 +331,7 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        static const T& gethelper(int64_t index, const XList& list) 
+        static T gethelper(int64_t index, const XList& list) 
         {
             if(list.ulist.typeinfo == s_inlinetypeinfo) {
                 return list.ulist.data.inlinelist.data[index];
@@ -352,7 +351,7 @@ namespace ᐸRuntimeᐳ
             return gethelper(0, *this);
         }
 
-        XList insert(int64_t index, const T& value)
+        XList insert(int64_t index, const T& value) const
         {
             if(this->ulist.typeinfo == nullptr) {
                 assert(index == 0);
