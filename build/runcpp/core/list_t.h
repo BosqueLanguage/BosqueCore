@@ -55,6 +55,30 @@ namespace ᐸRuntimeᐳ
             return cb;
         }
 
+        constexpr ListTInlineContent(const T& value): count(1)
+        {
+            this->data[0] = value;
+        }
+
+        ListTInlineContent insert(int64_t index, const T& value) const
+        {
+            assert(this->count < LIST_T_BUFF_SIZE);
+            assert(index < LIST_T_BUFF_SIZE);
+           
+            ListTInlineContent ninlcnt;
+            if(index > 0) {
+                std::copy(this->data.cbegin(), this->data.cbegin() + index, ninlcnt.data.begin());
+            }
+            if(index < (int64_t)this->count) {
+                std::copy(this->data.cbegin() + index, this->data.cbegin() + this->count, ninlcnt.data.begin() + index + 1);
+            }
+
+            ninlcnt.data[index] = value;
+            ninlcnt.count = this->count + 1;
+
+            return ninlcnt;
+        }
+
         constexpr int64_t size() const { return this->count; }
         constexpr T at(size_t index) const { return this->data[index]; }
     };
@@ -67,9 +91,24 @@ namespace ᐸRuntimeᐳ
 
         PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T> postree;
 
+        static ListTTreeContent mkwpostree(PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T> postree) 
+        {
+            return ListTTreeContent{ postree };
+        } 
+        static ListTTreeContent fromInlineList(const ListTInlineContent<T>& inlcnt)
+        {
+            PosRBTreeLeaf<T, LIST_T_MAX_LEAF_SIZE>* leaf = PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::s_leafallocator->allocate(inlcnt.data.cbegin(), inlcnt.data.cend());
+            return mkwpostree(PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::mkwleaf(leaf));
+        }
+
         static ListTTreeContent smliteral(std::initializer_list<T> elems)
         {
             return ListTTreeContent{PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::mkwleaf(PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::s_leafallocator->allocate(elems))};
+        }
+
+        ListTTreeContent insert(int64_t index, const T& value) const
+        {
+            return ListTTreeContent{this->postree.insert(index, value)};
         }
     };
 
@@ -288,6 +327,48 @@ namespace ᐸRuntimeᐳ
                 }
                 else {
                     return this->ulist.data.treelist.postree.count();
+                }
+            }
+        }
+
+        static T gethelper(int64_t index, const XList& list) 
+        {
+            if(list.ulist.typeinfo == s_inlinetypeinfo) {
+                return list.ulist.data.inlinelist.data[index];
+            }
+            else {
+                return list.ulist.data.treelist.postree.get(index);
+            }
+        }
+
+        T get(int64_t index) const
+        {
+            return gethelper(index, *this);
+        }
+
+        T front() const
+        {
+            return gethelper(0, *this);
+        }
+
+        XList insert(int64_t index, const T& value) const
+        {
+            if(this->ulist.typeinfo == nullptr) {
+                assert(index == 0);
+                return XList(ListTInlineContent<T>(value));
+            }
+            else {
+                if(this->ulist.typeinfo == s_inlinetypeinfo) {
+                    if(this->ulist.data.inlinelist.size() < ListTInlineContent<T>::LIST_T_BUFF_SIZE) {
+                        return XList(this->ulist.data.inlinelist.insert(index, value));
+                    }
+                    else {
+                        auto leaf = ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::fromInlineList(this->ulist.data.inlinelist);
+                        return XList(leaf.insert(index, value));
+                    }
+                }
+                else {
+                    return XList(this->ulist.data.treelist.insert(index, value));
                 }
             }
         }
