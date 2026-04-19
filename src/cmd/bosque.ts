@@ -77,7 +77,10 @@ function emitCommandLineMakefile(optlevel: "debug" | "test" | "release"): string
         'all: $(HEADERS) $(MAKE_PATH)/app\n\n' +
         '$(MAKE_PATH)/app: $(MAKE_PATH)/app.h $(MAKE_PATH)/app.cpp\n' +
         '\t@make -f $(RUNTIME_DIR)makefile BUILD=$(BUILD) --jobs=8 all\n' +
-        '\tg++ $(CPPFLAGS) -o $(MAKE_PATH)/app $(OUT_OBJS)* $(JSON_INCLUDES) $(MAKE_PATH)/app.cpp\n';
+        '\tg++ $(CPPFLAGS) -o $(MAKE_PATH)/app $(OUT_OBJS)* $(JSON_INCLUDES) $(MAKE_PATH)/app.cpp\n' +
+        'clean:\n' +
+	    '\trm -rf $(OUT_OBJS)*\n' +
+        '\trm app';
 }
 
 //////////////////////////////
