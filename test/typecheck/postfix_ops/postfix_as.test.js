@@ -35,9 +35,12 @@ describe ("Checker -- entity as", () => {
         checkTestFunctionInFileError("concept Bar {} concept Baz {} entity Foo provides Bar { field f: Int; } function main(x: Baz): Foo { return x.@<Foo>; }", "Convert always fails");
     });
 
-    it.skip("should check postfix @ types ADT", function () {
-    });
+    it("should check postfix @ types ADT", function () {
+        checkTestFunctionInFile('datatype Foo of F1 { } F2 { } ; function main(x: Foo): F1 { return x.@<F1>; }'); 
+        checkTestFunctionInFile('datatype Foo of F1 { } F2 { } ; function main(x: F1): Foo { return x.@<Foo>; }'); 
 
-    it.skip("should check postfix @ types ADT fail", function () {
+        checkTestFunctionInFile('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; function main(x: Bar): F1 { return x.@<F1>; }');
+        checkTestFunctionInFile('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; function main(x: Bar): Foo { return x.@<Foo>; }'); 
+        checkTestFunctionInFile('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; function main(x: F1): Bar { return x.@<Bar>; }'); 
     });
 });

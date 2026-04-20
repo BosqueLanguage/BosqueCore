@@ -25,7 +25,7 @@ describe ("Checker -- eADT decl", () => {
         checkTestFunctionInFile('datatype Foo of F1 { field f: Int; } F2 { } & { const c: Int = 3i; } function main(): Int { return Foo::c; }'); 
     });
 
-    it.skip("should check eADT function", function () {
+    it("should check eADT function", function () {
         checkTestFunctionInFile('datatype Foo of F1 { field f: Int; } F2 { } & { function foo(): Int { return 3i; } } function main(): Int { return F1::foo(); }'); 
         checkTestFunctionInFile('datatype Foo of F1 { field f: Int; } F2 { } & { function foo(): Int { return 3i; } } function main(): Int { return Foo::foo(); }'); 
     });

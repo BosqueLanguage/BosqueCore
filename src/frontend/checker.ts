@@ -2370,30 +2370,29 @@ class TypeChecker {
     }
 
     private checkCallTypeFunctionExpression(env: TypeEnvironment, exp: CallTypeFunctionExpression, refallowed: boolean): TypeResultWRefVarInfoResult {
-        /*
         const oktype = this.checkTypeSignature(exp.ttype);
         if(!oktype) {
-            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
         }
         
-        const fdecl = this.relations.resolveTypeFunction(exp.ttype, exp.name, this.constraints);
+        const fdecl = this.relations.resolveTypeFunction(exp.ttype, exp.name, this.constraints, hastemplate, haslambda, exp.args.hasSpecialRef());
         if(fdecl === undefined) {
             this.reportError(exp.sinfo, `Could not find type scoped function ${exp.ttype.emit()}::${exp.name}`);
-            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
         }
 
         //special case for type Foo = String of ... Foo::from
         if(fdecl.member === null) {
             if(exp.args.args.length !== 1 || !(exp.args.args[0] instanceof PositionalArgumentValue)) {
                 this.reportError(exp.sinfo, `Conversion from expects 1 argument`);
-                return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+                return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
             }
 
             const etype = this.checkExpression(env, exp.args.args[0].exp, undefined);
             this.checkError(exp.sinfo, !(etype instanceof NominalTypeSignature), `Invalid arg type for conversion from ${etype.emit()} -- converting to ${fdecl.typeinfo.tsig.emit()}`);
 
             if(etype instanceof NominalTypeSignature) {
-                if(etype.tkeystr === "String" || etype.tkeystr === "CString") {
+                if(etype.decl instanceof PrimitiveEntityTypeDecl) {
                     this.checkError(exp.sinfo, !this.relations.areSameTypes((fdecl.typeinfo.tsig.decl as TypedeclTypeDecl).valuetype, etype), `Invalid arg type for conversion from ${etype.emit()} -- converting to ${fdecl.typeinfo.tsig.emit()}`);
                 }
                 else if(etype.decl instanceof TypedeclTypeDecl) {
@@ -2408,13 +2407,13 @@ class TypeChecker {
             exp.resolvedDeclType = fdecl.typeinfo.tsig;
             exp.shuffleinfo = [[0, etype]];
 
-            return exp.setType(fdecl.typeinfo.tsig);
+            return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(fdecl.typeinfo.tsig));
         }
         else {
             const refinemap = this.relations.generateTemplateMappingForTypeDecl(fdecl.typeinfo.tsig as NominalTypeSignature);
-            const imapper = this.checkTemplateBindingsOnInvoke(exp. sinfo, env, exp.terms, fdecl.member, refinemap);
+            const imapper = this.checkTemplateBindingsOnInvokeSig(exp.sinfo, env, exp.terms, fdecl.member, refinemap);
             if(imapper === undefined) {
-                return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+                return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
             }
 
             const fullmapper = TemplateNameMapper.merge(fdecl.typeinfo.mapping, imapper);
@@ -2426,8 +2425,6 @@ class TypeChecker {
 
             return exp.setType(fdecl.member.resultType.remapTemplateBindings(fullmapper));
         }
-        */
-        assert(false, "Not Implemented -- checkCallTypeFunctionExpression");
     }
 
     private checkParseAsTypeExpression(env: TypeEnvironment, exp: ParseAsTypeExpression): TypeSignature {
