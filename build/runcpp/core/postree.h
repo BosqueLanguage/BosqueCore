@@ -480,6 +480,9 @@ namespace ᐸRuntimeᐳ
         PosRBTree<T, K, TreeID> insert(int64_t index, const T& value) const
         {
             PosRBTree<T, K, TreeID> res(inserthelper(index, value, this->repr));
+            if(res.repr.typeinfo == s_nodetypeinfo) {
+                res.repr.data.node->color = RColor::Black;
+            }
 
             assert(checkRBInvariants(res));
 
