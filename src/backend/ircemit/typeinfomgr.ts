@@ -233,7 +233,7 @@ class TypeInfoManager {
                     return TransformCPPNameManager.convertTypeKey(tkey) + rtspec;
                 }
                 else {
-                    return TransformCPPNameManager.convertTypeKey(tkey) + "&";                
+                    return (!isreftagged ? "const " : "") + TransformCPPNameManager.convertTypeKey(tkey) + "&";                
                 }
             }
         }

@@ -1091,10 +1091,25 @@ class ASMToIRConverter {
             const ivar = (passarg.exp as AccessVariableExpression).srcname;
             const ivartype = this.processTypeSignature((passarg.exp as AccessVariableExpression).getType());
             
-            //TODO: handle postcondition here  <--------------------------------- 
-            assert(!haspostconds, "not implemented");
+           if(!haspostconds) {
+                return new IRInvokeSimpleWithImplicitsExpression(iname, aargs, ii, ivar, ivartype, passarg.kind);
+            }
+            else {
+                const tmppass = this.generateTempVarName();
+                this.pushStatement(new IRTempAssignExpressionStatement(tmppass, aargs[srpos], ivartype));
 
-            return new IRInvokeSimpleWithImplicitsExpression(iname, aargs, ii, ivar, ivartype, passarg.kind);
+                const tmpres = this.generateTempVarName();
+                this.pushStatement(new IRTempAssignRefInvokeStatement(tmpres, this.processTypeSignature(exp.getType()), ivar, ivartype, passarg.kind, new IRInvokeSimpleWithImplicitsExpression(iname, aargs, ii, ivar, ivartype, passarg.kind)));
+            
+                //do postconditions as needed
+                const postargs = [new IRAccessTempVariableExpression(tmpres), new IRAccessTempVariableExpression(tmppass), ...aargs]
+                for(let i = 0; i < fdecl.postconditions.length; ++i) {
+                    const invdecl = fdecl.postconditions[i];
+                    this.pushStatement(new IRPostconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), iname, invdecl.ii, postargs));
+                } 
+
+                return new IRAccessTempVariableExpression(tmpres);
+            }
         }
     }
 

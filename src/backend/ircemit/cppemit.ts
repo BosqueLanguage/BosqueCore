@@ -1190,7 +1190,10 @@ class CPPEmitter {
             params = [rparam, ...sparams];
         }
         else {
-            assert(false, "CPPEmitter: need to implement support for postconditions with passing parameters in postcondition check function emission");
+            const pparam = invk.params.find((p) => p.pkind !== undefined) as IRInvokeParameterDecl;
+            const iparam = `${this.typeInfoManager.emitTypeAsParameter(pparam.type.tkeystr, false, false)} ${TransformCPPNameManager.convertIdentifier("$" + pparam.name)}`;
+
+            params = [rparam, iparam, ...sparams];
         }
 
         const finalv = `return ${this.emitIRSimpleExpression(ipcs.value, true)};`;
