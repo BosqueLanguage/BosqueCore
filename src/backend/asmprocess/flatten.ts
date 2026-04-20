@@ -587,7 +587,7 @@ class ASMToIRConverter {
         else if((oftype instanceof NominalTypeSignature) && (oftype.decl instanceof FailTypeDecl)) {
             return this.processITestCond_Fail(src, sexp, isnot, makeimm);
         }
-        else if((oftype instanceof NominalTypeSignature) && (oftype.decl instanceof OptionTypeDecl)) {
+        else if((src instanceof NominalTypeSignature) && (src.tkeystr === "None" || (src.decl instanceof SomeTypeDecl)) && (oftype instanceof NominalTypeSignature) && (oftype.decl instanceof OptionTypeDecl)) {
             const isoptsubtype = src.tkeystr === "None" || ((src instanceof NominalTypeSignature) && (src.decl instanceof SomeTypeDecl)) || src.tkeystr === oftype.tkeystr;
 
             if(isnot) {
@@ -1095,14 +1095,21 @@ class ASMToIRConverter {
                 return new IRInvokeSimpleWithImplicitsExpression(iname, aargs, ii, ivar, ivartype, passarg.kind);
             }
             else {
-                const tmppass = this.generateTempVarName();
-                this.pushStatement(new IRTempAssignExpressionStatement(tmppass, aargs[srpos], ivartype));
+                let tmppass: string | undefined = undefined;
+                if(passarg.kind !== "out" && passarg.kind !== "out?") {
+                    tmppass = this.generateTempVarName();
+                    this.pushStatement(new IRTempAssignExpressionStatement(tmppass, aargs[srpos], ivartype));
+                }
 
                 const tmpres = this.generateTempVarName();
                 this.pushStatement(new IRTempAssignRefInvokeStatement(tmpres, this.processTypeSignature(exp.getType()), ivar, ivartype, passarg.kind, new IRInvokeSimpleWithImplicitsExpression(iname, aargs, ii, ivar, ivartype, passarg.kind)));
             
                 //do postconditions as needed
-                const postargs = [new IRAccessTempVariableExpression(tmpres), new IRAccessTempVariableExpression(tmppass), ...aargs]
+                let postargs = [new IRAccessTempVariableExpression(tmpres), ...aargs];
+                if(tmppass !== undefined) {
+                    postargs = [new IRAccessTempVariableExpression(tmpres), new IRAccessTempVariableExpression(tmppass), ...postargs];
+                }
+
                 for(let i = 0; i < fdecl.postconditions.length; ++i) {
                     const invdecl = fdecl.postconditions[i];
                     this.pushStatement(new IRPostconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), iname, invdecl.ii, postargs));
