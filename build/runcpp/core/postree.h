@@ -206,6 +206,57 @@ namespace ᐸRuntimeᐳ
             return PosRBTree<T, K, TreeID>(mkwnodeRepr(node));
         }
 
+        static int64_t checkRBPathLengthInvariant(const PosRBTreeRepr<T, K>& t)
+        {
+            if(t.typeinfo == s_leaftypeinfo) {
+                return 0;
+            }
+            
+            const int lc = checkRBPathLengthInvariant(t.data.node->right);
+            if(lc == -1) {
+                return -1;
+            }
+
+            const int rc = checkRBPathLengthInvariant(t.data.node->right);
+            if(rc == -1) {
+                return -1;
+            }
+
+            if(lc != rc) { // black height mismatch
+                return -1;
+            }
+
+            return t.data.node->color == RColor::Black 
+                ? lc + 1
+                : lc;
+        }
+
+        static bool checkRBChildColorInvariant(const PosRBTreeRepr<T, K>& t)
+        {
+            if(t.typeinfo != s_nodetypeinfo) {
+                return true;
+            }
+
+            if(t.data.node->color == RColor::Red) {
+                const bool islred = t.typeinfo == s_nodetypeinfo 
+                    ? t.data.node->left.data.node->color == RColor::Red
+                    : false;
+                const bool isrred = t.typeinfo == s_nodetypeinfo 
+                    ? t.data.node->right.data.node->color == RColor::Red
+                    : false;
+
+                return !(islred || isrred);
+            }
+
+            return checkRBChildColorInvariant(t.data.node->left)
+                && checkRBChildColorInvariant(t.data.node->left);
+        }
+
+        static bool checkRBInvariants(const PosRBTreeRepr<T, K>& t)
+        {
+            return checkRBChildColorInvariant(t) && checkRBPathLengthInvariant(t) >= 0;
+        }
+
         constexpr int64_t count() const
         {
             if(this->repr.typeinfo == nullptr) {
@@ -314,7 +365,7 @@ namespace ᐸRuntimeᐳ
         {
             PosRBTree<T, K, TreeID> res(inserthelper(index, value, this->repr));
 
-            // TODO: assert(checkRBInvariants(res));
+            assert(checkRBInvariants(res));
 
             return res;
         }
