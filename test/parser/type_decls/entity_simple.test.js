@@ -44,7 +44,7 @@ describe ("Parser -- entity decl with consts", () => {
         parseTestFunctionInFileError('entity Foo { const c = 3i; } function main(): Int { return Foo::c; }', 'Expected ":" but got "=" when parsing "const member"'); 
     });
 });
-/*
+
 describe ("Parser -- entity decl with functions", () => {
     it("should parse entity with consts", function () {
         parseTestFunctionInFile('entity Foo { function foo(): Int { return 3i; } } [FUNC]', 'function main(): Int { return Foo::foo(); }');
@@ -53,4 +53,3 @@ describe ("Parser -- entity decl with functions", () => {
         parseTestFunctionInFile('entity Foo { function foo<T>(x: T): T { return x; } } [FUNC]', 'function main(): Int { return Foo::foo<Int>(3i); }');
     });
 });
-*/

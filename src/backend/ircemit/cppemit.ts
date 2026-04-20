@@ -1108,7 +1108,7 @@ class CPPEmitter {
 
         var typeidextract: string;
         if(!(mstmt.svaltype instanceof IRNominalTypeSignature)) {
-            typeidextract = `&${svaltypemgr} /** ${mstmt.svaltype.tkeystr} **/`;
+            typeidextract = `&${svaltypemgr}`;
         }
         else {
             const stdecl = this.irasm.alltypes.get(mstmt.svaltype.tkeystr);
@@ -1123,7 +1123,7 @@ class CPPEmitter {
             }
             else {
                 if((stdecl instanceof IRAbstractEntityTypeDecl)) {
-                    typeidextract = `&${svaltypemgr} /** ${mstmt.svaltype.tkeystr} **/`;
+                    typeidextract = `&${svaltypemgr}`;
                 }
                 else {
                     typeidextract = `${sval}.uval.typeinfo`;
@@ -1142,7 +1142,7 @@ class CPPEmitter {
 
                 let cop: string;
                 if((mftinfo instanceof IRAbstractEntityTypeDecl)) {
-                    cop = `&${svaltypemgr} == &${ttmgr}`;
+                    cop = `${typeidextract} == &${ttmgr}`;
                 }
                 else {
                     cop = `${RUNTIME_NAMESPACE}::isSubtypeOf(${typeidextract}, &${ttmgr})`;
