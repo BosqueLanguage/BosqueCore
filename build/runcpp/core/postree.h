@@ -283,6 +283,24 @@ namespace ᐸRuntimeᐳ
             }
         }
 
+        // double red violation on the LL side (PosRBTreeNode{ ..., Red, PosRBTreeNode{ x, Red, ... }, ... })
+        static std::optional<PosRBTreeRepr<T, K>> balancehelper_RR_LL(const PosRBTreeRepr<T, K>& cur)
+        {
+            const PosRBTreeRepr<T, K>& l  = cur.node->right;
+            const PosRBTreeRepr<T, K>& ll = r.node->left;
+            if(!validateBlackNode(cur) || !validateRedNode(lr) || !validateRedNode(ll)) {
+                return std::nullopt;
+            }
+
+            const PosRBTreeRepr<T, K>& lll = ll.node->left;
+            const PosRBTreeRepr<T, K>& llr = ll.node->right;
+            const PosRBTreeRepr<T, K>& lr  = l.node->right;
+            const PosRBTreeRepr<T, K>& r   = cur.node->right;
+            const PosRBTreeRepr<T, K> nl = mkwnodeRepr(lll.node->count + llr.node->count, RColor::Red, lll, llr);
+            const PosRBTreeRepr<T, K> nr = mkwnodeRepr(lr.node->count + r.node->count, RColor::Red, lr, r);
+            return mkwnodeRepr(s_nodeallocator->allocate(nl.node->count + nr.node->count, RColor::Black, nl, nr));
+        }
+
         // double red violation on the RL side (PosRBTreeNode{ ..., Red, PosRBTreeNode{ x, Red, ... }, ... })
         static std::optional<PosRBTreeRepr<T, K>> balancehelper_RR_RL(const PosRBTreeRepr<T, K>& cur)
         {
