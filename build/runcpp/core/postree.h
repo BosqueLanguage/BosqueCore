@@ -206,18 +206,18 @@ namespace ᐸRuntimeᐳ
             return PosRBTree<T, K, TreeID>(mkwnodeRepr(node));
         }
 
-        static int64_t checkRBPathLengthInvariant(const PosRBTreeRepr<T, K>& t)
+        static int64_t checkRBPathLengthInvariant(const PosRBTreeRepr<T, K>& cur)
         {
-            if(t.typeinfo == s_leaftypeinfo) {
+            if(cur.typeinfo == s_leaftypeinfo) {
                 return 0;
             }
             
-            const int lc = checkRBPathLengthInvariant(t.data.node->right);
+            const int lc = checkRBPathLengthInvariant(cur.data.node->left);
             if(lc == -1) {
                 return -1;
             }
 
-            const int rc = checkRBPathLengthInvariant(t.data.node->right);
+            const int rc = checkRBPathLengthInvariant(cur.data.node->right);
             if(rc == -1) {
                 return -1;
             }
@@ -226,30 +226,30 @@ namespace ᐸRuntimeᐳ
                 return -1;
             }
 
-            return t.data.node->color == RColor::Black 
+            return cur.data.node->color == RColor::Black 
                 ? lc + 1
                 : lc;
         }
 
-        static bool checkRBChildColorInvariant(const PosRBTreeRepr<T, K>& t)
+        static bool checkRBChildColorInvariant(const PosRBTreeRepr<T, K>& cur)
         {
-            if(t.typeinfo != s_nodetypeinfo) {
+            if(cur.typeinfo != s_nodetypeinfo) {
                 return true;
             }
 
-            if(t.data.node->color == RColor::Red) {
-                const bool islred = t.data.node->left.typeinfo == s_nodetypeinfo 
-                    ? t.data.node->left.data.node->color == RColor::Red
+            if(cur.data.node->color == RColor::Red) {
+                const bool islred = cur.data.node->left.typeinfo == s_nodetypeinfo 
+                    ? cur.data.node->left.data.node->color == RColor::Red
                     : false;
-                const bool isrred = t.data.node->right.typeinfo == s_nodetypeinfo 
-                    ? t.data.node->right.data.node->color == RColor::Red
+                const bool isrred = cur.data.node->right.typeinfo == s_nodetypeinfo 
+                    ? cur.data.node->right.data.node->color == RColor::Red
                     : false;
 
                 return !(islred || isrred);
             }
 
-            return checkRBChildColorInvariant(t.data.node->left)
-                && checkRBChildColorInvariant(t.data.node->right);
+            return checkRBChildColorInvariant(cur.data.node->left)
+                && checkRBChildColorInvariant(cur.data.node->right);
         }
 
         static bool checkRBInvariants(const PosRBTree<T, K, TreeID>& tree)
@@ -259,7 +259,10 @@ namespace ᐸRuntimeᐳ
 
         static bool validateRedNode(const PosRBTreeRepr<T, K>& cur)
         {
-            if(cur.typeinfo != s_nodetypeinfo || cur.data.node->color != RColor::Red) {
+            if(cur.typeinfo != s_nodetypeinfo) {
+                return false;
+            }
+            if(cur.data.node->color != RColor::Red) {
                 return false;
             }
             
@@ -268,19 +271,30 @@ namespace ᐸRuntimeᐳ
 
         static bool validateBlackNode(const PosRBTreeRepr<T, K>& cur)
         {
-            if(cur.typeinfo != s_nodetypeinfo || cur.data.node->color != RColor::Black) {
+            if(cur.typeinfo != s_nodetypeinfo) {
+                return false;
+            }
+            if(cur.data.node->color != RColor::Black) {
                 return false;
             }
             
             return true;
         }
 
-        // double red violation on the LL side (tleft = Node{Red, _, Node{Red, _ a, b}, c})
+        // double red violation on the LL side (tleft = Node{_, Red, Node{_, Red, a, b}, c})
         static std::optional<PosRBTreeRepr<T, K>> balancehelper_RR_LL(const PosRBTreeRepr<T, K>& cur)
         {
+            if(!validateBlackNode(cur)) {
+                return std::nullopt;
+            }
+
             const PosRBTreeRepr<T, K>& l  = cur.data.node->left;
+            if(!validateRedNode(l)) {
+                return std::nullopt;
+            }
+
             const PosRBTreeRepr<T, K>& ll = l.data.node->left;
-            if(!validateBlackNode(cur) || !validateRedNode(l) || !validateRedNode(ll)) {
+            if(!validateRedNode(ll)) {
                 return std::nullopt;
             }
 
@@ -289,16 +303,24 @@ namespace ᐸRuntimeᐳ
             const PosRBTreeRepr<T, K>& lr  = l.data.node->right;
             const PosRBTreeRepr<T, K>& r   = cur.data.node->right;
             const PosRBTreeRepr<T, K> nl = mkwnodeRepr(s_nodeallocator->allocate(lll.data.node->count + llr.data.node->count, RColor::Black, lll, llr));
-            const PosRBTreeRepr<T, K> nr = mkwnodeRepr(s_nodeallocator->allocate(lr.data.node->count + r.data.node->count, RColor::Red, lr, r));
+            const PosRBTreeRepr<T, K> nr = mkwnodeRepr(s_nodeallocator->allocate(lr.data.node->count + r.data.node->count, RColor::Black, lr, r));
             return mkwnodeRepr(s_nodeallocator->allocate(nl.data.node->count + nr.data.node->count, RColor::Red, nl, nr));
         }
 
-        // double red violation on the LR side (tleft = Node{Red, _, a, Node{Red, _, b, c}})
+        // double red violation on the LR side (tleft = Node{_, Red, a, Node{_, Red, b, c}})
         static std::optional<PosRBTreeRepr<T, K>> balancehelper_RR_LR(const PosRBTreeRepr<T, K>& cur)
         {
+            if(!validateBlackNode(cur)) {
+                return std::nullopt;
+            }
+
             const PosRBTreeRepr<T, K>& l  = cur.data.node->left;
+            if(!validateRedNode(l)) {
+                return std::nullopt;
+            }
+
             const PosRBTreeRepr<T, K>& lr = l.data.node->right;
-            if(!validateBlackNode(cur) || !validateRedNode(l) || !validateRedNode(lr)) {
+            if(!validateRedNode(lr)) {
                 return std::nullopt;
             }
 
@@ -311,12 +333,20 @@ namespace ᐸRuntimeᐳ
             return mkwnodeRepr(s_nodeallocator->allocate(nl.data.node->count + nr.data.node->count, RColor::Red, nl, nr));
         }
 
-        // double red violation on the RL side (tright = Node{Red, _, Node{Red, _, b, c}, d})
+        // double red violation on the RL side (tright = Node{_, Red, Node{_, Red, b, c}, d})
         static std::optional<PosRBTreeRepr<T, K>> balancehelper_RR_RL(const PosRBTreeRepr<T, K>& cur)
         {
+            if(!validateBlackNode(cur)) {
+                return std::nullopt;
+            }
+
             const PosRBTreeRepr<T, K>& r  = cur.data.node->right;
+            if(!validateRedNode(r)) {
+                return std::nullopt;
+            }
+
             const PosRBTreeRepr<T, K>& rl = r.data.node->left;
-            if(!validateBlackNode(cur) || !validateRedNode(r) || !validateRedNode(rl)) {
+            if(!validateRedNode(rl)) {
                 return std::nullopt;
             }
 
@@ -332,9 +362,17 @@ namespace ᐸRuntimeᐳ
         // double red violation on the RR side (tright = Node{Red, _, b, Node{Red, _, c, d}})
         static std::optional<PosRBTreeRepr<T, K>> balancehelper_RR_RR(const PosRBTreeRepr<T, K>& cur)
         {
+            if(!validateBlackNode(cur)) {
+                return std::nullopt;
+            }
+
             const PosRBTreeRepr<T, K>& r  = cur.data.node->right;
+            if(!validateRedNode(r)) {
+                return std::nullopt;
+            }
+
             const PosRBTreeRepr<T, K>& rr = r.data.node->right;
-            if(!validateBlackNode(cur) || !validateRedNode(r) || !validateRedNode(rr)) {
+            if(!validateRedNode(rr)) {
                 return std::nullopt;
             }
 
@@ -465,17 +503,19 @@ namespace ᐸRuntimeᐳ
                     nr = inserthelper(index - lcount, value, cur.data.node->right); 
                 }
 
-                return balance(mkwnodeRepr(s_nodeallocator->allocate(nl.data.node->count + nr.data.node->count, RColor::Red, nl, nr)));
+                return balance(mkwnodeRepr(s_nodeallocator->allocate(nl.data.node->count + nr.data.node->count, cur.data.node->color, nl, nr)));
             }
         }
 
         PosRBTree<T, K, TreeID> insert(int64_t index, const T& value) const
         {
             PosRBTree<T, K, TreeID> res(inserthelper(index, value, this->repr));
+        
             if(res.repr.typeinfo == s_nodetypeinfo) {  
                 res.repr.data.node->color = RColor::Black;
                 res = PosRBTree<T, K, TreeID>(balance(res.repr));
             }
+            
 
             assert(checkRBInvariants(res));
 
