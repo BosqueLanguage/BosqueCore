@@ -74,11 +74,11 @@ namespace ᐸRuntimeᐳ
             PosRBTreeLeaf nleaf;
             insert_index -= subset_index;
             std::copy(this->data.begin() + subset_index, 
-                this->data.begin() + subset_index + insert_index, 
-                nleaf.data.begin());
+                      this->data.begin() + subset_index + insert_index, 
+                      nleaf.data.begin());
             std::copy(this->data.begin() + subset_index + insert_index, 
-                this->data.begin() + subset_index + length, 
-                nleaf.data.begin() + insert_index + 1);
+                      this->data.begin() + subset_index + length, 
+                      nleaf.data.begin() + insert_index + 1);
             
             nleaf.data[insert_index] = value;
             nleaf.count = length + 1;
