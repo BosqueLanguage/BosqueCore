@@ -363,8 +363,7 @@ namespace ᐸRuntimeᐳ
                         return XList(this->ulist.data.inlinelist.insert(index, value));
                     }
                     else {
-                        auto leaf = ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::fromInlineList(this->ulist.data.inlinelist);
-                        return XList(leaf.insert(index, value));
+                        return XList(ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::fromInlineList(this->ulist.data.inlinelist).insert(index, value));
                     }
                 }
                 else {
