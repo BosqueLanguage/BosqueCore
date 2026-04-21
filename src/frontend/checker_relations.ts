@@ -907,16 +907,16 @@ class TypeCheckerRelations {
         }
     }
 
-    resolveTypeMethodDeclaration(tsig: TypeSignature, name: string, tconstrain: TemplateConstraintScope): MemberLookupInfo<MethodDecl> | undefined {
+    resolveTypeMethodDeclaration(tsig: TypeSignature, name: string, isTemplate: boolean, hasLambda: boolean, isRef: boolean,tconstrain: TemplateConstraintScope): MemberLookupInfo<MethodDecl> | undefined {
         const tn = this.resolveTemplateAsNeededForNameLookup(tsig, tconstrain);
         if(tn === undefined || !(tn instanceof NominalTypeSignature)) {
             return undefined;
         }
 
-        //
-        //TODO: need to be aware of ref methods and methods having the same name but distinguishing on ref-ness!!!!
-        //
-        const cci = tn.decl.methods.find((c) => c.name === name);
+        
+        const mmsig = {name: name, isTemplate: isTemplate, hasLambda: hasLambda, isRef: isRef};
+        const cci = tn.decl.methods.find((c) => Assembly.resolveSigMatch(mmsig, {name: c.name, isTemplate: c.terms.length !== 0, hasLambda: c.params.some((p) => p.type instanceof LambdaTypeSignature), isRef: c.params.some((p) => p.pkind !== undefined)}));
+
         if(cci !== undefined && !cci.attributes.some((attr) => attr.name === "override")) {
             const tlinfo = new TypeLookupInfo(tn, this.generateTemplateMappingForTypeDecl(tn));
             return new MemberLookupInfo<MethodDecl>(tlinfo, cci);
@@ -927,7 +927,7 @@ class TypeCheckerRelations {
                 const pdecl = provides[i];
                 const pdtype = pdecl.tsig.remapTemplateBindings(pdecl.mapping);
 
-                const flookup = this.resolveTypeMethodDeclaration(pdtype, name, tconstrain);
+                const flookup = this.resolveTypeMethodDeclaration(pdtype, name, isTemplate, hasLambda, isRef, tconstrain);
                 if(flookup !== undefined) {
                     return flookup;
                 }
@@ -937,13 +937,15 @@ class TypeCheckerRelations {
         }
     }
 
-    resolveTypeMethodImplementation(tsig: TypeSignature, name: string, tconstrain: TemplateConstraintScope): MemberLookupInfo<MethodDecl> | undefined {
+    resolveTypeMethodImplementation(tsig: TypeSignature, name: string, isTemplate: boolean, hasLambda: boolean, isRef: boolean, tconstrain: TemplateConstraintScope): MemberLookupInfo<MethodDecl> | undefined {
         const tn = this.resolveTemplateAsNeededForNameLookup(tsig, tconstrain);
         if(tn === undefined || !(tn instanceof NominalTypeSignature)) {
             return undefined;
         }
 
-        const cci = tn.decl.methods.find((c) => c.name === name);
+        const mmsig = {name: name, isTemplate: isTemplate, hasLambda: hasLambda, isRef: isRef};
+        const cci = tn.decl.methods.find((c) => Assembly.resolveSigMatch(mmsig, {name: c.name, isTemplate: c.terms.length !== 0, hasLambda: c.params.some((p) => p.type instanceof LambdaTypeSignature), isRef: c.params.some((p) => p.pkind !== undefined)}));
+
         if(cci !== undefined && !cci.attributes.some((attr) => attr.name === "abstract")) {
             const tlinfo = new TypeLookupInfo(tn, this.generateTemplateMappingForTypeDecl(tn));
             return new MemberLookupInfo<MethodDecl>(tlinfo, cci);
@@ -954,7 +956,7 @@ class TypeCheckerRelations {
                 const pdecl = provides[i];
                 const pdtype = pdecl.tsig.remapTemplateBindings(pdecl.mapping);
 
-                const flookup = this.resolveTypeMethodImplementation(pdtype, name, tconstrain);
+                const flookup = this.resolveTypeMethodImplementation(pdtype, name, isTemplate, hasLambda, isRef, tconstrain);
                 if(flookup !== undefined) {
                     return flookup;
                 }

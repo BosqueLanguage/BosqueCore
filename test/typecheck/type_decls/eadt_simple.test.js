@@ -29,6 +29,11 @@ describe ("Checker -- eADT decl", () => {
         checkTestFunctionInFile('datatype Foo of F1 { field f: Int; } F2 { } & { function foo(): Int { return 3i; } } function main(): Int { return F1::foo(); }'); 
         checkTestFunctionInFile('datatype Foo of F1 { field f: Int; } F2 { } & { function foo(): Int { return 3i; } } function main(): Int { return Foo::foo(); }'); 
     });
+
+    it("should check eADT function w/ multiple", function () {
+        checkTestFunctionInFile('datatype Foo of F1 { field f: Int; function foo<T>(x: T): Option<T> { return some(x); } } F2 { } & { function foo(): Int { return 3i; } } function main(): Int { return F1::foo(); }'); 
+        checkTestFunctionInFile('datatype Foo of F1 { field f: Int; function foo<T>(x: T): Option<T> { return some(x); } } F2 { } & { function foo(): Int { return 3i; } } function main(): Int { return F1::foo<Int>(3i).@some; }'); 
+    });
 });
 
 describe ("Checker -- entity decl inherits", () => {

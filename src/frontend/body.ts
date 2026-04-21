@@ -1367,11 +1367,18 @@ class PostfixInvoke extends PostfixOperation {
     readonly terms: TypeSignature[];
     readonly args: ArgumentList;
 
+    resolvedTrgt: TypeSignature | undefined = undefined;
+    resolvedMethod: MethodDecl | undefined = undefined;
+
     shuffleinfo: [number, TypeSignature][] = [];
     resttype: TypeSignature | undefined = undefined;
     restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
-    resolvedTrgt: TypeSignature | undefined = undefined;
-    resolvedMethod: MethodDecl | undefined = undefined;
+    setcondout: string[] = [];
+    setuncond: string[] = [];
+    inout: string[] = [];
+    byref: string[] = [];
+
+    monoinvid: number | undefined = undefined;
 
     constructor(sinfo: SourceInfo, specificResolve: TypeSignature | undefined, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
         super(sinfo, PostfixOpTag.PostfixInvoke);
