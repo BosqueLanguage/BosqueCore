@@ -66,18 +66,20 @@ namespace ᐸRuntimeᐳ
 
         PosRBTreeLeaf subsetinsert(int64_t subset_index, int64_t insert_index, int64_t length, const T& value) const
         {
-            assert(insert_index < K);
-            assert(subset_index + length < K);
+            assert(insert_index <= K);
+            assert(subset_index + length <= K);
             assert(this->count <= K);
+            assert(insert_index >= subset_index);
 
             PosRBTreeLeaf nleaf;
+            insert_index -= subset_index;
             std::copy(this->data.begin() + subset_index, 
-                      this->data.begin() + subset_index + insert_index, 
-                      nleaf.data.begin());
+                this->data.begin() + subset_index + insert_index, 
+                nleaf.data.begin());
             std::copy(this->data.begin() + subset_index + insert_index, 
-                      this->data.begin() + subset_index + length, 
-                      nleaf.data.begin() + insert_index + 1);
-
+                this->data.begin() + subset_index + length, 
+                nleaf.data.begin() + insert_index + 1);
+            
             nleaf.data[insert_index] = value;
             nleaf.count = length + 1;
 
@@ -359,7 +361,7 @@ namespace ᐸRuntimeᐳ
             return mkwnodeRepr(s_nodeallocator->allocate(nl.data.node->count + nr.data.node->count, RColor::Red, nl, nr));
         }
 
-        // double red violation on the RR side (tright = Node{Red, _, b, Node{Red, _, c, d}})
+        // double red violation on the RR side (tright = Node{_, Red, b, Node{_, Red, c, d}})
         static std::optional<PosRBTreeRepr<T, K>> balancehelper_RR_RR(const PosRBTreeRepr<T, K>& cur)
         {
             if(!validateBlackNode(cur)) {
@@ -463,32 +465,20 @@ namespace ᐸRuntimeᐳ
                     return mkwleafRepr(s_leafallocator->allocate(cur.data.leaf->insert(index, value)));
                 }
                 else {
-                    PosRBTreeRepr<T, K> nl, nr;
-                    if(index == 0) {
-                        nl = mkwleafRepr(s_leafallocator->allocate(value));
-                        nr = cur;
-                    }
-                    else if(index >= K - 1) {
-                        nl = cur; 
-                        nr = mkwleafRepr(s_leafallocator->allocate(value));
+                    constexpr int64_t midpt = K / 2;
+                    PosRBTreeLeaf<T, K> nlleaf, nrleaf;
+                    if(index < midpt) {
+                        nlleaf = cur.data.leaf->subsetinsert(0, index, midpt, value);
+                        nrleaf = cur.data.leaf->subset(midpt, K - midpt);
                     }
                     else {
-                        PosRBTreeLeaf<T, K> nlleaf, nrleaf;
-                        const int64_t midpt = cur.data.leaf->count / 2;
-                        if(index < midpt) {
-                            nlleaf = cur.data.leaf->subsetinsert(0, index, midpt, value);
-                            nrleaf = cur.data.leaf->subset(midpt, K - midpt);
-                        }
-                        else {
-                            nlleaf = cur.data.leaf->subset(0, midpt);
-                            nrleaf = cur.data.leaf->subsetinsert(midpt, index, K - midpt, value);
-                        }
-
-                        nl = mkwleafRepr(s_leafallocator->allocate(nlleaf));
-                        nr = mkwleafRepr(s_leafallocator->allocate(nrleaf));
+                        nlleaf = cur.data.leaf->subset(0, midpt);
+                        nrleaf = cur.data.leaf->subsetinsert(midpt, index, K - midpt, value);
                     }
 
-                    return mkwnodeRepr(s_nodeallocator->allocate(cur_count + 1, RColor::Red, nl, nr)); 
+                    return mkwnodeRepr(s_nodeallocator->allocate(cur_count + 1, RColor::Red, 
+                        mkwleafRepr(s_leafallocator->allocate(nlleaf)), 
+                        mkwleafRepr(s_leafallocator->allocate(nrleaf)))); 
                 }
             }
             else {
@@ -509,8 +499,7 @@ namespace ᐸRuntimeᐳ
 
         PosRBTree<T, K, TreeID> insert(int64_t index, const T& value) const
         {
-            PosRBTree<T, K, TreeID> res(inserthelper(index, value, this->repr));
-        
+            PosRBTree<T, K, TreeID> res(inserthelper(index, value, this->repr)); 
             if(res.repr.typeinfo == s_nodetypeinfo) {  
                 res.repr.data.node->color = RColor::Black;
                 res = PosRBTree<T, K, TreeID>(balance(res.repr));
