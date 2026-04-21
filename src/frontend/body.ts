@@ -1067,10 +1067,17 @@ class CallRefInvokeExpression extends Expression {
     readonly terms: TypeSignature[];
     readonly args: ArgumentList;
 
+    resolvedTrgt: TypeSignature | undefined = undefined;
+
     shuffleinfo: [number, TypeSignature][] = [];
     resttype: TypeSignature | undefined = undefined;
     restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
-    resolvedTrgt: TypeSignature | undefined = undefined;
+    setcondout: string[] = [];
+    setuncond: string[] = [];
+    inout: string[] = [];
+    byref: string[] = [];
+
+    monoinvid: number | undefined = undefined;
 
     constructor(tag: ExpressionTag, sinfo: SourceInfo, rcvr: AccessVariableExpression, specificResolve: TypeSignature | undefined, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
         super(tag, sinfo);

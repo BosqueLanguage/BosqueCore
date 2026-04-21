@@ -915,7 +915,7 @@ class TypeCheckerRelations {
 
         
         const mmsig = {name: name, isTemplate: isTemplate, hasLambda: hasLambda, isRef: isRef};
-        const cci = tn.decl.methods.find((c) => Assembly.resolveSigMatch(mmsig, {name: c.name, isTemplate: c.terms.length !== 0, hasLambda: c.params.some((p) => p.type instanceof LambdaTypeSignature), isRef: c.params.some((p) => p.pkind !== undefined)}));
+        const cci = tn.decl.methods.find((c) => Assembly.resolveSigMatch(mmsig, {name: c.name, isTemplate: c.terms.length !== 0, hasLambda: c.params.some((p) => p.type instanceof LambdaTypeSignature), isRef: c.isThisRef || c.params.some((p) => p.pkind !== undefined)}));
 
         if(cci !== undefined && !cci.attributes.some((attr) => attr.name === "override")) {
             const tlinfo = new TypeLookupInfo(tn, this.generateTemplateMappingForTypeDecl(tn));
@@ -944,7 +944,7 @@ class TypeCheckerRelations {
         }
 
         const mmsig = {name: name, isTemplate: isTemplate, hasLambda: hasLambda, isRef: isRef};
-        const cci = tn.decl.methods.find((c) => Assembly.resolveSigMatch(mmsig, {name: c.name, isTemplate: c.terms.length !== 0, hasLambda: c.params.some((p) => p.type instanceof LambdaTypeSignature), isRef: c.params.some((p) => p.pkind !== undefined)}));
+        const cci = tn.decl.methods.find((c) => Assembly.resolveSigMatch(mmsig, {name: c.name, isTemplate: c.terms.length !== 0, hasLambda: c.params.some((p) => p.type instanceof LambdaTypeSignature), isRef: c.isThisRef || c.params.some((p) => p.pkind !== undefined)}));
 
         if(cci !== undefined && !cci.attributes.some((attr) => attr.name === "abstract")) {
             const tlinfo = new TypeLookupInfo(tn, this.generateTemplateMappingForTypeDecl(tn));
