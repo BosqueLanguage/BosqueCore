@@ -2312,10 +2312,6 @@ class TypeChecker {
                 return false;
             }
 
-            if((arg instanceof PassingArgumentValue) && arg.kind === "out?") {
-                return false;
-            }
-
             const eexp = arg.exp;
             if(eexp instanceof ConstructorLambdaExpression) {
                 return true;
@@ -2341,8 +2337,8 @@ class TypeChecker {
         }
         
         this.checkTemplateBindingsOnInvokeConstraints(exp.sinfo, imapper, fdecl);
-
         const arginfo = this.checkArgumentList(exp.sinfo, env, refallowed, exp.args.args, fdecl.params, imapper);
+
         exp.shuffleinfo = arginfo.shuffleinfo;
         exp.resttype = arginfo.resttype;
         exp.restinfo = arginfo.restinfo;
@@ -2375,11 +2371,32 @@ class TypeChecker {
             return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
         }
         
-        const fdecl = this.relations.resolveTypeFunction(exp.ttype, exp.name, this.constraints, hastemplate, haslambda, exp.args.hasSpecialRef());
+        const hastemplate = exp.terms.length > 0;
+        const haslambda = exp.args.args.some((arg) => {
+            if(!(arg instanceof StdArgumentValue)) {
+                return false;
+            }
+
+            const eexp = arg.exp;
+            if(eexp instanceof ConstructorLambdaExpression) {
+                return true;
+            }
+            else if(eexp instanceof AccessVariableExpression) {
+                const atype = this.checkAccessVariableExpression(env, eexp);
+                return atype instanceof LambdaTypeSignature;
+            }
+            else {
+                return false;
+            }
+        });
+        const fdecl = this.relations.resolveTypeFunction(exp.ttype, exp.name, hastemplate, haslambda, exp.args.hasSpecialRef(), this.constraints);
         if(fdecl === undefined) {
             this.reportError(exp.sinfo, `Could not find type scoped function ${exp.ttype.emit()}::${exp.name}`);
             return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
         }
+
+        exp.resolvedDeclType = fdecl.typeinfo.tsig;
+        exp.monoinvid = this.invidCtr++;
 
         //special case for type Foo = String of ... Foo::from
         if(fdecl.member === null) {
@@ -2404,26 +2421,49 @@ class TypeChecker {
             }
 
             exp.isSpecialCall = true;
-            exp.resolvedDeclType = fdecl.typeinfo.tsig;
+
             exp.shuffleinfo = [[0, etype]];
+            exp.resttype = undefined;
+            exp.restinfo = undefined;
+            exp.setcondout = [];
+            exp.setuncond = [];
+            exp.inout = [];
+            exp.byref = [];
 
             return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(fdecl.typeinfo.tsig));
         }
         else {
-            const refinemap = this.relations.generateTemplateMappingForTypeDecl(fdecl.typeinfo.tsig as NominalTypeSignature);
-            const imapper = this.checkTemplateBindingsOnInvokeSig(exp.sinfo, env, exp.terms, fdecl.member, refinemap);
+            const imapper = this.checkTemplateBindingsOnInvokeSig(exp.sinfo, exp.terms, fdecl.member);
             if(imapper === undefined) {
                 return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
             }
 
             const fullmapper = TemplateNameMapper.merge(fdecl.typeinfo.mapping, imapper);
-            const arginfo = this.checkArgumentList(exp.sinfo, env, refok, exp.args.args, fdecl.member.params, fullmapper);
-            exp.resolvedDeclType = fdecl.typeinfo.tsig;
+            this.checkTemplateBindingsOnInvokeConstraints(exp.sinfo, fullmapper, fdecl.member);
+            const arginfo = this.checkArgumentList(exp.sinfo, env, refallowed, exp.args.args, fdecl.member.params, fullmapper);
+
             exp.shuffleinfo = arginfo.shuffleinfo;
             exp.resttype = arginfo.resttype;
             exp.restinfo = arginfo.restinfo;
+            exp.setcondout = arginfo.setcondout;
+            exp.setuncond = arginfo.setuncond;
+            exp.inout = arginfo.inout;
+            exp.byref = arginfo.byref;
 
-            return exp.setType(fdecl.member.resultType.remapTemplateBindings(fullmapper));
+            const rrt = TypeResultWRefVarInfoResult.makeGeneralResult(
+                exp.setType(fdecl.member.resultType.remapTemplateBindings(fullmapper)), false, false,
+                { ttrue: [...arginfo.setcondout], tfalse: [] },
+                [...arginfo.setuncond],
+                [...arginfo.inout, ...arginfo.byref],
+                []
+            );
+
+            if(rrt !== undefined) {
+                return rrt;
+            }
+            else {
+                return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
+            }
         }
     }
 

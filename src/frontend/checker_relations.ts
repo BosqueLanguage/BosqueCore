@@ -964,7 +964,7 @@ class TypeCheckerRelations {
         }
     }
 
-    resolveTypeFunction(tsig: TypeSignature, name: string, tconstrain: TemplateConstraintScope): MemberLookupInfo<TypeFunctionDecl | null> | undefined {
+    resolveTypeFunction(tsig: TypeSignature, name: string, isTemplate: boolean, hasLambda: boolean, isRef: boolean, tconstrain: TemplateConstraintScope): MemberLookupInfo<TypeFunctionDecl | null> | undefined {
         const tn = this.resolveTemplateAsNeededForNameLookup(tsig, tconstrain);
         if(tn === undefined || !(tn instanceof NominalTypeSignature)) {
             return undefined;
@@ -974,11 +974,13 @@ class TypeCheckerRelations {
             return undefined;
         }
 
-        if(tsig.decl instanceof TypedeclTypeDecl && (tsig.decl.valuetype.tkeystr === "String" || tsig.decl.valuetype.tkeystr === "CString") && name === "from") {
+        if(tsig.decl instanceof TypedeclTypeDecl && name === "from") {
             return new MemberLookupInfo<TypeFunctionDecl | null>(new TypeLookupInfo(tn, TemplateNameMapper.createEmpty()), null);
         }
 
-        const cci = tsig.decl.functions.find((c) => c.name === name);
+        const fnsig = {name: name, isTemplate: isTemplate, hasLambda: hasLambda, isRef: isRef};
+        const cci = tsig.decl.functions.find((c) => Assembly.resolveSigMatch(fnsig, {name: c.name, isTemplate: c.terms.length !== 0, hasLambda: c.params.some((p) => p.type instanceof LambdaTypeSignature), isRef: c.params.some((p) => p.pkind !== undefined)}));
+
         if(cci !== undefined) {
             const tlinfo = new TypeLookupInfo(tsig, this.generateTemplateMappingForTypeDecl(tsig));
             return new MemberLookupInfo<TypeFunctionDecl | null>(tlinfo, cci);
@@ -989,7 +991,7 @@ class TypeCheckerRelations {
                 const pdecl = provides[i];
                 const pdtype = pdecl.tsig.remapTemplateBindings(pdecl.mapping);
 
-                const flookup = this.resolveTypeFunction(pdtype, name, tconstrain);
+                const flookup = this.resolveTypeFunction(pdtype, name, isTemplate, hasLambda, isRef, tconstrain);
                 if(flookup !== undefined) {
                     return flookup;
                 }

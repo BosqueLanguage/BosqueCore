@@ -1024,9 +1024,16 @@ class CallTypeFunctionExpression extends Expression {
 
     isSpecialCall: boolean = false;
     resolvedDeclType: TypeSignature | undefined = undefined;
+    
     shuffleinfo: [number, TypeSignature][] = [];
     resttype: TypeSignature | undefined = undefined;
     restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
+    setcondout: string[] = [];
+    setuncond: string[] = [];
+    inout: string[] = [];
+    byref: string[] = [];
+
+    monoinvid: number | undefined = undefined;
 
     constructor(sinfo: SourceInfo, ttype: TypeSignature, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
         super(ExpressionTag.CallTypeFunctionExpression, sinfo);
