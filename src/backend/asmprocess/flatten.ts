@@ -1,15 +1,16 @@
 
 import { SourceInfo } from "../../frontend/build_decls.js";
-import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, LambdaTypeSignature, NominalTypeSignature, RecursiveAnnotation, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
-import { AbortStatement, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringTextComponent, HoleBodyImplementation, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PassingArgumentValue, PositionalArgumentValue, PostfixOp, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, StdArgumentValue, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement } from "../../frontend/body.js";
+import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, RecursiveAnnotation, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
+import { AbortStatement, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringTextComponent, HoleBodyImplementation, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, InterpolateFormatExpression, ITest, ITestBinderGuard, ITestFail, ITestGuard, ITestGuardSet, ITestNone, ITestOk, ITestSimpleGuard, ITestSome, ITestType, ITestTypeGuard, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PassingArgumentValue, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PostfixSliceOperator, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, StdArgumentValue, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement } from "../../frontend/body.js";
 import { AbstractCollectionTypeDecl, AbstractConceptTypeDecl, AbstractEntityTypeDecl, AdditionalTypeDeclTag, AgentDecl, APIDecl, APIDeniedTypeDecl, APIErrorTypeDecl, APIFlaggedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstructableTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EventListTypeDecl, FailTypeDecl, InvariantDecl, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskDecl, TestAssociation, TypedeclTypeDecl, ValidateDecl } from "../../frontend/assembly.js";
 
 import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatCStringTypeSignature, IRFormatPathFragmentTypeSignature, IRFormatPathGlobTypeSignature, IRFormatPathTypeSignature, IRFormatStringTypeSignature, IRFormatTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype.js";
-import { DateRepresentation, DeltaDateRepresentation, DeltaTimeRepresentation, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteBufferExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralCStringExpression, IRLiteralDecimalExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLatLongCoordinateExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralNoneExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralRationalExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRStatement, TimeRepresentation, IRLiteralFormatStringExpression, IRFormatStringTextComponent, IRFormatStringArgComponent, IRFormatStringComponent, IRLiteralFormatCStringExpression, IRLiteralTypedExpression, IRLiteralExpression, IRTypeDeclInvariantCheckStatement, IRLiteralTypedStringExpression, IRLiteralTypedCStringExpression, IRLiteralTypedFormatStringExpression, IRLiteralTypedFormatCStringExpression, IRTaskAccessIDExpression, IRTaskAccessParentIDExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessEnumExpression, IRSimpleExpression, IRPreconditionCheckStatement, IRExpression, IRTempAssignExpressionStatement, IRAccessTempVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessParameterVariableExpression, IRPrefixNotOpExpression, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRErrorAdditionBoundsCheckStatement, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRErrorDivisionByZeroCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRNopStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRReturnVoidSimpleStatement, IRAbortStatement, IRImmediateExpression, IRReturnValueSimpleStatement, IRChkLogicImpliesShortCircuitStatement, IRInvokeDirectExpression, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRVariableInitializationDirectInvokeStatement, IRInvokeSimpleExpression, IRInvokeImplicitsExpression, IRTempAssignStdInvokeStatement, IRTempAssignRefInvokeStatement, IRReturnDirectInvokeStatement, IRAssertStatement, IRValidateStatement, IRDebugStatement, IRBody, IRBuiltinBody, IRHoleBody, IRStandardBody, IRBinKeyEqDirectExpression, IRBinKeyLessDirectExpression, IRIsNoneOptionExpression, IRIsNotNoneOptionExpression, IRIsOptionEqValueExpression, IRIsOptionNeqValueExpression, IRIsSomeEqValueExpression, IRIsSomeNeqValueExpression, IRBinKeyNeqDirectExpression, IRConstructorOkTypeExpression, IRConstructorFailTypeExpression, IRConstructorSomeTypeExpression, IRConstructorMapEntryTypeExpression, IRLiteralDecimalDegreeExpression, IRTypeDeclSizeRangeCheckCStringStatement, IRTypeDeclSizeRangeCheckUnicodeStringStatement, IRTypeDeclFormatCheckCStringStatement, IRTypeDeclFormatCheckUnicodeStringStatement, IRLiteralOptionOfNoneExpression, IRWidenConceptRepresentationExpression, IRConstructResultFromOkExpression, IRConstructOptionFromSomeExpression, IRConstructResultFromFailExpression, IRBoxEntityToConceptRepresentationExpression, IRSimpleIfStatement, IRBlockStatement, IRSimpleIfElseStatement, IRConstructorStandardEntityExpression, IREntityInvariantCheckStatement, IRConstructExpression, IRVariableInitializationDirectConstructorStatement, IRReturnDirectConstructStatement, IRVariableAssignmentStatement, IRVariableAssignmentDirectInvokeStatement, IRVariableAssignmentDirectConstructorStatement, IRConstructorListEmptyExpression, IRConstructorListSingletonsExpression, IRReturnVoidWithImplicitStatement, IRReturnValueImplicitStatement, IRReturnDirectInvokeImplicitStatement, IRReturnDirectConstructWithBoxStatement, IRReturnDirectConstructImplicitStatement, IRReturnDirectConstructWithBoxImplicitStatement, IRReturnDirectInvokeImplicitPassThroughStatement, IRVariableInitializationDirectInvokeWithImplicitStatement, IRVariableAssignmentDirectInvokeWithImplicitStatement, IRInvokeSimpleWithImplicitsExpression, IRVoidInvokeStatement, IRVariableInitializationDirectConstructorWithBoxStatement, IRVariableAssignmentDirectConstructorWithBoxStatement } from "../irdefs/irbody.js";
-import { IRRegex, IRSourceInfo } from "../irdefs/irsupport.js";
-import { IRAgentDecl, IRAPIDecl, IRAPIDeniedTypeDecl, IRAPIErrorTypeDecl, IRAPIFlaggedTypeDecl, IRAPIRejectedTypeDecl, IRAPIResultTypeDecl, IRAPISuccessTypeDecl, IRAssembly, IRConceptTypeDecl, IRConstantDecl, IRDatatypeMemberEntityTypeDecl, IRDatatypeTypeDecl, IRDeclarationDocString, IRDeclarationMetaTag, IREntityTypeDecl, IREnumTypeDecl, IREventListTypeDecl, IRExampleDecl, IRFailTypeDecl, IRInvariantDecl, IRInvokeDecl, IRInvokeParameterDecl, IRListTypeDecl, IRMapEntryTypeDecl, IRMapTypeDecl, IRMemberFieldDecl, IROkTypeDecl, IROptionTypeDecl, IRPostConditionDecl, IRPreConditionDecl, IRPredicateDecl, IRPrimitiveEntityTypeDecl, IRQueueTypeDecl, IRResultTypeDecl, IRSetTypeDecl, IRSomeTypeDecl, IRStackTypeDecl, IRTaskDecl, IRTestAssociation, IRTestDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl, IRValidateDecl } from "../irdefs/irassembly.js";
+import { DateRepresentation, DeltaDateRepresentation, DeltaTimeRepresentation, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteBufferExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralCStringExpression, IRLiteralDecimalExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLatLongCoordinateExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralNoneExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralRationalExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRStatement, TimeRepresentation, IRLiteralFormatStringExpression, IRFormatStringTextComponent, IRFormatStringArgComponent, IRFormatStringComponent, IRLiteralFormatCStringExpression, IRLiteralTypedExpression, IRLiteralExpression, IRTypeDeclInvariantCheckStatement, IRLiteralTypedStringExpression, IRLiteralTypedCStringExpression, IRTaskAccessIDExpression, IRTaskAccessParentIDExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessEnumExpression, IRSimpleExpression, IRPreconditionCheckStatement, IRExpression, IRTempAssignExpressionStatement, IRAccessTempVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessParameterVariableExpression, IRPrefixNotOpExpression, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRErrorAdditionBoundsCheckStatement, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRErrorDivisionByZeroCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRNopStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRReturnVoidSimpleStatement, IRAbortStatement, IRImmediateExpression, IRReturnValueSimpleStatement, IRChkLogicImpliesShortCircuitStatement, IRInvokeDirectExpression, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRVariableInitializationDirectInvokeStatement, IRInvokeSimpleExpression, IRInvokeImplicitsExpression, IRTempAssignStdInvokeStatement, IRTempAssignRefInvokeStatement, IRReturnDirectInvokeStatement, IRAssertStatement, IRValidateStatement, IRDebugStatement, IRBody, IRBuiltinBody, IRHoleBody, IRStandardBody, IRBinKeyEqDirectExpression, IRBinKeyLessDirectExpression, IRIsNoneOptionExpression, IRIsNotNoneOptionExpression, IRIsOptionEqValueExpression, IRIsOptionNeqValueExpression, IRIsSomeEqValueExpression, IRIsSomeNeqValueExpression, IRBinKeyNeqDirectExpression, IRConstructorOkTypeExpression, IRConstructorFailTypeExpression, IRConstructorSomeTypeExpression, IRConstructorMapEntryTypeExpression, IRLiteralDecimalDegreeExpression, IRTypeDeclSizeRangeCheckCStringStatement, IRTypeDeclSizeRangeCheckUnicodeStringStatement, IRTypeDeclFormatCheckCStringStatement, IRTypeDeclFormatCheckUnicodeStringStatement, IRLiteralOptionOfNoneExpression, IRConvertConceptRepresentationExpression, IRConstructResultFromOkExpression, IRConstructOptionFromSomeExpression, IRConstructResultFromFailExpression, IRBoxEntityToConceptRepresentationExpression, IRSimpleIfStatement, IRBlockStatement, IRSimpleIfElseStatement, IRConstructorStandardEntityExpression, IREntityInvariantCheckStatement, IRConstructExpression, IRVariableInitializationDirectConstructorStatement, IRReturnDirectConstructStatement, IRVariableAssignmentStatement, IRVariableAssignmentDirectInvokeStatement, IRVariableAssignmentDirectConstructorStatement, IRConstructorListEmptyExpression, IRConstructorListSingletonsExpression, IRReturnVoidWithImplicitStatement, IRReturnValueImplicitStatement, IRReturnDirectInvokeImplicitStatement, IRReturnDirectConstructWithBoxStatement, IRReturnDirectConstructImplicitStatement, IRReturnDirectConstructWithBoxImplicitStatement, IRReturnDirectInvokeImplicitPassThroughStatement, IRVariableInitializationDirectInvokeWithImplicitStatement, IRVariableAssignmentDirectInvokeWithImplicitStatement, IRInvokeSimpleWithImplicitsExpression, IRVoidInvokeStatement, IRVariableInitializationDirectConstructorWithBoxStatement, IRVariableAssignmentDirectConstructorWithBoxStatement, IRInterpolateFormatStringExpression, IRInterpolateFormatCStringExpression, IRAccessFieldSpecialExpression, IRAccessFieldDirectExpression, IRAccessFieldVirtualExpression, IRStaticIsTypeSubtypeOfExpression, IRIsConceptRepresentationOfTypeExpression, IRIsNotConceptRepresentationOfTypeExpression, IRIsNotConceptRepresentationSubtypeOfTypeExpression, IRIsConceptRepresentationSubtypeOfTypeExpression, IRExtractSomeFromOptionExpression, IRExtractSomeValueFromOptionExpression, IRErrorTypeAssertionCheckStatement, IRUnboxEntityFromConceptRepresentationExpression, IRConstructorLambdaExpression, IRMatchExactStatement, IRMatchGeneralStatement, IRErrorExhaustiveStatement } from "../irdefs/irbody.js";
+import { IRCRegex, IRURegex, IRSourceInfo } from "../irdefs/irsupport.js";
+import { IRAgentDecl, IRAPIDecl, IRAPIDeniedTypeDecl, IRAPIErrorTypeDecl, IRAPIFlaggedTypeDecl, IRAPIRejectedTypeDecl, IRAPIResultTypeDecl, IRAPISuccessTypeDecl, IRAssembly, IRConceptTypeDecl, IRConstantDecl, IRDatatypeMemberEntityTypeDecl, IRDatatypeTypeDecl, IRDeclarationDocString, IRDeclarationMetaTag, IREntityTypeDecl, IREnumTypeDecl, IREventListTypeDecl, IRExampleDecl, IRFailTypeDecl, IRInvariantDecl, IRInvokeDecl, IRInvokeParameterDecl, IRLambdaParameterPackDecl, IRListTypeDecl, IRMapEntryTypeDecl, IRMapTypeDecl, IRMemberFieldDecl, IROkTypeDecl, IROptionTypeDecl, IRPostConditionDecl, IRPreConditionDecl, IRPredicateDecl, IRPrimitiveEntityTypeDecl, IRQueueTypeDecl, IRResultTypeDecl, IRSetTypeDecl, IRSomeTypeDecl, IRStackTypeDecl, IRTaskDecl, IRTestAssociation, IRTestDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl, IRValidateDecl } from "../irdefs/irassembly.js";
 
-import { InvokeInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiations.js";
+import { InvokeInstantiationInfo, LambdaInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiations.js";
+import { getBSQIRForm, getCPPForm, getSMTForm } from "@bosque/jsbrex";
 
 import assert from "node:assert";
 
@@ -20,11 +21,17 @@ class ASMToIRConverter {
     readonly testfilefilter: string[] | undefined;
     readonly testfilters: TestAssociation[] | undefined;
 
-    regexs: IRRegex[];
+    constants: IRConstantDecl[];
+
+    cregexs: Map<string, IRCRegex>;
+    uregexs: Map<string, IRURegex>;
     elists: IREListTypeSignature[];
     dashtypes: IRDashResultTypeSignature[];
     formats: IRFormatTypeSignature[];
     lpacks: IRLambdaParameterPackTypeSignature[];
+
+    formatcstrings: IRLiteralFormatCStringExpression[] = [];
+    formatstrings: IRLiteralFormatStringExpression[] = [];
 
     errInfos: { file: string, sinfo: IRSourceInfo, kind: "arith" | "runtime" | "userspec", checkID: number }[];
     errCtr: number;
@@ -36,8 +43,14 @@ class ASMToIRConverter {
     currentImplicitReturnVar: string | undefined;
     currentPostconditions: PostConditionDecl[] | undefined
 
+    currentNamespaceInstantiation: NamespaceInstantiationInfo | undefined;
     currentTypeInstantiation: TypeInstantiationInfo | undefined;
     currentInvokeInstantation: InvokeInstantiationInfo | undefined;
+    currentLambdaInstantiation: LambdaInstantiationInfo | undefined;
+
+    currentBinds: TemplateNameMapper | undefined;
+    currentLambdaConsMap: Map<number, string> | undefined;
+    currentMonoInvIdMap: Map<number, string> | undefined;
 
     pendingblocks: IRStatement[][];
     rescopeStack: Map<string, string>[]; //Maps from old name to new name
@@ -49,7 +62,10 @@ class ASMToIRConverter {
         this.testfilefilter = testfilefilter;
         this.testfilters = testfilters;
         
-        this.regexs = [];
+        this.constants = [];
+
+        this.cregexs = new Map<string, IRCRegex>();
+        this.uregexs = new Map<string, IRURegex>();
         this.elists = [];
         this.dashtypes = [];
         this.formats = [];
@@ -63,19 +79,68 @@ class ASMToIRConverter {
         this.tmpVarCtr = 0;
     }
 
-    private initCodeProcessingContext(file: string, isTaskAllowed: boolean, rtype: TypeSignature, implicitreturn: string | undefined, postconds: PostConditionDecl[] | undefined, typeinst: TypeInstantiationInfo | undefined, invokeinst: InvokeInstantiationInfo | undefined) {
+    private initCodeTypeProcessingContext(file: string, isTaskAllowed: boolean, typeinst: TypeInstantiationInfo) {
         this.currentFile = file;
         this.isTaskAllowed = isTaskAllowed;
-        this.currentReturnType = rtype;
-        this.currentImplicitReturnVar = implicitreturn;
-        this.currentPostconditions = postconds;
+        this.currentReturnType = undefined;
+        this.currentImplicitReturnVar = undefined;
+        this.currentPostconditions = undefined;
 
         this.currentTypeInstantiation = typeinst;
-        this.currentInvokeInstantation = invokeinst;
+        this.currentInvokeInstantation = undefined;
+        this.currentLambdaInstantiation = undefined;
+
+        this.currentBinds = typeinst.binds;
+        this.currentLambdaConsMap = undefined;
+        this.currentMonoInvIdMap = undefined;
 
         this.pendingblocks = [];
         this.rescopeStack = [];
         this.tmpVarCtr = 0;
+    }
+
+    private initCodeInvokeProcessingContext(file: string, isTaskAllowed: boolean, rtype: TypeSignature, implicitreturn: InvokeParameterDecl | undefined, postconds: PostConditionDecl[] | undefined, invokeinst: InvokeInstantiationInfo) {
+        this.currentFile = file;
+        this.isTaskAllowed = isTaskAllowed;
+        this.currentReturnType = rtype;
+        this.currentImplicitReturnVar = implicitreturn !== undefined ? implicitreturn.name : undefined;
+        this.currentPostconditions = postconds;
+
+        this.currentTypeInstantiation = undefined;
+        this.currentInvokeInstantation = invokeinst;
+        this.currentLambdaInstantiation = undefined;
+
+        this.currentBinds = invokeinst.binds;
+        this.currentLambdaConsMap = invokeinst.lambdacons;
+        this.currentMonoInvIdMap = invokeinst.monoinvids;
+
+        this.pendingblocks = [];
+        this.rescopeStack = [];
+        this.tmpVarCtr = 0;
+    }
+
+    private initCodeLambdaProcessingContext(file: string, rtype: TypeSignature, implicitreturn: LambdaParameterSignature | undefined, lambdainst: LambdaInstantiationInfo) {
+        this.currentFile = file;
+        this.isTaskAllowed = false;
+        this.currentReturnType = rtype;
+        this.currentImplicitReturnVar = implicitreturn !== undefined ? implicitreturn.name : undefined;
+        this.currentPostconditions = undefined;
+
+        this.currentTypeInstantiation = undefined;
+        this.currentInvokeInstantation = undefined;
+        this.currentLambdaInstantiation = lambdainst;
+
+        this.currentBinds = lambdainst.binds;
+        this.currentLambdaConsMap = lambdainst.lambdacons;
+        this.currentMonoInvIdMap = lambdainst.monoinvids;
+
+        this.pendingblocks = [];
+        this.rescopeStack = [];
+        this.tmpVarCtr = 0;
+    }
+
+    private extendProcessingContextForExpEval(rtype: TypeSignature) {
+        this.currentReturnType = rtype;
     }
 
     private convertSourceInfo(sinfo: SourceInfo): IRSourceInfo {
@@ -181,14 +246,40 @@ class ASMToIRConverter {
         return new DeltaTimeRepresentation(h, m, s);
     }
 
-    private processRegex(inns: FullyQualifiedNamespace, regexstr: string): IRRegex {
-        const rectr = this.regexs.length;
-        
-        const inst: IRRegex = new IRRegex(rectr); //TODO: need to make the real regex here
-        this.regexs.push(inst);
+    private processCRegex(inns: FullyQualifiedNamespace, regexstr: string): IRCRegex {
+        const fullre = getBSQIRForm(regexstr, inns.emit());
 
-        assert(false, "ASMToIRConverter::processRegex - Regex processing not yet implemented");
-        //return inst;
+        if(this.cregexs.has(fullre)) {
+            return this.cregexs.get(fullre) as IRCRegex;
+        }
+        else {
+            const smtre = getSMTForm(regexstr, inns.emit());
+            const cppre = getCPPForm(regexstr, inns.emit());
+            
+            const rectr = this.cregexs.size;
+            const inst: IRCRegex = new IRCRegex(rectr, fullre, smtre, cppre);
+            this.cregexs.set(fullre, inst);
+        
+            return inst;
+        }
+    }
+
+    private processURegex(inns: FullyQualifiedNamespace, regexstr: string): IRURegex {
+        const fullre = getBSQIRForm(regexstr, inns.emit());
+
+        if(this.uregexs.has(fullre)) {
+            return this.uregexs.get(fullre) as IRURegex;
+        }
+        else {
+            const smtre = getSMTForm(regexstr, inns.emit());
+            const cppre = getCPPForm(regexstr, inns.emit());
+
+            const rectr = this.uregexs.size;
+            const inst: IRURegex = new IRURegex(rectr, fullre, smtre, cppre);
+            this.uregexs.set(fullre, inst);
+
+            return inst;
+        }
     }
 
     private processStringBytes(sval: string): number[] {
@@ -202,15 +293,7 @@ class ASMToIRConverter {
     }
 
     private tproc(ttype: TypeSignature): TypeSignature {
-        if(this.currentInvokeInstantation !== undefined) {
-            return this.currentInvokeInstantation.binds !== undefined ? ttype.remapTemplateBindings(this.currentInvokeInstantation.binds) : ttype;
-        }
-        else if(this.currentTypeInstantiation !== undefined) {
-            return this.currentTypeInstantiation.binds !== undefined ? ttype.remapTemplateBindings(this.currentTypeInstantiation.binds) : ttype;
-        }
-        else {
-            return ttype;
-        }
+        return this.currentBinds !== undefined ? ttype.remapTemplateBindings(this.currentBinds) : ttype;
     }
 
     private processTypeSignature(tsig: TypeSignature): IRTypeSignature {
@@ -353,7 +436,7 @@ class ASMToIRConverter {
             assert(ttype instanceof NominalTypeSignature, "ASMToIRConverter::makeCoercionExplicitAsNeeded - totype not nominal");
 
             if(ftype.decl instanceof AbstractConceptTypeDecl) {
-                return new IRWidenConceptRepresentationExpression(this.processTypeSignature(ftype), this.processTypeSignature(ttype), exp);
+                return new IRConvertConceptRepresentationExpression(this.processTypeSignature(ftype), this.processTypeSignature(ttype), exp);
             }
             else {
                 if(ftype.tkeystr === "None") {
@@ -389,57 +472,61 @@ class ASMToIRConverter {
         return new IRNominalTypeSignature(tname);
     }
 
-    /*
-    private processITest_None(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
+    private processITestCond_None(src: TypeSignature, sexp: IRSimpleExpression, isnot: boolean, makeimm: boolean): [IRSimpleExpression, IRImmediateExpression | undefined] {
+        const srctype = src as NominalTypeSignature;
+
         //!none === some
         if(isnot) {
-            const rinfo = this.relations.splitOnSome(src, this.constraints);
-            if(rinfo === undefined) {
-                this.reportError(src.sinfo, `Unable to some-split type ${src.emit()}`);
-                return { bindtrue: undefined, bindfalse: undefined };
+            //if srctype is none or Some<...> then we can constant fold, otherwise we need to generate a test
+            if(srctype.decl instanceof AbstractEntityTypeDecl) {
+                return [new IRLiteralBoolExpression(srctype.tkeystr !== "None"), undefined];
             }
             else {
-                return { bindtrue: rinfo.overlapSomeT, bindfalse: rinfo.hasnone ? this.getWellKnownType("None") : undefined };
+                const iexp = makeimm ? this.makeExpressionImmediate(sexp, srctype) : sexp;
+                return [new IRIsNotNoneOptionExpression(iexp, this.processTypeSignature(srctype)), makeimm ? iexp : undefined];
             }
         }
         else {
-            const rinfo = this.relations.splitOnNone(src, this.constraints);
-            if(rinfo === undefined) {
-                this.reportError(src.sinfo, `Unable to none-split type ${src.emit()}`);
-                return { bindtrue: undefined, bindfalse: undefined };
+            //if srctype is none then we can constant fold, if it is Some<...> then we can constant fold, otherwise we need to generate a test
+            if(srctype.decl instanceof AbstractEntityTypeDecl) {
+                return [new IRLiteralBoolExpression(srctype.tkeystr === "None"), undefined];
             }
             else {
-                return { bindtrue: rinfo.hasnone ? this.getWellKnownType("None") : undefined, bindfalse: rinfo.remainSomeT };
+                const iexp = makeimm ? this.makeExpressionImmediate(sexp, srctype) : sexp;
+                return [new IRIsNoneOptionExpression(iexp, this.processTypeSignature(srctype)), makeimm ? iexp : undefined];
             }
         }
     }
 
-    private processITest_Some(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
+    private processITestCond_Some(src: TypeSignature, sexp: IRSimpleExpression, isnot: boolean, makeimm: boolean): [IRSimpleExpression, IRImmediateExpression | undefined] {
+        const srctype = src as NominalTypeSignature;
+
         //!some === none
         if(isnot) {
-            const rinfo = this.relations.splitOnNone(src, this.constraints);
-            if(rinfo === undefined) {
-                this.reportError(src.sinfo, `Unable to none-split type ${src.emit()}`);
-                return { bindtrue: undefined, bindfalse: undefined };
+            //if srctype is none or Some<...> then we can constant fold, otherwise we need to generate a test
+            if(srctype.decl instanceof AbstractEntityTypeDecl) {
+                return [new IRLiteralBoolExpression(srctype.tkeystr === "None"), undefined];
             }
             else {
-                return { bindtrue: rinfo.hasnone ? this.getWellKnownType("None") : undefined, bindfalse: rinfo.remainSomeT };
+                const iexp = makeimm ? this.makeExpressionImmediate(sexp, srctype) : sexp;
+                return [new IRIsNoneOptionExpression(iexp, this.processTypeSignature(srctype)), makeimm ? iexp : undefined];
             }
         }
         else {
-            const rinfo = this.relations.splitOnSome(src, this.constraints);
-            if(rinfo === undefined) {
-                this.reportError(src.sinfo, `Unable to some-split type ${src.emit()}`);
-                return { bindtrue: undefined, bindfalse: undefined };
+            //if srctype is none then we can constant fold, if it is Some<...> then we can constant fold, otherwise we need to generate a test
+            if(srctype.decl instanceof AbstractEntityTypeDecl) {
+                return [new IRLiteralBoolExpression(srctype.tkeystr !== "None"), undefined];
             }
             else {
-                return { bindtrue: rinfo.overlapSomeT, bindfalse: rinfo.hasnone ? this.getWellKnownType("None") : undefined };
+                const iexp = makeimm ? this.makeExpressionImmediate(sexp, srctype) : sexp;
+                return [new IRIsNotNoneOptionExpression(iexp, this.processTypeSignature(srctype)), makeimm ? iexp : undefined];
             }
         }
     }
 
-    private processITest_Ok(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
-        //!ok === err
+    private processITestCond_Ok(src: TypeSignature, sexp: IRSimpleExpression, isnot: boolean, makeimm: boolean): [IRSimpleExpression, IRImmediateExpression | undefined] {
+        //!ok === fail
+        /*
         if(isnot) {
             const rinfo = this.relations.splitOnErr(src, this.constraints);
             if(rinfo === undefined) {
@@ -460,10 +547,13 @@ class ASMToIRConverter {
                 return { bindtrue: rinfo.overlapOkT, bindfalse: rinfo.remainErrE };
             }
         }
+        */
+       assert(false, "Not implemented yet -- flatten ok/fail");
     }
 
-    private processITest_Err(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
-        //!err === ok
+    private processITestCond_Fail(src: TypeSignature, sexp: IRSimpleExpression, isnot: boolean, makeimm: boolean): [IRSimpleExpression, IRImmediateExpression | undefined] {
+        //!fail === ok
+        /*
         if(isnot) {
             const rinfo = this.relations.splitOnOk(src, this.constraints);
             if(rinfo === undefined) {
@@ -484,168 +574,321 @@ class ASMToIRConverter {
                 return { bindtrue: rinfo.overlapErrE, bindfalse: rinfo.remainOkT };
             }
         }
+        */
+       assert(false, "Not implemented yet -- flatten ok/fail");
     }
 
-    private processITest_Error(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
-        xxxx;
-    }
+    private processITestCond_Type(src: TypeSignature, sexp: IRSimpleExpression, oftype: TypeSignature, isnot: boolean, makeimm: boolean): [IRSimpleExpression, IRImmediateExpression | undefined] {
+        if(oftype.tkeystr === "None") {
+            return this.processITestCond_None(src, sexp, isnot, makeimm);
+        }
+        else if((oftype instanceof NominalTypeSignature) && (oftype.decl instanceof SomeTypeDecl)) {
+            return this.processITestCond_Some(src, sexp, isnot, makeimm);
+        }
+        else if((oftype instanceof NominalTypeSignature) && (oftype.decl instanceof OkTypeDecl)) {
+            return this.processITestCond_Ok(src, sexp, isnot, makeimm);
+        }
+        else if((oftype instanceof NominalTypeSignature) && (oftype.decl instanceof FailTypeDecl)) {
+            return this.processITestCond_Fail(src, sexp, isnot, makeimm);
+        }
+        else if((oftype instanceof NominalTypeSignature) && (oftype.decl instanceof OptionTypeDecl)) {
+            const isoptsubtype = src.tkeystr === "None" || ((src instanceof NominalTypeSignature) && (src.decl instanceof SomeTypeDecl)) || src.tkeystr === oftype.tkeystr;
 
-    private processITest_Rejected(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
-        xxxx;
-    }
-
-    private processITest_Denied(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
-        xxxx;
-    }
-
-    private processITest_Flagged(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
-        xxxx;
-    }
-
-    private processITest_Success(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
-        xxxx;
-    }
-
-    private processITest_Type(src: TypeSignature, oftype: TypeSignature): { ttrue: TypeSignature[], tfalse: TypeSignature[] } {
-        const rinfo = this.relations.refineType(src, oftype, this.constraints);
-        if(rinfo === undefined) {
-            this.reportError(src.sinfo, `Unable to some-split type ${src.emit()}`);
-            return { ttrue: [], tfalse: [] };
+            if(isnot) {
+                return [new IRLiteralBoolExpression(!isoptsubtype), undefined];
+            }
+            else {
+                return [new IRLiteralBoolExpression(isoptsubtype), undefined];
+            }
+        }
+        else if((oftype instanceof NominalTypeSignature) && (oftype.decl instanceof ResultTypeDecl)) {
+            assert(false, "Not implemented yet -- flatten option/result");
+        }
+        else if((oftype instanceof NominalTypeSignature) && (oftype.decl instanceof APIErrorTypeDecl)) {
+            assert(false, "Not implemented yet -- flatten api error");
+        }
+        else if((oftype instanceof NominalTypeSignature) && (oftype.decl instanceof APIRejectedTypeDecl)) {
+            assert(false, "Not implemented yet -- flatten api rejected");
+        }
+        else if((oftype instanceof NominalTypeSignature) && (oftype.decl instanceof APIDeniedTypeDecl)) {
+            assert(false, "Not implemented yet -- flatten api denied");
+        }
+        else if((oftype instanceof NominalTypeSignature) && (oftype.decl instanceof APIFlaggedTypeDecl)) {
+            assert(false, "Not implemented yet -- flatten api flagged");
+        }
+        else if((oftype instanceof NominalTypeSignature) && (oftype.decl instanceof APISuccessTypeDecl)) {
+            assert(false, "Not implemented yet -- flatten api success");
+        }
+        else if((oftype instanceof NominalTypeSignature) && (oftype.decl instanceof APIResultTypeDecl)) {
+            assert(false, "Not implemented yet -- flatten api result");
         }
         else {
-            return { ttrue: rinfo.overlap, tfalse: rinfo.remain };
+            if(!(oftype instanceof NominalTypeSignature)) {
+                //then this is is the special typesig types case and just depends on the names
+                const aresame = (this.tproc(src).tkeystr === this.tproc(oftype).tkeystr);
+                return [new IRLiteralBoolExpression(isnot ? !aresame : aresame), undefined];
+            }
+            else if(!(src instanceof NominalTypeSignature)) {
+                //then this is is the special typesig types case -- special typesigs can never be of concept types!
+                return [new IRLiteralBoolExpression(isnot), undefined];
+            }
+            else {
+                if(oftype.decl instanceof AbstractEntityTypeDecl) {
+                    //oftype is conrete entity
+
+                    if(src.decl instanceof AbstractEntityTypeDecl) {
+                        //then just depends on the names at compile time
+                        const aresame = (this.tproc(src).tkeystr === this.tproc(oftype).tkeystr);
+                        return [new IRLiteralBoolExpression(isnot ? !aresame : aresame), undefined];
+                    }
+                    else {
+                        //Handle concrete oftype and abstract arg
+                        const iexp = makeimm ? this.makeExpressionImmediate(sexp, src) : sexp;
+                        if(isnot) {
+                            // Handle negation of type test for non-abstract concept types
+                            return [new IRIsNotConceptRepresentationOfTypeExpression(iexp, this.processTypeSignature(src), this.processTypeSignature(oftype)), makeimm ? iexp : undefined];
+                        }
+                        else {
+                            // Handle type test for non-abstract concept types
+                            return [new IRIsConceptRepresentationOfTypeExpression(iexp, this.processTypeSignature(src), this.processTypeSignature(oftype)), makeimm ? iexp : undefined];
+                        }
+                    }
+                }
+                else {
+                    //oftype is concept
+                    if(src.decl instanceof AbstractEntityTypeDecl) {
+                        //emit subtype test but it is static since we know the concrete type at compile time
+                        return [new IRStaticIsTypeSubtypeOfExpression(this.processTypeSignature(src), this.processTypeSignature(oftype), isnot), undefined];
+                    }
+                    else {
+                        //handle abstract oftype and abstract arg
+                        const iexp = makeimm ? this.makeExpressionImmediate(sexp, src) : sexp;
+                        if(isnot) {
+                            // Handle negation of type test for abstract concept types
+                            return [new IRIsNotConceptRepresentationSubtypeOfTypeExpression(iexp, this.processTypeSignature(src), this.processTypeSignature(oftype)), makeimm ? iexp : undefined];
+                        }
+                        else {
+                            // Handle type test for abstract concept types
+                            return [new IRIsConceptRepresentationSubtypeOfTypeExpression(iexp, this.processTypeSignature(src), this.processTypeSignature(oftype)), makeimm ? iexp : undefined];
+                        }
+                    }
+                }
+            }
         }
     }
     
-    private processITestAsBoolean(sinfo: SourceInfo, env: TypeEnvironment, src: TypeSignature, tt: ITest): { ttrue: boolean, tfalse: boolean } {
+    private processITestAsBoolean(src: TypeSignature, sexp: IRSimpleExpression, tt: ITest): IRSimpleExpression {
+        let ops: [IRSimpleExpression, IRSimpleExpression | undefined];
+
         if(tt instanceof ITestType) {
-            if(!this.checkTypeSignature(tt.ttype)) {
-                return { ttrue: false, tfalse: false };
-            }
-            else {
-                const tres = this.processITest_Type(src, tt.ttype);
-                if(tt.isnot) {
-                    return { ttrue: tres.tfalse.length !== 0, tfalse: tres.ttrue.length !== 0 };
-                }
-                else {
-                    return { ttrue: tres.ttrue.length !== 0, tfalse: tres.tfalse.length !== 0 };
-                }
-            }
+            ops = this.processITestCond_Type(src, sexp, this.tproc(tt.ttype), tt.isnot, false);
         }
         else {
             if(tt instanceof ITestNone) {
-                const tres = this.processITest_None(src, tt.isnot);
-                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
+                ops = this.processITestCond_None(src, sexp, tt.isnot, false);
             }
             else if(tt instanceof ITestSome) {
-                const tres = this.processITest_Some(src, tt.isnot);
-                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
+                ops = this.processITestCond_Some(src, sexp, tt.isnot, false);
             }
             else if(tt instanceof ITestOk) {
-                const tres = this.processITest_Ok(src, tt.isnot);
-                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
-            }
-            else if(tt instanceof ITestError) {
-                const tres = this.processITest_Error(src, tt.isnot);
-                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
-            }
-            else if(tt instanceof ITestRejected) {
-                const tres = this.processITest_Rejected(src, tt.isnot);
-                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
-            }
-            else if(tt instanceof ITestDenied) {
-                const tres = this.processITest_Denied(src, tt.isnot);
-                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
-            }
-            else if(tt instanceof ITestFlagged) {
-                const tres = this.processITest_Flagged(src, tt.isnot);
-                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
-            }
-            else if(tt instanceof ITestSuccess) {
-                const tres = this.processITest_Success(src, tt.isnot);
-                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
+                ops = this.processITestCond_Ok(src, sexp, tt.isnot, false);
             }
             else {
                 assert(tt instanceof ITestFail, "missing case in ITest");
-                const tres = this.processITest_Err(src, tt.isnot);
-                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
+                ops = this.processITestCond_Fail(src, sexp, tt.isnot, false);
             }
         }
+
+        return ops[0];
     }
 
-    private processITestConvertLUB(sinfo: SourceInfo, opts: TypeSignature[], lubtype: TypeSignature): TypeSignature | undefined {
-        const flowlub = this.relations.flowTypeLUB(sinfo, lubtype, opts, this.constraints);
-        if(flowlub instanceof ErrorTypeSignature) {
-            return lubtype;
-        }
-        else {
-            return flowlub;
-        }
+    private processITestConvert_SafeNone(src: TypeSignature, sexp: IRSimpleExpression, isunwrap: boolean): IRSimpleExpression {
+        //if srctype is none then just return none (in any case)
+        return new IRLiteralNoneExpression();
     }
 
-    private processITestAsConvert(sinfo: SourceInfo, env: TypeEnvironment, src: TypeSignature, tt: ITest): { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined } {
-        if(tt instanceof ITestType) {
-            if(!this.checkTypeSignature(tt.ttype)) {
-                return { ttrue: undefined, tfalse: undefined };
+    private processITestConvert_SafeSome(src: TypeSignature, sexp: IRSimpleExpression, isunwrap: boolean): IRSimpleExpression {
+        const srctype = src as NominalTypeSignature;
+
+        if(srctype.decl instanceof AbstractEntityTypeDecl) {
+            if(!isunwrap) {
+                //src must be Some and we are not unwrapping so just return it
+                return sexp;
             }
             else {
-                const tres = this.processITest_Type(src, tt.ttype);
-                if(tt.isnot) {
-                    const ttrue = tres.tfalse.length !== 0 ? this.processITestConvertLUB(sinfo, tres.tfalse, src) : undefined; //negate takes the remain and lubs to the src
-                    const tfalse = tres.ttrue.length !== 0 ? tt.ttype : undefined; //overlap and passes as the user spec type -- does not matter now but short circuiting return will use this
+                //need to get value ot of some
+                const sometype = this.processTypeSignature(srctype);
+                const oftype = this.processTypeSignature(srctype.alltermargs[0]);
 
-                    return { ttrue: ttrue, tfalse: tfalse };
+                return new IRAccessFieldSpecialExpression(sometype, sexp, sometype, "value", oftype);
+            }
+        }
+        else {
+            const opttype = this.processTypeSignature(srctype);
+            const oftype = this.processTypeSignature(srctype.alltermargs[0]);
+            const sometype = new IRNominalTypeSignature(`Some<${oftype.tkeystr}>`);
+
+            return isunwrap ? new IRExtractSomeValueFromOptionExpression(opttype, sometype, oftype, sexp) : new IRExtractSomeFromOptionExpression(opttype, sometype, sexp);
+        }
+    }
+
+    private processITestConvert_SafeOk(src: TypeSignature, sexp: IRSimpleExpression, isunwrap: boolean): IRSimpleExpression {
+       assert(false, "Not implemented yet -- flatten ok/fail");
+    }
+
+    private processITestConvert_SafeFail(src: TypeSignature, sexp: IRSimpleExpression, isunwrap: boolean): IRSimpleExpression {
+       assert(false, "Not implemented yet -- flatten ok/fail");
+    }
+
+    private processITestConvert_SafeType(src: TypeSignature, sexp: IRSimpleExpression, trgttype: TypeSignature): IRSimpleExpression {
+        if(trgttype.tkeystr === "None") {
+            return this.processITestConvert_SafeNone(src, sexp, false);
+        }
+        else if((trgttype instanceof NominalTypeSignature) && (trgttype.decl instanceof SomeTypeDecl)) {
+            return this.processITestConvert_SafeSome(src, sexp, false);
+        }
+        else if((trgttype instanceof NominalTypeSignature) && (trgttype.decl instanceof OkTypeDecl)) {
+            return this.processITestConvert_SafeOk(src, sexp, false);
+        }
+        else if((trgttype instanceof NominalTypeSignature) && (trgttype.decl instanceof FailTypeDecl)) {
+            return this.processITestConvert_SafeFail(src, sexp, false);
+        }
+        else if((trgttype instanceof NominalTypeSignature) && (trgttype.decl instanceof OptionTypeDecl)) {
+            if(src.tkeystr === "None") {
+                return new IRLiteralOptionOfNoneExpression(this.processTypeSignature(trgttype));
+            }
+            else if((src instanceof NominalTypeSignature) && (src.decl instanceof SomeTypeDecl)) {
+                return new IRConstructOptionFromSomeExpression(this.processTypeSignature(trgttype), this.processTypeSignature(src), sexp);
+            }
+            else {
+                return sexp; //both option<T>
+            }
+        }
+        else if((trgttype instanceof NominalTypeSignature) && (trgttype.decl instanceof ResultTypeDecl)) {
+            assert(false, "Not implemented yet -- flatten option/result");
+        }
+        else if((trgttype instanceof NominalTypeSignature) && (trgttype.decl instanceof APIErrorTypeDecl)) {
+            assert(false, "Not implemented yet -- flatten api error");
+        }
+        else if((trgttype instanceof NominalTypeSignature) && (trgttype.decl instanceof APIRejectedTypeDecl)) {
+            assert(false, "Not implemented yet -- flatten api rejected");
+        }
+        else if((trgttype instanceof NominalTypeSignature) && (trgttype.decl instanceof APIDeniedTypeDecl)) {
+            assert(false, "Not implemented yet -- flatten api denied");
+        }
+        else if((trgttype instanceof NominalTypeSignature) && (trgttype.decl instanceof APIFlaggedTypeDecl)) {
+            assert(false, "Not implemented yet -- flatten api flagged");
+        }
+        else if((trgttype instanceof NominalTypeSignature) && (trgttype.decl instanceof APISuccessTypeDecl)) {
+            assert(false, "Not implemented yet -- flatten api success");
+        }
+        else if((trgttype instanceof NominalTypeSignature) && (trgttype.decl instanceof APIResultTypeDecl)) {
+            assert(false, "Not implemented yet -- flatten api result");
+        }
+        else {
+            if(!(trgttype instanceof NominalTypeSignature)) {
+                assert(this.tproc(src).tkeystr === this.tproc(trgttype).tkeystr, "these can never be subtypes so only option is if types are same so just return -- something went wrong");
+                return sexp;
+            }
+            else {
+                if(trgttype.decl instanceof AbstractEntityTypeDecl) {
+                    if(this.tproc(src).tkeystr === this.tproc(trgttype).tkeystr) {
+                        return sexp;
+                    }
+                    else {
+                        assert((src instanceof NominalTypeSignature) && (src.decl instanceof AbstractConceptTypeDecl), "otherwise the test would always be false (and this fails)");
+                        return new IRUnboxEntityFromConceptRepresentationExpression(this.processTypeSignature(src), this.processTypeSignature(trgttype), sexp);
+                    }
                 }
                 else {
-                    const ttrue = tres.ttrue.length !== 0 ? tt.ttype : undefined; //always cast to what the user asked for
-                    const tfalse = tres.tfalse.length !== 0 ? this.processITestConvertLUB(sinfo, tres.tfalse, src) : undefined; //cast to the LUB of the remaining types (with src as a default option)
-
-                    return { ttrue: ttrue, tfalse: tfalse };
+                    //trgttype is concept
+                    if((src as NominalTypeSignature).decl instanceof AbstractEntityTypeDecl) {
+                        return new IRBoxEntityToConceptRepresentationExpression(this.processTypeSignature(trgttype), this.processTypeSignature(src), sexp);
+                    }
+                    else {
+                        //both concepts so see which way to convert
+                        if(this.tproc(src).tkeystr === this.tproc(trgttype).tkeystr) {
+                           return sexp;
+                        }
+                        else {
+                            return new IRConvertConceptRepresentationExpression(this.processTypeSignature(src), this.processTypeSignature(trgttype), sexp);
+                        }
+                    }
                 }
             }
+        }
+    }
+
+    private processITestAsConvert(src: TypeSignature, sexp: IRSimpleExpression, tt: ITest, followpathtypett: TypeSignature, followpathtypeff: TypeSignature | undefined, knownsafe: boolean): [IRSimpleExpression, IRSimpleExpression, IRSimpleExpression | undefined] {
+        let ops: [IRSimpleExpression, IRSimpleExpression | undefined];
+
+        if(knownsafe) {
+            ops = [new IRLiteralBoolExpression(true), undefined];
+        }
+        else {
+            if(tt instanceof ITestType) {
+                ops = this.processITestCond_Type(src, sexp, this.tproc(tt.ttype), tt.isnot, true);
+            }
+            else {
+                if(tt instanceof ITestNone) {
+                    ops = this.processITestCond_None(src, sexp, tt.isnot, true);
+                }
+                else if(tt instanceof ITestSome) {
+                    ops = this.processITestCond_Some(src, sexp, tt.isnot, true);
+                }
+                else if(tt instanceof ITestOk) {
+                    ops = this.processITestCond_Ok(src, sexp, tt.isnot, true);
+                }
+                else {
+                    assert(tt instanceof ITestFail, "missing case in ITest");
+                    ops = this.processITestCond_Fail(src, sexp, tt.isnot, true);
+                }
+            }
+        }
+
+        const testop = ops[0];
+        const iexp = ops[1] || sexp;
+        if(tt instanceof ITestType) {
+            return [testop, this.processITestConvert_SafeType(src, iexp, followpathtypett), followpathtypeff !== undefined ? this.processITestConvert_SafeType(src, iexp, followpathtypeff) : undefined];
         }
         else {
             if(tt instanceof ITestNone) {
-                const tres = this.processITest_None(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
+                if(tt.isnot) {
+                    return [testop, this.processITestConvert_SafeSome(src, iexp, true), this.processITestConvert_SafeNone(src, iexp, true)];
+                }
+                else {
+                    return [testop, this.processITestConvert_SafeNone(src, iexp, true), this.processITestConvert_SafeSome(src, iexp, true)];
+                }
             }
             else if(tt instanceof ITestSome) {
-                const tres = this.processITest_Some(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
+                if(tt.isnot) {
+                    return [testop, this.processITestConvert_SafeNone(src, iexp, true), this.processITestConvert_SafeSome(src, iexp, true)];
+                }
+                else {
+                    return [testop, this.processITestConvert_SafeSome(src, iexp, true), this.processITestConvert_SafeNone(src, iexp, true)];
+                }
             }
             else if(tt instanceof ITestOk) {
-                const tres = this.processITest_Ok(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
-            }
-            else if(tt instanceof ITestError) {
-                const tres = this.processITest_Error(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
-            }
-            else if(tt instanceof ITestRejected) {
-                const tres = this.processITest_Rejected(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
-            }
-            else if(tt instanceof ITestDenied) {
-                const tres = this.processITest_Denied(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
-            }
-            else if(tt instanceof ITestFlagged) {
-                const tres = this.processITest_Flagged(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
-            }
-            else if(tt instanceof ITestSuccess) {
-                const tres = this.processITest_Success(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
+                if(tt.isnot) {
+                    return [testop, this.processITestConvert_SafeFail(src, iexp, true), this.processITestConvert_SafeOk(src, iexp, true)];
+                }
+                else {
+                    return [testop, this.processITestConvert_SafeOk(src, iexp, true), this.processITestConvert_SafeFail(src, iexp, true)];
+                }
             }
             else {
                 assert(tt instanceof ITestFail, "missing case in ITest");
-                const tres = this.processITest_Err(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
+
+                if(tt.isnot) {
+                    return [testop, this.processITestConvert_SafeOk(src, iexp, true), this.processITestConvert_SafeFail(src, iexp, true)];
+                }
+                else {
+                    return [testop, this.processITestConvert_SafeFail(src, iexp, true), this.processITestConvert_SafeOk(src, iexp, true)];
+                }
             }
         }
     }
-    */
-    
+
     private flattenITestGuardExpression(exp: Expression): IRSimpleExpression {
         switch (exp.tag) {
             case ExpressionTag.CallRefVariableExpression: {
@@ -732,18 +975,30 @@ class ASMToIRConverter {
         }
     }
 
-    private flattenITestGuard(sinfo: SourceInfo, tt: ITestGuard, gidx: number): [IRSimpleExpression, { ee: IRImmediateExpression, gidx: number } | undefined] {
+    private flattenITestGuard(sinfo: SourceInfo, tt: ITestGuard, gidx: number): [IRSimpleExpression, { ee: IRSimpleExpression, srctype: TypeSignature, itest: ITest } | undefined] {
         if(tt instanceof ITestSimpleGuard) {
             return [this.flattenITestGuardExpression(tt.exp), undefined];
+        }
+        else if(tt instanceof ITestTypeGuard) {
+            const texp = this.flattenExpression(tt.exp);
+            const sexp = this.makeExpressionSimple(texp, tt.exp.getType());
+
+            return [this.processITestAsBoolean(tt.exp.getType(), sexp, tt.itest), { ee: sexp, srctype: tt.exp.getType(), itest: tt.itest }];
+        }
+        else if(tt instanceof ITestBinderGuard) {
+            const texp = this.flattenExpression(tt.exp);
+            const iexp = this.makeExpressionImmediate(texp, tt.exp.getType());
+
+            return [this.processITestAsBoolean(tt.exp.getType(), iexp, tt.itest), { ee: iexp, srctype: tt.exp.getType(), itest: tt.itest }];
         }
         else {
             assert(false, "Unknown ITestGuard type"); //TODO check and do binders here!!!
         }
     }
 
-    private flattenITestGuardSet(sinfo: SourceInfo, tt: ITestGuardSet): [IRSimpleExpression, { ee: IRImmediateExpression, gidx: number }[]] {
+    private flattenITestGuardSet(sinfo: SourceInfo, tt: ITestGuardSet): [IRSimpleExpression, { ee: IRSimpleExpression, srctype: TypeSignature, itest: ITest }[]] {
         const grenvs = tt.guards.map((guard, ii) => this.flattenITestGuard(sinfo, guard, ii));
-        const iebinds = grenvs.map((ginfo) => ginfo[1]).filter((gbi) => gbi !== undefined) as { ee: IRImmediateExpression, gidx: number }[];
+        const iebinds = grenvs.map((ginfo) => ginfo[1]).filter((gbi) => gbi !== undefined) as { ee: IRSimpleExpression, srctype: TypeSignature, itest: ITest }[];
 
         const mustfalse = grenvs.some((aexp) => ASMToIRConverter.isLiteralFalseExpression(aexp[0]));
         if(mustfalse) {
@@ -770,6 +1025,8 @@ class ASMToIRConverter {
 
         const haspreconds = fdecl.preconditions.length > 0;
         const imapper = this.generateLocalTemplateMapping(fdecl.terms.map((t) => t.name), exp.terms);
+
+        const iname = (this.currentMonoInvIdMap as Map<number, string>).get(exp.monoinvid as number) as string;
 
         const aargs: IRSimpleExpression[] = [];
         for(let i = 0; i < exp.shuffleinfo.length; ++i) {
@@ -810,11 +1067,13 @@ class ASMToIRConverter {
         for(let i = 0; i < fdecl.preconditions.length; ++i) {
             const invdecl = fdecl.preconditions[i];
             
-            this.pushStatement(new IRPreconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), exp.monomorhphizedkey as string, invdecl.ii, aargs));
+            this.pushStatement(new IRPreconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), iname, invdecl.ii, aargs));
         }
 
+        //TODO: handle postcondition here  <---------------------------------  
+
         if(!exp.args.hasSpecialRef()) {
-            return new IRInvokeSimpleExpression(exp.monomorhphizedkey as string, aargs);
+            return new IRInvokeSimpleExpression(iname, aargs);
         }
         else {
             const srpos = exp.shuffleinfo.findIndex((si) => exp.args.args[si[0]] instanceof PassingArgumentValue);
@@ -823,7 +1082,7 @@ class ASMToIRConverter {
             const ivar = (passarg.exp as AccessVariableExpression).srcname;
             const ivartype = this.processTypeSignature((passarg.exp as AccessVariableExpression).getType());
             
-            return new IRInvokeSimpleWithImplicitsExpression(exp.monomorhphizedkey as string, aargs, ii, ivar, ivartype, passarg.kind);
+            return new IRInvokeSimpleWithImplicitsExpression(iname, aargs, ii, ivar, ivartype, passarg.kind);
         }
     }
 
@@ -831,12 +1090,182 @@ class ASMToIRConverter {
         assert(false, "ASMToIRConverter::flattenCallTypeFunctionExpression - Not Implemented");
     }
 
+    private flattenConstructorLambdaExpression(exp: ConstructorLambdaExpression): IRExpression {
+        const lptype = new IRLambdaParameterPackTypeSignature((this.currentLambdaConsMap as Map<number, string>).get(exp.monomorphizedUID as number) as string);
+        this.lpacks.push(lptype);
+
+        const iidecl = (this.currentNamespaceInstantiation as NamespaceInstantiationInfo).lambdas.get(lptype.tkeystr) as LambdaInstantiationInfo;
+        
+        const vexps = iidecl.capturedVars.map((vv) => {
+            if(vv[2] === "outer") {
+                return new IRAccessCapturedVariableExpression(vv[0]);
+            }
+            else if(vv[2] === "param") {
+                return new IRAccessParameterVariableExpression(vv[0]);
+            }
+            else {
+                return new IRAccessLocalVariableExpression(vv[0]);
+            }
+        });
+        const lexps = iidecl.capturedLambdas.map((vv) => {
+            if(vv.rpos === "outer") {
+                return new IRAccessCapturedVariableExpression(vv.pname);
+            }
+            else if(vv.rpos === "param") {
+                return new IRAccessParameterVariableExpression(vv.pname);
+            }
+            else {
+                return new IRAccessLocalVariableExpression(vv.pname);
+            }
+        });
+
+        return new IRConstructorLambdaExpression(lptype, [...vexps, ...lexps]);
+    }
+
     private flattenLambdaInvokeExpression(exp: LambdaInvokeExpression): IRExpression {
-        assert(false, "ASMToIRConverter::flattenLambdaInvokeExpression - Not Implemented");
+        const iname = (this.currentMonoInvIdMap as Map<number, string>).get(exp.monoinvid as number) as string;
+
+        const aargs: IRSimpleExpression[] = [exp.isCapturedLambda ? new IRAccessCapturedVariableExpression(exp.name) :  new IRAccessParameterVariableExpression(exp.name)];
+        for(let i = 0; i < exp.args.args.length; ++i) {
+            const ftype = this.tproc((exp.lambda as LambdaTypeSignature).params[i].type);
+            
+            const eexp = exp.args.args[i] as StdArgumentValue;
+            const sexp = this.flattenExpression(eexp.exp);
+            const cexp = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(sexp, eexp.exp.getType()), eexp.exp.getType(), ftype);
+
+            aargs.push(cexp);
+        }
+
+        //do rest parameter as needed
+        if(exp.resttype !== undefined) {
+            assert(false, "rest parameters not yet implemented in flattenCallNamespaceFunctionExpression");
+        }
+
+        if(!exp.args.hasSpecialRef()) {
+            return new IRInvokeSimpleExpression(iname, aargs);
+        }
+        else {
+            const srpos = exp.args.args.findIndex((si) => si instanceof PassingArgumentValue);
+            const passarg = exp.args.args[srpos] as PassingArgumentValue;
+            const ivar = (passarg.exp as AccessVariableExpression).srcname;
+            const ivartype = this.processTypeSignature((passarg.exp as AccessVariableExpression).getType());
+            
+            return new IRInvokeSimpleWithImplicitsExpression(iname, aargs, srpos, ivar, ivartype, passarg.kind);
+        }
+    }
+
+    private flattenPostfixAccessFromName(exp: PostfixAccessFromName, rootexp: IRSimpleExpression, roottype: TypeSignature): IRExpression {
+        const fdecl = exp.fieldDecl as MemberFieldDecl;
+        const indecl = this.tproc(exp.declaredInType as TypeSignature) as NominalTypeSignature;
+
+        const irroottype = this.processTypeSignature(roottype) as IRNominalTypeSignature;
+        const irftype = this.processTypeSignature(exp.fieldType as TypeSignature);
+        if(fdecl.isSpecialAccess) {
+            return new IRAccessFieldSpecialExpression(irroottype, rootexp, irroottype, fdecl.name, irftype);
+        }
+        else {
+            if(exp.isdirect) {
+                return new IRAccessFieldDirectExpression(irroottype, rootexp, this.processTypeSignature(indecl), fdecl.name, irftype);
+            }
+            else {
+                return new IRAccessFieldVirtualExpression(irroottype, rootexp, this.processTypeSignature(indecl), fdecl.name, irftype);
+            }
+        }
+    }
+
+    private flattenPostfixProjectFromNames(exp: PostfixProjectFromNames, rootexp: IRSimpleExpression, roottype: TypeSignature): IRExpression {
+        assert(false, "ASMToIRConverter::flattenPostfixProjectFromNames - Not Implemented");
+    }
+
+    private flattenPostfixAccessFromIndex(exp: PostfixAccessFromIndex, rootexp: IRSimpleExpression, roottype: TypeSignature): IRExpression {
+        assert(false, "ASMToIRConverter::flattenPostfixAccessFromIndex - Not Implemented");
+    }
+
+    private flattenPostfixIsTest(exp: PostfixIsTest, rootexp: IRSimpleExpression, roottype: TypeSignature): IRExpression {
+        return this.processITestAsBoolean(roottype, rootexp, exp.ttest);
+    }
+
+    private flattenPostfixAsConvert(exp: PostfixAsConvert, rootexp: IRSimpleExpression, roottype: TypeSignature): IRExpression {
+        const [testop, extractop, _] = this.processITestAsConvert(roottype, rootexp, exp.ttest, exp.getType(), undefined, exp.alwaysSucceeds);
+        if(testop instanceof IRLiteralBoolExpression && testop.value) {
+            return extractop;
+        }
+        else {
+            const typeassert = new IRErrorTypeAssertionCheckStatement(this.currentFile as string, this.convertSourceInfo(exp.sinfo), undefined, this.registerError(this.currentFile as string, this.convertSourceInfo(exp.sinfo), "runtime"), testop);
+            this.pushStatement(typeassert);
+
+            return extractop;
+        }
+    }
+
+    private flattenPostfixAssignFields(exp: PostfixAssignFields, rootexp: IRSimpleExpression, roottype: TypeSignature): IRExpression {
+        assert(false, "ASMToIRConverter::flattenPostfixAssignFields - Not Implemented");
+    }
+
+    private flattenPostfixSliceOperator(exp: PostfixSliceOperator, rootexp: IRSimpleExpression, roottype: TypeSignature): IRExpression {
+        assert(false, "ASMToIRConverter::flattenPostfixSliceOperator - Not Implemented");
+    }
+
+    private flattenPostfixInvoke(exp: PostfixInvoke, rootexp: IRSimpleExpression, roottype: TypeSignature): IRExpression {
+        assert(false, "ASMToIRConverter::flattenPostfixInvoke - Not Implemented");
     }
 
     private flattenPostfixOp(exp: PostfixOp): IRExpression {
-        assert(false, "ASMToIRConverter::flattenPostfixOp - Not Implemented");
+        let eexp = this.flattenExpression(exp.rootExp);
+        let eexptype = this.tproc(exp.rootExp.getType());
+
+        for(let i = 0; i < exp.ops.length; ++i) {
+            const op = exp.ops[i];
+
+            const scurr = this.makeExpressionSimple(eexp, eexptype);
+            switch(op.tag) {
+                case PostfixOpTag.PostfixAccessFromName: {
+                    eexp = this.flattenPostfixAccessFromName(op as PostfixAccessFromName, scurr, eexptype);
+                    eexptype = this.tproc(op.getType());
+                    break;
+                }
+                case PostfixOpTag.PostfixProjectFromNames: {
+                    eexp = this.flattenPostfixProjectFromNames(op as PostfixProjectFromNames, scurr, eexptype);
+                    eexptype = this.tproc(op.getType());
+                    break;
+                }
+                case PostfixOpTag.PostfixAccessFromIndex: {
+                    eexp = this.flattenPostfixAccessFromIndex(op as PostfixAccessFromIndex, scurr, eexptype);
+                    eexptype = this.tproc(op.getType());
+                    break;
+                }
+                case PostfixOpTag.PostfixIsTest: {
+                    eexp = this.flattenPostfixIsTest(op as PostfixIsTest, scurr, eexptype);
+                    eexptype = this.tproc(op.getType());
+                    break;
+                }
+                case PostfixOpTag.PostfixAsConvert: {
+                    eexp = this.flattenPostfixAsConvert(op as PostfixAsConvert, scurr, eexptype);
+                    eexptype = this.tproc(op.getType());
+                    break;
+                }
+                case PostfixOpTag.PostfixAssignFields: {
+                    eexp = this.flattenPostfixAssignFields(op as PostfixAssignFields, scurr, eexptype);
+                    eexptype = this.tproc(op.getType());
+                    break;
+                }
+                case PostfixOpTag.PostfixSliceOperator: {
+                    eexp = this.flattenPostfixSliceOperator(op as PostfixSliceOperator, scurr, eexptype);
+                    eexptype = this.tproc(op.getType());
+                    break;
+                }
+                case PostfixOpTag.PostfixInvoke: {
+                    eexp = this.flattenPostfixInvoke(op as PostfixInvoke, scurr, eexptype);
+                    eexptype = this.tproc(op.getType());
+                    break;
+                }
+                default: {
+                    assert(false, "missing case in PostfixOpTag");
+                }
+            }
+        }
+
+        return eexp;
     }
 
     private unwrapBinArgs(left: IRExpression, right: IRExpression, lefttype: TypeSignature, righttype: TypeSignature): [IRSimpleExpression, IRSimpleExpression] {
@@ -1254,13 +1683,13 @@ class ASMToIRConverter {
         }
         else if(ttag === ExpressionTag.LiteralUnicodeRegexExpression) {
             const rexp = (exp as LiteralRegexExpression);
-            const regexinst = this.processRegex(rexp.inns, rexp.value);
+            const regexinst = this.processURegex(rexp.inns, rexp.value);
 
             return new IRLiteralUnicodeRegexExpression(regexinst.regexID, rexp.value);
         }
         else if(ttag === ExpressionTag.LiteralCRegexExpression) {
             const rexp = (exp as LiteralRegexExpression);
-            const regexinst = this.processRegex(rexp.inns, rexp.value);
+            const regexinst = this.processCRegex(rexp.inns, rexp.value);
 
             return new IRLiteralCRegexExpression(regexinst.regexID, rexp.value);
         }
@@ -1289,6 +1718,8 @@ class ASMToIRConverter {
         }
         else if(ttag === ExpressionTag.LiteralFormatStringExpression) {
             const ffmt = exp as LiteralFormatStringExpression;
+            const ftype = this.processTypeSignature(ffmt.getType()) as IRFormatStringTypeSignature;
+            
             const fmts = ffmt.fmts.map<IRFormatStringComponent>((fmtcomp) => {
                 if(fmtcomp instanceof FormatStringTextComponent) {
                     const slexp = fmtcomp as FormatStringTextComponent;
@@ -1298,14 +1729,28 @@ class ASMToIRConverter {
                 }
                 else {
                     const argexp = fmtcomp as FormatStringArgComponent;
-                    return new IRFormatStringArgComponent(argexp.argPos, this.processTypeSignature(argexp.resolvedType as TypeSignature));
+                    let apos: number;
+                    if(/^[0-9]+$/.test(argexp.argPos)) {
+                        apos = Number.parseInt(argexp.argPos, 10);
+                    }
+                    else {
+                        apos = ftype.terms.findIndex((t) => t.argname === argexp.argPos);
+                    }
+
+                    return new IRFormatStringArgComponent(apos, this.processTypeSignature(argexp.resolvedType as TypeSignature));
                 }
             });
 
-            return new IRLiteralFormatStringExpression(fmts);
+            const iidx = this.formatstrings.length;
+            const fstring = new IRLiteralFormatStringExpression(iidx, fmts);
+            this.formatstrings.push(fstring);
+
+            return fstring;
         }
         else if(ttag === ExpressionTag.LiteralFormatCStringExpression) {
             const ffmt = exp as LiteralFormatCStringExpression;
+            const ftype = this.processTypeSignature(ffmt.getType()) as IRFormatStringTypeSignature;
+
             const fmts = ffmt.fmts.map<IRFormatStringComponent>((fmtcomp) => {
                 if(fmtcomp instanceof FormatStringTextComponent) {
                     const slexp = fmtcomp as FormatStringTextComponent;
@@ -1315,11 +1760,23 @@ class ASMToIRConverter {
                 }
                 else {
                     const argexp = fmtcomp as FormatStringArgComponent;
-                    return new IRFormatStringArgComponent(argexp.argPos, this.processTypeSignature(argexp.resolvedType as TypeSignature));
+                    let apos: number;
+                    if(/^[0-9]+$/.test(argexp.argPos)) {
+                        apos = Number.parseInt(argexp.argPos, 10);
+                    }
+                    else {
+                        apos = ftype.terms.findIndex((t) => t.argname === argexp.argPos);
+                    }
+                    
+                    return new IRFormatStringArgComponent(apos, this.processTypeSignature(argexp.resolvedType as TypeSignature));
                 }
             });
 
-            return new IRLiteralFormatCStringExpression(fmts);
+            const iidx = this.formatcstrings.length;
+            const fstring = new IRLiteralFormatCStringExpression(iidx, fmts);
+            this.formatcstrings.push(fstring);
+
+            return fstring;
         }
         else if(ttag === ExpressionTag.LiteralTypeDeclValueExpression) {
             const tdeclexp = exp as LiteralTypeDeclValueExpression;
@@ -1372,6 +1829,8 @@ class ASMToIRConverter {
         }
         else if(ttag === ExpressionTag.LiteralTypedFormatStringExpression) {
             const ffmt = exp as LiteralTypedFormatStringExpression;
+            const ftype = this.processTypeSignature(ffmt.getType()) as IRFormatStringTypeSignature;
+
             const fmts = ffmt.fmts.map<IRFormatStringComponent>((fmtcomp) => {
                 if(fmtcomp instanceof FormatStringTextComponent) {
                     const slexp = fmtcomp as FormatStringTextComponent;
@@ -1381,15 +1840,28 @@ class ASMToIRConverter {
                 }
                 else {
                     const argexp = fmtcomp as FormatStringArgComponent;
-                    return new IRFormatStringArgComponent(argexp.argPos, this.processTypeSignature(argexp.resolvedType as TypeSignature));
+                    let apos: number;
+                    if(/^[0-9]+$/.test(argexp.argPos)) {
+                        apos = Number.parseInt(argexp.argPos, 10);
+                    }
+                    else {
+                        apos = ftype.terms.findIndex((t) => t.argname === argexp.argPos);
+                    }
+
+                    return new IRFormatStringArgComponent(apos, this.processTypeSignature(argexp.resolvedType as TypeSignature));
                 }
             });
 
-            const csig = this.processTypeSignature(ffmt.constype);
-            return new IRLiteralTypedFormatStringExpression(csig, fmts);
+            const iidx = this.formatstrings.length;
+            const fstring = new IRLiteralFormatStringExpression(iidx, fmts);
+            this.formatstrings.push(fstring);
+
+            return fstring;
         }
         else if(ttag === ExpressionTag.LiteralTypedFormatCStringExpression) {
             const ffmt = exp as LiteralTypedFormatCStringExpression;
+            const ftype = this.processTypeSignature(ffmt.getType()) as IRFormatStringTypeSignature;
+
             const fmts = ffmt.fmts.map<IRFormatStringComponent>((fmtcomp) => {
                 if(fmtcomp instanceof FormatStringTextComponent) {
                     const slexp = fmtcomp as FormatStringTextComponent;
@@ -1399,12 +1871,23 @@ class ASMToIRConverter {
                 }
                 else {
                     const argexp = fmtcomp as FormatStringArgComponent;
-                    return new IRFormatStringArgComponent(argexp.argPos, this.processTypeSignature(argexp.resolvedType as TypeSignature));
+                    let apos: number;
+                    if(/^[0-9]+$/.test(argexp.argPos)) {
+                        apos = Number.parseInt(argexp.argPos, 10);
+                    }
+                    else {
+                        apos = ftype.terms.findIndex((t) => t.argname === argexp.argPos);
+                    }
+
+                    return new IRFormatStringArgComponent(apos, this.processTypeSignature(argexp.resolvedType as TypeSignature));
                 }
             });
 
-            const csig = this.processTypeSignature(ffmt.constype);
-            return new IRLiteralTypedFormatCStringExpression(csig, fmts);
+            const iidx = this.formatcstrings.length;
+            const fstring = new IRLiteralFormatCStringExpression(iidx, fmts);
+            this.formatcstrings.push(fstring);
+
+            return fstring;
         } 
         else if(ttag === ExpressionTag.AccessEnvValueExpression) {
             const aevexp = exp as AccessEnvValueExpression;
@@ -1466,7 +1949,7 @@ class ASMToIRConverter {
                 return new IRAccessParameterVariableExpression(tave.srcname);
             }
             else if(tave.isCaptured) {
-                return new IRAccessCapturedVariableExpression(tave.scopeidx as number, this.processLocalVariableName(tave.srcname));
+                return new IRAccessCapturedVariableExpression(this.processLocalVariableName(tave.srcname));
             }
             else {
                 return new IRAccessLocalVariableExpression(this.processLocalVariableName(tave.srcname));
@@ -1479,7 +1962,7 @@ class ASMToIRConverter {
             assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
         }
         else if(ttag === ExpressionTag.ConstructorLambdaExpression) {
-            assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+            return this.flattenConstructorLambdaExpression(exp as ConstructorLambdaExpression);
         }
         else if(ttag === ExpressionTag.LambdaInvokeExpression) {
             return this.flattenLambdaInvokeExpression(exp as LambdaInvokeExpression);
@@ -1495,6 +1978,44 @@ class ASMToIRConverter {
         }
         else if(ttag === ExpressionTag.ParseAsTypeExpression) {
             assert(false, `ASMToIRConverter: not implemented -- ${exp.tag}`);
+        }
+        else if(ttag === ExpressionTag.InterpolateFormatExpression) {
+            const ifexp = exp as InterpolateFormatExpression;
+            const rtype = this.tproc(ifexp.getType());
+            
+            const fop = this.makeExpressionSimple(this.flattenExpression(ifexp.fmtString), ifexp.fmtString.getType());
+            const fargs: IRSimpleExpression[] = [];
+            for(let i = 0; i < ifexp.args.length; i++) {
+                const argtype = this.tproc(ifexp.args[i].exp.getType()) as NominalTypeSignature;
+                const barg = this.makeExpressionSimple(this.flattenExpression(ifexp.args[i].exp), this.tproc(ifexp.args[i].exp.getType()))
+                if(!(argtype.decl instanceof TypedeclTypeDecl)) {
+                    fargs.push(barg);
+                }
+                else {
+                    const tdaccess = new IRAccessTypeDeclValueExpression(this.processTypeSignature(argtype), barg);
+                    fargs.push(tdaccess);
+                }
+            }
+
+            let interpop: IRConstructExpression;
+            if(ifexp.kind === "string") {
+                interpop = new IRInterpolateFormatStringExpression(fop, fargs);
+            }
+            else if(ifexp.kind === "cstring") {
+                interpop = new IRInterpolateFormatCStringExpression(fop, fargs);
+            }
+            else {
+                assert(false, `ASMToIRConverter: Unknown InterpolateFormatExpression kind -- ${ifexp.kind}`);
+            }
+
+            //if the result is a CString/String then just emit the format operation
+            if(rtype.tkeystr === "CString" || rtype.tkeystr === "String") {
+                return interpop;
+            }
+            else {            
+                //else it is a formatted literal and we need to emit multiple ops -- format the string, then run the check, then "construct the type alias"
+                assert(false, `ASMToIRConverter: not implemented -- InterpolateFormatExpression with type alias result`);
+            }
         }
         else if(ttag === ExpressionTag.PostfixOpExpression) {
             return this.flattenPostfixOp(exp as PostfixOp);
@@ -2377,57 +2898,109 @@ class ASMToIRConverter {
 
     private flattenIfStatement(stmt: IfStatement): boolean {
         const [texp, ginfos] = this.flattenITestGuardSet(stmt.sinfo, stmt.cond);
-        assert(ginfos.length === stmt.bbinds.length, "Internal error: binder info length mismatch");
 
         if(stmt.bbinds.length === 0) {
-            if(ASMToIRConverter.isLiteralFalseExpression(texp)) {
-                return false;
-            }
-            else {
-                if(ASMToIRConverter.isLiteralTrueExpression(texp)) {
-                    return this.flattenBlockStatement(stmt.trueBlock) || stmt.trueBlock.isterminal;
-                }
-                else {
-                    this.pushStatementBlock();
-                    this.flattenBlockStatement(stmt.trueBlock);
-                    const tblock = this.popStatementBlock();
-
-                    this.pushStatement(new IRSimpleIfStatement(texp, new IRBlockStatement(tblock)));
-                    return false;
-                }
-            }
-        }
-        else {
-            assert(false, "Not implemented -- IfStatement with binders");
-        }
-    }
-
-    private flattenIfElseStatement(stmt: IfElseStatement): boolean {
-        const [texp, ginfos] = this.flattenITestGuardSet(stmt.sinfo, stmt.cond);
-        assert(ginfos.length === stmt.bbinds.length, "Internal error: binder info length mismatch");
-
-        if(stmt.bbinds.length === 0) {
-            if(ASMToIRConverter.isLiteralFalseExpression(texp)) {
-                return this.flattenBlockStatement(stmt.falseBlock) || stmt.falseBlock.isterminal;
-            }
-            else if(ASMToIRConverter.isLiteralTrueExpression(texp)) {
+            if(ASMToIRConverter.isLiteralTrueExpression(texp)) {
                 return this.flattenBlockStatement(stmt.trueBlock) || stmt.trueBlock.isterminal;
+            }
+            else if(ASMToIRConverter.isLiteralFalseExpression(texp)) {
+                return false;
             }
             else {
                 this.pushStatementBlock();
                 this.flattenBlockStatement(stmt.trueBlock);
                 const tblock = this.popStatementBlock();
 
-                this.pushStatementBlock();
-                this.flattenBlockStatement(stmt.falseBlock);
-                const fblock = this.popStatementBlock();
-
-                this.pushStatement(new IRSimpleIfElseStatement(texp, new IRBlockStatement(tblock), new IRBlockStatement(fblock)));
+                this.pushStatement(new IRSimpleIfStatement(texp, new IRBlockStatement(tblock)));
                 return false;
             }
         }
         else {
-            assert(false, "Not implemented -- IfElseStatement with binders");
+            let bindstmts: IRStatement[] = [];
+            for(let i = 0; i < ginfos.length; ++i) {
+                const bvar = this.processLocalVariableName(stmt.bbinds[i].bname);
+                const btype = stmt.bbinds[i].ttrue as TypeSignature;
+                const bexp = this.processITestAsConvert(ginfos[i].srctype, ginfos[i].ee, ginfos[i].itest, btype, undefined, true);
+                bindstmts.push(new IRVariableInitializationStatement(bvar, this.processTypeSignature(btype), bexp[1], true));
+            }
+
+            if(ASMToIRConverter.isLiteralTrueExpression(texp)) {
+                this.pushStatements(bindstmts);
+                return this.flattenBlockStatement(stmt.trueBlock) || stmt.trueBlock.isterminal;
+            }
+            else if(ASMToIRConverter.isLiteralFalseExpression(texp)) {
+                return false;
+            }
+            else {
+                this.pushStatementBlock();
+                this.pushStatements(bindstmts);
+                this.flattenBlockStatement(stmt.trueBlock);
+                const tblock = this.popStatementBlock();
+
+                this.pushStatement(new IRSimpleIfStatement(texp, new IRBlockStatement(tblock)));
+                return false;
+            }
+        }
+    }
+
+    private flattenIfElseStatement(stmt: IfElseStatement): boolean {
+        const [texp, ginfos] = this.flattenITestGuardSet(stmt.sinfo, stmt.cond);
+        
+        if(stmt.bbinds.length === 0) {
+            if(ASMToIRConverter.isLiteralTrueExpression(texp)) {
+                return this.flattenBlockStatement(stmt.trueBlock) || stmt.trueBlock.isterminal;
+            }
+            else if(ASMToIRConverter.isLiteralFalseExpression(texp)) {
+                return this.flattenBlockStatement(stmt.falseBlock) || stmt.falseBlock.isterminal;
+            }
+            else {
+                this.pushStatementBlock();
+                const ttrue =this.flattenBlockStatement(stmt.trueBlock);
+                const tblock = this.popStatementBlock();
+
+                this.pushStatementBlock();
+                const tfalse =this.flattenBlockStatement(stmt.falseBlock);
+                const fblock = this.popStatementBlock();
+
+                this.pushStatement(new IRSimpleIfElseStatement(texp, new IRBlockStatement(tblock), new IRBlockStatement(fblock)));
+                return (ttrue || stmt.trueBlock.isterminal) && (tfalse || stmt.falseBlock.isterminal);
+            }
+        }
+        else {
+            let bindstmtstt: IRStatement[] = [];
+            let bindstmtsff: IRStatement[] = [];
+            for(let i = 0; i < ginfos.length; ++i) {
+                const bvar = this.processLocalVariableName(stmt.bbinds[i].bname);
+                const ttype = stmt.bbinds[i].ttrue as TypeSignature;
+                const ftype = stmt.bbinds[i].tfalse as TypeSignature;
+                const bexp = this.processITestAsConvert(ginfos[i].srctype, ginfos[i].ee, ginfos[i].itest, ttype, ftype, true);
+                
+                bindstmtstt.push(new IRVariableInitializationStatement(bvar, this.processTypeSignature(ttype), bexp[1], true));
+                bindstmtsff.push(new IRVariableInitializationStatement(bvar, this.processTypeSignature(ftype), bexp[2] as IRExpression, true));
+            }
+
+            if(ASMToIRConverter.isLiteralTrueExpression(texp)) {
+                this.pushStatements(bindstmtstt);
+                return this.flattenBlockStatement(stmt.trueBlock) || stmt.trueBlock.isterminal;
+            }
+            else if(ASMToIRConverter.isLiteralFalseExpression(texp)) {
+                this.pushStatements(bindstmtsff);
+                return this.flattenBlockStatement(stmt.falseBlock) || stmt.falseBlock.isterminal;
+            }
+            else {
+                this.pushStatementBlock();
+                this.pushStatements(bindstmtstt);
+                const ttrue =this.flattenBlockStatement(stmt.trueBlock);
+                const tblock = this.popStatementBlock();
+
+                this.pushStatementBlock();
+                this.pushStatements(bindstmtsff);
+                const tfalse =this.flattenBlockStatement(stmt.falseBlock);
+                const fblock = this.popStatementBlock();
+
+                this.pushStatement(new IRSimpleIfElseStatement(texp, new IRBlockStatement(tblock), new IRBlockStatement(fblock)));
+                return (ttrue || stmt.trueBlock.isterminal) && (tfalse || stmt.falseBlock.isterminal);
+            }
         }
     }
 
@@ -2440,7 +3013,53 @@ class ASMToIRConverter {
     }
 
     private flattenMatchStatement(stmt: MatchStatement): boolean {
-        assert(false, "Not Implemented -- flattenMatchStatement");
+        const sval = this.makeExpressionImmediate(this.flattenExpression(stmt.sval), this.tproc(stmt.sval.getType()));
+        const svaltype = this.processTypeSignature(stmt.sval.getType());
+        const implicitfinal = this.processTypeSignature(stmt.implicitFinalType || stmt.sval.getType());
+        
+        const flows = stmt.matchflow.map((mf) => {
+            const mtype = mf.mtype !== undefined ? this.processTypeSignature(mf.mtype) : undefined;
+
+            const bvar = this.processLocalVariableName(stmt.bindervar);
+            const ttype = mf.mtype || stmt.implicitFinalType || stmt.sval.getType();
+            const bexp = this.processITestConvert_SafeType(this.tproc(stmt.sval.getType()), sval, this.tproc(ttype));
+            const bstmt = new IRVariableInitializationStatement(bvar, this.processTypeSignature(ttype), bexp, true);
+                
+            this.pushStatementBlock();
+            this.pushStatement(bstmt);
+            this.flattenBlockStatement(mf.value);
+            const stmts = this.popStatementBlock();
+
+            return {mtype: mtype, value: new IRBlockStatement(stmts)};
+        });
+        if(!stmt.mustExhaustive) {
+            flows.push({mtype: undefined, value: new IRBlockStatement([new IRErrorExhaustiveStatement(this.currentFile as string, this.convertSourceInfo(stmt.sinfo), this.registerError(this.currentFile as string, this.convertSourceInfo(stmt.sinfo), "runtime"))])});
+        }
+
+        const allexact = stmt.matchflow.every((f) => {
+            if(f.mtype === undefined) {
+                return true;
+            }
+
+            const mmtype = this.tproc(f.mtype);
+            return (mmtype instanceof NominalTypeSignature) && (mmtype.decl instanceof AbstractEntityTypeDecl);
+        });
+
+        if(!allexact) {
+            this.pushStatement(new IRMatchGeneralStatement(sval, svaltype, stmt.bindervar, flows, implicitfinal));
+        }
+        else {
+            const svtype = this.tproc(stmt.sval.getType());
+            if((svtype instanceof NominalTypeSignature) && (svtype.decl instanceof AbstractConceptTypeDecl)) {
+                this.pushStatement(new IRMatchExactStatement(sval, svaltype, stmt.bindervar, flows, implicitfinal));
+            }
+            else {
+                const eflow = stmt.matchflow.findIndex((f) => f.mtype === undefined || svtype.tkeystr === this.tproc(f.mtype).tkeystr);
+                this.pushStatement(flows[eflow].value);
+            }
+        }
+
+        return stmt.matchflow.every((mf) => mf.value.isterminal);
     }
 
     private flattenDispatchPatternStatement(stmt: DispatchPatternStatement): boolean {
@@ -2461,7 +3080,7 @@ class ASMToIRConverter {
             ;//no-op
         }
         else {
-            this.pushStatement(new IRAssertStatement(this.currentFile as string, this.convertSourceInfo(stmt.sinfo), stmt.tag, this.registerError(this.currentFile as string, this.convertSourceInfo(stmt.sinfo), "userspec"), ircond));
+            this.pushStatement(new IRAssertStatement(this.currentFile as string, this.convertSourceInfo(stmt.sinfo), undefined, this.registerError(this.currentFile as string, this.convertSourceInfo(stmt.sinfo), "userspec"), ircond));
         }
     }
     
@@ -2471,7 +3090,7 @@ class ASMToIRConverter {
             ;//no-op
         }
         else {
-            this.pushStatement(new IRValidateStatement(this.currentFile as string, this.convertSourceInfo(stmt.sinfo), stmt.tag, this.registerError(this.currentFile as string, this.convertSourceInfo(stmt.sinfo), "userspec"), ircond));
+            this.pushStatement(new IRValidateStatement(this.currentFile as string, this.convertSourceInfo(stmt.sinfo), stmt.diagnosticTag, this.registerError(this.currentFile as string, this.convertSourceInfo(stmt.sinfo), "userspec"), ircond));
         }
     }
 
@@ -2796,15 +3415,15 @@ class ASMToIRConverter {
                 }
             }
 
-            if(!(p.type instanceof LambdaInvokeExpression)) {
-                return new IRInvokeParameterDecl(p.name, this.processTypeSignature(p.type), p.pkind, defaultValue);
-
+            if(!(p.type instanceof LambdaTypeSignature)) {
+                return new IRInvokeParameterDecl(p.name, this.processTypeSignature(p.type), p.pkind, undefined, defaultValue);
             }
             else {
-                const ll = (this.currentInvokeInstantation as InvokeInstantiationInfo).lambdas.find((li) => li.pname === p.name) as { pname: string, psigkey: string, invtrgt: string };
+                //This is ok since lambda params can only be on an invoke (not on another lambda)
+                const ll = (this.currentInvokeInstantation as InvokeInstantiationInfo).lambdaargs.find((li) => li.pname === p.name) as { pname: string, psigkey: string, invtrgt: string };
                 const tlambda = new IRLambdaParameterPackTypeSignature(ll.psigkey);
                 
-                return new IRInvokeParameterDecl(p.name, tlambda, p.pkind, defaultValue);
+                return new IRInvokeParameterDecl(p.name, tlambda, p.pkind, undefined, defaultValue);
             }
         });
     }
@@ -2837,6 +3456,27 @@ class ASMToIRConverter {
                 irasm.examples.push(new IRExampleDecl(ikey, recursive, params, this.processTypeSignature(fdecl.resultType), preconds, postconds, docstring, fdecl.file, this.convertSourceInfo(fdecl.sinfo), association, body));
             }
         }
+    }
+
+    private generateLambdaInvokeDecl(linst: LambdaInstantiationInfo): IRInvokeDecl {
+        const recursive = this.processRecursiveInfo(linst.body.recursive);
+
+        const params = [
+            new IRInvokeParameterDecl(linst.newikey, new IRLambdaParameterPackTypeSignature(linst.newikey), undefined, "lcapture", undefined) , 
+            ...this.processInvokeParams(linst.lsig.params.map((p) => new InvokeParameterDecl(p.name as string, p.type, undefined, p.pkind, p.isRestParam)))
+        ];
+
+        return new IRInvokeDecl(linst.newikey, 
+            recursive, 
+            params, 
+            this.processTypeSignature(linst.lsig.resultType), 
+            [],
+            [], 
+            undefined, 
+            linst.body.file, 
+            this.convertSourceInfo(linst.body.sinfo), 
+            this.processBody(linst.body.body)
+        );
     }
 
 /*
@@ -2872,7 +3512,7 @@ class ASMToIRConverter {
     }
 */
     private generateEnumTypeDecl(tdecl: EnumTypeDecl, tinst: TypeInstantiationInfo): IREnumTypeDecl {
-        this.initCodeProcessingContext(tdecl.file, false, tinst.tsig, undefined, undefined, tinst, undefined);
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
 
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
@@ -2881,7 +3521,7 @@ class ASMToIRConverter {
     }
 
     private generateTypedeclTypeDecl(tdecl: TypedeclTypeDecl, tinst: TypeInstantiationInfo): IRTypedeclTypeDecl {
-        this.initCodeProcessingContext(tdecl.file, false, tinst.tsig, undefined, undefined, tinst, undefined);
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
 
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
@@ -2902,7 +3542,7 @@ class ASMToIRConverter {
     }
 
     private generateTypedeclCStringDecl(tdecl: TypedeclTypeDecl, tinst: TypeInstantiationInfo): IRTypedeclCStringDecl {
-        this.initCodeProcessingContext(tdecl.file, false, tinst.tsig, undefined, undefined, tinst, undefined);
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
 
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
@@ -2929,7 +3569,7 @@ class ASMToIRConverter {
     }
 
     private generateTypedeclStringDecl(tdecl: TypedeclTypeDecl, tinst: TypeInstantiationInfo): IRTypedeclStringDecl {
-        this.initCodeProcessingContext(tdecl.file, false, tinst.tsig, undefined, undefined, tinst, undefined);
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
 
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
@@ -2956,7 +3596,7 @@ class ASMToIRConverter {
     }
 
     private generatePrimitiveEntityTypeDecl(tdecl: PrimitiveEntityTypeDecl, tinst: TypeInstantiationInfo): IRPrimitiveEntityTypeDecl {
-        this.initCodeProcessingContext(tdecl.file, false, tinst.tsig, undefined, undefined, tinst, undefined);
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
 
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
@@ -2993,7 +3633,7 @@ class ASMToIRConverter {
     }
 
     private generateSomeTypeDecl(tdecl: SomeTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRSomeTypeDecl {
-        this.initCodeProcessingContext(tdecl.file, false, tinst.tsig, undefined, undefined, tinst, undefined);
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
         
         const encloption = tdecl.saturatedProvides.map((sp) => this.processTypeSignature(sp));
 
@@ -3010,7 +3650,7 @@ class ASMToIRConverter {
     }
 
     private generateListTypeDecl(tdecl: ListTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRListTypeDecl {
-        this.initCodeProcessingContext(tdecl.file, false, tinst.tsig, undefined, undefined, tinst, undefined);
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
 
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
@@ -3041,7 +3681,7 @@ class ASMToIRConverter {
     }
 
     private generateEntityTypeDecl(tdecl: EntityTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IREntityTypeDecl {
-        this.initCodeProcessingContext(tdecl.file, false, tinst.tsig, undefined, undefined, tinst, undefined);
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
 
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
@@ -3083,8 +3723,17 @@ class ASMToIRConverter {
         );
     }
 
+    private generateLambdaDataDecl(linst: LambdaInstantiationInfo): IRLambdaParameterPackDecl {
+        const stdvalues: {vname: string, vtype: IRTypeSignature}[] = linst.capturedVars
+            .map((cv) => { return { vname: cv[0], vtype: this.processTypeSignature(cv[1]) }; });
+
+        const lambdavalues: {lname: string, ltypekey: string}[] = linst.capturedLambdas.map((cl) => { return { lname: cl.pname, ltypekey: cl.psigkey }; });
+
+        return new IRLambdaParameterPackDecl(linst.newikey, linst.newikey, stdvalues, lambdavalues);
+    }
+
     private generateOptionTypeDecl(tdecl: OptionTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IROptionTypeDecl {
-        this.initCodeProcessingContext(tdecl.file, false, tinst.tsig, undefined, undefined, tinst, undefined);
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
 
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
@@ -3106,14 +3755,15 @@ class ASMToIRConverter {
     }
 
     private generateConceptTypeDecl(tdecl: ConceptTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRConceptTypeDecl {
-        this.initCodeProcessingContext(tdecl.file, false, tinst.tsig, undefined, undefined, tinst, undefined);
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
 
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
 
         const bfinfo = tdecl.saturatedBFieldInfo.map((bf) => {
-            const fkey = `${(tinst.tsig as NominalTypeSignature).tkeystr}--${bf.name}`;
-            return { containingtype: this.processTypeSignature(bf.containingtype), fkey: fkey, fname: bf.name, ftype: this.processTypeSignature(bf.type) };
+            const bfirt = this.processTypeSignature(bf.containingtype);
+            const fkey = `${bfirt.tkeystr}--${bf.name}`;
+            return { containingtype: bfirt, fkey: fkey, fname: bf.name, ftype: this.processTypeSignature(bf.type) };
         });
 
         return new IRConceptTypeDecl(tinst.tkey, 
@@ -3130,11 +3780,77 @@ class ASMToIRConverter {
     }
 
     private generateDatatypeMemberEntityTypeDecl(tdecl: DatatypeMemberEntityTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRDatatypeMemberEntityTypeDecl {
-        assert(false, "Not Implemented -- generateDatatypeMemberEntityTypeDecl");
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
+
+        const doc = tdecl.attributes.find((a) => a.name === "doc");
+        const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
+
+        let etag: "std" | "status" | "event" = "std";
+        if(tdecl.etag === AdditionalTypeDeclTag.Status) {
+            etag = "status";
+        }
+        if(tdecl.etag === AdditionalTypeDeclTag.Event) {
+            etag = "event";
+        }
+
+        const bfinfo = tdecl.saturatedBFieldInfo.map((bf) => {
+            const bfirt = this.processTypeSignature(bf.containingtype);
+            const fkey = `${bfirt.tkeystr}--${bf.name}`;
+            return { containingtype: bfirt, fkey: fkey, fname: bf.name, ftype: this.processTypeSignature(bf.type) };
+        });
+
+        const allInvariants = tdecl.allInvariants.map((vv) => {
+            return { containingtype: this.processTypeSignature(vv.containingtype), ii: vv.ii };
+        });
+        const allValidates = tdecl.allValidates.map((vv) => {
+            return { containingtype: this.processTypeSignature(vv.containingtype), ii: vv.ii };
+        });
+
+        return new IRDatatypeMemberEntityTypeDecl(tinst.tkey, 
+            tdecl.invariants.map<IRInvariantDecl>((inv) => this.generateInvariantClauseDecl(tinst.tsig as NominalTypeSignature, inv)),
+            tdecl.validates.map<IRValidateDecl>((val) => this.generateValidateClauseDecl(tinst.tsig as NominalTypeSignature, val)),
+            tdecl.fields.map<IRMemberFieldDecl>((f) => this.generateMemberFieldDecl(tinst.tsig as NominalTypeSignature, f)),
+            etag,
+            tdecl.saturatedProvides.map((sp) => this.processTypeSignature(sp)),
+            bfinfo,
+            allInvariants,
+            allValidates,
+            docstring,
+            this.processMetaDataTags(tdecl.attributes),
+            tdecl.file,
+            this.convertSourceInfo(tdecl.sinfo)
+        );
     }
 
     private generateDatatypeTypeDecl(tdecl: DatatypeTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRDatatypeTypeDecl {
-        assert(false, "Not Implemented -- generateDatatypeTypeDecl");
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
+
+        const doc = tdecl.attributes.find((a) => a.name === "doc");
+        const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
+
+        const bfinfo = tdecl.saturatedBFieldInfo.map((bf) => {
+            const bfirt = this.processTypeSignature(bf.containingtype);
+            const fkey = `${bfirt.tkeystr}--${bf.name}`;
+            return { containingtype: bfirt, fkey: fkey, fname: bf.name, ftype: this.processTypeSignature(bf.type) };
+        });
+
+        const assocdecls = tdecl.associatedMemberEntityDecls.map((md) => {
+            const tsig = new NominalTypeSignature(md.sinfo, undefined, md, tdecl.terms.map((ta) => new TemplateTypeSignature(md.sinfo, ta.name)));
+            return this.processTypeSignature(tsig);
+        });
+
+        return new IRDatatypeTypeDecl(tinst.tkey, 
+            tdecl.invariants.map<IRInvariantDecl>((inv) => this.generateInvariantClauseDecl(tinst.tsig as NominalTypeSignature, inv)),
+            tdecl.validates.map<IRValidateDecl>((val) => this.generateValidateClauseDecl(tinst.tsig as NominalTypeSignature, val)),
+            tdecl.fields.map<IRMemberFieldDecl>((f) => this.generateMemberFieldDecl(tinst.tsig as NominalTypeSignature, f)),
+            tdecl.saturatedProvides.map((sp) => this.processTypeSignature(sp)),
+            bfinfo,
+            docstring,
+            this.processMetaDataTags(tdecl.attributes),
+            tdecl.file,
+            this.convertSourceInfo(tdecl.sinfo),
+            assocdecls
+        );
     }
 
     private generateAPIDecl(adecl: APIDecl, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRAPIDecl {
@@ -3149,8 +3865,8 @@ class ASMToIRConverter {
         assert(false, "Not implemented -- checkTaskDecl");
     }
 
-    private generateNamespaceConstDecl(cdecl: NamespaceConstDecl): IRConstantDecl {
-        this.initCodeProcessingContext(cdecl.file, false, cdecl.declaredType, undefined, undefined, undefined, undefined);
+    private generateNamespaceConstDecl(ns: FullyQualifiedNamespace, cdecl: NamespaceConstDecl): IRConstantDecl {
+        this.extendProcessingContextForExpEval(cdecl.declaredType);
 
         this.pushStatementBlock();
         const irval = this.flattenExpression(cdecl.value);
@@ -3161,7 +3877,7 @@ class ASMToIRConverter {
         const stmts = this.popStatementBlock();
         const expr = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(irval, this.tproc(cdecl.value.getType())), this.tproc(cdecl.value.getType()), cdecl.declaredType);
 
-        return new IRConstantDecl(cdecl.name, this.processTypeSignature(cdecl.declaredType), stmts, expr, docstring);
+        return new IRConstantDecl(ns.emit() + "::" + cdecl.name, this.processTypeSignature(cdecl.declaredType), stmts, expr, docstring);
     }
 
     private generateNamespaceTypeDecl(tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]) {
@@ -3343,8 +4059,29 @@ class ASMToIRConverter {
             }
         }
 
+        //don't want subnamespace decls to overwrite the current namespace instantiation
+        this.currentNamespaceInstantiation = asminstantiation;
+
         for(let i = 0; i < decl.consts.length; ++i) {
-            this.generateNamespaceConstDecl(decl.consts[i]);
+            const ntcd = this.assembly.resolveNamespaceConstant(decl.fullnamespace, decl.consts[i].name);
+            if(ntcd !== undefined) {
+                this.constants.push(this.generateNamespaceConstDecl(decl.fullnamespace, decl.consts[i]));
+            }
+        }
+
+        const llist = [...asminstantiation.lambdas.values()].sort((a, b) => a.newikey.localeCompare(b.newikey));
+        for(let i = 0; i < llist.length; ++i) {
+            const linst = llist[i];
+            irasm.lpacksigs.push(new IRLambdaParameterPackTypeSignature(linst.newikey));
+
+            const implicitreturn = linst.lsig.params.find((p) => p.pkind !== undefined);
+            this.initCodeLambdaProcessingContext(linst.body.file, linst.lsig.resultType, implicitreturn, linst);
+
+            const ldecl = this.generateLambdaDataDecl(linst);
+            irasm.alllambdas.set(ldecl.tkeystr, ldecl);
+                    
+            const linv = this.generateLambdaInvokeDecl(linst);
+            irasm.invokes.push(linv);
         }
 
         for(let i = 0; i < decl.functions.length; ++i) {
@@ -3354,7 +4091,7 @@ class ASMToIRConverter {
                     const fdecl = decl.functions[i];
                     const implicitreturn = fdecl.params.find((p) => p.pkind !== undefined);
 
-                    this.initCodeProcessingContext(fdecl.file, false, fdecl.resultType, implicitreturn !== undefined ? implicitreturn.name : undefined, fdecl.postconditions.length !== 0 ? fdecl.postconditions : undefined, undefined, finst[j]);
+                    this.initCodeInvokeProcessingContext(fdecl.file, false, fdecl.resultType, implicitreturn, fdecl.postconditions.length !== 0 ? fdecl.postconditions : undefined, finst[j]);
                     this.generateNamespaceFunctionDecl(fdecl, irasm);
                 }
             }
@@ -3383,6 +4120,8 @@ class ASMToIRConverter {
         for(let i = 0; i < decl.tasks.length; ++i) {
             irasm.tasks.push(this.generateTaskDecl(decl.tasks[i], irasm, aainsts));
         }
+
+        this.currentNamespaceInstantiation = undefined;
     }
 
     static generateIR(assembly: Assembly, asminstantiation: NamespaceInstantiationInfo[], testfilefilter: string[] | undefined): IRAssembly {
@@ -3398,6 +4137,16 @@ class ASMToIRConverter {
                 emitter.emitNamespaceDeclaration(nsdecl, nsii, asminstantiation, irasm);
             }
         }
+
+        irasm.constants.push(...emitter.constants);
+
+        irasm.cregexps.push(...emitter.cregexs.values());
+        irasm.uregexps.push(...emitter.uregexs.values());
+
+        irasm.formats.push(...emitter.formats);
+
+        irasm.formatcstrings.push(...emitter.formatcstrings);
+        irasm.formatstrings.push(...emitter.formatstrings);
 
         irasm.computeSubtypeInfo();
         irasm.computeTypeDependencyInfo();

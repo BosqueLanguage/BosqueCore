@@ -3,7 +3,7 @@
 import { checkTestEmitMainFunction } from "../../../bin/test/cppemit/cppemit_nf.js";
 import { describe, it } from "node:test";
 
-describe ("CppEmit -- NamespaceFunction Ref Params", () => {
+describe ("CPPEmit -- NamespaceFunction Ref Params", () => {
     it("should emit simple ref", function () {
         checkTestEmitMainFunction('function foo(out y: Int): Int { y = 2i; return 1i; } public function main(): Int { var i = 0i; return foo(out i); }', "Int Mainᕒmain() { Int i = 0_i; Int tmp_0 = Mainᕒfooᙾref(i); return tmp_0; }");
         checkTestEmitMainFunction('function foo(out? y: Int): Bool { y = 2i; return true; } public function main(): Bool { var i = 0i; return foo(out? i); }', "Bool Mainᕒmain() { Int i = 0_i; Bool tmp_0 = Mainᕒfooᙾref(i); return tmp_0; }");

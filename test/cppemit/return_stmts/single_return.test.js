@@ -3,7 +3,6 @@
 import { checkTestEmitMainFunction } from "../../../bin/test/cppemit/cppemit_nf.js";
 import { describe, it } from "node:test";
 
-
 describe ("CPPEmit -- simple return", () => {
     it("should emit simple returns", function () {
         checkTestEmitMainFunction('public function main(x: Int): Int { return x; }', 'Int Mainᕒmain(Int x) { return x; }');

@@ -182,7 +182,7 @@ class FormatStringTextComponent extends FormatStringComponent {
 }
 
 class FormatStringArgComponent extends FormatStringComponent {
-    readonly argPos: string; //name
+    readonly argPos: string; //name or index
     readonly argType: TypeSignature; //can be AutoTypeSignature, string, or typed string
     resolvedType: TypeSignature | undefined; //after type checking
 
@@ -372,7 +372,7 @@ enum ExpressionTag {
 
     ParseAsTypeExpression = "ParseAsTypeExpression",
 
-    InterpolateFormatStringExpression = "InterpolateFormatStringExpression",
+    InterpolateFormatExpression = "InterpolateFormatExpression",
 
     PostfixOpExpression = "PostfixOpExpression",
 
@@ -856,7 +856,7 @@ class AccessVariableExpression extends Expression {
     readonly srcname: string; //the name in the source code
     isParameter: boolean = false;
     isCaptured: boolean = false;
-    scopeidx: number | undefined = undefined;
+    ocapture: "outer" | "local" | "param" | undefined = undefined;
 
     constructor(sinfo: SourceInfo, srcname: string) {
         super(ExpressionTag.AccessVariableExpression, sinfo);
@@ -905,7 +905,6 @@ class ConstructorEListExpression extends ConstructorExpression {
 
 class ConstructorLambdaExpression extends Expression {
     readonly invoke: LambdaDecl;
-
     monomorphizedUID: number | undefined = undefined;
 
     constructor(sinfo: SourceInfo, invoke: LambdaDecl) {
@@ -941,10 +940,19 @@ class LambdaInvokeExpression extends Expression {
     readonly args: ArgumentList;
 
     isCapturedLambda: boolean = false;
+    ocapture: "outer" | "local" | "param" | undefined = undefined;
+    
     lambda: LambdaTypeSignature | undefined = undefined;
     arginfo: TypeSignature[] = [];
     resttype: TypeSignature | undefined = undefined;
     restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
+
+    setcondout: string[] = [];
+    setuncond: string[] = [];
+    inout: string[] = [];
+    byref: string[] = [];
+
+    monoinvid: number | undefined = undefined;
 
     constructor(sinfo: SourceInfo, name: string, rec: RecursiveAnnotation, args: ArgumentList) {
         super(ExpressionTag.LambdaInvokeExpression, sinfo);
@@ -980,7 +988,7 @@ class CallNamespaceFunctionExpression extends Expression {
     inout: string[] = [];
     byref: string[] = [];
 
-    monomorhphizedkey: string | undefined = undefined;
+    monoinvid: number | undefined = undefined;
 
     constructor(sinfo: SourceInfo, isImplicitNS: boolean, ns: FullyQualifiedNamespace, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
         super(ExpressionTag.CallNamespaceFunctionExpression, sinfo);
@@ -1138,15 +1146,15 @@ class ParseAsTypeExpression extends Expression {
 }
 
 class InterpolateFormatExpression extends Expression {
-    readonly kind: "string" | "cstring" | "path" | "fragment" | "glob";
+    readonly kind: "string" | "cstring";
     readonly decloftype: TypeSignature | undefined;
     readonly fmtString: Expression;
-    readonly args: AbstractArgumentValue[];
+    readonly args: StdArgumentValue[];
     
     actualoftype: TypeSignature | undefined = undefined;
 
-    constructor(sinfo: SourceInfo, kind: "string" | "cstring" | "path" | "fragment" | "glob", decloftype: TypeSignature | undefined, fmtString: Expression, args: AbstractArgumentValue[]) {
-        super(ExpressionTag.InterpolateFormatStringExpression, sinfo);
+    constructor(sinfo: SourceInfo, kind: "string" | "cstring", decloftype: TypeSignature | undefined, fmtString: Expression, args: StdArgumentValue[]) {
+        super(ExpressionTag.InterpolateFormatExpression, sinfo);
         this.kind = kind;
         this.decloftype = decloftype;
         this.fmtString = fmtString;
@@ -1248,6 +1256,8 @@ class PostfixAccessFromName extends PostfixOperation {
     
     declaredInType: TypeSignature | undefined = undefined;
     fieldDecl: MemberFieldDecl | undefined = undefined;
+    fieldType: TypeSignature | undefined = undefined;
+    isdirect: boolean = false;
 
     constructor(sinfo: SourceInfo, name: string) {
         super(sinfo, PostfixOpTag.PostfixAccessFromName);
@@ -1294,12 +1304,13 @@ class PostfixIsTest extends PostfixOperation {
     }
 
     emit(fmt: CodeFormatter): string {
-        return "?" + this.ttest.emit(fmt);
+        return ".?" + this.ttest.emit(fmt);
     }
 }
 
 class PostfixAsConvert extends PostfixOperation {
     readonly ttest: ITest;
+    alwaysSucceeds: boolean = false;
 
     constructor(sinfo: SourceInfo, ttest: ITest) {
         super(sinfo, PostfixOpTag.PostfixAsConvert);
@@ -1307,7 +1318,7 @@ class PostfixAsConvert extends PostfixOperation {
     }
 
     emit(fmt: CodeFormatter): string {
-        return "@" + this.ttest.emit(fmt);
+        return ".@" + this.ttest.emit(fmt);
     }
 }
 
@@ -2129,7 +2140,7 @@ class ConditionalValueExpression extends RValueExpression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         const ttest = this.guardset.emit(fmt);
-        return `${ttest} ? ${this.trueValue.emit(true, fmt)} : ${this.falseValue.emit(true, fmt)}`;
+        return `${ttest} ?? ${this.trueValue.emit(true, fmt)} : ${this.falseValue.emit(true, fmt)}`;
     }
 }
 
@@ -2489,74 +2500,80 @@ class SwitchStatement extends Statement {
         const ttmf = this.switchflow.map((sf) => `${sf.lval ? sf.lval.emit(true, fmt) : "_"} => ${sf.value.emit(fmt)}`);
         fmt.indentPop();
 
-        const iir = ttmf.map((cc) => fmt.indent("| " + cc));
+        const iir = ttmf.map((cc) => fmt.indent("    " + cc));
         return `${mheader} {\n${iir.join("\n")}\n${fmt.indent("}")}`;
     }
 }
 
 class MatchStatement extends Statement {
-    readonly sval: ITestGuard;
+    readonly sval: Expression;
+    readonly bindervar: string;
     readonly matchflow: {mtype: TypeSignature | undefined, value: BlockStatement}[];
 
     mustExhaustive: boolean = false;
     implicitFinalType: TypeSignature | undefined = undefined;
 
-    constructor(sinfo: SourceInfo, sval: ITestGuard, flow: {mtype: TypeSignature | undefined, value: BlockStatement}[]) {
+    constructor(sinfo: SourceInfo, sval: Expression, bindername: string, flow: {mtype: TypeSignature | undefined, value: BlockStatement}[]) {
         super(StatementTag.MatchStatement, sinfo);
         this.sval = sval;
+        this.bindervar = bindername;
         this.matchflow = flow;
     }
 
     emit(fmt: CodeFormatter): string {
-        const mheader = `match${this.sval.emit(true, fmt)}`;
+        const mheader = `match(${this.sval.emit(true, fmt)})`;
         fmt.indentPush();
         const ttmf = this.matchflow.map((mf) => `${mf.mtype ? mf.mtype.emit() : "_"} => ${mf.value.emit(fmt)}`);
         fmt.indentPop();
 
-        const iir = ttmf.map((cc) => fmt.indent("| " + cc));
+        const iir = ttmf.map((cc) => fmt.indent("    " + cc));
         return `${mheader} {\n${iir.join("\n")}\n${fmt.indent("}")}`;
     }
 }
 
 class DispatchPatternStatement extends Statement {
-    readonly sval: ITestGuard;
+    readonly sval: Expression;
+    readonly bindername: string;
     readonly dispatchflow: {kidx: Expression | undefined, value: BlockStatement}[];
     //always must exhaustive
 
     implicitFinalType: TypeSignature | undefined = undefined;
 
-    constructor(sinfo: SourceInfo, sval: ITestGuard, dispatchflow: {kidx: Expression | undefined, value: BlockStatement}[]) {
+    constructor(sinfo: SourceInfo, sval: Expression, bindername: string, dispatchflow: {kidx: Expression | undefined, value: BlockStatement}[]) {
         super(StatementTag.DispatchPatternStatement, sinfo);
         this.sval = sval;
+        this.bindername = bindername;
         this.dispatchflow = dispatchflow;
     }
 
     emit(fmt: CodeFormatter): string {
-        const dheader = `dispatch${this.sval.emit(true, fmt)}`;
+        const dheader = `dispatch(${this.sval.emit(true, fmt)})`;
         fmt.indentPush();
         const ttdf = this.dispatchflow.map((df) => `${df.kidx ? df.kidx.emit(true, fmt) : "_"} => ${df.value.emit(fmt)}`);
         fmt.indentPop();
 
-        const iir = ttdf.map((cc) => fmt.indent("| " + cc));
+        const iir = ttdf.map((cc) => fmt.indent("    " + cc));
         return `${dheader} {\n${iir.join("\n")}\n${fmt.indent("}")}`;
     }
 }
 
 class DispatchTaskStatement extends Statement {
-    readonly sval: ITestGuard;
+    readonly sval: Expression;
+    readonly bindername: string;
     readonly dispatchflow: {kidx: string | undefined, value: BlockStatement}[];
     //always must exhaustive
 
     implicitFinalType: TypeSignature | undefined = undefined;
 
-    constructor(sinfo: SourceInfo, sval: ITestGuard, dispatchflow: {kidx: string | undefined, value: BlockStatement}[]) {
+    constructor(sinfo: SourceInfo, sval: Expression, bindername: string, dispatchflow: {kidx: string | undefined, value: BlockStatement}[]) {
         super(StatementTag.DispatchTaskStatement, sinfo);
         this.sval = sval;
+        this.bindername = bindername;
         this.dispatchflow = dispatchflow;
     }
 
     emit(fmt: CodeFormatter): string {
-        const dheader = `dispatch${this.sval.emit(true, fmt)}`;
+        const dheader = `dispatch(${this.sval.emit(true, fmt)})`;
         fmt.indentPush();
         const ttdf = this.dispatchflow.map((df) => `${df.kidx ? df.kidx : "_"} => ${df.value.emit(fmt)}`);
         fmt.indentPop();

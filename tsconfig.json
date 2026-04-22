@@ -13,9 +13,9 @@
         "target": "es2020",
         "sourceMap": true,
         "outDir": "bin",
-        "typeRoots": [
-            "node_modules/@types"
-        ],
+        "types": [
+            "node"
+        ]
     },
     "include": [
         "src/frontend/*.ts",

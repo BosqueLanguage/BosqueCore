@@ -2,8 +2,8 @@ import assert from "node:assert";
 
 import { APIDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, InvokeTemplateTypeRestrictionClause, MAX_SAFE_CHK_NAT, MIN_SAFE_CHK_INT, MAX_SAFE_CHK_INT, APIDeniedTypeDecl, APIFlaggedTypeDecl, AgentDecl, TaskConfiguration, AbstractCollectionTypeDecl, ConstructableTypeDecl, InvokeParameterDecl } from "./assembly.js";
 import { CodeFormatter, SourceInfo } from "./build_decls.js";
-import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, ErrorTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
-import { APIInvokeExpression, AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, AbstractArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, FormatStringTextComponent, HoleBodyImplementation, HoleExpression, HoleStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, IfElifElseStatement, IfElseStatement, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypeDeclValueExpression, LiteralTypedCStringExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PassingArgumentValue, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RValueExpression, RValueExpressionTag, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VoidRefCallStatement, StdArgumentValue, SkipArgumentValue } from "./body.js";
+import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, ErrorTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
+import { APIInvokeExpression, AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, AbstractArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, FormatStringTextComponent, HoleBodyImplementation, HoleExpression, HoleStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, IfElifElseStatement, IfElseStatement, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypeDeclValueExpression, LiteralTypedCStringExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PassingArgumentValue, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RValueExpression, RValueExpressionTag, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VoidRefCallStatement, StdArgumentValue, SkipArgumentValue, InterpolateFormatExpression, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestFail, ITestTypeGuard, ITestBinderGuard, TypeTestBindInfo } from "./body.js";
 import { SimpleTypeInferContext, TypeEnvironment, TypeResultWRefVarInfoResult, TypeInferContext, VarInfo } from "./checker_environment.js";
 import { TypeCheckerRelations } from "./checker_relations.js";
 
@@ -32,6 +32,8 @@ class TypeChecker {
 
     isTaskScope: boolean = false;
     envDecl: EnvironmentVariableInformation[] = [];
+    lambdaCtr: number = 0;
+    invidCtr = 0;
 
     constructor(constraints: TemplateConstraintScope, relations: TypeCheckerRelations) {
         this.constraints = constraints;
@@ -89,33 +91,30 @@ class TypeChecker {
         return (t.tkeystr === "Void");
     }
 
-    private resolveSizeConstraints(tdecl: TypedeclTypeDecl, rlen: number): {min: bigint, max: bigint} | undefined {
-        if(tdecl.optsizerng === undefined) {
-            return undefined;
-        }
-        else {
-            let min = 0n;
-            if(tdecl.optsizerng.min !== undefined) {
-                try {
-                    min = BigInt(tdecl.optsizerng.min);
-                }
-                catch {
-                    ;
-                }
-            }
+    private resolveSizeConstraints(tdecl: TypedeclTypeDecl, rlen: number): {min: bigint, max: bigint} {
+        assert(tdecl.optsizerng !== undefined, "size constraints should be defined to call resolveSizeConstraints");
 
-            let max = BigInt(rlen);
-            if(tdecl.optsizerng.max !== undefined) {
-                try {
-                    max = BigInt(tdecl.optsizerng.max);
-                }
-                catch {
-                    ;
-                }
+        let min = 0n;
+        if(tdecl.optsizerng.min !== undefined) {
+            try {
+                min = BigInt(tdecl.optsizerng.min.slice(0, -1)); //remove the 'n' at the end
             }
-
-            return { min: min, max: max };
+            catch {
+                //just ignore the constraint and report error at definition
+            }
         }
+
+        let max = BigInt(rlen);
+        if(tdecl.optsizerng.max !== undefined) {
+            try {
+                max = BigInt(tdecl.optsizerng.max.slice(0, -1)); //remove the 'n' at the end
+            }
+            catch {
+                //just ignore the constraint and report error at definition
+            }
+        }
+
+        return { min: min, max: max };
     }
     private parseIntegerRangeBound(sinfo: SourceInfo, literal: string, typeName: string, minSafe: bigint, maxSafe: bigint): { value: bigint, ok: boolean } {
         const numStr = literal.slice(0, -1);
@@ -197,13 +196,13 @@ class TypeChecker {
         const vs = validateStringLiteral(value.slice(1, -1));
         this.checkError(sinfo, vs === null, `Invalid string literal value ${value}`);
 
+        if(vs !== null && tdecl.optsizerng !== undefined) {
+            const sbounds = this.resolveSizeConstraints(tdecl, vs.length);
+            this.checkError(sinfo, BigInt(vs.length) < sbounds.min || BigInt(vs.length) > sbounds.max, `String literal length ${vs.length} out of bounds`);
+        }
+
         if(vs !== null && tdecl.optofexp !== undefined) {
             const vexp = this.relations.assembly.resolveValidatorLiteral(tdecl.optofexp);
-
-            const sbounds = this.resolveSizeConstraints(tdecl, vs.length);
-            if(sbounds !== undefined) {
-                this.checkError(sinfo, BigInt(vs.length) < sbounds.min || BigInt(vs.length) > sbounds.max, `String literal length ${vs.length} out of bounds`);
-            }
 
             if(vexp === undefined || vexp.tag !== ExpressionTag.LiteralUnicodeRegexExpression) {
                 this.reportError(sinfo, `Unable to resolve regex validator`);
@@ -213,7 +212,7 @@ class TypeChecker {
                     this.reportError(sinfo, `Invalid regex validator -- expected literal or namespace constant`);
                 }
                 else {
-                    this.doRegexValidation(sinfo, vexp, tdecl.ns.ns.join("::"), vs, value.slice(1, -1));
+                    this.doRegexValidation(sinfo, vexp, tdecl.ns.emit(), vs, value.slice(1, -1));
                 }
             }
         }
@@ -225,13 +224,13 @@ class TypeChecker {
         const vs = validateCStringLiteral(value.slice(1, -1));
         this.checkError(sinfo, vs === null, `Invalid cstring literal value ${value}`);
 
+        if(vs !== null && tdecl.optsizerng !== undefined) {
+            const sbounds = this.resolveSizeConstraints(tdecl, vs.length);
+            this.checkError(sinfo, BigInt(vs.length) < sbounds.min || BigInt(vs.length) > sbounds.max, `CString literal length ${vs.length} out of bounds`);
+        }
+
         if(vs !== null && tdecl.optofexp !== undefined) {
             const vexp = this.relations.assembly.resolveValidatorLiteral(tdecl.optofexp);
-
-            const sbounds = this.resolveSizeConstraints(tdecl, vs.length);
-            if(sbounds !== undefined) {
-                this.checkError(sinfo, BigInt(vs.length) < sbounds.min || BigInt(vs.length) > sbounds.max, `CString literal length ${vs.length} out of bounds`);
-            }
 
             if(vexp === undefined || vexp.tag !== ExpressionTag.LiteralCRegexExpression) {
                 this.reportError(sinfo, `Unable to resolve cregex validator`);
@@ -241,7 +240,7 @@ class TypeChecker {
                     this.reportError(sinfo, `Invalid regex validator -- expected literal or namespace constant`);
                 }
                 else {
-                    this.doRegexValidation(sinfo, vexp, tdecl.ns.ns.join("::"), vs, value.slice(1, -1));
+                    this.doRegexValidation(sinfo, vexp, tdecl.ns.emit(), vs, value.slice(1, -1));
                 }
             }
         }
@@ -265,7 +264,7 @@ class TypeChecker {
                     this.reportError(sinfo, `Invalid glob validator -- expected literal or namespace constant`);
                 }
                 else {
-                    this.doGlobValidation(sinfo, vexp, tdecl.ns.ns.join("::"), vs, value.slice(1, -1));
+                    this.doGlobValidation(sinfo, vexp, tdecl.ns.emit(), vs, value.slice(1, -1));
                 }
             }
         }
@@ -274,7 +273,6 @@ class TypeChecker {
     }
     */
 
-    /*
     private processITest_None(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
         //!none === some
         if(isnot) {
@@ -371,26 +369,6 @@ class TypeChecker {
         }
     }
 
-    private processITest_Error(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
-        xxxx;
-    }
-
-    private processITest_Rejected(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
-        xxxx;
-    }
-
-    private processITest_Denied(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
-        xxxx;
-    }
-
-    private processITest_Flagged(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
-        xxxx;
-    }
-
-    private processITest_Success(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
-        xxxx;
-    }
-
     private processITest_Type(src: TypeSignature, oftype: TypeSignature): { ttrue: TypeSignature[], tfalse: TypeSignature[] } {
         const rinfo = this.relations.refineType(src, oftype, this.constraints);
         if(rinfo === undefined) {
@@ -428,26 +406,6 @@ class TypeChecker {
             }
             else if(tt instanceof ITestOk) {
                 const tres = this.processITest_Ok(src, tt.isnot);
-                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
-            }
-            else if(tt instanceof ITestError) {
-                const tres = this.processITest_Error(src, tt.isnot);
-                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
-            }
-            else if(tt instanceof ITestRejected) {
-                const tres = this.processITest_Rejected(src, tt.isnot);
-                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
-            }
-            else if(tt instanceof ITestDenied) {
-                const tres = this.processITest_Denied(src, tt.isnot);
-                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
-            }
-            else if(tt instanceof ITestFlagged) {
-                const tres = this.processITest_Flagged(src, tt.isnot);
-                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
-            }
-            else if(tt instanceof ITestSuccess) {
-                const tres = this.processITest_Success(src, tt.isnot);
                 return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
             }
             else {
@@ -502,26 +460,6 @@ class TypeChecker {
                 const tres = this.processITest_Ok(src, tt.isnot);
                 return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
             }
-            else if(tt instanceof ITestError) {
-                const tres = this.processITest_Error(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
-            }
-            else if(tt instanceof ITestRejected) {
-                const tres = this.processITest_Rejected(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
-            }
-            else if(tt instanceof ITestDenied) {
-                const tres = this.processITest_Denied(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
-            }
-            else if(tt instanceof ITestFlagged) {
-                const tres = this.processITest_Flagged(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
-            }
-            else if(tt instanceof ITestSuccess) {
-                const tres = this.processITest_Success(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
-            }
             else {
                 assert(tt instanceof ITestFail, "missing case in ITest");
                 const tres = this.processITest_Err(src, tt.isnot);
@@ -529,7 +467,6 @@ class TypeChecker {
             }
         }
     }
-    */
 
     private processITestGuardExpression(env: TypeEnvironment, exp: Expression, andrefsok: boolean): TypeResultWRefVarInfoResult {
         switch (exp.tag) {
@@ -598,6 +535,33 @@ class TypeChecker {
     private processITestGuard(sinfo: SourceInfo, env: TypeEnvironment, tt: ITestGuard, gidx: number, andrefsok: boolean): TypeResultWRefVarInfoResult {
         if(tt instanceof ITestSimpleGuard) {
             return this.processITestGuardExpression(env, tt.exp, andrefsok);
+        }
+        else if(tt instanceof ITestTypeGuard) {
+            const evinfo = this.processITestGuardExpression(env, tt.exp, andrefsok);
+            if(evinfo.tsig instanceof ErrorTypeSignature) {
+                return TypeResultWRefVarInfoResult.makeSimpleResult(this.getWellKnownType("Bool"));
+            }
+            else {
+                const splits = this.processITestAsBoolean(tt.exp.sinfo, env, evinfo.tsig, tt.itest);
+                this.checkError(tt.exp.sinfo, !splits.ttrue, "Test is never true");
+                this.checkError(tt.exp.sinfo, !splits.tfalse, "Test is never false");
+
+                return new TypeResultWRefVarInfoResult(this.getWellKnownType("Bool"), false, false, evinfo.setcondout, evinfo.setuncond, evinfo.usemod, evinfo.bbinds);
+            }
+        }
+        else if(tt instanceof ITestBinderGuard) {
+            const evinfo = this.processITestGuardExpression(env, tt.exp, andrefsok);
+            if(evinfo.tsig instanceof ErrorTypeSignature) {
+                return TypeResultWRefVarInfoResult.makeSimpleResult(this.getWellKnownType("Bool"));
+            }
+            else {
+                const splits = this.processITestAsConvert(tt.exp.sinfo, env, evinfo.tsig, tt.itest);
+                this.checkError(tt.exp.sinfo, splits.ttrue === undefined, "Test is never true");
+                this.checkError(tt.exp.sinfo, splits.tfalse === undefined, "Test is never false");
+
+                const nbind: TypeTestBindInfo = new TypeTestBindInfo(gidx, tt.bindinfo.srcname, splits.ttrue || evinfo.tsig, splits.tfalse || evinfo.tsig);
+                return new TypeResultWRefVarInfoResult(this.getWellKnownType("Bool"), false, false, evinfo.setcondout, evinfo.setuncond, evinfo.usemod, [nbind, ...evinfo.bbinds]);
+            }
         }
         else {
             assert(false, "Unknown ITestGuard type"); //TODO check and do binders here!!!
@@ -1183,8 +1147,12 @@ class TypeChecker {
 
         return { shuffleinfo: shuffleinfo, resttype: resttype, restinfo: restinfo, setcondout: setcondout, setuncond: setuncond, inout: inout, byref: byref };
     }
-/*
-    private checkLambdaArgumentList(sinfo: SourceInfo, env: TypeEnvironment, refok: boolean, args: ArgumentValue[], params: LambdaParameterSignature[]): { arginfo: TypeSignature[], resttype: TypeSignature | undefined, restinfo: [number, boolean, TypeSignature][] | undefined } {
+
+    private checkLambdaArgumentList(sinfo: SourceInfo, env: TypeEnvironment, refok: boolean, args: AbstractArgumentValue[], params: LambdaParameterSignature[]): { arginfo: TypeSignature[], resttype: TypeSignature | undefined, restinfo: [number, boolean, TypeSignature][] | undefined, setcondout: string[], setuncond: string[], inout: string[], byref: string[] } {
+        if(args.some((av) => av instanceof SkipArgumentValue)) {
+            this.reportError(sinfo, `Skip arguments not allowed in lambda argument list`);
+        }
+        
         if(args.some((av) => av instanceof NamedArgumentValue)) {
             this.reportError(sinfo, `Named arguments not allowed in lambda argument list`);
         }
@@ -1197,15 +1165,41 @@ class TypeChecker {
         }
 
         let arginfo: TypeSignature[] = [];
+        let setcond: string[] = [];
+        let setuncond: string[] = [];
+        let inout: string[] = [];
+        let byref: string[] = [];
+
         for(let i = 0; i < nonrestparams.length && i < args.length; ++i) {
-            const argtype = this.checkSingleParam(env, args[i], "[lambda_param]", nonrestparams[i].type, nonrestparams[i].isRefParam, TemplateNameMapper.createEmpty());
-            arginfo.push(argtype);
+            const pp = nonrestparams[i];
+            if(!(args[i] instanceof SkipArgumentValue)) {
+                this.checkError(sinfo, !refok && (args[i] instanceof PassingArgumentValue), `Reference argument only allowed in top-level contexts`);
+                const argtype = this.checkSingleParam(env, args[i] as StdArgumentValue, "[lambda_param]", nonrestparams[i].type, nonrestparams[i].pkind, TemplateNameMapper.createEmpty());
+            
+                arginfo.push(argtype);
+                if(pp.pkind !== undefined && (args[i] instanceof PassingArgumentValue) && (args[i] as PassingArgumentValue).exp instanceof AccessVariableExpression) {
+                    const vname = ((args[i] as PassingArgumentValue).exp as AccessVariableExpression).srcname;
+                    if(pp.pkind === "out?") {
+                        setcond.push(vname);
+                    }
+                    else if(pp.pkind === "out") {
+                        setuncond.push(vname);
+                    }
+                    else if(pp.pkind === "inout") {
+                        inout.push(vname);
+                    }
+                    else {
+                        //ref param
+                        byref.push(vname);
+                    }
+                }
+            }
         }
 
         let resttype: TypeSignature | undefined = undefined;
         let restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
         if(restparam !== undefined) {
-            let restargs = args.slice(nonrestparams.length);
+            let restargs = args.slice(nonrestparams.length) as StdArgumentValue[];
             const restypes = this.checkRestParam(env, restargs, "[lambda_param]", restparam.type, TemplateNameMapper.createEmpty());
 
             resttype = restparam.type;
@@ -1216,9 +1210,9 @@ class TypeChecker {
             }
         }
 
-        return { arginfo: arginfo, resttype: resttype, restinfo: restinfo };
+        return { arginfo: arginfo, resttype: resttype, restinfo: restinfo, setcondout: setcond, setuncond: setuncond, inout: inout, byref: byref };
     }
-*/
+
     private checkConstructorArgumentListStd(sinfo: SourceInfo, env: TypeEnvironment, args: AbstractArgumentValue[], bnames: {name: string, type: TypeSignature, hasdefault: boolean, containingtype: NominalTypeSignature}[], imapper: TemplateNameMapper): [number, TypeSignature, string, TypeSignature][] {
         let argsuffle: (StdArgumentValue | undefined)[] = [];
         let argsuffleidx: number[] = [];
@@ -1556,7 +1550,10 @@ class TypeChecker {
         return exp.setType(this.getWellKnownType("CString"));
     }
 
-    private computeFormatArgsTypes(sinfo: SourceInfo, fmts: FormatStringComponent[], defaulttype: TypeSignature): {argname: string, argtype: TypeSignature}[] {
+    private computeFormatArgsTypes(sinfo: SourceInfo, fmts: FormatStringComponent[], defaulttype: TypeSignature, infertype: TypeSignature | undefined): {argname: string, argtype: TypeSignature}[] {
+        this.checkError(sinfo, infertype !== undefined && !(infertype instanceof ErrorTypeSignature) && !(infertype instanceof FormatStringTypeSignature), `Inferred type for format string must be a format string type`);
+        const itype = infertype instanceof FormatStringTypeSignature ? infertype : undefined;
+
         let fmttypes: {argname: string, argtype: TypeSignature}[] = [];
         for(let i = 0; i < fmts.length; ++i) {
             const ffmt = fmts[i];
@@ -1587,19 +1584,75 @@ class TypeChecker {
             }
         }
 
-        return fmttypes;
+        fmttypes.sort((a, b) => a.argname.localeCompare(b.argname));
+
+        const allidxs = fmttypes.every((fmt) => /^[0-9]+$/.test(fmt.argname));
+        const allnames = fmttypes.every((fmt) => !/^[0-9]+$/.test(fmt.argname));
+        if(!allidxs && !allnames) {
+            this.reportError(sinfo, `Format string arguments must be either all indexed or all named`);
+        }
+
+        let uniquefmttypes: {argname: string, argtype: TypeSignature}[] = [];
+        for(let i = 0; i < fmttypes.length; ++i) {
+            const mmtype = uniquefmttypes.find((uft) => uft.argname === fmttypes[i].argname);
+            if(mmtype === undefined) {
+                uniquefmttypes.push(fmttypes[i]);
+            }
+            else {
+                this.checkError(sinfo, !this.relations.areSameTypes(mmtype.argtype, fmttypes[i].argtype), `Multiple format string arguments with name ${fmttypes[i].argname} must have the same type`);
+            }
+        }
+
+        if(itype === undefined) {
+            if(allidxs) {
+                const allidxs = uniquefmttypes.map((fmt) => {
+                    let ii = -1;
+                    try { ii = Number.parseInt(fmt.argname) } catch(err) { ; }
+                    return ii;
+                });
+
+                this.checkError(sinfo, allidxs[0] !== 0, `If format string argument indexes are used, then they must start at 0 (unless being matched to an inferred type)`);
+                this.checkError(sinfo, allidxs.slice(1).some((idx, ii) => idx - 1 !== allidxs[ii]), `Format string argument indexes cannot have gaps (unless being matched to an inferred type)`);
+            }
+        }
+        else {
+            if(allidxs) {
+                const allidxsfound = fmttypes.every((fmt) => {
+                    let iidx = -1;
+                    try { iidx = Number.parseInt(fmt.argname) } catch(err) { ; }
+
+                    return iidx !== -1 && iidx < itype.terms.length;
+                });
+                this.checkError(sinfo, !allidxsfound, `Inferred format string type ${itype.emit()} does not have all the required argument indexes`);
+            }
+            else {
+                const allnamesfound = fmttypes.every((fmt) => {
+                    return itype.terms.some((term) => term.argname === fmt.argname);
+                });
+                this.checkError(sinfo, !allnamesfound, `Format string literal uses names not found in inferred type ${itype.emit()}`);
+            }
+        }
+
+        if(allidxs) {
+            const idxs = fmttypes.map((fmt) => Number.parseInt(fmt.argname));
+            this.checkError(sinfo, idxs.some((idx) => idx < 0), `Format string argument indexes must be non-negative integers`);
+            
+            uniquefmttypes = uniquefmttypes.map((fmt) => ({argname: "_", argtype: fmt.argtype}));
+        }
+
+        return uniquefmttypes;
     }
 
-    private checkLiteralFormatStringExpression(env: TypeEnvironment, exp: LiteralFormatStringExpression): TypeSignature {
-        const fmttypes = this.computeFormatArgsTypes(exp.sinfo, exp.fmts, this.getWellKnownType("String"));
+    private checkLiteralFormatStringExpression(env: TypeEnvironment, exp: LiteralFormatStringExpression, infertype: TypeSignature | undefined): TypeSignature {
+        const fmttypes = this.computeFormatArgsTypes(exp.sinfo, exp.fmts, this.getWellKnownType("String"), infertype);
         
-        return exp.setType(new FormatStringTypeSignature(exp.sinfo, "String", this.getWellKnownType("String"), fmttypes));
+        return exp.setType(infertype || new FormatStringTypeSignature(exp.sinfo, "String", this.getWellKnownType("String"), fmttypes));
     }
 
-    private checkLiteralFormatCStringExpression(env: TypeEnvironment, exp: LiteralFormatCStringExpression): TypeSignature {
-        const fmttypes = this.computeFormatArgsTypes(exp.sinfo, exp.fmts, this.getWellKnownType("CString"));
+    private checkLiteralFormatCStringExpression(env: TypeEnvironment, exp: LiteralFormatCStringExpression, infertype: TypeSignature | undefined): TypeSignature {
+        const fmttypes = this.computeFormatArgsTypes(exp.sinfo, exp.fmts, this.getWellKnownType("CString"), infertype);
         
-        return exp.setType(new FormatStringTypeSignature(exp.sinfo, "CString", this.getWellKnownType("CString"), fmttypes));
+        return exp.setType(infertype || new FormatStringTypeSignature(exp.sinfo, "CString", this.getWellKnownType("CString"), fmttypes));
     }
 
     private checkLiteralPathExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
@@ -1669,7 +1722,7 @@ class TypeChecker {
         }
 
         const vs = this.checkTypeDeclOfStringRestrictions(exp.sinfo, exp.constype.decl as TypedeclTypeDecl, exp.value);
-        if(vs === null) {
+        if(vs !== null) {
             exp.resolvedValue = vs;
         }
             
@@ -1693,14 +1746,14 @@ class TypeChecker {
         }
 
         const vs = this.checkTypeDeclOfCStringRestrictions(exp.sinfo, exp.constype.decl as TypedeclTypeDecl, exp.value);
-        if(vs === null) {
+        if(vs !== null) {
             exp.resolvedValue = vs;
         }
             
         return exp.setType(exp.constype);
     }
 
-    private checkLiteralTypedFormatStringExpression(env: TypeEnvironment, exp: LiteralTypedFormatStringExpression): TypeSignature {
+    private checkLiteralTypedFormatStringExpression(env: TypeEnvironment, exp: LiteralTypedFormatStringExpression, infertype: TypeSignature | undefined): TypeSignature {
         if(!this.checkTypeSignature(exp.constype)) {
             return exp.setType(exp.constype);
         }
@@ -1716,12 +1769,12 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
-        const fmttypes = this.computeFormatArgsTypes(exp.sinfo, exp.fmts, this.getWellKnownType("String"));
+        const fmttypes = this.computeFormatArgsTypes(exp.sinfo, exp.fmts, this.getWellKnownType("String"), infertype);
         
-        return exp.setType(new FormatStringTypeSignature(exp.sinfo, "String", exp.constype, fmttypes));
+        return exp.setType(infertype || new FormatStringTypeSignature(exp.sinfo, "String", exp.constype, fmttypes));
     }
 
-    private checkLiteralTypedFormatCStringExpression(env: TypeEnvironment, exp: LiteralTypedFormatCStringExpression): TypeSignature {
+    private checkLiteralTypedFormatCStringExpression(env: TypeEnvironment, exp: LiteralTypedFormatCStringExpression, infertype: TypeSignature | undefined): TypeSignature {
         if(!this.checkTypeSignature(exp.constype)) {
             return exp.setType(exp.constype);
         }
@@ -1737,9 +1790,9 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
-        const fmttypes = this.computeFormatArgsTypes(exp.sinfo, exp.fmts, this.getWellKnownType("CString"));
+        const fmttypes = this.computeFormatArgsTypes(exp.sinfo, exp.fmts, this.getWellKnownType("CString"), infertype);
         
-        return exp.setType(new FormatStringTypeSignature(exp.sinfo, "CString", exp.constype, fmttypes));
+        return exp.setType(infertype || new FormatStringTypeSignature(exp.sinfo, "CString", exp.constype, fmttypes));
     }
 
     private checkAccessEnvValueExpression(env: TypeEnvironment, exp: AccessEnvValueExpression): TypeSignature {
@@ -1872,11 +1925,11 @@ class TypeChecker {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
             else {
-                this.checkError(exp.sinfo, !cinfo[0].mustDefined, `Variable ${exp.srcname} may not be defined on all control flow paths`);
+                this.checkError(exp.sinfo, !cinfo.mustDefined, `Variable ${exp.srcname} may not be defined on all control flow paths`);
 
                 exp.isCaptured = true;
-                exp.scopeidx = cinfo[1];
-                return exp.setType(cinfo[0].decltype);
+                exp.ocapture = env.resolveOCaptureInfoFromSrcName(exp.srcname);
+                return exp.setType(cinfo.decltype);
             }
         }
     }
@@ -2133,7 +2186,6 @@ class TypeChecker {
     }
 
     private checkConstructorLambdaExpression(env: TypeEnvironment, exp: ConstructorLambdaExpression, infertype: TypeSignature | undefined): TypeSignature {
-        /*
         let itype: LambdaTypeSignature | undefined = undefined;
         if(infertype !== undefined && infertype instanceof LambdaTypeSignature && infertype.params.length === exp.invoke.params.length) {
             itype = infertype;
@@ -2141,7 +2193,7 @@ class TypeChecker {
         
         let argsok = true;
         let args: VarInfo[] = [];
-        let params: LambdaParameterSignature[] = [];
+        let params: InvokeParameterDecl[] = [];
         let rtype: TypeSignature = new ErrorTypeSignature(exp.sinfo, undefined);
 
         if(exp.invoke.isAuto) {
@@ -2154,8 +2206,8 @@ class TypeChecker {
                     const iptype = itype.params[i];
                     const ipdecl = exp.invoke.params[i];
 
-                    args.push(new VarInfo(ipdecl.name, iptype.type, [], true, true, ipdecl.isRefParam));
-                    params.push(new LambdaParameterSignature(ipdecl.name, iptype.type, ipdecl.isRefParam, ipdecl.isRestParam));
+                    args.push(new VarInfo(ipdecl.name, iptype.type, ipdecl.pkind || "let", true));
+                    params.push(new InvokeParameterDecl(ipdecl.name, iptype.type, undefined, ipdecl.pkind, ipdecl.isRestParam));
                 }
             }
         }
@@ -2163,8 +2215,8 @@ class TypeChecker {
             for(let i = 0; i < exp.invoke.params.length; ++i) {
                 const ipdecl = exp.invoke.params[i];
 
-                args.push(new VarInfo(ipdecl.name, ipdecl.type, [], true, true, ipdecl.isRefParam));
-                params.push(new LambdaParameterSignature(ipdecl.name, ipdecl.type, ipdecl.isRefParam, ipdecl.isRestParam));
+                args.push(new VarInfo(ipdecl.name, ipdecl.type, ipdecl.pkind || "let", true));
+                params.push(new InvokeParameterDecl(ipdecl.name, ipdecl.type, undefined, ipdecl.pkind, ipdecl.isRestParam));
             }
         }
 
@@ -2193,47 +2245,67 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
         else {
-            const ltype = new LambdaTypeSignature(exp.sinfo, exp.invoke.recursive, exp.invoke.name as "fn" | "pred", params, rtype);
+            const lparams = params.map((p) => new LambdaParameterSignature(p.name, p.type, p.pkind, p.isRestParam));
+            const ltype = new LambdaTypeSignature(exp.sinfo, exp.invoke.recursive, exp.invoke.name as "fn" | "pred", lparams, rtype);
 
             const ireturn = this.relations.convertTypeSignatureToTypeInferCtx(rtype);
-            const lenv = TypeEnvironment.createInitialLambdaEnv(args, rtype, ireturn, env);
-            this.checkBodyImplementation(lenv, exp.invoke.body);
+            const lenv = TypeEnvironment.createInitialLambdaEnv(rtype, ireturn, args, env);
+            this.checkBodyImplementation(lenv, exp.invoke.body, params);
             
+            exp.monomorphizedUID = this.lambdaCtr++;
             return exp.setType(ltype);
         }
-        */
-        assert(false, "Not Implemented -- checkConstructorLambdaExpression");
     }
 
     private checkLambdaInvokeExpression(env: TypeEnvironment, exp: LambdaInvokeExpression, refallowed: boolean): TypeResultWRefVarInfoResult {
-        /*
         let llvar = env.resolveLocalVarInfoFromSrcName(exp.name);
         if(llvar === undefined) {
-            exp.isCapturedLambda = true;
-            llvar = env.resolveLambdaCaptureVarInfoFromSrcName(exp.name);
-        }
+            const clvar = env.resolveLambdaCaptureVarInfoFromSrcName(exp.name);
 
-        if(llvar === undefined) {
-            this.reportError(exp.sinfo, `Could not find lambda variable ${exp.name}`);
-            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            if(clvar === undefined) {
+                this.reportError(exp.sinfo, `Could not find lambda variable ${exp.name}`);
+                return TypeResultWRefVarInfoResult.makeSimpleResult(new ErrorTypeSignature(exp.sinfo, undefined));
+            }
+            else {
+                llvar = clvar;
+                exp.isCapturedLambda = true;
+                exp.ocapture = env.resolveOCaptureInfoFromSrcName(exp.name);
+            }
         }
 
         if(!(llvar.decltype instanceof LambdaTypeSignature)) {
             this.reportError(exp.sinfo, `Variable ${exp.name} is not a lambda value`);
-            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            return TypeResultWRefVarInfoResult.makeSimpleResult(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
         const lsig = llvar.decltype as LambdaTypeSignature;
 
-        const arginfo = this.checkLambdaArgumentList(exp.sinfo, env, refok, exp.args.args, lsig.params);
+        const arginfo = this.checkLambdaArgumentList(exp.sinfo, env, refallowed, exp.args.args, lsig.params);
         exp.lambda = llvar.decltype;
         exp.arginfo = arginfo.arginfo;
         exp.resttype = arginfo.resttype;
         exp.restinfo = arginfo.restinfo;
+        exp.setcondout = arginfo.setcondout;
+        exp.setuncond = arginfo.setuncond;
+        exp.inout = arginfo.inout;
+        exp.byref = arginfo.byref;
 
-        return exp.setType(lsig.resultType);
-        */
-        assert(false, "Not Implemented -- checkLambdaInvokeExpression");
+        exp.monoinvid = this.invidCtr++;
+
+        const rrt = TypeResultWRefVarInfoResult.makeGeneralResult(
+            exp.setType(lsig.resultType), false, false,
+            { ttrue: [...arginfo.setcondout], tfalse: [] },
+            [...arginfo.setuncond],
+            [...arginfo.inout, ...arginfo.byref],
+            []
+        );
+
+        if(rrt !== undefined) {
+            return rrt;
+        }
+        else {
+            return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
+        }
     }
 
     private checkSpecialConstructorExpressionNoInfer(env: TypeEnvironment, exp: SpecialConstructorExpression): TypeSignature {
@@ -2375,6 +2447,8 @@ class TypeChecker {
         exp.inout = arginfo.inout;
         exp.byref = arginfo.byref;
 
+        exp.monoinvid = this.invidCtr++;
+
         const rrt = TypeResultWRefVarInfoResult.makeGeneralResult(
             exp.setType(fdecl.resultType.remapTemplateBindings(imapper)), false, false,
             { ttrue: [...arginfo.setcondout], tfalse: [] },
@@ -2466,10 +2540,126 @@ class TypeChecker {
         assert(false, "Not Implemented -- checkParseAsTypeExpression");
     }
 
+    private checkInterpolationArguments(sinfo: SourceInfo, iscstrunderly: boolean, env: TypeEnvironment, args: AbstractArgumentValue[], fmtparams: {argname: string, argtype: TypeSignature}[]) {
+        if(args.length !== fmtparams.length) {
+            this.reportError(sinfo, `Interpolate must have same number of parameters and arguments`);
+            return;
+        }
+        const argsallnamed = args.every((arg) => arg instanceof NamedArgumentValue);
+        
+        const paramsallpositional = fmtparams.every((p) => p.argname === "_");
+        const paramsallnamed = fmtparams.every((p) => p.argname !== "_");
+
+        if(paramsallpositional) {
+            const argsallpositional = args.every((arg) => arg instanceof PositionalArgumentValue);
+            if(!argsallpositional) {
+                this.reportError(sinfo, `InterpolateFormatExpression with positional format parameters must have all positional arguments`);
+                return;
+            }
+
+            for(let i = 0; i < args.length; i++) {
+                const argtype = this.checkExpression(env, args[i].exp, fmtparams[i].argtype);
+
+                if(iscstrunderly) {
+                    if(this.relations.isSubtypeOf(fmtparams[i].argtype, this.getWellKnownType("CString"), this.constraints)) {
+                        const btype = !(argtype instanceof ErrorTypeSignature) ? this.resolveUnderlyingType(argtype) || argtype : argtype;
+                        this.checkError(sinfo, btype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(btype, this.getWellKnownType("CString"), this.constraints), `Interpolation argument ${i} is not a subtype of CString as required for CString format string`);
+                    }
+                    else {
+                        this.checkError(sinfo, argtype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(argtype, fmtparams[i].argtype, this.constraints), `Interpolation argument ${i} is not a subtype of ${fmtparams[i].argtype.emit()}`);
+                    }
+                }
+                else {
+                    if(this.relations.isSubtypeOf(fmtparams[i].argtype, this.getWellKnownType("String"), this.constraints)) {
+                        const btype = !(argtype instanceof ErrorTypeSignature) ? this.resolveUnderlyingType(argtype) || argtype : argtype;
+                        this.checkError(sinfo, btype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(btype, this.getWellKnownType("String"), this.constraints), `Interpolation argument ${i} is not a subtype of String as required for String format string`);
+                    }
+                    else {
+                        this.checkError(sinfo, argtype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(argtype, fmtparams[i].argtype, this.constraints), `Interpolation argument ${i} is not a subtype of ${fmtparams[i].argtype.emit()}`);
+                    }
+                }
+            }
+        }
+
+        if(paramsallnamed) {
+            if(!argsallnamed) {
+                this.reportError(sinfo, `InterpolateFormatExpression with named format parameters must have all named arguments`);
+                return;
+            }
+
+            for(let i = 0; i < args.length; i++) {
+                const arg = args[i] as NamedArgumentValue;
+                const param = fmtparams.find((p) => p.argname === arg.name);
+                if(param === undefined) {
+                    this.reportError(sinfo, `Interpolation argument ${arg.name} does not match any format parameter`);
+                    continue;
+                }
+
+                const argtype = this.checkExpression(env, arg.exp, param.argtype);
+                this.checkError(sinfo, argtype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(argtype, param.argtype, this.constraints), `Interpolation argument ${arg.name} is not a subtype of ${param.argtype.emit()}`);
+            }
+        }
+    }
+
+    private checkInterpolateFormatExpression(env: TypeEnvironment, exp: InterpolateFormatExpression): TypeSignature {
+        const fmtkind = this.checkExpression(env, exp.fmtString, undefined);
+
+        if(exp.kind === "cstring") {
+            if(!(fmtkind instanceof FormatStringTypeSignature) || fmtkind.oftype !== "CString") {
+                this.reportError(exp.sinfo, `InterpolateFormatExpression with kind "cstring" must have a CString format string`);
+                return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            }
+
+            if(exp.decloftype !== undefined) {
+                this.checkTypeSignature(exp.decloftype);
+
+                const isresultsimple = this.relations.isSubtypeOf(exp.decloftype, this.getWellKnownType("CString"), this.constraints);
+                const isformatsimple = this.relations.isSubtypeOf(fmtkind.rtype, this.getWellKnownType("CString"), this.constraints);
+
+                //if either is simple then we always allow it
+                if(!isresultsimple && !isformatsimple) {
+                    this.checkError(exp.sinfo, !this.relations.isSubtypeOf(exp.decloftype, fmtkind.rtype, this.constraints), `Declared oftype ${exp.decloftype.emit()} is not compatible with format string result type ${fmtkind.rtype.emit()}`);
+                }
+            }
+
+            this.checkTypeSignature(fmtkind.rtype);
+            this.checkInterpolationArguments(exp.sinfo, true, env, exp.args, fmtkind.terms);
+
+            exp.actualoftype = fmtkind.rtype;
+            return exp.setType(fmtkind.rtype);
+        }
+        else if(exp.kind === "string") {
+            if(!(fmtkind instanceof FormatStringTypeSignature) || fmtkind.oftype !== "String") {
+                this.reportError(exp.sinfo, `InterpolateFormatExpression with kind "string" must have a String format string`);
+                return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            }
+
+            if(exp.decloftype !== undefined) {
+                this.checkTypeSignature(exp.decloftype);
+
+                const isresultsimple = this.relations.isSubtypeOf(exp.decloftype, this.getWellKnownType("String"), this.constraints);
+                const isformatsimple = this.relations.isSubtypeOf(fmtkind.rtype, this.getWellKnownType("String"), this.constraints);
+
+                //if either is simple then we always allow it
+                if(!isresultsimple && !isformatsimple) {
+                    this.checkError(exp.sinfo, !this.relations.isSubtypeOf(exp.decloftype, fmtkind.rtype, this.constraints), `Declared oftype ${exp.decloftype.emit()} is not compatible with format string result type ${fmtkind.rtype.emit()}`);
+                }
+            }
+
+            this.checkTypeSignature(fmtkind.rtype);
+            this.checkInterpolationArguments(exp.sinfo, false, env, exp.args, fmtkind.terms);
+
+            exp.actualoftype = fmtkind.rtype;
+            return exp.setType(fmtkind.rtype);
+        }
+        else {
+            assert(false, "checkInterpolateFormatExpression -- unknown kind");
+        }
+    }
+
     ////////
     // Postfix Expressions
     private checkPostfixAccessFromName(env: TypeEnvironment, exp: PostfixAccessFromName, rcvrtype: TypeSignature): TypeSignature {
-        /*
         const finfo = this.relations.resolveTypeField(rcvrtype, exp.name, this.constraints);
         if(finfo === undefined) {
             this.reportError(exp.sinfo, `Could not find field ${exp.name} in type ${rcvrtype.emit()}`);
@@ -2478,11 +2668,12 @@ class TypeChecker {
         else {
             exp.declaredInType = finfo.typeinfo.tsig;
             exp.fieldDecl = finfo.member;
+            exp.fieldType = finfo.member.declaredType.remapTemplateBindings(finfo.typeinfo.mapping);
+
+            exp.isdirect = this.relations.isDirectNominalType(finfo.typeinfo.tsig, this.constraints);
         }
 
         return exp.setType(finfo.member.declaredType.remapTemplateBindings(finfo.typeinfo.mapping));
-        */
-        assert(false, "Not Implemented -- checkPostfixAccessFromName");
     }
 
     private checkPostfixProjectFromNames(env: TypeEnvironment, exp: PostfixProjectFromNames, rcvrtype: TypeSignature, infertype: TypeInferContext | undefined): TypeSignature {
@@ -2507,25 +2698,21 @@ class TypeChecker {
     }
 
     private checkPostfixIsTest(env: TypeEnvironment, exp: PostfixIsTest, rcvrtype: TypeSignature): TypeSignature {
-        /*
         const splits = this.processITestAsBoolean(exp.sinfo, env, rcvrtype, exp.ttest);
         this.checkError(exp.sinfo, !splits.ttrue, "Test is never true");
         this.checkError(exp.sinfo, !splits.tfalse, "Test is never false");
 
         return exp.setType(this.getWellKnownType("Bool"));
-        */
-        assert(false, "Not Implemented -- checkPostfixIsTest");
     }
 
     private checkPostfixAsConvert(env: TypeEnvironment, exp: PostfixAsConvert, rcvrtype: TypeSignature): TypeSignature {
-        /*
         const splits = this.processITestAsConvert(exp.sinfo, env, rcvrtype, exp.ttest);
         this.checkError(exp.sinfo, splits.ttrue === undefined, "Convert always fails");
+
         //if always true then this is an upcast and OK!
+        exp.alwaysSucceeds = splits.tfalse === undefined;
 
         return exp.setType(splits.ttrue || new ErrorTypeSignature(exp.sinfo, undefined));
-        */
-        assert(false, "Not Implemented -- checkPostfixAsConvert");
     }
 
     private checkPostfixAssignFields(env: TypeEnvironment, exp: PostfixAssignFields, rcvrtype: TypeSignature): TypeSignature {
@@ -3242,10 +3429,12 @@ class TypeChecker {
                 return this.checkLiteralCStringExpression(env, exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralFormatStringExpression: {
-                return this.checkLiteralFormatStringExpression(env, exp as LiteralFormatStringExpression);
+                const itype = TypeInferContext.asSimpleType(typeinfer);
+                return this.checkLiteralFormatStringExpression(env, exp as LiteralFormatStringExpression, itype);
             }
             case ExpressionTag.LiteralFormatCStringExpression: {
-                return this.checkLiteralFormatCStringExpression(env, exp as LiteralFormatCStringExpression);
+                const itype = TypeInferContext.asSimpleType(typeinfer);
+                return this.checkLiteralFormatCStringExpression(env, exp as LiteralFormatCStringExpression, itype);
             }
             case ExpressionTag.LiteralPathExpression: {
                 return this.checkLiteralPathExpression(env, exp as LiteralSimpleExpression);
@@ -3266,10 +3455,12 @@ class TypeChecker {
                 return this.checkLiteralTypedCStringExpression(env, exp as LiteralTypedCStringExpression);
             }
             case ExpressionTag.LiteralTypedFormatStringExpression: {
-                return this.checkLiteralTypedFormatStringExpression(env, exp as LiteralTypedFormatStringExpression);
+                const itype = TypeInferContext.asSimpleType(typeinfer);
+                return this.checkLiteralTypedFormatStringExpression(env, exp as LiteralTypedFormatStringExpression, itype);
             }
             case ExpressionTag.LiteralTypedFormatCStringExpression: {
-                return this.checkLiteralTypedFormatCStringExpression(env, exp as LiteralTypedFormatCStringExpression);
+                const itype = TypeInferContext.asSimpleType(typeinfer);
+                return this.checkLiteralTypedFormatCStringExpression(env, exp as LiteralTypedFormatCStringExpression, itype);
             }
             case ExpressionTag.AccessEnvValueExpression: {
                 return this.checkAccessEnvValueExpression(env, exp as AccessEnvValueExpression);
@@ -3312,6 +3503,9 @@ class TypeChecker {
             }
             case ExpressionTag.ParseAsTypeExpression: {
                 return this.checkParseAsTypeExpression(env, exp as ParseAsTypeExpression);
+            }
+            case ExpressionTag.InterpolateFormatExpression: {
+                return this.checkInterpolateFormatExpression(env, exp as InterpolateFormatExpression);
             }
             case ExpressionTag.PostfixOpExpression: {
                 return this.checkPostfixOp(env, exp as PostfixOp, typeinfer);
@@ -3925,45 +4119,20 @@ class TypeChecker {
         stmt.bbinds = eetgr.bbinds;
         if(eetgr.bbinds.length === 0) {
             this.checkError(stmt.sinfo, !this.relations.isBooleanType(eetype), "If test requires a Bool type");
-
             let [aenv, tenv, _] = eetgr.extendEnvironmentWithVarAssignments(env);
 
             const ttrue = this.checkBlockStatement(tenv, stmt.trueBlock);
             return TypeEnvironment.mergeEnvironmentsSimple(aenv, tenv, ttrue);
         }
         else {
-            /*
-            const splits = this.processITestAsConvert(stmt.sinfo, env, eetype, stmt.cond.itestopt);
-            this.checkError(stmt.cond.exp.sinfo, splits.ttrue === undefined, "Test is never true -- true branch of if is unreachable");
-            this.checkError(stmt.cond.exp.sinfo, splits.tfalse === undefined, "Test is never false -- false branch of if is unreachable");
+            this.checkError(stmt.sinfo, !this.relations.isBooleanType(eetype), "If test requires a Bool type");
+            let [aenv, tenv, _] = eetgr.extendEnvironmentWithVarAssignments(env);
 
-            if(stmt.binder === undefined) {
-                const ttrue = this.checkBlockStatement(env, stmt.trueBlock);
-                return TypeEnvironment.mergeEnvironmentsSimple(env, env, ttrue);
-            }
-            else {
-                stmt.trueBindType = splits.ttrue || eetype;
+            //update the true branch with any binders from the itest
+            tenv = tenv.pushNewLocalBinderScope(stmt.bbinds.map((bb) => new VarInfo(bb.bname, bb.ttrue as TypeSignature, "let", true)));
 
-                const nenv = env.pushNewLocalBinderScope(stmt.binder.srcname, splits.ttrue || eetype);
-                const ttrue = this.checkStatement(nenv, stmt.trueBlock).popLocalScope();
-
-                const retypename = stmt.binder.srcname.slice(1);
-                this.checkFlowRebinder(stmt.sinfo, stmt.binder, retypename, env);
-                if(ttrue.normalflow && splits.tfalse !== undefined) {
-                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: eetype, specialaccess: undefined }, env, ttrue, nenv);
-                }
-                else if(ttrue.normalflow) {
-                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: splits.ttrue as TypeSignature, specialaccess: splits.tspecialfubx }, env, ttrue, nenv);
-                }
-                else if(splits.tfalse !== undefined) {
-                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: splits.tfalse as TypeSignature, specialaccess: splits.fspecialfubx }, env, ttrue, nenv);
-                }
-                else {
-                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: eetype, specialaccess: undefined }, env, ttrue, nenv);    
-                }
-            }
-            */
-            assert(false, "Not Implemented -- checkIfStatement with ITest binds");
+            const ttrue = this.checkBlockStatement(tenv, stmt.trueBlock);
+            return TypeEnvironment.mergeEnvironmentsSimple(aenv, tenv, ttrue);
         }
     }
 
@@ -3982,43 +4151,19 @@ class TypeChecker {
             return TypeEnvironment.mergeEnvironmentsSimple(aenv, ttrue, tfalse);
         }
         else {
-            /*
-            const splits = this.processITestAsConvert(stmt.sinfo, env, eetype, stmt.cond.itestopt);
-            this.checkError(stmt.cond.exp.sinfo, splits.ttrue === undefined, "Test is never true -- true branch of if is unreachable");
-            this.checkError(stmt.cond.exp.sinfo, splits.tfalse === undefined, "Test is never false -- false branch of if is unreachable");
+            this.checkError(stmt.sinfo, !this.relations.isBooleanType(eetype), "If test requires a Bool type");
+            
+            let [aenv, tenv, fenv] = eetgr.extendEnvironmentWithVarAssignments(env);
 
-            if(stmt.binder === undefined) {
-                const ttrue = this.checkBlockStatement(env, stmt.trueBlock);
-                const tfalse = this.checkBlockStatement(env, stmt.falseBlock);
-                return TypeEnvironment.mergeEnvironmentsSimple(env, ttrue, tfalse);
-            }
-            else {
-                stmt.trueBindType = splits.ttrue || eetype;
-                stmt.falseBindType = splits.tfalse || eetype;
+            //update the true branch with any binders from the itest
+            tenv = tenv.pushNewLocalBinderScope(stmt.bbinds.map((bb) => new VarInfo(bb.bname, bb.ttrue as TypeSignature, "let", true)));
+            const ttrue = this.checkBlockStatement(tenv, stmt.trueBlock);
 
-                const tenv = env.pushNewLocalBinderScope(stmt.binder.srcname, splits.ttrue || eetype);
-                const ttrue = this.checkStatement(tenv, stmt.trueBlock).popLocalScope();
-
-                const fenv = env.pushNewLocalBinderScope(stmt.binder.srcname, splits.tfalse || eetype);
-                const tfalse = this.checkStatement(fenv, stmt.falseBlock).popLocalScope();
-
-                const retypename = stmt.binder.srcname.slice(1);
-                this.checkFlowRebinder(stmt.sinfo, stmt.binder, retypename, env);
-                if(ttrue.normalflow && tfalse.normalflow) {
-                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: eetype, specialaccess: undefined }, ttrue, tfalse);
-                }
-                else if(ttrue.normalflow) {
-                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: splits.ttrue as TypeSignature, specialaccess: splits.tspecialfubx }, ttrue, tfalse);
-                }
-                else if(tfalse.normalflow) {
-                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: splits.tfalse as TypeSignature, specialaccess: splits.fspecialfubx }, ttrue, tfalse);
-                }
-                else {
-                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: eetype, specialaccess: undefined }, ttrue, tfalse);
-                }
-            }
-            */
-            assert(false, "Not Implemented -- checkIfElseStatement with ITest binds");
+            //update the false branch with any binders from the itest
+            fenv = fenv.pushNewLocalBinderScope(stmt.bbinds.map((bb) => new VarInfo(bb.bname, bb.tfalse as TypeSignature, "let", true)));
+            const tfalse = this.checkBlockStatement(fenv, stmt.falseBlock);
+            
+            return TypeEnvironment.mergeEnvironmentsSimple(aenv, ttrue, tfalse);
         }
     }
 
@@ -4089,15 +4234,14 @@ class TypeChecker {
     }
 
     private checkMatchStatement(env: TypeEnvironment, stmt: MatchStatement): TypeEnvironment {
-        /*
-        const eetype = this.checkExpression(env, stmt.sval[0], undefined);
+        const eetype = this.checkExpression(env, stmt.sval, undefined);
         if(eetype instanceof ErrorTypeSignature) {
             return env;
         }
 
         let ctype = this.relations.decomposeType(eetype) || [];
         if(ctype.length === 0) {
-            this.reportError(stmt.sval[0].sinfo, `Match statement requires a decomposable type but got ${eetype.emit()}`);
+            this.reportError(stmt.sval.sinfo, `Match statement requires a decomposable type but got ${eetype.emit()}`);
             return env;
         }
         
@@ -4116,16 +4260,10 @@ class TypeChecker {
                 const defaulttype = (lubattempt instanceof ErrorTypeSignature) ? eetype : lubattempt;
                 stmt.implicitFinalType = defaulttype;
 
-                let cenv = env;
-                if(stmt.sval[1] !== undefined) {
-                    cenv = env.pushNewLocalBinderScope(stmt.sval[1].srcname, defaulttype)
-                }
-                
+                let cenv = env.pushNewLocalBinderScope([new VarInfo(stmt.bindervar, defaulttype, "let", true)]);
                 cenv = this.checkBlockStatement(cenv, stmt.matchflow[i].value);
-
-                if(stmt.sval[1] !== undefined) {
-                    cenv = cenv.popLocalScope();
-                }
+                cenv = cenv.popLocalScope()[0];
+                
                 results.push(cenv);
             }
             else {
@@ -4146,15 +4284,10 @@ class TypeChecker {
                     exhaustive = splits.remain.length === 0;
                     this.checkError(stmt.matchflow[i].value.sinfo, exhaustive && i !== stmt.matchflow.length - 1, `Test is never false -- but there were ${stmt.matchflow.length - (i + 1)} more that are unreachable`);
 
-                    let cenv = env;
-                    if(stmt.sval[1] !== undefined) {
-                        cenv = env.pushNewLocalBinderScope(stmt.sval[1].srcname, mtype);
-                    }
+                    let cenv = env.pushNewLocalBinderScope([new VarInfo(stmt.bindervar, mtype, "let", true)]);
                     cenv = this.checkBlockStatement(cenv, stmt.matchflow[i].value);
-
-                    if(stmt.sval[1] !== undefined) {
-                        cenv = cenv.popLocalScope();
-                    }
+                    cenv = cenv.popLocalScope()[0];
+                    
                     ctype = splits.remain || ctype;
                     results.push(cenv);
                 }
@@ -4163,9 +4296,6 @@ class TypeChecker {
         
         stmt.mustExhaustive = exhaustive;
         return TypeEnvironment.mergeEnvironmentsSimple(env, ...results);
-
-        */
-        assert(false, "Not Implemented -- checkMatchStatement");
     }
 
     private checkDispatchPatternStatement(env: TypeEnvironment, stmt: DispatchPatternStatement): TypeEnvironment {
@@ -5032,6 +5162,17 @@ class TypeChecker {
 
             if(minParsed !== undefined && minParsed.ok && maxParsed !== undefined && maxParsed.ok) {
                 this.checkError(tdecl.sinfo, minParsed.value > maxParsed.value, `Range min (${tdecl.optsizerng.min}) must be <= max (${tdecl.optsizerng.max})`);
+            }
+
+            if(tdecl.optsizerng.min !== undefined && tdecl.optsizerng.max !== undefined) {
+                try {
+                    const minval = BigInt(tdecl.optsizerng.min.slice(0, -1));
+                    const maxval = BigInt(tdecl.optsizerng.max.slice(0, -1));
+                    this.checkError(tdecl.sinfo, minval > maxval, `Size range min cannot be larger than size range max`);
+                }
+                catch {
+                    //ignore -- already reported as invalid
+                }
             }
         }
 

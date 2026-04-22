@@ -12,20 +12,21 @@
         "url": "https://github.com/BosqueLanguage/BosqueCore"
     },
     "dependencies": {
-        "@types/node": "22.7.1",
-        "@bosque/jsbrex": "0.15.0",
+        "@bosque/jsbrex": "0.16.0",
         "chalk": "5.5.0"
     },
     "devDependencies": {
+        "@types/node": "^25.5.2",
         "typescript": "5.6.2"
     },
     "scripts": {
-        "build": "node ./build/build_all.js",
+        "build": "node ./build/build_all.js && node ./build/build_smt.js",
+        "build-smt": " node ./build/build_smt.js",
         "test": "node ./build/build_all.js && node --test-concurrency=8 --test test/*/*/*.test.js",
         "test-parser": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/parser/*/*.test.js",
         "test-typecheck": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/typecheck/*/*.test.js",
         "test-cppemit": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/cppemit/*/*.test.js",
-        "test-cpprun": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/cpprun/*/*.test.js"
+        "test-cpprun": "node ./build/build_all.js && node --test-concurrency=16 --test ./test/cpprun/*/*.test.js"
     },
     "files": [
         "bin/*"

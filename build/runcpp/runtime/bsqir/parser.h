@@ -16,11 +16,19 @@ namespace ᐸRuntimeᐳ
     private:
         BSQONLexer lexer;
 
+        /** Enable to allow "" quoted strings to be parsed as CStrings and '' as Strings too **/
+        bool sloppystrings = false;
+
     public:
         BSQONParser() : lexer() {}
 
         void initialize(std::list<uint8_t*>&& iobuffs, size_t totalbytes);
         void release();
+
+        void setSloppyStringParsing(bool enable) 
+        { 
+            this->sloppystrings = enable; 
+        }
 
         bool peekSymbol(char sym);
         BSQONTokenType peekTokenType();
@@ -91,6 +99,9 @@ namespace ᐸRuntimeᐳ
 
         std::optional<XCString> parseCString();
         std::optional<XString> parseString();
+
+        std::optional<XCRegex> parseCRegex();
+        std::optional<XRegex> parseRegex();
 
         bool allInputConsumed()
         {

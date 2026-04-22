@@ -18,11 +18,11 @@ namespace ᐸRuntimeᐳ
         constexpr ByteBufferEntry(const std::initializer_list<uint8_t>& initdata) : data{0} { std::copy(initdata.begin(), initdata.end(), this->data); }
         constexpr ByteBufferEntry(const ByteBufferEntry& other) = default;
 
-        inline constexpr uint8_t* getData() { return this->data; }
-        inline constexpr const uint8_t* getData() const { return this->data; }
+        constexpr uint8_t* getData() { return this->data; }
+        constexpr const uint8_t* getData() const { return this->data; }
 
-        inline constexpr uint8_t getInner(size_t index) const { return this->data[index]; }
-        inline constexpr uint8_t getFull(size_t index, uint8_t value) const { return this->data[index % BUFFER_ENTRY_SIZE]; }
+        constexpr uint8_t getInner(size_t index) const { return this->data[index]; }
+        constexpr uint8_t getFull(size_t index, uint8_t value) const { return this->data[index % BUFFER_ENTRY_SIZE]; }
     };
 
     class ByteBufferBlock
@@ -37,7 +37,7 @@ namespace ᐸRuntimeᐳ
         ByteBufferBlock(ByteBufferEntry** entries, size_t entryCount, ByteBufferBlock* next) : entries{0}, next(next) { std::copy(entries, entries + entryCount, this->entries); }
         ByteBufferBlock(const ByteBufferBlock& other) = default;
 
-        inline constexpr ByteBufferEntry* getEntryFor(size_t index) const 
+        constexpr ByteBufferEntry* getEntryFor(size_t index) const 
         {
             constexpr size_t bbvolume = ByteBufferBlock::BUFFER_BLOCK_ENTRY_COUNT * ByteBufferEntry::BUFFER_ENTRY_SIZE;
 
@@ -63,34 +63,52 @@ namespace ᐸRuntimeᐳ
     };
     using BufferTree = ᐸRuntimeᐳ::BoxedUnion<ByteBufferTreeUnion>;
 
-    constexpr TypeInfo g_typeinfo_ByteBufferEntry = {
+    inline constexpr TypeInfo g_typeinfo_ByteBufferEntry = {
         WELL_KNOWN_TYPE_ID_BYTEBUFFERENTRY,
         sizeof(ByteBufferEntry),
         byteSizeToSlotCount(sizeof(ByteBufferEntry)),
         LayoutTag::Ref,
+        BSQ_TYPEINFO_NO_ESLOT,
         BSQ_PTR_MASK_LEAF,
-        "ByteBufferEntry",
-        nullptr
+        nullptr,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        0,
+        "ByteBufferEntry"
     };
 
-    constexpr TypeInfo g_typeinfo_ByteBufferBlock = {
+    inline constexpr TypeInfo g_typeinfo_ByteBufferBlock = {
         WELL_KNOWN_TYPE_ID_BYTEBUFFERBLOCK,
         sizeof(ByteBufferBlock),
         byteSizeToSlotCount(sizeof(ByteBufferBlock)),
-        LayoutTag::Ref,
+        LayoutTag::ArrayRef,
+        1,
         "1111111111111111111111111111111111111111111111111111111111111111",
-        "ByteBufferBlock",
-        nullptr
+        nullptr,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        0,
+        "ByteBufferBlock"
     };
 
-    constexpr TypeInfo g_typeinfo_ByteBuffer = {
+    inline constexpr TypeInfo g_typeinfo_ByteBuffer = {
         WELL_KNOWN_TYPE_ID_BYTEBUFFER,
         sizeof(BufferTree) + sizeof(size_t),
         byteSizeToSlotCount(sizeof(BufferTree) + sizeof(size_t)),
         LayoutTag::Tagged,
+        BSQ_TYPEINFO_NO_ESLOT,
         "200",
-        "ByteBuffer",
-        nullptr
+        nullptr,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        0,
+        "ByteBuffer"
     };
 
     class ByteBufferIterator
@@ -165,7 +183,7 @@ namespace ᐸRuntimeᐳ
         XByteBuffer(const BufferTree& t, size_t b) : tree(t), bytesize(b) {}
         XByteBuffer(const XByteBuffer& other) = default;
         
-        inline constexpr size_t bytes() const { return this->bytesize; }
+        constexpr size_t bytes() const { return this->bytesize; }
 
         ByteBufferIterator iterator() const 
         {

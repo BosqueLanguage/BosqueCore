@@ -176,11 +176,16 @@ namespace ᐸRuntimeᐳ
         void emitCString(XCString s);
         void emitString(XString s);
 
+        void emitCRegex(XCRegex r);
+        void emitRegex(XRegex r);
+
         //
         //Lots more here
         //
 
         std::list<uint8_t*>&& completeEmit(size_t& bytes);
+
+        void debug_emit(const std::function<void()>& emitter);
     };
 
     class JSONEmitter

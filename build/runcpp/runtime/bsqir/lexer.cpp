@@ -1,7 +1,5 @@
 #include "lexer.h"
 
-#include <regex>
-
 namespace ᐸRuntimeᐳ
 {
     static std::regex s_ws_re("^\\s+", std::regex_constants::nosubs | std::regex_constants::optimize);

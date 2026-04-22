@@ -23,6 +23,15 @@ describe ("CPPExec -- Entity Constructor", () => {
     it("should exec skip positions", function () {
         runTestSet('entity Foo { field f: Int; field g: Bool = true; field h: Int; } public function main(v: Int): Foo { return Foo{1i, _, h = v + v}; }', [['3i', 'Main::Foo{ 1i, true, 6i }']], []);
     });
+
+    it("should exec nested and reference versions", function () {
+        const bbar = 'entity Bar { field p: Int; field q: Int; field r: Int; }';
+        const sbfoo = 'entity Foo { field a: Bar; field b: Bar; }';
+        const lbfoo = 'entity Foo { field x: Int; field y: Int; field z: Int; field a: Bar; field b: Bar; }';
+     
+        runTestSet(`${bbar} ${sbfoo} public function main(v: Int): Foo { return Foo{a = Bar{1i, 2i, 3i}, b = Bar{4i, 5i, v}}; }`, [['3i', 'Main::Foo{ Main::Bar{ 1i, 2i, 3i }, Main::Bar{ 4i, 5i, 3i } }']], []);
+        runTestSet(`${bbar} ${lbfoo} public function main(v: Int): Foo { return Foo{1i, v, 3i, Bar{4i, 5i, v}, Bar{6i, 7i, v}}; }`, [['5i', 'Main::Foo{ 1i, 5i, 3i, Main::Bar{ 4i, 5i, 5i }, Main::Bar{ 6i, 7i, 5i } }']], []); 
+    });
 });
 
 describe ("CPPExec -- Entity w/ Invariant Constructor", () => {

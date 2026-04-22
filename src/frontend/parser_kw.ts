@@ -254,6 +254,7 @@ const SYM_dot = ".";
 const SYM_eq = "=";
 const SYM_semicolon = ";";
 const SYM_question = "?";
+const SYM_questionquestion = "??";
 const SYM_dotdotdot = "...";
 const SYM_HOLE = "$?_";
 
@@ -293,6 +294,7 @@ const StandardSymbols = [
     SYM_eq,
     SYM_semicolon,
     SYM_question,
+    SYM_questionquestion,
     SYM_dotdotdot,
     SYM_HOLE,
     
@@ -475,6 +477,7 @@ export {
     SYM_eq,
     SYM_semicolon,
     SYM_question,
+    SYM_questionquestion,
     SYM_dotdotdot,
     SYM_HOLE,
     

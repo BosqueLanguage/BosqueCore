@@ -134,8 +134,7 @@ namespace ᐸRuntimeᐳ
     void BSQONEmitter::emitCChar(XCChar c)
     {
         //TODO: we need to handle escaping correctly
-        assert(std::isalnum(char(c.value)) || c.value == ' ');
-
+        
         this->bufferMgr.writeImmediate("c'");
         this->bufferMgr.write(char(c.value));
         this->bufferMgr.writeImmediate("'");
@@ -144,8 +143,7 @@ namespace ᐸRuntimeᐳ
     void BSQONEmitter::emitUnicodeChar(XUnicodeChar c)
     {
         //TODO: we need to handle escaping correctly
-        assert(std::isalnum(char(c.value)) || c.value == ' ');
-
+        
         this->bufferMgr.writeImmediate("c\"");
         this->bufferMgr.write(char(c.value));
         this->bufferMgr.writeImmediate("\"");
@@ -161,8 +159,7 @@ namespace ᐸRuntimeᐳ
         for(auto ii = istart; ii != iend; ++ii) {
             char c = *ii;
             //TODO: we need to handle escaping correctly
-            assert(std::isalnum(c) || c == ' ');
-
+            
             this->bufferMgr.write(c);
         }
 
@@ -180,16 +177,42 @@ namespace ᐸRuntimeᐳ
             char32_t c = *ii;
 
             //TODO: we need to handle escaping correctly
-            assert(std::isalnum(c) || c == ' ');
-
+            
             this->bufferMgr.write(c);
         }
 
         this->bufferMgr.writeImmediate("\"");
     }
 
+    void BSQONEmitter::emitCRegex(XCRegex r)
+    {
+        assert(false); // Not Implemented: emitting CRegex values
+    }
+    
+    void emitRegex(XRegex r)
+    {
+        assert(false); // Not Implemented: emitting Regex values
+    }
+
     std::list<uint8_t*>&& BSQONEmitter::completeEmit(size_t& bytes)
     {
         return this->bufferMgr.completeEmit(bytes);
+    }
+
+    void BSQONEmitter::debug_emit(const std::function<void()>& emitter)
+    {
+        size_t obytes = 0;
+        this->prepForEmit(true);
+        emitter();
+        auto oibb = this->completeEmit(obytes);
+
+        //TODO assume chars are all printable for now
+        for(size_t i = 0; i < obytes; i++) {
+            printf("%c", static_cast<char>(oibb.front()[i]));
+        }
+        printf("\n");
+
+        ᐸRuntimeᐳ::g_alloc_info.io_buffer_free_list(oibb);
+        oibb.clear();
     }
 }

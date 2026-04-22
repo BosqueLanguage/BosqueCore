@@ -6,52 +6,15 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 import { Assembly } from "../frontend/assembly.js";
-import { PackageConfig } from "../frontend/build_decls.js";
-import { generateASM, workflowLoadUserSrc, setStatusEnabled } from "./workflows.js";
+import { checkAssembly, parseArgv } from "./workflows.js";
 import { Monomorphizer } from "../backend/asmprocess/monomorphize.js";
 import { ASMToIRConverter } from "../backend/asmprocess/flatten.js";
 import { CPPEmitter } from "../backend/ircemit/cppemit.js";
+import { Status } from "./status_output.js"
 
 const runcppdir = path.join(__dirname, "../../runcpp/");
 
-let statusenabled = true;
-const Status = {
-    output: (msg: string) => {
-        if(statusenabled) {
-            process.stdout.write(msg);
-        }
-    },
-    error: (msg: string) => {
-        if(statusenabled) {
-            process.stderr.write(msg);
-        }
-    }
-};
-
-function enableStatus() {
-    statusenabled = true;
-    setStatusEnabled(true);
-}
-
-let fullargs = [...process.argv].slice(2);
-if(fullargs.length === 0) {
-    Status.error("No input files specified!\n");
-    process.exit(1);
-}
-
-let mainns = "Main";
-let mainnsidx = fullargs.findIndex((v) => v === "--namespace");
-if(mainnsidx !== -1) {
-    mainns = fullargs[mainnsidx + 1];
-    fullargs = fullargs.slice(0, mainnsidx).concat(fullargs.slice(mainnsidx + 2));
-}
-
-let outdir = path.join(path.dirname(path.resolve(fullargs[0])), "cppout");
-let outdiridx = fullargs.findIndex((v) => v === "--output");
-if(outdiridx !== -1) {
-    outdir = fullargs[outdiridx + 1];
-    fullargs = fullargs.slice(0, outdiridx).concat(fullargs.slice(outdiridx + 2));
-}
+const [fullargs, mainns, outdir] = parseArgv("cppout", ...process.argv);
 
 function buildExeCode(assembly: Assembly, rootasm: string, outname: string) {
     Status.output("Monomorphizing code...\n");
@@ -62,7 +25,7 @@ function buildExeCode(assembly: Assembly, rootasm: string, outname: string) {
 
     Status.output("Emitting CPP code...\n");
     const cppcode = CPPEmitter.createEmitter(ircode);
-    const maincode = cppcode.emitForCommandLine([`${mainns}::main`]);
+    const maincode = cppcode.emitForCommandLine(`${mainns}::main`);
 
     Status.output("    Writing CPP code to disk...\n");
     const nndir = path.normalize(outname);
@@ -105,63 +68,25 @@ function emitCommandLineMakefile(optlevel: "debug" | "test" | "release"): string
         'JSON_INCLUDES=-I $(BUILD_DIR)include/json/\n\n' +
         '#dev is default, for another flavor : make BUILD=release or debug\n' +
         `BUILD := ${optlevel}\n\n` + 
-        'CPP_STDFLAGS=-Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable -Wuninitialized -Werror -std=gnu++20 -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-stack-protector -fPIC\n' + 
+        'CPP_STDFLAGS=-Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable -Wuninitialized -Werror -std=gnu++23 -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-stack-protector -fPIC\n' + 
         'CPPFLAGS_OPT.debug=-O0 -g -ggdb -fno-omit-frame-pointer -fsanitize=address\n' +
         'CPPFLAGS_OPT.test=-O0 -g -ggdb -fno-omit-frame-pointer\n' +
         'CPPFLAGS_OPT.release=-O3 -march=x86-64-v3\n' +
         'CPPFLAGS=${CPPFLAGS_OPT.${BUILD}} ${CPP_STDFLAGS}\n\n' +
         'HEADERS=$(wildcard $(SRC_DIR)*.h) $(wildcard $(CORE_SRC_DIR)*.h) $(wildcard $(RUNTIME_SRC_DIR)*.h) $(wildcard $(ALLOC_SRC_DIR)*.h) $(wildcard $(BSQIR_SRC_DIR)*.h)\n' +
-        'all: $(MAKE_PATH)/app\n\n' +
+        'all: $(HEADERS) $(MAKE_PATH)/app\n\n' +
         '$(MAKE_PATH)/app: $(MAKE_PATH)/app.h $(MAKE_PATH)/app.cpp\n' +
         '\t@make -f $(RUNTIME_DIR)makefile BUILD=$(BUILD) --jobs=8 all\n' +
-        '\tg++ $(CPPFLAGS) -o $(MAKE_PATH)/app $(OUT_OBJS)* $(JSON_INCLUDES) $(MAKE_PATH)/app.cpp\n';
-}
-
-function getSimpleFilename(fn: string): string {
-    return path.basename(fn);
-}
-
-function checkAssembly(srcfiles: string[]): Assembly | undefined {
-    const lstart = Date.now();
-    Status.output("Loading user sources...\n");
-    const usersrcinfo = workflowLoadUserSrc(srcfiles);
-    if(usersrcinfo === undefined) {
-        Status.error("Failed to load user sources!\n");
-        return;
-    }
-    const dend = Date.now();
-    Status.output(`    User sources loaded [${(dend - lstart) / 1000}s]\n\n`);
-
-    const userpackage = new PackageConfig([], usersrcinfo)
-    const [asm, perrors, terrors] = generateASM(userpackage);
-
-    if(perrors.length === 0 && terrors.length === 0) {
-        return asm;
-    }
-    else {
-        Status.error("Failed to generate assembly!\n");
-
-        //TODO -- need to do filename in error and sort nicely
-        perrors.sort((a, b) => (a.srcfile !== b.srcfile) ? a.srcfile.localeCompare(b.srcfile) : a.sinfo.line - b.sinfo.line);
-        for(let i = 0; i < perrors.length; ++i) {
-            Status.error(`Parser Error @ ${getSimpleFilename(perrors[i].srcfile)}#${perrors[i].sinfo.line}: ${perrors[i].message}\n`);
-        }
-
-        terrors.sort((a, b) => (a.file !== b.file) ? a.file.localeCompare(b.file) : a.line - b.line);
-        if(terrors.length !== 0) {
-            for(let i = 0; i < terrors.length; ++i) {
-                Status.error(`Type Error @ ${getSimpleFilename(terrors[i].file)}#${terrors[i].line}: ${terrors[i].msg}\n`);
-            }
-        }
-
-        return undefined;
-    }
+        '\tg++ $(CPPFLAGS) -o $(MAKE_PATH)/app $(OUT_OBJS)* $(JSON_INCLUDES) $(MAKE_PATH)/app.cpp\n' +
+        'clean:\n' +
+	    '\trm -rf $(OUT_OBJS)*\n' +
+        '\trm app';
 }
 
 //////////////////////////////
-enableStatus();
+Status.enable();
 
-const asm = checkAssembly(fullargs);
+const asm = checkAssembly(fullargs, "cpp");
 if(asm === undefined) {
     process.exit(1);
 }

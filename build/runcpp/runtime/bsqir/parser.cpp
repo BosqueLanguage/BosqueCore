@@ -270,17 +270,28 @@ namespace ᐸRuntimeᐳ
     std::optional<XCString> BSQONParser::parseCString()
     {
         if(this->lexer.current().tokentype != BSQONTokenType::LiteralCString) {
-            return std::nullopt;
+            if(!this->sloppystrings || this->lexer.current().tokentype != BSQONTokenType::LiteralString) {
+                return std::nullopt;
+            }
+        }
+
+        char etok = '\'';
+        if(this->sloppystrings && this->lexer.current().tokentype == BSQONTokenType::LiteralString) {
+            etok = '"';
         }
 
         auto stok = this->lexer.current();
-        if(stok.size() < CStrBuff::CSTR_MAX_SIZE) {
-            CStrBuff cb;
+        if(stok.size() == 2) {
+            this->lexer.consume();
+            return std::make_optional(XCString());
+        }
+        else if(stok.size() - 2 <= CStrRootInlineContent::CSTR_MAX_SIZE) {
+            CStrRootInlineContent cb;
             size_t ecount = 0;
             bool extractok = true;
             BSQLexBufferIterator ii = stok.begin;
             ++ii; //eat ' and skip final '
-            while(*ii != '\'') {
+            while(*ii != etok) {
                 extractok &= processCCharInString(ii, &cb.data[ecount + 1]);
                 ecount++;
             }
@@ -304,10 +315,14 @@ namespace ᐸRuntimeᐳ
         if(this->lexer.current().tokentype != BSQONTokenType::LiteralString) {
             return std::nullopt;
         }
-
+        
         auto stok = this->lexer.current();
-        if(stok.size() < StrBuff::STR_MAX_SIZE) {
-            StrBuff cb;
+        if(stok.size() == 2) {
+            this->lexer.consume();
+            return std::make_optional(XString());
+        }
+        else if(stok.size() - 2 <= StrRootInlineContent::STR_MAX_SIZE) {
+            StrRootInlineContent cb;
             size_t ecount = 0;
             bool extractok = true;
             BSQLexBufferIterator ii = stok.begin;
@@ -329,5 +344,15 @@ namespace ᐸRuntimeᐳ
         else {
             assert(false); // Not Implemented: parsing large CString values
         }
+    }
+
+    std::optional<XCRegex> BSQONParser::parseCRegex()
+    {
+        assert(false); // Not Implemented: parsing CRegex values
+    }
+
+    std::optional<XRegex> BSQONParser::parseRegex()
+    {
+        assert(false); // Not Implemented: parsing Regex values
     }
 }

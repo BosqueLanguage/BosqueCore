@@ -8,19 +8,65 @@ namespace ᐸRuntimeᐳ
 {
     constexpr size_t MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE = 8192; //8KB blocks for buffer allocation
 
+    class GCAllocatorImpl
+    {
+    private:
+    #if BSQ_ALLOCATOR_USE_MALLOC
+        std::vector<void*> x_allocs;
+    #endif
+
+    public:
+        const TypeInfo* alloctype; 
+
+        constexpr GCAllocatorImpl(const TypeInfo* alloctype) : alloctype(alloctype) {} 
+
+        inline void* xalloc()
+        {
+    #if BSQ_ALLOCATOR_USE_MALLOC
+            void* ptr = malloc(this->alloctype->bytesize);
+
+            this->x_allocs.push_back(ptr);
+            return ptr;
+    #else 
+            assert(false); //Not implemented: GC allocator without malloc
+    #endif
+        }
+
+        void cleanup()
+        {
+    #if BSQ_ALLOCATOR_USE_MALLOC
+            for(size_t i = 0; i < this->x_allocs.size(); i++) {
+                free(this->x_allocs[i]);
+            }
+
+            this->x_allocs.clear();
+    #endif
+        }
+    };
+
+    template <typename T>
+    class GCAllocator : public GCAllocatorImpl
+    {
+    public:
+        constexpr GCAllocator(const TypeInfo* alloctype) : GCAllocatorImpl(alloctype) {}
+
+        template<typename... Args>
+        inline T* allocate(Args... args) 
+        {
+            return new (this->xalloc()) T{args...};
+        }
+    };
+
     class AllocatorThreadLocalInfo
     {
     public:
-        // Add any allocator specific thread local info here
+        std::map<uint32_t, GCAllocatorImpl*> gcallocs;
+        void (*collectfp)();
 
-        ////////////////
-        //Support for IO Buffer Allocator and interop with Native code
-        ////////////////
+        AllocatorThreadLocalInfo() : gcallocs(), collectfp(nullptr) {}
 
-        void* io_buffer_alloc()
-        {
-            return (uint8_t*)malloc(MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE);
-        }
+        void initialize(void** caller_rbp, void (*_collectfp)(), const std::map<uint32_t, GCAllocatorImpl*>& gcallocs);
+        void cleanup();
     };
 
     class AllocatorGlobalInfo
@@ -33,10 +79,6 @@ namespace ᐸRuntimeᐳ
         std::mutex g_ioalloc_mutex;
 
     public:
-        // This mutex ensures that at most one GC thread is performing RC inc/dec operations at any given time -- later if we find high contention we can shard this to per page CAS operations
-        std::mutex g_rcop_mutex;
-
-        
         ////////////////
         //Support for Mint Allocator -- can only be called from mint server thread
         ////////////////
@@ -113,5 +155,7 @@ namespace ᐸRuntimeᐳ
 
     extern thread_local AllocatorThreadLocalInfo tl_alloc_info;
     extern AllocatorGlobalInfo g_alloc_info;
+
+    extern void collect();
 }
 

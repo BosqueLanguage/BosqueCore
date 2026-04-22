@@ -333,8 +333,6 @@ abstract class AbstractInvokeDecl extends AbstractCoreDecl {
 class LambdaDecl extends AbstractInvokeDecl {
     readonly isAuto: boolean;
 
-    capturedVars: {name: string, type: TypeSignature}[] = [];
-
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: "fn" | "pred", recursive: "yes" | "no" | "cond", params: InvokeParameterDecl[], resultType: TypeSignature, body: BodyImplementation, isAuto: boolean) {
         super(file, sinfo, attributes, name, recursive, params, resultType, body);
 
@@ -1147,7 +1145,7 @@ class DatatypeTypeDecl extends AbstractConceptTypeDecl {
             usingdecl = " using {\n" + this.joinBodyGroups(mg) + fmt.indent("\n}\nof\n");
         }
 
-        const edecls = this.associatedMemberEntityDecls.map((aed) => aed.emit(fmt)).join("\n| ");
+        const edecls = this.associatedMemberEntityDecls.map((aed) => aed.emit(fmt)).join("\n  ");
 
         let etail = ";";
         if(bg.length !== 0) {

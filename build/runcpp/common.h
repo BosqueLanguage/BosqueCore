@@ -16,6 +16,8 @@
 #include <list>
 #include <algorithm>
 
+#include <regex>
+
 #include <type_traits>
 #include <concepts>
 
@@ -24,6 +26,11 @@
 
 //Only for internal diagnostics
 #include <assert.h>
+
+////
+//TODO: for now the default allocator is #define set to malloc/free
+#define BSQ_ALLOCATOR_USE_MALLOC 1
+////
 
 namespace ᐸRuntimeᐳ
 {
@@ -41,6 +48,7 @@ namespace ᐸRuntimeᐳ
         DivisionByZero,
 
         InvalidCast,
+        ExhaustiveCheck,
 
         UserAbort,
         UserAssertion,
@@ -66,6 +74,19 @@ namespace ᐸRuntimeᐳ
 
     //slow path error handler
     [[noreturn]] void bsq_handle_error(const char* file, uint32_t line, ErrorKind kerror, const char* tag, const char* message);
+
+
+    inline void bsq_typeassert(bool cond, const char* file, uint32_t line, const char* tag, const char* message)
+    {
+        if(!cond) [[unlikely]] {
+            bsq_handle_error(file, line, ErrorKind::InvalidCast, tag, message);
+        }
+    }
+
+    inline void bsq_exhaustive(const char* file, uint32_t line, const char* message)
+    {
+        bsq_handle_error(file, line, ErrorKind::ExhaustiveCheck, nullptr, message);
+    }
 
     [[noreturn]] inline void bsq_abort(const char* file, uint32_t line, const char* tag, const char* message)
     {

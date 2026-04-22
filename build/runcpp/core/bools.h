@@ -31,13 +31,19 @@ namespace ᐸRuntimeᐳ
     constexpr XBool XFALSE = XBool::from(false);
     constexpr XBool XTRUE = XBool::from(true);
 
-    constexpr TypeInfo g_typeinfo_Bool = {
+    inline constexpr TypeInfo g_typeinfo_Bool = {
         WELL_KNOWN_TYPE_ID_BOOL,
         sizeof(XBool),
         byteSizeToSlotCount(sizeof(XBool)),
         LayoutTag::Value,
+        BSQ_TYPEINFO_NO_ESLOT,
         BSQ_PTR_MASK_LEAF,
-        "Bool",
-        nullptr
+        nullptr,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        0,
+        "Bool"
     };
 }
