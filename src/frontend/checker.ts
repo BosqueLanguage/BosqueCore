@@ -152,35 +152,23 @@ class TypeChecker {
             case "Rational": {
                 const body = literal.slice(0, -1);
                 const slashIdx = body.indexOf("/");
-                if(slashIdx === -1) {
-                    try {
-                        const val = Number(BigInt(body));
-                        return { value: val, ok: true };
-                    }
-                    catch {
-                        this.reportError(sinfo, `Invalid Rational range bound: ${literal}`);
+                try {
+                    const num = BigInt(slashIdx === -1 ? body : body.slice(0, slashIdx));
+                    const den = slashIdx === -1 ? 1n : BigInt(body.slice(slashIdx + 1));
+
+                    this.checkError(sinfo, num < MIN_SAFE_CHK_INT || num > MAX_SAFE_CHK_INT, `Rational numerator ${num} is outside safe ChkInt range`);
+                    this.checkError(sinfo, den < 1n || den > MAX_SAFE_NAT, `Rational denominator ${den} must be in safe Nat range (>= 1)`);
+
+                    const val = Number(num) / Number(den);
+                    if(!Number.isFinite(val)) {
+                        this.reportError(sinfo, `Rational range bound overflows: ${literal}`);
                         return { value: 0, ok: false };
                     }
+                    return { value: val, ok: true };
                 }
-                else {
-                    try {
-                        const num = BigInt(body.slice(0, slashIdx));
-                        const den = BigInt(body.slice(slashIdx + 1));
-                        if(den === 0n) {
-                            this.reportError(sinfo, `Zero denominator in Rational range bound: ${literal}`);
-                            return { value: 0, ok: false };
-                        }
-                        const val = Number(num) / Number(den);
-                        if(!Number.isFinite(val)) {
-                            this.reportError(sinfo, `Rational range bound overflows: ${literal}`);
-                            return { value: 0, ok: false };
-                        }
-                        return { value: val, ok: true };
-                    }
-                    catch {
-                        this.reportError(sinfo, `Invalid Rational range bound: ${literal}`);
-                        return { value: 0, ok: false };
-                    }
+                catch {
+                    this.reportError(sinfo, `Invalid Rational range bound: ${literal}`);
+                    return { value: 0, ok: false };
                 }
             }
             case "String":

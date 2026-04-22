@@ -208,4 +208,16 @@ describe ("Checker -- Rational range validation", () => {
     it("should fail Rational value above max", function () {
         checkTestFunctionError('type Foo = Rational{1R, 5R}; function main(): Foo { return 7R<Foo>; }', "Value 7R is above range maximum 5R");
     });
+
+    it("should accept fractional Rational range", function () {
+        checkTestFunction('type Foo = Rational{1/2R, 3/4R}; function main(): Foo { return 5/8R<Foo>; }');
+    });
+
+    it("should accept negative fractional Rational range", function () {
+        checkTestFunction('type Foo = Rational{-1/2R, 1/2R}; function main(): Foo { return 0R<Foo>; }');
+    });
+
+    it("should fail fractional Rational value below min", function () {
+        checkTestFunctionError('type Foo = Rational{1/2R, 3/4R}; function main(): Foo { return 1/4R<Foo>; }', "Value 1/4R is below range minimum 1/2R");
+    });
 });
