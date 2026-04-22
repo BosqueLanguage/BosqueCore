@@ -2339,6 +2339,8 @@ class TypeChecker {
         this.checkTemplateBindingsOnInvokeConstraints(exp.sinfo, imapper, fdecl);
         const arginfo = this.checkArgumentList(exp.sinfo, env, refallowed, exp.args.args, fdecl.params, imapper);
 
+        exp.resolvedFunction = fdecl;
+
         exp.shuffleinfo = arginfo.shuffleinfo;
         exp.resttype = arginfo.resttype;
         exp.restinfo = arginfo.restinfo;
@@ -2441,6 +2443,8 @@ class TypeChecker {
             const fullmapper = TemplateNameMapper.merge(fdecl.typeinfo.mapping, imapper);
             this.checkTemplateBindingsOnInvokeConstraints(exp.sinfo, fullmapper, fdecl.member);
             const arginfo = this.checkArgumentList(exp.sinfo, env, refallowed, exp.args.args, fdecl.member.params, fullmapper);
+
+            exp.resolvedFunction = fdecl.member;
 
             exp.shuffleinfo = arginfo.shuffleinfo;
             exp.resttype = arginfo.resttype;

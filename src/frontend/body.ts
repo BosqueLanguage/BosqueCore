@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { FullyQualifiedNamespace, AutoTypeSignature, RecursiveAnnotation, TypeSignature, LambdaTypeSignature, NominalTypeSignature } from "./type.js";
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls.js";
-import { LambdaDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, TaskConfiguration } from "./assembly.js";
+import { LambdaDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, TaskConfiguration, TypeFunctionDecl } from "./assembly.js";
 
 class BinderInfo {
     readonly srcname: string; //the name in the source code
@@ -980,6 +980,8 @@ class CallNamespaceFunctionExpression extends Expression {
     readonly terms: TypeSignature[];
     readonly args: ArgumentList;
 
+    resolvedFunction: TypeFunctionDecl | undefined = undefined;
+    
     shuffleinfo: [number, TypeSignature][] = [];
     resttype: TypeSignature | undefined = undefined;
     restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
@@ -1024,6 +1026,7 @@ class CallTypeFunctionExpression extends Expression {
 
     isSpecialCall: boolean = false;
     resolvedDeclType: TypeSignature | undefined = undefined;
+    resolvedFunction: TypeFunctionDecl | undefined = undefined;
     
     shuffleinfo: [number, TypeSignature][] = [];
     resttype: TypeSignature | undefined = undefined;

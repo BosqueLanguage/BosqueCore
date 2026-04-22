@@ -137,11 +137,11 @@ class Monomorphizer {
     private isAlreadySeenNamespaceFunction(fkey: string): boolean {
         return this.completedNamespaceFunctions.has(fkey) || this.pendingNamespaceFunctions.some((pnf) => pnf.fkey === fkey);
     }
-/*
+
     private isAlreadySeenTypeFunction(tkey: string): boolean {
         return this.completedTypeFunctions.has(tkey) || this.pendingTypeFunctions.some((ptf) => ptf.fkey === tkey);
     }
-
+/*
     private isAlreadySeenMemberMethod(mkey: string): boolean {
         return this.completedMemberMethods.has(mkey) || this.pendingTypeMethods.some((ptm) => ptm.mkey === mkey);
     }
@@ -209,12 +209,12 @@ class Monomorphizer {
 
         this.pendingNamespaceFunctions.push(new PendingNamespaceFunction(ns, fdecl, tterms, lambdas, fkey));
     }
-/*
+
     //Given a type function -- instantiate it
     private instantiateTypeFunction(enclosingType: TypeSignature, fdecl: TypeFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]) {
         const rcvrtype = this.currentMapping !== undefined ? enclosingType.remapTemplateBindings(this.currentMapping) : enclosingType;
         const tterms = this.currentMapping !== undefined ? terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : terms;
-        const fkey = this.computeInvokeKeyForTypeFunction(rcvrtype, fdecl, tterms, lambdas);
+        const fkey = computeInvokeKeyForTypeFunction(rcvrtype, fdecl, tterms, lambdas);
 
         if(this.isAlreadySeenTypeFunction(fkey)) {
             return;
@@ -222,7 +222,7 @@ class Monomorphizer {
 
         this.pendingTypeFunctions.push(new PendingTypeFunction(rcvrtype, fdecl, tterms, lambdas, fkey));
     }
-
+/*
     //Given a type method -- instantiate it
     private instantiateMemberMethod(enclosingType: TypeSignature, mdecl: MethodDecl, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]) {
         const retype = this.currentMapping !== undefined ? enclosingType.remapTemplateBindings(this.currentMapping) : enclosingType;
@@ -566,10 +566,7 @@ class Monomorphizer {
 
         const nns = this.assembly.resolveNamespaceDecl(exp.ns.ns) as NamespaceDeclaration;
 
-        const hastemplate = exp.terms.length > 0;
-        const haslambda = exp.shuffleinfo.some((si) => si[1] instanceof LambdaTypeSignature);
-        const nfd = this.assembly.resolveNamespaceFunction(exp.ns, exp.name, hastemplate, haslambda, exp.args.hasSpecialRef()) as NamespaceFunctionDecl;
-
+        const nfd = exp.resolvedFunction as NamespaceFunctionDecl;
         const lambdas = this.instantiateArgumentList(exp.args.args, nfd.params.map((p) => p.name || "_"), exp.shuffleinfo);
 
         for(let i = 0; i < exp.shuffleinfo.length; ++i) {
@@ -593,7 +590,6 @@ class Monomorphizer {
     }
 
     private instantiateCallTypeFunctionExpression(exp: CallTypeFunctionExpression) {
-        /*
         this.instantiateTypeSignature(exp.ttype, this.currentMapping);
         this.instantiateTypeSignature(exp.resolvedDeclType as TypeSignature, this.currentMapping);
 
@@ -601,14 +597,12 @@ class Monomorphizer {
             this.instantiateTypeSignature(exp.terms[i], this.currentMapping);
         }
 
-        this.instantiateArgumentList(exp.args.args);
-
         for(let i = 0; i < exp.shuffleinfo.length; ++i) {
             this.instantiateTypeSignature(exp.shuffleinfo[i][1], this.currentMapping);
         }
         if(exp.restinfo !== undefined) {
             const rparamtype = (this.currentMapping !== undefined ? (exp.resttype as TypeSignature).remapTemplateBindings(this.currentMapping) : (exp.resttype as TypeSignature)) as NominalTypeSignature;
-            let rargs: ArgumentValue[] = [];
+            let rargs: AbstractArgumentValue[] = [];
 
             for(let i = 0; i < exp.restinfo.length; ++i) {
                 this.instantiateTypeSignature(exp.restinfo[i][2], this.currentMapping);
@@ -619,11 +613,14 @@ class Monomorphizer {
         }
 
         if(!exp.isSpecialCall) {
-            const fdecl = (exp.resolvedDeclType as NominalTypeSignature).decl.functions.find((ff) => ff.name === exp.name) as TypeFunctionDecl;
-            this.instantiateTypeFunction(exp.resolvedDeclType as TypeSignature, (exp.resolvedDeclType as NominalTypeSignature).decl, fdecl, exp.terms);
+            const fdecl = exp.resolvedFunction as TypeFunctionDecl;
+            const lambdas = this.instantiateArgumentList(exp.args.args, fdecl.params.map((p) => p.name || "_"), exp.shuffleinfo);
+
+            const tterms = this.currentMapping !== undefined ? exp.terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : exp.terms;
+            this.callinstmap.set(exp.monoinvid as number, computeInvokeKeyForTypeFunction(exp.resolvedDeclType as NominalTypeSignature, fdecl, tterms, lambdas));
+
+            this.instantiateTypeFunction(exp.resolvedDeclType as TypeSignature, fdecl, exp.terms, lambdas);
         }
-        */
-       assert(false, "Not Implemented -- instantiateCallTypeFunctionExpression");
     }
 
     private instantiateParseAsTypeExpression(exp: ParseAsTypeExpression) {
