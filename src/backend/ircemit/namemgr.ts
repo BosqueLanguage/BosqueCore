@@ -1,5 +1,6 @@
 
 const s_coloncolon_repl = "ᕒ";
+const s_at_repl = "ᑀ";
 const s_colon_repl = "ᕀ";
 const s_hash_repl = "ᙾ";
 const s_comma_repl = "ᐪ";
@@ -18,6 +19,7 @@ class TransformCPPNameManager {
 
     private static resymbol(cstr: string): string {
         const bb = cstr
+            .replace(/@/g, s_at_repl)
             .replace(/::/g, s_coloncolon_repl)
             .replace(/: */g, s_colon_repl)
             .replace(/#/g, s_hash_repl)

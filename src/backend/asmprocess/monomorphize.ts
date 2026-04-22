@@ -712,6 +712,8 @@ class Monomorphizer {
             this.instantiateCollectionConstructor(rparamtype.decl as AbstractCollectionTypeDecl, rparamtype, rargs);
         }
 
+        const prepostikey = computeInvokeKeyForTypeMethod(exp.resolvedDeclType as TypeSignature, mdd, exp.terms, lambdas);
+
         //if the decl is not the same as the impl (and the decls has pre/post conditions), then we need to instantiate the decl as well to ensure the pre/post conditions are compiled
         if(exp.resolvedImplType !== undefined && exp.resolvedDeclType !== undefined && exp.resolvedDeclType.tkeystr !== exp.resolvedImplType.tkeystr) {
             const rmd = exp.resolvedMethodDecl as MethodDecl;
@@ -723,7 +725,7 @@ class Monomorphizer {
         if(exp.resolvedMethodImpl !== undefined) {
             const tterms = this.currentMapping !== undefined ? exp.terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : exp.terms;
             this.callinstmap.set(exp.monoinvid as number, computeInvokeKeyForTypeMethod(exp.resolvedImplType as TypeSignature, mdd, tterms, lambdas));
-            this.instantiateSpecificResolvedMemberMethod(exp.resolvedImplType as TypeSignature, mdd, tterms, lambdas);
+            this.instantiateSpecificResolvedMemberMethod(exp.resolvedImplType as TypeSignature, mdd, tterms, lambdas, prepostikey);
         }
         else {
             assert(false, "Not Implemented -- instantiatePostfixInvoke for virtual");
@@ -1764,7 +1766,7 @@ class Monomorphizer {
         }
 
         const ikey = computeInvokeKeyForNamespaceFunction(ns, fdecl.function, fdecl.instantiation, fdecl.lambdas);
-        (cnns.functionbinds.get(rkey) as InvokeInstantiationInfo[]).push(new InvokeInstantiationInfo(ikey, this.currentMapping as TemplateNameMapper, fdecl.lambdas, this.lambdamap, this.callinstmap));
+        (cnns.functionbinds.get(rkey) as InvokeInstantiationInfo[]).push(new InvokeInstantiationInfo(ikey, this.currentMapping as TemplateNameMapper, fdecl.lambdas, this.lambdamap, this.callinstmap, undefined));
 
         this.currentMapping = undefined;
         this.currentLambdaMapping = undefined;
@@ -1810,7 +1812,7 @@ class Monomorphizer {
         }
 
         const ikey = computeInvokeKeyForTypeFunction(fdecl.type, fdecl.function, fdecl.instantiation, fdecl.lambdas);
-        (typeinst.functionbinds.get(rkey) as InvokeInstantiationInfo[]).push(new InvokeInstantiationInfo(ikey, this.currentMapping as TemplateNameMapper, fdecl.lambdas, this.lambdamap, this.callinstmap));
+        (typeinst.functionbinds.get(rkey) as InvokeInstantiationInfo[]).push(new InvokeInstantiationInfo(ikey, this.currentMapping as TemplateNameMapper, fdecl.lambdas, this.lambdamap, this.callinstmap, undefined));
 
         this.currentMapping = undefined;
         this.currentLambdaMapping = undefined;
@@ -1844,14 +1846,14 @@ class Monomorphizer {
         this.instantiateBodyImplementation(mdecl.method.body);
 
         const rkey = computeResolveKeyForInvoke(mdecl.method.name, mdecl.method.terms.length, mdecl.method.params.some((p) => p.pkind !== undefined), mdecl.method.params.some((p) => p.type instanceof LambdaTypeSignature));
-
+        
         mdecl.method.resolvename = rkey;
         if(!typeinst.methodbinds.has(rkey)) {
             typeinst.methodbinds.set(rkey, []);
         }
 
         const ikey = computeInvokeKeyForTypeMethod(mdecl.type, mdecl.method, mdecl.instantiation, mdecl.lambdas);
-        (typeinst.methodbinds.get(rkey) as InvokeInstantiationInfo[]).push(new InvokeInstantiationInfo(ikey, this.currentMapping as TemplateNameMapper, mdecl.lambdas, this.lambdamap, this.callinstmap));
+        (typeinst.methodbinds.get(rkey) as InvokeInstantiationInfo[]).push(new InvokeInstantiationInfo(ikey, this.currentMapping as TemplateNameMapper, mdecl.lambdas, this.lambdamap, this.callinstmap, mdecl.prepostikey));
 
         this.currentMapping = undefined;
         this.lambdamap = new Map<number, string>();

@@ -1315,7 +1315,10 @@ class CPPEmitter {
             return `${ptypstr} ${TransformCPPNameManager.convertIdentifier(iparam.name)}`;
         }
         else {
-            if(iparam.skind === "lcapture") {
+            if(iparam.skind === "this") {
+                return `${ptypstr} ${TransformCPPNameManager.convertIdentifier(iparam.name)}`;
+            }
+            else if(iparam.skind === "lcapture") {
                 return `${ptypstr} ${CLOSURE_CAPTURE_NAME}`;
             }
             else {
