@@ -5136,6 +5136,10 @@ class TypeChecker {
         }
 
         if(tdecl.optsizerng !== undefined) {
+            if(tdecl.optsizerng.min === undefined && tdecl.optsizerng.max === undefined) {
+                this.reportError(tdecl.sinfo, `Invalid size range max and min -- at least one must be defined`);
+            }
+
             const typevaluename = (tdecl.valuetype as NominalTypeSignature).decl.name;
             let minParsed: { value: bigint | number, ok: boolean } | undefined = undefined;
             let maxParsed: { value: bigint | number, ok: boolean } | undefined = undefined;
