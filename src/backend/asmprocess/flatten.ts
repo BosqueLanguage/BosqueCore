@@ -1311,8 +1311,77 @@ class ASMToIRConverter {
         assert(false, "ASMToIRConverter::flattenPostfixSliceOperator - Not Implemented");
     }
 
+
     private flattenPostfixInvoke(exp: PostfixInvoke, rootexp: IRSimpleExpression, roottype: TypeSignature): IRExpression {
-        assert(false, "ASMToIRConverter::flattenPostfixInvoke - Not Implemented");
+        const mdecl = exp.resolvedMethodDecl as MethodDecl;
+
+        const haspreconds = mdecl.preconditions.length > 0;
+        const haspostconds = mdecl.postconditions.length > 0;
+        const iname = (this.currentMonoInvIdMap as Map<number, string>).get(exp.monoinvid as number) as string;
+
+        const imapper = this.generateLocalTemplateMapping(mdecl.terms.map((t) => t.name), exp.terms);
+        const fullmapper = TemplateNameMapper.tryMerge(this.currentBinds, imapper);
+        const rexp = (haspreconds || haspostconds) ? this.makeExpressionImmediate(rootexp, roottype) : rootexp;
+        const aargs = [rexp, ...this.flattenInvokeArgs(haspreconds, haspostconds, exp.shuffleinfo, mdecl.params, exp.args, exp.resttype, fullmapper)];
+
+        //do preconditions as needed
+        for(let i = 0; i < mdecl.preconditions.length; ++i) {
+            const invdecl = mdecl.preconditions[i];
+            this.pushStatement(new IRPreconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), iname, invdecl.ii, aargs));
+        } 
+
+        if(!exp.args.hasSpecialRef()) {
+            if(!haspostconds) {
+                return new IRInvokeSimpleExpression(iname, aargs);
+            }
+            else {
+                const tmpres = this.generateTempVarName();
+                this.pushStatement(new IRTempAssignStdInvokeStatement(tmpres, new IRInvokeSimpleExpression(iname, aargs), this.processTypeSignature(exp.getType())));
+
+                //do postconditions as needed
+                const postargs = [new IRAccessTempVariableExpression(tmpres), ...aargs]
+                for(let i = 0; i < mdecl.postconditions.length; ++i) {
+                    const invdecl = mdecl.postconditions[i];
+                    this.pushStatement(new IRPostconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), iname, invdecl.ii, postargs));
+                } 
+
+                return new IRAccessTempVariableExpression(tmpres);
+            }
+        }
+        else {
+            const srpos = exp.shuffleinfo.findIndex((si) => exp.args.args[si[0]] instanceof PassingArgumentValue);
+            const ii = exp.shuffleinfo[srpos][0];
+            const passarg = exp.args.args[ii] as PassingArgumentValue;
+            const ivar = (passarg.exp as AccessVariableExpression).srcname;
+            const ivartype = this.processTypeSignature((passarg.exp as AccessVariableExpression).getType());
+            
+           if(!haspostconds) {
+                return new IRInvokeSimpleWithImplicitsExpression(iname, aargs, ii, ivar, ivartype, passarg.kind);
+            }
+            else {
+                let tmppass: string | undefined = undefined;
+                if(passarg.kind !== "out" && passarg.kind !== "out?") {
+                    tmppass = this.generateTempVarName();
+                    this.pushStatement(new IRTempAssignExpressionStatement(tmppass, aargs[srpos], ivartype));
+                }
+
+                const tmpres = this.generateTempVarName();
+                this.pushStatement(new IRTempAssignRefInvokeStatement(tmpres, this.processTypeSignature(exp.getType()), ivar, ivartype, passarg.kind, new IRInvokeSimpleWithImplicitsExpression(iname, aargs, ii, ivar, ivartype, passarg.kind)));
+            
+                //do postconditions as needed
+                let postargs = [new IRAccessTempVariableExpression(tmpres), ...aargs];
+                if(tmppass !== undefined) {
+                    postargs = [new IRAccessTempVariableExpression(tmpres), new IRAccessTempVariableExpression(tmppass), ...postargs];
+                }
+
+                for(let i = 0; i < mdecl.postconditions.length; ++i) {
+                    const invdecl = mdecl.postconditions[i];
+                    this.pushStatement(new IRPostconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), iname, invdecl.ii, postargs));
+                } 
+
+                return new IRAccessTempVariableExpression(tmpres);
+            }
+        }
     }
 
     private flattenPostfixOp(exp: PostfixOp): IRExpression {
@@ -3583,7 +3652,18 @@ class ASMToIRConverter {
 
 
     private generateTypeFunctionDecl(fdecl: TypeFunctionDecl, irasm: IRAssembly) {
-        assert(false, "Not Implemented -- generateTypeFunctionDecl");
+        const ikey = (this.currentInvokeInstantation as InvokeInstantiationInfo).newikey;
+        const recursive = this.processRecursiveInfo(fdecl.recursive);
+        
+        const params = this.processInvokeParams(fdecl.params);
+        const preconds = fdecl.preconditions.map<IRPreConditionDecl>((pc) => this.generateRequiresClauseDecl(pc, ikey));
+        const postconds = fdecl.postconditions.map<IRPostConditionDecl>((ec) => this.generateEnsuresClauseDecl(ec, ikey));
+
+        const doc = fdecl.attributes.find((a) => a.name === "doc");
+        const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
+
+        const body = this.processBody(fdecl.body);
+        irasm.invokes.push(new IRInvokeDecl(ikey, recursive, params, this.processTypeSignature(fdecl.resultType), preconds, postconds, docstring, fdecl.file, this.convertSourceInfo(fdecl.sinfo), body));
     }
 
     private generateMethodDecl(tdecl: AbstractNominalTypeDecl, rcvr: TypeSignature, mdecl: MethodDecl, irasm: IRAssembly) {
@@ -3615,7 +3695,7 @@ class ASMToIRConverter {
 */
 
     /** Handle the standard set of type functions, methods, and constants **/
-    private processTypeInfoStandard(tdecl: AbstractNominalTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly) {
+    private processNominalTypeInfoStandard(tdecl: AbstractNominalTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly) {
         for(let i = 0; i < tdecl.consts.length; ++i) {
             assert(false, "Not Implemented -- processTypeInfoStandard consts");
         }
@@ -3649,20 +3729,24 @@ class ASMToIRConverter {
         }
     }
 
-    private generateEnumTypeDecl(tdecl: EnumTypeDecl, tinst: TypeInstantiationInfo): IREnumTypeDecl {
+    private generateEnumTypeDecl(tdecl: EnumTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IREnumTypeDecl {
         this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
 
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
+
+        this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
 
         return new IREnumTypeDecl(tinst.tkey, docstring, tdecl.file, this.convertSourceInfo(tdecl.sinfo), [...tdecl.members]);
     }
 
-    private generateTypedeclTypeDecl(tdecl: TypedeclTypeDecl, tinst: TypeInstantiationInfo): IRTypedeclTypeDecl {
+    private generateTypedeclTypeDecl(tdecl: TypedeclTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRTypedeclTypeDecl {
         this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
 
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
+
+        this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
 
         const invariants = tdecl.invariants.map<IRInvariantDecl>((inv) => this.generateInvariantClauseDecl(tinst.tsig as NominalTypeSignature, inv));
         const validates = tdecl.validates.map<IRValidateDecl>((val) => this.generateValidateClauseDecl(tinst.tsig as NominalTypeSignature, val));
@@ -3679,11 +3763,13 @@ class ASMToIRConverter {
         return new IRTypedeclTypeDecl(tinst.tkey, invariants, validates, saturatedProvides, allInvariants, allValidates, docstring, this.processMetaDataTags(tdecl.attributes), tdecl.file, this.convertSourceInfo(tdecl.sinfo), this.processTypeSignature(tdecl.valuetype as TypeSignature), (tdecl.valuetype as NominalTypeSignature).decl.isKeyTypeRestricted(), (tdecl.valuetype as NominalTypeSignature).decl.isNumericRestricted());
     }
 
-    private generateTypedeclCStringDecl(tdecl: TypedeclTypeDecl, tinst: TypeInstantiationInfo): IRTypedeclCStringDecl {
+    private generateTypedeclCStringDecl(tdecl: TypedeclTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRTypedeclCStringDecl {
         this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
 
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
+
+        this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
 
         const invariants = tdecl.invariants.map<IRInvariantDecl>((inv) => this.generateInvariantClauseDecl(tinst.tsig as NominalTypeSignature, inv));
         const validates = tdecl.validates.map<IRValidateDecl>((val) => this.generateValidateClauseDecl(tinst.tsig as NominalTypeSignature, val));
@@ -3706,11 +3792,13 @@ class ASMToIRConverter {
         return new IRTypedeclCStringDecl(tinst.tkey, invariants, validates, saturatedProvides, allInvariants, allValidates, docstring, this.processMetaDataTags(tdecl.attributes), tdecl.file, this.convertSourceInfo(tdecl.sinfo), rngchk, rechk);
     }
 
-    private generateTypedeclStringDecl(tdecl: TypedeclTypeDecl, tinst: TypeInstantiationInfo): IRTypedeclStringDecl {
+    private generateTypedeclStringDecl(tdecl: TypedeclTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRTypedeclStringDecl {
         this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
 
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
+
+        this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
 
         const invariants = tdecl.invariants.map<IRInvariantDecl>((inv) => this.generateInvariantClauseDecl(tinst.tsig as NominalTypeSignature, inv));
         const validates = tdecl.validates.map<IRValidateDecl>((val) => this.generateValidateClauseDecl(tinst.tsig as NominalTypeSignature, val));
@@ -3733,44 +3821,46 @@ class ASMToIRConverter {
         return new IRTypedeclStringDecl(tinst.tkey, invariants, validates, saturatedProvides, allInvariants, allValidates, docstring, this.processMetaDataTags(tdecl.attributes), tdecl.file, this.convertSourceInfo(tdecl.sinfo), rngchk, rechk);
     }
 
-    private generatePrimitiveEntityTypeDecl(tdecl: PrimitiveEntityTypeDecl, tinst: TypeInstantiationInfo): IRPrimitiveEntityTypeDecl {
+    private generatePrimitiveEntityTypeDecl(tdecl: PrimitiveEntityTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRPrimitiveEntityTypeDecl {
         this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
 
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
 
+        this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
+
         return new IRPrimitiveEntityTypeDecl(tdecl.name, docstring, tdecl.file, this.convertSourceInfo(tdecl.sinfo));
     }
 
-    private generateOkTypeDecl(tdecl: OkTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IROkTypeDecl {
+    private generateOkTypeDecl(tdecl: OkTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IROkTypeDecl {
         assert(false, "Not Implemented -- generateOkTypeDecl");
     }
 
-    private generateFailTypeDecl(tdecl: FailTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRFailTypeDecl {
+    private generateFailTypeDecl(tdecl: FailTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRFailTypeDecl {
         assert(false, "Not Implemented -- generateFailTypeDecl");
     }
 
-    private generateAPIErrorTypeDecl(tdecl: APIErrorTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRAPIErrorTypeDecl {
+    private generateAPIErrorTypeDecl(tdecl: APIErrorTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRAPIErrorTypeDecl {
         assert(false, "Not Implemented -- generateAPIErrorTypeDecl");
     }
 
-    private generateAPIRejectedTypeDecl(tdecl: APIRejectedTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRAPIRejectedTypeDecl {
+    private generateAPIRejectedTypeDecl(tdecl: APIRejectedTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRAPIRejectedTypeDecl {
         assert(false, "Not Implemented -- generateAPIRejectedTypeDecl");
     }
 
-    private generateAPIDeniedTypeDecl(tdecl: APIDeniedTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRAPIDeniedTypeDecl {
+    private generateAPIDeniedTypeDecl(tdecl: APIDeniedTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRAPIDeniedTypeDecl {
         assert(false, "Not Implemented -- generateAPIDeniedTypeDecl");
     }
 
-    private generateAPIFlaggedTypeDecl(tdecl: APIFlaggedTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRAPIFlaggedTypeDecl {
+    private generateAPIFlaggedTypeDecl(tdecl: APIFlaggedTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRAPIFlaggedTypeDecl {
         assert(false, "Not Implemented -- generateAPIFlaggedTypeDecl");
     }
 
-    private generateAPISuccessTypeDecl(tdecl: APISuccessTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRAPISuccessTypeDecl {
+    private generateAPISuccessTypeDecl(tdecl: APISuccessTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRAPISuccessTypeDecl {
         assert(false, "Not Implemented -- generateAPISuccessTypeDecl");
     }
 
-    private generateSomeTypeDecl(tdecl: SomeTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRSomeTypeDecl {
+    private generateSomeTypeDecl(tdecl: SomeTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRSomeTypeDecl {
         this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
         
         const encloption = tdecl.saturatedProvides.map((sp) => this.processTypeSignature(sp));
@@ -3778,51 +3868,57 @@ class ASMToIRConverter {
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
 
+        this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
+
         const oftype = this.processTypeSignature((this.tproc(tinst.tsig) as NominalTypeSignature).alltermargs[0] as TypeSignature);
 
         return new IRSomeTypeDecl(tinst.tkey, encloption, docstring, tdecl.file, this.convertSourceInfo(tdecl.sinfo), oftype);
     }
 
-    private generateMapEntryTypeDecl(tdecl: MapEntryTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRMapEntryTypeDecl {
+    private generateMapEntryTypeDecl(tdecl: MapEntryTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRMapEntryTypeDecl {
         assert(false, "Not Implemented -- generateMapEntryTypeDecl");
     }
 
-    private generateListTypeDecl(tdecl: ListTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRListTypeDecl {
+    private generateListTypeDecl(tdecl: ListTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRListTypeDecl {
         this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
 
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
+
+        this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
 
         const oftype = this.processTypeSignature((this.tproc(tinst.tsig) as NominalTypeSignature).alltermargs[0] as TypeSignature);
 
         return new IRListTypeDecl(tinst.tkey, docstring, tdecl.file, this.convertSourceInfo(tdecl.sinfo), oftype);
     }
 
-    private generateStackTypeDecl(tdecl: StackTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRStackTypeDecl {
+    private generateStackTypeDecl(tdecl: StackTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRStackTypeDecl {
         assert(false, "Not Implemented -- generateStackTypeDecl");
     }
 
-    private generateQueueTypeDecl(tdecl: QueueTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRQueueTypeDecl {
+    private generateQueueTypeDecl(tdecl: QueueTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRQueueTypeDecl {
         assert(false, "Not Implemented -- generateQueueTypeDecl");
     }
 
-    private generateSetTypeDecl(tdecl: SetTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRSetTypeDecl {
+    private generateSetTypeDecl(tdecl: SetTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRSetTypeDecl {
         assert(false, "Not Implemented -- generateSetTypeDecl");
     }
 
-    private generateMapTypeDecl(tdecl: MapTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRMapTypeDecl {
+    private generateMapTypeDecl(tdecl: MapTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRMapTypeDecl {
         assert(false, "Not Implemented -- generateMapTypeDecl");
     }
 
-    private generateEventListTypeDecl(tdecl: EventListTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IREventListTypeDecl {
+    private generateEventListTypeDecl(tdecl: EventListTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IREventListTypeDecl {
         assert(false, "Not Implemented -- generateEventListTypeDecl");
     }
 
-    private generateEntityTypeDecl(tdecl: EntityTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IREntityTypeDecl {
+    private generateEntityTypeDecl(tdecl: EntityTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IREntityTypeDecl {
         this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
 
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
+
+        this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
 
         let etag: "std" | "status" | "event" = "std";
         if(tdecl.etag === AdditionalTypeDeclTag.Status) {
@@ -3844,8 +3940,6 @@ class ASMToIRConverter {
         const allValidates = tdecl.allValidates.map((vv) => {
             return { containingtype: this.processTypeSignature(vv.containingtype), ii: vv.ii };
         });
-
-        this.processTypeInfoStandard(tdecl, tinst, irasm);
 
         return new IREntityTypeDecl(tinst.tkey, 
             tdecl.invariants.map<IRInvariantDecl>((inv) => this.generateInvariantClauseDecl(tinst.tsig as NominalTypeSignature, inv)),
@@ -3872,11 +3966,13 @@ class ASMToIRConverter {
         return new IRLambdaParameterPackDecl(linst.newikey, linst.newikey, stdvalues, lambdavalues);
     }
 
-    private generateOptionTypeDecl(tdecl: OptionTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IROptionTypeDecl {
+    private generateOptionTypeDecl(tdecl: OptionTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IROptionTypeDecl {
         this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
 
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
+
+        this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
 
         const oftype = this.processTypeSignature((this.tproc(tinst.tsig) as NominalTypeSignature).alltermargs[0] as TypeSignature);
         
@@ -3886,19 +3982,21 @@ class ASMToIRConverter {
         return new IROptionTypeDecl(tinst.tkey, docstring, tdecl.file, this.convertSourceInfo(tdecl.sinfo), oftype, sometype);
     }
 
-    private generateResultTypeDecl(tdecl: ResultTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRResultTypeDecl {
+    private generateResultTypeDecl(tdecl: ResultTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRResultTypeDecl {
         assert(false, "Not Implemented -- generateResultTypeDecl");
     }
 
-    private generateAPIResultTypeDecl(tdecl: APIResultTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRAPIResultTypeDecl {
+    private generateAPIResultTypeDecl(tdecl: APIResultTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRAPIResultTypeDecl {
         assert(false, "Not Implemented -- generateAPIResultTypeDecl");
     }
 
-    private generateConceptTypeDecl(tdecl: ConceptTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRConceptTypeDecl {
+    private generateConceptTypeDecl(tdecl: ConceptTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRConceptTypeDecl {
         this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
 
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
+
+        this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
 
         const bfinfo = tdecl.saturatedBFieldInfo.map((bf) => {
             const bfirt = this.processTypeSignature(bf.containingtype);
@@ -3919,11 +4017,13 @@ class ASMToIRConverter {
         );
     }
 
-    private generateDatatypeMemberEntityTypeDecl(tdecl: DatatypeMemberEntityTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRDatatypeMemberEntityTypeDecl {
+    private generateDatatypeMemberEntityTypeDecl(tdecl: DatatypeMemberEntityTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRDatatypeMemberEntityTypeDecl {
         this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
 
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
+
+        this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
 
         let etag: "std" | "status" | "event" = "std";
         if(tdecl.etag === AdditionalTypeDeclTag.Status) {
@@ -3962,11 +4062,13 @@ class ASMToIRConverter {
         );
     }
 
-    private generateDatatypeTypeDecl(tdecl: DatatypeTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRDatatypeTypeDecl {
+    private generateDatatypeTypeDecl(tdecl: DatatypeTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRDatatypeTypeDecl {
         this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
 
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
+
+        this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
 
         const bfinfo = tdecl.saturatedBFieldInfo.map((bf) => {
             const bfirt = this.processTypeSignature(bf.containingtype);
@@ -3993,15 +4095,15 @@ class ASMToIRConverter {
         );
     }
 
-    private generateAPIDecl(adecl: APIDecl, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRAPIDecl {
+    private generateAPIDecl(adecl: APIDecl, irasm: IRAssembly): IRAPIDecl {
         assert(false, "Not implemented -- checkAPIDecl");
     }
 
-    private generateAgentDecl(adecl: AgentDecl, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRAgentDecl {
+    private generateAgentDecl(adecl: AgentDecl, irasm: IRAssembly): IRAgentDecl {
         assert(false, "Not implemented -- checkAgentDecl");
     }
 
-    private generateTaskDecl(tdecl: TaskDecl, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]): IRTaskDecl {
+    private generateTaskDecl(tdecl: TaskDecl, irasm: IRAssembly): IRTaskDecl {
         assert(false, "Not implemented -- checkTaskDecl");
     }
 
@@ -4023,140 +4125,140 @@ class ASMToIRConverter {
     private generateNamespaceTypeDecl(tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]) {
         const tt = (tinst.tsig as NominalTypeSignature).decl;
         if(tt instanceof EnumTypeDecl) {
-            const edecl = this.generateEnumTypeDecl(tt, tinst);
+            const edecl = this.generateEnumTypeDecl(tt, tinst, irasm);
             irasm.enums.push(edecl);
             irasm.alltypes.set(edecl.tkey, edecl);
         }
         else if(tt instanceof TypedeclTypeDecl) {
             const oftype = this.processTypeSignature((tt.valuetype as TypeSignature));
             if(oftype.tkeystr === "CString") {
-                const csdecl = this.generateTypedeclCStringDecl(tt, tinst)
+                const csdecl = this.generateTypedeclCStringDecl(tt, tinst, irasm);
                 irasm.cstringoftypedecls.push(csdecl);
                 irasm.alltypes.set(csdecl.tkey, csdecl);
             }
             else if(oftype.tkeystr === "String") {
-                const sdecl = this.generateTypedeclStringDecl(tt, tinst);
+                const sdecl = this.generateTypedeclStringDecl(tt, tinst, irasm);
                 irasm.stringoftypedecls.push(sdecl);
                 irasm.alltypes.set(sdecl.tkey, sdecl);
             }
             else {
-                const ttdecl = this.generateTypedeclTypeDecl(tt, tinst);
+                const ttdecl = this.generateTypedeclTypeDecl(tt, tinst, irasm);
                 irasm.typedecls.push(ttdecl);
                 irasm.alltypes.set(ttdecl.tkey, ttdecl);
             }
         }
         else if(tt instanceof PrimitiveEntityTypeDecl) {
-            const pdecl = this.generatePrimitiveEntityTypeDecl(tt, tinst);
+            const pdecl = this.generatePrimitiveEntityTypeDecl(tt, tinst, irasm);
             irasm.primitives.push(pdecl);
             irasm.alltypes.set(pdecl.tkey, pdecl);
         }
         else if(tt instanceof OkTypeDecl) {
-            const okdecl = this.generateOkTypeDecl(tt, tinst, irasm, iinfo);
+            const okdecl = this.generateOkTypeDecl(tt, tinst, irasm);
             irasm.constructables.push(okdecl);
             irasm.alltypes.set(okdecl.tkey, okdecl);
         }
         else if(tt instanceof FailTypeDecl) {
-            const faildecl = this.generateFailTypeDecl(tt, tinst, irasm, iinfo);
+            const faildecl = this.generateFailTypeDecl(tt, tinst, irasm);
             irasm.constructables.push(faildecl);
             irasm.alltypes.set(faildecl.tkey, faildecl);
         }
         else if(tt instanceof APIErrorTypeDecl) {
-            const errdecl = this.generateAPIErrorTypeDecl(tt, tinst, irasm, iinfo);
+            const errdecl = this.generateAPIErrorTypeDecl(tt, tinst, irasm);
             irasm.constructables.push(errdecl);
             irasm.alltypes.set(errdecl.tkey, errdecl);
         }
         else if(tt instanceof APIRejectedTypeDecl) {
-            const rejecteddecl = this.generateAPIRejectedTypeDecl(tt, tinst, irasm, iinfo);
+            const rejecteddecl = this.generateAPIRejectedTypeDecl(tt, tinst, irasm);
             irasm.constructables.push(rejecteddecl);
             irasm.alltypes.set(rejecteddecl.tkey, rejecteddecl);
         }
         else if(tt instanceof APIDeniedTypeDecl) {
-            const denieddecl = this.generateAPIDeniedTypeDecl(tt, tinst, irasm, iinfo);
+            const denieddecl = this.generateAPIDeniedTypeDecl(tt, tinst, irasm);
             irasm.constructables.push(denieddecl);
             irasm.alltypes.set(denieddecl.tkey, denieddecl);
         }
         else if(tt instanceof APIFlaggedTypeDecl) {
-            const flaggeddecl = this.generateAPIFlaggedTypeDecl(tt, tinst, irasm, iinfo);
+            const flaggeddecl = this.generateAPIFlaggedTypeDecl(tt, tinst, irasm);
             irasm.constructables.push(flaggeddecl);
             irasm.alltypes.set(flaggeddecl.tkey, flaggeddecl);
         }
         else if(tt instanceof APISuccessTypeDecl) {
-            const successdecl = this.generateAPISuccessTypeDecl(tt, tinst, irasm, iinfo);
+            const successdecl = this.generateAPISuccessTypeDecl(tt, tinst, irasm);
             irasm.constructables.push(successdecl);
             irasm.alltypes.set(successdecl.tkey, successdecl);
         }
         else if(tt instanceof SomeTypeDecl) {
-            const somedecl = this.generateSomeTypeDecl(tt, tinst, irasm, iinfo);
+            const somedecl = this.generateSomeTypeDecl(tt, tinst, irasm);
             irasm.constructables.push(somedecl);
             irasm.alltypes.set(somedecl.tkey, somedecl);
         }
         else if(tt instanceof MapEntryTypeDecl) {
-            const mapdecl = this.generateMapEntryTypeDecl(tt, tinst, irasm, iinfo);
+            const mapdecl = this.generateMapEntryTypeDecl(tt, tinst, irasm);
             irasm.constructables.push(mapdecl);
             irasm.alltypes.set(mapdecl.tkey, mapdecl);
         }
         else if(tt instanceof ListTypeDecl) {
-            const listdecl = this.generateListTypeDecl(tt, tinst, irasm, iinfo);
+            const listdecl = this.generateListTypeDecl(tt, tinst, irasm);
             irasm.collections.push(listdecl);
             irasm.alltypes.set(listdecl.tkey, listdecl);
         }
         else if(tt instanceof StackTypeDecl) {
-            const stackdecl = this.generateStackTypeDecl(tt, tinst, irasm, iinfo);
+            const stackdecl = this.generateStackTypeDecl(tt, tinst, irasm);
             irasm.collections.push(stackdecl);
             irasm.alltypes.set(stackdecl.tkey, stackdecl);
         }
         else if(tt instanceof QueueTypeDecl) {
-            const queuedecl = this.generateQueueTypeDecl(tt, tinst, irasm, iinfo);
+            const queuedecl = this.generateQueueTypeDecl(tt, tinst, irasm);
             irasm.collections.push(queuedecl);
             irasm.alltypes.set(queuedecl.tkey, queuedecl);
         }
         else if(tt instanceof SetTypeDecl) {
-            const setdecl = this.generateSetTypeDecl(tt, tinst, irasm, iinfo);
+            const setdecl = this.generateSetTypeDecl(tt, tinst, irasm);
             irasm.collections.push(setdecl);
             irasm.alltypes.set(setdecl.tkey, setdecl);
         }
         else if(tt instanceof MapTypeDecl) {
-            const mapdecl = this.generateMapTypeDecl(tt, tinst, irasm, iinfo);
+            const mapdecl = this.generateMapTypeDecl(tt, tinst, irasm);
             irasm.collections.push(mapdecl);
             irasm.alltypes.set(mapdecl.tkey, mapdecl);
         }
         else if(tt instanceof EventListTypeDecl) {
-            const eldecl = this.generateEventListTypeDecl(tt, tinst, irasm, iinfo);
+            const eldecl = this.generateEventListTypeDecl(tt, tinst, irasm);
             irasm.eventlists.push(eldecl);
             irasm.alltypes.set(eldecl.tkey, eldecl);
         }
         else if(tt instanceof EntityTypeDecl) {
-            const eedecl = this.generateEntityTypeDecl(tt, tinst, irasm, iinfo);
+            const eedecl = this.generateEntityTypeDecl(tt, tinst, irasm);
             irasm.entities.push(eedecl);
             irasm.alltypes.set(eedecl.tkey, eedecl);
         }
         else if(tt instanceof OptionTypeDecl) {
-            const optdecl = this.generateOptionTypeDecl(tt, tinst, irasm, iinfo);
+            const optdecl = this.generateOptionTypeDecl(tt, tinst, irasm);
             irasm.pconcepts.push(optdecl);
             irasm.alltypes.set(optdecl.tkey, optdecl);
         }
         else if(tt instanceof ResultTypeDecl) {
-            const resdecl = this.generateResultTypeDecl(tt, tinst, irasm, iinfo);
+            const resdecl = this.generateResultTypeDecl(tt, tinst, irasm);
             irasm.pconcepts.push(resdecl);
             irasm.alltypes.set(resdecl.tkey, resdecl);
         }
         else if(tt instanceof APIResultTypeDecl) {
-            const apidecl = this.generateAPIResultTypeDecl(tt, tinst, irasm, iinfo);
+            const apidecl = this.generateAPIResultTypeDecl(tt, tinst, irasm);
             irasm.pconcepts.push(apidecl);
             irasm.alltypes.set(apidecl.tkey, apidecl);
         }
         else if(tt instanceof ConceptTypeDecl) {
-            const cptdecl = this.generateConceptTypeDecl(tt, tinst, irasm, iinfo);
+            const cptdecl = this.generateConceptTypeDecl(tt, tinst, irasm);
             irasm.concepts.push(cptdecl);
             irasm.alltypes.set(cptdecl.tkey, cptdecl);
         }
         else if(tt instanceof DatatypeMemberEntityTypeDecl) {
-            const dmdecl = this.generateDatatypeMemberEntityTypeDecl(tt, tinst, irasm, iinfo);
+            const dmdecl = this.generateDatatypeMemberEntityTypeDecl(tt, tinst, irasm);
             irasm.datamembers.push(dmdecl);
             irasm.alltypes.set(dmdecl.tkey, dmdecl);
         }
         else if(tt instanceof DatatypeTypeDecl) {
-            const dtdecl = this.generateDatatypeTypeDecl(tt, tinst, irasm, iinfo);
+            const dtdecl = this.generateDatatypeTypeDecl(tt, tinst, irasm);
             irasm.datatypes.push(dtdecl);
             irasm.alltypes.set(dtdecl.tkey, dtdecl);
         }
@@ -4248,17 +4350,17 @@ class ASMToIRConverter {
 
         //apis
         for(let i = 0; i < decl.apis.length; ++i) {
-            irasm.apis.push(this.generateAPIDecl(decl.apis[i], irasm, aainsts));
+            irasm.apis.push(this.generateAPIDecl(decl.apis[i], irasm));
         }
 
         //agents
         for(let i = 0; i < decl.agents.length; ++i) {
-            irasm.agents.push(this.generateAgentDecl(decl.agents[i], irasm, aainsts));
+            irasm.agents.push(this.generateAgentDecl(decl.agents[i], irasm));
         }
 
         //tasks
         for(let i = 0; i < decl.tasks.length; ++i) {
-            irasm.tasks.push(this.generateTaskDecl(decl.tasks[i], irasm, aainsts));
+            irasm.tasks.push(this.generateTaskDecl(decl.tasks[i], irasm));
         }
 
         this.currentNamespaceInstantiation = undefined;

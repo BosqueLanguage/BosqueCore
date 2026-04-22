@@ -2742,6 +2742,9 @@ class TypeChecker {
             return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
         }
 
+        exp.resolvedDeclType = mresolve.typeinfo.tsig;
+        exp.resolvedMethodDecl = mresolve.member;
+
         if(mresolve.member.isThisRef) {
             this.reportError(exp.sinfo, `Method ${exp.name} is a "ref" method and cannot be called without a ref rcvr`);
             return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
@@ -2761,15 +2764,16 @@ class TypeChecker {
             const rrt = this.relations.resolveTypeMethodImplementation(resolvefrom, exp.name, hastemplate, haslambda, exp.args.hasSpecialRef(), this.constraints);
             this.checkError(exp.sinfo, rrt === undefined, `Method ${exp.name} is not specifically resolvable from type ${resolvefrom.emit()}`);
 
-            if(rrt !== undefined) { 
-                exp.resolvedTrgt = rrt.typeinfo.tsig;
+            if(rrt !== undefined) {
+                exp.resolvedImplType = rrt.typeinfo.tsig;
+                exp.resolvedMethodImpl = rrt.member;
             }
         }
         else {
             const smresolve = this.postfixInvokeStaticResolve(env, mresolve, exp.name, hastemplate, haslambda, exp.args.hasSpecialRef(), resolvefrom);
             if(smresolve !== undefined) {
-                exp.resolvedTrgt = smresolve.typeinfo.tsig;
-                exp.resolvedMethod = smresolve.member;
+                exp.resolvedImplType = smresolve.typeinfo.tsig;
+                exp.resolvedMethodImpl = smresolve.member;
             }
         }
 

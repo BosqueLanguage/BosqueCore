@@ -1377,8 +1377,11 @@ class PostfixInvoke extends PostfixOperation {
     readonly terms: TypeSignature[];
     readonly args: ArgumentList;
 
-    resolvedTrgt: TypeSignature | undefined = undefined;
-    resolvedMethod: MethodDecl | undefined = undefined;
+    resolvedDeclType: TypeSignature | undefined = undefined;
+    resolvedMethodDecl: MethodDecl | undefined = undefined;
+
+    resolvedImplType: TypeSignature | undefined = undefined;
+    resolvedMethodImpl: MethodDecl | undefined = undefined; //can stay undefined if virtual
 
     shuffleinfo: [number, TypeSignature][] = [];
     resttype: TypeSignature | undefined = undefined;
