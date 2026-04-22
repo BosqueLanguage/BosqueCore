@@ -2760,11 +2760,13 @@ class TypeChecker {
         const fullmapper = TemplateNameMapper.merge(mresolve.typeinfo.mapping, imapper);
         const arginfo = this.checkArgumentList(exp.sinfo, env, refallowed, exp.args.args, mresolve.member.params, fullmapper);
 
+        let resolvedrtype: TypeSignature = mresolve.member.resultType;
         if(exp.specificResolve !== undefined) {
             const rrt = this.relations.resolveTypeMethodImplementation(resolvefrom, exp.name, hastemplate, haslambda, exp.args.hasSpecialRef(), this.constraints);
             this.checkError(exp.sinfo, rrt === undefined, `Method ${exp.name} is not specifically resolvable from type ${resolvefrom.emit()}`);
 
             if(rrt !== undefined) {
+                resolvedrtype = rrt.member.resultType;
                 exp.resolvedImplType = rrt.typeinfo.tsig;
                 exp.resolvedMethodImpl = rrt.member;
             }
@@ -2772,6 +2774,7 @@ class TypeChecker {
         else {
             const smresolve = this.postfixInvokeStaticResolve(env, mresolve, exp.name, hastemplate, haslambda, exp.args.hasSpecialRef(), resolvefrom);
             if(smresolve !== undefined) {
+                resolvedrtype = smresolve.member.resultType;
                 exp.resolvedImplType = smresolve.typeinfo.tsig;
                 exp.resolvedMethodImpl = smresolve.member;
             }
@@ -2786,7 +2789,7 @@ class TypeChecker {
         exp.byref = arginfo.byref;
 
         const rrt = TypeResultWRefVarInfoResult.makeGeneralResult(
-            exp.setType(mresolve.member.resultType.remapTemplateBindings(fullmapper)), false, false,
+            exp.setType(resolvedrtype.remapTemplateBindings(fullmapper)), false, false,
             { ttrue: [...arginfo.setcondout], tfalse: [] },
             [...arginfo.setuncond],
             [...arginfo.inout, ...arginfo.byref],

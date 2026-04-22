@@ -1319,9 +1319,18 @@ class ASMToIRConverter {
         const haspostconds = mdecl.postconditions.length > 0;
         const iname = (this.currentMonoInvIdMap as Map<number, string>).get(exp.monoinvid as number) as string;
 
+        let rexp: IRSimpleExpression;
+        if(exp.resolvedImplType !== undefined) {
+            const convexp = this.makeCoercionExplicitAsNeeded(rootexp, this.tproc(roottype), this.tproc(exp.resolvedImplType));
+            rexp = (haspreconds || haspostconds) ? this.makeExpressionImmediate(convexp, this.tproc(exp.resolvedImplType)) : convexp;
+        }
+        else {
+            const convexp = this.makeCoercionExplicitAsNeeded(rootexp, this.tproc(roottype), this.tproc(exp.resolvedDeclType as TypeSignature));
+            rexp = (haspreconds || haspostconds) ? this.makeExpressionImmediate(convexp, this.tproc(exp.resolvedDeclType as TypeSignature)) : convexp;
+        }
+
         const imapper = this.generateLocalTemplateMapping(mdecl.terms.map((t) => t.name), exp.terms);
         const fullmapper = TemplateNameMapper.tryMerge(this.currentBinds, imapper);
-        const rexp = (haspreconds || haspostconds) ? this.makeExpressionImmediate(rootexp, roottype) : rootexp;
         const aargs = [rexp, ...this.flattenInvokeArgs(haspreconds, haspostconds, exp.shuffleinfo, mdecl.params, exp.args, exp.resttype, fullmapper)];
 
         //do preconditions as needed
@@ -3667,7 +3676,19 @@ class ASMToIRConverter {
     }
 
     private generateMethodDecl(tdecl: AbstractNominalTypeDecl, rcvr: TypeSignature, mdecl: MethodDecl, irasm: IRAssembly) {
-        assert(false, "Not Implemented -- generateMethodDecl");
+        const ikey = (this.currentInvokeInstantation as InvokeInstantiationInfo).newikey;
+        const recursive = this.processRecursiveInfo(mdecl.recursive);
+
+        xxxx;
+        const params = this.processInvokeParams(mdecl.params);
+        const preconds = mdecl.preconditions.map<IRPreConditionDecl>((pc) => this.generateRequiresClauseDecl(pc, ikey));
+        const postconds = mdecl.postconditions.map<IRPostConditionDecl>((ec) => this.generateEnsuresClauseDecl(ec, ikey));
+
+        const doc = mdecl.attributes.find((a) => a.name === "doc");
+        const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
+
+        const body = this.processBody(mdecl.body);
+        irasm.invokes.push(new IRInvokeDecl(ikey, recursive, params, this.processTypeSignature(mdecl.resultType), preconds, postconds, docstring, mdecl.file, this.convertSourceInfo(mdecl.sinfo), body));
     }
 /*
     private generateTaskMethodDecl(tdecl: AbstractNominalTypeDecl, rcvr: TypeSignature, mdecl: TaskMethodDecl, invks: IRInvokeDecl[]) {

@@ -49,14 +49,16 @@ class PendingTypeMethod {
     readonly lambdas: { pname: string, psigkey: string }[];
 
     readonly mkey: string;
+    readonly prepostikey: string;
 
-    constructor(type: TypeSignature, mthd: MethodDecl, instantiation: TypeSignature[], lambdas: { pname: string, psigkey: string }[], mkey: string) {
+    constructor(type: TypeSignature, mthd: MethodDecl, instantiation: TypeSignature[], lambdas: { pname: string, psigkey: string }[], mkey: string, prepostikey: string) {
         this.type = type;
         this.method = mthd;
         this.instantiation = instantiation;
         this.lambdas = lambdas;
 
         this.mkey = mkey;
+        this.prepostikey = prepostikey;
     }
 }
 
@@ -224,7 +226,7 @@ class Monomorphizer {
     }
 
     //Given a type method -- instantiate it
-    private instantiateSpecificResolvedMemberMethod(enclosingType: TypeSignature, mdecl: MethodDecl, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]) {
+    private instantiateSpecificResolvedMemberMethod(enclosingType: TypeSignature, mdecl: MethodDecl, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[], prepostikey: string) {
         const retype = this.currentMapping !== undefined ? enclosingType.remapTemplateBindings(this.currentMapping) : enclosingType;
         const tterms = this.currentMapping !== undefined ? terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : terms;
         const mkey = computeInvokeKeyForTypeMethod(retype, mdecl, tterms, lambdas);
@@ -233,7 +235,7 @@ class Monomorphizer {
             return;
         }
 
-        this.pendingTypeMethods.push(new PendingTypeMethod(retype, mdecl, tterms, lambdas, mkey));
+        this.pendingTypeMethods.push(new PendingTypeMethod(retype, mdecl, tterms, lambdas, mkey, prepostikey));
     }
 
     private instantiateStringFormatsList(formats: FormatStringComponent[]) {
@@ -708,6 +710,14 @@ class Monomorphizer {
             }
 
             this.instantiateCollectionConstructor(rparamtype.decl as AbstractCollectionTypeDecl, rparamtype, rargs);
+        }
+
+        //if the decl is not the same as the impl (and the decls has pre/post conditions), then we need to instantiate the decl as well to ensure the pre/post conditions are compiled
+        if(exp.resolvedImplType !== undefined && exp.resolvedDeclType !== undefined && exp.resolvedDeclType.tkeystr !== exp.resolvedImplType.tkeystr) {
+            const rmd = exp.resolvedMethodDecl as MethodDecl;
+            if(rmd.preconditions.length !== 0 || rmd.postconditions.length !== 0) {
+                assert(false, "Not Implemented -- instantiatePostfixInvoke for decl/impl mismatch with pre/post conditions -- abstract or virtual");
+            }
         }
 
         if(exp.resolvedMethodImpl !== undefined) {
@@ -1835,13 +1845,13 @@ class Monomorphizer {
 
         const rkey = computeResolveKeyForInvoke(mdecl.method.name, mdecl.method.terms.length, mdecl.method.params.some((p) => p.pkind !== undefined), mdecl.method.params.some((p) => p.type instanceof LambdaTypeSignature));
 
+        mdecl.method.resolvename = rkey;
         if(!typeinst.methodbinds.has(rkey)) {
             typeinst.methodbinds.set(rkey, []);
         }
 
         const ikey = computeInvokeKeyForTypeMethod(mdecl.type, mdecl.method, mdecl.instantiation, mdecl.lambdas);
         (typeinst.methodbinds.get(rkey) as InvokeInstantiationInfo[]).push(new InvokeInstantiationInfo(ikey, this.currentMapping as TemplateNameMapper, mdecl.lambdas, this.lambdamap, this.callinstmap));
-
 
         this.currentMapping = undefined;
         this.lambdamap = new Map<number, string>();
