@@ -19,9 +19,10 @@ describe ("CPPExec -- entity is", () => {
         runTestSet("concept Bar {} concept Baz provides Bar {} entity Foo provides Baz { field f: Int; } entity Fuzz provides Bar { field f: Int; } public function main(x: Bar): Bool { return x.?<Baz>; }", [['Main::Foo{5i}', 'true'], ['Main::Fuzz{5i}', 'false']], []);
     });
 
-    it.skip("should exec postfix ? types ADT", function () {
-    });
+    it("should exec postfix ? types ADT", function () {
+        runTestSet('datatype Foo of F1 { } F2 { } ; public function main(x: Foo): Bool { return x.?<F1>; }', [['Main::F1{ }', 'true'], ['Main::F2{ }', 'false']], []);
 
-    it.skip("should exec postfix ? types ADT fail", function () {
+        runTestSet('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; public function main(x: Bar): Bool { return x.?<F1>; }', [['Main::F1{ }', 'true'], ['Main::F2{ }', 'false']], []);
+        runTestSet('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; public function main(x: Bar): Bool { return x.?<Foo>; }', [['Main::F1{ }', 'true'], ['Main::F2{ }', 'false']], []);
     });
 });

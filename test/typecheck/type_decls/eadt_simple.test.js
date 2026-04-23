@@ -36,7 +36,7 @@ describe ("Checker -- eADT decl", () => {
     });
 });
 
-describe ("Checker -- entity decl inherits", () => {
+describe ("Checker -- eADT decl inherits", () => {
     it("should check simple inherits eADT", function () {
         checkTestFunctionInFile('datatype Foo using { field f: Int; } of F1 { } F2 { }; function main(): Int { return F1{3i}.f; }'); 
         checkTestFunctionInFile('datatype Foo using { field f: Int; invariant $f >= 0i; } of F1 { } F2 { field g: Bool; }; function main(): Bool { return F2{3i, false}.g; }'); 

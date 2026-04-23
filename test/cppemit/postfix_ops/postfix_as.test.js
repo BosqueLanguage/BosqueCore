@@ -36,9 +36,12 @@ describe ("CPPEmit -- entity as", () => {
         checkTestEmitMainFunction("concept Bar {} entity Foo provides Bar { field f: Int; } public function main(x: Bar): Bar { return x.@!<Foo>; }", 'MainᕒBar Mainᕒmain(MainᕒBar x) { ᐸRuntimeᐳ::bsq_typeassert((bool)(x.uval.isNotTypeOf(&ᐸRuntimeᐳ::g_typeinfo_MainᕒFoo)), "test.bsq", 2, "Type assertion failed", "Type assertion failed"); return x; }');
     });
 
-    it.skip("should check postfix @ types ADT", function () {
-    });
+    it("should check postfix @ types ADT", function () {
+        checkTestEmitMainFunction('datatype Foo of F1 { } F2 { } ; public function main(x: Foo): F1 { return x.@<F1>; }', "aaa"); 
+        checkTestEmitMainFunction('datatype Foo of F1 { } F2 { } ; public function main(x: F1): Foo { return x.@<Foo>; }', "bbb"); 
 
-    it.skip("should check postfix @ types ADT fail", function () {
+        checkTestEmitMainFunction('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; public function main(x: Bar): F1 { return x.@<F1>; }', "ccc");
+        checkTestEmitMainFunction('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; public function main(x: Bar): Foo { return x.@<Foo>; }', "ddd"); 
+        checkTestEmitMainFunction('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; public function main(x: F1): Bar { return x.@<Bar>; }', "eee"); 
     });
 });
