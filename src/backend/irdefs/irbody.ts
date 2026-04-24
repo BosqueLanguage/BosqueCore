@@ -304,6 +304,7 @@ enum IRStatementTag {
 
     IRTypeDeclSizeRangeCheckCStringStatement = "IRTypeDeclSizeRangeCheckCStringStatement",
     IRTypeDeclSizeRangeCheckUnicodeStringStatement = "IRTypeDeclSizeRangeCheckUnicodeStringStatement",
+    IRTypeDeclNumericRangeCheckStatement = "IRTypeDeclNumericRangeCheckStatement",
     IRTypeDeclFormatCheckCStringStatement = "IRTypeDeclFormatCheckCStringStatement",
     IRTypeDeclFormatCheckUnicodeStringStatement = "IRTypeDeclFormatCheckUnicodeStringStatement",
 
@@ -2145,6 +2146,19 @@ class IRTypeDeclSizeRangeCheckUnicodeStringStatement extends IRErrorTypedStringC
     }
 }
 
+class IRTypeDeclNumericRangeCheckStatement extends IRErrorCheckStatement {
+    readonly min: string | undefined;
+    readonly max: string | undefined;
+    readonly numexp: IRImmediateExpression;
+
+    constructor(file: string, sinfo: IRSourceInfo, checkID: number, min: string | undefined, max: string | undefined, numexp: IRImmediateExpression) {
+        super(IRStatementTag.IRTypeDeclNumericRangeCheckStatement, file, sinfo, undefined, checkID);
+        this.min = min;
+        this.max = max;
+        this.numexp = numexp;
+    }
+}
+
 class IRTypeDeclFormatCheckCStringStatement extends IRErrorTypedStringCheckStatement {
     readonly re: IRLiteralCRegexExpression;
 
@@ -2395,7 +2409,7 @@ export {
 
     IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement,
     IRErrorTypeAssertionCheckStatement, IRErrorExhaustiveStatement,
-    IRErrorTypedStringCheckStatement, IRTypeDeclSizeRangeCheckCStringStatement, IRTypeDeclSizeRangeCheckUnicodeStringStatement, IRTypeDeclFormatCheckCStringStatement, IRTypeDeclFormatCheckUnicodeStringStatement,
+    IRErrorTypedStringCheckStatement, IRTypeDeclSizeRangeCheckCStringStatement, IRTypeDeclSizeRangeCheckUnicodeStringStatement, IRTypeDeclNumericRangeCheckStatement, IRTypeDeclFormatCheckCStringStatement, IRTypeDeclFormatCheckUnicodeStringStatement,
 
     IRTypeDeclInvariantCheckStatement, IREntityInvariantCheckStatement,
     IRPreconditionCheckStatement, IRPostconditionCheckStatement,
