@@ -1840,6 +1840,11 @@ class Monomorphizer {
             this.currentMapping = TemplateNameMapper.tryMerge(typeinst.binds, TemplateNameMapper.createInitialMapping(tmap));
         }
 
+        this.currentLambdaMapping = new Map<string, string>();
+        for(let i = 0; i < mdecl.lambdas.length; ++i) {
+            this.currentLambdaMapping.set(mdecl.lambdas[i].pname, mdecl.lambdas[i].psigkey);
+        }
+
         this.instantiateExplicitInvokeDeclSignature(mdecl.method);
         this.instantiateExplicitInvokeDeclMetaData(mdecl.method, undefined);
 
@@ -1856,6 +1861,7 @@ class Monomorphizer {
         (typeinst.methodbinds.get(rkey) as InvokeInstantiationInfo[]).push(new InvokeInstantiationInfo(ikey, this.currentMapping as TemplateNameMapper, mdecl.lambdas, this.lambdamap, this.callinstmap, mdecl.prepostikey));
 
         this.currentMapping = undefined;
+        this.currentLambdaMapping = undefined;
         this.lambdamap = new Map<number, string>();
         this.callinstmap = new Map<number, string>();
     }

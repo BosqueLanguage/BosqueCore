@@ -37,11 +37,12 @@ describe ("CPPEmit -- entity as", () => {
     });
 
     it("should check postfix @ types ADT", function () {
-        checkTestEmitMainFunction('datatype Foo of F1 { } F2 { } ; public function main(x: Foo): F1 { return x.@<F1>; }', "aaa"); 
-        checkTestEmitMainFunction('datatype Foo of F1 { } F2 { } ; public function main(x: F1): Foo { return x.@<Foo>; }', "bbb"); 
+        checkTestEmitMainFunction('datatype Foo of F1 { } F2 { } ; public function main(x: Foo): F1 { return x.@<F1>; }', 'MainᕒF1 Mainᕒmain(MainᕒFoo x) { ᐸRuntimeᐳ::bsq_typeassert((bool)(x.uval.isTypeOf(&ᐸRuntimeᐳ::g_typeinfo_MainᕒF1)), "test.bsq", 2, "Type assertion failed", "Type assertion failed"); return x.uval.data.u_MainᕒF1; }'); 
+        checkTestEmitMainFunction('datatype Foo of F1 { } F2 { } ; public function main(x: F1): Foo { return x.@<Foo>; }', "MainᕒFoo Mainᕒmain(MainᕒF1 x) { return MainᕒFoo(x); }"); 
 
-        checkTestEmitMainFunction('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; public function main(x: Bar): F1 { return x.@<F1>; }', "ccc");
-        checkTestEmitMainFunction('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; public function main(x: Bar): Foo { return x.@<Foo>; }', "ddd"); 
-        checkTestEmitMainFunction('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; public function main(x: F1): Bar { return x.@<Bar>; }', "eee"); 
+        checkTestEmitMainFunction('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; public function main(x: Bar): F1 { return x.@<F1>; }', 'MainᕒF1 Mainᕒmain(MainᕒBar x) { ᐸRuntimeᐳ::bsq_typeassert((bool)(x.uval.isTypeOf(&ᐸRuntimeᐳ::g_typeinfo_MainᕒF1)), "test.bsq", 2, "Type assertion failed", "Type assertion failed"); return x.uval.data.u_MainᕒF1; }');
+        checkTestEmitMainFunction('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; public function main(x: Bar): Foo { return x.@<Foo>; }', 'MainᕒFoo Mainᕒmain(MainᕒBar x) { ᐸRuntimeᐳ::bsq_typeassert((bool)(x.uval.isSubtypeOf(&ᐸRuntimeᐳ::g_typeinfo_MainᕒFoo)), "test.bsq", 2, "Type assertion failed", "Type assertion failed"); return x.convert<MainᕒFoo, MainᕒFooᐤUnion>(); }'); 
+                checkTestEmitMainFunction('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; public function main(x: Foo): Bar { return x.@<Bar>; }', 'MainᕒBar Mainᕒmain(MainᕒFoo x) { return x.convert<MainᕒBar, MainᕒBarᐤUnion>(); }'); 
+        checkTestEmitMainFunction('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; public function main(x: F1): Bar { return x.@<Bar>; }', "MainᕒBar Mainᕒmain(MainᕒF1 x) { return MainᕒBar(x); }"); 
     });
 });

@@ -1127,8 +1127,9 @@ class ASMToIRConverter {
         const haspostconds = fdecl.postconditions.length > 0;
         const iname = (this.currentMonoInvIdMap as Map<number, string>).get(exp.monoinvid as number) as string;
 
+        const tmapper = TemplateNameMapper.generateTemplateMappingForTypeDecl(this.tproc(exp.resolvedDeclType as TypeSignature) as NominalTypeSignature);
         const imapper = this.generateLocalTemplateMapping(fdecl.terms.map((t) => t.name), exp.terms);
-        const fullmapper = TemplateNameMapper.tryMerge(this.currentBinds, imapper);
+        const fullmapper = TemplateNameMapper.tryMerge(tmapper, imapper);
         const aargs = this.flattenInvokeArgs(haspreconds, haspostconds, exp.shuffleinfo, fdecl.params, exp.args, exp.resttype, fullmapper);
 
         //do preconditions as needed
@@ -1287,7 +1288,7 @@ class ASMToIRConverter {
     }
 
     private flattenPostfixAsConvert(exp: PostfixAsConvert, rootexp: IRSimpleExpression, roottype: TypeSignature): IRExpression {
-        const [testop, extractop, _] = this.processITestAsConvert(roottype, rootexp, exp.ttest, exp.getType(), undefined, exp.alwaysSucceeds);
+        const [testop, extractop, _] = this.processITestAsConvert(this.tproc(roottype), rootexp, exp.ttest, this.tproc(exp.getType()), undefined, exp.alwaysSucceeds);
         if(testop instanceof IRLiteralBoolExpression && testop.value) {
             return extractop;
         }
@@ -1326,8 +1327,9 @@ class ASMToIRConverter {
             rexp = (haspreconds || haspostconds) ? this.makeExpressionImmediate(convexp, this.tproc(exp.resolvedDeclType as TypeSignature)) : convexp;
         }
 
+        const tmapper = TemplateNameMapper.generateTemplateMappingForTypeDecl(this.tproc(exp.resolvedDeclType as TypeSignature) as NominalTypeSignature);
         const imapper = this.generateLocalTemplateMapping(mimpl.terms.map((t) => t.name), exp.terms);
-        const fullmapper = TemplateNameMapper.tryMerge(this.currentBinds, imapper);
+        const fullmapper = TemplateNameMapper.tryMerge(tmapper, imapper);
         const aargs = [rexp, ...this.flattenInvokeArgs(haspreconds, haspostconds, exp.shuffleinfo, mimpl.params, exp.args, exp.resttype, fullmapper)];
 
         //do preconditions as needed
@@ -3117,7 +3119,7 @@ class ASMToIRConverter {
             for(let i = 0; i < ginfos.length; ++i) {
                 const bvar = this.processLocalVariableName(stmt.bbinds[i].bname);
                 const btype = stmt.bbinds[i].ttrue as TypeSignature;
-                const bexp = this.processITestAsConvert(ginfos[i].srctype, ginfos[i].ee, ginfos[i].itest, btype, undefined, true);
+                const bexp = this.processITestAsConvert(this.tproc(ginfos[i].srctype), ginfos[i].ee, ginfos[i].itest, this.tproc(btype), undefined, true);
                 bindstmts.push(new IRVariableInitializationStatement(bvar, this.processTypeSignature(btype), bexp[1], true));
             }
 
@@ -3170,7 +3172,7 @@ class ASMToIRConverter {
                 const bvar = this.processLocalVariableName(stmt.bbinds[i].bname);
                 const ttype = stmt.bbinds[i].ttrue as TypeSignature;
                 const ftype = stmt.bbinds[i].tfalse as TypeSignature;
-                const bexp = this.processITestAsConvert(ginfos[i].srctype, ginfos[i].ee, ginfos[i].itest, ttype, ftype, true);
+                const bexp = this.processITestAsConvert(this.tproc(ginfos[i].srctype), ginfos[i].ee, ginfos[i].itest, this.tproc(ttype), this.tproc(ftype), true);
                 
                 bindstmtstt.push(new IRVariableInitializationStatement(bvar, this.processTypeSignature(ttype), bexp[1], true));
                 bindstmtsff.push(new IRVariableInitializationStatement(bvar, this.processTypeSignature(ftype), bexp[2] as IRExpression, true));

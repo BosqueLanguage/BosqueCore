@@ -25,7 +25,7 @@ describe ("CPPEmit -- entity is", () => {
     it("should emit postfix ? types ADT", function () {
         checkTestEmitMainFunction('datatype Foo of F1 { } F2 { } ; public function main(x: Foo): Bool { return x.?<F1>; }', "Bool Mainᕒmain(MainᕒFoo x) { return x.uval.isTypeOf(&ᐸRuntimeᐳ::g_typeinfo_MainᕒF1); }");
 
-        checkTestEmitMainFunction('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; public function main(x: Bar): Bool { return x.?<F1>; }', "mmm");
-        checkTestEmitMainFunction('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; public function main(x: Bar): Bool { return x.?<Foo>; }', "nnn");
+        checkTestEmitMainFunction('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; public function main(x: Bar): Bool { return x.?<F1>; }', "Bool Mainᕒmain(MainᕒBar x) { return x.uval.isTypeOf(&ᐸRuntimeᐳ::g_typeinfo_MainᕒF1); }");
+        checkTestEmitMainFunction('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; public function main(x: Bar): Bool { return x.?<Foo>; }', "Bool Mainᕒmain(MainᕒBar x) { return x.uval.isSubtypeOf(&ᐸRuntimeᐳ::g_typeinfo_MainᕒFoo); }");
     });
 });

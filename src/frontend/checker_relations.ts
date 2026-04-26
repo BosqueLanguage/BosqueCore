@@ -892,8 +892,7 @@ class TypeCheckerRelations {
         if(tn === undefined || !(tn instanceof NominalTypeSignature)) {
             return undefined;
         }
-
-        
+    
         const mmsig = {name: name, isTemplate: isTemplate, hasLambda: hasLambda, isRef: isRef};
         const cci = tn.decl.methods.find((c) => Assembly.resolveSigMatch(mmsig, {name: c.name, isTemplate: c.terms.length !== 0, hasLambda: c.params.some((p) => p.type instanceof LambdaTypeSignature), isRef: c.isThisRef || c.params.some((p) => p.pkind !== undefined)}));
 
