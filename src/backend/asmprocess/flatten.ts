@@ -1290,7 +1290,13 @@ class ASMToIRConverter {
     private flattenPostfixAsConvert(exp: PostfixAsConvert, rootexp: IRSimpleExpression, roottype: TypeSignature): IRExpression {
         const [testop, extractop, _] = this.processITestAsConvert(this.tproc(roottype), rootexp, exp.ttest, this.tproc(exp.getType()), undefined, exp.alwaysSucceeds);
         if(testop instanceof IRLiteralBoolExpression && testop.value) {
-            return extractop;
+            if(testop.value) {
+                return extractop;
+            }
+            else {
+                //If we optimize out later we could handle in a pass like the one where we cleanup copy propagation after we know allocation sizes
+                assert(false, "Todo: extra fails operation which we then optimize out later -- or make this a real error case?");
+            }
         }
         else {
             const typeassert = new IRErrorTypeAssertionCheckStatement(this.currentFile as string, this.convertSourceInfo(exp.sinfo), undefined, this.registerError(this.currentFile as string, this.convertSourceInfo(exp.sinfo), "runtime"), testop);
@@ -3119,8 +3125,10 @@ class ASMToIRConverter {
             for(let i = 0; i < ginfos.length; ++i) {
                 const bvar = this.processLocalVariableName(stmt.bbinds[i].bname);
                 const btype = stmt.bbinds[i].ttrue as TypeSignature;
-                const bexp = this.processITestAsConvert(this.tproc(ginfos[i].srctype), ginfos[i].ee, ginfos[i].itest, this.tproc(btype), undefined, true);
-                bindstmts.push(new IRVariableInitializationStatement(bvar, this.processTypeSignature(btype), bexp[1], true));
+                if(!ASMToIRConverter.isLiteralFalseExpression(texp)) {
+                    const bexp = this.processITestAsConvert(this.tproc(ginfos[i].srctype), ginfos[i].ee, ginfos[i].itest, this.tproc(btype), undefined, true);
+                    bindstmts.push(new IRVariableInitializationStatement(bvar, this.processTypeSignature(btype), bexp[1], true));
+                }
             }
 
             if(ASMToIRConverter.isLiteralTrueExpression(texp)) {
@@ -3172,10 +3180,23 @@ class ASMToIRConverter {
                 const bvar = this.processLocalVariableName(stmt.bbinds[i].bname);
                 const ttype = stmt.bbinds[i].ttrue as TypeSignature;
                 const ftype = stmt.bbinds[i].tfalse as TypeSignature;
-                const bexp = this.processITestAsConvert(this.tproc(ginfos[i].srctype), ginfos[i].ee, ginfos[i].itest, this.tproc(ttype), this.tproc(ftype), true);
-                
-                bindstmtstt.push(new IRVariableInitializationStatement(bvar, this.processTypeSignature(ttype), bexp[1], true));
-                bindstmtsff.push(new IRVariableInitializationStatement(bvar, this.processTypeSignature(ftype), bexp[2] as IRExpression, true));
+
+                if(!ASMToIRConverter.isLiteralTrueExpression(texp) && !ASMToIRConverter.isLiteralFalseExpression(texp)) {
+                    const bexp = this.processITestAsConvert(this.tproc(ginfos[i].srctype), ginfos[i].ee, ginfos[i].itest, this.tproc(ttype), this.tproc(ftype), true);
+                    bindstmtstt.push(new IRVariableInitializationStatement(bvar, this.processTypeSignature(ttype), bexp[1], true));
+                    bindstmtsff.push(new IRVariableInitializationStatement(bvar, this.processTypeSignature(ftype), bexp[2] as IRExpression, true));
+                }
+                else{
+                    if(!ASMToIRConverter.isLiteralFalseExpression(texp)) {
+                        const bexp = this.processITestAsConvertS(this.tproc(ginfos[i].srctype), ginfos[i].ee, ginfos[i].itest, this.tproc(ttype), undefined, true);
+                        bindstmtstt.push(new IRVariableInitializationStatement(bvar, this.processTypeSignature(ttype), bexp[1], true));
+                    }
+
+                    if(!ASMToIRConverter.isLiteralTrueExpression(texp)) {
+                        const bexp = this.processITestAsConvertSafe(this.tproc(ginfos[i].srctype), ginfos[i].ee, ginfos[i].itest, this.tproc(ftype), undefined, true);
+                        bindstmtsff.push(new IRVariableInitializationStatement(bvar, this.processTypeSignature(ftype), bexp[1], true));
+                    }
+                }
             }
 
             if(ASMToIRConverter.isLiteralTrueExpression(texp)) {
@@ -3218,6 +3239,9 @@ class ASMToIRConverter {
         
         const flows = stmt.matchflow.map((mf) => {
             const mtype = mf.mtype !== undefined ? this.processTypeSignature(mf.mtype) : undefined;
+
+            //TODO: should determine if this test is always true/false too
+            xxxx;
 
             const bvar = this.processLocalVariableName(stmt.bindervar);
             const ttype = mf.mtype || stmt.implicitFinalType || stmt.sval.getType();
