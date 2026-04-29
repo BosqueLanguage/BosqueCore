@@ -811,7 +811,7 @@ class ASMToIRConverter {
         }
     }
 
-    private processITestAsConvert(src: TypeSignature, sexp: IRSimpleExpression, tt: ITest, followpathtypett: TypeSignature, followpathtypeff: TypeSignature | undefined, knownsafe: boolean): [IRSimpleExpression, IRSimpleExpression, IRSimpleExpression | undefined] {
+    private processITestAsConvertX(src: TypeSignature, sexp: IRSimpleExpression, tt: ITest, followpathtypett: TypeSignature, followpathtypeff: TypeSignature | undefined, knownsafe: boolean): [IRSimpleExpression, IRSimpleExpression, IRSimpleExpression | undefined] {
         let ops: [IRSimpleExpression, IRSimpleExpression | undefined];
 
         if(knownsafe) {
