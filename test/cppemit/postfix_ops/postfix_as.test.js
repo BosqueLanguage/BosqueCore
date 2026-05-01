@@ -42,7 +42,7 @@ describe ("CPPEmit -- entity as", () => {
 
         checkTestEmitMainFunction('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; public function main(x: Bar): F1 { return x.@<F1>; }', 'MainᕒF1 Mainᕒmain(MainᕒBar x) { ᐸRuntimeᐳ::bsq_typeassert((bool)(x.uval.isTypeOf(&ᐸRuntimeᐳ::g_typeinfo_MainᕒF1)), "test.bsq", 2, "Type assertion failed", "Type assertion failed"); return x.uval.data.u_MainᕒF1; }');
         checkTestEmitMainFunction('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; public function main(x: Bar): Foo { return x.@<Foo>; }', 'MainᕒFoo Mainᕒmain(MainᕒBar x) { ᐸRuntimeᐳ::bsq_typeassert((bool)(x.uval.isSubtypeOf(&ᐸRuntimeᐳ::g_typeinfo_MainᕒFoo)), "test.bsq", 2, "Type assertion failed", "Type assertion failed"); return x.convert<MainᕒFoo, MainᕒFooᐤUnion>(); }'); 
-                checkTestEmitMainFunction('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; public function main(x: Foo): Bar { return x.@<Bar>; }', 'MainᕒBar Mainᕒmain(MainᕒFoo x) { return x.convert<MainᕒBar, MainᕒBarᐤUnion>(); }'); 
+        checkTestEmitMainFunction('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; public function main(x: Foo): Bar { return x.@<Bar>; }', 'MainᕒBar Mainᕒmain(MainᕒFoo x) { return x.convert<MainᕒBar, MainᕒBarᐤUnion>(); }'); 
         checkTestEmitMainFunction('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; public function main(x: F1): Bar { return x.@<Bar>; }', "MainᕒBar Mainᕒmain(MainᕒF1 x) { return MainᕒBar(x); }"); 
     });
 });

@@ -29,8 +29,8 @@ describe ("CPPEmit -- entity methods", () => {
     });
 
     it("should emit simple entity methods with both template and more", function () {
-        checkTestEmitMainFunction('entity Foo<T> { field f: T; method foo<U>(u: U): U { if (this.f)@<U> { return $_; } else { return u; } }} public function main(): Nat { let x = Foo<Int>{3i}; return x.foo<Nat>(3n); }', "jjj"); 
-        checkTestEmitMainFunction('entity Foo<T> { field f: T; method foo<U>(t: T): T { if (t)<U> { return t; } else { return this.f; } }} public function main(): Int { let x = Foo<Int>{3i}; return x.foo<Int>(3i); }', "kkk"); 
+        checkTestEmitMainFunction('entity Foo<T> { field f: T; method foo<U>(u: U): U { if (this.f)@<U> { return $_; } else { return u; } }} public function main(): Nat { let x = Foo<Int>{3i}; return x.foo<Nat>(3n); }', "Nat Mainᕒmain() { MainᕒFooᐸIntᐳ x = MainᕒFooᐸIntᐳ{3_i}; return MainᕒFooᐸIntᐳᑀfooᐸNatᐳ(x, 3_n); }"); 
+        checkTestEmitMainFunction('entity Foo<T> { field f: T; method foo<U>(t: T): T { if (t)<U> { return t; } else { return this.f; } }} public function main(): Int { let x = Foo<Int>{3i}; return x.foo<Int>(3i); }', "Int Mainᕒmain() { MainᕒFooᐸIntᐳ x = MainᕒFooᐸIntᐳ{3_i}; return MainᕒFooᐸIntᐳᑀfooᐸIntᐳ(x, 3_i); }"); 
     });
 
     it("should emit simple entity methods multiple options", function () {

@@ -811,71 +811,70 @@ class ASMToIRConverter {
         }
     }
 
-    private processITestAsConvertX(src: TypeSignature, sexp: IRSimpleExpression, tt: ITest, followpathtypett: TypeSignature, followpathtypeff: TypeSignature | undefined, knownsafe: boolean): [IRSimpleExpression, IRSimpleExpression, IRSimpleExpression | undefined] {
-        let ops: [IRSimpleExpression, IRSimpleExpression | undefined];
-
-        if(knownsafe) {
-            ops = [new IRLiteralBoolExpression(true), undefined];
-        }
-        else {
-            if(tt instanceof ITestType) {
-                ops = this.processITestCond_Type(src, sexp, this.tproc(tt.ttype), tt.isnot, true);
-            }
-            else {
-                if(tt instanceof ITestNone) {
-                    ops = this.processITestCond_None(src, sexp, tt.isnot, true);
-                }
-                else if(tt instanceof ITestSome) {
-                    ops = this.processITestCond_Some(src, sexp, tt.isnot, true);
-                }
-                else if(tt instanceof ITestOk) {
-                    ops = this.processITestCond_Ok(src, sexp, tt.isnot, true);
-                }
-                else {
-                    assert(tt instanceof ITestFail, "missing case in ITest");
-                    ops = this.processITestCond_Fail(src, sexp, tt.isnot, true);
-                }
-            }
-        }
-
-        const testop = ops[0];
-        const iexp = ops[1] || sexp;
+    private processITestAsConvertFlow(src: TypeSignature, sexp: IRSimpleExpression, tt: ITest, followpathtypett: TypeSignature | undefined, followpathtypeff: TypeSignature | undefined): [IRSimpleExpression | undefined, IRSimpleExpression | undefined] {
         if(tt instanceof ITestType) {
-            return [testop, this.processITestConvert_SafeType(src, iexp, followpathtypett), followpathtypeff !== undefined ? this.processITestConvert_SafeType(src, iexp, followpathtypeff) : undefined];
+            return [
+                followpathtypett !== undefined ? this.processITestConvert_SafeType(src, sexp, followpathtypett) : undefined, 
+                followpathtypeff !== undefined ? this.processITestConvert_SafeType(src, sexp, followpathtypeff) : undefined
+            ];
         }
         else {
             if(tt instanceof ITestNone) {
                 if(tt.isnot) {
-                    return [testop, this.processITestConvert_SafeSome(src, iexp, true), this.processITestConvert_SafeNone(src, iexp, true)];
+                    return [
+                        followpathtypett !== undefined ? this.processITestConvert_SafeSome(src, sexp, true) : undefined,
+                        followpathtypeff !== undefined ? this.processITestConvert_SafeNone(src, sexp, true) : undefined
+                    ];
                 }
                 else {
-                    return [testop, this.processITestConvert_SafeNone(src, iexp, true), this.processITestConvert_SafeSome(src, iexp, true)];
+                    return [
+                        followpathtypett !== undefined ? this.processITestConvert_SafeNone(src, sexp, true) : undefined,
+                        followpathtypeff !== undefined ? this.processITestConvert_SafeSome(src, sexp, true) : undefined
+                    ];
                 }
             }
             else if(tt instanceof ITestSome) {
                 if(tt.isnot) {
-                    return [testop, this.processITestConvert_SafeNone(src, iexp, true), this.processITestConvert_SafeSome(src, iexp, true)];
+                    return [
+                        followpathtypett !== undefined ? this.processITestConvert_SafeNone(src, sexp, true) : undefined,
+                        followpathtypeff !== undefined ? this.processITestConvert_SafeSome(src, sexp, true) : undefined
+                    ];
                 }
                 else {
-                    return [testop, this.processITestConvert_SafeSome(src, iexp, true), this.processITestConvert_SafeNone(src, iexp, true)];
+                    return [
+                        followpathtypett !== undefined ? this.processITestConvert_SafeSome(src, sexp, true) : undefined,
+                        followpathtypeff !== undefined ? this.processITestConvert_SafeNone(src, sexp, true) : undefined
+                    ];
                 }
             }
             else if(tt instanceof ITestOk) {
                 if(tt.isnot) {
-                    return [testop, this.processITestConvert_SafeFail(src, iexp, true), this.processITestConvert_SafeOk(src, iexp, true)];
+                    return [
+                        followpathtypett !== undefined ? this.processITestConvert_SafeFail(src, sexp, true) : undefined,
+                        followpathtypeff !== undefined ? this.processITestConvert_SafeOk(src, sexp, true) : undefined
+                    ];
                 }
                 else {
-                    return [testop, this.processITestConvert_SafeOk(src, iexp, true), this.processITestConvert_SafeFail(src, iexp, true)];
+                    return [
+                        followpathtypett !== undefined ? this.processITestConvert_SafeOk(src, sexp, true) : undefined,
+                        followpathtypeff !== undefined ? this.processITestConvert_SafeFail(src, sexp, true) : undefined
+                    ];
                 }
             }
             else {
                 assert(tt instanceof ITestFail, "missing case in ITest");
 
                 if(tt.isnot) {
-                    return [testop, this.processITestConvert_SafeOk(src, iexp, true), this.processITestConvert_SafeFail(src, iexp, true)];
+                    return [
+                        followpathtypett !== undefined ? this.processITestConvert_SafeOk(src, sexp, true) : undefined,
+                        followpathtypeff !== undefined ? this.processITestConvert_SafeFail(src, sexp, true) : undefined
+                    ];
                 }
                 else {
-                    return [testop, this.processITestConvert_SafeFail(src, iexp, true), this.processITestConvert_SafeOk(src, iexp, true)];
+                    return [
+                        followpathtypett !== undefined ? this.processITestConvert_SafeFail(src, sexp, true) : undefined,
+                        followpathtypeff !== undefined ? this.processITestConvert_SafeOk(src, sexp, true) : undefined
+                    ];
                 }
             }
         }
@@ -1288,21 +1287,33 @@ class ASMToIRConverter {
     }
 
     private flattenPostfixAsConvert(exp: PostfixAsConvert, rootexp: IRSimpleExpression, roottype: TypeSignature): IRExpression {
-        const [testop, extractop, _] = this.processITestAsConvert(this.tproc(roottype), rootexp, exp.ttest, this.tproc(exp.getType()), undefined, exp.alwaysSucceeds);
-        if(testop instanceof IRLiteralBoolExpression && testop.value) {
-            if(testop.value) {
-                return extractop;
-            }
-            else {
-                //If we optimize out later we could handle in a pass like the one where we cleanup copy propagation after we know allocation sizes
-                assert(false, "Todo: extra fails operation which we then optimize out later -- or make this a real error case?");
-            }
+        if(exp.alwaysSucceeds) {
+            const sexp = this.makeExpressionSimple(rootexp, roottype);
+
+            const [ttop, _] = this.processITestAsConvertFlow(this.tproc(roottype), sexp, exp.ttest, this.tproc(exp.getType()), undefined);
+            return ttop as IRSimpleExpression;
         }
         else {
-            const typeassert = new IRErrorTypeAssertionCheckStatement(this.currentFile as string, this.convertSourceInfo(exp.sinfo), undefined, this.registerError(this.currentFile as string, this.convertSourceInfo(exp.sinfo), "runtime"), testop);
-            this.pushStatement(typeassert);
+            const iexp = this.makeExpressionImmediate(rootexp, roottype);
+            const testop = this.processITestAsBoolean(roottype, iexp, exp.ttest);
 
-            return extractop;
+            if(testop instanceof IRLiteralBoolExpression) {
+                if(testop.value) {
+                    const [ttop, _] = this.processITestAsConvertFlow(this.tproc(roottype), iexp, exp.ttest, this.tproc(exp.getType()), undefined);
+                    return ttop as IRSimpleExpression;
+                }
+                else {
+                    //If we optimize out later we could handle in a pass like the one where we cleanup copy propagation after we know allocation sizes
+                    assert(false, "Todo: extra fails operation which we then optimize out later -- or make this a real error case?");
+                }
+            }
+            else {
+                const typeassert = new IRErrorTypeAssertionCheckStatement(this.currentFile as string, this.convertSourceInfo(exp.sinfo), undefined, this.registerError(this.currentFile as string, this.convertSourceInfo(exp.sinfo), "runtime"), testop);
+                this.pushStatement(typeassert);
+
+                const [ttop, _] = this.processITestAsConvertFlow(this.tproc(roottype), iexp, exp.ttest, this.tproc(exp.getType()), undefined);
+                return ttop as IRSimpleExpression;
+            }
         }
     }
 
@@ -3122,12 +3133,13 @@ class ASMToIRConverter {
         }
         else {
             let bindstmts: IRStatement[] = [];
-            for(let i = 0; i < ginfos.length; ++i) {
-                const bvar = this.processLocalVariableName(stmt.bbinds[i].bname);
-                const btype = stmt.bbinds[i].ttrue as TypeSignature;
-                if(!ASMToIRConverter.isLiteralFalseExpression(texp)) {
-                    const bexp = this.processITestAsConvert(this.tproc(ginfos[i].srctype), ginfos[i].ee, ginfos[i].itest, this.tproc(btype), undefined, true);
-                    bindstmts.push(new IRVariableInitializationStatement(bvar, this.processTypeSignature(btype), bexp[1], true));
+            if(!ASMToIRConverter.isLiteralFalseExpression(texp)) {
+                for(let i = 0; i < ginfos.length; ++i) {
+                    const bvar = this.processLocalVariableName(stmt.bbinds[i].bname);
+                    const btype = stmt.bbinds[i].ttrue as TypeSignature;
+
+                    const [tconv, _] = this.processITestAsConvertFlow(this.tproc(ginfos[i].srctype), ginfos[i].ee, ginfos[i].itest, this.tproc(btype), undefined);
+                    bindstmts.push(new IRVariableInitializationStatement(bvar, this.processTypeSignature(btype), tconv as IRSimpleExpression, true));
                 }
             }
 
@@ -3176,25 +3188,18 @@ class ASMToIRConverter {
         else {
             let bindstmtstt: IRStatement[] = [];
             let bindstmtsff: IRStatement[] = [];
-            for(let i = 0; i < ginfos.length; ++i) {
-                const bvar = this.processLocalVariableName(stmt.bbinds[i].bname);
-                const ttype = stmt.bbinds[i].ttrue as TypeSignature;
-                const ftype = stmt.bbinds[i].tfalse as TypeSignature;
+            if(!ASMToIRConverter.isLiteralTrueExpression(texp) && !ASMToIRConverter.isLiteralFalseExpression(texp)) {
+                for(let i = 0; i < ginfos.length; ++i) {
+                    const bvar = this.processLocalVariableName(stmt.bbinds[i].bname);
+                    const ttype = !ASMToIRConverter.isLiteralFalseExpression(texp) ? this.tproc(stmt.bbinds[i].ttrue as TypeSignature) : undefined;
+                    const ftype = !ASMToIRConverter.isLiteralTrueExpression(texp) ? this.tproc(stmt.bbinds[i].tfalse as TypeSignature) : undefined;
 
-                if(!ASMToIRConverter.isLiteralTrueExpression(texp) && !ASMToIRConverter.isLiteralFalseExpression(texp)) {
-                    const bexp = this.processITestAsConvert(this.tproc(ginfos[i].srctype), ginfos[i].ee, ginfos[i].itest, this.tproc(ttype), this.tproc(ftype), true);
-                    bindstmtstt.push(new IRVariableInitializationStatement(bvar, this.processTypeSignature(ttype), bexp[1], true));
-                    bindstmtsff.push(new IRVariableInitializationStatement(bvar, this.processTypeSignature(ftype), bexp[2] as IRExpression, true));
-                }
-                else{
-                    if(!ASMToIRConverter.isLiteralFalseExpression(texp)) {
-                        const bexp = this.processITestAsConvertS(this.tproc(ginfos[i].srctype), ginfos[i].ee, ginfos[i].itest, this.tproc(ttype), undefined, true);
-                        bindstmtstt.push(new IRVariableInitializationStatement(bvar, this.processTypeSignature(ttype), bexp[1], true));
+                    const [tbind, fbind] = this.processITestAsConvertFlow(this.tproc(ginfos[i].srctype), ginfos[i].ee, ginfos[i].itest, ttype, ftype);
+                    if(tbind !== undefined) {
+                        bindstmtstt.push(new IRVariableInitializationStatement(bvar, this.processTypeSignature(ttype as TypeSignature), tbind, true));
                     }
-
-                    if(!ASMToIRConverter.isLiteralTrueExpression(texp)) {
-                        const bexp = this.processITestAsConvertSafe(this.tproc(ginfos[i].srctype), ginfos[i].ee, ginfos[i].itest, this.tproc(ftype), undefined, true);
-                        bindstmtsff.push(new IRVariableInitializationStatement(bvar, this.processTypeSignature(ftype), bexp[1], true));
+                    if(fbind !== undefined) {
+                        bindstmtsff.push(new IRVariableInitializationStatement(bvar, this.processTypeSignature(ftype as TypeSignature), fbind, true));
                     }
                 }
             }
@@ -3237,11 +3242,35 @@ class ASMToIRConverter {
         const svaltype = this.processTypeSignature(stmt.sval.getType());
         const implicitfinal = this.processTypeSignature(stmt.implicitFinalType || stmt.sval.getType());
         
-        const flows = stmt.matchflow.map((mf) => {
-            const mtype = mf.mtype !== undefined ? this.processTypeSignature(mf.mtype) : undefined;
+        //We need to do some cleanup in the case of template instantiation simplifying something -- making a case always true/false
+        let ccflows = stmt.matchflow.map((mf) => {
+            if(mf.mtype === undefined) {
+                return mf;
+            }
 
-            //TODO: should determine if this test is always true/false too
-            xxxx;
+            //This assumes that no ops are added to the statment block during flattening -- if that happens then this needs to be cleaned up or a flag set to prevent that from happening
+            const top = this.processITestCond_Type(this.tproc(stmt.sval.getType()), sval, this.tproc(mf.mtype), false, false);
+            if(!(top instanceof IRLiteralBoolExpression)) {
+                return mf;
+            }
+            else {
+                if(top.value) {
+                    return {mtype: undefined, value: mf.value};
+                }
+                else {
+                    return undefined; //this case is always false, so remove it from the match
+                }
+            }
+        })
+        .filter((mf) => mf !== undefined) as {mtype: TypeSignature | undefined, value: BlockStatement}[];
+
+        const lidx = ccflows.findIndex((f) => f.mtype === undefined);
+        if(lidx !== -1 && lidx !== ccflows.length - 1) {
+            ccflows = ccflows.slice(0, lidx);
+        }
+
+        const flows = ccflows.map((mf) => {
+            const mtype = mf.mtype !== undefined ? this.processTypeSignature(mf.mtype) : undefined;
 
             const bvar = this.processLocalVariableName(stmt.bindervar);
             const ttype = mf.mtype || stmt.implicitFinalType || stmt.sval.getType();

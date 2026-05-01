@@ -15,7 +15,7 @@ describe ("CPPExec -- NamespaceFunction Ref Params", () => {
         runTestSet('function foo(out y: Int, x: Int): Int { y = 2i; return x; } public function main(v: Int): Int { var i = 0i; let z = foo(out i, v); return z + i; }', [['1i', '3i'], ['0i', '2i']], []);
         runTestSet('function foo(out y: Int): Int { y = 2i; return 1i; } public function main(v: Int): Int { var i = v; i = foo(out i); return i; }', [['2i', '1i']], []);
         runTestSet('function foo(inout y: Int): Int { y = y + 2i; return y; } public function main(v: Int): Int { var i = v; i = foo(inout i); return i; }', [['3i', '5i'], ['0i', '2i']], []);
-        runTestSet('entity Foo{ } function foo(ref y: Foo) { return; } public function main(v: Int): Foo { ref ff = Foo{}; foo(ref ff); return ff; }', [['0i', 'Main::Foo{  }']], []);
+        runTestSet('entity Foo{ } function foo(ref y: Foo) { return; } public function main(v: Int): Foo { ref ff = Foo{}; foo(ref ff); return ff; }', [['0i', 'Main::Foo{ }']], []);
         runTestSet('function foo(v: Int, out y: Int): Int { y = 2i; return v; } public function main(v: Int): Int { var i = 0i; let x = foo(v, out i); return x + i; }', [['2i', '4i'], ['0i', '2i']], []);
     });
 

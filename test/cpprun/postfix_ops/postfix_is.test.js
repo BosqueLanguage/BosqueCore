@@ -23,6 +23,6 @@ describe ("CPPExec -- entity is", () => {
         runTestSet('datatype Foo of F1 { } F2 { } ; public function main(x: Foo): Bool { return x.?<F1>; }', [['Main::F1{ }', 'true'], ['Main::F2{ }', 'false']], []);
 
         runTestSet('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; public function main(x: Bar): Bool { return x.?<F1>; }', [['Main::F1{ }', 'true'], ['Main::F2{ }', 'false']], []);
-        runTestSet('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; public function main(x: Bar): Bool { return x.?<Foo>; }', [['Main::F1{ }', 'true'], ['Main::F2{ }', 'false']], []);
+        runTestSet('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; public function main(x: Bar): Bool { return x.?<Foo>; }', [['Main::F1{ }', 'true'], ['Main::F2{ }', 'true']], []);
     });
 });

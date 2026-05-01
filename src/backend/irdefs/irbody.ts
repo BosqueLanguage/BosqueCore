@@ -1060,12 +1060,10 @@ class IRConstructorLambdaExpression extends IRSimpleExpression {
 }
 
 /* NOTE -- the empty constructor is a simple expression (as it is really a constant) we can place anywhere safely */
-class IRConstructorListEmptyExpression extends IRSimpleExpression {
-    readonly ctype: IRNominalTypeSignature;
-
+class IRConstructorListEmptyExpression extends IRConstructExpression {
+    
     constructor(ctype: IRNominalTypeSignature) {
-        super(IRExpressionTag.IRConstructorListEmptyExpression);
-        this.ctype = ctype;
+        super(IRExpressionTag.IRConstructorListEmptyExpression, ctype);
     }
 }
 
