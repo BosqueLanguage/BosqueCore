@@ -24,9 +24,13 @@ describe ("CPPExec -- entity as", () => {
         runTestSet("concept Bar {} concept Baz provides Bar {} entity Foo provides Baz { field f: Int; } entity Fuzz provides Bar { field f: Int; } public function main(x: Bar): Baz { return x.@<Baz>; }", [['Main::Foo{ 5i }', 'Main::Foo{ 5i }']], ['Main::Fuzz{ 5i }']);
     });
 
-    it.skip("should exec postfix @ types ADT", function () {
-    });
+    it("should exec postfix @ types ADT", function () {
+        runTestSet('datatype Foo of F1 { } F2 { } ; public function main(x: Foo): F1 { return x.@<F1>; }', [['Main::F1{ }', 'Main::F1{ }']], []);
+        runTestSet('datatype Foo of F1 { } F2 { } ; public function main(x: F1): Foo { return x.@<Foo>; }', [['Main::F1{ }', 'Main::F1{ }']], []);
+        runTestSet('datatype Foo of F1 { } F2 { } ; public function main(x: F2): Foo { return x.@<Foo>; }', [['Main::F2{ }', 'Main::F2{ }']], []);
 
-    it.skip("should exec postfix @ types ADT fail", function () {
+        runTestSet('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; public function main(x: Bar): F1 { return x.@<F1>; }', [['Main::F1{ }', 'Main::F1{ }']], []);
+        runTestSet('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; public function main(x: Bar): Foo { return x.@<Foo>; }', [['Main::F1{ }', 'Main::F1{ }']], []);
+        runTestSet('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; public function main(x: F1): Bar { return x.@<Bar>; }', [['Main::F1{ }', 'Main::F1{ }']], []);
     });
 });

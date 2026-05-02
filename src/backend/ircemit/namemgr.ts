@@ -1,5 +1,6 @@
 
 const s_coloncolon_repl = "ᕒ";
+const s_at_repl = "ᑀ";
 const s_colon_repl = "ᕀ";
 const s_hash_repl = "ᙾ";
 const s_comma_repl = "ᐪ";
@@ -12,11 +13,13 @@ const s_runtimename = "ᐸRuntimeᐳ";
 
 class TransformCPPNameManager {
     static c_dangerous: Map<string, string> = new Map<string, string>([
-        ["this", "ᐸthisᐳ"]
+        ["this", "ᐸthisᐳ"],
+        ["$return", "ᐸreturnᐳ"]
     ]);
 
     private static resymbol(cstr: string): string {
         const bb = cstr
+            .replace(/@/g, s_at_repl)
             .replace(/::/g, s_coloncolon_repl)
             .replace(/: */g, s_colon_repl)
             .replace(/#/g, s_hash_repl)

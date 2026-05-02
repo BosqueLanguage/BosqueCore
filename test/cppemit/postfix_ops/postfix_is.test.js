@@ -15,16 +15,17 @@ describe ("CPPEmit -- entity is", () => {
         checkTestEmitMainFunction("public function main(x: Option<Int>): Bool { return x.?<Some<Int>>; }", "Bool Mainᕒmain(OptionᐸIntᐳ x) { return !x.isNone(); }");
     });
 
-    it("should check postfix ? types", function () {
+    it("should emit postfix ? types", function () {
         checkTestEmitMainFunction("concept Bar {} entity Foo provides Bar { field f: Int; } public function main(x: Bar): Bool { return x.?<Foo>; }", "Bool Mainᕒmain(MainᕒBar x) { return x.uval.isTypeOf(&ᐸRuntimeᐳ::g_typeinfo_MainᕒFoo); }");
         checkTestEmitMainFunction("concept Bar {} entity Foo provides Bar { field f: Int; } public function main(x: Bar): Bool { return x.?!<Foo>; }", "Bool Mainᕒmain(MainᕒBar x) { return x.uval.isNotTypeOf(&ᐸRuntimeᐳ::g_typeinfo_MainᕒFoo); }");
 
         checkTestEmitMainFunction("concept Bar {} concept Baz provides Bar {} entity Foo provides Baz { field f: Int; } public function main(x: Bar): Bool { return x.?<Baz>; }", "Bool Mainᕒmain(MainᕒBar x) { return x.uval.isSubtypeOf(&ᐸRuntimeᐳ::g_typeinfo_MainᕒBaz); }");
     });
 
-    it.skip("should check postfix ? types ADT", function () {
-    });
+    it("should emit postfix ? types ADT", function () {
+        checkTestEmitMainFunction('datatype Foo of F1 { } F2 { } ; public function main(x: Foo): Bool { return x.?<F1>; }', "Bool Mainᕒmain(MainᕒFoo x) { return x.uval.isTypeOf(&ᐸRuntimeᐳ::g_typeinfo_MainᕒF1); }");
 
-    it.skip("should check postfix ? types ADT fail", function () {
+        checkTestEmitMainFunction('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; public function main(x: Bar): Bool { return x.?<F1>; }', "Bool Mainᕒmain(MainᕒBar x) { return x.uval.isTypeOf(&ᐸRuntimeᐳ::g_typeinfo_MainᕒF1); }");
+        checkTestEmitMainFunction('concept Bar { } datatype Foo provides Bar of F1 { } F2 { }; public function main(x: Bar): Bool { return x.?<Foo>; }', "Bool Mainᕒmain(MainᕒBar x) { return x.uval.isSubtypeOf(&ᐸRuntimeᐳ::g_typeinfo_MainᕒFoo); }");
     });
 });

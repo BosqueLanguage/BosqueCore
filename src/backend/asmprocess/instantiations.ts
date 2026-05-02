@@ -37,12 +37,15 @@ class InvokeInstantiationInfo {
 
     readonly monoinvids: Map<number, string>;
 
-    constructor(newikey: string, binds: TemplateNameMapper | undefined, lambdaargs: { pname: string, psigkey: string }[], lambdacons: Map<number, string>, monoinvids: Map<number, string>) {
+    readonly prepostikey: string | undefined; //for methods where the pre/post may be on virtual/abstract decls -- this is the ikey to use
+
+    constructor(newikey: string, binds: TemplateNameMapper | undefined, lambdaargs: { pname: string, psigkey: string }[], lambdacons: Map<number, string>, monoinvids: Map<number, string>, prepostikey: string | undefined) {
         this.newikey = newikey;
         this.binds = binds;
         this.lambdaargs = lambdaargs;
         this.lambdacons = lambdacons;
         this.monoinvids = monoinvids;
+        this.prepostikey = prepostikey;
     }
 }
 

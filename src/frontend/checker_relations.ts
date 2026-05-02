@@ -37,26 +37,6 @@ class TypeCheckerRelations {
         this.wellknowntypes = wellknowntypes;
     }
 
-    generateTemplateMappingForTypeDecl(t: NominalTypeSignature): TemplateNameMapper {
-        let pmap = new Map<string, TypeSignature>();
-
-        if(t.decl.isSpecialResultEntity()) {
-            pmap.set("T", t.alltermargs[0]);
-            pmap.set("E", t.alltermargs[1]);
-        }
-        else if(t.decl.isSpecialAPIResultEntity()) {
-            pmap.set("T", t.alltermargs[0]);
-            pmap.set("E", t.alltermargs[1]);
-        }
-        else {
-            for(let j = 0; j < t.decl.terms.length; ++j) {
-                pmap.set(t.decl.terms[j].name, t.alltermargs[j]);
-            }
-        }
-
-        return TemplateNameMapper.createInitialMapping(pmap)
-    }
-
     private resolveTemplateAsNeededForNameLookup(ttype: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature | undefined {
         if (ttype instanceof NominalTypeSignature) {
             return ttype;
@@ -77,7 +57,7 @@ class TypeCheckerRelations {
             return [];
         }
 
-        const tnmapping = this.generateTemplateMappingForTypeDecl(tn);
+        const tnmapping = TemplateNameMapper.generateTemplateMappingForTypeDecl(tn);
         const pdecls: TypeLookupInfo[] = [];
         for(let i = 0; i < tn.decl.provides.length; ++i) {
             const ptype = tn.decl.provides[i];
@@ -89,7 +69,7 @@ class TypeCheckerRelations {
                 continue;
             }
 
-            const ptmapping = this.generateTemplateMappingForTypeDecl(ptype);
+            const ptmapping = TemplateNameMapper.generateTemplateMappingForTypeDecl(ptype);
             const fullmapping = TemplateNameMapper.merge(tnmapping, ptmapping);
             pdecls.push(new TypeLookupInfo(ptype, fullmapping));
         }
@@ -809,7 +789,7 @@ class TypeCheckerRelations {
 
         const cci = tn.decl.consts.find((c) => c.name === name);
         if(cci !== undefined) {
-            const tlinfo = new TypeLookupInfo(tn, this.generateTemplateMappingForTypeDecl(tn));
+            const tlinfo = new TypeLookupInfo(tn, TemplateNameMapper.generateTemplateMappingForTypeDecl(tn));
             return new MemberLookupInfo<ConstMemberDecl>(tlinfo, cci);
         }
         else {
@@ -888,7 +868,7 @@ class TypeCheckerRelations {
         }
 
         if(cci !== undefined) {
-            const tlinfo = new TypeLookupInfo(tn, this.generateTemplateMappingForTypeDecl(tn));
+            const tlinfo = new TypeLookupInfo(tn, TemplateNameMapper.generateTemplateMappingForTypeDecl(tn));
             return new MemberLookupInfo<MemberFieldDecl>(tlinfo, cci);
         }
         else {
@@ -907,18 +887,17 @@ class TypeCheckerRelations {
         }
     }
 
-    resolveTypeMethodDeclaration(tsig: TypeSignature, name: string, tconstrain: TemplateConstraintScope): MemberLookupInfo<MethodDecl> | undefined {
+    resolveTypeMethodDeclaration(tsig: TypeSignature, name: string, isTemplate: boolean, hasLambda: boolean, isRef: boolean,tconstrain: TemplateConstraintScope): MemberLookupInfo<MethodDecl> | undefined {
         const tn = this.resolveTemplateAsNeededForNameLookup(tsig, tconstrain);
         if(tn === undefined || !(tn instanceof NominalTypeSignature)) {
             return undefined;
         }
+    
+        const mmsig = {name: name, isTemplate: isTemplate, hasLambda: hasLambda, isRef: isRef};
+        const cci = tn.decl.methods.find((c) => Assembly.resolveSigMatch(mmsig, {name: c.name, isTemplate: c.terms.length !== 0, hasLambda: c.params.some((p) => p.type instanceof LambdaTypeSignature), isRef: c.isThisRef || c.params.some((p) => p.pkind !== undefined)}));
 
-        //
-        //TODO: need to be aware of ref methods and methods having the same name but distinguishing on ref-ness!!!!
-        //
-        const cci = tn.decl.methods.find((c) => c.name === name);
         if(cci !== undefined && !cci.attributes.some((attr) => attr.name === "override")) {
-            const tlinfo = new TypeLookupInfo(tn, this.generateTemplateMappingForTypeDecl(tn));
+            const tlinfo = new TypeLookupInfo(tn, TemplateNameMapper.generateTemplateMappingForTypeDecl(tn));
             return new MemberLookupInfo<MethodDecl>(tlinfo, cci);
         }
         else {
@@ -927,7 +906,7 @@ class TypeCheckerRelations {
                 const pdecl = provides[i];
                 const pdtype = pdecl.tsig.remapTemplateBindings(pdecl.mapping);
 
-                const flookup = this.resolveTypeMethodDeclaration(pdtype, name, tconstrain);
+                const flookup = this.resolveTypeMethodDeclaration(pdtype, name, isTemplate, hasLambda, isRef, tconstrain);
                 if(flookup !== undefined) {
                     return flookup;
                 }
@@ -937,15 +916,17 @@ class TypeCheckerRelations {
         }
     }
 
-    resolveTypeMethodImplementation(tsig: TypeSignature, name: string, tconstrain: TemplateConstraintScope): MemberLookupInfo<MethodDecl> | undefined {
+    resolveTypeMethodImplementation(tsig: TypeSignature, name: string, isTemplate: boolean, hasLambda: boolean, isRef: boolean, tconstrain: TemplateConstraintScope): MemberLookupInfo<MethodDecl> | undefined {
         const tn = this.resolveTemplateAsNeededForNameLookup(tsig, tconstrain);
         if(tn === undefined || !(tn instanceof NominalTypeSignature)) {
             return undefined;
         }
 
-        const cci = tn.decl.methods.find((c) => c.name === name);
+        const mmsig = {name: name, isTemplate: isTemplate, hasLambda: hasLambda, isRef: isRef};
+        const cci = tn.decl.methods.find((c) => Assembly.resolveSigMatch(mmsig, {name: c.name, isTemplate: c.terms.length !== 0, hasLambda: c.params.some((p) => p.type instanceof LambdaTypeSignature), isRef: c.isThisRef || c.params.some((p) => p.pkind !== undefined)}));
+
         if(cci !== undefined && !cci.attributes.some((attr) => attr.name === "abstract")) {
-            const tlinfo = new TypeLookupInfo(tn, this.generateTemplateMappingForTypeDecl(tn));
+            const tlinfo = new TypeLookupInfo(tn, TemplateNameMapper.generateTemplateMappingForTypeDecl(tn));
             return new MemberLookupInfo<MethodDecl>(tlinfo, cci);
         }
         else {
@@ -954,7 +935,7 @@ class TypeCheckerRelations {
                 const pdecl = provides[i];
                 const pdtype = pdecl.tsig.remapTemplateBindings(pdecl.mapping);
 
-                const flookup = this.resolveTypeMethodImplementation(pdtype, name, tconstrain);
+                const flookup = this.resolveTypeMethodImplementation(pdtype, name, isTemplate, hasLambda, isRef, tconstrain);
                 if(flookup !== undefined) {
                     return flookup;
                 }
@@ -964,7 +945,7 @@ class TypeCheckerRelations {
         }
     }
 
-    resolveTypeFunction(tsig: TypeSignature, name: string, tconstrain: TemplateConstraintScope): MemberLookupInfo<TypeFunctionDecl | null> | undefined {
+    resolveTypeFunction(tsig: TypeSignature, name: string, isTemplate: boolean, hasLambda: boolean, isRef: boolean, tconstrain: TemplateConstraintScope): MemberLookupInfo<TypeFunctionDecl | null> | undefined {
         const tn = this.resolveTemplateAsNeededForNameLookup(tsig, tconstrain);
         if(tn === undefined || !(tn instanceof NominalTypeSignature)) {
             return undefined;
@@ -974,13 +955,15 @@ class TypeCheckerRelations {
             return undefined;
         }
 
-        if(tsig.decl instanceof TypedeclTypeDecl && (tsig.decl.valuetype.tkeystr === "String" || tsig.decl.valuetype.tkeystr === "CString") && name === "from") {
+        if(tsig.decl instanceof TypedeclTypeDecl && name === "from") {
             return new MemberLookupInfo<TypeFunctionDecl | null>(new TypeLookupInfo(tn, TemplateNameMapper.createEmpty()), null);
         }
 
-        const cci = tsig.decl.functions.find((c) => c.name === name);
+        const fnsig = {name: name, isTemplate: isTemplate, hasLambda: hasLambda, isRef: isRef};
+        const cci = tsig.decl.functions.find((c) => Assembly.resolveSigMatch(fnsig, {name: c.name, isTemplate: c.terms.length !== 0, hasLambda: c.params.some((p) => p.type instanceof LambdaTypeSignature), isRef: c.params.some((p) => p.pkind !== undefined)}));
+
         if(cci !== undefined) {
-            const tlinfo = new TypeLookupInfo(tsig, this.generateTemplateMappingForTypeDecl(tsig));
+            const tlinfo = new TypeLookupInfo(tsig, TemplateNameMapper.generateTemplateMappingForTypeDecl(tsig));
             return new MemberLookupInfo<TypeFunctionDecl | null>(tlinfo, cci);
         }
         else {
@@ -989,7 +972,7 @@ class TypeCheckerRelations {
                 const pdecl = provides[i];
                 const pdtype = pdecl.tsig.remapTemplateBindings(pdecl.mapping);
 
-                const flookup = this.resolveTypeFunction(pdtype, name, tconstrain);
+                const flookup = this.resolveTypeFunction(pdtype, name, isTemplate, hasLambda, isRef, tconstrain);
                 if(flookup !== undefined) {
                     return flookup;
                 }
@@ -1078,8 +1061,8 @@ class TypeCheckerRelations {
             allvalidators = allvalidators.concat(pdecl.tsig.decl.validates.map((inv) => new MemberLookupInfo<ValidateDecl>(pdecl, inv)));
         }
 
-        allinvariants = allinvariants.concat(((ttype as NominalTypeSignature).decl.invariants.map((inv) => new MemberLookupInfo<InvariantDecl>(new TypeLookupInfo(ttype as NominalTypeSignature, this.generateTemplateMappingForTypeDecl(ttype as NominalTypeSignature)), inv))));
-        allvalidators = allvalidators.concat(((ttype as NominalTypeSignature).decl.validates.map((inv) => new MemberLookupInfo<ValidateDecl>(new TypeLookupInfo(ttype as NominalTypeSignature, this.generateTemplateMappingForTypeDecl(ttype as NominalTypeSignature)), inv))));
+        allinvariants = allinvariants.concat(((ttype as NominalTypeSignature).decl.invariants.map((inv) => new MemberLookupInfo<InvariantDecl>(new TypeLookupInfo(ttype as NominalTypeSignature, TemplateNameMapper.generateTemplateMappingForTypeDecl(ttype as NominalTypeSignature)), inv))));
+        allvalidators = allvalidators.concat(((ttype as NominalTypeSignature).decl.validates.map((inv) => new MemberLookupInfo<ValidateDecl>(new TypeLookupInfo(ttype as NominalTypeSignature, TemplateNameMapper.generateTemplateMappingForTypeDecl(ttype as NominalTypeSignature)), inv))));
 
         return {invariants: allinvariants, validators: allvalidators};
     }

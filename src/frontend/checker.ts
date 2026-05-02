@@ -1,11 +1,11 @@
 import assert from "node:assert";
 
-import { APIDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, InvokeTemplateTypeRestrictionClause, MAX_SAFE_CHK_NAT, MIN_SAFE_CHK_INT, MAX_SAFE_CHK_INT, APIDeniedTypeDecl, APIFlaggedTypeDecl, AgentDecl, TaskConfiguration, AbstractCollectionTypeDecl, ConstructableTypeDecl, InvokeParameterDecl } from "./assembly.js";
+import { APIDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, InvokeTemplateTypeRestrictionClause, MAX_SAFE_CHK_NAT, MIN_SAFE_CHK_INT, MAX_SAFE_CHK_INT, APIDeniedTypeDecl, APIFlaggedTypeDecl, AgentDecl, TaskConfiguration, AbstractCollectionTypeDecl, ConstructableTypeDecl, InvokeParameterDecl, AbstractEntityTypeDecl } from "./assembly.js";
 import { CodeFormatter, SourceInfo } from "./build_decls.js";
 import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, ErrorTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
 import { APIInvokeExpression, AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, AbstractArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, FormatStringTextComponent, HoleBodyImplementation, HoleExpression, HoleStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, IfElifElseStatement, IfElseStatement, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypeDeclValueExpression, LiteralTypedCStringExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PassingArgumentValue, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RValueExpression, RValueExpressionTag, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VoidRefCallStatement, StdArgumentValue, SkipArgumentValue, InterpolateFormatExpression, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestFail, ITestTypeGuard, ITestBinderGuard, TypeTestBindInfo } from "./body.js";
 import { SimpleTypeInferContext, TypeEnvironment, TypeResultWRefVarInfoResult, TypeInferContext, VarInfo } from "./checker_environment.js";
-import { TypeCheckerRelations } from "./checker_relations.js";
+import { MemberLookupInfo, TypeCheckerRelations } from "./checker_relations.js";
 
 import { validateStringLiteral, validateCStringLiteral, loadConstAndValidateRESystem, accepts } from "@bosque/jsbrex";
 
@@ -2392,11 +2392,7 @@ class TypeChecker {
     private checkCallNamespaceFunctionExpression(env: TypeEnvironment, exp: CallNamespaceFunctionExpression, refallowed: boolean): TypeResultWRefVarInfoResult {
         const hastemplate = exp.terms.length > 0;
         const haslambda = exp.args.args.some((arg) => {
-            if(!(arg instanceof StdArgumentValue)) {
-                return false;
-            }
-
-            if((arg instanceof PassingArgumentValue) && arg.kind === "out?") {
+            if(!(arg instanceof PositionalArgumentValue)) {
                 return false;
             }
 
@@ -2425,8 +2421,10 @@ class TypeChecker {
         }
         
         this.checkTemplateBindingsOnInvokeConstraints(exp.sinfo, imapper, fdecl);
-
         const arginfo = this.checkArgumentList(exp.sinfo, env, refallowed, exp.args.args, fdecl.params, imapper);
+
+        exp.resolvedFunction = fdecl;
+
         exp.shuffleinfo = arginfo.shuffleinfo;
         exp.resttype = arginfo.resttype;
         exp.restinfo = arginfo.restinfo;
@@ -2454,30 +2452,50 @@ class TypeChecker {
     }
 
     private checkCallTypeFunctionExpression(env: TypeEnvironment, exp: CallTypeFunctionExpression, refallowed: boolean): TypeResultWRefVarInfoResult {
-        /*
         const oktype = this.checkTypeSignature(exp.ttype);
         if(!oktype) {
-            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
         }
         
-        const fdecl = this.relations.resolveTypeFunction(exp.ttype, exp.name, this.constraints);
+        const hastemplate = exp.terms.length > 0;
+        const haslambda = exp.args.args.some((arg) => {
+            if(!(arg instanceof PositionalArgumentValue)) {
+                return false;
+            }
+
+            const eexp = arg.exp;
+            if(eexp instanceof ConstructorLambdaExpression) {
+                return true;
+            }
+            else if(eexp instanceof AccessVariableExpression) {
+                const atype = this.checkAccessVariableExpression(env, eexp);
+                return atype instanceof LambdaTypeSignature;
+            }
+            else {
+                return false;
+            }
+        });
+        const fdecl = this.relations.resolveTypeFunction(exp.ttype, exp.name, hastemplate, haslambda, exp.args.hasSpecialRef(), this.constraints);
         if(fdecl === undefined) {
             this.reportError(exp.sinfo, `Could not find type scoped function ${exp.ttype.emit()}::${exp.name}`);
-            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
         }
+
+        exp.resolvedDeclType = fdecl.typeinfo.tsig;
+        exp.monoinvid = this.invidCtr++;
 
         //special case for type Foo = String of ... Foo::from
         if(fdecl.member === null) {
             if(exp.args.args.length !== 1 || !(exp.args.args[0] instanceof PositionalArgumentValue)) {
                 this.reportError(exp.sinfo, `Conversion from expects 1 argument`);
-                return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+                return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
             }
 
             const etype = this.checkExpression(env, exp.args.args[0].exp, undefined);
             this.checkError(exp.sinfo, !(etype instanceof NominalTypeSignature), `Invalid arg type for conversion from ${etype.emit()} -- converting to ${fdecl.typeinfo.tsig.emit()}`);
 
             if(etype instanceof NominalTypeSignature) {
-                if(etype.tkeystr === "String" || etype.tkeystr === "CString") {
+                if(etype.decl instanceof PrimitiveEntityTypeDecl) {
                     this.checkError(exp.sinfo, !this.relations.areSameTypes((fdecl.typeinfo.tsig.decl as TypedeclTypeDecl).valuetype, etype), `Invalid arg type for conversion from ${etype.emit()} -- converting to ${fdecl.typeinfo.tsig.emit()}`);
                 }
                 else if(etype.decl instanceof TypedeclTypeDecl) {
@@ -2489,29 +2507,52 @@ class TypeChecker {
             }
 
             exp.isSpecialCall = true;
-            exp.resolvedDeclType = fdecl.typeinfo.tsig;
-            exp.shuffleinfo = [[0, etype]];
 
-            return exp.setType(fdecl.typeinfo.tsig);
+            exp.shuffleinfo = [[0, etype]];
+            exp.resttype = undefined;
+            exp.restinfo = undefined;
+            exp.setcondout = [];
+            exp.setuncond = [];
+            exp.inout = [];
+            exp.byref = [];
+
+            return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(fdecl.typeinfo.tsig));
         }
         else {
-            const refinemap = this.relations.generateTemplateMappingForTypeDecl(fdecl.typeinfo.tsig as NominalTypeSignature);
-            const imapper = this.checkTemplateBindingsOnInvoke(exp. sinfo, env, exp.terms, fdecl.member, refinemap);
+            const imapper = this.checkTemplateBindingsOnInvokeSig(exp.sinfo, exp.terms, fdecl.member);
             if(imapper === undefined) {
-                return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+                return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
             }
 
             const fullmapper = TemplateNameMapper.merge(fdecl.typeinfo.mapping, imapper);
-            const arginfo = this.checkArgumentList(exp.sinfo, env, refok, exp.args.args, fdecl.member.params, fullmapper);
-            exp.resolvedDeclType = fdecl.typeinfo.tsig;
+            this.checkTemplateBindingsOnInvokeConstraints(exp.sinfo, fullmapper, fdecl.member);
+            const arginfo = this.checkArgumentList(exp.sinfo, env, refallowed, exp.args.args, fdecl.member.params, fullmapper);
+
+            exp.resolvedFunction = fdecl.member;
+
             exp.shuffleinfo = arginfo.shuffleinfo;
             exp.resttype = arginfo.resttype;
             exp.restinfo = arginfo.restinfo;
+            exp.setcondout = arginfo.setcondout;
+            exp.setuncond = arginfo.setuncond;
+            exp.inout = arginfo.inout;
+            exp.byref = arginfo.byref;
 
-            return exp.setType(fdecl.member.resultType.remapTemplateBindings(fullmapper));
+            const rrt = TypeResultWRefVarInfoResult.makeGeneralResult(
+                exp.setType(fdecl.member.resultType.remapTemplateBindings(fullmapper)), false, false,
+                { ttrue: [...arginfo.setcondout], tfalse: [] },
+                [...arginfo.setuncond],
+                [...arginfo.inout, ...arginfo.byref],
+                []
+            );
+
+            if(rrt !== undefined) {
+                return rrt;
+            }
+            else {
+                return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
+            }
         }
-        */
-        assert(false, "Not Implemented -- checkCallTypeFunctionExpression");
     }
 
     private checkParseAsTypeExpression(env: TypeEnvironment, exp: ParseAsTypeExpression): TypeSignature {
@@ -2738,22 +2779,20 @@ class TypeChecker {
         assert(false, "Not Implemented -- checkPostfixAssignFields");
     }
 
-    /*
-    private postfixInvokeStaticResolve(env: TypeEnvironment, mdeclaration: MemberLookupInfo<MethodDecl>, name: string, resolvefrom: TypeSignature): MemberLookupInfo<MethodDecl> | undefined {
-        /*
+    private postfixInvokeStaticResolve(env: TypeEnvironment, mdeclaration: MemberLookupInfo<MethodDecl>, name: string, isTemplate: boolean, hasLambda: boolean, isRef: boolean, resolvefrom: TypeSignature): MemberLookupInfo<MethodDecl> | undefined {
         if(mdeclaration.member.attributes.every((attr) => attr.name !== "virtual" && attr.name !== "abstract")) {
             return mdeclaration; //There is no overloading so the declaration is the implementation!
         }
 
         const tdecl = (resolvefrom as NominalTypeSignature).decl;
         if(tdecl instanceof AbstractEntityTypeDecl) {
-            return this.relations.resolveTypeMethodDeclaration(resolvefrom, name, this.constraints); //a concrete subtype so we can resolve statically
+            return this.relations.resolveTypeMethodDeclaration(resolvefrom, name, isTemplate, hasLambda, isRef, this.constraints); //a concrete subtype so we can resolve statically
         }
+
+        return undefined; //otherwise we have to do dynamic dispatch
     }
-    */
 
     private checkPostfixInvoke(env: TypeEnvironment, exp: PostfixInvoke, rcvrtype: TypeSignature, refallowed: boolean): TypeResultWRefVarInfoResult {
-        /*
         let resolvefrom = rcvrtype;
         if(exp.specificResolve !== undefined) {
             const specificok = this.checkTypeSignature(exp.specificResolve);
@@ -2762,48 +2801,91 @@ class TypeChecker {
             }
         }
         
-        const mresolve = this.relations.resolveTypeMethodDeclaration(resolvefrom, exp.name, this.constraints);
+        const hastemplate = exp.terms.length > 0;
+        const haslambda = exp.args.args.some((arg) => {
+            if(!(arg instanceof PositionalArgumentValue)) {
+                return false;
+            }
+
+            const eexp = arg.exp;
+            if(eexp instanceof ConstructorLambdaExpression) {
+                return true;
+            }
+            else if(eexp instanceof AccessVariableExpression) {
+                const atype = this.checkAccessVariableExpression(env, eexp);
+                return atype instanceof LambdaTypeSignature;
+            }
+            else {
+                return false;
+            }
+        });
+
+        const mresolve = this.relations.resolveTypeMethodDeclaration(resolvefrom, exp.name, hastemplate, haslambda, exp.args.hasSpecialRef(), this.constraints);
         if(mresolve === undefined) {
             this.reportError(exp.sinfo, `Could not find method ${exp.name} in type ${rcvrtype.emit()}`);
-            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
         }
+
+        exp.resolvedDeclType = mresolve.typeinfo.tsig;
+        exp.resolvedMethodDecl = mresolve.member;
 
         if(mresolve.member.isThisRef) {
             this.reportError(exp.sinfo, `Method ${exp.name} is a "ref" method and cannot be called without a ref rcvr`);
-            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
         }
 
-        const refinemap = this.relations.generateTemplateMappingForTypeDecl(mresolve.typeinfo.tsig);
-        const imapper = this.checkTemplateBindingsOnInvoke(exp.sinfo, env, exp.terms, mresolve.member, refinemap);
+        const imapper = this.checkTemplateBindingsOnInvokeSig(exp.sinfo, exp.terms, mresolve.member);
         if(imapper === undefined) {
-            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
         }
+
+        exp.monoinvid = this.invidCtr++;
 
         const fullmapper = TemplateNameMapper.merge(mresolve.typeinfo.mapping, imapper);
-        const arginfo = this.checkArgumentList(exp.sinfo, env, refok, exp.args.args, mresolve.member.params, fullmapper);
-        exp.shuffleinfo = arginfo.shuffleinfo;
-        exp.resttype = arginfo.resttype;
-        exp.restinfo = arginfo.restinfo;
+        const arginfo = this.checkArgumentList(exp.sinfo, env, refallowed, exp.args.args, mresolve.member.params, fullmapper);
 
+        let resolvedrtype: TypeSignature = mresolve.member.resultType;
         if(exp.specificResolve !== undefined) {
-            const rrt = this.relations.resolveTypeMethodImplementation(resolvefrom, exp.name, this.constraints);
+            const rrt = this.relations.resolveTypeMethodImplementation(resolvefrom, exp.name, hastemplate, haslambda, exp.args.hasSpecialRef(), this.constraints);
             this.checkError(exp.sinfo, rrt === undefined, `Method ${exp.name} is not specifically resolvable from type ${resolvefrom.emit()}`);
 
-            if(rrt !== undefined) { 
-                exp.resolvedTrgt = rrt.typeinfo.tsig;
+            if(rrt !== undefined) {
+                resolvedrtype = rrt.member.resultType;
+                exp.resolvedImplType = rrt.typeinfo.tsig;
+                exp.resolvedMethodImpl = rrt.member;
             }
         }
         else {
-            const smresolve = this.postfixInvokeStaticResolve(env, mresolve, exp.name, resolvefrom);
+            const smresolve = this.postfixInvokeStaticResolve(env, mresolve, exp.name, hastemplate, haslambda, exp.args.hasSpecialRef(), resolvefrom);
             if(smresolve !== undefined) {
-                exp.resolvedTrgt = smresolve.typeinfo.tsig;
-                exp.resolvedMethod = smresolve.member;
+                resolvedrtype = smresolve.member.resultType;
+                exp.resolvedImplType = smresolve.typeinfo.tsig;
+                exp.resolvedMethodImpl = smresolve.member;
             }
         }
 
-        return exp.setType(mresolve.member.resultType.remapTemplateBindings(fullmapper));
-        */
-        assert(false, "Not Implemented -- checkPostfixInvoke");
+        exp.shuffleinfo = arginfo.shuffleinfo;
+        exp.resttype = arginfo.resttype;
+        exp.restinfo = arginfo.restinfo;
+        exp.setcondout = arginfo.setcondout;
+        exp.setuncond = arginfo.setuncond;
+        exp.inout = arginfo.inout;
+        exp.byref = arginfo.byref;
+
+        const rrt = TypeResultWRefVarInfoResult.makeGeneralResult(
+            exp.setType(resolvedrtype.remapTemplateBindings(fullmapper)), false, false,
+            { ttrue: [...arginfo.setcondout], tfalse: [] },
+            [...arginfo.setuncond],
+            [...arginfo.inout, ...arginfo.byref],
+            []
+        );
+
+        if(rrt !== undefined) {
+            return rrt;
+        }
+        else {
+            return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
+        }
     }
 
     private checkPostfixOp(env: TypeEnvironment, exp: PostfixOp, typeinfer: TypeInferContext | undefined): TypeSignature {
@@ -3566,7 +3648,6 @@ class TypeChecker {
     }
 
     private checkCallRefInvokeExpression(env: TypeEnvironment, exp: CallRefInvokeExpression): TypeResultWRefVarInfoResult {
-        /*
         const rcvrtype: TypeSignature = this.checkExpression(env, exp.rcvr, undefined);
 
         let resolvefrom = rcvrtype;
@@ -3577,56 +3658,104 @@ class TypeChecker {
             }
         }
         
-        const mresolve = this.relations.resolveTypeMethodDeclaration(resolvefrom, exp.name, this.constraints);
+        const hastemplate = exp.terms.length > 0;
+        const haslambda = exp.args.args.some((arg) => {
+            if(!(arg instanceof PositionalArgumentValue)) {
+                return false;
+            }
+
+            const eexp = arg.exp;
+            if(eexp instanceof ConstructorLambdaExpression) {
+                return true;
+            }
+            else if(eexp instanceof AccessVariableExpression) {
+                const atype = this.checkAccessVariableExpression(env, eexp);
+                return atype instanceof LambdaTypeSignature;
+            }
+            else {
+                return false;
+            }
+        });
+
+        const mresolve = this.relations.resolveTypeMethodDeclaration(resolvefrom, exp.name, hastemplate, haslambda, true, this.constraints);
         if(mresolve === undefined) {
             this.reportError(exp.sinfo, `Could not find method ${exp.name} in type ${rcvrtype.emit()}`);
-            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
         }
+
+        exp.resolvedDeclType = mresolve.typeinfo.tsig;
+        exp.resolvedMethodDecl = mresolve.member;
 
         if(!mresolve.member.isThisRef) {
             this.reportError(exp.sinfo, `Method ${exp.name} is not a "ref" method and cannot be called with a ref rcvr`);
-            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
         }
 
         const rcvrname = exp.rcvr.srcname;
-        const [vinfo, isparam] = env.resolveLocalVarInfoFromSrcNameWithIsParam(rcvrname);
+        const vinfo = env.resolveLocalVarInfoFromSrcName(rcvrname);
         if(vinfo === undefined) {
             this.reportError(exp.sinfo, `Variable ${rcvrname} is not declared`);
         }
         else {
-            if((!isparam && vinfo.isConst) || (isparam && !vinfo.isRef)) {
+            if(vinfo.vkind === "let") {
                 this.reportError(exp.sinfo, `Variable ${rcvrname} is cannot be updated (is local const or not a ref param)`);
             }
         }
 
-        const refinemap = this.relations.generateTemplateMappingForTypeDecl(mresolve.typeinfo.tsig);
-        const imapper = this.checkTemplateBindingsOnInvoke(exp.sinfo, env, exp.terms, mresolve.member, refinemap);
+        const imapper = this.checkTemplateBindingsOnInvokeSig(exp.sinfo, exp.terms, mresolve.member);
         if(imapper === undefined) {
-            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
         }
+
+        exp.monoinvid = this.invidCtr++;
 
         const fullmapper = TemplateNameMapper.merge(mresolve.typeinfo.mapping, imapper);
-        const arginfo = this.checkArgumentList(exp.sinfo, env, true, exp.args.args, mresolve.member.params, fullmapper);
-        exp.shuffleinfo = arginfo.shuffleinfo;
-        exp.resttype = arginfo.resttype;
-        exp.restinfo = arginfo.restinfo;
+        const arginfo = this.checkArgumentList(exp.sinfo, env, false, exp.args.args, mresolve.member.params, fullmapper);
 
+        let resolvedrtype: TypeSignature = mresolve.member.resultType;
         if(exp.specificResolve !== undefined) {
-            const rrt = this.relations.resolveTypeMethodImplementation(resolvefrom, exp.name, this.constraints);
+            const rrt = this.relations.resolveTypeMethodImplementation(resolvefrom, exp.name, hastemplate, haslambda, true, this.constraints);
             this.checkError(exp.sinfo, rrt === undefined, `Method ${exp.name} is not specifically resolvable from type ${resolvefrom.emit()}`);
 
-            exp.resolvedTrgt = (rrt !== undefined) ? rrt.typeinfo.tsig : undefined;
+            if(rrt !== undefined) {
+                resolvedrtype = rrt.member.resultType;
+                exp.resolvedImplType = rrt.typeinfo.tsig;
+                exp.resolvedMethodImpl = rrt.member;
+            }
         }
         else {
-            const smresolve = this.postfixInvokeStaticResolve(env, mresolve, exp.name, resolvefrom);
+            const smresolve = this.postfixInvokeStaticResolve(env, mresolve, exp.name, hastemplate, haslambda, true, resolvefrom);
             if(smresolve !== undefined) {
-                exp.resolvedTrgt = smresolve.typeinfo.tsig;
+                resolvedrtype = smresolve.member.resultType;
+                exp.resolvedImplType = smresolve.typeinfo.tsig;
+                exp.resolvedMethodImpl = smresolve.member;
             }
         }
 
-        return exp.setType(mresolve.member.resultType.remapTemplateBindings(fullmapper));
-        */
-        assert(false, "Not Implemented -- checkCallRefInvokeExpression");
+        this.checkError(exp.sinfo, !this.relations.areSameTypes(exp.resolvedDeclType, rcvrtype), `Receiver type ${rcvrtype.emit()} does not match method declaration receiver type ${exp.resolvedDeclType.emit()}`);
+
+        exp.shuffleinfo = arginfo.shuffleinfo;
+        exp.resttype = arginfo.resttype;
+        exp.restinfo = arginfo.restinfo;
+        exp.setcondout = arginfo.setcondout;
+        exp.setuncond = arginfo.setuncond;
+        exp.inout = arginfo.inout;
+        exp.byref = arginfo.byref;
+
+        const rrt = TypeResultWRefVarInfoResult.makeGeneralResult(
+            exp.setType(resolvedrtype.remapTemplateBindings(fullmapper)), false, false,
+            { ttrue: [...arginfo.setcondout], tfalse: [] },
+            [...arginfo.setuncond],
+            [...arginfo.inout, ...arginfo.byref],
+            []
+        );
+
+        if(rrt !== undefined) {
+            return rrt;
+        }
+        else {
+            return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
+        }
     }
 
     private checkCallRefVariableExpression(env: TypeEnvironment, exp: CallRefVariableExpression): TypeResultWRefVarInfoResult {

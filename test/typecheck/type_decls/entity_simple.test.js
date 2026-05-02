@@ -54,9 +54,9 @@ describe ("Checker -- entity decl with consts", () => {
 
 describe ("Checker -- entity decl with functions", () => {
     it("should check entity with consts", function () {
-        checkTestFunctionInFile('entity Foo { function foo(): Int { return 3i; } } function main(): Int { return 3i; }');
+        checkTestFunctionInFile('entity Foo { function foo(): Int { return 3i; } } function main(): Int { return Foo::foo(); }');
 
-        checkTestFunctionInFile('entity Foo<T> { function foo(x: T): T { return x; } } function main(): Int { return 3i; }');
-        checkTestFunctionInFile('entity Foo { function foo<T>(x: T): T { return x; } } function main(): Int { return 3i; }');
+        checkTestFunctionInFile('entity Foo<T> { function foo(x: T): T { return x; } } function main(): Int { return Foo<Int>::foo(3i); }');
+        checkTestFunctionInFile('entity Foo { function foo<T>(x: T): T { return x; } } function main(): Int { return Foo::foo<Int>(3i); }');
     });
 });

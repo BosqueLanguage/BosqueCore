@@ -25,13 +25,18 @@ describe ("Checker -- eADT decl", () => {
         checkTestFunctionInFile('datatype Foo of F1 { field f: Int; } F2 { } & { const c: Int = 3i; } function main(): Int { return Foo::c; }'); 
     });
 
-    it.skip("should check eADT function", function () {
+    it("should check eADT function", function () {
         checkTestFunctionInFile('datatype Foo of F1 { field f: Int; } F2 { } & { function foo(): Int { return 3i; } } function main(): Int { return F1::foo(); }'); 
         checkTestFunctionInFile('datatype Foo of F1 { field f: Int; } F2 { } & { function foo(): Int { return 3i; } } function main(): Int { return Foo::foo(); }'); 
     });
+
+    it("should check eADT function w/ multiple", function () {
+        checkTestFunctionInFile('datatype Foo of F1 { field f: Int; function foo<T>(x: T): Option<T> { return some(x); } } F2 { } & { function foo(): Int { return 3i; } } function main(): Int { return F1::foo(); }'); 
+        checkTestFunctionInFile('datatype Foo of F1 { field f: Int; function foo<T>(x: T): Option<T> { return some(x); } } F2 { } & { function foo(): Int { return 3i; } } function main(): Int { return F1::foo<Int>(3i).@some; }'); 
+    });
 });
 
-describe ("Checker -- entity decl inherits", () => {
+describe ("Checker -- eADT decl inherits", () => {
     it("should check simple inherits eADT", function () {
         checkTestFunctionInFile('datatype Foo using { field f: Int; } of F1 { } F2 { }; function main(): Int { return F1{3i}.f; }'); 
         checkTestFunctionInFile('datatype Foo using { field f: Int; invariant $f >= 0i; } of F1 { } F2 { field g: Bool; }; function main(): Bool { return F2{3i, false}.g; }'); 
