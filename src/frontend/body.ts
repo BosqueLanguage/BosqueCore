@@ -1070,7 +1070,11 @@ class CallRefInvokeExpression extends Expression {
     readonly terms: TypeSignature[];
     readonly args: ArgumentList;
 
-    resolvedTrgt: TypeSignature | undefined = undefined;
+    resolvedDeclType: TypeSignature | undefined = undefined;
+    resolvedMethodDecl: MethodDecl | undefined = undefined;
+
+    resolvedImplType: TypeSignature | undefined = undefined;
+    resolvedMethodImpl: MethodDecl | undefined = undefined; //can stay undefined if virtual
 
     shuffleinfo: [number, TypeSignature][] = [];
     resttype: TypeSignature | undefined = undefined;
@@ -1081,7 +1085,7 @@ class CallRefInvokeExpression extends Expression {
     byref: string[] = [];
 
     monoinvid: number | undefined = undefined;
-
+    
     constructor(tag: ExpressionTag, sinfo: SourceInfo, rcvr: AccessVariableExpression, specificResolve: TypeSignature | undefined, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
         super(tag, sinfo);
         this.rcvr = rcvr;

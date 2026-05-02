@@ -3683,6 +3683,9 @@ class TypeChecker {
             return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
         }
 
+        exp.resolvedDeclType = mresolve.typeinfo.tsig;
+        exp.resolvedMethodDecl = mresolve.member;
+
         if(!mresolve.member.isThisRef) {
             this.reportError(exp.sinfo, `Method ${exp.name} is not a "ref" method and cannot be called with a ref rcvr`);
             return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
@@ -3707,20 +3710,29 @@ class TypeChecker {
         exp.monoinvid = this.invidCtr++;
 
         const fullmapper = TemplateNameMapper.merge(mresolve.typeinfo.mapping, imapper);
-        const arginfo = this.checkArgumentList(exp.sinfo, env, true, exp.args.args, mresolve.member.params, fullmapper);
+        const arginfo = this.checkArgumentList(exp.sinfo, env, false, exp.args.args, mresolve.member.params, fullmapper);
 
+        let resolvedrtype: TypeSignature = mresolve.member.resultType;
         if(exp.specificResolve !== undefined) {
             const rrt = this.relations.resolveTypeMethodImplementation(resolvefrom, exp.name, hastemplate, haslambda, true, this.constraints);
             this.checkError(exp.sinfo, rrt === undefined, `Method ${exp.name} is not specifically resolvable from type ${resolvefrom.emit()}`);
 
-            exp.resolvedTrgt = (rrt !== undefined) ? rrt.typeinfo.tsig : undefined;
+            if(rrt !== undefined) {
+                resolvedrtype = rrt.member.resultType;
+                exp.resolvedImplType = rrt.typeinfo.tsig;
+                exp.resolvedMethodImpl = rrt.member;
+            }
         }
         else {
             const smresolve = this.postfixInvokeStaticResolve(env, mresolve, exp.name, hastemplate, haslambda, true, resolvefrom);
             if(smresolve !== undefined) {
-                exp.resolvedTrgt = smresolve.typeinfo.tsig;
+                resolvedrtype = smresolve.member.resultType;
+                exp.resolvedImplType = smresolve.typeinfo.tsig;
+                exp.resolvedMethodImpl = smresolve.member;
             }
         }
+
+        this.checkError(exp.sinfo, !this.relations.areSameTypes(exp.resolvedDeclType, rcvrtype), `Receiver type ${rcvrtype.emit()} does not match method declaration receiver type ${exp.resolvedDeclType.emit()}`);
 
         exp.shuffleinfo = arginfo.shuffleinfo;
         exp.resttype = arginfo.resttype;
@@ -3731,7 +3743,7 @@ class TypeChecker {
         exp.byref = arginfo.byref;
 
         const rrt = TypeResultWRefVarInfoResult.makeGeneralResult(
-            exp.setType(mresolve.member.resultType.remapTemplateBindings(fullmapper)), false, false,
+            exp.setType(resolvedrtype.remapTemplateBindings(fullmapper)), false, false,
             { ttrue: [...arginfo.setcondout], tfalse: [] },
             [...arginfo.setuncond],
             [...arginfo.inout, ...arginfo.byref],

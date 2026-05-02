@@ -685,6 +685,10 @@ class Monomorphizer {
     }
 
     private instantiatePostfixInvoke(exp: PostfixInvoke) {
+        if(exp.specificResolve !== undefined) {
+            this.instantiateTypeSignature(exp.specificResolve, this.currentMapping);
+        }
+
         this.instantiateTypeSignature(exp.resolvedDeclType as TypeSignature, this.currentMapping);
         if(exp.resolvedImplType !== undefined) {
             this.instantiateTypeSignature(exp.resolvedImplType as TypeSignature, this.currentMapping);
@@ -1105,21 +1109,30 @@ class Monomorphizer {
     }
 
     private instantiateCallRefInvokeExpression(exp: CallRefInvokeExpression) {
-        /*
         this.instantiateExpression(exp.rcvr);
 
         if(exp.specificResolve !== undefined) {
             this.instantiateTypeSignature(exp.specificResolve, this.currentMapping);
         }
 
-        this.instantiateArgumentList(exp.args.args);
+        this.instantiateTypeSignature(exp.resolvedDeclType as TypeSignature, this.currentMapping);
+        if(exp.resolvedImplType !== undefined) {
+            this.instantiateTypeSignature(exp.resolvedImplType as TypeSignature, this.currentMapping);
+        }
+
+        const mdd = exp.resolvedMethodDecl as MethodDecl;
+        const lambdas = this.instantiateArgumentList(exp.args.args, mdd.params.map((p) => p.name || "_"), exp.shuffleinfo);
+
+        for(let i = 0; i < exp.terms.length; ++i) {
+            this.instantiateTypeSignature(exp.terms[i], this.currentMapping);
+        }
 
         for(let i = 0; i < exp.shuffleinfo.length; ++i) {
             this.instantiateTypeSignature(exp.shuffleinfo[i][1], this.currentMapping);
         }
         if(exp.restinfo !== undefined) {
             const rparamtype = (this.currentMapping !== undefined ? (exp.resttype as TypeSignature).remapTemplateBindings(this.currentMapping) : (exp.resttype as TypeSignature)) as NominalTypeSignature;
-            let rargs: ArgumentValue[] = [];
+            let rargs: AbstractArgumentValue[] = [];
 
             for(let i = 0; i < exp.restinfo.length; ++i) {
                 this.instantiateTypeSignature(exp.restinfo[i][2], this.currentMapping);
@@ -1129,13 +1142,24 @@ class Monomorphizer {
             this.instantiateCollectionConstructor(rparamtype.decl as AbstractCollectionTypeDecl, rparamtype, rargs);
         }
 
-        this.instantiateTypeSignature(exp.resolvedTrgt as TypeSignature, this.currentMapping);
+        const prepostikey = computeInvokeKeyForTypeMethod(exp.resolvedDeclType as TypeSignature, mdd, exp.terms, lambdas);
 
-        const nns = (exp.resolvedTrgt as NominalTypeSignature).decl.ns;
-        const mm = (exp.resolvedTrgt as NominalTypeSignature).decl.methods.find((m) => m.isThisRef && m.name === exp.name) as MethodDecl;
-        this.instantiateSpecificResolvedMemberMethod(nns, exp.resolvedTrgt as NominalTypeSignature, mm, exp.terms);
-        */
-         assert(false, "Not Implemented -- instantiateCallRefInvokeExpression");
+        //if the decl is not the same as the impl (and the decls has pre/post conditions), then we need to instantiate the decl as well to ensure the pre/post conditions are compiled
+        if(exp.resolvedImplType !== undefined && exp.resolvedDeclType !== undefined && exp.resolvedDeclType.tkeystr !== exp.resolvedImplType.tkeystr) {
+            const rmd = exp.resolvedMethodDecl as MethodDecl;
+            if(rmd.preconditions.length !== 0 || rmd.postconditions.length !== 0) {
+                assert(false, "Not Implemented -- instantiatePostfixInvoke for decl/impl mismatch with pre/post conditions -- abstract or virtual");
+            }
+        }
+
+        if(exp.resolvedMethodImpl !== undefined) {
+            const tterms = this.currentMapping !== undefined ? exp.terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : exp.terms;
+            this.callinstmap.set(exp.monoinvid as number, computeInvokeKeyForTypeMethod(exp.resolvedImplType as TypeSignature, mdd, tterms, lambdas));
+            this.instantiateSpecificResolvedMemberMethod(exp.resolvedImplType as TypeSignature, mdd, tterms, lambdas, prepostikey);
+        }
+        else {
+            assert(false, "Not Implemented -- instantiatePostfixInvoke for virtual");
+        }
     }
 
     private instantiateCallRefVariableExpression(exp: CallRefVariableExpression) {
