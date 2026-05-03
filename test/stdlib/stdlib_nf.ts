@@ -9,7 +9,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 import assert from "node:assert";
 
 import { PackageConfig } from "../../src/frontend/build_decls.js";
-import { generateASMTest } from '../../src/cmd/workflows.js';
+import { generateASMExec } from '../../src/cmd/workflows.js';
 import { Assembly } from '../../src/frontend/assembly.js';
 import { Monomorphizer } from "../../src/backend/asmprocess/monomorphize.js";
 import { ASMToIRConverter } from "../../src/backend/asmprocess/flatten.js";
@@ -18,8 +18,8 @@ import { CPPEmitter } from "../../src/backend/ircemit/cppemit.js";
 const runcppdir = path.join(__dirname, "../../runcpp/");
 
 function buildAssembly(srcfile: string): Assembly | undefined {
-    const userpackage = new PackageConfig(["EXEC_LIBS", "STRIPPED_CORE"], [{ srcpath: "test.bsq", filename: "test.bsq", contents: srcfile }]);
-    const [asm, perrors, terrors] = generateASMTest(userpackage);
+    const userpackage = new PackageConfig(["EXEC_LIBS"], [{ srcpath: "test.bsq", filename: "test.bsq", contents: srcfile }]);
+    const [asm, perrors, terrors] = generateASMExec(userpackage);
 
     if(perrors.length === 0 && terrors.length === 0) {
         return asm;

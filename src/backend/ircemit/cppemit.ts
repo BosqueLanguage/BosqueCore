@@ -1229,7 +1229,12 @@ class CPPEmitter {
     */
 
     private emitBuiltinBody(body: IRBuiltinBody, indent: string | undefined): string {
-        assert(false, "CPPEmitter: need to implement builtin body emission");
+        if(body.builtin === "list_size") {
+            return "xxxx";
+        }
+        else {
+            assert(false, "CPPEmitter: need to implement builtin body emission " + body.builtin);
+        }
     }
 
     private emitHoleBody(body: IRHoleBody, indent: string | undefined): string {

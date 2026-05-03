@@ -8,18 +8,20 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 import assert from "node:assert";
 
-import { PackageConfig } from "../../src/frontend/build_decls.js";
-import { generateASMTest } from '../../src/cmd/workflows.js';
+import { CodeFileInfo, PackageConfig } from "../../src/frontend/build_decls.js";
+import { generateASMExec, workflowLoadCoreSrc } from '../../src/cmd/workflows.js';
 import { Assembly } from '../../src/frontend/assembly.js';
+import { TypeChecker } from '../../src/frontend/checker.js';
 import { Monomorphizer } from "../../src/backend/asmprocess/monomorphize.js";
 import { ASMToIRConverter } from "../../src/backend/asmprocess/flatten.js";
 import { CPPEmitter } from "../../src/backend/ircemit/cppemit.js";
+import { Parser } from "../../src/frontend/parser.js";
 
 const runcppdir = path.join(__dirname, "../../runcpp/");
 
 function buildAssembly(srcfile: string): Assembly | undefined {
-    const userpackage = new PackageConfig(["EXEC_LIBS", "STRIPPED_CORE"], [{ srcpath: "test.bsq", filename: "test.bsq", contents: srcfile }]);
-    const [asm, perrors, terrors] = generateASMTest(userpackage);
+    const userpackage = new PackageConfig(["EXEC_LIBS"], [{ srcpath: "test.bsq", filename: "test.bsq", contents: srcfile }]);
+    const [asm, perrors, terrors] = generateASMExec(userpackage);
 
     if(perrors.length === 0 && terrors.length === 0) {
         return asm;
@@ -118,6 +120,34 @@ function runCPPBuild(code: string, nndir: string): string | undefined {
     return result;
 }
 
+function loadContents(ff: string): Assembly | string {
+    const src = workflowLoadCoreSrc();
+    if(src === undefined) {
+        return "**ERROR**";
+    }
+
+    const maintest: CodeFileInfo[]  = [{srcpath: "test", filename: "test", contents: ff}];
+
+    const rr = Parser.parse(src, maintest, ["EXEC_LIBS", "STRIPPED_CORE"]);
+    return Array.isArray(rr) ? rr[0].message : rr;
+}
+
+function generateFunctionContents(ff: string): string {
+    return `declare namespace Main; ${ff}`;
+}
+
+function checkTestFunctionError(ff: string, msg: string) {
+    const assembly = loadContents(generateFunctionContents(ff));
+
+    if(typeof(assembly) === "string") {
+        assert.equal(assembly, msg);
+        return;
+    }
+
+    const errors = TypeChecker.checkAssembly(assembly);
+    assert.equal(errors[0].msg, msg);
+}
+
 function runNormal(exepath: string, input: string | undefined, expected: string): void {
     try {
         const cmd = input === undefined ? `${exepath}` : `${exepath} '${input}'`;
@@ -166,5 +196,6 @@ function runTestSet(code: string, normalexecs: [string | undefined, string][], e
 }
 
 export {
-    runTestSet
+    runTestSet,
+    checkTestFunctionError
 };
