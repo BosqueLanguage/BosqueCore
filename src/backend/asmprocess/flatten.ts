@@ -3841,7 +3841,7 @@ class ASMToIRConverter {
             const cc = tdecl.consts[i];
             const nsd = this.assembly.tryReduceConstantExpression(cc.value);
         
-            if(nsd !== undefined) {
+            if(nsd === undefined) {
                 irasm.constants.push(this.generateConstMemberDecl(tdecl, cc, tinst));
             }
         }
@@ -4452,7 +4452,8 @@ class ASMToIRConverter {
 
         for(let i = 0; i < decl.consts.length; ++i) {
             const ntcd = this.assembly.resolveNamespaceConstant(decl.fullnamespace, decl.consts[i].name);
-            if(ntcd !== undefined) {
+            
+            if(ntcd === undefined) {
                 irasm.constants.push(this.generateNamespaceConstDecl(decl.fullnamespace, decl.consts[i]));
             }
         }

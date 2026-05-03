@@ -1229,12 +1229,25 @@ class CPPEmitter {
     */
 
     private emitBuiltinBody(body: IRBuiltinBody, indent: string | undefined): string {
-        if(body.builtin === "list_size") {
-            return "xxxx";
+        let bstr: string;
+
+        if(body.builtin === "list_empty") {
+            bstr = "ᐸRuntimeᐳ::XBool::from(l.empty())";
+        }
+        else if(body.builtin === "list_size") {
+            bstr = "ᐸRuntimeᐳ::XNat{(int64_t)l.size()}";
+        }
+        else if(body.builtin === "list_front") {
+            bstr = "l.front()";
+        }
+        else if(body.builtin === "list_back") {
+            bstr = "l.back()";
         }
         else {
             assert(false, "CPPEmitter: need to implement builtin body emission " + body.builtin);
         }
+
+        return `{ return ${bstr}; }`;
     }
 
     private emitHoleBody(body: IRHoleBody, indent: string | undefined): string {

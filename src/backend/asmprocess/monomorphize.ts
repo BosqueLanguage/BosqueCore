@@ -202,40 +202,35 @@ class Monomorphizer {
 
     //Given a namespace function -- instantiate it
     private instantiateNamespaceFunction(ns: NamespaceDeclaration, fdecl: NamespaceFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]) {
-        const tterms = this.currentMapping !== undefined ? terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : terms;
-        const fkey = computeInvokeKeyForNamespaceFunction(ns, fdecl, tterms, lambdas);
+        const fkey = computeInvokeKeyForNamespaceFunction(ns, fdecl, terms, lambdas);
 
         if(this.isAlreadySeenNamespaceFunction(fkey)) {
             return;
         }
 
-        this.pendingNamespaceFunctions.push(new PendingNamespaceFunction(ns, fdecl, tterms, lambdas, fkey));
+        this.pendingNamespaceFunctions.push(new PendingNamespaceFunction(ns, fdecl, terms, lambdas, fkey));
     }
 
     //Given a type function -- instantiate it
     private instantiateTypeFunction(enclosingType: TypeSignature, fdecl: TypeFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]) {
-        const rcvrtype = this.currentMapping !== undefined ? enclosingType.remapTemplateBindings(this.currentMapping) : enclosingType;
-        const tterms = this.currentMapping !== undefined ? terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : terms;
-        const fkey = computeInvokeKeyForTypeFunction(rcvrtype, fdecl, tterms, lambdas);
+        const fkey = computeInvokeKeyForTypeFunction(enclosingType, fdecl, terms, lambdas);
 
         if(this.isAlreadySeenTypeFunction(fkey)) {
             return;
         }
 
-        this.pendingTypeFunctions.push(new PendingTypeFunction(rcvrtype, fdecl, tterms, lambdas, fkey));
+        this.pendingTypeFunctions.push(new PendingTypeFunction(enclosingType, fdecl, terms, lambdas, fkey));
     }
 
     //Given a type method -- instantiate it
     private instantiateSpecificResolvedMemberMethod(enclosingType: TypeSignature, mdecl: MethodDecl, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[], prepostikey: string) {
-        const retype = this.currentMapping !== undefined ? enclosingType.remapTemplateBindings(this.currentMapping) : enclosingType;
-        const tterms = this.currentMapping !== undefined ? terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : terms;
-        const mkey = computeInvokeKeyForTypeMethod(retype, mdecl, tterms, lambdas);
+        const mkey = computeInvokeKeyForTypeMethod(enclosingType, mdecl, terms, lambdas);
 
         if(this.isAlreadySeenMemberMethod(mkey)) {
             return;
         }
 
-        this.pendingTypeMethods.push(new PendingTypeMethod(retype, mdecl, tterms, lambdas, mkey, prepostikey));
+        this.pendingTypeMethods.push(new PendingTypeMethod(enclosingType, mdecl, terms, lambdas, mkey, prepostikey));
     }
 
     private instantiateStringFormatsList(formats: FormatStringComponent[]) {
@@ -617,10 +612,11 @@ class Monomorphizer {
             const fdecl = exp.resolvedFunction as TypeFunctionDecl;
             const lambdas = this.instantiateArgumentList(exp.args.args, fdecl.params.map((p) => p.name || "_"), exp.shuffleinfo);
 
+            const enclosingType = this.currentMapping !== undefined ? (exp.resolvedDeclType as TypeSignature).remapTemplateBindings(this.currentMapping) : (exp.resolvedDeclType as TypeSignature);
             const tterms = this.currentMapping !== undefined ? exp.terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : exp.terms;
-            this.callinstmap.set(exp.monoinvid as number, computeInvokeKeyForTypeFunction(exp.resolvedDeclType as NominalTypeSignature, fdecl, tterms, lambdas));
+            this.callinstmap.set(exp.monoinvid as number, computeInvokeKeyForTypeFunction(enclosingType, fdecl, tterms, lambdas));
 
-            this.instantiateTypeFunction(exp.resolvedDeclType as TypeSignature, fdecl, exp.terms, lambdas);
+            this.instantiateTypeFunction(enclosingType, fdecl, exp.terms, lambdas);
         }
     }
 
@@ -727,9 +723,10 @@ class Monomorphizer {
         }
 
         if(exp.resolvedMethodImpl !== undefined) {
+            const mdecl = this.currentMapping !== undefined ? (exp.resolvedImplType as TypeSignature).remapTemplateBindings(this.currentMapping) : (exp.resolvedDeclType as TypeSignature);
             const tterms = this.currentMapping !== undefined ? exp.terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : exp.terms;
-            this.callinstmap.set(exp.monoinvid as number, computeInvokeKeyForTypeMethod(exp.resolvedImplType as TypeSignature, mdd, tterms, lambdas));
-            this.instantiateSpecificResolvedMemberMethod(exp.resolvedImplType as TypeSignature, mdd, tterms, lambdas, prepostikey);
+            this.callinstmap.set(exp.monoinvid as number, computeInvokeKeyForTypeMethod(mdecl, mdd, tterms, lambdas));
+            this.instantiateSpecificResolvedMemberMethod(mdecl, mdd, tterms, lambdas, prepostikey);
         }
         else {
             assert(false, "Not Implemented -- instantiatePostfixInvoke for virtual");
@@ -1153,9 +1150,10 @@ class Monomorphizer {
         }
 
         if(exp.resolvedMethodImpl !== undefined) {
+            const mdecl = this.currentMapping !== undefined ? (exp.resolvedImplType as TypeSignature).remapTemplateBindings(this.currentMapping) : (exp.resolvedDeclType as TypeSignature);
             const tterms = this.currentMapping !== undefined ? exp.terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : exp.terms;
-            this.callinstmap.set(exp.monoinvid as number, computeInvokeKeyForTypeMethod(exp.resolvedImplType as TypeSignature, mdd, tterms, lambdas));
-            this.instantiateSpecificResolvedMemberMethod(exp.resolvedImplType as TypeSignature, mdd, tterms, lambdas, prepostikey);
+            this.callinstmap.set(exp.monoinvid as number, computeInvokeKeyForTypeMethod(mdecl, mdd, tterms, lambdas));
+            this.instantiateSpecificResolvedMemberMethod(mdecl, mdd, tterms, lambdas, prepostikey);
         }
         else {
             assert(false, "Not Implemented -- instantiatePostfixInvoke for virtual");

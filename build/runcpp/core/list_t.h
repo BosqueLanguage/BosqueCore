@@ -351,6 +351,11 @@ namespace ᐸRuntimeᐳ
             return gethelper(0, *this);
         }
 
+        T back() const
+        {
+            return gethelper(this->size() - 1, *this);
+        }
+
         XList insert(int64_t index, const T& value) const
         {
             if(this->ulist.typeinfo == nullptr) {
