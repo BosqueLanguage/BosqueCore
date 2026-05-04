@@ -1243,6 +1243,9 @@ class CPPEmitter {
         else if(body.builtin === "list_back") {
             bstr = "l.back()";
         }
+        else if(body.builtin === "list_get") {
+            bstr = "l.get(idx.value)";
+        }
         else {
             assert(false, "CPPEmitter: need to implement builtin body emission " + body.builtin);
         }

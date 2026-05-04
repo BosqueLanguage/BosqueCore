@@ -10,9 +10,9 @@ describe ("List -- construct empty and isEmpty", () => {
     });
 
     it("should isSingle list", function () {
-        runTestSet('public function main(z: Int): Bool { return List<Int>{}.isSingle(); }', [['0i', 'false']], []); 
-        runTestSet('public function main(z: Int): Bool { return List<Int>{1i}.isSingle(); }', [['0i', 'true']], []); 
-        runTestSet('public function main(z: Int): Bool { return List<Int>{1i, 2i}.isSingle(); }', [['0i', 'false']], []); 
+        runTestSet('public function main(z: Int): Bool { return List<Int>{}.singleton(); }', [['0i', 'false']], []); 
+        runTestSet('public function main(z: Int): Bool { return List<Int>{1i}.singleton(); }', [['0i', 'true']], []); 
+        runTestSet('public function main(z: Int): Bool { return List<Int>{1i, 2i}.singleton(); }', [['0i', 'false']], []); 
     });
 });
 
