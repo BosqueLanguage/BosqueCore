@@ -12,8 +12,7 @@ namespace ᐸRuntimeᐳ
     enum class RColor : uint64_t
     {
         Red,
-        Black,
-        BBlack
+        Black
     };
 
     template<typename T, int64_t K> class PosRBTreeNode;
