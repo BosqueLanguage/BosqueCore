@@ -16,13 +16,6 @@ namespace ᐸRuntimeᐳ
         BBlack
     };
 
-    //TODO: when this is hooked up to the GC we can drop this and use the page type info instead
-    enum class PosRBTreeTag : uint64_t
-    {
-        Leaf,
-        Node
-    };
-
     template<typename T, int64_t K> class PosRBTreeNode;
 
     template<typename T, int64_t K> 
@@ -228,9 +221,7 @@ namespace ᐸRuntimeᐳ
                 return -1;
             }
 
-            return cur.data.node->color == RColor::Black 
-                ? lc + 1
-                : lc;
+            return (cur.data.node->color == RColor::Black) ? (lc + 1) : lc;
         }
 
         static bool checkRBChildColorInvariant(const PosRBTreeRepr<T, K>& cur)
@@ -240,18 +231,13 @@ namespace ᐸRuntimeᐳ
             }
 
             if(cur.data.node->color == RColor::Red) {
-                const bool islred = cur.data.node->left.typeinfo == s_nodetypeinfo 
-                    ? cur.data.node->left.data.node->color == RColor::Red
-                    : false;
-                const bool isrred = cur.data.node->right.typeinfo == s_nodetypeinfo 
-                    ? cur.data.node->right.data.node->color == RColor::Red
-                    : false;
+                const bool islred = (cur.data.node->left.typeinfo == s_nodetypeinfo) ? (cur.data.node->left.data.node->color == RColor::Red) : false;
+                const bool isrred = (cur.data.node->right.typeinfo == s_nodetypeinfo) ? (cur.data.node->right.data.node->color == RColor::Red) : false;
 
                 return !(islred || isrred);
             }
 
-            return checkRBChildColorInvariant(cur.data.node->left)
-                && checkRBChildColorInvariant(cur.data.node->right);
+            return checkRBChildColorInvariant(cur.data.node->left) && checkRBChildColorInvariant(cur.data.node->right);
         }
 
         static bool checkRBInvariants(const PosRBTree<T, K, TreeID>& tree)
@@ -505,9 +491,6 @@ namespace ᐸRuntimeᐳ
                 res = PosRBTree<T, K, TreeID>(balance(res.repr));
             }
             
-
-            assert(checkRBInvariants(res));
-
             return res;
         }
     };

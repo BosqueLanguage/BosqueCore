@@ -407,5 +407,47 @@ namespace ᐸRuntimeᐳ
                 assert(false); // Not Implemented: allOf for ListTTreeContent
             }
         }
+
+        template<bool SafeSimplePred, typename Pred>
+        XBool noneOf(Pred p) const
+        {
+            assert(this->ulist.typeinfo != nullptr);
+
+            if(this->ulist.typeinfo == s_inlinetypeinfo) {
+                if constexpr (SafeSimplePred) {
+                    static_assert(false, "SafeSimplePred is not supported for ListTInlineContent currently");
+                }
+                else {
+                    auto ddend = this->ulist.data.inlinelist.data.cbegin() + this->ulist.data.inlinelist.count;
+                    auto ii = std::find_if(this->ulist.data.inlinelist.data.cbegin(), ddend, [p](const T& v) { return p(v); });
+                
+                    return XBool::from(ii == ddend);
+                }
+            }
+            else {
+                assert(false); // Not Implemented: noneOf for ListTTreeContent
+            }
+        }
+
+        template<bool SafeSimplePred, typename Pred>
+        XBool someOf(Pred p) const
+        {
+            assert(this->ulist.typeinfo != nullptr);
+
+            if(this->ulist.typeinfo == s_inlinetypeinfo) {
+                if constexpr (SafeSimplePred) {
+                    static_assert(false, "SafeSimplePred is not supported for ListTInlineContent currently");
+                }
+                else {
+                    auto ddend = this->ulist.data.inlinelist.data.cbegin() + this->ulist.data.inlinelist.count;
+                    auto ii = std::find_if(this->ulist.data.inlinelist.data.cbegin(), ddend, [p](const T& v) { return p(v); });
+                
+                    return XBool::from(ii != ddend);
+                }
+            }
+            else {
+                assert(false); // Not Implemented: someOf for ListTTreeContent
+            }
+        }
     };
 }

@@ -1268,11 +1268,13 @@ class CPPEmitter {
         }
         else if(body.builtin === "list_noneof") {
             //TODO: SafeSimplePred
-            bstr = "l.noneOf(p)";
+            const [fn, params, args] = this.getParamInforForLambda(invk, "p");
+            bstr = `l.noneOf<false>([&p](${params}){ return ${fn}(p, ${args}); })`;
         }
         else if(body.builtin === "list_someof") {
             //TODO: SafeSimplePred
-            bstr = "l.someOf(p)";
+            const [fn, params, args] = this.getParamInforForLambda(invk, "p");
+            bstr = `l.someOf<false>([&p](${params}){ return ${fn}(p, ${args}); })`;
         }
         else {
             assert(false, "CPPEmitter: need to implement builtin body emission " + body.builtin);
