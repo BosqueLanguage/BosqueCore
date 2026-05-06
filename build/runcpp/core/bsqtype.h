@@ -48,8 +48,6 @@ namespace ᐸRuntimeᐳ
     {
         Value,
         Ref,
-        ArrayInline,
-        ArrayRef,
         Tagged
     };
 
@@ -82,8 +80,7 @@ namespace ᐸRuntimeᐳ
         uint32_t bytesize;
         uint32_t slotcount;
         LayoutTag tag;
-        uint16_t slotct; //For array entries this is the number of slots each entry takes (so don't scan more than eslotct * size slots)
-
+        
         const char* ptrmask; // NULL is for leaf values or structs
 
         const uint32_t* supertypes;

@@ -48,8 +48,6 @@ class FieldOffsetInfo {
 enum LayoutTag {
     Value  = "Value",
     Ref    = "Ref",
-    ArrayInline = "ArrayInline",
-    ArrayRef = "ArrayRef",
     Tagged = "Tagged"
 }
 
@@ -118,7 +116,7 @@ class TypeInfoManager {
 
     generateAllocatorNameForTypeKeyGeneral(tkey: string): string | undefined {
         const tii = this.getTypeInfo(tkey);
-        if(tii.tag !== LayoutTag.Ref && tii.tag !== LayoutTag.ArrayRef) {
+        if(tii.tag !== LayoutTag.Ref) {
             return undefined;
         }
 
@@ -157,7 +155,7 @@ class TypeInfoManager {
 
     generateAllocatorNameForTypeKeyGeneralMapEntry(tkey: string): string | undefined {
         const tii = this.getTypeInfo(tkey);
-        if(tii.tag !== LayoutTag.Ref && tii.tag !== LayoutTag.ArrayRef) {
+        if(tii.tag !== LayoutTag.Ref) {
             return undefined;
         }
 
@@ -517,7 +515,7 @@ class TypeInfoManager {
         timgr.addTypeInfo("String", new TypeInfo("String", new IRNominalTypeSignature("String"), 18, 40, 5, LayoutTag.Tagged, 0, "20000"));
 
         timgr.addTypeInfo("ByteBufferEntry", new TypeInfo("ByteBufferEntry", new IRNominalTypeSignature("ByteBufferEntry"), 19, 512, 64, LayoutTag.Ref, 0, undefined));
-        timgr.addTypeInfo("ByteBufferBlock", new TypeInfo("ByteBufferBlock", new IRNominalTypeSignature("ByteBufferBlock"), 20, 512, 64, LayoutTag.ArrayRef, 1, "1111111111111111111111111111111111111111111111111111111111111111"));
+        timgr.addTypeInfo("ByteBufferBlock", new TypeInfo("ByteBufferBlock", new IRNominalTypeSignature("ByteBufferBlock"), 20, 512, 64, LayoutTag.Ref, 1, "1111111111111111111111111111111111111111111111111111111111111111"));
         timgr.addTypeInfo("ByteBuffer", new TypeInfo("ByteBuffer", new IRNominalTypeSignature("ByteBuffer"), 21, 24, 3, LayoutTag.Value, 0, "200"));
 
         timgr.addTypeInfo("UUIDV4", new TypeInfo("UUIDV4", new IRNominalTypeSignature("UUIDV4"), 22, 16, 2, LayoutTag.Value, 0, undefined));

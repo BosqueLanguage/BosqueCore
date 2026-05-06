@@ -134,7 +134,7 @@ namespace ᐸRuntimeᐳ
             id,
             sizeof(ListTInlineContent<T>),
             byteSizeToSlotCount(sizeof(ListTInlineContent<T>)),
-            LayoutTag::ArrayInline,
+            LayoutTag::Value,
             tslots,
             mask,
             nullptr,

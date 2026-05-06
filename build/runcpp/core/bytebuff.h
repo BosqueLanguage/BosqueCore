@@ -83,7 +83,7 @@ namespace ᐸRuntimeᐳ
         WELL_KNOWN_TYPE_ID_BYTEBUFFERBLOCK,
         sizeof(ByteBufferBlock),
         byteSizeToSlotCount(sizeof(ByteBufferBlock)),
-        LayoutTag::ArrayRef,
+        LayoutTag::Ref,
         1,
         "1111111111111111111111111111111111111111111111111111111111111111",
         nullptr,
