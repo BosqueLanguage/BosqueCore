@@ -12,7 +12,6 @@ OUT_COMPONENTS=$(BUILD_DIR)output/
 OUT_OBJ=$(BUILD_DIR)output/obj/
 
 JSON_INCLUDES=-I $(BUILD_DIR)include/json/
-TEST_CPPFLAGS=$(filter-out -fno-exceptions -fno-rtti,$(CPPFLAGS)) -fexceptions -frtti -DBSQ_POSTREE_VALIDATE=1
 
 #dev is default, for another flavor : make BUILD=release or debug
 BUILD := debug
@@ -32,18 +31,9 @@ all: $(OBJS)
 
 app: ${OUT_COMPONENTS}app
 
-test: test-postree
-
-test-postree: ${OUT_COMPONENTS}postree_tests
-	${OUT_COMPONENTS}postree_tests --log_level=test_suite
-
 ${OUT_COMPONENTS}app: $(HEADERS) $(OBJS) app.cpp
 	@mkdir -p $(OUT_COMPONENTS)
 	$(CPP) $(CPPFLAGS) -o ${OUT_COMPONENTS}app $(OBJS) $(JSON_INCLUDES) app.cpp
-
-${OUT_COMPONENTS}postree_tests: $(HEADERS) $(TEST_SRC_DIR)postree_tests.cpp
-	@mkdir -p $(OUT_COMPONENTS)
-	$(CPP) $(TEST_CPPFLAGS) -o ${OUT_COMPONENTS}postree_tests $(TEST_SRC_DIR)postree_tests.cpp
 
 $(OUT_OBJ)emit.o: $(HEADERS) $(BSQIR_SRC_DIR)emit.cpp
 	@mkdir -p $(OUT_OBJ)

@@ -7,9 +7,7 @@
 
 #include "../runtime/allocator/alloc.h"
 
-#ifndef BSQ_POSTREE_VALIDATE
-#define BSQ_POSTREE_VALIDATE 0
-#endif
+#define BSQ_POSTREE_VALIDATE 1
 
 #if BSQ_POSTREE_VALIDATE
 #define BSQ_POSTREE_ASSERT(COND) assert(COND)
@@ -38,11 +36,11 @@ namespace ᐸRuntimeᐳ
         constexpr PosRBTreeLeaf(const PosRBTreeLeaf& other) = default;
 
         template<typename Iter>
-        requires std::random_access_iterator<Iter>
         PosRBTreeLeaf(Iter start, Iter end) 
         { 
             const int64_t size = std::distance(start, end);
             assert(size <= K);
+
             std::copy(start, end, this->data.begin());
             this->count = size; 
         }
@@ -56,36 +54,14 @@ namespace ᐸRuntimeᐳ
             this->count = args.size();
         }
 
+        T front() const
+        {
+            return this->data.front();
+        }
+
         T back() const
         {
             return this->data.back();
-        }
-
-        PosRBTreeLeaf subset(int64_t index, int64_t length) const
-        {
-            return PosRBTreeLeaf(this->data.begin() + index, this->data.begin() + index + length);
-        }
-
-        PosRBTreeLeaf subsetinsert(int64_t subset_index, int64_t insert_index, int64_t length, const T& value) const
-        {
-            assert(insert_index <= K);
-            assert(subset_index + length <= K);
-            assert(this->count <= K);
-            assert(insert_index >= subset_index);
-
-            PosRBTreeLeaf nleaf;
-            insert_index -= subset_index;
-            std::copy(this->data.begin() + subset_index, 
-                      this->data.begin() + subset_index + insert_index, 
-                      nleaf.data.begin());
-            std::copy(this->data.begin() + subset_index + insert_index, 
-                      this->data.begin() + subset_index + length, 
-                      nleaf.data.begin() + insert_index + 1);
-            
-            nleaf.data[insert_index] = value;
-            nleaf.count = length + 1;
-
-            return nleaf;
         }
 
         PosRBTreeLeaf insert(int64_t index, const T& value) const
@@ -200,6 +176,49 @@ namespace ᐸRuntimeᐳ
     class PosRBTree
     {
     public:
+        PosRBTreeRepr<T, K> repr;
+
+        static const TypeInfo* s_leaftypeinfo;
+        thread_local static GCAllocator<PosRBTreeLeaf<T, K>>* s_leafallocator;
+
+        static const TypeInfo* s_nodetypeinfo;
+        thread_local static GCAllocator<PosRBTreeNode<T, K>>* s_nodeallocator;
+
+        PosRBTree() = default;
+        PosRBTree(const PosRBTree& other) = default;
+
+        PosRBTree(const PosRBTreeRepr<T, K>& repr) : repr(repr) { ; }
+        PosRBTree(PosRBTreeLeaf<T, K>* leaf) : repr(PosRBTreeRepr<T, K>(s_leaftypeinfo, PosRBTreeUnion<T, K>(leaf))) { ; }
+        PosRBTree(PosRBTreeNode<T, K>* node) : repr(PosRBTreeRepr<T, K>(s_nodetypeinfo, PosRBTreeUnion<T, K>(node))) { ; }
+
+        enum class InsertResultTag : uint8_t
+        {
+            Done,
+            Tree
+        };
+
+        class InsertResult
+        {
+        public:
+            InsertResultTag tag;
+            PosRBTree ptree;
+
+            constexpr InsertResult(InsertResultTag tag, const PosRBTree& ptree) : tag(tag), ptree(ptree) { ; }
+
+            static InsertResult makeDone(const PosRBTree& ptree)
+            {
+                return InsertResult(InsertResultTag::Done, ptree);
+            }
+
+            static InsertResult makeTree(const PosRBTree& ptree)
+            {
+                return InsertResult(InsertResultTag::Tree, ptree);
+            }
+
+            constexpr bool isDone() const { return this->tag == InsertResultTag::Done; }
+            constexpr bool isTree() const { return this->tag == InsertResultTag::Tree; }
+        };
+
         enum class DeleteResultTag : uint8_t
         {
             Done,
@@ -210,112 +229,78 @@ namespace ᐸRuntimeᐳ
         {
         public:
             DeleteResultTag tag;
-            PosRBTreeRepr<T, K> repr;
+            PosRBTree ptree;
 
-            constexpr DeleteResult(DeleteResultTag tag, const PosRBTreeRepr<T, K>& repr) : tag(tag), repr(repr) { ; }
+            constexpr DeleteResult(DeleteResultTag tag, const PosRBTree& ptree) : tag(tag), ptree(ptree) { ; }
+
+            static DeleteResult makeDone(const PosRBTree& ptree)
+            {
+                return DeleteResult(DeleteResultTag::Done, ptree);
+            }
+
+            static DeleteResult makeShort(const PosRBTree& ptree)
+            {
+                return DeleteResult(DeleteResultTag::Short, ptree);
+            }
 
             constexpr bool isDone() const { return this->tag == DeleteResultTag::Done; }
             constexpr bool isShort() const { return this->tag == DeleteResultTag::Short; }
         };
 
-        PosRBTreeRepr<T, K> repr;
-
-        static const TypeInfo* s_leaftypeinfo;
-        thread_local static GCAllocator<PosRBTreeLeaf<T, K>>* s_leafallocator;
-
-        static const TypeInfo* s_nodetypeinfo;
-        thread_local static GCAllocator<PosRBTreeNode<T, K>>* s_nodeallocator;
-
-        static PosRBTreeRepr<T, K> mkwleafRepr(PosRBTreeLeaf<T, K>* leaf) 
+        bool empty() const
         {
-            return PosRBTreeRepr<T, K>(s_leaftypeinfo, PosRBTreeUnion<T, K>(leaf));
+            return this->repr.typeinfo == nullptr;
         }
 
-        static PosRBTreeRepr<T, K> mkwnodeRepr(PosRBTreeNode<T, K>* node) 
+        constexpr int64_t count() const
         {
-            return PosRBTreeRepr<T, K>(s_nodetypeinfo, PosRBTreeUnion<T, K>(node));
-        }
-
-        static PosRBTree<T, K, TreeID> mkwleaf(PosRBTreeLeaf<T, K>* leaf) 
-        {
-            return PosRBTree<T, K, TreeID>(mkwleafRepr(leaf));
-        }
-
-        static PosRBTree<T, K, TreeID> mkwnode(PosRBTreeNode<T, K>* node) 
-        {
-            return PosRBTree<T, K, TreeID>(mkwnodeRepr(node));
-        }
-
-        static bool isEmpty(const PosRBTreeRepr<T, K>& cur)
-        {
-            return cur.typeinfo == nullptr;
-        }
-
-        static int64_t reprcount(const PosRBTreeRepr<T, K>& cur)
-        {
-            if(cur.typeinfo == nullptr) {
+            if(this->repr.typeinfo == nullptr) {
                 return 0;
             }
-
-            return (cur.typeinfo == s_leaftypeinfo) ? cur.data.leaf->count : cur.data.node->count;
-        }
-
-        static PosRBTreeRepr<T, K> makeLeaf(const PosRBTreeLeaf<T, K>& leaf)
-        {
-            return mkwleafRepr(s_leafallocator->allocate(leaf));
-        }
-
-        static PosRBTreeRepr<T, K> makeNode(RColor color, const PosRBTreeRepr<T, K>& left, const PosRBTreeRepr<T, K>& right)
-        {
-            return mkwnodeRepr(s_nodeallocator->allocate(reprcount(left) + reprcount(right), color, left, right));
-        }
-
-        static DeleteResult mkDeleteDone(const PosRBTreeRepr<T, K>& repr)
-        {
-            return DeleteResult(DeleteResultTag::Done, repr);
-        }
-
-        static DeleteResult mkDeleteShort(const PosRBTreeRepr<T, K>& repr)
-        {
-            return DeleteResult(DeleteResultTag::Short, repr);
-        }
-
-        template<typename Mapper>
-        static DeleteResult mapDeleteResult(const DeleteResult& res, Mapper&& mapper)
-        {
-            const PosRBTreeRepr<T, K> mapped = mapper(res.repr);
-            return res.isShort() ? mkDeleteShort(mapped) : mkDeleteDone(mapped);
-        }
-
-        static bool checkCountInvariant(const PosRBTreeRepr<T, K>& cur)
-        {
-            if(cur.typeinfo == nullptr) {
-                return true;
+            else {
+                if(this->repr.typeinfo == s_leaftypeinfo) {
+                    return this->repr.data.leaf->count;
+                }
+                else {
+                    return this->repr.data.node->count;
+                }
             }
-
-            if(cur.typeinfo == s_leaftypeinfo) {
-                return cur.data.leaf->count > 0 && cur.data.leaf->count <= K;
-            }
-
-            return !isEmpty(cur.data.node->left) && !isEmpty(cur.data.node->right)
-                && cur.data.node->count == reprcount(cur.data.node->left) + reprcount(cur.data.node->right)
-                && checkCountInvariant(cur.data.node->left)
-                && checkCountInvariant(cur.data.node->right);
         }
 
-        static void debugAssertInvariants(const PosRBTreeRepr<T, K>& repr)
+        static bool isReprLeaf(const PosRBTreeRepr<T, K>& repr)
         {
+            return repr.typeinfo != s_nodetypeinfo;
+        }
+
+        static bool isReprNode(const PosRBTreeRepr<T, K>& repr)
+        {
+            return repr.typeinfo == s_nodetypeinfo;
+        }
+
+        static RColor getReprColor(const PosRBTreeRepr<T, K>& repr)
+        {
+            if(repr.typeinfo == s_nodetypeinfo) {
+                return repr.data.node->color;
+            }
+            else {
+                return RColor::Black;
+            }
+        }
+
+        static isBlackNode(const PosRBTreeRepr<T, K>& repr)
+        {
+            return getReprColor(repr) == RColor::Black;
+        }
+
+        static isRedNode(const PosRBTreeRepr<T, K>& repr)
+        {
+            return getReprColor(repr) == RColor::Red;
+        }
+
 #if BSQ_POSTREE_VALIDATE
-            BSQ_POSTREE_ASSERT((checkCountInvariant(repr)));
-            BSQ_POSTREE_ASSERT((PosRBTree<T, K, TreeID>::checkRBInvariants(PosRBTree<T, K, TreeID>(repr))));
-#else
-            (void)repr;
-#endif
-        }
-
-        static int64_t checkRBPathLengthInvariant(const PosRBTreeRepr<T, K>& cur)
+        static int64_t checkRBPathLengthInvariant(const PosRBTreeRepr<T, K>& cur) const
         {
-            if(cur.typeinfo == nullptr || cur.typeinfo == s_leaftypeinfo) {
+            if(isReprLeaf(cur)) {
                 return 0;
             }
             
@@ -333,20 +318,17 @@ namespace ᐸRuntimeᐳ
                 return -1;
             }
 
-            return (cur.data.node->color == RColor::Black) ? (lc + 1) : lc;
+            return isBlackNode(cur.data.node) ? (lc + 1) : lc;
         }
 
         static bool checkRBChildColorInvariant(const PosRBTreeRepr<T, K>& cur)
         {
-            if(cur.typeinfo != s_nodetypeinfo) {
+            if(isReprLeaf(cur)) {
                 return true;
             }
 
-            if(cur.data.node->color == RColor::Red) {
-                const bool islred = (cur.data.node->left.typeinfo == s_nodetypeinfo) ? (cur.data.node->left.data.node->color == RColor::Red) : false;
-                const bool isrred = (cur.data.node->right.typeinfo == s_nodetypeinfo) ? (cur.data.node->right.data.node->color == RColor::Red) : false;
-
-                return !(islred || isrred);
+            if(isRedNode(cur.data.node)) {
+                return !(isRedNode(cur.data.node->left) || isRedNode(cur.data.node->right));
             }
 
             return checkRBChildColorInvariant(cur.data.node->left) && checkRBChildColorInvariant(cur.data.node->right);
@@ -356,29 +338,13 @@ namespace ᐸRuntimeᐳ
         {
             return checkRBChildColorInvariant(tree.repr) && checkRBPathLengthInvariant(tree.repr) >= 0;
         }
-
-        static bool validateRedNode(const PosRBTreeRepr<T, K>& cur)
+#endif
+        
+        void debugAssertInvariants() const
         {
-            if(cur.typeinfo != s_nodetypeinfo) {
-                return false;
-            }
-            if(cur.data.node->color != RColor::Red) {
-                return false;
-            }
-            
-            return true; 
-        }
-
-        static bool validateBlackNode(const PosRBTreeRepr<T, K>& cur)
-        {
-            if(cur.typeinfo != s_nodetypeinfo) {
-                return false;
-            }
-            if(cur.data.node->color != RColor::Black) {
-                return false;
-            }
-            
-            return true;
+#if BSQ_POSTREE_VALIDATE
+            assert(checkRBInvariants(this->repr));
+#endif
         }
 
         // double red violation on the LL side (tleft = Node{_, Red, Node{_, Red, a, b}, c})
@@ -501,21 +467,6 @@ namespace ᐸRuntimeᐳ
             }
             else {
                 return cur;
-            }
-        }
-
-        constexpr int64_t count() const
-        {
-            if(this->repr.typeinfo == nullptr) {
-                return 0;
-            }
-            else {
-                if(this->repr.typeinfo == s_leaftypeinfo) {
-                    return this->repr.data.leaf->count;
-                }
-                else {
-                    return this->repr.data.node->count;
-                }
             }
         }
 

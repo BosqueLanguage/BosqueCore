@@ -95,6 +95,7 @@ namespace ᐸRuntimeᐳ
         {
             return ListTTreeContent{ postree };
         } 
+        
         static ListTTreeContent fromInlineList(const ListTInlineContent<T>& inlcnt)
         {
             PosRBTreeLeaf<T, LIST_T_MAX_LEAF_SIZE>* leaf = PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::s_leafallocator->allocate(inlcnt.data.cbegin(), inlcnt.data.cend());
