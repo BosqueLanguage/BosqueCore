@@ -32,10 +32,12 @@ namespace ᐸRuntimeᐳ
 
         constexpr PosRBTreeData(const PosRBTreeData& other) = default;
 
+        /** Constructor when we have a range of values that follow  **/
         template<typename Iter>
         PosRBTreeData(Iter start, Iter end)
         {            
             const int64_t size = std::distance(start, end);
+            assert(size != 0);
             assert(size <= K);
 
             uint64_t* rawdata = reinterpret_cast<uint64_t*>(this->data.data()); 
@@ -43,6 +45,85 @@ namespace ᐸRuntimeᐳ
 
             std::copy(start, end, this->data.begin());
             this->count = size; 
+        }
+
+        /** Constructor when we have a single value at position 0 and a range of values that follow -- pushFront style constructor  **/
+        template<typename Iter, bool isfull>
+        PosRBTreeData(const T& ival, Iter rstart, Iter rend)
+        {   
+            assert(1 + std::distance(rstart, rend) <= K);    
+            assert(!isfull || (1 + std::distance(rstart, rend) == K));
+            
+            if constexpr (!isfull) {
+                uint64_t* rawdata = reinterpret_cast<uint64_t*>(this->data.data()); 
+                std::fill(rawdata, rawdata + K, 0);
+            }
+
+            uint32_t size;
+            if constexpr (isfull) {
+                size = K;
+            }
+            else {
+                size = 1 + std::distance(rstart, rend);
+            }
+
+            this->data[0] = ival;
+            std::copy(rstart, rend, this->data.begin() + 1);
+
+            this->count = size;
+        }
+
+        /** Constructor when we have a range of values and a single value at the end -- pushBack style constructor  **/
+        template<typename Iter, bool isfull>
+        PosRBTreeData(Iter lstart, Iter lend, const T& ival)
+        {          
+            assert(1 + std::distance(lstart, lend) <= K);  
+            assert(!isfull || (std::distance(lstart, lend) + 1 == K));
+            
+            if constexpr (!isfull) {
+                uint64_t* rawdata = reinterpret_cast<uint64_t*>(this->data.data()); 
+                std::fill(rawdata, rawdata + K, 0);
+            }
+
+            uint32_t size;
+            if constexpr (isfull) {
+                size = K;
+            }
+            else {
+                size = std::distance(lstart, lend) + 1;
+            }
+
+            std::copy(lstart, lend, this->data.begin());
+            this->data[std::distance(lstart, lend)] = ival;
+
+            this->count = size;
+        }
+
+        /** Constructor when we have a range of values, a single value, and then another range of values -- insert middle style constructor  **/
+        template<typename Iter, bool isfull>
+        PosRBTreeData(Iter lstart, Iter lend, const T& ival, Iter rstart, Iter rend)
+        {
+            assert(std::distance(lstart, lend) + 1 + std::distance(rstart, rend) <= K);
+            assert(!isfull || (std::distance(lstart, lend) + 1 + std::distance(rstart, rend) == K));
+            
+            if constexpr (!isfull) {
+                uint64_t* rawdata = reinterpret_cast<uint64_t*>(this->data.data()); 
+                std::fill(rawdata, rawdata + K, 0);
+            }
+
+            uint32_t size;
+            if constexpr (isfull) {
+                size = K;
+            }
+            else {
+                size = std::distance(lstart, lend) + 1 + std::distance(rstart, rend);
+            }
+
+            std::copy(lstart, lend, this->data.begin());
+            this->data[std::distance(lstart, lend)] = ival;
+            std::copy(rstart, rend, this->data.begin() + std::distance(lstart, lend) + 1);
+
+            this->count = size;
         }
 
         PosRBTreeData(std::initializer_list<T> args)
@@ -74,13 +155,75 @@ namespace ᐸRuntimeᐳ
 
         PosRBTreeData insert(int64_t index, const T& value) const
         {
-            assert(index < K);
+            assert((0 < index) & (index < K));
             assert(this->count < K);
-          
+
+            xxxx;
+            if(index == 0) {
+                return PosRBTreeData(std::initializer_list<T>{value}, this->data.cbegin(), this->data.cbegin() + this->count);
+            }
+            else if(index == this->count) {
+                PosRBTreeData nleaf;
+                std::copy(this->data.cbegin(), this->data.cbegin() + this->count, nleaf.data.begin());
+                nleaf.data[this->count] = value;
+                nleaf.count = this->count + 1;
+
+                return nleaf;
+            }
             PosRBTreeData nleaf;
-            if(index > 0) {
+            if(0 < index) {
                 std::copy(this->data.cbegin(), this->data.cbegin() + index, nleaf.data.begin());
             }
+
+            if(index < this->count) {
+                std::copy(this->data.cbegin() + index, this->data.cbegin() + this->count, nleaf.data.begin() + index + 1);               
+            }
+
+            nleaf.data[index] = value;
+            nleaf.count = this->count + 1;
+
+            return nleaf;
+        }
+
+        PosRBTreeData insertSpillLeft(int64_t index, const T& value, T& spill) const
+        {
+            assert((0 <= index) & (index < K));
+            assert(this->count == K);
+          
+            if(index == 0) {
+                spill = value;
+                return *this;
+            }
+            else {
+                spill = this->data.front();
+
+                PosRBTreeData nleaf;
+                std::copy(this->data.cbegin() + 1, this->data.cbegin() + index, nleaf.data.begin());
+                std::copy(this->data.cbegin() + index + 1, this->data.cend(), nleaf.data.begin() + index + 1);               
+                
+                nleaf.data[index] = value;
+                nleaf.count = K;
+
+                return nleaf;
+            }
+        }
+
+        PosRBTreeData insertSpillRight(int64_t index, const T& value, T& spill) const
+        {
+            assert((0 < index) & (index <= K));
+            assert(this->count == K);
+          
+            if(index == K) {
+                spill = value;
+                return *this;
+            }
+            else {
+                spill = this->data.back();
+
+                PosRBTreeData nleaf;
+                if(index > 0) {
+                    std::copy(this->data.cbegin(), this->data.cbegin() + index, nleaf.data.begin());
+                }
 
             if(index < this->count) {
                 std::copy(this->data.cbegin() + index, this->data.cbegin() + this->count, nleaf.data.begin() + index + 1);               
@@ -205,7 +348,7 @@ namespace ᐸRuntimeᐳ
             }
 
             //Must check index bounds before calling this function! -- range can be [0, count] where (inclusive) count is the "one past the end" index
-            PosRBTreeNode* buildToIndex(int64_t index, PosRBTreeNode* root)
+            std::pair<PosRBTreeNode*, int64_t> buildToIndex(int64_t index, PosRBTreeNode* root)
             {
                 PosRBTreeNode* cur = root;
                 int64_t idx = index;
@@ -214,7 +357,7 @@ namespace ᐸRuntimeᐳ
                     const int64_t tmax = lmax + cur->data.count ((cur->right != nullptr) ? 0 : 1); //if we have no right child but index is 1 past end, then we are the node to insert (or look) at
 
                     if(lmax <= idx && idx < tmax) {
-                        return cur;
+                        return std::make_pair(cur, idx - lmax);
                     }
 
                     if(idx < lmax) {
@@ -446,6 +589,15 @@ namespace ᐸRuntimeᐳ
             return allocator.allocate(node->color, node->left, node->right, ndata);
         }
 
+        static PosRBTreeNode* insert_spill(PosRBTreeNode* node, int64_t index, const T& value, GCAllocator<PosRBTreeNode>& allocator)
+        {
+            if(node == nullptr) {
+                return allocator.allocate(RColor::Red, nullptr, nullptr, PosRBTreeData<T, K>{value});
+            }
+
+
+        }
+
         PosRBTreeNode* insert(int64_t index, const T& value, GCAllocator<PosRBTreeNode>& allocator)
         {
             TreeNodePath path;
@@ -462,9 +614,16 @@ namespace ᐸRuntimeᐳ
             }
             else {
                 // we need to split the leaf and add a new node -- must do rebalance
-
                 InsertResult res;
-                if(opnode->left == nullptr || opnode->right == nullptr) {
+                if(index == 0) {
+                    //then spill the insert element down to the left
+                    xxxx;
+                }
+                else if(index == K) { 
+                    //then spill the insert element down to the right
+                    xxxx;
+                }
+                else if(opnode->left == nullptr) {
                     //create a new leaf
                     if(opnode->left == nullptr) {
                         xxxx;
@@ -475,14 +634,7 @@ namespace ᐸRuntimeᐳ
                 }
                 else {
                     //evict an element down the tree
-                    if(index == 0) {
-                        //then spill the insert element down to the left
-                        xxxx;
-                    }
-                    else if(index == K) { 
-                        //then spill the insert element down to the right
-                        xxxx;
-                    }
+                    
                     else {
                         if(opnode->left->count < opnode->right->count) {
                              //evict to left
