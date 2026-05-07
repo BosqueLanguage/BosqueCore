@@ -146,9 +146,15 @@ namespace ᐸRuntimeᐳ
 
             constexpr bool isDone() const { return this->tag == InsertResultTag::Done; }
             constexpr bool isTree() const { return this->tag == InsertResultTag::Tree; }
+
+            template<typename Fn>
+            InsertResult apply(Fn fn) const
+            {
+                return InsertResult{this->tag, fn(this->tnode)};
+            }
         };
 
-        enum class DeleteResultTag : uint8_t
+        enum class DeleteResultTag
         {
             Done,
             Short
@@ -167,11 +173,17 @@ namespace ᐸRuntimeᐳ
             constexpr bool isShort() const { return this->tag == DeleteResultTag::Short; }
         };
 
+        enum class PathDirection
+        {
+            Left,
+            Right
+        };
+
         class TreeNodePath
         {
         public:
             int64_t top;
-            std::array<PosRBTreeNode*, 42> nodes;
+            std::array<std::pair<PathDirection, PosRBTreeNode*>, 32> nodes;
 
             TreeNodePath() : top(-1) { ; }
 
@@ -180,42 +192,42 @@ namespace ᐸRuntimeᐳ
                 return this->top == -1; 
             }
 
-            void push(PosRBTreeNode* node) 
+            void push(PathDirection direction, PosRBTreeNode* node) 
             {
-                assert(this->top < 41);
-                this->nodes[++this->top] = node;
+                assert(this->top < 31);
+                this->nodes[++this->top] = std::make_pair(direction, node);
             }
 
-            PosRBTreeNode* pop() 
+            std::pair<PathDirection, PosRBTreeNode*> pop() 
             {
                 assert(this->top >= 0);
                 return this->nodes[this->top--];
             }
 
+            //Must check index bounds before calling this function! -- range can be [0, count] where (inclusive) count is the "one past the end" index
             PosRBTreeNode* buildToIndex(int64_t index, PosRBTreeNode* root)
             {
                 PosRBTreeNode* cur = root;
                 int64_t idx = index;
-                while(cur != nullptr) {
+                while(true) {
                     const int64_t lmax = (cur->left != nullptr) ? cur->left->count : 0;
-                    const int64_t tmax = lmax + cur->data.count;
+                    const int64_t tmax = lmax + cur->data.count ((cur->right != nullptr) ? 0 : 1); //if we have no right child but index is 1 past end, then we are the node to insert (or look) at
 
                     if(lmax <= idx && idx < tmax) {
                         return cur;
                     }
 
-                    this->push(cur);
                     if(idx < lmax) {
+                        this->push(PathDirection::Left, cur);
                         cur = cur->left;
                     }
                     else {
                         idx -= tmax;
+
+                        this->push(PathDirection::Right, cur);
                         cur = cur->right;
                     }
                 }
-
-                assert(false); // index out of bounds
-                return nullptr;
             }
         };
 
@@ -284,7 +296,7 @@ namespace ᐸRuntimeᐳ
         }
 
         // double red violation on the LL side  (B (R (R a x b) y c) z d) = T (R (B a x b) y (B c z d))
-        static bool balancehelper_RR_LL(const PosRBTreeNode* cur, InsertResult& res, GCAllocator<PosRBTreeNode>& allocator)
+        static bool balancehelper_RR_LL(PosRBTreeNode* cur, InsertResult& res, GCAllocator<PosRBTreeNode>& allocator)
         {
             const PosRBTreeNode* l  = cur->left;
             if(!isRedNode(l)) {
@@ -307,7 +319,7 @@ namespace ᐸRuntimeᐳ
         }
 
         // double red violation on the LR side  (B (R a x (R b y c)) z d) = T (R (B a x b) y (B c z d))
-        static bool balancehelper_RR_LR(const PosRBTreeNode* cur, InsertResult& res, GCAllocator<PosRBTreeNode>& allocator)
+        static bool balancehelper_RR_LR(PosRBTreeNode* cur, InsertResult& res, GCAllocator<PosRBTreeNode>& allocator)
         {
             const PosRBTreeNode* l  = cur->left;
             if(!isRedNode(l)) {
@@ -330,7 +342,7 @@ namespace ᐸRuntimeᐳ
         }
 
         // double red violation on the RL side  (B a x (R (R b y c) z d)) = T (R (B a x b) y (B c z d))
-        static bool balancehelper_RR_RL(const PosRBTreeNode* cur, InsertResult& res, GCAllocator<PosRBTreeNode>& allocator)
+        static bool balancehelper_RR_RL(PosRBTreeNode* cur, InsertResult& res, GCAllocator<PosRBTreeNode>& allocator)
         {
             const PosRBTreeNode* r  = cur->right;
             if(!isRedNode(r)) {
@@ -353,7 +365,7 @@ namespace ᐸRuntimeᐳ
         }
 
         // double red violation on the RR side balance (B a x (R b y (R c z d))) = T (R (B a x b) y (B c z d))
-        static bool balancehelper_RR_RR(const PosRBTreeNode* cur, InsertResult& res, GCAllocator<PosRBTreeNode>& allocator)
+        static bool balancehelper_RR_RR(PosRBTreeNode* cur, InsertResult& res, GCAllocator<PosRBTreeNode>& allocator)
         {
             const PosRBTreeNode* r  = cur->right;
             if(!isRedNode(r)) {
@@ -381,18 +393,18 @@ namespace ᐸRuntimeᐳ
             if(isBlackNode(cur)) {
                 return false;
             }
-xxxx;
+
             res = InsertResult::makeDone(cur);
             return true;
         }
 
-        // Tentatively roll up the red nodes -- balance (R a x b) = D (R a x b)
+        // Tentatively roll up the red nodes -- balance (R a x b) = T (R a x b)
         static bool balancehelper_S_R(PosRBTreeNode* cur, InsertResult& res, GCAllocator<PosRBTreeNode>& allocator)
         {
             if(isRedNode(cur)) {
                 return false;
             }
-xxxx;
+
             res = InsertResult::makeTree(curr);
             return true;
         }
@@ -421,12 +433,15 @@ xxxx;
             }   
         }
 
-        static PosRBTree* copyNodeForSpine(PosRBTreeNode* node, xxxx, GCAllocator<PosRBTreeNode>& allocator)
+        static PosRBTree* copyNodeSpine(const std::pair<PathDirection, PosRBTreeNode*>& nodepath, PosRBTreeNode* curr, GCAllocator<PosRBTreeNode>& allocator)
         {
-            return allocator.allocate(node->color, node->left, node->right, node->data);
+            PosRBTreeNode* nl = nodepath.first == PathDirection::Left ? curr : nodepath.second->left;
+            PosRBTreeNode* nr = nodepath.first == PathDirection::Right ? curr : nodepath.second->right;
+
+            return allocator.allocate(nodepath.second->color, nl, nr, nodepath.second->data);
         }
 
-        static PosRBTree* copyNodeForSpineReplace(PosRBTreeNode* node, const PosRBTreeData& ndata, GCAllocator<PosRBTreeNode>& allocator)
+        static PosRBTree* copyNodeReplaceData(PosRBTreeNode* node, const PosRBTreeData& ndata, GCAllocator<PosRBTreeNode>& allocator)
         {
             return allocator.allocate(node->color, node->left, node->right, ndata);
         }
@@ -434,26 +449,68 @@ xxxx;
         PosRBTreeNode* insert(int64_t index, const T& value, GCAllocator<PosRBTreeNode>& allocator)
         {
             TreeNodePath path;
-            PosRBTreeNode* insnode = path.buildToIndex(index, this);
+            PosRBTreeNode* opnode = path.buildToIndex(index, this);
 
-            if(insnode->count < K) {
-                xxxx;
-                insnode->data = insnode->data.insert(index, value);
-                insnode->count++;
+            if(opnode->count < K) {
+                //we can add the element without modifying structure -- no rebalancing needed just copy spine
+                PosRBTreeNode* curr = copyNodeReplaceData(opnode, opnode->data.insert(index, value), allocator);
+                while(!path.empty()) {
+                    curr = copyNodeSpine(path.pop(), curr, allocator);
+                }
 
-                return this;
+                return blacken(curr);
             }
             else {
-                xxxx;
-                InsertResult res = balance(insnode->insert(index, value, allocator), allocator);
-                if(res.isDone()) {
-                    return this;
+                // we need to split the leaf and add a new node -- must do rebalance
+
+                InsertResult res;
+                if(opnode->left == nullptr || opnode->right == nullptr) {
+                    //create a new leaf
+                    if(opnode->left == nullptr) {
+                        xxxx;
+                    }
+                    else {
+                        xxxx;
+                    }
                 }
                 else {
-                    PosRBTreeNode* newroot = res.tnode;
-                    newroot->color = RColor::Black;
-                    return newroot;
+                    //evict an element down the tree
+                    if(index == 0) {
+                        //then spill the insert element down to the left
+                        xxxx;
+                    }
+                    else if(index == K) { 
+                        //then spill the insert element down to the right
+                        xxxx;
+                    }
+                    else {
+                        if(opnode->left->count < opnode->right->count) {
+                             //evict to left
+                            int64_t lshiftidx = xxxx;
+                            PosRBTreeNode* nleft = insert(lshiftidx, opnode->data.front(), allocator);
+                        
+                            xxxx;
+                            PosRBTreeNode* inode = allocator.allocate(opnode->color, left, opnode->right, xxx);
+                            res = InsertResult::makeTree(inode);
+                        }
+                        else {
+                            //evict to right
+                            int64_t rshiftidx = xxxx;
+                            PosRBTreeNode* nright = insert(rshiftidx, opnode->data.back(), allocator);
+
+                            xxxx;
+                            PosRBTreeNode* inode = allocator.allocate(opnode->color, opnode->left, nright, xxx);
+                            res = InsertResult::makeTree(inode);
+                        }
+                    }
                 }
+
+                //now rebalance the tree on the way up
+                while(path.empty()) {
+                    xxxx;
+                }
+
+                return blacken(res.tnode);
             }
         }
 
