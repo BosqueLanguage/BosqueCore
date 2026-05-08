@@ -51,61 +51,60 @@ namespace ᐸRuntimeᐳ
         }
 
         /** Constructor when we have a single value at position 0 and a range of values that follow -- pushFront style constructor  **/
-        template<typename Iter, bool isfull>
+        template<typename Iter>
         PosRBTreeData(const T& ival, Iter rstart, Iter rend)
         {   
-            assert(1 + std::distance(rstart, rend) <= K);    
-            assert(!isfull || (1 + std::distance(rstart, rend) == K));
+            assert(1 + std::distance(rstart, rend) <= K);
 
             this->data[0] = ival;
             std::copy(rstart, rend, this->data.begin() + 1);
+            this->count = 1 + std::distance(rstart, rend);
 
-            if constexpr (isfull) {
-                this->count = K;
-            }
-            else {
-                this->count = 1 + std::distance(rstart, rend);
+            if(this->count < K) {
                 zerofill(this->data, this->count);
             }
         }
 
         /** Constructor when we have a range of values and a single value at the end -- pushBack style constructor  **/
-        template<typename Iter, bool isfull>
+        template<typename Iter>
         PosRBTreeData(Iter lstart, Iter lend, const T& ival)
         {          
-            assert(1 + std::distance(lstart, lend) <= K);  
-            assert(!isfull || (std::distance(lstart, lend) + 1 == K));
+            assert(1 + std::distance(lstart, lend) <= K);
 
             std::copy(lstart, lend, this->data.begin());
             this->data[std::distance(lstart, lend)] = ival;
+            this->count = std::distance(lstart, lend) + 1;
 
-            if constexpr (isfull) {
-                this->count = K;
-            }
-            else {
-                this->count = std::distance(lstart, lend) + 1;
+            if(this->count < K) {
                 zerofill(this->data, this->count);
             }
         }
 
         /** Constructor when we have a range of values, a single value, and then another range of values -- insert middle style constructor  **/
-        template<typename Iter, bool isfull>
+        template<typename Iter>
         PosRBTreeData(Iter lstart, Iter lend, const T& ival, Iter rstart, Iter rend)
         {
             assert(std::distance(lstart, lend) + 1 + std::distance(rstart, rend) <= K);
-            assert(!isfull || (std::distance(lstart, lend) + 1 + std::distance(rstart, rend) == K));
 
             std::copy(lstart, lend, this->data.begin());
             this->data[std::distance(lstart, lend)] = ival;
             std::copy(rstart, rend, this->data.begin() + std::distance(lstart, lend) + 1);
+            this->count = std::distance(lstart, lend) + 1 + std::distance(rstart, rend);
 
-            if constexpr (isfull) {
-                this->count = K;
-            }
-            else {
-                this->count = std::distance(lstart, lend) + 1 + std::distance(rstart, rend);
+            if(this->count < K) {
                 zerofill(this->data, this->count);
             }
+        }
+
+        /** Constructor when we have a range of values, a single value, and then another range of values -- remove middle style constructor  **/
+        template<typename Iter>
+        PosRBTreeData(Iter lstart, Iter lend, Iter rstart, Iter rend)
+        {
+            std::copy(lstart, lend, this->data.begin());
+            std::copy(rstart, rend, this->data.begin() + std::distance(lstart, lend));
+            this->count = std::distance(lstart, lend) + std::distance(rstart, rend);
+
+            zerofill(this->data, this->count);
         }
 
         PosRBTreeData(std::initializer_list<T> args)
@@ -135,34 +134,18 @@ namespace ᐸRuntimeᐳ
 
         PosRBTreeData insert(int64_t index, const T& value) const
         {
-            assert((0 < index) & (index < K));
+            assert((0 <= index) & (index <= this->count));
             assert(this->count < K);
 
-            xxxx;
             if(index == 0) {
-                return PosRBTreeData(std::initializer_list<T>{value}, this->data.cbegin(), this->data.cbegin() + this->count);
+                return PosRBTreeData(value, this->data.cbegin(), this->data.cbegin() + this->count);
             }
             else if(index == this->count) {
-                PosRBTreeData nleaf;
-                std::copy(this->data.cbegin(), this->data.cbegin() + this->count, nleaf.data.begin());
-                nleaf.data[this->count] = value;
-                nleaf.count = this->count + 1;
-
-                return nleaf;
+                return PosRBTreeData(this->data.cbegin(), this->data.cbegin() + this->count, value);
             }
-            PosRBTreeData nleaf;
-            if(0 < index) {
-                std::copy(this->data.cbegin(), this->data.cbegin() + index, nleaf.data.begin());
+            else {
+                return PosRBTreeData(this->data.cbegin(), this->data.cbegin() + index, value, this->data.cbegin() + index, this->data.cbegin() + this->count);
             }
-
-            if(index < this->count) {
-                std::copy(this->data.cbegin() + index, this->data.cbegin() + this->count, nleaf.data.begin() + index + 1);               
-            }
-
-            nleaf.data[index] = value;
-            nleaf.count = this->count + 1;
-
-            return nleaf;
         }
 
         PosRBTreeData insertSpillLeft(int64_t index, const T& value, T& spill) const
@@ -176,15 +159,7 @@ namespace ᐸRuntimeᐳ
             }
             else {
                 spill = this->data.front();
-
-                PosRBTreeData nleaf;
-                std::copy(this->data.cbegin() + 1, this->data.cbegin() + index, nleaf.data.begin());
-                std::copy(this->data.cbegin() + index + 1, this->data.cend(), nleaf.data.begin() + index + 1);               
-                
-                nleaf.data[index] = value;
-                nleaf.count = K;
-
-                return nleaf;
+                return PosRBTreeData(this->data.cbegin() + 1, this->data.cbegin() + index, value, this->data.cbegin() + index, this->data.cend());
             }
         }
 
@@ -199,58 +174,67 @@ namespace ᐸRuntimeᐳ
             }
             else {
                 spill = this->data.back();
-
-                PosRBTreeData nleaf;
-                if(index > 0) {
-                    std::copy(this->data.cbegin(), this->data.cbegin() + index, nleaf.data.begin());
-                }
-
-            if(index < this->count) {
-                std::copy(this->data.cbegin() + index, this->data.cbegin() + this->count, nleaf.data.begin() + index + 1);               
+                return PosRBTreeData(this->data.cbegin(), this->data.cbegin() + index, value, this->data.cbegin() + index, this->data.cend() - 1);
             }
-
-            nleaf.data[index] = value;
-            nleaf.count = this->count + 1;
-
-            return nleaf;
-        }
         }
 
         PosRBTreeData remove(int64_t index) const
         {
-            assert(index < this->count);
+            assert((0 <= index) & (index < this->count));
             assert(this->count > 1);
 
-            PosRBTreeData nleaf;
-            if(index > 0) {
-                std::copy(this->data.cbegin(), this->data.cbegin() + index, nleaf.data.begin());
+            if(index == 0) {
+                return PosRBTreeData(this->data.cbegin() + 1, this->data.cbegin() + this->count);
             }
-
-            if(index + 1 < this->count) {
-                std::copy(this->data.cbegin() + index + 1, this->data.cbegin() + this->count, nleaf.data.begin() + index);
+            else if(index == this->count - 1) {
+                return PosRBTreeData(this->data.cbegin(), this->data.cbegin() + this->count - 1);
             }
-
-            nleaf.count = this->count - 1;
-            return nleaf;
+            else {
+                return PosRBTreeData(this->data.cbegin(), this->data.cbegin() + index, this->data.cbegin() + index + 1, this->data.cbegin() + this->count);
+            }
         }
     };
 
-    enum class RColor : uint64_t
+    enum class RColor : uint16_t
     {
         Red,
         Black
+    };
+
+    enum class RTag : uint16_t
+    {
+        Leaf,
+        Node
+    };
+
+    template<typename T, int64_t K>
+    class PosRBTreeCore
+    {
+    public:
+        RTag tag;
+        RColor color;
+        uint16_t bheight;
+        uint16_t datacount;
+        int64_t count;
+
+        PosRBTreeData<T, K> data;
+    };
+
+    template<typename T, int64_t K> 
+    class PosRBTreeLeaf
+    {
+    public:
+        PosRBTreeCore<T, K> repr;
     };
 
     template<typename T, int64_t K> 
     class PosRBTreeNode
     {
     public:
-        int64_t count;
+        
         PosRBTreeNode* left;
         PosRBTreeNode* right;
-        PosRBTreeData<T, K> data;
-
-        RColor color;
+        
 
     private:
         enum class InsertResultTag
