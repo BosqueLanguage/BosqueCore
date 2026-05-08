@@ -24,13 +24,18 @@ namespace ᐸRuntimeᐳ
         int64_t count;
         std::array<T, K> data;
 
-        constexpr PosRBTreeData() : count(0) 
+        static zerofill(std::array<T, K>& data, size_t ecount)
         {
-            uint64_t* rawdata = reinterpret_cast<uint64_t*>(this->data.data()); 
-            std::fill(rawdata, rawdata + K, 0); 
+            uint8_t* rawdata = reinterpret_cast<uint8_t*>(data.data()); 
+            std::fill(rawdata + ecount * sizeof(T), rawdata + K * sizeof(T), 0);
         }
 
-        constexpr PosRBTreeData(const PosRBTreeData& other) = default;
+        PosRBTreeData() : count(0) 
+        {
+            zerofill(this->data, 0);
+        }
+
+        PosRBTreeData(const PosRBTreeData& other) = default;
 
         /** Constructor when we have a range of values that follow  **/
         template<typename Iter>
@@ -40,10 +45,8 @@ namespace ᐸRuntimeᐳ
             assert(size != 0);
             assert(size <= K);
 
-            uint64_t* rawdata = reinterpret_cast<uint64_t*>(this->data.data()); 
-            std::fill(rawdata, rawdata + K, 0);
-
             std::copy(start, end, this->data.begin());
+            zerofill(this->data, size);
             this->count = size; 
         }
 
@@ -53,24 +56,17 @@ namespace ᐸRuntimeᐳ
         {   
             assert(1 + std::distance(rstart, rend) <= K);    
             assert(!isfull || (1 + std::distance(rstart, rend) == K));
-            
-            if constexpr (!isfull) {
-                uint64_t* rawdata = reinterpret_cast<uint64_t*>(this->data.data()); 
-                std::fill(rawdata, rawdata + K, 0);
-            }
-
-            uint32_t size;
-            if constexpr (isfull) {
-                size = K;
-            }
-            else {
-                size = 1 + std::distance(rstart, rend);
-            }
 
             this->data[0] = ival;
             std::copy(rstart, rend, this->data.begin() + 1);
 
-            this->count = size;
+            if constexpr (isfull) {
+                this->count = K;
+            }
+            else {
+                this->count = 1 + std::distance(rstart, rend);
+                zerofill(this->data, this->count);
+            }
         }
 
         /** Constructor when we have a range of values and a single value at the end -- pushBack style constructor  **/
@@ -79,24 +75,17 @@ namespace ᐸRuntimeᐳ
         {          
             assert(1 + std::distance(lstart, lend) <= K);  
             assert(!isfull || (std::distance(lstart, lend) + 1 == K));
-            
-            if constexpr (!isfull) {
-                uint64_t* rawdata = reinterpret_cast<uint64_t*>(this->data.data()); 
-                std::fill(rawdata, rawdata + K, 0);
-            }
-
-            uint32_t size;
-            if constexpr (isfull) {
-                size = K;
-            }
-            else {
-                size = std::distance(lstart, lend) + 1;
-            }
 
             std::copy(lstart, lend, this->data.begin());
             this->data[std::distance(lstart, lend)] = ival;
 
-            this->count = size;
+            if constexpr (isfull) {
+                this->count = K;
+            }
+            else {
+                this->count = std::distance(lstart, lend) + 1;
+                zerofill(this->data, this->count);
+            }
         }
 
         /** Constructor when we have a range of values, a single value, and then another range of values -- insert middle style constructor  **/
@@ -105,25 +94,18 @@ namespace ᐸRuntimeᐳ
         {
             assert(std::distance(lstart, lend) + 1 + std::distance(rstart, rend) <= K);
             assert(!isfull || (std::distance(lstart, lend) + 1 + std::distance(rstart, rend) == K));
-            
-            if constexpr (!isfull) {
-                uint64_t* rawdata = reinterpret_cast<uint64_t*>(this->data.data()); 
-                std::fill(rawdata, rawdata + K, 0);
-            }
-
-            uint32_t size;
-            if constexpr (isfull) {
-                size = K;
-            }
-            else {
-                size = std::distance(lstart, lend) + 1 + std::distance(rstart, rend);
-            }
 
             std::copy(lstart, lend, this->data.begin());
             this->data[std::distance(lstart, lend)] = ival;
             std::copy(rstart, rend, this->data.begin() + std::distance(lstart, lend) + 1);
 
-            this->count = size;
+            if constexpr (isfull) {
+                this->count = K;
+            }
+            else {
+                this->count = std::distance(lstart, lend) + 1 + std::distance(rstart, rend);
+                zerofill(this->data, this->count);
+            }
         }
 
         PosRBTreeData(std::initializer_list<T> args)
@@ -131,10 +113,8 @@ namespace ᐸRuntimeᐳ
             assert(args.size() != 0);
             assert(args.size() <= K);
 
-            uint64_t* rawdata = reinterpret_cast<uint64_t*>(this->data.data()); 
-            std::fill(rawdata, rawdata + K, 0);
-
             std::copy(args.begin(), args.end(), this->data.begin());
+            zerofill(this->data, args.size());
             this->count = args.size();
         }
 
@@ -233,6 +213,7 @@ namespace ᐸRuntimeᐳ
             nleaf.count = this->count + 1;
 
             return nleaf;
+        }
         }
 
         PosRBTreeData remove(int64_t index) const
