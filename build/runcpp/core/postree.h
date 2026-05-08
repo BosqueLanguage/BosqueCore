@@ -107,31 +107,6 @@ namespace ᐸRuntimeᐳ
             zerofill(this->data, this->count);
         }
 
-        PosRBTreeData(std::initializer_list<T> args)
-        {
-            assert(args.size() != 0);
-            assert(args.size() <= K);
-
-            std::copy(args.begin(), args.end(), this->data.begin());
-            zerofill(this->data, args.size());
-            this->count = args.size();
-        }
-
-        T front() const
-        {
-            return this->data.front();
-        }
-
-        T back() const
-        {
-            return this->data.back();
-        }
-
-        T get(int64_t idx) const
-        {
-            return this->data.at(idx);
-        }
-
         PosRBTreeData insert(int64_t index, const T& value) const
         {
             assert((0 <= index) & (index <= this->count));
@@ -213,10 +188,8 @@ namespace ᐸRuntimeᐳ
     public:
         RTag tag;
         RColor color;
-        uint16_t bheight;
-        uint16_t datacount;
-        int64_t count;
-
+        uint32_t datacount;
+        
         PosRBTreeData<T, K> data;
     };
 
@@ -234,7 +207,6 @@ namespace ᐸRuntimeᐳ
         
         PosRBTreeNode* left;
         PosRBTreeNode* right;
-        
 
     private:
         enum class InsertResultTag
