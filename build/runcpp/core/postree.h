@@ -17,155 +17,155 @@
 
 namespace ᐸRuntimeᐳ
 {
-    template<typename T, int64_t K>
-    class PosRBTreeData
+    template<typename T, size_t K>
+    class PosRBData
     {
     public:
-        int64_t count;
-        std::array<T, K> data;
+        T data[K];
+        int32_t dcount; //note that when the color follows immediately in enclosing classes the alignment works
 
-        static zerofill(std::array<T, K>& data, size_t ecount)
+        static zerofill(T* data, size_t ecount)
         {
-            uint8_t* rawdata = reinterpret_cast<uint8_t*>(data.data()); 
+            uint8_t* rawdata = reinterpret_cast<uint8_t*>(data); 
             std::fill(rawdata + ecount * sizeof(T), rawdata + K * sizeof(T), 0);
         }
 
-        PosRBTreeData() : count(0) 
+        PosRBData() : data(), dcount(0)
         {
             zerofill(this->data, 0);
         }
 
-        PosRBTreeData(const PosRBTreeData& other) = default;
+        PosRBData(const PosRBData& other) = default;
 
-        /** Constructor when we have a range of values that follow  **/
+        /** Constructor when we have a range of values  **/
         template<typename Iter>
-        PosRBTreeData(Iter start, Iter end)
+        PosRBData(Iter start, Iter end)
         {            
             const int64_t size = std::distance(start, end);
             assert(size != 0);
             assert(size <= K);
 
-            std::copy(start, end, this->data.begin());
+            std::copy(start, end, this->data);
             zerofill(this->data, size);
-            this->count = size; 
+            this->dcount = size; 
         }
 
         /** Constructor when we have a single value at position 0 and a range of values that follow -- pushFront style constructor  **/
         template<typename Iter>
-        PosRBTreeData(const T& ival, Iter rstart, Iter rend)
+        PosRBData(const T& ival, Iter rstart, Iter rend)
         {   
             assert(1 + std::distance(rstart, rend) <= K);
 
             this->data[0] = ival;
-            std::copy(rstart, rend, this->data.begin() + 1);
-            this->count = 1 + std::distance(rstart, rend);
+            std::copy(rstart, rend, this->data + 1);
+            this->dcount = 1 + std::distance(rstart, rend);
 
-            if(this->count < K) {
-                zerofill(this->data, this->count);
+            if(this->dcount < K) {
+                zerofill(this->data, this->dcount);
             }
         }
 
         /** Constructor when we have a range of values and a single value at the end -- pushBack style constructor  **/
         template<typename Iter>
-        PosRBTreeData(Iter lstart, Iter lend, const T& ival)
+        PosRBData(Iter lstart, Iter lend, const T& ival)
         {          
             assert(1 + std::distance(lstart, lend) <= K);
 
-            std::copy(lstart, lend, this->data.begin());
+            std::copy(lstart, lend, this->data);
             this->data[std::distance(lstart, lend)] = ival;
-            this->count = std::distance(lstart, lend) + 1;
+            this->dcount = std::distance(lstart, lend) + 1;
 
-            if(this->count < K) {
-                zerofill(this->data, this->count);
+            if(this->dcount < K) {
+                zerofill(this->data, this->dcount);
             }
         }
 
         /** Constructor when we have a range of values, a single value, and then another range of values -- insert middle style constructor  **/
         template<typename Iter>
-        PosRBTreeData(Iter lstart, Iter lend, const T& ival, Iter rstart, Iter rend)
+        PosRBData(Iter lstart, Iter lend, const T& ival, Iter rstart, Iter rend)
         {
             assert(std::distance(lstart, lend) + 1 + std::distance(rstart, rend) <= K);
 
-            std::copy(lstart, lend, this->data.begin());
+            std::copy(lstart, lend, this->data);
             this->data[std::distance(lstart, lend)] = ival;
-            std::copy(rstart, rend, this->data.begin() + std::distance(lstart, lend) + 1);
-            this->count = std::distance(lstart, lend) + 1 + std::distance(rstart, rend);
+            std::copy(rstart, rend, this->data + std::distance(lstart, lend) + 1);
+            this->dcount = std::distance(lstart, lend) + 1 + std::distance(rstart, rend);
 
-            if(this->count < K) {
-                zerofill(this->data, this->count);
+            if(this->dcount < K) {
+                zerofill(this->data, this->dcount);
             }
         }
 
-        /** Constructor when we have a range of values, a single value, and then another range of values -- remove middle style constructor  **/
+        /** Constructor when we have a range of values and then another range of values -- remove middle style constructor  **/
         template<typename Iter>
-        PosRBTreeData(Iter lstart, Iter lend, Iter rstart, Iter rend)
+        PosRBData(Iter lstart, Iter lend, Iter rstart, Iter rend)
         {
-            std::copy(lstart, lend, this->data.begin());
-            std::copy(rstart, rend, this->data.begin() + std::distance(lstart, lend));
-            this->count = std::distance(lstart, lend) + std::distance(rstart, rend);
+            std::copy(lstart, lend, this->data);
+            std::copy(rstart, rend, this->data + std::distance(lstart, lend));
+            this->dcount = std::distance(lstart, lend) + std::distance(rstart, rend);
 
-            zerofill(this->data, this->count);
+            zerofill(this->data, this->dcount);
         }
 
-        PosRBTreeData insert(int64_t index, const T& value) const
+        PosRBData insert(int64_t index, const T& value) const
         {
-            assert((0 <= index) & (index <= this->count));
-            assert(this->count < K);
+            assert((0 <= index) & (index <= this->dcount));
+            assert(this->dcount < K);
 
             if(index == 0) {
-                return PosRBTreeData(value, this->data.cbegin(), this->data.cbegin() + this->count);
+                return PosRBData(value, this->data, this->data + this->dcount);
             }
-            else if(index == this->count) {
-                return PosRBTreeData(this->data.cbegin(), this->data.cbegin() + this->count, value);
+            else if(index == this->dcount) {
+                return PosRBData(this->data, this->data + this->dcount, value);
             }
             else {
-                return PosRBTreeData(this->data.cbegin(), this->data.cbegin() + index, value, this->data.cbegin() + index, this->data.cbegin() + this->count);
+                return PosRBData(this->data, this->data + index, value, this->data + index, this->data + this->dcount);
             }
         }
 
-        PosRBTreeData insertSpillLeft(int64_t index, const T& value, T& spill) const
+        PosRBData insertSpillLeft(int64_t index, const T& value, T& spill) const
         {
             assert((0 <= index) & (index < K));
-            assert(this->count == K);
+            assert(this->dcount == K);
           
             if(index == 0) {
                 spill = value;
                 return *this;
             }
             else {
-                spill = this->data.front();
-                return PosRBTreeData(this->data.cbegin() + 1, this->data.cbegin() + index, value, this->data.cbegin() + index, this->data.cend());
+                spill = this->data[0];
+                return PosRBData(this->data + 1, this->data + index, value, this->data + index, this->data + K);
             }
         }
 
-        PosRBTreeData insertSpillRight(int64_t index, const T& value, T& spill) const
+        PosRBData insertSpillRight(int64_t index, const T& value, T& spill) const
         {
             assert((0 < index) & (index <= K));
-            assert(this->count == K);
+            assert(this->dcount == K);
           
             if(index == K) {
                 spill = value;
                 return *this;
             }
             else {
-                spill = this->data.back();
-                return PosRBTreeData(this->data.cbegin(), this->data.cbegin() + index, value, this->data.cbegin() + index, this->data.cend() - 1);
+                spill = this->data[K - 1];
+                return PosRBData(this->data, this->data + index, value, this->data + index, this->data + K - 1);
             }
         }
 
-        PosRBTreeData remove(int64_t index) const
+        PosRBData remove(int64_t index) const
         {
-            assert((0 <= index) & (index < this->count));
-            assert(this->count > 1);
+            assert((0 <= index) & (index < this->dcount));
+            assert(this->dcount > 1);
 
             if(index == 0) {
-                return PosRBTreeData(this->data.cbegin() + 1, this->data.cbegin() + this->count);
+                return PosRBData(this->data + 1, this->data + this->dcount);
             }
-            else if(index == this->count - 1) {
-                return PosRBTreeData(this->data.cbegin(), this->data.cbegin() + this->count - 1);
+            else if(index == this->dcount - 1) {
+                return PosRBData(this->data, this->data + this->dcount - 1);
             }
             else {
-                return PosRBTreeData(this->data.cbegin(), this->data.cbegin() + index, this->data.cbegin() + index + 1, this->data.cbegin() + this->count);
+                return PosRBData(this->data, this->data + index, this->data + index + 1, this->data + this->dcount);
             }
         }
     };
@@ -176,37 +176,28 @@ namespace ᐸRuntimeᐳ
         Black
     };
 
-    enum class RTag : uint16_t
-    {
-        Leaf,
-        Node
-    };
-
-    template<typename T, int64_t K>
-    class PosRBTreeCore
+    template<typename T, size_t K>
+    __attribute__((packed)) struct PosRBNode
     {
     public:
-        RTag tag;
+        PosRBData<T, K> data;
         RColor color;
-        uint32_t datacount;
-        
-        PosRBTreeData<T, K> data;
+        uint16_t bheight; //black height of the subtree rooted at this node
     };
 
-    template<typename T, int64_t K> 
-    class PosRBTreeLeaf
-    {
-    public:
-        PosRBTreeCore<T, K> repr;
-    };
+    constexpr size_t RB_DATA_SIZE = sizeof(PosRBData<int64_t, 1>);
+    static_assert(RB_DATA_SIZE == sizeof(int64_t) * 1 + sizeof(int32_t), "Unexpected padding in PosRBData");
 
-    template<typename T, int64_t K> 
+    constexpr size_t RB_NODE_SIZE = sizeof(PosRBNode<int64_t, 1>);
+    
+    template<typename T, size_t K> 
     class PosRBTreeNode
     {
     public:
-        
+        PosRBNode<T, K> ndata;
         PosRBTreeNode* left;
         PosRBTreeNode* right;
+        int64_t tcount; //total number of elements in the subtree rooted at this node
 
     private:
         enum class InsertResultTag
@@ -615,7 +606,7 @@ ins (N k a y b)
     public:
     };
 
-    template<typename T, int64_t K> 
+    template<typename T, size_t K> 
     consteval TypeInfo g_typeinfo_PosRBTreeNode_generate(uint32_t tid, uint16_t tslots, const char* mask, const char* tname)
     {
         return TypeInfo{
@@ -639,7 +630,7 @@ ins (N k a y b)
     //Note that we tag each template to keep the types distinct because we have the static allocator/type info! 
     //For now we probably want to mostly PIMPL the persistent tree logic and keep wrappers in the class to avoid code bloat but we can always change this later.
     ////
-    template<typename T, int64_t K, uint32_t TreeID>
+    template<typename T, size_t K, uint32_t TreeID>
     class PosRBTree
     {
     public:
@@ -945,7 +936,7 @@ ins (N k a y b)
         }
     };
 
-    template<typename T, int64_t K, uint32_t TreeID> 
+    template<typename T, size_t K, uint32_t TreeID> 
     consteval TypeInfo g_typeinfo_PosRBTree_generate(uint32_t tid, const char* tname)
     {
         return TypeInfo {

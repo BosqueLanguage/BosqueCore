@@ -1,19 +1,16 @@
 #pragma once
 
-#include "../../common.h"
-
-#include "../../core/bsqtype.h"
+#include "memory.h"
 
 namespace ᐸRuntimeᐳ
 {
     constexpr size_t MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE = 8192; //8KB blocks for buffer allocation
 
+#if BSQ_ALLOCATOR_USE_MALLOC
     class GCAllocatorImpl
     {
     private:
-    #if BSQ_ALLOCATOR_USE_MALLOC
         std::vector<void*> x_allocs;
-    #endif
 
     public:
         const TypeInfo* alloctype; 
@@ -22,27 +19,40 @@ namespace ᐸRuntimeᐳ
 
         inline void* xalloc()
         {
-    #if BSQ_ALLOCATOR_USE_MALLOC
             void* ptr = malloc(this->alloctype->bytesize);
 
             this->x_allocs.push_back(ptr);
-            return ptr;
-    #else 
-            assert(false); //Not implemented: GC allocator without malloc
-    #endif
+            return initAllocGCMetadata(ptr, this->alloctype);
         }
 
         void cleanup()
         {
-    #if BSQ_ALLOCATOR_USE_MALLOC
             for(size_t i = 0; i < this->x_allocs.size(); i++) {
                 free(this->x_allocs[i]);
             }
 
             this->x_allocs.clear();
-    #endif
         }
     };
+#else
+    class GCAllocatorImpl
+    {
+    private:
+    
+    public:
+        const TypeInfo* alloctype; 
+
+        constexpr GCAllocatorImpl(const TypeInfo* alloctype) : alloctype(alloctype) {} 
+
+        inline void* xalloc()
+        {
+        }
+
+        void cleanup()
+        {
+        }
+    };
+#endif //BSQ_ALLOCATOR_USE_MALLOC
 
     template <typename T>
     class GCAllocator : public GCAllocatorImpl
