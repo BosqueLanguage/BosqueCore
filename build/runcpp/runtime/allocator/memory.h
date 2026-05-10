@@ -20,19 +20,19 @@ namespace ᐸRuntimeᐳ
     constexpr size_t GC_METADATA_OFFSET = (sizeof(GCMetadata) / sizeof(void*));;
     static_assert(GC_METADATA_SIZE == 16, "GCMetadata size must be a multiple of max alignment");
 
-    constexpr GCMetadata* getMetadata(void* ptr)
+    constexpr GCMetadata* gcGetMetadata(void* ptr)
     {
         return reinterpret_cast<GCMetadata*>(ptr - GC_METADATA_OFFSET);
     }
 
-    constexpr const TypeInfo* getTypeInfo(void* ptr)
+    constexpr const TypeInfo* gcGetTypeInfo(void* ptr)
     {
-        return getMetadata(ptr)->typeinfo;
+        return gcGetMetadata(ptr)->typeinfo;
     }
 
-    constexpr void* initAllocGCMetadata(void* ptr, const TypeInfo* typeinfo)
+    constexpr void* gcInitAllocGCMetadata(void* ptr, const TypeInfo* typeinfo)
     {
-        GCMetadata* meta = getMetadata(ptr);
+        GCMetadata* meta = gcGetMetadata(ptr);
         meta->typeinfo = typeinfo;
         meta->isalloc = 1;
         meta->isyoung = 1;
