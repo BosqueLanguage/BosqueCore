@@ -7,9 +7,10 @@
 
 #include "postree.h"
 
+/*
 namespace ᐸRuntimeᐳ
 {
-    constexpr static size_t MAX_LIST_INLINE_BYTES = 48; //Bytes -- so 64 total when we add 8 bytes for the size and 8 bytes for the tag or 1 element of the value type if larger!!!
+    constexpr static size_t MAX_LIST_INLINE_BYTES = 32; //Bytes -- so 40 total when we add 8 bytes for the size
 
     constexpr size_t LIST_T_CAPACITY(size_t elem_size)
     {
@@ -156,7 +157,7 @@ namespace ᐸRuntimeᐳ
             byteSizeToSlotCount(sizeof(ListTTreeContent<T, TYPE_ID_POS_TREE_T>)),
             LayoutTag::Tagged,
             BSQ_TYPEINFO_NO_ESLOT,
-            "20",
+            "40",
             nullptr,
             0,
             nullptr,
@@ -452,3 +453,4 @@ namespace ᐸRuntimeᐳ
         }
     };
 }
+*/

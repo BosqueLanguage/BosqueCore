@@ -17,12 +17,11 @@ namespace ᐸRuntimeᐳ
     };
 
     constexpr size_t GC_METADATA_SIZE = sizeof(GCMetadata);
-    constexpr size_t GC_METADATA_OFFSET = (sizeof(GCMetadata) / sizeof(void*));;
     static_assert(GC_METADATA_SIZE == 16, "GCMetadata size must be a multiple of max alignment");
 
     constexpr GCMetadata* gcGetMetadata(void* ptr)
     {
-        return reinterpret_cast<GCMetadata*>(ptr - GC_METADATA_OFFSET);
+        return (GCMetadata*)(((uint8_t*)ptr) - GC_METADATA_SIZE);
     }
 
     constexpr const TypeInfo* gcGetTypeInfo(void* ptr)
@@ -40,7 +39,7 @@ namespace ᐸRuntimeᐳ
         meta->isrootref = 0;
         meta->rc = 0;
 
-        return ptr + GC_METADATA_OFFSET;
+        return (void*)((uint8_t*)ptr + GC_METADATA_SIZE);
     }
 #else
 #endif //BSQ_ALLOCATOR_USE_MALLOC

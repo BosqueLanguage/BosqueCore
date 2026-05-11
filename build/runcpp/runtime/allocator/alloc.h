@@ -22,7 +22,7 @@ namespace ᐸRuntimeᐳ
             void* ptr = malloc(this->alloctype->bytesize);
 
             this->x_allocs.push_back(ptr);
-            return initAllocGCMetadata(ptr, this->alloctype);
+            return gcInitAllocGCMetadata(ptr, this->alloctype);
         }
 
         void cleanup()

@@ -11,6 +11,11 @@ BOOST_AUTO_TEST_SUITE(PosTreeTests)
 BOOST_AUTO_TEST_SUITE(Basics)
 
 BOOST_AUTO_TEST_CASE(MakeLeaf_PushBack) {
+    static_assert(sizeof(ᐸRuntimeᐳ::PosRBData<int64_t, 4>) == 40);
+    static_assert(sizeof(ᐸRuntimeᐳ::PosRBTreeLeaf<int64_t, 4>) == 40);
+    static_assert(sizeof(ᐸRuntimeᐳ::PosRBTreeNode<int64_t, 4>) == 64);
+    static_assert(sizeof(ᐸRuntimeᐳ::PosRBTree<int64_t, 4, BSQ_POSTREE_ID>) == 8);
+
     using PTree = ᐸRuntimeᐳ::PosRBTree<int64_t, 4, BSQ_POSTREE_ID>;
 
     auto leaftypeinfo = ᐸRuntimeᐳ::g_typeinfo_PosRBTreeLeaf_generate<int64_t, 4>(BSQ_POSTREE_LEAF_ID, BSQ_PTR_MASK_LEAF, "PosRBTreeLeaf_Int64");

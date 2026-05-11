@@ -33,9 +33,21 @@ namespace ᐸRuntimeᐳ
         ByteBufferEntry* entries[BUFFER_BLOCK_ENTRY_COUNT];
         ByteBufferBlock* next;
 
-        ByteBufferBlock(size_t entryCount) : entries{0}, next(nullptr) {}
-        ByteBufferBlock(ByteBufferEntry** entries, size_t entryCount, ByteBufferBlock* next) : entries{0}, next(next) { std::copy(entries, entries + entryCount, this->entries); }
-        ByteBufferBlock(const ByteBufferBlock& other) = default;
+        ByteBufferBlock(size_t entryCount) : entries(), next(nullptr) 
+        {
+            std::fill(this->entries, this->entries + BUFFER_BLOCK_ENTRY_COUNT, nullptr);
+        }
+
+        ByteBufferBlock(ByteBufferEntry** entries, size_t entryCount, ByteBufferBlock* next) : entries(), next(next) 
+        { 
+            std::copy(entries, entries + entryCount, this->entries); 
+            std::fill(this->entries + entryCount, this->entries + BUFFER_BLOCK_ENTRY_COUNT, nullptr);
+        }
+
+        ByteBufferBlock(const ByteBufferBlock& other): entries(), next(other.next) 
+        { 
+            std::copy(other.entries, other.entries + BUFFER_BLOCK_ENTRY_COUNT, this->entries); 
+        }
 
         constexpr ByteBufferEntry* getEntryFor(size_t index) const 
         {
@@ -68,7 +80,6 @@ namespace ᐸRuntimeᐳ
         sizeof(ByteBufferEntry),
         byteSizeToSlotCount(sizeof(ByteBufferEntry)),
         LayoutTag::Ref,
-        BSQ_TYPEINFO_NO_ESLOT,
         BSQ_PTR_MASK_LEAF,
         nullptr,
         0,
@@ -84,8 +95,7 @@ namespace ᐸRuntimeᐳ
         sizeof(ByteBufferBlock),
         byteSizeToSlotCount(sizeof(ByteBufferBlock)),
         LayoutTag::Ref,
-        1,
-        "1111111111111111111111111111111111111111111111111111111111111111",
+        "111111111111111111111111111111111111111111111111111111111111111",
         nullptr,
         0,
         nullptr,
@@ -100,8 +110,7 @@ namespace ᐸRuntimeᐳ
         sizeof(BufferTree) + sizeof(size_t),
         byteSizeToSlotCount(sizeof(BufferTree) + sizeof(size_t)),
         LayoutTag::Tagged,
-        BSQ_TYPEINFO_NO_ESLOT,
-        "200",
+        "20",
         nullptr,
         0,
         nullptr,

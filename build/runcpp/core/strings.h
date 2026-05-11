@@ -55,12 +55,14 @@ namespace ᐸRuntimeᐳ
     {
     public:
         constexpr static int64_t CSTR_MAX_LEAF_SIZE = CStrRootInlineContent::CSTR_BUFF_SIZE * 2;
+        constexpr static char* CSTR_NODE_MASK = "00000110";
 
+        int64_t size;
         PosRBTree<char, CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING> postree;
     };
 
-    inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_CString = g_typeinfo_PosRBTreeLeaf_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_CSTRING, 1, BSQ_PTR_MASK_LEAF, "PosRBTreeLeaf_CString");
-    inline constexpr TypeInfo g_typeinfo_PosRBTreeNode_CString = g_typeinfo_PosRBTreeNode_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_NODE_CSTRING, "PosRBTreeNode_CString");
+    inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_CString = g_typeinfo_PosRBTreeLeaf_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_CSTRING, BSQ_PTR_MASK_LEAF, "PosRBTreeLeaf_CString");
+    inline constexpr TypeInfo g_typeinfo_PosRBTreeNode_CString = g_typeinfo_PosRBTreeNode_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_NODE_CSTRING, CStrRootTreeContent::CSTR_NODE_MASK, "PosRBTreeNode_CString");
     inline constexpr TypeInfo g_typeinfo_PosRBTree_CString = g_typeinfo_PosRBTree_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>(WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING, "PosRBTree_CString");
 
     extern thread_local GCAllocator<PosRBTreeLeaf<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>> PosRBTreeLeaf_CString_allocator;
@@ -76,6 +78,12 @@ namespace ᐸRuntimeᐳ
         constexpr CStringUnion(const CStringUnion& other) = default;
         constexpr CStringUnion(const CStrRootInlineContent& c) : inlinecstr(c) {}
         constexpr CStringUnion(const CStrRootTreeContent& c) : treecstr(c) {}
+
+        constexpr bool empty() const { return this->treecstr.size == 0; }
+
+        //High order bit hacking -- inline is in top-byte but tree is in low 7 bytes
+        constexpr bool isInline() const { return this->treecstr.size != 0 && this->inlinecstr.size() != 0; }
+        constexpr bool isTree() const { return this->treecstr.size != 0 && this->inlinecstr.size() == 0; }
     };
 
     inline constexpr TypeInfo g_typeinfo_CStringInline = {
@@ -83,7 +91,6 @@ namespace ᐸRuntimeᐳ
         sizeof(CStrRootInlineContent),
         byteSizeToSlotCount(sizeof(CStrRootInlineContent)),
         LayoutTag::Value,
-        BSQ_TYPEINFO_NO_ESLOT, //since always a leaf of values we just ignore
         BSQ_PTR_MASK_LEAF,
         nullptr,
         0,
@@ -98,9 +105,8 @@ namespace ᐸRuntimeᐳ
         WELL_KNOWN_TYPE_ID_CSTRING_TREE,
         sizeof(CStrRootTreeContent),
         byteSizeToSlotCount(sizeof(CStrRootTreeContent)),
-        LayoutTag::Tagged,
-        BSQ_TYPEINFO_NO_ESLOT,
-        "20",
+        LayoutTag::Value,
+        "01",
         nullptr,
         0,
         nullptr,
@@ -112,11 +118,10 @@ namespace ᐸRuntimeᐳ
 
     inline constexpr TypeInfo g_typeinfo_CString = {
         WELL_KNOWN_TYPE_ID_CSTRING,
-        sizeof(BoxedUnion<CStringUnion>),
-        byteSizeToSlotCount(sizeof(BoxedUnion<CStringUnion>)),
-        LayoutTag::Tagged,
-        BSQ_TYPEINFO_NO_ESLOT,
-        "200",
+        sizeof(CStringUnion),
+        byteSizeToSlotCount(sizeof(CStringUnion)),
+        LayoutTag::Str,
+        "30",
         nullptr,
         0,
         nullptr,
@@ -131,7 +136,7 @@ namespace ᐸRuntimeᐳ
     {
     public:
         int64_t index;
-        BoxedUnion<CStringUnion> ucstr;
+        CStringUnion ucstr;
 
         using value_type = char;
         using difference_type = std::ptrdiff_t;
@@ -142,9 +147,9 @@ namespace ᐸRuntimeᐳ
 
         value_type operator*() const 
         { 
-            assert(this->ucstr.typeinfo != nullptr); //should not dereference on empty string
+            assert(this->ucstr.treecstr.size != 0); //should not dereference on empty string
 
-            if(this->ucstr.typeinfo == &g_typeinfo_CStringInline) {
+            if(this->ucstr. == &g_typeinfo_CStringInline) {
                 return this->ucstr.data.inlinecstr.at(this->index);
             }
             else {
@@ -391,7 +396,7 @@ namespace ᐸRuntimeᐳ
     public:
         size_t regexid;
     };
-
+/*
     class StrRootInlineContent
     {
     public:
@@ -777,4 +782,5 @@ namespace ᐸRuntimeᐳ
 
     inline constexpr XCString emptycstr();
     inline constexpr XString emptystr();
+*/
 }
