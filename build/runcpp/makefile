@@ -6,7 +6,10 @@ CORE_SRC_DIR=$(SRC_DIR)core/
 RUNTIME_SRC_DIR=$(SRC_DIR)runtime/
 ALLOC_SRC_DIR=$(RUNTIME_SRC_DIR)allocator/
 BSQIR_SRC_DIR=$(RUNTIME_SRC_DIR)bsqir/
-TEST_SRC_DIR=$(SRC_DIR)testing/
+
+TEST_SRC_DIR=$(SRC_DIR)tests/
+CORE_TEST_SRC_DIR=$(TEST_SRC_DIR)core/
+RUNTIME_TEST_SRC_DIR=$(TEST_SRC_DIR)runtime/
 
 OUT_COMPONENTS=$(BUILD_DIR)output/
 OUT_OBJ=$(BUILD_DIR)output/obj/
@@ -30,6 +33,10 @@ OBJS=$(OUT_OBJ)common.o $(OUT_OBJ)alloc.o  $(OUT_OBJ)strings.o $(OUT_OBJ)lexer.o
 all: $(OBJS)
 
 app: ${OUT_COMPONENTS}app
+
+test: $(OBJS) $(HEADERS) $(CORE_TEST_SRC_DIR)*.cpp $(RUNTIME_TEST_SRC_DIR)*.cpp
+	@mkdir -p $(OUT_COMPONENTS)
+	$(CPP) $(CPPFLAGS) -o ${OUT_COMPONENTS}test $(OBJS) $(JSON_INCLUDES) $(CORE_TEST_SRC_DIR)*.cpp $(RUNTIME_TEST_SRC_DIR)*.cpp
 
 ${OUT_COMPONENTS}app: $(HEADERS) $(OBJS) app.cpp
 	@mkdir -p $(OUT_COMPONENTS)
