@@ -49,6 +49,12 @@ namespace ᐸRuntimeᐳ
             std::copy(other.data, other.data + K, this->data);
         }
 
+        template<typename Iter>
+        PosRBData(RColor color, uint16_t bheight, const PosRBData& other) : color(color), bheight(bheight), dcount(other.dcount)
+        {
+            std::copy(other.data, other.data + K, this->data);
+        }
+
         /** Constructor when we have a range of values  **/
         template<typename Iter>
         PosRBData(RColor color, uint16_t bheight, Iter start, Iter end) : color(color), bheight(bheight)
@@ -190,6 +196,17 @@ namespace ᐸRuntimeᐳ
     {
     public:
         PosRBData<T, K> data;
+
+        PosRBNode() = default;
+        PosRBNode(const PosRBNode& other) = default;
+
+        PosRBNode(const PosRBData<T, K>& data) : data(data) { ; }
+        PosRBNode(RColor color, uint16_t bheight, const PosRBData<T, K>& data) : data(color, bheight, dstart, dend) { ; }
+
+        constexpr static int64_t reprbheight(const PosRBNode* node)
+        {
+            return (node != nullptr) ? node->data.bheight : 0;
+        }
     };
 
     template<typename T, size_t K>
@@ -199,7 +216,10 @@ namespace ᐸRuntimeᐳ
         PosRBTreeLeaf() : PosRBNode<T, K>() = default;
         PosRBTreeLeaf(const PosRBTreeLeaf& other) = default;
         
-        PosRBTreeLeaf(const PosRBData<T, K>& data) : PosRBNode<T, K>(data) { ; }
+        PosRBTreeNode(RColor color, const PosRBData<T, K>& data) : PosRBNode<T, K>(color, color == RColor::Black ? 1 : 0, data)
+        {
+            ;
+        }
     };
     
     template<typename T, int64_t K>
@@ -228,6 +248,14 @@ namespace ᐸRuntimeᐳ
         PosRBNode* left;
         PosRBNode* right;
         int64_t tcount; //total number of elements in the subtree rooted at this node
+
+        PosRBTreeNode() = default;
+        PosRBTreeNode(const PosRBTreeNode& other) = default;
+
+        PosRBTreeNode(RColor color, PosRBNode* left, PosRBNode* right, const PosRBData<T, K>& data) : PosRBNode<T, K>(color, reprbheight(left) + (color == RColor::Black ? 1 : 0), data), left(left), right(right), tcount(data.dcount + reprcount(left) + reprcount(right))
+        {
+            ;
+        }
     };
 
     template<typename T, size_t K> 
@@ -274,6 +302,46 @@ namespace ᐸRuntimeᐳ
 
         constexpr static const PosRBTreeLeaf<T, K>* asLeafType(const PosRBNode<T, K>* node) { return static_cast<const PosRBTreeLeaf<T, K>*>(node); }
         constexpr static const PosRBTreeNode<T, K>* asNodeType(const PosRBNode<T, K>* node) { return static_cast<const PosRBTreeNode<T, K>*>(node); }
+
+        constexpr static PosRBNode<T, K>* reprGetLeft(PosRBNode<T, K>* node) 
+        {
+            if(isLeafType(node)) {
+                return nullptr;
+            }
+            else {
+            return asNodeType(node)->left; 
+            }
+        }
+
+        constexpr static PosRBNode<T, K>* reprGetRight(PosRBNode<T, K>* node) 
+        {
+            if(isLeafType(node)) {
+                return nullptr;
+            }
+            else {
+                return asNodeType(node)->right; 
+            }
+        }
+
+        constexpr static PosRBNode<T, K>* copyNodeReplaceData(PosRBNode<T, K>* node, const PosRBTreeData& ndata)
+        {
+            if(isLeafType(node)) {
+                return s_leafallocator.allocate(node->color, ndata);
+            }  
+            else {
+                return s_nodeallocator.allocate(node->color, node->left, node->right, ndata);
+            }
+        }
+
+        constexpr static PosRBNode<T, K>* mkcopynode(RColor color, PosRBNode<T, K>* left, PosRBNode<T, K>* right, const PosRBTreeData<T, K>& data)
+        {
+            if(left == nullptr && right == nullptr) {
+                return s_leafallocator.allocate(color, data);
+            }
+            else {
+                return s_nodeallocator.allocate(color, left, right, data);
+            }
+        }
 
 private:
         enum class InsertResultTag
@@ -387,99 +455,143 @@ private:
         }
 
         // double red violation on the LL side  (B (R (R a x b) y c) z d) = T (R (B a x b) y (B c z d))
-        static bool balancehelper_RR_LL(PosRBTreeNode* cur, InsertResult& res, GCAllocator<PosRBTreeNode>& allocator)
+        static bool balancehelper_RR_LL(PosRBNode<T, K>* cur, InsertResult& res)
         {
-            const PosRBTreeNode* l = cur->left;
-            if(l == nullptr || l->color != RColor::Red) {
+            if(cur == nullptr || cur->color != RColor::Black) {
                 return false;
             }
 
-            const PosRBTreeNode* ll = l->left;
-            if(ll == nullptr || ll->color != RColor::Red) {
+            if(isLeafType(cur)) {
                 return false;
             }
+            else {
+                PosRBTreeNode<T, K>* tnode = asNodeType(cur);
 
-            res = InsertResult::makeTree(
-                allocator.allocate(RColor::Red, 
-                    allocator.allocate(RColor::Black, ll->left, ll->right, ll->data), 
-                    allocator.allocate(RColor::Black, l->right, cur->right, cur->data),
-                    l->data
-                )
-            );
-            return true;
+                const PosRBTreeNode* l = tnode->left;
+                if(l == nullptr || l->color != RColor::Red) {
+                    return false;
+                }
+
+                const PosRBTreeNode* ll = l->left;
+                if(ll == nullptr || ll->color != RColor::Red) {
+                    return false;
+                }
+
+                res = InsertResult::makeTree(
+                    s_nodeallocator.allocate(RColor::Red, 
+                        mkcopynode(RColor::Black, ll->left, ll->right, ll->data), 
+                        mkcopynode(RColor::Black, l->right, tnode->right, tnode->data),
+                        l->data
+                    )
+                );
+                return true;
+            }
         }
 
         // double red violation on the LR side  (B (R a x (R b y c)) z d) = T (R (B a x b) y (B c z d))
-        static bool balancehelper_RR_LR(PosRBTreeNode* cur, InsertResult& res, GCAllocator<PosRBTreeNode>& allocator)
+        static bool balancehelper_RR_LR(PosRBNode<T, K>* cur, InsertResult& res)
         {
-            const PosRBTreeNode* l  = cur->left;
-            if(l == nullptr || l->color != RColor::Red) {
+            if(cur == nullptr || cur->color != RColor::Black) {
                 return false;
             }
 
-            const PosRBTreeNode* lr = l->right;
-            if(lr == nullptr || lr->color != RColor::Red) {
+            if(isLeafType(cur)) {
                 return false;
             }
+            else {
+                PosRBTreeNode<T, K>* tnode = asNodeType(cur);
 
-            res = InsertResult::makeTree(
-                allocator.allocate(RColor::Red, 
-                    allocator.allocate(RColor::Black, l->left, lr->left, l->data), 
-                    allocator.allocate(RColor::Black, lr->right, cur->right, cur->data),
-                    lr->data
-                )
-            );
-            return true;
+                const PosRBTreeNode* l  = tnode->left;
+                if(l == nullptr || l->color != RColor::Red) {
+                    return false;
+                }
+
+                const PosRBTreeNode* lr = l->right;
+                if(lr == nullptr || lr->color != RColor::Red) {
+                    return false;
+                }
+
+                res = InsertResult::makeTree(
+                    s_nodeallocator.allocate(RColor::Red, 
+                        mkcopynode(RColor::Black, l->left, lr->left, l->data), 
+                        mkcopynode(RColor::Black, lr->right, tnode->right, tnode->data),
+                        lr->data
+                    )
+                );
+                return true;
+            }
         }
 
         // double red violation on the RL side  (B a x (R (R b y c) z d)) = T (R (B a x b) y (B c z d))
-        static bool balancehelper_RR_RL(PosRBTreeNode* cur, InsertResult& res, GCAllocator<PosRBTreeNode>& allocator)
+        static bool balancehelper_RR_RL(PosRBNode<T, K>* cur, InsertResult& res)
         {
-            const PosRBTreeNode* r  = cur->right;
-            if(r == nullptr || r->color != RColor::Red) {
+            if(cur == nullptr || cur->color != RColor::Black) {
                 return false;
             }
 
-            const PosRBTreeNode* rr = r->right;
-            if(rr == nullptr || rr->color != RColor::Red) {
+            if(isLeafType(cur)) {
                 return false;
             }
+            else {
+                PosRBTreeNode<T, K>* tnode = asNodeType(cur);
 
-            res = InsertResult::makeTree(
-                allocator.allocate(RColor::Red, 
-                    allocator.allocate(RColor::Black, cur->left, rr->left, cur->data), 
-                    allocator.allocate(RColor::Black, rr->right, r->right, r->data),
-                    rr->data
-                )
-            );
-            return true;
+                const PosRBTreeNode* r  = tnode->right;
+                if(r == nullptr || r->color != RColor::Red) {
+                    return false;
+                }
+
+                const PosRBTreeNode* rr = r->right;
+                if(rr == nullptr || rr->color != RColor::Red) {
+                    return false;
+                }
+
+                res = InsertResult::makeTree(
+                    s_nodeallocator.allocate(RColor::Red, 
+                        mkcopynode(RColor::Black, tnode->left, rr->left, tnode->data), 
+                        mkcopynode(RColor::Black, rr->right, r->right, r->data),
+                        rr->data
+                    )
+                );
+                return true;
+            }
         }
 
         // double red violation on the RR side balance (B a x (R b y (R c z d))) = T (R (B a x b) y (B c z d))
-        static bool balancehelper_RR_RR(PosRBTreeNode* cur, InsertResult& res, GCAllocator<PosRBTreeNode>& allocator)
+        static bool balancehelper_RR_RR(PosRBNode<T, K>* cur, InsertResult& res)
         {
-            const PosRBTreeNode* r  = cur->right;
-            if(r == nullptr || r->color != RColor::Red) {
+            if(cur == nullptr || cur->color != RColor::Black) {
                 return false;
             }
 
-            const PosRBTreeNode* rr = r->right;
-            if(rr == nullptr || rr->color != RColor::Red) {
+            if(isLeafType(cur)) {
                 return false;
             }
+            else {
+                PosRBTreeNode<T, K>* tnode = asNodeType(cur);
 
-            res = InsertResult::makeTree(
-                allocator.allocate(RColor::Red, 
-                    allocator.allocate(RColor::Black, cur->left, r->left, cur->data), 
-                    allocator.allocate(RColor::Black, rr->left, rr->right, rr->data),
-                    r->data
-                )
-            );
-            return true;
+                const PosRBTreeNode* r = tnode->right;
+                if(r == nullptr || r->color != RColor::Red) {
+                    return false;
+                }
+
+                const PosRBTreeNode* rr = r->right;
+                if(rr == nullptr || rr->color != RColor::Red) {
+                    return false;
+                }
+
+                res = InsertResult::makeTree(
+                    s_nodeallocator->allocate(RColor::Red, 
+                        mkcopynode(RColor::Black, tnode->left, r->left, tnode->data), 
+                        mkcopynode(RColor::Black, rr->left, rr->right, rr->data),
+                        r->data
+                    )
+                );
+                return true;
+            }
         }
 
         // Just roll up the black nodes -- balance (B a x b) = D (B a x b)
-        static bool balancehelper_S_B(PosRBTreeNode* cur, InsertResult& res, GCAllocator<PosRBTreeNode>& allocator)
+        static bool balancehelper_S_B(PosRBNode<T, K>* cur, InsertResult& res)
         {
             if(cur == nullptr || cur->color != RColor::Black) {
                 return false;
@@ -490,7 +602,7 @@ private:
         }
 
         // Tentatively roll up the red nodes -- balance (R a x b) = T (R a x b)
-        static bool balancehelper_S_R(PosRBTreeNode* cur, InsertResult& res, GCAllocator<PosRBTreeNode>& allocator)
+        static bool balancehelper_S_R(PosRBNode<T, K>* cur, InsertResult& res)
         {
             if(cur == nullptr || cur->color != RColor::Red) {
                 return false;
@@ -500,75 +612,62 @@ private:
             return true;
         }
 
-        static InsertResult balance(PosRBTreeNode* cur, GCAllocator<PosRBTreeNode>& allocator)
+        static InsertResult balance(const InsertResult& rres)
         {
+            if(rres.isDone()) {
+                return rres;
+            }
+
             InsertResult res;
-            if(balancehelper_RR_LL(cur, res, allocator)) {
+            PosRBNode<T, K>* cur = rres.getTree();
+            if(balancehelper_RR_LL(cur, res)) {
                 return res;
             }
-            else if(balancehelper_RR_LR(cur, res, allocator)) {
+            else if(balancehelper_RR_LR(cur, res)) {
                 return res;
             }
-            else if(balancehelper_RR_RL(cur, res, allocator)) {
+            else if(balancehelper_RR_RL(cur, res)) {
                 return res;
             }
-            else if(balancehelper_RR_RR(cur, res, allocator)) {
+            else if(balancehelper_RR_RR(cur, res)) {
                 return res;
             }
-            else if(balancehelper_S_B(cur, res, allocator)) {
+            else if(balancehelper_S_B(cur, res)) {
                 return res;
             }
             else {
-                balancehelper_S_R(cur, res, allocator);
+                balancehelper_S_R(cur, res);
                 return res;
             }   
         }
 
-        static PosRBTree* copyNodeSpine(const std::pair<PathDirection, PosRBTreeNode*>& nodepath, PosRBTreeNode* curr, GCAllocator<PosRBTreeNode>& allocator)
+        static InsertResult insertrec(PosRBNode<T, K>* curr, int64_t index, const T& value)
         {
-            PosRBTreeNode* nl = nodepath.first == PathDirection::Left ? curr : nodepath.second->left;
-            PosRBTreeNode* nr = nodepath.first == PathDirection::Right ? curr : nodepath.second->right;
-
-            return allocator.allocate(nodepath.second->color, nl, nr, nodepath.second->data);
-        }
-
-        static PosRBTree* copyNodeReplaceData(PosRBTreeNode* node, const PosRBTreeData& ndata, GCAllocator<PosRBTreeNode>& allocator)
-        {
-            return allocator.allocate(node->color, node->left, node->right, ndata);
-        }
-
-        static PosRBTreeNode* insert_spill(PosRBTreeNode* node, int64_t index, const T& value, GCAllocator<PosRBTreeNode>& allocator)
-        {
-            if(node == nullptr) {
-                return allocator.allocate(RColor::Red, nullptr, nullptr, PosRBTreeData<T, K>{value});
+            if(curr == nullptr) {
+                //add the element in a new leaf
+                PosRBTreeLeaf<T, K> nleaf = s_leafallocator->allocate(RColor::Red, PosRBData<T, K>{value});
+                return InsertResult::makeTree(nleaf);
             }
 
-
-        }
-
-        PosRBTreeNode* insert(int64_t index, const T& value, GCAllocator<PosRBTreeNode>& allocator)
-        {
-            TreeNodePath path;
-            PosRBTreeNode* opnode = path.buildToIndex(index, this);
-
-            if(opnode->count < K) {
+            if(curr->data.dcount < K) {
                 //we can add the element without modifying structure -- no rebalancing needed just copy spine
-                PosRBTreeNode* curr = copyNodeReplaceData(opnode, opnode->data.insert(index, value), allocator);
-                while(!path.empty()) {
-                    curr = copyNodeSpine(path.pop(), curr, allocator);
-                }
-
-                return blacken(curr);
+                PosRBNode<T, K>* curr = copyNodeReplaceData(curr, curr->data.insert(index, value));
+                return InsertResult::makeDone(curr);
             }
             else {
                 // we need to split the leaf and add a new node -- must do rebalance
                 InsertResult res;
                 if(index == 0) {
-                    //then spill the insert element down to the left
-                    xxxx;
+                    //then spill the insert element down to the left -- but index of 0 must mean there is no left child
+                    T spill;
+                    PosRBData<T, K> ndata = curr->data.insertSpillLeft(index, value, spill);
+                    
+                    xxxx; need to fix constructor
+                    PosRBTreeLeaf<T, K> nleaf = s_leafallocator->allocate(RColor::Red, PosRBData<T, K>{value});
+                    return InsertResult::makeTree(nleaf);
                 }
                 else if(index == K) { 
-                    //then spill the insert element down to the right
+                    //then spill the insert element down to the right -- but index of K must mean there is no left child
                     xxxx;
                 }
                 else if(opnode->left == nullptr) {
