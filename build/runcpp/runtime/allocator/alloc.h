@@ -65,6 +65,12 @@ namespace ᐸRuntimeᐳ
         {
             return new (this->xalloc()) T{args...};
         }
+
+        template<typename... Args>
+        inline T* construct(Args... args) 
+        {
+            return new (this->xalloc()) T(args...);
+        }
     };
 
     class AllocatorThreadLocalInfo

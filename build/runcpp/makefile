@@ -27,6 +27,8 @@ CPPFLAGS_OPT.test=-O0 -g -ggdb -fno-omit-frame-pointer
 CPPFLAGS_OPT.release=-O3 -march=x86-64-v3
 CPPFLAGS=${CPPFLAGS_OPT.${BUILD}} ${CPP_STDFLAGS}
 
+CPP_TESTFLAGS=-O0 -g -ggdb -fno-omit-frame-pointer -fsanitize=address -Wall -Wextra -Wno-unused-parameter -Wuninitialized -Werror -std=gnu++23 -fno-rtti -fno-strict-aliasing -fno-stack-protector -fPIC
+
 HEADERS=$(wildcard $(SRC_DIR)*.h) $(wildcard $(CORE_SRC_DIR)*.h) $(wildcard $(RUNTIME_SRC_DIR)*.h) $(wildcard $(ALLOC_SRC_DIR)*.h) $(wildcard $(BSQIR_SRC_DIR)*.h)
 OBJS=$(OUT_OBJ)common.o $(OUT_OBJ)alloc.o  $(OUT_OBJ)strings.o $(OUT_OBJ)lexer.o $(OUT_OBJ)parser.o $(OUT_OBJ)emit.o
 
@@ -34,9 +36,13 @@ all: $(OBJS)
 
 app: ${OUT_COMPONENTS}app
 
-test: $(OBJS) $(HEADERS) $(CORE_TEST_SRC_DIR)*.cpp $(RUNTIME_TEST_SRC_DIR)*.cpp
+testcore: $(OBJS) $(HEADERS) $(CORE_TEST_SRC_DIR)*.cpp
 	@mkdir -p $(OUT_COMPONENTS)
-	$(CPP) $(CPPFLAGS) -o ${OUT_COMPONENTS}test $(OBJS) $(JSON_INCLUDES) $(CORE_TEST_SRC_DIR)*.cpp $(RUNTIME_TEST_SRC_DIR)*.cpp
+	$(CPP) $(CPP_TESTFLAGS) -o ${OUT_COMPONENTS}testcore $(OBJS) $(JSON_INCLUDES) $(CORE_TEST_SRC_DIR)*.cpp -lboost_unit_test_framework
+
+testruntime: $(OBJS) $(HEADERS) $(RUNTIME_TEST_SRC_DIR)*.cpp
+	@mkdir -p $(OUT_COMPONENTS)
+	$(CPP) $(CPP_TESTFLAGS) -o ${OUT_COMPONENTS}testruntime $(OBJS) $(JSON_INCLUDES) $(RUNTIME_TEST_SRC_DIR)*.cpp -lboost_unit_test_framework
 
 ${OUT_COMPONENTS}app: $(HEADERS) $(OBJS) app.cpp
 	@mkdir -p $(OUT_COMPONENTS)

@@ -64,7 +64,7 @@ namespace ᐸRuntimeᐳ
         template<typename Iter>
         PosRBData(RColor color, uint16_t bheight, Iter start, Iter end) : color(color), bheight(bheight)
         {            
-            const int64_t size = std::distance(start, end);
+            const size_t size = std::distance(start, end);
             assert(size != 0);
             assert(size <= K);
 
@@ -80,7 +80,7 @@ namespace ᐸRuntimeᐳ
         template<typename Iter>
         PosRBData(RColor color, uint16_t bheight, const T& ival, Iter rstart, Iter rend) : color(color), bheight(bheight)
         {   
-            const int64_t size = 1 + std::distance(rstart, rend);
+            const size_t size = 1 + std::distance(rstart, rend);
             assert(size <= K);
 
             this->data[0] = ival;
@@ -96,7 +96,7 @@ namespace ᐸRuntimeᐳ
         template<typename Iter>
         PosRBData(RColor color, uint16_t bheight, Iter lstart, Iter lend, const T& ival) : color(color), bheight(bheight)
         {          
-            const int64_t size = std::distance(lstart, lend) + 1;
+            const size_t size = std::distance(lstart, lend) + 1;
             assert(size <= K);
 
             std::copy(lstart, lend, this->data.begin());
@@ -112,7 +112,7 @@ namespace ᐸRuntimeᐳ
         template<typename Iter>
         PosRBData(RColor color, uint16_t bheight, Iter lstart, Iter lend, const T& ival, Iter rstart, Iter rend) : color(color), bheight(bheight)
         {
-            const int64_t size = std::distance(lstart, lend) + 1 + std::distance(rstart, rend);
+            const size_t size = std::distance(lstart, lend) + 1 + std::distance(rstart, rend);
             assert(size <= K);
 
             std::copy(lstart, lend, this->data.begin());
@@ -129,7 +129,7 @@ namespace ᐸRuntimeᐳ
         template<typename Iter>
         PosRBData(RColor color, uint16_t bheight, Iter lstart, Iter lend, Iter rstart, Iter rend) : color(color), bheight(bheight)
         {
-            const int64_t size = std::distance(lstart, lend) + std::distance(rstart, rend);
+            const size_t size = std::distance(lstart, lend) + std::distance(rstart, rend);
             assert(size <= K);
 
             std::copy(lstart, lend, this->data.begin());
@@ -143,20 +143,20 @@ namespace ᐸRuntimeᐳ
 
         PosRBData pushfront(const T& value) const
         {
-            assert(this->dcount < K);
+            assert((size_t)this->dcount < K);
             return PosRBData(this->color, this->bheight, value, this->data.begin(), this->data.begin() + this->dcount);
         }
 
         PosRBData pushback(const T& value) const
         {
-            assert(this->dcount < K);
+            assert((size_t)this->dcount < K);
             return PosRBData(this->color, this->bheight, this->data.begin(), this->data.begin() + this->dcount, value);
         }
 
         PosRBData insert(int64_t index, const T& value) const
         {
             assert((0 <= index) & (index <= this->dcount));
-            assert(this->dcount < K);
+            assert((size_t)this->dcount < K);
 
             if(index == 0) {
                 return PosRBData(this->color, this->bheight, value, this->data.begin(), this->data.begin() + this->dcount);
@@ -171,8 +171,8 @@ namespace ᐸRuntimeᐳ
 
         PosRBData insertSpillLeft(int64_t index, const T& value, T& spill) const
         {
-            assert((0 <= index) & (index < K));
-            assert(this->dcount == K);
+            assert((0 <= index) & (index < (int64_t)K));
+            assert((size_t)this->dcount == K);
           
             if(index == 0) {
                 spill = value;
@@ -186,8 +186,8 @@ namespace ᐸRuntimeᐳ
 
         PosRBData insertSpillRight(int64_t index, const T& value, T& spill) const
         {
-            assert((0 < index) & (index <= K));
-            assert(this->dcount == K);
+            assert((0 < index) & (index <= (int64_t)K));
+            assert((size_t)this->dcount == K);
           
             if(index == K) {
                 spill = value;
@@ -223,7 +223,7 @@ namespace ᐸRuntimeᐳ
     class PosRBNode
     {
     public:
-        PosRBData<T, K> data;
+        const PosRBData<T, K> data;
 
         PosRBNode() : data() { ; }
         PosRBNode(const PosRBNode& other) : data(other.data) { ; }
@@ -264,13 +264,13 @@ namespace ᐸRuntimeᐳ
     class PosRBTreeNode : public PosRBNode<T, K>
     {
     public:
-        PosRBNode<T, K>* left;
-        PosRBNode<T, K>* right;
+        const PosRBNode<T, K>* left;
+        const PosRBNode<T, K>* right;
         int64_t tcount; //total number of elements in the subtree rooted at this node
 
         PosRBTreeNode() : PosRBNode<T, K>(), left(nullptr), right(nullptr), tcount(0) { ; }
         PosRBTreeNode(const PosRBTreeNode& other) : PosRBNode<T, K>(other.data), left(other.left), right(other.right), tcount(other.tcount) { ; }
-        PosRBTreeNode(RColor color, uint16_t bheight, int64_t tcount, PosRBNode<T, K>* left, PosRBNode<T, K>* right, const PosRBData<T, K>& data) : PosRBNode<T, K>(color, bheight, data), left(left), right(right), tcount(tcount) { ; }
+        PosRBTreeNode(RColor color, uint16_t bheight, int64_t tcount, const PosRBNode<T, K>* left, const PosRBNode<T, K>* right, const PosRBData<T, K>& data) : PosRBNode<T, K>(color, bheight, data), left(left), right(right), tcount(tcount) { ; }
     };
 
     template<typename T, size_t K> 
@@ -342,34 +342,34 @@ namespace ᐸRuntimeᐳ
         static PosRBNode<T, K>* mknode(RColor color, const PosRBNode<T, K>* left, const PosRBNode<T, K>* right, const PosRBData<T, K>& data)
         {
             if(left == nullptr && right == nullptr) {
-                return s_leafallocator->allocate(color, data);
+                return s_leafallocator->construct(color, data);
             }
             else {
                 int16_t bheight = reprGetBHeight(left) + (color == RColor::Black ? 1 : 0);
                 int64_t tcount = reprGetCount(left) + reprGetCount(right) + data.dcount;
 
-                return s_nodeallocator.allocate(color, bheight, tcount, left, right, data);
+                return s_nodeallocator->construct(color, bheight, tcount, left, right, data);
             }
         }
 
         static PosRBNode<T, K>* copyNodeReplaceData(const PosRBNode<T, K>* node, const PosRBData<T, K>& ndata)
         {
             if(isLeafType(node)) {
-                return s_leafallocator.allocate(node->color, ndata);
+                return s_leafallocator->construct(node->data.color, ndata);
             }  
             else {
                 const PosRBTreeNode<T, K>* tnode = asNodeType(node);
-                return s_nodeallocator.allocate(node->color, tnode->bheight, tnode->tcount, node->left, node->right, ndata);
+                return s_nodeallocator->construct(node->data.color, tnode->data.bheight, tnode->tcount, tnode->left, tnode->right, ndata);
             }
         }
 
         static PosRBNode<T, K>* mkcopynode(RColor color, const PosRBNode<T, K>* left, const PosRBNode<T, K>* right, const PosRBData<T, K>& data)
         {
             if(left == nullptr && right == nullptr) {
-                return s_leafallocator.allocate(color, data);
+                return s_leafallocator->construct(color, data);
             }
             else {
-                return s_nodeallocator.allocate(color, reprGetBHeight(left), reprGetCount(left) + reprGetCount(right) + data.dcount, left, right, data);
+                return s_nodeallocator->construct(color, reprGetBHeight(left), reprGetCount(left) + reprGetCount(right) + data.dcount, left, right, data);
             }
         }
 
@@ -462,7 +462,7 @@ private:
             }
             
             if(isLeafType(node)) {
-                return (node->color == RColor::Black) ? 1 : 0;
+                return (node->data.color == RColor::Black) ? 1 : 0;
             }
             else {
                 const PosRBTreeNode<T, K>* tnode = asNodeType(node);
@@ -481,7 +481,7 @@ private:
                     return -1;
                 }
 
-                return (node->color == RColor::Black) ? (lc + 1) : lc;
+                return (node->data.color == RColor::Black) ? (lc + 1) : lc;
             }
         }
 
@@ -489,22 +489,23 @@ private:
         {
             if(node == nullptr || isLeafType(node)) {
                 return true;
-            }
-
-            if(isNodeType(node)) {
+            } 
+            else {
                 const PosRBTreeNode<T, K>* tnode = asNodeType(node);
                 
-                if(tnode->color == RColor::Red) {
-                    if(tnode->left != nullptr && tnode->left->color == RColor::Red) {
+                if(tnode->data.color == RColor::Red) {
+                    if(tnode->left != nullptr && tnode->left->data.color == RColor::Red) {
                         return false;
                     }
-                    if(tnode->right != nullptr && tnode->right->color == RColor::Red) {
+                    if(tnode->right != nullptr && tnode->right->data.color == RColor::Red) {
                         return false;
                     }
                 }
 
                 return checkRBChildColorInvariant(tnode->left) && checkRBChildColorInvariant(tnode->right);
             }
+
+            return true;
         }
 
         static bool checkRBLeafInvariant(const PosRBNode<T, K>* node)
@@ -512,8 +513,7 @@ private:
             if(node == nullptr || isLeafType(node)) {
                 return true;
             }
-
-            if(isNodeType(node)) {
+            else {
                 const PosRBTreeNode<T, K>* tnode = asNodeType(node);
                 
                 if(tnode->left == nullptr && tnode->right == nullptr) {
@@ -543,7 +543,7 @@ private:
         {
             assert(cur != nullptr);
 
-            if(cur->color != RColor::Black) {
+            if(cur->data.color != RColor::Black) {
                 return emptyInsertResult;
             }
 
@@ -554,12 +554,12 @@ private:
                 const PosRBTreeNode<T, K>* tnode = asNodeType(cur);
 
                 const PosRBNode<T, K>* l = reprGetLeft(tnode);
-                if(l == nullptr || l->color != RColor::Red) {
+                if(l == nullptr || l->data.color != RColor::Red) {
                     return emptyInsertResult;
                 }
 
                 const PosRBNode<T, K>* ll = reprGetLeft(l);
-                if(ll == nullptr || ll->color != RColor::Red) {
+                if(ll == nullptr || ll->data.color != RColor::Red) {
                     return emptyInsertResult;
                 }
 
@@ -574,11 +574,11 @@ private:
         }
 
         // double red violation on the LR side  (B (R a x (R b y c)) z d) = T (R (B a x b) y (B c z d))
-        static InsertResult balancehelper_RR_LR(PosRBNode<T, K>* cur, InsertResult& res)
+        static InsertResult balancehelper_RR_LR(const PosRBNode<T, K>* cur)
         {
             assert(cur != nullptr);
 
-            if(cur->color != RColor::Black) {
+            if(cur->data.color != RColor::Black) {
                 return emptyInsertResult;
             }
 
@@ -589,12 +589,12 @@ private:
                 const PosRBTreeNode<T, K>* tnode = asNodeType(cur);
 
                 const PosRBNode<T, K>* l  = reprGetLeft(tnode);
-                if(l == nullptr || l->color != RColor::Red) {
+                if(l == nullptr || l->data.color != RColor::Red) {
                     return emptyInsertResult;
                 }
 
                 const PosRBNode<T, K>* lr = reprGetRight(l);
-                if(lr == nullptr || lr->color != RColor::Red) {
+                if(lr == nullptr || lr->data.color != RColor::Red) {
                     return emptyInsertResult;
                 }
 
@@ -609,11 +609,11 @@ private:
         }
 
         // double red violation on the RL side  (B a x (R (R b y c) z d)) = T (R (B a x b) y (B c z d))
-        static InsertResult balancehelper_RR_RL(PosRBNode<T, K>* cur, InsertResult& res)
+        static InsertResult balancehelper_RR_RL(const PosRBNode<T, K>* cur)
         {
             assert(cur != nullptr);
             
-            if(cur->color != RColor::Black) {
+            if(cur->data.color != RColor::Black) {
                 return emptyInsertResult;
             }
 
@@ -624,12 +624,12 @@ private:
                 const PosRBTreeNode<T, K>* tnode = asNodeType(cur);
 
                 const PosRBNode<T, K>* r = reprGetRight(tnode);
-                if(r == nullptr || r->color != RColor::Red) {
+                if(r == nullptr || r->data.color != RColor::Red) {
                     return emptyInsertResult;
                 }
 
                 const PosRBNode<T, K>* rr = reprGetRight(r);
-                if(rr == nullptr || rr->color != RColor::Red) {
+                if(rr == nullptr || rr->data.color != RColor::Red) {
                     return emptyInsertResult;
                 }
 
@@ -644,11 +644,11 @@ private:
         }
 
         // double red violation on the RR side balance (B a x (R b y (R c z d))) = T (R (B a x b) y (B c z d))
-        static InsertResult balancehelper_RR_RR(PosRBNode<T, K>* cur, InsertResult& res)
+        static InsertResult balancehelper_RR_RR(const PosRBNode<T, K>* cur)
         {
             assert(cur != nullptr);
 
-            if(cur->color != RColor::Black) {
+            if(cur->data.color != RColor::Black) {
                 return emptyInsertResult;
             }
 
@@ -659,12 +659,12 @@ private:
                 const PosRBTreeNode<T, K>* tnode = asNodeType(cur);
 
                 const PosRBNode<T, K>* r = reprGetRight(tnode);
-                if(r == nullptr || r->color != RColor::Red) {
+                if(r == nullptr || r->data.color != RColor::Red) {
                     return emptyInsertResult;
                 }
 
                 const PosRBNode<T, K>* rr = reprGetRight(r);
-                if(rr == nullptr || rr->color != RColor::Red) {
+                if(rr == nullptr || rr->data.color != RColor::Red) {
                     return emptyInsertResult;
                 }
 
@@ -679,11 +679,11 @@ private:
         }
 
         // Just roll up the black nodes -- balance (B a x b) = D (B a x b)
-        static InsertResult balancehelper_S_B(PosRBNode<T, K>* cur, InsertResult& res)
+        static InsertResult balancehelper_S_B(const PosRBNode<T, K>* cur)
         {
             assert(cur != nullptr);
 
-            if(cur->color != RColor::Black) {
+            if(cur->data.color != RColor::Black) {
                 return emptyInsertResult;
             }
 
@@ -691,11 +691,11 @@ private:
         }
 
         // Tentatively roll up the red nodes -- balance (R a x b) = T (R a x b)
-        static InsertResult balancehelper_S_R(PosRBNode<T, K>* cur, InsertResult& res)
+        static InsertResult balancehelper_S_R(const PosRBNode<T, K>* cur)
         {
             assert(cur != nullptr);
 
-            if(cur->color != RColor::Red) {
+            if(cur->data.color != RColor::Red) {
                 return emptyInsertResult;
             }
 
@@ -708,7 +708,7 @@ private:
                 return rres;
             }
 
-            PosRBNode<T, K>* cur = rres.getTree();
+            const PosRBNode<T, K>* cur = rres.tnode;
 
             InsertResult res_rr_ll = balancehelper_RR_LL(cur);
             if(!res_rr_ll.isEmpty()) {
@@ -730,7 +730,7 @@ private:
                 return res_rr_rr;
             }
 
-            InsertResult res_s_b = balancehelper_S_B(cur, rres);
+            InsertResult res_s_b = balancehelper_S_B(cur);
             if(!res_s_b.isEmpty()) {
                 return res_s_b;
             }
@@ -742,133 +742,133 @@ private:
         {
             //add the element in a new leaf
             if(curr == nullptr) {
-                PosRBTreeLeaf<T, K> nleaf = s_leafallocator->allocate(PosRBData<T, K>(RColor::Red, 0, value));
+                PosRBTreeLeaf<T, K>* nleaf = s_leafallocator->construct(RColor::Red, PosRBData<T, K>(RColor::Red, 0, value));
                 return InsertResult::makeTree(nleaf);
             }
 
             //we can add the element without modifying structure -- no rebalancing needed just copy spine
-            if(curr->data.dcount < K && reprGetLeft(curr) == nullptr) {
-                PosRBNode<T, K>* curr = copyNodeReplaceData(curr, curr->data.pushfront(value));
-                return InsertResult::makeDone(curr);
+            if((size_t)curr->data.dcount < K && reprGetLeft(curr) == nullptr) {
+                PosRBNode<T, K>* nnode = copyNodeReplaceData(curr, curr->data.pushfront(value));
+                return InsertResult::makeDone(nnode);
             }
             else {
                 InsertResult nleft = pushfrontrec(reprGetLeft(curr), value);
-                return balance(nleft.apply([curr](PosRBNode<T, K>* tnode) { return mknode(curr->color, tnode, reprGetRight(curr), curr->data); }));
+                return balance(nleft.apply([curr](const PosRBNode<T, K>* tnode) { return mknode(curr->data.color, tnode, reprGetRight(curr), curr->data); }));
             }
         }
 
-        static InsertResult pushbackrec(PosRBNode<T, K>* curr, const T& value)
+        static InsertResult pushbackrec(const PosRBNode<T, K>* curr, const T& value)
         {
             //add the element in a new leaf
             if(curr == nullptr) {
-                PosRBTreeLeaf<T, K> nleaf = s_leafallocator->allocate(PosRBData<T, K>(RColor::Red, 0, value));
+                PosRBTreeLeaf<T, K>* nleaf = s_leafallocator->construct(RColor::Red, PosRBData<T, K>(RColor::Red, 0, value));
                 return InsertResult::makeTree(nleaf);
             }
 
             //we can add the element without modifying structure -- no rebalancing needed just copy spine
-            if(curr->data.dcount < K && reprGetRight(curr) == nullptr) {
-                PosRBNode<T, K>* curr = copyNodeReplaceData(curr, curr->data.pushback(value));
-                return InsertResult::makeDone(curr);
+            if((size_t)curr->data.dcount < K && reprGetRight(curr) == nullptr) {
+                PosRBNode<T, K>* nnode = copyNodeReplaceData(curr, curr->data.pushback(value));
+                return InsertResult::makeDone(nnode);
             }
             else {
                 InsertResult nright = pushbackrec(reprGetRight(curr), value);
-                return balance(nright.apply([curr](PosRBNode<T, K>* tnode) { return mknode(curr->color, reprGetLeft(curr), tnode, curr->data); }));
+                return balance(nright.apply([curr](const PosRBNode<T, K>* tnode) { return mknode(curr->data.color, reprGetLeft(curr), tnode, curr->data); }));
             }
         }
 
-        static InsertResult insertrec(PosRBNode<T, K>* curr, int64_t index, const T& value)
+        static InsertResult insertrec(const PosRBNode<T, K>* curr, int64_t index, const T& value)
         {
             if(curr == nullptr) {
                 //add the element in a new leaf
-                PosRBTreeLeaf<T, K> nleaf = s_leafallocator->allocate(PosRBData<T, K>(RColor::Red, 0, value));
+                PosRBTreeLeaf<T, K>* nleaf = s_leafallocator->construct(RColor::Red, PosRBData<T, K>(RColor::Red, 0, value));
                 return InsertResult::makeTree(nleaf);
             }
 
             if(isLeafType(curr)) {
-                PosRBTreeLeaf<T, K>* leaf = asLeafType(curr);
+                const PosRBTreeLeaf<T, K>* leaf = asLeafType(curr);
                 
-                if(curr->data.dcount < K) {
-                    PosRBNode<T, K>* curr = copyNodeReplaceData(curr, curr->data.insert(index, value));
-                    return InsertResult::makeDone(curr);
+                if((size_t)curr->data.dcount < K) {
+                    PosRBNode<T, K>* nnode = copyNodeReplaceData(curr, curr->data.insert(index, value));
+                    return InsertResult::makeDone(nnode);
                 }
                 else {
-                    if(index < K / 2) {
+                    if(index < (int64_t)K / 2) {
                         //then spill the insert element down to the left
                         T spill;
                         PosRBData<T, K> ndata = curr->data.insertSpillLeft(index, value, spill);
-                        PosRBTreeLeaf<T, K> lleaf = s_leafallocator->allocate(PosRBData<T, K>(RColor::Red, 0, spill));
+                        PosRBTreeLeaf<T, K>* lleaf = s_leafallocator->construct(RColor::Red, PosRBData<T, K>(RColor::Red, 0, spill));
                         return balance(InsertResult::makeTree(mknode(ndata.color, lleaf, nullptr, ndata)));
                     }
                     else {
                         //then spill the insert element down to the right
                         T spill;
                         PosRBData<T, K> ndata = curr->data.insertSpillRight(index, value, spill);
-                        PosRBTreeLeaf<T, K> rleaf = s_leafallocator->allocate(PosRBData<T, K>(RColor::Red, 0, spill));
+                        PosRBTreeLeaf<T, K>* rleaf = s_leafallocator->construct(RColor::Red, PosRBData<T, K>(RColor::Red, 0, spill));
                         return balance(InsertResult::makeTree(mknode(ndata.color, nullptr, rleaf, ndata)));
                     }
                 }
             }
             else {
-                PosRBTreeNode<T, K>* opnode = asNodeType(curr);
-                PosRBNode<T, K>* l = opnode->left;
-                PosRBNode<T, K>* r = opnode->right;
+                const PosRBTreeNode<T, K>* opnode = asNodeType(curr);
+                const PosRBNode<T, K>* l = opnode->left;
+                const PosRBNode<T, K>* r = opnode->right;
                 
                 int64_t lcount = reprGetCount(l);
                 if(index <= lcount) {
                     //insert to left
-                    if(index == lcount && opnode->data.dcount < K) {
+                    if(index == lcount && (size_t)curr->data.dcount < K) {
                         //we can add the element without modifying structure -- no rebalancing needed just copy spine
-                        PosRBNode<T, K>* curr = copyNodeReplaceData(curr, curr->data.pushfront(value));
-                        return InsertResult::makeDone(curr);
+                        PosRBNode<T, K>* nnode = copyNodeReplaceData(curr, curr->data.pushfront(value));
+                        return InsertResult::makeDone(nnode);
                     }
                     else {
                         InsertResult nleft = insertrec(l, index, value);
-                        return balance(nleft.apply([opnode, r](PosRBNode<T, K>* tnode) { return mknode(opnode->color, tnode, r, opnode->data); }));
+                        return balance(nleft.apply([opnode, r](const PosRBNode<T, K>* tnode) { return mknode(opnode->data.color, tnode, r, opnode->data); }));
                     }
                 }
                 else if(lcount + opnode->data.dcount <= index) {
                     //insert to right
-                    if(index == lcount + opnode->data.dcount && opnode->data.dcount < K) {
+                    if(index == lcount + opnode->data.dcount && (size_t)opnode->data.dcount < K) {
                         //we can add the element without modifying structure -- no rebalancing needed just copy spine
-                        PosRBNode<T, K>* curr = copyNodeReplaceData(curr, curr->data.pushback(value));
-                        return InsertResult::makeDone(curr);
+                        PosRBNode<T, K>* nnode = copyNodeReplaceData(curr, curr->data.pushback(value));
+                        return InsertResult::makeDone(nnode);
                     }
                     else {
                         InsertResult nright = insertrec(r, index - (lcount + opnode->data.dcount), value);
-                        return balance(nright.apply([opnode, l](PosRBNode<T, K>* tnode) { return mknode(opnode->color, l, tnode, opnode->data); }));
+                        return balance(nright.apply([opnode, l](const PosRBNode<T, K>* tnode) { return mknode(opnode->data.color, l, tnode, opnode->data); }));
                     }
                 }
                 else {
                     int64_t nidx = index - lcount;
 
-                    if(curr->data.dcount < K) {
+                    if((size_t)curr->data.dcount < K) {
                         //we can add the element without modifying structure -- no rebalancing needed just copy spine
-                        PosRBNode<T, K>* curr = copyNodeReplaceData(curr, curr->data.insert(nidx, value));
-                        return InsertResult::makeDone(curr);
+                        PosRBNode<T, K>* nnode = copyNodeReplaceData(curr, curr->data.insert(nidx, value));
+                        return InsertResult::makeDone(nnode);
                     }
                     else {
-                        bool leftspill = (l == nullptr) || (r != nullptr && nidx < K / 2);
+                        bool leftspill = (l == nullptr) || (r != nullptr && nidx < (int64_t)K / 2);
 
                         if(leftspill) {
                             //then spill the insert element down to the left
                             T spill;
                             PosRBData<T, K> ndata = curr->data.insertSpillLeft(nidx, value, spill);
                             InsertResult nleft = pushbackrec(l, spill);
-                            return balance(nleft.apply([opnode, r, &ndata](PosRBNode<T, K>* tnode) { return mknode(ndata.color, tnode, r, ndata); }));
+                            return balance(nleft.apply([opnode, r, &ndata](const PosRBNode<T, K>* tnode) { return mknode(ndata.color, tnode, r, ndata); }));
                         }
                         else {
                             //then spill the insert element down to the right
                             T spill;
                             PosRBData<T, K> ndata = curr->data.insertSpillRight(nidx, value, spill);
                             InsertResult nright = pushfrontrec(r, 0, spill);
-                            return balance(nright.apply([opnode, l, &ndata](PosRBNode<T, K>* tnode) { return mknode(ndata.color, l, tnode, ndata); }));
+                            return balance(nright.apply([opnode, l, &ndata](const PosRBNode<T, K>* tnode) { return mknode(ndata.color, l, tnode, ndata); }));
                         }
                     }
                 }
             }
         }
 
-        InsertResult blacken(InsertResult rr)
+        static PosRBNode<T, K>* blacken(InsertResult rr)
         {
             return mknode(RColor::Black, reprGetLeft(rr.tnode), reprGetRight(rr.tnode), rr.tnode->data);
         }
@@ -881,19 +881,19 @@ private:
 
         T getFront() const
         {
-            PosRBNode<T, K>* minNode = reprGetMinNode(this->root);
+            const PosRBNode<T, K>* minNode = reprGetMinNode(this->root);
             return minNode->data.data[0];
         }
 
         T getBack() const
         {
-            PosRBNode<T, K>* maxNode = reprGetMaxNode(this->root);
+            const PosRBNode<T, K>* maxNode = reprGetMaxNode(this->root);
             return maxNode->data.data[maxNode->data.dcount - 1];
         }
 
         T get(int64_t index) const
         {
-            PosRBNode<T, K>* indexNode = reprGetIndexNode(index, this->root);
+            const PosRBNode<T, K>* indexNode = reprGetIndexNode(index, this->root);
             return indexNode->data.data[index - reprGetCount(reprGetLeft(indexNode))];
         }
 
