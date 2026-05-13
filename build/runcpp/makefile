@@ -38,7 +38,7 @@ app: ${OUT_COMPONENTS}app
 
 testcore: $(OBJS) $(HEADERS) $(CORE_TEST_SRC_DIR)*.cpp
 	@mkdir -p $(OUT_COMPONENTS)
-	$(CPP) $(CPP_TESTFLAGS) -o ${OUT_COMPONENTS}testcore $(OBJS) $(JSON_INCLUDES) $(CORE_TEST_SRC_DIR)*.cpp -lboost_unit_test_framework
+	$(CPP) $(CPP_TESTFLAGS) -o ${OUT_COMPONENTS}testcore $(OBJS) $(JSON_INCLUDES) $(CORE_TEST_SRC_DIR)*.cpp 
 
 testruntime: $(OBJS) $(HEADERS) $(RUNTIME_TEST_SRC_DIR)*.cpp
 	@mkdir -p $(OUT_COMPONENTS)

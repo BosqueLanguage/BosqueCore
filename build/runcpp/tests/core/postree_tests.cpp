@@ -1,4 +1,5 @@
-#include <boost/test/unit_test.hpp>
+#define BOOST_TEST_MODULE CoreTests_PosTree
+#include <boost/test/included/unit_test.hpp>
 
 #include "../../core/postree.h"
 
