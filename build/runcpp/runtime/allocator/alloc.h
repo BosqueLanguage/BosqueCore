@@ -19,7 +19,7 @@ namespace ᐸRuntimeᐳ
 
         inline void* xalloc()
         {
-            void* ptr = malloc(this->alloctype->bytesize);
+            void* ptr = malloc(this->alloctype->bytesize + sizeof(GCMetadata));
 
             this->x_allocs.push_back(ptr);
             return gcInitAllocGCMetadata(ptr, this->alloctype);

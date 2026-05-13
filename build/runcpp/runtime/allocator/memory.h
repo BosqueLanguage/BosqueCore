@@ -31,7 +31,7 @@ namespace ᐸRuntimeᐳ
 
     constexpr void* gcInitAllocGCMetadata(void* ptr, const TypeInfo* typeinfo)
     {
-        GCMetadata* meta = gcGetMetadata(ptr);
+        GCMetadata* meta = (GCMetadata*)ptr;
         meta->typeinfo = typeinfo;
         meta->isalloc = 1;
         meta->isyoung = 1;

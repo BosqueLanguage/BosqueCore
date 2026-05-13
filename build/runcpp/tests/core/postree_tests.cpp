@@ -28,8 +28,8 @@ BOOST_AUTO_TEST_CASE(MakeLeaf_PushBack) {
     static_assert(sizeof(ᐸRuntimeᐳ::PosRBTreeNode<int64_t, 4>) == 64);
     static_assert(sizeof(ᐸRuntimeᐳ::PosRBTree<int64_t, 4, BSQ_POSTREE_ID>) == 8);
 
-    PTreeInt4 tree{PTreeInt4::s_leafallocator->construct(ᐸRuntimeᐳ::RColor::Black, ᐸRuntimeᐳ::PosRBData<int64_t, 4>(ᐸRuntimeᐳ::RColor::Black, 1, 0))};
-    for(int i = 0; i < 10; i++) {
+    PTreeInt4 tree{PTreeInt4::s_leafallocator->construct(ᐸRuntimeᐳ::PosRBData<int64_t, 4>(ᐸRuntimeᐳ::RColor::Black, 2, 0))};
+    for(int i = 0; i < 20; i++) {
         tree = tree.pushBack(i);
     }
 

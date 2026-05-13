@@ -238,7 +238,8 @@ namespace ᐸRuntimeᐳ
     public:
         PosRBTreeLeaf() : PosRBNode<T, K>() { ; }
         PosRBTreeLeaf(const PosRBTreeLeaf& other) : PosRBNode<T, K>(other.data) { ; }
-        PosRBTreeLeaf(RColor color, const PosRBData<T, K>& data) : PosRBNode<T, K>(color, color == RColor::Black ? 1 : 0, data) { ; }
+        PosRBTreeLeaf(const PosRBData<T, K>& data) : PosRBNode<T, K>(data) { ; }
+        PosRBTreeLeaf(RColor color, uint16_t bheight, const PosRBData<T, K>& data) : PosRBNode<T, K>(color, bheight, data) { ; }
     };
     
     template<typename T, int64_t K>
@@ -316,7 +317,7 @@ namespace ᐸRuntimeᐳ
 
         static int64_t reprGetBHeight(const PosRBNode<T, K>* node)
         {
-            return (node != nullptr) ? node->data.bheight : 0;
+            return (node != nullptr) ? node->data.bheight : 1;
         }
 
         static int64_t reprGetCount(const PosRBNode<T, K>* node)
@@ -339,37 +340,38 @@ namespace ᐸRuntimeᐳ
             return (isNodeType(node)) ? asNodeType(node)->right : nullptr;
         }
 
+        static uint16_t computeNewBHeight_ForTreeLeaf(RColor color) { return 1 + ((color == RColor::Black) ? 1 : 0); }
+        static uint16_t computeNewBHeight_ForTreeNode(RColor color, const PosRBNode<T, K>* left, const PosRBNode<T, K>* right) { return reprGetBHeight(left) + ((color == RColor::Black) ? 1 : 0); }
+        static int64_t computeNewCount_ForTreeNode(const PosRBNode<T, K>* left, const PosRBNode<T, K>* right, const PosRBData<T, K>& data) { return reprGetCount(left) + reprGetCount(right) + data.dcount; }
+
         static PosRBNode<T, K>* mknode(RColor color, const PosRBNode<T, K>* left, const PosRBNode<T, K>* right, const PosRBData<T, K>& data)
         {
             if(left == nullptr && right == nullptr) {
-                return s_leafallocator->construct(color, data);
+                return s_leafallocator->construct(color, computeNewBHeight_ForTreeLeaf(color), data);
             }
             else {
-                int16_t bheight = reprGetBHeight(left) + (color == RColor::Black ? 1 : 0);
-                int64_t tcount = reprGetCount(left) + reprGetCount(right) + data.dcount;
-
-                return s_nodeallocator->construct(color, bheight, tcount, left, right, data);
+                return s_nodeallocator->construct(color, computeNewBHeight_ForTreeNode(color, left, right), computeNewCount_ForTreeNode(left, right, data), left, right, data);
             }
         }
 
         static PosRBNode<T, K>* copyNodeReplaceData(const PosRBNode<T, K>* node, const PosRBData<T, K>& ndata)
         {
             if(isLeafType(node)) {
-                return s_leafallocator->construct(node->data.color, ndata);
+                return s_leafallocator->construct(node->data.color, computeNewBHeight_ForTreeLeaf(node->data.color), ndata);
             }  
             else {
                 const PosRBTreeNode<T, K>* tnode = asNodeType(node);
-                return s_nodeallocator->construct(node->data.color, tnode->data.bheight, tnode->tcount, tnode->left, tnode->right, ndata);
+                return s_nodeallocator->construct(node->data.color, computeNewBHeight_ForTreeNode(node->data.color, tnode->left, tnode->right), computeNewCount_ForTreeNode(tnode->left, tnode->right, ndata), tnode->left, tnode->right, ndata);
             }
         }
 
         static PosRBNode<T, K>* mkcopynode(RColor color, const PosRBNode<T, K>* left, const PosRBNode<T, K>* right, const PosRBData<T, K>& data)
         {
             if(left == nullptr && right == nullptr) {
-                return s_leafallocator->construct(color, data);
+                return s_leafallocator->construct(color, computeNewBHeight_ForTreeLeaf(color), data);
             }
             else {
-                return s_nodeallocator->construct(color, reprGetBHeight(left), reprGetCount(left) + reprGetCount(right) + data.dcount, left, right, data);
+                return s_nodeallocator->construct(color, computeNewBHeight_ForTreeNode(color, left, right), computeNewCount_ForTreeNode(left, right, data), left, right, data);
             }
         }
 
@@ -628,16 +630,16 @@ private:
                     return emptyInsertResult;
                 }
 
-                const PosRBNode<T, K>* rr = reprGetRight(r);
-                if(rr == nullptr || rr->data.color != RColor::Red) {
+                const PosRBNode<T, K>* rl = reprGetLeft(r);
+                if(rl == nullptr || rl->data.color != RColor::Red) {
                     return emptyInsertResult;
                 }
 
                 return InsertResult::makeTree(
                     mknode(RColor::Red, 
-                        mkcopynode(RColor::Black, reprGetLeft(tnode), reprGetLeft(rr), tnode->data), 
-                        mkcopynode(RColor::Black, reprGetRight(rr), reprGetRight(r), r->data),
-                        rr->data
+                        mkcopynode(RColor::Black, reprGetLeft(tnode), reprGetLeft(rl), tnode->data), 
+                        mkcopynode(RColor::Black, reprGetRight(rl), reprGetRight(r), r->data),
+                        rl->data
                     )
                 );
             }
@@ -742,7 +744,7 @@ private:
         {
             //add the element in a new leaf
             if(curr == nullptr) {
-                PosRBTreeLeaf<T, K>* nleaf = s_leafallocator->construct(RColor::Red, PosRBData<T, K>(RColor::Red, 0, value));
+                PosRBTreeLeaf<T, K>* nleaf = s_leafallocator->construct(PosRBData<T, K>(RColor::Red, 1, value));
                 return InsertResult::makeTree(nleaf);
             }
 
@@ -761,7 +763,7 @@ private:
         {
             //add the element in a new leaf
             if(curr == nullptr) {
-                PosRBTreeLeaf<T, K>* nleaf = s_leafallocator->construct(RColor::Red, PosRBData<T, K>(RColor::Red, 0, value));
+                PosRBTreeLeaf<T, K>* nleaf = s_leafallocator->construct(PosRBData<T, K>(RColor::Red, 1, value));
                 return InsertResult::makeTree(nleaf);
             }
 
@@ -780,7 +782,7 @@ private:
         {
             if(curr == nullptr) {
                 //add the element in a new leaf
-                PosRBTreeLeaf<T, K>* nleaf = s_leafallocator->construct(RColor::Red, PosRBData<T, K>(RColor::Red, 0, value));
+                PosRBTreeLeaf<T, K>* nleaf = s_leafallocator->construct(PosRBData<T, K>(RColor::Red, 1, value));
                 return InsertResult::makeTree(nleaf);
             }
 
@@ -796,14 +798,14 @@ private:
                         //then spill the insert element down to the left
                         T spill;
                         PosRBData<T, K> ndata = curr->data.insertSpillLeft(index, value, spill);
-                        PosRBTreeLeaf<T, K>* lleaf = s_leafallocator->construct(RColor::Red, PosRBData<T, K>(RColor::Red, 0, spill));
+                        PosRBTreeLeaf<T, K>* lleaf = s_leafallocator->construct(PosRBData<T, K>(RColor::Red, 1, spill));
                         return balance(InsertResult::makeTree(mknode(ndata.color, lleaf, nullptr, ndata)));
                     }
                     else {
                         //then spill the insert element down to the right
                         T spill;
                         PosRBData<T, K> ndata = curr->data.insertSpillRight(index, value, spill);
-                        PosRBTreeLeaf<T, K>* rleaf = s_leafallocator->construct(RColor::Red, PosRBData<T, K>(RColor::Red, 0, spill));
+                        PosRBTreeLeaf<T, K>* rleaf = s_leafallocator->construct(PosRBData<T, K>(RColor::Red, 1, spill));
                         return balance(InsertResult::makeTree(mknode(ndata.color, nullptr, rleaf, ndata)));
                     }
                 }
@@ -870,7 +872,12 @@ private:
 
         static PosRBNode<T, K>* blacken(InsertResult rr)
         {
-            return mknode(RColor::Black, reprGetLeft(rr.tnode), reprGetRight(rr.tnode), rr.tnode->data);
+            if(rr.tnode->data.color == RColor::Black) {
+                return const_cast<PosRBNode<T, K>*>(rr.tnode);
+            }
+            else {
+                return mknode(RColor::Black, reprGetLeft(rr.tnode), reprGetRight(rr.tnode), rr.tnode->data);
+            }
         }
 
     public:
@@ -901,7 +908,7 @@ private:
         {
             PosRBNode<T, K>* root = blacken(pushfrontrec(this->root, value));
 
-            debugAssertInvariants(root, reprGetCount(root) + 1);
+            debugAssertInvariants(root, reprGetCount(this->root) + 1);
             return PosRBTree<T, K, TreeID>{root};
         }
 
@@ -909,7 +916,7 @@ private:
         {
             PosRBNode<T, K>* root = blacken(pushbackrec(this->root, value));
 
-            debugAssertInvariants(root, reprGetCount(root) + 1);
+            debugAssertInvariants(root, reprGetCount(this->root) + 1);
             return PosRBTree<T, K, TreeID>{root};
         }
 
@@ -917,7 +924,7 @@ private:
         {
             PosRBNode<T, K>* root = blacken(insertrec(this->root, index, value));
 
-            debugAssertInvariants(root, reprGetCount(root) + 1);
+            debugAssertInvariants(root, reprGetCount(this->root) + 1);
             return PosRBTree<T, K, TreeID>{root};
         }
     };
