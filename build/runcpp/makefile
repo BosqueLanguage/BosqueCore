@@ -8,11 +8,10 @@ ALLOC_SRC_DIR=$(RUNTIME_SRC_DIR)allocator/
 BSQIR_SRC_DIR=$(RUNTIME_SRC_DIR)bsqir/
 
 TEST_SRC_DIR=$(SRC_DIR)tests/
-CORE_TEST_SRC_DIR=$(TEST_SRC_DIR)core/
-RUNTIME_TEST_SRC_DIR=$(TEST_SRC_DIR)runtime/
 
 OUT_COMPONENTS=$(BUILD_DIR)output/
 OUT_OBJ=$(BUILD_DIR)output/obj/
+OUT_TESTS=$(BUILD_DIR)output/tests/
 
 JSON_INCLUDES=-I $(BUILD_DIR)include/json/
 
@@ -31,18 +30,15 @@ CPP_TESTFLAGS=-O0 -g -ggdb -fno-omit-frame-pointer -fsanitize=address -Wall -Wex
 
 HEADERS=$(wildcard $(SRC_DIR)*.h) $(wildcard $(CORE_SRC_DIR)*.h) $(wildcard $(RUNTIME_SRC_DIR)*.h) $(wildcard $(ALLOC_SRC_DIR)*.h) $(wildcard $(BSQIR_SRC_DIR)*.h)
 OBJS=$(OUT_OBJ)common.o $(OUT_OBJ)alloc.o  $(OUT_OBJ)strings.o $(OUT_OBJ)lexer.o $(OUT_OBJ)parser.o $(OUT_OBJ)emit.o
+TESTS=$(OUT_TESTS)postree_tests
 
 all: $(OBJS)
 
 app: ${OUT_COMPONENTS}app
 
-testcore: $(OBJS) $(HEADERS) $(CORE_TEST_SRC_DIR)*.cpp
-	@mkdir -p $(OUT_COMPONENTS)
-	$(CPP) $(CPP_TESTFLAGS) -o ${OUT_COMPONENTS}testcore $(OBJS) $(JSON_INCLUDES) $(CORE_TEST_SRC_DIR)*.cpp 
-
-testruntime: $(OBJS) $(HEADERS) $(RUNTIME_TEST_SRC_DIR)*.cpp
-	@mkdir -p $(OUT_COMPONENTS)
-	$(CPP) $(CPP_TESTFLAGS) -o ${OUT_COMPONENTS}testruntime $(OBJS) $(JSON_INCLUDES) $(RUNTIME_TEST_SRC_DIR)*.cpp -lboost_unit_test_framework
+tests: $(TESTS) $(TEST_SRC_DIR)runner.sh
+	cp $(TEST_SRC_DIR)runner.sh $(OUT_COMPONENTS)/tests/
+	@echo "Tests built successfully. You can run them using -- bash $(OUT_COMPONENTS)/tests/runner.sh"
 
 ${OUT_COMPONENTS}app: $(HEADERS) $(OBJS) app.cpp
 	@mkdir -p $(OUT_COMPONENTS)
@@ -76,6 +72,15 @@ $(OUT_OBJ)common.o: $(HEADERS) $(SRC_DIR)common.cpp
 	@mkdir -p $(OUT_OBJ)
 	$(CPP) $(CPPFLAGS) -o $(OUT_OBJ)common.o -c $(SRC_DIR)common.cpp
 
+##
+#Test builds
+##
+
+$(OUT_TESTS)postree_tests: $(OBJS) $(HEADERS) $(TEST_SRC_DIR)core/postree_tests.cpp
+	@mkdir -p $(OUT_TESTS)
+	$(CPP) $(CPP_TESTFLAGS) -o ${OUT_TESTS}postree_tests $(OBJS) $(JSON_INCLUDES) $(TEST_SRC_DIR)core/postree_tests.cpp
+
 clean:
 	rm -rf $(OUT_OBJ)*
 	rm -rf $(OUT_COMPONENTS)*
+	rm -rf $(OUT_TESTS)*
