@@ -370,7 +370,7 @@ class TypeInfoManager {
             }
 
             let ptrmask: string | undefined = undefined; 
-            if(eptrmask.includes("1") || eptrmask.includes("2")) {
+            if(!/[1-4]/.test(eptrmask)) {
                 ptrmask = eptrmask;
             }
 
@@ -500,14 +500,14 @@ class TypeInfoManager {
 
         timgr.addTypeInfo("Float", new TypeInfo("Float", new IRNominalTypeSignature("Float"), 6, 8, 1, LayoutTag.Value, 0, undefined));
         
-        timgr.addTypeInfo("PosRBTreeLeaf_CString", new TypeInfo("PosRBTreeLeaf_CString", new IRNominalTypeSignature("PosRBTreeLeaf_CString"), 7, 40, 5, LayoutTag.ArrayRef, 1, undefined));
+        timgr.addTypeInfo("PosRBTreeLeaf_CString", new TypeInfo("PosRBTreeLeaf_CString", new IRNominalTypeSignature("PosRBTreeLeaf_CString"), 7, 40, 5, LayoutTag.Ref, 1, undefined));
         timgr.addTypeInfo("PosRBTreeNode_CString", new TypeInfo("PosRBTreeNode_CString", new IRNominalTypeSignature("PosRBTreeNode_CString"), 8, 48, 6, LayoutTag.Ref, 0, undefined));
         timgr.addTypeInfo("PosRBTree_CString", new TypeInfo("PosRBTree_CString", new IRNominalTypeSignature("PosRBTree_CString"), 9, 16, 2, LayoutTag.Tagged, 0, undefined));
         timgr.addTypeInfo("CStringInline", new TypeInfo("CStringInline", new IRNominalTypeSignature("CStringInline"), 10, 16, 2, LayoutTag.Value, 0, undefined));
         timgr.addTypeInfo("CStringTree", new TypeInfo("CStringTree", new IRNominalTypeSignature("CStringTree"), 11, 16, 2, LayoutTag.Tagged, 0, undefined));
         timgr.addTypeInfo("CString", new TypeInfo("CString", new IRNominalTypeSignature("CString"), 12, 24, 3, LayoutTag.Tagged, 0, undefined));
 
-        timgr.addTypeInfo("PosRBTreeLeaf_String", new TypeInfo("PosRBTreeLeaf_String", new IRNominalTypeSignature("PosRBTreeLeaf_String"), 13, 40, 5, LayoutTag.ArrayRef, 1, undefined));
+        timgr.addTypeInfo("PosRBTreeLeaf_String", new TypeInfo("PosRBTreeLeaf_String", new IRNominalTypeSignature("PosRBTreeLeaf_String"), 13, 40, 5, LayoutTag.Ref, 1, undefined));
         timgr.addTypeInfo("PosRBTreeNode_String", new TypeInfo("PosRBTreeNode_String", new IRNominalTypeSignature("PosRBTreeNode_String"), 14, 48, 6, LayoutTag.Ref, 0, "002020"));
         timgr.addTypeInfo("PosRBTree_String", new TypeInfo("PosRBTree_String", new IRNominalTypeSignature("PosRBTree_String"), 15, 16, 2, LayoutTag.Tagged, 0, "20"));
         timgr.addTypeInfo("StringInline", new TypeInfo("StringInline", new IRNominalTypeSignature("StringInline"), 16, 32, 4, LayoutTag.Value, 0, undefined));

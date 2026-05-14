@@ -39,26 +39,11 @@ namespace ᐸRuntimeᐳ
             std::fill(rawdata + ecount * sizeof(T), rawdata + K * sizeof(T), 0);
         }
 
-        PosRBData() : color(RColor::Black), bheight(0), dcount(0), data()
-        {
-            zerofill(this->data, 0);
-        }
+        constexpr PosRBData(): color(RColor::Black), bheight(0), dcount(0), data{} { ; }
+        constexpr PosRBData(const PosRBData& other) = default;
 
-        PosRBData(const PosRBData& other) : color(other.color), bheight(other.bheight), dcount(other.dcount)
-        {
-            std::copy(other.data.begin(), other.data.end(), this->data.begin());
-        }
-
-        PosRBData(RColor color, uint16_t bheight, const T& value) : color(color), bheight(bheight), dcount(1)
-        {
-            this->data[0] = value;
-            zerofill(this->data, 1);
-        }
-
-        PosRBData(RColor color, uint16_t bheight, const PosRBData<T, K>& data) : color(color), bheight(bheight), dcount(data.dcount)
-        {
-            std::copy(data.data.begin(), data.data.end(), this->data.begin());
-        }
+        constexpr PosRBData(RColor color, uint16_t bheight, const T& value) : color(color), bheight(bheight), dcount(1), data{value} { ; }
+        constexpr PosRBData(RColor color, uint16_t bheight, const PosRBData<T, K>& data) : color(color), bheight(bheight), dcount(data.dcount), data(data.data) { ; }
 
         /** Constructor when we have a range of values  **/
         template<typename Iter>

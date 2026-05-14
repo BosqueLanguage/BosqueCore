@@ -1432,7 +1432,6 @@ class CPPEmitter {
         `        8,\n` +
         `        1,\n` +
         `        LayoutTag::Value,\n` +
-        `        BSQ_TYPEINFO_NO_ESLOT,\n` +
         `        nullptr,\n` +
         `        nullptr,\n` +
         `        0,\n` +
@@ -1467,7 +1466,7 @@ class CPPEmitter {
         
         let inlinemask: string | undefined = undefined; 
         let leafmask: string | undefined = undefined;
-        if(eemask.includes("1") || eemask.includes("2")) {
+        if(!/[1-4]/.test(eemask)) {
             const icapacity = LIST_T_CAPACITY(ofttid.bytesize);
 
             inlinemask = "0" + Array(icapacity).fill(eemask).join("");
@@ -1542,7 +1541,6 @@ class CPPEmitter {
             `        ${ttid.bytesize},\n` +
             `        ${ttid.slotcount},\n` +
             `        LayoutTag::${ttid.tag},\n` +
-            `        BSQ_TYPEINFO_NO_ESLOT,\n` +
             `        ${ttid.ptrmask !== undefined ? ('"' + ttid.ptrmask + '"') : "nullptr"},\n` +
             `        ${supertable},\n` +
             `        ${superlist.length},\n` +
@@ -1587,7 +1585,6 @@ class CPPEmitter {
             `        ${ttid.bytesize},\n` +
             `        ${ttid.slotcount},\n` +
             `        LayoutTag::${ttid.tag},\n` +
-            `        BSQ_TYPEINFO_NO_ESLOT,\n` +
             `        ${ttid.ptrmask !== undefined ? ('"' + ttid.ptrmask + '"') : "nullptr"},\n` +
             `        ${supertable},\n` +
             `        ${superlist.length},\n` +
@@ -1612,7 +1609,6 @@ class CPPEmitter {
             `        ${ttid.bytesize},\n` +
             `        ${ttid.slotcount},\n` +
             `        LayoutTag::Tagged,\n` +
-            `        BSQ_TYPEINFO_NO_ESLOT,\n` +
             `        ${ttid.ptrmask !== undefined ? ('"' + ttid.ptrmask + '"') : "nullptr"},\n` +
             `        nullptr,\n` +
             `        0,\n` +

@@ -7,7 +7,6 @@
 
 #include "postree.h"
 
-/*
 namespace ᐸRuntimeᐳ
 {
     constexpr static size_t MAX_LIST_INLINE_BYTES = 32; //Bytes -- so 40 total when we add 8 bytes for the size
@@ -24,9 +23,18 @@ namespace ᐸRuntimeᐳ
         constexpr static int64_t LIST_T_BUFF_SIZE = LIST_T_CAPACITY(sizeof(T));
 
         size_t count;
-        std::array<T, LIST_T_CAPACITY(sizeof(T))> data;
+        std::array<T, LIST_T_BUFF_SIZE> data;
 
-        constexpr ListTInlineContent() : count(0) { ; }
+        constexpr static void zerofill(std::array<T, LIST_T_BUFF_SIZE>& data, size_t ecount)
+        {
+            uint8_t* rawdata = reinterpret_cast<uint8_t*>(data.data()); 
+            std::fill(rawdata + ecount * sizeof(T), rawdata + LIST_T_BUFF_SIZE * sizeof(T), 0);
+        }
+
+        constexpr ListTInlineContent() : count(0) 
+        { 
+            zerofill(this->data, 0); 
+        }
         constexpr ListTInlineContent(const ListTInlineContent& other) = default;
 
         constexpr bool empty() const { return this->count == 0; }
@@ -453,4 +461,3 @@ namespace ᐸRuntimeᐳ
         }
     };
 }
-*/
