@@ -33,21 +33,20 @@ namespace ᐸRuntimeᐳ
         int32_t dcount; //note that when the color follows immediately in enclosing classes the alignment works
         std::array<T, K> data;
 
-        static void zerofill(std::array<T, K>& data, size_t ecount)
-        {
-            uint8_t* rawdata = reinterpret_cast<uint8_t*>(data.data()); 
-            std::fill(rawdata + ecount * sizeof(T), rawdata + K * sizeof(T), 0);
-        }
-
-        constexpr PosRBData(): color(RColor::Black), bheight(0), dcount(0), data{} { ; }
+        constexpr PosRBData(): color{}, bheight{}, dcount{}, data{} { ; }
+        constexpr PosRBData(RColor color, uint16_t bheight, const PosRBData<T, K>& data) : color{color}, bheight{bheight}, dcount{data.dcount}, data{data.data} { ; }
         constexpr PosRBData(const PosRBData& other) = default;
 
-        constexpr PosRBData(RColor color, uint16_t bheight, const T& value) : color(color), bheight(bheight), dcount(1), data{value} { ; }
-        constexpr PosRBData(RColor color, uint16_t bheight, const PosRBData<T, K>& data) : color(color), bheight(bheight), dcount(data.dcount), data(data.data) { ; }
+        constexpr PosRBData(RColor color, uint16_t bheight, const T& value) : color{color}, bheight{bheight}, dcount{1}, data{value} { ; }
+
+        constexpr static void zerofill(std::array<T, K>& data, size_t ecount)
+        {
+            std::fill(data.begin() + ecount, data.end(), T{});
+        }
 
         /** Constructor when we have a range of values  **/
         template<typename Iter>
-        PosRBData(RColor color, uint16_t bheight, Iter start, Iter end) : color(color), bheight(bheight)
+        PosRBData(RColor color, uint16_t bheight, Iter start, Iter end) : color{color}, bheight{bheight}
         {            
             const size_t size = std::distance(start, end);
             assert(size != 0);
@@ -63,7 +62,7 @@ namespace ᐸRuntimeᐳ
 
         /** Constructor when we have a single value at position 0 and a range of values that follow -- pushFront style constructor  **/
         template<typename Iter>
-        PosRBData(RColor color, uint16_t bheight, const T& ival, Iter rstart, Iter rend) : color(color), bheight(bheight)
+        PosRBData(RColor color, uint16_t bheight, const T& ival, Iter rstart, Iter rend) : color{color}, bheight{bheight}
         {   
             const size_t size = 1 + std::distance(rstart, rend);
             assert(size <= K);
@@ -79,7 +78,7 @@ namespace ᐸRuntimeᐳ
 
         /** Constructor when we have a range of values and a single value at the end -- pushBack style constructor  **/
         template<typename Iter>
-        PosRBData(RColor color, uint16_t bheight, Iter lstart, Iter lend, const T& ival) : color(color), bheight(bheight)
+        PosRBData(RColor color, uint16_t bheight, Iter lstart, Iter lend, const T& ival) : color{color}, bheight{bheight}
         {          
             const size_t size = std::distance(lstart, lend) + 1;
             assert(size <= K);
@@ -95,7 +94,7 @@ namespace ᐸRuntimeᐳ
 
         /** Constructor when we have a range of values, a single value, and then another range of values -- insert middle style constructor  **/
         template<typename Iter>
-        PosRBData(RColor color, uint16_t bheight, Iter lstart, Iter lend, const T& ival, Iter rstart, Iter rend) : color(color), bheight(bheight)
+        PosRBData(RColor color, uint16_t bheight, Iter lstart, Iter lend, const T& ival, Iter rstart, Iter rend) : color{color}, bheight{bheight}
         {
             const size_t size = std::distance(lstart, lend) + 1 + std::distance(rstart, rend);
             assert(size <= K);
@@ -112,7 +111,7 @@ namespace ᐸRuntimeᐳ
 
         /** Constructor when we have a range of values and then another range of values -- remove middle style constructor  **/
         template<typename Iter>
-        PosRBData(RColor color, uint16_t bheight, Iter lstart, Iter lend, Iter rstart, Iter rend) : color(color), bheight(bheight)
+        PosRBData(RColor color, uint16_t bheight, Iter lstart, Iter lend, Iter rstart, Iter rend) : color{color}, bheight{bheight}
         {
             const size_t size = std::distance(lstart, lend) + std::distance(rstart, rend);
             assert(size <= K);
@@ -210,21 +209,21 @@ namespace ᐸRuntimeᐳ
     public:
         const PosRBData<T, K> data;
 
-        PosRBNode() : data() { ; }
-        PosRBNode(const PosRBNode& other) : data(other.data) { ; }
+        constexpr PosRBNode() : data{} { ; }
+        constexpr PosRBNode(const PosRBData<T, K>& data) = default;
 
-        PosRBNode(const PosRBData<T, K>& data) : data(data) { ; }
-        PosRBNode(RColor color, uint16_t bheight, const PosRBData<T, K>& data) : data(color, bheight, data) { ; }
+        constexpr PosRBNode(const PosRBNode& other) : data{other.data} { ; }
+        constexpr PosRBNode(RColor color, uint16_t bheight, const PosRBData<T, K>& data) : data{color, bheight, data} { ; }
     };
 
     template<typename T, size_t K>
     class PosRBTreeLeaf : public PosRBNode<T, K>
     {
     public:
-        PosRBTreeLeaf() : PosRBNode<T, K>() { ; }
-        PosRBTreeLeaf(const PosRBTreeLeaf& other) : PosRBNode<T, K>(other.data) { ; }
-        PosRBTreeLeaf(const PosRBData<T, K>& data) : PosRBNode<T, K>(data) { ; }
-        PosRBTreeLeaf(RColor color, uint16_t bheight, const PosRBData<T, K>& data) : PosRBNode<T, K>(color, bheight, data) { ; }
+        constexpr PosRBTreeLeaf() : PosRBNode<T, K>{} { ; }
+        constexpr PosRBTreeLeaf(const PosRBTreeLeaf& other) = default;
+
+        constexpr PosRBTreeLeaf(RColor color, uint16_t bheight, const PosRBData<T, K>& data) : PosRBNode<T, K>{color, bheight, data} { ; }
     };
     
     template<typename T, int64_t K>
@@ -254,9 +253,10 @@ namespace ᐸRuntimeᐳ
         const PosRBNode<T, K>* right;
         int64_t tcount; //total number of elements in the subtree rooted at this node
 
-        PosRBTreeNode() : PosRBNode<T, K>(), left(nullptr), right(nullptr), tcount(0) { ; }
-        PosRBTreeNode(const PosRBTreeNode& other) : PosRBNode<T, K>(other.data), left(other.left), right(other.right), tcount(other.tcount) { ; }
-        PosRBTreeNode(RColor color, uint16_t bheight, int64_t tcount, const PosRBNode<T, K>* left, const PosRBNode<T, K>* right, const PosRBData<T, K>& data) : PosRBNode<T, K>(color, bheight, data), left(left), right(right), tcount(tcount) { ; }
+        constexpr PosRBTreeNode() : PosRBNode<T, K>{}, left{}, right{}, tcount{} { ; }
+        constexpr PosRBTreeNode(const PosRBTreeNode& other) = default;
+
+        constexpr PosRBTreeNode(RColor color, uint16_t bheight, int64_t tcount, const PosRBNode<T, K>* left, const PosRBNode<T, K>* right, const PosRBData<T, K>& data) : PosRBNode<T, K>{color, bheight, data}, left{left}, right{right}, tcount{tcount} { ; }
     };
 
     template<typename T, size_t K> 
@@ -290,9 +290,9 @@ namespace ᐸRuntimeᐳ
         static const TypeInfo* s_nodetypeinfo;
         thread_local static GCAllocator<PosRBTreeNode<T, K>>* s_nodeallocator;
 
-        PosRBTree() = default;
-        PosRBTree(const PosRBTree& other) = default;
-        PosRBTree(PosRBNode<T, K>* node) : root(node) { ; }
+        constexpr PosRBTree() : root{} { ; }
+        constexpr PosRBTree(PosRBNode<T, K>* node) : root{node} { ; }
+        constexpr PosRBTree(const PosRBTree& other) = default;
 
         static bool isLeafType(const PosRBNode<T, K>* node) { return (node != nullptr) && (gcGetTypeInfo(const_cast<PosRBNode<T, K>*>(node)) == s_leaftypeinfo); }
         static bool isNodeType(const PosRBNode<T, K>* node) { return (node != nullptr) && (gcGetTypeInfo(const_cast<PosRBNode<T, K>*>(node)) == s_nodetypeinfo); }

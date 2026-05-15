@@ -25,16 +25,7 @@ namespace ᐸRuntimeᐳ
         size_t count;
         std::array<T, LIST_T_BUFF_SIZE> data;
 
-        constexpr static void zerofill(std::array<T, LIST_T_BUFF_SIZE>& data, size_t ecount)
-        {
-            uint8_t* rawdata = reinterpret_cast<uint8_t*>(data.data()); 
-            std::fill(rawdata + ecount * sizeof(T), rawdata + LIST_T_BUFF_SIZE * sizeof(T), 0);
-        }
-
-        constexpr ListTInlineContent() : count(0) 
-        { 
-            zerofill(this->data, 0); 
-        }
+        constexpr ListTInlineContent() : count{0}, data{} { ; } 
         constexpr ListTInlineContent(const ListTInlineContent& other) = default;
 
         constexpr bool empty() const { return this->count == 0; }

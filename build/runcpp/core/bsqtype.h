@@ -49,8 +49,8 @@ namespace ᐸRuntimeᐳ
         Value,     //an inline value
         Ref,       //a pointer to a heap allocated value
         Tagged,    //a tagged value, first slot is the typeinfo that has the actual data layout
-        Str,       //a string type over 16 bytes-- the collector will look at the last byte for a tag -- if second dword is all 0 then this is empty string, if inline then this is non-zero, otherwise a tree pointer
-        Collection //a List/Map type -- the collector will look at the first dword, if zero then this is empty, if inline then this is non-zero and less than equal to inline threshold, otherwise a tree pointer
+        Str,       //a string type over 16 bytes -- the collector will look for a special tag
+        Collection //a List/Map type -- the collector will look for a special tag
     };
 
     class FieldOffsetInfo

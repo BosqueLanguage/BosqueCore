@@ -42,20 +42,20 @@ namespace ᐸRuntimeᐳ
         T data;
     
     private:
-        constexpr XOption(const TypeInfo* ti) : typeinfo(ti), data() {}
-        constexpr XOption(const TypeInfo* ti, const T& d) : typeinfo(ti), data(d) {}
+        constexpr XOption(const TypeInfo* ti) : typeinfo{ti}, data{} { ; }
+        constexpr XOption(const TypeInfo* ti, const T& d) : typeinfo{ti}, data{d} { ; }
 
     public:
-        constexpr XOption() : typeinfo(nullptr), data() {};
+        constexpr XOption() : typeinfo{}, data{} { ; };
         constexpr XOption(const XOption& other) = default;
         
         // Special none option bits
         constexpr XBool isNone() const { return XBool::from(this->typeinfo == &g_typeinfo_None); }
-        static constexpr XOption<T> optnone = XOption(&g_typeinfo_None);
+        static constexpr XOption<T> optnone = XOption{&g_typeinfo_None};
         
         // Some option bits
         constexpr XBool isSome() const { return XBool::from(this->typeinfo != &g_typeinfo_None); }
-        static XOption<T> fromSome(const TypeInfo* ti, const XSome<T>& d) { return XOption<T>(ti, d.value); }
+        static XOption<T> fromSome(const TypeInfo* ti, const XSome<T>& d) { return XOption<T>{ti, d.value}; }
 
         constexpr XNone asNone() const { return xnone; }
         constexpr XSome<T> asSome() const { return XSome<T>{this->data}; }
@@ -85,13 +85,17 @@ namespace ᐸRuntimeᐳ
     class BoxedUnion 
     {
     public:
+        static_assert(std::is_union_v<U>, "BoxedUnion requires a union type U");
+    
         const TypeInfo* typeinfo;
         U data;
-        static_assert(std::is_union_v<U>, "BoxedUnion requires a union type U");
         
-        constexpr BoxedUnion() : typeinfo(nullptr), data() {};
-        constexpr BoxedUnion(const TypeInfo* ti) : typeinfo(ti), data() {}
-        constexpr BoxedUnion(const TypeInfo* ti, const U& d) : typeinfo(ti), data(d) {}
+    private:
+        constexpr BoxedUnion(const TypeInfo* ti) : typeinfo{ti}, data{} { ; }
+
+    public:
+        constexpr BoxedUnion() : typeinfo{}, data{} { ; }
+        constexpr BoxedUnion(const TypeInfo* ti, const U& d) : typeinfo{ti}, data{d} { ; }
         constexpr BoxedUnion(const BoxedUnion& other) = default;
         
         // Note -- inject and extract are generated for each use based on the generation union type (see strings for example)

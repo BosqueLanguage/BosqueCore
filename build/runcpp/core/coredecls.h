@@ -40,3 +40,18 @@ constexpr ᐸRuntimeᐳ::XFloat operator""_f(long double n)
 {
     return ᐸRuntimeᐳ::XFloat{(double)n};
 }
+
+template<ᐸRuntimeᐳ::CStrRootInlineContent::SmallLiteralInitBuffer ssb>
+constexpr ᐸRuntimeᐳ::XCString operator""_cs()
+{
+    return ᐸRuntimeᐳ::XCString{ᐸRuntimeᐳ::CStrRootInlineContent(ssb)};
+}
+
+template<ᐸRuntimeᐳ::StrRootInlineContent::SmallLiteralInitBuffer ssb>
+constexpr ᐸRuntimeᐳ::XString operator""_us()
+{
+    return ᐸRuntimeᐳ::XString{ᐸRuntimeᐳ::StrRootInlineContent(ssb)};
+}
+
+static_assert(""_cs.empty(), "CString empty literal checking");
+static_assert(U""_us.empty(), "String empty literal checking");
