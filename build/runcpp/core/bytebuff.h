@@ -18,7 +18,7 @@ namespace ᐸRuntimeᐳ
         constexpr ByteBufferEntry(const std::array<uint8_t, BUFFER_ENTRY_SIZE>& data) : data{data} { ; }
         constexpr ByteBufferEntry(const ByteBufferEntry& other) = default;
 
-        constexpr ByteBufferEntry(const std::initializer_list<uint8_t>& initdata) : data{} { std::copy(initdata.begin(), initdata.end(), this->data); }
+        constexpr ByteBufferEntry(const std::initializer_list<uint8_t>& initdata) : data{} { std::copy(initdata.begin(), initdata.end(), this->data.begin()); }
 
         constexpr uint8_t* getData() { return this->data.data(); }
         constexpr const uint8_t* getData() const { return this->data.data(); }

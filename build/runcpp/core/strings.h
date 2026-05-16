@@ -399,7 +399,7 @@ namespace ᐸRuntimeᐳ
                     }
                 }
                 
-                return XCString::smliteraldynamic(inlined, total_size);
+                return XCString(inlined, total_size);
             }
             else {
                 assert(false); // Not Implemented: full support for FString interpolation
@@ -806,7 +806,7 @@ namespace ᐸRuntimeᐳ
                     }
                 }
                 
-                return XString::smliteraldynamic(inlined, total_size);
+                return XString(inlined, total_size);
             }
             else {
                 assert(false); // Not Implemented: full support for FString interpolation
