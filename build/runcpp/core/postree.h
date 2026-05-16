@@ -210,9 +210,9 @@ namespace ᐸRuntimeᐳ
         const PosRBData<T, K> data;
 
         constexpr PosRBNode() : data{} { ; }
-        constexpr PosRBNode(const PosRBData<T, K>& data) = default;
+        constexpr PosRBNode(const PosRBNode<T, K>& other) = default;
 
-        constexpr PosRBNode(const PosRBNode& other) : data{other.data} { ; }
+        constexpr PosRBNode(const PosRBData<T, K>& data) : data{data} { ; }
         constexpr PosRBNode(RColor color, uint16_t bheight, const PosRBData<T, K>& data) : data{color, bheight, data} { ; }
     };
 
@@ -223,6 +223,7 @@ namespace ᐸRuntimeᐳ
         constexpr PosRBTreeLeaf() : PosRBNode<T, K>{} { ; }
         constexpr PosRBTreeLeaf(const PosRBTreeLeaf& other) = default;
 
+        constexpr PosRBNode(const PosRBData<T, K>& data) : data{data} { ; }
         constexpr PosRBTreeLeaf(RColor color, uint16_t bheight, const PosRBData<T, K>& data) : PosRBNode<T, K>{color, bheight, data} { ; }
     };
     
@@ -328,6 +329,30 @@ namespace ᐸRuntimeᐳ
         static uint16_t computeNewBHeight_ForTreeLeaf(RColor color) { return 1 + ((color == RColor::Black) ? 1 : 0); }
         static uint16_t computeNewBHeight_ForTreeNode(RColor color, const PosRBNode<T, K>* left, const PosRBNode<T, K>* right) { return reprGetBHeight(left) + ((color == RColor::Black) ? 1 : 0); }
         static int64_t computeNewCount_ForTreeNode(const PosRBNode<T, K>* left, const PosRBNode<T, K>* right, const PosRBData<T, K>& data) { return reprGetCount(left) + reprGetCount(right) + data.dcount; }
+
+        template <typename Iter>
+        static PosRBNode<T, K>* mkinitial(Iter start, Iter end)
+        {
+            return s_leafallocator->construct(PosRBData<T, K>(RColor::Black, 2, start, end));
+        }
+
+        template <typename Iter>
+        static PosRBNode<T, K>* mkinitial(const T& value, Iter start, Iter end)
+        {
+            return s_leafallocator->construct(PosRBData<T, K>(RColor::Black, 2, value, start, end));
+        }
+
+        template <typename Iter>
+        static PosRBNode<T, K>* mkinitial(Iter start, Iter end, const T& value)
+        {
+            return s_leafallocator->construct(PosRBData<T, K>(RColor::Black, 2, start, end, value));
+        }
+
+        template <typename Iter>
+        static PosRBNode<T, K>* mkinitial(Iter lstart, Iter lend, const T& value, Iter rstart, Iter rend)
+        {
+            return s_leafallocator->construct(PosRBData<T, K>(RColor::Black, 2, lstart, lend, value, rstart, rend));
+        }
 
         static PosRBNode<T, K>* mknode(RColor color, const PosRBNode<T, K>* left, const PosRBNode<T, K>* right, const PosRBData<T, K>& data)
         {

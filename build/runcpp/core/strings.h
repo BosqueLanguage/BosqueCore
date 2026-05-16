@@ -3,8 +3,6 @@
 #include "../common.h"
 
 #include "bsqtype.h"
-#include "boxed.h"
-
 #include "postree.h"
 
 namespace ᐸRuntimeᐳ
@@ -101,7 +99,7 @@ namespace ᐸRuntimeᐳ
 
     union CStringUnion
     {
-        //empty cstring is where boxed union typeinfo is nullptr
+        //empty cstring is inlinecstr
         CStrRootInlineContent inlinecstr;
         CStrRootTreeContent treecstr;
 
@@ -233,18 +231,24 @@ namespace ᐸRuntimeᐳ
     public:
         constexpr XCString() : ucstr{} { ; }
         constexpr XCString(const CStrRootInlineContent& b) : ucstr{CStringUnion{b}} { ; }
-        constexpr XCString(CStrRootTreeContent& n) : ucstr{CStringUnion{n}} { ; }
+        constexpr XCString(const CStrRootTreeContent& n) : ucstr{CStringUnion{n}} { ; }
         constexpr XCString(const XCString& other) = default;
 
-        constexpr XCString(const char* cstr, size_t len)
+        static XCString mk(const char* cstr, size_t len)
         {
-            assert(len <= CStrRootInlineContent::CSTR_MAX_SIZE);
-
             if(len == 0) {
-                this->ucstr = CStringUnion{};
+                return XCString{};
             }
             else {
-                this->ucstr = CStringUnion{CStrRootInlineContent(cstr, len)};
+                if(len <= CStrRootInlineContent::CSTR_MAX_SIZE) {
+                    return XCString{CStrRootInlineContent(cstr, len)};
+                }
+                else if(len <= CStrRootTreeContent::CSTR_MAX_LEAF_SIZE) {
+                    return XCString{CStrRootTreeContent{PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>::mkinitial(cstr, cstr + len)}};
+                }
+                else {
+                    assert(false); // Not Implemented: full mk for CString trees
+                }
             }
         }
 
@@ -502,7 +506,7 @@ namespace ᐸRuntimeᐳ
 
     union StringUnion
     {
-        //empty string is where boxed union typeinfo is nullptr
+        //empty string is inlinesstr
         StrRootInlineContent inlinecstr;
         StrRootTreeContent treecstr;
 
@@ -637,15 +641,21 @@ namespace ᐸRuntimeᐳ
         constexpr XString(StrRootTreeContent& n) : ustr{n} { ; }
         constexpr XString(const XString& other) = default;
 
-        constexpr XString(const char32_t* str, size_t len)
+        static XString mk(const char32_t* str, size_t len)
         {
-            assert(len <= StrRootInlineContent::STR_MAX_SIZE);
-
             if(len == 0) {
-                this->ustr = StringUnion{};
+                return XString{};
             }
             else {
-                this->ustr = StringUnion{StrRootInlineContent(str, len)};
+                if(len <= StrRootInlineContent::STR_MAX_SIZE) {
+                    return XString{StrRootInlineContent(str, len)};
+                }
+                else if(len <= StrRootTreeContent::STR_MAX_LEAF_SIZE) {
+                    return XString{StrRootTreeContent{PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>::mkinitial(str, str + len)}};
+                }
+                else {
+                    assert(false); // Not Implemented: full mk for CString trees
+                }
             }
         }
 
