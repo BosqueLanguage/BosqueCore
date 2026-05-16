@@ -223,7 +223,7 @@ namespace ᐸRuntimeᐳ
         constexpr PosRBTreeLeaf() : PosRBNode<T, K>{} { ; }
         constexpr PosRBTreeLeaf(const PosRBTreeLeaf& other) = default;
 
-        constexpr PosRBNode(const PosRBData<T, K>& data) : data{data} { ; }
+        constexpr PosRBTreeLeaf(const PosRBData<T, K>& data) : PosRBNode<T, K>{data} { ; }
         constexpr PosRBTreeLeaf(RColor color, uint16_t bheight, const PosRBData<T, K>& data) : PosRBNode<T, K>{color, bheight, data} { ; }
     };
     

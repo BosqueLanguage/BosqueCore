@@ -638,7 +638,7 @@ namespace ᐸRuntimeᐳ
     public:
         constexpr XString() : ustr{} { ; }
         constexpr XString(const StrRootInlineContent& b) : ustr{b} { ; }
-        constexpr XString(StrRootTreeContent& n) : ustr{n} { ; }
+        constexpr XString(const StrRootTreeContent& n) : ustr{n} { ; }
         constexpr XString(const XString& other) = default;
 
         static XString mk(const char32_t* str, size_t len)
