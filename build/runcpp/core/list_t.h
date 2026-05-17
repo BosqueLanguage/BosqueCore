@@ -128,7 +128,7 @@ namespace ᐸRuntimeᐳ
     class ListTTreeContent
     {
     public:
-        constexpr static int64_t LIST_T_MAX_LEAF_SIZE = std::max(ListTInlineContent<T>::LIST_T_BUFF_SIZE * 2, (size_t)4);
+        constexpr static int64_t LIST_T_MAX_LEAF_SIZE = std::max(ListTInlineContent<T>::LIST_T_BUFF_SIZE * 2, (int64_t)4);
 
         size_t tag;
         PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T> postree;
@@ -285,12 +285,9 @@ namespace ᐸRuntimeᐳ
         inline static consteval uint32_t getPosInlineIDFrom(uint32_t treeid) { return treeid - 2; }
         inline static consteval uint32_t getPosTreeIDFrom(uint32_t treeid) { return treeid - 3; }
 
-        BoxedUnion<ListTUnion<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>> ulist;
+        ListTUnion<T, getPosTreeIDFrom(TYPE_ID_LIST_T)> ulist;
 
     public:
-        static const TypeInfo* s_inlinetypeinfo;
-        static const TypeInfo* s_treetypeinfo;
-
         constexpr XList() : ulist() {}
         constexpr XList(const XList& other) = default;
         constexpr XList(const ListTInlineContent<T>& b) : ulist{b} { ; }
@@ -437,19 +434,19 @@ namespace ᐸRuntimeᐳ
                 }
             }
         }
-/*
+
         template<bool SafeSimplePred, typename Pred>
         XBool allOf(Pred p) const
         {
-            assert(this->ulist.typeinfo != nullptr);
+            assert(this->ulist.empty());
 
-            if(this->ulist.typeinfo == s_inlinetypeinfo) {
+            if(this->ulist.isInline()) {
                 if constexpr (SafeSimplePred) {
                     static_assert(false, "SafeSimplePred is not supported for ListTInlineContent currently");
                 }
                 else {
-                    auto ddend = this->ulist.data.inlinelist.data.cbegin() + this->ulist.data.inlinelist.count;
-                    auto ii = std::find_if(this->ulist.data.inlinelist.data.cbegin(), ddend, [p](const T& v) { return !p(v); });
+                    auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
+                    auto ii = std::find_if(this->ulist.inlinelist.data.cbegin(), ddend, [p](const T& v) { return !p(v); });
                 
                     return XBool::from(ii == ddend);
                 }
@@ -462,15 +459,15 @@ namespace ᐸRuntimeᐳ
         template<bool SafeSimplePred, typename Pred>
         XBool noneOf(Pred p) const
         {
-            assert(this->ulist.typeinfo != nullptr);
+            assert(this->ulist.empty());
 
-            if(this->ulist.typeinfo == s_inlinetypeinfo) {
+            if(this->ulist.isInline()) {
                 if constexpr (SafeSimplePred) {
                     static_assert(false, "SafeSimplePred is not supported for ListTInlineContent currently");
                 }
                 else {
-                    auto ddend = this->ulist.data.inlinelist.data.cbegin() + this->ulist.data.inlinelist.count;
-                    auto ii = std::find_if(this->ulist.data.inlinelist.data.cbegin(), ddend, [p](const T& v) { return p(v); });
+                    auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
+                    auto ii = std::find_if(this->ulist.inlinelist.data.cbegin(), ddend, [p](const T& v) { return p(v); });
                 
                     return XBool::from(ii == ddend);
                 }
@@ -483,15 +480,15 @@ namespace ᐸRuntimeᐳ
         template<bool SafeSimplePred, typename Pred>
         XBool someOf(Pred p) const
         {
-            assert(this->ulist.typeinfo != nullptr);
+            assert(this->ulist.empty());
 
-            if(this->ulist.typeinfo == s_inlinetypeinfo) {
+            if(this->ulist.isInline()) {
                 if constexpr (SafeSimplePred) {
                     static_assert(false, "SafeSimplePred is not supported for ListTInlineContent currently");
                 }
                 else {
-                    auto ddend = this->ulist.data.inlinelist.data.cbegin() + this->ulist.data.inlinelist.count;
-                    auto ii = std::find_if(this->ulist.data.inlinelist.data.cbegin(), ddend, [p](const T& v) { return p(v); });
+                    auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
+                    auto ii = std::find_if(this->ulist.inlinelist.data.cbegin(), ddend, [p](const T& v) { return p(v); });
                 
                     return XBool::from(ii != ddend);
                 }
@@ -500,6 +497,5 @@ namespace ᐸRuntimeᐳ
                 assert(false); // Not Implemented: someOf for ListTTreeContent
             }
         }
-*/
     };
 }
