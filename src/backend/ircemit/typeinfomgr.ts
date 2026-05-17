@@ -6,7 +6,7 @@ import { TransformCPPNameManager } from "./namemgr.js";
 import assert from "node:assert";
 
 //Duplicated from C++ definitions
-const MAX_LIST_INLINE_BYTES = 48; //Bytes -- so 64 total when we add 8 bytes for the size and 8 bytes for the tag
+const MAX_LIST_INLINE_BYTES = 32; //Bytes -- so 64 total when we add 8 bytes for the size and 8 bytes for the tag
 
 function LIST_T_CAPACITY(elem_size: number): number {
     return Math.max(Math.floor(MAX_LIST_INLINE_BYTES / elem_size), 1);

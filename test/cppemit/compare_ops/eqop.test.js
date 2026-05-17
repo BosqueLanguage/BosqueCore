@@ -7,7 +7,7 @@ describe ("CPPEmit -- basic strict equals", () => {
     it("should emit strict equals operations", function () {
         checkTestEmitMainFunction("public function main(): Bool { return 0n === 1n; }", "Bool Mainᕒmain() { return 0_n == 1_n; }");
         checkTestEmitMainFunction("public function main(): Bool { return 0n !== 1n; }", "Bool Mainᕒmain() { return 0_n != 1_n; }");
-        checkTestEmitMainFunction("public function main(): Bool { return 'ok' !== 'yes'; }", 'Bool Mainᕒmain() { return ᐸRuntimeᐳ::XCString::smliteral("ok") != ᐸRuntimeᐳ::XCString::smliteral("yes"); }');
+        checkTestEmitMainFunction("public function main(): Bool { return 'ok' !== 'yes'; }", 'Bool Mainᕒmain() { return "ok"_cs != "yes"_cs; }');
 
         checkTestEmitMainFunction("public function main(): Bool { let x = 3i; let y = 4i; return x !== y; }", "Bool Mainᕒmain() { Int x = 3_i; Int y = 4_i; return x != y; }");
         checkTestEmitMainFunction("public function main(): Bool { let x = 3i; let y = 4i; return x === y; }", "Bool Mainᕒmain() { Int x = 3_i; Int y = 4_i; return x == y; }");

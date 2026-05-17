@@ -298,10 +298,6 @@ namespace ᐸRuntimeᐳ
 
         template<size_t len>
         constexpr XList(const T (&elems)[len]) : ulist{ListTInlineContent<T>(elems, len)} { ; }
-        {
-            static_assert(0 <= len);
-            static_assert(len <= ListTInlineContent<T>::LIST_T_BUFF_SIZE);
-        }
 
         static XList mk(std::initializer_list<T> elems)
         {

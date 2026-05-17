@@ -264,7 +264,7 @@ class CPPEmitter {
             const [escstr, lcount] = this.escapeLiteralCString((exp as IRLiteralStringExpression).bytes);
 
             if(lcount <= SMALL_CSTRING_MAX_SIZE) {
-                return `${RUNTIME_NAMESPACE}::XCString::smliteral(${escstr})`;
+                return `${escstr}_cs`;
             }
             else {
                 assert(false, "CPPEmitter: need to do heap allocation for long cstrings");
@@ -274,7 +274,7 @@ class CPPEmitter {
             const [ustr, lcount] = this.escapeLiteralString((exp as IRLiteralStringExpression).bytes);
         
             if(lcount <= SMALL_STRING_MAX_SIZE) {
-                return `${RUNTIME_NAMESPACE}::XString::smliteral(${ustr})`;
+                return `${ustr}_us`;
             }
             else {
                 assert(false, "CPPEmitter: need to do heap allocation for long strings");
@@ -300,7 +300,7 @@ class CPPEmitter {
             const [escstr, lcount] = this.escapeLiteralString(ilte.bytes);
 
             if(lcount <= SMALL_STRING_MAX_SIZE) {
-                return `${cce}(${RUNTIME_NAMESPACE}::XString::smliteral(${escstr}))`;
+                return `${cce}(${escstr}_us)`;
             }
             else {
                 assert(false, "CPPEmitter: need to do heap allocation for long strings");
@@ -312,7 +312,7 @@ class CPPEmitter {
             const [escstr, lcount] = this.escapeLiteralCString(ilte.bytes);
 
             if(lcount <= SMALL_CSTRING_MAX_SIZE) {
-                return `${cce}(${RUNTIME_NAMESPACE}::XCString::smliteral(${escstr}))`;
+                return `${cce}(${escstr}_cs)`;
             }
             else {
                 assert(false, "CPPEmitter: need to do heap allocation for long cstrings");
