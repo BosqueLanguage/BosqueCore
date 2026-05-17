@@ -9,7 +9,7 @@
 
 #define BSQ_POSTREE_VALIDATE 1
 
-#if BSQ_POSTREE_VALIDATE
+#ifdef BSQ_POSTREE_VALIDATE
 #define BSQ_POSTREE_ASSERT(COND) assert(COND)
 #else
 #define BSQ_POSTREE_ASSERT(COND) ((void)0)
@@ -198,6 +198,29 @@ namespace ᐸRuntimeᐳ
                 return PosRBData(this->color, this->bheight, this->data.begin(), this->data.begin() + index, this->data.begin() + index + 1, this->data.begin() + this->dcount);
             }
         }
+
+#ifdef BSQ_POSTREE_VALIDATE
+        void toValues(std::vector<T>& result) const
+        {
+            for(size_t i = 0; i < (size_t)this->dcount; i++) {
+                result.push_back(this->data[i]);
+            }
+        }
+
+        template <typename Fn>
+        std::string toJSON(Fn pf) const
+        {
+            std::string result = "{color: " + std::string((this->color == RColor::Red) ? "Red" : "Black") + ", bheight: " + std::to_string(this->bheight) + ", data: [";
+            for(size_t i = 0; i < (size_t)this->dcount; i++) {
+                result += pf(this->data[i]);
+                if(i != (size_t)(this->dcount - 1)) {
+                    result += ", ";
+                }
+            }
+            result += "]}";
+            return result;
+        }
+#endif
     };
 
     template<typename T, size_t K> class PosRBTreeLeaf;
@@ -419,6 +442,56 @@ namespace ᐸRuntimeᐳ
             }
         }
         
+#ifdef BSQ_POSTREE_VALIDATE
+        static void reprToValues(std::vector<T>& result, const PosRBNode<T, K>* node)
+        {
+            if(node == nullptr) {
+                return;
+            }
+            else {
+                const PosRBNode<T, K>* ll = reprGetLeft(node);
+                const PosRBNode<T, K>* rr = reprGetRight(node);
+                
+                if(ll != nullptr) {
+                    reprToValues(result, ll);
+                }
+                
+                node->data.toValues(result);
+
+                if(rr != nullptr) {
+                    reprToValues(result, rr);
+                }
+
+                return;
+            }
+        }
+
+        template <typename Fn>
+        static std::string reprToJSON(const PosRBNode<T, K>* node, Fn pf)
+        {
+            if(node == nullptr) {
+                return "null";
+            }
+            else {
+                const PosRBNode<T, K>* ll = reprGetLeft(node);
+                const PosRBNode<T, K>* rr = reprGetRight(node);
+                
+                return "{node: " + node->data.toJSON(pf) + ", left: " + reprToJSON(ll, pf) + ", right: " + reprToJSON(rr, pf) + "}";
+            }
+        }
+
+        void toValues(std::vector<T>& result) const
+        {
+            reprToValues(result, this->root);
+        }
+
+        template <typename Fn>
+        std::string toJSON(Fn pf) const
+        {
+            return reprToJSON(this->root, pf);
+        }
+#endif
+
 private:
         enum class InsertResultTag
         {
@@ -872,7 +945,7 @@ private:
                             //then spill the insert element down to the right
                             T spill;
                             PosRBData<T, K> ndata = curr->data.insertSpillRight(nidx, value, spill);
-                            InsertResult nright = pushfrontrec(r, 0, spill);
+                            InsertResult nright = pushfrontrec(r, spill);
                             return balance(nright.apply([opnode, l, &ndata](const PosRBNode<T, K>* tnode) { return mknode(ndata.color, l, tnode, ndata); }));
                         }
                     }

@@ -8,8 +8,12 @@ import assert from "node:assert";
 //Duplicated from C++ definitions
 const MAX_LIST_INLINE_BYTES = 32; //Bytes -- so 64 total when we add 8 bytes for the size and 8 bytes for the tag
 
-function LIST_T_CAPACITY(elem_size: number): number {
+function LIST_T_INLINE_CAPACITY(elem_size: number): number {
     return Math.max(Math.floor(MAX_LIST_INLINE_BYTES / elem_size), 1);
+}
+
+function LIST_T_LEAF_CAPACITY(elem_size: number): number {
+    return Math.max(LIST_T_INLINE_CAPACITY(elem_size) * 2, 4);
 }
 
 class VirtualInvokeInfo {
@@ -590,7 +594,7 @@ class TypeInfoManager {
 }
 
 export {
-    MAX_LIST_INLINE_BYTES, LIST_T_CAPACITY,
+    MAX_LIST_INLINE_BYTES, LIST_T_INLINE_CAPACITY, LIST_T_LEAF_CAPACITY,
     VirtualInvokeInfo, FieldOffsetInfo, 
     LayoutTag, TypeInfo,
     TypeInfoManager

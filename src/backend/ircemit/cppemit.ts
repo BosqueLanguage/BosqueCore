@@ -1,5 +1,5 @@
 import { TransformCPPNameManager } from "./namemgr.js";
-import { LayoutTag, LIST_T_CAPACITY, TypeInfo, TypeInfoManager } from "./typeinfomgr.js";
+import { LayoutTag, LIST_T_INLINE_CAPACITY, LIST_T_LEAF_CAPACITY, TypeInfo, TypeInfoManager } from "./typeinfomgr.js";
 
 import { MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_INT } from "../../frontend/assembly.js";
 import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag, IRPrefixNotOpExpression, IRPrefixPlusOpExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRReturnValueSimpleStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement, IRTypeDeclSizeRangeCheckCStringStatement, IRTypeDeclSizeRangeCheckUnicodeStringStatement, IRAbortStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRTempAssignExpressionStatement, IRTypeDeclInvariantCheckStatement, IRDebugStatement, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRChkLogicImpliesShortCircuitStatement, IRPreconditionCheckStatement, IRPostconditionCheckStatement, IRVariableInitializationDirectInvokeStatement, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRAssertStatement, IRValidateStatement, IRBuiltinBody, IRStandardBody, IRHoleBody, IRIsNoneOptionExpression, IRBinKeyEqDirectExpression, IRIsOptionEqValueExpression, IRIsSomeNeqValueExpression, IRIsOptionNeqValueExpression, IRIsSomeEqValueExpression, IRConstructorSomeTypeExpression, IRLiteralOptionOfNoneExpression, IRConstructOptionFromSomeExpression, IRExtractSomeFromOptionExpression, IRExtractSomeValueFromOptionExpression, IRBinKeyNeqDirectExpression, IRBinKeyLessDirectExpression, IRSimpleIfStatement, IRSimpleIfElseStatement, IRConstructorStandardEntityExpression, IRReturnDirectConstructStatement, IRReturnDirectInvokeStatement, IRVariableInitializationDirectConstructorStatement, IREntityInvariantCheckStatement, IRBoxEntityToConceptRepresentationExpression, IRVariableAssignmentStatement, IRVariableAssignmentDirectInvokeStatement, IRVariableAssignmentDirectConstructorStatement, IRConstructorListEmptyExpression, IRConstructorListSingletonsExpression, IRInvokeSimpleExpression, IRVariableInitializationDirectInvokeWithImplicitStatement, IRVariableAssignmentDirectInvokeWithImplicitStatement, IRReturnDirectConstructWithBoxStatement, IRReturnValueImplicitStatement, IRReturnDirectInvokeImplicitStatement, IRReturnDirectInvokeImplicitPassThroughStatement, IRReturnDirectConstructImplicitStatement, IRReturnDirectConstructWithBoxImplicitStatement, IRInvokeSimpleWithImplicitsExpression, IRTempAssignRefInvokeStatement, IRTempAssignStdInvokeStatement, IRVoidInvokeStatement, IRVariableInitializationDirectConstructorWithBoxStatement, IRVariableAssignmentDirectConstructorWithBoxStatement, IRLiteralFormatCStringExpression, IRLiteralFormatStringExpression, IRInterpolateFormatCStringExpression, IRFormatStringTextComponent, IRFormatStringArgComponent, IRTypeDeclFormatCheckCStringStatement, IRLiteralTypedStringExpression, IRAccessFieldSpecialExpression, IRAccessFieldVirtualExpression, IRIsConceptRepresentationOfTypeExpression, IRIsConceptRepresentationSubtypeOfTypeExpression, IRIsNotConceptRepresentationSubtypeOfTypeExpression, IRStaticIsTypeSubtypeOfExpression, IRErrorTypeAssertionCheckStatement, IRUnboxEntityFromConceptRepresentationExpression, IRConvertConceptRepresentationExpression, IRConstructorLambdaExpression, IRMatchExactStatement, IRMatchGeneralStatement, IRBlockStatement, IRErrorExhaustiveStatement, IRTypeDeclNumericRangeCheckStatement } from "../irdefs/irbody.js";
@@ -696,13 +696,11 @@ class CPPEmitter {
 
                 const ldecl = this.irasm.alltypes.get(iclse.constype.tkeystr) as IRListTypeDecl;
                 const tinfot = this.typeInfoManager.getTypeInfo(ldecl.oftype.tkeystr);
-                if(iclse.elements.length <= LIST_T_CAPACITY(tinfot.bytesize)) {
-                    const inlinetypeinfo = `ᐸRuntimeᐳ::g_typeinfo_${cce}Inline`;
-                    return `${cce}::smliteral({${args}}, &${inlinetypeinfo})`;
+                if(iclse.elements.length <= LIST_T_INLINE_CAPACITY(tinfot.bytesize)) {
+                    return `${cce}({${args}})`;
                 }
-                else if(iclse.elements.length <= 2 * LIST_T_CAPACITY(tinfot.bytesize)) {
-                    const treetypeinfo = `ᐸRuntimeᐳ::g_typeinfo_${cce}Tree`;
-                    return `${cce}::slliteral({${args}}, &${treetypeinfo})`;
+                else if(iclse.elements.length <= LIST_T_LEAF_CAPACITY(tinfot.bytesize)) {
+                    return `${cce}::mk({${args}})`;
                 }
                 else {
                     assert(false, "CPPEmitter: need to implement list singleton construction for larger allocation");
@@ -1261,6 +1259,15 @@ class CPPEmitter {
         else if(body.builtin === "list_get") {
             bstr = "l.get(idx.value)";
         }
+        else if(body.builtin === "list_pushfront") {
+            bstr = "l.pushFront(v)";
+        }
+        else if(body.builtin === "list_pushback") {
+            bstr = "l.pushBack(v)";
+        }
+        else if(body.builtin === "list_insert") {
+            bstr = "l.insert(idx.value, v)";
+        }
         else if(body.builtin === "list_allof") {
             //TODO: SafeSimplePred
             const [fn, params, args] = this.getParamInforForLambda(invk, "p");
@@ -1467,7 +1474,7 @@ class CPPEmitter {
         let inlinemask: string | undefined = undefined; 
         let leafmask: string | undefined = undefined;
         if(!/[1-4]/.test(eemask)) {
-            const icapacity = LIST_T_CAPACITY(ofttid.bytesize);
+            const icapacity = LIST_T_INLINE_CAPACITY(ofttid.bytesize);
 
             inlinemask = "0" + Array(icapacity).fill(eemask).join("");
             leafmask = "0" + Array(2 * icapacity).fill(eemask).join("");
@@ -1481,12 +1488,12 @@ class CPPEmitter {
         const listtreeid = ttid.bsqtypeid - 1;
 
         const tidecls = `namespace ᐸRuntimeᐳ {\n` +
-        `    inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_${ctname} = g_typeinfo_PosRBTreeLeaf_generate<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>(${posrb_treeleafid}, ${leafmask !== undefined ? `"${leafmask}"` : "nullptr"}, "PosRBTreeLeaf_${ctname}");\n` +
-        `    inline constexpr TypeInfo g_typeinfo_PosRBTreeNode_${ctname} = g_typeinfo_PosRBTreeNode_generate<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>(${posrb_treenodeid}, "xxxxxx", "PosRBTreeNode_${ctname}");\n` +
-        `    inline constexpr TypeInfo g_typeinfo_PosRBTree_${ctname} = g_typeinfo_PosRBTree_generate<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE, ${posrb_treeid}>(${posrb_treeid}, "PosRBTree_${ctname}");\n` +
+        `    inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_${ctname} = g_typeinfo_PosRBTreeLeaf_generate<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::MAX_LEAF_CAPACITY>(${posrb_treeleafid}, ${leafmask !== undefined ? `"${leafmask}"` : "nullptr"}, "PosRBTreeLeaf_${ctname}");\n` +
+        `    inline constexpr TypeInfo g_typeinfo_PosRBTreeNode_${ctname} = g_typeinfo_PosRBTreeNode_generate<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::MAX_LEAF_CAPACITY>(${posrb_treenodeid}, "xxxxxx", "PosRBTreeNode_${ctname}");\n` +
+        `    inline constexpr TypeInfo g_typeinfo_PosRBTree_${ctname} = g_typeinfo_PosRBTree_generate<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::MAX_LEAF_CAPACITY, ${posrb_treeid}>(${posrb_treeid}, "PosRBTree_${ctname}");\n` +
         '\n' +
-        `    extern thread_local GCAllocator<PosRBTreeLeaf<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>> PosRBTreeLeaf_${ctname}_allocator;\n` +
-        `    extern thread_local GCAllocator<PosRBTreeNode<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>> PosRBTreeNode_${ctname}_allocator;\n` +
+        `    extern thread_local GCAllocator<PosRBTreeLeaf<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::MAX_LEAF_CAPACITY>> PosRBTreeLeaf_${ctname}_allocator;\n` +
+        `    extern thread_local GCAllocator<PosRBTreeNode<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::MAX_LEAF_CAPACITY>> PosRBTreeNode_${ctname}_allocator;\n` +
         '\n' +
         `    inline constexpr TypeInfo g_typeinfo_${ctname}Inline = g_typeinfo_ListTInlineContent_generate<${oftrepr}>(${listinlineid}, ${inlinemask !== undefined ? `"${inlinemask}"` : "nullptr"}, "${ctname}Inline");\n` +
         `    inline constexpr TypeInfo g_typeinfo_${ctname}Tree = g_typeinfo_ListTTreeContent<${oftrepr}, ${posrb_treeid}>(${listtreeid}, "${ctname}TreeContent");\n` +
@@ -1494,13 +1501,13 @@ class CPPEmitter {
         `}`;
 
         const tidefs = `namespace ᐸRuntimeᐳ {\n` +
-        `    thread_local GCAllocator<PosRBTreeLeaf<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>> PosRBTreeLeaf_${ctname}_allocator(&g_typeinfo_PosRBTreeLeaf_${ctname});\n` +
-        `    thread_local GCAllocator<PosRBTreeNode<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>> PosRBTreeNode_${ctname}_allocator(&g_typeinfo_PosRBTreeNode_${ctname});\n` +
+        `    thread_local GCAllocator<PosRBTreeLeaf<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::MAX_LEAF_CAPACITY>> PosRBTreeLeaf_${ctname}_allocator(&g_typeinfo_PosRBTreeLeaf_${ctname});\n` +
+        `    thread_local GCAllocator<PosRBTreeNode<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::MAX_LEAF_CAPACITY>> PosRBTreeNode_${ctname}_allocator(&g_typeinfo_PosRBTreeNode_${ctname});\n` +
         '\n' +
-        `    template<> const TypeInfo* PosRBTree<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE, ${posrb_treeid}>::s_leaftypeinfo = &g_typeinfo_PosRBTreeLeaf_${ctname};\n` +
-        `    template<> thread_local GCAllocator<PosRBTreeLeaf<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>>* PosRBTree<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE, ${posrb_treeid}>::s_leafallocator = &PosRBTreeLeaf_${ctname}_allocator;\n` +
-        `    template<> const TypeInfo* PosRBTree<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE, ${posrb_treeid}>::s_nodetypeinfo = &g_typeinfo_PosRBTreeNode_${ctname};\n` +
-        `    template<> thread_local GCAllocator<PosRBTreeNode<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE>>* PosRBTree<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::LIST_T_MAX_LEAF_SIZE, ${posrb_treeid}>::s_nodeallocator = &PosRBTreeNode_${ctname}_allocator;\n` +
+        `    template<> const TypeInfo* PosRBTree<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::MAX_LEAF_CAPACITY, ${posrb_treeid}>::s_leaftypeinfo = &g_typeinfo_PosRBTreeLeaf_${ctname};\n` +
+        `    template<> thread_local GCAllocator<PosRBTreeLeaf<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::MAX_LEAF_CAPACITY>>* PosRBTree<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::MAX_LEAF_CAPACITY, ${posrb_treeid}>::s_leafallocator = &PosRBTreeLeaf_${ctname}_allocator;\n` +
+        `    template<> const TypeInfo* PosRBTree<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::MAX_LEAF_CAPACITY, ${posrb_treeid}>::s_nodetypeinfo = &g_typeinfo_PosRBTreeNode_${ctname};\n` +
+        `    template<> thread_local GCAllocator<PosRBTreeNode<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::MAX_LEAF_CAPACITY>>* PosRBTree<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::MAX_LEAF_CAPACITY, ${posrb_treeid}>::s_nodeallocator = &PosRBTreeNode_${ctname}_allocator;\n` +
         `}`;
 
         return [tidecls, tidefs];
@@ -1878,7 +1885,7 @@ class CPPEmitter {
         `        if(count >= 16) { break; /* TODO: implement dynamic growth */ }\n` +
         `    }\n` +
         `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('}')) { return std::nullopt; };\n` +
-        `    return std::make_optional<${ctname}>(${ctname}::palloc(varr, count));\n` +
+        `    return std::make_optional<${ctname}>(${ctname}::mk(varr, count));\n` +
         `}`;
 
         const defbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv) {\n` +
