@@ -3,6 +3,7 @@
 #include "../common.h"
 
 #include "bsqtype.h"
+#include "integrals.h"
 #include "boxed.h"
 
 #include "../runtime/allocator/alloc.h"
@@ -17,6 +18,16 @@
 
 namespace ᐸRuntimeᐳ
 {
+    template <size_t K>
+    constexpr std::array<XNat, K> create_idx_range() {
+        std::array<XNat, K> arr{};
+        for (std::size_t i = 0; i < K; ++i) {
+            arr[i] = i;
+        }
+        
+        return arr;
+    }
+
     enum class RColor : uint16_t
     {
         Red,

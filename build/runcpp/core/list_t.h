@@ -19,11 +19,15 @@ namespace ᐸRuntimeᐳ
         return std::max(LIST_T_INLINE_CAPACITY(elem_size) * 2, (size_t)4);
     }
 
+    constexpr auto fn_lambdaand = [](XBool a, XBool b) { return a & b; };
+    constexpr auto fn_lambdaor = [](XBool a, XBool b) { return a | b; };
+
     template<typename T>
     class ListTInlineContent
     {
     public:
         constexpr static int64_t MAX_INLINE_CAPACITY = LIST_T_INLINE_CAPACITY(sizeof(T));
+        constexpr static std::array<XNat, MAX_INLINE_CAPACITY> idx_range = create_idx_range<MAX_INLINE_CAPACITY>();
 
         size_t count;
         std::array<T, MAX_INLINE_CAPACITY> data;
@@ -529,16 +533,17 @@ namespace ᐸRuntimeᐳ
         template<bool SafeSimplePred, typename Pred>
         XBool allOf(Pred p) const
         {
-            assert(this->ulist.empty());
+            assert(!this->ulist.empty());
 
             if(this->ulist.isInline()) {
+                auto ddbegin = this->ulist.inlinelist.data.cbegin();
+                auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
+
                 if constexpr (SafeSimplePred) {
-                    static_assert(false, "SafeSimplePred is not supported for ListTInlineContent currently");
+                    return std::transform_reduce(ddbegin, ddend, XTRUE, fn_lambdaand, p);
                 }
                 else {
-                    auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
-                    auto ii = std::find_if(this->ulist.inlinelist.data.cbegin(), ddend, [p](const T& v) { return !p(v); });
-                
+                    auto ii = std::find_if(ddbegin, ddend, std::not_fn(p));
                     return XBool::from(ii == ddend);
                 }
             }
@@ -550,16 +555,17 @@ namespace ᐸRuntimeᐳ
         template<bool SafeSimplePred, typename Pred>
         XBool noneOf(Pred p) const
         {
-            assert(this->ulist.empty());
+            assert(!this->ulist.empty());
 
             if(this->ulist.isInline()) {
+                auto ddbegin = this->ulist.inlinelist.data.cbegin();
+                auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
+
                 if constexpr (SafeSimplePred) {
-                    static_assert(false, "SafeSimplePred is not supported for ListTInlineContent currently");
+                    return !std::transform_reduce(ddbegin, ddend, XFALSE, fn_lambdaor, p);
                 }
                 else {
-                    auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
-                    auto ii = std::find_if(this->ulist.inlinelist.data.cbegin(), ddend, [p](const T& v) { return p(v); });
-                
+                    auto ii = std::find_if(ddbegin, ddend, p);
                     return XBool::from(ii == ddend);
                 }
             }
@@ -571,21 +577,74 @@ namespace ᐸRuntimeᐳ
         template<bool SafeSimplePred, typename Pred>
         XBool someOf(Pred p) const
         {
-            assert(this->ulist.empty());
+            assert(!this->ulist.empty());
 
             if(this->ulist.isInline()) {
+                auto ddbegin = this->ulist.inlinelist.data.cbegin();
+                auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
+
                 if constexpr (SafeSimplePred) {
-                    static_assert(false, "SafeSimplePred is not supported for ListTInlineContent currently");
+                    return std::transform_reduce(ddbegin, ddend, XFALSE, fn_lambdaor, p);
                 }
                 else {
-                    auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
-                    auto ii = std::find_if(this->ulist.inlinelist.data.cbegin(), ddend, [p](const T& v) { return p(v); });
-                
+                    auto ii = std::find_if(ddbegin, ddend, p);
                     return XBool::from(ii != ddend);
                 }
             }
             else {
                 assert(false); // Not Implemented: someOf for ListTTreeContent
+            }
+        }
+
+        template<bool SafeSimpleFn, typename U, typename Fn>
+        XList<U> map(Fn f) const
+        {
+            assert(!this->ulist.empty());
+
+            if(this->ulist.isInline()) {
+                auto ddbegin = this->ulist.inlinelist.data.cbegin();
+                auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
+
+                std::array<U, ListTTreeContent<U>::MAX_LEAF_CAPACITY> result{};
+
+                if constexpr (SafeSimpleFn) {
+                    std::transform(ddbegin, ddend, result.begin(), f);
+                }
+                else {
+                    std::for_each(ddbegin, ddend, result.begin(), f);
+                }
+
+                if(this->ulist.inlinelist.count < ListTInlineContent<U>::MAX_INLINE_CAPACITY) {
+                    return XList<U>{ListTInlineContent<U>(result.data(), this->ulist.inlinelist.count)};
+                }
+                else {
+                    return XList<U>{ListTTreeContent<U, getPosInlineIDFrom(TYPE_ID_LIST_T)>{PosRBTree<U, ListTTreeContent<U, getPosInlineIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosInlineIDFrom(TYPE_ID_LIST_T)>::mkinitial(result.data(), result.data() + this->ulist.inlinelist.count)}};
+                }
+            }
+            else {
+                assert(false); // Not Implemented: map for ListTTreeContent
+            }
+        }
+
+        template<bool SafeSimpleFn, typename U, typename Fn>
+        U mapIdx(Fn f) const
+        {
+            assert(!this->ulist.empty());
+
+            if(this->ulist.isInline()) {
+                auto ddbegin = this->ulist.inlinelist.data.cbegin();
+                auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
+
+                if constexpr (SafeSimpleFn) {
+                    return std::transform_reduce(ddbegin, ddend, xxx, f);
+                }
+                else {
+                    auto ii = std::find_if(ddbegin, ddend, f);
+                    return XBool::from(ii != ddend);
+                }
+            }
+            else {
+                assert(false); // Not Implemented: map for ListTTreeContent
             }
         }
     };

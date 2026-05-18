@@ -1232,7 +1232,7 @@ class CPPEmitter {
     }
     */
 
-    private getParamInforForLambda(invk: IRInvokeDecl, lname: string): [string, string, string] {
+    private getParamInforForLambda(invk: IRInvokeDecl, lname: string): [string, boolean, string, string] {
         const lparam = invk.params.find((p) => p.name === lname) as IRInvokeParameterDecl;
         const lpptype = this.irasm.alllambdas.get(lparam.type.tkeystr) as IRLambdaParameterPackDecl;
 
@@ -1242,6 +1242,7 @@ class CPPEmitter {
 
         return [
             TransformCPPNameManager.convertInvokeKey(fikey), 
+            ll.body.isSimpleBody(),
             `${this.typeInfoManager.emitTypeAsParameter(llp.type.tkeystr, llp.pkind !== undefined, false)} ${TransformCPPNameManager.convertIdentifier(llp.name)}`, 
             TransformCPPNameManager.convertIdentifier(llp.name)
         ];
@@ -1257,10 +1258,10 @@ class CPPEmitter {
             bstr = "ᐸRuntimeᐳ::XNat{(int64_t)l.size()}";
         }
         else if(body.builtin === "list_front") {
-            bstr = "l.front()";
+            bstr = "l.getFront()";
         }
         else if(body.builtin === "list_back") {
-            bstr = "l.back()";
+            bstr = "l.getBack()";
         }
         else if(body.builtin === "list_get") {
             bstr = "l.get(idx.value)";
@@ -1276,18 +1277,18 @@ class CPPEmitter {
         }
         else if(body.builtin === "list_allof") {
             //TODO: SafeSimplePred
-            const [fn, params, args] = this.getParamInforForLambda(invk, "p");
-            bstr = `l.allOf<false>([&p](${params}){ return ${fn}(p, ${args}); })`;
+            const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "p");
+            bstr = `l.allOf<${isSimple}>([&p](${params}){ return ${fn}(p, ${args}); })`;
         }
         else if(body.builtin === "list_noneof") {
             //TODO: SafeSimplePred
-            const [fn, params, args] = this.getParamInforForLambda(invk, "p");
-            bstr = `l.noneOf<false>([&p](${params}){ return ${fn}(p, ${args}); })`;
+            const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "p");
+            bstr = `l.noneOf<${isSimple}>([&p](${params}){ return ${fn}(p, ${args}); })`;
         }
         else if(body.builtin === "list_someof") {
             //TODO: SafeSimplePred
-            const [fn, params, args] = this.getParamInforForLambda(invk, "p");
-            bstr = `l.someOf<false>([&p](${params}){ return ${fn}(p, ${args}); })`;
+            const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "p");
+            bstr = `l.someOf<${isSimple}>([&p](${params}){ return ${fn}(p, ${args}); })`;
         }
         else {
             assert(false, "CPPEmitter: need to implement builtin body emission " + body.builtin);
