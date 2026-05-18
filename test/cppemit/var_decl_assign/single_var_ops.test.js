@@ -24,12 +24,12 @@ describe ("CPPEmit -- simple declare-assign only", () => {
     });
 
     it("should emit simple declare-assign with coerce", function () {
-        checkTestEmitMainFunction('public function main(): Option<Int> { let x: Option<Int> = none; return x; }', "OptionᐸIntᐳ Mainᕒmain() { OptionᐸIntᐳ x = OptionᐸIntᐳ::optnone; return x; }");
-        checkTestEmitMainFunction('public function main(): Option<Int> { let x: Option<Int> = some(3i); return x; }', "OptionᐸIntᐳ Mainᕒmain() { OptionᐸIntᐳ x = OptionᐸIntᐳ::fromSome(&ᐸRuntimeᐳ::g_typeinfo_SomeᐸIntᐳ, SomeᐸIntᐳ{3_i}); return x; }");
-        checkTestEmitMainFunction('public function main(): Option<Int> { ref x: Option<Int> = some(3i); return x; }', "OptionᐸIntᐳ Mainᕒmain() { OptionᐸIntᐳ x = OptionᐸIntᐳ::fromSome(&ᐸRuntimeᐳ::g_typeinfo_SomeᐸIntᐳ, SomeᐸIntᐳ{3_i}); return x; }");
+        checkTestEmitMainFunction('public function main(): Option<Int> { let x: Option<Int> = none; return x; }', "OptionᐸIntᐳ Mainᕒmain() { OptionᐸIntᐳ x = OptionᐸIntᐳ::none; return x; }");
+        checkTestEmitMainFunction('public function main(): Option<Int> { let x: Option<Int> = some(3i); return x; }', "OptionᐸIntᐳ Mainᕒmain() { OptionᐸIntᐳ x = OptionᐸIntᐳ{SomeᐸIntᐳ{3_i}}; return x; }");
+        checkTestEmitMainFunction('public function main(): Option<Int> { ref x: Option<Int> = some(3i); return x; }', "OptionᐸIntᐳ Mainᕒmain() { OptionᐸIntᐳ x = OptionᐸIntᐳ{SomeᐸIntᐳ{3_i}}; return x; }");
 
-        checkTestEmitMainFunction('concept Baz {} entity Foo provides Baz {} public function main(): Baz { let x: Baz = Foo{}; return x; }', "MainᕒBaz Mainᕒmain() { MainᕒBaz x = MainᕒBaz(MainᕒFoo{}); return x; }");
-        checkTestEmitMainFunction('concept Baz {} entity Foo provides Baz {} public function main(): Baz { var x: Baz = Foo{}; return x; }', "MainᕒBaz Mainᕒmain() { MainᕒBaz x = MainᕒBaz(MainᕒFoo{}); return x; }");
+        checkTestEmitMainFunction('concept Baz {} entity Foo provides Baz {} public function main(): Baz { let x: Baz = Foo{}; return x; }', "MainᕒBaz Mainᕒmain() { MainᕒBaz x = MainᕒBaz{MainᕒFoo{}}; return x; }");
+        checkTestEmitMainFunction('concept Baz {} entity Foo provides Baz {} public function main(): Baz { var x: Baz = Foo{}; return x; }', "MainᕒBaz Mainᕒmain() { MainᕒBaz x = MainᕒBaz{MainᕒFoo{}}; return x; }");
     });
 });
 
@@ -45,8 +45,7 @@ describe ("CPPEmit -- simple assign", () => {
     });
 
     it("should emit simple assign with coerce", function () {
-        checkTestEmitMainFunction('public function main(): Option<Int> { var x: Option<Int> = none; x = some(3i); return x; }', "OptionᐸIntᐳ Mainᕒmain() { OptionᐸIntᐳ x = OptionᐸIntᐳ::optnone; x = OptionᐸIntᐳ::fromSome(&ᐸRuntimeᐳ::g_typeinfo_SomeᐸIntᐳ, SomeᐸIntᐳ{3_i}); return x; }");
-
-        checkTestEmitMainFunction('concept Baz {} entity Foo provides Baz {} public function main(): Baz { var x: Baz = Foo{}; x = Foo{}; return x; }', "MainᕒBaz Mainᕒmain() { MainᕒBaz x = MainᕒBaz(MainᕒFoo{}); x = MainᕒBaz(MainᕒFoo{}); return x; }");
+        checkTestEmitMainFunction('public function main(): Option<Int> { var x: Option<Int> = none; x = some(3i); return x; }', "OptionᐸIntᐳ Mainᕒmain() { OptionᐸIntᐳ x = OptionᐸIntᐳ::none; x = OptionᐸIntᐳ{SomeᐸIntᐳ{3_i}}; return x; }");
+        checkTestEmitMainFunction('concept Baz {} entity Foo provides Baz {} public function main(): Baz { var x: Baz = Foo{}; x = Foo{}; return x; }', "MainᕒBaz Mainᕒmain() { MainᕒBaz x = MainᕒBaz{MainᕒFoo{}}; x = MainᕒBaz{MainᕒFoo{}}; return x; }");
     });
 });

@@ -18,15 +18,15 @@ describe ("CPPEmit -- simple return", () => {
 
     it("should emit direct returns", function () {
         checkTestEmitMainFunction('public function foo(x: Int): Int { return x + 1i; } public function main(): Int { return foo(3i); }', 'Int Mainᕒmain() { return Mainᕒfoo(3_i); }');
-        checkTestEmitMainFunction('concept Baz {} entity Foo provides Baz { field f: Int; } public function foo(x: Int): Foo { return Foo{x + 1i}; } public function main(): Baz { return foo(3i); }', 'MainᕒBaz Mainᕒmain() { MainᕒFoo tmp_0 = Mainᕒfoo(3_i); return MainᕒBaz(tmp_0); }');
+        checkTestEmitMainFunction('concept Baz {} entity Foo provides Baz { field f: Int; } public function foo(x: Int): Foo { return Foo{x + 1i}; } public function main(): Baz { return foo(3i); }', 'MainᕒBaz Mainᕒmain() { MainᕒFoo tmp_0 = Mainᕒfoo(3_i); return MainᕒBaz{tmp_0}; }');
     });
 
     it("should emit returns with special coerce", function () {
-        checkTestEmitMainFunction('public function main(): Option<Int> { return none; }', 'OptionᐸIntᐳ Mainᕒmain() { return OptionᐸIntᐳ::optnone; }');
-        checkTestEmitMainFunction('public function main(): Option<Int> { return some(3i); }', 'OptionᐸIntᐳ Mainᕒmain() { return OptionᐸIntᐳ::fromSome(&ᐸRuntimeᐳ::g_typeinfo_SomeᐸIntᐳ, SomeᐸIntᐳ{3_i}); }');
-        checkTestEmitMainFunction('public function main(): Option<Int> { let x: Option<Int> = some(3i); return x; }', 'OptionᐸIntᐳ Mainᕒmain() { OptionᐸIntᐳ x = OptionᐸIntᐳ::fromSome(&ᐸRuntimeᐳ::g_typeinfo_SomeᐸIntᐳ, SomeᐸIntᐳ{3_i}); return x; }');
+        checkTestEmitMainFunction('public function main(): Option<Int> { return none; }', 'OptionᐸIntᐳ Mainᕒmain() { return OptionᐸIntᐳ::none; }');
+        checkTestEmitMainFunction('public function main(): Option<Int> { return some(3i); }', 'OptionᐸIntᐳ Mainᕒmain() { return OptionᐸIntᐳ{SomeᐸIntᐳ{3_i}}; }');
+        checkTestEmitMainFunction('public function main(): Option<Int> { let x: Option<Int> = some(3i); return x; }', 'OptionᐸIntᐳ Mainᕒmain() { OptionᐸIntᐳ x = OptionᐸIntᐳ{SomeᐸIntᐳ{3_i}}; return x; }');
 
-        checkTestEmitMainFunction('concept Baz {} entity Foo provides Baz {} public function main(): Baz { return Foo{}; }', 'MainᕒBaz Mainᕒmain() { return MainᕒBaz(MainᕒFoo{}); }');
-        checkTestEmitMainFunction('concept Baz {} entity Foo provides Baz {} public function main(): Baz { let x: Foo = Foo{}; return x; }', 'MainᕒBaz Mainᕒmain() { MainᕒFoo x = MainᕒFoo{}; return MainᕒBaz(x); }');
+        checkTestEmitMainFunction('concept Baz {} entity Foo provides Baz {} public function main(): Baz { return Foo{}; }', 'MainᕒBaz Mainᕒmain() { return MainᕒBaz{MainᕒFoo{}}; }');
+        checkTestEmitMainFunction('concept Baz {} entity Foo provides Baz {} public function main(): Baz { let x: Foo = Foo{}; return x; }', 'MainᕒBaz Mainᕒmain() { MainᕒFoo x = MainᕒFoo{}; return MainᕒBaz{x}; }');
     });
 });

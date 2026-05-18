@@ -13,7 +13,7 @@ describe ("CPPExec -- Container Constructor (List)", () => {
         runTestSet("public function main(y: CString): List<CString> { let s = 'ok'; return List<CString>{y, s, 'a'}; }", [['"y"', "List<CString>{ 'y', 'ok', 'a' }"]], []);
     });
 
-    it.todo("should exec spread and mixed list constructors", function () {
+    it.skip("should exec spread and mixed list constructors", function () {
         runTestSet("public function main(l: List<Int>): List<Int> { return List<Int>{...l}; }", [], []);
         runTestSet("public function main(l: List<Int>): List<Int> { return List<Int>{...l, ...l}; }", [], []);
         runTestSet("public function main(l: List<Int>): List<Int> { return List<Int>{1i, ...l, 3i}; }", [], []);

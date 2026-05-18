@@ -373,7 +373,7 @@ class CPPEmitter {
             }
             else if(ttag === IRExpressionTag.IRConstructorSomeTypeExpression) {
                 const cexp = exps as IRConstructorSomeTypeExpression;
-                bstr = `${TransformCPPNameManager.generateNameForConstructor(cexp.oftype.tkeystr)}{${this.emitIRSimpleExpression(cexp.value, false)}}`;
+                bstr = `${TransformCPPNameManager.generateNameForConstructor(cexp.oftype.tkeystr)}{${this.emitIRSimpleExpression(cexp.value, true)}}`;
             }
             else if(ttag === IRExpressionTag.IRConstructorOkTypeExpression) {
                 assert(false, "CPPEmitter: need to implement ok type expression emission");
@@ -559,7 +559,7 @@ class CPPEmitter {
             else if(ttag === IRExpressionTag.IRBoxEntityToConceptRepresentationExpression) {
                 const bexp = exps as IRBoxEntityToConceptRepresentationExpression;
                 const ctype = TransformCPPNameManager.convertTypeKey(bexp.totype.tkeystr); 
-                bstr = `${ctype}(${this.emitIRSimpleExpression(bexp.value, true)})`;
+                bstr = `${ctype}{${this.emitIRSimpleExpression(bexp.value, true)}}`;
             }
             else if(ttag === IRExpressionTag.IRUnboxEntityFromConceptRepresentationExpression) {
                 const ubexp = exps as IRUnboxEntityFromConceptRepresentationExpression;
@@ -749,28 +749,28 @@ class CPPEmitter {
             
             const vdecltype = this.typeInfoManager.emitTypeAsStd(tase.ttype.tkeystr);
             const wval = this.emitExpression(tase.rhs, true);
-            return `${vdecltype} ${TransformCPPNameManager.convertIdentifier(tase.tname)}{${wval}};`
+            return `${vdecltype} ${TransformCPPNameManager.convertIdentifier(tase.tname)} = ${wval};`
         }
         else if(ttag === IRStatementTag.IRTempAssignStdInvokeStatement) {
             const tasi = stmt as IRTempAssignStdInvokeStatement;
             
             const vdecltype = this.typeInfoManager.emitTypeAsStd(tasi.ttype.tkeystr);
             const wval = this.emitExpression(tasi.rhs, true);
-            return `${vdecltype} ${TransformCPPNameManager.convertIdentifier(tasi.tname)}{${wval}};`
+            return `${vdecltype} ${TransformCPPNameManager.convertIdentifier(tasi.tname)} = ${wval};`
         }
         else if(ttag === IRStatementTag.IRTempAssignRefInvokeStatement) {
             const tare = stmt as IRTempAssignRefInvokeStatement;
             
             const vdecltype = this.typeInfoManager.emitTypeAsStd(tare.ttype.tkeystr);
             const wval = this.emitExpression(tare.rhs, true);
-            return `${vdecltype} ${TransformCPPNameManager.convertIdentifier(tare.tname)}{${wval}};`
+            return `${vdecltype} ${TransformCPPNameManager.convertIdentifier(tare.tname)} = ${wval};`
         }
         else if(ttag === IRStatementTag.IRTempAssignDirectConstructorStatement) {
             const tadc = stmt as IRTempAssignDirectConstructorStatement;
 
             const vdecltype = this.typeInfoManager.emitTypeAsStd(tadc.ttype.tkeystr);
             const wval = this.emitExpression(tadc.rhs, true);
-            return `${vdecltype} ${TransformCPPNameManager.convertIdentifier(tadc.tname)}{${wval}};`
+            return `${vdecltype} ${TransformCPPNameManager.convertIdentifier(tadc.tname)} = ${wval};`
         }
         else if(ttag === IRStatementTag.IRVariableDeclarationStatement) {
             const vdeclstmt = stmt as IRVariableDeclarationStatement;
@@ -783,28 +783,28 @@ class CPPEmitter {
 
             const vdecltype = this.typeInfoManager.emitTypeAsStd(vistmt.vtype.tkeystr);
             const wval = this.emitIRSimpleExpression(vistmt.initexp, true);
-            return `${vdecltype} ${TransformCPPNameManager.convertIdentifier(vistmt.vname)}{${wval}};`
+            return `${vdecltype} ${TransformCPPNameManager.convertIdentifier(vistmt.vname)} = ${wval};`
         }
         else if(ttag === IRStatementTag.IRVariableInitializationDirectInvokeStatement) {
             const vistmt = stmt as IRVariableInitializationDirectInvokeStatement;
 
             const vdecltype = this.typeInfoManager.emitTypeAsStd(vistmt.vtype.tkeystr);
             const wval = this.emitExpression(vistmt.initexp, true);
-            return `${vdecltype} ${TransformCPPNameManager.convertIdentifier(vistmt.vname)}{${wval}};`
+            return `${vdecltype} ${TransformCPPNameManager.convertIdentifier(vistmt.vname)} = ${wval};`
         }
         else if(ttag === IRStatementTag.IRVariableInitializationDirectInvokeWithImplicitStatement) {
             const vistmt = stmt as IRVariableInitializationDirectInvokeWithImplicitStatement;
 
             const vdecltype = this.typeInfoManager.emitTypeAsStd(vistmt.vtype.tkeystr);
             const wval = this.emitExpression(vistmt.initexp, true);
-            return `${vdecltype} ${TransformCPPNameManager.convertIdentifier(vistmt.vname)}{${wval}};`
+            return `${vdecltype} ${TransformCPPNameManager.convertIdentifier(vistmt.vname)} = ${wval};`
         }
         else if(ttag === IRStatementTag.IRVariableInitializationDirectConstructorStatement) {
             const vistmt = stmt as IRVariableInitializationDirectConstructorStatement;
 
             const vdecltype = this.typeInfoManager.emitTypeAsStd(vistmt.vtype.tkeystr);
             const wval = this.emitExpression(vistmt.initexp, true);
-            return `${vdecltype} ${TransformCPPNameManager.convertIdentifier(vistmt.vname)}{${wval}};`
+            return `${vdecltype} ${TransformCPPNameManager.convertIdentifier(vistmt.vname)} = ${wval};`
         }
         else if(ttag === IRStatementTag.IRVariableInitializationDirectConstructorWithBoxStatement) {
             const vistmt = stmt as IRVariableInitializationDirectConstructorWithBoxStatement;
@@ -812,7 +812,7 @@ class CPPEmitter {
             const vdecltype = this.typeInfoManager.emitTypeAsStd(vistmt.vtype.tkeystr);
             const ctype = TransformCPPNameManager.convertTypeKey(vistmt.vtype.tkeystr); 
             const wval = this.emitExpression(vistmt.initexp, true);
-            return `${vdecltype} ${TransformCPPNameManager.convertIdentifier(vistmt.vname)}{${ctype}{${wval}}};`
+            return `${vdecltype} ${TransformCPPNameManager.convertIdentifier(vistmt.vname)} = ${ctype}{${wval}};`
         }
         else if(ttag === IRStatementTag.IRVariableAssignmentStatement) {
             const vistmt = stmt as IRVariableAssignmentStatement;
@@ -843,7 +843,7 @@ class CPPEmitter {
 
             const ctype = TransformCPPNameManager.convertTypeKey(vistmt.vtype.tkeystr); 
             const wval = this.emitExpression(vistmt.aexp, true);
-            return `${TransformCPPNameManager.convertIdentifier(vistmt.vname)} = ${ctype}(${wval});`
+            return `${TransformCPPNameManager.convertIdentifier(vistmt.vname)} = ${ctype}{${wval}};`
         }
         else if(ttag === IRStatementTag.IRReturnVoidSimpleStatement) {
             return "return;";
@@ -863,7 +863,7 @@ class CPPEmitter {
         else if(ttag === IRStatementTag.IRReturnDirectConstructWithBoxStatement) {
             const irdcwbs = stmt as IRReturnDirectConstructWithBoxStatement;
             const ctype = TransformCPPNameManager.convertTypeKey(irdcwbs.totype.tkeystr); 
-            return `return ${ctype}(${this.emitExpression(irdcwbs.retexp, true)});`;
+            return `return ${ctype}{${this.emitExpression(irdcwbs.retexp, true)}};`;
         }
         else if(ttag === IRStatementTag.IRReturnVoidImplicitStatement) {
             return "return;";
@@ -887,7 +887,7 @@ class CPPEmitter {
         else if(ttag === IRStatementTag.IRReturnDirectConstructWithBoxImplicitStatement) {
             const irdcwbs = stmt as IRReturnDirectConstructWithBoxImplicitStatement;
             const ctype = TransformCPPNameManager.convertTypeKey(irdcwbs.totype.tkeystr); 
-            return `return ${ctype}(${this.emitExpression(irdcwbs.retexp, true)});`;
+            return `return ${ctype}{${this.emitExpression(irdcwbs.retexp, true)}};`;
         }
         else if(ttag === IRStatementTag.IRVoidInvokeStatement) {
             const ivis = stmt as IRVoidInvokeStatement;
