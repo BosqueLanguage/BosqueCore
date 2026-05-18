@@ -26,7 +26,6 @@ describe ("Parser -- NamespaceFunction Implicit (no template)", () => {
         parseTestFunctionInFile('function foo(x: Int, ...y: List<Int>): Int { return x; } [FUNC]', 'function main(): Int { return foo(1i, 2i); }');
         parseTestFunctionInFile('function foo(x: Int, ...y: List<Int>): Int { return x; } [FUNC]', 'function main(): Int { return foo(1i, 2i, 3i); }');
         parseTestFunctionInFile('function foo(x: Int, ...y: List<Int>): Int { return x; } [FUNC]', 'function main(): Int { return foo(3i, x = 1i); }');
-        
     });
 
     it("should parse default", function () {

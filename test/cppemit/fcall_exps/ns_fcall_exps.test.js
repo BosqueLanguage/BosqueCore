@@ -29,7 +29,12 @@ describe ("CPPEmit -- NamespaceFunction (no template)", () => {
         checkTestEmitMainFunction("function foo(x: Int, y: Int = 1i): Int { return x + y; } public function main(): Int { return foo(1i); }", "Int Mainᕒmain() { return Mainᕒfoo(1_i, 1_i); }");
     });
 
-    it.todo("should emit simple rest", function () {
+    it("should emit simple rest", function () {
+        checkTestEmitMainFunction('function foo(x: Int, ...y: List<Int>): Int { return x; } public function main(): Int { return foo(1i); }', "xxxx");
+        checkTestEmitMainFunction('function foo(x: Int, ...y: List<Int>): Int { return x; } public function main(): Int { return foo(1i, 2i); }', "yyyy");
+        checkTestEmitMainFunction('function foo(x: Int, ...y: List<Int>): Int { return x; } public function main(): Int { return foo(1i, 2i, 3i); }', "zzzz");
+
+        checkTestEmitMainFunction('function foo(x: Int, ...y: List<Int>): Int { return x; } public function main(): Int { return foo(x = 0i, 2i, 3i); }', "qqq");
     });
 });
 

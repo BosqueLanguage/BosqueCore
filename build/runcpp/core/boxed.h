@@ -41,6 +41,8 @@ namespace ᐸRuntimeᐳ
         const TypeInfo* typeinfo;
         T data;
     
+        static const TypeInfo* s_someTypeInfo;
+
     private:
         constexpr XOption(const TypeInfo* ti) : typeinfo{ti}, data{} { ; }
         constexpr XOption(const TypeInfo* ti, const T& d) : typeinfo{ti}, data{d} { ; }
@@ -48,14 +50,12 @@ namespace ᐸRuntimeᐳ
     public:
         constexpr XOption() : typeinfo{}, data{} { ; };
         constexpr XOption(const XOption& other) = default;
+
+        static constexpr XOption<T> none = XOption{&g_typeinfo_None};
+        XOption(const XSome<T>& d) : typeinfo{s_someTypeInfo}, data{d.value} { ; }
         
-        // Special none option bits
         constexpr XBool isNone() const { return XBool::from(this->typeinfo == &g_typeinfo_None); }
-        static constexpr XOption<T> optnone = XOption{&g_typeinfo_None};
-        
-        // Some option bits
         constexpr XBool isSome() const { return XBool::from(this->typeinfo != &g_typeinfo_None); }
-        static XOption<T> fromSome(const TypeInfo* ti, const XSome<T>& d) { return XOption<T>{ti, d.value}; }
 
         constexpr XNone asNone() const { return xnone; }
         constexpr XSome<T> asSome() const { return XSome<T>{this->data}; }

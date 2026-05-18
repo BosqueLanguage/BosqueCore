@@ -427,12 +427,13 @@ namespace ᐸRuntimeᐳ
         static const PosRBNode<T, K>* reprGetIndexNode(int64_t index, const PosRBNode<T, K>* curr)
         {
             while(true) {
-                int64_t lcount = reprGetCount(curr);
+                const PosRBNode<T, K>* l = reprGetLeft(curr);
+                int64_t lcount = reprGetCount(l);
 
                 if(index < lcount) {
-                    curr = reprGetLeft(curr);
+                    curr = l;
                 }
-                else if(lcount + curr->data.dcount <= index) {
+                else if(index >= lcount + curr->data.dcount) {
                     index -= (lcount + curr->data.dcount);
                     curr = reprGetRight(curr);
                 }
@@ -899,7 +900,7 @@ private:
                 const PosRBNode<T, K>* r = opnode->right;
                 
                 int64_t lcount = reprGetCount(l);
-                if(index <= lcount) {
+                if(index < lcount) {
                     //insert to left
                     if(index == lcount && (size_t)curr->data.dcount < K) {
                         //we can add the element without modifying structure -- no rebalancing needed just copy spine
@@ -911,7 +912,7 @@ private:
                         return balance(nleft.apply([opnode, r](const PosRBNode<T, K>* tnode) { return mknode(opnode->data.color, tnode, r, opnode->data); }));
                     }
                 }
-                else if(lcount + opnode->data.dcount <= index) {
+                else if(index >= lcount + opnode->data.dcount) {
                     //insert to right
                     if(index == lcount + opnode->data.dcount && (size_t)opnode->data.dcount < K) {
                         //we can add the element without modifying structure -- no rebalancing needed just copy spine

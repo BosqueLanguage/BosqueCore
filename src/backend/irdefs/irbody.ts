@@ -251,6 +251,7 @@ enum IRStatementTag {
     IRTempAssignExpressionStatement = "IRTempAssignExpressionStatement",
     IRTempAssignStdInvokeStatement = "IRTempAssignStdInvokeStatement",
     IRTempAssignRefInvokeStatement = "IRTempAssignRefInvokeStatement",
+    IRTempAssignDirectConstructorStatement = "IRTempAssignDirectConstructorStatement",
 
     IRVariableDeclarationStatement = "IRVariableDeclarationStatement",
 
@@ -1685,6 +1686,15 @@ class IRTempAssignRefInvokeStatement extends IRTempAssignStatement {
     }
 }
 
+class IRTempAssignDirectConstructorStatement extends IRTempAssignStatement {
+    readonly rhs: IRConstructExpression;
+
+    constructor(tname: string, ttype: IRTypeSignature, rhs: IRConstructExpression) {
+        super(IRStatementTag.IRTempAssignDirectConstructorStatement, tname, ttype);
+        this.rhs = rhs;
+    }
+}
+
 class IRVariableDeclarationStatement extends IRAtomicStatement {
     readonly vname: string;
     readonly vtype: IRTypeSignature;
@@ -2388,7 +2398,7 @@ export {
     IRErrorCheckStatement, IRErrorBinArithCheckStatement,
 
     IRNopStatement,
-    IRTempAssignExpressionStatement, IRTempAssignStdInvokeStatement, IRTempAssignRefInvokeStatement,
+    IRTempAssignExpressionStatement, IRTempAssignStdInvokeStatement, IRTempAssignRefInvokeStatement, IRTempAssignDirectConstructorStatement,
 
     IRVariableDeclarationStatement, 
     IRVariableInitializationStatement, IRVariableInitializationDirectInvokeStatement, IRVariableInitializationDirectInvokeWithImplicitStatement, IRVariableInitializationDirectConstructorStatement, IRVariableInitializationDirectConstructorWithBoxStatement,
