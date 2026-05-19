@@ -194,6 +194,12 @@ namespace ᐸRuntimeᐳ
             }
         }
 
+        PosRBData set(int64_t index, const T& value) const
+        {
+            assert((0 <= index) & (index < this->dcount));
+            return PosRBData(this->color, this->bheight, this->data.begin(), this->data.begin() + index, value, this->data.begin() + index + 1, this->data.end());
+        }
+
         PosRBData remove(int64_t index) const
         {
             assert((0 <= index) & (index < this->dcount));
@@ -975,6 +981,48 @@ private:
             }
         }
 
+        static PosRBNode<T, K>* setrec(const PosRBNode<T, K>* curr, int64_t index, const T& value)
+        {
+            std::vector<std::pair<const PosRBNode<T, K>*, std::pair<bool, bool>>> path;
+            while(true) {
+                const PosRBNode<T, K>* l = reprGetLeft(curr);
+                int64_t lcount = reprGetCount(l);
+
+                if(index < lcount) {
+                    path.push_back(std::make_pair(curr, std::make_pair(true, false)));
+                    curr = l;
+                }
+                else if(index >= lcount + curr->data.dcount) {
+                    path.push_back(std::make_pair(curr, std::make_pair(false, true)));
+                    index -= (lcount + curr->data.dcount);
+                    curr = reprGetRight(curr);
+                }
+                else {
+                    break; //index is within the current node
+                }
+            }
+
+            //set the value at the specified index within the current node
+            PosRBNode<T, K>* nnode = copyNodeReplaceData(curr, curr->data.set(index, value));
+
+            //go back up the path and update each node in the path with the new value
+            while(!path.empty()) {
+                std::pair<const PosRBNode<T, K>*, std::pair<bool, bool>> pp = path.back();
+                path.pop_back();
+
+                if(pp.second.first) {
+                    // Update the left child
+                    nnode = mkcopynode(pp.first->data.color, nnode, reprGetRight(pp.first), pp.first->data);
+                }
+                else {
+                    // Update the right child
+                    nnode = mkcopynode(pp.first->data.color, reprGetLeft(pp.first), nnode, pp.first->data);
+                }
+            }
+
+            return nnode;
+        }
+
     public:
         int64_t size() const
         {
@@ -1020,6 +1068,14 @@ private:
             PosRBNode<T, K>* root = blacken(insertrec(this->root, index, value));
 
             debugAssertInvariants(root, reprGetCount(this->root) + 1);
+            return PosRBTree<T, K, TreeID>{root};
+        }
+
+        PosRBTree<T, K, TreeID> set(int64_t index, const T& value) const
+        {
+            PosRBNode<T, K>* root = setrec(this->root, index, value);
+
+            debugAssertInvariants(root, reprGetCount(this->root));
             return PosRBTree<T, K, TreeID>{root};
         }
     };

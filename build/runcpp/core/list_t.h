@@ -134,17 +134,20 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        /** Push the element in the middle of the list **/
-        ListTInlineContent(const ListTInlineContent& src, int64_t index, const T& value) : count{src.count + 1}
-        {
-            assert(src.count < MAX_INLINE_CAPACITY);
-            assert(index < MAX_INLINE_CAPACITY);
-           
-            std::copy(src.data.cbegin(), src.data.cbegin() + index, this->data.begin());
-            this->data[index] = value;
-            std::copy(src.data.cbegin() + index, src.data.cbegin() + src.count, this->data.begin() + index + 1);
-            
-            if(this->count < MAX_INLINE_CAPACITY) {
+        /** Constructor for middle replacement **/
+        template<typename Iter>
+        ListTInlineContent(Iter lstart, Iter lend, const T& value, Iter rstart, Iter rend)
+        {   
+            const size_t size = std::distance(lstart, lend) + 1 + std::distance(rstart, rend);
+            assert(size != 0);
+            assert(size <= MAX_INLINE_CAPACITY);
+
+            std::copy(lstart, lend, this->data.begin());
+            this->data[std::distance(lstart, lend)] = value;
+            std::copy(rstart, rend, this->data.begin() + std::distance(lstart, lend) + 1);
+            this->count = size;
+
+            if(size < MAX_INLINE_CAPACITY) {
                 zerofill(this->data, this->count);
             }
         }
@@ -509,6 +512,16 @@ namespace ᐸRuntimeᐳ
             }
         }
 
+        XList set(int64_t index, const T& value) const
+        {
+            if(this->ulist.isInline()) {
+                return XList{ListTInlineContent<T>{this->ulist.inlinelist.data.begin(), this->ulist.inlinelist.data.begin() + index, value, this->ulist.inlinelist.data.begin() + index + 1, this->ulist.inlinelist.data.begin() + this->ulist.inlinelist.count}};
+            }
+            else {
+                return XList{this->ulist.treelist.postree.set(index, value)};
+            }
+        }
+
         XList insert(int64_t index, const T& value) const
         {
             if(this->ulist.empty()) {
@@ -518,7 +531,7 @@ namespace ᐸRuntimeᐳ
             else {
                 if(this->ulist.isInline()) {
                     if(this->ulist.inlinelist.size() < ListTInlineContent<T>::MAX_INLINE_CAPACITY) {
-                        return XList{ListTInlineContent<T>{this->ulist.inlinelist, index, value}};
+                        return XList{ListTInlineContent<T>{this->ulist.inlinelist.data.begin(), this->ulist.inlinelist.data.begin() + index, value, this->ulist.inlinelist.data.begin() + index, this->ulist.inlinelist.data.begin() + this->ulist.inlinelist.count}};
                     }
                     else {
                         return XList{ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>{PosRBTree<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_T)>::mkinitial(this->ulist.inlinelist.data.begin(), this->ulist.inlinelist.data.begin() + index, value, this->ulist.inlinelist.data.begin() + index, this->ulist.inlinelist.data.begin() + this->ulist.inlinelist.count)}};
