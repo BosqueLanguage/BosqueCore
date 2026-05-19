@@ -7,7 +7,8 @@ const dtype = 'datatype BoolOp of Const { val: Bool } NotOp { arg: BoolOp } AndO
 
 describe ("datatype exec", () => {
     it("datatype should succeed", function () {
-        runMainCode(`${dtype} public function main(): Bool { return OrOp{Const{true}, Const{false}}.evaluate[recursive](); }`, "true");
-        runMainCode(`${dtype} public function main(): Bool { return AndOp{larg=Const{true}, rarg=Const{false}}.evaluate[recursive](); }`, "false"); 
+        runTestSet(`${dtype} public function main(b: Bool): Bool { return OrOp{Const{b}, Const{false}}.evaluate[recursive](); }`, [['true', 'true'], ['false', 'false']], []);
+        runTestSet(`${dtype} public function main(b: Bool): Bool { return AndOp{larg=Const{true}, rarg=Const{b}}.evaluate[recursive](); }`, [['true', 'true'], ['false', 'false']], []);
+        runTestSet(`${dtype} public function main(b: Bool): Bool { return AndOp{larg=Const{true}, rarg=NotOp{arg=Const{b}}}.evaluate[recursive](); }`, [['true', 'false'], ['false', 'true']], []);
     });
 });

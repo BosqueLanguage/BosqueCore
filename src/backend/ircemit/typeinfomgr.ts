@@ -357,7 +357,8 @@ class TypeInfoManager {
             const mustref = this.isRecursiveTypeKey(tdecl.tkey, irasm);
             for(const fdecl of tdecl.saturatedBFieldInfo) {
                 if(this.isNominalRecursiveType(fdecl.ftype, irasm)) {
-                    if((fdecl instanceof IRConceptTypeDecl) || (fdecl instanceof IRDatatypeTypeDecl)) {
+                    const ftypedecl = irasm.alltypes.get(fdecl.ftype.tkeystr) as IRAbstractNominalTypeDecl;
+                    if((ftypedecl instanceof IRConceptTypeDecl) || (ftypedecl instanceof IRDatatypeTypeDecl)) {
                         totalbytesize += 16;
                         totalslotcount += 2;
                         eptrmask += "20";
