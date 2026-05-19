@@ -228,14 +228,14 @@ namespace ᐸRuntimeᐳ
     }
 
     template<typename T, uint32_t TYPE_ID_POS_TREE_T>
-    inline constexpr TypeInfo g_typeinfo_ListT_generate(uint32_t id, const char* name) 
+    inline constexpr TypeInfo g_typeinfo_ListT_generate(uint32_t id, const char* mask, const char* name) 
     {
         return TypeInfo{
             id,
             sizeof(ListTUnion<T, TYPE_ID_POS_TREE_T>),
             byteSizeToSlotCount(sizeof(ListTUnion<T, TYPE_ID_POS_TREE_T>)),
             LayoutTag::Value,
-            "40",
+            mask,
             nullptr,
             0,
             nullptr,

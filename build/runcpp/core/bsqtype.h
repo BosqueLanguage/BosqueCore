@@ -48,9 +48,7 @@ namespace ᐸRuntimeᐳ
     {
         Value,     //an inline value
         Ref,       //a pointer to a heap allocated value
-        Tagged,    //a tagged value, first slot is the typeinfo that has the actual data layout
-        Str,       //a string type over 16 bytes -- the collector will look for a special tag
-        Collection //a List/Map type -- the collector will look for a special tag
+        Tagged    //a tagged value, first slot is the typeinfo that has the actual data layout
     };
 
     class FieldOffsetInfo

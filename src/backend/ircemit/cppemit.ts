@@ -1485,13 +1485,19 @@ class CPPEmitter {
             }
         }
         
+        const icapacity = LIST_T_INLINE_CAPACITY(ofttid.bytesize);
+        const lcapacity = LIST_T_LEAF_CAPACITY(ofttid.bytesize);
+
         let inlinemask: string | undefined = undefined; 
         let leafmask: string | undefined = undefined;
+        let nodemask: string | undefined = undefined;
         if(!/[1-4]/.test(eemask)) {
-            const icapacity = LIST_T_INLINE_CAPACITY(ofttid.bytesize);
-
+            nodemask = "0" + Array(lcapacity).fill(eemask).join("") + "110";
+        }
+        else {
             inlinemask = "0" + Array(icapacity).fill(eemask).join("");
-            leafmask = "0" + Array(2 * icapacity).fill(eemask).join("");
+            leafmask = "0" + Array(lcapacity).fill(eemask).join("");
+            nodemask = "0" + Array(lcapacity).fill(eemask).join("") + "110";
         }
         
         const posrb_treeleafid = ttid.bsqtypeid - 5;
@@ -1503,7 +1509,7 @@ class CPPEmitter {
 
         const tidecls = `namespace ᐸRuntimeᐳ {\n` +
         `    inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_${ctname} = g_typeinfo_PosRBTreeLeaf_generate<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::MAX_LEAF_CAPACITY>(${posrb_treeleafid}, ${leafmask !== undefined ? `"${leafmask}"` : "nullptr"}, "PosRBTreeLeaf_${ctname}");\n` +
-        `    inline constexpr TypeInfo g_typeinfo_PosRBTreeNode_${ctname} = g_typeinfo_PosRBTreeNode_generate<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::MAX_LEAF_CAPACITY>(${posrb_treenodeid}, "xxxxxx", "PosRBTreeNode_${ctname}");\n` +
+        `    inline constexpr TypeInfo g_typeinfo_PosRBTreeNode_${ctname} = g_typeinfo_PosRBTreeNode_generate<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::MAX_LEAF_CAPACITY>(${posrb_treenodeid}, "${nodemask}", "PosRBTreeNode_${ctname}");\n` +
         `    inline constexpr TypeInfo g_typeinfo_PosRBTree_${ctname} = g_typeinfo_PosRBTree_generate<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::MAX_LEAF_CAPACITY, ${posrb_treeid}>(${posrb_treeid}, "PosRBTree_${ctname}");\n` +
         '\n' +
         `    extern thread_local GCAllocator<PosRBTreeLeaf<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::MAX_LEAF_CAPACITY>> PosRBTreeLeaf_${ctname}_allocator;\n` +
@@ -1511,7 +1517,7 @@ class CPPEmitter {
         '\n' +
         `    inline constexpr TypeInfo g_typeinfo_${ctname}Inline = g_typeinfo_ListTInlineContent_generate<${oftrepr}>(${listinlineid}, ${inlinemask !== undefined ? `"${inlinemask}"` : "nullptr"}, "${ctname}Inline");\n` +
         `    inline constexpr TypeInfo g_typeinfo_${ctname}Tree = g_typeinfo_ListTTreeContent<${oftrepr}, ${posrb_treeid}>(${listtreeid}, "${ctname}TreeContent");\n` +
-        `    inline constexpr TypeInfo g_typeinfo_${ctname} = g_typeinfo_ListT_generate<${oftrepr}, ${posrb_treeid}>(${ttid.bsqtypeid}, "${ctname}");\n` +
+        `    inline constexpr TypeInfo g_typeinfo_${ctname} = g_typeinfo_ListT_generate<${oftrepr}, ${posrb_treeid}>(${ttid.bsqtypeid}, ${inlinemask !== undefined ? `"${inlinemask}"` : "nullptr"}, "${ctname}");\n` +
         `}`;
 
         const tidefs = `namespace ᐸRuntimeᐳ {\n` +
