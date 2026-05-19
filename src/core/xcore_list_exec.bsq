@@ -18,6 +18,9 @@ namespace ListOps {
     recursive? function s_list_allof<T>(l: List<T>, p: recursive? pred(T) -> Bool): Bool = @list_allof;
     recursive? function s_list_noneof<T>(l: List<T>, p: recursive? pred(T) -> Bool): Bool = @list_noneof;
     recursive? function s_list_someof<T>(l: List<T>, p: recursive? pred(T) -> Bool): Bool = @list_someof;
+
+    recursive? function s_list_map<T, U>(l: List<T>, f: recursive? fn(T) -> U): List<U> = @list_map;
+    recursive? function s_list_mapidx<T, U>(l: List<T>, f: recursive? fn(T, Nat) -> U): List<U> = @list_mapidx;
 }
 #else
 #endif %% EXEC_LIBS

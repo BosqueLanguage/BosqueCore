@@ -3609,9 +3609,10 @@ class ASMToIRConverter {
         return terminal;
     }
 
-    private processBody(body: BodyImplementation): IRBody {
+    private processBody(body: BodyImplementation, bitbinds: [string, TypeSignature][] | undefined): IRBody {
         if(body instanceof BuiltinBodyImplementation) {
-            return new IRBuiltinBody(body.builtin);
+            const bbi = (bitbinds || []).map((bb) => [this.processLocalVariableName(bb[0]), this.processTypeSignature(bb[1])] as [string, IRTypeSignature]);
+            return new IRBuiltinBody(body.builtin, bbi);
         }
         else if(body instanceof HoleBodyImplementation) {
             assert(body.samplesfile === undefined, "HoleBodyImplementation with expression not supported in IR yet");
@@ -3778,7 +3779,7 @@ class ASMToIRConverter {
             irasm.predicates.push(new IRPredicateDecl(ikey, recursive, params, this.processTypeSignature(fdecl.resultType), preconds, postconds, docstring, fdecl.file, this.convertSourceInfo(fdecl.sinfo)));
         }
         else {
-            const body = this.processBody(fdecl.body);
+            const body = this.processBody(fdecl.body, fdecl.terms.map((t) => [t.name, new TemplateTypeSignature(fdecl.sinfo, t.name)] as [string, TypeSignature]));
             const association = (fdecl.tassoc !== undefined) ? this.processAssociationInfo(fdecl.tassoc) : undefined;
 
             if(fdecl.fkind === "function") {
@@ -3810,7 +3811,7 @@ class ASMToIRConverter {
             undefined, 
             linst.body.file, 
             this.convertSourceInfo(linst.body.sinfo), 
-            this.processBody(linst.body.body)
+            this.processBody(linst.body.body, undefined)
         );
     }
 
@@ -3825,7 +3826,7 @@ class ASMToIRConverter {
         const doc = fdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
 
-        const body = this.processBody(fdecl.body);
+        const body = this.processBody(fdecl.body, undefined);
         irasm.invokes.push(new IRInvokeDecl(ikey, recursive, params, this.processTypeSignature(fdecl.resultType), preconds, postconds, docstring, fdecl.file, this.convertSourceInfo(fdecl.sinfo), body));
     }
 
@@ -3840,7 +3841,7 @@ class ASMToIRConverter {
         const doc = mdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
 
-        const body = this.processBody(mdecl.body);
+        const body = this.processBody(mdecl.body, undefined);
         irasm.invokes.push(new IRInvokeDecl(ikey, recursive, params, this.processTypeSignature(mdecl.resultType), preconds, postconds, docstring, mdecl.file, this.convertSourceInfo(mdecl.sinfo), body));
     }
 /*

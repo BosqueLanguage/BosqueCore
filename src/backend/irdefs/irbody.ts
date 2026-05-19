@@ -2466,10 +2466,12 @@ abstract class IRBody {
 
 class IRBuiltinBody extends IRBody {
     readonly builtin: string;
+    readonly biterms: [string, IRTypeSignature][];
 
-    constructor(builtin: string) {
+    constructor(builtin: string, biterms: [string, IRTypeSignature][]) {
         super();
         this.builtin = builtin;
+        this.biterms = biterms;
     }
 
     override isSimpleBody(): boolean {

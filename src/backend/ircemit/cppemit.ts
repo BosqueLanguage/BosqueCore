@@ -1276,19 +1276,26 @@ class CPPEmitter {
             bstr = "l.insert(idx.value, v)";
         }
         else if(body.builtin === "list_allof") {
-            //TODO: SafeSimplePred
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "p");
             bstr = `l.allOf<${isSimple}>([&p](${params}){ return ${fn}(p, ${args}); })`;
         }
         else if(body.builtin === "list_noneof") {
-            //TODO: SafeSimplePred
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "p");
             bstr = `l.noneOf<${isSimple}>([&p](${params}){ return ${fn}(p, ${args}); })`;
         }
         else if(body.builtin === "list_someof") {
-            //TODO: SafeSimplePred
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "p");
             bstr = `l.someOf<${isSimple}>([&p](${params}){ return ${fn}(p, ${args}); })`;
+        }
+        else if(body.builtin === "list_map") {
+            const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "f");
+            const utype = body.biterms.find((bt) => bt[0] === "U") as [string, IRTypeSignature];
+            bstr = `l.map<${isSimple}, ${TransformCPPNameManager.convertTypeKey(utype[1].tkeystr)}>([&f](${params}){ return ${fn}(f, ${args}); })`;
+        }
+        else if(body.builtin === "list_mapidx") {
+            const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "f");
+            const utype = body.biterms.find((bt) => bt[0] === "U") as [string, IRTypeSignature];
+            bstr = `l.mapIdx<${isSimple}, ${TransformCPPNameManager.convertTypeKey(utype[1].tkeystr)}>([&f](${params}){ return ${fn}(f, ${args}); })`;
         }
         else {
             assert(false, "CPPEmitter: need to implement builtin body emission " + body.builtin);
