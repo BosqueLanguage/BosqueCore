@@ -1238,13 +1238,14 @@ class CPPEmitter {
 
         const fikey = lpptype.invtrgt;
         const ll = this.irasm.invokes.find((inv) => inv.ikey === fikey) as IRInvokeDecl;
-        const llp = ll.params[1] as IRInvokeParameterDecl;
+        const llpp = ll.params.slice(1).map((p) => this.typeInfoManager.emitTypeAsParameter(p.type.tkeystr, p.pkind !== undefined, false) + " " + TransformCPPNameManager.convertIdentifier(p.name)) as string[];
+        const llppargs = ll.params.slice(1).map((p) => TransformCPPNameManager.convertIdentifier(p.name)).join(", ");
 
         return [
             TransformCPPNameManager.convertInvokeKey(fikey), 
             ll.body.isSimpleBody(),
-            `${this.typeInfoManager.emitTypeAsParameter(llp.type.tkeystr, llp.pkind !== undefined, false)} ${TransformCPPNameManager.convertIdentifier(llp.name)}`, 
-            TransformCPPNameManager.convertIdentifier(llp.name)
+            `${llpp.join(", ")}`, 
+            `${llppargs}`
         ];
     }
 
@@ -1290,12 +1291,14 @@ class CPPEmitter {
         else if(body.builtin === "list_map") {
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "f");
             const utype = body.biterms.find((bt) => bt[0] === "U") as [string, IRTypeSignature];
-            bstr = `l.map<${isSimple}, ${TransformCPPNameManager.convertTypeKey(utype[1].tkeystr)}>([&f](${params}){ return ${fn}(f, ${args}); })`;
+            const ptid = this.typeInfoManager.getTypeInfo(invk.resultType.tkeystr).bsqtypeid;
+            bstr = `l.map<${isSimple}, ${TransformCPPNameManager.convertTypeKey(utype[1].tkeystr)}, ${ptid}>([&f](${params}){ return ${fn}(f, ${args}); })`;
         }
         else if(body.builtin === "list_mapidx") {
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "f");
             const utype = body.biterms.find((bt) => bt[0] === "U") as [string, IRTypeSignature];
-            bstr = `l.mapIdx<${isSimple}, ${TransformCPPNameManager.convertTypeKey(utype[1].tkeystr)}>([&f](${params}){ return ${fn}(f, ${args}); })`;
+            const ptid = this.typeInfoManager.getTypeInfo(invk.resultType.tkeystr).bsqtypeid;
+            bstr = `l.mapIdx<${isSimple}, ${TransformCPPNameManager.convertTypeKey(utype[1].tkeystr)}, ${ptid}>([&f](${params}){ return ${fn}(f, ${args}); })`;
         }
         else {
             assert(false, "CPPEmitter: need to implement builtin body emission " + body.builtin);

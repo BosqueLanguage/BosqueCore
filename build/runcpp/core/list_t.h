@@ -596,7 +596,7 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        template<bool SafeSimpleFn, typename U, size_t TYPE_ID_LIST_U, typename Fn>
+        template<bool SafeSimpleFn, typename U, uint32_t TYPE_ID_LIST_U, typename Fn>
         XList<U, TYPE_ID_LIST_U> map(Fn f) const
         {
             assert(!this->ulist.empty());
@@ -620,25 +620,25 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        template<bool SafeSimpleFn, typename U, typename Fn>
-        auto mapIdx(Fn f) const
+        template<bool SafeSimpleFn, typename U, uint32_t TYPE_ID_LIST_U, typename Fn>
+        XList<U, TYPE_ID_LIST_U> mapIdx(Fn f) const
         {
             assert(!this->ulist.empty());
 
             if(this->ulist.isInline()) {
-                std::array<U, ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY> zipidx = create_idx_range<ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY>();
+                std::array<XNat, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY> zipidx = create_idx_range<ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY>();
 
                 auto ddbegin = this->ulist.inlinelist.data.cbegin();
                 auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
 
-                std::array<U, ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY> result{};
+                std::array<U, ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_U)>::MAX_LEAF_CAPACITY> result{};
                 std::transform(ddbegin, ddend, zipidx.begin(), result.begin(), f);
                 
                 if(this->ulist.inlinelist.count < ListTInlineContent<U>::MAX_INLINE_CAPACITY) {
-                    return XList<U>{ListTInlineContent<U>(result.data(), this->ulist.inlinelist.count)};
+                    return XList<U, TYPE_ID_LIST_U>{ListTInlineContent<U>(result.data(), this->ulist.inlinelist.count)};
                 }
                 else {
-                    return XList<U>{ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_T)>{PosRBTree<U, ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_T)>::mkinitial(result.data(), result.data() + this->ulist.inlinelist.count)}};
+                    return XList<U, TYPE_ID_LIST_U>{ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_U)>{PosRBTree<U, ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_U)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_U)>::mkinitial(result.data(), result.data() + this->ulist.inlinelist.count)}};
                 }
             }
             else {

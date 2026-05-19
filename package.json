@@ -28,6 +28,7 @@
         "test-cpprun": "node ./build/build_all.js && node --test-concurrency=16 --test ./test/cpprun/*/*.test.js",
         "test-docs": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/documentation/*/*.test.js",
         "test-stdlib": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/stdlib/*/*.test.js",
+        "test-native": "make -f ./build/runcpp/makefile tests && ./build/output/tests/postree_tests",
         "test-cpprun-stage": "node ./build/build_all.js && node --test-concurrency=16 --test ./test/cpprun_stage/*/*.test.js"
     },
     "files": [

@@ -100,13 +100,16 @@ allPositive(1i, 3i, -4i) %%false
 **Sign (with blocks and assignment):**
 ```none
 public function sign(x: Int): Int {
-    var y: Int;
-
     if(x == 0i) {
-        y = 0i;
+        return 0i;
+    }
+
+    var y: Int;
+    if(x < 0i) {
+        y = -1i;
     }
     else {
-        y = if (x > 0i) then 1i else -1i;
+        y = 1i;
     }
 
     return y;

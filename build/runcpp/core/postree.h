@@ -18,11 +18,11 @@
 
 namespace ᐸRuntimeᐳ
 {
-    template <size_t K>
+    template <int64_t K>
     constexpr std::array<XNat, K> create_idx_range() {
         std::array<XNat, K> arr{};
-        for (std::size_t i = 0; i < K; ++i) {
-            arr[i] = i;
+        for (std::int64_t i = 0; i < K; ++i) {
+            arr[i] = XNat{i};
         }
         
         return arr;
