@@ -1536,6 +1536,48 @@ class CPPEmitter {
         return [tidecls, tidefs];
     }
 
+    private emitEntityTypeInfoWForwarDecl(tdecl: IRAbstractEntityTypeDecl): string {
+        const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
+        const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey);
+
+        const superlist = (this.irasm.concretesupertypes.get(tdecl.tkey) as IRTypeSignature[]).map((tt) => this.typeInfoManager.getTypeInfo(tt.tkeystr).bsqtypeid).sort();
+        let superdecl = "";
+        let supertable = "nullptr";
+        if(superlist.length !== 0) {
+            superdecl = `    inline constexpr uint32_t g_supertypes_${ctname}[${superlist.length}] = { ${superlist.join(", ")} };\n`;
+            supertable = `g_supertypes_${ctname}`;
+        }
+
+        let ftdecl = "";
+        let ftable = "nullptr";
+        if(ttid.ftable.length !== 0) {
+            ftdecl = `    inline constexpr FieldOffsetInfo g_ftable_${ctname}[${ttid.ftable.length}] = {\n` +
+            ttid.ftable.map((fte) => {
+                const fttid = this.typeInfoManager.getTypeInfo(fte.ftype.tkeystr);
+                return `        { ${fte.fid}, ${fttid.bsqtypeid}, ${fte.offset * 8}, ${fte.offset}, "${fte.fkey}", "${fte.fname}" }`;
+            }).join(",\n") + "\n" +
+            `    };\n`;
+            ftable = `g_ftable_${ctname}`;
+        }
+
+        return  superdecl +
+                ftdecl +
+                `    inline constexpr TypeInfo g_typeinfo_${ctname} = {\n` +
+                `        ${ttid.bsqtypeid},\n` +
+                `        ${ttid.bytesize},\n` +
+                `        ${ttid.slotcount},\n` +
+                `        LayoutTag::${ttid.tag},\n` +
+                `        ${ttid.ptrmask !== undefined ? ('"' + ttid.ptrmask + '"') : "nullptr"},\n` +
+                `        ${supertable},\n` +
+                `        ${superlist.length},\n` +
+                `        ${ftable},\n` +
+                `        ${ttid.ftable.length},\n` +
+                `        ${ttid.itable.length !== 0 ? "xxx" : "nullptr"},\n` +
+                `        ${ttid.itable.length},\n` +
+                `        "${tdecl.tkey}"\n` +
+                `    };`;
+    }
+
     private emitEntityTypeInfoDecl(tdecl: IRAbstractEntityTypeDecl): string {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
         const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey);
@@ -1580,7 +1622,7 @@ class CPPEmitter {
             `}`;
     }
 
-     private emitEntityTypeInfoWAllocInfo(tdecl: IRAbstractEntityTypeDecl): [string, string] {
+    private emitEntityTypeInfoWAllocInfo(tdecl: IRAbstractEntityTypeDecl): [string, string] {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
         const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey); 
 
@@ -1589,7 +1631,7 @@ class CPPEmitter {
         let supertable = "nullptr";
         if(superlist.length !== 0) {
             superdecl = `    inline constexpr uint32_t g_supertypes_${ctname}[${superlist.length}] = { ${superlist.join(", ")} };\n`;
-            supertable = `&g_supertypes_${ctname}`;
+            supertable = `g_supertypes_${ctname}`;
         }
 
         let ftdecl = "";
@@ -1604,27 +1646,37 @@ class CPPEmitter {
             ftable = `g_ftable_${ctname}`;
         }
 
-        return [`namespace ᐸRuntimeᐳ {\n` +
-            superdecl +
-            ftdecl +
-            `    inline constexpr TypeInfo g_typeinfo_${ctname} = {\n` +
-            `        ${ttid.bsqtypeid},\n` +
-            `        ${ttid.bytesize},\n` +
-            `        ${ttid.slotcount},\n` +
-            `        LayoutTag::${ttid.tag},\n` +
-            `        ${ttid.ptrmask !== undefined ? ('"' + ttid.ptrmask + '"') : "nullptr"},\n` +
-            `        ${supertable},\n` +
-            `        ${superlist.length},\n` +
-            `        ${ftable},\n` +
-            `        ${ttid.ftable.length},\n` +
-            `        ${ttid.itable.length !== 0 ? "xxx" : "nullptr"},\n` +
-            `        ${ttid.itable.length},\n` +
-            `        "${tdecl.tkey}"\n` +
-            `    };\n` +
-            `    extern thread_local GCAllocator<${ctname}> ${ctname}_allocator;\n` +
-            `}`,
-            `namespace ᐸRuntimeᐳ { thread_local GCAllocator<${ctname}> ${ctname}_allocator(&g_typeinfo_${ctname}); }`
-        ];
+        //we emit these typeinfos with the forward decls
+        if(this.irasm.typedepcycles.some((cyc) => cyc.find((tt) => tt.tkeystr === tdecl.tkey))) {
+            return [`namespace ᐸRuntimeᐳ {\n` +
+                `    extern thread_local GCAllocator<${ctname}> ${ctname}_allocator;\n` +
+                `}`,
+                `namespace ᐸRuntimeᐳ { thread_local GCAllocator<${ctname}> ${ctname}_allocator(&g_typeinfo_${ctname}); }`
+            ];
+        }
+        else {
+            return [`namespace ᐸRuntimeᐳ {\n` +
+                superdecl +
+                ftdecl +
+                `    inline constexpr TypeInfo g_typeinfo_${ctname} = {\n` +
+                `        ${ttid.bsqtypeid},\n` +
+                `        ${ttid.bytesize},\n` +
+                `        ${ttid.slotcount},\n` +
+                `        LayoutTag::${ttid.tag},\n` +
+                `        ${ttid.ptrmask !== undefined ? ('"' + ttid.ptrmask + '"') : "nullptr"},\n` +
+                `        ${supertable},\n` +
+                `        ${superlist.length},\n` +
+                `        ${ftable},\n` +
+                `        ${ttid.ftable.length},\n` +
+                `        ${ttid.itable.length !== 0 ? "xxx" : "nullptr"},\n` +
+                `        ${ttid.itable.length},\n` +
+                `        "${tdecl.tkey}"\n` +
+                `    };\n` +
+                `    extern thread_local GCAllocator<${ctname}> ${ctname}_allocator;\n` +
+                `}`,
+                `namespace ᐸRuntimeᐳ { thread_local GCAllocator<${ctname}> ${ctname}_allocator(&g_typeinfo_${ctname}); }`
+            ];
+        }
     }
 
     private emitConceptTypeInfoDecl(tdecl: IRAbstractEntityTypeDecl): string {
@@ -2143,7 +2195,7 @@ class CPPEmitter {
         const ucons = uoptions.map((opt) => {
             const argtype = this.typeInfoManager.emitTypeAsParameter(opt.tkeystr, false, false);
             const umember = TransformCPPNameManager.generateNameForUnionMember(opt.tkeystr);
-            return `    constexpr ${uctname}(const ${argtype}& v) : ${umember}(v) { }`;
+            return `    constexpr ${uctname}(${argtype} v) : ${umember}{v} { }`;
         });
 
         const declunion = `union ${ctname}${"ᐤ"}Union {\n` +
@@ -2156,16 +2208,16 @@ class CPPEmitter {
         const ccons = uoptions.map((opt) => {
             const argtype = this.typeInfoManager.emitTypeAsParameter(opt.tkeystr, false, false);
             const typeinfo = TransformCPPNameManager.generateTypeInfoNameForTypeKey(opt.tkeystr);
-            return `    constexpr ${ctname}(const ${argtype}& v) : uval(${RUNTIME_NAMESPACE}::BoxedUnion<${uctname}>(&${typeinfo}, ${uctname}(v))) { }`;
+            return `    constexpr ${ctname}(${argtype} v) : uval(${RUNTIME_NAMESPACE}::BoxedUnion<${uctname}>(&${typeinfo}, ${uctname}{v})) { ; }`;
         });
 
         const declconcept = `class ${ctname} {\n` +
         `public:\n` +
         `    ${RUNTIME_NAMESPACE}::BoxedUnion<${uctname}> uval;\n\n` +
         `    constexpr ${ctname}() = default;\n` +
-        `    constexpr ${ctname}(const ${RUNTIME_NAMESPACE}::BoxedUnion<${uctname}>& v) : uval(v) {};\n` +
+        `    constexpr ${ctname}(const ${RUNTIME_NAMESPACE}::BoxedUnion<${uctname}>& v) : uval{v} { ; };\n` +
         `    constexpr ${ctname}(const ${ctname}& other) = default;\n\n` +
-        '    template<typename T, typename TC> T convert() const { return T(this->uval.convert<TC>()); }\n' +
+        '    template<typename T, typename TC> T convert() const { return T{this->uval.convert<TC>()}; }\n' +
         '    template<typename T, size_t idx> inline T accessfield() const { return this->uval.accessfield<T, idx>(); }\n' +
         '    //TODO: implement access field truly virtual -- with dynamic field offset lookup \n\n' +
         `${ccons.join("\n")}\n` +
@@ -2296,6 +2348,21 @@ class CPPEmitter {
         const fcstringdd = this.emitFCStringDefInfo(this.irasm.formatcstrings);
         const fstringdd = this.emitFStringDefInfo(this.irasm.formatstrings);
 
+        const sccfdecll = this.irasm.typedepcycles.flatMap((cycle) => {
+            const etypes = cycle.filter((ct) => this.typeInfoManager.getTypeInfo(ct.tkeystr).tag === LayoutTag.Ref);
+            return etypes.map((ct) => `class ${TransformCPPNameManager.convertTypeKey(ct.tkeystr)};`);
+        });
+
+        const sccftypeinfos = this.irasm.typedepcycles.flatMap((cycle) => {
+            const etypes = cycle.filter((ct) => this.typeInfoManager.getTypeInfo(ct.tkeystr).tag === LayoutTag.Ref);
+            return etypes.map((ct) => this.emitEntityTypeInfoWForwarDecl(this.irasm.alltypes.get(ct.tkeystr) as IREntityTypeDecl));
+        });
+
+        let sccfdecls: string[] = [];
+        if(sccfdecll.length !== 0) {
+            sccfdecls = [["//Forward decls for SCC cycles", ...sccfdecll, "", `namespace ᐸRuntimeᐳ {`, ...sccftypeinfos, `}`].join("\n")];
+        }
+
         const decltdd = this.irasm.typedeporder
         .filter((ttd) => {
             if(!(ttd instanceof IRNominalTypeSignature)) {
@@ -2386,7 +2453,7 @@ class CPPEmitter {
         });
 
         return [
-            [pdecls, redecls, ...enumdd.map((tt) => tt[0]), ...gtddd.map((tt) => tt[0]), ...cstringdd.map((tt) => tt[0]), ...stringdd.map((tt) => tt[0]), ...decltdd.map((tt) => tt[0])].join("\n\n"),
+            [pdecls, redecls, ...enumdd.map((tt) => tt[0]), ...gtddd.map((tt) => tt[0]), ...cstringdd.map((tt) => tt[0]), ...stringdd.map((tt) => tt[0]), ...sccfdecls, ...decltdd.map((tt) => tt[0])].join("\n\n"),
             [pdefs, redefs, ...enumdd.map((tt) => tt[1]), ...gtddd.map((tt) => tt[1]), ...cstringdd.map((tt) => tt[1]), ...stringdd.map((tt) => tt[1]), fcstringdd, fstringdd, ...decltdd.map((tt) => tt[1])].join("\n\n")
         ];
     }
