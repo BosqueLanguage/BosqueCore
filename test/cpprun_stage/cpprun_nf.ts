@@ -9,7 +9,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 import assert from "node:assert";
 
 import { PackageConfig } from "../../src/frontend/build_decls.js";
-import { generateASM } from '../../src/cmd/workflows.js';
+import { generateASMTest, generateASMExec } from '../../src/cmd/workflows.js';
 import { Assembly } from '../../src/frontend/assembly.js';
 import { Monomorphizer } from "../../src/backend/asmprocess/monomorphize.js";
 import { ASMToIRConverter } from "../../src/backend/asmprocess/flatten.js";
@@ -21,7 +21,7 @@ function buildAssembly(srcfile: string, stdlib: boolean): Assembly | undefined {
     const cflags = stdlib ? ["EXEC_LIBS"] : ["EXEC_LIBS", "STRIPPED_CORE"];
 
     const userpackage = new PackageConfig(cflags, [{ srcpath: "test.bsq", filename: "test.bsq", contents: srcfile }]);
-    const [asm, perrors, terrors] = generateASM(userpackage);
+    const [asm, perrors, terrors] = stdlib ? generateASMExec(userpackage) : generateASMTest(userpackage);
 
     if(perrors.length === 0 && terrors.length === 0) {
         return asm;

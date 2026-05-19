@@ -12,17 +12,18 @@ namespace ᐸRuntimeᐳ
     public:
         constexpr static size_t BUFFER_ENTRY_SIZE = 512; //TODO: This may need tuning, seems like a reasonable default for now (time vs wasted space tradeoff)
 
-        uint8_t data[BUFFER_ENTRY_SIZE];
+        std::array<uint8_t, BUFFER_ENTRY_SIZE> data;
 
-        constexpr ByteBufferEntry() : data{0} {}
-        constexpr ByteBufferEntry(const std::initializer_list<uint8_t>& initdata) : data{0} { std::copy(initdata.begin(), initdata.end(), this->data); }
+        constexpr ByteBufferEntry() : data{} { ; }
+        constexpr ByteBufferEntry(const std::array<uint8_t, BUFFER_ENTRY_SIZE>& data) : data{data} { ; }
         constexpr ByteBufferEntry(const ByteBufferEntry& other) = default;
 
-        constexpr uint8_t* getData() { return this->data; }
-        constexpr const uint8_t* getData() const { return this->data; }
+        constexpr ByteBufferEntry(const std::initializer_list<uint8_t>& initdata) : data{} { std::copy(initdata.begin(), initdata.end(), this->data.begin()); }
+
+        constexpr uint8_t* getData() { return this->data.data(); }
+        constexpr const uint8_t* getData() const { return this->data.data(); }
 
         constexpr uint8_t getInner(size_t index) const { return this->data[index]; }
-        constexpr uint8_t getFull(size_t index, uint8_t value) const { return this->data[index % BUFFER_ENTRY_SIZE]; }
     };
 
     class ByteBufferBlock
@@ -30,25 +31,12 @@ namespace ᐸRuntimeᐳ
     public:
         constexpr static size_t BUFFER_BLOCK_ENTRY_COUNT = 63; //TODO: This may need tuning, seems like a reasonable default for now (time vs wasted space tradeoff) -- this struct is 64 fields
 
-        ByteBufferEntry* entries[BUFFER_BLOCK_ENTRY_COUNT];
+        std::array<ByteBufferEntry*, BUFFER_BLOCK_ENTRY_COUNT> entries;
         ByteBufferBlock* next;
 
-        ByteBufferBlock(size_t entryCount) : entries{0}, next(nullptr) {}
-        ByteBufferBlock(ByteBufferEntry** entries, size_t entryCount, ByteBufferBlock* next) : entries{0}, next(next) { std::copy(entries, entries + entryCount, this->entries); }
-        ByteBufferBlock(const ByteBufferBlock& other) = default;
-
-        constexpr ByteBufferEntry* getEntryFor(size_t index) const 
-        {
-            constexpr size_t bbvolume = ByteBufferBlock::BUFFER_BLOCK_ENTRY_COUNT * ByteBufferEntry::BUFFER_ENTRY_SIZE;
-
-            const ByteBufferBlock* curr = this;
-            while(index >= bbvolume) {
-                index -= bbvolume;
-                curr = curr->next;
-            }
-
-            return this->entries[index / ByteBufferEntry::BUFFER_ENTRY_SIZE]; 
-        }
+        constexpr ByteBufferBlock() : entries{}, next{} { ; }
+        constexpr ByteBufferBlock(const std::array<ByteBufferEntry*, BUFFER_BLOCK_ENTRY_COUNT>& entries, ByteBufferBlock* next) : entries{entries}, next{next} { ; } 
+        constexpr ByteBufferBlock(const ByteBufferBlock& other) = default;
     };
 
     union ByteBufferTreeUnion
@@ -56,10 +44,10 @@ namespace ᐸRuntimeᐳ
         ByteBufferEntry* buff;
         ByteBufferBlock* node;
 
-        constexpr ByteBufferTreeUnion() : buff() {}
+        constexpr ByteBufferTreeUnion() : buff{} { ; }
+        constexpr ByteBufferTreeUnion(ByteBufferEntry* b) : buff{b} { ; }
+        constexpr ByteBufferTreeUnion(ByteBufferBlock* n) : node{n} { ; }
         constexpr ByteBufferTreeUnion(const ByteBufferTreeUnion& other) = default;
-        constexpr ByteBufferTreeUnion(ByteBufferEntry* b) : buff(b) {}
-        constexpr ByteBufferTreeUnion(ByteBufferBlock* n) : node(n) {}
     };
     using BufferTree = ᐸRuntimeᐳ::BoxedUnion<ByteBufferTreeUnion>;
 
@@ -68,7 +56,6 @@ namespace ᐸRuntimeᐳ
         sizeof(ByteBufferEntry),
         byteSizeToSlotCount(sizeof(ByteBufferEntry)),
         LayoutTag::Ref,
-        BSQ_TYPEINFO_NO_ESLOT,
         BSQ_PTR_MASK_LEAF,
         nullptr,
         0,
@@ -83,9 +70,8 @@ namespace ᐸRuntimeᐳ
         WELL_KNOWN_TYPE_ID_BYTEBUFFERBLOCK,
         sizeof(ByteBufferBlock),
         byteSizeToSlotCount(sizeof(ByteBufferBlock)),
-        LayoutTag::ArrayRef,
-        1,
-        "1111111111111111111111111111111111111111111111111111111111111111",
+        LayoutTag::Ref,
+        "111111111111111111111111111111111111111111111111111111111111111",
         nullptr,
         0,
         nullptr,
@@ -100,7 +86,6 @@ namespace ᐸRuntimeᐳ
         sizeof(BufferTree) + sizeof(size_t),
         byteSizeToSlotCount(sizeof(BufferTree) + sizeof(size_t)),
         LayoutTag::Tagged,
-        BSQ_TYPEINFO_NO_ESLOT,
         "200",
         nullptr,
         0,
@@ -124,7 +109,7 @@ namespace ᐸRuntimeᐳ
         size_t totalbytes;
 
     public:
-        ByteBufferIterator(ByteBufferEntry* e, ByteBufferBlock* b, size_t totalbytes) : centry(e), cindex(0), cblock(b), bbindex(0), gindex(0), totalbytes(totalbytes) {}
+        ByteBufferIterator(ByteBufferEntry* e, ByteBufferBlock* b, size_t totalbytes) : centry{e}, cindex{0}, cblock{b}, bbindex{0}, gindex{0}, totalbytes{totalbytes} { ; }
         ByteBufferIterator(const ByteBufferIterator& other) = default;
 
         inline bool valid() const 
@@ -177,12 +162,13 @@ namespace ᐸRuntimeᐳ
         size_t bytesize;
 
     public:
-        constexpr XByteBuffer() : tree(), bytesize(0) {}
-        constexpr XByteBuffer(ByteBufferEntry* b) : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ByteBufferTreeUnion>(&ᐸRuntimeᐳ::g_typeinfo_ByteBufferEntry, ᐸRuntimeᐳ::ByteBufferTreeUnion(b))), bytesize(ByteBufferEntry::BUFFER_ENTRY_SIZE) {}
-        XByteBuffer(ByteBufferBlock* n) : tree(ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ByteBufferTreeUnion>(&ᐸRuntimeᐳ::g_typeinfo_ByteBufferBlock, ᐸRuntimeᐳ::ByteBufferTreeUnion(n))), bytesize(0) {}
-        XByteBuffer(const BufferTree& t, size_t b) : tree(t), bytesize(b) {}
-        XByteBuffer(const XByteBuffer& other) = default;
-        
+        constexpr XByteBuffer() : tree{}, bytesize{0} { ; }
+        constexpr XByteBuffer(const BufferTree& t, size_t b) : tree{t}, bytesize{b} { ; }
+        constexpr XByteBuffer(const XByteBuffer& other) = default;
+
+        XByteBuffer(ByteBufferEntry* b, size_t size) : tree{ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ByteBufferTreeUnion>(&ᐸRuntimeᐳ::g_typeinfo_ByteBufferEntry, ᐸRuntimeᐳ::ByteBufferTreeUnion(b))}, bytesize{size} { ; }
+        XByteBuffer(ByteBufferBlock* n, size_t size) : tree{ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ByteBufferTreeUnion>(&ᐸRuntimeᐳ::g_typeinfo_ByteBufferBlock, ᐸRuntimeᐳ::ByteBufferTreeUnion(n))}, bytesize{size} { ; }
+
         constexpr size_t bytes() const { return this->bytesize; }
 
         ByteBufferIterator iterator() const 

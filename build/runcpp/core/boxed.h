@@ -41,21 +41,21 @@ namespace ᐸRuntimeᐳ
         const TypeInfo* typeinfo;
         T data;
     
+        static const TypeInfo* s_someTypeInfo;
+
     private:
-        constexpr XOption(const TypeInfo* ti) : typeinfo(ti), data() {}
-        constexpr XOption(const TypeInfo* ti, const T& d) : typeinfo(ti), data(d) {}
+        constexpr XOption(const TypeInfo* ti) : typeinfo{ti}, data{} { ; }
+        constexpr XOption(const TypeInfo* ti, const T& d) : typeinfo{ti}, data{d} { ; }
 
     public:
-        constexpr XOption() : typeinfo(nullptr), data() {};
+        constexpr XOption() : typeinfo{}, data{} { ; };
         constexpr XOption(const XOption& other) = default;
+
+        static constexpr XOption<T> none = XOption{&g_typeinfo_None};
+        XOption(const XSome<T>& d) : typeinfo{s_someTypeInfo}, data{d.value} { ; }
         
-        // Special none option bits
         constexpr XBool isNone() const { return XBool::from(this->typeinfo == &g_typeinfo_None); }
-        static constexpr XOption<T> optnone = XOption(&g_typeinfo_None);
-        
-        // Some option bits
         constexpr XBool isSome() const { return XBool::from(this->typeinfo != &g_typeinfo_None); }
-        static XOption<T> fromSome(const TypeInfo* ti, const XSome<T>& d) { return XOption<T>(ti, d.value); }
 
         constexpr XNone asNone() const { return xnone; }
         constexpr XSome<T> asSome() const { return XSome<T>{this->data}; }
@@ -85,15 +85,21 @@ namespace ᐸRuntimeᐳ
     class BoxedUnion 
     {
     public:
+        static_assert(std::is_union_v<U>, "BoxedUnion requires a union type U");
+    
         const TypeInfo* typeinfo;
         U data;
-        static_assert(std::is_union_v<U>, "BoxedUnion requires a union type U");
-        
-        constexpr BoxedUnion() : typeinfo(nullptr), data() {};
-        constexpr BoxedUnion(const TypeInfo* ti) : typeinfo(ti), data() {}
-        constexpr BoxedUnion(const TypeInfo* ti, const U& d) : typeinfo(ti), data(d) {}
+
+    public:
+        constexpr BoxedUnion() : typeinfo{}, data{} { ; }
+        constexpr BoxedUnion(const TypeInfo* ti, const U& d) : typeinfo{ti}, data{d} { ; }
         constexpr BoxedUnion(const BoxedUnion& other) = default;
         
+        BoxedUnion(const TypeInfo* ti, const uint8_t* dbegin, const uint8_t* dend) : typeinfo{ti} 
+        { 
+            std::copy(dbegin, dend, reinterpret_cast<uint8_t*>(&this->data));
+        }
+
         // Note -- inject and extract are generated for each use based on the generation union type (see strings for example)
 
         constexpr XBool isTypeOf(const TypeInfo* ti) const { return XBool::from(this->typeinfo == ti); }
@@ -108,10 +114,7 @@ namespace ᐸRuntimeᐳ
             static_assert(std::is_union_v<V>, "BoxedUnion convert requires a union type V");
             constexpr size_t copysize = std::min(sizeof(U), sizeof(V));
 
-            BoxedUnion<V> cu(this->typeinfo);
-            std::copy(reinterpret_cast<const uint8_t*>(&this->data), reinterpret_cast<const uint8_t*>(&this->data) + copysize, reinterpret_cast<uint8_t*>(&cu.data));
-            
-            return cu;
+            return BoxedUnion<V>(this->typeinfo, reinterpret_cast<const uint8_t*>(&this->data), reinterpret_cast<const uint8_t*>(&this->data) + copysize);
         }
 
         template<typename T, size_t idx>

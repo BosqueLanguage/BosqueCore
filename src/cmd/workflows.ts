@@ -118,14 +118,17 @@ function generateASMGeneral(usercode: PackageConfig, macrodefs: string[]): [Asse
     return [tasm, parseerrors, typeerrors];
 }
 
-function generateASM(usercode: PackageConfig): [Assembly | undefined, ParserError[], TypeError[]]{
+function generateASMTest(usercode: PackageConfig): [Assembly | undefined, ParserError[], TypeError[]]{
     return generateASMGeneral(usercode, ["EXEC_LIBS", "STRIPPED_CORE"]);
+}
+
+function generateASMExec(usercode: PackageConfig): [Assembly | undefined, ParserError[], TypeError[]]{
+    return generateASMGeneral(usercode, ["EXEC_LIBS"]);
 }
 
 function generateASMSMT(usercode: PackageConfig): [Assembly | undefined, ParserError[], TypeError[]]{
     // TODO: support for smt libraries in bosque (or perhaps unnecessary?)
-    //return generateASMGeneral(usercode, ["SMT_LIBS"]);
-    return generateASMGeneral(usercode, ["EXEC_LIBS", "STRIPPED_CORE"]);
+    return generateASMGeneral(usercode, []);
 }
 
 function getSimpleFilename(fn: string): string {
@@ -145,7 +148,7 @@ function checkAssembly(srcfiles: string[], asmtype: "smt" | "cpp"): Assembly | u
 
     const userpackage = new PackageConfig([], usersrcinfo)
     const [asm, perrors, terrors] = asmtype === "cpp"
-        ? generateASM(userpackage) 
+        ? generateASMExec(userpackage) 
         : generateASMSMT(userpackage);
 
     if(perrors.length === 0 && terrors.length === 0) {
@@ -173,6 +176,6 @@ function checkAssembly(srcfiles: string[], asmtype: "smt" | "cpp"): Assembly | u
 
 export { 
     workflowLoadUserSrc, workflowLoadCoreSrc, workflowLoadAllSrc, 
-    generateASM, generateASMSMT, checkAssembly, 
+    generateASMTest, generateASMExec, generateASMSMT, checkAssembly, 
     parseArgv
 };

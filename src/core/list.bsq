@@ -10,6 +10,10 @@ __internal entity List<T> {
         return ListOps::s_list_empty<T>(this);
     }
 
+    method singleton(): Bool {
+        return ListOps::s_list_size<T>(this) == 1n;
+    }
+
     method size(): Nat {
         return ListOps::s_list_size<T>(this);
     }
@@ -32,10 +36,75 @@ __internal entity List<T> {
         return ListOps::s_list_back<T>(this);
     }
 
+    method single(): T 
+        requires this.singleton();
+    {
+        return ListOps::s_list_front<T>(this);
+    }
+
     method get(i: Nat): T 
         requires i < this.size();
     {
         return ListOps::s_list_get<T>(this, i);
     }
+
+    method pushFront(v: T): List<T> {
+        return ListOps::s_list_pushfront<T>(this, v);
+    }
+
+    method pushBack(v: T): List<T> {
+        return ListOps::s_list_pushback<T>(this, v);
+    }
+
+    method insert(i: Nat, v: T): List<T> 
+        requires i <= this.size();
+    {
+        return ListOps::s_list_insert<T>(this, i, v);
+    }
+
+    recursive? method allOf(p: recursive? pred(T) -> Bool): Bool {
+        if(ListOps::s_list_empty<T>(this)) {
+            return true;
+        }
+        else {
+            return ListOps::s_list_allof[recursive?]<T>(this, p);
+        }
+    }
+
+    recursive? method noneOf(p: recursive? pred(T) -> Bool): Bool {
+        if(ListOps::s_list_empty<T>(this)) {
+            return true;
+        }
+        else {
+            return ListOps::s_list_noneof[recursive?]<T>(this, p);
+        }
+    }
+
+    recursive? method someOf(p: recursive? pred(T) -> Bool): Bool {
+        if(ListOps::s_list_empty<T>(this)) {
+            return false;
+        }
+        else {
+            return ListOps::s_list_someof[recursive?]<T>(this, p);
+        }
+    }
+
+    recursive? method map<U>(f: recursive? fn(T) -> U): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+            return ListOps::s_list_map[recursive?]<T, U>(this, f);
+        }
+    }
+
+    recursive? method mapIdx<U>(f: recursive? fn(T, Nat) -> U): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+            return ListOps::s_list_mapidx[recursive?]<T, U>(this, f);
+        }
+    }    
 #endif %% STRIPPED_CORE 
 }

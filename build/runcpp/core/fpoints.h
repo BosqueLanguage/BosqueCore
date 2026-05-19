@@ -75,7 +75,6 @@ namespace ᐸRuntimeᐳ
         sizeof(XFloat),
         byteSizeToSlotCount(sizeof(XFloat)),
         LayoutTag::Value,
-        BSQ_TYPEINFO_NO_ESLOT,
         BSQ_PTR_MASK_LEAF,
         nullptr,
         0,

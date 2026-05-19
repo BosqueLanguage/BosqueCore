@@ -159,6 +159,8 @@ abstract class IRExpression {
     constructor(tag: IRExpressionTag) {
         this.tag = tag;
     }
+
+    abstract isSimpleExpression(): boolean;
 }
 
 /* This class represents expressions that are invocations (function/method/virtual calls) */
@@ -170,6 +172,10 @@ abstract class IRInvokeExpression extends IRExpression {
         super(tag);
         this.ikey = ikey;
         this.args = args;
+    }
+
+    override isSimpleExpression(): boolean {
+        return false;
     }
 }
 
@@ -204,12 +210,20 @@ abstract class IRConstructExpression extends IRExpression {
         super(tag);
         this.constype = constype;
     }
+
+    override isSimpleExpression(): boolean {
+        return true;
+    }
 }
 
 /* This class represents expressions that are simple and side-effect free (i.e., immediate expressions plus simple operations that we can put into expression trees) */
 abstract class IRSimpleExpression extends IRExpression {
     constructor(tag: IRExpressionTag) {
         super(tag);
+    }
+
+    override isSimpleExpression(): boolean {
+        return true;
     }
 }
 
@@ -251,6 +265,7 @@ enum IRStatementTag {
     IRTempAssignExpressionStatement = "IRTempAssignExpressionStatement",
     IRTempAssignStdInvokeStatement = "IRTempAssignStdInvokeStatement",
     IRTempAssignRefInvokeStatement = "IRTempAssignRefInvokeStatement",
+    IRTempAssignDirectConstructorStatement = "IRTempAssignDirectConstructorStatement",
 
     IRVariableDeclarationStatement = "IRVariableDeclarationStatement",
 
@@ -328,6 +343,8 @@ abstract class IRStatement {
     }
 
     isTerminalStatement(): boolean { return false; }
+
+    abstract isSimpleStatement(): boolean;
 }
 
 /* This class represents statements that are atomic (line statements) and don't have control flow or sub blocks */
@@ -347,6 +364,10 @@ abstract class IRTempAssignStatement extends IRAtomicStatement {
         this.tname = tname;
         this.ttype = ttype;
     }
+
+    override isSimpleStatement(): boolean { 
+        return true; 
+    }
 }
 
 /* Represent return statement that do not involve any ref/out/out?/inout parameters */
@@ -355,7 +376,13 @@ abstract class IRReturnSimpleStatement extends IRAtomicStatement {
         super(tag);
     }
 
-    override isTerminalStatement(): boolean { return true; }
+    override isTerminalStatement(): boolean { 
+        return true; 
+    }
+
+    override isSimpleStatement(): boolean { 
+        return true;  
+    }
 }
 
 /* Represent return statement that involve ref/out/out?/inout parameters and thus have an implicit variable to hold the returned value */
@@ -367,7 +394,13 @@ abstract class IRReturnWithImplicitStatement extends IRAtomicStatement {
         this.implicitvar = implicitvar;
     }
 
-    override isTerminalStatement(): boolean { return true; }
+    override isTerminalStatement(): boolean { 
+        return true; 
+    }
+
+    override isSimpleStatement(): boolean {
+        return false;
+    }
 }
 
 /* Explicit error condition checks -- all possible error conditions must be made explicit during flattening */
@@ -386,6 +419,10 @@ abstract class IRErrorCheckStatement extends IRAtomicStatement {
         this.sinfo = sinfo;
         this.diagnosticTag = diagnosticTag;
         this.checkID = checkID;
+    }
+
+    override isSimpleStatement(): boolean {
+        return false;
     }
 }
 
@@ -875,6 +912,10 @@ class IRAccessEnvHasExpression extends IRExpression {
         super(IRExpressionTag.IRAccessEnvHasExpression);
         this.keybytes = keybytes;
     }
+
+    override isSimpleExpression(): boolean {
+        return false;
+    }
 }
 
 class IRAccessEnvGetExpression extends IRExpression {
@@ -885,6 +926,10 @@ class IRAccessEnvGetExpression extends IRExpression {
         super(IRExpressionTag.IRAccessEnvGetExpression);
         this.keybytes = keybytes;
         this.oftype = oftype;
+    }
+
+    override isSimpleExpression(): boolean {
+        return false;
     }
 }
 
@@ -899,17 +944,29 @@ class IRAccessEnvTryGetExpression extends IRExpression {
         this.oftype = oftype;
         this.optiontype = optiontype;
     }
+
+    override isSimpleExpression(): boolean {
+        return false;
+    }
 }
 
 class IRTaskAccessIDExpression extends IRExpression {
     constructor() {
         super(IRExpressionTag.IRTaskAccessIDExpression);
     }
+
+    override isSimpleExpression(): boolean {
+        return false;
+    }
 }
 
 class IRTaskAccessParentIDExpression extends IRExpression {
     constructor() {
         super(IRExpressionTag.IRTaskAccessParentIDExpression);
+    }
+
+    override isSimpleExpression(): boolean {
+        return false;
     }
 }
 
@@ -1649,6 +1706,10 @@ class IRNopStatement extends IRAtomicStatement {
     constructor() {
         super(IRStatementTag.IRNopStatement);
     }
+
+    override isSimpleStatement(): boolean {
+        return true;
+    }
 }
 
 class IRTempAssignExpressionStatement extends IRTempAssignStatement {
@@ -1685,6 +1746,15 @@ class IRTempAssignRefInvokeStatement extends IRTempAssignStatement {
     }
 }
 
+class IRTempAssignDirectConstructorStatement extends IRTempAssignStatement {
+    readonly rhs: IRConstructExpression;
+
+    constructor(tname: string, ttype: IRTypeSignature, rhs: IRConstructExpression) {
+        super(IRStatementTag.IRTempAssignDirectConstructorStatement, tname, ttype);
+        this.rhs = rhs;
+    }
+}
+
 class IRVariableDeclarationStatement extends IRAtomicStatement {
     readonly vname: string;
     readonly vtype: IRTypeSignature;
@@ -1693,6 +1763,10 @@ class IRVariableDeclarationStatement extends IRAtomicStatement {
         super(IRStatementTag.IRVariableDeclarationStatement);
         this.vname = vname;
         this.vtype = vtype;
+    }
+
+    override isSimpleStatement(): boolean {
+        return true;
     }
 }
 
@@ -1708,6 +1782,10 @@ class IRVariableInitializationStatement extends IRAtomicStatement {
         this.vtype = vtype;
         this.initexp = initexp;
         this.isconst = isconst;
+    }
+
+    override isSimpleStatement(): boolean {
+        return true;
     }
 }
 
@@ -1726,6 +1804,10 @@ class IRVariableInitializationDirectInvokeStatement extends IRAtomicStatement {
         this.initexp = initexp;
         this.isconst = isconst;
     }
+
+    override isSimpleStatement(): boolean {
+        return false;
+    }
 }
 
 class IRVariableInitializationDirectInvokeWithImplicitStatement extends IRAtomicStatement {
@@ -1743,6 +1825,10 @@ class IRVariableInitializationDirectInvokeWithImplicitStatement extends IRAtomic
         this.initexp = initexp;
         this.isconst = isconst;
     }
+
+    override isSimpleStatement(): boolean {
+        return false;
+    }
 }
 
 class IRVariableInitializationDirectConstructorStatement extends IRAtomicStatement {
@@ -1757,6 +1843,10 @@ class IRVariableInitializationDirectConstructorStatement extends IRAtomicStateme
         this.vtype = vtype;
         this.initexp = initexp;
         this.isconst = isconst;
+    }
+
+    override isSimpleStatement(): boolean {
+        return true;
     }
 }
 
@@ -1775,6 +1865,10 @@ class IRVariableInitializationDirectConstructorWithBoxStatement extends IRAtomic
         this.initexp = initexp;
         this.isconst = isconst;
     }
+
+    override isSimpleStatement(): boolean {
+        return true;
+    }
 }
 
 class IRVariableAssignmentStatement extends IRAtomicStatement {
@@ -1787,6 +1881,10 @@ class IRVariableAssignmentStatement extends IRAtomicStatement {
         this.vname = vname;
         this.vtype = vtype;
         this.aexp = aexp;
+    }
+
+    override isSimpleStatement(): boolean {
+        return true;
     }
 }
 
@@ -1803,6 +1901,10 @@ class IRVariableAssignmentDirectInvokeStatement extends IRAtomicStatement {
         this.vtype = vtype;
         this.aexp = aexp;
     }
+
+    override isSimpleStatement(): boolean {
+        return false;
+    }
 }
 
 class IRVariableAssignmentDirectInvokeWithImplicitStatement extends IRAtomicStatement {
@@ -1818,6 +1920,10 @@ class IRVariableAssignmentDirectInvokeWithImplicitStatement extends IRAtomicStat
         this.vtype = vtype;
         this.aexp = aexp;
     }
+
+    override isSimpleStatement(): boolean {
+        return false;
+    }
 }
 
 class IRVariableAssignmentDirectConstructorStatement extends IRAtomicStatement {
@@ -1830,6 +1936,10 @@ class IRVariableAssignmentDirectConstructorStatement extends IRAtomicStatement {
         this.vname = vname;
         this.vtype = vtype;
         this.aexp = aexp;
+    }
+
+    override isSimpleStatement(): boolean {
+        return true;
     }
 }
 
@@ -1845,6 +1955,10 @@ class IRVariableAssignmentDirectConstructorWithBoxStatement extends IRAtomicStat
         this.vtype = vtype;
         this.fromtype = fromtype;
         this.aexp = aexp;
+    }
+
+    override isSimpleStatement(): boolean {
+        return true;
     }
 }
 
@@ -1962,6 +2076,10 @@ class IRVoidInvokeStatement extends IRAtomicStatement {
         this.scratchname = scratch;
         this.aexp = aexp;
     }
+
+    override isSimpleStatement(): boolean {
+        return false;
+    }
 }
 
 class IRChkLogicImpliesShortCircuitStatement extends IRStatement {
@@ -1976,6 +2094,10 @@ class IRChkLogicImpliesShortCircuitStatement extends IRStatement {
         this.lhs = lhs;
         this.rstmts = rstmts;
         this.rexp = rexp;
+    }
+
+    override isSimpleStatement(): boolean {
+        return this.lhs.isSimpleExpression() && this.rstmts.every(s => s.isSimpleStatement()) && this.rexp.isSimpleExpression();
     }
 }
 
@@ -1998,6 +2120,10 @@ class IRLogicConditionalStatement extends IRStatement {
         this.falsestmt = falsestmt;
         this.falseexp = falseexp;
     }
+
+    override isSimpleStatement(): boolean {
+        return this.condition.isSimpleExpression() && this.truestmt.every(s => s.isSimpleStatement()) && this.trueexp.isSimpleExpression() && this.falsestmt.every(s => s.isSimpleStatement()) && this.falseexp.isSimpleExpression();
+    }
 }
 
 class IRSimpleIfStatement extends IRStatement {
@@ -2008,6 +2134,10 @@ class IRSimpleIfStatement extends IRStatement {
         super(IRStatementTag.IRSimpleIfStatement);
         this.cond = cond;
         this.tblock = tblock;
+    }
+
+    override isSimpleStatement(): boolean {
+        return this.cond.isSimpleExpression() && this.tblock.isSimpleStatement();
     }
 }
 
@@ -2023,7 +2153,13 @@ class IRSimpleIfElseStatement extends IRStatement {
         this.eblock = eblock;
     }
 
-    override isTerminalStatement(): boolean { return this.tblock.isTerminalStatement() && this.eblock.isTerminalStatement(); }
+    override isTerminalStatement(): boolean { 
+        return this.tblock.isTerminalStatement() && this.eblock.isTerminalStatement(); 
+    }
+
+    override isSimpleStatement(): boolean {
+        return this.cond.isSimpleExpression() && this.tblock.isSimpleStatement() && this.eblock.isSimpleStatement();
+    }
 }
 
 class IRSimpleIfElifElseStatement extends IRStatement {
@@ -2040,7 +2176,13 @@ class IRSimpleIfElifElseStatement extends IRStatement {
         this.eblock = eblock;
     }
 
-    override isTerminalStatement(): boolean { return this.ttblock.isTerminalStatement() && this.elifs.every(e => e.block.isTerminalStatement()) && this.eblock.isTerminalStatement(); }
+    override isTerminalStatement(): boolean { 
+        return this.ttblock.isTerminalStatement() && this.elifs.every(e => e.block.isTerminalStatement()) && this.eblock.isTerminalStatement(); 
+    }
+
+    override isSimpleStatement(): boolean { 
+        return this.cond.isSimpleExpression() && this.ttblock.isSimpleStatement() && this.elifs.every(e =>e.test.isSimpleExpression() && e.block.isSimpleStatement()) && this.eblock.isSimpleStatement(); 
+    }
 }
 
 class IRMatchExactStatement extends IRStatement {
@@ -2059,7 +2201,13 @@ class IRMatchExactStatement extends IRStatement {
         this.implicitFinalType = implicitFinalType;
     }
 
-    override isTerminalStatement(): boolean { return this.matchflow.every(f => f.value.isTerminalStatement()); }
+    override isTerminalStatement(): boolean { 
+        return this.matchflow.every(f => f.value.isTerminalStatement()); 
+    }
+
+    override isSimpleStatement(): boolean {
+        return this.sval.isSimpleExpression() && this.matchflow.every(f => f.value.isSimpleStatement());
+    }
 }
 
 class IRMatchGeneralStatement extends IRStatement {
@@ -2078,7 +2226,13 @@ class IRMatchGeneralStatement extends IRStatement {
         this.implicitFinalType = implicitFinalType;
     }
 
-    override isTerminalStatement(): boolean { return this.matchflow.every(f => f.value.isTerminalStatement()); }
+    override isTerminalStatement(): boolean { 
+        return this.matchflow.every(f => f.value.isTerminalStatement()); 
+    }
+
+    override isSimpleStatement(): boolean {
+        return this.sval.isSimpleExpression() && this.matchflow.every(f => f.value.isSimpleStatement());
+    }
 }
 
 class IRErrorAdditionBoundsCheckStatement extends IRErrorBinArithCheckStatement {
@@ -2280,6 +2434,10 @@ class IRDebugStatement extends IRAtomicStatement {
         this.file = file;
         this.line = sinfo.line;
     }
+
+    override isSimpleStatement(): boolean {
+        return this.dbgexp.isSimpleExpression();
+    }
 }
 
 class IRBlockStatement extends IRStatement {
@@ -2290,20 +2448,34 @@ class IRBlockStatement extends IRStatement {
         this.statements = statements;
     }
 
-    override isTerminalStatement(): boolean { return this.statements.length > 0 && this.statements[this.statements.length - 1].isTerminalStatement(); }
+    override isTerminalStatement(): boolean { 
+        return this.statements.length > 0 && this.statements[this.statements.length - 1].isTerminalStatement(); 
+    }
+
+    override isSimpleStatement(): boolean {
+        return this.statements.every(s => s.isSimpleStatement());
+    }
 }
 
 abstract class IRBody {
     constructor() {
     }
+
+    abstract isSimpleBody(): boolean;
 }
 
 class IRBuiltinBody extends IRBody {
     readonly builtin: string;
+    readonly biterms: [string, IRTypeSignature][];
 
-    constructor(builtin: string) {
+    constructor(builtin: string, biterms: [string, IRTypeSignature][]) {
         super();
         this.builtin = builtin;
+        this.biterms = biterms;
+    }
+
+    override isSimpleBody(): boolean {
+        return false;
     }
 }
 
@@ -2318,6 +2490,10 @@ class IRHoleBody extends IRBody {
         this.doccomment = doccomment;
         this.samplesfile = samplesfile;
     }
+
+    override isSimpleBody(): boolean {
+        return false;
+    }
 }
 
 class IRStandardBody extends IRBody {
@@ -2326,6 +2502,10 @@ class IRStandardBody extends IRBody {
     constructor(statements: IRStatement[]) {
         super();
         this.statements = statements;
+    }
+
+    override isSimpleBody(): boolean {
+        return this.statements.every(s => s.isSimpleStatement());
     }
 }
 
@@ -2388,7 +2568,7 @@ export {
     IRErrorCheckStatement, IRErrorBinArithCheckStatement,
 
     IRNopStatement,
-    IRTempAssignExpressionStatement, IRTempAssignStdInvokeStatement, IRTempAssignRefInvokeStatement,
+    IRTempAssignExpressionStatement, IRTempAssignStdInvokeStatement, IRTempAssignRefInvokeStatement, IRTempAssignDirectConstructorStatement,
 
     IRVariableDeclarationStatement, 
     IRVariableInitializationStatement, IRVariableInitializationDirectInvokeStatement, IRVariableInitializationDirectInvokeWithImplicitStatement, IRVariableInitializationDirectConstructorStatement, IRVariableInitializationDirectConstructorWithBoxStatement,

@@ -3,83 +3,156 @@
 #include "../common.h"
 
 #include "bsqtype.h"
-#include "boxed.h"
-
 #include "postree.h"
 
 namespace ᐸRuntimeᐳ
 {
-    constexpr static size_t MAX_LIST_INLINE_BYTES = 48; //Bytes -- so 64 total when we add 8 bytes for the size and 8 bytes for the tag or 1 element of the value type if larger!!!
-
-    constexpr size_t LIST_T_CAPACITY(size_t elem_size)
+    constexpr static size_t MAX_LIST_INLINE_BYTES = 32; //Bytes -- so 40 total when we add 8 bytes for the size
+    
+    constexpr size_t LIST_T_INLINE_CAPACITY(size_t elem_size)
     {
         return std::max(MAX_LIST_INLINE_BYTES / elem_size, (size_t)1);
     }
+
+    constexpr size_t LIST_T_LEAF_CAPACITY(size_t elem_size)
+    {
+        return std::max(LIST_T_INLINE_CAPACITY(elem_size) * 4, (size_t)4);
+    }
+
+    constexpr auto fn_lambdaand = [](XBool a, XBool b) { return a & b; };
+    constexpr auto fn_lambdaor = [](XBool a, XBool b) { return a | b; };
 
     template<typename T>
     class ListTInlineContent
     {
     public:
-        constexpr static int64_t LIST_T_BUFF_SIZE = LIST_T_CAPACITY(sizeof(T));
+        constexpr static int64_t MAX_INLINE_CAPACITY = LIST_T_INLINE_CAPACITY(sizeof(T));
+        constexpr static std::array<XNat, MAX_INLINE_CAPACITY> idx_range = create_idx_range<MAX_INLINE_CAPACITY>();
 
         size_t count;
-        std::array<T, LIST_T_CAPACITY(sizeof(T))> data;
+        std::array<T, MAX_INLINE_CAPACITY> data;
 
-        constexpr ListTInlineContent() : count(0) { ; }
+#ifdef BSQ_POSTREE_VALIDATE
+        void toValues(std::vector<T>& result) const
+        {
+            for(size_t i = 0; i < this->count; i++) {
+                result.push_back(this->data[i]);
+            }
+        }
+
+        template <typename Fn>
+        std::string toJSON(Fn pf) const
+        {
+            std::string result = "{count: " + std::to_string(this->count) + ", data: [";
+            for(size_t i = 0; i < this->count; i++) {
+                result += pf(this->data[i]);
+                if(i != this->count - 1) {
+                    result += ", ";
+                }
+            }
+            result += "]}";
+            return result;
+        }
+#endif
+
+        constexpr ListTInlineContent() : count{0}, data{} { ; } 
         constexpr ListTInlineContent(const ListTInlineContent& other) = default;
 
         constexpr bool empty() const { return this->count == 0; }
 
+        constexpr ListTInlineContent(const T& value): count(1), data{value} { ; }
+
+        constexpr static void zerofill(std::array<T, MAX_INLINE_CAPACITY>& data, size_t ecount)
+        {
+            std::fill(data.begin() + ecount, data.end(), T{});
+        }
+
         template<size_t len>
-        constexpr static ListTInlineContent smliteral(const T (&elems)[len])
+        constexpr ListTInlineContent(const T (&elems)[len]) : count{len}
         {
             static_assert(len != 0, "ListT inline literal should not be empty");
-            static_assert(len <= LIST_T_CAPACITY(sizeof(T)), "Literal too large for ListTInlineContent");
+            static_assert(len <= MAX_INLINE_CAPACITY, "Literal too large for ListTInlineContent");
 
-            ListTInlineContent cb;
-            std::copy(elems, elems + len, cb.data.begin());
-            cb.count = len;
+            std::copy(elems, elems + len, this->data.begin());
 
-            return cb;
+            if constexpr (len < MAX_INLINE_CAPACITY) {
+                zerofill(this->data, len);
+            }
         }
 
-        static ListTInlineContent literaldynamic(const T* elems, size_t len)
+        ListTInlineContent(const T* elems, size_t len) : count{len}
         {
             assert(len != 0);
-            assert(len <= LIST_T_CAPACITY(sizeof(T)));
+            assert(len <= MAX_INLINE_CAPACITY);
 
-            ListTInlineContent cb;
-            std::copy(elems, elems + len, cb.data.begin());
-            cb.count = len;
+            std::copy(elems, elems + len, this->data.begin());
 
-            return cb;
+            if(len < MAX_INLINE_CAPACITY) {
+                zerofill(this->data, len);
+            }
         }
 
-        constexpr ListTInlineContent(const T& value): count(1)
+        /** Constructor when we have a range of values  **/
+        template<typename Iter>
+        ListTInlineContent(Iter start, Iter end)
+        {            
+            const size_t size = std::distance(start, end);
+            assert(size != 0);
+            assert(size <= MAX_INLINE_CAPACITY);
+
+            std::copy(start, end, this->data.begin());
+            this->count = size; 
+            
+            if(size < MAX_INLINE_CAPACITY) {
+                zerofill(this->data, size);
+            }
+        }
+
+        /** Push the element at the front of the list **/
+        ListTInlineContent(const T& value, const ListTInlineContent& src) : count{src.count + 1}
         {
+            assert(src.count < MAX_INLINE_CAPACITY);
+
             this->data[0] = value;
+            std::copy(src.data.cbegin(), src.data.cbegin() + src.count, this->data.begin() + 1);
+
+            if(this->count < MAX_INLINE_CAPACITY) {
+                zerofill(this->data, this->count);
+            }
         }
 
-        ListTInlineContent insert(int64_t index, const T& value) const
+        /** Push the element at the end of the list **/
+        ListTInlineContent(const ListTInlineContent& src, const T& value) : count{src.count + 1}
         {
-            assert(this->count < LIST_T_BUFF_SIZE);
-            assert(index < LIST_T_BUFF_SIZE);
+            assert(src.count < MAX_INLINE_CAPACITY);
+
+            std::copy(src.data.cbegin(), src.data.cbegin() + src.count, this->data.begin());
+            this->data[src.count] = value;
+
+            if(this->count < MAX_INLINE_CAPACITY) {
+                zerofill(this->data, this->count);
+            }
+        }
+
+        /** Push the element in the middle of the list **/
+        ListTInlineContent(const ListTInlineContent& src, int64_t index, const T& value) : count{src.count + 1}
+        {
+            assert(src.count < MAX_INLINE_CAPACITY);
+            assert(index < MAX_INLINE_CAPACITY);
            
-            ListTInlineContent ninlcnt;
-            if(index > 0) {
-                std::copy(this->data.cbegin(), this->data.cbegin() + index, ninlcnt.data.begin());
+            std::copy(src.data.cbegin(), src.data.cbegin() + index, this->data.begin());
+            this->data[index] = value;
+            std::copy(src.data.cbegin() + index, src.data.cbegin() + src.count, this->data.begin() + index + 1);
+            
+            if(this->count < MAX_INLINE_CAPACITY) {
+                zerofill(this->data, this->count);
             }
-            if(index < (int64_t)this->count) {
-                std::copy(this->data.cbegin() + index, this->data.cbegin() + this->count, ninlcnt.data.begin() + index + 1);
-            }
-
-            ninlcnt.data[index] = value;
-            ninlcnt.count = this->count + 1;
-
-            return ninlcnt;
         }
 
         constexpr int64_t size() const { return this->count; }
+
+        constexpr T getFront() const { return this->data[0]; }
+        constexpr T getBack() const { return this->data[this->count - 1]; }
         constexpr T at(size_t index) const { return this->data[index]; }
     };
 
@@ -87,54 +160,43 @@ namespace ᐸRuntimeᐳ
     class ListTTreeContent
     {
     public:
-        constexpr static int64_t LIST_T_MAX_LEAF_SIZE = ListTInlineContent<T>::LIST_T_BUFF_SIZE * 2;
+        constexpr static int64_t MAX_LEAF_CAPACITY = LIST_T_LEAF_CAPACITY(sizeof(T));
 
-        PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T> postree;
+        size_t tag;
+        PosRBTree<T, MAX_LEAF_CAPACITY, TYPE_ID_POS_TREE_T> postree;
 
-        static ListTTreeContent mkwpostree(PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T> postree) 
-        {
-            return ListTTreeContent{ postree };
-        } 
-        static ListTTreeContent fromInlineList(const ListTInlineContent<T>& inlcnt)
-        {
-            PosRBTreeLeaf<T, LIST_T_MAX_LEAF_SIZE>* leaf = PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::s_leafallocator->allocate(inlcnt.data.cbegin(), inlcnt.data.cend());
-            return mkwpostree(PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::mkwleaf(leaf));
-        }
-
-        static ListTTreeContent smliteral(std::initializer_list<T> elems)
-        {
-            return ListTTreeContent{PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::mkwleaf(PosRBTree<T, LIST_T_MAX_LEAF_SIZE, TYPE_ID_POS_TREE_T>::s_leafallocator->allocate(elems))};
-        }
-
-        ListTTreeContent insert(int64_t index, const T& value) const
-        {
-            return ListTTreeContent{this->postree.insert(index, value)};
-        }
+        ListTTreeContent() : tag{std::numeric_limits<size_t>::max()}, postree{} { ; }
+        ListTTreeContent(const ListTTreeContent& other) = default;
+        ListTTreeContent(const PosRBTree<T, MAX_LEAF_CAPACITY, TYPE_ID_POS_TREE_T>& postree) : tag{std::numeric_limits<size_t>::max()}, postree{postree} { ; }
     };
 
     template<typename T, uint32_t TYPE_ID_POS_TREE_T>
     union ListTUnion
     {
-        //empty list is where boxed union typeinfo is nullptr
+        //empty list is inlinelist
         ListTInlineContent<T> inlinelist;
         ListTTreeContent<T, TYPE_ID_POS_TREE_T> treelist;
 
-        constexpr ListTUnion() : inlinelist() {}
+        constexpr ListTUnion() : inlinelist{} {}
         constexpr ListTUnion(const ListTUnion& other) = default;
 
-        constexpr ListTUnion(const ListTInlineContent<T>& c) : inlinelist(c) {}
-        constexpr ListTUnion(const ListTTreeContent<T, TYPE_ID_POS_TREE_T>& c) : treelist(c) {}
+        constexpr ListTUnion(const ListTInlineContent<T>& c) : inlinelist{c} {}
+        constexpr ListTUnion(const ListTTreeContent<T, TYPE_ID_POS_TREE_T>& c) : treelist{c} {}
+
+        constexpr bool empty() const { return this->inlinelist.empty(); }
+
+        constexpr bool isInline() const { return this->inlinelist.count < std::numeric_limits<size_t>::max(); }
+        constexpr bool isTree() const { return this->inlinelist.count == std::numeric_limits<size_t>::max(); }
     };
 
     template<typename T>
-    constexpr TypeInfo g_typeinfo_ListTInlineContent_generate(uint32_t id, uint16_t tslots, const char* mask, const char* name) 
+    constexpr TypeInfo g_typeinfo_ListTInlineContent_generate(uint32_t id, const char* mask, const char* name) 
     {
         return TypeInfo{
             id,
             sizeof(ListTInlineContent<T>),
             byteSizeToSlotCount(sizeof(ListTInlineContent<T>)),
-            LayoutTag::ArrayInline,
-            tslots,
+            LayoutTag::Value,
             mask,
             nullptr,
             0,
@@ -153,9 +215,8 @@ namespace ᐸRuntimeᐳ
             id,
             sizeof(ListTTreeContent<T, TYPE_ID_POS_TREE_T>),
             byteSizeToSlotCount(sizeof(ListTTreeContent<T, TYPE_ID_POS_TREE_T>)),
-            LayoutTag::Tagged,
-            BSQ_TYPEINFO_NO_ESLOT,
-            "20",
+            LayoutTag::Value,
+            "01",
             nullptr,
             0,
             nullptr,
@@ -167,15 +228,14 @@ namespace ᐸRuntimeᐳ
     }
 
     template<typename T, uint32_t TYPE_ID_POS_TREE_T>
-    inline constexpr TypeInfo g_typeinfo_ListT_generate(uint32_t id, const char* name) 
+    inline constexpr TypeInfo g_typeinfo_ListT_generate(uint32_t id, const char* mask, const char* name) 
     {
         return TypeInfo{
             id,
-            sizeof(BoxedUnion<ListTUnion<T, TYPE_ID_POS_TREE_T>>),
-            byteSizeToSlotCount(sizeof(BoxedUnion<ListTUnion<T, TYPE_ID_POS_TREE_T>>)),
-            LayoutTag::Tagged,
-            BSQ_TYPEINFO_NO_ESLOT,
-            "200",
+            sizeof(ListTUnion<T, TYPE_ID_POS_TREE_T>),
+            byteSizeToSlotCount(sizeof(ListTUnion<T, TYPE_ID_POS_TREE_T>)),
+            LayoutTag::Value,
+            mask,
             nullptr,
             0,
             nullptr,
@@ -192,7 +252,7 @@ namespace ᐸRuntimeᐳ
     {
     public:
         int64_t index;
-        BoxedUnion<ListTUnion<T, TYPE_ID_POS_TREE_T>> ulistt;
+        ListTUnion<T, TYPE_ID_POS_TREE_T> ulistt;
 
         using value_type = T;
         using difference_type = std::ptrdiff_t;
@@ -203,13 +263,13 @@ namespace ᐸRuntimeᐳ
 
         value_type operator*() const 
         { 
-            assert(this->ulistt.typeinfo != nullptr);
+            assert(!this->ulistt.empty());
             
-            if(this->ulistt.typeinfo->bsqtypeid == TYPE_ID_INLINE_CONTENT) {
-                return this->ulistt.data.inlinelist.at(this->index);
+            if(this->ulistt.isInline()) {
+                return this->ulistt.inlinelist.at(this->index);
             }
             else {
-                return this->ulistt.data.treelist.postree.get(this->index);
+                return this->ulistt.treelist.postree.get(this->index);
             }
         }
 
@@ -257,117 +317,114 @@ namespace ᐸRuntimeᐳ
         inline static consteval uint32_t getPosInlineIDFrom(uint32_t treeid) { return treeid - 2; }
         inline static consteval uint32_t getPosTreeIDFrom(uint32_t treeid) { return treeid - 3; }
 
-        BoxedUnion<ListTUnion<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>> ulist;
+        ListTUnion<T, getPosTreeIDFrom(TYPE_ID_LIST_T)> ulist;
 
     public:
-        static const TypeInfo* s_inlinetypeinfo;
-        static const TypeInfo* s_treetypeinfo;
-
-        constexpr XList() : ulist() {}
-        constexpr XList(const ListTInlineContent<T>& b, const TypeInfo* inlinetypeinfo) : ulist(BoxedUnion<ListTUnion<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>>(inlinetypeinfo, ListTUnion<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>(b))) {}
-        constexpr XList(const ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>& n, const TypeInfo* treetypeinfo) : ulist(BoxedUnion<ListTUnion<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>>(treetypeinfo, ListTUnion<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>(n))) {}
+        constexpr XList() : ulist{} {}
         constexpr XList(const XList& other) = default;
-
-        XList(const ListTInlineContent<T>& b) : ulist(BoxedUnion<ListTUnion<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>>(s_inlinetypeinfo, ListTUnion<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>(b))) {}
-        XList(const ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>& n) : ulist(BoxedUnion<ListTUnion<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>>(s_treetypeinfo, ListTUnion<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>(n))) {}
+        constexpr XList(const ListTInlineContent<T>& b) : ulist{b} { ; }
+        constexpr XList(const ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>& n) : ulist{n} { ; }
 
         template<size_t len>
-        constexpr static XList smliteral(const T (&cdata)[len], const TypeInfo* inlinetypeinfo)
+        constexpr XList(const T (&elems)[len]) : ulist{ListTInlineContent<T>(elems, len)} { ; }
+
+        static XList mk(std::initializer_list<T> elems)
         {
-            static_assert(len <= LIST_T_CAPACITY(sizeof(T)), "List literal too large for ListTInlineContent");
-
-            return XList(ListTInlineContent<T>::smliteral(cdata), inlinetypeinfo);
-        }
-
-        static XList slliteral(std::initializer_list<T> elems, const TypeInfo* treetypeinfo)
-        {
-            assert(elems.size() != 0);
-            assert(elems.size() <= 2 * LIST_T_CAPACITY(sizeof(T)));
-
-            return XList(ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::smliteral(elems), treetypeinfo);
-        }
-
-        constexpr static XList make_empty()
-        {
-            return XList();
-        }
-
-        static XList palloc(T* data, size_t count)
-        {
-            if(count == 0) {
-                return XList();
+            if(elems.size() == 0) {
+                return XList{};
             }
             else {
-                if(count <= LIST_T_CAPACITY(sizeof(T))) {
-                    ListTInlineContent<T> buff;
-                    std::copy(data, data + count, buff.data.begin());
-                    buff.count = count;
-
-                    return XList(buff);
+                if(elems.size() <= ListTInlineContent<T>::MAX_INLINE_CAPACITY) {
+                    return XList(ListTInlineContent<T>(elems.begin(), elems.end()));
+                }
+                else if(elems.size() <= ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY) {
+                    return XList{ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>{PosRBTree<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_T)>::mkinitial(elems.begin(), elems.end())}};
                 }
                 else {
-                    assert(false); // Not Implemented: full palloc for CString trees
+                    assert(false); // Not Implemented: full mk for CString trees
                 }
             }
         }
 
-        bool empty() const
+        static XList mk(const T* elems, size_t len)
         {
-            return this->ulist.typeinfo == nullptr;
+            if(len == 0) {
+                return XList{};
+            }
+            else {
+                if(len <= ListTInlineContent<T>::MAX_INLINE_CAPACITY) {
+                    return XList(ListTInlineContent<T>(elems, elems + len));
+                }
+                else if(len <= ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY) {
+                    return XList{ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>{PosRBTree<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_T)>::mkinitial(elems, elems + len)}};
+                }
+                else {
+                    assert(false); // Not Implemented: full mk for CString trees
+                }
+            }
+        }
+
+#ifdef BSQ_POSTREE_VALIDATE
+        template <typename Fn>
+        std::string toString(Fn pf) const
+        {
+            if(this->ulist.empty()) {
+                return "[]";
+            }
+            else {
+                std::vector<T> values;
+                if(this->ulist.isInline()) {
+                    this->ulist.inlinelist.toValues(values);
+                }
+                else {
+                    this->ulist.treelist.postree.toValues(values);
+                }
+
+                std::string result = "[";
+                for(size_t i = 0; i < values.size(); i++) {
+                    result += pf(values[i]);
+                    if(i != values.size() - 1) {
+                        result += ", ";
+                    }
+                }
+                result += "]";
+                return result;
+            }
+        }
+
+        template <typename Fn>
+        std::string toJSON(Fn pf) const
+        {
+            if(this->ulist.empty()) {
+                return "null";
+            }
+            else {
+                if(this->ulist.isInline()) {
+                    return this->ulist.inlinelist.toJSON(pf);
+                }
+                else {
+                    return this->ulist.treelist.postree.toJSON(pf);
+                }
+            }
+        }
+#endif
+
+        constexpr bool empty() const
+        {
+            return this->ulist.empty();
         }
 
         size_t size() const
         {
-            if(this->ulist.typeinfo == nullptr) {
+            if(this->ulist.empty()) {
                 return 0;
             }
             else {
-                if(this->ulist.typeinfo == s_inlinetypeinfo) {
-                    return this->ulist.data.inlinelist.count;
+                if(this->ulist.isInline()) {
+                    return this->ulist.inlinelist.size();
                 }
                 else {
-                    return this->ulist.data.treelist.postree.count();
-                }
-            }
-        }
-
-        static T gethelper(int64_t index, const XList& list) 
-        {
-            if(list.ulist.typeinfo == s_inlinetypeinfo) {
-                return list.ulist.data.inlinelist.data[index];
-            }
-            else {
-                return list.ulist.data.treelist.postree.get(index);
-            }
-        }
-
-        T get(int64_t index) const
-        {
-            return gethelper(index, *this);
-        }
-
-        T front() const
-        {
-            return gethelper(0, *this);
-        }
-
-        XList insert(int64_t index, const T& value) const
-        {
-            if(this->ulist.typeinfo == nullptr) {
-                assert(index == 0);
-                return XList(ListTInlineContent<T>(value));
-            }
-            else {
-                if(this->ulist.typeinfo == s_inlinetypeinfo) {
-                    if(this->ulist.data.inlinelist.size() < ListTInlineContent<T>::LIST_T_BUFF_SIZE) {
-                        return XList(this->ulist.data.inlinelist.insert(index, value));
-                    }
-                    else {
-                        return XList(ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::fromInlineList(this->ulist.data.inlinelist).insert(index, value));
-                    }
-                }
-                else {
-                    return XList(this->ulist.data.treelist.insert(index, value));
+                    return this->ulist.treelist.postree.size();
                 }
             }
         }
@@ -380,6 +437,213 @@ namespace ᐸRuntimeᐳ
         XListTIterator<T, getPosTreeIDFrom(TYPE_ID_LIST_T), getPosInlineIDFrom(TYPE_ID_LIST_T)> end() const
         {
             return XListTIterator<T, getPosTreeIDFrom(TYPE_ID_LIST_T), getPosInlineIDFrom(TYPE_ID_LIST_T)>{(int64_t)this->size(), this->ulist};
+        }
+
+        T getFront() const
+        {
+            if(this->ulist.isInline()) {
+                return this->ulist.inlinelist.getFront();
+            }
+            else {
+                return this->ulist.treelist.postree.getFront();
+            }
+        }
+
+        T getBack() const
+        {
+            if(this->ulist.isInline()) {
+                return this->ulist.inlinelist.getBack();
+            }
+            else {
+                return this->ulist.treelist.postree.getBack();
+            }
+        }
+
+        T get(int64_t index) const
+        {
+            if(this->ulist.isInline()) {
+                return this->ulist.inlinelist.at(index);
+            }
+            else {
+                return this->ulist.treelist.postree.get(index);
+            }
+        }
+
+        XList pushBack(const T& value) const
+        {
+            if(this->ulist.empty()) {
+                return XList{ListTInlineContent<T>{value}};
+            }
+            else {
+                if(this->ulist.isInline()) {
+                    if(this->ulist.inlinelist.size() < ListTInlineContent<T>::MAX_INLINE_CAPACITY) {
+                        return XList{ListTInlineContent<T>{this->ulist.inlinelist, value}};
+                    }
+                    else {
+                        return XList{ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>{PosRBTree<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_T)>::mkinitial(this->ulist.inlinelist.data.begin(), this->ulist.inlinelist.data.begin() + this->ulist.inlinelist.count, value)}};
+                    }
+                }
+                else {
+                    return XList{this->ulist.treelist.postree.pushBack(value)};
+                }
+            }
+        }
+
+        XList pushFront(const T& value) const
+        {
+            if(this->ulist.empty()) {
+                return XList{ListTInlineContent<T>{value}};
+            }
+            else {
+                if(this->ulist.isInline()) {
+                    if(this->ulist.inlinelist.size() < ListTInlineContent<T>::MAX_INLINE_CAPACITY) {
+                        return XList{ListTInlineContent<T>{value, this->ulist.inlinelist}};
+                    }
+                    else {
+                        return XList{ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>{PosRBTree<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_T)>::mkinitial(value, this->ulist.inlinelist.data.begin(), this->ulist.inlinelist.data.begin() + this->ulist.inlinelist.count)}};
+                    }
+                }
+                else {
+                    return XList{this->ulist.treelist.postree.pushFront(value)};
+                }
+            }
+        }
+
+        XList insert(int64_t index, const T& value) const
+        {
+            if(this->ulist.empty()) {
+                assert(index == 0);
+                return XList{ListTInlineContent<T>{value}};
+            }
+            else {
+                if(this->ulist.isInline()) {
+                    if(this->ulist.inlinelist.size() < ListTInlineContent<T>::MAX_INLINE_CAPACITY) {
+                        return XList{ListTInlineContent<T>{this->ulist.inlinelist, index, value}};
+                    }
+                    else {
+                        return XList{ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>{PosRBTree<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_T)>::mkinitial(this->ulist.inlinelist.data.begin(), this->ulist.inlinelist.data.begin() + index, value, this->ulist.inlinelist.data.begin() + index, this->ulist.inlinelist.data.begin() + this->ulist.inlinelist.count)}};
+                    }
+                }
+                else {
+                    return XList{this->ulist.treelist.postree.insert(index, value)};
+                }
+            }
+        }
+
+        template<bool SafeSimplePred, typename Pred>
+        XBool allOf(Pred p) const
+        {
+            assert(!this->ulist.empty());
+
+            if(this->ulist.isInline()) {
+                auto ddbegin = this->ulist.inlinelist.data.cbegin();
+                auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
+
+                if constexpr (SafeSimplePred) {
+                    return std::transform_reduce(ddbegin, ddend, XTRUE, fn_lambdaand, p);
+                }
+                else {
+                    auto ii = std::find_if(ddbegin, ddend, std::not_fn(p));
+                    return XBool::from(ii == ddend);
+                }
+            }
+            else {
+                assert(false); // Not Implemented: allOf for ListTTreeContent
+            }
+        }
+
+        template<bool SafeSimplePred, typename Pred>
+        XBool noneOf(Pred p) const
+        {
+            assert(!this->ulist.empty());
+
+            if(this->ulist.isInline()) {
+                auto ddbegin = this->ulist.inlinelist.data.cbegin();
+                auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
+
+                if constexpr (SafeSimplePred) {
+                    return !std::transform_reduce(ddbegin, ddend, XFALSE, fn_lambdaor, p);
+                }
+                else {
+                    auto ii = std::find_if(ddbegin, ddend, p);
+                    return XBool::from(ii == ddend);
+                }
+            }
+            else {
+                assert(false); // Not Implemented: noneOf for ListTTreeContent
+            }
+        }
+
+        template<bool SafeSimplePred, typename Pred>
+        XBool someOf(Pred p) const
+        {
+            assert(!this->ulist.empty());
+
+            if(this->ulist.isInline()) {
+                auto ddbegin = this->ulist.inlinelist.data.cbegin();
+                auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
+
+                if constexpr (SafeSimplePred) {
+                    return std::transform_reduce(ddbegin, ddend, XFALSE, fn_lambdaor, p);
+                }
+                else {
+                    auto ii = std::find_if(ddbegin, ddend, p);
+                    return XBool::from(ii != ddend);
+                }
+            }
+            else {
+                assert(false); // Not Implemented: someOf for ListTTreeContent
+            }
+        }
+
+        template<bool SafeSimpleFn, typename U, uint32_t TYPE_ID_LIST_U, typename Fn>
+        XList<U, TYPE_ID_LIST_U> map(Fn f) const
+        {
+            assert(!this->ulist.empty());
+
+            if(this->ulist.isInline()) {
+                auto ddbegin = this->ulist.inlinelist.data.cbegin();
+                auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
+
+                std::array<U, ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_U)>::MAX_LEAF_CAPACITY> result{};
+                std::transform(ddbegin, ddend, result.begin(), f);
+                
+                if(this->ulist.inlinelist.count < ListTInlineContent<U>::MAX_INLINE_CAPACITY) {
+                    return XList<U, TYPE_ID_LIST_U>{ListTInlineContent<U>(result.data(), this->ulist.inlinelist.count)};
+                }
+                else {
+                    return XList<U, TYPE_ID_LIST_U>{ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_U)>{PosRBTree<U, ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_U)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_U)>::mkinitial(result.data(), result.data() + this->ulist.inlinelist.count)}};
+                }
+            }
+            else {
+                assert(false); // Not Implemented: map for ListTTreeContent
+            }
+        }
+
+        template<bool SafeSimpleFn, typename U, uint32_t TYPE_ID_LIST_U, typename Fn>
+        XList<U, TYPE_ID_LIST_U> mapIdx(Fn f) const
+        {
+            assert(!this->ulist.empty());
+
+            if(this->ulist.isInline()) {
+                std::array<XNat, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY> zipidx = create_idx_range<ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY>();
+
+                auto ddbegin = this->ulist.inlinelist.data.cbegin();
+                auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
+
+                std::array<U, ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_U)>::MAX_LEAF_CAPACITY> result{};
+                std::transform(ddbegin, ddend, zipidx.begin(), result.begin(), f);
+                
+                if(this->ulist.inlinelist.count < ListTInlineContent<U>::MAX_INLINE_CAPACITY) {
+                    return XList<U, TYPE_ID_LIST_U>{ListTInlineContent<U>(result.data(), this->ulist.inlinelist.count)};
+                }
+                else {
+                    return XList<U, TYPE_ID_LIST_U>{ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_U)>{PosRBTree<U, ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_U)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_U)>::mkinitial(result.data(), result.data() + this->ulist.inlinelist.count)}};
+                }
+            }
+            else {
+                assert(false); // Not Implemented: map for ListTTreeContent
+            }
         }
     };
 }

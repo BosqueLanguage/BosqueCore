@@ -67,7 +67,7 @@ namespace ᐸRuntimeᐳ
 
     void BSQONEmitter::emitBool(XBool b)
     {
-        if(XBool::toBool(b)) {
+        if((bool)b) {
             this->bufferMgr.writeImmediate("true");
         }
         else {

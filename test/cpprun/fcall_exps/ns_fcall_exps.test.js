@@ -29,7 +29,7 @@ describe ("CPPExec -- NamespaceFunction (no template)", () => {
         runTestSet("function foo(x: Int, y: Int = 1i): Int { return x + y; } public function main(v: Int): Int { return foo(1i); }", [['2i', '2i']], []);
     });
 
-    it.todo("should exec simple rest", function () {
+    it("should exec simple rest", function () {
     });
 });
 

@@ -20,13 +20,15 @@
         "typescript": "5.6.2"
     },
     "scripts": {
-        "build": "node ./build/build_all.js && node ./build/build_smt.js",
-        "build-smt": " node ./build/build_smt.js",
+        "build": "node ./build/build_all.js",
         "test": "node ./build/build_all.js && node --test-concurrency=8 --test test/*/*/*.test.js",
         "test-parser": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/parser/*/*.test.js",
         "test-typecheck": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/typecheck/*/*.test.js",
         "test-cppemit": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/cppemit/*/*.test.js",
         "test-cpprun": "node ./build/build_all.js && node --test-concurrency=16 --test ./test/cpprun/*/*.test.js",
+        "test-docs": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/documentation/*/*.test.js",
+        "test-stdlib": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/stdlib/*/*.test.js",
+        "test-native": "make -f ./build/runcpp/makefile tests && ./build/output/tests/postree_tests",
         "test-cpprun-stage": "node ./build/build_all.js && node --test-concurrency=16 --test ./test/cpprun_stage/*/*.test.js"
     },
     "files": [

@@ -8,8 +8,8 @@ describe ("CPPEmit -- basic KeyComparator equals/less", () => {
         checkTestEmitMainFunction("public function main(): Bool { return KeyComparator::equal<Nat>(0n, 1n); }", "Bool Mainᕒmain() { return 0_n == 1_n; }");
         checkTestEmitMainFunction("public function main(): Bool { return KeyComparator::less<Nat>(0n, 1n); }", "Bool Mainᕒmain() { return 0_n < 1_n; }");
 
-        checkTestEmitMainFunction("public function main(): Bool { return KeyComparator::equal<CString>('', 'ok'); }", 'Bool Mainᕒmain() { return ᐸRuntimeᐳ::XCString::smliteral("") == ᐸRuntimeᐳ::XCString::smliteral("ok"); }');
-        checkTestEmitMainFunction("public function main(): Bool { return KeyComparator::less<CString>('ok', 'ok'); }", 'Bool Mainᕒmain() { return ᐸRuntimeᐳ::XCString::smliteral("ok") < ᐸRuntimeᐳ::XCString::smliteral("ok"); }');
+        checkTestEmitMainFunction("public function main(): Bool { return KeyComparator::equal<CString>('', 'ok'); }", 'Bool Mainᕒmain() { return ""_cs == "ok"_cs; }');
+        checkTestEmitMainFunction("public function main(): Bool { return KeyComparator::less<CString>('ok', 'ok'); }", 'Bool Mainᕒmain() { return "ok"_cs < "ok"_cs; }');
     });
 });
 

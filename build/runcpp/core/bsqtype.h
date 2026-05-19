@@ -46,11 +46,9 @@ namespace ᐸRuntimeᐳ
 
     enum class LayoutTag : uint16_t
     {
-        Value,
-        Ref,
-        ArrayInline,
-        ArrayRef,
-        Tagged
+        Value,     //an inline value
+        Ref,       //a pointer to a heap allocated value
+        Tagged    //a tagged value, first slot is the typeinfo that has the actual data layout
     };
 
     class FieldOffsetInfo
@@ -82,8 +80,7 @@ namespace ᐸRuntimeᐳ
         uint32_t bytesize;
         uint32_t slotcount;
         LayoutTag tag;
-        uint16_t slotct; //For array entries this is the number of slots each entry takes (so don't scan more than eslotct * size slots)
-
+        
         const char* ptrmask; // NULL is for leaf values or structs
 
         const uint32_t* supertypes;
@@ -113,7 +110,6 @@ namespace ᐸRuntimeᐳ
         8,
         byteSizeToSlotCount(8),
         LayoutTag::Value,
-        BSQ_TYPEINFO_NO_ESLOT,
         BSQ_PTR_MASK_LEAF,
         nullptr,
         0,

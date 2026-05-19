@@ -56,15 +56,15 @@ describe ("CPPEmit -- eADT methods", () => {
     });
 
     it("should emit simple ROOT eADT methods", function () {
-        checkTestEmitMainFunction('datatype Foo of F1 { } F2 { } & { method foo(): Int { if(this)<F1> { return 1i; } else { return 0i; } } } public function main(): Int { return F1{}.foo(); }', "Int Mainᕒmain() { MainᕒF1 tmp_0 = MainᕒF1{}; return MainᕒFooᑀfoo(MainᕒFoo(tmp_0)); }"); 
+        checkTestEmitMainFunction('datatype Foo of F1 { } F2 { } & { method foo(): Int { if(this)<F1> { return 1i; } else { return 0i; } } } public function main(): Int { return F1{}.foo(); }', "Int Mainᕒmain() { MainᕒF1 tmp_0 = MainᕒF1{}; return MainᕒFooᑀfoo(MainᕒFoo{tmp_0}); }"); 
 
-        checkTestEmitMainFunction('datatype Foo of F1 { f: Int } F2 { g: Int } & { method foo(): Int { if(this)@<F1> { return $this.f; } else { return $this.g; } } } public function main(): Int { return F1{3i}.foo(); }', "Int Mainᕒmain() { MainᕒF1 tmp_0 = MainᕒF1{3_i}; return MainᕒFooᑀfoo(MainᕒFoo(tmp_0)); }"); 
+        checkTestEmitMainFunction('datatype Foo of F1 { f: Int } F2 { g: Int } & { method foo(): Int { if(this)@<F1> { return $this.f; } else { return $this.g; } } } public function main(): Int { return F1{3i}.foo(); }', "Int Mainᕒmain() { MainᕒF1 tmp_0 = MainᕒF1{3_i}; return MainᕒFooᑀfoo(MainᕒFoo{tmp_0}); }"); 
     });
 
     it("should emit template ROOT eADT methods", function () {
-        checkTestEmitMainFunction('datatype Foo<T> of F1 { } F2 { } & { method foo(): Int { if(this)<F1<T>> { return  1i; } return 0i; } } public function main(): Int { return F1<Bool>{}.foo(); }', "Int Mainᕒmain() { MainᕒF1ᐸBoolᐳ tmp_0 = MainᕒF1ᐸBoolᐳ{}; return MainᕒFooᐸBoolᐳᑀfoo(MainᕒFooᐸBoolᐳ(tmp_0)); }"); 
+        checkTestEmitMainFunction('datatype Foo<T> of F1 { } F2 { } & { method foo(): Int { if(this)<F1<T>> { return  1i; } return 0i; } } public function main(): Int { return F1<Bool>{}.foo(); }', "Int Mainᕒmain() { MainᕒF1ᐸBoolᐳ tmp_0 = MainᕒF1ᐸBoolᐳ{}; return MainᕒFooᐸBoolᐳᑀfoo(MainᕒFooᐸBoolᐳ{tmp_0}); }"); 
 
-        checkTestEmitMainFunction('datatype Foo<T> of F1 { f: T } F2 { g: T } & { method foo(): T { if(this)@<F1<T>> { return $this.f; } else { return $this.g; } } } public function main(): Int { return F1<Int>{3i}.foo(); }', "Int Mainᕒmain() { MainᕒF1ᐸIntᐳ tmp_0 = MainᕒF1ᐸIntᐳ{3_i}; return MainᕒFooᐸIntᐳᑀfoo(MainᕒFooᐸIntᐳ(tmp_0)); }"); 
+        checkTestEmitMainFunction('datatype Foo<T> of F1 { f: T } F2 { g: T } & { method foo(): T { if(this)@<F1<T>> { return $this.f; } else { return $this.g; } } } public function main(): Int { return F1<Int>{3i}.foo(); }', "Int Mainᕒmain() { MainᕒF1ᐸIntᐳ tmp_0 = MainᕒF1ᐸIntᐳ{3_i}; return MainᕒFooᐸIntᐳᑀfoo(MainᕒFooᐸIntᐳ{tmp_0}); }"); 
     });
 });
 

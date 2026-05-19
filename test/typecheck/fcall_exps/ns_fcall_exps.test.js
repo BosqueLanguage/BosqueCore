@@ -33,7 +33,17 @@ describe ("Checker -- NamespaceFunction (no template)", () => {
         checkTestFunction("function foo(x: Int, y: Int = $x): Int { return x + y; } function main(): Int { return foo(1i); }");
     });
 
-    it.todo("should check simple rest", function () {
+    it("should check simple rest", function () {
+        checkTestFunction('function foo(x: Int, ...y: List<Int>): Int { return x; } function main(): Int { return foo(1i); }');
+        checkTestFunction('function foo(x: Int, ...y: List<Int>): Int { return x; } function main(): Int { return foo(1i, 2i); }');
+        checkTestFunction('function foo(x: Int, ...y: List<Int>): Int { return x; } function main(): Int { return foo(1i, 2i, 3i); }');
+        checkTestFunction('function foo(x: Int, ...y: List<Int>): Int { return x; } function main(): Int { return foo(x = 1i, 2i, 3i); }');
+    });
+
+    it("should fail simple rest", function () {
+        checkTestFunctionError('function foo(x: Int, ...y: List<Int>): Int { return x; } function main(): Int { return foo(1i, 2n); }', 'Rest argument 0 expected type Int');
+        checkTestFunctionError('function foo(x: Int, ...y: List<Int>): Int { return x; } function main(): Int { return foo(3i, x = 1i); }', 'Named argument x already assigned to parameter');
+        checkTestFunctionError('function foo(x: Int, ...y: List<Int>): Int { return x; } function main(): Int { return foo(3i, x = 1i, 1i); }', 'Rest argument 0 expected to be container of type Int');
     });
 
     it("should fail simple positional", function () {
