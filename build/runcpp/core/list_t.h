@@ -16,7 +16,8 @@ namespace ᐸRuntimeᐳ
 
     constexpr size_t LIST_T_LEAF_CAPACITY(size_t elem_size)
     {
-        return std::max(LIST_T_INLINE_CAPACITY(elem_size) * 4, (size_t)4);
+        return 8;
+        //return std::max(LIST_T_INLINE_CAPACITY(elem_size) * 4, (size_t)4);
     }
 
     constexpr auto fn_lambdaand = [](XBool a, XBool b) { return a & b; };
@@ -553,15 +554,15 @@ namespace ᐸRuntimeᐳ
                 auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
 
                 if constexpr (SafeSimplePred) {
-                    return std::transform_reduce(ddbegin, ddend, XTRUE, fn_lambdaand, p);
+                    return XBool::from(std::all_of(std::execution::unseq, ddbegin, ddend, p));
                 }
                 else {
-                    auto ii = std::find_if(ddbegin, ddend, std::not_fn(p));
+                    auto ii = std::find_if_not(ddbegin, ddend, p);
                     return XBool::from(ii == ddend);
                 }
             }
             else {
-                assert(false); // Not Implemented: allOf for ListTTreeContent
+                return this->ulist.treelist.postree.template allof<SafeSimplePred, Pred>(p);
             }
         }
 
@@ -575,7 +576,7 @@ namespace ᐸRuntimeᐳ
                 auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
 
                 if constexpr (SafeSimplePred) {
-                    return !std::transform_reduce(ddbegin, ddend, XFALSE, fn_lambdaor, p);
+                    return XBool::from(std::none_of(std::execution::unseq, ddbegin, ddend, p));
                 }
                 else {
                     auto ii = std::find_if(ddbegin, ddend, p);
@@ -583,7 +584,7 @@ namespace ᐸRuntimeᐳ
                 }
             }
             else {
-                assert(false); // Not Implemented: noneOf for ListTTreeContent
+                return this->ulist.treelist.postree.template noneof<SafeSimplePred, Pred>(p);
             }
         }
 
@@ -597,7 +598,7 @@ namespace ᐸRuntimeᐳ
                 auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
 
                 if constexpr (SafeSimplePred) {
-                    return std::transform_reduce(ddbegin, ddend, XFALSE, fn_lambdaor, p);
+                    return XBool::from(std::any_of(std::execution::unseq, ddbegin, ddend, p));
                 }
                 else {
                     auto ii = std::find_if(ddbegin, ddend, p);
@@ -605,7 +606,7 @@ namespace ᐸRuntimeᐳ
                 }
             }
             else {
-                assert(false); // Not Implemented: someOf for ListTTreeContent
+                return XBool::from(this->ulist.treelist.postree.template someof<SafeSimplePred, Pred>(p));
             }
         }
 
@@ -629,7 +630,7 @@ namespace ᐸRuntimeᐳ
                 }
             }
             else {
-                assert(false); // Not Implemented: map for ListTTreeContent
+                return XList<U, TYPE_ID_LIST_U>{ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_U)>{this->ulist.treelist.postree.template map<SafeSimpleFn, U, getPosTreeIDFrom(TYPE_ID_LIST_U), Fn>(f)}};
             }
         }
 
@@ -639,7 +640,7 @@ namespace ᐸRuntimeᐳ
             assert(!this->ulist.empty());
 
             if(this->ulist.isInline()) {
-                std::array<XNat, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY> zipidx = create_idx_range<ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY>();
+                constexpr std::array<XNat, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY> zipidx = create_idx_range<ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY>();
 
                 auto ddbegin = this->ulist.inlinelist.data.cbegin();
                 auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
@@ -655,7 +656,7 @@ namespace ᐸRuntimeᐳ
                 }
             }
             else {
-                assert(false); // Not Implemented: map for ListTTreeContent
+                return XList<U, TYPE_ID_LIST_U>{ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_U)>{this->ulist.treelist.postree.template mapIdx<SafeSimpleFn, U, getPosTreeIDFrom(TYPE_ID_LIST_U), Fn>(f)}};
             }
         }
     };

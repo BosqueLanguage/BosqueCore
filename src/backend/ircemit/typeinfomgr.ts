@@ -13,7 +13,8 @@ function LIST_T_INLINE_CAPACITY(elem_size: number): number {
 }
 
 function LIST_T_LEAF_CAPACITY(elem_size: number): number {
-    return Math.max(LIST_T_INLINE_CAPACITY(elem_size) * 4, 4);
+    //return Math.max(LIST_T_INLINE_CAPACITY(elem_size) * 4, 4);
+    return 8;
 }
 
 class VirtualInvokeInfo {
