@@ -2167,7 +2167,7 @@ class ASMToIRConverter {
                 return this.flattenExpression(rvv);
             }
             else {
-                const flatfieldname = `${(tasf.resolvedDeclType as TypeSignature).emit()}::${tasf.name}`;
+                const flatfieldname = `${(tasf.resolvedDeclType as TypeSignature).tkeystr}::${tasf.name}`;
                 return new IRAccessConstantExpression(flatfieldname);
             }
         }
@@ -3882,7 +3882,7 @@ class ASMToIRConverter {
         assert(false, "Not implemented -- generateTaskActionDecl");
     }
 */
-    private generateConstMemberDecl(tdecl: AbstractNominalTypeDecl, cdecl: ConstMemberDecl, typeinst: TypeInstantiationInfo | undefined): IRConstantDecl {
+    private generateConstMemberDecl(tdecl: AbstractNominalTypeDecl, cdecl: ConstMemberDecl, typeinst: TypeInstantiationInfo): IRConstantDecl {
         this.extendProcessingContextForExpEval(cdecl.declaredType);
         
         this.pushStatementBlock();
@@ -3894,7 +3894,8 @@ class ASMToIRConverter {
         const expr = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(irval, cdecl.value.getType()), cdecl.value.getType(), cdecl.declaredType);
         const stmts = this.popStatementBlock();
 
-        return new IRConstantDecl(cdecl.name, this.processTypeSignature(cdecl.declaredType), stmts, expr, docstring);
+        const flatfieldname = `${typeinst.tkey}::${cdecl.name}`;
+        return new IRConstantDecl(flatfieldname, this.processTypeSignature(cdecl.declaredType), stmts, expr, docstring);
     }
 
     /** Handle the standard set of type functions, methods, and constants **/
@@ -4348,7 +4349,8 @@ class ASMToIRConverter {
         const stmts = this.popStatementBlock();
         const expr = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(irval, this.tproc(cdecl.value.getType())), this.tproc(cdecl.value.getType()), cdecl.declaredType);
 
-        return new IRConstantDecl(ns.emit() + "::" + cdecl.name, this.processTypeSignature(cdecl.declaredType), stmts, expr, docstring);
+        const flatconstname = `${ns.emit()}::${cdecl.name}`;
+        return new IRConstantDecl(flatconstname, this.processTypeSignature(cdecl.declaredType), stmts, expr, docstring);
     }
 
     private generateNamespaceTypeDecl(tinst: TypeInstantiationInfo, irasm: IRAssembly, iinfo: NamespaceInstantiationInfo[]) {
