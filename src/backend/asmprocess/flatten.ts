@@ -3304,8 +3304,37 @@ class ASMToIRConverter {
         }
     }
 
+    private flattenIfElifElseStatementHelper(condflow: {cond: Expression, block: BlockStatement}[], elseflow: BlockStatement): boolean {
+        if(condflow.length === 0) {
+            return this.flattenBlockStatement(elseflow) || elseflow.isterminal;
+        }
+
+        const cc = condflow[0].cond;
+        const bb = condflow[0].block;
+
+        const texp = this.flattenExpression(cc);
+        if(ASMToIRConverter.isLiteralTrueExpression(texp)) {
+            return this.flattenBlockStatement(bb) || bb.isterminal;
+        }
+        else if(ASMToIRConverter.isLiteralFalseExpression(texp)) {
+            return this.flattenIfElifElseStatementHelper(condflow.slice(1), elseflow);
+        }
+        else {
+            this.pushStatementBlock();
+            const tblock = this.flattenBlockStatement(bb);
+            const block = this.popStatementBlock();
+
+            this.pushStatementBlock();
+            const rterm = this.flattenIfElifElseStatementHelper(condflow.slice(1), elseflow);
+            const fblock = this.popStatementBlock();
+
+            this.pushStatement(new IRSimpleIfElseStatement(texp, new IRBlockStatement(block), new IRBlockStatement(fblock)));
+            return (tblock || bb.isterminal) && rterm;
+        }
+    }
+
     private flattenIfElifElseStatement(stmt: IfElifElseStatement): boolean {
-        assert(false, "Not Implemented -- flattenIfElifElseStatement");
+        return this.flattenIfElifElseStatementHelper(stmt.condflow, stmt.elseflow);
     }
 
     private flattenSwitchStatement(stmt: SwitchStatement): boolean {
@@ -3862,8 +3891,8 @@ class ASMToIRConverter {
         const doc = cdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
         
-        const stmts = this.popStatementBlock();
         const expr = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(irval, cdecl.value.getType()), cdecl.value.getType(), cdecl.declaredType);
+        const stmts = this.popStatementBlock();
 
         return new IRConstantDecl(cdecl.name, this.processTypeSignature(cdecl.declaredType), stmts, expr, docstring);
     }

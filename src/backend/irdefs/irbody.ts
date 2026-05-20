@@ -302,7 +302,6 @@ enum IRStatementTag {
 
     IRSimpleIfStatement = "IRSimpleIfStatement",
     IRSimpleIfElseStatement = "IRSimpleIfElseStatement",
-    IRSimpleIfElifElseStatement = "IRSimpleIfElifElseStatement",
 
     IRMatchExactStatement = "IRMatchExactStatement",
     IRMatchGeneralStatement = "IRMatchGeneralStatement",
@@ -2162,29 +2161,6 @@ class IRSimpleIfElseStatement extends IRStatement {
     }
 }
 
-class IRSimpleIfElifElseStatement extends IRStatement {
-    readonly cond: IRSimpleExpression;
-    readonly ttblock: IRBlockStatement;
-    readonly elifs: {test: IRSimpleExpression, block: IRBlockStatement}[];
-    readonly eblock: IRBlockStatement;
-
-    constructor(cond: IRSimpleExpression, ttblock: IRBlockStatement, elifs: {test: IRSimpleExpression, block: IRBlockStatement}[], eblock: IRBlockStatement) {
-        super(IRStatementTag.IRSimpleIfElifElseStatement);
-        this.cond = cond;
-        this.ttblock = ttblock;
-        this.elifs = elifs;
-        this.eblock = eblock;
-    }
-
-    override isTerminalStatement(): boolean { 
-        return this.ttblock.isTerminalStatement() && this.elifs.every(e => e.block.isTerminalStatement()) && this.eblock.isTerminalStatement(); 
-    }
-
-    override isSimpleStatement(): boolean { 
-        return this.cond.isSimpleExpression() && this.ttblock.isSimpleStatement() && this.elifs.every(e =>e.test.isSimpleExpression() && e.block.isSimpleStatement()) && this.eblock.isSimpleStatement(); 
-    }
-}
-
 class IRMatchExactStatement extends IRStatement {
     readonly sval: IRImmediateExpression;
     readonly svaltype: IRTypeSignature;
@@ -2582,7 +2558,7 @@ export {
     IRChkLogicImpliesShortCircuitStatement,
     IRLogicConditionalStatement,
 
-    IRSimpleIfStatement, IRSimpleIfElseStatement, IRSimpleIfElifElseStatement,
+    IRSimpleIfStatement, IRSimpleIfElseStatement,
     IRMatchExactStatement, IRMatchGeneralStatement,
 
     IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement,

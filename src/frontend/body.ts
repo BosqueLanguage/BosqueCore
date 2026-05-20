@@ -2502,7 +2502,7 @@ class IfElifElseStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        const ttcond = this.condflow.map((cf) => `$(${cf.cond.emit(true, fmt)}) ${cf.block.emit(fmt)}`);
+        const ttcond = this.condflow.map((cf) => `(${cf.cond.emit(true, fmt)}) ${cf.block.emit(fmt)}`);
         const ttelse = this.elseflow.emit(fmt);
 
         const iif = `if${ttcond[0]}`;

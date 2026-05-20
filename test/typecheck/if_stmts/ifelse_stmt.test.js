@@ -50,4 +50,11 @@ describe ("Checker -- IfElse Statement", () => {
 
     it.todo("should check if-else w/ passing params", function () {
     });
+
+    it("should check simple if-elif-else", function () {
+        checkTestFunction("function main(x: Int): Int { if(x == 0i) { return 0i; } elif(x > 0i) { return 1i; } else { return -1i; } }");
+
+        checkTestFunctionError("function main(x: Int): Int { if(x == 0i) { return 0i; } elif(x) { return 1i; } else { return -1i; } }", 'Expected a boolean expression but got Int');
+        checkTestFunctionError("function main(x: Int): Int { if(x == 0i) { return 0i; } elif(x > 0i) { return true; } else { return -1i; } }", "Expected a return value of type Int but got Bool");
+    });
 });
