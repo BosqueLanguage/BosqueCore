@@ -1942,6 +1942,9 @@ class Monomorphizer {
             }
         }
 
+        this.lambdamap = new Map<number, string>();
+        this.callinstmap = new Map<number, string>();
+
         //make sure all of the invariants on this typecheck
         this.instantiateInvariants(pdecl.type.invariants);
         this.instantiateValidates(pdecl.type.validates);
@@ -1959,12 +1962,15 @@ class Monomorphizer {
         const bbl = cnns.typebinds.get(pdecl.type.name) as TypeInstantiationInfo[];
 
         if(terms.length === 0) {
-            bbl.push(new TypeInstantiationInfo(pdecl.tkey, pdecl.tsig, undefined, new Map<string, InvokeInstantiationInfo[]>(), new Map<string, InvokeInstantiationInfo[]>()));
+            bbl.push(new TypeInstantiationInfo(pdecl.tkey, pdecl.tsig, undefined, new Map<string, InvokeInstantiationInfo[]>(), new Map<string, InvokeInstantiationInfo[]>(), this.lambdamap, this.callinstmap));
         }
         else {
-            bbl.push(new TypeInstantiationInfo(pdecl.tkey, pdecl.tsig, this.currentMapping as TemplateNameMapper, new Map<string, InvokeInstantiationInfo[]>(), new Map<string, InvokeInstantiationInfo[]>()));
+            bbl.push(new TypeInstantiationInfo(pdecl.tkey, pdecl.tsig, this.currentMapping as TemplateNameMapper, new Map<string, InvokeInstantiationInfo[]>(), new Map<string, InvokeInstantiationInfo[]>(), this.lambdamap, this.callinstmap));
             this.currentMapping = undefined;
         }
+
+        this.lambdamap = new Map<number, string>();
+        this.callinstmap = new Map<number, string>();
     }
 
     private instantiateEnumTypeDecl(pdecl: PendingNominalTypeDecl) {
@@ -2157,6 +2163,9 @@ class Monomorphizer {
 
         this.instantiateProvides(pdecl.type.provides);
 
+        this.lambdamap = new Map<number, string>();
+        this.callinstmap = new Map<number, string>();
+
         //make sure all of the invariants on this typecheck
         this.instantiateInvariants(pdecl.type.invariants);
         this.instantiateValidates(pdecl.type.validates);
@@ -2179,21 +2188,39 @@ class Monomorphizer {
         const bbl = cnns.typebinds.get(pdecl.type.name) as TypeInstantiationInfo[];
 
         if(tdecl.terms.length === 0) {
-            bbl.push(new TypeInstantiationInfo(pdecl.tkey, pdecl.tsig, undefined, new Map<string, InvokeInstantiationInfo[]>(), new Map<string, InvokeInstantiationInfo[]>()));
+            bbl.push(new TypeInstantiationInfo(pdecl.tkey, pdecl.tsig, undefined, new Map<string, InvokeInstantiationInfo[]>(), new Map<string, InvokeInstantiationInfo[]>(), this.lambdamap, this.callinstmap));
         }
         else {
-            bbl.push(new TypeInstantiationInfo(pdecl.tkey, pdecl.tsig, this.currentMapping as TemplateNameMapper, new Map<string, InvokeInstantiationInfo[]>(), new Map<string, InvokeInstantiationInfo[]>()));
+            bbl.push(new TypeInstantiationInfo(pdecl.tkey, pdecl.tsig, this.currentMapping as TemplateNameMapper, new Map<string, InvokeInstantiationInfo[]>(), new Map<string, InvokeInstantiationInfo[]>(), this.lambdamap, this.callinstmap));
             this.currentMapping = undefined;
         }
+
+        this.lambdamap = new Map<number, string>();
+        this.callinstmap = new Map<number, string>();
     }
 
-    private instantiateNamespaceConstDecls(cdecls: NamespaceConstDecl[]) {
+    private instantiateNamespaceConstDecls(ns: NamespaceDeclaration, cdecls: NamespaceConstDecl[]) {
+        this.instantiateNamespaceDeclaration(ns);
+
+        this.lambdamap = new Map<number, string>();
+        this.callinstmap = new Map<number, string>();
+
         for(let i = 0; i < cdecls.length; ++i) {
             const m = cdecls[i];
 
             this.instantiateTypeSignature(m.declaredType, this.currentMapping);
             this.instantiateExpression(m.value);
         }
+
+        this.lambdamap.forEach((value, key) => {
+            (this.currentNSInstantiation as NamespaceInstantiationInfo).lambdacons.set(key, value);
+        });
+        (this.currentNSInstantiation as NamespaceInstantiationInfo).monoinvids.forEach((value, key) => {
+            (this.currentNSInstantiation as NamespaceInstantiationInfo).monoinvids.set(key, value);
+        });
+
+        this.lambdamap = new Map<number, string>();
+        this.callinstmap = new Map<number, string>();
     }
 
     private instantiateNamespaceTypeDecl(ns: NamespaceDeclaration, pdecl: PendingNominalTypeDecl) {
@@ -2299,8 +2326,6 @@ class Monomorphizer {
         else {
             this.currentNSInstantiation = new NamespaceInstantiationInfo(decl.fullnamespace);
             this.instantiation.push(this.currentNSInstantiation);
-
-            this.instantiateNamespaceConstDecls(decl.consts);
         }
     }
 
@@ -2313,7 +2338,7 @@ class Monomorphizer {
     }
 
     private instantiateRootNamespaceDeclaration(decl: NamespaceDeclaration) {
-        this.instantiateNamespaceConstDecls(decl.consts);
+        this.instantiateNamespaceConstDecls(decl, decl.consts);
 
         for(let i = 0; i < decl.functions.length; ++i) {
             if(this.shouldInstantiateAsRootInvoke(decl.functions[i])) {

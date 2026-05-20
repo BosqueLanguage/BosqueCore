@@ -85,8 +85,8 @@ class ASMToIRConverter {
         this.currentLambdaInstantiation = undefined;
 
         this.currentBinds = typeinst.binds;
-        this.currentLambdaConsMap = undefined;
-        this.currentMonoInvIdMap = undefined;
+        this.currentLambdaConsMap = typeinst.lambdacons;
+        this.currentMonoInvIdMap = typeinst.monoinvids;
 
         this.pendingblocks = [];
         this.rescopeStack = [];
@@ -2488,48 +2488,48 @@ class ASMToIRConverter {
             const kkop = exp as BinKeyEqExpression;
 
             if(kkop.operkind === "lhsnone") {
-                const rhs = this.flattenExpression(kkop.rhs);
+                const rhs = this.makeExpressionSimple(this.flattenExpression(kkop.rhs), this.tproc(kkop.rhs.getType()));
                 return new IRIsNoneOptionExpression(rhs, this.processTypeSignature(kkop.rhs.getType()));
             }
             else if(kkop.operkind === "rhsnone") {
-                const lhs = this.flattenExpression(kkop.lhs);
+                const lhs = this.makeExpressionSimple(this.flattenExpression(kkop.lhs), this.tproc(kkop.lhs.getType()));
                 return new IRIsNoneOptionExpression(lhs, this.processTypeSignature(kkop.lhs.getType()));
             }
             else if(kkop.operkind === "lhskeyeqoption") {
-                const optexp = this.flattenExpression(kkop.lhs);
+                const optexp = this.makeExpressionSimple(this.flattenExpression(kkop.lhs), this.tproc(kkop.lhs.getType()));
                 const opttype = this.processTypeSignature(kkop.lhs.getType());
-                const valexp = this.flattenExpression(kkop.rhs);
+                const valexp = this.makeExpressionSimple(this.flattenExpression(kkop.rhs), this.tproc(kkop.rhs.getType()));
                 const valuetype = this.processTypeSignature(kkop.rhs.getType());
 
                 return new IRIsOptionEqValueExpression(optexp, opttype, valexp, valuetype);
             }
             else if(kkop.operkind === "rhskeyeqoption") {
-                const optexp = this.flattenExpression(kkop.rhs);
+                const optexp = this.makeExpressionSimple(this.flattenExpression(kkop.rhs), this.tproc(kkop.rhs.getType()));
                 const opttype = this.processTypeSignature(kkop.rhs.getType());
-                const valexp = this.flattenExpression(kkop.lhs);
+                const valexp = this.makeExpressionSimple(this.flattenExpression(kkop.lhs), this.tproc(kkop.lhs.getType()));
                 const valuetype = this.processTypeSignature(kkop.lhs.getType());
 
                 return new IRIsOptionEqValueExpression(optexp, opttype, valexp, valuetype);
             }
             else if(kkop.operkind === "lhskeyeqsome") {
-                const someexp = this.flattenExpression(kkop.lhs);
+                const someexp = this.makeExpressionSimple(this.flattenExpression(kkop.lhs), this.tproc(kkop.lhs.getType()));
                 const sometype = this.processTypeSignature(kkop.lhs.getType());
-                const valexp = this.flattenExpression(kkop.rhs);
+                const valexp = this.makeExpressionSimple(this.flattenExpression(kkop.rhs), this.tproc(kkop.rhs.getType()));
                 const valuetype = this.processTypeSignature(kkop.rhs.getType());
 
                 return new IRIsSomeEqValueExpression(someexp, sometype, valexp, valuetype);
             }
             else if(kkop.operkind === "rhskeyeqsome") {
-                const someexp = this.flattenExpression(kkop.rhs);
+                const someexp = this.makeExpressionSimple(this.flattenExpression(kkop.rhs), this.tproc(kkop.rhs.getType()));
                 const sometype = this.processTypeSignature(kkop.rhs.getType());
-                const valexp = this.flattenExpression(kkop.lhs);
+                const valexp = this.makeExpressionSimple(this.flattenExpression(kkop.lhs), this.tproc(kkop.lhs.getType()));
                 const valuetype = this.processTypeSignature(kkop.lhs.getType());
 
                 return new IRIsSomeEqValueExpression(someexp, sometype, valexp, valuetype);
             }
             else {
-                const lhs = this.flattenExpression(kkop.lhs);
-                const rhs = this.flattenExpression(kkop.rhs);
+                const lhs = this.makeExpressionSimple(this.flattenExpression(kkop.lhs), this.tproc(kkop.lhs.getType()));
+                const rhs = this.makeExpressionSimple(this.flattenExpression(kkop.rhs), this.tproc(kkop.rhs.getType()));
 
                 return new IRBinKeyEqDirectExpression(lhs, rhs, this.processTypeSignature(kkop.lhs.getType()));
             }
@@ -2538,48 +2538,48 @@ class ASMToIRConverter {
             const kkop = exp as BinKeyNeqExpression;
 
             if(kkop.operkind === "lhsnone") {
-                const rhs = this.flattenExpression(kkop.rhs);
+                const rhs = this.makeExpressionSimple(this.flattenExpression(kkop.rhs), this.tproc(kkop.rhs.getType()));
                 return new IRIsNotNoneOptionExpression(rhs, this.processTypeSignature(kkop.rhs.getType()));
             }
             else if(kkop.operkind === "rhsnone") {
-                const lhs = this.flattenExpression(kkop.lhs);
+                const lhs = this.makeExpressionSimple(this.flattenExpression(kkop.lhs), this.tproc(kkop.lhs.getType()));
                 return new IRIsNotNoneOptionExpression(lhs, this.processTypeSignature(kkop.lhs.getType()));
             }
             else if(kkop.operkind === "lhskeyeqoption") {
-                const optexp = this.flattenExpression(kkop.lhs);
+                const optexp = this.makeExpressionSimple(this.flattenExpression(kkop.lhs), this.tproc(kkop.lhs.getType()));
                 const opttype = this.processTypeSignature(kkop.lhs.getType());
-                const valexp = this.flattenExpression(kkop.rhs);
+                const valexp = this.makeExpressionSimple(this.flattenExpression(kkop.rhs), this.tproc(kkop.rhs.getType()));
                 const valuetype = this.processTypeSignature(kkop.rhs.getType());
 
                 return new IRIsOptionNeqValueExpression(optexp, opttype, valexp, valuetype);
             }
             else if(kkop.operkind === "rhskeyeqoption") {
-                const optexp = this.flattenExpression(kkop.rhs);
+                const optexp = this.makeExpressionSimple(this.flattenExpression(kkop.rhs), this.tproc(kkop.rhs.getType()));
                 const opttype = this.processTypeSignature(kkop.rhs.getType());
-                const valexp = this.flattenExpression(kkop.lhs);
+                const valexp = this.makeExpressionSimple(this.flattenExpression(kkop.lhs), this.tproc(kkop.lhs.getType()));
                 const valuetype = this.processTypeSignature(kkop.lhs.getType());
 
                 return new IRIsOptionNeqValueExpression(optexp, opttype, valexp, valuetype);
             }
             else if(kkop.operkind === "lhskeyeqsome") {
-                const someexp = this.flattenExpression(kkop.lhs);
+                const someexp = this.makeExpressionSimple(this.flattenExpression(kkop.lhs), this.tproc(kkop.lhs.getType()));
                 const sometype = this.processTypeSignature(kkop.lhs.getType());
-                const valexp = this.flattenExpression(kkop.rhs);
+                const valexp = this.makeExpressionSimple(this.flattenExpression(kkop.rhs), this.tproc(kkop.rhs.getType()));
                 const valuetype = this.processTypeSignature(kkop.rhs.getType());
 
                 return new IRIsSomeNeqValueExpression(someexp, sometype, valexp, valuetype);
             }
             else if(kkop.operkind === "rhskeyeqsome") {
-                const someexp = this.flattenExpression(kkop.rhs);
+                const someexp = this.makeExpressionSimple(this.flattenExpression(kkop.rhs), this.tproc(kkop.rhs.getType()));
                 const sometype = this.processTypeSignature(kkop.rhs.getType());
-                const valexp = this.flattenExpression(kkop.lhs);
+                const valexp = this.makeExpressionSimple(this.flattenExpression(kkop.lhs), this.tproc(kkop.lhs.getType()));
                 const valuetype = this.processTypeSignature(kkop.lhs.getType());
 
                 return new IRIsSomeNeqValueExpression(someexp, sometype, valexp, valuetype);
             }
             else {
-                const lhs = this.flattenExpression(kkop.lhs);
-                const rhs = this.flattenExpression(kkop.rhs);
+                const lhs = this.makeExpressionSimple(this.flattenExpression(kkop.lhs), this.tproc(kkop.lhs.getType()));
+                const rhs = this.makeExpressionSimple(this.flattenExpression(kkop.rhs), this.tproc(kkop.rhs.getType()));
 
                 return new IRBinKeyNeqDirectExpression(lhs, rhs, this.processTypeSignature(kkop.lhs.getType()));
             }
@@ -2587,16 +2587,16 @@ class ASMToIRConverter {
         else if(ttag === ExpressionTag.KeyCompareEqExpression) {
             const kkop = exp as KeyCompareEqExpression;
             
-            const lhs = this.flattenExpression(kkop.lhs);
-            const rhs = this.flattenExpression(kkop.rhs);
+            const lhs = this.makeExpressionSimple(this.flattenExpression(kkop.lhs), this.tproc(kkop.lhs.getType()));
+            const rhs = this.makeExpressionSimple(this.flattenExpression(kkop.rhs), this.tproc(kkop.rhs.getType()));
 
             return new IRBinKeyEqDirectExpression(lhs, rhs, this.processTypeSignature(kkop.ktype));
         }
         else if(ttag === ExpressionTag.KeyCompareLessExpression) {
             const kklop = exp as KeyCompareLessExpression;
             
-            const lhs = this.flattenExpression(kklop.lhs);
-            const rhs = this.flattenExpression(kklop.rhs);
+            const lhs = this.makeExpressionSimple(this.flattenExpression(kklop.lhs), this.tproc(kklop.lhs.getType()));
+            const rhs = this.makeExpressionSimple(this.flattenExpression(kklop.rhs), this.tproc(kklop.rhs.getType()));
 
             return new IRBinKeyLessDirectExpression(lhs, rhs, this.processTypeSignature(kklop.ktype));
         }
@@ -3312,7 +3312,7 @@ class ASMToIRConverter {
         const cc = condflow[0].cond;
         const bb = condflow[0].block;
 
-        const texp = this.flattenExpression(cc);
+        const texp = this.makeExpressionSimple(this.flattenExpression(cc), this.tproc(cc.getType()));
         if(ASMToIRConverter.isLiteralTrueExpression(texp)) {
             return this.flattenBlockStatement(bb) || bb.isterminal;
         }
@@ -3954,10 +3954,10 @@ class ASMToIRConverter {
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
 
-        this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
-
         const invariants = tdecl.invariants.map<IRInvariantDecl>((inv) => this.generateInvariantClauseDecl(tinst.tsig as NominalTypeSignature, inv));
         const validates = tdecl.validates.map<IRValidateDecl>((val) => this.generateValidateClauseDecl(tinst.tsig as NominalTypeSignature, val));
+
+        this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
 
         const saturatedProvides = tdecl.saturatedProvides.map((sp => this.processTypeSignature(sp)));
 
@@ -3977,10 +3977,10 @@ class ASMToIRConverter {
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
 
-        this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
-
         const invariants = tdecl.invariants.map<IRInvariantDecl>((inv) => this.generateInvariantClauseDecl(tinst.tsig as NominalTypeSignature, inv));
         const validates = tdecl.validates.map<IRValidateDecl>((val) => this.generateValidateClauseDecl(tinst.tsig as NominalTypeSignature, val));
+
+        this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
 
         const saturatedProvides = tdecl.saturatedProvides.map((sp => this.processTypeSignature(sp)));
 
@@ -4006,10 +4006,10 @@ class ASMToIRConverter {
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
 
-        this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
-
         const invariants = tdecl.invariants.map<IRInvariantDecl>((inv) => this.generateInvariantClauseDecl(tinst.tsig as NominalTypeSignature, inv));
         const validates = tdecl.validates.map<IRValidateDecl>((val) => this.generateValidateClauseDecl(tinst.tsig as NominalTypeSignature, val));
+
+        this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
 
         const saturatedProvides = tdecl.saturatedProvides.map((sp => this.processTypeSignature(sp)));
 
@@ -4126,8 +4126,6 @@ class ASMToIRConverter {
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
 
-        this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
-
         let etag: "std" | "status" | "event" = "std";
         if(tdecl.etag === AdditionalTypeDeclTag.Status) {
             etag = "status";
@@ -4135,6 +4133,13 @@ class ASMToIRConverter {
         if(tdecl.etag === AdditionalTypeDeclTag.Event) {
             etag = "event";
         }
+
+        const fields = tdecl.fields.map<IRMemberFieldDecl>((f) => this.generateMemberFieldDecl(tinst.tsig as NominalTypeSignature, f));
+
+        const invariants = tdecl.invariants.map<IRInvariantDecl>((inv) => this.generateInvariantClauseDecl(tinst.tsig as NominalTypeSignature, inv));
+        const validates = tdecl.validates.map<IRValidateDecl>((val) => this.generateValidateClauseDecl(tinst.tsig as NominalTypeSignature, val));
+
+        this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
 
         const bfinfo = tdecl.saturatedBFieldInfo.map((bf) => {
             const bfirt = this.processTypeSignature(bf.containingtype);
@@ -4150,9 +4155,9 @@ class ASMToIRConverter {
         });
 
         return new IREntityTypeDecl(tinst.tkey, 
-            tdecl.invariants.map<IRInvariantDecl>((inv) => this.generateInvariantClauseDecl(tinst.tsig as NominalTypeSignature, inv)),
-            tdecl.validates.map<IRValidateDecl>((val) => this.generateValidateClauseDecl(tinst.tsig as NominalTypeSignature, val)),
-            tdecl.fields.map<IRMemberFieldDecl>((f) => this.generateMemberFieldDecl(tinst.tsig as NominalTypeSignature, f)),
+            invariants,
+            validates,
+            fields,
             etag,
             tdecl.saturatedProvides.map((sp) => this.processTypeSignature(sp)),
             bfinfo,
@@ -4204,6 +4209,11 @@ class ASMToIRConverter {
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
 
+        const fields = tdecl.fields.map<IRMemberFieldDecl>((f) => this.generateMemberFieldDecl(tinst.tsig as NominalTypeSignature, f));
+
+        const invariants = tdecl.invariants.map<IRInvariantDecl>((inv) => this.generateInvariantClauseDecl(tinst.tsig as NominalTypeSignature, inv));
+        const validates = tdecl.validates.map<IRValidateDecl>((val) => this.generateValidateClauseDecl(tinst.tsig as NominalTypeSignature, val));
+
         this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
 
         const bfinfo = tdecl.saturatedBFieldInfo.map((bf) => {
@@ -4213,9 +4223,9 @@ class ASMToIRConverter {
         });
 
         return new IRConceptTypeDecl(tinst.tkey, 
-            tdecl.invariants.map<IRInvariantDecl>((inv) => this.generateInvariantClauseDecl(tinst.tsig as NominalTypeSignature, inv)),
-            tdecl.validates.map<IRValidateDecl>((val) => this.generateValidateClauseDecl(tinst.tsig as NominalTypeSignature, val)),
-            tdecl.fields.map<IRMemberFieldDecl>((f) => this.generateMemberFieldDecl(tinst.tsig as NominalTypeSignature, f)),
+            invariants,
+            validates,
+            fields,
             tdecl.saturatedProvides.map((sp) => this.processTypeSignature(sp)),
             bfinfo,
             docstring,
@@ -4231,8 +4241,6 @@ class ASMToIRConverter {
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
 
-        this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
-
         let etag: "std" | "status" | "event" = "std";
         if(tdecl.etag === AdditionalTypeDeclTag.Status) {
             etag = "status";
@@ -4240,6 +4248,13 @@ class ASMToIRConverter {
         if(tdecl.etag === AdditionalTypeDeclTag.Event) {
             etag = "event";
         }
+
+        const fields = tdecl.fields.map<IRMemberFieldDecl>((f) => this.generateMemberFieldDecl(tinst.tsig as NominalTypeSignature, f));
+
+        const invariants = tdecl.invariants.map<IRInvariantDecl>((inv) => this.generateInvariantClauseDecl(tinst.tsig as NominalTypeSignature, inv));
+        const validates = tdecl.validates.map<IRValidateDecl>((val) => this.generateValidateClauseDecl(tinst.tsig as NominalTypeSignature, val));
+
+        this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
 
         const bfinfo = tdecl.saturatedBFieldInfo.map((bf) => {
             const bfirt = this.processTypeSignature(bf.containingtype);
@@ -4255,9 +4270,9 @@ class ASMToIRConverter {
         });
 
         return new IRDatatypeMemberEntityTypeDecl(tinst.tkey, 
-            tdecl.invariants.map<IRInvariantDecl>((inv) => this.generateInvariantClauseDecl(tinst.tsig as NominalTypeSignature, inv)),
-            tdecl.validates.map<IRValidateDecl>((val) => this.generateValidateClauseDecl(tinst.tsig as NominalTypeSignature, val)),
-            tdecl.fields.map<IRMemberFieldDecl>((f) => this.generateMemberFieldDecl(tinst.tsig as NominalTypeSignature, f)),
+            invariants,
+            validates,
+            fields,
             etag,
             tdecl.saturatedProvides.map((sp) => this.processTypeSignature(sp)),
             bfinfo,
@@ -4276,6 +4291,12 @@ class ASMToIRConverter {
         const doc = tdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
 
+
+        const fields = tdecl.fields.map<IRMemberFieldDecl>((f) => this.generateMemberFieldDecl(tinst.tsig as NominalTypeSignature, f));
+
+        const invariants = tdecl.invariants.map<IRInvariantDecl>((inv) => this.generateInvariantClauseDecl(tinst.tsig as NominalTypeSignature, inv));
+        const validates = tdecl.validates.map<IRValidateDecl>((val) => this.generateValidateClauseDecl(tinst.tsig as NominalTypeSignature, val));
+
         this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
 
         const bfinfo = tdecl.saturatedBFieldInfo.map((bf) => {
@@ -4290,9 +4311,9 @@ class ASMToIRConverter {
         });
 
         return new IRDatatypeTypeDecl(tinst.tkey, 
-            tdecl.invariants.map<IRInvariantDecl>((inv) => this.generateInvariantClauseDecl(tinst.tsig as NominalTypeSignature, inv)),
-            tdecl.validates.map<IRValidateDecl>((val) => this.generateValidateClauseDecl(tinst.tsig as NominalTypeSignature, val)),
-            tdecl.fields.map<IRMemberFieldDecl>((f) => this.generateMemberFieldDecl(tinst.tsig as NominalTypeSignature, f)),
+            invariants,
+            validates,
+            fields,
             tdecl.saturatedProvides.map((sp) => this.processTypeSignature(sp)),
             bfinfo,
             docstring,
@@ -4511,6 +4532,8 @@ class ASMToIRConverter {
 
         //don't want subnamespace decls to overwrite the current namespace instantiation
         this.currentNamespaceInstantiation = asminstantiation;
+        this.currentLambdaConsMap = asminstantiation.lambdacons;
+        this.currentMonoInvIdMap = asminstantiation.monoinvids;
 
         for(let i = 0; i < decl.consts.length; ++i) {
             const ntcd = this.assembly.resolveNamespaceConstant(decl.fullnamespace, decl.consts[i].name);
