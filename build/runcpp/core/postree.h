@@ -208,7 +208,7 @@ namespace ᐸRuntimeᐳ
         PosRBData set(int64_t index, const T& value) const
         {
             assert((0 <= index) & (index < this->dcount));
-            return PosRBData(this->color, this->bheight, this->data.begin(), this->data.begin() + index, value, this->data.begin() + index + 1, this->data.end());
+            return PosRBData(this->color, this->bheight, this->data.begin(), this->data.begin() + index, value, this->data.begin() + index + 1, this->data.begin() + this->dcount);
         }
 
         PosRBData remove(int64_t index) const
