@@ -1,5 +1,5 @@
 import { IRSourceInfo } from "./irsupport.js";
-import { IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature } from "./irtype.js";
+import { IREListTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature } from "./irtype.js";
 
 enum IRExpressionTag {
     IRLiteralNoneExpression = "IRLiteralNoneExpression",
@@ -79,8 +79,8 @@ enum IRExpressionTag {
     IRConstructorMapEntryTypeExpression = "IRConstructorMapEntryTypeExpression",
 
     IRConstructorStandardEntityExpression = "IRConstructorStandardEntityExpression",
-
     IRConstructorLambdaExpression = "IRConstructorLambdaExpression",
+    IRConstructorEListExpression = "IRConstructorEListExpression",
 
     IRConstructorListEmptyExpression = "IRConstructorListEmptyExpression",
     IRConstructorListSingletonsExpression = "IRConstructorListSingletonsExpression",
@@ -88,6 +88,8 @@ enum IRExpressionTag {
     IRAccessFieldSpecialExpression = "IRAccessFieldSpecialExpression",
     IRAccessFieldDirectExpression = "IRAccessFieldDirectExpression",
     IRAccessFieldVirtualExpression = "IRAccessFieldVirtualExpression",
+
+    IRAccessEListIndexExpression = "IRAccessEListIndexExpression",
 
     IRInvokeSimpleExpression = "IRInvokeSimpleExpression",
     IRInvokeSimpleWithImplicitsExpression = "IRInvokeSimpleWithImplicitsExpression",
@@ -1115,6 +1117,17 @@ class IRConstructorLambdaExpression extends IRSimpleExpression {
     }
 }
 
+class IRConstructorEListExpression extends IRSimpleExpression {
+    readonly eltype: IREListTypeSignature;
+    readonly values: IRSimpleExpression[];
+
+    constructor(eltype: IREListTypeSignature, values: IRSimpleExpression[]) {
+        super(IRExpressionTag.IRConstructorEListExpression);
+        this.eltype = eltype;
+        this.values = values;
+    }
+}
+
 /* NOTE -- the empty constructor is a simple expression (as it is really a constant) we can place anywhere safely */
 class IRConstructorListEmptyExpression extends IRConstructExpression {
     
@@ -1151,6 +1164,19 @@ class IRAccessFieldDirectExpression extends IRAccessFieldExpression {
 class IRAccessFieldVirtualExpression extends IRAccessFieldExpression {
     constructor(eexptype: IRNominalTypeSignature, eexp: IRSimpleExpression, intype: IRNominalTypeSignature, fieldname: string, fieldtype: IRTypeSignature) {
         super(IRExpressionTag.IRAccessFieldVirtualExpression, eexptype, eexp, intype, fieldname, fieldtype);
+    }
+}
+
+class IRAccessEListIndexExpression extends IRSimpleExpression {
+    readonly eltype: IREListTypeSignature;
+    readonly eexp: IRSimpleExpression;
+    readonly idx: number;
+
+    constructor(eltype: IREListTypeSignature, eexp: IRSimpleExpression, idx: number) {
+        super(IRExpressionTag.IRAccessEListIndexExpression);
+        this.eltype = eltype;
+        this.eexp = eexp;
+        this.idx = idx;
     }
 }
 
@@ -2518,9 +2544,10 @@ export {
 
     IRConstructorStandardEntityExpression,
     IRConstructorLambdaExpression,
+    IRConstructorEListExpression,
     IRConstructorListEmptyExpression, IRConstructorListSingletonsExpression,
 
-    IRAccessFieldExpression, IRAccessFieldSpecialExpression, IRAccessFieldDirectExpression, IRAccessFieldVirtualExpression,
+    IRAccessFieldExpression, IRAccessFieldSpecialExpression, IRAccessFieldDirectExpression, IRAccessFieldVirtualExpression, IRAccessEListIndexExpression,
 
     IRInvokeExpression, IRInvokeDirectExpression, IRInvokeImplicitsExpression, IRInvokeSimpleExpression, IRInvokeSimpleWithImplicitsExpression, IRInvokeVirtualSimpleExpression, IRInvokeVirtualWithImplicitsExpression,
 
