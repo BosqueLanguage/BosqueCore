@@ -4,6 +4,7 @@ namespace Core;
 #else
 #if EXEC_LIBS
 namespace NumericOps {
+    function s_floatSqrt(v: Float): Float = @float_sqrt;
 }
 #else
 #endif %% EXEC_LIBS

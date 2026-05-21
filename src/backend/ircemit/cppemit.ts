@@ -1260,7 +1260,10 @@ class CPPEmitter {
     private emitBuiltinBody(invk: IRInvokeDecl, body: IRBuiltinBody, indent: string | undefined): string {
         let bstr: string;
 
-        if(body.builtin === "list_empty") {
+        if(body.builtin === "float_sqrt") {
+            bstr = "ᐸRuntimeᐳ::XFloat{std::sqrt(v.value)}"
+        }
+        else if(body.builtin === "list_empty") {
             bstr = "ᐸRuntimeᐳ::XBool::from(l.empty())";
         }
         else if(body.builtin === "list_size") {
@@ -1303,13 +1306,16 @@ class CPPEmitter {
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "f");
             const utype = body.biterms.find((bt) => bt[0] === "U") as [string, IRTypeSignature];
             const ptid = this.typeInfoManager.getTypeInfo(invk.resultType.tkeystr).bsqtypeid;
-            bstr = `l.map<${isSimple}, ${TransformCPPNameManager.convertTypeKey(utype[1].tkeystr)}, ${ptid}>([&f](${params}){ return ${fn}(f, ${args}); })`;
+            bstr = `l.map<${isSimple}, ${this.typeInfoManager.emitTypeAsStd(utype[1].tkeystr)}, ${ptid}>([&f](${params}){ return ${fn}(f, ${args}); })`;
         }
         else if(body.builtin === "list_mapidx") {
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "f");
             const utype = body.biterms.find((bt) => bt[0] === "U") as [string, IRTypeSignature];
             const ptid = this.typeInfoManager.getTypeInfo(invk.resultType.tkeystr).bsqtypeid;
-            bstr = `l.mapIdx<${isSimple}, ${TransformCPPNameManager.convertTypeKey(utype[1].tkeystr)}, ${ptid}>([&f](${params}){ return ${fn}(f, ${args}); })`;
+            bstr = `l.mapIdx<${isSimple}, ${this.typeInfoManager.emitTypeAsStd(utype[1].tkeystr)}, ${ptid}>([&f](${params}){ return ${fn}(f, ${args}); })`;
+        }
+        else if(body.builtin === "list_sum") {
+            bstr = `l.sum(zero)`
         }
         else {
             assert(false, "CPPEmitter: need to implement builtin body emission " + body.builtin);

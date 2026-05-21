@@ -1,5 +1,5 @@
 
-import { FullyQualifiedNamespace, TypeSignature, LambdaTypeSignature, RecursiveAnnotation, TemplateTypeSignature, VoidTypeSignature, LambdaParameterSignature, AutoTypeSignature, NominalTypeSignature } from "./type.js";
+import { FullyQualifiedNamespace, TypeSignature, LambdaTypeSignature, RecursiveAnnotation, TemplateTypeSignature, VoidTypeSignature, LambdaParameterSignature, AutoTypeSignature, NominalTypeSignature, TemplateNameMapper } from "./type.js";
 import { Expression, BodyImplementation, ExpressionTag, AccessNamespaceConstantExpression, LiteralRegexExpression, ChkLogicExpression, AccessStaticFieldExpression } from "./body.js";
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls.js";
@@ -1900,7 +1900,7 @@ class Assembly {
         return [{nsinfo: nsinfo, reinfos: reinfos}, ...subnsinfo].filter((nsi) => nsi.reinfos.length !== 0);
     }
 
-    tryReduceConstantExpression(exp: Expression): Expression | undefined {
+    tryReduceConstantExpression(exp: Expression, currentBinds: TemplateNameMapper | undefined): Expression | undefined {
         if(exp.isLiteralExpression()) {
             return exp;
         }
@@ -1910,15 +1910,17 @@ class Assembly {
                 return undefined;
             }
 
-            return this.tryReduceConstantExpression(nsresl.value);
+            return this.tryReduceConstantExpression(nsresl.value, undefined);
         }
         else if(exp instanceof AccessStaticFieldExpression) {
-            const tsdecl = (exp.resolvedDeclType as NominalTypeSignature).decl.consts.find((c) => c.name === exp.name);
+            const tsdecltype = ((currentBinds !== undefined) ? (exp.resolvedDeclType as TypeSignature).remapTemplateBindings(currentBinds) : exp.resolvedDeclType) as NominalTypeSignature;
+            const tsdecl = tsdecltype.decl.consts.find((c) => c.name === exp.name);
             if(tsdecl === undefined) {
                 return undefined;
             }
 
-            return this.tryReduceConstantExpression(tsdecl.value);
+            const nbinds = TemplateNameMapper.generateTemplateMappingForTypeDecl(tsdecltype);
+            return this.tryReduceConstantExpression(tsdecl.value, nbinds);
         }
         else {
             return undefined;

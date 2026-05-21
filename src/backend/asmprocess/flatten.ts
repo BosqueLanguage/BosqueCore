@@ -1018,7 +1018,7 @@ class ASMToIRConverter {
             const ftype = this.applyLocalTemplateMapping(pinfo.type, imapper);
             
             if(ii[0] === -1) {
-                const crexp = this.assembly.tryReduceConstantExpression(pinfo.optDefaultValue as Expression);
+                const crexp = this.assembly.tryReduceConstantExpression(pinfo.optDefaultValue as Expression, this.currentBinds);
 
                 if(crexp !== undefined) {
                     const sexp = this.flattenExpression(crexp);
@@ -1608,7 +1608,7 @@ class ASMToIRConverter {
             
             if(ii[0] === -1) {
                 const eexp = this.assembly.resolveFieldDeclDefaultExpFromTypeSignature(finfo.containingtype, finfo.name) as Expression;
-                const crexp = eexp !== undefined ? this.assembly.tryReduceConstantExpression(eexp) : undefined;
+                const crexp = eexp !== undefined ? this.assembly.tryReduceConstantExpression(eexp, this.currentBinds) : undefined;
 
                 if(crexp !== undefined) {
                     const sexp = this.flattenExpression(crexp);
@@ -2162,7 +2162,7 @@ class ASMToIRConverter {
         }
         else if(ttag === ExpressionTag.AccessNamespaceConstantExpression) {
             const tnsa = exp as AccessNamespaceConstantExpression;
-            const rvv = this.assembly.tryReduceConstantExpression(tnsa);
+            const rvv = this.assembly.tryReduceConstantExpression(tnsa, this.currentBinds);
             if(rvv !== undefined) {
                 return this.flattenExpression(rvv);
             }
@@ -2173,7 +2173,7 @@ class ASMToIRConverter {
         }
         else if(ttag === ExpressionTag.AccessStaticFieldExpression) {
             const tasf = exp as AccessStaticFieldExpression;
-            const rvv = this.assembly.tryReduceConstantExpression(tasf);
+            const rvv = this.assembly.tryReduceConstantExpression(tasf, this.currentBinds);
             if(rvv !== undefined) {
                 return this.flattenExpression(rvv);
             }
@@ -3724,7 +3724,7 @@ class ASMToIRConverter {
 
         let defaultinfo: { stmts: IRStatement[], value: IRSimpleExpression } | undefined = undefined;
         if(mdecl.defaultValue !== undefined) {
-            const crexp = this.assembly.tryReduceConstantExpression(mdecl.defaultValue);
+            const crexp = this.assembly.tryReduceConstantExpression(mdecl.defaultValue, this.currentBinds);
 
             if(crexp === undefined) {
                 assert(false, "ASMToIRConverter not implemented: MemberFieldDecl default value is a constant evaluatable expression");
@@ -3785,7 +3785,7 @@ class ASMToIRConverter {
         return params.map<IRInvokeParameterDecl>((p) => {
             let defaultValue: { stmts: IRStatement[], value: IRSimpleExpression } | undefined = undefined;
             if(p.optDefaultValue !== undefined) {
-                const crexp = this.assembly.tryReduceConstantExpression(p.optDefaultValue);
+                const crexp = this.assembly.tryReduceConstantExpression(p.optDefaultValue, this.currentBinds);
                 if(crexp === undefined) {
                     assert(false, "Not Implemented -- processInvokeParams default value");
                 }
@@ -3913,7 +3913,7 @@ class ASMToIRConverter {
     private processNominalTypeInfoStandard(tdecl: AbstractNominalTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly) {
         for(let i = 0; i < tdecl.consts.length; ++i) {
             const cc = tdecl.consts[i];
-            const nsd = this.assembly.tryReduceConstantExpression(cc.value);
+            const nsd = this.assembly.tryReduceConstantExpression(cc.value, this.currentBinds);
         
             if(nsd === undefined) {
                 irasm.constants.push(this.generateConstMemberDecl(tdecl, cc, tinst));

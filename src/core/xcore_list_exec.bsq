@@ -22,6 +22,8 @@ namespace ListOps {
 
     recursive? function s_list_map<T, U>(l: List<T>, f: recursive? fn(T) -> U): List<U> = @list_map;
     recursive? function s_list_mapidx<T, U>(l: List<T>, f: recursive? fn(T, Nat) -> U): List<U> = @list_mapidx;
+
+    function s_list_sum<T: numeric>(l: List<T>, zero: T): T = @list_sum;
 }
 #else
 #endif %% EXEC_LIBS

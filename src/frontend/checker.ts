@@ -5128,7 +5128,7 @@ class TypeChecker {
                 const env = TypeEnvironment.createInitialStdEnv(m.declaredType, infertype, []);
 
                 const decltype = this.checkExpression(env, m.value, new SimpleTypeInferContext(m.declaredType));
-                this.checkError(m.sinfo, !this.relations.isSubtypeOf(decltype, m.declaredType, this.constraints), `Const initializer does not match declared type -- expected ${m.declaredType.emit()} but got ${decltype.emit()}`);
+                this.checkError(m.sinfo, !(decltype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(decltype, m.declaredType, this.constraints), `Const initializer does not match declared type -- expected ${m.declaredType.emit()} but got ${decltype.emit()}`);
             }
         }
     }

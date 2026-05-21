@@ -112,6 +112,22 @@ namespace ᐸRuntimeᐳ
 
         constexpr bool isInline() const { return this->inlinecstr.size() < std::numeric_limits<char>::max(); }
         constexpr bool isTree() const { return this->inlinecstr.size() == std::numeric_limits<char>::max(); }
+
+        constexpr CStringUnion& operator=(const CStringUnion& other)
+        {
+            if (this == &other) {
+                return *this;
+            }
+
+            if(other.isInline()) {
+                this->inlinecstr = other.inlinecstr;
+            }
+            else {
+                this->treecstr = other.treecstr;
+            }
+            
+            return *this;
+        }
     };
 
     inline constexpr TypeInfo g_typeinfo_CStringInline = {
@@ -519,6 +535,22 @@ namespace ᐸRuntimeᐳ
 
         constexpr bool isInline() const { return this->inlinecstr.size() < std::numeric_limits<char32_t>::max(); }
         constexpr bool isTree() const { return this->inlinecstr.size() == std::numeric_limits<char32_t>::max(); }
+
+        constexpr StringUnion& operator=(const StringUnion& other)
+        {
+            if(this == &other) {
+                return *this;
+            }
+
+            if(other.isInline()) {
+                this->inlinecstr = other.inlinecstr;
+            }
+            else {
+                this->treecstr = other.treecstr;
+            }
+
+            return *this;
+        }
     };
 
     inline constexpr TypeInfo g_typeinfo_StringInline = {

@@ -191,6 +191,23 @@ namespace ᐸRuntimeᐳ
 
         constexpr bool isInline() const { return this->inlinelist.count < std::numeric_limits<size_t>::max(); }
         constexpr bool isTree() const { return this->inlinelist.count == std::numeric_limits<size_t>::max(); }
+
+
+        constexpr ListTUnion& operator=(const ListTUnion& other)
+        {
+            if(this == &other) {
+                return *this;
+            }
+
+            if(other.isInline()) {
+                this->inlinelist = other.inlinelist;
+            }
+            else {
+                this->treelist = other.treelist;
+            }
+
+            return *this;
+        }
     };
 
     template<typename T>
@@ -657,6 +674,24 @@ namespace ᐸRuntimeᐳ
             }
             else {
                 return XList<U, TYPE_ID_LIST_U>{ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_U)>{this->ulist.treelist.postree.template mapIdx<SafeSimpleFn, U, getPosTreeIDFrom(TYPE_ID_LIST_U), Fn>(f)}};
+            }
+        }
+
+        T sum(T zero) const
+        {
+            assert(!this->ulist.empty());
+
+            if(this->ulist.isInline()) {
+                auto ddbegin = this->ulist.inlinelist.data.cbegin();
+                auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
+
+                return std::accumulate(ddbegin, ddend, zero, [](T a, T b) {
+                    T::checkOverflowAddition(a, b, "List Sum", 0);
+                    return a + b;
+                });
+            }
+            else {
+                assert(false); //Not implemented for postrees
             }
         }
     };
