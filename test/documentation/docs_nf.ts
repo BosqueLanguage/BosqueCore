@@ -18,6 +18,7 @@ import { CPPEmitter } from "../../src/backend/ircemit/cppemit.js";
 import { Parser } from "../../src/frontend/parser.js";
 
 const runcppdir = path.join(__dirname, "../../runcpp/");
+const sampledir = path.join(__dirname, "../../samples/");
 
 function buildAssembly(srcfile: string): Assembly | undefined {
     const userpackage = new PackageConfig(["EXEC_LIBS"], [{ srcpath: "test.bsq", filename: "test.bsq", contents: srcfile }]);
@@ -196,6 +197,7 @@ function runTestSet(code: string, normalexecs: [string | undefined, string][], e
 }
 
 export {
+    sampledir,
     runTestSet,
     checkTestFunctionError
 };
