@@ -1694,7 +1694,8 @@ class CPPEmitter {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
         const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey); 
 
-        return `namespace ᐸRuntimeᐳ { inline constexpr TypeInfo g_typeinfo_${ctname} = {\n` +
+        return `namespace ᐸRuntimeᐳ { \n` +
+            `    inline constexpr TypeInfo g_typeinfo_${ctname} = {\n` +
             `        ${ttid.bsqtypeid},\n` +
             `        ${ttid.bytesize},\n` +
             `        ${ttid.slotcount},\n` +
@@ -1917,8 +1918,6 @@ class CPPEmitter {
         return "//TODO: pending implementation of format string defs";
     }
 
-
-////////////////////
     private emitEListTypeInfo(elist: IREListTypeSignature): [string, string] {
         const ctname = TransformCPPNameManager.convertTypeKey(elist.tkeystr);
         const ctrepr = this.typeInfoManager.emitTypeAsStd(elist.tkeystr);
@@ -1956,7 +1955,6 @@ class CPPEmitter {
             [bsqparsedef, bsqemitdef].join("\n")
         ];
     }
-////////////////////
 
     private emitSomeTypeInfo(tdecl: IRSomeTypeDecl): [string, string] {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
@@ -2044,9 +2042,9 @@ class CPPEmitter {
         const declbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}();`;
         const declbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv);`;
 
-        const sometypeinfo = TransformCPPNameManager.generateTypeInfoNameForTypeKey(tdecl.ttype.tkeystr);
+        const sometypeinfo = TransformCPPNameManager.generateTypeInfoNameForTypeKey(tdecl.sometype.tkeystr);
         const defstatic = `namespace ᐸRuntimeᐳ {\n` +
-        `    template<> const TypeInfo* XOption<${voptttname}>::s_someTypeInfo = &${sometypeinfo};\n` +
+        `    template<> const TypeInfo* XOption<${voptt}>::s_someTypeInfo = &${sometypeinfo};\n` +
         `}`;
 
         const defbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}() {\n` +
