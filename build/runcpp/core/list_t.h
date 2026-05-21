@@ -606,7 +606,7 @@ namespace ᐸRuntimeᐳ
                 }
             }
             else {
-                return XBool::from(this->ulist.treelist.postree.template someof<SafeSimplePred, Pred>(p));
+                return this->ulist.treelist.postree.template someof<SafeSimplePred, Pred>(p);
             }
         }
 
@@ -640,7 +640,7 @@ namespace ᐸRuntimeᐳ
             assert(!this->ulist.empty());
 
             if(this->ulist.isInline()) {
-                constexpr std::array<XNat, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY> zipidx = create_idx_range<ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY>();
+                constexpr std::array<XNat, ListTInlineContent<T>::MAX_INLINE_CAPACITY> zipidx = create_idx_range<ListTInlineContent<T>::MAX_INLINE_CAPACITY>();
 
                 auto ddbegin = this->ulist.inlinelist.data.cbegin();
                 auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
