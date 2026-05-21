@@ -4,7 +4,7 @@ import { APIDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APIS
 import { CodeFormatter, SourceInfo } from "./build_decls.js";
 import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, ErrorTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
 import { APIInvokeExpression, AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, AbstractArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, FormatStringTextComponent, HoleBodyImplementation, HoleExpression, HoleStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, IfElifElseStatement, IfElseStatement, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypeDeclValueExpression, LiteralTypedCStringExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PassingArgumentValue, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RValueExpression, RValueExpressionTag, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VoidRefCallStatement, StdArgumentValue, SkipArgumentValue, InterpolateFormatExpression, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestFail, ITestTypeGuard, ITestBinderGuard, TypeTestBindInfo } from "./body.js";
-import { SimpleTypeInferContext, TypeEnvironment, TypeResultWRefVarInfoResult, TypeInferContext, VarInfo } from "./checker_environment.js";
+import { SimpleTypeInferContext, TypeEnvironment, TypeResultWRefVarInfoResult, TypeInferContext, VarInfo, EListStyleTypeInferContext } from "./checker_environment.js";
 import { MemberLookupInfo, TypeCheckerRelations } from "./checker_relations.js";
 
 import { validateStringLiteral, validateCStringLiteral, loadConstAndValidateRESystem, accepts } from "@bosque/jsbrex";
@@ -2125,7 +2125,6 @@ class TypeChecker {
     }
     
     private checkConstructorEListExpression(env: TypeEnvironment, exp: ConstructorEListExpression, infertype: TypeInferContext | undefined): TypeSignature {
-        /*
         if(infertype === undefined) {
             const ttypes = exp.args.args.map((arg) => this.checkExpression(env, (arg as PositionalArgumentValue).exp, undefined));
             const rel = new EListTypeSignature(exp.sinfo, ttypes);
@@ -2169,8 +2168,6 @@ class TypeChecker {
             const rel = new EListTypeSignature(exp.sinfo, ttypes);
             return exp.setType(rel);
         }
-        */
-        assert(false, "Not Implemented -- checkConstructorEListExpression");
     }
 
     private checkConstructorLambdaExpression(env: TypeEnvironment, exp: ConstructorLambdaExpression, infertype: TypeSignature | undefined): TypeSignature {
@@ -2710,7 +2707,6 @@ class TypeChecker {
     }
 
     private checkPostfixAccessFromIndex(env: TypeEnvironment, exp: PostfixAccessFromIndex, rcvrtype: TypeSignature): TypeSignature {
-        /*
         if(!(rcvrtype instanceof EListTypeSignature)) {
             this.reportError(exp.sinfo, `Cannot access index from non-elist type ${rcvrtype.emit()}`);
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
@@ -2722,8 +2718,6 @@ class TypeChecker {
         }
 
         return exp.setType(rcvrtype.entries[exp.idx]);
-        */
-        assert(false, "Not Implemented -- checkPostfixAccessFromIndex");
     }
 
     private checkPostfixIsTest(env: TypeEnvironment, exp: PostfixIsTest, rcvrtype: TypeSignature): TypeSignature {
