@@ -24,8 +24,6 @@ const TokenStrings = {
     DocComment: "[DOC_COMMENT]",
 
     NumberinoInt: "[LITERAL_NUMBERINO_INT]",
-    NumberinoFloat: "[LITERAL_NUMBERINO_FLOAT]",
-    NumberinoRational: "[LITERAL_NUMBERINO_RATIONAL]",
 
     AtDexNumber: "[LITERAL_ATDEX_NUMBER]",
 
@@ -346,8 +344,6 @@ class Lexer {
     private static readonly _s_idexValue = new RegExp(`@(${Lexer._s_intValue})`, "y");
 
     private static readonly _s_intNumberinoRe = new RegExp(`${Lexer._s_intValue}`, "y");
-    private static readonly _s_floatNumberinoRe = new RegExp(`${Lexer._s_floatValue}`, "y");
-    private static readonly _s_rationalNumberinoRe = new RegExp(`(${Lexer._s_intValue})/(${Lexer._s_nonzeroIntValNoSign})`, "y");
 
     private static readonly _s_intRe = new RegExp(`(${Lexer._s_intValue})i`, "y");
     private static readonly _s_natRe = new RegExp(`(${Lexer._s_intValue})n`, "y");
@@ -367,7 +363,6 @@ class Lexer {
     private static readonly _s_deltasecondsRE = new RegExp(`[+-](${Lexer._s_floatValueNoSign})ds`, "y");
     private static readonly _s_deltalogicaltimeRE = new RegExp(`[+-](${Lexer._s_intValueNoSign})dl`, "y");
 
-    private static readonly _s_zerodenomRationalNumberinoRe = new RegExp(`(${Lexer._s_intValue})/0`, "y");
     private static readonly _s_zerodenomRationalRe = new RegExp(`(${Lexer._s_intValue})/0R`, "y");
 
     private static readonly _s_redundantSignRE = /[+-]{2,}/y;
@@ -432,12 +427,6 @@ class Lexer {
             return true;
         }
 
-        const unumberino = this.trylex(Lexer._s_floatNumberinoRe);
-        if(unumberino !== null) {
-            this.recordLexTokenWData(this.jsStrPos + unumberino.length, TokenStrings.NumberinoFloat, unumberino);
-            return true;
-        }
-
         return false;
     }
 
@@ -452,19 +441,6 @@ class Lexer {
         const mrational = this.trylex(Lexer._s_rationalRe);
         if(mrational !== null) {
             this.recordLexTokenWData(this.jsStrPos + mrational.length, TokenStrings.Rational, mrational);
-            return true;
-        }
-
-        const mzerodenomtagged = this.trylex(Lexer._s_zerodenomRationalNumberinoRe);
-        if(mzerodenomtagged !== null) {
-            this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, mzerodenomtagged.length), "Zero denominator in rational number");
-            this.recordLexTokenWData(this.jsStrPos + mzerodenomtagged.length, TokenStrings.NumberinoRational, mzerodenomtagged);
-            return true;
-        }
-
-        const mnumberino = this.trylex(Lexer._s_rationalNumberinoRe);
-        if(mnumberino !== null) {
-            this.recordLexTokenWData(this.jsStrPos + mnumberino.length, TokenStrings.NumberinoRational, mnumberino);
             return true;
         }
 
@@ -3818,7 +3794,7 @@ class Parser {
                 }
             }
         }
-        else if(tk === TokenStrings.NumberinoInt || tk === TokenStrings.NumberinoFloat || tk === TokenStrings.NumberinoRational) {
+        else if(tk === TokenStrings.NumberinoInt) {
             this.consumeToken();
             this.recordErrorGeneral(sinfo, "Un-annotated numeric literals are not supported");
             return new ErrorExpression(sinfo, undefined, undefined);
