@@ -305,6 +305,14 @@ namespace ᐸRuntimeᐳ
             
             return PosRBData<U, K>(this->color, this->bheight, this->dcount, result);
         }
+
+        T sum(T init) const
+        {
+            return std::accumulate(this->data.begin(), this->data.begin() + this->dcount, init, [](T a, T b) {
+                T::checkOverflowAddition(a, b, "List Sum", 0);
+                return a + b;
+            });
+        }
     };
 
     template<typename T, size_t K> class PosRBTreeLeaf;
@@ -1221,6 +1229,24 @@ private:
             }
         }
 
+        static T recsum(const PosRBNode<T, K>* curr, T init)
+        {
+            if(curr == nullptr) {
+                return init;
+            }
+
+            if(isLeafType(curr)) {
+                return curr->data.sum(init);
+            }
+            else {
+                T leftSum = recsum(reprGetLeft(curr), init);
+                T midSum = curr->data.sum(leftSum);
+                T rightSum = recsum(reprGetRight(curr), midSum);
+
+                return rightSum;
+            }
+        }
+
     public:
         int64_t size() const
         {
@@ -1305,6 +1331,11 @@ private:
         PosRBTree<U, K, UTreeID> mapIdx(Fn f) const
         {
             return PosRBTree<U, K, UTreeID>{recmapIdx<SafeSimpleFn, U, UTreeID, Fn>(this->root, 0, f)};
+        }
+
+        T sum(T zero) const
+        {
+            return recsum(this->root, zero);
         }
     };
 

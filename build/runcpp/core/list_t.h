@@ -676,7 +676,9 @@ namespace ᐸRuntimeᐳ
 
         T sum(T zero) const
         {
-            assert(!this->ulist.empty());
+            if(this->ulist.empty()) {
+                return zero;
+            }
 
             if(this->ulist.isInline()) {
                 auto ddbegin = this->ulist.inlinelist.data.cbegin();
@@ -688,7 +690,7 @@ namespace ᐸRuntimeᐳ
                 });
             }
             else {
-                assert(false); //Not implemented for postrees
+                return this->ulist.treelist.postree.sum(zero);
             }
         }
     };

@@ -118,11 +118,11 @@ namespace ᐸRuntimeᐳ
     void BSQONEmitter::emitFloat(XFloat f)
     {
         if(std::floor(f.value) != f.value) {
-            this->bufferMgr.writeNumberWFormat("%lgf", f.value);
+            this->bufferMgr.writeNumberWFormat("%.12lgf", f.value);
         }
         else {
             //force the decimal and a single trailing 0 for whole numbers
-            this->bufferMgr.writeNumberWFormat("%lg.0f", f.value);
+            this->bufferMgr.writeNumberWFormat("%.12lg.0f", f.value);
         }
     }
 
