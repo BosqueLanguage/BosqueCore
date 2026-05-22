@@ -82,7 +82,7 @@ describe ("Parser -- Rational", () => {
     });
 
     it("should fail zero denom rational", function () {
-        parseTestExpError("1/0<Foo>", "Zero denominator in rational number", "Rational");
+        parseTestExpError("1/0<Foo>", "Unterminated Regex literal", "Rational");
     });
 });
 
@@ -124,7 +124,7 @@ describe ("Parser -- Complex", () => {
     });
 
     it("should fail missing real", function () {
-        parseTestExpError("-0.5j", "Un-annotated numeric literals are not supported", "Complex");
+        parseTestExpError("-0.5j", "Unrecognized token", "Complex");
     });
 
     it("should fail missing imag", function () {

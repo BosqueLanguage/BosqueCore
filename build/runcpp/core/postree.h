@@ -20,9 +20,19 @@ namespace ᐸRuntimeᐳ
 {
     template <int64_t K>
     constexpr std::array<XNat, K> create_idx_range() {
-        std::array<XNat, K> arr{};
-        for (std::int64_t i = 0; i < K; ++i) {
+        std::array<XNat, K> arr;
+        for(int64_t i = 0; i < K; ++i) {
             arr[i] = XNat{i};
+        }
+        
+        return arr;
+    }
+
+    template <int64_t K>
+    std::array<XNat, K> create_idx_range_from(int64_t start) {
+        std::array<XNat, K> arr;
+        for(int64_t i = 0; i < K; ++i) {
+            arr[i] = XNat{i + start};
         }
         
         return arr;
@@ -49,6 +59,7 @@ namespace ᐸRuntimeᐳ
         constexpr PosRBData(const PosRBData& other) = default;
 
         constexpr PosRBData(RColor color, uint16_t bheight, const T& value) : color{color}, bheight{bheight}, dcount{1}, data{value} { ; }
+        constexpr PosRBData(RColor color, uint16_t bheight, int32_t dcount, const std::array<T, K>& data) : color{color}, bheight{bheight}, dcount{dcount}, data{data} { ; }
 
         constexpr static void zerofill(std::array<T, K>& data, size_t ecount)
         {
@@ -194,6 +205,12 @@ namespace ᐸRuntimeᐳ
             }
         }
 
+        PosRBData set(int64_t index, const T& value) const
+        {
+            assert((0 <= index) & (index < this->dcount));
+            return PosRBData(this->color, this->bheight, this->data.begin(), this->data.begin() + index, value, this->data.begin() + index + 1, this->data.begin() + this->dcount);
+        }
+
         PosRBData remove(int64_t index) const
         {
             assert((0 <= index) & (index < this->dcount));
@@ -232,6 +249,70 @@ namespace ᐸRuntimeᐳ
             return result;
         }
 #endif
+
+        template<bool SafeSimplePred, typename Pred>
+        bool allOf(Pred p) const
+        {
+            if constexpr (SafeSimplePred) {
+                return std::all_of(std::execution::unseq, this->data.begin(), this->data.begin() + this->dcount, p);
+            }
+            else {
+                auto ii = std::find_if_not(this->data.begin(), this->data.begin() + this->dcount, p);
+                return ii == (this->data.begin() + this->dcount);
+            }
+        }
+
+        template<bool SafeSimplePred, typename Pred>
+        bool someOf(Pred p) const
+        {
+            if constexpr (SafeSimplePred) {
+                return std::any_of(std::execution::unseq, this->data.begin(), this->data.begin() + this->dcount, p);
+            }
+            else {
+                auto ii = std::find_if(this->data.begin(), this->data.begin() + this->dcount, p);
+                return ii != (this->data.begin() + this->dcount);
+            }
+        }
+
+        template<bool SafeSimplePred, typename Pred>
+        bool noneOf(Pred p) const
+        {
+            if constexpr (SafeSimplePred) {
+                return std::none_of(std::execution::unseq, this->data.begin(), this->data.begin() + this->dcount, p);
+            }
+            else {
+                auto ii = std::find_if(this->data.begin(), this->data.begin() + this->dcount, p);
+                return ii == (this->data.begin() + this->dcount);
+            }
+        }
+
+        template<bool SafeSimpleFn, typename U, typename Fn>
+        PosRBData<U, K> map(Fn f) const
+        {
+            std::array<U, K> result{};
+            std::transform(this->data.begin(), this->data.begin() + this->dcount, result.begin(), f);
+            
+            return PosRBData<U, K>(this->color, this->bheight, this->dcount, result);
+        }
+
+        template<bool SafeSimpleFn, typename U, typename Fn>
+        PosRBData<U, K> mapIdx(int64_t sidx, Fn f) const
+        {
+            std::array<XNat, K> zipidx = create_idx_range_from<K>(sidx);
+
+            std::array<U, K> result{};
+            std::transform(this->data.begin(), this->data.begin() + this->dcount, zipidx.begin(), result.begin(), f);
+            
+            return PosRBData<U, K>(this->color, this->bheight, this->dcount, result);
+        }
+
+        T sum(T init) const
+        {
+            return std::accumulate(this->data.begin(), this->data.begin() + this->dcount, init, [](T a, T b) {
+                T::checkOverflowAddition(a, b, "List Sum", 0);
+                return a + b;
+            });
+        }
     };
 
     template<typename T, size_t K> class PosRBTreeLeaf;
@@ -975,6 +1056,197 @@ private:
             }
         }
 
+        static PosRBNode<T, K>* setrec(const PosRBNode<T, K>* curr, int64_t index, const T& value)
+        {
+            std::vector<std::pair<const PosRBNode<T, K>*, std::pair<bool, bool>>> path;
+            while(true) {
+                const PosRBNode<T, K>* l = reprGetLeft(curr);
+                int64_t lcount = reprGetCount(l);
+
+                if(index < lcount) {
+                    path.push_back(std::make_pair(curr, std::make_pair(true, false)));
+                    curr = l;
+                }
+                else if(index >= lcount + curr->data.dcount) {
+                    path.push_back(std::make_pair(curr, std::make_pair(false, true)));
+                    index -= (lcount + curr->data.dcount);
+                    curr = reprGetRight(curr);
+                }
+                else {
+                    break; //index is within the current node
+                }
+            }
+
+            //set the value at the specified index within the current node
+            PosRBNode<T, K>* nnode = copyNodeReplaceData(curr, curr->data.set(index, value));
+
+            //go back up the path and update each node in the path with the new value
+            while(!path.empty()) {
+                std::pair<const PosRBNode<T, K>*, std::pair<bool, bool>> pp = path.back();
+                path.pop_back();
+
+                if(pp.second.first) {
+                    // Update the left child
+                    nnode = mkcopynode(pp.first->data.color, nnode, reprGetRight(pp.first), pp.first->data);
+                }
+                else {
+                    // Update the right child
+                    nnode = mkcopynode(pp.first->data.color, reprGetLeft(pp.first), nnode, pp.first->data);
+                }
+            }
+
+            return nnode;
+        }
+
+        template<bool SafeSimplePred, typename Pred>
+        static bool recallOf(const PosRBNode<T, K>* curr, Pred p)
+        {
+            if(curr == nullptr) {
+                return true;
+            }
+
+            if(isLeafType(curr)) {
+                return curr->data.template allOf<SafeSimplePred, Pred>(p);
+            }
+            else {
+                bool allleft = recallOf<SafeSimplePred, Pred>(reprGetLeft(curr), p);
+                if(!allleft) {
+                    return false;
+                }
+
+                bool allmid = curr->data.template allOf<SafeSimplePred, Pred>(p);
+                if(!allmid) {
+                    return false;
+                }
+
+                bool allright = recallOf<SafeSimplePred, Pred>(reprGetRight(curr), p);
+                if(!allright) {
+                    return false;
+                }
+
+                return true;
+            }
+        }
+
+        template<bool SafeSimplePred, typename Pred>
+        static bool recnoneOf(const PosRBNode<T, K>* curr, Pred p)
+        {
+            if(curr == nullptr) {
+                return true;
+            }
+
+            if(isLeafType(curr)) {
+                return curr->data.template noneOf<SafeSimplePred, Pred>(p);
+            }
+            else {
+                bool noneleft = recnoneOf<SafeSimplePred, Pred>(reprGetLeft(curr), p);
+                if(!noneleft) {
+                    return false;
+                }
+
+                bool nonemid = curr->data.template noneOf<SafeSimplePred, Pred>(p);
+                if(!nonemid) {
+                    return false;
+                }
+
+                bool noneright = recnoneOf<SafeSimplePred, Pred>(reprGetRight(curr), p);
+                if(!noneright) {
+                    return false;
+                }
+
+                return true;
+            }
+        }
+
+        template<bool SafeSimplePred, typename Pred>
+        static bool recsomeOf(const PosRBNode<T, K>* curr, Pred p)
+        {
+            if(curr == nullptr) {
+                return false;
+            }
+
+            if(isLeafType(curr)) {
+                return curr->data.template someOf<SafeSimplePred, Pred>(p);
+            }
+            else {
+                bool someleft = recsomeOf<SafeSimplePred, Pred>(reprGetLeft(curr), p);
+                if(someleft) {
+                    return true;
+                }
+
+                bool somemid = curr->data.template someOf<SafeSimplePred, Pred>(p);
+                if(somemid) {
+                    return true;
+                }
+
+                bool someright = recsomeOf<SafeSimplePred, Pred>(reprGetRight(curr), p);
+                if(someright) {
+                    return true;
+                }
+
+                return false;
+            }
+        }
+
+        template<bool SafeSimpleFn, typename U, uint32_t UTreeID, typename Fn>
+        static PosRBNode<U, K>* recmap(const PosRBNode<T, K>* curr, Fn f)
+        {
+            if(curr == nullptr) {
+                return nullptr;
+            }
+
+            if(isLeafType(curr)) {
+                return PosRBTree<U, K, UTreeID>::mkcopynode(curr->data.color, nullptr, nullptr, curr->data.template map<SafeSimpleFn, U, Fn>(f));
+            }
+            else {
+                const PosRBNode<U, K>* nleft = recmap<SafeSimpleFn, U, UTreeID, Fn>(reprGetLeft(curr), f);
+                const PosRBData<U, K> ndata = curr->data.template map<SafeSimpleFn, U, Fn>(f);
+                const PosRBNode<U, K>* nright = recmap<SafeSimpleFn, U, UTreeID, Fn>(reprGetRight(curr), f);
+
+                return PosRBTree<U, K, UTreeID>::mkcopynode(curr->data.color, nleft, nright, ndata);
+            }
+        }
+
+        template<bool SafeSimpleFn, typename U, uint32_t UTreeID, typename Fn>
+        static PosRBNode<U, K>* recmapIdx(const PosRBNode<T, K>* curr, int64_t sidx, Fn f)
+        {
+            if(curr == nullptr) {
+                return nullptr;
+            }
+
+            if(isLeafType(curr)) {
+                return PosRBTree<U, K, UTreeID>::mkcopynode(curr->data.color, nullptr, nullptr, curr->data.template mapIdx<SafeSimpleFn, U, Fn>(sidx, f));
+            }
+            else {
+                const int64_t leftCount = reprGetCount(reprGetLeft(curr));
+                const int64_t midCount = curr->data.dcount;
+
+                const PosRBNode<U, K>* nleft = recmapIdx<SafeSimpleFn, U, UTreeID, Fn>(reprGetLeft(curr), sidx, f);
+                const PosRBData<U, K> ndata = curr->data.template mapIdx<SafeSimpleFn, U, Fn>(sidx + leftCount, f);
+                const PosRBNode<U, K>* nright = recmapIdx<SafeSimpleFn, U, UTreeID, Fn>(reprGetRight(curr), sidx + leftCount + midCount, f);
+                
+                return PosRBTree<U, K, UTreeID>::mkcopynode(curr->data.color, nleft, nright, ndata);
+            }
+        }
+
+        static T recsum(const PosRBNode<T, K>* curr, T init)
+        {
+            if(curr == nullptr) {
+                return init;
+            }
+
+            if(isLeafType(curr)) {
+                return curr->data.sum(init);
+            }
+            else {
+                T leftSum = recsum(reprGetLeft(curr), init);
+                T midSum = curr->data.sum(leftSum);
+                T rightSum = recsum(reprGetRight(curr), midSum);
+
+                return rightSum;
+            }
+        }
+
     public:
         int64_t size() const
         {
@@ -1021,6 +1293,49 @@ private:
 
             debugAssertInvariants(root, reprGetCount(this->root) + 1);
             return PosRBTree<T, K, TreeID>{root};
+        }
+
+        PosRBTree<T, K, TreeID> set(int64_t index, const T& value) const
+        {
+            PosRBNode<T, K>* root = setrec(this->root, index, value);
+
+            debugAssertInvariants(root, reprGetCount(this->root));
+            return PosRBTree<T, K, TreeID>{root};
+        }
+
+        template<bool SafeSimplePred, typename Pred>
+        XBool allof(const Pred& p) const
+        {
+            return XBool::from(recallOf<SafeSimplePred, Pred>(this->root, p));
+        }
+
+        template<bool SafeSimplePred, typename Pred>
+        XBool noneof(const Pred& p) const
+        {
+            return XBool::from(recnoneOf<SafeSimplePred, Pred>(this->root, p));
+        }
+
+        template<bool SafeSimplePred, typename Pred>
+        XBool someof(const Pred& p) const
+        {
+            return XBool::from(recsomeOf<SafeSimplePred, Pred>(this->root, p));
+        }
+
+        template<bool SafeSimpleFn, typename U, uint32_t UTreeID, typename Fn>
+        PosRBTree<U, K, UTreeID> map(Fn f) const
+        {
+            return PosRBTree<U, K, UTreeID>{recmap<SafeSimpleFn, U, UTreeID, Fn>(this->root, f)};
+        }
+
+        template<bool SafeSimpleFn, typename U, uint32_t UTreeID, typename Fn>
+        PosRBTree<U, K, UTreeID> mapIdx(Fn f) const
+        {
+            return PosRBTree<U, K, UTreeID>{recmapIdx<SafeSimpleFn, U, UTreeID, Fn>(this->root, 0, f)};
+        }
+
+        T sum(T zero) const
+        {
+            return recsum(this->root, zero);
         }
     };
 

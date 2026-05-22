@@ -1,9 +1,8 @@
+declare namespace Main;
 
 %%
 %%This is a bosque nbody implementation of https://benchmarksgame-team.pages.debian.net/benchmarksgame/performance/nbody.html.
 %%
-
-declare namespace Main;
 
 entity Position {
     field x: Float;
@@ -225,13 +224,19 @@ entity NBodySystem {
     }
 }
 
-public function main(): Float {
+public function main(iters: Nat): Float {
     var system = NBodySystem::create();
     let step = 0.01f;
 
-    system = system.advance(step);
-    system = system.advance(step);
-    system = system.advance(step);
+    if(iters > 0n) {
+        system = system.advance(step);
+    }
+    if(iters > 1n) {
+        system = system.advance(step);
+    }
+    if(iters > 2n) {
+        system = system.advance(step);
+    }
 
     return system.energy();
 

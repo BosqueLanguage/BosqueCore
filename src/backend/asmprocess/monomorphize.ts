@@ -79,7 +79,7 @@ class PendingNominalTypeDecl {
 }
 
 class ScopeUseFrame {
-    capturedVars: [string, TypeSignature, "outer" | "local" | "param"][] = [];
+    capturedVars: [string, TypeSignature, "outer" |  "local" | "param"][] = [];
     capturedLambdas: { pname: string, psigkey: string, rpos: "outer" | "local" | "param" }[] = [];
     capturedTemplateNames: string[] = [];
 
@@ -488,6 +488,19 @@ class Monomorphizer {
         this.callinstmap = ominvmap;
 
         const linfo = this.lambdaScopes.pop() as ScopeUseFrame;
+        if(this.lambdaScopes.length !== 0) {
+            const lcaptures = exp.lcaptures as { vname: string, vtype: TypeSignature, ocapture: "local" | "param" | "outer" }[];
+            const pscope = this.lambdaScopes[this.lambdaScopes.length - 1];
+
+            const nvcaptures = linfo.capturedVars.filter((cv) => lcaptures.some((lc) => lc.vname === cv[0] && lc.ocapture === "outer") && !pscope.capturedVars.some((ov) => ov[0] === cv[0]));
+            pscope.capturedVars.push(...nvcaptures);
+            
+            const nlcaptures = linfo.capturedLambdas.filter((lv) => lcaptures.some((lc) => lc.vname === lv.pname && lc.ocapture === "outer") && !pscope.capturedLambdas.some((ov) => ov.pname === lv.pname));
+            pscope.capturedLambdas.push(...nlcaptures);
+
+            pscope.capturedTemplateNames.push(...linfo.capturedTemplateNames);
+        }
+
         if(linfo.capturedTemplateNames.length === 0 && linfo.capturedLambdas.length === 0) {
             const psigkey = `fn_${exp.monomorphizedUID}`;
 
@@ -500,7 +513,7 @@ class Monomorphizer {
         }
         else {
             const tbinds = linfo.capturedTemplateNames.map((ctn) => (this.currentMapping as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(exp.sinfo, ctn)));
-            const psigkey = computeInvokeKeyForLambdaFunction(`fn_${exp.monomorphizedUID}`, tbinds, linfo.capturedLambdas);
+            const psigkey = computeInvokeKeyForLambdaFunction(`fn_${exp.monomorphizedUID}`, exp.sinfo.line, tbinds, linfo.capturedLambdas);
 
             let binds: TemplateNameMapper | undefined = undefined;
             if(tbinds.length !== 0) {
@@ -1942,6 +1955,9 @@ class Monomorphizer {
             }
         }
 
+        this.lambdamap = new Map<number, string>();
+        this.callinstmap = new Map<number, string>();
+
         //make sure all of the invariants on this typecheck
         this.instantiateInvariants(pdecl.type.invariants);
         this.instantiateValidates(pdecl.type.validates);
@@ -1959,12 +1975,15 @@ class Monomorphizer {
         const bbl = cnns.typebinds.get(pdecl.type.name) as TypeInstantiationInfo[];
 
         if(terms.length === 0) {
-            bbl.push(new TypeInstantiationInfo(pdecl.tkey, pdecl.tsig, undefined, new Map<string, InvokeInstantiationInfo[]>(), new Map<string, InvokeInstantiationInfo[]>()));
+            bbl.push(new TypeInstantiationInfo(pdecl.tkey, pdecl.tsig, undefined, new Map<string, InvokeInstantiationInfo[]>(), new Map<string, InvokeInstantiationInfo[]>(), this.lambdamap, this.callinstmap));
         }
         else {
-            bbl.push(new TypeInstantiationInfo(pdecl.tkey, pdecl.tsig, this.currentMapping as TemplateNameMapper, new Map<string, InvokeInstantiationInfo[]>(), new Map<string, InvokeInstantiationInfo[]>()));
+            bbl.push(new TypeInstantiationInfo(pdecl.tkey, pdecl.tsig, this.currentMapping as TemplateNameMapper, new Map<string, InvokeInstantiationInfo[]>(), new Map<string, InvokeInstantiationInfo[]>(), this.lambdamap, this.callinstmap));
             this.currentMapping = undefined;
         }
+
+        this.lambdamap = new Map<number, string>();
+        this.callinstmap = new Map<number, string>();
     }
 
     private instantiateEnumTypeDecl(pdecl: PendingNominalTypeDecl) {
@@ -2157,6 +2176,9 @@ class Monomorphizer {
 
         this.instantiateProvides(pdecl.type.provides);
 
+        this.lambdamap = new Map<number, string>();
+        this.callinstmap = new Map<number, string>();
+
         //make sure all of the invariants on this typecheck
         this.instantiateInvariants(pdecl.type.invariants);
         this.instantiateValidates(pdecl.type.validates);
@@ -2179,21 +2201,39 @@ class Monomorphizer {
         const bbl = cnns.typebinds.get(pdecl.type.name) as TypeInstantiationInfo[];
 
         if(tdecl.terms.length === 0) {
-            bbl.push(new TypeInstantiationInfo(pdecl.tkey, pdecl.tsig, undefined, new Map<string, InvokeInstantiationInfo[]>(), new Map<string, InvokeInstantiationInfo[]>()));
+            bbl.push(new TypeInstantiationInfo(pdecl.tkey, pdecl.tsig, undefined, new Map<string, InvokeInstantiationInfo[]>(), new Map<string, InvokeInstantiationInfo[]>(), this.lambdamap, this.callinstmap));
         }
         else {
-            bbl.push(new TypeInstantiationInfo(pdecl.tkey, pdecl.tsig, this.currentMapping as TemplateNameMapper, new Map<string, InvokeInstantiationInfo[]>(), new Map<string, InvokeInstantiationInfo[]>()));
+            bbl.push(new TypeInstantiationInfo(pdecl.tkey, pdecl.tsig, this.currentMapping as TemplateNameMapper, new Map<string, InvokeInstantiationInfo[]>(), new Map<string, InvokeInstantiationInfo[]>(), this.lambdamap, this.callinstmap));
             this.currentMapping = undefined;
         }
+
+        this.lambdamap = new Map<number, string>();
+        this.callinstmap = new Map<number, string>();
     }
 
-    private instantiateNamespaceConstDecls(cdecls: NamespaceConstDecl[]) {
+    private instantiateNamespaceConstDecls(ns: NamespaceDeclaration, cdecls: NamespaceConstDecl[]) {
+        this.instantiateNamespaceDeclaration(ns);
+
+        this.lambdamap = new Map<number, string>();
+        this.callinstmap = new Map<number, string>();
+
         for(let i = 0; i < cdecls.length; ++i) {
             const m = cdecls[i];
 
             this.instantiateTypeSignature(m.declaredType, this.currentMapping);
             this.instantiateExpression(m.value);
         }
+
+        this.lambdamap.forEach((value, key) => {
+            (this.currentNSInstantiation as NamespaceInstantiationInfo).lambdacons.set(key, value);
+        });
+        (this.currentNSInstantiation as NamespaceInstantiationInfo).monoinvids.forEach((value, key) => {
+            (this.currentNSInstantiation as NamespaceInstantiationInfo).monoinvids.set(key, value);
+        });
+
+        this.lambdamap = new Map<number, string>();
+        this.callinstmap = new Map<number, string>();
     }
 
     private instantiateNamespaceTypeDecl(ns: NamespaceDeclaration, pdecl: PendingNominalTypeDecl) {
@@ -2299,8 +2339,6 @@ class Monomorphizer {
         else {
             this.currentNSInstantiation = new NamespaceInstantiationInfo(decl.fullnamespace);
             this.instantiation.push(this.currentNSInstantiation);
-
-            this.instantiateNamespaceConstDecls(decl.consts);
         }
     }
 
@@ -2313,7 +2351,7 @@ class Monomorphizer {
     }
 
     private instantiateRootNamespaceDeclaration(decl: NamespaceDeclaration) {
-        this.instantiateNamespaceConstDecls(decl.consts);
+        this.instantiateNamespaceConstDecls(decl, decl.consts);
 
         for(let i = 0; i < decl.functions.length; ++i) {
             if(this.shouldInstantiateAsRootInvoke(decl.functions[i])) {

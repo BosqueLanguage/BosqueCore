@@ -50,4 +50,11 @@ describe ("Parser -- IfElse Statement", () => {
 
     it.todo("should parse if-else w/ passing params", function () {
     });
+
+    it("should parse if-elif-else", function () {
+        parseTestFunction("function main(x: Int): Int { if(x == 0i) { return 0i; } elif(x > 0i) { return 1i; } else { return -1i; } }", undefined);
+
+        parseTestFunctionError("function main(x: Int): Int { if(x == 0i) { return 0i; } else if(x > 0i) { return 1i; } else { return -1i; } }", 'Expected "{" but got "if" when parsing "block statement"');
+        parseTestFunctionError("function main(x: Int): Int { if(x == 0i) { return 0i; } elif(x > 0i) { return 1i; } }", 'Expected "else" but got "}" when parsing "if-elif-else statement"');
+    });
 });

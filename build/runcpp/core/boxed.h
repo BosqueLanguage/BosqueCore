@@ -94,10 +94,10 @@ namespace ᐸRuntimeᐳ
         constexpr BoxedUnion() : typeinfo{}, data{} { ; }
         constexpr BoxedUnion(const TypeInfo* ti, const U& d) : typeinfo{ti}, data{d} { ; }
         constexpr BoxedUnion(const BoxedUnion& other) = default;
-        
-        BoxedUnion(const TypeInfo* ti, const uint8_t* dbegin, const uint8_t* dend) : typeinfo{ti} 
+
+        constexpr BoxedUnion(const TypeInfo* ti, const uint8_t* dbegin, const uint8_t* dend) : typeinfo{ti} 
         { 
-            std::copy(dbegin, dend, reinterpret_cast<uint8_t*>(&this->data));
+            std::copy(dbegin, dend, this->data.getUP());
         }
 
         // Note -- inject and extract are generated for each use based on the generation union type (see strings for example)
@@ -109,12 +109,12 @@ namespace ᐸRuntimeᐳ
         constexpr XBool isNotSubtypeOf(const TypeInfo* ti) const { return ᐸRuntimeᐳ::isNotSubtypeOf(this->typeinfo, ti); }
 
         template<typename V>
-        BoxedUnion<V> convert() const 
+        constexpr BoxedUnion<V> convert() const 
         {
             static_assert(std::is_union_v<V>, "BoxedUnion convert requires a union type V");
             constexpr size_t copysize = std::min(sizeof(U), sizeof(V));
 
-            return BoxedUnion<V>(this->typeinfo, reinterpret_cast<const uint8_t*>(&this->data), reinterpret_cast<const uint8_t*>(&this->data) + copysize);
+            return BoxedUnion<V>(this->typeinfo, this->data.getUP(), this->data.getUP() + copysize);
         }
 
         template<typename T, size_t idx>

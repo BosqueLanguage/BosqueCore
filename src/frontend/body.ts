@@ -906,6 +906,7 @@ class ConstructorEListExpression extends ConstructorExpression {
 class ConstructorLambdaExpression extends Expression {
     readonly invoke: LambdaDecl;
     monomorphizedUID: number | undefined = undefined;
+    lcaptures: {vname: string, vtype: TypeSignature, ocapture: "outer" | "local" | "param"}[] | undefined = undefined;
 
     constructor(sinfo: SourceInfo, invoke: LambdaDecl) {
         super(ExpressionTag.ConstructorLambdaExpression, sinfo);
@@ -2502,7 +2503,7 @@ class IfElifElseStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        const ttcond = this.condflow.map((cf) => `$(${cf.cond.emit(true, fmt)}) ${cf.block.emit(fmt)}`);
+        const ttcond = this.condflow.map((cf) => `(${cf.cond.emit(true, fmt)}) ${cf.block.emit(fmt)}`);
         const ttelse = this.elseflow.emit(fmt);
 
         const iif = `if${ttcond[0]}`;

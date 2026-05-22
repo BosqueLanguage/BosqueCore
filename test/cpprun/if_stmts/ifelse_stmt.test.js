@@ -39,4 +39,8 @@ describe ("CPPExec -- ElseIf Statement", () => {
 
     it.todo("should exec if-else w/ passing params", function () {
     });
+
+    it("should exec simple if-elif-else", function () {
+        runTestSet("public function main(x: Int): Int { if(x == 0i) { return 0i; } elif(x > 0i) { return 1i; } else { return -1i; } }", [['0i', '0i'], ['1i', '1i'], ['-1i', '-1i']], []);
+    });
 });

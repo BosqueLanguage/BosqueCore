@@ -41,13 +41,24 @@ namespace ᐸRuntimeᐳ
 
     union ByteBufferTreeUnion
     {
+        void* upunning;
         ByteBufferEntry* buff;
         ByteBufferBlock* node;
 
-        constexpr ByteBufferTreeUnion() : buff{} { ; }
+        constexpr ByteBufferTreeUnion() : upunning{} { ; }
         constexpr ByteBufferTreeUnion(ByteBufferEntry* b) : buff{b} { ; }
         constexpr ByteBufferTreeUnion(ByteBufferBlock* n) : node{n} { ; }
         constexpr ByteBufferTreeUnion(const ByteBufferTreeUnion& other) = default;
+
+        constexpr ByteBufferTreeUnion& operator=(const ByteBufferTreeUnion& other)
+        {
+            if(this == &other) {
+                return *this;
+            }
+
+            this->upunning = other.upunning;
+            return *this;
+        }
     };
     using BufferTree = ᐸRuntimeᐳ::BoxedUnion<ByteBufferTreeUnion>;
 
@@ -166,8 +177,8 @@ namespace ᐸRuntimeᐳ
         constexpr XByteBuffer(const BufferTree& t, size_t b) : tree{t}, bytesize{b} { ; }
         constexpr XByteBuffer(const XByteBuffer& other) = default;
 
-        XByteBuffer(ByteBufferEntry* b, size_t size) : tree{ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ByteBufferTreeUnion>(&ᐸRuntimeᐳ::g_typeinfo_ByteBufferEntry, ᐸRuntimeᐳ::ByteBufferTreeUnion(b))}, bytesize{size} { ; }
-        XByteBuffer(ByteBufferBlock* n, size_t size) : tree{ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ByteBufferTreeUnion>(&ᐸRuntimeᐳ::g_typeinfo_ByteBufferBlock, ᐸRuntimeᐳ::ByteBufferTreeUnion(n))}, bytesize{size} { ; }
+        XByteBuffer(ByteBufferEntry* b, size_t size) : tree{ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ByteBufferTreeUnion>{&ᐸRuntimeᐳ::g_typeinfo_ByteBufferEntry, ᐸRuntimeᐳ::ByteBufferTreeUnion(b)}}, bytesize{size} { ; }
+        XByteBuffer(ByteBufferBlock* n, size_t size) : tree{ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ByteBufferTreeUnion>{&ᐸRuntimeᐳ::g_typeinfo_ByteBufferBlock, ᐸRuntimeᐳ::ByteBufferTreeUnion(n)}}, bytesize{size} { ; }
 
         constexpr size_t bytes() const { return this->bytesize; }
 

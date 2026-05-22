@@ -13,7 +13,8 @@ function LIST_T_INLINE_CAPACITY(elem_size: number): number {
 }
 
 function LIST_T_LEAF_CAPACITY(elem_size: number): number {
-    return Math.max(LIST_T_INLINE_CAPACITY(elem_size) * 4, 4);
+    //return Math.max(LIST_T_INLINE_CAPACITY(elem_size) * 4, 4);
+    return 8;
 }
 
 class VirtualInvokeInfo {
@@ -217,12 +218,21 @@ class TypeInfoManager {
         return `constexpr TypeInfo g_typeinfo_${tk} = { ${typeinfo.bsqtypeid}, ${typeinfo.bytesize}, ${typeinfo.slotcount}, LayoutTag::${layouttag}, BSQ_TYPEINFO_NO_ESLOT, ${typeinfo.ptrmask ?? "BSQ_PTR_MASK_LEAF"}, "${tk}", nullptr };`;
     }
 
+    private emitTypeAsEListSelfDescribing(tinfo: TypeInfo): string {
+        const entries = (tinfo.tsig as IREListTypeSignature).entries.map((ee) => this.emitTypeAsStd(ee.tkeystr));
+        return `std::tuple<${entries.join(", ")}>`;
+    }
+
     emitTypeAsParameter(tkey: string, isreftagged: boolean, islambda: boolean): string {
         if(islambda) {
             return "const " + TransformCPPNameManager.convertTypeKey(tkey) + "_ldata_&";
         }
         else {
             const typeinfo = this.getTypeInfo(tkey);
+
+            if(typeinfo.tsig instanceof IREListTypeSignature) {
+                return "const " + this.emitTypeAsEListSelfDescribing(typeinfo) + "&";
+            }
 
             const rtspec = (isreftagged ? "&" : "");
             if(typeinfo.tag === LayoutTag.Ref) {
@@ -246,6 +256,10 @@ class TypeInfoManager {
         else {
             const typeinfo = this.getTypeInfo(tkey);
 
+            if(typeinfo.tsig instanceof IREListTypeSignature) {
+                return this.emitTypeAsEListSelfDescribing(typeinfo);
+            }
+
             if(typeinfo.tag !== LayoutTag.Ref) {
                 return TransformCPPNameManager.convertTypeKey(tkey);
             }
@@ -258,6 +272,10 @@ class TypeInfoManager {
     emitTypeAsMemberField(tkey: string): string {
         const typeinfo = this.getTypeInfo(tkey);
 
+        if(typeinfo.tsig instanceof IREListTypeSignature) {
+            return this.emitTypeAsEListSelfDescribing(typeinfo);
+        }
+
         if(typeinfo.tag !== LayoutTag.Ref) {
             return TransformCPPNameManager.convertTypeKey(tkey);
         }
@@ -268,6 +286,10 @@ class TypeInfoManager {
 
     emitTypeAsStd(tkey: string): string {
         const typeinfo = this.getTypeInfo(tkey);
+
+        if(typeinfo.tsig instanceof IREListTypeSignature) {
+            return this.emitTypeAsEListSelfDescribing(typeinfo);
+        }
 
         if(typeinfo.tag !== LayoutTag.Ref) {
             return TransformCPPNameManager.convertTypeKey(tkey);
@@ -357,7 +379,8 @@ class TypeInfoManager {
             const mustref = this.isRecursiveTypeKey(tdecl.tkey, irasm);
             for(const fdecl of tdecl.saturatedBFieldInfo) {
                 if(this.isNominalRecursiveType(fdecl.ftype, irasm)) {
-                    if((fdecl instanceof IRConceptTypeDecl) || (fdecl instanceof IRDatatypeTypeDecl)) {
+                    const ftypedecl = irasm.alltypes.get(fdecl.ftype.tkeystr) as IRAbstractNominalTypeDecl;
+                    if((ftypedecl instanceof IRConceptTypeDecl) || (ftypedecl instanceof IRDatatypeTypeDecl)) {
                         totalbytesize += 16;
                         totalslotcount += 2;
                         eptrmask += "20";
@@ -382,6 +405,13 @@ class TypeInfoManager {
                         eptrmask += ftypeinfo.ptrmask || TypeInfoManager.computeValueMaskOfK(ftypeinfo.slotcount);
                     }
                 }
+            }
+
+            // If the entity has no fields, it should still have a size of 8 bytes and 1 slot
+            if(tdecl.saturatedBFieldInfo.length === 0) {
+                totalbytesize = 8;
+                totalslotcount = 1;
+                eptrmask = "0";
             }
 
             let ptrmask: string | undefined = undefined; 
@@ -432,12 +462,13 @@ class TypeInfoManager {
         else {
             assert((tdecl instanceof IRConceptTypeDecl) || (tdecl instanceof IRDatatypeTypeDecl), `TypeInfoManager::processInfoGenerationForConcept - Unsupported concept type declaration for key ${tdecl.tkey}`);
 
-            let totalbytesize = 0;
-            let totalslotcount = 0;
+            // If the concept has no subtypes, it should still have a size of 8 bytes and 1 slot
+            let totalbytesize = 8;
+            let totalslotcount = 1;
 
             const subtypes = irasm.concretesubtypes.get(tdecl.tkey) as IRTypeSignature[];
             for(const subtt of subtypes) {
-              if(this.isNominalRecursiveType(subtt, irasm)) {
+                if(this.isNominalRecursiveType(subtt, irasm)) {
                     totalbytesize = Math.max(totalbytesize, 8);
                     totalslotcount = Math.max(totalslotcount, 1);
                 }
@@ -461,6 +492,52 @@ class TypeInfoManager {
 
             return this.getTypeInfo(tdecl.tkey);
         }
+    }
+
+    private processInfoGenerationForElist(ttype: IREListTypeSignature, irasm: IRAssembly): TypeInfo {
+        let totalbytesize = 0;
+        let totalslotcount = 0;
+        let eptrmask = "";
+
+        for(const edecl of ttype.entries) {
+            if(this.isNominalRecursiveType(edecl, irasm)) {
+                const ftypedecl = irasm.alltypes.get(edecl.tkeystr) as IRAbstractNominalTypeDecl;
+                if((ftypedecl instanceof IRConceptTypeDecl) || (ftypedecl instanceof IRDatatypeTypeDecl)) {
+                    totalbytesize += 16;
+                    totalslotcount += 2;
+                    eptrmask += "20";
+                }
+                else {
+                    totalbytesize += 8;
+                    totalslotcount += 1;
+                    eptrmask += "1";
+                }
+            }
+            else {
+                const ftypeinfo = this.processInfoGenerationForType(edecl, irasm);
+
+                if(ftypeinfo.tag === LayoutTag.Ref) {
+                    totalbytesize += 8;
+                    totalslotcount += 1;
+                    eptrmask += "1";
+                }
+                else {
+                    totalbytesize += ftypeinfo.bytesize;
+                    totalslotcount += ftypeinfo.slotcount;
+                    eptrmask += ftypeinfo.ptrmask || TypeInfoManager.computeValueMaskOfK(ftypeinfo.slotcount);
+                }
+            }
+        }
+
+        let ptrmask: string | undefined = undefined; 
+        if(/[1-4]/.test(eptrmask)) {
+            ptrmask = eptrmask;
+        }
+
+        const ttid = this.typeInfoMap.size;
+        this.addTypeInfo(ttype.tkeystr, new TypeInfo(ttype.tkeystr, ttype, ttid, totalbytesize, totalslotcount, LayoutTag.Value, ptrmask));
+
+        return this.getTypeInfo(ttype.tkeystr);
     }
 
     private processInfoGenerationForFormat(ttype: IRFormatTypeSignature, irasm: IRAssembly): TypeInfo {
@@ -488,7 +565,7 @@ class TypeInfoManager {
             assert(!(ttype instanceof IRVoidTypeSignature), "Don't think we should ever be doing this...");
 
             if(ttype instanceof IREListTypeSignature) {
-                assert(false, `TypeInfoManager::processInfoGenerationForType - Unsupported elist type signature for key ${ttype.tkeystr}`);
+                return this.processInfoGenerationForElist(ttype, irasm);
             }
             else if(ttype instanceof IRDashResultTypeSignature) {
                 assert(false, `TypeInfoManager::processInfoGenerationForType - Unsupported dash result type signature for key ${ttype.tkeystr}`);

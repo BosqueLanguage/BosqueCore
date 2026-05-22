@@ -195,35 +195,22 @@ function flowit(x: Option<Nat>): Nat {
 
 flowit(none)      %%0n
 flowit(some(5n))  %%15n
-
-function restrict(x: Option<Nat>): Nat {
-    if(x)@@none {
-        return 0n;
-    }
-
-    %%x is a Nat here as asserted by test and type inference
-    return x + 10n;
-}
-
-restrict(none)      %%0n
-restrict(some(5n))  %%15n
 ```
 
 **(Algebraic Data Types)++**
 ```
-datatype BoolOp
-of
-| Const { val: Bool }
-| NotOp { arg: BoolOp }
-| AndOp { larg: BoolOp, rarg: BoolOp }
-| OrOp { larg: BoolOp, rarg: BoolOp }
+datatype BoolOp of
+    Const { val: Bool }
+    NotOp { arg: BoolOp }
+    AndOp { larg: BoolOp, rarg: BoolOp }
+    OrOp { larg: BoolOp, rarg: BoolOp }
 & {
     recursive method evaluate(): Bool {
-        match(this)@ {
-            | Const  => { return $this.val; }
-            | NotOp => { return !$this.arg.evaluate[recursive](); }
-            | AndOp => { return $this.larg.evaluate[recursive]() && $this.rarg.evaluate[recursive](); }
-            | OrOp  => { return $this.larg.evaluate[recursive]() || $this.rarg.evaluate[recursive](); }
+        match(this) {
+            Const  => { return $this.val; }
+            NotOp => { return !$this.arg.evaluate[recursive](); }
+            AndOp => { return $this.larg.evaluate[recursive]() && $this.rarg.evaluate[recursive](); }
+            OrOp  => { return $this.larg.evaluate[recursive]() || $this.rarg.evaluate[recursive](); }
         }
     } 
 }
@@ -234,21 +221,21 @@ AndOp{larg=Const{true}, rarg=Const{false}}.evaluate[recursive]() %%false
 
 **Validated Strings:**
 ```
-type Zipcode = String of /[0-9]{5}("-"[0-9]{4})?/;
-type CSSPt = String of /[0-9]+"pt"/;
+type Zipcode = CString of /[0-9]{5}('-'[0-9]{4})?/c;
+type CSSPt = CString of /[0-9]+'pt'/c;
 
 function is3pt(s1: CSSPt): Bool {
-    return s1.value === "3pt";
+    return s1.value === '3pt';
 }
 
-"1234"<Zipcode> %%type error (does not match regex)
-"3px"<CSSPt>    %%type error (does not match regex)
+'1234'<Zipcode> %%type error (does not match regex)
+'3px'<CSSPt>    %%type error (does not match regex)
 
-is3pt("12")               %%type error not a CSSPt
-is3pt("98052"<Zipcode>)   %%type error not a CSSPt
+is3pt('12')               %%type error not a CSSPt
+is3pt('98052'<Zipcode>)   %%type error not a CSSPt
 
-is3pt("3pt"<CSSPt>) %%true
-is3pt("4pt"<CSSPt>) %%false
+is3pt('3pt'<CSSPt>) %%true
+is3pt('4pt'<CSSPt>) %%false
 ```
 
 # Installing the Bosque Language (Currently Development Only)

@@ -57,17 +57,19 @@ class TypeInstantiationInfo {
     readonly functionbinds: Map<string, InvokeInstantiationInfo[]>;
     readonly methodbinds: Map<string, InvokeInstantiationInfo[]>;
 
-    constructor(tkey: string, tsig: TypeSignature, binds: TemplateNameMapper | undefined, functionbinds: Map<string, InvokeInstantiationInfo[]>, methodbinds: Map<string, InvokeInstantiationInfo[]>) {
+    //For the implicit invokes that happen in const declarations
+    readonly lambdacons: Map<number, string>; //string corresponds to a lambda instantation info
+    readonly monoinvids: Map<number, string>;
+
+    constructor(tkey: string, tsig: TypeSignature, binds: TemplateNameMapper | undefined, functionbinds: Map<string, InvokeInstantiationInfo[]>, methodbinds: Map<string, InvokeInstantiationInfo[]>, lambdacons: Map<number, string>, monoinvids: Map<number, string>) {
         this.tkey = tkey;
         this.tsig = tsig;
         this.binds = binds;
 
         this.functionbinds = functionbinds;
         this.methodbinds = methodbinds;
-    }
-
-    static createNoTemplateInfo(tkey: string, tsig: TypeSignature, functionbinds: Map<string, InvokeInstantiationInfo[]>, methodbinds: Map<string, InvokeInstantiationInfo[]>): TypeInstantiationInfo {
-        return new TypeInstantiationInfo(tkey, tsig, undefined, functionbinds, methodbinds);
+        this.lambdacons = lambdacons;
+        this.monoinvids = monoinvids;
     }
 }
 
@@ -79,6 +81,10 @@ class NamespaceInstantiationInfo {
 
     readonly elists: Map<string, EListTypeSignature>;
     readonly lambdas: Map<string, LambdaInstantiationInfo>;
+
+    //For the implicit invokes that happen in const declarations
+    readonly lambdacons: Map<number, string> = new Map<number, string>(); //string corresponds to a lambda instantation info
+    readonly monoinvids: Map<number, string> = new Map<number, string>();
 
     constructor(ns: FullyQualifiedNamespace) {
         this.ns = ns;
@@ -121,8 +127,8 @@ function computeInvokeKeyForTypeMethod(rcvrtype: TypeSignature, mdecl: MethodDec
     return `${rcvrtype.tkeystr}@${mdecl.name}${rti}${computeTBindsKey(terms)}${computeLambdaKey(lambdas)}`;
 }
 
-function computeInvokeKeyForLambdaFunction(basefn: string, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]): string {
-    return `${basefn}${computeTBindsKey(terms)}${computeLambdaKey(lambdas)}`;
+function computeInvokeKeyForLambdaFunction(basefn: string, line: number, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]): string {
+    return `${basefn}_${line}${computeTBindsKey(terms)}${computeLambdaKey(lambdas)}`;
 }
 
 export {

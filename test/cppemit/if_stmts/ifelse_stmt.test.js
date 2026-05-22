@@ -55,4 +55,8 @@ describe ("CPPEmit -- ElseIf Statement", () => {
 
     it.todo("should emit if-else w/ passing params", function () {
     });
+
+    it("should emit simple if-elif-else", function () {
+        checkTestEmitMainFunction("public function main(x: Int): Int { if(x == 0i) { return 0i; } elif(x > 0i) { return 1i; } else { return -1i; } }", 'Int Mainᕒmain(Int x) { if(x == 0_i) { return 0_i; } else { if(x > 0_i) { return 1_i; } else { return -1_i; } } }');
+    });
 });

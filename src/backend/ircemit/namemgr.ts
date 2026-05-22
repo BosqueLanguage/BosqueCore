@@ -28,8 +28,8 @@ class TransformCPPNameManager {
             .replace(/ *>/g, "ᐳ")
             .replace(/\[ */g, "ᑅ")
             .replace(/\] */g, "ᑀ")
-            .replace(/\(\| */g, "ᐸRuntimeᐳ::EList<")
-            .replace(/ *\|\)/g, ">");
+            .replace(/\(\| */g, (s_BSQ_tag + "EListᐸ"))
+            .replace(/ *\|\)/g, "ᐳ");
 
         if(bb.startsWith("lambda_")) {
             return "lambda_" + s_BSQ_tag + bb.slice(6);

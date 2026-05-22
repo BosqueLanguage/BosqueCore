@@ -41,12 +41,22 @@ __internal __typedeclable __keycomparable __numeric entity Int {
 #endif %% STRIPPED_CORE
 }
 
-%** Primitive big-integer value. **%
+%** Primitive big-natural number value. **%
 __internal __typedeclable __keycomparable __numeric entity ChkNat {
+    #if STRIPPED_CORE
+#else
+    const zero: ChkNat = 0N;
+    const one: ChkNat = 1N;
+#endif %% STRIPPED_CORE
 }
 
-%** Primitive big-integer value. **%
+%** Primitive big-integer number value. **%
 __internal __typedeclable __keycomparable __numeric entity ChkInt {
+    #if STRIPPED_CORE
+#else
+    const zero: ChkInt = 0I;
+    const one: ChkInt = 1I;
+#endif %% STRIPPED_CORE
 }
 
 %** Primitive rational value. **%
@@ -59,6 +69,19 @@ __internal __typedeclable __numeric entity Float {
 #else
     const zero: Float = 0.0f;
     const one: Float = 1.0f;
+
+    const pi: Float = 3.1415926535897931f;
+    const e: Float = 2.7182818284590451f;
+
+    function square(x: Float): Float {
+        return x * x;
+    }
+
+    function sqrt(x: Float): Float
+        requires x >= 0.0f;
+    {
+        return NumericOps::s_floatSqrt(x);
+    }
 #endif %% STRIPPED_CORE
 }
 

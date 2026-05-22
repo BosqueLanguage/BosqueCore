@@ -62,6 +62,12 @@ __internal entity List<T> {
         return ListOps::s_list_insert<T>(this, i, v);
     }
 
+    method set(i: Nat, v: T): List<T>
+        requires i < this.size();
+    {
+        return ListOps::s_list_set<T>(this, i, v);
+    }
+
     recursive? method allOf(p: recursive? pred(T) -> Bool): Bool {
         if(ListOps::s_list_empty<T>(this)) {
             return true;
@@ -106,5 +112,14 @@ __internal entity List<T> {
             return ListOps::s_list_mapidx[recursive?]<T, U>(this, f);
         }
     }    
+    
+    method {when T: numeric} sum(): T {
+        if(ListOps::s_list_empty<T>(this)) {
+            return T::zero;
+        }
+        else {
+            return ListOps::s_list_sum<T>(this, T::zero);
+        }
+    }
 #endif %% STRIPPED_CORE 
 }
