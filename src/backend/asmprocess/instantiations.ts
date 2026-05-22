@@ -127,8 +127,8 @@ function computeInvokeKeyForTypeMethod(rcvrtype: TypeSignature, mdecl: MethodDec
     return `${rcvrtype.tkeystr}@${mdecl.name}${rti}${computeTBindsKey(terms)}${computeLambdaKey(lambdas)}`;
 }
 
-function computeInvokeKeyForLambdaFunction(basefn: string, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]): string {
-    return `${basefn}${computeTBindsKey(terms)}${computeLambdaKey(lambdas)}`;
+function computeInvokeKeyForLambdaFunction(basefn: string, line: number, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]): string {
+    return `${basefn}_${line}${computeTBindsKey(terms)}${computeLambdaKey(lambdas)}`;
 }
 
 export {

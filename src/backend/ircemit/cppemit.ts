@@ -2255,11 +2255,13 @@ class CPPEmitter {
         });
 
         const declunion = `union ${uctname} {\n` +
-        `    std::array<uint8_t, ${this.typeInfoManager.getTypeInfo(tdecl.tkey).bytesize}> upunning;\n` +
+        `    std::array<uint8_t, ${this.typeInfoManager.getTypeInfo(tdecl.tkey).bytesize - 8}> upunning;\n` +
         `${uopts.join("\n")}\n` +
         `    constexpr ${uctname}() : upunning{} { ; };\n` +
         `    constexpr ${uctname}(const ${uctname}& other) = default;\n` +
         `    constexpr ${uctname}& operator=(const ${uctname}& other) { if(this == &other) { return *this; } this->upunning = other.upunning; return *this; }\n` +
+        `    constexpr const uint8_t* getUP() const { return this->upunning.data(); }` +
+        `    constexpr uint8_t* getUP() { return this->upunning.data(); }` +
         `${ucons.join("\n")}\n` +
         `};`;
 

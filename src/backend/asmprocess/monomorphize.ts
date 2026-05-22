@@ -488,6 +488,18 @@ class Monomorphizer {
         this.callinstmap = ominvmap;
 
         const linfo = this.lambdaScopes.pop() as ScopeUseFrame;
+        if(this.lambdaScopes.length !== 0) {
+            const pscope = this.lambdaScopes[this.lambdaScopes.length - 1];
+
+            const nvcaptures = linfo.capturedVars.filter((cv) => cv[2] === "outer" && pscope.capturedVars.find((ov) => ov[0] === cv[0]) === undefined);
+            pscope.capturedVars.push(...nvcaptures);
+
+            const nlcaptures = linfo.capturedLambdas.filter((lv) => lv.rpos === "outer" && pscope.capturedLambdas.find((ov) => ov.pname === lv.pname) === undefined);
+            pscope.capturedLambdas.push(...nlcaptures);
+
+            pscope.capturedTemplateNames.push(...linfo.capturedTemplateNames);
+        }
+
         if(linfo.capturedTemplateNames.length === 0 && linfo.capturedLambdas.length === 0) {
             const psigkey = `fn_${exp.monomorphizedUID}`;
 
@@ -500,7 +512,7 @@ class Monomorphizer {
         }
         else {
             const tbinds = linfo.capturedTemplateNames.map((ctn) => (this.currentMapping as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(exp.sinfo, ctn)));
-            const psigkey = computeInvokeKeyForLambdaFunction(`fn_${exp.monomorphizedUID}`, tbinds, linfo.capturedLambdas);
+            const psigkey = computeInvokeKeyForLambdaFunction(`fn_${exp.monomorphizedUID}`, exp.sinfo.line, tbinds, linfo.capturedLambdas);
 
             let binds: TemplateNameMapper | undefined = undefined;
             if(tbinds.length !== 0) {
