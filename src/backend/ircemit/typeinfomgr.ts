@@ -407,6 +407,13 @@ class TypeInfoManager {
                 }
             }
 
+            // If the entity has no fields, it should still have a size of 8 bytes and 1 slot
+            if(tdecl.saturatedBFieldInfo.length === 0) {
+                totalbytesize = 8;
+                totalslotcount = 1;
+                eptrmask = "0";
+            }
+
             let ptrmask: string | undefined = undefined; 
             if(/[1-4]/.test(eptrmask)) {
                 ptrmask = eptrmask;
@@ -455,12 +462,13 @@ class TypeInfoManager {
         else {
             assert((tdecl instanceof IRConceptTypeDecl) || (tdecl instanceof IRDatatypeTypeDecl), `TypeInfoManager::processInfoGenerationForConcept - Unsupported concept type declaration for key ${tdecl.tkey}`);
 
-            let totalbytesize = 0;
-            let totalslotcount = 0;
+            // If the concept has no subtypes, it should still have a size of 8 bytes and 1 slot
+            let totalbytesize = 8;
+            let totalslotcount = 1;
 
             const subtypes = irasm.concretesubtypes.get(tdecl.tkey) as IRTypeSignature[];
             for(const subtt of subtypes) {
-              if(this.isNominalRecursiveType(subtt, irasm)) {
+                if(this.isNominalRecursiveType(subtt, irasm)) {
                     totalbytesize = Math.max(totalbytesize, 8);
                     totalslotcount = Math.max(totalslotcount, 1);
                 }

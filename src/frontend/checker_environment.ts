@@ -338,7 +338,9 @@ class TypeEnvironment {
             return undefined;
         }
 
-        this.lcaptures.push({vname: pcapture.srcname, vtype: pcapture.decltype});
+        if(!this.lcaptures.some((c) => c.vname === pcapture.srcname)) {
+            this.lcaptures.push({vname: pcapture.srcname, vtype: pcapture.decltype});
+        }
         return pcapture;
     }
 

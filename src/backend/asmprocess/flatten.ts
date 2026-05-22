@@ -1229,11 +1229,13 @@ class ASMToIRConverter {
 
         const iidecl = (this.currentNamespaceInstantiation as NamespaceInstantiationInfo).lambdas.get(lptype.tkeystr) as LambdaInstantiationInfo;
         
+        const lcaptures = exp.lcaptures as { vname: string, vtype: TypeSignature, ocapture: "local" | "param" | "outer" }[];
         const vexps = iidecl.capturedVars.map((vv) => {
-            if(vv[2] === "outer") {
+            const ccap = lcaptures.find((lc) => lc.vname === vv[0]) as { vname: string, vtype: TypeSignature, ocapture: "local" | "param" | "outer" };
+            if(ccap.ocapture === "outer") {
                 return new IRAccessCapturedVariableExpression(vv[0]);
             }
-            else if(vv[2] === "param") {
+            else if(ccap.ocapture === "param") {
                 return new IRAccessParameterVariableExpression(vv[0]);
             }
             else {
@@ -1241,10 +1243,11 @@ class ASMToIRConverter {
             }
         });
         const lexps = iidecl.capturedLambdas.map((vv) => {
-            if(vv.rpos === "outer") {
+            const ccap = lcaptures.find((lc) => lc.vname === vv.pname) as { vname: string, vtype: TypeSignature, ocapture: "local" | "param" | "outer" };
+            if(ccap.ocapture === "outer") {
                 return new IRAccessCapturedVariableExpression(vv.pname);
             }
-            else if(vv.rpos === "param") {
+            else if(ccap.ocapture === "param") {
                 return new IRAccessParameterVariableExpression(vv.pname);
             }
             else {

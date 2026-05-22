@@ -489,12 +489,13 @@ class Monomorphizer {
 
         const linfo = this.lambdaScopes.pop() as ScopeUseFrame;
         if(this.lambdaScopes.length !== 0) {
+            const lcaptures = exp.lcaptures as { vname: string, vtype: TypeSignature, ocapture: "local" | "param" | "outer" }[];
             const pscope = this.lambdaScopes[this.lambdaScopes.length - 1];
 
-            const nvcaptures = linfo.capturedVars.filter((cv) => cv[2] === "outer" && pscope.capturedVars.find((ov) => ov[0] === cv[0]) === undefined);
+            const nvcaptures = linfo.capturedVars.filter((cv) => lcaptures.some((lc) => lc.vname === cv[0] && lc.ocapture === "outer") && !pscope.capturedVars.some((ov) => ov[0] === cv[0]));
             pscope.capturedVars.push(...nvcaptures);
             
-            const nlcaptures = linfo.capturedLambdas.filter((lv) => lv.rpos === "outer" && pscope.capturedLambdas.find((ov) => ov.pname === lv.pname) === undefined);
+            const nlcaptures = linfo.capturedLambdas.filter((lv) => lcaptures.some((lc) => lc.vname === lv.pname && lc.ocapture === "outer") && !pscope.capturedLambdas.some((ov) => ov.pname === lv.pname));
             pscope.capturedLambdas.push(...nlcaptures);
 
             pscope.capturedTemplateNames.push(...linfo.capturedTemplateNames);

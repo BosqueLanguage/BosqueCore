@@ -2099,7 +2099,7 @@ class CPPEmitter {
         });
         const tclass = `class ${ctname} {\n` +
             `public:\n` +
-            `${fdecllist.join("    \n")}\n` +
+            (tdecl.saturatedBFieldInfo.length !== 0 ? `${fdecllist.join("    \n")}\n` : "    uint64_t padding; // Special case: no fields\n") +
             `    //All constructor and assignment defaults\n` +
             `};`;
 
