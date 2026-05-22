@@ -2237,6 +2237,14 @@ class TypeChecker {
             const lenv = TypeEnvironment.createInitialLambdaEnv(rtype, ireturn, args, env);
             this.checkBodyImplementation(lenv, exp.invoke.body, params);
             
+            //note what escapes here and also resolve upwards
+            exp.lcaptures = lenv.lcaptures.map((c) => {
+                return { vname: c.vname, vtype: c.vtype, ocapture: lenv.resolveOCaptureInfoFromSrcName(c.vname) };
+            });
+            for(let i = 0; i < exp.lcaptures.length; ++i) {
+                env.resolveLambdaCaptureVarInfoFromSrcName(exp.lcaptures[i].vname);
+            }
+
             exp.monomorphizedUID = this.lambdaCtr++;
             return exp.setType(ltype);
         }

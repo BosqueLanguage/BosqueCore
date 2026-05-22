@@ -79,7 +79,7 @@ class PendingNominalTypeDecl {
 }
 
 class ScopeUseFrame {
-    capturedVars: [string, TypeSignature, "outer" | "local" | "param"][] = [];
+    capturedVars: [string, TypeSignature, "outer" |  "local" | "param"][] = [];
     capturedLambdas: { pname: string, psigkey: string, rpos: "outer" | "local" | "param" }[] = [];
     capturedTemplateNames: string[] = [];
 
@@ -492,13 +492,8 @@ class Monomorphizer {
             const pscope = this.lambdaScopes[this.lambdaScopes.length - 1];
 
             const nvcaptures = linfo.capturedVars.filter((cv) => cv[2] === "outer" && pscope.capturedVars.find((ov) => ov[0] === cv[0]) === undefined);
-            for(let i = 0; i < nvcaptures.length; ++i) {
-                const cc = nvcaptures[i];
-
-                const nc = [cc[0], cc[1], cscope];
-                pscope.capturedVars.push(nc);
-            }
-
+            pscope.capturedVars.push(...nvcaptures);
+            
             const nlcaptures = linfo.capturedLambdas.filter((lv) => lv.rpos === "outer" && pscope.capturedLambdas.find((ov) => ov.pname === lv.pname) === undefined);
             pscope.capturedLambdas.push(...nlcaptures);
 
