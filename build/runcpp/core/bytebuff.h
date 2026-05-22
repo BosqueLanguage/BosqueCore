@@ -41,13 +41,24 @@ namespace ᐸRuntimeᐳ
 
     union ByteBufferTreeUnion
     {
+        void* upunning;
         ByteBufferEntry* buff;
         ByteBufferBlock* node;
 
-        constexpr ByteBufferTreeUnion() : buff{} { ; }
+        constexpr ByteBufferTreeUnion() : upunning{} { ; }
         constexpr ByteBufferTreeUnion(ByteBufferEntry* b) : buff{b} { ; }
         constexpr ByteBufferTreeUnion(ByteBufferBlock* n) : node{n} { ; }
         constexpr ByteBufferTreeUnion(const ByteBufferTreeUnion& other) = default;
+
+        constexpr ByteBufferTreeUnion& operator=(const ByteBufferTreeUnion& other)
+        {
+            if(this == &other) {
+                return *this;
+            }
+
+            this->upunning = other.upunning;
+            return *this;
+        }
     };
     using BufferTree = ᐸRuntimeᐳ::BoxedUnion<ByteBufferTreeUnion>;
 

@@ -177,15 +177,18 @@ namespace ᐸRuntimeᐳ
     template<typename T, uint32_t TYPE_ID_POS_TREE_T>
     union ListTUnion
     {
-        //empty list is inlinelist
+        static_assert(sizeof(ListTInlineContent<T>) >= sizeof(ListTTreeContent<T, TYPE_ID_POS_TREE_T>));
+
+        //empty list is inlinelist, upunning type type punning for assignment and default initialization
+        std::array<uint8_t, sizeof(ListTInlineContent<T>)> upunning;
         ListTInlineContent<T> inlinelist;
         ListTTreeContent<T, TYPE_ID_POS_TREE_T> treelist;
 
-        constexpr ListTUnion() : inlinelist{} {}
+        constexpr ListTUnion() : upunning{} { ; }
         constexpr ListTUnion(const ListTUnion& other) = default;
 
-        constexpr ListTUnion(const ListTInlineContent<T>& c) : inlinelist{c} {}
-        constexpr ListTUnion(const ListTTreeContent<T, TYPE_ID_POS_TREE_T>& c) : treelist{c} {}
+        constexpr ListTUnion(const ListTInlineContent<T>& c) : inlinelist{c} { ; }
+        constexpr ListTUnion(const ListTTreeContent<T, TYPE_ID_POS_TREE_T>& c) : treelist{c} { ; }
 
         constexpr bool empty() const { return this->inlinelist.empty(); }
 
@@ -199,13 +202,7 @@ namespace ᐸRuntimeᐳ
                 return *this;
             }
 
-            if(other.isInline()) {
-                this->inlinelist = other.inlinelist;
-            }
-            else {
-                this->treelist = other.treelist;
-            }
-
+            this->upunning = other.upunning;
             return *this;
         }
     };

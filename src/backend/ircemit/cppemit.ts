@@ -2254,10 +2254,12 @@ class CPPEmitter {
             return `    constexpr ${uctname}(${argtype} v) : ${umember}{v} { }`;
         });
 
-        const declunion = `union ${ctname}${"ᐤ"}Union {\n` +
+        const declunion = `union ${uctname} {\n` +
+        `    std::array<uint8_t, ${this.typeInfoManager.getTypeInfo(tdecl.tkey).bytesize}> upunning;\n` +
         `${uopts.join("\n")}\n` +
-        `    constexpr ${uctname}() {};\n` +
+        `    constexpr ${uctname}() : upunning{} { ; };\n` +
         `    constexpr ${uctname}(const ${uctname}& other) = default;\n` +
+        `    constexpr ${uctname}& operator=(const ${uctname}& other) { if(this == &other) { return *this; } this->upunning = other.upunning; return *this; }\n` +
         `${ucons.join("\n")}\n` +
         `};`;
 

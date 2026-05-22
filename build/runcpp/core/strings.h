@@ -99,11 +99,14 @@ namespace ᐸRuntimeᐳ
 
     union CStringUnion
     {
-        //empty cstring is inlinecstr
+        static_assert(sizeof(CStrRootInlineContent) >= sizeof(CStrRootTreeContent));
+
+        //empty cstring is inlinecstr, upunning type type punning for assignment and default initialization
+        std::array<uint8_t, sizeof(CStrRootInlineContent)> upunning;
         CStrRootInlineContent inlinecstr;
         CStrRootTreeContent treecstr;
 
-        constexpr CStringUnion() : inlinecstr{} { ; }
+        constexpr CStringUnion() : upunning{} { ; }
         constexpr CStringUnion(const CStringUnion& other) = default;
         constexpr CStringUnion(const CStrRootInlineContent& c) : inlinecstr{c} { ; }
         constexpr CStringUnion(const CStrRootTreeContent& c) : treecstr{c} { ; }
@@ -115,17 +118,11 @@ namespace ᐸRuntimeᐳ
 
         constexpr CStringUnion& operator=(const CStringUnion& other)
         {
-            if (this == &other) {
+            if(this == &other) {
                 return *this;
             }
 
-            if(other.isInline()) {
-                this->inlinecstr = other.inlinecstr;
-            }
-            else {
-                this->treecstr = other.treecstr;
-            }
-            
+            this->upunning = other.upunning;
             return *this;
         }
     };
@@ -522,19 +519,22 @@ namespace ᐸRuntimeᐳ
 
     union StringUnion
     {
-        //empty string is inlinesstr
-        StrRootInlineContent inlinecstr;
-        StrRootTreeContent treecstr;
+        static_assert(sizeof(StrRootInlineContent) >= sizeof(StrRootTreeContent));
 
-        constexpr StringUnion() : inlinecstr{} { ; }
-        constexpr StringUnion(const StrRootInlineContent& c) : inlinecstr{c} { ; }
-        constexpr StringUnion(const StrRootTreeContent& c) : treecstr{c} { ; }
+        //empty cstring is inlinestr, upunning type type punning for assignment and default initialization
+        std::array<uint8_t, sizeof(CStrRootInlineContent)> upunning;
+        StrRootInlineContent inlinestr;
+        StrRootTreeContent treestr;
+
+        constexpr StringUnion() : upunning{} { ; }
+        constexpr StringUnion(const StrRootInlineContent& c) : inlinestr{c} { ; }
+        constexpr StringUnion(const StrRootTreeContent& c) : treestr{c} { ; }
         constexpr StringUnion(const StringUnion& other) = default;
 
-        constexpr bool empty() const { return this->inlinecstr.empty(); }
+        constexpr bool empty() const { return this->inlinestr.empty(); }
 
-        constexpr bool isInline() const { return this->inlinecstr.size() < std::numeric_limits<char32_t>::max(); }
-        constexpr bool isTree() const { return this->inlinecstr.size() == std::numeric_limits<char32_t>::max(); }
+        constexpr bool isInline() const { return this->inlinestr.size() < std::numeric_limits<char32_t>::max(); }
+        constexpr bool isTree() const { return this->inlinestr.size() == std::numeric_limits<char32_t>::max(); }
 
         constexpr StringUnion& operator=(const StringUnion& other)
         {
@@ -542,13 +542,7 @@ namespace ᐸRuntimeᐳ
                 return *this;
             }
 
-            if(other.isInline()) {
-                this->inlinecstr = other.inlinecstr;
-            }
-            else {
-                this->treecstr = other.treecstr;
-            }
-
+            this->upunning = other.upunning;
             return *this;
         }
     };
@@ -617,10 +611,10 @@ namespace ᐸRuntimeᐳ
             assert(!this->ustr.empty()); //should not dereference on empty string
 
             if(this->ustr.isInline()) {
-                return this->ustr.inlinecstr.at(this->index);
+                return this->ustr.inlinestr.at(this->index);
             }
             else {
-                return this->ustr.treecstr.postree.get(this->index);
+                return this->ustr.treestr.postree.get(this->index);
             }
         }
 
@@ -699,10 +693,10 @@ namespace ᐸRuntimeᐳ
         int64_t size() const
         {
             if(this->ustr.isInline()) {
-                return this->ustr.inlinecstr.size();
+                return this->ustr.inlinestr.size();
             }
             else {
-                return this->ustr.treecstr.postree.size();
+                return this->ustr.treestr.postree.size();
             }
         }
 
