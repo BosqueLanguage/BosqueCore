@@ -13,6 +13,7 @@
 #include <random>
 #include <string>
 #include <array>
+#include <vector>
 #include <map>
 #include <list>
 #include <algorithm>
@@ -32,6 +33,14 @@
 ////
 //TODO: for now the default allocator is #define set to malloc/free
 #define BSQ_ALLOCATOR_USE_MALLOC 1
+////
+
+////
+//ENABLE HEAVY DIAGNOSTICS
+#define BSQ_POSTREE_VALIDATE 1
+#define GC_INVARIANTS 1
+
+#define GC_DIAG_LEVEL_1 1
 ////
 
 namespace ᐸRuntimeᐳ

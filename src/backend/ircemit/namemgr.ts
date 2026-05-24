@@ -37,6 +37,9 @@ class TransformCPPNameManager {
         else if(bb.startsWith("BSQ_")) {
             return "BSQ_" + s_BSQ_tag + bb.slice(3);
         }
+        else if(bb.startsWith("GC_")) {
+            return "GC_" + s_BSQ_tag + bb.slice(3);
+        }
         else if(bb.startsWith("MINT_")) {
             return "MINT_" + s_BSQ_tag + bb.slice(4);
         }

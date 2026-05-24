@@ -29,7 +29,7 @@ CPPFLAGS=${CPPFLAGS_OPT.${BUILD}} ${CPP_STDFLAGS}
 CPP_TESTFLAGS=-O0 -g -ggdb -fno-omit-frame-pointer -fsanitize=address -Wall -Wextra -Wno-unused-parameter -Wuninitialized -Werror -std=gnu++23 -fno-rtti -fno-strict-aliasing -fno-stack-protector -fPIC
 
 HEADERS=$(wildcard $(SRC_DIR)*.h) $(wildcard $(CORE_SRC_DIR)*.h) $(wildcard $(RUNTIME_SRC_DIR)*.h) $(wildcard $(ALLOC_SRC_DIR)*.h) $(wildcard $(BSQIR_SRC_DIR)*.h)
-OBJS=$(OUT_OBJ)common.o $(OUT_OBJ)alloc.o  $(OUT_OBJ)strings.o $(OUT_OBJ)lexer.o $(OUT_OBJ)parser.o $(OUT_OBJ)emit.o
+OBJS=$(OUT_OBJ)common.o $(OUT_OBJ)alloc.o $(OUT_OBJ)memstats.o $(OUT_OBJ)gc.o $(OUT_OBJ)strings.o $(OUT_OBJ)lexer.o $(OUT_OBJ)parser.o $(OUT_OBJ)emit.o
 TESTS=$(OUT_TESTS)postree_tests
 
 all: $(OBJS)
@@ -63,6 +63,14 @@ $(OUT_OBJ)list_t.o: $(HEADERS) $(CORE_SRC_DIR)list_t.cpp
 $(OUT_OBJ)strings.o: $(HEADERS) $(CORE_SRC_DIR)strings.cpp
 	@mkdir -p $(OUT_OBJ)
 	$(CPP) $(CPPFLAGS) -o $(OUT_OBJ)strings.o -c $(CORE_SRC_DIR)strings.cpp
+
+$(OUT_OBJ)gc.o: $(HEADERS) $(ALLOC_SRC_DIR)gc.cpp
+	@mkdir -p $(OUT_OBJ)
+	$(CPP) $(CPPFLAGS) -o $(OUT_OBJ)gc.o -c $(ALLOC_SRC_DIR)gc.cpp
+
+$(OUT_OBJ)memstats.o: $(HEADERS) $(ALLOC_SRC_DIR)memstats.cpp
+	@mkdir -p $(OUT_OBJ)
+	$(CPP) $(CPPFLAGS) -o $(OUT_OBJ)memstats.o -c $(ALLOC_SRC_DIR)memstats.cpp
 
 $(OUT_OBJ)alloc.o: $(HEADERS) $(ALLOC_SRC_DIR)alloc.cpp
 	@mkdir -p $(OUT_OBJ)
