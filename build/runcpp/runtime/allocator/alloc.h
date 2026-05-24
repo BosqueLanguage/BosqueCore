@@ -10,7 +10,7 @@ namespace ᐸRuntimeᐳ
     class GCAllocatorImpl
     {
     private:
-        std::vector<void*> x_allocs;
+        std::set<void*> x_allocs;
 
     public:
         const TypeInfo* alloctype; 
@@ -22,14 +22,24 @@ namespace ᐸRuntimeᐳ
         {
             void* ptr = malloc(this->alloctype->bytesize + sizeof(GCMetadata));
 
-            this->x_allocs.push_back(ptr);
+            this->x_allocs.insert(ptr);
             return gcInitAllocGCMetadata(ptr, this->alloctype);
+        }
+
+        bool isAddrInValidObject(void* addr, GCMetadata& m)
+        {
+            auto iter = this->x_allocs.xxxx(addr);
+            
+            if(iter != this->x_allocs.end()) {
+            }
+            
+            return false;
         }
 
         void cleanup()
         {
-            for(size_t i = 0; i < this->x_allocs.size(); i++) {
-                free(this->x_allocs[i]);
+            for(auto iter = this->x_allocs.begin(); iter != this->x_allocs.end(); iter++) {
+                free(*iter);
             }
 
             this->x_allocs.clear();
@@ -97,7 +107,7 @@ namespace ᐸRuntimeᐳ
     class AllocatorThreadLocalInfo
     {
     public:
-        thread:: threadid; //the id of the thread this info is associated with
+        std::thread::id threadid; //the id of the thread this info is associated with
 
         void** native_stack_base; //the base of the native stack
         std::vector<void*> old_roots;
@@ -111,7 +121,7 @@ namespace ᐸRuntimeᐳ
 
         AllocatorThreadLocalInfo() : native_stack_base{}, old_roots{}, gcallocs{}, collectfp{}, memstats{} { ; }
 
-        void initialize(void** caller_rbp, void (*_collectfp)(), const std::map<uint32_t, GCAllocatorImpl*>& gcallocs);
+        void initialize(std::thread::id threadid, void** caller_rbp, void (*_collectfp)(), const std::map<uint32_t, GCAllocatorImpl*>& gcallocs);
         void cleanup();
     };
 
@@ -126,11 +136,14 @@ namespace ᐸRuntimeᐳ
     public:
         // This mutex protects all global allocator page operations
         std::mutex g_pages_mutex;
+
+        // This mutex protects RC critical sections (and where our imprecise stack roots could materialize a ref to a RC object)
+        std::mutex g_rcops_mutex;
         
         // This mutex protects all global IO buffer allocator operations
         std::mutex g_ioalloc_mutex;
 
-        AllocatorGlobalInfo() : g_globals_mutex{}, g_globals_lastproc{}, g_globals_end{}, g_pages_mutex{}, g_ioalloc_mutex{} { ; }
+        AllocatorGlobalInfo() : g_globals_mutex{}, g_globals_lastproc{}, g_globals_end{}, g_pages_mutex{}, g_rcops_mutex{}, g_ioalloc_mutex{} { ; }
 
         ////////////////
         //Support for immortal object processing -- will block all other GC threads when new data is processed

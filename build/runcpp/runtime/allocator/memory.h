@@ -23,6 +23,7 @@ namespace ᐸRuntimeᐳ
     struct GCMetadata
     {
         const TypeInfo* typeinfo;
+        std::thread::id threadid;
         uint64_t isalloc    : 1;
         uint64_t isyoung    : 1;
         uint64_t ismarked   : 1;
@@ -31,7 +32,7 @@ namespace ᐸRuntimeᐳ
     };
 
     constexpr size_t GC_METADATA_SIZE = sizeof(GCMetadata);
-    static_assert(GC_METADATA_SIZE == 16, "GCMetadata size must be a multiple of max alignment");
+    static_assert(GC_METADATA_SIZE == 24, "GCMetadata size must be a multiple of max alignment");
 
     constexpr GCMetadata* gcGetMetadata(void* ptr)
     {
@@ -47,6 +48,7 @@ namespace ᐸRuntimeᐳ
     {
         GCMetadata* meta = (GCMetadata*)ptr;
         meta->typeinfo = typeinfo;
+        meta->threadid = std::this_thread::get_id();
         meta->isalloc = 1;
         meta->isyoung = 1;
         meta->ismarked = 0;
