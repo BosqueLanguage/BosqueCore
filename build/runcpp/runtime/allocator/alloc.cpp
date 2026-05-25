@@ -45,30 +45,19 @@ namespace ᐸRuntimeᐳ
         }
     }
 
-    bool AllocatorGlobalInfo::isAllocatedAddress(void* addr, GCMetadata& m)
+    bool AllocatorGlobalInfo::isAllocatedAddress(void* addr, GCMetadata*& meta, void*& raddr)
     {
-        //Check address could be in middle of allocated object too!!
-        assert(false);
+        //TODO -- page version is more complex and must check
+        // - Is the page allocated at all (in the table map)
+        // - If so is the location in (many be in middle) of valid object in the page
+        //   - Is the object allocated
+        //   - If so then is the object young (and of the same threadid) OR is it an RC object 
 
-        /*
-        bool pointsToObjectStart(void* addr) noexcept 
-    {
-        uintptr_t offset = reinterpret_cast<uintptr_t>(addr) & GC_PAGE_MASK; 
-        PageInfo* p = PageInfo::extractPageFromPointer(addr);
-	    if(offset < (sizeof(PageInfo) + METADATA_SEG_SIZE(p))) {
+        GCAllocatorImpl* alloc = gcGetAllocator<GCAllocatorImpl>(addr);
+        if(!alloc->isAddrInValidObject(addr, meta, raddr)) {
             return false;
         }
 
-        uintptr_t start = GET_SLOT_START_FROM_OFFSET(offset, p);
-        return start % p->realsize == 0;
-    }
-
-    bool processPotentialPtr(void* addr, std::vector<void*>& roots)
-    { 
-	    if(!GlobalPageGCManager::g_gc_page_manager.pagetableQuery(addr) || !pointsToObjectStart(addr))
-	    {
-            return false;
-        }
-        */
+        return alloc->isAddrSuitableCategory(meta);
     }
 }

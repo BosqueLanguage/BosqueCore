@@ -9,13 +9,14 @@ namespace ᐸRuntimeᐳ
 #if BSQ_ALLOCATOR_USE_MALLOC
     class GCAllocatorImpl
     {
+    public:
+        const TypeInfo* alloctype; 
+
     private:
         std::set<void*> x_allocs;
 
     public:
-        const TypeInfo* alloctype; 
-
-        constexpr GCAllocatorImpl(const TypeInfo* alloctype) : alloctype(alloctype) {} 
+        constexpr GCAllocatorImpl(const TypeInfo* alloctype) : alloctype(alloctype) { ; } 
 
         template<typename T>
         inline void* xalloc()
@@ -23,17 +24,48 @@ namespace ᐸRuntimeᐳ
             void* ptr = malloc(this->alloctype->bytesize + sizeof(GCMetadata));
 
             this->x_allocs.insert(ptr);
-            return gcInitAllocGCMetadata(ptr, this->alloctype);
+            return gcInitAllocGCMetadata(ptr, this);
         }
 
-        bool isAddrInValidObject(void* addr, GCMetadata& m)
-        {
-            auto iter = this->x_allocs.xxxx(addr);
+        bool checkObjectBounds(void* addr, void* omem, const GCMetadata* meta, void*& raddr)
+        {            
+            const GCMetadata* meta = gcGetMetadata(omem);
+
+            const uintptr_t objstart = (uintptr_t)(omem) + sizeof(GCMetadata);
+            const uintptr_t objend = objstart + ((GCAllocatorImpl*)meta->allocator)->alloctype->bytesize;
             
-            if(iter != this->x_allocs.end()) {
+            if((objstart <= (uintptr_t)addr) && ((uintptr_t)addr < objend)) {
+                raddr = omem;
+                return true;
             }
-            
+
             return false;
+        }
+
+        bool isAddrInValidObject(void* addr, GCMetadata*& meta, void*& raddr)
+        {
+            if(this->x_allocs.empty()) {
+                return false;
+            }
+
+            auto iter = this->x_allocs.lower_bound(addr);
+            iter--;
+            
+            meta = gcGetMetadata(*iter);
+            return this->checkObjectBounds(addr, *iter, meta, raddr);
+        }
+
+        bool isAddrSuitableCategory(const GCMetadata* meta)
+        {
+            if(!meta->isalloc) {
+                return false;
+            }
+
+            if(meta->isyoung && meta->threadid != std::this_thread::get_id()) {
+                return false;
+            }
+
+            return true;
         }
 
         void cleanup()
@@ -152,7 +184,7 @@ namespace ᐸRuntimeᐳ
         void unloadGlobalRootsFromProc(bool processed);
 
         // Check if the address refers into any valid allocation (even in middle of it) and if so get the associated metadata
-        bool isAllocatedAddress(void* addr, GCMetadata& m);
+        bool isAllocatedAddress(void* addr, GCMetadata*& meta, void*& raddr);
 
         ////////////////
         //Support for Mint Allocator -- can only be called from mint server thread

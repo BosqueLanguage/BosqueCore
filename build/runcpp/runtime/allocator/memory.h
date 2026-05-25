@@ -22,7 +22,7 @@ namespace ᐸRuntimeᐳ
 #if BSQ_ALLOCATOR_USE_MALLOC
     struct GCMetadata
     {
-        const TypeInfo* typeinfo;
+        void* allocator;
         std::thread::id threadid;
         uint64_t isalloc    : 1;
         uint64_t isyoung    : 1;
@@ -39,15 +39,21 @@ namespace ᐸRuntimeᐳ
         return (GCMetadata*)(((uint8_t*)ptr) - GC_METADATA_SIZE);
     }
 
-    constexpr const TypeInfo* gcGetTypeInfo(void* ptr)
+    template<typename T>
+    constexpr T* gcGetAllocator(void* ptr)
     {
-        return gcGetMetadata(ptr)->typeinfo;
+        return (T**)(((uint8_t*)ptr) - GC_METADATA_SIZE);
     }
 
-    constexpr void* gcInitAllocGCMetadata(void* ptr, const TypeInfo* typeinfo)
+    constexpr const TypeInfo* gcGetTypeInfo(void* ptr)
+    {
+        return *((const TypeInfo**)(((uint8_t*)ptr) - GC_METADATA_SIZE));
+    }
+
+    constexpr void* gcInitAllocGCMetadata(void* ptr, void* allocator)
     {
         GCMetadata* meta = (GCMetadata*)ptr;
-        meta->typeinfo = typeinfo;
+        meta->allocator = allocator;
         meta->threadid = std::this_thread::get_id();
         meta->isalloc = 1;
         meta->isyoung = 1;

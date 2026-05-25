@@ -67,34 +67,20 @@ namespace ᐸRuntimeᐳ
         #endif
     }
 
-    bool pointsToObjectStart(void* addr) noexcept 
-    {
-        uintptr_t offset = reinterpret_cast<uintptr_t>(addr) & GC_PAGE_MASK; 
-        PageInfo* p = PageInfo::extractPageFromPointer(addr);
-	    if(offset < (sizeof(PageInfo) + METADATA_SEG_SIZE(p))) {
-            return false;
-        }
-
-        uintptr_t start = GET_SLOT_START_FROM_OFFSET(offset, p);
-        return start % p->realsize == 0;
-    }
-
     bool processPotentialPtr(void* addr, std::vector<void*>& roots)
     { 
-	    if(!GlobalPageGCManager::g_gc_page_manager.pagetableQuery(addr) || !pointsToObjectStart(addr))
-	    {
-            return false;
+        GCMetadata* meta = nullptr;
+        void* realaddr = nullptr;
+	    if(g_alloc_info.isAllocatedAddress(addr, meta, realaddr)) {
+            roots.push_back(realaddr);
+            
+            return meta->threadid == std::this_thread::get_id();
         }
 
-    	GCMetaData* m = PageInfo::getObjectMetadataAligned(addr);
-	    if(!GC_IS_ALLOCATED(m)) {
-		    return false;
-	    }
-
-        roots.push_back(addr);
+        return false;
     }
 
-    void walkStack(std::vector<void*>& roots)
+    bool walkStack(std::vector<void*>& roots)
     {
         RegisterContents rcontents{};
 
@@ -109,24 +95,27 @@ namespace ᐸRuntimeᐳ
         // page->entrycount may be reset by another thread (setPageMetaData) -- processPotentialPtr
 	    std::lock_guard lk(g_alloc_info.g_pages_mutex);
         
+        bool maybecrazyroot = false;
         for(auto ii = possibleroots.begin(); ii != possibleroots.end(); ii++) {
-            processPotentialPtr(*ii, roots);
+            maybecrazyroot |= processPotentialPtr(*ii, roots);
         }
 
-        processPotentialPtr(rcontents.rax, roots);
-        processPotentialPtr(rcontents.rbx, roots);
-        processPotentialPtr(rcontents.rcx, roots);
-        processPotentialPtr(rcontents.rdx, roots);
-        processPotentialPtr(rcontents.rsi, roots);
-        processPotentialPtr(rcontents.rdi, roots);
-        processPotentialPtr(rcontents.r8, roots);
-        processPotentialPtr(rcontents.r9, roots);
-        processPotentialPtr(rcontents.r10, roots);
-        processPotentialPtr(rcontents.r11, roots);
-        processPotentialPtr(rcontents.r12, roots);
-        processPotentialPtr(rcontents.r13, roots);
-        processPotentialPtr(rcontents.r14, roots);
-        processPotentialPtr(rcontents.r15, roots);
+        maybecrazyroot |= processPotentialPtr(rcontents.rax, roots);
+        maybecrazyroot |= processPotentialPtr(rcontents.rbx, roots);
+        maybecrazyroot |= processPotentialPtr(rcontents.rcx, roots);
+        maybecrazyroot |= processPotentialPtr(rcontents.rdx, roots);
+        maybecrazyroot |= processPotentialPtr(rcontents.rsi, roots);
+        maybecrazyroot |= processPotentialPtr(rcontents.rdi, roots);
+        maybecrazyroot |= processPotentialPtr(rcontents.r8, roots);
+        maybecrazyroot |= processPotentialPtr(rcontents.r9, roots);
+        maybecrazyroot |= processPotentialPtr(rcontents.r10, roots);
+        maybecrazyroot |= processPotentialPtr(rcontents.r11, roots);
+        maybecrazyroot |= processPotentialPtr(rcontents.r12, roots);
+        maybecrazyroot |= processPotentialPtr(rcontents.r13, roots);
+        maybecrazyroot |= processPotentialPtr(rcontents.r14, roots);
+        maybecrazyroot |= processPotentialPtr(rcontents.r15, roots);
+
+        return maybecrazyroot;
     }
 
     void collect()
@@ -138,7 +127,10 @@ namespace ᐸRuntimeᐳ
         //E.g. what if I find a false root to another threads young object! Or RC object that they are just collecting  
 
         bool gproc = g_alloc_info.loadGlobalRootsToProc(curr_roots);
-        walkStack(curr_roots);
+        bool maybecrazyroot = walkStack(curr_roots);
+
+        //TODO -- if maybecrazyroot then need to critical section with decs and other stack walkers
+        xxxx;
 
         //TODO -- more stuff!!!!
         assert(false);
