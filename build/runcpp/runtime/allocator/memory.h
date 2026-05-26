@@ -42,12 +42,12 @@ namespace ᐸRuntimeᐳ
     template<typename T>
     constexpr T* gcGetAllocator(void* ptr)
     {
-        return (T**)(((uint8_t*)ptr) - GC_METADATA_SIZE);
+        return *((T**)(((uint8_t*)ptr) - GC_METADATA_SIZE));
     }
 
     constexpr const TypeInfo* gcGetTypeInfo(void* ptr)
     {
-        return *((const TypeInfo**)(((uint8_t*)ptr) - GC_METADATA_SIZE));
+        return **((const TypeInfo***)(((uint8_t*)ptr) - GC_METADATA_SIZE));
     }
 
     constexpr void* gcInitAllocGCMetadata(void* ptr, void* allocator)

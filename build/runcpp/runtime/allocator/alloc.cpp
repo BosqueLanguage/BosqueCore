@@ -20,11 +20,6 @@ namespace ᐸRuntimeᐳ
         this->gcallocs.clear();
     }
 
-    void collect()
-    {
-        ;
-    }
-
     bool AllocatorGlobalInfo::loadGlobalRootsToProc(std::vector<void*>& possibleroots)
     {
         this->g_globals_mutex.lock();

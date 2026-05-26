@@ -89,13 +89,12 @@ namespace ᐸRuntimeᐳ
 
         loadNativeRootSet(rcontents, possibleroots);
 
-        std::vector<void*> roots;
-        roots.reserve(possibleroots.size() / 4); //TODO -- tune this
-
         // page->entrycount may be reset by another thread (setPageMetaData) -- processPotentialPtr
 	    std::lock_guard lk(g_alloc_info.g_pages_mutex);
         
         bool maybecrazyroot = false;
+        roots.reserve(possibleroots.size() / 4); //TODO -- tune this
+
         for(auto ii = possibleroots.begin(); ii != possibleroots.end(); ii++) {
             maybecrazyroot |= processPotentialPtr(*ii, roots);
         }
@@ -130,7 +129,7 @@ namespace ᐸRuntimeᐳ
         bool maybecrazyroot = walkStack(curr_roots);
 
         //TODO -- if maybecrazyroot then need to critical section with decs and other stack walkers
-        xxxx;
+        assert(!maybecrazyroot);
 
         //TODO -- more stuff!!!!
         assert(false);

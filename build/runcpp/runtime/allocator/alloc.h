@@ -18,7 +18,6 @@ namespace ᐸRuntimeᐳ
     public:
         constexpr GCAllocatorImpl(const TypeInfo* alloctype) : alloctype(alloctype) { ; } 
 
-        template<typename T>
         inline void* xalloc()
         {
             void* ptr = malloc(this->alloctype->bytesize + sizeof(GCMetadata));
@@ -29,8 +28,6 @@ namespace ᐸRuntimeᐳ
 
         bool checkObjectBounds(void* addr, void* omem, const GCMetadata* meta, void*& raddr)
         {            
-            const GCMetadata* meta = gcGetMetadata(omem);
-
             const uintptr_t objstart = (uintptr_t)(omem) + sizeof(GCMetadata);
             const uintptr_t objend = objstart + ((GCAllocatorImpl*)meta->allocator)->alloctype->bytesize;
             

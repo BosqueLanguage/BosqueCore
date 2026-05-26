@@ -2542,7 +2542,9 @@ class CPPEmitter {
             '#include "./runcpp/core/list_t.h"',
             '',
             '#include "./runcpp/core/coredecls.h"',
-            '#include "./runcpp/runtime/taskinfo.h"'
+            '#include "./runcpp/runtime/taskinfo.h"',
+            '',
+            '#include "./runcpp/runtime/allocator/gc.h"'
         ].join("\n");
     }
 
@@ -2635,7 +2637,7 @@ class CPPEmitter {
         const initializegc = '{\n' +
         '        //always thread safe on this initialization phase since we have not started any other threads yet\n' +
         '        register void** rbp asm("rbp");\n' +
-        `        ᐸRuntimeᐳ::tl_alloc_info.initialize(rbp, ᐸRuntimeᐳ::collect, {${[...sallocs, ...allocs].join(', ')}});\n` +
+        `        ᐸRuntimeᐳ::tl_alloc_info.initialize(std::this_thread::get_id(), rbp, ᐸRuntimeᐳ::collect, {${[...sallocs, ...allocs].join(', ')}});\n` +
         '    }\n';
 
         const notes = "//TODO ---- need to dispatch on things and handle useage + agents.md";
