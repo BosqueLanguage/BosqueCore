@@ -67,12 +67,17 @@ namespace ᐸRuntimeᐳ
         #endif
     }
 
-    bool processPotentialPtr(void* addr, std::vector<void*>& roots)
+    bool processPotentialPtr(void* addr, std::vector<void*>& roots_young, std::vector<void*>& roots_rc)
     { 
         GCMetadata* meta = nullptr;
         void* realaddr = nullptr;
 	    if(g_alloc_info.isAllocatedAddress(addr, meta, realaddr)) {
-            roots.push_back(realaddr);
+            if(meta->isyoung) {
+                roots_young.push_back(realaddr);
+            }
+            else {
+                roots_rc.push_back(realaddr);
+            }
             
             return meta->threadid == std::this_thread::get_id();
         }
@@ -80,12 +85,25 @@ namespace ᐸRuntimeᐳ
         return false;
     }
 
-    bool walkStack(std::vector<void*>& roots)
+    bool walkGlobalRoots(std::vector<void*>& roots_young, std::vector<void*>& roots_rc)
+    {
+        std::vector<void*> possibleroots;
+        
+        bool gproc = g_alloc_info.loadGlobalRootsToProc(possibleroots);
+        
+        for(auto ii = possibleroots.begin(); ii != possibleroots.end(); ii++) {
+            processPotentialPtr(*ii, roots_young, roots_rc);
+        }
+
+        return gproc;
+    }
+
+    bool walkStack(std::vector<void*>& roots_young, std::vector<void*>& roots_rc)
     {
         RegisterContents rcontents{};
 
         std::vector<void*> possibleroots;
-        possibleroots.reserve(512); //TODO -- tune this
+        possibleroots.reserve(256); //TODO -- tune this
 
         loadNativeRootSet(rcontents, possibleroots);
 
@@ -93,46 +111,57 @@ namespace ᐸRuntimeᐳ
 	    std::lock_guard lk(g_alloc_info.g_pages_mutex);
         
         bool maybecrazyroot = false;
-        roots.reserve(possibleroots.size() / 4); //TODO -- tune this
+        roots_young.reserve(possibleroots.size() / 4); //TODO -- tune this
+        roots_rc.reserve(possibleroots.size() / 4); //TODO -- tune this
 
         for(auto ii = possibleroots.begin(); ii != possibleroots.end(); ii++) {
-            maybecrazyroot |= processPotentialPtr(*ii, roots);
+            maybecrazyroot |= processPotentialPtr(*ii, roots_young, roots_rc);
         }
 
-        maybecrazyroot |= processPotentialPtr(rcontents.rax, roots);
-        maybecrazyroot |= processPotentialPtr(rcontents.rbx, roots);
-        maybecrazyroot |= processPotentialPtr(rcontents.rcx, roots);
-        maybecrazyroot |= processPotentialPtr(rcontents.rdx, roots);
-        maybecrazyroot |= processPotentialPtr(rcontents.rsi, roots);
-        maybecrazyroot |= processPotentialPtr(rcontents.rdi, roots);
-        maybecrazyroot |= processPotentialPtr(rcontents.r8, roots);
-        maybecrazyroot |= processPotentialPtr(rcontents.r9, roots);
-        maybecrazyroot |= processPotentialPtr(rcontents.r10, roots);
-        maybecrazyroot |= processPotentialPtr(rcontents.r11, roots);
-        maybecrazyroot |= processPotentialPtr(rcontents.r12, roots);
-        maybecrazyroot |= processPotentialPtr(rcontents.r13, roots);
-        maybecrazyroot |= processPotentialPtr(rcontents.r14, roots);
-        maybecrazyroot |= processPotentialPtr(rcontents.r15, roots);
+        maybecrazyroot |= processPotentialPtr(rcontents.rax, roots_young, roots_rc);
+        maybecrazyroot |= processPotentialPtr(rcontents.rbx, roots_young, roots_rc);
+        maybecrazyroot |= processPotentialPtr(rcontents.rcx, roots_young, roots_rc);
+        maybecrazyroot |= processPotentialPtr(rcontents.rdx, roots_young, roots_rc);
+        maybecrazyroot |= processPotentialPtr(rcontents.rsi, roots_young, roots_rc);
+        maybecrazyroot |= processPotentialPtr(rcontents.rdi, roots_young, roots_rc);
+        maybecrazyroot |= processPotentialPtr(rcontents.r8, roots_young, roots_rc);
+        maybecrazyroot |= processPotentialPtr(rcontents.r9, roots_young, roots_rc);
+        maybecrazyroot |= processPotentialPtr(rcontents.r10, roots_young, roots_rc);
+        maybecrazyroot |= processPotentialPtr(rcontents.r11, roots_young, roots_rc);
+        maybecrazyroot |= processPotentialPtr(rcontents.r12, roots_young, roots_rc);
+        maybecrazyroot |= processPotentialPtr(rcontents.r13, roots_young, roots_rc);
+        maybecrazyroot |= processPotentialPtr(rcontents.r14, roots_young, roots_rc);
+        maybecrazyroot |= processPotentialPtr(rcontents.r15, roots_young, roots_rc);
 
         return maybecrazyroot;
     }
 
+    void processRCRoots(std::vector<void*>& roots)
+    {
+        return;
+    }
+
     void collect()
     {
-        std::vector<void*> curr_roots{};
-        curr_roots.reserve(256); //TODO -- tune this
+        std::vector<void*> curr_roots_young;
+        std::vector<void*> curr_roots_rc;
+        curr_roots_young.reserve(128); //TODO -- tune this
+        curr_roots_rc.reserve(128); //TODO -- tune this
 
-        //TODO: do we need a lock here around roots & RC????
-        //E.g. what if I find a false root to another threads young object! Or RC object that they are just collecting  
-
-        bool gproc = g_alloc_info.loadGlobalRootsToProc(curr_roots);
-        bool maybecrazyroot = walkStack(curr_roots);
+        bool gproc = walkGlobalRoots(curr_roots_young, curr_roots_rc);
+        bool maybecrazyroot = walkStack(curr_roots_young, curr_roots_rc);
 
         //TODO -- if maybecrazyroot then need to critical section with decs and other stack walkers
+        //     -- later assume that if gproc is true then we should do the crazy root path too -- just for safety/simplicity!!!
         assert(!maybecrazyroot);
 
-        //TODO -- more stuff!!!!
+        xxxx;
+        //TODO -- handle the RC roots (these can't trigger any walk or evacuation)
+
+        //TODO -- handle the young roots + the young walk and evacuation
         assert(false);
+
+        //TODO -- process Decs
 
         //Make sure we release the globals mutex if needed
         g_alloc_info.unloadGlobalRootsFromProc(gproc);
