@@ -24,11 +24,9 @@ namespace ᐸRuntimeᐳ
     {
         void* allocator;
         std::thread::id threadid;
-        uint64_t isalloc    : 1;
-        uint64_t isyoung    : 1;
-        uint64_t ismarked   : 1;
-        uint64_t isrootref  : 1;
-        uint64_t rc         : 60; //later tag this for single parent ptr vs counter
+        std::atomic<uint32_t> rc;
+        uint16_t isalloc;
+        uint16_t isyoung;
     };
 
     constexpr size_t GC_METADATA_SIZE = sizeof(GCMetadata);
@@ -62,6 +60,16 @@ namespace ᐸRuntimeᐳ
         meta->rc = 0;
 
         return (void*)((uint8_t*)ptr + GC_METADATA_SIZE);
+    }
+
+    constexpr void gcRefIncrement(GCMetadata* meta)
+    {
+        meta->rc++;
+    }
+
+    constexpr void gcRefDecrement(GCMetadata* meta)
+    {
+        meta->rc--;
     }
 #else
 #endif //BSQ_ALLOCATOR_USE_MALLOC

@@ -141,6 +141,49 @@ namespace ᐸRuntimeᐳ
         return;
     }
 
+    void* forward(void* ptr);
+
+    void* processSlotTrgt(void* ptr)
+    {
+        GCMetadata* m = gcGetMetadata(ptr);
+        if(m->isyoung) {
+            return forward(ptr);
+        }
+        else {
+            m->
+            return ptr;
+        }
+    }
+
+    void* forward(void* ptr)
+    {
+        GCAllocatorImpl* gcalloc = gcGetAllocator<GCAllocatorImpl>(ptr);
+        GCMetadata* m = gcGetMetadata(ptr); 
+
+        void* nptr = gcalloc.allocateEvacuation(); 
+	    xmem_copy(ptr, nptr, p->typeinfo->slot_size);
+
+        // Insert into forward table and update object ensuring future objects update
+        int32_t fwdidx = tinfo.forward_table.insert(nptr);
+        RESET_METADATA_FOR_OBJECT(m, fwdidx);
+
+        return nptr;
+    }
+
+    void processYoungRoots(std::vector<void*>& roots)
+    {
+        //TODO -- in place promote all root refs
+        xxxx;
+
+        //TODO -- walk and forward recursively
+        xxxx;
+    }
+
+    void processDecrements(const std::vector<void*>& roots_young, const std::vector<void*>& roots_rc)
+    {
+        return;
+    }
+
     void collect()
     {
         std::vector<void*> curr_roots_young;
@@ -151,17 +194,24 @@ namespace ᐸRuntimeᐳ
         bool gproc = walkGlobalRoots(curr_roots_young, curr_roots_rc);
         bool maybecrazyroot = walkStack(curr_roots_young, curr_roots_rc);
 
+        std::sort(curr_roots_young.begin(), curr_roots_young.end());
+        curr_roots_young.erase(std::unique(curr_roots_young.begin(), curr_roots_young.end()), curr_roots_young.end());
+
+        std::sort(curr_roots_rc.begin(), curr_roots_rc.end());
+        curr_roots_rc.erase(std::unique(curr_roots_rc.begin(), curr_roots_rc.end()), curr_roots_rc.end());
+
         //TODO -- if maybecrazyroot then need to critical section with decs and other stack walkers
         //     -- later assume that if gproc is true then we should do the crazy root path too -- just for safety/simplicity!!!
         assert(!maybecrazyroot);
 
-        xxxx;
-        //TODO -- handle the RC roots (these can't trigger any walk or evacuation)
+        //Handle the RC roots (these can't trigger any walk or evacuation)
+        processRCRoots(curr_roots_rc);
 
-        //TODO -- handle the young roots + the young walk and evacuation
-        assert(false);
-
-        //TODO -- process Decs
+        //Handle the young roots + the young walk and evacuation
+        processYoungRoots(curr_roots_young);
+        
+        //Process decrements
+        processDecrements(curr_roots_young, curr_roots_rc);
 
         //Make sure we release the globals mutex if needed
         g_alloc_info.unloadGlobalRootsFromProc(gproc);
