@@ -19,14 +19,60 @@
 
 namespace ᐸRuntimeᐳ
 {
+    using AtomicMetaBits = std::atomic<uint64_t>;
+
+    constexpr uint64_t META_BIT_IS_ALLOC = 0x1;
+    constexpr uint64_t META_BIT_IS_YOUNG = 0x2;
+    constexpr uint32_t META_BIT_RC_SHIFT = 3;
+
+    constexpr uint64_t META_BIT_RC_ZERO = 0x0;
+    constexpr uint64_t META_BIT_RC_ONE = 0x4;
+
+    constexpr bool gcIsAllocated(const AtomicMetaBits& rc) {
+        return (rc.load() & META_BIT_IS_ALLOC) != 0;
+    }
+
+    constexpr bool gcIsYoung(const AtomicMetaBits& rc) {
+        return (rc.load() & META_BIT_IS_YOUNG) != 0;
+    }
+
+    constexpr void gcInitOnAllocate(AtomicMetaBits& rc)
+    {
+        rc.store(META_BIT_IS_ALLOC | META_BIT_IS_YOUNG);
+    }
+
+    constexpr void gcInitOnPromote(AtomicMetaBits& rc)
+    {
+        rc.store(META_BIT_RC_ONE | META_BIT_IS_ALLOC);
+    }
+
+    constexpr void gcIncRefCountConservative(AtomicMetaBits& rc)
+    {
+        //Make sure we don't do anything strange to a "forged pointer"
+        //TOCTOU issue is resolved by a Read-Writer when we have thread shared root ref objects detected
+
+        uint64_t vv = rc.load();
+        if((vv & META_BIT_IS_ALLOC) & !(vv & META_BIT_IS_YOUNG) & (vv >= META_BIT_RC_ONE)) {
+            rc.fetch_add(META_BIT_RC_ONE);
+        }
+    }
+
+    constexpr void gcIncRefCountPrecise(AtomicMetaBits& rc)
+    {
+        rc.fetch_add(META_BIT_RC_ONE);
+    }
+
+    constexpr bool gcDecRefCount(AtomicMetaBits& rc)
+    {
+        return (META_BIT_RC_ZERO | META_BIT_IS_ALLOC) == rc.fetch_sub(META_BIT_RC_ONE);
+    }
+
 #if BSQ_ALLOCATOR_USE_MALLOC
     struct GCMetadata
     {
         void* allocator;
         std::thread::id threadid;
-        std::atomic<uint32_t> rc;
-        uint16_t isalloc;
-        uint16_t isyoung;
+        AtomicMetaBits rc;
     };
 
     constexpr size_t GC_METADATA_SIZE = sizeof(GCMetadata);
@@ -53,24 +99,26 @@ namespace ᐸRuntimeᐳ
         GCMetadata* meta = (GCMetadata*)ptr;
         meta->allocator = allocator;
         meta->threadid = std::this_thread::get_id();
-        meta->isalloc = 1;
-        meta->isyoung = 1;
-        meta->ismarked = 0;
-        meta->isrootref = 0;
-        meta->rc = 0;
+        gcInitOnAllocate(meta->rc);
 
         return (void*)((uint8_t*)ptr + GC_METADATA_SIZE);
     }
 
-    constexpr void gcRefIncrement(GCMetadata* meta)
+    constexpr void* gcInitEvacGCMetadata(void* ptr, void* allocator)
     {
-        meta->rc++;
+        GCMetadata* meta = (GCMetadata*)ptr;
+        meta->allocator = allocator;
+        meta->threadid = std::this_thread::get_id();
+        gcInitOnPromote(meta->rc);
+
+        return (void*)((uint8_t*)ptr + GC_METADATA_SIZE);
     }
 
-    constexpr void gcRefDecrement(GCMetadata* meta)
+    constexpr void promoteYoungInPlace(GCMetadata* meta)
     {
-        meta->rc--;
+        gcInitOnPromote(meta->rc);
     }
+
 #else
 #endif //BSQ_ALLOCATOR_USE_MALLOC
 

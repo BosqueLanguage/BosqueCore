@@ -138,7 +138,12 @@ namespace ᐸRuntimeᐳ
 
     void processRCRoots(std::vector<void*>& roots)
     {
-        return;
+        for(size_t i = 0; i < roots.size(); i++) {
+            bool alreadyknown = std::binary_search(tl_alloc_info.old_roots.cbegin(), tl_alloc_info.old_roots.cend(), roots[i]);
+            if(!alreadyknown) {
+                gcIncRefCountConservative(gcGetMetadata(roots[i])->rc);
+            }
+        }
     }
 
     void* forward(void* ptr);
@@ -146,11 +151,11 @@ namespace ᐸRuntimeᐳ
     void* processSlotTrgt(void* ptr)
     {
         GCMetadata* m = gcGetMetadata(ptr);
-        if(m->isyoung) {
+        if(gcIsYoung(m->rc)) {
             return forward(ptr);
         }
         else {
-            m->
+            gcIncRefCountPrecise(m->rc);
             return ptr;
         }
     }
@@ -160,8 +165,8 @@ namespace ᐸRuntimeᐳ
         GCAllocatorImpl* gcalloc = gcGetAllocator<GCAllocatorImpl>(ptr);
         GCMetadata* m = gcGetMetadata(ptr); 
 
-        void* nptr = gcalloc.allocateEvacuation(); 
-	    xmem_copy(ptr, nptr, p->typeinfo->slot_size);
+        void* nptr = gcalloc->xalloc_evac(); 
+	    std::copy(ptr, nptr, gcGetTypeInfo(m)->slotcount);
 
         // Insert into forward table and update object ensuring future objects update
         int32_t fwdidx = tinfo.forward_table.insert(nptr);
@@ -181,7 +186,7 @@ namespace ᐸRuntimeᐳ
 
     void processDecrements(const std::vector<void*>& roots_young, const std::vector<void*>& roots_rc)
     {
-        return;
+        xxxx;
     }
 
     void collect()

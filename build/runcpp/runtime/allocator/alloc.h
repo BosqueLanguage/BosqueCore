@@ -21,9 +21,17 @@ namespace ᐸRuntimeᐳ
         inline void* xalloc()
         {
             void* ptr = malloc(this->alloctype->bytesize + sizeof(GCMetadata));
+            std::fill((uint8_t*)ptr, ((uint8_t*)ptr + this->alloctype->bytesize + sizeof(GCMetadata)), 0);
 
-            this->x_allocs.insert(ptr);
-            return gcInitAllocGCMetadata(ptr, this);
+            return *this->x_allocs.insert(gcInitAllocGCMetadata(ptr, this)).first;
+        }
+
+        inline void* xalloc_evac()
+        {
+            void* ptr = malloc(this->alloctype->bytesize + sizeof(GCMetadata));
+            std::fill((uint8_t*)ptr, ((uint8_t*)ptr + this->alloctype->bytesize + sizeof(GCMetadata)), 0);
+
+            return *this->x_allocs.insert(gcInitEvacGCMetadata(ptr, this)).first;
         }
 
         bool checkObjectBounds(void* addr, void* omem, const GCMetadata* meta, void*& raddr)
@@ -54,11 +62,11 @@ namespace ᐸRuntimeᐳ
 
         bool isAddrSuitableCategory(const GCMetadata* meta)
         {
-            if(!meta->isalloc) {
+            if(!gcIsAllocated(meta->rc)) {
                 return false;
             }
 
-            if(meta->isyoung && meta->threadid != std::this_thread::get_id()) {
+            if(gcIsYoung(meta->rc) && meta->threadid != std::this_thread::get_id()) {
                 return false;
             }
 
