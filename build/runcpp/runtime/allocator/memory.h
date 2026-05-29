@@ -19,14 +19,16 @@
 
 namespace ᐸRuntimeᐳ
 {
-    using AtomicMetaBits = std::atomic<uint64_t>;
+    using MetaBits = uint64_t;
+    using AtomicMetaBits = std::atomic<MetaBits>;
 
-    constexpr uint64_t META_BIT_IS_ALLOC = 0x1;
-    constexpr uint64_t META_BIT_IS_YOUNG = 0x2;
-    constexpr uint32_t META_BIT_RC_SHIFT = 3;
+    constexpr MetaBits META_BIT_IS_ALLOC = 0x1;
+    constexpr MetaBits META_BIT_IS_YOUNG = 0x2;
+    constexpr MetaBits META_BIT_IS_FORWARD = 0x4;
 
-    constexpr uint64_t META_BIT_RC_ZERO = 0x0;
-    constexpr uint64_t META_BIT_RC_ONE = 0x4;
+    constexpr MetaBits META_BIT_RC_ZERO = 0x0;
+    constexpr MetaBits META_BIT_RC_ONE = 0x8;
+    constexpr MetaBits META_BIT_RC_MASK = ~(0x7);
 
     constexpr bool gcIsAllocated(const AtomicMetaBits& rc) {
         return (rc.load(std::memory_order_relaxed) & META_BIT_IS_ALLOC) != 0;
@@ -36,58 +38,58 @@ namespace ᐸRuntimeᐳ
         return (rc.load(std::memory_order_relaxed) & META_BIT_IS_YOUNG) != 0;
     }
 
+    constexpr bool gcIsForwarded(const AtomicMetaBits& rc) {
+        return (rc.load(std::memory_order_relaxed) & META_BIT_IS_FORWARD) != 0;
+    }
+
+    constexpr bool gcIsZeroRefCount(const AtomicMetaBits& rc) {
+        return (rc.load(std::memory_order_relaxed) & META_BIT_RC_MASK) != 0;
+    }
+
     constexpr void gcInitOnAllocate(AtomicMetaBits& rc)
     {
         rc.store(META_BIT_IS_ALLOC | META_BIT_IS_YOUNG, std::memory_order_relaxed);
     }
 
-    constexpr void gcInitOnPromote(AtomicMetaBits& rc)
+    constexpr bool gcRootProcessRCIncrement(AtomicMetaBits& rc)
+    {
+        //on root increment this could be a "forged" reference 
+        //so we CAS to make sure we aren't incrementing a 0 count, young, or unallocated object
+        //we hold page mutex so we know the memory location is otherwise valid
+        //return true if we successfully incremented, false if this is a TOCTOU or forged reference
+
+        MetaBits ll = rc.load();
+        while(true) {
+            if(((ll & META_BIT_IS_ALLOC) == 0) | ((ll & META_BIT_IS_YOUNG) == 0) | ((ll & META_BIT_RC_MASK) == 0)) {
+                return false;
+            }
+
+            MetaBits newVal = ll + META_BIT_RC_ONE;
+            if(rc.compare_exchange_weak(ll, newVal)) {
+                return true;
+            }
+        }
+    }
+
+    constexpr void gcProcessUpdateYoungForward(AtomicMetaBits& rc)
+    {
+        rc.store(META_BIT_IS_YOUNG | META_BIT_IS_ALLOC | META_BIT_IS_FORWARD, std::memory_order_relaxed);
+    }
+
+    constexpr void gcRootProcessYoungPromote(AtomicMetaBits& rc)
     {
         rc.store(META_BIT_RC_ONE | META_BIT_IS_ALLOC, std::memory_order_relaxed);
     }
 
-    constexpr void gcIncRefCountGuarded(AtomicMetaBits& rc)
-    {
-        //Make sure we don't do anything strange to a "forged pointer"
-        //TOCTOU issue is resolved by a Read-Writer when we have thread shared root ref objects detected
-
-        uint64_t vv = rc.load(std::memory_order_relaxed);
-        if((vv & META_BIT_IS_ALLOC) & !(vv & META_BIT_IS_YOUNG) & (vv >= META_BIT_RC_ONE)) {
-            rc.fetch_add(META_BIT_RC_ONE, std::memory_order_relaxed);
-        }
-    }
-
-    constexpr void gcIncRefCountSingleThreaded(AtomicMetaBits& rc)
-    {
-        rc.fetch_add(META_BIT_RC_ONE, std::memory_order_relaxed);
-    }
-
-    constexpr void gcIncRefCountStd(AtomicMetaBits& rc)
+    constexpr void gcYoungProcessRCIncrement(AtomicMetaBits& rc)
     {
         rc.fetch_add(META_BIT_RC_ONE);
     }
 
-    constexpr bool gcDecRefCountGuarded(AtomicMetaBits& rc)
+    constexpr bool gcProcessRCDecrement(AtomicMetaBits& rc)
     {
-        //Make sure we don't do anything strange to a "forged pointer"
-        //TOCTOU issue is resolved by a Read-Writer when we have thread shared root ref objects detected
-
-        uint64_t vv = rc.load(std::memory_order_relaxed);
-        if((vv & META_BIT_IS_ALLOC) & !(vv & META_BIT_IS_YOUNG) & (vv >= META_BIT_RC_ONE)) {
-            return (META_BIT_RC_ZERO | META_BIT_IS_ALLOC) == rc.fetch_sub(META_BIT_RC_ONE, std::memory_order_relaxed);
-        }
-
-        return false;
-    }
-
-    constexpr bool gcDecRefCountSingleThreaded(AtomicMetaBits& rc)
-    {
-        return (META_BIT_RC_ZERO | META_BIT_IS_ALLOC) == rc.fetch_sub(META_BIT_RC_ONE, std::memory_order_relaxed);
-    }
-    
-    constexpr bool gcDecRefCountStd(AtomicMetaBits& rc)
-    {
-        return (META_BIT_RC_ZERO | META_BIT_IS_ALLOC) == rc.fetch_sub(META_BIT_RC_ONE);
+        MetaBits oldVal = rc.fetch_sub(META_BIT_RC_ONE);
+        return (oldVal & META_BIT_RC_MASK) == META_BIT_RC_ONE; //was one before decrement, now zero so we want to reclaim
     }
 
 #if BSQ_ALLOCATOR_USE_MALLOC

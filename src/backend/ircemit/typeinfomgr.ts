@@ -325,8 +325,11 @@ class TypeInfoManager {
         return "2" + Array(k).fill("0").join("");
     }
 
-    private static computeListMaskOfK(k: number): string {
-        return "4" + Array(k - 1).fill("0").join(""); //we use the count as the tag for lists, so mask is 4 followed by 0s for the rest of the slots
+    private static computeListMaskOfK(k: number, ptrmask: string, ): string {
+        const bmask = Array(k).fill(ptrmask).join("");
+        const pad = "0".repeat(4 - bmask.length);
+
+        return "4" + bmask + pad;
     }
 
     private processInfoGenerationForEntity(tdecl: IRAbstractEntityTypeDecl, irasm: IRAssembly): TypeInfo {
@@ -352,7 +355,8 @@ class TypeInfoManager {
                 const ltdatasize = LIST_T_LEAF_CAPACITY(oftinfo.bytesize) * oftinfo.bytesize;
                 const ltotalsize = 8 + ldatasize; //8 for the count field
 
-                const mask = TypeInfoManager.computeListMaskOfK(ltotalsize / 8);
+                const imask = oftinfo.ptrmask || TypeInfoManager.computeValueMaskOfK(oftinfo.slotcount);
+                const mask = TypeInfoManager.computeListMaskOfK(LIST_T_INLINE_CAPACITY(oftinfo.bytesize), imask);
 
                 //Add placeholders for the implicitly generated list types -- use dummy values for mask here since we just need to know they exist -- list emitter will handle the rest
                 this.addTypeInfo(`PosRBTreeLeaf_${tdecl.tkey}`, new TypeInfo(`PosRBTreeLeaf_${tdecl.tkey}`, new IRNominalTypeSignature(`PosRBTreeLeaf_${tdecl.tkey}`), ttid - 5, (ldatasize + 8), (ldatasize + 8) / 8, LayoutTag.Ref, undefined));

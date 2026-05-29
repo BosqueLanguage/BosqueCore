@@ -18,12 +18,6 @@
 
 namespace ᐸRuntimeᐳ
 {
-    struct MarkStackEntry
-    {
-        void* obj;
-        uintptr_t color;
-    };
-    
     void loadNativeRootSet(RegisterContents& rcontents, std::vector<void*>& possibleroots)
     {
         //this code should load from the asm stack pointers and copy the native stack into the roots memory
@@ -67,22 +61,18 @@ namespace ᐸRuntimeᐳ
         #endif
     }
 
-    bool processPotentialPtr(void* addr, std::vector<void*>& roots_young, std::vector<void*>& roots_rc)
+    void processPotentialPtr(void* addr, std::vector<void*>& roots_young, std::vector<void*>& roots_rc)
     { 
         GCMetadata* meta = nullptr;
         void* realaddr = nullptr;
 	    if(g_alloc_info.isAllocatedAddress(addr, meta, realaddr)) {
-            if(meta->isyoung) {
+            if(gcIsYoung(meta->rc)) {
                 roots_young.push_back(realaddr);
             }
             else {
                 roots_rc.push_back(realaddr);
             }
-            
-            return meta->threadid == std::this_thread::get_id();
         }
-
-        return false;
     }
 
     bool walkGlobalRoots(std::vector<void*>& roots_young, std::vector<void*>& roots_rc)
@@ -98,7 +88,7 @@ namespace ᐸRuntimeᐳ
         return gproc;
     }
 
-    bool walkStack(std::vector<void*>& roots_young, std::vector<void*>& roots_rc)
+    void walkStack(std::vector<void*>& roots_young, std::vector<void*>& roots_rc)
     {
         RegisterContents rcontents{};
 
@@ -106,81 +96,115 @@ namespace ᐸRuntimeᐳ
         possibleroots.reserve(256); //TODO -- tune this
 
         loadNativeRootSet(rcontents, possibleroots);
-
-        // page->entrycount may be reset by another thread (setPageMetaData) -- processPotentialPtr
-	    std::lock_guard lk(g_alloc_info.g_pages_mutex);
         
-        bool maybecrazyroot = false;
         roots_young.reserve(possibleroots.size() / 4); //TODO -- tune this
         roots_rc.reserve(possibleroots.size() / 4); //TODO -- tune this
 
         for(auto ii = possibleroots.begin(); ii != possibleroots.end(); ii++) {
-            maybecrazyroot |= processPotentialPtr(*ii, roots_young, roots_rc);
+            processPotentialPtr(*ii, roots_young, roots_rc);
         }
 
-        maybecrazyroot |= processPotentialPtr(rcontents.rax, roots_young, roots_rc);
-        maybecrazyroot |= processPotentialPtr(rcontents.rbx, roots_young, roots_rc);
-        maybecrazyroot |= processPotentialPtr(rcontents.rcx, roots_young, roots_rc);
-        maybecrazyroot |= processPotentialPtr(rcontents.rdx, roots_young, roots_rc);
-        maybecrazyroot |= processPotentialPtr(rcontents.rsi, roots_young, roots_rc);
-        maybecrazyroot |= processPotentialPtr(rcontents.rdi, roots_young, roots_rc);
-        maybecrazyroot |= processPotentialPtr(rcontents.r8, roots_young, roots_rc);
-        maybecrazyroot |= processPotentialPtr(rcontents.r9, roots_young, roots_rc);
-        maybecrazyroot |= processPotentialPtr(rcontents.r10, roots_young, roots_rc);
-        maybecrazyroot |= processPotentialPtr(rcontents.r11, roots_young, roots_rc);
-        maybecrazyroot |= processPotentialPtr(rcontents.r12, roots_young, roots_rc);
-        maybecrazyroot |= processPotentialPtr(rcontents.r13, roots_young, roots_rc);
-        maybecrazyroot |= processPotentialPtr(rcontents.r14, roots_young, roots_rc);
-        maybecrazyroot |= processPotentialPtr(rcontents.r15, roots_young, roots_rc);
-
-        return maybecrazyroot;
+        processPotentialPtr(rcontents.rax, roots_young, roots_rc);
+        processPotentialPtr(rcontents.rbx, roots_young, roots_rc);
+        processPotentialPtr(rcontents.rcx, roots_young, roots_rc);
+        processPotentialPtr(rcontents.rdx, roots_young, roots_rc);
+        processPotentialPtr(rcontents.rsi, roots_young, roots_rc);
+        processPotentialPtr(rcontents.rdi, roots_young, roots_rc);
+        processPotentialPtr(rcontents.r8, roots_young, roots_rc);
+        processPotentialPtr(rcontents.r9, roots_young, roots_rc);
+        processPotentialPtr(rcontents.r10, roots_young, roots_rc);
+        processPotentialPtr(rcontents.r11, roots_young, roots_rc);
+        processPotentialPtr(rcontents.r12, roots_young, roots_rc);
+        processPotentialPtr(rcontents.r13, roots_young, roots_rc);
+        processPotentialPtr(rcontents.r14, roots_young, roots_rc);
+        processPotentialPtr(rcontents.r15, roots_young, roots_rc);
     }
 
-    void processRCRoots(std::vector<void*>& roots)
+    void processRCRoots(std::vector<void*>& roots, std::vector<void*>& finalroots)
     {
         for(size_t i = 0; i < roots.size(); i++) {
             bool alreadyknown = std::binary_search(tl_alloc_info.old_roots.cbegin(), tl_alloc_info.old_roots.cend(), roots[i]);
             if(!alreadyknown) {
-                gcIncRefCountConservative(gcGetMetadata(roots[i])->rc);
+                bool keep = gcRootProcessRCIncrement(gcGetMetadata(roots[i])->rc);
+                if(keep) {
+                    finalroots.push_back(roots[i]);
+                }
             }
         }
     }
 
     void* forward(void* ptr);
 
-    void* processSlotTrgt(void* ptr)
+    void* processSlotPtrTrgt(void* ptr)
     {
         GCMetadata* m = gcGetMetadata(ptr);
         if(gcIsYoung(m->rc)) {
             return forward(ptr);
         }
         else {
-            gcIncRefCountPrecise(m->rc);
+            gcYoungProcessRCIncrement(m->rc);
             return ptr;
+        }
+    }
+
+    uint32_t processSlots(char tag, void** slots) {
+        switch(tag) {
+            case '0': {
+                return 1;
+            }
+            case '1': {
+                *slots = processSlotPtrTrgt(*slots);
+                return 1;
+            }
+            case '2': {
+                const TypeInfo* ti = (const TypeInfo*)(*slots);
+                assert(false); //TODO -- need to handle this case for tagged layouts
+
+                return 1 + ti->slotcount;
+            }
+            case '3': {
+                assert(false); //TODO -- need to handle this case for ref layouts with ptrmask
+
+                return 2;
+            }
+            case '4' : {
+                assert(false); //TODO -- need to handle this case for tagged layouts with ptrmask
+                xxxx;
+                return ti->slotcount;
+            }
         }
     }
 
     void* forward(void* ptr)
     {
-        GCAllocatorImpl* gcalloc = gcGetAllocator<GCAllocatorImpl>(ptr);
         GCMetadata* m = gcGetMetadata(ptr); 
 
-        void* nptr = gcalloc->xalloc_evac(); 
-	    std::copy(ptr, nptr, gcGetTypeInfo(m)->slotcount);
+        if(gcIsForwarded(m->rc)) {
+            return *((void**)ptr);
+        }
+        else {
+            GCAllocatorImpl* gcalloc = gcGetAllocator<GCAllocatorImpl>(ptr);
+        
+            uint32_t slotcount = gcGetTypeInfo(ptr)->slotcount;
+            const char* ptrmask = gcGetTypeInfo(ptr)->ptrmask;
 
-        // Insert into forward table and update object ensuring future objects update
-        int32_t fwdidx = tinfo.forward_table.insert(nptr);
-        RESET_METADATA_FOR_OBJECT(m, fwdidx);
+            void* nptr = gcalloc->xalloc_evac(); 
+	        std::copy(ptr, nptr, slotcount);
 
-        return nptr;
+            if(ptrmask != nullptr) {
+
+            }
+
+            *((void**)ptr) = nptr;
+            gcProcessUpdateYoungForward(m->rc);
+
+            return nptr;
+        }
     }
 
     void processYoungRoots(std::vector<void*>& roots)
     {
-        //TODO -- in place promote all root refs
-        xxxx;
-
-        //TODO -- walk and forward recursively
+        //do walk as above then promote in place
         xxxx;
     }
 
@@ -193,30 +217,34 @@ namespace ᐸRuntimeᐳ
     {
         std::vector<void*> curr_roots_young;
         std::vector<void*> curr_roots_rc;
+        std::vector<void*> final_roots_rc;
         curr_roots_young.reserve(128); //TODO -- tune this
         curr_roots_rc.reserve(128); //TODO -- tune this
 
-        bool gproc = walkGlobalRoots(curr_roots_young, curr_roots_rc);
-        bool maybecrazyroot = walkStack(curr_roots_young, curr_roots_rc);
+        bool gproc = false;
+        {
+            // page->entrycount may be reset by another thread (setPageMetaData) -- processPotentialPtr
+	        std::lock_guard lk(g_alloc_info.g_pages_mutex);
 
-        std::sort(curr_roots_young.begin(), curr_roots_young.end());
-        curr_roots_young.erase(std::unique(curr_roots_young.begin(), curr_roots_young.end()), curr_roots_young.end());
+            gproc = walkGlobalRoots(curr_roots_young, curr_roots_rc);
+            walkStack(curr_roots_young, curr_roots_rc);
 
-        std::sort(curr_roots_rc.begin(), curr_roots_rc.end());
-        curr_roots_rc.erase(std::unique(curr_roots_rc.begin(), curr_roots_rc.end()), curr_roots_rc.end());
+            std::sort(curr_roots_young.begin(), curr_roots_young.end());
+            curr_roots_young.erase(std::unique(curr_roots_young.begin(), curr_roots_young.end()), curr_roots_young.end());
 
-        //TODO -- if maybecrazyroot then need to critical section with decs and other stack walkers
-        //     -- later assume that if gproc is true then we should do the crazy root path too -- just for safety/simplicity!!!
-        assert(!maybecrazyroot);
+            std::sort(curr_roots_rc.begin(), curr_roots_rc.end());
+            curr_roots_rc.erase(std::unique(curr_roots_rc.begin(), curr_roots_rc.end()), curr_roots_rc.end());
 
-        //Handle the RC roots (these can't trigger any walk or evacuation)
-        processRCRoots(curr_roots_rc);
+            //Handle the RC roots 
+            final_roots_rc.reserve(curr_roots_rc.size());
+            processRCRoots(curr_roots_rc, final_roots_rc);
+        }
 
         //Handle the young roots + the young walk and evacuation
         processYoungRoots(curr_roots_young);
         
-        //Process decrements
-        processDecrements(curr_roots_young, curr_roots_rc);
+        //Process decrements and update the roots info for the next round
+        processDecrements(curr_roots_young, final_roots_rc);
 
         //Make sure we release the globals mutex if needed
         g_alloc_info.unloadGlobalRootsFromProc(gproc);
