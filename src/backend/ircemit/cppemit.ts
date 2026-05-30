@@ -1511,7 +1511,7 @@ class CPPEmitter {
         let inlinemask: string | undefined = undefined; 
         let leafmask: string | undefined = undefined;
         let nodemask: string | undefined = undefined;
-        if(!/[1-4]/.test(eemask)) {
+        if(!/[1-5]/.test(eemask)) {
             nodemask = "0" + Array(lcapacity).fill(eemask).join("") + "110";
         }
         else {

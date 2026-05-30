@@ -325,11 +325,8 @@ class TypeInfoManager {
         return "2" + Array(k).fill("0").join("");
     }
 
-    private static computeListMaskOfK(k: number, ptrmask: string, ): string {
-        const bmask = Array(k).fill(ptrmask).join("");
-        const pad = "0".repeat(4 - bmask.length);
-
-        return "4" + bmask + pad;
+    private static computeListMaskOfK(k: number, ptrmask: string): string {
+        return "5" + Array(k).fill(ptrmask).join("");
     }
 
     private processInfoGenerationForEntity(tdecl: IRAbstractEntityTypeDecl, irasm: IRAssembly): TypeInfo {
@@ -419,7 +416,7 @@ class TypeInfoManager {
             }
 
             let ptrmask: string | undefined = undefined; 
-            if(/[1-4]/.test(eptrmask)) {
+            if(/[1-5]/.test(eptrmask)) {
                 ptrmask = eptrmask;
             }
 
@@ -534,7 +531,7 @@ class TypeInfoManager {
         }
 
         let ptrmask: string | undefined = undefined; 
-        if(/[1-4]/.test(eptrmask)) {
+        if(/[1-5]/.test(eptrmask)) {
             ptrmask = eptrmask;
         }
 
@@ -612,7 +609,7 @@ class TypeInfoManager {
         timgr.addTypeInfo("StringInline", new TypeInfo("StringInline", new IRNominalTypeSignature("StringInline"), 16, 32, 4, LayoutTag.Value, undefined));
         timgr.addTypeInfo("StringTree", new TypeInfo("StringTree", new IRNominalTypeSignature("StringTree"), 17, 16, 2, LayoutTag.Value, undefined));
         
-        timgr.addTypeInfo("String", new TypeInfo("String", new IRNominalTypeSignature("String"), 18, 16, 2, LayoutTag.Value, "30"));
+        timgr.addTypeInfo("String", new TypeInfo("String", new IRNominalTypeSignature("String"), 18, 16, 2, LayoutTag.Value, "40"));
 
         timgr.addTypeInfo("ByteBufferEntry", new TypeInfo("ByteBufferEntry", new IRNominalTypeSignature("ByteBufferEntry"), 19, 512, 64, LayoutTag.Ref, undefined));
         timgr.addTypeInfo("ByteBufferBlock", new TypeInfo("ByteBufferBlock", new IRNominalTypeSignature("ByteBufferBlock"), 20, 512, 64, LayoutTag.Ref, "1111111111111111111111111111111111111111111111111111111111111111"));

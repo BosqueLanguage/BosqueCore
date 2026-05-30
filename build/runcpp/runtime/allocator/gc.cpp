@@ -1,11 +1,13 @@
 #include "gc.h"
 
+#include "../../core/strings.h"
+#include "../../core/list_t.h"
+
 #if GC_INVARIANTS
 #define GC_INVARIANT_CHECK(x) assert(x)
 #else
 #define GC_INVARIANT_CHECK(x)
 #endif
-
 
 #define GC_PTR_IN_RANGE(V) ((GC_MIN_ALLOCATED_ADDRESS <= V) && (V <= GC_MAX_ALLOCATED_ADDRESS))
 #define GC_PTR_NOT_IN_STACK(BASE, CURR, V) ((((void*)V) < ((void*)CURR)) || (((void*)BASE) < ((void*)V)))
@@ -147,30 +149,59 @@ namespace ᐸRuntimeᐳ
         }
     }
 
-    uint32_t processSlots(char tag, void** slots) {
-        switch(tag) {
+    void processSlotTag(const char*& tag, void**& slots) {
+        switch(*tag) {
             case '0': {
-                return 1;
+                tag++;
+                slots++;
+                break;
             }
             case '1': {
                 *slots = processSlotPtrTrgt(*slots);
-                return 1;
+                tag++;
+                slots++;
+                break;
             }
             case '2': {
                 const TypeInfo* ti = (const TypeInfo*)(*slots);
-                assert(false); //TODO -- need to handle this case for tagged layouts
+                tag++;
+                slots++;
 
-                return 1 + ti->slotcount;
+                const char* mmask = ti->ptrmask;
+                while(*mmask == '\0') {
+                    processSlotTag(mmask, slots);
+                }
+                tag += ti->slotcount;
+                break;
             }
             case '3': {
-                assert(false); //TODO -- need to handle this case for ref layouts with ptrmask
-
-                return 2;
+                if(!XCString::gcIsTestIsInlineRepresentation(slots)) {
+                    *(slots + 1) = processSlotPtrTrgt(*(slots + 1));
+                }
+                tag += 2;
+                slots += 2;
+                break;
             }
-            case '4' : {
-                assert(false); //TODO -- need to handle this case for tagged layouts with ptrmask
-                xxxx;
-                return ti->slotcount;
+            case '4': {
+                if(!XString::gcIsTestIsInlineRepresentation(slots)) {
+                    *(slots + 1) = processSlotPtrTrgt(*(slots + 1));
+                }
+                tag += 2;
+                slots += 2;
+                break;
+            }
+            case '5' : {
+                if(gcIsListTInline(slots)) {
+                    //inline then ptrmask is already inline so just eat the '5' -- otherwise process the pointer and return 2
+                    tag++;
+                    slots++;
+                }
+                else {
+                    *(slots + 1) = processSlotPtrTrgt(*(slots + 1));
+                    tag += 2;
+                    slots += 2;
+                }
+                break;
             }
         }
     }
@@ -184,33 +215,47 @@ namespace ᐸRuntimeᐳ
         }
         else {
             GCAllocatorImpl* gcalloc = gcGetAllocator<GCAllocatorImpl>(ptr);
-        
-            uint32_t slotcount = gcGetTypeInfo(ptr)->slotcount;
-            const char* ptrmask = gcGetTypeInfo(ptr)->ptrmask;
+            const TypeInfo* ti = gcGetTypeInfo(ptr);
 
             void* nptr = gcalloc->xalloc_evac(); 
-	        std::copy(ptr, nptr, slotcount);
+	        std::copy((void**)ptr, (void**)ptr + ti->slotcount, (void**)nptr);
 
-            if(ptrmask != nullptr) {
-
+            if(ti->ptrmask != nullptr) {
+                const char* mmask = ti->ptrmask;
+                void** slots = (void**)nptr;
+                while(*mmask == '\0') {
+                    processSlotTag(mmask, slots);
+                }
             }
 
-            *((void**)ptr) = nptr;
             gcProcessUpdateYoungForward(m->rc);
-
             return nptr;
         }
     }
 
     void processYoungRoots(std::vector<void*>& roots)
     {
-        //do walk as above then promote in place
-        xxxx;
+        for(size_t i = 0; i < roots.size(); i++) {
+            gcRootProcessYoungPromote(gcGetMetadata(roots[i])->rc);
+        }
+
+        for(size_t i = 0; i < roots.size(); i++) {
+            const TypeInfo* ti = gcGetTypeInfo(roots[i]);
+
+            if(ti->ptrmask != nullptr) {
+                const char* mmask = ti->ptrmask;
+                void** slots = (void**)roots[i];
+                while(*mmask == '\0') {
+                    processSlotTag(mmask, slots);
+                }
+            }
+        }
     }
 
     void processDecrements(const std::vector<void*>& roots_young, const std::vector<void*>& roots_rc)
     {
-        xxxx;
+        //TODO: need to process the decrements and update the roots sets for the next collection round
+        return;
     }
 
     void collect()

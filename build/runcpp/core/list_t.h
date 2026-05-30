@@ -694,4 +694,6 @@ namespace ᐸRuntimeᐳ
             }
         }
     };
+
+    constexpr bool gcIsListTInline(void** ptr) { return *((size_t*)ptr) < std::numeric_limits<size_t>::max(); }
 }

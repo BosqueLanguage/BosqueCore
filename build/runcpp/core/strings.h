@@ -270,6 +270,11 @@ namespace ᐸRuntimeᐳ
             return this->ucstr.empty();
         }
 
+        constexpr static bool gcIsTestIsInlineRepresentation(void** value)
+        {
+            return ((XCString*)value)->ucstr.isInline();
+        }
+
         int64_t size() const
         {
             if(this->ucstr.isInline()) {
@@ -582,7 +587,7 @@ namespace ᐸRuntimeᐳ
         sizeof(StringUnion),
         byteSizeToSlotCount(sizeof(StringUnion)),
         LayoutTag::Value,
-        "30",
+        "40",
         nullptr,
         0,
         nullptr,
@@ -688,6 +693,11 @@ namespace ᐸRuntimeᐳ
         constexpr bool empty() const
         {
             return this->ustr.empty();
+        }
+
+        constexpr static bool gcIsTestIsInlineRepresentation(void** value)
+        {
+            return ((XString*)value)->ustr.isInline();
         }
 
         int64_t size() const

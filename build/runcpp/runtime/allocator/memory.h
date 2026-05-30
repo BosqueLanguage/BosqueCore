@@ -51,6 +51,11 @@ namespace ᐸRuntimeᐳ
         rc.store(META_BIT_IS_ALLOC | META_BIT_IS_YOUNG, std::memory_order_relaxed);
     }
 
+    constexpr void gcInitOnEvacuate(AtomicMetaBits& rc)
+    {
+        rc.store(META_BIT_RC_ZERO | META_BIT_IS_ALLOC, std::memory_order_relaxed);
+    }
+
     constexpr bool gcRootProcessRCIncrement(AtomicMetaBits& rc)
     {
         //on root increment this could be a "forged" reference 
@@ -134,14 +139,9 @@ namespace ᐸRuntimeᐳ
         GCMetadata* meta = (GCMetadata*)ptr;
         meta->allocator = allocator;
         meta->threadid = std::this_thread::get_id();
-        gcInitOnPromote(meta->rc);
+        gcInitOnEvacuate(meta->rc);
 
         return (void*)((uint8_t*)ptr + GC_METADATA_SIZE);
-    }
-
-    constexpr void promoteYoungInPlace(GCMetadata* meta)
-    {
-        gcInitOnPromote(meta->rc);
     }
 
 #else
