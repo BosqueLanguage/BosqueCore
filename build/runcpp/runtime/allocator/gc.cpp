@@ -26,20 +26,15 @@ namespace ᐸRuntimeᐳ
         #ifdef __x86_64__
             register void** rbp asm("rbp");
             void** current_frame = rbp;
+            void** iter = current_frame;
         
             //Walk the stack
-            while (current_frame <= tl_alloc_info.native_stack_base) {
-                assert(GC_IS_ALIGNED(current_frame));
-            
-                //Walk entire frame looking for valid pointers
-                void** it = current_frame;
-                void* potential_ptr = *it;
+            while (iter <= tl_alloc_info.native_stack_base) {
+                void* potential_ptr = *iter;
                 if(GC_PTR_IN_RANGE(potential_ptr) && GC_PTR_NOT_IN_STACK(tl_alloc_info.native_stack_base, current_frame, potential_ptr)) {
                     possibleroots.push_back(potential_ptr);
                 }
-                it--;
-            
-                current_frame++;
+                iter++;
             }
     
 
@@ -168,7 +163,7 @@ namespace ᐸRuntimeᐳ
                 slots++;
 
                 const char* mmask = ti->ptrmask;
-                while(*mmask == '\0') {
+                while(*mmask != '\0') {
                     processSlotTag(mmask, slots);
                 }
                 tag += ti->slotcount;
@@ -223,7 +218,7 @@ namespace ᐸRuntimeᐳ
             if(ti->ptrmask != nullptr) {
                 const char* mmask = ti->ptrmask;
                 void** slots = (void**)nptr;
-                while(*mmask == '\0') {
+                while(*mmask != '\0') {
                     processSlotTag(mmask, slots);
                 }
             }
@@ -245,7 +240,7 @@ namespace ᐸRuntimeᐳ
             if(ti->ptrmask != nullptr) {
                 const char* mmask = ti->ptrmask;
                 void** slots = (void**)roots[i];
-                while(*mmask == '\0') {
+                while(*mmask != '\0') {
                     processSlotTag(mmask, slots);
                 }
             }

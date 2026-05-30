@@ -12,31 +12,36 @@ namespace ᐸRuntimeᐳ
     public:
         const TypeInfo* alloctype; 
 
-    private:
         std::set<void*> x_allocs;
+        static std::map<void*, GCAllocatorImpl*> x_all_alloc_to_allocator_map;
 
-    public:
         constexpr GCAllocatorImpl(const TypeInfo* alloctype) : alloctype(alloctype) { ; } 
 
         inline void* xalloc()
         {
             void* ptr = malloc(this->alloctype->bytesize + sizeof(GCMetadata));
-            std::fill((uint8_t*)ptr, ((uint8_t*)ptr + this->alloctype->bytesize + sizeof(GCMetadata)), 0);
+            void* obj = gcInitAllocGCMetadata(ptr, this);
 
-            return *this->x_allocs.insert(gcInitAllocGCMetadata(ptr, this)).first;
+            this->x_allocs.insert(obj);
+            GCAllocatorImpl::x_all_alloc_to_allocator_map.insert({obj, this});
+
+            return obj;
         }
 
         inline void* xalloc_evac()
         {
             void* ptr = malloc(this->alloctype->bytesize + sizeof(GCMetadata));
-            std::fill((uint8_t*)ptr, ((uint8_t*)ptr + this->alloctype->bytesize + sizeof(GCMetadata)), 0);
+            void* obj = gcInitEvacGCMetadata(ptr, this);
 
-            return *this->x_allocs.insert(gcInitEvacGCMetadata(ptr, this)).first;
+            this->x_allocs.insert(obj);
+            GCAllocatorImpl::x_all_alloc_to_allocator_map.insert({obj, this});
+
+            return obj;
         }
 
         bool checkObjectBounds(void* addr, void* omem, const GCMetadata* meta, void*& raddr)
         {            
-            const uintptr_t objstart = (uintptr_t)(omem) + sizeof(GCMetadata);
+            const uintptr_t objstart = (uintptr_t)(omem);
             const uintptr_t objend = objstart + ((GCAllocatorImpl*)meta->allocator)->alloctype->bytesize;
             
             if((objstart <= (uintptr_t)addr) && ((uintptr_t)addr < objend)) {
@@ -76,7 +81,7 @@ namespace ᐸRuntimeᐳ
         void cleanup()
         {
             for(auto iter = this->x_allocs.begin(); iter != this->x_allocs.end(); iter++) {
-                free(*iter);
+                free((void*)gcGetMetadata(*iter));
             }
 
             this->x_allocs.clear();

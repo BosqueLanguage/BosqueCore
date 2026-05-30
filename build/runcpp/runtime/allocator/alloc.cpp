@@ -2,11 +2,16 @@
 
 namespace ᐸRuntimeᐳ
 {
+#if BSQ_ALLOCATOR_USE_MALLOC
+    std::map<void*, GCAllocatorImpl*> GCAllocatorImpl::x_all_alloc_to_allocator_map{};
+#endif
+
     thread_local AllocatorThreadLocalInfo tl_alloc_info;
     AllocatorGlobalInfo g_alloc_info;
 
     void AllocatorThreadLocalInfo::initialize(std::thread::id threadid, void** caller_rbp, void (*_collectfp)(), const std::map<uint32_t, GCAllocatorImpl*>& gcallocs)
     {
+        this->native_stack_base = caller_rbp;
         this->collectfp = _collectfp;
         this->gcallocs = gcallocs;
     }
@@ -42,17 +47,25 @@ namespace ᐸRuntimeᐳ
 
     bool AllocatorGlobalInfo::isAllocatedAddress(void* addr, GCMetadata*& meta, void*& raddr)
     {
-        //TODO -- page version is more complex and must check
-        // - Is the page allocated at all (in the table map)
-        // - If so is the location in (many be in middle) of valid object in the page
-        //   - Is the object allocated
-        //   - If so then is the object young (and of the same threadid) OR is it an RC object 
-
-        GCAllocatorImpl* alloc = gcGetAllocator<GCAllocatorImpl>(addr);
-        if(!alloc->isAddrInValidObject(addr, meta, raddr)) {
+#if BSQ_ALLOCATOR_USE_MALLOC
+        if(GCAllocatorImpl::x_all_alloc_to_allocator_map.empty()) {
             return false;
         }
 
-        return alloc->isAddrSuitableCategory(meta);
+        auto aii = GCAllocatorImpl::x_all_alloc_to_allocator_map.lower_bound(addr);
+        aii--;
+
+        if(!aii->second->isAddrInValidObject(addr, meta, raddr)) {
+            return false;
+        }
+
+        return aii->second->isAddrSuitableCategory(meta);
     }
+#else
+    //TODO -- page version is more complex and must check
+        // - Is the page allocated at all (in the table map)
+        // - If so is the location in (many be in middle) of valid object in the page
+        //   - Is the object allocated
+        //   - If so then is the object young (and of the same threadid) OR is it an RC object
+#endif
 }
