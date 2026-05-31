@@ -215,6 +215,9 @@ namespace ᐸRuntimeᐳ
             void* nptr = gcalloc->xalloc_evac(); 
 	        std::copy((void**)ptr, (void**)ptr + ti->slotcount, (void**)nptr);
 
+            *((void**)ptr) = nptr;
+            gcProcessUpdateYoungForward(m->rc);
+
             if(ti->ptrmask != nullptr) {
                 const char* mmask = ti->ptrmask;
                 void** slots = (void**)nptr;
@@ -223,7 +226,6 @@ namespace ᐸRuntimeᐳ
                 }
             }
 
-            gcProcessUpdateYoungForward(m->rc);
             return nptr;
         }
     }
@@ -250,7 +252,10 @@ namespace ᐸRuntimeᐳ
     void processDecrements(const std::vector<void*>& roots_young, const std::vector<void*>& roots_rc)
     {
         //TODO: need to process the decrements and update the roots sets for the next collection round
-        return;
+        
+        tl_alloc_info.old_roots.resize(roots_young.size() + roots_rc.size());
+        std::copy(roots_young.cbegin(), roots_young.cend(), tl_alloc_info.old_roots.begin());
+        std::copy(roots_rc.cbegin(), roots_rc.cend(), tl_alloc_info.old_roots.begin() + roots_young.size());
     }
 
     void collect()
@@ -288,5 +293,9 @@ namespace ᐸRuntimeᐳ
 
         //Make sure we release the globals mutex if needed
         g_alloc_info.unloadGlobalRootsFromProc(gproc);
+
+        for(auto ai = tl_alloc_info.gcallocs.begin(); ai != tl_alloc_info.gcallocs.end(); ++ai) {
+            ai->second->processNursery();
+        }
     }
 }

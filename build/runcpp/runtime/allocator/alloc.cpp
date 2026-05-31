@@ -9,6 +9,11 @@ namespace ᐸRuntimeᐳ
     thread_local AllocatorThreadLocalInfo tl_alloc_info;
     AllocatorGlobalInfo g_alloc_info;
 
+    void runCollect()
+    {
+        tl_alloc_info.collectfp();
+    }
+
     void AllocatorThreadLocalInfo::initialize(std::thread::id threadid, void** caller_rbp, void (*_collectfp)(), const std::map<uint32_t, GCAllocatorImpl*>& gcallocs)
     {
         this->native_stack_base = caller_rbp;

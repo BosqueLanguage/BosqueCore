@@ -6,26 +6,51 @@ namespace ᐸRuntimeᐳ
 {
     constexpr size_t MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE = 8192; //8KB blocks for buffer allocation
 
+    void runCollect();
+
 #if BSQ_ALLOCATOR_USE_MALLOC
     class GCAllocatorImpl
     {
     public:
-        const TypeInfo* alloctype; 
+        constexpr static size_t NURSERY_SIZE = 1024;
+
+        const TypeInfo* alloctype;
+        void* freelist;
+        std::array<void*, NURSERY_SIZE> nursery;
+        size_t allocount;
 
         std::set<void*> x_allocs;
         static std::map<void*, GCAllocatorImpl*> x_all_alloc_to_allocator_map;
 
-        constexpr GCAllocatorImpl(const TypeInfo* alloctype) : alloctype(alloctype) { ; } 
+        GCAllocatorImpl(const TypeInfo* alloctype) : alloctype{alloctype}, freelist{nullptr}, nursery{}, allocount(0), x_allocs{} { ; } 
 
         inline void* xalloc()
         {
-            void* ptr = malloc(this->alloctype->bytesize + sizeof(GCMetadata));
-            void* obj = gcInitAllocGCMetadata(ptr, this);
+            this->allocount++;
+            if(this->allocount >= NURSERY_SIZE) {
+                runCollect();
+            }
 
-            this->x_allocs.insert(obj);
-            GCAllocatorImpl::x_all_alloc_to_allocator_map.insert({obj, this});
+            if(this->freelist != nullptr) {
+                void* ptr = *((void**)this->freelist);
+                this->freelist = *((void**)ptr);
 
-            return obj;
+                GCMetadata* meta = gcGetMetadata((GCMetadata*)ptr - 1);
+                gcInitOnAllocate(meta->rc);
+
+                this->nursery[this->allocount++] = ptr;
+                return ptr;
+            }
+            else {
+                void* ptr = malloc(this->alloctype->bytesize + sizeof(GCMetadata));
+                void* obj = gcInitAllocGCMetadata(ptr, this);
+
+                this->x_allocs.insert(obj);
+                GCAllocatorImpl::x_all_alloc_to_allocator_map.insert({obj, this});
+
+                this->nursery[this->allocount++] = obj;
+                return obj;
+            }
         }
 
         inline void* xalloc_evac()
@@ -78,6 +103,22 @@ namespace ᐸRuntimeᐳ
             return true;
         }
 
+        void processNursery()
+        {
+            for(size_t i = 0; i < this->allocount; ++i) {
+                GCMetadata* meta = gcGetMetadata(this->nursery[i]);
+                if(!gcIsAllocated(meta->rc) | gcIsYoung(meta->rc)) {
+                    *((void**)this->nursery[i]) = this->freelist;
+                    this->freelist = this->nursery[i];
+                }
+                
+                gcProcessSweep(meta->rc);
+                this->nursery[i] = nullptr;
+            }
+
+            this->allocount = 0;
+        }
+
         void cleanup()
         {
             for(auto iter = this->x_allocs.begin(); iter != this->x_allocs.end(); iter++) {
@@ -92,7 +133,7 @@ namespace ᐸRuntimeᐳ
     class GCAllocator : public GCAllocatorImpl
     {
     public:
-        constexpr GCAllocator(const TypeInfo* alloctype) : GCAllocatorImpl(alloctype) {}
+        GCAllocator(const TypeInfo* alloctype) : GCAllocatorImpl(alloctype) {}
 
         template<typename... Args>
         inline T* allocate(Args... args) 
@@ -114,7 +155,7 @@ namespace ᐸRuntimeᐳ
     public:
         const TypeInfo* alloctype; 
 
-        constexpr GCAllocatorImpl(const TypeInfo* alloctype) : alloctype(alloctype) {} 
+        GCAllocatorImpl(const TypeInfo* alloctype) : alloctype(alloctype) {} 
 
         void cleanup()
         {
@@ -125,7 +166,7 @@ namespace ᐸRuntimeᐳ
     class GCAllocator : public GCAllocatorImpl
     {
     public:
-        constexpr GCAllocator(const TypeInfo* alloctype) : GCAllocatorImpl(alloctype) {}
+        GCAllocator(const TypeInfo* alloctype) : GCAllocatorImpl(alloctype) {}
 
         inline void* xalloc()
         {

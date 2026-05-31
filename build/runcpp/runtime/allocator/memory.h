@@ -53,7 +53,7 @@ namespace ᐸRuntimeᐳ
 
     constexpr void gcInitOnEvacuate(AtomicMetaBits& rc)
     {
-        rc.store(META_BIT_RC_ZERO | META_BIT_IS_ALLOC, std::memory_order_relaxed);
+        rc.store(META_BIT_IS_ALLOC | META_BIT_RC_ZERO, std::memory_order_relaxed);
     }
 
     constexpr bool gcRootProcessRCIncrement(AtomicMetaBits& rc)
@@ -65,7 +65,7 @@ namespace ᐸRuntimeᐳ
 
         MetaBits ll = rc.load();
         while(true) {
-            if(((ll & META_BIT_IS_ALLOC) == 0) | ((ll & META_BIT_IS_YOUNG) == 0) | ((ll & META_BIT_RC_MASK) == 0)) {
+            if(((ll & META_BIT_IS_ALLOC) == 0) | ((ll & META_BIT_IS_YOUNG) != 0) | ((ll & META_BIT_RC_MASK) == META_BIT_RC_ZERO)) {
                 return false;
             }
 
@@ -78,12 +78,12 @@ namespace ᐸRuntimeᐳ
 
     constexpr void gcProcessUpdateYoungForward(AtomicMetaBits& rc)
     {
-        rc.store(META_BIT_IS_YOUNG | META_BIT_IS_ALLOC | META_BIT_IS_FORWARD, std::memory_order_relaxed);
+        rc.store(META_BIT_IS_ALLOC | META_BIT_IS_YOUNG | META_BIT_IS_FORWARD, std::memory_order_relaxed);
     }
 
     constexpr void gcRootProcessYoungPromote(AtomicMetaBits& rc)
     {
-        rc.store(META_BIT_RC_ONE | META_BIT_IS_ALLOC, std::memory_order_relaxed);
+        rc.store(META_BIT_IS_ALLOC | META_BIT_RC_ONE, std::memory_order_relaxed);
     }
 
     constexpr void gcYoungProcessRCIncrement(AtomicMetaBits& rc)
@@ -95,6 +95,11 @@ namespace ᐸRuntimeᐳ
     {
         MetaBits oldVal = rc.fetch_sub(META_BIT_RC_ONE);
         return (oldVal & META_BIT_RC_MASK) == META_BIT_RC_ONE; //was one before decrement, now zero so we want to reclaim
+    }
+
+    constexpr void gcProcessSweep(AtomicMetaBits& rc)
+    {
+        rc.store(0, std::memory_order_relaxed);
     }
 
 #if BSQ_ALLOCATOR_USE_MALLOC

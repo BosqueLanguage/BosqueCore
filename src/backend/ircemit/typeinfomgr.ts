@@ -331,6 +331,7 @@ class TypeInfoManager {
 
     private processInfoGenerationForEntity(tdecl: IRAbstractEntityTypeDecl, irasm: IRAssembly): TypeInfo {
         if(tdecl instanceof IRSomeTypeDecl) {
+            xxxx;
             const oftinfo = this.processInfoGenerationForType(tdecl.ttype, irasm);
 
             const ttid = this.typeInfoMap.size;
@@ -345,6 +346,7 @@ class TypeInfoManager {
         }
         else if(tdecl instanceof IRAbstractCollectionTypeDecl) {
             if(tdecl instanceof IRListTypeDecl) {
+                xxxx;
                 const oftinfo = this.processInfoGenerationForType(tdecl.oftype, irasm);
                 
                 const ttid = this.typeInfoMap.size + 5; //+5 for the leaf, node, tree, inline, and tree repr type infos we need to generate for all the parts in the list
@@ -447,6 +449,7 @@ class TypeInfoManager {
 
     private processInfoGenerationForConcept(tdecl: IRAbstractEntityTypeDecl, irasm: IRAssembly): TypeInfo {
         if(tdecl instanceof IROptionTypeDecl) {
+            xxxx;
             const oftinfo = this.processInfoGenerationForType(tdecl.ttype, irasm);
 
             const ttid = this.typeInfoMap.size;
@@ -548,18 +551,32 @@ class TypeInfoManager {
         return this.getTypeInfo(ttype.tkeystr);
     }
 
-    private processInfoGenerationForType(ttype: IRTypeSignature, irasm: IRAssembly): TypeInfo {
+    private processInfoGenerationForType(ttype: IRTypeSignature, irasm: IRAssembly, norec: boolean): TypeInfo {
         if(this.hasTypeInfo(ttype.tkeystr)) {
             return this.getTypeInfo(ttype.tkeystr);
         }
 
         if(ttype instanceof IRNominalTypeSignature) {
-            const ddecl = irasm.alltypes.get(ttype.tkeystr) as IRAbstractNominalTypeDecl;
-            if(ddecl instanceof IRAbstractEntityTypeDecl) {
-                return this.processInfoGenerationForEntity(ddecl, irasm);
+            if(norec && this.isNominalRecursiveType(ttype, irasm)) {
+                if((ftypedecl instanceof IRConceptTypeDecl) || (ftypedecl instanceof IRDatatypeTypeDecl)) {
+                        totalbytesize += 16;
+                        totalslotcount += 2;
+                        eptrmask += "20";
+                    }
+                    else {
+                        totalbytesize += 8;
+                        totalslotcount += 1;
+                        eptrmask += "1";
+                    }
             }
             else {
-                return this.processInfoGenerationForConcept(ddecl, irasm);
+                const ddecl = irasm.alltypes.get(ttype.tkeystr) as IRAbstractNominalTypeDecl;
+                if(ddecl instanceof IRAbstractEntityTypeDecl) {
+                    return this.processInfoGenerationForEntity(ddecl, irasm);
+                }
+                else {
+                    return this.processInfoGenerationForConcept(ddecl, irasm);
+                }
             }
         }
         else {
