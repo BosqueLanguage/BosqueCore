@@ -1705,7 +1705,7 @@ class CPPEmitter {
             `        ${ttid.bsqtypeid},\n` +
             `        ${ttid.bytesize},\n` +
             `        ${ttid.slotcount},\n` +
-            `        LayoutTag::Tagged,\n` +
+            `        LayoutTag::Value,\n` +
             `        ${ttid.ptrmask !== undefined ? ('"' + ttid.ptrmask + '"') : "nullptr"},\n` +
             `        nullptr,\n` +
             `        0,\n` +

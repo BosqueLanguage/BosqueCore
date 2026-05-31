@@ -96,7 +96,7 @@ namespace ᐸRuntimeᐳ
         WELL_KNOWN_TYPE_ID_BYTEBUFFER,
         sizeof(BufferTree) + sizeof(size_t),
         byteSizeToSlotCount(sizeof(BufferTree) + sizeof(size_t)),
-        LayoutTag::Tagged,
+        LayoutTag::Value,
         "200",
         nullptr,
         0,

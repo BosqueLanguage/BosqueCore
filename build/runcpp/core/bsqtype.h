@@ -2,10 +2,6 @@
 
 #include "../common.h"
 
-#define BSQ_PTR_MASK_NOP ('0')
-#define BSQ_PTR_MASK_PTR ('1')
-#define BSQ_PTR_MASK_TAGGED ('2')
-
 #define BSQ_PTR_MASK_LEAF nullptr
 
 namespace ᐸRuntimeᐳ
@@ -47,8 +43,7 @@ namespace ᐸRuntimeᐳ
     enum class LayoutTag : uint16_t
     {
         Value,     //an inline value
-        Ref,       //a pointer to a heap allocated value
-        Tagged    //a tagged value, first slot is the typeinfo that has the actual data layout
+        Ref        //a pointer to a heap allocated value
     };
 
     class FieldOffsetInfo

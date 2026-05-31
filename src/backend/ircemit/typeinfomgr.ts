@@ -52,8 +52,25 @@ class FieldOffsetInfo {
 
 enum LayoutTag {
     Value  = "Value",
-    Ref    = "Ref",
-    Tagged = "Tagged"
+    Ref    = "Ref"
+}
+
+class LayoutInfo {
+    readonly tkey: string;
+    readonly tsig: IRTypeSignature;
+
+    readonly bytesize: number;
+    readonly slotcount: number;
+
+    readonly layoutmask: string; //This is not ptr mask it is ALWAYS the mask for the inline repr
+
+    constructor(tkey: string, tsig: IRTypeSignature, bytesize: number, layoutmask: string) {
+        this.tkey = tkey;
+        this.tsig = tsig;
+        this.bytesize = bytesize;
+        this.slotcount = bytesize / 8;
+        this.layoutmask = layoutmask;
+    }
 }
 
 class TypeInfo {
@@ -65,18 +82,18 @@ class TypeInfo {
     readonly slotcount: number;
     readonly tag: LayoutTag;
 
-    readonly ptrmask: string | undefined; // NULL is for leaf values or structs
+    readonly ptrmask: string | undefined; //undefined is for leaf values or structs
 
     readonly itable: VirtualInvokeInfo[] = [];
     readonly ftable: FieldOffsetInfo[]  = [];
 
-    constructor(tkey: string, tsig: IRTypeSignature, bsqtypeid: number, bytesize: number, slotcount: number, tag: LayoutTag, ptrmask: string | undefined) {
+    constructor(tkey: string, tsig: IRTypeSignature, bsqtypeid: number, bytesize: number, tag: LayoutTag, ptrmask: string | undefined) {
         this.tkey = tkey;
         this.tsig = tsig;
 
         this.bsqtypeid = bsqtypeid;
         this.bytesize = bytesize;
-        this.slotcount = slotcount;
+        this.slotcount = bytesize / 8;
         this.tag = tag;
 
         this.ptrmask = ptrmask;
@@ -88,13 +105,37 @@ class TypeInfo {
 }
 
 class TypeInfoManager {
-    private typeInfoMap: Map<string, TypeInfo>;
+    private layoutInfoMap: Map<string, LayoutInfo> = new Map<string, LayoutInfo>();
+    private typeInfoMap: Map<string, TypeInfo> = new Map<string, TypeInfo>();
     private fieldidctr = 0;
 
     static readonly c_ref_pass_size: number = 32; //Bytes used for ref passing (pointer + typeid + extra)
 
     constructor() {
-        this.typeInfoMap = new Map<string, TypeInfo>();
+    }
+
+     private static isAllNopMask(mask: string): boolean {
+        return !/[1-5]/.test(mask);
+    }
+
+    private static staticLayoutToPtrMaskConvert(layoutmask: string): string | undefined {
+        return TypeInfoManager.isAllNopMask(layoutmask) ? undefined : layoutmask;
+    }
+
+    hasLayoutInfo(tkey: string): boolean {
+        return this.layoutInfoMap.has(tkey);
+    }
+
+    getLayoutInfo(tkey: string): LayoutInfo {
+        assert(this.layoutInfoMap.has(tkey), `TypeInfoManager::getLayoutInfo - Missing type info for key ${tkey}`);
+        
+        return this.layoutInfoMap.get(tkey) as LayoutInfo;
+    }
+
+    addLayoutInfo(tkey: string, typeInfo: LayoutInfo): void {
+        assert(!this.layoutInfoMap.has(tkey), `TypeInfoManager::addLayoutInfo - Duplicate type info for key ${tkey}`);
+
+        this.layoutInfoMap.set(tkey, typeInfo);
     }
 
     hasTypeInfo(tkey: string): boolean {
@@ -108,10 +149,6 @@ class TypeInfoManager {
     }
 
     addTypeInfo(tkey: string, typeInfo: TypeInfo): void {
-        if(this.typeInfoMap.has(tkey))  {
-            console.log(this.typeInfoMap.get(tkey));
-        }
-
         assert(!this.typeInfoMap.has(tkey), `TypeInfoManager::addTypeInfo - Duplicate type info for key ${tkey}`);
 
         this.typeInfoMap.set(tkey, typeInfo);
@@ -206,11 +243,8 @@ class TypeInfoManager {
         if(typeinfo.tag === LayoutTag.Value) {
             layouttag = "Value";
         }
-        else if(typeinfo.tag === LayoutTag.Ref) {
-            layouttag = "Ref";
-        }
         else {
-            layouttag = "Tagged";
+            layouttag = "Ref";
         }
 
         assert(typeinfo.itable.length === 0, `TypeInfoManager::emitTypeInfoDecl - ITable emission not yet supported for type key ${tkey}`);
@@ -305,14 +339,6 @@ class TypeInfoManager {
         });
     }
 
-    private isNominalRecursiveType(ttype: IRTypeSignature, irasm: IRAssembly): boolean {
-        if(!(ttype instanceof IRNominalTypeSignature)) {
-            return false;
-        }
-
-        return this.isRecursiveTypeKey(ttype.tkeystr, irasm);
-    }
-
     private isSizeOkForValueLayout(bytesize: number): boolean {
         return bytesize <= 64;
     }
@@ -321,52 +347,169 @@ class TypeInfoManager {
         return Array(k).fill("0").join("");
     }
 
-    private static computeTaggedMaskOfK(k: number): string {
-        return "2" + Array(k).fill("0").join("");
-    }
-
     private static computeListMaskOfK(k: number, ptrmask: string): string {
         return "5" + Array(k).fill(ptrmask).join("");
     }
 
-    private processInfoGenerationForEntity(tdecl: IRAbstractEntityTypeDecl, irasm: IRAssembly): TypeInfo {
+    private generateLayoutInfoForEntity(tdecl: IRAbstractEntityTypeDecl, irasm: IRAssembly): LayoutInfo {
         if(tdecl instanceof IRSomeTypeDecl) {
-            xxxx;
-            const oftinfo = this.processInfoGenerationForType(tdecl.ttype, irasm);
-
-            const ttid = this.typeInfoMap.size;
-            if(oftinfo.tag === LayoutTag.Ref) {
-                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, 8, 1, LayoutTag.Value, "1"));
-            }
-            else {
-                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, oftinfo.bytesize, oftinfo.slotcount, oftinfo.tag, oftinfo.ptrmask));
-            }
-            
-            return this.getTypeInfo(tdecl.tkey);
+            const oftinfo = this.generateLayoutInfoForType(tdecl.ttype, irasm);
+            this.addLayoutInfo(tdecl.tkey, new LayoutInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), oftinfo.bytesize, oftinfo.layoutmask));
         }
         else if(tdecl instanceof IRAbstractCollectionTypeDecl) {
             if(tdecl instanceof IRListTypeDecl) {
-                xxxx;
-                const oftinfo = this.processInfoGenerationForType(tdecl.oftype, irasm);
+                const oftinfo = this.generateLayoutInfoForType(tdecl.oftype, irasm);
+                
+                const ldatasize = LIST_T_INLINE_CAPACITY(oftinfo.bytesize) * oftinfo.bytesize;
+                const ltotalsize = 8 + ldatasize; //8 for the count field
+                const mask = TypeInfoManager.computeListMaskOfK(LIST_T_INLINE_CAPACITY(oftinfo.bytesize), oftinfo.layoutmask);
+
+                this.addLayoutInfo(tdecl.tkey, new LayoutInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ltotalsize, mask));
+                return this.getLayoutInfo(tdecl.tkey);
+            }
+            else {
+                assert(false, `TypeInfoManager::processInfoGenerationForEntity - Unsupported collection type declaration for key ${tdecl.tkey}`);
+            }
+        }
+        else {
+            assert((tdecl instanceof IREntityTypeDecl) || (tdecl instanceof IRDatatypeMemberEntityTypeDecl), `TypeInfoManager::processInfoGenerationForEntity - Unsupported entity type declaration for key ${tdecl.tkey}`);
+
+            if(this.isRecursiveTypeKey(tdecl.tkey, irasm)) {
+                this.addLayoutInfo(tdecl.tkey, new LayoutInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), 8, "1"));
+            }
+            else {
+                let totalbytesize = 0;
+                let layoutmask = "";
+
+                for(let i = 0; i < tdecl.saturatedBFieldInfo.length; ++i) {
+                    const ftypeinfo = this.generateLayoutInfoForType(tdecl.saturatedBFieldInfo[i].ftype, irasm);
+
+                    totalbytesize += ftypeinfo.bytesize;
+                    layoutmask += ftypeinfo.layoutmask;
+                }
+
+                // If the entity has no fields, it should still have a size of 8 bytes and 1 slot
+                if(tdecl.saturatedBFieldInfo.length === 0) {
+                    totalbytesize = 8;
+                    layoutmask = "0";
+                }
+
+                if(!this.isSizeOkForValueLayout(totalbytesize)) {
+                    this.addLayoutInfo(tdecl.tkey, new LayoutInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), 8, "1"));                    
+                }
+                else {
+                    this.addLayoutInfo(tdecl.tkey, new LayoutInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), totalbytesize, layoutmask));
+                }
+            }
+        }
+
+        return this.getLayoutInfo(tdecl.tkey);
+    }
+
+    private generateLayoutInfoForConcept(tdecl: IRAbstractEntityTypeDecl, irasm: IRAssembly): LayoutInfo {
+        if(tdecl instanceof IROptionTypeDecl) {
+            const oftinfo = this.generateLayoutInfoForType(tdecl.ttype, irasm);
+
+            let spm = TypeInfoManager.isAllNopMask(oftinfo.layoutmask) ? ("0" + oftinfo.layoutmask) : ("2" + TypeInfoManager.computeValueMaskOfK(oftinfo.bytesize));
+            this.addLayoutInfo(tdecl.tkey, new LayoutInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), oftinfo.bytesize + 8, spm));
+        }
+        else {
+            assert((tdecl instanceof IRConceptTypeDecl) || (tdecl instanceof IRDatatypeTypeDecl), `TypeInfoManager::processInfoGenerationForConcept - Unsupported concept type declaration for key ${tdecl.tkey}`);
+
+            // If the concept has no subtypes, it should still have a size of 8 bytes
+            let maxbytesize = 8;
+            let allnops = true;
+            const subtypes = irasm.concretesubtypes.get(tdecl.tkey) as IRTypeSignature[];
+            for(let i = 0; i < subtypes.length; ++i) {
+                const ftypeinfo = this.generateLayoutInfoForType(subtypes[i], irasm);
+                maxbytesize = Math.max(maxbytesize, ftypeinfo.bytesize);
+                allnops = allnops && TypeInfoManager.isAllNopMask(ftypeinfo.layoutmask)
+            }
+
+            let layoutmask = (allnops ? "0" : "2") + TypeInfoManager.computeValueMaskOfK(maxbytesize / 8);
+            this.addLayoutInfo(tdecl.tkey, new LayoutInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), maxbytesize + 8, layoutmask));
+        }
+
+        return this.getLayoutInfo(tdecl.tkey);
+    }
+
+    private generateLayoutInfoForElist(ttype: IREListTypeSignature, irasm: IRAssembly): LayoutInfo {
+        let totalbytesize = 0;
+        let layoutmask = "";
+
+        for(let i = 0; i < ttype.entries.length; ++i) {
+            const ftypeinfo = this.generateLayoutInfoForType(ttype.entries[i], irasm);
+            totalbytesize += ftypeinfo.bytesize;
+            layoutmask += ftypeinfo.layoutmask;
+        }
+
+        this.addLayoutInfo(ttype.tkeystr, new LayoutInfo(ttype.tkeystr, ttype, totalbytesize, layoutmask));
+        return this.getLayoutInfo(ttype.tkeystr);
+    }
+
+    private generateLayoutInfoForFormat(ttype: IRFormatTypeSignature, irasm: IRAssembly): LayoutInfo {
+        this.addLayoutInfo(ttype.tkeystr, new LayoutInfo(ttype.tkeystr, ttype, 8, "0"));
+        return this.getLayoutInfo(ttype.tkeystr);
+    }
+
+    private generateLayoutInfoForType(ttype: IRTypeSignature, irasm: IRAssembly): LayoutInfo {
+        if(this.hasLayoutInfo(ttype.tkeystr)) {
+            return this.getLayoutInfo(ttype.tkeystr);
+        }
+
+        if(ttype instanceof IRNominalTypeSignature) {
+            const ddecl = irasm.alltypes.get(ttype.tkeystr) as IRAbstractNominalTypeDecl;
+            if(ddecl instanceof IRAbstractEntityTypeDecl) {
+                return this.generateLayoutInfoForEntity(ddecl, irasm);
+            }
+            else {
+                return this.generateLayoutInfoForConcept(ddecl, irasm);
+            }
+        }
+        else {
+            assert(!(ttype instanceof IRVoidTypeSignature), "Don't think we should ever be doing this...");
+
+            if(ttype instanceof IREListTypeSignature) {
+                return this.generateLayoutInfoForElist(ttype, irasm);
+            }
+            else if(ttype instanceof IRDashResultTypeSignature) {
+                assert(false, `TypeInfoManager::processInfoGenerationForType - Unsupported dash result type signature for key ${ttype.tkeystr}`);
+            }
+            else if(ttype instanceof IRFormatTypeSignature) {
+                return this.generateLayoutInfoForFormat(ttype, irasm);
+            }
+            else {
+                assert(false, `TypeInfoManager::processInfoGenerationForType - Unsupported type signature for key ${ttype.tkeystr}`);
+            }
+        }
+    }
+
+    private processInfoGenerationForEntity(tdecl: IRAbstractEntityTypeDecl, irasm: IRAssembly): TypeInfo {
+        if(tdecl instanceof IRSomeTypeDecl) {
+            const oftinfo = this.generateLayoutInfoForType(tdecl.ttype, irasm);
+
+            const ttid = this.typeInfoMap.size;
+            this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, oftinfo.bytesize, LayoutTag.Value, TypeInfoManager.staticLayoutToPtrMaskConvert(oftinfo.layoutmask)));
+        }
+        else if(tdecl instanceof IRAbstractCollectionTypeDecl) {
+            if(tdecl instanceof IRListTypeDecl) {
+                const oftinfo = this.generateLayoutInfoForType(tdecl.oftype, irasm);
                 
                 const ttid = this.typeInfoMap.size + 5; //+5 for the leaf, node, tree, inline, and tree repr type infos we need to generate for all the parts in the list
                 const ldatasize = LIST_T_INLINE_CAPACITY(oftinfo.bytesize) * oftinfo.bytesize;
                 const ltdatasize = LIST_T_LEAF_CAPACITY(oftinfo.bytesize) * oftinfo.bytesize;
                 const ltotalsize = 8 + ldatasize; //8 for the count field
 
-                const imask = oftinfo.ptrmask || TypeInfoManager.computeValueMaskOfK(oftinfo.slotcount);
-                const mask = TypeInfoManager.computeListMaskOfK(LIST_T_INLINE_CAPACITY(oftinfo.bytesize), imask);
+                const mask = TypeInfoManager.computeListMaskOfK(LIST_T_INLINE_CAPACITY(oftinfo.bytesize), oftinfo.layoutmask);
 
                 //Add placeholders for the implicitly generated list types -- use dummy values for mask here since we just need to know they exist -- list emitter will handle the rest
-                this.addTypeInfo(`PosRBTreeLeaf_${tdecl.tkey}`, new TypeInfo(`PosRBTreeLeaf_${tdecl.tkey}`, new IRNominalTypeSignature(`PosRBTreeLeaf_${tdecl.tkey}`), ttid - 5, (ldatasize + 8), (ldatasize + 8) / 8, LayoutTag.Ref, undefined));
-                this.addTypeInfo(`PosRBTreeNode_${tdecl.tkey}`, new TypeInfo(`PosRBTreeNode_${tdecl.tkey}`, new IRNominalTypeSignature(`PosRBTreeNode_${tdecl.tkey}`), ttid - 4, (ldatasize + 32) , (ldatasize + 4) / 8, LayoutTag.Ref, undefined));
-                this.addTypeInfo(`PosRBTree_${tdecl.tkey}`, new TypeInfo(`PosRBTree_${tdecl.tkey}`, new IRNominalTypeSignature(`PosRBTree_${tdecl.tkey}`), ttid - 3, 8, 1, LayoutTag.Ref, undefined));
-                this.addTypeInfo(`${tdecl.tkey}Inline`, new TypeInfo(`${tdecl.tkey}Inline`, new IRNominalTypeSignature(`${tdecl.tkey}Inline`), ttid - 2, ltdatasize + 8, (ltdatasize + 8) / 8, LayoutTag.Value, undefined));
-                this.addTypeInfo(`${tdecl.tkey}Tree`, new TypeInfo(`${tdecl.tkey}Tree`, new IRNominalTypeSignature(`${tdecl.tkey}Tree`), ttid - 1, 16, 2, LayoutTag.Value, undefined));
+                this.addTypeInfo(`PosRBTreeLeaf_${tdecl.tkey}`, new TypeInfo(`PosRBTreeLeaf_${tdecl.tkey}`, new IRNominalTypeSignature(`PosRBTreeLeaf_${tdecl.tkey}`), ttid - 5, (ldatasize + 8), LayoutTag.Ref, undefined));
+                this.addTypeInfo(`PosRBTreeNode_${tdecl.tkey}`, new TypeInfo(`PosRBTreeNode_${tdecl.tkey}`, new IRNominalTypeSignature(`PosRBTreeNode_${tdecl.tkey}`), ttid - 4, (ldatasize + 32), LayoutTag.Ref, undefined));
+                this.addTypeInfo(`PosRBTree_${tdecl.tkey}`, new TypeInfo(`PosRBTree_${tdecl.tkey}`, new IRNominalTypeSignature(`PosRBTree_${tdecl.tkey}`), ttid - 3, 8, LayoutTag.Ref, undefined));
+                this.addTypeInfo(`${tdecl.tkey}Inline`, new TypeInfo(`${tdecl.tkey}Inline`, new IRNominalTypeSignature(`${tdecl.tkey}Inline`), ttid - 2, ltdatasize + 8, LayoutTag.Value, undefined));
+                this.addTypeInfo(`${tdecl.tkey}Tree`, new TypeInfo(`${tdecl.tkey}Tree`, new IRNominalTypeSignature(`${tdecl.tkey}Tree`), ttid - 1, 16, LayoutTag.Value, undefined));
 
-                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, ltotalsize, (ltotalsize / 8), LayoutTag.Value, mask));
-
-                return this.getTypeInfo(tdecl.tkey);
+                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, ltotalsize, LayoutTag.Value, mask));
             }
             else {
                 assert(false, `TypeInfoManager::processInfoGenerationForEntity - Unsupported collection type declaration for key ${tdecl.tkey}`);
@@ -376,62 +519,33 @@ class TypeInfoManager {
             assert((tdecl instanceof IREntityTypeDecl) || (tdecl instanceof IRDatatypeMemberEntityTypeDecl), `TypeInfoManager::processInfoGenerationForEntity - Unsupported entity type declaration for key ${tdecl.tkey}`);
 
             let totalbytesize = 0;
-            let totalslotcount = 0;
-            let eptrmask = "";
+            let layoutmask = "";
 
-            const mustref = this.isRecursiveTypeKey(tdecl.tkey, irasm);
-            for(const fdecl of tdecl.saturatedBFieldInfo) {
-                if(this.isNominalRecursiveType(fdecl.ftype, irasm)) {
-                    const ftypedecl = irasm.alltypes.get(fdecl.ftype.tkeystr) as IRAbstractNominalTypeDecl;
-                    if((ftypedecl instanceof IRConceptTypeDecl) || (ftypedecl instanceof IRDatatypeTypeDecl)) {
-                        totalbytesize += 16;
-                        totalslotcount += 2;
-                        eptrmask += "20";
-                    }
-                    else {
-                        totalbytesize += 8;
-                        totalslotcount += 1;
-                        eptrmask += "1";
-                    }
-                }
-                else {
-                    const ftypeinfo = this.processInfoGenerationForType(fdecl.ftype, irasm);
+            for(let i = 0; i < tdecl.saturatedBFieldInfo.length; ++i) {
+                const ftypeinfo = this.generateLayoutInfoForType(tdecl.saturatedBFieldInfo[i].ftype, irasm);
 
-                    if(ftypeinfo.tag === LayoutTag.Ref) {
-                        totalbytesize += 8;
-                        totalslotcount += 1;
-                        eptrmask += "1";
-                    }
-                    else {
-                        totalbytesize += ftypeinfo.bytesize;
-                        totalslotcount += ftypeinfo.slotcount;
-                        eptrmask += ftypeinfo.ptrmask || TypeInfoManager.computeValueMaskOfK(ftypeinfo.slotcount);
-                    }
-                }
+                totalbytesize += ftypeinfo.bytesize;
+                layoutmask += ftypeinfo.layoutmask;
             }
 
             // If the entity has no fields, it should still have a size of 8 bytes and 1 slot
             if(tdecl.saturatedBFieldInfo.length === 0) {
                 totalbytesize = 8;
-                totalslotcount = 1;
-                eptrmask = "0";
+                layoutmask = "0";
             }
 
-            let ptrmask: string | undefined = undefined; 
-            if(/[1-5]/.test(eptrmask)) {
-                ptrmask = eptrmask;
-            }
-
+            const ptrmask: string | undefined = TypeInfoManager.staticLayoutToPtrMaskConvert(layoutmask); 
             const ttid = this.typeInfoMap.size;
-            if(!mustref && this.isSizeOkForValueLayout(totalbytesize)) {
-                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, totalbytesize, totalslotcount, LayoutTag.Value, ptrmask));
+
+            if(!this.isRecursiveTypeKey(tdecl.tkey, irasm) && this.isSizeOkForValueLayout(totalbytesize)) {
+                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, totalbytesize, LayoutTag.Value, ptrmask));
             }
             else {
-                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, totalbytesize, totalslotcount, LayoutTag.Ref, ptrmask));
+                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, totalbytesize, LayoutTag.Ref, ptrmask));
             }
-
-            return this.getTypeInfo(tdecl.tkey);
         }
+
+        return this.getTypeInfo(tdecl.tkey);
     }
 
     private processFieldInfoGenerationForEntity(tdecl: IRAbstractEntityTypeDecl, irasm: IRAssembly): void {
@@ -449,134 +563,61 @@ class TypeInfoManager {
 
     private processInfoGenerationForConcept(tdecl: IRAbstractEntityTypeDecl, irasm: IRAssembly): TypeInfo {
         if(tdecl instanceof IROptionTypeDecl) {
-            xxxx;
-            const oftinfo = this.processInfoGenerationForType(tdecl.ttype, irasm);
+            const oftinfo = this.generateLayoutInfoForType(tdecl.ttype, irasm);
 
             const ttid = this.typeInfoMap.size;
-            if(oftinfo.tag === LayoutTag.Ref) {
-                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, 16, 2, LayoutTag.Tagged, "20"));
-            }
-            else {
-                let spm = TypeInfoManager.computeTaggedMaskOfK(oftinfo.slotcount);
-                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, oftinfo.bytesize + 8, oftinfo.slotcount + 1, LayoutTag.Tagged, spm));
-            }
-            
-            return this.getTypeInfo(tdecl.tkey);
+            let spm = TypeInfoManager.isAllNopMask(oftinfo.layoutmask) ? ("0" + oftinfo.layoutmask) : ("2" + TypeInfoManager.computeValueMaskOfK(oftinfo.bytesize));
+            this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, oftinfo.bytesize + 8, LayoutTag.Value, TypeInfoManager.staticLayoutToPtrMaskConvert(spm)));
         }
         else {
             assert((tdecl instanceof IRConceptTypeDecl) || (tdecl instanceof IRDatatypeTypeDecl), `TypeInfoManager::processInfoGenerationForConcept - Unsupported concept type declaration for key ${tdecl.tkey}`);
 
-            // If the concept has no subtypes, it should still have a size of 8 bytes and 1 slot
-            let totalbytesize = 8;
-            let totalslotcount = 1;
-
+            // If the concept has no subtypes, it should still have a size of 8 bytes
+            let maxbytesize = 8;
+            let allnops = true;
             const subtypes = irasm.concretesubtypes.get(tdecl.tkey) as IRTypeSignature[];
-            for(const subtt of subtypes) {
-                if(this.isNominalRecursiveType(subtt, irasm)) {
-                    totalbytesize = Math.max(totalbytesize, 8);
-                    totalslotcount = Math.max(totalslotcount, 1);
-                }
-                else {
-                    const ftypeinfo = this.processInfoGenerationForType(subtt, irasm);
-
-                    if(ftypeinfo.tag === LayoutTag.Ref) {
-                        totalbytesize = Math.max(totalbytesize, 8);
-                        totalslotcount = Math.max(totalslotcount, 1);
-                    }
-                    else {
-                        totalbytesize = Math.max(totalbytesize, ftypeinfo.bytesize);
-                        totalslotcount = Math.max(totalslotcount, ftypeinfo.slotcount);
-                    }
-                }
+            for(let i = 0; i < subtypes.length; ++i) {
+                const ftypeinfo = this.generateLayoutInfoForType(subtypes[i], irasm);
+                maxbytesize = Math.max(maxbytesize, ftypeinfo.bytesize);
+                allnops = allnops && TypeInfoManager.isAllNopMask(ftypeinfo.layoutmask)
             }
 
             const ttid = this.typeInfoMap.size;
-            let eptrmask = TypeInfoManager.computeTaggedMaskOfK(totalslotcount);
-            this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, totalbytesize + 8, totalslotcount + 1, LayoutTag.Tagged, eptrmask));
-
-            return this.getTypeInfo(tdecl.tkey);
+            let eptrmask = (allnops ? "0" : "2") + TypeInfoManager.computeValueMaskOfK(maxbytesize / 8);
+            this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, maxbytesize + 8, LayoutTag.Value, TypeInfoManager.staticLayoutToPtrMaskConvert(eptrmask)));
         }
+
+        return this.getTypeInfo(tdecl.tkey);
     }
 
     private processInfoGenerationForElist(ttype: IREListTypeSignature, irasm: IRAssembly): TypeInfo {
-        let totalbytesize = 0;
-        let totalslotcount = 0;
-        let eptrmask = "";
-
-        for(const edecl of ttype.entries) {
-            if(this.isNominalRecursiveType(edecl, irasm)) {
-                const ftypedecl = irasm.alltypes.get(edecl.tkeystr) as IRAbstractNominalTypeDecl;
-                if((ftypedecl instanceof IRConceptTypeDecl) || (ftypedecl instanceof IRDatatypeTypeDecl)) {
-                    totalbytesize += 16;
-                    totalslotcount += 2;
-                    eptrmask += "20";
-                }
-                else {
-                    totalbytesize += 8;
-                    totalslotcount += 1;
-                    eptrmask += "1";
-                }
-            }
-            else {
-                const ftypeinfo = this.processInfoGenerationForType(edecl, irasm);
-
-                if(ftypeinfo.tag === LayoutTag.Ref) {
-                    totalbytesize += 8;
-                    totalslotcount += 1;
-                    eptrmask += "1";
-                }
-                else {
-                    totalbytesize += ftypeinfo.bytesize;
-                    totalslotcount += ftypeinfo.slotcount;
-                    eptrmask += ftypeinfo.ptrmask || TypeInfoManager.computeValueMaskOfK(ftypeinfo.slotcount);
-                }
-            }
-        }
-
-        let ptrmask: string | undefined = undefined; 
-        if(/[1-5]/.test(eptrmask)) {
-            ptrmask = eptrmask;
-        }
+        const layoutinfo = this.generateLayoutInfoForType(ttype, irasm);
 
         const ttid = this.typeInfoMap.size;
-        this.addTypeInfo(ttype.tkeystr, new TypeInfo(ttype.tkeystr, ttype, ttid, totalbytesize, totalslotcount, LayoutTag.Value, ptrmask));
+        this.addTypeInfo(ttype.tkeystr, new TypeInfo(ttype.tkeystr, ttype, ttid, layoutinfo.bytesize, LayoutTag.Value, TypeInfoManager.staticLayoutToPtrMaskConvert(layoutinfo.layoutmask)));
 
         return this.getTypeInfo(ttype.tkeystr);
     }
 
     private processInfoGenerationForFormat(ttype: IRFormatTypeSignature, irasm: IRAssembly): TypeInfo {
         const ttid = this.typeInfoMap.size;
-        this.addTypeInfo(ttype.tkeystr, new TypeInfo(ttype.tkeystr, ttype, ttid, 8, 1, LayoutTag.Value, undefined));
+        this.addTypeInfo(ttype.tkeystr, new TypeInfo(ttype.tkeystr, ttype, ttid, 8, LayoutTag.Value, undefined));
 
         return this.getTypeInfo(ttype.tkeystr);
     }
 
-    private processInfoGenerationForType(ttype: IRTypeSignature, irasm: IRAssembly, norec: boolean): TypeInfo {
+    private processInfoGenerationForType(ttype: IRTypeSignature, irasm: IRAssembly): TypeInfo {
         if(this.hasTypeInfo(ttype.tkeystr)) {
             return this.getTypeInfo(ttype.tkeystr);
         }
 
         if(ttype instanceof IRNominalTypeSignature) {
-            if(norec && this.isNominalRecursiveType(ttype, irasm)) {
-                if((ftypedecl instanceof IRConceptTypeDecl) || (ftypedecl instanceof IRDatatypeTypeDecl)) {
-                        totalbytesize += 16;
-                        totalslotcount += 2;
-                        eptrmask += "20";
-                    }
-                    else {
-                        totalbytesize += 8;
-                        totalslotcount += 1;
-                        eptrmask += "1";
-                    }
+            const ddecl = irasm.alltypes.get(ttype.tkeystr) as IRAbstractNominalTypeDecl;
+            if(ddecl instanceof IRAbstractEntityTypeDecl) {
+                return this.processInfoGenerationForEntity(ddecl, irasm);
             }
             else {
-                const ddecl = irasm.alltypes.get(ttype.tkeystr) as IRAbstractNominalTypeDecl;
-                if(ddecl instanceof IRAbstractEntityTypeDecl) {
-                    return this.processInfoGenerationForEntity(ddecl, irasm);
-                }
-                else {
-                    return this.processInfoGenerationForConcept(ddecl, irasm);
-                }
+                return this.processInfoGenerationForConcept(ddecl, irasm);
             }
         }
         else {
@@ -600,43 +641,68 @@ class TypeInfoManager {
     static generateTypeInfos(irasm: IRAssembly): TypeInfoManager {
         const timgr = new TypeInfoManager();
 
+        //setup the well-known primitive layouts
+        timgr.addLayoutInfo("None", new LayoutInfo("None", new IRNominalTypeSignature("None"), 8, "0"));
+        timgr.addLayoutInfo("Bool", new LayoutInfo("Bool", new IRNominalTypeSignature("Bool"), 8, "0"));
+        timgr.addLayoutInfo("Int", new LayoutInfo("Int", new IRNominalTypeSignature("Int"), 8, "0"));
+        timgr.addLayoutInfo("Nat", new LayoutInfo("Nat", new IRNominalTypeSignature("Nat"), 8, "0"));
+        timgr.addLayoutInfo("ChkInt", new LayoutInfo("ChkInt", new IRNominalTypeSignature("ChkInt"), 16, "00"));
+        timgr.addLayoutInfo("ChkNat", new LayoutInfo("ChkNat", new IRNominalTypeSignature("ChkNat"), 16, "00"));
+
+        timgr.addLayoutInfo("Float", new LayoutInfo("Float", new IRNominalTypeSignature("Float"), 8, "0"));
+        
+        timgr.addLayoutInfo("CString", new LayoutInfo("CString", new IRNominalTypeSignature("CString"), 16, "30"));
+        timgr.addLayoutInfo("String", new LayoutInfo("String", new IRNominalTypeSignature("String"), 16, "40"));
+
+        timgr.addLayoutInfo("ByteBufferEntry", new LayoutInfo("ByteBufferEntry", new IRNominalTypeSignature("ByteBufferEntry"), 512, "1"));
+        timgr.addLayoutInfo("ByteBufferBlock", new LayoutInfo("ByteBufferBlock", new IRNominalTypeSignature("ByteBufferBlock"), 512, "1"));
+        timgr.addLayoutInfo("ByteBuffer", new LayoutInfo("ByteBuffer", new IRNominalTypeSignature("ByteBuffer"), 24, "200"));
+
+        timgr.addLayoutInfo("UUIDV4", new LayoutInfo("UUIDV4", new IRNominalTypeSignature("UUIDV4"), 16, "00"));
+        timgr.addLayoutInfo("UUIDV7", new LayoutInfo("UUIDV7", new IRNominalTypeSignature("UUIDV7"), 16, "00"));
+
+        timgr.addLayoutInfo("CRegex", new LayoutInfo("CRegex", new IRNominalTypeSignature("CRegex"), 8, "0"));
+        timgr.addLayoutInfo("Regex", new LayoutInfo("Regex", new IRNominalTypeSignature("Regex"), 8, "0"));
+
+        //TODO: more primitive types
+
         //setup the well-known primitive types
-        timgr.addTypeInfo("None", new TypeInfo("None", new IRNominalTypeSignature("None"), 0, 8, 1, LayoutTag.Value, undefined));
-        timgr.addTypeInfo("Bool", new TypeInfo("Bool", new IRNominalTypeSignature("Bool"), 1, 8, 1, LayoutTag.Value, undefined));
-        timgr.addTypeInfo("Int", new TypeInfo("Int", new IRNominalTypeSignature("Int"), 2, 8, 1, LayoutTag.Value, undefined));
-        timgr.addTypeInfo("Nat", new TypeInfo("Nat", new IRNominalTypeSignature("Nat"), 3, 8, 1, LayoutTag.Value, undefined));
-        timgr.addTypeInfo("ChkInt", new TypeInfo("ChkInt", new IRNominalTypeSignature("ChkInt"), 4, 16, 2, LayoutTag.Value, undefined));
-        timgr.addTypeInfo("ChkNat", new TypeInfo("ChkNat", new IRNominalTypeSignature("ChkNat"), 5, 16, 2, LayoutTag.Value, undefined));
+        timgr.addTypeInfo("None", new TypeInfo("None", new IRNominalTypeSignature("None"), 0, 8, LayoutTag.Value, undefined));
+        timgr.addTypeInfo("Bool", new TypeInfo("Bool", new IRNominalTypeSignature("Bool"), 1, 8, LayoutTag.Value, undefined));
+        timgr.addTypeInfo("Int", new TypeInfo("Int", new IRNominalTypeSignature("Int"), 2, 8, LayoutTag.Value, undefined));
+        timgr.addTypeInfo("Nat", new TypeInfo("Nat", new IRNominalTypeSignature("Nat"), 3, 8, LayoutTag.Value, undefined));
+        timgr.addTypeInfo("ChkInt", new TypeInfo("ChkInt", new IRNominalTypeSignature("ChkInt"), 4, 16, LayoutTag.Value, undefined));
+        timgr.addTypeInfo("ChkNat", new TypeInfo("ChkNat", new IRNominalTypeSignature("ChkNat"), 5, 16, LayoutTag.Value, undefined));
 
-        timgr.addTypeInfo("Float", new TypeInfo("Float", new IRNominalTypeSignature("Float"), 6, 8, 1, LayoutTag.Value, undefined));
+        timgr.addTypeInfo("Float", new TypeInfo("Float", new IRNominalTypeSignature("Float"), 6, 8, LayoutTag.Value, undefined));
         
         //Add placeholders for the implicitly generated list types -- use dummy values for mask here since we just need to know they exist -- list emitter will handle the rest
-        timgr.addTypeInfo("PosRBTreeLeaf_CString", new TypeInfo("PosRBTreeLeaf_CString", new IRNominalTypeSignature("PosRBTreeLeaf_CString"), 7, 40, 5, LayoutTag.Ref, undefined));
-        timgr.addTypeInfo("PosRBTreeNode_CString", new TypeInfo("PosRBTreeNode_CString", new IRNominalTypeSignature("PosRBTreeNode_CString"), 8, 64, 8, LayoutTag.Ref, undefined));
-        timgr.addTypeInfo("PosRBTree_CString", new TypeInfo("PosRBTree_CString", new IRNominalTypeSignature("PosRBTree_CString"), 9, 8, 1, LayoutTag.Ref, undefined));
-        timgr.addTypeInfo("CStringInline", new TypeInfo("CStringInline", new IRNominalTypeSignature("CStringInline"), 10, 16, 2, LayoutTag.Value, undefined));
-        timgr.addTypeInfo("CStringTree", new TypeInfo("CStringTree", new IRNominalTypeSignature("CStringTree"), 11, 16, 2, LayoutTag.Value, undefined));
+        timgr.addTypeInfo("PosRBTreeLeaf_CString", new TypeInfo("PosRBTreeLeaf_CString", new IRNominalTypeSignature("PosRBTreeLeaf_CString"), 7, 40, LayoutTag.Ref, undefined));
+        timgr.addTypeInfo("PosRBTreeNode_CString", new TypeInfo("PosRBTreeNode_CString", new IRNominalTypeSignature("PosRBTreeNode_CString"), 8, 64, LayoutTag.Ref, undefined));
+        timgr.addTypeInfo("PosRBTree_CString", new TypeInfo("PosRBTree_CString", new IRNominalTypeSignature("PosRBTree_CString"), 9, 8, LayoutTag.Ref, undefined));
+        timgr.addTypeInfo("CStringInline", new TypeInfo("CStringInline", new IRNominalTypeSignature("CStringInline"), 10, 16, LayoutTag.Value, undefined));
+        timgr.addTypeInfo("CStringTree", new TypeInfo("CStringTree", new IRNominalTypeSignature("CStringTree"), 11, 16, LayoutTag.Value, undefined));
         
-        timgr.addTypeInfo("CString", new TypeInfo("CString", new IRNominalTypeSignature("CString"), 12, 16, 2, LayoutTag.Value, "30"));
+        timgr.addTypeInfo("CString", new TypeInfo("CString", new IRNominalTypeSignature("CString"), 12, 16, LayoutTag.Value, "30"));
 
         //Add placeholders for the implicitly generated list types -- use dummy values for mask here since we just need to know they exist -- list emitter will handle the rest
-        timgr.addTypeInfo("PosRBTreeLeaf_String", new TypeInfo("PosRBTreeLeaf_String", new IRNominalTypeSignature("PosRBTreeLeaf_String"), 13, 40, 5, LayoutTag.Ref, undefined));
-        timgr.addTypeInfo("PosRBTreeNode_String", new TypeInfo("PosRBTreeNode_String", new IRNominalTypeSignature("PosRBTreeNode_String"), 14, 64, 8, LayoutTag.Ref, undefined));
-        timgr.addTypeInfo("PosRBTree_String", new TypeInfo("PosRBTree_String", new IRNominalTypeSignature("PosRBTree_String"), 15, 8, 1, LayoutTag.Ref, undefined));
-        timgr.addTypeInfo("StringInline", new TypeInfo("StringInline", new IRNominalTypeSignature("StringInline"), 16, 32, 4, LayoutTag.Value, undefined));
-        timgr.addTypeInfo("StringTree", new TypeInfo("StringTree", new IRNominalTypeSignature("StringTree"), 17, 16, 2, LayoutTag.Value, undefined));
+        timgr.addTypeInfo("PosRBTreeLeaf_String", new TypeInfo("PosRBTreeLeaf_String", new IRNominalTypeSignature("PosRBTreeLeaf_String"), 13, 40, LayoutTag.Ref, undefined));
+        timgr.addTypeInfo("PosRBTreeNode_String", new TypeInfo("PosRBTreeNode_String", new IRNominalTypeSignature("PosRBTreeNode_String"), 14, 64, LayoutTag.Ref, undefined));
+        timgr.addTypeInfo("PosRBTree_String", new TypeInfo("PosRBTree_String", new IRNominalTypeSignature("PosRBTree_String"), 15, 8, LayoutTag.Ref, undefined));
+        timgr.addTypeInfo("StringInline", new TypeInfo("StringInline", new IRNominalTypeSignature("StringInline"), 16, 32, LayoutTag.Value, undefined));
+        timgr.addTypeInfo("StringTree", new TypeInfo("StringTree", new IRNominalTypeSignature("StringTree"), 17, 16, LayoutTag.Value, undefined));
         
-        timgr.addTypeInfo("String", new TypeInfo("String", new IRNominalTypeSignature("String"), 18, 16, 2, LayoutTag.Value, "40"));
+        timgr.addTypeInfo("String", new TypeInfo("String", new IRNominalTypeSignature("String"), 18, 16, LayoutTag.Value, "40"));
 
-        timgr.addTypeInfo("ByteBufferEntry", new TypeInfo("ByteBufferEntry", new IRNominalTypeSignature("ByteBufferEntry"), 19, 512, 64, LayoutTag.Ref, undefined));
-        timgr.addTypeInfo("ByteBufferBlock", new TypeInfo("ByteBufferBlock", new IRNominalTypeSignature("ByteBufferBlock"), 20, 512, 64, LayoutTag.Ref, "1111111111111111111111111111111111111111111111111111111111111111"));
-        timgr.addTypeInfo("ByteBuffer", new TypeInfo("ByteBuffer", new IRNominalTypeSignature("ByteBuffer"), 21, 24, 3, LayoutTag.Value, "200"));
+        timgr.addTypeInfo("ByteBufferEntry", new TypeInfo("ByteBufferEntry", new IRNominalTypeSignature("ByteBufferEntry"), 19, 512, LayoutTag.Ref, undefined));
+        timgr.addTypeInfo("ByteBufferBlock", new TypeInfo("ByteBufferBlock", new IRNominalTypeSignature("ByteBufferBlock"), 20, 512, LayoutTag.Ref, "1111111111111111111111111111111111111111111111111111111111111111"));
+        timgr.addTypeInfo("ByteBuffer", new TypeInfo("ByteBuffer", new IRNominalTypeSignature("ByteBuffer"), 21, 24, LayoutTag.Value, "200"));
 
-        timgr.addTypeInfo("UUIDV4", new TypeInfo("UUIDV4", new IRNominalTypeSignature("UUIDV4"), 22, 16, 2, LayoutTag.Value, undefined));
-        timgr.addTypeInfo("UUIDV7", new TypeInfo("UUIDV7", new IRNominalTypeSignature("UUIDV7"), 23, 16, 2, LayoutTag.Value, undefined));
+        timgr.addTypeInfo("UUIDV4", new TypeInfo("UUIDV4", new IRNominalTypeSignature("UUIDV4"), 22, 16, LayoutTag.Value, undefined));
+        timgr.addTypeInfo("UUIDV7", new TypeInfo("UUIDV7", new IRNominalTypeSignature("UUIDV7"), 23, 16, LayoutTag.Value, undefined));
 
-        timgr.addTypeInfo("CRegex", new TypeInfo("CRegex", new IRNominalTypeSignature("CRegex"), 24, 8, 1, LayoutTag.Value, undefined));
-        timgr.addTypeInfo("Regex", new TypeInfo("Regex", new IRNominalTypeSignature("Regex"), 25, 8, 1, LayoutTag.Value, undefined));
+        timgr.addTypeInfo("CRegex", new TypeInfo("CRegex", new IRNominalTypeSignature("CRegex"), 24, 8, LayoutTag.Value, undefined));
+        timgr.addTypeInfo("Regex", new TypeInfo("Regex", new IRNominalTypeSignature("Regex"), 25, 8, LayoutTag.Value, undefined));
 
         //TODO: more primitive types
 
@@ -645,7 +711,7 @@ class TypeInfoManager {
             const etdecl = irasm.enums[i];
             const etkey = TransformCPPNameManager.convertTypeKey(etdecl.tkey);
             const etid = timgr.typeInfoMap.size;
-            const enumtd = new TypeInfo(etkey, new IRNominalTypeSignature(etkey), etid, 8, 1, LayoutTag.Value,undefined);
+            const enumtd = new TypeInfo(etkey, new IRNominalTypeSignature(etkey), etid, 8, LayoutTag.Value,undefined);
 
             timgr.addTypeInfo(etdecl.tkey, enumtd);
         }
@@ -656,7 +722,7 @@ class TypeInfoManager {
             const ttid = timgr.typeInfoMap.size;
 
             const utypeinfo = timgr.getTypeInfo(TransformCPPNameManager.convertTypeKey(tdecl.valuetype.tkeystr));
-            const typedtd = new TypeInfo(ttkey, new IRNominalTypeSignature(ttkey), ttid, utypeinfo.bytesize, utypeinfo.slotcount, utypeinfo.tag, utypeinfo.ptrmask);
+            const typedtd = new TypeInfo(ttkey, new IRNominalTypeSignature(ttkey), ttid, utypeinfo.bytesize, utypeinfo.tag, utypeinfo.ptrmask);
             
             timgr.addTypeInfo(tdecl.tkey, typedtd);
         }
@@ -666,7 +732,7 @@ class TypeInfoManager {
             const tdecl = irasm.cstringoftypedecls[i];
             const ttkey = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
             const ttid = timgr.typeInfoMap.size;
-            const typedtd = new TypeInfo(ttkey, new IRNominalTypeSignature(ttkey), ttid, cstringtypeinfo.bytesize, cstringtypeinfo.slotcount, cstringtypeinfo.tag, cstringtypeinfo.ptrmask);
+            const typedtd = new TypeInfo(ttkey, new IRNominalTypeSignature(ttkey), ttid, cstringtypeinfo.bytesize, cstringtypeinfo.tag, cstringtypeinfo.ptrmask);
             
             timgr.addTypeInfo(tdecl.tkey, typedtd);
         }
@@ -676,7 +742,7 @@ class TypeInfoManager {
             const tdecl = irasm.stringoftypedecls[i];
             const ttkey = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
             const ttid = timgr.typeInfoMap.size;
-            const typedtd = new TypeInfo(ttkey, new IRNominalTypeSignature(ttkey), ttid, stringtypeinfo.bytesize, stringtypeinfo.slotcount, stringtypeinfo.tag, stringtypeinfo.ptrmask);
+            const typedtd = new TypeInfo(ttkey, new IRNominalTypeSignature(ttkey), ttid, stringtypeinfo.bytesize, stringtypeinfo.tag, stringtypeinfo.ptrmask);
             
             timgr.addTypeInfo(tdecl.tkey, typedtd);
         }

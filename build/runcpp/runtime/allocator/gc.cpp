@@ -134,6 +134,10 @@ namespace ᐸRuntimeᐳ
 
     void* processSlotPtrTrgt(void* ptr)
     {
+        if(ptr == nullptr) {
+            return nullptr;
+        }
+
         GCMetadata* m = gcGetMetadata(ptr);
         if(gcIsYoung(m->rc)) {
             return forward(ptr);
@@ -162,11 +166,13 @@ namespace ᐸRuntimeᐳ
                 tag++;
                 slots++;
 
-                const char* mmask = ti->ptrmask;
-                while(*mmask != '\0') {
-                    processSlotTag(mmask, slots);
+                if(ti != nullptr) {
+                    const char* mmask = ti->ptrmask;
+                    while(*mmask != '\0') {
+                        processSlotTag(mmask, slots);
+                    }
+                    tag += ti->slotcount;
                 }
-                tag += ti->slotcount;
                 break;
             }
             case '3': {
