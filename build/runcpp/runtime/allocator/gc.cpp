@@ -242,6 +242,10 @@ namespace ᐸRuntimeᐳ
             gcRootProcessYoungPromote(gcGetMetadata(roots[i])->rc);
         }
 
+        //
+        //TODO: This processing is recursive on the object graph -- so OOS is definitely a concern at some point
+        //      We will want to make this a loop with an explicit stack to avoid these issues at some point but for now we are just using a simple recursive implementation 
+        //
         for(size_t i = 0; i < roots.size(); i++) {
             const TypeInfo* ti = gcGetTypeInfo(roots[i]);
 

@@ -666,6 +666,33 @@ class TypeInfoManager {
 
         //TODO: more primitive types
 
+        for(let i = 0; i < irasm.enums.length; ++i) {
+            const etdecl = irasm.enums[i];
+            const etkey = TransformCPPNameManager.convertTypeKey(etdecl.tkey);
+            timgr.addLayoutInfo(etdecl.tkey, new LayoutInfo(etkey, new IRNominalTypeSignature(etkey), 8, "0"));
+        }
+
+        for(let i = 0; i < irasm.typedecls.length; ++i) {
+            const tdecl = irasm.typedecls[i];
+            const ttkey = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
+            const utypeinfo = timgr.getLayoutInfo(TransformCPPNameManager.convertTypeKey(tdecl.valuetype.tkeystr));
+            timgr.addLayoutInfo(tdecl.tkey, new LayoutInfo(ttkey, new IRNominalTypeSignature(ttkey), utypeinfo.bytesize, utypeinfo.layoutmask));
+        }
+
+        const cstringlayoutinfo = timgr.getLayoutInfo("CString");
+        for(let i = 0; i < irasm.cstringoftypedecls.length; ++i) {
+            const tdecl = irasm.cstringoftypedecls[i];
+            const ttkey = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
+            timgr.addLayoutInfo(tdecl.tkey, new LayoutInfo(ttkey, new IRNominalTypeSignature(ttkey), cstringlayoutinfo.bytesize, cstringlayoutinfo.layoutmask));
+        }
+
+        const stringlayoutinfo = timgr.getLayoutInfo("String");
+        for(let i = 0; i < irasm.stringoftypedecls.length; ++i) {
+            const tdecl = irasm.stringoftypedecls[i];
+            const ttkey = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
+            timgr.addLayoutInfo(tdecl.tkey, new LayoutInfo(ttkey, new IRNominalTypeSignature(ttkey), stringlayoutinfo.bytesize, stringlayoutinfo.layoutmask));
+        }
+
         //setup the well-known primitive types
         timgr.addTypeInfo("None", new TypeInfo("None", new IRNominalTypeSignature("None"), 0, 8, LayoutTag.Value, undefined));
         timgr.addTypeInfo("Bool", new TypeInfo("Bool", new IRNominalTypeSignature("Bool"), 1, 8, LayoutTag.Value, undefined));
@@ -706,7 +733,6 @@ class TypeInfoManager {
 
         //TODO: more primitive types
 
-        //TODO enums
         for(let i = 0; i < irasm.enums.length; ++i) {
             const etdecl = irasm.enums[i];
             const etkey = TransformCPPNameManager.convertTypeKey(etdecl.tkey);
