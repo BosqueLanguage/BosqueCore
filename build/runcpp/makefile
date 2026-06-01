@@ -21,12 +21,12 @@ BUILD := debug
 CPP=g++ 
 CPP_STDFLAGS=-Wall -Wextra -Wno-unused-parameter -Wuninitialized -Werror -std=gnu++23 -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-stack-protector -fPIC
 
-CPPFLAGS_OPT.debug=-O0 -g -ggdb -fno-omit-frame-pointer -fsanitize=address
+CPPFLAGS_OPT.debug=-O0 -g -ggdb -fno-omit-frame-pointer -fsanitize=address --param asan-stack=0
 CPPFLAGS_OPT.test=-O0 -g -ggdb -fno-omit-frame-pointer
 CPPFLAGS_OPT.release=-O2 -fno-omit-frame-pointer -march=x86-64-v3 -Wno-array-bounds -Wno-stringop-overflow
 CPPFLAGS=${CPPFLAGS_OPT.${BUILD}} ${CPP_STDFLAGS}
 
-CPP_TESTFLAGS=-O0 -g -ggdb -fno-omit-frame-pointer -fsanitize=address -Wall -Wextra -Wno-unused-parameter -Wuninitialized -Werror -std=gnu++23 -fno-rtti -fno-strict-aliasing -fno-stack-protector -fPIC
+CPP_TESTFLAGS=-O0 -g -ggdb -fno-omit-frame-pointer -Wall -Wextra -Wno-unused-parameter -Wuninitialized -Werror -std=gnu++23 -fno-rtti -fno-strict-aliasing -fno-stack-protector -fPIC
 
 HEADERS=$(wildcard $(SRC_DIR)*.h) $(wildcard $(CORE_SRC_DIR)*.h) $(wildcard $(RUNTIME_SRC_DIR)*.h) $(wildcard $(ALLOC_SRC_DIR)*.h) $(wildcard $(BSQIR_SRC_DIR)*.h)
 OBJS=$(OUT_OBJ)common.o $(OUT_OBJ)alloc.o $(OUT_OBJ)memstats.o $(OUT_OBJ)gc.o $(OUT_OBJ)strings.o $(OUT_OBJ)lexer.o $(OUT_OBJ)parser.o $(OUT_OBJ)emit.o
