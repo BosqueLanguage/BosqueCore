@@ -70,6 +70,8 @@ class LayoutInfo {
         this.bytesize = bytesize;
         this.slotcount = bytesize / 8;
         this.layoutmask = layoutmask;
+
+        assert(this.slotcount === this.layoutmask.length);
     }
 }
 
@@ -97,6 +99,10 @@ class TypeInfo {
         this.tag = tag;
 
         this.ptrmask = ptrmask;
+
+        if(this.ptrmask !== undefined) {
+            assert( this.slotcount === this.ptrmask.length);
+        }
     }
 
     getAccessor(): string {

@@ -2423,6 +2423,9 @@ class CPPEmitter {
             sccfdecls = [["//Forward decls for SCC cycles", ...sccfdecll, "", `namespace ᐸRuntimeᐳ {`, ...sccftypeinfos, `}`].join("\n")];
         }
 
+        xxxx;
+        //TODO -- get all the forward decls and move them to the end of the typed order!
+
         const decltdd = this.irasm.typedeporder
         .filter((ttd) => {
             if(!(ttd instanceof IRNominalTypeSignature)) {

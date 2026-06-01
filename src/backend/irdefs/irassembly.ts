@@ -1123,10 +1123,24 @@ class IRAssembly {
             let scc: IRTypeSignature[] = [];
             let cycdeps = deps.filter((d) => orderedtypes.findIndex((t) => t.tkeystr === d.tkeystr) !== -1);
             if(cycdeps.length !== 0) {
-                scc.push(...cycdeps);
+                let foundmore = true;
+                while(foundmore) {
+                    foundmore = false;
+                    const olen = cycdeps.length;
+                    for(let i = 0; i < olen; ++i) {
+                        const ndeps = this.getTypeDependencyInfo(cycdeps[i]);
+                        for(let j = 0; j < ndeps.length; ++j) {
+                            let orr = orderedtypes.findIndex((t) => t.tkeystr === ndeps[j].tkeystr) !== -1;
+                            let nadd = cycdeps.findIndex((t) => t.tkeystr === ndeps[j].tkeystr) === -1;
+                            if(orr && nadd) {
+                                cycdeps.push(ndeps[j])
+                                foundmore = true;
+                            }
+                        }
+                    }
+                }
 
-                const nclycdeps = cycdeps.flatMap((cd) => this.getTypeDependencyInfo(cd));
-                cycdeps = nclycdeps.filter((d) => orderedtypes.findIndex((t) => t.tkeystr === d.tkeystr) !== -1);
+                scc.push(...cycdeps);
             }
 
             if(scc.length === 0) {
@@ -1137,22 +1151,6 @@ class IRAssembly {
                 this.typedepcycles.push(scc);
             }
         }
-
-        //resort the final order so that in cycles the value types come before (the soon to be forward) declared reference types
-        const otypedorder = [...this.typedeporder];
-        this.typedeporder.sort((a, b) => {
-            const scc = this.typedepcycles.find(c => c.find(t => t.tkeystr === a.tkeystr) !== undefined && c.find(t => t.tkeystr === b.tkeystr) !== undefined);
-            if(scc !== undefined) {
-                const aidx = scc.findIndex(t => t.tkeystr === a.tkeystr);
-                const bidx = scc.findIndex(t => t.tkeystr === b.tkeystr);
-                return aidx - bidx;
-            }
-            else {
-                const aidx = otypedorder.findIndex(t => t.tkeystr === a.tkeystr);
-                const bidx = otypedorder.findIndex(t => t.tkeystr === b.tkeystr);
-                return aidx - bidx;
-            }
-        });
     }
 
     emitBAPI() {
