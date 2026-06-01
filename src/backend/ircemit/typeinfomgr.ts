@@ -416,7 +416,7 @@ class TypeInfoManager {
         if(tdecl instanceof IROptionTypeDecl) {
             const oftinfo = this.generateLayoutInfoForType(tdecl.ttype, irasm);
 
-            let spm = TypeInfoManager.isAllNopMask(oftinfo.layoutmask) ? ("0" + oftinfo.layoutmask) : ("2" + TypeInfoManager.computeValueMaskOfK(oftinfo.bytesize));
+            let spm = TypeInfoManager.isAllNopMask(oftinfo.layoutmask) ? ("0" + oftinfo.layoutmask) : ("2" + TypeInfoManager.computeValueMaskOfK(oftinfo.slotcount));
             this.addLayoutInfo(tdecl.tkey, new LayoutInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), oftinfo.bytesize + 8, spm));
         }
         else {
@@ -572,7 +572,7 @@ class TypeInfoManager {
             const oftinfo = this.generateLayoutInfoForType(tdecl.ttype, irasm);
 
             const ttid = this.typeInfoMap.size;
-            let spm = TypeInfoManager.isAllNopMask(oftinfo.layoutmask) ? ("0" + oftinfo.layoutmask) : ("2" + TypeInfoManager.computeValueMaskOfK(oftinfo.bytesize));
+            let spm = TypeInfoManager.isAllNopMask(oftinfo.layoutmask) ? ("0" + oftinfo.layoutmask) : ("2" + TypeInfoManager.computeValueMaskOfK(oftinfo.slotcount));
             this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, oftinfo.bytesize + 8, LayoutTag.Value, TypeInfoManager.staticLayoutToPtrMaskConvert(spm)));
         }
         else {
@@ -660,8 +660,8 @@ class TypeInfoManager {
         timgr.addLayoutInfo("CString", new LayoutInfo("CString", new IRNominalTypeSignature("CString"), 16, "30"));
         timgr.addLayoutInfo("String", new LayoutInfo("String", new IRNominalTypeSignature("String"), 16, "40"));
 
-        timgr.addLayoutInfo("ByteBufferEntry", new LayoutInfo("ByteBufferEntry", new IRNominalTypeSignature("ByteBufferEntry"), 512, "1"));
-        timgr.addLayoutInfo("ByteBufferBlock", new LayoutInfo("ByteBufferBlock", new IRNominalTypeSignature("ByteBufferBlock"), 512, "1"));
+        timgr.addLayoutInfo("ByteBufferEntry", new LayoutInfo("ByteBufferEntry", new IRNominalTypeSignature("ByteBufferEntry"), 8, "1"));
+        timgr.addLayoutInfo("ByteBufferBlock", new LayoutInfo("ByteBufferBlock", new IRNominalTypeSignature("ByteBufferBlock"), 8, "1"));
         timgr.addLayoutInfo("ByteBuffer", new LayoutInfo("ByteBuffer", new IRNominalTypeSignature("ByteBuffer"), 24, "200"));
 
         timgr.addLayoutInfo("UUIDV4", new LayoutInfo("UUIDV4", new IRNominalTypeSignature("UUIDV4"), 16, "00"));

@@ -58,6 +58,10 @@ namespace ᐸRuntimeᐳ
         }
 
         auto aii = GCAllocatorImpl::x_all_alloc_to_allocator_map.lower_bound(addr);
+        if(aii == GCAllocatorImpl::x_all_alloc_to_allocator_map.begin()) {
+            return false;
+        }
+
         aii--;
 
         if(!aii->second->isAddrInValidObject(addr, meta, raddr)) {

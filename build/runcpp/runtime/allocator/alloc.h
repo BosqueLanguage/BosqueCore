@@ -12,7 +12,7 @@ namespace ᐸRuntimeᐳ
     class GCAllocatorImpl
     {
     public:
-        constexpr static size_t NURSERY_SIZE = 1024;
+        constexpr static size_t NURSERY_SIZE = GC_NURSERY_SIZE;
 
         const TypeInfo* alloctype;
         void* freelist;
@@ -26,16 +26,15 @@ namespace ᐸRuntimeᐳ
 
         inline void* xalloc()
         {
-            this->allocount++;
             if(this->allocount >= NURSERY_SIZE) {
                 runCollect();
             }
 
             if(this->freelist != nullptr) {
-                void* ptr = *((void**)this->freelist);
+                void* ptr = this->freelist;
                 this->freelist = *((void**)ptr);
 
-                GCMetadata* meta = gcGetMetadata((GCMetadata*)ptr - 1);
+                GCMetadata* meta = gcGetMetadata((GCMetadata*)ptr);
                 gcInitOnAllocate(meta->rc);
 
                 this->nursery[this->allocount++] = ptr;
@@ -84,6 +83,10 @@ namespace ᐸRuntimeᐳ
             }
 
             auto iter = this->x_allocs.lower_bound(addr);
+            if(iter == this->x_allocs.begin()) {
+                return false;
+            }
+            
             iter--;
             
             meta = gcGetMetadata(*iter);

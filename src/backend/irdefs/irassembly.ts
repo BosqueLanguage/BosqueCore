@@ -1140,6 +1140,13 @@ class IRAssembly {
                     }
                 }
 
+                scc.sort((a, b) => {
+                    const apos = orderedtypes.findIndex((t) => t.tkeystr === a.tkeystr);
+                    const bpos = orderedtypes.findIndex((t) => t.tkeystr === b.tkeystr);
+
+                    return apos - bpos;
+                });
+
                 scc.push(...cycdeps);
             }
 

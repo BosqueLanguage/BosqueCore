@@ -9,7 +9,7 @@ namespace ᐸRuntimeᐳ
     class MemStats {
     public:
 #if GC_DIAG_LEVEL_1
-        size_t totalallocs  = 0;
+        size_t totalallocs = 0;
         size_t totalbytes = 0;
 
         void processalloc(size_t bytes) {
