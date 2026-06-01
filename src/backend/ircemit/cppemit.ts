@@ -1317,6 +1317,13 @@ class CPPEmitter {
         else if(body.builtin === "list_sum") {
             bstr = `l.sum(zero)`
         }
+        else if(body.builtin === "algo_for") {
+            const [fn] = this.getParamInforForLambda(invk, "op");
+            bstr = `for(Nat i = min; i < max; i = i + 1_n) { s = ${fn}(op, s, i); } NOT_IMPLEMENTED`;
+        }
+        else if(body.builtin === "algo_while") {
+            bstr = `NOT_IMPLEMENTED`
+        }
         else {
             assert(false, "CPPEmitter: need to implement builtin body emission " + body.builtin);
         }
