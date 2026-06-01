@@ -260,7 +260,7 @@ class TypeInfoManager {
 
     private emitTypeAsEListSelfDescribing(tinfo: TypeInfo): string {
         const entries = (tinfo.tsig as IREListTypeSignature).entries.map((ee) => this.emitTypeAsStd(ee.tkeystr));
-        return `std::tuple<${entries.join(", ")}>`;
+        return `ᐸRuntimeᐳ::EList${entries.length}<${entries.join(", ")}>`;
     }
 
     emitTypeAsParameter(tkey: string, isreftagged: boolean, islambda: boolean): string {

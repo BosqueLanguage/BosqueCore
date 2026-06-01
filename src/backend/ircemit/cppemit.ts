@@ -633,7 +633,7 @@ class CPPEmitter {
             }
             else if(ttag === IRExpressionTag.IRAccessEListIndexExpression) {
                 const iexp = exps as IRAccessEListIndexExpression;
-                return `std::get<${iexp.idx}>(${this.emitIRSimpleExpression(iexp.eexp, true)})`;
+                return `${this.emitIRSimpleExpression(iexp.eexp, false)}.at<${iexp.idx}, ${this.typeInfoManager.emitTypeAsStd(iexp.eltype.entries[iexp.idx].tkeystr)}>()`;
             }
             else {
                 assert(false, `CPPEmitter: Unsupported IR simple expression type -- ${exps.constructor.name}`);
@@ -1944,7 +1944,7 @@ class CPPEmitter {
             `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate("(| "); \n` +
             `${elist.entries.map((ee, ii) => {
                 const fttname = TransformCPPNameManager.convertTypeKey(ee.tkeystr);
-                return `    BSQ_emit${fttname}(std::get<${ii}>(vv));${ii !== elist.entries.length - 1 ? ' ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate(", ");' : ""}`;
+                return `    BSQ_emit${fttname}(vv.at<${ii}, ${this.typeInfoManager.emitTypeAsStd(ee.tkeystr)}>());${ii !== elist.entries.length - 1 ? ' ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate(", ");' : ""}`;
             }).join("\n")}\n` +
             `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate(" |)"); \n` +
             `}`;
@@ -1952,6 +1952,10 @@ class CPPEmitter {
         const bfparses = elist.entries.map((ee, ii) => {
             const fttname = TransformCPPNameManager.convertTypeKey(ee.tkeystr);
             return `    auto v_${ii} = BSQ_parse${fttname}(); if(!v_${ii}.has_value()) { return std::nullopt; } ${ii !== elist.entries.length - 1 ? "if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol(',')) { return std::nullopt; };" : ""}`;
+        });
+
+        const constypes = elist.entries.map((ee) => {
+            return this.typeInfoManager.emitTypeAsStd(ee.tkeystr);
         });
 
         const consargs = elist.entries.map((ee, ii) => {
@@ -1962,7 +1966,7 @@ class CPPEmitter {
         `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol("(|")) { return std::nullopt; };\n` +
         `${bfparses.join("\n")}\n` +
         `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol("|)")) { return std::nullopt; };\n` +
-        `    return std::make_optional<${ctrepr}>(std::make_tuple(${consargs.join(", ")}));\n` +
+        `    return std::make_optional<${ctrepr}>(ᐸRuntimeᐳ::EList${constypes.length}<${constypes.join(", ")}>(${consargs.join(", ")}));\n` +
         '}';
 
         return [
@@ -2547,14 +2551,10 @@ class CPPEmitter {
     private generateHeaderSetup(): string {
         return [
             '#include "./runcpp/common.h"',
-            '#include "./runcpp/core/bsqtype.h"',
-            '#include "./runcpp/core/boxed.h"',
-            '#include "./runcpp/core/bools.h"',
-            '#include "./runcpp/core/integrals.h"',
-            '#include "./runcpp/core/strings.h"',
+            '#include "./runcpp/core/coredecls.h"',
+            '#include "./runcpp/core/elist.h"',
             '#include "./runcpp/core/list_t.h"',
             '',
-            '#include "./runcpp/core/coredecls.h"',
             '#include "./runcpp/runtime/taskinfo.h"',
             '',
             '#include "./runcpp/runtime/allocator/gc.h"'
