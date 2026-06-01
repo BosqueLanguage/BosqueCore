@@ -10,7 +10,7 @@
 #endif
 
 #define GC_PTR_IN_RANGE(V) ((GC_MIN_ALLOCATED_ADDRESS <= V) && (V <= GC_MAX_ALLOCATED_ADDRESS))
-#define GC_PTR_NOT_IN_STACK(BASE, CURR, V) ((((void*)V) < ((void*)CURR)) || (((void*)BASE) < ((void*)V)))
+#define GC_PTR_NOT_IN_STACK(BASE, CURR, V) ((((void*)V) <= ((void*)CURR)) || (((void*)BASE) <= ((void*)V)))
 #define GC_IS_ALIGNED(V) (((uintptr_t)(V) % GC_MEM_ALIGNMENT) == 0)
 
 #define GC_PROCESS_REGISTER(BASE, CURR, R)                                    \
@@ -25,34 +25,32 @@ namespace ᐸRuntimeᐳ
         //this code should load from the asm stack pointers and copy the native stack into the roots memory
         #ifdef __x86_64__
             register void** rbp asm("rbp");
-            void** current_frame = rbp;
-            void** iter = current_frame;
+            void** iter = rbp;
         
             //Walk the stack
             while (iter <= tl_alloc_info.native_stack_base) {
                 void* potential_ptr = *iter;
-                if(GC_PTR_IN_RANGE(potential_ptr) && GC_PTR_NOT_IN_STACK(tl_alloc_info.native_stack_base, current_frame, potential_ptr)) {
+                if(GC_PTR_IN_RANGE(potential_ptr) && GC_PTR_NOT_IN_STACK(tl_alloc_info.native_stack_base, rbp, potential_ptr)) {
                     possibleroots.push_back(potential_ptr);
                 }
                 iter++;
             }
     
-
             //Check contents of registers
-            GC_PROCESS_REGISTER(tl_alloc_info.native_stack_base, current_frame, rax)
-            GC_PROCESS_REGISTER(tl_alloc_info.native_stack_base, current_frame, rbx)
-            GC_PROCESS_REGISTER(tl_alloc_info.native_stack_base, current_frame, rcx)
-            GC_PROCESS_REGISTER(tl_alloc_info.native_stack_base, current_frame, rdx)
-            GC_PROCESS_REGISTER(tl_alloc_info.native_stack_base, current_frame, rsi)
-            GC_PROCESS_REGISTER(tl_alloc_info.native_stack_base, current_frame, rdi)
-            GC_PROCESS_REGISTER(tl_alloc_info.native_stack_base, current_frame, r8)
-            GC_PROCESS_REGISTER(tl_alloc_info.native_stack_base, current_frame, r9)
-            GC_PROCESS_REGISTER(tl_alloc_info.native_stack_base, current_frame, r10)
-            GC_PROCESS_REGISTER(tl_alloc_info.native_stack_base, current_frame, r11)
-            GC_PROCESS_REGISTER(tl_alloc_info.native_stack_base, current_frame, r12)
-            GC_PROCESS_REGISTER(tl_alloc_info.native_stack_base, current_frame, r13)
-            GC_PROCESS_REGISTER(tl_alloc_info.native_stack_base, current_frame, r14)
-            GC_PROCESS_REGISTER(tl_alloc_info.native_stack_base, current_frame, r15)
+            GC_PROCESS_REGISTER(tl_alloc_info.native_stack_base, rbp, rax)
+            GC_PROCESS_REGISTER(tl_alloc_info.native_stack_base, rbp, rbx)
+            GC_PROCESS_REGISTER(tl_alloc_info.native_stack_base, rbp, rcx)
+            GC_PROCESS_REGISTER(tl_alloc_info.native_stack_base, rbp, rdx)
+            GC_PROCESS_REGISTER(tl_alloc_info.native_stack_base, rbp, rsi)
+            GC_PROCESS_REGISTER(tl_alloc_info.native_stack_base, rbp, rdi)
+            GC_PROCESS_REGISTER(tl_alloc_info.native_stack_base, rbp, r8)
+            GC_PROCESS_REGISTER(tl_alloc_info.native_stack_base, rbp, r9)
+            GC_PROCESS_REGISTER(tl_alloc_info.native_stack_base, rbp, r10)
+            GC_PROCESS_REGISTER(tl_alloc_info.native_stack_base, rbp, r11)
+            GC_PROCESS_REGISTER(tl_alloc_info.native_stack_base, rbp, r12)
+            GC_PROCESS_REGISTER(tl_alloc_info.native_stack_base, rbp, r13)
+            GC_PROCESS_REGISTER(tl_alloc_info.native_stack_base, rbp, r14)
+            GC_PROCESS_REGISTER(tl_alloc_info.native_stack_base, rbp, r15)
         #else
             #error "Architecture not supported"
         #endif

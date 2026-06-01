@@ -647,6 +647,9 @@ class TypeInfoManager {
     static generateTypeInfos(irasm: IRAssembly): TypeInfoManager {
         const timgr = new TypeInfoManager();
 
+        //////////////////////////////////////////////////////////////
+        //Layout Info
+
         //setup the well-known primitive layouts
         timgr.addLayoutInfo("None", new LayoutInfo("None", new IRNominalTypeSignature("None"), 8, "0"));
         timgr.addLayoutInfo("Bool", new LayoutInfo("Bool", new IRNominalTypeSignature("Bool"), 8, "0"));
@@ -698,6 +701,24 @@ class TypeInfoManager {
             const ttkey = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
             timgr.addLayoutInfo(tdecl.tkey, new LayoutInfo(ttkey, new IRNominalTypeSignature(ttkey), stringlayoutinfo.bytesize, stringlayoutinfo.layoutmask));
         }
+
+        //Now handle entities with a recursive walk
+        irasm.constructables.forEach((tdecl) => { if(!timgr.hasLayoutInfo(tdecl.tkey)) { timgr.generateLayoutInfoForEntity(tdecl, irasm); } });
+        irasm.collections.forEach((tdecl) => { if(!timgr.hasLayoutInfo(tdecl.tkey)) { timgr.generateLayoutInfoForEntity(tdecl, irasm); } });
+        irasm.eventlists.forEach((tdecl) => { if(!timgr.hasLayoutInfo(tdecl.tkey)) { timgr.generateLayoutInfoForEntity(tdecl, irasm); } });
+        irasm.entities.forEach((tdecl) => { if(!timgr.hasLayoutInfo(tdecl.tkey)) { timgr.generateLayoutInfoForEntity(tdecl, irasm); } });
+        irasm.datamembers.forEach((tdecl) => { if(!timgr.hasLayoutInfo(tdecl.tkey)) { timgr.generateLayoutInfoForEntity(tdecl, irasm); } });
+
+        irasm.pconcepts.forEach((cdecl) => { if(!timgr.hasLayoutInfo(cdecl.tkey)) { timgr.generateLayoutInfoForConcept(cdecl, irasm); } });
+        irasm.concepts.forEach((cdecl) => { if(!timgr.hasLayoutInfo(cdecl.tkey)) { timgr.generateLayoutInfoForConcept(cdecl, irasm); } });
+        irasm.datatypes.forEach((cdecl) => { if(!timgr.hasLayoutInfo(cdecl.tkey)) { timgr.generateLayoutInfoForConcept(cdecl, irasm); } });
+
+        irasm.elists.forEach((ttype) => { if(!timgr.hasLayoutInfo(ttype.tkeystr)) { timgr.generateLayoutInfoForType(ttype, irasm); } });
+        irasm.dashtypes.forEach((ttype) => { if(!timgr.hasLayoutInfo(ttype.tkeystr)) { timgr.generateLayoutInfoForType(ttype, irasm); } });
+        irasm.formats.forEach((ttype) => { if(!timgr.hasLayoutInfo(ttype.tkeystr)) { timgr.generateLayoutInfoForType(ttype, irasm); } });
+
+        //////////////////////////////////////////////////////////////
+        //Type Info
 
         //setup the well-known primitive types
         timgr.addTypeInfo("None", new TypeInfo("None", new IRNominalTypeSignature("None"), 0, 8, LayoutTag.Value, undefined));

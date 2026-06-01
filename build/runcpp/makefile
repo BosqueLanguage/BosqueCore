@@ -23,7 +23,7 @@ CPP_STDFLAGS=-Wall -Wextra -Wno-unused-parameter -Wuninitialized -Werror -std=gn
 
 CPPFLAGS_OPT.debug=-O0 -g -ggdb -fno-omit-frame-pointer -fsanitize=address
 CPPFLAGS_OPT.test=-O0 -g -ggdb -fno-omit-frame-pointer
-CPPFLAGS_OPT.release=-O2 -march=x86-64-v3 -Wno-array-bounds -Wno-stringop-overflow
+CPPFLAGS_OPT.release=-O2 -fno-omit-frame-pointer -march=x86-64-v3 -Wno-array-bounds -Wno-stringop-overflow
 CPPFLAGS=${CPPFLAGS_OPT.${BUILD}} ${CPP_STDFLAGS}
 
 CPP_TESTFLAGS=-O0 -g -ggdb -fno-omit-frame-pointer -fsanitize=address -Wall -Wextra -Wno-unused-parameter -Wuninitialized -Werror -std=gnu++23 -fno-rtti -fno-strict-aliasing -fno-stack-protector -fPIC

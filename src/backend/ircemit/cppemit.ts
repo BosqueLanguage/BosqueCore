@@ -1414,9 +1414,18 @@ class CPPEmitter {
    
     emitConstantDeclInfo(iconst: IRConstantDecl): [string, string] {
         const gvname = `BSQ_g_${TransformCPPNameManager.generateNameForConstantKey(iconst.ckey)}`;
-        const staticsstr = `std::optional<${this.typeInfoManager.emitTypeAsStd(iconst.declaredType.tkeystr)}> ${gvname} = std::nullopt;`;
+        const staticsstr = `std::optional<${this.typeInfoManager.emitTypeAsStd(iconst.declaredType.tkeystr)}*> ${gvname} = std::nullopt;`;
         
-        const bodystr = this.emitStatementList(iconst.stmts, [`if(${gvname}.has_value()) { return ${gvname}.value(); } `], [`${gvname} = std::make_optional(${this.emitIRSimpleExpression(iconst.value, true)}); return ${gvname}.value();`], undefined);
+        const bytes = this.typeInfoManager.getLayoutInfo(iconst.declaredType.tkeystr).bytesize;
+        const bodystr = this.emitStatementList(iconst.stmts, 
+            [`if(${gvname}.has_value()) { return *(${gvname}.value()); }`],
+            [
+                `${this.typeInfoManager.emitTypeAsStd(iconst.declaredType.tkeystr)}* dptr = (${this.typeInfoManager.emitTypeAsStd(iconst.declaredType.tkeystr)}*) ᐸRuntimeᐳ::g_alloc_info.getGlobalRegionStorageOfSize(${bytes});`,
+                `*dptr = ${this.emitIRSimpleExpression(iconst.value, true)};`, 
+                `${gvname} = std::make_optional(dptr); return *(${gvname}.value());`
+            ], 
+            undefined
+        );
         
         const cdeclstr = `${this.typeInfoManager.emitTypeAsStd(iconst.declaredType.tkeystr)} ${TransformCPPNameManager.generateNameForConstantKey(iconst.ckey)}();`;
         const cdefstr = `${staticsstr}\n${this.typeInfoManager.emitTypeAsStd(iconst.declaredType.tkeystr)} ${TransformCPPNameManager.generateNameForConstantKey(iconst.ckey)}() { ${bodystr} }`;
@@ -2556,7 +2565,10 @@ class CPPEmitter {
     private emitStaticInitializationOps(): string {
         const stringunion = 'union StdEnvUnion { ᐸRuntimeᐳ::XCString strval; };';
 
-        return [stringunion, '//TODO eventually need to set GC and other info'].join("\n\n");
+        const constlayoutbytes = this.irasm.constants.map((cc) => this.typeInfoManager.getLayoutInfo(cc.declaredType.tkeystr).bytesize).reduce((acc, v) => acc + v, 0);
+        const globalbuff = `void* BSQ_g_globaldata[${constlayoutbytes}];`
+
+        return [stringunion, globalbuff].join("\n") + "\n";
     }
 
     ////
@@ -2650,6 +2662,7 @@ class CPPEmitter {
                'int main(int argc, char** argv) {\n' +
                '    ᐸRuntimeᐳ::TaskInfoRepr<StdEnvUnion> maintask;\n' +
                '    ᐸRuntimeᐳ::tl_bosque_info.current_task = &maintask;\n\n' +
+               '    ᐸRuntimeᐳ::g_alloc_info.initializeGlobalRegion(BSQ_g_globaldata);\n' +
                `    ${initializegc}\n` +
                `    ${notes}\n` +
                `    mmain(argc, argv);\n` +

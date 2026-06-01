@@ -71,7 +71,7 @@ function emitCommandLineMakefile(optlevel: "debug" | "test" | "release"): string
         'CPP_STDFLAGS=-Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable -Wuninitialized -Werror -std=gnu++23 -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-stack-protector -fPIC\n' + 
         'CPPFLAGS_OPT.debug=-O0 -g -ggdb -fno-omit-frame-pointer -fsanitize=address\n' +
         'CPPFLAGS_OPT.test=-O0 -g -ggdb -fno-omit-frame-pointer\n' +
-        'CPPFLAGS_OPT.release=-O2 -march=x86-64-v3 -Wno-array-bounds -Wno-stringop-overflow\n' +
+        'CPPFLAGS_OPT.release=-O2 -fno-omit-frame-pointer -march=x86-64-v3 -Wno-array-bounds -Wno-stringop-overflow\n' +
         'CPPFLAGS=${CPPFLAGS_OPT.${BUILD}} ${CPP_STDFLAGS}\n\n' +
         'HEADERS=$(wildcard $(SRC_DIR)*.h) $(wildcard $(CORE_SRC_DIR)*.h) $(wildcard $(RUNTIME_SRC_DIR)*.h) $(wildcard $(ALLOC_SRC_DIR)*.h) $(wildcard $(BSQIR_SRC_DIR)*.h)\n' +
         'all: $(HEADERS) $(MAKE_PATH)/app\n\n' +

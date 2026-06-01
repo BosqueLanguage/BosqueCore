@@ -83,11 +83,9 @@ namespace ᐸRuntimeᐳ
             }
 
             auto iter = this->x_allocs.lower_bound(addr);
-            if(iter == this->x_allocs.begin()) {
-                return false;
+            if(iter != this->x_allocs.begin() && *iter != addr) {
+                iter--;
             }
-            
-            iter--;
             
             meta = gcGetMetadata(*iter);
             return this->checkObjectBounds(addr, *iter, meta, raddr);
@@ -216,6 +214,7 @@ namespace ᐸRuntimeᐳ
     private:
         //This allows us to only-once process immortal objects
         std::mutex g_globals_mutex;
+        void* g_globals;
         void** g_globals_lastproc; //last global entry processed during GC runs
         void** g_globals_end; //the current last initialized global entry
 
@@ -229,11 +228,13 @@ namespace ᐸRuntimeᐳ
         // This mutex protects all global IO buffer allocator operations
         std::mutex g_ioalloc_mutex;
 
-        AllocatorGlobalInfo() : g_globals_mutex{}, g_globals_lastproc{}, g_globals_end{}, g_pages_mutex{}, g_rcops_mutex{}, g_ioalloc_mutex{} { ; }
+        AllocatorGlobalInfo() : g_globals_mutex{}, g_globals{}, g_globals_lastproc{}, g_globals_end{}, g_pages_mutex{}, g_rcops_mutex{}, g_ioalloc_mutex{} { ; }
 
         ////////////////
         //Support for immortal object processing -- will block all other GC threads when new data is processed
         ////////////////
+        void initializeGlobalRegion(void* data);
+        void* getGlobalRegionStorageOfSize(size_t k);
         bool loadGlobalRootsToProc(std::vector<void*>& possibleroots);
         void unloadGlobalRootsFromProc(bool processed);
 

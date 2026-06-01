@@ -30,6 +30,21 @@ namespace ᐸRuntimeᐳ
         this->gcallocs.clear();
     }
 
+    void AllocatorGlobalInfo::initializeGlobalRegion(void* data)
+    {
+        this->g_globals = data;
+        this->g_globals_lastproc = (void**)this->g_globals;
+        this->g_globals_end = (void**)this->g_globals;
+    }
+    
+    void* AllocatorGlobalInfo::getGlobalRegionStorageOfSize(size_t k)
+    {
+        void* slot = (void*)this->g_globals_end;
+        this->g_globals_end = (void**)((uint8_t*)this->g_globals_end + k);
+
+        return slot;
+    }
+
     bool AllocatorGlobalInfo::loadGlobalRootsToProc(std::vector<void*>& possibleroots)
     {
         this->g_globals_mutex.lock();
@@ -58,11 +73,9 @@ namespace ᐸRuntimeᐳ
         }
 
         auto aii = GCAllocatorImpl::x_all_alloc_to_allocator_map.lower_bound(addr);
-        if(aii == GCAllocatorImpl::x_all_alloc_to_allocator_map.begin()) {
-            return false;
+        if(aii != GCAllocatorImpl::x_all_alloc_to_allocator_map.begin() && aii->first != addr) {
+            aii--;
         }
-
-        aii--;
 
         if(!aii->second->isAddrInValidObject(addr, meta, raddr)) {
             return false;
