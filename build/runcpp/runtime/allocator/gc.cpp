@@ -24,7 +24,7 @@ namespace ᐸRuntimeᐳ
     {
         //this code should load from the asm stack pointers and copy the native stack into the roots memory
         #ifdef __x86_64__
-            register void** rbp asm("rbp");
+            void** rbp = (void**)__builtin_frame_address(0);
             void** iter = rbp;
         
             //Walk the stack

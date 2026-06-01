@@ -2652,7 +2652,7 @@ class CPPEmitter {
 
         const initializegc = '{\n' +
         '        //always thread safe on this initialization phase since we have not started any other threads yet\n' +
-        '        register void** rbp asm("rbp");\n' +
+        '        void** rbp = (void**)__builtin_frame_address(0);\n' +
         `        ᐸRuntimeᐳ::tl_alloc_info.initialize(std::this_thread::get_id(), rbp, ᐸRuntimeᐳ::collect, {${[...sallocs, ...allocs].join(', ')}});\n` +
         '    }\n';
 
