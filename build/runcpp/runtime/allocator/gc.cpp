@@ -119,7 +119,10 @@ namespace ᐸRuntimeᐳ
     {
         for(size_t i = 0; i < roots.size(); i++) {
             bool alreadyknown = std::binary_search(tl_alloc_info.old_roots.cbegin(), tl_alloc_info.old_roots.cend(), roots[i]);
-            if(!alreadyknown) {
+            if(alreadyknown) {
+                finalroots.push_back(roots[i]);
+            }
+            else {
                 bool keep = gcRootProcessRCIncrement(gcGetMetadata(roots[i])->rc);
                 if(keep) {
                     finalroots.push_back(roots[i]);
@@ -331,7 +334,6 @@ namespace ᐸRuntimeᐳ
         else {
             
             GCAllocatorImpl* alloc = gcGetAllocator<GCAllocatorImpl>(ptr);
-            /*
             if(ti->ptrmask != nullptr) {
                 const char* mmask = ti->ptrmask;
                 void** slots = (void**)ptr;
@@ -339,7 +341,7 @@ namespace ᐸRuntimeᐳ
                     decrementStdSlotTag(mmask, slots);
                 }
             }
-            */
+            
             alloc->xrcRelease(ptr);
         }
     }
