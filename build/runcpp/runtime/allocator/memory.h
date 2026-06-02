@@ -140,13 +140,13 @@ namespace ᐸRuntimeᐳ
             MetaBits newbits;
             if(ll & META_BIT_IS_RC_UNIQUE) {
                 //Was a unique reference but now delete pending
-                newbits = (META_BIT_IS_DELETE_PENDING | META_BIT_RC_ZERO);
+                newbits = (META_BIT_IS_ALLOC | META_BIT_IS_DELETE_PENDING | META_BIT_RC_ZERO);
             }
             else {
                 //Otherwise just increment the counter
                 if((ll & META_BIT_RC_MASK) == META_BIT_RC_ONE) {
                     //This decrement would put us at zero, so set delete pending
-                    newbits = (META_BIT_IS_DELETE_PENDING | META_BIT_RC_ZERO);
+                    newbits = (META_BIT_IS_ALLOC | META_BIT_IS_DELETE_PENDING | META_BIT_RC_ZERO);
                 }
                 else {
                     newbits = ll - META_BIT_RC_ONE;
@@ -157,6 +157,20 @@ namespace ᐸRuntimeᐳ
                 return (newbits & META_BIT_IS_DELETE_PENDING) != 0;
             }
         }
+    }
+
+    //Thread the pending delete freelist via the rc counter
+    constexpr void gcStoreDeleteListPtr(AtomicMetaBits& rc, void* addr)
+    {
+        MetaBits ll = rc.load(std::memory_order_relaxed);
+        rc.store(ll | ((uintptr_t)addr << META_BIT_RC_ADDR_SHIFT), std::memory_order_relaxed);
+    }
+
+    //Thread the pending delete freelist via the rc counter
+    constexpr void* gcGetDeleteListPtr(AtomicMetaBits& rc)
+    {
+        MetaBits ll = rc.load(std::memory_order_relaxed);
+        return (void*)((ll & META_BIT_RC_MASK) >> META_BIT_RC_ADDR_SHIFT);
     }
 
     //After processing an object (in sweep or RC deletion) clear the meta bits

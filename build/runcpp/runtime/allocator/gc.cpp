@@ -314,35 +314,89 @@ namespace ᐸRuntimeᐳ
         alloc->xrcRelease(ptr);
     }
     
-    void releaseStd(void* ptr);
-
-    void decrementStdSlotTag(const char*& tag, void**& slots) {
-        //
-        //TODO: this is a nop that leaks memory!!!!
-        //
-
-        tag++;
-        slots++;
-    }
-
     void releaseStd(void* ptr)
     {
+        GCAllocatorImpl* alloc = gcGetAllocator<GCAllocatorImpl>(ptr);
         const TypeInfo* ti = gcGetTypeInfo(ptr);
         if(ti->quickrelease) {
              releaseQuick(ptr);
         }
         else {
-            
-            GCAllocatorImpl* alloc = gcGetAllocator<GCAllocatorImpl>(ptr);
-            if(ti->ptrmask != nullptr) {
-                const char* mmask = ti->ptrmask;
-                void** slots = (void**)ptr;
-                while(*mmask != '\0') {
-                    decrementStdSlotTag(mmask, slots);
-                }
+            gcStoreDeleteListPtr(gcGetMetadata(ptr)->rc, alloc->pendingdelete);
+            alloc->pendingdelete = ptr;
+        }
+    }
+
+    void decrementStdSlotTag(const char*& tag, void**& slots) {
+        switch(*tag) {
+            case '0': {
+                tag++;
+                slots++;
+                break;
             }
-            
-            alloc->xrcRelease(ptr);
+            case '1': {
+                if(*slots != nullptr) {
+                    bool isdead = gcProcessRCDecrement(gcGetMetadata(*slots)->rc);
+                    if(isdead) {
+                        releaseStd(*slots);
+                    }
+                }
+                tag++;
+                slots++;
+                break;
+            }
+            case '2': {
+                const TypeInfo* ti = (const TypeInfo*)(*slots);
+                tag++;
+                slots++;
+
+                if(ti != nullptr) {
+                    const char* mmask = ti->ptrmask;
+                    while(*mmask != '\0') {
+                        decrementStdSlotTag(mmask, slots);
+                    }
+                    tag += ti->slotcount;
+                }
+                break;
+            }
+            case '3': {
+                if(!XCString::gcIsTestIsInlineRepresentation(slots)) {
+                    bool isdead = gcProcessRCDecrement(gcGetMetadata(*(slots + 1))->rc);
+                    if(isdead) {
+                        releaseStd(*(slots + 1));
+                    }
+                }
+                tag += 2;
+                slots += 2;
+                break;
+            }
+            case '4': {
+                if(!XString::gcIsTestIsInlineRepresentation(slots)) {
+                    bool isdead = gcProcessRCDecrement(gcGetMetadata(*(slots + 1))->rc);
+                    if(isdead) {
+                        releaseStd(*(slots + 1));
+                    }
+                }
+                tag += 2;
+                slots += 2;
+                break;
+            }
+            case '5' : {
+                if(gcIsListTInline(slots)) {
+                    //inline then ptrmask is already inline so just eat the '5' -- otherwise process the pointer and return 2
+                    tag++;
+                    slots++;
+                }
+                else {
+                    bool isdead = gcProcessRCDecrement(gcGetMetadata(*(slots + 1))->rc);
+                    if(isdead) {
+                        releaseStd(*(slots + 1));
+                    }
+                    tag += 2;
+                    slots += 2;
+                }
+                break;
+            }
         }
     }
 
@@ -370,6 +424,30 @@ namespace ᐸRuntimeᐳ
 
         tl_alloc_info.old_roots.resize(roots_young.size() + roots_rc.size());
         std::merge(roots_young.cbegin(), roots_young.cend(), roots_rc.cbegin(), roots_rc.cend(), tl_alloc_info.old_roots.begin());
+    }
+
+    void processPendingDeleteWork(GCAllocatorImpl* alloc)
+    {
+        //
+        //TODO: what is this heuristic and how to balance it with incremental at allocation bits
+        //
+        for(size_t i = 0; i < std::max((size_t)(GC_NURSERY_SIZE / 10), (size_t)10) && alloc->pendingdelete != nullptr; ++i) {
+            void* ptr = alloc->pendingdelete;
+            alloc->pendingdelete = gcGetDeleteListPtr(gcGetMetadata(ptr)->rc);
+
+            GCAllocatorImpl* alloc = gcGetAllocator<GCAllocatorImpl>(ptr);
+            const TypeInfo* ti = gcGetTypeInfo(ptr);
+
+            if(ti->ptrmask != nullptr) {
+                const char* mmask = ti->ptrmask;
+                void** slots = (void**)ptr;
+                while(*mmask != '\0') {
+                    decrementStdSlotTag(mmask, slots);
+                }
+            }
+
+            alloc->xrcRelease(ptr);
+        }
     }
 
     void collect()
@@ -408,6 +486,14 @@ namespace ᐸRuntimeᐳ
         //Make sure we release the globals mutex if needed
         g_alloc_info.unloadGlobalRootsFromProc(gproc);
 
+        //Peel off some of the pending decs
+        for(auto ai = tl_alloc_info.gcallocs.begin(); ai != tl_alloc_info.gcallocs.end(); ++ai) {
+            if(ai->second->pendingdelete != nullptr) {
+                processPendingDeleteWork(ai->second);
+            }
+        }
+
+        //Eagerly process some nursery space
         for(auto ai = tl_alloc_info.gcallocs.begin(); ai != tl_alloc_info.gcallocs.end(); ++ai) {
             ai->second->processNursery();
         }

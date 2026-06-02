@@ -16,13 +16,16 @@ namespace ᐸRuntimeᐳ
 
         const TypeInfo* alloctype;
         void* freelist;
+        void* pendingdelete;
+
+
         std::array<void*, NURSERY_SIZE> nursery;
         size_t allocount;
 
         std::set<void*> x_allocs;
         static std::map<void*, GCAllocatorImpl*> x_all_alloc_to_allocator_map;
 
-        GCAllocatorImpl(const TypeInfo* alloctype) : alloctype{alloctype}, freelist{nullptr}, nursery{}, allocount(0), x_allocs{} { ; } 
+        GCAllocatorImpl(const TypeInfo* alloctype) : alloctype{alloctype}, freelist{nullptr}, pendingdelete{nullptr}, nursery{}, allocount(0), x_allocs{} { ; } 
 
         inline void* xalloc()
         {
