@@ -128,9 +128,9 @@ namespace ᐸRuntimeᐳ
         }
     }
 
-    void* forward(void* ptr);
+    void* forward(void* ptr, void** parentslotptr);
 
-    void* processSlotPtrTrgt(void* ptr)
+    void* processSlotPtrTrgt(void* ptr, void** parentslotptr)
     {
         if(ptr == nullptr) {
             return nullptr;
@@ -138,7 +138,7 @@ namespace ᐸRuntimeᐳ
 
         GCMetadata* m = gcGetMetadata(ptr);
         if(gcIsYoung(m->rc)) {
-            return forward(ptr);
+            return forward(ptr, parentslotptr);
         }
         else {
             gcYoungProcessRCIncrement(m->rc);
@@ -154,7 +154,7 @@ namespace ᐸRuntimeᐳ
                 break;
             }
             case '1': {
-                *slots = processSlotPtrTrgt(*slots);
+                *slots = processSlotPtrTrgt(*slots, slots);
                 tag++;
                 slots++;
                 break;
@@ -175,7 +175,7 @@ namespace ᐸRuntimeᐳ
             }
             case '3': {
                 if(!XCString::gcIsTestIsInlineRepresentation(slots)) {
-                    *(slots + 1) = processSlotPtrTrgt(*(slots + 1));
+                    *(slots + 1) = processSlotPtrTrgt(*(slots + 1), slots + 1);
                 }
                 tag += 2;
                 slots += 2;
@@ -183,7 +183,7 @@ namespace ᐸRuntimeᐳ
             }
             case '4': {
                 if(!XString::gcIsTestIsInlineRepresentation(slots)) {
-                    *(slots + 1) = processSlotPtrTrgt(*(slots + 1));
+                    *(slots + 1) = processSlotPtrTrgt(*(slots + 1), slots + 1);
                 }
                 tag += 2;
                 slots += 2;
@@ -196,7 +196,7 @@ namespace ᐸRuntimeᐳ
                     slots++;
                 }
                 else {
-                    *(slots + 1) = processSlotPtrTrgt(*(slots + 1));
+                    *(slots + 1) = processSlotPtrTrgt(*(slots + 1), slots + 1);
                     tag += 2;
                     slots += 2;
                 }
@@ -205,7 +205,7 @@ namespace ᐸRuntimeᐳ
         }
     }
 
-    void* forward(void* ptr)
+    void* forward(void* ptr, void** parentslotptr)
     {
         GCMetadata* m = gcGetMetadata(ptr); 
 
@@ -216,7 +216,7 @@ namespace ᐸRuntimeᐳ
             GCAllocatorImpl* gcalloc = gcGetAllocator<GCAllocatorImpl>(ptr);
             const TypeInfo* ti = gcGetTypeInfo(ptr);
 
-            void* nptr = gcalloc->xalloc_evac(); 
+            void* nptr = gcalloc->xalloc_evac(parentslotptr); 
 	        std::copy((void**)ptr, (void**)ptr + ti->slotcount, (void**)nptr);
 
             *((void**)ptr) = nptr;
@@ -257,13 +257,117 @@ namespace ᐸRuntimeᐳ
         }
     }
 
+    void releaseQuick(void* ptr);
+
+    void decrementQuickSlotTag(const char*& tag, void**& slots) {
+        switch(*tag) {
+            case '0': {
+                tag++;
+                slots++;
+                break;
+            }
+            case '1': {
+                if(*slots != nullptr) {
+                    bool isdead = gcProcessRCDecrement(gcGetMetadata(*slots)->rc);
+                    if(isdead) {
+                        releaseQuick(*slots);
+                    }
+                }
+                tag++;
+                slots++;
+                break;
+            }
+            case '2': {
+                const TypeInfo* ti = (const TypeInfo*)(*slots);
+                tag++;
+                slots++;
+
+                if(ti != nullptr) {
+                    const char* mmask = ti->ptrmask;
+                    while(*mmask != '\0') {
+                        decrementQuickSlotTag(mmask, slots);
+                    }
+                    tag += ti->slotcount;
+                }
+                break;
+            }
+            //other cases should not be possible in a quick release object since they are all leaf types
+        }
+    }
+
+    void releaseQuick(void* ptr)
+    {
+        GCAllocatorImpl* alloc = gcGetAllocator<GCAllocatorImpl>(ptr);
+        const TypeInfo* ti = gcGetTypeInfo(ptr);
+
+        if(ti->ptrmask != nullptr) {
+            const char* mmask = ti->ptrmask;
+            void** slots = (void**)ptr;
+            while(*mmask != '\0') {
+                decrementQuickSlotTag(mmask, slots);
+            }
+        }
+
+        alloc->xrcRelease(ptr);
+    }
+    
+    void releaseStd(void* ptr);
+
+    void decrementStdSlotTag(const char*& tag, void**& slots) {
+        //
+        //TODO: this is a nop that leaks memory!!!!
+        //
+
+        tag++;
+        slots++;
+    }
+
+    void releaseStd(void* ptr)
+    {
+        const TypeInfo* ti = gcGetTypeInfo(ptr);
+        if(ti->quickrelease) {
+             releaseQuick(ptr);
+        }
+        else {
+            
+            GCAllocatorImpl* alloc = gcGetAllocator<GCAllocatorImpl>(ptr);
+            /*
+            if(ti->ptrmask != nullptr) {
+                const char* mmask = ti->ptrmask;
+                void** slots = (void**)ptr;
+                while(*mmask != '\0') {
+                    decrementStdSlotTag(mmask, slots);
+                }
+            }
+            */
+            alloc->xrcRelease(ptr);
+        }
+    }
+
     void processDecrements(const std::vector<void*>& roots_young, const std::vector<void*>& roots_rc)
     {
-        //TODO: need to process the decrements and update the roots sets for the next collection round
+        std::vector<void*> decroots;
+        std::copy_if(tl_alloc_info.old_roots.cbegin(), tl_alloc_info.old_roots.cend(), std::back_inserter(decroots), [&roots_young, &roots_rc](void* r) {
+            return !std::binary_search(roots_young.cbegin(), roots_young.cend(), r) && !std::binary_search(roots_rc.cbegin(), roots_rc.cend(), r);
+        });
         
+        for(size_t i = 0; i < decroots.size(); i++) {
+            void* droot = decroots[i];
+            bool isdead = gcProcessRCDecrement(gcGetMetadata(decroots[i])->rc);
+
+            if(isdead) {
+                const TypeInfo* ti = gcGetTypeInfo(droot);
+                if(ti->quickrelease) {
+                    releaseQuick(droot);
+                }
+                else {
+                    releaseStd(droot);
+                }
+            }
+        }
+
         tl_alloc_info.old_roots.resize(roots_young.size() + roots_rc.size());
-        std::copy(roots_young.cbegin(), roots_young.cend(), tl_alloc_info.old_roots.begin());
-        std::copy(roots_rc.cbegin(), roots_rc.cend(), tl_alloc_info.old_roots.begin() + roots_young.size());
+        std::merge(roots_young.cbegin(), roots_young.cend(), roots_rc.cbegin(), roots_rc.cend(), tl_alloc_info.old_roots.begin());
     }
 
     void collect()
