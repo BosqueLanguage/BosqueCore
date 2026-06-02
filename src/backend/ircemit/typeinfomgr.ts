@@ -5,8 +5,10 @@ import { TransformCPPNameManager } from "./namemgr.js";
 
 import assert from "node:assert";
 
+const MAX_VALUE_LAYOUT_BYTESIZE = 72; //max number of bytes we allow for value layouts -- above this we switch to ref layout
+
 //Duplicated from C++ definitions
-const MAX_LIST_INLINE_BYTES = 32; //Bytes -- so 64 total when we add 8 bytes for the size and 8 bytes for the tag
+const MAX_LIST_INLINE_BYTES = 48; //Bytes -- so 56 total when we add 8 bytes for the size
 
 function LIST_T_INLINE_CAPACITY(elem_size: number): number {
     return Math.max(Math.floor(MAX_LIST_INLINE_BYTES / elem_size), 1);
@@ -346,7 +348,7 @@ class TypeInfoManager {
     }
 
     private isSizeOkForValueLayout(bytesize: number): boolean {
-        return bytesize <= 64;
+        return bytesize <= MAX_VALUE_LAYOUT_BYTESIZE;
     }
 
     private static computeValueMaskOfK(k: number): string {

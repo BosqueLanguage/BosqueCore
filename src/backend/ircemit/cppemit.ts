@@ -1258,6 +1258,7 @@ class CPPEmitter {
     }
 
     private emitBuiltinBody(invk: IRInvokeDecl, body: IRBuiltinBody, indent: string | undefined): string {
+        let prestr = "";
         let bstr: string;
 
         if(body.builtin === "float_sqrt") {
@@ -1319,16 +1320,20 @@ class CPPEmitter {
         }
         else if(body.builtin === "algo_for") {
             const [fn] = this.getParamInforForLambda(invk, "op");
-            bstr = `for(Nat i = min; i < max; i = i + 1_n) { s = ${fn}(op, s, i); } NOT_IMPLEMENTED`;
+            prestr = `auto sp = s; for(Nat i = low; i < high; i = i + 1_n) { sp = ${fn}(op, sp, i); }`;
+            bstr = "sp";
         }
         else if(body.builtin === "algo_while") {
-            bstr = `NOT_IMPLEMENTED`
+            const [g] = this.getParamInforForLambda(invk, "guard");
+            const [fn] = this.getParamInforForLambda(invk, "op");
+            prestr = `auto sp = s; while(${g}(guard, sp)) { sp = ${fn}(op, s); }`;
+            bstr = "s";
         }
         else {
             assert(false, "CPPEmitter: need to implement builtin body emission " + body.builtin);
         }
 
-        return `{ return ${bstr}; }`;
+        return `{ ${prestr == "" ? "" : prestr + " "}return ${bstr}; }`;
     }
 
     private emitHoleBody(body: IRHoleBody, indent: string | undefined): string {

@@ -228,15 +228,7 @@ public function main(iters: Nat): Float {
     var system = NBodySystem::create();
     let step = 0.01f;
 
-    if(iters > 0n) {
-        system = system.advance(step);
-    }
-    if(iters > 1n) {
-        system = system.advance(step);
-    }
-    if(iters > 2n) {
-        system = system.advance(step);
-    }
+    system = Algorithm::for<NBodySystem>(system, 0n, iters, fn(s, i) => s.advance(step));
 
     return system.energy();
 

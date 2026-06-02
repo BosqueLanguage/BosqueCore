@@ -7,7 +7,7 @@
 
 namespace ᐸRuntimeᐳ
 {
-    constexpr static size_t MAX_LIST_INLINE_BYTES = 32; //Bytes -- so 40 total when we add 8 bytes for the size
+    constexpr static size_t MAX_LIST_INLINE_BYTES = 48; //Bytes -- so 56 total when we add 8 bytes for the size
     
     constexpr size_t LIST_T_INLINE_CAPACITY(size_t elem_size)
     {
@@ -16,7 +16,7 @@ namespace ᐸRuntimeᐳ
 
     constexpr size_t LIST_T_LEAF_CAPACITY(size_t elem_size)
     {
-        return 8;
+        return 12;
         //return std::max(LIST_T_INLINE_CAPACITY(elem_size) * 4, (size_t)4);
     }
 
