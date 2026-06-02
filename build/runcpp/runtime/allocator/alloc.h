@@ -6,59 +6,135 @@ namespace ᐸRuntimeᐳ
 {
     constexpr size_t MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE = 8192; //8KB blocks for buffer allocation
 
+    void runCollect();
+
 #if BSQ_ALLOCATOR_USE_MALLOC
     class GCAllocatorImpl
     {
-    private:
-        std::vector<void*> x_allocs;
-
     public:
-        const TypeInfo* alloctype; 
+        constexpr static size_t NURSERY_SIZE = GC_NURSERY_SIZE;
 
-        constexpr GCAllocatorImpl(const TypeInfo* alloctype) : alloctype(alloctype) {} 
+        const TypeInfo* alloctype;
+        void* freelist;
+        std::array<void*, NURSERY_SIZE> nursery;
+        size_t allocount;
+
+        std::set<void*> x_allocs;
+        static std::map<void*, GCAllocatorImpl*> x_all_alloc_to_allocator_map;
+
+        GCAllocatorImpl(const TypeInfo* alloctype) : alloctype{alloctype}, freelist{nullptr}, nursery{}, allocount(0), x_allocs{} { ; } 
 
         inline void* xalloc()
         {
-            void* ptr = malloc(this->alloctype->bytesize + sizeof(GCMetadata));
+            if(this->allocount >= NURSERY_SIZE) {
+                runCollect();
+            }
 
-            this->x_allocs.push_back(ptr);
-            return gcInitAllocGCMetadata(ptr, this->alloctype);
+            if(this->freelist != nullptr) {
+                void* ptr = this->freelist;
+                this->freelist = *((void**)ptr);
+
+                GCMetadata* meta = gcGetMetadata((GCMetadata*)ptr);
+                gcInitOnAllocate(meta->rc);
+
+                this->nursery[this->allocount++] = ptr;
+                return ptr;
+            }
+            else {
+                void* ptr = malloc(this->alloctype->bytesize + sizeof(GCMetadata));
+                void* obj = gcInitAllocGCMetadata(ptr, this);
+
+                this->x_allocs.insert(obj);
+                GCAllocatorImpl::x_all_alloc_to_allocator_map.insert({obj, this});
+
+                this->nursery[this->allocount++] = obj;
+                return obj;
+            }
+        }
+
+        inline void* xalloc_evac()
+        {
+            void* ptr = malloc(this->alloctype->bytesize + sizeof(GCMetadata));
+            void* obj = gcInitEvacGCMetadata(ptr, this);
+
+            this->x_allocs.insert(obj);
+            GCAllocatorImpl::x_all_alloc_to_allocator_map.insert({obj, this});
+
+            return obj;
+        }
+
+        bool checkObjectBounds(void* addr, void* omem, const GCMetadata* meta, void*& raddr)
+        {            
+            const uintptr_t objstart = (uintptr_t)(omem);
+            const uintptr_t objend = objstart + ((GCAllocatorImpl*)meta->allocator)->alloctype->bytesize;
+            
+            if((objstart <= (uintptr_t)addr) && ((uintptr_t)addr < objend)) {
+                raddr = omem;
+                return true;
+            }
+
+            return false;
+        }
+
+        bool isAddrInValidObject(void* addr, GCMetadata*& meta, void*& raddr)
+        {
+            if(this->x_allocs.empty()) {
+                return false;
+            }
+
+            auto iter = this->x_allocs.lower_bound(addr);
+            if(iter != this->x_allocs.begin() && *iter != addr) {
+                iter--;
+            }
+            
+            meta = gcGetMetadata(*iter);
+            return this->checkObjectBounds(addr, *iter, meta, raddr);
+        }
+
+        bool isAddrSuitableCategory(const GCMetadata* meta)
+        {
+            if(!gcIsAllocated(meta->rc)) {
+                return false;
+            }
+
+            if(gcIsYoung(meta->rc) && meta->threadid != std::this_thread::get_id()) {
+                return false;
+            }
+
+            return true;
+        }
+
+        void processNursery()
+        {
+            for(size_t i = 0; i < this->allocount; ++i) {
+                GCMetadata* meta = gcGetMetadata(this->nursery[i]);
+                if(!gcIsAllocated(meta->rc) | gcIsYoung(meta->rc)) {
+                    *((void**)this->nursery[i]) = this->freelist;
+                    this->freelist = this->nursery[i];
+                }
+                
+                gcProcessSweep(meta->rc);
+                this->nursery[i] = nullptr;
+            }
+
+            this->allocount = 0;
         }
 
         void cleanup()
         {
-            for(size_t i = 0; i < this->x_allocs.size(); i++) {
-                free(this->x_allocs[i]);
+            for(auto iter = this->x_allocs.begin(); iter != this->x_allocs.end(); iter++) {
+                free((void*)gcGetMetadata(*iter));
             }
 
             this->x_allocs.clear();
         }
     };
-#else
-    class GCAllocatorImpl
-    {
-    private:
-    
-    public:
-        const TypeInfo* alloctype; 
-
-        constexpr GCAllocatorImpl(const TypeInfo* alloctype) : alloctype(alloctype) {} 
-
-        inline void* xalloc()
-        {
-        }
-
-        void cleanup()
-        {
-        }
-    };
-#endif //BSQ_ALLOCATOR_USE_MALLOC
 
     template <typename T>
     class GCAllocator : public GCAllocatorImpl
     {
     public:
-        constexpr GCAllocator(const TypeInfo* alloctype) : GCAllocatorImpl(alloctype) {}
+        GCAllocator(const TypeInfo* alloctype) : GCAllocatorImpl(alloctype) {}
 
         template<typename... Args>
         inline T* allocate(Args... args) 
@@ -72,29 +148,99 @@ namespace ᐸRuntimeᐳ
             return new (this->xalloc()) T(args...);
         }
     };
+#else
+    class GCAllocatorImpl
+    {
+    private:
+    
+    public:
+        const TypeInfo* alloctype; 
+
+        GCAllocatorImpl(const TypeInfo* alloctype) : alloctype(alloctype) {} 
+
+        void cleanup()
+        {
+        }
+    };
+
+    template <typename T>
+    class GCAllocator : public GCAllocatorImpl
+    {
+    public:
+        GCAllocator(const TypeInfo* alloctype) : GCAllocatorImpl(alloctype) {}
+
+        inline void* xalloc()
+        {
+            assert(false);
+        }
+
+        template<typename... Args>
+        inline T* allocate(Args... args) 
+        {
+            return new (this->xalloc()) T{args...};
+        }
+
+        template<typename... Args>
+        inline T* construct(Args... args) 
+        {
+            return new (this->xalloc()) T(args...);
+        }
+    };
+#endif //BSQ_ALLOCATOR_USE_MALLOC
 
     class AllocatorThreadLocalInfo
     {
     public:
+        std::thread::id threadid; //the id of the thread this info is associated with
+
+        void** native_stack_base; //the base of the native stack
+        std::vector<void*> old_roots;
+
         std::map<uint32_t, GCAllocatorImpl*> gcallocs;
+        //TODO -- should have sparse vector to quickly get alloc for evacuate
+
         void (*collectfp)();
 
-        AllocatorThreadLocalInfo() : gcallocs(), collectfp(nullptr) {}
+        MemStats memstats;
 
-        void initialize(void** caller_rbp, void (*_collectfp)(), const std::map<uint32_t, GCAllocatorImpl*>& gcallocs);
+        AllocatorThreadLocalInfo() : native_stack_base{}, old_roots{}, gcallocs{}, collectfp{}, memstats{} { ; }
+
+        void initialize(std::thread::id threadid, void** caller_rbp, void (*_collectfp)(), const std::map<uint32_t, GCAllocatorImpl*>& gcallocs);
         void cleanup();
     };
 
     class AllocatorGlobalInfo
     {
     private:
+        //This allows us to only-once process immortal objects
+        std::mutex g_globals_mutex;
+        void* g_globals;
+        void** g_globals_lastproc; //last global entry processed during GC runs
+        void** g_globals_end; //the current last initialized global entry
+
+    public:
         // This mutex protects all global allocator page operations
         std::mutex g_pages_mutex;
+
+        // This mutex protects RC critical sections (and where our imprecise stack roots could materialize a ref to a RC object)
+        std::mutex g_rcops_mutex;
         
         // This mutex protects all global IO buffer allocator operations
         std::mutex g_ioalloc_mutex;
 
-    public:
+        AllocatorGlobalInfo() : g_globals_mutex{}, g_globals{}, g_globals_lastproc{}, g_globals_end{}, g_pages_mutex{}, g_rcops_mutex{}, g_ioalloc_mutex{} { ; }
+
+        ////////////////
+        //Support for immortal object processing -- will block all other GC threads when new data is processed
+        ////////////////
+        void initializeGlobalRegion(void* data);
+        void* getGlobalRegionStorageOfSize(size_t k);
+        bool loadGlobalRootsToProc(std::vector<void*>& possibleroots);
+        void unloadGlobalRootsFromProc(bool processed);
+
+        // Check if the address refers into any valid allocation (even in middle of it) and if so get the associated metadata
+        bool isAllocatedAddress(void* addr, GCMetadata*& meta, void*& raddr);
+
         ////////////////
         //Support for Mint Allocator -- can only be called from mint server thread
         ////////////////
@@ -171,7 +317,5 @@ namespace ᐸRuntimeᐳ
 
     extern thread_local AllocatorThreadLocalInfo tl_alloc_info;
     extern AllocatorGlobalInfo g_alloc_info;
-
-    extern void collect();
 }
 

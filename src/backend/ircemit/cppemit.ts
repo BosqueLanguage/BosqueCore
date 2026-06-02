@@ -633,7 +633,7 @@ class CPPEmitter {
             }
             else if(ttag === IRExpressionTag.IRAccessEListIndexExpression) {
                 const iexp = exps as IRAccessEListIndexExpression;
-                return `std::get<${iexp.idx}>(${this.emitIRSimpleExpression(iexp.eexp, true)})`;
+                return `${this.emitIRSimpleExpression(iexp.eexp, false)}.at<${iexp.idx}, ${this.typeInfoManager.emitTypeAsStd(iexp.eltype.entries[iexp.idx].tkeystr)}>()`;
             }
             else {
                 assert(false, `CPPEmitter: Unsupported IR simple expression type -- ${exps.constructor.name}`);
@@ -1258,6 +1258,7 @@ class CPPEmitter {
     }
 
     private emitBuiltinBody(invk: IRInvokeDecl, body: IRBuiltinBody, indent: string | undefined): string {
+        let prestr = "";
         let bstr: string;
 
         if(body.builtin === "float_sqrt") {
@@ -1317,11 +1318,22 @@ class CPPEmitter {
         else if(body.builtin === "list_sum") {
             bstr = `l.sum(zero)`
         }
+        else if(body.builtin === "algo_for") {
+            const [fn] = this.getParamInforForLambda(invk, "op");
+            prestr = `auto sp = s; for(Nat i = low; i < high; i = i + 1_n) { sp = ${fn}(op, sp, i); }`;
+            bstr = "sp";
+        }
+        else if(body.builtin === "algo_while") {
+            const [g] = this.getParamInforForLambda(invk, "guard");
+            const [fn] = this.getParamInforForLambda(invk, "op");
+            prestr = `auto sp = s; while(${g}(guard, sp)) { sp = ${fn}(op, s); }`;
+            bstr = "s";
+        }
         else {
             assert(false, "CPPEmitter: need to implement builtin body emission " + body.builtin);
         }
 
-        return `{ return ${bstr}; }`;
+        return `{ ${prestr == "" ? "" : prestr + " "}return ${bstr}; }`;
     }
 
     private emitHoleBody(body: IRHoleBody, indent: string | undefined): string {
@@ -1414,9 +1426,18 @@ class CPPEmitter {
    
     emitConstantDeclInfo(iconst: IRConstantDecl): [string, string] {
         const gvname = `BSQ_g_${TransformCPPNameManager.generateNameForConstantKey(iconst.ckey)}`;
-        const staticsstr = `std::optional<${this.typeInfoManager.emitTypeAsStd(iconst.declaredType.tkeystr)}> ${gvname} = std::nullopt;`;
+        const staticsstr = `std::optional<${this.typeInfoManager.emitTypeAsStd(iconst.declaredType.tkeystr)}*> ${gvname} = std::nullopt;`;
         
-        const bodystr = this.emitStatementList(iconst.stmts, [`if(${gvname}.has_value()) { return ${gvname}.value(); } `], [`${gvname} = std::make_optional(${this.emitIRSimpleExpression(iconst.value, true)}); return ${gvname}.value();`], undefined);
+        const bytes = this.typeInfoManager.getLayoutInfo(iconst.declaredType.tkeystr).bytesize;
+        const bodystr = this.emitStatementList(iconst.stmts, 
+            [`if(${gvname}.has_value()) { return *(${gvname}.value()); }`],
+            [
+                `${this.typeInfoManager.emitTypeAsStd(iconst.declaredType.tkeystr)}* dptr = (${this.typeInfoManager.emitTypeAsStd(iconst.declaredType.tkeystr)}*) ᐸRuntimeᐳ::g_alloc_info.getGlobalRegionStorageOfSize(${bytes});`,
+                `*dptr = ${this.emitIRSimpleExpression(iconst.value, true)};`, 
+                `${gvname} = std::make_optional(dptr); return *(${gvname}.value());`
+            ], 
+            undefined
+        );
         
         const cdeclstr = `${this.typeInfoManager.emitTypeAsStd(iconst.declaredType.tkeystr)} ${TransformCPPNameManager.generateNameForConstantKey(iconst.ckey)}();`;
         const cdefstr = `${staticsstr}\n${this.typeInfoManager.emitTypeAsStd(iconst.declaredType.tkeystr)} ${TransformCPPNameManager.generateNameForConstantKey(iconst.ckey)}() { ${bodystr} }`;
@@ -1511,7 +1532,7 @@ class CPPEmitter {
         let inlinemask: string | undefined = undefined; 
         let leafmask: string | undefined = undefined;
         let nodemask: string | undefined = undefined;
-        if(!/[1-4]/.test(eemask)) {
+        if(!/[1-5]/.test(eemask)) {
             nodemask = "0" + Array(lcapacity).fill(eemask).join("") + "110";
         }
         else {
@@ -1705,7 +1726,7 @@ class CPPEmitter {
             `        ${ttid.bsqtypeid},\n` +
             `        ${ttid.bytesize},\n` +
             `        ${ttid.slotcount},\n` +
-            `        LayoutTag::Tagged,\n` +
+            `        LayoutTag::Value,\n` +
             `        ${ttid.ptrmask !== undefined ? ('"' + ttid.ptrmask + '"') : "nullptr"},\n` +
             `        nullptr,\n` +
             `        0,\n` +
@@ -1935,7 +1956,7 @@ class CPPEmitter {
             `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate("(| "); \n` +
             `${elist.entries.map((ee, ii) => {
                 const fttname = TransformCPPNameManager.convertTypeKey(ee.tkeystr);
-                return `    BSQ_emit${fttname}(std::get<${ii}>(vv));${ii !== elist.entries.length - 1 ? ' ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate(", ");' : ""}`;
+                return `    BSQ_emit${fttname}(vv.at<${ii}, ${this.typeInfoManager.emitTypeAsStd(ee.tkeystr)}>());${ii !== elist.entries.length - 1 ? ' ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate(", ");' : ""}`;
             }).join("\n")}\n` +
             `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate(" |)"); \n` +
             `}`;
@@ -1943,6 +1964,10 @@ class CPPEmitter {
         const bfparses = elist.entries.map((ee, ii) => {
             const fttname = TransformCPPNameManager.convertTypeKey(ee.tkeystr);
             return `    auto v_${ii} = BSQ_parse${fttname}(); if(!v_${ii}.has_value()) { return std::nullopt; } ${ii !== elist.entries.length - 1 ? "if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol(',')) { return std::nullopt; };" : ""}`;
+        });
+
+        const constypes = elist.entries.map((ee) => {
+            return this.typeInfoManager.emitTypeAsStd(ee.tkeystr);
         });
 
         const consargs = elist.entries.map((ee, ii) => {
@@ -1953,7 +1978,7 @@ class CPPEmitter {
         `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol("(|")) { return std::nullopt; };\n` +
         `${bfparses.join("\n")}\n` +
         `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol("|)")) { return std::nullopt; };\n` +
-        `    return std::make_optional<${ctrepr}>(std::make_tuple(${consargs.join(", ")}));\n` +
+        `    return std::make_optional<${ctrepr}>(ᐸRuntimeᐳ::EList${constypes.length}<${constypes.join(", ")}>(${consargs.join(", ")}));\n` +
         '}';
 
         return [
@@ -2423,7 +2448,11 @@ class CPPEmitter {
             sccfdecls = [["//Forward decls for SCC cycles", ...sccfdecll, "", `namespace ᐸRuntimeᐳ {`, ...sccftypeinfos, `}`].join("\n")];
         }
 
-        const decltdd = this.irasm.typedeporder
+        const allfdecls = this.irasm.typedepcycles.flat().filter((t) => this.typeInfoManager.getTypeInfo(t.tkeystr).tag === LayoutTag.Ref);
+        const allftypes = this.irasm.typedeporder.filter((ttd) => allfdecls.some((fdecl) => fdecl.tkeystr === ttd.tkeystr));
+        const allntypes = this.irasm.typedeporder.filter((ttd) => !allfdecls.some((fdecl) => fdecl.tkeystr === ttd.tkeystr));
+
+        const decltdd = [...allntypes, ...allftypes]
         .filter((ttd) => {
             if(!(ttd instanceof IRNominalTypeSignature)) {
                 return true;
@@ -2534,15 +2563,13 @@ class CPPEmitter {
     private generateHeaderSetup(): string {
         return [
             '#include "./runcpp/common.h"',
-            '#include "./runcpp/core/bsqtype.h"',
-            '#include "./runcpp/core/boxed.h"',
-            '#include "./runcpp/core/bools.h"',
-            '#include "./runcpp/core/integrals.h"',
-            '#include "./runcpp/core/strings.h"',
+            '#include "./runcpp/core/coredecls.h"',
+            '#include "./runcpp/core/elist.h"',
             '#include "./runcpp/core/list_t.h"',
             '',
-            '#include "./runcpp/core/coredecls.h"',
-            '#include "./runcpp/runtime/taskinfo.h"'
+            '#include "./runcpp/runtime/taskinfo.h"',
+            '',
+            '#include "./runcpp/runtime/allocator/gc.h"'
         ].join("\n");
     }
 
@@ -2550,7 +2577,10 @@ class CPPEmitter {
     private emitStaticInitializationOps(): string {
         const stringunion = 'union StdEnvUnion { ᐸRuntimeᐳ::XCString strval; };';
 
-        return [stringunion, '//TODO eventually need to set GC and other info'].join("\n\n");
+        const constlayoutbytes = this.irasm.constants.map((cc) => this.typeInfoManager.getLayoutInfo(cc.declaredType.tkeystr).bytesize).reduce((acc, v) => acc + v, 0);
+        const globalbuff = `void* BSQ_g_globaldata[${constlayoutbytes}];`
+
+        return [stringunion, globalbuff].join("\n") + "\n";
     }
 
     ////
@@ -2634,8 +2664,8 @@ class CPPEmitter {
 
         const initializegc = '{\n' +
         '        //always thread safe on this initialization phase since we have not started any other threads yet\n' +
-        '        register void** rbp asm("rbp");\n' +
-        `        ᐸRuntimeᐳ::tl_alloc_info.initialize(rbp, ᐸRuntimeᐳ::collect, {${[...sallocs, ...allocs].join(', ')}});\n` +
+        '        void** rbp = (void**)__builtin_frame_address(0);\n' +
+        `        ᐸRuntimeᐳ::tl_alloc_info.initialize(std::this_thread::get_id(), rbp, ᐸRuntimeᐳ::collect, {${[...sallocs, ...allocs].join(', ')}});\n` +
         '    }\n';
 
         const notes = "//TODO ---- need to dispatch on things and handle useage + agents.md";
@@ -2644,6 +2674,7 @@ class CPPEmitter {
                'int main(int argc, char** argv) {\n' +
                '    ᐸRuntimeᐳ::TaskInfoRepr<StdEnvUnion> maintask;\n' +
                '    ᐸRuntimeᐳ::tl_bosque_info.current_task = &maintask;\n\n' +
+               '    ᐸRuntimeᐳ::g_alloc_info.initializeGlobalRegion(BSQ_g_globaldata);\n' +
                `    ${initializegc}\n` +
                `    ${notes}\n` +
                `    mmain(argc, argv);\n` +

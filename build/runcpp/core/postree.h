@@ -8,8 +8,6 @@
 
 #include "../runtime/allocator/alloc.h"
 
-#define BSQ_POSTREE_VALIDATE 1
-
 #ifdef BSQ_POSTREE_VALIDATE
 #define BSQ_POSTREE_ASSERT(COND) assert(COND)
 #else

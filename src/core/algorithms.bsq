@@ -2,5 +2,10 @@ namespace Core;
 
 #if STRIPPED_CORE
 #else
+namespace Algorithm {
+    recursive? function for<T>(s: T, low: Nat, high: Nat, op: recursive? fn(T, Nat) -> T): T = @algo_for;
+
+    recursive? function while<T>(s: T, guard: recursive? pred(T) -> Bool, op: recursive? fn(T) -> T): T = @algo_while;
+}
 #endif %% STRIPPED_CORE
 
