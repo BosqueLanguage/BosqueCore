@@ -368,7 +368,8 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
-        "Nat"
+        "Nat",
+        true
     };
 
     inline constexpr TypeInfo g_typeinfo_Int = {
@@ -383,7 +384,8 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
-        "Int"
+        "Int",
+        true
     };
 
     inline constexpr TypeInfo g_typeinfo_ChkNat = {
@@ -398,7 +400,8 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
-        "ChkNat"
+        "ChkNat",
+        true
     };
 
     inline constexpr TypeInfo g_typeinfo_ChkInt = {
@@ -413,7 +416,8 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
-        "ChkInt"
+        "ChkInt",
+        true
     };
 
     static_assert(sizeof(XNat) == sizeof(int64_t), "Nat size incorrect");

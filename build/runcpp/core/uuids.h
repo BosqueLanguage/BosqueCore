@@ -49,7 +49,8 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
-        "UUIDv4"
+        "UUIDv4",
+        true
     };
 
     inline constexpr TypeInfo g_typeinfo_UUIDv7 = {
@@ -64,6 +65,7 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
-        "UUIDv7"
+        "UUIDv7",
+        true
     };
 }

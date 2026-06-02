@@ -90,7 +90,7 @@ namespace ᐸRuntimeᐳ
         constexpr CStrRootTreeContent(const CStrRootTreeContent& other) = default;
     };
 
-    inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_CString = g_typeinfo_PosRBTreeLeaf_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_CSTRING, BSQ_PTR_MASK_LEAF, "PosRBTreeLeaf_CString");
+    inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_CString = g_typeinfo_PosRBTreeLeaf_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_CSTRING, BSQ_PTR_MASK_LEAF, "PosRBTreeLeaf_CString", true);
     inline constexpr TypeInfo g_typeinfo_PosRBTreeNode_CString = g_typeinfo_PosRBTreeNode_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_NODE_CSTRING, CStrRootTreeContent::CSTR_NODE_MASK, "PosRBTreeNode_CString");
     inline constexpr TypeInfo g_typeinfo_PosRBTree_CString = g_typeinfo_PosRBTree_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>(WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING, "PosRBTree_CString");
 
@@ -139,7 +139,8 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
-        "CStringInline"
+        "CStringInline",
+        false
     };
 
     inline constexpr TypeInfo g_typeinfo_CStringTree = {
@@ -154,7 +155,8 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
-        "CStringTree"
+        "CStringTree",
+        false
     };
 
     inline constexpr TypeInfo g_typeinfo_CString = {
@@ -169,7 +171,8 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
-        "CString"
+        "CString",
+        false
     };
 
     //TODO: this is currently n * ln(n) for iteration and access -- definitely want to speed this up later
@@ -515,7 +518,7 @@ namespace ᐸRuntimeᐳ
         constexpr StrRootTreeContent(const StrRootTreeContent& other) = default;
     };
 
-    inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_String = g_typeinfo_PosRBTreeLeaf_generate<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_STRING, BSQ_PTR_MASK_LEAF, "PosRBTreeLeaf_String");
+    inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_String = g_typeinfo_PosRBTreeLeaf_generate<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_STRING, BSQ_PTR_MASK_LEAF, "PosRBTreeLeaf_String", true);
     inline constexpr TypeInfo g_typeinfo_PosRBTreeNode_String = g_typeinfo_PosRBTreeNode_generate<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_NODE_STRING, StrRootTreeContent::STR_NODE_MASK, "PosRBTreeNode_String");
     inline constexpr TypeInfo g_typeinfo_PosRBTree_String = g_typeinfo_PosRBTree_generate<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>(WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING, "PosRBTree_String");
 
@@ -564,7 +567,8 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
-        "StringInline"
+        "StringInline",
+        false
     };
 
     inline constexpr TypeInfo g_typeinfo_StringTree = {
@@ -579,7 +583,8 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
-        "StringTree"
+        "StringTree",
+        false
     };
 
     inline constexpr TypeInfo g_typeinfo_String = {
@@ -594,7 +599,8 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
-        "String"
+        "String",
+        false
     };
 
     //TODO: this is currently n * ln(n) for iteration and access -- definitely want to speed this up later

@@ -6,7 +6,8 @@
 #include "memstats.h"
 
 #ifndef GC_NURSERY_SIZE
-#define GC_NURSERY_SIZE 512
+#define GC_NURSERY_SIZE 2
+//#define GC_NURSERY_SIZE 512
 #endif
 
 //Make sure any allocated page is addressable by us -- larger than 2^31 and less than 2^42

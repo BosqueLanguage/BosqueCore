@@ -42,6 +42,7 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
-        "Bool"
+        "Bool",
+        true
     };
 }

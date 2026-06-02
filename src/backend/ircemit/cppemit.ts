@@ -1501,7 +1501,8 @@ class CPPEmitter {
         `        0,\n` +
         `        nullptr,\n` +
         `        0,` +
-        `        "${tdecl.tkey}"\n` +
+        `        "${tdecl.tkey}",\n` +
+        `        true\n` +
         `    };\n` +
         `}`;
     }
@@ -1549,7 +1550,7 @@ class CPPEmitter {
         const listtreeid = ttid.bsqtypeid - 1;
 
         const tidecls = `namespace ᐸRuntimeᐳ {\n` +
-        `    inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_${ctname} = g_typeinfo_PosRBTreeLeaf_generate<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::MAX_LEAF_CAPACITY>(${posrb_treeleafid}, ${leafmask !== undefined ? `"${leafmask}"` : "nullptr"}, "PosRBTreeLeaf_${ctname}");\n` +
+        `    inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_${ctname} = g_typeinfo_PosRBTreeLeaf_generate<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::MAX_LEAF_CAPACITY>(${posrb_treeleafid}, ${leafmask !== undefined ? `"${leafmask}"` : "nullptr"}, "PosRBTreeLeaf_${ctname}", ${ofttid.quickrelease});\n` +
         `    inline constexpr TypeInfo g_typeinfo_PosRBTreeNode_${ctname} = g_typeinfo_PosRBTreeNode_generate<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::MAX_LEAF_CAPACITY>(${posrb_treenodeid}, "${nodemask}", "PosRBTreeNode_${ctname}");\n` +
         `    inline constexpr TypeInfo g_typeinfo_PosRBTree_${ctname} = g_typeinfo_PosRBTree_generate<${oftrepr}, ListTTreeContent<${oftrepr}, ${posrb_treeleafid}>::MAX_LEAF_CAPACITY, ${posrb_treeid}>(${posrb_treeid}, "PosRBTree_${ctname}");\n` +
         '\n' +
@@ -1612,7 +1613,8 @@ class CPPEmitter {
                 `        ${ttid.ftable.length},\n` +
                 `        ${ttid.itable.length !== 0 ? "xxx" : "nullptr"},\n` +
                 `        ${ttid.itable.length},\n` +
-                `        "${tdecl.tkey}"\n` +
+                `        "${tdecl.tkey}",\n` +
+                `        ${ttid.quickrelease}\n` +
                 `    };`;
     }
 
@@ -1655,7 +1657,8 @@ class CPPEmitter {
             `        ${ttid.ftable.length},\n` +
             `        ${ttid.itable.length !== 0 ? "xxx" : "nullptr"},\n` +
             `        ${ttid.itable.length},\n` +
-            `        "${tdecl.tkey}"\n` +
+            `        "${tdecl.tkey}",\n` +
+            `        ${ttid.quickrelease}\n` +
             `    };\n` +
             `}`;
     }
@@ -1708,7 +1711,8 @@ class CPPEmitter {
                 `        ${ttid.ftable.length},\n` +
                 `        ${ttid.itable.length !== 0 ? "xxx" : "nullptr"},\n` +
                 `        ${ttid.itable.length},\n` +
-                `        "${tdecl.tkey}"\n` +
+                `        "${tdecl.tkey}",\n` +
+                `        ${ttid.quickrelease}\n` +
                 `    };\n` +
                 `    extern thread_local GCAllocator<${ctname}> ${ctname}_allocator;\n` +
                 `}`,
@@ -1734,7 +1738,8 @@ class CPPEmitter {
             `        0,\n` +
             `        nullptr,\n` +
             `        0,\n` +
-            `        "${tdecl.tkey}"\n` +
+            `        "${tdecl.tkey}",\n` +
+            `        ${ttid.quickrelease}\n` +
             `    };\n` +
             `}`;
     }
