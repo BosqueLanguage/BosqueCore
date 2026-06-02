@@ -74,6 +74,52 @@ namespace ᐸRuntimeᐳ
 
         constexpr int64_t size() const { return static_cast<int64_t>(this->data[0]); }
         constexpr char at(int64_t index) const { return this->data[index + 1]; }
+
+        friend XBool operator==(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) 
+        { 
+            if(lhs.size() != rhs.size()) {
+                return XFALSE;
+            }
+            else {
+                return XBool::from(std::equal(lhs.data.begin(), lhs.data.begin() + lhs.size(), rhs.data.begin())); 
+            }
+        }
+
+        friend XBool operator<(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) 
+        {
+            if(lhs.size() != rhs.size()) {
+                return XBool::from(lhs.size() < rhs.size());
+            }
+            else {
+                auto mmpos = std::mismatch(lhs.data.begin(), lhs.data.begin() + lhs.size(), rhs.data.begin());
+                if(mmpos.first == lhs.data.begin() + lhs.size()) {
+                    return XBool::from(false);
+                }
+                else {
+                    return XBool::from(*mmpos.first < *mmpos.second);
+                }
+            }
+        }
+
+        friend XBool operator>(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) 
+        { 
+            if(lhs.size() != rhs.size()) {
+                return XBool::from(lhs.size() > rhs.size());
+            }
+            else {
+                auto mmpos = std::mismatch(lhs.data.begin(), lhs.data.begin() + lhs.size(), rhs.data.begin());
+                if(mmpos.first == lhs.data.begin() + lhs.size()) {
+                    return XBool::from(false);
+                }
+                else {
+                    return XBool::from(*mmpos.first > *mmpos.second);
+                } 
+            } 
+        }
+        
+        friend XBool operator!=(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) { return !(lhs == rhs); }
+        friend XBool operator<=(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) { return !(lhs > rhs); }
+        friend XBool operator>=(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) { return !(lhs < rhs); }
     };
 
     class CStrRootTreeContent
@@ -309,7 +355,12 @@ namespace ᐸRuntimeᐳ
                 return XFALSE;
             }
             else {
-                return XBool::from(std::equal(lhs.begin(), lhs.end(), rhs.begin())); 
+                if(lhs.ucstr.isInline() & rhs.ucstr.isInline()) {
+                    return lhs.ucstr.inlinecstr == rhs.ucstr.inlinecstr;
+                }
+                else {
+                    return XBool::from(std::equal(lhs.begin(), lhs.end(), rhs.begin())); 
+                }
             }
         }
 
@@ -319,12 +370,17 @@ namespace ᐸRuntimeᐳ
                 return XBool::from(lhs.size() < rhs.size());
             }
             else {
-                auto mmpos = std::mismatch(lhs.begin(), lhs.end(), rhs.begin());
-                if(mmpos.first == lhs.end()) {
-                    return XBool::from(false);
+                if(lhs.ucstr.isInline() & rhs.ucstr.isInline()) {
+                    return lhs.ucstr.inlinecstr < rhs.ucstr.inlinecstr;
                 }
                 else {
-                    return XBool::from(*mmpos.first < *mmpos.second);
+                    auto mmpos = std::mismatch(lhs.begin(), lhs.end(), rhs.begin());
+                    if(mmpos.first == lhs.end()) {
+                        return XBool::from(false);
+                    }
+                    else {
+                        return XBool::from(*mmpos.first < *mmpos.second);
+                    }
                 }
             }
         }
@@ -335,12 +391,17 @@ namespace ᐸRuntimeᐳ
                 return XBool::from(lhs.size() > rhs.size());
             }
             else {
-                auto mmpos = std::mismatch(lhs.begin(), lhs.end(), rhs.begin());
-                if(mmpos.first == lhs.end()) {
-                    return XBool::from(false);
+                if(lhs.ucstr.isInline() & rhs.ucstr.isInline()) {
+                    return lhs.ucstr.inlinecstr > rhs.ucstr.inlinecstr;
                 }
                 else {
-                    return XBool::from(*mmpos.first > *mmpos.second);
+                    auto mmpos = std::mismatch(lhs.begin(), lhs.end(), rhs.begin());
+                    if(mmpos.first == lhs.end()) {
+                        return XBool::from(false);
+                    }
+                    else {
+                        return XBool::from(*mmpos.first > *mmpos.second);
+                    }
                 } 
             } 
         }
