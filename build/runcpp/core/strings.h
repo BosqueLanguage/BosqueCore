@@ -81,7 +81,7 @@ namespace ᐸRuntimeᐳ
                 return XFALSE;
             }
             else {
-                return XBool::from(std::equal(lhs.data.begin(), lhs.data.begin() + lhs.size(), rhs.data.begin())); 
+                return XBool::from(std::equal(lhs.data.begin() + 1, lhs.data.begin() + 1 + lhs.size(), rhs.data.begin() + 1)); 
             }
         }
 
@@ -91,8 +91,8 @@ namespace ᐸRuntimeᐳ
                 return XBool::from(lhs.size() < rhs.size());
             }
             else {
-                auto mmpos = std::mismatch(lhs.data.begin(), lhs.data.begin() + lhs.size(), rhs.data.begin());
-                if(mmpos.first == lhs.data.begin() + lhs.size()) {
+                auto mmpos = std::mismatch(lhs.data.begin() + 1, lhs.data.begin() + 1 + lhs.size(), rhs.data.begin() + 1);
+                if(mmpos.first == lhs.data.begin() + 1 + lhs.size()) {
                     return XBool::from(false);
                 }
                 else {
@@ -107,8 +107,8 @@ namespace ᐸRuntimeᐳ
                 return XBool::from(lhs.size() > rhs.size());
             }
             else {
-                auto mmpos = std::mismatch(lhs.data.begin(), lhs.data.begin() + lhs.size(), rhs.data.begin());
-                if(mmpos.first == lhs.data.begin() + lhs.size()) {
+                auto mmpos = std::mismatch(lhs.data.begin() + 1, lhs.data.begin() + 1 + lhs.size(), rhs.data.begin() + 1);
+                if(mmpos.first == lhs.data.begin() + 1 + lhs.size()) {
                     return XBool::from(false);
                 }
                 else {
@@ -570,7 +570,7 @@ namespace ᐸRuntimeᐳ
                 return XFALSE;
             }
             else {
-                return XBool::from(std::equal(lhs.data.begin(), lhs.data.begin() + lhs.size(), rhs.data.begin())); 
+                return XBool::from(std::equal(lhs.data.begin() + 1, lhs.data.begin() + 1 + lhs.size(), rhs.data.begin() + 1)); 
             }
         }
 
@@ -580,8 +580,8 @@ namespace ᐸRuntimeᐳ
                 return XBool::from(lhs.size() < rhs.size());
             }
             else {
-                auto mmpos = std::mismatch(lhs.data.begin(), lhs.data.begin() + lhs.size(), rhs.data.begin());
-                if(mmpos.first == lhs.data.begin() + lhs.size()) {
+                auto mmpos = std::mismatch(lhs.data.begin() + 1, lhs.data.begin() + 1 + lhs.size(), rhs.data.begin() + 1);
+                if(mmpos.first == lhs.data.begin() + 1 + lhs.size()) {
                     return XBool::from(false);
                 }
                 else {
@@ -596,8 +596,8 @@ namespace ᐸRuntimeᐳ
                 return XBool::from(lhs.size() > rhs.size());
             }
             else {
-                auto mmpos = std::mismatch(lhs.data.begin(), lhs.data.begin() + lhs.size(), rhs.data.begin());
-                if(mmpos.first == lhs.data.begin() + lhs.size()) {
+                auto mmpos = std::mismatch(lhs.data.begin() + 1, lhs.data.begin() + 1 + lhs.size(), rhs.data.begin() + 1);
+                if(mmpos.first == lhs.data.begin() + 1 + lhs.size()) {
                     return XBool::from(false);
                 }
                 else {
