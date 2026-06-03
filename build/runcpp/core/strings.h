@@ -75,7 +75,7 @@ namespace ᐸRuntimeᐳ
         constexpr int64_t size() const { return static_cast<int64_t>(this->data[0]); }
         constexpr char at(int64_t index) const { return this->data[index + 1]; }
 
-        friend XBool operator==(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) 
+        constexpr friend XBool operator==(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) 
         { 
             if(lhs.size() != rhs.size()) {
                 return XFALSE;
@@ -85,7 +85,7 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        friend XBool operator<(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) 
+        constexpr friend XBool operator<(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) 
         {
             if(lhs.size() != rhs.size()) {
                 return XBool::from(lhs.size() < rhs.size());
@@ -101,7 +101,7 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        friend XBool operator>(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) 
+        constexpr friend XBool operator>(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) 
         { 
             if(lhs.size() != rhs.size()) {
                 return XBool::from(lhs.size() > rhs.size());
@@ -117,9 +117,9 @@ namespace ᐸRuntimeᐳ
             } 
         }
         
-        friend XBool operator!=(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) { return !(lhs == rhs); }
-        friend XBool operator<=(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) { return !(lhs > rhs); }
-        friend XBool operator>=(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) { return !(lhs < rhs); }
+        constexpr friend XBool operator!=(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) { return !(lhs == rhs); }
+        constexpr friend XBool operator<=(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) { return !(lhs > rhs); }
+        constexpr friend XBool operator>=(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) { return !(lhs < rhs); }
     };
 
     class CStrRootTreeContent
@@ -324,7 +324,7 @@ namespace ᐸRuntimeᐳ
             return ((XCString*)value)->ucstr.isInline();
         }
 
-        int64_t size() const
+        constexpr int64_t size() const
         {
             if(this->ucstr.isInline()) {
                 return this->ucstr.inlinecstr.size();
@@ -334,7 +334,7 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        int64_t bytes() const
+        constexpr int64_t bytes() const
         {
             return this->size() * sizeof(char);
         }
@@ -563,6 +563,52 @@ namespace ᐸRuntimeᐳ
         //mask off high bits if dirty from union bit hacking
         constexpr int64_t size() const { return static_cast<int64_t>(this->data[0]); }
         constexpr char32_t at(int64_t index) const { return this->data[index + 1]; }
+
+        constexpr friend XBool operator==(const StrRootInlineContent& lhs, const StrRootInlineContent& rhs) 
+        { 
+            if(lhs.size() != rhs.size()) {
+                return XFALSE;
+            }
+            else {
+                return XBool::from(std::equal(lhs.data.begin(), lhs.data.begin() + lhs.size(), rhs.data.begin())); 
+            }
+        }
+
+        constexpr friend XBool operator<(const StrRootInlineContent& lhs, const StrRootInlineContent& rhs) 
+        {
+            if(lhs.size() != rhs.size()) {
+                return XBool::from(lhs.size() < rhs.size());
+            }
+            else {
+                auto mmpos = std::mismatch(lhs.data.begin(), lhs.data.begin() + lhs.size(), rhs.data.begin());
+                if(mmpos.first == lhs.data.begin() + lhs.size()) {
+                    return XBool::from(false);
+                }
+                else {
+                    return XBool::from(*mmpos.first < *mmpos.second);
+                }
+            }
+        }
+
+        constexpr friend XBool operator>(const StrRootInlineContent& lhs, const StrRootInlineContent& rhs) 
+        { 
+            if(lhs.size() != rhs.size()) {
+                return XBool::from(lhs.size() > rhs.size());
+            }
+            else {
+                auto mmpos = std::mismatch(lhs.data.begin(), lhs.data.begin() + lhs.size(), rhs.data.begin());
+                if(mmpos.first == lhs.data.begin() + lhs.size()) {
+                    return XBool::from(false);
+                }
+                else {
+                    return XBool::from(*mmpos.first > *mmpos.second);
+                } 
+            } 
+        }
+        
+        constexpr friend XBool operator!=(const StrRootInlineContent& lhs, const StrRootInlineContent& rhs) { return !(lhs == rhs); }
+        constexpr friend XBool operator<=(const StrRootInlineContent& lhs, const StrRootInlineContent& rhs) { return !(lhs > rhs); }
+        constexpr friend XBool operator>=(const StrRootInlineContent& lhs, const StrRootInlineContent& rhs) { return !(lhs < rhs); }
     };
 
     class StrRootTreeContent
@@ -767,7 +813,7 @@ namespace ᐸRuntimeᐳ
             return ((XString*)value)->ustr.isInline();
         }
 
-        int64_t size() const
+        constexpr int64_t size() const
         {
             if(this->ustr.isInline()) {
                 return this->ustr.inlinestr.size();
@@ -777,7 +823,7 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        int64_t bytes() const
+        constexpr int64_t bytes() const
         {
             return this->size() * sizeof(char32_t);
         }
@@ -798,7 +844,12 @@ namespace ᐸRuntimeᐳ
                 return XFALSE;
             }
             else {
-                return XBool::from(std::equal(lhs.begin(), lhs.end(), rhs.begin()));
+                if(lhs.ustr.isInline() & rhs.ustr.isInline()) {
+                    return lhs.ustr.inlinestr == rhs.ustr.inlinestr;
+                }
+                else {
+                    return XBool::from(std::equal(lhs.begin(), lhs.end(), rhs.begin()));
+                }
             }
         }
 
@@ -808,12 +859,17 @@ namespace ᐸRuntimeᐳ
                 return XBool::from(lhs.size() < rhs.size());
             }
             else {
-                auto mmpos = std::mismatch(lhs.begin(), lhs.end(), rhs.begin());
-                if(mmpos.first == lhs.end()) {
-                    return XBool::from(false);
+                if(lhs.ustr.isInline() & rhs.ustr.isInline()) {
+                    return lhs.ustr.inlinestr < rhs.ustr.inlinestr;
                 }
                 else {
-                    return XBool::from(*mmpos.first < *mmpos.second);
+                    auto mmpos = std::mismatch(lhs.begin(), lhs.end(), rhs.begin());
+                    if(mmpos.first == lhs.end()) {
+                        return XBool::from(false);
+                    }
+                    else {
+                        return XBool::from(*mmpos.first < *mmpos.second);
+                    }
                 }
             }
         }
@@ -824,12 +880,17 @@ namespace ᐸRuntimeᐳ
                 return XBool::from(lhs.size() > rhs.size());
             }
             else {
-                auto mmpos = std::mismatch(lhs.begin(), lhs.end(), rhs.begin());
-                if(mmpos.first == lhs.end()) {
-                    return XBool::from(false);
+                if(lhs.ustr.isInline() & rhs.ustr.isInline()) {
+                    return lhs.ustr.inlinestr > rhs.ustr.inlinestr;
                 }
                 else {
-                    return XBool::from(*mmpos.first > *mmpos.second);
+                    auto mmpos = std::mismatch(lhs.begin(), lhs.end(), rhs.begin());
+                    if(mmpos.first == lhs.end()) {
+                        return XBool::from(false);
+                    }
+                    else {
+                        return XBool::from(*mmpos.first > *mmpos.second);
+                    }
                 } 
             } 
         }
