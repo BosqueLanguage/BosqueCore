@@ -82,7 +82,8 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
-        "Float"
+        "Float",
+        true
     };
 
     static_assert(sizeof(XFloat) == sizeof(double), "Float size incorrect");

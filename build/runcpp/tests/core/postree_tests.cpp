@@ -9,7 +9,7 @@
 
 using PTreeInt4 = ᐸRuntimeᐳ::PosRBTree<int64_t, 4, BSQ_POSTREE_ID>;
 
-const ᐸRuntimeᐳ::TypeInfo PTreeInt4_leaftypeinfo = ᐸRuntimeᐳ::g_typeinfo_PosRBTreeLeaf_generate<int64_t, 4>(BSQ_POSTREE_LEAF_ID, BSQ_PTR_MASK_LEAF, "PosRBTreeLeaf_Int64");
+const ᐸRuntimeᐳ::TypeInfo PTreeInt4_leaftypeinfo = ᐸRuntimeᐳ::g_typeinfo_PosRBTreeLeaf_generate<int64_t, 4>(BSQ_POSTREE_LEAF_ID, BSQ_PTR_MASK_LEAF, "PosRBTreeLeaf_Int64", true);
 template<> const ᐸRuntimeᐳ::TypeInfo* PTreeInt4::s_leaftypeinfo = &PTreeInt4_leaftypeinfo;
 thread_local ᐸRuntimeᐳ::GCAllocator<ᐸRuntimeᐳ::PosRBTreeLeaf<int64_t, 4>> PTreeInt4_leafallocator(&PTreeInt4_leaftypeinfo);
 template<> thread_local ᐸRuntimeᐳ::GCAllocator<ᐸRuntimeᐳ::PosRBTreeLeaf<int64_t, 4>>* PTreeInt4::s_leafallocator = &PTreeInt4_leafallocator;

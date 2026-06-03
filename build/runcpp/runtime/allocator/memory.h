@@ -6,7 +6,8 @@
 #include "memstats.h"
 
 #ifndef GC_NURSERY_SIZE
-#define GC_NURSERY_SIZE 512
+#define GC_NURSERY_SIZE 2
+//#define GC_NURSERY_SIZE 2048
 #endif
 
 //Make sure any allocated page is addressable by us -- larger than 2^31 and less than 2^42
@@ -26,13 +27,19 @@ namespace ᐸRuntimeᐳ
     using MetaBits = uint64_t;
     using AtomicMetaBits = std::atomic<MetaBits>;
 
+    //These bits are monotone in the lifecycle of an allocation 
     constexpr MetaBits META_BIT_IS_ALLOC = 0x1;
     constexpr MetaBits META_BIT_IS_YOUNG = 0x2;
     constexpr MetaBits META_BIT_IS_FORWARD = 0x4;
+    constexpr MetaBits META_BIT_IS_RC_UNIQUE = 0x10;
+    constexpr MetaBits META_BIT_IS_RC_SHARED = 0x20;
+    constexpr MetaBits META_BIT_IS_DELETE_PENDING = 0x40;
 
     constexpr MetaBits META_BIT_RC_ZERO = 0x0;
-    constexpr MetaBits META_BIT_RC_ONE = 0x8;
-    constexpr MetaBits META_BIT_RC_MASK = ~(0x7);
+    constexpr MetaBits META_BIT_RC_ONE = 0x80;
+    constexpr MetaBits META_BIT_RC_TWO = (META_BIT_RC_ONE + META_BIT_RC_ONE);
+    constexpr MetaBits META_BIT_RC_MASK = ~(0x7F);
+    constexpr uint32_t META_BIT_RC_ADDR_SHIFT = 4; //bottom 3 bits are zero already based on alignment
 
     constexpr bool gcIsAllocated(const AtomicMetaBits& rc) {
         return (rc.load(std::memory_order_relaxed) & META_BIT_IS_ALLOC) != 0;
@@ -46,61 +53,127 @@ namespace ᐸRuntimeᐳ
         return (rc.load(std::memory_order_relaxed) & META_BIT_IS_FORWARD) != 0;
     }
 
-    constexpr bool gcIsZeroRefCount(const AtomicMetaBits& rc) {
-        return (rc.load(std::memory_order_relaxed) & META_BIT_RC_MASK) != 0;
+    constexpr bool gcIsRC(const AtomicMetaBits& rc) {
+        return (rc.load(std::memory_order_relaxed) & (META_BIT_IS_RC_UNIQUE | META_BIT_IS_RC_SHARED)) != 0;
     }
 
+    //Set the state on initial allocation into the nursery
     constexpr void gcInitOnAllocate(AtomicMetaBits& rc)
     {
         rc.store(META_BIT_IS_ALLOC | META_BIT_IS_YOUNG, std::memory_order_relaxed);
     }
 
-    constexpr void gcInitOnEvacuate(AtomicMetaBits& rc)
+    //Set the state on allocation for an evacuation target -- the unique RC bit to indicate that there is a unique (known addr) heap reference
+    constexpr void gcInitOnEvacuate(AtomicMetaBits& rc, void** addr)
     {
-        rc.store(META_BIT_IS_ALLOC | META_BIT_RC_ZERO, std::memory_order_relaxed);
+        rc.store(META_BIT_IS_ALLOC | META_BIT_IS_RC_UNIQUE | ((uintptr_t)addr << META_BIT_RC_ADDR_SHIFT), std::memory_order_relaxed);
     }
 
     constexpr bool gcRootProcessRCIncrement(AtomicMetaBits& rc)
     {
         //on root increment this could be a "forged" reference 
-        //so we CAS to make sure we aren't incrementing a 0 count, young, or unallocated object
+        //so we CAS to make sure we aren't incrementing something that isn't already a valid RC object
         //we hold page mutex so we know the memory location is otherwise valid
         //return true if we successfully incremented, false if this is a TOCTOU or forged reference
 
-        MetaBits ll = rc.load();
+        MetaBits ll = rc.load(std::memory_order_relaxed);
         while(true) {
-            if(((ll & META_BIT_IS_ALLOC) == 0) | ((ll & META_BIT_IS_YOUNG) != 0) | ((ll & META_BIT_RC_MASK) == META_BIT_RC_ZERO)) {
+            if(((ll & META_BIT_RC_MASK) == 0) | ((ll & META_BIT_IS_DELETE_PENDING) != 0)) {
                 return false;
             }
 
-            MetaBits newVal = ll + META_BIT_RC_ONE;
-            if(rc.compare_exchange_weak(ll, newVal)) {
+            MetaBits newbits;
+            if(ll & META_BIT_IS_RC_UNIQUE) {
+                //Was a unique reference but we need to clear this and set the counter correctly (to 2)
+                newbits = (META_BIT_IS_ALLOC | META_BIT_IS_RC_SHARED | META_BIT_RC_TWO);
+                
+            }
+            else {
+                //Otherwise just increment the counter
+                newbits = ll + META_BIT_RC_ONE;
+            }
+
+            if(rc.compare_exchange_weak(ll, newbits)) {
                 return true;
             }
         }
     }
 
+    //The object is now a forward object -- so allocated and keep young so we know to collect it when sweeping (moved to the forwarding state)
     constexpr void gcProcessUpdateYoungForward(AtomicMetaBits& rc)
     {
         rc.store(META_BIT_IS_ALLOC | META_BIT_IS_YOUNG | META_BIT_IS_FORWARD, std::memory_order_relaxed);
     }
 
+    //The object is pointed to by a root of some kind, so cant unique parent it, just set the RC to 1
     constexpr void gcRootProcessYoungPromote(AtomicMetaBits& rc)
     {
-        rc.store(META_BIT_IS_ALLOC | META_BIT_RC_ONE, std::memory_order_relaxed);
+        rc.store(META_BIT_IS_ALLOC | META_BIT_IS_RC_SHARED | META_BIT_RC_ONE, std::memory_order_relaxed);
     }
 
+    //Increment the RC from a non-root reference -- these references area always precise to just increment in the appropriate way
     constexpr void gcYoungProcessRCIncrement(AtomicMetaBits& rc)
     {
-        rc.fetch_add(META_BIT_RC_ONE);
+        MetaBits ll = rc.load(std::memory_order_relaxed);
+        while(true) {
+            MetaBits newbits;
+            if(ll & META_BIT_IS_RC_UNIQUE) {
+                //Was a unique reference but we need to set the counter correctly (to 2)
+                newbits = (META_BIT_IS_ALLOC | META_BIT_IS_RC_SHARED | META_BIT_RC_TWO);
+            }
+            else {
+                //Otherwise just increment the counter
+                newbits = ll + META_BIT_RC_ONE;
+            }
+
+            if(rc.compare_exchange_weak(ll, newbits)) {
+                break;
+            }
+        }
     }
 
+    //Decrement the RC and set to delete pending if we hit zero -- return true if we hit zero and need to process false otherwise
     constexpr bool gcProcessRCDecrement(AtomicMetaBits& rc)
     {
-        MetaBits oldVal = rc.fetch_sub(META_BIT_RC_ONE);
-        return (oldVal & META_BIT_RC_MASK) == META_BIT_RC_ONE; //was one before decrement, now zero so we want to reclaim
+        MetaBits ll = rc.load(std::memory_order_relaxed);
+        while(true) {
+            MetaBits newbits;
+            if(ll & META_BIT_IS_RC_UNIQUE) {
+                //Was a unique reference but now delete pending
+                newbits = (META_BIT_IS_ALLOC | META_BIT_IS_DELETE_PENDING | META_BIT_RC_ZERO);
+            }
+            else {
+                //Otherwise just increment the counter
+                if((ll & META_BIT_RC_MASK) == META_BIT_RC_ONE) {
+                    //This decrement would put us at zero, so set delete pending
+                    newbits = (META_BIT_IS_ALLOC | META_BIT_IS_DELETE_PENDING | META_BIT_RC_ZERO);
+                }
+                else {
+                    newbits = ll - META_BIT_RC_ONE;
+                }
+            }
+
+            if(rc.compare_exchange_weak(ll, newbits)) {
+                return (newbits & META_BIT_IS_DELETE_PENDING) != 0;
+            }
+        }
     }
 
+    //Thread the pending delete freelist via the rc counter
+    constexpr void gcStoreDeleteListPtr(AtomicMetaBits& rc, void* addr)
+    {
+        MetaBits ll = rc.load(std::memory_order_relaxed);
+        rc.store(ll | ((uintptr_t)addr << META_BIT_RC_ADDR_SHIFT), std::memory_order_relaxed);
+    }
+
+    //Thread the pending delete freelist via the rc counter
+    constexpr void* gcGetDeleteListPtr(AtomicMetaBits& rc)
+    {
+        MetaBits ll = rc.load(std::memory_order_relaxed);
+        return (void*)((ll & META_BIT_RC_MASK) >> META_BIT_RC_ADDR_SHIFT);
+    }
+
+    //After processing an object (in sweep or RC deletion) clear the meta bits
     constexpr void gcProcessSweep(AtomicMetaBits& rc)
     {
         rc.store(0, std::memory_order_relaxed);
@@ -143,12 +216,12 @@ namespace ᐸRuntimeᐳ
         return (void*)((uint8_t*)ptr + GC_METADATA_SIZE);
     }
 
-    constexpr void* gcInitEvacGCMetadata(void* ptr, void* allocator)
+    constexpr void* gcInitEvacGCMetadata(void* ptr, void* allocator, void** parentslotptr)
     {
         GCMetadata* meta = (GCMetadata*)ptr;
         meta->allocator = allocator;
         meta->threadid = std::this_thread::get_id();
-        gcInitOnEvacuate(meta->rc);
+        gcInitOnEvacuate(meta->rc, parentslotptr);
 
         return (void*)((uint8_t*)ptr + GC_METADATA_SIZE);
     }

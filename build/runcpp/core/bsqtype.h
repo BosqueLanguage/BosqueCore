@@ -86,6 +86,8 @@ namespace ᐸRuntimeᐳ
         const uint32_t vitablecount;
 
         const char* typekey;
+
+        bool quickrelease;
     };
 
     constexpr uint32_t byteSizeToSlotCount(size_t bytesize)
@@ -112,6 +114,7 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
-        "None"
+        "None",
+        true
     };
 }

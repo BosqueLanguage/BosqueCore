@@ -74,7 +74,8 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
-        "ByteBufferEntry"
+        "ByteBufferEntry",
+        true
     };
 
     inline constexpr TypeInfo g_typeinfo_ByteBufferBlock = {
@@ -89,7 +90,8 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
-        "ByteBufferBlock"
+        "ByteBufferBlock",
+        false
     };
 
     inline constexpr TypeInfo g_typeinfo_ByteBuffer = {
@@ -104,7 +106,8 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
-        "ByteBuffer"
+        "ByteBuffer",
+        false
     };
 
     class ByteBufferIterator

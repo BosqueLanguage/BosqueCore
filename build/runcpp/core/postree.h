@@ -341,7 +341,7 @@ namespace ᐸRuntimeᐳ
     };
     
     template<typename T, int64_t K>
-    consteval TypeInfo g_typeinfo_PosRBTreeLeaf_generate(uint32_t tid, const char* mask, const char* tname)
+    consteval TypeInfo g_typeinfo_PosRBTreeLeaf_generate(uint32_t tid, const char* mask, const char* tname, bool quickrelease)
     {
         return TypeInfo{
             tid,
@@ -355,7 +355,8 @@ namespace ᐸRuntimeᐳ
             0,
             nullptr,
             0,
-            tname
+            tname,
+            quickrelease
         };
     }
 
@@ -388,7 +389,8 @@ namespace ᐸRuntimeᐳ
             0,
             nullptr,
             0,
-            tname
+            tname,
+            false
         };
     }
 
@@ -1352,7 +1354,8 @@ private:
             0,
             nullptr,
             0,
-            tname
+            tname,
+            false
         };
     }
 }

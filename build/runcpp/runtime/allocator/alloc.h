@@ -16,13 +16,16 @@ namespace ᐸRuntimeᐳ
 
         const TypeInfo* alloctype;
         void* freelist;
+        void* pendingdelete;
+
+
         std::array<void*, NURSERY_SIZE> nursery;
         size_t allocount;
 
         std::set<void*> x_allocs;
         static std::map<void*, GCAllocatorImpl*> x_all_alloc_to_allocator_map;
 
-        GCAllocatorImpl(const TypeInfo* alloctype) : alloctype{alloctype}, freelist{nullptr}, nursery{}, allocount(0), x_allocs{} { ; } 
+        GCAllocatorImpl(const TypeInfo* alloctype) : alloctype{alloctype}, freelist{nullptr}, pendingdelete{nullptr}, nursery{}, allocount(0), x_allocs{} { ; } 
 
         inline void* xalloc()
         {
@@ -52,15 +55,26 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        inline void* xalloc_evac()
+        inline void* xalloc_evac(void** parentslotptr)
         {
             void* ptr = malloc(this->alloctype->bytesize + sizeof(GCMetadata));
-            void* obj = gcInitEvacGCMetadata(ptr, this);
+            void* obj = gcInitEvacGCMetadata(ptr, this, parentslotptr);
 
             this->x_allocs.insert(obj);
             GCAllocatorImpl::x_all_alloc_to_allocator_map.insert({obj, this});
 
             return obj;
+        }
+
+        inline void xrcRelease(void* ptr)
+        {
+            GCMetadata* meta = gcGetMetadata(ptr);
+            gcProcessSweep(meta->rc);
+
+            this->x_allocs.erase(ptr);
+            GCAllocatorImpl::x_all_alloc_to_allocator_map.erase(ptr);
+
+            free((void*)meta);
         }
 
         bool checkObjectBounds(void* addr, void* omem, const GCMetadata* meta, void*& raddr)
@@ -109,11 +123,12 @@ namespace ᐸRuntimeᐳ
             for(size_t i = 0; i < this->allocount; ++i) {
                 GCMetadata* meta = gcGetMetadata(this->nursery[i]);
                 if(!gcIsAllocated(meta->rc) | gcIsYoung(meta->rc)) {
+                    gcProcessSweep(meta->rc);
+                    
                     *((void**)this->nursery[i]) = this->freelist;
                     this->freelist = this->nursery[i];
                 }
                 
-                gcProcessSweep(meta->rc);
                 this->nursery[i] = nullptr;
             }
 

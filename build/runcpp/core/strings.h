@@ -74,6 +74,52 @@ namespace ᐸRuntimeᐳ
 
         constexpr int64_t size() const { return static_cast<int64_t>(this->data[0]); }
         constexpr char at(int64_t index) const { return this->data[index + 1]; }
+
+        constexpr friend XBool operator==(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) 
+        { 
+            if(lhs.size() != rhs.size()) {
+                return XFALSE;
+            }
+            else {
+                return XBool::from(std::equal(lhs.data.begin(), lhs.data.begin() + lhs.size(), rhs.data.begin())); 
+            }
+        }
+
+        constexpr friend XBool operator<(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) 
+        {
+            if(lhs.size() != rhs.size()) {
+                return XBool::from(lhs.size() < rhs.size());
+            }
+            else {
+                auto mmpos = std::mismatch(lhs.data.begin(), lhs.data.begin() + lhs.size(), rhs.data.begin());
+                if(mmpos.first == lhs.data.begin() + lhs.size()) {
+                    return XBool::from(false);
+                }
+                else {
+                    return XBool::from(*mmpos.first < *mmpos.second);
+                }
+            }
+        }
+
+        constexpr friend XBool operator>(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) 
+        { 
+            if(lhs.size() != rhs.size()) {
+                return XBool::from(lhs.size() > rhs.size());
+            }
+            else {
+                auto mmpos = std::mismatch(lhs.data.begin(), lhs.data.begin() + lhs.size(), rhs.data.begin());
+                if(mmpos.first == lhs.data.begin() + lhs.size()) {
+                    return XBool::from(false);
+                }
+                else {
+                    return XBool::from(*mmpos.first > *mmpos.second);
+                } 
+            } 
+        }
+        
+        constexpr friend XBool operator!=(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) { return !(lhs == rhs); }
+        constexpr friend XBool operator<=(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) { return !(lhs > rhs); }
+        constexpr friend XBool operator>=(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) { return !(lhs < rhs); }
     };
 
     class CStrRootTreeContent
@@ -90,7 +136,7 @@ namespace ᐸRuntimeᐳ
         constexpr CStrRootTreeContent(const CStrRootTreeContent& other) = default;
     };
 
-    inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_CString = g_typeinfo_PosRBTreeLeaf_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_CSTRING, BSQ_PTR_MASK_LEAF, "PosRBTreeLeaf_CString");
+    inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_CString = g_typeinfo_PosRBTreeLeaf_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_CSTRING, BSQ_PTR_MASK_LEAF, "PosRBTreeLeaf_CString", true);
     inline constexpr TypeInfo g_typeinfo_PosRBTreeNode_CString = g_typeinfo_PosRBTreeNode_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_NODE_CSTRING, CStrRootTreeContent::CSTR_NODE_MASK, "PosRBTreeNode_CString");
     inline constexpr TypeInfo g_typeinfo_PosRBTree_CString = g_typeinfo_PosRBTree_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>(WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING, "PosRBTree_CString");
 
@@ -139,7 +185,8 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
-        "CStringInline"
+        "CStringInline",
+        false
     };
 
     inline constexpr TypeInfo g_typeinfo_CStringTree = {
@@ -154,7 +201,8 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
-        "CStringTree"
+        "CStringTree",
+        false
     };
 
     inline constexpr TypeInfo g_typeinfo_CString = {
@@ -169,7 +217,8 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
-        "CString"
+        "CString",
+        false
     };
 
     //TODO: this is currently n * ln(n) for iteration and access -- definitely want to speed this up later
@@ -275,7 +324,7 @@ namespace ᐸRuntimeᐳ
             return ((XCString*)value)->ucstr.isInline();
         }
 
-        int64_t size() const
+        constexpr int64_t size() const
         {
             if(this->ucstr.isInline()) {
                 return this->ucstr.inlinecstr.size();
@@ -285,7 +334,7 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        int64_t bytes() const
+        constexpr int64_t bytes() const
         {
             return this->size() * sizeof(char);
         }
@@ -306,7 +355,12 @@ namespace ᐸRuntimeᐳ
                 return XFALSE;
             }
             else {
-                return XBool::from(std::equal(lhs.begin(), lhs.end(), rhs.begin())); 
+                if(lhs.ucstr.isInline() & rhs.ucstr.isInline()) {
+                    return lhs.ucstr.inlinecstr == rhs.ucstr.inlinecstr;
+                }
+                else {
+                    return XBool::from(std::equal(lhs.begin(), lhs.end(), rhs.begin())); 
+                }
             }
         }
 
@@ -316,12 +370,17 @@ namespace ᐸRuntimeᐳ
                 return XBool::from(lhs.size() < rhs.size());
             }
             else {
-                auto mmpos = std::mismatch(lhs.begin(), lhs.end(), rhs.begin());
-                if(mmpos.first == lhs.end()) {
-                    return XBool::from(false);
+                if(lhs.ucstr.isInline() & rhs.ucstr.isInline()) {
+                    return lhs.ucstr.inlinecstr < rhs.ucstr.inlinecstr;
                 }
                 else {
-                    return XBool::from(*mmpos.first < *mmpos.second);
+                    auto mmpos = std::mismatch(lhs.begin(), lhs.end(), rhs.begin());
+                    if(mmpos.first == lhs.end()) {
+                        return XBool::from(false);
+                    }
+                    else {
+                        return XBool::from(*mmpos.first < *mmpos.second);
+                    }
                 }
             }
         }
@@ -332,12 +391,17 @@ namespace ᐸRuntimeᐳ
                 return XBool::from(lhs.size() > rhs.size());
             }
             else {
-                auto mmpos = std::mismatch(lhs.begin(), lhs.end(), rhs.begin());
-                if(mmpos.first == lhs.end()) {
-                    return XBool::from(false);
+                if(lhs.ucstr.isInline() & rhs.ucstr.isInline()) {
+                    return lhs.ucstr.inlinecstr > rhs.ucstr.inlinecstr;
                 }
                 else {
-                    return XBool::from(*mmpos.first > *mmpos.second);
+                    auto mmpos = std::mismatch(lhs.begin(), lhs.end(), rhs.begin());
+                    if(mmpos.first == lhs.end()) {
+                        return XBool::from(false);
+                    }
+                    else {
+                        return XBool::from(*mmpos.first > *mmpos.second);
+                    }
                 } 
             } 
         }
@@ -499,6 +563,52 @@ namespace ᐸRuntimeᐳ
         //mask off high bits if dirty from union bit hacking
         constexpr int64_t size() const { return static_cast<int64_t>(this->data[0]); }
         constexpr char32_t at(int64_t index) const { return this->data[index + 1]; }
+
+        constexpr friend XBool operator==(const StrRootInlineContent& lhs, const StrRootInlineContent& rhs) 
+        { 
+            if(lhs.size() != rhs.size()) {
+                return XFALSE;
+            }
+            else {
+                return XBool::from(std::equal(lhs.data.begin(), lhs.data.begin() + lhs.size(), rhs.data.begin())); 
+            }
+        }
+
+        constexpr friend XBool operator<(const StrRootInlineContent& lhs, const StrRootInlineContent& rhs) 
+        {
+            if(lhs.size() != rhs.size()) {
+                return XBool::from(lhs.size() < rhs.size());
+            }
+            else {
+                auto mmpos = std::mismatch(lhs.data.begin(), lhs.data.begin() + lhs.size(), rhs.data.begin());
+                if(mmpos.first == lhs.data.begin() + lhs.size()) {
+                    return XBool::from(false);
+                }
+                else {
+                    return XBool::from(*mmpos.first < *mmpos.second);
+                }
+            }
+        }
+
+        constexpr friend XBool operator>(const StrRootInlineContent& lhs, const StrRootInlineContent& rhs) 
+        { 
+            if(lhs.size() != rhs.size()) {
+                return XBool::from(lhs.size() > rhs.size());
+            }
+            else {
+                auto mmpos = std::mismatch(lhs.data.begin(), lhs.data.begin() + lhs.size(), rhs.data.begin());
+                if(mmpos.first == lhs.data.begin() + lhs.size()) {
+                    return XBool::from(false);
+                }
+                else {
+                    return XBool::from(*mmpos.first > *mmpos.second);
+                } 
+            } 
+        }
+        
+        constexpr friend XBool operator!=(const StrRootInlineContent& lhs, const StrRootInlineContent& rhs) { return !(lhs == rhs); }
+        constexpr friend XBool operator<=(const StrRootInlineContent& lhs, const StrRootInlineContent& rhs) { return !(lhs > rhs); }
+        constexpr friend XBool operator>=(const StrRootInlineContent& lhs, const StrRootInlineContent& rhs) { return !(lhs < rhs); }
     };
 
     class StrRootTreeContent
@@ -515,7 +625,7 @@ namespace ᐸRuntimeᐳ
         constexpr StrRootTreeContent(const StrRootTreeContent& other) = default;
     };
 
-    inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_String = g_typeinfo_PosRBTreeLeaf_generate<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_STRING, BSQ_PTR_MASK_LEAF, "PosRBTreeLeaf_String");
+    inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_String = g_typeinfo_PosRBTreeLeaf_generate<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_STRING, BSQ_PTR_MASK_LEAF, "PosRBTreeLeaf_String", true);
     inline constexpr TypeInfo g_typeinfo_PosRBTreeNode_String = g_typeinfo_PosRBTreeNode_generate<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_NODE_STRING, StrRootTreeContent::STR_NODE_MASK, "PosRBTreeNode_String");
     inline constexpr TypeInfo g_typeinfo_PosRBTree_String = g_typeinfo_PosRBTree_generate<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>(WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING, "PosRBTree_String");
 
@@ -564,7 +674,8 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
-        "StringInline"
+        "StringInline",
+        false
     };
 
     inline constexpr TypeInfo g_typeinfo_StringTree = {
@@ -579,7 +690,8 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
-        "StringTree"
+        "StringTree",
+        false
     };
 
     inline constexpr TypeInfo g_typeinfo_String = {
@@ -594,7 +706,8 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
-        "String"
+        "String",
+        false
     };
 
     //TODO: this is currently n * ln(n) for iteration and access -- definitely want to speed this up later
@@ -700,7 +813,7 @@ namespace ᐸRuntimeᐳ
             return ((XString*)value)->ustr.isInline();
         }
 
-        int64_t size() const
+        constexpr int64_t size() const
         {
             if(this->ustr.isInline()) {
                 return this->ustr.inlinestr.size();
@@ -710,7 +823,7 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        int64_t bytes() const
+        constexpr int64_t bytes() const
         {
             return this->size() * sizeof(char32_t);
         }
@@ -731,7 +844,12 @@ namespace ᐸRuntimeᐳ
                 return XFALSE;
             }
             else {
-                return XBool::from(std::equal(lhs.begin(), lhs.end(), rhs.begin()));
+                if(lhs.ustr.isInline() & rhs.ustr.isInline()) {
+                    return lhs.ustr.inlinestr == rhs.ustr.inlinestr;
+                }
+                else {
+                    return XBool::from(std::equal(lhs.begin(), lhs.end(), rhs.begin()));
+                }
             }
         }
 
@@ -741,12 +859,17 @@ namespace ᐸRuntimeᐳ
                 return XBool::from(lhs.size() < rhs.size());
             }
             else {
-                auto mmpos = std::mismatch(lhs.begin(), lhs.end(), rhs.begin());
-                if(mmpos.first == lhs.end()) {
-                    return XBool::from(false);
+                if(lhs.ustr.isInline() & rhs.ustr.isInline()) {
+                    return lhs.ustr.inlinestr < rhs.ustr.inlinestr;
                 }
                 else {
-                    return XBool::from(*mmpos.first < *mmpos.second);
+                    auto mmpos = std::mismatch(lhs.begin(), lhs.end(), rhs.begin());
+                    if(mmpos.first == lhs.end()) {
+                        return XBool::from(false);
+                    }
+                    else {
+                        return XBool::from(*mmpos.first < *mmpos.second);
+                    }
                 }
             }
         }
@@ -757,12 +880,17 @@ namespace ᐸRuntimeᐳ
                 return XBool::from(lhs.size() > rhs.size());
             }
             else {
-                auto mmpos = std::mismatch(lhs.begin(), lhs.end(), rhs.begin());
-                if(mmpos.first == lhs.end()) {
-                    return XBool::from(false);
+                if(lhs.ustr.isInline() & rhs.ustr.isInline()) {
+                    return lhs.ustr.inlinestr > rhs.ustr.inlinestr;
                 }
                 else {
-                    return XBool::from(*mmpos.first > *mmpos.second);
+                    auto mmpos = std::mismatch(lhs.begin(), lhs.end(), rhs.begin());
+                    if(mmpos.first == lhs.end()) {
+                        return XBool::from(false);
+                    }
+                    else {
+                        return XBool::from(*mmpos.first > *mmpos.second);
+                    }
                 } 
             } 
         }
