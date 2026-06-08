@@ -18,6 +18,7 @@
 
 //Control for page sizes and access
 #define GC_BITS_IN_ADDR_FOR_PAGE 13ul
+#define GC_PAGE_SIZE (1ul << GC_BITS_IN_ADDR_FOR_PAGE)
 #define GC_BLOCK_ALLOCATION_SIZE (1ul << GC_BITS_IN_ADDR_FOR_PAGE)
 #define GC_PAGE_MASK ((1ul << GC_BITS_IN_ADDR_FOR_PAGE) - 1ul)
 #define GC_PAGE_ADDR_MASK (~GC_PAGE_MASK)
@@ -40,6 +41,7 @@ namespace ᐸRuntimeᐳ
     constexpr MetaBits META_BIT_RC_TWO = (META_BIT_RC_ONE + META_BIT_RC_ONE);
     constexpr MetaBits META_BIT_RC_MASK = ~(0x7F);
     constexpr uint32_t META_BIT_RC_ADDR_SHIFT = 4; //bottom 3 bits are zero already based on alignment
+    constexpr uint32_t META_BIT_RC_FREELIST_SHIFT = 7; //same as above but all bits moved
 
     constexpr bool gcIsAllocated(const AtomicMetaBits& rc) {
         return (rc.load(std::memory_order_relaxed) & META_BIT_IS_ALLOC) != 0;

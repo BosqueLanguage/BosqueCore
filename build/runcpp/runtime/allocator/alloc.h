@@ -8,6 +8,88 @@ namespace ᐸRuntimeᐳ
 
     void runCollect();
 
+    class GCAllocatorImpl;
+    class GCPageList;
+
+    using FreeListEntry = uint64_t;
+
+    ////////////////////////////////////////////
+    // Page Layout:
+    // | Page Metadata | Objects Metadata | Data |
+    class PageInfo
+    {
+    public:
+        const TypeInfo* typeinfo; //all entries are of same type
+        GCAllocatorImpl* gcalloc; //alloc for this->typeinfo
+
+        FreeListEntry* freelist; //allocate from here until nullptr
+        int64_t freecount;
+        int64_t esize; //max number of entries in this page
+
+        void* data; //start of the data block
+        GCMetadata* mdata; // Meta data is stored out-of-band
+        uint32_t p2size; //power of 2 rounded (slot size) of the type stored in this page
+        uint32_t size2shift; //shift bits for power of 2 rounded (slot size) of the type stored in this page
+
+        size_t age; //increment age of this page
+        PageInfo* prev;
+        PageInfo* next;
+
+
+	    //RC_ADDR bits in freelist entries are [nextoffset | memoffset] in terms of sizeof(void*) indexing!
+        constexpr static uint64_t makeFreeListEntry(uint16_t nextoffset, uint16_t memoffset) {
+            return (((uint64_t)nextoffset << 16) | (uint64_t)memoffset) << META_BIT_RC_FREELIST_SHIFT;
+        }
+
+        constexpr static uint16_t getNextOffsetFromFreeListEntry(FreeListEntry entry) {
+            return (uint16_t)((entry >> META_BIT_RC_FREELIST_SHIFT) >> 16);
+        }
+
+        constexpr static uint16_t getMemOffsetFromFreeListEntry(FreeListEntry entry) {
+            return (uint16_t)((entry >> META_BIT_RC_FREELIST_SHIFT) & 0xFFFF);
+        }
+
+        constexpr static PageInfo* extractPageFromPointer(void* p) {
+            return (PageInfo*)((uintptr_t)(p) & GC_PAGE_ADDR_MASK);
+        }
+
+        constexpr uint16_t getIndexForObjectInPage(void* obj) { 
+            return (uint16_t)(((void**)obj - (void**)this->data) << this->size2shift);
+        }
+
+        constexpr void* getObjectFromIndexInPage(size_t idx) {
+            return this->data + idx;
+        }
+
+        constexpr uint16_t getIndexForMetadataInPage(void* obj) { 
+            return (uint16_t)(((void**)obj - (void**)this->data) << this->size2shift);
+        }
+
+        constexpr GCMetadata* getMetadataFromIndexInPage(size_t idx) {
+            return this->mdata + idx;
+        }
+
+        constexpr static GCMetadata* getMetadataForObj(void* obj) {
+            PageInfo* page = extractPageFromPointer(obj);
+            return page->mdata + page->getIndexForMetadataInPage(obj);
+        }
+
+        static PageInfo* setPageMetaData(void* vpp, GCAllocatorImpl* gcalloc, size_t agectr, PageInfo* prev, PageInfo* next));
+        static void* reset(PageInfo* pp);
+
+        void rebuild(size_t agectr);
+	
+	    // TODO we should investiage this and see if we can optimize the work needed to 
+	    // compute addr of metadata
+        static inline GCMetadata* getObjectMetadataAligned(void* obj) noexcept { 
+            PageInfo* page = extractPageFromPointer(obj);
+		    size_t idx = PageInfo::getIndexForObjectInPage(obj, page);
+        
+            return page->getMetaEntryAtIndex(idx);
+        }
+    };
+
+
 #if BSQ_ALLOCATOR_USE_MALLOC
     class GCAllocatorImpl
     {

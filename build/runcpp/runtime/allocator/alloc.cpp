@@ -14,6 +14,71 @@ namespace ᐸRuntimeᐳ
         tl_alloc_info.collectfp();
     }
 
+    PageInfo* PageInfo::setPageMetaData(void* vpp, GCAllocatorImpl* gcalloc, size_t agectr, PageInfo* prev, PageInfo* next)
+    {
+        PageInfo* pp = (PageInfo*)vpp;
+
+        uint32_t p2sizeshift = std::bit_ceil(gcalloc->alloctype->slotcount);
+        uint32_t p2size = std::pow(2, p2sizeshift);
+
+        uint32_t objcount = (GC_PAGE_SIZE - sizeof(PageInfo)) / ((p2size + 1) * 8);
+
+        pp->typeinfo = gcalloc->alloctype;
+        pp->gcalloc = gcalloc;
+
+        pp->freelist = nullptr;
+        pp->freecount = -1;
+        pp->esize = objcount;
+
+        pp->mdata = (GCMetadata*)((uint8_t*)pp + sizeof(PageInfo));
+        pp->data = (void**)((void**)pp->mdata + objcount);
+        pp->size2shift = p2sizeshift;
+
+        size_t age = agectr;
+        pp->prev = prev;
+        pp->next = next;
+
+        return pp;
+    }
+
+    void* PageInfo::reset(PageInfo* pp)
+    {
+        pp->typeinfo = nullptr;
+        pp->gcalloc = nullptr;
+
+        pp->freelist = nullptr;
+        pp->freecount = -1;
+
+        pp->data = nullptr;
+        pp->mdata = nullptr;
+        pp->size2shift = 0;
+
+        pp->age = 0;
+        pp->prev = nullptr;
+        pp->next = nullptr;
+    }
+
+    void PageInfo::rebuild(size_t agectr)
+    {
+        this->freelist = nullptr;
+        this->freecount = 0;
+        this->age = agectr;
+ 
+        for(int64_t i = this->esize - 1; i > 0; i--) {
+            GCMetadata* m = this->getMetadataFromIndexInPage(i);
+
+            GC_CHECK_BOOL_BYTES(m);
+
+            if(GC_SHOULD_FREE_LIST_ADD(m)) {
+                ZERO_METADATA(m);
+                FreeListEntry* entry = this->getFreelistEntryAtIndex(i);
+                entry->next = this->freelist;
+                this->freelist = entry;
+                this->freecount++;
+            }
+        }
+    }
+
     void AllocatorThreadLocalInfo::initialize(std::thread::id threadid, void** caller_rbp, void (*_collectfp)(), const std::map<uint32_t, GCAllocatorImpl*>& gcallocs)
     {
         this->native_stack_base = caller_rbp;
