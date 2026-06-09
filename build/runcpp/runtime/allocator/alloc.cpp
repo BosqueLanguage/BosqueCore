@@ -14,7 +14,7 @@ namespace ᐸRuntimeᐳ
         tl_alloc_info.collectfp();
     }
 
-    PageInfo* PageInfo::setPageMetaData(void* vpp, GCAllocatorImpl* gcalloc, size_t agectr, PageInfo* prev, PageInfo* next)
+    PageInfo* PageInfo::setPageMetaData(void* vpp, GCAllocatorImpl* gcalloc, std::thread::id threadid, size_t agectr, PageInfo* prev, PageInfo* next)
     {
         PageInfo* pp = (PageInfo*)vpp;
 
@@ -25,6 +25,7 @@ namespace ᐸRuntimeᐳ
 
         pp->typeinfo = gcalloc->alloctype;
         pp->gcalloc = gcalloc;
+        pp->threadid = threadid;
 
         pp->freelist = nullptr;
         pp->freecount = -1;
@@ -45,6 +46,7 @@ namespace ᐸRuntimeᐳ
     {
         pp->typeinfo = nullptr;
         pp->gcalloc = nullptr;
+        pp->threadid = std::thread::id{};
 
         pp->freelist = nullptr;
         pp->freecount = -1;
@@ -65,16 +67,16 @@ namespace ᐸRuntimeᐳ
         this->age = agectr;
  
         for(int64_t i = this->esize - 1; i > 0; i--) {
-            GCMetadata* m = this->getMetadataFromIndexInPage(i);
+            GCMetadata* meta = this->getMetadataFromIndexInPage(i);
 
-            GC_CHECK_BOOL_BYTES(m);
-
-            if(GC_SHOULD_FREE_LIST_ADD(m)) {
-                ZERO_METADATA(m);
-                FreeListEntry* entry = this->getFreelistEntryAtIndex(i);
-                entry->next = this->freelist;
-                this->freelist = entry;
-                this->freecount++;
+            if(!gcIsAllocated(meta->rc) | gcIsYoung(meta->rc)) {
+                    gcProcessSweep(meta->rc);
+                    
+                    FreeListEntry* entry = this->getFreeListEntryFromIndexInPage(i);
+                    entry->store(xxxx);
+                    this->freelist = xxx;
+                    this->freelist = entry;
+                    this->freecount++;
             }
         }
     }

@@ -11,7 +11,8 @@ namespace ᐸRuntimeᐳ
     class GCAllocatorImpl;
     class GCPageList;
 
-    using FreeListEntry = uint64_t;
+    using FreeListBits = uint64_t;
+    using FreeListEntry = std::atomic<FreeListBits>;
 
     ////////////////////////////////////////////
     // Page Layout:
@@ -21,6 +22,7 @@ namespace ᐸRuntimeᐳ
     public:
         const TypeInfo* typeinfo; //all entries are of same type
         GCAllocatorImpl* gcalloc; //alloc for this->typeinfo
+        std::thread::id threadid;
 
         FreeListEntry* freelist; //allocate from here until nullptr
         int64_t freecount;
@@ -37,8 +39,12 @@ namespace ᐸRuntimeᐳ
 
 
 	    //RC_ADDR bits in freelist entries are [nextoffset | memoffset] in terms of sizeof(void*) indexing!
-        constexpr static uint64_t makeFreeListEntry(uint16_t nextoffset, uint16_t memoffset) {
-            return (((uint64_t)nextoffset << 16) | (uint64_t)memoffset) << META_BIT_RC_FREELIST_SHIFT;
+        constexpr static void setFreeListBits(FreeListEntry* entry, uint16_t nextoffset, uint16_t memoffset) {
+            entry->store((((uint64_t)nextoffset << 16) | (uint64_t)memoffset) << META_BIT_RC_FREELIST_SHIFT, std::memory_order_relaxed);
+        }
+
+        constexpr FreeListEntry* getFreeListEntryFromIndexInPage(size_t idx) {
+            return (FreeListEntry*)(this->mdata + idx);
         }
 
         constexpr static uint16_t getNextOffsetFromFreeListEntry(FreeListEntry entry) {
@@ -74,7 +80,7 @@ namespace ᐸRuntimeᐳ
             return page->mdata + page->getIndexForMetadataInPage(obj);
         }
 
-        static PageInfo* setPageMetaData(void* vpp, GCAllocatorImpl* gcalloc, size_t agectr, PageInfo* prev, PageInfo* next));
+        static PageInfo* setPageMetaData(void* vpp, GCAllocatorImpl* gcalloc, std::thread::id threadid, size_t agectr, PageInfo* prev, PageInfo* next));
         static void* reset(PageInfo* pp);
 
         void rebuild(size_t agectr);
