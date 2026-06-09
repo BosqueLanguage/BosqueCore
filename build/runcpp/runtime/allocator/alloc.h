@@ -11,9 +11,6 @@ namespace ᐸRuntimeᐳ
     class GCAllocatorImpl;
     class GCPageList;
 
-    using FreeListBits = uint64_t;
-    using FreeListEntry = std::atomic<FreeListBits>;
-
     ////////////////////////////////////////////
     // Page Layout:
     // | Page Metadata | Objects Metadata | Data |
@@ -24,12 +21,12 @@ namespace ᐸRuntimeᐳ
         GCAllocatorImpl* gcalloc; //alloc for this->typeinfo
         std::thread::id threadid;
 
-        FreeListEntry* freelist; //allocate from here until nullptr
+        uint16_t freelistidx; //allocate from here until OOM sentinal is hit
         int64_t freecount;
         int64_t esize; //max number of entries in this page
 
         void* data; //start of the data block
-        GCMetadata* mdata; // Meta data is stored out-of-band
+        AtomicGCMetadata* mdata; // Meta data is stored out-of-band
         uint32_t p2size; //power of 2 rounded (slot size) of the type stored in this page
         uint32_t size2shift; //shift bits for power of 2 rounded (slot size) of the type stored in this page
 
@@ -37,66 +34,100 @@ namespace ᐸRuntimeᐳ
         PageInfo* prev;
         PageInfo* next;
 
-
-	    //RC_ADDR bits in freelist entries are [nextoffset | memoffset] in terms of sizeof(void*) indexing!
-        constexpr static void setFreeListBits(FreeListEntry* entry, uint16_t nextoffset, uint16_t memoffset) {
-            entry->store((((uint64_t)nextoffset << 16) | (uint64_t)memoffset) << META_BIT_RC_FREELIST_SHIFT, std::memory_order_relaxed);
-        }
-
-        constexpr FreeListEntry* getFreeListEntryFromIndexInPage(size_t idx) {
-            return (FreeListEntry*)(this->mdata + idx);
-        }
-
-        constexpr static uint16_t getNextOffsetFromFreeListEntry(FreeListEntry entry) {
-            return (uint16_t)((entry >> META_BIT_RC_FREELIST_SHIFT) >> 16);
-        }
-
-        constexpr static uint16_t getMemOffsetFromFreeListEntry(FreeListEntry entry) {
-            return (uint16_t)((entry >> META_BIT_RC_FREELIST_SHIFT) & 0xFFFF);
-        }
-
-        constexpr static PageInfo* extractPageFromPointer(void* p) {
+        constexpr static PageInfo* extractPageFromPointer(void* p) 
+        {
             return (PageInfo*)((uintptr_t)(p) & GC_PAGE_ADDR_MASK);
         }
 
-        constexpr uint16_t getIndexForObjectInPage(void* obj) { 
-            return (uint16_t)(((void**)obj - (void**)this->data) << this->size2shift);
+        constexpr uint16_t getIndexForObjectInPage(void* obj) 
+        { 
+            return (uint16_t)(((void**)obj - (void**)this->data) >> this->size2shift);
         }
 
-        constexpr void* getObjectFromIndexInPage(size_t idx) {
-            return this->data + idx;
+        constexpr void* getObjectFromIndexInPage(size_t idx) 
+        {
+            return (void*)((void**)this->data + (idx << this->size2shift));
         }
 
-        constexpr uint16_t getIndexForMetadataInPage(void* obj) { 
-            return (uint16_t)(((void**)obj - (void**)this->data) << this->size2shift);
+        constexpr uint16_t getIndexForMetadataInPage(void* obj) 
+        { 
+            return (uint16_t)(((void**)obj - (void**)this->data) >> this->size2shift);
         }
 
-        constexpr GCMetadata* getMetadataFromIndexInPage(size_t idx) {
+        constexpr AtomicGCMetadata* getMetadataFromIndexInPage(size_t idx) 
+        {
             return this->mdata + idx;
         }
 
-        constexpr static GCMetadata* getMetadataForObj(void* obj) {
-            PageInfo* page = extractPageFromPointer(obj);
-            return page->mdata + page->getIndexForMetadataInPage(obj);
+        constexpr static AtomicGCMetadata* getMetadataForObj(void* obj) 
+        {
+            PageInfo* pp = extractPageFromPointer(obj);
+            return pp->mdata + pp->getIndexForMetadataInPage(obj);
         }
 
-        static PageInfo* setPageMetaData(void* vpp, GCAllocatorImpl* gcalloc, std::thread::id threadid, size_t agectr, PageInfo* prev, PageInfo* next));
+        static PageInfo* setPageMetaData(void* vpp, GCAllocatorImpl* gcalloc, std::thread::id threadid, size_t agectr, PageInfo* prev, PageInfo* next);
         static void* reset(PageInfo* pp);
 
         void rebuild(size_t agectr);
-	
-	    // TODO we should investiage this and see if we can optimize the work needed to 
-	    // compute addr of metadata
-        static inline GCMetadata* getObjectMetadataAligned(void* obj) noexcept { 
-            PageInfo* page = extractPageFromPointer(obj);
-		    size_t idx = PageInfo::getIndexForObjectInPage(obj, page);
-        
-            return page->getMetaEntryAtIndex(idx);
-        }
     };
 
 
 #if BSQ_ALLOCATOR_USE_MALLOC
+    struct GCMetadataMalloc
+    {
+        GCAllocatorImpl* allocator;
+        std::thread::id threadid;
+        AtomicGCMetadata rc;
+    };
+
+    constexpr size_t GC_METADATA_SIZE = sizeof(GCMetadataMalloc);
+    static_assert(GC_METADATA_SIZE == 24, "GCMetadata size must be a multiple of max alignment");
+
+    constexpr GCMetadataMalloc* gcGetMetadataMalloc(void* ptr)
+    {
+        return (GCMetadataMalloc*)(((uint8_t*)ptr) - GC_METADATA_SIZE);
+    }
+
+    constexpr GCAllocatorImpl* gcGetAllocator(void* ptr)
+    {
+        return gcGetMetadataMalloc(ptr)->allocator;
+    }
+
+    constexpr const TypeInfo* gcGetTypeInfo(void* ptr)
+    {
+        return *((const TypeInfo**)gcGetMetadataMalloc(ptr)->allocator);
+    }
+
+    inline std::thread::id gcGetThreadId(void* ptr)
+    {
+        return gcGetMetadataMalloc(ptr)->threadid;
+    }
+
+    constexpr AtomicGCMetadata* gcGetMetadata(void* ptr)
+    {
+        return &(((GCMetadataMalloc*)(((uint8_t*)ptr) - GC_METADATA_SIZE))->rc);
+    }
+
+    constexpr void* gcInitAllocGCMetadata(void* ptr, GCAllocatorImpl* allocator)
+    {
+        GCMetadataMalloc* meta = (GCMetadataMalloc*)ptr;
+        meta->allocator = allocator;
+        meta->threadid = std::this_thread::get_id();
+        gcInitOnAllocate(&(meta->rc));
+
+        return (void*)((uint8_t*)ptr + GC_METADATA_SIZE);
+    }
+
+    constexpr void* gcInitEvacGCMetadata(void* ptr, GCAllocatorImpl* allocator, void** parentslotptr)
+    {
+        GCMetadataMalloc* meta = (GCMetadataMalloc*)ptr;
+        meta->allocator = allocator;
+        meta->threadid = std::this_thread::get_id();
+        gcInitOnEvacuate(&(meta->rc), parentslotptr);
+
+        return (void*)((uint8_t*)ptr + GC_METADATA_SIZE);
+    }
+
     class GCAllocatorImpl
     {
     public:
@@ -125,14 +156,14 @@ namespace ᐸRuntimeᐳ
                 void* ptr = this->freelist;
                 this->freelist = *((void**)ptr);
 
-                GCMetadata* meta = gcGetMetadata((GCMetadata*)ptr);
-                gcInitOnAllocate(meta->rc);
+                AtomicGCMetadata* meta = gcGetMetadata((AtomicGCMetadata*)ptr);
+                gcInitOnAllocate(meta);
 
                 this->nursery[this->allocount++] = ptr;
                 return ptr;
             }
             else {
-                void* ptr = malloc(this->alloctype->bytesize + sizeof(GCMetadata));
+                void* ptr = malloc(this->alloctype->bytesize + sizeof(AtomicGCMetadata));
                 void* obj = gcInitAllocGCMetadata(ptr, this);
 
                 this->x_allocs.insert(obj);
@@ -145,7 +176,7 @@ namespace ᐸRuntimeᐳ
 
         inline void* xalloc_evac(void** parentslotptr)
         {
-            void* ptr = malloc(this->alloctype->bytesize + sizeof(GCMetadata));
+            void* ptr = malloc(this->alloctype->bytesize + sizeof(AtomicGCMetadata));
             void* obj = gcInitEvacGCMetadata(ptr, this, parentslotptr);
 
             this->x_allocs.insert(obj);
@@ -156,8 +187,8 @@ namespace ᐸRuntimeᐳ
 
         inline void xrcRelease(void* ptr)
         {
-            GCMetadata* meta = gcGetMetadata(ptr);
-            gcProcessSweep(meta->rc);
+            AtomicGCMetadata* meta = gcGetMetadata(ptr);
+            gcProcessSweep(meta);
 
             this->x_allocs.erase(ptr);
             GCAllocatorImpl::x_all_alloc_to_allocator_map.erase(ptr);
@@ -165,10 +196,10 @@ namespace ᐸRuntimeᐳ
             free((void*)meta);
         }
 
-        bool checkObjectBounds(void* addr, void* omem, const GCMetadata* meta, void*& raddr)
+        bool checkObjectBounds(void* addr, void* omem, const AtomicGCMetadata* meta, void*& raddr)
         {            
             const uintptr_t objstart = (uintptr_t)(omem);
-            const uintptr_t objend = objstart + ((GCAllocatorImpl*)meta->allocator)->alloctype->bytesize;
+            const uintptr_t objend = objstart + this->alloctype->bytesize;
             
             if((objstart <= (uintptr_t)addr) && ((uintptr_t)addr < objend)) {
                 raddr = omem;
@@ -178,7 +209,7 @@ namespace ᐸRuntimeᐳ
             return false;
         }
 
-        bool isAddrInValidObject(void* addr, GCMetadata*& meta, void*& raddr)
+        bool isAddrInValidObject(void* addr, const AtomicGCMetadata* meta, void*& raddr)
         {
             if(this->x_allocs.empty()) {
                 return false;
@@ -193,13 +224,14 @@ namespace ᐸRuntimeᐳ
             return this->checkObjectBounds(addr, *iter, meta, raddr);
         }
 
-        bool isAddrSuitableCategory(const GCMetadata* meta)
+        bool isAddrSuitableCategory(const AtomicGCMetadata* meta, void* raddr)
         {
-            if(!gcIsAllocated(meta->rc)) {
+            if(!gcIsAllocated(meta)) {
                 return false;
             }
 
-            if(gcIsYoung(meta->rc) && meta->threadid != std::this_thread::get_id()) {
+            std::thread::id objtid = gcGetThreadId(raddr);
+            if(gcIsYoung(meta) && objtid != std::this_thread::get_id()) {
                 return false;
             }
 
@@ -209,9 +241,9 @@ namespace ᐸRuntimeᐳ
         void processNursery()
         {
             for(size_t i = 0; i < this->allocount; ++i) {
-                GCMetadata* meta = gcGetMetadata(this->nursery[i]);
-                if(!gcIsAllocated(meta->rc) | gcIsYoung(meta->rc)) {
-                    gcProcessSweep(meta->rc);
+                AtomicGCMetadata* meta = gcGetMetadata(this->nursery[i]);
+                if(!gcIsAllocated(meta) | gcIsYoung(meta)) {
+                    gcProcessSweep(meta);
                     
                     *((void**)this->nursery[i]) = this->freelist;
                     this->freelist = this->nursery[i];
@@ -252,6 +284,31 @@ namespace ᐸRuntimeᐳ
         }
     };
 #else
+    constexpr GCAllocatorImpl* gcGetAllocator(void* ptr)
+    {
+        xxxx;
+    }
+
+    constexpr const TypeInfo* gcGetTypeInfo(void* ptr)
+    {
+        xxxx;
+    }
+
+    constexpr AtomicGCMetadata* gcGetMetadata(void* ptr)
+    {
+        xxxx;
+    }
+
+    constexpr void* gcInitAllocGCMetadata(void* ptr, GCAllocatorImpl* allocator)
+    {
+        xxxx;
+    }
+
+    constexpr void* gcInitEvacGCMetadata(void* ptr, GCAllocatorImpl* allocator, void** parentslotptr)
+    {
+        xxxx;
+    }
+
     class GCAllocatorImpl
     {
     private:
@@ -297,7 +354,7 @@ namespace ᐸRuntimeᐳ
         std::thread::id threadid; //the id of the thread this info is associated with
 
         void** native_stack_base; //the base of the native stack
-        std::vector<void*> old_roots;
+        std::vector<std::pair<AtomicGCMetadata*, void*>> old_roots;
 
         std::map<uint32_t, GCAllocatorImpl*> gcallocs;
         //TODO -- should have sparse vector to quickly get alloc for evacuate
@@ -342,7 +399,7 @@ namespace ᐸRuntimeᐳ
         void unloadGlobalRootsFromProc(bool processed);
 
         // Check if the address refers into any valid allocation (even in middle of it) and if so get the associated metadata
-        bool isAllocatedAddress(void* addr, GCMetadata*& meta, void*& raddr);
+        bool isAllocatedAddress(void* addr, const AtomicGCMetadata* meta, void*& raddr);
 
         ////////////////
         //Support for Mint Allocator -- can only be called from mint server thread

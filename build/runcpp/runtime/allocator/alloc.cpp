@@ -27,15 +27,15 @@ namespace ᐸRuntimeᐳ
         pp->gcalloc = gcalloc;
         pp->threadid = threadid;
 
-        pp->freelist = nullptr;
+        pp->freelistidx = META_FREE_LIST_OOM_SENTINAL;
         pp->freecount = -1;
         pp->esize = objcount;
 
-        pp->mdata = (GCMetadata*)((uint8_t*)pp + sizeof(PageInfo));
+        pp->mdata = (AtomicGCMetadata*)((uint8_t*)pp + sizeof(PageInfo));
         pp->data = (void**)((void**)pp->mdata + objcount);
         pp->size2shift = p2sizeshift;
 
-        size_t age = agectr;
+        pp->age = agectr;
         pp->prev = prev;
         pp->next = next;
 
@@ -48,7 +48,7 @@ namespace ᐸRuntimeᐳ
         pp->gcalloc = nullptr;
         pp->threadid = std::thread::id{};
 
-        pp->freelist = nullptr;
+        pp->freelistidx = META_FREE_LIST_OOM_SENTINAL;
         pp->freecount = -1;
 
         pp->data = nullptr;
@@ -58,25 +58,25 @@ namespace ᐸRuntimeᐳ
         pp->age = 0;
         pp->prev = nullptr;
         pp->next = nullptr;
+
+        return (void*)pp;
     }
 
     void PageInfo::rebuild(size_t agectr)
     {
-        this->freelist = nullptr;
+        this->freelistidx = META_FREE_LIST_OOM_SENTINAL;
         this->freecount = 0;
         this->age = agectr;
  
         for(int64_t i = this->esize - 1; i > 0; i--) {
-            GCMetadata* meta = this->getMetadataFromIndexInPage(i);
+            AtomicGCMetadata* meta = this->getMetadataFromIndexInPage(i);
 
-            if(!gcIsAllocated(meta->rc) | gcIsYoung(meta->rc)) {
-                    gcProcessSweep(meta->rc);
-                    
-                    FreeListEntry* entry = this->getFreeListEntryFromIndexInPage(i);
-                    entry->store(xxxx);
-                    this->freelist = xxx;
-                    this->freelist = entry;
-                    this->freecount++;
+            if(!gcIsAllocated(meta) | gcIsYoung(meta)) {
+                gcProcessSweep(meta);
+                   
+                gcSetFreeListBits(meta, this->freelistidx);
+                this->freelistidx = i;
+                this->freecount++;
             }
         }
     }
@@ -132,7 +132,7 @@ namespace ᐸRuntimeᐳ
         }
     }
 
-    bool AllocatorGlobalInfo::isAllocatedAddress(void* addr, GCMetadata*& meta, void*& raddr)
+    bool AllocatorGlobalInfo::isAllocatedAddress(void* addr, const AtomicGCMetadata* meta, void*& raddr)
     {
 #if BSQ_ALLOCATOR_USE_MALLOC
         if(GCAllocatorImpl::x_all_alloc_to_allocator_map.empty()) {
@@ -148,7 +148,7 @@ namespace ᐸRuntimeᐳ
             return false;
         }
 
-        return aii->second->isAddrSuitableCategory(meta);
+        return aii->second->isAddrSuitableCategory(meta, raddr);
     }
 #else
     //TODO -- page version is more complex and must check

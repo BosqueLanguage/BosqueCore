@@ -56,21 +56,25 @@ namespace ᐸRuntimeᐳ
         #endif
     }
 
-    void processPotentialPtr(void* addr, std::vector<void*>& roots_young, std::vector<void*>& roots_rc)
+    constexpr static auto RootCmp = [](const std::pair<AtomicGCMetadata*, void*>& a, const std::pair<AtomicGCMetadata*, void*>& b) {
+        return a.second < b.second;
+    };
+
+    void processPotentialPtr(void* addr, std::vector<std::pair<AtomicGCMetadata*, void*>>& roots_young, std::vector<std::pair<AtomicGCMetadata*, void*>>& roots_rc)
     { 
-        GCMetadata* meta = nullptr;
+        AtomicGCMetadata* meta = nullptr;
         void* realaddr = nullptr;
 	    if(g_alloc_info.isAllocatedAddress(addr, meta, realaddr)) {
-            if(gcIsYoung(meta->rc)) {
-                roots_young.push_back(realaddr);
+            if(gcIsYoung(meta)) {
+                roots_young.push_back(std::make_pair(meta, realaddr));
             }
             else {
-                roots_rc.push_back(realaddr);
+                roots_rc.push_back(std::make_pair(meta, realaddr));
             }
         }
     }
 
-    bool walkGlobalRoots(std::vector<void*>& roots_young, std::vector<void*>& roots_rc)
+    bool walkGlobalRoots(std::vector<std::pair<AtomicGCMetadata*, void*>>& roots_young, std::vector<std::pair<AtomicGCMetadata*, void*>>& roots_rc)
     {
         std::vector<void*> possibleroots;
         
@@ -83,7 +87,7 @@ namespace ᐸRuntimeᐳ
         return gproc;
     }
 
-    void walkStack(std::vector<void*>& roots_young, std::vector<void*>& roots_rc)
+    void walkStack(std::vector<std::pair<AtomicGCMetadata*, void*>>& roots_young, std::vector<std::pair<AtomicGCMetadata*, void*>>& roots_rc)
     {
         RegisterContents rcontents{};
 
@@ -115,15 +119,16 @@ namespace ᐸRuntimeᐳ
         processPotentialPtr(rcontents.r15, roots_young, roots_rc);
     }
 
-    void processRCRoots(std::vector<void*>& roots, std::vector<void*>& finalroots)
+    void processRCRoots(std::vector< std::pair<AtomicGCMetadata*, void*>>& roots, std::vector<std::pair<AtomicGCMetadata*, void*>>& finalroots)
     {
         for(size_t i = 0; i < roots.size(); i++) {
-            bool alreadyknown = std::binary_search(tl_alloc_info.old_roots.cbegin(), tl_alloc_info.old_roots.cend(), roots[i]);
+            bool alreadyknown = std::binary_search(tl_alloc_info.old_roots.cbegin(), tl_alloc_info.old_roots.cend(), roots[i], RootCmp);
+            
             if(alreadyknown) {
                 finalroots.push_back(roots[i]);
             }
             else {
-                bool keep = gcRootProcessRCIncrement(gcGetMetadata(roots[i])->rc);
+                bool keep = gcRootProcessRCIncrement(roots[i].first);
                 if(keep) {
                     finalroots.push_back(roots[i]);
                 }
@@ -131,7 +136,7 @@ namespace ᐸRuntimeᐳ
         }
     }
 
-    void* forward(void* ptr, void** parentslotptr);
+    void* forward(AtomicGCMetadata* m, void* ptr, void** parentslotptr);
 
     void* processSlotPtrTrgt(void* ptr, void** parentslotptr)
     {
@@ -139,12 +144,12 @@ namespace ᐸRuntimeᐳ
             return nullptr;
         }
 
-        GCMetadata* m = gcGetMetadata(ptr);
-        if(gcIsYoung(m->rc)) {
-            return forward(ptr, parentslotptr);
+        AtomicGCMetadata* m = gcGetMetadata(ptr);
+        if(gcIsYoung(m)) {
+            return forward(m, ptr, parentslotptr);
         }
         else {
-            gcYoungProcessRCIncrement(m->rc);
+            gcYoungProcessRCIncrement(m);
             return ptr;
         }
     }
@@ -208,25 +213,22 @@ namespace ᐸRuntimeᐳ
         }
     }
 
-    void* forward(void* ptr, void** parentslotptr)
+    void* forward(AtomicGCMetadata* m, void* ptr, void** parentslotptr)
     {
-        GCMetadata* m = gcGetMetadata(ptr); 
-
-        if(gcIsForwarded(m->rc)) {
+        if(gcIsForwarded(m)) {
             return *((void**)ptr);
         }
         else {
-            GCAllocatorImpl* gcalloc = gcGetAllocator<GCAllocatorImpl>(ptr);
-            const TypeInfo* ti = gcGetTypeInfo(ptr);
+            GCAllocatorImpl* gcalloc = gcGetAllocator(ptr);
 
             void* nptr = gcalloc->xalloc_evac(parentslotptr); 
-	        std::copy((void**)ptr, (void**)ptr + ti->slotcount, (void**)nptr);
+	        std::copy((void**)ptr, (void**)ptr + gcalloc->alloctype->slotcount, (void**)nptr);
 
             *((void**)ptr) = nptr;
-            gcProcessUpdateYoungForward(m->rc);
+            gcProcessUpdateYoungForward(m);
 
-            if(ti->ptrmask != nullptr) {
-                const char* mmask = ti->ptrmask;
+            if(gcalloc->alloctype->ptrmask != nullptr) {
+                const char* mmask = gcalloc->alloctype->ptrmask;
                 void** slots = (void**)nptr;
                 while(*mmask != '\0') {
                     processSlotTag(mmask, slots);
@@ -237,10 +239,10 @@ namespace ᐸRuntimeᐳ
         }
     }
 
-    void processYoungRoots(std::vector<void*>& roots)
+    void processYoungRoots(std::vector<std::pair<AtomicGCMetadata*, void*>>& roots)
     {
         for(size_t i = 0; i < roots.size(); i++) {
-            gcRootProcessYoungPromote(gcGetMetadata(roots[i])->rc);
+            gcRootProcessYoungPromote(roots[i].first);
         }
 
         //
@@ -248,11 +250,11 @@ namespace ᐸRuntimeᐳ
         //      We will want to make this a loop with an explicit stack to avoid these issues at some point but for now we are just using a simple recursive implementation 
         //
         for(size_t i = 0; i < roots.size(); i++) {
-            const TypeInfo* ti = gcGetTypeInfo(roots[i]);
+            const TypeInfo* ti = gcGetTypeInfo(roots[i].second);
 
             if(ti->ptrmask != nullptr) {
                 const char* mmask = ti->ptrmask;
-                void** slots = (void**)roots[i];
+                void** slots = (void**)roots[i].second;
                 while(*mmask != '\0') {
                     processSlotTag(mmask, slots);
                 }
@@ -271,7 +273,7 @@ namespace ᐸRuntimeᐳ
             }
             case '1': {
                 if(*slots != nullptr) {
-                    bool isdead = gcProcessRCDecrement(gcGetMetadata(*slots)->rc);
+                    bool isdead = gcProcessRCDecrement(gcGetMetadata(*slots));
                     if(isdead) {
                         releaseQuick(*slots);
                     }
@@ -300,9 +302,7 @@ namespace ᐸRuntimeᐳ
 
     void releaseQuick(void* ptr)
     {
-        GCAllocatorImpl* alloc = gcGetAllocator<GCAllocatorImpl>(ptr);
-        const TypeInfo* ti = gcGetTypeInfo(ptr);
-
+        const TypeInfo* ti = gcGetTypeInfo(ptr);   
         if(ti->ptrmask != nullptr) {
             const char* mmask = ti->ptrmask;
             void** slots = (void**)ptr;
@@ -311,18 +311,20 @@ namespace ᐸRuntimeᐳ
             }
         }
 
+        GCAllocatorImpl* alloc = gcGetAllocator(ptr);
         alloc->xrcRelease(ptr);
     }
     
     void releaseStd(void* ptr)
     {
-        GCAllocatorImpl* alloc = gcGetAllocator<GCAllocatorImpl>(ptr);
         const TypeInfo* ti = gcGetTypeInfo(ptr);
         if(ti->quickrelease) {
              releaseQuick(ptr);
         }
         else {
-            gcStoreDeleteListPtr(gcGetMetadata(ptr)->rc, alloc->pendingdelete);
+            GCAllocatorImpl* alloc = gcGetAllocator(ptr);
+
+            gcStoreDeleteListPtr(gcGetMetadata(ptr), alloc->pendingdelete);
             alloc->pendingdelete = ptr;
         }
     }
@@ -336,7 +338,7 @@ namespace ᐸRuntimeᐳ
             }
             case '1': {
                 if(*slots != nullptr) {
-                    bool isdead = gcProcessRCDecrement(gcGetMetadata(*slots)->rc);
+                    bool isdead = gcProcessRCDecrement(gcGetMetadata(*slots));
                     if(isdead) {
                         releaseStd(*slots);
                     }
@@ -361,7 +363,7 @@ namespace ᐸRuntimeᐳ
             }
             case '3': {
                 if(!XCString::gcIsTestIsInlineRepresentation(slots)) {
-                    bool isdead = gcProcessRCDecrement(gcGetMetadata(*(slots + 1))->rc);
+                    bool isdead = gcProcessRCDecrement(gcGetMetadata(*(slots + 1)));
                     if(isdead) {
                         releaseStd(*(slots + 1));
                     }
@@ -372,7 +374,7 @@ namespace ᐸRuntimeᐳ
             }
             case '4': {
                 if(!XString::gcIsTestIsInlineRepresentation(slots)) {
-                    bool isdead = gcProcessRCDecrement(gcGetMetadata(*(slots + 1))->rc);
+                    bool isdead = gcProcessRCDecrement(gcGetMetadata(*(slots + 1)));
                     if(isdead) {
                         releaseStd(*(slots + 1));
                     }
@@ -388,7 +390,7 @@ namespace ᐸRuntimeᐳ
                     slots++;
                 }
                 else {
-                    bool isdead = gcProcessRCDecrement(gcGetMetadata(*(slots + 1))->rc);
+                    bool isdead = gcProcessRCDecrement(gcGetMetadata(*(slots + 1)));
                     if(isdead) {
                         releaseStd(*(slots + 1));
                     }
@@ -400,16 +402,16 @@ namespace ᐸRuntimeᐳ
         }
     }
 
-    void processDecrements(const std::vector<void*>& roots_young, const std::vector<void*>& roots_rc)
+    void processDecrements(const std::vector<std::pair<AtomicGCMetadata*, void*>>& roots_young, const std::vector<std::pair<AtomicGCMetadata*, void*>>& roots_rc)
     {
-        std::vector<void*> decroots;
-        std::copy_if(tl_alloc_info.old_roots.cbegin(), tl_alloc_info.old_roots.cend(), std::back_inserter(decroots), [&roots_young, &roots_rc](void* r) {
-            return !std::binary_search(roots_young.cbegin(), roots_young.cend(), r) && !std::binary_search(roots_rc.cbegin(), roots_rc.cend(), r);
+        std::vector<std::pair<AtomicGCMetadata*, void*>> decroots;
+        std::copy_if(tl_alloc_info.old_roots.cbegin(), tl_alloc_info.old_roots.cend(), std::back_inserter(decroots), [&roots_young, &roots_rc](const std::pair<AtomicGCMetadata*, void*>& r) {
+            return !std::binary_search(roots_young.cbegin(), roots_young.cend(), r, RootCmp) && !std::binary_search(roots_rc.cbegin(), roots_rc.cend(), r, RootCmp);
         });
         
         for(size_t i = 0; i < decroots.size(); i++) {
-            void* droot = decroots[i];
-            bool isdead = gcProcessRCDecrement(gcGetMetadata(decroots[i])->rc);
+            auto [meta, droot] = decroots[i];
+            bool isdead = gcProcessRCDecrement(meta);
 
             if(isdead) {
                 const TypeInfo* ti = gcGetTypeInfo(droot);
@@ -423,7 +425,7 @@ namespace ᐸRuntimeᐳ
         }
 
         tl_alloc_info.old_roots.resize(roots_young.size() + roots_rc.size());
-        std::merge(roots_young.cbegin(), roots_young.cend(), roots_rc.cbegin(), roots_rc.cend(), tl_alloc_info.old_roots.begin());
+        std::merge(roots_young.cbegin(), roots_young.cend(), roots_rc.cbegin(), roots_rc.cend(), tl_alloc_info.old_roots.begin(), RootCmp);
     }
 
     void processPendingDeleteWork(GCAllocatorImpl* alloc)
@@ -433,13 +435,10 @@ namespace ᐸRuntimeᐳ
         //
         for(size_t i = 0; i < std::max((size_t)(GC_NURSERY_SIZE / 10), (size_t)10) && alloc->pendingdelete != nullptr; ++i) {
             void* ptr = alloc->pendingdelete;
-            alloc->pendingdelete = gcGetDeleteListPtr(gcGetMetadata(ptr)->rc);
+            alloc->pendingdelete = gcGetDeleteListPtr(gcGetMetadata(ptr));
 
-            GCAllocatorImpl* alloc = gcGetAllocator<GCAllocatorImpl>(ptr);
-            const TypeInfo* ti = gcGetTypeInfo(ptr);
-
-            if(ti->ptrmask != nullptr) {
-                const char* mmask = ti->ptrmask;
+            if(alloc->alloctype->ptrmask != nullptr) {
+                const char* mmask = alloc->alloctype->ptrmask;
                 void** slots = (void**)ptr;
                 while(*mmask != '\0') {
                     decrementStdSlotTag(mmask, slots);
@@ -452,9 +451,9 @@ namespace ᐸRuntimeᐳ
 
     void collect()
     {
-        std::vector<void*> curr_roots_young;
-        std::vector<void*> curr_roots_rc;
-        std::vector<void*> final_roots_rc;
+        std::vector<std::pair<AtomicGCMetadata*, void*>> curr_roots_young;
+        std::vector<std::pair<AtomicGCMetadata*, void*>> curr_roots_rc;
+        std::vector<std::pair<AtomicGCMetadata*, void*>> final_roots_rc;
         curr_roots_young.reserve(128); //TODO -- tune this
         curr_roots_rc.reserve(128); //TODO -- tune this
 
