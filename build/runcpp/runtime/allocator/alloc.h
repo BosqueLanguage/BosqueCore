@@ -380,7 +380,12 @@ namespace ᐸRuntimeᐳ
 
         void processNursery()
         {
-            assert(this->allocpage == nullptr);
+            if(this->allocpage != nullptr) {
+                this->filled_pages.push_back(this->allocpage);
+                
+                this->allocpage = nullptr;
+                this->freelistidx = META_FREE_LIST_OOM_SENTINAL;
+            }
 
             //
             //TODO: Here is where we want to route some pages to aged (and thus rotate the heap slowly)
