@@ -33,7 +33,7 @@
 
 ////
 //TODO: for now the default allocator is #define set to malloc/free
-#define BSQ_ALLOCATOR_USE_MALLOC 1
+#define BSQ_ALLOCATOR_USE_MALLOC 0
 ////
 
 ////

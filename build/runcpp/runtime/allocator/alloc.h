@@ -286,40 +286,106 @@ namespace ᐸRuntimeᐳ
 #else
     constexpr GCAllocatorImpl* gcGetAllocator(void* ptr)
     {
-        xxxx;
+        return PageInfo::extractPageFromPointer(ptr)->gcalloc;
     }
 
     constexpr const TypeInfo* gcGetTypeInfo(void* ptr)
     {
-        xxxx;
+        return PageInfo::extractPageFromPointer(ptr)->typeinfo;
+    }
+
+    inline std::thread::id gcGetThreadId(void* ptr)
+    {
+        return PageInfo::extractPageFromPointer(ptr)->threadid;
     }
 
     constexpr AtomicGCMetadata* gcGetMetadata(void* ptr)
     {
-        xxxx;
-    }
-
-    constexpr void* gcInitAllocGCMetadata(void* ptr, GCAllocatorImpl* allocator)
-    {
-        xxxx;
-    }
-
-    constexpr void* gcInitEvacGCMetadata(void* ptr, GCAllocatorImpl* allocator, void** parentslotptr)
-    {
-        xxxx;
+        return PageInfo::getMetadataForObj(ptr);
     }
 
     class GCAllocatorImpl
     {
     private:
-    
+        uint16_t freelistidx;
+        uint16_t evaclistidx;
+
+        PageInfo* allocpage; // Page in which we are currently allocating from
+        PageInfo* evacpage; // Page in which we are currently evacuating from
+
+        PageList filled_pages; // Pages which we have young allocated into and pending processing
+
+        PageList pageset; //All pages allocated by this allocator that are nit currently being allocated from or in the filled list
+        xxxx;
+
     public:
         const TypeInfo* alloctype; 
 
         GCAllocatorImpl(const TypeInfo* alloctype) : alloctype(alloctype) {} 
 
+        inline void* xalloc()
+        {
+            if(this->freelistidx == nullptr) [[unlikely]] { 
+            this->allocatorRefreshAllocationPage();
+        }
+        
+        void* entry = this->freelist;
+        this->freelist = this->freelist->next;
+        
+        SET_ALLOC_LAYOUT_HANDLE_CANARY(entry, this->alloctype->type_size);
+        MetaData* m = SETUP_ALLOC_LAYOUT_GET_META_PTR(entry); 
+		SETUP_ALLOC_INITIALIZE_FRESH_META(m);
+
+        UPDATE_ALLOC_STATS(this, this->alloctype->type_size);
+
+        return SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(entry);
+
+            if(this->allocount >= NURSERY_SIZE) {
+                runCollect();
+            }
+
+            if(this->freelist != nullptr) {
+                void* ptr = this->freelist;
+                this->freelist = *((void**)ptr);
+
+                AtomicGCMetadata* meta = gcGetMetadata(ptr);
+                gcInitOnAllocate(meta);
+
+                this->nursery[this->allocount++] = ptr;
+                return ptr;
+            }
+            else {
+                void* ptr = malloc(this->alloctype->bytesize + sizeof(GCMetadataMalloc));
+                void* obj = gcInitAllocGCMetadata(ptr, this);
+
+                this->x_allocs.insert(obj);
+                GCAllocatorImpl::x_all_alloc_to_allocator_map.insert({obj, this});
+
+                this->nursery[this->allocount++] = obj;
+                return obj;
+            }
+        }
+
+        inline void* xalloc_evac(void** parentslotptr)
+        {
+            void* ptr = malloc(this->alloctype->bytesize + sizeof(GCMetadataMalloc));
+            void* obj = gcInitEvacGCMetadata(ptr, this, parentslotptr);
+
+            this->x_allocs.insert(obj);
+            GCAllocatorImpl::x_all_alloc_to_allocator_map.insert({obj, this});
+
+            return obj;
+        }
+
+        inline void xrcRelease(void* ptr)
+        {
+            AtomicGCMetadata* meta = gcGetMetadata(ptr);
+            gcProcessSweep(meta);
+        }
+
         void cleanup()
         {
+            xxxx;
         }
     };
 
