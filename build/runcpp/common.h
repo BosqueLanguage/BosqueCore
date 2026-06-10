@@ -15,6 +15,7 @@
 #include <array>
 #include <vector>
 #include <set>
+#include <unordered_set>
 #include <map>
 #include <list>
 #include <algorithm>
@@ -27,6 +28,8 @@
 #include <execution>
 #include <mutex>
 #include <thread>
+
+#include <sys/mman.h> //mmap
 
 //Only for internal diagnostics
 #include <assert.h>

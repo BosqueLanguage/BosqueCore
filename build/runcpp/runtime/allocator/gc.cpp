@@ -428,12 +428,12 @@ namespace ᐸRuntimeᐳ
         std::merge(roots_young.cbegin(), roots_young.cend(), roots_rc.cbegin(), roots_rc.cend(), tl_alloc_info.old_roots.begin(), RootCmp);
     }
 
-    void processPendingDeleteWork(GCAllocatorImpl* alloc)
+    bool processPendingDeleteWork(GCAllocatorImpl* alloc)
     {
-        //
-        //TODO: what is this heuristic and how to balance it with incremental at allocation bits
-        //
-        for(size_t i = 0; i < std::max((size_t)(GC_NURSERY_SIZE / 10), (size_t)10) && alloc->pendingdelete != nullptr; ++i) {
+        //TODO: maybe adjust this but right now we hypothesis an average survival rate of 10% and collect that much here per go-around
+        size_t processlimit = std::max((size_t)(GC_DELETE_PENDING_PROCESS_BYTES / alloc->alloctype->bytesize), (size_t)10);
+
+        for(size_t i = 0; i < processlimit && alloc->pendingdelete != nullptr; ++i) {
             void* ptr = alloc->pendingdelete;
             alloc->pendingdelete = gcGetDeleteListPtr(gcGetMetadata(ptr));
 
@@ -447,6 +447,8 @@ namespace ᐸRuntimeᐳ
 
             alloc->xrcRelease(ptr);
         }
+
+        return alloc->pendingdelete != nullptr;
     }
 
     void collect()
@@ -486,11 +488,13 @@ namespace ᐸRuntimeᐳ
         g_alloc_info.unloadGlobalRootsFromProc(gproc);
 
         //Peel off some of the pending decs
+        bool pending_deletes = false;
         for(auto ai = tl_alloc_info.gcallocs.begin(); ai != tl_alloc_info.gcallocs.end(); ++ai) {
             if(ai->second->pendingdelete != nullptr) {
-                processPendingDeleteWork(ai->second);
+                pending_deletes |= processPendingDeleteWork(ai->second);
             }
         }
+        tl_alloc_info.pending_deletes = pending_deletes;
 
         //Eagerly process some nursery space
         for(auto ai = tl_alloc_info.gcallocs.begin(); ai != tl_alloc_info.gcallocs.end(); ++ai) {

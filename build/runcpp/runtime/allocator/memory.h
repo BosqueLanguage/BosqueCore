@@ -5,9 +5,11 @@
 
 #include "memstats.h"
 
+#if BSQ_ALLOCATOR_USE_MALLOC
 #ifndef GC_NURSERY_SIZE
 #define GC_NURSERY_SIZE 2
 //#define GC_NURSERY_SIZE 2048
+#endif
 #endif
 
 //Make sure any allocated page is addressable by us -- larger than 2^31 and less than 2^42
@@ -22,6 +24,11 @@
 #define GC_BLOCK_ALLOCATION_SIZE (1ul << GC_BITS_IN_ADDR_FOR_PAGE)
 #define GC_PAGE_MASK ((1ul << GC_BITS_IN_ADDR_FOR_PAGE) - 1ul)
 #define GC_PAGE_ADDR_MASK (~GC_PAGE_MASK)
+
+//A bunch of knobs for adjusting GC behavior -- these are all subject to tuning as with the page info above
+#define GC_NUM_PAGES_ON_REQ 16
+#define GC_NUSERY_BYTES_COLLECT_THRESHOLD (1ul << 23)
+#define GC_DELETE_PENDING_PROCESS_BYTES (GC_NUSERY_BYTES_COLLECT_THRESHOLD / 20)
 
 namespace ᐸRuntimeᐳ
 {
@@ -197,7 +204,7 @@ namespace ᐸRuntimeᐳ
     }
 
     //return the next offset or OOM sentinal for empty
-    constexpr static uint16_t gcLoadFreeListEntries(const AtomicGCMetadata* rc) {
+    constexpr static uint16_t gcLoadFreeListNext(const AtomicGCMetadata* rc) {
         return (uint16_t)(rc->load(std::memory_order_relaxed) >> META_BIT_RC_FREELIST_SHIFT);
     }
 
