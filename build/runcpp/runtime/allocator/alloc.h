@@ -156,14 +156,14 @@ namespace ᐸRuntimeᐳ
                 void* ptr = this->freelist;
                 this->freelist = *((void**)ptr);
 
-                AtomicGCMetadata* meta = gcGetMetadata((AtomicGCMetadata*)ptr);
+                AtomicGCMetadata* meta = gcGetMetadata(ptr);
                 gcInitOnAllocate(meta);
 
                 this->nursery[this->allocount++] = ptr;
                 return ptr;
             }
             else {
-                void* ptr = malloc(this->alloctype->bytesize + sizeof(AtomicGCMetadata));
+                void* ptr = malloc(this->alloctype->bytesize + sizeof(GCMetadataMalloc));
                 void* obj = gcInitAllocGCMetadata(ptr, this);
 
                 this->x_allocs.insert(obj);
@@ -176,7 +176,7 @@ namespace ᐸRuntimeᐳ
 
         inline void* xalloc_evac(void** parentslotptr)
         {
-            void* ptr = malloc(this->alloctype->bytesize + sizeof(AtomicGCMetadata));
+            void* ptr = malloc(this->alloctype->bytesize + sizeof(GCMetadataMalloc));
             void* obj = gcInitEvacGCMetadata(ptr, this, parentslotptr);
 
             this->x_allocs.insert(obj);
@@ -193,7 +193,7 @@ namespace ᐸRuntimeᐳ
             this->x_allocs.erase(ptr);
             GCAllocatorImpl::x_all_alloc_to_allocator_map.erase(ptr);
 
-            free((void*)meta);
+            free((void*)((uint8_t*)ptr - GC_METADATA_SIZE));
         }
 
         bool checkObjectBounds(void* addr, void* omem, const AtomicGCMetadata* meta, void*& raddr)
@@ -209,7 +209,7 @@ namespace ᐸRuntimeᐳ
             return false;
         }
 
-        bool isAddrInValidObject(void* addr, const AtomicGCMetadata* meta, void*& raddr)
+        bool isAddrInValidObject(void* addr, AtomicGCMetadata*& meta, void*& raddr)
         {
             if(this->x_allocs.empty()) {
                 return false;
@@ -258,7 +258,7 @@ namespace ᐸRuntimeᐳ
         void cleanup()
         {
             for(auto iter = this->x_allocs.begin(); iter != this->x_allocs.end(); iter++) {
-                free((void*)gcGetMetadata(*iter));
+                free((void*)((uint8_t*)*iter - GC_METADATA_SIZE));
             }
 
             this->x_allocs.clear();
@@ -399,7 +399,7 @@ namespace ᐸRuntimeᐳ
         void unloadGlobalRootsFromProc(bool processed);
 
         // Check if the address refers into any valid allocation (even in middle of it) and if so get the associated metadata
-        bool isAllocatedAddress(void* addr, const AtomicGCMetadata* meta, void*& raddr);
+        bool isAllocatedAddress(void* addr, AtomicGCMetadata*& meta, void*& raddr);
 
         ////////////////
         //Support for Mint Allocator -- can only be called from mint server thread

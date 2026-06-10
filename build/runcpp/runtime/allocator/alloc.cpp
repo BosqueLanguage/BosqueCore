@@ -132,7 +132,7 @@ namespace ᐸRuntimeᐳ
         }
     }
 
-    bool AllocatorGlobalInfo::isAllocatedAddress(void* addr, const AtomicGCMetadata* meta, void*& raddr)
+    bool AllocatorGlobalInfo::isAllocatedAddress(void* addr, AtomicGCMetadata*& meta, void*& raddr)
     {
 #if BSQ_ALLOCATOR_USE_MALLOC
         if(GCAllocatorImpl::x_all_alloc_to_allocator_map.empty()) {
