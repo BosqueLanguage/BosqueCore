@@ -13,10 +13,11 @@ namespace ᐸRuntimeᐳ
     {
         PageInfo* pp = (PageInfo*)vpp;
 
-        uint32_t p2sizeshift = std::bit_ceil(gcalloc->alloctype->slotcount);
-        uint32_t p2size = std::pow(2, p2sizeshift);
+        uint32_t p2size = std::bit_ceil(gcalloc->alloctype->slotcount);
+        uint32_t p2sizeshift = std::bit_width(p2size) - 1;
 
         uint32_t objcount = (GC_PAGE_SIZE - sizeof(PageInfo)) / ((p2size + 1) * 8);
+        std::memset((void*)((uint8_t*)pp + sizeof(PageInfo)), 0, 8 * objcount);
 
         pp->typeinfo = gcalloc->alloctype;
         pp->gcalloc = gcalloc;
@@ -37,12 +38,15 @@ namespace ᐸRuntimeᐳ
 
     void* PageInfo::reset(PageInfo* pp)
     {
+        std::memset((void*)((uint8_t*)pp + sizeof(PageInfo)), 0, 8 * pp->esize);
+
         pp->typeinfo = nullptr;
         pp->gcalloc = nullptr;
         pp->threadid = std::thread::id{};
 
         pp->freelistidx = META_FREE_LIST_OOM_SENTINAL;
         pp->freecount = -1;
+        pp->esize = 0;
 
         pp->data = nullptr;
         pp->mdata = nullptr;
@@ -59,7 +63,7 @@ namespace ᐸRuntimeᐳ
         this->freecount = 0;
         this->age = agectr;
  
-        for(int64_t i = this->esize - 1; i > 0; i--) {
+        for(int64_t i = this->esize - 1; i >= 0; i--) {
             AtomicGCMetadata* meta = this->getMetadataFromIndexInPage(i);
 
             //
@@ -88,18 +92,18 @@ namespace ᐸRuntimeᐳ
 
 	    if(this->emptypages.empty()) {
             for(size_t i = 0; i < GC_NUM_PAGES_ON_REQ; i++) {
-                void* page = mmap(NULL, GC_PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+                void* addr = mmap(NULL, GC_PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
 
-                this->allocatedpages.insert(page);
-                this->emptypages.push_back(page);
+                assert(addr != MAP_FAILED);
+                assert(((uintptr_t)addr & GC_PAGE_MASK) == 0);
+
+                this->allocatedpages.insert(addr);
+                this->emptypages.push_back(addr);
             }
         }
 
         void* page = this->emptypages.back();
-        this->emptypages.pop_back();
-
-        assert(((uintptr_t)page & GC_PAGE_MASK) == 0 && "Address is not aligned to page boundary!");
-        assert(page != MAP_FAILED);
+        this->emptypages.pop_back();        
 
         return PageInfo::setPageMetaData(page, gcalloc, tl_alloc_info.threadid, 0);
     }
@@ -166,7 +170,7 @@ namespace ᐸRuntimeᐳ
             this->allocpage = nullptr;
         }
 
-        if(this->allocatedbytes >= GC_NUSERY_BYTES_COLLECT_THRESHOLD)
+        if(this->allocatedbytes >= GC_NURSERY_BYTES_COLLECT_THRESHOLD)
         {
             tl_alloc_info.collectfp();
             this->allocatedbytes = 0;
@@ -270,28 +274,28 @@ namespace ᐸRuntimeᐳ
         }
 
         return aii->second->isAddrSuitableCategory(meta, raddr);
-    }
 #else
-    auto baseaddr = (void*)((uintptr_t)addr & GC_PAGE_MASK);
-    if(!this->allocatedpages.contains(baseaddr)) {
-        return false;
+        auto baseaddr = (void*)((uintptr_t)addr & GC_PAGE_MASK);
+        if(!this->allocatedpages.contains(baseaddr)) {
+            return false;
+        }
+
+        const PageInfo* pp = PageInfo::extractPageFromPointer(addr);
+        auto idx = pp->getIndexForObjectInPage(addr);
+
+        meta = pp->getMetadataFromIndexInPage(idx);
+        raddr = pp->getObjectFromIndexInPage(idx);
+
+        if(!gcIsAllocated(meta)) {
+            return false;
+        }
+
+        std::thread::id objtid = gcGetThreadId(raddr);
+        if(gcIsYoung(meta) && objtid != std::this_thread::get_id()) {
+            return false;
+        }
+
+        return true;
     }
-
-    const PageInfo* pp = PageInfo::extractPageFromPointer(addr);
-    auto idx = pp->getIndexForObjectInPage(addr);
-
-    meta = pp->getMetadataFromIndexInPage(idx);
-    raddr = pp->getObjectFromIndexInPage(idx);
-
-    if(!gcIsAllocated(meta)) {
-        return false;
-    }
-
-    std::thread::id objtid = gcGetThreadId(raddr);
-    if(gcIsYoung(meta) && objtid != std::this_thread::get_id()) {
-        return false;
-    }
-
-    return true;
 #endif
 }

@@ -19,16 +19,16 @@
 #define GC_MEM_ALIGNMENT 8
 
 //Control for page sizes and access
-#define GC_BITS_IN_ADDR_FOR_PAGE 13ul
+#define GC_BITS_IN_ADDR_FOR_PAGE 12ul
 #define GC_PAGE_SIZE (1ul << GC_BITS_IN_ADDR_FOR_PAGE)
 #define GC_BLOCK_ALLOCATION_SIZE (1ul << GC_BITS_IN_ADDR_FOR_PAGE)
 #define GC_PAGE_MASK ((1ul << GC_BITS_IN_ADDR_FOR_PAGE) - 1ul)
 #define GC_PAGE_ADDR_MASK (~GC_PAGE_MASK)
 
 //A bunch of knobs for adjusting GC behavior -- these are all subject to tuning as with the page info above
-#define GC_NUM_PAGES_ON_REQ 16
-#define GC_NUSERY_BYTES_COLLECT_THRESHOLD (1ul << 23)
-#define GC_DELETE_PENDING_PROCESS_BYTES (GC_NUSERY_BYTES_COLLECT_THRESHOLD / 20)
+#define GC_NUM_PAGES_ON_REQ 4
+#define GC_NURSERY_BYTES_COLLECT_THRESHOLD (1ul << 23)
+#define GC_DELETE_PENDING_PROCESS_BYTES (GC_NURSERY_BYTES_COLLECT_THRESHOLD / 20)
 
 #define GC_NURSERY_AGE std::numeric_limits<size_t>::max()
 #define GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_ALLOC 0.60

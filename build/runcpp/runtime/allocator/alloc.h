@@ -302,8 +302,11 @@ namespace ᐸRuntimeᐳ
         return PageInfo::getMetadataForObj(ptr);
     }
 
-    constexpr auto PageAgeCmp = [](PageInfo* a, PageInfo* b) {
-        return a->age < b->age;
+    struct PageAgeCmp 
+    { 
+        bool operator()(PageInfo* a, PageInfo* b) const {
+            return a->age < b->age;
+        }
     };
 
     class GCAllocatorImpl
@@ -320,7 +323,7 @@ namespace ᐸRuntimeᐳ
 
     private:
         std::vector<PageInfo*> filled_pages; // Pages which we have young allocated into and pending processing
-        std::set<PageInfo*, decltype(PageAgeCmp)> pageset; //All pages allocated by this allocator that are not currently being allocated from or in the filled list -- ordered by age
+        std::set<PageInfo*, PageAgeCmp> pageset; //All pages allocated by this allocator that are not currently being allocated from or in the filled list -- ordered by age
 
         size_t agectr;
         size_t allocatedbytes;
@@ -430,7 +433,7 @@ namespace ᐸRuntimeᐳ
 
         MemStats memstats;
 
-        AllocatorThreadLocalInfo() : native_stack_base{}, old_roots{}, gcallocs{}, allocatedbytes{}, collectfp{}, pending_deletes{false}, memstats{} { ; }
+        AllocatorThreadLocalInfo() : native_stack_base{}, old_roots{}, gcallocs{}, allocatedbytes{}, pending_deletes{false}, collectfp{}, memstats{} { ; }
 
         void initialize(std::thread::id threadid, void** caller_rbp, void (*_collectfp)(), const std::map<uint32_t, GCAllocatorImpl*>& gcallocs);
         void cleanup();
