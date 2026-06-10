@@ -35,27 +35,27 @@ namespace ᐸRuntimeᐳ
             return (PageInfo*)((uintptr_t)(p) & GC_PAGE_ADDR_MASK);
         }
 
-        constexpr uint16_t getIndexForObjectInPage(void* obj) 
+        constexpr uint16_t getIndexForObjectInPage(void* obj) const
         { 
             return (uint16_t)(((void**)obj - (void**)this->data) >> this->size2shift);
         }
 
-        constexpr void* getObjectFromIndexInPage(size_t idx) 
+        constexpr void* getObjectFromIndexInPage(size_t idx) const
         {
             return (void*)((void**)this->data + (idx << this->size2shift));
         }
 
-        constexpr uint16_t getIndexForMetadataInPage(void* obj) 
+        constexpr uint16_t getIndexForMetadataInPage(void* obj) const
         { 
             return (uint16_t)(((void**)obj - (void**)this->data) >> this->size2shift);
         }
 
-        constexpr AtomicGCMetadata* getMetadataFromIndexInPage(size_t idx) 
+        constexpr AtomicGCMetadata* getMetadataFromIndexInPage(size_t idx) const
         {
             return this->mdata + idx;
         }
 
-        constexpr static AtomicGCMetadata* getMetadataForObj(void* obj) 
+        constexpr static AtomicGCMetadata* getMetadataForObj(void* obj)
         {
             PageInfo* pp = extractPageFromPointer(obj);
             return pp->mdata + pp->getIndexForMetadataInPage(obj);
@@ -323,14 +323,16 @@ namespace ᐸRuntimeᐳ
         std::set<PageInfo*, decltype(PageAgeCmp)> pageset; //All pages allocated by this allocator that are not currently being allocated from or in the filled list -- ordered by age
 
         size_t agectr;
+        size_t allocatedbytes;
 
+        PageInfo* allocatorPageFinder(double availthreshold, size_t age);
         void allocatorSlowPathRefresh();
         void evacuatorSlowPathRefresh();
 
     public:
         const TypeInfo* alloctype; 
 
-        GCAllocatorImpl(const TypeInfo* alloctype) : freelistidx{META_FREE_LIST_OOM_SENTINAL}, evaclistidx{META_FREE_LIST_OOM_SENTINAL}, allocpage{}, evacpage{}, pendingdelete{}, filled_pages{}, pageset{}, agectr(0), alloctype(alloctype) {}
+        GCAllocatorImpl(const TypeInfo* alloctype) : freelistidx{META_FREE_LIST_OOM_SENTINAL}, evaclistidx{META_FREE_LIST_OOM_SENTINAL}, allocpage{}, evacpage{}, pendingdelete{}, filled_pages{}, pageset{}, agectr{1}, allocatedbytes{0}, alloctype{alloctype} { ; }
 
         constexpr size_t generateNextAge() 
         {
@@ -373,9 +375,21 @@ namespace ᐸRuntimeᐳ
             gcProcessSweep(meta);
         }
 
+        void processNursery()
+        {
+            assert(this->allocpage == nullptr);
+
+            //
+            //TODO: Here is where we want to route some pages to aged (and thus rotate the heap slowly)
+            //      Initial design is just to move some fraction to the aged page set to keep consistent turnover of pages (and this reclaiming memory and identifying free pages for reuse)
+            //
+
+            this->pageset.insert(this->filled_pages.begin(), this->filled_pages.end());
+        }
+
         void cleanup()
         {
-            xxxx;
+            //We are just outa here!!!
         }
     };
 

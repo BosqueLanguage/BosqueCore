@@ -62,6 +62,10 @@ namespace ᐸRuntimeᐳ
         for(int64_t i = this->esize - 1; i > 0; i--) {
             AtomicGCMetadata* meta = this->getMetadataFromIndexInPage(i);
 
+            //
+            //TODO: Here is where we want to forward singleton ref counts too!!
+            //
+
             if(!gcIsAllocated(meta) | gcIsYoung(meta)) {
                 gcProcessSweep(meta);
                    
@@ -97,7 +101,58 @@ namespace ᐸRuntimeᐳ
         assert(((uintptr_t)page & GC_PAGE_MASK) == 0 && "Address is not aligned to page boundary!");
         assert(page != MAP_FAILED);
 
-        return PageInfo::setPageMetaData(page, gcalloc, tl_alloc_info.threadid, gcalloc->generateNextAge());
+        return PageInfo::setPageMetaData(page, gcalloc, tl_alloc_info.threadid, 0);
+    }
+
+    constexpr bool isPageSuitableForAlloc(PageInfo* pp, double availthreshold) 
+    {
+        return ((double)pp->freecount / (double)pp->esize >= availthreshold) || (pp->freecount > GC_PAGE_AVAILABILITY_COUNT_THRESHOLD);
+    }
+
+    PageInfo* GCAllocatorImpl::allocatorPageFinder(double availthreshold, size_t age)
+    {
+        //try for the nursery recent pages first if NOT evac
+        size_t navailchks = 0;
+        auto niter = this->pageset.rbegin();
+        while(niter != this->pageset.rend() && (*niter)->age == GC_NURSERY_AGE && navailchks < GC_PAGE_CHECK_LIMIT) {
+            PageInfo* pp = *niter;
+            niter = std::reverse_iterator(this->pageset.erase(std::next(niter).base()));
+
+            pp->rebuild(age);
+            
+            if(!isPageSuitableForAlloc(pp, availthreshold)) {
+                pp->age = this->generateNextAge();
+                this->pageset.insert(pp);
+            }
+            else {
+                return pp;
+            }
+
+            navailchks++;
+        }
+
+        //now process age ordered
+        size_t availchks = 0;
+        auto iter = this->pageset.begin();
+        while(iter != this->pageset.end() && availchks < GC_PAGE_CHECK_LIMIT) {
+            PageInfo* pp = *iter;
+            iter = this->pageset.erase(iter);
+
+            pp->rebuild(age);
+            //TODO: check for recycle fully empty pages back to global pool here as well
+
+            if(!isPageSuitableForAlloc(pp, availthreshold)) {
+                pp->age = this->generateNextAge();
+                this->pageset.insert(pp);
+            }
+            else {
+                return pp;
+            }
+
+            availchks++;
+        }
+
+        return nullptr;
     }
 
     void GCAllocatorImpl::allocatorSlowPathRefresh()
@@ -111,14 +166,21 @@ namespace ᐸRuntimeᐳ
             this->allocpage = nullptr;
         }
 
-        //try to get a allocator page before going to the global page set
-        xxxx;
+        if(this->allocatedbytes >= GC_NUSERY_BYTES_COLLECT_THRESHOLD)
+        {
+            tl_alloc_info.collectfp();
+            this->allocatedbytes = 0;
+        }
+
+        this->allocpage = this->allocatorPageFinder(GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_ALLOC, GC_NURSERY_AGE);
 
         if(this->allocpage == nullptr) {
             this->allocpage = g_alloc_info.getEmptyPage(this);
+            this->allocpage->rebuild(GC_NURSERY_AGE);
         }
 
-        this->allocpage->rebuild(this->generateNextAge());
+        this->freelistidx = this->allocpage->freelistidx;
+        this->allocatedbytes += (this->allocpage->freecount * this->alloctype->bytesize);
     }
 
     void GCAllocatorImpl::evacuatorSlowPathRefresh()
@@ -127,15 +189,16 @@ namespace ᐸRuntimeᐳ
             this->pageset.insert(this->evacpage);
             this->evacpage = nullptr;
         }
+        size_t age = this->generateNextAge();
 
-        //try to get a allocator page before going to the global page set
-        xxxx;
+        this->evacpage = this->allocatorPageFinder(GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_EVAC, age);
 
         if(this->evacpage == nullptr) {
             this->evacpage = g_alloc_info.getEmptyPage(this);
+            this->evacpage->rebuild(age);
         }
 
-        this->evacpage->rebuild(this->generateNextAge());
+        this->evaclistidx = this->evacpage->freelistidx;
     }
 #endif //BSQ_ALLOCATOR_USE_MALLOC
 
@@ -209,10 +272,26 @@ namespace ᐸRuntimeᐳ
         return aii->second->isAddrSuitableCategory(meta, raddr);
     }
 #else
-    //TODO -- page version is more complex and must check
-        // - Is the page allocated at all (in the table map)
-        // - If so is the location in (many be in middle) of valid object in the page
-        //   - Is the object allocated
-        //   - If so then is the object young (and of the same threadid) OR is it an RC object
+    auto baseaddr = (void*)((uintptr_t)addr & GC_PAGE_MASK);
+    if(!this->allocatedpages.contains(baseaddr)) {
+        return false;
+    }
+
+    const PageInfo* pp = PageInfo::extractPageFromPointer(addr);
+    auto idx = pp->getIndexForObjectInPage(addr);
+
+    meta = pp->getMetadataFromIndexInPage(idx);
+    raddr = pp->getObjectFromIndexInPage(idx);
+
+    if(!gcIsAllocated(meta)) {
+        return false;
+    }
+
+    std::thread::id objtid = gcGetThreadId(raddr);
+    if(gcIsYoung(meta) && objtid != std::this_thread::get_id()) {
+        return false;
+    }
+
+    return true;
 #endif
 }

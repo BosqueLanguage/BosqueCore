@@ -496,7 +496,7 @@ namespace ᐸRuntimeᐳ
         }
         tl_alloc_info.pending_deletes = pending_deletes;
 
-        //Eagerly process some nursery space
+        //Process nursery space
         for(auto ai = tl_alloc_info.gcallocs.begin(); ai != tl_alloc_info.gcallocs.end(); ++ai) {
             ai->second->processNursery();
         }
