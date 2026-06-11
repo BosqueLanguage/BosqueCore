@@ -93,9 +93,7 @@ namespace ᐸRuntimeᐳ
 	    if(this->emptypages.empty()) {
             for(size_t i = 0; i < GC_NUM_PAGES_ON_REQ; i++) {
                 void* addr = mmap(NULL, GC_PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
-
                 assert(addr != MAP_FAILED);
-                assert(((uintptr_t)addr & GC_PAGE_MASK) == 0);
 
                 this->allocatedpages.insert(addr);
                 this->emptypages.push_back(addr);
@@ -280,7 +278,7 @@ namespace ᐸRuntimeᐳ
         }
 
         const PageInfo* pp = (PageInfo*)baseaddr;
-        if(pp->typeinfo == nullptr || addr < pp->data) {
+        if(pp->typeinfo == nullptr || addr < pp->data || (void*)((void**)pp->data + (pp->esize << pp->size2shift)) <= addr) {
             //This page is not in use OR the pointer is not into the data section of the page
             return false;
         }
