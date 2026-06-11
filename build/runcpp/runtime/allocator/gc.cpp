@@ -428,7 +428,7 @@ namespace ᐸRuntimeᐳ
         std::merge(roots_young.cbegin(), roots_young.cend(), roots_rc.cbegin(), roots_rc.cend(), tl_alloc_info.old_roots.begin(), RootCmp);
     }
 
-    bool processPendingDeleteWork(GCAllocatorImpl* alloc)
+    void processPendingDeleteWork(GCAllocatorImpl* alloc)
     {
         //TODO: maybe adjust this but right now we hypothesis an average survival rate of 10% and collect that much here per go-around
         size_t processlimit = std::max((size_t)(GC_DELETE_PENDING_PROCESS_BYTES / alloc->alloctype->bytesize), (size_t)10);
@@ -447,8 +447,6 @@ namespace ᐸRuntimeᐳ
 
             alloc->xrcRelease(ptr);
         }
-
-        return alloc->pendingdelete != nullptr;
     }
 
     void collect()
@@ -488,13 +486,11 @@ namespace ᐸRuntimeᐳ
         g_alloc_info.unloadGlobalRootsFromProc(gproc);
 
         //Peel off some of the pending decs
-        bool pending_deletes = false;
         for(auto ai = tl_alloc_info.gcallocs.begin(); ai != tl_alloc_info.gcallocs.end(); ++ai) {
             if(ai->second->pendingdelete != nullptr) {
-                pending_deletes |= processPendingDeleteWork(ai->second);
+                processPendingDeleteWork(ai->second);
             }
         }
-        tl_alloc_info.pending_deletes = pending_deletes;
 
         //Process nursery space
         for(auto ai = tl_alloc_info.gcallocs.begin(); ai != tl_alloc_info.gcallocs.end(); ++ai) {

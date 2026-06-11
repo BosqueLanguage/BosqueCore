@@ -323,7 +323,7 @@ namespace ᐸRuntimeᐳ
 
     private:
         std::vector<PageInfo*> filled_pages; // Pages which we have young allocated into and pending processing
-        std::set<PageInfo*, PageAgeCmp> pageset; //All pages allocated by this allocator that are not currently being allocated from or in the filled list -- ordered by age
+        std::multiset<PageInfo*, PageAgeCmp> pageset; //All pages allocated by this allocator that are not currently being allocated from or in the filled list -- ordered by age
 
         size_t agectr;
         size_t allocatedbytes;
@@ -393,6 +393,7 @@ namespace ᐸRuntimeᐳ
             //
 
             this->pageset.insert(this->filled_pages.begin(), this->filled_pages.end());
+            this->filled_pages.clear();
         }
 
         void cleanup()
@@ -424,23 +425,20 @@ namespace ᐸRuntimeᐳ
     class AllocatorThreadLocalInfo
     {
     public:
-        std::thread::id threadid; //the id of the thread this info is associated with
-
         void** native_stack_base; //the base of the native stack
         std::vector<std::pair<AtomicGCMetadata*, void*>> old_roots;
 
         std::map<uint32_t, GCAllocatorImpl*> gcallocs;
         size_t allocatedbytes;
 
-        bool pending_deletes;
-
         void (*collectfp)();
+        void (*decsprocessfp)(GCAllocatorImpl*);
 
         MemStats memstats;
 
-        AllocatorThreadLocalInfo() : native_stack_base{}, old_roots{}, gcallocs{}, allocatedbytes{}, pending_deletes{false}, collectfp{}, memstats{} { ; }
+        AllocatorThreadLocalInfo() : native_stack_base{}, old_roots{}, gcallocs{}, allocatedbytes{}, collectfp{}, decsprocessfp{}, memstats{} { ; }
 
-        void initialize(std::thread::id threadid, void** caller_rbp, void (*_collectfp)(), const std::map<uint32_t, GCAllocatorImpl*>& gcallocs);
+        void initialize(void** caller_rbp, void (*_collectfp)(), void (*_decsprocessfp)(GCAllocatorImpl*), const std::map<uint32_t, GCAllocatorImpl*>& gcallocs);
         void cleanup();
     };
 

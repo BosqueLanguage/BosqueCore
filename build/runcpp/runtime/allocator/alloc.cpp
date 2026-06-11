@@ -105,7 +105,7 @@ namespace ᐸRuntimeᐳ
         void* page = this->emptypages.back();
         this->emptypages.pop_back();        
 
-        return PageInfo::setPageMetaData(page, gcalloc, tl_alloc_info.threadid, 0);
+        return PageInfo::setPageMetaData(page, gcalloc, std::this_thread::get_id(), 0);
     }
 
     constexpr bool isPageSuitableForAlloc(PageInfo* pp, double availthreshold) 
@@ -124,14 +124,13 @@ namespace ᐸRuntimeᐳ
 
             pp->rebuild(age);
             
-            if(!isPageSuitableForAlloc(pp, availthreshold)) {
-                pp->age = this->generateNextAge();
-                this->pageset.insert(pp);
-            }
-            else {
+            if(isPageSuitableForAlloc(pp, availthreshold)) {
                 return pp;
             }
-
+            
+            pp->age = this->generateNextAge();
+            this->pageset.insert(pp);
+            
             navailchks++;
         }
 
@@ -145,14 +144,13 @@ namespace ᐸRuntimeᐳ
             pp->rebuild(age);
             //TODO: check for recycle fully empty pages back to global pool here as well
 
-            if(!isPageSuitableForAlloc(pp, availthreshold)) {
-                pp->age = this->generateNextAge();
-                this->pageset.insert(pp);
-            }
-            else {
+            if(isPageSuitableForAlloc(pp, availthreshold)) {
                 return pp;
             }
 
+            pp->age = this->generateNextAge();
+            this->pageset.insert(pp);
+    
             availchks++;
         }
 
@@ -162,7 +160,7 @@ namespace ᐸRuntimeᐳ
     void GCAllocatorImpl::allocatorSlowPathRefresh()
     {
         if(this->pendingdelete != nullptr) {
-            assert(false); //not implemented
+            tl_alloc_info.decsprocessfp(this);
         }
 
         if(this->allocpage != nullptr) {
@@ -206,10 +204,11 @@ namespace ᐸRuntimeᐳ
     }
 #endif //BSQ_ALLOCATOR_USE_MALLOC
 
-    void AllocatorThreadLocalInfo::initialize(std::thread::id threadid, void** caller_rbp, void (*_collectfp)(), const std::map<uint32_t, GCAllocatorImpl*>& gcallocs)
+    void AllocatorThreadLocalInfo::initialize(void** caller_rbp, void (*_collectfp)(), void (*_decsprocessfp)(GCAllocatorImpl*), const std::map<uint32_t, GCAllocatorImpl*>& gcallocs)
     {
         this->native_stack_base = caller_rbp;
         this->collectfp = _collectfp;
+        this->decsprocessfp = _decsprocessfp;
         this->gcallocs = gcallocs;
     }
 	
@@ -275,12 +274,17 @@ namespace ᐸRuntimeᐳ
 
         return aii->second->isAddrSuitableCategory(meta, raddr);
 #else
-        auto baseaddr = (void*)((uintptr_t)addr & GC_PAGE_MASK);
+        auto baseaddr = (void*)((uintptr_t)(addr) & GC_PAGE_ADDR_MASK);
         if(!this->allocatedpages.contains(baseaddr)) {
             return false;
         }
 
-        const PageInfo* pp = PageInfo::extractPageFromPointer(addr);
+        const PageInfo* pp = (PageInfo*)baseaddr;
+        if(pp->typeinfo == nullptr || addr < pp->data) {
+            //This page is not in use OR the pointer is not into the data section of the page
+            return false;
+        }
+
         auto idx = pp->getIndexForObjectInPage(addr);
 
         meta = pp->getMetadataFromIndexInPage(idx);
@@ -296,6 +300,6 @@ namespace ᐸRuntimeᐳ
         }
 
         return true;
-    }
 #endif
+    }
 }

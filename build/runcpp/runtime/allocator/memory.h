@@ -7,8 +7,8 @@
 
 #if BSQ_ALLOCATOR_USE_MALLOC
 #ifndef GC_NURSERY_SIZE
-#define GC_NURSERY_SIZE 2
-//#define GC_NURSERY_SIZE 2048
+//#define GC_NURSERY_SIZE 2
+#define GC_NURSERY_SIZE 2048
 #endif
 #endif
 
