@@ -11,7 +11,6 @@
 
 #define GC_PTR_IN_RANGE(V) ((GC_MIN_ALLOCATED_ADDRESS <= V) && (V <= GC_MAX_ALLOCATED_ADDRESS))
 #define GC_PTR_NOT_IN_STACK(BASE, CURR, V) ((((void*)V) <= ((void*)CURR)) || (((void*)BASE) <= ((void*)V)))
-#define GC_IS_ALIGNED(V) (((uintptr_t)(V) % GC_MEM_ALIGNMENT) == 0)
 
 #define GC_PROCESS_REGISTER(BASE, CURR, R)                                    \
     register void* R asm(#R);                                                 \
