@@ -408,7 +408,7 @@ namespace ᐸRuntimeᐳ
         std::copy_if(tl_alloc_info.old_roots.cbegin(), tl_alloc_info.old_roots.cend(), std::back_inserter(decroots), [&roots_young, &roots_rc](const std::pair<AtomicGCMetadata*, void*>& r) {
             return !std::binary_search(roots_young.cbegin(), roots_young.cend(), r, RootCmp) && !std::binary_search(roots_rc.cbegin(), roots_rc.cend(), r, RootCmp);
         });
-        
+        /*
         for(size_t i = 0; i < decroots.size(); i++) {
             auto [meta, droot] = decroots[i];
             bool isdead = gcProcessRCDecrement(meta);
@@ -423,7 +423,7 @@ namespace ᐸRuntimeᐳ
                 }
             }
         }
-
+        */
         tl_alloc_info.old_roots.resize(roots_young.size() + roots_rc.size());
         std::merge(roots_young.cbegin(), roots_young.cend(), roots_rc.cbegin(), roots_rc.cend(), tl_alloc_info.old_roots.begin(), RootCmp);
     }
