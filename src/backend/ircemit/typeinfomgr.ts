@@ -5,7 +5,7 @@ import { TransformCPPNameManager } from "./namemgr.js";
 
 import assert from "node:assert";
 
-const MAX_VALUE_LAYOUT_BYTESIZE = 72; //max number of bytes we allow for value layouts -- above this we switch to ref layout
+const MAX_VALUE_LAYOUT_BYTESIZE = 56; //max number of bytes we allow for value layouts -- above this we switch to ref layout
 
 //Duplicated from C++ definitions
 const MAX_LIST_INLINE_BYTES = 48; //Bytes -- so 56 total when we add 8 bytes for the size

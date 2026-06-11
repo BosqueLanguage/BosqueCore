@@ -16,7 +16,7 @@ namespace ᐸRuntimeᐳ
 
     constexpr size_t LIST_T_LEAF_CAPACITY(size_t elem_size)
     {
-        return 12;
+        return 8;
         //return std::max(LIST_T_INLINE_CAPACITY(elem_size) * 4, (size_t)4);
     }
 

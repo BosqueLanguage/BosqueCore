@@ -27,7 +27,7 @@
 
 //A bunch of knobs for adjusting GC behavior -- these are all subject to tuning as with the page info above
 #define GC_NUM_PAGES_ON_REQ 4
-#define GC_NURSERY_BYTES_COLLECT_THRESHOLD (1ul << 23)
+#define GC_NURSERY_BYTES_COLLECT_THRESHOLD (1ul << 20)
 #define GC_DELETE_PENDING_PROCESS_BYTES (GC_NURSERY_BYTES_COLLECT_THRESHOLD / 20)
 
 #define GC_NURSERY_AGE std::numeric_limits<size_t>::max()
