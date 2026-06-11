@@ -57,8 +57,8 @@ namespace ᐸRuntimeᐳ
     constexpr GCMetaBits META_BIT_RC_ONE = 0x80;
     constexpr GCMetaBits META_BIT_RC_TWO = (META_BIT_RC_ONE + META_BIT_RC_ONE);
     constexpr GCMetaBits META_BIT_RC_MASK = ~(0x7F);
-    constexpr uint32_t META_BIT_RC_ADDR_SHIFT = 4; //bottom 3 bits are zero already based on alignment
-    constexpr uint32_t META_BIT_RC_FREELIST_SHIFT = 7; //same as above but all bits moved
+    constexpr uint32_t META_BIT_RC_ADDR_SHIFT = 7; //shifted to make sure we don't the flag bits
+    constexpr uint32_t META_BIT_RC_FREELIST_SHIFT = 7; //same as above
 
     constexpr uint16_t META_FREE_LIST_OOM_SENTINAL = 0xFFFF;
 
@@ -187,15 +187,13 @@ namespace ᐸRuntimeᐳ
     //Thread the pending delete freelist via the rc counter
     constexpr void gcStoreDeleteListPtr(AtomicGCMetadata* rc, void* addr)
     {
-        GCMetaBits ll = rc->load(std::memory_order_relaxed);
-        rc->store(ll | ((uintptr_t)addr << META_BIT_RC_ADDR_SHIFT), std::memory_order_relaxed);
+        rc->store(META_BIT_IS_ALLOC | META_BIT_IS_DELETE_PENDING | ((uintptr_t)addr << META_BIT_RC_ADDR_SHIFT), std::memory_order_relaxed);
     }
 
     //Thread the pending delete freelist via the rc counter
     constexpr void* gcGetDeleteListPtr(AtomicGCMetadata* rc)
     {
-        GCMetaBits ll = rc->load(std::memory_order_relaxed);
-        return (void*)((ll & META_BIT_RC_MASK) >> META_BIT_RC_ADDR_SHIFT);
+        return (void*)(rc->load(std::memory_order_relaxed) >> META_BIT_RC_ADDR_SHIFT);
     }
 
     //After processing an object (in sweep or RC deletion) clear the meta bits

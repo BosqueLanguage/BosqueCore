@@ -432,13 +432,12 @@ namespace ᐸRuntimeᐳ
         size_t allocatedbytes;
 
         void (*collectfp)();
-        void (*decsprocessfp)(GCAllocatorImpl*);
 
         MemStats memstats;
 
-        AllocatorThreadLocalInfo() : native_stack_base{}, old_roots{}, gcallocs{}, allocatedbytes{}, collectfp{}, decsprocessfp{}, memstats{} { ; }
+        AllocatorThreadLocalInfo() : native_stack_base{}, old_roots{}, gcallocs{}, allocatedbytes{}, collectfp{}, memstats{} { ; }
 
-        void initialize(void** caller_rbp, void (*_collectfp)(), void (*_decsprocessfp)(GCAllocatorImpl*), const std::map<uint32_t, GCAllocatorImpl*>& gcallocs);
+        void initialize(void** caller_rbp, void (*_collectfp)(), const std::map<uint32_t, GCAllocatorImpl*>& gcallocs);
         void cleanup();
     };
 

@@ -29,6 +29,7 @@ namespace ᐸRuntimeᐳ
 
         pp->mdata = (AtomicGCMetadata*)((uint8_t*)pp + sizeof(PageInfo));
         pp->data = (void**)((void**)pp->mdata + objcount);
+        pp->p2size = p2size;
         pp->size2shift = p2sizeshift;
 
         pp->age = agectr;
@@ -68,6 +69,7 @@ namespace ᐸRuntimeᐳ
 
             //
             //TODO: Here is where we want to forward singleton ref counts too!!
+            //      Don't reclaim but forward + update parent (might have root ref now) so stash for checking after GC ops
             //
 
             if(!gcIsAllocated(meta) | gcIsYoung(meta)) {
@@ -157,10 +159,6 @@ namespace ᐸRuntimeᐳ
 
     void GCAllocatorImpl::allocatorSlowPathRefresh()
     {
-        if(this->pendingdelete != nullptr) {
-            tl_alloc_info.decsprocessfp(this);
-        }
-
         if(this->allocpage != nullptr) {
             this->filled_pages.push_back(this->allocpage);
             this->allocpage = nullptr;
@@ -202,11 +200,10 @@ namespace ᐸRuntimeᐳ
     }
 #endif //BSQ_ALLOCATOR_USE_MALLOC
 
-    void AllocatorThreadLocalInfo::initialize(void** caller_rbp, void (*_collectfp)(), void (*_decsprocessfp)(GCAllocatorImpl*), const std::map<uint32_t, GCAllocatorImpl*>& gcallocs)
+    void AllocatorThreadLocalInfo::initialize(void** caller_rbp, void (*_collectfp)(), const std::map<uint32_t, GCAllocatorImpl*>& gcallocs)
     {
         this->native_stack_base = caller_rbp;
         this->collectfp = _collectfp;
-        this->decsprocessfp = _decsprocessfp;
         this->gcallocs = gcallocs;
     }
 	
