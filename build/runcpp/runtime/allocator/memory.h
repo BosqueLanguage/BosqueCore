@@ -5,13 +5,6 @@
 
 #include "memstats.h"
 
-#if BSQ_ALLOCATOR_USE_MALLOC
-#ifndef GC_NURSERY_SIZE
-//#define GC_NURSERY_SIZE 2
-#define GC_NURSERY_SIZE 2048
-#endif
-#endif
-
 //Make sure any allocated page is addressable by us -- larger than 2^31 and less than 2^42
 #define GC_MIN_ALLOCATED_ADDRESS ((void*)(2147483648ul))
 #define GC_MAX_ALLOCATED_ADDRESS ((void*)(281474976710656ul))
@@ -77,11 +70,6 @@ namespace ᐸRuntimeᐳ
         return (rc->load(std::memory_order_relaxed) & META_BIT_IS_FORWARD) != 0;
     }
 
-    constexpr bool gcIsRC(const AtomicGCMetadata* rc) 
-    {
-        return (rc->load(std::memory_order_relaxed) & (META_BIT_IS_RC_UNIQUE | META_BIT_IS_RC_SHARED)) != 0;
-    }
-
     //Set the state on initial allocation into the nursery
     constexpr void gcInitOnAllocate(AtomicGCMetadata* rc)
     {
@@ -111,7 +99,6 @@ namespace ᐸRuntimeᐳ
             if(ll & META_BIT_IS_RC_UNIQUE) {
                 //Was a unique reference but we need to clear this and set the counter correctly (to 2)
                 newbits = (META_BIT_IS_ALLOC | META_BIT_IS_RC_SHARED | META_BIT_RC_TWO);
-                
             }
             else {
                 //Otherwise just increment the counter
