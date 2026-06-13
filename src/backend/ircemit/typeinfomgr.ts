@@ -5,18 +5,19 @@ import { TransformCPPNameManager } from "./namemgr.js";
 
 import assert from "node:assert";
 
-const MAX_VALUE_LAYOUT_BYTESIZE = 56; //max number of bytes we allow for value layouts -- above this we switch to ref layout
+const MAX_VALUE_LAYOUT_BYTESIZE = 32; //max number of bytes we allow for value layouts -- above this we switch to ref layout
 
 //Duplicated from C++ definitions
-const MAX_LIST_INLINE_BYTES = 48; //Bytes -- so 56 total when we add 8 bytes for the size
+const MAX_LIST_INLINE_BYTES = 24; //Bytes -- so 32 total when we add 8 bytes for the size
 
 function LIST_T_INLINE_CAPACITY(elem_size: number): number {
+    //at least1 element but up to the number that can fir in the max inline bytes
     return Math.max(Math.floor(MAX_LIST_INLINE_BYTES / elem_size), 1);
 }
 
 function LIST_T_LEAF_CAPACITY(elem_size: number): number {
-    //return Math.max(LIST_T_INLINE_CAPACITY(elem_size) * 4, 4);
-    return 8;
+    //leaf should be big enough to hold a map(..) operation result from any type AND also be larger than the inline capacity (which-ever is larger)
+    return (MAX_LIST_INLINE_BYTES / 8) + 1;
 }
 
 class VirtualInvokeInfo {

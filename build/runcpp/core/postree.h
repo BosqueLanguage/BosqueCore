@@ -534,6 +534,25 @@ namespace ᐸRuntimeᐳ
                 }
             }
         }
+
+        static T reprGetIndexValue(int64_t index, const PosRBNode<T, K>* curr)
+        {
+            while(true) {
+                const PosRBNode<T, K>* l = reprGetLeft(curr);
+                int64_t lcount = reprGetCount(l);
+
+                if(index < lcount) {
+                    curr = l;
+                }
+                else if(index >= lcount + curr->data.dcount) {
+                    index -= (lcount + curr->data.dcount);
+                    curr = reprGetRight(curr);
+                }
+                else {
+                    return curr->data.data[index]; //index is within the current node
+                }
+            }
+        }
         
 #ifdef BSQ_POSTREE_VALIDATE
         static void reprToValues(std::vector<T>& result, const PosRBNode<T, K>* node)
@@ -1267,8 +1286,7 @@ private:
 
         T get(int64_t index) const
         {
-            const PosRBNode<T, K>* indexNode = reprGetIndexNode(index, this->root);
-            return indexNode->data.data[index - reprGetCount(reprGetLeft(indexNode))];
+            return reprGetIndexValue(index, this->root);
         }
 
         PosRBTree<T, K, TreeID> pushFront(const T& value) const
