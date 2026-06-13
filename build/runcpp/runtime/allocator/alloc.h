@@ -64,7 +64,7 @@ namespace ᐸRuntimeᐳ
         static PageInfo* setPageMetaData(void* vpp, GCAllocatorImpl* gcalloc, std::thread::id threadid, size_t agectr);
         static void* reset(PageInfo* pp);
 
-        void rebuild(size_t agectr);
+        void rebuild();
     };
 
 
@@ -302,13 +302,6 @@ namespace ᐸRuntimeᐳ
         return PageInfo::getMetadataForObj(ptr);
     }
 
-    struct PageAgeCmp 
-    { 
-        bool operator()(PageInfo* a, PageInfo* b) const {
-            return a->age < b->age;
-        }
-    };
-
     class GCAllocatorImpl
     {
     private:
@@ -318,29 +311,22 @@ namespace ᐸRuntimeᐳ
         PageInfo* allocpage; // Page in which we are currently allocating from
         PageInfo* evacpage; // Page in which we are currently evacuating from
 
-    public:
-        void* pendingdelete;
-
     private:
-        std::vector<PageInfo*> filled_pages; // Pages which we have young allocated into and pending processing
-        std::multiset<PageInfo*, PageAgeCmp> pageset; //All pages allocated by this allocator that are not currently being allocated from or in the filled list -- ordered by age
+        std::list<PageInfo*> filled_pages; // Pages which we have young allocated into and pending processing
+        std::list<PageInfo*> hot_nursery_pages; // Pages which we have evacuated into and pending processing
+        std::list<PageInfo*> pageset; //All pages allocated by this allocator that are not currently being allocated from or in the filled list
 
-        size_t agectr;
         size_t allocatedbytes;
 
-        PageInfo* allocatorPageFinder(double availthreshold, size_t age);
+        PageInfo* allocatorNurseryPageFinder(double availthreshold);
+        PageInfo* allocatorGeneralPageFinder(double availthreshold);
         void allocatorSlowPathRefresh();
         void evacuatorSlowPathRefresh();
 
     public:
         const TypeInfo* alloctype; 
 
-        GCAllocatorImpl(const TypeInfo* alloctype) : freelistidx{META_FREE_LIST_OOM_SENTINAL}, evaclistidx{META_FREE_LIST_OOM_SENTINAL}, allocpage{}, evacpage{}, pendingdelete{}, filled_pages{}, pageset{}, agectr{1}, allocatedbytes{0}, alloctype{alloctype} { ; }
-
-        constexpr size_t generateNextAge() 
-        {
-            return this->agectr++;
-        }
+        GCAllocatorImpl(const TypeInfo* alloctype) : freelistidx{META_FREE_LIST_OOM_SENTINAL}, evaclistidx{META_FREE_LIST_OOM_SENTINAL}, allocpage{}, evacpage{}, filled_pages{}, hot_nursery_pages{}, pageset{}, allocatedbytes{0}, alloctype{alloctype} { ; }
 
         constexpr void* xalloc()
         {
@@ -392,8 +378,7 @@ namespace ᐸRuntimeᐳ
             //      Initial design is just to move some fraction to the aged page set to keep consistent turnover of pages (and this reclaiming memory and identifying free pages for reuse)
             //
 
-            this->pageset.insert(this->filled_pages.begin(), this->filled_pages.end());
-            this->filled_pages.clear();
+            this->hot_nursery_pages.splice(this->filled_pages.begin(), this->filled_pages);
         }
 
         void cleanup()
@@ -431,11 +416,13 @@ namespace ᐸRuntimeᐳ
         std::map<uint32_t, GCAllocatorImpl*> gcallocs;
         size_t allocatedbytes;
 
+        std::list<void*> pendingdelete; //objects pending delete
+
         void (*collectfp)();
 
         MemStats memstats;
 
-        AllocatorThreadLocalInfo() : native_stack_base{}, old_roots{}, gcallocs{}, allocatedbytes{}, collectfp{}, memstats{} { ; }
+        AllocatorThreadLocalInfo() : native_stack_base{}, old_roots{}, gcallocs{}, allocatedbytes{}, pendingdelete{}, collectfp{}, memstats{} { ; }
 
         void initialize(void** caller_rbp, void (*_collectfp)(), const std::map<uint32_t, GCAllocatorImpl*>& gcallocs);
         void cleanup();

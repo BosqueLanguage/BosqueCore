@@ -58,11 +58,10 @@ namespace ᐸRuntimeᐳ
         return (void*)pp;
     }
 
-    void PageInfo::rebuild(size_t agectr)
+    void PageInfo::rebuild()
     {
         this->freelistidx = META_FREE_LIST_OOM_SENTINAL;
         this->freecount = 0;
-        this->age = agectr;
  
         for(int64_t i = this->esize - 1; i >= 0; i--) {
             AtomicGCMetadata* meta = this->getMetadataFromIndexInPage(i);
@@ -113,44 +112,39 @@ namespace ᐸRuntimeᐳ
         return ((double)pp->freecount / (double)pp->esize >= availthreshold) || (pp->freecount > GC_PAGE_AVAILABILITY_COUNT_THRESHOLD);
     }
 
-    PageInfo* GCAllocatorImpl::allocatorPageFinder(double availthreshold, size_t age)
+    PageInfo* GCAllocatorImpl::allocatorNurseryPageFinder(double availthreshold)
     {
-        //try for the nursery recent pages first if NOT evac
         size_t navailchks = 0;
-        auto niter = this->pageset.rbegin();
-        while(niter != this->pageset.rend() && (*niter)->age == GC_NURSERY_AGE && navailchks < GC_PAGE_CHECK_LIMIT) {
+        auto niter = this->hot_nursery_pages.begin();
+        while(niter != this->hot_nursery_pages.end() && navailchks < GC_PAGE_CHECK_NURSERY_LIMIT) {
             PageInfo* pp = *niter;
-            niter = std::reverse_iterator(this->pageset.erase(std::next(niter).base()));
+            pp->rebuild();
 
-            pp->rebuild(age);
-            
             if(isPageSuitableForAlloc(pp, availthreshold)) {
                 return pp;
             }
             
-            pp->age = this->generateNextAge();
-            this->pageset.insert(pp);
-            
+            this->pageset.splice(this->pageset.end(), this->hot_nursery_pages, niter);
             navailchks++;
         }
 
-        //now process age ordered
+        return nullptr;
+    }
+
+    PageInfo* GCAllocatorImpl::allocatorGeneralPageFinder(double availthreshold)
+    {
         size_t availchks = 0;
         auto iter = this->pageset.begin();
-        while(iter != this->pageset.end() && availchks < GC_PAGE_CHECK_LIMIT) {
+        while(iter != this->pageset.end() && availchks < GC_PAGE_CHECK_GENERAL_LIMIT) {
             PageInfo* pp = *iter;
-            iter = this->pageset.erase(iter);
-
-            pp->rebuild(age);
+            pp->rebuild();
             //TODO: check for recycle fully empty pages back to global pool here as well
 
             if(isPageSuitableForAlloc(pp, availthreshold)) {
                 return pp;
             }
 
-            pp->age = this->generateNextAge();
-            this->pageset.insert(pp);
-    
+            this->pageset.splice(this->pageset.end(), this->pageset, iter);
             availchks++;
         }
 
@@ -170,11 +164,15 @@ namespace ᐸRuntimeᐳ
             this->allocatedbytes = 0;
         }
 
-        this->allocpage = this->allocatorPageFinder(GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_ALLOC, GC_NURSERY_AGE);
+        this->allocpage = this->allocatorNurseryPageFinder(GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_ALLOC);
+
+        if(this->allocpage == nullptr) {
+            this->allocpage = this->allocatorGeneralPageFinder(GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_ALLOC);
+        }
 
         if(this->allocpage == nullptr) {
             this->allocpage = g_alloc_info.getEmptyPage(this);
-            this->allocpage->rebuild(GC_NURSERY_AGE);
+            this->allocpage->rebuild();
         }
 
         this->freelistidx = this->allocpage->freelistidx;
@@ -184,16 +182,14 @@ namespace ᐸRuntimeᐳ
     void GCAllocatorImpl::evacuatorSlowPathRefresh()
     {
         if(this->evacpage != nullptr) {
-            this->pageset.insert(this->evacpage);
+            this->pageset.push_back(this->evacpage);
             this->evacpage = nullptr;
         }
-        size_t age = this->generateNextAge();
-
-        this->evacpage = this->allocatorPageFinder(GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_EVAC, age);
+        this->evacpage = this->allocatorGeneralPageFinder(GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_EVAC);
 
         if(this->evacpage == nullptr) {
             this->evacpage = g_alloc_info.getEmptyPage(this);
-            this->evacpage->rebuild(age);
+            this->evacpage->rebuild();
         }
 
         this->evaclistidx = this->evacpage->freelistidx;
