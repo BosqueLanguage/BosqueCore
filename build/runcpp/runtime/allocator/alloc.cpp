@@ -163,6 +163,11 @@ namespace ᐸRuntimeᐳ
             tl_alloc_info.collectfp();
             this->allocatedbytes = 0;
         }
+        else {
+            if(!tl_alloc_info.pendingdelete.empty()) {
+                tl_alloc_info.procdecsfp(GC_DELETE_PENDING_PROCESS_BYTES_INCREMENTAL);
+            }
+        }
 
         this->allocpage = this->allocatorNurseryPageFinder(GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_ALLOC);
 
@@ -176,7 +181,7 @@ namespace ᐸRuntimeᐳ
         }
 
         this->freelistidx = this->allocpage->freelistidx;
-        this->allocatedbytes += (this->allocpage->freecount * this->alloctype->bytesize);
+        this->allocatedbytes += (this->allocpage->freecount * (this->allocpage->p2size * 8));
     }
 
     void GCAllocatorImpl::evacuatorSlowPathRefresh()
@@ -196,9 +201,10 @@ namespace ᐸRuntimeᐳ
     }
 #endif //BSQ_ALLOCATOR_USE_MALLOC
 
-    void AllocatorThreadLocalInfo::initialize(void** caller_rbp, void (*_collectfp)(), const std::map<uint32_t, GCAllocatorImpl*>& gcallocs)
+    void AllocatorThreadLocalInfo::initialize(void** caller_rbp, void(*_procdecsfp)(size_t), void (*_collectfp)(), const std::map<uint32_t, GCAllocatorImpl*>& gcallocs)
     {
         this->native_stack_base = caller_rbp;
+        this->procdecsfp = _procdecsfp;
         this->collectfp = _collectfp;
         this->gcallocs = gcallocs;
     }

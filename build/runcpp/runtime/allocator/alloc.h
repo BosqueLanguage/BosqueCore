@@ -418,13 +418,14 @@ namespace ᐸRuntimeᐳ
 
         std::list<void*> pendingdelete; //objects pending delete
 
+        void (*procdecsfp)(size_t);
         void (*collectfp)();
 
         MemStats memstats;
 
-        AllocatorThreadLocalInfo() : native_stack_base{}, old_roots{}, gcallocs{}, allocatedbytes{}, pendingdelete{}, collectfp{}, memstats{} { ; }
+        AllocatorThreadLocalInfo() : native_stack_base{}, old_roots{}, gcallocs{}, allocatedbytes{}, pendingdelete{}, procdecsfp{}, collectfp{}, memstats{} { ; }
 
-        void initialize(void** caller_rbp, void (*_collectfp)(), const std::map<uint32_t, GCAllocatorImpl*>& gcallocs);
+        void initialize(void** caller_rbp, void(*_procdecsfp)(size_t), void (*_collectfp)(), const std::map<uint32_t, GCAllocatorImpl*>& gcallocs);
         void cleanup();
     };
 

@@ -321,10 +321,13 @@ namespace ᐸRuntimeᐳ
              releaseQuick(ptr);
         }
         else {
-            GCAllocatorImpl* alloc = gcGetAllocator(ptr);
+            /*
+            gcStoreDeleteListPtr(gcGetMetadata(ptr), tl_alloc_info.pendingdelete);
+            tl_alloc_info.pendingdelete = ptr;
+            */
 
-            gcStoreDeleteListPtr(gcGetMetadata(ptr), alloc->pendingdelete);
-            alloc->pendingdelete = ptr;
+            assert(std::find(tl_alloc_info.pendingdelete.cbegin(), tl_alloc_info.pendingdelete.cend(), ptr) == tl_alloc_info.pendingdelete.cend());
+            tl_alloc_info.pendingdelete.push_back(ptr);
         }
     }
 
@@ -427,15 +430,19 @@ namespace ᐸRuntimeᐳ
         std::merge(roots_young.cbegin(), roots_young.cend(), roots_rc.cbegin(), roots_rc.cend(), tl_alloc_info.old_roots.begin(), RootCmp);
     }
 
-    void processPendingDeleteWork(GCAllocatorImpl* alloc)
+    void processPendingDeleteWork(size_t worklimit)
     {
-        //TODO: maybe adjust this but right now we hypothesis an average survival rate of 10% and collect that much here per go-around
-        size_t processlimit = std::max((size_t)(GC_DELETE_PENDING_PROCESS_BYTES / alloc->alloctype->bytesize), (size_t)10);
-
-        for(size_t i = 0; i < processlimit && alloc->pendingdelete != nullptr; ++i) {
+        size_t procbytes = 0;
+        auto iter = tl_alloc_info.pendingdelete.begin();
+        while(iter != tl_alloc_info.pendingdelete.end()) {
+            /*
             void* ptr = alloc->pendingdelete;
             alloc->pendingdelete = gcGetDeleteListPtr(gcGetMetadata(ptr));
+            */
+            void* ptr = tl_alloc_info.pendingdelete.front();
+            tl_alloc_info.pendingdelete.pop_front();
 
+            GCAllocatorImpl* alloc = gcGetAllocator(ptr);
             if(alloc->alloctype->ptrmask != nullptr) {
                 const char* mmask = alloc->alloctype->ptrmask;
                 void** slots = (void**)ptr;
@@ -445,10 +452,16 @@ namespace ᐸRuntimeᐳ
             }
 
             alloc->xrcRelease(ptr);
+
+            procbytes += alloc->alloctype->bytesize;
+            if(procbytes >= worklimit) {
+                break;
+            }
         }
     }
 
-    void collect()
+    template <bool skipwalk>
+    void xcollect(std::initializer_list<void*> roots)
     {
         std::vector<std::pair<AtomicGCMetadata*, void*>> curr_roots_young;
         std::vector<std::pair<AtomicGCMetadata*, void*>> curr_roots_rc;
@@ -461,8 +474,10 @@ namespace ᐸRuntimeᐳ
             // page->entrycount may be reset by another thread (setPageMetaData) -- processPotentialPtr
 	        std::lock_guard lk(g_alloc_info.g_pages_mutex);
 
-            gproc = walkGlobalRoots(curr_roots_young, curr_roots_rc);
-            walkStack(curr_roots_young, curr_roots_rc);
+            if constexpr (skipwalk) {
+                gproc = walkGlobalRoots(curr_roots_young, curr_roots_rc);
+                walkStack(curr_roots_young, curr_roots_rc);
+            }
 
             std::sort(curr_roots_young.begin(), curr_roots_young.end());
             curr_roots_young.erase(std::unique(curr_roots_young.begin(), curr_roots_young.end()), curr_roots_young.end());
@@ -485,15 +500,22 @@ namespace ᐸRuntimeᐳ
         g_alloc_info.unloadGlobalRootsFromProc(gproc);
 
         //Peel off some of the pending decs
-        for(auto ai = tl_alloc_info.gcallocs.begin(); ai != tl_alloc_info.gcallocs.end(); ++ai) {
-            if(ai->second->pendingdelete != nullptr) {
-                processPendingDeleteWork(ai->second);
-            }
-        }
-
+        processPendingDeleteWork(GC_DELETE_PENDING_PROCESS_BYTES_COLLECT);
+        
         //Process nursery space
         for(auto ai = tl_alloc_info.gcallocs.begin(); ai != tl_alloc_info.gcallocs.end(); ++ai) {
+            //TODO: we may want a list of nurserys that are dirty here -- that way we only visit with allocs to process instead of everyone (which may matter on larger programs)
             ai->second->processNursery();
         }
+    }
+
+    void collect()
+    {
+        xcollect<false>({});
+    }
+
+    void test_collect(std::initializer_list<void*> roots)
+    {
+        xcollect<true>(roots);
     }
 }

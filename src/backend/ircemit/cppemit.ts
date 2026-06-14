@@ -2670,7 +2670,7 @@ class CPPEmitter {
         const initializegc = '{\n' +
         '        //always thread safe on this initialization phase since we have not started any other threads yet\n' +
         '        void** rbp = (void**)__builtin_frame_address(0);\n' +
-        `        ᐸRuntimeᐳ::tl_alloc_info.initialize(rbp, ᐸRuntimeᐳ::collect, {${[...sallocs, ...allocs].join(', ')}});\n` +
+        `        ᐸRuntimeᐳ::tl_alloc_info.initialize(rbp, ᐸRuntimeᐳ::processPendingDeleteWork, ᐸRuntimeᐳ::collect, {${[...sallocs, ...allocs].join(', ')}});\n` +
         '    }\n';
 
         const notes = "//TODO ---- need to dispatch on things and handle useage + agents.md";

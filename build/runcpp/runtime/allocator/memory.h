@@ -21,7 +21,9 @@
 //A bunch of knobs for adjusting GC behavior -- these are all subject to tuning as with the page info above
 #define GC_NUM_PAGES_ON_REQ 4
 #define GC_NURSERY_BYTES_COLLECT_THRESHOLD (1ul << 20)
-#define GC_DELETE_PENDING_PROCESS_BYTES (GC_NURSERY_BYTES_COLLECT_THRESHOLD / 20)
+#define GC_DELETE_PENDING_PROCESS_BYTES_COLLECT (GC_NURSERY_BYTES_COLLECT_THRESHOLD / 2)
+#define GC_DELETE_PENDING_PROCESS_BYTES_INCREMENTAL (GC_PAGE_SIZE / 2)
+//TODO: probably also want to provide dynamic tuning for these rates based on observed backpressure (i.e. how big pending list is)
 
 #define GC_NURSERY_AGE std::numeric_limits<size_t>::max()
 #define GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_ALLOC 0.60
