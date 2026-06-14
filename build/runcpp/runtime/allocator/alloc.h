@@ -330,6 +330,8 @@ namespace ᐸRuntimeᐳ
 
         constexpr void* xalloc()
         {
+            GC_DIAG_LEVEL_1_OP(g_memstats.processalloc(this->alloctype->bytesize));
+
             if(this->freelistidx == META_FREE_LIST_OOM_SENTINAL) [[unlikely]] { 
                 this->allocatorSlowPathRefresh();
             }
@@ -421,9 +423,7 @@ namespace ᐸRuntimeᐳ
         void (*procdecsfp)(size_t);
         void (*collectfp)();
 
-        MemStats memstats;
-
-        AllocatorThreadLocalInfo() : native_stack_base{}, old_roots{}, gcallocs{}, allocatedbytes{}, pendingdelete{}, procdecsfp{}, collectfp{}, memstats{} { ; }
+        AllocatorThreadLocalInfo() : native_stack_base{}, old_roots{}, gcallocs{}, allocatedbytes{}, pendingdelete{}, procdecsfp{}, collectfp{} { ; }
 
         void initialize(void** caller_rbp, void(*_procdecsfp)(size_t), void (*_collectfp)(), const std::map<uint32_t, GCAllocatorImpl*>& gcallocs);
         void cleanup();

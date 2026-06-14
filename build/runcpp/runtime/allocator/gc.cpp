@@ -469,6 +469,7 @@ namespace ᐸRuntimeᐳ
         curr_roots_young.reserve(128); //TODO -- tune this
         curr_roots_rc.reserve(128); //TODO -- tune this
 
+        GC_DIAG_LEVEL_1_OP(auto time_collect_start = std::chrono::high_resolution_clock::now());
         bool gproc = false;
         {
             // page->entrycount may be reset by another thread (setPageMetaData) -- processPotentialPtr
@@ -493,6 +494,8 @@ namespace ᐸRuntimeᐳ
         //Handle the young roots + the young walk and evacuation
         processYoungRoots(curr_roots_young);
         
+        GC_DIAG_LEVEL_1_OP(auto time_collect_traverse_end = std::chrono::high_resolution_clock::now());
+
         //Process decrements and update the roots info for the next round
         processDecrements(curr_roots_young, final_roots_rc);
 
@@ -502,11 +505,16 @@ namespace ᐸRuntimeᐳ
         //Peel off some of the pending decs
         processPendingDeleteWork(GC_DELETE_PENDING_PROCESS_BYTES_COLLECT);
         
+        GC_DIAG_LEVEL_1_OP(auto time_collect_rc_end = std::chrono::high_resolution_clock::now());
+
         //Process nursery space
         for(auto ai = tl_alloc_info.gcallocs.begin(); ai != tl_alloc_info.gcallocs.end(); ++ai) {
             //TODO: we may want a list of nurserys that are dirty here -- that way we only visit with allocs to process instead of everyone (which may matter on larger programs)
             ai->second->processNursery();
         }
+
+        GC_DIAG_LEVEL_1_OP(auto time_collect_end = std::chrono::high_resolution_clock::now());
+        GC_DIAG_LEVEL_1_OP(g_memstats.processcollect(MemStats::time_in_millis(time_collect_end - time_collect_start), MemStats::time_in_millis(time_collect_traverse_end - time_collect_start), MemStats::time_in_millis(time_collect_rc_end - time_collect_traverse_end)));
     }
 
     void collect()

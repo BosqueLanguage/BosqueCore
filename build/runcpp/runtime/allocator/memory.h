@@ -32,6 +32,26 @@
 #define GC_PAGE_CHECK_NURSERY_LIMIT 12
 #define GC_PAGE_CHECK_GENERAL_LIMIT 4
 
+//A bunch of flags to turn off/on features
+#define GC_UNIQUE_PARENT_FEATURE 0
+#define GC_ALLOCATOR_USE_MALLOC 0
+
+//A bunch of flags to turn off/on diagnostics
+
+#if GC_DIAG_LEVEL_1
+#define GC_DIAG_LEVEL_1_OP(X) X
+#else
+#define GC_DIAG_LEVEL_1_OP(X)
+#endif
+
+#if GC_ALLOCATOR_USE_MALLOC
+#ifndef GC_NURSERY_SIZE
+//#define GC_NURSERY_SIZE 2
+#define GC_NURSERY_SIZE 512
+#endif
+#endif
+////
+
 namespace ᐸRuntimeᐳ
 {
     using GCMetaBits = uint64_t;
@@ -82,7 +102,11 @@ namespace ᐸRuntimeᐳ
     //Set the state on allocation for an evacuation target -- the unique RC bit to indicate that there is a unique (known addr) heap reference
     constexpr void gcInitOnEvacuate(AtomicGCMetadata* rc, void** addr)
     {
+#if GC_UNIQUE_PARENT_FEATURE
         rc->store(META_BIT_IS_ALLOC | META_BIT_IS_RC_UNIQUE | ((uintptr_t)addr << META_BIT_RC_ADDR_SHIFT), std::memory_order_relaxed);
+#else
+        rc->store(META_BIT_IS_ALLOC | META_BIT_IS_RC_SHARED | META_BIT_RC_ONE, std::memory_order_relaxed);
+#endif
     }
 
     constexpr bool gcRootProcessRCIncrement(AtomicGCMetadata* rc)

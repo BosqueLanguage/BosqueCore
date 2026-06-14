@@ -35,23 +35,10 @@
 #include <assert.h>
 
 ////
-//TODO: for now the default allocator is #define set to malloc/free
-#define BSQ_ALLOCATOR_USE_MALLOC 0
-
-#if BSQ_ALLOCATOR_USE_MALLOC
-#ifndef GC_NURSERY_SIZE
-//#define GC_NURSERY_SIZE 2
-#define GC_NURSERY_SIZE 512
-#endif
-#endif
-////
-
-////
-//ENABLE HEAVY DIAGNOSTICS
+//ENABLE DIAGNOSTICS
 //#define BSQ_POSTREE_VALIDATE 1
-//#define GC_INVARIANTS 1
-
-//#define GC_DIAG_LEVEL_1 1
+#define GC_INVARIANTS 1
+#define GC_DIAG_LEVEL_1 1
 ////
 
 namespace ᐸRuntimeᐳ
