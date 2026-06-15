@@ -158,6 +158,9 @@ BOOST_AUTO_TEST_CASE(ROOTS_ALL_LIVE_DEAD) {
     auto n = ᐸRuntimeᐳ::MainᕒNode_allocator.allocate(OptionᐸMainᕒLeafᐳ{SomeᐸMainᕒLeafᐳ{l}}, OptionᐸMainᕒLeafᐳ::none, 42_i);
 
     ᐸRuntimeᐳ::test_collect({n, l}, {});
+
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_rc_reclaims == 0, "missing reclaim " << ᐸRuntimeᐳ::g_memstats.total_rc_reclaims);
+
     ᐸRuntimeᐳ::test_collect({}, {});
 
     BOOST_TEST(ᐸRuntimeᐳ::g_memstats.totalallocs == 2, "missing allocation " << ᐸRuntimeᐳ::g_memstats.totalallocs);
