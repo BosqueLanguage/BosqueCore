@@ -366,6 +366,8 @@ namespace ᐸRuntimeᐳ
         {
             AtomicGCMetadata* meta = gcGetMetadata(ptr);
             gcProcessSweep(meta);
+
+            GC_DIAG_LEVEL_2_OP(std::memset(ptr, std::numeric_limits<uint8_t>::max(), this->alloctype->bytesize));
         }
 
         void processNursery()
@@ -387,7 +389,12 @@ namespace ᐸRuntimeᐳ
 
         void cleanup()
         {
-            //We are just outa here!!!
+             this->allocpage = nullptr;
+             this->evacpage = nullptr;
+
+            this->filled_pages.clear();
+            this->hot_nursery_pages.clear();
+            this->pageset.clear();
         }
     };
 

@@ -73,6 +73,7 @@ namespace ᐸRuntimeᐳ
 
             if(!gcIsAllocated(meta) | gcIsYoung(meta)) {
                 gcProcessSweep(meta);
+                GC_DIAG_LEVEL_2_OP(std::memset(this->getObjectFromIndexInPage(i), std::numeric_limits<uint8_t>::max(), this->typeinfo->bytesize));
                    
                 gcSetFreeListBits(meta, this->freelistidx);
                 this->freelistidx = i;

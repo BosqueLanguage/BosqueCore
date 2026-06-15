@@ -128,6 +128,7 @@ BOOST_AUTO_TEST_SUITE(GC_Basics)
 
 BOOST_AUTO_TEST_CASE(ROOTS_ALL_LIVE) {
     ᐸRuntimeᐳ::g_memstats.reset();
+    ᐸRuntimeᐳ::tl_alloc_info.gcallocs = { {ᐸRuntimeᐳ::g_typeinfo_MainᕒLeaf.bsqtypeid, &ᐸRuntimeᐳ::MainᕒLeaf_allocator}, {ᐸRuntimeᐳ::g_typeinfo_MainᕒNode.bsqtypeid, &ᐸRuntimeᐳ::MainᕒNode_allocator} };
     ᐸRuntimeᐳ::tl_alloc_info.old_roots.clear();
 
     auto l = ᐸRuntimeᐳ::MainᕒLeaf_allocator.allocate(1_i, 2_i, 3_i, 4_i, 5_i);
@@ -135,12 +136,13 @@ BOOST_AUTO_TEST_CASE(ROOTS_ALL_LIVE) {
 
     ᐸRuntimeᐳ::test_collect({n, l}, {});
 
-    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.totalallocs == 2, "missing allocation " << ᐸRuntimeᐳ::g_memstats.totalallocs);
-    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_root_promotions == 2, "missing root promotion " << ᐸRuntimeᐳ::g_memstats.total_root_promotions);
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.totalallocs == 2);
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_root_promotions == 2);
 }
 
 BOOST_AUTO_TEST_CASE(ROOTS_ALL_DEAD) {
     ᐸRuntimeᐳ::g_memstats.reset();
+    ᐸRuntimeᐳ::tl_alloc_info.gcallocs = { {ᐸRuntimeᐳ::g_typeinfo_MainᕒLeaf.bsqtypeid, &ᐸRuntimeᐳ::MainᕒLeaf_allocator}, {ᐸRuntimeᐳ::g_typeinfo_MainᕒNode.bsqtypeid, &ᐸRuntimeᐳ::MainᕒNode_allocator} };
     ᐸRuntimeᐳ::tl_alloc_info.old_roots.clear();
     
     auto l = ᐸRuntimeᐳ::MainᕒLeaf_allocator.allocate(1_i, 2_i, 3_i, 4_i, 5_i);
@@ -148,13 +150,14 @@ BOOST_AUTO_TEST_CASE(ROOTS_ALL_DEAD) {
 
     ᐸRuntimeᐳ::test_collect({}, {});
 
-    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.totalallocs == 2, "missing allocation " << ᐸRuntimeᐳ::g_memstats.totalallocs);
-    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_root_promotions == 0, "unexpected root promotion " << ᐸRuntimeᐳ::g_memstats.total_root_promotions);
-    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_rc_reclaims == 0, "missing reclaim " << ᐸRuntimeᐳ::g_memstats.total_rc_reclaims);
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.totalallocs == 2);
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_root_promotions == 0);
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_rc_reclaims == 0);
 }
 
 BOOST_AUTO_TEST_CASE(ROOTS_ALL_LIVE_DEAD) {
     ᐸRuntimeᐳ::g_memstats.reset();
+    ᐸRuntimeᐳ::tl_alloc_info.gcallocs = { {ᐸRuntimeᐳ::g_typeinfo_MainᕒLeaf.bsqtypeid, &ᐸRuntimeᐳ::MainᕒLeaf_allocator}, {ᐸRuntimeᐳ::g_typeinfo_MainᕒNode.bsqtypeid, &ᐸRuntimeᐳ::MainᕒNode_allocator} };
     ᐸRuntimeᐳ::tl_alloc_info.old_roots.clear();
     
     auto l = ᐸRuntimeᐳ::MainᕒLeaf_allocator.allocate(1_i, 2_i, 3_i, 4_i, 5_i);
@@ -162,61 +165,83 @@ BOOST_AUTO_TEST_CASE(ROOTS_ALL_LIVE_DEAD) {
 
     ᐸRuntimeᐳ::test_collect({n, l}, {});
 
-    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_rc_reclaims == 0, "missing reclaim " << ᐸRuntimeᐳ::g_memstats.total_rc_reclaims);
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_rc_reclaims == 0);
 
     ᐸRuntimeᐳ::test_collect({}, {});
 
-    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.totalallocs == 2, "missing allocation " << ᐸRuntimeᐳ::g_memstats.totalallocs);
-    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_root_promotions == 2, "unexpected root promotion " << ᐸRuntimeᐳ::g_memstats.total_root_promotions);
-    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_rc_reclaims == 2, "missing reclaim " << ᐸRuntimeᐳ::g_memstats.total_rc_reclaims);
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.totalallocs == 2);
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_root_promotions == 2);
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_rc_reclaims == 2);
 }
 
 BOOST_AUTO_TEST_CASE(ROOTS_ALL_LIVE_SHARE_SWITCH_AND_DIE) {
     ᐸRuntimeᐳ::g_memstats.reset();
+    ᐸRuntimeᐳ::tl_alloc_info.gcallocs = { {ᐸRuntimeᐳ::g_typeinfo_MainᕒLeaf.bsqtypeid, &ᐸRuntimeᐳ::MainᕒLeaf_allocator}, {ᐸRuntimeᐳ::g_typeinfo_MainᕒNode.bsqtypeid, &ᐸRuntimeᐳ::MainᕒNode_allocator} };
     ᐸRuntimeᐳ::tl_alloc_info.old_roots.clear();
     
     auto l = ᐸRuntimeᐳ::MainᕒLeaf_allocator.allocate(1_i, 2_i, 3_i, 4_i, 5_i);
     auto n = ᐸRuntimeᐳ::MainᕒNode_allocator.allocate(OptionᐸMainᕒLeafᐳ{SomeᐸMainᕒLeafᐳ{l}}, OptionᐸMainᕒLeafᐳ::none, 42_i);
 
     ᐸRuntimeᐳ::test_collect({n, l, l}, {});
-    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_rc_reclaims == 0, "missing reclaim " << ᐸRuntimeᐳ::g_memstats.total_rc_reclaims);
-    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_root_promotions == 2, "unexpected root promotion " << ᐸRuntimeᐳ::g_memstats.total_root_promotions);
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_rc_reclaims == 0);
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_root_promotions == 2);
  
     ᐸRuntimeᐳ::test_collect({}, {l});
-    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_rc_reclaims == 1, "missing reclaim " << ᐸRuntimeᐳ::g_memstats.total_rc_reclaims);
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_rc_reclaims == 1);
 
     ᐸRuntimeᐳ::test_collect({}, {});
-    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_rc_reclaims == 2, "missing reclaim " << ᐸRuntimeᐳ::g_memstats.total_rc_reclaims);
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_rc_reclaims == 2);
 }
 
 BOOST_AUTO_TEST_CASE(INDIRECT_LIVE) {
     ᐸRuntimeᐳ::g_memstats.reset();
+    ᐸRuntimeᐳ::tl_alloc_info.gcallocs = { {ᐸRuntimeᐳ::g_typeinfo_MainᕒLeaf.bsqtypeid, &ᐸRuntimeᐳ::MainᕒLeaf_allocator}, {ᐸRuntimeᐳ::g_typeinfo_MainᕒNode.bsqtypeid, &ᐸRuntimeᐳ::MainᕒNode_allocator} };
     ᐸRuntimeᐳ::tl_alloc_info.old_roots.clear();
 
     auto l = ᐸRuntimeᐳ::MainᕒLeaf_allocator.allocate(1_i, 2_i, 3_i, 4_i, 5_i);
     auto n = ᐸRuntimeᐳ::MainᕒNode_allocator.allocate(OptionᐸMainᕒLeafᐳ{SomeᐸMainᕒLeafᐳ{l}}, OptionᐸMainᕒLeafᐳ::none, 42_i);
 
     ᐸRuntimeᐳ::test_collect({n}, {});
-    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_root_promotions == 1, "missing root promotion " << ᐸRuntimeᐳ::g_memstats.total_root_promotions);
-    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_evac_promotions == 1, "missing evac promotion " << ᐸRuntimeᐳ::g_memstats.total_evac_promotions);
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_root_promotions == 1);
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_evac_promotions == 1);
 }
 
 BOOST_AUTO_TEST_CASE(INDIRECT_DEAD_YOUNG) {
     ᐸRuntimeᐳ::g_memstats.reset();
+    ᐸRuntimeᐳ::tl_alloc_info.gcallocs = { {ᐸRuntimeᐳ::g_typeinfo_MainᕒLeaf.bsqtypeid, &ᐸRuntimeᐳ::MainᕒLeaf_allocator}, {ᐸRuntimeᐳ::g_typeinfo_MainᕒNode.bsqtypeid, &ᐸRuntimeᐳ::MainᕒNode_allocator} };
     ᐸRuntimeᐳ::tl_alloc_info.old_roots.clear();
 
     auto l = ᐸRuntimeᐳ::MainᕒLeaf_allocator.allocate(1_i, 2_i, 3_i, 4_i, 5_i);
     
     ᐸRuntimeᐳ::test_collect({l}, {});
-    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_root_promotions == 1, "missing root promotion " << ᐸRuntimeᐳ::g_memstats.total_root_promotions);
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_root_promotions == 1);
 
     ᐸRuntimeᐳ::MainᕒNode_allocator.allocate(OptionᐸMainᕒLeafᐳ{SomeᐸMainᕒLeafᐳ{l}}, OptionᐸMainᕒLeafᐳ::none, 42_i);
     ᐸRuntimeᐳ::test_collect({}, {});
 
-    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_rc_reclaims == 1, "missing reclaim " << ᐸRuntimeᐳ::g_memstats.total_rc_reclaims);
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_rc_reclaims == 1);
 }
 
 BOOST_AUTO_TEST_CASE(INDIRECT_PROC_DIE_OLD) {
+    ᐸRuntimeᐳ::g_memstats.reset();
+    ᐸRuntimeᐳ::tl_alloc_info.gcallocs = { {ᐸRuntimeᐳ::g_typeinfo_MainᕒLeaf.bsqtypeid, &ᐸRuntimeᐳ::MainᕒLeaf_allocator}, {ᐸRuntimeᐳ::g_typeinfo_MainᕒNode.bsqtypeid, &ᐸRuntimeᐳ::MainᕒNode_allocator} };
+    ᐸRuntimeᐳ::tl_alloc_info.old_roots.clear();
+
+    auto l = ᐸRuntimeᐳ::MainᕒLeaf_allocator.allocate(1_i, 2_i, 3_i, 4_i, 5_i);
+    auto n1 = ᐸRuntimeᐳ::MainᕒNode_allocator.allocate(OptionᐸMainᕒLeafᐳ{SomeᐸMainᕒLeafᐳ{l}}, OptionᐸMainᕒLeafᐳ::none, 42_i);
+
+    ᐸRuntimeᐳ::test_collect({n1}, {});
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_root_promotions == 1);
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_evac_promotions == 1);
+
+    auto n2 = ᐸRuntimeᐳ::MainᕒNode_allocator.allocate(n1->l, OptionᐸMainᕒLeafᐳ::none, 42_i);
+    
+    ᐸRuntimeᐳ::test_collect({n2}, {});
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_root_promotions == 2);
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_rc_reclaims == 1);
+
+    ᐸRuntimeᐳ::test_collect({}, {});
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_rc_reclaims == 2);
 }
 
 BOOST_AUTO_TEST_CASE(INDIRECT_PROC_SHARE_YOUNG_DIE_OLD) {
