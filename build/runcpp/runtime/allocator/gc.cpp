@@ -173,7 +173,7 @@ namespace ᐸRuntimeᐳ
                 tag++;
                 slots++;
 
-                if(ti != nullptr) {
+                if(ti->ptrmask != nullptr) {
                     const char* mmask = ti->ptrmask;
                     while(*mmask != '\0') {
                         processSlotTag(mmask, slots);
@@ -291,7 +291,7 @@ namespace ᐸRuntimeᐳ
                 tag++;
                 slots++;
 
-                if(ti != nullptr) {
+                if(ti->ptrmask != nullptr) {
                     const char* mmask = ti->ptrmask;
                     while(*mmask != '\0') {
                         decrementQuickSlotTag(mmask, slots);
@@ -362,7 +362,7 @@ namespace ᐸRuntimeᐳ
                 tag++;
                 slots++;
 
-                if(ti != nullptr) {
+                if(ti->ptrmask != nullptr) {
                     const char* mmask = ti->ptrmask;
                     while(*mmask != '\0') {
                         decrementStdSlotTag(mmask, slots);

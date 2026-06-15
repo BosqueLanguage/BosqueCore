@@ -101,6 +101,11 @@ namespace ᐸRuntimeᐳ
         }
 
         MemStats() { ; }
+
+        void reset() 
+        {
+            *this = MemStats();
+        }
     };
 
     extern MemStats g_memstats;
