@@ -363,7 +363,7 @@ namespace ᐸRuntimeᐳ
                     return XList{ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>{PosRBTree<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_T)>::mkinitial(elems.begin(), elems.end())}};
                 }
                 else {
-                    assert(false); // Not Implemented: full mk for CString trees
+                    return XList{ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>{PosRBTree<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_T)>::mklargerec(elems.begin(), elems.end(), elems.size())}};
                 }
             }
         }
@@ -381,7 +381,7 @@ namespace ᐸRuntimeᐳ
                     return XList{ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>{PosRBTree<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_T)>::mkinitial(elems, elems + len)}};
                 }
                 else {
-                    assert(false); // Not Implemented: full mk for CString trees
+                    return XList{ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>{PosRBTree<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_T)>::mklargerec(elems, elems + len, len)}};
                 }
             }
         }

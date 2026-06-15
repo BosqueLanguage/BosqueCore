@@ -706,11 +706,8 @@ class CPPEmitter {
                 if(iclse.elements.length <= LIST_T_INLINE_CAPACITY(tinfot.bytesize)) {
                     return `${cce}({${args}})`;
                 }
-                else if(iclse.elements.length <= LIST_T_LEAF_CAPACITY(tinfot.bytesize)) {
-                    return `${cce}::mk({${args}})`;
-                }
                 else {
-                    assert(false, "CPPEmitter: need to implement list singleton construction for larger allocation");
+                    return `${cce}::mk({${args}})`;
                 }
             }
             else if(ttag === IRExpressionTag.IRInvokeSimpleExpression) {

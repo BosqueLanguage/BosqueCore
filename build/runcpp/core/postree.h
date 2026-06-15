@@ -479,6 +479,30 @@ namespace ᐸRuntimeᐳ
             }
         }
 
+        template <typename Iter>
+        static PosRBNode<T, K>* mklargerec(Iter start, Iter end, size_t size)
+        {
+            if(size <= K) {
+                return s_leafallocator->construct(PosRBData<T, K>(RColor::Red, 1, start, end));
+            }
+            else {
+                size_t csize = ((size - (K / 2)) / 2) + 1;
+                size_t dsize = size - (2 * csize);
+
+                Iter mid1 = start;
+                std::advance(mid1, csize);
+
+                Iter mid2 = mid1;
+                std::advance(mid2, dsize);
+
+                const PosRBNode<T, K>* left = mklargerec(start, mid1, csize);
+                const PosRBNode<T, K>* right = mklargerec(mid2, end, dsize);
+
+                PosRBData<T, K> ndata(RColor::Black, 1, mid1, mid2);
+                return s_nodeallocator->construct(RColor::Black, computeNewBHeight_ForTreeNode(RColor::Black, left, right), computeNewCount_ForTreeNode(left, right, ndata), left, right, ndata);
+            }
+        }
+
         static PosRBNode<T, K>* copyNodeReplaceData(const PosRBNode<T, K>* node, const PosRBData<T, K>& ndata)
         {
             if(isLeafType(node)) {
@@ -549,7 +573,7 @@ namespace ᐸRuntimeᐳ
                     curr = reprGetRight(curr);
                 }
                 else {
-                    return curr->data.data[index]; //index is within the current node
+                    return curr->data.data[index - lcount]; //index is within the current node
                 }
             }
         }

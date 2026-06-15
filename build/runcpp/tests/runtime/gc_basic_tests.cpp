@@ -128,6 +128,7 @@ BOOST_AUTO_TEST_SUITE(GC_Basics)
 
 BOOST_AUTO_TEST_CASE(ROOTS_ALL_LIVE) {
     ᐸRuntimeᐳ::g_memstats.reset();
+    ᐸRuntimeᐳ::tl_alloc_info.old_roots.clear();
 
     auto l = ᐸRuntimeᐳ::MainᕒLeaf_allocator.allocate(1_i, 2_i, 3_i, 4_i, 5_i);
     auto n = ᐸRuntimeᐳ::MainᕒNode_allocator.allocate(OptionᐸMainᕒLeafᐳ{SomeᐸMainᕒLeafᐳ{l}}, OptionᐸMainᕒLeafᐳ::none, 42_i);
@@ -140,6 +141,7 @@ BOOST_AUTO_TEST_CASE(ROOTS_ALL_LIVE) {
 
 BOOST_AUTO_TEST_CASE(ROOTS_ALL_DEAD) {
     ᐸRuntimeᐳ::g_memstats.reset();
+    ᐸRuntimeᐳ::tl_alloc_info.old_roots.clear();
     
     auto l = ᐸRuntimeᐳ::MainᕒLeaf_allocator.allocate(1_i, 2_i, 3_i, 4_i, 5_i);
     ᐸRuntimeᐳ::MainᕒNode_allocator.allocate(OptionᐸMainᕒLeafᐳ{SomeᐸMainᕒLeafᐳ{l}}, OptionᐸMainᕒLeafᐳ::none, 42_i);
@@ -148,11 +150,12 @@ BOOST_AUTO_TEST_CASE(ROOTS_ALL_DEAD) {
 
     BOOST_TEST(ᐸRuntimeᐳ::g_memstats.totalallocs == 2, "missing allocation " << ᐸRuntimeᐳ::g_memstats.totalallocs);
     BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_root_promotions == 0, "unexpected root promotion " << ᐸRuntimeᐳ::g_memstats.total_root_promotions);
-    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_rc_reclaims == 2, "missing reclaim " << ᐸRuntimeᐳ::g_memstats.total_rc_reclaims);
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_rc_reclaims == 0, "missing reclaim " << ᐸRuntimeᐳ::g_memstats.total_rc_reclaims);
 }
 
 BOOST_AUTO_TEST_CASE(ROOTS_ALL_LIVE_DEAD) {
     ᐸRuntimeᐳ::g_memstats.reset();
+    ᐸRuntimeᐳ::tl_alloc_info.old_roots.clear();
     
     auto l = ᐸRuntimeᐳ::MainᕒLeaf_allocator.allocate(1_i, 2_i, 3_i, 4_i, 5_i);
     auto n = ᐸRuntimeᐳ::MainᕒNode_allocator.allocate(OptionᐸMainᕒLeafᐳ{SomeᐸMainᕒLeafᐳ{l}}, OptionᐸMainᕒLeafᐳ::none, 42_i);
@@ -169,12 +172,48 @@ BOOST_AUTO_TEST_CASE(ROOTS_ALL_LIVE_DEAD) {
 }
 
 BOOST_AUTO_TEST_CASE(ROOTS_ALL_LIVE_SHARE_SWITCH_AND_DIE) {
+    ᐸRuntimeᐳ::g_memstats.reset();
+    ᐸRuntimeᐳ::tl_alloc_info.old_roots.clear();
+    
+    auto l = ᐸRuntimeᐳ::MainᕒLeaf_allocator.allocate(1_i, 2_i, 3_i, 4_i, 5_i);
+    auto n = ᐸRuntimeᐳ::MainᕒNode_allocator.allocate(OptionᐸMainᕒLeafᐳ{SomeᐸMainᕒLeafᐳ{l}}, OptionᐸMainᕒLeafᐳ::none, 42_i);
+
+    ᐸRuntimeᐳ::test_collect({n, l, l}, {});
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_rc_reclaims == 0, "missing reclaim " << ᐸRuntimeᐳ::g_memstats.total_rc_reclaims);
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_root_promotions == 2, "unexpected root promotion " << ᐸRuntimeᐳ::g_memstats.total_root_promotions);
+ 
+    ᐸRuntimeᐳ::test_collect({}, {l});
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_rc_reclaims == 1, "missing reclaim " << ᐸRuntimeᐳ::g_memstats.total_rc_reclaims);
+
+    ᐸRuntimeᐳ::test_collect({}, {});
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_rc_reclaims == 2, "missing reclaim " << ᐸRuntimeᐳ::g_memstats.total_rc_reclaims);
 }
 
 BOOST_AUTO_TEST_CASE(INDIRECT_LIVE) {
+    ᐸRuntimeᐳ::g_memstats.reset();
+    ᐸRuntimeᐳ::tl_alloc_info.old_roots.clear();
+
+    auto l = ᐸRuntimeᐳ::MainᕒLeaf_allocator.allocate(1_i, 2_i, 3_i, 4_i, 5_i);
+    auto n = ᐸRuntimeᐳ::MainᕒNode_allocator.allocate(OptionᐸMainᕒLeafᐳ{SomeᐸMainᕒLeafᐳ{l}}, OptionᐸMainᕒLeafᐳ::none, 42_i);
+
+    ᐸRuntimeᐳ::test_collect({n}, {});
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_root_promotions == 1, "missing root promotion " << ᐸRuntimeᐳ::g_memstats.total_root_promotions);
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_evac_promotions == 1, "missing evac promotion " << ᐸRuntimeᐳ::g_memstats.total_evac_promotions);
 }
 
 BOOST_AUTO_TEST_CASE(INDIRECT_DEAD_YOUNG) {
+    ᐸRuntimeᐳ::g_memstats.reset();
+    ᐸRuntimeᐳ::tl_alloc_info.old_roots.clear();
+
+    auto l = ᐸRuntimeᐳ::MainᕒLeaf_allocator.allocate(1_i, 2_i, 3_i, 4_i, 5_i);
+    
+    ᐸRuntimeᐳ::test_collect({l}, {});
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_root_promotions == 1, "missing root promotion " << ᐸRuntimeᐳ::g_memstats.total_root_promotions);
+
+    ᐸRuntimeᐳ::MainᕒNode_allocator.allocate(OptionᐸMainᕒLeafᐳ{SomeᐸMainᕒLeafᐳ{l}}, OptionᐸMainᕒLeafᐳ::none, 42_i);
+    ᐸRuntimeᐳ::test_collect({}, {});
+
+    BOOST_TEST(ᐸRuntimeᐳ::g_memstats.total_rc_reclaims == 1, "missing reclaim " << ᐸRuntimeᐳ::g_memstats.total_rc_reclaims);
 }
 
 BOOST_AUTO_TEST_CASE(INDIRECT_PROC_DIE_OLD) {
