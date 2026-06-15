@@ -9,6 +9,6 @@ namespace ᐸRuntimeᐳ
     void collect();
 
 #ifdef GC_TESTING
-    void test_collect(std::initializer_list<void*> roots);
+    void test_collect(std::initializer_list<void*> yroots, std::initializer_list<void*> rcroots);
 #endif
 }

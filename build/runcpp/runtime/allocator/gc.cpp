@@ -127,6 +127,7 @@ namespace ᐸRuntimeᐳ
                 finalroots.push_back(roots[i]);
             }
             else {
+                GC_DIAG_LEVEL_2_OP(g_memstats.processrootinc(roots[i].second));
                 bool keep = gcRootProcessRCIncrement(roots[i].first);
                 if(keep) {
                     finalroots.push_back(roots[i]);
@@ -148,6 +149,7 @@ namespace ᐸRuntimeᐳ
             return forward(m, ptr, parentslotptr);
         }
         else {
+            GC_DIAG_LEVEL_2_OP(g_memstats.processstdinc(ptr));
             gcYoungProcessRCIncrement(m);
             return ptr;
         }
@@ -218,6 +220,7 @@ namespace ᐸRuntimeᐳ
             return *((void**)ptr);
         }
         else {
+            GC_DIAG_LEVEL_2_OP(g_memstats.processpromotion(ptr, false));
             GCAllocatorImpl* gcalloc = gcGetAllocator(ptr);
 
             void* nptr = gcalloc->xalloc_evac(parentslotptr); 
@@ -241,6 +244,7 @@ namespace ᐸRuntimeᐳ
     void processYoungRoots(std::vector<std::pair<AtomicGCMetadata*, void*>>& roots)
     {
         for(size_t i = 0; i < roots.size(); i++) {
+            GC_DIAG_LEVEL_2_OP(g_memstats.processpromotion(roots[i].second, true));
             gcRootProcessYoungPromote(roots[i].first);
         }
 
@@ -272,6 +276,7 @@ namespace ᐸRuntimeᐳ
             }
             case '1': {
                 if(*slots != nullptr) {
+                    GC_DIAG_LEVEL_2_OP(g_memstats.processstddec(*slots));
                     bool isdead = gcProcessRCDecrement(gcGetMetadata(*slots));
                     if(isdead) {
                         releaseQuick(*slots);
@@ -301,7 +306,8 @@ namespace ᐸRuntimeᐳ
 
     void releaseQuick(void* ptr)
     {
-        const TypeInfo* ti = gcGetTypeInfo(ptr);   
+        GCAllocatorImpl* alloc = gcGetAllocator(ptr);
+        const TypeInfo* ti = alloc->alloctype;   
         if(ti->ptrmask != nullptr) {
             const char* mmask = ti->ptrmask;
             void** slots = (void**)ptr;
@@ -310,7 +316,7 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        GCAllocatorImpl* alloc = gcGetAllocator(ptr);
+        GC_DIAG_LEVEL_2_OP(g_memstats.processreclaimrc(ptr));
         alloc->xrcRelease(ptr);
     }
     
@@ -321,6 +327,7 @@ namespace ᐸRuntimeᐳ
              releaseQuick(ptr);
         }
         else {
+            GC_DIAG_LEVEL_2_OP(g_memstats.processpushpendingdelete(ptr));
             /*
             gcStoreDeleteListPtr(gcGetMetadata(ptr), tl_alloc_info.pendingdelete);
             tl_alloc_info.pendingdelete = ptr;
@@ -340,6 +347,7 @@ namespace ᐸRuntimeᐳ
             }
             case '1': {
                 if(*slots != nullptr) {
+                    GC_DIAG_LEVEL_2_OP(g_memstats.processstddec(*slots));
                     bool isdead = gcProcessRCDecrement(gcGetMetadata(*slots));
                     if(isdead) {
                         releaseStd(*slots);
@@ -365,6 +373,7 @@ namespace ᐸRuntimeᐳ
             }
             case '3': {
                 if(!XCString::gcIsTestIsInlineRepresentation(slots)) {
+                    GC_DIAG_LEVEL_2_OP(g_memstats.processstddec(*(slots + 1)));
                     bool isdead = gcProcessRCDecrement(gcGetMetadata(*(slots + 1)));
                     if(isdead) {
                         releaseStd(*(slots + 1));
@@ -376,6 +385,7 @@ namespace ᐸRuntimeᐳ
             }
             case '4': {
                 if(!XString::gcIsTestIsInlineRepresentation(slots)) {
+                    GC_DIAG_LEVEL_2_OP(g_memstats.processstddec(*(slots + 1)));
                     bool isdead = gcProcessRCDecrement(gcGetMetadata(*(slots + 1)));
                     if(isdead) {
                         releaseStd(*(slots + 1));
@@ -392,6 +402,7 @@ namespace ᐸRuntimeᐳ
                     slots++;
                 }
                 else {
+                    GC_DIAG_LEVEL_2_OP(g_memstats.processstddec(*(slots + 1)));
                     bool isdead = gcProcessRCDecrement(gcGetMetadata(*(slots + 1)));
                     if(isdead) {
                         releaseStd(*(slots + 1));
@@ -412,6 +423,8 @@ namespace ᐸRuntimeᐳ
         });
         
         for(size_t i = 0; i < decroots.size(); i++) {
+            GC_DIAG_LEVEL_2_OP(g_memstats.processrootdec(decroots[i].second));
+
             auto [meta, droot] = decroots[i];
             bool isdead = gcProcessRCDecrement(meta);
 
@@ -451,6 +464,7 @@ namespace ᐸRuntimeᐳ
                 }
             }
 
+            GC_DIAG_LEVEL_2_OP(g_memstats.processreclaimrc(ptr));
             alloc->xrcRelease(ptr);
 
             procbytes += alloc->alloctype->bytesize;
@@ -461,7 +475,7 @@ namespace ᐸRuntimeᐳ
     }
 
     template <bool skipwalk>
-    void xcollect(std::initializer_list<void*> roots)
+    void xcollect(std::initializer_list<void*> yroots, std::initializer_list<void*> rcroots)
     {
         std::vector<std::pair<AtomicGCMetadata*, void*>> curr_roots_young;
         std::vector<std::pair<AtomicGCMetadata*, void*>> curr_roots_rc;
@@ -476,6 +490,14 @@ namespace ᐸRuntimeᐳ
 	        std::lock_guard lk(g_alloc_info.g_pages_mutex);
 
             if constexpr (skipwalk) {
+                std::transform(yroots.begin(), yroots.end(), std::back_inserter(curr_roots_young), [](void* ptr) {
+                    return std::make_pair(gcGetMetadata(ptr), ptr);
+                });
+                std::transform(rcroots.begin(), rcroots.end(), std::back_inserter(curr_roots_rc), [](void* ptr) {
+                    return std::make_pair(gcGetMetadata(ptr), ptr);
+                });
+            }
+            else {
                 gproc = walkGlobalRoots(curr_roots_young, curr_roots_rc);
                 walkStack(curr_roots_young, curr_roots_rc);
             }
@@ -519,11 +541,11 @@ namespace ᐸRuntimeᐳ
 
     void collect()
     {
-        xcollect<false>({});
+        xcollect<false>({}, {});
     }
 
-    void test_collect(std::initializer_list<void*> roots)
+    void test_collect(std::initializer_list<void*> yroots, std::initializer_list<void*> rcroots)
     {
-        xcollect<true>(roots);
+        xcollect<true>(yroots, rcroots);
     }
 }

@@ -40,8 +40,14 @@
 
 #if GC_DIAG_LEVEL_1
 #define GC_DIAG_LEVEL_1_OP(X) X
+#if GC_DIAG_LEVEL_2
+#define GC_DIAG_LEVEL_2_OP(X) X
+#else
+#define GC_DIAG_LEVEL_2_OP(X)
+#endif
 #else
 #define GC_DIAG_LEVEL_1_OP(X)
+#define GC_DIAG_LEVEL_2_OP(X)
 #endif
 
 #if GC_ALLOCATOR_USE_MALLOC

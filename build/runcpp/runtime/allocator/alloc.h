@@ -342,6 +342,8 @@ namespace ᐸRuntimeᐳ
             this->freelistidx = gcLoadFreeListNext(meta);
             gcInitOnAllocate(meta);
 
+            GC_DIAG_LEVEL_1_OP(g_memstats.processallocof(freeidx, this->allocpage->getObjectFromIndexInPage(freeidx)));
+
             return this->allocpage->getObjectFromIndexInPage(freeidx);
         }
 

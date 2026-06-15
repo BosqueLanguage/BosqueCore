@@ -130,22 +130,22 @@ BOOST_AUTO_TEST_CASE(ROOTS_ALL_LIVE) {
     auto l = ᐸRuntimeᐳ::MainᕒLeaf_allocator.allocate(1_i, 2_i, 3_i, 4_i, 5_i);
     auto n = ᐸRuntimeᐳ::MainᕒNode_allocator.allocate(OptionᐸMainᕒLeafᐳ{SomeᐸMainᕒLeafᐳ{l}}, OptionᐸMainᕒLeafᐳ::none, 42_i);
 
-    ᐸRuntimeᐳ::test_collect({n, l});
+    ᐸRuntimeᐳ::test_collect({n, l}, {});
 }
 
 BOOST_AUTO_TEST_CASE(ROOTS_ALL_DEAD) {
     auto l = ᐸRuntimeᐳ::MainᕒLeaf_allocator.allocate(1_i, 2_i, 3_i, 4_i, 5_i);
     ᐸRuntimeᐳ::MainᕒNode_allocator.allocate(OptionᐸMainᕒLeafᐳ{SomeᐸMainᕒLeafᐳ{l}}, OptionᐸMainᕒLeafᐳ::none, 42_i);
 
-    ᐸRuntimeᐳ::test_collect({});
+    ᐸRuntimeᐳ::test_collect({}, {});
 }
 
 BOOST_AUTO_TEST_CASE(ROOTS_ALL_LIVE_DEAD) {
     auto l = ᐸRuntimeᐳ::MainᕒLeaf_allocator.allocate(1_i, 2_i, 3_i, 4_i, 5_i);
     auto n = ᐸRuntimeᐳ::MainᕒNode_allocator.allocate(OptionᐸMainᕒLeafᐳ{SomeᐸMainᕒLeafᐳ{l}}, OptionᐸMainᕒLeafᐳ::none, 42_i);
 
-    ᐸRuntimeᐳ::test_collect({n, l});
-    ᐸRuntimeᐳ::test_collect({});
+    ᐸRuntimeᐳ::test_collect({n, l}, {});
+    ᐸRuntimeᐳ::test_collect({}, {});
 }
 
 BOOST_AUTO_TEST_CASE(ROOTS_ALL_LIVE_SHARE_SWITCH_AND_DIE) {
