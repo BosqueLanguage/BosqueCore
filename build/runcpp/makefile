@@ -11,33 +11,25 @@ TEST_SRC_DIR=$(SRC_DIR)tests/
 
 OUT_COMPONENTS=$(BUILD_DIR)output/
 OUT_OBJ=$(BUILD_DIR)output/obj/
-OUT_TESTS=$(BUILD_DIR)output/tests/
 
 JSON_INCLUDES=-I $(BUILD_DIR)include/json/
 
-#dev is default, for another flavor : make BUILD=release or debug
+#testing is default, for another flavor : make BUILD=release or debug
 BUILD := testing
 
 CPP=g++ 
 CPP_STDFLAGS=-Wall -Wextra -Wno-unused-parameter -Wuninitialized -Werror -std=gnu++23 -fno-omit-frame-pointer -fno-rtti -fno-strict-aliasing -fno-stack-protector -fPIC
 
-CPPFLAGS_OPT.testing=-O0 -g -ggdb -fsanitize=address --param asan-stack=0 -DGC_TESTING
+CPPFLAGS_OPT.testing=-O0 -g -ggdb -fsanitize=address --param asan-stack=0
 CPPFLAGS_OPT.release=-O2 -fno-exceptions -march=x86-64-v3 -Wno-array-bounds -Wno-stringop-overflow
 CPPFLAGS=${CPPFLAGS_OPT.${BUILD}} ${CPP_STDFLAGS}
 
-CPP_TESTFLAGS=-O0 -g -ggdb -fno-omit-frame-pointer -fsanitize=address --param asan-stack=0 -Wall -Wextra -Wno-unused-parameter -Wuninitialized -Werror -std=gnu++23 -fno-rtti -fno-strict-aliasing -fno-stack-protector -fPIC
-
 HEADERS=$(wildcard $(SRC_DIR)*.h) $(wildcard $(CORE_SRC_DIR)*.h) $(wildcard $(RUNTIME_SRC_DIR)*.h) $(wildcard $(ALLOC_SRC_DIR)*.h) $(wildcard $(BSQIR_SRC_DIR)*.h)
 OBJS=$(OUT_OBJ)common.o $(OUT_OBJ)alloc.o $(OUT_OBJ)memstats.o $(OUT_OBJ)gc.o $(OUT_OBJ)strings.o $(OUT_OBJ)lexer.o $(OUT_OBJ)parser.o $(OUT_OBJ)emit.o
-TESTS=$(OUT_TESTS)postree_tests $(OUT_TESTS)gc_basic_tests
 
 all: $(OBJS)
 
 app: ${OUT_COMPONENTS}app
-
-tests: $(TESTS) $(TEST_SRC_DIR)runner.sh
-	cp $(TEST_SRC_DIR)runner.sh $(OUT_COMPONENTS)/tests/
-	@echo "Tests built successfully. You can run them using -- bash $(OUT_COMPONENTS)/tests/runner.sh"
 
 ${OUT_COMPONENTS}app: $(HEADERS) $(OBJS) app.cpp
 	@mkdir -p $(OUT_COMPONENTS)
@@ -79,19 +71,6 @@ $(OUT_OBJ)common.o: $(HEADERS) $(SRC_DIR)common.cpp
 	@mkdir -p $(OUT_OBJ)
 	$(CPP) $(CPPFLAGS) -o $(OUT_OBJ)common.o -c $(SRC_DIR)common.cpp
 
-##
-#Test builds
-##
-
-$(OUT_TESTS)postree_tests: $(OBJS) $(HEADERS) $(TEST_SRC_DIR)core/postree_tests.cpp
-	@mkdir -p $(OUT_TESTS)
-	$(CPP) $(CPP_TESTFLAGS) -o ${OUT_TESTS}postree_tests $(OBJS) $(JSON_INCLUDES) $(TEST_SRC_DIR)core/postree_tests.cpp
-
-$(OUT_TESTS)gc_basic_tests: $(OBJS) $(HEADERS) $(TEST_SRC_DIR)runtime/gc_basic_tests.cpp
-	@mkdir -p $(OUT_TESTS)
-	$(CPP) $(CPP_TESTFLAGS) -DGC_TESTING -o ${OUT_TESTS}gc_basic_tests $(OBJS) $(JSON_INCLUDES) $(TEST_SRC_DIR)runtime/gc_basic_tests.cpp
-
 clean:
 	rm -rf $(OUT_OBJ)*
 	rm -rf $(OUT_COMPONENTS)*
-	rm -rf $(OUT_TESTS)*

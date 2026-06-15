@@ -354,12 +354,12 @@ namespace ᐸRuntimeᐳ
             }
         
             uint16_t evacidx = this->evaclistidx;
-            AtomicGCMetadata* meta = this->allocpage->getMetadataFromIndexInPage(evacidx);
+            AtomicGCMetadata* meta = this->evacpage->getMetadataFromIndexInPage(evacidx);
 
             this->evaclistidx = gcLoadFreeListNext(meta);
             gcInitOnEvacuate(meta, parentslotptr);
 
-            return this->allocpage->getObjectFromIndexInPage(evacidx);
+            return this->evacpage->getObjectFromIndexInPage(evacidx);
         }
 
         inline void xrcRelease(void* ptr)

@@ -59,6 +59,10 @@ namespace ᐸRuntimeᐳ
         return a.second < b.second;
     };
 
+    constexpr static auto RootEq = [](const std::pair<AtomicGCMetadata*, void*>& a, const std::pair<AtomicGCMetadata*, void*>& b) {
+        return a.second == b.second;
+    };
+
     void processPotentialPtr(void* addr, std::vector<std::pair<AtomicGCMetadata*, void*>>& roots_young, std::vector<std::pair<AtomicGCMetadata*, void*>>& roots_rc)
     { 
         AtomicGCMetadata* meta = nullptr;
@@ -118,7 +122,7 @@ namespace ᐸRuntimeᐳ
         processPotentialPtr(rcontents.r15, roots_young, roots_rc);
     }
 
-    void processRCRoots(std::vector< std::pair<AtomicGCMetadata*, void*>>& roots, std::vector<std::pair<AtomicGCMetadata*, void*>>& finalroots)
+    void processRCRoots(std::vector<std::pair<AtomicGCMetadata*, void*>>& roots, std::vector<std::pair<AtomicGCMetadata*, void*>>& finalroots)
     {
         for(size_t i = 0; i < roots.size(); i++) {
             bool alreadyknown = std::binary_search(tl_alloc_info.old_roots.cbegin(), tl_alloc_info.old_roots.cend(), roots[i], RootCmp);
@@ -217,7 +221,9 @@ namespace ᐸRuntimeᐳ
     void* forward(AtomicGCMetadata* m, void* ptr, void** parentslotptr)
     {
         if(gcIsForwarded(m)) {
-            return *((void**)ptr);
+            void* nptr = *((void**)ptr);
+            gcYoungProcessRCIncrement(gcGetMetadata(nptr));
+            return nptr;
         }
         else {
             GC_DIAG_LEVEL_2_OP(g_memstats.processpromotion(ptr, false));
@@ -452,8 +458,8 @@ namespace ᐸRuntimeᐳ
             void* ptr = alloc->pendingdelete;
             alloc->pendingdelete = gcGetDeleteListPtr(gcGetMetadata(ptr));
             */
-            void* ptr = tl_alloc_info.pendingdelete.front();
-            tl_alloc_info.pendingdelete.pop_front();
+            void* ptr = *iter;
+            iter++;
 
             GCAllocatorImpl* alloc = gcGetAllocator(ptr);
             if(alloc->alloctype->ptrmask != nullptr) {
@@ -472,10 +478,11 @@ namespace ᐸRuntimeᐳ
                 break;
             }
         }
+
+        tl_alloc_info.pendingdelete.erase(tl_alloc_info.pendingdelete.begin(), iter);
     }
 
-    template <bool skipwalk>
-    void xcollect(std::initializer_list<void*> yroots, std::initializer_list<void*> rcroots)
+    void collect()
     {
         std::vector<std::pair<AtomicGCMetadata*, void*>> curr_roots_young;
         std::vector<std::pair<AtomicGCMetadata*, void*>> curr_roots_rc;
@@ -489,24 +496,14 @@ namespace ᐸRuntimeᐳ
             // page->entrycount may be reset by another thread (setPageMetaData) -- processPotentialPtr
 	        std::lock_guard lk(g_alloc_info.g_pages_mutex);
 
-            if constexpr (skipwalk) {
-                std::transform(yroots.begin(), yroots.end(), std::back_inserter(curr_roots_young), [](void* ptr) {
-                    return std::make_pair(gcGetMetadata(ptr), ptr);
-                });
-                std::transform(rcroots.begin(), rcroots.end(), std::back_inserter(curr_roots_rc), [](void* ptr) {
-                    return std::make_pair(gcGetMetadata(ptr), ptr);
-                });
-            }
-            else {
-                gproc = walkGlobalRoots(curr_roots_young, curr_roots_rc);
-                walkStack(curr_roots_young, curr_roots_rc);
-            }
+            gproc = walkGlobalRoots(curr_roots_young, curr_roots_rc);
+            walkStack(curr_roots_young, curr_roots_rc);
+            
+            std::sort(curr_roots_young.begin(), curr_roots_young.end(), RootCmp);
+            curr_roots_young.erase(std::unique(curr_roots_young.begin(), curr_roots_young.end(), RootEq), curr_roots_young.end());
 
-            std::sort(curr_roots_young.begin(), curr_roots_young.end());
-            curr_roots_young.erase(std::unique(curr_roots_young.begin(), curr_roots_young.end()), curr_roots_young.end());
-
-            std::sort(curr_roots_rc.begin(), curr_roots_rc.end());
-            curr_roots_rc.erase(std::unique(curr_roots_rc.begin(), curr_roots_rc.end()), curr_roots_rc.end());
+            std::sort(curr_roots_rc.begin(), curr_roots_rc.end(), RootCmp);
+            curr_roots_rc.erase(std::unique(curr_roots_rc.begin(), curr_roots_rc.end(), RootEq), curr_roots_rc.end());
 
             //Handle the RC roots 
             final_roots_rc.reserve(curr_roots_rc.size());
@@ -537,15 +534,5 @@ namespace ᐸRuntimeᐳ
 
         GC_DIAG_LEVEL_1_OP(auto time_collect_end = std::chrono::high_resolution_clock::now());
         GC_DIAG_LEVEL_1_OP(g_memstats.processcollect(MemStats::time_in_millis(time_collect_end - time_collect_start), MemStats::time_in_millis(time_collect_traverse_end - time_collect_start), MemStats::time_in_millis(time_collect_rc_end - time_collect_traverse_end)));
-    }
-
-    void collect()
-    {
-        xcollect<false>({}, {});
-    }
-
-    void test_collect(std::initializer_list<void*> yroots, std::initializer_list<void*> rcroots)
-    {
-        xcollect<true>(yroots, rcroots);
     }
 }

@@ -147,7 +147,7 @@ namespace ᐸRuntimeᐳ
     //The object is now a forward object -- so allocated and keep young so we know to collect it when sweeping (moved to the forwarding state)
     constexpr void gcProcessUpdateYoungForward(AtomicGCMetadata* rc)
     {
-        rc->store(META_BIT_IS_ALLOC | META_BIT_IS_YOUNG | META_BIT_IS_FORWARD, std::memory_order_relaxed);
+        rc->store(META_BIT_IS_FORWARD, std::memory_order_relaxed);
     }
 
     //The object is pointed to by a root of some kind, so cant unique parent it, just set the RC to 1
