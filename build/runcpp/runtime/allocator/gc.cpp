@@ -3,12 +3,6 @@
 #include "../../core/strings.h"
 #include "../../core/list_t.h"
 
-#if GC_INVARIANTS
-#define GC_INVARIANT_CHECK(x) assert(x)
-#else
-#define GC_INVARIANT_CHECK(x)
-#endif
-
 #define GC_PTR_IN_RANGE(V) ((GC_MIN_ALLOCATED_ADDRESS <= V) && (V <= GC_MAX_ALLOCATED_ADDRESS))
 #define GC_PTR_NOT_IN_STACK(BASE, CURR, V) ((((void*)V) <= ((void*)CURR)) || (((void*)BASE) <= ((void*)V)))
 
@@ -19,6 +13,40 @@
 
 namespace ᐸRuntimeᐳ
 {
+
+    constexpr static void gcStoreForwardingPtr(void* ptr, void* fwdptr) 
+    {
+        *((void**)ptr) = fwdptr;
+    }
+
+    constexpr static void* gcLoadForwardingPtr(void* ptr) 
+    {
+        return *((void**)ptr);
+    }
+
+    constexpr static void gcStoreDeleteListPtr(void* addr)
+    {
+        PageInfo* page = PageInfo::extractPageFromPointer(addr);
+        if(page->threadid == std::this_thread::get_id()) {
+            tl_alloc_info.pendingdelete.push_back(addr);
+        }
+        else {
+            assert(false); //Cross thread deletes not supported yet
+        }
+    }
+
+    constexpr static void* gcGetDeleteListPtr()
+    {
+        if(tl_alloc_info.pendingdelete.empty()) {
+            return nullptr;
+        }
+        else {
+            void* next = tl_alloc_info.pendingdelete.back();
+            tl_alloc_info.pendingdelete.pop_back();
+            return next;
+        }
+    }
+
     void loadNativeRootSet(RegisterContents& rcontents, std::vector<void*>& possibleroots)
     {
         //this code should load from the asm stack pointers and copy the native stack into the roots memory
@@ -131,7 +159,6 @@ namespace ᐸRuntimeᐳ
                 finalroots.push_back(roots[i]);
             }
             else {
-                GC_DIAG_LEVEL_2_OP(g_memstats.processrootinc(roots[i].second));
                 bool keep = gcRootProcessRCIncrement(roots[i].first);
                 if(keep) {
                     finalroots.push_back(roots[i]);
@@ -153,7 +180,6 @@ namespace ᐸRuntimeᐳ
             return forward(m, ptr, parentslotptr);
         }
         else {
-            GC_DIAG_LEVEL_2_OP(g_memstats.processstdinc(ptr));
             gcYoungProcessRCIncrement(m);
             return ptr;
         }
@@ -221,18 +247,17 @@ namespace ᐸRuntimeᐳ
     void* forward(AtomicGCMetadata* m, void* ptr, void** parentslotptr)
     {
         if(gcIsForwarded(m)) {
-            void* nptr = *((void**)ptr);
+            void* nptr = gcLoadForwardingPtr(ptr);
             gcYoungProcessRCIncrement(gcGetMetadata(nptr));
             return nptr;
         }
         else {
-            GC_DIAG_LEVEL_2_OP(g_memstats.processpromotion(ptr, false));
             GCAllocatorImpl* gcalloc = gcGetAllocator(ptr);
 
             void* nptr = gcalloc->xalloc_evac(parentslotptr); 
 	        std::copy((void**)ptr, (void**)ptr + gcalloc->alloctype->slotcount, (void**)nptr);
 
-            *((void**)ptr) = nptr;
+            gcStoreForwardingPtr(ptr, nptr);
             gcProcessUpdateYoungForward(m);
 
             if(gcalloc->alloctype->ptrmask != nullptr) {
@@ -250,7 +275,6 @@ namespace ᐸRuntimeᐳ
     void processYoungRoots(std::vector<std::pair<AtomicGCMetadata*, void*>>& roots)
     {
         for(size_t i = 0; i < roots.size(); i++) {
-            GC_DIAG_LEVEL_2_OP(g_memstats.processpromotion(roots[i].second, true));
             gcRootProcessYoungPromote(roots[i].first);
         }
 
@@ -282,7 +306,6 @@ namespace ᐸRuntimeᐳ
             }
             case '1': {
                 if(*slots != nullptr) {
-                    GC_DIAG_LEVEL_2_OP(g_memstats.processstddec(*slots));
                     bool isdead = gcProcessRCDecrement(gcGetMetadata(*slots));
                     if(isdead) {
                         releaseQuick(*slots);
@@ -322,7 +345,6 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        GC_DIAG_LEVEL_2_OP(g_memstats.processreclaimrc(ptr));
         alloc->xrcRelease(ptr);
     }
     
@@ -333,14 +355,7 @@ namespace ᐸRuntimeᐳ
              releaseQuick(ptr);
         }
         else {
-            GC_DIAG_LEVEL_2_OP(g_memstats.processpushpendingdelete(ptr));
-            /*
-            gcStoreDeleteListPtr(gcGetMetadata(ptr), tl_alloc_info.pendingdelete);
-            tl_alloc_info.pendingdelete = ptr;
-            */
-
-            assert(std::find(tl_alloc_info.pendingdelete.cbegin(), tl_alloc_info.pendingdelete.cend(), ptr) == tl_alloc_info.pendingdelete.cend());
-            tl_alloc_info.pendingdelete.push_back(ptr);
+            gcStoreDeleteListPtr(ptr);
         }
     }
 
@@ -353,7 +368,6 @@ namespace ᐸRuntimeᐳ
             }
             case '1': {
                 if(*slots != nullptr) {
-                    GC_DIAG_LEVEL_2_OP(g_memstats.processstddec(*slots));
                     bool isdead = gcProcessRCDecrement(gcGetMetadata(*slots));
                     if(isdead) {
                         releaseStd(*slots);
@@ -379,7 +393,6 @@ namespace ᐸRuntimeᐳ
             }
             case '3': {
                 if(!XCString::gcIsTestIsInlineRepresentation(slots)) {
-                    GC_DIAG_LEVEL_2_OP(g_memstats.processstddec(*(slots + 1)));
                     bool isdead = gcProcessRCDecrement(gcGetMetadata(*(slots + 1)));
                     if(isdead) {
                         releaseStd(*(slots + 1));
@@ -391,7 +404,6 @@ namespace ᐸRuntimeᐳ
             }
             case '4': {
                 if(!XString::gcIsTestIsInlineRepresentation(slots)) {
-                    GC_DIAG_LEVEL_2_OP(g_memstats.processstddec(*(slots + 1)));
                     bool isdead = gcProcessRCDecrement(gcGetMetadata(*(slots + 1)));
                     if(isdead) {
                         releaseStd(*(slots + 1));
@@ -408,7 +420,6 @@ namespace ᐸRuntimeᐳ
                     slots++;
                 }
                 else {
-                    GC_DIAG_LEVEL_2_OP(g_memstats.processstddec(*(slots + 1)));
                     bool isdead = gcProcessRCDecrement(gcGetMetadata(*(slots + 1)));
                     if(isdead) {
                         releaseStd(*(slots + 1));
@@ -429,8 +440,6 @@ namespace ᐸRuntimeᐳ
         });
         
         for(size_t i = 0; i < decroots.size(); i++) {
-            GC_DIAG_LEVEL_2_OP(g_memstats.processrootdec(decroots[i].second));
-
             auto [meta, droot] = decroots[i];
             bool isdead = gcProcessRCDecrement(meta);
 
@@ -452,15 +461,8 @@ namespace ᐸRuntimeᐳ
     void processPendingDeleteWork(size_t worklimit)
     {
         size_t procbytes = 0;
-        auto iter = tl_alloc_info.pendingdelete.begin();
-        while(iter != tl_alloc_info.pendingdelete.end()) {
-            /*
-            void* ptr = alloc->pendingdelete;
-            alloc->pendingdelete = gcGetDeleteListPtr(gcGetMetadata(ptr));
-            */
-            void* ptr = *iter;
-            iter++;
-
+        void* ptr = gcGetDeleteListPtr();
+        while(ptr != nullptr) {
             GCAllocatorImpl* alloc = gcGetAllocator(ptr);
             if(alloc->alloctype->ptrmask != nullptr) {
                 const char* mmask = alloc->alloctype->ptrmask;
@@ -470,16 +472,15 @@ namespace ᐸRuntimeᐳ
                 }
             }
 
-            GC_DIAG_LEVEL_2_OP(g_memstats.processreclaimrc(ptr));
             alloc->xrcRelease(ptr);
 
             procbytes += alloc->alloctype->bytesize;
             if(procbytes >= worklimit) {
                 break;
             }
-        }
 
-        tl_alloc_info.pendingdelete.erase(tl_alloc_info.pendingdelete.begin(), iter);
+            ptr = gcGetDeleteListPtr();
+        }
     }
 
     void collect()
@@ -490,7 +491,7 @@ namespace ᐸRuntimeᐳ
         curr_roots_young.reserve(128); //TODO -- tune this
         curr_roots_rc.reserve(128); //TODO -- tune this
 
-        GC_DIAG_LEVEL_1_OP(auto time_collect_start = std::chrono::high_resolution_clock::now());
+        GC_METRICS_BASIC_OP(auto time_collect_start = std::chrono::high_resolution_clock::now());
         bool gproc = false;
         {
             // page->entrycount may be reset by another thread (setPageMetaData) -- processPotentialPtr
@@ -513,7 +514,7 @@ namespace ᐸRuntimeᐳ
         //Handle the young roots + the young walk and evacuation
         processYoungRoots(curr_roots_young);
         
-        GC_DIAG_LEVEL_1_OP(auto time_collect_traverse_end = std::chrono::high_resolution_clock::now());
+        GC_METRICS_BASIC_OP(auto time_collect_traverse_end = std::chrono::high_resolution_clock::now());
 
         //Process decrements and update the roots info for the next round
         processDecrements(curr_roots_young, final_roots_rc);
@@ -524,7 +525,7 @@ namespace ᐸRuntimeᐳ
         //Peel off some of the pending decs
         processPendingDeleteWork(GC_DELETE_PENDING_PROCESS_BYTES_COLLECT);
         
-        GC_DIAG_LEVEL_1_OP(auto time_collect_rc_end = std::chrono::high_resolution_clock::now());
+        GC_METRICS_BASIC_OP(auto time_collect_rc_end = std::chrono::high_resolution_clock::now());
 
         //Process nursery space
         for(auto ai = tl_alloc_info.gcallocs.begin(); ai != tl_alloc_info.gcallocs.end(); ++ai) {
@@ -532,7 +533,7 @@ namespace ᐸRuntimeᐳ
             ai->second->processNursery();
         }
 
-        GC_DIAG_LEVEL_1_OP(auto time_collect_end = std::chrono::high_resolution_clock::now());
-        GC_DIAG_LEVEL_1_OP(g_memstats.processcollect(MemStats::time_in_millis(time_collect_end - time_collect_start), MemStats::time_in_millis(time_collect_traverse_end - time_collect_start), MemStats::time_in_millis(time_collect_rc_end - time_collect_traverse_end)));
+        GC_METRICS_BASIC_OP(auto time_collect_end = std::chrono::high_resolution_clock::now());
+        GC_METRICS_BASIC_OP(g_memstats.processcollect(MemStats::time_in_millis(time_collect_end - time_collect_start), MemStats::time_in_millis(time_collect_traverse_end - time_collect_start), MemStats::time_in_millis(time_collect_rc_end - time_collect_traverse_end)));
     }
 }

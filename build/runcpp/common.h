@@ -37,11 +37,7 @@
 ////
 //ENABLE DIAGNOSTICS
 //#define BSQ_POSTREE_VALIDATE 1
-#define GC_INVARIANTS 1
-#define GC_DIAG_LEVEL_1 1
-#define GC_DIAG_LEVEL_2 1
-#define GC_TRACE_LEVEL_1 1
-#define GC_TRACE_LEVEL_2 1
+#define GC_METRICS_BASIC 1
 ////
 
 namespace ᐸRuntimeᐳ

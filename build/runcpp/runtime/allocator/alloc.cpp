@@ -2,14 +2,10 @@
 
 namespace ᐸRuntimeᐳ
 {
-#if BSQ_ALLOCATOR_USE_MALLOC
-    std::map<void*, GCAllocatorImpl*> GCAllocatorImpl::x_all_alloc_to_allocator_map{};
-#endif
-
     thread_local AllocatorThreadLocalInfo tl_alloc_info;
     AllocatorGlobalInfo g_alloc_info;
 
-    PageInfo* PageInfo::setPageMetaData(void* vpp, GCAllocatorImpl* gcalloc, std::thread::id threadid, size_t agectr)
+    PageInfo* PageInfo::setPageMetaData(void* vpp, GCAllocatorImpl* gcalloc, std::thread::id threadid)
     {
         PageInfo* pp = (PageInfo*)vpp;
 
@@ -23,7 +19,8 @@ namespace ᐸRuntimeᐳ
         pp->gcalloc = gcalloc;
         pp->threadid = threadid;
 
-        pp->freelistidx = META_FREE_LIST_OOM_SENTINAL;
+        pp->freelist = new FreeList{};
+
         pp->freecount = -1;
         pp->esize = objcount;
 
@@ -32,35 +29,34 @@ namespace ᐸRuntimeᐳ
         pp->p2size = p2size;
         pp->size2shift = p2sizeshift;
 
-        pp->age = agectr;
-
         return pp;
     }
 
-    void* PageInfo::reset(PageInfo* pp)
+    void* PageInfo::reset()
     {
-        std::memset((void*)((uint8_t*)pp + sizeof(PageInfo)), 0, 8 * pp->esize);
+        std::memset((void*)((uint8_t*)this + sizeof(PageInfo)), 0, 8 * this->esize);
 
-        pp->typeinfo = nullptr;
-        pp->gcalloc = nullptr;
-        pp->threadid = std::thread::id{};
+        this->typeinfo = nullptr;
+        this->gcalloc = nullptr;
+        this->threadid = std::thread::id{};
 
-        pp->freelistidx = META_FREE_LIST_OOM_SENTINAL;
-        pp->freecount = -1;
-        pp->esize = 0;
+        if(this->freelist != nullptr) {
+            delete this->freelist;
+            this->freelist = nullptr;
+        }
 
-        pp->data = nullptr;
-        pp->mdata = nullptr;
-        pp->size2shift = 0;
+        this->freecount = -1;
+        this->esize = 0;
 
-        pp->age = 0;
+        this->data = nullptr;
+        this->mdata = nullptr;
+        this->size2shift = 0;
 
-        return (void*)pp;
+        return (void*)this;
     }
 
     void PageInfo::rebuild()
     {
-        this->freelistidx = META_FREE_LIST_OOM_SENTINAL;
         this->freecount = 0;
  
         for(int64_t i = this->esize - 1; i >= 0; i--) {
@@ -73,21 +69,11 @@ namespace ᐸRuntimeᐳ
 
             if(!gcIsAllocated(meta) | gcIsYoung(meta)) {
                 gcProcessSweep(meta);
-                GC_DIAG_LEVEL_2_OP(std::memset(this->getObjectFromIndexInPage(i), std::numeric_limits<uint8_t>::max(), this->typeinfo->bytesize));
-                   
-                gcSetFreeListBits(meta, this->freelistidx);
-                this->freelistidx = i;
-                this->freecount++;
+                this->gcFreeListPush(i);
             }
         }
     }
 
-#if BSQ_ALLOCATOR_USE_MALLOC
-    void runCollect()
-    {
-        tl_alloc_info.collectfp();
-    }
-#else
     PageInfo* AllocatorGlobalInfo::getEmptyPage(GCAllocatorImpl* gcalloc)
     {
         std::lock_guard lk(this->g_pages_mutex);
@@ -105,7 +91,7 @@ namespace ᐸRuntimeᐳ
         void* page = this->emptypages.back();
         this->emptypages.pop_back();        
 
-        return PageInfo::setPageMetaData(page, gcalloc, std::this_thread::get_id(), 0);
+        return PageInfo::setPageMetaData(page, gcalloc, std::this_thread::get_id());
     }
 
     constexpr bool isPageSuitableForAlloc(PageInfo* pp, double availthreshold) 
@@ -142,10 +128,11 @@ namespace ᐸRuntimeᐳ
             //TODO: check for recycle fully empty pages back to global pool here as well
 
             if(isPageSuitableForAlloc(pp, availthreshold)) {
+                this->pageset.erase(iter);
                 return pp;
             }
 
-            this->pageset.splice(this->pageset.end(), this->pageset, iter);
+            iter++;
             availchks++;
         }
 
@@ -181,8 +168,8 @@ namespace ᐸRuntimeᐳ
             this->allocpage->rebuild();
         }
 
-        this->freelistidx = this->allocpage->freelistidx;
-        this->allocatedbytes += (this->allocpage->freecount * (this->allocpage->p2size * 8));
+        this->nextalloc = this->allocpage->gcLoadFreeNext();
+        this->allocatedbytes += (this->allocpage->freecount * (this->alloctype->bytesize * 8));
     }
 
     void GCAllocatorImpl::evacuatorSlowPathRefresh()
@@ -198,9 +185,8 @@ namespace ᐸRuntimeᐳ
             this->evacpage->rebuild();
         }
 
-        this->evaclistidx = this->evacpage->freelistidx;
+        this->nextevac = this->evacpage->gcLoadFreeNext();
     }
-#endif //BSQ_ALLOCATOR_USE_MALLOC
 
     void AllocatorThreadLocalInfo::initialize(void** caller_rbp, void(*_procdecsfp)(size_t), void (*_collectfp)(), const std::map<uint32_t, GCAllocatorImpl*>& gcallocs)
     {
@@ -256,22 +242,6 @@ namespace ᐸRuntimeᐳ
 
     bool AllocatorGlobalInfo::isAllocatedAddress(void* addr, AtomicGCMetadata*& meta, void*& raddr)
     {
-#if BSQ_ALLOCATOR_USE_MALLOC
-        if(GCAllocatorImpl::x_all_alloc_to_allocator_map.empty()) {
-            return false;
-        }
-
-        auto aii = GCAllocatorImpl::x_all_alloc_to_allocator_map.lower_bound(addr);
-        if(aii != GCAllocatorImpl::x_all_alloc_to_allocator_map.begin() && aii->first != addr) {
-            aii--;
-        }
-
-        if(!aii->second->isAddrInValidObject(addr, meta, raddr)) {
-            return false;
-        }
-
-        return aii->second->isAddrSuitableCategory(meta, raddr);
-#else
         auto baseaddr = (void*)((uintptr_t)(addr) & GC_PAGE_ADDR_MASK);
         if(!this->allocatedpages.contains(baseaddr)) {
             return false;
@@ -298,6 +268,5 @@ namespace ᐸRuntimeᐳ
         }
 
         return true;
-#endif
     }
 }

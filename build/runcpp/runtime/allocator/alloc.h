@@ -19,7 +19,7 @@ namespace ᐸRuntimeᐳ
         GCAllocatorImpl* gcalloc; //alloc for this->typeinfo
         std::thread::id threadid;
 
-        uint16_t freelistidx; //allocate from here until OOM sentinal is hit
+        FreeList* freelist; // Free list for this page
         int64_t freecount;
         int64_t esize; //max number of entries in this page
 
@@ -28,8 +28,6 @@ namespace ᐸRuntimeᐳ
         uint32_t p2size; //power of 2 rounded (slot size) of the type stored in this page
         uint32_t size2shift; //shift bits for power of 2 rounded (slot size) of the type stored in this page
 
-        size_t age; //increment age of this page
-    
         constexpr static PageInfo* extractPageFromPointer(void* p) 
         {
             return (PageInfo*)((uintptr_t)(p) & GC_PAGE_ADDR_MASK);
@@ -61,227 +59,30 @@ namespace ᐸRuntimeᐳ
             return pp->mdata + pp->getIndexForMetadataInPage(obj);
         }
 
-        static PageInfo* setPageMetaData(void* vpp, GCAllocatorImpl* gcalloc, std::thread::id threadid, size_t agectr);
-        static void* reset(PageInfo* pp);
+        constexpr void gcFreeListPush(uint16_t index) 
+        {
+            this->freelist->push_back({this->getMetadataFromIndexInPage(index), this->getObjectFromIndexInPage(index)});
+            this->freecount++;
+        }
+
+        constexpr std::pair<AtomicGCMetadata*, void*> gcLoadFreeNext() 
+        {
+            if(this->freelist->empty()) {
+                return {nullptr, META_FREE_LIST_OOM_SENTINAL};
+            }
+            else {
+                auto next = this->freelist->back();
+                this->freelist->pop_back();
+                return next;
+            }
+        }
+
+        static PageInfo* setPageMetaData(void* vpp, GCAllocatorImpl* gcalloc, std::thread::id threadid);
+        void* reset();
 
         void rebuild();
     };
 
-
-#if BSQ_ALLOCATOR_USE_MALLOC
-    struct GCMetadataMalloc
-    {
-        GCAllocatorImpl* allocator;
-        std::thread::id threadid;
-        AtomicGCMetadata rc;
-    };
-
-    void runCollect();
-
-    constexpr size_t GC_METADATA_SIZE = sizeof(GCMetadataMalloc);
-    static_assert(GC_METADATA_SIZE == 24, "GCMetadata size must be a multiple of max alignment");
-
-    constexpr GCMetadataMalloc* gcGetMetadataMalloc(void* ptr)
-    {
-        return (GCMetadataMalloc*)(((uint8_t*)ptr) - GC_METADATA_SIZE);
-    }
-
-    constexpr GCAllocatorImpl* gcGetAllocator(void* ptr)
-    {
-        return gcGetMetadataMalloc(ptr)->allocator;
-    }
-
-    constexpr const TypeInfo* gcGetTypeInfo(void* ptr)
-    {
-        return *((const TypeInfo**)gcGetMetadataMalloc(ptr)->allocator);
-    }
-
-    inline std::thread::id gcGetThreadId(void* ptr)
-    {
-        return gcGetMetadataMalloc(ptr)->threadid;
-    }
-
-    constexpr AtomicGCMetadata* gcGetMetadata(void* ptr)
-    {
-        return &(((GCMetadataMalloc*)(((uint8_t*)ptr) - GC_METADATA_SIZE))->rc);
-    }
-
-    constexpr void* gcInitAllocGCMetadata(void* ptr, GCAllocatorImpl* allocator)
-    {
-        GCMetadataMalloc* meta = (GCMetadataMalloc*)ptr;
-        meta->allocator = allocator;
-        meta->threadid = std::this_thread::get_id();
-        gcInitOnAllocate(&(meta->rc));
-
-        return (void*)((uint8_t*)ptr + GC_METADATA_SIZE);
-    }
-
-    constexpr void* gcInitEvacGCMetadata(void* ptr, GCAllocatorImpl* allocator, void** parentslotptr)
-    {
-        GCMetadataMalloc* meta = (GCMetadataMalloc*)ptr;
-        meta->allocator = allocator;
-        meta->threadid = std::this_thread::get_id();
-        gcInitOnEvacuate(&(meta->rc), parentslotptr);
-
-        return (void*)((uint8_t*)ptr + GC_METADATA_SIZE);
-    }
-
-    class GCAllocatorImpl
-    {
-    public:
-        constexpr static size_t NURSERY_SIZE = GC_NURSERY_SIZE;
-
-        const TypeInfo* alloctype;
-        void* freelist;
-        void* pendingdelete;
-
-
-        std::array<void*, NURSERY_SIZE> nursery;
-        size_t allocount;
-
-        std::set<void*> x_allocs;
-        static std::map<void*, GCAllocatorImpl*> x_all_alloc_to_allocator_map;
-
-        GCAllocatorImpl(const TypeInfo* alloctype) : alloctype{alloctype}, freelist{nullptr}, pendingdelete{nullptr}, nursery{}, allocount(0), x_allocs{} { ; } 
-
-        inline void* xalloc()
-        {
-            if(this->allocount >= NURSERY_SIZE) {
-                runCollect();
-            }
-
-            if(this->freelist != nullptr) {
-                void* ptr = this->freelist;
-                this->freelist = *((void**)ptr);
-
-                AtomicGCMetadata* meta = gcGetMetadata(ptr);
-                gcInitOnAllocate(meta);
-
-                this->nursery[this->allocount++] = ptr;
-                return ptr;
-            }
-            else {
-                void* ptr = malloc(this->alloctype->bytesize + sizeof(GCMetadataMalloc));
-                void* obj = gcInitAllocGCMetadata(ptr, this);
-
-                this->x_allocs.insert(obj);
-                GCAllocatorImpl::x_all_alloc_to_allocator_map.insert({obj, this});
-
-                this->nursery[this->allocount++] = obj;
-                return obj;
-            }
-        }
-
-        inline void* xalloc_evac(void** parentslotptr)
-        {
-            void* ptr = malloc(this->alloctype->bytesize + sizeof(GCMetadataMalloc));
-            void* obj = gcInitEvacGCMetadata(ptr, this, parentslotptr);
-
-            this->x_allocs.insert(obj);
-            GCAllocatorImpl::x_all_alloc_to_allocator_map.insert({obj, this});
-
-            return obj;
-        }
-
-        inline void xrcRelease(void* ptr)
-        {
-            AtomicGCMetadata* meta = gcGetMetadata(ptr);
-            gcProcessSweep(meta);
-
-            this->x_allocs.erase(ptr);
-            GCAllocatorImpl::x_all_alloc_to_allocator_map.erase(ptr);
-
-            free((void*)((uint8_t*)ptr - GC_METADATA_SIZE));
-        }
-
-        bool checkObjectBounds(void* addr, void* omem, const AtomicGCMetadata* meta, void*& raddr)
-        {            
-            const uintptr_t objstart = (uintptr_t)(omem);
-            const uintptr_t objend = objstart + this->alloctype->bytesize;
-            
-            if((objstart <= (uintptr_t)addr) && ((uintptr_t)addr < objend)) {
-                raddr = omem;
-                return true;
-            }
-
-            return false;
-        }
-
-        bool isAddrInValidObject(void* addr, AtomicGCMetadata*& meta, void*& raddr)
-        {
-            if(this->x_allocs.empty()) {
-                return false;
-            }
-
-            auto iter = this->x_allocs.lower_bound(addr);
-            if(iter != this->x_allocs.begin() && *iter != addr) {
-                iter--;
-            }
-            
-            meta = gcGetMetadata(*iter);
-            return this->checkObjectBounds(addr, *iter, meta, raddr);
-        }
-
-        bool isAddrSuitableCategory(const AtomicGCMetadata* meta, void* raddr)
-        {
-            if(!gcIsAllocated(meta)) {
-                return false;
-            }
-
-            std::thread::id objtid = gcGetThreadId(raddr);
-            if(gcIsYoung(meta) && objtid != std::this_thread::get_id()) {
-                return false;
-            }
-
-            return true;
-        }
-
-        void processNursery()
-        {
-            for(size_t i = 0; i < this->allocount; ++i) {
-                AtomicGCMetadata* meta = gcGetMetadata(this->nursery[i]);
-                if(!gcIsAllocated(meta) | gcIsYoung(meta)) {
-                    gcProcessSweep(meta);
-                    
-                    *((void**)this->nursery[i]) = this->freelist;
-                    this->freelist = this->nursery[i];
-                }
-                
-                this->nursery[i] = nullptr;
-            }
-
-            this->allocount = 0;
-        }
-
-        void cleanup()
-        {
-            for(auto iter = this->x_allocs.begin(); iter != this->x_allocs.end(); iter++) {
-                free((void*)((uint8_t*)*iter - GC_METADATA_SIZE));
-            }
-
-            this->x_allocs.clear();
-        }
-    };
-
-    template <typename T>
-    class GCAllocator : public GCAllocatorImpl
-    {
-    public:
-        GCAllocator(const TypeInfo* alloctype) : GCAllocatorImpl(alloctype) {}
-
-        template<typename... Args>
-        inline T* allocate(Args... args) 
-        {
-            return new (this->xalloc()) T{args...};
-        }
-
-        template<typename... Args>
-        inline T* construct(Args... args) 
-        {
-            return new (this->xalloc()) T(args...);
-        }
-    };
-#else
     constexpr GCAllocatorImpl* gcGetAllocator(void* ptr)
     {
         return PageInfo::extractPageFromPointer(ptr)->gcalloc;
@@ -305,10 +106,10 @@ namespace ᐸRuntimeᐳ
     class GCAllocatorImpl
     {
     private:
-        uint16_t freelistidx;
-        uint16_t evaclistidx;
-
+        std::pair<AtomicGCMetadata*, void*> nextalloc;
         PageInfo* allocpage; // Page in which we are currently allocating from
+         
+        std::pair<AtomicGCMetadata*, void*> nextevac;
         PageInfo* evacpage; // Page in which we are currently evacuating from
 
     private:
@@ -326,48 +127,40 @@ namespace ᐸRuntimeᐳ
     public:
         const TypeInfo* alloctype; 
 
-        GCAllocatorImpl(const TypeInfo* alloctype) : freelistidx{META_FREE_LIST_OOM_SENTINAL}, evaclistidx{META_FREE_LIST_OOM_SENTINAL}, allocpage{}, evacpage{}, filled_pages{}, hot_nursery_pages{}, pageset{}, allocatedbytes{0}, alloctype{alloctype} { ; }
+        GCAllocatorImpl(const TypeInfo* alloctype) : nextalloc{nullptr, META_FREE_LIST_OOM_SENTINAL}, allocpage{}, nextevac{nullptr, META_FREE_LIST_OOM_SENTINAL}, evacpage{}, filled_pages{}, hot_nursery_pages{}, pageset{}, allocatedbytes{0}, alloctype{alloctype} { ; }
 
         constexpr void* xalloc()
         {
-            GC_DIAG_LEVEL_1_OP(g_memstats.processalloc(this->alloctype->bytesize));
+            GC_METRICS_BASIC_OP(g_memstats.processalloc(this->alloctype->bytesize));
 
-            if(this->freelistidx == META_FREE_LIST_OOM_SENTINAL) [[unlikely]] { 
+            if(this->nextalloc.second == META_FREE_LIST_OOM_SENTINAL) [[unlikely]] { 
                 this->allocatorSlowPathRefresh();
             }
         
-            uint16_t freeidx = this->freelistidx;
-            AtomicGCMetadata* meta = this->allocpage->getMetadataFromIndexInPage(freeidx);
-
-            this->freelistidx = gcLoadFreeListNext(meta);
+            auto [meta, ptr] = this->nextalloc;
+            this->nextalloc = this->allocpage->gcLoadFreeNext();
             gcInitOnAllocate(meta);
 
-            GC_DIAG_LEVEL_1_OP(g_memstats.processallocof(freeidx, this->allocpage->getObjectFromIndexInPage(freeidx)));
-
-            return this->allocpage->getObjectFromIndexInPage(freeidx);
+            return ptr;
         }
 
         inline void* xalloc_evac(void** parentslotptr)
         {
-            if(this->evaclistidx == META_FREE_LIST_OOM_SENTINAL) [[unlikely]] { 
+            if(this->nextevac.second == META_FREE_LIST_OOM_SENTINAL) [[unlikely]] { 
                 this->evacuatorSlowPathRefresh();
             }
         
-            uint16_t evacidx = this->evaclistidx;
-            AtomicGCMetadata* meta = this->evacpage->getMetadataFromIndexInPage(evacidx);
-
-            this->evaclistidx = gcLoadFreeListNext(meta);
+            auto [meta, ptr] = this->nextevac;
+            this->nextevac = this->evacpage->gcLoadFreeNext();
             gcInitOnEvacuate(meta, parentslotptr);
 
-            return this->evacpage->getObjectFromIndexInPage(evacidx);
+            return ptr;
         }
 
         inline void xrcRelease(void* ptr)
         {
             AtomicGCMetadata* meta = gcGetMetadata(ptr);
             gcProcessSweep(meta);
-
-            GC_DIAG_LEVEL_2_OP(std::memset(ptr, std::numeric_limits<uint8_t>::max(), this->alloctype->bytesize));
         }
 
         void processNursery()
@@ -376,7 +169,7 @@ namespace ᐸRuntimeᐳ
                 this->filled_pages.push_back(this->allocpage);
                 
                 this->allocpage = nullptr;
-                this->freelistidx = META_FREE_LIST_OOM_SENTINAL;
+                this->nextalloc = {nullptr, META_FREE_LIST_OOM_SENTINAL};
             }
 
             //
@@ -389,11 +182,13 @@ namespace ᐸRuntimeᐳ
 
         void cleanup()
         {
-             this->allocpage = nullptr;
-             this->evacpage = nullptr;
+            this->allocpage = nullptr;
+            this->evacpage = nullptr;
 
             this->filled_pages.clear();
             this->hot_nursery_pages.clear();
+
+            std::for_each(this->pageset.begin(), this->pageset.end(), [](PageInfo* pp) { pp->reset(); });
             this->pageset.clear();
         }
     };
@@ -416,7 +211,6 @@ namespace ᐸRuntimeᐳ
             return new (this->xalloc()) T(args...);
         }
     };
-#endif //BSQ_ALLOCATOR_USE_MALLOC
 
     class AllocatorThreadLocalInfo
     {

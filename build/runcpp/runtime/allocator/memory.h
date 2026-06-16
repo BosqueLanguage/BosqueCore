@@ -34,34 +34,24 @@
 
 //A bunch of flags to turn off/on features
 #define GC_UNIQUE_PARENT_FEATURE 0
-#define GC_ALLOCATOR_USE_MALLOC 0
 
 //A bunch of flags to turn off/on diagnostics
 
-#if GC_DIAG_LEVEL_1
-#define GC_DIAG_LEVEL_1_OP(X) X
-#if GC_DIAG_LEVEL_2
-#define GC_DIAG_LEVEL_2_OP(X) X
+#if GC_METRICS_BASIC
+#define GC_METRICS_BASIC_OP(X) X
 #else
-#define GC_DIAG_LEVEL_2_OP(X)
-#endif
-#else
-#define GC_DIAG_LEVEL_1_OP(X)
-#define GC_DIAG_LEVEL_2_OP(X)
+#define GC_METRICS_BASIC_OP(X)
 #endif
 
-#if GC_ALLOCATOR_USE_MALLOC
-#ifndef GC_NURSERY_SIZE
-//#define GC_NURSERY_SIZE 2
-#define GC_NURSERY_SIZE 512
-#endif
-#endif
 ////
 
 namespace ᐸRuntimeᐳ
 {
     using GCMetaBits = uint64_t;
     using AtomicGCMetadata = std::atomic<GCMetaBits>;
+
+    using FreeList = std::list<std::pair<AtomicGCMetadata*, void*>>; //TODO: should thread this in the object data for performance
+    using PendingDeleteList = std::list<void*>;
 
     static_assert(sizeof(void*) == 8, "This GC implementation assumes 64 bit pointers for the bit packing to work correctly");
     static_assert(sizeof(GCMetaBits) == 8, "This GC implementation assumes 64 bit pointers for the bit packing to work correctly");
@@ -80,9 +70,8 @@ namespace ᐸRuntimeᐳ
     constexpr GCMetaBits META_BIT_RC_TWO = (META_BIT_RC_ONE + META_BIT_RC_ONE);
     constexpr GCMetaBits META_BIT_RC_MASK = ~(0x7F);
     constexpr uint32_t META_BIT_RC_ADDR_SHIFT = 7; //shifted to make sure we don't the flag bits
-    constexpr uint32_t META_BIT_RC_FREELIST_SHIFT = 7; //same as above
 
-    constexpr uint16_t META_FREE_LIST_OOM_SENTINAL = 0xFFFF;
+    constexpr void* META_FREE_LIST_OOM_SENTINAL = nullptr;
 
     constexpr bool gcIsAllocated(const AtomicGCMetadata* rc) 
     {
@@ -147,7 +136,7 @@ namespace ᐸRuntimeᐳ
     //The object is now a forward object -- so allocated and keep young so we know to collect it when sweeping (moved to the forwarding state)
     constexpr void gcProcessUpdateYoungForward(AtomicGCMetadata* rc)
     {
-        rc->store(META_BIT_IS_FORWARD, std::memory_order_relaxed);
+        rc->store(META_BIT_IS_ALLOC | META_BIT_IS_YOUNG | META_BIT_IS_FORWARD, std::memory_order_relaxed);
     }
 
     //The object is pointed to by a root of some kind, so cant unique parent it, just set the RC to 1
@@ -204,32 +193,10 @@ namespace ᐸRuntimeᐳ
         }
     }
 
-    //Thread the pending delete freelist via the rc counter
-    constexpr void gcStoreDeleteListPtr(AtomicGCMetadata* rc, void* addr)
-    {
-        rc->store(META_BIT_IS_ALLOC | META_BIT_IS_DELETE_PENDING | ((uintptr_t)addr << META_BIT_RC_ADDR_SHIFT), std::memory_order_relaxed);
-    }
-
-    //Thread the pending delete freelist via the rc counter
-    constexpr void* gcGetDeleteListPtr(AtomicGCMetadata* rc)
-    {
-        return (void*)(rc->load(std::memory_order_relaxed) >> META_BIT_RC_ADDR_SHIFT);
-    }
-
     //After processing an object (in sweep or RC deletion) clear the meta bits
     constexpr void gcProcessSweep(AtomicGCMetadata* rc)
     {
         rc->store(0, std::memory_order_relaxed);
-    }
-
-    //RC_ADDR bits in freelist entries are nextoffset index values
-    constexpr static void gcSetFreeListBits(AtomicGCMetadata* rc, uint16_t nextoffset) {
-        rc->store((uint64_t)nextoffset << META_BIT_RC_FREELIST_SHIFT, std::memory_order_relaxed);
-    }
-
-    //return the next offset or OOM sentinal for empty
-    constexpr static uint16_t gcLoadFreeListNext(const AtomicGCMetadata* rc) {
-        return (uint16_t)(rc->load(std::memory_order_relaxed) >> META_BIT_RC_FREELIST_SHIFT);
     }
 
     struct RegisterContents
