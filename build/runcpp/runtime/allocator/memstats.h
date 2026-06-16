@@ -13,9 +13,16 @@ namespace ᐸRuntimeᐳ
         Time timeyoung = std::chrono::milliseconds(0);
         Time timerc = std::chrono::milliseconds(0);
 
+        size_t totalpages = 0;
+
         size_t collectioncount = 0;
         size_t totalallocs = 0;
         size_t totalbytes = 0;
+
+        void processallocpage()
+        {
+            this->totalpages += 1;
+        }
 
         void processalloc(size_t bytes) 
         {

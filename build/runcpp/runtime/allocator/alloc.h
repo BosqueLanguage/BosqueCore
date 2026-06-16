@@ -177,15 +177,29 @@ namespace ᐸRuntimeᐳ
             //      Initial design is just to move some fraction to the aged page set to keep consistent turnover of pages (and this reclaiming memory and identifying free pages for reuse)
             //
 
-            this->hot_nursery_pages.splice(this->filled_pages.begin(), this->filled_pages);
+#if GC_CLEAR_EAGER_FEATURE
+            std::for_each(this->filled_pages.begin(), this->filled_pages.end(), [](PageInfo* pp) { 
+                pp->rebuild(); 
+            });
+#endif
+            this->hot_nursery_pages.splice(this->hot_nursery_pages.end(), this->filled_pages);
         }
 
         void cleanup()
         {
-            this->allocpage = nullptr;
-            this->evacpage = nullptr;
+            if(this->allocpage != nullptr) {
+                this->filled_pages.push_back(this->allocpage);
+                this->allocpage = nullptr;
+            }
+            if(this->evacpage != nullptr) {
+                this->pageset.push_back(this->evacpage);
+                this->evacpage = nullptr;
+            }
 
+            std::for_each(this->filled_pages.begin(), this->filled_pages.end(), [](PageInfo* pp) { pp->reset(); });
             this->filled_pages.clear();
+
+            std::for_each(this->hot_nursery_pages.begin(), this->hot_nursery_pages.end(), [](PageInfo* pp) { pp->reset(); });
             this->hot_nursery_pages.clear();
 
             std::for_each(this->pageset.begin(), this->pageset.end(), [](PageInfo* pp) { pp->reset(); });

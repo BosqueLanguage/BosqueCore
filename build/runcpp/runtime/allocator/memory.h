@@ -33,6 +33,8 @@
 #define GC_PAGE_CHECK_GENERAL_LIMIT 4
 
 //A bunch of flags to turn off/on features
+#define GC_CLEAR_EAGER_FEATURE 1
+#define GC_MEMORY_CLEAR_FEATURE 1
 #define GC_UNIQUE_PARENT_FEATURE 0
 
 //A bunch of flags to turn off/on diagnostics

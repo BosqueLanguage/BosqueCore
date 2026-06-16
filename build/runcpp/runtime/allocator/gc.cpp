@@ -346,6 +346,10 @@ namespace ᐸRuntimeᐳ
         }
 
         alloc->xrcRelease(ptr);
+
+#if GC_MEMORY_CLEAR_FEATURE
+        std::memset(ptr, 0, alloc->alloctype->bytesize);
+#endif
     }
     
     void releaseStd(void* ptr)
@@ -473,6 +477,10 @@ namespace ᐸRuntimeᐳ
             }
 
             alloc->xrcRelease(ptr);
+
+#if GC_MEMORY_CLEAR_FEATURE
+            std::memset(ptr, 0, alloc->alloctype->bytesize);
+#endif
 
             procbytes += alloc->alloctype->bytesize;
             if(procbytes >= worklimit) {

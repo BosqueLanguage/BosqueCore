@@ -69,6 +69,10 @@ namespace ᐸRuntimeᐳ
 
             if(!gcIsAllocated(meta) | gcIsYoung(meta)) {
                 gcProcessSweep(meta);
+#if GC_MEMORY_CLEAR_FEATURE
+                std::memset(this->getObjectFromIndexInPage(i), 0, this->p2size * 8);
+#endif
+
                 this->gcFreeListPush(i);
             }
         }
@@ -105,13 +109,19 @@ namespace ᐸRuntimeᐳ
         auto niter = this->hot_nursery_pages.begin();
         while(niter != this->hot_nursery_pages.end() && navailchks < GC_PAGE_CHECK_NURSERY_LIMIT) {
             PageInfo* pp = *niter;
+
+#if !GC_CLEAR_EAGER_FEATURE
             pp->rebuild();
+#endif
 
             if(isPageSuitableForAlloc(pp, availthreshold)) {
+                this->hot_nursery_pages.erase(niter);
                 return pp;
             }
             
-            this->pageset.splice(this->pageset.end(), this->hot_nursery_pages, niter);
+            this->hot_nursery_pages.erase(niter);
+            this->pageset.push_back(pp);
+
             navailchks++;
         }
 
@@ -164,6 +174,8 @@ namespace ᐸRuntimeᐳ
         }
 
         if(this->allocpage == nullptr) {
+            GC_METRICS_BASIC_OP(g_memstats.processallocpage());
+
             this->allocpage = g_alloc_info.getEmptyPage(this);
             this->allocpage->rebuild();
         }
@@ -181,6 +193,8 @@ namespace ᐸRuntimeᐳ
         this->evacpage = this->allocatorGeneralPageFinder(GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_EVAC);
 
         if(this->evacpage == nullptr) {
+            GC_METRICS_BASIC_OP(g_memstats.processallocpage());
+
             this->evacpage = g_alloc_info.getEmptyPage(this);
             this->evacpage->rebuild();
         }
