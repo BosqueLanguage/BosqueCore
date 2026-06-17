@@ -31,8 +31,9 @@
 
 #include <sys/mman.h> //mmap
 
-//Only for internal diagnostics
+//Only for diagnostics
 #include <assert.h>
+#include <iostream>
 
 ////
 //ENABLE DIAGNOSTICS

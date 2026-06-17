@@ -1040,7 +1040,7 @@ class CPPEmitter {
         else if(ttag === IRStatementTag.IRDebugStatement) {
             const ids = stmt as IRDebugStatement;
 
-            return `BSQ_diag_emit${TransformCPPNameManager.convertTypeKey(ids.oftype.tkeystr)}(stdout, ${this.emitIRSimpleExpression(ids.dbgexp, true)}, true);`;
+            return `{ BSQ_diag_emit${TransformCPPNameManager.convertTypeKey(ids.oftype.tkeystr)}(std::cout, ${this.emitIRSimpleExpression(ids.dbgexp, true)}, true); std::cout << std::endl; }`;
 
             //const emf = `[=](){ BSQ_emit${TransformCPPNameManager.convertTypeKey(ids.oftype.tkeystr)}(${this.emitIRSimpleExpression(ids.dbgexp, true)}); }`;
             //return `ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.debug_emit(${emf});`;
@@ -2212,13 +2212,15 @@ class CPPEmitter {
         }
         else {
             bsqdiagemitdef = `void BSQ_diag_emit${ctname}(std::ostream& out, ${ctrepr} vv, bool waddr) {\n` +
-            `    out << "${tdecl.tkey}{"; \n` +
+            `    out << "${tdecl.tkey}"; \n` +
+            (isRef ? `    out << "@" << vv;\n` : "") +
+            `    out << '{'; \n` +
             `${tdecl.saturatedBFieldInfo.map((bf, ii) => {
                 const fname = TransformCPPNameManager.convertIdentifier(bf.fname);
                 const fttname = TransformCPPNameManager.convertTypeKey(bf.ftype.tkeystr);
-                return `    BSQ_diag_emit${fttname}(out, vv${vvaccess}${fname}, waddr);${ii !== tdecl.saturatedBFieldInfo.length - 1 ? ' ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate(", ");' : ""}`;
+                return `    BSQ_diag_emit${fttname}(out, vv${vvaccess}${fname}, waddr);${ii !== tdecl.saturatedBFieldInfo.length - 1 ? ' out << ", ";' : ""}`;
             }).join("\n")}\n` +
-            `    out << " }"; \n` +
+            `    out << "}"; \n` +
             `}`;
         }
 
@@ -2419,7 +2421,7 @@ class CPPEmitter {
                 const optypeinfo = this.typeInfoManager.getTypeInfo(opt.tkeystr);
                 const fttname = TransformCPPNameManager.convertTypeKey(opt.tkeystr);
                 const umember = TransformCPPNameManager.generateNameForUnionMember(opt.tkeystr);
-                return `    case ${optypeinfo.bsqtypeid}: BSQ_diag_emit${fttname}(vv.uval.data.${umember}); break;`;
+                return `    case ${optypeinfo.bsqtypeid}: BSQ_diag_emit${fttname}(out, vv.uval.data.${umember}, waddr); break;`;
             });
 
             bsqdiagemitdef = `void BSQ_diag_emit${ctname}(std::ostream& out, const ${ctname}& vv, bool waddr) {\n` +
@@ -2498,7 +2500,7 @@ class CPPEmitter {
         const pdefs = "//Primitive defs\n\n" + this.irasm.primitives.map((pdecl) => {
             const bsqparse = `std::optional<${pdecl.tkey}> BSQ_parse${pdecl.tkey}() { return ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.parse${pdecl.tkey}(); }`;
             const bsqemit = `void BSQ_emit${pdecl.tkey}(${pdecl.tkey} vv) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emit${pdecl.tkey}(vv); }`;
-            const bsqdiagemitdef = `void BSQ_diag_emit${pdecl.tkey}(std::ostream& out, ${pdecl.tkey} vv, bool waddr) { ᐸRuntimeᐳ::DiagnosticsEmitter::emit${pdecl.tkey}(out, vv, waddr); }`;
+            const bsqdiagemitdef = `void BSQ_diag_emit${pdecl.tkey}(std::ostream& out, ${pdecl.tkey} vv, bool waddr) { ᐸRuntimeᐳ::DiagnosticsEmitter::emit${pdecl.tkey}(out, vv); }`;
 
             return [bsqparse, bsqemit, bsqdiagemitdef].join("\n");
         }).join("\n\n");
