@@ -192,5 +192,32 @@ namespace ᐸRuntimeᐳ
     {
 
     };
+
+    class DiagnosticsEmitter
+    {
+    public:
+        void emitNone(std::ostream& out, XNone n);
+        void emitBool(std::ostream& out, XBool b);
+        void emitNat(std::ostream& out, XNat n);
+        void emitInt(std::ostream& out, XInt i);
+        void emitChkNat(std::ostream& out, XChkNat n);
+        void emitChkInt(std::ostream& out, XChkInt i);
+
+        void emitFloat(std::ostream& out, XFloat f);
+
+        //
+        //Lots more here
+        //
+
+        void emitByte(std::ostream& out, XByte b);
+        void emitCChar(std::ostream& out, XCChar c);
+        void emitUnicodeChar(std::ostream& out, XUnicodeChar c);
+
+        void emitCString(std::ostream& out, XCString s);
+        void emitString(std::ostream& out, XString s);
+
+        void emitCRegex(std::ostream& out, XCRegex r);
+        void emitRegex(std::ostream& out, XRegex r);
+    };
 }
 

@@ -1773,6 +1773,7 @@ class CPPEmitter {
         `};`;
         const bsqparsedecl = `std::optional<${ctname}> BSQ_parse${ctname}();`;
         const bsqemitdecl = `void BSQ_emit${ctname}(${ctname} vv);`;
+        const bsqdiagemit = `void BSQ_diag_emit${ctname}(std::ostream& out, ${ctname} vv);`;
 
         const mmarray = `inline constexpr std::array<const char*, ${eenum.members.length}> BSQ_enum_values_${ctname} = { ${eenum.members.map((mem) => `"${mem}"`).join(", ")} };`;
         const mdecls = `${eenum.members.map((mem, ii) => `${ctname} ${ctname}::${TransformCPPNameManager.convertIdentifier(mem)} = ${ctname}{${ii}};`).join("\n")}\n`;
@@ -1793,9 +1794,13 @@ class CPPEmitter {
         `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitLiteralContent(BSQ_enum_values_${ctname}[vv.value]);\n` +
         `}`;
 
+        const bsqdiagemitdef = `void BSQ_diag_emit${ctname}(std::ostream& out, ${ctname} vv) {\n` +
+        `    out << "${eenum.tkey}#" << BSQ_enum_values_${ctname}[vv.value];\n` +
+        `}`;
+
         return [
-            [edecl,  this.emitEnumTypeInfoDecl(eenum), bsqparsedecl, bsqemitdecl].join("\n"), 
-            [mmarray, mdecls, bsqparsedef, bsqemitdef].join("\n")
+            [edecl,  this.emitEnumTypeInfoDecl(eenum), bsqparsedecl, bsqemitdecl, bsqdiagemit].join("\n"), 
+            [mmarray, mdecls, bsqparsedef, bsqemitdef, bsqdiagemitdef].join("\n")
         ];
     }
 
@@ -1836,6 +1841,13 @@ class CPPEmitter {
         `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitSymbol('>'); \n` +
         `}`;
 
+        const bsqdiagemit = `void BSQ_diag_emit${ctname}(std::ostream& out, ${ctname} vv);`;
+        const bsqdiagemitdef = `void BSQ_diag_emit${ctname}(std::ostream& out, ${ctname} vv) {\n` +
+        `    out << "${tdecl.tkey}<";\n` +
+        `    BSQ_diag_emit${voptttname}(out, vv.value);\n` +
+        `    out << ">";\n` +
+        `}`;
+
         if(vfuncinfo.length === 0 && valfuncinfo.length === 0 && chkextra === undefined) {
             const bsqparsedef = `std::optional<${ctrepr}> BSQ_parse${ctname}() {\n` +
             `    std::optional<${voptt}> cc = ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.parse${voptttname}();\n` +
@@ -1849,8 +1861,8 @@ class CPPEmitter {
             '}';
 
             return [
-                [tclass, typeinfodecl, bsqparsedecl, bsqemitdecl].join("\n"), 
-                [bsqparsedef, bsqemitdef].join("\n")
+                [tclass, typeinfodecl, bsqparsedecl, bsqemitdecl, bsqdiagemit].join("\n"), 
+                [bsqparsedef, bsqemitdef, bsqdiagemitdef].join("\n")
             ];
         }
         else {
@@ -1883,8 +1895,8 @@ class CPPEmitter {
             '}';
 
             return [
-                [tclass, typeinfodecl, ivdecls, bsqparsedecl, bsqemitdecl].join("\n"), 
-                [ivdefs, bsqparsedef, bsqemitdef].join("\n")
+                [tclass, typeinfodecl, ivdecls, bsqparsedecl, bsqemitdecl, bsqdiagemit].join("\n"), 
+                [ivdefs, bsqparsedef, bsqemitdef, bsqdiagemitdef].join("\n")
             ];
         }
     }
