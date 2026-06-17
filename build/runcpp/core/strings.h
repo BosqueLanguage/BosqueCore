@@ -431,7 +431,7 @@ namespace ᐸRuntimeᐳ
             if(max < s.size()) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "CString length above maximum"); }
         }
 
-        void diagnosticEmit(std::ostream& out) const;
+        void diagnosticEmit(std::ostream& out, bool waddr) const;
     };
 
     class XFCStringRepr 
@@ -922,7 +922,7 @@ namespace ᐸRuntimeᐳ
             if(max < s.size()) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "String length above maximum"); }
         }
 
-        void diagnosticEmit(std::ostream& out) const;
+        void diagnosticEmit(std::ostream& out, bool waddr) const;
     };
 
     class XFStringRepr 

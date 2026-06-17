@@ -1040,8 +1040,10 @@ class CPPEmitter {
         else if(ttag === IRStatementTag.IRDebugStatement) {
             const ids = stmt as IRDebugStatement;
 
-            const emf = `[=](){ BSQ_emit${TransformCPPNameManager.convertTypeKey(ids.oftype.tkeystr)}(${this.emitIRSimpleExpression(ids.dbgexp, true)}); }`;
-            return `ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.debug_emit(${emf});`;
+            return `BSQ_diag_emit${TransformCPPNameManager.convertTypeKey(ids.oftype.tkeystr)}(stdout, ${this.emitIRSimpleExpression(ids.dbgexp, true)}, true);`;
+
+            //const emf = `[=](){ BSQ_emit${TransformCPPNameManager.convertTypeKey(ids.oftype.tkeystr)}(${this.emitIRSimpleExpression(ids.dbgexp, true)}); }`;
+            //return `ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.debug_emit(${emf});`;
         }
         else {
             assert(false, `CPPEmitter: Unsupported IR atomic statement type -- ${stmt.constructor.name}`);
@@ -1773,7 +1775,7 @@ class CPPEmitter {
         `};`;
         const bsqparsedecl = `std::optional<${ctname}> BSQ_parse${ctname}();`;
         const bsqemitdecl = `void BSQ_emit${ctname}(${ctname} vv);`;
-        const bsqdiagemit = `void BSQ_diag_emit${ctname}(std::ostream& out, ${ctname} vv);`;
+        const bsqdiagemit = `void BSQ_diag_emit${ctname}(std::ostream& out, ${ctname} vv, bool waddr = false);`;
 
         const mmarray = `inline constexpr std::array<const char*, ${eenum.members.length}> BSQ_enum_values_${ctname} = { ${eenum.members.map((mem) => `"${mem}"`).join(", ")} };`;
         const mdecls = `${eenum.members.map((mem, ii) => `${ctname} ${ctname}::${TransformCPPNameManager.convertIdentifier(mem)} = ${ctname}{${ii}};`).join("\n")}\n`;
@@ -1794,7 +1796,7 @@ class CPPEmitter {
         `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitLiteralContent(BSQ_enum_values_${ctname}[vv.value]);\n` +
         `}`;
 
-        const bsqdiagemitdef = `void BSQ_diag_emit${ctname}(std::ostream& out, ${ctname} vv) {\n` +
+        const bsqdiagemitdef = `void BSQ_diag_emit${ctname}(std::ostream& out, ${ctname} vv, bool waddr) {\n` +
         `    out << "${eenum.tkey}#" << BSQ_enum_values_${ctname}[vv.value];\n` +
         `}`;
 
@@ -1841,11 +1843,10 @@ class CPPEmitter {
         `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitSymbol('>'); \n` +
         `}`;
 
-        const bsqdiagemit = `void BSQ_diag_emit${ctname}(std::ostream& out, ${ctname} vv);`;
-        const bsqdiagemitdef = `void BSQ_diag_emit${ctname}(std::ostream& out, ${ctname} vv) {\n` +
-        `    out << "${tdecl.tkey}<";\n` +
-        `    BSQ_diag_emit${voptttname}(out, vv.value);\n` +
-        `    out << ">";\n` +
+        const bsqdiagemit = `void BSQ_diag_emit${ctname}(std::ostream& out, ${ctrepr} vv, bool waddr = false);`;
+        const bsqdiagemitdef = `void BSQ_diag_emit${ctname}(std::ostream& out, ${ctrepr} vv, bool waddr) {\n` +
+        `    BSQ_diag_emit${voptttname}(out, vv.value, waddr);\n` +
+        `    out << "<${tdecl.tkey}>";\n` +
         `}`;
 
         if(vfuncinfo.length === 0 && valfuncinfo.length === 0 && chkextra === undefined) {
@@ -1975,6 +1976,16 @@ class CPPEmitter {
             `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate(" |)"); \n` +
             `}`;
 
+        const bsqdiagemit = `void BSQ_diag_emit${ctname}(std::ostream& out, ${ctrepr} vv, bool waddr = false);`;
+        const bsqdiagemitdef = `void BSQ_diag_emit${ctname}(std::ostream& out, ${ctrepr} vv, bool waddr) {\n` +
+            `    out << "(| "; \n` +
+            `${elist.entries.map((ee, ii) => {
+                const fttname = TransformCPPNameManager.convertTypeKey(ee.tkeystr);
+                return `    BSQ_diag_emit${fttname}(out, vv.at<${ii}, ${this.typeInfoManager.emitTypeAsStd(ee.tkeystr)}>(), waddr);${ii !== elist.entries.length - 1 ? ' out << ", ";' : ""}`;
+            }).join("\n")}\n` +
+            `    out << " |)"; \n` +
+        `}`;
+
         const bfparses = elist.entries.map((ee, ii) => {
             const fttname = TransformCPPNameManager.convertTypeKey(ee.tkeystr);
             return `    auto v_${ii} = BSQ_parse${fttname}(); if(!v_${ii}.has_value()) { return std::nullopt; } ${ii !== elist.entries.length - 1 ? "if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol(',')) { return std::nullopt; };" : ""}`;
@@ -1996,8 +2007,8 @@ class CPPEmitter {
         '}';
 
         return [
-            [bsqparsedecl, bsqemitdecl].join("\n"), 
-            [bsqparsedef, bsqemitdef].join("\n")
+            [bsqparsedecl, bsqemitdecl, bsqdiagemit].join("\n"), 
+            [bsqparsedef, bsqemitdef, bsqdiagemitdef].join("\n")
         ];
     }
 
@@ -2015,9 +2026,15 @@ class CPPEmitter {
         const defbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}() { if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeKeyword("some")) { return std::nullopt; } if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('(')) { return std::nullopt; } auto vval = BSQ_parse${voptttname}(); if(!vval.has_value()) { return std::nullopt; } if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol(')')) { return std::nullopt; } return ${TransformCPPNameManager.generateNameForConstructor(ctname)}{vval.value()}; }`;
         const defbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitLiteralContent("some"); ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitSymbol('('); BSQ_emit${voptttname}(vv.value); ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitSymbol(')'); }`;
         
+        const bsqdiagemitdef = `void BSQ_diag_emit${ctname}(std::ostream& out, ${ctname} vv, bool waddr) {\n` +
+            `    out << "some("; \n` +
+            `    BSQ_diag_emit${voptttname}(out, vv.value(), waddr); \n` +
+            `    out << ")"; \n` +
+        `}`;
+
         return [
             [declusing, decltypeinfo, declbsqparse, declbsqemit].join("\n"),
-            [defbsqparse, defbsqemit].join("\n")
+            [defbsqparse, defbsqemit, bsqdiagemitdef].join("\n")
         ];
     }
 
@@ -2040,6 +2057,7 @@ class CPPEmitter {
         const [decltypeinfo, deftypeinfo] = this.emitListTypeInfoDecl(tdecl);
         const declbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}();`;
         const declbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv);`;
+        const declbsqemitdiag = `void BSQ_emit${ctname}(const ${ctname}& vv);`;
 
         const defbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}() {\n` +
         `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeType("${tdecl.tkey}")) { return std::nullopt; };\n` +
@@ -2069,10 +2087,14 @@ class CPPEmitter {
         `    if(!first) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate(" "); }\n` +
         `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate("}"); \n` +
         `}`;
+
+        const bsqdiagemitdef = `void BSQ_diag_emit${ctname}(std::ostream& out, const ${ctname}& vv, bool waddr) {\n` +
+            `    vv.diagnosticEmit(out, g_typeinfo_${ctname}, BSQ_diag_emit${TransformCPPNameManager.convertTypeKey(tdecl.oftype.tkeystr)}, waddr);\n` +
+        `}`;
         
         return [
-            [declusing, decltypeinfo, declbsqparse, declbsqemit].join("\n"),
-            [deftypeinfo, defbsqparse, defbsqemit].join("\n")
+            [declusing, decltypeinfo, declbsqparse, declbsqemit, declbsqemitdiag].join("\n"),
+            [deftypeinfo, defbsqparse, defbsqemit, bsqdiagemitdef].join("\n")
         ];
     }
 
@@ -2086,6 +2108,7 @@ class CPPEmitter {
         const decltypeinfo = this.emitConceptTypeInfoDecl(tdecl);
         const declbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}();`;
         const declbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv);`;
+        const bsqdiagemit = `void BSQ_diag_emit${ctname}(std::ostream& out, const ${ctname}& vv, bool waddr = false);`;
 
         const sometypeinfo = TransformCPPNameManager.generateTypeInfoNameForTypeKey(tdecl.sometype.tkeystr);
         const defstatic = `namespace ᐸRuntimeᐳ {\n` +
@@ -2103,10 +2126,15 @@ class CPPEmitter {
         `    if(vv.isNone()) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate("none"); }\n` +
         `    else { BSQ_emitSomeᐸ${voptttname}ᐳ(vv.asSome()); }\n` +
         `}`;
+
+        const bsqdiagemitdef = `void BSQ_diag_emit${ctname}(std::ostream& out, const ${ctname}& vv, bool waddr) {\n` +
+        `    if(vv.isNone()) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate("none"); }\n` +
+        `    else { BSQ_diag_emitSomeᐸ${voptttname}ᐳ(vv.asSome()); }\n` +
+        `}`;
         
         return [
-            [declusing, decltypeinfo, declbsqparse, declbsqemit].join("\n"),
-            [defstatic, defbsqparse, defbsqemit].join("\n")
+            [declusing, decltypeinfo, declbsqparse, declbsqemit, bsqdiagemit].join("\n"),
+            [defstatic, defbsqparse, defbsqemit, bsqdiagemitdef].join("\n")
         ];
     }
 
@@ -2175,6 +2203,25 @@ class CPPEmitter {
             `}`;
         }
 
+        const bsqdiagemit = `void BSQ_diag_emit${ctname}(std::ostream& out, ${ctrepr} vv, bool waddr = false);`;
+        let bsqdiagemitdef: string;
+        if(tdecl.saturatedBFieldInfo.length === 0) {
+            bsqdiagemitdef = `void BSQ_diag_emit${ctname}(std::ostream& out, ${ctrepr} vv, bool waddr) {\n` +
+            `    out << "${tdecl.tkey}{ }"; \n` +
+            `}`;
+        }
+        else {
+            bsqdiagemitdef = `void BSQ_diag_emit${ctname}(std::ostream& out, ${ctrepr} vv, bool waddr) {\n` +
+            `    out << "${tdecl.tkey}{"; \n` +
+            `${tdecl.saturatedBFieldInfo.map((bf, ii) => {
+                const fname = TransformCPPNameManager.convertIdentifier(bf.fname);
+                const fttname = TransformCPPNameManager.convertTypeKey(bf.ftype.tkeystr);
+                return `    BSQ_diag_emit${fttname}(out, vv${vvaccess}${fname}, waddr);${ii !== tdecl.saturatedBFieldInfo.length - 1 ? ' ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate(", ");' : ""}`;
+            }).join("\n")}\n` +
+            `    out << " }"; \n` +
+            `}`;
+        }
+
         const bfparses = tdecl.saturatedBFieldInfo.map((bf, ii) => {
             const fname = TransformCPPNameManager.convertIdentifier(bf.fname);
             const fttname = TransformCPPNameManager.convertTypeKey(bf.ftype.tkeystr);
@@ -2196,8 +2243,8 @@ class CPPEmitter {
             '}';
 
             return [
-                [tclass, typeinfodecl, bsqparsedecl, bsqemitdecl].join("\n"), 
-                [typeinfodef, bsqparsedef, bsqemitdef].join("\n")
+                [tclass, typeinfodecl, bsqparsedecl, bsqemitdecl, bsqdiagemit].join("\n"), 
+                [typeinfodef, bsqparsedef, bsqemitdef, bsqdiagemitdef].join("\n")
             ];
         }
         else {
@@ -2241,8 +2288,8 @@ class CPPEmitter {
             '}';
 
             return [
-                [tclass, typeinfodecl, ivdecls, bsqparsedecl, bsqemitdecl].join("\n"), 
-                [typeinfodef, ivdefs, bsqparsedef, bsqemitdef].join("\n")
+                [tclass, typeinfodecl, ivdecls, bsqparsedecl, bsqemitdecl, bsqdiagemit].join("\n"), 
+                [typeinfodef, ivdefs, bsqparsedef, bsqemitdef, bsqdiagemitdef].join("\n")
             ];
         }
     }
@@ -2324,15 +2371,20 @@ class CPPEmitter {
         const decltypeinfo = this.emitConceptTypeInfoDecl(tdecl);
         const declbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}();`;
         const declbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv);`;
+        const bsqdiagemit = `void BSQ_diag_emit${ctname}(std::ostream& out, const ${ctname}& vv, bool waddr = false);`;
 
         let defbsqparse = "";
         let defbsqemit = "";
+        let bsqdiagemitdef = "";
         if(uoptions.length === 0) {
             defbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}() {\n` +
             `\n    return std::nullopt;\n` +
             `}`;
 
             defbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv) {\n` +
+            `    ;//never reachable\n` +
+            `}`;
+            bsqdiagemitdef = `void BSQ_diag_emit${ctname}(std::ostream& out, const ${ctname}& vv, bool waddr) {\n` +
             `    ;//never reachable\n` +
             `}`;
         }
@@ -2362,11 +2414,24 @@ class CPPEmitter {
             `${emitops.join("\n")}\n` +
             `    }\n` +
             `}`;
+
+            const emitdiagops = uoptions.map((opt) => {
+                const optypeinfo = this.typeInfoManager.getTypeInfo(opt.tkeystr);
+                const fttname = TransformCPPNameManager.convertTypeKey(opt.tkeystr);
+                const umember = TransformCPPNameManager.generateNameForUnionMember(opt.tkeystr);
+                return `    case ${optypeinfo.bsqtypeid}: BSQ_diag_emit${fttname}(vv.uval.data.${umember}); break;`;
+            });
+
+            bsqdiagemitdef = `void BSQ_diag_emit${ctname}(std::ostream& out, const ${ctname}& vv, bool waddr) {\n` +
+            `    switch(vv.uval.typeinfo->bsqtypeid) {\n` +
+            `${emitdiagops.join("\n")}\n` +
+            `    }\n` +
+            `}`;
         }
         
         return [
-            [declunion, declconcept, decltypeinfo, declbsqparse, declbsqemit].join("\n"),
-            [defbsqparse, defbsqemit].join("\n")
+            [declunion, declconcept, decltypeinfo, declbsqparse, declbsqemit, bsqdiagemit].join("\n"),
+            [defbsqparse, defbsqemit, bsqdiagemitdef].join("\n")
         ];
     }
 
@@ -2426,14 +2491,16 @@ class CPPEmitter {
             const tusing = `using ${pdecl.tkey} = ᐸRuntimeᐳ::X${pdecl.tkey};`;
             const bsqparse = `std::optional<${pdecl.tkey}> BSQ_parse${pdecl.tkey}();`;
             const bsqemit = `void BSQ_emit${pdecl.tkey}(${pdecl.tkey} vv);`;
+            const bsqdiagemit = `void BSQ_diag_emit${pdecl.tkey}(std::ostream& out, ${pdecl.tkey} vv, bool waddr = false);`;
 
-            return [tusing, bsqparse, bsqemit].join("\n");
+            return [tusing, bsqparse, bsqemit, bsqdiagemit].join("\n");
         }).join("\n\n");
         const pdefs = "//Primitive defs\n\n" + this.irasm.primitives.map((pdecl) => {
             const bsqparse = `std::optional<${pdecl.tkey}> BSQ_parse${pdecl.tkey}() { return ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.parse${pdecl.tkey}(); }`;
             const bsqemit = `void BSQ_emit${pdecl.tkey}(${pdecl.tkey} vv) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emit${pdecl.tkey}(vv); }`;
+            const bsqdiagemitdef = `void BSQ_diag_emit${pdecl.tkey}(std::ostream& out, ${pdecl.tkey} vv, bool waddr) { ᐸRuntimeᐳ::DiagnosticsEmitter::emit${pdecl.tkey}(out, vv, waddr); }`;
 
-            return [bsqparse, bsqemit].join("\n");
+            return [bsqparse, bsqemit, bsqdiagemitdef].join("\n");
         }).join("\n\n");
 
         const [redecls, redefs] = this.emitRegexInfos(this.irasm.cregexps, this.irasm.uregexps);

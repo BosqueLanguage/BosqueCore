@@ -18,11 +18,11 @@ namespace ᐸRuntimeᐳ
     template<> const TypeInfo* PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>::s_nodetypeinfo = &g_typeinfo_PosRBTreeNode_String;
     template<> thread_local GCAllocator<PosRBTreeNode<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE>>* PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>::s_nodeallocator = &PosRBTreeNode_String_allocator;
 
-    void XCString::diagnosticEmit(std::ostream& out) const
+    void XCString::diagnosticEmit(std::ostream& out, bool waddr) const
     {
         if(this->ucstr.isInline()) {
             out << "'";
-            for(size_t i = 0; i < this->ucstr.inlinecstr.data[0]; i++) {
+            for(int64_t i = 0; i < this->ucstr.inlinecstr.data[0]; i++) {
                 out << this->ucstr.inlinecstr.data[i + 1];
             }
         }
@@ -31,11 +31,11 @@ namespace ᐸRuntimeᐳ
         }
     }
 
-    void XString::diagnosticEmit(std::ostream& out) const
+    void XString::diagnosticEmit(std::ostream& out, bool waddr) const
     {
         if(this->ustr.isInline()) {
             out << "'";
-            for(size_t i = 0; i < this->ustr.inlinestr.data[0]; i++) {
+            for(int64_t i = 0; i < this->ustr.inlinestr.data[0]; i++) {
                 out << (char)this->ustr.inlinestr.data[i + 1];
             }
         }

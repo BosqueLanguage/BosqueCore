@@ -697,6 +697,24 @@ namespace ᐸRuntimeᐳ
                 return this->ulist.treelist.postree.sum(zero);
             }
         }
+
+        void diagnosticEmit(std::ostream& out, const TypeInfo* ltype, void (__diagnosticEmitFn)(std::ostream&, const T&, bool), bool waddr) const
+        {
+            if(this->ulist.isInline()) {
+                out << ltype->typekey;
+                out << '{';
+                for(size_t i = 0; i < this->ulist.inlinelist.count; i++) {
+                    if(i != 0) {
+                        out << ", ";
+                    }
+                    __diagnosticEmitFn(out, this->ulist.inlinelist.data[i], waddr);
+                }
+                out << '}';
+            }
+            else {
+                this->ulist.treelist.postree.diagnosticEmit(out, ltype, __diagnosticEmitFn, waddr);
+            }
+        }
     };
 
     constexpr bool gcIsListTInline(void** ptr) { return *((size_t*)ptr) < std::numeric_limits<size_t>::max(); }

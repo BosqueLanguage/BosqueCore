@@ -294,12 +294,12 @@ namespace ᐸRuntimeᐳ
 
     void DiagnosticsEmitter::emitCString(std::ostream& out, XCString s)
     {
-        s.diagnosticEmit(out);
+        s.diagnosticEmit(out, true);
     }
         
     void DiagnosticsEmitter::emitString(std::ostream& out, XString s)
     {
-        s.diagnosticEmit(out);
+        s.diagnosticEmit(out, true);
     }
 
     void DiagnosticsEmitter::emitCRegex(std::ostream& out, XCRegex r)

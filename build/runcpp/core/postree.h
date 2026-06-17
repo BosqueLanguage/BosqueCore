@@ -311,6 +311,16 @@ namespace ᐸRuntimeᐳ
                 return a + b;
             });
         }
+
+        void diagnosticEmit(std::ostream& out, void (__diagnosticEmitFn)(std::ostream&, const T&, bool), bool waddr) const
+        {
+            for(size_t i = 0; i < (size_t)this->dcount; i++) {
+                __diagnosticEmitFn(out, this->data[i], waddr);
+                if(i != (size_t)(this->dcount - 1)) {
+                    out << ", ";
+                }
+            }
+        }
     };
 
     template<typename T, size_t K> class PosRBTreeLeaf;
@@ -1290,6 +1300,30 @@ private:
             }
         }
 
+        static void recdiagnosticEmit(const PosRBNode<T, K>* curr, std::ostream& out, void (__diagnosticEmitFn)(std::ostream&, const T&, bool), bool waddr)
+        {
+            if(curr == nullptr) {
+                out << "()";
+                return;
+            }
+
+            if(waddr) {
+                out << "@" << curr;
+            }
+            out << "(";
+
+            if(isLeafType(curr)) {
+                curr->data.diagnosticEmit(out, __diagnosticEmitFn);
+            }
+            else {
+                recdiagnosticEmit(reprGetLeft(curr), out, __diagnosticEmitFn, waddr);
+                curr->data.diagnosticEmit(out, __diagnosticEmitFn);
+                recdiagnosticEmit(reprGetRight(curr), out, __diagnosticEmitFn, waddr);
+            }
+                
+            out << ")";
+        }
+
     public:
         int64_t size() const
         {
@@ -1378,6 +1412,13 @@ private:
         T sum(T zero) const
         {
             return recsum(this->root, zero);
+        }
+
+        void diagnosticEmit(std::ostream& out, const TypeInfo* ltype, void (__diagnosticEmitFn)(std::ostream&, const T&, bool), bool waddr) const
+        {
+            out << ltype->typekey << "{";
+            recdiagnosticEmit(this->root, out, __diagnosticEmitFn, waddr);
+            out << "}";
         }
     };
 
