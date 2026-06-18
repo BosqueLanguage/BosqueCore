@@ -36,6 +36,7 @@
 #define GC_CLEAR_EAGER_FEATURE 0
 #define GC_MEMORY_CLEAR_FEATURE 0
 #define GC_UNIQUE_PARENT_FEATURE 0
+#define GC_DETERMINISTIC_ADDRESS_FEATURE 1
 
 //A bunch of flags to turn off/on diagnostics
 

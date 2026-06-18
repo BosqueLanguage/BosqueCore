@@ -75,13 +75,19 @@ namespace ᐸRuntimeᐳ
         }
     }
 
+    void* g_current_page_address = (void*)((uint8_t*)g_current_page_address + GC_PAGE_SIZE);
     PageInfo* AllocatorGlobalInfo::getEmptyPage(GCAllocatorImpl* gcalloc)
     {
         std::lock_guard lk(this->g_pages_mutex);
 
 	    if(this->emptypages.empty()) {
             for(size_t i = 0; i < GC_NUM_PAGES_ON_REQ; i++) {
+#if !GC_DETERMINISTIC_ADDRESS_FEATURE
                 void* addr = mmap(NULL, GC_PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+#else
+                void* addr = mmap(g_current_page_address, GC_PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, 0, 0);
+                g_current_page_address = (void*)((uint8_t*)g_current_page_address + GC_PAGE_SIZE);
+#endif
                 assert(addr != MAP_FAILED);
 
                 this->allocatedpages.insert(addr);
