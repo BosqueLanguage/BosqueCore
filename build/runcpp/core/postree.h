@@ -175,7 +175,7 @@ namespace ᐸRuntimeᐳ
 
         PosRBData insertSpillLeft(int64_t index, const T& value, T& spill) const
         {
-            assert((0 <= index) & (index < (int64_t)K));
+            assert((0 <= index) & (index <= (int64_t)K));
             assert((size_t)this->dcount == K);
           
             if(index == 0) {
@@ -190,7 +190,7 @@ namespace ᐸRuntimeᐳ
 
         PosRBData insertSpillRight(int64_t index, const T& value, T& spill) const
         {
-            assert((0 < index) & (index <= (int64_t)K));
+            assert((0 <= index) & (index <= (int64_t)K));
             assert((size_t)this->dcount == K);
           
             if(index == K) {

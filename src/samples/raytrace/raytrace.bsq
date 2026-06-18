@@ -38,25 +38,10 @@ entity RayTracer{
     }
 
     method minIntersection(ray: Ray, scene: Scene): Option<ISect> {
-        return scene.things.reduce<Option<ISect>>(fn(min, obj) => {
-            let isect = obj.intersect(ray);
-            if(isect)@none {
-                return min;
-            }
-            else {
-                if(min)@none {
-                    return isect;
-                }
-                else {
-                    if($min.dist > $isect.dist) {
-                        return isect;
-                    }
-                    else {
-                        return min;
-                    }
-                }
-            }
-        }, none);
+        return intersections = scene.things
+            .map<Option<ISect>>(fn(obj) => obj.intersect(ray))
+            .filterSome()
+            .min(pred(isect1, isect2) => isect1.dist < isect2.dist);
     }
 
     method testRay(ray: Ray, scene: Scene): Float {
@@ -79,7 +64,7 @@ entity RayTracer{
         }
     }
 
-    method getNaturalColor(thing: SceneObject, pos: Vector, norm: Vector, rd: Vector, scene: Scene): Color {
+    recursive method getNaturalColor(thing: SceneObject, pos: Vector, norm: Vector, rd: Vector, scene: Scene): Color {
         return scene.lights.reduce[recursive]<Color>(Color{0.0f, 0.0f, 0.0f}, recursive fn(ret, light) => {
             let ldis = Vector::minus(light.pos, pos);
             let livec = Vector::norm(ldis);
@@ -303,8 +288,10 @@ public function render_fixed(): Color {
     return RayTracer{}.traceRay(Ray{sc.camera.pos, Vector::norm(Vector::minus(sc.camera.forward, sc.camera.pos))}, sc, 0i);
 }
 
+%*
 public function render_param(thing: SceneObject): Color {
     let sc = RayTracer::createParameterScene(List<SceneObject>{thing});
 
     return RayTracer{}.traceRay(Ray{sc.camera.pos, Vector::norm(Vector::minus(sc.camera.forward, sc.camera.pos))}, sc, 0i);
 }
+*%
