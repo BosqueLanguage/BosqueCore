@@ -2132,7 +2132,7 @@ class CPPEmitter {
 
         const bsqdiagemitdef = `void BSQ_diag_emit${ctname}(std::ostream& out, const ${ctname}& vv, bool waddr) {\n` +
         `    if(vv.isNone()) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate("none"); }\n` +
-        `    else { BSQ_diag_emitSomeᐸ${voptttname}ᐳ(vv.asSome()); }\n` +
+        `    else { BSQ_diag_emitSomeᐸ${voptttname}ᐳ(out, vv.asSome(), waddr); }\n` +
         `}`;
         
         return [

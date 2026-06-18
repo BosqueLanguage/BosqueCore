@@ -19,7 +19,7 @@ namespace ᐸRuntimeᐳ
         GCAllocatorImpl* gcalloc; //alloc for this->typeinfo
         std::thread::id threadid;
 
-        FreeList* freelist; // Free list for this page
+        void* freelist; // Free list for this page
         int64_t freecount;
         int64_t esize; //max number of entries in this page
 
@@ -61,25 +61,29 @@ namespace ᐸRuntimeᐳ
 
         constexpr void gcFreeListReset() 
         {
-            this->freelist->clear();
+            this->freelist = nullptr;
             this->freecount = 0;
         }
 
         constexpr void gcFreeListPush(uint16_t index) 
         {
-            this->freelist->push_back({this->getMetadataFromIndexInPage(index), this->getObjectFromIndexInPage(index)});
+            void* ptr = this->getObjectFromIndexInPage(index);
+            *((void**)ptr) = this->freelist;
+
+            this->freelist = ptr;
             this->freecount++;
         }
 
         constexpr std::pair<AtomicGCMetadata*, void*> gcLoadFreeNext() 
         {
-            if(this->freelist->empty()) {
+            if(this->freelist == nullptr) {
                 return {nullptr, META_FREE_LIST_OOM_SENTINAL};
             }
             else {
-                auto next = this->freelist->back();
-                this->freelist->pop_back();
-                return next;
+                void* next = this->freelist;
+                this->freelist = *((void**)next);
+
+                return {getMetadataForObj(next), next};
             }
         }
 
@@ -241,7 +245,7 @@ namespace ᐸRuntimeᐳ
         std::map<uint32_t, GCAllocatorImpl*> gcallocs;
         size_t allocatedbytes;
 
-        std::list<void*> pendingdelete; //objects pending delete
+        void* pendingdelete; //objects pending delete
 
         void (*procdecsfp)(size_t);
         void (*collectfp)();

@@ -33,8 +33,8 @@
 #define GC_PAGE_CHECK_GENERAL_LIMIT 4
 
 //A bunch of flags to turn off/on features
-#define GC_CLEAR_EAGER_FEATURE 1
-#define GC_MEMORY_CLEAR_FEATURE 1
+#define GC_CLEAR_EAGER_FEATURE 0
+#define GC_MEMORY_CLEAR_FEATURE 0
 #define GC_UNIQUE_PARENT_FEATURE 0
 
 //A bunch of flags to turn off/on diagnostics
@@ -51,9 +51,6 @@ namespace ᐸRuntimeᐳ
 {
     using GCMetaBits = uint64_t;
     using AtomicGCMetadata = std::atomic<GCMetaBits>;
-
-    using FreeList = std::list<std::pair<AtomicGCMetadata*, void*>>; //TODO: should thread this in the object data for performance
-    using PendingDeleteList = std::list<void*>;
 
     static_assert(sizeof(void*) == 8, "This GC implementation assumes 64 bit pointers for the bit packing to work correctly");
     static_assert(sizeof(GCMetaBits) == 8, "This GC implementation assumes 64 bit pointers for the bit packing to work correctly");

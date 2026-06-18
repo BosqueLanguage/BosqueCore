@@ -19,7 +19,7 @@ namespace ᐸRuntimeᐳ
         pp->gcalloc = gcalloc;
         pp->threadid = threadid;
 
-        pp->freelist = new FreeList{};
+        pp->freelist = nullptr;
 
         pp->freecount = -1;
         pp->esize = objcount;
@@ -40,10 +40,7 @@ namespace ᐸRuntimeᐳ
         this->gcalloc = nullptr;
         this->threadid = std::thread::id{};
 
-        if(this->freelist != nullptr) {
-            delete this->freelist;
-            this->freelist = nullptr;
-        }
+        this->freelist = nullptr;
 
         this->freecount = -1;
         this->esize = 0;
@@ -162,7 +159,7 @@ namespace ᐸRuntimeᐳ
             this->allocatedbytes = 0;
         }
         else {
-            if(!tl_alloc_info.pendingdelete.empty()) {
+            if(tl_alloc_info.pendingdelete != nullptr) {
                 tl_alloc_info.procdecsfp(GC_DELETE_PENDING_PROCESS_BYTES_INCREMENTAL);
             }
         }
