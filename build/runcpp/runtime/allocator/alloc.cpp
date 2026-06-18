@@ -57,7 +57,7 @@ namespace ᐸRuntimeᐳ
 
     void PageInfo::rebuild()
     {
-        this->freecount = 0;
+        this->gcFreeListReset();
  
         for(int64_t i = this->esize - 1; i >= 0; i--) {
             AtomicGCMetadata* meta = this->getMetadataFromIndexInPage(i);

@@ -25,6 +25,7 @@ namespace ᐸRuntimeᐳ
             for(int64_t i = 0; i < this->ucstr.inlinecstr.data[0]; i++) {
                 out << this->ucstr.inlinecstr.data[i + 1];
             }
+            out << "'";
         }
         else {
             assert(false); // Not Implemented: diagnostic emit for non-inline strings
@@ -34,10 +35,11 @@ namespace ᐸRuntimeᐳ
     void XString::diagnosticEmit(std::ostream& out, bool waddr) const
     {
         if(this->ustr.isInline()) {
-            out << "'";
+            out << "\"";
             for(int64_t i = 0; i < this->ustr.inlinestr.data[0]; i++) {
                 out << (char)this->ustr.inlinestr.data[i + 1];
             }
+            out << "\"";
         }
         else {
             assert(false); // Not Implemented: diagnostic emit for non-inline strings

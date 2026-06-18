@@ -698,7 +698,8 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        void diagnosticEmit(std::ostream& out, const TypeInfo* ltype, void (__diagnosticEmitFn)(std::ostream&, const T&, bool), bool waddr) const
+        template <typename Fn>
+        void diagnosticEmit(std::ostream& out, const TypeInfo* ltype, Fn diagnosticEmitFn, bool waddr) const
         {
             if(this->ulist.isInline()) {
                 out << ltype->typekey;
@@ -707,12 +708,12 @@ namespace ᐸRuntimeᐳ
                     if(i != 0) {
                         out << ", ";
                     }
-                    __diagnosticEmitFn(out, this->ulist.inlinelist.data[i], waddr);
+                    diagnosticEmitFn(out, this->ulist.inlinelist.data[i], waddr);
                 }
                 out << '}';
             }
             else {
-                this->ulist.treelist.postree.diagnosticEmit(out, ltype, __diagnosticEmitFn, waddr);
+                this->ulist.treelist.postree.diagnosticEmit(out, ltype, diagnosticEmitFn, waddr);
             }
         }
     };

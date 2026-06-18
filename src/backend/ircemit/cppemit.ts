@@ -2089,7 +2089,10 @@ class CPPEmitter {
         `}`;
 
         const bsqdiagemitdef = `void BSQ_diag_emit${ctname}(std::ostream& out, const ${ctname}& vv, bool waddr) {\n` +
-            `    vv.diagnosticEmit(out, g_typeinfo_${ctname}, BSQ_diag_emit${TransformCPPNameManager.convertTypeKey(tdecl.oftype.tkeystr)}, waddr);\n` +
+            `    vv.diagnosticEmit(out, &ᐸRuntimeᐳ::g_typeinfo_${ctname}, [](std::ostream& oout, ${this.typeInfoManager.emitTypeAsStd(tdecl.oftype.tkeystr)} ee, bool owaddr) {\n` +
+            `        BSQ_diag_emit${TransformCPPNameManager.convertTypeKey(tdecl.oftype.tkeystr)}(oout, ee, owaddr);\n` + 
+            '    },\n' + 
+            `    waddr);\n` +
         `}`;
         
         return [

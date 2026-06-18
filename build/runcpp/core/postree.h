@@ -312,10 +312,11 @@ namespace ᐸRuntimeᐳ
             });
         }
 
-        void diagnosticEmit(std::ostream& out, void (__diagnosticEmitFn)(std::ostream&, const T&, bool), bool waddr) const
+        template<typename Fn>
+        void diagnosticEmit(std::ostream& out, Fn diagnosticEmitFn, bool waddr) const
         {
             for(size_t i = 0; i < (size_t)this->dcount; i++) {
-                __diagnosticEmitFn(out, this->data[i], waddr);
+                diagnosticEmitFn(out, this->data[i], waddr);
                 if(i != (size_t)(this->dcount - 1)) {
                     out << ", ";
                 }
@@ -1300,7 +1301,8 @@ private:
             }
         }
 
-        static void recdiagnosticEmit(const PosRBNode<T, K>* curr, std::ostream& out, void (__diagnosticEmitFn)(std::ostream&, const T&, bool), bool waddr)
+        template <typename Fn>
+        static void recdiagnosticEmit(const PosRBNode<T, K>* curr, std::ostream& out, Fn diagnosticEmitFn, bool waddr)
         {
             if(curr == nullptr) {
                 out << "()";
@@ -1313,12 +1315,12 @@ private:
             out << "(";
 
             if(isLeafType(curr)) {
-                curr->data.diagnosticEmit(out, __diagnosticEmitFn);
+                curr->data.diagnosticEmit(out, diagnosticEmitFn, waddr);
             }
             else {
-                recdiagnosticEmit(reprGetLeft(curr), out, __diagnosticEmitFn, waddr);
-                curr->data.diagnosticEmit(out, __diagnosticEmitFn);
-                recdiagnosticEmit(reprGetRight(curr), out, __diagnosticEmitFn, waddr);
+                recdiagnosticEmit(reprGetLeft(curr), out, diagnosticEmitFn, waddr);
+                curr->data.diagnosticEmit(out, diagnosticEmitFn, waddr);
+                recdiagnosticEmit(reprGetRight(curr), out, diagnosticEmitFn, waddr);
             }
                 
             out << ")";
@@ -1414,10 +1416,11 @@ private:
             return recsum(this->root, zero);
         }
 
-        void diagnosticEmit(std::ostream& out, const TypeInfo* ltype, void (__diagnosticEmitFn)(std::ostream&, const T&, bool), bool waddr) const
+        template <typename Fn>
+        void diagnosticEmit(std::ostream& out, const TypeInfo* ltype, Fn diagnosticEmitFn, bool waddr) const
         {
             out << ltype->typekey << "{";
-            recdiagnosticEmit(this->root, out, __diagnosticEmitFn, waddr);
+            recdiagnosticEmit(this->root, out, diagnosticEmitFn, waddr);
             out << "}";
         }
     };

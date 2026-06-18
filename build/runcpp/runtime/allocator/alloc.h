@@ -59,6 +59,12 @@ namespace ᐸRuntimeᐳ
             return pp->mdata + pp->getIndexForMetadataInPage(obj);
         }
 
+        constexpr void gcFreeListReset() 
+        {
+            this->freelist->clear();
+            this->freecount = 0;
+        }
+
         constexpr void gcFreeListPush(uint16_t index) 
         {
             this->freelist->push_back({this->getMetadataFromIndexInPage(index), this->getObjectFromIndexInPage(index)});
