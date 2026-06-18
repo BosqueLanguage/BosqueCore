@@ -209,7 +209,7 @@ namespace ᐸRuntimeᐳ
 	
     void AllocatorThreadLocalInfo::cleanup()
     {
-        //g_memstats.dump(std::cout);
+        g_memstats.dump(std::cout);
 
         for(auto iter = this->gcallocs.begin(); iter != this->gcallocs.end(); iter++) {
             iter->second->cleanup();
