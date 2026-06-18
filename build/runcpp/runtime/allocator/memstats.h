@@ -52,9 +52,12 @@ namespace ᐸRuntimeᐳ
 
         MemStats() { ; }
 
-        void reset() 
+        void dump(std::ostream& out)
         {
-            *this = MemStats();
+#if GC_METRICS_BASIC
+            out << "MEMSTATS: Total Time: " << this->timetotal << ", Young Time: " << this->timeyoung << ", RC Time: " << this->timerc << std::endl;
+            out << "Total Pages: " << this->totalpages << ", Total Collections: " << this->collectioncount << ", Total Allocations: " << this->totalallocs << ", Total Bytes: " << this->totalbytes << std::endl;
+#endif
         }
     };
 

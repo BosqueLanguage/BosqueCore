@@ -2028,7 +2028,7 @@ class CPPEmitter {
         
         const bsqdiagemitdef = `void BSQ_diag_emit${ctname}(std::ostream& out, ${ctname} vv, bool waddr) {\n` +
             `    out << "some("; \n` +
-            `    BSQ_diag_emit${voptttname}(out, vv.value(), waddr); \n` +
+            `    BSQ_diag_emit${voptttname}(out, vv.value, waddr); \n` +
             `    out << ")"; \n` +
         `}`;
 
