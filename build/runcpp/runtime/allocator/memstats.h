@@ -20,7 +20,7 @@ namespace ᐸRuntimeᐳ
 
         constexpr static size_t computeIntervalInMicroseconds(struct timespec start, struct timespec end) 
         {
-            return (end.tv_nsec - start.tv_nsec) / 1000;
+            return ((end.tv_nsec - start.tv_nsec)) / 1000 + (end.tv_sec - start.tv_sec) * 1000000;
         }
 
         constexpr static std::tuple<Time, Time, Time> computeMinMaxAvgPauses(const std::array<SingleCollectStat, RRSTATS_SIZE>& stats) 
