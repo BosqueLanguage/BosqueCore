@@ -113,6 +113,60 @@ __internal entity List<T> {
         }
     }    
     
+    method into<U>(): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+            xxxx;
+            return ListOps::s_list_mapas<T, U>(this, f);
+        }
+    }
+
+    recursive? method filter(p: recursive? pred(T) -> Bool): List<T> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<T>{};
+        }
+        else {
+            xxxx;
+            return ListOps::s_list_filter[recursive?]<T>(this, p);
+        }
+    }
+
+    method {when T: U} filter<U>(): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<T>{};
+        }
+        else {
+            xxxx;
+            return ListOps::s_list_filtertype<T, U>(this);
+        }
+    }
+
+    method {when T: Option<U>} filterSome<U>(): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+            xxxx;
+            return ListOps::s_list_filtersome<T, U>(this);
+        }
+    }
+
+    method {when T: numeric} min(): T 
+        requires !this.empty();
+    {
+        xxxx;
+        return ListOps::s_list_min<T>(this);
+    }
+
+    recursive? method min(cmp: recursive? pred(T, T) -> Bool): T 
+        requires !this.empty();
+    {
+        xxxx;
+        return ListOps::s_list_minfn<T>(this, cmp);
+    }
+
     method {when T: numeric} sum(): T {
         if(ListOps::s_list_empty<T>(this)) {
             return T::zero;
