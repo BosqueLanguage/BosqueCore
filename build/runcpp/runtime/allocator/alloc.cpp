@@ -75,7 +75,11 @@ namespace ᐸRuntimeᐳ
         }
     }
 
-    void* g_current_page_address = (void*)((uint8_t*)g_current_page_address + GC_PAGE_SIZE);
+#if GC_DETERMINISTIC_ADDRESS_FEATURE
+    //Hardcoded address that we start deterministic page allocations from to make debugging/diagnostics easier
+    void* g_current_page_address = (void*)(0x7ffff7f32000); 
+#endif
+    
     PageInfo* AllocatorGlobalInfo::getEmptyPage(GCAllocatorImpl* gcalloc)
     {
         std::lock_guard lk(this->g_pages_mutex);
