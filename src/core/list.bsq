@@ -122,7 +122,7 @@ __internal entity List<T> {
         }
     }
 
-    recursive? method filterMap<U>(p: recursive? pred(T) -> Bool, f: recursive? fn(T) -> U): List<U> {
+    recursive? method filtermap<U>(p: recursive? pred(T) -> Bool, f: recursive? fn(T) -> U): List<U> {
         if(ListOps::s_list_empty<T>(this)) {
             return List<U>{};
         }
@@ -181,6 +181,15 @@ __internal entity List<T> {
         requires !this.empty();
     {
         return ListOps::s_list_min<T>(this, cmp);
+    }
+
+    recursive? method sum(op: recursive? fn(T, T) -> T, zero: T): T {
+        if(ListOps::s_list_empty<T>(this)) {
+            return zero;
+        }
+        else {
+            return ListOps::s_list_sum<T>(this, zero);
+        }
     }
 
     method {when T: numeric} sum(): T {

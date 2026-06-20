@@ -40,7 +40,7 @@ entity RayTracer{
     method minIntersection(ray: Ray, scene: Scene): Option<ISect> {
         return intersections = scene.things
             .map<Option<ISect>>(fn(obj) => obj.intersect(ray))
-            .filter<ISect>()
+            .extract<ISect>()
             .min(pred(isect1, isect2) => isect1.dist < isect2.dist);
     }
 
@@ -64,23 +64,32 @@ entity RayTracer{
         }
     }
 
-    recursive method getNaturalColor(thing: SceneObject, pos: Vector, norm: Vector, rd: Vector, scene: Scene): Color {
-        return scene.lights.reduce[recursive]<Color>(Color{0.0f, 0.0f, 0.0f}, recursive fn(ret, light) => {
+    method getNaturalColor(thing: SceneObject, pos: Vector, norm: Vector, rd: Vector, scene: Scene): Color {
+        scene.lights.filter(pred(light) => {
             let ldis = Vector::minus(light.pos, pos);
             let livec = Vector::norm(ldis);
             let neatIsect = this.testRay(Ray{pos, livec}, scene);
-            let isInShadow = !((neatIsect > Vector::mag(ldis)) || (neatIsect == 0.0f));
-            if(isInShadow) {
-                return ret;
+            return (neatIsect > Vector::mag(ldis)) || (neatIsect == 0.0f);
+        }).
+        map<Color>(fn(light) => {
+            let ldis = Vector::minus(light.pos, pos);
+            let livec = Vector::norm(ldis);
+            let illum = Vector::dot(livec, norm);
+            let specular = Vector::dot(livec, Vector::norm(rd));
+
+            var lcolor = Color{0.0f, 0.0f, 0.0f};
+            if(illum > 0.0f) { 
+                lcolor = Color::times(illum, light.color);
             }
-            else {
-                let illum = Vector::dot(livec, norm);
-                let lcolor = if(illum > 0.0f) then Color::times(illum, light.color) else Color{0.0f, 0.0f, 0.0f};
-                let specular = Vector::dot(livec, Vector::norm(rd));
-                let scolor = if(specular > 0.0f) then Color::times(Float::pow(specular, thing.surface.roughness), light.color) else Color{0.0f, 0.0f, 0.0f};
-                return Color::plus(ret, Color::plus(Color::ctimes(thing.surface.diffuse, lcolor), Color::ctimes(thing.surface.specular, scolor)));
+
+            var scolor = Color{0.0f, 0.0f, 0.0f};
+            if(specular > 0.0f) {
+                scolor = Color::times(Float::pow(specular, thing.surface.roughness), light.color);
             }
-        });
+
+            return Color::plus(Color::ctimes(thing.surface.diffuse, lcolor), Color::ctimes(thing.surface.specular, scolor));
+        }).
+        sum(fn(c1, c2) => Color::plus(c1, c2), Color{0.0f, 0.0f, 0.0f});
     }
 
     method getReflectionColor(thing: SceneObject, pos: Vector, norm: Vector, rd: Vector, scene: Scene, depth: Int): Color {
