@@ -41,28 +41,29 @@ class TemplateConstraintScope {
     constructor() {
     }
 
-    pushConstraintScope(constraints: TemplateTermDecl[], trestrict: InvokeTemplateTypeRestriction | undefined) {
+    pushConstraintDeclsScope(constraints: TemplateTermDecl[]) {
         this.constraints.push([...constraints]);
+    }
 
-        //cases of {where T: U numeric}
-        if(trestrict !== undefined) {
-            const nrestrict = (trestrict.clauses.map((tc) => {
-                const btt = this.resolveConstraint(tc.t.name) as TemplateTermDecl;
+    pushConstraintRestrictionScope(trestrict: InvokeTemplateTypeRestriction) {
+        //cases of {when T: U numeric}
+        const nrestrict = (trestrict.clauses.map((tc) => {
+            const btt = this.resolveConstraint(tc.t.name) as TemplateTermDecl;
 
-                const tcsub = tc.subtype || btt.tconstraint;
-                let tcextra = [...tc.extraTags];
-                if(!tcextra.includes(TemplateTermDeclExtraTag.KeyType) && btt.extraTags.includes(TemplateTermDeclExtraTag.KeyType)) {
-                    tcextra.push(TemplateTermDeclExtraTag.KeyType);
-                }
-                if(!tcextra.includes(TemplateTermDeclExtraTag.Numeric) && btt.extraTags.includes(TemplateTermDeclExtraTag.Numeric)) {
-                    tcextra.push(TemplateTermDeclExtraTag.Numeric);
-                }
+            const tcsub = tc.subtype || btt.tconstraint;
+            let tcextra = [...tc.extraTags];
+            if(!tcextra.includes(TemplateTermDeclExtraTag.KeyType) && btt.extraTags.includes(TemplateTermDeclExtraTag.KeyType)) {
+                tcextra.push(TemplateTermDeclExtraTag.KeyType);
+            }
+            if(!tcextra.includes(TemplateTermDeclExtraTag.Numeric) && btt.extraTags.includes(TemplateTermDeclExtraTag.Numeric)) {
+                tcextra.push(TemplateTermDeclExtraTag.Numeric);
+            }
 
-                return new TemplateTermDecl(tc.t.name, tcsub, tcextra)
-            }));
+            return new TemplateTermDecl(tc.t.name, tcsub, tcextra)
+        }));
 
-            this.constraints.push(nrestrict);
-        }
+        //since this is appended at end it overrides any prior constraints on the same term, which is the intended semantics for when clause restrictions
+        this.constraints.push(nrestrict);
     }
 
     popConstraintScope() {

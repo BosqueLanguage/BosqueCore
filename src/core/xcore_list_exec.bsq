@@ -25,7 +25,7 @@ namespace ListOps {
 
     recursive? function s_list_filter<T>(l: List<T>, p: recursive? pred(T) -> Bool): List<T> = @list_filter;
 
-    recursive? function s_list_filtermap<T, U>(l: List<T>, p: recursive? pred(T) -> Bool, f: recursive? fn(T) -> Option<U>): List<U> = @list_filtermap;
+    recursive? function s_list_filtermap<T, U>(l: List<T>, p: recursive? pred(T) -> Bool, f: recursive? fn(T) -> U): List<U> = @list_filtermap;
 
     recursive? function s_list_min<T>(l: List<T>, cmp: recursive? pred(T, T) -> Bool): T = @list_min;
 

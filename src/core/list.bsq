@@ -158,7 +158,7 @@ __internal entity List<T> {
         }
     }
 
-    method {where T: Option<U>} extractEvery<U>(): List<U> {
+    method {when T: Option<U>} extractEvery<U>(): List<U> {
         if(ListOps::s_list_empty<T>(this)) {
             return List<U>{};
         }

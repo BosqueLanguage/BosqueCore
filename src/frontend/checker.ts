@@ -4994,15 +4994,14 @@ class TypeChecker {
         const tinscope = this.constraints.resolveConstraint(trclause.t.name);
         if(tinscope === undefined) {
             this.checkError(sinfo, true, `Template argument ${trclause.t.name} is not in scope -- so can't refine it`);
-            return;
         }
-
-        this.checkError(sinfo, trclause.subtype !== undefined && !this.relations.isSubtypeOf(trclause.t, trclause.subtype, this.constraints), `Template argument ${trclause.t.name} is not a subtype of restriction`);
     }
 
     private checkExplicitInvokeDeclTermInfo(idecl: ExplicitInvokeDecl) {
         this.checkTemplateTypesOnInvoke(idecl.sinfo, idecl.terms);
+    }
 
+    private checkExplicitInvokeDeclTermConstraints(idecl: ExplicitInvokeDecl) {
         if(idecl.termRestriction !== undefined) {
             for(let i = 0; i < idecl.termRestriction.clauses.length; ++i) {
                 this.checkExplicitInvokeDeclTermInfoClause(idecl.sinfo, idecl.termRestriction.clauses[i]);
@@ -5049,7 +5048,13 @@ class TypeChecker {
             this.checkExplicitInvokeDeclTermInfo(fdecl);
 
             if(fdecl.terms.length !== 0) {
-                this.constraints.pushConstraintScope(fdecl.terms, undefined);
+                this.constraints.pushConstraintDeclsScope(fdecl.terms);
+            }
+
+            this.checkExplicitInvokeDeclTermConstraints(fdecl);
+
+            if(fdecl.termRestriction !== undefined) {
+                this.constraints.pushConstraintRestrictionScope(fdecl.termRestriction);
             }
 
             this.checkExplicitInvokeDeclSignature(fdecl, []);
@@ -5070,11 +5075,16 @@ class TypeChecker {
     private checkTypeFunctionDecls(tdecl: AbstractNominalTypeDecl, fdecls: TypeFunctionDecl[]) {
         for(let i = 0; i < fdecls.length; ++i) {
             const fdecl = fdecls[i];
-    
             this.checkExplicitInvokeDeclTermInfo(fdecl);
 
-            if(fdecl.terms.length !== 0 || fdecl.termRestriction !== undefined) {
-                this.constraints.pushConstraintScope(fdecl.terms, fdecl.termRestriction);
+            if(fdecl.terms.length !== 0) {
+                this.constraints.pushConstraintDeclsScope(fdecl.terms);
+            }
+
+            this.checkExplicitInvokeDeclTermConstraints(fdecl);
+
+            if(fdecl.termRestriction !== undefined) {
+                this.constraints.pushConstraintRestrictionScope(fdecl.termRestriction);
             }
 
             this.checkExplicitInvokeDeclSignature(fdecl, []);
@@ -5093,11 +5103,16 @@ class TypeChecker {
     private checkMethodDecls(tdecl: AbstractNominalTypeDecl, rcvr: TypeSignature, mdecls: MethodDecl[]) {
         for(let i = 0; i < mdecls.length; ++i) {   
             const mdecl = mdecls[i];
-    
             this.checkExplicitInvokeDeclTermInfo(mdecl);
 
-            if(mdecl.terms.length !== 0 || mdecl.termRestriction !== undefined) {
-                this.constraints.pushConstraintScope(mdecl.terms, mdecl.termRestriction);
+            if(mdecl.terms.length !== 0) {
+                this.constraints.pushConstraintDeclsScope(mdecl.terms);
+            }
+
+            this.checkExplicitInvokeDeclTermConstraints(mdecl);
+
+            if(mdecl.termRestriction !== undefined) {
+                this.constraints.pushConstraintRestrictionScope(mdecl.termRestriction);
             }
 
             const thisvinfo = new VarInfo("this", rcvr, mdecl.isThisRef ? "ref" : "let", true);
@@ -5191,7 +5206,7 @@ class TypeChecker {
         this.checkTemplateTypesOnType(tdecl.sinfo, tdecl.terms);
 
         if(tdecl.terms.length !== 0) {
-            this.constraints.pushConstraintScope(tdecl.terms, undefined);
+            this.constraints.pushConstraintDeclsScope(tdecl.terms);
         }
 
         this.checkProvides(tdecl.provides);
@@ -5459,7 +5474,7 @@ class TypeChecker {
     private checkResultTypeDecl(ns: NamespaceDeclaration, tdecl: ResultTypeDecl) {
         this.checkInteralSimpleTypeDeclHelper(ns, tdecl, false);
 
-        this.constraints.pushConstraintScope(tdecl.terms, undefined);
+        this.constraints.pushConstraintDeclsScope(tdecl.terms);
         for(let i = 0; i < tdecl.nestedEntityDecls.length; ++i) {
             const ned = tdecl.nestedEntityDecls[i];
             if(ned instanceof OkTypeDecl) {
@@ -5475,7 +5490,7 @@ class TypeChecker {
     private checkAPIResultTypeDecl(ns: NamespaceDeclaration, tdecl: APIResultTypeDecl) {
         this.checkInteralSimpleTypeDeclHelper(ns, tdecl, false);
 
-        this.constraints.pushConstraintScope(tdecl.terms, undefined);
+        this.constraints.pushConstraintDeclsScope(tdecl.terms);
         for(let i = 0; i < tdecl.nestedEntityDecls.length; ++i) {
             const ned = tdecl.nestedEntityDecls[i];
             if(ned instanceof APIErrorTypeDecl) {
@@ -5559,7 +5574,7 @@ class TypeChecker {
         this.checkTemplateTypesOnType(tdecl.sinfo, tdecl.terms);
 
         if(tdecl.terms.length !== 0) {
-            this.constraints.pushConstraintScope(tdecl.terms, undefined);
+            this.constraints.pushConstraintDeclsScope(tdecl.terms);
         }
 
         const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
