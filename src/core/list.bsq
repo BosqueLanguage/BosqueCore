@@ -112,37 +112,64 @@ __internal entity List<T> {
             return ListOps::s_list_mapidx[recursive?]<T, U>(this, f);
         }
     }    
-    
-    method convert<U>(): List<U> {
-        if(ListOps::s_list_empty<T>(this)) {
-            return List<U>{};
-        }
-        else {
-            return ListOps::s_list_map(this, fn(x) => x.@<U>);
-        }
-    }
 
     recursive? method filter(p: recursive? pred(T) -> Bool): List<T> {
         if(ListOps::s_list_empty<T>(this)) {
             return List<T>{};
         }
         else {
-            xxxx;
             return ListOps::s_list_filter[recursive?]<T>(this, p);
         }
     }
 
-    %** Filter the list based on the given type. If the List is of a special form (Option<T>, Result<T, E>) and U is T (E) then this unwraps as well**%
-    method filter<U>(): List<U> {
+    recursive? method filterMap<U>(p: recursive? pred(T) -> Bool, f: recursive? fn(T) -> U): List<U> {
         if(ListOps::s_list_empty<T>(this)) {
-            return List<T>{};
+            return List<U>{};
         }
         else {
-            %%TODO: make this a special case in the type checker -- either subtype or special unwrap flavor
-            xxxx;
-            return ListOps::s_list_filtertype<T, U>(this);
+            return ListOps::s_list_filtermap[recursive?]<T, U>(this, p, f);
         }
     }
+
+    method convert<U>(): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+           return ListOps::s_list_filtermap<T, U>(this, pred(v) => v.?<U>, fn(v) => v.@<U>);
+        }
+    }
+
+    method {when T: Option<U>} extract<U>(): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+           return ListOps::s_list_filtermap<T, U>(this, pred(v) => v.?some, fn(v) => v.@some);
+        }
+    }
+
+    method convertEvery<U>(): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+            return ListOps::s_list_map<T, U>(this, fn(v) => v.@<U>);
+        }
+    }
+
+    method {where T: Option<U>} extractEvery<U>(): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+            return ListOps::s_list_map<T, U>(this, fn(v) => v.@some);
+        }
+    }
+
+    %%
+    %%TODO: extractOk<U>, extractFail<E>, extractOkEvery<U>, extractFailEvery<E> for Result<T, E>
+    %%
 
     method {when T: numeric} min(): T 
         requires !this.empty();
@@ -153,7 +180,6 @@ __internal entity List<T> {
     recursive? method min(cmp: recursive? pred(T, T) -> Bool): T 
         requires !this.empty();
     {
-        xxxx;
         return ListOps::s_list_min<T>(this, cmp);
     }
 
