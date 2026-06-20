@@ -113,13 +113,12 @@ __internal entity List<T> {
         }
     }    
     
-    method into<U>(): List<U> {
+    method convert<U>(): List<U> {
         if(ListOps::s_list_empty<T>(this)) {
             return List<U>{};
         }
         else {
-            xxxx;
-            return ListOps::s_list_mapas<T, U>(this, f);
+            return ListOps::s_list_map(this, fn(x) => x.@<U>);
         }
     }
 
@@ -133,38 +132,29 @@ __internal entity List<T> {
         }
     }
 
-    method {when T: U} filter<U>(): List<U> {
+    %** Filter the list based on the given type. If the List is of a special form (Option<T>, Result<T, E>) and U is T (E) then this unwraps as well**%
+    method filter<U>(): List<U> {
         if(ListOps::s_list_empty<T>(this)) {
             return List<T>{};
         }
         else {
+            %%TODO: make this a special case in the type checker -- either subtype or special unwrap flavor
             xxxx;
             return ListOps::s_list_filtertype<T, U>(this);
-        }
-    }
-
-    method {when T: Option<U>} filterSome<U>(): List<U> {
-        if(ListOps::s_list_empty<T>(this)) {
-            return List<U>{};
-        }
-        else {
-            xxxx;
-            return ListOps::s_list_filtersome<T, U>(this);
         }
     }
 
     method {when T: numeric} min(): T 
         requires !this.empty();
     {
-        xxxx;
-        return ListOps::s_list_min<T>(this);
+        return ListOps::s_list_min<T>(this, pred(a, b) => a < b);
     }
 
     recursive? method min(cmp: recursive? pred(T, T) -> Bool): T 
         requires !this.empty();
     {
         xxxx;
-        return ListOps::s_list_minfn<T>(this, cmp);
+        return ListOps::s_list_min<T>(this, cmp);
     }
 
     method {when T: numeric} sum(): T {
