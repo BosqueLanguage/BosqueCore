@@ -4358,7 +4358,7 @@ class TypeChecker {
             return env;
         }
 
-        let ctype = this.relations.decomposeType(eetype) || [];
+        let ctype = this.relations.decomposeType(eetype, this.constraints) || [];
         if(ctype.length === 0) {
             this.reportError(stmt.sval.sinfo, `Match statement requires a decomposable type but got ${eetype.emit()}`);
             return env;

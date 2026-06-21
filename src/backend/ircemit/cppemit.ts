@@ -1314,6 +1314,9 @@ class CPPEmitter {
             const ptid = this.typeInfoManager.getTypeInfo(invk.resultType.tkeystr).bsqtypeid;
             bstr = `l.mapIdx<${isSimple}, ${this.typeInfoManager.emitTypeAsStd(utype[1].tkeystr)}, ${ptid}>([&f](${params}){ return ${fn}(f, ${args}); })`;
         }
+        else if(body.builtin === "list_filter") {
+            assert(false, "CPPEmitter: need to implement list filter builtin body emission");
+        }
         else if(body.builtin === "list_sum") {
             bstr = `l.sum(zero)`
         }
@@ -1336,7 +1339,7 @@ class CPPEmitter {
     }
 
     private emitHoleBody(body: IRHoleBody, indent: string | undefined): string {
-        assert(false, "CPPEmitter: need to implement builtin body emission");
+        assert(false, "CPPEmitter: need to implement hole body");
     }
 
     private emitBody(invk: IRInvokeDecl, indent: string | undefined): string {
