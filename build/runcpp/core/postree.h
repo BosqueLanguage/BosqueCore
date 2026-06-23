@@ -304,6 +304,27 @@ namespace ᐸRuntimeᐳ
             return PosRBData<U, K>(this->color, this->bheight, this->dcount, result);
         }
 
+        template<bool SafeSimpleFn, typename Pred>
+        PosRBData<T, K> filter(Pred p) const
+        {
+            std::array<T, K> result{};
+            auto eiter = std::copy_if(this->data.begin(), this->data.begin() + this->dcount, result.begin(), p);
+            
+            return PosRBData<T, K>(this->color, this->bheight, std::distance(result.begin(), eiter), result);
+        }
+
+        template<bool BothSafeSimpleFn, typename U, typename Pred, typename Fn>
+        PosRBData<U, K> filtermap(Pred p, Fn f) const
+        {
+            std::array<T, K> fresult{};
+            auto feiter = std::copy_if(this->data.begin(), this->data.begin() + this->dcount, fresult.begin(), p);
+
+            std::array<U, K> mresult{};
+            auto meiter = std::transform(fresult.begin(), feiter, mresult.begin(), f);
+            
+            return PosRBData<U, K>(this->color, this->bheight, std::distance(mresult.begin(), meiter), mresult);
+        }
+
         T sum(T init) const
         {
             return std::accumulate(this->data.begin(), this->data.begin() + this->dcount, init, [](T a, T b) {
@@ -497,17 +518,20 @@ namespace ᐸRuntimeᐳ
                 return s_leafallocator->construct(PosRBData<T, K>(RColor::Red, 1, start, end));
             }
             else {
-                size_t csize = ((size - (K / 2)) / 2) + 1;
-                size_t dsize = size - (2 * csize);
+                size_t dsize = (size_t)std::max((uint64_t)1, ((uint64_t)K) - 2);
+
+                size_t remain = size - dsize;
+                size_t lsize = remain / 2;
+                size_t rsize = remain - lsize;
 
                 Iter mid1 = start;
-                std::advance(mid1, csize);
+                std::advance(mid1, lsize);
 
                 Iter mid2 = mid1;
                 std::advance(mid2, dsize);
 
-                const PosRBNode<T, K>* left = mklargerec(start, mid1, csize);
-                const PosRBNode<T, K>* right = mklargerec(mid2, end, dsize);
+                const PosRBNode<T, K>* left = mklargerec(start, mid1, lsize);
+                const PosRBNode<T, K>* right = mklargerec(mid2, end, rsize);
 
                 PosRBData<T, K> ndata(RColor::Black, 1, mid1, mid2);
                 return s_nodeallocator->construct(RColor::Black, computeNewBHeight_ForTreeNode(RColor::Black, left, right), computeNewCount_ForTreeNode(left, right, ndata), left, right, ndata);
@@ -1409,6 +1433,32 @@ private:
         PosRBTree<U, K, UTreeID> mapIdx(Fn f) const
         {
             return PosRBTree<U, K, UTreeID>{recmapIdx<SafeSimpleFn, U, UTreeID, Fn>(this->root, 0, f)};
+        }
+
+        template<bool SafeSimpleFn, typename Pred>
+        PosRBNode<T, K>* filter(PosRBData<T, K>& dres, Pred p) const
+        {
+            if(isLeafType(this->root)) {
+                dres = this->root->data.template filter<SafeSimpleFn, Pred>(p);
+                return nullptr;
+            }
+            else {
+                //TODO: iterate over values, batch into full data node and then append atomically onto the tree
+                assert(false);
+            }
+        }
+
+        template<bool BothSafeSimpleFn, typename U, uint32_t UTreeID, typename Pred, typename Fn>
+        PosRBNode<U, K>* filtermap(PosRBData<U, K>& dres, Pred p, Fn f) const
+        {
+            if(isLeafType(this->root)) {
+                dres = this->root->data.template filtermap<BothSafeSimpleFn, U, Pred, Fn>(p, f);
+                return nullptr;
+            }
+            else {
+                //TODO: iterate over values, batch into full data node and then append atomically onto the tree
+                assert(false);
+            }
         }
 
         T sum(T zero) const

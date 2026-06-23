@@ -22,7 +22,7 @@ CPP_STDFLAGS=-Wall -Wextra -Wno-unused-parameter -Wuninitialized -Werror -std=gn
 
 CPPFLAGS_OPT.testing=-O0 -g -ggdb -fsanitize=address --param asan-stack=0
 CPPFLAGS_OPT.testingopt=-O1 -g -ggdb -fsanitize=address --param asan-stack=0
-CPPFLAGS_OPT.release=-O1 -g -ggdb -fno-exceptions -march=x86-64-v3 -Wno-array-bounds -Wno-stringop-overflow
+CPPFLAGS_OPT.release=-O2 -g -ggdb -fno-exceptions -ftree-vectorize -march=native -Wno-array-bounds -Wno-stringop-overflow
 CPPFLAGS=${CPPFLAGS_OPT.${BUILD}} ${CPP_STDFLAGS}
 
 HEADERS=$(wildcard $(SRC_DIR)*.h) $(wildcard $(CORE_SRC_DIR)*.h) $(wildcard $(RUNTIME_SRC_DIR)*.h) $(wildcard $(ALLOC_SRC_DIR)*.h) $(wildcard $(BSQIR_SRC_DIR)*.h)

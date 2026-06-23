@@ -640,7 +640,7 @@ namespace ᐸRuntimeᐳ
                 std::array<U, ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_U)>::MAX_LEAF_CAPACITY> result{};
                 std::transform(ddbegin, ddend, result.begin(), f);
                 
-                if(this->ulist.inlinelist.count < ListTInlineContent<U>::MAX_INLINE_CAPACITY) {
+                if(this->ulist.inlinelist.count <= ListTInlineContent<U>::MAX_INLINE_CAPACITY) {
                     return XList<U, TYPE_ID_LIST_U>{ListTInlineContent<U>(result.data(), this->ulist.inlinelist.count)};
                 }
                 else {
@@ -666,7 +666,7 @@ namespace ᐸRuntimeᐳ
                 std::array<U, ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_U)>::MAX_LEAF_CAPACITY> result{};
                 std::transform(ddbegin, ddend, zipidx.begin(), result.begin(), f);
                 
-                if(this->ulist.inlinelist.count < ListTInlineContent<U>::MAX_INLINE_CAPACITY) {
+                if(this->ulist.inlinelist.count <= ListTInlineContent<U>::MAX_INLINE_CAPACITY) {
                     return XList<U, TYPE_ID_LIST_U>{ListTInlineContent<U>(result.data(), this->ulist.inlinelist.count)};
                 }
                 else {
@@ -690,10 +690,30 @@ namespace ᐸRuntimeᐳ
                 std::array<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY> result{};
                 auto eiter = std::copy_if(ddbegin, ddend, result.begin(), p);
                 
-                return XList<T, TYPE_ID_LIST_T>{ListTInlineContent<T>(result.data(), std::distance(result.begin(), eiter))};
+                if(eiter == result.begin()) {
+                    return XList<T, TYPE_ID_LIST_T>{};
+                }
+                else {
+                    return XList<T, TYPE_ID_LIST_T>{ListTInlineContent<T>(result.data(), std::distance(result.begin(), eiter))};
+                }
             }
             else {
-                assert(false);
+                PosRBData<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY> dres;
+                PosRBNode<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY>* opttree = this->ulist.treelist.postree.template filter<SafeSimpleFn, Pred>(dres, p);
+                if(opttree == nullptr) {
+                    if(dres.dcount == 0) {
+                        return XList<T, TYPE_ID_LIST_T>{};
+                    }
+                    else if(dres.dcount <= ListTInlineContent<T>::MAX_INLINE_CAPACITY) {
+                        return XList<T, TYPE_ID_LIST_T>{ListTInlineContent<T>(dres.data.data(), dres.dcount)};
+                    }
+                    else {
+                        return XList<T, TYPE_ID_LIST_T>{ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>{PosRBTree<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_T)>::mkinitial(dres.data.data(), dres.data.data() + dres.dcount)}};
+                    }
+                }
+                else {
+                    return XList<T, TYPE_ID_LIST_T>{ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>{opttree}};
+                }
             }
         }
 
@@ -708,19 +728,39 @@ namespace ᐸRuntimeᐳ
 
                 std::array<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY> fresult{};
                 auto feiter = std::copy_if(ddbegin, ddend, fresult.begin(), p);
-                
-                std::array<U, ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_U)>::MAX_LEAF_CAPACITY> mresult{};
-                auto meiter = std::transform(fresult.begin(), feiter, mresult.begin(), f);
 
-                if(this->ulist.inlinelist.count < ListTInlineContent<U>::MAX_INLINE_CAPACITY) {
-                    return XList<U, TYPE_ID_LIST_U>{ListTInlineContent<U>(mresult.data(), std::distance(mresult.begin(), meiter))};
+                if(feiter == fresult.begin()) {
+                    return XList<U, TYPE_ID_LIST_U>{};
                 }
                 else {
-                    return XList<U, TYPE_ID_LIST_U>{ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_U)>{PosRBTree<U, ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_U)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_U)>::mkinitial(mresult.data(), mresult.data() + std::distance(mresult.begin(), meiter))}};
+                    std::array<U, ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_U)>::MAX_LEAF_CAPACITY> mresult{};
+                    auto meiter = std::transform(fresult.begin(), feiter, mresult.begin(), f);
+                    
+                    if(std::distance(mresult.begin(), meiter) < ListTInlineContent<U>::MAX_INLINE_CAPACITY) {
+                        return XList<U, TYPE_ID_LIST_U>{ListTInlineContent<U>(mresult.data(), std::distance(mresult.begin(), meiter))};
+                    }
+                    else {
+                        return XList<U, TYPE_ID_LIST_U>{ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_U)>{PosRBTree<U, ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_U)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_U)>::mkinitial(mresult.data(), mresult.data() + std::distance(mresult.begin(), meiter))}};
+                    }
                 }
             }
             else {
-                assert(false);
+                PosRBData<U, ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_U)>::MAX_LEAF_CAPACITY> dres;
+                PosRBNode<U, ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_U)>::MAX_LEAF_CAPACITY>* opttree = this->ulist.treelist.postree.template filtermap<BothSafeSimpleFn, U, TYPE_ID_LIST_U, Pred, Fn>(dres, p, f);
+                if(opttree == nullptr) {
+                    if(dres.dcount == 0) {
+                        return XList<U, TYPE_ID_LIST_U>{};
+                    }
+                    else if(dres.dcount <= ListTInlineContent<U>::MAX_INLINE_CAPACITY) {
+                        return XList<U, TYPE_ID_LIST_U>{ListTInlineContent<U>(dres.data.data(), dres.dcount)};
+                    }
+                    else {
+                        return XList<U, TYPE_ID_LIST_U>{ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_U)>{PosRBTree<U, ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_U)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_U)>::mkinitial(dres.data.data(), dres.data.data() + dres.dcount)}};
+                    }
+                }
+                else {
+                    return XList<U, TYPE_ID_LIST_U>{ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_U)>{opttree}};
+                }
             }
         }
 

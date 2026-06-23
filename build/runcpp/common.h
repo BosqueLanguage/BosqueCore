@@ -38,7 +38,7 @@
 ////
 //ENABLE DIAGNOSTICS
 //#define BSQ_POSTREE_VALIDATE 1
-#define GC_METRICS_BASIC 1
+#define GC_METRICS_BASIC 0
 ////
 
 namespace ᐸRuntimeᐳ
