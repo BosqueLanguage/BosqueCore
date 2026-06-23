@@ -1315,7 +1315,11 @@ class CPPEmitter {
             bstr = `l.mapIdx<${isSimple}, ${this.typeInfoManager.emitTypeAsStd(utype[1].tkeystr)}, ${ptid}>([&f](${params}){ return ${fn}(f, ${args}); })`;
         }
         else if(body.builtin === "list_filter") {
-            assert(false, "CPPEmitter: need to implement list filter builtin body emission");
+            const [pred, isSimple, params, args] = this.getParamInforForLambda(invk, "p");
+            bstr = `l.filter<${isSimple}>([&p](${params}){ return ${pred}(p, ${args}); })`;
+        }
+        else if(body.builtin === "list_filtermap") {
+            assert(false, "CPPEmitter: need to implement list filtermap builtin body emission");
         }
         else if(body.builtin === "list_sum") {
             bstr = `l.sum(zero)`

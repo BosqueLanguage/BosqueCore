@@ -40,7 +40,7 @@ entity RayTracer{
     method minIntersection(ray: Ray, scene: Scene): Option<ISect> {
         return intersections = scene.things
             .map<Option<ISect>>(fn(obj) => obj.intersect(ray))
-            .extract<ISect>()
+            .extractIf<ISect>()
             .min(pred(isect1, isect2) => isect1.dist < isect2.dist);
     }
 

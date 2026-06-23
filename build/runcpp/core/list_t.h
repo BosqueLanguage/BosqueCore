@@ -678,6 +678,52 @@ namespace ᐸRuntimeᐳ
             }
         }
 
+        template<bool SafeSimpleFn, typename Pred>
+        XList<T, TYPE_ID_LIST_T> filter(Pred p) const
+        {
+            assert(!this->ulist.empty());
+
+            if(this->ulist.isInline()) {
+                auto ddbegin = this->ulist.inlinelist.data.cbegin();
+                auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
+
+                std::array<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY> result{};
+                auto eiter = std::copy_if(ddbegin, ddend, result.begin(), p);
+                
+                return XList<T, TYPE_ID_LIST_T>{ListTInlineContent<T>(result.data(), std::distance(result.begin(), eiter))};
+            }
+            else {
+                assert(false);
+            }
+        }
+
+        template<bool BothSafeSimpleFn, typename U, uint32_t TYPE_ID_LIST_U, typename Pred, typename Fn>
+        XList<U, TYPE_ID_LIST_U> filtermap(Pred p, Fn f) const
+        {
+            assert(!this->ulist.empty());
+
+            if(this->ulist.isInline()) {
+                auto ddbegin = this->ulist.inlinelist.data.cbegin();
+                auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
+
+                std::array<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY> fresult{};
+                auto feiter = std::copy_if(ddbegin, ddend, fresult.begin(), p);
+                
+                std::array<U, ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_U)>::MAX_LEAF_CAPACITY> mresult{};
+                auto meiter = std::transform(fresult.begin(), feiter, mresult.begin(), f);
+
+                if(this->ulist.inlinelist.count < ListTInlineContent<U>::MAX_INLINE_CAPACITY) {
+                    return XList<U, TYPE_ID_LIST_U>{ListTInlineContent<U>(mresult.data(), std::distance(mresult.begin(), meiter))};
+                }
+                else {
+                    return XList<U, TYPE_ID_LIST_U>{ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_U)>{PosRBTree<U, ListTTreeContent<U, getPosTreeIDFrom(TYPE_ID_LIST_U)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_U)>::mkinitial(mresult.data(), mresult.data() + std::distance(mresult.begin(), meiter))}};
+                }
+            }
+            else {
+                assert(false);
+            }
+        }
+
         T sum(T zero) const
         {
             if(this->ulist.empty()) {
