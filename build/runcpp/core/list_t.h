@@ -7,7 +7,7 @@
 
 namespace ᐸRuntimeᐳ
 {
-    constexpr static size_t MAX_LIST_INLINE_BYTES = 24; //Bytes -- so 32 total when we add 8 bytes for the size
+    constexpr static size_t MAX_LIST_INLINE_BYTES = 32; //Bytes -- so 40 total when we add 8 bytes for the size
     
     constexpr size_t LIST_T_INLINE_CAPACITY(size_t elem_size)
     {

@@ -1319,7 +1319,11 @@ class CPPEmitter {
             bstr = `l.filter<${isSimple}>([&p](${params}){ return ${pred}(p, ${args}); })`;
         }
         else if(body.builtin === "list_filtermap") {
-            assert(false, "CPPEmitter: need to implement list filtermap builtin body emission");
+            const [pred, isSimplePred, paramsPred, argsPred] = this.getParamInforForLambda(invk, "p");
+            const [fn, isSimpleFn, paramsFn, argsFn] = this.getParamInforForLambda(invk, "f");
+            const utype = body.biterms.find((bt) => bt[0] === "U") as [string, IRTypeSignature];
+            const ptid = this.typeInfoManager.getTypeInfo(invk.resultType.tkeystr).bsqtypeid;
+            bstr = `l.filtermap<${isSimplePred} & ${isSimpleFn}, ${this.typeInfoManager.emitTypeAsStd(utype[1].tkeystr)}, ${ptid}>([&p](${paramsPred}){ return ${pred}(p, ${argsPred}); }, [&f](${paramsFn}){ return ${fn}(f, ${argsFn}); })`;
         }
         else if(body.builtin === "list_sum") {
             bstr = `l.sum(zero)`
