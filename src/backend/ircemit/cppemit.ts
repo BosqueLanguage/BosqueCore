@@ -1325,8 +1325,20 @@ class CPPEmitter {
             const ptid = this.typeInfoManager.getTypeInfo(invk.resultType.tkeystr).bsqtypeid;
             bstr = `l.filtermap<${isSimplePred} & ${isSimpleFn}, ${this.typeInfoManager.emitTypeAsStd(utype[1].tkeystr)}, ${ptid}>([&p](${paramsPred}){ return ${pred}(p, ${argsPred}); }, [&f](${paramsFn}){ return ${fn}(f, ${argsFn}); })`;
         }
+        else if(body.builtin === "list_min") {
+            const mtype = this.typeInfoManager.emitTypeAsParameter(invk.resultType.tkeystr, false, false);
+            bstr = `l.minfun<true>([](${mtype} a, ${mtype} b){ return (bool)(a < b); })`;
+        }
+        else if(body.builtin === "list_minfun") {
+            const [cmp, isSimple, params, args] = this.getParamInforForLambda(invk, "cmp");
+            bstr = `l.minfun<${isSimple}>([&cmp](${params}){ return (bool)${cmp}(cmp, ${args}); })`;
+        }
         else if(body.builtin === "list_sum") {
             bstr = `l.sum(zero)`
+        }
+        else if(body.builtin === "list_sumfun") {
+            const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "op");
+            bstr = `l.sum<${isSimple}>(init, [&op](${params}){ return ${fn}(op, ${args}); })`;
         }
         else if(body.builtin === "algo_for") {
             const [fn] = this.getParamInforForLambda(invk, "op");

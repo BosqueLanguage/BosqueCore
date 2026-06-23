@@ -764,6 +764,27 @@ namespace ᐸRuntimeᐳ
             }
         }
 
+        template<bool SafeSimpleFn, typename Pred>
+        T minfun(Pred p) const
+        {
+            assert(!this->ulist.empty());
+
+            if(this->ulist.isInline()) {
+                auto ddbegin = this->ulist.inlinelist.data.cbegin();
+                auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
+
+                if constexpr (SafeSimpleFn) {
+                    return *std::min_element(std::execution::unseq, ddbegin, ddend, p);
+                }
+                else {
+                    return *std::min_element<std::execution::seq>(ddbegin, ddend, p);
+                }
+            }
+            else {
+                return this->ulist.treelist.postree.template minfun<SafeSimpleFn>(p);
+            }
+        }
+
         T sum(T zero) const
         {
             if(this->ulist.empty()) {
@@ -781,6 +802,26 @@ namespace ᐸRuntimeᐳ
             }
             else {
                 return this->ulist.treelist.postree.sum(zero);
+            }
+        }
+
+        template<bool SafeSimpleFn, typename Fn>
+        T sumfun(T zero, Fn op) const
+        {
+            if(this->ulist.empty()) {
+                return zero;
+            }
+
+            if(this->ulist.isInline()) {
+                auto ddbegin = this->ulist.inlinelist.data.cbegin();
+                auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
+
+                return std::accumulate(ddbegin, ddend, zero, [&op](const T& a, const T& b) {
+                    return op(a, b);
+                });
+            }
+            else {
+                return this->ulist.treelist.postree.template sumfun(zero, op);
             }
         }
 

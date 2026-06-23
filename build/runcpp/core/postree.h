@@ -325,11 +325,30 @@ namespace ᐸRuntimeᐳ
             return PosRBData<U, K>(this->color, this->bheight, std::distance(mresult.begin(), meiter), mresult);
         }
 
+        template<bool SafeSimpleFn, typename Pred>
+        T minfun(Pred p) const
+        {
+            if constexpr (SafeSimpleFn) {
+                return *std::min_element(std::execution::unseq, this->data.begin(), this->data.begin() + this->dcount, p);
+            }
+            else {
+                return *std::min_element(std::execution::seq, this->data.begin(), this->data.begin() + this->dcount, p);
+            }
+        }
+
         T sum(T init) const
         {
             return std::accumulate(this->data.begin(), this->data.begin() + this->dcount, init, [](T a, T b) {
                 T::checkOverflowAddition(a, b, "List Sum", 0);
                 return a + b;
+            });
+        }
+
+        template<bool SafeSimpleFn, typename Fn>
+        T sumfun(const T& init, Fn op) const
+        {
+            return std::accumulate(this->data.begin(), this->data.begin() + this->dcount, init, [&op](const T& a, const T& b) {
+                return op(a, b);
             });
         }
 
@@ -1307,6 +1326,25 @@ private:
             }
         }
 
+        template <bool SafeSimpleFn, typename Pred>
+        static T recminfun(const PosRBNode<T, K>* curr, const T& cmin, Pred p)
+        {
+            if(curr == nullptr) {
+                return cmin;
+            }
+
+            if(isLeafType(curr)) {
+                return curr->data.template minfun<SafeSimpleFn>(p);
+            }
+            else {
+                T leftMin = recminfun<SafeSimpleFn>(reprGetLeft(curr), cmin, p);
+                T midMin = curr->data.template minfun<SafeSimpleFn>(p);
+                T rightMin = recminfun<SafeSimpleFn>(reprGetRight(curr), cmin, p);
+
+                return std::min({leftMin, midMin, rightMin}, p);
+            }
+        }
+
         static T recsum(const PosRBNode<T, K>* curr, T init)
         {
             if(curr == nullptr) {
@@ -1320,6 +1358,25 @@ private:
                 T leftSum = recsum(reprGetLeft(curr), init);
                 T midSum = curr->data.sum(leftSum);
                 T rightSum = recsum(reprGetRight(curr), midSum);
+
+                return rightSum;
+            }
+        }
+
+        template <bool SafeSimpleFn, typename Fn>
+        static T recsumfun(const PosRBNode<T, K>* curr, const T& init, Fn op)
+        {
+            if(curr == nullptr) {
+                return init;
+            }
+
+            if(isLeafType(curr)) {
+                return curr->data.template sumfun<SafeSimpleFn>(init, op);
+            }
+            else {
+                T leftSum = recsumfun<SafeSimpleFn>(reprGetLeft(curr), init, op);
+                T midSum = curr->data.template sumfun<SafeSimpleFn>(leftSum, op);
+                T rightSum = recsumfun<SafeSimpleFn>(reprGetRight(curr), midSum, op);
 
                 return rightSum;
             }
@@ -1461,9 +1518,22 @@ private:
             }
         }
 
+        template <bool SafeSimplePred, typename Pred>
+        T minfun(Pred p) const
+        {
+            T cmin = this->getFront();
+            return recminfun<false, Pred>(this->root, cmin, p);
+        }
+
         T sum(T zero) const
         {
             return recsum(this->root, zero);
+        }
+
+        template <bool SafeSimpleFn, typename Op>
+        T sumfun(T zero, Op op) const
+        {
+            return recsumfun(this->root, zero, op);
         }
 
         template <typename Fn>
