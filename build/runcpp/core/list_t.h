@@ -821,7 +821,7 @@ namespace ᐸRuntimeᐳ
                 });
             }
             else {
-                return this->ulist.treelist.postree.template sumfun(zero, op);
+                return this->ulist.treelist.postree.template sumfun<SafeSimpleFn>(zero, op);
             }
         }
 

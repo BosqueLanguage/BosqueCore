@@ -349,6 +349,11 @@ class CPPEmitter {
             else if(ttag === IRExpressionTag.IRAccessTempVariableExpression) {
                 return TransformCPPNameManager.convertIdentifier((exp as IRAccessTempVariableExpression).vname);
             }
+            else if(ttag === IRExpressionTag.IRConstructorLambdaExpression) {
+                const clexp = exp as IRConstructorLambdaExpression;
+                const ctype = TransformCPPNameManager.convertTypeKey(clexp.ltype.tkeystr);
+                return `${ctype}_ldata_{${clexp.values.map((v) => this.emitIRSimpleExpression(v, false)).join(", ")}}`;
+            }
             else {
                 assert(false, `CPPEmitter: Unsupported IR immediate expression type -- ${exp.constructor.name}`);
             }
@@ -575,11 +580,6 @@ class CPPEmitter {
                 const totype = TransformCPPNameManager.convertTypeKey(cexp.totype.tkeystr);
                 const tounion =TransformCPPNameManager.generateNameForUnionType(cexp.totype.tkeystr);
                 bstr = `${this.emitIRSimpleExpression(cexp.value, false)}.convert<${totype}, ${tounion}>()`;
-            }
-            else if(ttag === IRExpressionTag.IRConstructorLambdaExpression) {
-                const clexp = exps as IRConstructorLambdaExpression;
-                const ctype = TransformCPPNameManager.convertTypeKey(clexp.ltype.tkeystr);
-                bstr = `${ctype}_ldata_{${clexp.values.map((v) => this.emitIRSimpleExpression(v, false)).join(", ")}}`;
             }
             else if(ttag === IRExpressionTag.IRAccessFieldSpecialExpression) {
                 const afse = exps as IRAccessFieldSpecialExpression;
@@ -1338,7 +1338,7 @@ class CPPEmitter {
         }
         else if(body.builtin === "list_sumfun") {
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "op");
-            bstr = `l.sum<${isSimple}>(init, [&op](${params}){ return ${fn}(op, ${args}); })`;
+            bstr = `l.sumfun<${isSimple}>(init, [&op](${params}){ return ${fn}(op, ${args}); })`;
         }
         else if(body.builtin === "algo_for") {
             const [fn] = this.getParamInforForLambda(invk, "op");
@@ -1380,7 +1380,7 @@ class CPPEmitter {
 
     private emitPreconditionCheckFunction(ipcs: IRPreConditionDecl, invk: IRInvokeDecl): [string, string] {
         const fname = TransformCPPNameManager.generateNameForInvokePreconditionCheck(invk.ikey, ipcs.requiresidx);
-        const params = invk.params.map((p) => `${this.typeInfoManager.emitTypeAsParameter(p.type.tkeystr, false, false)} ${TransformCPPNameManager.convertIdentifier(p.name)}`);
+        const params = invk.params.map((p) => `${this.typeInfoManager.emitTypeAsParameter(p.type.tkeystr, false, p.type instanceof IRLambdaParameterPackTypeSignature)} ${TransformCPPNameManager.convertIdentifier(p.name)}`);
 
         const finalv = `return ${this.emitIRSimpleExpression(ipcs.value, true)};`;
         const bodystr = this.emitStatementList(ipcs.stmts, undefined, [finalv], "");
@@ -1393,7 +1393,7 @@ class CPPEmitter {
 
     private emitPostconditionCheckFunction(ipcs: IRPostConditionDecl, invk: IRInvokeDecl, haspassing: boolean): [string, string] {
         const fname = TransformCPPNameManager.generateNameForInvokePostconditionCheck(invk.ikey, ipcs.ensuresidx);
-        const sparams = invk.params.map((p) => `${this.typeInfoManager.emitTypeAsParameter(p.type.tkeystr, false, false)} ${TransformCPPNameManager.convertIdentifier(p.name)}`);
+        const sparams = invk.params.map((p) => `${this.typeInfoManager.emitTypeAsParameter(p.type.tkeystr, false, p.type instanceof IRLambdaParameterPackTypeSignature)} ${TransformCPPNameManager.convertIdentifier(p.name)}`);
         
         const rparam = `${this.typeInfoManager.emitTypeAsParameter(invk.resultType.tkeystr, false, false)} ${TransformCPPNameManager.convertIdentifier("$return")}`;
 
@@ -1403,7 +1403,7 @@ class CPPEmitter {
         }
         else {
             const pparam = invk.params.find((p) => p.pkind !== undefined) as IRInvokeParameterDecl;
-            const iparam = `${this.typeInfoManager.emitTypeAsParameter(pparam.type.tkeystr, false, false)} ${TransformCPPNameManager.convertIdentifier("$" + pparam.name)}`;
+            const iparam = `${this.typeInfoManager.emitTypeAsParameter(pparam.type.tkeystr, false, pparam.type instanceof IRLambdaParameterPackTypeSignature)} ${TransformCPPNameManager.convertIdentifier("$" + pparam.name)}`;
 
             params = [rparam, ...sparams];
             if(pparam.pkind !== "out" && pparam.pkind !== "out?") {
@@ -1422,7 +1422,7 @@ class CPPEmitter {
 
     private emitInvariantFunction(iinv: IRInvariantDecl, tdecl: IRAbstractNominalTypeDecl, pinfo: {pname: string, ptype: IRTypeSignature}[]): [string, string] {
         const fname = TransformCPPNameManager.generateNameForInvariantFunction(tdecl.tkey, iinv.invariantidx);
-        const params = pinfo.map((p) => `${this.typeInfoManager.emitTypeAsParameter(p.ptype.tkeystr, false, false)} ${TransformCPPNameManager.convertIdentifier(p.pname)}`);
+        const params = pinfo.map((p) => `${this.typeInfoManager.emitTypeAsParameter(p.ptype.tkeystr, false, p.ptype instanceof IRLambdaParameterPackTypeSignature)} ${TransformCPPNameManager.convertIdentifier(p.pname)}`);
 
         const finalv = `return ${this.emitIRSimpleExpression(iinv.value, true)};`;
         const bodystr = this.emitStatementList(iinv.stmts, undefined, [finalv], "");
@@ -1435,7 +1435,7 @@ class CPPEmitter {
 
     private emitValidateFunction(ival: IRValidateDecl, tdecl: IRAbstractNominalTypeDecl, pinfo: {pname: string, ptype: IRTypeSignature}[]): [string, string] {
         const fname = TransformCPPNameManager.generateNameForValidateFunction(tdecl.tkey, ival.validateidx);
-        const params = pinfo.map((p) => `${this.typeInfoManager.emitTypeAsParameter(p.ptype.tkeystr, false, false)} ${TransformCPPNameManager.convertIdentifier(p.pname)}`);
+        const params = pinfo.map((p) => `${this.typeInfoManager.emitTypeAsParameter(p.ptype.tkeystr, false, p.ptype instanceof IRLambdaParameterPackTypeSignature)} ${TransformCPPNameManager.convertIdentifier(p.pname)}`);
 
         const finalv = `return ${this.emitIRSimpleExpression(ival.value, true)};`;
         const bodystr = this.emitStatementList(ival.stmts, undefined, [finalv], "");

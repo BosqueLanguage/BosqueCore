@@ -3671,7 +3671,12 @@ class ASMToIRConverter {
                     this.pushStatement(new IRReturnValueSimpleStatement(frval));
                 }
                 else if(eexp instanceof IRConstructExpression) {
-                    assert(false, "Not implemented -- flattenExpressionBody with construct expression body");
+                    if(body.exp.getType().tkeystr === (this.currentReturnType as TypeSignature).tkeystr) {
+                       this.pushStatement(new IRReturnDirectConstructStatement(eexp));
+                    }
+                    else {
+                        this.pushStatement(new IRReturnDirectConstructWithBoxStatement(eexp, this.processTypeSignature(body.exp.getType()), this.processTypeSignature(this.currentReturnType as TypeSignature)));
+                    }
                 }
                 else {
                     if(eexp instanceof IRInvokeDirectExpression && this.tproc(body.exp.getType()).tkeystr === (this.currentReturnType as TypeSignature).tkeystr) {

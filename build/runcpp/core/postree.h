@@ -1522,7 +1522,7 @@ private:
         T minfun(Pred p) const
         {
             T cmin = this->getFront();
-            return recminfun<false, Pred>(this->root, cmin, p);
+            return recminfun<SafeSimplePred, Pred>(this->root, cmin, p);
         }
 
         T sum(T zero) const
@@ -1533,7 +1533,7 @@ private:
         template <bool SafeSimpleFn, typename Op>
         T sumfun(T zero, Op op) const
         {
-            return recsumfun(this->root, zero, op);
+            return recsumfun<SafeSimpleFn, Op>(this->root, zero, op);
         }
 
         template <typename Fn>
