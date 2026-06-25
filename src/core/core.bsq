@@ -77,6 +77,10 @@ __internal __typedeclable __numeric entity Float {
         return x * x;
     }
 
+    function pow(x: Float, y: Float): Float {
+        return NumericOps::s_floatPow(x, y);
+    }
+
     function sqrt(x: Float): Float
         requires x >= 0.0f;
     {

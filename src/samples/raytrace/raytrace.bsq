@@ -38,10 +38,16 @@ entity RayTracer{
     }
 
     method minIntersection(ray: Ray, scene: Scene): Option<ISect> {
-        return intersections = scene.things
+        let isects = scene.things
             .map<Option<ISect>>(fn(obj) => obj.intersect(ray))
-            .extractIfSome<ISect>()
-            .min(pred(isect1, isect2) => isect1.dist < isect2.dist);
+            .extractIfSome<ISect>();
+
+        if(isects.empty()) {
+            return none;
+        }
+        else {
+            return some(isects.min(pred(isect1, isect2) => isect1.dist < isect2.dist));
+        }
     }
 
     method testRay(ray: Ray, scene: Scene): Float {
@@ -65,7 +71,7 @@ entity RayTracer{
     }
 
     method getNaturalColor(thing: SceneObject, pos: Vector, norm: Vector, rd: Vector, scene: Scene): Color {
-        scene.lights.filter(pred(light) => {
+        return scene.lights.filter(pred(light) => {
             let ldis = Vector::minus(light.pos, pos);
             let livec = Vector::norm(ldis);
             let neatIsect = this.testRay(Ray{pos, livec}, scene);
@@ -138,7 +144,12 @@ entity Vector {
     
     function norm(v: Vector): Vector {
         let mag = Vector::mag(v);
-        let div = if(mag == 0.0f) then 1000000000.0f else (1.0f // mag);
+        
+        var div = 1000000000.0f;
+        if(mag != 0.0f) {
+            div = 1.0f // mag;
+        }
+
         return Vector::times(div, v);
     }
 
@@ -176,7 +187,12 @@ entity Color {
     const defaultColor: Color = Color{0.0f, 0.0f, 0.0f};
 
     function legalize(d: Float): Float {
-        return if(d > 1.0f) then 1.0f else d;
+        if(d > 1.0f) {
+            return 1.0f;
+        }
+        else {
+            return d;
+        }
     }
 }
 
@@ -223,20 +239,16 @@ concept SceneObject {
     field surface: Surface;
     
     method intersect(ray: Ray): Option<ISect> {
-        if(this)@<Sphere> {
-            return $this.intersectSphere(ray);
-        }
-        else {
-            return this@<Plane>.intersectPlane(ray);
+        match(this) {
+            Sphere => { return $this.intersectSphere(ray); }
+            Plane => { return this.@<Plane>.intersectPlane(ray); }
         }
     }
 
     method normal(pos: Vector): Vector {
-        if(this)@<Sphere> {
-            return Vector::norm(Vector::minus(pos, $this.center));
-        }
-        else {
-            return this@<Plane>.norm;
+        match(this) {
+            Sphere => { return Vector::norm(Vector::minus(pos, $this.center)); }
+            Plane => { return this.@<Plane>.norm; }
         }
     }
 }
@@ -257,7 +269,12 @@ entity Sphere provides SceneObject {
         else
         {
             let disc = Float::square(this.radius) - (Vector::dot(eo, eo) - Float::square(v));
-            dist = if(disc < 0.0f) then 0.0f else (v - Float::sqrt(disc));
+            if(disc < 0.0f) {
+                dist = 0.0f;
+            }
+            else {
+                dist = v - Float::sqrt(disc);
+            }
         }
 
         if(dist == 0.0f) {

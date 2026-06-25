@@ -1263,6 +1263,9 @@ class CPPEmitter {
         if(body.builtin === "float_sqrt") {
             bstr = "ᐸRuntimeᐳ::XFloat{std::sqrt(v.value)}"
         }
+        else if(body.builtin === "float_pow") {
+            bstr = "ᐸRuntimeᐳ::XFloat{std::pow(x.value, y.value)}";
+        }
         else if(body.builtin === "list_empty") {
             bstr = "ᐸRuntimeᐳ::XBool::from(l.empty())";
         }
