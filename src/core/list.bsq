@@ -131,12 +131,30 @@ __internal entity List<T> {
         }
     }
 
+    method convert<U>(): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+            return ListOps::s_list_map<T, U>(this, fn(v) => v.@<U>);
+        }
+    }
+
     method convertIf<U>(): List<U> {
         if(ListOps::s_list_empty<T>(this)) {
             return List<U>{};
         }
         else {
            return ListOps::s_list_filtermap<T, U>(this, pred(v) => v.?<U>, fn(v) => v.@<U>);
+        }
+    }
+
+    method {when T: Option<U>} extractSome<U>(): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+            return ListOps::s_list_map<T, U>(this, fn(v) => v.@some);
         }
     }
 
@@ -149,29 +167,11 @@ __internal entity List<T> {
         }
     }
 
-    method convert<U>(): List<U> {
-        if(ListOps::s_list_empty<T>(this)) {
-            return List<U>{};
-        }
-        else {
-            return ListOps::s_list_map<T, U>(this, fn(v) => v.@<U>);
-        }
-    }
-
-    method {when T: Option<U>} extract<U>(): List<U> {
-        if(ListOps::s_list_empty<T>(this)) {
-            return List<U>{};
-        }
-        else {
-            return ListOps::s_list_map<T, U>(this, fn(v) => v.@some);
-        }
-    }
-
     %%
-    %%TODO: extractIfOk<U>, extractIfFail<E>, extractOkAll<U>, extractFailAll<E> for Result<T, E>
+    %%TODO: extractIfOk<U>, extractIfFail<E>, extractOk<U>, extractFail<E> for Result<T, E>
     %%
 
-    method {when T: numeric} min(): T 
+    method {when T: keytype} min(): T 
         requires !this.empty();
     {
         return ListOps::s_list_min<T>(this);
