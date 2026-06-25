@@ -2235,12 +2235,13 @@ class TypeChecker {
 
             const ireturn = this.relations.convertTypeSignatureToTypeInferCtx(rtype);
             const lenv = TypeEnvironment.createInitialLambdaEnv(rtype, ireturn, args, env);
-            this.checkBodyImplementation(lenv, exp.invoke.body, params);
+            const fenv = this.checkBodyImplementation(lenv, exp.invoke.body, params);
             
             //note what escapes here and also resolve upwards
-            exp.lcaptures = lenv.lcaptures.map((c) => {
+            exp.lcaptures = fenv.lcaptures.map((c) => {
                 return { vname: c.vname, vtype: c.vtype, ocapture: lenv.resolveOCaptureInfoFromSrcName(c.vname) };
             });
+            
             for(let i = 0; i < exp.lcaptures.length; ++i) {
                 env.resolveLambdaCaptureVarInfoFromSrcName(exp.lcaptures[i].vname);
             }
@@ -4895,9 +4896,9 @@ class TypeChecker {
         }
     }
 
-    private checkBodyImplementation(env: TypeEnvironment, body: BodyImplementation, params: InvokeParameterDecl[]) {
+    private checkBodyImplementation(env: TypeEnvironment, body: BodyImplementation, params: InvokeParameterDecl[]): TypeEnvironment {
         if((body instanceof AbstractBodyImplementation) || (body instanceof PredicateUFBodyImplementation) || (body instanceof BuiltinBodyImplementation)) {
-            return;
+            return env;
         }
 
         if(body instanceof HoleBodyImplementation) {
@@ -4931,6 +4932,8 @@ class TypeChecker {
 
             this.checkError(body.sinfo, !this.isVoidType(env.declReturnType) && env.isnormalflow, "Function does not have a return statement in all code paths");
         }
+
+        return env;
     }
 
     private checkRequires(env: TypeEnvironment, requires: PreConditionDecl[]) {

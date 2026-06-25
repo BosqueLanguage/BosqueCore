@@ -92,7 +92,7 @@ namespace ᐸRuntimeᐳ
         }
     }
 
-    inline void bsq_exhaustive(const char* file, uint32_t line, const char* message)
+    [[noreturn]] inline void bsq_exhaustive(const char* file, uint32_t line, const char* message)
     {
         bsq_handle_error(file, line, ErrorKind::ExhaustiveCheck, nullptr, message);
     }

@@ -308,7 +308,7 @@ entity Scene {
     field camera: Camera;
 }
 
-public function render_fixed(): Color {
+public function main(): Color {
     let sc = RayTracer::createDefaultScene();
 
     return RayTracer{}.traceRay(Ray{sc.camera.pos, Vector::norm(Vector::minus(sc.camera.forward, sc.camera.pos))}, sc, 0i);
