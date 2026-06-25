@@ -241,14 +241,14 @@ concept SceneObject {
     method intersect(ray: Ray): Option<ISect> {
         match(this) {
             Sphere => { return $this.intersectSphere(ray); }
-            Plane => { return this.@<Plane>.intersectPlane(ray); }
+            Plane => { return $this.intersectPlane(ray); }
         }
     }
 
     method normal(pos: Vector): Vector {
         match(this) {
             Sphere => { return Vector::norm(Vector::minus(pos, $this.center)); }
-            Plane => { return this.@<Plane>.norm; }
+            Plane => { return $this.norm; }
         }
     }
 }
