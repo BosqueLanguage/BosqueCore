@@ -1260,11 +1260,31 @@ class CPPEmitter {
         let prestr = "";
         let bstr: string;
 
-        if(body.builtin === "float_sqrt") {
+        if(body.builtin === "float_is_safe_convert_into") {
+            const intotype = body.biterms.find((bt) => bt[0] === "T") as [string, IRTypeSignature];
+            bstr = "ᐸRuntimeᐳ::XFloat::isSafeConvertInto<" + TransformCPPNameManager.convertTypeKey(intotype[1].tkeystr) + ">(f)";
+        }
+        else if(body.builtin === "float_from_nat") {
+            bstr = "ᐸRuntimeᐳ::XFloat{static_cast<float>(v.value)}";
+        }
+        else if(body.builtin === "float_safe_convert_into") {
+            const intotype = body.biterms.find((bt) => bt[0] === "T") as [string, IRTypeSignature];
+            bstr = "ᐸRuntimeᐳ::XFloat::doSafeConvertInto<" + TransformCPPNameManager.convertTypeKey(intotype[1].tkeystr) + ">(f)";
+        }
+        else if(body.builtin === "float_sqrt") {
             bstr = "ᐸRuntimeᐳ::XFloat{std::sqrt(v.value)}"
         }
         else if(body.builtin === "float_pow") {
             bstr = "ᐸRuntimeᐳ::XFloat{std::pow(x.value, y.value)}";
+        }
+        else if(body.builtin === "list_range_nat") {
+            bstr = "ᐸRuntimeᐳ::XList<ᐸRuntimeᐳ::XNat>::fromRange(n.value)";
+        }
+        else if(body.builtin === "list_range_int") {
+            bstr = "ᐸRuntimeᐳ::XList<ᐸRuntimeᐳ::XInt>::fromRange(n.value)";
+        }
+        else if(body.builtin === "list_zip") {
+            xxxx;
         }
         else if(body.builtin === "list_empty") {
             bstr = "ᐸRuntimeᐳ::XBool::from(l.empty())";

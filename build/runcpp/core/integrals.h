@@ -10,13 +10,16 @@ namespace ᐸRuntimeᐳ
     class XNat
     {
     public:
-        static constexpr int64_t MAX_NAT = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_BASE;
+        static constexpr int64_t MIN_VALUE = 0;
+        static constexpr int64_t MAX_VALUE = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_BASE;
+
+        using value_type = int64_t;
 
         int64_t value;
 
         constexpr static bool isValidNat(int64_t v)
         {
-            return (0 <= v) & (v <= XNat::MAX_NAT);
+            return (XNat::MIN_VALUE <= v) & (v <= XNat::MAX_VALUE);
         }
 
         // Check operators on Nat
@@ -77,14 +80,16 @@ namespace ᐸRuntimeᐳ
     class XInt
     {
     public:
-        static constexpr int64_t MIN_INT = -ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_BASE; 
-        static constexpr int64_t MAX_INT = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_BASE; 
+        static constexpr int64_t MIN_VALUE = -ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_BASE; 
+        static constexpr int64_t MAX_VALUE = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_BASE; 
+
+        using value_type = int64_t;
 
         int64_t value;
 
         constexpr static bool isValidInt(int64_t v)
         {
-            return (XInt::MIN_INT <= v) & (v <= XInt::MAX_INT);
+            return (XInt::MIN_VALUE <= v) & (v <= XInt::MAX_VALUE);
         }
     
         // Check operators on Int
@@ -146,13 +151,16 @@ namespace ᐸRuntimeᐳ
     class XChkNat
     {
     public:
-        static constexpr __int128_t MAX_NAT = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED; 
+        static constexpr __int128_t MIN_VALUE = 0;
+        static constexpr __int128_t MAX_VALUE = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED; 
+
+        using value_type = __int128_t;
 
         __int128_t value;
 
         constexpr static bool isValidNat(__int128_t v)
         {
-            return (0 <= v) & (v <= XChkNat::MAX_NAT);
+            return (XChkNat::MIN_VALUE <= v) & (v <= XChkNat::MAX_VALUE);
         }
 
         static constexpr __int128_t BOTTOM_VALUE = (__int128_t(1) << 126);
@@ -178,7 +186,7 @@ namespace ᐸRuntimeᐳ
         }
         constexpr static void checkDivisionByZero(XChkNat n2, const char* file, uint32_t line)
         {
-            if(n2.value == 0) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::DivisionByZero, nullptr, "Int division by zero"); }
+            if(n2.value == 0) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::DivisionByZero, nullptr, "Nat division by zero"); }
         }
 
         // Overloaded operators on Nat
@@ -250,14 +258,16 @@ namespace ᐸRuntimeᐳ
     class XChkInt
     {
     public:
-        static constexpr __int128_t MIN_INT = -ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED; 
-        static constexpr __int128_t MAX_INT = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED; 
+        static constexpr __int128_t MIN_VALUE = -ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED; 
+        static constexpr __int128_t MAX_VALUE = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED; 
                 
+        using value_type = __int128_t;
+
         __int128_t value;
 
         constexpr static bool isValidInt(__int128_t v)
         {
-            return (XChkInt::MIN_INT <= v) & (v <= XChkInt::MAX_INT);
+            return (XChkInt::MIN_VALUE <= v) & (v <= XChkInt::MAX_VALUE);
         }
 
         static constexpr __int128_t BOTTOM_VALUE = (__int128_t(1) << 126);

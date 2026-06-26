@@ -9,6 +9,9 @@ const matteShiny: Surface = Surface{Color{1.0f, 1.0f, 1.0f}, Color{0.25f, 0.25f,
 entity RayTracer{
     const maxDepth: Int = 5i;
 
+    field screenWidth: Nat;
+	field screenHeight: Nat;
+
     function createDefaultScene(): Scene {
         let things = List<SceneObject>{
             Sphere{Main::matteShiny, Vector{-0.5f, 1.0f, 1.5f}, 0.5f},
@@ -114,6 +117,24 @@ entity RayTracer{
         }
 
         return Color::plus(ret, this.getReflectionColor(isect.thing, Vector::plus(pos, Vector::times(0.001f, reflectDir)), normal, reflectDir, scene, depth));
+    }
+
+    method recenterX(x: Nat): Float {
+        return (Float::fromNat(x) - (Float::fromNat(this.screenWidth) // 2.0f)) // (2.0f * Float::fromNat(this.screenWidth));
+    }
+	
+    method recenterY(y: Nat): Float {
+		return -(Float::fromNat(y) - (Float::fromNat(this.screenHeight) // 2.0f)) // (2.0f * Float::fromNat(this.screenHeight));
+    }
+
+    method getPoint(x: Nat, y: Nat, camera: Camera): Vector {
+        return Vector::norm(Vector::plus(camera.forward, Vector::plus(Vector::times(this.recenterX(x), camera.right), Vector::times(this.recenterY(y), camera.up))));
+    }
+
+    method renderColors(scene: Scene): List<List<Color>> {
+		let ys = List::rangeOfNat(0n, this.screenHeight);
+        let xs = List::rangeOfNat(0n, this.screenWidth);
+        return ys.map<List<Color>>(fn(y) => xs.map<Color>(fn(x) => this.traceRay(Ray{scene.camera.pos, this.getPoint(x, y, scene.camera)}, scene, 0i)));
     }
 }
 
@@ -308,10 +329,19 @@ entity Scene {
     field camera: Camera;
 }
 
-public function main(): Color {
-    let sc = RayTracer::createDefaultScene();
+function extractdiag(pvals: List<List<Color>>): List<Color> {
+    let didxs = List::rangeOfNat(0n, pvals.size());
+    return didxs.map<Color>(fn(idx) => pvals.get(idx).get(idx));
+}
 
-    return RayTracer{}.traceRay(Ray{sc.camera.pos, Vector::norm(Vector::minus(sc.camera.forward, sc.camera.pos))}, sc, 0i);
+const imagesize: Nat = 10n;
+
+public function main(): List<Color> {
+    let sc = RayTracer::createDefaultScene();
+    let rt = RayTracer{imagesize, imagesize};
+
+    let pvals = rt.renderColors(sc);
+    return extractdiag(pvals);
 }
 
 %*
@@ -321,3 +351,19 @@ public function render_param(thing: SceneObject): Color {
     return RayTracer{}.traceRay(Ray{sc.camera.pos, Vector::norm(Vector::minus(sc.camera.forward, sc.camera.pos))}, sc, 0i);
 }
 *%
+
+%**
+10x10 Diag Pixels:
+Diag Pixels:
+Color(R: 0, G: 0, B: 0)
+Color(R: 0, G: 0, B: 0)
+Color(R: 0.9128008546682947, G: 0.8759200120554343, B: 0.737616852257208)
+Color(R: 0.8675872115231464, G: 0.8325331827747363, B: 0.7010805749681992)
+Color(R: 0.5901674814391263, G: 0.5663223306739091, B: 0.47690301530434454)
+Color(R: 0.13267484140311228, G: 0.12206326803983913, B: 0.1341997869893186)
+Color(R: 0.009340552693522993, G: 3.4421654935998165E-34, B: 0.053614772460821976)
+Color(R: 0.008216491390106192, G: 9.759645234674696E-11, B: 0.04716266004568226)
+Color(R: 0.017605978548440097, G: 5.605307413198225E-179, B: 0.09958937360733792)
+Color(R: 0.017994518043909443, G: 3.8143983687976177E-110, B: 0.10178717277362917)
+**%
+

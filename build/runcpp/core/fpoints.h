@@ -17,6 +17,22 @@ namespace ᐸRuntimeᐳ
             return std::isfinite(v);
         }
 
+        template <typename T>
+        constexpr static XBool isSafeConvertInto(XFloat f)
+        {
+            if(!std::isfinite(f.value)) {
+                return XBool::from(false);
+            }
+
+            return XBool::from((static_cast<double>(T::MIN_VALUE) <= f.value) & (f.value <= static_cast<double>(T::MAX_VALUE)));
+        }
+
+        template <typename T>
+        constexpr static T doSafeConvertInto(XFloat f)
+        {
+            return T{static_cast<typename T::value_type>(f.value)};
+        }
+
         // Check operators on Float
         constexpr static void checkOverflowAddition(XFloat n1, XFloat n2, const char* file, uint32_t line)
         {

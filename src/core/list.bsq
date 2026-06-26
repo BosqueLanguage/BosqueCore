@@ -1,6 +1,22 @@
 namespace Core;
 
 namespace List {
+#if STRIPPED_CORE
+#else
+    function rangeOfNat(start: Nat, end: Nat): List<Nat> {
+        return ListOps::s_list_range_nat(start, end);
+    }
+
+    function rangeOfInt(start: Int, end: Int): List<Int> {
+        return ListOps::s_list_range_int(start, end);
+    }
+
+    function zip<T, U>(l1: List<T>, l2: List<U>): List<(|T, U|)> 
+        requires l1.size() == l2.size();
+    {
+        return ListOps::s_list_zip<T, U>(l1, l2);
+    }
+#endif  %% STRIPPED_CORE 
 }
 
 __internal entity List<T> {
