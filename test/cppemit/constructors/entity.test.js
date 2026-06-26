@@ -31,7 +31,7 @@ describe ("CPPEmit -- Entity Constructor", () => {
         const sbfoo = 'entity Foo { field a: Bar; }';
         const lbfoo = 'entity Foo { field jj: Int; field x: Int; field y: Int; field z: Int; field a: Bar; field b: Bar; }';
      
-        checkTestEmitMainFunction(`${bbar} ${sbfoo} public function main(): Foo { return Foo{a = Bar{1i, 2i, 3i}}; }`, "MainᕒFoo Mainᕒmain() { MainᕒBar tmp_0 = MainᕒBar{1_i, 2_i, 3_i}; return MainᕒFoo{tmp_0}; }");
+        checkTestEmitMainFunction(`${bbar} ${sbfoo} public function main(): Foo { return Foo{a = Bar{1i, 2i, 3i}}; }`, "MainᕒFoo* Mainᕒmain() { MainᕒBar tmp_0 = MainᕒBar{1_i, 2_i, 3_i}; return ᐸRuntimeᐳ::MainᕒFoo_allocator.allocate(tmp_0); }");
         checkTestEmitMainFunction(`${bbar} ${lbfoo} public function main(): Foo { return Foo{0i, 1i, 2i, 3i, Bar{4i, 5i, 0i}, Bar{6i, 7i, 0i}}; }`, "MainᕒFoo* Mainᕒmain() { MainᕒBar tmp_0 = MainᕒBar{4_i, 5_i, 0_i}; MainᕒBar tmp_1 = MainᕒBar{6_i, 7_i, 0_i}; return ᐸRuntimeᐳ::MainᕒFoo_allocator.allocate(0_i, 1_i, 2_i, 3_i, tmp_0, tmp_1); }"); 
     });
 });
