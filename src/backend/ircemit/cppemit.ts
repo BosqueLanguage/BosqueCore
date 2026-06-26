@@ -1262,14 +1262,14 @@ class CPPEmitter {
 
         if(body.builtin === "float_is_safe_convert_into") {
             const intotype = body.biterms.find((bt) => bt[0] === "T") as [string, IRTypeSignature];
-            bstr = "ᐸRuntimeᐳ::XFloat::isSafeConvertInto<" + TransformCPPNameManager.convertTypeKey(intotype[1].tkeystr) + ">(f)";
+            bstr = `ᐸRuntimeᐳ::XFloat::isSafeConvertInto<${TransformCPPNameManager.convertTypeKey(intotype[1].tkeystr)}>(f)`;
         }
         else if(body.builtin === "float_from_nat") {
-            bstr = "ᐸRuntimeᐳ::XFloat{static_cast<float>(v.value)}";
+            bstr = "ᐸRuntimeᐳ::XFloat{static_cast<double>(v.value)}";
         }
         else if(body.builtin === "float_safe_convert_into") {
             const intotype = body.biterms.find((bt) => bt[0] === "T") as [string, IRTypeSignature];
-            bstr = "ᐸRuntimeᐳ::XFloat::doSafeConvertInto<" + TransformCPPNameManager.convertTypeKey(intotype[1].tkeystr) + ">(f)";
+            bstr = `ᐸRuntimeᐳ::XFloat::doSafeConvertInto<${TransformCPPNameManager.convertTypeKey(intotype[1].tkeystr)}>(f)`;
         }
         else if(body.builtin === "float_sqrt") {
             bstr = "ᐸRuntimeᐳ::XFloat{std::sqrt(v.value)}"
@@ -1278,13 +1278,17 @@ class CPPEmitter {
             bstr = "ᐸRuntimeᐳ::XFloat{std::pow(x.value, y.value)}";
         }
         else if(body.builtin === "list_range_nat") {
-            bstr = "ᐸRuntimeᐳ::XList<ᐸRuntimeᐳ::XNat>::fromRange(n.value)";
+            const rtype = this.typeInfoManager.getTypeInfo(invk.resultType.tkeystr);
+            bstr = `ᐸRuntimeᐳ::XListOps::fromRange<Nat, ${rtype.bsqtypeid}>(start.value, end.value)`;
         }
         else if(body.builtin === "list_range_int") {
-            bstr = "ᐸRuntimeᐳ::XList<ᐸRuntimeᐳ::XInt>::fromRange(n.value)";
+            const rtype = this.typeInfoManager.getTypeInfo(invk.resultType.tkeystr);
+            bstr = `ᐸRuntimeᐳ::XListOps::fromRange<Int, ${rtype.bsqtypeid}>(start.value, end.value)`;
         }
         else if(body.builtin === "list_zip") {
-            xxxx;
+            const jtype = body.biterms.find((bt) => bt[0] === "J") as [string, IRTypeSignature];
+            const rtype = this.typeInfoManager.getTypeInfo(invk.resultType.tkeystr);
+            bstr = `ᐸRuntimeᐳ::XListOps::zip<${TransformCPPNameManager.convertTypeKey(jtype[1].tkeystr)}, ${rtype.bsqtypeid}>(l1, l2, ssize.value)`;
         }
         else if(body.builtin === "list_empty") {
             bstr = "ᐸRuntimeᐳ::XBool::from(l.empty())";

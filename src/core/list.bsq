@@ -3,18 +3,38 @@ namespace Core;
 namespace List {
 #if STRIPPED_CORE
 #else
-    function rangeOfNat(start: Nat, end: Nat): List<Nat> {
-        return ListOps::s_list_range_nat(start, end);
+    function rangeOfNat(start: Nat, end: Nat): List<Nat> 
+        requires start <= end;
+    {
+        if(start == end) {
+            return List<Nat>{};
+        }
+        else {
+            return ListOps::s_list_range_nat(start, end);
+        }
     }
 
-    function rangeOfInt(start: Int, end: Int): List<Int> {
-        return ListOps::s_list_range_int(start, end);
+    function rangeOfInt(start: Int, end: Int): List<Int> 
+        requires start <= end;
+    {
+        if(start == end) {
+            return List<Int>{};
+        }
+        else {
+            return ListOps::s_list_range_int(start, end);
+        }
     }
 
     function zip<T, U>(l1: List<T>, l2: List<U>): List<(|T, U|)> 
         requires l1.size() == l2.size();
     {
-        return ListOps::s_list_zip<T, U>(l1, l2);
+        let ssize = l1.size();
+        if(ssize == 0n) {
+            return List<(|T, U|)>{};
+        }
+        else {
+            return ListOps::s_list_zip<T, U, (|T, U|)>(l1, l2, ssize);
+        }
     }
 #endif  %% STRIPPED_CORE 
 }

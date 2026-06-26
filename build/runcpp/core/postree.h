@@ -1382,6 +1382,73 @@ private:
             }
         }
 
+        //Only works when T is Nat/Int
+        static PosRBNode<T, K>* recmkrange(int64_t start, int64_t end)
+        {
+            int64_t size = (size_t)(end - start);
+            if((size_t)size <= K) {
+                xxxx;
+                return s_leafallocator->construct(PosRBData<T, K>(RColor::Red, 1, start, end));
+            }
+            else {
+                xxxx;
+                size_t dsize = (size_t)std::max((uint64_t)1, ((uint64_t)K) - 2);
+
+                size_t remain = size - dsize;
+                size_t lsize = remain / 2;
+                size_t rsize = remain - lsize;
+
+                Iter mid1 = start;
+                std::advance(mid1, lsize);
+
+                Iter mid2 = mid1;
+                std::advance(mid2, dsize);
+
+                const PosRBNode<T, K>* left = mklargerec(start, mid1, lsize);
+                const PosRBNode<T, K>* right = mklargerec(mid2, end, rsize);
+
+                PosRBData<T, K> ndata(RColor::Black, 1, mid1, mid2);
+                return s_nodeallocator->construct(RColor::Black, computeNewBHeight_ForTreeNode(RColor::Black, left, right), computeNewCount_ForTreeNode(left, right, ndata), left, right, ndata);
+            }
+        }
+
+        //Only works when T is (|X, Y|)
+        template <typename IterX, typename IterY>
+        static PosRBNode<T, K>* recmkzip(const IterX& l1, const IterY& l2, int64_t count)
+        {
+            if((size_t)count <= K) {
+                xxxx;
+
+                return s_leafallocator->construct(PosRBData<T, K>(RColor::Red, 1, l1, l2, count));
+            }
+            else {
+                xxxx;
+                size_t dsize = (size_t)std::max((uint64_t)1, ((uint64_t)K) - 2);
+
+                size_t remain = (size_t)count - dsize;
+                size_t lsize = remain / 2;
+                size_t rsize = remain - lsize;
+
+                IterX mid1x = l1;
+                std::advance(mid1x, lsize);
+
+                IterY mid1y = l2;
+                std::advance(mid1y, lsize);
+
+                IterX mid2x = mid1x;
+                std::advance(mid2x, dsize);
+
+                IterY mid2y = mid1y;
+                std::advance(mid2y, dsize);
+
+                const PosRBNode<T, K>* left = recmkzip(l1, l2, lsize);
+                const PosRBNode<T, K>* right = recmkzip(mid2x, mid2y, rsize);
+
+                PosRBData<T, K> ndata(RColor::Black, 1, mid1x, mid1y, mid2x, mid2y);
+                return s_nodeallocator->construct(RColor::Black, computeNewBHeight_ForTreeNode(RColor::Black, left, right), computeNewCount_ForTreeNode(left, right, ndata), left, right, ndata);
+            }
+        }
+
         template <typename Fn>
         static void recdiagnosticEmit(const PosRBNode<T, K>* curr, std::ostream& out, Fn diagnosticEmitFn, bool waddr)
         {
@@ -1534,6 +1601,19 @@ private:
         T sumfun(T zero, Op op) const
         {
             return recsumfun<SafeSimpleFn, Op>(this->root, zero, op);
+        }
+
+        //Only works when T is Nat/Int
+        static PosRBTree<T, K, TreeID> mkrange(int64_t start, int64_t end)
+        {
+            return PosRBTree<T, K, TreeID>{recmkrange(start, end)};
+        }
+
+        //Only works when T is (|X, Y|)
+        template <typename IterX, typename IterY>
+        static PosRBTree<T, K, TreeID> mkzip(const IterX& l1, const IterY& l2, int64_t count)
+        {
+            return PosRBTree<T, K, TreeID>{recmkzip(l1, l2, count)};
         }
 
         template <typename Fn>

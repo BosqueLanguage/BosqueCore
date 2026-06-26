@@ -7,7 +7,7 @@ namespace ListOps {
     function s_list_range_nat(start: Nat, end: Nat): List<Nat> = @list_range_nat;
     function s_list_range_int(start: Int, end: Int): List<Int> = @list_range_int;
 
-    function s_list_zip<T, U>(l1: List<T>, l2: List<U>): List<(|T, U|)> = @list_zip;
+    function s_list_zip<T, U, J>(l1: List<T>, l2: List<U>): List<(|T, U|)> = @list_zip;
 
     function s_list_empty<T>(l: List<T>): Bool = @list_empty;
     function s_list_size<T>(l: List<T>): Nat = @list_size;
