@@ -28,44 +28,44 @@ namespace ᐸRuntimeᐳ
         uint32_t p2size; //power of 2 rounded (slot size) of the type stored in this page
         uint32_t size2shift; //shift bits for power of 2 rounded (slot size) of the type stored in this page
 
-        constexpr static PageInfo* extractPageFromPointer(void* p) 
+        inline static PageInfo* extractPageFromPointer(void* p) 
         {
             return (PageInfo*)((uintptr_t)(p) & GC_PAGE_ADDR_MASK);
         }
 
-        constexpr uint16_t getIndexForObjectInPage(void* obj) const
+        inline uint16_t getIndexForObjectInPage(void* obj) const
         { 
             return (uint16_t)(((void**)obj - (void**)this->data) >> this->size2shift);
         }
 
-        constexpr void* getObjectFromIndexInPage(size_t idx) const
+        inline void* getObjectFromIndexInPage(size_t idx) const
         {
             return (void*)((void**)this->data + (idx << this->size2shift));
         }
 
-        constexpr uint16_t getIndexForMetadataInPage(void* obj) const
+        inline uint16_t getIndexForMetadataInPage(void* obj) const
         { 
             return (uint16_t)(((void**)obj - (void**)this->data) >> this->size2shift);
         }
 
-        constexpr AtomicGCMetadata* getMetadataFromIndexInPage(size_t idx) const
+        inline AtomicGCMetadata* getMetadataFromIndexInPage(size_t idx) const
         {
             return this->mdata + idx;
         }
 
-        constexpr static AtomicGCMetadata* getMetadataForObj(void* obj)
+        inline static AtomicGCMetadata* getMetadataForObj(void* obj)
         {
             PageInfo* pp = extractPageFromPointer(obj);
             return pp->mdata + pp->getIndexForMetadataInPage(obj);
         }
 
-        constexpr void gcFreeListReset() 
+        inline void gcFreeListReset() 
         {
             this->freelist = nullptr;
             this->freecount = 0;
         }
 
-        constexpr void gcFreeListPush(uint16_t index) 
+        inline void gcFreeListPush(uint16_t index) 
         {
             void* ptr = this->getObjectFromIndexInPage(index);
             *((void**)ptr) = this->freelist;
@@ -74,7 +74,7 @@ namespace ᐸRuntimeᐳ
             this->freecount++;
         }
 
-        constexpr std::pair<AtomicGCMetadata*, void*> gcLoadFreeNext() 
+        inline std::pair<AtomicGCMetadata*, void*> gcLoadFreeNext() 
         {
             if(this->freelist == nullptr) {
                 return {nullptr, META_FREE_LIST_OOM_SENTINAL};
@@ -93,12 +93,12 @@ namespace ᐸRuntimeᐳ
         void rebuild();
     };
 
-    constexpr GCAllocatorImpl* gcGetAllocator(void* ptr)
+    inline GCAllocatorImpl* gcGetAllocator(void* ptr)
     {
         return PageInfo::extractPageFromPointer(ptr)->gcalloc;
     }
 
-    constexpr const TypeInfo* gcGetTypeInfo(void* ptr)
+    inline const TypeInfo* gcGetTypeInfo(void* ptr)
     {
         return PageInfo::extractPageFromPointer(ptr)->typeinfo;
     }
@@ -108,7 +108,7 @@ namespace ᐸRuntimeᐳ
         return PageInfo::extractPageFromPointer(ptr)->threadid;
     }
 
-    constexpr AtomicGCMetadata* gcGetMetadata(void* ptr)
+    inline AtomicGCMetadata* gcGetMetadata(void* ptr)
     {
         return PageInfo::getMetadataForObj(ptr);
     }
@@ -139,7 +139,7 @@ namespace ᐸRuntimeᐳ
 
         GCAllocatorImpl(const TypeInfo* alloctype) : nextalloc{nullptr, META_FREE_LIST_OOM_SENTINAL}, allocpage{}, nextevac{nullptr, META_FREE_LIST_OOM_SENTINAL}, evacpage{}, filled_pages{}, hot_nursery_pages{}, pageset{}, allocatedbytes{0}, alloctype{alloctype} { ; }
 
-        constexpr void* xalloc()
+        inline void* xalloc()
         {
             GC_METRICS_BASIC_OP(g_memstats.processalloc(this->alloctype->bytesize));
 
@@ -278,7 +278,7 @@ namespace ᐸRuntimeᐳ
         // This mutex protects all global IO buffer allocator operations
         std::mutex g_ioalloc_mutex;
 
-        AllocatorGlobalInfo() : g_globals_mutex{}, g_globals{}, g_globals_lastproc{}, g_globals_end{}, allocatedpages{}, emptypages{}, g_pages_mutex{}, g_rcops_mutex{}, g_ioalloc_mutex{} { ; }
+        AllocatorGlobalInfo() : g_globals_mutex{}, g_globals{}, g_globals_lastproc{}, g_globals_end{}, allocatedpages{}, emptypages{}, g_pages_mutex{}, g_rcops_mutex{}, g_ioalloc_mutex{} { this->allocatedpages.reserve(1000); }
 
         ////////////////
         //Support for immortal object processing -- will block all other GC threads when new data is processed

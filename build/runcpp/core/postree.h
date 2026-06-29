@@ -1387,7 +1387,7 @@ private:
         {
             int64_t size = (size_t)(end - start);
             if((size_t)size <= K) {
-                std::array<T, K> arr;
+                std::array<T, K> arr{};
                 std::iota(arr.begin(), arr.begin() + size, T{start});
 
                 return s_leafallocator->construct(PosRBData<T, K>(RColor::Red, 1, size, arr));
@@ -1405,7 +1405,7 @@ private:
                 const PosRBNode<T, K>* left = recmkrange(start, mid1);
                 const PosRBNode<T, K>* right = recmkrange(mid2, end);
 
-                std::array<T, K> arr;
+                std::array<T, K> arr{};
                 std::iota(arr.begin(), arr.begin() + dsize, T{mid1});
                 PosRBData<T, K> ndata(RColor::Black, 1, dsize, arr);
                 return s_nodeallocator->construct(RColor::Black, computeNewBHeight_ForTreeNode(RColor::Black, left, right), computeNewCount_ForTreeNode(left, right, ndata), left, right, ndata);
@@ -1420,7 +1420,7 @@ private:
                 IterX end1 = l1;
                 std::advance(end1, count);
 
-                std::array<T, K> arr;
+                std::array<T, K> arr{};
                 std::transform(l1, end1, l2, arr.begin(), [](const auto& x, const auto& y) { return T{x, y}; });
 
                 return s_leafallocator->construct(PosRBData<T, K>(RColor::Red, 1, count, arr));
@@ -1447,7 +1447,7 @@ private:
                 const PosRBNode<T, K>* left = recmkzip(l1, l2, lsize);
                 const PosRBNode<T, K>* right = recmkzip(mid2x, mid2y, rsize);
 
-                std::array<T, K> arr;
+                std::array<T, K> arr{};
                 std::transform(mid1x, mid2x, mid1y, arr.begin(), [](const auto& x, const auto& y) { return T{x, y}; });
                 PosRBData<T, K> ndata(RColor::Black, 1, dsize, arr);
                 return s_nodeallocator->construct(RColor::Black, computeNewBHeight_ForTreeNode(RColor::Black, left, right), computeNewCount_ForTreeNode(left, right, ndata), left, right, ndata);

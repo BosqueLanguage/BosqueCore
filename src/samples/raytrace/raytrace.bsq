@@ -1,6 +1,6 @@
 declare namespace Main;
 
-const checkerBoard: Surface = Surface{Color{0.02f, 0.0f, 0.1f}, Color{1.0f, 1.0f, 1.0f}, 0.5f, 150.0f};
+const checkerBoard: Surface = Surface{Color{0.02f, 0.0f, 0.14f}, Color{1.0f, 1.0f, 1.0f}, 0.5f, 150.0f};
 
 const shiny: Surface = Surface{Color{1.0f, 1.0f, 1.0f}, Color{0.5f, 0.5f, 0.5f}, 0.7f, 250.0f};
 

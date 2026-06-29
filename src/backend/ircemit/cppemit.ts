@@ -1265,7 +1265,7 @@ class CPPEmitter {
             bstr = `ᐸRuntimeᐳ::XFloat::isSafeConvertInto<${TransformCPPNameManager.convertTypeKey(intotype[1].tkeystr)}>(f)`;
         }
         else if(body.builtin === "float_from_nat") {
-            bstr = "ᐸRuntimeᐳ::XFloat{static_cast<double>(v.value)}";
+            bstr = "ᐸRuntimeᐳ::XFloat{static_cast<double>(n.value)}";
         }
         else if(body.builtin === "float_safe_convert_into") {
             const intotype = body.biterms.find((bt) => bt[0] === "T") as [string, IRTypeSignature];

@@ -14,17 +14,17 @@
 namespace ᐸRuntimeᐳ
 {
 
-    constexpr static void gcStoreForwardingPtr(void* ptr, void* fwdptr) 
+    inline static void gcStoreForwardingPtr(void* ptr, void* fwdptr) 
     {
         *((void**)ptr) = fwdptr;
     }
 
-    constexpr static void* gcLoadForwardingPtr(void* ptr) 
+    inline static void* gcLoadForwardingPtr(void* ptr) 
     {
         return *((void**)ptr);
     }
 
-    constexpr static void gcStoreDeleteListPtr(void* addr)
+    inline static void gcStoreDeleteListPtr(void* addr)
     {
         PageInfo* page = PageInfo::extractPageFromPointer(addr);
         if(page->threadid == std::this_thread::get_id()) {
@@ -36,7 +36,7 @@ namespace ᐸRuntimeᐳ
         }
     }
 
-    constexpr static void* gcGetDeleteListPtr()
+    inline static void* gcGetDeleteListPtr()
     {
         if(tl_alloc_info.pendingdelete == nullptr) {
             return nullptr;
@@ -84,11 +84,11 @@ namespace ᐸRuntimeᐳ
         #endif
     }
 
-    constexpr static auto RootCmp = [](const std::pair<AtomicGCMetadata*, void*>& a, const std::pair<AtomicGCMetadata*, void*>& b) {
+    inline static auto RootCmp = [](const std::pair<AtomicGCMetadata*, void*>& a, const std::pair<AtomicGCMetadata*, void*>& b) {
         return a.second < b.second;
     };
 
-    constexpr static auto RootEq = [](const std::pair<AtomicGCMetadata*, void*>& a, const std::pair<AtomicGCMetadata*, void*>& b) {
+    inline static auto RootEq = [](const std::pair<AtomicGCMetadata*, void*>& a, const std::pair<AtomicGCMetadata*, void*>& b) {
         return a.second == b.second;
     };
 
@@ -204,7 +204,7 @@ namespace ᐸRuntimeᐳ
                 tag++;
                 slots++;
 
-                if(ti->ptrmask != nullptr) {
+                if(ti != nullptr && ti->ptrmask != nullptr) {
                     const char* mmask = ti->ptrmask;
                     while(*mmask != '\0') {
                         processSlotTag(mmask, slots);
@@ -321,7 +321,7 @@ namespace ᐸRuntimeᐳ
                 tag++;
                 slots++;
 
-                if(ti->ptrmask != nullptr) {
+                if(ti != nullptr && ti->ptrmask != nullptr) {
                     const char* mmask = ti->ptrmask;
                     while(*mmask != '\0') {
                         decrementQuickSlotTag(mmask, slots);
@@ -387,7 +387,7 @@ namespace ᐸRuntimeᐳ
                 tag++;
                 slots++;
 
-                if(ti->ptrmask != nullptr) {
+                if(ti != nullptr && ti->ptrmask != nullptr) {
                     const char* mmask = ti->ptrmask;
                     while(*mmask != '\0') {
                         decrementStdSlotTag(mmask, slots);
