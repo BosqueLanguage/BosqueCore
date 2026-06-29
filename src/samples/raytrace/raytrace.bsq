@@ -334,11 +334,9 @@ function extractdiag(pvals: List<List<Color>>): List<Color> {
     return didxs.map<Color>(fn(idx) => pvals.get(idx).get(idx));
 }
 
-const imagesize: Nat = 10n;
-
-public function main(): List<Color> {
+public function main(n: Nat): List<Color> {
     let sc = RayTracer::createDefaultScene();
-    let rt = RayTracer{imagesize, imagesize};
+    let rt = RayTracer{n, n};
 
     let pvals = rt.renderColors(sc);
     return extractdiag(pvals);

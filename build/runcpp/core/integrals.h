@@ -22,6 +22,12 @@ namespace ᐸRuntimeᐳ
             return (XNat::MIN_VALUE <= v) & (v <= XNat::MAX_VALUE);
         }
 
+        //Just used internally for range fill and such
+        XNat& operator++() {
+            ++value;
+            return *this;
+        }
+
         // Check operators on Nat
         constexpr static void checkOverflowAddition(XNat n1, XNat n2, const char* file, uint32_t line)
         {
@@ -92,6 +98,12 @@ namespace ᐸRuntimeᐳ
             return (XInt::MIN_VALUE <= v) & (v <= XInt::MAX_VALUE);
         }
     
+        //Just used internally for range fill and such
+        XInt& operator++() {
+            ++value;
+            return *this;
+        }
+
         // Check operators on Int
         constexpr static void checkOverflowAddition(XInt n1, XInt n2, const char* file, uint32_t line)
         {

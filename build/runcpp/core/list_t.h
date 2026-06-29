@@ -335,13 +335,12 @@ namespace ᐸRuntimeᐳ
     template<typename T, uint32_t TYPE_ID_LIST_T>
     class XList
     {
-    private:
+    public:
         inline static consteval uint32_t getPosInlineIDFrom(uint32_t treeid) { return treeid - 2; }
         inline static consteval uint32_t getPosTreeIDFrom(uint32_t treeid) { return treeid - 3; }
-
+    
         ListTUnion<T, getPosTreeIDFrom(TYPE_ID_LIST_T)> ulist;
 
-    public:
         constexpr XList() : ulist{} {}
         constexpr XList(const XList& other) = default;
         constexpr XList(const ListTInlineContent<T>& b) : ulist{b} { ; }
@@ -852,17 +851,13 @@ namespace ᐸRuntimeᐳ
         {
             if(end - start <= ListTInlineContent<T>::MAX_INLINE_CAPACITY) {
                 std::array<T, ListTInlineContent<T>::MAX_INLINE_CAPACITY> result{};
-                for(int64_t i = 0; i < end - start; i++) {
-                    result[i] = T{start + i};
-                }
+                std::iota(result.begin(), result.begin() + (end - start), T{start});
 
                 return XList<T, TYPE_ID_LIST_T>{ListTInlineContent<T>(result.data(), end - start)};
             }
             else if(end - start <= ListTTreeContent<T, XList<T, TYPE_ID_LIST_T>::getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY) {
                 std::array<T, ListTTreeContent<T, XList<T, TYPE_ID_LIST_T>::getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY> result{};
-                for(int64_t i = 0; i < end - start; i++) {
-                    result[i] = T{start + i};
-                }
+                std::iota(result.begin(), result.begin() + (end - start), T{start});
 
                 return XList<T, TYPE_ID_LIST_T>{ListTTreeContent<T, XList<T, TYPE_ID_LIST_T>::getPosTreeIDFrom(TYPE_ID_LIST_T)>{PosRBTree<T, ListTTreeContent<T, XList<T, TYPE_ID_LIST_T>::getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, XList<T, TYPE_ID_LIST_T>::getPosTreeIDFrom(TYPE_ID_LIST_T)>::mkinitial(result.data(), result.data() + (end - start))}};
             }
@@ -876,19 +871,9 @@ namespace ᐸRuntimeᐳ
         {
             if(ssize < ListTInlineContent<J>::MAX_INLINE_CAPACITY) {
                 std::array<J, ListTInlineContent<J>::MAX_INLINE_CAPACITY> result{};
-                for(int64_t i = 0; i < ssize; i++) {
-                    result[i] = J{l1.get(i), l2.get(i)};
-                }
+                std::transform(l1.ulist.inlinelist.data.begin(), l1.ulist.inlinelist.data.begin() + ssize, l2.ulist.inlinelist.data.begin(), result.begin(), [](const auto& a, const auto& b) { return J{a, b}; });
 
                 return XList<J, TYPE_ID_LIST_J>{ListTInlineContent<J>(result.data(), ssize)};
-            }
-            else if(ssize < ListTTreeContent<J, XList<J, TYPE_ID_LIST_J>::getPosTreeIDFrom(TYPE_ID_LIST_J)>::MAX_LEAF_CAPACITY) {
-                std::array<J, ListTTreeContent<J, XList<J, TYPE_ID_LIST_J>::getPosTreeIDFrom(TYPE_ID_LIST_J)>::MAX_LEAF_CAPACITY> result{};
-                for(int64_t i = 0; i < ssize; i++) {
-                    result[i] = J{l1.get(i), l2.get(i)};
-                }
-
-                return XList<J, TYPE_ID_LIST_J>{ListTTreeContent<J, XList<J, TYPE_ID_LIST_J>::getPosTreeIDFrom(TYPE_ID_LIST_J)>{PosRBTree<J, ListTTreeContent<J, XList<J, TYPE_ID_LIST_J>::getPosTreeIDFrom(TYPE_ID_LIST_J)>::MAX_LEAF_CAPACITY, XList<J, TYPE_ID_LIST_J>::getPosTreeIDFrom(TYPE_ID_LIST_J)>::mkinitial(result.data(), result.data() + ssize)}};
             }
             else {
                 return XList<J, TYPE_ID_LIST_J>{ListTTreeContent<J, XList<J, TYPE_ID_LIST_J>::getPosTreeIDFrom(TYPE_ID_LIST_J)>{PosRBTree<J, ListTTreeContent<J, XList<J, TYPE_ID_LIST_J>::getPosTreeIDFrom(TYPE_ID_LIST_J)>::MAX_LEAF_CAPACITY, XList<J, TYPE_ID_LIST_J>::getPosTreeIDFrom(TYPE_ID_LIST_J)>::mkzip(l1.begin(), l2.begin(), ssize)}};

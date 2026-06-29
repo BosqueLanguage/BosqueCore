@@ -1288,7 +1288,7 @@ class CPPEmitter {
         else if(body.builtin === "list_zip") {
             const jtype = body.biterms.find((bt) => bt[0] === "J") as [string, IRTypeSignature];
             const rtype = this.typeInfoManager.getTypeInfo(invk.resultType.tkeystr);
-            bstr = `ᐸRuntimeᐳ::XListOps::zip<${TransformCPPNameManager.convertTypeKey(jtype[1].tkeystr)}, ${rtype.bsqtypeid}>(l1, l2, ssize.value)`;
+            bstr = `ᐸRuntimeᐳ::XListOps::zip<${this.typeInfoManager.emitTypeAsStd(jtype[1].tkeystr)}, ${rtype.bsqtypeid}>(l1, l2, ssize.value)`;
         }
         else if(body.builtin === "list_empty") {
             bstr = "ᐸRuntimeᐳ::XBool::from(l.empty())";
