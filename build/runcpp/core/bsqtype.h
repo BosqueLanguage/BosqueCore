@@ -6,39 +6,39 @@
 
 namespace ᐸRuntimeᐳ
 {
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_NONE = 0;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_BOOL = 1;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_INT = 2;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_NAT = 3;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_CHKINT = 4;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_CHKNAT = 5;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_FLOAT = 6;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_NONE = 0;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_BOOL = 1;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_INT = 2;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_NAT = 3;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_CHKINT = 4;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_CHKNAT = 5;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_FLOAT = 6;
 
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_CSTRING = 7;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_POSRB_TREE_NODE_CSTRING = 8;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING = 9;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_CSTRING = 7;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_POSRB_TREE_NODE_CSTRING = 8;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING = 9;
 
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTRING_INLINE = 10;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTRING_TREE = 11;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTRING = 12;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTRING_INLINE = 10;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTRING_TREE = 11;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_CSTRING = 12;
 
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_STRING = 13;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_POSRB_TREE_NODE_STRING = 14;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING = 15;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_STRING = 13;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_POSRB_TREE_NODE_STRING = 14;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING = 15;
 
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_STRING_INLINE = 16;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_STRING_TREE = 17;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_STRING = 18;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_STRING_INLINE = 16;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_STRING_TREE = 17;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_STRING = 18;
 
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERENTRY = 19;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERBLOCK = 20;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFER = 21;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERENTRY = 19;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERBLOCK = 20;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFER = 21;
 
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_UUIDV4 = 22;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_UUIDV7 = 23;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_UUIDV4 = 22;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_UUIDV7 = 23;
 
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_CREGEX = 24;
-    constexpr uint32_t WELL_KNOWN_TYPE_ID_REGEX = 25;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_CREGEX = 24;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_REGEX = 25;
 
     enum class LayoutTag : uint16_t
     {
@@ -90,17 +90,17 @@ namespace ᐸRuntimeᐳ
         bool quickrelease;
     };
 
-    constexpr uint32_t byteSizeToSlotCount(size_t bytesize)
+    consteval uint32_t byteSizeToSlotCount(size_t bytesize)
     {
         return bytesize / sizeof(uint64_t);
     }
 
-    constexpr uint32_t slotCountToByteSize(size_t slotcount)
+    consteval uint32_t slotCountToByteSize(size_t slotcount)
     {
         return slotcount * sizeof(uint64_t);
     }
 
-    constexpr uint16_t BSQ_TYPEINFO_NO_ESLOT = 0x0;
+    inline constexpr uint16_t BSQ_TYPEINFO_NO_ESLOT = 0x0;
 
     inline constexpr TypeInfo g_typeinfo_None = {
         WELL_KNOWN_TYPE_ID_NONE,

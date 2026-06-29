@@ -14,16 +14,16 @@ namespace ᐸRuntimeᐳ
 
         std::array<uint8_t, BUFFER_ENTRY_SIZE> data;
 
-        constexpr ByteBufferEntry() : data{} { ; }
-        constexpr ByteBufferEntry(const std::array<uint8_t, BUFFER_ENTRY_SIZE>& data) : data{data} { ; }
-        constexpr ByteBufferEntry(const ByteBufferEntry& other) = default;
+        ByteBufferEntry() : data{} { ; }
+        ByteBufferEntry(const std::array<uint8_t, BUFFER_ENTRY_SIZE>& data) : data{data} { ; }
+        ByteBufferEntry(const ByteBufferEntry& other) = default;
 
-        constexpr ByteBufferEntry(const std::initializer_list<uint8_t>& initdata) : data{} { std::copy(initdata.begin(), initdata.end(), this->data.begin()); }
+        ByteBufferEntry(const std::initializer_list<uint8_t>& initdata) : data{} { std::copy(initdata.begin(), initdata.end(), this->data.begin()); }
 
-        constexpr uint8_t* getData() { return this->data.data(); }
-        constexpr const uint8_t* getData() const { return this->data.data(); }
+        uint8_t* getData() { return this->data.data(); }
+        const uint8_t* getData() const { return this->data.data(); }
 
-        constexpr uint8_t getInner(size_t index) const { return this->data[index]; }
+        uint8_t getInner(size_t index) const { return this->data[index]; }
     };
 
     class ByteBufferBlock
@@ -34,9 +34,9 @@ namespace ᐸRuntimeᐳ
         std::array<ByteBufferEntry*, BUFFER_BLOCK_ENTRY_COUNT> entries;
         ByteBufferBlock* next;
 
-        constexpr ByteBufferBlock() : entries{}, next{} { ; }
-        constexpr ByteBufferBlock(const std::array<ByteBufferEntry*, BUFFER_BLOCK_ENTRY_COUNT>& entries, ByteBufferBlock* next) : entries{entries}, next{next} { ; } 
-        constexpr ByteBufferBlock(const ByteBufferBlock& other) = default;
+        ByteBufferBlock() : entries{}, next{} { ; }
+        ByteBufferBlock(const std::array<ByteBufferEntry*, BUFFER_BLOCK_ENTRY_COUNT>& entries, ByteBufferBlock* next) : entries{entries}, next{next} { ; } 
+        ByteBufferBlock(const ByteBufferBlock& other) = default;
     };
 
     union ByteBufferTreeUnion
@@ -45,12 +45,12 @@ namespace ᐸRuntimeᐳ
         ByteBufferEntry* buff;
         ByteBufferBlock* node;
 
-        constexpr ByteBufferTreeUnion() : upunning{} { ; }
-        constexpr ByteBufferTreeUnion(ByteBufferEntry* b) : buff{b} { ; }
-        constexpr ByteBufferTreeUnion(ByteBufferBlock* n) : node{n} { ; }
-        constexpr ByteBufferTreeUnion(const ByteBufferTreeUnion& other) = default;
+        ByteBufferTreeUnion() : upunning{} { ; }
+        ByteBufferTreeUnion(ByteBufferEntry* b) : buff{b} { ; }
+        ByteBufferTreeUnion(ByteBufferBlock* n) : node{n} { ; }
+        ByteBufferTreeUnion(const ByteBufferTreeUnion& other) = default;
 
-        constexpr ByteBufferTreeUnion& operator=(const ByteBufferTreeUnion& other)
+        ByteBufferTreeUnion& operator=(const ByteBufferTreeUnion& other)
         {
             if(this == &other) {
                 return *this;
@@ -176,14 +176,14 @@ namespace ᐸRuntimeᐳ
         size_t bytesize;
 
     public:
-        constexpr XByteBuffer() : tree{}, bytesize{0} { ; }
-        constexpr XByteBuffer(const BufferTree& t, size_t b) : tree{t}, bytesize{b} { ; }
-        constexpr XByteBuffer(const XByteBuffer& other) = default;
+        XByteBuffer() : tree{}, bytesize{0} { ; }
+        XByteBuffer(const BufferTree& t, size_t b) : tree{t}, bytesize{b} { ; }
+        XByteBuffer(const XByteBuffer& other) = default;
 
         XByteBuffer(ByteBufferEntry* b, size_t size) : tree{ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ByteBufferTreeUnion>{&ᐸRuntimeᐳ::g_typeinfo_ByteBufferEntry, ᐸRuntimeᐳ::ByteBufferTreeUnion(b)}}, bytesize{size} { ; }
         XByteBuffer(ByteBufferBlock* n, size_t size) : tree{ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ByteBufferTreeUnion>{&ᐸRuntimeᐳ::g_typeinfo_ByteBufferBlock, ᐸRuntimeᐳ::ByteBufferTreeUnion(n)}}, bytesize{size} { ; }
 
-        constexpr size_t bytes() const { return this->bytesize; }
+        size_t bytes() const { return this->bytesize; }
 
         ByteBufferIterator iterator() const 
         {

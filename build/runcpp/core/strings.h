@@ -18,7 +18,7 @@ namespace ᐸRuntimeᐳ
         {
             std::array<char, N> data;
 
-            constexpr SmallLiteralInitBuffer(const char (&cstr)[N])
+            consteval SmallLiteralInitBuffer(const char (&cstr)[N])
             {
                 static_assert(N - 1 <= CStrRootInlineContent::CSTR_MAX_SIZE, "CString literal too large for CStrRootInlineContent");
                 std::copy(cstr, cstr + N, this->data.begin());
@@ -27,17 +27,17 @@ namespace ᐸRuntimeᐳ
 
         std::array<char, CSTR_BUFF_SIZE> data;
 
-        constexpr CStrRootInlineContent() : data{} { ; }
-        constexpr CStrRootInlineContent(const CStrRootInlineContent& other) = default;
+        CStrRootInlineContent() : data{} { ; }
+        CStrRootInlineContent(const CStrRootInlineContent& other) = default;
 
-        constexpr bool empty() const { return static_cast<int64_t>(this->data[0]) == 0; }
+        bool empty() const { return static_cast<int64_t>(this->data[0]) == 0; }
 
         template<size_t len>
-        constexpr CStrRootInlineContent(const char (&cstr)[len])
+        CStrRootInlineContent(const char (&cstr)[len])
         {
             static_assert(len - 1 <= ᐸRuntimeᐳ::CStrRootInlineContent::CSTR_MAX_SIZE, "CString literal too large for CStrRootInlineContent");
 
-            if constexpr (len == 1) {
+            if(len == 1) {
                 this->data.fill('\0');
             }
             else {
@@ -48,11 +48,11 @@ namespace ᐸRuntimeᐳ
         }
 
         template<size_t N>
-        constexpr CStrRootInlineContent(SmallLiteralInitBuffer<N> slib)
+        CStrRootInlineContent(SmallLiteralInitBuffer<N> slib)
         {
             static_assert(N - 1 <= ᐸRuntimeᐳ::CStrRootInlineContent::CSTR_MAX_SIZE, "CString literal too large for CStrRootInlineContent");
 
-            if constexpr (N == 1) {
+            if(N == 1) {
                 this->data.fill('\0');
             }
             else {
@@ -72,10 +72,10 @@ namespace ᐸRuntimeᐳ
 
         }
 
-        constexpr int64_t size() const { return static_cast<int64_t>(this->data[0]); }
-        constexpr char at(int64_t index) const { return this->data[index + 1]; }
+        int64_t size() const { return static_cast<int64_t>(this->data[0]); }
+        char at(int64_t index) const { return this->data[index + 1]; }
 
-        constexpr friend XBool operator==(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) 
+        friend XBool operator==(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) 
         { 
             if(lhs.size() != rhs.size()) {
                 return XFALSE;
@@ -85,7 +85,7 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        constexpr friend XBool operator<(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) 
+        friend XBool operator<(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) 
         {
             if(lhs.size() != rhs.size()) {
                 return XBool::from(lhs.size() < rhs.size());
@@ -101,7 +101,7 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        constexpr friend XBool operator>(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) 
+        friend XBool operator>(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) 
         { 
             if(lhs.size() != rhs.size()) {
                 return XBool::from(lhs.size() > rhs.size());
@@ -117,9 +117,9 @@ namespace ᐸRuntimeᐳ
             } 
         }
         
-        constexpr friend XBool operator!=(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) { return !(lhs == rhs); }
-        constexpr friend XBool operator<=(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) { return !(lhs > rhs); }
-        constexpr friend XBool operator>=(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) { return !(lhs < rhs); }
+        friend XBool operator!=(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) { return !(lhs == rhs); }
+        friend XBool operator<=(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) { return !(lhs > rhs); }
+        friend XBool operator>=(const CStrRootInlineContent& lhs, const CStrRootInlineContent& rhs) { return !(lhs < rhs); }
     };
 
     class CStrRootTreeContent
@@ -131,9 +131,9 @@ namespace ᐸRuntimeᐳ
         std::array<char, 8> tags; //store tag in first byte
         PosRBTree<char, CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING> postree;
 
-        constexpr CStrRootTreeContent() : tags{std::numeric_limits<char>::max(), 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}, postree{} { ; }
-        constexpr CStrRootTreeContent(const PosRBTree<char, CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>& postree) : tags{std::numeric_limits<char>::max(), 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}, postree{postree} { ; }
-        constexpr CStrRootTreeContent(const CStrRootTreeContent& other) = default;
+        CStrRootTreeContent() : tags{std::numeric_limits<char>::max(), 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}, postree{} { ; }
+        CStrRootTreeContent(const PosRBTree<char, CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>& postree) : tags{std::numeric_limits<char>::max(), 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}, postree{postree} { ; }
+        CStrRootTreeContent(const CStrRootTreeContent& other) = default;
     };
 
     inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_CString = g_typeinfo_PosRBTreeLeaf_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_CSTRING, BSQ_PTR_MASK_LEAF, "PosRBTreeLeaf_CString", true);
@@ -152,17 +152,17 @@ namespace ᐸRuntimeᐳ
         CStrRootInlineContent inlinecstr;
         CStrRootTreeContent treecstr;
 
-        constexpr CStringUnion() : upunning{} { ; }
-        constexpr CStringUnion(const CStringUnion& other) = default;
-        constexpr CStringUnion(const CStrRootInlineContent& c) : inlinecstr{c} { ; }
-        constexpr CStringUnion(const CStrRootTreeContent& c) : treecstr{c} { ; }
+        CStringUnion() : upunning{} { ; }
+        CStringUnion(const CStringUnion& other) = default;
+        CStringUnion(const CStrRootInlineContent& c) : inlinecstr{c} { ; }
+        CStringUnion(const CStrRootTreeContent& c) : treecstr{c} { ; }
 
-        constexpr bool empty() const { return this->inlinecstr.empty(); }
+        bool empty() const { return this->inlinecstr.empty(); }
 
-        constexpr bool isInline() const { return this->inlinecstr.size() < std::numeric_limits<char>::max(); }
-        constexpr bool isTree() const { return this->inlinecstr.size() == std::numeric_limits<char>::max(); }
+        bool isInline() const { return this->inlinecstr.size() < std::numeric_limits<char>::max(); }
+        bool isTree() const { return this->inlinecstr.size() == std::numeric_limits<char>::max(); }
 
-        constexpr CStringUnion& operator=(const CStringUnion& other)
+        CStringUnion& operator=(const CStringUnion& other)
         {
             if(this == &other) {
                 return *this;
@@ -291,10 +291,10 @@ namespace ᐸRuntimeᐳ
         CStringUnion ucstr;
 
     public:
-        constexpr XCString() : ucstr{} { ; }
-        constexpr XCString(const CStrRootInlineContent& b) : ucstr{CStringUnion{b}} { ; }
-        constexpr XCString(const CStrRootTreeContent& n) : ucstr{CStringUnion{n}} { ; }
-        constexpr XCString(const XCString& other) = default;
+        XCString() : ucstr{} { ; }
+        XCString(const CStrRootInlineContent& b) : ucstr{CStringUnion{b}} { ; }
+        XCString(const CStrRootTreeContent& n) : ucstr{CStringUnion{n}} { ; }
+        XCString(const XCString& other) = default;
 
         static XCString mk(const char* cstr, size_t len)
         {
@@ -314,17 +314,17 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        constexpr bool empty() const
+        bool empty() const
         {
             return this->ucstr.empty();
         }
 
-        constexpr static bool gcIsTestIsInlineRepresentation(void** value)
+        static bool gcIsTestIsInlineRepresentation(void** value)
         {
             return ((XCString*)value)->ucstr.isInline();
         }
 
-        constexpr int64_t size() const
+        int64_t size() const
         {
             if(this->ucstr.isInline()) {
                 return this->ucstr.inlinecstr.size();
@@ -334,7 +334,7 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        constexpr int64_t bytes() const
+        int64_t bytes() const
         {
             return this->size() * sizeof(char);
         }
@@ -508,7 +508,7 @@ namespace ᐸRuntimeᐳ
         {
             std::array<char32_t, N> data;
 
-            constexpr SmallLiteralInitBuffer(const char32_t (&cstr)[N])
+            consteval SmallLiteralInitBuffer(const char32_t (&cstr)[N])
             {
                 static_assert(N - 1 <= StrRootInlineContent::STR_MAX_SIZE, "String literal too large for StrRootInlineContent");
                 std::copy(cstr, cstr + N, this->data.begin());
@@ -517,17 +517,17 @@ namespace ᐸRuntimeᐳ
 
         std::array<char32_t, STR_BUFF_SIZE> data;
 
-        constexpr StrRootInlineContent() : data{} { ; }
-        constexpr StrRootInlineContent(const StrRootInlineContent& other) = default;
+        StrRootInlineContent() : data{} { ; }
+        StrRootInlineContent(const StrRootInlineContent& other) = default;
 
-        constexpr bool empty() const { return static_cast<int64_t>(this->data[0]) == 0; }
+        bool empty() const { return static_cast<int64_t>(this->data[0]) == 0; }
 
         template<size_t len>
-        constexpr StrRootInlineContent(const char32_t (&str)[len])
+        StrRootInlineContent(const char32_t (&str)[len])
         {
             static_assert(len - 1 <= ᐸRuntimeᐳ::StrRootInlineContent::STR_MAX_SIZE, "String literal too large for CStrRootInlineContent");
 
-            if constexpr (len == 1) {
+            if(len == 1) {
                 this->data.fill(U'\0');
             }
             else {
@@ -538,11 +538,11 @@ namespace ᐸRuntimeᐳ
         }
 
         template<size_t N>
-        constexpr StrRootInlineContent(SmallLiteralInitBuffer<N> slib)
+        StrRootInlineContent(SmallLiteralInitBuffer<N> slib)
         {
             static_assert(N - 1 <= ᐸRuntimeᐳ::StrRootInlineContent::STR_MAX_SIZE, "String literal too large for CStrRootInlineContent");
 
-            if constexpr (N == 1) {
+            if(N == 1) {
                 this->data.fill(U'\0');
             }
             else {
@@ -563,10 +563,10 @@ namespace ᐸRuntimeᐳ
         }
 
         //mask off high bits if dirty from union bit hacking
-        constexpr int64_t size() const { return static_cast<int64_t>(this->data[0]); }
-        constexpr char32_t at(int64_t index) const { return this->data[index + 1]; }
+        int64_t size() const { return static_cast<int64_t>(this->data[0]); }
+        char32_t at(int64_t index) const { return this->data[index + 1]; }
 
-        constexpr friend XBool operator==(const StrRootInlineContent& lhs, const StrRootInlineContent& rhs) 
+        friend XBool operator==(const StrRootInlineContent& lhs, const StrRootInlineContent& rhs) 
         { 
             if(lhs.size() != rhs.size()) {
                 return XFALSE;
@@ -576,7 +576,7 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        constexpr friend XBool operator<(const StrRootInlineContent& lhs, const StrRootInlineContent& rhs) 
+        friend XBool operator<(const StrRootInlineContent& lhs, const StrRootInlineContent& rhs) 
         {
             if(lhs.size() != rhs.size()) {
                 return XBool::from(lhs.size() < rhs.size());
@@ -592,7 +592,7 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        constexpr friend XBool operator>(const StrRootInlineContent& lhs, const StrRootInlineContent& rhs) 
+        friend XBool operator>(const StrRootInlineContent& lhs, const StrRootInlineContent& rhs) 
         { 
             if(lhs.size() != rhs.size()) {
                 return XBool::from(lhs.size() > rhs.size());
@@ -608,9 +608,9 @@ namespace ᐸRuntimeᐳ
             } 
         }
         
-        constexpr friend XBool operator!=(const StrRootInlineContent& lhs, const StrRootInlineContent& rhs) { return !(lhs == rhs); }
-        constexpr friend XBool operator<=(const StrRootInlineContent& lhs, const StrRootInlineContent& rhs) { return !(lhs > rhs); }
-        constexpr friend XBool operator>=(const StrRootInlineContent& lhs, const StrRootInlineContent& rhs) { return !(lhs < rhs); }
+        friend XBool operator!=(const StrRootInlineContent& lhs, const StrRootInlineContent& rhs) { return !(lhs == rhs); }
+        friend XBool operator<=(const StrRootInlineContent& lhs, const StrRootInlineContent& rhs) { return !(lhs > rhs); }
+        friend XBool operator>=(const StrRootInlineContent& lhs, const StrRootInlineContent& rhs) { return !(lhs < rhs); }
     };
 
     class StrRootTreeContent
@@ -622,9 +622,9 @@ namespace ᐸRuntimeᐳ
         std::array<char32_t, 2> tags; //store tag in first byte
         PosRBTree<char32_t, STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING> postree;
 
-        constexpr StrRootTreeContent() : tags{std::numeric_limits<char32_t>::max(), 0x0}, postree{} { ; }
-        constexpr StrRootTreeContent(const PosRBTree<char32_t, STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>& postree) : tags{std::numeric_limits<char32_t>::max(), 0x0}, postree{postree} { ; }
-        constexpr StrRootTreeContent(const StrRootTreeContent& other) = default;
+        StrRootTreeContent() : tags{std::numeric_limits<char32_t>::max(), 0x0}, postree{} { ; }
+        StrRootTreeContent(const PosRBTree<char32_t, STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>& postree) : tags{std::numeric_limits<char32_t>::max(), 0x0}, postree{postree} { ; }
+        StrRootTreeContent(const StrRootTreeContent& other) = default;
     };
 
     inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_String = g_typeinfo_PosRBTreeLeaf_generate<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_STRING, BSQ_PTR_MASK_LEAF, "PosRBTreeLeaf_String", true);
@@ -643,17 +643,17 @@ namespace ᐸRuntimeᐳ
         StrRootInlineContent inlinestr;
         StrRootTreeContent treestr;
 
-        constexpr StringUnion() : upunning{} { ; }
-        constexpr StringUnion(const StrRootInlineContent& c) : inlinestr{c} { ; }
-        constexpr StringUnion(const StrRootTreeContent& c) : treestr{c} { ; }
-        constexpr StringUnion(const StringUnion& other) = default;
+        StringUnion() : upunning{} { ; }
+        StringUnion(const StrRootInlineContent& c) : inlinestr{c} { ; }
+        StringUnion(const StrRootTreeContent& c) : treestr{c} { ; }
+        StringUnion(const StringUnion& other) = default;
 
-        constexpr bool empty() const { return this->inlinestr.empty(); }
+        bool empty() const { return this->inlinestr.empty(); }
 
-        constexpr bool isInline() const { return this->inlinestr.size() < std::numeric_limits<char32_t>::max(); }
-        constexpr bool isTree() const { return this->inlinestr.size() == std::numeric_limits<char32_t>::max(); }
+        bool isInline() const { return this->inlinestr.size() < std::numeric_limits<char32_t>::max(); }
+        bool isTree() const { return this->inlinestr.size() == std::numeric_limits<char32_t>::max(); }
 
-        constexpr StringUnion& operator=(const StringUnion& other)
+        StringUnion& operator=(const StringUnion& other)
         {
             if(this == &other) {
                 return *this;
@@ -782,10 +782,10 @@ namespace ᐸRuntimeᐳ
         StringUnion ustr;
 
     public:
-        constexpr XString() : ustr{} { ; }
-        constexpr XString(const StrRootInlineContent& b) : ustr{b} { ; }
-        constexpr XString(const StrRootTreeContent& n) : ustr{n} { ; }
-        constexpr XString(const XString& other) = default;
+        XString() : ustr{} { ; }
+        XString(const StrRootInlineContent& b) : ustr{b} { ; }
+        XString(const StrRootTreeContent& n) : ustr{n} { ; }
+        XString(const XString& other) = default;
 
         static XString mk(const char32_t* str, size_t len)
         {
@@ -805,17 +805,17 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        constexpr bool empty() const
+        bool empty() const
         {
             return this->ustr.empty();
         }
 
-        constexpr static bool gcIsTestIsInlineRepresentation(void** value)
+        static bool gcIsTestIsInlineRepresentation(void** value)
         {
             return ((XString*)value)->ustr.isInline();
         }
 
-        constexpr int64_t size() const
+        int64_t size() const
         {
             if(this->ustr.isInline()) {
                 return this->ustr.inlinestr.size();
@@ -825,7 +825,7 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        constexpr int64_t bytes() const
+        int64_t bytes() const
         {
             return this->size() * sizeof(char32_t);
         }
