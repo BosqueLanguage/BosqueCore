@@ -28,8 +28,8 @@ namespace ᐸRuntimeᐳ
     {
         PageInfo* page = PageInfo::extractPageFromPointer(addr);
         if(page->threadid == std::this_thread::get_id()) {
-            *((void**)addr) = tl_alloc_info.pendingdelete;
-            tl_alloc_info.pendingdelete = addr;
+            //*((void**)addr) = tl_alloc_info.pendingdelete;
+            tl_alloc_info.pendingdelete.push_back(addr);
         }
         else {
             assert(false); //Cross thread deletes not supported yet
@@ -38,12 +38,12 @@ namespace ᐸRuntimeᐳ
 
     inline static void* gcGetDeleteListPtr()
     {
-        if(tl_alloc_info.pendingdelete == nullptr) {
+        if(tl_alloc_info.pendingdelete.empty()) {
             return nullptr;
         }
         else {
-            void* next = tl_alloc_info.pendingdelete;
-            tl_alloc_info.pendingdelete = *((void**)next);
+            void* next = tl_alloc_info.pendingdelete.front();
+            tl_alloc_info.pendingdelete.pop_front();
             return next;
         }
     }

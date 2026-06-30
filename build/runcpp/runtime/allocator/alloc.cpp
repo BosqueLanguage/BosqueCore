@@ -126,7 +126,7 @@ namespace ᐸRuntimeᐳ
                 return pp;
             }
             
-            this->hot_nursery_pages.erase(niter);
+            niter = this->hot_nursery_pages.erase(niter);
             this->pageset.push_back(pp);
 
             navailchks++;
@@ -169,7 +169,7 @@ namespace ᐸRuntimeᐳ
             this->allocatedbytes = 0;
         }
         else {
-            if(tl_alloc_info.pendingdelete != nullptr) {
+            if(!tl_alloc_info.pendingdelete.empty()) {
                 tl_alloc_info.procdecsfp(GC_DELETE_PENDING_PROCESS_BYTES_INCREMENTAL);
             }
         }

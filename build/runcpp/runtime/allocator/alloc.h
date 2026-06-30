@@ -245,7 +245,7 @@ namespace ᐸRuntimeᐳ
         std::map<uint32_t, GCAllocatorImpl*> gcallocs;
         size_t allocatedbytes;
 
-        void* pendingdelete; //objects pending delete
+        std::list<void*> pendingdelete; //objects pending delete
 
         void (*procdecsfp)(size_t);
         void (*collectfp)();
