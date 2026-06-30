@@ -3,6 +3,8 @@
 #include "../../common.h"
 #include "../../core/bsqtype.h"
 
+#include "./flags.h"
+
 #include "memstats.h"
 
 //Make sure any allocated page is addressable by us -- larger than 2^31 and less than 2^42

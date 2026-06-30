@@ -35,11 +35,7 @@
 #include <assert.h>
 #include <iostream>
 
-////
-//ENABLE DIAGNOSTICS
-//#define BSQ_POSTREE_VALIDATE 1
-#define GC_METRICS_BASIC 0
-////
+#include "./flags.h"
 
 namespace ᐸRuntimeᐳ
 {
