@@ -23,14 +23,16 @@ namespace ᐸRuntimeᐳ
 
     struct LambdaAndFn
     {
-        XBool operator()(XBool a, XBool b) const { 
+        XBool operator()(XBool a, XBool b) const 
+        { 
             return a & b; 
         }
     };
 
     struct LambdaOrFn
     {
-        XBool operator()(XBool a, XBool b) const { 
+        XBool operator()(XBool a, XBool b) const 
+        { 
             return a | b; 
         }
     };

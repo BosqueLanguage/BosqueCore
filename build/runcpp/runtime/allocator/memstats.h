@@ -18,12 +18,12 @@ namespace ᐸRuntimeᐳ
     public:
         constexpr static size_t RRSTATS_SIZE = 10;
 
-        constexpr static size_t computeIntervalInMicroseconds(struct timespec start, struct timespec end) 
+        inline static size_t computeIntervalInMicroseconds(struct timespec start, struct timespec end) 
         {
             return ((end.tv_nsec - start.tv_nsec)) / 1000 + (end.tv_sec - start.tv_sec) * 1000000;
         }
 
-        constexpr static std::tuple<Time, Time, Time> computeMinMaxAvgPauses(const std::array<SingleCollectStat, RRSTATS_SIZE>& stats) 
+        inline static std::tuple<Time, Time, Time> computeMinMaxAvgPauses(const std::array<SingleCollectStat, RRSTATS_SIZE>& stats) 
         {
             Time min_total = std::numeric_limits<Time>::max();
             Time max_total = 0;

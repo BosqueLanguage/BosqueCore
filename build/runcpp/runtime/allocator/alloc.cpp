@@ -105,7 +105,7 @@ namespace ᐸRuntimeᐳ
         return PageInfo::setPageMetaData(page, gcalloc, std::this_thread::get_id());
     }
 
-    constexpr bool isPageSuitableForAlloc(PageInfo* pp, double availthreshold) 
+    inline bool isPageSuitableForAlloc(PageInfo* pp, double availthreshold) 
     {
         return ((double)pp->freecount / (double)pp->esize >= availthreshold) || (pp->freecount > GC_PAGE_AVAILABILITY_COUNT_THRESHOLD);
     }

@@ -84,12 +84,20 @@ namespace ᐸRuntimeᐳ
         #endif
     }
 
-    inline static auto RootCmp = [](const std::pair<AtomicGCMetadata*, void*>& a, const std::pair<AtomicGCMetadata*, void*>& b) {
-        return a.second < b.second;
+    struct RootCmpFn
+    {
+        bool operator()(const std::pair<AtomicGCMetadata*, void*>& a, const std::pair<AtomicGCMetadata*, void*>& b) const
+        {
+            return a.second < b.second;
+        }
     };
 
-    inline static auto RootEq = [](const std::pair<AtomicGCMetadata*, void*>& a, const std::pair<AtomicGCMetadata*, void*>& b) {
-        return a.second == b.second;
+    struct RootEqFn
+    {
+        bool operator()(const std::pair<AtomicGCMetadata*, void*>& a, const std::pair<AtomicGCMetadata*, void*>& b) const
+        {
+            return a.second == b.second;
+        }
     };
 
     void processPotentialPtr(void* addr, std::vector<std::pair<AtomicGCMetadata*, void*>>& roots_young, std::vector<std::pair<AtomicGCMetadata*, void*>>& roots_rc)
@@ -154,7 +162,7 @@ namespace ᐸRuntimeᐳ
     void processRCRoots(std::vector<std::pair<AtomicGCMetadata*, void*>>& roots, std::vector<std::pair<AtomicGCMetadata*, void*>>& finalroots)
     {
         for(size_t i = 0; i < roots.size(); i++) {
-            bool alreadyknown = std::binary_search(tl_alloc_info.old_roots.cbegin(), tl_alloc_info.old_roots.cend(), roots[i], RootCmp);
+            bool alreadyknown = std::binary_search(tl_alloc_info.old_roots.cbegin(), tl_alloc_info.old_roots.cend(), roots[i], RootCmpFn{});
             
             if(alreadyknown) {
                 finalroots.push_back(roots[i]);
@@ -441,7 +449,7 @@ namespace ᐸRuntimeᐳ
     {
         std::vector<std::pair<AtomicGCMetadata*, void*>> decroots;
         std::copy_if(tl_alloc_info.old_roots.cbegin(), tl_alloc_info.old_roots.cend(), std::back_inserter(decroots), [&roots_young, &roots_rc](const std::pair<AtomicGCMetadata*, void*>& r) {
-            return !std::binary_search(roots_young.cbegin(), roots_young.cend(), r, RootCmp) && !std::binary_search(roots_rc.cbegin(), roots_rc.cend(), r, RootCmp);
+            return !std::binary_search(roots_young.cbegin(), roots_young.cend(), r, RootCmpFn{}) && !std::binary_search(roots_rc.cbegin(), roots_rc.cend(), r, RootCmpFn{});
         });
         
         for(size_t i = 0; i < decroots.size(); i++) {
@@ -460,7 +468,7 @@ namespace ᐸRuntimeᐳ
         }
         
         tl_alloc_info.old_roots.resize(roots_young.size() + roots_rc.size());
-        std::merge(roots_young.cbegin(), roots_young.cend(), roots_rc.cbegin(), roots_rc.cend(), tl_alloc_info.old_roots.begin(), RootCmp);
+        std::merge(roots_young.cbegin(), roots_young.cend(), roots_rc.cbegin(), roots_rc.cend(), tl_alloc_info.old_roots.begin(), RootCmpFn{});
     }
 
     void processPendingDeleteWork(size_t worklimit)
@@ -509,11 +517,11 @@ namespace ᐸRuntimeᐳ
             gproc = walkGlobalRoots(curr_roots_young, curr_roots_rc);
             walkStack(curr_roots_young, curr_roots_rc);
             
-            std::sort(curr_roots_young.begin(), curr_roots_young.end(), RootCmp);
-            curr_roots_young.erase(std::unique(curr_roots_young.begin(), curr_roots_young.end(), RootEq), curr_roots_young.end());
+            std::sort(curr_roots_young.begin(), curr_roots_young.end(), RootCmpFn{});
+            curr_roots_young.erase(std::unique(curr_roots_young.begin(), curr_roots_young.end(), RootEqFn{}), curr_roots_young.end());
 
-            std::sort(curr_roots_rc.begin(), curr_roots_rc.end(), RootCmp);
-            curr_roots_rc.erase(std::unique(curr_roots_rc.begin(), curr_roots_rc.end(), RootEq), curr_roots_rc.end());
+            std::sort(curr_roots_rc.begin(), curr_roots_rc.end(), RootCmpFn{});
+            curr_roots_rc.erase(std::unique(curr_roots_rc.begin(), curr_roots_rc.end(), RootEqFn{}), curr_roots_rc.end());
 
             //Handle the RC roots 
             final_roots_rc.reserve(curr_roots_rc.size());
