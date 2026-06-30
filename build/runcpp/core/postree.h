@@ -17,7 +17,7 @@
 namespace ᐸRuntimeᐳ
 {
     template <int64_t K>
-    constexpr std::array<XNat, K> create_idx_range() {
+    consteval std::array<XNat, K> create_idx_range() {
         std::array<XNat, K> arr;
         for(int64_t i = 0; i < K; ++i) {
             arr[i] = XNat{i};
@@ -52,14 +52,14 @@ namespace ᐸRuntimeᐳ
         int32_t dcount; //note that when the color follows immediately in enclosing classes the alignment works
         std::array<T, K> data;
 
-        constexpr PosRBData(): color{}, bheight{}, dcount{}, data{} { ; }
-        constexpr PosRBData(RColor color, uint16_t bheight, const PosRBData<T, K>& data) : color{color}, bheight{bheight}, dcount{data.dcount}, data{data.data} { ; }
-        constexpr PosRBData(const PosRBData& other) = default;
+        PosRBData(): color{}, bheight{}, dcount{}, data{} { ; }
+        PosRBData(RColor color, uint16_t bheight, const PosRBData<T, K>& data) : color{color}, bheight{bheight}, dcount{data.dcount}, data{data.data} { ; }
+        PosRBData(const PosRBData& other) = default;
 
-        constexpr PosRBData(RColor color, uint16_t bheight, const T& value) : color{color}, bheight{bheight}, dcount{1}, data{value} { ; }
-        constexpr PosRBData(RColor color, uint16_t bheight, int32_t dcount, const std::array<T, K>& data) : color{color}, bheight{bheight}, dcount{dcount}, data{data} { ; }
+        PosRBData(RColor color, uint16_t bheight, const T& value) : color{color}, bheight{bheight}, dcount{1}, data{value} { ; }
+        PosRBData(RColor color, uint16_t bheight, int32_t dcount, const std::array<T, K>& data) : color{color}, bheight{bheight}, dcount{dcount}, data{data} { ; }
 
-        constexpr static void zerofill(std::array<T, K>& data, size_t ecount)
+        static void zerofill(std::array<T, K>& data, size_t ecount)
         {
             std::fill(data.begin() + ecount, data.end(), T{});
         }
@@ -251,7 +251,7 @@ namespace ᐸRuntimeᐳ
         template<bool SafeSimplePred, typename Pred>
         bool allOf(Pred p) const
         {
-            if constexpr (SafeSimplePred) {
+            if(SafeSimplePred) {
                 return std::all_of(std::execution::unseq, this->data.begin(), this->data.begin() + this->dcount, p);
             }
             else {
@@ -263,7 +263,7 @@ namespace ᐸRuntimeᐳ
         template<bool SafeSimplePred, typename Pred>
         bool someOf(Pred p) const
         {
-            if constexpr (SafeSimplePred) {
+            if(SafeSimplePred) {
                 return std::any_of(std::execution::unseq, this->data.begin(), this->data.begin() + this->dcount, p);
             }
             else {
@@ -275,7 +275,7 @@ namespace ᐸRuntimeᐳ
         template<bool SafeSimplePred, typename Pred>
         bool noneOf(Pred p) const
         {
-            if constexpr (SafeSimplePred) {
+            if(SafeSimplePred) {
                 return std::none_of(std::execution::unseq, this->data.begin(), this->data.begin() + this->dcount, p);
             }
             else {
@@ -328,7 +328,7 @@ namespace ᐸRuntimeᐳ
         template<bool SafeSimpleFn, typename Pred>
         T minfun(Pred p) const
         {
-            if constexpr (SafeSimpleFn) {
+            if(SafeSimpleFn) {
                 return *std::min_element(std::execution::unseq, this->data.begin(), this->data.begin() + this->dcount, p);
             }
             else {
@@ -373,22 +373,22 @@ namespace ᐸRuntimeᐳ
     public:
         const PosRBData<T, K> data;
 
-        constexpr PosRBNode() : data{} { ; }
-        constexpr PosRBNode(const PosRBNode<T, K>& other) = default;
+        PosRBNode() : data{} { ; }
+        PosRBNode(const PosRBNode<T, K>& other) = default;
 
-        constexpr PosRBNode(const PosRBData<T, K>& data) : data{data} { ; }
-        constexpr PosRBNode(RColor color, uint16_t bheight, const PosRBData<T, K>& data) : data{color, bheight, data} { ; }
+        PosRBNode(const PosRBData<T, K>& data) : data{data} { ; }
+        PosRBNode(RColor color, uint16_t bheight, const PosRBData<T, K>& data) : data{color, bheight, data} { ; }
     };
 
     template<typename T, size_t K>
     class PosRBTreeLeaf : public PosRBNode<T, K>
     {
     public:
-        constexpr PosRBTreeLeaf() : PosRBNode<T, K>{} { ; }
-        constexpr PosRBTreeLeaf(const PosRBTreeLeaf& other) = default;
+        PosRBTreeLeaf() : PosRBNode<T, K>{} { ; }
+        PosRBTreeLeaf(const PosRBTreeLeaf& other) = default;
 
-        constexpr PosRBTreeLeaf(const PosRBData<T, K>& data) : PosRBNode<T, K>{data} { ; }
-        constexpr PosRBTreeLeaf(RColor color, uint16_t bheight, const PosRBData<T, K>& data) : PosRBNode<T, K>{color, bheight, data} { ; }
+        PosRBTreeLeaf(const PosRBData<T, K>& data) : PosRBNode<T, K>{data} { ; }
+        PosRBTreeLeaf(RColor color, uint16_t bheight, const PosRBData<T, K>& data) : PosRBNode<T, K>{color, bheight, data} { ; }
     };
     
     template<typename T, int64_t K>
@@ -419,10 +419,10 @@ namespace ᐸRuntimeᐳ
         const PosRBNode<T, K>* right;
         int64_t tcount; //total number of elements in the subtree rooted at this node
 
-        constexpr PosRBTreeNode() : PosRBNode<T, K>{}, left{}, right{}, tcount{} { ; }
-        constexpr PosRBTreeNode(const PosRBTreeNode& other) = default;
+        PosRBTreeNode() : PosRBNode<T, K>{}, left{}, right{}, tcount{} { ; }
+        PosRBTreeNode(const PosRBTreeNode& other) = default;
 
-        constexpr PosRBTreeNode(RColor color, uint16_t bheight, int64_t tcount, const PosRBNode<T, K>* left, const PosRBNode<T, K>* right, const PosRBData<T, K>& data) : PosRBNode<T, K>{color, bheight, data}, left{left}, right{right}, tcount{tcount} { ; }
+        PosRBTreeNode(RColor color, uint16_t bheight, int64_t tcount, const PosRBNode<T, K>* left, const PosRBNode<T, K>* right, const PosRBData<T, K>& data) : PosRBNode<T, K>{color, bheight, data}, left{left}, right{right}, tcount{tcount} { ; }
     };
 
     template<typename T, size_t K> 
@@ -457,9 +457,9 @@ namespace ᐸRuntimeᐳ
         static const TypeInfo* s_nodetypeinfo;
         thread_local static GCAllocator<PosRBTreeNode<T, K>>* s_nodeallocator;
 
-        constexpr PosRBTree() : root{} { ; }
-        constexpr PosRBTree(PosRBNode<T, K>* node) : root{node} { ; }
-        constexpr PosRBTree(const PosRBTree& other) = default;
+        PosRBTree() : root{} { ; }
+        PosRBTree(PosRBNode<T, K>* node) : root{node} { ; }
+        PosRBTree(const PosRBTree& other) = default;
 
         static bool isLeafType(const PosRBNode<T, K>* node) { return (node != nullptr) && (gcGetTypeInfo(const_cast<PosRBNode<T, K>*>(node)) == s_leaftypeinfo); }
         static bool isNodeType(const PosRBNode<T, K>* node) { return (node != nullptr) && (gcGetTypeInfo(const_cast<PosRBNode<T, K>*>(node)) == s_nodetypeinfo); }

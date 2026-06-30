@@ -12,7 +12,7 @@ namespace ᐸRuntimeᐳ
         T2 second;
 
         template<size_t idx, typename T>
-        constexpr T at() const
+        T at() const
         {
             static_assert(idx < 2, "Index out of bounds for EList2");
             if constexpr (idx == 0) {
@@ -33,7 +33,7 @@ namespace ᐸRuntimeᐳ
         T3 third;
 
         template<size_t idx, typename T>
-        constexpr T at() const
+        T at() const
         {
             static_assert(idx < 3, "Index out of bounds for EList3");
             if constexpr (idx == 0) {
@@ -58,7 +58,7 @@ namespace ᐸRuntimeᐳ
         T4 fourth;
 
         template<size_t idx, typename T>
-        constexpr T at() const
+        T at() const
         {
             static_assert(idx < 4, "Index out of bounds for EList4");
 
