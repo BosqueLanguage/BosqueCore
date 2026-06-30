@@ -179,13 +179,14 @@ namespace ᐸRuntimeᐳ
     {
     public:
         constexpr static int64_t MAX_LEAF_CAPACITY = LIST_T_LEAF_CAPACITY(sizeof(T));
+        constexpr static size_t GC_SKIP_SLOTS = std::numeric_limits<uint32_t>::max() + (ListTInlineContent<T>::MAX_INLINE_CAPACITY * sizeof(T) / sizeof(void*));
 
         size_t tag;
         PosRBTree<T, MAX_LEAF_CAPACITY, TYPE_ID_POS_TREE_T> postree;
 
-        ListTTreeContent() : tag{std::numeric_limits<size_t>::max()}, postree{} { ; }
+        ListTTreeContent() : tag{GC_SKIP_SLOTS}, postree{} { ; }
         ListTTreeContent(const ListTTreeContent& other) = default;
-        ListTTreeContent(const PosRBTree<T, MAX_LEAF_CAPACITY, TYPE_ID_POS_TREE_T>& postree) : tag{std::numeric_limits<size_t>::max()}, postree{postree} { ; }
+        ListTTreeContent(const PosRBTree<T, MAX_LEAF_CAPACITY, TYPE_ID_POS_TREE_T>& postree) : tag{GC_SKIP_SLOTS}, postree{postree} { ; }
     };
 
     template<typename T, uint32_t TYPE_ID_POS_TREE_T>
@@ -206,8 +207,8 @@ namespace ᐸRuntimeᐳ
 
         bool empty() const { return this->inlinelist.empty(); }
 
-        bool isInline() const { return this->inlinelist.count < std::numeric_limits<size_t>::max(); }
-        bool isTree() const { return this->inlinelist.count == std::numeric_limits<size_t>::max(); }
+        bool isInline() const { return this->inlinelist.count < std::numeric_limits<uint32_t>::max(); }
+        bool isTree() const { return this->inlinelist.count >= std::numeric_limits<uint32_t>::max(); }
 
 
         ListTUnion& operator=(const ListTUnion& other)
@@ -894,5 +895,6 @@ namespace ᐸRuntimeᐳ
         }
     }
 
-    inline bool gcIsListTInline(void** ptr) { return *((size_t*)ptr) < std::numeric_limits<size_t>::max(); }
+    inline bool gcIsListTInline(void** ptr) { return *((size_t*)ptr) < std::numeric_limits<uint32_t>::max(); }
+    inline size_t gcGetListTInlineSkipCount(void** ptr) { return *((size_t*)ptr) - std::numeric_limits<uint32_t>::max(); }
 }

@@ -212,12 +212,23 @@ namespace ᐸRuntimeᐳ
                 tag++;
                 slots++;
 
-                if(ti != nullptr && ti->ptrmask != nullptr) {
-                    const char* mmask = ti->ptrmask;
-                    while(*mmask != '\0') {
-                        processSlotTag(mmask, slots);
+                if(ti != nullptr) {
+                    if(ti->tag == LayoutTag::Ref) {
+                        *slots = processSlotPtrTrgt(*slots, slots);
+                        tag++;
+                        slots++;
                     }
-                    tag += ti->slotcount;
+                    else if(ti->ptrmask != nullptr) {
+                        const char* mmask = ti->ptrmask;
+                        while(*mmask != '\0') {
+                            processSlotTag(mmask, slots);
+                        }
+                        tag += ti->slotcount;
+                    }
+                    else {
+                        tag += ti->slotcount;
+                        slots += ti->slotcount;
+                    }
                 }
                 break;
             }
@@ -244,9 +255,10 @@ namespace ᐸRuntimeᐳ
                     slots++;
                 }
                 else {
+                    size_t skipcount = gcGetListTInlineSkipCount(slots);
                     *(slots + 1) = processSlotPtrTrgt(*(slots + 1), slots + 1);
-                    tag += 2;
-                    slots += 2;
+                    tag += (skipcount + 1);
+                    slots += (skipcount + 1);
                 }
                 break;
             }
@@ -329,12 +341,28 @@ namespace ᐸRuntimeᐳ
                 tag++;
                 slots++;
 
-                if(ti != nullptr && ti->ptrmask != nullptr) {
-                    const char* mmask = ti->ptrmask;
-                    while(*mmask != '\0') {
-                        decrementQuickSlotTag(mmask, slots);
+                if(ti != nullptr) {
+                    if(ti->tag == LayoutTag::Ref) {
+                        if(*slots != nullptr) {
+                            bool isdead = gcProcessRCDecrement(gcGetMetadata(*slots));
+                            if(isdead) {
+                                releaseQuick(*slots);
+                            }
+                        }
+                        tag++;
+                        slots++;
                     }
-                    tag += ti->slotcount;
+                    else if(ti->ptrmask != nullptr) {
+                        const char* mmask = ti->ptrmask;
+                        while(*mmask != '\0') {
+                            decrementQuickSlotTag(mmask, slots);
+                        }
+                        tag += ti->slotcount;
+                    }
+                    else {
+                        tag += ti->slotcount;
+                        slots += ti->slotcount;
+                    }
                 }
                 break;
             }
@@ -395,12 +423,28 @@ namespace ᐸRuntimeᐳ
                 tag++;
                 slots++;
 
-                if(ti != nullptr && ti->ptrmask != nullptr) {
-                    const char* mmask = ti->ptrmask;
-                    while(*mmask != '\0') {
-                        decrementStdSlotTag(mmask, slots);
+                if(ti != nullptr) {
+                    if(ti->tag == LayoutTag::Ref) {
+                        if(*slots != nullptr) {
+                            bool isdead = gcProcessRCDecrement(gcGetMetadata(*slots));
+                            if(isdead) {
+                                releaseStd(*slots);
+                            }
+                        }
+                        tag++;
+                        slots++;
                     }
-                    tag += ti->slotcount;
+                    else if(ti->ptrmask != nullptr) {
+                        const char* mmask = ti->ptrmask;
+                        while(*mmask != '\0') {
+                            decrementStdSlotTag(mmask, slots);
+                        }
+                        tag += ti->slotcount;
+                    }
+                    else {
+                        tag += ti->slotcount;
+                        slots += ti->slotcount;
+                    }
                 }
                 break;
             }
@@ -433,12 +477,13 @@ namespace ᐸRuntimeᐳ
                     slots++;
                 }
                 else {
+                    size_t skipcount = gcGetListTInlineSkipCount(slots);
                     bool isdead = gcProcessRCDecrement(gcGetMetadata(*(slots + 1)));
                     if(isdead) {
                         releaseStd(*(slots + 1));
                     }
-                    tag += 2;
-                    slots += 2;
+                    tag += (skipcount + 1);
+                    slots += (skipcount + 1);
                 }
                 break;
             }

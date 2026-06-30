@@ -25,7 +25,6 @@
 #define GC_DELETE_PENDING_PROCESS_BYTES_INCREMENTAL (GC_PAGE_SIZE / 2)
 //TODO: probably also want to provide dynamic tuning for these rates based on observed backpressure (i.e. how big pending list is)
 
-#define GC_NURSERY_AGE std::numeric_limits<size_t>::max()
 #define GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_ALLOC 0.60
 #define GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_EVAC 0.30
 #define GC_PAGE_AVAILABILITY_COUNT_THRESHOLD 8
