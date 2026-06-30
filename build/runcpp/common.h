@@ -15,6 +15,7 @@
 #include <array>
 #include <vector>
 #include <set>
+#include <unordered_set>
 #include <map>
 #include <list>
 #include <algorithm>
@@ -28,20 +29,16 @@
 #include <mutex>
 #include <thread>
 
-//Only for internal diagnostics
+#include <sys/mman.h> //mmap
+
+//Only for diagnostics
 #include <assert.h>
+#include <iostream>
 
 ////
-//TODO: for now the default allocator is #define set to malloc/free
-#define BSQ_ALLOCATOR_USE_MALLOC 1
-////
-
-////
-//ENABLE HEAVY DIAGNOSTICS
-#define BSQ_POSTREE_VALIDATE 1
-#define GC_INVARIANTS 1
-
-#define GC_DIAG_LEVEL_1 1
+//ENABLE DIAGNOSTICS
+//#define BSQ_POSTREE_VALIDATE 1
+#define GC_METRICS_BASIC 1
 ////
 
 namespace ᐸRuntimeᐳ
@@ -95,7 +92,7 @@ namespace ᐸRuntimeᐳ
         }
     }
 
-    inline void bsq_exhaustive(const char* file, uint32_t line, const char* message)
+    [[noreturn]] inline void bsq_exhaustive(const char* file, uint32_t line, const char* message)
     {
         bsq_handle_error(file, line, ErrorKind::ExhaustiveCheck, nullptr, message);
     }

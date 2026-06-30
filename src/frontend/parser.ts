@@ -4698,7 +4698,7 @@ class Parser {
             }
 
             if((rhs instanceof PostfixOp) && ((rhs.ops.length !== 1) && !(rhs.ops[0] instanceof PostfixInvoke))) {
-                this.recordErrorGeneral(sinfo, "Postfix expression with ref must be simple (not later in a chained operation");
+                this.recordErrorGeneral(sinfo, "Postfix expression with ref (i.e. not assigned or returned) must be simple -- not later in a chained operation");
                 return new ErrorStatement(sinfo);
             }
 

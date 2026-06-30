@@ -1,22 +1,23 @@
 
-import { IRAbstractCollectionTypeDecl, IRAbstractConceptTypeDecl, IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAssembly, IRConceptTypeDecl, IRDatatypeMemberEntityTypeDecl, IRDatatypeTypeDecl, IREntityTypeDecl, IREnumTypeDecl, IRListTypeDecl, IROptionTypeDecl, IRPrimitiveEntityTypeDecl, IRSomeTypeDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl } from "../irdefs/irassembly.js";
+import { IRAbstractCollectionTypeDecl, IRAbstractConceptTypeDecl, IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAssembly, IRConceptTypeDecl, IRDatatypeMemberEntityTypeDecl, IRDatatypeTypeDecl, IREntityTypeDecl, IREnumTypeDecl, IRListTypeDecl, IRMapEntryTypeDecl, IRMapTypeDecl, IROptionTypeDecl, IRPrimitiveEntityTypeDecl, IRQueueTypeDecl, IRSetTypeDecl, IRSomeTypeDecl, IRStackTypeDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl } from "../irdefs/irassembly.js";
 import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype.js";
 import { TransformCPPNameManager } from "./namemgr.js";
 
 import assert from "node:assert";
 
-const MAX_VALUE_LAYOUT_BYTESIZE = 72; //max number of bytes we allow for value layouts -- above this we switch to ref layout
+const MAX_VALUE_LAYOUT_BYTESIZE = 40; //max number of bytes we allow for value layouts -- above this we switch to ref layout
 
 //Duplicated from C++ definitions
-const MAX_LIST_INLINE_BYTES = 48; //Bytes -- so 56 total when we add 8 bytes for the size
+const MAX_LIST_INLINE_BYTES = 32; //Bytes -- so 40 total when we add 8 bytes for the size
 
 function LIST_T_INLINE_CAPACITY(elem_size: number): number {
+    //at least1 element but up to the number that can fir in the max inline bytes
     return Math.max(Math.floor(MAX_LIST_INLINE_BYTES / elem_size), 1);
 }
 
 function LIST_T_LEAF_CAPACITY(elem_size: number): number {
-    //return Math.max(LIST_T_INLINE_CAPACITY(elem_size) * 4, 4);
-    return 8;
+    //leaf should be big enough to hold a map(..) operation result from any type AND also be larger than the inline capacity (which-ever is larger)
+    return (MAX_LIST_INLINE_BYTES / 8) + 1;
 }
 
 class VirtualInvokeInfo {
@@ -350,8 +351,71 @@ class TypeInfoManager {
         });
     }
 
-    private isSizeOkForValueLayout(bytesize: number): boolean {
-        return bytesize <= MAX_VALUE_LAYOUT_BYTESIZE;
+    private isSimpleFieldType(ttype: IRTypeSignature, irasm: IRAssembly): boolean {
+        if(!(ttype instanceof IRNominalTypeSignature)) {
+            return false;
+        }
+
+        const ddecl = irasm.alltypes.get(ttype.tkeystr) as IRAbstractNominalTypeDecl;
+        if((ddecl instanceof IRPrimitiveEntityTypeDecl)) {
+            return true;
+        }
+        else if(ddecl instanceof IRTypedeclTypeDecl) {
+            return true;
+        }
+        else if((ddecl instanceof IRTypedeclCStringDecl) || (ddecl instanceof IRTypedeclStringDecl)) {
+            return true;
+        }
+        else if(ddecl instanceof IREnumTypeDecl) {
+            return true;
+        }
+        else {
+            if(ddecl instanceof IRAbstractEntityTypeDecl) {
+                if(ddecl instanceof IRSomeTypeDecl) {
+                    return this.isSimpleFieldType(ddecl.ttype, irasm);
+                }
+                else if(ddecl instanceof IRMapEntryTypeDecl) {
+                    return this.isSimpleFieldType(ddecl.ktype, irasm) && this.isSimpleFieldType(ddecl.vtype, irasm);
+                }
+                else if(ddecl instanceof IRListTypeDecl) {
+                    return this.isSimpleFieldType(ddecl.oftype, irasm);
+                }
+                else if(ddecl instanceof IRStackTypeDecl) {
+                    return this.isSimpleFieldType(ddecl.oftype, irasm);
+                }
+                else if(ddecl instanceof IRQueueTypeDecl) {
+                    return this.isSimpleFieldType(ddecl.oftype, irasm);
+                }
+                else if(ddecl instanceof IRSetTypeDecl) {
+                    return this.isSimpleFieldType(ddecl.oftype, irasm);
+                }
+                else if(ddecl instanceof IRMapTypeDecl) {
+                    return this.isSimpleFieldType(ddecl.ktype, irasm) && this.isSimpleFieldType(ddecl.vtype, irasm);
+                }
+                else {
+                    return false;
+                }
+            }
+            else if(ddecl instanceof IRAbstractConceptTypeDecl) {
+                if(ddecl instanceof IROptionTypeDecl) {
+                    return this.isSimpleFieldType(ddecl.ttype, irasm);
+                }
+                else {
+                    return false;
+                }
+            }
+            else {
+                return false;
+            }
+        }
+    }
+
+    private isEntityTypeOkForValueLayout(tdecl: IREntityTypeDecl | IRDatatypeMemberEntityTypeDecl, irasm: IRAssembly, bytesize: number): boolean {
+        if(bytesize > MAX_VALUE_LAYOUT_BYTESIZE) {
+            return false;
+        }
+
+        return tdecl.saturatedBFieldInfo.every((bfi) => this.isSimpleFieldType(bfi.ftype, irasm));
     }
 
     private static computeValueMaskOfK(k: number): string {
@@ -483,7 +547,7 @@ class TypeInfoManager {
                     layoutmask = "0";
                 }
 
-                if(!this.isSizeOkForValueLayout(totalbytesize)) {
+                if(!this.isEntityTypeOkForValueLayout(tdecl, irasm, totalbytesize)) {
                     this.addLayoutInfo(tdecl.tkey, new LayoutInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), 8, "1"));                    
                 }
                 else {
@@ -629,7 +693,7 @@ class TypeInfoManager {
             const ttid = this.typeInfoMap.size;
 
             const quickrelease = this.isQuickReleaseType(new IRNominalTypeSignature(tdecl.tkey), irasm);
-            if(!this.isRecursiveTypeKey(tdecl.tkey, irasm) && this.isSizeOkForValueLayout(totalbytesize)) {
+            if(!this.isRecursiveTypeKey(tdecl.tkey, irasm) && this.isEntityTypeOkForValueLayout(tdecl, irasm, totalbytesize)) {
                 this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, totalbytesize, LayoutTag.Value, ptrmask, quickrelease));
             }
             else {

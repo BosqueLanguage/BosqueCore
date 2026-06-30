@@ -43,7 +43,7 @@ function buildExeCode(assembly: Assembly, rootasm: string, outname: string) {
     Status.output(`    Code generation successful -- CPP emitted to ${nndir}\n\n`);
 }
 
-function moveRuntimeFiles(buildlevel: "debug" | "test" | "release", outname: string) {
+function moveRuntimeFiles(buildlevel: "testing" | "release", outname: string) {
     Status.output("    Copying CPP runtime support...\n");
     const nndir = path.normalize(outname);
 
@@ -61,26 +61,29 @@ function moveRuntimeFiles(buildlevel: "debug" | "test" | "release", outname: str
     }
 }
 
-function emitCommandLineMakefile(optlevel: "debug" | "test" | "release"): string {
+function emitCommandLineMakefile(optlevel: "testing" | "release"): string {
     return 'MAKE_PATH=$(realpath $(dir $(lastword $(MAKEFILE_LIST))))\n' +
-        'RUNTIME_DIR=$(MAKE_PATH)/runcpp/\n' + 
-        'OUT_OBJS=$(MAKE_PATH)/output/obj/\n\n' +
-        'JSON_INCLUDES=-I $(BUILD_DIR)include/json/\n\n' +
-        '#dev is default, for another flavor : make BUILD=release or debug\n' +
+        'SRC_DIR=$(MAKE_PATH)/runcpp/\n' + 
+        'CORE_SRC_DIR=$(SRC_DIR)core/\n' +
+        'RUNTIME_SRC_DIR=$(SRC_DIR)runtime/\n' +
+        'ALLOC_SRC_DIR=$(RUNTIME_SRC_DIR)allocator/\n' +
+        'BSQIR_SRC_DIR=$(RUNTIME_SRC_DIR)bsqir/\n' +
+        '\n' +
+        '#testing is default, for another flavor : make BUILD=release or debug\n' +
         `BUILD := ${optlevel}\n\n` + 
-        'CPP_STDFLAGS=-Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable -Wuninitialized -Werror -std=gnu++23 -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-stack-protector -fPIC\n' + 
-        'CPPFLAGS_OPT.debug=-O0 -g -ggdb -fno-omit-frame-pointer -fsanitize=address --param asan-stack=0\n' +
-        'CPPFLAGS_OPT.test=-O0 -g -ggdb -fno-omit-frame-pointer\n' +
-        'CPPFLAGS_OPT.release=-O2 -fno-omit-frame-pointer -march=x86-64-v3 -Wno-array-bounds -Wno-stringop-overflow\n' +
+        'CPP_STDFLAGS=-Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable -Wuninitialized -Werror -std=gnu++20 -fno-omit-frame-pointer -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-stack-protector\n' + 
+        'CPPFLAGS_OPT.testing=-O0 -g -ggdb -fsanitize=address --param asan-stack=0\n' +
+        'CPPFLAGS_OPT.testingopt=-O1 -g -ggdb -fsanitize=address --param asan-stack=0\n' +
+        'CPPFLAGS_OPT.release=-O2 -g -ggdb -flto=auto -ftree-vectorize -march=native -Wno-array-bounds -Wno-stringop-overflow\n' +
         'CPPFLAGS=${CPPFLAGS_OPT.${BUILD}} ${CPP_STDFLAGS}\n\n' +
         'HEADERS=$(wildcard $(SRC_DIR)*.h) $(wildcard $(CORE_SRC_DIR)*.h) $(wildcard $(RUNTIME_SRC_DIR)*.h) $(wildcard $(ALLOC_SRC_DIR)*.h) $(wildcard $(BSQIR_SRC_DIR)*.h)\n' +
-        'all: $(HEADERS) $(MAKE_PATH)/app\n\n' +
-        '$(MAKE_PATH)/app: $(MAKE_PATH)/app.h $(MAKE_PATH)/app.cpp\n' +
-        '\t@make -f $(RUNTIME_DIR)makefile BUILD=$(BUILD) --jobs=8 all\n' +
-        '\tg++ $(CPPFLAGS) -o $(MAKE_PATH)/app $(OUT_OBJS)* $(JSON_INCLUDES) $(MAKE_PATH)/app.cpp\n' +
+        'CPP=$(wildcard $(SRC_DIR)*.cpp) $(wildcard $(CORE_SRC_DIR)*.cpp) $(wildcard $(RUNTIME_SRC_DIR)*.cpp) $(wildcard $(ALLOC_SRC_DIR)*.cpp) $(wildcard $(BSQIR_SRC_DIR)*.cpp)\n' +
+        '\n' +
+        'all: $(MAKE_PATH)/app\n\n' +
+        '$(MAKE_PATH)/app: $(HEADERS) $(CPP) $(MAKE_PATH)/app.h $(MAKE_PATH)/app.cpp\n' +
+        '\tg++ $(CPPFLAGS) -o $(MAKE_PATH)/app $(CPP) $(MAKE_PATH)/app.cpp\n' +
         'clean:\n' +
-	    '\trm -rf $(OUT_OBJS)*\n' +
-        '\trm app';
+	    '\trm $(MAKE_PATH)/app';
 }
 
 //////////////////////////////
@@ -97,6 +100,6 @@ fs.rmSync(outdir, { recursive: true, force: true });
 fs.mkdirSync(outdir);
 
 buildExeCode(asm, mainns, outdir);
-moveRuntimeFiles("debug", outdir);
+moveRuntimeFiles("testing", outdir);
 
 Status.output("All done!\n");

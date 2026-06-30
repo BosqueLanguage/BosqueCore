@@ -73,8 +73,21 @@ __internal __typedeclable __numeric entity Float {
     const pi: Float = 3.1415926535897931f;
     const e: Float = 2.7182818284590451f;
 
+    function isSafeConvertInto<T: numeric>(f: Float): Bool = @float_is_safe_convert_into;
+
+    function fromNat(n: Nat): Float = @float_from_nat;
+    function toNat(f: Float): Nat
+        requires Float::isSafeConvertInto<Nat>(f);
+    {
+        return NumericOps::s_safeConvertFloatInto<Nat>(f);
+    }
+
     function square(x: Float): Float {
         return x * x;
+    }
+
+    function pow(x: Float, y: Float): Float {
+        return NumericOps::s_floatPow(x, y);
     }
 
     function sqrt(x: Float): Float

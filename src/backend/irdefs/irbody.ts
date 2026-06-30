@@ -1106,11 +1106,11 @@ class IRConstructorStandardEntityExpression extends IRConstructExpression {
 }
 
 //TODO: maybe add a specialized version of this that does boxing to a concept as well
-class IRConstructorLambdaExpression extends IRSimpleExpression {
+class IRConstructorLambdaExpression extends IRImmediateExpression {
     readonly ltype: IRLambdaParameterPackTypeSignature;
-    readonly values: IRSimpleExpression[];
+    readonly values: IRImmediateExpression[];
     
-    constructor(entitytype: IRLambdaParameterPackTypeSignature, values: IRSimpleExpression[]) {
+    constructor(entitytype: IRLambdaParameterPackTypeSignature, values: IRImmediateExpression[]) {
         super(IRExpressionTag.IRConstructorLambdaExpression);
         this.ltype = entitytype;
         this.values = values;

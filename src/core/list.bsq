@@ -1,6 +1,42 @@
 namespace Core;
 
 namespace List {
+#if STRIPPED_CORE
+#else
+    function rangeOfNat(start: Nat, end: Nat): List<Nat> 
+        requires start <= end;
+    {
+        if(start == end) {
+            return List<Nat>{};
+        }
+        else {
+            return ListOps::s_list_range_nat(start, end);
+        }
+    }
+
+    function rangeOfInt(start: Int, end: Int): List<Int> 
+        requires start <= end;
+    {
+        if(start == end) {
+            return List<Int>{};
+        }
+        else {
+            return ListOps::s_list_range_int(start, end);
+        }
+    }
+
+    function zip<T, U>(l1: List<T>, l2: List<U>): List<(|T, U|)> 
+        requires l1.size() == l2.size();
+    {
+        let ssize = l1.size();
+        if(ssize == 0n) {
+            return List<(|T, U|)>{};
+        }
+        else {
+            return ListOps::s_list_zip<T, U, (|T, U|)>(l1, l2, ssize);
+        }
+    }
+#endif  %% STRIPPED_CORE 
 }
 
 __internal entity List<T> {
@@ -112,13 +148,92 @@ __internal entity List<T> {
             return ListOps::s_list_mapidx[recursive?]<T, U>(this, f);
         }
     }    
-    
+
+    recursive? method filter(p: recursive? pred(T) -> Bool): List<T> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<T>{};
+        }
+        else {
+            return ListOps::s_list_filter[recursive?]<T>(this, p);
+        }
+    }
+
+    recursive? method filtermap<U>(p: recursive? pred(T) -> Bool, f: recursive? fn(T) -> U): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+            return ListOps::s_list_filtermap[recursive?]<T, U>(this, p, f);
+        }
+    }
+
+    method convert<U>(): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+            return ListOps::s_list_map<T, U>(this, fn(v) => v.@<U>);
+        }
+    }
+
+    method convertIf<U>(): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+           return ListOps::s_list_filtermap<T, U>(this, pred(v) => v.?<U>, fn(v) => v.@<U>);
+        }
+    }
+
+    method {when T: Option<U>} extractSome<U>(): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+            return ListOps::s_list_map<T, U>(this, fn(v) => v.@some);
+        }
+    }
+
+    method {when T: Option<U>} extractIfSome<U>(): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+           return ListOps::s_list_filtermap<T, U>(this, pred(v) => v.?some, fn(v) => v.@some);
+        }
+    }
+
+    %%
+    %%TODO: extractIfOk<U>, extractIfFail<E>, extractOk<U>, extractFail<E> for Result<T, E>
+    %%
+
+    method {when T: keytype} min(): T 
+        requires !this.empty();
+    {
+        return ListOps::s_list_min<T>(this);
+    }
+
+    recursive? method min(cmp: recursive? pred(T, T) -> Bool): T 
+        requires !this.empty();
+    {
+        return ListOps::s_list_minfun<T>(this, cmp);
+    }
+
     method {when T: numeric} sum(): T {
         if(ListOps::s_list_empty<T>(this)) {
             return T::zero;
         }
         else {
             return ListOps::s_list_sum<T>(this, T::zero);
+        }
+    }
+
+    recursive? method accumulate(op: recursive? fn(T, T) -> T, init: T): T {
+        if(ListOps::s_list_empty<T>(this)) {
+            return init;
+        }
+        else {
+            return ListOps::s_list_sumfun<T>(this, init, op);
         }
     }
 #endif %% STRIPPED_CORE 

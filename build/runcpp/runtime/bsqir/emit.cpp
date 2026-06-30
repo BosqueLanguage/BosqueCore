@@ -175,7 +175,6 @@ namespace ᐸRuntimeᐳ
 
         for(auto ii = istart; ii != iend; ++ii) {
             char32_t c = *ii;
-
             //TODO: we need to handle escaping correctly
             
             this->bufferMgr.write(c);
@@ -214,5 +213,102 @@ namespace ᐸRuntimeᐳ
 
         ᐸRuntimeᐳ::g_alloc_info.io_buffer_free_list(oibb);
         oibb.clear();
+    }
+
+    void DiagnosticsEmitter::emitNone(std::ostream& out, XNone n)
+    {
+        out << "none";
+    }
+    
+    void DiagnosticsEmitter::emitBool(std::ostream& out, XBool b)
+    {
+        out << (bool)b;
+    }
+
+    void DiagnosticsEmitter::emitNat(std::ostream& out, XNat n)
+    {
+        out << n.value << "n";
+    }
+
+    void DiagnosticsEmitter::emitInt(std::ostream& out, XInt i)
+    {
+        out << i.value << "i";
+    }
+
+    void DiagnosticsEmitter::emitChkNat(std::ostream& out, XChkNat n)
+    {
+        if(n.isBottom()) {
+            out << "ChkNat::npos";
+        }
+        else {
+            if(n.value <= (__int128_t)std::numeric_limits<int64_t>::max()) {
+                out << (int64_t)n.value << "N";
+            }
+            else {
+                assert(false); // Not Implemented: format for very large ChkNat values
+            }
+        }
+    }
+
+    void DiagnosticsEmitter::emitChkInt(std::ostream& out, XChkInt i)
+    {
+        if(i.isBottom()) {
+            out << "ChkInt::npos";
+        }
+        else {
+            if(i.value <= (__int128_t)std::numeric_limits<int64_t>::max()) {
+                out << (int64_t)i.value << "I";
+            }
+            else {
+                assert(false); // Not Implemented: format for very large ChkNat values
+            }
+        }
+    }
+
+    void DiagnosticsEmitter::emitFloat(std::ostream& out, XFloat f)
+    {
+        if(std::floor(f.value) != f.value) {
+            out << f.value << "f";
+        }
+        else {
+            out << f.value << ".0f";
+        }
+    }
+
+    void DiagnosticsEmitter::emitByte(std::ostream& out, XByte b)
+    {
+        assert(false); // Not Implemented: emitting Byte values
+    }
+
+    void DiagnosticsEmitter::emitCChar(std::ostream& out, XCChar c)
+    {
+        //TODO: we need to handle escaping correctly
+        out << "c'" << char(c.value) << "'";
+    }
+
+    void DiagnosticsEmitter::emitUnicodeChar(std::ostream& out, XUnicodeChar c)
+    {
+        //TODO: we need to handle escaping correctly
+        out << "c\"" << char(c.value) << "\"";
+    }
+
+    void DiagnosticsEmitter::emitCString(std::ostream& out, XCString s)
+    {
+        s.diagnosticEmit(out, true);
+    }
+        
+    void DiagnosticsEmitter::emitString(std::ostream& out, XString s)
+    {
+        s.diagnosticEmit(out, true);
+    }
+
+    void DiagnosticsEmitter::emitCRegex(std::ostream& out, XCRegex r)
+    {
+        assert(false); // Not Implemented: emitting CRegex values
+    }
+
+    void DiagnosticsEmitter::emitRegex(std::ostream& out, XRegex r)
+    {
+        assert(false); // Not Implemented: emitting Regex values
     }
 }

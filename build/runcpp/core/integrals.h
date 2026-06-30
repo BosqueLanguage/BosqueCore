@@ -10,185 +10,205 @@ namespace ᐸRuntimeᐳ
     class XNat
     {
     public:
-        static constexpr int64_t MAX_NAT = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_BASE;
+        constexpr static int64_t MIN_VALUE = 0;
+        constexpr static int64_t MAX_VALUE = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_BASE;
+
+        using value_type = int64_t;
 
         int64_t value;
 
-        constexpr static bool isValidNat(int64_t v)
+        static bool isValidNat(int64_t v)
         {
-            return (0 <= v) & (v <= XNat::MAX_NAT);
+            return (XNat::MIN_VALUE <= v) & (v <= XNat::MAX_VALUE);
+        }
+
+        //Just used internally for range fill and such
+        XNat& operator++() {
+            ++value;
+            return *this;
         }
 
         // Check operators on Nat
-        constexpr static void checkOverflowAddition(XNat n1, XNat n2, const char* file, uint32_t line)
+        static void checkOverflowAddition(XNat n1, XNat n2, const char* file, uint32_t line)
         {
             int64_t result = 0;
             if(__builtin_add_overflow(n1.value, n2.value, &result) || !(XNat::isValidNat(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Nat addition bounds"); }
         }
-        constexpr static void checkOverflowSubtraction(XNat n1, XNat n2, const char* file, uint32_t line)
+        static void checkOverflowSubtraction(XNat n1, XNat n2, const char* file, uint32_t line)
         {
             if(n2.value > n1.value) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericUnderflow, nullptr, "Nat subtraction underflow"); }
             
             int64_t result = 0;
             if(__builtin_sub_overflow(n1.value, n2.value, &result) || !(XNat::isValidNat(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Nat subtraction bounds"); }
         }
-        constexpr static void checkOverflowMultiplication(XNat n1, XNat n2, const char* file, uint32_t line)
+        static void checkOverflowMultiplication(XNat n1, XNat n2, const char* file, uint32_t line)
         {
             int64_t result = 0;
             if(__builtin_mul_overflow(n1.value, n2.value, &result) || !(XNat::isValidNat(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Nat multiplication bounds"); }
         }
-        constexpr static void checkDivisionByZero(XNat n2, const char* file, uint32_t line)
+        static void checkDivisionByZero(XNat n2, const char* file, uint32_t line)
         {
             if(n2.value == 0) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::DivisionByZero, nullptr, "Nat division by zero"); }
         }
 
         // Overloaded operators on Nat
-        constexpr XNat operator+() const
+        XNat operator+() const
         {
             return *this;
         }
         // Negation is not defined for Nat
 
-        friend constexpr XNat operator+(XNat lhs, XNat rhs)
+        friend XNat operator+(XNat lhs, XNat rhs)
         {
             return XNat{lhs.value + rhs.value};
         }
-        friend constexpr XNat operator-(XNat lhs, XNat rhs)
+        friend XNat operator-(XNat lhs, XNat rhs)
         {
             return XNat{lhs.value - rhs.value};
         }
-        friend constexpr XNat operator/(XNat lhs, XNat rhs)
+        friend XNat operator/(XNat lhs, XNat rhs)
         {
            return XNat{lhs.value / rhs.value};
         }
-        friend constexpr XNat operator*(XNat lhs, XNat rhs)
+        friend XNat operator*(XNat lhs, XNat rhs)
         {
             return XNat{lhs.value * rhs.value};
         }
 
-        friend constexpr XBool operator==(const XNat& lhs, const XNat& rhs) { return XBool::from(lhs.value == rhs.value); }
-        friend constexpr XBool operator<(const XNat& lhs, const XNat& rhs) { return XBool::from(lhs.value < rhs.value); }
-        friend constexpr XBool operator>(const XNat& lhs, const XNat& rhs) { return XBool::from(rhs.value < lhs.value); }
-        friend constexpr XBool operator!=(const XNat& lhs, const XNat& rhs) { return XBool::from(!(lhs.value == rhs.value)); }
-        friend constexpr XBool operator<=(const XNat& lhs, const XNat& rhs) { return XBool::from(!(lhs.value > rhs.value)); }
-        friend constexpr XBool operator>=(const XNat& lhs, const XNat& rhs) { return XBool::from(!(lhs.value < rhs.value)); }
+        friend XBool operator==(const XNat& lhs, const XNat& rhs) { return XBool::from(lhs.value == rhs.value); }
+        friend XBool operator<(const XNat& lhs, const XNat& rhs) { return XBool::from(lhs.value < rhs.value); }
+        friend XBool operator>(const XNat& lhs, const XNat& rhs) { return XBool::from(rhs.value < lhs.value); }
+        friend XBool operator!=(const XNat& lhs, const XNat& rhs) { return XBool::from(!(lhs.value == rhs.value)); }
+        friend XBool operator<=(const XNat& lhs, const XNat& rhs) { return XBool::from(!(lhs.value > rhs.value)); }
+        friend XBool operator>=(const XNat& lhs, const XNat& rhs) { return XBool::from(!(lhs.value < rhs.value)); }
     };
 
     class XInt
     {
     public:
-        static constexpr int64_t MIN_INT = -ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_BASE; 
-        static constexpr int64_t MAX_INT = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_BASE; 
+        constexpr static int64_t MIN_VALUE = -ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_BASE; 
+        constexpr static int64_t MAX_VALUE = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_BASE; 
+
+        using value_type = int64_t;
 
         int64_t value;
 
-        constexpr static bool isValidInt(int64_t v)
+        static bool isValidInt(int64_t v)
         {
-            return (XInt::MIN_INT <= v) & (v <= XInt::MAX_INT);
+            return (XInt::MIN_VALUE <= v) & (v <= XInt::MAX_VALUE);
         }
     
+        //Just used internally for range fill and such
+        XInt& operator++() {
+            ++value;
+            return *this;
+        }
+
         // Check operators on Int
-        constexpr static void checkOverflowAddition(XInt n1, XInt n2, const char* file, uint32_t line)
+        static void checkOverflowAddition(XInt n1, XInt n2, const char* file, uint32_t line)
         {
             int64_t result = 0;
             if(__builtin_add_overflow(n1.value, n2.value, &result) || !(XInt::isValidInt(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Int addition bounds"); }
         }
-        constexpr static void checkOverflowSubtraction(XInt n1, XInt n2, const char* file, uint32_t line)
+        static void checkOverflowSubtraction(XInt n1, XInt n2, const char* file, uint32_t line)
         {
             int64_t result = 0;
             if(__builtin_sub_overflow(n1.value, n2.value, &result) || !(XInt::isValidInt(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Int subtraction bounds"); }
         }
-        constexpr static void checkOverflowMultiplication(XInt n1, XInt n2, const char* file, uint32_t line)
+        static void checkOverflowMultiplication(XInt n1, XInt n2, const char* file, uint32_t line)
         {
             int64_t result = 0;
             if(__builtin_mul_overflow(n1.value, n2.value, &result) || !(XInt::isValidInt(result))) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Int multiplication bounds"); }
         }
-        constexpr static void checkDivisionByZero(XInt n2, const char* file, uint32_t line)
+        static void checkDivisionByZero(XInt n2, const char* file, uint32_t line)
         {
             if(n2.value == 0) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::DivisionByZero, nullptr, "Int division by zero"); }
         }
 
         // Overloaded operators on Int
-        constexpr XInt operator+() const
+        XInt operator+() const
         {
             return *this;
         }
-        constexpr XInt operator-() const
+        XInt operator-() const
         {
             return XInt{-this->value};
         }
 
-        friend constexpr XInt operator+(XInt lhs, XInt rhs)
+        friend XInt operator+(XInt lhs, XInt rhs)
         {
             return XInt{lhs.value + rhs.value};
         }
-        friend constexpr XInt operator-(XInt lhs, XInt rhs)
+        friend XInt operator-(XInt lhs, XInt rhs)
         {
             return XInt{lhs.value - rhs.value};
         }
-        friend constexpr XInt operator/(XInt lhs, XInt rhs)
+        friend XInt operator/(XInt lhs, XInt rhs)
         {
             return XInt{lhs.value / rhs.value};
         }
-        friend constexpr XInt operator*(XInt lhs, XInt rhs)
+        friend XInt operator*(XInt lhs, XInt rhs)
         {
             return XInt{lhs.value * rhs.value};
         }
 
-        friend constexpr XBool operator==(const XInt& lhs, const XInt& rhs) { return XBool::from(lhs.value == rhs.value); }
-        friend constexpr XBool operator<(const XInt& lhs, const XInt& rhs) { return XBool::from(lhs.value < rhs.value); }
-        friend constexpr XBool operator>(const XInt& lhs, const XInt& rhs) { return XBool::from(rhs.value < lhs.value); }
-        friend constexpr XBool operator!=(const XInt& lhs, const XInt& rhs) { return XBool::from(!(lhs.value == rhs.value)); }
-        friend constexpr XBool operator<=(const XInt& lhs, const XInt& rhs) { return XBool::from(!(lhs.value > rhs.value)); }
-        friend constexpr XBool operator>=(const XInt& lhs, const XInt& rhs) { return XBool::from(!(lhs.value < rhs.value)); }
+        friend XBool operator==(const XInt& lhs, const XInt& rhs) { return XBool::from(lhs.value == rhs.value); }
+        friend XBool operator<(const XInt& lhs, const XInt& rhs) { return XBool::from(lhs.value < rhs.value); }
+        friend XBool operator>(const XInt& lhs, const XInt& rhs) { return XBool::from(rhs.value < lhs.value); }
+        friend XBool operator!=(const XInt& lhs, const XInt& rhs) { return XBool::from(!(lhs.value == rhs.value)); }
+        friend XBool operator<=(const XInt& lhs, const XInt& rhs) { return XBool::from(!(lhs.value > rhs.value)); }
+        friend XBool operator>=(const XInt& lhs, const XInt& rhs) { return XBool::from(!(lhs.value < rhs.value)); }
     };
 
     class XChkNat
     {
     public:
-        static constexpr __int128_t MAX_NAT = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED; 
+        constexpr static __int128_t MIN_VALUE = 0;
+        constexpr static __int128_t MAX_VALUE = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED; 
+
+        using value_type = __int128_t;
 
         __int128_t value;
 
-        constexpr static bool isValidNat(__int128_t v)
+        static bool isValidNat(__int128_t v)
         {
-            return (0 <= v) & (v <= XChkNat::MAX_NAT);
+            return (XChkNat::MIN_VALUE <= v) & (v <= XChkNat::MAX_VALUE);
         }
 
-        static constexpr __int128_t BOTTOM_VALUE = (__int128_t(1) << 126);
+        constexpr static __int128_t BOTTOM_VALUE = (__int128_t(1) << 126);
         
-        constexpr static bool s_isBottom(__int128_t v)
+        static bool s_isBottom(__int128_t v)
         {
             return v == BOTTOM_VALUE;
         }
 
-        constexpr static XChkNat bliteral()
+        consteval static XChkNat bliteral()
         {
             return XChkNat{XChkNat::BOTTOM_VALUE};
         }
 
-        constexpr bool isBottom() const
+        bool isBottom() const
         {
             return XChkNat::s_isBottom(this->value);
         }
 
-        constexpr static void checkOverflowSubtraction(XChkNat n1, XChkNat n2, const char* file, uint32_t line)
+        static void checkOverflowSubtraction(XChkNat n1, XChkNat n2, const char* file, uint32_t line)
         {
             if(n2.value > n1.value) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericUnderflow, nullptr, "Nat subtraction underflow"); }
         }
-        constexpr static void checkDivisionByZero(XChkNat n2, const char* file, uint32_t line)
+        static void checkDivisionByZero(XChkNat n2, const char* file, uint32_t line)
         {
-            if(n2.value == 0) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::DivisionByZero, nullptr, "Int division by zero"); }
+            if(n2.value == 0) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::DivisionByZero, nullptr, "Nat division by zero"); }
         }
 
         // Overloaded operators on Nat
-        constexpr XChkNat operator+() const
+        XChkNat operator+() const
         {
             return *this;
         }
         // Negation is not defined for Nat
 
-        friend constexpr XChkNat operator+(XChkNat lhs, XChkNat rhs)
+        friend XChkNat operator+(XChkNat lhs, XChkNat rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
                 return XChkNat(XChkNat::BOTTOM_VALUE);
@@ -202,7 +222,7 @@ namespace ᐸRuntimeᐳ
                 return XChkNat{XChkNat::BOTTOM_VALUE};
             }
         }
-        friend constexpr XChkNat operator-(XChkNat lhs, XChkNat rhs)
+        friend XChkNat operator-(XChkNat lhs, XChkNat rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
                 return XChkNat{XChkNat::BOTTOM_VALUE};
@@ -216,7 +236,7 @@ namespace ᐸRuntimeᐳ
                 return XChkNat{XChkNat::BOTTOM_VALUE};
             }
         }
-        friend constexpr XChkNat operator/(XChkNat lhs, XChkNat rhs)
+        friend XChkNat operator/(XChkNat lhs, XChkNat rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
                 return XChkNat{XChkNat::BOTTOM_VALUE};
@@ -224,7 +244,7 @@ namespace ᐸRuntimeᐳ
 
             return XChkNat{lhs.value / rhs.value};
         }
-        friend constexpr XChkNat operator*(XChkNat lhs, XChkNat rhs)
+        friend XChkNat operator*(XChkNat lhs, XChkNat rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
                 return XChkNat{XChkNat::BOTTOM_VALUE};
@@ -239,55 +259,57 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        friend constexpr XBool operator==(const XChkNat& lhs, const XChkNat& rhs) { return XBool::from(lhs.value == rhs.value); }
-        friend constexpr XBool operator<(const XChkNat& lhs, const XChkNat& rhs) { return XBool::from(lhs.value < rhs.value); }
-        friend constexpr XBool operator>(const XChkNat& lhs, const XChkNat& rhs) { return XBool::from(rhs.value < lhs.value); }
-        friend constexpr XBool operator!=(const XChkNat& lhs, const XChkNat& rhs) { return XBool::from(!(lhs.value == rhs.value)); }
-        friend constexpr XBool operator<=(const XChkNat& lhs, const XChkNat& rhs) { return XBool::from(!(lhs.value > rhs.value)); }
-        friend constexpr XBool operator>=(const XChkNat& lhs, const XChkNat& rhs) { return XBool::from(!(lhs.value < rhs.value)); }
+        friend XBool operator==(const XChkNat& lhs, const XChkNat& rhs) { return XBool::from(lhs.value == rhs.value); }
+        friend XBool operator<(const XChkNat& lhs, const XChkNat& rhs) { return XBool::from(lhs.value < rhs.value); }
+        friend XBool operator>(const XChkNat& lhs, const XChkNat& rhs) { return XBool::from(rhs.value < lhs.value); }
+        friend XBool operator!=(const XChkNat& lhs, const XChkNat& rhs) { return XBool::from(!(lhs.value == rhs.value)); }
+        friend XBool operator<=(const XChkNat& lhs, const XChkNat& rhs) { return XBool::from(!(lhs.value > rhs.value)); }
+        friend XBool operator>=(const XChkNat& lhs, const XChkNat& rhs) { return XBool::from(!(lhs.value < rhs.value)); }
     };
 
     class XChkInt
     {
     public:
-        static constexpr __int128_t MIN_INT = -ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED; 
-        static constexpr __int128_t MAX_INT = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED; 
+        constexpr static __int128_t MIN_VALUE = -ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED; 
+        constexpr static __int128_t MAX_VALUE = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED; 
                 
+        using value_type = __int128_t;
+
         __int128_t value;
 
-        constexpr static bool isValidInt(__int128_t v)
+        static bool isValidInt(__int128_t v)
         {
-            return (XChkInt::MIN_INT <= v) & (v <= XChkInt::MAX_INT);
+            return (XChkInt::MIN_VALUE <= v) & (v <= XChkInt::MAX_VALUE);
         }
 
-        static constexpr __int128_t BOTTOM_VALUE = (__int128_t(1) << 126);
+        constexpr static __int128_t BOTTOM_VALUE = (__int128_t(1) << 126);
 
-        constexpr static bool isBottom(__int128_t v)
+        static bool s_isBottom(__int128_t v)
         {
             return v == BOTTOM_VALUE;
         }
 
-        constexpr bool isBottom() const
-        {
-            return XChkInt::isBottom(this->value);
-        }
-
-        constexpr static XChkInt bliteral()
+        consteval static XChkInt bliteral()
         {
             return XChkInt{XChkInt::BOTTOM_VALUE};
         }
     
-        constexpr static void checkDivisionByZero(XChkInt n2, const char* file, uint32_t line)
+        bool isBottom() const
+        {
+            return XChkInt::s_isBottom(this->value);
+        }
+
+        static void checkDivisionByZero(XChkInt n2, const char* file, uint32_t line)
         {
             if(n2.value == 0) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::DivisionByZero, nullptr, "Int division by zero"); }
         }
 
         // Overloaded operators on Int
-        constexpr XChkInt operator+() const
+        XChkInt operator+() const
         {
             return *this;
         }
-        constexpr XChkInt operator-() const
+        XChkInt operator-() const
         {
             if(this->isBottom()) {
                 return XChkInt{XChkInt::BOTTOM_VALUE};
@@ -297,7 +319,7 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        friend constexpr XChkInt operator+(XChkInt lhs, XChkInt rhs)
+        friend XChkInt operator+(XChkInt lhs, XChkInt rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
                 return XChkInt{XChkInt::BOTTOM_VALUE};
@@ -311,7 +333,7 @@ namespace ᐸRuntimeᐳ
                 return XChkInt{XChkInt::BOTTOM_VALUE};
             }
         }
-        friend constexpr XChkInt operator-(XChkInt lhs, XChkInt rhs)
+        friend XChkInt operator-(XChkInt lhs, XChkInt rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
                 return XChkInt{XChkInt::BOTTOM_VALUE};
@@ -325,7 +347,7 @@ namespace ᐸRuntimeᐳ
                 return XChkInt{XChkInt::BOTTOM_VALUE};
             }
         }
-        friend constexpr XChkInt operator/(XChkInt lhs, XChkInt rhs)
+        friend XChkInt operator/(XChkInt lhs, XChkInt rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
                 return XChkInt{XChkInt::BOTTOM_VALUE};
@@ -333,7 +355,7 @@ namespace ᐸRuntimeᐳ
 
             return XChkInt{lhs.value / rhs.value};
         }
-        friend constexpr XChkInt operator*(XChkInt lhs, XChkInt rhs)
+        friend XChkInt operator*(XChkInt lhs, XChkInt rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
                 return XChkInt{XChkInt::BOTTOM_VALUE};
@@ -348,12 +370,12 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        friend constexpr XBool operator==(const XChkInt& lhs, const XChkInt& rhs) { return XBool::from(lhs.value == rhs.value); }
-        friend constexpr XBool operator<(const XChkInt& lhs, const XChkInt& rhs) { return XBool::from(lhs.value < rhs.value); }
-        friend constexpr XBool operator>(const XChkInt& lhs, const XChkInt& rhs) { return XBool::from(rhs.value < lhs.value); }
-        friend constexpr XBool operator!=(const XChkInt& lhs, const XChkInt& rhs) { return XBool::from(!(lhs.value == rhs.value)); }
-        friend constexpr XBool operator<=(const XChkInt& lhs, const XChkInt& rhs) { return XBool::from(!(lhs.value > rhs.value)); }
-        friend constexpr XBool operator>=(const XChkInt& lhs, const XChkInt& rhs) { return XBool::from(!(lhs.value < rhs.value)); }
+        friend XBool operator==(const XChkInt& lhs, const XChkInt& rhs) { return XBool::from(lhs.value == rhs.value); }
+        friend XBool operator<(const XChkInt& lhs, const XChkInt& rhs) { return XBool::from(lhs.value < rhs.value); }
+        friend XBool operator>(const XChkInt& lhs, const XChkInt& rhs) { return XBool::from(rhs.value < lhs.value); }
+        friend XBool operator!=(const XChkInt& lhs, const XChkInt& rhs) { return XBool::from(!(lhs.value == rhs.value)); }
+        friend XBool operator<=(const XChkInt& lhs, const XChkInt& rhs) { return XBool::from(!(lhs.value > rhs.value)); }
+        friend XBool operator>=(const XChkInt& lhs, const XChkInt& rhs) { return XBool::from(!(lhs.value < rhs.value)); }
     };
 
     inline constexpr TypeInfo g_typeinfo_Nat = {

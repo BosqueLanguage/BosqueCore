@@ -4,7 +4,10 @@ namespace Core;
 #else
 #if EXEC_LIBS
 namespace NumericOps {
+    function s_safeConvertFloatInto<T: numeric>(f: Float): T = @float_safe_convert_into;
+
     function s_floatSqrt(v: Float): Float = @float_sqrt;
+    function s_floatPow(x: Float, y: Float): Float = @float_pow;
 }
 #else
 #endif %% EXEC_LIBS

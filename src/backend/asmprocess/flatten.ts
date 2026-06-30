@@ -3671,7 +3671,12 @@ class ASMToIRConverter {
                     this.pushStatement(new IRReturnValueSimpleStatement(frval));
                 }
                 else if(eexp instanceof IRConstructExpression) {
-                    assert(false, "Not implemented -- flattenExpressionBody with construct expression body");
+                    if(body.exp.getType().tkeystr === (this.currentReturnType as TypeSignature).tkeystr) {
+                       this.pushStatement(new IRReturnDirectConstructStatement(eexp));
+                    }
+                    else {
+                        this.pushStatement(new IRReturnDirectConstructWithBoxStatement(eexp, this.processTypeSignature(body.exp.getType()), this.processTypeSignature(this.currentReturnType as TypeSignature)));
+                    }
                 }
                 else {
                     if(eexp instanceof IRInvokeDirectExpression && this.tproc(body.exp.getType()).tkeystr === (this.currentReturnType as TypeSignature).tkeystr) {
@@ -4360,8 +4365,8 @@ class ASMToIRConverter {
         const doc = cdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
         
-        const stmts = this.popStatementBlock();
         const expr = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(irval, this.tproc(cdecl.value.getType())), this.tproc(cdecl.value.getType()), cdecl.declaredType);
+        const stmts = this.popStatementBlock();
 
         const flatconstname = `${ns.emit()}::${cdecl.name}`;
         return new IRConstantDecl(flatconstname, this.processTypeSignature(cdecl.declaredType), stmts, expr, docstring);
@@ -4552,7 +4557,7 @@ class ASMToIRConverter {
         this.currentMonoInvIdMap = asminstantiation.monoinvids;
 
         for(let i = 0; i < decl.consts.length; ++i) {
-            const ntcd = this.assembly.resolveNamespaceConstant(decl.fullnamespace, decl.consts[i].name);
+            const ntcd = this.assembly.tryReduceConstantExpression(decl.consts[i].value, undefined);
             
             if(ntcd === undefined) {
                 irasm.constants.push(this.generateNamespaceConstDecl(decl.fullnamespace, decl.consts[i]));

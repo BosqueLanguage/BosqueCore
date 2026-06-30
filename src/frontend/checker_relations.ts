@@ -424,42 +424,56 @@ class TypeCheckerRelations {
     }
 
     //Take a type and decompose it (using out type system rules) into the constituent types that make it up
-    decomposeType(t: TypeSignature): TypeSignature[] | undefined {
+    decomposeType(t: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature[] | undefined {
         assert((t instanceof TemplateTypeSignature) || (t instanceof NominalTypeSignature));
 
-        if(t instanceof NominalTypeSignature) {
+        let tresolved: TypeSignature;
+        if(!(t instanceof TemplateTypeSignature)) {
+            tresolved = t;
+        }
+        else {
+            const tr = this.resolveTemplateAsNeededForNameLookup(t, tconstrain);
+            if(tr === undefined) {
+                return [t];
+            }
+            
+
+            tresolved = tr;
+        }
+
+        if(tresolved instanceof NominalTypeSignature) {
             const corens = this.assembly.getCoreNamespace();
 
-            if(t.decl instanceof OptionTypeDecl) {
-                const some = new NominalTypeSignature(t.sinfo, undefined, corens.typedecls.find((tdecl) => tdecl.name === "Some") as SomeTypeDecl, t.alltermargs);
+            if(tresolved.decl instanceof OptionTypeDecl) {
+                const some = new NominalTypeSignature(t.sinfo, undefined, corens.typedecls.find((tdecl) => tdecl.name === "Some") as SomeTypeDecl, tresolved.alltermargs);
                 return [this.wellknowntypes.get("None") as TypeSignature, some];
             }
-            else if(t.decl instanceof ResultTypeDecl) {
+            else if(tresolved.decl instanceof ResultTypeDecl) {
                 const tresult = corens.typedecls.find((tdecl) => tdecl.name === "Result") as ResultTypeDecl;
-                const tok = new NominalTypeSignature(t.sinfo, undefined, tresult.getOkType(), t.alltermargs);
-                const terr = new NominalTypeSignature(t.sinfo, undefined, tresult.getFailType(), t.alltermargs);
+                const tok = new NominalTypeSignature(t.sinfo, undefined, tresult.getOkType(), tresolved.alltermargs);
+                const terr = new NominalTypeSignature(t.sinfo, undefined, tresult.getFailType(), tresolved.alltermargs);
 
                 return [tok, terr];
             }
-            else if(t.decl instanceof APIResultTypeDecl) {
+            else if(tresolved.decl instanceof APIResultTypeDecl) {
                 const tresult = corens.typedecls.find((tdecl) => tdecl.name === "APIResult") as APIResultTypeDecl;
-                const terror = new NominalTypeSignature(t.sinfo, undefined, tresult.getAPIErrorType(), t.alltermargs);
-                const trejected = new NominalTypeSignature(t.sinfo, undefined, tresult.getAPIRejectedType(), t.alltermargs);
-                const tdenied = new NominalTypeSignature(t.sinfo, undefined, tresult.getAPIDeniedType(), t.alltermargs);
-                const tflagged = new NominalTypeSignature(t.sinfo, undefined, tresult.getAPIFlaggedType(), t.alltermargs);
-                const tsuccess = new NominalTypeSignature(t.sinfo, undefined, tresult.getAPISuccessType(), t.alltermargs);
+                const terror = new NominalTypeSignature(t.sinfo, undefined, tresult.getAPIErrorType(), tresolved.alltermargs);
+                const trejected = new NominalTypeSignature(t.sinfo, undefined, tresult.getAPIRejectedType(), tresolved.alltermargs);
+                const tdenied = new NominalTypeSignature(t.sinfo, undefined, tresult.getAPIDeniedType(), tresolved.alltermargs);
+                const tflagged = new NominalTypeSignature(t.sinfo, undefined, tresult.getAPIFlaggedType(), tresolved.alltermargs);
+                const tsuccess = new NominalTypeSignature(t.sinfo, undefined, tresult.getAPISuccessType(), tresolved.alltermargs);
 
                 return [terror, trejected, tdenied, tflagged, tsuccess];
             }
-            else if(t.decl instanceof DatatypeTypeDecl) {
-                return t.decl.associatedMemberEntityDecls.map((mem) => new NominalTypeSignature(mem.sinfo, t.altns, mem, t.alltermargs));
+            else if(tresolved.decl instanceof DatatypeTypeDecl) {
+                return tresolved.decl.associatedMemberEntityDecls.map((mem) => new NominalTypeSignature(mem.sinfo, tresolved.altns, mem, tresolved.alltermargs));
             }
             else {
-                return [t];
+                return [tresolved];
             }
         }
         else {
-            return [t];
+            return [tresolved];
         }
     }
 
@@ -538,7 +552,7 @@ class TypeCheckerRelations {
             return { overlap: [], remain: [] };
         }
 
-        const dcr = this.decomposeType(refine);
+        const dcr = this.decomposeType(refine, tconstrain);
         if(dcr === undefined) {
             return undefined;
         }
@@ -550,12 +564,12 @@ class TypeCheckerRelations {
             return { overlap: [], remain: [] };
         }
 
-        const dct = this.decomposeType(src);
+        const dct = this.decomposeType(src, tconstrain);
         if(dct === undefined) {
             return undefined;
         }
 
-        const dcr = this.decomposeType(refine);
+        const dcr = this.decomposeType(refine, tconstrain);
         if(dcr === undefined) {
             return undefined;
         }
@@ -591,7 +605,7 @@ class TypeCheckerRelations {
             return { hasnone: false, remainSomeT: undefined };
         }
 
-        const dct = this.decomposeType(src);
+        const dct = this.decomposeType(src, tconstrain);
         if(dct === undefined) {
             return undefined;
         }
@@ -627,7 +641,7 @@ class TypeCheckerRelations {
             return { overlapSomeT: undefined, hasnone: false };
         }
 
-        const dct = this.decomposeType(src);
+        const dct = this.decomposeType(src, tconstrain);
         if(dct === undefined) {
             return undefined;
         }
@@ -678,7 +692,7 @@ class TypeCheckerRelations {
             return { overlapOkT: undefined, remainErrE: undefined };
         }
 
-        const dct = this.decomposeType(src);
+        const dct = this.decomposeType(src, tconstrain);
         if(dct === undefined) {
             return undefined;
         }
@@ -729,7 +743,7 @@ class TypeCheckerRelations {
             return { overlapErrE: undefined, remainOkT: undefined };
         }
 
-        const dct = this.decomposeType(src);
+        const dct = this.decomposeType(src, tconstrain);
         if(dct === undefined) {
             return undefined;
         }

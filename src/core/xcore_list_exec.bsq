@@ -4,6 +4,11 @@ namespace Core;
 #else
 #if EXEC_LIBS
 namespace ListOps {
+    function s_list_range_nat(start: Nat, end: Nat): List<Nat> = @list_range_nat;
+    function s_list_range_int(start: Int, end: Int): List<Int> = @list_range_int;
+
+    function s_list_zip<T, U, J>(l1: List<T>, l2: List<U>, ssize: Nat): List<(|T, U|)> = @list_zip;
+
     function s_list_empty<T>(l: List<T>): Bool = @list_empty;
     function s_list_size<T>(l: List<T>): Nat = @list_size;
 
@@ -23,7 +28,15 @@ namespace ListOps {
     recursive? function s_list_map<T, U>(l: List<T>, f: recursive? fn(T) -> U): List<U> = @list_map;
     recursive? function s_list_mapidx<T, U>(l: List<T>, f: recursive? fn(T, Nat) -> U): List<U> = @list_mapidx;
 
+    recursive? function s_list_filter<T>(l: List<T>, p: recursive? pred(T) -> Bool): List<T> = @list_filter;
+
+    recursive? function s_list_filtermap<T, U>(l: List<T>, p: recursive? pred(T) -> Bool, f: recursive? fn(T) -> U): List<U> = @list_filtermap;
+
+    recursive? function s_list_min<T: keytype>(l: List<T>): T = @list_min;
+    recursive? function s_list_minfun<T>(l: List<T>, cmp: recursive? pred(T, T) -> Bool): T = @list_minfun;
+
     function s_list_sum<T: numeric>(l: List<T>, zero: T): T = @list_sum;
+    function s_list_sumfun<T>(l: List<T>, init: T, op: recursive? fn(T, T) -> T): T = @list_sumfun;
 }
 #else
 #endif %% EXEC_LIBS

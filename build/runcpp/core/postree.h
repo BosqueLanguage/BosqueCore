@@ -17,7 +17,7 @@
 namespace ᐸRuntimeᐳ
 {
     template <int64_t K>
-    constexpr std::array<XNat, K> create_idx_range() {
+    consteval std::array<XNat, K> create_idx_range() {
         std::array<XNat, K> arr;
         for(int64_t i = 0; i < K; ++i) {
             arr[i] = XNat{i};
@@ -52,14 +52,14 @@ namespace ᐸRuntimeᐳ
         int32_t dcount; //note that when the color follows immediately in enclosing classes the alignment works
         std::array<T, K> data;
 
-        constexpr PosRBData(): color{}, bheight{}, dcount{}, data{} { ; }
-        constexpr PosRBData(RColor color, uint16_t bheight, const PosRBData<T, K>& data) : color{color}, bheight{bheight}, dcount{data.dcount}, data{data.data} { ; }
-        constexpr PosRBData(const PosRBData& other) = default;
+        PosRBData(): color{}, bheight{}, dcount{}, data{} { ; }
+        PosRBData(RColor color, uint16_t bheight, const PosRBData<T, K>& data) : color{color}, bheight{bheight}, dcount{data.dcount}, data{data.data} { ; }
+        PosRBData(const PosRBData& other) = default;
 
-        constexpr PosRBData(RColor color, uint16_t bheight, const T& value) : color{color}, bheight{bheight}, dcount{1}, data{value} { ; }
-        constexpr PosRBData(RColor color, uint16_t bheight, int32_t dcount, const std::array<T, K>& data) : color{color}, bheight{bheight}, dcount{dcount}, data{data} { ; }
+        PosRBData(RColor color, uint16_t bheight, const T& value) : color{color}, bheight{bheight}, dcount{1}, data{value} { ; }
+        PosRBData(RColor color, uint16_t bheight, int32_t dcount, const std::array<T, K>& data) : color{color}, bheight{bheight}, dcount{dcount}, data{data} { ; }
 
-        constexpr static void zerofill(std::array<T, K>& data, size_t ecount)
+        static void zerofill(std::array<T, K>& data, size_t ecount)
         {
             std::fill(data.begin() + ecount, data.end(), T{});
         }
@@ -175,7 +175,7 @@ namespace ᐸRuntimeᐳ
 
         PosRBData insertSpillLeft(int64_t index, const T& value, T& spill) const
         {
-            assert((0 <= index) & (index < (int64_t)K));
+            assert((0 <= index) & (index <= (int64_t)K));
             assert((size_t)this->dcount == K);
           
             if(index == 0) {
@@ -190,7 +190,7 @@ namespace ᐸRuntimeᐳ
 
         PosRBData insertSpillRight(int64_t index, const T& value, T& spill) const
         {
-            assert((0 < index) & (index <= (int64_t)K));
+            assert((0 <= index) & (index <= (int64_t)K));
             assert((size_t)this->dcount == K);
           
             if(index == K) {
@@ -251,7 +251,7 @@ namespace ᐸRuntimeᐳ
         template<bool SafeSimplePred, typename Pred>
         bool allOf(Pred p) const
         {
-            if constexpr (SafeSimplePred) {
+            if(SafeSimplePred) {
                 return std::all_of(std::execution::unseq, this->data.begin(), this->data.begin() + this->dcount, p);
             }
             else {
@@ -263,7 +263,7 @@ namespace ᐸRuntimeᐳ
         template<bool SafeSimplePred, typename Pred>
         bool someOf(Pred p) const
         {
-            if constexpr (SafeSimplePred) {
+            if(SafeSimplePred) {
                 return std::any_of(std::execution::unseq, this->data.begin(), this->data.begin() + this->dcount, p);
             }
             else {
@@ -275,7 +275,7 @@ namespace ᐸRuntimeᐳ
         template<bool SafeSimplePred, typename Pred>
         bool noneOf(Pred p) const
         {
-            if constexpr (SafeSimplePred) {
+            if(SafeSimplePred) {
                 return std::none_of(std::execution::unseq, this->data.begin(), this->data.begin() + this->dcount, p);
             }
             else {
@@ -304,12 +304,63 @@ namespace ᐸRuntimeᐳ
             return PosRBData<U, K>(this->color, this->bheight, this->dcount, result);
         }
 
+        template<bool SafeSimpleFn, typename Pred>
+        PosRBData<T, K> filter(Pred p) const
+        {
+            std::array<T, K> result{};
+            auto eiter = std::copy_if(this->data.begin(), this->data.begin() + this->dcount, result.begin(), p);
+            
+            return PosRBData<T, K>(this->color, this->bheight, std::distance(result.begin(), eiter), result);
+        }
+
+        template<bool BothSafeSimpleFn, typename U, typename Pred, typename Fn>
+        PosRBData<U, K> filtermap(Pred p, Fn f) const
+        {
+            std::array<T, K> fresult{};
+            auto feiter = std::copy_if(this->data.begin(), this->data.begin() + this->dcount, fresult.begin(), p);
+
+            std::array<U, K> mresult{};
+            auto meiter = std::transform(fresult.begin(), feiter, mresult.begin(), f);
+            
+            return PosRBData<U, K>(this->color, this->bheight, std::distance(mresult.begin(), meiter), mresult);
+        }
+
+        template<bool SafeSimpleFn, typename Pred>
+        T minfun(Pred p) const
+        {
+            if(SafeSimpleFn) {
+                return *std::min_element(std::execution::unseq, this->data.begin(), this->data.begin() + this->dcount, p);
+            }
+            else {
+                return *std::min_element(std::execution::seq, this->data.begin(), this->data.begin() + this->dcount, p);
+            }
+        }
+
         T sum(T init) const
         {
             return std::accumulate(this->data.begin(), this->data.begin() + this->dcount, init, [](T a, T b) {
                 T::checkOverflowAddition(a, b, "List Sum", 0);
                 return a + b;
             });
+        }
+
+        template<bool SafeSimpleFn, typename Fn>
+        T sumfun(const T& init, Fn op) const
+        {
+            return std::accumulate(this->data.begin(), this->data.begin() + this->dcount, init, [&op](const T& a, const T& b) {
+                return op(a, b);
+            });
+        }
+
+        template<typename Fn>
+        void diagnosticEmit(std::ostream& out, Fn diagnosticEmitFn, bool waddr) const
+        {
+            for(size_t i = 0; i < (size_t)this->dcount; i++) {
+                diagnosticEmitFn(out, this->data[i], waddr);
+                if(i != (size_t)(this->dcount - 1)) {
+                    out << ", ";
+                }
+            }
         }
     };
 
@@ -322,22 +373,22 @@ namespace ᐸRuntimeᐳ
     public:
         const PosRBData<T, K> data;
 
-        constexpr PosRBNode() : data{} { ; }
-        constexpr PosRBNode(const PosRBNode<T, K>& other) = default;
+        PosRBNode() : data{} { ; }
+        PosRBNode(const PosRBNode<T, K>& other) = default;
 
-        constexpr PosRBNode(const PosRBData<T, K>& data) : data{data} { ; }
-        constexpr PosRBNode(RColor color, uint16_t bheight, const PosRBData<T, K>& data) : data{color, bheight, data} { ; }
+        PosRBNode(const PosRBData<T, K>& data) : data{data} { ; }
+        PosRBNode(RColor color, uint16_t bheight, const PosRBData<T, K>& data) : data{color, bheight, data} { ; }
     };
 
     template<typename T, size_t K>
     class PosRBTreeLeaf : public PosRBNode<T, K>
     {
     public:
-        constexpr PosRBTreeLeaf() : PosRBNode<T, K>{} { ; }
-        constexpr PosRBTreeLeaf(const PosRBTreeLeaf& other) = default;
+        PosRBTreeLeaf() : PosRBNode<T, K>{} { ; }
+        PosRBTreeLeaf(const PosRBTreeLeaf& other) = default;
 
-        constexpr PosRBTreeLeaf(const PosRBData<T, K>& data) : PosRBNode<T, K>{data} { ; }
-        constexpr PosRBTreeLeaf(RColor color, uint16_t bheight, const PosRBData<T, K>& data) : PosRBNode<T, K>{color, bheight, data} { ; }
+        PosRBTreeLeaf(const PosRBData<T, K>& data) : PosRBNode<T, K>{data} { ; }
+        PosRBTreeLeaf(RColor color, uint16_t bheight, const PosRBData<T, K>& data) : PosRBNode<T, K>{color, bheight, data} { ; }
     };
     
     template<typename T, int64_t K>
@@ -368,10 +419,10 @@ namespace ᐸRuntimeᐳ
         const PosRBNode<T, K>* right;
         int64_t tcount; //total number of elements in the subtree rooted at this node
 
-        constexpr PosRBTreeNode() : PosRBNode<T, K>{}, left{}, right{}, tcount{} { ; }
-        constexpr PosRBTreeNode(const PosRBTreeNode& other) = default;
+        PosRBTreeNode() : PosRBNode<T, K>{}, left{}, right{}, tcount{} { ; }
+        PosRBTreeNode(const PosRBTreeNode& other) = default;
 
-        constexpr PosRBTreeNode(RColor color, uint16_t bheight, int64_t tcount, const PosRBNode<T, K>* left, const PosRBNode<T, K>* right, const PosRBData<T, K>& data) : PosRBNode<T, K>{color, bheight, data}, left{left}, right{right}, tcount{tcount} { ; }
+        PosRBTreeNode(RColor color, uint16_t bheight, int64_t tcount, const PosRBNode<T, K>* left, const PosRBNode<T, K>* right, const PosRBData<T, K>& data) : PosRBNode<T, K>{color, bheight, data}, left{left}, right{right}, tcount{tcount} { ; }
     };
 
     template<typename T, size_t K> 
@@ -406,9 +457,9 @@ namespace ᐸRuntimeᐳ
         static const TypeInfo* s_nodetypeinfo;
         thread_local static GCAllocator<PosRBTreeNode<T, K>>* s_nodeallocator;
 
-        constexpr PosRBTree() : root{} { ; }
-        constexpr PosRBTree(PosRBNode<T, K>* node) : root{node} { ; }
-        constexpr PosRBTree(const PosRBTree& other) = default;
+        PosRBTree() : root{} { ; }
+        PosRBTree(PosRBNode<T, K>* node) : root{node} { ; }
+        PosRBTree(const PosRBTree& other) = default;
 
         static bool isLeafType(const PosRBNode<T, K>* node) { return (node != nullptr) && (gcGetTypeInfo(const_cast<PosRBNode<T, K>*>(node)) == s_leaftypeinfo); }
         static bool isNodeType(const PosRBNode<T, K>* node) { return (node != nullptr) && (gcGetTypeInfo(const_cast<PosRBNode<T, K>*>(node)) == s_nodetypeinfo); }
@@ -479,6 +530,33 @@ namespace ᐸRuntimeᐳ
             }
         }
 
+        template <typename Iter>
+        static PosRBNode<T, K>* mklargerec(Iter start, Iter end, size_t size)
+        {
+            if(size <= K) {
+                return s_leafallocator->construct(PosRBData<T, K>(RColor::Red, 1, start, end));
+            }
+            else {
+                size_t dsize = (size_t)std::max((uint64_t)1, ((uint64_t)K) - 2);
+
+                size_t remain = size - dsize;
+                size_t lsize = remain / 2;
+                size_t rsize = remain - lsize;
+
+                Iter mid1 = start;
+                std::advance(mid1, lsize);
+
+                Iter mid2 = mid1;
+                std::advance(mid2, dsize);
+
+                const PosRBNode<T, K>* left = mklargerec(start, mid1, lsize);
+                const PosRBNode<T, K>* right = mklargerec(mid2, end, rsize);
+
+                PosRBData<T, K> ndata(RColor::Black, 1, mid1, mid2);
+                return s_nodeallocator->construct(RColor::Black, computeNewBHeight_ForTreeNode(RColor::Black, left, right), computeNewCount_ForTreeNode(left, right, ndata), left, right, ndata);
+            }
+        }
+
         static PosRBNode<T, K>* copyNodeReplaceData(const PosRBNode<T, K>* node, const PosRBData<T, K>& ndata)
         {
             if(isLeafType(node)) {
@@ -531,6 +609,25 @@ namespace ᐸRuntimeᐳ
                 }
                 else {
                     return curr; //index is within the current node
+                }
+            }
+        }
+
+        static T reprGetIndexValue(int64_t index, const PosRBNode<T, K>* curr)
+        {
+            while(true) {
+                const PosRBNode<T, K>* l = reprGetLeft(curr);
+                int64_t lcount = reprGetCount(l);
+
+                if(index < lcount) {
+                    curr = l;
+                }
+                else if(index >= lcount + curr->data.dcount) {
+                    index -= (lcount + curr->data.dcount);
+                    curr = reprGetRight(curr);
+                }
+                else {
+                    return curr->data.data[index - lcount]; //index is within the current node
                 }
             }
         }
@@ -1229,6 +1326,25 @@ private:
             }
         }
 
+        template <bool SafeSimpleFn, typename Pred>
+        static T recminfun(const PosRBNode<T, K>* curr, const T& cmin, Pred p)
+        {
+            if(curr == nullptr) {
+                return cmin;
+            }
+
+            if(isLeafType(curr)) {
+                return curr->data.template minfun<SafeSimpleFn>(p);
+            }
+            else {
+                T leftMin = recminfun<SafeSimpleFn>(reprGetLeft(curr), cmin, p);
+                T midMin = curr->data.template minfun<SafeSimpleFn>(p);
+                T rightMin = recminfun<SafeSimpleFn>(reprGetRight(curr), cmin, p);
+
+                return std::min({leftMin, midMin, rightMin}, p);
+            }
+        }
+
         static T recsum(const PosRBNode<T, K>* curr, T init)
         {
             if(curr == nullptr) {
@@ -1245,6 +1361,122 @@ private:
 
                 return rightSum;
             }
+        }
+
+        template <bool SafeSimpleFn, typename Fn>
+        static T recsumfun(const PosRBNode<T, K>* curr, const T& init, Fn op)
+        {
+            if(curr == nullptr) {
+                return init;
+            }
+
+            if(isLeafType(curr)) {
+                return curr->data.template sumfun<SafeSimpleFn>(init, op);
+            }
+            else {
+                T leftSum = recsumfun<SafeSimpleFn>(reprGetLeft(curr), init, op);
+                T midSum = curr->data.template sumfun<SafeSimpleFn>(leftSum, op);
+                T rightSum = recsumfun<SafeSimpleFn>(reprGetRight(curr), midSum, op);
+
+                return rightSum;
+            }
+        }
+
+        //Only works when T is Nat/Int
+        static PosRBNode<T, K>* recmkrange(int64_t start, int64_t end)
+        {
+            int64_t size = (size_t)(end - start);
+            if((size_t)size <= K) {
+                std::array<T, K> arr{};
+                std::iota(arr.begin(), arr.begin() + size, T{start});
+
+                return s_leafallocator->construct(PosRBData<T, K>(RColor::Red, 1, size, arr));
+            }
+            else {
+                size_t dsize = (size_t)std::max((uint64_t)1, ((uint64_t)K) - 2);
+
+                size_t remain = size - dsize;
+                size_t lsize = remain / 2;
+                size_t rsize = remain - lsize;
+
+                int64_t mid1 = start + lsize;
+                int64_t mid2 = mid1 + dsize;
+
+                const PosRBNode<T, K>* left = recmkrange(start, mid1);
+                const PosRBNode<T, K>* right = recmkrange(mid2, end);
+
+                std::array<T, K> arr{};
+                std::iota(arr.begin(), arr.begin() + dsize, T{mid1});
+                PosRBData<T, K> ndata(RColor::Black, 1, dsize, arr);
+                return s_nodeallocator->construct(RColor::Black, computeNewBHeight_ForTreeNode(RColor::Black, left, right), computeNewCount_ForTreeNode(left, right, ndata), left, right, ndata);
+            }
+        }
+
+        //Only works when T is (|X, Y|)
+        template <typename IterX, typename IterY>
+        static PosRBNode<T, K>* recmkzip(const IterX& l1, const IterY& l2, int64_t count)
+        {
+            if((size_t)count <= K) {
+                IterX end1 = l1;
+                std::advance(end1, count);
+
+                std::array<T, K> arr{};
+                std::transform(l1, end1, l2, arr.begin(), [](const auto& x, const auto& y) { return T{x, y}; });
+
+                return s_leafallocator->construct(PosRBData<T, K>(RColor::Red, 1, count, arr));
+            }
+            else {
+                size_t dsize = (size_t)std::max((uint64_t)1, ((uint64_t)K) - 2);
+
+                size_t remain = (size_t)count - dsize;
+                size_t lsize = remain / 2;
+                size_t rsize = remain - lsize;
+
+                IterX mid1x = l1;
+                std::advance(mid1x, lsize);
+
+                IterY mid1y = l2;
+                std::advance(mid1y, lsize);
+
+                IterX mid2x = mid1x;
+                std::advance(mid2x, dsize);
+
+                IterY mid2y = mid1y;
+                std::advance(mid2y, dsize);
+
+                const PosRBNode<T, K>* left = recmkzip(l1, l2, lsize);
+                const PosRBNode<T, K>* right = recmkzip(mid2x, mid2y, rsize);
+
+                std::array<T, K> arr{};
+                std::transform(mid1x, mid2x, mid1y, arr.begin(), [](const auto& x, const auto& y) { return T{x, y}; });
+                PosRBData<T, K> ndata(RColor::Black, 1, dsize, arr);
+                return s_nodeallocator->construct(RColor::Black, computeNewBHeight_ForTreeNode(RColor::Black, left, right), computeNewCount_ForTreeNode(left, right, ndata), left, right, ndata);
+            }
+        }
+
+        template <typename Fn>
+        static void recdiagnosticEmit(const PosRBNode<T, K>* curr, std::ostream& out, Fn diagnosticEmitFn, bool waddr)
+        {
+            if(curr == nullptr) {
+                out << "()";
+                return;
+            }
+
+            if(waddr) {
+                out << "@" << curr;
+            }
+            out << "(";
+
+            if(isLeafType(curr)) {
+                curr->data.diagnosticEmit(out, diagnosticEmitFn, waddr);
+            }
+            else {
+                recdiagnosticEmit(reprGetLeft(curr), out, diagnosticEmitFn, waddr);
+                curr->data.diagnosticEmit(out, diagnosticEmitFn, waddr);
+                recdiagnosticEmit(reprGetRight(curr), out, diagnosticEmitFn, waddr);
+            }
+                
+            out << ")";
         }
 
     public:
@@ -1267,8 +1499,7 @@ private:
 
         T get(int64_t index) const
         {
-            const PosRBNode<T, K>* indexNode = reprGetIndexNode(index, this->root);
-            return indexNode->data.data[index - reprGetCount(reprGetLeft(indexNode))];
+            return reprGetIndexValue(index, this->root);
         }
 
         PosRBTree<T, K, TreeID> pushFront(const T& value) const
@@ -1333,9 +1564,69 @@ private:
             return PosRBTree<U, K, UTreeID>{recmapIdx<SafeSimpleFn, U, UTreeID, Fn>(this->root, 0, f)};
         }
 
+        template<bool SafeSimpleFn, typename Pred>
+        PosRBNode<T, K>* filter(PosRBData<T, K>& dres, Pred p) const
+        {
+            if(isLeafType(this->root)) {
+                dres = this->root->data.template filter<SafeSimpleFn, Pred>(p);
+                return nullptr;
+            }
+            else {
+                //TODO: iterate over values, batch into full data node and then append atomically onto the tree
+                assert(false);
+            }
+        }
+
+        template<bool BothSafeSimpleFn, typename U, uint32_t UTreeID, typename Pred, typename Fn>
+        PosRBNode<U, K>* filtermap(PosRBData<U, K>& dres, Pred p, Fn f) const
+        {
+            if(isLeafType(this->root)) {
+                dres = this->root->data.template filtermap<BothSafeSimpleFn, U, Pred, Fn>(p, f);
+                return nullptr;
+            }
+            else {
+                //TODO: iterate over values, batch into full data node and then append atomically onto the tree
+                assert(false);
+            }
+        }
+
+        template <bool SafeSimplePred, typename Pred>
+        T minfun(Pred p) const
+        {
+            T cmin = this->getFront();
+            return recminfun<SafeSimplePred, Pred>(this->root, cmin, p);
+        }
+
         T sum(T zero) const
         {
             return recsum(this->root, zero);
+        }
+
+        template <bool SafeSimpleFn, typename Op>
+        T sumfun(T zero, Op op) const
+        {
+            return recsumfun<SafeSimpleFn, Op>(this->root, zero, op);
+        }
+
+        //Only works when T is Nat/Int
+        static PosRBTree<T, K, TreeID> mkrange(int64_t start, int64_t end)
+        {
+            return PosRBTree<T, K, TreeID>{recmkrange(start, end)};
+        }
+
+        //Only works when T is (|X, Y|)
+        template <typename IterX, typename IterY>
+        static PosRBTree<T, K, TreeID> mkzip(const IterX& l1, const IterY& l2, int64_t count)
+        {
+            return PosRBTree<T, K, TreeID>{recmkzip(l1, l2, count)};
+        }
+
+        template <typename Fn>
+        void diagnosticEmit(std::ostream& out, const TypeInfo* ltype, Fn diagnosticEmitFn, bool waddr) const
+        {
+            out << ltype->typekey << "{";
+            recdiagnosticEmit(this->root, out, diagnosticEmitFn, waddr);
+            out << "}";
         }
     };
 

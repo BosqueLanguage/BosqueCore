@@ -20,6 +20,6 @@ describe ("CPPEmit -- elist decl and access", () => {
 
     it("should emit nesting", function () {
         checkTestEmitMainFunction('public function main(): (|Int, (|Bool, Bool|)|) { return (|2i, (|true, false|)|); }', 'ᐸRuntimeᐳ::EList2<Int, ᐸRuntimeᐳ::EList2<Bool, Bool>> Mainᕒmain() { return ᐸRuntimeᐳ::EList2<Int, ᐸRuntimeᐳ::EList2<Bool, Bool>>{2_i, ᐸRuntimeᐳ::EList2<Bool, Bool>{TRUE, FALSE}}; }'); 
-        checkTestEmitMainFunction('entity Foo { field pp: (|Int, Bool|); } public function main(): Foo { return Foo{(|2i, false|)}; }', 'MainᕒFoo Mainᕒmain() { return MainᕒFoo{ᐸRuntimeᐳ::EList2<Int, Bool>{2_i, FALSE}}; }'); 
+        checkTestEmitMainFunction('entity Foo { field pp: (|Int, Bool|); } public function main(): Foo { return Foo{(|2i, false|)}; }', 'MainᕒFoo* Mainᕒmain() { return ᐸRuntimeᐳ::MainᕒFoo_allocator.allocate(ᐸRuntimeᐳ::EList2<Int, Bool>{2_i, FALSE}); }'); 
     });
 });

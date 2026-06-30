@@ -7,13 +7,13 @@
 
 namespace ᐸRuntimeᐳ
 {
-    constexpr XBool isSubtypeOf(const TypeInfo* etype, const TypeInfo* oftype)
+    inline XBool isSubtypeOf(const TypeInfo* etype, const TypeInfo* oftype)
     {
         auto ii = std::find(etype->supertypes, etype->supertypes + etype->supertypescount, oftype->bsqtypeid);
         return XBool::from(ii != (etype->supertypes + etype->supertypescount));
     }
 
-    constexpr XBool isNotSubtypeOf(const TypeInfo* etype, const TypeInfo* oftype)
+    inline XBool isNotSubtypeOf(const TypeInfo* etype, const TypeInfo* oftype)
     {
         auto ii = std::find(etype->supertypes, etype->supertypes + etype->supertypescount, oftype->bsqtypeid);
         return XBool::from(ii == (etype->supertypes + etype->supertypescount));
@@ -28,10 +28,10 @@ namespace ᐸRuntimeᐳ
     public:
         T value;
         
-        friend constexpr XBool operator==(const XSome<T>& lhs, const T& rhs) { return lhs.value == rhs; }
-        friend constexpr XBool operator==(const T& lhs, const XSome<T>& rhs) { return lhs == rhs.value; }
-        friend constexpr XBool operator!=(const XSome<T>& lhs, const T& rhs) { return lhs.value != rhs; }
-        friend constexpr XBool operator!=(const T& lhs, const XSome<T>& rhs) { return lhs != rhs.value; }
+        friend XBool operator==(const XSome<T>& lhs, const T& rhs) { return lhs.value == rhs; }
+        friend XBool operator==(const T& lhs, const XSome<T>& rhs) { return lhs == rhs.value; }
+        friend XBool operator!=(const XSome<T>& lhs, const T& rhs) { return lhs.value != rhs; }
+        friend XBool operator!=(const T& lhs, const XSome<T>& rhs) { return lhs != rhs.value; }
     };
 
     template <typename T>
@@ -44,36 +44,36 @@ namespace ᐸRuntimeᐳ
         static const TypeInfo* s_someTypeInfo;
 
     private:
-        constexpr XOption(const TypeInfo* ti) : typeinfo{ti}, data{} { ; }
-        constexpr XOption(const TypeInfo* ti, const T& d) : typeinfo{ti}, data{d} { ; }
+        XOption(const TypeInfo* ti) : typeinfo{ti}, data{} { ; }
+        XOption(const TypeInfo* ti, const T& d) : typeinfo{ti}, data{d} { ; }
 
     public:
-        constexpr XOption() : typeinfo{}, data{} { ; };
-        constexpr XOption(const XOption& other) = default;
+        XOption() : typeinfo{}, data{} { ; };
+        XOption(const XOption& other) = default;
 
-        static constexpr XOption<T> none = XOption{&g_typeinfo_None};
+        inline static XOption<T> none = XOption{&g_typeinfo_None};
         XOption(const XSome<T>& d) : typeinfo{s_someTypeInfo}, data{d.value} { ; }
         
-        constexpr XBool isNone() const { return XBool::from(this->typeinfo == &g_typeinfo_None); }
-        constexpr XBool isSome() const { return XBool::from(this->typeinfo != &g_typeinfo_None); }
+        XBool isNone() const { return XBool::from(this->typeinfo == &g_typeinfo_None); }
+        XBool isSome() const { return XBool::from(this->typeinfo != &g_typeinfo_None); }
 
-        constexpr XNone asNone() const { return xnone; }
-        constexpr XSome<T> asSome() const { return XSome<T>{this->data}; }
-        constexpr T unwrap() const { return this->data; }
+        XNone asNone() const { return xnone; }
+        XSome<T> asSome() const { return XSome<T>{this->data}; }
+        T unwrap() const { return this->data; }
 
         XNone asNone() { return xnone; }
         XSome<T> asSome() { return XSome<T>{this->data}; }
         T unwrap() { return this->data; }
 
-        friend constexpr XBool operator==(const XOption<T>& lhs, const XNone& rhs) { return lhs.isNone(); }
-        friend constexpr XBool operator==(const XNone& lhs, const XOption<T>& rhs) { return rhs.isNone(); }
-        friend constexpr XBool operator!=(const XOption<T>& lhs, const XNone& rhs) { return lhs.isSome(); }
-        friend constexpr XBool operator!=(const XNone& lhs, const XOption<T>& rhs) { return rhs.isSome(); }
+        friend XBool operator==(const XOption<T>& lhs, const XNone& rhs) { return lhs.isNone(); }
+        friend XBool operator==(const XNone& lhs, const XOption<T>& rhs) { return rhs.isNone(); }
+        friend XBool operator!=(const XOption<T>& lhs, const XNone& rhs) { return lhs.isSome(); }
+        friend XBool operator!=(const XNone& lhs, const XOption<T>& rhs) { return rhs.isSome(); }
         
-        friend constexpr XBool operator==(const XOption<T>& lhs, const T& rhs) { return lhs.isSome() & (lhs.data == rhs); }
-        friend constexpr XBool operator==(const T& lhs, const XOption<T>& rhs) { return rhs.isSome() & (lhs == rhs.data); }
-        friend constexpr XBool operator!=(const XOption<T>& lhs, const T& rhs) { return lhs.isNone() | (lhs.data != rhs); }
-        friend constexpr XBool operator!=(const T& lhs, const XOption<T>& rhs) { return rhs.isNone() | (lhs != rhs.data); }
+        friend XBool operator==(const XOption<T>& lhs, const T& rhs) { return lhs.isSome() & (lhs.data == rhs); }
+        friend XBool operator==(const T& lhs, const XOption<T>& rhs) { return rhs.isSome() & (lhs == rhs.data); }
+        friend XBool operator!=(const XOption<T>& lhs, const T& rhs) { return lhs.isNone() | (lhs.data != rhs); }
+        friend XBool operator!=(const T& lhs, const XOption<T>& rhs) { return rhs.isNone() | (lhs != rhs.data); }
     };
 
     //
@@ -91,25 +91,25 @@ namespace ᐸRuntimeᐳ
         U data;
 
     public:
-        constexpr BoxedUnion() : typeinfo{}, data{} { ; }
-        constexpr BoxedUnion(const TypeInfo* ti, const U& d) : typeinfo{ti}, data{d} { ; }
-        constexpr BoxedUnion(const BoxedUnion& other) = default;
+        BoxedUnion() : typeinfo{}, data{} { ; }
+        BoxedUnion(const TypeInfo* ti, const U& d) : typeinfo{ti}, data{d} { ; }
+        BoxedUnion(const BoxedUnion& other) = default;
 
-        constexpr BoxedUnion(const TypeInfo* ti, const uint8_t* dbegin, const uint8_t* dend) : typeinfo{ti} 
+        BoxedUnion(const TypeInfo* ti, const uint8_t* dbegin, const uint8_t* dend) : typeinfo{ti} 
         { 
             std::copy(dbegin, dend, this->data.getUP());
         }
 
         // Note -- inject and extract are generated for each use based on the generation union type (see strings for example)
 
-        constexpr XBool isTypeOf(const TypeInfo* ti) const { return XBool::from(this->typeinfo == ti); }
-        constexpr XBool isNotTypeOf(const TypeInfo* ti) const { return XBool::from(this->typeinfo != ti); }
+        XBool isTypeOf(const TypeInfo* ti) const { return XBool::from(this->typeinfo == ti); }
+        XBool isNotTypeOf(const TypeInfo* ti) const { return XBool::from(this->typeinfo != ti); }
 
-        constexpr XBool isSubtypeOf(const TypeInfo* ti) const { return ᐸRuntimeᐳ::isSubtypeOf(this->typeinfo, ti); }
-        constexpr XBool isNotSubtypeOf(const TypeInfo* ti) const { return ᐸRuntimeᐳ::isNotSubtypeOf(this->typeinfo, ti); }
+        XBool isSubtypeOf(const TypeInfo* ti) const { return ᐸRuntimeᐳ::isSubtypeOf(this->typeinfo, ti); }
+        XBool isNotSubtypeOf(const TypeInfo* ti) const { return ᐸRuntimeᐳ::isNotSubtypeOf(this->typeinfo, ti); }
 
         template<typename V>
-        constexpr BoxedUnion<V> convert() const 
+        BoxedUnion<V> convert() const 
         {
             static_assert(std::is_union_v<V>, "BoxedUnion convert requires a union type V");
             constexpr size_t copysize = std::min(sizeof(U), sizeof(V));
@@ -128,7 +128,8 @@ namespace ᐸRuntimeᐳ
                 assert(this->typeinfo->tag == LayoutTag::Ref);
 
                 //dereference pointer in the union and then get the slot at index
-                return *(reinterpret_cast<const T*>(reinterpret_cast<uint64_t*>(const_cast<U*>(&this->data)) + idx));
+                const uint64_t* ptrslots = *reinterpret_cast<const uint64_t**>(const_cast<U*>(&this->data));
+                return *(reinterpret_cast<const T*>(ptrslots + idx));
             }
         }
 
@@ -143,7 +144,8 @@ namespace ᐸRuntimeᐳ
                 assert(this->typeinfo->tag == LayoutTag::Ref);
                 
                 //dereference pointer in the union and then get the slot at index
-                return *(reinterpret_cast<const T*>(reinterpret_cast<uint64_t*>(const_cast<U*>(&this->data)) + idx));
+                const uint64_t* ptrslots = *reinterpret_cast<const uint64_t**>(const_cast<U*>(&this->data));
+                return *(reinterpret_cast<const T*>(ptrslots + idx));
             }
         }
     };
