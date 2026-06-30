@@ -2737,7 +2737,7 @@ class CPPEmitter {
                 const vname = TransformCPPNameManager.convertIdentifier(p.name);
                 const parsekey = TransformCPPNameManager.convertTypeKey(p.type.tkeystr);
 
-                return `    auto ${vname} = BSQ_parse${parsekey}(); if(!${vname}.has_value()) { printf("Error parsing input\\n"); exit(1); }\n`;
+                return `    auto _${vname} = BSQ_parse${parsekey}(); if(!_${vname}.has_value()) { printf("Error parsing input\\n"); exit(1); }\n`;
             }).join("\n") + "\n";
 
             const finalizeparse = 
@@ -2751,7 +2751,7 @@ class CPPEmitter {
     private emitMMain(idecl: IRInvokeDecl): string {
         const parse = this.emitParseArgsMain(idecl);
 
-        const invokeargs = idecl.params.map((p) => TransformCPPNameManager.convertIdentifier(p.name) + ".value()").join(", ");
+        const invokeargs = idecl.params.map((p) => "_" + TransformCPPNameManager.convertIdentifier(p.name) + ".value()").join(", ");
         const invoke = '    if (setjmp(ᐸRuntimeᐳ::tl_bosque_info.current_task->error_handler) > 0) {\n' +
             '        auto perr = ᐸRuntimeᐳ::tl_bosque_info.current_task->pending_error.value();\n' +
             '        auto pfile = std::string(perr.file);\n' +
