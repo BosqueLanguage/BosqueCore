@@ -74,7 +74,7 @@ function emitCommandLineMakefile(optlevel: "testing" | "release"): string {
         'CPP_STDFLAGS=-Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable -Wuninitialized -Werror -std=gnu++20 -fno-omit-frame-pointer -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-stack-protector\n' + 
         'CPPFLAGS_OPT.testing=-O0 -g -ggdb -fsanitize=address --param asan-stack=0\n' +
         'CPPFLAGS_OPT.testingopt=-O1 -g -ggdb -fsanitize=address --param asan-stack=0\n' +
-        'CPPFLAGS_OPT.release=-O2 -g -ggdb -flto -ftree-vectorize -march=native -Wno-array-bounds -Wno-stringop-overflow\n' +
+        'CPPFLAGS_OPT.release=-O2 -g -ggdb -flto=auto -ftree-vectorize -march=native -Wno-array-bounds -Wno-stringop-overflow\n' +
         'CPPFLAGS=${CPPFLAGS_OPT.${BUILD}} ${CPP_STDFLAGS}\n\n' +
         'HEADERS=$(wildcard $(SRC_DIR)*.h) $(wildcard $(CORE_SRC_DIR)*.h) $(wildcard $(RUNTIME_SRC_DIR)*.h) $(wildcard $(ALLOC_SRC_DIR)*.h) $(wildcard $(BSQIR_SRC_DIR)*.h)\n' +
         'CPP=$(wildcard $(SRC_DIR)*.cpp) $(wildcard $(CORE_SRC_DIR)*.cpp) $(wildcard $(RUNTIME_SRC_DIR)*.cpp) $(wildcard $(ALLOC_SRC_DIR)*.cpp) $(wildcard $(BSQIR_SRC_DIR)*.cpp)\n' +

@@ -2767,8 +2767,14 @@ class CPPEmitter {
             `    BSQ_emit${TransformCPPNameManager.convertTypeKey(idecl.resultType.tkeystr)}(result);\n` +
             '    auto oibb = ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.completeEmit(obytes);\n\n' +
             '    //TODO assume chars are all printable for now\n' +
-            '    for(size_t i = 0; i < obytes; i++) {\n' +
-            '        printf("%c", static_cast<char>(oibb.front()[i]));\n' +
+            '    size_t ii = 0; auto biter = oibb.begin();\n' +
+            '    while(biter != oibb.end()) {\n' +
+            '        size_t j = 0;\n' +
+            '        while(j < ᐸRuntimeᐳ::MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE && ii < obytes) {\n' +
+            '            printf("%c", static_cast<char>((*biter)[j]));\n' +
+            '            j++; ii++;\n' +
+            '        }\n' +
+            '        biter++;\n' +
             '    }\n' +
             '    printf("\\n");\n\n' +
             '    ᐸRuntimeᐳ::g_alloc_info.io_buffer_free_list(oibb);\n' +
