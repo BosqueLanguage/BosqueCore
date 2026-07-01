@@ -78,10 +78,10 @@ namespace ᐸRuntimeᐳ
         std::lock_guard lk(this->g_pages_mutex);
 
 	    if(this->emptypages.empty()) {
-            for(size_t i = 0; i < GC_GET_PARAMETER(GC_NUM_PAGES_ON_REQ); i++) {
+            for(size_t i = 0; i < GC_NUM_PAGES_ON_REQ; i++) {
                 void* addr = MAP_FAILED;
 
-                if constexpr (GC_IS_ENABLED(GC_ALLOW_NON_DETERMINISTIC_MMAP)) {
+                if constexpr (GC_ALLOW_NON_DETERMINISTIC_MMAP) {
                     addr = mmap(NULL, GC_PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
 
                     this->minpageaddr = std::min(this->minpageaddr, (uintptr_t)addr);
@@ -117,7 +117,7 @@ namespace ᐸRuntimeᐳ
     {
         size_t navailchks = 0;
         auto niter = this->hot_nursery_pages.begin();
-        while(niter != this->hot_nursery_pages.end() && navailchks < GC_GET_PARAMETER(GC_PAGE_CHECK_NURSERY_LIMIT)) {
+        while(niter != this->hot_nursery_pages.end() && navailchks < GC_PAGE_CHECK_NURSERY_LIMIT) {
             PageInfo* pp = *niter;
             pp->rebuild();
 
@@ -139,7 +139,7 @@ namespace ᐸRuntimeᐳ
     {
         size_t availchks = 0;
         auto iter = this->pageset.begin();
-        while(iter != this->pageset.end() && availchks < GC_GET_PARAMETER(GC_PAGE_CHECK_GENERAL_LIMIT)) {
+        while(iter != this->pageset.end() && availchks < GC_PAGE_CHECK_GENERAL_LIMIT) {
             PageInfo* pp = *iter;
             pp->rebuild();
 
@@ -164,21 +164,21 @@ namespace ᐸRuntimeᐳ
             this->allocpage = nullptr;
         }
 
-        if(this->allocatedbytes >= GC_GET_PARAMETER(GC_NURSERY_BYTES_COLLECT_THRESHOLD))
+        if(this->allocatedbytes >= GC_NURSERY_BYTES_COLLECT_THRESHOLD)
         {
             tl_alloc_info.collectfp();
             this->allocatedbytes = 0;
         }
         else {
             if(!tl_alloc_info.pendingdelete.empty()) {
-                tl_alloc_info.procdecsfp(GC_GET_PARAMETER(GC_DELETE_PENDING_PROCESS_BYTES_INCREMENTAL));
+                tl_alloc_info.procdecsfp(GC_DELETE_PENDING_PROCESS_BYTES_INCREMENTAL);
             }
         }
 
-        this->allocpage = this->allocatorNurseryPageFinder(GC_GET_PARAMETER(GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_ALLOC));
+        this->allocpage = this->allocatorNurseryPageFinder(GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_ALLOC);
 
         if(this->allocpage == nullptr) {
-            this->allocpage = this->allocatorGeneralPageFinder(GC_GET_PARAMETER(GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_ALLOC));
+            this->allocpage = this->allocatorGeneralPageFinder(GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_ALLOC);
         }
 
         if(this->allocpage == nullptr) {
@@ -198,7 +198,7 @@ namespace ᐸRuntimeᐳ
             this->pageset.push_back(this->evacpage);
             this->evacpage = nullptr;
         }
-        this->evacpage = this->allocatorGeneralPageFinder(GC_GET_PARAMETER(GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_EVAC));
+        this->evacpage = this->allocatorGeneralPageFinder(GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_EVAC);
 
         if(this->evacpage == nullptr) {
             GC_IF_ENABLED(GC_METRICS, g_memstats.processallocpage());

@@ -583,7 +583,7 @@ namespace ᐸRuntimeᐳ
         g_alloc_info.unloadGlobalRootsFromProc(gproc);
 
         //Peel off some of the pending decs
-        processPendingDeleteWork(GC_GET_PARAMETER(GC_DELETE_PENDING_PROCESS_BYTES_COLLECT));
+        processPendingDeleteWork(GC_DELETE_PENDING_PROCESS_BYTES_COLLECT);
         
         GC_IF_ENABLED(GC_METRICS, clock_gettime(CLOCK_MONOTONIC, &time_collect_rc_end));
 

@@ -56,7 +56,7 @@ namespace ᐸRuntimeᐳ
     //Set the state on allocation for an evacuation target -- the unique RC bit to indicate that there is a unique (known addr) heap reference
     inline void gcInitOnEvacuate(AtomicGCMetadata* rc, void** addr)
     {
-        if constexpr (GC_IS_ENABLED(GC_UNIQUE_PARENT_FEATURE)) {
+        if constexpr (GC_UNIQUE_PARENT_FEATURE) {
             rc->store(META_BIT_IS_ALLOC | META_BIT_IS_RC_UNIQUE | ((uintptr_t)addr << META_BIT_RC_ADDR_SHIFT), std::memory_order_relaxed);
         }
         else {

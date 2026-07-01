@@ -284,7 +284,7 @@ namespace ᐸRuntimeᐳ
         AllocatorGlobalInfo() : g_globals_mutex{}, g_globals{}, g_globals_lastproc{}, g_globals_end{}, minpageaddr{}, maxpageaddr{}, allocatedpages{}, emptypages{}, g_pages_mutex{}, g_rcops_mutex{}, g_ioalloc_mutex{} { 
             this->allocatedpages.reserve(1000); 
 
-            if constexpr (GC_IS_ENABLED(GC_ALLOW_NON_DETERMINISTIC_MMAP)) {
+            if constexpr (GC_ALLOW_NON_DETERMINISTIC_MMAP) {
                 this->minpageaddr = AllocatorGlobalInfo::max_allocatable_page_address;
                 this->maxpageaddr = 0;
             }
