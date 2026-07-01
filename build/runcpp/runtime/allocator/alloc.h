@@ -187,11 +187,8 @@ namespace ᐸRuntimeᐳ
             //      Initial design is just to move some fraction to the aged page set to keep consistent turnover of pages (and this reclaiming memory and identifying free pages for reuse)
             //
 
-#if GC_CLEAR_EAGER_FEATURE
-            std::for_each(this->filled_pages.begin(), this->filled_pages.end(), [](PageInfo* pp) { 
-                pp->rebuild(); 
-            });
-#endif
+            GC_IF_ENABLED(GC_CLEAR_EAGER_FEATURE, std::for_each(this->filled_pages.begin(), this->filled_pages.end(), [](PageInfo* pp) { pp->rebuild(); }));
+
             this->hot_nursery_pages.splice(this->hot_nursery_pages.end(), this->filled_pages);
         }
 
@@ -265,6 +262,12 @@ namespace ᐸRuntimeᐳ
         void** g_globals_lastproc; //last global entry processed during GC runs
         void** g_globals_end; //the current last initialized global entry
 
+        uintptr_t minpageaddr; //the minimum page address allocated by the allocator
+        uintptr_t maxpageaddr; //the maximum page address allocated by the allocator
+
+        constexpr static uintptr_t initial_deterministic_page_address = (1ull << 30); //I just like this address
+        constexpr static uintptr_t max_allocatable_page_address = (1ull << 42); //2^48 
+
         std::unordered_set<void*> allocatedpages;
         std::vector<void*> emptypages;
 
@@ -278,7 +281,18 @@ namespace ᐸRuntimeᐳ
         // This mutex protects all global IO buffer allocator operations
         std::mutex g_ioalloc_mutex;
 
-        AllocatorGlobalInfo() : g_globals_mutex{}, g_globals{}, g_globals_lastproc{}, g_globals_end{}, allocatedpages{}, emptypages{}, g_pages_mutex{}, g_rcops_mutex{}, g_ioalloc_mutex{} { this->allocatedpages.reserve(1000); }
+        AllocatorGlobalInfo() : g_globals_mutex{}, g_globals{}, g_globals_lastproc{}, g_globals_end{}, allocatedpages{}, emptypages{}, g_pages_mutex{}, g_rcops_mutex{}, g_ioalloc_mutex{}, minpageaddr{}, maxpageaddr{} { 
+            this->allocatedpages.reserve(1000); 
+
+            if constexpr (GC_IS_ENABLED(GC_ALLOW_NON_DETERMINISTIC_MMAP)) {
+                this->minpageaddr = AllocatorGlobalInfo::max_allocatable_page_address;
+                this->maxpageaddr = 0;
+            }
+            else {
+                this->minpageaddr = AllocatorGlobalInfo::initial_deterministic_page_address;
+                this->maxpageaddr = AllocatorGlobalInfo::initial_deterministic_page_address;
+            }
+        }
 
         ////////////////
         //Support for immortal object processing -- will block all other GC threads when new data is processed
@@ -289,6 +303,12 @@ namespace ᐸRuntimeᐳ
         void unloadGlobalRootsFromProc(bool processed);
 
         PageInfo* getEmptyPage(GCAllocatorImpl* gcalloc);
+
+        //A quick sanity check to see if the address is in the range of allocated pages -- this is a quick check to avoid lsearching the allocatedpages in the final check below
+        bool isAllocatedAddressQuickCheck(void* addr) 
+        {
+            return (this->minpageaddr <= (uintptr_t)addr) && ((uintptr_t)addr < this->maxpageaddr);
+        }
 
         // Check if the address refers into any valid allocation (even in middle of it) and if so get the associated metadata
         bool isAllocatedAddress(void* addr, AtomicGCMetadata*& meta, void*& raddr);

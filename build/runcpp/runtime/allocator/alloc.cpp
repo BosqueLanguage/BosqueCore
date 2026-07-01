@@ -66,37 +66,35 @@ namespace ᐸRuntimeᐳ
 
             if(!gcIsAllocated(meta) | gcIsYoung(meta)) {
                 gcProcessSweep(meta);
-#if GC_MEMORY_CLEAR_FEATURE
-                std::memset(this->getObjectFromIndexInPage(i), 0, this->p2size * 8);
-#endif
 
+                GC_IF_ENABLED(GC_MEMORY_CLEAR_FEATURE, std::memset(this->getObjectFromIndexInPage(i), 0, this->p2size * 8));
                 this->gcFreeListPush(i);
             }
         }
     }
-
-#if GC_DETERMINISTIC_ADDRESS_FEATURE
-    //Hardcoded address that we start deterministic page allocations from to make debugging/diagnostics easier
-    void* g_current_page_address = (void*)(0x7ffff7f32000); 
-#endif
     
     PageInfo* AllocatorGlobalInfo::getEmptyPage(GCAllocatorImpl* gcalloc)
     {
         std::lock_guard lk(this->g_pages_mutex);
 
 	    if(this->emptypages.empty()) {
-            for(size_t i = 0; i < GC_NUM_PAGES_ON_REQ; i++) {
-#if !GC_DETERMINISTIC_ADDRESS_FEATURE
-                void* addr = mmap(NULL, GC_PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
-#else
+            for(size_t i = 0; i < GC_GET_PARAMETER(GC_NUM_PAGES_ON_REQ); i++) {
                 void* addr = MAP_FAILED;
-                while(addr == MAP_FAILED) {
-                    assert(g_current_page_address < (void*)GC_MAX_ALLOCATED_ADDRESS); //We have exhausted our deterministic address space -- need to increase the range
 
-                    addr = mmap(g_current_page_address, GC_PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE, 0, 0);
-                    g_current_page_address = (void*)((uint8_t*)g_current_page_address + GC_PAGE_SIZE);
+                if constexpr (GC_IS_ENABLED(GC_ALLOW_NON_DETERMINISTIC_MMAP)) {
+                    addr = mmap(NULL, GC_PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+
+                    this->minpageaddr = std::min(this->minpageaddr, (uintptr_t)addr);
+                    this->maxpageaddr = std::max(this->maxpageaddr, (uintptr_t)addr);
                 }
-#endif
+                else {
+                    while(addr == MAP_FAILED) {
+                        assert(this->maxpageaddr < AllocatorGlobalInfo::max_allocatable_page_address); //We have exhausted our deterministic address space -- need to increase the range
+
+                        addr = mmap((void*)this->maxpageaddr, GC_PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE, 0, 0);
+                        this->maxpageaddr += GC_PAGE_SIZE;
+                    }
+                }
                 assert(addr != MAP_FAILED);
 
                 this->allocatedpages.insert(addr);
@@ -112,19 +110,16 @@ namespace ᐸRuntimeᐳ
 
     inline bool isPageSuitableForAlloc(PageInfo* pp, double availthreshold) 
     {
-        return ((double)pp->freecount / (double)pp->esize >= availthreshold) || (pp->freecount > GC_PAGE_AVAILABILITY_COUNT_THRESHOLD);
+        return ((double)pp->freecount / (double)pp->esize) >= availthreshold;
     }
 
     PageInfo* GCAllocatorImpl::allocatorNurseryPageFinder(double availthreshold)
     {
         size_t navailchks = 0;
         auto niter = this->hot_nursery_pages.begin();
-        while(niter != this->hot_nursery_pages.end() && navailchks < GC_PAGE_CHECK_NURSERY_LIMIT) {
+        while(niter != this->hot_nursery_pages.end() && navailchks < GC_GET_PARAMETER(GC_PAGE_CHECK_NURSERY_LIMIT)) {
             PageInfo* pp = *niter;
-
-#if !GC_CLEAR_EAGER_FEATURE
             pp->rebuild();
-#endif
 
             if(isPageSuitableForAlloc(pp, availthreshold)) {
                 this->hot_nursery_pages.erase(niter);
@@ -144,9 +139,10 @@ namespace ᐸRuntimeᐳ
     {
         size_t availchks = 0;
         auto iter = this->pageset.begin();
-        while(iter != this->pageset.end() && availchks < GC_PAGE_CHECK_GENERAL_LIMIT) {
+        while(iter != this->pageset.end() && availchks < GC_GET_PARAMETER(GC_PAGE_CHECK_GENERAL_LIMIT)) {
             PageInfo* pp = *iter;
             pp->rebuild();
+
             //TODO: check for recycle fully empty pages back to global pool here as well
 
             if(isPageSuitableForAlloc(pp, availthreshold)) {
@@ -175,14 +171,14 @@ namespace ᐸRuntimeᐳ
         }
         else {
             if(!tl_alloc_info.pendingdelete.empty()) {
-                tl_alloc_info.procdecsfp(GC_DELETE_PENDING_PROCESS_BYTES_INCREMENTAL);
+                tl_alloc_info.procdecsfp(GC_GET_PARAMETER(GC_DELETE_PENDING_PROCESS_BYTES_INCREMENTAL));
             }
         }
 
-        this->allocpage = this->allocatorNurseryPageFinder(GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_ALLOC);
+        this->allocpage = this->allocatorNurseryPageFinder(GC_GET_PARAMETER(GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_ALLOC));
 
         if(this->allocpage == nullptr) {
-            this->allocpage = this->allocatorGeneralPageFinder(GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_ALLOC);
+            this->allocpage = this->allocatorGeneralPageFinder(GC_GET_PARAMETER(GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_ALLOC));
         }
 
         if(this->allocpage == nullptr) {
@@ -202,7 +198,7 @@ namespace ᐸRuntimeᐳ
             this->pageset.push_back(this->evacpage);
             this->evacpage = nullptr;
         }
-        this->evacpage = this->allocatorGeneralPageFinder(GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_EVAC);
+        this->evacpage = this->allocatorGeneralPageFinder(GC_GET_PARAMETER(GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_EVAC));
 
         if(this->evacpage == nullptr) {
             GC_IF_ENABLED(GC_METRICS, g_memstats.processallocpage());

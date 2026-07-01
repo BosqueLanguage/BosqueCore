@@ -7,18 +7,7 @@
 
 #include "memstats.h"
 
-//Make sure any allocated page is addressable by us -- larger than 2^31 and less than 2^42
-#define GC_MIN_ALLOCATED_ADDRESS ((void*)(2147483648ul))
-#define GC_MAX_ALLOCATED_ADDRESS ((void*)(281474976710656ul))
-
 #define GC_MEM_ALIGNMENT 8
-
-//Control for page sizes and access
-#define GC_BITS_IN_ADDR_FOR_PAGE 12ul
-#define GC_PAGE_SIZE (1ul << GC_BITS_IN_ADDR_FOR_PAGE)
-#define GC_BLOCK_ALLOCATION_SIZE (1ul << GC_BITS_IN_ADDR_FOR_PAGE)
-#define GC_PAGE_MASK ((1ul << GC_BITS_IN_ADDR_FOR_PAGE) - 1ul)
-#define GC_PAGE_ADDR_MASK (~GC_PAGE_MASK)
 
 namespace ᐸRuntimeᐳ
 {
@@ -69,11 +58,12 @@ namespace ᐸRuntimeᐳ
     //Set the state on allocation for an evacuation target -- the unique RC bit to indicate that there is a unique (known addr) heap reference
     inline void gcInitOnEvacuate(AtomicGCMetadata* rc, void** addr)
     {
-#if GC_UNIQUE_PARENT_FEATURE
-        rc->store(META_BIT_IS_ALLOC | META_BIT_IS_RC_UNIQUE | ((uintptr_t)addr << META_BIT_RC_ADDR_SHIFT), std::memory_order_relaxed);
-#else
-        rc->store(META_BIT_IS_ALLOC | META_BIT_IS_RC_SHARED | META_BIT_RC_ONE, std::memory_order_relaxed);
-#endif
+        if constexpr (GC_IS_ENABLED(GC_UNIQUE_PARENT_FEATURE)) {
+            rc->store(META_BIT_IS_ALLOC | META_BIT_IS_RC_UNIQUE | ((uintptr_t)addr << META_BIT_RC_ADDR_SHIFT), std::memory_order_relaxed);
+        }
+        else {
+            rc->store(META_BIT_IS_ALLOC | META_BIT_IS_RC_SHARED | META_BIT_RC_ONE, std::memory_order_relaxed);
+        }
     }
 
     inline bool gcRootProcessRCIncrement(AtomicGCMetadata* rc)

@@ -3,13 +3,12 @@
 #include "../../core/strings.h"
 #include "../../core/list_t.h"
 
-#define GC_PTR_IN_RANGE(V) ((GC_MIN_ALLOCATED_ADDRESS <= V) && (V <= GC_MAX_ALLOCATED_ADDRESS))
 #define GC_PTR_NOT_IN_STACK(BASE, CURR, V) ((((void*)V) <= ((void*)CURR)) || (((void*)BASE) <= ((void*)V)))
 
-#define GC_PROCESS_REGISTER(BASE, CURR, R)                                    \
-    register void* R asm(#R);                                                 \
+#define GC_PROCESS_REGISTER(BASE, CURR, R)                     \
+    register void* R asm(#R);                                  \
     rcontents.R = NULL;                                        \
-    if(GC_PTR_IN_RANGE(R) && GC_PTR_NOT_IN_STACK(BASE, CURR, R)) { rcontents.R = R; }
+    if(GC_PTR_NOT_IN_STACK(BASE, CURR, R) && g_alloc_info.isAllocatedAddressQuickCheck(R)) { rcontents.R = R; }
 
 namespace ᐸRuntimeᐳ
 {
@@ -58,7 +57,7 @@ namespace ᐸRuntimeᐳ
             //Walk the stack
             while (iter <= tl_alloc_info.native_stack_base) {
                 void* potential_ptr = *iter;
-                if(GC_PTR_IN_RANGE(potential_ptr) && GC_PTR_NOT_IN_STACK(tl_alloc_info.native_stack_base, rbp, potential_ptr)) {
+                if(GC_PTR_NOT_IN_STACK(tl_alloc_info.native_stack_base, rbp, potential_ptr) && g_alloc_info.isAllocatedAddressQuickCheck(potential_ptr)) {
                     possibleroots.push_back(potential_ptr);
                 }
                 iter++;
@@ -383,10 +382,7 @@ namespace ᐸRuntimeᐳ
         }
 
         alloc->xrcRelease(ptr);
-
-#if GC_MEMORY_CLEAR_FEATURE
-        std::memset(ptr, 0, alloc->alloctype->bytesize);
-#endif
+        GC_IF_ENABLED(GC_MEMORY_CLEAR_FEATURE, std::memset(ptr, 0, alloc->alloctype->bytesize));
     }
     
     void releaseStd(void* ptr)
@@ -531,10 +527,7 @@ namespace ᐸRuntimeᐳ
             }
 
             alloc->xrcRelease(ptr);
-
-#if GC_MEMORY_CLEAR_FEATURE
-            std::memset(ptr, 0, alloc->alloctype->bytesize);
-#endif
+            GC_IF_ENABLED(GC_MEMORY_CLEAR_FEATURE, std::memset(ptr, 0, alloc->alloctype->bytesize));
 
             procbytes += alloc->alloctype->bytesize;
             if(procbytes >= worklimit) {
@@ -590,7 +583,7 @@ namespace ᐸRuntimeᐳ
         g_alloc_info.unloadGlobalRootsFromProc(gproc);
 
         //Peel off some of the pending decs
-        processPendingDeleteWork(GC_DELETE_PENDING_PROCESS_BYTES_COLLECT);
+        processPendingDeleteWork(GC_GET_PARAMETER(GC_DELETE_PENDING_PROCESS_BYTES_COLLECT));
         
         GC_IF_ENABLED(GC_METRICS, clock_gettime(CLOCK_MONOTONIC, &time_collect_rc_end));
 
