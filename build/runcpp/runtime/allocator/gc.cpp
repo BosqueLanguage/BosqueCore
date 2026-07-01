@@ -547,13 +547,18 @@ namespace ᐸRuntimeᐳ
 
     void collect()
     {
+        struct timespec time_collect_start;
+        struct timespec time_collect_traverse_end;
+        struct timespec time_collect_rc_end;
+        struct timespec time_collect_end; 
+
         std::vector<std::pair<AtomicGCMetadata*, void*>> curr_roots_young;
         std::vector<std::pair<AtomicGCMetadata*, void*>> curr_roots_rc;
         std::vector<std::pair<AtomicGCMetadata*, void*>> final_roots_rc;
         curr_roots_young.reserve(128); //TODO -- tune this
         curr_roots_rc.reserve(128); //TODO -- tune this
 
-        GC_METRICS_BASIC_OP(struct timespec time_collect_start; clock_gettime(CLOCK_MONOTONIC, &time_collect_start));
+        GC_IF_ENABLED(GC_METRICS, clock_gettime(CLOCK_MONOTONIC, &time_collect_start));
         bool gproc = false;
         {
             // page->entrycount may be reset by another thread (setPageMetaData) -- processPotentialPtr
@@ -576,7 +581,7 @@ namespace ᐸRuntimeᐳ
         //Handle the young roots + the young walk and evacuation
         processYoungRoots(curr_roots_young);
         
-        GC_METRICS_BASIC_OP(struct timespec time_collect_traverse_end; clock_gettime(CLOCK_MONOTONIC, &time_collect_traverse_end));
+        GC_IF_ENABLED(GC_METRICS, clock_gettime(CLOCK_MONOTONIC, &time_collect_traverse_end));
 
         //Process decrements and update the roots info for the next round
         processDecrements(curr_roots_young, final_roots_rc);
@@ -587,7 +592,7 @@ namespace ᐸRuntimeᐳ
         //Peel off some of the pending decs
         processPendingDeleteWork(GC_DELETE_PENDING_PROCESS_BYTES_COLLECT);
         
-        GC_METRICS_BASIC_OP(struct timespec time_collect_rc_end; clock_gettime(CLOCK_MONOTONIC, &time_collect_rc_end));
+        GC_IF_ENABLED(GC_METRICS, clock_gettime(CLOCK_MONOTONIC, &time_collect_rc_end));
 
         //Process nursery space
         for(auto ai = tl_alloc_info.gcallocs.begin(); ai != tl_alloc_info.gcallocs.end(); ++ai) {
@@ -595,7 +600,7 @@ namespace ᐸRuntimeᐳ
             ai->second->processNursery();
         }
 
-        GC_METRICS_BASIC_OP(struct timespec time_collect_end; clock_gettime(CLOCK_MONOTONIC, &time_collect_end));
-        GC_METRICS_BASIC_OP(g_memstats.processcollect(time_collect_start, time_collect_traverse_end, time_collect_rc_end, time_collect_end));
+        GC_IF_ENABLED(GC_METRICS, clock_gettime(CLOCK_MONOTONIC, &time_collect_end));
+        GC_IF_ENABLED(GC_METRICS, g_memstats.processcollect(time_collect_start, time_collect_traverse_end, time_collect_rc_end, time_collect_end));
     }
 }

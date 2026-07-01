@@ -47,7 +47,6 @@ namespace ᐸRuntimeᐳ
         size_t count;
         std::array<T, MAX_INLINE_CAPACITY> data;
 
-#ifdef BSQ_POSTREE_VALIDATE
         void toValues(std::vector<T>& result) const
         {
             for(size_t i = 0; i < this->count; i++) {
@@ -68,7 +67,6 @@ namespace ᐸRuntimeᐳ
             result += "]}";
             return result;
         }
-#endif
 
         ListTInlineContent() : count{0}, data{} { ; } 
         ListTInlineContent(const ListTInlineContent& other) = default;
@@ -399,7 +397,6 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-#ifdef BSQ_POSTREE_VALIDATE
         template <typename Fn>
         std::string toString(Fn pf) const
         {
@@ -442,7 +439,6 @@ namespace ᐸRuntimeᐳ
                 }
             }
         }
-#endif
 
         bool empty() const
         {

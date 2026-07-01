@@ -141,7 +141,7 @@ namespace ᐸRuntimeᐳ
 
         inline void* xalloc()
         {
-            GC_METRICS_BASIC_OP(g_memstats.processalloc(this->alloctype->bytesize));
+            GC_IF_ENABLED(GC_METRICS, g_memstats.processalloc(this->alloctype->bytesize));
 
             if(this->nextalloc.second == META_FREE_LIST_OOM_SENTINAL) [[unlikely]] { 
                 this->allocatorSlowPathRefresh();

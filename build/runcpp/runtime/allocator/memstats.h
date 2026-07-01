@@ -50,7 +50,6 @@ namespace ᐸRuntimeᐳ
             return std::make_tuple(min_total != std::numeric_limits<Time>::max() ? min_total : 0, max_total, avg_val);
         }
 
-#if GC_METRICS_BASIC
         SingleCollectStat totalstats = {0, 0, 0};
 
         size_t rstatsidx = 0;
@@ -85,19 +84,16 @@ namespace ᐸRuntimeᐳ
             rrstats[rstatsidx] = {total, walk, rc};
             rstatsidx = (rstatsidx + 1) % RRSTATS_SIZE;
         }
-#endif
 
         MemStats() { ; }
 
         void dump(std::ostream& out)
         {
-#if GC_METRICS_BASIC
             auto [min_time, max_time, avg_time] = computeMinMaxAvgPauses(rrstats);
 
             out << "MEMSTATS: Total Time: " << this->totalstats.timetotal_us / 1000 << "ms, Young Time: " << this->totalstats.young_time_us / 1000 << "ms, RC Time: " << this->totalstats.rc_time_us / 1000 << "ms" << std::endl;
             out << "Collection (Approx) Distribution -- Min: " << min_time << "us, Max: " << max_time << "us, Avg: " << avg_time << "us" << std::endl;
             out << "Total Pages: " << this->totalpages << ", Total Collections: " << this->collectioncount << ", Total Allocations: " << this->totalallocs << ", Total Bytes: " << this->totalbytes << std::endl;
-#endif
         }
     };
 

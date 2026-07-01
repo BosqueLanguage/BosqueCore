@@ -20,35 +20,6 @@
 #define GC_PAGE_MASK ((1ul << GC_BITS_IN_ADDR_FOR_PAGE) - 1ul)
 #define GC_PAGE_ADDR_MASK (~GC_PAGE_MASK)
 
-//A bunch of knobs for adjusting GC behavior -- these are all subject to tuning as with the page info above
-#define GC_NUM_PAGES_ON_REQ 4
-#define GC_NURSERY_BYTES_COLLECT_THRESHOLD (1ul << 20)
-#define GC_DELETE_PENDING_PROCESS_BYTES_COLLECT (GC_NURSERY_BYTES_COLLECT_THRESHOLD / 2)
-#define GC_DELETE_PENDING_PROCESS_BYTES_INCREMENTAL (GC_PAGE_SIZE / 2)
-//TODO: probably also want to provide dynamic tuning for these rates based on observed backpressure (i.e. how big pending list is)
-
-#define GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_ALLOC 0.60
-#define GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_EVAC 0.30
-#define GC_PAGE_AVAILABILITY_COUNT_THRESHOLD 8
-#define GC_PAGE_CHECK_NURSERY_LIMIT 12
-#define GC_PAGE_CHECK_GENERAL_LIMIT 4
-
-//A bunch of flags to turn off/on features
-#define GC_CLEAR_EAGER_FEATURE 0
-#define GC_MEMORY_CLEAR_FEATURE 0
-#define GC_UNIQUE_PARENT_FEATURE 0
-#define GC_DETERMINISTIC_ADDRESS_FEATURE 1
-
-//A bunch of flags to turn off/on diagnostics
-
-#if GC_METRICS_BASIC
-#define GC_METRICS_BASIC_OP(X) X
-#else
-#define GC_METRICS_BASIC_OP(X)
-#endif
-
-////
-
 namespace ᐸRuntimeᐳ
 {
     using GCMetaBits = uint64_t;

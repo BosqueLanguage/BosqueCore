@@ -168,7 +168,7 @@ namespace ᐸRuntimeᐳ
             this->allocpage = nullptr;
         }
 
-        if(this->allocatedbytes >= GC_NURSERY_BYTES_COLLECT_THRESHOLD)
+        if(this->allocatedbytes >= GC_GET_PARAMETER(GC_NURSERY_BYTES_COLLECT_THRESHOLD))
         {
             tl_alloc_info.collectfp();
             this->allocatedbytes = 0;
@@ -186,7 +186,7 @@ namespace ᐸRuntimeᐳ
         }
 
         if(this->allocpage == nullptr) {
-            GC_METRICS_BASIC_OP(g_memstats.processallocpage());
+            GC_IF_ENABLED(GC_METRICS, g_memstats.processallocpage());
 
             this->allocpage = g_alloc_info.getEmptyPage(this);
             this->allocpage->rebuild();
@@ -205,7 +205,7 @@ namespace ᐸRuntimeᐳ
         this->evacpage = this->allocatorGeneralPageFinder(GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_EVAC);
 
         if(this->evacpage == nullptr) {
-            GC_METRICS_BASIC_OP(g_memstats.processallocpage());
+            GC_IF_ENABLED(GC_METRICS, g_memstats.processallocpage());
 
             this->evacpage = g_alloc_info.getEmptyPage(this);
             this->evacpage->rebuild();
@@ -224,7 +224,7 @@ namespace ᐸRuntimeᐳ
 	
     void AllocatorThreadLocalInfo::cleanup()
     {
-        g_memstats.dump(std::cout);
+        GC_IF_ENABLED(GC_METRICS, g_memstats.dump(std::cout));
 
         for(auto iter = this->gcallocs.begin(); iter != this->gcallocs.end(); iter++) {
             iter->second->cleanup();
