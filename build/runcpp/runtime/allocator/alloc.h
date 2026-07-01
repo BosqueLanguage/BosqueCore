@@ -281,7 +281,7 @@ namespace ᐸRuntimeᐳ
         // This mutex protects all global IO buffer allocator operations
         std::mutex g_ioalloc_mutex;
 
-        AllocatorGlobalInfo() : g_globals_mutex{}, g_globals{}, g_globals_lastproc{}, g_globals_end{}, allocatedpages{}, emptypages{}, g_pages_mutex{}, g_rcops_mutex{}, g_ioalloc_mutex{}, minpageaddr{}, maxpageaddr{} { 
+        AllocatorGlobalInfo() : g_globals_mutex{}, g_globals{}, g_globals_lastproc{}, g_globals_end{}, minpageaddr{}, maxpageaddr{}, allocatedpages{}, emptypages{}, g_pages_mutex{}, g_rcops_mutex{}, g_ioalloc_mutex{} { 
             this->allocatedpages.reserve(1000); 
 
             if constexpr (GC_IS_ENABLED(GC_ALLOW_NON_DETERMINISTIC_MMAP)) {

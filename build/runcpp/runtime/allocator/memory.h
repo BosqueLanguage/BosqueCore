@@ -3,8 +3,6 @@
 #include "../../common.h"
 #include "../../core/bsqtype.h"
 
-#include "./flags.h"
-
 #include "memstats.h"
 
 #define GC_MEM_ALIGNMENT 8

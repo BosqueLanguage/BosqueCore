@@ -16,13 +16,18 @@
 
 namespace ᐸRuntimeᐳ
 {
+    //Bosque runtime debugging and diagnostic flags
     BSQ_REGISTER_FLAG(RB_INVARIANT_VALIDATE, "Enable red-black tree validation checks");
 
+    //GC debugging and diagnostics flags
     GC_REGISTER_FLAG(GC_CLEAR_EAGER_FEATURE, "Process all pages immediately after collection");
     GC_REGISTER_FLAG(GC_MEMORY_CLEAR_FEATURE, "Zero out memory when processing pages and RC free");
-    GC_REGISTER_FLAG(GC_UNIQUE_PARENT_FEATURE, "Enable unique parent tracking for RC objects");
     GC_REGISTER_FLAG(GC_ALLOW_NON_DETERMINISTIC_MMAP, "Allow non-deterministic mmap allocations for GC pages");
 
+    //Feature flags for in progress work
+    GC_REGISTER_FLAG(GC_UNIQUE_PARENT_FEATURE, "Enable unique parent tracking for RC objects");
+
+    //Support for computing GC metrics
     GC_REGISTER_FLAG(GC_METRICS, "Enable basic GC metrics collection");
 
 #if GC_NURSERY_BYTES_COLLECT_THRESHOLD
