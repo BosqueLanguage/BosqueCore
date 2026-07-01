@@ -14,9 +14,45 @@ namespace ᐸRuntimeᐳ
         Time rc_time_us = 0;
     };
 
+    class UtilizationStat
+    {
+    public:
+        size_t count_0_30 = 0;
+        size_t count_30_70 = 0;
+        size_t count_70_100 = 0;
+    };
+
+    class HeapStats
+    {
+    public: 
+        size_t totalpages;
+        size_t livebytes;
+        UtilizationStat overallutilizations;
+
+        size_t hotnurserycount;
+        UtilizationStat nurseryutilizations;
+
+        size_t pagesetcount;
+        UtilizationStat pagesetutilizations;
+    };
+
+    class CollectionDataInfo
+    {
+    public:
+        size_t totalpages;
+        size_t totalprocessed;
+
+        size_t directrcreclaims;
+        size_t indirectrcreclaims;
+
+        size_t startingrcpends;
+        size_t totalrcprocessed;
+        size_t finalrcpends;
+    };
+
     class MemStats {
     public:
-        constexpr static size_t RRSTATS_SIZE = 10;
+        constexpr static size_t RRSTATS_SIZE = 50;
 
         inline static size_t computeIntervalInMicroseconds(struct timespec start, struct timespec end) 
         {
