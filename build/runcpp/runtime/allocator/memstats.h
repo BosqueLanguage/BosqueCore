@@ -27,6 +27,8 @@ namespace ᐸRuntimeᐳ
     public: 
         size_t totalpages;
         size_t livebytes;
+        size_t freebytes;
+
         UtilizationStat overallutilizations;
 
         size_t hotnurserycount;
@@ -90,6 +92,59 @@ namespace ᐸRuntimeᐳ
 
         size_t rstatsidx = 0;
         std::array<SingleCollectStat, RRSTATS_SIZE> rrstats{};
+
+#if GC_METRICS_DETAILED
+        size_t collectstatsidx = 0;
+        std::array<CollectionDataInfo, RRSTATS_SIZE> collectstats{};
+
+        size_t heapstatsidx = 0;
+        std::array<HeapStats, RRSTATS_SIZE> heapstats{};
+
+        void advanceCollectStats() 
+        {
+            collectstatsidx = (collectstatsidx + 1) % RRSTATS_SIZE;
+            collectstats[collectstatsidx] = {};
+        }
+
+        CollectionDataInfo& getCurrentCollectStats() 
+        {
+            return collectstats[collectstatsidx];
+        }
+
+        void advanceHeapStats() 
+        {
+            heapstatsidx = (heapstatsidx + 1) % RRSTATS_SIZE;
+            heapstats[heapstatsidx] = {};
+        }
+
+        HeapStats& getCurrentHeapStats() 
+        {
+            return heapstats[heapstatsidx];
+        }
+#else
+        CollectionDataInfo collectstats{};
+        HeapStats heapstats{};
+
+        void advanceCollectStats() 
+        {
+            collectstats = {};
+        }
+
+        CollectionDataInfo& getCurrentCollectStats() 
+        {
+            return collectstats;
+        }
+
+        void advanceHeapStats() 
+        {
+            heapstats = {};
+        }
+
+        HeapStats& getCurrentHeapStats() 
+        {
+            return heapstats;
+        }
+#endif
 
         size_t totalpages = 0;
 

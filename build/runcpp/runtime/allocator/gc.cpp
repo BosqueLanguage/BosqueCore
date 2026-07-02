@@ -1,4 +1,5 @@
-#include "gc.h"
+#include "./gc.h"
+#include "./gc_validation.h"
 
 #include "../../core/strings.h"
 #include "../../core/list_t.h"
@@ -12,7 +13,6 @@
 
 namespace ᐸRuntimeᐳ
 {
-
     inline static void gcStoreForwardingPtr(void* ptr, void* fwdptr) 
     {
         *((void**)ptr) = fwdptr;
@@ -552,6 +552,8 @@ namespace ᐸRuntimeᐳ
         curr_roots_rc.reserve(128); //TODO -- tune this
 
         GC_IF_ENABLED(GC_METRICS, clock_gettime(CLOCK_MONOTONIC, &time_collect_start));
+        GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.advanceCollectStats());
+
         bool gproc = false;
         {
             // page->entrycount may be reset by another thread (setPageMetaData) -- processPotentialPtr
@@ -595,5 +597,7 @@ namespace ᐸRuntimeᐳ
 
         GC_IF_ENABLED(GC_METRICS, clock_gettime(CLOCK_MONOTONIC, &time_collect_end));
         GC_IF_ENABLED(GC_METRICS, g_memstats.processcollect(time_collect_start, time_collect_traverse_end, time_collect_rc_end, time_collect_end));
+
+        GC_IF_ENABLED(GC_VALIDATE, gcValidate());
     }
 }

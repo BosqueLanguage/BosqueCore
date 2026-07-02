@@ -3,7 +3,7 @@
 #include "../../common.h"
 #include "../../core/bsqtype.h"
 
-#include "memstats.h"
+#include "./memstats.h"
 
 #define GC_MEM_ALIGNMENT 8
 
@@ -27,6 +27,8 @@ namespace ᐸRuntimeᐳ
     constexpr GCMetaBits META_BIT_RC_ZERO = 0x0;
     constexpr GCMetaBits META_BIT_RC_ONE = 0x80;
     constexpr GCMetaBits META_BIT_RC_TWO = (META_BIT_RC_ONE + META_BIT_RC_ONE);
+    
+    constexpr GCMetaBits META_BIT_RC_BITS_MASK = (0x7F);
     constexpr GCMetaBits META_BIT_RC_MASK = ~(0x7F);
     constexpr uint32_t META_BIT_RC_ADDR_SHIFT = 7; //shifted to make sure we don't the flag bits
 

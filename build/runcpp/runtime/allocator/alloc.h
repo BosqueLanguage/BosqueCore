@@ -1,6 +1,6 @@
 #pragma once
 
-#include "memory.h"
+#include "./memory.h"
 
 namespace ᐸRuntimeᐳ
 {
@@ -115,16 +115,15 @@ namespace ᐸRuntimeᐳ
 
     class GCAllocatorImpl
     {
-    private:
+    public:
         std::pair<AtomicGCMetadata*, void*> nextalloc;
         PageInfo* allocpage; // Page in which we are currently allocating from
          
         std::pair<AtomicGCMetadata*, void*> nextevac;
         PageInfo* evacpage; // Page in which we are currently evacuating from
 
-    private:
         std::list<PageInfo*> filled_pages; // Pages which we have young allocated into and pending processing
-        std::list<PageInfo*> hot_nursery_pages; // Pages which we have evacuated into and pending processing
+        std::list<PageInfo*> hot_nursery_pages; //Pages which previously were nursery pages (and evacuated) available and good candidates for young allocation again
         std::list<PageInfo*> pageset; //All pages allocated by this allocator that are not currently being allocated from or in the filled list
 
         size_t allocatedbytes;
@@ -255,7 +254,7 @@ namespace ᐸRuntimeᐳ
 
     class AllocatorGlobalInfo
     {
-    private:
+    public:
         //This allows us to only-once process immortal objects
         std::mutex g_globals_mutex;
         void* g_globals;

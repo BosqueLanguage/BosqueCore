@@ -57,6 +57,26 @@
     #define GC_METRICS 0
 #endif
 
+//Enable detailed GC metrics collection
+#ifndef GC_METRICS_DETAILED
+    #define GC_METRICS_DETAILED 0
+#else
+    //If detailed metrics are enabled, basic metrics are also enabled
+    #undef GC_METRICS
+    #define GC_METRICS 1
+#endif
+
+//Enable detailed GC metrics collection
+#ifndef GC_VALIDATE
+    #define GC_VALIDATE 0
+#else
+    //If validation is enabled, detailed metrics are also enabled
+    #undef GC_METRICS
+    #undef GC_METRICS_DETAILED
+    #define GC_METRICS 1
+    #define GC_METRICS_DETAILED 1
+#endif
+
 ///////////////////////////////////////////////
 //Flags for GC performance tuning
 
