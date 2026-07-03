@@ -189,7 +189,7 @@ namespace ᐸRuntimeᐳ
         }
 
         this->nextalloc = this->allocpage->gcLoadFreeNext();
-        this->allocatedbytes += (this->allocpage->freecount * (this->alloctype->bytesize * 8));
+        this->allocatedbytes += (this->allocpage->freecount * this->alloctype->bytesize);
     }
 
     void GCAllocatorImpl::evacuatorSlowPathRefresh()
