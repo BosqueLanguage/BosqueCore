@@ -2,8 +2,10 @@
 
 namespace ᐸRuntimeᐳ
 {
-    std::pair<size_t, size_t> processInfoForSinglePage(const PageInfo* pp, UtilizationStat& stat, const std::unordered_set<void*>& pendingdeletes)
+    std::pair<size_t, size_t> processInfoForSinglePage(PageInfo* pp, UtilizationStat& stat, const std::unordered_set<void*>& pendingdeletes)
     {
+        pp->rebuild(); //rebuild the page so everything is in a consistent state
+
         std::unordered_set<void*> freelistset;
         void* freecur = pp->freelist;
         while(freecur != nullptr) {
@@ -73,6 +75,8 @@ namespace ᐸRuntimeᐳ
 
     std::pair<size_t, size_t> processInfoForSingleEvacPage(const PageInfo* pp, const std::unordered_set<void*>& pendingdeletes)
     {
+        //Evac page is not rebuilt so we don't check everything here
+
         std::unordered_set<void*> freelistset;
         void* freecur = pp->freelist;
         while(freecur != nullptr) {
