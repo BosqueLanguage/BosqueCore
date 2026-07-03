@@ -24,12 +24,13 @@ namespace ᐸRuntimeᐳ
             freelistset.insert(freecur);
             freecur = next;
         }
+        assert(freelistset.size() == (size_t)pp->freecount);
 
         //now walk the page to check that the free list and the pending deletes are consistent with the metadata
         size_t livebytes = 0;
         size_t freebytes = 0;
         size_t entrybytes = pp->typeinfo->bytesize;
-        for(int64_t i = pp->esize - 1; i >= 0; i--) {
+        for(int64_t i = pp->maxcount - 1; i >= 0; i--) {
             AtomicGCMetadata* meta = pp->getMetadataFromIndexInPage(i);
 
             if(!gcIsAllocated(meta)) {
@@ -59,7 +60,7 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        double utilization = ((double)pp->freecount / (double)pp->esize) * 100.0;
+        double utilization = ((double)pp->freecount / (double)pp->maxcount) * 100.0;
         if(utilization < 30.0) {
             stat.count_0_30++;
         }
@@ -100,7 +101,7 @@ namespace ᐸRuntimeᐳ
         size_t livebytes = 0;
         size_t freebytes = 0;
         size_t entrybytes = pp->typeinfo->bytesize;
-        for(int64_t i = pp->esize - 1; i >= 0; i--) {
+        for(int64_t i = pp->maxcount - 1; i >= 0; i--) {
             AtomicGCMetadata* meta = pp->getMetadataFromIndexInPage(i);
 
             if(!gcIsAllocated(meta)) {

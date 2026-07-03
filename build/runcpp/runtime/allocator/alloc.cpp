@@ -9,10 +9,7 @@ namespace ᐸRuntimeᐳ
     {
         PageInfo* pp = (PageInfo*)vpp;
 
-        uint32_t p2size = std::bit_ceil(gcalloc->alloctype->slotcount);
-        uint32_t p2sizeshift = std::bit_width(p2size) - 1;
-
-        uint32_t objcount = (GC_PAGE_SIZE - sizeof(PageInfo)) / ((p2size + 1) * 8);
+        uint32_t objcount = (GC_PAGE_SIZE - sizeof(PageInfo)) / ((gcalloc->alloctype->slotcount + 1) * 8);
         std::memset((void*)((uint8_t*)pp + sizeof(PageInfo)), 0, 8 * objcount);
 
         pp->typeinfo = gcalloc->alloctype;
@@ -20,34 +17,33 @@ namespace ᐸRuntimeᐳ
         pp->threadid = threadid;
 
         pp->freelist = nullptr;
-
         pp->freecount = -1;
-        pp->esize = objcount;
+
+        pp->maxcount = objcount;
+        pp->eslots = gcalloc->alloctype->slotcount;
 
         pp->mdata = (AtomicGCMetadata*)((uint8_t*)pp + sizeof(PageInfo));
         pp->data = (void**)((void**)pp->mdata + objcount);
-        pp->p2size = p2size;
-        pp->size2shift = p2sizeshift;
 
         return pp;
     }
 
     void* PageInfo::reset()
     {
-        std::memset((void*)((uint8_t*)this + sizeof(PageInfo)), 0, 8 * this->esize);
+        std::memset((void*)((uint8_t*)this + sizeof(PageInfo)), 0, 8 * this->maxcount);
 
         this->typeinfo = nullptr;
         this->gcalloc = nullptr;
         this->threadid = std::thread::id{};
 
         this->freelist = nullptr;
-
         this->freecount = -1;
-        this->esize = 0;
+        
+        this->maxcount = 0;
+        this->eslots = 0;
 
         this->data = nullptr;
         this->mdata = nullptr;
-        this->size2shift = 0;
 
         return (void*)this;
     }
@@ -56,7 +52,7 @@ namespace ᐸRuntimeᐳ
     {
         this->gcFreeListReset();
  
-        for(int64_t i = this->esize - 1; i >= 0; i--) {
+        for(int64_t i = this->maxcount - 1; i >= 0; i--) {
             AtomicGCMetadata* meta = this->getMetadataFromIndexInPage(i);
 
             //
@@ -67,7 +63,7 @@ namespace ᐸRuntimeᐳ
             if(!gcIsAllocated(meta) | gcIsYoung(meta)) {
                 gcProcessSweep(meta);
 
-                GC_IF_ENABLED(GC_MEMORY_CLEAR_FEATURE, std::memset(this->getObjectFromIndexInPage(i), 0, this->p2size * 8));
+                GC_IF_ENABLED(GC_MEMORY_CLEAR_FEATURE, std::memset(this->getObjectFromIndexInPage(i), 0, this->eslots * 8));
                 this->gcFreeListPush(i);
             }
         }
@@ -110,7 +106,7 @@ namespace ᐸRuntimeᐳ
 
     inline bool isPageSuitableForAlloc(PageInfo* pp, double availthreshold) 
     {
-        return ((double)pp->freecount / (double)pp->esize) >= availthreshold;
+        return ((double)pp->freecount / (double)pp->maxcount) >= availthreshold;
     }
 
     PageInfo* GCAllocatorImpl::allocatorNurseryPageFinder(double availthreshold)
@@ -272,7 +268,7 @@ namespace ᐸRuntimeᐳ
         }
 
         const PageInfo* pp = (PageInfo*)baseaddr;
-        if(pp->typeinfo == nullptr || addr < pp->data || (void*)((void**)pp->data + (pp->esize << pp->size2shift)) <= addr) {
+        if(pp->typeinfo == nullptr || addr < pp->data || (void*)((void**)pp->data + (pp->eslots * pp->maxcount)) <= addr) {
             //This page is not in use OR the pointer is not into the data section of the page
             return false;
         }

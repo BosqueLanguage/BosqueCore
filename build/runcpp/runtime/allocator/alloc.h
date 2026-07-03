@@ -21,12 +21,11 @@ namespace ᐸRuntimeᐳ
 
         void* freelist; // Free list for this page
         int64_t freecount;
-        int64_t esize; //max number of entries in this page
+        int64_t maxcount; //max number of entries in this page
+        int64_t eslots; //size of each entry in slots
 
         void* data; //start of the data block
         AtomicGCMetadata* mdata; // Meta data is stored out-of-band
-        uint32_t p2size; //power of 2 rounded (slot size) of the type stored in this page
-        uint32_t size2shift; //shift bits for power of 2 rounded (slot size) of the type stored in this page
 
         inline static PageInfo* extractPageFromPointer(void* p) 
         {
@@ -35,17 +34,17 @@ namespace ᐸRuntimeᐳ
 
         inline uint16_t getIndexForObjectInPage(void* obj) const
         { 
-            return (uint16_t)(((void**)obj - (void**)this->data) >> this->size2shift);
+            return (uint16_t)(((void**)obj - (void**)this->data) / this->eslots);
         }
 
         inline void* getObjectFromIndexInPage(size_t idx) const
         {
-            return (void*)((void**)this->data + (idx << this->size2shift));
+            return (void*)((void**)this->data + (idx * this->eslots));
         }
 
         inline uint16_t getIndexForMetadataInPage(void* obj) const
         { 
-            return (uint16_t)(((void**)obj - (void**)this->data) >> this->size2shift);
+            return (uint16_t)(((void**)obj - (void**)this->data) / this->eslots);
         }
 
         inline AtomicGCMetadata* getMetadataFromIndexInPage(size_t idx) const
