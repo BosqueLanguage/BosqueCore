@@ -130,11 +130,11 @@ namespace ᐸRuntimeᐳ
         return std::make_pair(livebytes, freebytes);
     }
 
-    std::pair<size_t, size_t> processInfoForHotNurseryPages(const GCAllocatorImpl* allocator, HeapStats& stat, const std::unordered_set<void*>& pendingdeletes)
+    void processInfoForHotNurseryPages(const GCAllocatorImpl* allocator, HeapStats& stat, const std::unordered_set<void*>& pendingdeletes)
     {
         //This should be clear since we just processed the filled pages and moved them to the hot nursery pages
         assert(allocator->allocpage == nullptr);
-        assert(allocator->nextevac.second == META_FREE_LIST_OOM_SENTINAL);
+        assert(allocator->nextalloc.second == META_FREE_LIST_OOM_SENTINAL);
         assert(allocator->filled_pages.empty());
 
         stat.totalpages += allocator->hot_nursery_pages.size();
@@ -151,7 +151,7 @@ namespace ᐸRuntimeᐳ
         stat.overallutilizations.count_70_100 += stat.nurseryutilizations.count_70_100;
     }
 
-    std::pair<size_t, size_t> processInfoForActiveEvacPage(const GCAllocatorImpl* allocator, HeapStats& stat, const std::unordered_set<void*>& pendingdeletes)
+    void processInfoForActiveEvacPage(const GCAllocatorImpl* allocator, HeapStats& stat, const std::unordered_set<void*>& pendingdeletes)
     {
         if(allocator->evacpage == nullptr) {
             assert(allocator->nextevac.second == META_FREE_LIST_OOM_SENTINAL);
@@ -166,7 +166,7 @@ namespace ᐸRuntimeᐳ
         stat.freebytes += freebytes;
     }
 
-    std::pair<size_t, size_t> processInfoForPageSetEntries(const GCAllocatorImpl* allocator, HeapStats& stat, const std::unordered_set<void*>& pendingdeletes)
+    void processInfoForPageSetEntries(const GCAllocatorImpl* allocator, HeapStats& stat, const std::unordered_set<void*>& pendingdeletes)
     {
         stat.totalpages += allocator->pageset.size();
 

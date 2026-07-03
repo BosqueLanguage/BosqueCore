@@ -181,6 +181,8 @@ namespace ᐸRuntimeᐳ
                 this->nextalloc = {nullptr, META_FREE_LIST_OOM_SENTINAL};
             }
 
+            GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.getCurrentCollectStats().nurserypages += this->filled_pages.size());
+
             //
             //TODO: Here is where we want to route some pages to aged (and thus rotate the heap slowly)
             //      Initial design is just to move some fraction to the aged page set to keep consistent turnover of pages (and this reclaiming memory and identifying free pages for reuse)
