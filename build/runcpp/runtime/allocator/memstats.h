@@ -9,17 +9,17 @@ namespace ᐸRuntimeᐳ
     class SingleCollectStat
     {
     public:
-        Time timetotal_us = 0;
-        Time young_time_us = 0;
-        Time rc_time_us = 0;
+        Time timetotal_us;
+        Time young_time_us;
+        Time rc_time_us;
     };
 
     class UtilizationStat
     {
     public:
-        size_t count_0_30 = 0;
-        size_t count_30_70 = 0;
-        size_t count_70_100 = 0;
+        size_t count_0_30;
+        size_t count_30_70;
+        size_t count_70_100;
     };
 
     class HeapStats

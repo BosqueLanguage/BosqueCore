@@ -60,7 +60,7 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        double utilization = ((double)pp->freecount / (double)pp->maxcount) * 100.0;
+        double utilization = ((double)(pp->maxcount - pp->freecount) / (double)pp->maxcount) * 100.0;
         if(utilization < 30.0) {
             stat.count_0_30++;
         }
@@ -143,17 +143,13 @@ namespace ᐸRuntimeᐳ
         assert(allocator->filled_pages.empty());
 
         stat.totalpages += allocator->hot_nursery_pages.size();
+        stat.hotnurserycount += allocator->hot_nursery_pages.size();
 
-        stat.hotnurserycount = allocator->hot_nursery_pages.size();
         for(auto iter = allocator->hot_nursery_pages.begin(); iter != allocator->hot_nursery_pages.end(); iter++) {
             auto [livebytes, freebytes] = processInfoForSinglePage(*iter, stat.nurseryutilizations, pendingdeletes);
             stat.livebytes += livebytes;
             stat.freebytes += freebytes;
         }
-
-        stat.overallutilizations.count_0_30 += stat.nurseryutilizations.count_0_30;
-        stat.overallutilizations.count_30_70 += stat.nurseryutilizations.count_30_70;
-        stat.overallutilizations.count_70_100 += stat.nurseryutilizations.count_70_100;
     }
 
     void processInfoForActiveEvacPage(const GCAllocatorImpl* allocator, HeapStats& stat, const std::unordered_set<void*>& pendingdeletes)
@@ -174,16 +170,13 @@ namespace ᐸRuntimeᐳ
     void processInfoForPageSetEntries(const GCAllocatorImpl* allocator, HeapStats& stat, const std::unordered_set<void*>& pendingdeletes)
     {
         stat.totalpages += allocator->pageset.size();
+        stat.pagesetcount += allocator->pageset.size();
 
         for(auto iter = allocator->pageset.begin(); iter != allocator->pageset.end(); iter++) {
             auto [livebytes, freebytes] = processInfoForSinglePage(*iter, stat.pagesetutilizations, pendingdeletes);
             stat.livebytes += livebytes;
             stat.freebytes += freebytes;
         }
-
-        stat.overallutilizations.count_0_30 += stat.pagesetutilizations.count_0_30;
-        stat.overallutilizations.count_30_70 += stat.pagesetutilizations.count_30_70;
-        stat.overallutilizations.count_70_100 += stat.pagesetutilizations.count_70_100;
     }
 
     void processAllocatorInfo(const GCAllocatorImpl* allocator, HeapStats& stat, const std::unordered_set<void*>& pendingdeletes, const std::unordered_set<void*>& allpages)
@@ -236,6 +229,14 @@ namespace ᐸRuntimeᐳ
         for(auto iter = gcallocs.begin(); iter != gcallocs.end(); iter++) {
             processAllocatorInfo(iter->second, stat, pendingdeletes, g_alloc_info.allocatedpages);
         }
+
+        stat.overallutilizations.count_0_30 += stat.nurseryutilizations.count_0_30;
+        stat.overallutilizations.count_30_70 += stat.nurseryutilizations.count_30_70;
+        stat.overallutilizations.count_70_100 += stat.nurseryutilizations.count_70_100;
+
+        stat.overallutilizations.count_0_30 += stat.pagesetutilizations.count_0_30;
+        stat.overallutilizations.count_30_70 += stat.pagesetutilizations.count_30_70;
+        stat.overallutilizations.count_70_100 += stat.pagesetutilizations.count_70_100;
     }
 
     void gcValidate()
