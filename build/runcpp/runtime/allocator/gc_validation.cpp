@@ -241,7 +241,7 @@ namespace ᐸRuntimeᐳ
 
     void gcValidate()
     {
-        g_memstats.advanceHeapStats();
-        processAllAllocatorsInfo(tl_alloc_info.gcallocs, g_memstats.getCurrentHeapStats());
+        g_memstats.heapstats = {};
+        processAllAllocatorsInfo(tl_alloc_info.gcallocs, g_memstats.heapstats);
     }
 }

@@ -272,8 +272,8 @@ namespace ᐸRuntimeᐳ
             return nptr;
         }
         else {
-            GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.getCurrentCollectStats().totalprocessed += 1);
-            GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.getCurrentCollectStats().evacuated += 1);
+            GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats.totalprocessed += 1);
+            GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats.evacuated += 1);
 
             GCAllocatorImpl* gcalloc = gcGetAllocator(ptr);
 
@@ -298,8 +298,8 @@ namespace ᐸRuntimeᐳ
     void processYoungRoots(std::vector<std::pair<AtomicGCMetadata*, void*>>& roots)
     {
         for(size_t i = 0; i < roots.size(); i++) {
-            GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.getCurrentCollectStats().totalprocessed += 1);
-            GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.getCurrentCollectStats().inplace += 1);
+            GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats.totalprocessed += 1);
+            GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats.inplace += 1);
 
             gcRootProcessYoungPromote(roots[i].first);
         }
@@ -390,9 +390,9 @@ namespace ᐸRuntimeᐳ
         alloc->xrcRelease(ptr);
         GC_IF_ENABLED(GC_MEMORY_CLEAR_FEATURE, std::memset(ptr, 0, alloc->alloctype->bytesize));
 
-        GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.getCurrentCollectStats().totalprocessed += 1);
-        GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.getCurrentCollectStats().indirectrcreclaims += 1);
-        GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.getCurrentCollectStats().quickreclaims += 1);
+        GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats.totalprocessed += 1);
+        GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats.indirectrcreclaims += 1);
+        GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats.quickreclaims += 1);
     }
     
     void releaseStd(void* ptr)
@@ -404,9 +404,9 @@ namespace ᐸRuntimeᐳ
         else {
             gcStoreDeleteListPtr(ptr);
 
-            GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.getCurrentCollectStats().totalprocessed += 1);
-            GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.getCurrentCollectStats().indirectrcreclaims += 1);
-            GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.getCurrentCollectStats().pendreclaims += 1);
+            GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats.totalprocessed += 1);
+            GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats.indirectrcreclaims += 1);
+            GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats.pendreclaims += 1);
         }
     }
 
@@ -566,8 +566,8 @@ namespace ᐸRuntimeᐳ
         curr_roots_rc.reserve(128); //TODO -- tune this
 
         GC_IF_ENABLED(GC_METRICS, clock_gettime(CLOCK_MONOTONIC, &time_collect_start));
-        GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.advanceCollectStats());
-        GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.getCurrentCollectStats().startingrcpends = tl_alloc_info.pendingdelete.size());
+        GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats = {});
+        GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats.startingrcpends = tl_alloc_info.pendingdelete.size());
 
         bool gproc = false;
         {
@@ -613,7 +613,7 @@ namespace ᐸRuntimeᐳ
         GC_IF_ENABLED(GC_METRICS, clock_gettime(CLOCK_MONOTONIC, &time_collect_end));
         GC_IF_ENABLED(GC_METRICS, g_memstats.processcollect(time_collect_start, time_collect_traverse_end, time_collect_rc_end, time_collect_end));
 
-        GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.getCurrentCollectStats().finalrcpends = tl_alloc_info.pendingdelete.size());
+        GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats.finalrcpends = tl_alloc_info.pendingdelete.size());
         GC_IF_ENABLED(GC_VALIDATE, gcValidate());
     }
 }

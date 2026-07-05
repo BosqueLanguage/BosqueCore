@@ -96,58 +96,8 @@ namespace ᐸRuntimeᐳ
         size_t rstatsidx = 0;
         std::array<SingleCollectStat, RRSTATS_SIZE> rrstats{};
 
-#if GC_METRICS_DETAILED
-        size_t collectstatsidx = 0;
-        std::array<CollectionDataInfo, RRSTATS_SIZE> collectstats{};
-
-        size_t heapstatsidx = 0;
-        std::array<HeapStats, RRSTATS_SIZE> heapstats{};
-
-        void advanceCollectStats() 
-        {
-            collectstatsidx = (collectstatsidx + 1) % RRSTATS_SIZE;
-            collectstats[collectstatsidx] = {};
-        }
-
-        CollectionDataInfo& getCurrentCollectStats() 
-        {
-            return collectstats[collectstatsidx];
-        }
-
-        void advanceHeapStats() 
-        {
-            heapstatsidx = (heapstatsidx + 1) % RRSTATS_SIZE;
-            heapstats[heapstatsidx] = {};
-        }
-
-        HeapStats& getCurrentHeapStats() 
-        {
-            return heapstats[heapstatsidx];
-        }
-#else
         CollectionDataInfo collectstats{};
         HeapStats heapstats{};
-
-        void advanceCollectStats() 
-        {
-            collectstats = {};
-        }
-
-        CollectionDataInfo& getCurrentCollectStats() 
-        {
-            return collectstats;
-        }
-
-        void advanceHeapStats() 
-        {
-            heapstats = {};
-        }
-
-        HeapStats& getCurrentHeapStats() 
-        {
-            return heapstats;
-        }
-#endif
 
         size_t totalpages = 0;
 
@@ -190,7 +140,7 @@ namespace ᐸRuntimeᐳ
             out << "Total Pages: " << this->totalpages << ", Total Collections: " << this->collectioncount << ", Total Allocations: " << this->totalallocs << ", Total Bytes: " << this->totalbytes << std::endl;
 
 #if GC_METRICS_DETAILED
-            const CollectionDataInfo& stats = this->getCurrentCollectStats();
+            const CollectionDataInfo& stats = this->collectstats;
             out << std::endl << "Collection Stats (Most Recent): " << std::endl;
             out << "Nursery Pages: " << stats.nurserypages << std::endl;
             out << "Total Objects Processed: " << stats.totalprocessed << ", In Place Promoted: " << stats.inplace << ", Evacuated: " << stats.evacuated << std::endl;
@@ -199,7 +149,7 @@ namespace ᐸRuntimeᐳ
 #endif
 
 #if GC_VALIDATE
-            const HeapStats& hstats = this->getCurrentHeapStats();
+            const HeapStats& hstats = this->heapstats;
             out << std::endl << "Heap Stats (Most Recent): " << std::endl;
             out << "Total Pages: " << hstats.totalpages << ", Live Bytes: " << hstats.livebytes << ", Free Bytes: " << hstats.freebytes << std::endl;
             out << "Overall Utilization: 0-30%: " << hstats.overallutilizations.count_0_30 << ", 30-70%: " << hstats.overallutilizations.count_30_70 << ", 70-100%: " << hstats.overallutilizations.count_70_100 << std::endl;
