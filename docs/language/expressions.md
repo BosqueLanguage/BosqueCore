@@ -35,7 +35,7 @@ Nat and ChkNat represent non-negative numbers only -- thus leading `-` signs are
 
 ChkInt and ChkNat have 2x the range of the standard Int and Nat types -- from -(2^124 - 1) to (2^124 - 1) and 0 to (2^126 - 1). As with Int/Nat these ranges are symmetric, negation and ChkNat -> ChkInt conversion is always safe. All operations on these types are saturating to a invalid flag `ChkInt::npos` (`ChkNat::npos`) for overflowing calculations. As opposed to traditional NaN values these can be compared for equality and ordering (with `npos` being larger than all valid values). However, division by zero and `ChkNat` underflow are still errors.
 
-For literals duplicate signs are an error, and the sign is _explicitly_ part of the number literal -- thus `-2i` and `-(2i)` are not the same semantically which is important for literal typedecl values such as `-2i<Fo>` where this is the literal `-2i` as a `Foo` _not_ the value `2i<Foo>` negated. 
+For literals duplicate signs are an error, and the sign is _explicitly_ part of the number literal -- thus `-2i` and `-(2i)` are not the same semantically which is important for literal typedecl values such as `-2i<Foo>` where this is the literal `-2i` as a `Foo` _not_ the value `2i<Foo>` negated. 
 
 ### Real Approximation Numbers
 -- In Progress --
@@ -117,13 +117,15 @@ String literals by default can be multi-line and preserve whitespace using trail
 ## Regular Expression Literals
 To match strings Bosque provides regular expression literals for both Unicode strings and C-style strings. These literals are enclosed in slashes `/.../` for Unicode regular expressions, `/.../c` for regular expressions over `CString` values, and support the regex syntax described in [BREX](https://github.com/BosqueLanguage/BREX).
 
+Key feature -- Bosque regular expressions are ReDoS free by construction and thus are guaranteed to run in linear time with respect to the input string length.
+
 ## Path Literals
 -- In Progress --
 In addition to string literals Bosque also provides path, path fragment, and glob literals for working with URI style resource paths. These literals are enclosed in backslashres `\...\`. They support arbitrary resource types and standard URI path syntax. 
 
 Examples include:
 ```none
-\file:/path/to/resource
+\file:/path/to/resource\
 f\resource/fragment\
 g\file:/path/**/glob/*.ext\
 
@@ -131,22 +133,23 @@ g\file:/path/**/glob/*.ext\
 ```
 
 ## Format String and Path Literals
--- In Progress --
 Strings and paths can be format literals as well. These are prefixed with a `$` and support embedded typed format components enclosed in `${...}`. These components include an argument index (starting at `0`) and the types of the format components can be specialized with an optional type after a colon `:`.
 
 ```none
 $"Hello ${0}"
-$"Value is ${0:CStringOf<Temperature>}"
-$\file:/path/to/${0}/resource
+$"Value is ${0:CString}"
+$\file:/path/to/${0}/resource\ %%In progress -- path format literals are not yet supported
 ```
 
 ## Literal Typed Expressions
-Typed literals provide a way to express structured information on other primitive data types, such as `Bool`, `Int`, `ChkInt`, `Decimal`, `UUIDv4`, `DateTime`, etc. These types are created using `type` syntax and literal values are constructed with the form `literal<Type>`. 
+Typed literals provide a way to express structured information on other primitive data types, such as `Bool`, `Int`, `ChkInt`, `Decimal`, `UUIDv4`, `DateTime`, etc. These types are created using `type` syntax and literal values are constructed with the form `literal<Type>`. Numeric types also support bounds.
 
 An example of a simple type alias creation is:
 ```none
 type Fahrenheit = Int;
 123i<Fahrenheit>
+
+type Percentage = Float{0.0f, 100.0f};
 
 type UserID = UUIDv4;
 uuid4{4f63660e-e0ad-4d18-93c6-f684faf11e65}<UserID>
@@ -157,25 +160,24 @@ These typed literals are strongly typed and do *not* auto-decay to their underly
 type Percentage = Float & { 
     invariant 0.0f <= $value && $value <= 100.0f;
 }
+```
 
 ## Literal Typed String/Path Expressions
--- In Progress --
-Typed strings provide a direct way to expose otherwise latent information about the data that is stored in a string -- e.g. a zipcode, CSS attribute, part ID, etc. The format information is given by a `Validator` type (see [Validator Types](types.md)) and a conforming string literal.
+Typed strings provide a direct way to expose otherwise latent information about the data that is stored in a string -- e.g. a zipcode, CSS attribute, part ID, etc. 
 
 ```none
-typedecl ZipcodeUS = /[0-9]{5}(-[0-9]{4})?/;
+type ZipcodeUS = CString of /[0-9]{5}(-[0-9]{4})?/c;
 ...
-"98052"ZipcodeUS
-"98052-0001"ZipcodeUS
+'98052'<ZipcodeUS>
+'98052-0001'<ZipcodeUS>
 
-"abc123"ZipcodeUS %%type error
+'abc123'<ZipcodeUS> %%type error
 ```
 
 ## Parameters/Variables/Captures
-Variables in Bosque are of the form `[_a-z][_a-zA-Z0-9]`. Local variables can be declared using a `let` for immutable bindings or `var` for mutable bindings. In addition to these standard modifiers, variables can also be declared with the `ref` modifier which allows them to be modified (see ref updates) in place or passed as reference parameters in calls.
+Variables in Bosque are of the form `[_a-z][_a-zA-Z0-9]`. Local variables can be declared using a `let` for immutable bindings or `var` for fully mutable bindings. In addition to these standard modifiers, variables can also be declared as `ref` which allows them to be modified (see ref updates) in place or passed as reference parameters in calls.
 
- Parameters are by default immutable. There are explicit passing modifers, `out`, `out?`, `inout`, and `ref` that allow updates in the callee to be reflected in the caller. The `out`, `out?`, `inout` modifiers require the caller to pass a
- variable that the callee can assign, conditionally assign or read/assign, respectively. The `ref` modifier allows the caller to pass a variable that the callee can ref update.
+ Parameters are by default immutable. There are explicit passing modifers, `out`, `out?`, `inout`, and `ref` that allow updates in the callee to be reflected in the caller. The `out`, `out?`, `inout` modifiers require the caller to pass a variable that the callee can assign ('var'), conditionally assign or read/assign, respectively. The `ref` modifier allows the caller to pass a variable that the callee can ref update.
  
  As Bosque is _referentially transparent_ there are no modes that are needed for the lambda captures -- all values are captured by value and cannot be modified in the lambda body. 
 
@@ -193,7 +195,7 @@ Ns::c2 %%3i but not a literal expression
 ```
 
 ## Member Constants
-Constant values can be declared in Object-Oriented scopes as well (see [types](types.md)). These constants can be used in expressions with the syntax `<typename>::<constant>` and, when they refer to `literal` values they are then valid `literal` expressions as well (so can be used in switch statements etc.).
+Constant values can be declared in Object-Oriented scopes as well (see [Types](types.md)). These constants can be used in expressions with the syntax `<typename>::<constant>` and, when they refer to `literal` values they are then valid `literal` expressions as well (so can be used in switch statements etc.).
 
 In contrast to many languages `const` declarations are dynamically resolved. Thus, any subtype will also have access to the `const` declarations of the supertype. This allows for a more flexible and natural way to define common constants for a set of types.
 
@@ -248,24 +250,22 @@ Similarly object-oriented types can be defined as `type` or `datatypes` and cons
 type Fahrenheit = Int;
 Fahrenheit{32i} %%constructs a Fahrenheit value for freezing
 
-type SystemID = /[A-Z]{3}"-"[0-9]+/;
-type PartID = StringOf<SystemID>;
+type PartID = String of /[A-Z]{3}"-"[0-9]+/;
 
 "X-52"<PartID>    %%fails the invariant on the string
 "ABC-123"<PartID> %%constructs a literal PartID value with the value ABC-123
-PartID{SystemID::from("ABC-123")} %%constructs a PartID value with the value ABC-123
+PartID::from("ABC-123") %%constructs a PartID value with the value ABC-123
 
----In Progress---
 datatype BoolOp using {
     line: Nat
 } of
-| LConst { val: Bool }
-| NotOp { arg: BoolOp }
-| AndOp { larg: BoolOp, rarg: BoolOp }
-| OrOp { larg: BoolOp, rarg: BoolOp }
+  LConst { val: Bool }
+  NotOp { arg: BoolOp }
+  AndOp { larg: BoolOp, rarg: BoolOp }
+  OrOp { larg: BoolOp, rarg: BoolOp }
 ;
 
-NotOp{5n LConst{1n, false}} %%constructs a NotOp value
+NotOp{5n, LConst{1n, false}} %%constructs a NotOp value
 ```
 
 In all cases they support the use of _data invariants_ of various types (mostly using the `invariant` [member](types.md)). The invariants are checked on construction and result in an error when violated.
@@ -370,7 +370,6 @@ Function parameters expressions that, are by default, passed by value. They can 
 The declaration of an operator is a virtual or abstract definition which may have Concept or Union typed arguments. Each dispatch implementation must have only unique (non-entity and non-union) typed arguments and must be defined in the same namespace as the operator (this prevents resolution ambiguity and accidental overloading). Arguments may also use literal value dispatch on one argument in the operator. If these are used then each dispatch implementation must provide a literal value for this argument.
 
 ## Field Access
--- In Progress --
 Fields in Object-Oriented types are accessed using the notation `e.f` where `f` is a field name. Fields accesses can be done on expressions of concrete and abstract types (virtual accesses). These virtual accesses can be on Concepts or Unions -- however all possible resolutions must be to the same definition!
 
 Examples of field access include:
@@ -405,8 +404,7 @@ y.h %%error -- Qux, Qaz both have h fields but different declarations
 ```
 
 ## ITest Check
--- In Progress --
-Bosque provides a unique form of test operators for types/values that generalizes simple type-relations checks. These operators are also used to implement the explicit flow-typing and binding in the language. The full syntax/semantics for these operators are covered in the *ITests* section. Their use for postfix tests uses the following syntax `e?ITest` where `ITest` is an ITest expression. 
+Bosque provides a unique form of test operators for types/values that generalizes simple type-relations checks. These operators are also used to implement the explicit flow-typing and binding in the language. The full syntax/semantics for these operators are covered in the *ITests* section. Their use for postfix tests uses the following syntax `e.?ITest` where `ITest` is an ITest expression. 
 
 Some examples of these tests include:
 ```none
@@ -425,15 +423,15 @@ entity Qaz provides Named, Bar {
 }
 
 let x: Named = ...;
-x?<Qux> %%true if x is a Qux
-x?!<Qux> %%true if x is a not a Qux
+x.?<Qux> %%true if x is a Qux
+x.?!<Qux> %%true if x is a not a Qux
 
-let y: Qux | Qaz | None = ...;
-y?<Qux | Qaz> %%true if y is a Qux or Qaz
-y?<None> %%true if y is None
-y?none %%true y is none
-y?!none %%true if y is none
-y?some %%true if y is a subtype of Some
+let y: Option<Bar> = ...;
+y.?<Some<Bar>> %%true if y is a some type
+y.?<None> %%true if y is None
+y.?none %%true y is none
+y.?!none %%true if y is not none
+y.?some %%true if y is a Some<Bar>
 ```
  
 ## ITest As and Conversion
@@ -457,22 +455,21 @@ entity Qaz provides Named, Bar {
 }
 
 let x: Named = ...;
-x@<Qux> %%fails if x is not a Qux and result type is Qux
-x@!<Qux> %%fail if x is a not a Qux and result type is Named
+x.@<Qux> %%fails if x is not a Qux and result type is Qux
+x.@!<Qux> %%fail if x is a not a Qux and result type is Named
 
-let y: Qux | Qaz | None = ...;
-y@<Qux | Qaz> %%fails if y is not a Qux or Qaz and result type is Qux | Qaz
-y@!<Qux> %%fails if y is a Qux and result type is Qaz | None
-y@!<None> %%fails if y is None and result type is Qux | Qaz
-y@some %%fails if y is none and result type is Qux | Qaz
+let y: Some<Bar> = ...;
+y.@<Some<Bar>> %%fails if y is not a Some<Bar> and result type is Some<Bar>
+y.@!<Some<Bar>> %%fails if y is a Some<Bar> and result type is None
+y.@!none %%fails if y is None and result type is Bar
+y.@some %%fails if y is none and result type is Bar
 
 let z: Result<Int, String> = ...;
-z@ok %%fails if z is err and result type is Int
-z@err %%fails if z is ok and result type is String
+z.@ok %%fails if z is err and result type is Int
+z.@err %%fails if z is ok and result type is String
 ```
 
 ## Method Call
--- In Progress --
 Bosque Object-Oriented types support member method definitions. These may be direct (no virtual definitions or dispatch) or virtual. Direct methods are defined on a single type and called directly when the receiver is of that type or a subtype. As with field accesses, if there are multiple types in a union, a method may be invoked provided all possible resolutions are to the same definition.
 
 Examples of direct method calls include:
@@ -509,7 +506,7 @@ let x: Bar = ...;
 x.get_g() %%call to Bar get_g
 x.get_h() %%error -- Bar does not have method get_h
 
-let y: Qux | Qaz = ...;
+let y: Bar = ...;
 y.get_g() %%call to Bar get_g
 y.get_h() %%error -- differing declarations of get_h
 ```
@@ -569,7 +566,7 @@ type IsOpEnabled = Boolean;
 ```
 
 ## Prefix Negation
-In Bosque the `+` and `-` operators are used to perform a unary sign operation on a numeric expression. In contrast to most languages the `-` operator is _safe_ for all numeric types. Specifically, as the valid range for `Int`/`ChkInt` is symmetric! For `Int`/`ChkInt` negation is always valid and for `Nat`/`ChkNat` negation results in a conversion to the corresponding `Int`/`ChkInt` type. The `+` operator is effectively a no-op for the primitive types (but may function differently if/when operator overloading is added).
+In Bosque the `+` and `-` operators are used to perform a unary sign operation on a numeric expression. In contrast to most languages the `-` operator is _safe_ for all numeric types. Specifically, as the valid range for `Int`/`ChkInt` is symmetric! For `Int`/`ChkInt` negation is always valid. The `+` operator is effectively a no-op for the primitive types (but may function differently if/when operator overloading is added).
 
 ```none 
 -(1i)  %% -1i
@@ -620,8 +617,8 @@ Types are not implicitly converted for comparison operations and, if needed, mus
 3.5f <= 2.5f %%false
 
 type Foo = Nat;
-2n_Foo > 1n_Foo %%true
-2n_Foo !== 3n_Foo %%true
+2n<Foo> > 1n<Foo> %%true
+2n<Foo> !== 3n<Foo> %%true
 ```
 
 In the special case of `ChkInt` and `ChkNat` values, comparisons with `npos` are defined such that `npos` is equal to itself and is greater than all other values of the type.
@@ -697,7 +694,7 @@ KeyComparator::less<ChkInt>(3I, 2I) %%false
 KeyComparator::equal<ChkInt>(4I, ChkInt::npos) %%true -- npos is greater than all other values (except itself)
 ```
 
-## Binary Logic `&&`/`||`/`==>` operators
+## Binary Logic `&&`/`||` operators
 Bosque provides (slightly non-standard) _non_-short-circuiting boolean operators of `&&` and `||`. 
 
 ```none
@@ -710,8 +707,8 @@ false || false %% false
 true || (1i / 0i == 1i) %% failure -- NOT short-circuited
 ```
 
--- In Progress --
-Bosque also has a logical implication operator `==>` which is short-circuited on the left side when it is `false`. 
+## Logical Implication `==>` operator (Top-Level Only)
+Bosque also has a logical implication operator `==>` which is short-circuited on the left side when it is `false`. This operator can only be used in top-level expressions for invariants, asserts, pre/post conditions.
 
 ```none
 true ==> true %%true
@@ -735,8 +732,7 @@ The Bosque language type checker uses a novel _explicit flow-sensitive_ typing a
 
 There are three flavors of ITests in bosque:
 1. **Type ITests** - These are used to test if an expression is of a specific type in a classic subtyping sense. The syntax for these is `<Type>` where `Type` is a type expression and `!<Type>` is an negated version of the test.
-2. **Value ITests** - These are used to test if an expression is a specific value, which must be a literal comparable with the `===` or `!==` operator.The syntax for these is `[Literal]` where `Literal` is a literal expression and `![Literal]` is a negated version that uses the `!==` semantics.
-3. **Special Constructor ITests** - These are used to test if an expression is a specific special constructor and then, depending, on the context will also extract and bind values. The syntax for these is:
+2. **Special Constructor ITests** - These are used to test if an expression is a specific special constructor and then, depending, on the context will also extract and bind values. The syntax for these is:
     - `none` - tests if the expression is `none` and converts the result to a none
     - `some` - tests if the expression is `some` and converts the result to a some
     - `ok` - tests if the expression is `ok` and converts the result to `T` corresponding to the `Result<T, E>::Ok` type value
