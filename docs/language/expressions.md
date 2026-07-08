@@ -194,6 +194,20 @@ Ns::c1 %%1i and is a literal expression
 Ns::c2 %%3i but not a literal expression
 ```
 
+## Enum Values
+Enum members are referenced with the syntax `Type#Member`. These values are treated as literal expressions, so they can be used anywhere a literal is required, including `switch` cases and constant initializers. Currently they are opaque values and cannot be used in arithmetic or other operations outside of comparisons.
+
+```none
+enum PlayerMark {
+    empty,
+    x,
+    o
+}
+
+PlayerMark#empty
+PlayerMark#x
+```
+
 ## Member Constants
 Constant values can be declared in Object-Oriented scopes as well (see [Types](types.md)). These constants can be used in expressions with the syntax `<typename>::<constant>` and, when they refer to `literal` values they are then valid `literal` expressions as well (so can be used in switch statements etc.).
 
@@ -725,24 +739,115 @@ The `Map<K, V>` container in Bosque holds values of type `MapEntry<K, V>`. The M
 Map<Int, String>{1i => "one", 2i => "two"}; %%Map<Int, String>{MapEntry<Int, String>{1i, "one"}, MapEntry<Int, String>{2i, "two"}}
 ```
 
+## Value List Constructors
+Bosque uses the `(| ... |)` syntax for fixed-size heterogeneous value lists. These are commonly used for multiple return values and for compact tuple-style data.
+
+A value list constructor must contain at least two entries.
+
+```none
+(|1i, "hello"|)
+(|some(1i), true, 4n|)
+```
+
+## Value List Index Access
+Values in a value list can be accessed using numeric postfix selectors such as `.0`, `.1`, and so on. The index must be in bounds for the statically known value list type.
+
+```none
+let pair = (|1i, "hello"|);
+
+pair.0 %%1i
+pair.1 %%"hello"
+```
+
+## Lambda Expressions
+Bosque supports inline lambda expressions with the `fn` and `pred` keywords. A `fn` lambda produces an arbitrary value while a `pred` lambda is intended to produce a `Bool`. Lambdas may also be marked `recursive` or `recursive?` to indicate direct recursion support.
+
+Lambda expressions _must_ be used in a direct call position -- e.g. they cannot be assigned to variables or returned from functions. Lambda parameters are either all explicitly typed or all inferred together.
+
+```none
+fn(x: Int, y: Int): Int => x + y
+pred(x) => x >= 0i
+```
+
+## Lambda Invocation
+When a variable is bound to a lambda value it can be invoked with standard call syntax. Recursive lambda values may also use the explicit recursive call annotations `[recursive]` and `[recursive?]` in the same style as named functions.
+
+```none
+function applybinop(op: (Int, Int) => Int, x: Int, y: Int): Int {
+    return op(x, y);
+}
+
+applybinop(fn(x, y) => x + y, 1i, 2i) %%3i
+```
+
+## Parse-As-Type Expressions
+--In Progress--
+Bosque reserves the syntax `<Type>(expr)` for parse/coercion style expressions.
+
+## Format Interpolation Expressions
+In addition to format string literals, Bosque exposes explicit interpolation helpers through `Interpolate::string` and `Interpolate::cstring`. The first argument must be a format string value and the remaining arguments must match the placeholders declared in that format string.
+
+```none
+let msg = Interpolate::string($"Hello %{name: String}", name = "Bosque");
+let cmsg = Interpolate::cstring($'id=%{0: Int}', 42i);
+```
+
+Named placeholders require named arguments and positional placeholders require positional arguments.
+
+## Environment Value Access
+--In Progress--
+Task code can access environment values with `env.name`, `env.has(name)`, `env.get(name)`, and `env.tryGet(name)`. Direct member-style access and `get` return the declared environment value type, while `tryGet` returns an `Option<T>` for the declared environment type.
+
+```none
+env.requestID
+env.has('tenant')
+env.get('requestID')
+env.tryGet('tenant')
+```
+
+Environment access is only valid in task scopes.
+
+## Hole Expressions
+--In Progress--
+Hole expressions provide a placeholder for synthesis, prototyping, and tool-assisted completion. They can optionally name the hole, capture variables, attach a documentation comment, point at a sample source, and declare an expected result type.
+
 # Bosque Expression Components
 
 ## ITests
-The Bosque language type checker uses a novel _explicit flow-sensitive_ typing algorithm. Instead of relying on a set of heuristics and implicit rules in the checker logic Bosque makes the flow typing an explicit part of the language syntax. Inference introduction is limited to function/method arguments, `let`/`var` bindings and `return` statements where the type of the binding or return value is used to infer type of the expression (or vice a versa). These introductions are then pushed down the expression tree to the leaves or propagated up to roots. Otherwise flow and inference are explicitly stated with Itests and Binders.
+The Bosque language type checker uses a novel _explicit flow-sensitive_ typing algorithm. Instead of relying on a set of heuristics and implicit rules in the checker logic Bosque makes the flow typing an explicit part of the language syntax. 
 
 There are three flavors of ITests in bosque:
-1. **Type ITests** - These are used to test if an expression is of a specific type in a classic subtyping sense. The syntax for these is `<Type>` where `Type` is a type expression and `!<Type>` is an negated version of the test.
+1. **Type ITests** - These are used to test if an expression is of a specific type in a classic subtyping sense. The syntax for these is `<Type>` where `Type` is a type expression and `!<Type>` is a negated version of the test.
 2. **Special Constructor ITests** - These are used to test if an expression is a specific special constructor and then, depending, on the context will also extract and bind values. The syntax for these is:
-    - `none` - tests if the expression is `none` and converts the result to a none
-    - `some` - tests if the expression is `some` and converts the result to a some
-    - `ok` - tests if the expression is `ok` and converts the result to `T` corresponding to the `Result<T, E>::Ok` type value
-    - `fail` - tests if the expression is `err` and converts the result to `E` corresponding to the `Result<T, E>::Err` type value
+    - `none` - tests if the expression is `none` (and extracts as none if needed)
+    - `some` - tests if the expression is `some(k)` (and extracts as `k` if needed)
+    - `ok` - tests if the expression is `ok(value)` (and extracts as `value` if needed)
+    - `fail` - tests if the expression is `fail(info)` (and extracts as `info` if needed)
     
 ## Parameters and Arguments
 
--- In Progress --
+Bosque supports several argument forms:
 
-## Binders
+1. Positional arguments such as `f(1i, 2i)`.
+2. Named arguments such as `f(x = 1i, y = 2i)`.
+3. Skipped arguments with `_` that are filled later by name.
+4. Spread arguments with `...args`.
+5. Passing arguments with `ref`, `out`, `out?`, and `inout`.
 
-# Bosque Task Expressions
+```none
+f(1i, y = 2i)
+f(_, y = 2i, x = 1i)
+g(...values)
+h(state, inout count)
+```
+
+**[TODO]** The full ordering and interaction rules between skipped, named, spread, and passing arguments should be documented in more detail.
+
+## API Invocation Expressions
+--In Progress--
+Bosque provides a dedicated `api` invocation form for task-oriented API dispatch. The syntax is namespace-qualified, may carry task configs, and uses the same leading environment argument as task execution expressions.
+
+## Agent Invocation Expressions
+--In Progress--
+Bosque also provides an `agent` invocation form. It is similar to `api` invocation but may include an explicit result type annotation after the config block.
 
