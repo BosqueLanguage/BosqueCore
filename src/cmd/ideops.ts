@@ -52,13 +52,14 @@ function runIDETypeCheck(usercode: CodeFileInfo[]): [IDEOpErrorInfo[], string | 
 }
 
 let fullargs = process.argv.slice(2);
-
 function workflowLoadUserSrc(files: string[]): CodeFileInfo[] | undefined {
     try {
         let code: CodeFileInfo[] = [];
 
         for (let i = 0; i < files.length; ++i) {
-            code.push({ srcpath: files[i], filename: path.basename(files[i]), contents: fs.readFileSync(files[i]).toString() });
+            if(!files[i].includes("BosqueCore/src/core") && !files[i].includes("BosqueCore/src/samples")) {
+                code.push({ srcpath: files[i], filename: path.basename(files[i]), contents: fs.readFileSync(files[i]).toString() });
+            }
         }
 
         return code;
