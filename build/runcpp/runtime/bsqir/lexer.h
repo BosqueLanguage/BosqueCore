@@ -151,7 +151,7 @@ namespace ᐸRuntimeᐳ
         }
 
         bool matches(const char* cchars) const;
-        void extract(char* outchars, size_t maxlen) const;
+        bool extract(char* outchars, size_t maxlen) const;
 
         template<size_t len>
         bool xmatches(const char (&cchars)[len]) const

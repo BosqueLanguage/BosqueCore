@@ -352,7 +352,7 @@ class IRTypedeclCStringDecl extends IRTypedeclTypeDecl {
     readonly rechk: IRLiteralCRegexExpression | undefined;
     
     constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], saturatedProvides: IRTypeSignature[], allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[], allValidates: { containingtype: IRNominalTypeSignature, ii: number }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo, rngchk: {min: string | undefined, max: string | undefined} | undefined, rechk: IRLiteralCRegexExpression | undefined) {
-        super(tkey, invariants, validates, saturatedProvides, allInvariants, allValidates, docstr, [], file, sinfo, new IRNominalTypeSignature("CString"), true, false, rngchk);
+        super(tkey, invariants, validates, saturatedProvides, allInvariants, allValidates, docstr, metatags, file, sinfo, new IRNominalTypeSignature("CString"), true, false, rngchk);
         this.rechk = rechk;
     }
 }
@@ -361,7 +361,7 @@ class IRTypedeclStringDecl extends IRTypedeclTypeDecl {
     readonly rechk: IRLiteralUnicodeRegexExpression | undefined;
     
     constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], saturatedProvides: IRTypeSignature[], allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[], allValidates: { containingtype: IRNominalTypeSignature, ii: number }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo, rngchk: {min: string | undefined, max: string | undefined} | undefined, rechk: IRLiteralUnicodeRegexExpression | undefined) {
-        super(tkey, invariants, validates, saturatedProvides, allInvariants, allValidates, docstr, [], file, sinfo, new IRNominalTypeSignature("String"), true, false, rngchk);
+        super(tkey, invariants, validates, saturatedProvides, allInvariants, allValidates, docstr, metatags, file, sinfo, new IRNominalTypeSignature("String"), true, false, rngchk);
         this.rechk = rechk;
     }
 }

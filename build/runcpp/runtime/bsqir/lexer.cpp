@@ -9,7 +9,7 @@ namespace ᐸRuntimeᐳ
     static std::regex s_int_re("^(0|[+-]?[1-9][0-9]*)i", std::regex_constants::nosubs | std::regex_constants::optimize);
     static std::regex s_chknat_re("^(ChkNat::npos|((0|[+-]?[1-9][0-9]*)N))", std::regex_constants::nosubs | std::regex_constants::optimize);
     static std::regex s_chkint_re("^(ChkInt::npos|((0|[+-]?[1-9][0-9]*)I))", std::regex_constants::nosubs | std::regex_constants::optimize);
-    static std::regex s_float_re("^(0|[+-]?[1-9][0-9]*)(\\.[0-9]+)([eE][+-]?[0-9]+)?f", std::regex_constants::nosubs | std::regex_constants::optimize);
+    static std::regex s_float_re("^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)([eE][+-]?[0-9]+)?f", std::regex_constants::nosubs | std::regex_constants::optimize);
 
     constexpr std::array<char, 11> s_symbol_tokens = { '(', ')', '{', '}', '[', ']', '<', '>', ',', '#', '|' };
     constexpr std::array<const char*, 6> s_keyword_tokens = { "none", "true", "false", "some", "ok", "fail" };
@@ -26,12 +26,15 @@ namespace ᐸRuntimeᐳ
         return std::equal(this->begin, this->end, cchars);
     }
         
-    void BSQONToken::extract(char* outchars, size_t maxlen) const
+    bool BSQONToken::extract(char* outchars, size_t maxlen) const
     {
-        assert(maxlen > this->size());
+        if(maxlen <= this->size()) {
+            return false;
+        }
 
         std::copy(this->begin, this->end, outchars);
         outchars[this->size()] = '\0';
+        return true;
     }
 
     void BSQONLexer::initialize(std::list<uint8_t*>&& iobuffs, size_t totalbytes)
