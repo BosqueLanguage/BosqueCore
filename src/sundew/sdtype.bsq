@@ -1,22 +1,22 @@
-namespace IRAssembly;
+namespace Sundew;
 
 entity FormatTypeSignatureTerm {
-    field argname: IRIdentifier;
-    field argtype: IRTypeSignature;
+    field argname: Identifier;
+    field argtype: TypeSignature;
 }
 
-datatype IRTypeSignature using {
-    field tkeystr: IRTypeKey;
+datatype TypeSignature using {
+    field tkeystr: TypeKey;
 }
 of
-    IRVoidTypeSignature { }
-    IRNominalTypeSignature { }
-    IREListTypeSignature { field entries: List<IRTypeSignature>; }
-    IRDashResultTypeSignature { field entries: List<IRTypeSignature>; }
-    IRFormatCStringTypeSignature { field rtype: IRTypeSignature; field terms: List<FormatTypeSignatureTerm>; }
-    IRFormatStringTypeSignature { field rtype: IRTypeSignature; field terms: List<FormatTypeSignatureTerm>; }
+    VoidTypeSignature { }
+    NominalTypeSignature { }
+    EListTypeSignature { field entries: List<TypeSignature>; }
+    DashResultTypeSignature { field entries: List<TypeSignature>; }
+    FormatCStringTypeSignature { field rtype: TypeSignature; field terms: List<FormatTypeSignatureTerm>; }
+    FormatStringTypeSignature { field rtype: TypeSignature; field terms: List<FormatTypeSignatureTerm>; }
     %% More Here -- see below
-    IRLambdaTypeSignature { }
+    LambdaTypeSignature { }
 ;
 
 %*

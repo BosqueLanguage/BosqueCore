@@ -1,0 +1,53 @@
+declare namespace Sundew;
+
+concept AbstractNominalTypeDecl {
+    field tkey: TypeKey;
+
+    %%readonly invariants: IRInvariantDecl[];
+    %%readonly validates: IRValidateDecl[];
+    %%readonly fields: IRMemberFieldDecl[];
+
+    %%readonly etag: "std" | "status" | "event";
+
+    %%field saturatedProvides: IRTypeSignature[];
+    %%field saturatedBFieldInfo: { containingtype: IRNominalTypeSignature, fkey: string, fname: string, ftype: IRTypeSignature }[];
+
+    %%field allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[];
+    %%field allValidates: { containingtype: IRNominalTypeSignature, ii: number }[];
+    
+    %%TODO vtable info here
+
+    %%field docstr: IRDeclarationDocString | undefined;
+    %%field metatags: IRDeclarationMetaTag[];
+}
+
+
+concept AbstractEntityTypeDecl provides AbstractNominalTypeDecl {
+}
+
+entity EnumTypeDecl provides AbstractEntityTypeDecl {
+    field members: List<CString>;
+}
+
+entity TypedeclRangeCheck {
+    field min: Option<LiteralExpression>;
+    field max: Option<LiteralExpression>;
+}
+
+datatype TypedeclTypeDecl provides AbstractEntityTypeDecl using {
+    field valuetype: TypeSignature;
+    field iskeytype: Bool;
+    field isnumerictype: Bool;
+}
+of
+    TypedeclSimpleTypeDecl { }
+    TypedeclBoundedTypeDecl { field rngchk: TypedeclRangeCheck; }
+    TypedeclCStringDecl { field rechk: Option<CString> = none; field rngchk: Option<TypedeclRangeCheck> = none; }
+    TypedeclStringDecl { field rechk: Option<String> = none; field rngchk: Option<TypedeclRangeCheck> = none; }
+;
+
+concept InternalEntityTypeDecl provides AbstractEntityTypeDecl {
+}
+
+entity PrimitiveEntityTypeDecl provides InternalEntityTypeDecl {
+}

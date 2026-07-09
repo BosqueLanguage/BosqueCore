@@ -1,0 +1,61 @@
+namespace Sundew;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Functions to emit the Expressions in the appropriate form for the SMT Solver
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+function emitLiteralExpression(exp: LiteralExpression): CString {
+    return exp.smtval;
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Functions to emit the Type Declarations in the appropriate form for the SMT Solver
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+function emitEnumDeclaration(enumdecl: EnumTypeDecl): CString {
+    abort;
+}
+
+function emitTypedeclDeclaration(typedecl: TypedeclTypeDecl): CString {
+    match(typedecl) {
+        TypedeclSimpleTypeDecl => { abort; }
+        TypedeclBoundedTypeDecl => { abort; }
+        TypedeclCStringDecl => { abort; }
+        TypedeclStringDecl => { abort; }
+    }
+}
+
+function emitEntityTypeDeclaration(decl: AbstractEntityTypeDecl): CString {
+    abort;
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Functions to emit types in the appropriate form for the SMT Solver to generate solvable values 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+function emitSolvableValueForEnumType(tdecl: EnumTypeDecl, path: CString): CString {
+    xxxx;
+}
+
+function emitSolvableValueForTypedeclType(tdecl: TypedeclTypeDecl, path: CString): CString {
+    xxxx;
+}
+
+function emitSolvableValueForPrimitiveType(tdecl: PrimitiveEntityTypeDecl, path: CString): CString {
+    xxxx;
+}
+
+function emitSolvableValueForEntityType(tdecl: AbstractEntityTypeDecl, path: CString): CString {
+    xxxx;
+}
+
+function emitSolvableValueForNominalType(tdecl: AbstractNominalTypeDecl, path: CString): CString {
+    xxxx;
+}
+
+function emitSolvableValueForType(tsig: TypeSignature, path: CString): CString {
+    match(tsig) {
+        NominalTypeSignature => { return emitSolvableValueForNominalType(xxxx, path); }
+        EListTypeSignature => { abort; }
+    }
+}
