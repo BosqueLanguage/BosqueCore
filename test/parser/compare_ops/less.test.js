@@ -1,6 +1,6 @@
 "use strict";
 
-import { parseTestExp, parseTestExpError } from "../../../bin/test/parser/parse_nf.js";
+import { parseTestExp, parseTestExpError, parseTestFunctionInFile } from "../../../bin/test/parser/parse_nf.js";
 import { describe, it } from "node:test";
 
 describe ("Parser -- basic <", () => {
@@ -12,6 +12,10 @@ describe ("Parser -- basic <", () => {
 
     it("should fail stuck operator", function () {
         parseTestExpError("2n<3n", 'Expected ">" but got "3n" when parsing "tagged literal"', "Nat");
+    });
+
+    it("should parse type alias compare", function () {
+        parseTestFunctionInFile("type Foo = Nat; [FUNC]", "function main(): Bool { return 0n<Main::Foo> < 1n<Main::Foo>; }");
     });
 });
 
@@ -25,5 +29,8 @@ describe ("Parser -- basic <=", () => {
     it("should fail stuck operator", function () {
         parseTestExpError("2n<=3n", 'Expected ">" but got "=" when parsing "tagged literal"', "Nat");
     });
-});
 
+    it("should parse type alias compare", function () {
+        parseTestFunctionInFile("type Foo = Nat; [FUNC]", "function main(): Bool { return 0n<Main::Foo> <= 1n<Main::Foo>; }");
+    });
+});

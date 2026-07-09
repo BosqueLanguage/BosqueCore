@@ -1,6 +1,4 @@
-
 let statusEnabled: boolean = false;
-
 const Status = {
     output: (msg: string): void => {
         if(statusEnabled) {
@@ -20,6 +18,6 @@ const Status = {
     }
 };
 
-export { 
-    Status 
+export {
+    Status
 };

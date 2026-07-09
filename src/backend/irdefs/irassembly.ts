@@ -1,0 +1,1195 @@
+import { IRCRegex, IRURegex, IRSourceInfo } from "./irsupport.js";
+import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature } from "./irtype.js";
+import { IRBody, IRLiteralCRegexExpression, IRLiteralFormatCStringExpression, IRLiteralFormatStringExpression, IRLiteralUnicodeRegexExpression, IRSimpleExpression, IRStatement } from "./irbody.js";
+
+abstract class IRConditionDecl {
+    readonly file: string;
+    readonly sinfo: IRSourceInfo;
+
+    readonly diagnosticTag: string | undefined;
+    
+    readonly stmts: IRStatement[];
+    readonly value: IRSimpleExpression;
+
+    constructor(file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, stmts: IRStatement[], value: IRSimpleExpression) {
+        this.file = file;
+        this.sinfo = sinfo;
+        
+        this.diagnosticTag = diagnosticTag;
+
+        this.stmts = stmts;
+        this.value = value;
+    }
+}
+
+class IRPreConditionDecl extends IRConditionDecl {
+    readonly ikey: string;
+    readonly requiresidx: number;
+    
+    readonly issoft: boolean;
+
+    constructor(file: string, sinfo: IRSourceInfo, tag: string | undefined, ikey: string, requiresidx: number, issoft: boolean, stmts: IRStatement[], value: IRSimpleExpression) {
+        super(file, sinfo, tag, stmts, value);
+        this.ikey = ikey;
+        this.requiresidx = requiresidx;
+        this.issoft = issoft;
+    }
+}
+
+class IRPostConditionDecl extends IRConditionDecl {
+    readonly ikey: string;
+    readonly ensuresidx: number;
+    
+    readonly issoft: boolean;
+    
+    constructor(file: string, sinfo: IRSourceInfo, tag: string | undefined, ikey: string, ensuresidx: number, issoft: boolean, stmts: IRStatement[], value: IRSimpleExpression) {
+        super(file, sinfo, tag, stmts, value);
+        this.ikey = ikey;
+        this.ensuresidx = ensuresidx;
+        this.issoft = issoft;
+    }
+}
+
+class IRInvariantDecl extends IRConditionDecl {
+    readonly tkey: string;
+    readonly invariantidx: number;
+    
+    constructor(file: string, sinfo: IRSourceInfo, tag: string | undefined, tkey: string, invariantidx: number, stmts: IRStatement[], value: IRSimpleExpression) {
+        super(file, sinfo, tag, stmts, value);
+        this.tkey = tkey;
+        this.invariantidx = invariantidx;
+    }
+}
+
+class IRValidateDecl extends IRConditionDecl {
+    readonly tkey: string;
+    readonly validateidx: number;
+    
+    constructor(file: string, sinfo: IRSourceInfo, tag: string | undefined, tkey: string, validateidx: number, stmts: IRStatement[], value: IRSimpleExpression) {
+        super(file, sinfo, tag, stmts, value);
+        this.tkey = tkey;
+        this.validateidx = validateidx;
+    }
+}
+
+class IRDeclarationDocString {
+    readonly text: string;
+
+    constructor(text: string) {
+        this.text = text;
+    }
+}
+
+class IRDeclarationMetaTag {
+    readonly name: string;
+    readonly tags: {enumType: IRTypeSignature, tag: string}[];
+
+    constructor(name: string, tags: {enumType: IRTypeSignature, tag: string}[]) {
+        this.name = name;
+        this.tags = tags;
+    }
+}
+
+class IRConstantDecl {
+    readonly ckey: string;
+
+    readonly declaredType: IRTypeSignature;
+    readonly stmts: IRStatement[];
+    readonly value: IRSimpleExpression;
+
+    readonly docstr: IRDeclarationDocString | undefined;
+
+    constructor(ckey: string, declaredType: IRTypeSignature, stmts: IRStatement[], value: IRSimpleExpression, docstr: IRDeclarationDocString | undefined) {
+        this.ckey = ckey;
+        this.declaredType = declaredType;
+        this.stmts = stmts;
+        this.value = value;
+        this.docstr = docstr;
+    }
+}
+
+class IRInvokeParameterDecl {
+    readonly name: string;
+    readonly type: IRTypeSignature;
+    readonly pkind: "ref" | "out" | "out?" | "inout" | undefined;
+    readonly skind: "lcapture" | "this" | "self" | undefined;
+
+    readonly defaultValue: { stmts: IRStatement[], value: IRSimpleExpression } | undefined;
+    
+    constructor(name: string, type: IRTypeSignature, pkind: "ref" | "out" | "out?" | "inout" | undefined, skind: "lcapture" | "this" | "self" | undefined, defaultValue: { stmts: IRStatement[], value: IRSimpleExpression } | undefined) {
+        this.name = name;
+        this.type = type;
+        this.pkind = pkind;
+        this.skind = skind;
+        this.defaultValue = defaultValue;
+    }
+}
+
+abstract class IRInvokeMetaDecl {
+    readonly ikey: string;
+
+    readonly recursive: "recursive" | "recursive?" | undefined;
+    readonly params: IRInvokeParameterDecl[];
+    readonly resultType: IRTypeSignature;
+
+    readonly preconditions: IRPreConditionDecl[];
+    readonly postconditions: IRPostConditionDecl[];
+
+    readonly docstr: IRDeclarationDocString | undefined;
+
+    readonly file: string;
+    readonly sinfo: IRSourceInfo;
+
+    constructor(ikey: string, recursive: "recursive" | "recursive?" | undefined, params: IRInvokeParameterDecl[], resultType: IRTypeSignature, preconditions: IRPreConditionDecl[], postconditions: IRPostConditionDecl[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo) {
+        this.ikey = ikey;
+        this.recursive = recursive;
+        this.params = params;
+        this.resultType = resultType;
+        this.preconditions = preconditions;
+        this.postconditions = postconditions;
+        this.docstr = docstr;
+        this.file = file;
+        this.sinfo = sinfo;
+    }
+}
+
+class IRTestAssociation {
+    readonly file: string | undefined;
+    readonly ns: string | undefined;
+    readonly ontype: string | undefined;
+    readonly onmember: string | undefined;
+
+    constructor(file: string | undefined, ns: string | undefined, ontype: string | undefined, onmember: string | undefined) {
+        this.file = file;
+        this.ns = ns;
+        this.ontype = ontype;
+        this.onmember = onmember;
+    }
+
+    isMatchWith(tmatch: IRTestAssociation): boolean {
+        if(tmatch.file !== undefined && this.file !== tmatch.file) {
+            return false;
+        }
+
+        if(tmatch.ns !== undefined && this.ns !== tmatch.ns) {
+            return false;
+        }
+
+        if(tmatch.ontype !== undefined && this.ontype !== tmatch.ontype) {
+            return false;
+        }
+
+        if(tmatch.onmember !== undefined && this.onmember !== tmatch.onmember) {
+            return false;
+        }
+
+        return true;
+    }
+}
+
+class IRPredicateDecl extends IRInvokeMetaDecl {
+    constructor(ikey: string, recursive: "recursive" | "recursive?" | undefined, params: IRInvokeParameterDecl[], resultType: IRTypeSignature, preconditions: IRPreConditionDecl[], postconditions: IRPostConditionDecl[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo) {
+        super(ikey, recursive, params, resultType, preconditions, postconditions, docstr, file, sinfo);
+    }
+}
+
+class IRTestDecl extends IRInvokeMetaDecl {
+    readonly testkind: "errtest" | "chktest";
+    readonly association: IRTestAssociation[] | undefined;
+
+    readonly body: IRBody;
+
+    constructor(ikey: string, recursive: "recursive" | "recursive?" | undefined, params: IRInvokeParameterDecl[], resultType: IRTypeSignature, preconditions: IRPreConditionDecl[], postconditions: IRPostConditionDecl[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, testkind: "errtest" | "chktest", association: IRTestAssociation[] | undefined, body: IRBody) {
+        super(ikey, recursive, params, resultType, preconditions, postconditions, docstr, file, sinfo);
+        this.testkind = testkind;
+        this.association = association;
+        this.body = body;
+    }
+}
+
+class IRExampleDecl extends IRInvokeMetaDecl {
+    readonly association: IRTestAssociation[] | undefined;
+
+    readonly body: IRBody;
+
+    constructor(ikey: string, recursive: "recursive" | "recursive?" | undefined, params: IRInvokeParameterDecl[], resultType: IRTypeSignature, preconditions: IRPreConditionDecl[], postconditions: IRPostConditionDecl[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, association: IRTestAssociation[] | undefined, body: IRBody) {
+        super(ikey, recursive, params, resultType, preconditions, postconditions, docstr, file, sinfo);
+        this.association = association;
+        this.body = body;
+    }
+} 
+
+class IRInvokeDecl extends IRInvokeMetaDecl {
+    readonly body: IRBody;
+
+    constructor(ikey: string, recursive: "recursive" | "recursive?" | undefined, params: IRInvokeParameterDecl[], resultType: IRTypeSignature, preconditions: IRPreConditionDecl[], postconditions: IRPostConditionDecl[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, body: IRBody) {
+        super(ikey, recursive, params, resultType, preconditions, postconditions, docstr, file, sinfo);
+        this.body = body;
+    }
+}
+
+class IRTaskActionDecl extends IRInvokeMetaDecl {
+    readonly body: IRBody;
+
+    constructor(ikey: string, recursive: "recursive" | "recursive?" | undefined, params: IRInvokeParameterDecl[], resultType: IRTypeSignature, preconditions: IRPreConditionDecl[], postconditions: IRPostConditionDecl[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, body: IRBody) {
+        super(ikey, recursive, params, resultType, preconditions, postconditions, docstr, file, sinfo);
+        this.body = body;
+    }
+}
+
+class IRMemberFieldDecl {
+    readonly fkey: string;
+
+    readonly enclosingType: IRNominalTypeSignature;
+    readonly fname: string;
+    readonly declaredType: IRTypeSignature;
+    readonly defaultValue: { stmts: IRStatement[], value: IRSimpleExpression } | undefined;
+
+    readonly docstr: IRDeclarationDocString | undefined;
+    readonly metatags: IRDeclarationMetaTag[];
+
+    constructor(fkey: string, enclosingType: IRNominalTypeSignature, fname: string, declaredType: IRTypeSignature, defaultValue: { stmts: IRStatement[], value: IRSimpleExpression } | undefined, docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[]) {
+        this.fkey = fkey;
+        this.enclosingType = enclosingType;
+        this.fname = fname;
+        this.declaredType = declaredType;
+        this.defaultValue = defaultValue;
+
+        this.docstr = docstr;
+        this.metatags = metatags;
+    }
+}
+
+abstract class IRAbstractNominalTypeDecl {
+    readonly tkey: string;
+
+    readonly invariants: IRInvariantDecl[];
+    readonly validates: IRValidateDecl[];
+    readonly fields: IRMemberFieldDecl[];
+
+    readonly etag: "std" | "status" | "event";
+
+    readonly saturatedProvides: IRTypeSignature[];
+    readonly saturatedBFieldInfo: { containingtype: IRNominalTypeSignature, fkey: string, fname: string, ftype: IRTypeSignature }[];
+
+    readonly allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[];
+    readonly allValidates: { containingtype: IRNominalTypeSignature, ii: number }[];
+    
+    //TODO vtable info here
+
+    readonly docstr: IRDeclarationDocString | undefined;
+    readonly metatags: IRDeclarationMetaTag[];
+
+    readonly file: string;
+    readonly sinfo: IRSourceInfo;
+
+    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], fields: IRMemberFieldDecl[], etag: "std" | "status" | "event", saturatedProvides: IRTypeSignature[], saturatedBFieldInfo: { containingtype: IRNominalTypeSignature, fkey: string, fname: string, ftype: IRTypeSignature }[], allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[], allValidates: { containingtype: IRNominalTypeSignature, ii: number }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
+        this.tkey = tkey;
+        this.invariants = invariants;
+        this.validates = validates;
+        this.fields = fields;
+        this.etag = etag;
+        this.saturatedProvides = saturatedProvides;
+        this.saturatedBFieldInfo = saturatedBFieldInfo;
+        this.allInvariants = allInvariants;
+        this.allValidates = allValidates;
+        this.docstr = docstr;
+        this.metatags = metatags;
+
+        //TODO vtable info here
+
+        this.file = file;
+        this.sinfo = sinfo;
+    }
+
+    abstract getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[];
+}
+
+abstract class IRAbstractEntityTypeDecl extends IRAbstractNominalTypeDecl {
+    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], fields: IRMemberFieldDecl[], etag: "std" | "status" | "event", saturatedProvides: IRTypeSignature[], saturatedBFieldInfo: { containingtype: IRNominalTypeSignature, fkey: string, fname: string, ftype: IRTypeSignature }[], allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[], allValidates: { containingtype: IRNominalTypeSignature, ii: number }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
+        super(tkey, invariants, validates, fields, etag, saturatedProvides, saturatedBFieldInfo, allInvariants, allValidates, docstr, metatags, file, sinfo);
+    }
+
+    static emitBAPI(): string {
+        return "Not Implemented: BAPI emission for abstract entities!";
+    }
+}
+
+class IREnumTypeDecl extends IRAbstractEntityTypeDecl {
+    readonly members: string[];
+
+    constructor(tkey: string, docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, members: string[]) {
+        super(tkey, [], [], [], "std", [], [], [], [], docstr, [], file, sinfo);
+        this.members = members;
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [];
+    }
+}
+
+class IRTypedeclTypeDecl extends IRAbstractEntityTypeDecl {
+    readonly valuetype: IRTypeSignature;
+    readonly iskeytype: boolean;
+    readonly isnumerictype: boolean;
+    
+    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], saturatedProvides: IRTypeSignature[], allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[], allValidates: { containingtype: IRNominalTypeSignature, ii: number }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo, valuetype: IRTypeSignature, iskeytype: boolean, isnumerictype: boolean) {
+        super(tkey, invariants, validates, [], "std", saturatedProvides, [], allInvariants, allValidates, docstr, metatags, file, sinfo);
+        this.valuetype = valuetype;
+        this.iskeytype = iskeytype;
+        this.isnumerictype = isnumerictype;
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [];
+    }
+}
+
+class IRTypedeclCStringDecl extends IRTypedeclTypeDecl {
+    readonly rngchk: {min: string | undefined, max: string | undefined} | undefined;
+    readonly rechk: IRLiteralCRegexExpression | undefined;
+    
+    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], saturatedProvides: IRTypeSignature[], allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[], allValidates: { containingtype: IRNominalTypeSignature, ii: number }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo, rngchk: {min: string | undefined, max: string | undefined} | undefined, rechk: IRLiteralCRegexExpression | undefined) {
+        super(tkey, invariants, validates, saturatedProvides, allInvariants, allValidates, docstr, [], file, sinfo, new IRNominalTypeSignature("CString"), true, false);
+        this.rngchk = rngchk;
+        this.rechk = rechk;
+    }
+}
+
+class IRTypedeclStringDecl extends IRTypedeclTypeDecl {
+    readonly rngchk: {min: string | undefined, max: string | undefined} | undefined;
+    readonly rechk: IRLiteralUnicodeRegexExpression | undefined;
+    
+    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], saturatedProvides: IRTypeSignature[], allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[], allValidates: { containingtype: IRNominalTypeSignature, ii: number }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo, rngchk: {min: string | undefined, max: string | undefined} | undefined, rechk: IRLiteralUnicodeRegexExpression | undefined) {
+        super(tkey, invariants, validates, saturatedProvides, allInvariants, allValidates, docstr, [], file, sinfo, new IRNominalTypeSignature("String"), true, false);
+        this.rngchk = rngchk;
+        this.rechk = rechk;
+    }
+}
+
+//TODO: Path typedecl
+
+abstract class IRInternalEntityTypeDecl extends IRAbstractEntityTypeDecl {
+    constructor(tkey: string, saturatedProvides: IRTypeSignature[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
+        super(tkey, [], [], [], "std", saturatedProvides, [], [], [], docstr, metatags, file, sinfo);
+    }
+}
+
+class IRPrimitiveEntityTypeDecl extends IRInternalEntityTypeDecl {
+    constructor(tkey: string, docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo) {
+        super(tkey, [], docstr, [], file, sinfo);
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [];
+    }
+}
+
+abstract class IRConstructableTypeDecl extends IRInternalEntityTypeDecl {
+    constructor(tkey: string, saturatedProvides: IRTypeSignature[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo) {
+        super(tkey, saturatedProvides, docstr, [], file, sinfo);
+    }
+}
+
+class IROkTypeDecl extends IRConstructableTypeDecl {
+    readonly ttype: IRTypeSignature;
+    readonly etype: IRTypeSignature;
+
+    constructor(tkey: string, saturatedProvides: IRTypeSignature[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, ttype: IRTypeSignature, etype: IRTypeSignature) {
+        super(tkey, saturatedProvides, docstr, file, sinfo);
+        this.ttype = ttype;
+        this.etype = etype;
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.ttype, this.etype];
+    }
+}
+
+class IRFailTypeDecl extends IRConstructableTypeDecl {
+    readonly ttype: IRTypeSignature;
+    readonly etype: IRTypeSignature;
+
+    constructor(tkey: string, saturatedProvides: IRTypeSignature[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, ttype: IRTypeSignature, etype: IRTypeSignature) {
+        super(tkey, saturatedProvides, docstr, file, sinfo);
+        this.ttype = ttype;
+        this.etype = etype;
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.ttype, this.etype];
+    }
+}
+
+class IRAPIErrorTypeDecl extends IRConstructableTypeDecl {
+    readonly ttype: IRTypeSignature;
+    readonly etype: IRTypeSignature;
+
+    constructor(tkey: string, saturatedProvides: IRTypeSignature[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, ttype: IRTypeSignature, etype: IRTypeSignature) {
+        super(tkey, saturatedProvides, docstr, file, sinfo);
+        this.ttype = ttype;
+        this.etype = etype;
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.ttype, this.etype];
+    }
+}
+
+class IRAPIRejectedTypeDecl extends IRConstructableTypeDecl {
+    readonly ttype: IRTypeSignature;
+    readonly etype: IRTypeSignature;
+
+    constructor(tkey: string, saturatedProvides: IRTypeSignature[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, ttype: IRTypeSignature, etype: IRTypeSignature) {
+        super(tkey, saturatedProvides, docstr, file, sinfo);
+        this.ttype = ttype;
+        this.etype = etype;
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.ttype, this.etype];
+    }
+}
+
+class IRAPIDeniedTypeDecl extends IRConstructableTypeDecl {
+    readonly ttype: IRTypeSignature;
+    readonly etype: IRTypeSignature;
+
+    constructor(tkey: string, saturatedProvides: IRTypeSignature[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, ttype: IRTypeSignature, etype: IRTypeSignature) {
+        super(tkey, saturatedProvides, docstr, file, sinfo);
+        this.ttype = ttype;
+        this.etype = etype;
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.ttype, this.etype];
+    }
+}
+
+class IRAPIFlaggedTypeDecl extends IRConstructableTypeDecl {
+    readonly ttype: IRTypeSignature;
+    readonly etype: IRTypeSignature;
+
+    constructor(tkey: string, saturatedProvides: IRTypeSignature[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, ttype: IRTypeSignature, etype: IRTypeSignature) {
+        super(tkey, saturatedProvides, docstr, file, sinfo);
+        this.ttype = ttype;
+        this.etype = etype;
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.ttype, this.etype];
+    }
+}
+
+class IRAPISuccessTypeDecl extends IRConstructableTypeDecl {
+    readonly ttype: IRTypeSignature;
+    readonly etype: IRTypeSignature;
+
+    constructor(tkey: string, saturatedProvides: IRTypeSignature[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, ttype: IRTypeSignature, etype: IRTypeSignature) {
+        super(tkey, saturatedProvides, docstr, file, sinfo);
+        this.ttype = ttype;
+        this.etype = etype;
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.ttype, this.etype];
+    }
+}
+
+class IRSomeTypeDecl extends IRConstructableTypeDecl {
+    readonly ttype: IRTypeSignature;
+
+    constructor(tkey: string, saturatedProvides: IRTypeSignature[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, ttype: IRTypeSignature) {
+        super(tkey, saturatedProvides, docstr, file, sinfo);
+        this.ttype = ttype;
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.ttype];
+    }
+}
+
+class IRMapEntryTypeDecl extends IRConstructableTypeDecl {
+    readonly ktype: IRTypeSignature;
+    readonly vtype: IRTypeSignature;
+
+    constructor(tkey: string, saturatedProvides: IRTypeSignature[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, ktype: IRTypeSignature, vtype: IRTypeSignature) {
+        super(tkey, saturatedProvides, docstr, file, sinfo);
+        this.ktype = ktype;
+        this.vtype = vtype;
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.ktype, this.vtype];
+    }
+}
+
+abstract class IRAbstractCollectionTypeDecl extends IRInternalEntityTypeDecl {
+    readonly oftype: IRTypeSignature;
+
+    constructor(tkey: string, docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, oftype: IRTypeSignature) {
+        super(tkey, [], docstr, [], file, sinfo);
+        this.oftype = oftype;
+    }
+}
+
+class IRListTypeDecl extends IRAbstractCollectionTypeDecl {
+    constructor(tkey: string, docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, oftype: IRTypeSignature) {
+        super(tkey, docstr, file, sinfo, oftype);
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.oftype];
+    }
+}
+
+class IRStackTypeDecl extends IRAbstractCollectionTypeDecl {
+    constructor(tkey: string, docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, oftype: IRTypeSignature) {
+        super(tkey, docstr, file, sinfo, oftype);
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.oftype];
+    }
+}
+
+class IRQueueTypeDecl extends IRAbstractCollectionTypeDecl {
+    constructor(tkey: string, docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, oftype: IRTypeSignature) {
+        super(tkey, docstr, file, sinfo, oftype);
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.oftype];
+    }
+}
+
+class IRSetTypeDecl extends IRAbstractCollectionTypeDecl {
+    constructor(tkey: string, docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, oftype: IRTypeSignature) {
+        super(tkey, docstr, file, sinfo, oftype);
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.oftype];
+    }
+}
+
+class IRMapTypeDecl extends IRAbstractCollectionTypeDecl {
+    readonly ktype: IRTypeSignature;
+    readonly vtype: IRTypeSignature;
+
+    constructor(tkey: string, docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, oftype: IRTypeSignature, ktype: IRTypeSignature, vtype: IRTypeSignature) {
+        super(tkey, docstr, file, sinfo, oftype);
+        this.ktype = ktype;
+        this.vtype = vtype;
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+       return [this.oftype, this.ktype, this.vtype];
+    }
+}
+
+class IREventListTypeDecl extends IRInternalEntityTypeDecl {
+    readonly etype: IRTypeSignature;
+
+    constructor(tkey: string, docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, etype: IRTypeSignature) {
+        super(tkey, [], docstr, [], file, sinfo);
+        this.etype = etype;
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.etype];
+    }
+}
+
+class IREntityTypeDecl extends IRAbstractEntityTypeDecl {
+    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], fields: IRMemberFieldDecl[], etag: "std" | "status" | "event", saturatedProvides: IRTypeSignature[], saturatedBFieldInfo: { containingtype: IRNominalTypeSignature, fkey: string, fname: string, ftype: IRTypeSignature }[], allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[], allValidates: { containingtype: IRNominalTypeSignature, ii: number }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
+        super(tkey, invariants, validates, fields, etag, saturatedProvides, saturatedBFieldInfo, allInvariants, allValidates, docstr, metatags, file, sinfo);
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        const ffdecls = this.saturatedBFieldInfo.map((bf) => {
+            const ctt = alltypes.get(bf.containingtype.tkeystr) as IRAbstractNominalTypeDecl;
+            const bfdecl = ctt.fields.find(f => f.fkey === bf.fkey) as IRMemberFieldDecl;
+            return bfdecl.declaredType;
+        });
+
+        return ffdecls;
+    }
+
+    emitBAPI(): string {
+        const base = IRAbstractEntityTypeDecl.emitBAPI();
+        return `'${this.tkey}'<IRAssembly::TypeKey> => IRAssembly::EntityTypeDecl{ ${base} }`;
+    }
+}
+
+abstract class IRAbstractConceptTypeDecl extends IRAbstractNominalTypeDecl {
+    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], fields: IRMemberFieldDecl[], saturatedProvides: IRTypeSignature[], saturatedBFieldInfo: { containingtype: IRNominalTypeSignature, fkey: string, fname: string, ftype: IRTypeSignature }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
+        super(tkey, invariants, validates, fields, "std", saturatedProvides, saturatedBFieldInfo, [], [], docstr, metatags, file, sinfo);
+    }
+}
+
+abstract class IRInternalConceptTypeDecl extends IRAbstractConceptTypeDecl {
+    constructor(tkey: string, docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
+        super(tkey, [], [], [], [], [], docstr, metatags, file, sinfo);
+    }
+}
+
+class IROptionTypeDecl extends IRInternalConceptTypeDecl {
+    readonly ttype: IRTypeSignature;
+    readonly sometype: IRTypeSignature;
+
+    constructor(tkey: string, docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, ttype: IRTypeSignature, sometype: IRTypeSignature) {
+        super(tkey, docstr, [], file, sinfo);
+        this.ttype = ttype;
+        this.sometype = sometype;
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.ttype, this.sometype];
+    }
+}
+
+class IRResultTypeDecl extends IRInternalConceptTypeDecl {
+    readonly ttype: IRTypeSignature;
+    readonly etype: IRTypeSignature;
+
+    readonly oktype: IRTypeSignature;
+    readonly failtype: IRTypeSignature;
+
+    constructor(tkey: string, docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, ttype: IRTypeSignature, etype: IRTypeSignature, oktype: IRTypeSignature, failtype: IRTypeSignature) {
+        super(tkey, docstr, [], file, sinfo);
+        this.ttype = ttype;
+        this.etype = etype;
+        this.oktype = oktype;
+        this.failtype = failtype;
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.ttype, this.etype, this.oktype, this.failtype];
+    }
+}
+
+class IRAPIResultTypeDecl extends IRInternalConceptTypeDecl {
+    readonly ttype: IRTypeSignature;
+    readonly etype: IRTypeSignature;
+
+    readonly errortype: IRTypeSignature;
+    readonly rejectedtype: IRTypeSignature;
+    readonly deniedtype: IRTypeSignature;
+    readonly flaggedtype: IRTypeSignature;
+    readonly successtype: IRTypeSignature;
+
+    constructor(tkey: string, docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, ttype: IRTypeSignature, etype: IRTypeSignature, errortype: IRTypeSignature, rejectedtype: IRTypeSignature, deniedtype: IRTypeSignature, flaggedtype: IRTypeSignature, successtype: IRTypeSignature) {
+        super(tkey, docstr, [], file, sinfo);
+        this.ttype = ttype;
+        this.etype = etype;
+        this.errortype = errortype;
+        this.rejectedtype = rejectedtype;
+        this.deniedtype = deniedtype;
+        this.flaggedtype = flaggedtype;
+        this.successtype = successtype;
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.ttype, this.etype, this.errortype, this.rejectedtype, this.deniedtype, this.flaggedtype, this.successtype];
+    }
+}
+
+class IRConceptTypeDecl extends IRAbstractConceptTypeDecl {
+    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], fields: IRMemberFieldDecl[], saturatedProvides: IRTypeSignature[], saturatedBFieldInfo: { containingtype: IRNominalTypeSignature, fkey: string, fname: string, ftype: IRTypeSignature }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
+        super(tkey, invariants, validates, fields, saturatedProvides, saturatedBFieldInfo, docstr, metatags, file, sinfo);
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        const ffdecls = this.saturatedBFieldInfo.map(bf => {
+            const ctt = alltypes.get(bf.containingtype.tkeystr) as IRAbstractNominalTypeDecl;
+            const bfdecl = ctt.fields.find(f => f.fkey === bf.fkey) as IRMemberFieldDecl;
+            return bfdecl.declaredType;
+        });
+
+        return [new IRNominalTypeSignature(this.tkey), ...ffdecls];
+    }
+}
+
+class IRDatatypeMemberEntityTypeDecl extends IRAbstractEntityTypeDecl {
+    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], fields: IRMemberFieldDecl[], etag: "std" | "status" | "event", saturatedProvides: IRTypeSignature[], saturatedBFieldInfo: { containingtype: IRNominalTypeSignature, fkey: string, fname: string, ftype: IRTypeSignature }[], allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[], allValidates: { containingtype: IRNominalTypeSignature, ii: number }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
+        super(tkey, invariants, validates, fields, etag, saturatedProvides, saturatedBFieldInfo, allInvariants, allValidates, docstr, metatags, file, sinfo);
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        const ffdecls = this.saturatedBFieldInfo.map(bf => {
+            const ctt = alltypes.get(bf.containingtype.tkeystr) as IRAbstractNominalTypeDecl;
+            const bfdecl = ctt.fields.find(f => f.fkey === bf.fkey) as IRMemberFieldDecl;
+            return bfdecl.declaredType;
+        });
+
+        return ffdecls;
+    }
+}
+
+class IRDatatypeTypeDecl extends IRAbstractConceptTypeDecl {
+    readonly dataelems: IRTypeSignature[];
+
+    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], fields: IRMemberFieldDecl[], saturatedProvides: IRTypeSignature[], saturatedBFieldInfo: { containingtype: IRNominalTypeSignature, fkey: string, fname: string, ftype: IRTypeSignature }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo, dataelems: IRTypeSignature[]) {
+        super(tkey, invariants, validates, fields, saturatedProvides, saturatedBFieldInfo, docstr, metatags, file, sinfo);
+        this.dataelems = dataelems;
+    }
+
+    getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        const ffdecls = this.saturatedBFieldInfo.map(bf => {
+            const ctt = alltypes.get(bf.containingtype.tkeystr) as IRAbstractNominalTypeDecl;
+            const bfdecl = ctt.fields.find(f => f.fkey === bf.fkey) as IRMemberFieldDecl;
+            return bfdecl.declaredType;
+        });
+        
+        return [new IRNominalTypeSignature(this.tkey), ...ffdecls];
+    }
+}
+
+class IREnvironmentVariableInformation {
+    readonly evname: string; //identifier or cstring
+    readonly evtype: IRTypeSignature;
+    readonly required: boolean;
+    readonly optdefault: { stmts: IRStatement[], value: IRSimpleExpression } | undefined;
+
+    constructor(evname: string, evtype: IRTypeSignature, required: boolean, optdefault: { stmts: IRStatement[], value: IRSimpleExpression } | undefined) {
+        this.evname = evname;
+        this.evtype = evtype;
+        this.required = required;
+        this.optdefault = optdefault;
+    }
+}
+
+class IRResourceInformation {
+    //TODO: fill this in
+}
+
+class IRTaskConfiguration {
+    timeout: number | undefined;
+    retry: {delay: number, tries: number} | undefined;
+    priority: "immediate" | "fast" | "normal" | "longrunning" | "background" | "optional" | undefined;
+
+    constructor(timeout: number | undefined, retry: {delay: number, tries: number} | undefined, priority: "immediate" | "fast" | "normal" | "longrunning" | "background" | "optional" | undefined) {
+        this.timeout = timeout;
+        this.retry = retry;
+        this.priority = priority;
+    }
+}
+
+class IRAPIDecl {
+    readonly ikey: string;
+
+    readonly params: IRInvokeParameterDecl[];    
+    readonly resultType: IRTypeSignature;
+    readonly eventType: IRTypeSignature | undefined;
+
+    readonly preconditions: IRPreConditionDecl[];
+    readonly postconditions: IRPostConditionDecl[];
+
+    readonly configs: IRTaskConfiguration;
+
+    readonly statusinfo: IRTypeSignature[];
+    readonly envreqs: IREnvironmentVariableInformation[];
+    readonly resourcereqs: IRResourceInformation;
+
+    readonly body: IRBody;
+
+    readonly docstr: IRDeclarationDocString | undefined;
+    readonly metatags: IRDeclarationMetaTag[];
+
+    readonly file: string;
+    readonly sinfo: IRSourceInfo;
+
+    constructor(ikey: string, params: IRInvokeParameterDecl[], resultType: IRTypeSignature, eventType: IRTypeSignature | undefined, preconditions: IRPreConditionDecl[], postconditions: IRPostConditionDecl[], configs: IRTaskConfiguration, statusinfo: IRTypeSignature[], envreqs: IREnvironmentVariableInformation[], resourcereqs: IRResourceInformation, body: IRBody, docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
+        this.ikey = ikey;
+        this.params = params;
+        this.resultType = resultType;
+        this.eventType = eventType;
+        this.preconditions = preconditions;
+        this.postconditions = postconditions;
+        this.configs = configs;
+        this.statusinfo = statusinfo;
+        this.envreqs = envreqs;
+        this.resourcereqs = resourcereqs;
+        this.body = body;
+        this.docstr = docstr;
+        this.metatags = metatags;
+        this.file = file;
+        this.sinfo = sinfo;
+    }
+}
+
+class IRAgentDecl {
+    readonly ikey: string;
+
+    readonly params: IRInvokeParameterDecl[];    
+    readonly resultType: IRTypeSignature | undefined; //This may be set on a per call-site basis
+    readonly eventType: IRTypeSignature | undefined;
+
+    readonly preconditions: IRPreConditionDecl[];
+    readonly postconditions: IRPostConditionDecl[];
+
+    readonly configs: IRTaskConfiguration;
+
+    readonly statusinfo: IRTypeSignature[];
+    readonly envreqs: IREnvironmentVariableInformation[];
+    readonly resourcereqs: IRResourceInformation;
+
+    readonly body: IRBody;
+
+    readonly docstr: IRDeclarationDocString | undefined;
+    readonly metatags: IRDeclarationMetaTag[];
+
+    readonly file: string;
+    readonly sinfo: IRSourceInfo;
+
+    constructor(ikey: string, params: IRInvokeParameterDecl[], resultType: IRTypeSignature | undefined, eventType: IRTypeSignature | undefined, preconditions: IRPreConditionDecl[], postconditions: IRPostConditionDecl[], configs: IRTaskConfiguration, statusinfo: IRTypeSignature[], envreqs: IREnvironmentVariableInformation[], resourcereqs: IRResourceInformation, body: IRBody, docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
+        this.ikey = ikey;
+        this.params = params;
+        this.resultType = resultType;
+        this.eventType = eventType;
+        this.preconditions = preconditions;
+        this.postconditions = postconditions;
+        this.configs = configs;
+        this.statusinfo = statusinfo;
+        this.envreqs = envreqs;
+        this.resourcereqs = resourcereqs;
+        this.body = body;
+        this.docstr = docstr;
+        this.metatags = metatags;
+        this.file = file;
+        this.sinfo = sinfo;
+    }
+}
+
+class IRTaskDecl {
+    readonly tkey: string;
+
+    readonly invariants: IRInvariantDecl[];
+    readonly fields: IRMemberFieldDecl[];
+
+    readonly docstr: IRDeclarationDocString | undefined;
+    readonly metatags: IRDeclarationMetaTag[];
+
+    readonly file: string;
+    readonly sinfo: IRSourceInfo;
+
+    readonly configs: IRTaskConfiguration;
+
+    readonly statusinfo: IRTypeSignature[];
+    readonly envreqs: IREnvironmentVariableInformation[];
+    readonly resourcereqs: IRResourceInformation;
+    readonly eventinfo: IRTypeSignature[];
+
+    readonly imain: string; //invoke key of main task action
+    readonly icleanup: {
+        onterminate: string | undefined //invoke key of on-terminate action -- when we have a cancel/timeout/or parent abort that we cooperatively check and we are graceful in cleanup
+        onerror: string | undefined //invoke key of on-error action -- when we abort from a runtime failure and we are bailing
+        ondrop: string | undefined //invoke key of on-drop action -- when we have completed but our result is unused and we gracefully clean up
+    };
+
+    constructor(tkey: string, invariants: IRInvariantDecl[], fields: IRMemberFieldDecl[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo, configs: IRTaskConfiguration, statusinfo: IRTypeSignature[], envreqs: IREnvironmentVariableInformation[], resourcereqs: IRResourceInformation, eventinfo: IRTypeSignature[], imain: string, icleanup: { onterminate: string | undefined; onerror: string | undefined; ondrop: string | undefined; }) {
+        this.tkey = tkey;
+        this.invariants = invariants;
+        this.fields = fields;
+        this.docstr = docstr;
+        this.metatags = metatags;
+        this.file = file;
+        this.sinfo = sinfo;
+        
+        this.configs = configs;
+        this.statusinfo = statusinfo;
+        this.envreqs = envreqs;
+        this.resourcereqs = resourcereqs;
+        this.eventinfo = eventinfo;
+
+        this.imain = imain;
+        this.icleanup = icleanup;
+    }
+}
+
+class IRLambdaParameterPackDecl {
+    readonly tkeystr: string;
+    readonly invtrgt: string;
+    readonly stdvalues: {vname: string, vtype: IRTypeSignature}[];
+    readonly lambdavalues: {lname: string, ltypekey: string}[];
+
+    constructor(tkeystr: string, invtrgt: string, stdvalues: {vname: string, vtype: IRTypeSignature}[], lambdavalues: {lname: string, ltypekey: string}[]) {
+        this.tkeystr = tkeystr;
+        this.invtrgt = invtrgt;
+        this.stdvalues = stdvalues;
+        this.lambdavalues = lambdavalues;
+    }
+}
+
+
+class IRAssembly {
+    readonly cregexps: IRCRegex[] = [];
+    readonly uregexps: IRURegex[] = [];
+
+    readonly constants: IRConstantDecl[] = [];
+
+    readonly tests: IRTestDecl[] = [];
+    readonly examples: IRExampleDecl[] = [];
+
+    readonly predicates: IRPredicateDecl[] = [];
+    readonly invokes: IRInvokeDecl[] = [];
+    readonly taskactions: IRTaskActionDecl[] = [];
+
+    readonly primitives: IRPrimitiveEntityTypeDecl[] = [];
+    readonly constructables: IRConstructableTypeDecl[] = [];
+    readonly collections: IRAbstractCollectionTypeDecl[] = [];
+    readonly eventlists: IREventListTypeDecl[] = [];
+
+    readonly enums: IREnumTypeDecl[] = [];
+    readonly typedecls: IRTypedeclTypeDecl[] = [];
+    readonly cstringoftypedecls: IRTypedeclCStringDecl[] = [];
+    readonly stringoftypedecls: IRTypedeclStringDecl[] = [];
+
+    readonly entities: IREntityTypeDecl[] = [];
+    readonly datamembers: IRDatatypeMemberEntityTypeDecl[] = [];
+
+    readonly pconcepts: IRInternalConceptTypeDecl[] = [];
+    readonly concepts: IRConceptTypeDecl[] = [];
+    readonly datatypes: IRDatatypeTypeDecl[] = [];
+
+    readonly apis: IRAPIDecl[] = [];
+    readonly agents: IRAgentDecl[] = [];
+    readonly tasks: IRTaskDecl[] = [];
+
+    readonly alltypes: Map<string, IRAbstractNominalTypeDecl> = new Map<string, IRAbstractNominalTypeDecl>();
+    readonly allinvokes: Map<string, IRInvokeMetaDecl> = new Map<string, IRInvokeMetaDecl>();
+    readonly alllambdas: Map<string, IRLambdaParameterPackDecl> = new Map<string, IRLambdaParameterPackDecl>();
+
+    readonly elists: IREListTypeSignature[] = [];
+    readonly dashtypes: IRDashResultTypeSignature[] = [];
+    readonly formats: IRFormatTypeSignature[] = [];
+    readonly lpacksigs: IRLambdaParameterPackTypeSignature[] = [];
+
+    readonly formatcstrings: IRLiteralFormatCStringExpression[] = [];
+    readonly formatstrings: IRLiteralFormatStringExpression[] = [];
+
+    readonly concretesubtypes: Map<string, IRTypeSignature[]> = new Map<string, IRTypeSignature[]>();
+    readonly concretesupertypes: Map<string, IRTypeSignature[]> = new Map<string, IRTypeSignature[]>();
+
+    readonly typedeporder: IRTypeSignature[] = [];
+    readonly typedepcycles: IRTypeSignature[][] = [];
+
+    constructor() {
+    }
+
+    computeSubtypeInfo() {
+        const alltl = [...this.alltypes.values()];
+
+        for(let i = 0; i < alltl.length; i++) {
+            const ctt = alltl[i];
+
+            if(ctt instanceof IRAbstractConceptTypeDecl) {
+                if(!this.concretesubtypes.has(ctt.tkey)) {
+                    this.concretesubtypes.set(ctt.tkey, []);
+                }
+            }
+            else {
+                if(!this.concretesupertypes.has(ctt.tkey)) {
+                    this.concretesupertypes.set(ctt.tkey, []);
+                }
+                let superl = this.concretesupertypes.get(ctt.tkey) as IRTypeSignature[];
+
+                const cctsig = new IRNominalTypeSignature(ctt.tkey);
+                for(let j = 0; j < ctt.saturatedProvides.length; j++) {
+                    const ssuper = ctt.saturatedProvides[j];
+
+                    if(!this.concretesubtypes.has(ssuper.tkeystr)) {
+                        this.concretesubtypes.set(ssuper.tkeystr, []);
+                    }
+                    (this.concretesubtypes.get(ssuper.tkeystr) as IRTypeSignature[]).push(cctsig);
+                    superl.push(ssuper);
+                }
+            }
+        }
+
+        for(const csubts of this.concretesubtypes.values()) {
+            csubts.sort((a, b) => a.tkeystr.localeCompare(b.tkeystr));   
+        }
+
+        for(const csupts of this.concretesupertypes.values()) {
+            csupts.sort((a, b) => a.tkeystr.localeCompare(b.tkeystr));   
+        }
+    }
+
+    private getTypeDependencyInfo(tsig: IRTypeSignature): IRTypeSignature[] {
+        let ttl: IRTypeSignature[] = [];
+        if(tsig instanceof IRLambdaParameterPackTypeSignature) {
+            const lsdecl = this.alllambdas.get(tsig.tkeystr) as IRLambdaParameterPackDecl;
+            ttl = [
+                ...lsdecl.stdvalues.map((sv) => sv.vtype),
+                ...lsdecl.lambdavalues.map((lv) => new IRLambdaParameterPackTypeSignature(lv.ltypekey))
+            ];
+        }
+        else if(tsig instanceof IRNominalTypeSignature) {
+            const ttdecl = this.alltypes.get(tsig.tkeystr) as IRAbstractNominalTypeDecl;
+            ttl = ttdecl.getDeclDependencyTypes(this.alltypes);
+        }
+        else {
+            ttl = tsig.getDirectDependencyTypes();            
+        }
+
+        //now make all the concrete subtypes explicit
+        let allttl: IRTypeSignature[] = [];
+        for(let i = 0; i < ttl.length; i++) {
+            allttl.push(ttl[i]);
+
+            const csubts = this.concretesubtypes.get(ttl[i].tkeystr);
+            if(csubts !== undefined) {
+                for(let j = 0; j < csubts.length; j++) {
+                    allttl.push(csubts[j]);
+                }
+            }
+        }
+
+        //now make the result unique
+        let resl: IRTypeSignature[] = [];
+        for(let i = 0; i < allttl.length; i++) {
+            if(resl.findIndex((t) => t.tkeystr === allttl[i].tkeystr) === -1) {
+                resl.push(allttl[i]);
+            }
+        }
+
+        return resl;
+    }
+
+    private visitType(tsig: IRTypeSignature, visited: Set<string>) {
+        if(visited.has(tsig.tkeystr)) {
+            return;
+        }
+
+        //If this is a SCC then we don't revisit this and we need to handle the cycle elsewhere
+        visited.add(tsig.tkeystr);
+
+        const deps = this.getTypeDependencyInfo(tsig);
+        for(let i = 0; i < deps.length; i++) {
+            this.visitType(deps[i], visited);
+        }
+
+        this.typedeporder.push(tsig);
+    }
+
+    private computeAllTypes(): IRTypeSignature[] {
+        const allndecls = [...this.alltypes.values()].map(td => new IRNominalTypeSignature(td.tkey));
+        const allsdtypes = [...this.elists, ...this.dashtypes, ...this.formats, ...this.lpacksigs];
+
+        return [...allndecls, ...allsdtypes];
+    }
+
+    private getTypesCount(visited: Set<string>): [IRTypeSignature, number][] {
+        const allpending = this.computeAllTypes().filter((t) => !visited.has(t.tkeystr));
+        const ttcount = new Map<string, number>();
+
+        for(let i = 0; i < allpending.length; i++) {
+            ttcount.set(allpending[i].tkeystr, 0);
+        }
+
+        for(let i = 0; i < allpending.length; i++) {
+            const deps = this.getTypeDependencyInfo(allpending[i]);
+            for(let j = 0; j < deps.length; j++) {
+                if(allpending[i].tkeystr !== deps[j].tkeystr) {
+                    const ccount = ttcount.get(deps[j].tkeystr) as number;
+                    ttcount.set(deps[j].tkeystr, ccount + 1);
+                }
+            }
+        }
+
+        return allpending.map<[IRTypeSignature, number]>((t) => [t, ttcount.get(t.tkeystr) as number]).sort((a, b) => a[1] - b[1]);
+    }
+
+    computeTypeDependencyInfo() {
+        const visited = new Set<string>();
+        let toproc = this.getTypesCount(visited);
+
+        while(toproc.length !== 0) {
+            const nrval = toproc.shift() as [IRTypeSignature, number];
+            this.visitType(nrval[0], visited);
+
+            if(nrval[1] !== 0) {
+                toproc = this.getTypesCount(visited);
+            }
+        }
+
+        let orderedtypes = [...this.typedeporder];
+        while(orderedtypes.length !== 0) {
+            const ctt = orderedtypes[0];
+            const deps = this.getTypeDependencyInfo(ctt);
+
+            let scc: IRTypeSignature[] = [];
+            let cycdeps = deps.filter((d) => orderedtypes.findIndex((t) => t.tkeystr === d.tkeystr) !== -1);
+            if(cycdeps.length !== 0) {
+                let foundmore = true;
+                while(foundmore) {
+                    foundmore = false;
+                    const olen = cycdeps.length;
+                    for(let i = 0; i < olen; ++i) {
+                        const ndeps = this.getTypeDependencyInfo(cycdeps[i]);
+                        for(let j = 0; j < ndeps.length; ++j) {
+                            let orr = orderedtypes.findIndex((t) => t.tkeystr === ndeps[j].tkeystr) !== -1;
+                            let nadd = cycdeps.findIndex((t) => t.tkeystr === ndeps[j].tkeystr) === -1;
+                            if(orr && nadd) {
+                                cycdeps.push(ndeps[j])
+                                foundmore = true;
+                            }
+                        }
+                    }
+                }
+
+                scc.sort((a, b) => {
+                    const apos = orderedtypes.findIndex((t) => t.tkeystr === a.tkeystr);
+                    const bpos = orderedtypes.findIndex((t) => t.tkeystr === b.tkeystr);
+
+                    return apos - bpos;
+                });
+
+                scc.push(...cycdeps);
+            }
+
+            if(scc.length === 0) {
+                orderedtypes.shift();
+            }
+            else {
+                orderedtypes = orderedtypes.filter((t) => !scc.find((st) => st.tkeystr === t.tkeystr));
+                this.typedepcycles.push(scc);
+            }
+        }
+    }
+
+    emitBAPI() {
+        return "IRAssembly::IRAssembly{\n" 
+            + `\tMap<IRAssembly::IREntityTypeDecl>{ ${this.entities.map<string>(e => e.emitBAPI()).join()} }\n`
+        + "}\n";
+    }
+}
+
+export {
+    IRPreConditionDecl, IRPostConditionDecl, IRInvariantDecl, IRValidateDecl,
+    IRDeclarationDocString, IRDeclarationMetaTag,
+    IRConstantDecl,
+    IRInvokeParameterDecl, IRInvokeMetaDecl, IRTestAssociation,
+    IRPredicateDecl, IRTestDecl, IRExampleDecl, IRInvokeDecl, IRTaskActionDecl,
+    IRMemberFieldDecl,
+    IRAbstractNominalTypeDecl, IRAbstractEntityTypeDecl, 
+    IREnumTypeDecl, 
+    IRTypedeclTypeDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl,
+    IRInternalEntityTypeDecl, IRPrimitiveEntityTypeDecl, IRConstructableTypeDecl, 
+    IROkTypeDecl, IRFailTypeDecl,
+    IRAPIDeniedTypeDecl, IRAPIErrorTypeDecl, IRAPIRejectedTypeDecl, IRAPIFlaggedTypeDecl, IRAPISuccessTypeDecl,
+    IRSomeTypeDecl, IRMapEntryTypeDecl,
+    IRAbstractCollectionTypeDecl, IRListTypeDecl, IRStackTypeDecl, IRQueueTypeDecl, IRSetTypeDecl, IRMapTypeDecl,
+    IREventListTypeDecl,
+    IREntityTypeDecl,
+    IRAbstractConceptTypeDecl, IRInternalConceptTypeDecl,
+    IROptionTypeDecl, IRResultTypeDecl, IRAPIResultTypeDecl, 
+    IRConceptTypeDecl,
+    IRDatatypeMemberEntityTypeDecl, IRDatatypeTypeDecl,
+    IREnvironmentVariableInformation, IRResourceInformation, IRTaskConfiguration,
+    IRAPIDecl, IRAgentDecl, IRTaskDecl,
+    IRLambdaParameterPackDecl,
+    IRAssembly
+};

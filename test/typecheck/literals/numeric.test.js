@@ -27,27 +27,27 @@ describe ("Checker -- Int", () => {
     });
 });
 
-describe ("Checker -- BigNat", () => {
+describe ("Checker -- ChkNat", () => {
     it("should check simple big nats", function () {
-        checkTestExp("0N", "BigNat");
-        checkTestExp("+2N", "BigNat");
+        checkTestExp("0N", "ChkNat");
+        checkTestExp("+2N", "ChkNat");
     });
 
     it("should fail simple big nats", function () {
-        checkTestExpError("0N", "Nat", "Expected a return value of type Nat but got BigNat");
-        checkTestExpError("-20N", "BigNat", "BigNat literal cannot be negative");
+        checkTestExpError("0N", "Nat", "Expected a return value of type Nat but got ChkNat");
+        checkTestExpError("-20N", "ChkNat", "ChkNat literal cannot be negative");
     });
 });
 
-describe ("Checker -- BigInt", () => {
+describe ("Checker -- ChkInt", () => {
     it("should check simple big ints", function () {
-        checkTestExp("0I", "BigInt");
-        checkTestExp("+2I", "BigInt");
-        checkTestExp("-2I", "BigInt");
+        checkTestExp("0I", "ChkInt");
+        checkTestExp("+2I", "ChkInt");
+        checkTestExp("-2I", "ChkInt");
     });
 
-    it("should fail simple big nats", function () {
-        checkTestExpError("0N", "Nat", "Expected a return value of type Nat but got BigNat");
+    it("should fail simple big ints", function () {
+        checkTestExpError("0I", "Int", "Expected a return value of type Int but got ChkInt");
     });
 });
 

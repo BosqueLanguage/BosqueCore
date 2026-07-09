@@ -38,4 +38,3 @@ describe ("Parser -- Validate", () => {
         parseTestFunctionError("function main(): Int { validate[Check] true; return 1i; }", 'Expected "[LITERAL_EX_STRING]" but got "Check" when parsing "validate statement tag"');
     });
 });
-

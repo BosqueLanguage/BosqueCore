@@ -13,15 +13,14 @@
         "target": "es2020",
         "sourceMap": true,
         "outDir": "bin",
-        "typeRoots": [
-            "node_modules/@types"
-        ],
+        "types": [
+            "node"
+        ]
     },
     "include": [
         "src/frontend/*.ts",
-        "src/backend/bsqon/*.ts",
-        "src/backend/jsemitter/*.ts",
         "src/cmd/*.ts",
+        "src/backend/*/*.ts",
         "test/*/*_nf.ts"
     ]
 }

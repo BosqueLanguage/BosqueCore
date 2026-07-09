@@ -1,12 +1,12 @@
 
 import assert from "node:assert";
 
-import { LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env.js";
-import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateTypeSignature, TypeSignature } from "./type.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LiteralExpressionValue, LiteralRegexExpression, LiteralSimpleExpression, LiteralNoneExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, SpecialConstructorExpression, ConstructorPrimaryExpression, PostfixAccessFromName, ReturnVoidStatement, ReturnSingleStatement, PostfixInvoke, KeyCompareEqExpression, KeyCompareLessExpression, ReturnMultiStatement, SafeConvertExpression, PostfixAccessFromIndex, AccessStaticFieldExpression, CallTypeFunctionExpression, CreateDirectExpression, LambdaInvokeExpression, ThisUpdateStatement, VarUpdateStatement, CallRefThisExpression, VoidRefCallStatement, CallRefSelfExpression, CallRefVariableExpression, CallRefInvokeExpression, PostfixAssignFields, LiteralFormatCStringExpression, LiteralFormatStringExpression, FormatStringComponent, FormatStringTextComponent, FormatStringArgComponent, InterpolateFormatExpression } from "./body.js";
-import { APIDecl, APIResultTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, CRopeTypeDecl, CRopeIteratorTypeDecl, UnicodeRopeTypeDecl, UnicodeRopeIteratorTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, SomeTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, OkTypeDecl, FailTypeDecl, APIRejectedTypeDecl, APIFailedTypeDecl, APIErrorTypeDecl, APISuccessTypeDecl, InternalEntityTypeDecl, AbstractCollectionTypeDecl, TestAssociation } from "./assembly.js";
+import { VariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env.js";
+import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, ErrorTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateTypeSignature, TypeSignature } from "./type.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, AbstractArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfStatement, LiteralRegexExpression, LiteralSimpleExpression, LiteralNoneExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, SpecialConstructorExpression, ConstructorPrimaryExpression, PostfixAccessFromName, ReturnVoidStatement, ReturnSingleStatement, PostfixInvoke, KeyCompareEqExpression, KeyCompareLessExpression, ReturnMultiStatement, PostfixAccessFromIndex, AccessStaticFieldExpression, CallTypeFunctionExpression, LambdaInvokeExpression, ThisUpdateStatement, VarUpdateStatement, CallRefThisExpression, VoidRefCallStatement, CallRefSelfExpression, CallRefVariableExpression, CallRefInvokeExpression, PostfixAssignFields, ChkLogicExpression, RValueExpression, ITestGuard, ITestGuardSet, ITestBinderGuard, ITestSimpleGuard, ITestTypeGuard, PassingArgumentValue, LiteralStringExpression, LiteralCStringExpression, LiteralFormatStringExpression, LiteralFormatCStringExpression, LiteralFormatPathItemExpression, LiteralPathItemExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LiteralTypedCStringExpression, LiteralTypedPathExpression, FormatStringComponent, FormatStringTextComponent, FormatStringArgComponent, LiteralTypedFormatCStringExpression, LiteralTypedPathFormatExpression, AccessEnvValueExpression, TaskAccessInfoExpression, InterpolateFormatExpression, PostfixSliceOperator, HoleExpression, LogicAndExpression, LogicOrExpression, TaskRunExpression, EnvironmentGenerationExpression, EmptyEnvironmentExpression, CurrentEnvironmentExpression, InitializeEnvironmentExpression, TaskMultiExpression, TaskAllExpression, TaskDashExpression, TaskDashAnyExpression, TaskRaceExpression, TaskRaceAnyExpression, APIInvokeExpression, AgentInvokeExpression, ChkLogicImpliesExpression, ChkLogicBaseExpression, BaseRValueExpression, ConditionalValueExpression, ShortCircuitAssignRHSExpressionFail, ShortCircuitAssignRHSExpressionReturn, CallTaskActionExpression, SelfUpdateStatement, TaskCheckAndHandleTerminationStatement, TaskStatusStatement, TaskYieldStatement, DispatchTaskStatement, DispatchPatternStatement, HoleStatement, HoleBodyImplementation, SkipArgumentValue, StdArgumentValue } from "./body.js";
+import { APIDecl, APIResultTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, SomeTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, OkTypeDecl, FailTypeDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIDeniedTypeDecl, APIFlaggedTypeDecl, APISuccessTypeDecl, InternalEntityTypeDecl, AbstractCollectionTypeDecl, TestAssociation, TaskConfiguration, AgentDecl } from "./assembly.js";
 import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls.js";
-import { AllAttributes, CoreOnlyAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_fail, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lparenbar, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_rparenbar, SYM_semicolon, SYM_times, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols, TermRestrictions } from "./parser_kw.js";
+import { AllAttributes, CoreOnlyAttributes, KeywordStrings, KW__debug, KW_abort, KW_action, KW_agent, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_configs, KW_const, KW_datatype, KW_debug, KW_declare, KW_dispatch, KW_do, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_errtest, KW_event, KW_example, KW_fail, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_inout, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_of, KW_ok, KW_out, KW_out_q, KW_parallel, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_sequential, KW_slice, KW_softcheck, KW_some, KW_spec, KW_status, KW_switch, KW_task, KW_Task, KW_test, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KW_yield, LeftScanParens, ParenSymbols, RightScanParens, SpaceFrontSymbols, SpaceRequiredSymbols, SpecialNominalTypes, SpecialPathFormatTypes, SpecialStringFormatTypes, StandardSymbols, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_HOLE, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lparenbar, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_questionquestion, SYM_questionat, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_rparenbar, SYM_semicolon, SYM_times, TaskConfigs, TermRestrictions } from "./parser_kw.js";
 
 type ParsePhase = number;
 const ParsePhase_RegisterNames: ParsePhase = 1;
@@ -24,13 +24,13 @@ const TokenStrings = {
     DocComment: "[DOC_COMMENT]",
 
     NumberinoInt: "[LITERAL_NUMBERINO_INT]",
-    NumberinoFloat: "[LITERAL_NUMBERINO_FLOAT]",
-    NumberinoRational: "[LITERAL_NUMBERINO_RATIONAL]",
+
+    AtDexNumber: "[LITERAL_ATDEX_NUMBER]",
 
     Nat: "[LITERAL_NAT]",
     Int: "[LITERAL_INT]",
-    BigNat: "[LITERAL_BIGNAT]",
-    BigInt: "[LITERAL_BIGINT]",
+    ChkNat: "[LITERAL_CHKNAT]",
+    ChkInt: "[LITERAL_CHKINT]",
     Float: "[LITERAL_FLOAT]",
     Decimal: "[LITERAL_DECIMAL]",
     Rational: "[LITERAL_RATIONAL]",
@@ -42,17 +42,18 @@ const TokenStrings = {
     UUIDValue: "[LITERAL_UUID]",
     ShaHashcode: "[LITERAL_SHA]",
 
+    Byte: "[LITERAL_BYTE]",
     CChar: "[LITERAL_CCHAR]",
     UnicodeChar: "[LITERAL_UNICODECHAR]",
 
     String: "[LITERAL_STRING]",
     CString: "[LITERAL_EX_STRING]",
-   	FormatString: "[LITERAL_FORMAT_STRING]",
-	FormatCString: "[LITERAL_FORMAT_EX_STRING]",
+    FormatString: "[LITERAL_FORMAT_STRING]",
+    FormatCString: "[LITERAL_FORMAT_EX_STRING]",
 
     Regex: "[LITERAL_REGEX]",
     PathItem: "[LITERAL_PATH_ITEM]",
-    PathTemplateItem: "[LITERAL_TEMPLATE_PATH_ITEM]",
+    FormatPathItem: "[LITERAL_FORMAT_PATH_ITEM]",
 
     TZDateTime: "[LITERAL_TZTIME]",
     TAITime: "[LITERAL_TAI_TIME]",
@@ -71,22 +72,20 @@ const TokenStrings = {
     IdentifierName: "[IDENTIFIER]",
     Attribute: "[ATTRIBUTE]",
 
-    ResourceUseMod: "[RESOURCE_USE_MOD]",
-
     EndOfStream: "[EOS]"
 };
 
 const PRIMITIVE_ENTITY_TYPE_NAMES = [
     "None", "Bool", 
-    "Nat", "Int", "BigInt", "BigNat", "Rational", "Float", "Decimal", "DecimalDegree", "LatLongCoordinate", "Complex",
+    "Nat", "Int", "ChkInt", "ChkNat", "Rational", "Float", "Decimal", "DecimalDegree", "LatLongCoordinate", "Complex",
     "ByteBuffer", "UUIDv4", "UUIDv7", "SHAContentHash", 
     "TZDateTime", "TAITime", "PlainDate", "PlainTime", "LogicalTime", "ISOTimestamp",
     "DeltaDateTime", "DeltaSeconds", "DeltaLogicalTime", "DeltaISOTimestamp",
-    "CChar", "UnicodeChar",
+    "Byte", "CChar", "UnicodeChar",
     "CCharBuffer", "UnicodeCharBuffer",
-    "String", "CString", 
-    "Regex", "CRegex", "PathRegex",
-    "Path", "PathItem", "Glob"
+    "String", "CString",
+    "Regex", "CRegex",
+    "Path", "PathFragment", "Glob"
 ];
 
 class Token {
@@ -241,8 +240,6 @@ class Lexer {
         }
     }
     
-    private static readonly _s_resourceUseModRe = new RegExp('\[[?!+*-]+\]', 'y');
-    
     private tryLexWS(): boolean {
         const arop = this.trylexWSPlus(SpaceRequiredSymbols, Lexer._s_whitespaceRe);
         if (arop !== null) {
@@ -344,14 +341,14 @@ class Lexer {
     private static readonly _s_floatSimpleValueNoSign = '[0-9]+[.][0-9]+';
     private static readonly _s_floatSimpleValue = `[+-]?${Lexer._s_floatSimpleValueNoSign}`;
 
+    private static readonly _s_idexValue = new RegExp(`@(${Lexer._s_intValue})`, "y");
+
     private static readonly _s_intNumberinoRe = new RegExp(`${Lexer._s_intValue}`, "y");
-    private static readonly _s_floatNumberinoRe = new RegExp(`${Lexer._s_floatValue}`, "y");
-    private static readonly _s_rationalNumberinoRe = new RegExp(`(${Lexer._s_intValue})/(${Lexer._s_nonzeroIntValNoSign})`, "y");
 
     private static readonly _s_intRe = new RegExp(`(${Lexer._s_intValue})i`, "y");
     private static readonly _s_natRe = new RegExp(`(${Lexer._s_intValue})n`, "y");
-    private static readonly _s_bigintRe = new RegExp(`(${Lexer._s_intValue})I`, "y");
-    private static readonly _s_bignatRe = new RegExp(`(${Lexer._s_intValue})N`, "y");
+    private static readonly _s_chkintRe = new RegExp(`ChkInt::npos|(${Lexer._s_intValue})I`, "y");
+    private static readonly _s_chknatRe = new RegExp(`ChkNat::npos|(${Lexer._s_intValue})N`, "y");
 
     private static readonly _s_floatRe = new RegExp(`(${Lexer._s_floatValue})f`, "y");
     private static readonly _s_decimalRe = new RegExp(`(${Lexer._s_floatValue})d`, "y");
@@ -366,7 +363,6 @@ class Lexer {
     private static readonly _s_deltasecondsRE = new RegExp(`[+-](${Lexer._s_floatValueNoSign})ds`, "y");
     private static readonly _s_deltalogicaltimeRE = new RegExp(`[+-](${Lexer._s_intValueNoSign})dl`, "y");
 
-    private static readonly _s_zerodenomRationalNumberinoRe = new RegExp(`(${Lexer._s_intValue})/0`, "y");
     private static readonly _s_zerodenomRationalRe = new RegExp(`(${Lexer._s_intValue})/0R`, "y");
 
     private static readonly _s_redundantSignRE = /[+-]{2,}/y;
@@ -379,6 +375,15 @@ class Lexer {
                 this.advancePosition(Math.min(this.jsStrEnd, this.jsStrPos + mm.length - 1));
             }
         }
+    }
+
+    private tryLexIdexToken(): boolean {
+        const midex = this.trylex(Lexer._s_idexValue);
+        if(midex !== null) {
+            this.recordLexTokenWData(this.jsStrPos + midex.length, TokenStrings.AtDexNumber, midex);
+            return true;
+        }
+        return false;
     }
 
     private tryLexFloatCompositeLikeToken(): boolean {
@@ -422,12 +427,6 @@ class Lexer {
             return true;
         }
 
-        const unumberino = this.trylex(Lexer._s_floatNumberinoRe);
-        if(unumberino !== null) {
-            this.recordLexTokenWData(this.jsStrPos + unumberino.length, TokenStrings.NumberinoFloat, unumberino);
-            return true;
-        }
-
         return false;
     }
 
@@ -442,19 +441,6 @@ class Lexer {
         const mrational = this.trylex(Lexer._s_rationalRe);
         if(mrational !== null) {
             this.recordLexTokenWData(this.jsStrPos + mrational.length, TokenStrings.Rational, mrational);
-            return true;
-        }
-
-        const mzerodenomtagged = this.trylex(Lexer._s_zerodenomRationalNumberinoRe);
-        if(mzerodenomtagged !== null) {
-            this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, mzerodenomtagged.length), "Zero denominator in rational number");
-            this.recordLexTokenWData(this.jsStrPos + mzerodenomtagged.length, TokenStrings.NumberinoRational, mzerodenomtagged);
-            return true;
-        }
-
-        const mnumberino = this.trylex(Lexer._s_rationalNumberinoRe);
-        if(mnumberino !== null) {
-            this.recordLexTokenWData(this.jsStrPos + mnumberino.length, TokenStrings.NumberinoRational, mnumberino);
             return true;
         }
 
@@ -486,15 +472,15 @@ class Lexer {
             return true;
         }
 
-        const mbigint = this.trylex(Lexer._s_bigintRe);
-        if(mbigint !== null) {
-            this.recordLexTokenWData(this.jsStrPos + mbigint.length, TokenStrings.BigInt, mbigint);
+        const mchkint = this.trylex(Lexer._s_chkintRe);
+        if(mchkint !== null) {
+            this.recordLexTokenWData(this.jsStrPos + mchkint.length, TokenStrings.ChkInt, mchkint);
             return true;
         }
 
-        const mbignat = this.trylex(Lexer._s_bignatRe);
-        if(mbignat !== null) {
-            this.recordLexTokenWData(this.jsStrPos + mbignat.length, TokenStrings.BigNat, mbignat);
+        const mchknat = this.trylex(Lexer._s_chknatRe);
+        if(mchknat !== null) {
+            this.recordLexTokenWData(this.jsStrPos + mchknat.length, TokenStrings.ChkNat, mchknat);
             return true;
         }
 
@@ -509,6 +495,11 @@ class Lexer {
 
     private tryLexNumberLikeToken(): boolean {
         this.checkRedundantSigns();
+
+        const idex = this.tryLexIdexToken();
+        if(idex) {
+            return true;
+        }
 
         const cft = this.tryLexFloatCompositeLikeToken();
         if(cft) {
@@ -533,7 +524,18 @@ class Lexer {
         return false;
     }
 
-    private static _s_bytebufferRe = new RegExp('0x\\[[0-9a-fA-F]+\\]', "y");
+    private static _s_byteRe = new RegExp('0x[0-9a-fA-F]{1,2}', "y");
+    private tryLexByte(): boolean {
+        const m = this.trylex(Lexer._s_byteRe);
+        if(m !== null) {
+            this.recordLexTokenWData(this.jsStrPos + m.length, TokenStrings.Byte, m);
+            return true;
+        }
+
+        return false;
+    }
+
+    private static _s_bytebufferRe = new RegExp('0x\\[\\]|0x\\[[0-9a-fA-F]{1,2}(,[0-9a-fA-F]{1,2})*\\]', "y");
     private tryLexByteBuffer(): boolean {
         const m = this.trylex(Lexer._s_bytebufferRe);
         if(m !== null) {
@@ -703,6 +705,11 @@ class Lexer {
     }
 
     private tryLexCharLike() {
+        const bb = this.tryLexByte();
+        if(bb) {
+            return true;
+        }
+
         const cc = this.tryLexCChar();
         if(cc) {
             return true;
@@ -765,27 +772,22 @@ class Lexer {
     }
 
     private static _s_pathRe = /[$]?[gf]?\\[ !-Z^-~\[\]]\\/y;
-    private static readonly _s_literalPathTagRE = /[<]/y;
     private tryLexPath() {
-        Lexer._s_pathRe.lastIndex = this.jsStrPos;
+        let ncpos = this.jsStrPos;
+        let istemplate = false;
+        if(this.input.startsWith("$", this.jsStrPos)) {
+            ncpos += 1;
+            istemplate = true;
+        }
+
+        Lexer._s_pathRe.lastIndex = ncpos;
         const mpth = Lexer._s_pathRe.exec(this.input);
         if(mpth !== null) {
-            let jepos = this.jsStrPos + mpth[0].length;
+            let jepos = ncpos + mpth[0].length;
             let pthval = mpth[0];
-
-            const istemplate = pthval.startsWith("$");
-            if(istemplate) {
-                pthval = pthval.slice(1);
-            }
-
-            Lexer._s_literalPathTagRE.lastIndex = jepos;
-            const mtag = Lexer._s_literalPathTagRE.exec(this.input);
-            if(mtag !== null) {
-                pthval += "[T]";
-            }
-
+            
             this.updatePositionInfo(this.jsStrPos, jepos);
-            this.recordLexTokenWData(jepos, istemplate ? TokenStrings.PathTemplateItem : TokenStrings.PathItem, pthval);
+            this.recordLexTokenWData(jepos, istemplate ? TokenStrings.FormatPathItem : TokenStrings.PathItem, pthval);
             return true;
         }
 
@@ -797,7 +799,7 @@ class Lexer {
     private static _s_tzvalue = '((\{[a-zA-Z0-9/, _-]+\})|[A-Z]+)';
 
     private static _s_datatimeRE = new RegExp(`${Lexer._s_datevalue}T${Lexer._s_timevalue}@${Lexer._s_tzvalue}`, "y");
-    private static _s_taitimeRE = new RegExp(`${Lexer._s_datevalue}T${Lexer._s_timevalue}?`, "y");
+    private static _s_taitimeRE = new RegExp(`${Lexer._s_datevalue}T${Lexer._s_timevalue}`, "y");
     private static _s_plaindateRE = new RegExp(`${Lexer._s_datevalue}`, "y");
     private static _s_plaintimeRE = new RegExp(`${Lexer._s_timevalue}`, "y");
     private static _s_timestampRE = new RegExp(`${Lexer._s_datevalue}T${Lexer._s_timevalue}[.]([0-9]{3})Z`, "y");
@@ -836,13 +838,13 @@ class Lexer {
         return false;
     }
 
-    private static _s_deltadatevalue = '([0-9]{1,4})-([0-9]{1,2})-([0-9]{1,2})';
-    private static _s_deltatimevalue = '([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})';
+    private static _s_deltadatevalue = '([0-9]{1,4})-([0-9]{1,10})-([0-9]{1,10})';
+    private static _s_deltatimevalue = '([0-9]{1,10}):([0-9]{1,10}):([0-9]{1,10})';
 
     private static _s_datetimeDeltaRE = new RegExp(`[+-]${Lexer._s_deltadatevalue}T${Lexer._s_deltatimevalue}?`, "y");
     private static _s_plaindateDeltaRE = new RegExp(`[+-]${Lexer._s_deltadatevalue}`, "y");
     private static _s_plaintimeDeltaRE = new RegExp(`[+-]${Lexer._s_deltatimevalue}`, "y");
-    private static _s_timestampDeltaRE = new RegExp(`[+-]${Lexer._s_deltadatevalue}T${Lexer._s_deltatimevalue}[.]([0-9]{3})Z`, "y");
+    private static _s_timestampDeltaRE = new RegExp(`[+-]${Lexer._s_deltadatevalue}T${Lexer._s_deltatimevalue}[.]([0-9]{18})Z`, "y");
 
     private tryLexDateTimeDelta() {
         const mdt = this.trylex(Lexer._s_datetimeDeltaRE);
@@ -887,14 +889,9 @@ class Lexer {
     }
 
     private tryLexSymbol() {
-        const usemodop = this.trylex(Lexer._s_resourceUseModRe);
         const spaceop = this.trylexWSPlus(SpaceRequiredSymbols, Lexer._s_whitespaceRe);
         const frontop = this.trylexWSPlus(SpaceFrontSymbols, /[^0-9+-]/y);
-        if(usemodop !== null) {
-            this.recordLexTokenWData(this.jsStrPos + usemodop.length, TokenStrings.ResourceUseMod, usemodop);
-            return true;
-        }
-        else if(spaceop !== null) {
+        if(spaceop !== null) {
             const realstr = " " + spaceop.trim() + " ";
 
             this.recordLexToken(this.jsStrPos + spaceop.length, realstr);
@@ -1340,7 +1337,7 @@ class Parser {
     }
 
     //scan until we find a balanaced xxx { ... } declaration -- eat the parens
-    private scanOverBraceDelimitedDeclaration(usesemi?: boolean) {
+    private scanOverBraceDelimitedDeclaration(allowcorebi?: boolean) {
         let pscount = 0;
 
         let tok = this.peekToken();
@@ -1350,9 +1347,10 @@ class Parser {
                 return;
             }
 
-            if(usesemi && pscount === 0) {
-                //check for the end of a builtin method "= ID;"
-                if(this.peekTokenKind() === SYM_eq && this.peekTokenKind(1) === TokenStrings.IdentifierName && this.peekTokenKind(2) === SYM_semicolon) {
+            if(allowcorebi && pscount === 0) {
+                //check for the end of a builtin method "= @ID;"
+                if(this.peekTokenKind() === SYM_eq && this.peekTokenKind(1) === SYM_at && this.peekTokenKind(2) === TokenStrings.IdentifierName && this.peekTokenKind(3) === SYM_semicolon) {
+                    this.consumeToken();
                     this.consumeToken();
                     this.consumeToken();
                     this.consumeToken();
@@ -1458,13 +1456,18 @@ class Parser {
     }
 
     private processFormatArguments(contents: string, sinfo: SourceInfo): FormatStringComponent[] {
-        const parts = contents.slice(2, -1).split(/(\$\{[0-9a-zA-Z:]+\})/).filter((cc) => cc !== "");
+        const parts = contents.slice(2, -1).split(/(\$\{[0-9a-zA-Z: ]+\})/).filter((cc) => cc !== "");
 
         return parts.map((part) => {
             if(!part.startsWith("${")) {
                 return new FormatStringTextComponent(part);
             }
             else {
+                if(!part.endsWith("}")) {
+                    this.recordErrorGeneral(sinfo, "Unterminated format string argument");
+                    return new FormatStringTextComponent(part);
+                }
+
                 const tpos = part.indexOf(":");
                 if(tpos === -1) {
                     const argpos = part.slice(2, part.length - 1);
@@ -1472,7 +1475,7 @@ class Parser {
                 }
                 else {
                     const argpos = part.slice(2, tpos);
-                    const fmtstr = part.slice(tpos + 1, part.length - 1);
+                    const fmtstr = part.slice(tpos + 1, part.length - 1).trim();
                     
                     const fsig = this.FA_TSigLookup(sinfo, fmtstr);
                     if(fsig !== undefined) {
@@ -1599,7 +1602,7 @@ class Parser {
                 if(tsroot === "Result" && (ttname === "Ok" || ttname === "Fail")) {
                     return {nsScope: currentns, scopeTokens: scopeTokens, typeTokens: [{tname: "Result", tterms: terms}, {tname: ttname, tterms: []}]};
                 }
-                else if(tsroot === "APIResult" && (ttname === "Rejected" || ttname === "Error" || ttname === "Failed" || ttname === "Success")) {
+                else if(tsroot === "APIResult" && (ttname === "Error" || ttname === "Rejected" || ttname === "Denied" || ttname === "Flagged" || ttname === "Success")) {
                     return {nsScope: currentns, scopeTokens: scopeTokens, typeTokens: [{tname: "APIResult", tterms: terms}, {tname: ttname, tterms: []}]};
                 }
                 else {
@@ -1808,6 +1811,25 @@ class Parser {
         }
     }
 
+    private parseVarDeclKind(): "let" | "ref" | "var" {
+        if(this.testToken(KW_let) || this.testToken(KW_ref) || this.testToken(KW_var)) {
+            return this.consumeTokenAndGetValue() as "let" | "ref" | "var";
+        }
+        else {
+            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Expected let, ref or var for variable declaration");
+            return "let";
+        }
+    }
+
+    private parseParamDeclKind(): "ref" | "out" | "out?" | "inout" | undefined {
+        if(this.testToken(KW_ref) || this.testToken(KW_out) || this.testToken(KW_out_q) || this.testToken(KW_inout)) {
+            return this.consumeTokenAndGetValue() as "ref" | "out" | "out?" | "inout";
+        }
+        else {
+            return undefined;
+        }
+    }
+
     private parseAdditionalTypeDeclTag(): AdditionalTypeDeclTag {
         let isStatus = false;
         let isEvent = false;
@@ -1856,7 +1878,7 @@ class Parser {
             this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot use _ as an identifier name -- it is special ignored variable");
         }
         
-        if(!/^[_a-zA-Z][_a-zA-Z0-9]*$/.test(vv)) {
+        if(!/^[_a-zA-Z0-9]+$/.test(vv)) {
             this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Invalid enum member name -- must start with an uppercase letter");
         }
 
@@ -1972,10 +1994,11 @@ class Parser {
         return undefined;
     }
 
-    private parsePreAndPostConditions(sinfo: SourceInfo, argnames: Set<string>, refParams: Set<string>, boundtemplates: Set<string>, taskcond: boolean, apicond: boolean): [PreConditionDecl[], PostConditionDecl[]] {
+    private parsePreAndPostConditions(sinfo: SourceInfo, argnames: Set<string>, mutparams: Set<string>, boundtemplates: Set<string>, taskcond: boolean, apicond: boolean): [PreConditionDecl[], PostConditionDecl[]] {
         let preconds: PreConditionDecl[] = [];
 
-        this.env.scope = new StandardScopeInfo([...argnames].map((v) => new LocalVariableDefinitionInfo(true, v)), boundtemplates, this.wellknownTypes.get("Bool") as TypeSignature);
+        this.env.scope = new StandardScopeInfo([...argnames].map((v) => new VariableDefinitionInfo("let", v)), boundtemplates, this.wellknownTypes.get("Bool") as TypeSignature);
+        let ii = 0;
         while (this.testToken(KW_requires)) {
             this.consumeToken();
             
@@ -1991,14 +2014,14 @@ class Parser {
             let softcheck = apicond && this.testToken(KW_softcheck);
             if(this.testAndConsumeTokenIf(KW_softcheck)) {
                 if(!apicond) {   
-                    this.recordErrorGeneral(sinfo, "Softcheck is only allowed in API pre/post conditions");
+                    this.recordErrorGeneral(sinfo, "Softcheck is only allowed in API/Task pre/post conditions");
                 }
             }
 
             const level = this.parseBuildInfo(KW_release);
-            const exp = this.parseExpression();
+            const exp = this.parseChkLogicExpression();
 
-            preconds.push(new PreConditionDecl(this.env.currentFile, sinfo, tag, level, softcheck, exp));
+            preconds.push(new PreConditionDecl(this.env.currentFile, sinfo, tag, ii++, level, softcheck, exp));
 
             this.ensureAndConsumeTokenIf(SYM_semicolon, "requires");
         }
@@ -2006,15 +2029,16 @@ class Parser {
 
         let postconds: PostConditionDecl[] = [];
 
-        const refnames = [...refParams].map((v) => new LocalVariableDefinitionInfo(true, "$" + v));
+        const refnames = [...mutparams].map((v) => new VariableDefinitionInfo("let", "$" + v));
 
-        const postvardecls = [...[...argnames].map((v) => new LocalVariableDefinitionInfo(true, v)), ...refnames, new LocalVariableDefinitionInfo(true, WELL_KNOWN_RETURN_VAR_NAME)];
+        const postvardecls = [...[...argnames].map((v) => new VariableDefinitionInfo("let", v)), ...refnames, new VariableDefinitionInfo("let", WELL_KNOWN_RETURN_VAR_NAME)];
         if(taskcond || apicond) {
-            postvardecls.push(new LocalVariableDefinitionInfo(true, WELL_KNOWN_EVENTS_VAR_NAME));
+            postvardecls.push(new VariableDefinitionInfo("let", WELL_KNOWN_EVENTS_VAR_NAME));
         }
 
         this.env.scope = new StandardScopeInfo(postvardecls, boundtemplates, this.wellknownTypes.get("Bool") as TypeSignature);
         
+        let jj = 0;
         while (this.testToken(KW_ensures)) {
             this.consumeToken();
 
@@ -2030,14 +2054,14 @@ class Parser {
             let softcheck = apicond && this.testToken(KW_softcheck);
             if(this.testAndConsumeTokenIf(KW_softcheck)) {
                 if(!apicond) {   
-                    this.recordErrorGeneral(sinfo, "Softcheck is only allowed in API pre/post conditions");
+                    this.recordErrorGeneral(sinfo, "Softcheck is only allowed in API/Task pre/post conditions");
                 }
             }
 
             const level = this.parseBuildInfo(KW_release);
-            const exp = this.parseExpression();
+            const exp = this.parseChkLogicExpression();
 
-            postconds.push(new PostConditionDecl(this.env.currentFile, sinfo, tag, level, softcheck, exp));
+            postconds.push(new PostConditionDecl(this.env.currentFile, sinfo, tag, jj++, level, softcheck, exp));
 
             this.ensureAndConsumeTokenIf(SYM_semicolon, "ensures");
         }
@@ -2049,14 +2073,18 @@ class Parser {
     private parseLambdaSignatureParameter(): LambdaParameterSignature {
         const cinfo = this.peekToken().getSourceInfo();
 
-        const isref = this.testAndConsumeTokenIf(KW_ref);
+        const pkind = this.parseParamDeclKind();
         const isrest = this.testAndConsumeTokenIf(SYM_dotdotdot);
 
-        if(isref && isrest) {
+        if(pkind !== undefined && isrest) {
             this.recordErrorGeneral(cinfo, "Cannot have a parameter that is both a reference and a rest");
         }
 
         const ptype = this.parseParameterTypeSignature();
+
+        if(ptype instanceof LambdaTypeSignature) {
+            this.recordErrorGeneral(cinfo, "Cannot have a lambda type as a parameter type of a lambda signature");
+        }
 
         if(this.testToken(SYM_eq)) {
             this.recordErrorGeneral(this.peekToken(), "Cannot have default values for lambda parameters");
@@ -2064,7 +2092,7 @@ class Parser {
             this.parseExpression(); //try to eat the expression to recover nicely
         }
 
-        return new LambdaParameterSignature(undefined, ptype, isref, isrest);
+        return new LambdaParameterSignature(undefined, ptype, pkind, isrest);
     }
 
     private parseLambdaSignatureParameters(cinfo: SourceInfo): LambdaParameterSignature[] {
@@ -2078,16 +2106,20 @@ class Parser {
             }
         }
 
+        if(params.filter((p) => p.pkind !== undefined).length > 1) {
+            this.recordErrorGeneral(cinfo, "Cannot have more than one special passing parameter");
+        }
+
         return params;
     }
 
     private parseInvokeDeclParameter(boundtemplates: Set<string>): InvokeParameterDecl {
         const cinfo = this.peekToken().getSourceInfo();
 
-        const isref = this.testAndConsumeTokenIf(KW_ref);
+        const pkind = this.parseParamDeclKind();
         const isrest = this.testAndConsumeTokenIf(SYM_dotdotdot);
 
-        if(isref && isrest) {
+        if(pkind !== undefined && isrest) {
             this.recordErrorGeneral(cinfo, "Cannot have a parameter that is both a reference and a rest");
         }
 
@@ -2107,23 +2139,23 @@ class Parser {
             }
         }
 
-        let optDefaultExp: ConstantExpressionValue | undefined = undefined;
+        let optDefaultExp: Expression | undefined = undefined;
         if(this.testAndConsumeTokenIf(SYM_eq)) {
-            optDefaultExp = this.parseConstExpression(ptype, boundtemplates);
+            optDefaultExp = this.parseConstScopedExpression(ptype, boundtemplates);
         }
 
         if(isrest && optDefaultExp !== undefined) {
             this.recordErrorGeneral(cinfo, "Cannot have a default value for rest parameters");
         }
 
-        if(isref && optDefaultExp !== undefined) {
+        if(pkind !== undefined && optDefaultExp !== undefined) {
             this.recordErrorGeneral(cinfo, "Cannot have a default value for reference parameters");
         }
 
-        return new InvokeParameterDecl(pname, ptype, optDefaultExp, isref, isrest);
+        return new InvokeParameterDecl(pname, ptype, optDefaultExp, pkind, isrest);
     }
 
-    private parseInvokeDeclParameters(cinfo: SourceInfo, implicitRefAllowed: boolean, boundtemplates: Set<string>): InvokeParameterDecl[] {
+    private parseInvokeDeclParameters(cinfo: SourceInfo, argSpecialAllowed: boolean, boundtemplates: Set<string>): InvokeParameterDecl[] {
         const params = this.parseListOf<InvokeParameterDecl>("function parameter list", SYM_lparen, SYM_rparen, SYM_coma, () => {
             return this.parseInvokeDeclParameter(boundtemplates)
         });
@@ -2133,8 +2165,15 @@ class Parser {
                 this.recordErrorGeneral(cinfo, "Rest parameter must be the last parameter");
             }
 
-            if(!implicitRefAllowed && params.some((param) => param.isRefParam)) {
-                this.recordErrorGeneral(cinfo, "Cannot have more than one reference parameter");
+            if(argSpecialAllowed) {
+                if(params.filter((p) => p.pkind !== undefined).length > 1) {
+                    this.recordErrorGeneral(cinfo, "Cannot have more than one special passing parameter");
+                }
+            }
+            else {
+                if(params.some((param) => param.pkind !== undefined)) {
+                    this.recordErrorGeneral(cinfo, "Cannot have more than one special passing parameter");
+                }
             }
 
             if(params[params.length - 1].isRestParam && params.some((param) => param.optDefaultValue !== undefined)) {
@@ -2148,6 +2187,7 @@ class Parser {
     private parseInvokeTemplateTermDecl(): InvokeTemplateTermDecl {
         this.ensureToken(TokenStrings.Template, "template term");
         const tname = this.consumeTokenAndGetValue();
+        const caninfer = this.testAndConsumeTokenIf(SYM_question);
 
         let ttype: TypeSignature | undefined = undefined;
         let tags: TemplateTermDeclExtraTag[] = [];
@@ -2166,7 +2206,7 @@ class Parser {
             }
         }
 
-        return new InvokeTemplateTermDecl(tname, tags, ttype);
+        return new InvokeTemplateTermDecl(tname, tags, ttype, caninfer);
     }
 
     private parseInvokeTemplateTerms(): InvokeTemplateTermDecl[] { 
@@ -2189,11 +2229,11 @@ class Parser {
     private parseLambdaDeclParameter(): InvokeParameterDecl {
         const cinfo = this.peekToken().getSourceInfo();
 
-        const isref = this.testAndConsumeTokenIf(KW_ref);
+        const pkind = this.parseParamDeclKind();
         const isrest = this.testAndConsumeTokenIf(SYM_dotdotdot);
 
-        if(isref && isrest) {
-            this.recordErrorGeneral(cinfo, "Cannot have a parameter that is both a reference and a rest");
+        if(pkind !== undefined && isrest) {
+            this.recordErrorGeneral(cinfo, "Cannot have a parameter that is both a special passing and a rest");
         }
 
         const idok = this.ensureToken(TokenStrings.IdentifierName, "function parameter");
@@ -2204,13 +2244,17 @@ class Parser {
             ptype = this.parseParameterTypeSignature();
         }
 
+        if(ptype instanceof LambdaTypeSignature) {
+            this.recordErrorGeneral(cinfo, "Cannot have a lambda type as a parameter type of a lambda declaration");
+        }
+
         if(this.testToken(SYM_eq)) {
             this.recordErrorGeneral(this.peekToken(), "Cannot have default values for lambda parameters");
             this.consumeToken();
             this.parseExpression(); //try to eat the expression to recover nicely
         }
 
-        return new InvokeParameterDecl(pname, ptype, undefined, isref, isrest);
+        return new InvokeParameterDecl(pname, ptype, undefined, pkind, isrest);
     }
 
     private parseLambdaDeclParameters(cinfo: SourceInfo): InvokeParameterDecl[] {
@@ -2222,6 +2266,10 @@ class Parser {
             if(params.slice(0, -1).some((param) => param.isRestParam)) {
                 this.recordErrorGeneral(cinfo, "Rest parameter must be the last parameter");
             }
+        }
+
+        if(params.filter((p) => p.pkind !== undefined).length > 1) {
+            this.recordErrorGeneral(cinfo, "Cannot have more than one special passing parameter");
         }
 
         return params;
@@ -2276,7 +2324,7 @@ class Parser {
             this.consumeToken();
         }
         
-        const lambdaargs = params.map((param) => new LocalVariableDefinitionInfo(!param.isRefParam, param.name));
+        const lambdaargs = params.map((param) => new VariableDefinitionInfo(param.pkind || "let", param.name));
         this.env.pushLambdaScope(lambdaargs, (resultInfo instanceof AutoTypeSignature) ? undefined : resultInfo);
         const body = this.parseBody([], false, true);
         this.env.popLambdaScope();
@@ -2338,10 +2386,10 @@ class Parser {
         }
 
         const argNames = new Set<string>(params.map((param) => param.name));
-        const cargs = params.map((param) => new LocalVariableDefinitionInfo(!param.isRefParam, param.name));
-        const refparams = new Set<string>(params.filter((param) => param.isRefParam).map((param) => param.name));
+        const cargs = params.map((param) => new VariableDefinitionInfo(param.pkind || "let", param.name));
+        const mutparams = new Set<string>(params.filter((param) => param.pkind !== undefined).map((param) => param.name));
 
-        const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, refparams, boundtemplates, false, false);
+        const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, mutparams, boundtemplates, false, false);
         
         this.env.pushStandardFunctionScope(cargs, boundtemplates, resultInfo);
         const body = this.parseBody(attributes, functionkind === "predicate", false);
@@ -2389,25 +2437,25 @@ class Parser {
         }
 
         const argNames = new Set<string>(params.map((param) => param.name));
-        let cargs = params.map((param) => new LocalVariableDefinitionInfo(!param.isRefParam, param.name));
-        const refparams = new Set<string>(params.filter((param) => param.isRefParam).map((param) => param.name));
+        let cargs = params.map((param) => new VariableDefinitionInfo(param.pkind || "let", param.name));
+        const mutparams = new Set<string>(params.filter((param) => param.pkind !== undefined).map((param) => param.name));
 
         if(taskscope) {
             argNames.add("self");
-            cargs = [new LocalVariableDefinitionInfo(!isref, "self"), ...cargs];
+            cargs = [new VariableDefinitionInfo(isref ? "ref" : "let", "self"), ...cargs];
             if(isref) {
-                refparams.add("self");
+                mutparams.add("self");
             }
         }
         else {
             argNames.add("this");
-            cargs = [new LocalVariableDefinitionInfo(!isref, "this"), ...cargs];
+            cargs = [new VariableDefinitionInfo(!isref ? "let" : "ref", "this"), ...cargs];
             if(isref) {
-                refparams.add("this");
+                mutparams.add("this");
             }
         }
 
-        const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, refparams, boundtemplates, false, false);
+        const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, mutparams, boundtemplates, false, false);
     
         this.env.pushStandardFunctionScope(cargs, boundtemplates, resultInfo);
         const body = this.parseBody(attributes, false, false);
@@ -2448,15 +2496,15 @@ class Parser {
         }
 
         const argNames = new Set<string>(params.map((param) => param.name));
-        let cargs = params.map((param) => new LocalVariableDefinitionInfo(!param.isRefParam, param.name));
-        const refparams = new Set<string>(params.filter((param) => param.isRefParam).map((param) => param.name));
+        let cargs = params.map((param) => new VariableDefinitionInfo(param.pkind || "let", param.name));
+        const mutparams = new Set<string>(params.filter((param) => param.pkind !== undefined).map((param) => param.name));
 
         argNames.add("self");
-        cargs = [new LocalVariableDefinitionInfo(true, "self"), ...cargs];
-        refparams.add("self");
-    
-        const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, refparams, boundtemplates, fname === taskmain, false);
-    
+        cargs = [new VariableDefinitionInfo("ref", "self"), ...cargs];
+        mutparams.add("self");
+
+        const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, mutparams, boundtemplates, fname === taskmain, false);
+
         this.env.pushStandardFunctionScope(cargs, boundtemplates, resultInfo);
         const body = this.parseBody(attributes, false, false);
         this.env.popStandardFunctionScope();
@@ -2616,8 +2664,64 @@ class Parser {
         return terms;
     }
 
+    private parseFormatTypeTermList(sinfo: SourceInfo): [TypeSignature, {argname: string, argtype: TypeSignature}[]] {
+        const allterms = this.parseListOf<{argname: string, argtype: TypeSignature}>("format type term list", SYM_langle, SYM_rangle, SYM_coma, () => {
+            let argname: string = "_";
+
+            if(this.testFollows(TokenStrings.IdentifierName, SYM_colon)) {
+                argname = this.consumeTokenAndGetValue();
+                this.ensureAndConsumeTokenAlways(SYM_colon, "format type term");
+            }
+            
+            const rtype = this.parseStdTypeSignature();
+            return {argname: argname, argtype: rtype};
+        });
+
+        if(allterms.length !== 0 && allterms[0].argname !== "_") {
+            this.recordErrorGeneral(sinfo, "Format type first term is result type and cannot be named");
+        }
+        const rtype = allterms[0] || new ErrorTypeSignature(sinfo, undefined);
+
+        let terms = allterms.slice(1);
+        const ncount = terms.filter((t) => t.argname !== "_").length;
+
+        if(terms.length === 0) {
+            this.recordErrorGeneral(this.peekToken(), "Format type term list cannot be empty");
+            return [new ErrorTypeSignature(sinfo, undefined), []];
+        }
+
+        if(ncount !== 0 && ncount !== terms.length) {
+            this.recordErrorGeneral(sinfo, "All format type terms must *either* be named or be positional");
+        }
+
+        if(ncount !== 0) {
+            terms = terms.sort((a, b) => a.argname.localeCompare(b.argname));
+        }
+
+        return [rtype.argtype, terms];
+    }
+
     private parseNominalType(): TypeSignature {
         const sinfo = this.peekToken().getSourceInfo();
+
+        const tokenData = this.peekTokenData();
+        if(this.testToken(TokenStrings.IdentifierName) && SpecialNominalTypes.includes(tokenData)) {
+            const stype = this.consumeTokenAndGetValue();
+
+            if(SpecialStringFormatTypes.includes(stype)) {
+                const [rtype, terms] = this.parseFormatTypeTermList(sinfo);
+                return new FormatStringTypeSignature(sinfo, stype.slice(1) as "String" | "CString", rtype, terms);
+            }
+            else if(SpecialPathFormatTypes.includes(stype)) {
+                const [rtype, terms] = this.parseFormatTypeTermList(sinfo);
+                return new FormatPathTypeSignature(sinfo, stype.slice(1) as "Path" | "PathFragment" | "PathGlob", rtype, terms);
+            }
+            else {
+                const terms = this.parseTermList();
+                return new DashResultTypeSignature(sinfo, terms);
+            }
+        }
+
         const nsr = this.parseIdentifierAccessChain();
         if(nsr === undefined) {
             return new ErrorTypeSignature(sinfo, undefined);
@@ -2687,28 +2791,59 @@ class Parser {
         }
     }
 
-    private parseMatchTypeGuard(): TypeSignature | undefined {
+    private parseMatchTypeGuard(): [boolean, TypeSignature | undefined] {
         if (this.testAndConsumeTokenIf(KW_under)) {
-            return undefined;
+            return [true, undefined];
         }
         else {
-            return this.parseStdTypeSignature();
+            const tsig = this.parseStdTypeSignature();
+            return [!(tsig instanceof ErrorTypeSignature), tsig];
         }
     }
 
-    private parseSwitchLiteralGuard(): LiteralExpressionValue | undefined {
+    private parseSwitchLiteralGuard(): [boolean, Expression | undefined] {
         if (this.testAndConsumeTokenIf(KW_under)) {
-            return undefined;
+            return [true, undefined];
         }
         else {
             const exp = this.parseExpression();
     
             if(!exp.isLiteralExpression() && !(exp instanceof AccessNamespaceConstantExpression) && !(exp instanceof AccessStaticFieldExpression) && !(exp instanceof AccessEnumExpression)) {
-                this.recordErrorGeneral(exp.sinfo, "Expected literal expression")
+                this.recordErrorGeneral(exp.sinfo, "Expected literal expression");
+                return [false, exp];
             }
 
-            return new LiteralExpressionValue(exp);
+            return [true, exp];
         }
+    }
+
+    private parseDispatchGuard(): [boolean, Expression | string | undefined] {
+        if (this.testAndConsumeTokenIf(KW_under)) {
+            return [false, undefined];
+        }
+        else {
+            if(this.testAndConsumeTokenIf(TokenStrings.AtDexNumber)) {
+                return [true, this.consumeTokenAndGetValue()];
+            }
+            else {
+                const exp = this.parseExpression();
+        
+                if(!exp.isLiteralExpression() && !(exp instanceof AccessNamespaceConstantExpression) && !(exp instanceof AccessStaticFieldExpression)) {
+                    this.recordErrorGeneral(exp.sinfo, "Expected literal expression or binder variable");
+                    return [false, exp];
+                }
+
+                return [true, exp];
+            }
+        }
+    }
+
+    private parseITypeTest(isnot: boolean): ITest {
+        this.consumeToken();
+        const ttype = this.parseStdTypeSignature();
+        this.ensureAndConsumeTokenAlways(SYM_rangle, "ITest");
+
+        return new ITestType(isnot, ttype);
     }
 
     private parseITest(): ITest | undefined {
@@ -2741,12 +2876,72 @@ class Parser {
         }
     }
 
-    private parseITypeTest(isnot: boolean): ITest {
-        this.consumeToken();
-        const ttype = this.parseStdTypeSignature();
-        this.ensureAndConsumeTokenAlways(SYM_rangle, "ITest");
+    private checkITestFirstToken(): boolean {
+        return this.testToken(SYM_bang) || this.testToken(SYM_langle) || this.testToken(KW_none) || this.testToken(KW_some) || this.testToken(KW_ok) || this.testToken(KW_fail);
+    }
 
-        return new ITestType(isnot, ttype);
+    private parseRValueInTopTestExpression(): Expression {
+        if(this.testToken(KW_ref)) {
+            return this.parseRefRValueExpression();
+        }
+        else if(this.testToken(KW_do)) {
+            return this.parseTaskActionRValueExpression();
+        }
+        else {
+            return this.parseExpression();
+        }
+    }
+
+    private parseITestGuard(): ITestGuard {
+        if(this.testFollows(SYM_lparen, TokenStrings.IdentifierName, SYM_eq)) {
+            this.consumeToken();
+            const binfo = this.parseBinderInfo();
+            this.ensureAndConsumeTokenAlways(SYM_eq, "binder in ITest guard");
+            const bexp = this.parseRValueInTopTestExpression();
+            this.ensureAndConsumeTokenAlways(SYM_rparen, "binder in ITest guard");
+
+            this.ensureAndConsumeTokenAlways(SYM_at, "binder in ITest guard");
+            const itest = this.parseITest() as ITest;
+            return new ITestBinderGuard(bexp, itest, new BinderInfo(binfo as string, false));
+        }
+        else {
+            const isparened = this.testToken(SYM_lparen);
+            const bexp = this.parseRValueInTopTestExpression();
+            
+            if((this.testToken(SYM_at) || this.checkITestFirstToken()) && !isparened) {
+                this.recordErrorGeneral(bexp.sinfo, "ITest guard expression is missing parentheses");
+            }
+
+            if(this.testToken(SYM_at)) {
+                let stdbindname = "$_";
+                if(bexp instanceof AccessVariableExpression) {
+                    stdbindname = "$" + bexp.srcname;
+                }
+
+                this.consumeToken();
+                const itest = this.parseITest() as ITest;
+                return new ITestBinderGuard(bexp, itest, new BinderInfo(stdbindname, true));
+            }
+            else if(this.checkITestFirstToken()) {
+                const itest = this.parseITest() as ITest;
+                return new ITestTypeGuard(bexp, itest);
+            }
+            else {
+                return new ITestSimpleGuard(bexp);
+            }
+        }
+    }
+
+    private parseITestGuardSet(): ITestGuardSet {
+        const lg = this.parseITestGuard();
+        let guards = [lg];
+
+        while (this.testToken(SYM_ampamp)) {
+            this.consumeToken();
+            guards.push(this.parseITestGuard());
+        }
+
+        return new ITestGuardSet(guards);
     }
 
     private parseInvokeTemplateArguments() {
@@ -2786,32 +2981,37 @@ class Parser {
         return recursive;
     }
 
-    private checkArgs(args: ArgumentValue[]) {
+    private checkArgs(args: AbstractArgumentValue[]) {
         const namedParams = args.filter((arg) => arg instanceof NamedArgumentValue).map((arg) => (arg as NamedArgumentValue).name);
         const duplicateNames = namedParams.find((name, index) => namedParams.indexOf(name) !== index);
         if(duplicateNames !== undefined) {
             this.recordErrorGeneral(this.peekToken(), `Duplicate argument name ${duplicateNames}`);
         }
 
-        const multiplerefs = args.filter((arg) => arg instanceof RefArgumentValue).length > 1;
+        const multiplerefs = args.filter((arg) => arg instanceof PassingArgumentValue).length > 1;
         if(multiplerefs) {
-            this.recordErrorGeneral(this.peekToken(), "Cannot have multiple reference arguments");
+            this.recordErrorGeneral(this.peekToken(), "Cannot have multiple special passing arguments");
         }
     }
 
     private parseArgumentsCallStd(refok: boolean): ArgumentList {
-        const args = this.parseListOf<ArgumentValue>("argument list", SYM_lparen, SYM_rparen, SYM_coma, () => {
-            if(this.testToken(KW_ref)) {
+        const args = this.parseListOf<AbstractArgumentValue>("argument list", SYM_lparen, SYM_rparen, SYM_coma, () => {
+            if(this.testToken(KW_under)) {
+                this.consumeToken();
+                return new SkipArgumentValue();
+            }
+            else if(this.testToken(KW_ref) || this.testToken(KW_out) || this.testToken(KW_out_q) || this.testToken(KW_inout)) {
                 if(!refok) {
                     this.recordErrorGeneral(this.peekToken(), "Cannot have a reference argument in this context");
                 }
-                this.consumeToken();
+
+                const pk = this.consumeTokenAndGetValue() as "ref" | "out" | "out?" | "inout";
                 const exp = this.parseExpression();
                 if(!(exp instanceof AccessVariableExpression)) {
-                    this.recordErrorGeneral(exp.sinfo, "Expected variable as target in ref argument");
+                    this.recordErrorGeneral(exp.sinfo, "Expected variable as target in special passing argument");
                 }
 
-                return new RefArgumentValue(exp as AccessVariableExpression);
+                return new PassingArgumentValue(pk, exp as AccessVariableExpression);
             }
             else if(this.testToken(SYM_dotdotdot)) {
                 this.consumeToken();
@@ -2839,19 +3039,25 @@ class Parser {
     }
 
     private parseArgumentsCallLambda(refok: boolean): ArgumentList {
-        const args = this.parseListOf<ArgumentValue>("argument list", SYM_lparen, SYM_rparen, SYM_coma, () => {
-            if(this.testToken(KW_ref)) {
-                if(!refok) {
-                    this.recordErrorGeneral(this.peekToken(), "Cannot have a reference argument in this context");
-                }
+        const args = this.parseListOf<AbstractArgumentValue>("argument list", SYM_lparen, SYM_rparen, SYM_coma, () => {
+            if(this.testToken(KW_under)) {
+                this.recordErrorGeneral(this.peekToken(), "Cannot have skip arguments in lambda call context");
 
                 this.consumeToken();
-                const exp = this.parseExpression();
-                if(!(exp instanceof AccessVariableExpression)) {
-                    this.recordErrorGeneral(exp.sinfo, "Expected variable as target in ref argument");
+                return new SkipArgumentValue();
+            }
+            else if(this.testToken(KW_ref) || this.testToken(KW_out) || this.testToken(KW_out_q) || this.testToken(KW_inout)) {
+                if(!refok) {
+                    this.recordErrorGeneral(this.peekToken(), "Cannot have a special passing argument in this context");
                 }
 
-                return new RefArgumentValue(exp as AccessVariableExpression);
+                const pk = this.consumeTokenAndGetValue() as "ref" | "out" | "out?" | "inout";
+                const exp = this.parseExpression();
+                if(!(exp instanceof AccessVariableExpression)) {
+                    this.recordErrorGeneral(exp.sinfo, "Expected variable as target in special passing argument");
+                }
+
+                return new PassingArgumentValue(pk, exp as AccessVariableExpression);
             }
             else if(this.testToken(SYM_dotdotdot)) {
                 this.consumeToken();
@@ -2881,17 +3087,22 @@ class Parser {
     }
 
     private parseArgumentsConstructorStd(): ArgumentList {
-        const args = this.parseListOf<ArgumentValue>("argument list", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
-            if(this.testToken(KW_ref)) {
-                this.recordErrorGeneral(this.peekToken(), "Cannot have a reference argument in this context");
-                
+        const args = this.parseListOf<AbstractArgumentValue>("argument list", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
+            if(this.testToken(KW_under)) {
+                this.consumeToken();
+                return new SkipArgumentValue();
+            }
+            else if(this.testToken(KW_ref) || this.testToken(KW_out) || this.testToken(KW_out_q) || this.testToken(KW_inout)) {
+                this.recordErrorGeneral(this.peekToken(), "Cannot have a special passing argument in this context");
+
                 this.consumeToken();
                 const exp = this.parseExpression();
                 if(!(exp instanceof AccessVariableExpression)) {
-                    this.recordErrorGeneral(exp.sinfo, "Expected variable as target in ref argument");
+                    this.recordErrorGeneral(exp.sinfo, "Expected variable as target in special passing argument");
                 }
 
-                return new RefArgumentValue(exp as AccessVariableExpression);
+                //Drop the special passing argument and treat as positional so we can continue to type checker
+                return new PositionalArgumentValue(exp as AccessVariableExpression);
             }
             else if(this.testToken(SYM_dotdotdot)) {
                 this.consumeToken();
@@ -2919,17 +3130,18 @@ class Parser {
     }
 
     private parseArgumentsCollection(mapargs: boolean): ArgumentList {
-        const args = this.parseListOf<ArgumentValue>("argument list", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
-            if(this.testToken(KW_ref)) {
-                this.recordErrorGeneral(this.peekToken(), "Cannot have a reference argument in collection constructor context");
+        const args = this.parseListOf<AbstractArgumentValue>("argument list", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
+            if(this.testToken(KW_ref) || this.testToken(KW_out) || this.testToken(KW_out_q) || this.testToken(KW_inout)) {
+                this.recordErrorGeneral(this.peekToken(), "Cannot have a special passing argument in collection constructor context");
 
                 this.consumeToken();
                 const exp = this.parseExpression();
                 if(!(exp instanceof AccessVariableExpression)) {
-                    this.recordErrorGeneral(exp.sinfo, "Expected variable as target in ref argument");
+                    this.recordErrorGeneral(exp.sinfo, "Expected variable as target in special passing argument");
                 }
 
-                return new RefArgumentValue(exp as AccessVariableExpression);
+                //Drop the special passing argument and treat as positional so we can continue to type checker
+                return new PositionalArgumentValue(exp as AccessVariableExpression);
             }
             else if(this.testToken(SYM_dotdotdot)) {
                 this.consumeToken();
@@ -2973,16 +3185,6 @@ class Parser {
         return new ConstructorLambdaExpression(sinfo, ldecl);
     }
 
-    private parseConstExpression(etype: TypeSignature | undefined, boundtemplates: Set<string>): ConstantExpressionValue {
-        this.env.pushStandardFunctionScope([], boundtemplates, etype);
-        this.env.pushBlockScope();
-        const exp = this.parseExpression();
-        this.env.popBlockScope();
-        this.env.popStandardFunctionScope();
-
-        return new ConstantExpressionValue(exp);
-    }
-
     private processTaggedLiteral(): TypeSignature {
         this.ensureAndConsumeTokenAlways(SYM_langle, "tagged literal");
         const ttype = this.parseTypeTagSignature();
@@ -3004,32 +3206,6 @@ class Parser {
     private trySpecialNamespaceCall(sinfo: SourceInfo, ns: NamespaceDeclaration, name: string, targs: TypeSignature[], args: ArgumentList): Expression | undefined {
         if(ns.fullnamespace.ns[0] !== "Core") {
             return undefined;
-        }
-
-        if(ns.name === "XCore") {
-            if(name === "s_safeas") {
-                if(targs.length !== 2) {
-                    this.recordErrorGeneral(sinfo, "SafeAs expects exactly two template arguments");
-                }
-    
-                if(args.args.length !== 1 || !args.args.every((arg) => arg instanceof PositionalArgumentValue)) {
-                    this.recordErrorGeneral(sinfo, "SafeAs expects exactly one positional arguments");
-                }
-
-                return new SafeConvertExpression(sinfo, (args.args[0] as PositionalArgumentValue).exp, targs[0], targs[1]);
-            }
-
-            if(name === "s_createDirect") {
-                if(targs.length !== 2) {
-                    this.recordErrorGeneral(sinfo, "CreateDirect expects exactly two template arguments");
-                }
-    
-                if(args.args.length !== 1 || !args.args.every((arg) => arg instanceof PositionalArgumentValue)) {
-                    this.recordErrorGeneral(sinfo, "CreateDirect expects exactly one positional arguments");
-                }
-
-                return new CreateDirectExpression(sinfo, (args.args[0] as PositionalArgumentValue).exp, targs[0], targs[1]);
-            }
         }
 
         if(ns.name === "KeyComparator") {
@@ -3060,10 +3236,11 @@ class Parser {
 
             if(args.args.length === 0 || !(args.args[0] instanceof PositionalArgumentValue)) {
                 this.recordErrorGeneral(sinfo, "Interpolate expects the format string as the first (positional) argument");
+                return new ErrorExpression(sinfo, undefined, undefined);
             }
 
             const farg = (args.args[0] as PositionalArgumentValue).exp;
-            const vargs = args.args.slice(1).map((arg) => arg as ArgumentValue);
+            const vargs = args.args.slice(1).map((arg) => arg as StdArgumentValue);
 
             if(name === "string") {
                 return new InterpolateFormatExpression(sinfo, "string", targs[0], farg, vargs);
@@ -3074,7 +3251,7 @@ class Parser {
             else {
                 assert(false, "Unknown Interpolate function");
             }
-		}
+        }
 
         return undefined;
     }
@@ -3296,6 +3473,108 @@ class Parser {
         return new ParseAsTypeExpression(sinfo, exp, tsig);
     }
 
+    private parseEnvExpression(): Expression {
+        const sinfo = this.peekToken().getSourceInfo();
+
+        this.consumeToken(); //env
+        this.ensureAndConsumeTokenAlways(SYM_dot, "env expression");
+
+        this.ensureToken(TokenStrings.IdentifierName, "env expression");
+        const key = this.consumeTokenAndGetValue();
+        if(key === "has" || key === "get" || key === "tryGet") {
+            this.ensureAndConsumeTokenAlways(SYM_lparen, "env expression");
+            let envkey: string | undefined;
+            if(this.testToken(TokenStrings.IdentifierName)) {
+                envkey = this.consumeTokenAndGetValue();
+            }
+            else if(this.testToken(TokenStrings.String) || this.testToken(TokenStrings.CString)) {
+                envkey = this.consumeTokenAndGetValue();
+            }
+            else {
+                envkey = undefined;
+            }
+
+            this.ensureAndConsumeTokenAlways(SYM_rparen, "env expression");
+
+            if(envkey !== undefined) {
+                return new AccessEnvValueExpression(sinfo, key, envkey);
+            }
+            else {
+                this.recordErrorGeneral(sinfo, "Missing environment variable key name to access");
+                return new ErrorExpression(sinfo, undefined, undefined);
+                
+            }
+        }
+        else {
+            return new AccessEnvValueExpression(sinfo, undefined, key);
+        }
+    }
+
+    private parseTaskFunctionExpression(): Expression {
+        const sinfo = this.peekToken().getSourceInfo();
+
+        this.consumeToken(); //Task
+        this.ensureAndConsumeTokenAlways(SYM_coloncolon, "Task function expression");
+        
+        this.ensureToken(TokenStrings.IdentifierName, "Task function expression");
+        const fname = this.consumeTokenAndGetValue();
+
+        this.ensureAndConsumeTokenAlways(SYM_lparen, "Task function expression");
+        this.ensureAndConsumeTokenAlways(SYM_rparen, "Task function expression");
+
+        if(fname === "currentID") {
+            return new TaskAccessInfoExpression(ExpressionTag.TaskAccessIDExpression, sinfo, fname);
+        }
+        else if(fname === "parentID") {
+            return new TaskAccessInfoExpression(ExpressionTag.TaskAccessParentIDExpression, sinfo, fname);
+        }
+        else {
+            this.recordErrorGeneral(sinfo, `Unknown Task function '${fname}'`);
+            return new ErrorExpression(sinfo, undefined, undefined);
+        }
+    }
+
+    private parseHoleExpression(): Expression {
+        const sinfo = this.peekToken().getSourceInfo();
+
+        this.consumeToken();
+
+        let hname: string | undefined = undefined;
+        if(this.testToken(TokenStrings.IdentifierName)) {
+            hname = this.consumeTokenAndGetValue();
+        }
+
+        let captures: string[] = [];
+        if(this.testToken(SYM_lbrack)) {
+            captures = this.parseListOf<string>("hole captures", SYM_lbrack, SYM_rbrack, SYM_coma, () => {
+                this.ensureToken(TokenStrings.IdentifierName, "hole capture list");
+                return this.consumeTokenAndGetValue();
+            });
+        }        
+
+        let doccomment: string | undefined = undefined;
+        if(this.testToken(SYM_lparen)) {
+            this.consumeToken();
+            this.ensureToken(TokenStrings.DocComment, "hole expression");
+            doccomment = this.consumeTokenAndGetValue();
+            this.ensureAndConsumeTokenAlways(SYM_rparen, "hole expression");
+        }
+
+        let samplesfile: Expression | undefined = undefined;
+        if(this.testToken(KW_of)) {
+            this.consumeToken();
+            samplesfile = this.parseExpression();
+        }
+
+        let explicittype: TypeSignature | undefined;
+        if(this.testToken(SYM_arrow)) {
+            this.consumeToken();
+            explicittype = this.parseStdTypeSignature();
+        }
+
+        return new HoleExpression(sinfo, hname, captures, explicittype, doccomment, samplesfile);
+    }
+
     private parsePrimaryExpression(): Expression {
         const sinfo = this.peekToken().getSourceInfo();
 
@@ -3316,13 +3595,13 @@ class Parser {
             const istr = this.consumeTokenAndGetValue();
             return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralIntExpression, istr);
         }
-        else if(tk === TokenStrings.BigNat) {
+        else if(tk === TokenStrings.ChkNat) {
             const istr = this.consumeTokenAndGetValue();
-            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralBigNatExpression, istr);
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralChkNatExpression, istr);
         }
-        else if (tk === TokenStrings.BigInt) {
+        else if (tk === TokenStrings.ChkInt) {
             const istr = this.consumeTokenAndGetValue();
-            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralBigIntExpression, istr);
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralChkIntExpression, istr);
         }
         else if (tk === TokenStrings.Rational) {
             const rstr = this.consumeTokenAndGetValue();
@@ -3403,7 +3682,11 @@ class Parser {
         }
         else if(tk === TokenStrings.Regex) {
             const rstr = this.consumeTokenAndGetValue();
-            return new LiteralRegexExpression(rstr.endsWith("/") ? ExpressionTag.LiteralUnicodeRegexExpression : ExpressionTag.LiteralCRegexExpression, sinfo, rstr);
+            return new LiteralRegexExpression(rstr.endsWith("/") ? ExpressionTag.LiteralUnicodeRegexExpression : ExpressionTag.LiteralCRegexExpression, sinfo, this.env.currentNamespace.fullnamespace, rstr);
+        }
+        else if(tk === TokenStrings.Byte) {
+            const bstr = this.consumeTokenAndGetValue();
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralByteExpression, bstr);
         }
         else if(tk === TokenStrings.CChar) {
             const cstr = this.consumeTokenAndGetValue();
@@ -3415,11 +3698,47 @@ class Parser {
         }
         else if(tk === TokenStrings.String) {
             const sstr = this.consumeTokenAndGetValue();
-            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralStringExpression, sstr);
+            if(!this.testToken(SYM_langle)) {
+                return new LiteralStringExpression(sinfo, sstr);
+            }
+            else {
+                const ttype = this.processTaggedLiteral();
+                return new LiteralTypedStringExpression(sinfo, sstr, ttype);
+            }
         }
         else if(tk === TokenStrings.CString) {
-            const sstr = this.consumeTokenAndGetValue();
-            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralCStringExpression, sstr);
+            const cstr = this.consumeTokenAndGetValue();
+            if(!this.testToken(SYM_langle)) {
+                return new LiteralCStringExpression(sinfo, cstr);
+            }
+            else {
+                const ttype = this.processTaggedLiteral();
+                return new LiteralTypedCStringExpression(sinfo, cstr, ttype);
+            }
+        }
+        else if(tk === TokenStrings.PathItem) {
+            const pstr = this.consumeTokenAndGetValue();
+
+            let ptag = ExpressionTag.LiteralPathExpression;
+            if(!pstr.startsWith("\\")) {
+                ptag = pstr.startsWith("g") ? ExpressionTag.LiteralGlobExpression : ExpressionTag.LiteralPathFragmentExpression;
+            }
+
+            if(!this.testToken(SYM_langle)) {
+                return new LiteralPathItemExpression(ptag, sinfo, pstr);
+            }
+            else {
+                const ttype = this.processTaggedLiteral();
+
+                if(ptag === ExpressionTag.LiteralPathExpression) {
+                    return new LiteralTypedPathExpression(sinfo, pstr, ttype);
+                }
+                else {
+                    this.recordErrorGeneral(sinfo, "Only full path literals can be tagged");
+                    return new ErrorExpression(sinfo, undefined, undefined);
+                }
+            }
+            
         }
         else if(tk === TokenStrings.FormatString) {
             const tkinfo = this.peekToken().getSourceInfo();
@@ -3431,9 +3750,10 @@ class Parser {
                 return new LiteralFormatStringExpression(sinfo, sstr, fmts);
             }
             else {
-				assert(false, "Attempted to parse non supported typed format string expression!");
+                const ttype = this.processTaggedLiteral();
+                return new LiteralTypedFormatStringExpression(sinfo, sstr, fmts, ttype);
             }
-		}
+        }
         else if(tk === TokenStrings.FormatCString) {
             const tkinfo = this.peekToken().getSourceInfo();
 
@@ -3444,20 +3764,37 @@ class Parser {
                 return new LiteralFormatCStringExpression(sinfo, cstr, fmts);
             }
             else {
-				assert(false, "Attempted to parse non supported typed format cstring expression!");
+                const ttype = this.processTaggedLiteral();
+                return new LiteralTypedFormatCStringExpression(sinfo, cstr, fmts, ttype);
             }
         }
-        else if(tk === TokenStrings.PathItem) {
-            const sstr = this.consumeTokenAndGetValue();
+        else if(tk === TokenStrings.FormatPathItem) {
+            const tkinfo = this.peekToken().getSourceInfo();
+
+            const pstr = this.consumeTokenAndGetValue();
+            const fmts = this.processFormatArguments(pstr, tkinfo);
 
             let ptag = ExpressionTag.LiteralPathExpression;
-            if(!sstr.startsWith("\\")) {
-                ptag = sstr.startsWith("g") ? ExpressionTag.LiteralGlobExpression : ExpressionTag.LiteralPathItemExpression;
+            if(!pstr.startsWith("\\")) {
+                ptag = pstr.startsWith("g") ? ExpressionTag.LiteralGlobExpression : ExpressionTag.LiteralPathFragmentExpression;
             }
 
-            return this.processSimplyTaggableLiteral(sinfo, ptag, sstr);
+            if(!this.testToken(SYM_langle)) {
+                return new LiteralFormatPathItemExpression(ptag, sinfo, pstr, fmts);
+            }
+            else {
+                const ttype = this.processTaggedLiteral();
+
+                if(ptag === ExpressionTag.LiteralPathExpression) {
+                    return new LiteralTypedPathFormatExpression(sinfo, pstr, ttype);
+                }
+                else {
+                    this.recordErrorGeneral(sinfo, "Only full path literal formats can be tagged");
+                    return new ErrorExpression(sinfo, undefined, undefined);
+                }
+            }
         }
-        else if(tk === TokenStrings.NumberinoInt || tk === TokenStrings.NumberinoFloat || tk === TokenStrings.NumberinoRational) {
+        else if(tk === TokenStrings.NumberinoInt) {
             this.consumeToken();
             this.recordErrorGeneral(sinfo, "Un-annotated numeric literals are not supported");
             return new ErrorExpression(sinfo, undefined, undefined);
@@ -3467,7 +3804,11 @@ class Parser {
             return new AccessVariableExpression(sinfo, "this");
         }
         else if (tk === KW_self) {
-            assert(false, "Need to handle any self cases");
+            this.consumeToken();
+            return new AccessVariableExpression(sinfo, "self");
+        }
+        else if (tk == KW_env) {
+            return this.parseEnvExpression();
         }
         else if(tk === KW_some || tk === KW_ok || tk === KW_fail) {
             return this.parseSpecialConstructorExpression();
@@ -3490,12 +3831,19 @@ class Parser {
             }
             else {
                 if(closeparen !== undefined) {
+                    this.recordErrorGeneral(this.peekToken(), "Missing closing ')' in expression");
                     this.currentState().moveToRecoverPosition();
                 }
             }
 
             this.popStateIntoParentOk();
             return exp;
+        }
+        else if(tk === SYM_HOLE) {
+            return this.parseHoleExpression();
+        }
+        else if(tk === KW_Task) {
+            return this.parseTaskFunctionExpression();
         }
         else if (tk === TokenStrings.IdentifierName || tk === TokenStrings.Template) {
             return this.parseIdentifierFirstExpression();
@@ -3522,8 +3870,9 @@ class Parser {
         let rootexp = this.parsePrimaryExpression();
 
         let ops: PostfixOperation[] = [];
-        while (this.testToken(SYM_dot) || this.testToken(SYM_question) || this.testToken(SYM_at) || this.testToken(SYM_lbrack)) {
+        while (this.testToken(SYM_dot)) {
             const sinfo = this.peekToken().getSourceInfo();
+            this.consumeToken(); //always consume the dot first
 
             if(this.testToken(SYM_question)) {
                 this.consumeToken();
@@ -3549,41 +3898,41 @@ class Parser {
                     ops.push(new PostfixAssignFields(sinfo, updates));
                 }
             }
+            else if(this.testToken(SYM_lparenbar)) {
+                assert(false, "Not implemented yet -- project fields");
+            }
+            else if(this.testToken(KW_slice)) {
+                this.consumeToken();
+                const args = this.parseArgumentsCallStd(false);
+                ops.push(new PostfixSliceOperator(sinfo, args));
+            }
+            else if(this.testToken(TokenStrings.NumberinoInt)) {
+                const nval = this.consumeTokenAndGetValue();
+                ops.push(new PostfixAccessFromIndex(sinfo, parseInt(nval)));
+            }
             else {
-                this.ensureAndConsumeTokenAlways(SYM_dot, "postfix access/update/invoke");
-
-                if(this.testToken(SYM_lparenbar)) {
-                    assert(false, "Not implemented yet -- project fields");
+                this.ensureToken(TokenStrings.IdentifierName, "postfix access/invoke");
+            
+                let resolvedScope: TypeSignature | undefined = undefined;
+                if(this.peekTokenKind(1) === SYM_coloncolon) { //it is either T::f or N::T...::f
+                    resolvedScope = this.parseNominalType();
+                    this.ensureToken(SYM_coloncolon, "postfix access");
                 }
-                   
-                else if(this.testToken(TokenStrings.NumberinoInt)) {
-                    const nval = this.consumeTokenAndGetValue();
-                    ops.push(new PostfixAccessFromIndex(sinfo, parseInt(nval)));
+
+                const name = this.parseIdentifierAsStdVariable();
+                if(!this.testPostfixInvokePrefix()) {
+                    if(resolvedScope !== undefined) {
+                        this.recordErrorGeneral(sinfo, "Encountered named access but given type resolver (only valid on method calls)");
+                    }
+
+                    ops.push(new PostfixAccessFromName(sinfo, name));
                 }
                 else {
-                    this.ensureToken(TokenStrings.IdentifierName, "postfix access/invoke");
-                    
-                    let resolvedScope: TypeSignature | undefined = undefined;
-                    if(this.peekTokenKind(1) === SYM_coloncolon) { //it is either T::f or N::T...::f
-                        resolvedScope = this.parseNominalType();
-                        this.ensureToken(SYM_coloncolon, "postfix access");
-                    }
+                    const rec = this.parseInvokeRecursiveArgs();
+                    const targs = this.parseInvokeTemplateArguments();
+                    const args = this.parseArgumentsCallStd(true);
 
-                    const name = this.parseIdentifierAsStdVariable();
-                    if(!this.testPostfixInvokePrefix()) {
-                        if(resolvedScope !== undefined) {
-                            this.recordErrorGeneral(sinfo, "Encountered named access but given type resolver (only valid on method calls)");
-                        }
-
-                        ops.push(new PostfixAccessFromName(sinfo, name));
-                    }
-                    else {
-                        const rec = this.parseInvokeRecursiveArgs();
-                        const targs = this.parseInvokeTemplateArguments();
-                        const args = this.parseArgumentsCallStd(true);
-
-                        ops.push(new PostfixInvoke(sinfo, resolvedScope, name, targs, rec, args));
-                    }
+                    ops.push(new PostfixInvoke(sinfo, resolvedScope, name, targs, rec, args));
                 }
             }
         }
@@ -3625,14 +3974,7 @@ class Parser {
             ops.push([this.consumeTokenAndGetValue(), undefined]);
         }
 
-        let exp: Expression;
-        if (this.testToken(KW_if)) {
-            exp = this.parseIfExpression();
-        }
-        else {
-            exp = this.parsePostfixExpression();
-        }
-
+        const exp = this.parsePostfixExpression();
         return this.prefixStackApplicationHandler(exp, sinfo, ops.reverse());
     }
 
@@ -3741,169 +4083,44 @@ class Parser {
 
     private parseAndExpression(): Expression {
         const sinfo = this.peekToken().getSourceInfo();
-        const exp = this.parseRelationalExpression();
+        const iexp = this.parseRelationalExpression();
 
-        if (this.testAndConsumeTokenIf(SYM_ampamp)) {
-            return new BinLogicAndExpression(sinfo, exp, this.parseAndExpression());
+        if(!this.testToken(SYM_ampamp)) {
+            return iexp;
         }
         else {
-            return exp;
+            let expl = [iexp];
+            while(this.testAndConsumeTokenIf(SYM_ampamp)) {
+                expl.push(this.parseRelationalExpression());
+            }
+
+            return new LogicAndExpression(sinfo, expl);
         }
     }
 
     private parseOrExpression(): Expression {
         const sinfo = this.peekToken().getSourceInfo();
-        const exp = this.parseAndExpression();
+        const iexp = this.parseAndExpression();
 
-        if (this.testAndConsumeTokenIf(SYM_barbar)) {
-            return new BinLogicOrExpression(sinfo, exp, this.parseOrExpression());
+        if(!this.testToken(SYM_barbar)) {
+            return iexp;
         }
         else {
-            return exp;
-        }
-    }
-
-    private parseImpliesExpression(): Expression {
-        const sinfo = this.peekToken().getSourceInfo();
-        const exp = this.parseOrExpression();
-
-        if (this.testAndConsumeTokenIf(SYM_implies)) {
-            return new BinLogicImpliesExpression(sinfo, exp, this.parseImpliesExpression());
-        }
-        else if(this.testAndConsumeTokenIf(SYM_iff)) {
-            return new BinLogicIFFExpression(sinfo, exp, this.parseImpliesExpression());
-        }
-        else {
-            return exp;
-        }
-    }
-
-    private parseIfTest(isexp: boolean): [Expression, string | undefined, boolean, boolean, ITest | undefined] {
-        let exp: Expression;
-        let bindername: string | undefined = undefined;
-        let implicitdef: boolean = true;
-        let ispostflow: boolean;
-        let itest: ITest | undefined = undefined;
-        let dobind: boolean;
-
-        this.ensureAndConsumeTokenIf(SYM_lparen, "if test");
-        if(this.testFollows(TokenStrings.IdentifierName, SYM_eq)) {
-            bindername = this.parseBinderInfo();
-            implicitdef = false;
-            this.ensureAndConsumeTokenAlways(SYM_eq, "if test");
-        }
-        
-        exp = this.parseExpression();
-        this.ensureAndConsumeTokenIf(SYM_rparen, "if test");
-
-        if(this.testAndConsumeTokenIf(SYM_atat)) {
-            ispostflow = true;
-            dobind = true
-        }
-        else if(this.testAndConsumeTokenIf(SYM_at)) {
-            ispostflow = false;
-            dobind = true;
-        }
-        else {
-            ispostflow = false;
-            dobind = false;
-        }
-        itest = !this.testToken(isexp ? KW_then : SYM_lbrace) ? this.parseITest() : undefined;
-
-        if(isexp && ispostflow) {
-            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot have postflow in if-expression");
-            ispostflow = false;
-        }
-
-        if(dobind && itest === undefined) {
-            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot have binder without itest");
-            bindername = undefined;
-        }
-
-        if(bindername !== undefined && !dobind) {
-            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot have binder name without '@' or '@@'");
-            bindername = undefined;
-        }
-
-        if(dobind && implicitdef) {
-            if(exp instanceof AccessVariableExpression) {
-                bindername = "$" + exp.srcname;
+            let expl = [iexp];
+            while(this.testAndConsumeTokenIf(SYM_barbar)) {
+                expl.push(this.parseAndExpression());
             }
-            else {
-                bindername = "$_";
-            }
+
+            return new LogicOrExpression(sinfo, expl);
         }
-
-        if(ispostflow && (!implicitdef || !(exp instanceof AccessVariableExpression))) {
-            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot have postflow without implicitdef or using a non-variable expression");
-            ispostflow = false;
-        }
-
-        return [exp, bindername, implicitdef, ispostflow, itest];
-    }
-
-    private parseMatchTest(isexp: boolean): [Expression, string | undefined, boolean] {
-        let exp: Expression;
-        let bindername: string | undefined = undefined;
-        let implicitdef: boolean = true;
-        let dobind: boolean;
-
-        this.ensureAndConsumeTokenIf(SYM_lparen, "swtich/match test");
-        if(this.testFollows(TokenStrings.IdentifierName, SYM_eq)) {
-            bindername = this.parseBinderInfo();
-            implicitdef = false;
-            this.ensureAndConsumeTokenAlways(SYM_eq, "if test");
-        }
-        
-        exp = this.parseExpression();
-        this.ensureAndConsumeTokenIf(SYM_rparen, "swtich/match test");
-
-        dobind = this.testAndConsumeTokenIf(SYM_at);
-
-        if(bindername !== undefined && !dobind) {
-            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot have binder name without '@' or '@@'");
-            bindername = undefined;
-        }
-
-        if(dobind && implicitdef) {
-            if(exp instanceof AccessVariableExpression) {
-                bindername = "$" + exp.srcname;
-            }
-            else {
-                bindername = "$_";
-            }
-        }
-
-        return [exp, bindername, implicitdef];
-    }
-
-    private parseIfExpression(): Expression {
-        const sinfo = this.peekToken().getSourceInfo();
-
-        this.consumeToken();
-        const [iexp, bindername, implicitdef, _, itest] = this.parseIfTest(true);
-
-        this.ensureAndConsumeTokenIf(KW_then, "if-expression")
-
-        const ifvalueinfo = this.parseExpression();
-        let binder: BinderInfo | undefined = undefined;
-        if(bindername !== undefined) {
-            binder = new BinderInfo(bindername, implicitdef, false);
-        }
-
-        this.ensureAndConsumeTokenIf(KW_else, "if-expression");
-        const elsevalueinfo = this.parseExpression();
-
-        return new IfExpression(sinfo, new IfTest(iexp, itest), binder, ifvalueinfo, elsevalueinfo);
     }
 
     private parseExpression(): Expression {
-        return this.parseImpliesExpression();
+        return this.parseOrExpression();
     }
 
     private parseMapEntryConstructorExpression(): Expression {
         const sinfo = this.peekToken().getSourceInfo();
-        //TODO: this will reject (2 => 3) since there are parens, maybe this is ok or maybe we should allow it?
 
         const lexp = this.parseExpression();   
         if(this.testAndConsumeTokenIf(SYM_bigarrow)) {
@@ -3916,8 +4133,6 @@ class Parser {
     }
 
     private parseLambdaOkExpression(): Expression {
-        //TODO: this will reject (fn(x) => x) since there are parens, maybe this is ok or maybe we should allow it?
-
         if (this.testToken(KW_fn) || this.testFollows(KW_recursive, KW_fn) || this.testFollows(KW_recursive_q, KW_fn)) {
             return this.parseLambdaTerm();
         }
@@ -3929,75 +4144,510 @@ class Parser {
         }
     }
 
-    private parseRHSExpression(): Expression {
-        //TODO: later we need to parse trailing early returns/checks
+    private parseConstScopedExpression(etype: TypeSignature | undefined, boundtemplates: Set<string>): Expression {
+        this.env.pushStandardFunctionScope([], boundtemplates, etype);
+        this.env.pushBlockScope();
+        const exp = this.parseExpression();
+        this.env.popBlockScope();
+        this.env.popStandardFunctionScope();
 
-        if(this.testToken(KW_ref)) {
-            const sinfo = this.peekToken().getSourceInfo();
-            this.consumeToken();
+        return exp;
+    }
 
-            if(!this.testToken(TokenStrings.IdentifierName) && !this.testToken(KW_this) && !this.testToken(KW_self)) {
-                this.recordErrorGeneral(sinfo, "Expected a variable name after ref");
-                return new ErrorExpression(sinfo, undefined, undefined);
-            }
+    private parseEnvConstructionExpression(): EnvironmentGenerationExpression {
+        const sinfo = this.peekToken().getSourceInfo();
+        this.ensureAndConsumeTokenAlways(KW_env, "environment construction expression");
 
-            const rcvr = new AccessVariableExpression(this.peekToken().getSourceInfo(), this.consumeTokenAndGetValue());
-            this.ensureAndConsumeTokenAlways(SYM_dot, "ref invoke");
-
-            this.ensureToken(TokenStrings.IdentifierName, "ref invoke");
-                    
-            let resolvedScope: TypeSignature | undefined = undefined;
-            if(this.peekTokenKind(1) === SYM_coloncolon) { //it is either T::f or N::T...::f
-                resolvedScope = this.parseNominalType();
-                this.ensureToken(SYM_coloncolon, "postfix access");
-            }
-
-            const name = this.parseIdentifierAsStdVariable();
-
-            const rec = this.parseInvokeRecursiveArgs();
-            const targs = this.parseInvokeTemplateArguments();
-            const args = this.parseArgumentsCallStd(false);
-
-            if(rcvr.srcname === "this") {
-                return new CallRefThisExpression(sinfo, rcvr, resolvedScope, name, targs, rec, args);
-            }
-            if(rcvr.srcname === "self") {
-                return new CallRefSelfExpression(sinfo, rcvr, name, targs, rec, args);                
-            }
-            else {
-                return new CallRefVariableExpression(sinfo, rcvr, resolvedScope, name, targs, rec, args);
-            }
+        if(!this.testToken(SYM_lbrace)) {
+            return new CurrentEnvironmentExpression(sinfo);
         }
         else {
-            return this.parseExpression();
+            const pprms = this.parseListOf<{envkey: string, value: RValueExpression}>("environment construction parameters", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
+                this.ensureToken(TokenStrings.IdentifierName, "environment construction parameter");
+                const envkey = this.consumeTokenAndGetValue();
+                this.ensureAndConsumeTokenAlways("=", "environment construction parameter");
+                const value = this.parseRValueExpression();
+
+                return { envkey: envkey, value: value };
+            });
+
+            if(pprms.length === 0) {
+                return new EmptyEnvironmentExpression(sinfo);
+            }
+            else {
+                return new InitializeEnvironmentExpression(sinfo, pprms);
+            }
+        }
+    }
+
+    private parseTaskTailArgs(): Expression[] {
+        let args: Expression[] = [];
+
+        while(this.testToken(SYM_coma)) {
+            this.consumeToken();
+
+            args.push(this.parseExpression());
+        }
+
+        return args;
+    }
+
+    private parseTaskArguments(): [Expression[], EnvironmentGenerationExpression] {
+        this.ensureAndConsumeTokenAlways(SYM_lparen, "Task arguments");
+
+        const envexp = this.parseEnvConstructionExpression();
+        let args: Expression[] = [];
+        if(this.testToken(SYM_coma)) {
+            args = this.parseTaskTailArgs();
+        }
+
+        this.ensureAndConsumeTokenAlways(SYM_rparen, "Task arguments");
+
+        return [args, envexp];
+    }
+
+    private parseTaskConfigs(config: TaskConfiguration)  {
+        while(this.testToken(TokenStrings.IdentifierName) && TaskConfigs.includes(this.peekToken().data as string)) {
+            const sinfo = this.peekToken().getSourceInfo();
+
+            const cname = this.consumeTokenAndGetValue();
+            this.ensureAndConsumeTokenAlways(SYM_eq, "task configs section");
+
+            if(cname === "priority") {
+                this.ensureToken(TokenStrings.IdentifierName, "task configs section");
+                const pstr = this.consumeTokenAndGetValue();
+                if(!["immediate", "fast", "normal", "longrunning", "background", "optional"].includes(pstr)) {
+                    this.recordErrorGeneral(sinfo, `Invalid task priority -- ${pstr}`);
+                }
+                    
+                config.priority = pstr as "immediate" | "fast" | "normal" | "longrunning" | "background" | "optional";
+            }
+            else if(cname === "retry") {
+                this.ensureAndConsumeTokenAlways(SYM_lparen, "task configs section");
+                this.ensureToken(TokenStrings.NumberinoInt, "task configs section");
+                const retrycount = Number.parseInt(this.consumeTokenAndGetValue());
+                this.ensureAndConsumeTokenAlways(SYM_coma, "task configs section");
+                this.ensureToken(TokenStrings.NumberinoInt, "task configs section");
+                const retrydelay = Number.parseInt(this.consumeTokenAndGetValue());
+                this.ensureAndConsumeTokenAlways(TokenStrings.IdentifierName, "ms value");
+                this.ensureAndConsumeTokenAlways(SYM_rparen, "task configs section");
+
+                config.retry = { tries: retrycount, delay: retrydelay };
+            }
+            else if(cname === "timeout") {
+                this.ensureToken(TokenStrings.NumberinoInt, "task configs section");
+                const msexp = Number.parseInt(this.consumeTokenAndGetValue());
+                this.ensureAndConsumeTokenAlways(TokenStrings.IdentifierName, "ms value");
+
+                config.timeout = msexp;
+            }
+            else {
+                this.recordErrorGeneral(sinfo, `Unknown task config -- ${cname}`);
+            }
+        }
+    }
+
+    private parseTaskRunExpression(sinfo: SourceInfo, execmode: "parallel" | "sequential" | "std"): Expression {
+        if(execmode !== "std") {
+            this.recordErrorGeneral(sinfo, "Parallel/Sequential are not allowed on single Task::run");
+        }
+
+        this.consumeToken(); //<
+        const task = this.parseNominalType();
+        const configs = new TaskConfiguration(undefined, undefined, undefined);
+        this.parseTaskConfigs(configs);
+        this.consumeToken(); //>
+
+        const [args, envexp] = this.parseTaskArguments();
+
+        return new TaskRunExpression(sinfo, task, args, envexp, configs);
+    }
+
+    private parseTaskMultiExpression(sinfo: SourceInfo, execmode: "parallel" | "sequential" | "std"): Expression {
+        const tasks = this.parseListOf<[TypeSignature, TaskConfiguration]>("Task multi types", SYM_langle, SYM_rangle, SYM_coma, () => {
+            const task = this.parseNominalType();
+            const configs = new TaskConfiguration(undefined, undefined, undefined);
+            this.parseTaskConfigs(configs);
+
+            return [task, configs];
+        });
+
+        const args = this.parseListOf<[Expression[], EnvironmentGenerationExpression]>("Task multi arguments", SYM_lparen, SYM_rparen, SYM_semicolon, () => {
+            return this.parseTaskArguments();
+        });
+
+        return new TaskMultiExpression(sinfo, execmode, tasks, args);
+    }
+
+    private parseTaskAllExpression(sinfo: SourceInfo, execmode: "parallel" | "sequential" | "std"): Expression {
+        this.consumeToken(); //<
+        const task = this.parseNominalType();
+        const configs = new TaskConfiguration(undefined, undefined, undefined);
+        this.parseTaskConfigs(configs);
+        this.consumeToken(); //>
+
+        this.ensureAndConsumeTokenAlways(SYM_lparen, "Task all expression");
+        const envexp = this.parseEnvConstructionExpression();
+        this.ensureAndConsumeTokenAlways(SYM_coma, "Task all expression");
+        const argl = this.parseExpression();
+        this.ensureAndConsumeTokenAlways(SYM_rparen, "Task all expression");
+
+        return new TaskAllExpression(sinfo, execmode, task, argl, envexp, configs);
+    }
+
+    private parseTaskDashStyleExpression(sinfo: SourceInfo, execmode: "parallel" | "sequential" | "std", isany: boolean): Expression {
+        const tasks = this.parseListOf<[TypeSignature, TaskConfiguration]>("Task dash types", SYM_langle, SYM_rangle, SYM_coma, () => {
+            const task = this.parseNominalType();
+            const configs = new TaskConfiguration(undefined, undefined, undefined);
+        this.parseTaskConfigs(configs);
+
+            return [task, configs];
+        });
+
+        const args = this.parseListOf<[Expression[], EnvironmentGenerationExpression]>("Task dash arguments", SYM_lparen, SYM_rparen, SYM_semicolon, () => {
+            return this.parseTaskArguments();
+        });
+
+        if(!isany) {
+            return new TaskDashExpression(sinfo, execmode, tasks, args);
+        }
+        else {
+            return new TaskDashAnyExpression(sinfo, execmode, tasks, args);
+        }
+    }
+
+    private parseTaskRaceStyleExpression(sinfo: SourceInfo, execmode: "parallel" | "sequential" | "std", isany: boolean): Expression {
+        this.consumeToken(); //<
+        const task = this.parseNominalType();
+        const configs = new TaskConfiguration(undefined, undefined, undefined);
+        this.parseTaskConfigs(configs);
+        this.consumeToken(); //>
+
+        this.ensureAndConsumeTokenAlways(SYM_lparen, "Task race expression");
+        const envexp = this.parseEnvConstructionExpression();
+        this.ensureAndConsumeTokenAlways(SYM_coma, "Task race expression");
+        const argl = this.parseExpression();
+        this.ensureAndConsumeTokenAlways(SYM_rparen, "Task race expression");
+
+        if(!isany) {
+            return new TaskRaceExpression(sinfo, execmode, task, argl, envexp, configs);
+        }
+        else {
+            return new TaskRaceAnyExpression(sinfo, execmode, task, argl, envexp, configs);
+        }
+    }
+
+    private parseAPIInvokeExpression(): APIInvokeExpression {
+        const sinfo = this.peekToken().getSourceInfo();
+
+        this.ensureAndConsumeTokenAlways(KW_api, "API invoke expression");
+
+        const peekname = this.peekTokenData();
+        const access = this.parseIdentifierAccessChain();
+        if(access === undefined || access.typeTokens.length === 0) {
+            this.recordErrorGeneral(sinfo, `Could not resolve '${peekname}' in this context`);
+        }
+
+        this.ensureAndConsumeTokenAlways(SYM_coloncolon, "api scoped expression");
+        this.ensureToken(TokenStrings.IdentifierName, "api scoped expression");
+
+        const api = this.parseIdentifierAsStdVariable();
+        const configs = new TaskConfiguration(undefined, undefined, undefined);
+        this.parseTaskConfigs(configs);
+
+        const [args, envexp] = this.parseTaskArguments();
+
+        return new APIInvokeExpression(sinfo, access!.nsScope.fullnamespace, api, args, envexp, configs);
+    }
+
+    private parseAgentInvokeExpression(): AgentInvokeExpression {
+        const sinfo = this.peekToken().getSourceInfo();
+
+        this.ensureAndConsumeTokenAlways(KW_agent, "API invoke expression");
+
+        const peekname = this.peekTokenData();
+        const access = this.parseIdentifierAccessChain();
+        if(access === undefined || access.typeTokens.length === 0) {
+            this.recordErrorGeneral(sinfo, `Could not resolve '${peekname}' in this context`);
+        }
+
+        this.ensureAndConsumeTokenAlways(SYM_coloncolon, "api scoped expression");
+        this.ensureToken(TokenStrings.IdentifierName, "api scoped expression");
+
+        const api = this.parseIdentifierAsStdVariable();
+        const configs = new TaskConfiguration(undefined, undefined, undefined);
+        this.parseTaskConfigs(configs);
+        let explicittype: TypeSignature | undefined = undefined;
+        if(this.testToken(SYM_langle)) {
+            this.consumeToken(); //<
+            explicittype = this.parseStdTypeSignature();
+            this.ensureAndConsumeTokenAlways(SYM_rangle, "agent invoke explicit type");
+        }
+
+        const [args, envexp] = this.parseTaskArguments();
+
+        return new AgentInvokeExpression(sinfo, access!.nsScope.fullnamespace, api, explicittype, args, envexp, configs);
+    }
+
+    private parseChkLogicExpression(): ChkLogicExpression {
+        const sinfo = this.peekToken().getSourceInfo();
+
+        const cle = this.parseITestGuardSet();
+
+        if(this.testToken(SYM_implies)) {
+            this.consumeToken();
+
+            const rhs = this.parseExpression();
+            return new ChkLogicImpliesExpression(sinfo, cle, rhs);
+        }
+        else {
+            let llexps: Expression[] = [];
+
+            if(!cle.guards.every((g) => g instanceof ITestSimpleGuard)) {
+                this.recordErrorGeneral(sinfo, "Complex guard sets are not allowed in standalone chk logic expressions");
+                llexps.push(new ErrorExpression(sinfo, undefined, undefined));
+            }
+            else {
+                if(cle.guards.length === 1) {
+                    llexps.push((cle.guards[0] as ITestSimpleGuard).exp);
+                }
+                else {
+                    llexps.push(new LogicAndExpression(sinfo, cle.guards.map((g) => (g as ITestSimpleGuard).exp)));
+                }
+            }
+
+            while(this.testToken(SYM_barbar)) {
+                this.consumeToken();
+                const ng = this.parseExpression();
+                llexps.push(ng);
+            }
+
+            return new ChkLogicBaseExpression(llexps.length === 1 ? llexps[0] : new LogicOrExpression(sinfo, llexps));
+
+        }
+    }
+
+    private parseChkLogicScopedExpression(boundtemplates: Set<string>): ChkLogicExpression {
+        this.env.pushStandardFunctionScope([], boundtemplates, this.wellknownTypes.get("Bool"));
+        this.env.pushBlockScope();
+        const exp = this.parseChkLogicExpression();
+        this.env.popBlockScope();
+        this.env.popStandardFunctionScope();
+
+        return exp;
+    }
+
+    private parseConditionalExpressionTail(sinfo: SourceInfo, exp: ITestGuardSet): RValueExpression {
+        this.ensureAndConsumeTokenAlways(SYM_questionquestion, "conditional expression");
+
+        const thenexp = this.parseExpression();
+        this.ensureAndConsumeTokenAlways(SYM_colon, "conditional expression");
+        const elseexp = this.parseExpression();
+
+        return new ConditionalValueExpression(sinfo, exp, thenexp, elseexp);
+    }
+
+    private parseShortCircuitOptions(exp: Expression): RValueExpression {
+        if(this.testToken(SYM_atat)) {
+            this.consumeToken();
+
+            const itest = this.parseITest() as ITest;
+            return new ShortCircuitAssignRHSExpressionFail(exp, itest);
+        } 
+        else {
+            this.ensureAndConsumeTokenAlways(SYM_questionat, "short-circuit options");
+
+            const itest = this.parseITest() as ITest;
+            this.ensureAndConsumeTokenAlways(SYM_colon, "short-circuit options");
+            const rexp = this.parseExpression();
+
+            return new ShortCircuitAssignRHSExpressionReturn(exp, itest, rexp);
+        }
+    }
+
+    private parseRefRValueExpression(): Expression {
+        const sinfo = this.peekToken().getSourceInfo();
+        this.consumeToken();
+
+        if(!this.testToken(TokenStrings.IdentifierName) && !this.testToken(KW_this) && !this.testToken(KW_self)) {
+            this.recordErrorGeneral(sinfo, "Expected a variable name after ref");
+            return new ErrorExpression(sinfo, undefined, undefined);
+        }
+
+        const rcvr = new AccessVariableExpression(this.peekToken().getSourceInfo(), this.consumeTokenAndGetValue());
+        this.ensureAndConsumeTokenAlways(SYM_dot, "ref invoke");
+
+        this.ensureToken(TokenStrings.IdentifierName, "ref invoke");
+                    
+        let resolvedScope: TypeSignature | undefined = undefined;
+        if(this.peekTokenKind(1) === SYM_coloncolon) { //it is either T::f or N::T...::f
+            resolvedScope = this.parseNominalType();
+            this.ensureToken(SYM_coloncolon, "postfix access");
+        }
+
+        const name = this.parseIdentifierAsStdVariable();
+
+        const rec = this.parseInvokeRecursiveArgs();
+        const targs = this.parseInvokeTemplateArguments();
+        const args = this.parseArgumentsCallStd(false);
+
+        if(rcvr.srcname === "this") {
+            return new CallRefThisExpression(sinfo, rcvr, resolvedScope, name, targs, rec, args);
+        }
+        if(rcvr.srcname === "self") {
+            return new CallRefSelfExpression(sinfo, rcvr, name, targs, rec, args);                
+        }
+        else {
+            return new CallRefVariableExpression(sinfo, rcvr, resolvedScope, name, targs, rec, args);
+        }
+    }
+
+    private parseTaskActionRValueExpression(): Expression {
+        const sinfo = this.peekToken().getSourceInfo();
+
+        this.ensureAndConsumeTokenAlways(KW_do, "Task action expression");
+        this.ensureAndConsumeTokenAlways(KW_self, "Task action expression");
+        this.ensureAndConsumeTokenAlways(SYM_dot, "Task action expression");
+
+        this.ensureToken(TokenStrings.IdentifierName, "Task action expression");
+        const name = this.parseIdentifierAsStdVariable();
+
+        const terms = this.parseInvokeTemplateArguments();
+        const args = this.parseArgumentsCallStd(false);
+
+        return new CallTaskActionExpression(sinfo, name, terms, args);
+    }
+
+    private parseTaskRunRValueExpression(execmode: "parallel" | "sequential" | "std"): Expression {
+        this.ensureAndConsumeTokenAlways(KW_Task, "Task run expression");
+        this.ensureAndConsumeTokenAlways(SYM_coloncolon, "Task run expression");
+
+        this.ensureToken(TokenStrings.IdentifierName, "Task run expression");
+        const taskname = this.consumeTokenAndGetValue();
+
+        if(taskname === "run") {
+            return this.parseTaskRunExpression(this.peekToken().getSourceInfo(), execmode);
+        }
+        else if(taskname === "multi") {
+            return this.parseTaskMultiExpression(this.peekToken().getSourceInfo(), execmode);
+        }
+        else if(taskname === "all") {
+            return this.parseTaskAllExpression(this.peekToken().getSourceInfo(), execmode);
+        }
+        else if(taskname === "dash") {
+            return this.parseTaskDashStyleExpression(this.peekToken().getSourceInfo(), execmode, false);
+        }
+        else if(taskname === "dashAny") {
+            return this.parseTaskDashStyleExpression(this.peekToken().getSourceInfo(), execmode, true);
+        }
+        else if(taskname ===  "race") {
+            return this.parseTaskRaceStyleExpression(this.peekToken().getSourceInfo(), execmode, false);
+        }
+        else if(taskname ===  "raceAny") {
+            return this.parseTaskRaceStyleExpression(this.peekToken().getSourceInfo(), execmode, true);
+        }
+        else {
+            this.recordErrorGeneral(this.peekToken().getSourceInfo(), `Unknown Task function '${taskname}'`);
+            return new ErrorExpression(this.peekToken().getSourceInfo(), undefined, undefined);
+        }
+    }
+
+    private parseRValueOfLHSExpression(sinfo: SourceInfo): RValueExpression {
+        const eexpr = this.parseITestGuardSet();
+
+        if(this.testToken(SYM_questionquestion)) {
+            return this.parseConditionalExpressionTail(sinfo, eexpr);
+        }
+        else {
+            if(eexpr.guards.length !== 1 || !(eexpr.guards[0] instanceof ITestSimpleGuard)) {
+                this.recordErrorGeneral(sinfo, "Guard set found where simple expression expected");
+            }
+
+            const lexp = eexpr.guards[0].exp;
+            if(this.testToken(SYM_atat) || this.testToken(SYM_questionat)) {
+                return this.parseShortCircuitOptions(lexp);
+            }
+            else {
+                return new BaseRValueExpression(lexp);
+            }
+        }
+    }
+
+    private parseRValueOfLHSExpressionSimple(sinfo: SourceInfo, expr: Expression): RValueExpression {
+        if(this.testToken(SYM_questionquestion)) {
+            return this.parseConditionalExpressionTail(sinfo, new ITestGuardSet([new ITestSimpleGuard(expr)]));
+        }
+        else {
+            if(this.testToken(SYM_atat) || this.testToken(SYM_questionat)) {
+                return this.parseShortCircuitOptions(expr);
+            }
+            else {
+                return new BaseRValueExpression(expr);
+            }
+        }
+    }
+
+    private parseRValueExpression(): RValueExpression {
+        const sinfo = this.peekToken().getSourceInfo();
+
+        if(this.testToken(KW_ref)) {
+            const expr = this.parseRefRValueExpression();
+            return this.parseRValueOfLHSExpressionSimple(sinfo, expr);
+        }
+        else if(this.testToken(KW_do)) {
+            const expr = this.parseTaskActionRValueExpression(); 
+            return this.parseRValueOfLHSExpressionSimple(sinfo, expr);
+        }
+        else if(this.testToken(KW_sequential) || this.testToken(KW_parallel) || this.testToken(KW_Task)) {
+            let execmode: "sequential" | "parallel" | "std" = "std";
+            if(this.testToken(KW_sequential) || this.testToken(KW_parallel)) {
+                execmode = this.consumeTokenAndGetValue() as "sequential" | "parallel";
+            }
+
+            const oop = this.peekToken(2);
+            if(oop.kind === TokenStrings.IdentifierName && (oop.data === "currentID" || oop.data === "parentID")) {
+                return this.parseRValueOfLHSExpression(sinfo); //Task::currentID() or Task::parentID() -- followed maybe by some more stuff
+            }
+            else {
+                const expr = this.parseTaskRunRValueExpression(execmode);
+                return new BaseRValueExpression(expr);
+            }
+        }
+        else if(this.testToken(KW_api)) {
+            const apiexpr = this.parseAPIInvokeExpression();
+            return new BaseRValueExpression(apiexpr);
+        }
+        else if(this.testToken(KW_agent)) {
+            const expr = this.parseAgentInvokeExpression();
+            return new BaseRValueExpression(expr);
+        }
+        else {
+            return this.parseRValueOfLHSExpression(sinfo);
+        }
+    }
+
+    parseTestRValueExpression(): RValueExpression {
+        const sinfo = this.peekToken().getSourceInfo();
+
+        const eexpr = this.parseITestGuardSet();
+
+        if(this.testToken(SYM_questionquestion)) {
+            return this.parseConditionalExpressionTail(sinfo, eexpr);
+        }
+        else {
+            if(eexpr.guards.length !== 1 || !(eexpr.guards[0] instanceof BaseRValueExpression)) {
+                this.recordErrorGeneral(sinfo, "Guard set found where simple expression expected");
+            }
+
+            const lexp = eexpr.guards[0].exp;
+            return new BaseRValueExpression(lexp);
         }
     }
 
     private parseStatementExpression(): Statement {
         const sinfo = this.peekToken().getSourceInfo();
 
-        if(this.testFollows(KW_ref, TokenStrings.IdentifierName, SYM_at)) {
-            this.consumeToken(); //consume ref
-
-            const name = this.parseIdentifierAsStdVariable();
-            this.consumeToken();
-
-            const badbinder = name.startsWith("$");
-            const lambdacapture = this.env.identifierResolvesAsVariable(name)
-            if(badbinder || lambdacapture) {
-                this.recordErrorGeneral(sinfo, "Cannot retype lambda captured or binder variables");
-                return new ErrorStatement(sinfo);
-            }
-
-            const ttest = this.parseITest();
-            if(ttest === undefined) {
-                this.recordErrorGeneral(sinfo, "Expected test expression after @");
-                return new ErrorStatement(sinfo);
-            }
-
-            return new VariableRetypeStatement(sinfo, name, ttest);
-        }
-        else if(this.testFollows(KW_ref, KW_this, SYM_lbrack)) {
+        if(this.testFollows(KW_ref, KW_this, SYM_lbrack)) {
             this.consumeToken(); //consume ref
 
             const vexp = new AccessVariableExpression(this.peekToken().getSourceInfo(), "this");
@@ -4012,15 +4662,6 @@ class Parser {
 
             return new ThisUpdateStatement(sinfo, vexp, updates);
         }
-        else if(this.testFollows(KW_ref, KW_self, SYM_lbrack)) {
-            this.consumeToken(); //consume ref
-
-            this.consumeToken(); //consume self
-            this.parseVarUpdates();
-
-            this.recordErrorGeneral(sinfo, `NOT IMPLEMENTED -- update self fields`);
-            return new ErrorStatement(sinfo);
-        }
         else if(this.testFollows(KW_ref, TokenStrings.IdentifierName, SYM_lbrack)) {
             this.consumeToken(); //consume ref
 
@@ -4034,15 +4675,30 @@ class Parser {
 
             return new VarUpdateStatement(sinfo, vexp, updates);
         }
+        else if(this.testFollows(KW_ref, KW_self, SYM_lbrack)) {
+            this.consumeToken(); //consume self
+            const updates = this.parseVarUpdates();
+
+            if(updates.length === 0) {
+                this.recordErrorGeneral(sinfo, "Empty update list is not allowed");
+                return new ErrorStatement(sinfo);
+            }
+
+            return new SelfUpdateStatement(sinfo, updates);
+        }
+        else if(this.testToken(KW_do)) {
+            const rhs = this.parseTaskActionRValueExpression();
+            return new VoidRefCallStatement(sinfo, rhs);  
+        }
         else {
-            const rhs = this.parseRHSExpression(); //must be a call (with a ref/out param)
+            const rhs = this.parseExpression(); //must be a call (with a ref/out param)
             if(!(rhs instanceof CallNamespaceFunctionExpression) && !(rhs instanceof CallTypeFunctionExpression) && !(rhs instanceof PostfixOp) && !(rhs instanceof CallRefInvokeExpression)) {
                 this.recordErrorGeneral(sinfo, "Expected a call expression");
                 return new ErrorStatement(sinfo);
             }
 
             if((rhs instanceof PostfixOp) && ((rhs.ops.length !== 1) && !(rhs.ops[0] instanceof PostfixInvoke))) {
-                this.recordErrorGeneral(sinfo, "Postfix expression with ref must be simple (not later in a chained operation");
+                this.recordErrorGeneral(sinfo, "Postfix expression with ref (i.e. not assigned or returned) must be simple -- not later in a chained operation");
                 return new ErrorStatement(sinfo);
             }
 
@@ -4053,7 +4709,7 @@ class Parser {
     ////
     //Statement parsing
 
-    parseSingleDeclarationVarInfo(): {name: string, vtype: TypeSignature} {
+    private parseSingleDeclarationVarInfo(): {name: string, vtype: TypeSignature} {
         const sinfo = this.peekToken().getSourceInfo();
 
         this.ensureTokenOptions(TokenStrings.IdentifierName, KW_under);
@@ -4071,7 +4727,7 @@ class Parser {
         return { name: name, vtype: itype };
     }
 
-    parseMultiDeclarationVarInfo(isfirst: boolean): {name: string, vtype: TypeSignature}[] {
+    private parseMultiDeclarationVarInfo(isfirst: boolean): {name: string, vtype: TypeSignature}[] {
         let decls: {name: string, vtype: TypeSignature}[] = [];
 
         if(isfirst && this.testToken(SYM_coma)) {
@@ -4088,7 +4744,7 @@ class Parser {
         return decls;
     }
 
-    parseSingleAssignmentVarInfo(): string {
+    private parseSingleAssignmentVarInfo(): string {
         const sinfo = this.peekToken().getSourceInfo();
 
         this.ensureTokenOptions(TokenStrings.IdentifierName, KW_under);
@@ -4101,7 +4757,7 @@ class Parser {
         return name;
     }
 
-    parseMultiAssignmentVarInfo(isfirst: boolean): string[] {
+    private parseMultiAssignmentVarInfo(isfirst: boolean): string[] {
         let assigns: string[] = [];
 
         if(isfirst && this.testToken(SYM_coma)) {
@@ -4118,7 +4774,7 @@ class Parser {
         return assigns;
     }
 
-    parseVarUpdates(): [string, Expression][] {
+    private parseVarUpdates(): [string, Expression][] {
         return this.parseListOf<[string, Expression]>("variable update list", SYM_lbrack, SYM_rbrack, SYM_coma, () => {
             this.ensureToken(TokenStrings.IdentifierName, "variable update list");
             const name = this.consumeTokenAndGetValue();
@@ -4130,142 +4786,92 @@ class Parser {
         });
     }
 
-    /*
-    private parseTaskRunStatement(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vv: {name: string, vtype: TypeSignature} | undefined): Statement {
-        this.ensureTaskOpOk();
-        
-        //TODO: need to cleanup so that SC return and assign work with this as well 
-
-        let allvvs: {name: string, vtype: TypeSignature}[] = [];
-        if (vv !== undefined) {
-            allvvs.push(vv);
-            while (!this.testToken(SYM_eq)) {
-                this.ensureAndConsumeToken(SYM_coma, "Expected , in task result assignment list");
-
-                const assign = this.parseAssignmentVarInfo(this.getCurrentSrcInfo(), isconst ? KW_let : KW_var);
-                const vvar = { name: assign.name, vtype: assign.vtype };
-
-                if (this.m_penv.getCurrentFunctionScope().isVarNameDefined(assign.name)) {
-                    this.raiseError(this.getCurrentLine(), "Variable name is already defined");
-                }
-                this.m_penv.getCurrentFunctionScope().defineLocalVar(assign.name, assign.name, false);
-
-                allvvs.push(vvar);
-            }
-        }
-
+    private parseHoleStatement(): Statement {
+        const sinfo = this.peekToken().getSourceInfo();
         this.consumeToken();
-        this.ensureAndConsumeToken(SYM_coloncolon, "Task statement");
-        this.ensureToken(TokenStrings.Identifier, "Task statement");
 
-        const name = this.consumeTokenAndGetValue();
-
-        if(name === "getTaskID" || name === "isCanceled") {
-            this.ensureAndConsumeToken(SYM_lparen, `Task expression ${name}`);
-            this.ensureAndConsumeToken(SYM_rparen, `Task expression ${name}`);
-            this.ensureAndConsumeToken(SYM_semicolon, `Task expression ${name}`);
-
-            if(name === "getTaskID") {
-                if(vv === undefined) {
-                    return new ReturnStatement(sinfo, new TaskGetIDExpression(sinfo));
-                }
-                else if(isdefine) {
-                    return new VariableDeclarationStatement(sinfo, vv.name, isconst, vv.vtype, new TaskGetIDExpression(sinfo), undefined);
-                }
-                else {
-                    return new VariableAssignmentStatement(sinfo, vv.name, new TaskGetIDExpression(sinfo), undefined);
-                }
-            }
-            else {
-                if(vv === undefined) {
-                    return new ReturnStatement(sinfo, new TaskCancelRequestedExpression(sinfo))
-                }
-                else if(isdefine) {
-                    return new VariableDeclarationStatement(sinfo, vv.name, isconst, vv.vtype, new TaskCancelRequestedExpression(sinfo), undefined);
-                }
-                else {
-                    return new VariableAssignmentStatement(sinfo, vv.name, new TaskCancelRequestedExpression(sinfo), undefined);
-                }
-            }
+        let hname: string | undefined = undefined;
+        if(this.testToken(TokenStrings.IdentifierName)) {
+            hname = this.consumeTokenAndGetValue();
         }
-        else {
-            let argpack: { argn: string, argv: Expression }[] = [];
-            if (this.testToken(SYM_lbrace)) {
-                this.parseListOf("Task Run arguments", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
-                    const argn = this.ensureAndConsumeToken(TokenStrings.Identifier, "Task Run argument name");
-                    this.ensureAndConsumeToken("=", "Task run argument");
-                    const argv = this.parseExpression();
 
-                    return { argn: argn, argv: argv };
+        let captures: string[] = [];
+        if(this.testToken(SYM_lbrack)) {
+            captures = this.parseListOf<string>("hole captures", SYM_lbrack, SYM_rbrack, SYM_coma, () => {
+                this.ensureToken(TokenStrings.IdentifierName, "hole capture list");
+                return this.consumeTokenAndGetValue();
+            });
+        }        
+
+        let doccomment: string | undefined = undefined;
+        if(this.testToken(SYM_lparen)) {
+            this.consumeToken();
+            this.ensureToken(TokenStrings.DocComment, "hole expression");
+            doccomment = this.consumeTokenAndGetValue();
+            this.ensureAndConsumeTokenAlways(SYM_rparen, "hole expression");
+        }
+
+        let samplesfile: Expression | undefined = undefined;
+        if(this.testToken(KW_of)) {
+            this.consumeToken();
+            samplesfile = this.parseExpression();
+        }
+
+        let nvars: {name: string, tsig: TypeSignature}[] = [];
+        let ensures: ChkLogicExpression[] = [];
+        if(this.testToken(SYM_arrow)) {
+            this.consumeToken();
+            
+            if(this.testToken(SYM_lbrack)) {
+                nvars = this.parseListOf<{name: string, tsig: TypeSignature}>("hole named variables", SYM_lbrack, SYM_rbrack, SYM_coma, () => {
+                    this.ensureToken(TokenStrings.IdentifierName, "hole named variable");
+                    const name = this.consumeTokenAndGetValue();
+                    this.ensureAndConsumeTokenAlways(SYM_colon, "hole named variable");
+                    const tsig = this.parseStdTypeSignature();
+
+                    return { name: name, tsig: tsig };
                 });
             }
 
-            const terms = this.parseTemplateArguments();
-            const args = this.parseArguments(SYM_lparen, SYM_rparen);
-
-            if (terms.length !== 0) {
-                this.raiseError(sinfo.line, "Must supply at least 1 task to run");
-            }
-
-            this.ensureAndConsumeToken(SYM_semicolon, "assignment statement");
-
-            if (name === "run") {
-                if (terms.length !== allvvs.length) {
-                    this.raiseError(sinfo.line, "Must have equal numbers of tasks and result assignments");
-                }
-
-                if (terms.length === 1) {
-                    //x = Task::run<T>(args)
-                    return new TaskRunStatement(sinfo, isdefine, isconst, allvvs[0], terms[0], argpack, args);
-                }
-                else {
-                    //y, z = Task::run<T, U>(argv, ...)
-                    return new TaskMultiStatement(sinfo, isdefine, isconst, allvvs, terms, argpack, args);
-                }
-            }
-            else if (name === "dash") {
-                if (terms.length === 1) {
-                    this.raiseError(sinfo.line, "dashing to a result on a single task is redundant -- use \"run\" instead");
-                }
-
-                if (terms.length !== allvvs.length) {
-                    this.raiseError(sinfo.line, "Must have equal numbers of tasks and result assignments");
-                }
-
-                //x, y, z = Task::dash<T, U>(argv, ...)
-                return new TaskDashStatement(sinfo, isdefine, isconst, allvvs, terms, argpack, args);
-            }
-            else if (name === "all") {
-                if (terms.length !== 1 || args.length !== 1) {
-                    this.raiseError(sinfo.line, "Task::all runs same task on all args tuples in the list");
-                }
-
-                if (allvvs.length !== 1) {
-                    this.raiseError(sinfo.line, "Task::all produces a single result List");
-                }
-
-                //x: List<V> = Task::all<T>(List<U>) <-- result list all done
-                return new TaskAllStatement(sinfo, isdefine, isconst, allvvs[0], terms[0], argpack, args[0]);
-            }
-            else if (name === "race") {
-                if (terms.length !== 1 || args.length !== 1) {
-                    this.raiseError(sinfo.line, "Task::all runs same task on all args tuples in the list");
-                }
-
-                if (allvvs.length !== 1) {
-                    this.raiseError(sinfo.line, "Task::all produces a single Result");
-                }
-
-                //x: Result<T, E> = Task::race<T>(List<U>) <-- result list all done
-                return new TaskRaceStatement(sinfo, isdefine, isconst, allvvs[0], terms[0], argpack, args[0]);
-            }
-            else {
-                this.raiseError(sinfo.line, "Unknown \"Task\" operation");
-                return new InvalidStatement(sinfo);
+            if(this.testToken(SYM_lbrace)) {
+                ensures = this.parseListOf<ChkLogicExpression>("hole ensures expressions", SYM_lbrace, SYM_rbrace, SYM_semicolon, () => {
+                    this.ensureAndConsumeTokenAlways(KW_ensures, "hole ensures expression");
+                    return this.parseChkLogicExpression();
+                });
             }
         }
+
+        return new HoleStatement(sinfo, hname, captures, doccomment, samplesfile, nvars, ensures);
     }
-    */
+
+    private isVarDeclPrefix(): boolean {
+        if(!this.testToken(KW_var) && !this.testToken(KW_ref) && !this.testToken(KW_let)) {
+            return false;
+        }
+
+        if(this.testToken(KW_var) || this.testToken(KW_let)) {
+            return true;
+        }
+        else {
+            const wtype = this.testFollows(KW_ref, TokenStrings.IdentifierName, SYM_colon); //ref x: T ... case
+            const wtypeu = this.testFollows(KW_ref, KW_under, SYM_colon); //ref _: T ... case
+            const wassign = this.testFollows(KW_ref, TokenStrings.IdentifierName, SYM_eq); //ref x = ... case
+            const wassignu = this.testFollows(KW_ref, KW_under, SYM_eq); //ref _ = ... case
+            const wmulti = this.testFollows(KW_ref, TokenStrings.IdentifierName, SYM_coma); //ref x, y = ... case
+            const wmultiu = this.testFollows(KW_ref, KW_under, SYM_coma); //ref _, y = ... case
+
+            return wtype || wtypeu || wassign || wassignu || wmulti || wmultiu;
+        }
+    }
+
+    private isTaskStatementPrefix(): boolean {
+        if(!this.testFollows(KW_Task, SYM_coloncolon, TokenStrings.IdentifierName)) {
+            return false;
+        }
+
+        const taskname = this.peekTokenData(2);
+        return taskname === "emitStatusUpdate" || taskname === "checkAndHandleTermination";
+    }
 
     private parseLineStatement(): Statement {
         const sinfo = this.peekToken().getSourceInfo();
@@ -4273,15 +4879,13 @@ class Parser {
         if (this.testToken(SYM_semicolon)) {
             return new EmptyStatement(sinfo);
         }
-        else if (this.testToken(KW_var) || this.testToken(KW_let)) {
-            const isConst = this.testToken(KW_let);
-            
-            this.consumeToken();
+        else if (this.isVarDeclPrefix()) {
+            const vtype = this.parseVarDeclKind();
             const assigns = this.parseMultiDeclarationVarInfo(true);
 
             if(this.testToken(SYM_semicolon)) {
-                if(isConst) {
-                    this.recordErrorGeneral(sinfo, "Cannot declare as const without an assignment");
+                if(vtype !== "var") {
+                    this.recordErrorGeneral(sinfo, "Cannot declare as let/ref without an assignment");
                 }
 
                 if(assigns.some((vv) => vv.vtype instanceof AutoTypeSignature)) {
@@ -4289,7 +4893,7 @@ class Parser {
                 }
 
                 assigns.forEach((vv) => {
-                    const okadd = this.env.addVariable(vv.name, isConst, false);
+                    const okadd = this.env.addVariable(vv.name, vtype, false);
                     if(!okadd) {
                         this.recordErrorGeneral(sinfo, `Variable ${vv.name} cannot be defined`);
                     }
@@ -4300,38 +4904,51 @@ class Parser {
             else if(this.testToken(SYM_eq)) {
                 this.consumeToken();
 
-                const exp = this.parseRHSExpression();
+                const exp = this.parseRValueExpression();
                 if(this.testToken(SYM_semicolon)) {
                     //could be elist type expression but we need to wait for type checking
                     assigns.forEach((vv) => {
-                        const okadd = this.env.addVariable(vv.name, isConst, assigns.length > 1);
+                        const okadd = this.env.addVariable(vv.name, vtype, assigns.length > 1);
                         if(!okadd) {
                             this.recordErrorGeneral(sinfo, `Variable ${vv.name} cannot be defined`);
                         }
                     });
 
-                    return assigns.length === 1 ? new VariableInitializationStatement(sinfo, isConst, assigns[0].name, assigns[0].vtype, exp) : new VariableMultiInitializationStatement(sinfo, isConst, assigns, exp);
+                    return assigns.length === 1 ? new VariableInitializationStatement(sinfo, vtype, assigns[0].name, assigns[0].vtype, exp) : new VariableMultiInitializationStatement(sinfo, vtype, assigns, exp);
                 }
                 else {
                     //we need as many expressions as there are variables
-                    let exps = [exp];
+                    let exps: Expression[] = [];
                     while(this.testToken(SYM_coma) && exps.length < assigns.length) {
                         this.consumeToken();
-                        exps.push(this.parseRHSExpression());
+                        exps.push(this.parseExpression());
                     }
 
-                    if(exps.length !== assigns.length) {
+                    if(exps.length + 1 !== assigns.length) {
                         this.recordErrorGeneral(sinfo, "Mismatch in number of variables and expressions in assignment");
                     }
 
                     assigns.forEach((vv) => {
-                        const okadd = this.env.addVariable(vv.name, isConst, true);
+                        const okadd = this.env.addVariable(vv.name, vtype, true);
                         if(!okadd) {
                             this.recordErrorGeneral(sinfo, `Variable ${vv.name} is already defined`);
                         }
                     });
 
-                    return assigns.length === 1 ? new VariableInitializationStatement(sinfo, isConst, assigns[0].name, assigns[0].vtype, exps[0]) : new VariableMultiInitializationStatement(sinfo, isConst, assigns, exps);
+                    if(assigns.length === 1) {
+                        return new VariableInitializationStatement(sinfo, vtype, assigns[0].name, assigns[0].vtype, exp);
+                    }
+                    else {
+                        let bexp: Expression = new ErrorExpression(sinfo, undefined, undefined);
+                        if(exp instanceof BaseRValueExpression) {
+                            bexp = exp.exp;
+                        }
+                        else {
+                            this.recordErrorGeneral(sinfo, "Cannot use complex RHS expression in multi-initialization");
+                        }
+
+                        return new VariableMultiInitializationStatement(sinfo, vtype, assigns, [bexp, ...exps]);
+                    }
                 }
             }
             else {
@@ -4348,7 +4965,7 @@ class Parser {
             }
 
             this.ensureAndConsumeTokenIf(SYM_eq, "assignment statement");
-            const exp = this.parseRHSExpression();
+            const exp = this.parseRValueExpression();
 
             return new VariableAssignmentStatement(sinfo, vname, exp);
         }
@@ -4356,7 +4973,7 @@ class Parser {
             const vnames = this.parseMultiAssignmentVarInfo(true);
 
             this.ensureAndConsumeTokenIf(SYM_eq, "assignment statement");
-            const exp = this.parseRHSExpression();
+            const exp = this.parseRValueExpression();
 
             if(this.testToken(SYM_semicolon)) {
                 //could be elist type expression but we need to wait for type checking
@@ -4371,13 +4988,13 @@ class Parser {
             }
             else {
                 //we need as many expressions as there are variables
-                let exps = [exp];
+                let exps: Expression[] = [];
                 while(this.testToken(SYM_coma) && exps.length < vnames.length) {
                     this.consumeToken();
-                    exps.push(this.parseRHSExpression());
+                    exps.push(this.parseExpression());
                 }
 
-                if(exps.length !== vnames.length) {
+                if(exps.length + 1 !== vnames.length) {
                     this.recordErrorGeneral(sinfo, "Mismatch in number of variables and expressions in assignment");
                 }
 
@@ -4385,7 +5002,20 @@ class Parser {
                     this.env.assignVariable(vv);
                 });
 
-                return vnames.length === 1 ? new VariableAssignmentStatement(sinfo, vnames[0], exps[0]) : new VariableMultiAssignmentStatement(sinfo, vnames, exps);
+                if(vnames.length === 1) {
+                    return new VariableAssignmentStatement(sinfo, vnames[0], exp);
+                }
+                else {
+                    let bexp: Expression = new ErrorExpression(sinfo, undefined, undefined);
+                    if(exp instanceof BaseRValueExpression) {
+                        bexp = exp.exp;
+                    }
+                    else {
+                        this.recordErrorGeneral(sinfo, "Cannot use complex RHS expression in multi-assignment");
+                    }
+
+                    return new VariableMultiAssignmentStatement(sinfo, vnames, [bexp, ...exps]);
+                }
             }
         }
         else if (this.testToken(KW_return)) {
@@ -4395,18 +5025,27 @@ class Parser {
                 return new ReturnVoidStatement(sinfo);
             }
             else {
-                const rexp = this.parseRHSExpression();
+                const rexp = this.parseRValueExpression();
                 if(this.testToken(SYM_semicolon)) {
                     return new ReturnSingleStatement(sinfo, rexp);
                 }
                 else {
-                    let rexps = [rexp];
+                    let rexps: Expression[] = [];
                     while(this.testToken(SYM_coma)) {
                         this.consumeToken();
-                        rexps.push(this.parseRHSExpression());
+                        rexps.push(this.parseExpression());
                     }
 
-                    return new ReturnMultiStatement(sinfo, rexps);
+
+                    let bexp: Expression = new ErrorExpression(sinfo, undefined, undefined);
+                    if(rexp instanceof BaseRValueExpression) {
+                        bexp = rexp.exp;
+                    }
+                    else {
+                        this.recordErrorGeneral(sinfo, "Cannot use complex RHS expression in multi-return");
+                    }
+
+                    return new ReturnMultiStatement(sinfo, [bexp, ...rexps]);
                 }
             }
         }
@@ -4465,7 +5104,7 @@ class Parser {
             this.consumeToken();
 
             const level = this.parseBuildInfo(KW_release);
-            const exp = this.parseExpression();
+            const exp = this.parseChkLogicExpression();
 
             return new AssertStatement(sinfo, exp, level);
         }
@@ -4480,8 +5119,7 @@ class Parser {
                 this.ensureAndConsumeTokenAlways(SYM_rbrack, "validate statement tag");
             }
 
-            const exp = this.parseExpression();
-
+            const exp = this.parseChkLogicExpression();
             return new ValidateStatement(sinfo, exp, diagnosticTag);
         }
         else if (this.testToken(KW__debug)) {
@@ -4491,75 +5129,30 @@ class Parser {
             
             return new DebugStatement(sinfo, value);
         }
-        /*
-        else if(tk === KW_callwith) {
-            this.ensureTaskOpOk();
+        else if(this.isTaskStatementPrefix()) {
+            this.consumeToken(); //Task
+            this.consumeToken(); //::
 
-            this.consumeToken();
-            this.ensureToken(TokenStrings.Identifier, "callwith operation");
-            if(this.consumeTokenAndGetValue() !== "self") {
-                this.raiseError(sinfo.line, "can only callwith on self actions");
-            }
-
-            this.ensureAndConsumeToken(SYM_dot, "callwith operation");
-
-            this.ensureToken(TokenStrings.Identifier, "callwith operation name");
-            const cname = this.consumeTokenAndGetValue();
-
-            const terms = this.testToken(SYM_le) ? this.parseTemplateArguments() : [];
-            const args = this.parseArguments(SYM_lparen, SYM_rparen);
-
-            this.ensureAndConsumeToken(SYM_semicolon, "callwith operation");
-
-            return new TaskCallWithStatement(sinfo, cname, terms, args);
-        }
-        else if(tk === KW_resultwith) {
-            this.ensureTaskOpOk();
-
-            this.consumeToken();
-            this.ensureToken(TokenStrings.Identifier, "resultwith operation");
-            if(this.consumeTokenAndGetValue() !== "self") {
-                this.raiseError(sinfo.line, "can only resultwith on self actions");
-            }
-
-            this.ensureAndConsumeToken(SYM_dot, "resultwith operation");
-
-            this.ensureToken(TokenStrings.Identifier, "resultwith operation name");
-            const cname = this.consumeTokenAndGetValue();
-
-            const terms = this.testToken(SYM_le) ? this.parseTemplateArguments() : [];
-            const args = this.parseArguments(SYM_lparen, SYM_rparen);
-
-            this.ensureAndConsumeToken(SYM_semicolon, "resultwith operation");
-
-            return new TaskCallWithStatement(sinfo, cname, terms, args);
-        }
-        else if(tk === TokenStrings.Namespace && this.peekTokenData() === "Task") {
-            this.ensureTaskOpOk();
-
-            this.consumeToken();
-            this.ensureAndConsumeToken(SYM_coloncolon, "Task operation");
-            this.ensureToken(TokenStrings.Identifier, "Task operation");
             const op = this.consumeTokenAndGetValue();
-            if(op !== "status" && op !== "event") {
-                this.raiseError(sinfo.line, `unknown call ${op} on Task`);
-            }
-
-            const args = this.parseArguments(SYM_lparen, SYM_rparen);
-            if(args.length !== 1) {
-                this.raiseError(sinfo.line, `Task::${op} takes a single argument`);
-            }
-
-            this.ensureAndConsumeToken(SYM_semicolon, `Task::${op} operation`);
-                    
-            if(op === "status") {
-                return new TaskSetStatusStatement(sinfo, args[0]);
+            if(op === "checkAndHandleTermination") {
+                return new TaskCheckAndHandleTerminationStatement(sinfo);
             }
             else {
-                return new TaskEventEmitStatement(sinfo, args[0]);
+                this.ensureAndConsumeTokenAlways(SYM_lparen, `Task::${op} operation`);
+                const exp = this.parseExpression();
+                this.ensureAndConsumeTokenAlways(SYM_rparen, `Task::${op} operation`);
+
+                return new TaskStatusStatement(sinfo, exp);
             }
         }
-        */
+        else if(this.testToken(KW_yield)) {
+            this.consumeToken();
+            const exp = this.parseRValueExpression();
+            return new TaskYieldStatement(sinfo, exp);
+        }
+        else if (this.testToken(SYM_HOLE)) {
+            return this.parseHoleStatement();
+        }
         else {
             return this.parseStatementExpression();
         }
@@ -4625,43 +5218,41 @@ class Parser {
         const sinfo = this.peekToken().getSourceInfo();
 
         this.ensureAndConsumeTokenAlways(KW_if, "if statement cond");
-        const [iexp, bindername, implicitdef, ispostflow, itest] = this.parseIfTest(false);
+        this.ensureToken(SYM_lparen, "if statement cond"); //always need parens here
 
+        const itest = this.parseITestGuardSet();
         const ifbody = this.parseScopedBlockStatement();
-        let binder: BinderInfo | undefined = undefined;
-        if(bindername !== undefined) {
-            binder = new BinderInfo(bindername, implicitdef, ispostflow);
-        }
 
-        let conds: {cond: IfTest, block: BlockStatement}[] = [];
+        let conds: {cond: Expression, block: BlockStatement}[] = [];
         while (this.testAndConsumeTokenIf(KW_elif)) {
-            const [kiexp, kbinder, _k2, _k3, kitest] = this.parseIfTest(false);
-            if(kbinder !== undefined) {
-                this.recordErrorGeneral(sinfo, "Cannot have a binder in an if-elif-else statement");
-            }
+            const kiexp = this.parseExpression();
             const elifbody = this.parseScopedBlockStatement();
-           
-            conds.push({cond: new IfTest(kiexp, kitest), block: elifbody});
+
+            conds.push({cond: kiexp, block: elifbody});
         }
 
         if(conds.length === 0) {
             if(!this.testAndConsumeTokenIf(KW_else)) {
-                return new IfStatement(sinfo, new IfTest(iexp, itest), binder, ifbody);
+                return new IfStatement(sinfo, itest, ifbody);
             }
             else {
                 const elsebody = this.parseScopedBlockStatement();
-                return new IfElseStatement(sinfo, new IfTest(iexp, itest), binder, ifbody, elsebody);
+                return new IfElseStatement(sinfo, itest, ifbody, elsebody);
             }
         }
         else {
             this.ensureAndConsumeTokenIf(KW_else, "if-elif-else statement");
 
-            if(binder !== undefined) {
+            let itexp: Expression = new ErrorExpression(sinfo, undefined, undefined);
+            if(itest.guards.length === 1 && itest.guards[0] instanceof ITestSimpleGuard) {
+                itexp = itest.guards[0].exp;
+            }
+            else {
                 this.recordErrorGeneral(sinfo, "Cannot have a binder in an if-elif-else statement");
             }
 
             const elssebody = this.parseScopedBlockStatement();
-            return new IfElifElseStatement(sinfo, [{cond: iexp, block: ifbody}, ...conds.map((cc) => { return {cond: cc.cond.exp, block: cc.block}; })], elssebody);
+            return new IfElifElseStatement(sinfo, [{cond: itexp, block: ifbody}, ...conds], elssebody);
         }
     }
 
@@ -4674,19 +5265,20 @@ class Parser {
         const sexp = this.parseExpression();
         this.ensureAndConsumeTokenAlways(SYM_rparen, "switch statement dispatch value");
 
-        let entries: { lval: LiteralExpressionValue | undefined, value: BlockStatement }[] = [];
+        let entries: { lval: Expression | undefined, value: BlockStatement }[] = [];
         this.ensureAndConsumeTokenAlways(SYM_lbrace, "switch statement options");
         
-        this.ensureAndConsumeTokenAlways(SYM_bar, "switch statement entry");
-        const swlit = this.parseSwitchLiteralGuard();
+        const [_, swlit] = this.parseSwitchLiteralGuard();
         this.ensureAndConsumeTokenIf(SYM_bigarrow, "switch statement entry");
         const svalue = this.parseScopedBlockStatement();
 
         entries.push({ lval: swlit, value: svalue });
-        while (this.testToken(SYM_bar)) {
-            this.consumeToken();
+        while (!this.testToken(SYM_rbrace)) {
+            const [okv, swlitx] = this.parseSwitchLiteralGuard();
+            if(!okv) {
+                break;
+            }
 
-            const swlitx = this.parseSwitchLiteralGuard();
             this.ensureAndConsumeTokenIf(SYM_bigarrow, "switch statement entry");
             const svaluex = this.parseScopedBlockStatement();
 
@@ -4697,26 +5289,50 @@ class Parser {
         return new SwitchStatement(sinfo, sexp, entries);
     }
 
+    private parseMatchOrDispatchGuard(): [string, Expression] {
+        if(this.testFollows(SYM_lparen, TokenStrings.IdentifierName, SYM_eq)) {
+            this.consumeToken();
+            const binfo = this.parseBinderInfo();
+            this.ensureAndConsumeTokenAlways(SYM_eq, "binder in ITest guard");
+            const bexp = this.parseRValueInTopTestExpression();
+            this.ensureAndConsumeTokenAlways(SYM_rparen, "binder in ITest guard");
+
+            return [binfo as string, bexp];
+        }
+        else {
+            this.ensureAndConsumeTokenAlways(SYM_lparen, "binder in ITest guard");
+            const bexp = this.parseRValueInTopTestExpression();
+            this.ensureAndConsumeTokenAlways(SYM_rparen, "binder in ITest guard");
+
+            let stdbindname = "$_";
+            if(bexp instanceof AccessVariableExpression) {
+                stdbindname = "$" + bexp.srcname;
+            }
+
+            return [stdbindname, bexp];
+        }
+    }
+
     private parseMatchStatement(): Statement {
         const sinfo = this.peekToken().getSourceInfo();
         
         this.ensureAndConsumeTokenAlways(KW_match, "match statement dispatch value");
-
-        const [mexp, binder, implicitdef] = this.parseMatchTest(true);
+        const sguard = this.parseMatchOrDispatchGuard();
 
         let entries: { mtype: TypeSignature | undefined, value: BlockStatement }[] = [];
         this.ensureAndConsumeTokenAlways(SYM_lbrace, "match statement options");
 
-        this.ensureAndConsumeTokenAlways(SYM_bar, "match statement entry");
-        const mtype = this.parseMatchTypeGuard();
+        const [_, mtype] = this.parseMatchTypeGuard();
         this.ensureAndConsumeTokenIf(SYM_bigarrow, "match statement entry");
         const mvalue = this.parseScopedBlockStatement();
 
         entries.push({ mtype: mtype, value: mvalue });
-        while (this.testToken(SYM_bar)) {
-            this.consumeToken();
-            
-            const mtypex = this.parseMatchTypeGuard();
+        while (!this.testToken(SYM_rbrace)) {
+            const [okv, mtypex] = this.parseMatchTypeGuard();
+            if(!okv) {
+                break;
+            }
+
             this.ensureAndConsumeTokenIf(SYM_bigarrow, "match statement entry");
             const mvaluex = this.parseScopedBlockStatement();
 
@@ -4724,12 +5340,83 @@ class Parser {
         }
         this.ensureAndConsumeTokenAlways(SYM_rbrace, "switch statment options");
 
-        let bindinfo: BinderInfo | undefined = undefined;
-        if(binder !== undefined) {
-            bindinfo = new BinderInfo(binder, implicitdef, false);
-        }
+        return new MatchStatement(sinfo, sguard[1], sguard[0], entries);
+    }
 
-        return new MatchStatement(sinfo, [mexp, bindinfo], entries);
+    private parseDispatchStatement(): Statement {
+        const sinfo = this.peekToken().getSourceInfo();
+
+        this.ensureAndConsumeTokenAlways(KW_dispatch, "dispatch statement target");
+        const dguard = this.parseMatchOrDispatchGuard();
+
+        this.ensureAndConsumeTokenAlways(SYM_lbrace, "dispatch statement options");
+
+        const [_, dtype] = this.parseDispatchGuard();
+        this.ensureAndConsumeTokenIf(SYM_bigarrow, "dispatch statement entry");
+        const dvalue = this.parseScopedBlockStatement();
+
+        if(dtype === undefined || typeof(dtype) === "string") {
+            let entries: { kidx: string | undefined, value: BlockStatement }[] = [];
+            entries.push({ kidx: dtype !== undefined ? dtype[0] : undefined, value: dvalue });
+
+            while (!this.testToken(SYM_rbrace)) {
+                const [okv, dtypex] = this.parseDispatchGuard();
+                if(!okv) {
+                    break;
+                }
+
+                let dd: string | undefined;
+                if(dtypex === undefined) {
+                    dd = undefined;
+                }
+                else if(typeof(dtypex) === "string") {
+                    dd = dtypex;
+                }
+                else {
+                    this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Mixed dispatch type guard styles in dispatch statement");
+                    dd = undefined;
+                }
+
+                this.ensureAndConsumeTokenIf(SYM_bigarrow, "dispatch statement entry");
+                const dvaluex = this.parseScopedBlockStatement();
+
+                entries.push({ kidx: dd, value: dvaluex });
+            }
+            this.ensureAndConsumeTokenAlways(SYM_rbrace, "dispatch statement options");
+
+            return new DispatchTaskStatement(sinfo, dguard[1], dguard[0], entries);
+        }
+        else {
+            let entries: { kidx: Expression | undefined, value: BlockStatement }[] = [];
+            entries.push({ kidx: dtype, value: dvalue });
+
+            while (!this.testToken(SYM_rbrace)) {
+                const [okv, dtypex] = this.parseDispatchGuard();
+                if(!okv) {
+                    break;
+                }
+
+                let dd: Expression | undefined;
+                if(dtypex === undefined) {
+                    dd = undefined;
+                }
+                else if(typeof(dtypex) !== "string") {
+                    dd = dtypex;
+                }
+                else {
+                    this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Mixed dispatch type guard styles in dispatch statement");
+                    dd = undefined;
+                }
+
+                this.ensureAndConsumeTokenIf(SYM_bigarrow, "dispatch statement entry");
+                const dvaluex = this.parseScopedBlockStatement();
+
+                entries.push({ kidx: dd, value: dvaluex });
+            }
+            this.ensureAndConsumeTokenAlways(SYM_rbrace, "dispatch statement options");
+
+            return new DispatchPatternStatement(sinfo, dguard[1], dguard[0], entries);
+        }
     }
 
     private parseStatement(): Statement {
@@ -4741,6 +5428,9 @@ class Parser {
         }
         else if (this.testToken(KW_match)) {
             return this.parseMatchStatement();
+        }
+        else if (this.testToken(KW_dispatch)) {
+            return this.parseDispatchStatement();
         }
         else if(this.testToken(SYM_lbrace)) {
             return this.parseScopedBlockStatement();
@@ -4786,19 +5476,39 @@ class Parser {
         else if(this.testToken(SYM_eq)) {
             this.consumeToken();
 
+            this.ensureAndConsumeTokenAlways(SYM_at, "expression body");
             this.ensureToken(TokenStrings.IdentifierName, "body");
             const iname = this.parseIdentifierAsStdVariable();
-            this.ensureAndConsumeTokenIf(SYM_semicolon, "body");
+            this.ensureAndConsumeTokenAlways(SYM_semicolon, "body");
 
             return new BuiltinBodyImplementation(sinfo, this.env.currentFile, iname);
         }
-        else if(this.testFollows(SYM_lbrace, SYM_HOLE, SYM_semicolon, SYM_rbrace)) {
-            this.consumeToken();
-            this.consumeToken();
-            this.consumeToken();
-            this.consumeToken();
+        else if(this.testFollows(SYM_lbrace, SYM_HOLE)) {
+            this.consumeToken(); //{
+            this.consumeToken(); //HOLE
 
-            return new SynthesisBodyImplementation(sinfo, this.env.currentFile);
+            let hname: string | undefined = undefined;
+            if(this.testToken(TokenStrings.IdentifierName)) {
+                hname = this.consumeTokenAndGetValue();
+            }
+
+            let doccomment: string | undefined = undefined;
+            if(this.testToken(SYM_lparen)) {
+                this.consumeToken();
+                this.ensureToken(TokenStrings.DocComment, "hole expression");
+                doccomment = this.consumeTokenAndGetValue();
+                this.ensureAndConsumeTokenAlways(SYM_rparen, "hole expression");
+            }
+
+            let samplesfile: Expression | undefined = undefined;
+            if(this.testToken(KW_of)) {
+                this.consumeToken();
+                samplesfile = this.parseExpression();
+            }
+
+            this.ensureAndConsumeTokenAlways(SYM_rbrace, "hole body");
+
+            return new HoleBodyImplementation(sinfo, this.env.currentFile, hname, doccomment, samplesfile);
         }
         else {
             if(this.testToken(SYM_lbrace)) {
@@ -4977,6 +5687,9 @@ class Parser {
             else if(this.testToken(KW_api)) {
                 this.parseAPI(attributes);
             }
+            else if(this.testToken(KW_agent)) {
+                this.parseAgent(attributes);
+            }
             else if(this.testToken(KW_namespace)) {
                 this.parseSubNamespace();
             }
@@ -5039,21 +5752,26 @@ class Parser {
         const sname = this.parseIdentifierAsStdVariable();
 
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
-            if(this.env.currentNamespace.checkDeclNameClashMember(sname)) {
-                this.recordErrorGeneral(sinfo, `Collision between const and other names -- ${sname}`);
-            }
-
             this.env.currentNamespace.declaredNames.add(sname);
             this.env.currentNamespace.declaredConstNames.add(sname);
 
             this.scanOverSemiDelimitedDeclaration();
         }
         else {
+            if(this.env.currentNamespace.checkDeclNameClashMemberSimple(sname)) {
+                const mconst = this.env.currentNamespace.consts.find((cc) => cc.name === sname);
+                const mfunc = this.env.currentNamespace.functions.find((ff) => ff.name === sname);
+
+                if(mconst !== undefined || mfunc !== undefined) {
+                    this.recordErrorGeneral(sinfo, `Collision between const and other names -- ${sname}`);
+                }
+            }
+
             this.ensureAndConsumeTokenIf(SYM_colon, "const member");
             const stype = this.parseStdTypeSignature();
 
             this.ensureAndConsumeTokenIf(SYM_eq, "const member");
-            const value = this.parseConstExpression(stype, new Set<string>());
+            const value = this.parseConstScopedExpression(stype, new Set<string>());
         
             this.env.currentNamespace.consts.push(new ConstMemberDecl(this.env.currentFile, sinfo, attributes, sname, stype, value));
 
@@ -5070,10 +5788,6 @@ class Parser {
             this.consumeToken();
 
             const fname = this.consumeTokenAndGetValue();
-            if(this.env.currentNamespace.checkDeclNameClashMember(fname)) {
-                this.recordErrorGeneral(sinfo, `Collision between function and other names -- ${fname}`);
-            }
-
             this.env.currentNamespace.declaredNames.add(fname);
             this.env.currentNamespace.declaredFunctionNames.add(fname);
 
@@ -5100,9 +5814,20 @@ class Parser {
 
             const fdecl = this.parseFunctionInvokeDecl(fkind, attributes, new Set<string>());
 
-            if(fdecl !== undefined) {
-                this.env.currentNamespace.functions.push(fdecl as NamespaceFunctionDecl);
+            if(fdecl === undefined) {
+                return;
             }
+
+            if(this.env.currentNamespace.checkDeclNameClashMemberSimple(fdecl.name)) {
+                const mconst = this.env.currentNamespace.consts.find((cc) => cc.name === fdecl.name);
+                const mfunc = this.env.currentNamespace.functions.find((ff) => Assembly.checkFunctionSigMatch(ff, fdecl));
+
+                if(mconst !== undefined || mfunc !== undefined) {
+                    this.recordErrorGeneral(sinfo, `Collision between function and other names -- ${fdecl.name}`);
+                }
+            }
+
+            this.env.currentNamespace.functions.push(fdecl as NamespaceFunctionDecl);
         }
     }
 
@@ -5145,7 +5870,7 @@ class Parser {
         const stype = this.parseStdTypeSignature();
 
         this.ensureAndConsumeTokenIf(SYM_eq, "const member");
-        const value = this.parseConstExpression(stype, typeTerms);
+        const value = this.parseConstScopedExpression(stype, typeTerms);
 
         if(constMembers === undefined) {
             this.recordErrorGeneral(sinfo, "Cannot have a const member on this type");
@@ -5155,7 +5880,7 @@ class Parser {
         }
         allMemberNames.add(sname);
 
-        if(constMembers !== undefined && !constMembers.some((cm) => cm.name === sname)) {
+        if(constMembers !== undefined) {
             constMembers.push(new ConstMemberDecl(this.env.currentFile, sinfo, attributes, sname, stype, value));
         }
 
@@ -5175,12 +5900,20 @@ class Parser {
             return;
         } 
         
-        if(allMemberNames.has(fdecl.name)) {
-            this.recordErrorGeneral(sinfo, `Duplicate const member ${fdecl.name}`);
+        if(memberFunctions !== undefined && allMemberNames.has(fdecl.name)) {
+            const ffdecl = memberFunctions.find((mf) => Assembly.checkFunctionSigMatch(mf, fdecl));
+            const fndecl = memberFunctions.find((mf) => mf.name === fdecl.name);
+
+            if(fndecl === undefined) {
+                this.recordErrorGeneral(sinfo, `Duplicate member ${fdecl.name} with same name`);
+            }
+            if(fndecl !== undefined && ffdecl !== undefined) {
+                this.recordErrorGeneral(sinfo, `Duplicate member ${fdecl.name} with same signature`);
+            }
         }
         allMemberNames.add(fdecl.name);
 
-        if(memberFunctions !== undefined && !memberFunctions.some((cm) => cm.name === fdecl.name)) {
+        if(memberFunctions !== undefined) {
             memberFunctions.push(fdecl);
         }
     }
@@ -5197,20 +5930,20 @@ class Parser {
         this.ensureAndConsumeTokenIf(SYM_colon, "member field");
         const ftype = this.parseStdTypeSignature();
 
-        let ivalue: ConstantExpressionValue | undefined = undefined;
+        let ivalue: Expression | undefined = undefined;
         if (this.testAndConsumeTokenIf(SYM_eq)) {
-            ivalue = this.parseConstExpression(ftype, typeTerms);
+            ivalue = this.parseConstScopedExpression(ftype, typeTerms);
         }
 
         if(memberFields === undefined) {
-            this.recordErrorGeneral(sinfo, "Cannot have a const member on this type");
+            this.recordErrorGeneral(sinfo, "Cannot have a field member on this type");
         }
         if(allMemberNames.has(fname)) {
-            this.recordErrorGeneral(sinfo, `Duplicate const member ${fname}`);
+            this.recordErrorGeneral(sinfo, `Duplicate field member ${fname}`);
         }
         allMemberNames.add(fname);
 
-        if(memberFields !== undefined && !memberFields.some((cm) => cm.name === fname)) {
+        if(memberFields !== undefined) {
             memberFields.push(new MemberFieldDecl(this.env.currentFile, sinfo, attributes, fname, ftype, ivalue, false));
         }
 
@@ -5230,12 +5963,20 @@ class Parser {
             return;
         } 
         
-        if(allMemberNames.has(mdecl.name)) {
-            this.recordErrorGeneral(sinfo, `Duplicate const member ${mdecl.name}`);
+        if(memberMethods !== undefined && allMemberNames.has(mdecl.name)) {
+            const mfdecl = memberMethods.find((mf) => Assembly.checkMethodSigMatch(mf, mdecl));
+            const mndecl = memberMethods.find((mf) => mf.name === mdecl.name);
+
+            if(mndecl === undefined) {
+                this.recordErrorGeneral(sinfo, `Duplicate member ${mdecl.name} with same name`);
+            }
+            if(mndecl !== undefined && mfdecl !== undefined) {
+                this.recordErrorGeneral(sinfo, `Duplicate member ${mdecl.name} with same signature`);
+            }
         }
         allMemberNames.add(mdecl.name);
 
-        if(memberMethods !== undefined && !memberMethods.some((cm) => cm.name === mdecl.name)) {
+        if(memberMethods !== undefined) {
             memberMethods.push(mdecl);
         }
     }
@@ -5258,7 +5999,7 @@ class Parser {
         }
         allMemberNames.add(mdecl.name);
 
-        if(taskMemberMethods !== undefined && !taskMemberMethods.some((cm) => cm.name === mdecl.name)) {
+        if(taskMemberMethods !== undefined) {
             taskMemberMethods.push(mdecl);
         }
     }
@@ -5281,16 +6022,17 @@ class Parser {
         }
         allMemberNames.add(adecl.name);
 
-        if(taskMemberAction !== undefined && !taskMemberAction.some((cm) => cm.name === adecl.name)) {
+        if(taskMemberAction !== undefined) {
             taskMemberAction.push(adecl);
         }
     }
 
     private parseInvariantsInto(invs: InvariantDecl[] | undefined, vdates: ValidateDecl[] | undefined, typeTerms: Set<string>) {
         assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParsing));
-        const sinfo = this.peekToken().getSourceInfo();
 
         while (this.testToken(KW_invariant) || this.testToken(KW_validate)) {
+            const sinfo = this.peekToken().getSourceInfo();
+            
             const isvalidate = this.testToken(KW_validate);
             this.consumeToken();
 
@@ -5304,7 +6046,7 @@ class Parser {
             }
 
             if(isvalidate) {
-                const exp = this.parseConstExpression(this.wellknownTypes.get("Bool") as TypeSignature, typeTerms);
+                const exp = this.parseChkLogicScopedExpression(typeTerms);
 
                 if(vdates === undefined) {
                     this.recordErrorGeneral(sinfo, "Cannot have a validate on this type");
@@ -5315,7 +6057,7 @@ class Parser {
             }
             else {
                 const level = this.parseBuildInfo(KW_release);
-                const exp = this.parseConstExpression(this.wellknownTypes.get("Bool") as TypeSignature, typeTerms);
+                const exp = this.parseChkLogicScopedExpression(typeTerms);
 
                 if(invs === undefined) {
                     this.recordErrorGeneral(sinfo, "Cannot have an invariant on this type");
@@ -5333,8 +6075,7 @@ class Parser {
         invariants: InvariantDecl[] | undefined, validates: ValidateDecl[] | undefined,
         constMembers: ConstMemberDecl[] | undefined, functionMembers: TypeFunctionDecl[] | undefined, 
         memberFields: MemberFieldDecl[] | undefined, memberMethods: MethodDecl[] | undefined, 
-        taskMemberMethods: TaskMethodDecl[] | undefined, taskMemberAction: TaskActionDecl[] | undefined, 
-        taskmain: string | undefined) {
+        taskMemberMethods: TaskMethodDecl[] | undefined, taskMemberAction: TaskActionDecl[] | undefined) {
         let allMemberNames = new Set<string>();
 
         const rpos = this.scanMatchingParens(SYM_lbrace, SYM_rbrace);
@@ -5386,7 +6127,7 @@ class Parser {
                 }
             }
             else if(this.testToken(KW_action)) {
-                this.parseTaskMemberAction(taskMemberAction, allMemberNames, attributes, typeTerms, taskmain as string);
+                this.parseTaskMemberAction(taskMemberAction, allMemberNames, attributes, typeTerms, "main");
             }
             else if(this.testToken(KW_entity)) {
                 if(specialConcept === undefined) {
@@ -5426,7 +6167,7 @@ class Parser {
                 tdecl.provides.push(...provides);
             }
 
-            this.parseOOPMembersCommonAll(false, undefined, typeTerms, undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, typeTerms, undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
         }
         else {
             const tdecl = (specialConcept as APIResultTypeDecl).nestedEntityDecls.find((ned) => ned.name === ename) as InternalEntityTypeDecl;
@@ -5436,7 +6177,7 @@ class Parser {
                 tdecl.provides.push(...provides);
             }
 
-            this.parseOOPMembersCommonAll(false, undefined, typeTerms, undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, typeTerms, undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
         }
     }
 
@@ -5471,18 +6212,6 @@ class Parser {
             else if(name === "EventList") {
                 tdecl = new EventListTypeDecl(this.env.currentFile, sinfo, attributes, "EventList");
             }
-            else if(name === "CRope") {
-                tdecl = new CRopeTypeDecl(this.env.currentFile, sinfo, attributes, "CRope");
-            } 
-            else if(name === "CRopeIterator") {
-                tdecl = new CRopeIteratorTypeDecl(this.env.currentFile, sinfo, attributes, "CRopeIterator")
-            }
-            else if(name === "UnicodeRope") {
-                tdecl = new UnicodeRopeTypeDecl(this.env.currentFile, sinfo, attributes, "UnicodeRope");
-            }
-            else if(name === "UnicodeRopeIterator") {
-                tdecl = new UnicodeRopeIteratorTypeDecl(this.env.currentFile, sinfo, attributes, "UnicodeRopeIterator");
-            }
             else {
                 assert(!attributes.some((attr) => attr.name === "__internal"), "Missing special case on primitive entity parse -- " + name);
 
@@ -5514,32 +6243,26 @@ class Parser {
         }
 
         if(tdecl instanceof PrimitiveEntityTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
         }
         else if(tdecl instanceof SomeTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
         }
         else if(tdecl instanceof ListTypeDecl || tdecl instanceof StackTypeDecl || tdecl instanceof QueueTypeDecl || tdecl instanceof SetTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
         }
         else if(tdecl instanceof MapEntryTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(["K", "V"]), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(["K", "V"]), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
         }
         else if(tdecl instanceof MapTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(["K", "V"]), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(["K", "V"]), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
         }
         else if(tdecl instanceof EventListTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
-        }
-        else if (tdecl instanceof CRopeTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
-        }
-        else if (tdecl instanceof UnicodeRopeTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
         }
         else {
             const edecl = tdecl as EntityTypeDecl;
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(edecl.terms.map((term) => term.name)), edecl.invariants, edecl.validates, edecl.consts, edecl.functions, edecl.fields, edecl.methods, undefined, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(edecl.terms.map((term) => term.name)), edecl.invariants, edecl.validates, edecl.consts, edecl.functions, edecl.fields, edecl.methods, undefined, undefined);
         }
     }
 
@@ -5594,14 +6317,17 @@ class Parser {
         }
         else {
             const rdecl = pdecl as APIResultTypeDecl;
-            if(ename === "APIRejectedTypeDecl") {
+            if(ename === "APIErrorTypeDecl") {
+                rdecl.nestedEntityDecls.push(new APIErrorTypeDecl(this.env.currentFile, sinfo, attributes, ename));
+            }
+            else if(ename === "APIRejectedTypeDecl") {
                 rdecl.nestedEntityDecls.push(new APIRejectedTypeDecl(this.env.currentFile, sinfo, attributes, ename));
             }
-            else if(ename === "APIFailedTypeDecl") {
-                rdecl.nestedEntityDecls.push(new APIFailedTypeDecl(this.env.currentFile, sinfo, attributes, ename));
+            else if(ename === "APIDeniedTypeDecl") {
+                rdecl.nestedEntityDecls.push(new APIDeniedTypeDecl(this.env.currentFile, sinfo, attributes, ename));
             }
-            else if(ename === "APIErrorTypeDecl") {
-                rdecl.nestedEntityDecls.push(new APIErrorTypeDecl(this.env.currentFile, sinfo, attributes, ename));
+            else if(ename === "APIFlaggedTypeDecl") {
+                rdecl.nestedEntityDecls.push(new APIFlaggedTypeDecl(this.env.currentFile, sinfo, attributes, ename));
             }
             else {
                 rdecl.nestedEntityDecls.push(new APISuccessTypeDecl(this.env.currentFile, sinfo, attributes, ename));
@@ -5636,6 +6362,7 @@ class Parser {
 
                 this.scanToKWOptsInDeclaration(SYM_lbrace);
                 this.consumeToken();
+                this.parseNestedEntityRegisterType(tdecl);
                 this.parseNestedEntityRegisterType(tdecl);
                 this.parseNestedEntityRegisterType(tdecl);
                 this.parseNestedEntityRegisterType(tdecl);
@@ -5675,17 +6402,17 @@ class Parser {
         }
 
         if(tdecl instanceof OptionTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
         }
         else if(tdecl instanceof ResultTypeDecl) {
-            this.parseOOPMembersCommonAll(false, tdecl, new Set<string>(["T", "E"]), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, tdecl, new Set<string>(["T", "E"]), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
         }
         else if(tdecl instanceof APIResultTypeDecl) {
-            this.parseOOPMembersCommonAll(false, tdecl, new Set<string>(["T"]), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, tdecl, new Set<string>(["T", "E"]), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
         }
         else {
             const cdecl = tdecl as ConceptTypeDecl;
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(cdecl.terms.map((term) => term.name)), cdecl.invariants, cdecl.validates, cdecl.consts, cdecl.functions, cdecl.fields, cdecl.methods, undefined, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(cdecl.terms.map((term) => term.name)), cdecl.invariants, cdecl.validates, cdecl.consts, cdecl.functions, cdecl.fields, cdecl.methods, undefined, undefined);
         }
     }
 
@@ -5728,7 +6455,6 @@ class Parser {
             }
 
             const members = this.parseListOf<string>("enum members", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
-                this.ensureToken(TokenStrings.IdentifierName, "enum member");
                 return this.parseIdentifierAsEnumMember();
             });
 
@@ -5746,6 +6472,29 @@ class Parser {
         }
     }
 
+    private isLiteralNumericToken(kind?: string): boolean {
+        const tk = kind ?? this.peekTokenKind();
+        return tk === TokenStrings.Nat || tk === TokenStrings.Int
+            || tk === TokenStrings.ChkNat || tk === TokenStrings.ChkInt
+            || tk === TokenStrings.Float || tk === TokenStrings.Decimal
+            || tk === TokenStrings.Rational;
+    }
+
+    private expectedRangeLiteralToken(typeName: string): string | undefined {
+        switch(typeName) {
+            case "Int": return TokenStrings.Int;
+            case "Nat": return TokenStrings.Nat;
+            case "ChkInt": return TokenStrings.ChkInt;
+            case "ChkNat": return TokenStrings.ChkNat;
+            case "Float": return TokenStrings.Float;
+            case "Decimal": return TokenStrings.Decimal;
+            case "Rational": return TokenStrings.Rational;
+            case "String": return TokenStrings.Nat;
+            case "CString": return TokenStrings.Nat;
+            default: return undefined;
+        }
+    }
+
     private parseTypeDecl(attributes: DeclarationAttibute[]) {
         const sinfo = this.peekToken().getSourceInfo();
 
@@ -5753,6 +6502,8 @@ class Parser {
         this.ensureAndConsumeTokenAlways(KW_type, "type alias declaration");
         this.ensureToken(TokenStrings.IdentifierName, "type alias declaration");
         const iname = this.parseIdentifierAsNamespaceOrTypeName();
+
+        this.ensureAndConsumeTokenIf(SYM_eq, "type declaration");
 
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
             if(this.env.currentNamespace.checkDeclNameClashType(iname, false)) {
@@ -5767,19 +6518,59 @@ class Parser {
 
             this.scanToKWOptsInDeclaration(SYM_lbrace, SYM_semicolon);
             if(!this.testAndConsumeTokenIf(SYM_semicolon)) {
-                this.scanOverBraceDelimitedDeclaration();
+                if(this.isLiteralNumericToken(this.peekTokenKind(1)) || this.peekTokenKind(1) === SYM_coma) {
+                    this.consumeToken();
+                    if(this.isLiteralNumericToken()) { this.consumeToken(); }
+                    if(this.testAndConsumeTokenIf(SYM_coma)) {
+                        if(this.isLiteralNumericToken()) { this.consumeToken(); }
+                    }
+                    this.ensureAndConsumeTokenAlways(SYM_rbrace, "type declaration size range");
+                }
+
+                this.scanToKWOptsInDeclaration(SYM_lbrace, SYM_semicolon);
+                if(!this.testAndConsumeTokenIf(SYM_semicolon)) {
+                    this.scanOverBraceDelimitedDeclaration();
+                }
             }
         }
         else {
             const tdecl = this.env.currentNamespace.typedecls.find((td) => td.name === iname);
             assert(tdecl !== undefined && (tdecl instanceof TypedeclTypeDecl), "Failed to find type type");
 
-            this.ensureAndConsumeTokenIf(SYM_eq, "type declaration");
             const ttype = this.parseTypedeclRHSSignature();
             (tdecl as TypedeclTypeDecl).valuetype = ttype;
 
+            if(this.testAndConsumeTokenIf(SYM_lbrace)) {
+                let min: string | undefined = undefined;
+                let max: string | undefined = undefined;
+
+                const expectedToken = (ttype instanceof NominalTypeSignature) ? this.expectedRangeLiteralToken(ttype.decl.name) : undefined;
+
+                if(this.isLiteralNumericToken()) {
+                    if(expectedToken !== undefined && this.peekTokenKind() !== expectedToken) {
+                        this.recordErrorGeneral(this.peekToken().getSourceInfo(), `Range bound literal must match type ${(ttype as NominalTypeSignature).decl.name}`);
+                    }
+                    min = this.consumeTokenAndGetValue();
+                }
+                if(this.testAndConsumeTokenIf(SYM_coma)) {
+                    if(this.isLiteralNumericToken()) {
+                        if(expectedToken !== undefined && this.peekTokenKind() !== expectedToken) {
+                            this.recordErrorGeneral(this.peekToken().getSourceInfo(), `Range bound literal must match type ${(ttype as NominalTypeSignature).decl.name}`);
+                        }
+                        max = this.consumeTokenAndGetValue();
+                    }
+                }
+                else {
+                    max = min;
+                }
+
+                this.ensureAndConsumeTokenAlways(SYM_rbrace, "type declaration size range");
+
+                (tdecl as TypedeclTypeDecl).optsizerng = { min: min, max: max };
+            }
+
             if(this.testAndConsumeTokenIf(KW_of)) {
-                const ofexp = this.parseConstExpression(undefined, new Set<string>());
+                const ofexp = this.parseConstScopedExpression(undefined, new Set<string>());
                 (tdecl as TypedeclTypeDecl).optofexp = ofexp;
             }
 
@@ -5791,7 +6582,7 @@ class Parser {
                     tdecl.provides.push(...provides);
                 }
 
-                this.parseOOPMembersCommonAll(false, undefined, new Set<string>(), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
+                this.parseOOPMembersCommonAll(false, undefined, new Set<string>(), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
             }
         }
     }
@@ -5842,7 +6633,7 @@ class Parser {
                 (tdecl as DatatypeMemberEntityTypeDecl).fields.push(...fields);
             }
             else {
-                this.parseOOPMembersCommonAll(false, undefined, new Set<string>(parenttype.terms.map((term) => term.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, (tdecl as DatatypeMemberEntityTypeDecl).fields, tdecl.methods, undefined, undefined, undefined);
+                this.parseOOPMembersCommonAll(false, undefined, new Set<string>(parenttype.terms.map((term) => term.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, (tdecl as DatatypeMemberEntityTypeDecl).fields, tdecl.methods, undefined, undefined);
             }
         }
     }
@@ -5902,7 +6693,7 @@ class Parser {
                     tdecl.fields.push(...fields);
                 }
                 else {
-                    this.parseOOPMembersCommonAll(false, undefined, new Set<string>(tdecl.terms.map((term) => term.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, tdecl.fields, tdecl.methods, undefined, undefined, undefined);
+                    this.parseOOPMembersCommonAll(false, undefined, new Set<string>(tdecl.terms.map((term) => term.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, tdecl.fields, tdecl.methods, undefined, undefined);
                     if(tdecl.functions.length !== 0 || tdecl.methods.length !== 0) {
                         this.recordErrorGeneral(sinfo, "Using component cannot include functions or methods");
                     }
@@ -5919,7 +6710,6 @@ class Parser {
         }
 
         while (!this.testToken(SYM_semicolon) && !this.testToken(SYM_amp) && !this.testToken(TokenStrings.EndOfStream) && !this.testToken(TokenStrings.Recover)) {
-            this.ensureAndConsumeTokenAlways(SYM_bar, "datatype member");
             this.parseDatatypeMemberEntityTypeDecl(attributes, tdecl, hasTerms, etag);
         }
 
@@ -5928,11 +6718,75 @@ class Parser {
                 this.scanOverBraceDelimitedDeclaration();
             }
             else {
-                this.parseOOPMembersCommonAll(false, undefined, new Set<string>(tdecl.terms.map((tt) => tt.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, tdecl.fields, tdecl.methods, undefined, undefined, undefined);
+                this.parseOOPMembersCommonAll(false, undefined, new Set<string>(tdecl.terms.map((tt) => tt.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, tdecl.fields, tdecl.methods, undefined, undefined);
             }
         }
 
         this.testAndConsumeTokenIf(SYM_semicolon);
+    }
+
+    private parseStatusInfo(statusinfo: TypeSignature[]) {
+        this.consumeToken();
+
+        statusinfo.push(this.parseNominalType());
+        while(this.testAndConsumeTokenIf(SYM_bar)) {
+            statusinfo.push(this.parseNominalType());
+        }
+
+        this.ensureAndConsumeTokenAlways(SYM_semicolon, "task status section");
+    }
+
+    private parseResourceInfo(resinfo: ResourceInformation) {
+        this.consumeToken();
+        const rri = this.parseListOf<{ pg: Expression[], optas: Expression | undefined }>("resource section", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
+            let pg: Expression[] = [];
+            let optas: Expression | undefined = undefined;
+
+            if(this.testToken(SYM_lbrack)) {
+                pg = this.parseListOf<Expression>("pathglob expression", SYM_lbrack, SYM_rbrack, SYM_coma, () => {
+                    return this.parseConstScopedExpression(undefined, new Set<string>());
+                });
+            }
+            else {
+                pg.push(this.parseConstScopedExpression(undefined, new Set<string>()));
+            }
+
+            if(this.testAndConsumeTokenIf(KW_as)) {
+                optas = this.parseConstScopedExpression(undefined, new Set<string>());
+            }
+
+            return { pg: pg, optas: optas };
+        });
+
+        resinfo.pathglobs.push(...rri);
+    }
+
+    private parseEnvInfo(envinfo: EnvironmentVariableInformation[]) {
+        this.consumeToken();
+
+        let ei = this.parseListOf<EnvironmentVariableInformation>("env section", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
+            let ename = "";
+            if(this.testToken(TokenStrings.CString)) {
+                ename = this.consumeTokenAndGetValue();
+            }
+            else {
+                this.ensureToken(TokenStrings.IdentifierName, "env section");
+                ename = this.consumeTokenAndGetValue();
+            }
+
+            const isoptional = this.testAndConsumeTokenIf(SYM_question);
+            this.ensureAndConsumeTokenIf(SYM_colon, "task env section");
+            const ttype = this.parseStdTypeSignature();
+                        
+            let exp: Expression | undefined = undefined;
+            if(this.testAndConsumeTokenIf(SYM_eq)) {
+                exp = this.parseConstScopedExpression(ttype, new Set<string>());
+            }
+
+            return new EnvironmentVariableInformation(ename, ttype, !isoptional, exp);
+        });
+
+        envinfo.push(...ei);
     }
 
     private parseTask(attributes: DeclarationAttibute[]) {
@@ -5971,109 +6825,56 @@ class Parser {
                 this.recordErrorGeneral(sinfo, "Cannot have provides on tasks");
             }
 
-            let taskmain: string = "main";
-            if(this.testAndConsumeTokenIf(KW_implements)) {
-                const iiaccess = this.parseIdentifierAccessChain();
-                if(iiaccess === undefined) {
-                    this.recordErrorGeneral(sinfo, "Invalid expression -- could not resolve name");
-                    
-                    //something went very wrong
-                    this.currentState().moveToRecoverPosition();
-                    return;
-                }
-
-                if(iiaccess.typeTokens.length !== 0) {
-                    this.recordErrorGeneral(sinfo, "Invalid API name");
-                }
-                else {
-                    this.ensureAndConsumeTokenAlways(SYM_coloncolon, "task declaration provides");
-                    const ok = this.ensureToken(TokenStrings.IdentifierName, "task declaration provides");
-
-                    if(ok) {
-                        const pn = this.parseIdentifierAsStdVariable();
-
-                        taskmain = pn;
-                        tdecl.implementsapi = [iiaccess.nsScope.fullnamespace, pn];
-                    }
-                }
-            }
-
-            while(this.testToken(KW_status) || this.testToken(KW_resource) || this.testToken(KW_env) || this.testToken(KW_event)) {
+            while(this.testToken(KW_status) || this.testToken(KW_resource) || this.testToken(KW_env) || this.testToken(KW_event) ||this.testToken(KW_configs) ) {
                 if(this.testToken(KW_event)) {
-                    if(tdecl.eventsInfo !== undefined) {
+                    if(tdecl.eventinfo.length !== 0) {
                         this.recordErrorGeneral(sinfo, "Cannot have multiple event sections");
                     }
     
                     this.consumeToken();
-                    tdecl.eventsInfo = this.parseNominalType();
+                    tdecl.eventinfo.push(this.parseNominalType());
+                    while(this.testAndConsumeTokenIf(SYM_bar)) {
+                        tdecl.eventinfo.push(this.parseNominalType());
+                    }
+
+                    this.ensureAndConsumeTokenAlways(SYM_semicolon, "task event section");
+                }
+                else if(this.testToken(KW_configs)) {
+                    if(tdecl.configs.priority !== undefined || tdecl.configs.retry !== undefined || tdecl.configs.timeout !== undefined) {
+                        this.recordErrorGeneral(sinfo, "Cannot have multiple config sections");
+                    }
+
+                    this.consumeToken();
+                    this.ensureAndConsumeTokenAlways(SYM_lbrace, "task configs section");
+
+                    this.parseTaskConfigs(tdecl.configs);
+
+                    this.ensureAndConsumeTokenAlways(SYM_rbrace, "task configs section");
                 }
                 else if(this.testToken(KW_status)) {
-                    if(tdecl.statusInfo !== undefined) {
+                    if(tdecl.statusinfo.length !== 0) {
                         this.recordErrorGeneral(sinfo, "Cannot have multiple status sections");
                     }
 
-                    this.consumeToken();
-                    tdecl.statusInfo = this.parseListOf<TypeSignature>("task status section", SYM_lbrack, SYM_rbrack, SYM_coma, () => this.parseNominalType());
+                    this.parseStatusInfo(tdecl.statusinfo);
                 }
                 else if(this.testToken(KW_resource)) {
-                    if(tdecl.resourceImpactInfo !== undefined) {
+                    if(tdecl.resourcereqs.pathglobs.length !== 0) {
                         this.recordErrorGeneral(sinfo, "Cannot have multiple resource sections");
                     }
 
-                    this.consumeToken();
-                    if(this.testFollows(SYM_lbrace, SYM_rbrace)) {
-                        this.consumeToken();
-                        this.consumeToken();
-                        tdecl.resourceImpactInfo = "{}";
-                    }
-                    else if(this.testFollows(SYM_lbrace, SYM_question, SYM_lbrace)) {
-                        this.consumeToken();
-                        tdecl.resourceImpactInfo = this.consumeTokenAndGetValue() as "?";
-                        this.consumeToken();
-                    }
-                    else {
-                        tdecl.resourceImpactInfo = this.parseListOf<ResourceInformation>("task resource section", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
-                            const pp = this.parseConstExpression(undefined, new Set<string>());
-                            this.ensureAndConsumeTokenIf(SYM_at, "task resource section");
-
-                            const mod = this.ensureToken(TokenStrings.ResourceUseMod, "task resource section") ? this.consumeTokenAndGetValue() : "[*]";
-                            const oops = mod.includes("*") ? "*" : mod.slice(1, -1).split("");
-
-                            return new ResourceInformation(pp, oops as ResourceAccessModes[]);
-                        });
-                    }
+                    this.parseResourceInfo(tdecl.resourcereqs);
                 }
                 else {
-                    if(tdecl.envVarRequirementInfo !== undefined) {
+                    if(tdecl.envreqs.length !== 0) {
                         this.recordErrorGeneral(sinfo, "Cannot have multiple env sections");
                     }
 
-                    this.consumeToken();
-                    tdecl.envVarRequirementInfo = this.parseListOf<EnvironmentVariableInformation>("task env section", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
-                        this.ensureToken(TokenStrings.CString, "task env section");
-                        const ename = this.consumeTokenAndGetValue();
-
-                        this.ensureAndConsumeTokenIf(SYM_colon, "task env section");
-                        const ttype = this.parseStdTypeSignature();
-                        
-                        let exp: ConstantExpressionValue | undefined = undefined;
-                        if(this.testAndConsumeTokenIf(SYM_eq)) {
-                            exp = this.parseConstExpression(ttype, new Set<string>());
-                        }
-
-                        return new EnvironmentVariableInformation(ename, ttype, exp);
-                    });
+                    this.parseEnvInfo(tdecl.envreqs);
                 }
             }
 
-            if(tdecl.envVarRequirementInfo === undefined) {
-                tdecl.envVarRequirementInfo = [];
-            }
-            if(tdecl.resourceImpactInfo === undefined) {
-                tdecl.resourceImpactInfo = "{}";
-            }
-
-            this.parseOOPMembersCommonAll(true, undefined, new Set<string>(tdecl.terms.map((term) => term.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, tdecl.fields, undefined, tdecl.selfmethods, tdecl.actions, taskmain);
+            this.parseOOPMembersCommonAll(true, undefined, new Set<string>(tdecl.terms.map((term) => term.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, tdecl.fields, undefined, tdecl.selfmethods, tdecl.actions);
         }
     }
 
@@ -6085,7 +6886,7 @@ class Parser {
         const apiname = this.parseIdentifierAsStdVariable();
 
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
-            if(this.env.currentNamespace.checkDeclNameClashMember(apiname)) {
+            if(this.env.currentNamespace.checkDeclNameClashMemberSimple(apiname)) {
                 this.recordErrorGeneral(sinfo, `Collision between API and other names -- ${apiname}`);
             }
 
@@ -6107,85 +6908,157 @@ class Parser {
             this.ensureAndConsumeTokenIf(SYM_colon, "api declaration");
             const resultInfo = this.parseReturnTypeSignature(true);
 
+            let eventType: TypeSignature | undefined = undefined;
+            if(this.testAndConsumeTokenIf(SYM_coma)) {
+                eventType = this.parseNominalType();
+            }
+
             const argNames = new Set<string>(params.map((param) => param.name));
-            const cargs = params.map((param) => new LocalVariableDefinitionInfo(!param.isRefParam, param.name));
+            const cargs = params.map((param) => new VariableDefinitionInfo(param.pkind || "let", param.name));
 
             const [preconds, postconds] = this.parsePreAndPostConditions(sinfo, argNames, new Set<string>(), new Set<string>(), true, true);
     
+            let configs: TaskConfiguration = new TaskConfiguration(undefined, undefined, undefined);
             let statusinfo: TypeSignature[] = [];
-            let resouceinfo: ResourceInformation[] | "**" | "{}" | undefined = undefined;
-            let envinfo: EnvironmentVariableInformation[] | undefined = undefined;
-            while(this.testToken(KW_event) || this.testToken(KW_status) || this.testToken(KW_resource) || this.testToken(KW_env)) {
-                if(this.testToken(KW_status)) {
-                    if(statusinfo !== undefined) {
+            let resourcereqs: ResourceInformation = new ResourceInformation([]);
+            let envreqs: EnvironmentVariableInformation[] = [];
+            while(this.testToken(KW_status) || this.testToken(KW_resource) || this.testToken(KW_env) || this.testToken(KW_configs)) {
+                if(this.testToken(KW_configs)) {
+                    if(configs.priority !== undefined || configs.retry !== undefined || configs.timeout !== undefined) {
+                        this.recordErrorGeneral(sinfo, "Cannot have multiple config sections");
+                    }
+
+                    this.consumeToken();
+                    this.ensureAndConsumeTokenAlways(SYM_lbrace, "task configs section");
+
+                    this.parseTaskConfigs(configs);
+
+                    this.ensureAndConsumeTokenAlways(SYM_rbrace, "task configs section");
+                }
+                else if(this.testToken(KW_status)) {
+                    if(statusinfo.length !== 0) {
                         this.recordErrorGeneral(sinfo, "Cannot have multiple status sections");
                     }
 
-                    this.consumeToken();
-                    statusinfo = this.parseListOf<TypeSignature>("task status section", SYM_lbrack, SYM_rbrack, SYM_coma, () => this.parseNominalType());
+                    this.parseStatusInfo(statusinfo);
                 }
                 else if(this.testToken(KW_resource)) {
-                    if(resouceinfo !== undefined) {
+                    if(resourcereqs.pathglobs.length !== 0) {
                         this.recordErrorGeneral(sinfo, "Cannot have multiple resource sections");
                     }
 
-                    this.consumeToken();
-                    if(this.testFollows(SYM_lbrace, SYM_rbrace)) {
-                        this.consumeToken();
-                        this.consumeToken();
-                        resouceinfo = "{}";
-                    }
-                    else {
-                        resouceinfo = this.parseListOf<ResourceInformation>("task resource section", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
-                            const pp = this.parseConstExpression(undefined, new Set<string>());
-                            this.ensureAndConsumeTokenIf(SYM_at, "task resource section");
-
-                            const mod = this.ensureToken(TokenStrings.ResourceUseMod, "task resource section") ? this.consumeTokenAndGetValue() : "[*]";
-                            const oops = mod.includes("*") ? "*" : mod.slice(1, -1).split("");
-
-                            return new ResourceInformation(pp, oops as ResourceAccessModes[]);
-                        });
-                    }
+                    this.parseResourceInfo(resourcereqs);
                 }
                 else {
-                    if(envinfo !== undefined) {
+                    if(envreqs.length !== 0) {
                         this.recordErrorGeneral(sinfo, "Cannot have multiple env sections");
                     }
 
-                    this.consumeToken();
-                    envinfo = this.parseListOf<EnvironmentVariableInformation>("task env section", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
-                        this.ensureToken(TokenStrings.CString, "task env section");
-                        const ename = this.consumeTokenAndGetValue();
-
-                        this.ensureAndConsumeTokenIf(SYM_colon, "task env section");
-                        const ttype = this.parseStdTypeSignature();
-
-                        let exp: ConstantExpressionValue | undefined = undefined;
-                        if(this.testAndConsumeTokenIf(SYM_eq)) {
-                            exp = this.parseConstExpression(ttype, new Set<string>());
-                        }
-
-                        return new EnvironmentVariableInformation(ename, ttype, exp);
-                    });
+                    this.parseEnvInfo(envreqs);
                 }
-            }
-
-            if(statusinfo === undefined) {
-                statusinfo = [];
-            }
-            if(envinfo === undefined) {
-                envinfo = [];
-            }
-            if(resouceinfo === undefined) {
-                resouceinfo = "{}";
             }
 
             this.env.pushStandardFunctionScope(cargs, boundtemplates, resultInfo);
             const body = this.parseBody(attributes, false, false);
             this.env.popStandardFunctionScope();
             
-            const api = new APIDecl(this.env.currentFile, sinfo, attributes, apiname, params, resultInfo, preconds, postconds, statusinfo, envinfo, resouceinfo, body);
+            const api = new APIDecl(this.env.currentFile, sinfo, attributes, apiname, params, resultInfo, eventType, preconds, postconds, configs, statusinfo, envreqs, resourcereqs, body);
             this.env.currentNamespace.apis.push(api);
+
+
+            ////
+            const sstr = api.emit(new CodeFormatter());
+            console.log(`API EMIT: ${sstr}`);
+            ////
+        }
+    }
+
+    private parseAgent(attributes: DeclarationAttibute[]) {
+        const sinfo = this.peekToken().getSourceInfo();
+
+        this.ensureAndConsumeTokenAlways(KW_agent, "agent declaration");
+        this.ensureToken(TokenStrings.IdentifierName, "agent declaration");
+        const agentname = this.parseIdentifierAsStdVariable();
+
+        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
+            if(this.env.currentNamespace.checkDeclNameClashMemberSimple(agentname)) {
+                this.recordErrorGeneral(sinfo, `Collision between Agent and other names -- ${agentname}`);
+            }
+
+            this.env.currentNamespace.declaredNames.add(agentname);
+            this.env.currentNamespace.declaredAgentNames.add(agentname);
+
+            this.scanOverSemiDelimitedDeclaration();
+        }
+        else {
+            const okdecl = this.testToken(SYM_lparen);
+            if(!okdecl) {
+                this.recordErrorGeneral(sinfo, "Agent declaration missing parameter list");
+                return;
+            }
+
+            const boundtemplates = new Set<string>();
+            const params: InvokeParameterDecl[] = this.parseInvokeDeclParameters(sinfo, false, boundtemplates);
+        
+            this.ensureAndConsumeTokenIf(SYM_colon, "agent declaration");
+            const resultInfo = this.parseReturnTypeSignature(true);
+
+            let eventType: TypeSignature | undefined = undefined;
+            if(this.testAndConsumeTokenIf(SYM_coma)) {
+                eventType = this.parseNominalType();
+            }
+
+            const argNames = new Set<string>(params.map((param) => param.name));
+            const cargs = params.map((param) => new VariableDefinitionInfo("let", param.name));
+
+            const [preconds, postconds] = this.parsePreAndPostConditions(sinfo, argNames, new Set<string>(), new Set<string>(), true, true);
+    
+            let configs: TaskConfiguration = new TaskConfiguration(undefined, undefined, undefined);
+            let statusinfo: TypeSignature[] = [];
+            let resourcereqs: ResourceInformation = new ResourceInformation([]);
+            let envreqs: EnvironmentVariableInformation[] = [];
+            while(this.testToken(KW_status) || this.testToken(KW_resource) || this.testToken(KW_env) || this.testToken(KW_configs)) {
+                if(this.testToken(KW_configs)) {
+                    if(configs.priority !== undefined || configs.retry !== undefined || configs.timeout !== undefined) {
+                        this.recordErrorGeneral(sinfo, "Cannot have multiple config sections");
+                    }
+
+                    this.consumeToken();
+                    this.ensureAndConsumeTokenAlways(SYM_lbrace, "task configs section");
+
+                    this.parseTaskConfigs(configs);
+
+                    this.ensureAndConsumeTokenAlways(SYM_rbrace, "task configs section");
+                }
+                else if(this.testToken(KW_status)) {
+                    if(statusinfo.length !== 0) {
+                        this.recordErrorGeneral(sinfo, "Cannot have multiple status sections");
+                    }
+
+                    this.parseStatusInfo(statusinfo);
+                }
+                else if(this.testToken(KW_resource)) {
+                    if(resourcereqs.pathglobs.length !== 0) {
+                        this.recordErrorGeneral(sinfo, "Cannot have multiple resource sections");
+                    }
+
+                    this.parseResourceInfo(resourcereqs);
+                }
+                else {
+                    if(envreqs.length !== 0) {
+                        this.recordErrorGeneral(sinfo, "Cannot have multiple env sections");
+                    }
+
+                    this.parseEnvInfo(envreqs);
+                }
+            }
+
+            this.env.pushStandardFunctionScope(cargs, boundtemplates, resultInfo);
+            const body = this.parseBody(attributes, false, false);
+            this.env.popStandardFunctionScope();
+            
+            const agent = new AgentDecl(this.env.currentFile, sinfo, attributes, agentname, params, resultInfo, eventType, preconds, postconds, configs, statusinfo, envreqs, resourcereqs, body);
+            this.env.currentNamespace.agents.push(agent);
         }
     }
 
@@ -6352,7 +7225,7 @@ class Parser {
         }
 
         const ns = assembly.getToplevelNamespace("Main") as NamespaceDeclaration;
-        const sffdecl = ns.functions.find((f) => f.name === "main");
+        const sffdecl = ns.functions.find((f) => f.name === "main") || ns.apis.find((f) => f.name === "main") || ns.agents.find((f) => f.name === "main");
 
         return sffdecl !== undefined ? sffdecl.emit(new CodeFormatter()) : "**ERROR**";
     }
@@ -6369,7 +7242,7 @@ class Parser {
         }
 
         const ns = assembly.getToplevelNamespace("Main") as NamespaceDeclaration;
-        const sffdecl = ns.functions.find((f) => f.name === fname);
+        const sffdecl = ns.functions.find((f) => f.name === fname) || ns.apis.find((f) => f.name === fname) || ns.agents.find((f) => f.name === fname);
 
         return sffdecl !== undefined ? sffdecl.emit(new CodeFormatter()) : "**ERROR**";
     }
@@ -6386,7 +7259,7 @@ class Parser {
         }
 
         const ns = assembly.getToplevelNamespace("Main") as NamespaceDeclaration;
-        const sffdecl = ns.functions.find((f) => f.name === fname);
+        const sffdecl = ns.functions.find((f) => f.name === fname) || ns.apis.find((f) => f.name === fname) || ns.agents.find((f) => f.name === fname);
 
         return sffdecl !== undefined ? sffdecl.emit(new CodeFormatter()) : "**ERROR**";
     }

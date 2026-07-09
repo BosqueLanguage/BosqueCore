@@ -41,28 +41,29 @@ class TemplateConstraintScope {
     constructor() {
     }
 
-    pushConstraintScope(constraints: TemplateTermDecl[], trestrict: InvokeTemplateTypeRestriction | undefined) {
+    pushConstraintDeclsScope(constraints: TemplateTermDecl[]) {
         this.constraints.push([...constraints]);
+    }
 
-        //cases of {where T: U numeric}
-        if(trestrict !== undefined) {
-            const nrestrict = (trestrict.clauses.map((tc) => {
-                const btt = this.resolveConstraint(tc.t.name) as TemplateTermDecl;
+    pushConstraintRestrictionScope(trestrict: InvokeTemplateTypeRestriction) {
+        //cases of {when T: U numeric}
+        const nrestrict = (trestrict.clauses.map((tc) => {
+            const btt = this.resolveConstraint(tc.t.name) as TemplateTermDecl;
 
-                const tcsub = tc.subtype || btt.tconstraint;
-                let tcextra = [...tc.extraTags];
-                if(!tcextra.includes(TemplateTermDeclExtraTag.KeyType) && btt.extraTags.includes(TemplateTermDeclExtraTag.KeyType)) {
-                    tcextra.push(TemplateTermDeclExtraTag.KeyType);
-                }
-                if(!tcextra.includes(TemplateTermDeclExtraTag.Numeric) && btt.extraTags.includes(TemplateTermDeclExtraTag.Numeric)) {
-                    tcextra.push(TemplateTermDeclExtraTag.Numeric);
-                }
+            const tcsub = tc.subtype || btt.tconstraint;
+            let tcextra = [...tc.extraTags];
+            if(!tcextra.includes(TemplateTermDeclExtraTag.KeyType) && btt.extraTags.includes(TemplateTermDeclExtraTag.KeyType)) {
+                tcextra.push(TemplateTermDeclExtraTag.KeyType);
+            }
+            if(!tcextra.includes(TemplateTermDeclExtraTag.Numeric) && btt.extraTags.includes(TemplateTermDeclExtraTag.Numeric)) {
+                tcextra.push(TemplateTermDeclExtraTag.Numeric);
+            }
 
-                return new TemplateTermDecl(tc.t.name, tcsub, tcextra)
-            }));
+            return new TemplateTermDecl(tc.t.name, tcsub, tcextra)
+        }));
 
-            this.constraints.push(nrestrict);
-        }
+        //since this is appended at end it overrides any prior constraints on the same term, which is the intended semantics for when clause restrictions
+        this.constraints.push(nrestrict);
     }
 
     popConstraintScope() {
@@ -86,6 +87,26 @@ class TemplateNameMapper {
 
     constructor(mapper: Map<string, TypeSignature>[]) {
         this.mapper = mapper;
+    }
+
+    static generateTemplateMappingForTypeDecl(t: NominalTypeSignature): TemplateNameMapper {
+        let pmap = new Map<string, TypeSignature>();
+    
+        if(t.decl.isSpecialResultEntity()) {
+            pmap.set("T", t.alltermargs[0]);
+            pmap.set("E", t.alltermargs[1]);
+        }
+        else if(t.decl.isSpecialAPIResultEntity()) {
+            pmap.set("T", t.alltermargs[0]);
+            pmap.set("E", t.alltermargs[1]);
+        }
+        else {
+            for(let j = 0; j < t.decl.terms.length; ++j) {
+                pmap.set(t.decl.terms[j].name, t.alltermargs[j]);
+            }
+        }
+    
+        return TemplateNameMapper.createInitialMapping(pmap)
     }
 
     static identicalMappings(m1: TemplateNameMapper, m2: TemplateNameMapper): boolean {
@@ -174,6 +195,7 @@ abstract class TypeSignature {
     }
 
     abstract remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature;
+    abstract gatherTemplateBindings(tnames: Set<string>): void;
 
     abstract emit(): string;
 }
@@ -191,6 +213,10 @@ class ErrorTypeSignature extends TypeSignature {
         return this;
     }
 
+    gatherTemplateBindings(tnames: Set<string>) {
+        ;
+    }
+
     emit(): string {
         return this.tkeystr;
     }
@@ -205,6 +231,10 @@ class VoidTypeSignature extends TypeSignature {
         return this;
     }
 
+    gatherTemplateBindings(tnames: Set<string>) {
+        ;
+    }
+
     emit(): string {
         return "Void";
     }
@@ -217,6 +247,10 @@ class AutoTypeSignature extends TypeSignature {
 
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
         return this;
+    }
+
+    gatherTemplateBindings(tnames: Set<string>) {
+        ;
     }
 
     emit(): string {
@@ -234,6 +268,10 @@ class TemplateTypeSignature extends TypeSignature {
 
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
         return mapper.resolveTemplateMapping(this);
+    }
+
+    gatherTemplateBindings(tnames: Set<string>) {
+        tnames.add(this.name);
     }
 
     emit(): string {
@@ -280,6 +318,10 @@ class NominalTypeSignature extends TypeSignature {
         return new NominalTypeSignature(this.sinfo, this.altns, this.decl, rtall);
     }
 
+    gatherTemplateBindings(tnames: Set<string>) {
+        this.alltermargs.forEach((tt) => tt.gatherTemplateBindings(tnames));
+    }
+
     emit(): string {
         const tscope = this.alltermargs.length !== 0 ? ("<" + this.alltermargs.map((tt) => tt.emit()).join(", ") + ">") : "";
         if(this.decl.isSpecialResultEntity()) {
@@ -314,8 +356,33 @@ class EListTypeSignature extends TypeSignature {
         return new EListTypeSignature(this.sinfo, this.entries.map((tt) => tt.remapTemplateBindings(mapper)));
     }
 
+    gatherTemplateBindings(tnames: Set<string>) {
+        this.entries.forEach((tt) => tt.gatherTemplateBindings(tnames));
+    }
+
     emit(): string {
         return `(|${this.entries.map((tt) => tt.emit()).join(", ")}|)`;
+    }
+}
+
+class DashResultTypeSignature extends TypeSignature {
+    readonly entries: TypeSignature[];
+
+    constructor(sinfo: SourceInfo, entries: TypeSignature[]) {
+        super(sinfo, "DashResult<" + entries.map((tt) => tt.tkeystr).join(", ") + ">");
+        this.entries = entries;
+    }
+
+    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
+        return new DashResultTypeSignature(this.sinfo, this.entries.map((tt) => tt.remapTemplateBindings(mapper)));
+    }
+
+    gatherTemplateBindings(tnames: Set<string>) {
+        this.entries.forEach((tt) => tt.gatherTemplateBindings(tnames));
+    }
+
+    emit(): string {
+        return `DashResult<${this.entries.map((tt) => tt.emit()).join(", ")}>`;
     }
 }
 
@@ -324,18 +391,18 @@ type RecursiveAnnotation = "yes" | "no" | "cond";
 class LambdaParameterSignature {
     readonly name: string | undefined; //optional name for the parameter
     readonly type: TypeSignature;
-    readonly isRefParam: boolean;
+    readonly pkind: "ref" | "out" | "out?" | "inout" | undefined;;
     readonly isRestParam: boolean;
 
-    constructor(name: string | undefined, type: TypeSignature, isRefParam: boolean, isRestParam: boolean) {
+    constructor(name: string | undefined, type: TypeSignature, pkind: "ref" | "out" | "out?" | "inout" | undefined, isRestParam: boolean) {
         this.name = name;
         this.type = type;
-        this.isRefParam = isRefParam;
+        this.pkind = pkind;
         this.isRestParam = isRestParam;
     }
 
     emit(): string {
-        return `${(this.isRefParam ? "ref " : "")}${this.isRestParam ? "..." : ""}${this.type.emit()}`;
+        return `${(this.pkind ? this.pkind + " " : "")}${this.isRestParam ? "..." : ""}${this.type.emit()}`;
     }
 }
 
@@ -354,8 +421,13 @@ class LambdaTypeSignature extends TypeSignature {
     }
 
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
-        const rbparams = this.params.map((pp) => new LambdaParameterSignature(pp.name, pp.type.remapTemplateBindings(mapper), pp.isRefParam, pp.isRestParam));
+        const rbparams = this.params.map((pp) => new LambdaParameterSignature(pp.name, pp.type.remapTemplateBindings(mapper), pp.pkind, pp.isRestParam));
         return new LambdaTypeSignature(this.sinfo, this.recursive, this.name, rbparams, this.resultType.remapTemplateBindings(mapper));
+    }
+
+    gatherTemplateBindings(tnames: Set<string>) {
+        this.params.forEach((pp) => pp.type.gatherTemplateBindings(tnames));
+        this.resultType.gatherTemplateBindings(tnames);
     }
 
     emit(): string {
@@ -381,8 +453,15 @@ class FormatStringTypeSignature extends TypeSignature {
             return `F${oftype}<${rtype.emit()}>`
         }
         else {
-            const aargs = terms.map((tt) => tt.argname + ": " + tt.argtype.emit()).join(", ");
-            return `F${oftype}<${aargs}, ${rtype.emit()}>`;
+            const aargs = terms.map((tt) => { 
+                if(tt.argname === "_") {
+                    return tt.argtype.emit();
+                }
+                else {
+                    return tt.argname + ": " + tt.argtype.emit();
+                }
+            }).join(", ");
+            return `F${oftype}<${rtype.emit()}${aargs.length !== 0 ? `, ${aargs}` : ""}>`;
         }
     }
 
@@ -398,6 +477,53 @@ class FormatStringTypeSignature extends TypeSignature {
         return new FormatStringTypeSignature(this.sinfo, this.oftype, this.rtype.remapTemplateBindings(mapper), ttrmp);
     }
 
+    gatherTemplateBindings(tnames: Set<string>) {
+        this.terms.forEach((tt) => tt.argtype.gatherTemplateBindings(tnames));
+    }
+
+    emit(): string {
+        return this.tkeystr;
+    }
+}
+
+class FormatPathTypeSignature extends TypeSignature {
+    readonly oftype: "Path" | "PathFragment" | "PathGlob";
+    readonly rtype: TypeSignature;
+    readonly terms: {argname: string, argtype: TypeSignature}[];
+
+    private static buildkstr(oftype: "Path" | "PathFragment" | "PathGlob", rtype: TypeSignature, terms: {argname: string | undefined, argtype: TypeSignature}[]): string {
+        if(terms.length === 0) {
+            return `F${oftype}<${rtype.emit()}>`
+        }
+        else {
+            const aargs = terms.map((tt) => { 
+                if(tt.argname === "_") {
+                    return tt.argtype.emit();
+                }
+                else {
+                    return tt.argname + ": " + tt.argtype.emit();
+                }
+            }).join(", ");
+            return `F${oftype}<${rtype.emit()}${aargs.length !== 0 ? `, ${aargs}` : ""}>`;
+        }
+    }
+
+    constructor(sinfo: SourceInfo, oftype: "Path" | "PathFragment" | "PathGlob", rtype: TypeSignature, terms: {argname: string, argtype: TypeSignature}[]) {
+        super(sinfo, FormatPathTypeSignature.buildkstr(oftype, rtype, terms));
+        this.oftype = oftype;
+        this.rtype = rtype;
+        this.terms = terms;
+    }
+
+    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
+        const ttrmp = this.terms.map((tt) => { return {argname: tt.argname, argtype: tt.argtype.remapTemplateBindings(mapper)}; });
+        return new FormatPathTypeSignature(this.sinfo, this.oftype, this.rtype.remapTemplateBindings(mapper), ttrmp);
+    }
+
+    gatherTemplateBindings(tnames: Set<string>) {
+        this.terms.forEach((tt) => tt.argtype.gatherTemplateBindings(tnames));
+    }
+
     emit(): string {
         return this.tkeystr;
     }
@@ -408,6 +534,7 @@ export {
     TypeSignature, ErrorTypeSignature, VoidTypeSignature, AutoTypeSignature, 
     TemplateTypeSignature, NominalTypeSignature, 
     EListTypeSignature,
+    DashResultTypeSignature,
     RecursiveAnnotation, LambdaParameterSignature, LambdaTypeSignature,
-	FormatStringTypeSignature
+    FormatStringTypeSignature, FormatPathTypeSignature
 };

@@ -17,28 +17,6 @@ __internal entity Map<K: keytype, V> {
         return MapOps::s_map_size<K, V>(this);
     }
 
-    method isSingle(): Bool {
-        return MapOps::s_map_size<K, V>(this) == 1n;
-    }
-
-    method single(): MapEntry<K, V>
-        requires this.isSingle();
-    {
-        return MapOps::s_map_min<K, V>(this);
-    }
-
-    method kmin(): MapEntry<K, V>
-        requires !this.empty();
-    {
-        return MapOps::s_map_min<K, V>(this);
-    }
-
-    method kmax(): MapEntry<K, V>
-        requires !this.empty();
-    {
-        return MapOps::s_map_max<K, V>(this);
-    }
-
     method has(k: K): Bool {
         return MapOps::s_map_has<K, V>(this, k);
     }
@@ -46,155 +24,11 @@ __internal entity Map<K: keytype, V> {
     method get(k: K): V 
         requires this.has(k);
     {
-        return MapOps::s_map_get_direct<K, V>(this, k);
+        return MapOps::s_map_get<K, V>(this, k);
     }
 
     method tryGet(k: K): Option<V> {
-        if(MapOps::s_map_empty<K, V>(this)) {
-            return none;
-        }
-        else {
-            return MapOps::s_map_get_option<K, V>(this, k);
-        }
+        return MapOps::s_map_tryget<K, V>(this, k);
     }
-
-    method insert(k: K, v: V): Map<K, V> 
-        requires !this.has(k);
-    {
-        return MapOps::s_map_insert<K, V>(this, k, v);
-    }
-
-    method delete(k: K): Map<K, V>
-        requires this.has(k);
-    {
-        return MapOps::s_map_delete<K, V>(this, k);
-    }
-
-    method set(k: K, v: V): Map<K, V> 
-        requires this.has(k);
-    {
-        return MapOps::s_map_set<K, V>(this, k, v);
-    }
-
-    method keyList(): List<K> {
-        if(MapOps::s_map_empty<K, V>(this)) {
-            return List<K>{};
-        }
-        else {
-            %%TODO: we can do a better version of this with custom code
-            return MapOps::s_map_reduce<K, V, List<K>>(this, List<K>{}, fn(ll, k, v) => ll.pushBack(k));
-        }
-    }
-
-    %%TODO: keySet
-
-    method valueList(): List<V> {
-        if(MapOps::s_map_empty<K, V>(this)) {
-            return List<V>{};
-        }
-        else {
-            %%TODO: we can do a better version of this with custom code
-            return MapOps::s_map_reduce<K, V, List<V>>(this, List<V>{}, fn(ll, k, v) => ll.pushBack(v));
-        }
-    }
-
-    method entries(): List<MapEntry<K, V>> {
-        if(MapOps::s_map_empty<K, V>(this)) {
-            return List<MapEntry<K, V>>{};
-        }
-        else {
-            %%TODO: we can do a better version of this with custom code
-            return MapOps::s_map_reduce<K, V, List<MapEntry<K, V>>>(this, List<MapEntry<K, V>>{}, fn(ll, k, v) => ll.pushBack(MapEntry<K, V>{k, v}));
-        }
-    }
-
-    function union(...maps: List<Map<K, V>>): Map<K, V> {
-        if(maps.empty()) {
-            return Map<K, V>{};
-        }
-        else {
-            if(maps.isSingle()) {
-                return maps.single();
-            }
-            else {
-                return maps.reduce<Map<K, V>>(fn(acc, m) => MapOps::s_map_union2<K, V>(acc, m), Map<K, V>{});
-            }
-        }
-    }
-
-    function unionAll(maps: List<Map<K, V>>): Map<K, V> {
-        if(maps.empty()) {
-            return Map<K, V>{};
-        }
-        else {
-            if(maps.isSingle()) {
-                return maps.single();
-            }
-            else {
-                return maps.reduce<Map<K, V>>(fn(acc, m) => MapOps::s_map_union2<K, V>(acc, m), Map<K, V>{});
-            }
-        }
-    }
-
-    recursive? method map<U>(f: recursive? fn(K, V) -> U): Map<K, U> {
-        if(MapOps::s_map_empty<K, V>(this)) {
-            return Map<K, U>{};
-        }
-        else {
-            return MapOps::s_map_map<K, V, U>(this, f);
-        }
-    }
-
-    recursive? method reduce<U>(f: recursive? fn(U, K, V) -> U, init: U): U {
-        if(MapOps::s_map_empty<K, V>(this)) {
-            return init;
-        }
-        else {
-            return MapOps::s_map_reduce<K, V, U>(this, init, f);
-        }
-    }
-
-    function mergeIdempotent(...maps: List<Map<K, V>>): Map<K, V> {
-        if(maps.empty()) {
-            return Map<K, V>{};
-        }
-        else {
-            if(maps.isSingle()) {
-                return maps.single();
-            }
-            else {
-                return maps.reduce<Map<K, V>>(fn(acc, m) => MapOps::s_map_mergei2<K, V>(acc, m), Map<K, V>{});
-            }
-        }
-    }
-
-    function mergeAllIdempotent(maps: List<Map<K, V>>): Map<K, V> {
-        if(maps.empty()) {
-            return Map<K, V>{};
-        }
-        else {
-            if(maps.isSingle()) {
-                return maps.single();
-            }
-            else {
-                return maps.reduce<Map<K, V>>(fn(acc, m) => MapOps::s_map_mergei2<K, V>(acc, m), Map<K, V>{});
-            }
-        }
-    }
-
-    function mergeAllConfluent(maps: List<Map<K, V>>, merge: recursive? fn(V, V) -> V): Map<K, V> {
-        if(maps.empty()) {
-            return Map<K, V>{};
-        }
-        else {
-            if(maps.isSingle()) {
-                return maps.single();
-            }
-            else {
-                return maps.reduce<Map<K, V>>(recursive? fn(acc, m) => MapOps::s_map_mergec2[recursive?]<K, V>(acc, m, merge), Map<K, V>{});
-            }
-        }
-    }
-
 #endif %% STRIPPED_CORE
 }

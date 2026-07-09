@@ -1,10 +1,10 @@
 /node_modules
-/bin
-/bsqbin
 /.vscode
-/build/test/**
 *.xml
 *.dgml
+
+/bin
+/build/test/**
 
 **/.DS_Store
 **/output/*

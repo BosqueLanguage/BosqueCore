@@ -4,7 +4,7 @@ import { parseTestFunctionInFile, parseTestFunctionInFileError } from "../../../
 import { describe, it } from "node:test";
 
 describe ("Parser -- Access Enum Simple", () => {
-    it("should parse non-virtual lookup", function () {
+    it("should parse enum lookup", function () {
         parseTestFunctionInFile('enum Foo {f1, F2, _f3} [FUNC]', 'function main(): Int { return Foo#f1; }');
         parseTestFunctionInFile('enum Foo {f1, F2, _f3} [FUNC]', 'function main(): Int { return Foo#F2; }');
         parseTestFunctionInFile('enum Foo {f1, F2, _f3} [FUNC]', 'function main(): Int { return Foo#_f3; }');
@@ -20,4 +20,3 @@ describe ("Parser -- Access Enum Simple", () => {
         parseTestFunctionInFileError('enum Foo {f1, F2, _f3} function main(): Int { return Foo.f1; }', 'Unknown type scoped expression');
     });
 });
-
