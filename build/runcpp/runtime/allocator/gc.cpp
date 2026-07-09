@@ -1,19 +1,18 @@
-#include "gc.h"
+#include "./gc.h"
+#include "./gc_validation.h"
 
 #include "../../core/strings.h"
 #include "../../core/list_t.h"
 
-#define GC_PTR_IN_RANGE(V) ((GC_MIN_ALLOCATED_ADDRESS <= V) && (V <= GC_MAX_ALLOCATED_ADDRESS))
 #define GC_PTR_NOT_IN_STACK(BASE, CURR, V) ((((void*)V) <= ((void*)CURR)) || (((void*)BASE) <= ((void*)V)))
 
-#define GC_PROCESS_REGISTER(BASE, CURR, R)                                    \
-    register void* R asm(#R);                                                 \
+#define GC_PROCESS_REGISTER(BASE, CURR, R)                     \
+    register void* R asm(#R);                                  \
     rcontents.R = NULL;                                        \
-    if(GC_PTR_IN_RANGE(R) && GC_PTR_NOT_IN_STACK(BASE, CURR, R)) { rcontents.R = R; }
+    if(GC_PTR_NOT_IN_STACK(BASE, CURR, R) && g_alloc_info.isAllocatedAddressQuickCheck(R)) { rcontents.R = R; }
 
 namespace ᐸRuntimeᐳ
 {
-
     inline static void gcStoreForwardingPtr(void* ptr, void* fwdptr) 
     {
         *((void**)ptr) = fwdptr;
@@ -58,7 +57,7 @@ namespace ᐸRuntimeᐳ
             //Walk the stack
             while (iter <= tl_alloc_info.native_stack_base) {
                 void* potential_ptr = *iter;
-                if(GC_PTR_IN_RANGE(potential_ptr) && GC_PTR_NOT_IN_STACK(tl_alloc_info.native_stack_base, rbp, potential_ptr)) {
+                if(GC_PTR_NOT_IN_STACK(tl_alloc_info.native_stack_base, rbp, potential_ptr) && g_alloc_info.isAllocatedAddressQuickCheck(potential_ptr)) {
                     possibleroots.push_back(potential_ptr);
                 }
                 iter++;
@@ -273,6 +272,9 @@ namespace ᐸRuntimeᐳ
             return nptr;
         }
         else {
+            GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats.totalprocessed += 1);
+            GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats.evacuated += 1);
+
             GCAllocatorImpl* gcalloc = gcGetAllocator(ptr);
 
             void* nptr = gcalloc->xalloc_evac(parentslotptr); 
@@ -296,6 +298,9 @@ namespace ᐸRuntimeᐳ
     void processYoungRoots(std::vector<std::pair<AtomicGCMetadata*, void*>>& roots)
     {
         for(size_t i = 0; i < roots.size(); i++) {
+            GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats.totalprocessed += 1);
+            GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats.inplace += 1);
+
             gcRootProcessYoungPromote(roots[i].first);
         }
 
@@ -383,20 +388,25 @@ namespace ᐸRuntimeᐳ
         }
 
         alloc->xrcRelease(ptr);
+        GC_IF_ENABLED(GC_MEMORY_CLEAR_FEATURE, std::memset(ptr, 0, alloc->alloctype->bytesize));
 
-#if GC_MEMORY_CLEAR_FEATURE
-        std::memset(ptr, 0, alloc->alloctype->bytesize);
-#endif
+        GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats.totalprocessed += 1);
+        GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats.indirectrcreclaims += 1);
+        GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats.quickreclaims += 1);
     }
     
     void releaseStd(void* ptr)
     {
         const TypeInfo* ti = gcGetTypeInfo(ptr);
         if(ti->quickrelease) {
-             releaseQuick(ptr);
+            releaseQuick(ptr);
         }
         else {
             gcStoreDeleteListPtr(ptr);
+
+            GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats.totalprocessed += 1);
+            GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats.indirectrcreclaims += 1);
+            GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats.pendreclaims += 1);
         }
     }
 
@@ -531,10 +541,7 @@ namespace ᐸRuntimeᐳ
             }
 
             alloc->xrcRelease(ptr);
-
-#if GC_MEMORY_CLEAR_FEATURE
-            std::memset(ptr, 0, alloc->alloctype->bytesize);
-#endif
+            GC_IF_ENABLED(GC_MEMORY_CLEAR_FEATURE, std::memset(ptr, 0, alloc->alloctype->bytesize));
 
             procbytes += alloc->alloctype->bytesize;
             if(procbytes >= worklimit) {
@@ -547,13 +554,21 @@ namespace ᐸRuntimeᐳ
 
     void collect()
     {
+        struct timespec time_collect_start;
+        struct timespec time_collect_traverse_end;
+        struct timespec time_collect_rc_end;
+        struct timespec time_collect_end; 
+
         std::vector<std::pair<AtomicGCMetadata*, void*>> curr_roots_young;
         std::vector<std::pair<AtomicGCMetadata*, void*>> curr_roots_rc;
         std::vector<std::pair<AtomicGCMetadata*, void*>> final_roots_rc;
         curr_roots_young.reserve(128); //TODO -- tune this
         curr_roots_rc.reserve(128); //TODO -- tune this
 
-        GC_METRICS_BASIC_OP(struct timespec time_collect_start; clock_gettime(CLOCK_MONOTONIC, &time_collect_start));
+        GC_IF_ENABLED(GC_METRICS, clock_gettime(CLOCK_MONOTONIC, &time_collect_start));
+        GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats = {});
+        GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats.startingrcpends = tl_alloc_info.pendingdelete.size());
+
         bool gproc = false;
         {
             // page->entrycount may be reset by another thread (setPageMetaData) -- processPotentialPtr
@@ -576,7 +591,7 @@ namespace ᐸRuntimeᐳ
         //Handle the young roots + the young walk and evacuation
         processYoungRoots(curr_roots_young);
         
-        GC_METRICS_BASIC_OP(struct timespec time_collect_traverse_end; clock_gettime(CLOCK_MONOTONIC, &time_collect_traverse_end));
+        GC_IF_ENABLED(GC_METRICS, clock_gettime(CLOCK_MONOTONIC, &time_collect_traverse_end));
 
         //Process decrements and update the roots info for the next round
         processDecrements(curr_roots_young, final_roots_rc);
@@ -587,7 +602,7 @@ namespace ᐸRuntimeᐳ
         //Peel off some of the pending decs
         processPendingDeleteWork(GC_DELETE_PENDING_PROCESS_BYTES_COLLECT);
         
-        GC_METRICS_BASIC_OP(struct timespec time_collect_rc_end; clock_gettime(CLOCK_MONOTONIC, &time_collect_rc_end));
+        GC_IF_ENABLED(GC_METRICS, clock_gettime(CLOCK_MONOTONIC, &time_collect_rc_end));
 
         //Process nursery space
         for(auto ai = tl_alloc_info.gcallocs.begin(); ai != tl_alloc_info.gcallocs.end(); ++ai) {
@@ -595,7 +610,10 @@ namespace ᐸRuntimeᐳ
             ai->second->processNursery();
         }
 
-        GC_METRICS_BASIC_OP(struct timespec time_collect_end; clock_gettime(CLOCK_MONOTONIC, &time_collect_end));
-        GC_METRICS_BASIC_OP(g_memstats.processcollect(time_collect_start, time_collect_traverse_end, time_collect_rc_end, time_collect_end));
+        GC_IF_ENABLED(GC_METRICS, clock_gettime(CLOCK_MONOTONIC, &time_collect_end));
+        GC_IF_ENABLED(GC_METRICS, g_memstats.processcollect(time_collect_start, time_collect_traverse_end, time_collect_rc_end, time_collect_end));
+
+        GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats.finalrcpends = tl_alloc_info.pendingdelete.size());
+        GC_IF_ENABLED(GC_VALIDATE, gcValidate());
     }
 }

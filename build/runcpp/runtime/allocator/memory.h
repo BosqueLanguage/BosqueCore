@@ -3,49 +3,9 @@
 #include "../../common.h"
 #include "../../core/bsqtype.h"
 
-#include "memstats.h"
-
-//Make sure any allocated page is addressable by us -- larger than 2^31 and less than 2^42
-#define GC_MIN_ALLOCATED_ADDRESS ((void*)(2147483648ul))
-#define GC_MAX_ALLOCATED_ADDRESS ((void*)(281474976710656ul))
+#include "./memstats.h"
 
 #define GC_MEM_ALIGNMENT 8
-
-//Control for page sizes and access
-#define GC_BITS_IN_ADDR_FOR_PAGE 12ul
-#define GC_PAGE_SIZE (1ul << GC_BITS_IN_ADDR_FOR_PAGE)
-#define GC_BLOCK_ALLOCATION_SIZE (1ul << GC_BITS_IN_ADDR_FOR_PAGE)
-#define GC_PAGE_MASK ((1ul << GC_BITS_IN_ADDR_FOR_PAGE) - 1ul)
-#define GC_PAGE_ADDR_MASK (~GC_PAGE_MASK)
-
-//A bunch of knobs for adjusting GC behavior -- these are all subject to tuning as with the page info above
-#define GC_NUM_PAGES_ON_REQ 4
-#define GC_NURSERY_BYTES_COLLECT_THRESHOLD (1ul << 20)
-#define GC_DELETE_PENDING_PROCESS_BYTES_COLLECT (GC_NURSERY_BYTES_COLLECT_THRESHOLD / 2)
-#define GC_DELETE_PENDING_PROCESS_BYTES_INCREMENTAL (GC_PAGE_SIZE / 2)
-//TODO: probably also want to provide dynamic tuning for these rates based on observed backpressure (i.e. how big pending list is)
-
-#define GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_ALLOC 0.60
-#define GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_EVAC 0.30
-#define GC_PAGE_AVAILABILITY_COUNT_THRESHOLD 8
-#define GC_PAGE_CHECK_NURSERY_LIMIT 12
-#define GC_PAGE_CHECK_GENERAL_LIMIT 4
-
-//A bunch of flags to turn off/on features
-#define GC_CLEAR_EAGER_FEATURE 0
-#define GC_MEMORY_CLEAR_FEATURE 0
-#define GC_UNIQUE_PARENT_FEATURE 0
-#define GC_DETERMINISTIC_ADDRESS_FEATURE 1
-
-//A bunch of flags to turn off/on diagnostics
-
-#if GC_METRICS_BASIC
-#define GC_METRICS_BASIC_OP(X) X
-#else
-#define GC_METRICS_BASIC_OP(X)
-#endif
-
-////
 
 namespace ᐸRuntimeᐳ
 {
@@ -67,6 +27,8 @@ namespace ᐸRuntimeᐳ
     constexpr GCMetaBits META_BIT_RC_ZERO = 0x0;
     constexpr GCMetaBits META_BIT_RC_ONE = 0x80;
     constexpr GCMetaBits META_BIT_RC_TWO = (META_BIT_RC_ONE + META_BIT_RC_ONE);
+    
+    constexpr GCMetaBits META_BIT_RC_BITS_MASK = (0x7F);
     constexpr GCMetaBits META_BIT_RC_MASK = ~(0x7F);
     constexpr uint32_t META_BIT_RC_ADDR_SHIFT = 7; //shifted to make sure we don't the flag bits
 
@@ -96,11 +58,12 @@ namespace ᐸRuntimeᐳ
     //Set the state on allocation for an evacuation target -- the unique RC bit to indicate that there is a unique (known addr) heap reference
     inline void gcInitOnEvacuate(AtomicGCMetadata* rc, void** addr)
     {
-#if GC_UNIQUE_PARENT_FEATURE
-        rc->store(META_BIT_IS_ALLOC | META_BIT_IS_RC_UNIQUE | ((uintptr_t)addr << META_BIT_RC_ADDR_SHIFT), std::memory_order_relaxed);
-#else
-        rc->store(META_BIT_IS_ALLOC | META_BIT_IS_RC_SHARED | META_BIT_RC_ONE, std::memory_order_relaxed);
-#endif
+        if constexpr (GC_UNIQUE_PARENT_FEATURE) {
+            rc->store(META_BIT_IS_ALLOC | META_BIT_IS_RC_UNIQUE | ((uintptr_t)addr << META_BIT_RC_ADDR_SHIFT), std::memory_order_relaxed);
+        }
+        else {
+            rc->store(META_BIT_IS_ALLOC | META_BIT_IS_RC_SHARED | META_BIT_RC_ONE, std::memory_order_relaxed);
+        }
     }
 
     inline bool gcRootProcessRCIncrement(AtomicGCMetadata* rc)

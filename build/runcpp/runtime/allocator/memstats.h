@@ -9,14 +9,55 @@ namespace ᐸRuntimeᐳ
     class SingleCollectStat
     {
     public:
-        Time timetotal_us = 0;
-        Time young_time_us = 0;
-        Time rc_time_us = 0;
+        Time timetotal_us;
+        Time young_time_us;
+        Time rc_time_us;
+    };
+
+    class UtilizationStat
+    {
+    public:
+        size_t count_0_30;
+        size_t count_30_70;
+        size_t count_70_100;
+    };
+
+    class HeapStats
+    {
+    public: 
+        size_t totalpages;
+        size_t livebytes;
+        size_t freebytes;
+
+        UtilizationStat overallutilizations;
+
+        size_t hotnurserycount;
+        UtilizationStat nurseryutilizations;
+
+        size_t pagesetcount;
+        UtilizationStat pagesetutilizations;
+    };
+
+    class CollectionDataInfo
+    {
+    public:
+        size_t nurserypages;
+
+        size_t totalprocessed;
+        size_t inplace;
+        size_t evacuated;
+
+        size_t indirectrcreclaims;
+        size_t quickreclaims;
+        size_t pendreclaims;
+
+        size_t startingrcpends;
+        size_t finalrcpends;
     };
 
     class MemStats {
     public:
-        constexpr static size_t RRSTATS_SIZE = 10;
+        constexpr static size_t RRSTATS_SIZE = 50;
 
         inline static size_t computeIntervalInMicroseconds(struct timespec start, struct timespec end) 
         {
@@ -50,11 +91,13 @@ namespace ᐸRuntimeᐳ
             return std::make_tuple(min_total != std::numeric_limits<Time>::max() ? min_total : 0, max_total, avg_val);
         }
 
-#if GC_METRICS_BASIC
         SingleCollectStat totalstats = {0, 0, 0};
 
         size_t rstatsidx = 0;
         std::array<SingleCollectStat, RRSTATS_SIZE> rrstats{};
+
+        CollectionDataInfo collectstats{};
+        HeapStats heapstats{};
 
         size_t totalpages = 0;
 
@@ -85,18 +128,33 @@ namespace ᐸRuntimeᐳ
             rrstats[rstatsidx] = {total, walk, rc};
             rstatsidx = (rstatsidx + 1) % RRSTATS_SIZE;
         }
-#endif
 
         MemStats() { ; }
 
         void dump(std::ostream& out)
         {
-#if GC_METRICS_BASIC
             auto [min_time, max_time, avg_time] = computeMinMaxAvgPauses(rrstats);
 
             out << "MEMSTATS: Total Time: " << this->totalstats.timetotal_us / 1000 << "ms, Young Time: " << this->totalstats.young_time_us / 1000 << "ms, RC Time: " << this->totalstats.rc_time_us / 1000 << "ms" << std::endl;
             out << "Collection (Approx) Distribution -- Min: " << min_time << "us, Max: " << max_time << "us, Avg: " << avg_time << "us" << std::endl;
             out << "Total Pages: " << this->totalpages << ", Total Collections: " << this->collectioncount << ", Total Allocations: " << this->totalallocs << ", Total Bytes: " << this->totalbytes << std::endl;
+
+#if GC_METRICS_DETAILED
+            const CollectionDataInfo& stats = this->collectstats;
+            out << std::endl << "Collection Stats (Most Recent): " << std::endl;
+            out << "Nursery Pages: " << stats.nurserypages << std::endl;
+            out << "Total Objects Processed: " << stats.totalprocessed << ", In Place Promoted: " << stats.inplace << ", Evacuated: " << stats.evacuated << std::endl;
+            out << "Indirect RC Reclaims: " << stats.indirectrcreclaims << ", Quick Reclaims: " << stats.quickreclaims << ", Pending Reclaims: " << stats.pendreclaims << std::endl;
+            out << "Starting RC Pending: " << stats.startingrcpends << ", Final RC Pending: " << stats.finalrcpends << std::endl;
+#endif
+
+#if GC_VALIDATE
+            const HeapStats& hstats = this->heapstats;
+            out << std::endl << "Heap Stats (Most Recent): " << std::endl;
+            out << "Total Pages: " << hstats.totalpages << ", Live Bytes: " << hstats.livebytes << ", Free Bytes: " << hstats.freebytes << std::endl;
+            out << "Overall Utilization: 0-30%: " << hstats.overallutilizations.count_0_30 << ", 30-70%: " << hstats.overallutilizations.count_30_70 << ", 70-100%: " << hstats.overallutilizations.count_70_100 << std::endl;
+            out << "Hot Nursery Pages: " << hstats.hotnurserycount << ", Nursery Utilization: 0-30%: " << hstats.nurseryutilizations.count_0_30 << ", 30-70%: " << hstats.nurseryutilizations.count_30_70 << ", 70-100%: " << hstats.nurseryutilizations.count_70_100 << std::endl;
+            out << "Pageset Count: " << hstats.pagesetcount << ", Pageset Utilization: 0-30%: " << hstats.pagesetutilizations.count_0_30 << ", 30-70%: " << hstats.pagesetutilizations.count_30_70 << ", 70-100%: " << hstats.pagesetutilizations.count_70_100 << std::endl; 
 #endif
         }
     };

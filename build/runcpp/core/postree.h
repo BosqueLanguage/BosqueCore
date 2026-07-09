@@ -8,12 +8,6 @@
 
 #include "../runtime/allocator/alloc.h"
 
-#ifdef BSQ_POSTREE_VALIDATE
-#define BSQ_POSTREE_ASSERT(COND) assert(COND)
-#else
-#define BSQ_POSTREE_ASSERT(COND) ((void)0)
-#endif
-
 namespace ᐸRuntimeᐳ
 {
     template <int64_t K>
@@ -225,7 +219,6 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-#ifdef BSQ_POSTREE_VALIDATE
         void toValues(std::vector<T>& result) const
         {
             for(size_t i = 0; i < (size_t)this->dcount; i++) {
@@ -246,7 +239,6 @@ namespace ᐸRuntimeᐳ
             result += "]}";
             return result;
         }
-#endif
 
         template<bool SafeSimplePred, typename Pred>
         bool allOf(Pred p) const
@@ -632,7 +624,6 @@ namespace ᐸRuntimeᐳ
             }
         }
         
-#ifdef BSQ_POSTREE_VALIDATE
         static void reprToValues(std::vector<T>& result, const PosRBNode<T, K>* node)
         {
             if(node == nullptr) {
@@ -680,7 +671,6 @@ namespace ᐸRuntimeᐳ
         {
             return reprToJSON(this->root, pf);
         }
-#endif
 
 private:
         enum class InsertResultTag
@@ -729,7 +719,6 @@ private:
             bool isShort() const { return this->tag == DeleteResultTag::Short; }
         };
 
-#if BSQ_POSTREE_VALIDATE
         static int64_t checkRBPathLengthInvariant(const PosRBNode<T, K>* node)
         {
             if(node == nullptr) {
@@ -803,14 +792,11 @@ private:
         {
             return checkRBChildColorInvariant(node) && checkRBPathLengthInvariant(node) >= 0 && checkRBLeafInvariant(node);
         }
-    #endif
             
         static void debugAssertInvariants(const PosRBNode<T, K>* node, int64_t expectedCount)
         {
-#if BSQ_POSTREE_VALIDATE
             assert(checkRBInvariants(node));
             assert(reprGetCount(node) == expectedCount);
-#endif
         }
 
         // double red violation on the LL side  (B (R (R a x b) y c) z d) = T (R (B a x b) y (B c z d))
@@ -1506,7 +1492,7 @@ private:
         {
             PosRBNode<T, K>* root = blacken(pushfrontrec(this->root, value));
 
-            debugAssertInvariants(root, reprGetCount(this->root) + 1);
+            BSQ_IF_ENABLED(RB_INVARIANT_VALIDATE, debugAssertInvariants(root, reprGetCount(this->root) + 1));
             return PosRBTree<T, K, TreeID>{root};
         }
 
@@ -1514,7 +1500,7 @@ private:
         {
             PosRBNode<T, K>* root = blacken(pushbackrec(this->root, value));
 
-            debugAssertInvariants(root, reprGetCount(this->root) + 1);
+            BSQ_IF_ENABLED(RB_INVARIANT_VALIDATE, debugAssertInvariants(root, reprGetCount(this->root) + 1));
             return PosRBTree<T, K, TreeID>{root};
         }
 
@@ -1522,7 +1508,7 @@ private:
         {
             PosRBNode<T, K>* root = blacken(insertrec(this->root, index, value));
 
-            debugAssertInvariants(root, reprGetCount(this->root) + 1);
+            BSQ_IF_ENABLED(RB_INVARIANT_VALIDATE, debugAssertInvariants(root, reprGetCount(this->root) + 1));
             return PosRBTree<T, K, TreeID>{root};
         }
 
@@ -1530,7 +1516,7 @@ private:
         {
             PosRBNode<T, K>* root = setrec(this->root, index, value);
 
-            debugAssertInvariants(root, reprGetCount(this->root));
+            BSQ_IF_ENABLED(RB_INVARIANT_VALIDATE, debugAssertInvariants(root, reprGetCount(this->root)));
             return PosRBTree<T, K, TreeID>{root};
         }
 

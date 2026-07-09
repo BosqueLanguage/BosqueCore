@@ -1,6 +1,0 @@
-namespace IRAssembly;
-
-entity IRSourceInfo {
-    field line: Nat;
-    field column: Nat;
-}

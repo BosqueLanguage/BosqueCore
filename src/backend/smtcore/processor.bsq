@@ -1,7 +1,0 @@
-declare namespace SMTEmitter {
-    using IRAssembly;
-}
-
-public function main(mode: CString, assembly: IRAssembly::IRAssembly): CString {
-    return '';
-}

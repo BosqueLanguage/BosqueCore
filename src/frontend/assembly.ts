@@ -1256,7 +1256,7 @@ class APIDecl extends AbstractCoreDecl {
         }
 
         let configs: string[] = [];
-        if(this.configs !== undefined) {
+        if(this.configs.priority !== undefined || this.configs.retry !== undefined || this.configs.timeout !== undefined) {
             configs = [fmt.indent(`configs { ${this.configs.emit()} }`)];
         }
 
@@ -1278,7 +1278,7 @@ class APIDecl extends AbstractCoreDecl {
         }
 
         fmt.indentPop();
-        if(prec.length === 0 && postc.length === 0 && status.length === 0 && evs.length === 0) {
+        if(prec.length === 0 && postc.length === 0 && configs.length === 0 && status.length === 0 && evs.length === 0) {
             return undefined;
         }
         else {
@@ -1346,7 +1346,7 @@ class AgentDecl extends AbstractCoreDecl {
         }
 
         let configs: string[] = [];
-        if(this.configs !== undefined) {
+        if(this.configs.priority !== undefined || this.configs.retry !== undefined || this.configs.timeout !== undefined) {
             configs = [fmt.indent(`configs { ${this.configs.emit()} }`)];
         }
 
@@ -1368,7 +1368,7 @@ class AgentDecl extends AbstractCoreDecl {
         }
 
         fmt.indentPop();
-        if(prec.length === 0 && postc.length === 0 && status.length === 0 && evs.length === 0) {
+        if(prec.length === 0 && postc.length === 0 && configs.length === 0 && status.length === 0 && evs.length === 0) {
             return undefined;
         }
         else {

@@ -6964,6 +6964,12 @@ class Parser {
             
             const api = new APIDecl(this.env.currentFile, sinfo, attributes, apiname, params, resultInfo, eventType, preconds, postconds, configs, statusinfo, envreqs, resourcereqs, body);
             this.env.currentNamespace.apis.push(api);
+
+
+            ////
+            const sstr = api.emit(new CodeFormatter());
+            console.log(`API EMIT: ${sstr}`);
+            ////
         }
     }
 
@@ -7219,7 +7225,7 @@ class Parser {
         }
 
         const ns = assembly.getToplevelNamespace("Main") as NamespaceDeclaration;
-        const sffdecl = ns.functions.find((f) => f.name === "main");
+        const sffdecl = ns.functions.find((f) => f.name === "main") || ns.apis.find((f) => f.name === "main") || ns.agents.find((f) => f.name === "main");
 
         return sffdecl !== undefined ? sffdecl.emit(new CodeFormatter()) : "**ERROR**";
     }
@@ -7236,7 +7242,7 @@ class Parser {
         }
 
         const ns = assembly.getToplevelNamespace("Main") as NamespaceDeclaration;
-        const sffdecl = ns.functions.find((f) => f.name === fname);
+        const sffdecl = ns.functions.find((f) => f.name === fname) || ns.apis.find((f) => f.name === fname) || ns.agents.find((f) => f.name === fname);
 
         return sffdecl !== undefined ? sffdecl.emit(new CodeFormatter()) : "**ERROR**";
     }
@@ -7253,7 +7259,7 @@ class Parser {
         }
 
         const ns = assembly.getToplevelNamespace("Main") as NamespaceDeclaration;
-        const sffdecl = ns.functions.find((f) => f.name === fname);
+        const sffdecl = ns.functions.find((f) => f.name === fname) || ns.apis.find((f) => f.name === fname) || ns.agents.find((f) => f.name === fname);
 
         return sffdecl !== undefined ? sffdecl.emit(new CodeFormatter()) : "**ERROR**";
     }

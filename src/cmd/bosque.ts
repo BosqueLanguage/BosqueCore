@@ -81,7 +81,7 @@ function emitCommandLineMakefile(optlevel: "testing" | "release"): string {
         '\n' +
         'all: $(MAKE_PATH)/app\n\n' +
         '$(MAKE_PATH)/app: $(HEADERS) $(CPP) $(MAKE_PATH)/app.h $(MAKE_PATH)/app.cpp\n' +
-        '\tg++ $(CPPFLAGS) -o $(MAKE_PATH)/app $(CPP) $(MAKE_PATH)/app.cpp\n' +
+        '\tg++ $(CPPFLAGS) $(DFLAGS) -o $(MAKE_PATH)/app $(CPP) $(MAKE_PATH)/app.cpp\n' +
         'clean:\n' +
 	    '\trm $(MAKE_PATH)/app';
 }

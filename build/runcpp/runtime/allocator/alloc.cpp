@@ -1,4 +1,4 @@
-#include "alloc.h"
+#include "./alloc.h"
 
 namespace ᐸRuntimeᐳ
 {
@@ -9,10 +9,7 @@ namespace ᐸRuntimeᐳ
     {
         PageInfo* pp = (PageInfo*)vpp;
 
-        uint32_t p2size = std::bit_ceil(gcalloc->alloctype->slotcount);
-        uint32_t p2sizeshift = std::bit_width(p2size) - 1;
-
-        uint32_t objcount = (GC_PAGE_SIZE - sizeof(PageInfo)) / ((p2size + 1) * 8);
+        uint32_t objcount = (GC_PAGE_SIZE - sizeof(PageInfo)) / ((gcalloc->alloctype->slotcount + 1) * 8);
         std::memset((void*)((uint8_t*)pp + sizeof(PageInfo)), 0, 8 * objcount);
 
         pp->typeinfo = gcalloc->alloctype;
@@ -20,34 +17,33 @@ namespace ᐸRuntimeᐳ
         pp->threadid = threadid;
 
         pp->freelist = nullptr;
-
         pp->freecount = -1;
-        pp->esize = objcount;
+
+        pp->maxcount = objcount;
+        pp->eslots = gcalloc->alloctype->slotcount;
 
         pp->mdata = (AtomicGCMetadata*)((uint8_t*)pp + sizeof(PageInfo));
         pp->data = (void**)((void**)pp->mdata + objcount);
-        pp->p2size = p2size;
-        pp->size2shift = p2sizeshift;
 
         return pp;
     }
 
     void* PageInfo::reset()
     {
-        std::memset((void*)((uint8_t*)this + sizeof(PageInfo)), 0, 8 * this->esize);
+        std::memset((void*)((uint8_t*)this + sizeof(PageInfo)), 0, 8 * this->maxcount);
 
         this->typeinfo = nullptr;
         this->gcalloc = nullptr;
         this->threadid = std::thread::id{};
 
         this->freelist = nullptr;
-
         this->freecount = -1;
-        this->esize = 0;
+        
+        this->maxcount = 0;
+        this->eslots = 0;
 
         this->data = nullptr;
         this->mdata = nullptr;
-        this->size2shift = 0;
 
         return (void*)this;
     }
@@ -56,7 +52,7 @@ namespace ᐸRuntimeᐳ
     {
         this->gcFreeListReset();
  
-        for(int64_t i = this->esize - 1; i >= 0; i--) {
+        for(int64_t i = this->maxcount - 1; i >= 0; i--) {
             AtomicGCMetadata* meta = this->getMetadataFromIndexInPage(i);
 
             //
@@ -66,19 +62,12 @@ namespace ᐸRuntimeᐳ
 
             if(!gcIsAllocated(meta) | gcIsYoung(meta)) {
                 gcProcessSweep(meta);
-#if GC_MEMORY_CLEAR_FEATURE
-                std::memset(this->getObjectFromIndexInPage(i), 0, this->p2size * 8);
-#endif
 
+                GC_IF_ENABLED(GC_MEMORY_CLEAR_FEATURE, std::memset(this->getObjectFromIndexInPage(i), 0, this->eslots * 8));
                 this->gcFreeListPush(i);
             }
         }
     }
-
-#if GC_DETERMINISTIC_ADDRESS_FEATURE
-    //Hardcoded address that we start deterministic page allocations from to make debugging/diagnostics easier
-    void* g_current_page_address = (void*)(0x7ffff7f32000); 
-#endif
     
     PageInfo* AllocatorGlobalInfo::getEmptyPage(GCAllocatorImpl* gcalloc)
     {
@@ -86,17 +75,22 @@ namespace ᐸRuntimeᐳ
 
 	    if(this->emptypages.empty()) {
             for(size_t i = 0; i < GC_NUM_PAGES_ON_REQ; i++) {
-#if !GC_DETERMINISTIC_ADDRESS_FEATURE
-                void* addr = mmap(NULL, GC_PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
-#else
                 void* addr = MAP_FAILED;
-                while(addr == MAP_FAILED) {
-                    assert(g_current_page_address < (void*)GC_MAX_ALLOCATED_ADDRESS); //We have exhausted our deterministic address space -- need to increase the range
 
-                    addr = mmap(g_current_page_address, GC_PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE, 0, 0);
-                    g_current_page_address = (void*)((uint8_t*)g_current_page_address + GC_PAGE_SIZE);
+                if constexpr (GC_ALLOW_NON_DETERMINISTIC_MMAP) {
+                    addr = mmap(NULL, GC_PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+
+                    this->minpageaddr = std::min(this->minpageaddr, (uintptr_t)addr);
+                    this->maxpageaddr = std::max(this->maxpageaddr, (uintptr_t)addr);
                 }
-#endif
+                else {
+                    while(addr == MAP_FAILED) {
+                        assert(this->maxpageaddr < AllocatorGlobalInfo::max_allocatable_page_address); //We have exhausted our deterministic address space -- need to increase the range
+
+                        addr = mmap((void*)this->maxpageaddr, GC_PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE, 0, 0);
+                        this->maxpageaddr += GC_PAGE_SIZE;
+                    }
+                }
                 assert(addr != MAP_FAILED);
 
                 this->allocatedpages.insert(addr);
@@ -112,7 +106,7 @@ namespace ᐸRuntimeᐳ
 
     inline bool isPageSuitableForAlloc(PageInfo* pp, double availthreshold) 
     {
-        return ((double)pp->freecount / (double)pp->esize >= availthreshold) || (pp->freecount > GC_PAGE_AVAILABILITY_COUNT_THRESHOLD);
+        return ((double)pp->freecount / (double)pp->maxcount) >= availthreshold;
     }
 
     PageInfo* GCAllocatorImpl::allocatorNurseryPageFinder(double availthreshold)
@@ -121,10 +115,7 @@ namespace ᐸRuntimeᐳ
         auto niter = this->hot_nursery_pages.begin();
         while(niter != this->hot_nursery_pages.end() && navailchks < GC_PAGE_CHECK_NURSERY_LIMIT) {
             PageInfo* pp = *niter;
-
-#if !GC_CLEAR_EAGER_FEATURE
             pp->rebuild();
-#endif
 
             if(isPageSuitableForAlloc(pp, availthreshold)) {
                 this->hot_nursery_pages.erase(niter);
@@ -147,6 +138,7 @@ namespace ᐸRuntimeᐳ
         while(iter != this->pageset.end() && availchks < GC_PAGE_CHECK_GENERAL_LIMIT) {
             PageInfo* pp = *iter;
             pp->rebuild();
+
             //TODO: check for recycle fully empty pages back to global pool here as well
 
             if(isPageSuitableForAlloc(pp, availthreshold)) {
@@ -186,14 +178,14 @@ namespace ᐸRuntimeᐳ
         }
 
         if(this->allocpage == nullptr) {
-            GC_METRICS_BASIC_OP(g_memstats.processallocpage());
+            GC_IF_ENABLED(GC_METRICS, g_memstats.processallocpage());
 
             this->allocpage = g_alloc_info.getEmptyPage(this);
             this->allocpage->rebuild();
         }
 
         this->nextalloc = this->allocpage->gcLoadFreeNext();
-        this->allocatedbytes += (this->allocpage->freecount * (this->alloctype->bytesize * 8));
+        this->allocatedbytes += (this->allocpage->freecount * this->alloctype->bytesize);
     }
 
     void GCAllocatorImpl::evacuatorSlowPathRefresh()
@@ -205,7 +197,7 @@ namespace ᐸRuntimeᐳ
         this->evacpage = this->allocatorGeneralPageFinder(GC_PAGE_AVAILABILITY_RATIO_THRESHOLD_EVAC);
 
         if(this->evacpage == nullptr) {
-            GC_METRICS_BASIC_OP(g_memstats.processallocpage());
+            GC_IF_ENABLED(GC_METRICS, g_memstats.processallocpage());
 
             this->evacpage = g_alloc_info.getEmptyPage(this);
             this->evacpage->rebuild();
@@ -224,7 +216,7 @@ namespace ᐸRuntimeᐳ
 	
     void AllocatorThreadLocalInfo::cleanup()
     {
-        g_memstats.dump(std::cout);
+        GC_IF_ENABLED(GC_METRICS, g_memstats.dump(std::cout));
 
         for(auto iter = this->gcallocs.begin(); iter != this->gcallocs.end(); iter++) {
             iter->second->cleanup();
@@ -276,7 +268,7 @@ namespace ᐸRuntimeᐳ
         }
 
         const PageInfo* pp = (PageInfo*)baseaddr;
-        if(pp->typeinfo == nullptr || addr < pp->data || (void*)((void**)pp->data + (pp->esize << pp->size2shift)) <= addr) {
+        if(pp->typeinfo == nullptr || addr < pp->data || (void*)((void**)pp->data + (pp->eslots * pp->maxcount)) <= addr) {
             //This page is not in use OR the pointer is not into the data section of the page
             return false;
         }
