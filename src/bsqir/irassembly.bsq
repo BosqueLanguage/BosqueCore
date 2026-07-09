@@ -19,7 +19,4 @@ concept IRAbstractNominalTypeDecl {
 
     %%field docstr: IRDeclarationDocString | undefined;
     %%field metatags: IRDeclarationMetaTag[];
-
-    field file: CString;
-    field sinfo: IRSourceInfo;
 }

@@ -9,6 +9,7 @@ namespace ᐸRuntimeᐳ
     static std::regex s_int_re("^(0|[+-]?[1-9][0-9]*)i", std::regex_constants::nosubs | std::regex_constants::optimize);
     static std::regex s_chknat_re("^(ChkNat::npos|((0|[+-]?[1-9][0-9]*)N))", std::regex_constants::nosubs | std::regex_constants::optimize);
     static std::regex s_chkint_re("^(ChkInt::npos|((0|[+-]?[1-9][0-9]*)I))", std::regex_constants::nosubs | std::regex_constants::optimize);
+    static std::regex s_float_re("^(0|[+-]?[1-9][0-9]*)(\\.[0-9]+)([eE][+-]?[0-9]+)?f", std::regex_constants::nosubs | std::regex_constants::optimize);
 
     constexpr std::array<char, 11> s_symbol_tokens = { '(', ')', '{', '}', '[', ']', '<', '>', ',', '#', '|' };
     constexpr std::array<const char*, 6> s_keyword_tokens = { "none", "true", "false", "some", "ok", "fail" };
@@ -119,6 +120,17 @@ namespace ᐸRuntimeᐳ
         }
 
         this->advanceToken(BSQONTokenType::LiteralChkInt, mm[0].length());
+        return true;
+    }
+
+    bool BSQONLexer::tryLexFloat()
+    {
+        std::match_results<BSQLexBufferIterator> mm;
+        if(!std::regex_search(this->iter, this->iend, mm, s_float_re)) {
+            return false;
+        }
+
+        this->advanceToken(BSQONTokenType::LiteralFloat, mm[0].length());
         return true;
     }
 
@@ -315,7 +327,7 @@ namespace ᐸRuntimeᐳ
             return;
         }
 
-        if(this->tryLexNat() || this->tryLexInt() || this->tryLexChkNat() || this->tryLexChkInt()) {
+        if(this->tryLexNat() || this->tryLexInt() || this->tryLexChkNat() || this->tryLexChkInt() || this->tryLexFloat()) {
             return;
         }
         else if(this->tryLexCString() || this->tryLexString()) {

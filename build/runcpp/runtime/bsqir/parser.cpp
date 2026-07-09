@@ -215,7 +215,24 @@ namespace ᐸRuntimeᐳ
 
     std::optional<XFloat> BSQONParser::parseFloat()
     {
-        assert(false); // Not Implemented: parsing Float values
+        if(this->lexer.current().tokentype == BSQONTokenType::LiteralFloat) {
+            char outbuff[64] = {0};
+            this->lexer.current().extract(outbuff, 64);
+
+            errno = 0;
+            char* endptr = nullptr;
+            double vv = std::strtod(outbuff, &endptr);
+
+            if(errno != 0 || endptr == outbuff || !std::isfinite(vv)) {
+                return std::nullopt;
+            }
+            else {
+                this->lexer.consume();
+                return std::make_optional(XFloat{vv});
+            }
+        }
+        
+        return std::nullopt;
     }
 
     bool isSimpleChar(uint8_t c)
