@@ -1952,6 +1952,23 @@ class CPPEmitter {
         }
     }
 
+    private emitTypeDeclTypeDeclNumericInfo(tdecl: IRTypedeclTypeDecl): [string, string] {
+        const echks: string[] = [];
+        if(tdecl.rngchk !== undefined) {
+            if(tdecl.rngchk.min === undefined) {
+                echks.push(`if(${(tdecl.rngchk.max as string).slice(0, -1)} < vv.value) { return std::nullopt; };`);
+            }
+            else if(tdecl.rngchk.max === undefined) {
+                echks.push(`if(vv.value < ${(tdecl.rngchk.min as string).slice(0, -1)}) { return std::nullopt; };`);
+            }
+            else {
+                echks.push(`if((vv.value < ${(tdecl.rngchk.min as string).slice(0, -1)}) || (${(tdecl.rngchk.max as string).slice(0, -1)} < vv.value)) { return std::nullopt; };`);
+            }
+        }
+
+        return this.emitGeneralTypeDeclInfo(tdecl, echks);
+    }
+
     private emitCStringTypeDeclInfo(tcstr: IRTypedeclCStringDecl): [string, string] {
         let echks: string[] = [];
         if(tcstr.rngchk !== undefined) {
@@ -2562,7 +2579,15 @@ class CPPEmitter {
         
         const enumdd = this.irasm.enums.map((eden) => this.emitEnumTypeDeclInfo(eden));
 
-        const gtddd = this.irasm.typedecls.map((tgtd) =>  this.emitGeneralTypeDeclInfo(tgtd, undefined));
+        const gtddd = this.irasm.typedecls.map((tgtd) => {
+            if(tgtd.rngchk === undefined) {
+                return this.emitGeneralTypeDeclInfo(tgtd, undefined);
+            }
+            else {
+                return this.emitTypeDeclTypeDeclNumericInfo(tgtd);
+            }
+        });
+        
         const cstringdd = this.irasm.cstringoftypedecls.map((tcstr) => this.emitCStringTypeDeclInfo(tcstr));
         const stringdd = this.irasm.stringoftypedecls.map((tstr) => this.emitStringTypeDeclInfo(tstr));
 
@@ -2741,7 +2766,7 @@ class CPPEmitter {
             }).join("\n") + "\n";
 
             const finalizeparse = 
-            '    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.allInputConsumed()) { printf("Error parsing input -- invaliad data in tail of input\\n"); exit(1); }\n' +
+            '    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.allInputConsumed()) { printf("Error parsing input -- invalid data in tail of input\\n"); exit(1); }\n' +
             '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.release();\n';
 
             return [initforparse, pargs, finalizeparse].join("\n");

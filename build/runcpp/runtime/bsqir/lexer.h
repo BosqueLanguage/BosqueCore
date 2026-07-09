@@ -119,6 +119,7 @@ namespace ᐸRuntimeᐳ
         LiteralInt,
         LiteralChkNat,
         LiteralChkInt,
+        LiteralFloat,
         LiteralCString,
         LiteralString,
         LiteralSymbol,
@@ -150,7 +151,7 @@ namespace ᐸRuntimeᐳ
         }
 
         bool matches(const char* cchars) const;
-        void extract(char* outchars, size_t maxlen) const;
+        bool extract(char* outchars, size_t maxlen) const;
 
         template<size_t len>
         bool xmatches(const char (&cchars)[len]) const
@@ -189,6 +190,7 @@ namespace ᐸRuntimeᐳ
         bool tryLexInt();
         bool tryLexChkNat();
         bool tryLexChkInt();
+        bool tryLexFloat();
 
         bool tryLexCString();
         bool tryLexString();
