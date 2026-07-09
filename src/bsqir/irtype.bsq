@@ -1,0 +1,40 @@
+namespace IRAssembly;
+
+entity FormatTypeSignatureTerm {
+    field argname: IRIdentifier;
+    field argtype: IRTypeSignature;
+}
+
+datatype IRTypeSignature using {
+    field tkeystr: IRTypeKey;
+}
+of
+    IRVoidTypeSignature { }
+    IRNominalTypeSignature { }
+    IREListTypeSignature { field entries: List<IRTypeSignature>; }
+    IRDashResultTypeSignature { field entries: List<IRTypeSignature>; }
+    IRFormatCStringTypeSignature { field rtype: IRTypeSignature; field terms: List<FormatTypeSignatureTerm>; }
+    IRFormatStringTypeSignature { field rtype: IRTypeSignature; field terms: List<FormatTypeSignatureTerm>; }
+    %% More Here -- see below
+    IRLambdaTypeSignature { }
+;
+
+%*
+class IRFormatPathTypeSignature extends IRFormatTypeSignature {
+    constructor(tkeystr: string, rtype: IRTypeSignature, terms: {argname: string, argtype: IRTypeSignature}[]) {
+        super(tkeystr, rtype, terms);
+    }
+}
+
+class IRFormatPathFragmentTypeSignature extends IRFormatTypeSignature {
+    constructor(tkeystr: string, rtype: IRTypeSignature, terms: {argname: string, argtype: IRTypeSignature}[]) {
+        super(tkeystr, rtype, terms);
+    }
+}
+
+class IRFormatPathGlobTypeSignature extends IRFormatTypeSignature {
+    constructor(tkeystr: string, rtype: IRTypeSignature, terms: {argname: string, argtype: IRTypeSignature}[]) {
+        super(tkeystr, rtype, terms);
+    }
+}
+*%

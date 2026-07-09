@@ -1,226 +1,105 @@
 import * as fs from "fs";
-import { JSEmitter } from "../backend/jsemitter/jsemitter.js";
-import { Assembly, NamespaceDeclaration, NamespaceFunctionDecl } from "../frontend/assembly.js";
-import { BuildLevel, PackageConfig } from "../frontend/build_decls.js";
-import { InstantiationPropagator } from "../frontend/closed_terms.js";
-import { Status } from "./status_output.js";
-import { generateASM, workflowLoadUserSrc } from "./workflows.js";
 import * as path from "path";
+import { execSync } from "child_process";
 
 import { fileURLToPath } from 'url';
-import { BSQONTypeInfoEmitter } from "../backend/bsqon/bsqonemitter.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const bosque_dir: string = path.join(__dirname, "../../../");
-const runtime_code_path = path.join(bosque_dir, "bin/jsruntime/runtime.mjs");
-const bsqon_code_path = path.join(bosque_dir, "bin/jsruntime/bsqon.mjs");
-const smtextract_code_path = path.join(bosque_dir, "bin/jsruntime/smtextract.mjs");
-const modules_path = path.join(bosque_dir, "node_modules");
+import { Assembly } from "../frontend/assembly.js";
+import { checkAssembly, parseArgv } from "./workflows.js";
+import { Monomorphizer } from "../backend/asmprocess/monomorphize.js";
+import { ASMToIRConverter } from "../backend/asmprocess/flatten.js";
+import { CPPEmitter } from "../backend/ircemit/cppemit.js";
+import { Status } from "./status_output.js"
 
-let fullargs = [...process.argv].slice(2);
-if(fullargs.length === 0) {
-    Status.error("No input files specified!\n");
-    process.exit(1);
-}
+const runcppdir = path.join(__dirname, "../../runcpp/");
 
-let mainns = "Main";
-let mainnsidx = fullargs.findIndex((v) => v === "--namespace");
-if(mainnsidx !== -1) {
-    mainns = fullargs[mainnsidx + 1];
-    fullargs = fullargs.slice(0, mainnsidx).concat(fullargs.slice(mainnsidx + 2));
-}
+const [fullargs, mainns, outdir] = parseArgv("cppout", ...process.argv);
 
-let testgen = false;
-let testgenidx = fullargs.findIndex((v) => v === "--testgen");
-if(testgenidx !== -1) {
-    testgen = true;
-    fullargs = fullargs.slice(0, testgenidx).concat(fullargs.slice(testgenidx + 1));
-}
+function buildExeCode(assembly: Assembly, rootasm: string, outname: string) {
+    Status.output("Monomorphizing code...\n");
+    const iim = Monomorphizer.computeExecutableInstantiations(assembly, [rootasm]);
 
-let outdir = path.join(path.dirname(path.resolve(fullargs[0])), "jsout");
-let outdiridx = fullargs.findIndex((v) => v === "--output");
-if(outdiridx !== -1) {
-    outdir = fullargs[outdiridx + 1];
-    fullargs = fullargs.slice(0, outdiridx).concat(fullargs.slice(outdiridx + 2));
-}
+    Status.output("Generating IR code...\n");
+    const ircode = ASMToIRConverter.generateIR(assembly, iim, undefined);
 
-let functionname: string | undefined = undefined;
-let functionIdx = fullargs.findIndex(v => v === "--function");
+    Status.output("Emitting CPP code...\n");
+    const cppcode = CPPEmitter.createEmitter(ircode);
+    const maincode = cppcode.emitForCommandLine(`${mainns}::main`);
 
-if (functionIdx !== -1) {
-    functionname = fullargs[functionIdx + 1];
-    fullargs = fullargs.slice(0, functionIdx).concat(fullargs.slice(functionIdx + 2));
-}
-
-function getSimpleFilename(fn: string): string {
-    return path.basename(fn);
-}
-
-function buildExeCode(assembly: Assembly, mode: "release" | "debug", buildlevel: BuildLevel, rootasm: string, outname: string) {
-    Status.output("Generating JS code...\n");
-    const iim = InstantiationPropagator.computeExecutableInstantiations(assembly, [rootasm]);
-    const jscode = JSEmitter.emitAssembly(assembly, mode, buildlevel, mainns, iim);
-
-    Status.output("    Writing JS code to disk...\n");
+    Status.output("    Writing CPP code to disk...\n");
     const nndir = path.normalize(outname);
     try {
-        fs.cpSync(runtime_code_path, path.join(nndir, "runtime.mjs"));
-        fs.cpSync(bsqon_code_path, path.join(nndir, "bsqon.mjs"));
-        fs.cpSync(smtextract_code_path, path.join(nndir, "smtextract.mjs"));
-        fs.cpSync(modules_path, path.join(nndir, "node_modules"), { recursive: true });
+        const hname = path.join(nndir, `app.h`);
+        fs.writeFileSync(hname, maincode[0]);
 
-        for(let i = 0; i < jscode.length; ++i) {
-            const fname = path.join(nndir, `${jscode[i].ns.ns[0]}.mjs`);
-            fs.writeFileSync(fname, jscode[i].contents);
-        }
+        const cname = path.join(nndir, `app.cpp`);
+        fs.writeFileSync(cname, maincode[1]);
     }
     catch(e) {      
         Status.error("Failed to write output files!\n");
     }
 
-    Status.output(`    Code generation successful -- JS emitted to ${nndir}\n\n`);
+    Status.output(`    Code generation successful -- CPP emitted to ${nndir}\n\n`);
 }
 
-function buildTypeInfo(assembly: Assembly, rootasm: string, outname: string) {
-    Status.output("Generating Type Info assembly...\n");
-    const iim = InstantiationPropagator.computeExecutableInstantiations(assembly, [rootasm]);
-    const tinfo = BSQONTypeInfoEmitter.emitAssembly(assembly, iim, true);
-
-    Status.output("    Writing Type Info to disk...\n");
+function moveRuntimeFiles(buildlevel: "testing" | "release", outname: string) {
+    Status.output("    Copying CPP runtime support...\n");
     const nndir = path.normalize(outname);
+
+    const makefile = emitCommandLineMakefile(buildlevel);
     try {
-        const fname = path.join(nndir, "typeinfo.json");
-        fs.writeFileSync(fname, JSON.stringify(tinfo, undefined, 4));
+        const dstpath = path.join(nndir, "runcpp/");
+
+        fs.mkdirSync(dstpath, {recursive: true});
+        execSync(`cp -R ${runcppdir}* ${dstpath}`);
+
+        fs.writeFileSync(path.join(nndir, "Makefile"), makefile);
     }
-    catch(e) {      
-        Status.error("Failed to write type info file!\n");
-    }
-
-    Status.output(`    Code generation successful -- Type Info emitted to ${nndir}\n\n`);
-}
-
-function buildExeCodeTest(assembly: Assembly, outname: string) {
-    Status.output("Generating JS code...\n");
-    const iim = InstantiationPropagator.computeTestInstantiations(assembly, ["Main"]);
-    const [jscode, testasm] = JSEmitter.emitTestAssembly(assembly, iim, undefined, undefined);
-
-    Status.output("    Writing JS code to disk...\n");
-    const nndir = path.normalize(outname);
-    try {
-        fs.cpSync(runtime_code_path, path.join(nndir, "runtime.mjs"));
-        fs.cpSync(bsqon_code_path, path.join(nndir, "bsqon.mjs"));
-        fs.cpSync(smtextract_code_path, path.join(nndir, "smtextract.mjs"));
-        fs.cpSync(modules_path, path.join(nndir, "node_modules"), { recursive: true });
-
-        for(let i = 0; i < jscode.length; ++i) {
-            const fname = path.join(nndir, `${jscode[i].ns.ns[0]}.mjs`);
-            fs.writeFileSync(fname, jscode[i].contents);
-        }
-
-        const testfname = path.join(nndir, "test.mjs");
-        fs.writeFileSync(testfname, testasm);
-    }
-    catch(e) {      
-        Status.error("Failed to write output files!\n");
-    }
-
-    Status.output(`    Code generation successful -- JS emitted to ${nndir}\n\n`);
-}
-
-function findFunctionsByName(
-    ns: NamespaceDeclaration,
-    fname: string,
-    matches: { fqn: string, decl: NamespaceFunctionDecl }[] = []
-): {fqn: string, decl: NamespaceFunctionDecl} [] {
-    for (const fn of ns.functions) {
-        if (fn.name === fname) {
-            const fqn = `${ns.fullnamespace.emit()}::${fn.name}`;
-            matches.push({fqn, decl: fn});
-        }
-    }
-    for (const sub of ns.subns) {
-        findFunctionsByName(sub, fname, matches);
-    }
-    return matches;
-}
-
-function checkAssembly(srcfiles: string[]): Assembly | undefined {
-    Status.enable();
-
-    const lstart = Date.now();
-    Status.output("Loading user sources...\n");
-    const usersrcinfo = workflowLoadUserSrc(srcfiles);
-    if(usersrcinfo === undefined) {
-        Status.error("Failed to load user sources!\n");
-        return;
-    }
-    const dend = Date.now();
-    Status.output(`    User sources loaded [${(dend - lstart) / 1000}s]\n\n`);
-
-    const userpackage = new PackageConfig([], usersrcinfo)
-    const [asm, perrors, terrors] = generateASM(userpackage);
-
-    if(perrors.length === 0 && terrors.length === 0) {
-        return asm;
-    }
-    else {
-        Status.error("Failed to generate assembly!\n");
-
-        //TODO -- need to do filename in error and sort nicely
-        perrors.sort((a, b) => (a.srcfile !== b.srcfile) ? a.srcfile.localeCompare(b.srcfile) : a.sinfo.line - b.sinfo.line);
-        for(let i = 0; i < perrors.length; ++i) {
-            Status.error(`Parser Error @ ${getSimpleFilename(perrors[i].srcfile)}#${perrors[i].sinfo.line}: ${perrors[i].message}\n`);
-        }
-
-        terrors.sort((a, b) => (a.file !== b.file) ? a.file.localeCompare(b.file) : a.line - b.line);
-        if(terrors.length !== 0) {
-            for(let i = 0; i < terrors.length; ++i) {
-                Status.error(`Type Error @ ${getSimpleFilename(terrors[i].file)}#${terrors[i].line}: ${terrors[i].msg}\n`);
-            }
-        }
-
-        return undefined;
+    catch(e) {
+        Status.error("Failed to copy runtime files!\n");
     }
 }
 
-const asm = checkAssembly(fullargs);
+function emitCommandLineMakefile(optlevel: "testing" | "release"): string {
+    return 'MAKE_PATH=$(realpath $(dir $(lastword $(MAKEFILE_LIST))))\n' +
+        'SRC_DIR=$(MAKE_PATH)/runcpp/\n' + 
+        'CORE_SRC_DIR=$(SRC_DIR)core/\n' +
+        'RUNTIME_SRC_DIR=$(SRC_DIR)runtime/\n' +
+        'ALLOC_SRC_DIR=$(RUNTIME_SRC_DIR)allocator/\n' +
+        'BSQIR_SRC_DIR=$(RUNTIME_SRC_DIR)bsqir/\n' +
+        '\n' +
+        '#testing is default, for another flavor : make BUILD=release or debug\n' +
+        `BUILD := ${optlevel}\n\n` + 
+        'CPP_STDFLAGS=-Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable -Wuninitialized -Werror -std=gnu++20 -fno-omit-frame-pointer -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-stack-protector\n' + 
+        'CPPFLAGS_OPT.testing=-O0 -g -ggdb -fsanitize=address --param asan-stack=0\n' +
+        'CPPFLAGS_OPT.testingopt=-O1 -g -ggdb -fsanitize=address --param asan-stack=0\n' +
+        'CPPFLAGS_OPT.release=-O2 -g -ggdb -flto=auto -ftree-vectorize -march=native -Wno-array-bounds -Wno-stringop-overflow\n' +
+        'CPPFLAGS=${CPPFLAGS_OPT.${BUILD}} ${CPP_STDFLAGS}\n\n' +
+        'HEADERS=$(wildcard $(SRC_DIR)*.h) $(wildcard $(CORE_SRC_DIR)*.h) $(wildcard $(RUNTIME_SRC_DIR)*.h) $(wildcard $(ALLOC_SRC_DIR)*.h) $(wildcard $(BSQIR_SRC_DIR)*.h)\n' +
+        'CPP=$(wildcard $(SRC_DIR)*.cpp) $(wildcard $(CORE_SRC_DIR)*.cpp) $(wildcard $(RUNTIME_SRC_DIR)*.cpp) $(wildcard $(ALLOC_SRC_DIR)*.cpp) $(wildcard $(BSQIR_SRC_DIR)*.cpp)\n' +
+        '\n' +
+        'all: $(MAKE_PATH)/app\n\n' +
+        '$(MAKE_PATH)/app: $(HEADERS) $(CPP) $(MAKE_PATH)/app.h $(MAKE_PATH)/app.cpp\n' +
+        '\tg++ $(CPPFLAGS) $(DFLAGS) -o $(MAKE_PATH)/app $(CPP) $(MAKE_PATH)/app.cpp\n' +
+        'clean:\n' +
+	    '\trm $(MAKE_PATH)/app';
+}
+
+//////////////////////////////
+Status.enable();
+
+const asm = checkAssembly(fullargs, "cpp");
 if(asm === undefined) {
     process.exit(1);
 }
 
-Status.output(`-- JS output directory: ${outdir}\n\n`);
+Status.output(`-- CPP output directory: ${outdir}\n\n`);
 
 fs.rmSync(outdir, { recursive: true, force: true });
 fs.mkdirSync(outdir);
 
-if(testgen) {
-    buildExeCodeTest(asm, outdir);
-}
-else {
-    buildTypeInfo(asm, mainns, outdir);
-    buildExeCode(asm, "debug", "debug", mainns, outdir);
-    if (functionname !== undefined) {
-        let allmatches: {fqn: string, decl: NamespaceFunctionDecl}[] = [];
-        for (const ns of asm.toplevelNamespaces) {
-            allmatches.push(...findFunctionsByName(ns, functionname))
-        }
+buildExeCode(asm, mainns, outdir);
+moveRuntimeFiles("testing", outdir);
 
-        if (allmatches.length === 0) {
-            console.error(`ERROR: Function ${functionname} not found.`)
-            process.exit(1);
-        }
-        const target = allmatches[0];
-        const targettype = {
-            fname: target.fqn,
-            args: target.decl.params.map(p => ({
-                name: p.name,
-                type: p.type.tkeystr
-            })),
-            precondition: target.decl.preconditions,
-            postcondition: target.decl.postconditions,
-            return: target.decl.resultType.tkeystr
-        }
-        const targetPath = path.join(outdir, "targettype.json");
-        fs.writeFileSync(targetPath, JSON.stringify(targettype, null, 4));
-    }
-}
+Status.output("All done!\n");

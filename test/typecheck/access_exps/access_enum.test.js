@@ -4,7 +4,7 @@ import { checkTestFunction, checkTestFunctionError } from "../../../bin/test/typ
 import { describe, it } from "node:test";
 
 describe ("Checker -- access enum", () => {
-    it("should check simple arg var access", function () {
+    it("should check simple enum access", function () {
         checkTestFunction("enum Foo {f, g} function main(): Foo { return Foo#f; }");
     });
 

@@ -7,70 +7,40 @@
 
 # The Bosque Project
 
-Bosque is a new approach to programming models, development tooling, and runtime design that is focused on supporting mechanization at scale and establishing a new standard for creating high-reliability software artifacts. The foundational design precepts for Bosque are:
-1. Design for Tooling & Mechanization -- The entire system should be amenable to automated analysis and transformation. Avoid features or behaviors that inhibit analysis and automation.
-2. Total Safety -- Don't just make mistakes hard to make, eliminate them entirely. Whenever possible rule-out entire categories of failures by construction.
-3. WYSIWYG -- Humans and AI Agents understand and make assumptions about the semantics (behavior) of the code from the textual representation (syntax). Minimize the presence of implicit or syntactically hidden behaviors. 
-4. The Ecosystem is the Language -- Modern development at scale is a collaborative process, both working with partner teams or using 3rd party code, via packages and/or APIs. Create a framework that is designed for componentization, composition, and behavioral guarantees.
-5. Reliable Performance at Scale -- At scale worst-case performance behaviors _will_ inevitably occur and are problematic to resolve. Design for low-variance execution and minimize the impacts of worst case behaviors instead of optimizing for the best or average case. 
-6. Failure is Always an Option -- Failure is inevitable and mitigation/recovery is a requirement for reliable and scalable systems. Give un-happy path processing first-class support in the language and ensure observability throughout the system.
+Bosque is a new approach to programming languages, development tooling, and runtime design that is focused on supporting mechanization at scale and establishing a new standard for creating efficient and high-reliability software artifacts. 
+- **Quality** -- reliability and correctness should be opt-out, not opt-in, by default. Doing the simple obvious thing should _just work_ and lead to good outcomes.
+- **Efficiency** -- software bloat and inefficiency are a major source of cost and complexity in modern systems. Writing simple, clear code, should lead to efficient and predictable systems.
+- **Mechanization** -- whenever possible we support mechanization of development tasks. We want humans to focus on the creative \& high-level aspects development and let machines handle the tedious parts.
+- **AI Agents & APIs** -- we want to embrace the use of AI agents and APIs as key parts of the development process. Thus, we support these a first-class parts of the programming and software stack.
+- **Development should be Fun!** -- the tools and languages we use should make it easy (and fun) to express ideas and solve problems, not get in the way.
 
 # Current Status
-We are at a major milestone in the Bosque project -- declaring 1.0! 
+We are at a major milestone in the Bosque project -- our 2.0 release! 
 
-Now this doesn't mean that Bosque is done, or even that is easily useable, but it does mean that the language is what it is going to be and (bold) engineering teams can write code with some degree of confidence that it will be stable and supported. As part of living this commitment, and moving on to the Bosque 2.0 phase, the goal is to begin implementing the majority of new Bosque code in Bosque itself!
+Since the first announcement about this project in 2019 we have been focused on a North-Star of eliminating extrinsic complexity from the software stack and engineering process. We are excited to announce that after a lot (and more than I expected) of experimentation and experience we are ready to stabilize the language and core platform for general use in the 2.0 release.
 
-The 2.0 release will be focused on a revised version of the [Small Model Verifier](https://discovery.ucl.ac.uk/id/eprint/10146184/1/finir.pdf), the [AOT compiler/runtime](https://bosquelanguage.github.io/2024/10/01/an-omega-c-runtime.html), along with improving the language for self-hosting the compiler and having a stable language for development in general.
+Our #1 priority is to work with the community to start deploying Bosque in the real-world and rapidly address any issues that arise. In addition we plan to invest in building out the ecosystem of tools, libraries, and integrations that will make Bosque a great platform for building high-quality software. This includes the entire gamut of ecosystems from table stakes like LSP support, formal-methods, and workflows for Agentic AI systems!
 
 # Platform Road Map 
 The current (approximate) roadmap for the Bosque project is broken down into a series of major components that are being developed in parallel + smaller but high-impact work items. These cover a range of complexity and required skills, from academic level publication results, through non-trivial software engineering lifts, and into smaller tasks that are good starter projects. If you are interested in one of these please find (or open) an issue for more detail.
 
-The current work items are focused on the 1.0 release of the Bosque language and it actively in-progress:
-- Core Libraries -- not much but lots of opportunity to build out from previous prototype code.
-- Visual Studio Code Integration -- Just a simple syntax highlighter at the moment next steps are to build out a full LSP server.
+The current work items are focused on the 2.0 release of the Bosque language and it actively in-progress:
+- Core Libraries -- lots of opportunity to build out this to provide a comprehensive set of core libraries for the Bosque language.
+- Build out async tasks and runtime support -- including priority scheduling, cancellation, an async I/O microservice host, and production trace recording.
+- Visual Studio Code Integration -- The current version is a simple syntax highlighter at the moment next steps are to build out a full LSP server.
 - Small Model Verifier -- a symbolic checker with guarantees of the decidability of the presence or absence of small inputs that trigger any runtime failure/assertion/pre/post/invariant condition.
-- A Ω()-time and O(1)-space runtime and AOT compiler -- a runtime that is designed to be performant, low memory, and predictable in its behavior.
+- Provide the [Tecton](https://arxiv.org/abs/2510.19777) test generator as a builtin component to augment the small model verifier and provide a simple way to generate test cases for Bosque programs.
 
-## Invitation for Contributors
 The Bosque project is actively inviting contributors as we move from a research focused into a practically focused project! We want to make this a a great place to learn and contribute to the next era in programming languages, compilers, and runtime systems. Below are some topics that are open for contributions and where help is greatly appreciated, we are happy to help mentor and guide you through the process.
 
-### Breakout Features
-These items are headline features that are large and complex(possibly open research) but will have major impact on the future of software development. They are great for someone, highly-motivated and skilled, looking to make a big impact on the project.
+# Some Notable Bosque Features
+- **No Spooky Actions at a Distance** -- Bosque code is understandable in isolation and strongly guarantees that the behavior of a program is not dependent on the context in which it is run or dependent on implicit behaviors.
+- **Fully Deterministic** -- Core Bosque is fully deterministic, for any input there is only one possible output and any (nondeterministic) environmental interactions are explicitly encapsulated in 'Task' environments.
+- **Poke-Yoke Programming** -- These features, along with full memory safety, loop-free programming, typed strings, and type invariants, Bosque makes writing correct programs hard to do wrong. In fact, of the 2024 MITRE Top-10 CWE categories, 3 are impossible and 5 more require explicit opt-outs of safety features to trigger. 
+- **No Tradeoff-GC** -- The simplified design of Bosque limits what happen when any given piece of code runs (simplifying reasoning) and also simplifying the runtime. In fact the Bosque compiler leverages this to provide _the first_ no-tradeoooff garbage collector with bounded pauses, starvation freedom, and bounded CPU/Memory overhead!
+- **(Being) Made for Observability** -- Bosque is designed to be a distributed deployment ecosystem -- thus assertions, operation auditing, distributed event tracking, and field-issue reproduction and built into the language and runtime. 
 
-- O(1)-GC -- a garbage collector with constant memory overhead, constant work per allocation, constant collector pauses, and compaction! 
-- Versioning and Packaging -- build a well-founded semantics for versioning + ability to verify if changes/version errors. For users the ability to confidently upgrade dependencies (also prep for package manager and testing features).
-- Termination and Bounds analysis -- a static analysis that can prove the termination of a function/task/api and the bounds on the resources it consumes.
-- Extending StringOf to allow for context-free languages. Create an easy to write and generally expressive CFG language for use in Bosque and enable it for safe strings and general use.
-- API-Embodied Meta-Cognitive AI-Agent (AMC-AI) -- a big acronym but big potential! Take the idea of Bosque APIs, which are well suited for synthesis with generative AI, and combine with the verifier to have a _fully-grounded_ and API (tool) using agent that can reliably accomplish user tasks.
-
-### High-Value Enhancements
-These items are more defined in scope, and will make a big difference for the project, but still require a substantial level of technical skill and effort.
-
-- LSP Server -- a full language server protocol server for Bosque that provides code completion, diagnostics, and other IDE features.
-- API Manager and Broker -- to enable bundling and calling of APIs in a uniform and efficient method. Needs a bit of semantic work + OS and Cloud support.
-- Testing framework -- both to run traditional unit-tests, examples, small-model verification, and fuzzing. Also doc-gen from code artifacts.
-- Power-Proroguing -- take the idea [here](https://earlbarr.com/publications/prorogue.pdf) and use the capabilities of [BSQON](https://github.com/BosqueLanguage/BSQON/blob/main/docs/publications/bsqon_techreport.pdf) (full-fidelity literals and references) to make it practical -- also maybe have some fun with LLMs!
-
-
-### Chunkable Work Items
-These are well-defined items that can be done in a few hours to a maybe a couple weeks and don't require much (if any) special expertise. They are great for someone looking to get started with the project -- also see good-first-issues.
-
-- Standard Library -- build out the standard library with a focus on the core data structures and algorithms that are needed for general programming tasks.
-- Documentation -- write documentation for the language, libraries, and tools. This is a great way to learn the language and help others.
-- Tests -- write tests for the language, libraries, and tools. This is a great way to learn the language and help others.
-- Shell -- a Bosque shell that can be used standalone or for scripting. Mainly writing a host for tracking tasks and interacting with them + writing some tasks that implement basic shell functionality.
-- TTD and Debugger -- time-travel-debugging is actually a pretty simple to implement feature in Bosque. Would be great to have this and a debugger that can use it! Might split this into deterministic replay & debugger as two tasks.
-
-# Documentation
-
-In progress documentation for the language and standard libraries are on the [Language](docs/overview.md) and [Libraries](docs/overview.md) doc pages respectively. Sample code snippets below provide a quick feel of the language and syntax.
-
-Detailed Documentation, Tutorials, and Technical Information:
-* [Language Docs](docs/overview.md)
-* [Library Docs](docs/overview.md)
-* [Technical Papers](docs/research/papers/publist.md)
-
-## Code Snippets
+# Sample Code
 
 **Functions and arguments:**
 ```none
@@ -99,13 +69,16 @@ allPositive(1i, 3i, -4i) %%false
 **Sign (with blocks and assignment):**
 ```none
 public function sign(x: Int): Int {
-    var y: Int;
-
     if(x == 0i) {
-        y = 0i;
+        return 0i;
+    }
+
+    var y: Int;
+    if(x < 0i) {
+        y = -1i;
     }
     else {
-        y = if (x > 0i) then 1i else -1i;
+        y = 1i;
     }
 
     return y;
@@ -191,35 +164,22 @@ function flowit(x: Option<Nat>): Nat {
 
 flowit(none)      %%0n
 flowit(some(5n))  %%15n
-
-function restrict(x: Option<Nat>): Nat {
-    if(x)@@none {
-        return 0n;
-    }
-
-    %%x is a Nat here as asserted by test and type inference
-    return x + 10n;
-}
-
-restrict(none)      %%0n
-restrict(some(5n))  %%15n
 ```
 
 **(Algebraic Data Types)++**
 ```
-datatype BoolOp
-of
-| Const { val: Bool }
-| NotOp { arg: BoolOp }
-| AndOp { larg: BoolOp, rarg: BoolOp }
-| OrOp { larg: BoolOp, rarg: BoolOp }
+datatype BoolOp of
+    Const { val: Bool }
+    NotOp { arg: BoolOp }
+    AndOp { larg: BoolOp, rarg: BoolOp }
+    OrOp { larg: BoolOp, rarg: BoolOp }
 & {
     recursive method evaluate(): Bool {
-        match(this)@ {
-            | Const  => { return $this.val; }
-            | NotOp => { return !$this.arg.evaluate[recursive](); }
-            | AndOp => { return $this.larg.evaluate[recursive]() && $this.rarg.evaluate[recursive](); }
-            | OrOp  => { return $this.larg.evaluate[recursive]() || $this.rarg.evaluate[recursive](); }
+        match(this) {
+            Const  => { return $this.val; }
+            NotOp => { return !$this.arg.evaluate[recursive](); }
+            AndOp => { return $this.larg.evaluate[recursive]() && $this.rarg.evaluate[recursive](); }
+            OrOp  => { return $this.larg.evaluate[recursive]() || $this.rarg.evaluate[recursive](); }
         }
     } 
 }
@@ -230,46 +190,56 @@ AndOp{larg=Const{true}, rarg=Const{false}}.evaluate[recursive]() %%false
 
 **Validated Strings:**
 ```
-type Zipcode = String of /[0-9]{5}("-"[0-9]{4})?/;
-type CSSPt = String of /[0-9]+"pt"/;
+type Zipcode = CString of /[0-9]{5}('-'[0-9]{4})?/c;
+type CSSPt = CString of /[0-9]+'pt'/c;
 
 function is3pt(s1: CSSPt): Bool {
-    return s1.value === "3pt";
+    return s1.value === '3pt';
 }
 
-"1234"<Zipcode> %%type error (does not match regex)
-"3px"<CSSPt>    %%type error (does not match regex)
+'1234'<Zipcode> %%type error (does not match regex)
+'3px'<CSSPt>    %%type error (does not match regex)
 
-is3pt("12")               %%type error not a CSSPt
-is3pt("98052"<Zipcode>)   %%type error not a CSSPt
+is3pt('12')               %%type error not a CSSPt
+is3pt('98052'<Zipcode>)   %%type error not a CSSPt
 
-is3pt("3pt"<CSSPt>) %%true
-is3pt("4pt"<CSSPt>) %%false
+is3pt('3pt'<CSSPt>) %%true
+is3pt('4pt'<CSSPt>) %%false
 ```
 
-# Installing the Bosque Language (Currently Development Only)
+# Documentation
+
+In progress documentation for the language and standard libraries are on the [Language](docs/overview.md) and [Libraries](docs/overview.md) doc pages respectively. Sample code snippets below provide a quick feel of the language and syntax.
+
+Detailed Documentation, Tutorials, and Technical Information:
+* [Language Docs](docs/overview.md)
+* [Library Docs](docs/overview.md)
+* [Technical Papers](docs/research/papers/publist.md)
+
+
+# Installing the Bosque Language
 
 In order to install/build the project the following are needed:
 
 - 64 bit Linux Operating System (Ubuntu 24 recommended)
 - Version 22+ of [node.js](https://nodejs.org/en/download/)
 - Typescript 5.6 (installed as a dev dependency)
-- Git and [git-lfs](https://git-lfs.github.com/) setup
+- Git 
 
 ## Build & Test
 
 ```none
 npm install && npm test
 ```
-The Z3 theorem prover is provided as a binary dependency in the repo via git LFS. To ensure these are present you will need to have [git-lfs](https://git-lfs.github.com/) installed, run `git lfs install` to setup the needed hooks, and pull. 
 
 ## Running
 
-The current (and temporary) way to experiment with the Bosque language at this point is through the `bosque` compiler command line tool. After building this tool is available in the `bin/src/cmd/` directory. It is currently very simple with _one_ action which is to take all of the command line arguments and compile them as a single application to produce an set of executable JavaScript files -- using the unique `public function main() ...` as the entrypoint and putting the result in the output folder `jsout`. 
+The current way to work with Bosque source code is through the `bosque` compiler command line tool. After building this tool is available in the `bin/src/cmd/` directory. It is currently very simple with _one_ action which is to take all of the command line arguments and transpile them into C++ sources and a `Makefile` -- using the _unique_ `public function main(args) ...` as the entrypoint and putting the results in the output folder `cppout`. This makefile defaults to a diagnostic build with no optimizations and but can also be built as an optimized build with the `make BUILD=release` option. The resulting executable 'app' is placed in the `cppout` folder.
 
 ```none
 node bin/src/cmd/bosque.js <source-file.bsq> <source-file.bsq> ...
-node jsout/Main.mjs
+make -f cppout/Makefile
+./cppout/app 'arg1' 'arg2' ...
 ```
 
 ## Visual Studio Code Integration

@@ -4,16 +4,10 @@ namespace Core;
 #else
 #if EXEC_LIBS
 namespace NumericOps {
-    function s_natToCString(v: Nat): CString = s_nat_to_cstring;
-    function s_natFromCString(str: CString): Nat = s_nat_from_cstring;
+    function s_safeConvertFloatInto<T: numeric>(f: Float): T = @float_safe_convert_into;
 
-    function s_intToCString(v: Int): CString = s_int_to_cstring;
-    function s_intFromCString(str: CString): Int = s_int_from_cstring;
-
-    function s_floatPow(a: Float, b: Float): Float = s_float_pow;
-    function s_floatSqrt(a: Float): Float = s_float_sqrt;
-
-    function s_natPow(a: Nat, b: Nat): Nat = s_nat_pow;
+    function s_floatSqrt(v: Float): Float = @float_sqrt;
+    function s_floatPow(x: Float, y: Float): Float = @float_pow;
 }
 #else
 #endif %% EXEC_LIBS

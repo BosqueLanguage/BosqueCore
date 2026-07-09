@@ -1,7 +1,0 @@
-namespace SMTEmitter;
-
-%% This class will transfor a BSQAssembly in 2 ways
-%% 1. It will convert all diamond flow operations into continuation trees
-%% 2. It will work bottom up and track (1) which vars are live (2) rename on assignment (3) track if they are used as refs
-%% 3. These 3 bits of info will allow us to generate the correct type of parameter for each continuation
-

@@ -8,4 +8,3 @@ describe ("Parser -- Debug", () => {
         parseTestFunction("function main(): Int { _debug 5i; return 1i; }", undefined);
     });
 });
-

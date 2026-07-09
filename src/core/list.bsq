@@ -1,6 +1,42 @@
 namespace Core;
 
 namespace List {
+#if STRIPPED_CORE
+#else
+    function rangeOfNat(start: Nat, end: Nat): List<Nat> 
+        requires start <= end;
+    {
+        if(start == end) {
+            return List<Nat>{};
+        }
+        else {
+            return ListOps::s_list_range_nat(start, end);
+        }
+    }
+
+    function rangeOfInt(start: Int, end: Int): List<Int> 
+        requires start <= end;
+    {
+        if(start == end) {
+            return List<Int>{};
+        }
+        else {
+            return ListOps::s_list_range_int(start, end);
+        }
+    }
+
+    function zip<T, U>(l1: List<T>, l2: List<U>): List<(|T, U|)> 
+        requires l1.size() == l2.size();
+    {
+        let ssize = l1.size();
+        if(ssize == 0n) {
+            return List<(|T, U|)>{};
+        }
+        else {
+            return ListOps::s_list_zip<T, U, (|T, U|)>(l1, l2, ssize);
+        }
+    }
+#endif  %% STRIPPED_CORE 
 }
 
 __internal entity List<T> {
@@ -8,6 +44,10 @@ __internal entity List<T> {
 #else
     method empty(): Bool {
         return ListOps::s_list_empty<T>(this);
+    }
+
+    method singleton(): Bool {
+        return ListOps::s_list_size<T>(this) == 1n;
     }
 
     method size(): Nat {
@@ -18,16 +58,6 @@ __internal entity List<T> {
         requires !this.empty();
     {
         return ListOps::s_list_size<T>(this) - 1n;
-    }
-
-    method isSingle(): Bool {
-        return ListOps::s_list_size<T>(this) == 1n;
-    }
-
-    method single(): T 
-        requires this.isSingle();
-    {
-        return ListOps::s_list_front<T>(this);
     }
 
     method front(): T 
@@ -42,36 +72,24 @@ __internal entity List<T> {
         return ListOps::s_list_back<T>(this);
     }
 
+    method single(): T 
+        requires this.singleton();
+    {
+        return ListOps::s_list_front<T>(this);
+    }
+
     method get(i: Nat): T 
         requires i < this.size();
     {
         return ListOps::s_list_get<T>(this, i);
     }
 
-    method setFront(v: T): List<T> 
-        requires !this.empty();
-    {
-        return ListOps::s_list_set_front<T>(this, v);
-    }
-
-    method setBack(v: T): List<T> 
-        requires !this.empty();
-    {
-        return ListOps::s_list_set_back<T>(this, v);
-    }
-
-    method set(i: Nat, v: T): List<T> 
-        requires i < this.size();
-    {
-        return ListOps::s_list_set<T>(this, i, v);
-    }
-
     method pushFront(v: T): List<T> {
-        return ListOps::s_list_push_front<T>(this, v);
+        return ListOps::s_list_pushfront<T>(this, v);
     }
 
     method pushBack(v: T): List<T> {
-        return ListOps::s_list_push_back<T>(this, v);
+        return ListOps::s_list_pushback<T>(this, v);
     }
 
     method insert(i: Nat, v: T): List<T> 
@@ -80,123 +98,10 @@ __internal entity List<T> {
         return ListOps::s_list_insert<T>(this, i, v);
     }
 
-    method popFront(): T, List<T>
-        requires !this.empty();
-    {
-        return ListOps::s_list_pop_front<T>(this);
-    }
-
-    method popBack(): T, List<T>
-        requires !this.empty();
-    {
-        return ListOps::s_list_pop_back<T>(this);
-    }
-
-    method deleteFront(): List<T>
-        requires !this.empty();
-    {
-        return ListOps::s_list_delete_front<T>(this);
-    }
-
-    method deleteBack(): List<T>
-        requires !this.empty();
-    {
-        return ListOps::s_list_delete_back<T>(this);
-    }
-
-    method delete(i: Nat): List<T>
+    method set(i: Nat, v: T): List<T>
         requires i < this.size();
     {
-        return ListOps::s_list_delete<T>(this, i);
-    }
-
-    method append(l: List<T>): List<T> {
-        return ListOps::s_concat2<T>(this, l);
-    }
-
-    method prepend(l: List<T>): List<T> {
-        return ListOps::s_concat2<T>(l, this);
-    }
-
-    function concat(...ll: List<List<T>>): List<T> {
-        if(ll.empty()) {
-            return List<T>{};
-        }
-        else {
-            if(ll.isSingle()) {
-                return ll.single();
-            }
-            else {
-                return ll.reduce<List<T>>(fn(acc, l) => ListOps::s_concat2<T>(acc, l), List<T>{});
-            }
-        }
-    }
-
-    function concatAll(ll: List<List<T>>): List<T> {
-        if(ll.empty()) {
-            return List<T>{};
-        }
-        else {
-            if(ll.isSingle()) {
-                return ll.single();
-            }
-            else {
-                return ll.reduce<List<T>>(fn(acc, l) => ListOps::s_concat2<T>(acc, l), List<T>{});
-            }
-        }
-    }
-
-    method reverse(): List<T> {
-        if(ListOps::s_list_empty<T>(this)) {
-            return List<T>{};
-        }
-        else {
-            return ListOps::s_list_reverse<T>(this);
-        }
-    }
-
-    method firstK(n: Nat): List<T> 
-        requires n <= this.size();
-    {
-        if(ListOps::s_list_empty<T>(this)) {
-            return List<T>{};
-        }
-        else {
-            return ListOps::s_list_firstk<T>(this, n);
-        }
-    }
-
-    method lastK(n: Nat): List<T> 
-        requires n <= this.size();
-    {
-        if(ListOps::s_list_empty<T>(this)) {
-            return List<T>{};
-        }
-        else {
-            return ListOps::s_list_lastk<T>(this, n);
-        }
-    }
-
-    method shiftK(n: Nat): List<T> 
-        requires n <= this.size();
-    {
-        if(ListOps::s_list_empty<T>(this)) {
-            return List<T>{};
-        }
-        else {
-            return ListOps::s_list_shiftk<T>(this, n);
-        }
-    }
-
-    method popK(n: Nat): List<T> 
-        requires n <= this.size();
-    {
-        if(ListOps::s_list_empty<T>(this)) {
-            return List<T>{};
-        }
-        else {
-            return ListOps::s_list_popk<T>(this, n);
-        }
+        return ListOps::s_list_set<T>(this, i, v);
     }
 
     recursive? method allOf(p: recursive? pred(T) -> Bool): Bool {
@@ -225,41 +130,6 @@ __internal entity List<T> {
             return ListOps::s_list_someof[recursive?]<T>(this, p);
         }
     }
-    
-    recursive? method find(p: recursive? pred(T) -> Bool): T {
-        return this.tryFind[recursive?](p)@some;
-    }
-
-    recursive? method findLast(p: recursive? pred(T) -> Bool): T {
-        return this.tryFindLast[recursive?](p)@some;
-    }
-
-    recursive? method tryFind(p: recursive? pred(T) -> Bool): Option<T> {
-        if(ListOps::s_list_empty<T>(this)) {
-            return none;
-        }
-        else {
-            return ListOps::s_list_find[recursive?]<T>(this, p);
-        }
-    }
-
-    recursive? method tryFindLast(p: recursive? pred(T) -> Bool): Option<T> {
-        if(ListOps::s_list_empty<T>(this)) {
-            return none;
-        }
-        else {
-            return ListOps::s_list_find_last[recursive?]<T>(this, p);
-        }
-    }
-
-    method {when T: keytype} contains(v: T): Bool {
-        if(ListOps::s_list_empty<T>(this)) {
-            return false;
-        }
-        else {
-            return ListOps::s_list_contains<T>(this, v);
-        }
-    }
 
     recursive? method map<U>(f: recursive? fn(T) -> U): List<U> {
         if(ListOps::s_list_empty<T>(this)) {
@@ -277,7 +147,7 @@ __internal entity List<T> {
         else {
             return ListOps::s_list_mapidx[recursive?]<T, U>(this, f);
         }
-    }
+    }    
 
     recursive? method filter(p: recursive? pred(T) -> Bool): List<T> {
         if(ListOps::s_list_empty<T>(this)) {
@@ -288,58 +158,65 @@ __internal entity List<T> {
         }
     }
 
-    recursive? method filterIdx(p: recursive? pred(T, Nat) -> Bool): List<T> {
+    recursive? method filtermap<U>(p: recursive? pred(T) -> Bool, f: recursive? fn(T) -> U): List<U> {
         if(ListOps::s_list_empty<T>(this)) {
-            return List<T>{};
+            return List<U>{};
         }
         else {
-            return ListOps::s_list_filteridx[recursive?]<T>(this, p);
+            return ListOps::s_list_filtermap[recursive?]<T, U>(this, p, f);
         }
     }
 
-%*
-TODO: this should work (I think)
-    method {when T: Option<U>} filterSome<U>(): List<U> {
-        return this.filter(pred(v) => v?some).map<U>(fn(v) => XCore::s_safeas<Option<U>, Some<U>>(v).value);
-    }
-*%
-
-    %% we need to some more flavors here like refduce and reduceIdx
-
-    recursive? method reduce<U>(f: recursive? fn(U, T) -> U, init: U): U {
+    method convert<U>(): List<U> {
         if(ListOps::s_list_empty<T>(this)) {
-            return init;
+            return List<U>{};
         }
         else {
-            return ListOps::s_list_reduce[recursive?]<T, U>(this, init, f);
+            return ListOps::s_list_map<T, U>(this, fn(v) => v.@<U>);
         }
     }
 
-    recursive? method lreduce<U>(f: recursive? fn(U, T) -> U, init: U): U {
+    method convertIf<U>(): List<U> {
         if(ListOps::s_list_empty<T>(this)) {
-            return init;
+            return List<U>{};
         }
         else {
-            return ListOps::s_list_lreduce[recursive?]<T, U>(this, init, f);
+           return ListOps::s_list_filtermap<T, U>(this, pred(v) => v.?<U>, fn(v) => v.@<U>);
         }
     }
 
-    recursive? method transduce<E, U>(f: recursive? fn(E, T) -> (|E, U|), environment: E): E, List<U> {
+    method {when T: Option<U>} extractSome<U>(): List<U> {
         if(ListOps::s_list_empty<T>(this)) {
-            return environment, List<U>{};
+            return List<U>{};
         }
         else {
-            return ListOps::s_list_transduce[recursive?]<T, E, U>(this, environment, f);
+            return ListOps::s_list_map<T, U>(this, fn(v) => v.@some);
         }
     }
 
-    recursive? method ltransduce<E, U>(f: recursive? fn(E, T) -> (|E, U|), environment: E): E, List<U> {
+    method {when T: Option<U>} extractIfSome<U>(): List<U> {
         if(ListOps::s_list_empty<T>(this)) {
-            return environment, List<U>{};
+            return List<U>{};
         }
         else {
-            return ListOps::s_list_ltransduce[recursive?]<T, E, U>(this, environment, f);
+           return ListOps::s_list_filtermap<T, U>(this, pred(v) => v.?some, fn(v) => v.@some);
         }
+    }
+
+    %%
+    %%TODO: extractIfOk<U>, extractIfFail<E>, extractOk<U>, extractFail<E> for Result<T, E>
+    %%
+
+    method {when T: keytype} min(): T 
+        requires !this.empty();
+    {
+        return ListOps::s_list_min<T>(this);
+    }
+
+    recursive? method min(cmp: recursive? pred(T, T) -> Bool): T 
+        requires !this.empty();
+    {
+        return ListOps::s_list_minfun<T>(this, cmp);
     }
 
     method {when T: numeric} sum(): T {
@@ -351,87 +228,13 @@ TODO: this should work (I think)
         }
     }
 
-    method binarySearchSingle(v: T, p: pred(T, T) -> Bool): Option<Nat> {
-        abort; %%TODO: implement binary search on lists
-    }
-
-    method binarySearchLower(v: T, p: pred(T, T) -> Bool): Option<Nat> {
-        abort; %%TODO: implement binary search on lists
-    }
-
-    method binarySearchUpper(v: T, p: pred(T, T) -> Bool): Option<Nat> {
-        abort; %%TODO: implement binary search on lists
-    }
-
-    function sortedMerge(l1: List<T>, l2: List<T>, cmp: recursive? pred(T, T) -> Bool): List<T> {
-        abort; %%TODO: implement sorted merge on lists
-    }
-
-    method sort(cmp: recursive? pred(T, T) -> Bool): List<T> {
-        abort; %%TODO: implement sort on lists
-    }
-
-    function sortedMergeUnique(l1: List<T>, l2: List<T>, cmp: recursive? pred(T, T) -> Bool): List<T> {
-        abort; %%TODO: implement sorted merge uniqueify on lists
-    }
-
-    method sortUniqueify(cmp: recursive? pred(T, T) -> Bool): List<T> {
-        abort; %%TODO: implement sort uniqueify on lists
-    }
-
-    method {when T: keytype} binarySearchKeySingle(v: T): Option<Nat> {
-        abort; %%TODO: implement binary search on keytype lists
-    }
-
-    method {when T: keytype} binarySearchKeyLower(v: T): Option<Nat> {
-        abort; %%TODO: implement binary search on keytype lists
-    }
-
-    method {when T: keytype} binarySearchKeyUpper(v: T): Option<Nat> {
-        abort; %%TODO: implement binary search on keytype lists
-    }
-
-    function {when T: keytype} sortedKeyMerge(l1: List<T>, l2: List<T>): List<T> {
-        if(ListOps::s_list_empty<T>(l1)) {
-            return l2;
-        }
-        elif(ListOps::s_list_empty<T>(l2)) {
-            return l1;
+    recursive? method accumulate(op: recursive? fn(T, T) -> T, init: T): T {
+        if(ListOps::s_list_empty<T>(this)) {
+            return init;
         }
         else {
-            return ListOps::s_sorted_key_merge<T>(l1, l2);
+            return ListOps::s_list_sumfun<T>(this, init, op);
         }
     }
-
-    method {when T: keytype} sortKey(): List<T> {
-        if(ListOps::s_list_size<T>(this) <= 1n) {
-            return this;
-        }
-        else {
-            return ListOps::s_sort_key<T>(this);
-        }
-    }
-
-    function {when T: keytype} sortedKeyMergeUnique(l1: List<T>, l2: List<T>): List<T> {
-        if(ListOps::s_list_empty<T>(l1)) {
-            return l2;
-        }
-        elif(ListOps::s_list_empty<T>(l2)) {
-            return l1;
-        }
-        else {
-            return ListOps::s_sorted_key_merge_unique<T>(l1, l2);
-        }
-    }
-
-    method {when T: keytype} sortKeyUniqueify(): List<T> {
-        if(ListOps::s_list_size<T>(this) <= 1n) {
-            return this;
-        }
-        else {
-            return ListOps::s_sort_key_uniqueify<T>(this);
-        }
-    }
-
 #endif %% STRIPPED_CORE 
 }

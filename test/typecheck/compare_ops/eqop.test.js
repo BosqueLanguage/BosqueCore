@@ -19,6 +19,17 @@ describe ("Checker -- basic strict equals", () => {
     });
 });
 
+describe ("Checker -- Some strict equals", () => {
+    it("should check strict equals option operations", function () {
+        checkTestFunction("function main(): Bool { let x: Some<Int> = some(3i); return x === 3i; }");
+        checkTestFunction("function main(): Bool { let x: Some<Int> = some(0i); return 3i === x; }");
+    });
+
+    it("should check fail strict equals option operations", function () {
+        checkTestFunctionError("function main(): Bool { let x: Some<Int> = some(3i); let y: Some<Int> = some(3i); return y === x; }", "Types Some<Int> and Some<Int> are not comparable");
+    });
+});
+
 describe ("Checker -- Option strict equals", () => {
     it("should check strict equals option operations", function () {
         checkTestFunction("function main(): Bool { let x: Option<Int> = some(3i); return x === none; }");

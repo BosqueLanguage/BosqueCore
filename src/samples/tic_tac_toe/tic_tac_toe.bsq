@@ -84,46 +84,14 @@ entity Board {
     }
 }
 
-%*
-function main(moves: List<[Nat, Nat, PlayerMark]>): Result<PlayerMark?, String> {
-    let res = moves.reduce<Result<Board, String>>(fn(state: Result<Board, String>, move: [Nat, Nat, PlayerMark]): Result<Board, String> => {
-            if err (state) {
-                return state;
-            }
-            else {
-                let bb = $@ok;
-                if(bb.hasWinner()) {
-                    return err("A player already won");
-                }
-                elif(!bb.isCellEmpty(move.0, move.1)) {
-                    return err("Cell is already occupied");
-                }
-                else {
-                    return ok(bb.setCellMark(move.0, move.1, move.2));
-                }
-            }
-        },
-        Result<Board, String>::Ok{Board::createEmpty()}
-    );
-
-    if err (res) {
-        return err($);
-    }
-    else {
-        let bb = $@ok;
-        return ok(bb.checkAnyWinner());
-    }
-}
-*%
-
-public function main(a: Nat, b: Nat): Bool {
+public function main(a: Nat): Bool {
     var bb = Board::initialBoard;
 
     bb = bb.setCell(0n, 0n, PlayerMark#x);
     bb = bb.setCell(1n, 1n, PlayerMark#o);
     bb = bb.setCell(0n, 1n, PlayerMark#x);
     bb = bb.setCell(1n, 0n, PlayerMark#o);
-    bb = bb.setCell(a, b, PlayerMark#x);
+    bb = bb.setCell(a, 2n, PlayerMark#x);
 
     let winner = bb.checkAnyWinner();
     return winner === PlayerMark#x;
