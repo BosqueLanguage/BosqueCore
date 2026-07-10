@@ -1,5 +1,18 @@
 declare namespace Sundew;
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Misc Declarations
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Invoke Related Declarations
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Type Declarations 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%** This concept represents an abstract nominal type declaration and most commonly needed information about nominal types **%
 concept AbstractNominalTypeDecl {
     field tkey: TypeKey;
 
@@ -21,10 +34,11 @@ concept AbstractNominalTypeDecl {
     %%field metatags: IRDeclarationMetaTag[];
 }
 
-
+%** This is the abstract type for all entities in the system **%
 concept AbstractEntityTypeDecl provides AbstractNominalTypeDecl {
 }
 
+%** This is the concrete type for enumerations declarations **%
 entity EnumTypeDecl provides AbstractEntityTypeDecl {
     field members: List<CString>;
 }
@@ -34,6 +48,7 @@ entity TypedeclRangeCheck {
     field max: Option<LiteralExpression>;
 }
 
+%** This is the concrete type for various type aliases including simple, those with ranges, and string flavors **%
 datatype TypedeclTypeDecl provides AbstractEntityTypeDecl using {
     field valuetype: TypeSignature;
     field iskeytype: Bool;
@@ -46,8 +61,61 @@ of
     TypedeclStringDecl { field rechk: Option<String> = none; field rngchk: Option<TypedeclRangeCheck> = none; }
 ;
 
+%** This is the abstract type for internal entity type declarations **%
 concept InternalEntityTypeDecl provides AbstractEntityTypeDecl {
 }
 
+%** This is the concrete type for primitive entity type declarations **%
 entity PrimitiveEntityTypeDecl provides InternalEntityTypeDecl {
+}
+
+entity Assembly {
+    %%readonly constants: IRConstantDecl[] = [];
+
+    %%readonly tests: IRTestDecl[] = [];
+    %%readonly examples: IRExampleDecl[] = [];
+
+    %%readonly predicates: IRPredicateDecl[] = [];
+    %%readonly invokes: IRInvokeDecl[] = [];
+    %%readonly taskactions: IRTaskActionDecl[] = [];
+
+    field primitives: List<PrimitiveEntityTypeDecl>;
+    %%readonly constructables: IRConstructableTypeDecl[] = [];
+    %%readonly collections: IRAbstractCollectionTypeDecl[] = [];
+    %%readonly eventlists: IREventListTypeDecl[] = [];
+
+    field enums: List<EnumTypeDecl>;
+    field simpletypedecls: List<TypedeclSimpleTypeDecl>;
+    field boundedtypedecls: List<TypedeclBoundedTypeDecl>;
+    field cstringoftypedecls: List<TypedeclCStringDecl>;
+    field stringoftypedecls: List<TypedeclStringDecl>;
+
+    %%readonly entities: IREntityTypeDecl[] = [];
+    %%readonly datamembers: IRDatatypeMemberEntityTypeDecl[] = [];
+
+    %%readonly pconcepts: IRInternalConceptTypeDecl[] = [];
+    %%readonly concepts: IRConceptTypeDecl[] = [];
+    %%readonly datatypes: IRDatatypeTypeDecl[] = [];
+
+    %%readonly apis: IRAPIDecl[] = [];
+    %%readonly agents: IRAgentDecl[] = [];
+    %%readonly tasks: IRTaskDecl[] = [];
+
+    field alltypes: Map<TypeKey, AbstractNominalTypeDecl>;
+    %%readonly allinvokes: Map<string, IRInvokeMetaDecl> = new Map<string, IRInvokeMetaDecl>();
+    %%readonly alllambdas: Map<string, IRLambdaParameterPackDecl> = new Map<string, IRLambdaParameterPackDecl>();
+
+    field elists: List<EListTypeSignature>;
+    %%readonly dashtypes: IRDashResultTypeSignature[] = [];
+    %%readonly formats: IRFormatTypeSignature[] = [];
+    %%readonly lpacksigs: IRLambdaParameterPackTypeSignature[] = [];
+
+    %%readonly formatcstrings: IRLiteralFormatCStringExpression[] = [];
+    %%readonly formatstrings: IRLiteralFormatStringExpression[] = [];
+
+    %%readonly concretesubtypes: Map<string, IRTypeSignature[]> = new Map<string, IRTypeSignature[]>();
+    %%readonly concretesupertypes: Map<string, IRTypeSignature[]> = new Map<string, IRTypeSignature[]>();
+
+    %%readonly typedeporder: IRTypeSignature[] = [];
+    %%readonly typedepcycles: IRTypeSignature[][] = [];
 }
