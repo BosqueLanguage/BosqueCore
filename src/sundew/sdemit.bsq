@@ -1,0 +1,103 @@
+namespace Sundew;
+
+entity SMTEmitter {
+    field asm: Assembly;
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %% Functions to emit the Expressions in the appropriate form for the SMT Solver
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    method emitLiteralExpression(exp: LiteralExpression): CString {
+        return exp.smtval;
+    }
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %% Functions to emit the Type Declarations in the appropriate form for the SMT Solver
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    method emitEnumDeclaration(tdecl: EnumTypeDecl): CString {
+        abort;
+    }
+
+    method emitTypedeclDeclaration(tdecl: TypedeclTypeDecl): CString {
+        match(tdecl) {
+            TypedeclSimpleTypeDecl => { abort; }
+            TypedeclBoundedTypeDecl => { abort; }
+            TypedeclCStringDecl => { abort; }
+            TypedeclStringDecl => { abort; }
+        }
+    }
+
+    method emitEntityTypeDeclaration(decl: AbstractEntityTypeDecl): CString {
+        abort;
+    }
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %% Functions to emit types in the appropriate form for the SMT Solver to generate solvable values 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    method emitSolvableValueForEnumType(tdecl: EnumTypeDecl, path: CString): CString {
+        abort;
+    }
+
+    method emitSolvableValueForTypedeclType(tdecl: TypedeclTypeDecl, path: CString): CString {
+        match(tdecl) {
+            TypedeclSimpleTypeDecl => { abort; }
+            TypedeclBoundedTypeDecl => { abort; }
+            TypedeclCStringDecl => { abort; }
+            TypedeclStringDecl => { abort; }
+        }
+    }
+
+    method emitSolvableValueForPrimitiveType(tdecl: PrimitiveEntityTypeDecl, path: CString): CString {
+        let ctkey = tdecl.tkey.value;
+        let cdecl = Interpolate::cstring($'(declare-const ${0} X${1})', path, ctkey);
+
+        if(ctkey === "None" || ctkey === "Bool") {
+            return cdecl;
+        }
+        elif(ctkey === "Nat") {
+            let rngchk = Interpolate::cstring($'(assert (XNatRngChk ${0}))', path);
+            return CString::join(' ', cdecl, rngchk);
+        }
+        elif(ctkey === "Int") {
+            let rngchk = Interpolate::cstring($'(assert (XIntRngChk ${0}))', path);
+            return CString::join(' ', cdecl, rngchk);
+        }
+        elif(ctkey === "ChkNat") {
+            let rngchk = Interpolate::cstring($'(assert (XChkNatRngChk ${0}))', path);
+            return CString::join(' ', cdecl, rngchk);
+        }
+        elif(ctkey === "ChkInt") {
+            let rngchk = Interpolate::cstring($'(assert (XChkIntRngChk ${0}))', path);
+            return CString::join(' ', cdecl, rngchk);
+        }
+        elif(ctkey === "Float") {
+            return cdecl;
+        }
+        elif(ctkey === "CString") {
+            abort;
+        }
+        elif(ctkey === "String") {
+            abort;
+        }
+        else {
+            abort;
+        }
+    }
+
+    method emitSolvableValueForEntityType(tdecl: AbstractEntityTypeDecl, path: CString): CString {
+        abort;
+    }
+
+    method emitSolvableValueForNominalType(tdecl: AbstractNominalTypeDecl, path: CString): CString {
+        abort;
+    }
+
+    function emitSolvableValueForType(tsig: TypeSignature, path: CString): CString {
+        match(tsig) {
+            NominalTypeSignature => { return this.emitSolvableValueForNominalType(this.asm.get($tsig.tkey), path); }
+            EListTypeSignature => { abort; }
+        }
+    }
+}

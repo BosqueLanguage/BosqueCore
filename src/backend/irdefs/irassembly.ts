@@ -921,7 +921,6 @@ class IRLambdaParameterPackDecl {
     }
 }
 
-
 class IRAssembly {
     readonly cregexps: IRCRegex[] = [];
     readonly uregexps: IRURegex[] = [];

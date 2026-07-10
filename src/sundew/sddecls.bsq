@@ -1,0 +1,28 @@
+namespace Sundew;
+
+const namespaceComponentRE: CRegex = /[A-Z][_a-zA-Z0-9]+/c;
+const namespaceKeyRE: CRegex = /(${Sundew::namespaceComponentRE}'::')*${Sundew::namespaceComponentRE}/c; %%Core is explicit here
+type NamespaceComponentKey = CString of Sundew::namespaceComponentRE;
+type NamespaceKey = CString of Sundew::namespaceKeyRE; %%Core is implicit here
+
+const basicNominalTypeKeyRE: CRegex = /(${Sundew::namespaceKeyRE}'::')?[A-Z][_a-zA-Z0-9]+('<'.+'>')?/c; %%Core is implicit here
+const specialScopedTypeKeyRE: CRegex = /('Result'|'APIResult')'<'.+'>''::'('Ok'|'Fail'|'Rejected'|'Failed'|'Error'|'Success')/c; %%Core is implicit here
+const nominalTypeKeyRE: CRegex = /(${Sundew::basicNominalTypeKeyRE}|${Sundew::specialScopedTypeKeyRE})/c; %%a bit rough but helps prevent mistakes
+const elistTypeKeyRE: CRegex = /'(|'.*'|)'/c;
+
+const lambdaTypeKeyRE: CRegex = /('fn'|'pred') '('.*')' '->' (${Sundew::nominalTypeKeyRE}|${Sundew::elistTypeKeyRE})/c;
+const typeKeyRE: CRegex = /${Sundew::nominalTypeKeyRE}|${Sundew::elistTypeKeyRE}|${Sundew::lambdaTypeKeyRE}/c; 
+type TypeKey = CString of Sundew::typeKeyRE;
+
+const invokeKeyRE: CRegex = /(${Sundew::namespaceKeyRE}|${Sundew::nominalTypeKeyRE})'::'[_a-zA-Z0-9$-]+('<'.+'>')?/c;
+type InvokeKey = CString of Sundew::invokeKeyRE;
+
+const identifierRE: CRegex = /[_a-z][_a-zA-Z0-9$]*/c; %%we allow $ inside these identifiers so we can make special names
+const videntifierRE: CRegex = /'$'?[_a-z][_a-zA-Z0-9$]*/c; %%we allow $ inside these identifiers so we can make special names
+type Identifier = CString of Sundew::identifierRE;
+type VarIdentifier = CString of Sundew::videntifierRE;
+
+entity SourceInfo {
+    field line: Nat;
+    field column: Nat;
+}
