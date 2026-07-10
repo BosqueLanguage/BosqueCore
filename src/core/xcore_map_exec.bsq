@@ -9,7 +9,6 @@ namespace MapOps {
 
     function s_map_has<K: keytype, V>(m: Map<K, V>, k: K): Bool = @map_has;
     function s_map_get<K: keytype, V>(m: Map<K, V>, k: K): V = @map_get;
-    function s_map_tryget<K: keytype, V>(m: Map<K, V>, k: K): Option<V> = @map_tryget;
 }
 #else
 #endif %% EXEC_LIBS

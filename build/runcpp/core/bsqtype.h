@@ -6,6 +6,12 @@
 
 namespace ᐸRuntimeᐳ
 {
+    enum class RColor : uint16_t
+    {
+        Red,
+        Black
+    };
+    
     inline constexpr uint32_t WELL_KNOWN_TYPE_ID_NONE = 0;
     inline constexpr uint32_t WELL_KNOWN_TYPE_ID_BOOL = 1;
     inline constexpr uint32_t WELL_KNOWN_TYPE_ID_INT = 2;

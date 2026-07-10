@@ -28,7 +28,22 @@ __internal entity Map<K: keytype, V> {
     }
 
     method tryGet(k: K): Option<V> {
-        return MapOps::s_map_tryget<K, V>(this, k);
+        if(MapOps::s_map_has<K, V>(this, k)) {
+            return some(MapOps::s_map_get<K, V>(this, k));
+        }
+        else {
+            return none;
+        }
+    }
+
+    method testGet(k: K, out? v: V): Bool {
+        if(MapOps::s_map_has<K, V>(this, k)) {
+            v = MapOps::s_map_get<K, V>(this, k);
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 #endif %% STRIPPED_CORE
 }
