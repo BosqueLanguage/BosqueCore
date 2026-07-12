@@ -7,14 +7,14 @@
 namespace ᐸRuntimeᐳ
 {
     template<typename K, typename V>
-    class MapEntry
+    class XMapEntry
     {
     public:
         K key;
         V value;
 
-        MapEntry() = default;
-        MapEntry(const K &k, const V &v) : key{k}, value{v} {}
+        XMapEntry() = default;
+        XMapEntry(const K &k, const V &v) : key{k}, value{v} {}
     };
 
     template<typename K, typename V>
@@ -22,8 +22,8 @@ namespace ᐸRuntimeᐳ
     {
         return TypeInfo{
             id,
-            sizeof(MapEntry<K, V>),
-            byteSizeToSlotCount(sizeof(MapEntry<K, V>)),
+            sizeof(XMapEntry<K, V>),
+            byteSizeToSlotCount(sizeof(XMapEntry<K, V>)),
             LayoutTag::Value,
             mask,
             nullptr,

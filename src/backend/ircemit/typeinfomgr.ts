@@ -509,6 +509,11 @@ class TypeInfoManager {
             const oftinfo = this.generateLayoutInfoForType(tdecl.ttype, irasm);
             this.addLayoutInfo(tdecl.tkey, new LayoutInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), oftinfo.bytesize, oftinfo.layoutmask));
         }
+        else if(tdecl instanceof IRMapEntryTypeDecl) {
+            const kftinfo = this.generateLayoutInfoForType(tdecl.ktype, irasm);
+            const vftinfo = this.generateLayoutInfoForType(tdecl.vtype, irasm);
+            this.addLayoutInfo(tdecl.tkey, new LayoutInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), kftinfo.bytesize + vftinfo.bytesize, kftinfo.layoutmask + vftinfo.layoutmask));
+        }
         else if(tdecl instanceof IRAbstractCollectionTypeDecl) {
             if(tdecl instanceof IRListTypeDecl) {
                 const oftinfo = this.generateLayoutInfoForType(tdecl.oftype, irasm);
@@ -644,6 +649,14 @@ class TypeInfoManager {
 
             const ttid = this.typeInfoMap.size;
             this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, oftinfo.bytesize, LayoutTag.Value, TypeInfoManager.staticLayoutToPtrMaskConvert(oftinfo.layoutmask), quickrelease));
+        }
+        else if(tdecl instanceof IRMapEntryTypeDecl) {
+            const quickrelease = this.isQuickReleaseType(tdecl.ktype, irasm) && this.isQuickReleaseType(tdecl.vtype, irasm);
+            const kftinfo = this.generateLayoutInfoForType(tdecl.ktype, irasm);
+            const vftinfo = this.generateLayoutInfoForType(tdecl.vtype, irasm);
+
+            const ttid = this.typeInfoMap.size;
+            this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, kftinfo.bytesize + vftinfo.bytesize, LayoutTag.Value, TypeInfoManager.staticLayoutToPtrMaskConvert(kftinfo.layoutmask + vftinfo.layoutmask), quickrelease));
         }
         else if(tdecl instanceof IRAbstractCollectionTypeDecl) {
             if(tdecl instanceof IRListTypeDecl) {

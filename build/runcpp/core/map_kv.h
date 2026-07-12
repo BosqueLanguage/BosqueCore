@@ -14,9 +14,9 @@ namespace ᐸRuntimeᐳ
     {
     public:
         int64_t index;
-        CmpRBTree<K, V> ulistt;
+        CmpRBTree<K, V, TYPE_ID_CMP_TREE_KV> umap;
 
-        using value_type = MapEntry<K, V>;
+        using value_type = XMapEntry<K, V>;
         using difference_type = std::ptrdiff_t;
         using iterator_category = std::bidirectional_iterator_tag;
 
@@ -25,14 +25,9 @@ namespace ᐸRuntimeᐳ
 
         value_type operator*() const 
         { 
-            assert(!this->ulistt.empty());
+            assert(!this->umap.empty());
             
-            if(this->ulistt.isInline()) {
-                return this->ulistt.inlinelist.at(this->index);
-            }
-            else {
-                return this->ulistt.treelist.postree.get(this->index);
-            }
+            return this->umap.getindex(this->index);
         }
 
         XMapKVIterator& operator++()
@@ -84,7 +79,7 @@ namespace ᐸRuntimeᐳ
         XMapKV(const XMapKV& other) = default;
         XMapKV(const CmpRBTree<K, V, getCmpTreeIDFrom(TYPE_ID_MAP_KV)>& n) : utree{n} { ; }
 
-        static XMapKV mk(std::initializer_list<MapEntry<K, V>> elems)
+        static XMapKV mk(std::initializer_list<XMapEntry<K, V>> elems)
         {
             if(elems.size() == 0) {
                 return XMapKV{};
@@ -94,7 +89,7 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        static XMapKV mk(const MapEntry<K, V>* elems, size_t len)
+        static XMapKV mk(const XMapEntry<K, V>* elems, size_t len)
         {
             if(len == 0) {
                 return XMapKV{};
@@ -111,7 +106,7 @@ namespace ᐸRuntimeᐳ
                 return "[]";
             }
             else {
-                std::vector<MapEntry<K, V>> values;
+                std::vector<XMapEntry<K, V>> values;
                 this->utree.toValues(values);
 
                 std::string result = "[";
@@ -157,12 +152,12 @@ namespace ᐸRuntimeᐳ
             return XMapKVIterator<K, V, getCmpTreeIDFrom(TYPE_ID_MAP_KV)>{(int64_t)this->size(), this->utree};
         }
 
-        MapEntry<K, V> getMin() const
+        XMapEntry<K, V> getMin() const
         {
             return this->utree.getFront();
         }
 
-        MapEntry<K, V> getMax() const
+        XMapEntry<K, V> getMax() const
         {
             return this->utree.getBack();
         }
@@ -172,12 +167,12 @@ namespace ᐸRuntimeᐳ
             return this->utree.has(key);
         }
 
-        MapEntry<K, V> get(const K& key) const
+        XMapEntry<K, V> get(const K& key) const
         {
             return this->utree.get(key);
         }
 
-        bool tryget(const K& key, MapEntry<K, V>& val) const
+        bool tryget(const K& key, XMapEntry<K, V>& val) const
         {
             return this->utree.tryget(key, val);
         }
@@ -185,7 +180,7 @@ namespace ᐸRuntimeᐳ
         XMapKV insert(const K& key, const V& value) const
         {
             CmpRBTree<K, V, getCmpTreeIDFrom(TYPE_ID_MAP_KV)> newtree = this->utree.insert(key, value);
-            return XMapKV{newtree};
+            return XMapKV<K, V, getCmpTreeIDFrom(TYPE_ID_MAP_KV)>{newtree};
         }
     };
 }

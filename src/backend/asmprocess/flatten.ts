@@ -4109,7 +4109,17 @@ class ASMToIRConverter {
     }
 
     private generateMapEntryTypeDecl(tdecl: MapEntryTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRMapEntryTypeDecl {
-        assert(false, "Not Implemented -- generateMapEntryTypeDecl");
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
+
+        const doc = tdecl.attributes.find((a) => a.name === "doc");
+        const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
+        
+        this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
+
+        const keytype = this.processTypeSignature((this.tproc(tinst.tsig) as NominalTypeSignature).alltermargs[0] as TypeSignature);
+        const valuetype = this.processTypeSignature((this.tproc(tinst.tsig) as NominalTypeSignature).alltermargs[1] as TypeSignature);
+        
+        return new IRMapEntryTypeDecl(tinst.tkey, docstring, tdecl.file, this.convertSourceInfo(tdecl.sinfo), keytype, valuetype);
     }
 
     private generateListTypeDecl(tdecl: ListTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRListTypeDecl {

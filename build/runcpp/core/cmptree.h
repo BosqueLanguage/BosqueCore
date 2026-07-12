@@ -18,15 +18,15 @@ namespace ᐸRuntimeᐳ
         uint16_t bheight; //black height of the subtree rooted at this node
 
         int32_t dcount; //note that when the color follows immediately in enclosing classes the alignment works -- currently this is just use as alignment padding
-        MapEntry<K, V> entry;
+        XMapEntry<K, V> entry;
 
         CmpRBData(): color{}, bheight{}, dcount{}, entry{} { ; }
         CmpRBData(const CmpRBData<K, V>& other) = default;
 
         CmpRBData(RColor color, uint16_t bheight, const CmpRBData<K, V>& data) : color{color}, bheight{bheight}, dcount{1}, entry{data.entry} { ; }
-        CmpRBData(RColor color, uint16_t bheight, const MapEntry<K, V>& value) : color{color}, bheight{bheight}, dcount{1}, entry{value} { ; }
+        CmpRBData(RColor color, uint16_t bheight, const XMapEntry<K, V>& value) : color{color}, bheight{bheight}, dcount{1}, entry{value} { ; }
 
-        void toValues(std::vector<MapEntry<K, V>>& result) const
+        void toValues(std::vector<XMapEntry<K, V>>& result) const
         {
             for(size_t i = 0; i < (size_t)this->dcount; i++) {
                 result.push_back(this->entry);
@@ -176,13 +176,12 @@ namespace ᐸRuntimeᐳ
             return (isNodeType(node)) ? asNodeType(node)->right : nullptr;
         }
 
-        static uint16_t computeNewBHeight_ForTreeNode(RColor color, const CmpRBNode<K, V>* left, const CmpRBNode<K, V>* right) { return reprGetBHeight(left) + ((color == RColor::Black) ? 1 : 0); }
+        static uint16_t computeNewBHeight_ForTreeLeaf(RColor color) { return 1 + ((color == RColor::Black) ? 1 : 0); }
         static uint16_t computeNewBHeight_ForTreeNode(RColor color, const CmpRBNode<K, V>* left, const CmpRBNode<K, V>* right) { return reprGetBHeight(left) + ((color == RColor::Black) ? 1 : 0); }
         static int64_t computeNewCount_ForTreeNode(const CmpRBNode<K, V>* left, const CmpRBNode<K, V>* right, const CmpRBData<K, V>& data) { return reprGetCount(left) + reprGetCount(right) + data.dcount; }
 
-
         template <typename Iter>
-        static CmpRBNode<K, V>* mkinitial(const MapEntry<K, V>& value)
+        static CmpRBNode<K, V>* mkinitial(const XMapEntry<K, V>& value)
         {
             return s_leafallocator->construct(CmpRBData<K, V>(RColor::Black, 2, value));
         }
@@ -234,6 +233,30 @@ namespace ᐸRuntimeᐳ
             return curr;
         }
 
+        static XMapEntry<K, V> reprGetIndexValue(int64_t index, const CmpRBNode<K, V>* curr)
+        {
+            while(true) {
+                if(isLeafType(curr)) {
+                    return curr->data.entry;
+                }
+                else {
+                    const CmpRBTreeNode<K, V>* tnode = asNodeType(curr);
+                    int64_t lcount = reprGetCount(tnode->left);
+
+                    if(index < lcount) {
+                        curr = tnode->left;
+                    }
+                    else if(index > lcount + 1) {
+                        index -= (lcount + 1);
+                        curr = tnode->right;
+                    }
+                    else {
+                        return tnode->data.entry;
+                    }
+                }
+            }
+        }
+
         static const CmpRBNode<K, V>* reprGetKeyNode(const K& key, const CmpRBNode<K, V>* curr)
         {
             while(curr != nullptr) {
@@ -266,7 +289,7 @@ namespace ᐸRuntimeᐳ
             }
         }
         
-        static void reprToValues(std::vector<MapEntry<K, V>>& result, const CmpRBNode<K, V>* node)
+        static void reprToValues(std::vector<XMapEntry<K, V>>& result, const CmpRBNode<K, V>* node)
         {
             if(node == nullptr) {
                 return;
@@ -303,7 +326,7 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        void toValues(std::vector<MapEntry<K, V>>& result) const
+        void toValues(std::vector<XMapEntry<K, V>>& result) const
         {
             reprToValues(result, this->root);
         }
@@ -659,11 +682,11 @@ private:
                 else {
                     if(key < leaf->data.entry.key) {
                         CmpRBNode<K, V>* lleaf = s_leafallocator->construct(CmpRBData<K, V>(RColor::Red, 1, key, value));
-                        return balance(InsertResult::makeTree(mknode(ndata.color, lleaf, nullptr, ndata)));
+                        return balance(InsertResult::makeTree(mknode(curr->data.color, lleaf, nullptr, curr->data)));
                     }
                     else {
                         CmpRBTreeLeaf<K, V>* rleaf = s_leafallocator->construct(CmpRBData<K, V>(RColor::Red, 1, key, value));
-                        return balance(InsertResult::makeTree(mknode(ndata.color, nullptr, rleaf, ndata)));
+                        return balance(InsertResult::makeTree(mknode(curr->data.color, nullptr, rleaf, curr->data)));
                     }
                 }
             }
@@ -673,12 +696,12 @@ private:
                 const CmpRBNode<K, V>* r = opnode->right;
                 
                 if(key < opnode->data.entry.key) {
-                    InsertResult nleft = insertrec(l, index, value);
-                    return balance(nleft.apply([opnode, r](const PosRBNode<T, K>* tnode) { return mknode(opnode->data.color, tnode, r, opnode->data); }));
+                    InsertResult nleft = insertrec(l, key, value);
+                    return balance(nleft.apply([opnode, r](const CmpRBNode<K, V>* tnode) { return mknode(opnode->data.color, tnode, r, opnode->data); }));
                 }
                 else if(key > opnode->data.entry.key) {
-                    InsertResult nright = insertrec(r, index - (lcount + opnode->data.dcount), value);
-                    return balance(nright.apply([opnode, l](const PosRBNode<T, K>* tnode) { return mknode(opnode->data.color, l, tnode, opnode->data); }));
+                    InsertResult nright = insertrec(r, key, value);
+                    return balance(nright.apply([opnode, l](const CmpRBNode<K, V>* tnode) { return mknode(opnode->data.color, l, tnode, opnode->data); }));
                 }
                 else {
                     CmpRBNode<K, V>* nnode = copyNodeReplaceData(curr, CmpRBData<K, V>(opnode->data.color, opnode->data.bheight, key, value));
@@ -700,7 +723,7 @@ private:
         template <typename Iter>
         static CmpRBNode<K, V>* mklargerec(Iter start, Iter end)
         {
-            CmpRBNode<K, V>* curr = s_leafallocator->construct(CmpRBData<K, V>(RColor::Red, 1, *start));
+            CmpRBNode<K, V>* curr = s_leafallocator->construct(CmpRBData<K, V>(RColor::Red, 1, start->key, start->value));
             ++start;
 
             while(start != end) {
@@ -742,16 +765,21 @@ private:
             return reprGetCount(this->root);
         }
 
-        MapEntry<K, V> getFront() const
+        XMapEntry<K, V> getFront() const
         {
             const CmpRBNode<K, V>* minNode = reprGetMinNode(this->root);
             return minNode->data.entry;
         }
 
-        MapEntry<K, V> getBack() const
+        XMapEntry<K, V> getBack() const
         {
             const CmpRBNode<K, V>* maxNode = reprGetMaxNode(this->root);
             return maxNode->data.entry;
+        }
+
+        XMapEntry<K, V> getindex(int64_t index) const
+        {
+            return reprGetIndexValue(index, this->root);
         }
 
         bool has(const K& key) const
@@ -759,12 +787,12 @@ private:
             return reprGetKeyNode(key, this->root) != nullptr;
         }
 
-        MapEntry<K, V> get(const K& key) const
+        XMapEntry<K, V> get(const K& key) const
         {
             return reprGetKeyNode(key, this->root)->data.entry;
         }
 
-        bool tryget(const K& key, MapEntry<K, V>& val) const
+        bool tryget(const K& key, XMapEntry<K, V>& val) const
         {
             const CmpRBNode<K, V>* node = reprGetKeyNode(key, this->root);
             if(node != nullptr) {
@@ -775,7 +803,7 @@ private:
             return false;
         }
 
-        CmpRBTree<K, V, TreeID> insert(int64_t index, const MapEntry<K, V>& value) const
+        CmpRBTree<K, V, TreeID> insert(int64_t index, const XMapEntry<K, V>& value) const
         {
             CmpRBNode<K, V>* root = blacken(insertrec(this->root, index, value));
 
