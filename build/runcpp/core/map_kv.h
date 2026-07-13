@@ -8,6 +8,26 @@
 
 namespace ᐸRuntimeᐳ
 {
+    template<typename K, typename V, uint32_t TYPE_ID_CMP_TREE_T>
+    consteval TypeInfo g_typeinfo_MapKV_generate(uint32_t id, const char* mask, const char* name) 
+    {
+        return TypeInfo{
+            id,
+            8,
+            1,
+            LayoutTag::Value,
+            mask,
+            nullptr,
+            0,
+            nullptr,
+            0,
+            nullptr,
+            0,
+            name,
+            false
+        };
+    }
+
     //TODO: this is currently n * ln(n) for iteration and access -- definitely want to speed this up later
     template<typename K, typename V, uint32_t TYPE_ID_CMP_TREE_KV>
     class XMapKVIterator
@@ -130,6 +150,12 @@ namespace ᐸRuntimeᐳ
             else {
                 return this->utree.toJSON(pf);
             }
+        }
+
+        template <typename Fn>
+        void diagnosticEmit(std::ostream& out, const TypeInfo* ltype, Fn diagnosticEmitFn, bool waddr) const
+        {
+            this->utree.diagnosticEmit(out, ltype, diagnosticEmitFn, waddr);
         }
 
         bool empty() const

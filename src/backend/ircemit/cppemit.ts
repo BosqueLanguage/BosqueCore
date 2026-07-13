@@ -1636,6 +1636,60 @@ class CPPEmitter {
         return [tidecls, tidefs];
     }
 
+    private emitMapTypeInfoDecl(tdecl: IRMapTypeDecl): [string, string] {
+        const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
+        const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey);
+
+        const ofttid = this.typeInfoManager.getTypeInfo(tdecl.oftype.tkeystr);
+        let eemask: string;
+        if(ofttid.ptrmask !== undefined) {
+            eemask = ofttid.ptrmask;
+        }
+        else {
+            eemask = Array(ofttid.slotcount).fill("0").join("");
+        }
+        
+        let leafmask: string | undefined = undefined;
+        let nodemask: string | undefined = undefined;
+        if(!/[1-5]/.test(eemask)) {
+            nodemask = "0" + eemask + "110";
+        }
+        else {
+            leafmask = "0" + eemask;
+            nodemask = "0" + eemask + "110";
+        }
+        
+        const cmprb_treeleafid = ttid.bsqtypeid - 3;
+        const cmprb_treenodeid = ttid.bsqtypeid - 2;
+        const cmprb_treeid = ttid.bsqtypeid - 1;
+
+        const krepr = this.typeInfoManager.emitTypeAsStd(tdecl.ktype.tkeystr);
+        const vrepr = this.typeInfoManager.emitTypeAsStd(tdecl.vtype.tkeystr);
+
+        const tidecls = `namespace ᐸRuntimeᐳ {\n` +
+        `    inline constexpr TypeInfo g_typeinfo_CmpRBTreeLeaf_${ctname} = g_typeinfo_CmpRBTreeLeaf_generate<${krepr}, ${vrepr}>(${cmprb_treeleafid}, ${leafmask !== undefined ? `"${leafmask}"` : "nullptr"}, "CmpRBTreeLeaf_${ctname}", ${ofttid.quickrelease});\n` +
+        `    inline constexpr TypeInfo g_typeinfo_CmpRBTreeNode_${ctname} = g_typeinfo_CmpRBTreeNode_generate<${krepr}, ${vrepr}>(${cmprb_treenodeid}, "${nodemask}", "CmpRBTreeNode_${ctname}");\n` +
+        `    inline constexpr TypeInfo g_typeinfo_CmpRBTree_${ctname} = g_typeinfo_CmpRBTree_generate<${krepr}, ${vrepr}, ${cmprb_treeid}>(${cmprb_treeid}, "CmpRBTree_${ctname}");\n` +
+        '\n' +
+        `    extern thread_local GCAllocator<CmpRBTreeLeaf<${krepr}, ${vrepr}>> CmpRBTreeLeaf_${ctname}_allocator;\n` +
+        `    extern thread_local GCAllocator<CmpRBTreeNode<${krepr}, ${vrepr}>> CmpRBTreeNode_${ctname}_allocator;\n` +
+        '\n' +
+        `    inline constexpr TypeInfo g_typeinfo_${ctname} = g_typeinfo_MapKV_generate<${krepr}, ${vrepr}, ${cmprb_treeid}>(${ttid.bsqtypeid}, "1", "${ctname}");\n` +
+        `}`;
+
+        const tidefs = `namespace ᐸRuntimeᐳ {\n` +
+        `    thread_local GCAllocator<CmpRBTreeLeaf<${krepr}, ${vrepr}>> CmpRBTreeLeaf_${ctname}_allocator(&g_typeinfo_CmpRBTreeLeaf_${ctname});\n` +
+        `    thread_local GCAllocator<CmpRBTreeNode<${krepr}, ${vrepr}>> CmpRBTreeNode_${ctname}_allocator(&g_typeinfo_CmpRBTreeNode_${ctname});\n` +
+        '\n' +
+        `    template<> const TypeInfo* CmpRBTree<${krepr}, ${vrepr}, ${cmprb_treeid}>::s_leaftypeinfo = &g_typeinfo_CmpRBTreeLeaf_${ctname};\n` +
+        `    template<> thread_local GCAllocator<CmpRBTreeLeaf<${krepr}, ${vrepr}>>* CmpRBTree<${krepr}, ${vrepr}, ${cmprb_treeid}>::s_leafallocator = &CmpRBTreeLeaf_${ctname}_allocator;\n` +
+        `    template<> const TypeInfo* CmpRBTree<${krepr}, ${vrepr}, ${cmprb_treeid}>::s_nodetypeinfo = &g_typeinfo_CmpRBTreeNode_${ctname};\n` +
+        `    template<> thread_local GCAllocator<CmpRBTreeNode<${krepr}, ${vrepr}>>* CmpRBTree<${krepr}, ${vrepr}, ${cmprb_treeid}>::s_nodeallocator = &CmpRBTreeNode_${ctname}_allocator;\n` +
+        `}`;
+
+        return [tidecls, tidefs];
+    }
+
     private emitEntityTypeInfoWForwarDecl(tdecl: IRAbstractEntityTypeDecl): string {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
         const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey);
@@ -2179,7 +2233,6 @@ class CPPEmitter {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
         const tinfo = this.typeInfoManager.getTypeInfo(tdecl.tkey);
 
-        //const oftname = TransformCPPNameManager.convertTypeKey(tdecl.oftype.tkeystr);
         const voft = this.typeInfoManager.emitTypeAsStd(tdecl.oftype.tkeystr);
         
         const declusing = `using ${ctname} = ${RUNTIME_NAMESPACE}::XList<${voft}, ${tinfo.bsqtypeid}>;`;
@@ -2195,7 +2248,7 @@ class CPPEmitter {
         `    size_t count = 0;\n` +
         `    bool first = true;\n` +
         `    while(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.peekSymbol('}')) {\n` +
-        `        if(first) { first = false; } else { if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol(',')) { return std::nullopt; }; }\n` +
+        `        if(first) { first = false; } else { if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol(',')) { return std::nullopt; } }\n` +
         `        std::optional<${this.typeInfoManager.emitTypeAsStd(tdecl.oftype.tkeystr)}> vv = BSQ_parse${TransformCPPNameManager.convertTypeKey(tdecl.oftype.tkeystr)}();\n` +
         `        if(!vv.has_value()) { return std::nullopt; }\n` +
         `        varr[count++] = vv.value();\n\n` +
@@ -2212,6 +2265,67 @@ class CPPEmitter {
         `    for(auto iter = vv.begin(); iter != vv.end(); ++iter) {\n` +
         `        if(first) { first = false; } else { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate(", "); }\n` +
         `        BSQ_emit${TransformCPPNameManager.convertTypeKey(tdecl.oftype.tkeystr)}((*iter));\n` +
+        `    }\n` +
+        `    if(!first) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate(" "); }\n` +
+        `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate("}"); \n` +
+        `}`;
+
+        const bsqdiagemitdef = `void BSQ_diag_emit${ctname}(std::ostream& out, const ${ctname}& vv, bool waddr) {\n` +
+            `    vv.diagnosticEmit(out, &ᐸRuntimeᐳ::g_typeinfo_${ctname}, [](std::ostream& oout, ${this.typeInfoManager.emitTypeAsStd(tdecl.oftype.tkeystr)} ee, bool owaddr) {\n` +
+            `        BSQ_diag_emit${TransformCPPNameManager.convertTypeKey(tdecl.oftype.tkeystr)}(oout, ee, owaddr);\n` + 
+            '    },\n' + 
+            `    waddr);\n` +
+        `}`;
+        
+        return [
+            [declusing, decltypeinfo, declbsqparse, declbsqemit, declbsqemitdiag].join("\n"),
+            [deftypeinfo, defbsqparse, defbsqemit, bsqdiagemitdef].join("\n")
+        ];
+    }
+
+    private emitMapTypeInfo(tdecl: IRMapTypeDecl): [string, string] {
+        const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
+        const tinfo = this.typeInfoManager.getTypeInfo(tdecl.tkey);
+
+        const ktype = this.typeInfoManager.emitTypeAsStd(tdecl.ktype.tkeystr);
+        const vtype = this.typeInfoManager.emitTypeAsStd(tdecl.vtype.tkeystr);
+        const oftype = this.typeInfoManager.emitTypeAsStd(tdecl.oftype.tkeystr);
+        
+        const declusing = `using ${ctname} = ${RUNTIME_NAMESPACE}::XMapKV<${ktype}, ${vtype}, ${tinfo.bsqtypeid}>;`;
+        const [decltypeinfo, deftypeinfo] = this.emitMapTypeInfoDecl(tdecl);
+        const declbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}();`;
+        const declbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv);`;
+        const declbsqemitdiag = `void BSQ_diag_emit${ctname}(const ${ctname}& vv);`;
+
+        const defbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}() {\n` +
+        `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeType("${tdecl.tkey}")) { return std::nullopt; };\n` +
+        `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('{')) { return std::nullopt; };\n` +
+        `    ${oftype} varr[16] = {};\n` +
+        `    size_t count = 0;\n` +
+        `    bool first = true;\n` +
+        `    while(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.peekSymbol('}')) {\n` +
+        `        if(first) { first = false; } else { if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol(',')) { return std::nullopt; } }\n` +
+        `        std::optional<${ktype}> vk = BSQ_parse${TransformCPPNameManager.convertTypeKey(tdecl.ktype.tkeystr)}();\n` +
+        `        if(!vk.has_value()) { return std::nullopt; }\n` +
+        `        if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol("=>")) { return std::nullopt; }\n` +
+        `        std::optional<${vtype}> vv = BSQ_parse${TransformCPPNameManager.convertTypeKey(tdecl.vtype.tkeystr)}();\n` +
+        `        if(!vv.has_value()) { return std::nullopt; }\n` +
+        `        varr[count++] = { vk.value(), vv.value() };\n\n` +
+        `        if(count >= 16) { break; /* TODO: implement dynamic growth */ }\n` +
+        `    }\n` +
+        `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('}')) { return std::nullopt; };\n` +
+        `    return std::make_optional<${ctname}>(${ctname}::mk(varr, count));\n` +
+        `}`;
+
+        const defbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv) {\n` +
+        `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emitLiteralContent("${tdecl.tkey}"); \n` +
+        `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate("{ "); \n` +
+        `    bool first = true;\n` +
+        `    for(auto iter = vv.begin(); iter != vv.end(); ++iter) {\n` +
+        `        if(first) { first = false; } else { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate(", "); }\n` +
+        `        BSQ_emit${TransformCPPNameManager.convertTypeKey(tdecl.ktype.tkeystr)}(((*iter).key));\n` +
+        `        ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate(" => ");\n` +
+        `        BSQ_emit${TransformCPPNameManager.convertTypeKey(tdecl.vtype.tkeystr)}(((*iter).value));\n` +
         `    }\n` +
         `    if(!first) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate(" "); }\n` +
         `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate("}"); \n` +
@@ -2729,7 +2843,7 @@ class CPPEmitter {
                         return this.emitListTypeInfo(ctd);
                     }
                     else if(ctd instanceof IRMapTypeDecl) {
-                        assert(false, "CPPEmitter: need to implement map type decl emission");
+                        return this.emitMapTypeInfo(ctd);
                     }
                     else {
                         assert(false, "CPPEmitter: unknown abstract collection type decl emission");

@@ -25,26 +25,27 @@ namespace ᐸRuntimeᐳ
 
         CmpRBData(RColor color, uint16_t bheight, const CmpRBData<K, V>& data) : color{color}, bheight{bheight}, dcount{1}, entry{data.entry} { ; }
         CmpRBData(RColor color, uint16_t bheight, const XMapEntry<K, V>& value) : color{color}, bheight{bheight}, dcount{1}, entry{value} { ; }
+        CmpRBData(RColor color, uint16_t bheight, const K& key, const V& value) : color{color}, bheight{bheight}, dcount{1}, entry{key, value} { ; }
 
         void toValues(std::vector<XMapEntry<K, V>>& result) const
         {
-            for(size_t i = 0; i < (size_t)this->dcount; i++) {
-                result.push_back(this->entry);
-            }
+            result.push_back(this->entry);
         }
 
         template <typename Fn>
         std::string toJSON(Fn pf) const
         {
             std::string result = "{color: " + std::string((this->color == RColor::Red) ? "Red" : "Black") + ", bheight: " + std::to_string(this->bheight) + ", data: [";
-            for(size_t i = 0; i < (size_t)this->dcount; i++) {
-                result += pf(this->entry);
-                if(i != (size_t)(this->dcount - 1)) {
-                    result += ", ";
-                }
-            }
+            result += pf(this->entry);
             result += "]}";
+            
             return result;
+        }
+
+        template<typename Fn>
+        void diagnosticEmit(std::ostream& out, Fn diagnosticEmitFn, bool waddr) const
+        {
+            diagnosticEmitFn(out, this->entry, waddr);
         }
     };
 
@@ -720,20 +721,6 @@ private:
             }
         }
 
-        template <typename Iter>
-        static CmpRBNode<K, V>* mklargerec(Iter start, Iter end)
-        {
-            CmpRBNode<K, V>* curr = s_leafallocator->construct(CmpRBData<K, V>(RColor::Red, 1, start->key, start->value));
-            ++start;
-
-            while(start != end) {
-                curr = blacken(insertrec(curr, start->key, start->value));
-                ++start;
-            }
-
-            return curr;
-        }
-
         template <typename Fn>
         static void recdiagnosticEmit(const CmpRBNode<K, V>* curr, std::ostream& out, Fn diagnosticEmitFn, bool waddr)
         {
@@ -760,9 +747,28 @@ private:
         }
 
     public:
+        bool empty() const
+        {
+            return this->root == nullptr;
+        }
+
         int64_t size() const
         {
             return reprGetCount(this->root);
+        }
+
+        template <typename Iter>
+        static CmpRBNode<K, V>* mklargerec(Iter start, Iter end)
+        {
+            CmpRBNode<K, V>* curr = s_leafallocator->construct(CmpRBData<K, V>(RColor::Red, 1, start->key, start->value));
+            ++start;
+
+            while(start != end) {
+                curr = blacken(insertrec(curr, start->key, start->value));
+                ++start;
+            }
+
+            return curr;
         }
 
         XMapEntry<K, V> getFront() const
