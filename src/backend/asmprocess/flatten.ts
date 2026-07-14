@@ -4196,7 +4196,7 @@ class ASMToIRConverter {
         const ktype = this.processTypeSignature((this.tproc(tinst.tsig) as NominalTypeSignature).alltermargs[0] as TypeSignature);
         const vtype = this.processTypeSignature((this.tproc(tinst.tsig) as NominalTypeSignature).alltermargs[1] as TypeSignature);
         
-        const medecl = this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "MapEntry") as MapTypeDecl;
+        const medecl = this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "MapEntry") as MapEntryTypeDecl;
         const metdecl = new NominalTypeSignature(tdecl.sinfo, undefined, medecl, [(this.tproc(tinst.tsig) as NominalTypeSignature).alltermargs[0], (this.tproc(tinst.tsig) as NominalTypeSignature).alltermargs[1]]);
         const oftype = this.processTypeSignature(metdecl);
 

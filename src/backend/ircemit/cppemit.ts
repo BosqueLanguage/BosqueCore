@@ -1419,7 +1419,7 @@ class CPPEmitter {
         }
 
         if(invk.resultType instanceof IRVoidTypeSignature) {
-            return `${bstr}`;
+            return `{ ${bstr}; }`;
         }
         else {
             return `{ ${prestr == "" ? "" : prestr + " "}return ${bstr}; }`;
@@ -2268,7 +2268,7 @@ class CPPEmitter {
         const [decltypeinfo, deftypeinfo] = this.emitListTypeInfoDecl(tdecl);
         const declbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}();`;
         const declbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv);`;
-        const declbsqemitdiag = `void BSQ_diag_emit${ctname}(const ${ctname}& vv);`;
+        const declbsqemitdiag = `void BSQ_diag_emit${ctname}(std::ostream& out, const ${ctname}& vv, bool waddr);`;
 
         const defbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}() {\n` +
         `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeType("${tdecl.tkey}")) { return std::nullopt; };\n` +
@@ -2281,7 +2281,7 @@ class CPPEmitter {
         `        std::optional<${this.typeInfoManager.emitTypeAsStd(tdecl.oftype.tkeystr)}> vv = BSQ_parse${TransformCPPNameManager.convertTypeKey(tdecl.oftype.tkeystr)}();\n` +
         `        if(!vv.has_value()) { return std::nullopt; }\n` +
         `        varr[count++] = vv.value();\n\n` +
-        `        if(count >= 16) { break; /* TODO: implement dynamic growth */ }\n` +
+        `        if(count >= 16) { assert(false); /* TODO: implement dynamic growth */ }\n` +
         `    }\n` +
         `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('}')) { return std::nullopt; };\n` +
         `    return std::make_optional<${ctname}>(${ctname}::mk(varr, count));\n` +
@@ -2324,7 +2324,7 @@ class CPPEmitter {
         const [decltypeinfo, deftypeinfo] = this.emitMapTypeInfoDecl(tdecl);
         const declbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}();`;
         const declbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv);`;
-        const declbsqemitdiag = `void BSQ_diag_emit${ctname}(const ${ctname}& vv);`;
+        const declbsqemitdiag = `void BSQ_diag_emit${ctname}(std::ostream& out, const ${ctname}& vv, bool waddr);`;
 
         const defbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}() {\n` +
         `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeType("${tdecl.tkey}")) { return std::nullopt; };\n` +
@@ -2340,7 +2340,7 @@ class CPPEmitter {
         `        std::optional<${vtype}> vv = BSQ_parse${TransformCPPNameManager.convertTypeKey(tdecl.vtype.tkeystr)}();\n` +
         `        if(!vv.has_value()) { return std::nullopt; }\n` +
         `        varr[count++] = { vk.value(), vv.value() };\n\n` +
-        `        if(count >= 16) { break; /* TODO: implement dynamic growth */ }\n` +
+        `        if(count >= 16) { assert(false); /* TODO: implement dynamic growth */ }\n` +
         `    }\n` +
         `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('}')) { return std::nullopt; };\n` +
         `    return std::make_optional<${ctname}>(${ctname}::mk(varr, count));\n` +

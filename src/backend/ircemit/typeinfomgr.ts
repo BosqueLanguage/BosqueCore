@@ -701,9 +701,9 @@ class TypeInfoManager {
                 const quickrelease = this.isQuickReleaseType(tdecl.oftype, irasm);
 
                 //Add placeholders for the implicitly generated map types -- use dummy values for mask here since we just need to know they exist -- list emitter will handle the rest
-                this.addTypeInfo(`CmpRBTreeLeaf_${tdecl.tkey}`, new TypeInfo(`CmpRBTreeLeaf_${tdecl.tkey}`, new IRNominalTypeSignature(`PosRBTreeLeaf_${tdecl.tkey}`), ttid - 3, (oftinfo.bytesize + 8), LayoutTag.Ref, undefined, quickrelease));
-                this.addTypeInfo(`CmpRBTreeNode_${tdecl.tkey}`, new TypeInfo(`CmpRBTreeNode_${tdecl.tkey}`, new IRNominalTypeSignature(`PosRBTreeNode_${tdecl.tkey}`), ttid - 2, (oftinfo.bytesize + 32), LayoutTag.Ref, undefined, false));
-                this.addTypeInfo(`CmpRBTree_${tdecl.tkey}`, new TypeInfo(`CmpRBTree_${tdecl.tkey}`, new IRNominalTypeSignature(`PosRBTree_${tdecl.tkey}`), ttid - 1, 8, LayoutTag.Ref, undefined, false));
+                this.addTypeInfo(`CmpRBTreeLeaf_${tdecl.tkey}`, new TypeInfo(`CmpRBTreeLeaf_${tdecl.tkey}`, new IRNominalTypeSignature(`CmpRBTreeLeaf_${tdecl.tkey}`), ttid - 3, (oftinfo.bytesize + 8), LayoutTag.Ref, undefined, quickrelease));
+                this.addTypeInfo(`CmpRBTreeNode_${tdecl.tkey}`, new TypeInfo(`CmpRBTreeNode_${tdecl.tkey}`, new IRNominalTypeSignature(`CmpRBTreeNode_${tdecl.tkey}`), ttid - 2, (oftinfo.bytesize + 32), LayoutTag.Ref, undefined, false));
+                this.addTypeInfo(`CmpRBTree_${tdecl.tkey}`, new TypeInfo(`CmpRBTree_${tdecl.tkey}`, new IRNominalTypeSignature(`CmpRBTree_${tdecl.tkey}`), ttid - 1, 8, LayoutTag.Ref, undefined, false));
                 
                 this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, 8, LayoutTag.Value, "1", false));
             }
