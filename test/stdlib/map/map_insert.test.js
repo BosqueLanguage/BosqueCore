@@ -15,7 +15,7 @@ describe ("Map -- add/set/insert", () => {
 
     it("should add", function () {
         runTestSet('public function main(i: Int): Map<Int, Nat> { return Map<Int, Nat>{}.add(i, 1n); }', [['0i', 'Map<Int, Nat>{ 0i => 1n }']], []);
-        runTestSet('public function main(i: Int): Map<Int, Nat> { return Map<Int, Nat>{1i => 1n, 2i => 2n}.add(i, 3n); }', [['0i', 'Map<Int, Nat>{ 0i => 3n, 1i => 1n, 2i => 2n }'], ['0i', 'Map<Int, Nat>{ 0i => 3n, 1i => 1n, 2i => 2n }']], ['2i']); 
+        runTestSet('public function main(i: Int): Map<Int, Nat> { return Map<Int, Nat>{1i => 1n, 2i => 2n}.add(i, 3n); }', [['0i', 'Map<Int, Nat>{ 0i => 3n, 1i => 1n, 2i => 2n }'], ['11i', 'Map<Int, Nat>{ 1i => 1n, 2i => 2n, 11i => 3n }']], ['2i']); 
         runTestSet('public function main(i: Int): Map<Int, Nat> { return Map<Int, Nat>{1i => 1n, 2i => 2n, 3i => 3n}.add(i, 4n); }', [['0i', 'Map<Int, Nat>{ 0i => 4n, 1i => 1n, 2i => 2n, 3i => 3n }'], ['5i', 'Map<Int, Nat>{ 1i => 1n, 2i => 2n, 3i => 3n, 5i => 4n }']], ['3i']); 
     });
 
