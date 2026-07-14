@@ -73,7 +73,7 @@ __internal entity Map<K: keytype, V> {
     method insert(k: K, v: V): Map<K, V> {
         return MapOps::s_map_insert<K, V>(this, k, v);
     }
-    
+%*
     ref method add(k: K, v: V) 
         requires !this.has(k);
     {
@@ -89,5 +89,6 @@ __internal entity Map<K: keytype, V> {
     ref method insert(k: K, v: V) {
         return MapOps::s_map_insert_ref<K, V>(ref this, k, v);
     }
+*%
 #endif %% STRIPPED_CORE
 }
