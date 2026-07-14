@@ -4676,6 +4676,7 @@ class Parser {
             return new VarUpdateStatement(sinfo, vexp, updates);
         }
         else if(this.testFollows(KW_ref, KW_self, SYM_lbrack)) {
+            this.consumeToken(); //consume ref
             this.consumeToken(); //consume self
             const updates = this.parseVarUpdates();
 
@@ -4691,6 +4692,7 @@ class Parser {
             return new VoidRefCallStatement(sinfo, rhs);  
         }
         else {
+            this.consumeToken(); //consume ref
             const rhs = this.parseExpression(); //must be a call (with a ref/out param)
             if(!(rhs instanceof CallNamespaceFunctionExpression) && !(rhs instanceof CallTypeFunctionExpression) && !(rhs instanceof PostfixOp) && !(rhs instanceof CallRefInvokeExpression)) {
                 this.recordErrorGeneral(sinfo, "Expected a call expression");
