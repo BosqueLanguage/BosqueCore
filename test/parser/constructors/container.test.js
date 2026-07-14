@@ -17,7 +17,7 @@ describe ("Parser -- Container Constructor (List)", () => {
 
     it("should parse map constructors", function () {
         parseTestFunction("function main(): Map<Int, Nat> { return Map<Int, Nat>{}; }", undefined);
-        parseTestFunction("function main(): Map<Int, Nat> { return Map<Int, Nat>{1i => 2n, MapEntry{3i, 4n}}; }", undefined);
+        parseTestFunction("function main(): Map<Int, Nat> { return Map<Int, Nat>{1i => 2n, MapEntry<Int, Nat>{3i, 4n}}; }", undefined);
         parseTestFunction("function main(m: Map<Int, Nat>): Map<Int, Nat> { return Map<Int, Nat>{1i => 2n, ...m, 3i => 4n}; }", undefined);
     });
 
