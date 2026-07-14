@@ -771,19 +771,19 @@ private:
             return curr;
         }
 
-        XMapEntry<K, V> getFront() const
+        XMapEntry<K, V> getFrontNode() const
         {
             const CmpRBNode<K, V>* minNode = reprGetMinNode(this->root);
             return minNode->data.entry;
         }
 
-        XMapEntry<K, V> getBack() const
+        XMapEntry<K, V> getBackNode() const
         {
             const CmpRBNode<K, V>* maxNode = reprGetMaxNode(this->root);
             return maxNode->data.entry;
         }
 
-        XMapEntry<K, V> getindex(int64_t index) const
+        XMapEntry<K, V> getIndexNode(int64_t index) const
         {
             return reprGetIndexValue(index, this->root);
         }
@@ -793,16 +793,16 @@ private:
             return reprGetKeyNode(key, this->root) != nullptr;
         }
 
-        XMapEntry<K, V> get(const K& key) const
+        V getValue(const K& key) const
         {
-            return reprGetKeyNode(key, this->root)->data.entry;
+            return reprGetKeyValue(key, this->root);
         }
 
-        bool tryget(const K& key, XMapEntry<K, V>& val) const
+        bool tryget(const K& key, V& val) const
         {
             const CmpRBNode<K, V>* node = reprGetKeyNode(key, this->root);
             if(node != nullptr) {
-                val = node->data.entry;
+                val = node->data.entry.value;
                 return true;
             }
 

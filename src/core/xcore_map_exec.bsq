@@ -7,8 +7,14 @@ namespace MapOps {
     function s_map_empty<K: keytype, V>(m: Map<K, V>): Bool = @map_empty;
     function s_map_size<K: keytype, V>(m: Map<K, V>): Nat = @map_size;
 
+    function s_map_min<K: keytype, V>(m: Map<K, V>): MapEntry<K, V> = @map_min;
+    function s_map_max<K: keytype, V>(m: Map<K, V>): MapEntry<K, V> = @map_max;
+
     function s_map_has<K: keytype, V>(m: Map<K, V>, k: K): Bool = @map_has;
     function s_map_get<K: keytype, V>(m: Map<K, V>, k: K): V = @map_get;
+
+    function s_map_insert<K: keytype, V>(m: Map<K, V>, k: K, v: V): Map<K, V> = @map_insert;
+    function s_map_insert_ref<K: keytype, V>(m: Map<K, V>, k: K, v: V): Void = @map_insert_ref;
 }
 #else
 #endif %% EXEC_LIBS

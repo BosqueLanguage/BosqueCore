@@ -1390,11 +1390,40 @@ class CPPEmitter {
             prestr = `auto sp = s; while(${g}(guard, sp)) { sp = ${fn}(op, s); }`;
             bstr = "s";
         }
+        else if(body.builtin === "map_empty") {
+            bstr = "ᐸRuntimeᐳ::XBool::from(m.empty())";
+        }
+        else if(body.builtin === "map_size") {
+            bstr = "ᐸRuntimeᐳ::XNat{(int64_t)m.size()}";
+        }
+        else if(body.builtin === "map_min") {
+            bstr = "m.getMin()";
+        }
+        else if(body.builtin === "map_max") {
+            bstr = "m.getMax()";
+        }
+        else if(body.builtin === "map_has") {
+            bstr = "ᐸRuntimeᐳ::XBool::from(m.has(k))";
+        }
+        else if(body.builtin === "map_get") {
+            bstr = "m.get(k)";
+        }
+        else if(body.builtin === "map_insert") {
+            bstr = "m.insert(k, v)";
+        }
+        else if(body.builtin === "map_insert_ref") {
+            bstr = "m = m.insert(k, v)";
+        }
         else {
             assert(false, "CPPEmitter: need to implement builtin body emission " + body.builtin);
         }
 
-        return `{ ${prestr == "" ? "" : prestr + " "}return ${bstr}; }`;
+        if(invk.resultType instanceof IRVoidTypeSignature) {
+            return `${bstr}`;
+        }
+        else {
+            return `{ ${prestr == "" ? "" : prestr + " "}return ${bstr}; }`;
+        }
     }
 
     private emitHoleBody(body: IRHoleBody, indent: string | undefined): string {

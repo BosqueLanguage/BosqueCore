@@ -47,7 +47,7 @@ namespace ᐸRuntimeᐳ
         { 
             assert(!this->umap.empty());
             
-            return this->umap.getindex(this->index);
+            return this->umap.getIndexNode(this->index);
         }
 
         XMapKVIterator& operator++()
@@ -193,12 +193,12 @@ namespace ᐸRuntimeᐳ
             return this->utree.has(key);
         }
 
-        XMapEntry<K, V> get(const K& key) const
+        V get(const K& key) const
         {
-            return this->utree.get(key);
+            return this->utree.getValue(key);
         }
 
-        bool tryget(const K& key, XMapEntry<K, V>& val) const
+        bool tryget(const K& key, V& val) const
         {
             return this->utree.tryget(key, val);
         }
