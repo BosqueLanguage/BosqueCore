@@ -180,12 +180,12 @@ namespace ᐸRuntimeᐳ
 
         XMapEntry<K, V> getMin() const
         {
-            return this->utree.getFront();
+            return this->utree.getFrontNode();
         }
 
         XMapEntry<K, V> getMax() const
         {
-            return this->utree.getBack();
+            return this->utree.getBackNode();
         }
 
         bool has(const K& key) const
@@ -205,8 +205,7 @@ namespace ᐸRuntimeᐳ
 
         XMapKV insert(const K& key, const V& value) const
         {
-            CmpRBTree<K, V, getCmpTreeIDFrom(TYPE_ID_MAP_KV)> newtree = this->utree.insert(key, value);
-            return XMapKV<K, V, getCmpTreeIDFrom(TYPE_ID_MAP_KV)>{newtree};
+            return XMapKV{this->utree.insert(key, value)};
         }
     };
 }

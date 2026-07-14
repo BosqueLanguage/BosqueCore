@@ -809,9 +809,9 @@ private:
             return false;
         }
 
-        CmpRBTree<K, V, TreeID> insert(int64_t index, const XMapEntry<K, V>& value) const
+        CmpRBTree<K, V, TreeID> insert(const K& key, const V& value) const
         {
-            CmpRBNode<K, V>* root = blacken(insertrec(this->root, index, value));
+            CmpRBNode<K, V>* root = blacken(insertrec(this->root, key, value));
 
             BSQ_IF_ENABLED(RB_INVARIANT_VALIDATE, debugAssertInvariants(root, reprGetCount(this->root) + 1));
             return CmpRBTree<K, V, TreeID>{root};
