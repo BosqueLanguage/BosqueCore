@@ -247,7 +247,7 @@ namespace ᐸRuntimeᐳ
                     if(index < lcount) {
                         curr = tnode->left;
                     }
-                    else if(index > lcount + 1) {
+                    else if(index > lcount) {
                         index -= (lcount + 1);
                         curr = tnode->right;
                     }

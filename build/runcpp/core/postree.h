@@ -1105,33 +1105,6 @@ private:
             }
         }
 
-        template <typename Iter>
-        static PosRBNode<T, K>* mklargerec(Iter start, Iter end, size_t size)
-        {
-            if(size <= K) {
-                return s_leafallocator->construct(PosRBData<T, K>(RColor::Red, 1, start, end));
-            }
-            else {
-                size_t dsize = (size_t)std::max((uint64_t)1, ((uint64_t)K) - 2);
-
-                size_t remain = size - dsize;
-                size_t lsize = remain / 2;
-                size_t rsize = remain - lsize;
-
-                Iter mid1 = start;
-                std::advance(mid1, lsize);
-
-                Iter mid2 = mid1;
-                std::advance(mid2, dsize);
-
-                const PosRBNode<T, K>* left = mklargerec(start, mid1, lsize);
-                const PosRBNode<T, K>* right = mklargerec(mid2, end, rsize);
-
-                PosRBData<T, K> ndata(RColor::Black, 1, mid1, mid2);
-                return s_nodeallocator->construct(RColor::Black, computeNewBHeight_ForTreeNode(RColor::Black, left, right), computeNewCount_ForTreeNode(left, right, ndata), left, right, ndata);
-            }
-        }
-
         static PosRBNode<T, K>* setrec(const PosRBNode<T, K>* curr, int64_t index, const T& value)
         {
             std::vector<std::pair<const PosRBNode<T, K>*, std::pair<bool, bool>>> path;
@@ -1459,6 +1432,33 @@ private:
         }
 
     public:
+        template <typename Iter>
+        static PosRBNode<T, K>* mklargerec(Iter start, Iter end, size_t size)
+        {
+            if(size <= K) {
+                return s_leafallocator->construct(PosRBData<T, K>(RColor::Red, 1, start, end));
+            }
+            else {
+                size_t dsize = (size_t)std::max((uint64_t)1, ((uint64_t)K) - 2);
+
+                size_t remain = size - dsize;
+                size_t lsize = remain / 2;
+                size_t rsize = remain - lsize;
+
+                Iter mid1 = start;
+                std::advance(mid1, lsize);
+
+                Iter mid2 = mid1;
+                std::advance(mid2, dsize);
+
+                const PosRBNode<T, K>* left = mklargerec(start, mid1, lsize);
+                const PosRBNode<T, K>* right = mklargerec(mid2, end, rsize);
+
+                PosRBData<T, K> ndata(RColor::Black, 1, mid1, mid2);
+                return s_nodeallocator->construct(RColor::Black, computeNewBHeight_ForTreeNode(RColor::Black, left, right), computeNewCount_ForTreeNode(left, right, ndata), left, right, ndata);
+            }
+        }
+        
         int64_t size() const
         {
             return reprGetCount(this->root);
