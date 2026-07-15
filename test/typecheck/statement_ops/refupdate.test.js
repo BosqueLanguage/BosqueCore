@@ -17,6 +17,9 @@ describe ("Checker -- ref updates", () => {
     it("should check ref updates as params", function () {
         checkTestFunctionInFile('entity Foo { field x: Int; } public function main(ref z: Foo): Int { ref z[x = 5i]; return z.x; }');
         checkTestFunctionInFile('entity Foo { field x: Int; ref method f() { ref this[x = 0i]; return; } } public function main(): Int { ref z = Foo{3i}; ref z.f(); return z.x; }');
+
+        //don't need return value for Void invokes
+        checkTestFunctionInFile('entity Foo { field x: Int; ref method f() { ref this[x = 0i]; } } public function main(): Int { ref z = Foo{3i}; ref z.f(); return z.x; }');
     });
 
     it("should fail ref updates", function () {

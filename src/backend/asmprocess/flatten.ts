@@ -3514,6 +3514,17 @@ class ASMToIRConverter {
             const iiv = this.flattenExpression(stmt.exp);
             this.pushStatement(new IRVoidInvokeStatement(this.generateTempVarName(), iiv as IRInvokeImplicitsExpression));
         }
+        else if(stmt.exp instanceof CallTypeFunctionExpression) {
+            const iiv = this.flattenExpression(stmt.exp);
+            this.pushStatement(new IRVoidInvokeStatement(this.generateTempVarName(), iiv as IRInvokeImplicitsExpression));
+        }
+        else if(stmt.exp instanceof PostfixOp) {
+            const iiv = this.flattenExpression(stmt.exp);
+            this.pushStatement(new IRVoidInvokeStatement(this.generateTempVarName(), iiv as IRInvokeImplicitsExpression));
+        }
+        else if(stmt.exp instanceof CallRefInvokeExpression) {
+            xxxx;
+        }
         else {
             assert(false, "Not Implemented -- flattenVoidRefCallStatement for other calls");
         }

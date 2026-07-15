@@ -4458,6 +4458,7 @@ class TypeChecker {
         this.checkError(stmt.sinfo, !(rtype.tsig instanceof ErrorTypeSignature) && !(rtype.tsig instanceof VoidTypeSignature), `Expected a void return but got ${rtype.tsig.emit()}`);
 
         //TODO may want to do additional checks that there are ref/out params that are assigned here (or that it is a task operation)
+        xxxx;
 
         for(let i = 0; i < rtype.setuncond.length; ++i) {
             env = env.assignLocalVariable(rtype.setuncond[i]);
