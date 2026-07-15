@@ -3376,7 +3376,6 @@ class TypeChecker {
     }
 
     private checkMapEntryConstructorExpression(env: TypeEnvironment, exp: MapEntryConstructorExpression, infertype: TypeSignature | undefined): TypeSignature {
-        /*
         const ioktype = infertype !== undefined && (infertype instanceof NominalTypeSignature) && (infertype.decl instanceof MapEntryTypeDecl);
         if(!ioktype) {
             this.reportError(exp.sinfo, `MapEntryConstructor requires a MapEntry type as the inferred type`);
@@ -3394,8 +3393,6 @@ class TypeChecker {
 
         exp.ctype = infertype;
         return exp.setType(infertype);
-        */
-        assert(false, "Not Implemented -- checkMapEntryConstructorExpression");
     }
 
     ////////

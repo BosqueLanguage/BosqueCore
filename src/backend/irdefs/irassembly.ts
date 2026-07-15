@@ -512,8 +512,8 @@ class IRMapEntryTypeDecl extends IRConstructableTypeDecl {
     readonly ktype: IRTypeSignature;
     readonly vtype: IRTypeSignature;
 
-    constructor(tkey: string, saturatedProvides: IRTypeSignature[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, ktype: IRTypeSignature, vtype: IRTypeSignature) {
-        super(tkey, saturatedProvides, docstr, file, sinfo);
+    constructor(tkey: string, docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, ktype: IRTypeSignature, vtype: IRTypeSignature) {
+        super(tkey, [], docstr, file, sinfo);
         this.ktype = ktype;
         this.vtype = vtype;
     }

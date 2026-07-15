@@ -4662,6 +4662,18 @@ class Parser {
 
             return new ThisUpdateStatement(sinfo, vexp, updates);
         }
+        else if(this.testFollows(KW_ref, KW_self, SYM_lbrack)) {
+            this.consumeToken(); //consume ref
+            this.consumeToken(); //consume self
+            const updates = this.parseVarUpdates();
+
+            if(updates.length === 0) {
+                this.recordErrorGeneral(sinfo, "Empty update list is not allowed");
+                return new ErrorStatement(sinfo);
+            }
+
+            return new SelfUpdateStatement(sinfo, updates);
+        }
         else if(this.testFollows(KW_ref, TokenStrings.IdentifierName, SYM_lbrack)) {
             this.consumeToken(); //consume ref
 
@@ -4675,23 +4687,13 @@ class Parser {
 
             return new VarUpdateStatement(sinfo, vexp, updates);
         }
-        else if(this.testFollows(KW_ref, KW_self, SYM_lbrack)) {
-            this.consumeToken(); //consume self
-            const updates = this.parseVarUpdates();
-
-            if(updates.length === 0) {
-                this.recordErrorGeneral(sinfo, "Empty update list is not allowed");
-                return new ErrorStatement(sinfo);
-            }
-
-            return new SelfUpdateStatement(sinfo, updates);
-        }
         else if(this.testToken(KW_do)) {
             const rhs = this.parseTaskActionRValueExpression();
             return new VoidRefCallStatement(sinfo, rhs);  
         }
         else {
-            const rhs = this.parseExpression(); //must be a call (with a ref/out param)
+            const rhs = this.testToken(KW_ref) ? this.parseRefRValueExpression() : this.parseExpression(); //must be a call (with a ref/out param)
+
             if(!(rhs instanceof CallNamespaceFunctionExpression) && !(rhs instanceof CallTypeFunctionExpression) && !(rhs instanceof PostfixOp) && !(rhs instanceof CallRefInvokeExpression)) {
                 this.recordErrorGeneral(sinfo, "Expected a call expression");
                 return new ErrorStatement(sinfo);
