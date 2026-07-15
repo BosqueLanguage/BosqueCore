@@ -85,6 +85,9 @@ enum IRExpressionTag {
     IRConstructorListEmptyExpression = "IRConstructorListEmptyExpression",
     IRConstructorListSingletonsExpression = "IRConstructorListSingletonsExpression",
 
+    IRConstructorMapEmptyExpression = "IRConstructorMapEmptyExpression",
+    IRConstructorMapSingletonsExpression = "IRConstructorMapSingletonsExpression",
+
     IRAccessFieldSpecialExpression = "IRAccessFieldSpecialExpression",
     IRAccessFieldDirectExpression = "IRAccessFieldDirectExpression",
     IRAccessFieldVirtualExpression = "IRAccessFieldVirtualExpression",
@@ -1141,6 +1144,23 @@ class IRConstructorListSingletonsExpression extends IRConstructExpression {
 
     constructor(ctype: IRNominalTypeSignature, elements: IRSimpleExpression[]) {
         super(IRExpressionTag.IRConstructorListSingletonsExpression, ctype);
+        this.elements = elements;
+    }
+}
+
+/* NOTE -- the empty constructor is a simple expression (as it is really a constant) we can place anywhere safely */
+class IRConstructorMapEmptyExpression extends IRConstructExpression {
+    
+    constructor(ctype: IRNominalTypeSignature) {
+        super(IRExpressionTag.IRConstructorMapEmptyExpression, ctype);
+    }
+}
+
+class IRConstructorMapSingletonsExpression extends IRConstructExpression {
+    readonly elements: IRSimpleExpression[];
+
+    constructor(ctype: IRNominalTypeSignature, elements: IRSimpleExpression[]) {
+        super(IRExpressionTag.IRConstructorMapSingletonsExpression, ctype);
         this.elements = elements;
     }
 }
@@ -2546,6 +2566,7 @@ export {
     IRConstructorLambdaExpression,
     IRConstructorEListExpression,
     IRConstructorListEmptyExpression, IRConstructorListSingletonsExpression,
+    IRConstructorMapEmptyExpression, IRConstructorMapSingletonsExpression,
 
     IRAccessFieldExpression, IRAccessFieldSpecialExpression, IRAccessFieldDirectExpression, IRAccessFieldVirtualExpression, IRAccessEListIndexExpression,
 

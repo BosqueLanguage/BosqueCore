@@ -453,6 +453,9 @@ class TypeInfoManager {
                 else if(ddecl instanceof IRSomeTypeDecl) {
                     isqr = this.isQuickReleaseType(ddecl.ttype, irasm);
                 }
+                else if(ddecl instanceof IRMapEntryTypeDecl) {
+                    isqr = this.isQuickReleaseType(ddecl.ktype, irasm) && this.isQuickReleaseType(ddecl.vtype, irasm);
+                }
                 else if(ddecl instanceof IRListTypeDecl) {
                     isqr = false;
                 }
@@ -509,6 +512,11 @@ class TypeInfoManager {
             const oftinfo = this.generateLayoutInfoForType(tdecl.ttype, irasm);
             this.addLayoutInfo(tdecl.tkey, new LayoutInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), oftinfo.bytesize, oftinfo.layoutmask));
         }
+        else if(tdecl instanceof IRMapEntryTypeDecl) {
+            const kftinfo = this.generateLayoutInfoForType(tdecl.ktype, irasm);
+            const vftinfo = this.generateLayoutInfoForType(tdecl.vtype, irasm);
+            this.addLayoutInfo(tdecl.tkey, new LayoutInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), kftinfo.bytesize + vftinfo.bytesize, kftinfo.layoutmask + vftinfo.layoutmask));
+        }
         else if(tdecl instanceof IRAbstractCollectionTypeDecl) {
             if(tdecl instanceof IRListTypeDecl) {
                 const oftinfo = this.generateLayoutInfoForType(tdecl.oftype, irasm);
@@ -518,6 +526,13 @@ class TypeInfoManager {
                 const mask = TypeInfoManager.computeListMaskOfK(LIST_T_INLINE_CAPACITY(oftinfo.bytesize), oftinfo.layoutmask);
 
                 this.addLayoutInfo(tdecl.tkey, new LayoutInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ltotalsize, mask));
+                return this.getLayoutInfo(tdecl.tkey);
+            }
+            else if(tdecl instanceof IRMapTypeDecl) {
+                //
+                //For now maps are just a value type with a single pointer to the tree -- later might generalize like lists
+                //
+                this.addLayoutInfo(tdecl.tkey, new LayoutInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), 8, "1"));
                 return this.getLayoutInfo(tdecl.tkey);
             }
             else {
@@ -645,6 +660,14 @@ class TypeInfoManager {
             const ttid = this.typeInfoMap.size;
             this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, oftinfo.bytesize, LayoutTag.Value, TypeInfoManager.staticLayoutToPtrMaskConvert(oftinfo.layoutmask), quickrelease));
         }
+        else if(tdecl instanceof IRMapEntryTypeDecl) {
+            const quickrelease = this.isQuickReleaseType(tdecl.ktype, irasm) && this.isQuickReleaseType(tdecl.vtype, irasm);
+            const kftinfo = this.generateLayoutInfoForType(tdecl.ktype, irasm);
+            const vftinfo = this.generateLayoutInfoForType(tdecl.vtype, irasm);
+
+            const ttid = this.typeInfoMap.size;
+            this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, kftinfo.bytesize + vftinfo.bytesize, LayoutTag.Value, TypeInfoManager.staticLayoutToPtrMaskConvert(kftinfo.layoutmask + vftinfo.layoutmask), quickrelease));
+        }
         else if(tdecl instanceof IRAbstractCollectionTypeDecl) {
             if(tdecl instanceof IRListTypeDecl) {
                 const oftinfo = this.generateLayoutInfoForType(tdecl.oftype, irasm);
@@ -665,6 +688,24 @@ class TypeInfoManager {
                 this.addTypeInfo(`${tdecl.tkey}Tree`, new TypeInfo(`${tdecl.tkey}Tree`, new IRNominalTypeSignature(`${tdecl.tkey}Tree`), ttid - 1, 16, LayoutTag.Value, undefined, false));
 
                 this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, ltotalsize, LayoutTag.Value, mask, false));
+            }
+            else if(tdecl instanceof IRMapTypeDecl) {
+                //
+                //For now maps are just a value type with a single pointer to the tree -- later might generalize like lists
+                //
+
+                const oftinfo = this.generateLayoutInfoForType(tdecl.oftype, irasm);
+                
+                const ttid = this.typeInfoMap.size + 3; //+3 for the leaf, node, and tree type infos we need to generate for all the parts in the list
+                
+                const quickrelease = this.isQuickReleaseType(tdecl.oftype, irasm);
+
+                //Add placeholders for the implicitly generated map types -- use dummy values for mask here since we just need to know they exist -- list emitter will handle the rest
+                this.addTypeInfo(`CmpRBTreeLeaf_${tdecl.tkey}`, new TypeInfo(`CmpRBTreeLeaf_${tdecl.tkey}`, new IRNominalTypeSignature(`CmpRBTreeLeaf_${tdecl.tkey}`), ttid - 3, (oftinfo.bytesize + 8), LayoutTag.Ref, undefined, quickrelease));
+                this.addTypeInfo(`CmpRBTreeNode_${tdecl.tkey}`, new TypeInfo(`CmpRBTreeNode_${tdecl.tkey}`, new IRNominalTypeSignature(`CmpRBTreeNode_${tdecl.tkey}`), ttid - 2, (oftinfo.bytesize + 32), LayoutTag.Ref, undefined, false));
+                this.addTypeInfo(`CmpRBTree_${tdecl.tkey}`, new TypeInfo(`CmpRBTree_${tdecl.tkey}`, new IRNominalTypeSignature(`CmpRBTree_${tdecl.tkey}`), ttid - 1, 8, LayoutTag.Ref, undefined, false));
+                
+                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, 8, LayoutTag.Value, "1", false));
             }
             else {
                 assert(false, `TypeInfoManager::processInfoGenerationForEntity - Unsupported collection type declaration for key ${tdecl.tkey}`);

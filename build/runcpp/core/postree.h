@@ -4,7 +4,6 @@
 
 #include "bsqtype.h"
 #include "integrals.h"
-#include "boxed.h"
 
 #include "../runtime/allocator/alloc.h"
 
@@ -29,12 +28,6 @@ namespace ᐸRuntimeᐳ
         
         return arr;
     }
-
-    enum class RColor : uint16_t
-    {
-        Red,
-        Black
-    };
     
     template<typename T, size_t K>
     class PosRBData
@@ -48,7 +41,7 @@ namespace ᐸRuntimeᐳ
 
         PosRBData(): color{}, bheight{}, dcount{}, data{} { ; }
         PosRBData(RColor color, uint16_t bheight, const PosRBData<T, K>& data) : color{color}, bheight{bheight}, dcount{data.dcount}, data{data.data} { ; }
-        PosRBData(const PosRBData& other) = default;
+        PosRBData(const PosRBData<T, K>& other) = default;
 
         PosRBData(RColor color, uint16_t bheight, const T& value) : color{color}, bheight{bheight}, dcount{1}, data{value} { ; }
         PosRBData(RColor color, uint16_t bheight, int32_t dcount, const std::array<T, K>& data) : color{color}, bheight{bheight}, dcount{dcount}, data{data} { ; }
@@ -519,33 +512,6 @@ namespace ᐸRuntimeᐳ
             }
             else {
                 return s_nodeallocator->construct(color, computeNewBHeight_ForTreeNode(color, left, right), computeNewCount_ForTreeNode(left, right, data), left, right, data);
-            }
-        }
-
-        template <typename Iter>
-        static PosRBNode<T, K>* mklargerec(Iter start, Iter end, size_t size)
-        {
-            if(size <= K) {
-                return s_leafallocator->construct(PosRBData<T, K>(RColor::Red, 1, start, end));
-            }
-            else {
-                size_t dsize = (size_t)std::max((uint64_t)1, ((uint64_t)K) - 2);
-
-                size_t remain = size - dsize;
-                size_t lsize = remain / 2;
-                size_t rsize = remain - lsize;
-
-                Iter mid1 = start;
-                std::advance(mid1, lsize);
-
-                Iter mid2 = mid1;
-                std::advance(mid2, dsize);
-
-                const PosRBNode<T, K>* left = mklargerec(start, mid1, lsize);
-                const PosRBNode<T, K>* right = mklargerec(mid2, end, rsize);
-
-                PosRBData<T, K> ndata(RColor::Black, 1, mid1, mid2);
-                return s_nodeallocator->construct(RColor::Black, computeNewBHeight_ForTreeNode(RColor::Black, left, right), computeNewCount_ForTreeNode(left, right, ndata), left, right, ndata);
             }
         }
 
@@ -1466,6 +1432,33 @@ private:
         }
 
     public:
+        template <typename Iter>
+        static PosRBNode<T, K>* mklargerec(Iter start, Iter end, size_t size)
+        {
+            if(size <= K) {
+                return s_leafallocator->construct(PosRBData<T, K>(RColor::Red, 1, start, end));
+            }
+            else {
+                size_t dsize = (size_t)std::max((uint64_t)1, ((uint64_t)K) - 2);
+
+                size_t remain = size - dsize;
+                size_t lsize = remain / 2;
+                size_t rsize = remain - lsize;
+
+                Iter mid1 = start;
+                std::advance(mid1, lsize);
+
+                Iter mid2 = mid1;
+                std::advance(mid2, dsize);
+
+                const PosRBNode<T, K>* left = mklargerec(start, mid1, lsize);
+                const PosRBNode<T, K>* right = mklargerec(mid2, end, rsize);
+
+                PosRBData<T, K> ndata(RColor::Black, 1, mid1, mid2);
+                return s_nodeallocator->construct(RColor::Black, computeNewBHeight_ForTreeNode(RColor::Black, left, right), computeNewCount_ForTreeNode(left, right, ndata), left, right, ndata);
+            }
+        }
+        
         int64_t size() const
         {
             return reprGetCount(this->root);
