@@ -28,3 +28,10 @@ describe ("Checker -- simple return", () => {
         checkTestFunctionInFileError('concept Baz {} entity Foo {} function main(): Baz { return Foo{}; }', "Expected a return value of type Baz but got Foo");
     });
 });
+
+describe ("Checker -- return with refs", () => {
+    it("should check declare-assign with refs", function () {
+        checkTestFunctionInFile("function foo(out y: Int): Int { return 1i; } public function main(): Int { var y: Int; return foo(out y); }");
+        checkTestFunctionInFile("entity Foo { ref method foo(): Int { return 1i; } } public function main(): Int { ref z = Foo{}; return ref z.foo(); }");
+    });
+});
