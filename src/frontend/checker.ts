@@ -4472,13 +4472,12 @@ class TypeChecker {
         }
 
         const decl = ttype.decl;
-        const okupdate = (decl instanceof EntityTypeDecl) || (decl instanceof DatatypeMemberEntityTypeDecl) || (decl instanceof ConceptTypeDecl) || (decl instanceof DatatypeTypeDecl);
-        const isdirect = (decl instanceof EntityTypeDecl) || (decl instanceof DatatypeMemberEntityTypeDecl);
+        const okupdate = (decl instanceof EntityTypeDecl) || (decl instanceof DatatypeMemberEntityTypeDecl) || (decl instanceof ConceptTypeDecl) || (decl instanceof DatatypeTypeDecl) || (decl instanceof AbstractCollectionTypeDecl);
+        const isdirect = (decl instanceof EntityTypeDecl) || (decl instanceof DatatypeMemberEntityTypeDecl) || (decl instanceof AbstractCollectionTypeDecl);
 
         return [okupdate, isdirect];
     }
 
-    /*
     private getFieldType(rcvrtype: TypeSignature, fname: string): TypeSignature | undefined {
         const finfo = this.relations.resolveTypeField(rcvrtype, fname, this.constraints);
         if(finfo === undefined) {
@@ -4487,19 +4486,17 @@ class TypeChecker {
 
         return finfo.member.declaredType.remapTemplateBindings(finfo.typeinfo.mapping);
     }
-    */
     
     private checkUpdateStatement(env: TypeEnvironment, stmt: UpdateStatement): TypeEnvironment {
-        /*
         const vtype = this.checkExpression(env, stmt.vexp, undefined);
         const vname = stmt.vexp.srcname;
 
-        const [vinfo, isparam] = env.resolveLocalVarInfoFromSrcNameWithIsParam(vname);
+        const vinfo = env.resolveLocalVarInfoFromSrcName(vname);
         if(vinfo === undefined) {
             this.reportError(stmt.sinfo, `Variable ${vname} is not declared`);
             return env;
         }
-        if((!isparam && vinfo.isConst) || (isparam && !vinfo.isRef)) {
+        if(vinfo.vkind !== "ref" && vinfo.vkind !== "var") {
             this.reportError(stmt.sinfo, `Variable ${vname} is cannot be updated (is local const or not a ref param)`);
             return env;
         }
@@ -4519,7 +4516,7 @@ class TypeChecker {
                 return {fieldname: upd[0], fieldtype: new ErrorTypeSignature(stmt.sinfo, undefined), etype: new ErrorTypeSignature(stmt.sinfo, undefined)};
             }
 
-            const cenv = env.pushNewLocalBinderScope(bname, ftype);
+            const cenv = env.pushNewLocalBinderScope([new VarInfo(bname, ftype, "let", true)]);
             const etype = this.checkExpression(cenv, upd[1], new SimpleTypeInferContext(ftype));
             if(!(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, ftype, this.constraints)) {
                 this.reportError(stmt.sinfo, `Expression of type ${etype.emit()} cannot be assigned to field ${upd[0]} of type ${ftype.emit()}`);
@@ -4533,8 +4530,6 @@ class TypeChecker {
         stmt.isdirect = isdirect;
 
         return env;
-        */
-        assert(false, "Not Implemented -- checkUpdateStatement");
     }
 
     private checkVarUpdateStatement(env: TypeEnvironment, stmt: VarUpdateStatement): TypeEnvironment {

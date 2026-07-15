@@ -15,5 +15,7 @@ describe ("Parser -- ref updates", () => {
 
         parseTestFunctionInFileError('entity Foo { field x: Int; } function foo(ref z: Foo): Int { ref z[x = 5i; return this.x; }', 'Expected "]" but got "[RECOVER]" when parsing "variable update list"');
         parseTestFunctionInFileError('entity Foo { field x: Int; } function foo(ref z: Foo): Int { ref z.[x = 5i]; return this.x; }', 'Expected "[IDENTIFIER]" but got "[" when parsing "ref invoke"');
+
+        parseTestFunctionInFileError('entity Foo { field x: Int; } function foo(ref z: Foo): Int { ref z[]; return this.x; }', 'Empty update list is not allowed');
     });
 });
