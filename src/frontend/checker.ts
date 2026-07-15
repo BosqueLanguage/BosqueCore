@@ -2774,7 +2774,7 @@ class TypeChecker {
         });
 
         exp.updatetype = rcvrtype;
-        exp.updateinfo = updates;
+        exp.updateinfo = updates.sort((a, b) => a.fieldname.localeCompare(b.fieldname));
         exp.isdirect = isdirect;
 
         return rcvrtype;
@@ -4539,7 +4539,7 @@ class TypeChecker {
         });
 
         stmt.updatetype = vtype;
-        stmt.updateinfo = updates;
+        stmt.updateinfo = updates.sort((a, b) => a.fieldname.localeCompare(b.fieldname));
         stmt.isdirect = isdirect;
 
         return env;
