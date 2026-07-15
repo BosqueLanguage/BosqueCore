@@ -3523,7 +3523,21 @@ class ASMToIRConverter {
             this.pushStatement(new IRVoidInvokeStatement(this.generateTempVarName(), iiv as IRInvokeImplicitsExpression));
         }
         else if(stmt.exp instanceof CallRefInvokeExpression) {
-            xxxx;
+            let iiv: IRExpression;
+            if(stmt.exp.tag === ExpressionTag.CallRefVariableExpression) {
+                iiv = this.flattenCallRefVariableExpression(stmt.exp as CallRefVariableExpression);
+            }
+            else if(stmt.exp.tag === ExpressionTag.CallRefThisExpression) {
+                iiv = this.flattenCallRefThisExpression(stmt.exp as CallRefThisExpression);
+            }
+            else if(stmt.exp.tag === ExpressionTag.CallRefSelfExpression) {
+                iiv = this.flattenCallRefSelfExpression(stmt.exp as CallRefSelfExpression);
+            }
+            else {
+                assert(false, "Unexpected CallRefInvokeExpression tag in flattenVoidRefCallStatement");
+            }
+
+            this.pushStatement(new IRVoidInvokeStatement(this.generateTempVarName(), iiv as IRInvokeImplicitsExpression));
         }
         else {
             assert(false, "Not Implemented -- flattenVoidRefCallStatement for other calls");

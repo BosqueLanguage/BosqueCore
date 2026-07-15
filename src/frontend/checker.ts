@@ -4455,10 +4455,22 @@ class TypeChecker {
 
     private checkVoidRefCallStatement(env: TypeEnvironment, stmt: VoidRefCallStatement): TypeEnvironment {
         const rtype = this.checkBaseRValueExpression(env, stmt.exp, undefined);
-        this.checkError(stmt.sinfo, !(rtype.tsig instanceof ErrorTypeSignature) && !(rtype.tsig instanceof VoidTypeSignature), `Expected a void return but got ${rtype.tsig.emit()}`);
+        
+        if(!(stmt.exp instanceof CallRefInvokeExpression)) {
+            if(stmt.exp instanceof CallNamespaceFunctionExpression) {
+                this.checkError(stmt.sinfo, !stmt.exp.args.args.some((arg) => arg instanceof PassingArgumentValue), `Call does not have any effect`);
+            }
+            else if( stmt.exp instanceof CallTypeFunctionExpression) {
+                this.checkError(stmt.sinfo, !stmt.exp.args.args.some((arg) => arg instanceof PassingArgumentValue), `Call does not have any effect`);
+            }
+            else {
+                assert(stmt.exp instanceof PostfixOp, "Huh this should be checked before.");
 
-        //TODO may want to do additional checks that there are ref/out params that are assigned here (or that it is a task operation)
-        xxxx;
+                const pcall = stmt.exp.ops[stmt.exp.ops.length - 1];
+                this.checkError(stmt.sinfo, !(pcall instanceof PostfixInvoke), `Call does not have any effect`);
+                this.checkError(stmt.sinfo, !(pcall as PostfixInvoke).args.args.some((arg) => arg instanceof PassingArgumentValue), `Call does not have any effect`);
+            }
+        }
 
         for(let i = 0; i < rtype.setuncond.length; ++i) {
             env = env.assignLocalVariable(rtype.setuncond[i]);
