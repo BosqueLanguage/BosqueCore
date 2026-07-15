@@ -30,8 +30,12 @@ describe ("Checker -- simple return", () => {
 });
 
 describe ("Checker -- return with refs", () => {
-    it("should check declare-assign with refs", function () {
+    it("should check return with refs", function () {
         checkTestFunctionInFile("function foo(out y: Int): Int { return 1i; } public function main(): Int { var y: Int; return foo(out y); }");
         checkTestFunctionInFile("entity Foo { ref method foo(): Int { return 1i; } } public function main(): Int { ref z = Foo{}; return ref z.foo(); }");
+    });
+
+    it("should check return with out? passthrough", function () {
+        checkTestFunctionInFile("function bar(out? y: Int): Bool { y = 1i; return true; } function foo(out? y: Int): Bool { return bar(out? y); } public function main(): Int { var y: Int; if(foo(out? y) { return y; } else { return 0i; } }");
     });
 });

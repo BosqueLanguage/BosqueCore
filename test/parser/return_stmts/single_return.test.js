@@ -11,7 +11,7 @@ describe ("Parser -- simple return", () => {
 });
 
 describe ("Parser -- return with refs", () => {
-    it("should parse declare-assign with refs", function () {
+    it("should parse return with refs", function () {
         parseTestFunctionInFile("function foo(out y: Int): Int { return 1i; } [FUNC]", "function main(): Int { var y: Int; return foo(out y); }", undefined);
         parseTestFunctionInFile("entity Foo { ref method foo() { ; } } [FUNC]", "function main(): Int { let z = Foo{}; return ref z.foo(); }", undefined);
     });
