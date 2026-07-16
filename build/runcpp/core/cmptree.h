@@ -812,7 +812,7 @@ private:
         CmpRBTree<K, V, TreeID> insert(const K& key, const V& value) const
         {
             CmpRBNode<K, V>* root = blacken(insertrec(this->root, key, value));
-            BSQ_IF_ENABLED(RB_INVARIANT_VALIDATE, debugAssertInvariants(root, reprGetCount(this->root) + (hasrec(this->root, key) ? 0 : 1))); //note this->root is never modified so we can test here (after the insert)
+            BSQ_IF_ENABLED(RB_INVARIANT_VALIDATE, debugAssertInvariants(root, reprGetCount(this->root) + (this->has(key) ? 0 : 1))); //note this->root is never modified so we can test here (after the insert)
 
             return CmpRBTree<K, V, TreeID>{root};
         }
