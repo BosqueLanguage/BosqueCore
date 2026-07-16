@@ -3595,7 +3595,8 @@ class ASMToIRConverter {
 
                  const invchecks = udecl.allInvariants.map<IREntityInvariantCheckStatement>((invdecl) => {
                     const intype = tbinds !== undefined ? invdecl.containingtype.remapTemplateBindings(tbinds) : invdecl.containingtype;
-                    return new IREntityInvariantCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.tag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), this.processTypeSignature(intype).tkeystr, invdecl.ii, cargs as IRImmediateExpression[]);
+                    const targs = cargs.slice(0, invdecl.containingtype.decl.saturatedBFieldInfo.length) as IRImmediateExpression[]
+                    return new IREntityInvariantCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.tag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), this.processTypeSignature(intype).tkeystr, invdecl.ii, targs);
                 });
                 
                 this.pushStatements(invchecks);

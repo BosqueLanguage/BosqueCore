@@ -2731,10 +2731,17 @@ class CPPEmitter {
             `    }\n` +
             `}`;
         }
-        
+
+        const iifieldargl = tdecl.saturatedBFieldInfo.map((bf) => { return {pname: `${TransformCPPNameManager.convertIdentifier("$" + bf.fname)}`, ptype: bf.ftype}; }); 
+        const vfuncinfo = tdecl.invariants.map((inv) => this.emitInvariantFunction(inv, tdecl, iifieldargl));
+        const valfuncinfo = tdecl.validates.map((val) => this.emitValidateFunction(val, tdecl, iifieldargl));
+
+        const ivdecls = [...vfuncinfo.map((vf) => vf[0]), ...valfuncinfo.map((vf) => vf[0])].join("\n");
+        const ivdefs = [...vfuncinfo.map((vf) => vf[1]), ...valfuncinfo.map((vf) => vf[1])].join("\n");
+
         return [
-            [declunion, declconcept, decltypeinfo, declbsqparse, declbsqemit, bsqdiagemit].join("\n"),
-            [defbsqparse, defbsqemit, bsqdiagemitdef].join("\n")
+            [declunion, declconcept, decltypeinfo, ivdecls, declbsqparse, declbsqemit, bsqdiagemit].join("\n"),
+            [ivdefs, defbsqparse, defbsqemit, bsqdiagemitdef].join("\n")
         ];
     }
 
