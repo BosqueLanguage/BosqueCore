@@ -3547,21 +3547,29 @@ class ASMToIRConverter {
     private flattenUpdateStatement(stmt: UpdateStatement, root: IRImmediateExpression) {
         const utype = this.tproc(stmt.updatetype as TypeSignature) as NominalTypeSignature;
 
-        let sbinds: {bname: string, btype: TypeSignature, bexp: IRAccessFieldExpression}[] = [];
-        let svars: {fname: string, fexp: IRSimpleExpression}[] = [];
-
         if(stmt.isdirect) {
+            let svars: {fname: string, fexp: IRSimpleExpression}[] = [];
+            
+            this.pushStatementBlock();
             for(let i = 0; i < stmt.updates.length; ++i) {
                 const update = stmt.updateinfo[i];
 
-                const ftype = this.tproc(update.fieldtype as TypeSignature);
+                const ftype = this.processTypeSignature(update.fieldtype as TypeSignature);
+                const declintype = this.processTypeSignature(update.declin as TypeSignature);
+                const bname = `$${update.fieldname}`;
+                const lfexp = new IRAccessFieldDirectExpression(this.processTypeSignature(utype), root, declintype, update.fieldname, ftype);
+                this.pushStatement(new IRVariableInitializationStatement(bname, ftype, lfexp, true));
+
                 const fexp = stmt.updates.find((ue) => ue[0] === update.fieldname) as [string, Expression];
                 const fval = this.flattenExpression(fexp[1]) as IRImmediateExpression;
 
-                sbinds.push({bname: update.binder, btype: update.fieldtype as TypeSignature, bexp: new IRAccessFieldDirectExpression()});
-
                 svars.push({fname: update.fieldname, fexp: fval});
             }
+            const stmts = this.popStatementBlock();
+
+            xxxx;
+
+            this.pushStatement(new IRBlockStatement(stmts));
         }
         else {
             assert(false, "Not Implemented -- flattenUpdateStatement for non-direct updates");
@@ -3570,11 +3578,13 @@ class ASMToIRConverter {
 
     private flattenVarUpdateStatement(stmt: VarUpdateStatement) {
         const vv = this.flattenExpression(stmt.vexp) as IRImmediateExpression;
+        
         this.flattenUpdateStatement(stmt, vv);
     }
 
     private flattenThisUpdateStatement(stmt: ThisUpdateStatement) {
         const vv = this.flattenExpression(stmt.vexp) as IRImmediateExpression;
+        
         this.flattenUpdateStatement(stmt, vv);
     }
 

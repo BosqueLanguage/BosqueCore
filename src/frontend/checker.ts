@@ -4490,15 +4490,6 @@ class TypeChecker {
 
         return [okupdate, isdirect];
     }
-
-    private getFieldType(rcvrtype: TypeSignature, fname: string): TypeSignature | undefined {
-        const finfo = this.relations.resolveTypeField(rcvrtype, fname, this.constraints);
-        if(finfo === undefined) {
-            return undefined;
-        }
-
-        return finfo.member.declaredType.remapTemplateBindings(finfo.typeinfo.mapping);
-    }
     
     private checkUpdateStatement(env: TypeEnvironment, stmt: UpdateStatement): TypeEnvironment {
         const vtype = this.checkExpression(env, stmt.vexp, undefined);
@@ -4522,12 +4513,14 @@ class TypeChecker {
 
         const updates = stmt.updates.map((upd) => {
             const bname = "$" + upd[0];
-            const ftype = this.getFieldType(vtype, upd[0]);
-
-            if(ftype === undefined) {
+            const finfo = this.relations.resolveTypeField(vtype, upd[0], this.constraints);
+            if(finfo === undefined) {
                 this.reportError(stmt.sinfo, `Field ${upd[0]} is not a member of type ${vtype.emit()}`);
-                return {fieldname: upd[0], fieldtype: new ErrorTypeSignature(stmt.sinfo, undefined), etype: new ErrorTypeSignature(stmt.sinfo, undefined)};
+                return {fieldname: upd[0], declin: new ErrorTypeSignature(stmt.sinfo, undefined), fieldtype: new ErrorTypeSignature(stmt.sinfo, undefined), etype: new ErrorTypeSignature(stmt.sinfo, undefined)};
             }
+
+            const declin = finfo.typeinfo.tsig;
+            const ftype = finfo.member.declaredType.remapTemplateBindings(finfo.typeinfo.mapping);
 
             const cenv = env.pushNewLocalBinderScope([new VarInfo(bname, ftype, "let", true)]);
             const etype = this.checkExpression(cenv, upd[1], new SimpleTypeInferContext(ftype));
@@ -4535,7 +4528,7 @@ class TypeChecker {
                 this.reportError(stmt.sinfo, `Expression of type ${etype.emit()} cannot be assigned to field ${upd[0]} of type ${ftype.emit()}`);
             }
 
-            return {fieldname: upd[0], fieldtype: ftype, etype: etype};
+            return {fieldname: upd[0], declin: declin, fieldtype: ftype, etype: etype};
         });
 
         stmt.updatetype = vtype;
