@@ -53,6 +53,6 @@ describe ("CPPEmit -- simple assign", () => {
 describe ("CPPEmit -- declare-assign with refs", () => {
     it("should emit declare-assign with refs", function () {
         checkTestEmitMainFunction("function foo(out y: Int): Int { return 1i; } public function main(): Int { var y: Int; let x = foo(out y); return x; }", "Int Mainᕒmain() { Int y; Int x = Mainᕒfooᙾref(y); return x; }");
-        checkTestEmitMainFunction("entity Foo { ref method foo(): Int { return 1i; } } public function main(): Int { ref z = Foo{}; let x = ref z.foo(); return x; }", "bbb");
+        checkTestEmitMainFunction("entity Foo { ref method foo(): Int { return 1i; } } public function main(): Int { ref z = Foo{}; let x = ref z.foo(); return x; }", "Int Mainᕒmain() { MainᕒFoo z = MainᕒFoo{}; Int x = MainᕒFooᑀfooᙾref(z); return x; }");
     });
 });

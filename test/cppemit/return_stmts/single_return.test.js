@@ -34,7 +34,7 @@ describe ("CPPEmit -- simple return", () => {
 describe ("CPPEmit -- return with refs", () => {
     it("should emit return with refs", function () {
         checkTestEmitMainFunction("function foo(out y: Int): Int { return 1i; } public function main(): Int { var y: Int; return foo(out y); }", 'Int Mainᕒmain() { Int y; Int tmp_0 = Mainᕒfooᙾref(y); return tmp_0; }');
-        checkTestEmitMainFunction("entity Foo { ref method foo(): Int { return 1i; } } public function main(): Int { ref z = Foo{}; return ref z.foo(); }", 'bbb');
+        checkTestEmitMainFunction("entity Foo { ref method foo(): Int { return 1i; } } public function main(): Int { ref z = Foo{}; return ref z.foo(); }", 'Int Mainᕒmain() { MainᕒFoo z = MainᕒFoo{}; Int tmp_0 = MainᕒFooᑀfooᙾref(z); return tmp_0; }');
     });
 
     it("should emit return with out? passthrough", function () {
