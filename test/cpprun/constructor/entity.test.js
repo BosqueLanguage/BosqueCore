@@ -46,12 +46,14 @@ describe ("CPPExec -- Entity w/ Invariant Constructor", () => {
         runTestSet('entity Foo { field f: Int = 0i; invariant $f != 3i; } public function main(v: Int): Foo { return Foo{}; }', [['3i', 'Main::Foo{ 0i }']], []);
     });
 
-    it.todo("should exec inherits single", function () {
+    it("should exec inherits single", function () {
+        runTestSet('concept Bar { field g: Bool; invariant $g; } entity Foo provides Bar { field x: Int; } public function main(x: Int): Foo { return Foo{true, x}; }', [['0i', 'Main::Foo{ true, 0i }']], []);
+        runTestSet('concept Bar { field g: Bool; } entity Foo provides Bar { field x: Int; invariant $x != 0i; } public function main(x: Int): Foo { return Foo{true, x}; }', [['1i', 'Main::Foo{ true, 1i }']], ['0i']);
+        runTestSet('concept Bar { field g: Bool; invariant $g; } entity Foo provides Bar { field x: Int; invariant $x != 0i; } public function main(x: Int): Foo { return Foo{true, x}; }', [['1i', 'Main::Foo{ true, 1i }']], ['0i']);
     });
 
-    it.todo("should exec inherits multiple", function () {
-    });
-
-    it.todo("should exec inherits with invariants too", function () {
+    it("should exec inherits multiple", function () {
+        runTestSet('concept Bar { field g: Bool; invariant $g; } concept Baz { field k: Int; invariant $k != 0i; } entity Foo provides Bar, Baz { field x: Int; invariant $x != 0i; } public function main(x: Int): Foo { return Foo{true, 1i, x}; }', [['1i', 'Main::Foo{ true, 1i, 1i }']], []);
+        runTestSet('concept Bar { field g: Bool; invariant $g; } concept Baz { field k: Int; invariant $k != 0i; } entity Foo provides Bar, Baz { field x: Int; invariant $x + $k != 0i; } public function main(x: Int): Foo { return Foo{true, 1i, x}; }', [['1i', 'Main::Foo{ true, 1i, 1i }']], []);
     });
 });

@@ -49,12 +49,14 @@ describe ("CPPEmit -- Entity w/ Invariant Constructor", () => {
         checkTestEmitMainFunction('entity Foo { field f: Int = 0i; invariant $f != 3i; } public function main(): Foo { return Foo{}; }', 'MainᕒFoo Mainᕒmain() { ᐸRuntimeᐳ::bsq_invariant((bool)(MainᕒFooᐤinvariant_0(0_i)), "test.bsq", 2, nullptr, "Failed Invariant"); return MainᕒFoo{0_i}; }');
     });
 
-    it.todo("should emit inherits single", function () {
+    it("should emit inherits single", function () {
+        checkTestEmitMainFunction('concept Bar { field g: Bool; invariant $g; } entity Foo provides Bar { field x: Int; } public function main(x: Int): Foo { return Foo{true, x}; }', 'MainᕒFoo Mainᕒmain(Int x) { ᐸRuntimeᐳ::bsq_invariant((bool)(MainᕒBarᐤinvariant_0(TRUE)), "test.bsq", 2, nullptr, "Failed Invariant"); return MainᕒFoo{TRUE, x}; }');
+        checkTestEmitMainFunction('concept Bar { field g: Bool; } entity Foo provides Bar { field x: Int; invariant $x != 0i; } public function main(x: Int): Foo { return Foo{true, x}; }', 'MainᕒFoo Mainᕒmain(Int x) { ᐸRuntimeᐳ::bsq_invariant((bool)(MainᕒFooᐤinvariant_0(TRUE, x)), "test.bsq", 2, nullptr, "Failed Invariant"); return MainᕒFoo{TRUE, x}; }');
+        checkTestEmitMainFunction('concept Bar { field g: Bool; invariant $g; } entity Foo provides Bar { field x: Int; invariant $x != 0i; } public function main(x: Int): Foo { return Foo{true, x}; }', 'MainᕒFoo Mainᕒmain(Int x) { ᐸRuntimeᐳ::bsq_invariant((bool)(MainᕒBarᐤinvariant_0(TRUE)), "test.bsq", 2, nullptr, "Failed Invariant"); ᐸRuntimeᐳ::bsq_invariant((bool)(MainᕒFooᐤinvariant_0(TRUE, x)), "test.bsq", 2, nullptr, "Failed Invariant"); return MainᕒFoo{TRUE, x}; }');
     });
 
-    it.todo("should emit inherits multiple", function () {
-    });
-
-    it.todo("should emit inherits with invariants too", function () {
+    it("should emit inherits multiple", function () {
+        checkTestEmitMainFunction('concept Bar { field g: Bool; invariant $g; } concept Baz { field k: Int; invariant $k != 0i; } entity Foo provides Bar, Baz { field x: Int; invariant $x != 0i; } public function main(x: Int): Foo { return Foo{true, 1i, x}; }', 'MainᕒFoo Mainᕒmain(Int x) { ᐸRuntimeᐳ::bsq_invariant((bool)(MainᕒBarᐤinvariant_0(TRUE)), "test.bsq", 2, nullptr, "Failed Invariant"); ᐸRuntimeᐳ::bsq_invariant((bool)(MainᕒBazᐤinvariant_0(1_i)), "test.bsq", 2, nullptr, "Failed Invariant"); ᐸRuntimeᐳ::bsq_invariant((bool)(MainᕒFooᐤinvariant_0(TRUE, 1_i, x)), "test.bsq", 2, nullptr, "Failed Invariant"); return MainᕒFoo{TRUE, 1_i, x}; }');
+        checkTestEmitMainFunction('concept Bar { field g: Bool; invariant $g; } concept Baz { field k: Int; invariant $k != 0i; } entity Foo provides Bar, Baz { field x: Int; invariant $x + $k != 0i; } public function main(x: Int): Foo { return Foo{true, 1i, x}; }', 'MainᕒFoo Mainᕒmain(Int x) { ᐸRuntimeᐳ::bsq_invariant((bool)(MainᕒBarᐤinvariant_0(TRUE)), "test.bsq", 2, nullptr, "Failed Invariant"); ᐸRuntimeᐳ::bsq_invariant((bool)(MainᕒBazᐤinvariant_0(1_i)), "test.bsq", 2, nullptr, "Failed Invariant"); ᐸRuntimeᐳ::bsq_invariant((bool)(MainᕒFooᐤinvariant_0(TRUE, 1_i, x)), "test.bsq", 2, nullptr, "Failed Invariant"); return MainᕒFoo{TRUE, 1_i, x}; }');
     });
 });

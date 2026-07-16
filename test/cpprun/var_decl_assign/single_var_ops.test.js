@@ -56,3 +56,10 @@ describe ("CPPExec -- simple assign", () => {
         runTestSet('concept Baz {} entity Foo provides Baz { field f: Int; field g: Int; } public function main(v: Baz): Baz { var x: Baz = Foo{1i, 2i}; x = v; return x; }', [['Main::Foo{ 5i, 10i }', 'Main::Foo{ 5i, 10i }']], []);
     });
 });
+
+describe ("CPPExec -- declare-assign with refs", () => {
+    it("should exec declare-assign with refs", function () {
+        runTestSet("function foo(out y: Int): Int { return 1i; } public function main(): Int { var y: Int; let x = foo(out y); return x; }", [['0i', '1i']], []);
+        runTestSet("entity Foo { ref method foo(): Int { return 1i; } } public function main(): Int { ref z = Foo{}; let x = ref z.foo(); return x; }", [['0i', '1i']], []);
+    });
+});
