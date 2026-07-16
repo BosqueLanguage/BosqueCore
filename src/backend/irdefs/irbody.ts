@@ -286,6 +286,9 @@ enum IRStatementTag {
     IRVariableAssignmentDirectConstructorStatement = "IRVariableAssignmentDirectConstructorStatement",
     IRVariableAssignmentDirectConstructorWithBoxStatement = "IRVariableAssignmentDirectConstructorWithBoxStatement",
 
+    IRUpdateLocalDirectStatement = "IRUpdateLocalDirectStatement",
+    IRUpdateParamDirectStatement = "IRUpdateParamDirectStatement",
+
     IRReturnVoidSimpleStatement = "IRReturnVoidSimpleStatement",
     IRReturnValueSimpleStatement = "IRReturnValueSimpleStatement",
     IRReturnDirectInvokeStatement = "IRReturnDirectInvokeStatement",
@@ -2007,6 +2010,40 @@ class IRVariableAssignmentDirectConstructorWithBoxStatement extends IRAtomicStat
     }
 }
 
+class IRUpdateLocalDirectStatement extends IRAtomicStatement {
+    readonly vname: string;
+    readonly vtype: IRTypeSignature
+    readonly aargs: IRSimpleExpression[];
+
+    constructor(vname: string, vtype: IRTypeSignature, aargs: IRSimpleExpression[]) {
+        super(IRStatementTag.IRUpdateLocalDirectStatement);
+        this.vname = vname;
+        this.vtype = vtype;
+        this.aargs = aargs;
+    }
+
+    override isSimpleStatement(): boolean {
+        return true;
+    }
+}
+
+class IRUpdateParamDirectStatement extends IRAtomicStatement {
+    readonly vname: string;
+    readonly vtype: IRTypeSignature;
+    readonly aargs: IRSimpleExpression[];
+
+    constructor(vname: string, vtype: IRTypeSignature, aargs: IRSimpleExpression[]) {
+        super(IRStatementTag.IRUpdateParamDirectStatement);
+        this.vname = vname;
+        this.vtype = vtype;
+        this.aargs = aargs;
+    }
+
+    override isSimpleStatement(): boolean {
+        return true;
+    }
+}
+
 //
 //TODO: lots more statement types here
 //
@@ -2598,6 +2635,8 @@ export {
     IRVariableInitializationStatement, IRVariableInitializationDirectInvokeStatement, IRVariableInitializationDirectInvokeWithImplicitStatement, IRVariableInitializationDirectConstructorStatement, IRVariableInitializationDirectConstructorWithBoxStatement,
     IRVariableAssignmentStatement, IRVariableAssignmentDirectInvokeStatement, IRVariableAssignmentDirectInvokeWithImplicitStatement, IRVariableAssignmentDirectConstructorStatement, IRVariableAssignmentDirectConstructorWithBoxStatement,
     
+    IRUpdateLocalDirectStatement, IRUpdateParamDirectStatement,
+
     IRReturnVoidSimpleStatement, IRReturnValueSimpleStatement, IRReturnDirectInvokeStatement, IRReturnDirectConstructStatement, IRReturnDirectConstructWithBoxStatement,
     IRReturnVoidWithImplicitStatement, IRReturnValueImplicitStatement, IRReturnDirectInvokeImplicitStatement, IRReturnDirectInvokeImplicitPassThroughStatement, IRReturnDirectConstructImplicitStatement, IRReturnDirectConstructWithBoxImplicitStatement,
     

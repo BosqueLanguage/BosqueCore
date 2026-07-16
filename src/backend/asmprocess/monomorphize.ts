@@ -895,6 +895,198 @@ class Monomorphizer {
         this.instantiateExpression(exp.vexp);
     }
 
+    private instantiateCallRefInvokeExpression(exp: CallRefInvokeExpression) {
+        this.instantiateExpression(exp.rcvr);
+
+        if(exp.specificResolve !== undefined) {
+            this.instantiateTypeSignature(exp.specificResolve, this.currentMapping);
+        }
+
+        this.instantiateTypeSignature(exp.resolvedDeclType as TypeSignature, this.currentMapping);
+        if(exp.resolvedImplType !== undefined) {
+            this.instantiateTypeSignature(exp.resolvedImplType as TypeSignature, this.currentMapping);
+        }
+
+        const mdd = exp.resolvedMethodDecl as MethodDecl;
+        const lambdas = this.instantiateArgumentList(exp.args.args, mdd.params.map((p) => p.name || "_"), exp.shuffleinfo);
+
+        for(let i = 0; i < exp.terms.length; ++i) {
+            this.instantiateTypeSignature(exp.terms[i], this.currentMapping);
+        }
+
+        for(let i = 0; i < exp.shuffleinfo.length; ++i) {
+            this.instantiateTypeSignature(exp.shuffleinfo[i][1], this.currentMapping);
+        }
+        if(exp.restinfo !== undefined) {
+            const rparamtype = (this.currentMapping !== undefined ? (exp.resttype as TypeSignature).remapTemplateBindings(this.currentMapping) : (exp.resttype as TypeSignature)) as NominalTypeSignature;
+            let rargs: AbstractArgumentValue[] = [];
+
+            for(let i = 0; i < exp.restinfo.length; ++i) {
+                this.instantiateTypeSignature(exp.restinfo[i][2], this.currentMapping);
+                rargs.push(exp.args.args[exp.restinfo[i][0]]);
+            }
+
+            this.instantiateCollectionConstructor(rparamtype.decl as AbstractCollectionTypeDecl, rparamtype, rargs);
+        }
+
+        const prepostikey = computeInvokeKeyForTypeMethod(exp.resolvedDeclType as TypeSignature, mdd, exp.terms, lambdas);
+
+        //if the decl is not the same as the impl (and the decls has pre/post conditions), then we need to instantiate the decl as well to ensure the pre/post conditions are compiled
+        if(exp.resolvedImplType !== undefined && exp.resolvedDeclType !== undefined && exp.resolvedDeclType.tkeystr !== exp.resolvedImplType.tkeystr) {
+            const rmd = exp.resolvedMethodDecl as MethodDecl;
+            if(rmd.preconditions.length !== 0 || rmd.postconditions.length !== 0) {
+                assert(false, "Not Implemented -- instantiatePostfixInvoke for decl/impl mismatch with pre/post conditions -- abstract or virtual");
+            }
+        }
+
+        if(exp.resolvedMethodImpl !== undefined) {
+            const mdecl = this.currentMapping !== undefined ? (exp.resolvedImplType as TypeSignature).remapTemplateBindings(this.currentMapping) : (exp.resolvedDeclType as TypeSignature);
+            const tterms = this.currentMapping !== undefined ? exp.terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : exp.terms;
+            this.callinstmap.set(exp.monoinvid as number, computeInvokeKeyForTypeMethod(mdecl, mdd, tterms, lambdas));
+            this.instantiateSpecificResolvedMemberMethod(mdecl, mdd, tterms, lambdas, prepostikey);
+        }
+        else {
+            assert(false, "Not Implemented -- instantiatePostfixInvoke for virtual");
+        }
+    }
+
+    private instantiateCallRefVariableExpression(exp: CallRefVariableExpression) {
+        this.instantiateCallRefInvokeExpression(exp);
+    }
+
+    private instantiateCallRefThisExpression(exp: CallRefThisExpression) {
+        this.instantiateCallRefInvokeExpression(exp);
+    }
+
+    private instantiateCallRefSelfExpression(exp: CallRefSelfExpression) {
+        this.instantiateCallRefInvokeExpression(exp);
+    }
+
+    private instantiateCallTaskActionExpression(exp: CallTaskActionExpression) {
+        assert(false, "Not Implemented -- instantiateCallTaskActionExpression");
+    }
+
+    private instantiateTaskRunExpression(exp: TaskRunExpression) {
+        assert(false, "Not Implemented -- instantiateTaskRunExpression");
+    }
+
+    private instantiateTaskMultiExpression(exp: TaskMultiExpression) {
+        assert(false, "Not Implemented -- instantiateTaskMultiExpression");
+    }
+
+    private instantiateTaskDashExpression(exp: TaskDashExpression) {
+        assert(false, "Not Implemented -- instantiateTaskDashExpression");
+    }
+
+    private instantiateTaskAllExpression(exp: TaskAllExpression) {
+        assert(false, "Not Implemented -- instantiateTaskAllExpression");
+    }
+
+    private instantiateTaskRaceExpression(exp: TaskRaceExpression) {
+        assert(false, "Not Implemented -- instantiateTaskRaceExpression");
+    }
+
+    private instantiateAPIInvokeExpression(exp: APIInvokeExpression) {
+        assert(false, "Not Implemented");
+    }
+    
+    private instantiateAgentInvokeExpression(exp: AgentInvokeExpression) {
+        assert(false, "Not Implemented");
+    }
+
+    private instantiateChkLogicExpression(exp: ChkLogicExpression) {
+        if(exp.tag === ChkLogicExpressionTag.ChkLogicBaseExpression) {
+            return this.instantiateExpression((exp as ChkLogicBaseExpression).exp);
+        }
+        else {
+            const iiexp = exp as ChkLogicImpliesExpression;
+            this.instantiateITestGuardSet(iiexp.lhs);
+
+            for(let i = 0; i < iiexp.bbinds.length; ++i) {
+            const bb = iiexp.bbinds[i];
+            if(bb.ttrue !== undefined) {
+                this.instantiateTypeSignature(bb.ttrue, this.currentMapping);
+            }
+            if(bb.tfalse !== undefined) {
+                this.instantiateTypeSignature(bb.tfalse, this.currentMapping);
+            }
+        }
+
+            this.instantiateExpression(iiexp.rhs);
+        }
+    }
+
+    private instantiateConditionalValueExpression(exp: ConditionalValueExpression) {
+        this.instantiateITestGuardSet(exp.guardset);
+
+        for(let i = 0; i < exp.bbinds.length; ++i) {
+            const bb = exp.bbinds[i];
+            if(bb.ttrue !== undefined) {
+                this.instantiateTypeSignature(bb.ttrue, this.currentMapping);
+            }
+            if(bb.tfalse !== undefined) {
+                this.instantiateTypeSignature(bb.tfalse, this.currentMapping);
+            }
+        }
+
+        this.instantiateExpression(exp.trueValue);
+        this.instantiateExpression(exp.falseValue);
+    }
+
+    private instantiateBaseRValueExpression(exp: Expression) {
+        const ttag = exp.tag;
+        switch (ttag) {
+            case ExpressionTag.CallRefVariableExpression: {
+                this.instantiateCallRefVariableExpression(exp as CallRefVariableExpression);
+                break;
+            }
+            case ExpressionTag.CallRefThisExpression: {
+                this.instantiateCallRefThisExpression(exp as CallRefThisExpression);
+                break;
+            }
+            case ExpressionTag.CallRefSelfExpression: {
+                this.instantiateCallRefSelfExpression(exp as CallRefSelfExpression);
+                break;
+            }
+            case ExpressionTag.CallTaskActionExpression: {
+                this.instantiateCallTaskActionExpression(exp as CallTaskActionExpression);
+                break;
+            }
+            case ExpressionTag.TaskRunExpression: {
+                this.instantiateTaskRunExpression(exp as TaskRunExpression);
+                break;
+            }
+            case ExpressionTag.TaskMultiExpression: {
+                this.instantiateTaskMultiExpression(exp as TaskMultiExpression);
+                break;
+            }
+            case ExpressionTag.TaskDashExpression: {
+                this.instantiateTaskDashExpression(exp as TaskDashExpression);
+                break;
+            }
+            case ExpressionTag.TaskAllExpression: {
+                this.instantiateTaskAllExpression(exp as TaskAllExpression);
+                break;
+            }
+            case ExpressionTag.TaskRaceExpression: {
+                this.instantiateTaskRaceExpression(exp as TaskRaceExpression);
+                break;
+            }
+            case ExpressionTag.APIInvokeExpression: {
+                this.instantiateAPIInvokeExpression(exp as APIInvokeExpression);
+                break;
+            }
+            case ExpressionTag.AgentInvokeExpression: {
+                this.instantiateAgentInvokeExpression(exp as AgentInvokeExpression);
+                break;
+            }
+            default: {
+                this.instantiateExpression(exp);
+                break;
+            }
+        }
+    }
+
     // Add our rope instantiation here, check if we are cstring or string and go lookup ns to find the constructor for the correct size
     private instantiateExpression(exp: Expression) {
         this.instantiateTypeSignature(exp.getType(), this.currentMapping);
@@ -1112,153 +1304,6 @@ class Monomorphizer {
                 this.instantiateMapEntryConstructorExpression(exp as MapEntryConstructorExpression);
                 break;
             }
-            default: {
-                ; //handled by the type signature instantiation on exp type
-            }
-        }
-    }
-
-    private instantiateCallRefInvokeExpression(exp: CallRefInvokeExpression) {
-        this.instantiateExpression(exp.rcvr);
-
-        if(exp.specificResolve !== undefined) {
-            this.instantiateTypeSignature(exp.specificResolve, this.currentMapping);
-        }
-
-        this.instantiateTypeSignature(exp.resolvedDeclType as TypeSignature, this.currentMapping);
-        if(exp.resolvedImplType !== undefined) {
-            this.instantiateTypeSignature(exp.resolvedImplType as TypeSignature, this.currentMapping);
-        }
-
-        const mdd = exp.resolvedMethodDecl as MethodDecl;
-        const lambdas = this.instantiateArgumentList(exp.args.args, mdd.params.map((p) => p.name || "_"), exp.shuffleinfo);
-
-        for(let i = 0; i < exp.terms.length; ++i) {
-            this.instantiateTypeSignature(exp.terms[i], this.currentMapping);
-        }
-
-        for(let i = 0; i < exp.shuffleinfo.length; ++i) {
-            this.instantiateTypeSignature(exp.shuffleinfo[i][1], this.currentMapping);
-        }
-        if(exp.restinfo !== undefined) {
-            const rparamtype = (this.currentMapping !== undefined ? (exp.resttype as TypeSignature).remapTemplateBindings(this.currentMapping) : (exp.resttype as TypeSignature)) as NominalTypeSignature;
-            let rargs: AbstractArgumentValue[] = [];
-
-            for(let i = 0; i < exp.restinfo.length; ++i) {
-                this.instantiateTypeSignature(exp.restinfo[i][2], this.currentMapping);
-                rargs.push(exp.args.args[exp.restinfo[i][0]]);
-            }
-
-            this.instantiateCollectionConstructor(rparamtype.decl as AbstractCollectionTypeDecl, rparamtype, rargs);
-        }
-
-        const prepostikey = computeInvokeKeyForTypeMethod(exp.resolvedDeclType as TypeSignature, mdd, exp.terms, lambdas);
-
-        //if the decl is not the same as the impl (and the decls has pre/post conditions), then we need to instantiate the decl as well to ensure the pre/post conditions are compiled
-        if(exp.resolvedImplType !== undefined && exp.resolvedDeclType !== undefined && exp.resolvedDeclType.tkeystr !== exp.resolvedImplType.tkeystr) {
-            const rmd = exp.resolvedMethodDecl as MethodDecl;
-            if(rmd.preconditions.length !== 0 || rmd.postconditions.length !== 0) {
-                assert(false, "Not Implemented -- instantiatePostfixInvoke for decl/impl mismatch with pre/post conditions -- abstract or virtual");
-            }
-        }
-
-        if(exp.resolvedMethodImpl !== undefined) {
-            const mdecl = this.currentMapping !== undefined ? (exp.resolvedImplType as TypeSignature).remapTemplateBindings(this.currentMapping) : (exp.resolvedDeclType as TypeSignature);
-            const tterms = this.currentMapping !== undefined ? exp.terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : exp.terms;
-            this.callinstmap.set(exp.monoinvid as number, computeInvokeKeyForTypeMethod(mdecl, mdd, tterms, lambdas));
-            this.instantiateSpecificResolvedMemberMethod(mdecl, mdd, tterms, lambdas, prepostikey);
-        }
-        else {
-            assert(false, "Not Implemented -- instantiatePostfixInvoke for virtual");
-        }
-    }
-
-    private instantiateCallRefVariableExpression(exp: CallRefVariableExpression) {
-        this.instantiateCallRefInvokeExpression(exp);
-    }
-
-    private instantiateCallRefThisExpression(exp: CallRefThisExpression) {
-        this.instantiateCallRefInvokeExpression(exp);
-    }
-
-    private instantiateCallRefSelfExpression(exp: CallRefSelfExpression) {
-        this.instantiateCallRefInvokeExpression(exp);
-    }
-
-    private instantiateCallTaskActionExpression(exp: CallTaskActionExpression) {
-        assert(false, "Not Implemented -- instantiateCallTaskActionExpression");
-    }
-
-    private instantiateTaskRunExpression(exp: TaskRunExpression) {
-        assert(false, "Not Implemented -- instantiateTaskRunExpression");
-    }
-
-    private instantiateTaskMultiExpression(exp: TaskMultiExpression) {
-        assert(false, "Not Implemented -- instantiateTaskMultiExpression");
-    }
-
-    private instantiateTaskDashExpression(exp: TaskDashExpression) {
-        assert(false, "Not Implemented -- instantiateTaskDashExpression");
-    }
-
-    private instantiateTaskAllExpression(exp: TaskAllExpression) {
-        assert(false, "Not Implemented -- instantiateTaskAllExpression");
-    }
-
-    private instantiateTaskRaceExpression(exp: TaskRaceExpression) {
-        assert(false, "Not Implemented -- instantiateTaskRaceExpression");
-    }
-
-    private instantiateAPIInvokeExpression(exp: APIInvokeExpression) {
-        assert(false, "Not Implemented");
-    }
-    
-    private instantiateAgentInvokeExpression(exp: AgentInvokeExpression) {
-        assert(false, "Not Implemented");
-    }
-
-    private instantiateChkLogicExpression(exp: ChkLogicExpression) {
-        if(exp.tag === ChkLogicExpressionTag.ChkLogicBaseExpression) {
-            return this.instantiateExpression((exp as ChkLogicBaseExpression).exp);
-        }
-        else {
-            const iiexp = exp as ChkLogicImpliesExpression;
-            this.instantiateITestGuardSet(iiexp.lhs);
-
-            for(let i = 0; i < iiexp.bbinds.length; ++i) {
-            const bb = iiexp.bbinds[i];
-            if(bb.ttrue !== undefined) {
-                this.instantiateTypeSignature(bb.ttrue, this.currentMapping);
-            }
-            if(bb.tfalse !== undefined) {
-                this.instantiateTypeSignature(bb.tfalse, this.currentMapping);
-            }
-        }
-
-            this.instantiateExpression(iiexp.rhs);
-        }
-    }
-
-    private instantiateConditionalValueExpression(exp: ConditionalValueExpression) {
-        this.instantiateITestGuardSet(exp.guardset);
-
-        for(let i = 0; i < exp.bbinds.length; ++i) {
-            const bb = exp.bbinds[i];
-            if(bb.ttrue !== undefined) {
-                this.instantiateTypeSignature(bb.ttrue, this.currentMapping);
-            }
-            if(bb.tfalse !== undefined) {
-                this.instantiateTypeSignature(bb.tfalse, this.currentMapping);
-            }
-        }
-
-        this.instantiateExpression(exp.trueValue);
-        this.instantiateExpression(exp.falseValue);
-    }
-
-    private instantiateBaseRValueExpression(exp: Expression) {
-        const ttag = exp.tag;
-        switch (ttag) {
             case ExpressionTag.CallRefVariableExpression: {
                 this.instantiateCallRefVariableExpression(exp as CallRefVariableExpression);
                 break;
@@ -1271,41 +1316,8 @@ class Monomorphizer {
                 this.instantiateCallRefSelfExpression(exp as CallRefSelfExpression);
                 break;
             }
-            case ExpressionTag.CallTaskActionExpression: {
-                this.instantiateCallTaskActionExpression(exp as CallTaskActionExpression);
-                break;
-            }
-            case ExpressionTag.TaskRunExpression: {
-                this.instantiateTaskRunExpression(exp as TaskRunExpression);
-                break;
-            }
-            case ExpressionTag.TaskMultiExpression: {
-                this.instantiateTaskMultiExpression(exp as TaskMultiExpression);
-                break;
-            }
-            case ExpressionTag.TaskDashExpression: {
-                this.instantiateTaskDashExpression(exp as TaskDashExpression);
-                break;
-            }
-            case ExpressionTag.TaskAllExpression: {
-                this.instantiateTaskAllExpression(exp as TaskAllExpression);
-                break;
-            }
-            case ExpressionTag.TaskRaceExpression: {
-                this.instantiateTaskRaceExpression(exp as TaskRaceExpression);
-                break;
-            }
-            case ExpressionTag.APIInvokeExpression: {
-                this.instantiateAPIInvokeExpression(exp as APIInvokeExpression);
-                break;
-            }
-            case ExpressionTag.AgentInvokeExpression: {
-                this.instantiateAgentInvokeExpression(exp as AgentInvokeExpression);
-                break;
-            }
             default: {
-                this.instantiateExpression(exp);
-                break;
+                assert(false, "instantiateExpression - Unknown Expression kind");
             }
         }
     }

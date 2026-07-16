@@ -31,3 +31,15 @@ describe ("CPPExec -- simple return", () => {
         runTestSet('concept Baz {} entity Foo provides Baz {field f: Int; } public function main(v: Int): Baz { let x: Foo = Foo{v}; return x; }', [['3i', 'Main::Foo{ 3i }']], []);
     });
 });
+
+describe ("CPPExec -- return with refs", () => {
+    it("should exec return with refs", function () {
+        runTestSet("function foo(out y: Int): Int { return 1i; } public function main(): Int { var y: Int; return foo(out y); }", [['0i', '1i']], []);
+        runTestSet("entity Foo { ref method foo(): Int { return 1i; } } public function main(): Int { ref z = Foo{}; return ref z.foo(); }", [['0i', '1i']], []);
+    });
+
+    it("should exec return with out? passthrough", function () {
+        runTestSet("function bar(out? y: Int): Bool { y = 1i; return true; } function foo(out? y: Int): Bool { return bar(out? y); } public function main(): Int { var y: Int; if(foo(out? y) { return y; } else { return 0i; } }", [['0i', '1i']], []);
+    });
+});
+

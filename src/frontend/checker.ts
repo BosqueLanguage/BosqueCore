@@ -2774,7 +2774,7 @@ class TypeChecker {
         });
 
         exp.updatetype = rcvrtype;
-        exp.updateinfo = updates;
+        exp.updateinfo = updates.sort((a, b) => a.fieldname.localeCompare(b.fieldname));
         exp.isdirect = isdirect;
 
         return rcvrtype;
@@ -4455,9 +4455,22 @@ class TypeChecker {
 
     private checkVoidRefCallStatement(env: TypeEnvironment, stmt: VoidRefCallStatement): TypeEnvironment {
         const rtype = this.checkBaseRValueExpression(env, stmt.exp, undefined);
-        this.checkError(stmt.sinfo, !(rtype.tsig instanceof ErrorTypeSignature) && !(rtype.tsig instanceof VoidTypeSignature), `Expected a void return but got ${rtype.tsig.emit()}`);
+        
+        if(!(stmt.exp instanceof CallRefInvokeExpression)) {
+            if(stmt.exp instanceof CallNamespaceFunctionExpression) {
+                this.checkError(stmt.sinfo, !stmt.exp.args.args.some((arg) => arg instanceof PassingArgumentValue), `Call does not have any effect`);
+            }
+            else if( stmt.exp instanceof CallTypeFunctionExpression) {
+                this.checkError(stmt.sinfo, !stmt.exp.args.args.some((arg) => arg instanceof PassingArgumentValue), `Call does not have any effect`);
+            }
+            else {
+                assert(stmt.exp instanceof PostfixOp, "Huh this should be checked before.");
 
-        //TODO may want to do additional checks that there are ref/out params that are assigned here (or that it is a task operation)
+                const pcall = stmt.exp.ops[stmt.exp.ops.length - 1];
+                this.checkError(stmt.sinfo, !(pcall instanceof PostfixInvoke), `Call does not have any effect`);
+                this.checkError(stmt.sinfo, !(pcall as PostfixInvoke).args.args.some((arg) => arg instanceof PassingArgumentValue), `Call does not have any effect`);
+            }
+        }
 
         for(let i = 0; i < rtype.setuncond.length; ++i) {
             env = env.assignLocalVariable(rtype.setuncond[i]);
@@ -4472,34 +4485,22 @@ class TypeChecker {
         }
 
         const decl = ttype.decl;
-        const okupdate = (decl instanceof EntityTypeDecl) || (decl instanceof DatatypeMemberEntityTypeDecl) || (decl instanceof ConceptTypeDecl) || (decl instanceof DatatypeTypeDecl);
-        const isdirect = (decl instanceof EntityTypeDecl) || (decl instanceof DatatypeMemberEntityTypeDecl);
+        const okupdate = (decl instanceof EntityTypeDecl) || (decl instanceof DatatypeMemberEntityTypeDecl) || (decl instanceof ConceptTypeDecl) || (decl instanceof DatatypeTypeDecl) || (decl instanceof AbstractCollectionTypeDecl);
+        const isdirect = (decl instanceof EntityTypeDecl) || (decl instanceof DatatypeMemberEntityTypeDecl) || (decl instanceof AbstractCollectionTypeDecl);
 
         return [okupdate, isdirect];
     }
-
-    /*
-    private getFieldType(rcvrtype: TypeSignature, fname: string): TypeSignature | undefined {
-        const finfo = this.relations.resolveTypeField(rcvrtype, fname, this.constraints);
-        if(finfo === undefined) {
-            return undefined;
-        }
-
-        return finfo.member.declaredType.remapTemplateBindings(finfo.typeinfo.mapping);
-    }
-    */
     
     private checkUpdateStatement(env: TypeEnvironment, stmt: UpdateStatement): TypeEnvironment {
-        /*
         const vtype = this.checkExpression(env, stmt.vexp, undefined);
         const vname = stmt.vexp.srcname;
 
-        const [vinfo, isparam] = env.resolveLocalVarInfoFromSrcNameWithIsParam(vname);
+        const vinfo = env.resolveLocalVarInfoFromSrcName(vname);
         if(vinfo === undefined) {
             this.reportError(stmt.sinfo, `Variable ${vname} is not declared`);
             return env;
         }
-        if((!isparam && vinfo.isConst) || (isparam && !vinfo.isRef)) {
+        if(vinfo.vkind !== "ref" && vinfo.vkind !== "var") {
             this.reportError(stmt.sinfo, `Variable ${vname} is cannot be updated (is local const or not a ref param)`);
             return env;
         }
@@ -4512,29 +4513,29 @@ class TypeChecker {
 
         const updates = stmt.updates.map((upd) => {
             const bname = "$" + upd[0];
-            const ftype = this.getFieldType(vtype, upd[0]);
-
-            if(ftype === undefined) {
+            const finfo = this.relations.resolveTypeField(vtype, upd[0], this.constraints);
+            if(finfo === undefined) {
                 this.reportError(stmt.sinfo, `Field ${upd[0]} is not a member of type ${vtype.emit()}`);
-                return {fieldname: upd[0], fieldtype: new ErrorTypeSignature(stmt.sinfo, undefined), etype: new ErrorTypeSignature(stmt.sinfo, undefined)};
+                return {fieldname: upd[0], declin: new ErrorTypeSignature(stmt.sinfo, undefined), fieldtype: new ErrorTypeSignature(stmt.sinfo, undefined), etype: new ErrorTypeSignature(stmt.sinfo, undefined)};
             }
 
-            const cenv = env.pushNewLocalBinderScope(bname, ftype);
+            const declin = finfo.typeinfo.tsig;
+            const ftype = finfo.member.declaredType.remapTemplateBindings(finfo.typeinfo.mapping);
+
+            const cenv = env.pushNewLocalBinderScope([new VarInfo(bname, ftype, "let", true)]);
             const etype = this.checkExpression(cenv, upd[1], new SimpleTypeInferContext(ftype));
             if(!(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, ftype, this.constraints)) {
                 this.reportError(stmt.sinfo, `Expression of type ${etype.emit()} cannot be assigned to field ${upd[0]} of type ${ftype.emit()}`);
             }
 
-            return {fieldname: upd[0], fieldtype: ftype, etype: etype};
+            return {fieldname: upd[0], declin: declin, fieldtype: ftype, etype: etype};
         });
 
         stmt.updatetype = vtype;
-        stmt.updateinfo = updates;
+        stmt.updateinfo = updates.sort((a, b) => a.fieldname.localeCompare(b.fieldname));
         stmt.isdirect = isdirect;
 
         return env;
-        */
-        assert(false, "Not Implemented -- checkUpdateStatement");
     }
 
     private checkVarUpdateStatement(env: TypeEnvironment, stmt: VarUpdateStatement): TypeEnvironment {

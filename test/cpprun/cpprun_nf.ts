@@ -59,13 +59,17 @@ function emitCommandLineMakefile(): string {
         'ALLOC_SRC_DIR=$(RUNTIME_SRC_DIR)allocator/\n' +
         'BSQIR_SRC_DIR=$(RUNTIME_SRC_DIR)bsqir/\n' +
         '\n' +
-        'CPPFLAGS=-O0 -g -ggdb -fsanitize=address --param asan-stack=0 -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable -Wuninitialized -Werror -std=gnu++23 -fno-omit-frame-pointer -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-stack-protector\n' + 
+        'OUT_OBJ=$(BUILD_DIR)output/obj/\n' +
+        '\n' +
+        'CPPFLAGS=-Og -g -ggdb -DRB_INVARIANT_VALIDATE -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable -Wuninitialized -Werror -std=gnu++23 -fno-omit-frame-pointer -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-stack-protector\n' +
+        '\n' +
         'HEADERS=$(wildcard $(SRC_DIR)*.h) $(wildcard $(CORE_SRC_DIR)*.h) $(wildcard $(RUNTIME_SRC_DIR)*.h) $(wildcard $(ALLOC_SRC_DIR)*.h) $(wildcard $(BSQIR_SRC_DIR)*.h)\n' +
-        'CPP=$(wildcard $(SRC_DIR)*.cpp) $(wildcard $(CORE_SRC_DIR)*.cpp) $(wildcard $(RUNTIME_SRC_DIR)*.cpp) $(wildcard $(ALLOC_SRC_DIR)*.cpp) $(wildcard $(BSQIR_SRC_DIR)*.cpp)\n' +
+        'OBJ=$(OUT_OBJ)common.o $(OUT_OBJ)strings.o $(OUT_OBJ)memstats.o $(OUT_OBJ)gc_validation.o $(OUT_OBJ)alloc.o $(OUT_OBJ)gc.o $(OUT_OBJ)emit.o $(OUT_OBJ)lexer.o $(OUT_OBJ)parser.o\n' +
+        'MAKEFLAGS += -j8\n' +
         '\n' +
         'all: $(MAKE_PATH)/app\n\n' +
-        '$(MAKE_PATH)/app: $(HEADERS) $(CPP) $(MAKE_PATH)/app.h $(MAKE_PATH)/app.cpp\n' +
-        '\tg++ $(CPPFLAGS) -o $(MAKE_PATH)/app $(CPP) $(MAKE_PATH)/app.cpp\n'
+        '$(MAKE_PATH)/app: $(HEADERS) $(OBJ) $(MAKE_PATH)/app.h $(MAKE_PATH)/app.cpp\n' +
+        '\tg++ $(CPPFLAGS) -o $(MAKE_PATH)/app $(OBJ) $(MAKE_PATH)/app.cpp\n'
         ;
 }
 

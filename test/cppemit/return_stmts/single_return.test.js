@@ -30,3 +30,14 @@ describe ("CPPEmit -- simple return", () => {
         checkTestEmitMainFunction('concept Baz {} entity Foo provides Baz {} public function main(): Baz { let x: Foo = Foo{}; return x; }', 'MainᕒBaz Mainᕒmain() { MainᕒFoo x = MainᕒFoo{}; return MainᕒBaz{x}; }');
     });
 });
+
+describe ("CPPEmit -- return with refs", () => {
+    it("should emit return with refs", function () {
+        checkTestEmitMainFunction("function foo(out y: Int): Int { return 1i; } public function main(): Int { var y: Int; return foo(out y); }", 'Int Mainᕒmain() { Int y; Int tmp_0 = Mainᕒfooᙾref(y); return tmp_0; }');
+        checkTestEmitMainFunction("entity Foo { ref method foo(): Int { return 1i; } } public function main(): Int { ref z = Foo{}; return ref z.foo(); }", 'Int Mainᕒmain() { MainᕒFoo z = MainᕒFoo{}; Int tmp_0 = MainᕒFooᑀfooᙾref(z); return tmp_0; }');
+    });
+
+    it("should emit return with out? passthrough", function () {
+        checkTestEmitMainFunction("function bar(out? y: Int): Bool { y = 1i; return true; } function foo(out? y: Int): Bool { return bar(out? y); } public function main(): Int { var y: Int; if(foo(out? y) { return y; } else { return 0i; } }", 'Int Mainᕒmain() { Int y; Bool tmp_0 = Mainᕒfooᙾref(y); if(tmp_0) { return y; } else { return 0_i; } }');
+    });
+});

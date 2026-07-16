@@ -1,6 +1,6 @@
 "use strict";
 
-import { parseTestFunction, parseTestFunctionError } from "../../../bin/test/parser/parse_nf.js";
+import { parseTestFunction, parseTestFunctionError, parseTestFunctionInFile } from "../../../bin/test/parser/parse_nf.js";
 import { describe, it } from "node:test";
 
 describe ("Parser -- simple declare only", () => {
@@ -75,5 +75,12 @@ describe ("Parser -- simple assign", () => {
 
     it("should fail assign -- undecl", function () {
         parseTestFunctionError("function main(x: Int): Int { y = 2i; return 0i; }", "Cannot assign to variable y");
+    });
+});
+
+describe ("Parser -- declare-assign with refs", () => {
+    it("should parse declare-assign with refs", function () {
+        parseTestFunctionInFile("function foo(out y: Int): Int { return 1i; } [FUNC]", "function main(): Int { var y: Int; let x = foo(out y); }", undefined);
+        parseTestFunctionInFile("entity Foo { ref method foo() { ; } } [FUNC]", "function main(): Int { let z = Foo{}; let x = ref z.foo(); }", undefined);
     });
 });

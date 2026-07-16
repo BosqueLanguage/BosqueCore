@@ -28,3 +28,14 @@ describe ("Checker -- simple return", () => {
         checkTestFunctionInFileError('concept Baz {} entity Foo {} function main(): Baz { return Foo{}; }', "Expected a return value of type Baz but got Foo");
     });
 });
+
+describe ("Checker -- return with refs", () => {
+    it("should check return with refs", function () {
+        checkTestFunctionInFile("function foo(out y: Int): Int { return 1i; } public function main(): Int { var y: Int; return foo(out y); }");
+        checkTestFunctionInFile("entity Foo { ref method foo(): Int { return 1i; } } public function main(): Int { ref z = Foo{}; return ref z.foo(); }");
+    });
+
+    it("should check return with out? passthrough", function () {
+        checkTestFunctionInFile("function bar(out? y: Int): Bool { y = 1i; return true; } function foo(out? y: Int): Bool { return bar(out? y); } public function main(): Int { var y: Int; if(foo(out? y) { return y; } else { return 0i; } }");
+    });
+});
