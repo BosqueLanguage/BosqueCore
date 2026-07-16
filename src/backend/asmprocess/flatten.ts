@@ -1673,7 +1673,8 @@ class ASMToIRConverter {
                 return aargs[aaidx] as IRImmediateExpression;
             });
 
-            this.pushStatement(new IREntityInvariantCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.tag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), this.processTypeSignature(invdecl.containingtype).tkeystr, invdecl.ii, args));
+            const intype = imapper !== undefined ? invdecl.containingtype.remapTemplateBindings(imapper) : invdecl.containingtype;
+            this.pushStatement(new IREntityInvariantCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.tag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), this.processTypeSignature(intype).tkeystr, invdecl.ii, args));
         }
 
         return new IRConstructorStandardEntityExpression(this.processTypeSignature(exp.ctype), aargs);
@@ -3567,13 +3568,14 @@ class ASMToIRConverter {
             }
 
             const udecl = utype.decl as AbstractEntityTypeDecl;
-            const cargs = udecl.saturatedBFieldInfo.map((bfi) => {
+            const tbinds = this.generateLocalTemplateMapping(udecl.terms.map((t) => t.name), utype.alltermargs);
+
+            let cargs = udecl.saturatedBFieldInfo.map((bfi) => {
                 const svar = svars.find((sv) => sv.fname === bfi.name);
                 if(svar !== undefined) {
                     return svar.fexp;
                 }
                 else {
-                    const tbinds = udecl.terms.length !== 0 ? TemplateNameMapper.generateTemplateMappingForTypeDecl(utype) : undefined;
                     const indecl = tbinds !== undefined ? bfi.containingtype.remapTemplateBindings(tbinds) : bfi.containingtype;
                     const ftype = tbinds !== undefined ? bfi.type.remapTemplateBindings(tbinds) : bfi.type;
 
@@ -3582,7 +3584,21 @@ class ASMToIRConverter {
             });
 
             if(udecl.allInvariants.length !== 0) {
-                assert(false, "Not Implemented -- flattenUpdateStatement for direct updates with invariants");
+                const oargs = cargs;
+                cargs = [];
+                for(let i = 0; i < udecl.saturatedBFieldInfo.length; ++i) {
+                    const bfi = udecl.saturatedBFieldInfo[i];
+                    const oarg = oargs[i];
+
+                    cargs.push(this.makeExpressionImmediate(oarg, tbinds !== undefined ? bfi.type.remapTemplateBindings(tbinds) : bfi.type));
+                }
+
+                 const invchecks = udecl.allInvariants.map<IREntityInvariantCheckStatement>((invdecl) => {
+                    const intype = tbinds !== undefined ? invdecl.containingtype.remapTemplateBindings(tbinds) : invdecl.containingtype;
+                    return new IREntityInvariantCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.tag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), this.processTypeSignature(intype).tkeystr, invdecl.ii, cargs as IRImmediateExpression[]);
+                });
+                
+                this.pushStatements(invchecks);
             }
 
             if(isparam) {

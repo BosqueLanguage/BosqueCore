@@ -25,6 +25,8 @@ describe ("CPPEmit -- ref updates", () => {
     });
 
     it("should emit ref updates direct with invariants", function () {
+        checkTestEmitMainFunction('entity Foo { field x: Int; invariant $x < 5i; } public function main(x: Int): Int { ref z = Foo{x}; ref z[x = $x + 1i]; return z.x; }', 'ccci');
+        checkTestEmitMainFunction('concept Bar { field g: Bool; invariant $g; } entity Foo provides Bar { field x: Int; } public function main(x: Int): Bool { var z = Foo{true, x}; ref z[g = z.x != 0i]; return z.g; }', 'llli');
     });
 
     it("should emit ref updates as params", function () {

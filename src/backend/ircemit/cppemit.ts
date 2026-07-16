@@ -1251,7 +1251,7 @@ class CPPEmitter {
             return this.emitIRMatchGeneralStatement(stmt, isfinal, indent);
         }
         else if(stmt instanceof IRBlockStatement) {
-            return this.emitBlockStatementInline(stmt, undefined, undefined, indent);
+            return this.emitBlockStatementInline(stmt, undefined, undefined, indent + "    ");
         }
         else {
             assert(false, `CPPEmitter: Unsupported IR statement type -- ${stmt.constructor.name}`);
