@@ -7,6 +7,9 @@ abstract class IRTypeSignature {
     }
 
     abstract getDirectDependencyTypes(): IRTypeSignature[];
+
+    abstract toJSON(): any;
+    abstract toBAPI(): string;
 }
 
 class IRVoidTypeSignature extends IRTypeSignature {
@@ -16,6 +19,14 @@ class IRVoidTypeSignature extends IRTypeSignature {
 
     getDirectDependencyTypes(): IRTypeSignature[] {
         return [];
+    }
+
+    toJSON(): any { 
+        xxxx;
+    }
+
+    toBAPI(): string {
+        xxxx;
     }
 }
 

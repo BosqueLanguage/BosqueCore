@@ -1,0 +1,32 @@
+namespace Assembly;
+
+%** Top Expression Concept Type **%
+concept Expression {
+}
+
+%** Simple Expressions are safe to evaluate (never return bottom value) and do not involve calls or allocating constructors. **%
+concept SimpleExpression provides Expression {
+}
+
+%** This class represents expressions that are guaranteed to be immediate values that do not require (nontrivial) evaluation (i.e., vars, literals, constants) **%
+concept ImmediateExpression provides SimpleExpression {
+}
+
+%** This class represents expressions that are guaranteed to be immediate values (i.e., constants, typdecl literals) **%
+datatype LiteralExpression provides ImmediateExpression 
+of
+    LiteralNoneExpression { }
+    LiteralBoolExpression { field value: Bool; }
+    LiteralNatExpression { field value: Nat; }
+    LiteralIntExpression { field value: Int; }
+    LiteralChkNatExpression { field value: ChkNat; }
+    LiteralChkIntExpression { field value: ChkInt; }
+    LiteralRationalExpression { field value: Rational; }
+    LiteralFloatExpression { field value: Float; }
+    %% More here 
+    LiteralUnicodeRegexExpression { field regexid: Nat; field value: ByteBuffer; }
+    LiteralCRegexExpression {  field regexid: Nat; field value: ByteBuffer; }
+    %%And here
+    LiteralCStringExpression { field value: CString; }
+    LiteralStringExpression { field value: String; }
+;

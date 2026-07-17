@@ -1,4 +1,4 @@
-declare namespace Sundew;
+declare namespace Assembly;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Misc Declarations
@@ -32,6 +32,9 @@ concept AbstractNominalTypeDecl {
 
     %%field docstr: IRDeclarationDocString | undefined;
     %%field metatags: IRDeclarationMetaTag[];
+
+    field file: CString;
+    field sinfo: SourceInfo;
 }
 
 %** This is the abstract type for all entities in the system **%

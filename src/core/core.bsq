@@ -175,6 +175,12 @@ __internal __typedeclable __keycomparable entity CString {
 #endif %% STRIPPED_CORE
 }
 
+__internal __typedeclable entity ByteBuffer {
+#if STRIPPED_CORE
+#else
+#endif %% STRIPPED_CORE
+}
+
 %** Primitive unicode regex value. **%
 __internal entity Regex {
     function accepts(re: Regex, s: String): Bool = @regex_accepts;
