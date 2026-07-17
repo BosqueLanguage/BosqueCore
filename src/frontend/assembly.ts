@@ -703,7 +703,7 @@ class EnumTypeDecl extends AbstractEntityTypeDecl {
 class TypedeclTypeDecl extends AbstractEntityTypeDecl {
     valuetype: TypeSignature;
     optofexp: Expression | undefined; //for strings, cstrings, and paths (but not fragments or globs)
-    optsizerng: {min: string | undefined, max: string | undefined} | undefined;
+    optsizerng: {min: Expression | undefined, max: Expression | undefined} | undefined;
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, etag: AdditionalTypeDeclTag, valuetype: TypeSignature) {
         super(file, sinfo, attributes, ns, name, etag);
@@ -720,8 +720,8 @@ class TypedeclTypeDecl extends AbstractEntityTypeDecl {
 
         let optsize = "";
         if(this.optsizerng !== undefined) {
-            const minstr = this.optsizerng.min !== undefined ? this.optsizerng.min : "";
-            const maxstr = this.optsizerng.max !== undefined ? this.optsizerng.max : "";
+            const minstr = this.optsizerng.min !== undefined ? this.optsizerng.min.emit(true, new CodeFormatter()) : "";
+            const maxstr = this.optsizerng.max !== undefined ? this.optsizerng.max.emit(true, new CodeFormatter()) : "";
             optsize = ` {${minstr},${maxstr}}`;
         }
 

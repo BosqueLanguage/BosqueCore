@@ -78,7 +78,6 @@ entity Assembly {
     %%readonly tests: IRTestDecl[] = [];
     %%readonly examples: IRExampleDecl[] = [];
 
-    %%readonly predicates: IRPredicateDecl[] = [];
     %%readonly invokes: IRInvokeDecl[] = [];
     %%readonly taskactions: IRTaskActionDecl[] = [];
 

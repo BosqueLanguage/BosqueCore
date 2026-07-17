@@ -2947,7 +2947,6 @@ class CPPEmitter {
     }
 
     private emitAllInvokeInfo(): [string, string] {
-        assert(this.irasm.predicates.length === 0, "CPPEmitter: need to implement predicate decl emission");
         const idecls = this.irasm.invokes.map((invk) => this.emitIRInvokeDeclInfo(invk));
         assert(this.irasm.taskactions.length === 0, "CPPEmitter: need to implement ADT decl emission");
 

@@ -1,6 +1,8 @@
 import { IRSourceInfo } from "./irsupport.js";
 import { IREListTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature } from "./irtype.js";
 
+import { BAPILexer } from "./irlexer.js";
+
 enum IRExpressionTag {
     IRLiteralNoneExpression = "IRLiteralNoneExpression",
     IRLiteralBoolExpression = "IRLiteralBoolExpression",
@@ -166,6 +168,12 @@ abstract class IRExpression {
     }
 
     abstract isSimpleExpression(): boolean;
+
+    abstract toBAPI(): string;
+
+    parseBAPI_IRExpression(lexer: BAPILexer): void {
+        xxxx;
+    }
 }
 
 /* This class represents expressions that are invocations (function/method/virtual calls) */
