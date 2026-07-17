@@ -25,4 +25,9 @@ describe ("Map -- add/set/insert", () => {
 
         runTestSet('public function main(i: Int): Map<Int, Nat> { return Map<Int, Nat>{1i => 1n, 18i => 18n, 2i => 2n}.insert(i, 5n).insert(i + 1i, 6n).add(3i, 3n).add(4i, 4n); }', [['0i', 'Map<Int, Nat>{ 0i => 5n, 1i => 6n, 2i => 2n, 3i => 3n, 4i => 4n, 18i => 18n }'], ['5i', 'Map<Int, Nat>{ 1i => 1n, 2i => 2n, 3i => 3n, 4i => 4n, 5i => 5n, 6i => 6n, 18i => 18n }']], ['2i']);
     });
+
+    it("should mixed ops w ref", function () {
+        runTestSet('public function main(i: Int): Map<Int, Nat> { var m = Map<Int, Nat>{1i => 1n, 2i => 2n}; ref m.add(3i, 3n); ref m.add(4i, 4n); ref m.insert(i, 5n); return m; }', [['2i', 'Map<Int, Nat>{ 1i => 1n, 2i => 5n, 3i => 3n, 4i => 4n }'], ['11i', 'Map<Int, Nat>{ 1i => 1n, 2i => 2n, 3i => 3n, 4i => 4n, 11i => 5n }']], []);
+        runTestSet('public function main(i: Int): Map<Int, Nat> { var m = Map<Int, Nat>{1i => 1n, 2i => 2n}; ref m.set(i, 5n); ref m.add(4i, 4n); ref m.set(2i, 100n); ref m.insert(i + 1i, 6n); return m; }', [['2i', 'Map<Int, Nat>{ 1i => 1n, 2i => 100n, 3i => 6n, 4i => 4n }']], ['0i']);
+    });
 });
