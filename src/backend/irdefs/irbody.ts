@@ -773,23 +773,19 @@ class IRLiteralDeltaLogicalTimeExpression extends IRLiteralExpression {
 
 class IRLiteralUnicodeRegexExpression extends IRLiteralExpression {
     readonly regexID: number
-    readonly value: string;
-
-    constructor(regexID: number, value: string) {
+    
+    constructor(regexID: number) {
         super(IRExpressionTag.IRLiteralUnicodeRegexExpression);
         this.regexID = regexID;
-        this.value = value;
     }
 }
 
 class IRLiteralCRegexExpression extends IRLiteralExpression {
     readonly regexID: number
-    readonly value: string;
-
-    constructor(regexID: number, value: string) {
+    
+    constructor(regexID: number) {
         super(IRExpressionTag.IRLiteralCRegexExpression);
         this.regexID = regexID;
-        this.value = value;
     }
 }
 

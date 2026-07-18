@@ -2,9 +2,12 @@ import assert from "node:assert";
 
 enum BAPITokenKind {
     EOS = "$EOS$",
-    Identifier = "Identifier",
+    NoneLiteral = "none",
+    TrueLiteral = "true",
+    FalseLiteral = "false",
     CStringLiteral = "CStringLiteral",
     StringLiteral = "StringLiteral",
+    Identifier = "Identifier",
     TypeIdentifier = "TypeIdentifier",
     OpenBrace = "{",
     CloseBrace = "}",

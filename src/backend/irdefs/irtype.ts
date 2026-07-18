@@ -178,7 +178,7 @@ abstract class IRFormatTypeSignature extends IRTypeSignature {
         return `${this.rtype.toBAPI()}, List<Assembly::FormatTypeSignatureTerm>{${this.terms.map(t => `Assembly::FormatTypeSignatureTerm{'${t.argname}'<Assembly::Identifier>, ${t.argtype.toBAPI()}}`).join(", ")}}`;
     }
 
-    static parseBAPI_IRFormatTypeSignature(lexer: BAPILexer): [IRTypeSignature, {argname: string, argtype: IRTypeSignature}[]] {
+    static parseBAPI_IRFormatTypeSignature(lexer: BAPILexer): {rtype: IRTypeSignature, terms: {argname: string, argtype: IRTypeSignature}[]} {
         const rtype = IRTypeSignature.parseBAPI(lexer);
         lexer.ensureAndConsumeSymbol(',');
         const terms = parseListOf<{argname: string, argtype: IRTypeSignature}>(lexer, '{', '}', ',', (lexer) => {
@@ -197,7 +197,7 @@ abstract class IRFormatTypeSignature extends IRTypeSignature {
 
             return {argname, argtype};
         });
-        return [rtype, terms];
+        return {rtype, terms};
     }
 }
 
@@ -215,7 +215,7 @@ class IRFormatCStringTypeSignature extends IRFormatTypeSignature {
         lexer.ensureAndConsumeSymbol('{');
         const tkeystr = parseTypeKey(lexer);
         lexer.ensureAndConsumeSymbol(',');
-        const [rtype, terms] = IRFormatTypeSignature.parseBAPI_IRFormatTypeSignature(lexer);
+        const {rtype, terms} = IRFormatTypeSignature.parseBAPI_IRFormatTypeSignature(lexer);
         lexer.ensureAndConsumeSymbol('}');
 
         return new IRFormatCStringTypeSignature(tkeystr, rtype, terms);
@@ -236,7 +236,7 @@ class IRFormatStringTypeSignature extends IRFormatTypeSignature {
         lexer.ensureAndConsumeSymbol('{');
         const tkeystr = parseTypeKey(lexer);
         lexer.ensureAndConsumeSymbol(',');
-        const [rtype, terms] = IRFormatTypeSignature.parseBAPI_IRFormatTypeSignature(lexer);
+        const {rtype, terms} = IRFormatTypeSignature.parseBAPI_IRFormatTypeSignature(lexer);
         lexer.ensureAndConsumeSymbol('}');
 
         return new IRFormatStringTypeSignature(tkeystr, rtype, terms);
