@@ -2,22 +2,39 @@ import assert from "node:assert";
 
 enum BAPITokenKind {
     EOS = "$EOS$",
+    
     NoneLiteral = "none",
     TrueLiteral = "true",
     FalseLiteral = "false",
+    NatLiteral = "NatLiteral",
+    IntLiteral = "IntLiteral",
+    ChkNatLiteral = "ChkNatLiteral",
+    ChkIntLiteral = "ChkIntLiteral",
+    RationalLiteral = "RationalLiteral",
+    FloatLiteral = "FloatLiteral",
+    DecimalLiteral = "DecimalLiteral",
+
+    ByteBufferLiteral = "ByteBufferLiteral",
+
     CStringLiteral = "CStringLiteral",
     StringLiteral = "StringLiteral",
+    
+    CRegexLiteral = "CRegexLiteral",
+    URegexLiteral = "URegexLiteral",
+    
     Identifier = "Identifier",
     TypeIdentifier = "TypeIdentifier",
+    
     OpenBrace = "{",
     CloseBrace = "}",
     Langle = "<",
     Rangle = ">",
     OpenParen = "(",
     CloseParen = ")",
+    
     Comma = ",",
     Colon = ":",
-    ColonColon = "::",
+    ColonColon = "::"
 }
 
 class BAPIToken {

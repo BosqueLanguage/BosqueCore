@@ -347,7 +347,7 @@ class IREnumTypeDecl extends IRAbstractEntityTypeDecl {
         return `Assembly::IREnumTypeDecl{${this.toBAPI_IRAbstractEntityTypeDecl()}, List<CString>{${this.members.map(m => `'${m}'`).join(", ")}}}`;
     }
 
-    static parseBAPI_IREnumTypeDecl(lexer: BAPILexer): IREnumTypeDecl {
+    static parseBAPIAsIREnumTypeDecl(lexer: BAPILexer): IREnumTypeDecl {
         lexer.consumeToken(); //Assembly::IREnumTypeDecl
         lexer.ensureAndConsumeSymbol("{");
         const etdfields = IRAbstractEntityTypeDecl.parseBAPI_IRAbstractEntityTypeDecl(lexer);
@@ -394,7 +394,7 @@ class IRTypedeclTypeDecl extends IRAbstractEntityTypeDecl {
         const mintok = lexer.consumeToken();
         if(mintok.kind !== BAPITokenKind.NoneLiteral) {
             lexer.ensureAndConsumeSymbol("(");
-            minexpr = IRImmediateExpression.parseBAPI_IRImmediateExpression(lexer);
+            minexpr = IRImmediateExpression.parseBAPIAsIRImmediateExpression(lexer);
             lexer.ensureAndConsumeSymbol(")");
         }
 
@@ -404,7 +404,7 @@ class IRTypedeclTypeDecl extends IRAbstractEntityTypeDecl {
         const maxtok = lexer.consumeToken();
         if(maxtok.kind !== BAPITokenKind.NoneLiteral) {
             lexer.ensureAndConsumeSymbol("(");
-            maxexpr = IRImmediateExpression.parseBAPI_IRImmediateExpression(lexer);
+            maxexpr = IRImmediateExpression.parseBAPIAsIRImmediateExpression(lexer);
             lexer.ensureAndConsumeSymbol(")");
         }
 
@@ -420,7 +420,7 @@ class IRTypedeclTypeDecl extends IRAbstractEntityTypeDecl {
         }
     }
 
-    static parseBAPI_IRTypedeclTypeDecl(lexer: BAPILexer): IRTypedeclTypeDecl {
+    static parseBAPIAsIRTypedeclTypeDecl(lexer: BAPILexer): IRTypedeclTypeDecl {
         const tok = lexer.consumeToken();
 
         const etdfields = IRAbstractEntityTypeDecl.parseBAPI_IRAbstractEntityTypeDecl(lexer);
@@ -464,7 +464,7 @@ class IRTypedeclCStringDecl extends IRTypedeclTypeDecl {
         return `Assembly::TypedeclCStringDecl{${this.toBAPI_IRAbstractEntityTypeDecl()}, ${this.iskeytype}, ${this.isnumerictype}, ${rngchkstr}, ${rechkstr}}`;
     }
 
-    static parseBAPI_IRTypedeclCStringDecl(lexer: BAPILexer): IRTypedeclCStringDecl {
+    static parseBAPIAsIRTypedeclCStringDecl(lexer: BAPILexer): IRTypedeclCStringDecl {
         lexer.consumeToken();
 
         const etdfields = IRAbstractEntityTypeDecl.parseBAPI_IRAbstractEntityTypeDecl(lexer);
@@ -481,7 +481,7 @@ class IRTypedeclCStringDecl extends IRTypedeclTypeDecl {
         const rechktok = lexer.consumeToken();
         if(rechktok.kind !== BAPITokenKind.NoneLiteral) {
             lexer.ensureAndConsumeSymbol("(");
-            rechk = IRLiteralCRegexExpression.parseBAPI_IRLiteralCRegexExpression(lexer);
+            rechk = IRLiteralCRegexExpression.parseBAPIAsIRLiteralCRegexExpression(lexer);
             lexer.ensureAndConsumeSymbol(")");
         }
 
@@ -505,7 +505,7 @@ class IRTypedeclStringDecl extends IRTypedeclTypeDecl {
         return `Assembly::TypedeclStringDecl{${this.toBAPI_IRAbstractEntityTypeDecl()}, ${this.iskeytype}, ${this.isnumerictype}, ${rngchkstr}, ${rechkstr}}`;
     }
 
-    static parseBAPI_IRTypedeclStringDecl(lexer: BAPILexer): IRTypedeclStringDecl {
+    static parseBAPIAsIRTypedeclStringDecl(lexer: BAPILexer): IRTypedeclStringDecl {
         lexer.consumeToken();
 
         const etdfields = IRAbstractEntityTypeDecl.parseBAPI_IRAbstractEntityTypeDecl(lexer);
@@ -522,7 +522,7 @@ class IRTypedeclStringDecl extends IRTypedeclTypeDecl {
         const rechktok = lexer.consumeToken();
         if(rechktok.kind !== BAPITokenKind.NoneLiteral) {
             lexer.ensureAndConsumeSymbol("(");
-            rechk = IRLiteralUnicodeRegexExpression.parseBAPI_IRLiteralUnicodeRegexExpression(lexer);
+            rechk = IRLiteralUnicodeRegexExpression.parseBAPIAsIRLiteralUnicodeRegexExpression(lexer);
             lexer.ensureAndConsumeSymbol(")");
         }
 
@@ -560,7 +560,7 @@ class IRPrimitiveEntityTypeDecl extends IRInternalEntityTypeDecl {
         return `Assembly::PrimitiveEntityTypeDecl{${this.toBAPI_IRInternalEntityTypeDecl()}}`;
     }
 
-    static parseBAPI_IRPrimitiveEntityTypeDecl(lexer: BAPILexer): IRPrimitiveEntityTypeDecl {
+    static parseBAPIAsIRPrimitiveEntityTypeDecl(lexer: BAPILexer): IRPrimitiveEntityTypeDecl {
         lexer.consumeToken(); //Assembly::PrimitiveEntityTypeDecl
         lexer.ensureAndConsumeSymbol("{");
         const etdfields = IRInternalEntityTypeDecl.parseBAPI_IRInternalEntityTypeDecl(lexer);
@@ -602,7 +602,7 @@ class IROkTypeDecl extends IRConstructableTypeDecl {
         assert(false, "IROkTypeDecl.toBAPI() is not implemented yet");
     }
 
-    static parseBAPI_IROkTypeDecl(lexer: BAPILexer): IROkTypeDecl {
+    static parseBAPIAsIROkTypeDecl(lexer: BAPILexer): IROkTypeDecl {
         assert(false, "IROkTypeDecl.parseBAPI_IROkTypeDecl() is not implemented yet");
     }
 }
@@ -625,7 +625,7 @@ class IRFailTypeDecl extends IRConstructableTypeDecl {
         assert(false, "IRFailTypeDecl.toBAPI() is not implemented yet");
     }
 
-    static parseBAPI_IRFailTypeDecl(lexer: BAPILexer): IRFailTypeDecl {
+    static parseBAPIAsIRFailTypeDecl(lexer: BAPILexer): IRFailTypeDecl {
         assert(false, "IRFailTypeDecl.parseBAPI_IRFailTypeDecl() is not implemented yet");
     }
 }
@@ -648,7 +648,7 @@ class IRAPIErrorTypeDecl extends IRConstructableTypeDecl {
         assert(false, "IRAPIErrorTypeDecl.toBAPI() is not implemented yet");
     }
 
-    static parseBAPI_IRAPIErrorTypeDecl(lexer: BAPILexer): IRAPIErrorTypeDecl {
+    static parseBAPIAsIRAPIErrorTypeDecl(lexer: BAPILexer): IRAPIErrorTypeDecl {
         assert(false, "IRAPIErrorTypeDecl.parseBAPI_IRAPIErrorTypeDecl() is not implemented yet");
     }
 }
@@ -671,7 +671,7 @@ class IRAPIRejectedTypeDecl extends IRConstructableTypeDecl {
         assert(false, "IRAPIRejectedTypeDecl.toBAPI() is not implemented yet");
     }
 
-    static parseBAPI_IRAPIRejectedTypeDecl(lexer: BAPILexer): IRAPIRejectedTypeDecl {
+    static parseBAPIAsIRAPIRejectedTypeDecl(lexer: BAPILexer): IRAPIRejectedTypeDecl {
         assert(false, "IRAPIRejectedTypeDecl.parseBAPI_IRAPIRejectedTypeDecl() is not implemented yet");
     }
 }
@@ -694,7 +694,7 @@ class IRAPIDeniedTypeDecl extends IRConstructableTypeDecl {
         assert(false, "IRAPIDeniedTypeDecl.toBAPI() is not implemented yet");
     }
 
-    static parseBAPI_IRAPIDeniedTypeDecl(lexer: BAPILexer): IRAPIDeniedTypeDecl {
+    static parseBAPIAsIRAPIDeniedTypeDecl(lexer: BAPILexer): IRAPIDeniedTypeDecl {
         assert(false, "IRAPIDeniedTypeDecl.parseBAPI_IRAPIDeniedTypeDecl() is not implemented yet");
     }
 }
@@ -717,7 +717,7 @@ class IRAPIFlaggedTypeDecl extends IRConstructableTypeDecl {
         assert(false, "IRAPIFlaggedTypeDecl.toBAPI() is not implemented yet");
     }
 
-    static parseBAPI_IRAPIFlaggedTypeDecl(lexer: BAPILexer): IRAPIFlaggedTypeDecl {
+    static parseBAPIAsIRAPIFlaggedTypeDecl(lexer: BAPILexer): IRAPIFlaggedTypeDecl {
         assert(false, "IRAPIFlaggedTypeDecl.parseBAPI_IRAPIFlaggedTypeDecl() is not implemented yet");
     }
 }
@@ -740,7 +740,7 @@ class IRAPISuccessTypeDecl extends IRConstructableTypeDecl {
         assert(false, "IRAPISuccessTypeDecl.toBAPI() is not implemented yet");
     }
 
-    static parseBAPI_IRAPISuccessTypeDecl(lexer: BAPILexer): IRAPISuccessTypeDecl {
+    static parseBAPIAsIRAPISuccessTypeDecl(lexer: BAPILexer): IRAPISuccessTypeDecl {
         assert(false, "IRAPISuccessTypeDecl.parseBAPI_IRAPISuccessTypeDecl() is not implemented yet");
     }
 }
@@ -761,7 +761,7 @@ class IRSomeTypeDecl extends IRConstructableTypeDecl {
         assert(false, "IRSomeTypeDecl.toBAPI() is not implemented yet");
     }
 
-    static parseBAPI_IRSomeTypeDecl(lexer: BAPILexer): IRSomeTypeDecl {
+    static parseBAPIAsIRSomeTypeDecl(lexer: BAPILexer): IRSomeTypeDecl {
         assert(false, "IRSomeTypeDecl.parseBAPI_IRSomeTypeDecl() is not implemented yet");
     }
 }
@@ -784,7 +784,7 @@ class IRMapEntryTypeDecl extends IRConstructableTypeDecl {
         assert(false, "IRMapEntryTypeDecl.toBAPI() is not implemented yet");
     }
 
-    static parseBAPI_IRMapEntryTypeDecl(lexer: BAPILexer): IRMapEntryTypeDecl {
+    static parseBAPIAsIRMapEntryTypeDecl(lexer: BAPILexer): IRMapEntryTypeDecl {
         assert(false, "IRMapEntryTypeDecl.parseBAPI_IRMapEntryTypeDecl() is not implemented yet");
     }
 }
@@ -823,7 +823,7 @@ class IRListTypeDecl extends IRAbstractCollectionTypeDecl {
         return `Assembly::ListTypeDecl{${this.toBAPI_IRAbstractCollectionTypeDecl()}}`;
     }
 
-    static parseBAPI_IRListTypeDecl(lexer: BAPILexer): IRListTypeDecl {
+    static parseBAPIAsIRListTypeDecl(lexer: BAPILexer): IRListTypeDecl {
         lexer.consumeToken(); //Assembly::IRListTypeDecl
         lexer.ensureAndConsumeSymbol("{");
         const etdfields = IRAbstractCollectionTypeDecl.parseBAPI_IRAbstractCollectionTypeDecl(lexer);
@@ -846,7 +846,7 @@ class IRStackTypeDecl extends IRAbstractCollectionTypeDecl {
         return `Assembly::StackTypeDecl{${this.toBAPI_IRAbstractCollectionTypeDecl()}}`;
     }
 
-    static parseBAPI_IRStackTypeDecl(lexer: BAPILexer): IRStackTypeDecl {
+    static parseBAPIAsIRStackTypeDecl(lexer: BAPILexer): IRStackTypeDecl {
         lexer.consumeToken(); //Assembly::IRStackTypeDecl
         lexer.ensureAndConsumeSymbol("{");
         const etdfields = IRAbstractCollectionTypeDecl.parseBAPI_IRAbstractCollectionTypeDecl(lexer);
@@ -868,7 +868,7 @@ class IRQueueTypeDecl extends IRAbstractCollectionTypeDecl {
         return `Assembly::QueueTypeDecl{${this.toBAPI_IRAbstractCollectionTypeDecl()}}`;
     }
 
-    static parseBAPI_IRQueueTypeDecl(lexer: BAPILexer): IRQueueTypeDecl {
+    static parseBAPIAsIRQueueTypeDecl(lexer: BAPILexer): IRQueueTypeDecl {
         lexer.consumeToken(); //Assembly::IRQueueTypeDecl
         lexer.ensureAndConsumeSymbol("{");
         const etdfields = IRAbstractCollectionTypeDecl.parseBAPI_IRAbstractCollectionTypeDecl(lexer);
@@ -891,7 +891,7 @@ class IRSetTypeDecl extends IRAbstractCollectionTypeDecl {
         return `Assembly::SetTypeDecl{${this.toBAPI_IRAbstractCollectionTypeDecl()}}`;
     }
 
-    static parseBAPI_IRSetTypeDecl(lexer: BAPILexer): IRSetTypeDecl {
+    static parseBAPIAsIRSetTypeDecl(lexer: BAPILexer): IRSetTypeDecl {
         lexer.consumeToken(); //Assembly::IRSetTypeDecl
         lexer.ensureAndConsumeSymbol("{");
         const etdfields = IRAbstractCollectionTypeDecl.parseBAPI_IRAbstractCollectionTypeDecl(lexer);
@@ -919,7 +919,7 @@ class IRMapTypeDecl extends IRAbstractCollectionTypeDecl {
         return `Assembly::MapTypeDecl{${this.toBAPI_IRAbstractCollectionTypeDecl()}, ${this.ktype.toBAPI()}, ${this.vtype.toBAPI()}}`;
     }
 
-    static parseBAPI_IRMapTypeDecl(lexer: BAPILexer): IRMapTypeDecl {
+    static parseBAPIAsIRMapTypeDecl(lexer: BAPILexer): IRMapTypeDecl {
         lexer.consumeToken(); //Assembly::MapTypeDecl
         lexer.ensureAndConsumeSymbol("{");
         const etdfields = IRAbstractCollectionTypeDecl.parseBAPI_IRAbstractCollectionTypeDecl(lexer);
@@ -949,7 +949,7 @@ class IREventListTypeDecl extends IRInternalEntityTypeDecl {
         assert(false, "IREventListTypeDecl.toBAPI() is not implemented yet");
     }
 
-    static parseBAPI_IREventListTypeDecl(lexer: BAPILexer): IREventListTypeDecl {
+    static parseBAPIAsIREventListTypeDecl(lexer: BAPILexer): IREventListTypeDecl {
         assert(false, "IREventListTypeDecl.parseBAPI_IREventListTypeDecl() is not implemented yet");
     }
 }
@@ -973,7 +973,7 @@ class IREntityTypeDecl extends IRAbstractEntityTypeDecl {
         return `Assembly::EntityTypeDecl{${this.toBAPI_IRAbstractEntityTypeDecl()}}`;
     }
 
-    static parseBAPI_IREntityTypeDecl(lexer: BAPILexer): IREntityTypeDecl {
+    static parseBAPIAsIREntityTypeDecl(lexer: BAPILexer): IREntityTypeDecl {
         lexer.consumeToken(); //Assembly::EntityTypeDecl
         lexer.ensureAndConsumeSymbol("{");
         const etdfields = IRAbstractEntityTypeDecl.parseBAPI_IRAbstractEntityTypeDecl(lexer);
@@ -1029,7 +1029,7 @@ class IROptionTypeDecl extends IRInternalConceptTypeDecl {
         assert(false, "IROptionTypeDecl.toBAPI() is not implemented yet");
     }
     
-    static parseBAPI_IROptionTypeDecl(lexer: BAPILexer): IROptionTypeDecl {
+    static parseBAPIAsIROptionTypeDecl(lexer: BAPILexer): IROptionTypeDecl {
         assert(false, "IROptionTypeDecl.parseBAPI_IROptionTypeDecl() is not implemented yet");
     }
 }
@@ -1057,7 +1057,7 @@ class IRResultTypeDecl extends IRInternalConceptTypeDecl {
         assert(false, "IRResultTypeDecl.toBAPI() is not implemented yet");
     }
 
-    static parseBAPI_IRResultTypeDecl(lexer: BAPILexer): IRResultTypeDecl {
+    static parseBAPIAsIRResultTypeDecl(lexer: BAPILexer): IRResultTypeDecl {
         assert(false, "IRResultTypeDecl.parseBAPI_IRResultTypeDecl() is not implemented yet");
     }
 }
@@ -1091,7 +1091,7 @@ class IRAPIResultTypeDecl extends IRInternalConceptTypeDecl {
         assert(false, "IRAPIResultTypeDecl.toBAPI() is not implemented yet");
     }
 
-    static parseBAPI_IRAPIResultTypeDecl(lexer: BAPILexer): IRAPIResultTypeDecl {
+    static parseBAPIAsIRAPIResultTypeDecl(lexer: BAPILexer): IRAPIResultTypeDecl {
         assert(false, "IRAPIResultTypeDecl.parseBAPI_IRAPIResultTypeDecl() is not implemented yet");
     }
 }
@@ -1115,7 +1115,7 @@ class IRConceptTypeDecl extends IRAbstractConceptTypeDecl {
         return `Assembly::ConceptTypeDecl{${this.toBAPI_IRAbstractConceptTypeDecl()}}`;
     }
 
-    static parseBAPI_IRConceptTypeDecl(lexer: BAPILexer): IRConceptTypeDecl {
+    static parseBAPIAsIRConceptTypeDecl(lexer: BAPILexer): IRConceptTypeDecl {
         lexer.consumeToken(); //Assembly::ConceptTypeDecl
         lexer.ensureAndConsumeSymbol("{");
         const etdfields = IRAbstractConceptTypeDecl.parseBAPI_IRAbstractConceptTypeDecl(lexer);
@@ -1144,7 +1144,7 @@ class IRDatatypeMemberEntityTypeDecl extends IRAbstractEntityTypeDecl {
         return `Assembly::DatatypeMemberEntityTypeDecl{${this.toBAPI_IRAbstractEntityTypeDecl()}}`;
     }
 
-    static parseBAPI_IRDatatypeMemberEntityTypeDecl(lexer: BAPILexer): IRDatatypeMemberEntityTypeDecl {
+    static parseBAPIAsIRDatatypeMemberEntityTypeDecl(lexer: BAPILexer): IRDatatypeMemberEntityTypeDecl {
         lexer.consumeToken(); //Assembly::DatatypeMemberEntityTypeDecl
         lexer.ensureAndConsumeSymbol("{");
         const etdfields = IRAbstractEntityTypeDecl.parseBAPI_IRAbstractEntityTypeDecl(lexer);
@@ -1176,7 +1176,7 @@ class IRDatatypeTypeDecl extends IRAbstractConceptTypeDecl {
         assert(false, "IRDatatypeTypeDecl.toBAPI() is not implemented yet");
     }
 
-    static parseBAPI_IRDatatypeTypeDecl(lexer: BAPILexer): IRDatatypeTypeDecl {
+    static parseBAPIAsIRDatatypeTypeDecl(lexer: BAPILexer): IRDatatypeTypeDecl {
         assert(false, "IRDatatypeTypeDecl.parseBAPI_IRDatatypeTypeDecl() is not implemented yet");
     }
 }

@@ -21,34 +21,34 @@ abstract class IRTypeSignature {
         }
 
         if(tok.value === "Assembly::IRTypeSignatureVoid") {
-            return IRVoidTypeSignature.parseBAPI_IRVoidTypeSignature(lexer);
+            return IRVoidTypeSignature.parseBAPIAsIRVoidTypeSignature(lexer);
         }
         else if(tok.value === "Assembly::IRTypeSignatureNominal") {
-            return IRNominalTypeSignature.parseBAPI_IRNominalTypeSignature(lexer);
+            return IRNominalTypeSignature.parseBAPIAsIRNominalTypeSignature(lexer);
         }
         else if(tok.value === "Assembly::IRTypeSignatureEList") {
-            return IREListTypeSignature.parseBAPI_IREListTypeSignature(lexer);
+            return IREListTypeSignature.parseBAPIAsIREListTypeSignature(lexer);
         }
         else if(tok.value === "Assembly::IRTypeSignatureDashResult") {
-            return IRDashResultTypeSignature.parseBAPI_IRDashResultTypeSignature(lexer);
+            return IRDashResultTypeSignature.parseBAPIAsIRDashResultTypeSignature(lexer);
         }
         else if(tok.value === "Assembly::IRFormatCStringTypeSignature") {
-            return IRFormatCStringTypeSignature.parseBAPI_IRFormatCStringTypeSignature(lexer);
+            return IRFormatCStringTypeSignature.parseBAPIAsIRFormatCStringTypeSignature(lexer);
         }
         else if(tok.value === "Assembly::IRFormatStringTypeSignature") {
-            return IRFormatStringTypeSignature.parseBAPI_IRFormatStringTypeSignature(lexer);
+            return IRFormatStringTypeSignature.parseBAPIAsIRFormatStringTypeSignature(lexer);
         }
         else if(tok.value === "Assembly::IRFormatPathTypeSignature") {
-            return IRFormatPathTypeSignature.parseBAPI_IRFormatPathTypeSignature(lexer);
+            return IRFormatPathTypeSignature.parseBAPIAsIRFormatPathTypeSignature(lexer);
         }
         else if(tok.value === "Assembly::IRFormatPathFragmentTypeSignature") {
-            return IRFormatPathFragmentTypeSignature.parseBAPI_IRFormatPathFragmentTypeSignature(lexer);
+            return IRFormatPathFragmentTypeSignature.parseBAPIAsIRFormatPathFragmentTypeSignature(lexer);
         }
         else if(tok.value === "Assembly::IRFormatPathGlobTypeSignature") {
-            return IRFormatPathGlobTypeSignature.parseBAPI_IRFormatPathGlobTypeSignature(lexer);
+            return IRFormatPathGlobTypeSignature.parseBAPIAsIRFormatPathGlobTypeSignature(lexer);
         }
         else if(tok.value === "Assembly::IRLambdaParameterPackTypeSignature") {
-            return IRLambdaParameterPackTypeSignature.parseBAPI_IRLambdaParameterPackTypeSignature(lexer);
+            return IRLambdaParameterPackTypeSignature.parseBAPIAsIRLambdaParameterPackTypeSignature(lexer);
         }
         else {
             throw new Error(`Unexpected TypeKey token value ${tok.value}`);
@@ -69,7 +69,7 @@ class IRVoidTypeSignature extends IRTypeSignature {
         return `Assembly::IRTypeSignatureVoid{${emitTypeKey(this.tkeystr)}}`;
     }
 
-    static parseBAPI_IRVoidTypeSignature(lexer: BAPILexer): IRTypeSignature {
+    static parseBAPIAsIRVoidTypeSignature(lexer: BAPILexer): IRTypeSignature {
         lexer.consumeToken();
         lexer.ensureAndConsumeSymbol('{');
         parseTypeKey(lexer);
@@ -92,7 +92,7 @@ class IRNominalTypeSignature extends IRTypeSignature {
         return `Assembly::IRTypeSignatureNominal{${emitTypeKey(this.tkeystr)}}`;
     }
 
-    static parseBAPI_IRNominalTypeSignature(lexer: BAPILexer): IRTypeSignature {
+    static parseBAPIAsIRNominalTypeSignature(lexer: BAPILexer): IRTypeSignature {
         lexer.consumeToken();
         lexer.ensureAndConsumeSymbol('{');
         const tkeystr = parseTypeKey(lexer);
@@ -118,7 +118,7 @@ class IREListTypeSignature extends IRTypeSignature {
         return `Assembly::IRTypeSignatureEList{${emitTypeKey(this.tkeystr)}, List<Assembly::IRTypeSignature>{${this.entries.map(e => e.toBAPI()).join(", ")}}}`;
     }
 
-    static parseBAPI_IREListTypeSignature(lexer: BAPILexer): IRTypeSignature {
+    static parseBAPIAsIREListTypeSignature(lexer: BAPILexer): IRTypeSignature {
         lexer.consumeToken();
         lexer.ensureAndConsumeSymbol('{');
         const tkeystr = parseTypeKey(lexer);
@@ -147,7 +147,7 @@ class IRDashResultTypeSignature extends IRTypeSignature {
         return `Assembly::IRTypeSignatureDashResult{'${this.tkeystr}'<Assembly::TypeKey>, List<Assembly::IRTypeSignature>{${this.entries.map(e => e.toBAPI()).join(", ")}}}`;
     }
 
-    static parseBAPI_IRDashResultTypeSignature(lexer: BAPILexer): IRTypeSignature {
+    static parseBAPIAsIRDashResultTypeSignature(lexer: BAPILexer): IRTypeSignature {
         lexer.consumeToken();
         lexer.ensureAndConsumeSymbol('{');
         const tkeystr = parseTypeKey(lexer);
@@ -210,7 +210,7 @@ class IRFormatCStringTypeSignature extends IRFormatTypeSignature {
         return `Assembly::IRFormatCStringTypeSignature{${emitTypeKey(this.tkeystr)}, ${this.toBAPI_IRFormatTypeSignature()}}`;
     }
 
-    static parseBAPI_IRFormatCStringTypeSignature(lexer: BAPILexer): IRTypeSignature {
+    static parseBAPIAsIRFormatCStringTypeSignature(lexer: BAPILexer): IRTypeSignature {
         lexer.consumeToken();
         lexer.ensureAndConsumeSymbol('{');
         const tkeystr = parseTypeKey(lexer);
@@ -231,7 +231,7 @@ class IRFormatStringTypeSignature extends IRFormatTypeSignature {
         return `Assembly::IRFormatStringTypeSignature{${emitTypeKey(this.tkeystr)}, ${this.toBAPI_IRFormatTypeSignature()}}`;
     }
 
-    static parseBAPI_IRFormatStringTypeSignature(lexer: BAPILexer): IRTypeSignature {
+    static parseBAPIAsIRFormatStringTypeSignature(lexer: BAPILexer): IRTypeSignature {
         lexer.consumeToken();
         lexer.ensureAndConsumeSymbol('{');
         const tkeystr = parseTypeKey(lexer);
@@ -252,7 +252,7 @@ class IRFormatPathTypeSignature extends IRFormatTypeSignature {
         assert(false, "IRFormatPathTypeSignature not implemented for serialization to BAPI");
     }
 
-    static parseBAPI_IRFormatPathTypeSignature(lexer: BAPILexer): IRTypeSignature {
+    static parseBAPIAsIRFormatPathTypeSignature(lexer: BAPILexer): IRTypeSignature {
         assert(false, "IRFormatPathTypeSignature not implemented for deserialization from BAPI");
     }
 }
@@ -266,7 +266,7 @@ class IRFormatPathFragmentTypeSignature extends IRFormatTypeSignature {
         assert(false, "IRFormatPathFragmentTypeSignature not implemented for serialization to BAPI");
     }
 
-    static parseBAPI_IRFormatPathFragmentTypeSignature(lexer: BAPILexer): IRTypeSignature {
+    static parseBAPIAsIRFormatPathFragmentTypeSignature(lexer: BAPILexer): IRTypeSignature {
         assert(false, "IRFormatPathFragmentTypeSignature not implemented for deserialization from BAPI");
     }
 }
@@ -280,7 +280,7 @@ class IRFormatPathGlobTypeSignature extends IRFormatTypeSignature {
         assert(false, "IRFormatPathGlobTypeSignature not implemented for serialization to BAPI");
     }
 
-    static parseBAPI_IRFormatPathGlobTypeSignature(lexer: BAPILexer): IRTypeSignature {
+    static parseBAPIAsIRFormatPathGlobTypeSignature(lexer: BAPILexer): IRTypeSignature {
         assert(false, "IRFormatPathGlobTypeSignature not implemented for deserialization from BAPI");
     }
 }
@@ -298,7 +298,7 @@ class IRLambdaParameterPackTypeSignature extends IRTypeSignature {
         return `Assembly::IRLambdaParameterPackTypeSignature{${emitTypeKey(this.tkeystr)}}`;
     }
 
-    static parseBAPI_IRLambdaParameterPackTypeSignature(lexer: BAPILexer): IRTypeSignature {
+    static parseBAPIAsIRLambdaParameterPackTypeSignature(lexer: BAPILexer): IRTypeSignature {
         lexer.consumeToken();
         lexer.ensureAndConsumeSymbol('{');
         const tkeystr = parseTypeKey(lexer);
