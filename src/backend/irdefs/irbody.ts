@@ -185,6 +185,63 @@ abstract class IRExpression {
         else if(tok.value === "Assembly::LiteralBoolExpression") {
             return IRLiteralBoolExpression.parseBAPIAsIRLiteralBoolExpression(lexer);
         }
+        else if(tok.value === "Assembly::LiteralNatExpression") {
+            return IRLiteralNatExpression.parseBAPIAsIRLiteralNatExpression(lexer);
+        }
+        else if(tok.value === "Assembly::LiteralIntExpression") {
+            return IRLiteralIntExpression.parseBAPIAsIRLiteralIntExpression(lexer);
+        }
+        else if(tok.value === "Assembly::LiteralChkNatExpression") {
+            return IRLiteralChkNatExpression.parseBAPIAsIRLiteralChkNatExpression(lexer);
+        }
+        else if(tok.value === "Assembly::LiteralChkIntExpression") {
+            return IRLiteralChkIntExpression.parseBAPIAsIRLiteralChkIntExpression(lexer);
+        }
+        else if(tok.value === "Assembly::LiteralRationalExpression") {
+            return IRLiteralRationalExpression.parseBAPIAsIRLiteralRationalExpression(lexer);
+        }
+        else if(tok.value === "Assembly::LiteralFloatExpression") {
+            return IRLiteralFloatExpression.parseBAPIAsIRLiteralFloatExpression(lexer);
+        }
+        else if(tok.value === "Assembly::LiteralDecimalExpression") {
+            return IRLiteralDecimalExpression.parseBAPIAsIRLiteralDecimalExpression(lexer);
+        }
+        //
+        //More here
+        //
+        else if(tok.value === "Assembly::LiteralByteBufferExpression") {
+            return IRLiteralByteBufferExpression.parseBAPIAsIRLiteralByteBufferExpression(lexer);
+        }
+        else if(tok.value === "Assembly::LiteralRegexExpression") {
+            return IRLiteralUnicodeRegexExpression.parseBAPIAsIRLiteralUnicodeRegexExpression(lexer);
+        }
+        else if(tok.value === "Assembly::LiteralCRegexExpression") {
+            return IRLiteralCRegexExpression.parseBAPIAsIRLiteralCRegexExpression(lexer);
+        }
+        else if(tok.value === "Assembly::LiteralByteExpression") {
+            return IRLiteralByteExpression.parseBAPIAsIRLiteralByteExpression(lexer);
+        }
+        else if(tok.value === "Assembly::LiteralCCharExpression") {
+            return IRLiteralCCharExpression.parseBAPIAsIRLiteralCCharExpression(lexer);
+        }
+        else if(tok.value === "Assembly::LiteralUnicodeCharExpression") {
+            return IRLiteralUnicodeCharExpression.parseBAPIAsIRLiteralUnicodeCharExpression(lexer);
+        }
+        else if(tok.value === "Assembly::LiteralStringExpression") {
+            return IRLiteralStringExpression.parseBAPIAsIRLiteralStringExpression(lexer);
+        }
+        else if(tok.value === "Assembly::LiteralCStringExpression") {
+            return IRLiteralCStringExpression.parseBAPIAsIRLiteralCStringExpression(lexer);
+        }
+        //
+        //More here
+        //
+        else if(tok.value === "Assembly::AccessConstantExpression") {
+            return IRAccessConstantExpression.parseBAPIAsIRAccessConstantExpression(lexer);
+        }
+        //
+        //More here
+        //
         else{
             assert(false, `IRExpression.parseBAPI not implemented for token value ${tok.value}`);
         }
@@ -611,14 +668,6 @@ abstract class IRLiteralIntegralNumberExpression extends IRLiteralExpression {
         super(tag);
         this.value = value;
     }
-
-    toBAPI_IRLiteralIntegralNumberExpression(): string {
-        return this.value;
-    }
-
-    static parseBAPI_IRLiteralIntegralNumberExpression(lexer: BAPILexer): {value: string} {
-        xxxx
-    }
 }
 
 class IRLiteralNatExpression extends IRLiteralIntegralNumberExpression {
@@ -627,13 +676,15 @@ class IRLiteralNatExpression extends IRLiteralIntegralNumberExpression {
     }
 
     override toBAPI(): string {
-        xxxx;
-        return this.value;
+        return `Assembly::LiteralNatExpression{${this.value}}`;
     }
     
     static parseBAPIAsIRLiteralNatExpression(lexer: BAPILexer): IRLiteralNatExpression {
-        xxxx;
+        lexer.ensureAndConsumeToken(BAPITokenKind.TypeIdentifier);
+        lexer.ensureAndConsumeSymbol("{");
         const value = lexer.ensureAndConsumeToken(BAPITokenKind.NatLiteral);
+        lexer.ensureAndConsumeSymbol("}");
+
         return new IRLiteralNatExpression(value);
     }
 }
@@ -644,13 +695,15 @@ class IRLiteralIntExpression extends IRLiteralIntegralNumberExpression {
     }
 
     override toBAPI(): string {
-        xxxx;
-        return this.value;
+        return `Assembly::LiteralIntExpression{${this.value}}`;
     }
     
     static parseBAPIAsIRLiteralIntExpression(lexer: BAPILexer): IRLiteralIntExpression {
-        xxxx;
+        lexer.ensureAndConsumeToken(BAPITokenKind.TypeIdentifier);
+        lexer.ensureAndConsumeSymbol("{");
         const value = lexer.ensureAndConsumeToken(BAPITokenKind.IntLiteral);
+        lexer.ensureAndConsumeSymbol("}");
+
         return new IRLiteralIntExpression(value);
     }
 }
@@ -661,13 +714,15 @@ class IRLiteralChkNatExpression extends IRLiteralIntegralNumberExpression {
     }
 
     override toBAPI(): string {
-        xxxx;
-        return this.value;
+        return `Assembly::LiteralChkNatExpression{${this.value}}`;
     }
 
     static parseBAPIAsIRLiteralChkNatExpression(lexer: BAPILexer): IRLiteralChkNatExpression {
-        xxxx;
+        lexer.ensureAndConsumeToken(BAPITokenKind.TypeIdentifier);
+        lexer.ensureAndConsumeSymbol("{");
         const value = lexer.ensureAndConsumeToken(BAPITokenKind.ChkNatLiteral);
+        lexer.ensureAndConsumeSymbol("}");
+        
         return new IRLiteralChkNatExpression(value);
     }
 }
@@ -678,13 +733,15 @@ class IRLiteralChkIntExpression extends IRLiteralIntegralNumberExpression {
     }
 
     override toBAPI(): string {
-        xxxx;
-        return this.value;
+        return `Assembly::LiteralChkIntExpression{${this.value}}`;
     }
 
     static parseBAPIAsIRLiteralChkIntExpression(lexer: BAPILexer): IRLiteralChkIntExpression {
-        xxxx;
+        lexer.ensureAndConsumeToken(BAPITokenKind.TypeIdentifier);
+        lexer.ensureAndConsumeSymbol("{");
         const value = lexer.ensureAndConsumeToken(BAPITokenKind.ChkIntLiteral);
+        lexer.ensureAndConsumeSymbol("}");
+
         return new IRLiteralChkIntExpression(value);
     }
 }
@@ -700,13 +757,20 @@ class IRLiteralRationalExpression extends IRLiteralExpression {
     }
 
     override toBAPI(): string {
-        xxxx;
-        return `${this.numerator}/${this.denominator}R`;
+        if(this.denominator === "1") {
+            return `Assembly::LiteralRationalExpression{${this.numerator}R}`;
+        }
+        else {
+            return `Assembly::LiteralRationalExpression{${this.numerator}/${this.denominator}R}`;
+        }
     }
 
     static parseBAPIAsIRLiteralRationalExpression(lexer: BAPILexer): IRLiteralRationalExpression {
-        xxxx;
+        lexer.ensureAndConsumeToken(BAPITokenKind.TypeIdentifier);
+        lexer.ensureAndConsumeSymbol("{");
         const rlit = lexer.ensureAndConsumeToken(BAPITokenKind.RationalLiteral);
+        lexer.ensureAndConsumeSymbol("}");
+
         if(!rlit.includes("/")) {
             const numerator = rlit.slice(0, -1);
             return new IRLiteralRationalExpression(numerator, "1");
@@ -733,13 +797,15 @@ class IRLiteralFloatExpression extends IRLiteralFloatingPointExpression {
     }
 
     override toBAPI(): string {
-        xxxx;
-        return this.value;
+        return `Assembly::LiteralFloatExpression{${this.value}}`;
     }
 
     static parseBAPIAsIRLiteralFloatExpression(lexer: BAPILexer): IRLiteralFloatExpression {
-        xxxx;
+        lexer.ensureAndConsumeToken(BAPITokenKind.TypeIdentifier);
+        lexer.ensureAndConsumeSymbol("{");
         const value = lexer.ensureAndConsumeToken(BAPITokenKind.FloatLiteral);
+        lexer.ensureAndConsumeSymbol("}");
+
         return new IRLiteralFloatExpression(value);
     }
 }
@@ -750,7 +816,7 @@ class IRLiteralDecimalExpression extends IRLiteralFloatingPointExpression {
     }
 
     override toBAPI(): string {
-        return this.value;
+        return `Assembly::LiteralDecimalExpression{${this.value}}`;
     }
 
     static parseBAPIAsIRLiteralDecimalExpression(lexer: BAPILexer): IRLiteralDecimalExpression {
@@ -820,11 +886,11 @@ class IRLiteralByteBufferExpression extends IRLiteralExpression {
     }
 
     override toBAPI(): string {
-        xxxx;
+        assert(false, "IRLiteralByteBufferExpression.toBAPI not implemented");
     }
 
     static parseBAPIAsIRLiteralByteBufferExpression(lexer: BAPILexer): IRLiteralByteBufferExpression {
-        xxxx;
+        assert(false, "IRLiteralByteBufferExpression.parseBAPI not implemented");
     }
 }
 
@@ -1162,11 +1228,16 @@ class IRLiteralUnicodeRegexExpression extends IRLiteralExpression {
     }
 
     override toBAPI(): string {
-        xxxx;
+        return `Assembly::LiteralUnicodeRegexExpression{${this.regexID}}`;
     }
 
     static parseBAPIAsIRLiteralUnicodeRegexExpression(lexer: BAPILexer): IRLiteralUnicodeRegexExpression {
-        xxxx;
+        lexer.ensureAndConsumeToken(BAPITokenKind.TypeIdentifier);
+        lexer.ensureAndConsumeSymbol("{");
+        const regexID = parseInt(lexer.ensureAndConsumeToken(BAPITokenKind.NatLiteral));
+        lexer.ensureAndConsumeSymbol("}");
+
+        return new IRLiteralUnicodeRegexExpression(regexID);
     }
 }
 
@@ -1179,11 +1250,16 @@ class IRLiteralCRegexExpression extends IRLiteralExpression {
     }
 
     override toBAPI(): string {
-        xxxx;
+        return `Assembly::LiteralCRegexExpression{${this.regexID}}`;
     }
 
     static parseBAPIAsIRLiteralCRegexExpression(lexer: BAPILexer): IRLiteralCRegexExpression {
-        xxxx;
+        lexer.ensureAndConsumeToken(BAPITokenKind.TypeIdentifier);
+        lexer.ensureAndConsumeSymbol("{");
+        const regexID = parseInt(lexer.ensureAndConsumeToken(BAPITokenKind.NatLiteral));
+        lexer.ensureAndConsumeSymbol("}");
+
+        return new IRLiteralCRegexExpression(regexID);
     }
 }
 
@@ -1213,11 +1289,16 @@ class IRLiteralCCharExpression extends IRLiteralExpression {
     }
 
     override toBAPI(): string {
-        assert(false, "IRLiteralCCharExpression.toBAPI not implemented");
+        if(40 <= this.value && this.value <= 126) {
+            return `Assembly::LiteralCCharExpression{c'${String.fromCharCode(this.value)}'}`;
+        }
+        else {
+            return `Assembly::LiteralCCharExpression{c'%x${this.value.toString(16)};'}`;
+        }
     }
 
     static parseBAPIAsIRLiteralCCharExpression(lexer: BAPILexer): IRLiteralCCharExpression {
-        assert(false, "IRLiteralCCharExpression.parseBAPI not implemented");
+        xxxx;
     }
 }
 
@@ -1230,11 +1311,16 @@ class IRLiteralUnicodeCharExpression extends IRLiteralExpression {
     }
 
     override toBAPI(): string {
-        assert(false, "IRLiteralUnicodeCharExpression.toBAPI not implemented");
+        if(40 <= this.value && this.value <= 126) {
+            return `Assembly::LiteralUnicodeCharExpression{c"${String.fromCharCode(this.value)}"}`;
+        }
+        else {
+            return `Assembly::LiteralUnicodeCharExpression{c"%x${this.value.toString(16)};"}`;
+        }
     }
 
     static parseBAPIAsIRLiteralUnicodeCharExpression(lexer: BAPILexer): IRLiteralUnicodeCharExpression {
-        assert(false, "IRLiteralUnicodeCharExpression.parseBAPI not implemented");
+        xxxx;
     }
 }
 
@@ -1247,7 +1333,15 @@ class IRLiteralCStringExpression extends IRLiteralExpression {
     }
 
     override toBAPI(): string {
-        xxxx;
+        const cchars = this.bytes.map(b => {
+            if(40 <= b && b <= 126) {
+                return `c'${String.fromCharCode(b)}'`;
+            }
+            else {
+                return `c'%x${b.toString(16)};'`;
+            }
+        }).join(', ');
+        return `Assembly::LiteralCStringExpression{List<CChar>{${cchars}}}`;
     }
 
     static parseBAPIAsIRLiteralCStringExpression(lexer: BAPILexer): IRLiteralCStringExpression {
@@ -1264,7 +1358,15 @@ class IRLiteralStringExpression extends IRLiteralExpression {
     }
 
     override toBAPI(): string {
-        xxxx;
+        const uchars = this.bytes.map(b => {
+            if(40 <= b && b <= 126) {
+                return `c"${String.fromCharCode(b)}"`;
+            }
+            else {
+                return `c"%x${b.toString(16)};"`;
+            }
+        }).join(', ');
+        return `Assembly::LiteralStringExpression{List<UChar>{${uchars}}}`;
     }
 
     static parseBAPIAsIRLiteralStringExpression(lexer: BAPILexer): IRLiteralStringExpression {

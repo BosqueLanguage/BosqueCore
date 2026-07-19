@@ -31,16 +31,16 @@ entity CRegex
 {
     field regexID: Nat;
 
-    field bsqregex: ByteBuffer;
-    field smtregex: ByteBuffer;
-    field cppregex: ByteBuffer;
+    field bsqregex: List<CChar>;
+    field smtregex: List<CChar>;
+    field cppregex: List<CChar>;
 }
 
 entity IRURegex
 {
     field regexID: Nat;
 
-    field bsqregex: ByteBuffer;
-    field smtregex: ByteBuffer;
-    field cppregex: ByteBuffer;
+    field bsqregex: List<UnicodeChar>;
+    field smtregex: List<UnicodeChar>;
+    field cppregex: List<UnicodeChar>;
 }
