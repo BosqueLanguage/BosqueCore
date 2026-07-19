@@ -613,7 +613,7 @@ abstract class IRLiteralIntegralNumberExpression extends IRLiteralExpression {
     }
 
     toBAPI_IRLiteralIntegralNumberExpression(): string {
-        return value;
+        return this.value;
     }
 
     static parseBAPI_IRLiteralIntegralNumberExpression(lexer: BAPILexer): {value: string} {
