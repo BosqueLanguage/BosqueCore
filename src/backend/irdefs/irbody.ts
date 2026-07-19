@@ -174,7 +174,20 @@ abstract class IRExpression {
     abstract toBAPI(): string;
 
     static parseBAPI(lexer: BAPILexer): IRExpression {
-        xxxx;
+        const tok = lexer.peekToken();
+        if(tok.kind !== BAPITokenKind.TypeIdentifier) {
+            throw new Error(`Expected type identifier token but got ${tok.kind}`);
+        }
+
+        if(tok.value === "Assembly::LiteralNoneExpression") {
+            return IRLiteralNoneExpression.parseBAPIAsIRLiteralNoneExpression(lexer);
+        }
+        else if(tok.value === "Assembly::LiteralBoolExpression") {
+            return IRLiteralBoolExpression.parseBAPIAsIRLiteralBoolExpression(lexer);
+        }
+        else{
+            assert(false, `IRExpression.parseBAPI not implemented for token value ${tok.value}`);
+        }
     }
 }
 
@@ -410,7 +423,7 @@ abstract class IRStatement {
     abstract toBAPI(): string;
 
     static parseBAPI(lexer: BAPILexer): IRStatement {
-        xxxx;
+        assert(false, "IRStatement.parseBAPI not implemented");
     }
 }
 
@@ -557,13 +570,14 @@ class IRLiteralNoneExpression extends IRLiteralExpression {
     }
 
     override toBAPI(): string {
-        xxxx;
-        return `none`;
+        return 'Assembly::LiteralNoneExpression{}';
     }
 
     static parseBAPIAsIRLiteralNoneExpression(lexer: BAPILexer): IRLiteralNoneExpression {
-        xxxx;
-        lexer.ensureAndConsumeToken(BAPITokenKind.NoneLiteral);
+        lexer.ensureAndConsumeToken(BAPITokenKind.TypeIdentifier);
+        lexer.ensureAndConsumeSymbol("{");
+        lexer.ensureAndConsumeSymbol("}");
+
         return new IRLiteralNoneExpression();
     }
 }
@@ -577,19 +591,16 @@ class IRLiteralBoolExpression extends IRLiteralExpression {
     }
 
     override toBAPI(): string {
-        xxxx;
-        return this.value ? `true` : `false`;
+        return `Assembly::LiteralBoolExpression{${this.value ? "true" : "false"}}`;
     }
 
     static parseBAPIAsIRLiteralBoolExpression(lexer: BAPILexer): IRLiteralBoolExpression {
-        xxxx;
-        if (lexer.ensureAndConsumeToken(BAPITokenKind.TrueLiteral)) {
-            return new IRLiteralBoolExpression(true);
-        } else if (lexer.ensureAndConsumeToken(BAPITokenKind.FalseLiteral)) {
-            return new IRLiteralBoolExpression(false);
-        } else {
-            throw new Error(`Expected 'true' or 'false' literal`);
-        }
+        lexer.ensureAndConsumeToken(BAPITokenKind.TypeIdentifier);
+        lexer.ensureAndConsumeSymbol("{");
+        const value = lexer.consumeToken().kind === BAPITokenKind.TrueLiteral;
+        lexer.ensureAndConsumeSymbol("}");
+
+        return new IRLiteralBoolExpression(value);
     }
 }
     
@@ -599,6 +610,14 @@ abstract class IRLiteralIntegralNumberExpression extends IRLiteralExpression {
     constructor(tag: IRExpressionTag, value: string) {
         super(tag);
         this.value = value;
+    }
+
+    toBAPI_IRLiteralIntegralNumberExpression(): string {
+        return value;
+    }
+
+    static parseBAPI_IRLiteralIntegralNumberExpression(lexer: BAPILexer): {value: string} {
+        xxxx
     }
 }
 
