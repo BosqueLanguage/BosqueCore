@@ -133,15 +133,21 @@ namespace ᐸRuntimeᐳ
 
     void BSQONEmitter::emitCChar(XCChar c)
     {
-        //TODO: we need to handle escaping correctly
-        
         this->bufferMgr.writeImmediate("c'");
-        this->bufferMgr.write(char(c.value));
+
+        if(isMustEscapeCChar(char(c.value))) {
+            this->bufferMgr.writeNumberWFormat("%%x%x", c.value);
+        }
+        else {
+            this->bufferMgr.write(char(c.value));
+        }
+
         this->bufferMgr.writeImmediate("'");
     }
 
     void BSQONEmitter::emitUnicodeChar(XUnicodeChar c)
     {
+        xxxx;
         //TODO: we need to handle escaping correctly
         
         this->bufferMgr.writeImmediate("c\"");
@@ -158,6 +164,8 @@ namespace ᐸRuntimeᐳ
 
         for(auto ii = istart; ii != iend; ++ii) {
             char c = *ii;
+
+            xxxx;
             //TODO: we need to handle escaping correctly
             
             this->bufferMgr.write(c);
@@ -175,6 +183,8 @@ namespace ᐸRuntimeᐳ
 
         for(auto ii = istart; ii != iend; ++ii) {
             char32_t c = *ii;
+
+            xxxx;
             //TODO: we need to handle escaping correctly
             
             this->bufferMgr.write(c);

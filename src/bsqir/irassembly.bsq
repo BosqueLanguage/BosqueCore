@@ -120,4 +120,6 @@ entity Assembly {
 
     %%readonly typedeporder: IRTypeSignature[] = [];
     %%readonly typedepcycles: IRTypeSignature[][] = [];
+
+    field maxerrorid: Nat;
 }

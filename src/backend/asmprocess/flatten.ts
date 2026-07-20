@@ -4810,6 +4810,8 @@ class ASMToIRConverter {
         irasm.computeSubtypeInfo();
         irasm.computeTypeDependencyInfo();
 
+        irasm.maxerrorid = emitter.errCtr;
+
         return irasm;
     }
 }

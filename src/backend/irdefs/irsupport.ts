@@ -68,6 +68,24 @@ function parseTypeKey(lexer: BAPILexer): string {
     return sstr;
 }
 
+function emitConstKey(tkeystr: string): string {
+    return `'${tkeystr}'<Assembly::ConstKey>`;
+}
+
+function parseConstKey(lexer: BAPILexer): string {
+    const sstr = lexer.parseCString();
+    lexer.ensureAndConsumeSymbol('<');
+        
+    const typetag = lexer.parseTypeIdentifier();
+    if(typetag !== "Assembly::ConstKey") {
+        throw new Error(`Expected ConstKey 'Assembly::ConstKey' but got ${typetag}`);
+    }
+        
+    lexer.ensureAndConsumeSymbol('>');
+
+    return sstr;
+}
+
 function emitInvokeKey(tkeystr: string): string {
     return `'${tkeystr}'<Assembly::InvokeKey>`;
 }
@@ -123,8 +141,8 @@ function parseVarIdentifier(lexer: BAPILexer): string {
 }
 
 export {
-    emitTypeKey, emitInvokeKey, emitIdentifier, emitVarIdentifier,
-    parseTypeKey, parseInvokeKey, parseIdentifier, parseVarIdentifier,
+    emitTypeKey, emitConstKey, emitInvokeKey, emitIdentifier, emitVarIdentifier,
+    parseTypeKey, parseConstKey, parseInvokeKey, parseIdentifier, parseVarIdentifier,
 
     IRSourceInfo,
     IRCRegex,

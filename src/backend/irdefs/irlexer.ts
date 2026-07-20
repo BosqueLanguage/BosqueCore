@@ -14,27 +14,16 @@ enum BAPITokenKind {
     FloatLiteral = "FloatLiteral",
     DecimalLiteral = "DecimalLiteral",
 
-    ByteBufferLiteral = "ByteBufferLiteral",
+    ByteLiteral = "ByteLiteral",
+    CCharLiteral = "CCharLiteral",
+    UnicodeCharLiteral = "UnicodeCharLiteral",
 
     CStringLiteral = "CStringLiteral",
-    StringLiteral = "StringLiteral",
-    
-    CRegexLiteral = "CRegexLiteral",
-    URegexLiteral = "URegexLiteral",
     
     Identifier = "Identifier",
     TypeIdentifier = "TypeIdentifier",
     
-    OpenBrace = "{",
-    CloseBrace = "}",
-    Langle = "<",
-    Rangle = ">",
-    OpenParen = "(",
-    CloseParen = ")",
-    
-    Comma = ",",
-    Colon = ":",
-    ColonColon = "::"
+    Symbol = "Symbol"
 }
 
 class BAPIToken {
@@ -103,14 +92,6 @@ class BAPILexer {
     }
 
     parseCString(): string {
-        assert(false, "Not implemented");
-    }
-
-    ensureAndConsumeTaggedCString(tkeystr: string): string {
-        assert(false, "Not implemented");
-    }
-
-    parseString(): string {
         assert(false, "Not implemented");
     }
 

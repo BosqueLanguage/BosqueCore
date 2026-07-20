@@ -14,7 +14,10 @@ const lambdaTypeKeyRE: CRegex = /('fn'|'pred') '('.*')' '->' (${Assembly::nomina
 const typeKeyRE: CRegex = /${Assembly::nominalTypeKeyRE}|${Assembly::elistTypeKeyRE}|${Assembly::lambdaTypeKeyRE}/c; 
 type TypeKey = CString of Assembly::typeKeyRE;
 
-const invokeKeyRE: CRegex = /(${Assembly::namespaceKeyRE}|${Assembly::nominalTypeKeyRE})'::'[_a-zA-Z0-9$-]+('<'.+'>')?/c;
+const constKeyRE: CRegex = /(${Assembly::namespaceKeyRE}|${Assembly::nominalTypeKeyRE})::'[_a-zA-Z0-9]+/c;
+type ConstKey = CString of Assembly::constKeyRE;
+
+const invokeKeyRE: CRegex = /(${Assembly::namespaceKeyRE}|${Assembly::nominalTypeKeyRE})'::'[_a-zA-Z0-9]+('<'.+'>')?/c;
 type InvokeKey = CString of Assembly::invokeKeyRE;
 
 const identifierRE: CRegex = /[_a-z][_a-zA-Z0-9$]*/c; %%we allow $ inside these identifiers so we can make special names

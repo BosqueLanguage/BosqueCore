@@ -1408,6 +1408,8 @@ class IRAssembly {
     readonly typedeporder: IRTypeSignature[] = [];
     readonly typedepcycles: IRTypeSignature[][] = [];
 
+    maxerrorid: number = 0;
+
     constructor() {
     }
 
