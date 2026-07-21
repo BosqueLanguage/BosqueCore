@@ -135,11 +135,11 @@ namespace ᐸRuntimeᐳ
     {
         this->bufferMgr.writeImmediate("c'");
 
-        if(isMustEscapeCChar(char(c.value))) {
-            this->bufferMgr.writeNumberWFormat("%%x%x", c.value);
+        if(isMustEscapeCChar((char)c.value)) {
+            this->bufferMgr.writeNumberWFormat("%%x%x;", c.value);
         }
         else {
-            this->bufferMgr.write(char(c.value));
+            this->bufferMgr.write((char)c.value);
         }
 
         this->bufferMgr.writeImmediate("'");
@@ -147,11 +147,15 @@ namespace ᐸRuntimeᐳ
 
     void BSQONEmitter::emitUnicodeChar(XUnicodeChar c)
     {
-        xxxx;
-        //TODO: we need to handle escaping correctly
-        
         this->bufferMgr.writeImmediate("c\"");
-        this->bufferMgr.write(char(c.value));
+        
+        if(isMustEscapeUnicodeChar((char32_t)c.value)) {
+            this->bufferMgr.writeNumberWFormat("%%x%x;", c.value);
+        }
+        else {
+            this->bufferMgr.write((char)c.value);
+        }
+        
         this->bufferMgr.writeImmediate("\"");
     }
 
@@ -165,10 +169,12 @@ namespace ᐸRuntimeᐳ
         for(auto ii = istart; ii != iend; ++ii) {
             char c = *ii;
 
-            xxxx;
-            //TODO: we need to handle escaping correctly
-            
-            this->bufferMgr.write(c);
+            if(isMustEscapeCChar(c)) {
+                this->bufferMgr.writeNumberWFormat("%%x%x;", c);
+            }
+            else {
+                this->bufferMgr.write(c);
+            }
         }
 
         this->bufferMgr.writeImmediate("'");
@@ -184,10 +190,12 @@ namespace ᐸRuntimeᐳ
         for(auto ii = istart; ii != iend; ++ii) {
             char32_t c = *ii;
 
-            xxxx;
-            //TODO: we need to handle escaping correctly
-            
-            this->bufferMgr.write(c);
+            if(isMustEscapeUnicodeChar(c)) {
+                this->bufferMgr.writeNumberWFormat("%%x%x;", c);
+            }
+            else {
+                this->bufferMgr.write((char)c);
+            }
         }
 
         this->bufferMgr.writeImmediate("\"");

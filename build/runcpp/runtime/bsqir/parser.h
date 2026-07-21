@@ -97,6 +97,10 @@ namespace ᐸRuntimeᐳ
 
         std::optional<XFloat> parseFloat();
 
+        std::optional<XByte> parseByte();
+        std::optional<XCChar> parseCChar();
+        std::optional<XUnicodeChar> parseUnicodeChar();
+
         std::optional<XCString> parseCString();
         std::optional<XString> parseString();
 

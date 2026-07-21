@@ -251,36 +251,32 @@ namespace ᐸRuntimeᐳ
         return std::nullopt;
     }
 
-    bool isSimpleChar(uint8_t c)
-    {
-        if(c > 126) {
-            return false;
-        }
-        else {
-            return std::isprint(c) || (c == '\t') || (c == '\n');
-        }
-    }
-
-    bool processCCharInString(BSQLexBufferIterator& ii, char* outchar)
+    bool processCCharFromIter(BSQLexBufferIterator& ii, char* outchar)
     {
         char c = *ii;
-        ++ii;
-
-        if(!isSimpleChar(static_cast<uint8_t>(c))) {
+        
+        if(c == '%') {
+            ++ii; //eat %
+            char nn = *ii;
+            if(nn == 'x') {
+                xxxx;
+            }
+            else {
+                xxxx;
+            }
+        }
+        else if(c == '\'' || (c < 32) || (126 < c)) {
             return false;
         }
-        
-        if(c != '%') {
-            *outchar = c;
-        }
         else {
-            assert(false); // Not Implemented: escape sequences in CString
-        }
+            *outchar = c;
+            ++ii;
 
-        return true;
+            return true;
+        }
     }
 
-    bool processUnicodeCharInString(BSQLexBufferIterator& ii, char32_t* outchar)
+    bool processUnicodeCharFromIter(BSQLexBufferIterator& ii, char32_t* outchar)
     {
         char c = *ii;
         ++ii;
@@ -298,6 +294,21 @@ namespace ᐸRuntimeᐳ
         }
 
         return true;
+    }
+
+    std::optional<XByte> BSQONParser::parseByte()
+    {
+        xxxx;
+    }
+
+    std::optional<XCChar> BSQONParser::parseCChar()
+    {
+        xxxx;
+    }
+
+    std::optional<XUnicodeChar> parseUnicodeChar()
+    {
+        xxxx;
     }
 
     std::optional<XCString> BSQONParser::parseCString()
