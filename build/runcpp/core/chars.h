@@ -25,6 +25,11 @@ namespace ᐸRuntimeᐳ
     public:
         uint64_t value; // Stored as uint64_t for alignment reasons
 
+        bool isValidCChar(char c)
+        {
+            return isLegalCChar(c);
+        }
+
         friend XBool operator==(const XCChar &lhs, const XCChar &rhs) { return XBool::from(lhs.value == rhs.value); }
         friend XBool operator<(const XCChar &lhs, const XCChar &rhs) { return XBool::from(lhs.value < rhs.value); }
         friend XBool operator>(const XCChar &lhs, const XCChar &rhs) { return XBool::from(rhs.value < lhs.value); }
@@ -37,6 +42,10 @@ namespace ᐸRuntimeᐳ
     {
     public:
         uint64_t value; // Stored as uint64_t for alignment reasons
+
+        static bool isValidUnicodeChar(char32_t c) { 
+            return isLegalUnicodeChar(c);
+        }
 
         friend XBool operator==(const XUnicodeChar &lhs, const XUnicodeChar &rhs) { return XBool::from(lhs.value == rhs.value); }
         friend XBool operator<(const XUnicodeChar &lhs, const XUnicodeChar &rhs) { return XBool::from(lhs.value < rhs.value); }

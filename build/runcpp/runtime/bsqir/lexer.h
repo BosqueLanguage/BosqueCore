@@ -120,6 +120,9 @@ namespace ᐸRuntimeᐳ
         LiteralChkNat,
         LiteralChkInt,
         LiteralFloat,
+        LiteralByte,
+        LiteralCChar,
+        LiteralUnicodeChar,
         LiteralCString,
         LiteralString,
         LiteralSymbol,
@@ -191,6 +194,10 @@ namespace ᐸRuntimeᐳ
         bool tryLexChkNat();
         bool tryLexChkInt();
         bool tryLexFloat();
+
+        bool tryLexByte();
+        bool tryLexCChar();
+        bool tryLexUnicodeChar();
 
         bool tryLexCString();
         bool tryLexString();

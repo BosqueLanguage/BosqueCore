@@ -11,10 +11,15 @@ namespace ᐸRuntimeᐳ
     static std::regex s_chkint_re("^(ChkInt::npos|((0|[+-]?[1-9][0-9]*)I))", std::regex_constants::nosubs | std::regex_constants::optimize);
     static std::regex s_float_re("^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)([eE][+-]?[0-9]+)?f", std::regex_constants::nosubs | std::regex_constants::optimize);
 
+    static std::regex s_byte_re("^0x[0-9a-fA-F]{1,2}", std::regex_constants::nosubs | std::regex_constants::optimize);
+    static std::regex s_cchar_re("^c'[^']{1,16}'", std::regex_constants::nosubs | std::regex_constants::optimize);
+    static std::regex s_uchar_re("^c\"[^\"]{1,16}\"", std::regex_constants::nosubs | std::regex_constants::optimize);
+
     constexpr std::array<char, 11> s_symbol_tokens = { '(', ')', '{', '}', '[', ']', '<', '>', ',', '#', '|' };
     constexpr std::array<const char*, 6> s_keyword_tokens = { "none", "true", "false", "some", "ok", "fail" };
 
     static std::regex s_identifierlike_re("^([a-zA-Z_][a-zA-Z0-9_]*)", std::regex_constants::nosubs | std::regex_constants::optimize);
+
 
     bool BSQONToken::matches(const char* cchars) const
     {
@@ -134,6 +139,49 @@ namespace ᐸRuntimeᐳ
         }
 
         this->advanceToken(BSQONTokenType::LiteralFloat, mm[0].length());
+        return true;
+    }
+
+    bool BSQONLexer::tryLexByte()
+    {
+        std::match_results<BSQLexBufferIterator> mm;
+        if(!std::regex_search(this->iter, this->iend, mm, s_byte_re)) {
+            return false;
+        }
+
+        this->advanceToken(BSQONTokenType::LiteralByte, mm[0].length());
+        return true;
+    }
+
+    bool BSQONLexer::tryLexCChar()
+    {
+        std::match_results<BSQLexBufferIterator> mm;
+        if(!std::regex_search(this->iter, this->iend, mm, s_cchar_re)) {
+            return false;
+        }
+
+        //Make sure this is plausibly a single char -- maybe escape sequence c'%underscore;' or c'%x20;' so could be more than 1 but there is a limit -- parser will check that it really is a single char
+        if(mm[0].length() >= 16) {
+            return false;
+        }
+
+        this->advanceToken(BSQONTokenType::LiteralCChar, mm[0].length());
+        return true;
+    }
+
+    bool BSQONLexer::tryLexUnicodeChar()
+    {
+        std::match_results<BSQLexBufferIterator> mm;
+        if(!std::regex_search(this->iter, this->iend, mm, s_uchar_re)) {
+            return false;
+        }
+
+        //Make sure this is plausibly a single char -- maybe escape sequence c'%underscore;' or c'%x20;' so could be more than 1 but there is a limit -- parser will check that it really is a single char
+        if(mm[0].length() >= 16) {
+            return false;
+        }
+
+        this->advanceToken(BSQONTokenType::LiteralUnicodeChar, mm[0].length());
         return true;
     }
 
@@ -331,6 +379,9 @@ namespace ᐸRuntimeᐳ
         }
 
         if(this->tryLexNat() || this->tryLexInt() || this->tryLexChkNat() || this->tryLexChkInt() || this->tryLexFloat()) {
+            return;
+        }
+        else if(this->tryLexByte() || this->tryLexCChar() || this->tryLexUnicodeChar()) {
             return;
         }
         else if(this->tryLexCString() || this->tryLexString()) {
