@@ -129,7 +129,20 @@ class TypeChecker {
         }
     }
 
-    private parseRangeBound(sinfo: SourceInfo, literal: string, typeName: string): { value: bigint | number, ok: boolean } {
+    private processRangeBound(sinfo: SourceInfo, boundexp: Expression | undefined, ontype: TypeSignature, defaultmin: bigint | number, defaultmax: bigint | number): { minvalue: bigint | number, maxvalue: bigint | number, ok: boolean } {
+        if(boundexp === undefined) {
+            return { minvalue: defaultmin, maxvalue: defaultmax, ok: true };
+        }
+
+        const env = TypeEnvironment.createInitialStdEnv(this.getWellKnownType("Void"), new SimpleTypeInferContext(ontype), []);
+        const rsig = this.checkExpression(env, boundexp, undefined);
+        if(rsig instanceof ErrorTypeSignature) {
+            return { minvalue: defaultmin, maxvalue: defaultmax, ok: false };
+        }
+
+        xxx;
+        const simplifyexp = this.;
+
         switch(typeName) {
             case "Int":
                 return this.parseIntegerRangeBound(sinfo, literal, typeName, MIN_SAFE_INT, MAX_SAFE_INT);
@@ -180,6 +193,7 @@ class TypeChecker {
             }
         }
     }
+
     private checkTypeDeclOfStringRestrictions(sinfo: SourceInfo, tdecl: TypedeclTypeDecl, value: string): string | undefined {
         const vs = validateStringLiteral(value.slice(1, -1));
         this.checkError(sinfo, vs === null, `Invalid string literal value ${value}`);

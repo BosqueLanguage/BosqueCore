@@ -69,7 +69,7 @@ class IRVoidTypeSignature extends IRTypeSignature {
         return `Assembly::IRTypeSignatureVoid{${emitTypeKey(this.tkeystr)}}`;
     }
 
-    static parseBAPIAsIRVoidTypeSignature(lexer: BAPILexer): IRTypeSignature {
+    static parseBAPIAsIRVoidTypeSignature(lexer: BAPILexer): IRVoidTypeSignature {
         lexer.consumeToken();
         lexer.ensureAndConsumeSymbol('{');
         parseTypeKey(lexer);
@@ -92,7 +92,7 @@ class IRNominalTypeSignature extends IRTypeSignature {
         return `Assembly::IRTypeSignatureNominal{${emitTypeKey(this.tkeystr)}}`;
     }
 
-    static parseBAPIAsIRNominalTypeSignature(lexer: BAPILexer): IRTypeSignature {
+    static parseBAPIAsIRNominalTypeSignature(lexer: BAPILexer): IRNominalTypeSignature {
         lexer.consumeToken();
         lexer.ensureAndConsumeSymbol('{');
         const tkeystr = parseTypeKey(lexer);
@@ -118,7 +118,7 @@ class IREListTypeSignature extends IRTypeSignature {
         return `Assembly::IRTypeSignatureEList{${emitTypeKey(this.tkeystr)}, List<Assembly::IRTypeSignature>{${this.entries.map(e => e.toBAPI()).join(", ")}}}`;
     }
 
-    static parseBAPIAsIREListTypeSignature(lexer: BAPILexer): IRTypeSignature {
+    static parseBAPIAsIREListTypeSignature(lexer: BAPILexer): IREListTypeSignature {
         lexer.consumeToken();
         lexer.ensureAndConsumeSymbol('{');
         const tkeystr = parseTypeKey(lexer);
@@ -147,7 +147,7 @@ class IRDashResultTypeSignature extends IRTypeSignature {
         return `Assembly::IRTypeSignatureDashResult{'${this.tkeystr}'<Assembly::TypeKey>, List<Assembly::IRTypeSignature>{${this.entries.map(e => e.toBAPI()).join(", ")}}}`;
     }
 
-    static parseBAPIAsIRDashResultTypeSignature(lexer: BAPILexer): IRTypeSignature {
+    static parseBAPIAsIRDashResultTypeSignature(lexer: BAPILexer): IRDashResultTypeSignature {
         lexer.consumeToken();
         lexer.ensureAndConsumeSymbol('{');
         const tkeystr = parseTypeKey(lexer);
@@ -210,7 +210,7 @@ class IRFormatCStringTypeSignature extends IRFormatTypeSignature {
         return `Assembly::IRFormatCStringTypeSignature{${emitTypeKey(this.tkeystr)}, ${this.toBAPI_IRFormatTypeSignature()}}`;
     }
 
-    static parseBAPIAsIRFormatCStringTypeSignature(lexer: BAPILexer): IRTypeSignature {
+    static parseBAPIAsIRFormatCStringTypeSignature(lexer: BAPILexer): IRFormatCStringTypeSignature {
         lexer.consumeToken();
         lexer.ensureAndConsumeSymbol('{');
         const tkeystr = parseTypeKey(lexer);
@@ -231,7 +231,7 @@ class IRFormatStringTypeSignature extends IRFormatTypeSignature {
         return `Assembly::IRFormatStringTypeSignature{${emitTypeKey(this.tkeystr)}, ${this.toBAPI_IRFormatTypeSignature()}}`;
     }
 
-    static parseBAPIAsIRFormatStringTypeSignature(lexer: BAPILexer): IRTypeSignature {
+    static parseBAPIAsIRFormatStringTypeSignature(lexer: BAPILexer): IRFormatStringTypeSignature {
         lexer.consumeToken();
         lexer.ensureAndConsumeSymbol('{');
         const tkeystr = parseTypeKey(lexer);
@@ -252,7 +252,7 @@ class IRFormatPathTypeSignature extends IRFormatTypeSignature {
         assert(false, "IRFormatPathTypeSignature not implemented for serialization to BAPI");
     }
 
-    static parseBAPIAsIRFormatPathTypeSignature(lexer: BAPILexer): IRTypeSignature {
+    static parseBAPIAsIRFormatPathTypeSignature(lexer: BAPILexer): IRFormatPathTypeSignature {
         assert(false, "IRFormatPathTypeSignature not implemented for deserialization from BAPI");
     }
 }
@@ -266,7 +266,7 @@ class IRFormatPathFragmentTypeSignature extends IRFormatTypeSignature {
         assert(false, "IRFormatPathFragmentTypeSignature not implemented for serialization to BAPI");
     }
 
-    static parseBAPIAsIRFormatPathFragmentTypeSignature(lexer: BAPILexer): IRTypeSignature {
+    static parseBAPIAsIRFormatPathFragmentTypeSignature(lexer: BAPILexer): IRFormatPathFragmentTypeSignature {
         assert(false, "IRFormatPathFragmentTypeSignature not implemented for deserialization from BAPI");
     }
 }
@@ -280,7 +280,7 @@ class IRFormatPathGlobTypeSignature extends IRFormatTypeSignature {
         assert(false, "IRFormatPathGlobTypeSignature not implemented for serialization to BAPI");
     }
 
-    static parseBAPIAsIRFormatPathGlobTypeSignature(lexer: BAPILexer): IRTypeSignature {
+    static parseBAPIAsIRFormatPathGlobTypeSignature(lexer: BAPILexer): IRFormatPathGlobTypeSignature {
         assert(false, "IRFormatPathGlobTypeSignature not implemented for deserialization from BAPI");
     }
 }
@@ -298,7 +298,7 @@ class IRLambdaParameterPackTypeSignature extends IRTypeSignature {
         return `Assembly::IRLambdaParameterPackTypeSignature{${emitTypeKey(this.tkeystr)}}`;
     }
 
-    static parseBAPIAsIRLambdaParameterPackTypeSignature(lexer: BAPILexer): IRTypeSignature {
+    static parseBAPIAsIRLambdaParameterPackTypeSignature(lexer: BAPILexer): IRLambdaParameterPackTypeSignature {
         lexer.consumeToken();
         lexer.ensureAndConsumeSymbol('{');
         const tkeystr = parseTypeKey(lexer);

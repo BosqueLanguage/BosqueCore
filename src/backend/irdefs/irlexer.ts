@@ -98,6 +98,14 @@ class BAPILexer {
     parseTypeIdentifier(): string {
         assert(false, "Not implemented");
     }
+
+    parseNatNumber(): number {
+        assert(false, "Not implemented");
+    }
+
+    parseIntNumber(): number {
+        assert(false, "Not implemented");
+    }
 }
 
 function parseListOf<T>(lexer: BAPILexer, lparen: string, rparen: string, separator: string, parseElement: (lexer: BAPILexer) => T): T[] {

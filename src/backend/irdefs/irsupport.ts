@@ -11,6 +11,22 @@ class IRSourceInfo
         this.line = line;
         this.column = column;
     }
+
+    toBAPI(): string {
+        return `Assembly::SourceInfo{${this.line}n, ${this.column}n}`;
+    }
+
+    static parseBAPI(lexer: BAPILexer): IRSourceInfo {
+        lexer.parseTypeIdentifier(); //eat type tag
+        lexer.ensureAndConsumeSymbol('{');
+        
+        const line = lexer.parseNatNumber();
+        lexer.ensureAndConsumeSymbol(',');
+        const column = lexer.parseNatNumber();
+        lexer.ensureAndConsumeSymbol('}');
+        
+        return new IRSourceInfo(line, column);
+    }
 }
 
 class IRCRegex

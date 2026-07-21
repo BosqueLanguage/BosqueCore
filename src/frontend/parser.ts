@@ -6531,8 +6531,8 @@ class Parser {
             (tdecl as TypedeclTypeDecl).valuetype = ttype;
 
             if(this.testAndConsumeTokenIf(SYM_lbrace)) {
-                let min: string | undefined = undefined;
-                let max: string | undefined = undefined;
+                let min: Expression | undefined = undefined;
+                let max: Expression | undefined = undefined;
 
                 const expectedToken = (ttype instanceof NominalTypeSignature) ? this.expectedRangeLiteralToken(ttype.decl.name) : undefined;
 
@@ -6540,14 +6540,14 @@ class Parser {
                     if(expectedToken !== undefined && this.peekTokenKind() !== expectedToken) {
                         this.recordErrorGeneral(this.peekToken().getSourceInfo(), `Range bound literal must match type ${(ttype as NominalTypeSignature).decl.name}`);
                     }
-                    min = this.consumeTokenAndGetValue();
+                    min = this.parsePrimaryExpression() as Expression;
                 }
                 if(this.testAndConsumeTokenIf(SYM_coma)) {
                     if(this.isLiteralNumericToken()) {
                         if(expectedToken !== undefined && this.peekTokenKind() !== expectedToken) {
                             this.recordErrorGeneral(this.peekToken().getSourceInfo(), `Range bound literal must match type ${(ttype as NominalTypeSignature).decl.name}`);
                         }
-                        max = this.consumeTokenAndGetValue();
+                        max = this.parsePrimaryExpression() as Expression;
                     }
                 }
                 else {

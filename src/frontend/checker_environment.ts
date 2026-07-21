@@ -311,7 +311,7 @@ class TypeEnvironment {
         this.locals = locals;
     }
 
-    static createInitialStdEnv(declReturnType: TypeSignature, inferReturn: TypeInferContext,args: VarInfo[]): TypeEnvironment {
+    static createInitialStdEnv(declReturnType: TypeSignature, inferReturn: TypeInferContext, args: VarInfo[]): TypeEnvironment {
         return new TypeEnvironment(declReturnType, inferReturn, true, undefined, [], args, [new LocalScope(false, [], new Set<string>())]);
     }
 
