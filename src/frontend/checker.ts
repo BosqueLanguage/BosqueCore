@@ -91,107 +91,97 @@ class TypeChecker {
         return (t.tkeystr === "Void");
     }
 
-    private resolveSizeConstraints(tdecl: TypedeclTypeDecl, rlen: number): {min: bigint, max: bigint} {
-        assert(tdecl.optsizerng !== undefined, "size constraints should be defined to call resolveSizeConstraints");
-
-        let min = 0n;
-        if(tdecl.optsizerng.min !== undefined) {
-            try {
-                min = BigInt(tdecl.optsizerng.min.slice(0, -1)); //remove the 'n' at the end
+    private processRangeBoundsGetDefault(sinfo: SourceInfo, ontype: TypeSignature): { minvalue: bigint | number, maxvalue: bigint | number } {
+        switch(ontype.tkeystr) {
+            case "Int": {
+                return { minvalue: MIN_SAFE_INT, maxvalue: MAX_SAFE_INT };
             }
-            catch {
-                //just ignore the constraint and report error at definition
+            case "Nat": {
+                return { minvalue: 0n, maxvalue: MAX_SAFE_NAT };
             }
-        }
-
-        let max = BigInt(rlen);
-        if(tdecl.optsizerng.max !== undefined) {
-            try {
-                max = BigInt(tdecl.optsizerng.max.slice(0, -1)); //remove the 'n' at the end
+            case "ChkInt": {
+                return { minvalue: MIN_SAFE_CHK_INT, maxvalue: MAX_SAFE_CHK_INT };
             }
-            catch {
-                //just ignore the constraint and report error at definition
+            case "ChkNat": {
+                return { minvalue: 0n, maxvalue: MAX_SAFE_CHK_NAT };
             }
-        }
-
-        return { min: min, max: max };
-    }
-    private parseIntegerRangeBound(sinfo: SourceInfo, literal: string, typeName: string, minSafe: bigint, maxSafe: bigint): { value: bigint, ok: boolean } {
-        const numStr = literal.slice(0, -1);
-        try {
-            const val = BigInt(numStr);
-            this.checkError(sinfo, val < minSafe || val > maxSafe, `Range bound ${literal} is outside safe ${typeName} range`);
-            return { value: val, ok: true };
-        }
-        catch {
-            this.reportError(sinfo, `Invalid ${typeName} range bound: ${literal}`);
-            return { value: 0n, ok: false };
-        }
-    }
-
-    private processRangeBound(sinfo: SourceInfo, boundexp: Expression | undefined, ontype: TypeSignature, defaultmin: bigint | number, defaultmax: bigint | number): { minvalue: bigint | number, maxvalue: bigint | number, ok: boolean } {
-        if(boundexp === undefined) {
-            return { minvalue: defaultmin, maxvalue: defaultmax, ok: true };
-        }
-
-        const env = TypeEnvironment.createInitialStdEnv(this.getWellKnownType("Void"), new SimpleTypeInferContext(ontype), []);
-        const rsig = this.checkExpression(env, boundexp, undefined);
-        if(rsig instanceof ErrorTypeSignature) {
-            return { minvalue: defaultmin, maxvalue: defaultmax, ok: false };
-        }
-
-        xxx;
-        const simplifyexp = this.;
-
-        switch(typeName) {
-            case "Int":
-                return this.parseIntegerRangeBound(sinfo, literal, typeName, MIN_SAFE_INT, MAX_SAFE_INT);
-            case "Nat":
-                return this.parseIntegerRangeBound(sinfo, literal, typeName, 0n, MAX_SAFE_NAT);
-            case "ChkInt":
-                return this.parseIntegerRangeBound(sinfo, literal, typeName, MIN_SAFE_CHK_INT, MAX_SAFE_CHK_INT);
-            case "ChkNat":
-                return this.parseIntegerRangeBound(sinfo, literal, typeName, 0n, MAX_SAFE_CHK_NAT);
-            case "Float":
-            case "Decimal": {
-                const numStr = literal.slice(0, -1);
-                const val = Number.parseFloat(numStr);
-                if(!Number.isFinite(val)) {
-                    this.reportError(sinfo, `Invalid ${typeName} range bound: ${literal}`);
-                    return { value: 0, ok: false };
-                }
-                return { value: val, ok: true };
+            case "Float": {
+                return { minvalue: -Number.MAX_VALUE, maxvalue: Number.MAX_VALUE };
             }
             case "Rational": {
-                const body = literal.slice(0, -1);
-                const slashIdx = body.indexOf("/");
-                try {
-                    const num = BigInt(slashIdx === -1 ? body : body.slice(0, slashIdx));
-                    const den = slashIdx === -1 ? 1n : BigInt(body.slice(slashIdx + 1));
-
-                    this.checkError(sinfo, num < MIN_SAFE_CHK_INT || num > MAX_SAFE_CHK_INT, `Rational numerator ${num} is outside safe ChkInt range`);
-                    this.checkError(sinfo, den < 1n || den > MAX_SAFE_NAT, `Rational denominator ${den} must be in safe Nat range (>= 1)`);
-
-                    const val = Number(num) / Number(den);
-                    if(!Number.isFinite(val)) {
-                        this.reportError(sinfo, `Rational range bound overflows: ${literal}`);
-                        return { value: 0, ok: false };
-                    }
-                    return { value: val, ok: true };
-                }
-                catch {
-                    this.reportError(sinfo, `Invalid Rational range bound: ${literal}`);
-                    return { value: 0, ok: false };
-                }
+                assert(false, "Rational range constraints not supported yet");
             }
-            case "String":
-            case "CString":
-                return this.parseIntegerRangeBound(sinfo, literal, typeName, 0n, MAX_SAFE_NAT);
+            case "String": {
+                return { minvalue: 0n, maxvalue: MAX_SAFE_NAT };
+            }
+            case "CString": {
+                return { minvalue: 0n, maxvalue: MAX_SAFE_NAT };
+            }
             default: {
-                this.reportError(sinfo, `Range constraints not supported for type ${typeName}`);
-                return { value: 0, ok: false };
+                this.reportError(sinfo, `Range constraints not supported for type ${ontype.tkeystr}`);
+                return { minvalue: 0, maxvalue: 0};
             }
         }
+    }
+
+    private processRangeGetValueForLiteral(sinfo: SourceInfo, lit: LiteralSimpleExpression, ontype: TypeSignature): bigint | number {
+        switch(ontype.tkeystr) {
+            case "Nat": {
+                return BigInt(lit.value.slice(0, lit.value.length - 1));
+            }
+            case "Int": {
+                return BigInt(lit.value.slice(0, lit.value.length - 1));
+            }
+            case "ChkNat": {
+                this.checkError(sinfo, lit.value === "ChkNat::npos", "ChkNat literal in range cannot be npos");
+                return BigInt(lit.value.slice(0, lit.value.length - 1));
+            }
+            case "ChkInt": {
+                this.checkError(sinfo, lit.value === "ChkInt::npos", "ChkInt literal in range cannot be npos");
+                return BigInt(lit.value.slice(0, lit.value.length - 1));
+            }
+            case "Rational": {
+                assert(false, "Rational range constraints not supported yet");
+            }
+            case "Float": {
+                this.checkError(sinfo, !TypeChecker.isValidFloatLiteral(lit.value.slice(0, lit.value.length - 1)), "Invalid Float literal");
+                return parseFloat(lit.value.slice(0, lit.value.length - 1));
+            }
+            default: {
+                this.reportError(sinfo, `Literal value not supported for type ${ontype.tkeystr}`);
+                return 0;
+            }
+        }
+    }
+
+    private processRangeBound(sinfo: SourceInfo, minexp: Expression | undefined, maxexp: Expression | undefined, ontype: TypeSignature): { min: bigint | number, max: bigint | number, ok: boolean } {
+        const { minvalue: defaultmin, maxvalue: defaultmax } = this.processRangeBoundsGetDefault(sinfo, ontype);
+        
+        let fmin: bigint | number = defaultmin;
+        if(minexp !== undefined) {
+            const env = TypeEnvironment.createInitialStdEnv(ontype, new SimpleTypeInferContext(ontype), []);
+            const minsig = this.checkExpression(env, minexp, undefined);
+            if(minsig instanceof ErrorTypeSignature) {
+                return { min: defaultmin, max: defaultmax, ok: false };
+            }
+
+            const fminexp = this.relations.assembly.tryReduceConstantExpression(minexp, TemplateNameMapper.createEmpty()) || minexp;
+            fmin = this.processRangeGetValueForLiteral(sinfo, fminexp as LiteralSimpleExpression, ontype);
+        }
+
+        let fmax: bigint | number = defaultmax;
+        if(maxexp !== undefined) {
+            const env = TypeEnvironment.createInitialStdEnv(ontype, new SimpleTypeInferContext(ontype), []);
+            const maxsig = this.checkExpression(env, maxexp, undefined);
+            if(maxsig instanceof ErrorTypeSignature) {
+                return { min: defaultmin, max: defaultmax, ok: false };
+            }
+
+            const fmaxexp = this.relations.assembly.tryReduceConstantExpression(maxexp, TemplateNameMapper.createEmpty()) || maxexp;
+            fmax = this.processRangeGetValueForLiteral(sinfo, fmaxexp as LiteralSimpleExpression, ontype);
+        }
+
+        return { min: fmin, max: fmax, ok: true };
     }
 
     private checkTypeDeclOfStringRestrictions(sinfo: SourceInfo, tdecl: TypedeclTypeDecl, value: string): string | undefined {
@@ -199,8 +189,11 @@ class TypeChecker {
         this.checkError(sinfo, vs === null, `Invalid string literal value ${value}`);
 
         if(vs !== null && tdecl.optsizerng !== undefined) {
-            const sbounds = this.resolveSizeConstraints(tdecl, vs.length);
-            this.checkError(sinfo, BigInt(vs.length) < sbounds.min || BigInt(vs.length) > sbounds.max, `String literal length ${vs.length} out of bounds`);
+            const sbounds = this.processRangeBound(sinfo, tdecl.optsizerng.min, tdecl.optsizerng.max, this.getWellKnownType("String"));
+            this.checkError(sinfo, !sbounds.ok, `Unable to resolve string literal size bounds`);
+            if(sbounds.ok) {
+                this.checkError(sinfo, BigInt(vs.length) < (sbounds.min as bigint) || BigInt(vs.length) > (sbounds.max as bigint), `String literal length ${vs.length} out of bounds`);
+            }
         }
 
         if(vs !== null && tdecl.optofexp !== undefined) {
@@ -227,8 +220,11 @@ class TypeChecker {
         this.checkError(sinfo, vs === null, `Invalid cstring literal value ${value}`);
 
         if(vs !== null && tdecl.optsizerng !== undefined) {
-            const sbounds = this.resolveSizeConstraints(tdecl, vs.length);
-            this.checkError(sinfo, BigInt(vs.length) < sbounds.min || BigInt(vs.length) > sbounds.max, `CString literal length ${vs.length} out of bounds`);
+            const sbounds = this.processRangeBound(sinfo, tdecl.optsizerng.min, tdecl.optsizerng.max, this.getWellKnownType("CString"));
+            this.checkError(sinfo, !sbounds.ok, `Unable to resolve cstring literal size bounds`);
+            if(sbounds.ok) {
+                this.checkError(sinfo, BigInt(vs.length) < (sbounds.min as bigint) || BigInt(vs.length) > (sbounds.max as bigint), `CString literal length ${vs.length} out of bounds`);
+            }
         }
 
         if(vs !== null && tdecl.optofexp !== undefined) {
@@ -1685,22 +1681,13 @@ class TypeChecker {
 
         const tdecl = exp.constype.decl as TypedeclTypeDecl;
         if(tdecl.optsizerng !== undefined && exp.value instanceof LiteralSimpleExpression) {
-            const typevaluename = (tdecl.valuetype as NominalTypeSignature).decl.name;
-            const valParsed = this.parseRangeBound(exp.sinfo, exp.value.value, typevaluename);
-
-            if(valParsed.ok) {
-                if(tdecl.optsizerng.min !== undefined) {
-                    const minParsed = this.parseRangeBound(exp.sinfo, tdecl.optsizerng.min, typevaluename);
-                    if(minParsed.ok) {
-                        this.checkError(exp.sinfo, valParsed.value < minParsed.value, `Value ${exp.value.value} is below range minimum ${tdecl.optsizerng.min}`);
-                    }
-                }
-                if(tdecl.optsizerng.max !== undefined) {
-                    const maxParsed = this.parseRangeBound(exp.sinfo, tdecl.optsizerng.max, typevaluename);
-                    if(maxParsed.ok) {
-                        this.checkError(exp.sinfo, valParsed.value > maxParsed.value, `Value ${exp.value.value} is above range maximum ${tdecl.optsizerng.max}`);
-                    }
-                }
+            const sbounds = this.processRangeBound(tdecl.sinfo, tdecl.optsizerng.min, tdecl.optsizerng.max, tdecl.valuetype);
+            const fminexp = this.relations.assembly.tryReduceConstantExpression(exp.value, TemplateNameMapper.createEmpty()) || exp.value;
+            const fmval = this.processRangeGetValueForLiteral(exp.sinfo, fminexp as LiteralSimpleExpression, tdecl.valuetype);
+            
+            if(sbounds.ok) {
+                this.checkError(exp.sinfo, fmval < sbounds.min, `Value ${exp.value.value} is below range minimum ${tdecl.optsizerng.min}`);
+                this.checkError(exp.sinfo, fmval > sbounds.max, `Value ${exp.value.value} is above range maximum ${tdecl.optsizerng.max}`);
             }
         }
 
@@ -5301,31 +5288,11 @@ class TypeChecker {
                 this.reportError(tdecl.sinfo, `Invalid size range max and min -- at least one must be defined`);
             }
 
-            const typevaluename = (tdecl.valuetype as NominalTypeSignature).decl.name;
-            let minParsed: { value: bigint | number, ok: boolean } | undefined = undefined;
-            let maxParsed: { value: bigint | number, ok: boolean } | undefined = undefined;
+            const sbounds = this.processRangeBound(tdecl.sinfo, tdecl.optsizerng.min, tdecl.optsizerng.max, tdecl.valuetype);
+            this.checkError(tdecl.sinfo, !sbounds.ok, `Unable to resolve cstring literal size bounds`);
 
-            if(tdecl.optsizerng.min !== undefined) {
-                minParsed = this.parseRangeBound(tdecl.sinfo, tdecl.optsizerng.min, typevaluename);
-            }
-
-            if(tdecl.optsizerng.max !== undefined) {
-                maxParsed = this.parseRangeBound(tdecl.sinfo, tdecl.optsizerng.max, typevaluename);
-            }
-
-            if(minParsed !== undefined && minParsed.ok && maxParsed !== undefined && maxParsed.ok) {
-                this.checkError(tdecl.sinfo, minParsed.value > maxParsed.value, `Range min (${tdecl.optsizerng.min}) must be <= max (${tdecl.optsizerng.max})`);
-            }
-
-            if(tdecl.optsizerng.min !== undefined && tdecl.optsizerng.max !== undefined) {
-                try {
-                    const minval = BigInt(tdecl.optsizerng.min.slice(0, -1));
-                    const maxval = BigInt(tdecl.optsizerng.max.slice(0, -1));
-                    this.checkError(tdecl.sinfo, minval > maxval, `Size range min cannot be larger than size range max`);
-                }
-                catch {
-                    //ignore -- already reported as invalid
-                }
+            if(sbounds.ok) {
+                this.checkError(tdecl.sinfo, sbounds.min > sbounds.max, `Range min (${tdecl.optsizerng.min}) must be <= max (${tdecl.optsizerng.max})`);
             }
         }
 
