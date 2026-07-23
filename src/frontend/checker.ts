@@ -147,6 +147,12 @@ class TypeChecker {
                 this.checkError(sinfo, !TypeChecker.isValidFloatLiteral(lit.value.slice(0, lit.value.length - 1)), "Invalid Float literal");
                 return parseFloat(lit.value.slice(0, lit.value.length - 1));
             }
+            case "CString": {
+                return BigInt(lit.value.slice(0, lit.value.length - 1));
+            }
+            case "String": {
+                return BigInt(lit.value.slice(0, lit.value.length - 1));
+            }
             default: {
                 this.reportError(sinfo, `Literal value not supported for type ${ontype.tkeystr}`);
                 return 0;
@@ -1686,8 +1692,11 @@ class TypeChecker {
             const fmval = this.processRangeGetValueForLiteral(exp.sinfo, fminexp as LiteralSimpleExpression, tdecl.valuetype);
             
             if(sbounds.ok) {
-                this.checkError(exp.sinfo, fmval < sbounds.min, `Value ${exp.value.value} is below range minimum ${tdecl.optsizerng.min}`);
-                this.checkError(exp.sinfo, fmval > sbounds.max, `Value ${exp.value.value} is above range maximum ${tdecl.optsizerng.max}`);
+                const minStr = tdecl.optsizerng.min !== undefined ? (tdecl.optsizerng.min as Expression).emit(true, new CodeFormatter()) : "RNG_MIN";
+                this.checkError(exp.sinfo, fmval < sbounds.min, `Value ${exp.value.value} is below range minimum ${minStr}`);
+                
+                const maxStr = tdecl.optsizerng.max !== undefined ? (tdecl.optsizerng.max as Expression).emit(true, new CodeFormatter()) : "RNG_MAX";
+                this.checkError(exp.sinfo, fmval > sbounds.max, `Value ${exp.value.value} is above range maximum ${maxStr}`);
             }
         }
 
@@ -5292,7 +5301,9 @@ class TypeChecker {
             this.checkError(tdecl.sinfo, !sbounds.ok, `Unable to resolve cstring literal size bounds`);
 
             if(sbounds.ok) {
-                this.checkError(tdecl.sinfo, sbounds.min > sbounds.max, `Range min (${tdecl.optsizerng.min}) must be <= max (${tdecl.optsizerng.max})`);
+                const minStr = tdecl.optsizerng.min !== undefined ? (tdecl.optsizerng.min as Expression).emit(true, new CodeFormatter()) : "RNG_MIN";
+                const maxStr = tdecl.optsizerng.max !== undefined ? (tdecl.optsizerng.max as Expression).emit(true, new CodeFormatter()) : "RNG_MAX";
+                this.checkError(tdecl.sinfo, sbounds.min > sbounds.max, `Range min (${minStr}) must be <= max (${maxStr})`);
             }
         }
 

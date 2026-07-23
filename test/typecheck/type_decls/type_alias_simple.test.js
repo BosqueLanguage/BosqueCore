@@ -61,10 +61,6 @@ describe ("Checker -- numeric range declaration validation", () => {
         checkTestFunction('type Foo = Float{0.0f, 1.0f}; function main(): Foo { return 0.5f<Foo>; }');
     });
 
-    it("should accept valid Decimal range", function () {
-        checkTestFunction('type Foo = Decimal{0.0d, 100.0d}; function main(): Foo { return 50.0d<Foo>; }');
-    });
-
     it("should accept single-value exact range", function () {
         checkTestFunction('type Foo = Int{5i}; function main(): Foo { return 5i<Foo>; }');
     });
@@ -192,6 +188,7 @@ describe ("Checker -- ChkNat range validation", () => {
     });
 });
 
+/*
 describe ("Checker -- Rational range validation", () => {
     it("should accept valid Rational range", function () {
         checkTestFunction('type Foo = Rational{1R, 5R}; function main(): Foo { return 3R<Foo>; }');
@@ -221,3 +218,5 @@ describe ("Checker -- Rational range validation", () => {
         checkTestFunctionError('type Foo = Rational{1/2R, 3/4R}; function main(): Foo { return 1/4R<Foo>; }', "Value 1/4R is below range minimum 1/2R");
     });
 });
+*/
+

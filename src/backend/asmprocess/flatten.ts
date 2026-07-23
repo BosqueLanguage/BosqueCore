@@ -1732,14 +1732,17 @@ class ASMToIRConverter {
         }
 
         if(tdecl.optsizerng !== undefined) {
+            const mmin = tdecl.optsizerng.min !== undefined ? this.makeExpressionImmediate(this.makeExpressionSimple(this.flattenExpression(tdecl.optsizerng.min), tdecl.valuetype), tdecl.valuetype) : undefined;
+            const mmax = tdecl.optsizerng.max !== undefined ? this.makeExpressionImmediate(this.makeExpressionSimple(this.flattenExpression(tdecl.optsizerng.max), tdecl.valuetype), tdecl.valuetype) : undefined;
+
             if(tdecl.valuetype.tkeystr === "CString") {
-                this.pushStatement(new IRTypeDeclSizeRangeCheckCStringStatement(tdecl.file, this.convertSourceInfo(tdecl.sinfo), this.registerError(tdecl.file, this.convertSourceInfo(tdecl.sinfo), "userspec"), tdecl.optsizerng.min, tdecl.optsizerng.max, cval as IRImmediateExpression));
+                this.pushStatement(new IRTypeDeclSizeRangeCheckCStringStatement(tdecl.file, this.convertSourceInfo(tdecl.sinfo), this.registerError(tdecl.file, this.convertSourceInfo(tdecl.sinfo), "userspec"), mmin, mmax, cval as IRImmediateExpression));
             }
             else if(tdecl.valuetype.tkeystr === "String") {
-                this.pushStatement(new IRTypeDeclSizeRangeCheckUnicodeStringStatement(tdecl.file, this.convertSourceInfo(tdecl.sinfo), this.registerError(tdecl.file, this.convertSourceInfo(tdecl.sinfo), "userspec"), tdecl.optsizerng.min, tdecl.optsizerng.max, cval as IRImmediateExpression));
+                this.pushStatement(new IRTypeDeclSizeRangeCheckUnicodeStringStatement(tdecl.file, this.convertSourceInfo(tdecl.sinfo), this.registerError(tdecl.file, this.convertSourceInfo(tdecl.sinfo), "userspec"), mmin, mmax, cval as IRImmediateExpression));
             }
             else {
-                this.pushStatement(new IRTypeDeclNumericRangeCheckStatement(tdecl.file, this.convertSourceInfo(tdecl.sinfo), this.registerError(tdecl.file, this.convertSourceInfo(tdecl.sinfo), "userspec"), tdecl.optsizerng.min, tdecl.optsizerng.max, cval as IRImmediateExpression));
+                this.pushStatement(new IRTypeDeclNumericRangeCheckStatement(tdecl.file, this.convertSourceInfo(tdecl.sinfo), this.registerError(tdecl.file, this.convertSourceInfo(tdecl.sinfo), "userspec"), mmin, mmax, cval as IRImmediateExpression));
             }
         }
 
@@ -1960,13 +1963,13 @@ class ASMToIRConverter {
             const rexp = (exp as LiteralRegexExpression);
             const regexinst = this.processURegex(rexp.inns, rexp.value);
 
-            return new IRLiteralUnicodeRegexExpression(regexinst.regexID, rexp.value);
+            return new IRLiteralUnicodeRegexExpression(regexinst.regexID);
         }
         else if(ttag === ExpressionTag.LiteralCRegexExpression) {
             const rexp = (exp as LiteralRegexExpression);
             const regexinst = this.processCRegex(rexp.inns, rexp.value);
 
-            return new IRLiteralCRegexExpression(regexinst.regexID, rexp.value);
+            return new IRLiteralCRegexExpression(regexinst.regexID);
         }
         else if(ttag === ExpressionTag.LiteralByteExpression) {
             const bstr = (exp as LiteralSimpleExpression).value;
@@ -2355,7 +2358,9 @@ class ASMToIRConverter {
                 }
 
                 if(eetype.decl.optsizerng !== undefined) {
-                    this.pushStatement(new IRTypeDeclNumericRangeCheckStatement(this.currentFile as string, this.convertSourceInfo(pfxneg.sinfo), this.registerError(this.currentFile as string, this.convertSourceInfo(pfxneg.sinfo), "userspec"), eetype.decl.optsizerng.min, eetype.decl.optsizerng.max, nsop as IRImmediateExpression));
+                    const mmin = eetype.decl.optsizerng.min !== undefined ? this.makeExpressionImmediate(this.makeExpressionSimple(this.flattenExpression(eetype.decl.optsizerng.min), eetype), eetype) : undefined;
+                    const mmax = eetype.decl.optsizerng.max !== undefined ? this.makeExpressionImmediate(this.makeExpressionSimple(this.flattenExpression(eetype.decl.optsizerng.max), eetype), eetype) : undefined;
+                    this.pushStatement(new IRTypeDeclNumericRangeCheckStatement(this.currentFile as string, this.convertSourceInfo(pfxneg.sinfo), this.registerError(this.currentFile as string, this.convertSourceInfo(pfxneg.sinfo), "userspec"), mmin, mmax, nsop as IRImmediateExpression));
                 }
 
                 return new IRConstructSafeTypeDeclExpression(this.processTypeSignature(eetype), nsop);
@@ -2377,7 +2382,7 @@ class ASMToIRConverter {
                 lexp = this.makeExpressionImmediate(lexp, optype);
                 rexp = this.makeExpressionImmediate(rexp, optype);
                 
-                this.pushStatement(new IRErrorAdditionBoundsCheckStatement(this.currentFile as string, binadd.sinfo, this.registerError(this.currentFile as string, binadd.sinfo, "arith"), lexp, rexp, opchk));
+                this.pushStatement(new IRErrorAdditionBoundsCheckStatement(this.currentFile as string, this.convertSourceInfo(binadd.sinfo), this.registerError(this.currentFile as string, this.convertSourceInfo(binadd.sinfo), "arith"), lexp, rexp, opchk));
             }
 
             if(!(finaltype.decl instanceof TypedeclTypeDecl)) {
@@ -2397,7 +2402,9 @@ class ASMToIRConverter {
                 }
 
                 if(finaltype.decl.optsizerng !== undefined) {
-                    this.pushStatement(new IRTypeDeclNumericRangeCheckStatement(this.currentFile as string, this.convertSourceInfo(binadd.sinfo), this.registerError(this.currentFile as string, this.convertSourceInfo(binadd.sinfo), "userspec"), finaltype.decl.optsizerng.min, finaltype.decl.optsizerng.max, addop as IRImmediateExpression));
+                    const mmin = finaltype.decl.optsizerng.min !== undefined ? this.makeExpressionImmediate(this.makeExpressionSimple(this.flattenExpression(finaltype.decl.optsizerng.min), finaltype), finaltype) : undefined;
+                    const mmax = finaltype.decl.optsizerng.max !== undefined ? this.makeExpressionImmediate(this.makeExpressionSimple(this.flattenExpression(finaltype.decl.optsizerng.max), finaltype), finaltype) : undefined;
+                    this.pushStatement(new IRTypeDeclNumericRangeCheckStatement(this.currentFile as string, this.convertSourceInfo(binadd.sinfo), this.registerError(this.currentFile as string, this.convertSourceInfo(binadd.sinfo), "userspec"), mmin, mmax, addop as IRImmediateExpression));
                 }
 
                 return new IRConstructSafeTypeDeclExpression(this.processTypeSignature(finaltype), addop);
@@ -2438,7 +2445,9 @@ class ASMToIRConverter {
                 }
 
                 if(finaltype.decl.optsizerng !== undefined) {
-                    this.pushStatement(new IRTypeDeclNumericRangeCheckStatement(this.currentFile as string, this.convertSourceInfo(binsub.sinfo), this.registerError(this.currentFile as string, this.convertSourceInfo(binsub.sinfo), "userspec"), finaltype.decl.optsizerng.min, finaltype.decl.optsizerng.max, subop as IRImmediateExpression));
+                    const mmin = finaltype.decl.optsizerng.min !== undefined ? this.makeExpressionImmediate(this.makeExpressionSimple(this.flattenExpression(finaltype.decl.optsizerng.min), finaltype), finaltype) : undefined;
+                    const mmax = finaltype.decl.optsizerng.max !== undefined ? this.makeExpressionImmediate(this.makeExpressionSimple(this.flattenExpression(finaltype.decl.optsizerng.max), finaltype), finaltype) : undefined;
+                    this.pushStatement(new IRTypeDeclNumericRangeCheckStatement(this.currentFile as string, this.convertSourceInfo(binsub.sinfo), this.registerError(this.currentFile as string, this.convertSourceInfo(binsub.sinfo), "userspec"), mmin, mmax, subop as IRImmediateExpression));
                 }
 
                 return new IRConstructSafeTypeDeclExpression(this.processTypeSignature(finaltype), subop);
@@ -2479,7 +2488,9 @@ class ASMToIRConverter {
                 }
 
                 if(finaltype.decl.optsizerng !== undefined) {
-                    this.pushStatement(new IRTypeDeclNumericRangeCheckStatement(this.currentFile as string, this.convertSourceInfo(binmult.sinfo), this.registerError(this.currentFile as string, this.convertSourceInfo(binmult.sinfo), "userspec"), finaltype.decl.optsizerng.min, finaltype.decl.optsizerng.max, multop as IRImmediateExpression));
+                    const mmin = finaltype.decl.optsizerng.min !== undefined ? this.makeExpressionImmediate(this.makeExpressionSimple(this.flattenExpression(finaltype.decl.optsizerng.min), finaltype), finaltype) : undefined;
+                    const mmax = finaltype.decl.optsizerng.max !== undefined ? this.makeExpressionImmediate(this.makeExpressionSimple(this.flattenExpression(finaltype.decl.optsizerng.max), finaltype), finaltype) : undefined;
+                    this.pushStatement(new IRTypeDeclNumericRangeCheckStatement(this.currentFile as string, this.convertSourceInfo(binmult.sinfo), this.registerError(this.currentFile as string, this.convertSourceInfo(binmult.sinfo), "userspec"), mmin, mmax, multop as IRImmediateExpression));
                 }
 
                 return new IRConstructSafeTypeDeclExpression(this.processTypeSignature(finaltype), multop);
@@ -2520,7 +2531,9 @@ class ASMToIRConverter {
                 }
 
                 if(finaltype.decl.optsizerng !== undefined) {
-                    this.pushStatement(new IRTypeDeclNumericRangeCheckStatement(this.currentFile as string, this.convertSourceInfo(bindiv.sinfo), this.registerError(this.currentFile as string, this.convertSourceInfo(bindiv.sinfo), "userspec"), finaltype.decl.optsizerng.min, finaltype.decl.optsizerng.max, divop as IRImmediateExpression));
+                    const mmin = finaltype.decl.optsizerng.min !== undefined ? this.makeExpressionImmediate(this.makeExpressionSimple(this.flattenExpression(finaltype.decl.optsizerng.min), finaltype), finaltype) : undefined;
+                    const mmax = finaltype.decl.optsizerng.max !== undefined ? this.makeExpressionImmediate(this.makeExpressionSimple(this.flattenExpression(finaltype.decl.optsizerng.max), finaltype), finaltype) : undefined;
+                    this.pushStatement(new IRTypeDeclNumericRangeCheckStatement(this.currentFile as string, this.convertSourceInfo(bindiv.sinfo), this.registerError(this.currentFile as string, this.convertSourceInfo(bindiv.sinfo), "userspec"), mmin, mmax, divop as IRImmediateExpression));
                 }
 
                 return new IRConstructSafeTypeDeclExpression(this.processTypeSignature(finaltype), divop);
@@ -4123,9 +4136,12 @@ class ASMToIRConverter {
             return { containingtype: this.processTypeSignature(val.containingtype), ii: jj };
         });
 
-        let rngchk: {min: string | undefined, max: string | undefined} | undefined = undefined;
+        let rngchk: {min: IRImmediateExpression | undefined, max: IRImmediateExpression | undefined} | undefined = undefined;
         if(tdecl.optsizerng !== undefined) {
-            rngchk = {min: tdecl.optsizerng.min, max: tdecl.optsizerng.max};
+            const mmin = tdecl.optsizerng.min !== undefined ? this.makeExpressionImmediate(this.makeExpressionSimple(this.flattenExpression(tdecl.optsizerng.min), tdecl.valuetype as NominalTypeSignature), tdecl.valuetype as NominalTypeSignature) : undefined;
+            const mmax = tdecl.optsizerng.max !== undefined ? this.makeExpressionImmediate(this.makeExpressionSimple(this.flattenExpression(tdecl.optsizerng.max), tdecl.valuetype as NominalTypeSignature), tdecl.valuetype as NominalTypeSignature) : undefined;
+                    
+            rngchk = {min: mmin, max: mmax};
         }
 
         return new IRTypedeclTypeDecl(tinst.tkey, invariants, validates, saturatedProvides, allInvariants, allValidates, docstring, this.processMetaDataTags(tdecl.attributes), tdecl.file, this.convertSourceInfo(tdecl.sinfo), this.processTypeSignature(tdecl.valuetype as TypeSignature), (tdecl.valuetype as NominalTypeSignature).decl.isKeyTypeRestricted(), (tdecl.valuetype as NominalTypeSignature).decl.isNumericRestricted(), rngchk);
@@ -4153,7 +4169,10 @@ class ASMToIRConverter {
 
         let rngchk: {min: IRImmediateExpression | undefined, max: IRImmediateExpression | undefined} | undefined = undefined;
         if(tdecl.optsizerng !== undefined) {
-            rngchk = {min: tdecl.optsizerng.min, max: tdecl.optsizerng.max};
+            const mmin = tdecl.optsizerng.min !== undefined ? this.makeExpressionImmediate(this.makeExpressionSimple(this.flattenExpression(tdecl.optsizerng.min), tdecl.valuetype as NominalTypeSignature), tdecl.valuetype as NominalTypeSignature) : undefined;
+            const mmax = tdecl.optsizerng.max !== undefined ? this.makeExpressionImmediate(this.makeExpressionSimple(this.flattenExpression(tdecl.optsizerng.max), tdecl.valuetype as NominalTypeSignature), tdecl.valuetype as NominalTypeSignature) : undefined;
+                    
+            rngchk = {min: mmin, max: mmax};
         }
         const rechk = tdecl.optofexp !== undefined ? this.flattenExpression(tdecl.optofexp) as IRLiteralCRegexExpression : undefined;
 
@@ -4180,9 +4199,12 @@ class ASMToIRConverter {
             return { containingtype: this.processTypeSignature(val.containingtype), ii: jj };
         });
 
-        let rngchk: {min: string | undefined, max: string | undefined} | undefined = undefined;
+        let rngchk: {min: IRImmediateExpression | undefined, max: IRImmediateExpression | undefined} | undefined = undefined;
         if(tdecl.optsizerng !== undefined) {
-            rngchk = {min: tdecl.optsizerng.min, max: tdecl.optsizerng.max};
+            const mmin = tdecl.optsizerng.min !== undefined ? this.makeExpressionImmediate(this.makeExpressionSimple(this.flattenExpression(tdecl.optsizerng.min), tdecl.valuetype as NominalTypeSignature), tdecl.valuetype as NominalTypeSignature) : undefined;
+            const mmax = tdecl.optsizerng.max !== undefined ? this.makeExpressionImmediate(this.makeExpressionSimple(this.flattenExpression(tdecl.optsizerng.max), tdecl.valuetype as NominalTypeSignature), tdecl.valuetype as NominalTypeSignature) : undefined;
+                    
+            rngchk = {min: mmin, max: mmax};
         }
         const rechk = tdecl.optofexp !== undefined ? this.flattenExpression(tdecl.optofexp) as IRLiteralUnicodeRegexExpression : undefined;
 

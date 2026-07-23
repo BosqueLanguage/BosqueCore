@@ -242,12 +242,12 @@ namespace ᐸRuntimeᐳ
         std::make_pair<char32_t, const char*>(37, "%%;")
     };
 
-    bool isSimpleEscapeUnicodeChar(char32_t c)
+    inline bool isSimpleEscapeUnicodeChar(char32_t c)
     {
         return (c == 9 || c == 10 || c == 34 || c == 37);
     }
 
-    bool isMustEscapeUnicodeChar(char32_t c)
+    inline bool isMustEscapeUnicodeChar(char32_t c)
     {
         return !(32 <= c && c <= 126) || isSimpleEscapeUnicodeChar(c);
     }
