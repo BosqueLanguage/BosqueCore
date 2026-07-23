@@ -462,6 +462,8 @@ class IRTypedeclTypeDecl extends IRAbstractEntityTypeDecl {
             lexer.ensureAndConsumeSymbol(")");
         }
 
+        lexer.ensureAndConsumeSymbol("}");
+
         return {min: minexpr, max: maxexpr};
     }
 
@@ -529,7 +531,16 @@ class IRTypedeclCStringDecl extends IRTypedeclTypeDecl {
         lexer.ensureAndConsumeSymbol(",");
         lexer.consumeToken().kind === BAPITokenKind.TrueLiteral;
         lexer.ensureAndConsumeSymbol(",");
-        const rngchk = IRTypedeclTypeDecl.parseBAPI_RNGCheck(lexer);
+        let rngchk: {min: IRImmediateExpression | undefined, max: IRImmediateExpression | undefined} | undefined = undefined;
+        if(lexer.peekTokenKind() === BAPITokenKind.NoneLiteral) {
+            lexer.consumeToken();
+        }
+        else {
+            lexer.ensureAndConsumeSymbol("some");
+            lexer.ensureAndConsumeSymbol("(");
+            rngchk = IRTypedeclTypeDecl.parseBAPI_RNGCheck(lexer);
+            lexer.ensureAndConsumeSymbol(")");
+        }
         lexer.ensureAndConsumeSymbol(",");
         let rechk: IRLiteralCRegexExpression | undefined = undefined;
         const rechktok = lexer.consumeToken();
@@ -570,7 +581,16 @@ class IRTypedeclStringDecl extends IRTypedeclTypeDecl {
         lexer.ensureAndConsumeSymbol(",");
         lexer.consumeToken().kind === BAPITokenKind.TrueLiteral;
         lexer.ensureAndConsumeSymbol(",");
-        const rngchk = IRTypedeclTypeDecl.parseBAPI_RNGCheck(lexer);
+        let rngchk: {min: IRImmediateExpression | undefined, max: IRImmediateExpression | undefined} | undefined = undefined;
+        if(lexer.peekTokenKind() === BAPITokenKind.NoneLiteral) {
+            lexer.consumeToken();
+        }
+        else {
+            lexer.ensureAndConsumeSymbol("some");
+            lexer.ensureAndConsumeSymbol("(");
+            rngchk = IRTypedeclTypeDecl.parseBAPI_RNGCheck(lexer);
+            lexer.ensureAndConsumeSymbol(")");
+        }
         lexer.ensureAndConsumeSymbol(",");
         let rechk: IRLiteralUnicodeRegexExpression | undefined = undefined;
         const rechktok = lexer.consumeToken();

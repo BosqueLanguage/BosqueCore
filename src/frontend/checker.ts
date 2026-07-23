@@ -5216,7 +5216,7 @@ class TypeChecker {
     private checkAbstractNominalTypeDeclVCallAndInheritance(tdecl: AbstractNominalTypeDecl, provides: TypeSignature[], isentity: boolean) {
         if(isentity) {
             const thisdynamic = tdecl.methods.some((mm) => mm.hasAttribute("override"));
-            const pdynamic = provides.some((pp) => (pp as NominalTypeSignature).decl.hasAttribute("abstract") ?? (pp as NominalTypeSignature).decl.hasAttribute("virtual"));
+            const pdynamic = provides.some((pp) => (pp as NominalTypeSignature).decl.hasAttribute("abstract") || (pp as NominalTypeSignature).decl.hasAttribute("virtual"));
 
             tdecl.hasDynamicInvokes = thisdynamic || pdynamic;
         }

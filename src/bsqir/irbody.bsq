@@ -25,8 +25,8 @@ of
     LiteralFloatExpression { field value: Float; }
     LiteralByteBufferExpression { field value: ByteBuffer; }
     %% More here 
-    LiteralUnicodeRegexExpression { field regexid: Nat; field value: List<CChar>; }
-    LiteralCRegexExpression {  field regexid: Nat; field value: List<UnicodeChar>; }
+    LiteralUnicodeRegexExpression { field regexid: Nat; }
+    LiteralCRegexExpression {  field regexid: Nat; }
     LiteralByteExpression { field value: Byte; }
     LiteralCCharExpression { field value: CChar; }
     LiteralUnicodeCharExpression { field value: UnicodeChar; }
