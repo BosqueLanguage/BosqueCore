@@ -294,10 +294,10 @@ namespace ᐸRuntimeᐳ
 
         if(outseq[1] == 'x') {
             uint8_t output = 0;
-            auto [ptr, ec] = std::from_chars(outseq.data() + 2, outseq.data() + outlen - 3, output, 16);
+            auto [ptr, ec] = std::from_chars(outseq.data() + 2, outseq.data() + outlen - 1, output, 16);
 
             res = static_cast<char>(output);
-            return ec == std::errc() && (ptr == outseq.data() + outlen - 3) && isLegalCChar(res);
+            return ec == std::errc() && (ptr == outseq.data() + outlen - 1) && isLegalCChar(res);
         }
 
         return false;
@@ -312,10 +312,10 @@ namespace ᐸRuntimeᐳ
 
         if(outseq[1] == 'x') {
             uint32_t output = 0;
-            auto [ptr, ec] = std::from_chars(outseq.data() + 2, outseq.data() + outlen - 3, output, 16);
+            auto [ptr, ec] = std::from_chars(outseq.data() + 2, outseq.data() + outlen - 1, output, 16);
 
             res = static_cast<char32_t>(output);
-            return ec == std::errc() && (ptr == outseq.data() + outlen - 3) && isLegalUnicodeChar(res);
+            return ec == std::errc() && (ptr == outseq.data() + outlen - 1) && isLegalUnicodeChar(res);
         }
 
         return false;
@@ -432,7 +432,7 @@ namespace ᐸRuntimeᐳ
         stok.extract(outbuff, sizeof(outbuff));
 
         uint8_t output = 0;
-        auto [ptr, ec] = std::from_chars(outbuff, outbuff + stok.size(), output, 16);
+        auto [ptr, ec] = std::from_chars(outbuff + 2, outbuff + stok.size(), output, 16);
         if(ec != std::errc() || (ptr != outbuff + stok.size())) {
             return std::nullopt;
         }

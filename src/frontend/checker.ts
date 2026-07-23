@@ -186,8 +186,8 @@ class TypeChecker {
                 return { min: defaultmin, max: defaultmax, ok: false };
             }
 
-            const fminexp = this.relations.assembly.tryReduceConstantExpression(minexp, TemplateNameMapper.createEmpty()) || minexp;
-            fmin = this.processRangeGetValueForLiteral(sinfo, fminexp as LiteralSimpleExpression, ontype) || defaultmin;
+            const fminexp = this.relations.assembly.tryReduceConstantExpression(minexp, TemplateNameMapper.createEmpty()) ?? minexp;
+            fmin = this.processRangeGetValueForLiteral(sinfo, fminexp as LiteralSimpleExpression, ontype) ?? defaultmin;
         }
 
         let fmax: bigint | number = defaultmax;
@@ -198,8 +198,8 @@ class TypeChecker {
                 return { min: defaultmin, max: defaultmax, ok: false };
             }
 
-            const fmaxexp = this.relations.assembly.tryReduceConstantExpression(maxexp, TemplateNameMapper.createEmpty()) || maxexp;
-            fmax = this.processRangeGetValueForLiteral(sinfo, fmaxexp as LiteralSimpleExpression, ontype) || defaultmax;
+            const fmaxexp = this.relations.assembly.tryReduceConstantExpression(maxexp, TemplateNameMapper.createEmpty()) ?? maxexp;
+            fmax = this.processRangeGetValueForLiteral(sinfo, fmaxexp as LiteralSimpleExpression, ontype) ?? defaultmax;
         }
 
         return { min: fmin, max: fmax, ok: true };
@@ -1703,7 +1703,7 @@ class TypeChecker {
         const tdecl = exp.constype.decl as TypedeclTypeDecl;
         if(tdecl.optsizerng !== undefined && exp.value instanceof LiteralSimpleExpression) {
             const sbounds = this.processRangeBound(tdecl.sinfo, tdecl.optsizerng.min, tdecl.optsizerng.max, tdecl.valuetype);
-            const fexp = this.relations.assembly.tryReduceConstantExpression(exp.value, TemplateNameMapper.createEmpty()) || exp.value;
+            const fexp = this.relations.assembly.tryReduceConstantExpression(exp.value, TemplateNameMapper.createEmpty()) ?? exp.value;
             const fval = this.processRangeGetValueForLiteral(exp.sinfo, fexp as LiteralSimpleExpression, tdecl.valuetype);
             
             if(sbounds.ok && fval !== undefined) {
@@ -4381,7 +4381,7 @@ class TypeChecker {
             return env;
         }
 
-        let ctype = this.relations.decomposeType(eetype, this.constraints) || [];
+        let ctype = this.relations.decomposeType(eetype, this.constraints) ?? [];
         if(ctype.length === 0) {
             this.reportError(stmt.sval.sinfo, `Match statement requires a decomposable type but got ${eetype.emit()}`);
             return env;
@@ -5216,7 +5216,7 @@ class TypeChecker {
     private checkAbstractNominalTypeDeclVCallAndInheritance(tdecl: AbstractNominalTypeDecl, provides: TypeSignature[], isentity: boolean) {
         if(isentity) {
             const thisdynamic = tdecl.methods.some((mm) => mm.hasAttribute("override"));
-            const pdynamic = provides.some((pp) => (pp as NominalTypeSignature).decl.hasAttribute("abstract") || (pp as NominalTypeSignature).decl.hasAttribute("virtual"));
+            const pdynamic = provides.some((pp) => (pp as NominalTypeSignature).decl.hasAttribute("abstract") ?? (pp as NominalTypeSignature).decl.hasAttribute("virtual"));
 
             tdecl.hasDynamicInvokes = thisdynamic || pdynamic;
         }
@@ -5313,7 +5313,7 @@ class TypeChecker {
             }
 
             const sbounds = this.processRangeBound(tdecl.sinfo, tdecl.optsizerng.min, tdecl.optsizerng.max, tdecl.valuetype);
-            this.checkError(tdecl.sinfo, !sbounds.ok, `Unable to resolve cstring literal size bounds`);
+            this.checkError(tdecl.sinfo, !sbounds.ok, `Unable to resolve literal range bounds`);
 
             if(sbounds.ok) {
                 const minStr = tdecl.optsizerng.min !== undefined ? (tdecl.optsizerng.min as Expression).emit(true, new CodeFormatter()) : "RNG_MIN";

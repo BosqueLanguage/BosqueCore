@@ -160,11 +160,6 @@ namespace ᐸRuntimeᐳ
             return false;
         }
 
-        //Make sure this is plausibly a single char -- maybe escape sequence c'%underscore;' or c'%x20;' so could be more than 1 but there is a limit -- parser will check that it really is a single char
-        if(mm[0].length() >= 16) {
-            return false;
-        }
-
         this->advanceToken(BSQONTokenType::LiteralCChar, mm[0].length());
         return true;
     }
@@ -173,11 +168,6 @@ namespace ᐸRuntimeᐳ
     {
         std::match_results<BSQLexBufferIterator> mm;
         if(!std::regex_search(this->iter, this->iend, mm, s_uchar_re)) {
-            return false;
-        }
-
-        //Make sure this is plausibly a single char -- maybe escape sequence c'%underscore;' or c'%x20;' so could be more than 1 but there is a limit -- parser will check that it really is a single char
-        if(mm[0].length() >= 16) {
             return false;
         }
 
