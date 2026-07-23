@@ -967,13 +967,13 @@ class CPPEmitter {
             const strarg = this.emitIRImmediateExpression(itdsrcc.strexp);
             const loc = `"${itdsrcc.file}", ${itdsrcc.sinfo.line}`;
             if(itdsrcc.min !== undefined && itdsrcc.max !== undefined) {
-                return `${RUNTIME_NAMESPACE}::XCString::checkSizeRange(${strarg}, ${this.emitIRImmediateExpression(itdsrcc.min)}, ${this.emitIRImmediateExpression(itdsrcc.max)}, ${loc});`;
+                return `${RUNTIME_NAMESPACE}::XCString::checkSizeRange(${strarg}, (${this.emitIRImmediateExpression(itdsrcc.min)}).value, (${this.emitIRImmediateExpression(itdsrcc.max)}).value, ${loc});`;
             }
             else if(itdsrcc.min !== undefined) {
-                return `${RUNTIME_NAMESPACE}::XCString::checkSizeMin(${strarg}, ${this.emitIRImmediateExpression(itdsrcc.min)}, ${loc});`;
+                return `${RUNTIME_NAMESPACE}::XCString::checkSizeMin(${strarg}, (${this.emitIRImmediateExpression(itdsrcc.min)}).value, ${loc});`;
             }
             else if(itdsrcc.max !== undefined) {
-                return `${RUNTIME_NAMESPACE}::XCString::checkSizeMax(${strarg}, ${this.emitIRImmediateExpression(itdsrcc.max)}, ${loc});`;
+                return `${RUNTIME_NAMESPACE}::XCString::checkSizeMax(${strarg}, (${this.emitIRImmediateExpression(itdsrcc.max)}).value, ${loc});`
             }
             else {
                 assert(false, "CPPEmitter: IRTypeDeclSizeRangeCheckCStringStatement with no min or max bound");
@@ -984,13 +984,13 @@ class CPPEmitter {
             const strarg = this.emitIRImmediateExpression(itdsrcu.strexp);
             const loc = `"${itdsrcu.file}", ${itdsrcu.sinfo.line}`;
             if(itdsrcu.min !== undefined && itdsrcu.max !== undefined) {
-                return `${RUNTIME_NAMESPACE}::XString::checkSizeRange(${strarg}, ${this.emitIRImmediateExpression(itdsrcu.min)}, ${this.emitIRImmediateExpression(itdsrcu.max)}, ${loc});`;
+                return `${RUNTIME_NAMESPACE}::XString::checkSizeRange(${strarg}, (${this.emitIRImmediateExpression(itdsrcu.min)}).value, (${this.emitIRImmediateExpression(itdsrcu.max)}).value, ${loc});`;
             }
             else if(itdsrcu.min !== undefined) {
-                return `${RUNTIME_NAMESPACE}::XString::checkSizeMin(${strarg}, ${this.emitIRImmediateExpression(itdsrcu.min)}, ${loc});`;
+                return `${RUNTIME_NAMESPACE}::XString::checkSizeMin(${strarg}, (${this.emitIRImmediateExpression(itdsrcu.min)}).value, ${loc});`;
             }
             else if(itdsrcu.max !== undefined) {
-                return `${RUNTIME_NAMESPACE}::XString::checkSizeMax(${strarg}, ${this.emitIRImmediateExpression(itdsrcu.max)}, ${loc});`;
+                return `${RUNTIME_NAMESPACE}::XString::checkSizeMax(${strarg}, (${this.emitIRImmediateExpression(itdsrcu.max)}).value, ${loc});`;
             }
             else {
                 assert(false, "CPPEmitter: IRTypeDeclSizeRangeCheckUnicodeStringStatement with no min or max bound");

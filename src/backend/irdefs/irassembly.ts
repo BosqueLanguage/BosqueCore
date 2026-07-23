@@ -306,7 +306,7 @@ abstract class IRAbstractNominalTypeDecl {
 
     static parseBAPI(lexer: BAPILexer): IRAbstractNominalTypeDecl {
         const tok = lexer.peekToken();
-        if(tok.kind === BAPITokenKind.TypeIdentifier) {
+        if(tok.kind !== BAPITokenKind.TypeIdentifier) {
             throw new Error(`Unexpected token ${tok.value} when parsing IRAbstractNominalTypeDecl`);
         }
 

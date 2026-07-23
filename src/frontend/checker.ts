@@ -124,7 +124,7 @@ class TypeChecker {
         }
     }
 
-    private processRangeGetValueForLiteral(sinfo: SourceInfo, lit: LiteralSimpleExpression, ontype: TypeSignature): bigint | number {
+    private processRangeGetValueForLiteral(sinfo: SourceInfo, lit: LiteralSimpleExpression, ontype: TypeSignature): bigint | number | undefined {
         switch(ontype.tkeystr) {
             case "Nat": {
                 return BigInt(lit.value.slice(0, lit.value.length - 1));
@@ -133,19 +133,34 @@ class TypeChecker {
                 return BigInt(lit.value.slice(0, lit.value.length - 1));
             }
             case "ChkNat": {
-                this.checkError(sinfo, lit.value === "ChkNat::npos", "ChkNat literal in range cannot be npos");
-                return BigInt(lit.value.slice(0, lit.value.length - 1));
+                if(lit.value !== "ChkNat::npos") {
+                    return BigInt(lit.value.slice(0, lit.value.length - 1));
+                }
+                else {
+                    this.reportError(sinfo, `ChkNat literal in range cannot be npos`);
+                    return undefined;
+                }
             }
             case "ChkInt": {
-                this.checkError(sinfo, lit.value === "ChkInt::npos", "ChkInt literal in range cannot be npos");
-                return BigInt(lit.value.slice(0, lit.value.length - 1));
+                if(lit.value !== "ChkInt::npos") {
+                    return BigInt(lit.value.slice(0, lit.value.length - 1));
+                }
+                else {
+                    this.reportError(sinfo, `ChkInt literal in range cannot be npos`);
+                    return undefined;
+                }
             }
             case "Rational": {
                 assert(false, "Rational range constraints not supported yet");
             }
             case "Float": {
-                this.checkError(sinfo, !TypeChecker.isValidFloatLiteral(lit.value.slice(0, lit.value.length - 1)), "Invalid Float literal");
-                return parseFloat(lit.value.slice(0, lit.value.length - 1));
+                if(TypeChecker.isValidFloatLiteral(lit.value.slice(0, lit.value.length - 1))) {
+                    return parseFloat(lit.value.slice(0, lit.value.length - 1));
+                }
+                else {
+                    this.reportError(sinfo, `Invalid Float literal in range -- ${lit.value}`);
+                    return undefined;
+                }
             }
             case "CString": {
                 return BigInt(lit.value.slice(0, lit.value.length - 1));
@@ -172,7 +187,7 @@ class TypeChecker {
             }
 
             const fminexp = this.relations.assembly.tryReduceConstantExpression(minexp, TemplateNameMapper.createEmpty()) || minexp;
-            fmin = this.processRangeGetValueForLiteral(sinfo, fminexp as LiteralSimpleExpression, ontype);
+            fmin = this.processRangeGetValueForLiteral(sinfo, fminexp as LiteralSimpleExpression, ontype) || defaultmin;
         }
 
         let fmax: bigint | number = defaultmax;
@@ -184,7 +199,7 @@ class TypeChecker {
             }
 
             const fmaxexp = this.relations.assembly.tryReduceConstantExpression(maxexp, TemplateNameMapper.createEmpty()) || maxexp;
-            fmax = this.processRangeGetValueForLiteral(sinfo, fmaxexp as LiteralSimpleExpression, ontype);
+            fmax = this.processRangeGetValueForLiteral(sinfo, fmaxexp as LiteralSimpleExpression, ontype) || defaultmax;
         }
 
         return { min: fmin, max: fmax, ok: true };
@@ -1688,15 +1703,15 @@ class TypeChecker {
         const tdecl = exp.constype.decl as TypedeclTypeDecl;
         if(tdecl.optsizerng !== undefined && exp.value instanceof LiteralSimpleExpression) {
             const sbounds = this.processRangeBound(tdecl.sinfo, tdecl.optsizerng.min, tdecl.optsizerng.max, tdecl.valuetype);
-            const fminexp = this.relations.assembly.tryReduceConstantExpression(exp.value, TemplateNameMapper.createEmpty()) || exp.value;
-            const fmval = this.processRangeGetValueForLiteral(exp.sinfo, fminexp as LiteralSimpleExpression, tdecl.valuetype);
+            const fexp = this.relations.assembly.tryReduceConstantExpression(exp.value, TemplateNameMapper.createEmpty()) || exp.value;
+            const fval = this.processRangeGetValueForLiteral(exp.sinfo, fexp as LiteralSimpleExpression, tdecl.valuetype);
             
-            if(sbounds.ok) {
+            if(sbounds.ok && fval !== undefined) {
                 const minStr = tdecl.optsizerng.min !== undefined ? (tdecl.optsizerng.min as Expression).emit(true, new CodeFormatter()) : "RNG_MIN";
-                this.checkError(exp.sinfo, fmval < sbounds.min, `Value ${exp.value.value} is below range minimum ${minStr}`);
+                this.checkError(exp.sinfo, fval < sbounds.min, `Value ${exp.value.value} is below range minimum ${minStr}`);
                 
                 const maxStr = tdecl.optsizerng.max !== undefined ? (tdecl.optsizerng.max as Expression).emit(true, new CodeFormatter()) : "RNG_MAX";
-                this.checkError(exp.sinfo, fmval > sbounds.max, `Value ${exp.value.value} is above range maximum ${maxStr}`);
+                this.checkError(exp.sinfo, fval > sbounds.max, `Value ${exp.value.value} is above range maximum ${maxStr}`);
             }
         }
 
