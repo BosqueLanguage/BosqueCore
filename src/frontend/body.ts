@@ -2855,21 +2855,6 @@ class AbstractBodyImplementation extends BodyImplementation {
     }
 }
 
-class PredicateUFBodyImplementation extends BodyImplementation {
-    constructor(sinfo: SourceInfo, file: string) {
-        super(sinfo, file);
-    }
-
-    emit(fmt: CodeFormatter, headerstr: string | undefined): string {
-        if(headerstr === undefined) {
-            return "%* Uninterpreted Function as predicate for checking *%;";
-        }
-        else {
-            return headerstr + "%* Uninterpreted Function as predicate for checking *%;";
-        }
-    }
-}
-
 class BuiltinBodyImplementation extends BodyImplementation {
     readonly builtin: string;
 
@@ -3021,5 +3006,5 @@ export {
     TaskStatusStatement, TaskCheckAndHandleTerminationStatement,
     TaskYieldStatement,
     BlockStatement, 
-    BodyImplementation, AbstractBodyImplementation, PredicateUFBodyImplementation, BuiltinBodyImplementation, HoleBodyImplementation, ExpressionBodyImplementation, StandardBodyImplementation
+    BodyImplementation, AbstractBodyImplementation, BuiltinBodyImplementation, HoleBodyImplementation, ExpressionBodyImplementation, StandardBodyImplementation
 };

@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { APIDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, InvokeTemplateTypeRestrictionClause, MAX_SAFE_CHK_NAT, MIN_SAFE_CHK_INT, MAX_SAFE_CHK_INT, APIDeniedTypeDecl, APIFlaggedTypeDecl, AgentDecl, TaskConfiguration, AbstractCollectionTypeDecl, ConstructableTypeDecl, InvokeParameterDecl, AbstractEntityTypeDecl } from "./assembly.js";
 import { CodeFormatter, SourceInfo } from "./build_decls.js";
 import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, ErrorTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
-import { APIInvokeExpression, AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, AbstractArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, FormatStringTextComponent, HoleBodyImplementation, HoleExpression, HoleStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, IfElifElseStatement, IfElseStatement, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypeDeclValueExpression, LiteralTypedCStringExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PassingArgumentValue, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RValueExpression, RValueExpressionTag, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VoidRefCallStatement, StdArgumentValue, SkipArgumentValue, InterpolateFormatExpression, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestFail, ITestTypeGuard, ITestBinderGuard, TypeTestBindInfo } from "./body.js";
+import { APIInvokeExpression, AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, AbstractArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, FormatStringTextComponent, HoleBodyImplementation, HoleExpression, HoleStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, IfElifElseStatement, IfElseStatement, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypeDeclValueExpression, LiteralTypedCStringExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PassingArgumentValue, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RValueExpression, RValueExpressionTag, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VoidRefCallStatement, StdArgumentValue, SkipArgumentValue, InterpolateFormatExpression, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestFail, ITestTypeGuard, ITestBinderGuard, TypeTestBindInfo } from "./body.js";
 import { SimpleTypeInferContext, TypeEnvironment, TypeResultWRefVarInfoResult, TypeInferContext, VarInfo, EListStyleTypeInferContext } from "./checker_environment.js";
 import { MemberLookupInfo, TypeCheckerRelations } from "./checker_relations.js";
 
@@ -91,102 +91,130 @@ class TypeChecker {
         return (t.tkeystr === "Void");
     }
 
-    private resolveSizeConstraints(tdecl: TypedeclTypeDecl, rlen: number): {min: bigint, max: bigint} {
-        assert(tdecl.optsizerng !== undefined, "size constraints should be defined to call resolveSizeConstraints");
-
-        let min = 0n;
-        if(tdecl.optsizerng.min !== undefined) {
-            try {
-                min = BigInt(tdecl.optsizerng.min.slice(0, -1)); //remove the 'n' at the end
+    private processRangeBoundsGetDefault(sinfo: SourceInfo, ontype: TypeSignature): { minvalue: bigint | number, maxvalue: bigint | number } {
+        switch(ontype.tkeystr) {
+            case "Int": {
+                return { minvalue: MIN_SAFE_INT, maxvalue: MAX_SAFE_INT };
             }
-            catch {
-                //just ignore the constraint and report error at definition
+            case "Nat": {
+                return { minvalue: 0n, maxvalue: MAX_SAFE_NAT };
             }
-        }
-
-        let max = BigInt(rlen);
-        if(tdecl.optsizerng.max !== undefined) {
-            try {
-                max = BigInt(tdecl.optsizerng.max.slice(0, -1)); //remove the 'n' at the end
+            case "ChkInt": {
+                return { minvalue: MIN_SAFE_CHK_INT, maxvalue: MAX_SAFE_CHK_INT };
             }
-            catch {
-                //just ignore the constraint and report error at definition
+            case "ChkNat": {
+                return { minvalue: 0n, maxvalue: MAX_SAFE_CHK_NAT };
             }
-        }
-
-        return { min: min, max: max };
-    }
-    private parseIntegerRangeBound(sinfo: SourceInfo, literal: string, typeName: string, minSafe: bigint, maxSafe: bigint): { value: bigint, ok: boolean } {
-        const numStr = literal.slice(0, -1);
-        try {
-            const val = BigInt(numStr);
-            this.checkError(sinfo, val < minSafe || val > maxSafe, `Range bound ${literal} is outside safe ${typeName} range`);
-            return { value: val, ok: true };
-        }
-        catch {
-            this.reportError(sinfo, `Invalid ${typeName} range bound: ${literal}`);
-            return { value: 0n, ok: false };
-        }
-    }
-
-    private parseRangeBound(sinfo: SourceInfo, literal: string, typeName: string): { value: bigint | number, ok: boolean } {
-        switch(typeName) {
-            case "Int":
-                return this.parseIntegerRangeBound(sinfo, literal, typeName, MIN_SAFE_INT, MAX_SAFE_INT);
-            case "Nat":
-                return this.parseIntegerRangeBound(sinfo, literal, typeName, 0n, MAX_SAFE_NAT);
-            case "ChkInt":
-                return this.parseIntegerRangeBound(sinfo, literal, typeName, MIN_SAFE_CHK_INT, MAX_SAFE_CHK_INT);
-            case "ChkNat":
-                return this.parseIntegerRangeBound(sinfo, literal, typeName, 0n, MAX_SAFE_CHK_NAT);
-            case "Float":
-            case "Decimal": {
-                const numStr = literal.slice(0, -1);
-                const val = Number.parseFloat(numStr);
-                if(!Number.isFinite(val)) {
-                    this.reportError(sinfo, `Invalid ${typeName} range bound: ${literal}`);
-                    return { value: 0, ok: false };
-                }
-                return { value: val, ok: true };
+            case "Float": {
+                return { minvalue: -Number.MAX_VALUE, maxvalue: Number.MAX_VALUE };
             }
             case "Rational": {
-                const body = literal.slice(0, -1);
-                const slashIdx = body.indexOf("/");
-                try {
-                    const num = BigInt(slashIdx === -1 ? body : body.slice(0, slashIdx));
-                    const den = slashIdx === -1 ? 1n : BigInt(body.slice(slashIdx + 1));
-
-                    this.checkError(sinfo, num < MIN_SAFE_CHK_INT || num > MAX_SAFE_CHK_INT, `Rational numerator ${num} is outside safe ChkInt range`);
-                    this.checkError(sinfo, den < 1n || den > MAX_SAFE_NAT, `Rational denominator ${den} must be in safe Nat range (>= 1)`);
-
-                    const val = Number(num) / Number(den);
-                    if(!Number.isFinite(val)) {
-                        this.reportError(sinfo, `Rational range bound overflows: ${literal}`);
-                        return { value: 0, ok: false };
-                    }
-                    return { value: val, ok: true };
-                }
-                catch {
-                    this.reportError(sinfo, `Invalid Rational range bound: ${literal}`);
-                    return { value: 0, ok: false };
-                }
+                assert(false, "Rational range constraints not supported yet");
             }
-            case "String":
-            case "CString":
-                return this.parseIntegerRangeBound(sinfo, literal, typeName, 0n, MAX_SAFE_NAT);
+            case "String": {
+                return { minvalue: 0n, maxvalue: MAX_SAFE_NAT };
+            }
+            case "CString": {
+                return { minvalue: 0n, maxvalue: MAX_SAFE_NAT };
+            }
             default: {
-                this.reportError(sinfo, `Range constraints not supported for type ${typeName}`);
-                return { value: 0, ok: false };
+                this.reportError(sinfo, `Range constraints not supported for type ${ontype.tkeystr}`);
+                return { minvalue: 0, maxvalue: 0};
             }
         }
     }
+
+    private processRangeGetValueForLiteral(sinfo: SourceInfo, lit: LiteralSimpleExpression, ontype: TypeSignature): bigint | number | undefined {
+        switch(ontype.tkeystr) {
+            case "Nat": {
+                return BigInt(lit.value.slice(0, lit.value.length - 1));
+            }
+            case "Int": {
+                return BigInt(lit.value.slice(0, lit.value.length - 1));
+            }
+            case "ChkNat": {
+                if(lit.value !== "ChkNat::npos") {
+                    return BigInt(lit.value.slice(0, lit.value.length - 1));
+                }
+                else {
+                    this.reportError(sinfo, `ChkNat literal in range cannot be npos`);
+                    return undefined;
+                }
+            }
+            case "ChkInt": {
+                if(lit.value !== "ChkInt::npos") {
+                    return BigInt(lit.value.slice(0, lit.value.length - 1));
+                }
+                else {
+                    this.reportError(sinfo, `ChkInt literal in range cannot be npos`);
+                    return undefined;
+                }
+            }
+            case "Rational": {
+                assert(false, "Rational range constraints not supported yet");
+            }
+            case "Float": {
+                if(TypeChecker.isValidFloatLiteral(lit.value.slice(0, lit.value.length - 1))) {
+                    return parseFloat(lit.value.slice(0, lit.value.length - 1));
+                }
+                else {
+                    this.reportError(sinfo, `Invalid Float literal in range -- ${lit.value}`);
+                    return undefined;
+                }
+            }
+            case "CString": {
+                return BigInt(lit.value.slice(0, lit.value.length - 1));
+            }
+            case "String": {
+                return BigInt(lit.value.slice(0, lit.value.length - 1));
+            }
+            default: {
+                this.reportError(sinfo, `Literal value not supported for type ${ontype.tkeystr}`);
+                return 0;
+            }
+        }
+    }
+
+    private processRangeBound(sinfo: SourceInfo, minexp: Expression | undefined, maxexp: Expression | undefined, ontype: TypeSignature): { min: bigint | number, max: bigint | number, ok: boolean } {
+        const { minvalue: defaultmin, maxvalue: defaultmax } = this.processRangeBoundsGetDefault(sinfo, ontype);
+        
+        let fmin: bigint | number = defaultmin;
+        if(minexp !== undefined) {
+            const env = TypeEnvironment.createInitialStdEnv(ontype, new SimpleTypeInferContext(ontype), []);
+            const minsig = this.checkExpression(env, minexp, undefined);
+            if(minsig instanceof ErrorTypeSignature) {
+                return { min: defaultmin, max: defaultmax, ok: false };
+            }
+
+            const fminexp = this.relations.assembly.tryReduceConstantExpression(minexp, TemplateNameMapper.createEmpty()) ?? minexp;
+            fmin = this.processRangeGetValueForLiteral(sinfo, fminexp as LiteralSimpleExpression, ontype) ?? defaultmin;
+        }
+
+        let fmax: bigint | number = defaultmax;
+        if(maxexp !== undefined) {
+            const env = TypeEnvironment.createInitialStdEnv(ontype, new SimpleTypeInferContext(ontype), []);
+            const maxsig = this.checkExpression(env, maxexp, undefined);
+            if(maxsig instanceof ErrorTypeSignature) {
+                return { min: defaultmin, max: defaultmax, ok: false };
+            }
+
+            const fmaxexp = this.relations.assembly.tryReduceConstantExpression(maxexp, TemplateNameMapper.createEmpty()) ?? maxexp;
+            fmax = this.processRangeGetValueForLiteral(sinfo, fmaxexp as LiteralSimpleExpression, ontype) ?? defaultmax;
+        }
+
+        return { min: fmin, max: fmax, ok: true };
+    }
+
     private checkTypeDeclOfStringRestrictions(sinfo: SourceInfo, tdecl: TypedeclTypeDecl, value: string): string | undefined {
         const vs = validateStringLiteral(value.slice(1, -1));
         this.checkError(sinfo, vs === null, `Invalid string literal value ${value}`);
 
         if(vs !== null && tdecl.optsizerng !== undefined) {
-            const sbounds = this.resolveSizeConstraints(tdecl, vs.length);
-            this.checkError(sinfo, BigInt(vs.length) < sbounds.min || BigInt(vs.length) > sbounds.max, `String literal length ${vs.length} out of bounds`);
+            const sbounds = this.processRangeBound(sinfo, tdecl.optsizerng.min, tdecl.optsizerng.max, this.getWellKnownType("String"));
+            this.checkError(sinfo, !sbounds.ok, `Unable to resolve string literal size bounds`);
+            if(sbounds.ok) {
+                this.checkError(sinfo, BigInt(vs.length) < (sbounds.min as bigint) || BigInt(vs.length) > (sbounds.max as bigint), `String literal length ${vs.length} out of bounds`);
+            }
         }
 
         if(vs !== null && tdecl.optofexp !== undefined) {
@@ -213,8 +241,11 @@ class TypeChecker {
         this.checkError(sinfo, vs === null, `Invalid cstring literal value ${value}`);
 
         if(vs !== null && tdecl.optsizerng !== undefined) {
-            const sbounds = this.resolveSizeConstraints(tdecl, vs.length);
-            this.checkError(sinfo, BigInt(vs.length) < sbounds.min || BigInt(vs.length) > sbounds.max, `CString literal length ${vs.length} out of bounds`);
+            const sbounds = this.processRangeBound(sinfo, tdecl.optsizerng.min, tdecl.optsizerng.max, this.getWellKnownType("CString"));
+            this.checkError(sinfo, !sbounds.ok, `Unable to resolve cstring literal size bounds`);
+            if(sbounds.ok) {
+                this.checkError(sinfo, BigInt(vs.length) < (sbounds.min as bigint) || BigInt(vs.length) > (sbounds.max as bigint), `CString literal length ${vs.length} out of bounds`);
+            }
         }
 
         if(vs !== null && tdecl.optofexp !== undefined) {
@@ -1671,22 +1702,16 @@ class TypeChecker {
 
         const tdecl = exp.constype.decl as TypedeclTypeDecl;
         if(tdecl.optsizerng !== undefined && exp.value instanceof LiteralSimpleExpression) {
-            const typevaluename = (tdecl.valuetype as NominalTypeSignature).decl.name;
-            const valParsed = this.parseRangeBound(exp.sinfo, exp.value.value, typevaluename);
-
-            if(valParsed.ok) {
-                if(tdecl.optsizerng.min !== undefined) {
-                    const minParsed = this.parseRangeBound(exp.sinfo, tdecl.optsizerng.min, typevaluename);
-                    if(minParsed.ok) {
-                        this.checkError(exp.sinfo, valParsed.value < minParsed.value, `Value ${exp.value.value} is below range minimum ${tdecl.optsizerng.min}`);
-                    }
-                }
-                if(tdecl.optsizerng.max !== undefined) {
-                    const maxParsed = this.parseRangeBound(exp.sinfo, tdecl.optsizerng.max, typevaluename);
-                    if(maxParsed.ok) {
-                        this.checkError(exp.sinfo, valParsed.value > maxParsed.value, `Value ${exp.value.value} is above range maximum ${tdecl.optsizerng.max}`);
-                    }
-                }
+            const sbounds = this.processRangeBound(tdecl.sinfo, tdecl.optsizerng.min, tdecl.optsizerng.max, tdecl.valuetype);
+            const fexp = this.relations.assembly.tryReduceConstantExpression(exp.value, TemplateNameMapper.createEmpty()) ?? exp.value;
+            const fval = this.processRangeGetValueForLiteral(exp.sinfo, fexp as LiteralSimpleExpression, tdecl.valuetype);
+            
+            if(sbounds.ok && fval !== undefined) {
+                const minStr = tdecl.optsizerng.min !== undefined ? (tdecl.optsizerng.min as Expression).emit(true, new CodeFormatter()) : "RNG_MIN";
+                this.checkError(exp.sinfo, fval < sbounds.min, `Value ${exp.value.value} is below range minimum ${minStr}`);
+                
+                const maxStr = tdecl.optsizerng.max !== undefined ? (tdecl.optsizerng.max as Expression).emit(true, new CodeFormatter()) : "RNG_MAX";
+                this.checkError(exp.sinfo, fval > sbounds.max, `Value ${exp.value.value} is above range maximum ${maxStr}`);
             }
         }
 
@@ -4356,7 +4381,7 @@ class TypeChecker {
             return env;
         }
 
-        let ctype = this.relations.decomposeType(eetype, this.constraints) || [];
+        let ctype = this.relations.decomposeType(eetype, this.constraints) ?? [];
         if(ctype.length === 0) {
             this.reportError(stmt.sval.sinfo, `Match statement requires a decomposable type but got ${eetype.emit()}`);
             return env;
@@ -4895,7 +4920,7 @@ class TypeChecker {
     }
 
     private checkBodyImplementation(env: TypeEnvironment, body: BodyImplementation, params: InvokeParameterDecl[]): TypeEnvironment {
-        if((body instanceof AbstractBodyImplementation) || (body instanceof PredicateUFBodyImplementation) || (body instanceof BuiltinBodyImplementation)) {
+        if((body instanceof AbstractBodyImplementation) || (body instanceof BuiltinBodyImplementation)) {
             return env;
         }
 
@@ -5287,31 +5312,13 @@ class TypeChecker {
                 this.reportError(tdecl.sinfo, `Invalid size range max and min -- at least one must be defined`);
             }
 
-            const typevaluename = (tdecl.valuetype as NominalTypeSignature).decl.name;
-            let minParsed: { value: bigint | number, ok: boolean } | undefined = undefined;
-            let maxParsed: { value: bigint | number, ok: boolean } | undefined = undefined;
+            const sbounds = this.processRangeBound(tdecl.sinfo, tdecl.optsizerng.min, tdecl.optsizerng.max, tdecl.valuetype);
+            this.checkError(tdecl.sinfo, !sbounds.ok, `Unable to resolve literal range bounds`);
 
-            if(tdecl.optsizerng.min !== undefined) {
-                minParsed = this.parseRangeBound(tdecl.sinfo, tdecl.optsizerng.min, typevaluename);
-            }
-
-            if(tdecl.optsizerng.max !== undefined) {
-                maxParsed = this.parseRangeBound(tdecl.sinfo, tdecl.optsizerng.max, typevaluename);
-            }
-
-            if(minParsed !== undefined && minParsed.ok && maxParsed !== undefined && maxParsed.ok) {
-                this.checkError(tdecl.sinfo, minParsed.value > maxParsed.value, `Range min (${tdecl.optsizerng.min}) must be <= max (${tdecl.optsizerng.max})`);
-            }
-
-            if(tdecl.optsizerng.min !== undefined && tdecl.optsizerng.max !== undefined) {
-                try {
-                    const minval = BigInt(tdecl.optsizerng.min.slice(0, -1));
-                    const maxval = BigInt(tdecl.optsizerng.max.slice(0, -1));
-                    this.checkError(tdecl.sinfo, minval > maxval, `Size range min cannot be larger than size range max`);
-                }
-                catch {
-                    //ignore -- already reported as invalid
-                }
+            if(sbounds.ok) {
+                const minStr = tdecl.optsizerng.min !== undefined ? (tdecl.optsizerng.min as Expression).emit(true, new CodeFormatter()) : "RNG_MIN";
+                const maxStr = tdecl.optsizerng.max !== undefined ? (tdecl.optsizerng.max as Expression).emit(true, new CodeFormatter()) : "RNG_MAX";
+                this.checkError(tdecl.sinfo, sbounds.min > sbounds.max, `Range min (${minStr}) must be <= max (${maxStr})`);
             }
         }
 

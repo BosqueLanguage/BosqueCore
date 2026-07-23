@@ -1,0 +1,49 @@
+namespace Assembly;
+
+const namespaceComponentRE: CRegex = /[A-Z][_a-zA-Z0-9]+/c;
+const namespaceKeyRE: CRegex = /(${Assembly::namespaceComponentRE}'::')*${Assembly::namespaceComponentRE}/c; %%Core is explicit here
+type NamespaceComponentKey = CString of Assembly::namespaceComponentRE;
+type NamespaceKey = CString of Assembly::namespaceKeyRE; %%Core is implicit here
+
+const basicNominalTypeKeyRE: CRegex = /(${Assembly::namespaceKeyRE}'::')?[A-Z][_a-zA-Z0-9]+('<'.+'>')?/c; %%Core is implicit here
+const specialScopedTypeKeyRE: CRegex = /('Result'|'APIResult')'<'.+'>''::'('Ok'|'Fail'|'Rejected'|'Failed'|'Error'|'Success')/c; %%Core is implicit here
+const nominalTypeKeyRE: CRegex = /(${Assembly::basicNominalTypeKeyRE}|${Assembly::specialScopedTypeKeyRE})/c; %%a bit rough but helps prevent mistakes
+const elistTypeKeyRE: CRegex = /'(|'.*'|)'/c;
+
+const lambdaTypeKeyRE: CRegex = /('fn'|'pred') '('.*')' '->' (${Assembly::nominalTypeKeyRE}|${Assembly::elistTypeKeyRE})/c;
+const typeKeyRE: CRegex = /${Assembly::nominalTypeKeyRE}|${Assembly::elistTypeKeyRE}|${Assembly::lambdaTypeKeyRE}/c; 
+type TypeKey = CString of Assembly::typeKeyRE;
+
+const constKeyRE: CRegex = /(${Assembly::namespaceKeyRE}|${Assembly::nominalTypeKeyRE})::'[_a-zA-Z0-9]+/c;
+type ConstKey = CString of Assembly::constKeyRE;
+
+const invokeKeyRE: CRegex = /(${Assembly::namespaceKeyRE}|${Assembly::nominalTypeKeyRE})'::'[_a-zA-Z0-9]+('<'.+'>')?/c;
+type InvokeKey = CString of Assembly::invokeKeyRE;
+
+const identifierRE: CRegex = /[_a-z][_a-zA-Z0-9$]*/c; %%we allow $ inside these identifiers so we can make special names
+const videntifierRE: CRegex = /'$'?[_a-z][_a-zA-Z0-9$]*/c; %%we allow $ inside these identifiers so we can make special names
+type Identifier = CString of Assembly::identifierRE;
+type VarIdentifier = CString of Assembly::videntifierRE;
+
+entity SourceInfo {
+    field line: Nat;
+    field column: Nat;
+}
+
+entity CRegex
+{
+    field regexID: Nat;
+
+    field bsqregex: List<CChar>;
+    field smtregex: List<CChar>;
+    field cppregex: List<CChar>;
+}
+
+entity IRURegex
+{
+    field regexID: Nat;
+
+    field bsqregex: List<UnicodeChar>;
+    field smtregex: List<UnicodeChar>;
+    field cppregex: List<UnicodeChar>;
+}

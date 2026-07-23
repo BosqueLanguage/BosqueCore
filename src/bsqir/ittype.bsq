@@ -1,4 +1,4 @@
-namespace Sundew;
+namespace Assembly;
 
 entity FormatTypeSignatureTerm {
     field argname: Identifier;

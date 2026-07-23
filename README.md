@@ -48,11 +48,11 @@ public function sub2(x: Int, y: Int): Int {
     return x - y;
 }
 
-sub2(4i, 2i)     %%2i
-sub2(y=2i, x=3i) %%1i
+sub2(4i, 2i)     %% 2i
+sub2(y=2i, x=3i) %% 1i
 
-sub2(3i, 4.0f) %%type error -- defined on Int but given Float arg
-sub2(3, 4)     %%type error -- un-annotated numeric literals are not supported (for now)
+sub2(3i, 4.0f) %% type error -- defined on Int but given Float arg
+sub2(3, 4)     %% type error -- un-annotated numeric literals are not supported (for now)
 ```
 
 **All positive check using rest parameters and lambda:**
@@ -61,9 +61,9 @@ public function allPositive(...args: List<Int>): Bool {
     return args.allOf(pred(x) => x >= 0i);
 }
 
-allPositive(1i, 3i, 4i)  %%true
-allPositive()            %%true
-allPositive(1i, 3i, -4i) %%false
+allPositive(1i, 3i, 4i)  %% true
+allPositive()            %% true
+allPositive(1i, 3i, -4i) %% false
 ```
 
 **Sign (with blocks and assignment):**
@@ -84,8 +84,41 @@ public function sign(x: Int): Int {
     return y;
 }
 
-sign(5i)    %%1
-sign(-5i)   %%-1
+sign(5i)    %%  1i
+sign(-5i)   %% -1i
+```
+
+**Reference and Parameter Passing modes -- Simplify common state management:**
+```none
+%%Manual threading of state
+entity Ctr { 
+    field vv: Nat = 0n; 
+    method next(): Ctr { 
+        return Ctr{ vv = this.vv + 1n }; 
+    } 
+} 
+
+let ctr = Ctr{}; 
+let ctr1 = ctr.next(); 
+let ctr2 = ctr1.next(); 
+
+ctr2.vv; %% 2n
+```
+
+```none
+%%Use ref params and updates to simplify state management (but still functional!)
+entity Ctr { 
+    field vv: Nat = 0n; 
+    ref method next() { 
+        ref this[vv = $vv + 1n]; 
+    } 
+} 
+
+ref ctr = Ctr{}; 
+ref ctr.next(); 
+ref ctr.next(); 
+
+ctr.vv; %% 2n
 ```
 
 **Nominal Types with Multi-Inheritance (todo: vcall impl) & Data Invariants:**
@@ -118,12 +151,12 @@ entity NamedGreeting provides WithName, Greeting {
     }
 }
 
-GenericGreeting{}.sayHello()          %%"hello world"
-GenericGreeting::instance.sayHello()  %%"hello world"
+GenericGreeting{}.sayHello()          %% "hello world"
+GenericGreeting::instance.sayHello()  %% "hello world"
 
-NamedGreeting{}.sayHello()           %%type error no value provided for "name" field
-NamedGreeting{""}.sayHello()         %%invariant error
-NamedGreeting{"bob"}.sayHello()      %%"hello bob"
+NamedGreeting{}.sayHello()           %% type error no value provided for "name" field
+NamedGreeting{""}.sayHello()         %% invariant error
+NamedGreeting{"bob"}.sayHello()      %% "hello bob"
 ```
 
 **Type Alias Types**
@@ -135,17 +168,17 @@ type Percentage = Nat & {
     invariant $value <= 100n;
 }
 
-32i<Fahrenheit> + 0i<Celsius>  %%type error different numeric types
-30n<Percentage>                %%valid percentage
-101n<Percentage>               %%invariant error
+32i<Fahrenheit> + 0i<Celsius>  %% type error different numeric types
+30n<Percentage>                %% valid percentage
+101n<Percentage>               %% invariant error
 
 function isFreezing(temp: Celsius): Bool {
     return temp <= 0i<Celsius>;
 }
 
-isFreezing(5.0f)           %%type error not a celsius number
-isFreezing(5i<Celsius>)    %%false
-isFreezing(-5i<Celsius>)   %%true
+isFreezing(5.0f)           %% type error not a celsius number
+isFreezing(5i<Celsius>)    %% false
+isFreezing(-5i<Celsius>)   %% true
 
 ```
 
@@ -162,8 +195,8 @@ function flowit(x: Option<Nat>): Nat {
     }
 }
 
-flowit(none)      %%0n
-flowit(some(5n))  %%15n
+flowit(none)      %% 0n
+flowit(some(5n))  %% 15n
 ```
 
 **(Algebraic Data Types)++**
@@ -184,8 +217,8 @@ datatype BoolOp of
     } 
 }
 
-OrOp{Const{true}, Const{false}}.evaluate[recursive]()            %%true
-AndOp{larg=Const{true}, rarg=Const{false}}.evaluate[recursive]() %%false
+OrOp{Const{true}, Const{false}}.evaluate[recursive]()            %% true
+AndOp{larg=Const{true}, rarg=Const{false}}.evaluate[recursive]() %% false
 ```
 
 **Validated Strings:**
@@ -197,14 +230,14 @@ function is3pt(s1: CSSPt): Bool {
     return s1.value === '3pt';
 }
 
-'1234'<Zipcode> %%type error (does not match regex)
-'3px'<CSSPt>    %%type error (does not match regex)
+'1234'<Zipcode> %% type error (does not match regex)
+'3px'<CSSPt>    %% type error (does not match regex)
 
-is3pt('12')               %%type error not a CSSPt
-is3pt('98052'<Zipcode>)   %%type error not a CSSPt
+is3pt('12')               %% type error not a CSSPt
+is3pt('98052'<Zipcode>)   %% type error not a CSSPt
 
-is3pt('3pt'<CSSPt>) %%true
-is3pt('4pt'<CSSPt>) %%false
+is3pt('3pt'<CSSPt>) %% true
+is3pt('4pt'<CSSPt>) %% false
 ```
 
 # Documentation

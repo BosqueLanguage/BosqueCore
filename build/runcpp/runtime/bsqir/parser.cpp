@@ -251,53 +251,237 @@ namespace ᐸRuntimeᐳ
         return std::nullopt;
     }
 
-    bool isSimpleChar(uint8_t c)
+    bool extractEscapedSeq(BSQLexBufferIterator& ii, char closequote, std::array<char, 16>& outseq, size_t& outlen)
     {
-        if(c > 126) {
-            return false;
+        outseq.fill(0);
+        outlen = 0;
+
+        while(*ii != closequote && outlen < 16) {
+            outseq[outlen] = *ii;
+            ++ii;
+            outlen++;
+
+            if(outseq[outlen - 1] == ';') {
+                return true;
+            }
         }
-        else {
-            return std::isprint(c) || (c == '\t') || (c == '\n');
-        }
+        return false;
     }
 
-    bool processCCharInString(BSQLexBufferIterator& ii, char* outchar)
+    bool extractUTF8MultibyteSeq(BSQLexBufferIterator& ii, std::array<uint8_t, 6>& outseq, size_t& outlen)
     {
-        char c = *ii;
-        ++ii;
+        outseq.fill(0);
+        outlen = 0;
 
-        if(!isSimpleChar(static_cast<uint8_t>(c))) {
+        //TODO: implement multibyte UFT8 decode
+        assert(false);
+
+        return false;
+    }
+
+    bool convertEscapedSeqToCChar(const std::array<char, 16>& outseq, size_t outlen, char& res)
+    {
+        res = 0;
+        if(outlen < 2 || outseq[0] != '%' || outseq[outlen - 1] != ';') {
             return false;
         }
+
+        auto ii = std::find_if(s_escape_names_char.cbegin(), s_escape_names_char.cend(), [&](const auto& p) { return std::strcmp(p.second, outseq.data()) == 0; });
+        if(ii != s_escape_names_char.cend()) {
+            res = (char)ii->first;
+            return isLegalCChar(res);
+        }
+
+        if(outseq[1] == 'x') {
+            uint8_t output = 0;
+            auto [ptr, ec] = std::from_chars(outseq.data() + 2, outseq.data() + outlen - 1, output, 16);
+
+            res = static_cast<char>(output);
+            return ec == std::errc() && (ptr == outseq.data() + outlen - 1) && isLegalCChar(res);
+        }
+
+        return false;
+    }
+
+    bool convertEscapedSeqToUnicodeChar(const std::array<char, 16>& outseq, size_t outlen, char32_t& res)
+    {
+        res = 0;
+        if(outlen < 2 || outseq[0] != '%' || outseq[outlen - 1] != ';') {
+            return false;
+        }
+
+        if(outseq[1] == 'x') {
+            uint32_t output = 0;
+            auto [ptr, ec] = std::from_chars(outseq.data() + 2, outseq.data() + outlen - 1, output, 16);
+
+            res = static_cast<char32_t>(output);
+            return ec == std::errc() && (ptr == outseq.data() + outlen - 1) && isLegalUnicodeChar(res);
+        }
+
+        return false;
+    }
+
+    bool convertMultibyteSeqToUnicodeChar(const std::array<uint8_t, 6>& outseq, size_t outlen, char32_t& res)
+    {
+        res = 0;
+
+        //TODO: implement multibyte UFT8 decode
+        assert(false);
+
+        return false;
+    }
+
+    bool processCCharFromIter(BSQLexBufferIterator& ii, char* outchar)
+    {
+        char c = *ii;
         
-        if(c != '%') {
-            *outchar = c;
+        if(c == '%') {
+            std::array<char, 16> outseq;
+            size_t outlen = 0;
+            bool extractok = extractEscapedSeq(ii, '\'', outseq, outlen);
+            if(!extractok) {
+                return false;
+            }
+
+            char res = 0;
+            bool convertok = convertEscapedSeqToCChar(outseq, outlen, res);
+            if(!convertok) {
+                return false;
+            }
+
+            *outchar = res;
+            return isLegalCChar(*outchar);
         }
         else {
-            assert(false); // Not Implemented: escape sequences in CString
-        }
-
-        return true;
-    }
-
-    bool processUnicodeCharInString(BSQLexBufferIterator& ii, char32_t* outchar)
-    {
-        char c = *ii;
-        ++ii;
-
-        if(!isSimpleChar(static_cast<uint8_t>(c))) {
-            assert(false); // Not Implemented: full unicode support in String
-        }
-        else {
-            if(c != '%') {
-                *outchar = (char32_t)c;
+            if(c == '\'' || (c < 32) || (126 < c)) {
+               return false;
             }
             else {
-                assert(false); // Not Implemented: escape sequences in String
+                *outchar = c;
+                ++ii;
+
+                return isLegalCChar(*outchar);
             }
         }
+    }
+
+    bool processUnicodeCharFromIter(BSQLexBufferIterator& ii, char32_t* outchar)
+    {
+        char c = *ii;
+       
+        if(c == '%') {
+            std::array<char, 16> outseq;
+            size_t outlen = 0;
+            bool extractok = extractEscapedSeq(ii, '"', outseq, outlen);
+            if(!extractok) {
+                return false;
+            }
+
+            char32_t res = 0;
+            bool convertok = convertEscapedSeqToUnicodeChar(outseq, outlen, res);
+            if(!convertok) {
+                return false;
+            }
+
+            *outchar = res;
+            return isLegalUnicodeChar(*outchar);
+        }
+        else {
+            if(c == '"') {
+               return false;
+            }
+            else if(isMultibyteEncoding(c)) {
+                std::array<uint8_t, 6> outseq;
+                size_t outlen = 0;
+                bool extractok = extractUTF8MultibyteSeq(ii, outseq, outlen);
+                if(!extractok) {
+                    return false;
+                }
+
+                char32_t res = 0;
+                bool convertok = convertMultibyteSeqToUnicodeChar(outseq, outlen, res);
+                if(!convertok) {
+                    return false;
+                }
+
+                *outchar = res;
+                return isLegalUnicodeChar(*outchar);
+            }
+            else {
+                *outchar = static_cast<char32_t>(c);
+                ++ii;
+
+                return isLegalUnicodeChar(*outchar);
+            }
+        }
+       
 
         return true;
+    }
+
+    std::optional<XByte> BSQONParser::parseByte()
+    {
+        if(this->lexer.current().tokentype != BSQONTokenType::LiteralByte) {
+            return std::nullopt;
+        }   
+
+        auto stok = this->lexer.current();
+        this->lexer.consume();
+
+        char outbuff[16] = {0};
+        stok.extract(outbuff, sizeof(outbuff));
+
+        uint8_t output = 0;
+        auto [ptr, ec] = std::from_chars(outbuff + 2, outbuff + stok.size(), output, 16);
+        if(ec != std::errc() || (ptr != outbuff + stok.size())) {
+            return std::nullopt;
+        }
+
+        return std::make_optional(XByte(output));
+    }
+
+    std::optional<XCChar> BSQONParser::parseCChar()
+    {
+        if(this->lexer.current().tokentype != BSQONTokenType::LiteralCChar) {
+            return std::nullopt;
+        }   
+
+        auto stok = this->lexer.current();
+        this->lexer.consume();
+
+        BSQLexBufferIterator ii = stok.begin;
+        ++ii; //eat 'c'
+        ++ii; //eat '\''
+
+        char output = 0;
+        bool charok = processCCharFromIter(ii, &output);
+        if(!charok || *ii != '\'') {
+            return std::nullopt;
+        }
+
+        return std::make_optional(XCChar{static_cast<uint64_t>(output)});
+    }
+
+    std::optional<XUnicodeChar> BSQONParser::parseUnicodeChar()
+    {
+        if(this->lexer.current().tokentype != BSQONTokenType::LiteralUnicodeChar) {
+            return std::nullopt;
+        }   
+
+        auto stok = this->lexer.current();
+        this->lexer.consume();
+
+        BSQLexBufferIterator ii = stok.begin;
+        ++ii; //eat 'c'
+        ++ii; //eat '"'
+
+        char32_t output = 0;
+        bool charok = processUnicodeCharFromIter(ii, &output);
+        if(!charok || *ii != '"') {
+            return std::nullopt;
+        }
+
+        return std::make_optional(XUnicodeChar{static_cast<uint64_t>(output)});
     }
 
     std::optional<XCString> BSQONParser::parseCString()
@@ -325,7 +509,7 @@ namespace ᐸRuntimeᐳ
             BSQLexBufferIterator ii = stok.begin;
             ++ii; //eat ' and skip final '
             while(*ii != etok) {
-                extractok &= processCCharInString(ii, &cb.data[ecount + 1]);
+                extractok &= processCCharFromIter(ii, &cb.data[ecount + 1]);
                 ecount++;
             }
             cb.data[0] = static_cast<char>(ecount);
@@ -361,7 +545,7 @@ namespace ᐸRuntimeᐳ
             BSQLexBufferIterator ii = stok.begin;
             ++ii; //eat " and skip final "
             while(*ii != '"') {
-                extractok &= processUnicodeCharInString(ii, &cb.data[ecount + 1]);
+                extractok &= processUnicodeCharFromIter(ii, &cb.data[ecount + 1]);
                 ecount++;
             }
             cb.data[0] = static_cast<char32_t>(ecount);

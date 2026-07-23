@@ -133,19 +133,43 @@ namespace ᐸRuntimeᐳ
 
     void BSQONEmitter::emitCChar(XCChar c)
     {
-        //TODO: we need to handle escaping correctly
-        
         this->bufferMgr.writeImmediate("c'");
-        this->bufferMgr.write(char(c.value));
+
+        if(!isMustEscapeCChar((char)c.value)) {
+            this->bufferMgr.write((char)c.value);            
+        }
+        else {
+            auto ii = std::find_if(s_escape_names_char_simple.begin(), s_escape_names_char_simple.end(), [c](const std::pair<uint8_t, const char*>& p) { return p.first == (uint8_t)c.value; });
+            if(ii != s_escape_names_char_simple.end()) {
+                this->bufferMgr.write(ii->second);
+            }
+            else {
+                this->bufferMgr.writeNumberWFormat("%%x%x;", c.value);
+            }
+        }
+
         this->bufferMgr.writeImmediate("'");
     }
 
     void BSQONEmitter::emitUnicodeChar(XUnicodeChar c)
     {
-        //TODO: we need to handle escaping correctly
-        
         this->bufferMgr.writeImmediate("c\"");
-        this->bufferMgr.write(char(c.value));
+        
+        if(!isMustEscapeUnicodeChar((char32_t)c.value)) {
+            this->bufferMgr.write((char)c.value);
+        }
+        else {
+            auto ii = std::find_if(s_escape_names_unicode_simple.begin(), s_escape_names_unicode_simple.end(), [c](const std::pair<uint8_t, const char*>& p) { return p.first == (char32_t)c.value; });
+            if(ii != s_escape_names_unicode_simple.end()) {
+                this->bufferMgr.write(ii->second);
+            }
+            else {
+                //TODO: maybe we want to do some selective multi-byte emits here for nicer output, but for now just emit the hex value as it is the least problematic encoding
+                
+                this->bufferMgr.writeNumberWFormat("%%x%x;", c.value);
+            }
+        }
+        
         this->bufferMgr.writeImmediate("\"");
     }
 
@@ -158,9 +182,19 @@ namespace ᐸRuntimeᐳ
 
         for(auto ii = istart; ii != iend; ++ii) {
             char c = *ii;
-            //TODO: we need to handle escaping correctly
-            
-            this->bufferMgr.write(c);
+
+            if(!isMustEscapeCChar(c)) {
+                this->bufferMgr.write(c);
+            }
+            else {
+                auto escname = std::find_if(s_escape_names_char_simple.begin(), s_escape_names_char_simple.end(), [c](const std::pair<uint8_t, const char*>& p) { return p.first == c; });
+                if(escname != s_escape_names_char_simple.end()) {
+                    this->bufferMgr.write(escname->second);
+                }
+                else {
+                    this->bufferMgr.writeNumberWFormat("%%x%x;", c);
+                }
+            }
         }
 
         this->bufferMgr.writeImmediate("'");
@@ -175,9 +209,21 @@ namespace ᐸRuntimeᐳ
 
         for(auto ii = istart; ii != iend; ++ii) {
             char32_t c = *ii;
-            //TODO: we need to handle escaping correctly
-            
-            this->bufferMgr.write(c);
+
+            if(!isMustEscapeUnicodeChar(c)) {
+                this->bufferMgr.write((char)c);
+            }
+            else {
+                auto ii = std::find_if(s_escape_names_unicode_simple.begin(), s_escape_names_unicode_simple.end(), [c](const std::pair<uint8_t, const char*>& p) { return p.first == (char32_t)c; });
+                if(ii != s_escape_names_unicode_simple.end()) {
+                    this->bufferMgr.write(ii->second);
+                }
+                else {
+                    //TODO: maybe we want to do some selective multi-byte emits here for nicer output, but for now just emit the hex value as it is the least problematic encoding
+
+                    this->bufferMgr.writeNumberWFormat("%%x%x;", c);
+                }
+            }
         }
 
         this->bufferMgr.writeImmediate("\"");

@@ -631,7 +631,7 @@ class TypeInfoManager {
                 return this.generateLayoutInfoForEntity(ddecl, irasm);
             }
             else {
-                return this.generateLayoutInfoForConcept(ddecl, irasm);
+                return this.generateLayoutInfoForConcept(ddecl as IRAbstractConceptTypeDecl, irasm);
             }
         }
         else {
@@ -818,7 +818,7 @@ class TypeInfoManager {
                 return this.processInfoGenerationForEntity(ddecl, irasm);
             }
             else {
-                return this.processInfoGenerationForConcept(ddecl, irasm);
+                return this.processInfoGenerationForConcept(ddecl as IRAbstractConceptTypeDecl, irasm);
             }
         }
         else {
