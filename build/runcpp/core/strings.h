@@ -467,7 +467,7 @@ namespace ᐸRuntimeᐳ
 
             if(total_size <= CStrRootInlineContent::CSTR_MAX_SIZE) {
                 std::array<char, CStrRootInlineContent::CSTR_MAX_SIZE + 1> inlined = {0};
-                char* ptr = inlined;
+                char* ptr = inlined.data();
 
                 for(size_t i = 0; i < repr.strcomps.size(); i++) {
                     const std::pair<uint8_t, const char*>& comp = repr.strcomps[i];
@@ -958,7 +958,7 @@ namespace ᐸRuntimeᐳ
 
             if(total_size <= StrRootInlineContent::STR_MAX_SIZE) {
                 std::array<char32_t, StrRootInlineContent::STR_MAX_SIZE + 1> inlined = {0};
-                char32_t* ptr = inlined;
+                char32_t* ptr = inlined.data();
 
                 for(size_t i = 0; i < repr.strcomps.size(); i++) {
                     const std::pair<uint8_t, const char32_t*>& comp = repr.strcomps[i];
