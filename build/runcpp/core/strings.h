@@ -957,7 +957,7 @@ namespace ᐸRuntimeᐳ
             }
 
             if(total_size <= StrRootInlineContent::STR_MAX_SIZE) {
-                std::array<char32_t, CStrRootInlineContent::CSTR_MAX_SIZE + 1> inlined = {0};
+                std::array<char32_t, StrRootInlineContent::STR_MAX_SIZE + 1> inlined = {0};
                 char32_t* ptr = inlined;
 
                 for(size_t i = 0; i < repr.strcomps.size(); i++) {
