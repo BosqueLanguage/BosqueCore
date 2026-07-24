@@ -1682,17 +1682,17 @@ class IRAssembly {
             //this.invokes.map((i) => i.toBAPI()).join(","),
             //this.taskactions.map((ta) => ta.toBAPI()).join(","),
             
-            ('List<Assembly::PrimitiveEntityTypeDecl>{' + this.primitives.map((p) => p.toBAPI()).join(",") + '}'),
+            ('List<Assembly::PrimitiveEntityTypeDecl>{\n        ' + this.primitives.map((p) => p.toBAPI()).join(",\n        ") + '\n    }'),
             //this.constructables.map((c) => c.toBAPI()).join(","),
             //this.collections.map((c) => c.toBAPI()).join(","),
             //this.eventlists.map((el) => el.toBAPI()).join(","),
 
-            ('List<Assembly::EnumTypeDecl>{' + this.enums.map((e) => e.toBAPI()).join(",") + '}'),
+            ('List<Assembly::EnumTypeDecl>{\n        ' + this.enums.map((e) => e.toBAPI()).join(",\n        ") + '\n    }'),
             
-            ('List<Assembly::SimpleTypeDecl>{' + this.typedecls.filter((td) => td.rngchk === undefined).map((td) => td.toBAPI()).join(",") + '}'),
-            ('List<Assembly::BoundedTypeDecl>{' + this.typedecls.filter((td) => td.rngchk !== undefined).map((td) => td.toBAPI()).join(",") + '}'),
-            ('List<Assembly::CStringTypeDecl>{' + this.cstringoftypedecls.map((td) => td.toBAPI()).join(",") + '}'),
-            ('List<Assembly::StringTypeDecl>{' + this.stringoftypedecls.map((td) => td.toBAPI()).join(",") + '}'),
+            ('List<Assembly::SimpleTypeDecl>{\n        ' + this.typedecls.filter((td) => td.rngchk === undefined).map((td) => td.toBAPI()).join(",\n        ") + '\n    }'),
+            ('List<Assembly::BoundedTypeDecl>{\n        ' + this.typedecls.filter((td) => td.rngchk !== undefined).map((td) => td.toBAPI()).join(",\n        ") + '\n    }'),
+            ('List<Assembly::CStringTypeDecl>{\n        ' + this.cstringoftypedecls.map((td) => td.toBAPI()).join(",\n        ") + '\n    }'),
+            ('List<Assembly::StringTypeDecl>{\n        ' + this.stringoftypedecls.map((td) => td.toBAPI()).join(",\n        ") + '\n    }'),
             
             //this.entities.map((e) => e.toBAPI()).join(","),
             //this.datamembers.map((dm) => dm.toBAPI()).join(","),
@@ -1704,11 +1704,11 @@ class IRAssembly {
             //this.agents.map((ag) => ag.toBAPI()).join(","),
             //this.tasks.map((t) => t.toBAPI()).join(",")
 
-            ('Map<Assembly::TypeKey, Assembly::AbstractNominalTypeDecl>{' + Array.from(this.alltypes.entries()).map(([k, v]) => `${emitTypeKey(k)} => ${v.toBAPI()}`).join(",") + '}'),
+            ('Map<Assembly::TypeKey, Assembly::AbstractNominalTypeDecl>{\n        ' + Array.from(this.alltypes.entries()).map(([k, v]) => `${emitTypeKey(k)} => ${v.toBAPI()}`).join(",\n        ") + '\n    }'),
             //readonly allinvokes: Map<string, IRInvokeMetaDecl> = new Map<string, IRInvokeMetaDecl>();
             //readonly alllambdas: Map<string, IRLambdaParameterPackDecl> = new Map<string, IRLambdaParameterPackDecl>();
 
-            ('List<Assembly::EListTypeSignature>{' + this.elists.map((el) => el.toBAPI()).join(",") + '}'),
+            ('List<Assembly::EListTypeSignature>{\n        ' + this.elists.map((el) => el.toBAPI()).join(",\n        ") + '\n    }'),
             //this.dashtypes.map((dt) => dt.toBAPI()).join(","),
             //this.formats.map((f) => f.toBAPI()).join(","),
             //this.lpacksigs.map((lp) => lp.toBAPI()).join(","),
@@ -1723,7 +1723,7 @@ class IRAssembly {
             //this.typedepcycles.map((c) => `Assembly::TypeDependencyCycle{[${c.map((t) => t.toBAPI()).join(",")}]} `).join(",")
         ];
 
-        return `Assembly::Assembly{${stuff.join(", ")}}`;
+        return `Assembly::Assembly{\n    ${stuff.join(",\n    ")}\n}\n`;
     }
 
     static parseBAPI(lexer: BAPILexer): IRAssembly {
