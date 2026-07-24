@@ -5,24 +5,18 @@ import { execSync } from "child_process";
 import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-import { Assembly } from "../frontend/assembly.js";
 import { checkAssembly, parseArgv } from "./workflows.js";
 import { Monomorphizer } from "../backend/asmprocess/monomorphize.js";
 import { ASMToIRConverter } from "../backend/asmprocess/flatten.js";
 import { CPPEmitter } from "../backend/ircemit/cppemit.js";
 import { Status } from "./status_output.js"
+import { IRAssembly } from "../backend/irdefs/irassembly.js";
 
 const runcppdir = path.join(__dirname, "../../runcpp/");
 
 const [fullargs, mainns, outdir] = parseArgv("cppout", ...process.argv);
 
-function buildExeCode(assembly: Assembly, rootasm: string, outname: string) {
-    Status.output("Monomorphizing code...\n");
-    const iim = Monomorphizer.computeExecutableInstantiations(assembly, [rootasm]);
-
-    Status.output("Generating IR code...\n");
-    const ircode = ASMToIRConverter.generateIR(assembly, iim, undefined);
-
+function buildExeCode(ircode: IRAssembly, outname: string) {
     Status.output("Emitting CPP code...\n");
     const cppcode = CPPEmitter.createEmitter(ircode);
     const maincode = cppcode.emitForCommandLine(`${mainns}::main`);
@@ -86,6 +80,28 @@ function emitCommandLineMakefile(optlevel: "testing" | "release"): string {
 	    '\trm $(MAKE_PATH)/app';
 }
 
+function emitAssemblyIR(ircode: IRAssembly, outname: string) {
+    //TODO: re-enable later when tested 
+    return false
+
+    /*
+    Status.output("Emitting IR code...\n");
+    const maincode = ircode.toBAPI();
+
+    Status.output("    Writing IR code to disk...\n");
+    const nndir = path.normalize(outname);
+    try {
+        const hname = path.join(nndir, `assembly.bsqir`);
+        fs.writeFileSync(hname, maincode);
+    }
+    catch(e) {      
+        Status.error("Failed to write output files!\n");
+    }
+
+    Status.output(`    Assembly IR generation successful -- IR emitted to ${nndir}\n\n`);
+    */
+}
+
 //////////////////////////////
 Status.enable();
 
@@ -99,7 +115,15 @@ Status.output(`-- CPP output directory: ${outdir}\n\n`);
 fs.rmSync(outdir, { recursive: true, force: true });
 fs.mkdirSync(outdir);
 
-buildExeCode(asm, mainns, outdir);
+Status.output("Monomorphizing code...\n");
+const iim = Monomorphizer.computeExecutableInstantiations(asm, [mainns]);
+
+Status.output("Generating IR code...\n");
+const ircode = ASMToIRConverter.generateIR(asm, iim, undefined);
+
+emitAssemblyIR(ircode, outdir);
+
+buildExeCode(ircode, outdir);
 moveRuntimeFiles("testing", outdir);
 
 Status.output("All done!\n");

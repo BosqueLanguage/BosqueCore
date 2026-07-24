@@ -309,7 +309,7 @@ namespace ᐸRuntimeᐳ
                     return XCString{CStrRootTreeContent{PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>::mkinitial(cstr, cstr + len)}};
                 }
                 else {
-                    assert(false); // Not Implemented: full mk for CString trees
+                    return XCString{CStrRootTreeContent{PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>::mklargerec(cstr, cstr + len, len)}};
                 }
             }
         }
@@ -466,8 +466,8 @@ namespace ᐸRuntimeᐳ
             }
 
             if(total_size <= CStrRootInlineContent::CSTR_MAX_SIZE) {
-                char inlined[total_size + 1] = {0};
-                char* ptr = inlined;
+                std::array<char, CStrRootInlineContent::CSTR_MAX_SIZE + 1> inlined = {0};
+                char* ptr = inlined.data();
 
                 for(size_t i = 0; i < repr.strcomps.size(); i++) {
                     const std::pair<uint8_t, const char*>& comp = repr.strcomps[i];
@@ -483,7 +483,7 @@ namespace ᐸRuntimeᐳ
                     }
                 }
                 
-                return XCString::mk(inlined, total_size);
+                return XCString::mk(inlined.data(), total_size);
             }
             else {
                 assert(false); // Not Implemented: full support for FString interpolation
@@ -800,7 +800,7 @@ namespace ᐸRuntimeᐳ
                     return XString{StrRootTreeContent{PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>::mkinitial(str, str + len)}};
                 }
                 else {
-                    assert(false); // Not Implemented: full mk for CString trees
+                    return XString{StrRootTreeContent{PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>::mklargerec(str, str + len, len)}};
                 }
             }
         }
@@ -957,8 +957,8 @@ namespace ᐸRuntimeᐳ
             }
 
             if(total_size <= StrRootInlineContent::STR_MAX_SIZE) {
-                char32_t inlined[total_size + 1] = {0};
-                char32_t* ptr = inlined;
+                std::array<char32_t, StrRootInlineContent::STR_MAX_SIZE + 1> inlined = {0};
+                char32_t* ptr = inlined.data();
 
                 for(size_t i = 0; i < repr.strcomps.size(); i++) {
                     const std::pair<uint8_t, const char32_t*>& comp = repr.strcomps[i];
@@ -974,7 +974,7 @@ namespace ᐸRuntimeᐳ
                     }
                 }
                 
-                return XString::mk(inlined, total_size);
+                return XString::mk(inlined.data(), total_size);
             }
             else {
                 assert(false); // Not Implemented: full support for FString interpolation

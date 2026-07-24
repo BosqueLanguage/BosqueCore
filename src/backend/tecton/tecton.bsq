@@ -1,0 +1,7 @@
+declare namespace Tecton { 
+    using Assembly;
+}
+
+public function main(asm: Assembly): CString {
+    return 'ok';
+}
