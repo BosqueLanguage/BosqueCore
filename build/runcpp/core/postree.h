@@ -688,7 +688,14 @@ private:
 
             bool isDone() const { return this->tag == DeleteResultTag::Done; }
             bool isShort() const { return this->tag == DeleteResultTag::Short; }
+
+            template<typename Fn>
+            InsertResult apply(Fn fn) const
+            {
+                return InsertResult{this->tag, fn(this->tnode)};
+            }
         };
+        constexpr static DeleteResult emptyDeleteResult{DeleteResultTag::Done, nullptr};
 
         static int64_t checkRBPathLengthInvariant(const PosRBNode<T, K>* node)
         {
@@ -1297,71 +1304,41 @@ private:
             return delbalancehelper_S_B(cur);
         }
 
-        // shorten left (N CC a x (B b y c)) = delbalance (N CC a x (R b y c))
-        static DeleteResult eqL_B(const PosRBNode<T, K>* curr)
-        {
-            xxxx;
-            
-            assert(curr != nullptr);
-            assert(isNodeType(curr));
-
-            const PosRBTreeNode<T, K>* tnode = asNodeType(curr);
-            const PosRBNode<T, K>* r = reprGetRight(tnode);
-            if(r == nullptr || r->data.color != RColor::Black) {
-                return emptyDeleteResult;
-            }
-            const PosRBNode<T, K>* rr = reprGetRight(r);
-            if(rr == nullptr || rr->data.color != RColor::Red) {
-                return emptyDeleteResult;
-            }
-
-            return delbalance(mknode(tnode->data.color, reprGetLeft(tnode), mknode(RColor::Red, reprGetLeft(r), reprGetRight(r), r->data), tnode->data));
-        }
-
-        static DeleteResult eqL_R(const PosRBNode<T, K>* curr)
-        {
-            xxxx;
-        }
-
         static DeleteResult eqL(const PosRBNode<T, K>* curr)
         {
             if(curr == nullptr || isLeafType(curr)) {
-                return DeleteResult::makeShort(curr);
+                return DeleteResult::makeDone(curr);
             }
             else {
                 const PosRBTreeNode<T, K>* tnode = asNodeType(curr);
+                const PosRBNode<T, K>* r = reprGetRight(tnode);
+                const PosRBNode<T, K>* l = reprGetLeft(tnode);
+
                 const auto lheight = reprGetBHeight(reprGetLeft(tnode));
                 const auto rheight = reprGetBHeight(reprGetRight(tnode));
 
                 if(lheight == rheight) {
-                    return DeleteResult::makeShort(curr);
+                    return DeleteResult::makeDone(curr);
+                }
+                assert(r != nullptr); //if it is then how is r taller than l?
+
+                if(r->data.color == RColor::Black) {
+                    return delbalance(mknode(tnode->data.color, 
+                        reprGetLeft(tnode), 
+                        mknode(RColor::Red, reprGetLeft(r), reprGetRight(r), r->data), 
+                        tnode->data)
+                    );
                 }
                 else {
-                    if(lheight < rheight) {
-                        xxxx;
-                        return eqL_X(curr);
-                    }
-                    else {
-                        xxxx;
-                        return eqR_X(curr);
-                    }
+                    DeleteResult neql = eqL(mknode(RColor::Red, reprGetLeft(tnode), reprGetLeft(r), tnode->data));
+                    return insbalance(neql.apply([r](const PosRBNode<T, K>* anode) { return mknode(RColor::Black, anode, reprGetRight(r), r->data); }));
                 }
             }
         }
 
-        // shorten right (N CC (B a x b) y c) = delbalance (N CC (R a x b) y c)
-        static DeleteResult eqR_B(const PosRBNode<T, K>* curr)
-        {
-            xxxx;
-        }
-
-        static DeleteResult eqR_R(const PosRBNode<T, K>* curr)
-        {
-            xxxx;
-        }
-
         static DeleteResult eqR(const PosRBNode<T, K>* curr)
         {
+            // shorten right (N CC (B a x b) y c) = delbalance (N CC (R a x b) y c)
             xxxx;
         }
 
