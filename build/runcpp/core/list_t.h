@@ -571,6 +571,28 @@ namespace ᐸRuntimeᐳ
             }
         }
 
+        XList deleteFront() const
+        {
+            if(this->ulist.isInline()) {
+                if(this->ulist.inlinelist.count == 1) {
+                    return XList{};
+                }
+                else {
+                    return XList{ListTInlineContent<T>{this->ulist.inlinelist.data.begin() + 1, this->ulist.inlinelist.data.begin() + this->ulist.inlinelist.count}};
+                }
+            }
+            else {
+                //if leaf type and size - 1 fits in inline repr
+                if(isLeafType(this->ulist.treelist.postree.root)) {
+                    xxxx;
+                }
+                else {
+                    xxxx;
+                    return XList{this->ulist.treelist.postree.deleteFront()};
+                }
+            }
+        }
+
         template<bool SafeSimplePred, typename Pred>
         XBool allOf(Pred p) const
         {
