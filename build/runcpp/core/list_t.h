@@ -583,12 +583,11 @@ namespace ᐸRuntimeᐳ
             }
             else {
                 //if leaf type and size - 1 fits in inline repr
-                if(isLeafType(this->ulist.treelist.postree.root)) {
-                    xxxx;
+                if(this->ulist.treelist.postree.size() - 1 <= ListTInlineContent<T>::MAX_INLINE_CAPACITY && PosRBTree<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_T)>::isLeafType(this->ulist.treelist.postree.root)) {
+                    return XList{ListTInlineContent<T>{this->ulist.treelist.postree.root->data.begin() + 1, this->ulist.treelist.postree.root->data.begin() + this->ulist.treelist.postree.root->count}};
                 }
                 else {
-                    xxxx;
-                    return XList{this->ulist.treelist.postree.deleteFront()};
+                    return XList{ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>{this->ulist.treelist.postree.deleteFront()}};
                 }
             }
         }

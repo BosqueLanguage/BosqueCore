@@ -1385,7 +1385,7 @@ private:
                 else {
                     // rotate right and increase black height on rec-repair
                     DeleteResult neql = eqR(mknode(RColor::Red, reprGetRight(l), reprGetRight(tnode), tnode->data));
-                    return neql.apply([l](const PosRBNode<T, K>* bnode) { return mknode(RColor::Black, reprGetLeft(l), bode, l->data); });
+                    return neql.apply([l](const PosRBNode<T, K>* bnode) { return mknode(RColor::Black, reprGetLeft(l), bnode, l->data); });
                 }
             }
         }

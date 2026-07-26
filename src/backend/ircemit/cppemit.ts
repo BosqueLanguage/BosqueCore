@@ -1343,6 +1343,12 @@ class CPPEmitter {
         else if(body.builtin === "list_set") {
             bstr = "l.set(idx.value, v)";
         }
+        else if(body.builtin === "list_deletefront") {
+            bstr = "l.deleteFront()";
+        }
+        else if(body.builtin === "list_deleteback") {
+            bstr = "l.deleteBack()";
+        }
         else if(body.builtin === "list_allof") {
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "p");
             bstr = `l.allOf<${isSimple}>([&p](${params}){ return ${fn}(p, ${args}); })`;
