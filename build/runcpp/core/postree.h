@@ -1368,7 +1368,7 @@ private:
                 if(lheight == rheight) {
                     return DeleteResult::makeDone(curr);
                 }
-                assert(r != nullptr); //if it is then how is l taller than r?
+                assert(l != nullptr); //if it is then how is l taller than r?
 
                 if(l->data.color == RColor::Black) {
                     // shorten right (N CC (B a x b) y c) = delbalance (N CC (R a x b) y c)
@@ -1388,7 +1388,7 @@ private:
 
         static PosRBNode<T, K>* delblacken(DeleteResult rr)
         {
-            if(rr.tnode->data.color == RColor::Black) {
+            if(rr.tnode == nullptr || rr.tnode->data.color == RColor::Black) {
                 return const_cast<PosRBNode<T, K>*>(rr.tnode);
             }
             else {
@@ -1412,10 +1412,10 @@ private:
                     else {
                         const PosRBNode<T, K>* r = reprGetRight(curr);
                         if(r == nullptr || r->data.color == RColor::Black) {
-                            return DeleteResult::makeDone(r); //node is removed but right is already null/black -- no black height issue
+                            return DeleteResult::makeShort(r); //node is removed but right is already null/black -- no black height issue
                         }
                         else {
-                            return DeleteResult::makeShort(mkcopynode(RColor::Black, reprGetLeft(r), reprGetRight(r), r->data)); //node is removed -- may shorten the tree
+                            return DeleteResult::makeDone(mkcopynode(RColor::Black, reprGetLeft(r), reprGetRight(r), r->data)); //black removed but l is made black so same bheight
                         }
                     }
                 }
@@ -1444,10 +1444,10 @@ private:
                     else {
                         const PosRBNode<T, K>* l = reprGetLeft(curr);
                         if(l == nullptr || l->data.color == RColor::Black) {
-                            return DeleteResult::makeDone(l); //node is removed but left is already null/black -- no black height issue
+                            return DeleteResult::makeShort(l); //node is removed but left is already null/black -- no black height issue
                         }
                         else {
-                            return DeleteResult::makeShort(mkcopynode(RColor::Black, reprGetLeft(l), reprGetRight(l), l->data)); //node is removed -- may shorten the tree
+                            return DeleteResult::makeDone(mkcopynode(RColor::Black, reprGetLeft(l), reprGetRight(l), l->data)); //black removed but l is made black so same bheight
                         }
                     }
                 }
