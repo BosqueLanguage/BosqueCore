@@ -571,6 +571,48 @@ namespace ᐸRuntimeᐳ
             }
         }
 
+        XList deleteFront() const
+        {
+            if(this->ulist.isInline()) {
+                if(this->ulist.inlinelist.count == 1) {
+                    return XList{};
+                }
+                else {
+                    return XList{ListTInlineContent<T>{this->ulist.inlinelist.data.begin() + 1, this->ulist.inlinelist.data.begin() + this->ulist.inlinelist.count}};
+                }
+            }
+            else {
+                //if leaf type and size - 1 fits in inline repr
+                if(this->ulist.treelist.postree.size() - 1 <= ListTInlineContent<T>::MAX_INLINE_CAPACITY && PosRBTree<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_T)>::isLeafType(this->ulist.treelist.postree.root)) {
+                    return XList{ListTInlineContent<T>{this->ulist.treelist.postree.root->data.data.begin() + 1, this->ulist.treelist.postree.root->data.data.begin() + this->ulist.treelist.postree.root->data.dcount}};
+                }
+                else {
+                    return XList{ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>{this->ulist.treelist.postree.deleteFront()}};
+                }
+            }
+        }
+
+        XList deleteBack() const
+        {
+            if(this->ulist.isInline()) {
+                if(this->ulist.inlinelist.count == 1) {
+                    return XList{};
+                }
+                else {
+                    return XList{ListTInlineContent<T>{this->ulist.inlinelist.data.begin(), this->ulist.inlinelist.data.begin() + this->ulist.inlinelist.count - 1}};
+                }
+            }
+            else {
+                //if leaf type and size - 1 fits in inline repr
+                if(this->ulist.treelist.postree.size() - 1 <= ListTInlineContent<T>::MAX_INLINE_CAPACITY && PosRBTree<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_T)>::isLeafType(this->ulist.treelist.postree.root)) {
+                    return XList{ListTInlineContent<T>{this->ulist.treelist.postree.root->data.data.begin(), this->ulist.treelist.postree.root->data.data.begin() + this->ulist.treelist.postree.root->data.dcount - 1}};
+                }
+                else {
+                    return XList{ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>{this->ulist.treelist.postree.deleteBack()}};
+                }
+            }
+        }
+
         template<bool SafeSimplePred, typename Pred>
         XBool allOf(Pred p) const
         {

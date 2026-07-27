@@ -21,6 +21,9 @@ namespace ListOps {
     function s_list_insert<T>(l: List<T>, idx: Nat, v: T): List<T> = @list_insert;
     function s_list_set<T>(l: List<T>, idx: Nat, v: T): List<T> = @list_set;
 
+    function s_list_deletefront<T>(l: List<T>): List<T> = @list_deletefront;
+    function s_list_deleteback<T>(l: List<T>): List<T> = @list_deleteback;
+
     recursive? function s_list_allof<T>(l: List<T>, p: recursive? pred(T) -> Bool): Bool = @list_allof;
     recursive? function s_list_noneof<T>(l: List<T>, p: recursive? pred(T) -> Bool): Bool = @list_noneof;
     recursive? function s_list_someof<T>(l: List<T>, p: recursive? pred(T) -> Bool): Bool = @list_someof;
