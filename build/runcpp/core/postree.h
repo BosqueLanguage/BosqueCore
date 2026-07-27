@@ -698,13 +698,14 @@ private:
             static DeleteResult makeDone(const PosRBNode<T, K>* tnode) { return DeleteResult{DeleteResultTag::Done, tnode}; }
             static DeleteResult makeShort(const PosRBNode<T, K>* tnode) { return DeleteResult{DeleteResultTag::Short, tnode}; }
 
+            bool isEmpty() const { return this->tnode == nullptr; }
             bool isDone() const { return this->tag == DeleteResultTag::Done; }
             bool isShort() const { return this->tag == DeleteResultTag::Short; }
 
             template<typename Fn>
-            InsertResult apply(Fn fn) const
+            DeleteResult apply(Fn fn) const
             {
-                return InsertResult{this->tag, fn(this->tnode)};
+                return DeleteResult{this->tag, fn(this->tnode)};
             }
         };
         constexpr static DeleteResult emptyDeleteResult{DeleteResultTag::Done, nullptr};
@@ -1129,11 +1130,6 @@ private:
             }
         }
 
-
-
-
-/////////////////////////////////////
-
         // double red violation on the LL side  (CC (R (R a x b) y c) z d) = T (CC (B a x b) y (B c z d))
         static DeleteResult delbalancehelper_RR_LL(const PosRBNode<T, K>* cur)
         {
@@ -1155,7 +1151,7 @@ private:
                     return emptyDeleteResult;
                 }
 
-                return DeleteResult::makeTree(
+                return DeleteResult::makeDone(
                     mknode(cur->data.color,
                         mkcopynode(RColor::Black, reprGetLeft(ll), reprGetRight(ll), ll->data), 
                         mkcopynode(RColor::Black, reprGetRight(l), reprGetRight(tnode), tnode->data),
@@ -1186,7 +1182,7 @@ private:
                     return emptyDeleteResult;
                 }
 
-                return DeleteResult::makeTree(
+                return DeleteResult::makeDone(
                     mknode(cur->data.color,
                         mkcopynode(RColor::Black, reprGetLeft(l), reprGetLeft(lr), l->data), 
                         mkcopynode(RColor::Black, reprGetRight(lr), reprGetRight(tnode), tnode->data),
@@ -1217,7 +1213,7 @@ private:
                     return emptyDeleteResult;
                 }
 
-                return DeleteResult::makeTree(
+                return DeleteResult::makeDone(
                     mknode(cur->data.color,
                         mkcopynode(RColor::Black, reprGetLeft(tnode), reprGetLeft(rl), tnode->data), 
                         mkcopynode(RColor::Black, reprGetRight(rl), reprGetRight(r), r->data),
@@ -1248,7 +1244,7 @@ private:
                     return emptyDeleteResult;
                 }
 
-                return DeleteResult::makeTree(
+                return DeleteResult::makeDone(
                     mknode(cur->data.color,
                         mkcopynode(RColor::Black, reprGetLeft(tnode), reprGetLeft(r), tnode->data), 
                         mkcopynode(RColor::Black, reprGetLeft(rr), reprGetRight(rr), rr->data),
@@ -1277,7 +1273,7 @@ private:
         {
             assert(cur != nullptr);
 
-            return DeleteResult::makeTree(cur);
+            return DeleteResult::makeShort(cur);
         }
 
         static DeleteResult delbalance(const PosRBNode<T, K>* cur)
@@ -1344,7 +1340,7 @@ private:
                 }
                 else {
                     // rotate left and increase black height on rec-repair
-                    DeleteResult neql = eqL(mknode(RColor::Red, reprGetLeft(tnode), reprGetLeft(r), tnode->data));
+                    DeleteResult neql = eqL(DeleteResult::makeShort(mknode(RColor::Red, reprGetLeft(tnode), reprGetLeft(r), tnode->data)));
                     return neql.apply([r](const PosRBNode<T, K>* anode) { return mknode(RColor::Black, anode, reprGetRight(r), r->data); });
                 }
             }
@@ -1384,8 +1380,8 @@ private:
                 }
                 else {
                     // rotate right and increase black height on rec-repair
-                    DeleteResult neql = eqR(mknode(RColor::Red, reprGetRight(l), reprGetRight(tnode), tnode->data));
-                    return neql.apply([l](const PosRBNode<T, K>* bnode) { return mknode(RColor::Black, reprGetLeft(l), bnode, l->data); });
+                    DeleteResult neqr = eqR(DeleteResult::makeShort(mknode(RColor::Red, reprGetRight(l), reprGetRight(tnode), tnode->data)));
+                    return neqr.apply([l](const PosRBNode<T, K>* bnode) { return mknode(RColor::Black, reprGetLeft(l), bnode, l->data); });
                 }
             }
         }
@@ -1404,44 +1400,65 @@ private:
         {
             assert(curr != nullptr);
 
-            if(isLeafType(curr)) {
+            const PosRBNode<T, K>* l = reprGetLeft(curr);
+            if(l == nullptr) {
                 if(curr->data.dcount > 1) {
-                    return DeleteResult::makeDone(mkleaf(curr->data.delfront())); //easy case no change
+                    return DeleteResult::makeDone(copyNodeReplaceData(curr, curr->data.delfront()));
                 }
                 else {
-                    return DeleteResult::makeShort(nullptr); //node is removed -- may shorten the tree
+                    if(curr->data.color == RColor::Red) {
+                        return DeleteResult::makeDone(reprGetRight(curr));
+                    }
+                    else {
+                        const PosRBNode<T, K>* r = reprGetRight(curr);
+                        if(r == nullptr || r->data.color == RColor::Black) {
+                            return DeleteResult::makeDone(r); //node is removed but right is already null/black -- no black height issue
+                        }
+                        else {
+                            return DeleteResult::makeShort(mkcopynode(RColor::Black, reprGetLeft(r), reprGetRight(r), r->data)); //node is removed -- may shorten the tree
+                        }
+                    }
                 }
             }
             else {
                 const PosRBTreeNode<T, K>* tnode = asNodeType(curr);
-                
-                const PosRBNode<T, K>* l = reprGetLeft(tnode);
-                if(l == nullptr) {
-                    if(tnode->data.dcount > 1) {
-                        return DeleteResult::makeDone(copyNodeReplaceData(tnode, tnode->data.delfront()));
-                    }
-                    else {
-                        if(tnode->data.color == RColor::Red) {
-                            return DeleteResult::makeDone(reprGetRight(tnode));
-                        }
-                        else {
-                            return delblacken(DeleteResult::makeDone(reprGetRight(tnode))); //node is removed -- may shorten the tree
-                        }
-                    }
-                }
-                else {
-                    DeleteResult ap = delfrontrec(l);
-                    return eqL(ap.apply([tnode](const PosRBNode<T, K>* anode) { return mknode(tnode->data.color, anode, reprGetRight(tnode), tnode->data); }));
-                }
+
+                DeleteResult ap = delfrontrec(l);
+                return eqL(ap.apply([tnode](const PosRBNode<T, K>* anode) { return mknode(tnode->data.color, anode, reprGetRight(tnode), tnode->data); }));
             }
         }
 
-        static InsertResult delbackrec(const PosRBNode<T, K>* curr)
+        static DeleteResult delbackrec(const PosRBNode<T, K>* curr)
         {
-            assert(false);
-        }
+            assert(curr != nullptr);
 
-//////////////////////////////////////
+            const PosRBNode<T, K>* r = reprGetRight(curr);
+            if(r == nullptr) {
+                if(curr->data.dcount > 1) {
+                    return DeleteResult::makeDone(copyNodeReplaceData(curr, curr->data.delback()));
+                }
+                else {
+                    if(curr->data.color == RColor::Red) {
+                        return DeleteResult::makeDone(reprGetLeft(curr));
+                    }
+                    else {
+                        const PosRBNode<T, K>* l = reprGetLeft(curr);
+                        if(l == nullptr || l->data.color == RColor::Black) {
+                            return DeleteResult::makeDone(l); //node is removed but left is already null/black -- no black height issue
+                        }
+                        else {
+                            return DeleteResult::makeShort(mkcopynode(RColor::Black, reprGetLeft(l), reprGetRight(l), l->data)); //node is removed -- may shorten the tree
+                        }
+                    }
+                }
+            }
+            else {
+                const PosRBTreeNode<T, K>* tnode = asNodeType(curr);
+
+                DeleteResult ap = delbackrec(r);
+                return eqR(ap.apply([tnode](const PosRBNode<T, K>* bnode) { return mknode(tnode->data.color, reprGetLeft(tnode), bnode, tnode->data); }));
+            }
+        }
 
         static PosRBNode<T, K>* setrec(const PosRBNode<T, K>* curr, int64_t index, const T& value)
         {
@@ -1848,6 +1865,22 @@ private:
             PosRBNode<T, K>* root = setrec(this->root, index, value);
 
             BSQ_IF_ENABLED(RB_INVARIANT_VALIDATE, debugAssertInvariants(root, reprGetCount(this->root)));
+            return PosRBTree<T, K, TreeID>{root};
+        }
+
+        PosRBTree<T, K, TreeID> deleteFront() const
+        {
+            PosRBNode<T, K>* root = delblacken(delfrontrec(this->root));
+
+            BSQ_IF_ENABLED(RB_INVARIANT_VALIDATE, debugAssertInvariants(root, reprGetCount(this->root) - 1));
+            return PosRBTree<T, K, TreeID>{root};
+        }
+
+        PosRBTree<T, K, TreeID> deleteBack() const
+        {
+            PosRBNode<T, K>* root = delblacken(delbackrec(this->root));
+
+            BSQ_IF_ENABLED(RB_INVARIANT_VALIDATE, debugAssertInvariants(root, reprGetCount(this->root) - 1));
             return PosRBTree<T, K, TreeID>{root};
         }
 
