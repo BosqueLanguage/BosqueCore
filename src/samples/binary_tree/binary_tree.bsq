@@ -1,0 +1,76 @@
+declare namespace Main;
+
+const minDepth: Nat = 4n;
+
+public main(n: Nat) CString 
+    requires n >= minDepth + 2n;
+{
+    let stretchDepth: Nat = n + 1n;
+    let check: Nat = TreeNode.create(stretchDepth).check();
+        
+    ref output = List<CString>{};
+    output.pushBack(interpolate::cstring("stretch tree of depth " + (stretchDepth) + "\t check: " + check));
+
+    const longLivedTree = TreeNode::create(n);
+    const tdepths = List::rangeOfNat(0n, ((n - minDepth) / 2n) + 1n).map(fn(d) => Main::minDepth + (2n * d));
+        
+    tdepths.map(fn(depth) => {
+        int iterations = 1 << (n - depth + minDepth);
+        check = 0;
+
+           for (int i = 1; i <= iterations; i++)
+           {
+                check += (TreeNode.create(depth)).check();
+           }
+           System.out.println(iterations + "\t trees of depth " + depth + "\t check: " + check);
+        });
+
+        System.out.println("long lived tree of depth " + n + "\t check: " + longLivedTree.check());
+    });
+}
+
+entity TreeNode {
+        
+    field left: TreeNode;
+    field right: TreeNode;
+
+    function create(depth: Nat): TreeNode {
+        return ChildTreeNodes(depth);
+    }
+         
+    function ChildTreeNodes(depth: Nat): TreeNode {
+        if(depth == 0n) {
+            return TreeNode{};
+        }
+        else {
+            return TreeNode{TreeNode::ChildTreeNodes(depth - 1n), ChildTreeNodes(depth - 1n)};
+        }
+    }
+
+    method check(): Int {
+        if(this.left == null) {
+            return 1i;
+        }
+        else {
+            return this.left.check() + this.right.check() + 1i;
+        }
+    }
+}
+
+%*
+COMMAND LINE:
+ ./app 21
+
+PROGRAM OUTPUT:
+stretch tree of depth 22	 check: 8388607
+2097152	 trees of depth 4	 check: 65011712
+524288	 trees of depth 6	 check: 66584576
+131072	 trees of depth 8	 check: 66977792
+32768	 trees of depth 10	 check: 67076096
+8192	 trees of depth 12	 check: 67100672
+2048	 trees of depth 14	 check: 67106816
+512	 trees of depth 16	 check: 67108352
+128	 trees of depth 18	 check: 67108736
+32	 trees of depth 20	 check: 67108832
+long lived tree of depth 21	 check: 4194303
+*%

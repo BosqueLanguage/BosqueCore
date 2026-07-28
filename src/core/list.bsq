@@ -3,6 +3,7 @@ namespace Core;
 namespace List {
 #if STRIPPED_CORE
 #else
+    %** Exclusive range of Nat values from [start, end) incremented by 1.  When start == end, returns an empty list. **%
     function rangeOfNat(start: Nat, end: Nat): List<Nat> 
         requires start <= end;
     {
@@ -14,6 +15,7 @@ namespace List {
         }
     }
 
+    %** Exclusive range of Int values from [start, end) incremented by 1.  When start == end, returns an empty list. **%
     function rangeOfInt(start: Int, end: Int): List<Int> 
         requires start <= end;
     {
