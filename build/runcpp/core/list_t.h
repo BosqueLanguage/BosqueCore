@@ -899,22 +899,26 @@ namespace ᐸRuntimeᐳ
     namespace XListOps 
     {
         template <typename T, uint32_t TYPE_ID_LIST_T>
-        XList<T, TYPE_ID_LIST_T> fromRange(int64_t start, int64_t end)
+        XList<T, TYPE_ID_LIST_T> fromRange(int64_t start, int64_t end, int64_t step)
         {
-            if(end - start <= ListTInlineContent<T>::MAX_INLINE_CAPACITY) {
+            int64_t count = ((end - start) / step) + (((end - start) % step) != 0 ? 1 : 0);
+            auto gen = [curr = start, step]() mutable { int64_t ret = curr; curr += step; return T{ret}; };
+
+            if(count <= ListTInlineContent<T>::MAX_INLINE_CAPACITY) {
                 std::array<T, ListTInlineContent<T>::MAX_INLINE_CAPACITY> result{};
-                std::iota(result.begin(), result.begin() + (end - start), T{start});
+                std::generate(result.begin(), result.begin() + count, gen);
 
-                return XList<T, TYPE_ID_LIST_T>{ListTInlineContent<T>(result.data(), end - start)};
+                return XList<T, TYPE_ID_LIST_T>{ListTInlineContent<T>(result.data(), count)};
             }
-            else if(end - start <= ListTTreeContent<T, XList<T, TYPE_ID_LIST_T>::getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY) {
+            else if(count <= ListTTreeContent<T, XList<T, TYPE_ID_LIST_T>::getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY) {
                 std::array<T, ListTTreeContent<T, XList<T, TYPE_ID_LIST_T>::getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY> result{};
-                std::iota(result.begin(), result.begin() + (end - start), T{start});
+                std::generate(result.begin(), result.begin() + count, gen);
 
-                return XList<T, TYPE_ID_LIST_T>{ListTTreeContent<T, XList<T, TYPE_ID_LIST_T>::getPosTreeIDFrom(TYPE_ID_LIST_T)>{PosRBTree<T, ListTTreeContent<T, XList<T, TYPE_ID_LIST_T>::getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, XList<T, TYPE_ID_LIST_T>::getPosTreeIDFrom(TYPE_ID_LIST_T)>::mkinitial(result.data(), result.data() + (end - start))}};
+                return XList<T, TYPE_ID_LIST_T>{ListTTreeContent<T, XList<T, TYPE_ID_LIST_T>::getPosTreeIDFrom(TYPE_ID_LIST_T)>{PosRBTree<T, ListTTreeContent<T, XList<T, TYPE_ID_LIST_T>::getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, XList<T, TYPE_ID_LIST_T>::getPosTreeIDFrom(TYPE_ID_LIST_T)>::mkinitial(result.data(), result.data() + count)}};
             }
             else {
-                return XList<T, TYPE_ID_LIST_T>{ListTTreeContent<T, XList<T, TYPE_ID_LIST_T>::getPosTreeIDFrom(TYPE_ID_LIST_T)>{PosRBTree<T, ListTTreeContent<T, XList<T, TYPE_ID_LIST_T>::getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, XList<T, TYPE_ID_LIST_T>::getPosTreeIDFrom(TYPE_ID_LIST_T)>::mkrange(start, end)}};
+                int64_t curr = start;
+                return XList<T, TYPE_ID_LIST_T>{ListTTreeContent<T, XList<T, TYPE_ID_LIST_T>::getPosTreeIDFrom(TYPE_ID_LIST_T)>{PosRBTree<T, ListTTreeContent<T, XList<T, TYPE_ID_LIST_T>::getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, XList<T, TYPE_ID_LIST_T>::getPosTreeIDFrom(TYPE_ID_LIST_T)>::mkrange(count, curr, step)}};
             }
         }
 

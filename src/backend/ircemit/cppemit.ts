@@ -1305,11 +1305,11 @@ class CPPEmitter {
         }
         else if(body.builtin === "list_range_nat") {
             const rtype = this.typeInfoManager.getTypeInfo(invk.resultType.tkeystr);
-            bstr = `ᐸRuntimeᐳ::XListOps::fromRange<Nat, ${rtype.bsqtypeid}>(start.value, end.value)`;
+            bstr = `ᐸRuntimeᐳ::XListOps::fromRange<Nat, ${rtype.bsqtypeid}>(start.value, end.value, step.value)`;
         }
         else if(body.builtin === "list_range_int") {
             const rtype = this.typeInfoManager.getTypeInfo(invk.resultType.tkeystr);
-            bstr = `ᐸRuntimeᐳ::XListOps::fromRange<Int, ${rtype.bsqtypeid}>(start.value, end.value)`;
+            bstr = `ᐸRuntimeᐳ::XListOps::fromRange<Int, ${rtype.bsqtypeid}>(start.value, end.value, step.value)`;
         }
         else if(body.builtin === "list_zip") {
             const jtype = body.biterms.find((bt) => bt[0] === "J") as [string, IRTypeSignature];

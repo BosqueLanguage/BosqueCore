@@ -4,8 +4,8 @@ namespace Core;
 #else
 #if EXEC_LIBS
 namespace ListOps {
-    function s_list_range_nat(start: Nat, end: Nat): List<Nat> = @list_range_nat;
-    function s_list_range_int(start: Int, end: Int): List<Int> = @list_range_int;
+    function s_list_range_nat(start: Nat, end: Nat, step: Nat): List<Nat> = @list_range_nat;
+    function s_list_range_int(start: Int, end: Int, step: Int): List<Int> = @list_range_int;
 
     function s_list_zip<T, U, J>(l1: List<T>, l2: List<U>, ssize: Nat): List<(|T, U|)> = @list_zip;
 

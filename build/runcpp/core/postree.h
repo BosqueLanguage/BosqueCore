@@ -1690,31 +1690,29 @@ private:
         }
 
         //Only works when T is Nat/Int
-        static PosRBNode<T, K>* recmkrange(int64_t start, int64_t end)
+        static PosRBNode<T, K>* recmkrange(int64_t count, int64_t& curr, int64_t step)
         {
-            int64_t size = (size_t)(end - start);
-            if((size_t)size <= K) {
+            if((size_t)count <= K) {
                 std::array<T, K> arr{};
-                std::iota(arr.begin(), arr.begin() + size, T{start});
+                std::generate(arr.begin(), arr.begin() + count, [&curr, step]() { int64_t val = curr; curr += step; return T{val}; });
 
-                return s_leafallocator->construct(PosRBData<T, K>(RColor::Red, 1, size, arr));
+                return s_leafallocator->construct(PosRBData<T, K>(RColor::Red, 1, count, arr));
             }
             else {
                 size_t dsize = (size_t)std::max((uint64_t)1, ((uint64_t)K) - 2);
 
-                size_t remain = size - dsize;
+                size_t remain = count - dsize;
                 size_t lsize = remain / 2;
                 size_t rsize = remain - lsize;
 
-                int64_t mid1 = start + lsize;
-                int64_t mid2 = mid1 + dsize;
-
-                const PosRBNode<T, K>* left = recmkrange(start, mid1);
-                const PosRBNode<T, K>* right = recmkrange(mid2, end);
-
+                const PosRBNode<T, K>* left = recmkrange(lsize, curr, step);
+                
                 std::array<T, K> arr{};
-                std::iota(arr.begin(), arr.begin() + dsize, T{mid1});
+                std::generate(arr.begin(), arr.begin() + dsize, [&curr, step]() { int64_t val = curr; curr += step; return T{val}; });
                 PosRBData<T, K> ndata(RColor::Black, 1, dsize, arr);
+                
+                const PosRBNode<T, K>* right = recmkrange(rsize, curr, step);
+
                 return s_nodeallocator->construct(RColor::Black, computeNewBHeight_ForTreeNode(RColor::Black, left, right), computeNewCount_ForTreeNode(left, right, ndata), left, right, ndata);
             }
         }
@@ -1959,9 +1957,9 @@ private:
         }
 
         //Only works when T is Nat/Int
-        static PosRBTree<T, K, TreeID> mkrange(int64_t start, int64_t end)
+        static PosRBTree<T, K, TreeID> mkrange(int64_t count, int64_t& curr, int64_t step)
         {
-            return PosRBTree<T, K, TreeID>{recmkrange(start, end)};
+            return PosRBTree<T, K, TreeID>{recmkrange(count, curr, step)};
         }
 
         //Only works when T is (|X, Y|)
