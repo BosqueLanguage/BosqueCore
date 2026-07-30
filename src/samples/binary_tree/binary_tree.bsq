@@ -13,11 +13,11 @@ public main(n: Nat) CString
     output.pushBack(interpolate::cstring("stretch tree of depth " + (stretchDepth) + "\t check: " + check));
 
     const longLivedTree = TreeNode::create(maxDepth);
-    const tdepths = List::rangeOfNat(minDepth, maxDepth + 1n, 2n); //inclusive of end value
+    const tdepths = List::rangeOfNat(minDepth, maxDepth, 2n, true); //inclusive of end value
         
     tdepths.map(fn(depth) => {
         let iterations = Nat::pow(2n, (maxDepth - depth) + minDepth);
-        let iterrng = List::rangeOfNat(1n, iterations + 1n); //inclusive of end value
+        let iterrng = List::rangeOfNat(1n, iterations, inclusive=true); //inclusive of end value
 
         check = 0;
 

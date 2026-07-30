@@ -899,12 +899,15 @@ namespace ᐸRuntimeᐳ
     namespace XListOps 
     {
         template <typename T, uint32_t TYPE_ID_LIST_T>
-        XList<T, TYPE_ID_LIST_T> fromRange(int64_t start, int64_t end, int64_t step)
+        XList<T, TYPE_ID_LIST_T> fromRange(int64_t start, int64_t end, int64_t step, bool inclusive)
         {
-            int64_t count = ((end - start) / step) + (((end - start) % step) != 0 ? 1 : 0);
+            int64_t count = ((end - start) / step) + ((inclusive || (((end - start) % step) != 0)) ? 1 : 0);
             auto gen = [curr = start, step]() mutable { int64_t ret = curr; curr += step; return T{ret}; };
 
-            if(count <= ListTInlineContent<T>::MAX_INLINE_CAPACITY) {
+            if(count <= 0) {
+                return XList<T, TYPE_ID_LIST_T>{};
+            }
+            else if(count <= ListTInlineContent<T>::MAX_INLINE_CAPACITY) {
                 std::array<T, ListTInlineContent<T>::MAX_INLINE_CAPACITY> result{};
                 std::generate(result.begin(), result.begin() + count, gen);
 

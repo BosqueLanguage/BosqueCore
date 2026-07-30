@@ -12,6 +12,13 @@ describe ("List -- ranges", () => {
     it("should create Nat ranges", function () {
         runTestSet('public function main(z: Nat): List<Nat> { return List::rangeOfNat(3n, z); }', [['3n', 'List<Nat>{ }'], ['4n', 'List<Nat>{ 3n }'], ['6n', 'List<Nat>{ 3n, 4n, 5n }'], ['8n', 'List<Nat>{ 3n, 4n, 5n, 6n, 7n }'], ['11n', 'List<Nat>{ 3n, 4n, 5n, 6n, 7n, 8n, 9n, 10n }']], ['1n']);
     });
+
+    it("should create Nat ranges with step and inclusive flag", function () {
+        runTestSet('public function main(z: Nat): List<Nat> { return List::rangeOfNat(3n, z, 2n); }', [['3n', 'List<Nat>{ }'], ['4n', 'List<Nat>{ 3n }'], ['6n', 'List<Nat>{ 3n, 5n }'], ['7n', 'List<Nat>{ 3n, 5n }']], []); 
+        runTestSet('public function main(z: Nat): List<Nat> { return List::rangeOfNat(3n, z, 2n, true); }', [['3n', 'List<Nat>{ 3n }'], ['4n', 'List<Nat>{ 3n }'], ['6n', 'List<Nat>{ 3n, 5n }'], ['7n', 'List<Nat>{ 3n, 5n, 7n }']], []); 
+
+        runTestSet('public function main(z: Nat): List<Nat> { return List::rangeOfNat(1n, z, inclusive=true); }', [['1n', 'List<Nat>{ 1n }'], ['3n', 'List<Nat>{ 1n, 2n, 3n }']], []);
+    });
 });
 
 describe ("List -- zip", () => {

@@ -3,28 +3,16 @@ namespace Core;
 namespace List {
 #if STRIPPED_CORE
 #else
-    %** Exclusive range of Nat values from [start, end) incremented by 1.  When start == end, returns an empty list. **%
-    function rangeOfNat(start: Nat, end: Nat, step: Nat = 1n): List<Nat>
+    function rangeOfNat(start: Nat, end: Nat, step: Nat = 1n, inclusive: Bool = false): List<Nat>
         requires start <= end;
     {
-        if(start == end) {
-            return List<Nat>{};
-        }
-        else {
-            return ListOps::s_list_range_nat(start, end, step);
-        }
+        return ListOps::s_list_range_nat(start, end, step, inclusive);
     }
 
-    %** Exclusive range of Int values from [start, end) incremented by 1.  When start == end, returns an empty list. **%
-    function rangeOfInt(start: Int, end: Int, step: Int = 1i): List<Int>
+    function rangeOfInt(start: Int, end: Int, step: Int = 1i, inclusive: Bool = false): List<Int>
         requires start <= end;
     {
-        if(start == end) {
-            return List<Int>{};
-        }
-        else {
-            return ListOps::s_list_range_int(start, end, step);
-        }
+        return ListOps::s_list_range_int(start, end, step, inclusive);
     }
 
     function zip<T, U>(l1: List<T>, l2: List<U>): List<(|T, U|)> 
