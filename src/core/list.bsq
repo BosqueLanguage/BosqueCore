@@ -221,12 +221,33 @@ __internal entity List<T> {
         return ListOps::s_list_minfun<T>(this, cmp);
     }
 
+    method {when T: keytype} max(): T 
+        requires !this.empty();
+    {
+        return ListOps::s_list_max<T>(this);
+    }
+
+    recursive? method max(cmp: recursive? pred(T, T) -> Bool): T 
+        requires !this.empty();
+    {
+        return ListOps::s_list_maxfun<T>(this, cmp);
+    }
+
     method {when T: numeric} sum(): T {
         if(ListOps::s_list_empty<T>(this)) {
             return T::zero;
         }
         else {
-            return ListOps::s_list_sum<T>(this, T::zero);
+            return ListOps::s_list_sum<T>(this);
+        }
+    }
+
+    method {when T: numeric} sumPrefix(): List<T> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<T>{};
+        }
+        else {
+            return ListOps::s_list_sumPrefix<T>(this);
         }
     }
 

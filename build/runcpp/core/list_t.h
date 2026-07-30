@@ -622,7 +622,7 @@ namespace ᐸRuntimeᐳ
                 auto ddbegin = this->ulist.inlinelist.data.cbegin();
                 auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
 
-                if(SafeSimplePred) {
+                if constexpr (SafeSimplePred) {
                     return XBool::from(std::all_of(std::execution::unseq, ddbegin, ddend, p));
                 }
                 else {
@@ -644,7 +644,7 @@ namespace ᐸRuntimeᐳ
                 auto ddbegin = this->ulist.inlinelist.data.cbegin();
                 auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
 
-                if(SafeSimplePred) {
+                if constexpr (SafeSimplePred) {
                     return XBool::from(std::none_of(std::execution::unseq, ddbegin, ddend, p));
                 }
                 else {
@@ -666,7 +666,7 @@ namespace ᐸRuntimeᐳ
                 auto ddbegin = this->ulist.inlinelist.data.cbegin();
                 auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
 
-                if(SafeSimplePred) {
+                if constexpr (SafeSimplePred) {
                     return XBool::from(std::any_of(std::execution::unseq, ddbegin, ddend, p));
                 }
                 else {
@@ -815,8 +815,8 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        template<bool SafeSimpleFn, typename Pred>
-        T minfun(Pred p) const
+        template<bool SafeSimpleFn, typename Cmp>
+        T minfun(Cmp cmp) const
         {
             assert(!this->ulist.empty());
 
@@ -824,55 +824,96 @@ namespace ᐸRuntimeᐳ
                 auto ddbegin = this->ulist.inlinelist.data.cbegin();
                 auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
 
-                if(SafeSimpleFn) {
-                    return *std::min_element(std::execution::unseq, ddbegin, ddend, p);
+                if constexpr (SafeSimpleFn) {
+                    return *std::min_element(std::execution::unseq, ddbegin, ddend, cmp);
                 }
                 else {
-                    return *std::min_element(std::execution::seq, ddbegin, ddend, p);
+                    return *std::min_element(std::execution::seq, ddbegin, ddend, cmp);
                 }
             }
             else {
-                return this->ulist.treelist.postree.template minfun<SafeSimpleFn>(p);
+                return this->ulist.treelist.postree.template minfun<SafeSimpleFn>(cmp);
             }
         }
 
-        T sum(T zero) const
+        template<bool SafeSimpleFn, typename Cmp>
+        T maxfun(Cmp cmp) const
+        {
+            assert(!this->ulist.empty());
+
+            if(this->ulist.isInline()) {
+                auto ddbegin = this->ulist.inlinelist.data.cbegin();
+                auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
+
+                if constexpr (SafeSimpleFn) {
+                    return *std::max_element(std::execution::unseq, ddbegin, ddend, cmp);
+                }
+                else {
+                    return *std::max_element(std::execution::seq, ddbegin, ddend, cmp);
+                }
+            }
+            else {
+                return this->ulist.treelist.postree.template maxfun<SafeSimpleFn>(cmp);
+            }
+        }
+
+        T sum() const
         {
             if(this->ulist.empty()) {
-                return zero;
+                return T{};
             }
 
             if(this->ulist.isInline()) {
                 auto ddbegin = this->ulist.inlinelist.data.cbegin();
                 auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
 
-                return std::accumulate(ddbegin, ddend, zero, [](T a, T b) {
+                return std::accumulate(ddbegin, ddend, T{}, [](T a, T b) {
                     T::checkOverflowAddition(a, b, "List Sum", 0);
                     return a + b;
                 });
             }
             else {
-                return this->ulist.treelist.postree.sum(zero);
+                return this->ulist.treelist.postree.sum();
             }
         }
 
-        template<bool SafeSimpleFn, typename Fn>
-        T sumfun(T zero, Fn op) const
+        XList<T, TYPE_ID_LIST_T> sumprefix() const
         {
             if(this->ulist.empty()) {
-                return zero;
+                return XList<T, TYPE_ID_LIST_T>{};
             }
 
             if(this->ulist.isInline()) {
                 auto ddbegin = this->ulist.inlinelist.data.cbegin();
                 auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
 
-                return std::accumulate(ddbegin, ddend, zero, [&op](const T& a, const T& b) {
+                std::array<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY> result{};
+                std::partial_sum(ddbegin, ddend, result.begin(), [](T a, T b) { T::checkOverflowAddition(a, b, "List Prefix Sum", 0); return a + b; });
+
+                return XList<T, TYPE_ID_LIST_T>{ListTInlineContent<T>(result.data(), this->ulist.inlinelist.count)};
+            }
+            else {
+                return XList<T, TYPE_ID_LIST_T>{this->ulist.treelist.postree.sumprefix()};
+            }
+        }
+
+        template<bool SafeSimpleFn, typename Fn>
+        T reduce(const T& acc, Fn op) const
+        {
+            if(this->ulist.empty()) {
+                return acc;
+            }
+
+            if(this->ulist.isInline()) {
+                auto ddbegin = this->ulist.inlinelist.data.cbegin();
+                auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
+
+                return std::accumulate(ddbegin, ddend, acc, [&op](const T& a, const T& b) {
                     return op(a, b);
                 });
             }
             else {
-                return this->ulist.treelist.postree.template sumfun<SafeSimpleFn>(zero, op);
+                return this->ulist.treelist.postree.template reduce<SafeSimpleFn>(acc, op);
             }
         }
 

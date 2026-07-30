@@ -206,6 +206,8 @@ const CoreOnlyAttributes = [
     "__internal",
     "__typedeclable",
     
+    "__may_fail",
+
     "__keycomparable",
     "__numeric"
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });

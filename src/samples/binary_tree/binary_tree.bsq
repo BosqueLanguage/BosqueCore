@@ -34,29 +34,30 @@ public main(n: Nat) CString
 
 entity TreeNode {
         
-    field left: TreeNode;
-    field right: TreeNode;
+    field left: Option<TreeNode>;
+    field right: Option<TreeNode>;
 
     function create(depth: Nat): TreeNode {
-        return ChildTreeNodes(depth);
-    }
-         
-    function ChildTreeNodes(depth: Nat): TreeNode {
         if(depth == 0n) {
-            return TreeNode{};
+            return TreeNode{none, none};
         }
         else {
-            return TreeNode{TreeNode::ChildTreeNodes(depth - 1n), ChildTreeNodes(depth - 1n)};
+            return TreeNode{some(TreeNode::create(depth - 1n)), some(TreeNode::create(depth - 1n))};
         }
     }
-
+    
     method check(): Int {
-        if(this.left == null) {
-            return 1i;
+        var ld = 0i;
+        if($l = this.left)@some {
+            ld = $l.check();
         }
-        else {
-            return this.left.check() + this.right.check() + 1i;
+
+        var rd = 0i;
+        if($r = this.right)@some {
+            rd = $r.check();
         }
+
+        return 1i + ld + rd;
     }
 }
 

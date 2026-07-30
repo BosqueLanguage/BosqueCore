@@ -1286,7 +1286,13 @@ class CPPEmitter {
         let prestr = "";
         let bstr: string;
 
-        if(body.builtin === "float_is_safe_convert_into") {
+        if(body.builtin === "nat_pow") {
+            bstr = `ᐸRuntimeᐳ::integerPower<ᐸRuntimeᐳ::XNat, int64_t>(x, y)`;
+        }
+        else if(body.builtin === "int_pow") {
+            bstr = `ᐸRuntimeᐳ::integerPower<ᐸRuntimeᐳ::XInt, int64_t>(x, y)`;
+        }
+        else if(body.builtin === "float_is_safe_convert_into") {
             const intotype = body.biterms.find((bt) => bt[0] === "T") as [string, IRTypeSignature];
             bstr = `ᐸRuntimeᐳ::XFloat::isSafeConvertInto<${TransformCPPNameManager.convertTypeKey(intotype[1].tkeystr)}>(f)`;
         }
@@ -1301,7 +1307,8 @@ class CPPEmitter {
             bstr = "ᐸRuntimeᐳ::XFloat{std::sqrt(v.value)}"
         }
         else if(body.builtin === "float_pow") {
-            bstr = "ᐸRuntimeᐳ::XFloat{std::pow(x.value, y.value)}";
+            prestr = 'auto pp = std::pow(x.value, y.value); if(!ᐸRuntimeᐳ::XFloat::isValidFloat(pp)) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error("internal code", 0, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Float power bounds"); }';
+            bstr = 'ᐸRuntimeᐳ::XFloat{pp}';
         }
         else if(body.builtin === "list_range_nat") {
             const rtype = this.typeInfoManager.getTypeInfo(invk.resultType.tkeystr);
@@ -1392,12 +1399,23 @@ class CPPEmitter {
             const [cmp, isSimple, params, args] = this.getParamInforForLambda(invk, "cmp");
             bstr = `l.minfun<${isSimple}>([&cmp](${params}){ return (bool)${cmp}(cmp, ${args}); })`;
         }
+        else if(body.builtin === "list_max") {
+            const mtype = this.typeInfoManager.emitTypeAsParameter(invk.resultType.tkeystr, false, false);
+            bstr = `l.maxfun<true>([](${mtype} a, ${mtype} b){ return (bool)(a < b); })`;
+        }
+        else if(body.builtin === "list_maxfun") {
+            const [cmp, isSimple, params, args] = this.getParamInforForLambda(invk, "cmp");
+            bstr = `l.maxfun<${isSimple}>([&cmp](${params}){ return (bool)${cmp}(cmp, ${args}); })`;
+        }
         else if(body.builtin === "list_sum") {
-            bstr = `l.sum(zero)`
+            bstr = `l.sum()`
+        }
+        else if(body.builtin === "list_sumprefix") {
+            bstr = `l.sumprefix()`
         }
         else if(body.builtin === "list_sumfun") {
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "op");
-            bstr = `l.sumfun<${isSimple}>(init, [&op](${params}){ return ${fn}(op, ${args}); })`;
+            bstr = `l.reduce<${isSimple}>(init, [&op](${params}){ return ${fn}(op, ${args}); })`;
         }
         else if(body.builtin === "algo_for") {
             const [fn] = this.getParamInforForLambda(invk, "op");

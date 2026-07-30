@@ -29,6 +29,14 @@ __internal __typedeclable __keycomparable __numeric entity Nat {
 #else
     const zero: Nat = 0n;
     const one: Nat = 1n;
+
+    function square(x: Nat): Nat {
+        return x * x;
+    }
+
+    function pow(x: Nat, y: Nat): Nat {
+        return NumericOps::s_natPow(x, y);
+    }
 #endif %% STRIPPED_CORE
 }
 
@@ -38,6 +46,16 @@ __internal __typedeclable __keycomparable __numeric entity Int {
 #else
     const zero: Int = 0i;
     const one: Int = 1i;
+
+    function square(x: Int): Int {
+        return x * x;
+    }
+
+    function pow(x: Int, y: Int): Int 
+        requires y >= 0i;
+    {
+        return NumericOps::s_intPow(x, y);
+    }
 #endif %% STRIPPED_CORE
 }
 
@@ -86,7 +104,9 @@ __internal __typedeclable __numeric entity Float {
         return x * x;
     }
 
-    function pow(x: Float, y: Float): Float {
+    function pow(x: Float, y: Float): Float 
+        requires y < 0.0f ==> x != 0.0f;
+    {
         return NumericOps::s_floatPow(x, y);
     }
 

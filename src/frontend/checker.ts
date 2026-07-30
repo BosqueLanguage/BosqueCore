@@ -2466,6 +2466,8 @@ class TypeChecker {
 
         exp.monoinvid = this.invidCtr++;
 
+        exp.iimapper = imapper;
+
         const rrt = TypeResultWRefVarInfoResult.makeGeneralResult(
             exp.setType(fdecl.resultType.remapTemplateBindings(imapper)), false, false,
             { ttrue: [...arginfo.setcondout], tfalse: [] },
@@ -2558,6 +2560,8 @@ class TypeChecker {
             const fullmapper = TemplateNameMapper.merge(fdecl.typeinfo.mapping, imapper);
             this.checkTemplateBindingsOnInvokeConstraints(exp.sinfo, fullmapper, fdecl.member);
             const arginfo = this.checkArgumentList(exp.sinfo, env, refallowed, exp.args.args, fdecl.member.params, fullmapper);
+
+            exp.iimapper = fullmapper;
 
             exp.resolvedFunction = fdecl.member;
 
@@ -2871,6 +2875,8 @@ class TypeChecker {
 
         const fullmapper = TemplateNameMapper.merge(mresolve.typeinfo.mapping, imapper);
         const arginfo = this.checkArgumentList(exp.sinfo, env, refallowed, exp.args.args, mresolve.member.params, fullmapper);
+
+        exp.iimapper = fullmapper;
 
         let resolvedrtype: TypeSignature = mresolve.member.resultType;
         if(exp.specificResolve !== undefined) {
@@ -3736,6 +3742,8 @@ class TypeChecker {
 
         const fullmapper = TemplateNameMapper.merge(mresolve.typeinfo.mapping, imapper);
         const arginfo = this.checkArgumentList(exp.sinfo, env, false, exp.args.args, mresolve.member.params, fullmapper);
+
+        exp.iimapper = fullmapper;
 
         let resolvedrtype: TypeSignature = mresolve.member.resultType;
         if(exp.specificResolve !== undefined) {
