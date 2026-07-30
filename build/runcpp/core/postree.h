@@ -548,6 +548,12 @@ namespace ᐸRuntimeᐳ
             return s_leafallocator->construct(PosRBData<T, K>(RColor::Black, 2, lstart, lend, value, rstart, rend));
         }
 
+        template <typename Iter>
+        static PosRBNode<T, K>* mkinitial_append(Iter lstart, Iter lend, Iter rstart, Iter rend)
+        {
+            return s_leafallocator->construct(PosRBData<T, K>(RColor::Black, 2, lstart, lend, rstart, rend));
+        }
+
         static PosRBNode<T, K>* mknode(RColor color, const PosRBNode<T, K>* left, const PosRBNode<T, K>* right, const PosRBData<T, K>& data)
         {
             if(left == nullptr && right == nullptr) {
@@ -1143,6 +1149,30 @@ private:
                         }
                     }
                 }
+            }
+        }
+
+        static InsertResult pushfrontrec(const PosRBNode<T, K>* curr, const PosRBData<T, K>& leafdata)
+        {
+            //add the element in a new leaf
+            if(curr == nullptr) {
+                return InsertResult::makeTree(s_leafallocator->construct(leafdata));
+            }
+            else {
+                InsertResult nleft = pushfrontrec(reprGetLeft(curr), leafdata);
+                return insbalance(nleft.apply([curr](const PosRBNode<T, K>* tnode) { return mknode(curr->data.color, tnode, reprGetRight(curr), curr->data); }));
+            }
+        }
+
+        static InsertResult pushbackrec(const PosRBNode<T, K>* curr, const PosRBData<T, K>& leafdata)
+        {
+            //add the element in a new leaf
+            if(curr == nullptr) {
+                return InsertResult::makeTree(s_leafallocator->construct(leafdata));
+            }
+            else {
+                InsertResult nright = pushbackrec(reprGetRight(curr), leafdata);
+                return insbalance(nright.apply([curr](const PosRBNode<T, K>* tnode) { return mknode(curr->data.color, reprGetLeft(curr), tnode, curr->data); }));
             }
         }
 
@@ -1943,6 +1973,45 @@ private:
 
             BSQ_IF_ENABLED(RB_INVARIANT_VALIDATE, debugAssertInvariants(root, reprGetCount(this->root) - 1));
             return PosRBTree<T, K, TreeID>{root};
+        }
+
+        static PosRBTree<T, K, TreeID> append(PosRBTree<T, K, TreeID> l, PosRBTree<T, K, TreeID> r)
+        {
+            bool lleaf = PosRBTree<T, K, TreeID>::isLeafType(l.root);
+            bool rleaf = PosRBTree<T, K, TreeID>::isLeafType(r.root);
+
+            PosRBNode<T, K>* nroot = nullptr;
+            if(lleaf && rleaf) {
+                if(l.root->data.dcount + r.root->data.dcount <= K) {
+                    nroot = PosRBTree<T, K, TreeID>::mkinitial_append(l.root->data.data, l.root->data.data + l.root->data.dcount, r.root->data.data, r.root->data.data + r.root->data.dcount);
+                }
+                else {
+                    if(l.root->data.dcount < r.root->data.dcount) {
+                        //insert the left leaf into the right "tree"
+                        nroot = PosRBTree<T, K, TreeID>{PosRBTree<T, K, TreeID>::pushfrontrec(r.root, PosRBData{RColor::Red, 1, l.root->data})};
+                    }
+                    else {
+                        //insert the right leaf into the left "tree"
+                        nroot = PosRBTree<T, K, TreeID>{PosRBTree<T, K, TreeID>::pushbackrec(l.root, PosRBData{RColor::Red, 1, r.root->data})};
+                    }
+                }
+            }
+            else {
+                if(lleaf) {
+                    //insert the left leaf into the right tree
+                    nroot = PosRBTree<T, K, TreeID>{PosRBTree<T, K, TreeID>::pushfrontrec(r.root, PosRBData{RColor::Red, 1, l.root->data})}; 
+                }
+                else if(rleaf) {
+                    //insert the right leaf into the left tree
+                    nroot = PosRBTree<T, K, TreeID>{PosRBTree<T, K, TreeID>::pushbackrec(l.root, PosRBData{RColor::Red, 1, r.root->data})}; 
+                }
+                else {
+                    assert(false); //TODO: implement append for two non-leaf trees
+                }
+            }
+
+            BSQ_IF_ENABLED(RB_INVARIANT_VALIDATE, debugAssertInvariants(nroot, reprGetCount(l.root) + reprGetCount(r.root)));
+            return PosRBTree<T, K, TreeID>{nroot};
         }
 
         template<bool SafeSimplePred, typename Pred>
