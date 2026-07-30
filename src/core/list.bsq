@@ -5,12 +5,14 @@ namespace List {
 #else
     function rangeOfNat(start: Nat, end: Nat, step: Nat = 1n, inclusive: Bool = false): List<Nat>
         requires start <= end;
+        requires step > 0n;
     {
         return ListOps::s_list_range_nat(start, end, step, inclusive);
     }
 
     function rangeOfInt(start: Int, end: Int, step: Int = 1i, inclusive: Bool = false): List<Int>
         requires start <= end;
+        requires step > 0i;
     {
         return ListOps::s_list_range_int(start, end, step, inclusive);
     }

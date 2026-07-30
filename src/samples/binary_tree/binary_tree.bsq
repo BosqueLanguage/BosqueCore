@@ -2,7 +2,7 @@ declare namespace Main;
 
 const minDepth: Nat = 4n;
 
-public main(n: Nat) CString 
+public function main(n: Nat): CString 
     requires n >= minDepth + 2n;
 {
     let maxDepth = n;

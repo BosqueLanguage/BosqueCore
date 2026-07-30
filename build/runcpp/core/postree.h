@@ -360,7 +360,13 @@ namespace ᐸRuntimeᐳ
         PosRBData<T, K> sumprefix(T& csum) const
         {
             std::array<T, K> result{};
-            std::partial_sum(this->data.begin(), this->data.begin() + this->dcount, result.begin(), [csum](T a, T b) { T::checkOverflowAddition(a, b, "List Prefix Sum", 0); return csum + a + b; });
+            T::checkOverflowAddition(csum, this->data[0], "List Prefix Sum", 0);
+            
+            result[0] = csum + this->data[0];
+            for(size_t i = 1; i < (size_t)this->dcount; ++i) {
+                T::checkOverflowAddition(result[i - 1], this->data[i], "List Prefix Sum", 0);
+                result[i] = result[i - 1] + this->data[i];
+            }
 
             csum = result[this->dcount - 1];
             return PosRBData<T, K>(this->color, this->bheight, this->dcount, result);
