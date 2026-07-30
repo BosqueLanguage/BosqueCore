@@ -253,7 +253,7 @@ namespace ᐸRuntimeᐳ
         template<bool SafeSimplePred, typename Pred>
         bool allOf(Pred p) const
         {
-            if(SafeSimplePred) {
+            if constexpr (SafeSimplePred) {
                 return std::all_of(std::execution::unseq, this->data.begin(), this->data.begin() + this->dcount, p);
             }
             else {
@@ -265,7 +265,7 @@ namespace ᐸRuntimeᐳ
         template<bool SafeSimplePred, typename Pred>
         bool someOf(Pred p) const
         {
-            if(SafeSimplePred) {
+            if constexpr (SafeSimplePred) {
                 return std::any_of(std::execution::unseq, this->data.begin(), this->data.begin() + this->dcount, p);
             }
             else {
@@ -277,7 +277,7 @@ namespace ᐸRuntimeᐳ
         template<bool SafeSimplePred, typename Pred>
         bool noneOf(Pred p) const
         {
-            if(SafeSimplePred) {
+            if constexpr (SafeSimplePred) {
                 return std::none_of(std::execution::unseq, this->data.begin(), this->data.begin() + this->dcount, p);
             }
             else {
@@ -327,14 +327,25 @@ namespace ᐸRuntimeᐳ
             return PosRBData<U, K>(this->color, this->bheight, std::distance(mresult.begin(), meiter), mresult);
         }
 
-        template<bool SafeSimpleFn, typename Pred>
-        T minfun(Pred p) const
+        template<bool SafeSimpleFn, typename Cmp>
+        T minfun(Cmp cmp) const
         {
-            if(SafeSimpleFn) {
-                return *std::min_element(std::execution::unseq, this->data.begin(), this->data.begin() + this->dcount, p);
+            if constexpr (SafeSimpleFn) {
+                return *std::min_element(std::execution::unseq, this->data.begin(), this->data.begin() + this->dcount, cmp);
             }
             else {
-                return *std::min_element(std::execution::seq, this->data.begin(), this->data.begin() + this->dcount, p);
+                return *std::min_element(std::execution::seq, this->data.begin(), this->data.begin() + this->dcount, cmp);
+            }
+        }
+
+        template<bool SafeSimpleFn, typename Cmp>
+        T maxfun(Cmp cmp) const
+        {
+            if constexpr (SafeSimpleFn) {
+                return *std::max_element(std::execution::unseq, this->data.begin(), this->data.begin() + this->dcount, cmp);
+            }
+            else {
+                return *std::max_element(std::execution::seq, this->data.begin(), this->data.begin() + this->dcount, cmp);
             }
         }
 
@@ -346,8 +357,23 @@ namespace ᐸRuntimeᐳ
             });
         }
 
+        PosRBData<T, K> sumprefix(T& csum) const
+        {
+            std::array<T, K> result{};
+            T::checkOverflowAddition(csum, this->data[0], "List Prefix Sum", 0);
+            
+            result[0] = csum + this->data[0];
+            for(size_t i = 1; i < (size_t)this->dcount; ++i) {
+                T::checkOverflowAddition(result[i - 1], this->data[i], "List Prefix Sum", 0);
+                result[i] = result[i - 1] + this->data[i];
+            }
+
+            csum = result[this->dcount - 1];
+            return PosRBData<T, K>(this->color, this->bheight, this->dcount, result);
+        }
+
         template<bool SafeSimpleFn, typename Fn>
-        T sumfun(const T& init, Fn op) const
+        T reduce(const T& init, Fn op) const
         {
             return std::accumulate(this->data.begin(), this->data.begin() + this->dcount, init, [&op](const T& a, const T& b) {
                 return op(a, b);
@@ -1633,36 +1659,55 @@ private:
             }
         }
 
-        template <bool SafeSimpleFn, typename Pred>
-        static T recminfun(const PosRBNode<T, K>* curr, const T& cmin, Pred p)
+        template <bool SafeSimpleFn, typename Cmp>
+        static T recminfun(const PosRBNode<T, K>* curr, const T& cmin, Cmp cmp)
         {
             if(curr == nullptr) {
                 return cmin;
             }
 
             if(isLeafType(curr)) {
-                return curr->data.template minfun<SafeSimpleFn>(p);
+                return curr->data.template minfun<SafeSimpleFn>(cmp);
             }
             else {
-                T leftMin = recminfun<SafeSimpleFn>(reprGetLeft(curr), cmin, p);
-                T midMin = curr->data.template minfun<SafeSimpleFn>(p);
-                T rightMin = recminfun<SafeSimpleFn>(reprGetRight(curr), cmin, p);
+                T leftMin = recminfun<SafeSimpleFn>(reprGetLeft(curr), cmin, cmp);
+                T midMin = curr->data.template minfun<SafeSimpleFn>(cmp);
+                T rightMin = recminfun<SafeSimpleFn>(reprGetRight(curr), cmin, cmp);
 
-                return std::min({leftMin, midMin, rightMin}, p);
+                return std::min({leftMin, midMin, rightMin}, cmp);
             }
         }
 
-        static T recsum(const PosRBNode<T, K>* curr, T init)
+        template <bool SafeSimpleFn, typename Cmp>
+        static T recmaxfun(const PosRBNode<T, K>* curr, const T& cmax, Cmp cmp)
         {
             if(curr == nullptr) {
-                return init;
+                return cmax;
             }
 
             if(isLeafType(curr)) {
-                return curr->data.sum(init);
+                return curr->data.template maxfun<SafeSimpleFn>(cmp);
             }
             else {
-                T leftSum = recsum(reprGetLeft(curr), init);
+                T leftMax = recmaxfun<SafeSimpleFn>(reprGetLeft(curr), cmax, cmp);
+                T midMax = curr->data.template maxfun<SafeSimpleFn>(cmp);
+                T rightMax = recmaxfun<SafeSimpleFn>(reprGetRight(curr), cmax, cmp);
+
+                return std::max({leftMax, midMax, rightMax}, cmp);
+            }
+        }
+
+        static T recsum(const PosRBNode<T, K>* curr, T acc)
+        {
+            if(curr == nullptr) {
+                return acc;
+            }
+
+            if(isLeafType(curr)) {
+                return curr->data.sum(acc);
+            }
+            else {
+                T leftSum = recsum(reprGetLeft(curr), acc);
                 T midSum = curr->data.sum(leftSum);
                 T rightSum = recsum(reprGetRight(curr), midSum);
 
@@ -1670,51 +1715,67 @@ private:
             }
         }
 
-        template <bool SafeSimpleFn, typename Fn>
-        static T recsumfun(const PosRBNode<T, K>* curr, const T& init, Fn op)
+        static PosRBNode<T, K>* recsumprefix(const PosRBNode<T, K>* curr, T& csum)
         {
             if(curr == nullptr) {
-                return init;
+                return nullptr;
             }
 
             if(isLeafType(curr)) {
-                return curr->data.template sumfun<SafeSimpleFn>(init, op);
+                return PosRBTree<T, K, TreeID>::mkcopynode(curr->data.color, nullptr, nullptr, curr->data.template sumprefix(csum));
             }
             else {
-                T leftSum = recsumfun<SafeSimpleFn>(reprGetLeft(curr), init, op);
-                T midSum = curr->data.template sumfun<SafeSimpleFn>(leftSum, op);
-                T rightSum = recsumfun<SafeSimpleFn>(reprGetRight(curr), midSum, op);
+                const PosRBNode<T, K>* nleft = recsumprefix(reprGetLeft(curr), csum);
+                const PosRBData<T, K> ndata = curr->data.template sumprefix(csum);
+                const PosRBNode<T, K>* nright = recsumprefix(reprGetRight(curr), csum);
+
+                return PosRBTree<T, K, TreeID>::mkcopynode(curr->data.color, nleft, nright, ndata);
+            }
+        }
+
+        template <bool SafeSimpleFn, typename Fn>
+        static T recreduce(const PosRBNode<T, K>* curr, const T& acc, Fn op)
+        {
+            if(curr == nullptr) {
+                return acc;
+            }
+
+            if(isLeafType(curr)) {
+                return curr->data.template reduce<SafeSimpleFn>(acc, op);
+            }
+            else {
+                T leftSum = recreduce<SafeSimpleFn>(reprGetLeft(curr), acc, op);
+                T midSum = curr->data.template reduce<SafeSimpleFn>(leftSum, op);
+                T rightSum = recreduce<SafeSimpleFn>(reprGetRight(curr), midSum, op);
 
                 return rightSum;
             }
         }
 
         //Only works when T is Nat/Int
-        static PosRBNode<T, K>* recmkrange(int64_t start, int64_t end)
+        static PosRBNode<T, K>* recmkrange(int64_t count, int64_t& curr, int64_t step)
         {
-            int64_t size = (size_t)(end - start);
-            if((size_t)size <= K) {
+            if((size_t)count <= K) {
                 std::array<T, K> arr{};
-                std::iota(arr.begin(), arr.begin() + size, T{start});
+                std::generate(arr.begin(), arr.begin() + count, [&curr, step]() { int64_t val = curr; curr += step; return T{val}; });
 
-                return s_leafallocator->construct(PosRBData<T, K>(RColor::Red, 1, size, arr));
+                return s_leafallocator->construct(PosRBData<T, K>(RColor::Red, 1, count, arr));
             }
             else {
                 size_t dsize = (size_t)std::max((uint64_t)1, ((uint64_t)K) - 2);
 
-                size_t remain = size - dsize;
+                size_t remain = count - dsize;
                 size_t lsize = remain / 2;
                 size_t rsize = remain - lsize;
 
-                int64_t mid1 = start + lsize;
-                int64_t mid2 = mid1 + dsize;
-
-                const PosRBNode<T, K>* left = recmkrange(start, mid1);
-                const PosRBNode<T, K>* right = recmkrange(mid2, end);
-
+                const PosRBNode<T, K>* left = recmkrange(lsize, curr, step);
+                
                 std::array<T, K> arr{};
-                std::iota(arr.begin(), arr.begin() + dsize, T{mid1});
+                std::generate(arr.begin(), arr.begin() + dsize, [&curr, step]() { int64_t val = curr; curr += step; return T{val}; });
                 PosRBData<T, K> ndata(RColor::Black, 1, dsize, arr);
+                
+                const PosRBNode<T, K>* right = recmkrange(rsize, curr, step);
+
                 return s_nodeallocator->construct(RColor::Black, computeNewBHeight_ForTreeNode(RColor::Black, left, right), computeNewCount_ForTreeNode(left, right, ndata), left, right, ndata);
             }
         }
@@ -1940,28 +2001,41 @@ private:
             }
         }
 
-        template <bool SafeSimplePred, typename Pred>
-        T minfun(Pred p) const
+        template <bool SafeSimplePred, typename Cmp>
+        T minfun(Cmp cmp) const
         {
             T cmin = this->getFront();
-            return recminfun<SafeSimplePred, Pred>(this->root, cmin, p);
+            return recminfun<SafeSimplePred, Cmp>(this->root, cmin, cmp);
         }
 
-        T sum(T zero) const
+        template <bool SafeSimplePred, typename Cmp>
+        T maxfun(Cmp cmp) const
         {
-            return recsum(this->root, zero);
+            T cmax = this->getFront();
+            return recmaxfun<SafeSimplePred, Cmp>(this->root, cmax, cmp);
+        }
+
+        T sum() const
+        {
+            return recsum(this->root, T{});
+        }
+
+        PosRBTree<T, K, TreeID> sumprefix() const
+        {
+            T csum = T{};
+            return PosRBTree<T, K, TreeID>{recsumprefix(this->root, csum)};
         }
 
         template <bool SafeSimpleFn, typename Op>
-        T sumfun(T zero, Op op) const
+        T reduce(const T& acc, Op op) const
         {
-            return recsumfun<SafeSimpleFn, Op>(this->root, zero, op);
+            return recreduce<SafeSimpleFn, Op>(this->root, acc, op);
         }
 
         //Only works when T is Nat/Int
-        static PosRBTree<T, K, TreeID> mkrange(int64_t start, int64_t end)
+        static PosRBTree<T, K, TreeID> mkrange(int64_t count, int64_t& curr, int64_t step)
         {
-            return PosRBTree<T, K, TreeID>{recmkrange(start, end)};
+            return PosRBTree<T, K, TreeID>{recmkrange(count, curr, step)};
         }
 
         //Only works when T is (|X, Y|)

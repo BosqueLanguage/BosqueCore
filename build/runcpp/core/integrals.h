@@ -7,6 +7,45 @@
 
 namespace ᐸRuntimeᐳ 
 {
+    template<typename T, typename I>
+    inline T integerPower(T x, T y)
+    {
+        if(y.value == 0) {
+            return T{1};
+        }
+        else if(y.value == 1) {
+            return x;
+        }
+        else {
+            if(x.value == 0) {
+                return T{0};
+            }
+            else if(x.value == 1) {
+                return T{1};
+            }
+            else {
+                if (x.value == 2 && y.value < 60) {
+                    return T{((I)1) << (uint32_t)y.value};
+                }
+                else {
+                    T result = T{1};
+
+                    I pval = y.value;
+                    while(pval > 0) {
+                        if(pval & 1) {
+                            T::checkOverflowMultiplication(result, x, "Integral power", 0);
+                            result = result * x;
+                        }
+                        T::checkOverflowMultiplication(x, x, "Integral power", 0);
+                        x = x * x;
+                        pval >>= 1;
+                    }
+                    return result;
+                }
+            }
+        }
+    }
+
     class XNat
     {
     public:
@@ -192,9 +231,17 @@ namespace ᐸRuntimeᐳ
             return XChkNat::s_isBottom(this->value);
         }
 
+        static void checkOverflowAddition(XChkNat n1, XChkNat n2, const char* file, uint32_t line)
+        {
+            ;
+        }
         static void checkOverflowSubtraction(XChkNat n1, XChkNat n2, const char* file, uint32_t line)
         {
             if(n2.value > n1.value) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::NumericUnderflow, nullptr, "Nat subtraction underflow"); }
+        }
+        static void checkOverflowMultiplication(XChkNat n1, XChkNat n2, const char* file, uint32_t line)
+        {
+            ;
         }
         static void checkDivisionByZero(XChkNat n2, const char* file, uint32_t line)
         {
@@ -211,7 +258,7 @@ namespace ᐸRuntimeᐳ
         friend XChkNat operator+(XChkNat lhs, XChkNat rhs)
         {
             if(lhs.isBottom() | rhs.isBottom()) {
-                return XChkNat(XChkNat::BOTTOM_VALUE);
+                return XChkNat{XChkNat::BOTTOM_VALUE};
             }
 
             __int128_t result = 0;
@@ -250,9 +297,9 @@ namespace ᐸRuntimeᐳ
                 return XChkNat{XChkNat::BOTTOM_VALUE};
             }
 
-           __int128_t result = 0;
+            __int128_t result = 0;
             if(!__builtin_mul_overflow(lhs.value, rhs.value, &result) && XChkNat::isValidNat(result)) [[likely]] {
-                return XChkNat(result);
+                return XChkNat{result};
             }
             else {
                 return XChkNat{XChkNat::BOTTOM_VALUE};
@@ -299,6 +346,18 @@ namespace ᐸRuntimeᐳ
             return XChkInt::s_isBottom(this->value);
         }
 
+        static void checkOverflowAddition(XChkInt n1, XChkInt n2, const char* file, uint32_t line)
+        {
+            ;
+        }
+        static void checkOverflowSubtraction(XChkInt n1, XChkInt n2, const char* file, uint32_t line)
+        {
+            ;
+        }
+        static void checkOverflowMultiplication(XChkInt n1, XChkInt n2, const char* file, uint32_t line)
+        {
+            ;
+        }
         static void checkDivisionByZero(XChkInt n2, const char* file, uint32_t line)
         {
             if(n2.value == 0) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::DivisionByZero, nullptr, "Int division by zero"); }

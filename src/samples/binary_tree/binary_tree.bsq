@@ -1,0 +1,80 @@
+declare namespace Main;
+
+const minDepth: Nat = 4n;
+
+public function main(n: Nat): CString 
+    requires n >= minDepth + 2n;
+{
+    let maxDepth = n;
+    let stretchDepth: Nat = n + 1n;
+    let check: Nat = TreeNode.create(stretchDepth).check();
+        
+    ref output = List<CString>{};
+    output.pushBack(interpolate::cstring("stretch tree of depth " + (stretchDepth) + "\t check: " + check));
+
+    const longLivedTree = TreeNode::create(maxDepth);
+    const tdepths = List::rangeOfNat(minDepth, maxDepth, 2n, true); //inclusive of end value
+        
+    tdepths.map(fn(depth) => {
+        let iterations = Nat::pow(2n, (maxDepth - depth) + minDepth);
+        let iterrng = List::rangeOfNat(1n, iterations, inclusive=true); //inclusive of end value
+
+        check = 0;
+
+           for (int i = 1; i <= iterations; i++)
+           {
+                check += (TreeNode.create(depth)).check();
+           }
+           System.out.println(iterations + "\t trees of depth " + depth + "\t check: " + check);
+        });
+
+        System.out.println("long lived tree of depth " + n + "\t check: " + longLivedTree.check());
+    });
+}
+
+entity TreeNode {
+        
+    field left: Option<TreeNode>;
+    field right: Option<TreeNode>;
+
+    function create(depth: Nat): TreeNode {
+        if(depth == 0n) {
+            return TreeNode{none, none};
+        }
+        else {
+            return TreeNode{some(TreeNode::create(depth - 1n)), some(TreeNode::create(depth - 1n))};
+        }
+    }
+    
+    method check(): Int {
+        var ld = 0i;
+        if($l = this.left)@some {
+            ld = $l.check();
+        }
+
+        var rd = 0i;
+        if($r = this.right)@some {
+            rd = $r.check();
+        }
+
+        return 1i + ld + rd;
+    }
+}
+
+%*
+COMMAND LINE:
+ ./app 21
+
+PROGRAM OUTPUT:
+stretch tree of depth 22	 check: 8388607
+2097152	 trees of depth 4	 check: 65011712
+524288	 trees of depth 6	 check: 66584576
+131072	 trees of depth 8	 check: 66977792
+32768	 trees of depth 10	 check: 67076096
+8192	 trees of depth 12	 check: 67100672
+2048	 trees of depth 14	 check: 67106816
+512	 trees of depth 16	 check: 67108352
+128	 trees of depth 18	 check: 67108736
+32	 trees of depth 20	 check: 67108832
+long lived tree of depth 21	 check: 4194303
+*%

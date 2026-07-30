@@ -710,15 +710,16 @@ class Monomorphizer {
             this.instantiateTypeSignature(exp.terms[i], this.currentMapping);
         }
 
+        const fullmapper = TemplateNameMapper.tryMerge(this.currentMapping, exp.iimapper);
         for(let i = 0; i < exp.shuffleinfo.length; ++i) {
-            this.instantiateTypeSignature(exp.shuffleinfo[i][1], this.currentMapping);
+            this.instantiateTypeSignature(exp.shuffleinfo[i][1], fullmapper);
         }
         if(exp.restinfo !== undefined) {
-            const rparamtype = (this.currentMapping !== undefined ? (exp.resttype as TypeSignature).remapTemplateBindings(this.currentMapping) : (exp.resttype as TypeSignature)) as NominalTypeSignature;
+            const rparamtype = (fullmapper !== undefined ? (exp.resttype as TypeSignature).remapTemplateBindings(fullmapper) : (exp.resttype as TypeSignature)) as NominalTypeSignature;
             let rargs: AbstractArgumentValue[] = [];
 
             for(let i = 0; i < exp.restinfo.length; ++i) {
-                this.instantiateTypeSignature(exp.restinfo[i][2], this.currentMapping);
+                this.instantiateTypeSignature(exp.restinfo[i][2], fullmapper);
                 rargs.push(exp.args.args[exp.restinfo[i][0]]);
             }
 

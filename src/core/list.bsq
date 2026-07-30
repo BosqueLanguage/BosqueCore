@@ -3,26 +3,18 @@ namespace Core;
 namespace List {
 #if STRIPPED_CORE
 #else
-    function rangeOfNat(start: Nat, end: Nat): List<Nat> 
+    function rangeOfNat(start: Nat, end: Nat, step: Nat = 1n, inclusive: Bool = false): List<Nat>
         requires start <= end;
+        requires step > 0n;
     {
-        if(start == end) {
-            return List<Nat>{};
-        }
-        else {
-            return ListOps::s_list_range_nat(start, end);
-        }
+        return ListOps::s_list_range_nat(start, end, step, inclusive);
     }
 
-    function rangeOfInt(start: Int, end: Int): List<Int> 
+    function rangeOfInt(start: Int, end: Int, step: Int = 1i, inclusive: Bool = false): List<Int>
         requires start <= end;
+        requires step > 0i;
     {
-        if(start == end) {
-            return List<Int>{};
-        }
-        else {
-            return ListOps::s_list_range_int(start, end);
-        }
+        return ListOps::s_list_range_int(start, end, step, inclusive);
     }
 
     function zip<T, U>(l1: List<T>, l2: List<U>): List<(|T, U|)> 
@@ -231,12 +223,33 @@ __internal entity List<T> {
         return ListOps::s_list_minfun<T>(this, cmp);
     }
 
+    method {when T: keytype} max(): T 
+        requires !this.empty();
+    {
+        return ListOps::s_list_max<T>(this);
+    }
+
+    recursive? method max(cmp: recursive? pred(T, T) -> Bool): T 
+        requires !this.empty();
+    {
+        return ListOps::s_list_maxfun<T>(this, cmp);
+    }
+
     method {when T: numeric} sum(): T {
         if(ListOps::s_list_empty<T>(this)) {
             return T::zero;
         }
         else {
-            return ListOps::s_list_sum<T>(this, T::zero);
+            return ListOps::s_list_sum<T>(this);
+        }
+    }
+
+    method {when T: numeric} sumPrefix(): List<T> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<T>{};
+        }
+        else {
+            return ListOps::s_list_sumPrefix<T>(this);
         }
     }
 

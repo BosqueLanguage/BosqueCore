@@ -1018,7 +1018,7 @@ class ASMToIRConverter {
             const ftype = this.applyLocalTemplateMapping(pinfo.type, imapper);
             
             if(ii[0] === -1) {
-                const crexp = this.assembly.tryReduceConstantExpression(pinfo.optDefaultValue as Expression, this.currentBinds);
+                const crexp = this.assembly.tryReduceConstantExpression(pinfo.optDefaultValue as Expression, imapper);
 
                 if(crexp !== undefined) {
                     const sexp = this.flattenExpression(crexp);
@@ -1638,8 +1638,9 @@ class ASMToIRConverter {
             
             if(ii[0] === -1) {
                 const eexp = this.assembly.resolveFieldDeclDefaultExpFromTypeSignature(finfo.containingtype, finfo.name) as Expression;
-                const crexp = eexp !== undefined ? this.assembly.tryReduceConstantExpression(eexp, this.currentBinds) : undefined;
+                const tbinds = TemplateNameMapper.tryMerge(this.currentBinds, TemplateNameMapper.generateTemplateMappingForTypeDecl(this.tproc(finfo.containingtype) as NominalTypeSignature));
 
+                const crexp = eexp !== undefined ? this.assembly.tryReduceConstantExpression(eexp, tbinds) : undefined;
                 if(crexp !== undefined) {
                     const sexp = this.flattenExpression(crexp);
                     const cexp = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(sexp, crexp.getType()), crexp.getType(), ftype);

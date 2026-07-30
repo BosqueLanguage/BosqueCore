@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import { FullyQualifiedNamespace, AutoTypeSignature, RecursiveAnnotation, TypeSignature, LambdaTypeSignature, NominalTypeSignature } from "./type.js";
+import { FullyQualifiedNamespace, AutoTypeSignature, RecursiveAnnotation, TypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper } from "./type.js";
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls.js";
 import { LambdaDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, TaskConfiguration, TypeFunctionDecl } from "./assembly.js";
@@ -991,6 +991,8 @@ class CallNamespaceFunctionExpression extends Expression {
     inout: string[] = [];
     byref: string[] = [];
 
+    iimapper: TemplateNameMapper | undefined = undefined;
+
     monoinvid: number | undefined = undefined;
 
     constructor(sinfo: SourceInfo, isImplicitNS: boolean, ns: FullyQualifiedNamespace, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
@@ -1036,6 +1038,8 @@ class CallTypeFunctionExpression extends Expression {
     setuncond: string[] = [];
     inout: string[] = [];
     byref: string[] = [];
+
+    iimapper: TemplateNameMapper | undefined = undefined;
 
     monoinvid: number | undefined = undefined;
 
@@ -1084,6 +1088,8 @@ class CallRefInvokeExpression extends Expression {
     setuncond: string[] = [];
     inout: string[] = [];
     byref: string[] = [];
+
+    iimapper: TemplateNameMapper | undefined = undefined;
 
     monoinvid: number | undefined = undefined;
     
@@ -1395,6 +1401,8 @@ class PostfixInvoke extends PostfixOperation {
     setuncond: string[] = [];
     inout: string[] = [];
     byref: string[] = [];
+
+    iimapper: TemplateNameMapper | undefined = undefined;
 
     monoinvid: number | undefined = undefined;
 
