@@ -44,13 +44,13 @@ namespace ᐸRuntimeᐳ
             else {
                 static_assert(CStrRootInlineContent::CSTR_MAX_SIZE * 2 <= CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, "If this changes then we need more complex logic like in list append");
                 
-                return XCString{CStrRootTreeContent{PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>::mkinitial_append(this->ucstr.inlinecstr.data.begin(), this->ucstr.inlinecstr.data.begin() + this->ucstr.inlinecstr.data[0], other.ucstr.inlinecstr.data.begin(), other.ucstr.inlinecstr.data.begin() + other.ucstr.inlinecstr.data[0])}};
+                return XCString{CStrRootTreeContent{PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>::mkinitial_append(this->ucstr.inlinecstr.data.begin() + 1, this->ucstr.inlinecstr.data.begin() + 1 + this->ucstr.inlinecstr.data[0], other.ucstr.inlinecstr.data.begin() + 1, other.ucstr.inlinecstr.data.begin() + 1 + other.ucstr.inlinecstr.data[0])}};
             }
         }
         else {
             PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING> lnode{};
             if(this->ucstr.isInline()) {
-                lnode = PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>::mkinitial(this->ucstr.inlinecstr.data.begin(), this->ucstr.inlinecstr.data.begin() + this->ucstr.inlinecstr.data[0]);
+                lnode = PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>::mkinitial(this->ucstr.inlinecstr.data.begin() + 1, this->ucstr.inlinecstr.data.begin() + 1 + this->ucstr.inlinecstr.data[0]);
             }
             else {
                 lnode = this->ucstr.treecstr.postree;
@@ -58,7 +58,7 @@ namespace ᐸRuntimeᐳ
 
             PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING> rnode{};
             if(other.ucstr.isInline()) {
-                rnode = PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>::mkinitial(other.ucstr.inlinecstr.data.begin(), other.ucstr.inlinecstr.data.begin() + other.ucstr.inlinecstr.data[0]);
+                rnode = PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>::mkinitial(other.ucstr.inlinecstr.data.begin() + 1, other.ucstr.inlinecstr.data.begin() + 1 + other.ucstr.inlinecstr.data[0]);
             }
             else {
                 rnode = other.ucstr.treecstr.postree;
