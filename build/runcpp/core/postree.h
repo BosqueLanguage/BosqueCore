@@ -1982,28 +1982,28 @@ private:
 
             PosRBNode<T, K>* nroot = nullptr;
             if(lleaf && rleaf) {
-                if(l.root->data.dcount + r.root->data.dcount <= K) {
-                    nroot = PosRBTree<T, K, TreeID>::mkinitial_append(l.root->data.data, l.root->data.data + l.root->data.dcount, r.root->data.data, r.root->data.data + r.root->data.dcount);
+                if((size_t)(l.root->data.dcount + r.root->data.dcount) <= K) {
+                    nroot = PosRBTree<T, K, TreeID>::mkinitial_append(l.root->data.data.begin(), l.root->data.data.begin() + l.root->data.dcount, r.root->data.data.begin(), r.root->data.data.begin() + r.root->data.dcount);
                 }
                 else {
                     if(l.root->data.dcount < r.root->data.dcount) {
                         //insert the left leaf into the right "tree"
-                        nroot = PosRBTree<T, K, TreeID>{PosRBTree<T, K, TreeID>::pushfrontrec(r.root, PosRBData{RColor::Red, 1, l.root->data})};
+                        nroot = insblacken(PosRBTree<T, K, TreeID>::pushfrontrec(r.root, PosRBData<T, K>(RColor::Red, 1, l.root->data)));
                     }
                     else {
                         //insert the right leaf into the left "tree"
-                        nroot = PosRBTree<T, K, TreeID>{PosRBTree<T, K, TreeID>::pushbackrec(l.root, PosRBData{RColor::Red, 1, r.root->data})};
+                        nroot = insblacken(PosRBTree<T, K, TreeID>::pushbackrec(l.root, PosRBData<T, K>(RColor::Red, 1, r.root->data)));
                     }
                 }
             }
             else {
                 if(lleaf) {
                     //insert the left leaf into the right tree
-                    nroot = PosRBTree<T, K, TreeID>{PosRBTree<T, K, TreeID>::pushfrontrec(r.root, PosRBData{RColor::Red, 1, l.root->data})}; 
+                    nroot = insblacken(PosRBTree<T, K, TreeID>::pushfrontrec(r.root, PosRBData<T, K>(RColor::Red, 1, l.root->data)));
                 }
                 else if(rleaf) {
                     //insert the right leaf into the left tree
-                    nroot = PosRBTree<T, K, TreeID>{PosRBTree<T, K, TreeID>::pushbackrec(l.root, PosRBData{RColor::Red, 1, r.root->data})}; 
+                    nroot = insblacken(PosRBTree<T, K, TreeID>::pushbackrec(l.root, PosRBData<T, K>(RColor::Red, 1, r.root->data)));
                 }
                 else {
                     assert(false); //TODO: implement append for two non-leaf trees
