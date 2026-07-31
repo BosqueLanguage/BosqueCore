@@ -640,11 +640,42 @@ namespace ᐸRuntimeᐳ
                     return XList{ListTInlineContent<T>{this->ulist.inlinelist.data.begin(), this->ulist.inlinelist.data.begin() + this->ulist.inlinelist.count, other.ulist.inlinelist.data.begin(), other.ulist.inlinelist.data.begin() + other.ulist.inlinelist.count}};
                 }
                 else {
-                    return XList{ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>{PosRBTree<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_T)>::mkinitial_append(this->ulist.inlinelist.data.begin(), this->ulist.inlinelist.data.begin() + this->ulist.inlinelist.count, other.ulist.inlinelist.data.begin(), other.ulist.inlinelist.data.begin() + other.ulist.inlinelist.count)}};
+                    if(this->ulist.inlinelist.size() + other.ulist.inlinelist.size() <= ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY) {
+                        return XList{ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>{PosRBTree<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_T)>::mkinitial_append(this->ulist.inlinelist.data.begin(), this->ulist.inlinelist.data.begin() + this->ulist.inlinelist.count, other.ulist.inlinelist.data.begin(), other.ulist.inlinelist.data.begin() + other.ulist.inlinelist.count)}};
+                    }
+                    else {
+                        PosRBNode<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY>* nnode = nullptr;
+                        if(this->ulist.inlinelist.size() <= other.ulist.inlinelist.size()) {
+                            PosRBNode<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY>* leaf1 = PosRBTree<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_T)>::mkinitial_red(this->ulist.inlinelist.data.begin(), this->ulist.inlinelist.data.begin() + this->ulist.inlinelist.count);
+                            nnode = PosRBTree<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_T)>::mknode(RColor::Black, leaf1, nullptr, PosRBData<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY>(RColor::Black, 2, other.ulist.inlinelist.data.begin(), other.ulist.inlinelist.data.begin() + other.ulist.inlinelist.count));
+                        }
+                        else {
+                            PosRBNode<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY>* leaf2 = PosRBTree<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_T)>::mkinitial_red(other.ulist.inlinelist.data.begin(), other.ulist.inlinelist.data.begin() + other.ulist.inlinelist.count);
+                            nnode = PosRBTree<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_T)>::mknode(RColor::Black, nullptr, leaf2, PosRBData<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY>(RColor::Black, 1, this->ulist.inlinelist.data.begin(), this->ulist.inlinelist.data.begin() + this->ulist.inlinelist.count));
+                        }
+                        
+                        return XList{ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>{PosRBTree<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_T)>{nnode}}};
+                    }
                 }
             }
             else {
-                return XList{PosRBTree<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_T)>::append(this->ulist.treelist.postree, other.ulist.treelist.postree)};
+                PosRBTree<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_T)> lnode{};
+                if(this->ulist.isInline()) {
+                    lnode = PosRBTree<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_T)>::mkinitial(this->ulist.inlinelist.data.begin(), this->ulist.inlinelist.data.begin() + this->ulist.inlinelist.count);
+                }
+                else {
+                    lnode = this->ulist.treelist.postree;
+                }
+
+                PosRBTree<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_T)> rnode{};
+                if(other.ulist.isInline()) {
+                    rnode = PosRBTree<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_T)>::mkinitial(other.ulist.inlinelist.data.begin(), other.ulist.inlinelist.data.begin() + other.ulist.inlinelist.count);
+                }
+                else {
+                    rnode = other.ulist.treelist.postree;
+                }
+
+                return XList{PosRBTree<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_T)>::append(lnode, rnode)};
             }
         }
 

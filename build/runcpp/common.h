@@ -302,12 +302,12 @@ namespace ᐸRuntimeᐳ
 
     inline bool isSimpleEscapeCChar(char c)
     {
-        return (c == 9 || c == 10 || c == 37 || c == 39);
+        return (c == 9 || c == 10 || c == 32 || c == 33 || c == 38);
     }
 
     inline bool isMustEscapeCChar(char c)
     {
-        return !(40 <= c && c <= 126) || isSimpleEscapeCChar(c);
+        return !(40 <= c && c <= 126) && !isSimpleEscapeCChar(c);
     }
 
     inline bool isLegalCChar(char c)
