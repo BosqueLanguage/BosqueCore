@@ -306,7 +306,7 @@ namespace ᐸRuntimeᐳ
             return false;
         }
         else {
-            return (c != 9 && c != 10 && c != 32 && c != 33 && c != 38);
+            return (c != 32 && c != 33 && c != 38);
         }
     }
 
