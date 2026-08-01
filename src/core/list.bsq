@@ -177,12 +177,48 @@ __internal entity List<T> {
         }
     }    
 
+    method convert<U>(): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+            return ListOps::s_list_map<T, U>(this, fn(v) => v.@<U>);
+        }
+    }
+
+    method {when T: Option<U>} convertsome<U>(): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+            return ListOps::s_list_map<T, U>(this, fn(v) => v.@some);
+        }
+    }
+
     recursive? method filter(p: recursive? pred(T) -> Bool): List<T> {
         if(ListOps::s_list_empty<T>(this)) {
             return List<T>{};
         }
         else {
             return ListOps::s_list_filter[recursive?]<T>(this, p);
+        }
+    }
+
+    method filter<U>(): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+           return ListOps::s_list_filtermap<T, U>(this, pred(v) => v.?<U>, fn(v) => v.@<U>);
+        }
+    }
+
+    method {when T: Option<U>} filtersome<U>(): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+           return ListOps::s_list_filtermap<T, U>(this, pred(v) => v.?some, fn(v) => v.@some);
         }
     }
 
@@ -195,44 +231,8 @@ __internal entity List<T> {
         }
     }
 
-    method convert<U>(): List<U> {
-        if(ListOps::s_list_empty<T>(this)) {
-            return List<U>{};
-        }
-        else {
-            return ListOps::s_list_map<T, U>(this, fn(v) => v.@<U>);
-        }
-    }
-
-    method convertIf<U>(): List<U> {
-        if(ListOps::s_list_empty<T>(this)) {
-            return List<U>{};
-        }
-        else {
-           return ListOps::s_list_filtermap<T, U>(this, pred(v) => v.?<U>, fn(v) => v.@<U>);
-        }
-    }
-
-    method {when T: Option<U>} extractSome<U>(): List<U> {
-        if(ListOps::s_list_empty<T>(this)) {
-            return List<U>{};
-        }
-        else {
-            return ListOps::s_list_map<T, U>(this, fn(v) => v.@some);
-        }
-    }
-
-    method {when T: Option<U>} extractIfSome<U>(): List<U> {
-        if(ListOps::s_list_empty<T>(this)) {
-            return List<U>{};
-        }
-        else {
-           return ListOps::s_list_filtermap<T, U>(this, pred(v) => v.?some, fn(v) => v.@some);
-        }
-    }
-
     %%
-    %%TODO: extractIfOk<U>, extractIfFail<E>, extractOk<U>, extractFail<E> for Result<T, E>
+    %%TODO: filterOk<U>, filterFail<E>, convertOk<U>, convertFail<E> for Result<T, E>
     %%
 
     method {when T: keytype} min(): T 

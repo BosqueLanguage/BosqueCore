@@ -21,35 +21,17 @@ describe ("List -- filtermap", () => {
     });
 });
 
-describe ("List -- convert(If)", () => {
-    it("should convert list", function () {
-        runTestSet(`${datatypedef} public function main(b: Bool): List<F2> { return List<Foo>{}.convert<F2>(); }`, [['true', 'List<Main::F2>{ }']], []);
-        runTestSet(`${datatypedef} public function main(b: Bool): List<F2> { return List<Foo>{ F2{5i} }.convert<F2>(); }`, [['true', 'List<Main::F2>{ Main::F2{ 5i } }']], []);
-        runTestSet(`${datatypedef} public function main(b: Bool): List<F2> { return List<Foo>{ F2{5i}, F2{5i}, F2{3i} }.convert<F2>(); }`, [['true', 'List<Main::F2>{ Main::F2{ 5i }, Main::F2{ 5i }, Main::F2{ 3i } }']], []);
-
-        runTestSet(`${datatypedef} public function main(b: Bool): List<F2> { return List<Foo>{ F1{5i} }.convert<F2>(); }`, [], ['false']);
+describe ("List -- filter type", () => {
+    it("should filter<T> list", function () {
+        runTestSet(`${datatypedef} public function main(b: Bool): List<F2> { return List<Foo>{}.filter<F2>(); }`, [['true', 'List<Main::F2>{ }']], []);
+        runTestSet(`${datatypedef} public function main(b: Bool): List<F2> { return List<Foo>{F1{1i}, F2{5i}}.filter<F2>(); }`, [['true', 'List<Main::F2>{ Main::F2{ 5i } }']], []);
+        runTestSet(`${datatypedef} public function main(b: Bool): List<F2> { return List<Foo>{ F1{1i}, F2{5i}, F1{2i}, F2{3i} }.filter<F2>(); }`, [['true', 'List<Main::F2>{ Main::F2{ 5i }, Main::F2{ 3i } }']], []);
     });
 
-    it("should convertIf list", function () {
-        runTestSet(`${datatypedef} public function main(b: Bool): List<F2> { return List<Foo>{}.convertIf<F2>(); }`, [['true', 'List<Main::F2>{ }']], []);
-        runTestSet(`${datatypedef} public function main(b: Bool): List<F2> { return List<Foo>{F1{1i}, F2{5i}}.convertIf<F2>(); }`, [['true', 'List<Main::F2>{ Main::F2{ 5i } }']], []);
-        runTestSet(`${datatypedef} public function main(b: Bool): List<F2> { return List<Foo>{ F1{1i}, F2{5i}, F1{2i}, F2{3i} }.convertIf<F2>(); }`, [['true', 'List<Main::F2>{ Main::F2{ 5i }, Main::F2{ 3i } }']], []);
-    });
-});
-
-describe ("List -- extract(If)", () => {
-    it("should extractSome list", function () {
-        runTestSet('public function main(b: Bool): List<Int> { return List<Option<Int>>{}.extractSome<Int>(); }', [['true', 'List<Int>{ }']], []);  
-        runTestSet('public function main(b: Bool): List<Int> { return List<Option<Int>>{some(2i), some(1i)}.extractSome<Int>(); }', [['true', 'List<Int>{ 2i, 1i }']], []); 
-        runTestSet('public function main(b: Bool): List<Int> { return List<Option<Int>>{some(2i), some(1i), some(3i), some(1i), some(5i)}.extractSome<Int>(); }', [['true', 'List<Int>{ 2i, 1i, 3i, 1i, 5i }']], []);         
-
-        runTestSet('public function main(b: Bool): List<Int> { return List<Option<Int>>{some(2i), none}.extractSome<Int>(); }', [], ['false']); 
-    });
-
-    it("should extractIfSome list", function () {
-        runTestSet('public function main(b: Bool): List<Int> { return List<Option<Int>>{}.extractIfSome<Int>(); }', [['true', 'List<Int>{ }']], []);  
-        runTestSet('public function main(b: Bool): List<Int> { return List<Option<Int>>{some(2i), none}.extractIfSome<Int>(); }', [['true', 'List<Int>{ 2i }']], []); 
-        runTestSet('public function main(b: Bool): List<Int> { return List<Option<Int>>{some(2i), some(1i), none, some(1i), none}.extractIfSome<Int>(); }', [['true', 'List<Int>{ 2i, 1i, 1i }']], []); 
-        runTestSet('public function main(b: Bool): List<Int> { return List<Option<Int>>{some(2i), some(1i), some(3i), some(1i), some(5i)}.extractIfSome<Int>(); }', [['true', 'List<Int>{ 2i, 1i, 3i, 1i, 5i }']], []);         
+    it("should filtersome<T> list", function () {
+        runTestSet('public function main(b: Bool): List<Int> { return List<Option<Int>>{}.filtersome<Int>(); }', [['true', 'List<Int>{ }']], []);  
+        runTestSet('public function main(b: Bool): List<Int> { return List<Option<Int>>{some(2i), none}.filtersome<Int>(); }', [['true', 'List<Int>{ 2i }']], []); 
+        runTestSet('public function main(b: Bool): List<Int> { return List<Option<Int>>{some(2i), some(1i), none, some(1i), none}.filtersome<Int>(); }', [['true', 'List<Int>{ 2i, 1i, 1i }']], []); 
+        runTestSet('public function main(b: Bool): List<Int> { return List<Option<Int>>{some(2i), some(1i), some(3i), some(1i), some(5i)}.filtersome<Int>(); }', [['true', 'List<Int>{ 2i, 1i, 3i, 1i, 5i }']], []);
     });
 });

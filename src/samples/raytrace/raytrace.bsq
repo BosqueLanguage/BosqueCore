@@ -43,7 +43,7 @@ entity RayTracer{
     method minIntersection(ray: Ray, scene: Scene): Option<ISect> {
         let isects = scene.things
             .map<Option<ISect>>(fn(obj) => obj.intersect(ray))
-            .extractIfSome<ISect>();
+            .filtersome<ISect>();
 
         if(isects.empty()) {
             return none;
