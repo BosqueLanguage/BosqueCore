@@ -523,7 +523,36 @@ namespace ᐸRuntimeᐳ
             }
         }
         else {
-            assert(false); // Not Implemented: parsing large CString values
+            XCString rstr{};
+
+            char ebuff[CStrRootTreeContent::CSTR_MAX_LEAF_SIZE] = {0};
+            bool extractok = true;
+
+            BSQLexBufferIterator ii = stok.begin;
+            ++ii; //eat ' and skip final '
+            while(*ii != etok) {
+                size_t ecount = 0;
+
+                while(*ii != etok && ecount < CStrRootTreeContent::CSTR_MAX_LEAF_SIZE) {
+                    extractok &= processCCharFromIter(ii, &ebuff[ecount]);
+                    ecount++;
+                }
+
+                if(rstr.empty()) {
+                    rstr = XCString::mk(ebuff, ecount);
+                }
+                else {
+                    rstr = rstr.append(XCString::mk(ebuff, ecount));
+                }
+            }
+
+            this->lexer.consume();
+            if(!extractok) {
+                return std::nullopt;
+            }
+            else {
+                return std::make_optional(rstr);
+            }
         }
     }
 
@@ -559,7 +588,36 @@ namespace ᐸRuntimeᐳ
             }
         }
         else {
-            assert(false); // Not Implemented: parsing large CString values
+            XString rstr{};
+
+            char32_t ebuff[StrRootTreeContent::STR_MAX_LEAF_SIZE] = {0};
+            bool extractok = true;
+
+            BSQLexBufferIterator ii = stok.begin;
+            ++ii; //eat " and skip final "
+            while(*ii != '"') {
+                size_t ecount = 0;
+
+                while(*ii != '"' && ecount < StrRootTreeContent::STR_MAX_LEAF_SIZE) {
+                    extractok &= processUnicodeCharFromIter(ii, &ebuff[ecount]);
+                    ecount++;
+                }
+
+                if(rstr.empty()) {
+                    rstr = XString::mk(ebuff, ecount);
+                }
+                else {
+                    rstr = rstr.append(XString::mk(ebuff, ecount));
+                }
+            }
+
+            this->lexer.consume();
+            if(!extractok) {
+                return std::nullopt;
+            }
+            else {
+                return std::make_optional(rstr);
+            }
         }
     }
 

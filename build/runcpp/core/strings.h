@@ -937,6 +937,8 @@ namespace ᐸRuntimeᐳ
         }
 
         void diagnosticEmit(std::ostream& out, bool waddr) const;
+
+        XString append(XString other);
     };
 
     class XFStringRepr 

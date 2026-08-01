@@ -81,4 +81,9 @@ namespace ᐸRuntimeᐳ
             assert(false); // Not Implemented: diagnostic emit for non-inline strings
         }
     }
+
+    XString XString::append(XString other)
+    {
+        assert(false); // Not Implemented: append for XString
+    }
 }
