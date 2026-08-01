@@ -18,6 +18,12 @@ describe ("Map -- immediate and size", () => {
     });
 });
 
+describe ("Map -- big parse", () => {
+    it("should test big parsing", function () {
+        runTestSet('public function main(z: Map<Int, Bool>): Map<Int, Bool> { return z; }', [['Map<Int, Bool>{ }', 'Map<Int, Bool>{ }'], ['Map<Int, Bool>{ 0i => true, 1i => true, 2i => true, 3i => false, 4i => false }', 'Map<Int, Bool>{ 0i => true, 1i => true, 2i => true, 3i => false, 4i => false }']], []);
+    });
+});
+
 describe ("Map -- has", () => {
     it("should create and has", function () {
         runTestSet('public function main(z: Int): Bool { return Map<Int, Int>{}.has(1i); }', [['0i', 'false']], []); 
