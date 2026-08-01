@@ -1310,6 +1310,27 @@ class CPPEmitter {
             prestr = 'auto pp = std::pow(x.value, y.value); if(!ᐸRuntimeᐳ::XFloat::isValidFloat(pp)) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error("internal code", 0, ᐸRuntimeᐳ::ErrorKind::NumericBounds, nullptr, "Float power bounds"); }';
             bstr = 'ᐸRuntimeᐳ::XFloat{pp}';
         }
+        else if(body.builtin === "cstring_empty") {
+            bstr = "ᐸRuntimeᐳ::XBool::from(s.empty())";
+        }
+        else if(body.builtin === "cstring_size") {
+            bstr = "ᐸRuntimeᐳ::XNat{(int64_t)s.size()}";
+        }
+        else if(body.builtin === "cstring_append") {
+            bstr = "s1.append(s2)";
+        }
+        else if(body.builtin === "string_empty") {
+            bstr = "ᐸRuntimeᐳ::XBool::from(s.empty())";
+        }
+        else if(body.builtin === "string_size") {
+            bstr = "ᐸRuntimeᐳ::XNat{(int64_t)s.size()}";
+        }
+        else if(body.builtin === "string_bytes") {
+            assert(false, "CPPEmitter: need to implement string_bytes builtin");
+        }
+        else if(body.builtin === "string_append") {
+            assert(false, "CPPEmitter: need to implement string_append builtin");
+        }
         else if(body.builtin === "list_range_nat") {
             const rtype = this.typeInfoManager.getTypeInfo(invk.resultType.tkeystr);
             bstr = `ᐸRuntimeᐳ::XListOps::fromRange<Nat, ${rtype.bsqtypeid}>(start.value, end.value, step.value, (bool)inclusive.value)`;
@@ -1355,6 +1376,9 @@ class CPPEmitter {
         }
         else if(body.builtin === "list_deleteback") {
             bstr = "l.deleteBack()";
+        }
+        else if(body.builtin === "list_append") {
+            bstr = "l1.append(l2)";
         }
         else if(body.builtin === "list_allof") {
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "p");

@@ -176,6 +176,32 @@ __internal __typedeclable __keycomparable entity String {
     method bytes(): Nat {
         return StringOps::s_bytes(this);
     }
+
+    %** Append other to this String **%
+    method append(other: String): String {
+        if(this.empty()) {
+            return other;
+        }
+        elif(other.empty()) {
+            return this;
+        }
+        else {
+            return StringOps::s_append(this, other);
+        }
+    }
+
+    %** Prepend other String to this **%
+    method prepend(other: String): String {
+        if(this.empty()) {
+            return other;
+        }
+        elif(other.empty()) {
+            return this;
+        }
+        else {
+            return StringOps::s_append(other, this);
+        }
+    }
 #endif %% STRIPPED_CORE
 }
 
@@ -191,6 +217,32 @@ __internal __typedeclable __keycomparable entity CString {
     %** Get size of CString **%
     method size(): Nat {
         return CStringOps::s_size(this);
+    }
+
+    %** Append other to this CString **%
+    method append(other: CString): CString {
+        if(this.empty()) {
+            return other;
+        }
+        elif(other.empty()) {
+            return this;
+        }
+        else {
+            return CStringOps::s_append(this, other);
+        }
+    }
+
+    %** Prepend other CString to this **%
+    method prepend(other: CString): CString {
+        if(this.empty()) {
+            return other;
+        }
+        elif(other.empty()) {
+            return this;
+        }
+        else {
+            return CStringOps::s_append(other, this);
+        }
     }
 #endif %% STRIPPED_CORE
 }

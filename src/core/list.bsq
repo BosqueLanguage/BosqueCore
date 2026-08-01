@@ -108,6 +108,30 @@ __internal entity List<T> {
         return ListOps::s_list_deleteback<T>(this);
     }
 
+    method append(other: List<T>): List<T> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return other;
+        }
+        elif(ListOps::s_list_empty<T>(other)) {
+            return this;
+        }
+        else {
+            return ListOps::s_list_append<T>(this, other);
+        }
+    }
+
+    method prepend(other: List<T>): List<T> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return other;
+        }
+        elif(ListOps::s_list_empty<T>(other)) {
+            return this;
+        }
+        else {
+            return ListOps::s_list_append<T>(other, this);
+        }
+    }
+
     recursive? method allOf(p: recursive? pred(T) -> Bool): Bool {
         if(ListOps::s_list_empty<T>(this)) {
             return true;

@@ -531,6 +531,12 @@ namespace ᐸRuntimeᐳ
         }
 
         template <typename Iter>
+        static PosRBNode<T, K>* mkinitial_red(Iter start, Iter end)
+        {
+            return s_leafallocator->construct(PosRBData<T, K>(RColor::Red, 1, start, end));
+        }
+
+        template <typename Iter>
         static PosRBNode<T, K>* mkinitial(const T& value, Iter start, Iter end)
         {
             return s_leafallocator->construct(PosRBData<T, K>(RColor::Black, 2, value, start, end));
@@ -546,6 +552,12 @@ namespace ᐸRuntimeᐳ
         static PosRBNode<T, K>* mkinitial(Iter lstart, Iter lend, const T& value, Iter rstart, Iter rend)
         {
             return s_leafallocator->construct(PosRBData<T, K>(RColor::Black, 2, lstart, lend, value, rstart, rend));
+        }
+
+        template <typename Iter>
+        static PosRBNode<T, K>* mkinitial_append(Iter lstart, Iter lend, Iter rstart, Iter rend)
+        {
+            return s_leafallocator->construct(PosRBData<T, K>(RColor::Black, 2, lstart, lend, rstart, rend));
         }
 
         static PosRBNode<T, K>* mknode(RColor color, const PosRBNode<T, K>* left, const PosRBNode<T, K>* right, const PosRBData<T, K>& data)
@@ -1146,6 +1158,58 @@ private:
             }
         }
 
+        static InsertResult pushfrontrec(const PosRBNode<T, K>* curr, const PosRBData<T, K>& leafdata)
+        {
+            //add the element in a new leaf
+            if(curr == nullptr) {
+                return InsertResult::makeTree(s_leafallocator->construct(leafdata));
+            }
+            else {
+                InsertResult nleft = pushfrontrec(reprGetLeft(curr), leafdata);
+                return insbalance(nleft.apply([curr](const PosRBNode<T, K>* tnode) { return mknode(curr->data.color, tnode, reprGetRight(curr), curr->data); }));
+            }
+        }
+
+        static InsertResult pushbackrec(const PosRBNode<T, K>* curr, const PosRBData<T, K>& leafdata)
+        {
+            //add the element in a new leaf
+            if(curr == nullptr) {
+                return InsertResult::makeTree(s_leafallocator->construct(leafdata));
+            }
+            else {
+                InsertResult nright = pushbackrec(reprGetRight(curr), leafdata);
+                return insbalance(nright.apply([curr](const PosRBNode<T, K>* tnode) { return mknode(curr->data.color, reprGetLeft(curr), tnode, curr->data); }));
+            }
+        }
+
+        static InsertResult joinleftrec(const PosRBNode<T, K>* curr, const PosRBNode<T, K>* insnode, const PosRBData<T, K>& kdata, int64_t insbheight)
+        {
+            //produce tree of shape (insnode kdata curr)
+            assert(insbheight <= reprGetBHeight(curr));
+
+            if(insbheight == reprGetBHeight(curr)) {
+                return InsertResult::makeTree(mknode(RColor::Red, insnode, curr, kdata));
+            }
+            else {
+                InsertResult nleft = joinleftrec(reprGetLeft(curr), insnode, kdata, insbheight);
+                return insbalance(nleft.apply([curr](const PosRBNode<T, K>* tnode) { return mknode(curr->data.color, tnode, reprGetRight(curr), curr->data); }));
+            }
+        }
+
+        static InsertResult joinrightrec(const PosRBNode<T, K>* curr, const PosRBNode<T, K>* insnode, const PosRBData<T, K>& kdata, int64_t insbheight)
+        {
+            //produce tree of shape (curr kdata insnode)
+            assert(reprGetBHeight(insnode) <= reprGetBHeight(curr));
+
+            if(reprGetBHeight(insnode) == reprGetBHeight(curr)) {
+                return InsertResult::makeTree(mknode(RColor::Red, curr, insnode, kdata));
+            }
+            else {
+                InsertResult nright = joinrightrec(reprGetRight(curr), insnode, kdata, insbheight);
+                return insbalance(nright.apply([curr](const PosRBNode<T, K>* tnode) { return mknode(curr->data.color, reprGetLeft(curr), tnode, curr->data); }));
+            }
+        }
+
         static PosRBNode<T, K>* insblacken(InsertResult rr)
         {
             if(rr.tnode->data.color == RColor::Black) {
@@ -1482,6 +1546,64 @@ private:
                 const PosRBTreeNode<T, K>* tnode = asNodeType(curr);
 
                 DeleteResult ap = delbackrec(r);
+                return eqR(ap.apply([tnode](const PosRBNode<T, K>* bnode) { return mknode(tnode->data.color, reprGetLeft(tnode), bnode, tnode->data); }));
+            }
+        }
+
+        static DeleteResult delminnoderec(const PosRBNode<T, K>* curr, PosRBData<T, K>& nodedata)
+        {
+            assert(curr != nullptr);
+
+            const PosRBNode<T, K>* l = reprGetLeft(curr);
+            if(l == nullptr) {
+                nodedata = curr->data;
+
+                if(curr->data.color == RColor::Red) {
+                    return DeleteResult::makeDone(reprGetRight(curr));
+                }
+                else {
+                    const PosRBNode<T, K>* r = reprGetRight(curr);
+                    if(r == nullptr || r->data.color == RColor::Black) {
+                        return DeleteResult::makeShort(r); //node is removed but right is already null/black -- no black height issue
+                    }
+                    else {
+                        return DeleteResult::makeDone(mkcopynode(RColor::Black, reprGetLeft(r), reprGetRight(r), r->data)); //black removed but l is made black so same bheight
+                    }
+                }
+            }
+            else {
+                const PosRBTreeNode<T, K>* tnode = asNodeType(curr);
+
+                DeleteResult ap = delminnoderec(l, nodedata);
+                return eqL(ap.apply([tnode](const PosRBNode<T, K>* anode) { return mknode(tnode->data.color, anode, reprGetRight(tnode), tnode->data); }));
+            }
+        }
+
+        static DeleteResult delmaxnoderec(const PosRBNode<T, K>* curr, PosRBData<T, K>& nodedata)
+        {
+            assert(curr != nullptr);
+
+            const PosRBNode<T, K>* r = reprGetRight(curr);
+            if(r == nullptr) {
+                nodedata = curr->data;
+
+                if(curr->data.color == RColor::Red) {
+                    return DeleteResult::makeDone(reprGetLeft(curr));
+                }
+                else {
+                    const PosRBNode<T, K>* l = reprGetLeft(curr);
+                    if(l == nullptr || l->data.color == RColor::Black) {
+                        return DeleteResult::makeShort(l); //node is removed but left is already null/black -- no black height issue
+                    }
+                    else {
+                        return DeleteResult::makeDone(mkcopynode(RColor::Black, reprGetLeft(l), reprGetRight(l), l->data)); //black removed but l is made black so same bheight
+                    }
+                }
+            }
+            else {
+                const PosRBTreeNode<T, K>* tnode = asNodeType(curr);
+
+                DeleteResult ap = delmaxnoderec(r, nodedata);
                 return eqR(ap.apply([tnode](const PosRBNode<T, K>* bnode) { return mknode(tnode->data.color, reprGetLeft(tnode), bnode, tnode->data); }));
             }
         }
@@ -1943,6 +2065,65 @@ private:
 
             BSQ_IF_ENABLED(RB_INVARIANT_VALIDATE, debugAssertInvariants(root, reprGetCount(this->root) - 1));
             return PosRBTree<T, K, TreeID>{root};
+        }
+
+        static PosRBTree<T, K, TreeID> append(PosRBTree<T, K, TreeID> l, PosRBTree<T, K, TreeID> r)
+        {
+            bool lleaf = PosRBTree<T, K, TreeID>::isLeafType(l.root);
+            bool rleaf = PosRBTree<T, K, TreeID>::isLeafType(r.root);
+
+            PosRBNode<T, K>* nroot = nullptr;
+            if(lleaf && rleaf) {
+                if((size_t)(l.root->data.dcount + r.root->data.dcount) <= K) {
+                    nroot = PosRBTree<T, K, TreeID>::mkinitial_append(l.root->data.data.begin(), l.root->data.data.begin() + l.root->data.dcount, r.root->data.data.begin(), r.root->data.data.begin() + r.root->data.dcount);
+                }
+                else {
+                    if(l.root->data.dcount < r.root->data.dcount) {
+                        //insert the left leaf into the right "tree"
+                        nroot = insblacken(PosRBTree<T, K, TreeID>::pushfrontrec(r.root, PosRBData<T, K>(RColor::Red, 1, l.root->data)));
+                    }
+                    else {
+                        //insert the right leaf into the left "tree"
+                        nroot = insblacken(PosRBTree<T, K, TreeID>::pushbackrec(l.root, PosRBData<T, K>(RColor::Red, 1, r.root->data)));
+                    }
+                }
+            }
+            else {
+                if(lleaf) {
+                    //insert the left leaf into the right tree
+                    nroot = insblacken(PosRBTree<T, K, TreeID>::pushfrontrec(r.root, PosRBData<T, K>(RColor::Red, 1, l.root->data)));
+                }
+                else if(rleaf) {
+                    //insert the right leaf into the left tree
+                    nroot = insblacken(PosRBTree<T, K, TreeID>::pushbackrec(l.root, PosRBData<T, K>(RColor::Red, 1, r.root->data)));
+                }
+                else {
+                    auto lbh = reprGetBHeight(l.root);
+                    auto rbh = reprGetBHeight(r.root);
+
+                    if(lbh <= rbh) {
+                        //insert the left tree into the right tree
+
+                        PosRBData<T, K> ndata{};
+                        PosRBNode<T, K>* nright = delblacken(PosRBTree<T, K, TreeID>::delminnoderec(r.root, ndata));
+                        assert(reprGetBHeight(l.root) <= reprGetBHeight(nright));
+
+                        nroot = insblacken(PosRBTree<T, K, TreeID>::joinleftrec(nright, l.root, ndata, reprGetBHeight(l.root)));
+                    }
+                    else {
+                        //insert the right tree into the left tree
+
+                        PosRBData<T, K> ndata{};
+                        PosRBNode<T, K>* nleft = delblacken(PosRBTree<T, K, TreeID>::delmaxnoderec(l.root, ndata));
+                        assert(reprGetBHeight(nleft) >= reprGetBHeight(r.root));
+
+                        nroot = insblacken(PosRBTree<T, K, TreeID>::joinrightrec(nleft, r.root, ndata, reprGetBHeight(r.root)));
+                    }
+                }
+            }
+
+            BSQ_IF_ENABLED(RB_INVARIANT_VALIDATE, debugAssertInvariants(nroot, reprGetCount(l.root) + reprGetCount(r.root)));
+            return PosRBTree<T, K, TreeID>{nroot};
         }
 
         template<bool SafeSimplePred, typename Pred>

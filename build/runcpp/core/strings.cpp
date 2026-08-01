@@ -32,6 +32,42 @@ namespace ᐸRuntimeᐳ
         }
     }
 
+    XCString XCString::append(XCString other)
+    {
+        assert(!this->ucstr.empty());
+        assert(!other.ucstr.empty());
+
+        if(this->ucstr.isInline() && other.ucstr.isInline()) {
+            if(this->ucstr.inlinecstr.data[0] + other.ucstr.inlinecstr.data[0] <= CStrRootInlineContent::CSTR_MAX_SIZE) {
+                return XCString{CStrRootInlineContent{this->ucstr.inlinecstr, other.ucstr.inlinecstr}};
+            }
+            else {
+                static_assert(CStrRootInlineContent::CSTR_MAX_SIZE * 2 <= CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, "If this changes then we need more complex logic like in list append");
+                
+                return XCString{CStrRootTreeContent{PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>::mkinitial_append(this->ucstr.inlinecstr.data.begin() + 1, this->ucstr.inlinecstr.data.begin() + 1 + this->ucstr.inlinecstr.data[0], other.ucstr.inlinecstr.data.begin() + 1, other.ucstr.inlinecstr.data.begin() + 1 + other.ucstr.inlinecstr.data[0])}};
+            }
+        }
+        else {
+            PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING> lnode{};
+            if(this->ucstr.isInline()) {
+                lnode = PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>::mkinitial(this->ucstr.inlinecstr.data.begin() + 1, this->ucstr.inlinecstr.data.begin() + 1 + this->ucstr.inlinecstr.data[0]);
+            }
+            else {
+                lnode = this->ucstr.treecstr.postree;
+            }
+
+            PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING> rnode{};
+            if(other.ucstr.isInline()) {
+                rnode = PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>::mkinitial(other.ucstr.inlinecstr.data.begin() + 1, other.ucstr.inlinecstr.data.begin() + 1 + other.ucstr.inlinecstr.data[0]);
+            }
+            else {
+                rnode = other.ucstr.treecstr.postree;
+            }
+
+            return XCString{CStrRootTreeContent{PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>::append(lnode, rnode)}};
+        }
+    }
+
     void XString::diagnosticEmit(std::ostream& out, bool waddr) const
     {
         if(this->ustr.isInline()) {

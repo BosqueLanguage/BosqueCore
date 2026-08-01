@@ -72,6 +72,18 @@ namespace ᐸRuntimeᐳ
 
         }
 
+        CStrRootInlineContent(const CStrRootInlineContent& s1, const CStrRootInlineContent& s2)
+        {
+            int64_t len1 = s1.size();
+            int64_t len2 = s2.size();
+            assert(len1 + len2 <= ᐸRuntimeᐳ::CStrRootInlineContent::CSTR_MAX_SIZE);
+
+            this->data[0] = static_cast<char>(len1 + len2); //store length
+            std::copy(s1.data.begin() + 1, s1.data.begin() + 1 + len1, this->data.begin() + 1);
+            std::copy(s2.data.begin() + 1, s2.data.begin() + 1 + len2, this->data.begin() + 1 + len1);
+            std::fill(this->data.begin() + len1 + len2 + 1, this->data.end(), '\0');
+        }
+
         int64_t size() const { return static_cast<int64_t>(this->data[0]); }
         char at(int64_t index) const { return this->data[index + 1]; }
 
@@ -432,6 +444,8 @@ namespace ᐸRuntimeᐳ
         }
 
         void diagnosticEmit(std::ostream& out, bool waddr) const;
+
+        XCString append(XCString other);
     };
 
     class XFCStringRepr 

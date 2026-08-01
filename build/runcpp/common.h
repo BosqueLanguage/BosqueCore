@@ -300,14 +300,14 @@ namespace ᐸRuntimeᐳ
         std::make_pair<uint8_t, const char*>(39, "%;")
     };
 
-    inline bool isSimpleEscapeCChar(char c)
-    {
-        return (c == 9 || c == 10 || c == 37 || c == 39);
-    }
-
     inline bool isMustEscapeCChar(char c)
     {
-        return !(40 <= c && c <= 126) || isSimpleEscapeCChar(c);
+        if(40 <= c && c <= 126) {
+            return false;
+        }
+        else {
+            return (c != 32 && c != 33 && c != 38);
+        }
     }
 
     inline bool isLegalCChar(char c)
