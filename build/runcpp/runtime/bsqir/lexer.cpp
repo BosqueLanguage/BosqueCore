@@ -15,7 +15,7 @@ namespace ᐸRuntimeᐳ
     static std::regex s_cchar_re("^c'[^']{1,16}'", std::regex_constants::nosubs | std::regex_constants::optimize);
     static std::regex s_uchar_re("^c\"[^\"]{1,16}\"", std::regex_constants::nosubs | std::regex_constants::optimize);
 
-    constexpr std::array<char, 12> s_symbol_tokens = { '(', ')', '{', '}', '[', ']', '<', '>', ',', '#', '|' };
+    constexpr std::array<char, 11> s_symbol_tokens = { '(', ')', '{', '}', '[', ']', '<', '>', ',', '#', '|' };
     constexpr std::array<const char*, 6> s_keyword_tokens = { "none", "true", "false", "some", "ok", "fail" };
 
     static std::regex s_identifierlike_re("^([a-zA-Z_][a-zA-Z0-9_]*)", std::regex_constants::nosubs | std::regex_constants::optimize);
