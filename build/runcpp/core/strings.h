@@ -500,7 +500,32 @@ namespace ᐸRuntimeᐳ
                 return XCString::mk(inlined.data(), total_size);
             }
             else {
-                assert(false); // Not Implemented: full support for FString interpolation
+                XCString rres{};
+
+                for(size_t i = 0; i < repr.strcomps.size(); i++) {
+                    const std::pair<uint8_t, const char*>& comp = repr.strcomps[i];
+                    XCString ncstr{};
+
+                    if(comp.second != nullptr) {
+                        size_t cmp_size = std::char_traits<char>::length(comp.second);
+                        ncstr = XCString::mk(comp.second, cmp_size);
+                    }
+                    else {
+                        uint8_t argpos = comp.first;
+                        ncstr = cstr[argpos];
+                    }
+
+                    if(!ncstr.empty()) {
+                        if(rres.empty()) {
+                            rres = ncstr;
+                        }
+                        else {
+                            rres = rres.append(ncstr);
+                        }
+                    }
+                }
+
+                return rres;
             }
         }
     };
@@ -993,7 +1018,32 @@ namespace ᐸRuntimeᐳ
                 return XString::mk(inlined.data(), total_size);
             }
             else {
-                assert(false); // Not Implemented: full support for FString interpolation
+                XString rres{};
+
+                for(size_t i = 0; i < repr.strcomps.size(); i++) {
+                    const std::pair<uint8_t, const char32_t*>& comp = repr.strcomps[i];
+                    XString ncstr{};
+
+                    if(comp.second != nullptr) {
+                        size_t cmp_size = std::char_traits<char32_t>::length(comp.second);
+                        ncstr = XString::mk(comp.second, cmp_size);
+                    }
+                    else {
+                        uint8_t argpos = comp.first;
+                        ncstr = cstr[argpos];
+                    }
+
+                    if(!ncstr.empty()) {
+                        if(rres.empty()) {
+                            rres = ncstr;
+                        }
+                        else {
+                            rres = rres.append(ncstr);
+                        }
+                    }
+                }
+
+                return rres;
             }
         }
     };
