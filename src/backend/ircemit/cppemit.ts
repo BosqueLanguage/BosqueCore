@@ -2335,6 +2335,7 @@ class CPPEmitter {
         const defbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}() {\n` +
         `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeType("${tdecl.tkey}")) { return std::nullopt; };\n` +
         `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('{')) { return std::nullopt; };\n` +
+        `    ${ctname} rres{};\n` +
         `    ${voft} varr[16] = {};\n` +
         `    size_t count = 0;\n` +
         `    bool first = true;\n` +
@@ -2343,10 +2344,11 @@ class CPPEmitter {
         `        std::optional<${this.typeInfoManager.emitTypeAsStd(tdecl.oftype.tkeystr)}> vv = BSQ_parse${TransformCPPNameManager.convertTypeKey(tdecl.oftype.tkeystr)}();\n` +
         `        if(!vv.has_value()) { return std::nullopt; }\n` +
         `        varr[count++] = vv.value();\n\n` +
-        `        if(count >= 16) { assert(false); /* TODO: implement dynamic growth */ }\n` +
+        `        if(count >= 16) { auto ttl = ${ctname}::mk(varr, count); if(rres.empty()) { rres = ttl; } else { rres = rres.append(ttl); } count = 0; }\n` +
         `    }\n` +
         `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('}')) { return std::nullopt; };\n` +
-        `    return std::make_optional<${ctname}>(${ctname}::mk(varr, count));\n` +
+        `    if(count > 0) { auto ttl = ${ctname}::mk(varr, count); if(rres.empty()) { rres = ttl; } else { rres = rres.append(ttl); } }\n` +
+        `    return std::make_optional<${ctname}>(rres);\n` +
         `}`;
 
         const defbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv) {\n` +
@@ -2380,7 +2382,6 @@ class CPPEmitter {
 
         const ktype = this.typeInfoManager.emitTypeAsStd(tdecl.ktype.tkeystr);
         const vtype = this.typeInfoManager.emitTypeAsStd(tdecl.vtype.tkeystr);
-        const oftype = this.typeInfoManager.emitTypeAsStd(tdecl.oftype.tkeystr);
         
         const declusing = `using ${ctname} = ${RUNTIME_NAMESPACE}::XMapKV<${ktype}, ${vtype}, ${tinfo.bsqtypeid}>;`;
         const [decltypeinfo, deftypeinfo] = this.emitMapTypeInfoDecl(tdecl);
@@ -2391,8 +2392,7 @@ class CPPEmitter {
         const defbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}() {\n` +
         `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeType("${tdecl.tkey}")) { return std::nullopt; };\n` +
         `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('{')) { return std::nullopt; };\n` +
-        `    ${oftype} varr[16] = {};\n` +
-        `    size_t count = 0;\n` +
+        `    ${ctname} rmap{};\n` +
         `    bool first = true;\n` +
         `    while(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.peekSymbol('}')) {\n` +
         `        if(first) { first = false; } else { if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol(',')) { return std::nullopt; } }\n` +
@@ -2401,11 +2401,10 @@ class CPPEmitter {
         `        if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol("=>")) { return std::nullopt; }\n` +
         `        std::optional<${vtype}> vv = BSQ_parse${TransformCPPNameManager.convertTypeKey(tdecl.vtype.tkeystr)}();\n` +
         `        if(!vv.has_value()) { return std::nullopt; }\n` +
-        `        varr[count++] = { vk.value(), vv.value() };\n\n` +
-        `        if(count >= 16) { assert(false); /* TODO: implement dynamic growth */ }\n` +
+        `        rmap = rmap.insert(vk.value(), vv.value());\n` +
         `    }\n` +
         `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('}')) { return std::nullopt; };\n` +
-        `    return std::make_optional<${ctname}>(${ctname}::mk(varr, count));\n` +
+        `    return std::make_optional<${ctname}>(rmap);\n` +
         `}`;
 
         const defbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv) {\n` +

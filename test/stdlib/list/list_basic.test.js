@@ -14,6 +14,10 @@ describe ("List -- construct empty and isEmpty", () => {
         runTestSet('public function main(z: Int): Bool { return List<Int>{1i}.singleton(); }', [['0i', 'true']], []); 
         runTestSet('public function main(z: Int): Bool { return List<Int>{1i, 2i}.singleton(); }', [['0i', 'false']], []); 
     });
+
+    it("should parse big list", function () {
+        runTestSet('public function main(z: List<Int>): List<Int> { return z; }', [['List<Int>{}', 'List<Int>{ }'], ['List<Int>{1i, 2i, 3i}', 'List<Int>{ 1i, 2i, 3i }'], ['List<Int>{1i, 2i, 3i, 4i, 5i, 6i, 7i, 8i, 9i, 10i}', 'List<Int>{ 1i, 2i, 3i, 4i, 5i, 6i, 7i, 8i, 9i, 10i }'], ['List<Int>{1i, 2i, 3i, 4i, 5i, 6i, 7i, 8i, 9i, 10i, 11i, 12i, 13i, 14i, 15i, 16i, 17i, 18i, 19i, 20i}', 'List<Int>{ 1i, 2i, 3i, 4i, 5i, 6i, 7i, 8i, 9i, 10i, 11i, 12i, 13i, 14i, 15i, 16i, 17i, 18i, 19i, 20i }']], []);
+    });
 });
 
 describe ("List -- immediate and size", () => {

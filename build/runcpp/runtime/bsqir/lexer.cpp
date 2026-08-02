@@ -221,7 +221,7 @@ namespace ᐸRuntimeᐳ
 
     bool BSQONLexer::tryLexSymbol()
     {
-        //Handle (| and |)
+        //Handle (|, |), and =>
         BSQLexBufferIterator niter = this->iter;
         if(*niter == '(') {
             ++niter;
@@ -233,6 +233,13 @@ namespace ᐸRuntimeᐳ
         if(*niter == '|') {
             ++niter;
             if(niter != this->iend && *niter == ')') {
+                this->advanceToken(BSQONTokenType::LiteralSymbol, 2);
+                return true;
+            }
+        }
+        if(*niter == '=') {
+            ++niter;
+            if(niter != this->iend && *niter == '>') {
                 this->advanceToken(BSQONTokenType::LiteralSymbol, 2);
                 return true;
             }
