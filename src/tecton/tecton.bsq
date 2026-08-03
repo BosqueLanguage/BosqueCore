@@ -2,6 +2,6 @@ declare namespace Tecton {
     using Assembly;
 }
 
-public function main(asm: Assembly): Assembly {
+public function main(asm: Assembly::BapiAssembly): Assembly::BapiAssembly {
     return asm;
 }

@@ -862,6 +862,10 @@ class TypeInfoManager {
         timgr.addLayoutInfo("ByteBufferBlock", new LayoutInfo("ByteBufferBlock", new IRNominalTypeSignature("ByteBufferBlock"), 8, "1"));
         timgr.addLayoutInfo("ByteBuffer", new LayoutInfo("ByteBuffer", new IRNominalTypeSignature("ByteBuffer"), 24, "200"));
 
+        timgr.addLayoutInfo("Byte", new LayoutInfo("Byte", new IRNominalTypeSignature("Byte"), 8, "0"));
+        timgr.addLayoutInfo("CChar", new LayoutInfo("CChar", new IRNominalTypeSignature("CChar"), 8, "0"));
+        timgr.addLayoutInfo("UnicodeChar", new LayoutInfo("UnicodeChar", new IRNominalTypeSignature("UnicodeChar"), 8, "0"));
+
         timgr.addLayoutInfo("UUIDV4", new LayoutInfo("UUIDV4", new IRNominalTypeSignature("UUIDV4"), 16, "00"));
         timgr.addLayoutInfo("UUIDV7", new LayoutInfo("UUIDV7", new IRNominalTypeSignature("UUIDV7"), 16, "00"));
 
@@ -947,11 +951,15 @@ class TypeInfoManager {
         timgr.addTypeInfo("ByteBufferBlock", new TypeInfo("ByteBufferBlock", new IRNominalTypeSignature("ByteBufferBlock"), 20, 512, LayoutTag.Ref, "1111111111111111111111111111111111111111111111111111111111111111", false));
         timgr.addTypeInfo("ByteBuffer", new TypeInfo("ByteBuffer", new IRNominalTypeSignature("ByteBuffer"), 21, 24, LayoutTag.Value, "200", false));
 
-        timgr.addTypeInfo("UUIDV4", new TypeInfo("UUIDV4", new IRNominalTypeSignature("UUIDV4"), 22, 16, LayoutTag.Value, undefined, true));
-        timgr.addTypeInfo("UUIDV7", new TypeInfo("UUIDV7", new IRNominalTypeSignature("UUIDV7"), 23, 16, LayoutTag.Value, undefined, true));
+        timgr.addTypeInfo("Byte", new TypeInfo("Byte", new IRNominalTypeSignature("Byte"), 22, 8, LayoutTag.Value, undefined, true));
+        timgr.addTypeInfo("CChar", new TypeInfo("CChar", new IRNominalTypeSignature("CChar"), 23, 8, LayoutTag.Value, undefined, true));
+        timgr.addTypeInfo("UnicodeChar", new TypeInfo("UnicodeChar", new IRNominalTypeSignature("UnicodeChar"), 24, 8, LayoutTag.Value, undefined, true));
 
-        timgr.addTypeInfo("CRegex", new TypeInfo("CRegex", new IRNominalTypeSignature("CRegex"), 24, 8, LayoutTag.Value, undefined, true));
-        timgr.addTypeInfo("Regex", new TypeInfo("Regex", new IRNominalTypeSignature("Regex"), 25, 8, LayoutTag.Value, undefined, true));
+        timgr.addTypeInfo("UUIDV4", new TypeInfo("UUIDV4", new IRNominalTypeSignature("UUIDV4"), 25, 16, LayoutTag.Value, undefined, true));
+        timgr.addTypeInfo("UUIDV7", new TypeInfo("UUIDV7", new IRNominalTypeSignature("UUIDV7"), 26, 16, LayoutTag.Value, undefined, true));
+
+        timgr.addTypeInfo("CRegex", new TypeInfo("CRegex", new IRNominalTypeSignature("CRegex"), 27, 8, LayoutTag.Value, undefined, true));
+        timgr.addTypeInfo("Regex", new TypeInfo("Regex", new IRNominalTypeSignature("Regex"), 28, 8, LayoutTag.Value, undefined, true));
 
         //TODO: more primitive types
 

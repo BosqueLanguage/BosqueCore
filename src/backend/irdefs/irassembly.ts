@@ -1723,17 +1723,17 @@ class IRAssembly {
             //this.typedepcycles.map((c) => `Assembly::TypeDependencyCycle{[${c.map((t) => t.toBAPI()).join(",")}]} `).join(",")
         ];
 
-        return `Assembly::Assembly{\n    ${stuff.join(",\n    ")}\n}\n`;
+        return `Assembly::BapiAssembly{\n    ${stuff.join(",\n    ")}\n}\n`;
     }
 
     static parseBAPI(lexer: BAPILexer): IRAssembly {
         const tok = lexer.peekToken();
-        if(tok.kind !== BAPITokenKind.TypeIdentifier || tok.value !== "Assembly::Assembly") {
+        if(tok.kind !== BAPITokenKind.TypeIdentifier || tok.value !== "Assembly::BapiAssembly") {
             throw new Error(`Unexpected token ${tok.value} when parsing IRAssembly`);
         }
 
         let irasm = new IRAssembly();
-        lexer.consumeToken(); //Assembly::Assembly
+        lexer.consumeToken(); //Assembly::BapiAssembly
         lexer.ensureAndConsumeSymbol("{");
 
         lexer.ensureAndConsumeSymbol("List<Assembly::PrimitiveEntityTypeDecl>");
