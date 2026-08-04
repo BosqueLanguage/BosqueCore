@@ -3036,6 +3036,9 @@ class CPPEmitter {
 
     private generateHeaderSetup(): string {
         return [
+            '#include <iostream>',
+            '#include <fstream>',
+            '',
             '#include "./runcpp/common.h"',
             '#include "./runcpp/core/coredecls.h"',
             '#include "./runcpp/core/elist.h"',
@@ -3066,27 +3069,61 @@ class CPPEmitter {
             return '    //No args';
         }
         else {
-            xxxx;
-            
-            const initforparse = 
-            '    auto iobb = ᐸRuntimeᐳ::g_alloc_info.io_buffer_alloc();\n' + 
-            '    size_t ibytes = std::strlen(argv[1]);\n' +
-            '    std::copy(argv[1], argv[1] + ibytes, iobb);\n\n' +
-            '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.initialize({iobb}, ibytes);\n' +
-            '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.setSloppyStringParsing(true);\n';
-
-            const pargs = idecl.params.map((p) => {
+            const argistrs = idecl.params.map((p, ii) => {
                 const vname = TransformCPPNameManager.convertIdentifier(p.name);
                 const parsekey = TransformCPPNameManager.convertTypeKey(p.type.tkeystr);
 
-                return `    auto _${vname} = BSQ_parse${parsekey}(); if(!_${vname}.has_value()) { printf("Error parsing input\\n"); exit(1); }\n`;
-            }).join("\n") + "\n";
+                const hhparse = `    if(argc <= ${ii} + scount) { printf("Missing argument for parameter ${p.name}\\n"); exit(1); }\n` +
+                `    if(argv[${ii} + scount][0] == '-') { printf("Missing argument for parameter ${p.name}\\n"); exit(1); }\n`;
+                '\n' +
+                `    if(std::strcmp(argv[${ii} + scount], "-f") == 0 || std::strcmp(argv[${ii} + scount], "--file") == 0) { fread = true; scount++; }\n` +
+                `    if(std::strcmp(argv[${ii} + scount], "-a") == 0 || std::strcmp(argv[${ii} + scount], "--allfiles") == 0) { freadall = true; scount++; }\n` +
+                `    if(std::strcmp(argv[${ii} + scount], "-c") == 0 || std::strcmp(argv[${ii} + scount], "--cin") == 0) { cinread = true; scount++; }\n` +
+                `    auto iobb_ = ᐸRuntimeᐳ::g_alloc_info.io_buffer_alloc();\n`;
 
+                const initforparse_file = 
+                `    if(fread || freadall) {\n` + 
+                `        fread = false;\n` +
+                `        size_t ibytes = std::strlen(argv[1]);\n` +
+                `        std::copy(argv[1], argv[1] + ibytes, iobb);\n\n` +
+                `        ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.initialize({iobb}, ibytes);\n` +
+                `    }\n`;
+
+                ////
+                 // Open at the end of the file (ios::ate) in binary mode
+    std::ifstream file("example.txt", std::ios::binary | std::ios::in | std::ios::ate);
+
+    if (file.is_open()) {
+        // tellg() reports the current cursor position (which is at the end)
+        std::streamsize size = file.tellg();
+        std::cout << "File size: " << size << " bytes\n";
+        
+        // Optional: Reset pointer back to the beginning if you want to read it
+        file.seekg(0, std::ios::beg); 
+    } else {
+        std::cout << "Failed to open file.\n";
+    }
+                ////
+
+            const initforparse_stdin =
+            xxxx;
+
+                const initforparse_arg = 
+            `    size_t ibytes = std::strlen(argv[${ii} + scount]);\n` +
+            `    std::copy(argv[${ii} + scount], argv[${ii} + scount + ibytes], iobb_${vname});\n\n` +
+            `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.initialize({iobb_${vname}}, ibytes);\n`;
+            
+            const pargs = `        ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.setSloppyStringParsing(true);\n` + 
+            `    auto _${vname} = BSQ_parse${parsekey}(); if(!_${vname}.has_value()) { printf("Error parsing input\\n"); exit(1); }\n`;
+            
             const finalizeparse = 
             '    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.allInputConsumed()) { printf("Error parsing input -- invalid data in tail of input\\n"); exit(1); }\n' +
             '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.release();\n';
 
-            return [initforparse, pargs, finalizeparse].join("\n");
+            return [hhparse, initforparse_file, initforparse_stdin, initforparse_arg, pargs, finalizeparse].join("\n");
+            });
+
+            return '    size_t scount = 1;\n    bool fread = false;\n    bool freadall = false;\n    bool cinread = false;\n\n' + argistrs.join("\n\n");
         }
     }
 
