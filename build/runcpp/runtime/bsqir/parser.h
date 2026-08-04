@@ -8,6 +8,7 @@
 #include "../../core/chars.h"
 #include "../../core/integrals.h"
 #include "../../core/strings.h"
+#include "../../core/bytebuff.h"
 
 namespace ᐸRuntimeᐳ
 {
@@ -103,6 +104,8 @@ namespace ᐸRuntimeᐳ
 
         std::optional<XCString> parseCString();
         std::optional<XString> parseString();
+
+        std::optional<XByteBuffer> parseByteBuffer();
 
         std::optional<XCRegex> parseCRegex();
         std::optional<XRegex> parseRegex();

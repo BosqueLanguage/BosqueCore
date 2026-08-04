@@ -13,6 +13,7 @@ const s_runtimename = "ᐸRuntimeᐳ";
 
 class TransformCPPNameManager {
     static c_dangerous: Map<string, string> = new Map<string, string>([
+        ["asm", "ᐸasmᐳ"],
         ["this", "ᐸthisᐳ"],
         ["$return", "ᐸreturnᐳ"]
     ]);

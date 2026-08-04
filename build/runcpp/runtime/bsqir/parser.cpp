@@ -621,6 +621,11 @@ namespace ᐸRuntimeᐳ
         }
     }
 
+    std::optional<XByteBuffer> BSQONParser::parseByteBuffer()
+    {
+        assert(false); // Not Implemented: parsing ByteBuffer values
+    }
+
     std::optional<XCRegex> BSQONParser::parseCRegex()
     {
         assert(false); // Not Implemented: parsing CRegex values

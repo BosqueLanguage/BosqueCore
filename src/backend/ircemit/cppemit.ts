@@ -1959,8 +1959,8 @@ class CPPEmitter {
         const cflags = "std::regex::ECMAScript | std::regex::nosubs";
         const uflags = "std::regex::ECMAScript | std::regex::nosubs";
         const redef = `namespace ᐸRuntimeᐳ {\n` +
-        `    std::array<std::basic_regex<char>, ${cregexs.length}> g_cregexs = { ${cregexs.map((re) => `std::basic_regex<char>("${re.cppregex}", ${cflags})`).join(", ")} };\n` +
-        `    std::array<std::basic_regex<char32_t>, ${uregexs.length}> g_uregexs = { ${uregexs.map((re) => `std::basic_regex<char32_t>(U"${re.cppregex}", ${uflags})`).join(", ")} };\n` +
+        `    std::array<std::basic_regex<char>, ${cregexs.length}> g_cregexs = { ${cregexs.map((re) => `std::basic_regex<char>(R"${re.cppregex}", ${cflags})`).join(", ")} };\n` +
+        `    std::array<std::basic_regex<char32_t>, ${uregexs.length}> g_uregexs = { ${uregexs.map((re) => `std::basic_regex<char32_t>(UR"${re.cppregex}", ${uflags})`).join(", ")} };\n` +
         `}`;
 
         return [redecl, redef];
@@ -2885,6 +2885,44 @@ class CPPEmitter {
         const allfdecls = this.irasm.typedepcycles.flat().filter((t) => this.typeInfoManager.getTypeInfo(t.tkeystr).tag === LayoutTag.Ref);
         const allftypes = this.irasm.typedeporder.filter((ttd) => allfdecls.some((fdecl) => fdecl.tkeystr === ttd.tkeystr));
         const allntypes = this.irasm.typedeporder.filter((ttd) => !allfdecls.some((fdecl) => fdecl.tkeystr === ttd.tkeystr));
+
+        //reorder types in cycles to ignore any forward declared types
+        let cycletypes = new Set<string>();
+        this.irasm.typedepcycles.forEach((cycle) => {
+            cycle.forEach((ct) => {
+                cycletypes.add(ct.tkeystr);
+            });
+        });
+        let posmap = new Map<string, number>();
+        this.irasm.typedeporder.forEach((ttd, ii) => {
+            posmap.set(ttd.tkeystr, ii);
+        });
+
+        allntypes.sort((a, b) => {
+            if(!cycletypes.has(a.tkeystr) && !cycletypes.has(b.tkeystr)) {
+                return (posmap.get(a.tkeystr) as number) - (posmap.get(b.tkeystr) as number);
+            }
+            else {
+                const cycle = this.irasm.typedepcycles.find((cyc) => cyc.find((ct) => ct.tkeystr === a.tkeystr) && cyc.find((ct) => ct.tkeystr === b.tkeystr));
+                if(cycle === undefined) {
+                    return (posmap.get(a.tkeystr) as number) - (posmap.get(b.tkeystr) as number);
+                }
+                else {
+                    const adeps = this.irasm.getTypeDependencyInfo(a).filter((dep) => !allfdecls.some((fdecl) => fdecl.tkeystr === dep.tkeystr));
+                    const bdeps = this.irasm.getTypeDependencyInfo(b).filter((dep) => !allfdecls.some((fdecl) => fdecl.tkeystr === dep.tkeystr));
+
+                    if(adeps.some((dep) => dep.tkeystr === b.tkeystr)) {
+                        return 1;
+                    }
+                    else if(bdeps.some((dep) => dep.tkeystr === a.tkeystr)) {
+                        return -1;
+                    }
+                    else {
+                        return (posmap.get(a.tkeystr) as number) - (posmap.get(b.tkeystr) as number);
+                    }
+                }
+            }
+        });
 
         const decltdd = [...allntypes, ...allftypes]
         .filter((ttd) => {

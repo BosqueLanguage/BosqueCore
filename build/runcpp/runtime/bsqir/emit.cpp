@@ -229,12 +229,17 @@ namespace ᐸRuntimeᐳ
         this->bufferMgr.writeImmediate("\"");
     }
 
+    void BSQONEmitter::emitByteBuffer(XByteBuffer buf)
+    {
+        assert(false); // Not Implemented: emitting ByteBuffer values
+    }
+
     void BSQONEmitter::emitCRegex(XCRegex r)
     {
         assert(false); // Not Implemented: emitting CRegex values
     }
     
-    void emitRegex(XRegex r)
+    void BSQONEmitter::emitRegex(XRegex r)
     {
         assert(false); // Not Implemented: emitting Regex values
     }

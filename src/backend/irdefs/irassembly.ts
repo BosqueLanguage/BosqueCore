@@ -1482,8 +1482,6 @@ class IRAssembly {
     readonly typedeporder: IRTypeSignature[] = [];
     readonly typedepcycles: IRTypeSignature[][] = [];
 
-    maxerrorid: number = 0;
-
     constructor() {
     }
 
@@ -1526,7 +1524,7 @@ class IRAssembly {
         }
     }
 
-    private getTypeDependencyInfo(tsig: IRTypeSignature): IRTypeSignature[] {
+    getTypeDependencyInfo(tsig: IRTypeSignature): IRTypeSignature[] {
         let ttl: IRTypeSignature[] = [];
         if(tsig instanceof IRLambdaParameterPackTypeSignature) {
             const lsdecl = this.alllambdas.get(tsig.tkeystr) as IRLambdaParameterPackDecl;
