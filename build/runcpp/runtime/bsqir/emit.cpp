@@ -353,6 +353,11 @@ namespace ᐸRuntimeᐳ
         s.diagnosticEmit(out, true);
     }
 
+    void DiagnosticsEmitter::emitByteBuffer(std::ostream& out, XByteBuffer buf)
+    {
+        assert(false); // Not Implemented: emitting ByteBuffer values
+    }
+
     void DiagnosticsEmitter::emitCRegex(std::ostream& out, XCRegex r)
     {
         assert(false); // Not Implemented: emitting CRegex values

@@ -1958,9 +1958,12 @@ class CPPEmitter {
 
         const cflags = "std::regex::ECMAScript | std::regex::nosubs";
         const uflags = "std::regex::ECMAScript | std::regex::nosubs";
+        const crecpp = cregexs.map((re) => `std::basic_regex<char>("${re.cppregex.replace(/\\/g, '\\\\')}", ${cflags})`);
+        const urecpp = uregexs.map((re) => `std::basic_regex<char32_t>(U"${re.cppregex.replace(/\\/g, '\\\\')}", ${uflags})`);
+
         const redef = `namespace ᐸRuntimeᐳ {\n` +
-        `    std::array<std::basic_regex<char>, ${cregexs.length}> g_cregexs = { ${cregexs.map((re) => `std::basic_regex<char>(R"${re.cppregex}", ${cflags})`).join(", ")} };\n` +
-        `    std::array<std::basic_regex<char32_t>, ${uregexs.length}> g_uregexs = { ${uregexs.map((re) => `std::basic_regex<char32_t>(UR"${re.cppregex}", ${uflags})`).join(", ")} };\n` +
+        `    std::array<std::basic_regex<char>, ${cregexs.length}> g_cregexs = { ${crecpp.join(", ")} };\n` +
+        `    std::array<std::basic_regex<char32_t>, ${uregexs.length}> g_uregexs = { ${urecpp.join(", ")} };\n` +
         `}`;
 
         return [redecl, redef];
@@ -3063,6 +3066,8 @@ class CPPEmitter {
             return '    //No args';
         }
         else {
+            xxxx;
+            
             const initforparse = 
             '    auto iobb = ᐸRuntimeᐳ::g_alloc_info.io_buffer_alloc();\n' + 
             '    size_t ibytes = std::strlen(argv[1]);\n' +

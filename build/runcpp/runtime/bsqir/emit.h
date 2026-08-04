@@ -218,6 +218,8 @@ namespace ᐸRuntimeᐳ
         static void emitCString(std::ostream& out, XCString s);
         static void emitString(std::ostream& out, XString s);
 
+        static void emitByteBuffer(std::ostream& out, XByteBuffer buf);
+
         static void emitCRegex(std::ostream& out, XCRegex r);
         static void emitRegex(std::ostream& out, XRegex r);
     };
