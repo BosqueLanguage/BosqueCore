@@ -88,7 +88,7 @@ function emitAssemblyIR(ircode: IRAssembly, outname: string) {
     Status.output("    Writing IR code to disk...\n");
     const nndir = path.normalize(outname);
     try {
-        const hname = path.join(nndir, `assembly.bsqir`);
+        const hname = path.join(nndir, `assembly.bapi`);
         fs.writeFileSync(hname, maincode);
     }
     catch(e) {      

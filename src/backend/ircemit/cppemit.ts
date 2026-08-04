@@ -3107,7 +3107,7 @@ class CPPEmitter {
                 `    else {\n` +
                 `        ibytes_${vname} = std::strlen(argv[${ii} + scount]);\n` +
                 `        iobb_${vname}.push_back(ᐸRuntimeᐳ::g_alloc_info.io_buffer_alloc());\n` +
-                `        std::copy(argv[${ii} + scount], argv[${ii} + scount + ibytes_${vname}], iobb_${vname}.back());\n\n` +
+                `        std::copy(argv[${ii} + scount], argv[${ii} + scount] + ibytes_${vname}, iobb_${vname}.back());\n` +
                 `    }\n`;
             
                 const pargs = 
