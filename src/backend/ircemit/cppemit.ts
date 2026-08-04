@@ -3073,57 +3073,56 @@ class CPPEmitter {
                 const vname = TransformCPPNameManager.convertIdentifier(p.name);
                 const parsekey = TransformCPPNameManager.convertTypeKey(p.type.tkeystr);
 
-                const hhparse = `    if(argc <= ${ii} + scount) { printf("Missing argument for parameter ${p.name}\\n"); exit(1); }\n` +
-                `    if(argv[${ii} + scount][0] == '-') { printf("Missing argument for parameter ${p.name}\\n"); exit(1); }\n`;
-                '\n' +
+                const hhparse = 
+                `    if(argc <= ${ii} + scount || (argv[${ii} + scount][0] == '-' && argc < ${ii} + scount)) { printf("Missing argument for parameter ${p.name}\\n"); exit(1); }\n` +
                 `    if(std::strcmp(argv[${ii} + scount], "-f") == 0 || std::strcmp(argv[${ii} + scount], "--file") == 0) { fread = true; scount++; }\n` +
                 `    if(std::strcmp(argv[${ii} + scount], "-a") == 0 || std::strcmp(argv[${ii} + scount], "--allfiles") == 0) { freadall = true; scount++; }\n` +
                 `    if(std::strcmp(argv[${ii} + scount], "-c") == 0 || std::strcmp(argv[${ii} + scount], "--cin") == 0) { cinread = true; scount++; }\n` +
-                `    auto iobb_ = ᐸRuntimeᐳ::g_alloc_info.io_buffer_alloc();\n`;
+                `    size_t ibytes_${vname} = 0;\n` +
+                `    std::list<uint8_t*> iobb_${vname} = { };\n`;
 
                 const initforparse_file = 
                 `    if(fread || freadall) {\n` + 
                 `        fread = false;\n` +
-                `        size_t ibytes = std::strlen(argv[1]);\n` +
-                `        std::copy(argv[1], argv[1] + ibytes, iobb);\n\n` +
-                `        ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.initialize({iobb}, ibytes);\n` +
-                `    }\n`;
+                `        std::ifstream bsqcontents(argv[${ii} + scount], std::ios::binary | std::ios::in | std::ios::ate);\n` +
+                `        if(!bsqcontents.is_open()) { printf("Failed to open file %s\\n", argv[${ii} + scount]); exit(1); }\n` +
+                `        ibytes_${vname} = bsqcontents.tellg();\n` +
+                `        bsqcontents.seekg(0, std::ios::beg);\n` +
+                '\n' +
+                `        for(size_t jj = 0; jj < ibytes_${vname}; jj += ᐸRuntimeᐳ::MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE) {\n` +
+                `            iobb_${vname}.push_back(ᐸRuntimeᐳ::g_alloc_info.io_buffer_alloc());\n` +
+                `            size_t jend = std::min(jj + ᐸRuntimeᐳ::MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE, ibytes_${vname});\n` +
+                `            if(!bsqcontents.read(reinterpret_cast<char*>(iobb_${vname}.back()), jend - jj)) { printf("Failed to read file %s\\n", argv[${ii} + scount]); exit(1); }\n` +
+                `        }\n` +
+                `        bsqcontents.close();\n` +
+                `    }`;
 
-                ////
-                 // Open at the end of the file (ios::ate) in binary mode
-    std::ifstream file("example.txt", std::ios::binary | std::ios::in | std::ios::ate);
-
-    if (file.is_open()) {
-        // tellg() reports the current cursor position (which is at the end)
-        std::streamsize size = file.tellg();
-        std::cout << "File size: " << size << " bytes\n";
-        
-        // Optional: Reset pointer back to the beginning if you want to read it
-        file.seekg(0, std::ios::beg); 
-    } else {
-        std::cout << "Failed to open file.\n";
-    }
-                ////
-
-            const initforparse_stdin =
-            xxxx;
+                const initforparse_stdin =
+                `    else if(cinread) {\n` +
+                `        cinread = false;\n` +
+                `        assert(false);\n` +
+                `    }`;
 
                 const initforparse_arg = 
-            `    size_t ibytes = std::strlen(argv[${ii} + scount]);\n` +
-            `    std::copy(argv[${ii} + scount], argv[${ii} + scount + ibytes], iobb_${vname});\n\n` +
-            `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.initialize({iobb_${vname}}, ibytes);\n`;
+                `    else {\n` +
+                `        ibytes_${vname} = std::strlen(argv[${ii} + scount]);\n` +
+                `        iobb_${vname}.push_back(ᐸRuntimeᐳ::g_alloc_info.io_buffer_alloc());\n` +
+                `        std::copy(argv[${ii} + scount], argv[${ii} + scount + ibytes_${vname}], iobb_${vname}.back());\n\n` +
+                `    }\n`;
             
-            const pargs = `        ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.setSloppyStringParsing(true);\n` + 
-            `    auto _${vname} = BSQ_parse${parsekey}(); if(!_${vname}.has_value()) { printf("Error parsing input\\n"); exit(1); }\n`;
+                const pargs = 
+                `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.initialize(std::move(iobb_${vname}), ibytes_${vname});\n` +
+                `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.setSloppyStringParsing(true);\n` + 
+                `    auto _${vname} = BSQ_parse${parsekey}(); if(!_${vname}.has_value()) { printf("Error parsing input\\n"); exit(1); }\n`;
             
-            const finalizeparse = 
-            '    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.allInputConsumed()) { printf("Error parsing input -- invalid data in tail of input\\n"); exit(1); }\n' +
-            '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.release();\n';
+                const finalizeparse = 
+                '    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.allInputConsumed()) { printf("Error parsing input -- invalid data in tail of input\\n"); exit(1); }\n' +
+                '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.release();\n';
 
-            return [hhparse, initforparse_file, initforparse_stdin, initforparse_arg, pargs, finalizeparse].join("\n");
+                return [hhparse, initforparse_file, initforparse_stdin, initforparse_arg, pargs, finalizeparse].join("\n");
             });
 
-            return '    size_t scount = 1;\n    bool fread = false;\n    bool freadall = false;\n    bool cinread = false;\n\n' + argistrs.join("\n\n");
+            return '    int scount = 1;\n    bool fread = false;\n    bool freadall = false;\n    bool cinread = false;\n\n' + argistrs.join("\n\n");
         }
     }
 
