@@ -19,7 +19,7 @@ describe ("Parser -- Lambda calls", () => {
         parseTestFunctionInFileError('function foo(f: fn(Int) -> Int): Int { return f(1i); } function main(): Bool { return foo(fn(x: Int): Int { return x + 1i; }); }', 'Expected " => " but got "{" when parsing "lambda declaration"');
         parseTestFunctionInFileError('function foo(f: fn(Int): Int): Int { return f(1i); } function main(): Bool { return foo(fn(x: Int): Int => { return x + 1i; }); }', 'Expected " -> " but got ":" when parsing "lambda type reference"');
         
-        parseTestFunctionInFileError('function foo(f: (Int) -> Int): Int { return f(1i); } function main(): Bool { return foo(fn(x: Int): Int => { return x + 1i; }); }', 'Expected ")" but got "[RECOVER]" when parsing "function parameter list"');
+        parseTestFunctionInFileError('function foo(f: (Int) -> Int): Int { return f(1i); } function main(): Bool { return foo(fn(x: Int): Int => { return x + 1i; }); }', 'Expected a type signature for parameter type');
         parseTestFunctionInFileError('function foo(f: fn(Int) -> Int): Int { return f(1i); } function main(): Bool { return foo((x: Int): Int => { return x + 1i; }); }', "Could not resolve 'x' in this context");
 
         parseTestFunctionInFileError('function foo(f: fn(Int) -> Int): Int { return f(_, 1i); } function main(): Int { return foo(fn(x: Int): Int => { return x + 1i; }); }', "Cannot have skip arguments in lambda call context");
