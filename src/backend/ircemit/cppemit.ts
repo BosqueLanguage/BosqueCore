@@ -1958,9 +1958,12 @@ class CPPEmitter {
 
         const cflags = "std::regex::ECMAScript | std::regex::nosubs";
         const uflags = "std::regex::ECMAScript | std::regex::nosubs";
+        const crecpp = cregexs.map((re) => `std::basic_regex<char>("${re.cppregex.replace(/\\/g, '\\\\')}", ${cflags})`);
+        const urecpp = uregexs.map((re) => `std::basic_regex<char32_t>(U"${re.cppregex.replace(/\\/g, '\\\\')}", ${uflags})`);
+
         const redef = `namespace ᐸRuntimeᐳ {\n` +
-        `    std::array<std::basic_regex<char>, ${cregexs.length}> g_cregexs = { ${cregexs.map((re) => `std::basic_regex<char>("${re.cppregex}", ${cflags})`).join(", ")} };\n` +
-        `    std::array<std::basic_regex<char32_t>, ${uregexs.length}> g_uregexs = { ${uregexs.map((re) => `std::basic_regex<char32_t>(U"${re.cppregex}", ${uflags})`).join(", ")} };\n` +
+        `    std::array<std::basic_regex<char>, ${cregexs.length}> g_cregexs = { ${crecpp.join(", ")} };\n` +
+        `    std::array<std::basic_regex<char32_t>, ${uregexs.length}> g_uregexs = { ${urecpp.join(", ")} };\n` +
         `}`;
 
         return [redecl, redef];
@@ -2886,6 +2889,44 @@ class CPPEmitter {
         const allftypes = this.irasm.typedeporder.filter((ttd) => allfdecls.some((fdecl) => fdecl.tkeystr === ttd.tkeystr));
         const allntypes = this.irasm.typedeporder.filter((ttd) => !allfdecls.some((fdecl) => fdecl.tkeystr === ttd.tkeystr));
 
+        //reorder types in cycles to ignore any forward declared types
+        let cycletypes = new Set<string>();
+        this.irasm.typedepcycles.forEach((cycle) => {
+            cycle.forEach((ct) => {
+                cycletypes.add(ct.tkeystr);
+            });
+        });
+        let posmap = new Map<string, number>();
+        this.irasm.typedeporder.forEach((ttd, ii) => {
+            posmap.set(ttd.tkeystr, ii);
+        });
+
+        allntypes.sort((a, b) => {
+            if(!cycletypes.has(a.tkeystr) && !cycletypes.has(b.tkeystr)) {
+                return (posmap.get(a.tkeystr) as number) - (posmap.get(b.tkeystr) as number);
+            }
+            else {
+                const cycle = this.irasm.typedepcycles.find((cyc) => cyc.find((ct) => ct.tkeystr === a.tkeystr) && cyc.find((ct) => ct.tkeystr === b.tkeystr));
+                if(cycle === undefined) {
+                    return (posmap.get(a.tkeystr) as number) - (posmap.get(b.tkeystr) as number);
+                }
+                else {
+                    const adeps = this.irasm.getTypeDependencyInfo(a).filter((dep) => !allfdecls.some((fdecl) => fdecl.tkeystr === dep.tkeystr));
+                    const bdeps = this.irasm.getTypeDependencyInfo(b).filter((dep) => !allfdecls.some((fdecl) => fdecl.tkeystr === dep.tkeystr));
+
+                    if(adeps.some((dep) => dep.tkeystr === b.tkeystr)) {
+                        return 1;
+                    }
+                    else if(bdeps.some((dep) => dep.tkeystr === a.tkeystr)) {
+                        return -1;
+                    }
+                    else {
+                        return (posmap.get(a.tkeystr) as number) - (posmap.get(b.tkeystr) as number);
+                    }
+                }
+            }
+        });
+
         const decltdd = [...allntypes, ...allftypes]
         .filter((ttd) => {
             if(!(ttd instanceof IRNominalTypeSignature)) {
@@ -2995,6 +3036,9 @@ class CPPEmitter {
 
     private generateHeaderSetup(): string {
         return [
+            '#include <iostream>',
+            '#include <fstream>',
+            '',
             '#include "./runcpp/common.h"',
             '#include "./runcpp/core/coredecls.h"',
             '#include "./runcpp/core/elist.h"',
@@ -3025,25 +3069,63 @@ class CPPEmitter {
             return '    //No args';
         }
         else {
-            const initforparse = 
-            '    auto iobb = ᐸRuntimeᐳ::g_alloc_info.io_buffer_alloc();\n' + 
-            '    size_t ibytes = std::strlen(argv[1]);\n' +
-            '    std::copy(argv[1], argv[1] + ibytes, iobb);\n\n' +
-            '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.initialize({iobb}, ibytes);\n' +
-            '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.setSloppyStringParsing(true);\n';
-
-            const pargs = idecl.params.map((p) => {
+            const argistrs = idecl.params.map((p, ii) => {
                 const vname = TransformCPPNameManager.convertIdentifier(p.name);
                 const parsekey = TransformCPPNameManager.convertTypeKey(p.type.tkeystr);
 
-                return `    auto _${vname} = BSQ_parse${parsekey}(); if(!_${vname}.has_value()) { printf("Error parsing input\\n"); exit(1); }\n`;
-            }).join("\n") + "\n";
+                const hhparse = 
+                `    if(argc <= ${ii} + scount) { printf("Missing argument for parameter ${p.name}\\n"); exit(1); }\n` +
+                `    if(std::strcmp(argv[${ii} + scount], "-f") == 0 || std::strcmp(argv[${ii} + scount], "--file") == 0) { fread = true; scount++; }\n` +
+                `    else if(std::strcmp(argv[${ii} + scount], "-a") == 0 || std::strcmp(argv[${ii} + scount], "--allfiles") == 0) { freadall = true; scount++; }\n` +
+                `    else if(std::strcmp(argv[${ii} + scount], "-c") == 0 || std::strcmp(argv[${ii} + scount], "--cin") == 0) { cinread = true; scount++; }\n` +
+                `    else { ; }\n` +
+                `    if(argc <= ${ii} + scount) { printf("Missing argument for parameter ${p.name}\\n"); exit(1); }\n` +
+                `\n` +
+                `    size_t ibytes_${vname} = 0;\n` +
+                `    std::list<uint8_t*> iobb_${vname} = { };\n`;
 
-            const finalizeparse = 
-            '    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.allInputConsumed()) { printf("Error parsing input -- invalid data in tail of input\\n"); exit(1); }\n' +
-            '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.release();\n';
+                const initforparse_file = 
+                `    if(fread || freadall) {\n` + 
+                `        fread = false;\n` +
+                `        std::ifstream bsqcontents(argv[${ii} + scount], std::ios::binary | std::ios::in | std::ios::ate);\n` +
+                `        if(!bsqcontents.is_open()) { printf("Failed to open file %s\\n", argv[${ii} + scount]); exit(1); }\n` +
+                `        ibytes_${vname} = bsqcontents.tellg();\n` +
+                `        bsqcontents.seekg(0, std::ios::beg);\n` +
+                '\n' +
+                `        for(size_t jj = 0; jj < ibytes_${vname}; jj += ᐸRuntimeᐳ::MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE) {\n` +
+                `            iobb_${vname}.push_back(ᐸRuntimeᐳ::g_alloc_info.io_buffer_alloc());\n` +
+                `            size_t jend = std::min(jj + ᐸRuntimeᐳ::MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE, ibytes_${vname});\n` +
+                `            if(!bsqcontents.read(reinterpret_cast<char*>(iobb_${vname}.back()), jend - jj)) { printf("Failed to read file %s\\n", argv[${ii} + scount]); exit(1); }\n` +
+                `        }\n` +
+                `        bsqcontents.close();\n` +
+                `    }`;
 
-            return [initforparse, pargs, finalizeparse].join("\n");
+                const initforparse_stdin =
+                `    else if(cinread) {\n` +
+                `        cinread = false;\n` +
+                `        assert(false);\n` +
+                `    }`;
+
+                const initforparse_arg = 
+                `    else {\n` +
+                `        ibytes_${vname} = std::strlen(argv[${ii} + scount]);\n` +
+                `        iobb_${vname}.push_back(ᐸRuntimeᐳ::g_alloc_info.io_buffer_alloc());\n` +
+                `        std::copy(argv[${ii} + scount], argv[${ii} + scount] + ibytes_${vname}, iobb_${vname}.back());\n` +
+                `    }\n`;
+            
+                const pargs = 
+                `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.initialize(std::move(iobb_${vname}), ibytes_${vname});\n` +
+                `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.setSloppyStringParsing(true);\n` + 
+                `    auto _${vname} = BSQ_parse${parsekey}(); if(!_${vname}.has_value()) { printf("Error parsing input\\n"); exit(1); }\n`;
+            
+                const finalizeparse = 
+                '    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.allInputConsumed()) { printf("Error parsing input -- invalid data in tail of input\\n"); exit(1); }\n' +
+                '    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.release();\n';
+
+                return [hhparse, initforparse_file, initforparse_stdin, initforparse_arg, pargs, finalizeparse].join("\n");
+            });
+
+            return '    int scount = 1;\n    bool fread = false;\n    bool freadall = false;\n    bool cinread = false;\n\n' + argistrs.join("\n\n");
         }
     }
 

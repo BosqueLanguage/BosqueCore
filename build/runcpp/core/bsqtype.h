@@ -40,11 +40,15 @@ namespace ᐸRuntimeᐳ
     inline constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFERBLOCK = 20;
     inline constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTEBUFFER = 21;
 
-    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_UUIDV4 = 22;
-    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_UUIDV7 = 23;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_BYTE = 22;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_CCHAR = 23;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_UNICODECHAR = 24;
 
-    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_CREGEX = 24;
-    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_REGEX = 25;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_UUIDV4 = 25;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_UUIDV7 = 26;
+
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_CREGEX = 27;
+    inline constexpr uint32_t WELL_KNOWN_TYPE_ID_REGEX = 28;
 
     enum class LayoutTag : uint16_t
     {

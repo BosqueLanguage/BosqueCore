@@ -14,7 +14,7 @@ import { IRAssembly } from "../backend/irdefs/irassembly.js";
 
 const runcppdir = path.join(__dirname, "../../runcpp/");
 
-const [fullargs, mainns, outdir] = parseArgv("cppout", ...process.argv);
+const [fullargs, mainns, outdir, emitir] = parseArgv("cppout", ...process.argv);
 
 function buildExeCode(ircode: IRAssembly, outname: string) {
     Status.output("Emitting CPP code...\n");
@@ -82,17 +82,13 @@ function emitCommandLineMakefile(optlevel: "testing" | "release"): string {
 }
 
 function emitAssemblyIR(ircode: IRAssembly, outname: string) {
-    //TODO: re-enable later when tested 
-    return false
-
-    /*
     Status.output("Emitting IR code...\n");
     const maincode = ircode.toBAPI();
 
     Status.output("    Writing IR code to disk...\n");
     const nndir = path.normalize(outname);
     try {
-        const hname = path.join(nndir, `assembly.bsqir`);
+        const hname = path.join(nndir, `assembly.bapi`);
         fs.writeFileSync(hname, maincode);
     }
     catch(e) {      
@@ -100,7 +96,6 @@ function emitAssemblyIR(ircode: IRAssembly, outname: string) {
     }
 
     Status.output(`    Assembly IR generation successful -- IR emitted to ${nndir}\n\n`);
-    */
 }
 
 //////////////////////////////
@@ -122,7 +117,9 @@ const iim = Monomorphizer.computeExecutableInstantiations(asm, [mainns]);
 Status.output("Generating IR code...\n");
 const ircode = ASMToIRConverter.generateIR(asm, iim, undefined);
 
-emitAssemblyIR(ircode, outdir);
+if(emitir) {
+    emitAssemblyIR(ircode, outdir);
+}
 
 buildExeCode(ircode, outdir);
 moveRuntimeFiles("testing", outdir);

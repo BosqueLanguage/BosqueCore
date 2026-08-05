@@ -62,11 +62,18 @@ function workflowLoadAllSrc(files: string[]): CodeFileInfo[] | undefined {
     }
 }
 
-function parseArgv(dir: string, ...argv: string[]): [string[], string, string] {
+function parseArgv(dir: string, ...argv: string[]): [string[], string, string, boolean] {
     let fullargs = argv.slice(2);
     if(fullargs.length === 0) {
         Status.error("No input files specified!\n");
         process.exit(1);
+    }
+
+    let emitir = false;
+    let emitiridx = fullargs.findIndex((v) => v === "--iremit");
+    if(emitiridx !== -1) {
+        emitir = true;
+        fullargs = fullargs.slice(0, emitiridx).concat(fullargs.slice(emitiridx + 1));
     }
 
     let mainns = "Main";
@@ -82,8 +89,8 @@ function parseArgv(dir: string, ...argv: string[]): [string[], string, string] {
         outdir = fullargs[outdiridx + 1];
         fullargs = fullargs.slice(0, outdiridx).concat(fullargs.slice(outdiridx + 2));
     }
-   
-    return [fullargs, mainns, outdir];
+
+    return [fullargs, mainns, outdir, emitir];
 }
 
 function generateASMGeneral(usercode: PackageConfig, macrodefs: string[]): [Assembly | undefined, ParserError[], TypeError[]]{

@@ -21,16 +21,16 @@ of
     LiteralIntExpression { field value: Int; }
     LiteralChkNatExpression { field value: ChkNat; }
     LiteralChkIntExpression { field value: ChkInt; }
-    LiteralRationalExpression { field value: Rational; }
+%%  LiteralRationalExpression { field value: Rational; }
     LiteralFloatExpression { field value: Float; }
     LiteralByteBufferExpression { field value: ByteBuffer; }
-    %% More here 
+%% More here 
     LiteralUnicodeRegexExpression { field regexid: Nat; }
     LiteralCRegexExpression {  field regexid: Nat; }
     LiteralByteExpression { field value: Byte; }
     LiteralCCharExpression { field value: CChar; }
     LiteralUnicodeCharExpression { field value: UnicodeChar; }
-    %%And here
+%%And here
     LiteralCStringExpression { field value: List<CChar>; }
     LiteralStringExpression { field value: List<UnicodeChar>; }
 ;

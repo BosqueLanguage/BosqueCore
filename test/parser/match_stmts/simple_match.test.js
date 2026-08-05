@@ -10,9 +10,9 @@ describe ("Parser -- match Statement", () => {
     });
 
     it("should parse fail simple match", function () {
-        parseTestFunctionError("function main(): Int { let x: Option<Int> = some(3i); match(x) { None => { return 0i; } | _ => { return 1i; } } }", 'Expected "}" but got "|" when parsing "switch statment options"');
+        parseTestFunctionError("function main(): Int { let x: Option<Int> = some(3i); match(x) { None => { return 0i; } | _ => { return 1i; } } }", 'Expected a type signature for standard type');
         parseTestFunctionError("datatype Foo of F1 {} F2 {}; function main(): Int { let x: Foo = F1{}; match(x) { F1 => return 0i; F2 => return 1i; } }", 'Expected "{" but got "return" when parsing "block statement"');
-        parseTestFunctionError("datatype Foo of F1 {} F2 {}; function main(): Int { let x: Foo = F1{}; match(x) { F1 => { return 0i; } | F2 => { return 1i; } } }", 'Expected "}" but got "|" when parsing "switch statment options"');
+        parseTestFunctionError("datatype Foo of F1 {} F2 {}; function main(): Int { let x: Foo = F1{}; match(x) { F1 => { return 0i; } | F2 => { return 1i; } } }", 'Expected a type signature for standard type');
     });
 
     it("should parse binder match", function () {

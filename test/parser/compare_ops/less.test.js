@@ -11,7 +11,7 @@ describe ("Parser -- basic <", () => {
     });
 
     it("should fail stuck operator", function () {
-        parseTestExpError("2n<3n", 'Expected ">" but got "3n" when parsing "tagged literal"', "Nat");
+        parseTestExpError("2n<3n", 'Expected a type signature for type tag', "Nat");
     });
 
     it("should parse type alias compare", function () {
@@ -27,7 +27,7 @@ describe ("Parser -- basic <=", () => {
     });
 
     it("should fail stuck operator", function () {
-        parseTestExpError("2n<=3n", 'Expected ">" but got "=" when parsing "tagged literal"', "Nat");
+        parseTestExpError("2n<=3n", 'Expected a type signature for type tag', "Nat");
     });
 
     it("should parse type alias compare", function () {

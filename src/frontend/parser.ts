@@ -2524,6 +2524,7 @@ class Parser {
                 return this.parseElistType();
             }
             default: {
+                this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Expected a type signature for return type");
                 return new ErrorTypeSignature(this.peekToken().getSourceInfo(), undefined);
             }
         }
@@ -2574,6 +2575,7 @@ class Parser {
                 return this.parseLambdaType();
             }
             default: {
+                this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Expected a type signature for parameter type");
                 return new ErrorTypeSignature(this.peekToken().getSourceInfo(), undefined);
             }
         }
@@ -2586,6 +2588,7 @@ class Parser {
                 return this.parseNominalType();
             }
             default: {
+                this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Expected a type signature for provides type");
                 return new ErrorTypeSignature(this.peekToken().getSourceInfo(), undefined);
             }
         }
@@ -2601,6 +2604,7 @@ class Parser {
                 return this.parseNominalType();
             }
             default: {
+                this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Expected a type signature for type tag");
                 return new ErrorTypeSignature(this.peekToken().getSourceInfo(), undefined);
             }
         }
@@ -2613,6 +2617,7 @@ class Parser {
                 return this.parseNominalType();
             }
             default: {
+                this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Expected a type signature for typedecl RHS");
                 return new ErrorTypeSignature(this.peekToken().getSourceInfo(), undefined);
             }
         }
@@ -2631,6 +2636,7 @@ class Parser {
                 return this.parseElistType();
             }
             default: {
+                this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Expected a type signature for standard type");
                 return new ErrorTypeSignature(this.peekToken().getSourceInfo(), undefined);
             }
         }
@@ -2720,14 +2726,17 @@ class Parser {
 
         const nsr = this.parseIdentifierAccessChain();
         if(nsr === undefined) {
+            //error already recorded if needed (maybe)
             return new ErrorTypeSignature(sinfo, undefined);
         }
         else if(nsr.typeTokens.length === 0) {
+            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Expected a type signature for nominal type");
             return new ErrorTypeSignature(sinfo, nsr.nsScope.fullnamespace);
         }
         else {
             const resolved = this.normalizeTypeNameChain(sinfo, nsr.nsScope, nsr.typeTokens);
             if(resolved === undefined) {
+                this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Expected a type signature for nominal type");
                 return new ErrorTypeSignature(sinfo, nsr.nsScope.fullnamespace);
             }
             else {

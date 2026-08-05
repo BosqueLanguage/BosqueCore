@@ -72,7 +72,7 @@ concept InternalEntityTypeDecl provides AbstractEntityTypeDecl {
 entity PrimitiveEntityTypeDecl provides InternalEntityTypeDecl {
 }
 
-entity Assembly {
+entity BapiAssembly {
     %%readonly constants: IRConstantDecl[] = [];
 
     %%readonly tests: IRTestDecl[] = [];
