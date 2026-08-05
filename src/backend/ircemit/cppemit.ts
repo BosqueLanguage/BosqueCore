@@ -3074,10 +3074,13 @@ class CPPEmitter {
                 const parsekey = TransformCPPNameManager.convertTypeKey(p.type.tkeystr);
 
                 const hhparse = 
-                `    if(argc <= ${ii} + scount || (argv[${ii} + scount][0] == '-' && argc < ${ii} + scount)) { printf("Missing argument for parameter ${p.name}\\n"); exit(1); }\n` +
+                `    if(argc <= ${ii} + scount) { printf("Missing argument for parameter ${p.name}\\n"); exit(1); }\n` +
                 `    if(std::strcmp(argv[${ii} + scount], "-f") == 0 || std::strcmp(argv[${ii} + scount], "--file") == 0) { fread = true; scount++; }\n` +
-                `    if(std::strcmp(argv[${ii} + scount], "-a") == 0 || std::strcmp(argv[${ii} + scount], "--allfiles") == 0) { freadall = true; scount++; }\n` +
-                `    if(std::strcmp(argv[${ii} + scount], "-c") == 0 || std::strcmp(argv[${ii} + scount], "--cin") == 0) { cinread = true; scount++; }\n` +
+                `    else if(std::strcmp(argv[${ii} + scount], "-a") == 0 || std::strcmp(argv[${ii} + scount], "--allfiles") == 0) { freadall = true; scount++; }\n` +
+                `    else if(std::strcmp(argv[${ii} + scount], "-c") == 0 || std::strcmp(argv[${ii} + scount], "--cin") == 0) { cinread = true; scount++; }\n` +
+                `    else { ; }\n` +
+                `    if(argc <= ${ii} + scount) { printf("Missing argument for parameter ${p.name}\\n"); exit(1); }\n` +
+                `\n` +
                 `    size_t ibytes_${vname} = 0;\n` +
                 `    std::list<uint8_t*> iobb_${vname} = { };\n`;
 
