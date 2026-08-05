@@ -320,10 +320,10 @@ abstract class IRAbstractNominalTypeDecl {
         else if(ttypekey === 'Assembly::TypedeclBoundedTypeDecl') {
             return IRTypedeclTypeDecl.parseBAPIAsIRTypedeclTypeDecl(lexer);
         }
-        else if(ttypekey === 'Assembly::TypedeclCStringDecl') {
+        else if(ttypekey === 'Assembly::TypedeclCStringTypeDecl') {
             return IRTypedeclCStringDecl.parseBAPIAsIRTypedeclCStringDecl(lexer);
         }
-        else if(ttypekey === 'Assembly::TypedeclStringDecl') {
+        else if(ttypekey === 'Assembly::TypedeclStringTypeDecl') {
             return IRTypedeclStringDecl.parseBAPIAsIRTypedeclStringDecl(lexer);
         }
         else if(ttypekey === 'Assembly::PrimitiveEntityTypeDecl') {
@@ -517,7 +517,7 @@ class IRTypedeclCStringDecl extends IRTypedeclTypeDecl {
         const rngchkstr = this.rngchk !== undefined ? this.toBAPI_RNGCheck() : 'none';
         const rechkstr = this.rechk !== undefined ? `some(${this.rechk.toBAPI()})` : 'none';
 
-        return `Assembly::TypedeclCStringDecl{${this.toBAPI_IRAbstractEntityTypeDecl()}, ${this.iskeytype}, ${this.isnumerictype}, ${rngchkstr}, ${rechkstr}}`;
+        return `Assembly::TypedeclCStringTypeDecl{${this.toBAPI_IRAbstractEntityTypeDecl()}, ${this.iskeytype}, ${this.isnumerictype}, ${rngchkstr}, ${rechkstr}}`;
     }
 
     static parseBAPIAsIRTypedeclCStringDecl(lexer: BAPILexer): IRTypedeclCStringDecl {
@@ -567,7 +567,7 @@ class IRTypedeclStringDecl extends IRTypedeclTypeDecl {
         const rngchkstr = this.rngchk !== undefined ? this.toBAPI_RNGCheck() : 'none';
         const rechkstr = this.rechk !== undefined ? `some(${this.rechk.toBAPI()})` : 'none';
         
-        return `Assembly::TypedeclStringDecl{${this.toBAPI_IRAbstractEntityTypeDecl()}, ${this.iskeytype}, ${this.isnumerictype}, ${rngchkstr}, ${rechkstr}}`;
+        return `Assembly::TypedeclStringTypeDecl{${this.toBAPI_IRAbstractEntityTypeDecl()}, ${this.iskeytype}, ${this.isnumerictype}, ${rngchkstr}, ${rechkstr}}`;
     }
 
     static parseBAPIAsIRTypedeclStringDecl(lexer: BAPILexer): IRTypedeclStringDecl {
@@ -1687,10 +1687,10 @@ class IRAssembly {
 
             ('List<Assembly::EnumTypeDecl>{\n        ' + this.enums.map((e) => e.toBAPI()).join(",\n        ") + '\n    }'),
             
-            ('List<Assembly::SimpleTypeDecl>{\n        ' + this.typedecls.filter((td) => td.rngchk === undefined).map((td) => td.toBAPI()).join(",\n        ") + '\n    }'),
-            ('List<Assembly::BoundedTypeDecl>{\n        ' + this.typedecls.filter((td) => td.rngchk !== undefined).map((td) => td.toBAPI()).join(",\n        ") + '\n    }'),
-            ('List<Assembly::CStringTypeDecl>{\n        ' + this.cstringoftypedecls.map((td) => td.toBAPI()).join(",\n        ") + '\n    }'),
-            ('List<Assembly::StringTypeDecl>{\n        ' + this.stringoftypedecls.map((td) => td.toBAPI()).join(",\n        ") + '\n    }'),
+            ('List<Assembly::TypedeclSimpleTypeDecl>{\n        ' + this.typedecls.filter((td) => td.rngchk === undefined).map((td) => td.toBAPI()).join(",\n        ") + '\n    }'),
+            ('List<Assembly::TypedeclBoundedTypeDecl>{\n        ' + this.typedecls.filter((td) => td.rngchk !== undefined).map((td) => td.toBAPI()).join(",\n        ") + '\n    }'),
+            ('List<Assembly::TypedeclCStringTypeDecl>{\n        ' + this.cstringoftypedecls.map((td) => td.toBAPI()).join(",\n        ") + '\n    }'),
+            ('List<Assembly::TypedeclStringTypeDecl>{\n        ' + this.stringoftypedecls.map((td) => td.toBAPI()).join(",\n        ") + '\n    }'),
             
             //this.entities.map((e) => e.toBAPI()).join(","),
             //this.datamembers.map((dm) => dm.toBAPI()).join(","),

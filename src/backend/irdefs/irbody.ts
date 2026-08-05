@@ -676,7 +676,7 @@ class IRLiteralNatExpression extends IRLiteralIntegralNumberExpression {
     }
 
     override toBAPI(): string {
-        return `Assembly::LiteralNatExpression{${this.value}}`;
+        return `Assembly::LiteralNatExpression{${this.value}n}`;
     }
     
     static parseBAPIAsIRLiteralNatExpression(lexer: BAPILexer): IRLiteralNatExpression {
@@ -685,7 +685,7 @@ class IRLiteralNatExpression extends IRLiteralIntegralNumberExpression {
         const value = lexer.ensureAndConsumeToken(BAPITokenKind.NatLiteral);
         lexer.ensureAndConsumeSymbol("}");
 
-        return new IRLiteralNatExpression(value);
+        return new IRLiteralNatExpression(value.slice(0, -1)); //remove the trailing 'n' from the literal
     }
 }
 
@@ -695,7 +695,7 @@ class IRLiteralIntExpression extends IRLiteralIntegralNumberExpression {
     }
 
     override toBAPI(): string {
-        return `Assembly::LiteralIntExpression{${this.value}}`;
+        return `Assembly::LiteralIntExpression{${this.value}i}`;
     }
     
     static parseBAPIAsIRLiteralIntExpression(lexer: BAPILexer): IRLiteralIntExpression {
@@ -704,7 +704,7 @@ class IRLiteralIntExpression extends IRLiteralIntegralNumberExpression {
         const value = lexer.ensureAndConsumeToken(BAPITokenKind.IntLiteral);
         lexer.ensureAndConsumeSymbol("}");
 
-        return new IRLiteralIntExpression(value);
+        return new IRLiteralIntExpression(value.slice(0, -1)); //remove the trailing 'i' from the literal
     }
 }
 
@@ -714,7 +714,7 @@ class IRLiteralChkNatExpression extends IRLiteralIntegralNumberExpression {
     }
 
     override toBAPI(): string {
-        return `Assembly::LiteralChkNatExpression{${this.value}}`;
+        return `Assembly::LiteralChkNatExpression{${this.value}N}`;
     }
 
     static parseBAPIAsIRLiteralChkNatExpression(lexer: BAPILexer): IRLiteralChkNatExpression {
@@ -723,7 +723,7 @@ class IRLiteralChkNatExpression extends IRLiteralIntegralNumberExpression {
         const value = lexer.ensureAndConsumeToken(BAPITokenKind.ChkNatLiteral);
         lexer.ensureAndConsumeSymbol("}");
         
-        return new IRLiteralChkNatExpression(value);
+        return new IRLiteralChkNatExpression(value.slice(0, -1)); //remove the trailing 'N' from the literal
     }
 }
 
@@ -733,7 +733,7 @@ class IRLiteralChkIntExpression extends IRLiteralIntegralNumberExpression {
     }
 
     override toBAPI(): string {
-        return `Assembly::LiteralChkIntExpression{${this.value}}`;
+        return `Assembly::LiteralChkIntExpression{${this.value}I}`;
     }
 
     static parseBAPIAsIRLiteralChkIntExpression(lexer: BAPILexer): IRLiteralChkIntExpression {
@@ -742,7 +742,7 @@ class IRLiteralChkIntExpression extends IRLiteralIntegralNumberExpression {
         const value = lexer.ensureAndConsumeToken(BAPITokenKind.ChkIntLiteral);
         lexer.ensureAndConsumeSymbol("}");
 
-        return new IRLiteralChkIntExpression(value);
+        return new IRLiteralChkIntExpression(value.slice(0, -1)); //remove the trailing 'I' from the literal
     }
 }
 
@@ -797,7 +797,7 @@ class IRLiteralFloatExpression extends IRLiteralFloatingPointExpression {
     }
 
     override toBAPI(): string {
-        return `Assembly::LiteralFloatExpression{${this.value}}`;
+        return `Assembly::LiteralFloatExpression{${this.value}f}`;
     }
 
     static parseBAPIAsIRLiteralFloatExpression(lexer: BAPILexer): IRLiteralFloatExpression {
@@ -806,7 +806,7 @@ class IRLiteralFloatExpression extends IRLiteralFloatingPointExpression {
         const value = lexer.ensureAndConsumeToken(BAPITokenKind.FloatLiteral);
         lexer.ensureAndConsumeSymbol("}");
 
-        return new IRLiteralFloatExpression(value);
+        return new IRLiteralFloatExpression(value.slice(0, -1)); //remove the trailing 'f' from the literal
     }
 }
 
@@ -816,12 +816,12 @@ class IRLiteralDecimalExpression extends IRLiteralFloatingPointExpression {
     }
 
     override toBAPI(): string {
-        return `Assembly::LiteralDecimalExpression{${this.value}}`;
+        return `Assembly::LiteralDecimalExpression{${this.value}d}`;
     }
 
     static parseBAPIAsIRLiteralDecimalExpression(lexer: BAPILexer): IRLiteralDecimalExpression {
         const value = lexer.ensureAndConsumeToken(BAPITokenKind.DecimalLiteral);
-        return new IRLiteralDecimalExpression(value);
+        return new IRLiteralDecimalExpression(value.slice(0, -1)); //remove the trailing 'd' from the literal
     }
 }
 
