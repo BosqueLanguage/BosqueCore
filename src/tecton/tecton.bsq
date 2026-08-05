@@ -2,6 +2,62 @@ declare namespace Tecton {
     using Assembly;
 }
 
-public function main(asm: Assembly::BapiAssembly): Assembly::BapiAssembly {
+type ComponentPath = CString of /[A-Z][_a-zA-Z0-9]+('.'[_a-zA-Z0-9]+)*('@'(${Assembly::typeKeyRE}|'length'))?/c & {
+    method extendWithField(f: CString): ComponentPath {
+        return CString::concat(this.value, '.', f);
+    }
+
+    method extendWithIndex(i: CString): ComponentPath {
+        return CString::concat(this.value, '.', i);
+    }
+
+    method extendWithType(oftype: Assembly::TypeKey): ComponentPath {
+        return CString::concat(this.value, '@', oftype.value);
+    }
+
+    method extendWithLength(): ComponentPath {
+        return CString::concat(this.value, '@', 'length');
+    }
+}
+
+datatype ComponentConstraint using {
+    field onpath: ComponentPath;
+}
+of
+MinLengthConstraint { 
+    field minlen: Nat; 
+}
+OfTypeConstraint {
+    field vtype: Assembly::TypeKey;
+}
+;
+
+entity PrimitiveComponent {
+    field oftype: Assembly::TypeKey;
+
+    field path: ComponentPath;
+    field steps: List<CString>;
+
+    field constraints: List<ComponentConstraint>;
+}
+
+function generatePrimitiveComponent(pdecl: Assembly::PrimitiveEntityTypeDecl, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): PrimitiveComponent {
+    return PrimitiveComponent{ pdecl.tkey, path, steps, constraints };
+}
+
+function generateEnumComponent(edecl: Assembly::EnumTypeDecl, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): PrimitiveComponent {
+    abort;
+}
+
+function generateTypeDeclType(tdecl: Assembly::TypedeclTypeDecl, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): PrimitiveComponent {
+    abort;
+}
+
+public function gatherPrimitveComponentsForType(gentype: Assembly::TypeKey, asm: Assembly::BapiAssembly): List<PrimitiveComponent> {
+    return xxxx;
+}
+
+public function main(asm: Assembly::BapiAssembly, gentype: Assembly::TypeKey): Assembly::BapiAssembly {
     return asm;
 }
+
