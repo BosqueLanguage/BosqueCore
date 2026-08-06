@@ -1387,7 +1387,7 @@ class CPPEmitter {
             bstr = "l1.append(l2)";
         }
         else if(body.builtin === "list_concat") {
-            bstr = "XXXX::concat(l)";
+            bstr = `${TransformCPPNameManager.convertTypeKey(invk.resultType.tkeystr)}::concat(l)`;
         }
         else if(body.builtin === "list_allof") {
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "p");

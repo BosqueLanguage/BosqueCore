@@ -34,13 +34,13 @@ namespace ᐸRuntimeᐳ
 
     XCString XCString::natToCString(int64_t value) {
         char numbuf[64];
-        int written = std::snprintf(numbuf, sizeof(numbuf), "%lli", value);
+        int written = std::snprintf(numbuf, sizeof(numbuf), "%lli", (long long int)value);
         return XCString::mk(numbuf, static_cast<size_t>(written));
     }
 
     XCString XCString::intToCString(int64_t value) {
         char numbuf[64];
-        int written = std::snprintf(numbuf, sizeof(numbuf), "%lli", value);
+        int written = std::snprintf(numbuf, sizeof(numbuf), "%lli", (long long int)value);
         return XCString::mk(numbuf, static_cast<size_t>(written));
     }
 

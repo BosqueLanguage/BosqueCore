@@ -680,9 +680,9 @@ namespace ᐸRuntimeᐳ
         }
 
         template<typename U, uint32_t TYPE_ID_LIST_U>
-        XList<U, TYPE_ID_LIST_U> concat(const XList<T, TYPE_ID_LIST_T>& other) const
+        XList<T, TYPE_ID_LIST_T> concat(const XList<U, TYPE_ID_LIST_U>& other) const
         {
-            XList<U, TYPE_ID_LIST_U> curr{};
+            XList<T, TYPE_ID_LIST_T> curr{};
 
             for(auto ii = this->begin(); ii != this->end(); ++ii) {
                 if(!ii->empty()) {

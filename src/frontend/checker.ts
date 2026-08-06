@@ -2874,6 +2874,7 @@ class TypeChecker {
         exp.monoinvid = this.invidCtr++;
 
         const fullmapper = TemplateNameMapper.merge(mresolve.typeinfo.mapping, imapper);
+        this.checkTemplateBindingsOnInvokeConstraints(exp.sinfo, fullmapper, mresolve.member);
         const arginfo = this.checkArgumentList(exp.sinfo, env, refallowed, exp.args.args, mresolve.member.params, fullmapper);
 
         exp.iimapper = fullmapper;
@@ -3741,6 +3742,7 @@ class TypeChecker {
         exp.monoinvid = this.invidCtr++;
 
         const fullmapper = TemplateNameMapper.merge(mresolve.typeinfo.mapping, imapper);
+        this.checkTemplateBindingsOnInvokeConstraints(exp.sinfo, fullmapper, mresolve.member);
         const arginfo = this.checkArgumentList(exp.sinfo, env, false, exp.args.args, mresolve.member.params, fullmapper);
 
         exp.iimapper = fullmapper;

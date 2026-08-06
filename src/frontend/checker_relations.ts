@@ -171,10 +171,18 @@ class TypeCheckerRelations {
             }
         }
         else {
-            ; //for all other cases res stays false
+            if(t1 instanceof TemplateTypeSignature || t2 instanceof TemplateTypeSignature) {
+                ;
+            }
+            else {
+                ; //for all other cases res stays false
+            }
         }
 
-        this.memoizedTypeEqualRelation.set(kstr, res);
+        if(!t1.hasTemplateBindings() && !t2.hasTemplateBindings()) {
+            this.memoizedTypeEqualRelation.set(kstr, res);
+        }
+
         return res;
     }
 
@@ -221,7 +229,10 @@ class TypeCheckerRelations {
             }
         }
 
-        this.memoizedTypeSubtypeRelation.set(kstr, res);
+        if(!t1.hasTemplateBindings() && !t2.hasTemplateBindings()) {
+            this.memoizedTypeSubtypeRelation.set(kstr, res);
+        }
+
         return res;
     }
 
