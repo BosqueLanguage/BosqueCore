@@ -132,6 +132,33 @@ __internal entity List<T> {
         }
     }
 
+    function concat(...lists: List<List<T>>): List<T> {
+        if(ListOps::s_list_empty<List<T>>(lists)) {
+            return List<T>{};
+        }
+        else {
+            return ListOps::s_list_concat<T>(lists);
+        }
+    }
+
+    function concatAll(lists: List<List<T>>): List<T> {
+        if(ListOps::s_list_empty<List<T>>(lists)) {
+            return List<T>{};
+        }
+        else {
+            return ListOps::s_list_concat<T>(lists);
+        }
+    }
+
+    method {when T: List<U>} flatten<U>(): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+            return ListOps::s_list_concat<T>(this);
+        }
+    }
+
     recursive? method allOf(p: recursive? pred(T) -> Bool): Bool {
         if(ListOps::s_list_empty<T>(this)) {
             return true;

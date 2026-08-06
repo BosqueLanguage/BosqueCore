@@ -679,6 +679,25 @@ namespace ᐸRuntimeᐳ
             }
         }
 
+        template<typename U, uint32_t TYPE_ID_LIST_U>
+        XList<U, TYPE_ID_LIST_U> concat(const XList<T, TYPE_ID_LIST_T>& other) const
+        {
+            XList<U, TYPE_ID_LIST_U> curr{};
+
+            for(auto ii = this->begin(); ii != this->end(); ++ii) {
+                if(!ii->empty()) {
+                    if(curr.empty()) {
+                        curr = *ii;
+                    }
+                    else {
+                        curr = curr.append(*ii);
+                    }
+                }
+            }
+
+            return curr;
+        }
+
         template<bool SafeSimplePred, typename Pred>
         XBool allOf(Pred p) const
         {

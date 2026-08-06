@@ -4,8 +4,10 @@ namespace Core;
 #else
 #if EXEC_LIBS
 namespace NumericOps {
-    __may_fail function s_natPow(x: Nat, y: Nat): Nat = @nat_pow;
+    function s_natToCString(n: Nat): CString = @nat_to_cstring;
+    function s_intToCString(i: Int): CString = @int_to_cstring;
 
+    __may_fail function s_natPow(x: Nat, y: Nat): Nat = @nat_pow;
     __may_fail function s_intPow(x: Int, y: Int): Int = @int_pow;
 
     function s_safeConvertFloatInto<T: numeric>(f: Float): T = @float_safe_convert_into;

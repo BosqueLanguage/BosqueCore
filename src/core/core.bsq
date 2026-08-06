@@ -30,6 +30,10 @@ __internal __typedeclable __keycomparable __numeric entity Nat {
     const zero: Nat = 0n;
     const one: Nat = 1n;
 
+    function toCString(n: Nat): CString {
+        return NumericOps::s_natToCString(n);
+    }
+
     function square(x: Nat): Nat {
         return x * x;
     }
@@ -46,6 +50,10 @@ __internal __typedeclable __keycomparable __numeric entity Int {
 #else
     const zero: Int = 0i;
     const one: Int = 1i;
+
+    function toCString(i: Int): CString {
+        return NumericOps::s_intToCString(i);
+    }
 
     function square(x: Int): Int {
         return x * x;

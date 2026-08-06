@@ -63,7 +63,7 @@ recursive function generateComponentsForTypeDecl(tdecl: Assembly::TypedeclTypeDe
     return generateComponentsForType[recursive](tdecl.valuetype.tkeystr, epath, esteps, constraints, assembly);
 }
 
-recursive function generateComponentsForNominalTypeSig(tsig: Assembly::NominalTypeSignature, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): List<PrimitiveComponent> {
+recursive function generateComponentsForNominalTypeSignature(tsig: Assembly::NominalTypeSignature, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): List<PrimitiveComponent> {
     let tdecl = assembly.alltypes.get(tsig.tkeystr);
 
     match(tdecl) {
@@ -73,12 +73,22 @@ recursive function generateComponentsForNominalTypeSig(tsig: Assembly::NominalTy
     }
 }
 
+recursive function generateComponentsForEListTypeSignature(tsig: Assembly::EListTypeSignature, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): List<PrimitiveComponent> {
+    return tsig.entries.flatmapIdx[recursive](recursive fn(entry, idx) => {
+        let epath = path.extendWithIndex(Nat::toCString(idx));
+        let esteps = steps.pushBack(Nat::toCString(idx));
+
+        return generateComponentsForType[recursive](entry.tkeystr, epath, esteps, constraints, assembly);
+    });
+}
+
 recursive function generateComponentsForType(gentype: Assembly::TypeKey, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): List<PrimitiveComponent> {
     let tsig = assembly.alltypesigs.get(gentype);
 
     match(tsig) {
         Assembly::VoidTypeSignature => { abort; } %%Should be handled prior to this point
-        Assembly::NominalTypeSignature => { return generateComponentsForNominalTypeSig[recursive]($tsig, path, steps, constraints, assembly); }
+        Assembly::NominalTypeSignature => { return generateComponentsForNominalTypeSignature[recursive]($tsig, path, steps, constraints, assembly); }
+        Assembly::EListTypeSignature => { return generateComponentsForEListTypeSignature[recursive]($tsig, path, steps, constraints, assembly); }
         %%Need to implement other cases here
     }
 }
