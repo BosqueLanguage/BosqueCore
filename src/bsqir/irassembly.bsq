@@ -103,6 +103,7 @@ entity BapiAssembly {
     %%readonly agents: IRAgentDecl[] = [];
     %%readonly tasks: IRTaskDecl[] = [];
 
+    field alltypesigs: Map<TypeKey, TypeSignature>;
     field alltypes: Map<TypeKey, AbstractNominalTypeDecl>;
     %%readonly allinvokes: Map<string, IRInvokeMetaDecl> = new Map<string, IRInvokeMetaDecl>();
     %%readonly alllambdas: Map<string, IRLambdaParameterPackDecl> = new Map<string, IRLambdaParameterPackDecl>();

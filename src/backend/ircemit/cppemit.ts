@@ -1194,7 +1194,7 @@ class CPPEmitter {
         const ops = mstmt.matchflow.map((mf, ii) => {
             let chk: string;
             if(mf.mtype === undefined || ii === mstmt.matchflow.length - 1) {
-                chk = 'else {';
+                chk = 'else';
             }
             else {
                 const mftinfo = this.irasm.alltypes.get(mf.mtype.tkeystr) as IRAbstractNominalTypeDecl;
@@ -1208,7 +1208,7 @@ class CPPEmitter {
                     cop = `${RUNTIME_NAMESPACE}::isSubtypeOf(${typeidextract}, &${ttmgr})`;
                 }
 
-                chk = `if${ii !== 0 ? " else" : ""}(${cop}) {`;
+                chk = `${ii !== 0 ? "else " : ""}if(${cop})`;
             }
             
             const body = this.emitStatementList(mf.value.statements, undefined, undefined, bindent);

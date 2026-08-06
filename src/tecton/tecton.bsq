@@ -2,21 +2,28 @@ declare namespace Tecton {
     using Assembly;
 }
 
-type ComponentPath = CString of /[A-Z][_a-zA-Z0-9]+('.'[_a-zA-Z0-9]+)*('@'(${Assembly::typeKeyRE}|'length'))?/c & {
+type ComponentPath = CString of /[_a-zA-Z0-9]+('.'[_a-zA-Z0-9]+)*('@'(${Assembly::typeKeyRE}|'length'))?/c & {
+    const dotPathExtension: FCString<CString, CString, CString> = $'${0}.${1}';
+    const specialPathExtension: FCString<CString, CString, CString> = $'${0}@${1}';
+
     method extendWithField(f: CString): ComponentPath {
-        return CString::concat(this.value, '.', f);
+        return ComponentPath::from(Interpolate::cstring(ComponentPath::dotPathExtension, this.value, f));
+    }
+
+    method extendWithValue(): ComponentPath {
+        return ComponentPath::from(Interpolate::cstring(ComponentPath::dotPathExtension, this.value, 'value'));
     }
 
     method extendWithIndex(i: CString): ComponentPath {
-        return CString::concat(this.value, '.', i);
+        return ComponentPath::from(Interpolate::cstring(ComponentPath::dotPathExtension, this.value, i));
     }
 
     method extendWithType(oftype: Assembly::TypeKey): ComponentPath {
-        return CString::concat(this.value, '@', oftype.value);
+        return ComponentPath::from(Interpolate::cstring(ComponentPath::specialPathExtension, this.value, oftype.value));
     }
 
     method extendWithLength(): ComponentPath {
-        return CString::concat(this.value, '@', 'length');
+        return ComponentPath::from(Interpolate::cstring(ComponentPath::specialPathExtension, this.value, 'length'));
     }
 }
 
@@ -41,23 +48,44 @@ entity PrimitiveComponent {
     field constraints: List<ComponentConstraint>;
 }
 
-function generatePrimitiveComponent(pdecl: Assembly::PrimitiveEntityTypeDecl, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): PrimitiveComponent {
-    return PrimitiveComponent{ pdecl.tkey, path, steps, constraints };
+function generateComponentsForPrimitive(pdecl: Assembly::PrimitiveEntityTypeDecl, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): List<PrimitiveComponent> {
+    return List<PrimitiveComponent>{ PrimitiveComponent{ pdecl.tkey, path, steps, constraints } };
 }
 
-function generateEnumComponent(edecl: Assembly::EnumTypeDecl, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): PrimitiveComponent {
-    abort;
+function generateComponentsForEnum(edecl: Assembly::EnumTypeDecl, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): List<PrimitiveComponent> {
+    return List<PrimitiveComponent>{ PrimitiveComponent{ edecl.tkey, path, steps, constraints } };
 }
 
-function generateTypeDeclType(tdecl: Assembly::TypedeclTypeDecl, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): PrimitiveComponent {
-    abort;
+recursive function generateComponentsForTypeDecl(tdecl: Assembly::TypedeclTypeDecl, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): List<PrimitiveComponent> {
+    let epath = path.extendWithValue();
+    let esteps = steps.pushBack('value');
+    
+    return generateComponentsForType[recursive](tdecl.valuetype.tkeystr, epath, esteps, constraints, assembly);
 }
 
-public function gatherPrimitveComponentsForType(gentype: Assembly::TypeKey, asm: Assembly::BapiAssembly): List<PrimitiveComponent> {
-    return xxxx;
+recursive function generateComponentsForNominalTypeSig(tsig: Assembly::NominalTypeSignature, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): List<PrimitiveComponent> {
+    let tdecl = assembly.alltypes.get(tsig.tkeystr);
+
+    match(tdecl) {
+        Assembly::PrimitiveEntityTypeDecl => { return generateComponentsForPrimitive($tdecl, path, steps, constraints, assembly); }
+        Assembly::EnumTypeDecl => { return generateComponentsForEnum($tdecl, path, steps, constraints, assembly); }
+        Assembly::TypedeclTypeDecl => { return generateComponentsForTypeDecl[recursive]($tdecl, path, steps, constraints, assembly); }
+    }
 }
 
-public function main(asm: Assembly::BapiAssembly, gentype: Assembly::TypeKey): Assembly::BapiAssembly {
-    return asm;
+recursive function generateComponentsForType(gentype: Assembly::TypeKey, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): List<PrimitiveComponent> {
+    let tsig = assembly.alltypesigs.get(gentype);
+
+    match(tsig) {
+        Assembly::VoidTypeSignature => { abort; } %%Should be handled prior to this point
+        Assembly::NominalTypeSignature => { return generateComponentsForNominalTypeSig[recursive]($tsig, path, steps, constraints, assembly); }
+        %%Need to implement other cases here
+    }
+}
+
+public function main(asm: Assembly::BapiAssembly, gentype: Assembly::TypeKey): List<PrimitiveComponent> {
+    let components = generateComponentsForType[recursive](gentype, ComponentPath::from('root'), List<CString>{'root'}, List<ComponentConstraint>{}, asm);
+
+    return components;
 }
 

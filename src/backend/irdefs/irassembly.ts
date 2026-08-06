@@ -1702,6 +1702,7 @@ class IRAssembly {
             //this.agents.map((ag) => ag.toBAPI()).join(","),
             //this.tasks.map((t) => t.toBAPI()).join(",")
 
+            ('Map<Assembly::TypeKey, Assembly::TypeSignature>{\n        ' + this.typedeporder.map((tt) => `${emitTypeKey(tt.tkeystr)} => ${tt.toBAPI()}`).join(",\n        ") + '\n    }'),
             ('Map<Assembly::TypeKey, Assembly::AbstractNominalTypeDecl>{\n        ' + Array.from(this.alltypes.entries()).map(([k, v]) => `${emitTypeKey(k)} => ${v.toBAPI()}`).join(",\n        ") + '\n    }'),
             //readonly allinvokes: Map<string, IRInvokeMetaDecl> = new Map<string, IRInvokeMetaDecl>();
             //readonly alllambdas: Map<string, IRLambdaParameterPackDecl> = new Map<string, IRLambdaParameterPackDecl>();
@@ -1751,6 +1752,14 @@ class IRAssembly {
 
         lexer.ensureAndConsumeSymbol("List<Assembly::StringTypeDecl>");
         irasm.stringoftypedecls.push(...parseListOf<IRTypedeclStringDecl>(lexer, '{', '}', ',', IRTypedeclStringDecl.parseBAPIAsIRTypedeclStringDecl));
+
+        lexer.ensureAndConsumeSymbol("Map<Assembly::TypeKey, Assembly::TypeSignature>");
+        parseListOf<[string, IRTypeSignature]>(lexer, '{', '}', ',', (lexer) => {
+            const key = parseTypeKey(lexer);
+            lexer.ensureAndConsumeSymbol('=>');
+            const value = IRTypeSignature.parseBAPI(lexer);
+            return [key, value];
+        });
 
         lexer.ensureAndConsumeSymbol("Map<Assembly::TypeKey, Assembly::AbstractNominalTypeDecl>");
         const entrylist = parseListOf<[string, IRAbstractNominalTypeDecl]>(lexer, '{', '}', ',', (lexer) => {
