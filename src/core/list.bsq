@@ -202,7 +202,27 @@ __internal entity List<T> {
         else {
             return ListOps::s_list_mapidx[recursive?]<T, U>(this, f);
         }
-    }    
+    }
+
+    recursive? method flatmap<U>(f: recursive? fn(T) -> List<U>): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+            let ll = ListOps::s_list_map[recursive?]<T, List<U>>(this, f);
+            return ListOps::s_list_concat<U>(ll);
+        }
+    }
+
+    recursive? method flatmapIdx<U>(f: recursive? fn(T, Nat) -> List<U>): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+            let ll = ListOps::s_list_mapidx[recursive?]<T, List<U>>(this, f);
+            return ListOps::s_list_concat<U>(ll);
+        }
+    }
 
     method convert<U>(): List<U> {
         if(ListOps::s_list_empty<T>(this)) {

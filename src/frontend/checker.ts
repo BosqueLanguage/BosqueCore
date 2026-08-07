@@ -823,11 +823,6 @@ class TypeChecker {
                 let cc = decl.termRestriction.clauses[i];
                 let trefine = tmap.resolveTemplateMapping(cc.t);
 
-                ////
-                //this.relations.isSubtypeOf(trefine, cc.subtype.remapTemplateBindings(tmap), this.constraints)
-                ////
-
-
                 if(cc.subtype !== undefined && !this.relations.areSameTypes(trefine, cc.subtype.remapTemplateBindings(tmap), this.constraints)) {
                     this.reportError(sinfo, `Template argument ${decl.terms[i].name} is not a subtype of subtype restriction`);
                     return undefined;

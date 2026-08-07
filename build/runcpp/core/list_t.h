@@ -680,17 +680,19 @@ namespace ᐸRuntimeᐳ
         }
 
         template<typename U, uint32_t TYPE_ID_LIST_U>
-        XList<T, TYPE_ID_LIST_T> concat(const XList<U, TYPE_ID_LIST_U>& other) const
+        static XList<T, TYPE_ID_LIST_T> concat(const XList<U, TYPE_ID_LIST_U>& ll)
         {
             XList<T, TYPE_ID_LIST_T> curr{};
 
-            for(auto ii = this->begin(); ii != this->end(); ++ii) {
-                if(!ii->empty()) {
+            for(auto ii = ll.begin(); ii != ll.end(); ++ii) {
+                auto il = *ii;
+                
+                if(!il.empty()) {
                     if(curr.empty()) {
-                        curr = *ii;
+                        curr = il;
                     }
                     else {
-                        curr = curr.append(*ii);
+                        curr = curr.append(il);
                     }
                 }
             }
