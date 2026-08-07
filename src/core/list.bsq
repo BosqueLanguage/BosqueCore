@@ -149,7 +149,7 @@ __internal entity List<T> {
             return ListOps::s_list_concat<T>(lists);
         }
     }
-%*
+
     method {when T: List<U>} flatten<U>(): List<U> {
         if(ListOps::s_list_empty<T>(this)) {
             return List<U>{};
@@ -158,7 +158,7 @@ __internal entity List<T> {
             return ListOps::s_list_concat<U>(this);
         }
     }
-*%
+
     recursive? method allOf(p: recursive? pred(T) -> Bool): Bool {
         if(ListOps::s_list_empty<T>(this)) {
             return true;
