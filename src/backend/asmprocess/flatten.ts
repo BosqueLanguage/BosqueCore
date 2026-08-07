@@ -424,8 +424,8 @@ class ASMToIRConverter {
             return exp;
         }
         else {
-            assert(ftype instanceof NominalTypeSignature, "ASMToIRConverter::makeCoercionExplicitAsNeeded - fromtype not nominal");
-            assert(ttype instanceof NominalTypeSignature, "ASMToIRConverter::makeCoercionExplicitAsNeeded - totype not nominal");
+            assert(ftype instanceof NominalTypeSignature, `ASMToIRConverter::makeCoercionExplicitAsNeeded - fromtype (${ftype.tkeystr}) not nominal`);
+            assert(ttype instanceof NominalTypeSignature, `ASMToIRConverter::makeCoercionExplicitAsNeeded - totype (${ttype.tkeystr}) not nominal`);
 
             if(ftype.decl instanceof AbstractConceptTypeDecl) {
                 return new IRConvertConceptRepresentationExpression(this.processTypeSignature(ftype), this.processTypeSignature(ttype), exp);

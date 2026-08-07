@@ -115,7 +115,7 @@ class IREListTypeSignature extends IRTypeSignature {
     }
 
     override toBAPI(): string {
-        return `Assembly::EListTypeSignature{${emitTypeKey(this.tkeystr)}, List<Assembly::IRTypeSignature>{${this.entries.map(e => e.toBAPI()).join(", ")}}}`;
+        return `Assembly::EListTypeSignature{${emitTypeKey(this.tkeystr)}, List<Assembly::TypeSignature>{${this.entries.map(e => e.toBAPI()).join(", ")}}}`;
     }
 
     static parseBAPIAsIREListTypeSignature(lexer: BAPILexer): IREListTypeSignature {
@@ -144,7 +144,7 @@ class IRDashResultTypeSignature extends IRTypeSignature {
     }
 
     override toBAPI(): string {
-        return `Assembly::DashResultTypeSignature{'${this.tkeystr}'<Assembly::TypeKey>, List<Assembly::IRTypeSignature>{${this.entries.map(e => e.toBAPI()).join(", ")}}}`;
+        return `Assembly::DashResultTypeSignature{'${this.tkeystr}'<Assembly::TypeKey>, List<Assembly::TypeSignature>{${this.entries.map(e => e.toBAPI()).join(", ")}}}`;
     }
 
     static parseBAPIAsIRDashResultTypeSignature(lexer: BAPILexer): IRDashResultTypeSignature {

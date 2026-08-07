@@ -21,7 +21,6 @@ describe ("List -- map index basic", () => {
     });
 });
 
-
 describe ("List -- convert", () => {
     it("should convert list", function () {
         runTestSet(`${datatypedef} public function main(b: Bool): List<F2> { return List<Foo>{}.convert<F2>(); }`, [['true', 'List<Main::F2>{ }']], []);
@@ -37,5 +36,15 @@ describe ("List -- convert", () => {
         runTestSet('public function main(b: Bool): List<Int> { return List<Option<Int>>{some(2i), some(1i), some(3i), some(1i), some(5i)}.convertsome<Int>(); }', [['true', 'List<Int>{ 2i, 1i, 3i, 1i, 5i }']], []);         
 
         runTestSet('public function main(b: Bool): List<Int> { return List<Option<Int>>{some(2i), none}.convertsome<Int>(); }', [], ['false']); 
+    });
+});
+
+describe ("List -- flatmap basic", () => {
+    it("should do simple flatmap", function () {
+        runTestSet('public function main(z: Int): List<Bool> { return List<Int>{1i, z, 5i}.flatmap<Bool>(fn(x) => List<Bool>{ x == 1i, x >= 0i }); }', [['1i', 'List<Bool>{ true, true, true, true, false, true }'], ['-1i', 'List<Bool>{ true, true, false, false, false, true }']], []);
+    });
+
+    it("should do simple flatmapIdx", function () {
+        runTestSet('public function main(z: Nat): List<Nat> { return List<Nat>{1n, z, 5n}.flatmapIdx<Nat>(fn(x, i) => List<Nat>{ x, i, x + i }); }', [['3n', 'List<Nat>{ 1n, 0n, 1n, 3n, 1n, 4n, 5n, 2n, 7n }']], []);
     });
 });

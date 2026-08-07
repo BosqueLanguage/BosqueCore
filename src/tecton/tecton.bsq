@@ -74,7 +74,7 @@ recursive function generateComponentsForNominalTypeSignature(tsig: Assembly::Nom
 }
 
 recursive function generateComponentsForEListTypeSignature(tsig: Assembly::EListTypeSignature, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): List<PrimitiveComponent> {
-    return tsig.entries.flatmapIdx[recursive](recursive fn(entry, idx) => {
+    return tsig.entries.flatmapIdx[recursive]<PrimitiveComponent>(recursive fn(entry, idx) => {
         let epath = path.extendWithIndex(Nat::toCString(idx));
         let esteps = steps.pushBack(Nat::toCString(idx));
 
