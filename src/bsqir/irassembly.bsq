@@ -60,8 +60,8 @@ datatype TypedeclTypeDecl provides AbstractEntityTypeDecl using {
 of
     TypedeclSimpleTypeDecl { }
     TypedeclBoundedTypeDecl { field rngchk: TypedeclRangeCheck; }
-    TypedeclCStringDecl { field rechk: Option<CString> = none; field rngchk: Option<TypedeclRangeCheck> = none; }
-    TypedeclStringDecl { field rechk: Option<String> = none; field rngchk: Option<TypedeclRangeCheck> = none; }
+    TypedeclCStringTypeDecl { field rechk: Option<CString> = none; field rngchk: Option<TypedeclRangeCheck> = none; }
+    TypedeclStringTypeDecl { field rechk: Option<String> = none; field rngchk: Option<TypedeclRangeCheck> = none; }
 ;
 
 %** This is the abstract type for internal entity type declarations **%
@@ -89,8 +89,8 @@ entity BapiAssembly {
     field enums: List<EnumTypeDecl>;
     field simpletypedecls: List<TypedeclSimpleTypeDecl>;
     field boundedtypedecls: List<TypedeclBoundedTypeDecl>;
-    field cstringoftypedecls: List<TypedeclCStringDecl>;
-    field stringoftypedecls: List<TypedeclStringDecl>;
+    field cstringoftypedecls: List<TypedeclCStringTypeDecl>;
+    field stringoftypedecls: List<TypedeclStringTypeDecl>;
 
     %%readonly entities: IREntityTypeDecl[] = [];
     %%readonly datamembers: IRDatatypeMemberEntityTypeDecl[] = [];
@@ -103,6 +103,7 @@ entity BapiAssembly {
     %%readonly agents: IRAgentDecl[] = [];
     %%readonly tasks: IRTaskDecl[] = [];
 
+    field alltypesigs: Map<TypeKey, TypeSignature>;
     field alltypes: Map<TypeKey, AbstractNominalTypeDecl>;
     %%readonly allinvokes: Map<string, IRInvokeMetaDecl> = new Map<string, IRInvokeMetaDecl>();
     %%readonly alllambdas: Map<string, IRLambdaParameterPackDecl> = new Map<string, IRLambdaParameterPackDecl>();
@@ -120,6 +121,4 @@ entity BapiAssembly {
 
     %%readonly typedeporder: IRTypeSignature[] = [];
     %%readonly typedepcycles: IRTypeSignature[][] = [];
-
-    field maxerrorid: Nat;
 }

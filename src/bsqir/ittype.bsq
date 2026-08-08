@@ -16,7 +16,7 @@ of
     FormatCStringTypeSignature { field rtype: TypeSignature; field terms: List<FormatTypeSignatureTerm>; }
     FormatStringTypeSignature { field rtype: TypeSignature; field terms: List<FormatTypeSignatureTerm>; }
     %% More Here -- see below
-    LambdaTypeSignature { }
+    LambdaParameterPackTypeSignature { }
 ;
 
 %*

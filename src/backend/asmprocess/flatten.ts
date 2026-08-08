@@ -424,8 +424,8 @@ class ASMToIRConverter {
             return exp;
         }
         else {
-            assert(ftype instanceof NominalTypeSignature, "ASMToIRConverter::makeCoercionExplicitAsNeeded - fromtype not nominal");
-            assert(ttype instanceof NominalTypeSignature, "ASMToIRConverter::makeCoercionExplicitAsNeeded - totype not nominal");
+            assert(ftype instanceof NominalTypeSignature, `ASMToIRConverter::makeCoercionExplicitAsNeeded - fromtype (${ftype.tkeystr}) not nominal`);
+            assert(ttype instanceof NominalTypeSignature, `ASMToIRConverter::makeCoercionExplicitAsNeeded - totype (${ttype.tkeystr}) not nominal`);
 
             if(ftype.decl instanceof AbstractConceptTypeDecl) {
                 return new IRConvertConceptRepresentationExpression(this.processTypeSignature(ftype), this.processTypeSignature(ttype), exp);
@@ -1151,7 +1151,61 @@ class ASMToIRConverter {
         }
     }
 
+    private flattenCallTypeFunctionSpecialExpression(exp: CallTypeFunctionExpression): IRExpression {
+        //currently only allowed special call is "T::from" for constructing a typedecl -- just need to emit that (see flattenSpecialTypeDeclConstructor)
+
+        const ctype = this.tproc(exp.getType()) as NominalTypeSignature;
+        const tdecl = ctype.decl as TypedeclTypeDecl;
+
+        const cargt = this.tproc((exp.args.args[0] as StdArgumentValue).exp.getType());
+        let cval = this.makeExpressionSimple(this.flattenExpression((exp.args.args[0] as StdArgumentValue).exp), cargt);
+        
+        if(tdecl.allInvariants.length !== 0 || tdecl.optofexp !== undefined || tdecl.optsizerng !== undefined) {
+            cval = this.makeExpressionImmediate(cval, tdecl.valuetype);
+        }
+
+        if(tdecl.optsizerng !== undefined) {
+            const mmin = tdecl.optsizerng.min !== undefined ? this.makeExpressionImmediate(this.makeExpressionSimple(this.flattenExpression(tdecl.optsizerng.min), tdecl.valuetype), tdecl.valuetype) : undefined;
+            const mmax = tdecl.optsizerng.max !== undefined ? this.makeExpressionImmediate(this.makeExpressionSimple(this.flattenExpression(tdecl.optsizerng.max), tdecl.valuetype), tdecl.valuetype) : undefined;
+
+            if(tdecl.valuetype.tkeystr === "CString") {
+                this.pushStatement(new IRTypeDeclSizeRangeCheckCStringStatement(tdecl.file, this.convertSourceInfo(tdecl.sinfo), this.registerError(tdecl.file, this.convertSourceInfo(tdecl.sinfo), "userspec"), mmin, mmax, cval as IRImmediateExpression));
+            }
+            else if(tdecl.valuetype.tkeystr === "String") {
+                this.pushStatement(new IRTypeDeclSizeRangeCheckUnicodeStringStatement(tdecl.file, this.convertSourceInfo(tdecl.sinfo), this.registerError(tdecl.file, this.convertSourceInfo(tdecl.sinfo), "userspec"), mmin, mmax, cval as IRImmediateExpression));
+            }
+            else {
+                this.pushStatement(new IRTypeDeclNumericRangeCheckStatement(tdecl.file, this.convertSourceInfo(tdecl.sinfo), this.registerError(tdecl.file, this.convertSourceInfo(tdecl.sinfo), "userspec"), mmin, mmax, cval as IRImmediateExpression));
+            }
+        }
+
+        if(tdecl.optofexp !== undefined) {
+            if(tdecl.valuetype.tkeystr === "CString") {
+                const regex = this.flattenExpression(tdecl.optofexp) as IRLiteralCRegexExpression;
+                this.pushStatement(new IRTypeDeclFormatCheckCStringStatement(tdecl.file, this.convertSourceInfo(tdecl.sinfo), this.registerError(tdecl.file, this.convertSourceInfo(tdecl.sinfo), "userspec"), regex, cval as IRImmediateExpression));
+            }
+            else {
+                const regex = this.flattenExpression(tdecl.optofexp) as IRLiteralUnicodeRegexExpression;
+                this.pushStatement(new IRTypeDeclFormatCheckUnicodeStringStatement(tdecl.file, this.convertSourceInfo(tdecl.sinfo), this.registerError(tdecl.file, this.convertSourceInfo(tdecl.sinfo), "userspec"), regex, cval as IRImmediateExpression));
+            }
+        }
+
+        if(tdecl.allInvariants.length !== 0) {
+            const invchecks = tdecl.allInvariants.map<IRTypeDeclInvariantCheckStatement>((invdecl) => {
+                return new IRTypeDeclInvariantCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.tag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), this.processTypeSignature(invdecl.containingtype).tkeystr, invdecl.ii, cval);
+            });
+                
+            this.pushStatements(invchecks);
+        }
+
+        return new IRConstructSafeTypeDeclExpression(this.processTypeSignature(ctype), cval);
+    }
+
     private flattenCallTypeFunctionExpression(exp: CallTypeFunctionExpression): IRExpression {
+        if(exp.isSpecialCall) {
+            return this.flattenCallTypeFunctionSpecialExpression(exp);
+        }
+
         const fdecl = exp.resolvedFunction as TypeFunctionDecl;
 
         const haspreconds = fdecl.preconditions.length > 0;

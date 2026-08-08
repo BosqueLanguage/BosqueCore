@@ -320,10 +320,10 @@ abstract class IRAbstractNominalTypeDecl {
         else if(ttypekey === 'Assembly::TypedeclBoundedTypeDecl') {
             return IRTypedeclTypeDecl.parseBAPIAsIRTypedeclTypeDecl(lexer);
         }
-        else if(ttypekey === 'Assembly::TypedeclCStringDecl') {
+        else if(ttypekey === 'Assembly::TypedeclCStringTypeDecl') {
             return IRTypedeclCStringDecl.parseBAPIAsIRTypedeclCStringDecl(lexer);
         }
-        else if(ttypekey === 'Assembly::TypedeclStringDecl') {
+        else if(ttypekey === 'Assembly::TypedeclStringTypeDecl') {
             return IRTypedeclStringDecl.parseBAPIAsIRTypedeclStringDecl(lexer);
         }
         else if(ttypekey === 'Assembly::PrimitiveEntityTypeDecl') {
@@ -517,7 +517,7 @@ class IRTypedeclCStringDecl extends IRTypedeclTypeDecl {
         const rngchkstr = this.rngchk !== undefined ? this.toBAPI_RNGCheck() : 'none';
         const rechkstr = this.rechk !== undefined ? `some(${this.rechk.toBAPI()})` : 'none';
 
-        return `Assembly::TypedeclCStringDecl{${this.toBAPI_IRAbstractEntityTypeDecl()}, ${this.iskeytype}, ${this.isnumerictype}, ${rngchkstr}, ${rechkstr}}`;
+        return `Assembly::TypedeclCStringTypeDecl{${this.toBAPI_IRAbstractEntityTypeDecl()}, ${this.iskeytype}, ${this.isnumerictype}, ${rngchkstr}, ${rechkstr}}`;
     }
 
     static parseBAPIAsIRTypedeclCStringDecl(lexer: BAPILexer): IRTypedeclCStringDecl {
@@ -567,7 +567,7 @@ class IRTypedeclStringDecl extends IRTypedeclTypeDecl {
         const rngchkstr = this.rngchk !== undefined ? this.toBAPI_RNGCheck() : 'none';
         const rechkstr = this.rechk !== undefined ? `some(${this.rechk.toBAPI()})` : 'none';
         
-        return `Assembly::TypedeclStringDecl{${this.toBAPI_IRAbstractEntityTypeDecl()}, ${this.iskeytype}, ${this.isnumerictype}, ${rngchkstr}, ${rechkstr}}`;
+        return `Assembly::TypedeclStringTypeDecl{${this.toBAPI_IRAbstractEntityTypeDecl()}, ${this.iskeytype}, ${this.isnumerictype}, ${rngchkstr}, ${rechkstr}}`;
     }
 
     static parseBAPIAsIRTypedeclStringDecl(lexer: BAPILexer): IRTypedeclStringDecl {
@@ -1687,10 +1687,10 @@ class IRAssembly {
 
             ('List<Assembly::EnumTypeDecl>{\n        ' + this.enums.map((e) => e.toBAPI()).join(",\n        ") + '\n    }'),
             
-            ('List<Assembly::SimpleTypeDecl>{\n        ' + this.typedecls.filter((td) => td.rngchk === undefined).map((td) => td.toBAPI()).join(",\n        ") + '\n    }'),
-            ('List<Assembly::BoundedTypeDecl>{\n        ' + this.typedecls.filter((td) => td.rngchk !== undefined).map((td) => td.toBAPI()).join(",\n        ") + '\n    }'),
-            ('List<Assembly::CStringTypeDecl>{\n        ' + this.cstringoftypedecls.map((td) => td.toBAPI()).join(",\n        ") + '\n    }'),
-            ('List<Assembly::StringTypeDecl>{\n        ' + this.stringoftypedecls.map((td) => td.toBAPI()).join(",\n        ") + '\n    }'),
+            ('List<Assembly::TypedeclSimpleTypeDecl>{\n        ' + this.typedecls.filter((td) => td.rngchk === undefined).map((td) => td.toBAPI()).join(",\n        ") + '\n    }'),
+            ('List<Assembly::TypedeclBoundedTypeDecl>{\n        ' + this.typedecls.filter((td) => td.rngchk !== undefined).map((td) => td.toBAPI()).join(",\n        ") + '\n    }'),
+            ('List<Assembly::TypedeclCStringTypeDecl>{\n        ' + this.cstringoftypedecls.map((td) => td.toBAPI()).join(",\n        ") + '\n    }'),
+            ('List<Assembly::TypedeclStringTypeDecl>{\n        ' + this.stringoftypedecls.map((td) => td.toBAPI()).join(",\n        ") + '\n    }'),
             
             //this.entities.map((e) => e.toBAPI()).join(","),
             //this.datamembers.map((dm) => dm.toBAPI()).join(","),
@@ -1702,6 +1702,7 @@ class IRAssembly {
             //this.agents.map((ag) => ag.toBAPI()).join(","),
             //this.tasks.map((t) => t.toBAPI()).join(",")
 
+            ('Map<Assembly::TypeKey, Assembly::TypeSignature>{\n        ' + this.typedeporder.map((tt) => `${emitTypeKey(tt.tkeystr)} => ${tt.toBAPI()}`).join(",\n        ") + '\n    }'),
             ('Map<Assembly::TypeKey, Assembly::AbstractNominalTypeDecl>{\n        ' + Array.from(this.alltypes.entries()).map(([k, v]) => `${emitTypeKey(k)} => ${v.toBAPI()}`).join(",\n        ") + '\n    }'),
             //readonly allinvokes: Map<string, IRInvokeMetaDecl> = new Map<string, IRInvokeMetaDecl>();
             //readonly alllambdas: Map<string, IRLambdaParameterPackDecl> = new Map<string, IRLambdaParameterPackDecl>();
@@ -1740,17 +1741,25 @@ class IRAssembly {
         lexer.ensureAndConsumeSymbol("List<Assembly::EnumTypeDecl>");
         irasm.enums.push(...parseListOf<IREnumTypeDecl>(lexer, '{', '}', ',', IREnumTypeDecl.parseBAPIAsIREnumTypeDecl));
 
-        lexer.ensureAndConsumeSymbol("List<Assembly::SimpleTypeDecl>");
+        lexer.ensureAndConsumeSymbol("List<Assembly::TypedeclSimpleTypeDecl>");
         irasm.typedecls.push(...parseListOf<IRTypedeclTypeDecl>(lexer, '{', '}', ',', IRTypedeclTypeDecl.parseBAPIAsIRTypedeclTypeDecl));
 
-        lexer.ensureAndConsumeSymbol("List<Assembly::BoundedTypeDecl>");
+        lexer.ensureAndConsumeSymbol("List<Assembly::TypedeclBoundedTypeDecl>");
         irasm.typedecls.push(...parseListOf<IRTypedeclTypeDecl>(lexer, '{', '}', ',', IRTypedeclTypeDecl.parseBAPIAsIRTypedeclTypeDecl));
 
-        lexer.ensureAndConsumeSymbol("List<Assembly::CStringTypeDecl>");
+        lexer.ensureAndConsumeSymbol("List<Assembly::TypedeclCStringTypeDecl>");
         irasm.cstringoftypedecls.push(...parseListOf<IRTypedeclCStringDecl>(lexer, '{', '}', ',', IRTypedeclCStringDecl.parseBAPIAsIRTypedeclCStringDecl));
 
-        lexer.ensureAndConsumeSymbol("List<Assembly::StringTypeDecl>");
+        lexer.ensureAndConsumeSymbol("List<Assembly::TypedeclStringTypeDecl>");
         irasm.stringoftypedecls.push(...parseListOf<IRTypedeclStringDecl>(lexer, '{', '}', ',', IRTypedeclStringDecl.parseBAPIAsIRTypedeclStringDecl));
+
+        lexer.ensureAndConsumeSymbol("Map<Assembly::TypeKey, Assembly::TypeSignature>");
+        parseListOf<[string, IRTypeSignature]>(lexer, '{', '}', ',', (lexer) => {
+            const key = parseTypeKey(lexer);
+            lexer.ensureAndConsumeSymbol('=>');
+            const value = IRTypeSignature.parseBAPI(lexer);
+            return [key, value];
+        });
 
         lexer.ensureAndConsumeSymbol("Map<Assembly::TypeKey, Assembly::AbstractNominalTypeDecl>");
         const entrylist = parseListOf<[string, IRAbstractNominalTypeDecl]>(lexer, '{', '}', ',', (lexer) => {

@@ -2,34 +2,32 @@ declare namespace Main;
 
 const minDepth: Nat = 4n;
 
-public function main(n: Nat): CString 
+public function main(n: Nat): List<CString>
     requires n >= minDepth + 2n;
 {
     let maxDepth = n;
     let stretchDepth: Nat = n + 1n;
     let check: Nat = TreeNode.create(stretchDepth).check();
         
-    ref output = List<CString>{};
-    output.pushBack(interpolate::cstring("stretch tree of depth " + (stretchDepth) + "\t check: " + check));
+    ref msgs = List<CString>{};
+    ref msgs.pushBack(Interpolate::cstring($'stretch tree of depth ${0}%t; check: ${1}', Nat::toString(stretchDepth), Nat::toString(check)));
 
     const longLivedTree = TreeNode::create(maxDepth);
     const tdepths = List::rangeOfNat(minDepth, maxDepth, 2n, true); //inclusive of end value
         
-    tdepths.map(fn(depth) => {
+    tdepths.map(ref msgs, fn(depth) => {
         let iterations = Nat::pow(2n, (maxDepth - depth) + minDepth);
         let iterrng = List::rangeOfNat(1n, iterations, inclusive=true); //inclusive of end value
 
-        check = 0;
+        let checkvals = iterrng.map(fn(i) => (TreeNode.create(depth)).check());
+        let checksum = checkvals.sum();
 
-           for (int i = 1; i <= iterations; i++)
-           {
-                check += (TreeNode.create(depth)).check();
-           }
-           System.out.println(iterations + "\t trees of depth " + depth + "\t check: " + check);
-        });
-
-        System.out.println("long lived tree of depth " + n + "\t check: " + longLivedTree.check());
+        ref msgs.pushBack(Interpolate::cstring($'${0}%t; check: ${1}', Nat::toString(depth), Nat::toString(checksum)));
     });
+
+    ref msgs.pushBack(Interpolate::cstring($'long lived tree of depth ${0}%t; check: ${1}', Nat::toString(maxDepth), Nat::toString(longLivedTree.check())));
+
+    return msgs
 }
 
 entity TreeNode {
@@ -46,18 +44,18 @@ entity TreeNode {
         }
     }
     
-    method check(): Int {
-        var ld = 0i;
+    method check(): Nat {
+        var ld: Nat = 0n;
         if($l = this.left)@some {
             ld = $l.check();
         }
 
-        var rd = 0i;
+        var rd: Nat = 0n;
         if($r = this.right)@some {
             rd = $r.check();
         }
 
-        return 1i + ld + rd;
+        return 1n + ld + rd;
     }
 }
 

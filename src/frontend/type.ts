@@ -194,6 +194,7 @@ abstract class TypeSignature {
         this.tkeystr = tkeystr;
     }
 
+    abstract hasTemplateBindings(): boolean;
     abstract remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature;
     abstract gatherTemplateBindings(tnames: Set<string>): void;
 
@@ -207,6 +208,10 @@ class ErrorTypeSignature extends TypeSignature {
         super(sinfo, "^error^");
 
         this.completionNamespace = completionNamespace;
+    }
+
+    hasTemplateBindings(): boolean {
+        return false;
     }
 
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
@@ -227,6 +232,10 @@ class VoidTypeSignature extends TypeSignature {
         super(sinfo, "Void");
     }
 
+    hasTemplateBindings(): boolean {
+        return false;
+    }
+
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
         return this;
     }
@@ -243,6 +252,10 @@ class VoidTypeSignature extends TypeSignature {
 class AutoTypeSignature extends TypeSignature {
     constructor(sinfo: SourceInfo) {
         super(sinfo, "^auto^");
+    }
+
+    hasTemplateBindings(): boolean {
+        return false;
     }
 
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
@@ -264,6 +277,10 @@ class TemplateTypeSignature extends TypeSignature {
     constructor(sinfo: SourceInfo, name: string) {
         super(sinfo, name);
         this.name = name;
+    }
+
+    hasTemplateBindings(): boolean {
+        return true;
     }
 
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
@@ -312,6 +329,10 @@ class NominalTypeSignature extends TypeSignature {
         this.altns = altns;
     }
 
+    hasTemplateBindings(): boolean {
+        return this.alltermargs.some((tt) => tt.hasTemplateBindings());
+    }
+
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
         const rtall = this.alltermargs.map((tt) => tt.remapTemplateBindings(mapper));
 
@@ -352,6 +373,10 @@ class EListTypeSignature extends TypeSignature {
         this.entries = entries;
     }
 
+    hasTemplateBindings(): boolean {
+        return this.entries.some((tt) => tt.hasTemplateBindings());
+    }
+
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
         return new EListTypeSignature(this.sinfo, this.entries.map((tt) => tt.remapTemplateBindings(mapper)));
     }
@@ -371,6 +396,10 @@ class DashResultTypeSignature extends TypeSignature {
     constructor(sinfo: SourceInfo, entries: TypeSignature[]) {
         super(sinfo, "DashResult<" + entries.map((tt) => tt.tkeystr).join(", ") + ">");
         this.entries = entries;
+    }
+
+    hasTemplateBindings(): boolean {
+        return this.entries.some((tt) => tt.hasTemplateBindings());
     }
 
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
@@ -413,11 +442,15 @@ class LambdaTypeSignature extends TypeSignature {
     readonly resultType: TypeSignature;
 
     constructor(sinfo: SourceInfo, recursive: RecursiveAnnotation, name: "fn" | "pred", params: LambdaParameterSignature[], resultType: TypeSignature) {
-        super(sinfo, `${recursive === "yes" ? "rec " : ""}${name}(${params.map((pp) => pp.emit()).join(", ")}): ${resultType.tkeystr}`);
+        super(sinfo, `${name}(${params.map((pp) => pp.emit()).join(", ")}): ${resultType.tkeystr}`);
         this.recursive = recursive;
         this.name = name;
         this.params = params;
         this.resultType = resultType;
+    }
+
+    hasTemplateBindings(): boolean {
+        return this.params.some((pp) => pp.type.hasTemplateBindings()) || this.resultType.hasTemplateBindings();
     }
 
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
@@ -472,6 +505,10 @@ class FormatStringTypeSignature extends TypeSignature {
         this.terms = terms;
     }
 
+    hasTemplateBindings(): boolean {
+        return this.terms.some((tt) => tt.argtype.hasTemplateBindings()) || this.rtype.hasTemplateBindings();
+    }
+
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
         const ttrmp = this.terms.map((tt) => { return {argname: tt.argname, argtype: tt.argtype.remapTemplateBindings(mapper)}; });
         return new FormatStringTypeSignature(this.sinfo, this.oftype, this.rtype.remapTemplateBindings(mapper), ttrmp);
@@ -513,6 +550,10 @@ class FormatPathTypeSignature extends TypeSignature {
         this.oftype = oftype;
         this.rtype = rtype;
         this.terms = terms;
+    }
+
+    hasTemplateBindings(): boolean {
+        return this.terms.some((tt) => tt.argtype.hasTemplateBindings()) || this.rtype.hasTemplateBindings();
     }
 
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {

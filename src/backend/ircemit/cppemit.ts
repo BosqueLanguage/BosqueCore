@@ -1194,7 +1194,7 @@ class CPPEmitter {
         const ops = mstmt.matchflow.map((mf, ii) => {
             let chk: string;
             if(mf.mtype === undefined || ii === mstmt.matchflow.length - 1) {
-                chk = 'else {';
+                chk = 'else';
             }
             else {
                 const mftinfo = this.irasm.alltypes.get(mf.mtype.tkeystr) as IRAbstractNominalTypeDecl;
@@ -1208,7 +1208,7 @@ class CPPEmitter {
                     cop = `${RUNTIME_NAMESPACE}::isSubtypeOf(${typeidextract}, &${ttmgr})`;
                 }
 
-                chk = `if${ii !== 0 ? " else" : ""}(${cop}) {`;
+                chk = `${ii !== 0 ? "else " : ""}if(${cop})`;
             }
             
             const body = this.emitStatementList(mf.value.statements, undefined, undefined, bindent);
@@ -1286,7 +1286,13 @@ class CPPEmitter {
         let prestr = "";
         let bstr: string;
 
-        if(body.builtin === "nat_pow") {
+        if(body.builtin === "nat_to_cstring") {
+            bstr = `ᐸRuntimeᐳ::XCString::natToCString(n.value)`;
+        }
+        else if(body.builtin === "int_to_cstring") {
+            bstr = `ᐸRuntimeᐳ::XCString::intToCString(i.value)`;
+        }
+        else if(body.builtin === "nat_pow") {
             bstr = `ᐸRuntimeᐳ::integerPower<ᐸRuntimeᐳ::XNat, int64_t>(x, y)`;
         }
         else if(body.builtin === "int_pow") {
@@ -1379,6 +1385,9 @@ class CPPEmitter {
         }
         else if(body.builtin === "list_append") {
             bstr = "l1.append(l2)";
+        }
+        else if(body.builtin === "list_concat") {
+            bstr = `${TransformCPPNameManager.convertTypeKey(invk.resultType.tkeystr)}::concat(l)`;
         }
         else if(body.builtin === "list_allof") {
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "p");

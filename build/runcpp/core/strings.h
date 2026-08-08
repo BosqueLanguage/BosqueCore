@@ -445,6 +445,9 @@ namespace ᐸRuntimeᐳ
 
         void diagnosticEmit(std::ostream& out, bool waddr) const;
 
+        static XCString natToCString(int64_t value);
+        static XCString intToCString(int64_t value);
+
         XCString append(XCString other);
     };
 

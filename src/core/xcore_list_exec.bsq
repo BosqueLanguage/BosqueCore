@@ -25,6 +25,7 @@ namespace ListOps {
     function s_list_deleteback<T>(l: List<T>): List<T> = @list_deleteback;
 
     function s_list_append<T>(l1: List<T>, l2: List<T>): List<T> = @list_append;
+    function s_list_concat<T>(l: List<List<T>>): List<T> = @list_concat;
 
     recursive? function s_list_allof<T>(l: List<T>, p: recursive? pred(T) -> Bool): Bool = @list_allof;
     recursive? function s_list_noneof<T>(l: List<T>, p: recursive? pred(T) -> Bool): Bool = @list_noneof;

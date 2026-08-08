@@ -77,13 +77,13 @@ class TypeCheckerRelations {
         return pdecls;
     }
 
-    private areSameTypeSignatureLists(tl1: TypeSignature[], tl2: TypeSignature[]): boolean {
+    private areSameTypeSignatureLists(tl1: TypeSignature[], tl2: TypeSignature[], tconstrain: TemplateConstraintScope): boolean {
         if(tl1.length !== tl2.length) {
             return false;
         }
 
         for(let i = 0; i < tl1.length; ++i) {
-            if(!this.areSameTypes(tl1[i], tl2[i])) {
+            if(!this.areSameTypes(tl1[i], tl2[i], tconstrain)) {
                 return false;
             }
         }
@@ -91,7 +91,7 @@ class TypeCheckerRelations {
         return true;
     }
 
-    private areSameFunctionParamLists(tl1: LambdaParameterSignature[], tl2: LambdaParameterSignature[]): boolean {
+    private areSameFunctionParamLists(tl1: LambdaParameterSignature[], tl2: LambdaParameterSignature[], tconstrain: TemplateConstraintScope): boolean {
         if(tl1.length !== tl2.length) {
             return false;
         }
@@ -101,7 +101,7 @@ class TypeCheckerRelations {
                 return false;
             }
             
-            if(!this.areSameTypes(tl1[i].type, tl2[i].type)) {
+            if(!this.areSameTypes(tl1[i].type, tl2[i].type, tconstrain)) {
                 return false;
             }
         }
@@ -109,7 +109,7 @@ class TypeCheckerRelations {
         return true;
     }
 
-    private areSameFunctionFormatLists(tl1: {argname: string, argtype: TypeSignature}[], tl2: {argname: string, argtype: TypeSignature}[]): boolean {
+    private areSameFunctionFormatLists(tl1: {argname: string, argtype: TypeSignature}[], tl2: {argname: string, argtype: TypeSignature}[], tconstrain: TemplateConstraintScope): boolean {
         if(tl1.length !== tl2.length) {
             return false;
         }
@@ -118,7 +118,7 @@ class TypeCheckerRelations {
             const a1 = tl1[i];
             const a2 = tl2.find((a) => a.argname === a1.argname);
 
-            if(a2 === undefined || !this.areSameTypes(a1.argtype, a2.argtype)) {
+            if(a2 === undefined || !this.areSameTypes(a1.argtype, a2.argtype, tconstrain)) {
                 return false;
             }
         }
@@ -126,8 +126,19 @@ class TypeCheckerRelations {
         return true;
     }
 
+    private isUniqueForSameTypesWithTemplateResolve(t: TypeSignature): boolean {
+        if(t instanceof NominalTypeSignature) {
+            //Entity types are unique and not subtypeable so they are ok for same type checks
+            return (t.decl instanceof AbstractEntityTypeDecl);
+        }
+        else {
+            //Other types are also not subtypeable so they are ok for same type checks
+            return true;
+        }
+    }
+
     //Check if t1 and t2 are the same type -- template types are not expanded in this check
-    areSameTypes(t1: TypeSignature, t2: TypeSignature): boolean {
+    areSameTypes(t1: TypeSignature, t2: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         assert(!(t1 instanceof ErrorTypeSignature) && !(t2 instanceof ErrorTypeSignature), "Checking type same on errors");
         assert(!(t1 instanceof AutoTypeSignature) && !(t2 instanceof AutoTypeSignature), "Checking type same on auto");
 
@@ -142,39 +153,65 @@ class TypeCheckerRelations {
             res = true;
         }
         else if(t1 instanceof TemplateTypeSignature && t2 instanceof TemplateTypeSignature) {
-            res = (t1.name === t2.name);
+            if(t1.name === t2.name) {
+                res = true;
+            }
+            else {
+                const const1 = tconstrain.resolveConstraint(t1.name);
+                const const2 = tconstrain.resolveConstraint(t2.name);
+
+                if(const1 !== undefined && const1.tconstraint !== undefined && const2 !== undefined && const2.tconstraint !== undefined) {
+                    res = this.isUniqueForSameTypesWithTemplateResolve(const1.tconstraint) && this.isUniqueForSameTypesWithTemplateResolve(const2.tconstraint) && this.areSameTypes(const1.tconstraint, const2.tconstraint, tconstrain);
+                } 
+                else {
+                    ; //for all other cases res stays false
+                }
+            }
         }
         else if(t1 instanceof NominalTypeSignature && t2 instanceof NominalTypeSignature) {
-            res = (t1.decl === t2.decl) && this.areSameTypeSignatureLists(t1.alltermargs, t2.alltermargs);
+            res = (t1.decl === t2.decl) && this.areSameTypeSignatureLists(t1.alltermargs, t2.alltermargs, tconstrain);
         }
         else if(t1 instanceof EListTypeSignature && t2 instanceof EListTypeSignature) {
-            res = this.areSameTypeSignatureLists(t1.entries, t2.entries);
+            res = this.areSameTypeSignatureLists(t1.entries, t2.entries, tconstrain);
         }
         else if(t1 instanceof DashResultTypeSignature && t2 instanceof DashResultTypeSignature) {
-            res = this.areSameTypeSignatureLists(t1.entries, t2.entries);
+            res = this.areSameTypeSignatureLists(t1.entries, t2.entries, tconstrain);
         }
         else if(t1 instanceof FormatStringTypeSignature && t2 instanceof FormatStringTypeSignature) {
-            res = (t1.oftype === t2.oftype) && this.areSameTypes(t1.rtype, t2.rtype) && this.areSameFunctionFormatLists(t1.terms, t2.terms);
+            res = (t1.oftype === t2.oftype) && this.areSameTypes(t1.rtype, t2.rtype, tconstrain) && this.areSameFunctionFormatLists(t1.terms, t2.terms, tconstrain);
         }
         else if(t1 instanceof FormatPathTypeSignature && t2 instanceof FormatPathTypeSignature) {
-            res = (t1.oftype === t2.oftype) && this.areSameTypes(t1.rtype, t2.rtype) && this.areSameFunctionFormatLists(t1.terms, t2.terms);
+            res = (t1.oftype === t2.oftype) && this.areSameTypes(t1.rtype, t2.rtype, tconstrain) && this.areSameFunctionFormatLists(t1.terms, t2.terms, tconstrain);
         }
         else if(t1 instanceof LambdaTypeSignature && t2 instanceof LambdaTypeSignature) {
             if(t1.name !== t2.name) {
                 res = false;
             }
             else {
-                const okargs = this.areSameFunctionParamLists(t1.params, t2.params);
-                const okres = this.areSameTypes(t1.resultType, t2.resultType);
+                const okargs = this.areSameFunctionParamLists(t1.params, t2.params, tconstrain);
+                const okres = this.areSameTypes(t1.resultType, t2.resultType, tconstrain);
 
                 res = okargs && okres;
             }
         }
         else {
-            ; //for all other cases res stays false
+            if(t1 instanceof TemplateTypeSignature) {
+                const cons = tconstrain.resolveConstraint(t1.name);
+                res = cons !== undefined && cons.tconstraint !== undefined && this.isUniqueForSameTypesWithTemplateResolve(cons.tconstraint) && this.areSameTypes(cons.tconstraint, t2, tconstrain); 
+            }
+            else if (t2 instanceof TemplateTypeSignature) {
+                const cons = tconstrain.resolveConstraint(t2.name);
+                res = cons !== undefined && cons.tconstraint !== undefined && this.isUniqueForSameTypesWithTemplateResolve(cons.tconstraint) && this.areSameTypes(t1, cons.tconstraint, tconstrain);
+            }
+            else {
+                ; //for all other cases res stays false
+            }
         }
 
-        this.memoizedTypeEqualRelation.set(kstr, res);
+        if(!t1.hasTemplateBindings() && !t2.hasTemplateBindings()) {
+            this.memoizedTypeEqualRelation.set(kstr, res);
+        }
+
         return res;
     }
 
@@ -206,7 +243,7 @@ class TypeCheckerRelations {
         }
 
         let res = false;
-        if(this.areSameTypes(t1, t2)) {
+        if(this.areSameTypes(t1, t2, tconstrain)) {
             res = true;
         }
         else {
@@ -221,7 +258,10 @@ class TypeCheckerRelations {
             }
         }
 
-        this.memoizedTypeSubtypeRelation.set(kstr, res);
+        if(!t1.hasTemplateBindings() && !t2.hasTemplateBindings()) {
+            this.memoizedTypeSubtypeRelation.set(kstr, res);
+        }
+
         return res;
     }
 
@@ -262,7 +302,7 @@ class TypeCheckerRelations {
             //check for special case of Ok+Err -> Result
             const okopt = ptl.find((t) => t.decl instanceof OkTypeDecl);
             const erropt = ptl.find((t) => t.decl instanceof FailTypeDecl);
-            if(okopt && erropt && this.areSameTypeSignatureLists(okopt.alltermargs, erropt.alltermargs)) {
+            if(okopt && erropt && this.areSameTypeSignatureLists(okopt.alltermargs, erropt.alltermargs, tconstrain)) {
                 return new NominalTypeSignature(sinfo, undefined, corens.typedecls.find((tdecl) => tdecl.name === "Result") as ResultTypeDecl, okopt.alltermargs);
             }
         }
@@ -590,7 +630,7 @@ class TypeCheckerRelations {
             if((t.decl instanceof SomeTypeDecl) || (t.decl instanceof OptionTypeDecl)) {
                 const topt = t.alltermargs[0];
 
-                if(someT !== undefined && !this.areSameTypes(someT, topt)) {
+                if(someT !== undefined && !this.areSameTypes(someT, topt, tconstrain)) {
                     return undefined;
                 }
                 someT = topt;
@@ -626,7 +666,7 @@ class TypeCheckerRelations {
             if((t.decl instanceof SomeTypeDecl) || (t.decl instanceof OptionTypeDecl)) {
                 const topt = t.alltermargs[0];
 
-                if(someT !== undefined && !this.areSameTypes(someT, topt)) {
+                if(someT !== undefined && !this.areSameTypes(someT, topt, tconstrain)) {
                     return undefined;
                 }
                 someT = topt;
@@ -662,12 +702,12 @@ class TypeCheckerRelations {
             const topt = t.alltermargs[0];
             const eopt = t.alltermargs[1];
 
-            if(typeT !== undefined && !this.areSameTypes(typeT, topt)) {
+            if(typeT !== undefined && !this.areSameTypes(typeT, topt, tconstrain)) {
                 return undefined;
             }
             typeT = topt;
 
-            if(typeE !== undefined && !this.areSameTypes(typeE, eopt)) {
+            if(typeE !== undefined && !this.areSameTypes(typeE, eopt, tconstrain)) {
                 return undefined;
             }
             typeE = eopt;
@@ -713,12 +753,12 @@ class TypeCheckerRelations {
             const topt = t.alltermargs[0];
             const eopt = t.alltermargs[1];
 
-            if(typeT !== undefined && !this.areSameTypes(typeT, topt)) {
+            if(typeT !== undefined && !this.areSameTypes(typeT, topt, tconstrain)) {
                 return undefined;
             }
             typeT = topt;
 
-            if(typeE !== undefined && !this.areSameTypes(typeE, eopt)) {
+            if(typeE !== undefined && !this.areSameTypes(typeE, eopt, tconstrain)) {
                 return undefined;
             }
             typeE = eopt;
