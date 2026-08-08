@@ -128,10 +128,11 @@ class TypeCheckerRelations {
 
     private isUniqueForSameTypesWithTemplateResolve(t: TypeSignature): boolean {
         if(t instanceof NominalTypeSignature) {
-            //Atomic types are unique and datatypes are closed on extensibility so subtyping is ok for disjointness there too
-            return (t.decl instanceof AbstractEntityTypeDecl) || (t.decl instanceof DatatypeTypeDecl);
+            //Entity types are unique and not subtypeable so they are ok for same type checks
+            return (t.decl instanceof AbstractEntityTypeDecl);
         }
         else {
+            //Other types are also not subtypeable so they are ok for same type checks
             return true;
         }
     }
@@ -152,7 +153,20 @@ class TypeCheckerRelations {
             res = true;
         }
         else if(t1 instanceof TemplateTypeSignature && t2 instanceof TemplateTypeSignature) {
-            res = (t1.name === t2.name);
+            if(t1.name === t2.name) {
+                res = true;
+            }
+            else {
+                const const1 = tconstrain.resolveConstraint(t1.name);
+                const const2 = tconstrain.resolveConstraint(t2.name);
+
+                if(const1 !== undefined && const1.tconstraint !== undefined && const2 !== undefined && const2.tconstraint !== undefined) {
+                    res = this.isUniqueForSameTypesWithTemplateResolve(const1.tconstraint) && this.isUniqueForSameTypesWithTemplateResolve(const2.tconstraint) && this.areSameTypes(const1.tconstraint, const2.tconstraint, tconstrain);
+                } 
+                else {
+                    ; //for all other cases res stays false
+                }
+            }
         }
         else if(t1 instanceof NominalTypeSignature && t2 instanceof NominalTypeSignature) {
             res = (t1.decl === t2.decl) && this.areSameTypeSignatureLists(t1.alltermargs, t2.alltermargs, tconstrain);
@@ -183,11 +197,11 @@ class TypeCheckerRelations {
         else {
             if(t1 instanceof TemplateTypeSignature) {
                 const cons = tconstrain.resolveConstraint(t1.name);
-                return cons !== undefined && cons.tconstraint !== undefined && this.isUniqueForSameTypesWithTemplateResolve(cons.tconstraint) && this.areSameTypes(cons.tconstraint, t2, tconstrain); 
+                res = cons !== undefined && cons.tconstraint !== undefined && this.isUniqueForSameTypesWithTemplateResolve(cons.tconstraint) && this.areSameTypes(cons.tconstraint, t2, tconstrain); 
             }
             else if (t2 instanceof TemplateTypeSignature) {
                 const cons = tconstrain.resolveConstraint(t2.name);
-                return cons !== undefined && cons.tconstraint !== undefined && this.isUniqueForSameTypesWithTemplateResolve(cons.tconstraint) && this.areSameTypes(t1, cons.tconstraint, tconstrain);
+                res = cons !== undefined && cons.tconstraint !== undefined && this.isUniqueForSameTypesWithTemplateResolve(cons.tconstraint) && this.areSameTypes(t1, cons.tconstraint, tconstrain);
             }
             else {
                 ; //for all other cases res stays false

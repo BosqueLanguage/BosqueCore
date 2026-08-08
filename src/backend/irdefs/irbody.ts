@@ -820,7 +820,11 @@ class IRLiteralDecimalExpression extends IRLiteralFloatingPointExpression {
     }
 
     static parseBAPIAsIRLiteralDecimalExpression(lexer: BAPILexer): IRLiteralDecimalExpression {
+        lexer.ensureAndConsumeToken(BAPITokenKind.TypeIdentifier);
+        lexer.ensureAndConsumeSymbol("{");
         const value = lexer.ensureAndConsumeToken(BAPITokenKind.DecimalLiteral);
+        lexer.ensureAndConsumeSymbol("}");
+        
         return new IRLiteralDecimalExpression(value.slice(0, -1)); //remove the trailing 'd' from the literal
     }
 }

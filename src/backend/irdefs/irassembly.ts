@@ -1741,16 +1741,16 @@ class IRAssembly {
         lexer.ensureAndConsumeSymbol("List<Assembly::EnumTypeDecl>");
         irasm.enums.push(...parseListOf<IREnumTypeDecl>(lexer, '{', '}', ',', IREnumTypeDecl.parseBAPIAsIREnumTypeDecl));
 
-        lexer.ensureAndConsumeSymbol("List<Assembly::SimpleTypeDecl>");
+        lexer.ensureAndConsumeSymbol("List<Assembly::TypedeclSimpleTypeDecl>");
         irasm.typedecls.push(...parseListOf<IRTypedeclTypeDecl>(lexer, '{', '}', ',', IRTypedeclTypeDecl.parseBAPIAsIRTypedeclTypeDecl));
 
-        lexer.ensureAndConsumeSymbol("List<Assembly::BoundedTypeDecl>");
+        lexer.ensureAndConsumeSymbol("List<Assembly::TypedeclBoundedTypeDecl>");
         irasm.typedecls.push(...parseListOf<IRTypedeclTypeDecl>(lexer, '{', '}', ',', IRTypedeclTypeDecl.parseBAPIAsIRTypedeclTypeDecl));
 
-        lexer.ensureAndConsumeSymbol("List<Assembly::CStringTypeDecl>");
+        lexer.ensureAndConsumeSymbol("List<Assembly::TypedeclCStringTypeDecl>");
         irasm.cstringoftypedecls.push(...parseListOf<IRTypedeclCStringDecl>(lexer, '{', '}', ',', IRTypedeclCStringDecl.parseBAPIAsIRTypedeclCStringDecl));
 
-        lexer.ensureAndConsumeSymbol("List<Assembly::StringTypeDecl>");
+        lexer.ensureAndConsumeSymbol("List<Assembly::TypedeclStringTypeDecl>");
         irasm.stringoftypedecls.push(...parseListOf<IRTypedeclStringDecl>(lexer, '{', '}', ',', IRTypedeclStringDecl.parseBAPIAsIRTypedeclStringDecl));
 
         lexer.ensureAndConsumeSymbol("Map<Assembly::TypeKey, Assembly::TypeSignature>");
