@@ -2439,7 +2439,8 @@ class TypeChecker {
                 return false;
             }
         });
-        const fdecl = this.relations.assembly.resolveNamespaceFunction(exp.ns, exp.name, hastemplate, haslambda, exp.args.hasSpecialRef());
+        const pkinds = exp.args.args.map((arg) => (arg instanceof PassingArgumentValue) ? arg.kind : undefined).filter((k) => k !== undefined) as ("ref" | "out" | "out?" | "inout")[];
+        const fdecl = this.relations.assembly.resolveNamespaceFunction(exp.ns, exp.name, hastemplate, haslambda, pkinds);
 
         if(fdecl === undefined) {
             this.reportError(exp.sinfo, `Could not find namespace function ${exp.ns.emit()}::${exp.name}`);
@@ -2508,7 +2509,8 @@ class TypeChecker {
                 return false;
             }
         });
-        const fdecl = this.relations.resolveTypeFunction(exp.ttype, exp.name, hastemplate, haslambda, exp.args.hasSpecialRef(), this.constraints);
+        const pkinds = exp.args.args.map((arg) => (arg instanceof PassingArgumentValue) ? arg.kind : undefined).filter((k) => k !== undefined) as ("ref" | "out" | "out?" | "inout")[];
+        const fdecl = this.relations.resolveTypeFunction(exp.ttype, exp.name, hastemplate, haslambda, pkinds, this.constraints);
         if(fdecl === undefined) {
             this.reportError(exp.sinfo, `Could not find type scoped function ${exp.ttype.emit()}::${exp.name}`);
             return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
@@ -2811,14 +2813,14 @@ class TypeChecker {
         assert(false, "Not Implemented -- checkPostfixAssignFields");
     }
 
-    private postfixInvokeStaticResolve(env: TypeEnvironment, mdeclaration: MemberLookupInfo<MethodDecl>, name: string, isTemplate: boolean, hasLambda: boolean, isRef: boolean, resolvefrom: TypeSignature): MemberLookupInfo<MethodDecl> | undefined {
+    private postfixInvokeStaticResolve(env: TypeEnvironment, mdeclaration: MemberLookupInfo<MethodDecl>, name: string, isTemplate: boolean, hasLambda: boolean, pkinds: ("ref" | "out" | "out?" | "inout")[], resolvefrom: TypeSignature): MemberLookupInfo<MethodDecl> | undefined {
         if(mdeclaration.member.attributes.every((attr) => attr.name !== "virtual" && attr.name !== "abstract")) {
             return mdeclaration; //There is no overloading so the declaration is the implementation!
         }
 
         const tdecl = (resolvefrom as NominalTypeSignature).decl;
         if(tdecl instanceof AbstractEntityTypeDecl) {
-            return this.relations.resolveTypeMethodDeclaration(resolvefrom, name, isTemplate, hasLambda, isRef, this.constraints); //a concrete subtype so we can resolve statically
+            return this.relations.resolveTypeMethodDeclaration(resolvefrom, name, isTemplate, hasLambda, pkinds, this.constraints); //a concrete subtype so we can resolve statically
         }
 
         return undefined; //otherwise we have to do dynamic dispatch
@@ -2852,7 +2854,8 @@ class TypeChecker {
             }
         });
 
-        const mresolve = this.relations.resolveTypeMethodDeclaration(resolvefrom, exp.name, hastemplate, haslambda, exp.args.hasSpecialRef(), this.constraints);
+        const pkinds = exp.args.args.map((arg) => (arg instanceof PassingArgumentValue) ? arg.kind : undefined).filter((k) => k !== undefined) as ("ref" | "out" | "out?" | "inout")[];
+        const mresolve = this.relations.resolveTypeMethodDeclaration(resolvefrom, exp.name, hastemplate, haslambda, pkinds, this.constraints);
         if(mresolve === undefined) {
             this.reportError(exp.sinfo, `Could not find method ${exp.name} in type ${rcvrtype.emit()}`);
             return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
@@ -2881,7 +2884,7 @@ class TypeChecker {
 
         let resolvedrtype: TypeSignature = mresolve.member.resultType;
         if(exp.specificResolve !== undefined) {
-            const rrt = this.relations.resolveTypeMethodImplementation(resolvefrom, exp.name, hastemplate, haslambda, exp.args.hasSpecialRef(), this.constraints);
+            const rrt = this.relations.resolveTypeMethodImplementation(resolvefrom, exp.name, hastemplate, haslambda, pkinds, this.constraints);
             this.checkError(exp.sinfo, rrt === undefined, `Method ${exp.name} is not specifically resolvable from type ${resolvefrom.emit()}`);
 
             if(rrt !== undefined) {
@@ -2891,7 +2894,7 @@ class TypeChecker {
             }
         }
         else {
-            const smresolve = this.postfixInvokeStaticResolve(env, mresolve, exp.name, hastemplate, haslambda, exp.args.hasSpecialRef(), resolvefrom);
+            const smresolve = this.postfixInvokeStaticResolve(env, mresolve, exp.name, hastemplate, haslambda, pkinds, resolvefrom);
             if(smresolve !== undefined) {
                 resolvedrtype = smresolve.member.resultType;
                 exp.resolvedImplType = smresolve.typeinfo.tsig;
@@ -2964,8 +2967,14 @@ class TypeChecker {
                     break;
                 }
                 case PostfixOpTag.PostfixInvoke: {
-                    ctype = this.checkPostfixInvoke(env, op as PostfixInvoke, ctype, false).tsig;
-                    break;
+                    if(i < exp.ops.length - 1) {
+                        ctype = this.checkPostfixInvoke(env, op as PostfixInvoke, ctype, false).tsig;
+                        break;
+                    }
+                    else {
+                        ctype = this.checkPostfixInvoke(env, op as PostfixInvoke, ctype, true).tsig;
+                        break;
+                    }
                 }
                 default: {
                     assert(op.tag === PostfixOpTag.PostfixError, "Unknown postfix op");
@@ -3709,7 +3718,8 @@ class TypeChecker {
             }
         });
 
-        const mresolve = this.relations.resolveTypeMethodDeclaration(resolvefrom, exp.name, hastemplate, haslambda, true, this.constraints);
+        const pkinds = ["ref", ...exp.args.args.map((arg) => (arg instanceof PassingArgumentValue) ? arg.kind : undefined)].filter((k) => k !== undefined) as ("ref" | "out" | "out?" | "inout")[];
+        const mresolve = this.relations.resolveTypeMethodDeclaration(resolvefrom, exp.name, hastemplate, haslambda, pkinds, this.constraints);
         if(mresolve === undefined) {
             this.reportError(exp.sinfo, `Could not find method ${exp.name} in type ${rcvrtype.emit()}`);
             return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
@@ -3749,7 +3759,7 @@ class TypeChecker {
 
         let resolvedrtype: TypeSignature = mresolve.member.resultType;
         if(exp.specificResolve !== undefined) {
-            const rrt = this.relations.resolveTypeMethodImplementation(resolvefrom, exp.name, hastemplate, haslambda, true, this.constraints);
+            const rrt = this.relations.resolveTypeMethodImplementation(resolvefrom, exp.name, hastemplate, haslambda, pkinds, this.constraints);
             this.checkError(exp.sinfo, rrt === undefined, `Method ${exp.name} is not specifically resolvable from type ${resolvefrom.emit()}`);
 
             if(rrt !== undefined) {
@@ -3759,7 +3769,7 @@ class TypeChecker {
             }
         }
         else {
-            const smresolve = this.postfixInvokeStaticResolve(env, mresolve, exp.name, hastemplate, haslambda, true, resolvefrom);
+            const smresolve = this.postfixInvokeStaticResolve(env, mresolve, exp.name, hastemplate, haslambda, pkinds, resolvefrom);
             if(smresolve !== undefined) {
                 resolvedrtype = smresolve.member.resultType;
                 exp.resolvedImplType = smresolve.typeinfo.tsig;

@@ -1826,7 +1826,7 @@ class Assembly {
         return true;
     }
 
-    static resolveSigMatch(s1: {name: string, isTemplate: boolean, hasLambda: boolean, isRef: boolean}, s2: {name: string, isTemplate: boolean, hasLambda: boolean, isRef: boolean}): boolean {
+    static resolveSigMatch(s1: {name: string, isTemplate: boolean, hasLambda: boolean, pkinds: ("ref" | "out" | "out?" | "inout")[]}, s2: {name: string, isTemplate: boolean, hasLambda: boolean, pkinds: ("ref" | "out" | "out?" | "inout")[]}): boolean {
         if(s1.name !== s2.name) {
             return false;
         }
@@ -1839,11 +1839,9 @@ class Assembly {
             return false;
         }
 
-        if(s1.isRef !== s2.isRef) {
-            return false;
-        }
-        
-        return true;
+        const pk1 = s1.pkinds.find((p) => p !== undefined);
+        const pk2 = s2.pkinds.find((p) => p !== undefined);
+        return pk1 === pk2;
     }
 
     resolveNamespaceConstant(ns: FullyQualifiedNamespace, name: string): NamespaceConstDecl | undefined {
@@ -1855,14 +1853,14 @@ class Assembly {
         return nsdecl.consts.find((c) => c.name === name);
     }
 
-    resolveNamespaceFunction(ns: FullyQualifiedNamespace, name: string, isTemplate: boolean, hasLambda: boolean, isRef: boolean): NamespaceFunctionDecl | undefined {
+    resolveNamespaceFunction(ns: FullyQualifiedNamespace, name: string, isTemplate: boolean, hasLambda: boolean, pkinds: ("ref" | "out" | "out?" | "inout")[]): NamespaceFunctionDecl | undefined {
         const nsdecl = this.resolveNamespaceDecl(ns.ns);
         if(nsdecl === undefined) {
             return undefined;
         }
 
-        const fnsig = {name: name, isTemplate: isTemplate, hasLambda: hasLambda, isRef: isRef};
-        return nsdecl.functions.find((c) => Assembly.resolveSigMatch(fnsig, {name: c.name, isTemplate: c.terms.length !== 0, hasLambda: c.params.some((p) => p.type instanceof LambdaTypeSignature), isRef: c.params.some((p) => p.pkind !== undefined)}));
+        const fnsig = {name: name, isTemplate: isTemplate, hasLambda: hasLambda, pkinds: pkinds};
+        return nsdecl.functions.find((c) => Assembly.resolveSigMatch(fnsig, {name: c.name, isTemplate: c.terms.length !== 0, hasLambda: c.params.some((p) => p.type instanceof LambdaTypeSignature), pkinds: c.params.map((p) => p.pkind).filter((pk) => pk !== undefined) as ("ref" | "out" | "out?" | "inout")[]}));
     }
 
     tryReduceConstantExpressionToRE(exp: Expression): LiteralRegexExpression | undefined {
