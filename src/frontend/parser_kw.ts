@@ -260,8 +260,8 @@ const SYM_questionquestion = "??";
 const SYM_dotdotdot = "...";
 const SYM_HOLE = "$?_";
 
-const SYM_positive = " +";
-const SYM_negate = " -";
+const SYM_positive = "+";
+const SYM_negate = "-";
 
 const SYM_ampamp = " && ";
 const SYM_bangeq = " != ";
@@ -300,6 +300,9 @@ const StandardSymbols = [
     SYM_dotdotdot,
     SYM_HOLE,
     
+    SYM_positive,
+    SYM_negate,
+
     SYM_atat,
     SYM_questionat,
     SYM_hash
@@ -323,12 +326,6 @@ const SpaceRequiredSymbols = [
     SYM_minus,
     SYM_times,
     SYM_div
-].map((s) => { return s.trim(); })
-.sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
-
-const SpaceFrontSymbols = [
-    SYM_positive,
-    SYM_negate
 ].map((s) => { return s.trim(); })
 .sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
@@ -367,7 +364,7 @@ export {
     GeneralAttributes, APIDeclAttributes, AgentDeclAttributes, InvokeAttributes, AllAttributes, CoreOnlyAttributes,
     TermRestrictions,
     LeftScanParens, RightScanParens,
-    SpaceRequiredSymbols, SpaceFrontSymbols, StandardSymbols, ParenSymbols,
+    SpaceRequiredSymbols, StandardSymbols, ParenSymbols,
 
     SpecialStringFormatTypes, SpecialPathFormatTypes, SpecialDashResultType, SpecialNominalTypes,
 

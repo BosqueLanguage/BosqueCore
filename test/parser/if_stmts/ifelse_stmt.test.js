@@ -8,7 +8,7 @@ describe ("Parser -- IfElse Statement", () => {
         parseTestFunction("function main(): Int { if (true) { return 3i; } else { return 1i; } }", undefined);
         parseTestFunction("function main(): Int { if (true || false) { return 3i; } else { return 1i; } }", undefined);
 
-        parseTestFunctionError("function main(): Int { if (true || +) { return 3i; } else { return 1i; } }", "Unrecognized token");
+        parseTestFunctionError("function main(): Int { if (true || +) { return 3i; } else { return 1i; } }", "Unexpected token in expression -- )");
 
         parseTestFunctionError("function main(): Int { if(true) { return 3i; } else { } return 1i; }", "Empty block statement -- should include a ';' to indicate intentionally empty block");
 

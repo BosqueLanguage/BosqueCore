@@ -32,7 +32,7 @@ describe ("Parser -- entity methods", () => {
     it("should parse fail simple entity", function () {
         parseTestFunctionInFileError('entity Foo { field f: Int; foo(): Bool { return this.f; }} function main(): Bool { let x = Foo{3i}; return x.foo(); }', "Unknown member foo");
         parseTestFunctionInFileError('entity Foo { field f: Int; method foo(): Bool { return this.f; }} function main(): Bool { let x = Foo{3i}; return x..foo(); }', 'Expected "[IDENTIFIER]" but got "." when parsing "postfix access/invoke"');
-        parseTestFunctionInFileError('entity Foo { field f: Int; method foo(): Bool { return this.f; }} function main(): Bool { let x = Foo{3i}; return x->foo(); }', "Unrecognized token");
+        parseTestFunctionInFileError('entity Foo { field f: Int; method foo(): Bool { return this.f; }} function main(): Bool { let x = Foo{3i}; return x->foo(); }', 'Expected ";" but got "-" when parsing "line statement"');
     });
 });
 
