@@ -124,7 +124,7 @@ describe ("Parser -- Complex", () => {
     });
 
     it("should fail missing real", function () {
-        parseTestExpError("-0.5j", "Unrecognized token", "Complex");
+        parseTestExpError("-0.5j", "Un-annotated numeric literals are not supported", "Complex");
     });
 
     it("should fail missing imag", function () {
