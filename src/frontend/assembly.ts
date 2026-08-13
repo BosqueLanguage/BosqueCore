@@ -1813,10 +1813,6 @@ class Assembly {
             return false;
         }
 
-        if(md1.isThisRef !== md2.isThisRef) {
-            return false;
-        }
-
         const pk1 = [md1.isThisRef ? "ref" : undefined, ...md1.params.map((p) => p.pkind)].find((pk) => pk !== undefined);
         const pk2 = [md2.isThisRef ? "ref" : undefined, ...md2.params.map((p) => p.pkind)].find((pk) => pk !== undefined);
         return pk1 === pk2;
