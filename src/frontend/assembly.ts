@@ -1793,13 +1793,9 @@ class Assembly {
             return false;
         }
 
-        const r1isref = fd1.params.some((p) => p.pkind !== undefined);
-        const r2isref = fd2.params.some((p) => p.pkind !== undefined);
-        if(r1isref !== r2isref) {
-            return false;
-        }
-
-        return true;
+        const pk1 = fd1.params.find((p) => p.pkind !== undefined);
+        const pk2 = fd2.params.find((p) => p.pkind !== undefined);
+        return pk1 === pk2;
     }
 
     static checkMethodSigMatch(md1: MethodDecl, md2: MethodDecl): boolean {
@@ -1817,13 +1813,13 @@ class Assembly {
             return false;
         }
 
-        const r1isref = md1.params.some((p) => p.pkind !== undefined);
-        const r2isref = md2.params.some((p) => p.pkind !== undefined);
-        if((r1isref || md1.isThisRef) !== (r2isref || md2.isThisRef)) {
+        if(md1.isThisRef !== md2.isThisRef) {
             return false;
         }
 
-        return true;
+        const pk1 = md1.params.find((p) => p.pkind !== undefined);
+        const pk2 = md2.params.find((p) => p.pkind !== undefined);
+        return pk1 === pk2;
     }
 
     static resolveSigMatch(s1: {name: string, isTemplate: boolean, hasLambda: boolean, pkinds: ("ref" | "out" | "out?" | "inout")[]}, s2: {name: string, isTemplate: boolean, hasLambda: boolean, pkinds: ("ref" | "out" | "out?" | "inout")[]}): boolean {
