@@ -35,7 +35,7 @@ describe ("CPPEmit -- entity methods", () => {
 
     it("should emit simple entity methods multiple options", function () {
         checkTestEmitMainFunction('entity Foo { field f: Int; method foo(): Int { return this.f; } method foo(out x: Int): Int { x = 3i; return x; } } public function main(): Int { return Foo{3i}.foo(); }', "Int Mainᕒmain() { MainᕒFoo tmp_0 = MainᕒFoo{3_i}; return MainᕒFooᑀfoo(tmp_0); }"); 
-        checkTestEmitMainFunction('entity Foo { field f: Int; method foo(): Int { return this.f; } method foo(out x: Int): Int { x = 3i; return x; } } public function main(): Int { let x = Foo{3i}; var y: Int; return x.foo(out y); }', "Int Mainᕒmain() { MainᕒFoo x = MainᕒFoo{3_i}; Int y; Int tmp_0 = MainᕒFooᑀfooᙾref(x, y); return tmp_0; }");
+        checkTestEmitMainFunction('entity Foo { field f: Int; method foo(): Int { return this.f; } method foo(out x: Int): Int { x = 3i; return x; } } public function main(): Int { let x = Foo{3i}; var y: Int; return x.foo(out y); }', "Int Mainᕒmain() { MainᕒFoo x = MainᕒFoo{3_i}; Int y; Int tmp_0 = MainᕒFooᑀfooᙾout(x, y); return tmp_0; }");
         checkTestEmitMainFunction('entity Foo { field f: Int; method foo(): Int { return this.f; } method foo(f: fn() -> Int): Int { return f(); } } public function main(): Int { let x = Foo{3i}; return x.foo(fn() => 3i); }', "Int Mainᕒmain() { MainᕒFoo x = MainᕒFoo{3_i}; return MainᕒFooᑀfooᑅfn_0ᑀ(x, fn_0_ldata_{}); }");
     });
 });
