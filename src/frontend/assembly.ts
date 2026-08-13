@@ -1380,12 +1380,11 @@ class AgentDecl extends AbstractCoreDecl {
         const attrs = this.emitAttributes();
 
         const params = this.params.map((p) => p.emit(fmt)).join(", ");
-        const iresult = this.resultType === undefined ? "<T>" : "";
         const eresult = this.resultType !== undefined ? (": " + this.resultType.emit()) : "";
         const eevent = this.eventType !== undefined ? (this.resultType !== undefined ? ", " : " ") + this.eventType.emit() : "";
 
         const minfo = this.emitMetaInfo(fmt);
-        return `${attrs}agent ${this.name}${iresult}(${params})${eresult}${eevent} ${this.body.emit(fmt, minfo)}`;
+        return `${attrs}agent ${this.name}(${params})${eresult}${eevent} ${this.body.emit(fmt, minfo)}`;
     }
 }
 
