@@ -1,4 +1,4 @@
-import { LambdaDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, TypeFunctionDecl } from "../../frontend/assembly.js";
+import { InvokeParameterDecl, LambdaDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, TypeFunctionDecl } from "../../frontend/assembly.js";
 import { EListTypeSignature, FullyQualifiedNamespace, LambdaTypeSignature, TemplateNameMapper, TypeSignature } from "../../frontend/type.js";
 
 class LambdaInstantiationInfo {
@@ -104,26 +104,30 @@ function computeLambdaKey(packs: { pname: string, psigkey: string }[]): string {
     return (packs.length !== 0) ? `[${packs.map(lp => lp.psigkey).join(", ")}]` : "";
 }
 
-function computeResolveKeyForInvoke(ikey: string, termcount: number, hasref: boolean, lambdas: boolean): string {
+function computeResolveKeyForInvoke(ikey: string, termcount: number, isthisref: boolean, params: InvokeParameterDecl[], lambdas: boolean): string {
     const tci = (termcount !== 0) ? `*tc_${termcount}_` : "";
-    const rfi = (hasref ? "*_ref_" : "");
+    const pkinds = [isthisref ? "ref" : undefined, ...params.map((p) => p.pkind)].filter((pk) => pk !== undefined);
+    const rfi = pkinds.length !== 0 ? `*_${pkinds[0].replace("?", "p")}_` : "";
     const li = (lambdas ? "*_lambdas_" : "");
 
     return `${ikey}${tci}${rfi}${li}`;
 }
 
 function computeInvokeKeyForNamespaceFunction(ns: NamespaceDeclaration, fdecl: NamespaceFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]): string {
-    const rti = fdecl.params.some((p) => p.pkind !== undefined) ? "#ref" : "";
+    const pkinds = fdecl.params.map((p) => p.pkind).filter((pk) => pk !== undefined);
+    const rti = pkinds.length !== 0 ? `#${pkinds[0].replace("?", "p")}` : "";
     return `${ns.fullnamespace.emit()}::${fdecl.name}${rti}${computeTBindsKey(terms)}${computeLambdaKey(lambdas)}`;
 }
 
 function computeInvokeKeyForTypeFunction(rcvrtype: TypeSignature, fdecl: TypeFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]): string {
-    const rti = fdecl.params.some((p) => p.pkind !== undefined) ? "#ref" : "";
+    const pkinds = fdecl.params.map((p) => p.pkind).filter((pk) => pk !== undefined);
+    const rti = pkinds.length !== 0 ? `#${pkinds[0].replace("?", "p")}` : "";
     return `${rcvrtype.tkeystr}::${fdecl.name}${rti}${computeTBindsKey(terms)}${computeLambdaKey(lambdas)}`;
 }
 
 function computeInvokeKeyForTypeMethod(rcvrtype: TypeSignature, mdecl: MethodDecl, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]): string {
-    const rti = ((mdecl.isThisRef) || mdecl.params.some((p) => p.pkind !== undefined)) ? "#ref" : "";
+    const pkinds = [mdecl.isThisRef ? "ref" : undefined, ...mdecl.params.map((p) => p.pkind)].filter((pk) => pk !== undefined);
+    const rti = pkinds.length !== 0 ? `#${pkinds[0].replace("?", "p")}` : "";
     return `${rcvrtype.tkeystr}@${mdecl.name}${rti}${computeTBindsKey(terms)}${computeLambdaKey(lambdas)}`;
 }
 

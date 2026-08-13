@@ -1806,7 +1806,7 @@ class Monomorphizer {
         this.instantiateBodyImplementation(fdecl.function.body);
 
         const cnns = this.currentNSInstantiation as NamespaceInstantiationInfo;
-        const rkey = computeResolveKeyForInvoke(fdecl.function.name, fdecl.function.terms.length, fdecl.function.params.some((p) => p.pkind !== undefined), fdecl.function.params.some((p) => p.type instanceof LambdaTypeSignature));
+        const rkey = computeResolveKeyForInvoke(fdecl.function.name, fdecl.function.terms.length, false, fdecl.function.params, fdecl.function.params.some((p) => p.type instanceof LambdaTypeSignature));
         
         fdecl.function.resolvename = rkey;
         if(!cnns.functionbinds.has(rkey)) {
@@ -1852,7 +1852,7 @@ class Monomorphizer {
 
         this.instantiateBodyImplementation(fdecl.function.body);
 
-        const rkey = computeResolveKeyForInvoke(fdecl.function.name, fdecl.function.terms.length, fdecl.function.params.some((p) => p.pkind !== undefined), fdecl.function.params.some((p) => p.type instanceof LambdaTypeSignature));
+        const rkey = computeResolveKeyForInvoke(fdecl.function.name, fdecl.function.terms.length, false, fdecl.function.params, fdecl.function.params.some((p) => p.type instanceof LambdaTypeSignature));
 
         fdecl.function.resolvename = rkey;
         if(!typeinst.functionbinds.has(rkey)) {
@@ -1898,7 +1898,7 @@ class Monomorphizer {
 
         this.instantiateBodyImplementation(mdecl.method.body);
 
-        const rkey = computeResolveKeyForInvoke(mdecl.method.name, mdecl.method.terms.length, mdecl.method.params.some((p) => p.pkind !== undefined), mdecl.method.params.some((p) => p.type instanceof LambdaTypeSignature));
+        const rkey = computeResolveKeyForInvoke(mdecl.method.name, mdecl.method.terms.length, mdecl.method.isThisRef, mdecl.method.params, mdecl.method.params.some((p) => p.type instanceof LambdaTypeSignature));
         
         mdecl.method.resolvename = rkey;
         if(!typeinst.methodbinds.has(rkey)) {
