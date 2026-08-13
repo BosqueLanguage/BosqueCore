@@ -2967,14 +2967,8 @@ class TypeChecker {
                     break;
                 }
                 case PostfixOpTag.PostfixInvoke: {
-                    if(i < exp.ops.length - 1) {
-                        ctype = this.checkPostfixInvoke(env, op as PostfixInvoke, ctype, false).tsig;
-                        break;
-                    }
-                    else {
-                        ctype = this.checkPostfixInvoke(env, op as PostfixInvoke, ctype, true).tsig;
-                        break;
-                    }
+                    ctype = this.checkPostfixInvoke(env, op as PostfixInvoke, ctype, false).tsig;
+                    break;
                 }
                 default: {
                     assert(op.tag === PostfixOpTag.PostfixError, "Unknown postfix op");

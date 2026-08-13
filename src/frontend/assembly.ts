@@ -1793,8 +1793,8 @@ class Assembly {
             return false;
         }
 
-        const pk1 = fd1.params.find((p) => p.pkind !== undefined);
-        const pk2 = fd2.params.find((p) => p.pkind !== undefined);
+        const pk1 = fd1.params.map((p) => p.pkind).find((pk) => pk !== undefined);
+        const pk2 = fd2.params.map((p) => p.pkind).find((pk) => pk !== undefined);
         return pk1 === pk2;
     }
 
@@ -1817,8 +1817,8 @@ class Assembly {
             return false;
         }
 
-        const pk1 = md1.params.find((p) => p.pkind !== undefined);
-        const pk2 = md2.params.find((p) => p.pkind !== undefined);
+        const pk1 = [md1.isThisRef ? "ref" : undefined, ...md1.params.map((p) => p.pkind)].find((pk) => pk !== undefined);
+        const pk2 = [md2.isThisRef ? "ref" : undefined, ...md2.params.map((p) => p.pkind)].find((pk) => pk !== undefined);
         return pk1 === pk2;
     }
 
