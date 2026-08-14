@@ -1,0 +1,29 @@
+"use strict";
+
+import { checkTestFunction, checkTestFunctionError } from "../../../bin/test/typecheck/typecheck_nf.js";
+import { describe, it } from "node:test";
+
+describe ("Checker -- Agent Declarations", () => {
+    it("should check simple agent decl", function () {
+        checkTestFunction('abstract agent foo(n: Nat): Int; function main(): Int { return 1i; }');
+        checkTestFunction('abstract agent foo(n: Nat): Int requires n != 0n; ensures $return > 0i; ; function main(): Int { return 1i; }');
+    });
+
+    it("should check simple agent decl fail", function () {
+        checkTestFunctionError('abstract agent foo(n: Nat): Int requires n != 0i; ensures $return > 0i; ; function main(): Int { return 1i; }', 'Operator != requires 2 arguments of the same type');
+    });
+});
+
+describe ("Checker -- Agent Calls", () => {
+    it("should check simple agent call", function () {
+        checkTestFunction('abstract agent foo(n: Nat): Int; function main(): Int { return agent foo(3n); }');
+        checkTestFunction('abstract agent foo(n: Nat): Int; function main(): Int { let ii = agent Main::foo(env{}, 3n); return ii; }');
+
+        checkTestFunction('abstract agent foo(n: Nat): CString; function main(): Int { return agent foo<Int>(3n); }');
+    });
+
+    it("should check simple agent call fail", function () {
+        checkTestFunctionError('abstract agent foo(n: Nat): Int; function main(): Bool { return agent foo(3n); }', 'yyy');
+        checkTestFunctionError('abstract agent foo(n: Nat): Int; function main(): Int { return agent foo(3i); }', 'www');
+    });
+});

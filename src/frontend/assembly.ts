@@ -120,7 +120,7 @@ class TaskConfiguration {
     }
 
     emit(): string | undefined {
-        if(this.priority === undefined && this.retry !== undefined && this.timeout !== undefined) {
+        if(this.priority === undefined && this.retry === undefined && this.timeout === undefined) {
             return undefined;
         }
 

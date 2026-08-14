@@ -4247,32 +4247,35 @@ class Parser {
         }
     }
 
-    private parseTaskTailArgs(): Expression[] {
-        let args: Expression[] = [];
-
-        while(this.testToken(SYM_coma)) {
-            this.consumeToken();
-
-            args.push(this.parseExpression());
+    private parseTaskTailArgs(nofirstcomma: boolean): Expression[] {
+        if(this.testToken(SYM_rparen)) {
+            return [];
         }
+        else {
+            let args: Expression[] = [];
 
-        return args;
+            let first = true;
+            while((first && nofirstcomma) || this.testToken(SYM_coma)) {
+                if(!first || !nofirstcomma) {
+                    this.consumeToken();
+                }
+                first = false;
+
+                args.push(this.parseExpression());
+            }
+            return args;
+        }
     }
 
     private parseTaskArguments(): [Expression[], EnvironmentGenerationExpression] {
         this.ensureAndConsumeTokenAlways(SYM_lparen, "Task arguments");
 
         const envexp = this.parseEnvConstructionExpression();
-        xxxx;
         
-        let args: Expression[] = [];
-        if(this.testToken(SYM_rparen)) {
-            args = this.parseTaskTailArgs();
-        }
-
+        const args = this.parseTaskTailArgs(envexp === undefined);
         this.ensureAndConsumeTokenAlways(SYM_rparen, "Task arguments");
 
-        return [args, envexp];
+        return [args, envexp ?? new EmptyEnvironmentExpression(this.peekToken().getSourceInfo())];
     }
 
     private parseTaskConfigs(config: TaskConfiguration)  {
@@ -4357,11 +4360,13 @@ class Parser {
 
         this.ensureAndConsumeTokenAlways(SYM_lparen, "Task all expression");
         const envexp = this.parseEnvConstructionExpression();
-        this.ensureAndConsumeTokenAlways(SYM_coma, "Task all expression");
+        if(envexp !== undefined) {
+            this.ensureAndConsumeTokenAlways(SYM_coma, "Task all expression");
+        }
         const argl = this.parseExpression();
         this.ensureAndConsumeTokenAlways(SYM_rparen, "Task all expression");
 
-        return new TaskAllExpression(sinfo, execmode, task, argl, envexp, configs);
+        return new TaskAllExpression(sinfo, execmode, task, argl, envexp ?? new EmptyEnvironmentExpression(this.peekToken().getSourceInfo()), configs);
     }
 
     private parseTaskDashStyleExpression(sinfo: SourceInfo, execmode: "parallel" | "sequential" | "std", isany: boolean): Expression {
@@ -4394,15 +4399,17 @@ class Parser {
 
         this.ensureAndConsumeTokenAlways(SYM_lparen, "Task race expression");
         const envexp = this.parseEnvConstructionExpression();
-        this.ensureAndConsumeTokenAlways(SYM_coma, "Task race expression");
+        if(envexp !== undefined) {
+            this.ensureAndConsumeTokenAlways(SYM_coma, "Task race expression");
+        }
         const argl = this.parseExpression();
         this.ensureAndConsumeTokenAlways(SYM_rparen, "Task race expression");
 
         if(!isany) {
-            return new TaskRaceExpression(sinfo, execmode, task, argl, envexp, configs);
+            return new TaskRaceExpression(sinfo, execmode, task, argl, envexp ?? new EmptyEnvironmentExpression(this.peekToken().getSourceInfo()), configs);
         }
         else {
-            return new TaskRaceAnyExpression(sinfo, execmode, task, argl, envexp, configs);
+            return new TaskRaceAnyExpression(sinfo, execmode, task, argl, envexp ?? new EmptyEnvironmentExpression(this.peekToken().getSourceInfo()), configs);
         }
     }
 
@@ -4420,7 +4427,7 @@ class Parser {
                 this.ensureAndConsumeTokenAlways(SYM_coloncolon, "api scoped expression");
             }
 
-            if(access === undefined || access.typeTokens.length === 0) {
+            if(access === undefined) {
                 this.recordErrorGeneral(sinfo, `Could not resolve '${peekname}' in this context`);
             }
         }
@@ -4450,7 +4457,7 @@ class Parser {
                 this.ensureAndConsumeTokenAlways(SYM_coloncolon, "agent scoped expression");
             }
 
-            if(access === undefined || access.typeTokens.length === 0) {
+            if(access === undefined) {
                 this.recordErrorGeneral(sinfo, `Could not resolve '${peekname}' in this context`);
             }
         }

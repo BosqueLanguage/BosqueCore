@@ -35,6 +35,13 @@ class TypeChecker {
     lambdaCtr: number = 0;
     invidCtr = 0;
 
+    isExternalMode: boolean = false; //external mode is used for checking external code (like API and Agent)
+    allowedStatusMsgs: TypeSignature[] = []; //allowed status messages for external mode
+    envinfo: EnvironmentVariableInformation[] = []; //environment variable information for external mode
+    resourceinfo: ResourceInformation = new ResourceInformation([]); //resource information for external mode
+    taskconfig: TaskConfiguration = new TaskConfiguration(undefined, undefined, undefined); //task configuration for external mode
+    taskeventinfo: TypeSignature[] = []; //task event information for external mode
+
     constructor(constraints: TemplateConstraintScope, relations: TypeCheckerRelations) {
         this.constraints = constraints;
         this.relations = relations;
@@ -5563,24 +5570,79 @@ class TypeChecker {
         this.file = CLEAR_FILENAME;
     }
 
-     private checkConfigsurationParameters(tconfig: TaskConfiguration) {
-        assert(false, "Not implemented -- checkEnvironmentVariableInformation");
+    private checkconfiguration(tconfig: TaskConfiguration): TaskConfiguration {
+        if(tconfig.priority === undefined && tconfig.retry === undefined && tconfig.timeout === undefined) {
+            return new TaskConfiguration(undefined, undefined, undefined);
+        }
+        else {
+            assert(false, "Not implemented -- checkEnvironmentVariableInformation");
+        }
     }
 
-    private checkstatusinfo(status: TypeSignature[]) {
-        assert(false, "Not implemented -- checkStatusInformation");
+    private checkstatusinfo(status: TypeSignature[]): TypeSignature[] {
+        if(status.length === 0) {
+            return [];
+        }
+        else {
+            assert(false, "Not implemented -- checkStatusInformation");
+        }
     }
 
-    private checkenvreqs(envreqs: EnvironmentVariableInformation[]) {
-        assert(false, "Not implemented -- checkEnvironmentRequirements");
+    private checkenvreqs(envreqs: EnvironmentVariableInformation[]): EnvironmentVariableInformation[] {
+        if(envreqs.length === 0) {
+            return [];
+        }
+        else {
+            assert(false, "Not implemented -- checkEnvironmentRequirements");
+        }
     }
 
-    private checkresourcereqs(resourcereqs: ResourceInformation) {
-        assert(false, "Not implemented -- checkResourceRequirements");
+    private checkresourcereqs(resourcereqs: ResourceInformation): ResourceInformation {
+        if(resourcereqs.pathglobs.length === 0) {
+            return new ResourceInformation([]);
+        }
+        else {
+            assert(false, "Not implemented -- checkResourceRequirements");
+        }
     }
 
-    private checkeventinfo(eventinfo: TypeSignature[]) {
-        assert(false, "Not implemented -- checkEventInformation");
+    private checkeventinfo(eventinfo: TypeSignature[]): TypeSignature[] {
+        if(eventinfo.length === 0) {
+            return [];
+        }
+        else {
+            assert(false, "Not implemented -- checkEventInformation");
+        }
+    }
+
+    private checkExplicitAgentAndAPIDeclSignature(sinfo: SourceInfo, params: InvokeParameterDecl[], resultType: TypeSignature) {
+        let argnames = new Set<string>();
+        const fullvinfo = params.map((p) => new VarInfo("$" + p.name, p.type, p.pkind || "let", true));
+        for(let i = 0; i < params.length; ++i) {
+            const p = params[i];
+            this.checkError(sinfo, argnames.has(p.name), `Duplicate parameter name ${p.name}`);
+            argnames.add(p.name);
+
+            const tok = this.checkTypeSignature(p.type);
+            if(tok && p.optDefaultValue !== undefined) {
+                const env = TypeEnvironment.createInitialStdEnv(p.type, new SimpleTypeInferContext(p.type), fullvinfo);
+                const etype = this.checkExpression(env, p.optDefaultValue, p.type);
+
+                this.checkError(sinfo, !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, p.type, this.constraints), `Default value does not match declared type -- expected ${p.type.emit()} but got ${etype.emit()}`);
+            }
+
+            this.checkError(p.type.sinfo, p.pkind === "ref" && !TypeChecker.isTypeUpdatable(p.type)[0], `Ref parameter must be of an updatable type`);
+        }
+
+        this.checkTypeSignature(resultType);
+    }
+
+    private checkExplicitAgentAndAPIDeclMetaData(sinfo: SourceInfo, params: InvokeParameterDecl[], resultType: TypeSignature, eventtype: TypeSignature | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[]) {
+        const fullvinfo = params.map((p) => new VarInfo(p.name, p.type, p.pkind || "let", true));
+
+        const ienv = TypeEnvironment.createInitialStdEnv(this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")), fullvinfo);
+        this.checkRequires(ienv, preconditions);
+        this.checkEnsures(ienv, resultType, [], eventtype, postconditions);
     }
 
     private checkAPIDecl(adecl: APIDecl) {
@@ -5588,7 +5650,36 @@ class TypeChecker {
     }
 
     private checkAgentDecl(adecl: AgentDecl) {
-        assert(false, "Not implemented -- checkAgentDecl");
+        this.file = adecl.file;
+
+        const rtype = adecl.resultType || this.getWellKnownType("Void");
+
+        this.isExternalMode = true;
+        this.allowedStatusMsgs = this.checkstatusinfo(adecl.statusinfo);
+        this.envinfo = this.checkenvreqs(adecl.envreqs);
+        this.resourceinfo = this.checkresourcereqs(adecl.resourcereqs);
+        this.taskconfig = this.checkconfiguration(adecl.configs);
+        this.taskeventinfo = [];
+
+        this.checkExplicitAgentAndAPIDeclSignature(adecl.sinfo, adecl.params, rtype);
+        this.checkExplicitAgentAndAPIDeclMetaData(adecl.sinfo, adecl.params, rtype, adecl.eventType, adecl.preconditions, adecl.postconditions);
+
+        if(adecl.eventType !== undefined) {
+            this.checkTypeSignature(adecl.eventType);
+        }
+
+        const infertype = this.relations.convertTypeSignatureToTypeInferCtx(adecl.resultType || this.getWellKnownType("Void"));
+        const env = TypeEnvironment.createInitialStdEnv(rtype, infertype, adecl.params.map((p) => new VarInfo(p.name, p.type, p.pkind || "let", true)));
+        this.checkBodyImplementation(env, adecl.body, adecl.params);
+
+        this.isExternalMode = false;
+        this.allowedStatusMsgs = [];
+        this.envinfo = [];
+        this.resourceinfo = new ResourceInformation([]); 
+        this.taskconfig = new TaskConfiguration(undefined, undefined, undefined);
+        this.taskeventinfo = [];
+
+        this.file = CLEAR_FILENAME;
     }
 
     private checkTaskDecl(ns: NamespaceDeclaration, tdecl: TaskDecl) {
@@ -5615,6 +5706,13 @@ class TypeChecker {
             return { containingtype: inv.typeinfo.tsig.remapTemplateBindings(inv.typeinfo.mapping) as NominalTypeSignature, ii: inv.member.ii, file: inv.member.file, sinfo: inv.member.sinfo, tag: inv.member.diagnosticTag };
         });
 
+        this.isExternalMode = true;
+        this.taskconfig = this.checkconfiguration(tdecl.configs);
+        this.allowedStatusMsgs = this.checkstatusinfo(tdecl.statusinfo);
+        this.envinfo = this.checkenvreqs(tdecl.envreqs);
+        this.resourceinfo = this.checkresourcereqs(tdecl.resourcereqs);
+        this.taskeventinfo = this.checkeventinfo(tdecl.eventinfo);
+
         this.checkConstMemberDecls(tdecl, tdecl.consts);
         this.checkTypeFunctionDecls(tdecl, tdecl.functions);
         this.checkTaskMethodDecls(tdecl, rcvr, tdecl.selfmethods);
@@ -5622,12 +5720,12 @@ class TypeChecker {
 
         this.checkMemberFieldDecls(bnames, tdecl.fields);
 
-        this.checkConfigsurationParameters(tdecl.configs);
-
-        this.checkstatusinfo(tdecl.statusinfo);
-        this.checkenvreqs(tdecl.envreqs);
-        this.checkresourcereqs(tdecl.resourcereqs);
-        this.checkeventinfo(tdecl.eventinfo);
+        this.isExternalMode = false;
+        this.taskconfig = new TaskConfiguration(undefined, undefined, undefined);
+        this.allowedStatusMsgs = [];
+        this.envinfo = [];
+        this.resourceinfo = new ResourceInformation([]); 
+        this.taskeventinfo = [];
 
         if(tdecl.terms.length !== 0) {
             this.constraints.popConstraintScope();
