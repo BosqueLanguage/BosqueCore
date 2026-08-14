@@ -1816,7 +1816,7 @@ class InitializeEnvironmentExpression extends EnvironmentGenerationExpression {
     }
 
     emit(fmt: CodeFormatter): string {
-        const argl = this.args.map((arg) => `${arg.envkey} = ${arg.value.emit(true, fmt)}`).join(", ");
+        const argl = this.args.map((arg) => `${arg.envkey} => ${arg.value.emit(true, fmt)}`).join(", ");
         return `env{ ${argl} }`;
     }
 }
@@ -2062,6 +2062,7 @@ class APIInvokeExpression extends Expression {
 class AgentInvokeExpression extends Expression {
     readonly ns: FullyQualifiedNamespace;
     readonly agent: string;
+    readonly optrestype: TypeSignature | undefined;
     readonly args: Expression[];
     readonly configs: TaskConfiguration;
     readonly envexp: EnvironmentGenerationExpression;
@@ -2070,6 +2071,7 @@ class AgentInvokeExpression extends Expression {
         super(ExpressionTag.AgentInvokeExpression, sinfo);
         this.ns = ns;
         this.agent = agent;
+        this.optrestype = optrestype;
         this.args = args;
         this.envexp = envexp;
         this.configs = configs;
@@ -2077,11 +2079,12 @@ class AgentInvokeExpression extends Expression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         const nsstr = this.ns.emit() + "::";
+        const restypeStr = this.optrestype ? `<${this.optrestype.emit()}>` : "";
         const configs = TaskInvokeExpression.emitconfigs(this.configs, fmt);
         const envexp = this.envexp.emit(fmt);
         const argl = this.args.map((arg) => arg.emit(true, fmt)).join(", ");
 
-        return `agent ${nsstr}${this.agent}${configs}(${envexp}${argl !== "" ? (", " + argl) : ""})`;
+        return `agent ${nsstr}${this.agent}${configs}${restypeStr}(${envexp}${argl !== "" ? (", " + argl) : ""})`;
     }
 }
 
