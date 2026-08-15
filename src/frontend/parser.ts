@@ -2051,7 +2051,7 @@ class Parser {
         return undefined;
     }
 
-    private parsePreAndPostConditions(sinfo: SourceInfo, argnames: Set<string>, mutparams: Set<string>, boundtemplates: Set<string>, taskcond: boolean, apicond: boolean): [PreConditionDecl[], PostConditionDecl[]] {
+    private parsePreAndPostConditions(sinfo: SourceInfo, argnames: Set<string>, mutparams: Set<string>, boundtemplates: Set<string>, taskcond: boolean, apiagentcond: boolean): [PreConditionDecl[], PostConditionDecl[]] {
         let preconds: PreConditionDecl[] = [];
 
         this.env.scope = new StandardScopeInfo([...argnames].map((v) => new VariableDefinitionInfo("let", v)), boundtemplates, this.wellknownTypes.get("Bool") as TypeSignature);
@@ -2068,9 +2068,9 @@ class Parser {
                 this.ensureAndConsumeTokenAlways(SYM_rbrack, "requires tag");
             }
 
-            let softcheck = apicond && this.testToken(KW_softcheck);
+            let softcheck = (taskcond || apiagentcond) && this.testToken(KW_softcheck);
             if(this.testAndConsumeTokenIf(KW_softcheck)) {
-                if(!apicond) {   
+                if(!softcheck) {
                     this.recordErrorGeneral(sinfo, "Softcheck is only allowed in API/Task pre/post conditions");
                 }
             }
@@ -2089,7 +2089,7 @@ class Parser {
         const refnames = [...mutparams].map((v) => new VariableDefinitionInfo("let", "$" + v));
 
         const postvardecls = [...[...argnames].map((v) => new VariableDefinitionInfo("let", v)), ...refnames, new VariableDefinitionInfo("let", WELL_KNOWN_RETURN_VAR_NAME)];
-        if(taskcond || apicond) {
+        if(taskcond || apiagentcond) {
             postvardecls.push(new VariableDefinitionInfo("let", WELL_KNOWN_EVENTS_VAR_NAME));
         }
 
@@ -2108,9 +2108,9 @@ class Parser {
                 this.ensureAndConsumeTokenAlways(SYM_rbrack, "requires tag");
             }
 
-            let softcheck = apicond && this.testToken(KW_softcheck);
+            let softcheck = (taskcond || apiagentcond) && this.testToken(KW_softcheck);
             if(this.testAndConsumeTokenIf(KW_softcheck)) {
-                if(!apicond) {   
+                if(!softcheck) {   
                     this.recordErrorGeneral(sinfo, "Softcheck is only allowed in API/Task pre/post conditions");
                 }
             }
@@ -2522,7 +2522,7 @@ class Parser {
         }
     }
 
-    private parseActionInvokeDecl(attributes: DeclarationAttibute[], typeTerms: Set<string>, taskmain: string): TaskActionDecl | undefined {
+    private parseActionInvokeDecl(attributes: DeclarationAttibute[], taskmain: string): TaskActionDecl | undefined {
         const cinfo = this.peekToken().getSourceInfo();
 
         this.ensureAndConsumeTokenAlways(KW_action, "action declaration");
@@ -2530,10 +2530,10 @@ class Parser {
         const termRestrictions = this.parseInvokeTermRestrictionInfo();
 
         this.ensureToken(TokenStrings.IdentifierName, "action name");
-        const fname = this.testToken(TokenStrings.IdentifierName) ? this.parseIdentifierAsStdVariable() : "[error]";
+        const fname = this.parseIdentifierAsStdVariable();
 
         const terms = this.parseInvokeTemplateTerms();
-        const boundtemplates = new Set<string>(...typeTerms, ...terms.map((term) => term.name));
+        const boundtemplates = new Set<string>(terms.map((term) => term.name));
 
         const okdecl = this.testToken(SYM_lparen);
         if(!okdecl) {
@@ -2541,7 +2541,7 @@ class Parser {
             return undefined;
         }
 
-        const params: InvokeParameterDecl[] = this.parseInvokeDeclParameters(cinfo, false, boundtemplates);
+        const params: InvokeParameterDecl[] = this.parseInvokeDeclParameters(cinfo, true, boundtemplates);
         
         let resultInfo = this.env.SpecialVoidSignature;
         if (this.testAndConsumeTokenIf(SYM_colon)) {
@@ -6088,11 +6088,11 @@ class Parser {
         }
     }
 
-    private parseTaskMemberAction(taskMemberAction: TaskActionDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[], typeTerms: Set<string>, taskmain: string) {
+    private parseTaskMemberAction(taskMemberAction: TaskActionDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[], taskmain: string) {
         assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParsing));
 
         const sinfo = this.peekToken().getSourceInfo();
-        const adecl = this.parseActionInvokeDecl(attributes, typeTerms, taskmain);
+        const adecl = this.parseActionInvokeDecl(attributes, taskmain);
 
         if(taskMemberAction === undefined) {
             this.recordErrorGeneral(sinfo, "Cannot have a task method member on this type");
@@ -6211,7 +6211,7 @@ class Parser {
                 }
             }
             else if(this.testToken(KW_action)) {
-                this.parseTaskMemberAction(taskMemberAction, allMemberNames, attributes, typeTerms, "main");
+                this.parseTaskMemberAction(taskMemberAction, allMemberNames, attributes, "main");
             }
             else if(this.testToken(KW_entity)) {
                 if(specialConcept === undefined) {
@@ -6881,9 +6881,7 @@ class Parser {
         const tname = this.parseIdentifierAsNamespaceOrTypeName();
 
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
-            const hasterms = this.testToken(SYM_langle);
-
-            if(this.env.currentNamespace.checkDeclNameClashType(tname, hasterms)) {
+            if(this.env.currentNamespace.checkDeclNameClashType(tname, false)) {
                 this.recordErrorGeneral(sinfo, `Collision between type and other names -- ${tname}`);
             }
 
@@ -6891,23 +6889,13 @@ class Parser {
             this.env.currentNamespace.typedecls.push(tdecl);
 
             this.env.currentNamespace.declaredNames.add(tname);
-            this.env.currentNamespace.declaredTypeNames.push({name: tname, hasterms: hasterms});
+            this.env.currentNamespace.declaredTypeNames.push({name: tname, hasterms: false});
 
             this.scanOverBraceDelimitedDeclaration();
         }
         else {
             const tdecl = this.env.currentNamespace.typedecls.find((td) => td.name === tname);
             assert(tdecl !== undefined && tdecl instanceof TaskDecl, "Failed to find task type");
-
-            const terms = this.parseTypeTemplateTerms();
-            if(terms.length !== 0) {
-                tdecl.terms.push(...terms);
-            }
-
-            const provides = this.parseProvides();
-            if(provides.length !== 0) {
-                this.recordErrorGeneral(sinfo, "Cannot have provides on tasks");
-            }
 
             while(this.testToken(KW_status) || this.testToken(KW_resource) || this.testToken(KW_env) || this.testToken(KW_event) ||this.testToken(KW_configs) ) {
                 if(this.testToken(KW_event)) {
@@ -7000,7 +6988,7 @@ class Parser {
             const argNames = new Set<string>(params.map((param) => param.name));
             const cargs = params.map((param) => new VariableDefinitionInfo(param.pkind || "let", param.name));
 
-            const [preconds, postconds] = this.parsePreAndPostConditions(sinfo, argNames, new Set<string>(), new Set<string>(), true, true);
+            const [preconds, postconds] = this.parsePreAndPostConditions(sinfo, argNames, new Set<string>(), new Set<string>(), false, true);
     
             let configs: TaskConfiguration = new TaskConfiguration(undefined, undefined, undefined);
             let statusinfo: TypeSignature[] = [];
@@ -7100,7 +7088,7 @@ class Parser {
             const argNames = new Set<string>(params.map((param) => param.name));
             const cargs = params.map((param) => new VariableDefinitionInfo("let", param.name));
 
-            const [preconds, postconds] = this.parsePreAndPostConditions(sinfo, argNames, new Set<string>(), new Set<string>(), true, true);
+            const [preconds, postconds] = this.parsePreAndPostConditions(sinfo, argNames, new Set<string>(), new Set<string>(), false, true);
     
             let configs: TaskConfiguration = new TaskConfiguration(undefined, undefined, undefined);
             let statusinfo: TypeSignature[] = [];
