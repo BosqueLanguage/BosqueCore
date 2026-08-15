@@ -17,12 +17,12 @@ describe ("Parser -- API Declarations", () => {
 
 describe ("Parser -- API Calls", () => {
     it("should parse simple api call", function () {
-        parseTestFunctionInFile('abstract api foo(n: Nat): Int; [FUNC]', 'function main(): Int { return agent Main::foo(env{}, 3n); }');
-        parseTestFunctionInFile('abstract api foo(n: Nat): Int; [FUNC]', 'function main(): Int { let ii = agent Main::foo(env{}, 3n); return ii; }');
+        parseTestFunctionInFile('abstract api foo(n: Nat): Int; [FUNC]', 'function main(): Int { return api Main::foo(env{}, 3n); }');
+        parseTestFunctionInFile('abstract api foo(n: Nat): Int; [FUNC]', 'function main(): Int { let ii = api Main::foo(env{}, 3n); return ii; }');
     });
 
     it("should parse simple api call fail", function () {
-        parseTestFunctionInFileError('abstract api foo(n: Nat): Int; function main(): Int { return agent Main::foo(, 3n); }', "Unexpected token in expression -- ,");
-        parseTestFunctionInFileError('abstract api foo(n: Nat): Int; function main(): Int { return agent Main::foo(env{} 3n); }', 'Expected ")" but got "3n" when parsing "Task arguments"');
+        parseTestFunctionInFileError('abstract api foo(n: Nat): Int; function main(): Int { return api Main::foo(, 3n); }', "Unexpected token in expression -- ,");
+        parseTestFunctionInFileError('abstract api foo(n: Nat): Int; function main(): Int { return api Main::foo(env{} 3n); }', 'Expected ")" but got "3n" when parsing "Task arguments"');
     });
 });
