@@ -1816,7 +1816,7 @@ class InitializeEnvironmentExpression extends EnvironmentGenerationExpression {
     }
 
     emit(fmt: CodeFormatter): string {
-        const argl = this.args.map((arg) => `${arg.envkey} = ${arg.value.emit(true, fmt)}`).join(", ");
+        const argl = this.args.map((arg) => `${arg.envkey} => ${arg.value.emit(true, fmt)}`).join(", ");
         return `env{ ${argl} }`;
     }
 }

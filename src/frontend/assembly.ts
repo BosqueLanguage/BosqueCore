@@ -120,7 +120,7 @@ class TaskConfiguration {
     }
 
     emit(): string | undefined {
-        if(this.priority === undefined && this.retry !== undefined && this.timeout !== undefined) {
+        if(this.priority === undefined && this.retry === undefined && this.timeout === undefined) {
             return undefined;
         }
 
@@ -1380,12 +1380,11 @@ class AgentDecl extends AbstractCoreDecl {
         const attrs = this.emitAttributes();
 
         const params = this.params.map((p) => p.emit(fmt)).join(", ");
-        const iresult = this.resultType === undefined ? "<T>" : "";
         const eresult = this.resultType !== undefined ? (": " + this.resultType.emit()) : "";
-        const eevent = this.eventType !== undefined ? (this.resultType !== undefined ? ", " : " ") + this.eventType.emit() : "";
+        const eevent = this.eventType !== undefined ? (", " + this.eventType.emit()) : "";
 
         const minfo = this.emitMetaInfo(fmt);
-        return `${attrs}agent ${this.name}${iresult}(${params})${eresult}${eevent} ${this.body.emit(fmt, minfo)}`;
+        return `${attrs}agent ${this.name}(${params})${eresult}${eevent} ${this.body.emit(fmt, minfo)}`;
     }
 }
 
@@ -1853,6 +1852,24 @@ class Assembly {
 
         const fnsig = {name: name, isTemplate: isTemplate, hasLambda: hasLambda, pkinds: pkinds};
         return nsdecl.functions.find((c) => Assembly.resolveSigMatch(fnsig, {name: c.name, isTemplate: c.terms.length !== 0, hasLambda: c.params.some((p) => p.type instanceof LambdaTypeSignature), pkinds: c.params.map((p) => p.pkind).filter((pk) => pk !== undefined) as ("ref" | "out" | "out?" | "inout")[]}));
+    }
+
+    resolveNamespaceAPI(ns: FullyQualifiedNamespace, name: string): APIDecl | undefined {
+        const nsdecl = this.resolveNamespaceDecl(ns.ns);
+        if(nsdecl === undefined) {
+            return undefined;
+        }
+
+        return nsdecl.apis.find((c) => c.name === name);
+    }
+
+    resolveNamespaceAgent(ns: FullyQualifiedNamespace, name: string): AgentDecl | undefined {
+        const nsdecl = this.resolveNamespaceDecl(ns.ns);
+        if(nsdecl === undefined) {
+            return undefined;
+        }
+
+        return nsdecl.agents.find((c) => c.name === name);
     }
 
     tryReduceConstantExpressionToRE(exp: Expression): LiteralRegexExpression | undefined {

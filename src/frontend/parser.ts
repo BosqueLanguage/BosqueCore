@@ -1364,8 +1364,39 @@ class Parser {
 
     //scan to and consume the end token
     private scanOverSemiDelimitedDeclaration() {
-        this.scanToKWOptsInDeclaration(SYM_semicolon);
-        this.testAndConsumeTokenIf(SYM_semicolon);
+        let pscount = 0;
+        let semicount = 1;
+
+        let tok = this.peekToken();
+        while (tok.kind !== TokenStrings.EndOfStream && tok.kind !== TokenStrings.Recover) {
+            if(tok.kind === SYM_semicolon && semicount === 1 && pscount === 0) {
+                this.consumeToken();
+                break;
+            }
+
+            if (LeftScanParens.indexOf(tok.kind) !== -1) {
+                pscount = pscount + 1;
+            }
+            else if (RightScanParens.indexOf(tok.kind) !== -1) {
+                pscount = pscount - 1;
+            }
+            else {
+                //nop
+            }
+
+            if(pscount === 0) {
+                if(tok.kind === SYM_semicolon) {
+                    semicount = semicount - 1;
+                }
+
+                if(tok.kind === KW_ensures || tok.kind === KW_requires) {
+                    semicount = semicount + 1;
+                }
+            }
+
+            this.consumeToken();
+            tok = this.peekToken();
+        }
     }
 
     //given some possible follow kw/sym token scan until we find one of them
@@ -1564,6 +1595,44 @@ class Parser {
         }
         if(topnsdecl.declaredConstNames.has(name)) {
             return [topnsdecl, "isconstant"];
+        }
+
+        return undefined;
+    }
+
+    private identifierResolvesAsScopedAgent(name: string): NamespaceDeclaration | undefined {
+        const coredecl = this.env.assembly.getCoreNamespace();
+        if(coredecl.declaredAgentNames.has(name)) {
+            return coredecl;
+        }
+
+        const currnsdecl = this.env.currentNamespace
+        if(currnsdecl.declaredAgentNames.has(name)) {
+            return currnsdecl;
+        }
+        
+        const topnsdecl = this.env.assembly.getToplevelNamespace(this.env.currentNamespace.topnamespace) as NamespaceDeclaration;
+        if(topnsdecl.declaredAgentNames.has(name)) {
+            return topnsdecl;
+        }
+
+        return undefined;
+    }
+
+    private identifierResolvesAsScopedAPI(name: string): NamespaceDeclaration | undefined {
+        const coredecl = this.env.assembly.getCoreNamespace();
+        if(coredecl.declaredAPINames.has(name)) {
+            return coredecl;
+        }
+
+        const currnsdecl = this.env.currentNamespace
+        if(currnsdecl.declaredAPINames.has(name)) {
+            return currnsdecl;
+        }
+        
+        const topnsdecl = this.env.assembly.getToplevelNamespace(this.env.currentNamespace.topnamespace) as NamespaceDeclaration;
+        if(topnsdecl.declaredAPINames.has(name)) {
+            return topnsdecl;
         }
 
         return undefined;
@@ -2160,7 +2229,7 @@ class Parser {
             }
             else {
                 if(params.some((param) => param.pkind !== undefined)) {
-                    this.recordErrorGeneral(cinfo, "Cannot have more than one special passing parameter");
+                    this.recordErrorGeneral(cinfo, "Cannot have special passing parameter here");
                 }
             }
 
@@ -4147,56 +4216,66 @@ class Parser {
         return exp;
     }
 
-    private parseEnvConstructionExpression(): EnvironmentGenerationExpression {
+    private parseEnvConstructionExpression(): EnvironmentGenerationExpression | undefined {
         const sinfo = this.peekToken().getSourceInfo();
-        this.ensureAndConsumeTokenAlways(KW_env, "environment construction expression");
-
-        if(!this.testToken(SYM_lbrace)) {
-            return new CurrentEnvironmentExpression(sinfo);
+        if(!this.testToken(KW_env)) {
+            return undefined;
         }
         else {
-            const pprms = this.parseListOf<{envkey: string, value: RValueExpression}>("environment construction parameters", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
-                this.ensureToken(TokenStrings.IdentifierName, "environment construction parameter");
-                const envkey = this.consumeTokenAndGetValue();
-                this.ensureAndConsumeTokenAlways("=", "environment construction parameter");
-                const value = this.parseRValueExpression();
+            this.ensureAndConsumeTokenAlways(KW_env, "environment construction expression");
 
-                return { envkey: envkey, value: value };
-            });
-
-            if(pprms.length === 0) {
-                return new EmptyEnvironmentExpression(sinfo);
+            if(!this.testToken(SYM_lbrace)) {
+                return new CurrentEnvironmentExpression(sinfo);
             }
             else {
-                return new InitializeEnvironmentExpression(sinfo, pprms);
+                const pprms = this.parseListOf<{envkey: string, value: RValueExpression}>("environment construction parameters", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
+                    this.ensureToken(TokenStrings.IdentifierName, "environment construction parameter");
+                    const envkey = this.consumeTokenAndGetValue();
+                    this.ensureAndConsumeTokenAlways(SYM_bigarrow, "environment construction parameter");
+                    const value = this.parseRValueExpression();
+
+                    return { envkey: envkey, value: value };
+                });
+
+                if(pprms.length === 0) {
+                    return new EmptyEnvironmentExpression(sinfo);
+                }
+                else {
+                    return new InitializeEnvironmentExpression(sinfo, pprms);
+                }
             }
         }
     }
 
-    private parseTaskTailArgs(): Expression[] {
-        let args: Expression[] = [];
-
-        while(this.testToken(SYM_coma)) {
-            this.consumeToken();
-
-            args.push(this.parseExpression());
+    private parseTaskTailArgs(nofirstcomma: boolean): Expression[] {
+        if(this.testToken(SYM_rparen)) {
+            return [];
         }
+        else {
+            let args: Expression[] = [];
 
-        return args;
+            let first = true;
+            while((first && nofirstcomma) || this.testToken(SYM_coma)) {
+                if(!first || !nofirstcomma) {
+                    this.consumeToken();
+                }
+                first = false;
+
+                args.push(this.parseExpression());
+            }
+            return args;
+        }
     }
 
     private parseTaskArguments(): [Expression[], EnvironmentGenerationExpression] {
         this.ensureAndConsumeTokenAlways(SYM_lparen, "Task arguments");
 
         const envexp = this.parseEnvConstructionExpression();
-        let args: Expression[] = [];
-        if(this.testToken(SYM_coma)) {
-            args = this.parseTaskTailArgs();
-        }
-
+        
+        const args = this.parseTaskTailArgs(envexp === undefined);
         this.ensureAndConsumeTokenAlways(SYM_rparen, "Task arguments");
 
-        return [args, envexp];
+        return [args, envexp ?? new EmptyEnvironmentExpression(this.peekToken().getSourceInfo())];
     }
 
     private parseTaskConfigs(config: TaskConfiguration)  {
@@ -4281,11 +4360,13 @@ class Parser {
 
         this.ensureAndConsumeTokenAlways(SYM_lparen, "Task all expression");
         const envexp = this.parseEnvConstructionExpression();
-        this.ensureAndConsumeTokenAlways(SYM_coma, "Task all expression");
+        if(envexp !== undefined) {
+            this.ensureAndConsumeTokenAlways(SYM_coma, "Task all expression");
+        }
         const argl = this.parseExpression();
         this.ensureAndConsumeTokenAlways(SYM_rparen, "Task all expression");
 
-        return new TaskAllExpression(sinfo, execmode, task, argl, envexp, configs);
+        return new TaskAllExpression(sinfo, execmode, task, argl, envexp ?? new EmptyEnvironmentExpression(this.peekToken().getSourceInfo()), configs);
     }
 
     private parseTaskDashStyleExpression(sinfo: SourceInfo, execmode: "parallel" | "sequential" | "std", isany: boolean): Expression {
@@ -4318,56 +4399,72 @@ class Parser {
 
         this.ensureAndConsumeTokenAlways(SYM_lparen, "Task race expression");
         const envexp = this.parseEnvConstructionExpression();
-        this.ensureAndConsumeTokenAlways(SYM_coma, "Task race expression");
+        if(envexp !== undefined) {
+            this.ensureAndConsumeTokenAlways(SYM_coma, "Task race expression");
+        }
         const argl = this.parseExpression();
         this.ensureAndConsumeTokenAlways(SYM_rparen, "Task race expression");
 
         if(!isany) {
-            return new TaskRaceExpression(sinfo, execmode, task, argl, envexp, configs);
+            return new TaskRaceExpression(sinfo, execmode, task, argl, envexp ?? new EmptyEnvironmentExpression(this.peekToken().getSourceInfo()), configs);
         }
         else {
-            return new TaskRaceAnyExpression(sinfo, execmode, task, argl, envexp, configs);
+            return new TaskRaceAnyExpression(sinfo, execmode, task, argl, envexp ?? new EmptyEnvironmentExpression(this.peekToken().getSourceInfo()), configs);
         }
     }
 
     private parseAPIInvokeExpression(): APIInvokeExpression {
         const sinfo = this.peekToken().getSourceInfo();
 
-        this.ensureAndConsumeTokenAlways(KW_api, "API invoke expression");
+        this.ensureAndConsumeTokenAlways(KW_api, "api invoke expression");
 
         const peekname = this.peekTokenData();
-        const access = this.parseIdentifierAccessChain();
-        if(access === undefined || access.typeTokens.length === 0) {
-            this.recordErrorGeneral(sinfo, `Could not resolve '${peekname}' in this context`);
+        let nscope = this.identifierResolvesAsScopedAPI(peekname);
+        if(nscope === undefined) {
+            const access = this.parseIdentifierAccessChain();
+            if(access !== undefined) {
+                nscope = access.nsScope;
+                this.ensureAndConsumeTokenAlways(SYM_coloncolon, "api scoped expression");
+            }
+
+            if(access === undefined) {
+                this.recordErrorGeneral(sinfo, `Could not resolve '${peekname}' in this context`);
+            }
         }
 
-        this.ensureAndConsumeTokenAlways(SYM_coloncolon, "api scoped expression");
         this.ensureToken(TokenStrings.IdentifierName, "api scoped expression");
-
         const api = this.parseIdentifierAsStdVariable();
+
         const configs = new TaskConfiguration(undefined, undefined, undefined);
         this.parseTaskConfigs(configs);
 
         const [args, envexp] = this.parseTaskArguments();
 
-        return new APIInvokeExpression(sinfo, access!.nsScope.fullnamespace, api, args, envexp, configs);
+        return new APIInvokeExpression(sinfo, (nscope ?? this.env.currentNamespace).fullnamespace, api, args, envexp, configs);
     }
 
     private parseAgentInvokeExpression(): AgentInvokeExpression {
         const sinfo = this.peekToken().getSourceInfo();
 
-        this.ensureAndConsumeTokenAlways(KW_agent, "API invoke expression");
+        this.ensureAndConsumeTokenAlways(KW_agent, "agent invoke expression");
 
         const peekname = this.peekTokenData();
-        const access = this.parseIdentifierAccessChain();
-        if(access === undefined || access.typeTokens.length === 0) {
-            this.recordErrorGeneral(sinfo, `Could not resolve '${peekname}' in this context`);
+        let nscope = this.identifierResolvesAsScopedAgent(peekname);
+        if(nscope === undefined) {
+            const access = this.parseIdentifierAccessChain();
+            if(access !== undefined) {
+                nscope = access.nsScope;
+                this.ensureAndConsumeTokenAlways(SYM_coloncolon, "agent scoped expression");
+            }
+
+            if(access === undefined) {
+                this.recordErrorGeneral(sinfo, `Could not resolve '${peekname}' in this context`);
+            }
         }
 
-        this.ensureAndConsumeTokenAlways(SYM_coloncolon, "api scoped expression");
-        this.ensureToken(TokenStrings.IdentifierName, "api scoped expression");
-
+        this.ensureToken(TokenStrings.IdentifierName, "agent scoped expression");
         const api = this.parseIdentifierAsStdVariable();
+
         const configs = new TaskConfiguration(undefined, undefined, undefined);
         this.parseTaskConfigs(configs);
         let explicittype: TypeSignature | undefined = undefined;
@@ -4379,7 +4476,7 @@ class Parser {
 
         const [args, envexp] = this.parseTaskArguments();
 
-        return new AgentInvokeExpression(sinfo, access!.nsScope.fullnamespace, api, explicittype, args, envexp, configs);
+        return new AgentInvokeExpression(sinfo, (nscope ?? this.env.currentNamespace).fullnamespace, api, explicittype, args, envexp, configs);
     }
 
     private parseChkLogicExpression(): ChkLogicExpression {
@@ -6987,13 +7084,18 @@ class Parser {
             const boundtemplates = new Set<string>();
             const params: InvokeParameterDecl[] = this.parseInvokeDeclParameters(sinfo, false, boundtemplates);
         
-            this.ensureAndConsumeTokenIf(SYM_colon, "agent declaration");
-            const resultInfo = this.parseReturnTypeSignature(true);
+            let resultInfo: TypeSignature | undefined = undefined;
+            if(this.testToken(SYM_colon)) {
+                this.consumeToken();
+                resultInfo = this.parseReturnTypeSignature(true);
+            }
 
             let eventType: TypeSignature | undefined = undefined;
             if(this.testAndConsumeTokenIf(SYM_coma)) {
                 eventType = this.parseNominalType();
             }
+
+            //note this accepts foo() , Event ... and that is intentional
 
             const argNames = new Set<string>(params.map((param) => param.name));
             const cargs = params.map((param) => new VariableDefinitionInfo("let", param.name));

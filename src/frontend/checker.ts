@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { APIDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, InvokeTemplateTypeRestrictionClause, MAX_SAFE_CHK_NAT, MIN_SAFE_CHK_INT, MAX_SAFE_CHK_INT, APIDeniedTypeDecl, APIFlaggedTypeDecl, AgentDecl, TaskConfiguration, AbstractCollectionTypeDecl, ConstructableTypeDecl, InvokeParameterDecl, AbstractEntityTypeDecl } from "./assembly.js";
 import { CodeFormatter, SourceInfo } from "./build_decls.js";
 import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, ErrorTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
-import { APIInvokeExpression, AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, AbstractArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, FormatStringTextComponent, HoleBodyImplementation, HoleExpression, HoleStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, IfElifElseStatement, IfElseStatement, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypeDeclValueExpression, LiteralTypedCStringExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PassingArgumentValue, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RValueExpression, RValueExpressionTag, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VoidRefCallStatement, StdArgumentValue, SkipArgumentValue, InterpolateFormatExpression, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestFail, ITestTypeGuard, ITestBinderGuard, TypeTestBindInfo } from "./body.js";
+import { APIInvokeExpression, AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, AbstractArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, FormatStringTextComponent, HoleBodyImplementation, HoleExpression, HoleStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, IfElifElseStatement, IfElseStatement, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypeDeclValueExpression, LiteralTypedCStringExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PassingArgumentValue, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RValueExpression, RValueExpressionTag, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VoidRefCallStatement, StdArgumentValue, SkipArgumentValue, InterpolateFormatExpression, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestFail, ITestTypeGuard, ITestBinderGuard, TypeTestBindInfo, EnvironmentGenerationExpression, EmptyEnvironmentExpression } from "./body.js";
 import { SimpleTypeInferContext, TypeEnvironment, TypeResultWRefVarInfoResult, TypeInferContext, VarInfo, EListStyleTypeInferContext } from "./checker_environment.js";
 import { MemberLookupInfo, TypeCheckerRelations } from "./checker_relations.js";
 
@@ -34,6 +34,13 @@ class TypeChecker {
     envDecl: EnvironmentVariableInformation[] = [];
     lambdaCtr: number = 0;
     invidCtr = 0;
+
+    isExternalMode: boolean = false; //external mode is used for checking external code (like API and Agent)
+    allowedStatusMsgs: TypeSignature[] = []; //allowed status messages for external mode
+    envinfo: EnvironmentVariableInformation[] = []; //environment variable information for external mode
+    resourceinfo: ResourceInformation = new ResourceInformation([]); //resource information for external mode
+    taskconfig: TaskConfiguration = new TaskConfiguration(undefined, undefined, undefined); //task configuration for external mode
+    taskeventinfo: TypeSignature[] = []; //task event information for external mode
 
     constructor(constraints: TemplateConstraintScope, relations: TypeCheckerRelations) {
         this.constraints = constraints;
@@ -3833,12 +3840,98 @@ class TypeChecker {
         assert(false, "Not Implemented -- checkTaskRaceExpression");
     }
 
+    private checkEnvironmentGenerationExpression(env: TypeEnvironment, exp: EnvironmentGenerationExpression, decl: EnvironmentVariableInformation[]) {
+        if(exp instanceof EmptyEnvironmentExpression) {
+            this.checkError(exp.sinfo, decl.length !== 0, "Empty environment expression cannot be used when the agent/api requires environment variables");
+        }
+        else {
+            assert(false, "Not Implemented -- checkEnvironmentGenerationExpression with non-empty environment expression");
+        }
+    }
+
     private checkAPIInvokeExpression(env: TypeEnvironment, exp: APIInvokeExpression): TypeSignature {
-        assert(false, "Not Implemented -- checkAPIInvokeExpression");
+        const adecl = this.relations.assembly.resolveNamespaceAPI(exp.ns, exp.api);
+
+        if(adecl === undefined) {
+            this.reportError(exp.sinfo, `Could not find namespace api ${exp.ns.emit()}::${exp.api}`);
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        this.checkEnvironmentGenerationExpression(env, exp.envexp, adecl.envreqs);
+
+        if(exp.args.length !== adecl.params.length) {
+            this.reportError(exp.sinfo, `Argument count mismatch for api ${exp.ns.emit()}::${exp.api} -- expected ${adecl.params.length} arguments but got ${exp.args.length}`);
+        }
+        else {
+            for(let i = 0; i < exp.args.length; i++) {
+                const arg = exp.args[i];
+                const pdecl = adecl.params[i];
+
+                const argtype = this.checkExpression(env, arg, new SimpleTypeInferContext(pdecl.type));
+                this.checkError(arg.sinfo, !(argtype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(argtype, pdecl.type, this.constraints), `Argument type ${argtype.emit()} is not a subtype of expected parameter type ${pdecl.type.emit()}`);
+            }
+        }
+
+        //Make sure this event is in the caller list of expected events
+        assert(adecl.eventType === undefined, "Not Implemented -- checkAgentInvokeExpression with event type");
+
+        //Make sure the status info is also in the caller list of expected status info
+        assert(adecl.statusinfo.length === 0, "Not Implemented -- checkAgentInvokeExpression with status info");
+
+        //TODO -- check task config bits here
+        assert(adecl.configs.priority === undefined && adecl.configs.timeout === undefined && adecl.configs.retry === undefined, "Not Implemented -- checkAgentInvokeExpression with priority config");
+
+        //nothing we can do for now about resource info since we can't do path inclusion
+
+        return exp.setType(adecl.resultType);
     }
     
     private checkAgentInvokeExpression(env: TypeEnvironment, exp: AgentInvokeExpression): TypeSignature {
-        assert(false, "Not Implemented -- checkAgentInvokeExpression");
+        const adecl = this.relations.assembly.resolveNamespaceAgent(exp.ns, exp.agent);
+
+        if(adecl === undefined) {
+            this.reportError(exp.sinfo, `Could not find namespace agent ${exp.ns.emit()}::${exp.agent}`);
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        this.checkEnvironmentGenerationExpression(env, exp.envexp, adecl.envreqs);
+
+        if(exp.args.length !== adecl.params.length) {
+            this.reportError(exp.sinfo, `Argument count mismatch for agent ${exp.ns.emit()}::${exp.agent} -- expected ${adecl.params.length} arguments but got ${exp.args.length}`);
+        }
+        else {
+            for(let i = 0; i < exp.args.length; i++) {
+                const arg = exp.args[i];
+                const pdecl = adecl.params[i];
+
+                const argtype = this.checkExpression(env, arg, new SimpleTypeInferContext(pdecl.type));
+                this.checkError(arg.sinfo, !(argtype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(argtype, pdecl.type, this.constraints), `Argument type ${argtype.emit()} is not a subtype of expected parameter type ${pdecl.type.emit()}`);
+            }
+        }
+
+        //Make sure this event is in the caller list of expected events
+        assert(adecl.eventType === undefined, "Not Implemented -- checkAgentInvokeExpression with event type");
+
+        //Make sure the status info is also in the caller list of expected status info
+        assert(adecl.statusinfo.length === 0, "Not Implemented -- checkAgentInvokeExpression with status info");
+
+        //TODO -- check task config bits here
+        assert(adecl.configs.priority === undefined && adecl.configs.timeout === undefined && adecl.configs.retry === undefined, "Not Implemented -- checkAgentInvokeExpression with priority config");
+
+        //nothing we can do for now about resource info since we can't do path inclusion
+
+        const restype = adecl.resultType ?? new VoidTypeSignature(exp.sinfo);
+        if(exp.optrestype === undefined) {
+            this.checkError(exp.sinfo, adecl.resultType === undefined, `Agent requires type to form result into`);
+
+            return exp.setType(restype);
+        }
+        else {
+            this.checkTypeSignature(exp.optrestype);
+            this.checkError(exp.sinfo, adecl.resultType !== undefined, `Agent does not allow result forming`);
+
+            return exp.setType(exp.optrestype);
+        }
     }
 
     private checkChkLogicExpression(env: TypeEnvironment, exp: ChkLogicExpression): TypeSignature {
@@ -5563,32 +5656,158 @@ class TypeChecker {
         this.file = CLEAR_FILENAME;
     }
 
-     private checkConfigsurationParameters(tconfig: TaskConfiguration) {
-        assert(false, "Not implemented -- checkEnvironmentVariableInformation");
+    private checkconfiguration(tconfig: TaskConfiguration): TaskConfiguration {
+        if(tconfig.priority === undefined && tconfig.retry === undefined && tconfig.timeout === undefined) {
+            return new TaskConfiguration(undefined, undefined, undefined);
+        }
+        else {
+            assert(false, "Not implemented -- checkEnvironmentVariableInformation");
+        }
     }
 
-    private checkstatusinfo(status: TypeSignature[]) {
-        assert(false, "Not implemented -- checkStatusInformation");
+    private checkstatusinfo(status: TypeSignature[]): TypeSignature[] {
+        if(status.length === 0) {
+            return [];
+        }
+        else {
+            assert(false, "Not implemented -- checkStatusInformation");
+        }
     }
 
-    private checkenvreqs(envreqs: EnvironmentVariableInformation[]) {
-        assert(false, "Not implemented -- checkEnvironmentRequirements");
+    private checkenvreqs(envreqs: EnvironmentVariableInformation[]): EnvironmentVariableInformation[] {
+        if(envreqs.length === 0) {
+            return [];
+        }
+        else {
+            assert(false, "Not implemented -- checkEnvironmentRequirements");
+        }
     }
 
-    private checkresourcereqs(resourcereqs: ResourceInformation) {
-        assert(false, "Not implemented -- checkResourceRequirements");
+    private checkresourcereqs(resourcereqs: ResourceInformation): ResourceInformation {
+        if(resourcereqs.pathglobs.length === 0) {
+            return new ResourceInformation([]);
+        }
+        else {
+            assert(false, "Not implemented -- checkResourceRequirements");
+        }
     }
 
-    private checkeventinfo(eventinfo: TypeSignature[]) {
-        assert(false, "Not implemented -- checkEventInformation");
+    private checkeventinfo(eventinfo: TypeSignature[]): TypeSignature[] {
+        if(eventinfo.length === 0) {
+            return [];
+        }
+        else {
+            assert(false, "Not implemented -- checkEventInformation");
+        }
+    }
+
+    private checkExplicitAgentAndAPIDeclSignature(sinfo: SourceInfo, params: InvokeParameterDecl[], resultType: TypeSignature) {
+        let argnames = new Set<string>();
+        const fullvinfo = params.map((p) => new VarInfo("$" + p.name, p.type, p.pkind || "let", true));
+        
+        if(params.some((p) => p.pkind !== undefined)) {
+            this.reportError(sinfo, `Agent/API parameters cannot have passing kinds`);
+        }
+
+        if(params.some((p) => p.type instanceof LambdaTypeSignature)) {
+            this.reportError(sinfo, `Agent/API parameters cannot have lambda types`);
+        }
+
+        if(params.some((p) => p.isRestParam)) {
+            this.reportError(sinfo, `Agent/API parameters cannot have rest parameters`);
+        }
+
+        if(params.some((p) => p.optDefaultValue !== undefined)) {
+            this.reportError(sinfo, `Agent/API parameters cannot have default values`);
+        }
+
+        for(let i = 0; i < params.length; ++i) {
+            const p = params[i];
+            this.checkError(sinfo, argnames.has(p.name), `Duplicate parameter name ${p.name}`);
+            argnames.add(p.name);
+
+            const tok = this.checkTypeSignature(p.type);
+            if(tok && p.optDefaultValue !== undefined) {
+                const env = TypeEnvironment.createInitialStdEnv(p.type, new SimpleTypeInferContext(p.type), fullvinfo);
+                const etype = this.checkExpression(env, p.optDefaultValue, p.type);
+
+                this.checkError(sinfo, !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, p.type, this.constraints), `Default value does not match declared type -- expected ${p.type.emit()} but got ${etype.emit()}`);
+            }
+        }
+
+        this.checkTypeSignature(resultType);
+    }
+
+    private checkExplicitAgentAndAPIDeclMetaData(sinfo: SourceInfo, params: InvokeParameterDecl[], resultType: TypeSignature, eventtype: TypeSignature | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[]) {
+        const fullvinfo = params.map((p) => new VarInfo(p.name, p.type, p.pkind || "let", true));
+
+        const ienv = TypeEnvironment.createInitialStdEnv(this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")), fullvinfo);
+        this.checkRequires(ienv, preconditions);
+        this.checkEnsures(ienv, resultType, [], eventtype, postconditions);
     }
 
     private checkAPIDecl(adecl: APIDecl) {
-        assert(false, "Not implemented -- checkAPIDecl");
+        this.file = adecl.file;
+
+        this.isExternalMode = true;
+        this.allowedStatusMsgs = this.checkstatusinfo(adecl.statusinfo);
+        this.envinfo = this.checkenvreqs(adecl.envreqs);
+        this.resourceinfo = this.checkresourcereqs(adecl.resourcereqs);
+        this.taskconfig = this.checkconfiguration(adecl.configs);
+        this.taskeventinfo = [];
+
+        this.checkExplicitAgentAndAPIDeclSignature(adecl.sinfo, adecl.params, adecl.resultType);
+        this.checkExplicitAgentAndAPIDeclMetaData(adecl.sinfo, adecl.params, adecl.resultType, adecl.eventType, adecl.preconditions, adecl.postconditions);
+
+        if(adecl.eventType !== undefined) {
+            this.checkTypeSignature(adecl.eventType);
+        }
+
+        const infertype = this.relations.convertTypeSignatureToTypeInferCtx(adecl.resultType);
+        const env = TypeEnvironment.createInitialStdEnv(adecl.resultType, infertype, adecl.params.map((p) => new VarInfo(p.name, p.type, p.pkind || "let", true)));
+        this.checkBodyImplementation(env, adecl.body, adecl.params);
+
+        this.isExternalMode = false;
+        this.allowedStatusMsgs = [];
+        this.envinfo = [];
+        this.resourceinfo = new ResourceInformation([]); 
+        this.taskconfig = new TaskConfiguration(undefined, undefined, undefined);
+        this.taskeventinfo = [];
+
+        this.file = CLEAR_FILENAME;
     }
 
     private checkAgentDecl(adecl: AgentDecl) {
-        assert(false, "Not implemented -- checkAgentDecl");
+        this.file = adecl.file;
+
+        const rtype = adecl.resultType || this.getWellKnownType("Void");
+
+        this.isExternalMode = true;
+        this.allowedStatusMsgs = this.checkstatusinfo(adecl.statusinfo);
+        this.envinfo = this.checkenvreqs(adecl.envreqs);
+        this.resourceinfo = this.checkresourcereqs(adecl.resourcereqs);
+        this.taskconfig = this.checkconfiguration(adecl.configs);
+        this.taskeventinfo = [];
+
+        this.checkExplicitAgentAndAPIDeclSignature(adecl.sinfo, adecl.params, rtype);
+        this.checkExplicitAgentAndAPIDeclMetaData(adecl.sinfo, adecl.params, rtype, adecl.eventType, adecl.preconditions, adecl.postconditions);
+
+        if(adecl.eventType !== undefined) {
+            this.checkTypeSignature(adecl.eventType);
+        }
+
+        const infertype = this.relations.convertTypeSignatureToTypeInferCtx(rtype);
+        const env = TypeEnvironment.createInitialStdEnv(rtype, infertype, adecl.params.map((p) => new VarInfo(p.name, p.type, p.pkind || "let", true)));
+        this.checkBodyImplementation(env, adecl.body, adecl.params);
+
+        this.isExternalMode = false;
+        this.allowedStatusMsgs = [];
+        this.envinfo = [];
+        this.resourceinfo = new ResourceInformation([]); 
+        this.taskconfig = new TaskConfiguration(undefined, undefined, undefined);
+        this.taskeventinfo = [];
+
+        this.file = CLEAR_FILENAME;
     }
 
     private checkTaskDecl(ns: NamespaceDeclaration, tdecl: TaskDecl) {
@@ -5615,6 +5834,13 @@ class TypeChecker {
             return { containingtype: inv.typeinfo.tsig.remapTemplateBindings(inv.typeinfo.mapping) as NominalTypeSignature, ii: inv.member.ii, file: inv.member.file, sinfo: inv.member.sinfo, tag: inv.member.diagnosticTag };
         });
 
+        this.isExternalMode = true;
+        this.taskconfig = this.checkconfiguration(tdecl.configs);
+        this.allowedStatusMsgs = this.checkstatusinfo(tdecl.statusinfo);
+        this.envinfo = this.checkenvreqs(tdecl.envreqs);
+        this.resourceinfo = this.checkresourcereqs(tdecl.resourcereqs);
+        this.taskeventinfo = this.checkeventinfo(tdecl.eventinfo);
+
         this.checkConstMemberDecls(tdecl, tdecl.consts);
         this.checkTypeFunctionDecls(tdecl, tdecl.functions);
         this.checkTaskMethodDecls(tdecl, rcvr, tdecl.selfmethods);
@@ -5622,12 +5848,12 @@ class TypeChecker {
 
         this.checkMemberFieldDecls(bnames, tdecl.fields);
 
-        this.checkConfigsurationParameters(tdecl.configs);
-
-        this.checkstatusinfo(tdecl.statusinfo);
-        this.checkenvreqs(tdecl.envreqs);
-        this.checkresourcereqs(tdecl.resourcereqs);
-        this.checkeventinfo(tdecl.eventinfo);
+        this.isExternalMode = false;
+        this.taskconfig = new TaskConfiguration(undefined, undefined, undefined);
+        this.allowedStatusMsgs = [];
+        this.envinfo = [];
+        this.resourceinfo = new ResourceInformation([]); 
+        this.taskeventinfo = [];
 
         if(tdecl.terms.length !== 0) {
             this.constraints.popConstraintScope();

@@ -13,11 +13,11 @@ public function main(n: Nat): List<CString>
     ref msgs.pushBack(Interpolate::cstring($'stretch tree of depth ${0}%t; check: ${1}', Nat::toString(stretchDepth), Nat::toString(check)));
 
     const longLivedTree = TreeNode::create(maxDepth);
-    const tdepths = List::rangeOfNat(minDepth, maxDepth, 2n, true); //inclusive of end value
+    const tdepths = List::rangeOfNat(minDepth, maxDepth, 2n, true); %%inclusive of end value
         
-    tdepths.map(ref msgs, fn(depth) => {
+    tdepths.reduce(ref msgs, fn(ref msgs, depth) => {
         let iterations = Nat::pow(2n, (maxDepth - depth) + minDepth);
-        let iterrng = List::rangeOfNat(1n, iterations, inclusive=true); //inclusive of end value
+        let iterrng = List::rangeOfNat(1n, iterations, inclusive=true); %%inclusive of end value
 
         let checkvals = iterrng.map(fn(i) => (TreeNode.create(depth)).check());
         let checksum = checkvals.sum();

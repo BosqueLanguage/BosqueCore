@@ -18,7 +18,7 @@ describe ("Parser -- entity ref methods", () => {
         parseTestFunctionInFileError('entity Foo { field f: Int; method foo(x: Int): Int { return this.f + x; }} function main(): Int { return ref Foo{3i}.foo(1i); }', 'Expected "." but got "{" when parsing "ref invoke"'); 
         parseTestFunctionInFileError('entity Foo { field f: Int; method foo(x: Int): Int { return this.f + x; }} function main(): Int { return ref this.foo(ref that); }', 'Cannot have a reference argument in this context'); 
 
-        parseTestFunctionInFileError('entity Foo { field f: Int; ref method foo(out x: Int): Int { x = 0i; return this.f; }} function main(): Int { let x = Foo{3i}; var y: Int; return ref x.foo(ref y); }', 'Cannot have more than one special passing parameter');
+        parseTestFunctionInFileError('entity Foo { field f: Int; ref method foo(out x: Int): Int { x = 0i; return this.f; }} function main(): Int { let x = Foo{3i}; var y: Int; return ref x.foo(ref y); }', 'Cannot have special passing parameter here');
     });
 });
 
