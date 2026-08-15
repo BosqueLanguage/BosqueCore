@@ -6211,7 +6211,7 @@ class Parser {
                 }
             }
             else if(this.testToken(KW_action)) {
-                this.parseTaskMemberAction(taskMemberAction, allMemberNames, attributes, "main");
+                this.parseTaskMemberAction(taskMemberAction, allMemberNames, attributes, "start");
             }
             else if(this.testToken(KW_entity)) {
                 if(specialConcept === undefined) {

@@ -3850,8 +3850,9 @@ class TypeChecker {
     }
 
     private checkAPIInvokeExpression(env: TypeEnvironment, exp: APIInvokeExpression): TypeSignature {
-        const adecl = this.relations.assembly.resolveNamespaceAPI(exp.ns, exp.api);
+        this.checkError(exp.sinfo, !this.isExternalMode, `Agent invocations must occour in environment aware code (agent/api/task) mode`);
 
+        const adecl = this.relations.assembly.resolveNamespaceAPI(exp.ns, exp.api);
         if(adecl === undefined) {
             this.reportError(exp.sinfo, `Could not find namespace api ${exp.ns.emit()}::${exp.api}`);
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
@@ -3887,8 +3888,9 @@ class TypeChecker {
     }
     
     private checkAgentInvokeExpression(env: TypeEnvironment, exp: AgentInvokeExpression): TypeSignature {
-        const adecl = this.relations.assembly.resolveNamespaceAgent(exp.ns, exp.agent);
+        this.checkError(exp.sinfo, !this.isExternalMode, `Agent invocations must occour in environment aware code (agent/api/task) mode`);
 
+        const adecl = this.relations.assembly.resolveNamespaceAgent(exp.ns, exp.agent);
         if(adecl === undefined) {
             this.reportError(exp.sinfo, `Could not find namespace agent ${exp.ns.emit()}::${exp.agent}`);
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
@@ -5265,13 +5267,80 @@ class TypeChecker {
 
     private checkTaskMethodDecls(tdecl: AbstractNominalTypeDecl, rcvr: TypeSignature, mdecls: TaskMethodDecl[]) {
         for(let i = 0; i < mdecls.length; ++i) {
-            assert(false, "Not implemented -- checkTaskMethodDecl");
+            const mdecl = mdecls[i];
+            this.checkExplicitInvokeDeclTermInfo(mdecl);
+
+            if(mdecl.terms.length !== 0) {
+                this.constraints.pushConstraintDeclsScope(mdecl.terms);
+            }
+
+            this.checkExplicitInvokeDeclTermConstraints(mdecl);
+
+            if(mdecl.termRestriction !== undefined) {
+                this.constraints.pushConstraintRestrictionScope(mdecl.termRestriction);
+            }
+
+            const thisvinfo = new VarInfo("self", rcvr, mdecl.isSelfRef ? "ref" : "let", true);
+
+            this.checkExplicitInvokeDeclSignature(mdecl, [thisvinfo]);
+            this.checkExplicitInvokeDeclMetaData(mdecl, [thisvinfo], mdecl.isSelfRef ? ["self"] : [], undefined);
+
+            const infertype = this.relations.convertTypeSignatureToTypeInferCtx(mdecl.resultType);
+            const env = TypeEnvironment.createInitialStdEnv(mdecl.resultType, infertype, [thisvinfo, ...mdecl.params.map((p) => new VarInfo(p.name, p.type, p.pkind || "let", true))]);
+            this.checkBodyImplementation(env, mdecl.body, mdecl.params);
+
+            if(mdecl.terms.length !== 0) {
+                this.constraints.popConstraintScope();
+            }
         }
     }
 
-    private checkTaskActionDecls(tdecl: AbstractNominalTypeDecl, rcvr: TypeSignature, mdecls: TaskActionDecl[]) {
-        for(let i = 0; i < mdecls.length; ++i) {
-            assert(false, "Not implemented -- checkTaskActionDecl");
+    private checkTaskActionDecls(tdecl: AbstractNominalTypeDecl, rcvr: TypeSignature, adecls: TaskActionDecl[]) {
+        for(let i = 0; i < adecls.length; ++i) {
+            const adecl = adecls[i];
+
+            xxxx; //todo -- nope -- instead make these as apis?
+
+            if(adecl.name === "run" || adecl.name === "terminate") {
+                this.checkError(adecl.sinfo, adecl.terms.length !== 0, `Task action ${adecl.name} cannot have template type parameters`);
+                this.checkError(adecl.sinfo, adecl.termRestriction !== undefined, `Task action ${adecl.name} cannot have template type restrictions`);
+                
+                this.checkError(adecl.sinfo, adecl.params.some((p) => p.pkind !== undefined), `Task action ${adecl.name} cannot have special passing params`);
+                this.checkError(adecl.sinfo, adecl.params.some((p) => p.type instanceof LambdaTypeSignature), `Task action ${adecl.name} cannot have lambda type parameters`);
+                this.checkError(adecl.sinfo, adecl.params.some((p) => p.isRestParam), `Task action ${adecl.name} cannot have a rest parameter`);
+
+                if(adecl.name === "terminate") {
+                    //make sure args is same as return type of run (both std return and event) and return type is correct for run
+                    assert(false, "Not implemented yet -- checkTaskActionDecls for terminate");
+                }
+            }
+
+            xxxx;
+
+            this.checkExplicitInvokeDeclTermInfo(adecl);
+
+            if(adecl.terms.length !== 0) {
+                this.constraints.pushConstraintDeclsScope(adecl.terms);
+            }
+
+            this.checkExplicitInvokeDeclTermConstraints(adecl);
+
+            if(adecl.termRestriction !== undefined) {
+                this.constraints.pushConstraintRestrictionScope(adecl.termRestriction);
+            }
+
+            const thisvinfo = new VarInfo("self", rcvr, "ref", true);
+
+            this.checkExplicitInvokeDeclSignature(adecl, [thisvinfo]);
+            this.checkExplicitInvokeDeclMetaData(adecl, [thisvinfo], ["self"], undefined);
+
+            const infertype = this.relations.convertTypeSignatureToTypeInferCtx(adecl.resultType);
+            const env = TypeEnvironment.createInitialStdEnv(adecl.resultType, infertype, [thisvinfo, ...adecl.params.map((p) => new VarInfo(p.name, p.type, p.pkind || "let", true))]);
+            this.checkBodyImplementation(env, adecl.body, adecl.params);
+
+            if(adecl.terms.length !== 0) {
+                this.constraints.popConstraintScope();
+            }
         }
     }
 
@@ -5954,6 +6023,9 @@ class TypeChecker {
             }
             else if(tt instanceof DatatypeTypeDecl) {
                 this.checkDatatypeTypeDecl(ns, tt);
+            }
+            else if(tt instanceof TaskDecl) {
+                this.checkTaskDecl(ns, tt);
             }
             else {
                 assert(false, "Unknown type decl kind");

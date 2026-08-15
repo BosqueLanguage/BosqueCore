@@ -19,12 +19,14 @@ describe ("Checker -- API Declarations", () => {
 
 describe ("Checker -- API Calls", () => {
     it("should check simple api call", function () {
-        checkTestFunction('abstract api foo(n: Nat): Int; function main(): Int { return api foo(3n); }');
-        checkTestFunction('abstract api foo(n: Nat): Int; function main(): Int { let ii = api Main::foo(env{}, 3n); return ii; }');
+        checkTestFunction('abstract api foo(n: Nat): Int; api main(): Int { return api foo(3n); }');
+        checkTestFunction('abstract api foo(n: Nat): Int; api main(): Int { let ii = api Main::foo(env{}, 3n); return ii; }');
     });
 
     it("should check simple api call fail", function () {
-        checkTestFunctionError('abstract api foo(n: Nat): Int; function main(): Bool { return api foo(3n); }', 'Expected a return value of type Bool but got Int');
-        checkTestFunctionError('abstract api foo(n: Nat): Int; function main(): Int { return api foo(3i); }', 'Argument type Int is not a subtype of expected parameter type Nat');
+        checkTestFunctionError('abstract api foo(n: Nat): Int; function main(): Int { return api foo(3n); }', 'Agent invocations must occour in environment aware code (agent/api/task) mode');
+
+        checkTestFunctionError('abstract api foo(n: Nat): Int; api main(): Bool { return api foo(3n); }', 'Expected a return value of type Bool but got Int');
+        checkTestFunctionError('abstract api foo(n: Nat): Int; api main(): Int { return api foo(3i); }', 'Argument type Int is not a subtype of expected parameter type Nat');
     });
 });
