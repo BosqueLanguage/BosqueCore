@@ -3850,7 +3850,40 @@ class TypeChecker {
     }
 
     private checkAPIInvokeExpression(env: TypeEnvironment, exp: APIInvokeExpression): TypeSignature {
-        assert(false, "Not Implemented -- checkAPIInvokeExpression");
+        const adecl = this.relations.assembly.resolveNamespaceAPI(exp.ns, exp.api);
+
+        if(adecl === undefined) {
+            this.reportError(exp.sinfo, `Could not find namespace api ${exp.ns.emit()}::${exp.api}`);
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        this.checkEnvironmentGenerationExpression(env, exp.envexp, adecl.envreqs);
+
+        if(exp.args.length !== adecl.params.length) {
+            this.reportError(exp.sinfo, `Argument count mismatch for api ${exp.ns.emit()}::${exp.api} -- expected ${adecl.params.length} arguments but got ${exp.args.length}`);
+        }
+        else {
+            for(let i = 0; i < exp.args.length; i++) {
+                const arg = exp.args[i];
+                const pdecl = adecl.params[i];
+
+                const argtype = this.checkExpression(env, arg, new SimpleTypeInferContext(pdecl.type));
+                this.checkError(arg.sinfo, !(argtype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(argtype, pdecl.type, this.constraints), `Argument type ${argtype.emit()} is not a subtype of expected parameter type ${pdecl.type.emit()}`);
+            }
+        }
+
+        //Make sure this event is in the caller list of expected events
+        assert(adecl.eventType === undefined, "Not Implemented -- checkAgentInvokeExpression with event type");
+
+        //Make sure the status info is also in the caller list of expected status info
+        assert(adecl.statusinfo.length === 0, "Not Implemented -- checkAgentInvokeExpression with status info");
+
+        //TODO -- check task config bits here
+        assert(adecl.configs.priority === undefined && adecl.configs.timeout === undefined && adecl.configs.retry === undefined, "Not Implemented -- checkAgentInvokeExpression with priority config");
+
+        //nothing we can do for now about resource info since we can't do path inclusion
+
+        return exp.setType(adecl.resultType);
     }
     
     private checkAgentInvokeExpression(env: TypeEnvironment, exp: AgentInvokeExpression): TypeSignature {
@@ -3889,13 +3922,13 @@ class TypeChecker {
 
         const restype = adecl.resultType ?? new VoidTypeSignature(exp.sinfo);
         if(exp.optrestype === undefined) {
+            this.checkError(exp.sinfo, adecl.resultType === undefined, `Agent requires type to form result into`);
+
             return exp.setType(restype);
         }
         else {
             this.checkTypeSignature(exp.optrestype);
-
-            const okopt = this.relations.isSubtypeOf(restype, this.getWellKnownType("CString"), this.constraints) || this.relations.isSubtypeOf(exp.optrestype, this.getWellKnownType("String"), this.constraints) || this.relations.isSubtypeOf(exp.optrestype, this.getWellKnownType("ByteBuffer"), this.constraints);
-            this.checkError(exp.sinfo, !okopt, `Agent ${exp.ns.emit()}::${exp.agent} result type ${restype.emit()} is not structured parsable type}`);
+            this.checkError(exp.sinfo, adecl.resultType !== undefined, `Agent does not allow result forming`);
 
             return exp.setType(exp.optrestype);
         }
@@ -5714,7 +5747,34 @@ class TypeChecker {
     }
 
     private checkAPIDecl(adecl: APIDecl) {
-        assert(false, "Not implemented -- checkAPIDecl");
+        this.file = adecl.file;
+
+        this.isExternalMode = true;
+        this.allowedStatusMsgs = this.checkstatusinfo(adecl.statusinfo);
+        this.envinfo = this.checkenvreqs(adecl.envreqs);
+        this.resourceinfo = this.checkresourcereqs(adecl.resourcereqs);
+        this.taskconfig = this.checkconfiguration(adecl.configs);
+        this.taskeventinfo = [];
+
+        this.checkExplicitAgentAndAPIDeclSignature(adecl.sinfo, adecl.params, adecl.resultType);
+        this.checkExplicitAgentAndAPIDeclMetaData(adecl.sinfo, adecl.params, adecl.resultType, adecl.eventType, adecl.preconditions, adecl.postconditions);
+
+        if(adecl.eventType !== undefined) {
+            this.checkTypeSignature(adecl.eventType);
+        }
+
+        const infertype = this.relations.convertTypeSignatureToTypeInferCtx(adecl.resultType);
+        const env = TypeEnvironment.createInitialStdEnv(adecl.resultType, infertype, adecl.params.map((p) => new VarInfo(p.name, p.type, p.pkind || "let", true)));
+        this.checkBodyImplementation(env, adecl.body, adecl.params);
+
+        this.isExternalMode = false;
+        this.allowedStatusMsgs = [];
+        this.envinfo = [];
+        this.resourceinfo = new ResourceInformation([]); 
+        this.taskconfig = new TaskConfiguration(undefined, undefined, undefined);
+        this.taskeventinfo = [];
+
+        this.file = CLEAR_FILENAME;
     }
 
     private checkAgentDecl(adecl: AgentDecl) {
@@ -5736,7 +5796,7 @@ class TypeChecker {
             this.checkTypeSignature(adecl.eventType);
         }
 
-        const infertype = this.relations.convertTypeSignatureToTypeInferCtx(adecl.resultType || this.getWellKnownType("Void"));
+        const infertype = this.relations.convertTypeSignatureToTypeInferCtx(rtype);
         const env = TypeEnvironment.createInitialStdEnv(rtype, infertype, adecl.params.map((p) => new VarInfo(p.name, p.type, p.pkind || "let", true)));
         this.checkBodyImplementation(env, adecl.body, adecl.params);
 

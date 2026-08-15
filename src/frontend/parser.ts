@@ -7084,13 +7084,18 @@ class Parser {
             const boundtemplates = new Set<string>();
             const params: InvokeParameterDecl[] = this.parseInvokeDeclParameters(sinfo, false, boundtemplates);
         
-            this.ensureAndConsumeTokenIf(SYM_colon, "agent declaration");
-            const resultInfo = this.parseReturnTypeSignature(true);
+            let resultInfo: TypeSignature | undefined = undefined;
+            if(this.testToken(SYM_colon)) {
+                this.consumeToken();
+                resultInfo = this.parseReturnTypeSignature(true);
+            }
 
             let eventType: TypeSignature | undefined = undefined;
             if(this.testAndConsumeTokenIf(SYM_coma)) {
                 eventType = this.parseNominalType();
             }
+
+            //note this accepts foo() , Event ... and that is intentional
 
             const argNames = new Set<string>(params.map((param) => param.name));
             const cargs = params.map((param) => new VariableDefinitionInfo("let", param.name));
