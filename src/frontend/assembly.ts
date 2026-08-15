@@ -1854,6 +1854,24 @@ class Assembly {
         return nsdecl.functions.find((c) => Assembly.resolveSigMatch(fnsig, {name: c.name, isTemplate: c.terms.length !== 0, hasLambda: c.params.some((p) => p.type instanceof LambdaTypeSignature), pkinds: c.params.map((p) => p.pkind).filter((pk) => pk !== undefined) as ("ref" | "out" | "out?" | "inout")[]}));
     }
 
+    resolveNamespaceAPI(ns: FullyQualifiedNamespace, name: string): APIDecl | undefined {
+        const nsdecl = this.resolveNamespaceDecl(ns.ns);
+        if(nsdecl === undefined) {
+            return undefined;
+        }
+
+        return nsdecl.apis.find((c) => c.name === name);
+    }
+
+    resolveNamespaceAgent(ns: FullyQualifiedNamespace, name: string): AgentDecl | undefined {
+        const nsdecl = this.resolveNamespaceDecl(ns.ns);
+        if(nsdecl === undefined) {
+            return undefined;
+        }
+
+        return nsdecl.agents.find((c) => c.name === name);
+    }
+
     tryReduceConstantExpressionToRE(exp: Expression): LiteralRegexExpression | undefined {
         if(exp instanceof LiteralRegexExpression) {
             return exp;

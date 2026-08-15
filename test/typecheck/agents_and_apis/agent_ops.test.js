@@ -11,6 +11,9 @@ describe ("Checker -- Agent Declarations", () => {
 
     it("should check simple agent decl fail", function () {
         checkTestFunctionError('abstract agent foo(n: Nat): Int requires n != 0i; ensures $return > 0i; ; function main(): Int { return 1i; }', 'Operator != requires 2 arguments of the same type');
+
+        checkTestFunctionError('abstract agent foo(...l: List<Nat>): Int; function main(): Int { return 1i; }', 'Agent/API parameters cannot have rest parameters');
+        checkTestFunctionError('abstract agent foo(n: Nat = 0n): Int; function main(): Int { return 1i; }', 'Agent/API parameters cannot have default values');
     });
 });
 
@@ -23,7 +26,7 @@ describe ("Checker -- Agent Calls", () => {
     });
 
     it("should check simple agent call fail", function () {
-        checkTestFunctionError('abstract agent foo(n: Nat): Int; function main(): Bool { return agent foo(3n); }', 'yyy');
-        checkTestFunctionError('abstract agent foo(n: Nat): Int; function main(): Int { return agent foo(3i); }', 'www');
+        checkTestFunctionError('abstract agent foo(n: Nat): Int; function main(): Bool { return agent foo(3n); }', 'Expected a return value of type Bool but got Int');
+        checkTestFunctionError('abstract agent foo(n: Nat): Int; function main(): Int { return agent foo(3i); }', 'Argument type Int is not a subtype of expected parameter type Nat');
     });
 });

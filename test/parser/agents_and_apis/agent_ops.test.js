@@ -12,6 +12,7 @@ describe ("Parser -- Agent Declarations", () => {
 
     it("should parse simple agent decl fail", function () {
         parseTestFunctionInFileError('agent foo(n: Nat): Int; function main(): Int { return; }', "Body implementation expected unless declared as abstract");
+        parseTestFunctionInFileError('abstract agent foo(out n: Nat): Int; function main(): Int { return 1i; }', 'Cannot have special passing parameter here');
     });
 });
 

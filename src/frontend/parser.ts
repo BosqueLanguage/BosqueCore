@@ -2229,7 +2229,7 @@ class Parser {
             }
             else {
                 if(params.some((param) => param.pkind !== undefined)) {
-                    this.recordErrorGeneral(cinfo, "Cannot have more than one special passing parameter");
+                    this.recordErrorGeneral(cinfo, "Cannot have special passing parameter here");
                 }
             }
 
