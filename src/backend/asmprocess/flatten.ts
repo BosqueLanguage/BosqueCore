@@ -1854,21 +1854,22 @@ class ASMToIRConverter {
 
     private flattenSpecialConstructorExpression(exp: SpecialConstructorExpression): IRExpression {
         const ctype = this.tproc(exp.constype as TypeSignature) as NominalTypeSignature;
+        
+        //always at least one argument for these special constructors
+        const argt0 = this.tproc(exp.args[0].getType());
+        const arg0 = this.makeExpressionSimple(this.flattenExpression(exp.args[0]), argt0);
 
-        const argt = this.tproc(exp.arg.getType());
-        const arg = this.makeExpressionSimple(this.flattenExpression(exp.arg), argt);
-            
         if(exp.rop === "some") {
-            const targ = this.makeCoercionExplicitAsNeeded(arg, argt, ctype.alltermargs[0]);
+            const targ = this.makeCoercionExplicitAsNeeded(arg0, argt0, ctype.alltermargs[0]);
             return new IRConstructorSomeTypeExpression(this.processTypeSignature(ctype), targ);
         }
         else if(exp.rop === "ok") {
-            const targ = this.makeCoercionExplicitAsNeeded(arg, argt, ctype.alltermargs[0]);
+            const targ = this.makeCoercionExplicitAsNeeded(arg0, argt0, ctype.alltermargs[0]);
             return new IRConstructorOkTypeExpression(this.processTypeSignature(ctype), targ);
         }
         else {
             //fail
-            const targ = this.makeCoercionExplicitAsNeeded(arg, argt, ctype.alltermargs[1]);
+            const targ = this.makeCoercionExplicitAsNeeded(arg0, argt0, ctype.alltermargs[1]);
             return new IRConstructorFailTypeExpression(this.processTypeSignature(ctype), targ);
         }
     }

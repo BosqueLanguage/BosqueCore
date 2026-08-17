@@ -565,7 +565,9 @@ class Monomorphizer {
 
     private instantiateSpecialConstructorExpression(exp: SpecialConstructorExpression) {
         this.instantiateTypeSignature(exp.constype as TypeSignature, this.currentMapping);
-        this.instantiateExpression(exp.arg);
+        for(let i = 0; i < exp.args.length; ++i) {
+            this.instantiateExpression(exp.args[i]);
+        }
     }
 
     private instantiateCallNamespaceFunctionExpression(exp: CallNamespaceFunctionExpression) {

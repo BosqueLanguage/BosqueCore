@@ -50,6 +50,16 @@ const KW_safety = "safety";
 const KW_spec = "spec";
 const KW_test = "test";
 
+const KW_error = "error";
+const KW_rejected = "rejected";
+const KW_denied = "denied";
+const KW_flagged = "flagged";
+const KW_success = "success";
+const KW_nevent = "$event";
+
+const KW_astype = "astype";
+const KW_asvalue = "asvalue";
+
 ////
 //Declaration keywords
 const KW_api = "api";
@@ -165,7 +175,17 @@ const KeywordStrings = [
     KW_softcheck,
     KW_errtest,
     KW_chktest,
-    KW_example
+    KW_example,
+
+    KW_error,
+    KW_rejected,
+    KW_denied,
+    KW_flagged,
+    KW_success,
+    KW_nevent,
+
+    KW_astype,
+    KW_asvalue
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -448,6 +468,16 @@ export {
     KW_errtest,
     KW_chktest,
     KW_example,
+
+    KW_error,
+    KW_rejected,
+    KW_denied,
+    KW_flagged,
+    KW_success,
+    KW_nevent,
+
+    KW_astype,
+    KW_asvalue,
 
     SYM_lbrack,
     SYM_lparen,

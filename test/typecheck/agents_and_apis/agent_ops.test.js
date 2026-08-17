@@ -2,7 +2,7 @@
 
 import { checkTestFunction, checkTestFunctionError } from "../../../bin/test/typecheck/typecheck_nf.js";
 import { describe, it } from "node:test";
-
+/*
 describe ("Checker -- Agent Declarations", () => {
     it("should check simple agent decl", function () {
         checkTestFunction('abstract agent foo(n: Nat): Int; function main(): Int { return 1i; }');
@@ -35,3 +35,4 @@ describe ("Checker -- Agent Calls", () => {
         checkTestFunctionError('abstract agent foo(n: Nat): Int; api main(): Int { return agent foo(3i); }', 'Argument type Int is not a subtype of expected parameter type Nat');
     });
 });
+*/

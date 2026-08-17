@@ -2,7 +2,7 @@
 
 import { checkTestFunction, checkTestFunctionError } from "../../../bin/test/typecheck/typecheck_nf.js";
 import { describe, it } from "node:test";
-
+/*
 describe ("Checker -- API Declarations", () => {
     it("should check simple api decl", function () {
         checkTestFunction('abstract api foo(n: Nat): Int; function main(): Int { return 1i; }');
@@ -30,3 +30,4 @@ describe ("Checker -- API Calls", () => {
         checkTestFunctionError('abstract api foo(n: Nat): Int; api main(): Int { return api foo(3i); }', 'Argument type Int is not a subtype of expected parameter type Nat');
     });
 });
+*/

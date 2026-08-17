@@ -919,19 +919,20 @@ class ConstructorLambdaExpression extends Expression {
 }
 
 class SpecialConstructorExpression extends Expression {
-    readonly rop: "ok" | "fail" | "some";
-    readonly arg: Expression;
+    readonly rop: "ok" | "fail" | "some" | "error" | "rejected" | "denied" | "flagged" | "success";
+    readonly args: Expression[];
 
     constype: TypeSignature | undefined = undefined;
 
-    constructor(sinfo: SourceInfo, rop: "ok" | "fail" | "some", arg: Expression) {
+    constructor(sinfo: SourceInfo, rop: "ok" | "fail" | "some" | "error" | "rejected" | "denied" | "flagged" | "success", args: Expression[]) {
         super(ExpressionTag.SpecialConstructorExpression, sinfo);
         this.rop = rop;
-        this.arg = arg;
+        this.args = args;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.rop}(${this.arg.emit(toplevel, fmt)})`;
+        const argstr = this.args.map((arg) => arg.emit(true, fmt));
+        return `${this.rop}(${argstr.join(", ")})`;
     }
 }
 

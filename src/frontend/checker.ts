@@ -30,7 +30,6 @@ class TypeChecker {
     readonly constraints: TemplateConstraintScope;
     readonly relations: TypeCheckerRelations;
 
-    isTaskScope: boolean = false;
     envDecl: EnvironmentVariableInformation[] = [];
     lambdaCtr: number = 0;
     invidCtr = 0;
@@ -41,6 +40,8 @@ class TypeChecker {
     resourceinfo: ResourceInformation = new ResourceInformation([]); //resource information for external mode
     taskconfig: TaskConfiguration = new TaskConfiguration(undefined, undefined, undefined); //task configuration for external mode
     taskeventinfo: TypeSignature[] = []; //task event information for external mode
+    xxxx;
+
 
     constructor(constraints: TemplateConstraintScope, relations: TypeCheckerRelations) {
         this.constraints = constraints;
@@ -1816,7 +1817,7 @@ class TypeChecker {
     }
 
     private checkAccessEnvValueExpression(env: TypeEnvironment, exp: AccessEnvValueExpression): TypeSignature {
-        this.checkError(exp.sinfo, !this.isTaskScope, `Environment values in non-task scopes`);
+        this.checkError(exp.sinfo, !this.isExternalMode, `Environment values in non-task scopes`);
 
         if(!exp.keyname.startsWith("'")) {
             exp.resolvedkey = exp.keyname;
@@ -1865,7 +1866,7 @@ class TypeChecker {
     }
 
     private checkTaskAccessInfoExpression(env: TypeEnvironment, exp: TaskAccessInfoExpression): TypeSignature {
-        this.checkError(exp.sinfo, !this.isTaskScope, `Task ID values cannot be accessed in non-task scopes`);
+        this.checkError(exp.sinfo, !this.isExternalMode, `Task ID values cannot be accessed in non-task scopes`);
 
         return exp.setType(this.getWellKnownType("UUIDv7"));
     }
@@ -2337,7 +2338,7 @@ class TypeChecker {
     private checkSpecialConstructorExpressionNoInfer(env: TypeEnvironment, exp: SpecialConstructorExpression): TypeSignature {
         const corens = this.relations.assembly.getCoreNamespace();
 
-        const etype = this.checkExpression(env, exp.arg, undefined);
+        const etype = this.checkExpression(env, exp.args[0], undefined);
         if((etype instanceof ErrorTypeSignature)) {
             this.reportError(exp.sinfo, `Invalid type for special constructor -- got ${etype.emit()}`);
             return exp.setType(etype);
@@ -2354,23 +2355,24 @@ class TypeChecker {
     }
 
     private checkSpecialConstructorExpression(env: TypeEnvironment, exp: SpecialConstructorExpression, infertype: TypeSignature | undefined): TypeSignature {
-        if(infertype === undefined || !(infertype instanceof NominalTypeSignature)) {
-            return this.checkSpecialConstructorExpressionNoInfer(env, exp);
-        }
-        else {
-            const ninfer = infertype as NominalTypeSignature;
-            if(exp.rop === "some") {
-                if(ninfer.decl instanceof SomeTypeDecl) {
-                    const ttype = ninfer.alltermargs[0];
-                    const etype = this.checkExpression(env, exp.arg, new SimpleTypeInferContext(ttype));
+        if(exp.rop === "some") {
+            if(infertype === undefined || !(infertype instanceof NominalTypeSignature)) {
+                return this.checkSpecialConstructorExpressionNoInfer(env, exp);
+            }
+            else {
+                this.checkError(exp.sinfo, exp.args.length !== 1, "some constructor expects 1 argument");
+
+                if(infertype.decl instanceof SomeTypeDecl) {
+                    const ttype = infertype.alltermargs[0];
+                    const etype = this.checkExpression(env, exp.args[0], new SimpleTypeInferContext(ttype));
                     this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Some constructor argument is not a subtype of ${ttype.emit()}`);
 
-                    exp.constype = ninfer;
-                    return exp.setType(ninfer);
+                    exp.constype = infertype;
+                    return exp.setType(infertype);
                 }
-                else if(ninfer.decl instanceof OptionTypeDecl) {
-                    const ttype = ninfer.alltermargs[0];
-                    const etype = this.checkExpression(env, exp.arg, new SimpleTypeInferContext(ttype));
+                else if(infertype.decl instanceof OptionTypeDecl) {
+                    const ttype = infertype.alltermargs[0];
+                    const etype = this.checkExpression(env, exp.args[0], new SimpleTypeInferContext(ttype));
                     this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Some constructor argument is not a subtype of ${ttype.emit()}`);
 
                     exp.constype = new NominalTypeSignature(exp.sinfo, undefined, this.relations.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Some") as SomeTypeDecl, [ttype]);
@@ -2380,10 +2382,19 @@ class TypeChecker {
                     return this.checkSpecialConstructorExpressionNoInfer(env, exp);
                 }
             }
-            else if(exp.rop === "ok") {
+        }
+        else if(exp.rop === "ok") {
+            if(infertype === undefined || !(infertype instanceof NominalTypeSignature)) {
+                this.reportError(exp.sinfo, "Cannot infer type for special Ok constructor -- no type provided");
+                return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            }
+            else {
+                this.checkError(exp.sinfo, exp.args.length !== 1, "ok constructor expects 1 argument");
+
+                const ninfer = infertype as NominalTypeSignature;
                 if(ninfer.decl instanceof OkTypeDecl) {
                     const ttype = ninfer.alltermargs[0];
-                    const etype = this.checkExpression(env, exp.arg, new SimpleTypeInferContext(ttype));
+                    const etype = this.checkExpression(env, exp.args[0], new SimpleTypeInferContext(ttype));
                     this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Ok constructor argument is not a subtype of ${ttype.emit()}`);
 
                     exp.constype = ninfer;
@@ -2391,7 +2402,7 @@ class TypeChecker {
                 }
                 else if(ninfer.decl instanceof ResultTypeDecl) {
                     const ttype = ninfer.alltermargs[0];
-                    const etype = this.checkExpression(env, exp.arg, new SimpleTypeInferContext(ttype));
+                    const etype = this.checkExpression(env, exp.args[0], new SimpleTypeInferContext(ttype));
                     this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Ok constructor argument is not a subtype of ${ttype.emit()}`);
 
                     exp.constype = new NominalTypeSignature(exp.sinfo, undefined, ninfer.decl.getOkType(), [ttype, ninfer.alltermargs[1]]);
@@ -2402,10 +2413,19 @@ class TypeChecker {
                     return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
                 }
             }
+        }
+        else if(exp.rop === "fail") {
+            if(infertype === undefined || !(infertype instanceof NominalTypeSignature)) {
+                this.reportError(exp.sinfo, "Cannot infer type for special Ok constructor -- no type provided");
+                return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            }
             else {
+                this.checkError(exp.sinfo, exp.args.length !== 1, "fail constructor expects 1 argument");
+
+                const ninfer = infertype as NominalTypeSignature;
                 if(ninfer.decl instanceof FailTypeDecl) {
                     const ttype = ninfer.alltermargs[1];
-                    const etype = this.checkExpression(env, exp.arg, new SimpleTypeInferContext(ttype));
+                    const etype = this.checkExpression(env, exp.args[0], new SimpleTypeInferContext(ttype));
                     this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Fail constructor argument is not a subtype of ${ttype.emit()}`);
 
                     exp.constype = ninfer;
@@ -2413,7 +2433,7 @@ class TypeChecker {
                 }
                 else if(ninfer.decl instanceof ResultTypeDecl) {
                     const ttype = ninfer.alltermargs[1];
-                    const etype = this.checkExpression(env, exp.arg, new SimpleTypeInferContext(ttype));
+                    const etype = this.checkExpression(env, exp.args[0], new SimpleTypeInferContext(ttype));
                     this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Err constructor argument is not a subtype of ${ttype.emit()}`);
 
                     exp.constype = new NominalTypeSignature(exp.sinfo, undefined, ninfer.decl.getFailType(), [ninfer.alltermargs[0], ttype]);
@@ -2424,6 +2444,51 @@ class TypeChecker {
                     return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
                 }
             }
+        }
+        else if(exp.rop === "error") {
+            assert(false, "Not implemented -- error tag");
+        }
+        else if(exp.rop === "rejected") {
+            assert(false, "Not implemented -- rejected tag");
+        }
+        else if(exp.rop === "denied") {
+            assert(false, "Not implemented -- denied tag");
+        }
+        else if(exp.rop === "flagged") {
+            assert(false, "Not implemented -- flagged tag");
+        }
+        else if(exp.rop === "success") {
+            if(this.xxxx === undefined) {
+                this.reportError(exp.sinfo, "Cannot infer type for special Success constructor -- no type provided");
+                return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            }
+            else {
+                this.checkError(exp.sinfo, exp.args.length !== 1, "success constructor expects 1 argument");
+
+                if(ninfer.decl instanceof SuccessTypeDecl) {
+                    const ttype = ninfer.alltermargs[0];
+                    const etype = this.checkExpression(env, exp.args[0], new SimpleTypeInferContext(ttype));
+                    this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Fail constructor argument is not a subtype of ${ttype.emit()}`);
+
+                    exp.constype = ninfer;
+                    return exp.setType(ninfer);
+                }
+                else if(ninfer.decl instanceof APIResultTypeDecl) {
+                    const ttype = ninfer.alltermargs[1];
+                    const etype = this.checkExpression(env, exp.args[0], new SimpleTypeInferContext(ttype));
+                    this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Err constructor argument is not a subtype of ${ttype.emit()}`);
+
+                    exp.constype = new NominalTypeSignature(exp.sinfo, undefined, ninfer.decl.getFailType(), [ninfer.alltermargs[0], ttype]);
+                    return exp.setType(exp.constype);
+                }
+                else {
+                    this.reportError(exp.sinfo, `Cannot infer type for special Success constructor -- got ${infertype.emit()}`);
+                    return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+                }
+            }
+        }
+        else {
+           assert(false, `Unsupported special constructor tag in checker -- ${exp.rop}`);
         }
     }
 
@@ -5297,6 +5362,8 @@ class TypeChecker {
 
     private checkTaskActionDecls(tdecl: AbstractNominalTypeDecl, rcvr: TypeSignature, adecls: TaskActionDecl[]) {
         for(let i = 0; i < adecls.length; ++i) {
+assert(false);
+/*
             const adecl = adecls[i];
 
             xxxx; //todo -- nope -- instead make these as apis?
@@ -5341,6 +5408,7 @@ class TypeChecker {
             if(adecl.terms.length !== 0) {
                 this.constraints.popConstraintScope();
             }
+*/
         }
     }
 
