@@ -55,7 +55,6 @@ const KW_rejected = "rejected";
 const KW_denied = "denied";
 const KW_flagged = "flagged";
 const KW_success = "success";
-const KW_nevent = "$event";
 
 const KW_astype = "astype";
 const KW_asvalue = "asvalue";
@@ -182,7 +181,6 @@ const KeywordStrings = [
     KW_denied,
     KW_flagged,
     KW_success,
-    KW_nevent,
 
     KW_astype,
     KW_asvalue
@@ -474,7 +472,6 @@ export {
     KW_denied,
     KW_flagged,
     KW_success,
-    KW_nevent,
 
     KW_astype,
     KW_asvalue,

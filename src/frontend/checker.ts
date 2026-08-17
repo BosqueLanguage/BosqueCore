@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import { APIDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, InvokeTemplateTypeRestrictionClause, MAX_SAFE_CHK_NAT, MIN_SAFE_CHK_INT, MAX_SAFE_CHK_INT, APIDeniedTypeDecl, APIFlaggedTypeDecl, AgentDecl, TaskConfiguration, AbstractCollectionTypeDecl, ConstructableTypeDecl, InvokeParameterDecl, AbstractEntityTypeDecl } from "./assembly.js";
+import { APIDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, InvokeTemplateTypeRestrictionClause, MAX_SAFE_CHK_NAT, MIN_SAFE_CHK_INT, MAX_SAFE_CHK_INT, APIDeniedTypeDecl, APIFlaggedTypeDecl, AgentDecl, TaskConfiguration, AbstractCollectionTypeDecl, ConstructableTypeDecl, InvokeParameterDecl, AbstractEntityTypeDecl, WELL_KNOWN_RESULT_EVENT_NAME } from "./assembly.js";
 import { CodeFormatter, SourceInfo } from "./build_decls.js";
 import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, ErrorTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
 import { APIInvokeExpression, AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, AbstractArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, FormatStringTextComponent, HoleBodyImplementation, HoleExpression, HoleStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, IfElifElseStatement, IfElseStatement, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypeDeclValueExpression, LiteralTypedCStringExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PassingArgumentValue, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RValueExpression, RValueExpressionTag, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VoidRefCallStatement, StdArgumentValue, SkipArgumentValue, InterpolateFormatExpression, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestFail, ITestTypeGuard, ITestBinderGuard, TypeTestBindInfo, EnvironmentGenerationExpression, EmptyEnvironmentExpression } from "./body.js";
@@ -40,8 +40,9 @@ class TypeChecker {
     resourceinfo: ResourceInformation = new ResourceInformation([]); //resource information for external mode
     taskconfig: TaskConfiguration = new TaskConfiguration(undefined, undefined, undefined); //task configuration for external mode
     taskeventinfo: TypeSignature[] = []; //task event information for external mode
-    xxxx;
-
+    
+    decltaskresult: TypeSignature | undefined = undefined;
+    decltaskevent: TypeSignature | undefined = undefined;
 
     constructor(constraints: TemplateConstraintScope, relations: TypeCheckerRelations) {
         this.constraints = constraints;
@@ -2458,14 +2459,15 @@ class TypeChecker {
             assert(false, "Not implemented -- flagged tag");
         }
         else if(exp.rop === "success") {
-            if(this.xxxx === undefined) {
+            if(infertype === undefined || !(infertype instanceof NominalTypeSignature)) {
                 this.reportError(exp.sinfo, "Cannot infer type for special Success constructor -- no type provided");
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
             else {
                 this.checkError(exp.sinfo, exp.args.length !== 1, "success constructor expects 1 argument");
 
-                if(ninfer.decl instanceof SuccessTypeDecl) {
+                const ninfer = infertype as NominalTypeSignature;
+                if(ninfer.decl instanceof APISuccessTypeDecl) {
                     const ttype = ninfer.alltermargs[0];
                     const etype = this.checkExpression(env, exp.args[0], new SimpleTypeInferContext(ttype));
                     this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Fail constructor argument is not a subtype of ${ttype.emit()}`);
@@ -2474,11 +2476,11 @@ class TypeChecker {
                     return exp.setType(ninfer);
                 }
                 else if(ninfer.decl instanceof APIResultTypeDecl) {
-                    const ttype = ninfer.alltermargs[1];
+                    const ttype = ninfer.alltermargs[0];
                     const etype = this.checkExpression(env, exp.args[0], new SimpleTypeInferContext(ttype));
                     this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Err constructor argument is not a subtype of ${ttype.emit()}`);
 
-                    exp.constype = new NominalTypeSignature(exp.sinfo, undefined, ninfer.decl.getFailType(), [ninfer.alltermargs[0], ttype]);
+                    exp.constype = new NominalTypeSignature(exp.sinfo, undefined, ninfer.decl.getAPISuccessType(), [ttype, ninfer.alltermargs[1]]);
                     return exp.setType(exp.constype);
                 }
                 else {
@@ -5148,6 +5150,8 @@ class TypeChecker {
         if(eventtype !== undefined) {
             const eldecl = this.relations.assembly.getCoreNamespace().typedecls.find((td) => td.name === "EventList") as EventListTypeDecl;
             const eventlisttype = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), undefined, eldecl, [eventtype]);
+            
+            eev = eev.addLocalVar(WELL_KNOWN_RESULT_EVENT_NAME, eventtype, "let", true);
             eev = eev.addLocalVar(WELL_KNOWN_EVENTS_VAR_NAME, eventlisttype, "let", true);
         }
         
@@ -5362,13 +5366,10 @@ class TypeChecker {
 
     private checkTaskActionDecls(tdecl: AbstractNominalTypeDecl, rcvr: TypeSignature, adecls: TaskActionDecl[]) {
         for(let i = 0; i < adecls.length; ++i) {
-assert(false);
-/*
+
             const adecl = adecls[i];
 
-            xxxx; //todo -- nope -- instead make these as apis?
-
-            if(adecl.name === "run" || adecl.name === "terminate") {
+            if(adecl.name === "start" || adecl.name === "complete") {
                 this.checkError(adecl.sinfo, adecl.terms.length !== 0, `Task action ${adecl.name} cannot have template type parameters`);
                 this.checkError(adecl.sinfo, adecl.termRestriction !== undefined, `Task action ${adecl.name} cannot have template type restrictions`);
                 
@@ -5376,13 +5377,11 @@ assert(false);
                 this.checkError(adecl.sinfo, adecl.params.some((p) => p.type instanceof LambdaTypeSignature), `Task action ${adecl.name} cannot have lambda type parameters`);
                 this.checkError(adecl.sinfo, adecl.params.some((p) => p.isRestParam), `Task action ${adecl.name} cannot have a rest parameter`);
 
-                if(adecl.name === "terminate") {
+                if(adecl.name === "complete") {
                     //make sure args is same as return type of run (both std return and event) and return type is correct for run
                     assert(false, "Not implemented yet -- checkTaskActionDecls for terminate");
                 }
             }
-
-            xxxx;
 
             this.checkExplicitInvokeDeclTermInfo(adecl);
 
@@ -5408,7 +5407,6 @@ assert(false);
             if(adecl.terms.length !== 0) {
                 this.constraints.popConstraintScope();
             }
-*/
         }
     }
 
@@ -5793,6 +5791,35 @@ assert(false);
         this.file = CLEAR_FILENAME;
     }
 
+    private checkTaskDeclaredResult(sinfo: SourceInfo, rsig: TypeSignature | undefined): TypeSignature | undefined {
+        if(rsig === undefined) {
+            this.reportError(sinfo, "Must have return type for main task");
+            return undefined;
+        }
+
+        const tok = this.checkTypeSignature(rsig);
+        if(!tok) {
+            return undefined;
+        }
+
+        if(!(rsig instanceof NominalTypeSignature) || !(rsig.decl instanceof APIResultTypeDecl)) {
+            this.reportError(sinfo, "External op result type must be an APIResult");
+            return undefined;
+        }
+        else {
+            return rsig;
+        }
+    }
+
+    private checkTaskDeclaredEvent(evt: TypeSignature | undefined): TypeSignature | undefined {
+        if(evt === undefined) {
+            return undefined;
+        }
+        else {
+            assert(false, "Not implemented yet -- checkTaskDeclaredEventOptions");
+        }
+    }
+
     private checkconfiguration(tconfig: TaskConfiguration): TaskConfiguration {
         if(tconfig.priority === undefined && tconfig.retry === undefined && tconfig.timeout === undefined) {
             return new TaskConfiguration(undefined, undefined, undefined);
@@ -5893,6 +5920,9 @@ assert(false);
         this.taskconfig = this.checkconfiguration(adecl.configs);
         this.taskeventinfo = [];
 
+//        this.decltaskresult = this.checkTaskDeclaredResult(adecl.resultType);
+//        this.decltaskevent = this.checkTaskDeclaredEventOptions();
+
         this.checkExplicitAgentAndAPIDeclSignature(adecl.sinfo, adecl.params, adecl.resultType);
         this.checkExplicitAgentAndAPIDeclMetaData(adecl.sinfo, adecl.params, adecl.resultType, adecl.eventType, adecl.preconditions, adecl.postconditions);
 
@@ -5911,13 +5941,16 @@ assert(false);
         this.taskconfig = new TaskConfiguration(undefined, undefined, undefined);
         this.taskeventinfo = [];
 
+        this.decltaskresult = undefined;
+        this.decltaskevent = undefined;
+
         this.file = CLEAR_FILENAME;
     }
 
     private checkAgentDecl(adecl: AgentDecl) {
         this.file = adecl.file;
 
-        const rtype = adecl.resultType || this.getWellKnownType("Void");
+        const rtype = adecl.resultType || new TemplateTypeSignature(adecl.sinfo, "T");
 
         this.isExternalMode = true;
         this.allowedStatusMsgs = this.checkstatusinfo(adecl.statusinfo);
@@ -5925,6 +5958,9 @@ assert(false);
         this.resourceinfo = this.checkresourcereqs(adecl.resourcereqs);
         this.taskconfig = this.checkconfiguration(adecl.configs);
         this.taskeventinfo = [];
+
+        this.decltaskresult = this.checkTaskDeclaredResult(adecl.sinfo, rtype);
+        this.decltaskevent = this.checkTaskDeclaredEvent(adecl.eventType);
 
         this.checkExplicitAgentAndAPIDeclSignature(adecl.sinfo, adecl.params, rtype);
         this.checkExplicitAgentAndAPIDeclMetaData(adecl.sinfo, adecl.params, rtype, adecl.eventType, adecl.preconditions, adecl.postconditions);
@@ -5943,6 +5979,9 @@ assert(false);
         this.resourceinfo = new ResourceInformation([]); 
         this.taskconfig = new TaskConfiguration(undefined, undefined, undefined);
         this.taskeventinfo = [];
+
+        this.decltaskresult = undefined;
+        this.decltaskevent = undefined;
 
         this.file = CLEAR_FILENAME;
     }
@@ -5978,6 +6017,50 @@ assert(false);
         this.resourceinfo = this.checkresourcereqs(tdecl.resourcereqs);
         this.taskeventinfo = this.checkeventinfo(tdecl.eventinfo);
 
+        const runaction = tdecl.actions.find((action) => action.name === "start");
+        this.checkError(tdecl.sinfo, runaction === undefined, "Missing start action on Task");
+
+        let runres: TypeSignature | undefined = undefined;
+        let runresevent: TypeSignature | undefined = undefined;
+        if(runaction !== undefined) {
+            const rres = runaction.resultType;
+            if((rres instanceof EListTypeSignature) && rres.entries.length == 2) {
+                if((rres.entries[0] instanceof NominalTypeSignature) && (rres.entries[0].decl instanceof APIResultTypeDecl)) {
+                    runres = rres.entries[0];
+                }
+                else {
+                    this.reportError(runaction.sinfo, "Result of start action must be a result and event mesage");
+                }
+
+                if((rres.entries[0] instanceof NominalTypeSignature) && this.relations.isEventDataType(rres.entries[0])) {
+                    runresevent = rres.entries[1];
+                }
+                else {
+                    this.reportError(runaction.sinfo, "Result of start action must be a result and event mesage");
+                }
+            }
+            else if((rres instanceof NominalTypeSignature) && (rres.decl instanceof APIResultTypeDecl)) {
+                runres = rres;
+            }
+            else {
+                this.reportError(runaction.sinfo, "Result of start action must be either a single result OR a result and event mesage");
+            }
+
+            tdecl.startaction = runaction;
+        }
+
+        const completeaction = tdecl.actions.find((action) => action.name === "complete");
+        if(completeaction !== undefined) {
+            //Checks go here
+
+            tdecl.completeaction = completeaction;
+
+            assert(false, "Not implemented -- checking complete action");
+        }
+
+        this.decltaskresult = this.checkTaskDeclaredResult(tdecl.sinfo, runres);
+        this.decltaskevent = this.checkTaskDeclaredEvent(runresevent);
+
         this.checkConstMemberDecls(tdecl, tdecl.consts);
         this.checkTypeFunctionDecls(tdecl, tdecl.functions);
         this.checkTaskMethodDecls(tdecl, rcvr, tdecl.selfmethods);
@@ -5991,6 +6074,9 @@ assert(false);
         this.envinfo = [];
         this.resourceinfo = new ResourceInformation([]); 
         this.taskeventinfo = [];
+
+        this.decltaskresult = undefined;
+        this.decltaskevent = undefined;
 
         if(tdecl.terms.length !== 0) {
             this.constraints.popConstraintScope();

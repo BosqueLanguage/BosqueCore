@@ -6416,16 +6416,16 @@ class Parser {
         }
         else {
             const rdecl = pdecl as APIResultTypeDecl;
-            if(ename === "APIErrorTypeDecl") {
+            if(ename === "Error") {
                 rdecl.nestedEntityDecls.push(new APIErrorTypeDecl(this.env.currentFile, sinfo, attributes, ename));
             }
-            else if(ename === "APIRejectedTypeDecl") {
+            else if(ename === "Rejected") {
                 rdecl.nestedEntityDecls.push(new APIRejectedTypeDecl(this.env.currentFile, sinfo, attributes, ename));
             }
-            else if(ename === "APIDeniedTypeDecl") {
+            else if(ename === "Denied") {
                 rdecl.nestedEntityDecls.push(new APIDeniedTypeDecl(this.env.currentFile, sinfo, attributes, ename));
             }
-            else if(ename === "APIFlaggedTypeDecl") {
+            else if(ename === "Flagged") {
                 rdecl.nestedEntityDecls.push(new APIFlaggedTypeDecl(this.env.currentFile, sinfo, attributes, ename));
             }
             else {

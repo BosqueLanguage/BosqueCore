@@ -19,6 +19,7 @@ const MAX_SAFE_CHK_NAT = s_p124bit_safe;
 
 const WELL_KNOWN_RETURN_VAR_NAME = "$return";
 const WELL_KNOWN_EVENTS_VAR_NAME = "$events";
+const WELL_KNOWN_RESULT_EVENT_NAME = "$ofevent";
 
 enum TemplateTermDeclExtraTag {
     KeyType = "keytype",
@@ -1400,6 +1401,9 @@ class TaskDecl extends AbstractNominalTypeDecl {
     readonly resourcereqs: ResourceInformation = new ResourceInformation([]);
     readonly eventinfo: TypeSignature[] = [];
 
+    startaction: TaskActionDecl | undefined = undefined;
+    completeaction: TaskActionDecl | undefined = undefined;
+
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string) {
         super(file, sinfo, attributes, ns, name, AdditionalTypeDeclTag.Std);
     }
@@ -1937,7 +1941,7 @@ class Assembly {
 
 export {
     MIN_SAFE_INT, MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_CHK_INT, MAX_SAFE_CHK_INT, MAX_SAFE_CHK_NAT,
-    WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_EVENTS_VAR_NAME,
+    WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RESULT_EVENT_NAME,
     TemplateTermDeclExtraTag, TemplateTermDecl, TypeTemplateTermDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestriction, 
     TaskConfiguration,
     AbstractDecl, 

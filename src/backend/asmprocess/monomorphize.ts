@@ -42,6 +42,24 @@ class PendingTypeFunction {
     }
 }
 
+class PendingAgentOrAPIInvoke {
+    readonly type: TypeSignature;
+    readonly aainvkoke: AgentDecl | APIDecl;
+    readonly instantiation: TypeSignature[];
+    readonly lambdas: { pname: string, psigkey: string }[];
+
+    readonly fkey: string;
+
+    constructor(type: TypeSignature, aainvoke: AgentDecl | APIDecl, instantiation: TypeSignature[], lambdas: { pname: string, psigkey: string }[], fkey: string) {
+        this.type = type;
+        this.aainvkoke = aainvoke;
+        this.instantiation = instantiation;
+        this.lambdas = lambdas;
+
+        this.fkey = fkey;;
+    }
+}
+
 class PendingTypeMethod {
     readonly type: TypeSignature;
     readonly method: MethodDecl;
@@ -54,6 +72,46 @@ class PendingTypeMethod {
     constructor(type: TypeSignature, mthd: MethodDecl, instantiation: TypeSignature[], lambdas: { pname: string, psigkey: string }[], mkey: string, prepostikey: string) {
         this.type = type;
         this.method = mthd;
+        this.instantiation = instantiation;
+        this.lambdas = lambdas;
+
+        this.mkey = mkey;
+        this.prepostikey = prepostikey;
+    }
+}
+
+class PendingTaskMethod {
+    readonly type: TypeSignature;
+    readonly method: TaskMethodDecl;
+    readonly instantiation: TypeSignature[];
+    readonly lambdas: { pname: string, psigkey: string }[];
+
+    readonly mkey: string;
+    readonly prepostikey: string;
+
+    constructor(type: TypeSignature, mthd: TaskMethodDecl, instantiation: TypeSignature[], lambdas: { pname: string, psigkey: string }[], mkey: string, prepostikey: string) {
+        this.type = type;
+        this.method = mthd;
+        this.instantiation = instantiation;
+        this.lambdas = lambdas;
+
+        this.mkey = mkey;
+        this.prepostikey = prepostikey;
+    }
+}
+
+class PendingTaskAction {
+    readonly type: TypeSignature;
+    readonly action: TaskActionDecl;
+    readonly instantiation: TypeSignature[];
+    readonly lambdas: { pname: string, psigkey: string }[];
+
+    readonly mkey: string;
+    readonly prepostikey: string;
+
+    constructor(type: TypeSignature, action: TaskActionDecl, instantiation: TypeSignature[], lambdas: { pname: string, psigkey: string }[], mkey: string, prepostikey: string) {
+        this.type = type;
+        this.action = action;
         this.instantiation = instantiation;
         this.lambdas = lambdas;
 
@@ -100,15 +158,19 @@ class Monomorphizer {
 
     readonly pendingNominalTypeDecls: PendingNominalTypeDecl[] = [];
     readonly pendingNamespaceFunctions: PendingNamespaceFunction[] = [];
+    readonly pendingAgentsAndAPIs: PendingAgentOrAPIInvoke[] = [];
     readonly pendingTypeFunctions: PendingTypeFunction[] = [];
     readonly pendingTypeMethods: PendingTypeMethod[] = [];
-    
-    //TODO -- pendingLambdas
+    readonly pendingTaskMethods: PendingTaskMethod[] = [];
+    readonly pendingTaskActions: PendingTaskAction[] = [];
 
     readonly completedInstantiations: Set<string> = new Set<string>();
     readonly completedNamespaceFunctions: Set<string> = new Set<string>();
     readonly completedTypeFunctions: Set<string> = new Set<string>();
+    readonly completedAgentsAndAPIs: Set<string> = new Set<string>();
     readonly completedMemberMethods: Set<string> = new Set<string>();
+    readonly completedTaskMethods: Set<string> = new Set<string>();
+    readonly completedTaskActions: Set<string> = new Set<string>();
 
     currentMapping: TemplateNameMapper | undefined = undefined;
     currentLambdaMapping: Map<string, string> | undefined = undefined;
@@ -120,12 +182,6 @@ class Monomorphizer {
 
         this.wellknowntypes = wellknowntypes;
     }
-
-    /*
-    private getFreshLambdaKey(): string {
-        return `lambda_${this.lambdaCtr++}`;
-    }
-    */
 
     private getWellKnownType(name: string): TypeSignature {
         assert(this.wellknowntypes.has(name), `Well known type ${name} not found`);
@@ -144,8 +200,20 @@ class Monomorphizer {
         return this.completedTypeFunctions.has(tkey) || this.pendingTypeFunctions.some((ptf) => ptf.fkey === tkey);
     }
 
+    private isAlreadySeenAgentsAndAPIs(akey: string): boolean {
+        return this.completedAgentsAndAPIs.has(akey) || this.pendingAgentsAndAPIs.some((ptf) => ptf.fkey === akey);
+    }
+
     private isAlreadySeenMemberMethod(mkey: string): boolean {
         return this.completedMemberMethods.has(mkey) || this.pendingTypeMethods.some((ptm) => ptm.mkey === mkey);
+    }
+
+    private isAlreadySeenTaskMethod(mkey: string): boolean {
+        return this.completedTaskMethods.has(mkey) || this.pendingTaskMethods.some((ptm) => ptm.mkey === mkey);
+    }
+
+    private isAlreadySeenTaskAction(mkey: string): boolean {
+        return this.completedTaskActions.has(mkey) || this.pendingTaskActions.some((ptm) => ptm.mkey === mkey);
     }
 
     //Given a type signature -- instantiate it and all sub-component types
@@ -1916,12 +1984,12 @@ class Monomorphizer {
         this.callinstmap = new Map<number, string>();
     }
 
-    private instantiateTaskMethodDecl(tdecl: AbstractNominalTypeDecl, mdecl: PendingTypeMethod) {
-        assert(false, "Not implemented -- instantiateTaskMethodDecl");
+    private instantiateTaskMethodDecl(tdecl: AbstractNominalTypeDecl, mdecl: PendingTaskMethod) {
+        xxxx;
     }
 
-    private instantiateTaskActionDecl(tdecl: AbstractNominalTypeDecl, mdecl: PendingTypeMethod) {
-        assert(false, "Not implemented -- instantiateTaskActionDecl");
+    private instantiateTaskActionDecl(tdecl: AbstractNominalTypeDecl, adecl: PendingTaskAction) {
+        xxxx;
     }
 
     private instantiateConstMemberDecls(tdecl: AbstractNominalTypeDecl, mdecls: ConstMemberDecl[]) {
@@ -2151,7 +2219,7 @@ class Monomorphizer {
     }
 
     private instantiateConfigsurationParameters(tconfig: TaskConfiguration) {
-        assert(false, "Not implemented -- instantiateEnvironmentVariableInformation");
+        assert(false, "Not implemented -- instantiateConfigInformation");
     }
 
     private instantiatestatusinfo(status: TypeSignature[]) {
@@ -2170,12 +2238,12 @@ class Monomorphizer {
         assert(false, "Not implemented -- instantiateEventInformation");
     }
 
-    private instantiateAPIDecl(adecl: APIDecl) {
+    private instantiateAPIDecl(tdecl: PendingAgentOrAPIInvoke, adecl: PendingAgentOrAPIInvoke) {
         assert(false, "Not implemented -- checkAPIDecl");
     }
 
-    private instantiateAgentDecl(adecl: AgentDecl) {
-        assert(false, "Not implemented -- checkAgentDecl");
+    private instantiateAgentDecl(tdecl: AgentDecl, adecl: PendingAgentOrAPIInvoke) {
+        xxxx;
     }
 
     private instantiateTaskDecl(tdecl: TaskDecl, pdecl: PendingNominalTypeDecl) {
@@ -2424,7 +2492,7 @@ class Monomorphizer {
             return true;
         }
         
-        return this.pendingNamespaceFunctions.length !== 0 || this.pendingTypeFunctions.length !== 0 || this.pendingTypeMethods.length !== 0;
+        return this.pendingNamespaceFunctions.length !== 0 || this.pendingTypeFunctions.length !== 0 || this.pendingAgentsAndAPIs.length !== 0 || this.pendingTypeMethods.length !== 0 || this.pendingTaskMethods.length !== 0 || this.pendingTaskActions.length !== 0;
     }
 
     private static loadWellKnownType(assembly: Assembly, name: string, wellknownTypes: Map<string, TypeSignature>) {
@@ -2506,20 +2574,41 @@ class Monomorphizer {
                     iim.completedTypeFunctions.add(tfd.fkey);
                     iim.pendingTypeFunctions.shift();
                 }
-                else {
-                    const tmd = iim.pendingTypeMethods[0];
-                    if(tmd.method instanceof TaskMethodDecl) {
-                        iim.instantiateTaskMethodDecl((tmd.type as NominalTypeSignature).decl, tmd);
-                    }
-                    else if(tmd.method instanceof TaskActionDecl) {
-                        iim.instantiateTaskActionDecl((tmd.type as NominalTypeSignature).decl, tmd);
+                else if(iim.pendingAgentsAndAPIs.length !== 0) {
+                    const paa = iim.pendingAgentsAndAPIs[0];
+                    if(paa.aainvkoke instanceof AgentDecl) {
+                        iim.instantiateAgentDecl(paa.aainvkoke, paa);
                     }
                     else {
-                        iim.instantiateMethodDecl((tmd.type as NominalTypeSignature).decl, tmd);
+                        iim.instantiateAPIDecl(paa.aainvkoke, paa);
                     }
+
+                    iim.completedAgentsAndAPIs.add(paa.fkey);
+                    iim.pendingAgentsAndAPIs.shift();
+                }
+                else if(iim.pendingTypeMethods.length !== 0) {
+                    const tmd = iim.pendingTypeMethods[0];
+                    iim.instantiateMethodDecl((tmd.type as NominalTypeSignature).decl, tmd);
 
                     iim.completedMemberMethods.add(tmd.mkey);
                     iim.pendingTypeMethods.shift();
+                }
+                else if(iim.pendingTaskMethods.length !== 0) {
+                    const tmd = iim.pendingTaskMethods[0];
+                    iim.instantiateTaskMethodDecl((tmd.type as NominalTypeSignature).decl, tmd);
+                    
+                    iim.completedTaskMethods.add(tmd.mkey);
+                    iim.pendingTaskMethods.shift();
+                }
+                else if(iim.pendingTaskActions.length !== 0) {
+                    const tmd = iim.pendingTaskActions[0];
+                    iim.instantiateTaskActionDecl((tmd.type as NominalTypeSignature).decl, tmd);
+                    
+                    iim.completedTaskActions.add(tmd.mkey);
+                    iim.pendingTaskActions.shift();
+                }
+                else {
+                    assert(false, "Unknown element to instantiate")
                 }
             }
         }
