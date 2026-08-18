@@ -4449,10 +4449,11 @@ class ASMToIRConverter {
 
         this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
 
-        const oftype = this.processTypeSignature((this.tproc(tinst.tsig) as NominalTypeSignature).alltermargs[0] as TypeSignature);
+        const irtsig = this.tproc(tinst.tsig) as NominalTypeSignature;
+        const oftype = this.processTypeSignature(irtsig.alltermargs[0]);
         
         const somedecl = this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Some") as SomeTypeDecl;
-        const sometype = this.processTypeSignature(new NominalTypeSignature(tinst.tsig.sinfo, undefined, somedecl, [(this.tproc(tinst.tsig) as NominalTypeSignature).alltermargs[0] as TypeSignature]));
+        const sometype = this.processTypeSignature(new NominalTypeSignature(tinst.tsig.sinfo, undefined, somedecl, [irtsig.alltermargs[0]]));
         
         return new IROptionTypeDecl(tinst.tkey, docstring, tdecl.file, this.convertSourceInfo(tdecl.sinfo), oftype, sometype);
     }
@@ -4462,7 +4463,24 @@ class ASMToIRConverter {
     }
 
     private generateAPIResultTypeDecl(tdecl: APIResultTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRAPIResultTypeDecl {
-        assert(false, "Not Implemented -- generateAPIResultTypeDecl");
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
+
+        const doc = tdecl.attributes.find((a) => a.name === "doc");
+        const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
+
+        this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
+
+        const irtsig = this.tproc(tinst.tsig) as NominalTypeSignature;
+        const oktype = this.processTypeSignature(irtsig.alltermargs[0]);
+        const itype = this.processTypeSignature(irtsig.alltermargs[1]);
+        
+        const errortype = this.processTypeSignature(new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.getAPIErrorType(), [...irtsig.alltermargs]));
+        const rejectedtype = this.processTypeSignature(new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.getAPIRejectedType(), [...irtsig.alltermargs]));
+        const deniedtype = this.processTypeSignature(new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.getAPIDeniedType(), [...irtsig.alltermargs]));
+        const flaggedtype = this.processTypeSignature(new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.getAPIFlaggedType(), [...irtsig.alltermargs]));
+        const successtype = this.processTypeSignature(new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.getAPISuccessType(), [...irtsig.alltermargs]));
+
+        return new IRAPIResultTypeDecl(tinst.tkey, docstring, tdecl.file, this.convertSourceInfo(tdecl.sinfo), oktype, itype, errortype, rejectedtype, deniedtype, flaggedtype, successtype);
     }
 
     private generateConceptTypeDecl(tdecl: ConceptTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRConceptTypeDecl {

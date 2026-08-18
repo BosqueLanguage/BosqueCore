@@ -502,20 +502,6 @@ class MethodDecl extends ExplicitInvokeDecl {
     }
 }
 
-class TaskMethodDecl extends ExplicitInvokeDecl {
-    readonly isSelfRef: boolean;
-
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: InvokeParameterDecl[], resultType: TypeSignature, body: BodyImplementation, terms: InvokeTemplateTermDecl[], termRestriction: InvokeTemplateTypeRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], isSelfRef: boolean) {
-        super(file, sinfo, attributes, name, recursive, params, resultType, body, terms, termRestriction, preconditions, postconditions);
-
-        this.isSelfRef = isSelfRef;
-    }
-
-    getDeclarationTag(): string {
-        return (this.isSelfRef ? "ref " : "") + "method";
-    }
-}
-
 class TaskActionDecl extends ExplicitInvokeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, params: InvokeParameterDecl[], resultType: TypeSignature, body: BodyImplementation, terms: InvokeTemplateTermDecl[], termRestriction: InvokeTemplateTypeRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[]) {
         super(file, sinfo, attributes, name, "no", params, resultType, body, terms, termRestriction, preconditions, postconditions);
@@ -1224,6 +1210,8 @@ class APIDecl extends AbstractCoreDecl {
 
     readonly body: BodyImplementation;
 
+    resolvename: string | undefined = undefined;
+
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, params: InvokeParameterDecl[], resultType: TypeSignature, eventType: TypeSignature | undefined, preconds: PreConditionDecl[], postconds: PostConditionDecl[], configs: TaskConfiguration, statusinfo: TypeSignature[], envreqs: EnvironmentVariableInformation[], resourcereqs: ResourceInformation, body: BodyImplementation) {
         super(file, sinfo, attributes, name);
 
@@ -1314,6 +1302,8 @@ class AgentDecl extends AbstractCoreDecl {
 
     readonly body: BodyImplementation;
 
+    resolvename: string | undefined = undefined;
+
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, params: InvokeParameterDecl[], resultType: TypeSignature | undefined, eventType: TypeSignature | undefined, preconds: PreConditionDecl[], postconds: PostConditionDecl[], configs: TaskConfiguration, statusinfo: TypeSignature[], envreqs: EnvironmentVariableInformation[], resourcereqs: ResourceInformation, body: BodyImplementation) {
         super(file, sinfo, attributes, name);
 
@@ -1391,7 +1381,6 @@ class AgentDecl extends AbstractCoreDecl {
 
 class TaskDecl extends AbstractNominalTypeDecl {
     readonly fields: MemberFieldDecl[] = [];
-    readonly selfmethods: TaskMethodDecl[] = [];
     readonly actions: TaskActionDecl[] = [];
 
     readonly configs: TaskConfiguration = new TaskConfiguration(undefined, undefined, undefined);
@@ -1439,9 +1428,6 @@ class TaskDecl extends AbstractNominalTypeDecl {
 
         if(this.fields.length !== 0) {
             mg.push(this.fields.map((ff) => ff.emit(fmt)));
-        }
-        if(this.selfmethods.length !== 0) {
-            mg.push(this.selfmethods.map((sm) => sm.emit(fmt)));
         }
         if(this.actions.length !== 0) {
             mg.push(this.actions.map((act) => act.emit(fmt)));
@@ -1952,7 +1938,7 @@ export {
     ExplicitInvokeDecl,
     TestAssociation,
     FunctionInvokeDecl, NamespaceFunctionDecl, TypeFunctionDecl,
-    MethodDecl, TaskMethodDecl, TaskActionDecl,
+    MethodDecl, TaskActionDecl,
     ConstMemberDecl, MemberFieldDecl,
     AbstractNominalTypeDecl, AdditionalTypeDeclTag,
     EnumTypeDecl,
