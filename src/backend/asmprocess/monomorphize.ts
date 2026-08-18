@@ -1,7 +1,7 @@
 import assert from "node:assert";
 
 import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, AgentDecl, APIDecl, APIDeniedTypeDecl, APIErrorTypeDecl, APIFlaggedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, ExplicitInvokeDecl, FailTypeDecl, InvariantDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskActionDecl, TaskConfiguration, TaskDecl, TaskMethodDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl } from "../../frontend/assembly.js";
-import { computeInvokeKeyForLambdaFunction, computeInvokeKeyForNamespaceFunction, computeInvokeKeyForTypeFunction, computeInvokeKeyForTypeMethod, computeResolveKeyForInvoke, InvokeInstantiationInfo, LambdaInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiations.js";
+import { computeInvokeKeyForAgentDecl, computeInvokeKeyForAPIDecl, computeInvokeKeyForLambdaFunction, computeInvokeKeyForNamespaceFunction, computeInvokeKeyForTypeFunction, computeInvokeKeyForTypeMethod, computeResolveKeyForInvoke, InvokeInstantiationInfo, LambdaInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiations.js";
 import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, AbstractArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, HoleBodyImplementation, HoleExpression, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, ITestGuard, ITestGuardSet, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixSliceOperator, PostfixOp, PostfixOpTag, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement, StdArgumentValue, InterpolateFormatExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixProjectFromNames, ITest, ITestType, ITestTypeGuard, ITestBinderGuard } from "../../frontend/body.js";
 import { SourceInfo } from "../../frontend/build_decls.js";
@@ -43,18 +43,16 @@ class PendingTypeFunction {
 }
 
 class PendingAgentOrAPIInvoke {
-    readonly type: TypeSignature;
+    readonly namespace: NamespaceDeclaration;
     readonly aainvkoke: AgentDecl | APIDecl;
     readonly instantiation: TypeSignature[];
-    readonly lambdas: { pname: string, psigkey: string }[];
 
     readonly fkey: string;
 
-    constructor(type: TypeSignature, aainvoke: AgentDecl | APIDecl, instantiation: TypeSignature[], lambdas: { pname: string, psigkey: string }[], fkey: string) {
-        this.type = type;
+    constructor(namespace: NamespaceDeclaration, aainvoke: AgentDecl | APIDecl, instantiation: TypeSignature[], fkey: string) {
+        this.namespace = namespace;
         this.aainvkoke = aainvoke;
         this.instantiation = instantiation;
-        this.lambdas = lambdas;
 
         this.fkey = fkey;;
     }
@@ -2238,7 +2236,7 @@ class Monomorphizer {
         assert(false, "Not implemented -- instantiateEventInformation");
     }
 
-    private instantiateAPIDecl(tdecl: PendingAgentOrAPIInvoke, adecl: PendingAgentOrAPIInvoke) {
+    private instantiateAPIDecl(tdecl: APIDecl, adecl: PendingAgentOrAPIInvoke) {
         assert(false, "Not implemented -- checkAPIDecl");
     }
 
@@ -2433,6 +2431,14 @@ class Monomorphizer {
         return idecl.terms.length === 0 && idecl.attributes.find((attr) => attr.name === "public") !== undefined; 
     }
 
+    private shouldInstantiateAsRootAgent(idecl: AgentDecl): boolean {
+        return idecl.attributes.find((attr) => attr.name === "public") !== undefined; 
+    }
+
+    private shouldInstantiateAsRootAPI(idecl: APIDecl): boolean {
+        return idecl.attributes.find((attr) => attr.name === "public") !== undefined; 
+    }
+
     private instantiateRootNamespaceDeclaration(decl: NamespaceDeclaration) {
         this.instantiateNamespaceConstDecls(decl, decl.consts);
 
@@ -2451,11 +2457,18 @@ class Monomorphizer {
         }
 
         for(let i = 0; i < decl.apis.length; ++i) {
-            this.instantiateAPIDecl(decl.apis[i]);
+            if(this.shouldInstantiateAsRootAPI(decl.apis[i])) {
+                const akey = computeInvokeKeyForAPIDecl(decl, decl.apis[i]);
+                this.pendingAgentsAndAPIs.push(new PendingAgentOrAPIInvoke(decl, decl.apis[i], [], akey));
+            }
         }
 
         for(let i = 0; i < decl.agents.length; ++i) {
-            this.instantiateAgentDecl(decl.agents[i]);
+            if(this.shouldInstantiateAsRootAgent(decl.agents[i])) {
+                const terms = decl.agents[i].resultType !== undefined ? [new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), "T")] : [];
+                const akey = computeInvokeKeyForAgentDecl(decl, decl.agents[i], terms);
+                this.pendingAgentsAndAPIs.push(new PendingAgentOrAPIInvoke(decl, decl.agents[i], terms, akey));
+            }
         }
 
         for(let i = 0; i < decl.tasks.length; ++i) {

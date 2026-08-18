@@ -1,4 +1,4 @@
-import { InvokeParameterDecl, LambdaDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, TypeFunctionDecl } from "../../frontend/assembly.js";
+import { AgentDecl, APIDecl, InvokeParameterDecl, LambdaDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, TypeFunctionDecl } from "../../frontend/assembly.js";
 import { EListTypeSignature, FullyQualifiedNamespace, LambdaTypeSignature, TemplateNameMapper, TypeSignature } from "../../frontend/type.js";
 
 class LambdaInstantiationInfo {
@@ -119,6 +119,14 @@ function computeInvokeKeyForNamespaceFunction(ns: NamespaceDeclaration, fdecl: N
     return `${ns.fullnamespace.emit()}::${fdecl.name}${rti}${computeTBindsKey(terms)}${computeLambdaKey(lambdas)}`;
 }
 
+function computeInvokeKeyForAPIDecl(ns: NamespaceDeclaration, adecl: APIDecl): string {
+    return `${ns.fullnamespace.emit()}::${adecl.name}`;
+}
+
+function computeInvokeKeyForAgentDecl(ns: NamespaceDeclaration, adecl: AgentDecl, terms: TypeSignature[]): string {
+    return `${ns.fullnamespace.emit()}::${adecl.name}${computeTBindsKey(terms)}`;
+}
+
 function computeInvokeKeyForTypeFunction(rcvrtype: TypeSignature, fdecl: TypeFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]): string {
     const pkinds = fdecl.params.map((p) => p.pkind).filter((pk) => pk !== undefined);
     const rti = pkinds.length !== 0 ? `#${pkinds[0].replace("?", "p")}` : "";
@@ -141,5 +149,5 @@ export {
     TypeInstantiationInfo,
     NamespaceInstantiationInfo,
     computeTBindsKey, computeLambdaKey, computeResolveKeyForInvoke, 
-    computeInvokeKeyForNamespaceFunction, computeInvokeKeyForTypeFunction, computeInvokeKeyForTypeMethod, computeInvokeKeyForLambdaFunction
+    computeInvokeKeyForNamespaceFunction, computeInvokeKeyForAPIDecl, computeInvokeKeyForAgentDecl, computeInvokeKeyForTypeFunction, computeInvokeKeyForTypeMethod, computeInvokeKeyForLambdaFunction
 };
