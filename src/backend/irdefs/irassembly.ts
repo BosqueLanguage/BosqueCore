@@ -1375,6 +1375,7 @@ class IRTaskDecl {
     readonly tkey: string;
 
     readonly invariants: IRInvariantDecl[];
+    readonly validates: IRValidateDecl[];
     readonly fields: IRMemberFieldDecl[];
 
     readonly docstr: IRDeclarationDocString | undefined;
@@ -1390,16 +1391,10 @@ class IRTaskDecl {
     readonly resourcereqs: IRResourceInformation;
     readonly eventinfo: IRTypeSignature[];
 
-    readonly imain: string; //invoke key of main task action
-    readonly icleanup: {
-        onterminate: string | undefined //invoke key of on-terminate action -- when we have a cancel/timeout/or parent abort that we cooperatively check and we are graceful in cleanup
-        onerror: string | undefined //invoke key of on-error action -- when we abort from a runtime failure and we are bailing
-        ondrop: string | undefined //invoke key of on-drop action -- when we have completed but our result is unused and we gracefully clean up
-    };
-
-    constructor(tkey: string, invariants: IRInvariantDecl[], fields: IRMemberFieldDecl[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo, configs: IRTaskConfiguration, statusinfo: IRTypeSignature[], envreqs: IREnvironmentVariableInformation[], resourcereqs: IRResourceInformation, eventinfo: IRTypeSignature[], imain: string, icleanup: { onterminate: string | undefined; onerror: string | undefined; ondrop: string | undefined; }) {
+    constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], fields: IRMemberFieldDecl[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo, configs: IRTaskConfiguration, statusinfo: IRTypeSignature[], envreqs: IREnvironmentVariableInformation[], resourcereqs: IRResourceInformation, eventinfo: IRTypeSignature[]) {
         this.tkey = tkey;
         this.invariants = invariants;
+        this.validates = validates;
         this.fields = fields;
         this.docstr = docstr;
         this.metatags = metatags;
@@ -1411,9 +1406,6 @@ class IRTaskDecl {
         this.envreqs = envreqs;
         this.resourcereqs = resourcereqs;
         this.eventinfo = eventinfo;
-
-        this.imain = imain;
-        this.icleanup = icleanup;
     }
 }
 
