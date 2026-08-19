@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, AgentDecl, APIDecl, APIDeniedTypeDecl, APIErrorTypeDecl, APIFlaggedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, ExplicitInvokeDecl, FailTypeDecl, InvariantDecl, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskActionDecl, TaskConfiguration, TaskDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl } from "../../frontend/assembly.js";
+import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, AgentDecl, APIDecl, APIDeniedTypeDecl, APIErrorTypeDecl, APIDroppedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, ExplicitInvokeDecl, FailTypeDecl, InvariantDecl, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskActionDecl, TaskConfiguration, TaskDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl } from "../../frontend/assembly.js";
 import { computeInvokeKeyForAgentDecl, computeInvokeKeyForAPIDecl, computeInvokeKeyForLambdaFunction, computeInvokeKeyForNamespaceFunction, computeInvokeKeyForTaskAction, computeInvokeKeyForTypeFunction, computeInvokeKeyForTypeMethod, computeResolveKeyForInvoke, InvokeInstantiationInfo, LambdaInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiations.js";
 import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, AbstractArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, HoleBodyImplementation, HoleExpression, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, ITestGuard, ITestGuardSet, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixSliceOperator, PostfixOp, PostfixOpTag, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement, StdArgumentValue, InterpolateFormatExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixProjectFromNames, ITest, ITestType, ITestTypeGuard, ITestBinderGuard } from "../../frontend/body.js";
@@ -1063,6 +1063,7 @@ class Monomorphizer {
             this.instantiateExpression(exp.args[i]);
         }
 
+        this.callinstmap.set(exp.monoinvid as number, computeInvokeKeyForAgentDecl(nns, agent));
         this.instantiateAgentOrAPI(nns, agent);
     }
 
@@ -2166,35 +2167,35 @@ class Monomorphizer {
         const stypes = [
             new NominalTypeSignature(pdecl.type.sinfo, undefined, this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "APIResult") as ResultTypeDecl, pdecl.instantiation),
         ];
-        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T", "E"], stypes);
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], stypes);
     }
 
     private instantiateAPIRejectedTypeDecl(pdecl: PendingNominalTypeDecl) {
         const stypes = [
             new NominalTypeSignature(pdecl.type.sinfo, undefined, this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "APIResult") as ResultTypeDecl, pdecl.instantiation),
         ];
-        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T", "E"], stypes);
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], stypes);
     }
 
     private instantiateAPIDeniedTypeDecl(pdecl: PendingNominalTypeDecl) {
         const stypes = [
             new NominalTypeSignature(pdecl.type.sinfo, undefined, this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "APIResult") as ResultTypeDecl, pdecl.instantiation),
         ];
-        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T", "E"], stypes);
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], stypes);
     }
 
-    private instantiateAPIFlaggedTypeDecl(pdecl: PendingNominalTypeDecl) {
+    private instantiateAPIDroppedTypeDecl(pdecl: PendingNominalTypeDecl) {
         const stypes = [
             new NominalTypeSignature(pdecl.type.sinfo, undefined, this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "APIResult") as ResultTypeDecl, pdecl.instantiation),
         ];
-        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T", "E"], stypes);
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], stypes);
     }
 
     private instantiateAPISuccessTypeDecl(pdecl: PendingNominalTypeDecl) {
         const stypes = [
             new NominalTypeSignature(pdecl.type.sinfo, undefined, this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "APIResult") as ResultTypeDecl, pdecl.instantiation),
         ];
-        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T", "E"], stypes);
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], stypes);
     }
 
     private instantiateSomeTypeDecl(pdecl: PendingNominalTypeDecl) {
@@ -2260,7 +2261,7 @@ class Monomorphizer {
             new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.nestedEntityDecls[3], pdecl.instantiation),
             new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.nestedEntityDecls[4], pdecl.instantiation)
         ];
-        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T", "E"], stypes);
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], stypes);
     }
 
     private instantiateConceptTypeDecl(tdecl: ConceptTypeDecl, pdecl: PendingNominalTypeDecl) {
@@ -2451,8 +2452,8 @@ class Monomorphizer {
         else if(tt instanceof APIDeniedTypeDecl) {
             this.instantiateAPIDeniedTypeDecl(pdecl);
         }
-        else if(tt instanceof APIFlaggedTypeDecl) {
-            this.instantiateAPIFlaggedTypeDecl(pdecl);
+        else if(tt instanceof APIDroppedTypeDecl) {
+            this.instantiateAPIDroppedTypeDecl(pdecl);
         }
         else if(tt instanceof APISuccessTypeDecl) {
             this.instantiateAPISuccessTypeDecl(pdecl);

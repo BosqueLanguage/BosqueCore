@@ -500,10 +500,10 @@ class TypeCheckerRelations {
                 const terror = new NominalTypeSignature(t.sinfo, undefined, tresult.getAPIErrorType(), tresolved.alltermargs);
                 const trejected = new NominalTypeSignature(t.sinfo, undefined, tresult.getAPIRejectedType(), tresolved.alltermargs);
                 const tdenied = new NominalTypeSignature(t.sinfo, undefined, tresult.getAPIDeniedType(), tresolved.alltermargs);
-                const tflagged = new NominalTypeSignature(t.sinfo, undefined, tresult.getAPIFlaggedType(), tresolved.alltermargs);
+                const tdropped = new NominalTypeSignature(t.sinfo, undefined, tresult.getAPIDroppedType(), tresolved.alltermargs);
                 const tsuccess = new NominalTypeSignature(t.sinfo, undefined, tresult.getAPISuccessType(), tresolved.alltermargs);
 
-                return [terror, trejected, tdenied, tflagged, tsuccess];
+                return [terror, trejected, tdenied, tdropped, tsuccess];
             }
             else if(tresolved.decl instanceof DatatypeTypeDecl) {
                 return tresolved.decl.associatedMemberEntityDecls.map((mem) => new NominalTypeSignature(mem.sinfo, tresolved.altns, mem, tresolved.alltermargs));
@@ -789,7 +789,6 @@ class TypeCheckerRelations {
         }
         return this.splitOnErrDecomposedSet(dct, tconstrain);
     }
-
 
     //
     //

@@ -598,7 +598,7 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
 
     //These are our annoying nested types
     isSpecialResultEntity(): boolean { return (this instanceof OkTypeDecl) || (this instanceof FailTypeDecl); }
-    isSpecialAPIResultEntity(): boolean { return (this instanceof APIErrorTypeDecl) || (this instanceof APIRejectedTypeDecl) || (this instanceof APIDeniedTypeDecl) || (this instanceof APIFlaggedTypeDecl) || (this instanceof APISuccessTypeDecl); }
+    isSpecialAPIResultEntity(): boolean { return (this instanceof APIErrorTypeDecl) || (this instanceof APIRejectedTypeDecl) || (this instanceof APIDeniedTypeDecl) || (this instanceof APIDroppedTypeDecl) || (this instanceof APISuccessTypeDecl); }
 
     hasAttribute(aname: string): boolean {
         return this.attributes.find((attr) => attr.name === aname) !== undefined;
@@ -834,7 +834,7 @@ class APIDeniedTypeDecl extends ConstructableTypeDecl {
     }
 }
 
-class APIFlaggedTypeDecl extends ConstructableTypeDecl {
+class APIDroppedTypeDecl extends ConstructableTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
     }
@@ -1027,7 +1027,7 @@ class ResultTypeDecl extends InternalConceptTypeDecl {
 }
 
 class APIResultTypeDecl extends InternalConceptTypeDecl {
-    readonly nestedEntityDecls: (APIErrorTypeDecl | APIRejectedTypeDecl | APIDeniedTypeDecl | APIFlaggedTypeDecl | APISuccessTypeDecl)[] = [];
+    readonly nestedEntityDecls: (APIErrorTypeDecl | APIRejectedTypeDecl | APIDeniedTypeDecl | APIDroppedTypeDecl | APISuccessTypeDecl)[] = [];
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
@@ -1045,8 +1045,8 @@ class APIResultTypeDecl extends InternalConceptTypeDecl {
         return this.nestedEntityDecls.find((ned) => ned instanceof APIDeniedTypeDecl) as APIDeniedTypeDecl;
     }
     
-    getAPIFlaggedType(): APIFlaggedTypeDecl {
-        return this.nestedEntityDecls.find((ned) => ned instanceof APIFlaggedTypeDecl) as APIFlaggedTypeDecl;
+    getAPIDroppedType(): APIDroppedTypeDecl {
+        return this.nestedEntityDecls.find((ned) => ned instanceof APIDroppedTypeDecl) as APIDroppedTypeDecl;
     }
 
     getAPISuccessType(): APISuccessTypeDecl {
@@ -1945,7 +1945,7 @@ export {
     TypedeclTypeDecl,
     AbstractEntityTypeDecl, PrimitiveEntityTypeDecl,
     InternalEntityTypeDecl,
-    ConstructableTypeDecl, OkTypeDecl, FailTypeDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIDeniedTypeDecl, APIFlaggedTypeDecl, APISuccessTypeDecl, SomeTypeDecl, MapEntryTypeDecl,
+    ConstructableTypeDecl, OkTypeDecl, FailTypeDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIDeniedTypeDecl, APIDroppedTypeDecl, APISuccessTypeDecl, SomeTypeDecl, MapEntryTypeDecl,
     AbstractCollectionTypeDecl, ListTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl,
     EventListTypeDecl,
     EntityTypeDecl, 

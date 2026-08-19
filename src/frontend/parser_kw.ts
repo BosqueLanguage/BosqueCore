@@ -50,10 +50,6 @@ const KW_safety = "safety";
 const KW_spec = "spec";
 const KW_test = "test";
 
-const KW_error = "error";
-const KW_rejected = "rejected";
-const KW_denied = "denied";
-const KW_flagged = "flagged";
 const KW_success = "success";
 
 const KW_astype = "astype";
@@ -176,10 +172,6 @@ const KeywordStrings = [
     KW_chktest,
     KW_example,
 
-    KW_error,
-    KW_rejected,
-    KW_denied,
-    KW_flagged,
     KW_success,
 
     KW_astype,
@@ -467,10 +459,6 @@ export {
     KW_chktest,
     KW_example,
 
-    KW_error,
-    KW_rejected,
-    KW_denied,
-    KW_flagged,
     KW_success,
 
     KW_astype,

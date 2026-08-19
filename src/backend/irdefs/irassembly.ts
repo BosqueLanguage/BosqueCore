@@ -706,16 +706,14 @@ class IRFailTypeDecl extends IRConstructableTypeDecl {
 
 class IRAPIErrorTypeDecl extends IRConstructableTypeDecl {
     readonly ttype: IRTypeSignature;
-    readonly etype: IRTypeSignature;
 
-    constructor(tkey: string, saturatedProvides: IRTypeSignature[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, ttype: IRTypeSignature, etype: IRTypeSignature) {
+    constructor(tkey: string, saturatedProvides: IRTypeSignature[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, ttype: IRTypeSignature) {
         super(tkey, saturatedProvides, docstr, file, sinfo);
         this.ttype = ttype;
-        this.etype = etype;
     }
 
     override getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
-        return [this.ttype, this.etype];
+        return [this.ttype];
     }
 
     override toBAPI(): string {
@@ -729,16 +727,14 @@ class IRAPIErrorTypeDecl extends IRConstructableTypeDecl {
 
 class IRAPIRejectedTypeDecl extends IRConstructableTypeDecl {
     readonly ttype: IRTypeSignature;
-    readonly etype: IRTypeSignature;
 
-    constructor(tkey: string, saturatedProvides: IRTypeSignature[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, ttype: IRTypeSignature, etype: IRTypeSignature) {
+    constructor(tkey: string, saturatedProvides: IRTypeSignature[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, ttype: IRTypeSignature) {
         super(tkey, saturatedProvides, docstr, file, sinfo);
         this.ttype = ttype;
-        this.etype = etype;
     }
 
     override getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
-        return [this.ttype, this.etype];
+        return [this.ttype];
     }
 
     override toBAPI(): string {
@@ -752,16 +748,14 @@ class IRAPIRejectedTypeDecl extends IRConstructableTypeDecl {
 
 class IRAPIDeniedTypeDecl extends IRConstructableTypeDecl {
     readonly ttype: IRTypeSignature;
-    readonly etype: IRTypeSignature;
 
-    constructor(tkey: string, saturatedProvides: IRTypeSignature[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, ttype: IRTypeSignature, etype: IRTypeSignature) {
+    constructor(tkey: string, saturatedProvides: IRTypeSignature[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, ttype: IRTypeSignature) {
         super(tkey, saturatedProvides, docstr, file, sinfo);
         this.ttype = ttype;
-        this.etype = etype;
     }
 
     override getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
-        return [this.ttype, this.etype];
+        return [this.ttype];
     }
 
     override toBAPI(): string {
@@ -773,41 +767,37 @@ class IRAPIDeniedTypeDecl extends IRConstructableTypeDecl {
     }
 }
 
-class IRAPIFlaggedTypeDecl extends IRConstructableTypeDecl {
+class IRAPIDroppedTypeDecl extends IRConstructableTypeDecl {
     readonly ttype: IRTypeSignature;
-    readonly etype: IRTypeSignature;
 
-    constructor(tkey: string, saturatedProvides: IRTypeSignature[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, ttype: IRTypeSignature, etype: IRTypeSignature) {
+    constructor(tkey: string, saturatedProvides: IRTypeSignature[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, ttype: IRTypeSignature) {
         super(tkey, saturatedProvides, docstr, file, sinfo);
         this.ttype = ttype;
-        this.etype = etype;
     }
 
     override getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
-        return [this.ttype, this.etype];
+        return [this.ttype];
     }
 
     override toBAPI(): string {
-        assert(false, "IRAPIFlaggedTypeDecl.toBAPI() is not implemented yet");
+        assert(false, "IRAPIDroppedTypeDecl.toBAPI() is not implemented yet");
     }
 
-    static parseBAPIAsIRAPIFlaggedTypeDecl(lexer: BAPILexer): IRAPIFlaggedTypeDecl {
-        assert(false, "IRAPIFlaggedTypeDecl.parseBAPI_IRAPIFlaggedTypeDecl() is not implemented yet");
+    static parseBAPIAsIRAPIDroppedTypeDecl(lexer: BAPILexer): IRAPIDroppedTypeDecl {
+        assert(false, "IRAPIDroppedTypeDecl.parseBAPI_IRAPIDroppedTypeDecl() is not implemented yet");
     }
 }
 
 class IRAPISuccessTypeDecl extends IRConstructableTypeDecl {
     readonly ttype: IRTypeSignature;
-    readonly etype: IRTypeSignature;
 
-    constructor(tkey: string, saturatedProvides: IRTypeSignature[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, ttype: IRTypeSignature, etype: IRTypeSignature) {
+    constructor(tkey: string, saturatedProvides: IRTypeSignature[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, ttype: IRTypeSignature) {
         super(tkey, saturatedProvides, docstr, file, sinfo);
         this.ttype = ttype;
-        this.etype = etype;
     }
 
     override getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
-        return [this.ttype, this.etype];
+        return [this.ttype];
     }
 
     override toBAPI(): string {
@@ -1138,27 +1128,25 @@ class IRResultTypeDecl extends IRInternalConceptTypeDecl {
 
 class IRAPIResultTypeDecl extends IRInternalConceptTypeDecl {
     readonly ttype: IRTypeSignature;
-    readonly etype: IRTypeSignature;
 
     readonly errortype: IRTypeSignature;
     readonly rejectedtype: IRTypeSignature;
     readonly deniedtype: IRTypeSignature;
-    readonly flaggedtype: IRTypeSignature;
+    readonly droppedtype: IRTypeSignature;
     readonly successtype: IRTypeSignature;
 
-    constructor(tkey: string, docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, ttype: IRTypeSignature, etype: IRTypeSignature, errortype: IRTypeSignature, rejectedtype: IRTypeSignature, deniedtype: IRTypeSignature, flaggedtype: IRTypeSignature, successtype: IRTypeSignature) {
+    constructor(tkey: string, docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, ttype: IRTypeSignature, errortype: IRTypeSignature, rejectedtype: IRTypeSignature, deniedtype: IRTypeSignature, droppedtype: IRTypeSignature, successtype: IRTypeSignature) {
         super(tkey, docstr, [], file, sinfo);
         this.ttype = ttype;
-        this.etype = etype;
         this.errortype = errortype;
         this.rejectedtype = rejectedtype;
         this.deniedtype = deniedtype;
-        this.flaggedtype = flaggedtype;
+        this.droppedtype = droppedtype;
         this.successtype = successtype;
     }
 
     override getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
-        return [this.ttype, this.etype, this.errortype, this.rejectedtype, this.deniedtype, this.flaggedtype, this.successtype];
+        return [this.ttype, this.errortype, this.rejectedtype, this.deniedtype, this.droppedtype, this.successtype];
     }
 
     override toBAPI(): string {
@@ -1783,7 +1771,7 @@ export {
     IRTypedeclTypeDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl,
     IRInternalEntityTypeDecl, IRPrimitiveEntityTypeDecl, IRConstructableTypeDecl, 
     IROkTypeDecl, IRFailTypeDecl,
-    IRAPIDeniedTypeDecl, IRAPIErrorTypeDecl, IRAPIRejectedTypeDecl, IRAPIFlaggedTypeDecl, IRAPISuccessTypeDecl,
+    IRAPIDeniedTypeDecl, IRAPIErrorTypeDecl, IRAPIRejectedTypeDecl, IRAPIDroppedTypeDecl, IRAPISuccessTypeDecl,
     IRSomeTypeDecl, IRMapEntryTypeDecl,
     IRAbstractCollectionTypeDecl, IRListTypeDecl, IRStackTypeDecl, IRQueueTypeDecl, IRSetTypeDecl, IRMapTypeDecl,
     IREventListTypeDecl,

@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import { APIDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, InvokeTemplateTypeRestrictionClause, MAX_SAFE_CHK_NAT, MIN_SAFE_CHK_INT, MAX_SAFE_CHK_INT, APIDeniedTypeDecl, APIFlaggedTypeDecl, AgentDecl, TaskConfiguration, AbstractCollectionTypeDecl, ConstructableTypeDecl, InvokeParameterDecl, AbstractEntityTypeDecl, WELL_KNOWN_RESULT_EVENT_NAME } from "./assembly.js";
+import { APIDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, InvokeTemplateTypeRestrictionClause, MAX_SAFE_CHK_NAT, MIN_SAFE_CHK_INT, MAX_SAFE_CHK_INT, APIDeniedTypeDecl, APIDroppedTypeDecl, AgentDecl, TaskConfiguration, AbstractCollectionTypeDecl, ConstructableTypeDecl, InvokeParameterDecl, AbstractEntityTypeDecl, WELL_KNOWN_RESULT_EVENT_NAME } from "./assembly.js";
 import { CodeFormatter, SourceInfo } from "./build_decls.js";
 import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, ErrorTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
 import { APIInvokeExpression, AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, AbstractArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, FormatStringTextComponent, HoleBodyImplementation, HoleExpression, HoleStatement, ITestGuard, ITestGuardSet, ITestSimpleGuard, IfElifElseStatement, IfElseStatement, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypeDeclValueExpression, LiteralTypedCStringExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PassingArgumentValue, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RValueExpression, RValueExpressionTag, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VoidRefCallStatement, StdArgumentValue, SkipArgumentValue, InterpolateFormatExpression, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestFail, ITestTypeGuard, ITestBinderGuard, TypeTestBindInfo, EnvironmentGenerationExpression, EmptyEnvironmentExpression } from "./body.js";
@@ -2017,43 +2017,17 @@ class TypeChecker {
                 this.checkError(exp.sinfo, (errarg instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(errarg, errtype, this.constraints), `Err constructor argument is not a subtype of ${errtype.emit()}`);
             }
         }
-        else if((cdecl instanceof APIErrorTypeDecl) || (cdecl instanceof APIRejectedTypeDecl) || (cdecl instanceof APIDeniedTypeDecl) || (cdecl instanceof APIFlaggedTypeDecl) || (cdecl instanceof APISuccessTypeDecl)) {
-            if(cdecl instanceof APIFlaggedTypeDecl) {
-                if(exp.args.args.length !== 2) {
-                    this.reportError(exp.sinfo, `API flagged result constructor expects 2 argument`);
-                }
-                else {
-                    const attype = ctype.alltermargs[0];
-                    const aetype = ctype.alltermargs[1];
-                    exp.shuffleinfo = [[0, undefined, "value", attype], [1, undefined, "info", aetype]];
-
-                    const atarg = this.checkExpression(env, (exp.args.args[0] as StdArgumentValue).exp, new SimpleTypeInferContext(attype));
-                    this.checkError(exp.sinfo, (atarg instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(atarg, attype, this.constraints), `API flagged result first constructor argument is not a subtype of ${attype.emit()}`);
-
-                    const aetarg = this.checkExpression(env, (exp.args.args[1] as StdArgumentValue).exp, new SimpleTypeInferContext(aetype));
-                    this.checkError(exp.sinfo, (aetarg instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(aetarg, aetype, this.constraints), `API flagged result second constructor argument is not a subtype of ${aetype.emit()}`);
-                }
+        else if((cdecl instanceof APIErrorTypeDecl) || (cdecl instanceof APIRejectedTypeDecl) || (cdecl instanceof APIDeniedTypeDecl) || (cdecl instanceof APIDroppedTypeDecl) || (cdecl instanceof APISuccessTypeDecl)) {
+            //TODO: update this as we add more args to constructors for these types
+            if(exp.args.args.length !== 1) {
+                this.reportError(exp.sinfo, `API result constructor expects 1 argument`);
             }
             else {
-                if(exp.args.args.length !== 1) {
-                    this.reportError(exp.sinfo, `API result constructor expects 1 argument`);
-                }
-                else {
-                    if(cdecl instanceof APISuccessTypeDecl) {
-                        const apitype = ctype.alltermargs[0];
-                        exp.shuffleinfo = [[0, undefined, "value", apitype]];
+                const apitype = ctype.alltermargs[0];
+                exp.shuffleinfo = [[0, undefined, "value", apitype]];
 
-                        const apiarg = this.checkExpression(env, (exp.args.args[0] as StdArgumentValue).exp, new SimpleTypeInferContext(apitype));
-                        this.checkError(exp.sinfo, (apiarg instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(apiarg, apitype, this.constraints), `API result constructor argument is not a subtype of ${apitype.emit()}`);
-                    }
-                    else {
-                        const apitype = ctype.alltermargs[1];
-                        exp.shuffleinfo = [[0, undefined, "info", apitype]];
-
-                        const apiarg = this.checkExpression(env, (exp.args.args[0] as StdArgumentValue).exp, new SimpleTypeInferContext(apitype));
-                        this.checkError(exp.sinfo, (apiarg instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(apiarg, apitype, this.constraints), `API result constructor argument is not a subtype of ${apitype.emit()}`);
-                    }
-                }
+                const apiarg = this.checkExpression(env, (exp.args.args[0] as StdArgumentValue).exp, new SimpleTypeInferContext(apitype));
+                this.checkError(exp.sinfo, (apiarg instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(apiarg, apitype, this.constraints), `API result constructor argument is not a subtype of ${apitype.emit()}`);
             }
         }
         else if(cdecl instanceof SomeTypeDecl) {
@@ -2435,7 +2409,7 @@ class TypeChecker {
                 else if(ninfer.decl instanceof ResultTypeDecl) {
                     const ttype = ninfer.alltermargs[1];
                     const etype = this.checkExpression(env, exp.args[0], new SimpleTypeInferContext(ttype));
-                    this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Err constructor argument is not a subtype of ${ttype.emit()}`);
+                    this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Fail constructor argument is not a subtype of ${ttype.emit()}`);
 
                     exp.constype = new NominalTypeSignature(exp.sinfo, undefined, ninfer.decl.getFailType(), [ninfer.alltermargs[0], ttype]);
                     return exp.setType(exp.constype);
@@ -2445,18 +2419,6 @@ class TypeChecker {
                     return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
                 }
             }
-        }
-        else if(exp.rop === "error") {
-            assert(false, "Not implemented -- error tag");
-        }
-        else if(exp.rop === "rejected") {
-            assert(false, "Not implemented -- rejected tag");
-        }
-        else if(exp.rop === "denied") {
-            assert(false, "Not implemented -- denied tag");
-        }
-        else if(exp.rop === "flagged") {
-            assert(false, "Not implemented -- flagged tag");
         }
         else if(exp.rop === "success") {
             if(infertype === undefined || !(infertype instanceof NominalTypeSignature)) {
@@ -2470,7 +2432,7 @@ class TypeChecker {
                 if(ninfer.decl instanceof APISuccessTypeDecl) {
                     const ttype = ninfer.alltermargs[0];
                     const etype = this.checkExpression(env, exp.args[0], new SimpleTypeInferContext(ttype));
-                    this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Fail constructor argument is not a subtype of ${ttype.emit()}`);
+                    this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Success constructor argument is not a subtype of ${ttype.emit()}`);
 
                     exp.constype = ninfer;
                     return exp.setType(ninfer);
@@ -2478,9 +2440,9 @@ class TypeChecker {
                 else if(ninfer.decl instanceof APIResultTypeDecl) {
                     const ttype = ninfer.alltermargs[0];
                     const etype = this.checkExpression(env, exp.args[0], new SimpleTypeInferContext(ttype));
-                    this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Err constructor argument is not a subtype of ${ttype.emit()}`);
+                    this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Success constructor argument is not a subtype of ${ttype.emit()}`);
 
-                    exp.constype = new NominalTypeSignature(exp.sinfo, undefined, ninfer.decl.getAPISuccessType(), [ttype, ninfer.alltermargs[1]]);
+                    exp.constype = new NominalTypeSignature(exp.sinfo, undefined, ninfer.decl.getAPISuccessType(), [ttype]);
                     return exp.setType(exp.constype);
                 }
                 else {
@@ -3917,7 +3879,7 @@ class TypeChecker {
     }
 
     private checkAPIInvokeExpression(env: TypeEnvironment, exp: APIInvokeExpression): TypeSignature {
-        this.checkError(exp.sinfo, !this.isExternalMode, `Agent invocations must occour in environment aware code (agent/api/task) mode`);
+        this.checkError(exp.sinfo, !this.isExternalMode, `API invocations must occour in environment aware code (agent/api/task) mode`);
 
         const adecl = this.relations.assembly.resolveNamespaceAPI(exp.ns, exp.api);
         if(adecl === undefined) {
@@ -3925,6 +3887,7 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
         exp.resolvedAPI = adecl;
+        exp.monoinvid = this.invidCtr++;
 
         this.checkEnvironmentGenerationExpression(env, exp.envexp, adecl.envreqs);
 
@@ -3964,6 +3927,7 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
         exp.resolvedAgent = adecl;
+        exp.monoinvid = this.invidCtr++;
 
         this.checkEnvironmentGenerationExpression(env, exp.envexp, adecl.envreqs);
 
@@ -5639,7 +5603,7 @@ class TypeChecker {
         this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
-    private checkAPIFlaggedTypeDecl(ns: NamespaceDeclaration, tdecl: APIFlaggedTypeDecl) {
+    private checkAPIDroppedTypeDecl(ns: NamespaceDeclaration, tdecl: APIDroppedTypeDecl) {
         this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
@@ -5723,8 +5687,8 @@ class TypeChecker {
             else if(ned instanceof APIDeniedTypeDecl) {
                 this.checkAPIDeniedTypeDecl(ns, ned);
             }
-            else if(ned instanceof APIFlaggedTypeDecl) {
-                this.checkAPIFlaggedTypeDecl(ns, ned);
+            else if(ned instanceof APIDroppedTypeDecl) {
+                this.checkAPIDroppedTypeDecl(ns, ned);
             }
             else {
                 this.checkAPISuccessTypeDecl(ns, ned as APISuccessTypeDecl);
@@ -6097,8 +6061,8 @@ class TypeChecker {
             else if(tt instanceof APIDeniedTypeDecl) {
                 this.checkAPIDeniedTypeDecl(ns, tt);
             }
-            else if(tt instanceof APIFlaggedTypeDecl) {
-                this.checkAPIFlaggedTypeDecl(ns, tt);
+            else if(tt instanceof APIDroppedTypeDecl) {
+                this.checkAPIDroppedTypeDecl(ns, tt);
             }
             else if(tt instanceof APISuccessTypeDecl) {
                 this.checkAPISuccessTypeDecl(ns, tt);

@@ -103,6 +103,9 @@ enum IRExpressionTag {
     IRInvokeVirtualSimpleExpression = "IRInvokeVirtualSimpleExpression",
     IRInvokeVirtualWithImplicitsExpression = "IRInvokeVirtualWithImplicitsExpression",
 
+    IRInvokeCallAgentOrAPIExpression = "IRInvokeCallAgentOrAPIExpression",
+    IRInvokeTaskActionExpression = "IRInvokeTaskActionExpression",
+
     IRInterpolateFormatCStringExpression = "IRInterpolateFormatCStringExpression",
     IRInterpolateFormatStringExpression = "IRInterpolateFormatStringExpression",
 
@@ -2158,6 +2161,52 @@ class IRInvokeVirtualWithImplicitsExpression extends IRInvokeImplicitsExpression
 
     static parseBAPIAsIRInvokeVirtualWithImplicitsExpression(lexer: BAPILexer): IRInvokeVirtualWithImplicitsExpression {
         assert(false, "IRInvokeVirtualWithImplicitsExpression.parseBAPI not implemented");
+    }
+}
+
+class IRInvokeCallAgentOrAPIExpression extends IRExpression {
+    readonly ikey: string;
+    readonly args: IRSimpleExpression[];
+
+    constructor(ikey: string, args: IRSimpleExpression[]) {
+        super(IRExpressionTag.IRInvokeCallAgentOrAPIExpression);
+        this.ikey = ikey;
+        this.args = args;
+    }
+
+    override isSimpleExpression(): boolean {
+        return false;
+    }
+
+    override toBAPI(): string {
+        assert(false, "IRInvokeCallAgentOrAPIExpression.toBAPI not implemented");
+    }
+
+    static parseBAPIAsIRInvokeCallAgentOrAPIExpression(lexer: BAPILexer): IRInvokeCallAgentOrAPIExpression {
+        assert(false, "IRInvokeCallAgentOrAPIExpression.parseBAPI not implemented");
+    }
+}
+
+class IRInvokeTaskActionExpression extends IRExpression {
+    readonly ikey: string;
+    readonly args: IRSimpleExpression[];
+
+    constructor(ikey: string, args: IRSimpleExpression[]) {
+        super(IRExpressionTag.IRInvokeTaskActionExpression);
+        this.ikey = ikey;
+        this.args = args;
+    }
+
+    override isSimpleExpression(): boolean {
+        return false;
+    }
+
+    override toBAPI(): string {
+        assert(false, "IRInvokeTaskActionExpression.toBAPI not implemented");
+    }
+
+    static parseBAPIAsIRInvokeTaskActionExpression(lexer: BAPILexer): IRInvokeTaskActionExpression {
+        assert(false, "IRInvokeTaskActionExpression.parseBAPI not implemented");
     }
 }
 
@@ -4503,6 +4552,8 @@ export {
     IRAccessFieldExpression, IRAccessFieldSpecialExpression, IRAccessFieldDirectExpression, IRAccessFieldVirtualExpression, IRAccessEListIndexExpression,
 
     IRInvokeExpression, IRInvokeDirectExpression, IRInvokeImplicitsExpression, IRInvokeSimpleExpression, IRInvokeSimpleWithImplicitsExpression, IRInvokeVirtualSimpleExpression, IRInvokeVirtualWithImplicitsExpression,
+
+    IRInvokeCallAgentOrAPIExpression, IRInvokeTaskActionExpression,
 
     IRInterpolateFormatCStringExpression, IRInterpolateFormatStringExpression,
 

@@ -2,12 +2,12 @@
 import { SourceInfo } from "../../frontend/build_decls.js";
 import { DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, RecursiveAnnotation, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, ArgumentList, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringTextComponent, HoleBodyImplementation, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, InterpolateFormatExpression, ITest, ITestBinderGuard, ITestFail, ITestGuard, ITestGuardSet, ITestNone, ITestOk, ITestSimpleGuard, ITestSome, ITestType, ITestTypeGuard, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralCStringExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PassingArgumentValue, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PostfixSliceOperator, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, StdArgumentValue, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement } from "../../frontend/body.js";
-import { AbstractCollectionTypeDecl, AbstractConceptTypeDecl, AbstractEntityTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, AgentDecl, APIDecl, APIDeniedTypeDecl, APIErrorTypeDecl, APIFlaggedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, ConstructableTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, FailTypeDecl, InvariantDecl, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskActionDecl, TaskConfiguration, TaskDecl, TestAssociation, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl } from "../../frontend/assembly.js";
+import { AbstractCollectionTypeDecl, AbstractConceptTypeDecl, AbstractEntityTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, AgentDecl, APIDecl, APIDeniedTypeDecl, APIErrorTypeDecl, APIDroppedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, ConstructableTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, FailTypeDecl, InvariantDecl, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskActionDecl, TaskConfiguration, TaskDecl, TestAssociation, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl } from "../../frontend/assembly.js";
 
 import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatCStringTypeSignature, IRFormatPathFragmentTypeSignature, IRFormatPathGlobTypeSignature, IRFormatPathTypeSignature, IRFormatStringTypeSignature, IRFormatTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype.js";
-import { IRDateRepresentation, IRDeltaDateRepresentation, IRDeltaTimeRepresentation, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteBufferExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralCStringExpression, IRLiteralDecimalExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLatLongCoordinateExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralNoneExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralRationalExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRStatement, IRTimeRepresentation, IRLiteralFormatStringExpression, IRFormatStringTextComponent, IRFormatStringArgComponent, IRFormatStringComponent, IRLiteralFormatCStringExpression, IRLiteralTypedExpression, IRLiteralExpression, IRTypeDeclInvariantCheckStatement, IRLiteralTypedStringExpression, IRLiteralTypedCStringExpression, IRTaskAccessIDExpression, IRTaskAccessParentIDExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessEnumExpression, IRSimpleExpression, IRPreconditionCheckStatement, IRExpression, IRTempAssignExpressionStatement, IRAccessTempVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessParameterVariableExpression, IRPrefixNotOpExpression, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRErrorAdditionBoundsCheckStatement, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRErrorDivisionByZeroCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRNopStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRReturnVoidSimpleStatement, IRAbortStatement, IRImmediateExpression, IRReturnValueSimpleStatement, IRChkLogicImpliesShortCircuitStatement, IRInvokeDirectExpression, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRVariableInitializationDirectInvokeStatement, IRInvokeSimpleExpression, IRInvokeImplicitsExpression, IRTempAssignStdInvokeStatement, IRTempAssignRefInvokeStatement, IRReturnDirectInvokeStatement, IRAssertStatement, IRValidateStatement, IRDebugStatement, IRBody, IRBuiltinBody, IRHoleBody, IRStandardBody, IRBinKeyEqDirectExpression, IRBinKeyLessDirectExpression, IRIsNoneOptionExpression, IRIsNotNoneOptionExpression, IRIsOptionEqValueExpression, IRIsOptionNeqValueExpression, IRIsSomeEqValueExpression, IRIsSomeNeqValueExpression, IRBinKeyNeqDirectExpression, IRConstructorOkTypeExpression, IRConstructorFailTypeExpression, IRConstructorSomeTypeExpression, IRConstructorMapEntryTypeExpression, IRLiteralDecimalDegreeExpression, IRTypeDeclSizeRangeCheckCStringStatement, IRTypeDeclSizeRangeCheckUnicodeStringStatement, IRTypeDeclFormatCheckCStringStatement, IRTypeDeclFormatCheckUnicodeStringStatement, IRLiteralOptionOfNoneExpression, IRConvertConceptRepresentationExpression, IRConstructResultFromOkExpression, IRConstructOptionFromSomeExpression, IRConstructResultFromFailExpression, IRBoxEntityToConceptRepresentationExpression, IRSimpleIfStatement, IRBlockStatement, IRSimpleIfElseStatement, IRConstructorStandardEntityExpression, IREntityInvariantCheckStatement, IRConstructExpression, IRVariableInitializationDirectConstructorStatement, IRReturnDirectConstructStatement, IRVariableAssignmentStatement, IRVariableAssignmentDirectInvokeStatement, IRVariableAssignmentDirectConstructorStatement, IRConstructorListEmptyExpression, IRConstructorListSingletonsExpression, IRReturnVoidWithImplicitStatement, IRReturnValueImplicitStatement, IRReturnDirectInvokeImplicitStatement, IRReturnDirectConstructWithBoxStatement, IRReturnDirectConstructImplicitStatement, IRReturnDirectConstructWithBoxImplicitStatement, IRReturnDirectInvokeImplicitPassThroughStatement, IRVariableInitializationDirectInvokeWithImplicitStatement, IRVariableAssignmentDirectInvokeWithImplicitStatement, IRInvokeSimpleWithImplicitsExpression, IRVoidInvokeStatement, IRVariableInitializationDirectConstructorWithBoxStatement, IRVariableAssignmentDirectConstructorWithBoxStatement, IRInterpolateFormatStringExpression, IRInterpolateFormatCStringExpression, IRAccessFieldSpecialExpression, IRAccessFieldDirectExpression, IRAccessFieldVirtualExpression, IRStaticIsTypeSubtypeOfExpression, IRIsConceptRepresentationOfTypeExpression, IRIsNotConceptRepresentationOfTypeExpression, IRIsNotConceptRepresentationSubtypeOfTypeExpression, IRIsConceptRepresentationSubtypeOfTypeExpression, IRExtractSomeFromOptionExpression, IRExtractSomeValueFromOptionExpression, IRErrorTypeAssertionCheckStatement, IRUnboxEntityFromConceptRepresentationExpression, IRConstructorLambdaExpression, IRMatchExactStatement, IRMatchGeneralStatement, IRErrorExhaustiveStatement, IRPostconditionCheckStatement, IRTypeDeclNumericRangeCheckStatement, IRTempAssignDirectConstructorStatement, IRConstructorEListExpression, IRAccessEListIndexExpression, IRConstructorMapEmptyExpression, IRConstructorMapSingletonsExpression, IRUpdateParamDirectStatement, IRUpdateLocalDirectStatement, IRAbstractBody } from "../irdefs/irbody.js";
+import { IRDateRepresentation, IRDeltaDateRepresentation, IRDeltaTimeRepresentation, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteBufferExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralCStringExpression, IRLiteralDecimalExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLatLongCoordinateExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralNoneExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralRationalExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRStatement, IRTimeRepresentation, IRLiteralFormatStringExpression, IRFormatStringTextComponent, IRFormatStringArgComponent, IRFormatStringComponent, IRLiteralFormatCStringExpression, IRLiteralTypedExpression, IRLiteralExpression, IRTypeDeclInvariantCheckStatement, IRLiteralTypedStringExpression, IRLiteralTypedCStringExpression, IRTaskAccessIDExpression, IRTaskAccessParentIDExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessEnumExpression, IRSimpleExpression, IRPreconditionCheckStatement, IRExpression, IRTempAssignExpressionStatement, IRAccessTempVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessParameterVariableExpression, IRPrefixNotOpExpression, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRErrorAdditionBoundsCheckStatement, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRErrorDivisionByZeroCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRNopStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRReturnVoidSimpleStatement, IRAbortStatement, IRImmediateExpression, IRReturnValueSimpleStatement, IRChkLogicImpliesShortCircuitStatement, IRInvokeDirectExpression, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRVariableInitializationDirectInvokeStatement, IRInvokeSimpleExpression, IRInvokeImplicitsExpression, IRTempAssignStdInvokeStatement, IRTempAssignRefInvokeStatement, IRReturnDirectInvokeStatement, IRAssertStatement, IRValidateStatement, IRDebugStatement, IRBody, IRBuiltinBody, IRHoleBody, IRStandardBody, IRBinKeyEqDirectExpression, IRBinKeyLessDirectExpression, IRIsNoneOptionExpression, IRIsNotNoneOptionExpression, IRIsOptionEqValueExpression, IRIsOptionNeqValueExpression, IRIsSomeEqValueExpression, IRIsSomeNeqValueExpression, IRBinKeyNeqDirectExpression, IRConstructorOkTypeExpression, IRConstructorFailTypeExpression, IRConstructorSomeTypeExpression, IRConstructorMapEntryTypeExpression, IRLiteralDecimalDegreeExpression, IRTypeDeclSizeRangeCheckCStringStatement, IRTypeDeclSizeRangeCheckUnicodeStringStatement, IRTypeDeclFormatCheckCStringStatement, IRTypeDeclFormatCheckUnicodeStringStatement, IRLiteralOptionOfNoneExpression, IRConvertConceptRepresentationExpression, IRConstructResultFromOkExpression, IRConstructOptionFromSomeExpression, IRConstructResultFromFailExpression, IRBoxEntityToConceptRepresentationExpression, IRSimpleIfStatement, IRBlockStatement, IRSimpleIfElseStatement, IRConstructorStandardEntityExpression, IREntityInvariantCheckStatement, IRConstructExpression, IRVariableInitializationDirectConstructorStatement, IRReturnDirectConstructStatement, IRVariableAssignmentStatement, IRVariableAssignmentDirectInvokeStatement, IRVariableAssignmentDirectConstructorStatement, IRConstructorListEmptyExpression, IRConstructorListSingletonsExpression, IRReturnVoidWithImplicitStatement, IRReturnValueImplicitStatement, IRReturnDirectInvokeImplicitStatement, IRReturnDirectConstructWithBoxStatement, IRReturnDirectConstructImplicitStatement, IRReturnDirectConstructWithBoxImplicitStatement, IRReturnDirectInvokeImplicitPassThroughStatement, IRVariableInitializationDirectInvokeWithImplicitStatement, IRVariableAssignmentDirectInvokeWithImplicitStatement, IRInvokeSimpleWithImplicitsExpression, IRVoidInvokeStatement, IRVariableInitializationDirectConstructorWithBoxStatement, IRVariableAssignmentDirectConstructorWithBoxStatement, IRInterpolateFormatStringExpression, IRInterpolateFormatCStringExpression, IRAccessFieldSpecialExpression, IRAccessFieldDirectExpression, IRAccessFieldVirtualExpression, IRStaticIsTypeSubtypeOfExpression, IRIsConceptRepresentationOfTypeExpression, IRIsNotConceptRepresentationOfTypeExpression, IRIsNotConceptRepresentationSubtypeOfTypeExpression, IRIsConceptRepresentationSubtypeOfTypeExpression, IRExtractSomeFromOptionExpression, IRExtractSomeValueFromOptionExpression, IRErrorTypeAssertionCheckStatement, IRUnboxEntityFromConceptRepresentationExpression, IRConstructorLambdaExpression, IRMatchExactStatement, IRMatchGeneralStatement, IRErrorExhaustiveStatement, IRPostconditionCheckStatement, IRTypeDeclNumericRangeCheckStatement, IRTempAssignDirectConstructorStatement, IRConstructorEListExpression, IRAccessEListIndexExpression, IRConstructorMapEmptyExpression, IRConstructorMapSingletonsExpression, IRUpdateParamDirectStatement, IRUpdateLocalDirectStatement, IRAbstractBody, IRInvokeCallAgentOrAPIExpression } from "../irdefs/irbody.js";
 import { IRCRegex, IRURegex, IRSourceInfo } from "../irdefs/irsupport.js";
-import { IRAgentDecl, IRAPIDecl, IRAPIDeniedTypeDecl, IRAPIErrorTypeDecl, IRAPIFlaggedTypeDecl, IRAPIRejectedTypeDecl, IRAPIResultTypeDecl, IRAPISuccessTypeDecl, IRAssembly, IRConceptTypeDecl, IRConstantDecl, IRDatatypeMemberEntityTypeDecl, IRDatatypeTypeDecl, IRDeclarationDocString, IRDeclarationMetaTag, IREntityTypeDecl, IREnumTypeDecl, IREnvironmentVariableInformation, IREventListTypeDecl, IRExampleDecl, IRFailTypeDecl, IRInvariantDecl, IRInvokeDecl, IRInvokeParameterDecl, IRLambdaParameterPackDecl, IRListTypeDecl, IRMapEntryTypeDecl, IRMapTypeDecl, IRMemberFieldDecl, IROkTypeDecl, IROptionTypeDecl, IRPostConditionDecl, IRPreConditionDecl, IRPrimitiveEntityTypeDecl, IRQueueTypeDecl, IRResourceInformation, IRResultTypeDecl, IRSetTypeDecl, IRSomeTypeDecl, IRStackTypeDecl, IRTaskActionDecl, IRTaskConfiguration, IRTaskDecl, IRTestAssociation, IRTestDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl, IRValidateDecl } from "../irdefs/irassembly.js";
+import { IRAgentDecl, IRAPIDecl, IRAPIDeniedTypeDecl, IRAPIErrorTypeDecl, IRAPIDroppedTypeDecl, IRAPIRejectedTypeDecl, IRAPIResultTypeDecl, IRAPISuccessTypeDecl, IRAssembly, IRConceptTypeDecl, IRConstantDecl, IRDatatypeMemberEntityTypeDecl, IRDatatypeTypeDecl, IRDeclarationDocString, IRDeclarationMetaTag, IREntityTypeDecl, IREnumTypeDecl, IREnvironmentVariableInformation, IREventListTypeDecl, IRExampleDecl, IRFailTypeDecl, IRInvariantDecl, IRInvokeDecl, IRInvokeParameterDecl, IRLambdaParameterPackDecl, IRListTypeDecl, IRMapEntryTypeDecl, IRMapTypeDecl, IRMemberFieldDecl, IROkTypeDecl, IROptionTypeDecl, IRPostConditionDecl, IRPreConditionDecl, IRPrimitiveEntityTypeDecl, IRQueueTypeDecl, IRResourceInformation, IRResultTypeDecl, IRSetTypeDecl, IRSomeTypeDecl, IRStackTypeDecl, IRTaskActionDecl, IRTaskConfiguration, IRTaskDecl, IRTestAssociation, IRTestDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl, IRValidateDecl } from "../irdefs/irassembly.js";
 
 import { InvokeInstantiationInfo, LambdaInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiations.js";
 import { getBSQIRForm, getCPPForm, getSMTForm } from "@bosque/jsbrex";
@@ -596,18 +596,6 @@ class ASMToIRConverter {
         else if((oftype instanceof NominalTypeSignature) && (oftype.decl instanceof ResultTypeDecl)) {
             assert(false, "Not implemented yet -- flatten option/result");
         }
-        else if((oftype instanceof NominalTypeSignature) && (oftype.decl instanceof APIErrorTypeDecl)) {
-            assert(false, "Not implemented yet -- flatten api error");
-        }
-        else if((oftype instanceof NominalTypeSignature) && (oftype.decl instanceof APIRejectedTypeDecl)) {
-            assert(false, "Not implemented yet -- flatten api rejected");
-        }
-        else if((oftype instanceof NominalTypeSignature) && (oftype.decl instanceof APIDeniedTypeDecl)) {
-            assert(false, "Not implemented yet -- flatten api denied");
-        }
-        else if((oftype instanceof NominalTypeSignature) && (oftype.decl instanceof APIFlaggedTypeDecl)) {
-            assert(false, "Not implemented yet -- flatten api flagged");
-        }
         else if((oftype instanceof NominalTypeSignature) && (oftype.decl instanceof APISuccessTypeDecl)) {
             assert(false, "Not implemented yet -- flatten api success");
         }
@@ -758,18 +746,6 @@ class ASMToIRConverter {
         }
         else if((trgttype instanceof NominalTypeSignature) && (trgttype.decl instanceof ResultTypeDecl)) {
             assert(false, "Not implemented yet -- flatten option/result");
-        }
-        else if((trgttype instanceof NominalTypeSignature) && (trgttype.decl instanceof APIErrorTypeDecl)) {
-            assert(false, "Not implemented yet -- flatten api error");
-        }
-        else if((trgttype instanceof NominalTypeSignature) && (trgttype.decl instanceof APIRejectedTypeDecl)) {
-            assert(false, "Not implemented yet -- flatten api rejected");
-        }
-        else if((trgttype instanceof NominalTypeSignature) && (trgttype.decl instanceof APIDeniedTypeDecl)) {
-            assert(false, "Not implemented yet -- flatten api denied");
-        }
-        else if((trgttype instanceof NominalTypeSignature) && (trgttype.decl instanceof APIFlaggedTypeDecl)) {
-            assert(false, "Not implemented yet -- flatten api flagged");
         }
         else if((trgttype instanceof NominalTypeSignature) && (trgttype.decl instanceof APISuccessTypeDecl)) {
             assert(false, "Not implemented yet -- flatten api success");
@@ -1752,7 +1728,7 @@ class ASMToIRConverter {
 
             return new IRConstructorFailTypeExpression(this.processTypeSignature(ctype), targ);
         }
-        else if((cdecl instanceof APIErrorTypeDecl) || (cdecl instanceof APIRejectedTypeDecl) || (cdecl instanceof APIDeniedTypeDecl) || (cdecl instanceof APIFlaggedTypeDecl) || (cdecl instanceof APISuccessTypeDecl)) {
+        else if((cdecl instanceof APIErrorTypeDecl) || (cdecl instanceof APIRejectedTypeDecl) || (cdecl instanceof APIDeniedTypeDecl) || (cdecl instanceof APIDroppedTypeDecl) || (cdecl instanceof APISuccessTypeDecl)) {
             assert(false, "ASMToIRConverter::flattenSpecialConstructableConstructor - Not Implemented");
         }
         else if(cdecl instanceof SomeTypeDecl) {
@@ -1867,10 +1843,14 @@ class ASMToIRConverter {
             const targ = this.makeCoercionExplicitAsNeeded(arg0, argt0, ctype.alltermargs[0]);
             return new IRConstructorOkTypeExpression(this.processTypeSignature(ctype), targ);
         }
-        else {
-            //fail
+        else if (exp.rop === "fail") {
             const targ = this.makeCoercionExplicitAsNeeded(arg0, argt0, ctype.alltermargs[1]);
             return new IRConstructorFailTypeExpression(this.processTypeSignature(ctype), targ);
+        }
+        else {
+            assert(exp.rop === "success");
+            const targ = this.makeCoercionExplicitAsNeeded(arg0, argt0, ctype.alltermargs[0]);
+            return new IRConstructorAPISuccessTypeExpression(this.processTypeSignature(ctype), targ);
         }
     }
 
@@ -2970,11 +2950,17 @@ class ASMToIRConverter {
 
         const haspreconds = adecl.preconditions.length > 0;
         const haspostconds = adecl.postconditions.length > 0;
-        const iname = this.;
+        const iname = (this.currentMonoInvIdMap as Map<number, string>).get(exp.monoinvid as number) as string;
 
-        const aargs = exp.args.map((arg) => {
-            xxxx;
-            return this.makeExpressionSimple(this.flattenExpression(arg), this.tproc(arg.getType()));
+        const aargs = exp.args.map((arg, ii) => {
+            const pinfo = adecl.params[ii];
+            const ftype = this.tproc(pinfo.type);
+
+            const sexp = this.flattenExpression(arg);
+            const cexp = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(sexp, arg.getType()), arg.getType(), ftype);
+
+            const fexp = (haspreconds || haspostconds) ? this.makeExpressionImmediate(cexp, ftype) : cexp;
+            return fexp;
         });
 
         //do preconditions as needed
@@ -2983,33 +2969,20 @@ class ASMToIRConverter {
             this.pushStatement(new IRPreconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), iname, invdecl.ii, aargs));
         } 
     
-        if(!haspostconds) {
-            xxxx;
-            return new IRInvokeSimpleWithImplicitsExpression(iname, aargs, ii, ivar, ivartype, passarg.kind);
-        }
-            else {
-                let tmppass: string | undefined = undefined;
-                if(passarg.kind !== "out" && passarg.kind !== "out?") {
-                    tmppass = this.generateTempVarName();
-                    this.pushStatement(new IRTempAssignExpressionStatement(tmppass, aargs[srpos], ivartype));
-                }
-
-                const tmpres = this.generateTempVarName();
-                this.pushStatement(new IRTempAssignRefInvokeStatement(tmpres, this.processTypeSignature(exp.getType()), ivar, ivartype, passarg.kind, new IRInvokeSimpleWithImplicitsExpression(iname, aargs, ii, ivar, ivartype, passarg.kind)));
+        const tmpres = this.generateTempVarName();
+        this.pushStatement(new IRTempAssignExpressionStatement(tmpres, new IRInvokeCallAgentOrAPIExpression(iname, aargs), this.processTypeSignature(exp.getType())));
             
-                //do postconditions as needed
-                let postargs = [new IRAccessTempVariableExpression(tmpres), ...aargs];
-                if(tmppass !== undefined) {
-                    postargs = [new IRAccessTempVariableExpression(tmpres), new IRAccessTempVariableExpression(tmppass), ...postargs];
-                }
+        //do postconditions as needed
+        if(!haspostconds) {
+            let postargs = [new IRAccessTempVariableExpression(tmpres), ...aargs];
 
-                for(let i = 0; i < fdecl.postconditions.length; ++i) {
-                    const invdecl = fdecl.postconditions[i];
-                    this.pushStatement(new IRPostconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), iname, invdecl.ii, postargs));
-                } 
-
-                return new IRAccessTempVariableExpression(tmpres);
+            for(let i = 0; i < adecl.postconditions.length; ++i) {
+                const invdecl = adecl.postconditions[i];
+                this.pushStatement(new IRPostconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), iname, invdecl.ii, postargs));
             }
+        } 
+
+        return new IRAccessTempVariableExpression(tmpres);
     }
 
     private flattenChkLogicExpression(exp: ChkLogicExpression): IRSimpleExpression {
@@ -4341,23 +4314,78 @@ class ASMToIRConverter {
     }
 
     private generateAPIErrorTypeDecl(tdecl: APIErrorTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRAPIErrorTypeDecl {
-        assert(false, "Not Implemented -- generateAPIErrorTypeDecl");
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
+        
+        const saturatedProvides = tdecl.saturatedProvides.map((sp) => this.processTypeSignature(sp));
+
+        const doc = tdecl.attributes.find((a) => a.name === "doc");
+        const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
+
+        this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
+
+        const ttype = this.processTypeSignature((this.tproc(tinst.tsig) as NominalTypeSignature).alltermargs[0] as TypeSignature);
+
+        return new IRAPIErrorTypeDecl(tinst.tkey, saturatedProvides, docstring, tdecl.file, this.convertSourceInfo(tdecl.sinfo), ttype);
     }
 
     private generateAPIRejectedTypeDecl(tdecl: APIRejectedTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRAPIRejectedTypeDecl {
-        assert(false, "Not Implemented -- generateAPIRejectedTypeDecl");
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
+        
+        const encloption = tdecl.saturatedProvides.map((sp) => this.processTypeSignature(sp));
+
+        const doc = tdecl.attributes.find((a) => a.name === "doc");
+        const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
+
+        this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
+
+        const ttype = this.processTypeSignature((this.tproc(tinst.tsig) as NominalTypeSignature).alltermargs[0] as TypeSignature);
+
+        return new IRAPIRejectedTypeDecl(tinst.tkey, encloption, docstring, tdecl.file, this.convertSourceInfo(tdecl.sinfo), ttype);
     }
 
     private generateAPIDeniedTypeDecl(tdecl: APIDeniedTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRAPIDeniedTypeDecl {
-        assert(false, "Not Implemented -- generateAPIDeniedTypeDecl");
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
+        
+        const encloption = tdecl.saturatedProvides.map((sp) => this.processTypeSignature(sp));
+
+        const doc = tdecl.attributes.find((a) => a.name === "doc");
+        const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
+
+        this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
+
+        const ttype = this.processTypeSignature((this.tproc(tinst.tsig) as NominalTypeSignature).alltermargs[0] as TypeSignature);
+
+        return new IRAPIDeniedTypeDecl(tinst.tkey, encloption, docstring, tdecl.file, this.convertSourceInfo(tdecl.sinfo), ttype);
     }
 
-    private generateAPIFlaggedTypeDecl(tdecl: APIFlaggedTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRAPIFlaggedTypeDecl {
-        assert(false, "Not Implemented -- generateAPIFlaggedTypeDecl");
+    private generateAPIDroppedTypeDecl(tdecl: APIDroppedTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRAPIDroppedTypeDecl {
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
+        
+        const encloption = tdecl.saturatedProvides.map((sp) => this.processTypeSignature(sp));
+
+        const doc = tdecl.attributes.find((a) => a.name === "doc");
+        const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
+
+        this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
+
+        const ttype = this.processTypeSignature((this.tproc(tinst.tsig) as NominalTypeSignature).alltermargs[0] as TypeSignature);
+
+        return new IRAPIDroppedTypeDecl(tinst.tkey, encloption, docstring, tdecl.file, this.convertSourceInfo(tdecl.sinfo), ttype);
     }
 
     private generateAPISuccessTypeDecl(tdecl: APISuccessTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRAPISuccessTypeDecl {
-        assert(false, "Not Implemented -- generateAPISuccessTypeDecl");
+        this.initCodeTypeProcessingContext(tdecl.file, false, tinst);
+        
+        const encloption = tdecl.saturatedProvides.map((sp) => this.processTypeSignature(sp));
+
+        const doc = tdecl.attributes.find((a) => a.name === "doc");
+        const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
+
+        this.processNominalTypeInfoStandard(tdecl, tinst, irasm);
+
+        const ttype = this.processTypeSignature((this.tproc(tinst.tsig) as NominalTypeSignature).alltermargs[0] as TypeSignature);
+
+        return new IRAPISuccessTypeDecl(tinst.tkey, encloption, docstring, tdecl.file, this.convertSourceInfo(tdecl.sinfo), ttype);
     }
 
     private generateSomeTypeDecl(tdecl: SomeTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRSomeTypeDecl {
@@ -4526,15 +4554,14 @@ class ASMToIRConverter {
 
         const irtsig = this.tproc(tinst.tsig) as NominalTypeSignature;
         const oktype = this.processTypeSignature(irtsig.alltermargs[0]);
-        const itype = this.processTypeSignature(irtsig.alltermargs[1]);
         
         const errortype = this.processTypeSignature(new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.getAPIErrorType(), [...irtsig.alltermargs]));
         const rejectedtype = this.processTypeSignature(new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.getAPIRejectedType(), [...irtsig.alltermargs]));
         const deniedtype = this.processTypeSignature(new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.getAPIDeniedType(), [...irtsig.alltermargs]));
-        const flaggedtype = this.processTypeSignature(new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.getAPIFlaggedType(), [...irtsig.alltermargs]));
+        const droppedtype = this.processTypeSignature(new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.getAPIDroppedType(), [...irtsig.alltermargs]));
         const successtype = this.processTypeSignature(new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.getAPISuccessType(), [...irtsig.alltermargs]));
 
-        return new IRAPIResultTypeDecl(tinst.tkey, docstring, tdecl.file, this.convertSourceInfo(tdecl.sinfo), oktype, itype, errortype, rejectedtype, deniedtype, flaggedtype, successtype);
+        return new IRAPIResultTypeDecl(tinst.tkey, docstring, tdecl.file, this.convertSourceInfo(tdecl.sinfo), oktype, errortype, rejectedtype, deniedtype, droppedtype, successtype);
     }
 
     private generateConceptTypeDecl(tdecl: ConceptTypeDecl, tinst: TypeInstantiationInfo, irasm: IRAssembly): IRConceptTypeDecl {
@@ -4837,10 +4864,10 @@ class ASMToIRConverter {
             irasm.constructables.push(denieddecl);
             irasm.alltypes.set(denieddecl.tkey, denieddecl);
         }
-        else if(tt instanceof APIFlaggedTypeDecl) {
-            const flaggeddecl = this.generateAPIFlaggedTypeDecl(tt, tinst, irasm);
-            irasm.constructables.push(flaggeddecl);
-            irasm.alltypes.set(flaggeddecl.tkey, flaggeddecl);
+        else if(tt instanceof APIDroppedTypeDecl) {
+            const droppeddecl = this.generateAPIDroppedTypeDecl(tt, tinst, irasm);
+            irasm.constructables.push(droppeddecl);
+            irasm.alltypes.set(droppeddecl.tkey, droppeddecl);
         }
         else if(tt instanceof APISuccessTypeDecl) {
             const successdecl = this.generateAPISuccessTypeDecl(tt, tinst, irasm);
@@ -5007,6 +5034,58 @@ class ASMToIRConverter {
             if(tinst !== undefined) {
                 for(let j = 0; j < tinst.length; ++j) {
                     this.generateNamespaceTypeDecl(tinst[j], irasm, aainsts);
+                }
+            }
+
+            //handle nested types as special case here
+            if(decl.typedecls[i] instanceof ResultTypeDecl) {
+                const rdecl = decl.typedecls[i] as ResultTypeDecl;
+
+                const okinst = asminstantiation.typebinds.get(rdecl.getOkType().name);
+                if(okinst !== undefined) {
+                    for(let j = 0; j < okinst.length; ++j) {
+                        this.generateNamespaceTypeDecl(okinst[j], irasm, aainsts);
+                    }
+                }
+                const failinst = asminstantiation.typebinds.get(rdecl.getFailType().name);
+                if(failinst !== undefined) {
+                    for(let j = 0; j < failinst.length; ++j) {
+                        this.generateNamespaceTypeDecl(failinst[j], irasm, aainsts);
+                    }
+                }
+            }
+            if(decl.typedecls[i] instanceof APIResultTypeDecl) {
+                const apirdecl = decl.typedecls[i] as APIResultTypeDecl;
+
+                const errinst = asminstantiation.typebinds.get(apirdecl.getAPIErrorType().name);
+                if(errinst !== undefined) {
+                    for(let j = 0; j < errinst.length; ++j) {
+                        this.generateNamespaceTypeDecl(errinst[j], irasm, aainsts);
+                    }
+                }
+                const rejectedinst = asminstantiation.typebinds.get(apirdecl.getAPIRejectedType().name);
+                if(rejectedinst !== undefined) {
+                    for(let j = 0; j < rejectedinst.length; ++j) {
+                        this.generateNamespaceTypeDecl(rejectedinst[j], irasm, aainsts);
+                    }
+                }
+                const deniedinst = asminstantiation.typebinds.get(apirdecl.getAPIDeniedType().name);
+                if(deniedinst !== undefined) {
+                    for(let j = 0; j < deniedinst.length; ++j) {
+                        this.generateNamespaceTypeDecl(deniedinst[j], irasm, aainsts);
+                    }
+                }
+                const droppedinst = asminstantiation.typebinds.get(apirdecl.getAPIDroppedType().name);
+                if(droppedinst !== undefined) {
+                    for(let j = 0; j < droppedinst.length; ++j) {
+                        this.generateNamespaceTypeDecl(droppedinst[j], irasm, aainsts);
+                    }
+                }
+                const successinst = asminstantiation.typebinds.get(apirdecl.getAPISuccessType().name);
+                if(successinst !== undefined) {
+                    for(let j = 0; j < successinst.length; ++j) {
+                        this.generateNamespaceTypeDecl(successinst[j], irasm, aainsts);
+                    }
                 }
             }
         }

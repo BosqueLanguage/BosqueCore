@@ -293,25 +293,25 @@ __internal concept Result<T, E> {
 }
 
 %** APIResult type. **%
-__internal concept APIResult<T, E> {
-    %** Failed internally or postcondition checks -- hard failure can get error UUID and tag **%
-    __internal entity Error provides APIResult<T, E> {
+__internal concept APIResult<T> {
+    %** Failed internally or postcondition checks -- hard failure can get error UUID, task UUID, and tag **%
+    __internal entity Error provides APIResult<T> {
     }
 
-    %** Failed in validation/precondition checks -- hard failure can get error UUID and tag **%
-    __internal entity Rejected provides APIResult<T, E> {
+    %** Failed in validation/precondition checks -- additional information in flags hard failure can failed condition and get error UUID, task UUID and tag **%
+    __internal entity Rejected provides APIResult<T> {
     }
 
-    %** Failed through access limits or other temp issues (also used for timeout or canceled) -- additional information in timeout/cancel flags and custom info (E type) **%
-    __internal entity Denied provides APIResult<T, E> {
+    %** Failed through access limits -- additional information in flags and failure tags and UUID **%
+    __internal entity Denied provides APIResult<T> {
     }
 
-    %** Failed in _soft_ validation/precondition/postcondition checks -- additional information custom error info (E type) and T contains a value **%
-    __internal entity Flagged provides APIResult<T, E> {
+    %** Failed through temp issues (e.g. for timeout or canceled) -- additional information in timeout/cancel flags and failure tags and UUID **%
+    __internal entity Dropped provides APIResult<T> {
     }
 
-    %** Successful result T contains the value **%
-    __internal entity Success provides APIResult<T, E> {
+    %** Successful result T contains the value -- failure in _soft_ validation/precondition/postcondition checks -- additional information **%
+    __internal entity Success provides APIResult<T> {
     }
 }
 
