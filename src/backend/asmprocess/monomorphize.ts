@@ -1055,9 +1055,9 @@ class Monomorphizer {
         if(exp.optrestype !== undefined) {
             this.instantiateTypeSignature(exp.optrestype, this.currentMapping);
         }
-        
+
         const nns = this.assembly.resolveNamespaceDecl(exp.ns.ns) as NamespaceDeclaration;
-        const agent = nns.agents.find((a) => a.name === exp.agent) as AgentDecl;
+        const agent = exp.resolvedAgent as AgentDecl;
 
         for(let i = 0; i < exp.args.length; ++i) {
             this.instantiateExpression(exp.args[i]);

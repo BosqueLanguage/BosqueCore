@@ -4376,6 +4376,24 @@ abstract class IRBody {
     }
 }
 
+class IRAbstractBody extends IRBody {
+    constructor() {
+        super();
+    }
+
+    override isSimpleBody(): boolean {
+        return false;
+    }
+
+    override toBAPI(): string {
+        assert(false, "IRAbstractBody.toBAPI not implemented");
+    }
+
+    static parseBAPIAsIRAbstractBody(lexer: BAPILexer): IRAbstractBody {
+        assert(false, "IRAbstractBody.parseBAPI not implemented");
+    }
+}
+
 class IRBuiltinBody extends IRBody {
     readonly builtin: string;
     readonly biterms: [string, IRTypeSignature][];
@@ -4534,5 +4552,5 @@ export {
     IRAbortStatement, IRAssertStatement, IRAssumeStatement, IRValidateStatement, IRDebugStatement,
 
     IRBlockStatement,
-    IRBody, IRBuiltinBody, IRHoleBody, IRStandardBody
+    IRBody, IRAbstractBody, IRBuiltinBody, IRHoleBody, IRStandardBody
 };

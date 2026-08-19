@@ -3924,6 +3924,7 @@ class TypeChecker {
             this.reportError(exp.sinfo, `Could not find namespace api ${exp.ns.emit()}::${exp.api}`);
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
+        exp.resolvedAPI = adecl;
 
         this.checkEnvironmentGenerationExpression(env, exp.envexp, adecl.envreqs);
 
@@ -3962,6 +3963,7 @@ class TypeChecker {
             this.reportError(exp.sinfo, `Could not find namespace agent ${exp.ns.emit()}::${exp.agent}`);
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
+        exp.resolvedAgent = adecl;
 
         this.checkEnvironmentGenerationExpression(env, exp.envexp, adecl.envreqs);
 

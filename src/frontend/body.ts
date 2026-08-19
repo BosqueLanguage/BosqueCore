@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { FullyQualifiedNamespace, AutoTypeSignature, RecursiveAnnotation, TypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper } from "./type.js";
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls.js";
-import { LambdaDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, TaskConfiguration, TypeFunctionDecl } from "./assembly.js";
+import { AgentDecl, APIDecl, LambdaDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, TaskConfiguration, TypeFunctionDecl } from "./assembly.js";
 
 class BinderInfo {
     readonly srcname: string; //the name in the source code
@@ -2041,6 +2041,8 @@ class APIInvokeExpression extends Expression {
     readonly configs: TaskConfiguration;
     readonly envexp: EnvironmentGenerationExpression;
 
+    resolvedAPI: APIDecl | undefined = undefined;
+
     constructor(sinfo: SourceInfo, ns: FullyQualifiedNamespace, api: string, args: Expression[], envexp: EnvironmentGenerationExpression, configs: TaskConfiguration) {
         super(ExpressionTag.APIInvokeExpression, sinfo);
         this.ns = ns;
@@ -2067,6 +2069,8 @@ class AgentInvokeExpression extends Expression {
     readonly args: Expression[];
     readonly configs: TaskConfiguration;
     readonly envexp: EnvironmentGenerationExpression;
+
+    resolvedAgent: AgentDecl | undefined = undefined;
 
     constructor(sinfo: SourceInfo, ns: FullyQualifiedNamespace, agent: string, optrestype: TypeSignature | undefined, args: Expression[], envexp: EnvironmentGenerationExpression, configs: TaskConfiguration) {
         super(ExpressionTag.AgentInvokeExpression, sinfo);
