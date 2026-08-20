@@ -10,10 +10,22 @@ describe ("List -- delete", () => {
         runTestSet('public function main(z: Int): List<Int> { return List<Int>{z, 1i}.deleteFront().deleteFront(); }', [['2i', 'List<Int>{ }']], []);
     });
 
+    it("should deleteFront w/ ref", function () {
+        runTestSet('public function main(z: Int): List<Int> { var l = List<Int>{}; ref l.deleteFront(); return l; }', [], ['0i']); 
+        runTestSet('public function main(z: Int): List<Int> { var l = List<Int>{1i, z}; ref l.deleteFront(); return l; }', [['2i', 'List<Int>{ 2i }']], []);
+        runTestSet('public function main(z: Int): List<Int> { var l = List<Int>{z, 1i}; ref l.deleteFront(); ref l.deleteFront(); return l; }', [['2i', 'List<Int>{ }']], []);
+    });
+
     it("should deleteBack basic", function () {
         runTestSet('public function main(z: Int): List<Int> { return List<Int>{}.deleteBack(); }', [], ['0i']); 
         runTestSet('public function main(z: Int): List<Int> { return List<Int>{1i, z}.deleteBack(); }', [['2i', 'List<Int>{ 1i }']], []);
         runTestSet('public function main(z: Int): List<Int> { return List<Int>{z, 1i}.deleteBack().deleteBack(); }', [['2i', 'List<Int>{ }']], []);
+    });
+
+    it("should deleteBack w/ ref", function () {
+        runTestSet('public function main(z: Int): List<Int> { var l = List<Int>{}; ref l.deleteBack(); return l; }', [], ['0i']); 
+        runTestSet('public function main(z: Int): List<Int> { var l = List<Int>{1i, z}; ref l.deleteBack(); return l; }', [['2i', 'List<Int>{ 1i }']], []);
+        runTestSet('public function main(z: Int): List<Int> { var l = List<Int>{z, 1i}; ref l.deleteBack(); ref l.deleteBack(); return l; }', [['2i', 'List<Int>{ }']], []);
     });
 
     it("should delete mixed", function () {

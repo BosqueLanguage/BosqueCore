@@ -88,7 +88,9 @@ enum IRExpressionTag {
     IRConstructorEListExpression = "IRConstructorEListExpression",
 
     IRConstructorListEmptyExpression = "IRConstructorListEmptyExpression",
+    IRConstructorListPassthroughExpression = "IRConstructorListPassthroughExpression",
     IRConstructorListSingletonsExpression = "IRConstructorListSingletonsExpression",
+    IRConstructorListMixedExpression = "IRConstructorListMixedExpression",
 
     IRConstructorMapEmptyExpression = "IRConstructorMapEmptyExpression",
     IRConstructorMapSingletonsExpression = "IRConstructorMapSingletonsExpression",
@@ -2002,6 +2004,23 @@ class IRConstructorListEmptyExpression extends IRConstructExpression {
     }
 }
 
+class IRConstructorListPassthroughExpression extends IRConstructExpression {
+    readonly ptl: IRSimpleExpression;
+
+    constructor(ctype: IRNominalTypeSignature, ptl: IRSimpleExpression) {
+        super(IRExpressionTag.IRConstructorListPassthroughExpression, ctype);
+        this.ptl = ptl;
+    }
+
+    override toBAPI(): string {
+        assert(false, "IRConstructorListPassthroughExpression.toBAPI not implemented");
+    }
+
+    static parseBAPIAsIRConstructorListPassthroughExpression(lexer: BAPILexer): IRConstructorListPassthroughExpression {
+        assert(false, "IRConstructorListPassthroughExpression.parseBAPI not implemented");
+    }
+}
+
 class IRConstructorListSingletonsExpression extends IRConstructExpression {
     readonly elements: IRSimpleExpression[];
 
@@ -2016,6 +2035,23 @@ class IRConstructorListSingletonsExpression extends IRConstructExpression {
 
     static parseBAPIAsIRConstructorListSingletonsExpression(lexer: BAPILexer): IRConstructorListSingletonsExpression {
         assert(false, "IRConstructorListSingletonsExpression.parseBAPI not implemented");
+    }
+}
+
+class IRConstructorListMixedExpression extends IRConstructExpression {
+    readonly elements: { kind: "positional" | "directappend" | "spreadappend", value: IRSimpleExpression }[];
+
+    constructor(ctype: IRNominalTypeSignature, elements: { kind: "positional" | "directappend" | "spreadappend", value: IRSimpleExpression }[]) {
+        super(IRExpressionTag.IRConstructorListMixedExpression, ctype);
+        this.elements = elements;
+    }
+
+    override toBAPI(): string {
+        assert(false, "IRConstructorListMixedExpression.toBAPI not implemented");
+    }
+
+    static parseBAPIAsIRConstructorListMixedExpression(lexer: BAPILexer): IRConstructorListMixedExpression {
+        assert(false, "IRConstructorListMixedExpression.parseBAPI not implemented");
     }
 }
 
@@ -4568,7 +4604,7 @@ export {
     IRConstructorStandardEntityExpression,
     IRConstructorLambdaExpression,
     IRConstructorEListExpression,
-    IRConstructorListEmptyExpression, IRConstructorListSingletonsExpression,
+    IRConstructorListEmptyExpression, IRConstructorListPassthroughExpression, IRConstructorListSingletonsExpression, IRConstructorListMixedExpression,
     IRConstructorMapEmptyExpression, IRConstructorMapSingletonsExpression,
 
     IRAccessFieldExpression, IRAccessFieldSpecialExpression, IRAccessFieldDirectExpression, IRAccessFieldVirtualExpression, IRAccessEListIndexExpression,
