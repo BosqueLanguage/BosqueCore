@@ -98,7 +98,6 @@ class TemplateNameMapper {
         }
         else if(t.decl.isSpecialAPIResultEntity()) {
             pmap.set("T", t.alltermargs[0]);
-            pmap.set("E", t.alltermargs[1]);
         }
         else {
             for(let j = 0; j < t.decl.terms.length; ++j) {

@@ -1,4 +1,4 @@
-import { InvokeParameterDecl, LambdaDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, TypeFunctionDecl } from "../../frontend/assembly.js";
+import { AgentDecl, APIDecl, InvokeParameterDecl, LambdaDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, TaskActionDecl, TypeFunctionDecl } from "../../frontend/assembly.js";
 import { EListTypeSignature, FullyQualifiedNamespace, LambdaTypeSignature, TemplateNameMapper, TypeSignature } from "../../frontend/type.js";
 
 class LambdaInstantiationInfo {
@@ -56,18 +56,21 @@ class TypeInstantiationInfo {
     readonly binds: TemplateNameMapper | undefined;
     readonly functionbinds: Map<string, InvokeInstantiationInfo[]>;
     readonly methodbinds: Map<string, InvokeInstantiationInfo[]>;
+    readonly taskactionbinds: Map<string, InvokeInstantiationInfo[]>;
 
     //For the implicit invokes that happen in const declarations
     readonly lambdacons: Map<number, string>; //string corresponds to a lambda instantation info
     readonly monoinvids: Map<number, string>;
 
-    constructor(tkey: string, tsig: TypeSignature, binds: TemplateNameMapper | undefined, functionbinds: Map<string, InvokeInstantiationInfo[]>, methodbinds: Map<string, InvokeInstantiationInfo[]>, lambdacons: Map<number, string>, monoinvids: Map<number, string>) {
+    constructor(tkey: string, tsig: TypeSignature, binds: TemplateNameMapper | undefined, lambdacons: Map<number, string>, monoinvids: Map<number, string>) {
         this.tkey = tkey;
         this.tsig = tsig;
         this.binds = binds;
 
-        this.functionbinds = functionbinds;
-        this.methodbinds = methodbinds;
+        this.functionbinds = new Map<string, InvokeInstantiationInfo[]>();
+        this.methodbinds = new Map<string, InvokeInstantiationInfo[]>();
+        this.taskactionbinds = new Map<string, InvokeInstantiationInfo[]>();
+
         this.lambdacons = lambdacons;
         this.monoinvids = monoinvids;
     }
@@ -78,6 +81,8 @@ class NamespaceInstantiationInfo {
 
     readonly functionbinds: Map<string, InvokeInstantiationInfo[]>;
     readonly typebinds: Map<string, TypeInstantiationInfo[]>;
+
+    readonly apiagentbinds: Map<string, InvokeInstantiationInfo[]>;
 
     readonly elists: Map<string, EListTypeSignature>;
     readonly lambdas: Map<string, LambdaInstantiationInfo>;
@@ -93,6 +98,7 @@ class NamespaceInstantiationInfo {
         this.typebinds = new Map<string, TypeInstantiationInfo[]>();
         this.elists = new Map<string, EListTypeSignature>();
         this.lambdas = new Map<string, LambdaInstantiationInfo>();
+        this.apiagentbinds = new Map<string, InvokeInstantiationInfo[]>();
     }
 }
 
@@ -119,6 +125,14 @@ function computeInvokeKeyForNamespaceFunction(ns: NamespaceDeclaration, fdecl: N
     return `${ns.fullnamespace.emit()}::${fdecl.name}${rti}${computeTBindsKey(terms)}${computeLambdaKey(lambdas)}`;
 }
 
+function computeInvokeKeyForAPIDecl(ns: NamespaceDeclaration, adecl: APIDecl): string {
+    return `${ns.fullnamespace.emit()}::${adecl.name}`;
+}
+
+function computeInvokeKeyForAgentDecl(ns: NamespaceDeclaration, adecl: AgentDecl): string {
+    return `${ns.fullnamespace.emit()}::${adecl.name}`;
+}
+
 function computeInvokeKeyForTypeFunction(rcvrtype: TypeSignature, fdecl: TypeFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]): string {
     const pkinds = fdecl.params.map((p) => p.pkind).filter((pk) => pk !== undefined);
     const rti = pkinds.length !== 0 ? `#${pkinds[0].replace("?", "p")}` : "";
@@ -127,6 +141,12 @@ function computeInvokeKeyForTypeFunction(rcvrtype: TypeSignature, fdecl: TypeFun
 
 function computeInvokeKeyForTypeMethod(rcvrtype: TypeSignature, mdecl: MethodDecl, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]): string {
     const pkinds = [mdecl.isThisRef ? "ref" : undefined, ...mdecl.params.map((p) => p.pkind)].filter((pk) => pk !== undefined);
+    const rti = pkinds.length !== 0 ? `#${pkinds[0].replace("?", "p")}` : "";
+    return `${rcvrtype.tkeystr}@${mdecl.name}${rti}${computeTBindsKey(terms)}${computeLambdaKey(lambdas)}`;
+}
+
+function computeInvokeKeyForTaskAction(rcvrtype: TypeSignature, mdecl: TaskActionDecl, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]): string {
+    const pkinds = mdecl.params.map((p) => p.pkind).filter((pk) => pk !== undefined);
     const rti = pkinds.length !== 0 ? `#${pkinds[0].replace("?", "p")}` : "";
     return `${rcvrtype.tkeystr}@${mdecl.name}${rti}${computeTBindsKey(terms)}${computeLambdaKey(lambdas)}`;
 }
@@ -141,5 +161,5 @@ export {
     TypeInstantiationInfo,
     NamespaceInstantiationInfo,
     computeTBindsKey, computeLambdaKey, computeResolveKeyForInvoke, 
-    computeInvokeKeyForNamespaceFunction, computeInvokeKeyForTypeFunction, computeInvokeKeyForTypeMethod, computeInvokeKeyForLambdaFunction
+    computeInvokeKeyForNamespaceFunction, computeInvokeKeyForAPIDecl, computeInvokeKeyForAgentDecl, computeInvokeKeyForTypeFunction, computeInvokeKeyForTypeMethod, computeInvokeKeyForTaskAction, computeInvokeKeyForLambdaFunction
 };

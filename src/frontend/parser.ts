@@ -4,9 +4,9 @@ import assert from "node:assert";
 import { VariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env.js";
 import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, ErrorTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateTypeSignature, TypeSignature } from "./type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, AbstractArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfStatement, LiteralRegexExpression, LiteralSimpleExpression, LiteralNoneExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, SpecialConstructorExpression, ConstructorPrimaryExpression, PostfixAccessFromName, ReturnVoidStatement, ReturnSingleStatement, PostfixInvoke, KeyCompareEqExpression, KeyCompareLessExpression, ReturnMultiStatement, PostfixAccessFromIndex, AccessStaticFieldExpression, CallTypeFunctionExpression, LambdaInvokeExpression, ThisUpdateStatement, VarUpdateStatement, CallRefThisExpression, VoidRefCallStatement, CallRefSelfExpression, CallRefVariableExpression, CallRefInvokeExpression, PostfixAssignFields, ChkLogicExpression, RValueExpression, ITestGuard, ITestGuardSet, ITestBinderGuard, ITestSimpleGuard, ITestTypeGuard, PassingArgumentValue, LiteralStringExpression, LiteralCStringExpression, LiteralFormatStringExpression, LiteralFormatCStringExpression, LiteralFormatPathItemExpression, LiteralPathItemExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LiteralTypedCStringExpression, LiteralTypedPathExpression, FormatStringComponent, FormatStringTextComponent, FormatStringArgComponent, LiteralTypedFormatCStringExpression, LiteralTypedPathFormatExpression, AccessEnvValueExpression, TaskAccessInfoExpression, InterpolateFormatExpression, PostfixSliceOperator, HoleExpression, LogicAndExpression, LogicOrExpression, TaskRunExpression, EnvironmentGenerationExpression, EmptyEnvironmentExpression, CurrentEnvironmentExpression, InitializeEnvironmentExpression, TaskMultiExpression, TaskAllExpression, TaskDashExpression, TaskDashAnyExpression, TaskRaceExpression, TaskRaceAnyExpression, APIInvokeExpression, AgentInvokeExpression, ChkLogicImpliesExpression, ChkLogicBaseExpression, BaseRValueExpression, ConditionalValueExpression, ShortCircuitAssignRHSExpressionFail, ShortCircuitAssignRHSExpressionReturn, CallTaskActionExpression, SelfUpdateStatement, TaskCheckAndHandleTerminationStatement, TaskStatusStatement, TaskYieldStatement, DispatchTaskStatement, DispatchPatternStatement, HoleStatement, HoleBodyImplementation, SkipArgumentValue, StdArgumentValue } from "./body.js";
-import { APIDecl, APIResultTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, SomeTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, OkTypeDecl, FailTypeDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIDeniedTypeDecl, APIFlaggedTypeDecl, APISuccessTypeDecl, InternalEntityTypeDecl, AbstractCollectionTypeDecl, TestAssociation, TaskConfiguration, AgentDecl } from "./assembly.js";
+import { APIDecl, APIResultTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, SomeTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, OkTypeDecl, FailTypeDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIDeniedTypeDecl, APIDroppedTypeDecl, APISuccessTypeDecl, InternalEntityTypeDecl, AbstractCollectionTypeDecl, TestAssociation, TaskConfiguration, AgentDecl } from "./assembly.js";
 import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls.js";
-import { AllAttributes, CoreOnlyAttributes, KeywordStrings, KW__debug, KW_abort, KW_action, KW_agent, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_configs, KW_const, KW_datatype, KW_debug, KW_declare, KW_dispatch, KW_do, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_errtest, KW_event, KW_example, KW_fail, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_inout, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_of, KW_ok, KW_out, KW_out_q, KW_parallel, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_sequential, KW_slice, KW_softcheck, KW_some, KW_spec, KW_status, KW_switch, KW_task, KW_Task, KW_test, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KW_yield, LeftScanParens, ParenSymbols, RightScanParens, SpaceRequiredSymbols, SpecialNominalTypes, SpecialPathFormatTypes, SpecialStringFormatTypes, StandardSymbols, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_HOLE, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lparenbar, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_questionquestion, SYM_questionat, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_rparenbar, SYM_semicolon, SYM_times, TaskConfigs, TermRestrictions } from "./parser_kw.js";
+import { AllAttributes, CoreOnlyAttributes, KeywordStrings, KW__debug, KW_abort, KW_action, KW_agent, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_configs, KW_const, KW_datatype, KW_debug, KW_declare, KW_dispatch, KW_do, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_errtest, KW_event, KW_example, KW_fail, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_inout, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_of, KW_ok, KW_out, KW_out_q, KW_parallel, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_sequential, KW_slice, KW_softcheck, KW_some, KW_spec, KW_status, KW_switch, KW_task, KW_Task, KW_test, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KW_yield, LeftScanParens, ParenSymbols, RightScanParens, SpaceRequiredSymbols, SpecialNominalTypes, SpecialPathFormatTypes, SpecialStringFormatTypes, StandardSymbols, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_HOLE, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lparenbar, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_questionquestion, SYM_questionat, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_rparenbar, SYM_semicolon, SYM_times, TaskConfigs, TermRestrictions, KW_success } from "./parser_kw.js";
 
 type ParsePhase = number;
 const ParsePhase_RegisterNames: ParsePhase = 1;
@@ -1659,7 +1659,7 @@ class Parser {
                 if(tsroot === "Result" && (ttname === "Ok" || ttname === "Fail")) {
                     return {nsScope: currentns, scopeTokens: scopeTokens, typeTokens: [{tname: "Result", tterms: terms}, {tname: ttname, tterms: []}]};
                 }
-                else if(tsroot === "APIResult" && (ttname === "Error" || ttname === "Rejected" || ttname === "Denied" || ttname === "Flagged" || ttname === "Success")) {
+                else if(tsroot === "APIResult" && (ttname === "Error" || ttname === "Rejected" || ttname === "Denied" || ttname === "Dropped" || ttname === "Success")) {
                     return {nsScope: currentns, scopeTokens: scopeTokens, typeTokens: [{tname: "APIResult", tterms: terms}, {tname: ttname, tterms: []}]};
                 }
                 else {
@@ -2051,7 +2051,7 @@ class Parser {
         return undefined;
     }
 
-    private parsePreAndPostConditions(sinfo: SourceInfo, argnames: Set<string>, mutparams: Set<string>, boundtemplates: Set<string>, taskcond: boolean, apicond: boolean): [PreConditionDecl[], PostConditionDecl[]] {
+    private parsePreAndPostConditions(sinfo: SourceInfo, argnames: Set<string>, mutparams: Set<string>, boundtemplates: Set<string>, taskcond: boolean, apiagentcond: boolean): [PreConditionDecl[], PostConditionDecl[]] {
         let preconds: PreConditionDecl[] = [];
 
         this.env.scope = new StandardScopeInfo([...argnames].map((v) => new VariableDefinitionInfo("let", v)), boundtemplates, this.wellknownTypes.get("Bool") as TypeSignature);
@@ -2068,9 +2068,9 @@ class Parser {
                 this.ensureAndConsumeTokenAlways(SYM_rbrack, "requires tag");
             }
 
-            let softcheck = apicond && this.testToken(KW_softcheck);
+            let softcheck = (taskcond || apiagentcond) && this.testToken(KW_softcheck);
             if(this.testAndConsumeTokenIf(KW_softcheck)) {
-                if(!apicond) {   
+                if(!softcheck) {
                     this.recordErrorGeneral(sinfo, "Softcheck is only allowed in API/Task pre/post conditions");
                 }
             }
@@ -2089,7 +2089,7 @@ class Parser {
         const refnames = [...mutparams].map((v) => new VariableDefinitionInfo("let", "$" + v));
 
         const postvardecls = [...[...argnames].map((v) => new VariableDefinitionInfo("let", v)), ...refnames, new VariableDefinitionInfo("let", WELL_KNOWN_RETURN_VAR_NAME)];
-        if(taskcond || apicond) {
+        if(taskcond || apiagentcond) {
             postvardecls.push(new VariableDefinitionInfo("let", WELL_KNOWN_EVENTS_VAR_NAME));
         }
 
@@ -2108,9 +2108,9 @@ class Parser {
                 this.ensureAndConsumeTokenAlways(SYM_rbrack, "requires tag");
             }
 
-            let softcheck = apicond && this.testToken(KW_softcheck);
+            let softcheck = (taskcond || apiagentcond) && this.testToken(KW_softcheck);
             if(this.testAndConsumeTokenIf(KW_softcheck)) {
-                if(!apicond) {   
+                if(!softcheck) {   
                     this.recordErrorGeneral(sinfo, "Softcheck is only allowed in API/Task pre/post conditions");
                 }
             }
@@ -2456,7 +2456,7 @@ class Parser {
         }
     }
 
-    private parseMethodInvokeDecl(taskscope: boolean, attributes: DeclarationAttibute[], typeTerms: Set<string>): MethodDecl | TaskMethodDecl | undefined {
+    private parseMethodInvokeDecl(taskscope: boolean, attributes: DeclarationAttibute[], typeTerms: Set<string>): MethodDecl | undefined {
         const cinfo = this.peekToken().getSourceInfo();
 
         let isrecursive: "yes" | "no" | "cond" = "no";
@@ -2514,15 +2514,10 @@ class Parser {
         const body = this.parseBody(attributes, false);
         this.env.popStandardFunctionScope();
 
-        if(taskscope) {
-            return new TaskMethodDecl(this.env.currentFile, cinfo, attributes, fname, isrecursive, params, resultInfo, body, terms, termRestrictions, preconds, postconds, isref);
-        }
-        else {
-            return new MethodDecl(this.env.currentFile, cinfo, attributes, fname, isrecursive, params, resultInfo, body, terms, termRestrictions, preconds, postconds, isref);
-        }
+        return new MethodDecl(this.env.currentFile, cinfo, attributes, fname, isrecursive, params, resultInfo, body, terms, termRestrictions, preconds, postconds, isref);
     }
 
-    private parseActionInvokeDecl(attributes: DeclarationAttibute[], typeTerms: Set<string>, taskmain: string): TaskActionDecl | undefined {
+    private parseActionInvokeDecl(attributes: DeclarationAttibute[], taskmain: string): TaskActionDecl | undefined {
         const cinfo = this.peekToken().getSourceInfo();
 
         this.ensureAndConsumeTokenAlways(KW_action, "action declaration");
@@ -2530,10 +2525,10 @@ class Parser {
         const termRestrictions = this.parseInvokeTermRestrictionInfo();
 
         this.ensureToken(TokenStrings.IdentifierName, "action name");
-        const fname = this.testToken(TokenStrings.IdentifierName) ? this.parseIdentifierAsStdVariable() : "[error]";
+        const fname = this.parseIdentifierAsStdVariable();
 
         const terms = this.parseInvokeTemplateTerms();
-        const boundtemplates = new Set<string>(...typeTerms, ...terms.map((term) => term.name));
+        const boundtemplates = new Set<string>(terms.map((term) => term.name));
 
         const okdecl = this.testToken(SYM_lparen);
         if(!okdecl) {
@@ -2541,7 +2536,7 @@ class Parser {
             return undefined;
         }
 
-        const params: InvokeParameterDecl[] = this.parseInvokeDeclParameters(cinfo, false, boundtemplates);
+        const params: InvokeParameterDecl[] = this.parseInvokeDeclParameters(cinfo, true, boundtemplates);
         
         let resultInfo = this.env.SpecialVoidSignature;
         if (this.testAndConsumeTokenIf(SYM_colon)) {
@@ -2931,6 +2926,9 @@ class Parser {
                 this.consumeToken();
                 return new ITestFail(isnot);
             }
+            else if(this.testToken(KW_success)) {
+                assert(false, "Not implemented -- itest success");
+            }
             else {
                 this.recordErrorGeneral(this.peekToken(), "Expected ITest");
                 return undefined;
@@ -2939,7 +2937,7 @@ class Parser {
     }
 
     private checkITestFirstToken(): boolean {
-        return this.testToken(SYM_bang) || this.testToken(SYM_langle) || this.testToken(KW_none) || this.testToken(KW_some) || this.testToken(KW_ok) || this.testToken(KW_fail);
+        return this.testToken(SYM_bang) || this.testToken(SYM_langle) || this.testToken(KW_none) || this.testToken(KW_some) || this.testToken(KW_ok) || this.testToken(KW_fail) || this.testToken(KW_success);
     }
 
     private parseRValueInTopTestExpression(): Expression {
@@ -3496,13 +3494,13 @@ class Parser {
 
     private parseSpecialConstructorExpression(): Expression {
         const sinfo = this.peekToken().getSourceInfo();
-        const cons = this.consumeTokenAndGetValue() as "fail" | "ok" | "some";
+        const cons = this.consumeTokenAndGetValue() as "fail" | "ok" | "some" | "success";
 
-        this.ensureAndConsumeTokenAlways(SYM_lparen, "special constructor expression");
-        const exp = this.parseExpression();
-        this.ensureAndConsumeTokenAlways(SYM_rparen, "special constructor expression");
+        const exps = this.parseListOf<Expression>("special constructor expression", SYM_lparen, SYM_rparen, SYM_coma, () => {
+            return this.parseExpression();
+        })
 
-        return new SpecialConstructorExpression(sinfo, cons, exp);
+        return new SpecialConstructorExpression(sinfo, cons, exps);
     }
 
     private parseEListConstructorExpression(): Expression {
@@ -3872,7 +3870,7 @@ class Parser {
         else if (tk == KW_env) {
             return this.parseEnvExpression();
         }
-        else if(tk === KW_some || tk === KW_ok || tk === KW_fail) {
+        else if(tk === KW_some || tk === KW_ok || tk === KW_fail || tk === KW_success) {
             return this.parseSpecialConstructorExpression();
         }
         else if(tk === SYM_lparenbar) {
@@ -4534,10 +4532,16 @@ class Parser {
         this.ensureAndConsumeTokenAlways(SYM_colon, "conditional expression");
         const elseexp = this.parseExpression();
 
+        //TODO: should the exp options allow task actions too (maybe not full Task::run etc things but at least self.process) -- see also parseShortCircuitOptions
+
         return new ConditionalValueExpression(sinfo, exp, thenexp, elseexp);
     }
 
     private parseShortCircuitOptions(exp: Expression): RValueExpression {
+        
+        //TODO: should the exp options allow task actions too to make cleanup calls nicer (maybe not full Task::run etc things but at least self.process) -- see also parseConditionalExpressionTail
+        //let x = (Task::run(...))?@!success do self.cleanup($_); -- also need to allow actions with no return type and check that all paths do a yield or continue
+
         if(this.testToken(SYM_atat)) {
             this.consumeToken();
 
@@ -6065,34 +6069,11 @@ class Parser {
         }
     }
 
-    private parseTaskMemberMethod(taskMemberMethods: TaskMethodDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[], typeTerms: Set<string>) {
+    private parseTaskMemberAction(taskMemberAction: TaskActionDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[], taskmain: string) {
         assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParsing));
 
         const sinfo = this.peekToken().getSourceInfo();
-        const mdecl = this.parseMethodInvokeDecl(true, attributes, typeTerms) as TaskMethodDecl;
-
-        if(taskMemberMethods === undefined) {
-            this.recordErrorGeneral(sinfo, "Cannot have a task method member on this type");
-        }
-        if(mdecl === undefined) {
-            return;
-        } 
-        
-        if(allMemberNames.has(mdecl.name)) {
-            this.recordErrorGeneral(sinfo, `Duplicate const member ${mdecl.name}`);
-        }
-        allMemberNames.add(mdecl.name);
-
-        if(taskMemberMethods !== undefined) {
-            taskMemberMethods.push(mdecl);
-        }
-    }
-
-    private parseTaskMemberAction(taskMemberAction: TaskActionDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[], typeTerms: Set<string>, taskmain: string) {
-        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParsing));
-
-        const sinfo = this.peekToken().getSourceInfo();
-        const adecl = this.parseActionInvokeDecl(attributes, typeTerms, taskmain);
+        const adecl = this.parseActionInvokeDecl(attributes, taskmain);
 
         if(taskMemberAction === undefined) {
             this.recordErrorGeneral(sinfo, "Cannot have a task method member on this type");
@@ -6159,7 +6140,7 @@ class Parser {
         invariants: InvariantDecl[] | undefined, validates: ValidateDecl[] | undefined,
         constMembers: ConstMemberDecl[] | undefined, functionMembers: TypeFunctionDecl[] | undefined, 
         memberFields: MemberFieldDecl[] | undefined, memberMethods: MethodDecl[] | undefined, 
-        taskMemberMethods: TaskMethodDecl[] | undefined, taskMemberAction: TaskActionDecl[] | undefined) {
+        taskMemberAction: TaskActionDecl[] | undefined) {
         let allMemberNames = new Set<string>();
 
         const rpos = this.scanMatchingParens(SYM_lbrace, SYM_rbrace);
@@ -6195,23 +6176,13 @@ class Parser {
                 this.parseMemberFunction(functionMembers, allMemberNames, attributes, typeTerms);
             }
             else if(this.testToken(KW_ref) || this.testFollows(KW_recursive, KW_ref) || this.testFollows(KW_recursive_q, KW_ref)) {
-                if(istask) {
-                    this.parseTaskMemberMethod(taskMemberMethods, allMemberNames, attributes, typeTerms);
-                }
-                else {
-                    this.parseMemberMethod(memberMethods, allMemberNames, attributes, typeTerms);
-                }
+                this.parseMemberMethod(memberMethods, allMemberNames, attributes, typeTerms);
             }
             else if(this.testToken(KW_method) || this.testFollows(KW_recursive, KW_method) || this.testFollows(KW_recursive_q, KW_method)) {
-                if(istask) {
-                    this.parseTaskMemberMethod(taskMemberMethods, allMemberNames, attributes, typeTerms);
-                }
-                else {
-                    this.parseMemberMethod(memberMethods, allMemberNames, attributes, typeTerms);
-                }
+                this.parseMemberMethod(memberMethods, allMemberNames, attributes, typeTerms);
             }
             else if(this.testToken(KW_action)) {
-                this.parseTaskMemberAction(taskMemberAction, allMemberNames, attributes, typeTerms, "main");
+                this.parseTaskMemberAction(taskMemberAction, allMemberNames, attributes, "start");
             }
             else if(this.testToken(KW_entity)) {
                 if(specialConcept === undefined) {
@@ -6251,7 +6222,7 @@ class Parser {
                 tdecl.provides.push(...provides);
             }
 
-            this.parseOOPMembersCommonAll(false, undefined, typeTerms, undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, typeTerms, undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined);
         }
         else {
             const tdecl = (specialConcept as APIResultTypeDecl).nestedEntityDecls.find((ned) => ned.name === ename) as InternalEntityTypeDecl;
@@ -6261,7 +6232,7 @@ class Parser {
                 tdecl.provides.push(...provides);
             }
 
-            this.parseOOPMembersCommonAll(false, undefined, typeTerms, undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, typeTerms, undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined);
         }
     }
 
@@ -6327,26 +6298,26 @@ class Parser {
         }
 
         if(tdecl instanceof PrimitiveEntityTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined);
         }
         else if(tdecl instanceof SomeTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined);
         }
         else if(tdecl instanceof ListTypeDecl || tdecl instanceof StackTypeDecl || tdecl instanceof QueueTypeDecl || tdecl instanceof SetTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined);
         }
         else if(tdecl instanceof MapEntryTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(["K", "V"]), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(["K", "V"]), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined);
         }
         else if(tdecl instanceof MapTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(["K", "V"]), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(["K", "V"]), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined);
         }
         else if(tdecl instanceof EventListTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined);
         }
         else {
             const edecl = tdecl as EntityTypeDecl;
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(edecl.terms.map((term) => term.name)), edecl.invariants, edecl.validates, edecl.consts, edecl.functions, edecl.fields, edecl.methods, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(edecl.terms.map((term) => term.name)), edecl.invariants, edecl.validates, edecl.consts, edecl.functions, edecl.fields, edecl.methods, undefined);
         }
     }
 
@@ -6401,17 +6372,17 @@ class Parser {
         }
         else {
             const rdecl = pdecl as APIResultTypeDecl;
-            if(ename === "APIErrorTypeDecl") {
+            if(ename === "Error") {
                 rdecl.nestedEntityDecls.push(new APIErrorTypeDecl(this.env.currentFile, sinfo, attributes, ename));
             }
-            else if(ename === "APIRejectedTypeDecl") {
+            else if(ename === "Rejected") {
                 rdecl.nestedEntityDecls.push(new APIRejectedTypeDecl(this.env.currentFile, sinfo, attributes, ename));
             }
-            else if(ename === "APIDeniedTypeDecl") {
+            else if(ename === "Denied") {
                 rdecl.nestedEntityDecls.push(new APIDeniedTypeDecl(this.env.currentFile, sinfo, attributes, ename));
             }
-            else if(ename === "APIFlaggedTypeDecl") {
-                rdecl.nestedEntityDecls.push(new APIFlaggedTypeDecl(this.env.currentFile, sinfo, attributes, ename));
+            else if(ename === "Dropped") {
+                rdecl.nestedEntityDecls.push(new APIDroppedTypeDecl(this.env.currentFile, sinfo, attributes, ename));
             }
             else {
                 rdecl.nestedEntityDecls.push(new APISuccessTypeDecl(this.env.currentFile, sinfo, attributes, ename));
@@ -6486,17 +6457,17 @@ class Parser {
         }
 
         if(tdecl instanceof OptionTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined);
         }
         else if(tdecl instanceof ResultTypeDecl) {
-            this.parseOOPMembersCommonAll(false, tdecl, new Set<string>(["T", "E"]), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, tdecl, new Set<string>(["T", "E"]), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined);
         }
         else if(tdecl instanceof APIResultTypeDecl) {
-            this.parseOOPMembersCommonAll(false, tdecl, new Set<string>(["T", "E"]), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, tdecl, new Set<string>(["T"]), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined);
         }
         else {
             const cdecl = tdecl as ConceptTypeDecl;
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(cdecl.terms.map((term) => term.name)), cdecl.invariants, cdecl.validates, cdecl.consts, cdecl.functions, cdecl.fields, cdecl.methods, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(cdecl.terms.map((term) => term.name)), cdecl.invariants, cdecl.validates, cdecl.consts, cdecl.functions, cdecl.fields, cdecl.methods, undefined);
         }
     }
 
@@ -6666,7 +6637,7 @@ class Parser {
                     tdecl.provides.push(...provides);
                 }
 
-                this.parseOOPMembersCommonAll(false, undefined, new Set<string>(), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
+                this.parseOOPMembersCommonAll(false, undefined, new Set<string>(), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined);
             }
         }
     }
@@ -6717,7 +6688,7 @@ class Parser {
                 (tdecl as DatatypeMemberEntityTypeDecl).fields.push(...fields);
             }
             else {
-                this.parseOOPMembersCommonAll(false, undefined, new Set<string>(parenttype.terms.map((term) => term.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, (tdecl as DatatypeMemberEntityTypeDecl).fields, tdecl.methods, undefined, undefined);
+                this.parseOOPMembersCommonAll(false, undefined, new Set<string>(parenttype.terms.map((term) => term.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, (tdecl as DatatypeMemberEntityTypeDecl).fields, tdecl.methods, undefined);
             }
         }
     }
@@ -6777,7 +6748,7 @@ class Parser {
                     tdecl.fields.push(...fields);
                 }
                 else {
-                    this.parseOOPMembersCommonAll(false, undefined, new Set<string>(tdecl.terms.map((term) => term.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, tdecl.fields, tdecl.methods, undefined, undefined);
+                    this.parseOOPMembersCommonAll(false, undefined, new Set<string>(tdecl.terms.map((term) => term.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, tdecl.fields, tdecl.methods, undefined);
                     if(tdecl.functions.length !== 0 || tdecl.methods.length !== 0) {
                         this.recordErrorGeneral(sinfo, "Using component cannot include functions or methods");
                     }
@@ -6802,7 +6773,7 @@ class Parser {
                 this.scanOverBraceDelimitedDeclaration();
             }
             else {
-                this.parseOOPMembersCommonAll(false, undefined, new Set<string>(tdecl.terms.map((tt) => tt.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, tdecl.fields, tdecl.methods, undefined, undefined);
+                this.parseOOPMembersCommonAll(false, undefined, new Set<string>(tdecl.terms.map((tt) => tt.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, tdecl.fields, tdecl.methods, undefined);
             }
         }
 
@@ -6881,33 +6852,21 @@ class Parser {
         const tname = this.parseIdentifierAsNamespaceOrTypeName();
 
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
-            const hasterms = this.testToken(SYM_langle);
-
-            if(this.env.currentNamespace.checkDeclNameClashType(tname, hasterms)) {
+            if(this.env.currentNamespace.checkDeclNameClashType(tname, false)) {
                 this.recordErrorGeneral(sinfo, `Collision between type and other names -- ${tname}`);
             }
 
             const tdecl = new TaskDecl(this.env.currentFile, sinfo, attributes, this.env.currentNamespace.fullnamespace, tname);
-            this.env.currentNamespace.typedecls.push(tdecl);
+            this.env.currentNamespace.tasks.push(tdecl);
 
             this.env.currentNamespace.declaredNames.add(tname);
-            this.env.currentNamespace.declaredTypeNames.push({name: tname, hasterms: hasterms});
+            this.env.currentNamespace.declaredTypeNames.push({name: tname, hasterms: false});
 
             this.scanOverBraceDelimitedDeclaration();
         }
         else {
-            const tdecl = this.env.currentNamespace.typedecls.find((td) => td.name === tname);
+            const tdecl = this.env.currentNamespace.tasks.find((td) => td.name === tname);
             assert(tdecl !== undefined && tdecl instanceof TaskDecl, "Failed to find task type");
-
-            const terms = this.parseTypeTemplateTerms();
-            if(terms.length !== 0) {
-                tdecl.terms.push(...terms);
-            }
-
-            const provides = this.parseProvides();
-            if(provides.length !== 0) {
-                this.recordErrorGeneral(sinfo, "Cannot have provides on tasks");
-            }
 
             while(this.testToken(KW_status) || this.testToken(KW_resource) || this.testToken(KW_env) || this.testToken(KW_event) ||this.testToken(KW_configs) ) {
                 if(this.testToken(KW_event)) {
@@ -6958,7 +6917,7 @@ class Parser {
                 }
             }
 
-            this.parseOOPMembersCommonAll(true, undefined, new Set<string>(tdecl.terms.map((term) => term.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, tdecl.fields, undefined, tdecl.selfmethods, tdecl.actions);
+            this.parseOOPMembersCommonAll(true, undefined, new Set<string>(tdecl.terms.map((term) => term.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, tdecl.fields, undefined, tdecl.actions);
         }
     }
 
@@ -7000,7 +6959,7 @@ class Parser {
             const argNames = new Set<string>(params.map((param) => param.name));
             const cargs = params.map((param) => new VariableDefinitionInfo(param.pkind || "let", param.name));
 
-            const [preconds, postconds] = this.parsePreAndPostConditions(sinfo, argNames, new Set<string>(), new Set<string>(), true, true);
+            const [preconds, postconds] = this.parsePreAndPostConditions(sinfo, argNames, new Set<string>(), new Set<string>(), false, true);
     
             let configs: TaskConfiguration = new TaskConfiguration(undefined, undefined, undefined);
             let statusinfo: TypeSignature[] = [];
@@ -7100,7 +7059,7 @@ class Parser {
             const argNames = new Set<string>(params.map((param) => param.name));
             const cargs = params.map((param) => new VariableDefinitionInfo("let", param.name));
 
-            const [preconds, postconds] = this.parsePreAndPostConditions(sinfo, argNames, new Set<string>(), new Set<string>(), true, true);
+            const [preconds, postconds] = this.parsePreAndPostConditions(sinfo, argNames, new Set<string>(), new Set<string>(), false, true);
     
             let configs: TaskConfiguration = new TaskConfiguration(undefined, undefined, undefined);
             let statusinfo: TypeSignature[] = [];

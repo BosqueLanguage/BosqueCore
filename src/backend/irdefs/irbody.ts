@@ -80,6 +80,7 @@ enum IRExpressionTag {
     IRConstructorSomeTypeExpression = "IRConstructorSomeTypeExpression",
     IRConstructorOkTypeExpression = "IRConstructorOkTypeExpression",
     IRConstructorFailTypeExpression = "IRConstructorFailTypeExpression",
+    IRConstructorAPISuccessTypeExpression = "IRConstructorAPISuccessTypeExpression",
     IRConstructorMapEntryTypeExpression = "IRConstructorMapEntryTypeExpression",
 
     IRConstructorStandardEntityExpression = "IRConstructorStandardEntityExpression",
@@ -102,6 +103,9 @@ enum IRExpressionTag {
     IRInvokeSimpleWithImplicitsExpression = "IRInvokeSimpleWithImplicitsExpression",
     IRInvokeVirtualSimpleExpression = "IRInvokeVirtualSimpleExpression",
     IRInvokeVirtualWithImplicitsExpression = "IRInvokeVirtualWithImplicitsExpression",
+
+    IRInvokeCallAgentOrAPIExpression = "IRInvokeCallAgentOrAPIExpression",
+    IRInvokeTaskActionExpression = "IRInvokeTaskActionExpression",
 
     IRInterpolateFormatCStringExpression = "IRInterpolateFormatCStringExpression",
     IRInterpolateFormatStringExpression = "IRInterpolateFormatStringExpression",
@@ -1885,6 +1889,25 @@ class IRConstructorFailTypeExpression extends IRSimpleExpression {
     }
 }
 
+class IRConstructorAPISuccessTypeExpression extends IRSimpleExpression {
+    readonly oftype: IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(oftype: IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRConstructorAPISuccessTypeExpression);
+        this.oftype = oftype;
+        this.value = value;
+    }
+
+    override toBAPI(): string {
+        assert(false, "IRConstructorAPISuccessTypeExpression.toBAPI not implemented");
+    }
+
+    static parseBAPIAsIRConstructorAPISuccessTypeExpression(lexer: BAPILexer): IRConstructorAPISuccessTypeExpression {
+        assert(false, "IRConstructorAPISuccessTypeExpression.parseBAPI not implemented");
+    }
+}
+
 class IRConstructorMapEntryTypeExpression extends IRSimpleExpression {
     readonly oftype: IRTypeSignature;
     readonly key: IRSimpleExpression;
@@ -2158,6 +2181,54 @@ class IRInvokeVirtualWithImplicitsExpression extends IRInvokeImplicitsExpression
 
     static parseBAPIAsIRInvokeVirtualWithImplicitsExpression(lexer: BAPILexer): IRInvokeVirtualWithImplicitsExpression {
         assert(false, "IRInvokeVirtualWithImplicitsExpression.parseBAPI not implemented");
+    }
+}
+
+class IRInvokeCallAgentOrAPIExpression extends IRExpression {
+    readonly ikey: string;
+    readonly args: IRSimpleExpression[];
+    readonly external: boolean;
+
+    constructor(ikey: string, args: IRSimpleExpression[], external: boolean) {
+        super(IRExpressionTag.IRInvokeCallAgentOrAPIExpression);
+        this.ikey = ikey;
+        this.args = args;
+        this.external = external;
+    }
+
+    override isSimpleExpression(): boolean {
+        return false;
+    }
+
+    override toBAPI(): string {
+        assert(false, "IRInvokeCallAgentOrAPIExpression.toBAPI not implemented");
+    }
+
+    static parseBAPIAsIRInvokeCallAgentOrAPIExpression(lexer: BAPILexer): IRInvokeCallAgentOrAPIExpression {
+        assert(false, "IRInvokeCallAgentOrAPIExpression.parseBAPI not implemented");
+    }
+}
+
+class IRInvokeTaskActionExpression extends IRExpression {
+    readonly ikey: string;
+    readonly args: IRSimpleExpression[];
+
+    constructor(ikey: string, args: IRSimpleExpression[]) {
+        super(IRExpressionTag.IRInvokeTaskActionExpression);
+        this.ikey = ikey;
+        this.args = args;
+    }
+
+    override isSimpleExpression(): boolean {
+        return false;
+    }
+
+    override toBAPI(): string {
+        assert(false, "IRInvokeTaskActionExpression.toBAPI not implemented");
+    }
+
+    static parseBAPIAsIRInvokeTaskActionExpression(lexer: BAPILexer): IRInvokeTaskActionExpression {
+        assert(false, "IRInvokeTaskActionExpression.parseBAPI not implemented");
     }
 }
 
@@ -4376,6 +4447,24 @@ abstract class IRBody {
     }
 }
 
+class IRAbstractBody extends IRBody {
+    constructor() {
+        super();
+    }
+
+    override isSimpleBody(): boolean {
+        return false;
+    }
+
+    override toBAPI(): string {
+        assert(false, "IRAbstractBody.toBAPI not implemented");
+    }
+
+    static parseBAPIAsIRAbstractBody(lexer: BAPILexer): IRAbstractBody {
+        assert(false, "IRAbstractBody.parseBAPI not implemented");
+    }
+}
+
 class IRBuiltinBody extends IRBody {
     readonly builtin: string;
     readonly biterms: [string, IRTypeSignature][];
@@ -4472,7 +4561,7 @@ export {
     
     IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression,
 
-    IRConstructorSomeTypeExpression, IRConstructorOkTypeExpression, IRConstructorFailTypeExpression, IRConstructorMapEntryTypeExpression,
+    IRConstructorSomeTypeExpression, IRConstructorOkTypeExpression, IRConstructorFailTypeExpression, IRConstructorAPISuccessTypeExpression, IRConstructorMapEntryTypeExpression,
 
     IRConstructExpression,
 
@@ -4485,6 +4574,8 @@ export {
     IRAccessFieldExpression, IRAccessFieldSpecialExpression, IRAccessFieldDirectExpression, IRAccessFieldVirtualExpression, IRAccessEListIndexExpression,
 
     IRInvokeExpression, IRInvokeDirectExpression, IRInvokeImplicitsExpression, IRInvokeSimpleExpression, IRInvokeSimpleWithImplicitsExpression, IRInvokeVirtualSimpleExpression, IRInvokeVirtualWithImplicitsExpression,
+
+    IRInvokeCallAgentOrAPIExpression, IRInvokeTaskActionExpression,
 
     IRInterpolateFormatCStringExpression, IRInterpolateFormatStringExpression,
 
@@ -4534,5 +4625,5 @@ export {
     IRAbortStatement, IRAssertStatement, IRAssumeStatement, IRValidateStatement, IRDebugStatement,
 
     IRBlockStatement,
-    IRBody, IRBuiltinBody, IRHoleBody, IRStandardBody
+    IRBody, IRAbstractBody, IRBuiltinBody, IRHoleBody, IRStandardBody
 };

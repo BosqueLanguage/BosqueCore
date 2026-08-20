@@ -1,5 +1,5 @@
 
-import { IRAbstractCollectionTypeDecl, IRAbstractConceptTypeDecl, IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAssembly, IRConceptTypeDecl, IRDatatypeMemberEntityTypeDecl, IRDatatypeTypeDecl, IREntityTypeDecl, IREnumTypeDecl, IRListTypeDecl, IRMapEntryTypeDecl, IRMapTypeDecl, IROptionTypeDecl, IRPrimitiveEntityTypeDecl, IRQueueTypeDecl, IRSetTypeDecl, IRSomeTypeDecl, IRStackTypeDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl } from "../irdefs/irassembly.js";
+import { IRAbstractCollectionTypeDecl, IRAbstractConceptTypeDecl, IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAPIDeniedTypeDecl, IRAPIDroppedTypeDecl, IRAPIErrorTypeDecl, IRAPIRejectedTypeDecl, IRAPIResultTypeDecl, IRAPISuccessTypeDecl, IRAssembly, IRConceptTypeDecl, IRDatatypeMemberEntityTypeDecl, IRDatatypeTypeDecl, IREntityTypeDecl, IREnumTypeDecl, IRListTypeDecl, IRMapEntryTypeDecl, IRMapTypeDecl, IROptionTypeDecl, IRPrimitiveEntityTypeDecl, IRQueueTypeDecl, IRSetTypeDecl, IRSomeTypeDecl, IRStackTypeDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl } from "../irdefs/irassembly.js";
 import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype.js";
 import { TransformCPPNameManager } from "./namemgr.js";
 
@@ -19,6 +19,9 @@ function LIST_T_LEAF_CAPACITY(elem_size: number): number {
     //leaf should be big enough to hold a map(..) operation result from any type AND also be larger than the inline capacity (which-ever is larger)
     return (MAX_LIST_INLINE_BYTES / 8) + 1;
 }
+
+//Duplicated from C++ definitions
+const BSQ_API_RESULT_DATA_SIZE_BYTES = 48;
 
 class VirtualInvokeInfo {
     readonly ikey: string;
@@ -453,6 +456,9 @@ class TypeInfoManager {
                 else if(ddecl instanceof IRSomeTypeDecl) {
                     isqr = this.isQuickReleaseType(ddecl.ttype, irasm);
                 }
+                else if((ddecl instanceof IRAPIErrorTypeDecl) || (ddecl instanceof IRAPIRejectedTypeDecl) || (ddecl instanceof IRAPIDeniedTypeDecl) || (ddecl instanceof IRAPIDroppedTypeDecl) || (ddecl instanceof IRAPISuccessTypeDecl)) {
+                    isqr = this.isQuickReleaseType(ddecl.ttype, irasm);
+                }
                 else if(ddecl instanceof IRMapEntryTypeDecl) {
                     isqr = this.isQuickReleaseType(ddecl.ktype, irasm) && this.isQuickReleaseType(ddecl.vtype, irasm);
                 }
@@ -471,6 +477,9 @@ class TypeInfoManager {
             }
             else {
                 if(ddecl instanceof IROptionTypeDecl) {
+                    isqr = this.isQuickReleaseType(ddecl.ttype, irasm);
+                }
+                else if(ddecl instanceof IRAPIResultTypeDecl) {
                     isqr = this.isQuickReleaseType(ddecl.ttype, irasm);
                 }
                 else if(ddecl instanceof IRConceptTypeDecl) {
@@ -508,9 +517,14 @@ class TypeInfoManager {
     }
 
     private generateLayoutInfoForEntity(tdecl: IRAbstractEntityTypeDecl, irasm: IRAssembly): LayoutInfo {
-        if(tdecl instanceof IRSomeTypeDecl) {
+        if((tdecl instanceof IRSomeTypeDecl)) {
             const oftinfo = this.generateLayoutInfoForType(tdecl.ttype, irasm);
             this.addLayoutInfo(tdecl.tkey, new LayoutInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), oftinfo.bytesize, oftinfo.layoutmask));
+        }
+        else if((tdecl instanceof IRAPIErrorTypeDecl) || (tdecl instanceof IRAPIRejectedTypeDecl) || (tdecl instanceof IRAPIDeniedTypeDecl) || (tdecl instanceof IRAPIDroppedTypeDecl) || (tdecl instanceof IRAPISuccessTypeDecl)) {
+            const oftinfo = this.generateLayoutInfoForType(tdecl.ttype, irasm);
+            const mask = "000000" + oftinfo.layoutmask;
+            this.addLayoutInfo(tdecl.tkey, new LayoutInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), BSQ_API_RESULT_DATA_SIZE_BYTES + oftinfo.bytesize, mask));
         }
         else if(tdecl instanceof IRMapEntryTypeDecl) {
             const kftinfo = this.generateLayoutInfoForType(tdecl.ktype, irasm);
@@ -580,6 +594,11 @@ class TypeInfoManager {
 
             let spm = TypeInfoManager.isAllNopMask(oftinfo.layoutmask) ? ("0" + oftinfo.layoutmask) : ("2" + TypeInfoManager.computeValueMaskOfK(oftinfo.slotcount));
             this.addLayoutInfo(tdecl.tkey, new LayoutInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), oftinfo.bytesize + 8, spm));
+        }
+        else if(tdecl instanceof IRAPIResultTypeDecl) {
+            const oftinfo = this.generateLayoutInfoForType(tdecl.ttype, irasm);
+            let spm = TypeInfoManager.isAllNopMask(oftinfo.layoutmask) ? ("0" + "000000" + oftinfo.layoutmask) : ("2" + "000000" + TypeInfoManager.computeValueMaskOfK(oftinfo.slotcount));
+            this.addLayoutInfo(tdecl.tkey, new LayoutInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), oftinfo.bytesize + BSQ_API_RESULT_DATA_SIZE_BYTES + 8, spm));
         }
         else {
             assert((tdecl instanceof IRConceptTypeDecl) || (tdecl instanceof IRDatatypeTypeDecl), `TypeInfoManager::processInfoGenerationForConcept - Unsupported concept type declaration for key ${tdecl.tkey}`);
@@ -659,6 +678,14 @@ class TypeInfoManager {
 
             const ttid = this.typeInfoMap.size;
             this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, oftinfo.bytesize, LayoutTag.Value, TypeInfoManager.staticLayoutToPtrMaskConvert(oftinfo.layoutmask), quickrelease));
+        }
+        else if((tdecl instanceof IRAPIErrorTypeDecl) || (tdecl instanceof IRAPIRejectedTypeDecl) || (tdecl instanceof IRAPIDeniedTypeDecl) || (tdecl instanceof IRAPIDroppedTypeDecl) || (tdecl instanceof IRAPISuccessTypeDecl)) {
+            const quickrelease = this.isQuickReleaseType(tdecl.ttype, irasm);
+            const oftinfo = this.generateLayoutInfoForType(tdecl.ttype, irasm);
+
+            const ttid = this.typeInfoMap.size;
+            const mask = TypeInfoManager.staticLayoutToPtrMaskConvert("000000" + oftinfo.layoutmask);
+            this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, BSQ_API_RESULT_DATA_SIZE_BYTES + oftinfo.bytesize, LayoutTag.Value, mask, quickrelease));
         }
         else if(tdecl instanceof IRMapEntryTypeDecl) {
             const quickrelease = this.isQuickReleaseType(tdecl.ktype, irasm) && this.isQuickReleaseType(tdecl.vtype, irasm);
@@ -766,6 +793,14 @@ class TypeInfoManager {
             const ttid = this.typeInfoMap.size;
             let spm = TypeInfoManager.isAllNopMask(oftinfo.layoutmask) ? ("0" + oftinfo.layoutmask) : ("2" + TypeInfoManager.computeValueMaskOfK(oftinfo.slotcount));
             this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, oftinfo.bytesize + 8, LayoutTag.Value, TypeInfoManager.staticLayoutToPtrMaskConvert(spm), quickrelease));
+        }
+        else if(tdecl instanceof IRAPIResultTypeDecl) {
+            const quickrelease = this.isQuickReleaseType(tdecl.ttype, irasm);
+            const oftinfo = this.generateLayoutInfoForType(tdecl.ttype, irasm);
+
+            const ttid = this.typeInfoMap.size;
+            let spm = TypeInfoManager.isAllNopMask(oftinfo.layoutmask) ? ("0" + "000000" + oftinfo.layoutmask) : ("2" + "000000" + TypeInfoManager.computeValueMaskOfK(oftinfo.slotcount));
+            this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, oftinfo.bytesize + BSQ_API_RESULT_DATA_SIZE_BYTES + 8, LayoutTag.Value, TypeInfoManager.staticLayoutToPtrMaskConvert(spm), quickrelease));
         }
         else {
             assert((tdecl instanceof IRConceptTypeDecl) || (tdecl instanceof IRDatatypeTypeDecl), `TypeInfoManager::processInfoGenerationForConcept - Unsupported concept type declaration for key ${tdecl.tkey}`);
@@ -916,6 +951,26 @@ class TypeInfoManager {
         irasm.dashtypes.forEach((ttype) => { if(!timgr.hasLayoutInfo(ttype.tkeystr)) { timgr.generateLayoutInfoForType(ttype, irasm); } });
         irasm.formats.forEach((ttype) => { if(!timgr.hasLayoutInfo(ttype.tkeystr)) { timgr.generateLayoutInfoForType(ttype, irasm); } });
 
+        for(let i = 0; i < irasm.tasks.length; ++i) {
+            const tdecl = irasm.tasks[i];
+
+            let totalbytesize = 0;
+            let layoutmask = "";
+            if(tdecl.fields.length === 0) {
+                totalbytesize = 8;
+                layoutmask = "0";
+            }
+            else {
+                for(let i = 0; i < tdecl.fields.length; ++i) {
+                    const ftypeinfo = timgr.generateLayoutInfoForType(tdecl.fields[i].declaredType, irasm);
+                    totalbytesize += ftypeinfo.bytesize;
+                    layoutmask += ftypeinfo.layoutmask;
+                }
+            }
+
+            timgr.addLayoutInfo(tdecl.tkey, new LayoutInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), totalbytesize, layoutmask));
+        }
+
         //////////////////////////////////////////////////////////////
         //Type Info
 
@@ -1020,6 +1075,31 @@ class TypeInfoManager {
 
         irasm.entities.forEach((tdecl) => { timgr.processFieldInfoGenerationForEntity(tdecl, irasm); });
         irasm.datamembers.forEach((tdecl) => { timgr.processFieldInfoGenerationForEntity(tdecl, irasm); });
+
+        for(let i = 0; i < irasm.tasks.length; ++i) {
+            const tdecl = irasm.tasks[i];
+
+            let totalbytesize = 0;
+            let layoutmask = "";
+            if(tdecl.fields.length === 0) {
+                totalbytesize = 8;
+                layoutmask = "0";
+            }
+            else {
+                for(let i = 0; i < tdecl.fields.length; ++i) {
+                    const ftypeinfo = timgr.generateLayoutInfoForType(tdecl.fields[i].declaredType, irasm);
+
+                    totalbytesize += ftypeinfo.bytesize;
+                    layoutmask += ftypeinfo.layoutmask;
+                }
+            }
+
+            const ptrmask: string | undefined = TypeInfoManager.staticLayoutToPtrMaskConvert(layoutmask); 
+            const ttid = timgr.typeInfoMap.size;
+
+            const quickrelease = true; //tasks are special cases that are always quick release since they are never stored in a collection or entity
+            timgr.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, totalbytesize, LayoutTag.Value, ptrmask, quickrelease));
+        }
 
         return timgr;
     }

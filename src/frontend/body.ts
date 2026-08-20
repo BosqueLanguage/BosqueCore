@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { FullyQualifiedNamespace, AutoTypeSignature, RecursiveAnnotation, TypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper } from "./type.js";
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls.js";
-import { LambdaDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, TaskConfiguration, TypeFunctionDecl } from "./assembly.js";
+import { AgentDecl, APIDecl, LambdaDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, TaskActionDecl, TaskConfiguration, TaskDecl, TypeFunctionDecl } from "./assembly.js";
 
 class BinderInfo {
     readonly srcname: string; //the name in the source code
@@ -919,19 +919,20 @@ class ConstructorLambdaExpression extends Expression {
 }
 
 class SpecialConstructorExpression extends Expression {
-    readonly rop: "ok" | "fail" | "some";
-    readonly arg: Expression;
+    readonly rop: "ok" | "fail" | "some" | "success";
+    readonly args: Expression[];
 
     constype: TypeSignature | undefined = undefined;
 
-    constructor(sinfo: SourceInfo, rop: "ok" | "fail" | "some", arg: Expression) {
+    constructor(sinfo: SourceInfo, rop: "ok" | "fail" | "some" | "success", args: Expression[]) {
         super(ExpressionTag.SpecialConstructorExpression, sinfo);
         this.rop = rop;
-        this.arg = arg;
+        this.args = args;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.rop}(${this.arg.emit(toplevel, fmt)})`;
+        const argstr = this.args.map((arg) => arg.emit(true, fmt));
+        return `${this.rop}(${argstr.join(", ")})`;
     }
 }
 
@@ -1140,6 +1141,10 @@ class CallTaskActionExpression extends Expression {
     readonly name: string;
     readonly terms: TypeSignature[];
     readonly args: ArgumentList;
+
+    resolvedTaskDecl: TaskDecl | undefined = undefined;
+    resolvedActionDecl: TaskActionDecl | undefined = undefined;
+    monoinvid: number | undefined = undefined;
 
     constructor(sinfo: SourceInfo, name: string, terms: TypeSignature[], args: ArgumentList) {
         super(ExpressionTag.CallTaskActionExpression, sinfo);
@@ -2040,6 +2045,9 @@ class APIInvokeExpression extends Expression {
     readonly configs: TaskConfiguration;
     readonly envexp: EnvironmentGenerationExpression;
 
+    monoinvid: number | undefined = undefined;
+    resolvedAPI: APIDecl | undefined = undefined;
+
     constructor(sinfo: SourceInfo, ns: FullyQualifiedNamespace, api: string, args: Expression[], envexp: EnvironmentGenerationExpression, configs: TaskConfiguration) {
         super(ExpressionTag.APIInvokeExpression, sinfo);
         this.ns = ns;
@@ -2066,6 +2074,9 @@ class AgentInvokeExpression extends Expression {
     readonly args: Expression[];
     readonly configs: TaskConfiguration;
     readonly envexp: EnvironmentGenerationExpression;
+
+    monoinvid: number | undefined = undefined;
+    resolvedAgent: AgentDecl | undefined = undefined;
 
     constructor(sinfo: SourceInfo, ns: FullyQualifiedNamespace, agent: string, optrestype: TypeSignature | undefined, args: Expression[], envexp: EnvironmentGenerationExpression, configs: TaskConfiguration) {
         super(ExpressionTag.AgentInvokeExpression, sinfo);

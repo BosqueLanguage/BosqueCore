@@ -19,6 +19,7 @@ const MAX_SAFE_CHK_NAT = s_p124bit_safe;
 
 const WELL_KNOWN_RETURN_VAR_NAME = "$return";
 const WELL_KNOWN_EVENTS_VAR_NAME = "$events";
+const WELL_KNOWN_RESULT_EVENT_NAME = "$ofevent";
 
 enum TemplateTermDeclExtraTag {
     KeyType = "keytype",
@@ -501,20 +502,6 @@ class MethodDecl extends ExplicitInvokeDecl {
     }
 }
 
-class TaskMethodDecl extends ExplicitInvokeDecl {
-    readonly isSelfRef: boolean;
-
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: InvokeParameterDecl[], resultType: TypeSignature, body: BodyImplementation, terms: InvokeTemplateTermDecl[], termRestriction: InvokeTemplateTypeRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], isSelfRef: boolean) {
-        super(file, sinfo, attributes, name, recursive, params, resultType, body, terms, termRestriction, preconditions, postconditions);
-
-        this.isSelfRef = isSelfRef;
-    }
-
-    getDeclarationTag(): string {
-        return (this.isSelfRef ? "ref " : "") + "method";
-    }
-}
-
 class TaskActionDecl extends ExplicitInvokeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, params: InvokeParameterDecl[], resultType: TypeSignature, body: BodyImplementation, terms: InvokeTemplateTermDecl[], termRestriction: InvokeTemplateTypeRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[]) {
         super(file, sinfo, attributes, name, "no", params, resultType, body, terms, termRestriction, preconditions, postconditions);
@@ -611,7 +598,7 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
 
     //These are our annoying nested types
     isSpecialResultEntity(): boolean { return (this instanceof OkTypeDecl) || (this instanceof FailTypeDecl); }
-    isSpecialAPIResultEntity(): boolean { return (this instanceof APIErrorTypeDecl) || (this instanceof APIRejectedTypeDecl) || (this instanceof APIDeniedTypeDecl) || (this instanceof APIFlaggedTypeDecl) || (this instanceof APISuccessTypeDecl); }
+    isSpecialAPIResultEntity(): boolean { return (this instanceof APIErrorTypeDecl) || (this instanceof APIRejectedTypeDecl) || (this instanceof APIDeniedTypeDecl) || (this instanceof APIDroppedTypeDecl) || (this instanceof APISuccessTypeDecl); }
 
     hasAttribute(aname: string): boolean {
         return this.attributes.find((attr) => attr.name === aname) !== undefined;
@@ -847,7 +834,7 @@ class APIDeniedTypeDecl extends ConstructableTypeDecl {
     }
 }
 
-class APIFlaggedTypeDecl extends ConstructableTypeDecl {
+class APIDroppedTypeDecl extends ConstructableTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
     }
@@ -1040,7 +1027,7 @@ class ResultTypeDecl extends InternalConceptTypeDecl {
 }
 
 class APIResultTypeDecl extends InternalConceptTypeDecl {
-    readonly nestedEntityDecls: (APIErrorTypeDecl | APIRejectedTypeDecl | APIDeniedTypeDecl | APIFlaggedTypeDecl | APISuccessTypeDecl)[] = [];
+    readonly nestedEntityDecls: (APIErrorTypeDecl | APIRejectedTypeDecl | APIDeniedTypeDecl | APIDroppedTypeDecl | APISuccessTypeDecl)[] = [];
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
@@ -1058,8 +1045,8 @@ class APIResultTypeDecl extends InternalConceptTypeDecl {
         return this.nestedEntityDecls.find((ned) => ned instanceof APIDeniedTypeDecl) as APIDeniedTypeDecl;
     }
     
-    getAPIFlaggedType(): APIFlaggedTypeDecl {
-        return this.nestedEntityDecls.find((ned) => ned instanceof APIFlaggedTypeDecl) as APIFlaggedTypeDecl;
+    getAPIDroppedType(): APIDroppedTypeDecl {
+        return this.nestedEntityDecls.find((ned) => ned instanceof APIDroppedTypeDecl) as APIDroppedTypeDecl;
     }
 
     getAPISuccessType(): APISuccessTypeDecl {
@@ -1223,6 +1210,8 @@ class APIDecl extends AbstractCoreDecl {
 
     readonly body: BodyImplementation;
 
+    resolvename: string | undefined = undefined;
+
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, params: InvokeParameterDecl[], resultType: TypeSignature, eventType: TypeSignature | undefined, preconds: PreConditionDecl[], postconds: PostConditionDecl[], configs: TaskConfiguration, statusinfo: TypeSignature[], envreqs: EnvironmentVariableInformation[], resourcereqs: ResourceInformation, body: BodyImplementation) {
         super(file, sinfo, attributes, name);
 
@@ -1313,6 +1302,8 @@ class AgentDecl extends AbstractCoreDecl {
 
     readonly body: BodyImplementation;
 
+    resolvename: string | undefined = undefined;
+
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, params: InvokeParameterDecl[], resultType: TypeSignature | undefined, eventType: TypeSignature | undefined, preconds: PreConditionDecl[], postconds: PostConditionDecl[], configs: TaskConfiguration, statusinfo: TypeSignature[], envreqs: EnvironmentVariableInformation[], resourcereqs: ResourceInformation, body: BodyImplementation) {
         super(file, sinfo, attributes, name);
 
@@ -1390,7 +1381,6 @@ class AgentDecl extends AbstractCoreDecl {
 
 class TaskDecl extends AbstractNominalTypeDecl {
     readonly fields: MemberFieldDecl[] = [];
-    readonly selfmethods: TaskMethodDecl[] = [];
     readonly actions: TaskActionDecl[] = [];
 
     readonly configs: TaskConfiguration = new TaskConfiguration(undefined, undefined, undefined);
@@ -1399,6 +1389,9 @@ class TaskDecl extends AbstractNominalTypeDecl {
     readonly envreqs: EnvironmentVariableInformation[] = [];
     readonly resourcereqs: ResourceInformation = new ResourceInformation([]);
     readonly eventinfo: TypeSignature[] = [];
+
+    startaction: TaskActionDecl | undefined = undefined;
+    completeaction: TaskActionDecl | undefined = undefined;
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string) {
         super(file, sinfo, attributes, ns, name, AdditionalTypeDeclTag.Std);
@@ -1435,9 +1428,6 @@ class TaskDecl extends AbstractNominalTypeDecl {
 
         if(this.fields.length !== 0) {
             mg.push(this.fields.map((ff) => ff.emit(fmt)));
-        }
-        if(this.selfmethods.length !== 0) {
-            mg.push(this.selfmethods.map((sm) => sm.emit(fmt)));
         }
         if(this.actions.length !== 0) {
             mg.push(this.actions.map((act) => act.emit(fmt)));
@@ -1937,7 +1927,7 @@ class Assembly {
 
 export {
     MIN_SAFE_INT, MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_CHK_INT, MAX_SAFE_CHK_INT, MAX_SAFE_CHK_NAT,
-    WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_EVENTS_VAR_NAME,
+    WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RESULT_EVENT_NAME,
     TemplateTermDeclExtraTag, TemplateTermDecl, TypeTemplateTermDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestriction, 
     TaskConfiguration,
     AbstractDecl, 
@@ -1948,14 +1938,14 @@ export {
     ExplicitInvokeDecl,
     TestAssociation,
     FunctionInvokeDecl, NamespaceFunctionDecl, TypeFunctionDecl,
-    MethodDecl, TaskMethodDecl, TaskActionDecl,
+    MethodDecl, TaskActionDecl,
     ConstMemberDecl, MemberFieldDecl,
     AbstractNominalTypeDecl, AdditionalTypeDeclTag,
     EnumTypeDecl,
     TypedeclTypeDecl,
     AbstractEntityTypeDecl, PrimitiveEntityTypeDecl,
     InternalEntityTypeDecl,
-    ConstructableTypeDecl, OkTypeDecl, FailTypeDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIDeniedTypeDecl, APIFlaggedTypeDecl, APISuccessTypeDecl, SomeTypeDecl, MapEntryTypeDecl,
+    ConstructableTypeDecl, OkTypeDecl, FailTypeDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIDeniedTypeDecl, APIDroppedTypeDecl, APISuccessTypeDecl, SomeTypeDecl, MapEntryTypeDecl,
     AbstractCollectionTypeDecl, ListTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl,
     EventListTypeDecl,
     EntityTypeDecl, 

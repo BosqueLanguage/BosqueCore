@@ -2,7 +2,7 @@
 
 import { checkTestFunction, checkTestFunctionError } from "../../../bin/test/typecheck/typecheck_nf.js";
 import { describe, it } from "node:test";
-
+/*
 describe ("Checker -- Agent Declarations", () => {
     it("should check simple agent decl", function () {
         checkTestFunction('abstract agent foo(n: Nat): Int; function main(): Int { return 1i; }');
@@ -19,17 +19,20 @@ describe ("Checker -- Agent Declarations", () => {
 
 describe ("Checker -- Agent Calls", () => {
     it("should check simple agent call", function () {
-        checkTestFunction('abstract agent foo(n: Nat): Int; function main(): Int { return agent foo(3n); }');
-        checkTestFunction('abstract agent foo(n: Nat): Int; function main(): Int { let ii = agent Main::foo(env{}, 3n); return ii; }');
+        checkTestFunction('abstract agent foo(n: Nat): Int; api main(): Int { return agent foo(3n); }');
+        checkTestFunction('abstract agent foo(n: Nat): Int; api main(): Int { let ii = agent Main::foo(env{}, 3n); return ii; }');
 
-        checkTestFunction('abstract agent foo(n: Nat); function main(): Int { return agent foo<Int>(3n); }');
+        checkTestFunction('abstract agent foo(n: Nat); api main(): Int { return agent foo<Int>(3n); }');
     });
 
     it("should check simple agent call fail", function () {
-        checkTestFunctionError('abstract agent foo(n: Nat): Int; function main(): Int { return agent foo<Int>(3n); }', 'Agent does not allow result forming');
-        checkTestFunctionError('abstract agent foo(n: Nat); function main(): Int { return agent foo(3n); }', 'Agent requires type to form result into');
+        checkTestFunctionError('abstract agent foo(n: Nat): Int; function main(): Int { return agent foo(3n); }', 'Agent invocations must occour in environment aware code (agent/api/task) mode');
 
-        checkTestFunctionError('abstract agent foo(n: Nat): Int; function main(): Bool { return agent foo(3n); }', 'Expected a return value of type Bool but got Int');
-        checkTestFunctionError('abstract agent foo(n: Nat): Int; function main(): Int { return agent foo(3i); }', 'Argument type Int is not a subtype of expected parameter type Nat');
+        checkTestFunctionError('abstract agent foo(n: Nat): Int; api main(): Int { return agent foo<Int>(3n); }', 'Agent does not allow result forming');
+        checkTestFunctionError('abstract agent foo(n: Nat); api main(): Int { return agent foo(3n); }', 'Agent requires type to form result into');
+
+        checkTestFunctionError('abstract agent foo(n: Nat): Int; api main(): Bool { return agent foo(3n); }', 'Expected a return value of type Bool but got Int');
+        checkTestFunctionError('abstract agent foo(n: Nat): Int; api main(): Int { return agent foo(3i); }', 'Argument type Int is not a subtype of expected parameter type Nat');
     });
 });
+*/

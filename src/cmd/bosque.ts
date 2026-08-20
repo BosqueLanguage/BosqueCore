@@ -19,7 +19,11 @@ const [fullargs, mainns, outdir, emitir] = parseArgv("cppout", ...process.argv);
 function buildExeCode(ircode: IRAssembly, outname: string) {
     Status.output("Emitting CPP code...\n");
     const cppcode = CPPEmitter.createEmitter(ircode);
-    const maincode = cppcode.emitForCommandLine(`${mainns}::main`);
+    const maincode = cppcode.emitForCommandLine(`${mainns}`);
+    if(maincode === undefined) {
+        Status.error(`Could not find invoke or task for key ${mainns}::main or ${mainns}::Main\n`);
+        return;
+    }
 
     Status.output("    Writing CPP code to disk...\n");
     const nndir = path.normalize(outname);

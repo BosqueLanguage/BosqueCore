@@ -37,7 +37,7 @@ function buildMainCode(assembly: Assembly, outname: string): boolean {
     const ircode = ASMToIRConverter.generateIR(assembly, iim, undefined);
 
     const cppcode = CPPEmitter.createEmitter(ircode);
-    const maincode = cppcode.emitForCommandLine(`Main::main`);
+    const maincode = cppcode.emitForCommandLine(`Main`) as [string, string];
     
     const nndir = path.normalize(outname);
     try {
