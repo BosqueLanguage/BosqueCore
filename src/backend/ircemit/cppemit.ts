@@ -3055,6 +3055,8 @@ class CPPEmitter {
             '#include "./runcpp/core/mapentry.h"',
             '#include "./runcpp/core/map_kv.h"',
             '',
+            '#include "./runcpp/core/apiresult.h"',
+            '',
             '#include "./runcpp/runtime/taskinfo.h"',
             '',
             '#include "./runcpp/runtime/allocator/gc.h"'

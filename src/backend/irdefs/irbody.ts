@@ -80,6 +80,7 @@ enum IRExpressionTag {
     IRConstructorSomeTypeExpression = "IRConstructorSomeTypeExpression",
     IRConstructorOkTypeExpression = "IRConstructorOkTypeExpression",
     IRConstructorFailTypeExpression = "IRConstructorFailTypeExpression",
+    IRConstructorAPISuccessTypeExpression = "IRConstructorAPISuccessTypeExpression",
     IRConstructorMapEntryTypeExpression = "IRConstructorMapEntryTypeExpression",
 
     IRConstructorStandardEntityExpression = "IRConstructorStandardEntityExpression",
@@ -1885,6 +1886,25 @@ class IRConstructorFailTypeExpression extends IRSimpleExpression {
 
     static parseBAPIAsIRConstructorFailTypeExpression(lexer: BAPILexer): IRConstructorFailTypeExpression {
         assert(false, "IRConstructorFailTypeExpression.parseBAPI not implemented");
+    }
+}
+
+class IRConstructorAPISuccessTypeExpression extends IRSimpleExpression {
+    readonly oftype: IRTypeSignature;
+    readonly value: IRSimpleExpression;
+
+    constructor(oftype: IRTypeSignature, value: IRSimpleExpression) {
+        super(IRExpressionTag.IRConstructorAPISuccessTypeExpression);
+        this.oftype = oftype;
+        this.value = value;
+    }
+
+    override toBAPI(): string {
+        assert(false, "IRConstructorAPISuccessTypeExpression.toBAPI not implemented");
+    }
+
+    static parseBAPIAsIRConstructorAPISuccessTypeExpression(lexer: BAPILexer): IRConstructorAPISuccessTypeExpression {
+        assert(false, "IRConstructorAPISuccessTypeExpression.parseBAPI not implemented");
     }
 }
 
@@ -4539,7 +4559,7 @@ export {
     
     IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression,
 
-    IRConstructorSomeTypeExpression, IRConstructorOkTypeExpression, IRConstructorFailTypeExpression, IRConstructorMapEntryTypeExpression,
+    IRConstructorSomeTypeExpression, IRConstructorOkTypeExpression, IRConstructorFailTypeExpression, IRConstructorAPISuccessTypeExpression, IRConstructorMapEntryTypeExpression,
 
     IRConstructExpression,
 

@@ -1,5 +1,5 @@
 
-import { IRAbstractCollectionTypeDecl, IRAbstractConceptTypeDecl, IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAssembly, IRConceptTypeDecl, IRDatatypeMemberEntityTypeDecl, IRDatatypeTypeDecl, IREntityTypeDecl, IREnumTypeDecl, IRListTypeDecl, IRMapEntryTypeDecl, IRMapTypeDecl, IROptionTypeDecl, IRPrimitiveEntityTypeDecl, IRQueueTypeDecl, IRSetTypeDecl, IRSomeTypeDecl, IRStackTypeDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl } from "../irdefs/irassembly.js";
+import { IRAbstractCollectionTypeDecl, IRAbstractConceptTypeDecl, IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAPIDeniedTypeDecl, IRAPIDroppedTypeDecl, IRAPIErrorTypeDecl, IRAPIRejectedTypeDecl, IRAPISuccessTypeDecl, IRAssembly, IRConceptTypeDecl, IRDatatypeMemberEntityTypeDecl, IRDatatypeTypeDecl, IREntityTypeDecl, IREnumTypeDecl, IRListTypeDecl, IRMapEntryTypeDecl, IRMapTypeDecl, IROptionTypeDecl, IRPrimitiveEntityTypeDecl, IRQueueTypeDecl, IRSetTypeDecl, IRSomeTypeDecl, IRStackTypeDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl } from "../irdefs/irassembly.js";
 import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype.js";
 import { TransformCPPNameManager } from "./namemgr.js";
 
@@ -19,6 +19,9 @@ function LIST_T_LEAF_CAPACITY(elem_size: number): number {
     //leaf should be big enough to hold a map(..) operation result from any type AND also be larger than the inline capacity (which-ever is larger)
     return (MAX_LIST_INLINE_BYTES / 8) + 1;
 }
+
+//Duplicated from C++ definitions
+const BSQ_API_RESULT_DATA_SIZE_BYTES = 48;
 
 class VirtualInvokeInfo {
     readonly ikey: string;
@@ -508,9 +511,14 @@ class TypeInfoManager {
     }
 
     private generateLayoutInfoForEntity(tdecl: IRAbstractEntityTypeDecl, irasm: IRAssembly): LayoutInfo {
-        if(tdecl instanceof IRSomeTypeDecl) {
+        if((tdecl instanceof IRSomeTypeDecl)) {
             const oftinfo = this.generateLayoutInfoForType(tdecl.ttype, irasm);
             this.addLayoutInfo(tdecl.tkey, new LayoutInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), oftinfo.bytesize, oftinfo.layoutmask));
+        }
+        else if((tdecl instanceof IRAPIErrorTypeDecl) || (tdecl instanceof IRAPIRejectedTypeDecl) || (tdecl instanceof IRAPIDeniedTypeDecl) || (tdecl instanceof IRAPIDroppedTypeDecl) || (tdecl instanceof IRAPISuccessTypeDecl)) {
+            const oftinfo = this.generateLayoutInfoForType(tdecl.ttype, irasm);
+            const mask = "000000" + oftinfo.layoutmask;
+            this.addLayoutInfo(tdecl.tkey, new LayoutInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), BSQ_API_RESULT_DATA_SIZE_BYTES + oftinfo.bytesize, mask));
         }
         else if(tdecl instanceof IRMapEntryTypeDecl) {
             const kftinfo = this.generateLayoutInfoForType(tdecl.ktype, irasm);
@@ -659,6 +667,14 @@ class TypeInfoManager {
 
             const ttid = this.typeInfoMap.size;
             this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, oftinfo.bytesize, LayoutTag.Value, TypeInfoManager.staticLayoutToPtrMaskConvert(oftinfo.layoutmask), quickrelease));
+        }
+        else if((tdecl instanceof IRAPIErrorTypeDecl) || (tdecl instanceof IRAPIRejectedTypeDecl) || (tdecl instanceof IRAPIDeniedTypeDecl) || (tdecl instanceof IRAPIDroppedTypeDecl) || (tdecl instanceof IRAPISuccessTypeDecl)) {
+            const quickrelease = false; //has strings in it so can't be quick release
+            const oftinfo = this.generateLayoutInfoForType(tdecl.ttype, irasm);
+
+            const ttid = this.typeInfoMap.size;
+            const mask = TypeInfoManager.staticLayoutToPtrMaskConvert("000000" + oftinfo.layoutmask);
+            this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, BSQ_API_RESULT_DATA_SIZE_BYTES + oftinfo.bytesize, LayoutTag.Value, mask, quickrelease));
         }
         else if(tdecl instanceof IRMapEntryTypeDecl) {
             const quickrelease = this.isQuickReleaseType(tdecl.ktype, irasm) && this.isQuickReleaseType(tdecl.vtype, irasm);
