@@ -80,8 +80,16 @@ __internal entity List<T> {
         return ListOps::s_list_pushfront<T>(this, v);
     }
 
+    ref method pushFront(v: T) {
+        return ListOps::s_list_pushfront_ref<T>(ref this, v);
+    }
+
     method pushBack(v: T): List<T> {
         return ListOps::s_list_pushback<T>(this, v);
+    }
+
+    ref method pushBack(v: T) {
+        return ListOps::s_list_pushback_ref<T>(ref this, v);
     }
 
     method insert(i: Nat, v: T): List<T> 
@@ -90,10 +98,22 @@ __internal entity List<T> {
         return ListOps::s_list_insert<T>(this, i, v);
     }
 
+    ref method insert(i: Nat, v: T) 
+        requires i <= this.size();
+    {
+        return ListOps::s_list_insert_ref<T>(ref this, i, v);
+    }
+
     method set(i: Nat, v: T): List<T>
         requires i < this.size();
     {
         return ListOps::s_list_set<T>(this, i, v);
+    }
+
+    ref method set(i: Nat, v: T)
+        requires i < this.size();
+    {
+        return ListOps::s_list_set_ref<T>(ref this, i, v);
     }
 
     method deleteFront(): List<T>
@@ -101,11 +121,23 @@ __internal entity List<T> {
     {
         return ListOps::s_list_deletefront<T>(this);
     }
+
+    ref method deleteFront() 
+        requires !this.empty();
+    {
+        return ListOps::s_list_deletefront_ref<T>(ref this);
+    }
     
     method deleteBack(): List<T>
         requires !this.empty();
     {
         return ListOps::s_list_deleteback<T>(this);
+    }
+
+    ref method deleteBack() 
+        requires !this.empty();
+    {
+        return ListOps::s_list_deleteback_ref<T>(ref this);
     }
 
     method append(other: List<T>): List<T> {
