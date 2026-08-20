@@ -26,7 +26,16 @@ namespace ᐸRuntimeᐳ
     };
     static_assert(sizeof(XAPIResultData) == 48, "Need to update values in compiler");
 
-    template <typename T>
+    enum class XAPIResultKind
+    {
+        Error,
+        Rejected,
+        Denied,
+        Dropped,
+        Success
+    };
+
+    template <typename T, XAPIResultKind K>
     class XAPIResultEntityValue
     {
     public:
