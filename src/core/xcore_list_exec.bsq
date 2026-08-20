@@ -17,12 +17,22 @@ namespace ListOps {
     function s_list_get<T>(l: List<T>, idx: Nat): T = @list_get;
 
     function s_list_pushfront<T>(l: List<T>, v: T): List<T> = @list_pushfront;
+    function s_list_pushfront_ref<T>(ref l: List<T>, v: T) = @list_pushfront_ref;
+
     function s_list_pushback<T>(l: List<T>, v: T): List<T> = @list_pushback;
+    function s_list_pushback_ref<T>(ref l: List<T>, v: T) = @list_pushback_ref;
+
     function s_list_insert<T>(l: List<T>, idx: Nat, v: T): List<T> = @list_insert;
+    function s_list_insert_ref<T>(ref l: List<T>, idx: Nat, v: T) = @list_insert_ref;
+
     function s_list_set<T>(l: List<T>, idx: Nat, v: T): List<T> = @list_set;
+    function s_list_set_ref<T>(ref l: List<T>, idx: Nat, v: T) = @list_set_ref;
 
     function s_list_deletefront<T>(l: List<T>): List<T> = @list_deletefront;
+    function s_list_deletefront_ref<T>(ref l: List<T>) = @list_deletefront_ref;
+
     function s_list_deleteback<T>(l: List<T>): List<T> = @list_deleteback;
+    function s_list_deleteback_ref<T>(ref l: List<T>) = @list_deleteback_ref;
 
     function s_list_append<T>(l1: List<T>, l2: List<T>): List<T> = @list_append;
     function s_list_concat<T>(l: List<List<T>>): List<T> = @list_concat;
