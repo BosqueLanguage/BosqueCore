@@ -31,6 +31,9 @@ namespace ᐸRuntimeᐳ
     constexpr GCMetaBits META_BIT_RC_BITS_MASK = (0x7F);
     constexpr GCMetaBits META_BIT_RC_MASK = ~(0x7F);
     constexpr uint32_t META_BIT_RC_ADDR_SHIFT = 7; //shifted to make sure we don't the flag bits
+    constexpr uint32_t META_BIT_DELETE_PTR_ALIGN_SHIFT = 3;
+    constexpr uint32_t META_BIT_DELETE_PTR_SHIFT = META_BIT_RC_ADDR_SHIFT - META_BIT_DELETE_PTR_ALIGN_SHIFT;
+    static_assert(GC_MEM_ALIGNMENT == (1 << META_BIT_DELETE_PTR_ALIGN_SHIFT));
 
     constexpr void* META_FREE_LIST_OOM_SENTINAL = nullptr;
 
@@ -47,6 +50,28 @@ namespace ᐸRuntimeᐳ
     inline bool gcIsForwarded(const AtomicGCMetadata* rc) 
     {
         return (rc->load(std::memory_order_relaxed) & META_BIT_IS_FORWARD) != 0;
+    }
+
+    inline void gcSetPendingDeleteNext(AtomicGCMetadata* rc, void* next)
+    {
+        uintptr_t nextaddr = (uintptr_t)next;
+        assert((nextaddr & (GC_MEM_ALIGNMENT - 1)) == 0);
+        assert(nextaddr <= (UINT64_MAX >> META_BIT_DELETE_PTR_SHIFT));
+
+        GCMetaBits ll = rc->load(std::memory_order_relaxed);
+        assert((ll & META_BIT_IS_DELETE_PENDING) != 0);
+
+        GCMetaBits nextbits = (nextaddr >> META_BIT_DELETE_PTR_ALIGN_SHIFT) << META_BIT_RC_ADDR_SHIFT;
+        rc->store((ll & META_BIT_RC_BITS_MASK) | nextbits, std::memory_order_relaxed);
+    }
+
+    inline void* gcGetPendingDeleteNext(const AtomicGCMetadata* rc)
+    {
+        GCMetaBits ll = rc->load(std::memory_order_relaxed);
+        assert((ll & META_BIT_IS_DELETE_PENDING) != 0);
+
+        uintptr_t nextaddr = (ll & META_BIT_RC_MASK) >> META_BIT_DELETE_PTR_SHIFT;
+        return (void*)nextaddr;
     }
 
     //Set the state on initial allocation into the nursery
@@ -133,6 +158,8 @@ namespace ᐸRuntimeᐳ
     {
         GCMetaBits ll = rc->load(std::memory_order_relaxed);
         while(true) {
+            assert((ll & META_BIT_IS_DELETE_PENDING) == 0);
+
             GCMetaBits newbits;
             if(ll & META_BIT_IS_RC_UNIQUE) {
                 //Was a unique reference but now delete pending

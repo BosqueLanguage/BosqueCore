@@ -242,12 +242,14 @@ namespace ᐸRuntimeᐳ
         std::map<uint32_t, GCAllocatorImpl*> gcallocs;
         size_t allocatedbytes;
 
-        std::list<void*> pendingdelete; //objects pending delete
+        void* pendingdeletehead; //objects pending delete, linked through their metadata
+        void* pendingdeletetail;
+        size_t pendingdeletecount;
 
         void (*procdecsfp)(size_t);
         void (*collectfp)();
 
-        AllocatorThreadLocalInfo() : native_stack_base{}, old_roots{}, gcallocs{}, allocatedbytes{}, pendingdelete{}, procdecsfp{}, collectfp{} { ; }
+        AllocatorThreadLocalInfo() : native_stack_base{}, old_roots{}, gcallocs{}, allocatedbytes{}, pendingdeletehead{}, pendingdeletetail{}, pendingdeletecount{}, procdecsfp{}, collectfp{} { ; }
 
         void initialize(void** caller_rbp, void(*_procdecsfp)(size_t), void (*_collectfp)(), const std::map<uint32_t, GCAllocatorImpl*>& gcallocs);
         void cleanup();
@@ -390,4 +392,3 @@ namespace ᐸRuntimeᐳ
     extern thread_local AllocatorThreadLocalInfo tl_alloc_info;
     extern AllocatorGlobalInfo g_alloc_info;
 }
-

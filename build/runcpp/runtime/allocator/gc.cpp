@@ -27,8 +27,19 @@ namespace ᐸRuntimeᐳ
     {
         PageInfo* page = PageInfo::extractPageFromPointer(addr);
         if(page->threadid == std::this_thread::get_id()) {
-            //*((void**)addr) = tl_alloc_info.pendingdelete;
-            tl_alloc_info.pendingdelete.push_back(addr);
+            AtomicGCMetadata* meta = page->getMetadataForObj(addr);
+            gcSetPendingDeleteNext(meta, nullptr);
+
+            if(tl_alloc_info.pendingdeletetail == nullptr) {
+                assert(tl_alloc_info.pendingdeletehead == nullptr);
+                tl_alloc_info.pendingdeletehead = addr;
+            }
+            else {
+                gcSetPendingDeleteNext(gcGetMetadata(tl_alloc_info.pendingdeletetail), addr);
+            }
+
+            tl_alloc_info.pendingdeletetail = addr;
+            tl_alloc_info.pendingdeletecount++;
         }
         else {
             assert(false); //Cross thread deletes not supported yet
@@ -37,13 +48,24 @@ namespace ᐸRuntimeᐳ
 
     inline static void* gcGetDeleteListPtr()
     {
-        if(tl_alloc_info.pendingdelete.empty()) {
+        if(tl_alloc_info.pendingdeletehead == nullptr) {
+            assert(tl_alloc_info.pendingdeletetail == nullptr);
+            assert(tl_alloc_info.pendingdeletecount == 0);
             return nullptr;
         }
         else {
-            void* next = tl_alloc_info.pendingdelete.front();
-            tl_alloc_info.pendingdelete.pop_front();
-            return next;
+            void* curr = tl_alloc_info.pendingdeletehead;
+            AtomicGCMetadata* meta = gcGetMetadata(curr);
+            tl_alloc_info.pendingdeletehead = gcGetPendingDeleteNext(meta);
+            gcSetPendingDeleteNext(meta, nullptr);
+
+            tl_alloc_info.pendingdeletecount--;
+            if(tl_alloc_info.pendingdeletehead == nullptr) {
+                tl_alloc_info.pendingdeletetail = nullptr;
+                assert(tl_alloc_info.pendingdeletecount == 0);
+            }
+
+            return curr;
         }
     }
 
@@ -567,7 +589,7 @@ namespace ᐸRuntimeᐳ
 
         GC_IF_ENABLED(GC_METRICS, clock_gettime(CLOCK_MONOTONIC, &time_collect_start));
         GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats = {});
-        GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats.startingrcpends = tl_alloc_info.pendingdelete.size());
+        GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats.startingrcpends = tl_alloc_info.pendingdeletecount);
 
         bool gproc = false;
         {
@@ -613,7 +635,7 @@ namespace ᐸRuntimeᐳ
         GC_IF_ENABLED(GC_METRICS, clock_gettime(CLOCK_MONOTONIC, &time_collect_end));
         GC_IF_ENABLED(GC_METRICS, g_memstats.processcollect(time_collect_start, time_collect_traverse_end, time_collect_rc_end, time_collect_end));
 
-        GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats.finalrcpends = tl_alloc_info.pendingdelete.size());
+        GC_IF_ENABLED(GC_METRICS_DETAILED, g_memstats.collectstats.finalrcpends = tl_alloc_info.pendingdeletecount);
         GC_IF_ENABLED(GC_VALIDATE, gcValidate());
     }
 }
