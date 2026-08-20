@@ -745,7 +745,13 @@ class CPPEmitter {
             else if(ttag === IRExpressionTag.IRInvokeCallAgentOrAPIExpression) {
                 const aaexp = exp as IRInvokeCallAgentOrAPIExpression;
                 const aargs = aaexp.args.map((arg) => this.emitIRSimpleExpression(arg, true));
-                return `${TransformCPPNameManager.convertInvokeKey(aaexp.ikey)}(${aargs.join(", ")})`;
+
+                if(aaexp.external) {
+                    return `${aaexp.ikey}(${aargs.join(", ")})`;
+                }
+                else {
+                    return `${TransformCPPNameManager.convertInvokeKey(aaexp.ikey)}(${aargs.join(", ")})`;
+                }
             }
             else if(ttag === IRExpressionTag.IRInterpolateFormatCStringExpression) {
                 const ifcsexp = exp as IRInterpolateFormatCStringExpression;

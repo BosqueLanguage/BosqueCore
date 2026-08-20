@@ -2187,11 +2187,13 @@ class IRInvokeVirtualWithImplicitsExpression extends IRInvokeImplicitsExpression
 class IRInvokeCallAgentOrAPIExpression extends IRExpression {
     readonly ikey: string;
     readonly args: IRSimpleExpression[];
+    readonly external: boolean;
 
-    constructor(ikey: string, args: IRSimpleExpression[]) {
+    constructor(ikey: string, args: IRSimpleExpression[], external: boolean) {
         super(IRExpressionTag.IRInvokeCallAgentOrAPIExpression);
         this.ikey = ikey;
         this.args = args;
+        this.external = external;
     }
 
     override isSimpleExpression(): boolean {

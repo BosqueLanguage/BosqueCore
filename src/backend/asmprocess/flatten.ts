@@ -2970,7 +2970,7 @@ class ASMToIRConverter {
         } 
     
         const tmpres = this.generateTempVarName();
-        this.pushStatement(new IRTempAssignExpressionStatement(tmpres, new IRInvokeCallAgentOrAPIExpression(iname, aargs), this.processTypeSignature(exp.getType())));
+        this.pushStatement(new IRTempAssignExpressionStatement(tmpres, new IRInvokeCallAgentOrAPIExpression(iname, aargs, adecl.body instanceof AbstractBodyImplementation), this.processTypeSignature(exp.getType())));
             
         //do postconditions as needed
         if(!haspostconds) {
