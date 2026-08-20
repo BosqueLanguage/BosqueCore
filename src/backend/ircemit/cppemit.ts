@@ -1391,20 +1391,38 @@ class CPPEmitter {
         else if(body.builtin === "list_pushfront") {
             bstr = "l.pushFront(v)";
         }
+        else if(body.builtin === "list_pushfront_ref") {
+            bstr = "l = l.pushFront(v)";
+        }
         else if(body.builtin === "list_pushback") {
             bstr = "l.pushBack(v)";
+        }
+        else if(body.builtin === "list_pushback_ref") {
+            bstr = "l = l.pushBack(v)";
         }
         else if(body.builtin === "list_insert") {
             bstr = "l.insert(idx.value, v)";
         }
+        else if(body.builtin === "list_insert_ref") {
+            bstr = "l = l.insert(idx.value, v)";
+        }
         else if(body.builtin === "list_set") {
             bstr = "l.set(idx.value, v)";
+        }
+        else if(body.builtin === "list_set_ref") {
+            bstr = "l = l.set(idx.value, v)";
         }
         else if(body.builtin === "list_deletefront") {
             bstr = "l.deleteFront()";
         }
+        else if(body.builtin === "list_deletefront_ref") {
+            bstr = "l = l.deleteFront()";
+        }
         else if(body.builtin === "list_deleteback") {
             bstr = "l.deleteBack()";
+        }
+        else if(body.builtin === "list_deleteback_ref") {
+            bstr = "l = l.deleteBack()";
         }
         else if(body.builtin === "list_append") {
             bstr = "l1.append(l2)";
