@@ -30,8 +30,7 @@ public function main(n: Nat): List<CString>
     return msgs
 }
 
-entity TreeNode {
-        
+entity TreeNode {   
     field left: Option<TreeNode>;
     field right: Option<TreeNode>;
 
