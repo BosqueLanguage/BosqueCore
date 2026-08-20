@@ -2973,7 +2973,7 @@ class ASMToIRConverter {
         this.pushStatement(new IRTempAssignExpressionStatement(tmpres, new IRInvokeCallAgentOrAPIExpression(iname, aargs, adecl.body instanceof AbstractBodyImplementation), this.processTypeSignature(exp.getType())));
             
         //do postconditions as needed
-        if(!haspostconds) {
+        if(haspostconds) {
             let postargs = [new IRAccessTempVariableExpression(tmpres), ...aargs];
 
             for(let i = 0; i < adecl.postconditions.length; ++i) {

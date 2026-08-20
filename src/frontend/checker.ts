@@ -2313,6 +2313,11 @@ class TypeChecker {
     private checkSpecialConstructorExpressionNoInfer(env: TypeEnvironment, exp: SpecialConstructorExpression): TypeSignature {
         const corens = this.relations.assembly.getCoreNamespace();
 
+        if(exp.args.length !== 1) {
+            this.reportError(exp.sinfo, "constructor expects 1 argument");
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
         const etype = this.checkExpression(env, exp.args[0], undefined);
         if((etype instanceof ErrorTypeSignature)) {
             this.reportError(exp.sinfo, `Invalid type for special constructor -- got ${etype.emit()}`);
@@ -2335,7 +2340,10 @@ class TypeChecker {
                 return this.checkSpecialConstructorExpressionNoInfer(env, exp);
             }
             else {
-                this.checkError(exp.sinfo, exp.args.length !== 1, "some constructor expects 1 argument");
+                if(exp.args.length !== 1) {
+                    this.reportError(exp.sinfo, "some constructor expects 1 argument");
+                    return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+                }
 
                 if(infertype.decl instanceof SomeTypeDecl) {
                     const ttype = infertype.alltermargs[0];
@@ -2364,7 +2372,10 @@ class TypeChecker {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
             else {
-                this.checkError(exp.sinfo, exp.args.length !== 1, "ok constructor expects 1 argument");
+                if(exp.args.length !== 1) {
+                    this.reportError(exp.sinfo, "ok constructor expects 1 argument");
+                    return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+                }
 
                 const ninfer = infertype as NominalTypeSignature;
                 if(ninfer.decl instanceof OkTypeDecl) {
@@ -2391,11 +2402,14 @@ class TypeChecker {
         }
         else if(exp.rop === "fail") {
             if(infertype === undefined || !(infertype instanceof NominalTypeSignature)) {
-                this.reportError(exp.sinfo, "Cannot infer type for special Ok constructor -- no type provided");
+                this.reportError(exp.sinfo, "Cannot infer type for special Fail constructor -- no type provided");
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
             else {
-                this.checkError(exp.sinfo, exp.args.length !== 1, "fail constructor expects 1 argument");
+                if(exp.args.length !== 1) {
+                    this.reportError(exp.sinfo, "fail constructor expects 1 argument");
+                    return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+                }
 
                 const ninfer = infertype as NominalTypeSignature;
                 if(ninfer.decl instanceof FailTypeDecl) {
@@ -2426,7 +2440,10 @@ class TypeChecker {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
             else {
-                this.checkError(exp.sinfo, exp.args.length !== 1, "success constructor expects 1 argument");
+                if(exp.args.length !== 1) {
+                    this.reportError(exp.sinfo, "success constructor expects 1 argument");
+                    return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+                }
 
                 const ninfer = infertype as NominalTypeSignature;
                 if(ninfer.decl instanceof APISuccessTypeDecl) {
@@ -5964,21 +5981,21 @@ class TypeChecker {
                     runres = rres.entries[0];
                 }
                 else {
-                    this.reportError(runaction.sinfo, "Result of start action must be a result and event mesage");
+                    this.reportError(runaction.sinfo, "Result of start action must be a result and event message");
                 }
 
-                if((rres.entries[0] instanceof NominalTypeSignature) && this.relations.isEventDataType(rres.entries[0])) {
+                if((rres.entries[1] instanceof NominalTypeSignature) && this.relations.isEventDataType(rres.entries[1])) {
                     runresevent = rres.entries[1];
                 }
                 else {
-                    this.reportError(runaction.sinfo, "Result of start action must be a result and event mesage");
+                    this.reportError(runaction.sinfo, "Result of start action must be a result and event message");
                 }
             }
             else if((rres instanceof NominalTypeSignature) && (rres.decl instanceof APIResultTypeDecl)) {
                 runres = rres;
             }
             else {
-                this.reportError(runaction.sinfo, "Result of start action must be either a single result OR a result and event mesage");
+                this.reportError(runaction.sinfo, "Result of start action must be either a single result OR a result and event message");
             }
 
             tdecl.startaction = runaction;
