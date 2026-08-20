@@ -414,6 +414,25 @@ namespace ᐸRuntimeᐳ
             }
         }
 
+        template<typename Iter>
+        static XList mkspread(Iter start, Iter end, size_t len)
+        {
+            if(len == 0) {
+                return XList{};
+            }
+            else {
+                if(len <= ListTInlineContent<T>::MAX_INLINE_CAPACITY) {
+                    return XList(ListTInlineContent<T>(start, end));
+                }
+                else if(len <= ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY) {
+                    return XList{ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>{PosRBTree<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_T)>::mkinitial(start, end)}};
+                }
+                else {
+                    return XList{ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>{PosRBTree<T, ListTTreeContent<T, getPosTreeIDFrom(TYPE_ID_LIST_T)>::MAX_LEAF_CAPACITY, getPosTreeIDFrom(TYPE_ID_LIST_T)>::mklargerec(start, end, len)}};
+                }
+            }
+        }
+
         template <typename Fn>
         std::string toString(Fn pf) const
         {
@@ -698,6 +717,19 @@ namespace ᐸRuntimeᐳ
             }
 
             return curr;
+        }
+
+        XList mk_mixed_append(const XList& other) const
+        {
+            if(this->ulist.empty()) {
+                return other;
+            }
+            else if(other.ulist.empty()) {
+                return *this;
+            }
+            else {
+                return this->append(other);
+            }
         }
 
         template<bool SafeSimplePred, typename Pred>

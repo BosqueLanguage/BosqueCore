@@ -9,25 +9,24 @@ public function main(n: Nat): List<CString>
     let stretchDepth: Nat = n + 1n;
     let check: Nat = TreeNode::create(stretchDepth).check();
         
-    ref msgs = List<CString>{};
-    ref msgs.pushBack(Interpolate::cstring($'stretch tree of depth ${0}%t; check: ${1}', Nat::toCString(stretchDepth), Nat::toCString(check)));
+    let smsg = Interpolate::cstring($'stretch tree of depth ${0}%t; check: ${1}', Nat::toCString(stretchDepth), Nat::toCString(check));
 
     let longLivedTree = TreeNode::create(maxDepth);
     let tdepths = List::rangeOfNat(minDepth, maxDepth, 2n, true); %%inclusive of end value
         
-    tdepths.reduce(ref msgs, fn(ref msgs, depth) => {
+    let msgs = tdepths.map(fn(ref msgs, depth) => {
         let iterations = Nat::pow(2n, (maxDepth - depth) + minDepth);
         let iterrng = List::rangeOfNat(1n, iterations, inclusive=true); %%inclusive of end value
 
         let checkvals = iterrng.map(fn(i) => (TreeNode::create(depth)).check());
         let checksum = checkvals.sum();
 
-        ref msgs.pushBack(Interpolate::cstring($'${0}%t; check: ${1}', Nat::toCString(depth), Nat::toCString(checksum)));
+        return Interpolate::cstring($'${0}%t; check: ${1}', Nat::toCString(depth), Nat::toCString(checksum));
     });
 
-    ref msgs.pushBack(Interpolate::cstring($'long lived tree of depth ${0}%t; check: ${1}', Nat::toCString(maxDepth), Nat::toCString(longLivedTree.check())));
+    let llmsg = Interpolate::cstring($'long lived tree of depth ${0}%t; check: ${1}', Nat::toCString(maxDepth), Nat::toCString(longLivedTree.check()));
 
-    return msgs;
+    return List<CString>{smsg, ...msgs, llmsg};
 }
 
 entity TreeNode {

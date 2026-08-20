@@ -13,10 +13,10 @@ describe ("CPPExec -- Container Constructor (List)", () => {
         runTestSet("public function main(y: CString): List<CString> { let s = 'ok'; return List<CString>{y, s, 'a'}; }", [['"y"', "List<CString>{ 'y', 'ok', 'a' }"]], []);
     });
 
-    it.skip("should exec spread and mixed list constructors", function () {
-        runTestSet("public function main(l: List<Int>): List<Int> { return List<Int>{...l}; }", [], []);
-        runTestSet("public function main(l: List<Int>): List<Int> { return List<Int>{...l, ...l}; }", [], []);
-        runTestSet("public function main(l: List<Int>): List<Int> { return List<Int>{1i, ...l, 3i}; }", [], []);
+    it("should exec spread and mixed list constructors", function () {
+        runTestSet("public function main(l: List<Int>): List<Int> { return List<Int>{...l}; }", [['List<Int>{}', 'List<Int>{ }'], ['List<Int>{1i, 2i, 3i}', 'List<Int>{ 1i, 2i, 3i }']], []);
+        runTestSet("public function main(l: List<Int>): List<Int> { return List<Int>{...l, ...l}; }", [['List<Int>{}', 'List<Int>{ }'], ['List<Int>{1i, 2i, 3i}', 'List<Int>{ 1i, 2i, 3i, 1i, 2i, 3i }']], []);
+        runTestSet("public function main(l: List<Int>): List<Int> { return List<Int>{1i, ...l, 3i}; }", [['List<Int>{}', 'List<Int>{ 1i, 3i }'], ['List<Int>{1i, 2i, 3i}', 'List<Int>{ 1i, 1i, 2i, 3i, 3i }']], []);
     });
 
     it("should exec simple map constructors", function () {
