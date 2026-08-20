@@ -14,7 +14,7 @@ public function main(n: Nat): List<CString>
     let longLivedTree = TreeNode::create(maxDepth);
     let tdepths = List::rangeOfNat(minDepth, maxDepth, 2n, true); %%inclusive of end value
         
-    let msgs = tdepths.map(fn(ref msgs, depth) => {
+    let msgs = tdepths.map(fn(depth) => {
         let iterations = Nat::pow(2n, (maxDepth - depth) + minDepth);
         let iterrng = List::rangeOfNat(1n, iterations, inclusive=true); %%inclusive of end value
 

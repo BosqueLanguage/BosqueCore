@@ -728,6 +728,9 @@ class CPPEmitter {
                     if(el.kind === "positional") {
                         chain = `${chain}.pushBack(${this.emitIRSimpleExpression(el.value, true)})`;
                     }
+                    else if(el.kind === "directappend") {
+                        chain = `${chain}.mk_mixed_append(${this.emitIRSimpleExpression(el.value, true)})`;
+                    }
                     else {
                         const imexp = this.emitIRImmediateExpression(el.value as IRImmediateExpression);
                         chain = `${chain}.mk_mixed_append(${cce}::mkspread(${imexp}.begin(), ${imexp}.end(), ${imexp}.size()))`;

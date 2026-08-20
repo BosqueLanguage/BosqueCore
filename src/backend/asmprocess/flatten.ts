@@ -1617,18 +1617,22 @@ class ASMToIRConverter {
                     return new IRConstructorListPassthroughExpression(this.processTypeSignature(tcons), ptl);
                 }
                 else {
-                    const aargs: { kind: "positional" | "spread", value: IRSimpleExpression }[] = [];
+                    const aargs: { kind: "positional" | "directappend" | "spreadappend", value: IRSimpleExpression }[] = [];
                     for(let i = 0; i < exp.args.args.length; ++i) {
                         const eexp = exp.args.args[i] as StdArgumentValue;
-                        const sexp = this.flattenExpression(eexp.exp);
+                        const sexp = this.makeExpressionSimple(this.flattenExpression(eexp.exp), eexp.exp.getType());
 
-                        if(eexp instanceof SpreadArgumentValue) {
-                            const cexp = this.makeExpressionImmediate(this.makeExpressionSimple(sexp, eexp.exp.getType()), eexp.exp.getType());
-                            aargs.push({ kind: "spread", value: cexp });
+                        if(eexp instanceof PositionalArgumentValue) {
+                            const cexp = this.makeCoercionExplicitAsNeeded(sexp, eexp.exp.getType(), tcons.alltermargs[0]);
+                            aargs.push({ kind: "positional", value: cexp });
                         }
                         else {
-                            const cexp = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(sexp, eexp.exp.getType()), eexp.exp.getType(), tcons.alltermargs[0]);
-                            aargs.push({ kind: "positional", value: cexp });
+                            if((eexp.exp.getType() as NominalTypeSignature).decl instanceof ListTypeDecl) {
+                                aargs.push({ kind: "directappend", value: this.makeExpressionSimple(sexp, eexp.exp.getType()) });
+                            }
+                            else {
+                                aargs.push({ kind: "spreadappend", value: this.makeExpressionImmediate(sexp, eexp.exp.getType()) });
+                            }
                         }
                     }
 

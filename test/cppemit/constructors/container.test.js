@@ -15,8 +15,8 @@ describe ("CPPEmit -- Container Constructor (List)", () => {
 
     it("should emit spread and mixed list constructors", function () {
         checkTestEmitMainFunction("public function main(l: List<Int>): List<Int> { return List<Int>{...l}; }", "ListᐸIntᐳ Mainᕒmain(const ListᐸIntᐳ& l) { return l; }");
-        checkTestEmitMainFunction("public function main(l: List<Int>): List<Int> { return List<Int>{...l, ...l}; }", "ListᐸIntᐳ Mainᕒmain(const ListᐸIntᐳ& l) { return ListᐸIntᐳ{}.mk_mixed_append(ListᐸIntᐳ::mkspread(l.begin(), l.end(), l.size())).mk_mixed_append(ListᐸIntᐳ::mkspread(l.begin(), l.end(), l.size())); }");
-        checkTestEmitMainFunction("public function main(l: List<Int>): List<Int> { return List<Int>{1i, ...l, 3i}; }", "ListᐸIntᐳ Mainᕒmain(const ListᐸIntᐳ& l) { return ListᐸIntᐳ{}.pushBack(1_i).mk_mixed_append(ListᐸIntᐳ::mkspread(l.begin(), l.end(), l.size())).pushBack(3_i); }");
+        checkTestEmitMainFunction("public function main(l: List<Int>): List<Int> { return List<Int>{...l, ...l}; }", "ListᐸIntᐳ Mainᕒmain(const ListᐸIntᐳ& l) { return ListᐸIntᐳ{}.mk_mixed_append(l).mk_mixed_append(l); }");
+        checkTestEmitMainFunction("public function main(l: List<Int>): List<Int> { return List<Int>{1i, ...l, 3i}; }", "ListᐸIntᐳ Mainᕒmain(const ListᐸIntᐳ& l) { return ListᐸIntᐳ{}.pushBack(1_i).mk_mixed_append(l).pushBack(3_i); }");
     });
 
     it("should emit simple map constructors", function () {

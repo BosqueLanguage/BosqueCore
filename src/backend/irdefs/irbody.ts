@@ -2039,9 +2039,9 @@ class IRConstructorListSingletonsExpression extends IRConstructExpression {
 }
 
 class IRConstructorListMixedExpression extends IRConstructExpression {
-    readonly elements: { kind: "positional" | "spread", value: IRSimpleExpression }[];
+    readonly elements: { kind: "positional" | "directappend" | "spreadappend", value: IRSimpleExpression }[];
 
-    constructor(ctype: IRNominalTypeSignature, elements: { kind: "positional" | "spread", value: IRSimpleExpression }[]) {
+    constructor(ctype: IRNominalTypeSignature, elements: { kind: "positional" | "directappend" | "spreadappend", value: IRSimpleExpression }[]) {
         super(IRExpressionTag.IRConstructorListMixedExpression, ctype);
         this.elements = elements;
     }
