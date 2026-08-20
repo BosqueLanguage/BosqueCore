@@ -217,9 +217,16 @@ namespace ᐸRuntimeᐳ
     void processAllAllocatorsInfo(const std::map<uint32_t, GCAllocatorImpl*>& gcallocs, HeapStats& stat)
     {
         std::unordered_set<void*> pendingdeletes;
-        for(auto iter = tl_alloc_info.pendingdelete.cbegin(); iter != tl_alloc_info.pendingdelete.cend(); iter++) {
-            pendingdeletes.insert(*iter);
+        void* pending = tl_alloc_info.pendingdeletehead;
+        void* lastpending = nullptr;
+        while(pending != nullptr) {
+            assert(!pendingdeletes.contains(pending));
+            pendingdeletes.insert(pending);
+            lastpending = pending;
+            pending = gcGetPendingDeleteNext(gcGetMetadata(pending));
         }
+        assert(pendingdeletes.size() == tl_alloc_info.pendingdeletecount);
+        assert(lastpending == tl_alloc_info.pendingdeletetail);
 
         for(auto iter = g_alloc_info.allocatedpages.cbegin(); iter != g_alloc_info.allocatedpages.cend(); iter++) {
             assert(g_alloc_info.minpageaddr <= (uintptr_t)(*iter));

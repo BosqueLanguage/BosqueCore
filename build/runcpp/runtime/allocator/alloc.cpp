@@ -166,7 +166,7 @@ namespace ᐸRuntimeᐳ
             this->allocatedbytes = 0;
         }
         else {
-            if(!tl_alloc_info.pendingdelete.empty()) {
+            if(tl_alloc_info.pendingdeletehead != nullptr) {
                 tl_alloc_info.procdecsfp(GC_DELETE_PENDING_PROCESS_BYTES_INCREMENTAL);
             }
         }
