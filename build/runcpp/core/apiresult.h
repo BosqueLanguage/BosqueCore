@@ -33,12 +33,4 @@ namespace ᐸRuntimeᐳ
         XAPIResultData data;
         T value;
     };
-
-    template <typename T>
-    class XAPIResult
-    {
-    public:
-        TypeInfo* typeinfo;
-        XAPIResultRepr<T> repr;
-    };
 }

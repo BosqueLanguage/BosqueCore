@@ -1359,19 +1359,7 @@ class IRAgentDecl {
     }
 }
 
-class IRTaskDecl {
-    readonly tkey: string;
-
-    readonly invariants: IRInvariantDecl[];
-    readonly validates: IRValidateDecl[];
-    readonly fields: IRMemberFieldDecl[];
-
-    readonly docstr: IRDeclarationDocString | undefined;
-    readonly metatags: IRDeclarationMetaTag[];
-
-    readonly file: string;
-    readonly sinfo: IRSourceInfo;
-
+class IRTaskDecl extends IRAbstractNominalTypeDecl {
     readonly configs: IRTaskConfiguration;
 
     readonly statusinfo: IRTypeSignature[];
@@ -1380,20 +1368,25 @@ class IRTaskDecl {
     readonly eventinfo: IRTypeSignature[];
 
     constructor(tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], fields: IRMemberFieldDecl[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo, configs: IRTaskConfiguration, statusinfo: IRTypeSignature[], envreqs: IREnvironmentVariableInformation[], resourcereqs: IRResourceInformation, eventinfo: IRTypeSignature[]) {
-        this.tkey = tkey;
-        this.invariants = invariants;
-        this.validates = validates;
-        this.fields = fields;
-        this.docstr = docstr;
-        this.metatags = metatags;
-        this.file = file;
-        this.sinfo = sinfo;
+        super(tkey, invariants, validates, fields, "std", [], [], [], [], docstr, metatags, file, sinfo);
         
         this.configs = configs;
         this.statusinfo = statusinfo;
         this.envreqs = envreqs;
         this.resourcereqs = resourcereqs;
         this.eventinfo = eventinfo;
+    }
+
+    override getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return []; //We should put all of these last and can't depend on each other
+    }
+
+    override toBAPI(): string {
+        assert(false, "IRTaskDecl.toBAPI() is not implemented yet");
+    }
+
+    static parseBAPIAsIRTaskDecl(lexer: BAPILexer): IRTaskDecl {
+        assert(false, "IRTaskDecl.parseBAPI_IRTaskDecl() is not implemented yet");
     }
 }
 
