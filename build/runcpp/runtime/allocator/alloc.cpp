@@ -146,9 +146,9 @@ namespace ᐸRuntimeᐳ
                 return pp;
             }
 
-            iter = this->pageset.erase(iter);
-            this->pageset.push_back(pp);
-            
+            auto current = iter++;
+            this->pageset.splice(this->pageset.end(), this->pageset, current);
+
             availchks++;
         }
 
