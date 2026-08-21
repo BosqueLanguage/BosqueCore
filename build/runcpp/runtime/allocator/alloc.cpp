@@ -134,8 +134,10 @@ namespace ᐸRuntimeᐳ
     PageInfo* GCAllocatorImpl::allocatorGeneralPageFinder(double availthreshold)
     {
         size_t availchks = 0;
+        size_t maxchecks = std::min((size_t)GC_PAGE_CHECK_GENERAL_LIMIT, this->pageset.size());
+        
         auto iter = this->pageset.begin();
-        while(iter != this->pageset.end() && availchks < GC_PAGE_CHECK_GENERAL_LIMIT) {
+        while(iter != this->pageset.end() && availchks < maxchecks) {
             PageInfo* pp = *iter;
             pp->rebuild();
 
