@@ -1344,10 +1344,10 @@ class CPPEmitter {
         else if(body.builtin === "int_to_cstring") {
             bstr = `ᐸRuntimeᐳ::XCString::intToCString(i.value)`;
         }
-        else if(body.builtin === "s_chkNatToCString") {
+        else if(body.builtin === "chk_nat_to_cstring") {
             bstr = `!n.isBottom() ? ᐸRuntimeᐳ::XCString::chkNatToCString(n.value) : ᐸRuntimeᐳ::XCString{"ChkNat::npos"}`;
         }
-        else if(body.builtin === "s_chkIntToCString") {
+        else if(body.builtin === "chk_int_to_cstring") {
             bstr = `!i.isBottom() ? ᐸRuntimeᐳ::XCString::chkIntToCString(i.value) : ᐸRuntimeᐳ::XCString{"ChkInt::npos"}`;
         }
         else if(body.builtin === "float_to_cstring") {

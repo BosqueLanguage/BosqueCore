@@ -9,7 +9,7 @@ namespace NumericOps {
     function s_intToCString(i: Int): CString = @int_to_cstring;
     function s_chkNatToCString(n: ChkNat): CString = @chk_nat_to_cstring;
     function s_chkIntToCString(i: ChkInt): CString = @chk_int_to_cstring;
-    function s_floatToCString(f: Float): CString = @float_to_cstring
+    function s_floatToCString(f: Float): CString = @float_to_cstring;
 
     __may_fail function s_natPow(x: Nat, y: Nat): Nat = @nat_pow;
     __may_fail function s_intPow(x: Int, y: Int): Int = @int_pow;

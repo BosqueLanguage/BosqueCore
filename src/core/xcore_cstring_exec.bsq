@@ -11,7 +11,7 @@ namespace CStringOps {
     function s_append(s1: CString, s2: CString): CString = @cstring_append;
 
     function s_toByteBuffer(s: CString): ByteBuffer = @cstring_to_bytebuffer;
-    function s_fromByteBuffer(bb: ByteBuffer, mbescape: Bool = false): Option<CString> = @cstring_from_bytebuffer;
+    function s_fromByteBuffer(bb: ByteBuffer, mbescape: Bool): Option<CString> = @cstring_from_bytebuffer;
 }
 
 #else

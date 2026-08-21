@@ -454,8 +454,8 @@ namespace ᐸRuntimeᐳ
         static XCString chkIntToCString(__int128_t value);
         static XCString floatToCString(double value);
 
-        static sxxx cstrToByteBuffer(const XCString& cstr);
-        static XCString fromByteBuffer(const xxx& buffer);
+        //static sxxx cstrToByteBuffer(const XCString& cstr);
+        //static XCString fromByteBuffer(const xxx& buffer);
 
         XCString append(XCString other);
     };

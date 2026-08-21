@@ -74,7 +74,15 @@ namespace ᐸRuntimeᐳ
 
     XCString XCString::floatToCString(double value) {
         char numbuf[64];
-        int written = std::snprintf(numbuf, sizeof(numbuf), "%ff", value);
+        int written = 0;
+        
+        if(std::floor(value) != value) {
+            written = std::snprintf(numbuf, sizeof(numbuf), "%.12lgf", value);
+        }
+        else {
+            written = std::snprintf(numbuf, sizeof(numbuf), "%.12lg.0f", value);
+        }
+
         return XCString::mk(numbuf, static_cast<size_t>(written));
     }
 
