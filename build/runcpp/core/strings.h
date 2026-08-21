@@ -308,6 +308,9 @@ namespace ᐸRuntimeᐳ
         XCString(const CStrRootTreeContent& n) : ucstr{CStringUnion{n}} { ; }
         XCString(const XCString& other) = default;
 
+        template<size_t len>
+        XCString(const char (&cstr)[len]) : XCString{CStrRootInlineContent(cstr)} { ; }
+
         static XCString mk(const char* cstr, size_t len)
         {
             if(len == 0) {
@@ -447,6 +450,12 @@ namespace ᐸRuntimeᐳ
 
         static XCString natToCString(int64_t value);
         static XCString intToCString(int64_t value);
+        static XCString chkNatToCString(__int128_t value);
+        static XCString chkIntToCString(__int128_t value);
+        static XCString floatToCString(double value);
+
+        static sxxx cstrToByteBuffer(const XCString& cstr);
+        static XCString fromByteBuffer(const xxx& buffer);
 
         XCString append(XCString other);
     };

@@ -34,13 +34,47 @@ namespace ᐸRuntimeᐳ
 
     XCString XCString::natToCString(int64_t value) {
         char numbuf[64];
-        int written = std::snprintf(numbuf, sizeof(numbuf), "%lli", (long long int)value);
+        int written = std::snprintf(numbuf, sizeof(numbuf), "%llin", (long long int)value);
         return XCString::mk(numbuf, static_cast<size_t>(written));
     }
 
     XCString XCString::intToCString(int64_t value) {
         char numbuf[64];
-        int written = std::snprintf(numbuf, sizeof(numbuf), "%lli", (long long int)value);
+        int written = std::snprintf(numbuf, sizeof(numbuf), "%llii", (long long int)value);
+        return XCString::mk(numbuf, static_cast<size_t>(written));
+    }
+
+    XCString XCString::chkNatToCString(__int128_t value) {
+        char numbuf[64];
+        int written = 0;
+
+        if(value <= (__int128_t)std::numeric_limits<int64_t>::max()) {
+            written = std::snprintf(numbuf, sizeof(numbuf), "%lliN", (long long int)value);
+        }
+        else {
+            assert(false); // Not Implemented: format for very large ChkNat values
+        }
+
+        return XCString::mk(numbuf, static_cast<size_t>(written));
+    }
+
+    XCString XCString::chkIntToCString(__int128_t value) {
+        char numbuf[64];
+        int written = 0;
+
+        if(value <= (__int128_t)std::numeric_limits<int64_t>::max()) {
+            written = std::snprintf(numbuf, sizeof(numbuf), "%lliI", (long long int)value);
+        }
+        else {
+            assert(false); // Not Implemented: format for very large ChkInt values
+        }
+
+        return XCString::mk(numbuf, static_cast<size_t>(written));
+    }
+
+    XCString XCString::floatToCString(double value) {
+        char numbuf[64];
+        int written = std::snprintf(numbuf, sizeof(numbuf), "%ff", value);
         return XCString::mk(numbuf, static_cast<size_t>(written));
     }
 

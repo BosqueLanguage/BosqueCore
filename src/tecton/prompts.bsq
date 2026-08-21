@@ -1,0 +1,19 @@
+namespace Tecton;
+
+entity Prompt {
+    %** The path to the component that this prompt is for **%
+    field path: CString;
+
+    %** The pretty-printed types for each step in this path **%
+    field typespp: List<CString>;
+
+    %** The type for the actual values we want to generate **%
+    field basetype: Assembly::TypeKey;
+
+    %** The JSON schema for the (individual) values we want to generate **%
+    field schema: CString;
+}
+
+function generatePromptForComponent(component: PrimitiveComponent): Prompt {
+    return Prompt{ component.path, List<CString>{}, component.oftype, '' };
+}

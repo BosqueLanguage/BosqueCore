@@ -1335,11 +1335,23 @@ class CPPEmitter {
         let prestr = "";
         let bstr: string;
 
-        if(body.builtin === "nat_to_cstring") {
+        if(body.builtin === "bool_to_cstring") {
+            bstr = `(bool)(b.value) ? ᐸRuntimeᐳ::XCString{"true"} : ᐸRuntimeᐳ::XCString{"false"}`;
+        }
+        else if(body.builtin === "nat_to_cstring") {
             bstr = `ᐸRuntimeᐳ::XCString::natToCString(n.value)`;
         }
         else if(body.builtin === "int_to_cstring") {
             bstr = `ᐸRuntimeᐳ::XCString::intToCString(i.value)`;
+        }
+        else if(body.builtin === "s_chkNatToCString") {
+            bstr = `!n.isBottom() ? ᐸRuntimeᐳ::XCString::chkNatToCString(n.value) : ᐸRuntimeᐳ::XCString{"ChkNat::npos"}`;
+        }
+        else if(body.builtin === "s_chkIntToCString") {
+            bstr = `!i.isBottom() ? ᐸRuntimeᐳ::XCString::chkIntToCString(i.value) : ᐸRuntimeᐳ::XCString{"ChkInt::npos"}`;
+        }
+        else if(body.builtin === "float_to_cstring") {
+            bstr = `ᐸRuntimeᐳ::XCString::floatToCString(f.value)`;
         }
         else if(body.builtin === "nat_pow") {
             bstr = `ᐸRuntimeᐳ::integerPower<ᐸRuntimeᐳ::XNat, int64_t>(x, y)`;

@@ -5,7 +5,7 @@ import { describe, it } from "node:test";
 
 describe ("Nat Operations", () => {
     it("should compute tostring", function () {
-        runTestSet('public function main(n: Nat): CString { return Nat::toCString(n); }', [['0n', "'0'"], ['3n', "'3'"]], []);
+        runTestSet('public function main(n: Nat): CString { return Nat::toCString(n); }', [['0n', "'0n'"], ['3n', "'3n'"]], []);
     });
     
     it("should compute powers generally", function () {
@@ -16,7 +16,19 @@ describe ("Nat Operations", () => {
 
 describe ("Int Operations", () => {
     it("should compute tostring", function () {
-        runTestSet('public function main(i: Int): CString { return Int::toCString(i); }', [['0i', "'0'"], ['3i', "'3'"], ['-3i', "'-3'"]], []);
+        runTestSet('public function main(i: Int): CString { return Int::toCString(i); }', [['0i', "'0i'"], ['3i', "'3i'"], ['-3i', "'-3i'"]], []);
+    });
+});
+
+describe ("ChkNat Operations", () => {
+    it("should compute tostring", function () {
+        runTestSet('public function main(n: ChkNat): CString { return ChkNat::toCString(n); }', [['0N', "'0N'"], ['3N', "'3N'"], ['ChkNat::npos', "'ChkNat::npos'"]], []);
+    });
+});
+
+describe ("ChkInt Operations", () => {
+    it("should compute tostring", function () {
+        runTestSet('public function main(i: ChkInt): CString { return ChkInt::toCString(i); }', [['0I', "'0I'"], ['3I', "'3I'"], ['-3I', "'-3I'"], ['ChkInt::npos', "'ChkInt::npos'"]], []);
     });
 });
 

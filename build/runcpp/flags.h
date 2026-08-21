@@ -82,7 +82,7 @@
 
 //The number of bytes allocated in the nursery before a collection is triggered
 #ifndef GC_NURSERY_BYTES_COLLECT_THRESHOLD
-    #define GC_NURSERY_BYTES_COLLECT_THRESHOLD (1ul << 20)
+    #define GC_NURSERY_BYTES_COLLECT_THRESHOLD (1ul << 23) //8MB by default
 #endif
 
 //The number of bytes to process from the pending delete list during a collection
