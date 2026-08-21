@@ -146,7 +146,9 @@ namespace ᐸRuntimeᐳ
                 return pp;
             }
 
-            iter++;
+            iter = this->pageset.erase(iter);
+            this->pageset.push_back(pp);
+            
             availchks++;
         }
 
