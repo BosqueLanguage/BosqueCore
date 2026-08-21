@@ -10,4 +10,8 @@ describe ("Floats Power", () => {
 
         runTestSet('public function main(x: Float): Float { return Float::pow(x, -2.0f); }', [['1.0f', '1.0f'], ['2.0f', '0.25f'], ['3.0f', '0.111111111111f']], ['0.0f']);
     });
+
+    it("should compute tostring", function () {
+        runTestSet('public function main(f: Float): CString { return Float::toCString(f); }', [['0.0f', "'0.0f'"], ['3.0f', "'3.0f'"]], []);
+    });
 });

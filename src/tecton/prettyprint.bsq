@@ -1,0 +1,108 @@
+declare namespace PrettyPrint  { 
+    using Assembly;
+}
+
+function prettyPrintLiteralExpression(expr: Assembly::LiteralExpression, assembly: Assembly::BapiAssembly): CString {
+    match(expr) {
+        Assembly::LiteralNoneExpression => { return 'none'; }
+        Assembly::LiteralBoolExpression => { return Bool::toCString(expr.value); }
+        Assembly::LiteralNatExpression => { return Nat::toCString(expr.value); }
+        Assembly::LiteralIntExpression => { return Int::toCString(expr.value); }
+        Assembly::LiteralChkNatExpression => { return ChkNat::toCString(expr.value); }
+        Assembly::LiteralChkIntExpression => { return ChkInt::toCString(expr.value); }
+
+        %%TODO: Add support for other literal types here
+    }
+}
+
+function prettyPrintPrimitive(pdecl: Assembly::PrimitiveEntityTypeDecl, assembly: Assembly::BapiAssembly): CString {
+    return pdecl.tkeystr;
+}
+
+function prettyPrintEnum(edecl: Assembly::EnumTypeDecl, assembly: Assembly::BapiAssembly): CString {
+    let memberspp = CString::joinAll(', ', edecl.members);
+    return Interpolate::cstring($'enum ${0} { ${1} }', edecl.tkeystr, memberspp);
+}
+
+function prettyPrintRngBound(rng: Assembly::TypedeclRangeCheck, assembly: Assembly::BapiAssembly): CString {
+    var minbound = '';
+    if($mb = rng.min)@some {
+        minbound = prettyPrintLiteralExpression($mb, assembly);
+    }
+
+    var maxbound = '';
+    if($mb = rng.max)@some {
+        maxbound = prettyPrintLiteralExpression($mb, assembly);
+    }
+
+    return Interpolate::cstring($'{${0},${1}}', minbound, maxbound);
+}
+
+function prettyPrintTypedecl(tdecl: Assembly::TypedeclTypeDecl, assembly: Assembly::BapiAssembly): CString {
+    match(tdecl) {
+        Assembly::TypedeclSimpleTypeDecl => { 
+            return Interpolate::cstring($'type ${0} = ${1};', tdecl.tkeystr, tdecl.valuetype.tkeystr); 
+        }
+        Assembly::TypedeclBoundedTypeDecl => { 
+            return Interpolate::cstring($'type ${0} = ${1}${2};', tdecl.tkeystr, tdecl.valuetype.tkeystr, prettyPrintRngBound(tdecl.rngchk, assembly)); 
+        }
+        Assembly::TypedeclCStringTypeDecl => {
+            var rngchkpp = '';
+            if($rng = tdecl.rngchk)@some {
+                rngchkpp = prettyPrintRngBound($rng, assembly);
+            }
+
+            var rechkpp = '';
+            if($rch = tdecl.rechk)@some {
+                abort; %%TODO: Implement regex pretty printing
+                %%Interpolate::cstring($' of ${0}', $rch);
+            }
+
+            return Interpolate::cstring($'type ${0} = CString${1}${2};', tdecl.tkeystr, rngchkpp, rechkpp); 
+        }
+        Assembly::TypedeclStringTypeDecl => { 
+            var rngchkpp = '';
+            if($rng = tdecl.rngchk)@some {
+                rngchkpp = prettyPrintRngBound($rng, assembly);
+            }
+
+            var rechkpp = '';
+            if($rch = tdecl.rechk)@some {
+                abort; %%TODO: Implement regex pretty printing
+                %%Interpolate::cstring($' of ${0}', $rch);
+            }
+
+            return Interpolate::cstring($'type ${0} = String${1}${2};', tdecl.tkeystr, rngchkpp, rechkpp); 
+        }
+    }
+}
+
+    function prettyPrintNominalTypeSignature(tsig: Assembly::NominalTypeSignature, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): List<PrimitiveComponent> {
+        let tdecl = assembly.alltypes.get(tsig.tkeystr);
+
+        match(tdecl) {
+            Assembly::PrimitiveEntityTypeDecl => { return generateComponentsForPrimitive($tdecl, path, steps, constraints, assembly); }
+            Assembly::EnumTypeDecl => { return generateComponentsForEnum($tdecl, path, steps, constraints, assembly); }
+            Assembly::TypedeclTypeDecl => { return generateComponentsForTypeDecl[recursive]($tdecl, path, steps, constraints, assembly); }
+        }
+    }
+
+    function prettyPrintEListTypeSignature(tsig: Assembly::EListTypeSignature, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): List<PrimitiveComponent> {
+    return tsig.entries.flatmapIdx[recursive]<PrimitiveComponent>(recursive fn(entry, idx) => {
+        let epath = path.extendWithIndex(Nat::toCString(idx));
+        let esteps = steps.pushBack(Nat::toCString(idx));
+
+        return generateComponentsForType[recursive](entry.tkeystr, epath, esteps, constraints, assembly);
+    });
+    }
+
+    recursive function generateComponentsForType(gentype: Assembly::TypeKey, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): List<PrimitiveComponent> {
+        let tsig = assembly.alltypesigs.get(gentype);
+
+        match(tsig) {
+            Assembly::VoidTypeSignature => { abort; } %%Should be handled prior to this point
+            Assembly::NominalTypeSignature => { return generateComponentsForNominalTypeSignature[recursive]($tsig, path, steps, constraints, assembly); }
+            Assembly::EListTypeSignature => { return generateComponentsForEListTypeSignature[recursive]($tsig, path, steps, constraints, assembly); }
+            %%Need to implement other cases here
+        }
+    }

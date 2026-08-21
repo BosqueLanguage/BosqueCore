@@ -21,6 +21,12 @@ __internal entity Some<T> provides Option<T> {
 
 %** Primitive boolean value. **%
 __internal __typedeclable __keycomparable entity Bool {
+#if STRIPPED_CORE
+#else
+    function toCString(b: Bool): CString {
+        return NumericOps::s_boolToCString(b);
+    }
+#endif %% STRIPPED_CORE
 }
 
 %** Primitive natural number value. **%
@@ -73,6 +79,10 @@ __internal __typedeclable __keycomparable __numeric entity ChkNat {
 #else
     const zero: ChkNat = 0N;
     const one: ChkNat = 1N;
+
+    function toCString(n: ChkNat): CString {
+        return NumericOps::s_chkNatToCString(n);
+    }
 #endif %% STRIPPED_CORE
 }
 
@@ -82,6 +92,10 @@ __internal __typedeclable __keycomparable __numeric entity ChkInt {
 #else
     const zero: ChkInt = 0I;
     const one: ChkInt = 1I;
+
+    function toCString(i: ChkInt): CString {
+        return NumericOps::s_chkIntToCString(i);
+    }
 #endif %% STRIPPED_CORE
 }
 
@@ -122,6 +136,10 @@ __internal __typedeclable __numeric entity Float {
         requires x >= 0.0f;
     {
         return NumericOps::s_floatSqrt(x);
+    }
+
+    function toCString(i: Float): CString {
+        return NumericOps::s_floatToCString(i);
     }
 #endif %% STRIPPED_CORE
 }
@@ -210,6 +228,16 @@ __internal __typedeclable __keycomparable entity String {
             return StringOps::s_append(other, this);
         }
     }
+
+    %** Convert a String to a ByteBuffer in utf-8 encoding **%
+    function toByteBuffer(s: String): ByteBuffer {
+        return StringOps::s_toByteBuffer(s);
+    }
+
+    %** Convert a ByteBuffer (assumed utf-8 encoded) to a String. If decoding fails, e.g. incomplete multi-byte character or invalid value, return None. **%
+    function fromByteBuffer(bb: ByteBuffer): Option<String> {
+        return StringOps::s_fromByteBuffer(bb);
+    }
 #endif %% STRIPPED_CORE
 }
 
@@ -251,6 +279,15 @@ __internal __typedeclable __keycomparable entity CString {
         else {
             return CStringOps::s_append(other, this);
         }
+    }
+
+    function toByteBuffer(s: CString): ByteBuffer {
+        return CStringOps::s_toByteBuffer(s);
+    }
+
+    %** Convert a ByteBuffer to a CString. If <code>mbescape</code> is true then out-of-range or multibyte utf-8 encodings are numeric escaped. If decoding fails, e.g. incomplete multi-byte character or invalid value, return None. **%
+    function fromByteBuffer(bb: ByteBuffer, mbescape: Bool = false): Option<CString> {
+        return CStringOps::s_fromByteBuffer(bb, mbescape);
     }
 #endif %% STRIPPED_CORE
 }
