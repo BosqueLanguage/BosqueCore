@@ -4,14 +4,14 @@ import { checkTestEmitMainFunction } from "../../../bin/test/cppemit/cppemit_nf.
 import { describe, it } from "node:test";
 
 describe ("CPPEmit -- Byte", () => {
-    it("should check simple byte", function () {
+    it("should emit simple byte", function () {
         checkTestEmitMainFunction("public function main(b: Byte): Byte { return 0xf; }", "Byte Mainᕒmain(Byte b) { return ᐸRuntimeᐳ::XByte{0x0f}; }");
         checkTestEmitMainFunction("public function main(b: Byte): Byte { return 0x0F; }", "Byte Mainᕒmain(Byte b) { return ᐸRuntimeᐳ::XByte{0x0f}; }");
     });
 });
 
 describe ("CPPEmit -- ByteBuffer", () => {
-    it("should check simple bytebuffer", function () {
+    it("should emit simple bytebuffer", function () {
         checkTestEmitMainFunction("public function main(b: ByteBuffer): ByteBuffer { return 0x[]; }", "ByteBuffer Mainᕒmain(ByteBuffer b) { return ᐸRuntimeᐳ::XByteBuffer{}; }");
         checkTestEmitMainFunction("public function main(b: ByteBuffer): ByteBuffer { return 0x[f]; }", "ByteBuffer Mainᕒmain(ByteBuffer b) { return ᐸRuntimeᐳ::XByteBuffer::mk({0x0f}); }");
         checkTestEmitMainFunction("public function main(b: ByteBuffer): ByteBuffer { return 0x[0F]; }", "ByteBuffer Mainᕒmain(ByteBuffer b) { return ᐸRuntimeᐳ::XByteBuffer::mk({0x0f}); }");

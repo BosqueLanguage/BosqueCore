@@ -252,7 +252,7 @@ namespace ᐸRuntimeᐳ
         return !(32 <= c && c <= 126) || isSimpleEscapeUnicodeChar(c);
     }
 
-    constexpr std::array<std::pair<uint8_t, const char*>, 55> s_escape_names_char = {
+    constexpr std::array<std::pair<uint8_t, const char*>, 37> s_escape_names_char = {
         std::make_pair<uint8_t, const char*>(9, "%t;"),
         std::make_pair<uint8_t, const char*>(10, "%n;"),
 
@@ -293,7 +293,7 @@ namespace ᐸRuntimeᐳ
         std::make_pair<uint8_t, const char*>(126, "%tilde;")
     };
 
-    constexpr std::array<std::pair<uint8_t, const char*>, 55> s_escape_names_char_simple = {
+    constexpr std::array<std::pair<uint8_t, const char*>, 4> s_escape_names_char_simple = {
         std::make_pair<uint8_t, const char*>(9, "%t;"),
         std::make_pair<uint8_t, const char*>(10, "%n;"),
         std::make_pair<uint8_t, const char*>(37, "%%;"),

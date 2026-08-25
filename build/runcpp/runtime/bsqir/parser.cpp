@@ -443,8 +443,15 @@ namespace ᐸRuntimeᐳ
     std::optional<XCChar> BSQONParser::parseCChar()
     {
         if(this->lexer.current().tokentype != BSQONTokenType::LiteralCChar) {
-            return std::nullopt;
-        }   
+            if(!this->sloppystrings || this->lexer.current().tokentype != BSQONTokenType::LiteralUnicodeChar) {
+                return std::nullopt;
+            }
+        }
+
+        char etok = '\'';
+        if(this->sloppystrings && this->lexer.current().tokentype == BSQONTokenType::LiteralUnicodeChar) {
+            etok = '"';
+        }
 
         auto stok = this->lexer.current();
         this->lexer.consume();
@@ -455,7 +462,7 @@ namespace ᐸRuntimeᐳ
 
         char output = 0;
         bool charok = processCCharFromIter(ii, &output);
-        if(!charok || *ii != '\'') {
+        if(!charok || *ii != etok) {
             return std::nullopt;
         }
 

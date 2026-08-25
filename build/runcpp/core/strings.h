@@ -576,7 +576,7 @@ namespace ᐸRuntimeᐳ
         template<size_t len>
         StrRootInlineContent(const char32_t (&str)[len])
         {
-            static_assert(len - 1 <= ᐸRuntimeᐳ::StrRootInlineContent::STR_MAX_SIZE, "String literal too large for CStrRootInlineContent");
+            static_assert(len - 1 <= ᐸRuntimeᐳ::StrRootInlineContent::STR_MAX_SIZE, "String literal too large for StrRootInlineContent");
 
             if(len == 1) {
                 this->data.fill(U'\0');
@@ -591,7 +591,7 @@ namespace ᐸRuntimeᐳ
         template<size_t N>
         StrRootInlineContent(SmallLiteralInitBuffer<N> slib)
         {
-            static_assert(N - 1 <= ᐸRuntimeᐳ::StrRootInlineContent::STR_MAX_SIZE, "String literal too large for CStrRootInlineContent");
+            static_assert(N - 1 <= ᐸRuntimeᐳ::StrRootInlineContent::STR_MAX_SIZE, "String literal too large for StrRootInlineContent");
 
             if(N == 1) {
                 this->data.fill(U'\0');

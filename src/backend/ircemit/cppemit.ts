@@ -14,7 +14,7 @@ const CLOSURE_CAPTURE_NAME = "ᐸclosureᐳ";
 
 //Make sure to keep these in sync with runtime limits
 const SMALL_CSTRING_MAX_SIZE = 15;
-const SMALL_STRING_MAX_SIZE = 7;
+const SMALL_STRING_MAX_SIZE = 3;
 
 class CPPEmitter {
     readonly irasm: IRAssembly;
@@ -79,7 +79,7 @@ class CPPEmitter {
     }
 
     private escapeLiteralUnicodeChar(b: number): string {
-        let escstr = "'";
+        let escstr = "U'";
         
         if(b === 0x5C) {
             escstr += "\\\\";
@@ -125,13 +125,8 @@ class CPPEmitter {
                 lcount++;
             }
             else {
-                if(32 <= b && b < 127) {
-                    escstr += String.fromCodePoint(b);
-                    lcount++;
-                }
-                else {
-                    assert(false, "CPPEmitter: need to do unicode escape for non-ascii characters in string literals -- they are utf8 encoded btw");
-                }
+                escstr += String.fromCodePoint(b);
+                lcount++;
             }
         }
         escstr += '"';
