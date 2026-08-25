@@ -3,7 +3,6 @@
 import { checkTestExp } from "../../../bin/test/typecheck/typecheck_nf.js";
 import { describe, it } from "node:test";
 
-
 describe ("Checker -- Byte", () => {
     it("should check simple byte", function () {
         checkTestExp("0xf", "Byte");

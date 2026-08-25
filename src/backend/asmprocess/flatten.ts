@@ -1931,8 +1931,16 @@ class ASMToIRConverter {
             return new IRLiteralComplexExpression(cnv.slice(0, spos), cnv.slice(spos, -1));
         }
         else if(ttag === ExpressionTag.LiteralByteBufferExpression) {
-            const bytes = (exp as LiteralSimpleExpression).value.slice(3, -1).split(",").map((b) => parseInt("0x" + b, 16));
-            return new IRLiteralByteBufferExpression(bytes);
+            const bset = (exp as LiteralSimpleExpression).value.slice(3, -1);
+            if(bset.length === 0) {
+                return new IRLiteralByteBufferExpression([]);
+            }
+            else {
+                const bvals = bset.split(",");
+                const bytes = bvals.map((b) => parseInt(b, 16));
+
+                return new IRLiteralByteBufferExpression(bytes);
+            }
         }
         else if(ttag === ExpressionTag.LiteralUUIDv4Expression) {
             const bstring = (exp as LiteralSimpleExpression).value.slice(6, -1).replace(/-/g, "");
@@ -2038,10 +2046,10 @@ class ASMToIRConverter {
             return new IRLiteralByteExpression(nval);
         }
         else if(ttag === ExpressionTag.LiteralCCharExpression) {
-            return new IRLiteralCCharExpression(((exp as LiteralSimpleExpression).resolvedValue as string).charCodeAt(0));
+            return new IRLiteralCCharExpression(((exp as LiteralSimpleExpression).resolvedValue as string).codePointAt(0) as number);
         }
         else if(ttag === ExpressionTag.LiteralUnicodeCharExpression) {
-            return new IRLiteralUnicodeCharExpression(((exp as LiteralSimpleExpression).resolvedValue as string).charCodeAt(0));
+            return new IRLiteralUnicodeCharExpression(((exp as LiteralSimpleExpression).resolvedValue as string).codePointAt(0) as number);
         }
         else if(ttag === ExpressionTag.LiteralCStringExpression) {
             const slexp = exp as LiteralCStringExpression;

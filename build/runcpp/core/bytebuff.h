@@ -3,7 +3,8 @@
 #include "../common.h"
 
 #include "bsqtype.h"
-#include "boxed.h"
+
+#include "../runtime/allocator/alloc.h"
 
 namespace ᐸRuntimeᐳ 
 {
@@ -151,18 +152,26 @@ namespace ᐸRuntimeᐳ
     public:
         constexpr static size_t BUFFER_INLINE_SIZE = 16;
 
+        static const TypeInfo* s_entrytypeinfo;
+        thread_local static GCAllocator<ByteBufferEntry>* s_entryallocator;
+
+        static const TypeInfo* s_blocktypeinfo;
+        thread_local static GCAllocator<ByteBufferBlock>* s_blockallocator;
+
     private:
         size_t bytesize;
         std::array<uint8_t, BUFFER_INLINE_SIZE> inlinebytes;
         void* heapbytes;
 
     public:
-        XByteBuffer() : bytesize{0}, inlinebytes{}, heapbytes{} { ; }
-        XByteBuffer(const std::array<uint8_t, BUFFER_INLINE_SIZE>& i, size_t b) :  bytesize{b}, inlinebytes{i}, heapbytes{} { ; }
+        constexpr XByteBuffer() : bytesize{0}, inlinebytes{}, heapbytes{} { ; }
+        constexpr XByteBuffer(const std::array<uint8_t, BUFFER_INLINE_SIZE>& i, size_t b) :  bytesize{b}, inlinebytes{i}, heapbytes{} { ; }
         XByteBuffer(void* h, size_t b) :  bytesize{b}, inlinebytes{}, heapbytes{h} { ; }
         XByteBuffer(const XByteBuffer& other) = default;
 
-        size_t bytes() const { return this->bytesize; }
+        static XByteBuffer mk(const std::initializer_list<uint8_t>& elems);
+
+        constexpr size_t bytes() const { return this->bytesize; }
 
         ByteBufferIterator iterator() const 
         {
