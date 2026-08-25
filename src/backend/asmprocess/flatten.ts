@@ -275,13 +275,16 @@ class ASMToIRConverter {
     }
 
     private processStringBytes(sval: string): number[] {
-        const bbuff = Buffer.from(sval, "utf8");
-        let bytes: number[] = [];
-        for(let i = 0; i < bbuff.length; ++i) {
-            bytes.push(bbuff[i]);
+        let cpoints: number[] = [];
+        
+        let pos = 0;
+        while(pos < sval.length) {
+            const cc = sval.codePointAt(pos) as number;
+            cpoints.push(cc);
+            pos += cc > 0xffff ? 2 : 1;
         }
 
-        return bytes;
+        return cpoints;
     }
 
     private tproc(ttype: TypeSignature): TypeSignature {
