@@ -895,7 +895,7 @@ class TypeInfoManager {
 
         timgr.addLayoutInfo("ByteBufferEntry", new LayoutInfo("ByteBufferEntry", new IRNominalTypeSignature("ByteBufferEntry"), 8, "1"));
         timgr.addLayoutInfo("ByteBufferBlock", new LayoutInfo("ByteBufferBlock", new IRNominalTypeSignature("ByteBufferBlock"), 8, "1"));
-        timgr.addLayoutInfo("ByteBuffer", new LayoutInfo("ByteBuffer", new IRNominalTypeSignature("ByteBuffer"), 24, "200"));
+        timgr.addLayoutInfo("ByteBuffer", new LayoutInfo("ByteBuffer", new IRNominalTypeSignature("ByteBuffer"), 32, "0001"));
 
         timgr.addLayoutInfo("Byte", new LayoutInfo("Byte", new IRNominalTypeSignature("Byte"), 8, "0"));
         timgr.addLayoutInfo("CChar", new LayoutInfo("CChar", new IRNominalTypeSignature("CChar"), 8, "0"));
@@ -1002,9 +1002,9 @@ class TypeInfoManager {
         
         timgr.addTypeInfo("String", new TypeInfo("String", new IRNominalTypeSignature("String"), 18, 16, LayoutTag.Value, "40", false));
 
-        timgr.addTypeInfo("ByteBufferEntry", new TypeInfo("ByteBufferEntry", new IRNominalTypeSignature("ByteBufferEntry"), 19, 512, LayoutTag.Ref, undefined, true));
+        timgr.addTypeInfo("ByteBufferEntry", new TypeInfo("ByteBufferEntry", new IRNominalTypeSignature("ByteBufferEntry"), 19, 64, LayoutTag.Ref, undefined, true));
         timgr.addTypeInfo("ByteBufferBlock", new TypeInfo("ByteBufferBlock", new IRNominalTypeSignature("ByteBufferBlock"), 20, 512, LayoutTag.Ref, "1111111111111111111111111111111111111111111111111111111111111111", false));
-        timgr.addTypeInfo("ByteBuffer", new TypeInfo("ByteBuffer", new IRNominalTypeSignature("ByteBuffer"), 21, 24, LayoutTag.Value, "200", false));
+        timgr.addTypeInfo("ByteBuffer", new TypeInfo("ByteBuffer", new IRNominalTypeSignature("ByteBuffer"), 21, 32, LayoutTag.Value, "0001", false));
 
         timgr.addTypeInfo("Byte", new TypeInfo("Byte", new IRNominalTypeSignature("Byte"), 22, 8, LayoutTag.Value, undefined, true));
         timgr.addTypeInfo("CChar", new TypeInfo("CChar", new IRNominalTypeSignature("CChar"), 23, 8, LayoutTag.Value, undefined, true));
