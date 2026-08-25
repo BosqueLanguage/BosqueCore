@@ -2645,8 +2645,13 @@ class Monomorphizer {
         Monomorphizer.loadWellKnownType(assembly, "LatLongCoordinate", wellknownTypes);
         Monomorphizer.loadWellKnownType(assembly, "Complex", wellknownTypes);
 
+        Monomorphizer.loadWellKnownType(assembly, "CChar", wellknownTypes);
+        Monomorphizer.loadWellKnownType(assembly, "UnicodeChar", wellknownTypes);
+        Monomorphizer.loadWellKnownType(assembly, "Byte", wellknownTypes);
+
         Monomorphizer.loadWellKnownType(assembly, "String", wellknownTypes);
         Monomorphizer.loadWellKnownType(assembly, "CString", wellknownTypes);
+        Monomorphizer.loadWellKnownType(assembly, "ByteBuffer", wellknownTypes);
 
         Monomorphizer.loadWellKnownType(assembly, "Regex", wellknownTypes);
         Monomorphizer.loadWellKnownType(assembly, "CRegex", wellknownTypes);

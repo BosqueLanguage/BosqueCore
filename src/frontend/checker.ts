@@ -1526,10 +1526,10 @@ class TypeChecker {
         try {
             const vcc = validateCStringLiteral(exp.value.slice(2, exp.value.length - 1));
             if(vcc === null) {
-                throw new Error(`Invalid CChar literal`);
+                this.reportError(exp.sinfo, `Invalid CChar literal`);
             }
             if(vcc.length > 1) {
-                throw new Error(`Expected zero or one UnicodeChar, but found ${vcc.length} characters`);
+                this.reportError(exp.sinfo, `Expected zero or one UnicodeChar, but found ${vcc.length} characters`);
             }
             exp.resolvedValue = vcc;
         } catch(err) {
@@ -1539,14 +1539,18 @@ class TypeChecker {
         return exp.setType(this.getWellKnownType("CChar"));
     }
 
+    private static isSingleCodePoint(str: string): boolean {
+        return (str.length <= 4) && [...str].length === 1;
+    }
+
     private checkLiteralUnicodeCharExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
         try {
             const vuc = validateStringLiteral(exp.value.slice(2, exp.value.length - 1));
             if(vuc === null) {
-                throw new Error(`Invalid UnicodeChar literal`)
+                this.reportError(exp.sinfo, `Invalid UnicodeChar literal`);
             }
-            if(vuc.length > 1) {
-                throw new Error(`Expected zero or one UnicodeChar, but found ${vuc.length} characters`);
+            if(!TypeChecker.isSingleCodePoint(vuc)) {
+                this.reportError(exp.sinfo, `Expected zero or one UnicodeChar, but found ${vuc.length} characters`);
             }
             exp.resolvedValue = vuc;
         } catch(err) {
@@ -6203,9 +6207,11 @@ class TypeChecker {
 
         TypeChecker.loadWellKnownType(assembly, "CChar", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "UnicodeChar", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "Byte", wellknownTypes);
 
         TypeChecker.loadWellKnownType(assembly, "String", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "CString", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "ByteBuffer", wellknownTypes);
 
         TypeChecker.loadWellKnownType(assembly, "Regex", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "CRegex", wellknownTypes);
