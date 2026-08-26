@@ -39,7 +39,7 @@ describe ("Parser -- CString", () => {
     });
     
     it("should fail illegal chars", function () {
-        parseTestExpError("'a🌵c'", "Invalid chacaters in CString literal", "CString");
-        parseTestExpError("'\v'", "Invalid chacaters in CString literal", "CString");
+        parseTestExpError("'a🌵c'", "Invalid character in CString literal", "CString");
+        parseTestExpError("'\v'", "Invalid character in CString literal", "CString");
     });
 });

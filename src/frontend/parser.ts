@@ -578,7 +578,13 @@ class Lexer {
             return true;
         }
         else {
-            // Defer checking for single character to type checker
+            if(jepos === ncpos) {
+                this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, jepos - this.jsStrPos), "Empty UChar literal");
+                this.recordLexToken(jepos, TokenStrings.Error);
+
+                return true;
+            }
+
             jepos++;
             let strval = this.input.slice(this.jsStrPos, jepos);
             
@@ -620,7 +626,7 @@ class Lexer {
         }
     }
 
-    static _s_validCStringChars = /^[ -~\t\n]*$/;
+    static _s_validCChars = /^[ -~\t\n]*$/;
     private tryLexCChar(): boolean {
         let ncpos = this.jsStrPos;
         if(!this.input.startsWith('c\'', this.jsStrPos)) { // Byte char
@@ -636,18 +642,18 @@ class Lexer {
             return true;
         }
         else {
-            const mstr = this.input.slice(ncpos, jepos);
-            if(!Lexer._s_validCStringChars.test(mstr)) {
-                this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, jepos - this.jsStrPos), "Invalid chacaters in CChar literal");
+            if(jepos === ncpos) {
+                this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, jepos - this.jsStrPos), "Empty CChar literal");
                 this.recordLexToken(jepos, TokenStrings.Error);
 
                 return true;
             }
 
-            if((jepos - ncpos) > 1) {
-                this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, this.jsStrEnd - this.jsStrPos), "More than one character in CChar literal");
-                this.recordLexToken(this.jsStrEnd, TokenStrings.Error);
-    
+            const mstr = this.input.slice(ncpos, jepos);
+            if(!Lexer._s_validCChars.test(mstr)) {
+                this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, jepos - this.jsStrPos), "Invalid character in CChar literal");
+                this.recordLexToken(jepos, TokenStrings.Error);
+
                 return true;
             }
 
@@ -660,6 +666,7 @@ class Lexer {
         }
     }
 
+    static _s_validCStringChars = /^[ -~\t\n]*$/;
     private tryLexCString(): boolean {
         let ncpos = this.jsStrPos;
         let istemplate = false;
@@ -684,7 +691,7 @@ class Lexer {
         else {
             const mstr = this.input.slice(ncpos, jepos);
             if(!Lexer._s_validCStringChars.test(mstr)) {
-                this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, jepos - this.jsStrPos), "Invalid chacaters in CString literal");
+                this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, jepos - this.jsStrPos), "Invalid character in CString literal");
                 this.recordLexToken(jepos, TokenStrings.Error);
 
                 return true;

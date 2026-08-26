@@ -256,7 +256,7 @@ namespace ᐸRuntimeᐳ
         outseq.fill(0);
         outlen = 0;
 
-        while(*ii != closequote && outlen < 16) {
+        while(*ii != closequote && outlen < 15) {
             outseq[outlen] = *ii;
             ++ii;
             outlen++;
@@ -308,6 +308,12 @@ namespace ᐸRuntimeᐳ
         res = 0;
         if(outlen < 2 || outseq[0] != '%' || outseq[outlen - 1] != ';') {
             return false;
+        }
+
+        auto ii = std::find_if(s_escape_names_unicode.cbegin(), s_escape_names_unicode.cend(), [&](const auto& p) { return std::strcmp(p.second, outseq.data()) == 0; });
+        if(ii != s_escape_names_unicode.cend()) {
+            res = (char32_t)ii->first;
+            return isLegalUnicodeChar(res);
         }
 
         if(outseq[1] == 'x') {
@@ -443,8 +449,15 @@ namespace ᐸRuntimeᐳ
     std::optional<XCChar> BSQONParser::parseCChar()
     {
         if(this->lexer.current().tokentype != BSQONTokenType::LiteralCChar) {
-            return std::nullopt;
-        }   
+            if(!this->sloppystrings || this->lexer.current().tokentype != BSQONTokenType::LiteralUnicodeChar) {
+                return std::nullopt;
+            }
+        }
+
+        char etok = '\'';
+        if(this->sloppystrings && this->lexer.current().tokentype == BSQONTokenType::LiteralUnicodeChar) {
+            etok = '"';
+        }
 
         auto stok = this->lexer.current();
         this->lexer.consume();
@@ -455,7 +468,7 @@ namespace ᐸRuntimeᐳ
 
         char output = 0;
         bool charok = processCCharFromIter(ii, &output);
-        if(!charok || *ii != '\'') {
+        if(!charok || *ii != etok) {
             return std::nullopt;
         }
 
@@ -621,9 +634,131 @@ namespace ᐸRuntimeᐳ
         }
     }
 
+    bool processByteBufferEntry(BSQLexBufferIterator& ii, uint8_t& byteval) {
+        //read hex value
+        char outbuff[16] = {0};
+        size_t ecount = 0;
+        while(std::isxdigit(*ii)) {
+            outbuff[ecount] = *ii;
+            ++ii;
+            ecount++;
+        }
+
+        uint8_t output = 0;
+        auto [ptr, ec] = std::from_chars(outbuff, outbuff + ecount, output, 16);
+        if(ec != std::errc() || (ptr != outbuff + ecount)) {
+            return false;
+        }
+
+        byteval = output;
+        return true;
+    }
+
     std::optional<XByteBuffer> BSQONParser::parseByteBuffer()
     {
-        assert(false); // Not Implemented: parsing ByteBuffer values
+        if(this->lexer.current().tokentype != BSQONTokenType::LiteralByteBuffer) {
+            return std::nullopt;
+        }
+        
+        auto stok = this->lexer.current();
+        if(stok.size() == 4) {
+            this->lexer.consume();
+            return std::make_optional(XByteBuffer{});
+        }
+        else {
+            size_t esize = std::numeric_limits<size_t>::max();
+            constexpr size_t maxpossiblechars = 3 + (XByteBuffer::BUFFER_INLINE_SIZE * 3); //if we have more than this many chars then we dfinitely are not inline
+            if(stok.size() <= maxpossiblechars) {
+                //we might fit so do the count
+                esize = std::count(stok.begin, stok.end, ',') + 1;
+            }
+
+            BSQLexBufferIterator ii = stok.begin;
+            ++ii; //eat 0x and (the [ gets handled in the loops)
+            ++ii;
+
+            bool extractok = true;
+            XByteBuffer rbuf{};
+            if(esize <= XByteBuffer::BUFFER_INLINE_SIZE) {
+                size_t icount = 0;
+                std::array<uint8_t, XByteBuffer::BUFFER_INLINE_SIZE> ibuff{};
+
+                while(*ii != ']' && extractok) {
+                    extractok &= (*ii == ',' || *ii == '[');
+                    ++ii;
+                    
+                    uint8_t byteval = 0;
+                    extractok &= processByteBufferEntry(ii, byteval);
+
+                    ibuff[icount] = byteval;
+                    icount++;
+                }
+
+                rbuf = XByteBuffer{ibuff, icount};
+            }
+            else {
+                size_t totalelems = 0;
+                ByteBufferBlock* blockl = nullptr;
+                size_t bytecount = 0;
+                std::array<uint8_t, ByteBufferEntry::BUFFER_ENTRY_SIZE> entrybytes{};
+                size_t blockcount = 0;
+                std::array<ByteBufferEntry*, ByteBufferBlock::BUFFER_BLOCK_ENTRY_COUNT> entryptrs{};
+
+                while(*ii != ']' && extractok) {
+                    while(bytecount < ByteBufferEntry::BUFFER_ENTRY_SIZE && *ii != ']' && extractok) {
+                        extractok &= (*ii == ',' || *ii == '[');
+                        ++ii;
+                    
+                        uint8_t byteval = 0;
+                        extractok &= processByteBufferEntry(ii, byteval);
+
+                        entrybytes[bytecount] = byteval;
+                        bytecount++;
+
+                        totalelems++;
+                    }
+
+                    ByteBufferEntry* bb = XByteBuffer::s_entryallocator->allocate(entrybytes);
+                    entrybytes.fill(0);
+                    bytecount = 0;
+
+                    entryptrs[blockcount] = bb;
+                    blockcount++;
+                    if(blockcount == ByteBufferBlock::BUFFER_BLOCK_ENTRY_COUNT) {
+                        blockl = XByteBuffer::s_blockallocator->allocate(entryptrs, blockl);
+                        entryptrs.fill(nullptr);
+                        blockcount = 0;
+                    }
+                }
+                if(blockcount != 0) {
+                    blockl = XByteBuffer::s_blockallocator->allocate(entryptrs, blockl);
+                }
+
+                //reverse for flow
+                std::stack<ByteBufferBlock*> blockstack{};
+                while(blockl != nullptr) {
+                    blockstack.push(blockl);
+                    blockl = blockl->next;
+                }
+
+                ByteBufferBlock* revl = nullptr;
+                while(!blockstack.empty()) {
+                    ByteBufferBlock* bb = blockstack.top();
+                    blockstack.pop();
+                    revl = XByteBuffer::s_blockallocator->allocate(bb->entries, revl);
+                }
+
+                return XByteBuffer(revl, totalelems);
+            }
+
+            this->lexer.consume();
+            if(!extractok) {
+                return std::nullopt;
+            }
+            else {
+                return std::make_optional(rbuf);
+            }
+        }
     }
 
     std::optional<XCRegex> BSQONParser::parseCRegex()

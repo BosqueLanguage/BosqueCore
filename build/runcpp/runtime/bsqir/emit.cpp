@@ -26,7 +26,7 @@ namespace ᐸRuntimeᐳ
         std::memset(this->cdata, 0, MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE);
     }
 
-    void BSQEmitBufferMgr::writeSlow(char c)
+    void BSQEmitBufferMgr::writeSlow(uint8_t c)
     {
         if(this->cpos == this->epos) {
             this->rotateData();
@@ -164,9 +164,16 @@ namespace ᐸRuntimeᐳ
                 this->bufferMgr.write(ii->second);
             }
             else {
-                //TODO: maybe we want to do some selective multi-byte emits here for nicer output, but for now just emit the hex value as it is the least problematic encoding
-                
-                this->bufferMgr.writeNumberWFormat("%%x%x;", c.value);
+                if(c.value <= 127) {
+                    this->bufferMgr.writeNumberWFormat("%%x%x;", c.value);
+                }
+                else {
+                    std::array<uint8_t, 4> outbuff;
+                    size_t bytecount = ucharToMultiByteEncoding(c.value, outbuff);
+                    for(size_t i = 0; i < bytecount; i++) {
+                        this->bufferMgr.write(outbuff[i]);
+                    }
+                }
             }
         }
         
@@ -219,9 +226,16 @@ namespace ᐸRuntimeᐳ
                     this->bufferMgr.write(ii->second);
                 }
                 else {
-                    //TODO: maybe we want to do some selective multi-byte emits here for nicer output, but for now just emit the hex value as it is the least problematic encoding
-
-                    this->bufferMgr.writeNumberWFormat("%%x%x;", c);
+                    if(c < 127) {
+                        this->bufferMgr.writeNumberWFormat("%%x%x;", c);
+                    }
+                    else {
+                        std::array<uint8_t, 4> outbuff;
+                        size_t bytecount = ucharToMultiByteEncoding(c, outbuff);
+                        for(size_t i = 0; i < bytecount; i++) {
+                            this->bufferMgr.write(outbuff[i]);
+                        }
+                    }
                 }
             }
         }
@@ -231,7 +245,36 @@ namespace ᐸRuntimeᐳ
 
     void BSQONEmitter::emitByteBuffer(XByteBuffer buf)
     {
-        assert(false); // Not Implemented: emitting ByteBuffer values
+        if(buf.bytes() == 0) {
+            this->bufferMgr.writeImmediate("0x[]");
+        }
+        else {
+            this->bufferMgr.writeImmediate("0x[");
+            if(buf.bytes() <= XByteBuffer::BUFFER_INLINE_SIZE) {
+                const uint8_t* inlineData = buf.inlinedata();
+                for(size_t i = 0; i < buf.bytes(); i++) {
+                    if(i != 0) {
+                        this->bufferMgr.write(',');
+                    }
+
+                    this->bufferMgr.writeNumberWFormat("%x", inlineData[i]);
+                }
+            }
+            else {
+                auto iter = buf.iterator();
+                bool first = true;
+                while(iter.valid()) {
+                    if(!first) {
+                        this->bufferMgr.write(',');
+                    }
+                    first = false;
+
+                    this->bufferMgr.writeNumberWFormat("%x", iter.get());
+                    iter.next();
+                }
+            }
+            this->bufferMgr.writeImmediate("]");
+        }
     }
 
     void BSQONEmitter::emitCRegex(XCRegex r)

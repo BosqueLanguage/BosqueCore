@@ -163,7 +163,7 @@ namespace ᐸRuntimeᐳ
 
     //See also allocator/alloc.h for allocator specific thread local and global info -- no other globals should be hanging around!
 
-    constexpr std::array<std::pair<char32_t, const char*>, 95> s_escape_names_unicode = {
+    constexpr std::array<std::pair<char32_t, const char*>, 68> s_escape_names_unicode = {
         std::make_pair<char32_t, const char*>(0, "%NUL;"),
         std::make_pair<char32_t, const char*>(1, "%SOH;"),
         std::make_pair<char32_t, const char*>(2, "%STX;"),
@@ -252,7 +252,7 @@ namespace ᐸRuntimeᐳ
         return !(32 <= c && c <= 126) || isSimpleEscapeUnicodeChar(c);
     }
 
-    constexpr std::array<std::pair<uint8_t, const char*>, 55> s_escape_names_char = {
+    constexpr std::array<std::pair<uint8_t, const char*>, 37> s_escape_names_char = {
         std::make_pair<uint8_t, const char*>(9, "%t;"),
         std::make_pair<uint8_t, const char*>(10, "%n;"),
 
@@ -293,7 +293,7 @@ namespace ᐸRuntimeᐳ
         std::make_pair<uint8_t, const char*>(126, "%tilde;")
     };
 
-    constexpr std::array<std::pair<uint8_t, const char*>, 55> s_escape_names_char_simple = {
+    constexpr std::array<std::pair<uint8_t, const char*>, 4> s_escape_names_char_simple = {
         std::make_pair<uint8_t, const char*>(9, "%t;"),
         std::make_pair<uint8_t, const char*>(10, "%n;"),
         std::make_pair<uint8_t, const char*>(37, "%%;"),
@@ -325,8 +325,12 @@ namespace ᐸRuntimeᐳ
         return (c <= 0x10FFFF) && !((0xD800 <= c) && (c <= 0xDFFF));
     }
 
-    inline bool isMultibyteEncoding(char c)
+    inline bool isMultibyteEncoding(uint8_t c)
     {
         return (c & 0x80) != 0;
     }
+
+    size_t multibyteCharCount(uint8_t c);
+    size_t ucharToMultiByteEncoding(char32_t c, std::array<uint8_t, 4>& outbuff);
+    char32_t multibyteToUChar(const std::array<uint8_t, 4>& inbuff, size_t bytecount);
 }

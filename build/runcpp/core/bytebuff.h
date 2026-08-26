@@ -3,14 +3,15 @@
 #include "../common.h"
 
 #include "bsqtype.h"
-#include "boxed.h"
+
+#include "../runtime/allocator/alloc.h"
 
 namespace ᐸRuntimeᐳ 
 {
     class ByteBufferEntry
     {
     public:
-        constexpr static size_t BUFFER_ENTRY_SIZE = 512; //TODO: This may need tuning, seems like a reasonable default for now (time vs wasted space tradeoff)
+        constexpr static size_t BUFFER_ENTRY_SIZE = 64;
 
         std::array<uint8_t, BUFFER_ENTRY_SIZE> data;
 
@@ -38,29 +39,6 @@ namespace ᐸRuntimeᐳ
         ByteBufferBlock(const std::array<ByteBufferEntry*, BUFFER_BLOCK_ENTRY_COUNT>& entries, ByteBufferBlock* next) : entries{entries}, next{next} { ; } 
         ByteBufferBlock(const ByteBufferBlock& other) = default;
     };
-
-    union ByteBufferTreeUnion
-    {
-        void* upunning;
-        ByteBufferEntry* buff;
-        ByteBufferBlock* node;
-
-        ByteBufferTreeUnion() : upunning{} { ; }
-        ByteBufferTreeUnion(ByteBufferEntry* b) : buff{b} { ; }
-        ByteBufferTreeUnion(ByteBufferBlock* n) : node{n} { ; }
-        ByteBufferTreeUnion(const ByteBufferTreeUnion& other) = default;
-
-        ByteBufferTreeUnion& operator=(const ByteBufferTreeUnion& other)
-        {
-            if(this == &other) {
-                return *this;
-            }
-
-            this->upunning = other.upunning;
-            return *this;
-        }
-    };
-    using BufferTree = ᐸRuntimeᐳ::BoxedUnion<ByteBufferTreeUnion>;
 
     inline constexpr TypeInfo g_typeinfo_ByteBufferEntry = {
         WELL_KNOWN_TYPE_ID_BYTEBUFFERENTRY,
@@ -96,10 +74,10 @@ namespace ᐸRuntimeᐳ
 
     inline constexpr TypeInfo g_typeinfo_ByteBuffer = {
         WELL_KNOWN_TYPE_ID_BYTEBUFFER,
-        sizeof(BufferTree) + sizeof(size_t),
-        byteSizeToSlotCount(sizeof(BufferTree) + sizeof(size_t)),
+        32,
+        byteSizeToSlotCount(32),
         LayoutTag::Value,
-        "200",
+        "0001",
         nullptr,
         0,
         nullptr,
@@ -171,27 +149,44 @@ namespace ᐸRuntimeᐳ
 
     class XByteBuffer
     {
+    public:
+        constexpr static size_t BUFFER_INLINE_SIZE = 16;
+
+        static const TypeInfo* s_entrytypeinfo;
+        thread_local static GCAllocator<ByteBufferEntry>* s_entryallocator;
+
+        static const TypeInfo* s_blocktypeinfo;
+        thread_local static GCAllocator<ByteBufferBlock>* s_blockallocator;
+
     private:
-        BufferTree tree;
         size_t bytesize;
+        std::array<uint8_t, BUFFER_INLINE_SIZE> inlinebytes;
+        void* heapbytes;
 
     public:
-        XByteBuffer() : tree{}, bytesize{0} { ; }
-        XByteBuffer(const BufferTree& t, size_t b) : tree{t}, bytesize{b} { ; }
+        constexpr XByteBuffer() : bytesize{0}, inlinebytes{}, heapbytes{} { ; }
+        constexpr XByteBuffer(const std::array<uint8_t, BUFFER_INLINE_SIZE>& i, size_t b) :  bytesize{b}, inlinebytes{i}, heapbytes{} { ; }
+        XByteBuffer(void* h, size_t b) :  bytesize{b}, inlinebytes{}, heapbytes{h} { ; }
         XByteBuffer(const XByteBuffer& other) = default;
 
-        XByteBuffer(ByteBufferEntry* b, size_t size) : tree{ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ByteBufferTreeUnion>{&ᐸRuntimeᐳ::g_typeinfo_ByteBufferEntry, ᐸRuntimeᐳ::ByteBufferTreeUnion(b)}}, bytesize{size} { ; }
-        XByteBuffer(ByteBufferBlock* n, size_t size) : tree{ᐸRuntimeᐳ::BoxedUnion<ᐸRuntimeᐳ::ByteBufferTreeUnion>{&ᐸRuntimeᐳ::g_typeinfo_ByteBufferBlock, ᐸRuntimeᐳ::ByteBufferTreeUnion(n)}}, bytesize{size} { ; }
+        static XByteBuffer mk(const std::initializer_list<uint8_t>& elems);
 
-        size_t bytes() const { return this->bytesize; }
+        constexpr size_t bytes() const { return this->bytesize; }
+
+        constexpr bool isInline() const { return this->bytesize <= BUFFER_INLINE_SIZE; }
+
+        const uint8_t* inlinedata() const { return this->inlinebytes.data(); }
 
         ByteBufferIterator iterator() const 
         {
-            if(this->tree.typeinfo->bsqtypeid == ᐸRuntimeᐳ::WELL_KNOWN_TYPE_ID_BYTEBUFFERENTRY) {
-                return ByteBufferIterator(this->tree.data.buff, nullptr, this->bytesize);
+            //should special case for small buffers
+            assert(this->bytesize > BUFFER_INLINE_SIZE);
+
+            if(this->bytesize <= ByteBufferEntry::BUFFER_ENTRY_SIZE) {
+                return ByteBufferIterator(static_cast<ByteBufferEntry*>(this->heapbytes), nullptr, this->bytesize);
             }
             else {
-                ByteBufferBlock* root = this->tree.data.node;
+                ByteBufferBlock* root = static_cast<ByteBufferBlock*>(this->heapbytes);
                 return ByteBufferIterator(root->entries[0], root, this->bytesize);
             }
         }

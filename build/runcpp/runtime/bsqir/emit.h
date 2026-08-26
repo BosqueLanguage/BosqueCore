@@ -46,10 +46,10 @@ namespace ᐸRuntimeᐳ
         }
         
         void rotateData();
-        void writeSlow(char c);
+        void writeSlow(uint8_t c);
         void writeSlowTail(const char* str, size_t slen);
 
-        void write(char c)
+        void write(uint8_t c)
         {
             if(this->cpos == this->epos) [[unlikely]] {
                 this->writeSlow(c);

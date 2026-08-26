@@ -1314,7 +1314,7 @@ class IRLiteralCCharExpression extends IRLiteralExpression {
         lexer.ensureAndConsumeSymbol("}");
 
         if(!cchar.startsWith("%x")) {
-            return new IRLiteralCCharExpression(cchar.charCodeAt(0));
+            return new IRLiteralCCharExpression(cchar.codePointAt(0) as number);
         }
         else {
             return new IRLiteralCCharExpression(parseInt(cchar, 16));
@@ -1346,7 +1346,7 @@ class IRLiteralUnicodeCharExpression extends IRLiteralExpression {
         lexer.ensureAndConsumeSymbol("}");
 
         if(!uchar.startsWith("%x")) {
-            return new IRLiteralUnicodeCharExpression(uchar.charCodeAt(0));
+            return new IRLiteralUnicodeCharExpression(uchar.codePointAt(0) as number);
         }
         else {
             return new IRLiteralUnicodeCharExpression(parseInt(uchar, 16));
@@ -1384,7 +1384,7 @@ class IRLiteralCStringExpression extends IRLiteralExpression {
             const token = lexer.ensureAndConsumeToken(BAPITokenKind.CCharLiteral);
             const cchar = token.slice(2, -1); //remove c' and '
             if(!cchar.startsWith("%x")) {
-                return cchar.charCodeAt(0);
+                return cchar.codePointAt(0) as number;
             }
             else {
                 return parseInt(cchar, 16);
@@ -1427,7 +1427,7 @@ class IRLiteralStringExpression extends IRLiteralExpression {
             const token = lexer.ensureAndConsumeToken(BAPITokenKind.UnicodeCharLiteral);
             const uchar = token.slice(2, -1); //remove c" and "
             if(!uchar.startsWith("%x")) {
-                return uchar.charCodeAt(0);
+                return uchar.codePointAt(0) as number;
             }
             else {
                 return parseInt(uchar, 16);
