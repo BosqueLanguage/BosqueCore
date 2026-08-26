@@ -285,9 +285,25 @@ __internal __typedeclable __keycomparable entity CString {
         return CStringOps::s_toByteBuffer(s);
     }
 
-    %** Convert a ByteBuffer to a CString. If <code>mbescape</code> is true then out-of-range or multibyte utf-8 encodings are numeric escaped. If decoding fails, e.g. incomplete multi-byte character or invalid value, return None. **%
-    function fromByteBuffer(bb: ByteBuffer, mbescape: Bool = false): Option<CString> {
-        return CStringOps::s_fromByteBuffer(bb, mbescape);
+    %** Convert a ByteBuffer to a CString. If decoding fails, e.g. incomplete multi-byte character or invalid value, return None. **%
+    function fromByteBuffer(bb: ByteBuffer): Option<CString> {
+        var result: CString;
+        if(CStringOps::s_fromByteBuffer(bb, out? result)) {
+            return some(result);
+        }
+        else {
+            return none;
+        }
+    }
+
+    %** Convert a ByteBuffer to a CString. If decoding fails, e.g. incomplete multi-byte character or invalid value, then the invalid parts are stripped. **%
+    function fromByteBufferStrip(bb: ByteBuffer): CString {
+        return CStringOps::s_fromByteBufferStrip(bb);
+    }
+
+    %** Convert a ByteBuffer to a CString. If decoding fails, e.g. incomplete multi-byte character or invalid value, then the invalid parts are replaced with the clamp <code>cc</code> value. **%
+    function fromByteBufferClamp(bb: ByteBuffer, cc: CChar = c'*'): CString {
+        return CStringOps::s_fromByteBufferClamp(bb, cc);
     }
 #endif %% STRIPPED_CORE
 }

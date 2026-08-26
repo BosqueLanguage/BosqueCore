@@ -261,16 +261,16 @@ namespace ᐸRuntimeᐳ
                 }
             }
             else {
-                auto iter = buf.iterator();
+                auto iter = buf.begin();
                 bool first = true;
-                while(iter.valid()) {
+                while(iter != buf.end()) {
                     if(!first) {
                         this->bufferMgr.write(',');
                     }
                     first = false;
 
-                    this->bufferMgr.writeNumberWFormat("%x", iter.get());
-                    iter.next();
+                    this->bufferMgr.writeNumberWFormat("%x", *iter);
+                    ++iter;
                 }
             }
             this->bufferMgr.writeImmediate("]");
