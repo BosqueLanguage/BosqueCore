@@ -125,6 +125,7 @@ namespace ᐸRuntimeᐳ
         LiteralUnicodeChar,
         LiteralCString,
         LiteralString,
+        LiteralByteBuffer,
         LiteralSymbol,
         LiteralKeyword,
         Identifier
@@ -201,6 +202,7 @@ namespace ᐸRuntimeᐳ
 
         bool tryLexCString();
         bool tryLexString();
+        bool tryLexByteBuffer();
 
         bool tryLexSymbol();
 

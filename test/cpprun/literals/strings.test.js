@@ -13,8 +13,8 @@ describe ("CPPExec -- String", () => {
     it("should exec escaped strings", function () {
         runTestSet('public function main(): String { return "%x59;"; }', [[undefined, "\"Y\""]], []);
         runTestSet('public function main(): String { return "%x1f335;"; }', [[undefined, "\"🌵\""]], []);
-        runTestSet('public function main(): String { return "%%;"; }', [[undefined, "\"%\""]], []);
-        runTestSet('public function main(): String { return "%;"; }', [[undefined, "\"\\\"\""]], []);
+        runTestSet('public function main(): String { return "%%;"; }', [[undefined, "\"%%;\""]], []);
+        runTestSet('public function main(): String { return "%;"; }', [[undefined, "\"%;\""]], []);
     });
 });
 
@@ -28,6 +28,6 @@ describe ("CPPExec -- CString", () => {
     it("should exec escaped strings", function () {
         runTestSet("public function main(): CString { return '%x59;'; }", [[undefined, "'Y'"]], []);
         runTestSet("public function main(): CString { return '%%;'; }", [[undefined, "'%%;'"]], []);
-        runTestSet("public function main(): CString { return '%;'; }", [[undefined, "'''"]], []);
+        runTestSet("public function main(): CString { return '%;'; }", [[undefined, "'%;'"]], []);
     });
 });

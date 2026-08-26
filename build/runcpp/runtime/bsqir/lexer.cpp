@@ -15,6 +15,9 @@ namespace ᐸRuntimeᐳ
     static std::regex s_cchar_re("^c'[^']{1,16}'", std::regex_constants::nosubs | std::regex_constants::optimize);
     static std::regex s_uchar_re("^c\"[^\"]{1,16}\"", std::regex_constants::nosubs | std::regex_constants::optimize);
 
+    static std::regex s_bytebuffer_prefix_re("^0x\\[", std::regex_constants::nosubs | std::regex_constants::optimize);
+    static std::regex s_bytebuffer_empty_re("^0x\\[\\]", std::regex_constants::nosubs | std::regex_constants::optimize);
+    
     constexpr std::array<char, 11> s_symbol_tokens = { '(', ')', '{', '}', '[', ']', '<', '>', ',', '#', '|' };
     constexpr std::array<const char*, 6> s_keyword_tokens = { "none", "true", "false", "some", "ok", "fail" };
 
@@ -219,6 +222,39 @@ namespace ᐸRuntimeᐳ
         return true;
     }
 
+    bool BSQONLexer::tryLexByteBuffer()
+    {
+        std::match_results<BSQLexBufferIterator> mmprefix;
+        if(!std::regex_search(this->iter, this->iend, mmprefix, s_bytebuffer_prefix_re)) {
+            return false;
+        }
+
+        std::match_results<BSQLexBufferIterator> mmempty;
+        if(std::regex_search(this->iter, this->iend, mmempty, s_bytebuffer_empty_re)) {
+            this->advanceToken(BSQONTokenType::LiteralByteBuffer, 4);
+            return true;
+        }
+        else {
+            BSQLexBufferIterator istart = this->iter;
+
+            ++this->iter; //eat opening 0x[
+            ++this->iter;
+            ++this->iter;
+
+            BSQLexBufferIterator clquote = std::find(this->iter, this->iend, ']');
+            if(clquote == this->iend) {
+                this->ctoken = {BSQONTokenType::ErrorToken, istart, this->iter};
+            }
+            else {
+                ++clquote; //eat closing ]
+                this->ctoken = {BSQONTokenType::LiteralByteBuffer, istart, clquote};
+                this->iter = clquote;
+            }
+            
+            return true;
+        }
+    }
+
     bool BSQONLexer::tryLexSymbol()
     {
         //Handle (|, |), and =>
@@ -381,7 +417,7 @@ namespace ᐸRuntimeᐳ
         else if(this->tryLexByte() || this->tryLexCChar() || this->tryLexUnicodeChar()) {
             return;
         }
-        else if(this->tryLexCString() || this->tryLexString()) {
+        else if(this->tryLexCString() || this->tryLexString() || this->tryLexByteBuffer()) {
             return;
         }
         else if(this->tryLexSymbol() || this->tryLexIdentifierLike()) {

@@ -173,6 +173,10 @@ namespace ᐸRuntimeᐳ
 
         constexpr size_t bytes() const { return this->bytesize; }
 
+        constexpr bool isInline() const { return this->bytesize <= BUFFER_INLINE_SIZE; }
+
+        const uint8_t* inlinedata() const { return this->inlinebytes.data(); }
+
         ByteBufferIterator iterator() const 
         {
             //should special case for small buffers

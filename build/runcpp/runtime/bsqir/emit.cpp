@@ -245,7 +245,36 @@ namespace ᐸRuntimeᐳ
 
     void BSQONEmitter::emitByteBuffer(XByteBuffer buf)
     {
-        assert(false); // Not Implemented: emitting ByteBuffer values
+        if(buf.bytes() == 0) {
+            this->bufferMgr.writeImmediate("0x[]");
+        }
+        else {
+            this->bufferMgr.writeImmediate("0x[");
+            if(buf.bytes() <= XByteBuffer::BUFFER_INLINE_SIZE) {
+                const uint8_t* inlineData = buf.inlinedata();
+                for(size_t i = 0; i < buf.bytes(); i++) {
+                    if(i != 0) {
+                        this->bufferMgr.write(',');
+                    }
+
+                    this->bufferMgr.writeNumberWFormat("%x", inlineData[i]);
+                }
+            }
+            else {
+                auto iter = buf.iterator();
+                bool first = true;
+                while(iter.valid()) {
+                    if(!first) {
+                        this->bufferMgr.write(',');
+                    }
+                    first = false;
+
+                    this->bufferMgr.writeNumberWFormat("%x", iter.get());
+                    iter.next();
+                }
+            }
+            this->bufferMgr.writeImmediate("]");
+        }
     }
 
     void BSQONEmitter::emitCRegex(XCRegex r)

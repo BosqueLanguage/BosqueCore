@@ -16,7 +16,7 @@ CPPFLAGS=${CPPFLAGS_OPT.${BUILD}} ${CPPFLAGS_STD}
 
 HEADERS=$(wildcard $(SRC_DIR)*.h) $(wildcard $(CORE_SRC_DIR)*.h) $(wildcard $(RUNTIME_SRC_DIR)*.h) $(wildcard $(ALLOC_SRC_DIR)*.h) $(wildcard $(BSQIR_SRC_DIR)*.h)
 CPP=$(wildcard $(SRC_DIR)*.cpp) $(wildcard $(CORE_SRC_DIR)*.cpp) $(wildcard $(RUNTIME_SRC_DIR)*.cpp) $(wildcard $(ALLOC_SRC_DIR)*.cpp) $(wildcard $(BSQIR_SRC_DIR)*.cpp)
-OBJ=$(OUT_OBJ)common.o $(OUT_OBJ)strings.o $(OUT_OBJ)memstats.o $(OUT_OBJ)gc_validation.o $(OUT_OBJ)alloc.o $(OUT_OBJ)gc.o $(OUT_OBJ)emit.o $(OUT_OBJ)lexer.o $(OUT_OBJ)parser.o
+OBJ=$(OUT_OBJ)common.o $(OUT_OBJ)strings.o $(OUT_OBJ)bytebuff.o $(OUT_OBJ)memstats.o $(OUT_OBJ)gc_validation.o $(OUT_OBJ)alloc.o $(OUT_OBJ)gc.o $(OUT_OBJ)emit.o $(OUT_OBJ)lexer.o $(OUT_OBJ)parser.o
 
 MAKEFLAGS += -j8
 
@@ -29,6 +29,10 @@ $(OUT_OBJ)common.o: $(HEADERS) $(CPP)
 $(OUT_OBJ)strings.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
 	g++ $(CPPFLAGS) -o $(OUT_OBJ)strings.o -c $(CORE_SRC_DIR)strings.cpp
+
+$(OUT_OBJ)bytebuff.o: $(HEADERS) $(CPP)
+	@mkdir -p $(OUT_OBJ)
+	g++ $(CPPFLAGS) -o $(OUT_OBJ)bytebuff.o -c $(CORE_SRC_DIR)bytebuff.cpp
 
 $(OUT_OBJ)memstats.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)

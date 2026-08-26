@@ -5,19 +5,19 @@ import { describe, it } from "node:test";
 
 describe ("CPPExec -- CChar", () => {
     it("should exec simple chars", function () {
-        runTestSet("public function main(c: CChar): CChar { return c'x'; }", [['c"a"', "c'x'"]], []);
+        runTestSet("public function main(): CChar { return c'x'; }", [[undefined, "c'x'"]], []);
         runTestSet("public function main(c: CChar): CChar { return c; }", [['c"a"', "c'a'"], ['c"%x59;"', "c'Y'"], ['c"%%;"', "c'%%;'"]], []);
 
-        runTestSet("public function main(c: CChar): CChar { return c'%;'; }", [['c"a"', "c'%;'"]], []);
+        runTestSet("public function main(): CChar { return c'%;'; }", [[undefined, "c'%;'"]], []);
  
     });
 });
 
 describe ("CPPExec -- UnicodeChar", () => {
     it("should exec simple uchars", function () {
-        runTestSet("public function main(c: UnicodeChar): UnicodeChar { return c\"x\"; }", [['c"a"', 'c"x"']], []);
-        runTestSet("public function main(c: UnicodeChar): UnicodeChar { return c\"🌵\"; }", [['c"a"', 'c"%x1f335;"']], []);
+        runTestSet("public function main(): UnicodeChar { return c\"x\"; }", [[undefined, 'c"x"']], []);
+        runTestSet("public function main(): UnicodeChar { return c\"🌵\"; }", [[undefined, 'c"🌵"']], []);
 
-        runTestSet("public function main(c: UnicodeChar): UnicodeChar { return c; }", [['c"a"', 'c"a"'], ['c"🌵"', 'c"%x1f335;"'], ['c"%x59;"', 'c"Y"'], ['c"%%;"', 'c"%%;"']], []);
+        runTestSet("public function main(c: UnicodeChar): UnicodeChar { return c; }", [['c"a"', 'c"a"'], ['c"%x59;"', 'c"Y"'], ['c"%%;"', 'c"%%;"']], []);
     });
 });

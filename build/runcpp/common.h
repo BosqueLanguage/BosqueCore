@@ -163,7 +163,7 @@ namespace ᐸRuntimeᐳ
 
     //See also allocator/alloc.h for allocator specific thread local and global info -- no other globals should be hanging around!
 
-    constexpr std::array<std::pair<char32_t, const char*>, 95> s_escape_names_unicode = {
+    constexpr std::array<std::pair<char32_t, const char*>, 68> s_escape_names_unicode = {
         std::make_pair<char32_t, const char*>(0, "%NUL;"),
         std::make_pair<char32_t, const char*>(1, "%SOH;"),
         std::make_pair<char32_t, const char*>(2, "%STX;"),
