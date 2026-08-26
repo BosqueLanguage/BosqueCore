@@ -325,8 +325,12 @@ namespace ᐸRuntimeᐳ
         return (c <= 0x10FFFF) && !((0xD800 <= c) && (c <= 0xDFFF));
     }
 
-    inline bool isMultibyteEncoding(char c)
+    inline bool isMultibyteEncoding(uint8_t c)
     {
         return (c & 0x80) != 0;
     }
+
+    size_t multibyteCharCount(uint8_t c);
+    size_t ucharToMultiByteEncoding(char32_t c, std::array<uint8_t, 4>& outbuff);
+    char32_t multibyteToUChar(const std::array<uint8_t, 4>& inbuff, size_t bytecount);
 }
