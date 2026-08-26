@@ -55,6 +55,9 @@ namespace ᐸRuntimeᐳ
                             blockcount = 0;
                         }
                     }
+                    if(blockcount != 0) {
+                        blockl = XByteBuffer::s_blockallocator->allocate(entryptrs, blockl);
+                    }
 
                     //reverse for flow
                     std::stack<ByteBufferBlock*> blockstack{};

@@ -164,7 +164,7 @@ namespace ᐸRuntimeᐳ
                 this->bufferMgr.write(ii->second);
             }
             else {
-                if(c.value < 127) {
+                if(c.value <= 127) {
                     this->bufferMgr.writeNumberWFormat("%%x%x;", c.value);
                 }
                 else {

@@ -94,7 +94,7 @@ class CPPEmitter {
             escstr += "\\t";
         }
         else {
-            escstr += String.fromCodePoint(b);
+            escstr += (b < 0x20 || b === 0x7F) ? `\\${b.toString(8).padStart(3, "0")}` : String.fromCodePoint(b);
         }
         escstr += "'";
 
@@ -125,7 +125,7 @@ class CPPEmitter {
                 lcount++;
             }
             else {
-                escstr += String.fromCodePoint(b);
+                escstr += (b < 0x20 || b === 0x7F) ? `\\${b.toString(8).padStart(3, "0")}` : String.fromCodePoint(b);
                 lcount++;
             }
         }

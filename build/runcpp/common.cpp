@@ -32,11 +32,11 @@ namespace ᐸRuntimeᐳ
     {
         assert(c > 0x7F);
         
-        if(c < 0x7FF) {
+        if(c <= 0x7FF) {
             outbuff = { (uint8_t)(0xC0 | (c >> 6)), (uint8_t)(0x80 | (c & 0x3F)), 0, 0 };
             return 2;
         }
-        else if(c < 0xFFFF) {
+        else if(c <= 0xFFFF) {
             outbuff = { (uint8_t)(0xE0 | (c >> 12)), (uint8_t)(0x80 | ((c >> 6) & 0x3F)), (uint8_t)(0x80 | (c & 0x3F)), 0 };
             return 3;
         }

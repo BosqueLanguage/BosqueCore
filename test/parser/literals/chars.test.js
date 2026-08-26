@@ -14,7 +14,7 @@ describe ("Parser -- CChar", () => {
     it("should fail invalid cchars", function () {
         parseTestExpError("c'", "Unterminated CChar literal", "CChar");
         parseTestExpError("c''", "Empty CChar literal", "CChar");
-        parseTestExpError("c'🌵'", "Invalid chacaters in CChar literal", "CChar");
+        parseTestExpError("c'🌵'", "Invalid character in CChar literal", "CChar");
     });
 });
 

@@ -256,7 +256,7 @@ namespace ᐸRuntimeᐳ
         outseq.fill(0);
         outlen = 0;
 
-        while(*ii != closequote && outlen < 16) {
+        while(*ii != closequote && outlen < 15) {
             outseq[outlen] = *ii;
             ++ii;
             outlen++;
@@ -668,7 +668,7 @@ namespace ᐸRuntimeᐳ
         else {
             size_t esize = std::numeric_limits<size_t>::max();
             constexpr size_t maxpossiblechars = 3 + (XByteBuffer::BUFFER_INLINE_SIZE * 3); //if we have more than this many chars then we dfinitely are not inline
-            if(stok.size() < maxpossiblechars) {
+            if(stok.size() <= maxpossiblechars) {
                 //we might fit so do the count
                 esize = std::count(stok.begin, stok.end, ',') + 1;
             }
@@ -729,6 +729,9 @@ namespace ᐸRuntimeᐳ
                         entryptrs.fill(nullptr);
                         blockcount = 0;
                     }
+                }
+                if(blockcount != 0) {
+                    blockl = XByteBuffer::s_blockallocator->allocate(entryptrs, blockl);
                 }
 
                 //reverse for flow
