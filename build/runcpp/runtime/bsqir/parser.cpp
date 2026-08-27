@@ -265,18 +265,25 @@ namespace ᐸRuntimeᐳ
                 return true;
             }
         }
+
         return false;
     }
 
-    bool extractUTF8MultibyteSeq(BSQLexBufferIterator& ii, std::array<uint8_t, 6>& outseq, size_t& outlen)
+    bool extractUTF8MultibyteSeq(BSQLexBufferIterator& ii, std::array<uint8_t, 4>& outseq, size_t& outlen)
     {
-        outseq.fill(0);
-        outlen = 0;
+        uint8_t bbyte = *ii;
+        outlen = multibyteCharCount(bbyte);
 
-        //TODO: implement multibyte UFT8 decode
-        assert(false);
+        for(size_t i = 0; i < outlen; i++) {
+            if(!ii.canRead()) {
+                return false;
+            }
 
-        return false;
+            outseq[i] = *ii;
+            ++ii;
+        }
+
+        return true;
     }
 
     bool convertEscapedSeqToCChar(const std::array<char, 16>& outseq, size_t outlen, char& res)
@@ -327,14 +334,15 @@ namespace ᐸRuntimeᐳ
         return false;
     }
 
-    bool convertMultibyteSeqToUnicodeChar(const std::array<uint8_t, 6>& outseq, size_t outlen, char32_t& res)
+    bool convertMultibyteSeqToUnicodeChar(const std::array<uint8_t, 4>& outseq, size_t outlen, char32_t& res)
     {
-        res = 0;
+        res = multibyteToUChar(outseq, outlen);
 
-        //TODO: implement multibyte UFT8 decode
-        assert(false);
+        if(!isLegalUnicodeChar(res)) {
+            return false;
+        }
 
-        return false;
+        return true;
     }
 
     bool processCCharFromIter(BSQLexBufferIterator& ii, char* outchar)
@@ -397,7 +405,7 @@ namespace ᐸRuntimeᐳ
                return false;
             }
             else if(isMultibyteEncoding(c)) {
-                std::array<uint8_t, 6> outseq;
+                std::array<uint8_t, 4> outseq;
                 size_t outlen = 0;
                 bool extractok = extractUTF8MultibyteSeq(ii, outseq, outlen);
                 if(!extractok) {

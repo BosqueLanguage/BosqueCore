@@ -95,7 +95,7 @@ namespace ᐸRuntimeᐳ
             //TODO: this is not the best in terms of memory/compute but is simple for now
             std::vector<uint8_t> buffer{};
             buffer.reserve(cstr.size());
-            std::transform(buffer.begin(), buffer.end(), buffer.begin(), [](uint8_t b) { return static_cast<uint8_t>(b); });
+            std::transform(cstr.ucstr.inlinecstr.data.begin() + 1, cstr.ucstr.inlinecstr.data.begin() + 1 + cstr.size(), std::back_inserter(buffer), [](uint8_t b) { return static_cast<uint8_t>(b); });
 
             return XByteBuffer::mk(buffer.data(), buffer.data() + buffer.size(), buffer.size());
         }
@@ -291,35 +291,76 @@ namespace ᐸRuntimeᐳ
         }
         else {
             //TODO: this is not the best in terms of memory/compute but is simple for now
-            
-            xxxx;
+            std::vector<char32_t> cbb{};
+            cbb.reserve(buffer.bytes());
+
             if(buffer.isInline()) {
-                bool allok = std::all_of(buffer.inlinedata(), buffer.inlinedata() + buffer.bytes(), [](uint8_t b) { return isLegalCChar(b); });
-                if(!allok) {
-                    return XFALSE;
+                size_t ii = 0;
+                const uint8_t* inlinedata = buffer.inlinedata();
+                while(ii < buffer.bytes()) {
+                    uint8_t cc = inlinedata[ii];
+
+                    if(!isMultibyteEncoding(cc)) {
+                        cbb.push_back(static_cast<char32_t>(cc));
+                        ii++;
+                    }
+                    else {
+                        size_t mbcc = multibyteCharCount(cc);
+                        if(buffer.bytes() < ii + mbcc)
+                        {
+                            return XFALSE;
+                        }
+
+                        std::array<uint8_t, 4> inbuff{};
+                        std::copy(inlinedata + ii, inlinedata + ii + mbcc, inbuff.begin());
+
+                        char32_t cc = multibyteToUChar(inbuff, mbcc);
+                        if(!isLegalUnicodeChar(cc)) {
+                            return XFALSE;
+                        }
+
+                        cbb.push_back(cc);
+                        ii += mbcc;
+                    }
                 }
-                else {
-                    std::vector<char> cbb{};
-                    cbb.reserve(buffer.bytes());
-                    std::transform(buffer.inlinedata(), buffer.inlinedata() + buffer.bytes(), std::back_inserter(cbb), [](uint8_t b) { return static_cast<char>(b); });
                     
-                    result = XCString::mk(cbb.begin(), cbb.end(),  cbb.size());
-                    return XTRUE;
-                }
+                result = XString::mk(cbb.begin(), cbb.end(),  cbb.size());
+                return XTRUE;
             }
             else {
-                bool allok = std::all_of(buffer.begin(), buffer.end(), [](uint8_t b) { return isLegalCChar(b); });
-                if(!allok) {
-                    return XFALSE;
+                auto ii = buffer.begin();
+                while(ii != buffer.end()) {
+                    uint8_t cc = *ii;
+
+                    if(!isMultibyteEncoding(cc)) {
+                        cbb.push_back(static_cast<char32_t>(cc));
+                        ii++;
+                    }
+                    else {
+                        size_t mbcc = multibyteCharCount(cc);
+                        if(buffer.bytes() < std::distance(buffer.begin(), ii) + mbcc)
+                        {
+                            return XFALSE;
+                        }
+
+                        std::array<uint8_t, 4> inbuff{};
+                        for(size_t j = 0; j < mbcc; j++) {
+                            inbuff[j] = *ii;
+                            ++ii;
+                        }
+
+                        char32_t cc = multibyteToUChar(inbuff, mbcc);
+                        if(!isLegalUnicodeChar(cc)) {
+                            return XFALSE;
+                        }
+                        
+                        cbb.push_back(cc);
+                        //ii is advanced during copyt
+                    }
                 }
-                else {
-                    std::vector<char> cbb{};
-                    cbb.reserve(buffer.bytes());
-                    std::transform(buffer.begin(), buffer.end(), std::back_inserter(cbb), [](uint8_t b) { return static_cast<char>(b); });
-                    
-                    result = XCString::mk(cbb.begin(), cbb.end(),  cbb.size());
-                    return XTRUE;
-                }
+
+                result = XString::mk(cbb.begin(), cbb.end(),  cbb.size());
+                return XTRUE;
             }
         }
     }

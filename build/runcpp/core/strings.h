@@ -82,7 +82,6 @@ namespace ᐸRuntimeᐳ
             this->data[0] = static_cast<char>(len); //store length
             std::copy(begin, end, this->data.begin() + 1);
             std::fill(this->data.begin() + len + 1, this->data.end(), '\0');
-
         }
 
         CStrRootInlineContent(const CStrRootInlineContent& s1, const CStrRootInlineContent& s2)
@@ -643,6 +642,28 @@ namespace ᐸRuntimeᐳ
             std::copy(str, str + len, this->data.begin() + 1);
             std::fill(this->data.begin() + len + 1, this->data.end(), U'\0');
 
+        }
+
+        template<typename Iter>
+        StrRootInlineContent(Iter begin, Iter end, size_t len)
+        {
+            assert(len <= ᐸRuntimeᐳ::StrRootInlineContent::STR_MAX_SIZE);
+
+            this->data[0] = static_cast<char32_t>(len); //store length
+            std::copy(begin, end, this->data.begin() + 1);
+            std::fill(this->data.begin() + len + 1, this->data.end(), U'\0');
+        }
+
+        StrRootInlineContent(const StrRootInlineContent& s1, const StrRootInlineContent& s2)
+        {
+            int64_t len1 = s1.size();
+            int64_t len2 = s2.size();
+            assert(len1 + len2 <= ᐸRuntimeᐳ::StrRootInlineContent::STR_MAX_SIZE);
+
+            this->data[0] = static_cast<char32_t>(len1 + len2); //store length
+            std::copy(s1.data.begin() + 1, s1.data.begin() + 1 + len1, this->data.begin() + 1);
+            std::copy(s2.data.begin() + 1, s2.data.begin() + 1 + len2, this->data.begin() + 1 + len1);
+            std::fill(this->data.begin() + len1 + len2 + 1, this->data.end(), U'\0');
         }
 
         //mask off high bits if dirty from union bit hacking
