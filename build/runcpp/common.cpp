@@ -51,13 +51,28 @@ namespace ᐸRuntimeᐳ
         assert(bytecount != 1);
 
         if(bytecount == 2) {
-            return (char32_t)((inbuff[0] & 0x1F) << 6 | (inbuff[1] & 0x3F));
+            if((inbuff[0] & 0xC0) != 0xC0 || (inbuff[1] & 0xC0) != 0x80) {
+                return std::numeric_limits<char32_t>::max();
+            }
+            else {
+                return (char32_t)((inbuff[0] & 0x1F) << 6 | (inbuff[1] & 0x3F));
+            }
         }
         else if(bytecount == 3) {
-            return (char32_t)((inbuff[0] & 0x0F) << 12 | ((inbuff[1] & 0x3F) << 6) | (inbuff[2] & 0x3F));
+            if((inbuff[0] & 0xE0) != 0xE0 || (inbuff[1] & 0xC0) != 0x80 || (inbuff[2] & 0xC0) != 0x80) {
+                return std::numeric_limits<char32_t>::max();
+            }
+            else {
+                return (char32_t)((inbuff[0] & 0x0F) << 12 | ((inbuff[1] & 0x3F) << 6) | (inbuff[2] & 0x3F));
+            }
         }
         else {
-            return (char32_t)((inbuff[0] & 0x07) << 18 | ((inbuff[1] & 0x3F) << 12) | ((inbuff[2] & 0x3F) << 6) | (inbuff[3] & 0x3F));
+            if((inbuff[0] & 0xF0) != 0xF0 || (inbuff[1] & 0xC0) != 0x80 || (inbuff[2] & 0xC0) != 0x80 || (inbuff[3] & 0xC0) != 0x80) {
+                return std::numeric_limits<char32_t>::max();
+            }
+            else {
+                return (char32_t)((inbuff[0] & 0x07) << 18 | ((inbuff[1] & 0x3F) << 12) | ((inbuff[2] & 0x3F) << 6) | (inbuff[3] & 0x3F));
+            }
         }
     }
 }

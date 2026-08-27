@@ -1464,7 +1464,7 @@ class CPPEmitter {
             bstr = "ᐸRuntimeᐳ::XNat{(int64_t)s.size()}";
         }
         else if(body.builtin === "string_utf8bytes") {
-            bstr = "XNat{ᐸRuntimeᐳ::XString::utf8bytes(s)}";
+            bstr = "ᐸRuntimeᐳ::XNat{s.utf8bytes()}";
         }
         else if(body.builtin === "string_append") {
             bstr = "s1.append(s2)";

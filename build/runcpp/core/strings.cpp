@@ -95,7 +95,7 @@ namespace ᐸRuntimeᐳ
             //TODO: this is not the best in terms of memory/compute but is simple for now
             std::vector<uint8_t> buffer{};
             buffer.reserve(cstr.size());
-            std::transform(cstr.ucstr.inlinecstr.data.begin() + 1, cstr.ucstr.inlinecstr.data.begin() + 1 + cstr.size(), std::back_inserter(buffer), [](uint8_t b) { return static_cast<uint8_t>(b); });
+            std::transform(cstr.begin(), cstr.end(), std::back_inserter(buffer), [](uint8_t b) { return static_cast<uint8_t>(b); });
 
             return XByteBuffer::mk(buffer.data(), buffer.data() + buffer.size(), buffer.size());
         }
@@ -353,7 +353,7 @@ namespace ᐸRuntimeᐳ
                         if(!isLegalUnicodeChar(cc)) {
                             return XFALSE;
                         }
-                        
+
                         cbb.push_back(cc);
                         //ii is advanced during copyt
                     }
