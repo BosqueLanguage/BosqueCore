@@ -1383,7 +1383,7 @@ class CPPEmitter {
         let bstr: string;
 
         if(body.builtin === "bool_to_cstring") {
-            bstr = `(bool)(b.value) ? "true"_cs : "false"_cs`;
+            bstr = `(bool)(b.value) ? ᐸRuntimeᐳ::XCString::mk("true", 4) : ᐸRuntimeᐳ::XCString::mk("false", 5)`;
         }
         else if(body.builtin === "nat_to_cstring") {
             bstr = `ᐸRuntimeᐳ::XCString::natToCString(n.value)`;
@@ -1392,16 +1392,16 @@ class CPPEmitter {
             bstr = `ᐸRuntimeᐳ::XCString::intToCString(i.value)`;
         }
         else if(body.builtin === "chk_nat_to_cstring") {
-            bstr = `!n.isBottom() ? ᐸRuntimeᐳ::XCString::chkNatToCString(n.value) : "ChkNat::npos"_cs`;
+            bstr = `!n.isBottom() ? ᐸRuntimeᐳ::XCString::chkNatToCString(n.value) : ᐸRuntimeᐳ::XCString::mk("ChkNat::npos", 12)`;
         }
         else if(body.builtin === "chk_int_to_cstring") {
-            bstr = `!i.isBottom() ? ᐸRuntimeᐳ::XCString::chkIntToCString(i.value) : "ChkInt::npos"_cs`;
+            bstr = `!i.isBottom() ? ᐸRuntimeᐳ::XCString::chkIntToCString(i.value) : ᐸRuntimeᐳ::XCString::mk("ChkInt::npos", 12)`;
         }
         else if(body.builtin === "float_to_cstring") {
             bstr = `ᐸRuntimeᐳ::XCString::floatToCString(f.value)`;
         }
         else if(body.builtin === "bool_to_string") {
-            bstr = `(bool)(b.value) ? "true"_us : "false"_us`;
+            bstr = `(bool)(b.value) ? ᐸRuntimeᐳ::XString::mk(U"true", 4) : ᐸRuntimeᐳ::XString::mk(U"false", 5)`;
         }
         else if(body.builtin === "nat_to_string") {
             bstr = `ᐸRuntimeᐳ::XString::natToString(n.value)`;
@@ -1410,10 +1410,10 @@ class CPPEmitter {
             bstr = `ᐸRuntimeᐳ::XString::intToString(i.value)`;
         }
         else if(body.builtin === "chk_nat_to_string") {
-            bstr = `!n.isBottom() ? ᐸRuntimeᐳ::XString::chkNatToString(n.value) : "ChkNat::npos"_us`;
+            bstr = `!n.isBottom() ? ᐸRuntimeᐳ::XString::chkNatToString(n.value) : ᐸRuntimeᐳ::XString::mk(U"ChkNat::npos", 12)`;
         }
         else if(body.builtin === "chk_int_to_string") {
-            bstr = `!i.isBottom() ? ᐸRuntimeᐳ::XString::chkIntToString(i.value) : "ChkInt::npos"_us`;
+            bstr = `!i.isBottom() ? ᐸRuntimeᐳ::XString::chkIntToString(i.value) : ᐸRuntimeᐳ::XString::mk(U"ChkInt::npos", 12)`;
         }
         else if(body.builtin === "float_to_string") {
             bstr = `ᐸRuntimeᐳ::XString::floatToString(f.value)`;

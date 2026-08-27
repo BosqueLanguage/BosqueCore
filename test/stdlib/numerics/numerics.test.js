@@ -19,18 +19,24 @@ describe ("Nat Operations", () => {
 describe ("Int Operations", () => {
     it("should compute tostring", function () {
         runTestSet('public function main(i: Int): CString { return Int::toCString(i); }', [['0i', "'0i'"], ['3i', "'3i'"], ['-3i', "'-3i'"]], []);
+
+        runTestSet('public function main(i: Int): String { return Int::toString(i); }', [['0i', '"0i"'], ['3i', '"3i"'], ['-3i', '"-3i"']], []);
     });
 });
 
 describe ("ChkNat Operations", () => {
     it("should compute tostring", function () {
         runTestSet('public function main(n: ChkNat): CString { return ChkNat::toCString(n); }', [['0N', "'0N'"], ['3N', "'3N'"], ['ChkNat::npos', "'ChkNat::npos'"]], []);
+
+        runTestSet('public function main(n: ChkNat): String { return ChkNat::toString(n); }', [['0N', '"0N"'], ['3N', '"3N"'], ['ChkNat::npos', '"ChkNat::npos"']], []);
     });
 });
 
 describe ("ChkInt Operations", () => {
     it("should compute tostring", function () {
         runTestSet('public function main(i: ChkInt): CString { return ChkInt::toCString(i); }', [['0I', "'0I'"], ['3I', "'3I'"], ['-3I', "'-3I'"], ['ChkInt::npos', "'ChkInt::npos'"]], []);
+
+        runTestSet('public function main(i: ChkInt): String { return ChkInt::toString(i); }', [['0I', '"0I"'], ['3I', '"3I"'], ['-3I', '"-3I"'], ['ChkInt::npos', '"ChkInt::npos"']], []);
     });
 });
 
