@@ -86,9 +86,19 @@ namespace ᐸRuntimeᐳ
         return XCString::mk(numbuf, static_cast<size_t>(written));
     }
 
-    XByteBuffer XCString::cstrToByteBuffer(const XCString& cstr)
+    XByteBuffer XCString::toByteBuffer(const XCString& cstr)
     {
-        return XByteBuffer::mk(cstr.begin(), cstr.end(), cstr.size());
+        if(cstr.empty()) {
+            return XByteBuffer{};
+        }
+        else {
+            //TODO: this is not the best in terms of memory/compute but is simple for now
+            std::vector<uint8_t> buffer{};
+            buffer.reserve(cstr.size());
+            std::transform(buffer.begin(), buffer.end(), buffer.begin(), [](uint8_t b) { return static_cast<uint8_t>(b); });
+
+            return XByteBuffer::mk(buffer.data(), buffer.data() + buffer.size(), buffer.size());
+        }
     }
 
     XBool XCString::fromByteBuffer(const XByteBuffer& buffer, XCString& result)
@@ -106,7 +116,11 @@ namespace ᐸRuntimeᐳ
                     return XFALSE;
                 }
                 else {
-                    result = XCString::mk(buffer.inlinedata(), buffer.inlinedata() + buffer.bytes(),  buffer.bytes());
+                    std::vector<char> cbb{};
+                    cbb.reserve(buffer.bytes());
+                    std::transform(buffer.inlinedata(), buffer.inlinedata() + buffer.bytes(), std::back_inserter(cbb), [](uint8_t b) { return static_cast<char>(b); });
+                    
+                    result = XCString::mk(cbb.begin(), cbb.end(),  cbb.size());
                     return XTRUE;
                 }
             }
@@ -116,7 +130,11 @@ namespace ᐸRuntimeᐳ
                     return XFALSE;
                 }
                 else {
-                    result = XCString::mk(buffer.begin(), buffer.end(),  buffer.bytes());
+                    std::vector<char> cbb{};
+                    cbb.reserve(buffer.bytes());
+                    std::transform(buffer.begin(), buffer.end(), std::back_inserter(cbb), [](uint8_t b) { return static_cast<char>(b); });
+                    
+                    result = XCString::mk(cbb.begin(), cbb.end(),  cbb.size());
                     return XTRUE;
                 }
             }
@@ -173,8 +191,172 @@ namespace ᐸRuntimeᐳ
         }
     }
 
+    XString XString::natToString(int64_t value) {
+        char numbuf[64];
+        int written = std::snprintf(numbuf, sizeof(numbuf), "%llin", (long long int)value);
+
+        char32_t numbuf32[64];
+        std::transform(numbuf, numbuf + written, numbuf32, [](char c) { return static_cast<char32_t>(c); });
+        return XString::mk(numbuf32, static_cast<size_t>(written));
+    }
+
+    XString XString::intToString(int64_t value) {
+        char numbuf[64];
+        int written = std::snprintf(numbuf, sizeof(numbuf), "%llii", (long long int)value);
+
+        char32_t numbuf32[64];
+        std::transform(numbuf, numbuf + written, numbuf32, [](char c) { return static_cast<char32_t>(c); });
+        return XString::mk(numbuf32, static_cast<size_t>(written));
+    }
+
+    XString XString::chkNatToString(__int128_t value) {
+        char numbuf[64];
+        int written = 0;
+
+        if(value <= (__int128_t)std::numeric_limits<int64_t>::max()) {
+            written = std::snprintf(numbuf, sizeof(numbuf), "%lliN", (long long int)value);
+        }
+        else {
+            assert(false); // Not Implemented: format for very large ChkNat values
+        }
+
+        char32_t numbuf32[64];
+        std::transform(numbuf, numbuf + written, numbuf32, [](char c) { return static_cast<char32_t>(c); });
+        return XString::mk(numbuf32, static_cast<size_t>(written));
+    }
+
+    XString XString::chkIntToString(__int128_t value) {
+        char numbuf[64];
+        int written = 0;
+
+        if(value <= (__int128_t)std::numeric_limits<int64_t>::max()) {
+            written = std::snprintf(numbuf, sizeof(numbuf), "%lliI", (long long int)value);
+        }
+        else {
+            assert(false); // Not Implemented: format for very large ChkInt values
+        }
+
+        char32_t numbuf32[64];
+        std::transform(numbuf, numbuf + written, numbuf32, [](char c) { return static_cast<char32_t>(c); });
+        return XString::mk(numbuf32, static_cast<size_t>(written));
+    }
+
+    XString XString::floatToString(double value) {
+        char numbuf[64];
+        int written = 0;
+        
+        if(std::floor(value) != value) {
+            written = std::snprintf(numbuf, sizeof(numbuf), "%.12lgf", value);
+        }
+        else {
+            written = std::snprintf(numbuf, sizeof(numbuf), "%.12lg.0f", value);
+        }
+
+        char32_t numbuf32[64];
+        std::transform(numbuf, numbuf + written, numbuf32, [](char c) { return static_cast<char32_t>(c); });
+        return XString::mk(numbuf32, static_cast<size_t>(written));
+    }
+
+    XByteBuffer XString::toByteBuffer(const XString& str)
+    {
+        if(str.empty()) {
+            return XByteBuffer{};
+        }
+        else {
+            //TODO: this is not the best in terms of memory/compute but is simple for now
+            std::vector<uint8_t> buffer{};
+            buffer.reserve(str.size());
+
+            std::array<uint8_t, 4> outbuff{};
+            for(auto ii = str.begin(); ii != str.end(); ++ii) {
+                char32_t cc = *ii;
+                if(cc <= 0xFF) {
+                    buffer.push_back(static_cast<uint8_t>(cc));
+                }
+                else {
+                    size_t count = ucharToMultiByteEncoding(cc, outbuff);
+                    buffer.insert(buffer.end(), outbuff.begin(), outbuff.begin() + count);
+                }
+            }
+
+            return XByteBuffer::mk(buffer.data(), buffer.data() + buffer.size(), buffer.size());
+        }
+    }
+
+    XBool XString::fromByteBuffer(const XByteBuffer& buffer, XString& result)
+    {
+        if(buffer.bytes() == 0) {
+            result = XString{};
+            return XTRUE;
+        }
+        else {
+            //TODO: this is not the best in terms of memory/compute but is simple for now
+            
+            xxxx;
+            if(buffer.isInline()) {
+                bool allok = std::all_of(buffer.inlinedata(), buffer.inlinedata() + buffer.bytes(), [](uint8_t b) { return isLegalCChar(b); });
+                if(!allok) {
+                    return XFALSE;
+                }
+                else {
+                    std::vector<char> cbb{};
+                    cbb.reserve(buffer.bytes());
+                    std::transform(buffer.inlinedata(), buffer.inlinedata() + buffer.bytes(), std::back_inserter(cbb), [](uint8_t b) { return static_cast<char>(b); });
+                    
+                    result = XCString::mk(cbb.begin(), cbb.end(),  cbb.size());
+                    return XTRUE;
+                }
+            }
+            else {
+                bool allok = std::all_of(buffer.begin(), buffer.end(), [](uint8_t b) { return isLegalCChar(b); });
+                if(!allok) {
+                    return XFALSE;
+                }
+                else {
+                    std::vector<char> cbb{};
+                    cbb.reserve(buffer.bytes());
+                    std::transform(buffer.begin(), buffer.end(), std::back_inserter(cbb), [](uint8_t b) { return static_cast<char>(b); });
+                    
+                    result = XCString::mk(cbb.begin(), cbb.end(),  cbb.size());
+                    return XTRUE;
+                }
+            }
+        }
+    }
+
     XString XString::append(XString other)
     {
-        assert(false); // Not Implemented: append for XString
+        assert(!this->ustr.empty());
+        assert(!other.ustr.empty());
+
+        if(this->ustr.isInline() && other.ustr.isInline()) {
+            if(this->ustr.inlinestr.data[0] + other.ustr.inlinestr.data[0] <= StrRootInlineContent::STR_MAX_SIZE) {
+                return XString{StrRootInlineContent{this->ustr.inlinestr, other.ustr.inlinestr}};
+            }
+            else {
+                static_assert(StrRootInlineContent::STR_MAX_SIZE * 2 <= StrRootTreeContent::STR_MAX_LEAF_SIZE, "If this changes then we need more complex logic like in list append");
+                
+                return XString{StrRootTreeContent{PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>::mkinitial_append(this->ustr.inlinestr.data.begin() + 1, this->ustr.inlinestr.data.begin() + 1 + this->ustr.inlinestr.data[0], other.ustr.inlinestr.data.begin() + 1, other.ustr.inlinestr.data.begin() + 1 + other.ustr.inlinestr.data[0])}};
+            }
+        }
+        else {
+            PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING> lnode{};
+            if(this->ustr.isInline()) {
+                lnode = PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>::mkinitial(this->ustr.inlinestr.data.begin() + 1, this->ustr.inlinestr.data.begin() + 1 + this->ustr.inlinestr.data[0]);
+            }
+            else {
+                lnode = this->ustr.treestr.postree;
+            }
+
+            PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING> rnode{};
+            if(other.ustr.isInline()) {
+                rnode = PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>::mkinitial(other.ustr.inlinestr.data.begin() + 1, other.ustr.inlinestr.data.begin() + 1 + other.ustr.inlinestr.data[0]);
+            }
+            else {
+                rnode = other.ustr.treestr.postree;
+            }
+
+            return XString{StrRootTreeContent{PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>::append(lnode, rnode)}};
+        }
     }
 }

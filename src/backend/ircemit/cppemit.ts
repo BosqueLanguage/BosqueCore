@@ -1383,7 +1383,7 @@ class CPPEmitter {
         let bstr: string;
 
         if(body.builtin === "bool_to_cstring") {
-            bstr = `(bool)(b.value) ? ᐸRuntimeᐳ::XCString{"true"} : ᐸRuntimeᐳ::XCString{"false"}`;
+            bstr = `(bool)(b.value) ? "true"_cs : "false"_cs`;
         }
         else if(body.builtin === "nat_to_cstring") {
             bstr = `ᐸRuntimeᐳ::XCString::natToCString(n.value)`;
@@ -1392,13 +1392,31 @@ class CPPEmitter {
             bstr = `ᐸRuntimeᐳ::XCString::intToCString(i.value)`;
         }
         else if(body.builtin === "chk_nat_to_cstring") {
-            bstr = `!n.isBottom() ? ᐸRuntimeᐳ::XCString::chkNatToCString(n.value) : ᐸRuntimeᐳ::XCString{"ChkNat::npos"}`;
+            bstr = `!n.isBottom() ? ᐸRuntimeᐳ::XCString::chkNatToCString(n.value) : "ChkNat::npos"_cs`;
         }
         else if(body.builtin === "chk_int_to_cstring") {
-            bstr = `!i.isBottom() ? ᐸRuntimeᐳ::XCString::chkIntToCString(i.value) : ᐸRuntimeᐳ::XCString{"ChkInt::npos"}`;
+            bstr = `!i.isBottom() ? ᐸRuntimeᐳ::XCString::chkIntToCString(i.value) : "ChkInt::npos"_cs`;
         }
         else if(body.builtin === "float_to_cstring") {
             bstr = `ᐸRuntimeᐳ::XCString::floatToCString(f.value)`;
+        }
+        else if(body.builtin === "bool_to_string") {
+            bstr = `(bool)(b.value) ? "true"_us : "false"_us`;
+        }
+        else if(body.builtin === "nat_to_string") {
+            bstr = `ᐸRuntimeᐳ::XString::natToString(n.value)`;
+        }
+        else if(body.builtin === "int_to_string") {
+            bstr = `ᐸRuntimeᐳ::XString::intToString(i.value)`;
+        }
+        else if(body.builtin === "chk_nat_to_string") {
+            bstr = `!n.isBottom() ? ᐸRuntimeᐳ::XString::chkNatToString(n.value) : "ChkNat::npos"_us`;
+        }
+        else if(body.builtin === "chk_int_to_string") {
+            bstr = `!i.isBottom() ? ᐸRuntimeᐳ::XString::chkIntToString(i.value) : "ChkInt::npos"_us`;
+        }
+        else if(body.builtin === "float_to_string") {
+            bstr = `ᐸRuntimeᐳ::XString::floatToString(f.value)`;
         }
         else if(body.builtin === "nat_pow") {
             bstr = `ᐸRuntimeᐳ::integerPower<ᐸRuntimeᐳ::XNat, int64_t>(x, y)`;
@@ -1434,7 +1452,7 @@ class CPPEmitter {
             bstr = "s1.append(s2)";
         }
         else if(body.builtin === "cstring_to_bytebuffer") {
-            bstr = "ᐸRuntimeᐳ::XCString::cstrToByteBuffer(s)";
+            bstr = "ᐸRuntimeᐳ::XCString::toByteBuffer(s)";
         }
         else if(body.builtin === "cstring_from_bytebuffer") {
             bstr = "ᐸRuntimeᐳ::XCString::fromByteBuffer(bb, result)";
@@ -1445,17 +1463,17 @@ class CPPEmitter {
         else if(body.builtin === "string_size") {
             bstr = "ᐸRuntimeᐳ::XNat{(int64_t)s.size()}";
         }
-        else if(body.builtin === "string_bytes") {
-            assert(false, "CPPEmitter: need to implement string_bytes builtin");
+        else if(body.builtin === "string_utf8bytes") {
+            bstr = "XNat{ᐸRuntimeᐳ::XString::utf8bytes(s)}";
         }
         else if(body.builtin === "string_append") {
-            assert(false, "CPPEmitter: need to implement string_append builtin");
+            bstr = "s1.append(s2)";
         }
         else if(body.builtin === "string_to_bytebuffer") {
-            assert(false, "CPPEmitter: need to implement string_to_bytebuffer builtin");
+            bstr = "ᐸRuntimeᐳ::XString::toByteBuffer(s)";
         }
         else if(body.builtin === "string_from_bytebuffer") {
-            assert(false, "CPPEmitter: need to implement string_from_bytebuffer builtin");
+            bstr = "ᐸRuntimeᐳ::XString::fromByteBuffer(bb, result)";
         }
         else if(body.builtin === "list_range_nat") {
             const rtype = this.typeInfoManager.getTypeInfo(invk.resultType.tkeystr);

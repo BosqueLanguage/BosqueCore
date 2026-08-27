@@ -4,7 +4,7 @@ import { runTestSet } from "../../../bin/test/stdlib/stdlib_nf.js";
 import { describe, it } from "node:test";
 
 describe ("CString -- construct empty and isEmpty", () => {
-    it("should create simple list", function () {
+    it("should create simple cstring", function () {
         runTestSet('public function main(z: CString): Bool { return z.empty(); }', [['""', 'true'], ['"non-empty"', 'false']], []);
     });
 });

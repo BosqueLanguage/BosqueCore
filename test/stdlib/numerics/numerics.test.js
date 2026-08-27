@@ -6,6 +6,8 @@ import { describe, it } from "node:test";
 describe ("Nat Operations", () => {
     it("should compute tostring", function () {
         runTestSet('public function main(n: Nat): CString { return Nat::toCString(n); }', [['0n', "'0n'"], ['3n', "'3n'"]], []);
+
+        runTestSet('public function main(n: Nat): String { return Nat::toString(n); }', [['0n', '"0n"'], ['3n', '"3n"']], []);
     });
     
     it("should compute powers generally", function () {

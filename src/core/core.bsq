@@ -199,8 +199,8 @@ __internal __typedeclable __keycomparable entity String {
     }
 
     %** Get size of String in bytes **%
-    method bytes(): Nat {
-        return StringOps::s_bytes(this);
+    method utf8bytes(): Nat {
+        return StringOps::s_utf8bytes(this);
     }
 
     %** Append other to this String **%
@@ -236,7 +236,13 @@ __internal __typedeclable __keycomparable entity String {
 
     %** Convert a ByteBuffer (assumed utf-8 encoded) to a String. If decoding fails, e.g. incomplete multi-byte character or invalid value, return None. **%
     function fromByteBuffer(bb: ByteBuffer): Option<String> {
-        return StringOps::s_fromByteBuffer(bb);
+        var result: String;
+        if(StringOps::s_fromByteBuffer(bb, out? result)) {
+            return some(result);
+        }
+        else {
+            return none;
+        }
     }
 #endif %% STRIPPED_CORE
 }
