@@ -50,6 +50,9 @@ namespace ᐸRuntimeᐳ
     {
         assert(bytecount != 1);
 
+        //TODO: we need to review this invalid encoding setup 
+        //      Specifically we are not handling overlong UTF-8 encodings or invalid byte sequences rigorously.
+
         if(bytecount == 2) {
             return (char32_t)((inbuff[0] & 0x1F) << 6 | (inbuff[1] & 0x3F));
         }

@@ -104,6 +104,11 @@ namespace ᐸRuntimeᐳ
         {
             return this->gindex;
         }
+
+        inline bool canRead() const
+        {
+            return this->gindex < this->totalbytes;
+        }
     };
     static_assert(std::bidirectional_iterator<BSQLexBufferIterator>);
 

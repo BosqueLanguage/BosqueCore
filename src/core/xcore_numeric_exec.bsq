@@ -11,6 +11,13 @@ namespace NumericOps {
     function s_chkIntToCString(i: ChkInt): CString = @chk_int_to_cstring;
     function s_floatToCString(f: Float): CString = @float_to_cstring;
 
+    function s_boolToString(b: Bool): String = @bool_to_string;
+    function s_natToString(n: Nat): String = @nat_to_string;
+    function s_intToString(i: Int): String = @int_to_string;
+    function s_chkNatToString(n: ChkNat): String = @chk_nat_to_string;
+    function s_chkIntToString(i: ChkInt): String = @chk_int_to_string;
+    function s_floatToString(f: Float): String = @float_to_string;
+
     __may_fail function s_natPow(x: Nat, y: Nat): Nat = @nat_pow;
     __may_fail function s_intPow(x: Int, y: Int): Int = @int_pow;
 

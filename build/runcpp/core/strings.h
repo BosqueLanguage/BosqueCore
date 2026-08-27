@@ -82,7 +82,6 @@ namespace ᐸRuntimeᐳ
             this->data[0] = static_cast<char>(len); //store length
             std::copy(begin, end, this->data.begin() + 1);
             std::fill(this->data.begin() + len + 1, this->data.end(), '\0');
-
         }
 
         CStrRootInlineContent(const CStrRootInlineContent& s1, const CStrRootInlineContent& s2)
@@ -486,7 +485,7 @@ namespace ᐸRuntimeᐳ
         static XCString chkIntToCString(__int128_t value);
         static XCString floatToCString(double value);
 
-        static XByteBuffer cstrToByteBuffer(const XCString& cstr);
+        static XByteBuffer toByteBuffer(const XCString& cstr);
         static XBool fromByteBuffer(const XByteBuffer& buffer, XCString& result);
         
         XCString append(XCString other);
@@ -643,6 +642,28 @@ namespace ᐸRuntimeᐳ
             std::copy(str, str + len, this->data.begin() + 1);
             std::fill(this->data.begin() + len + 1, this->data.end(), U'\0');
 
+        }
+
+        template<typename Iter>
+        StrRootInlineContent(Iter begin, Iter end, size_t len)
+        {
+            assert(len <= ᐸRuntimeᐳ::StrRootInlineContent::STR_MAX_SIZE);
+
+            this->data[0] = static_cast<char32_t>(len); //store length
+            std::copy(begin, end, this->data.begin() + 1);
+            std::fill(this->data.begin() + len + 1, this->data.end(), U'\0');
+        }
+
+        StrRootInlineContent(const StrRootInlineContent& s1, const StrRootInlineContent& s2)
+        {
+            int64_t len1 = s1.size();
+            int64_t len2 = s2.size();
+            assert(len1 + len2 <= ᐸRuntimeᐳ::StrRootInlineContent::STR_MAX_SIZE);
+
+            this->data[0] = static_cast<char32_t>(len1 + len2); //store length
+            std::copy(s1.data.begin() + 1, s1.data.begin() + 1 + len1, this->data.begin() + 1);
+            std::copy(s2.data.begin() + 1, s2.data.begin() + 1 + len2, this->data.begin() + 1 + len1);
+            std::fill(this->data.begin() + len1 + len2 + 1, this->data.end(), U'\0');
         }
 
         //mask off high bits if dirty from union bit hacking
@@ -888,6 +909,25 @@ namespace ᐸRuntimeᐳ
             }
         }
 
+        template<typename Iter>
+        static XString mk(Iter begin, Iter end, size_t len)
+        {
+            if(len == 0) {
+                return XString{};
+            }
+            else {
+                if(len <= StrRootInlineContent::STR_MAX_SIZE) {
+                    return XString{StrRootInlineContent(begin, end, len)};
+                }
+                else if(len <= StrRootTreeContent::STR_MAX_LEAF_SIZE) {
+                    return XString{StrRootTreeContent{PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>::mkinitial(begin, end)}};
+                }
+                else {
+                    return XString{StrRootTreeContent{PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>::mklargerec(begin, end, len)}};
+                }
+            }
+        }
+
         bool empty() const
         {
             return this->ustr.empty();
@@ -908,9 +948,10 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        int64_t bytes() const
+        int64_t utf8bytes() const
         {
-            return this->size() * sizeof(char32_t);
+            //TODO this should be the number of utf8 bytes needed to encode this string
+            assert(false);
         }
 
         XStringIterator begin() const
@@ -1006,6 +1047,15 @@ namespace ᐸRuntimeᐳ
         }
 
         void diagnosticEmit(std::ostream& out, bool waddr) const;
+
+        static XString natToString(int64_t value);
+        static XString intToString(int64_t value);
+        static XString chkNatToString(__int128_t value);
+        static XString chkIntToString(__int128_t value);
+        static XString floatToString(double value);
+
+        static XByteBuffer toByteBuffer(const XString& str);
+        static XBool fromByteBuffer(const XByteBuffer& buffer, XString& result);
 
         XString append(XString other);
     };

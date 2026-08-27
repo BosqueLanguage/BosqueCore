@@ -13,5 +13,7 @@ describe ("Floats Power", () => {
 
     it("should compute tostring", function () {
         runTestSet('public function main(f: Float): CString { return Float::toCString(f); }', [['0.0f', "'0.0f'"], ['3.0f', "'3.0f'"]], []);
+
+        runTestSet('public function main(f: Float): String { return Float::toString(f); }', [['0.0f', '"0.0f"'], ['3.0f', '"3.0f"']], []);
     });
 });

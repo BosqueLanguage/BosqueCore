@@ -26,6 +26,10 @@ __internal __typedeclable __keycomparable entity Bool {
     function toCString(b: Bool): CString {
         return NumericOps::s_boolToCString(b);
     }
+
+    function toString(b: Bool): String {
+        return NumericOps::s_boolToString(b);
+    }
 #endif %% STRIPPED_CORE
 }
 
@@ -36,16 +40,20 @@ __internal __typedeclable __keycomparable __numeric entity Nat {
     const zero: Nat = 0n;
     const one: Nat = 1n;
 
-    function toCString(n: Nat): CString {
-        return NumericOps::s_natToCString(n);
-    }
-
     function square(x: Nat): Nat {
         return x * x;
     }
 
     function pow(x: Nat, y: Nat): Nat {
         return NumericOps::s_natPow(x, y);
+    }
+
+    function toCString(n: Nat): CString {
+        return NumericOps::s_natToCString(n);
+    }
+
+    function toString(n: Nat): String {
+        return NumericOps::s_natToString(n);
     }
 #endif %% STRIPPED_CORE
 }
@@ -57,10 +65,6 @@ __internal __typedeclable __keycomparable __numeric entity Int {
     const zero: Int = 0i;
     const one: Int = 1i;
 
-    function toCString(i: Int): CString {
-        return NumericOps::s_intToCString(i);
-    }
-
     function square(x: Int): Int {
         return x * x;
     }
@@ -69,6 +73,14 @@ __internal __typedeclable __keycomparable __numeric entity Int {
         requires y >= 0i;
     {
         return NumericOps::s_intPow(x, y);
+    }
+
+    function toCString(i: Int): CString {
+        return NumericOps::s_intToCString(i);
+    }
+
+    function toString(i: Int): String {
+        return NumericOps::s_intToString(i);
     }
 #endif %% STRIPPED_CORE
 }
@@ -83,6 +95,10 @@ __internal __typedeclable __keycomparable __numeric entity ChkNat {
     function toCString(n: ChkNat): CString {
         return NumericOps::s_chkNatToCString(n);
     }
+
+    function toString(n: ChkNat): String {
+        return NumericOps::s_chkNatToString(n);
+    }
 #endif %% STRIPPED_CORE
 }
 
@@ -95,6 +111,10 @@ __internal __typedeclable __keycomparable __numeric entity ChkInt {
 
     function toCString(i: ChkInt): CString {
         return NumericOps::s_chkIntToCString(i);
+    }
+
+    function toString(i: ChkInt): String {
+        return NumericOps::s_chkIntToString(i);
     }
 #endif %% STRIPPED_CORE
 }
@@ -138,8 +158,12 @@ __internal __typedeclable __numeric entity Float {
         return NumericOps::s_floatSqrt(x);
     }
 
-    function toCString(i: Float): CString {
-        return NumericOps::s_floatToCString(i);
+    function toCString(f: Float): CString {
+        return NumericOps::s_floatToCString(f);
+    }
+
+    function toString(f: Float): String {
+        return NumericOps::s_floatToString(f);
     }
 #endif %% STRIPPED_CORE
 }
@@ -199,8 +223,8 @@ __internal __typedeclable __keycomparable entity String {
     }
 
     %** Get size of String in bytes **%
-    method bytes(): Nat {
-        return StringOps::s_bytes(this);
+    method utf8bytes(): Nat {
+        return StringOps::s_utf8bytes(this);
     }
 
     %** Append other to this String **%
@@ -236,7 +260,13 @@ __internal __typedeclable __keycomparable entity String {
 
     %** Convert a ByteBuffer (assumed utf-8 encoded) to a String. If decoding fails, e.g. incomplete multi-byte character or invalid value, return None. **%
     function fromByteBuffer(bb: ByteBuffer): Option<String> {
-        return StringOps::s_fromByteBuffer(bb);
+        var result: String;
+        if(StringOps::s_fromByteBuffer(bb, out? result)) {
+            return some(result);
+        }
+        else {
+            return none;
+        }
     }
 #endif %% STRIPPED_CORE
 }
