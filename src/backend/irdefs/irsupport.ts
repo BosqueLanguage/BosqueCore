@@ -1,3 +1,4 @@
+import assert from "node:assert";
 
 import type { BAPILexer } from "./irlexer.js";
 
@@ -45,6 +46,29 @@ class IRCRegex
         this.smtregex = smtregex;
         this.cppregex = cppregex;
     }
+
+    emitBAPI(): string {
+        const bsqregexLiteral = emitStringAsByteBufferLiteral(this.bsqregex);
+        const smtregexLiteral = emitStringAsByteBufferLiteral(this.smtregex);
+        const cppregexLiteral = emitStringAsByteBufferLiteral(this.cppregex);
+        return `Assembly::CRegex{${this.regexID}n, ${bsqregexLiteral}, ${smtregexLiteral}, ${cppregexLiteral}}`;
+    }
+
+    static parseBAPI(lexer: BAPILexer): IRCRegex {
+        lexer.parseTypeIdentifier(); //eat type tag
+        lexer.ensureAndConsumeSymbol('{');
+
+        const regexID = lexer.parseNatNumber();
+        lexer.ensureAndConsumeSymbol(',');
+        const bsqregex = parseStringAsByteBufferLiteral(lexer);
+        lexer.ensureAndConsumeSymbol(',');
+        const smtregex = parseStringAsByteBufferLiteral(lexer);
+        lexer.ensureAndConsumeSymbol(',');
+        const cppregex = parseStringAsByteBufferLiteral(lexer);
+        lexer.ensureAndConsumeSymbol('}');
+
+        return new IRCRegex(regexID, bsqregex, smtregex, cppregex);
+    }
 }
 
 class IRURegex
@@ -63,8 +87,57 @@ class IRURegex
         this.smtregex = smtregex;
         this.cppregex = cppregex;
     }
+
+    emitBAPI(): string {
+        const bsqregexLiteral = emitStringAsByteBufferLiteral(this.bsqregex);
+        const smtregexLiteral = emitStringAsByteBufferLiteral(this.smtregex);
+        const cppregexLiteral = emitStringAsByteBufferLiteral(this.cppregex);
+        return `Assembly::URegex{${this.regexID}n, ${bsqregexLiteral}, ${smtregexLiteral}, ${cppregexLiteral}}`;
+    }
+
+    static parseBAPI(lexer: BAPILexer): IRURegex {
+        lexer.parseTypeIdentifier(); //eat type tag
+        lexer.ensureAndConsumeSymbol('{');
+
+        const regexID = lexer.parseNatNumber();
+        lexer.ensureAndConsumeSymbol(',');
+        const bsqregex = parseStringAsByteBufferLiteral(lexer);
+        lexer.ensureAndConsumeSymbol(',');
+        const smtregex = parseStringAsByteBufferLiteral(lexer);
+        lexer.ensureAndConsumeSymbol(',');
+        const cppregex = parseStringAsByteBufferLiteral(lexer);
+        lexer.ensureAndConsumeSymbol('}');
+
+        return new IRURegex(regexID, bsqregex, smtregex, cppregex);
+    }
 }
 
+function emitStringAsByteBufferLiteral(cstr: string): string {
+    const bbytes = Array.from(Buffer.from(cstr, 'utf8')).map(b => b.toString(16));
+    return `0x[${bbytes.join(',')}]`;
+}
+
+function parseStringAsByteBufferLiteral(lexer: BAPILexer): string {
+    assert(false);
+}
+
+function emitUTF8BytesAsByteBufferLiteral(utf8bytes: number[]): string {
+    const bbytes = utf8bytes.map(b => b.toString(16));
+    return `0x[${bbytes.join(',')}]`;
+}
+
+function parseUTF8BytesAsByteBufferLiteral(lexer: BAPILexer): number[] {
+    assert(false);
+}
+
+function emitUTF32BytesAsByteBufferLiteral(utf32bytes: number[]): string {
+    const bbytes = utf32bytes.flatMap(b => Array.from(Buffer.from(String.fromCodePoint(b), 'utf8'))).map(b => b.toString(16));
+    return `0x[${bbytes.join(',')}]`;
+}
+
+function parseUTF32BytesAsByteBufferLiteral(lexer: BAPILexer): number[] {
+    assert(false);
+}
 
 function emitTypeKey(tkeystr: string): string {
     return `'${tkeystr}'<Assembly::TypeKey>`;
@@ -157,7 +230,9 @@ function parseVarIdentifier(lexer: BAPILexer): string {
 }
 
 export {
+    emitStringAsByteBufferLiteral, emitUTF8BytesAsByteBufferLiteral, emitUTF32BytesAsByteBufferLiteral,
     emitTypeKey, emitConstKey, emitInvokeKey, emitIdentifier, emitVarIdentifier,
+    parseStringAsByteBufferLiteral, parseUTF8BytesAsByteBufferLiteral, parseUTF32BytesAsByteBufferLiteral,
     parseTypeKey, parseConstKey, parseInvokeKey, parseIdentifier, parseVarIdentifier,
 
     IRSourceInfo,

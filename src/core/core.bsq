@@ -253,6 +253,20 @@ __internal __typedeclable __keycomparable entity String {
         }
     }
 
+    function toCString(s: String): Option<CString> {
+        var result: CString;
+        if(StringOps::s_toCString(s, out? result)) {
+            return some(result);
+        }
+        else {
+            return none;
+        }
+    }
+
+    function fromCString(s: CString): String {
+        return StringOps::s_fromCString(s);
+    }
+
     %** Convert a String to a ByteBuffer in utf-8 encoding **%
     function toByteBuffer(s: String): ByteBuffer {
         return StringOps::s_toByteBuffer(s);

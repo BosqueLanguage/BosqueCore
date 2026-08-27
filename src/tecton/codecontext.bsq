@@ -1,0 +1,108 @@
+declare namespace CodeContext  { 
+    using Assembly;
+}
+
+function generateLiteralExpressionContext(expr: Assembly::LiteralExpression, assembly: Assembly::BapiAssembly): String {
+    match(expr) {
+        Assembly::LiteralNoneExpression => { return "none"; }
+        Assembly::LiteralBoolExpression => { return Bool::toString($expr.value); }
+        Assembly::LiteralNatExpression => { return Nat::toString($expr.value); }
+        Assembly::LiteralIntExpression => { return Int::toString($expr.value); }
+        Assembly::LiteralChkNatExpression => { return ChkNat::toString($expr.value); }
+        Assembly::LiteralChkIntExpression => { return ChkInt::toString($expr.value); }
+
+        %%TODO: Add support for other literal types here
+    }
+}
+
+function generatePrimitiveEntityContext(pdecl: Assembly::PrimitiveEntityTypeDecl, assembly: Assembly::BapiAssembly): String {
+    return String::fromCString(pdecl.tkey.value);
+}
+
+function generateEnumEntityContext(edecl: Assembly::EnumTypeDecl, assembly: Assembly::BapiAssembly): String {
+    let memberspp = String::fromCString(CString::joinAll(', ', edecl.members));
+    return Interpolate::string($"enum ${0} { ${1} }", String::fromCString(edecl.tkey.value), memberspp);
+}
+
+function generateRngBoundContext(rng: Assembly::TypedeclRangeCheck, assembly: Assembly::BapiAssembly): String {
+    var minbound = "";
+    if($mb = rng.min)@some {
+        minbound = generateLiteralExpressionContext($mb, assembly);
+    }
+
+    var maxbound = "";
+    if($mb = rng.max)@some {
+        maxbound = generateLiteralExpressionContext($mb, assembly);
+    }
+
+    return Interpolate::string($"{${0},${1}}", minbound, maxbound);
+}
+
+function generateTypedeclEntityContext(tdecl: Assembly::TypedeclTypeDecl, assembly: Assembly::BapiAssembly): String {
+    match(tdecl) {
+        Assembly::TypedeclSimpleTypeDecl => { 
+            return Interpolate::string($"type ${0} = ${1};", String::fromCString(tdecl.tkey.value), String::fromCString(tdecl.valuetype.tkeystr.value)); 
+        }
+        Assembly::TypedeclBoundedTypeDecl => { 
+            return Interpolate::string($"type ${0} = ${1}${2};", String::fromCString(tdecl.tkey.value), String::fromCString(tdecl.valuetype.tkeystr.value), generateRngBoundContext($tdecl.rngchk, assembly)); 
+        }
+        Assembly::TypedeclCStringTypeDecl => {
+            var rngchkpp = "";
+            if($rng = $tdecl.rngchk)@some {
+                rngchkpp = generateRngBoundContext($rng, assembly);
+            }
+
+            var rechkpp = "";
+            if($rch = $tdecl.rechk)@some {
+                let cregex = assembly.cregexps.find(pred(cre) => cre.regexID == $rch);
+                let rexp = String::fromByteBuffer(cregex.regex).@some;
+                
+                rechkpp = Interpolate::string($" of ${0}", rexp);
+            }
+
+            return Interpolate::string($"type ${0} = CString${1}${2};", String::fromCString(tdecl.tkey.value), rngchkpp, rechkpp); 
+        }
+        Assembly::TypedeclStringTypeDecl => { 
+            var rngchkpp = "";
+            if($rng = $tdecl.rngchk)@some {
+                rngchkpp = generateRngBoundContext($rng, assembly);
+            }
+
+            var rechkpp = "";
+            if($rch = $tdecl.rechk)@some {
+                let uregex = assembly.uregexps.find(pred(cre) => cre.regexID == $rch);
+                let rexp = String::fromByteBuffer(uregex.regex).@some;
+                
+                rechkpp = Interpolate::string($" of ${0}", rexp);
+            }
+
+            return Interpolate::string($"type ${0} = String${1}${2};", String::fromCString(tdecl.tkey.value), rngchkpp, rechkpp); 
+        }
+    }
+}
+
+function generateNominalTypeSignatureContext(tsig: Assembly::NominalTypeSignature, assembly: Assembly::BapiAssembly): String {
+    let tdecl = assembly.alltypes.get(tsig.tkeystr);
+
+    match(tdecl) {
+        Assembly::PrimitiveEntityTypeDecl => { return generatePrimitiveEntityContext($tdecl, assembly); }
+        Assembly::EnumTypeDecl => { return generateEnumEntityContext($tdecl, assembly); }
+        Assembly::TypedeclTypeDecl => { return generateTypedeclEntityContext($tdecl, assembly); }
+    }
+}
+
+function generateEListTypeSignatureContext(tsig: Assembly::EListTypeSignature, assembly: Assembly::BapiAssembly): String {
+    let elems = String::joinAll(", ", tsig.entries.map(fn(entry) => String::fromCString(entry.tkeystr.value)));
+    return Interpolate::string($"(|${0}|)", elems);
+}
+
+recursive function generateTypeSignatureContext(gentype: Assembly::TypeKey, assembly: Assembly::BapiAssembly): String {
+    let tsig = assembly.alltypesigs.get(gentype);
+
+    match(tsig) {
+        Assembly::VoidTypeSignature => { abort; } %%Should be handled prior to this point
+        Assembly::NominalTypeSignature => { return generateNominalTypeSignatureContext($tsig, assembly); }
+        Assembly::EListTypeSignature => { return generateEListTypeSignatureContext($tsig, assembly); }
+        %%Need to implement other cases here
+    }
+}

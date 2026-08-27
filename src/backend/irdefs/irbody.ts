@@ -1,7 +1,7 @@
-import { emitConstKey, IRSourceInfo, parseConstKey } from "./irsupport.js";
+import { emitConstKey, emitUTF8BytesAsByteBufferLiteral, emitUTF32BytesAsByteBufferLiteral, IRSourceInfo, parseConstKey, parseUTF8BytesAsByteBufferLiteral, parseUTF32BytesAsByteBufferLiteral } from "./irsupport.js";
 import { IREListTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature } from "./irtype.js";
 
-import { BAPILexer, BAPITokenKind, parseListOf } from "./irlexer.js";
+import { BAPILexer, BAPITokenKind } from "./irlexer.js";
 
 import assert from "node:assert";
 
@@ -1363,34 +1363,14 @@ class IRLiteralCStringExpression extends IRLiteralExpression {
     }
 
     override toBAPI(): string {
-        const cchars = this.bytes.map(b => {
-            if((32 <= b && b <= 126) && !(b == 9 || b == 10 || b == 34 || b == 37)) {
-                return `c'${String.fromCharCode(b)}'`;
-            }
-            else {
-                return `c'%x${b.toString(16)};'`;
-            }
-        }).join(', ');
-        
-        return `Assembly::LiteralCStringExpression{List<CChar>{${cchars}}}`;
+        const cbytes = emitUTF8BytesAsByteBufferLiteral(this.bytes);
+        return `Assembly::LiteralCStringExpression{${cbytes}}`;
     }
 
     static parseBAPIAsIRLiteralCStringExpression(lexer: BAPILexer): IRLiteralCStringExpression {
         lexer.ensureAndConsumeToken(BAPITokenKind.TypeIdentifier);
         lexer.ensureAndConsumeSymbol("{");
-        lexer.ensureAndConsumeToken(BAPITokenKind.TypeIdentifier);
-        lexer.ensureAndConsumeSymbol("{");
-        const bytes = parseListOf<number>(lexer, "{", "}", ",", () => {
-            const token = lexer.ensureAndConsumeToken(BAPITokenKind.CCharLiteral);
-            const cchar = token.slice(2, -1); //remove c' and '
-            if(!cchar.startsWith("%x")) {
-                return cchar.codePointAt(0) as number;
-            }
-            else {
-                return parseInt(cchar, 16);
-            }
-        });
-        lexer.ensureAndConsumeSymbol("}");
+        const bytes = parseUTF8BytesAsByteBufferLiteral(lexer);
         lexer.ensureAndConsumeSymbol("}");
 
         return new IRLiteralCStringExpression(bytes);
@@ -1406,34 +1386,14 @@ class IRLiteralStringExpression extends IRLiteralExpression {
     }
 
     override toBAPI(): string {
-        const uchars = this.bytes.map(b => {
-            if((32 <= b && b <= 126) && !(b == 9 || b == 10 || b == 34 || b == 37)) {
-                return `c"${String.fromCharCode(b)}"`;
-            }
-            else {
-                return `c"%x${b.toString(16)};"`;
-            }
-        }).join(', ');
-
+        const uchars = emitUTF32BytesAsByteBufferLiteral(this.bytes);
         return `Assembly::LiteralStringExpression{List<UChar>{${uchars}}}`;
     }
 
     static parseBAPIAsIRLiteralStringExpression(lexer: BAPILexer): IRLiteralStringExpression {
         lexer.ensureAndConsumeToken(BAPITokenKind.TypeIdentifier);
         lexer.ensureAndConsumeSymbol("{");
-        lexer.ensureAndConsumeToken(BAPITokenKind.TypeIdentifier);
-        lexer.ensureAndConsumeSymbol("{");
-        const bytes = parseListOf<number>(lexer, "{", "}", ",", () => {
-            const token = lexer.ensureAndConsumeToken(BAPITokenKind.UnicodeCharLiteral);
-            const uchar = token.slice(2, -1); //remove c" and "
-            if(!uchar.startsWith("%x")) {
-                return uchar.codePointAt(0) as number;
-            }
-            else {
-                return parseInt(uchar, 16);
-            }
-        });
-        lexer.ensureAndConsumeSymbol("}");
+        const bytes = parseUTF32BytesAsByteBufferLiteral(lexer);
         lexer.ensureAndConsumeSymbol("}");
 
         return new IRLiteralStringExpression(bytes);
