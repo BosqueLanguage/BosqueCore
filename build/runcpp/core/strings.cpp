@@ -270,7 +270,7 @@ namespace ᐸRuntimeᐳ
             std::array<uint8_t, 4> outbuff{};
             for(auto ii = str.begin(); ii != str.end(); ++ii) {
                 char32_t cc = *ii;
-                if(cc <= 0xFF) {
+                if(cc <= 0x7F) {
                     buffer.push_back(static_cast<uint8_t>(cc));
                 }
                 else {
@@ -306,7 +306,7 @@ namespace ᐸRuntimeᐳ
                     }
                     else {
                         size_t mbcc = multibyteCharCount(cc);
-                        if(buffer.bytes() < ii + mbcc)
+                        if(mbcc == 0 || buffer.bytes() < ii + mbcc)
                         {
                             return XFALSE;
                         }
@@ -338,8 +338,7 @@ namespace ᐸRuntimeᐳ
                     }
                     else {
                         size_t mbcc = multibyteCharCount(cc);
-                        if(buffer.bytes() < std::distance(buffer.begin(), ii) + mbcc)
-                        {
+                        if(mbcc == 0 || ii.totalbytes < ii.gindex + mbcc) {
                             return XFALSE;
                         }
 

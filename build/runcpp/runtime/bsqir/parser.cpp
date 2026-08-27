@@ -273,6 +273,9 @@ namespace ᐸRuntimeᐳ
     {
         uint8_t bbyte = *ii;
         outlen = multibyteCharCount(bbyte);
+        if(outlen == 0) {
+            return false;
+        }
 
         for(size_t i = 0; i < outlen; i++) {
             if(!ii.canRead()) {
