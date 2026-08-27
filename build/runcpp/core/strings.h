@@ -488,8 +488,7 @@ namespace ᐸRuntimeᐳ
 
         static XByteBuffer cstrToByteBuffer(const XCString& cstr);
         static XBool fromByteBuffer(const XByteBuffer& buffer, XCString& result);
-        static XCString fromByteBufferStrip(const XByteBuffer& buffer, bool stripinvalid, bool clampinvalid, char clampchar);
-
+        
         XCString append(XCString other);
     };
 

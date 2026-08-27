@@ -123,38 +123,6 @@ namespace ᐸRuntimeᐳ
         }
     }
 
-    XCString XCString::fromByteBufferStrip(const XByteBuffer& buffer, bool stripinvalid, bool clampinvalid, char clampchar)
-    {
-        if(buffer.bytes() == 0) {
-            return XCString{};
-        }
-        else {
-            //TODO: this is not the best in terms of memory/compute but is simple for now
-
-            std::vector<char> tmp{};
-            tmp.reserve(buffer.bytes());
-                
-            if(buffer.isInline()) {
-                if(stripinvalid) {
-                    std::copy_if(buffer.inlinedata(), buffer.inlinedata() + buffer.bytes(), std::back_inserter(tmp), [](uint8_t b) { return isLegalCChar(b); });
-                }
-                else {
-                    std::transform(buffer.inlinedata(), buffer.inlinedata() + buffer.bytes(), std::back_inserter(tmp), [clampchar](uint8_t b) { return isLegalCChar(b) ? b : clampchar; });
-                }
-            }
-            else {
-                if(stripinvalid) {
-                    std::copy_if(buffer.begin(), buffer.end(), std::back_inserter(tmp), [](uint8_t b) { return isLegalCChar(b); });
-                }
-                else {
-                    std::transform(buffer.begin(), buffer.end(), std::back_inserter(tmp), [clampchar](uint8_t b) { return isLegalCChar(b) ? b : clampchar; });
-                }
-            }
-
-            return XCString::mk(tmp.begin(), tmp.end(), tmp.size());
-        }
-    }
-
     XCString XCString::append(XCString other)
     {
         assert(!this->ucstr.empty());

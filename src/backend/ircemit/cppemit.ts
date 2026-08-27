@@ -1439,12 +1439,6 @@ class CPPEmitter {
         else if(body.builtin === "cstring_from_bytebuffer") {
             bstr = "ᐸRuntimeᐳ::XCString::fromByteBuffer(bb, result)";
         }
-        else if(body.builtin === "cstring_from_bytebuffer_strip") {
-            bstr = "ᐸRuntimeᐳ::XCString::fromByteBufferStrip(bb, true, false, '*')";
-        }
-        else if(body.builtin === "cstring_from_bytebuffer_clamp") {
-            bstr = "ᐸRuntimeᐳ::XCString::fromByteBufferStrip(bb, false, true, '*')";
-        }
         else if(body.builtin === "string_empty") {
             bstr = "ᐸRuntimeᐳ::XBool::from(s.empty())";
         }

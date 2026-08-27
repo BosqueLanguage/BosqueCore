@@ -310,7 +310,7 @@ namespace ᐸRuntimeᐳ
         }
     }
 
-    inline bool isLegalCChar(char c)
+    inline bool isLegalCChar(uint8_t c)
     {
         if(c > 126) {
             return false;

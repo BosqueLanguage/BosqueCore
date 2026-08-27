@@ -237,20 +237,13 @@ namespace ᐸRuntimeᐳ
                         }
 
                         //reverse for flow
-                        std::stack<ByteBufferBlock*> blockstack{};
+                        ByteBufferBlock* revl = nullptr;
                         while(blockl != nullptr) {
-                            blockstack.push(blockl);
+                            revl = XByteBuffer::s_blockallocator->allocate(blockl->entries, revl);
                             blockl = blockl->next;
                         }
 
-                        ByteBufferBlock* revl = nullptr;
-                        while(!blockstack.empty()) {
-                            ByteBufferBlock* bb = blockstack.top();
-                            blockstack.pop();
-                            revl = XByteBuffer::s_blockallocator->allocate(bb->entries, revl);
-                        }
-
-                    return XByteBuffer(revl, size);
+                        return XByteBuffer(revl, size);
                     }
                 }
             }

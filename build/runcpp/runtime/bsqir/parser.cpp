@@ -288,8 +288,8 @@ namespace ᐸRuntimeᐳ
 
         auto ii = std::find_if(s_escape_names_char.cbegin(), s_escape_names_char.cend(), [&](const auto& p) { return std::strcmp(p.second, outseq.data()) == 0; });
         if(ii != s_escape_names_char.cend()) {
-            res = (char)ii->first;
-            return isLegalCChar(res);
+            res = static_cast<char>(ii->first);
+            return isLegalCChar(ii->first);
         }
 
         if(outseq[1] == 'x') {
@@ -297,7 +297,7 @@ namespace ᐸRuntimeᐳ
             auto [ptr, ec] = std::from_chars(outseq.data() + 2, outseq.data() + outlen - 1, output, 16);
 
             res = static_cast<char>(output);
-            return ec == std::errc() && (ptr == outseq.data() + outlen - 1) && isLegalCChar(res);
+            return ec == std::errc() && (ptr == outseq.data() + outlen - 1) && isLegalCChar(output);
         }
 
         return false;
@@ -339,7 +339,7 @@ namespace ᐸRuntimeᐳ
 
     bool processCCharFromIter(BSQLexBufferIterator& ii, char* outchar)
     {
-        char c = *ii;
+        uint8_t c = *ii;
         
         if(c == '%') {
             std::array<char, 16> outseq;
@@ -356,7 +356,7 @@ namespace ᐸRuntimeᐳ
             }
 
             *outchar = res;
-            return isLegalCChar(*outchar);
+            return true;
         }
         else {
             if(c == '\'' || (c < 32) || (126 < c)) {
@@ -366,14 +366,14 @@ namespace ᐸRuntimeᐳ
                 *outchar = c;
                 ++ii;
 
-                return isLegalCChar(*outchar);
+                return isLegalCChar(c);
             }
         }
     }
 
     bool processUnicodeCharFromIter(BSQLexBufferIterator& ii, char32_t* outchar)
     {
-        char c = *ii;
+        uint8_t c = *ii;
        
         if(c == '%') {
             std::array<char, 16> outseq;
@@ -390,7 +390,7 @@ namespace ᐸRuntimeᐳ
             }
 
             *outchar = res;
-            return isLegalUnicodeChar(*outchar);
+            return true;
         }
         else {
             if(c == '"') {
@@ -411,13 +411,13 @@ namespace ᐸRuntimeᐳ
                 }
 
                 *outchar = res;
-                return isLegalUnicodeChar(*outchar);
+                return true;
             }
             else {
                 *outchar = static_cast<char32_t>(c);
                 ++ii;
 
-                return isLegalUnicodeChar(*outchar);
+                return isLegalUnicodeChar(c);
             }
         }
        
@@ -735,17 +735,10 @@ namespace ᐸRuntimeᐳ
                 }
 
                 //reverse for flow
-                std::stack<ByteBufferBlock*> blockstack{};
-                while(blockl != nullptr) {
-                    blockstack.push(blockl);
-                    blockl = blockl->next;
-                }
-
                 ByteBufferBlock* revl = nullptr;
-                while(!blockstack.empty()) {
-                    ByteBufferBlock* bb = blockstack.top();
-                    blockstack.pop();
-                    revl = XByteBuffer::s_blockallocator->allocate(bb->entries, revl);
+                while(blockl != nullptr) {
+                    revl = XByteBuffer::s_blockallocator->allocate(blockl->entries, revl);
+                    blockl = blockl->next;
                 }
 
                 return XByteBuffer(revl, totalelems);
