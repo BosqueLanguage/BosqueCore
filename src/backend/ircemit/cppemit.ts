@@ -1470,12 +1470,10 @@ class CPPEmitter {
             bstr = "s1.append(s2)";
         }
         else if(body.builtin === "string_to_cstring") {
-            assert(false);
-            //bstr = "ᐸRuntimeᐳ::XString::toCString(s, result)";
+            bstr = "ᐸRuntimeᐳ::XString::toCString(s, result)";
         }
         else if(body.builtin === "string_from_cstring") {
-            assert(false);
-            //bstr = "ᐸRuntimeᐳ::XString::fromCString(s)";
+            bstr = "ᐸRuntimeᐳ::XString::fromCString(s)";
         }
         else if(body.builtin === "string_to_bytebuffer") {
             bstr = "ᐸRuntimeᐳ::XString::toByteBuffer(s)";

@@ -257,6 +257,16 @@ namespace ᐸRuntimeᐳ
         return XString::mk(numbuf32, static_cast<size_t>(written));
     }
 
+    XString XString::fromCString(const XCString& cstr)
+    {
+        xxxx;
+    }
+
+    XBool XString::toCString(const XString& str, XCString& cstr)
+    {
+        xxxx;
+    }
+
     XByteBuffer XString::toByteBuffer(const XString& str)
     {
         if(str.empty()) {

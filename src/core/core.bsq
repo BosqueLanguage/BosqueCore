@@ -253,6 +253,42 @@ __internal __typedeclable __keycomparable entity String {
         }
     }
 
+    function concat(...strings: List<String>): String {
+        if(ListOps::s_list_empty<List<String>>(lists)) {
+            return "";
+        }
+        else {
+            return ListOps::s_list_concat_strs<String>(lists);
+        }
+    }
+
+    function concatAll(...strings: List<String>): String {
+        if(ListOps::s_list_empty<List<String>>(lists)) {
+            return "";
+        }
+        else {
+            return ListOps::s_list_concat_strs<String>(lists);
+        }
+    }
+
+    function join(separator: String, ...strings: List<String>): String {
+        if(ListOps::s_list_empty<List<String>>(lists)) {
+            return "";
+        }
+        else {
+            return ListOps::s_list_join_strs<String>(separator, lists);
+        }
+    }
+
+    function joinAll(separator: String, strings: List<String>): String {
+        if(ListOps::s_list_empty<List<String>>(strings)) {
+            return "";
+        }
+        else {
+            return ListOps::s_list_join_strs<String>(separator, strings);
+        }
+    }
+
     function toCString(s: String): Option<CString> {
         var result: CString;
         if(StringOps::s_toCString(s, out? result)) {
