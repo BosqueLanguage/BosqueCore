@@ -1433,6 +1433,12 @@ class CPPEmitter {
         else if(body.builtin === "cstring_append") {
             bstr = "s1.append(s2)";
         }
+        else if(body.builtin === "cstring_to_bytebuffer") {
+            bstr = "ᐸRuntimeᐳ::XCString::cstrToByteBuffer(s)";
+        }
+        else if(body.builtin === "cstring_from_bytebuffer") {
+            bstr = "ᐸRuntimeᐳ::XCString::fromByteBuffer(bb, result)";
+        }
         else if(body.builtin === "string_empty") {
             bstr = "ᐸRuntimeᐳ::XBool::from(s.empty())";
         }
@@ -1444,6 +1450,12 @@ class CPPEmitter {
         }
         else if(body.builtin === "string_append") {
             assert(false, "CPPEmitter: need to implement string_append builtin");
+        }
+        else if(body.builtin === "string_to_bytebuffer") {
+            assert(false, "CPPEmitter: need to implement string_to_bytebuffer builtin");
+        }
+        else if(body.builtin === "string_from_bytebuffer") {
+            assert(false, "CPPEmitter: need to implement string_from_bytebuffer builtin");
         }
         else if(body.builtin === "list_range_nat") {
             const rtype = this.typeInfoManager.getTypeInfo(invk.resultType.tkeystr);

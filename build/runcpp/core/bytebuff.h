@@ -21,6 +21,9 @@ namespace ᐸRuntimeᐳ
 
         ByteBufferEntry(const std::initializer_list<uint8_t>& initdata) : data{} { std::copy(initdata.begin(), initdata.end(), this->data.begin()); }
 
+        template<typename Iter>
+        ByteBufferEntry(Iter begin, Iter end) : data{} { std::copy(begin, end, this->data.begin()); }
+
         uint8_t* getData() { return this->data.data(); }
         const uint8_t* getData() const { return this->data.data(); }
 
@@ -90,7 +93,7 @@ namespace ᐸRuntimeᐳ
 
     class ByteBufferIterator
     {
-    private:
+    public:
         ByteBufferEntry* centry;
         size_t cindex;
         
@@ -100,25 +103,7 @@ namespace ᐸRuntimeᐳ
         size_t gindex;
         size_t totalbytes;
 
-    public:
-        ByteBufferIterator(ByteBufferEntry* e, ByteBufferBlock* b, size_t totalbytes) : centry{e}, cindex{0}, cblock{b}, bbindex{0}, gindex{0}, totalbytes{totalbytes} { ; }
-        ByteBufferIterator(const ByteBufferIterator& other) = default;
-
-        inline bool valid() const 
-        {
-            return (this->gindex < totalbytes);
-        }
-
-        inline uint8_t get() const 
-        {
-            return this->centry->data[this->cindex];
-        }
-
-        inline size_t getIndex() const 
-        {
-            return this->gindex;
-        }
-
+    private:
         void nextslow()
         {
             if(this->gindex < this->totalbytes) {
@@ -134,18 +119,51 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        inline void next() 
+    public:
+        using value_type = uint8_t;
+        using iterator_category = std::forward_iterator_tag;
+        using difference_type = std::ptrdiff_t;
+
+        using pointer = value_type*;
+        using reference = value_type&;
+
+        value_type operator*() const 
+        { 
+            return this->centry->data[this->cindex];
+        }
+
+        ByteBufferIterator& operator++()
         {
             this->gindex++;
-
+            
             if(this->cindex + 1 < ByteBufferEntry::BUFFER_ENTRY_SIZE) {
                 this->cindex++;
             }
             else {
                 this->nextslow();
             }
+
+            return *this;
+        }
+ 
+        ByteBufferIterator operator++(int)
+        {
+            auto tmp = *this;
+            ++*this;
+            return tmp;
+        }
+ 
+        friend bool operator==(const ByteBufferIterator& lhs, const ByteBufferIterator& rhs)
+        {
+            return lhs.gindex == rhs.gindex;
+        }
+
+        friend bool operator!=(const ByteBufferIterator& lhs, const ByteBufferIterator& rhs) 
+        {
+            return lhs.gindex != rhs.gindex;
         }
     };
+    static_assert(std::forward_iterator<ByteBufferIterator>);
 
     class XByteBuffer
     {
@@ -169,7 +187,72 @@ namespace ᐸRuntimeᐳ
         XByteBuffer(void* h, size_t b) :  bytesize{b}, inlinebytes{}, heapbytes{h} { ; }
         XByteBuffer(const XByteBuffer& other) = default;
 
-        static XByteBuffer mk(const std::initializer_list<uint8_t>& elems);
+        template<typename Iter>
+        static XByteBuffer mk(Iter begin, Iter end, size_t size)
+        {
+            if(size == 0) {
+                return XByteBuffer{};
+            }
+            else {
+                if(size <= BUFFER_INLINE_SIZE) {
+                    std::array<uint8_t, BUFFER_INLINE_SIZE> inlinebytes{};
+                    std::copy(begin, end, inlinebytes.begin());
+
+                    return XByteBuffer(inlinebytes, size);
+                }
+                else {
+                    if(size <= ByteBufferEntry::BUFFER_ENTRY_SIZE) {
+                        return XByteBuffer(XByteBuffer::s_entryallocator->allocate(begin, end), size);
+                    }
+                    else {
+                        ByteBufferBlock* blockl = nullptr;
+                        size_t bytecount = 0;
+                        std::array<uint8_t, ByteBufferEntry::BUFFER_ENTRY_SIZE> entrybytes{};
+                        size_t blockcount = 0;
+                        std::array<ByteBufferEntry*, ByteBufferBlock::BUFFER_BLOCK_ENTRY_COUNT> entryptrs{};
+
+                        auto iter = begin;
+                        while(iter != end) {
+                            while(bytecount < ByteBufferEntry::BUFFER_ENTRY_SIZE && iter != end) {
+                                entrybytes[bytecount] = *iter;
+
+                                bytecount++;
+                                ++iter;
+                            }
+
+                            ByteBufferEntry* bb = XByteBuffer::s_entryallocator->allocate(entrybytes);
+                            entrybytes.fill(0);
+                            bytecount = 0;
+
+                            entryptrs[blockcount] = bb;
+                            blockcount++;
+                            if(blockcount == ByteBufferBlock::BUFFER_BLOCK_ENTRY_COUNT) {
+                                blockl = XByteBuffer::s_blockallocator->allocate(entryptrs, blockl);
+                                entryptrs.fill(nullptr);
+                                blockcount = 0;
+                            }
+                        }
+                        if(blockcount != 0) {
+                            blockl = XByteBuffer::s_blockallocator->allocate(entryptrs, blockl);
+                        }
+
+                        //reverse for flow
+                        ByteBufferBlock* revl = nullptr;
+                        while(blockl != nullptr) {
+                            revl = XByteBuffer::s_blockallocator->allocate(blockl->entries, revl);
+                            blockl = blockl->next;
+                        }
+
+                        return XByteBuffer(revl, size);
+                    }
+                }
+            }
+        }
+
+        static XByteBuffer mk(const std::initializer_list<uint8_t>& elems)
+        {
+            return XByteBuffer::mk(elems.begin(), elems.end(), elems.size());
+        }
 
         constexpr size_t bytes() const { return this->bytesize; }
 
@@ -177,18 +260,26 @@ namespace ᐸRuntimeᐳ
 
         const uint8_t* inlinedata() const { return this->inlinebytes.data(); }
 
-        ByteBufferIterator iterator() const 
+        ByteBufferIterator begin() const 
         {
             //should special case for small buffers
             assert(this->bytesize > BUFFER_INLINE_SIZE);
 
             if(this->bytesize <= ByteBufferEntry::BUFFER_ENTRY_SIZE) {
-                return ByteBufferIterator(static_cast<ByteBufferEntry*>(this->heapbytes), nullptr, this->bytesize);
+                return ByteBufferIterator{static_cast<ByteBufferEntry*>(this->heapbytes), 0, nullptr, 0, 0, this->bytesize};
             }
             else {
                 ByteBufferBlock* root = static_cast<ByteBufferBlock*>(this->heapbytes);
-                return ByteBufferIterator(root->entries[0], root, this->bytesize);
+                return ByteBufferIterator{root->entries[0], 0, root, 0, 0, this->bytesize};
             }
+        }
+
+        ByteBufferIterator end() const 
+        {
+            //should special case for small buffers
+            assert(this->bytesize > BUFFER_INLINE_SIZE);
+
+            return ByteBufferIterator{nullptr, 0, nullptr, 0, this->bytesize, this->bytesize};
         }
     };
 }

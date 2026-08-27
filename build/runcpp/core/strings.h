@@ -5,6 +5,8 @@
 #include "bsqtype.h"
 #include "postree.h"
 
+#include "bytebuff.h"
+
 namespace ᐸRuntimeᐳ
 {
     class CStrRootInlineContent
@@ -68,6 +70,17 @@ namespace ᐸRuntimeᐳ
 
             this->data[0] = static_cast<char>(len); //store length
             std::copy(cstr, cstr + len, this->data.begin() + 1);
+            std::fill(this->data.begin() + len + 1, this->data.end(), '\0');
+
+        }
+
+        template<typename Iter>
+        CStrRootInlineContent(Iter begin, Iter end, size_t len)
+        {
+            assert(len <= ᐸRuntimeᐳ::CStrRootInlineContent::CSTR_MAX_SIZE);
+
+            this->data[0] = static_cast<char>(len); //store length
+            std::copy(begin, end, this->data.begin() + 1);
             std::fill(this->data.begin() + len + 1, this->data.end(), '\0');
 
         }
@@ -329,6 +342,25 @@ namespace ᐸRuntimeᐳ
             }
         }
 
+        template<typename Iter>
+        static XCString mk(Iter begin, Iter end, size_t len)
+        {
+            if(len == 0) {
+                return XCString{};
+            }
+            else {
+                if(len <= CStrRootInlineContent::CSTR_MAX_SIZE) {
+                    return XCString{CStrRootInlineContent(begin, end, len)};
+                }
+                else if(len <= CStrRootTreeContent::CSTR_MAX_LEAF_SIZE) {
+                    return XCString{CStrRootTreeContent{PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>::mkinitial(begin, end)}};
+                }
+                else {
+                    return XCString{CStrRootTreeContent{PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>::mklargerec(begin, end, len)}};
+                }
+            }
+        }
+
         bool empty() const
         {
             return this->ucstr.empty();
@@ -454,9 +486,9 @@ namespace ᐸRuntimeᐳ
         static XCString chkIntToCString(__int128_t value);
         static XCString floatToCString(double value);
 
-        //static sxxx cstrToByteBuffer(const XCString& cstr);
-        //static XCString fromByteBuffer(const xxx& buffer);
-
+        static XByteBuffer cstrToByteBuffer(const XCString& cstr);
+        static XBool fromByteBuffer(const XByteBuffer& buffer, XCString& result);
+        
         XCString append(XCString other);
     };
 

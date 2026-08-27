@@ -86,6 +86,43 @@ namespace ᐸRuntimeᐳ
         return XCString::mk(numbuf, static_cast<size_t>(written));
     }
 
+    XByteBuffer XCString::cstrToByteBuffer(const XCString& cstr)
+    {
+        return XByteBuffer::mk(cstr.begin(), cstr.end(), cstr.size());
+    }
+
+    XBool XCString::fromByteBuffer(const XByteBuffer& buffer, XCString& result)
+    {
+        if(buffer.bytes() == 0) {
+            result = XCString{};
+            return XTRUE;
+        }
+        else {
+            //TODO: this is not the best in terms of memory/compute but is simple for now
+            
+            if(buffer.isInline()) {
+                bool allok = std::all_of(buffer.inlinedata(), buffer.inlinedata() + buffer.bytes(), [](uint8_t b) { return isLegalCChar(b); });
+                if(!allok) {
+                    return XFALSE;
+                }
+                else {
+                    result = XCString::mk(buffer.inlinedata(), buffer.inlinedata() + buffer.bytes(),  buffer.bytes());
+                    return XTRUE;
+                }
+            }
+            else {
+                bool allok = std::all_of(buffer.begin(), buffer.end(), [](uint8_t b) { return isLegalCChar(b); });
+                if(!allok) {
+                    return XFALSE;
+                }
+                else {
+                    result = XCString::mk(buffer.begin(), buffer.end(),  buffer.bytes());
+                    return XTRUE;
+                }
+            }
+        }
+    }
+
     XCString XCString::append(XCString other)
     {
         assert(!this->ucstr.empty());
