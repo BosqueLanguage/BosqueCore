@@ -1551,6 +1551,18 @@ class CPPEmitter {
         else if(body.builtin === "list_concat") {
             bstr = `${TransformCPPNameManager.convertTypeKey(invk.resultType.tkeystr)}::concat(l)`;
         }
+        else if(body.builtin === "list_concat_cstrs") {
+            bstr = `ᐸRuntimeᐳ::XListOps::concatStrs<CString>(l)`;
+        }
+        else if(body.builtin === "list_join_cstrs") {
+            bstr = `ᐸRuntimeᐳ::XListOps::joinStrs<CString>(sep, l)`;
+        }
+        else if(body.builtin === "list_concat_strs") {
+            bstr = `ᐸRuntimeᐳ::XListOps::concatStrs<String>(l)`;
+        }
+        else if(body.builtin === "list_join_strs") {
+            bstr = `ᐸRuntimeᐳ::XListOps::joinStrs<String>(sep, l)`;
+        }
         else if(body.builtin === "list_allof") {
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "p");
             bstr = `l.allOf<${isSimple}>([&p](${params}){ return ${fn}(p, ${args}); })`;

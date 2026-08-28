@@ -1098,6 +1098,54 @@ namespace ᐸRuntimeᐳ
                 return XList<J, TYPE_ID_LIST_J>{ListTTreeContent<J, XList<J, TYPE_ID_LIST_J>::getPosTreeIDFrom(TYPE_ID_LIST_J)>{PosRBTree<J, ListTTreeContent<J, XList<J, TYPE_ID_LIST_J>::getPosTreeIDFrom(TYPE_ID_LIST_J)>::MAX_LEAF_CAPACITY, XList<J, TYPE_ID_LIST_J>::getPosTreeIDFrom(TYPE_ID_LIST_J)>::mkzip(l1.begin(), l2.begin(), ssize)}};
             }
         }
+
+        template<typename T, typename StrList>
+        static T concatStrs(const StrList& ll)
+        {
+            T curr{};
+
+            for(auto ii = ll.begin(); ii != ll.end(); ++ii) {
+                auto il = *ii;
+                
+                if(!il.empty()) {
+                    if(curr.empty()) {
+                        curr = il;
+                    }
+                    else {
+                        curr = curr.append(il);
+                    }
+                }
+            }
+
+            return curr;
+        }
+
+        template<typename T, typename StrList>
+        static T joinStrs(const T& sep, const StrList& ll)
+        {
+            T curr{};
+
+            bool first = true;
+            for(auto ii = ll.begin(); ii != ll.end(); ++ii) {
+                auto il = *ii;
+                
+                if(!first) {
+                    curr = curr.append(sep);
+                }
+                first = false;
+
+                if(!il.empty()) {
+                    if(curr.empty()) {
+                        curr = il;
+                    }
+                    else {
+                        curr = curr.append(il);
+                    }
+                }
+            }
+
+            return curr;
+        }
     }
 
     inline bool gcIsListTInline(void** ptr) { return *((size_t*)ptr) < std::numeric_limits<uint32_t>::max(); }

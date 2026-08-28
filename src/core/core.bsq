@@ -254,29 +254,29 @@ __internal __typedeclable __keycomparable entity String {
     }
 
     function concat(...strings: List<String>): String {
-        if(ListOps::s_list_empty<String>(lists)) {
+        if(ListOps::s_list_empty<String>(strings)) {
             return "";
         }
         else {
-            return ListOps::s_list_concat_strs(lists);
+            return ListOps::s_list_concat_strs(strings);
         }
     }
 
-    function concatAll(...strings: List<String>): String {
-        if(ListOps::s_list_empty<String>(lists)) {
+    function concatAll(strings: List<String>): String {
+        if(ListOps::s_list_empty<String>(strings)) {
             return "";
         }
         else {
-            return ListOps::s_list_concat_strs(lists);
+            return ListOps::s_list_concat_strs(strings);
         }
     }
 
     function join(separator: String, ...strings: List<String>): String {
-        if(ListOps::s_list_empty<String>(lists)) {
+        if(ListOps::s_list_empty<String>(strings)) {
             return "";
         }
         else {
-            return ListOps::s_list_join_strs(separator, lists);
+            return ListOps::s_list_join_strs(separator, strings);
         }
     }
 
@@ -358,6 +358,42 @@ __internal __typedeclable __keycomparable entity CString {
         }
         else {
             return CStringOps::s_append(other, this);
+        }
+    }
+
+    function concat(...strings: List<CString>): CString {
+        if(ListOps::s_list_empty<CString>(strings)) {
+            return '';
+        }
+        else {
+            return ListOps::s_list_concat_cstrs(strings);
+        }
+    }
+
+    function concatAll(strings: List<CString>): CString {
+        if(ListOps::s_list_empty<CString>(strings)) {
+            return '';
+        }
+        else {
+            return ListOps::s_list_concat_cstrs(strings);
+        }
+    }
+
+    function join(separator: CString, ...strings: List<CString>): CString {
+        if(ListOps::s_list_empty<CString>(strings)) {
+            return '';
+        }
+        else {
+            return ListOps::s_list_join_cstrs(separator, strings);
+        }
+    }
+
+    function joinAll(separator: CString, strings: List<CString>): CString {
+        if(ListOps::s_list_empty<CString>(strings)) {
+            return '';
+        }
+        else {
+            return ListOps::s_list_join_cstrs(separator, strings);
         }
     }
 

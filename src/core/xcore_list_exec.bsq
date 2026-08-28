@@ -37,6 +37,11 @@ namespace ListOps {
     function s_list_append<T>(l1: List<T>, l2: List<T>): List<T> = @list_append;
     function s_list_concat<T>(l: List<List<T>>): List<T> = @list_concat;
 
+    function s_list_concat_cstrs(l: List<CString>): CString = @list_concat_cstrs;
+    function s_list_join_cstrs(sep: CString, l: List<CString>): CString = @list_join_cstrs;
+    function s_list_concat_strs(l: List<String>): String = @list_concat_strs;
+    function s_list_join_strs(sep: String, l: List<String>): String = @list_join_strs;
+
     recursive? function s_list_allof<T>(l: List<T>, p: recursive? pred(T) -> Bool): Bool = @list_allof;
     recursive? function s_list_noneof<T>(l: List<T>, p: recursive? pred(T) -> Bool): Bool = @list_noneof;
     recursive? function s_list_someof<T>(l: List<T>, p: recursive? pred(T) -> Bool): Bool = @list_someof;
