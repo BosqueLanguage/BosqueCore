@@ -140,13 +140,13 @@ namespace ᐸRuntimeᐳ
         PosRBData pushfront(const T& value) const
         {
             assert((size_t)this->dcount < K);
-            return PosRBData(this->color, this->bheight, value, this->data.begin(), this->data.begin() + this->dcount);
+            return PosRBData(this->color, this->bheight, value, this->data.cbegin(), this->data.cbegin() + this->dcount);
         }
 
         PosRBData pushback(const T& value) const
         {
             assert((size_t)this->dcount < K);
-            return PosRBData(this->color, this->bheight, this->data.begin(), this->data.begin() + this->dcount, value);
+            return PosRBData(this->color, this->bheight, this->data.cbegin(), this->data.cbegin() + this->dcount, value);
         }
 
         PosRBData insert(int64_t index, const T& value) const
@@ -155,13 +155,13 @@ namespace ᐸRuntimeᐳ
             assert((size_t)this->dcount < K);
 
             if(index == 0) {
-                return PosRBData(this->color, this->bheight, value, this->data.begin(), this->data.begin() + this->dcount);
+                return PosRBData(this->color, this->bheight, value, this->data.cbegin(), this->data.cbegin() + this->dcount);
             }
             else if(index == this->dcount) {
-                return PosRBData(this->color, this->bheight, this->data.begin(), this->data.begin() + this->dcount, value);
+                return PosRBData(this->color, this->bheight, this->data.cbegin(), this->data.cbegin() + this->dcount, value);
             }
             else {
-                return PosRBData(this->color, this->bheight, this->data.begin(), this->data.begin() + index, value, this->data.begin() + index, this->data.begin() + this->dcount);
+                return PosRBData(this->color, this->bheight, this->data.cbegin(), this->data.cbegin() + index, value, this->data.cbegin() + index, this->data.cbegin() + this->dcount);
             }
         }
 
@@ -176,7 +176,7 @@ namespace ᐸRuntimeᐳ
             }
             else {
                 spill = this->data[0];
-                return PosRBData(this->color, this->bheight, this->data.begin() + 1, this->data.begin() + index, value, this->data.begin() + index, this->data.end());
+                return PosRBData(this->color, this->bheight, this->data.cbegin() + 1, this->data.cbegin() + index, value, this->data.cbegin() + index, this->data.cbegin() + this->dcount);
             }
         }
 
@@ -191,26 +191,26 @@ namespace ᐸRuntimeᐳ
             }
             else {
                 spill = this->data[K - 1];
-                return PosRBData(this->color, this->bheight, this->data.begin(), this->data.begin() + index, value, this->data.begin() + index, this->data.begin() + (K - 1));
+                return PosRBData(this->color, this->bheight, this->data.cbegin(), this->data.cbegin() + index, value, this->data.cbegin() + index, this->data.cbegin() + (K - 1));
             }
         }
 
         PosRBData set(int64_t index, const T& value) const
         {
             assert((0 <= index) & (index < this->dcount));
-            return PosRBData(this->color, this->bheight, this->data.begin(), this->data.begin() + index, value, this->data.begin() + index + 1, this->data.begin() + this->dcount);
+            return PosRBData(this->color, this->bheight, this->data.cbegin(), this->data.cbegin() + index, value, this->data.cbegin() + index + 1, this->data.cbegin() + this->dcount);
         }
 
         PosRBData delfront() const
         {
             assert(this->dcount > 1);
-            return PosRBData(this->color, this->bheight, this->data.begin() + 1, this->data.begin() + this->dcount);
+            return PosRBData(this->color, this->bheight, this->data.cbegin() + 1, this->data.cbegin() + this->dcount);
         }
 
         PosRBData delback() const
         {
             assert(this->dcount > 1);
-            return PosRBData(this->color, this->bheight, this->data.begin(), this->data.begin() + this->dcount - 1);
+            return PosRBData(this->color, this->bheight, this->data.cbegin(), this->data.cbegin() + this->dcount - 1);
         }
 
         PosRBData delindex(int64_t index) const
@@ -219,13 +219,13 @@ namespace ᐸRuntimeᐳ
             assert(this->dcount > 1);
 
             if(index == 0) {
-                return PosRBData(this->color, this->bheight, this->data.begin() + 1, this->data.begin() + this->dcount);
+                return PosRBData(this->color, this->bheight, this->data.cbegin() + 1, this->data.cbegin() + this->dcount);
             }
             else if(index == this->dcount - 1) {
-                return PosRBData(this->color, this->bheight, this->data.begin(), this->data.begin() + this->dcount - 1);
+                return PosRBData(this->color, this->bheight, this->data.cbegin(), this->data.cbegin() + this->dcount - 1);
             }
             else {
-                return PosRBData(this->color, this->bheight, this->data.begin(), this->data.begin() + index, this->data.begin() + index + 1, this->data.begin() + this->dcount);
+                return PosRBData(this->color, this->bheight, this->data.cbegin(), this->data.cbegin() + index, this->data.cbegin() + index + 1, this->data.cbegin() + this->dcount);
             }
         }
 
@@ -250,15 +250,40 @@ namespace ᐸRuntimeᐳ
             return result;
         }
 
+        bool contains(const T& v) const
+        {
+            return std::find_if(std::execution::unseq, this->data.cbegin(), this->data.cbegin() + this->dcount, [&v](const T& x){ return (bool)(x == v); }) != (this->data.cbegin() + this->dcount);
+        }
+
+        template<bool SafeSimplePred, typename Pred>
+        bool find(Pred p, T& res) const
+        {
+            typename std::array<T, K>::const_iterator ii;
+            if constexpr (SafeSimplePred) {
+                ii = std::find_if(std::execution::unseq , this->data.cbegin(), this->data.cbegin() + this->dcount, p);
+            }
+            else {
+                ii = std::find_if(std::execution::seq, this->data.cbegin(), this->data.cbegin() + this->dcount, p);
+            }
+
+            if(ii == (this->data.cbegin() + this->dcount)) {
+                return false;
+            }
+            else {
+                res = *ii;
+                return true;
+            }
+        }
+
         template<bool SafeSimplePred, typename Pred>
         bool allOf(Pred p) const
         {
             if constexpr (SafeSimplePred) {
-                return std::all_of(std::execution::unseq, this->data.begin(), this->data.begin() + this->dcount, p);
+                return std::all_of(std::execution::unseq, this->data.cbegin(), this->data.cbegin() + this->dcount, p);
             }
             else {
-                auto ii = std::find_if_not(this->data.begin(), this->data.begin() + this->dcount, p);
-                return ii == (this->data.begin() + this->dcount);
+                auto ii = std::find_if_not(this->data.cbegin(), this->data.cbegin() + this->dcount, p);
+                return ii == (this->data.cbegin() + this->dcount);
             }
         }
 
@@ -266,11 +291,11 @@ namespace ᐸRuntimeᐳ
         bool someOf(Pred p) const
         {
             if constexpr (SafeSimplePred) {
-                return std::any_of(std::execution::unseq, this->data.begin(), this->data.begin() + this->dcount, p);
+                return std::any_of(std::execution::unseq, this->data.cbegin(), this->data.cbegin() + this->dcount, p);
             }
             else {
-                auto ii = std::find_if(this->data.begin(), this->data.begin() + this->dcount, p);
-                return ii != (this->data.begin() + this->dcount);
+                auto ii = std::find_if(this->data.cbegin(), this->data.cbegin() + this->dcount, p);
+                return ii != (this->data.cbegin() + this->dcount);
             }
         }
 
@@ -278,11 +303,11 @@ namespace ᐸRuntimeᐳ
         bool noneOf(Pred p) const
         {
             if constexpr (SafeSimplePred) {
-                return std::none_of(std::execution::unseq, this->data.begin(), this->data.begin() + this->dcount, p);
+                return std::none_of(std::execution::unseq, this->data.cbegin(), this->data.cbegin() + this->dcount, p);
             }
             else {
-                auto ii = std::find_if(this->data.begin(), this->data.begin() + this->dcount, p);
-                return ii == (this->data.begin() + this->dcount);
+                auto ii = std::find_if(this->data.cbegin(), this->data.cbegin() + this->dcount, p);
+                return ii == (this->data.cbegin() + this->dcount);
             }
         }
 
@@ -290,7 +315,7 @@ namespace ᐸRuntimeᐳ
         PosRBData<U, K> map(Fn f) const
         {
             std::array<U, K> result{};
-            std::transform(this->data.begin(), this->data.begin() + this->dcount, result.begin(), f);
+            std::transform(this->data.cbegin(), this->data.cbegin() + this->dcount, result.begin(), f);
             
             return PosRBData<U, K>(this->color, this->bheight, this->dcount, result);
         }
@@ -301,7 +326,7 @@ namespace ᐸRuntimeᐳ
             std::array<XNat, K> zipidx = create_idx_range_from<K>(sidx);
 
             std::array<U, K> result{};
-            std::transform(this->data.begin(), this->data.begin() + this->dcount, zipidx.begin(), result.begin(), f);
+            std::transform(this->data.cbegin(), this->data.cbegin() + this->dcount, zipidx.begin(), result.begin(), f);
             
             return PosRBData<U, K>(this->color, this->bheight, this->dcount, result);
         }
@@ -310,7 +335,7 @@ namespace ᐸRuntimeᐳ
         PosRBData<T, K> filter(Pred p) const
         {
             std::array<T, K> result{};
-            auto eiter = std::copy_if(this->data.begin(), this->data.begin() + this->dcount, result.begin(), p);
+            auto eiter = std::copy_if(this->data.cbegin(), this->data.cbegin() + this->dcount, result.begin(), p);
             
             return PosRBData<T, K>(this->color, this->bheight, std::distance(result.begin(), eiter), result);
         }
@@ -319,7 +344,7 @@ namespace ᐸRuntimeᐳ
         PosRBData<U, K> filtermap(Pred p, Fn f) const
         {
             std::array<T, K> fresult{};
-            auto feiter = std::copy_if(this->data.begin(), this->data.begin() + this->dcount, fresult.begin(), p);
+            auto feiter = std::copy_if(this->data.cbegin(), this->data.cbegin() + this->dcount, fresult.begin(), p);
 
             std::array<U, K> mresult{};
             auto meiter = std::transform(fresult.begin(), feiter, mresult.begin(), f);
@@ -331,10 +356,10 @@ namespace ᐸRuntimeᐳ
         T minfun(Cmp cmp) const
         {
             if constexpr (SafeSimpleFn) {
-                return *std::min_element(std::execution::unseq, this->data.begin(), this->data.begin() + this->dcount, cmp);
+                return *std::min_element(std::execution::unseq, this->data.cbegin(), this->data.cbegin() + this->dcount, cmp);
             }
             else {
-                return *std::min_element(std::execution::seq, this->data.begin(), this->data.begin() + this->dcount, cmp);
+                return *std::min_element(std::execution::seq, this->data.cbegin(), this->data.cbegin() + this->dcount, cmp);
             }
         }
 
@@ -342,16 +367,16 @@ namespace ᐸRuntimeᐳ
         T maxfun(Cmp cmp) const
         {
             if constexpr (SafeSimpleFn) {
-                return *std::max_element(std::execution::unseq, this->data.begin(), this->data.begin() + this->dcount, cmp);
+                return *std::max_element(std::execution::unseq, this->data.cbegin(), this->data.cbegin() + this->dcount, cmp);
             }
             else {
-                return *std::max_element(std::execution::seq, this->data.begin(), this->data.begin() + this->dcount, cmp);
+                return *std::max_element(std::execution::seq, this->data.cbegin(), this->data.cbegin() + this->dcount, cmp);
             }
         }
 
         T sum(T init) const
         {
-            return std::accumulate(this->data.begin(), this->data.begin() + this->dcount, init, [](T a, T b) {
+            return std::accumulate(this->data.cbegin(), this->data.cbegin() + this->dcount, init, [](T a, T b) {
                 T::checkOverflowAddition(a, b, "List Sum", 0);
                 return a + b;
             });
@@ -375,7 +400,7 @@ namespace ᐸRuntimeᐳ
         template<bool SafeSimpleFn, typename Fn>
         T reduce(const T& init, Fn op) const
         {
-            return std::accumulate(this->data.begin(), this->data.begin() + this->dcount, init, [&op](const T& a, const T& b) {
+            return std::accumulate(this->data.cbegin(), this->data.cbegin() + this->dcount, init, [&op](const T& a, const T& b) {
                 return op(a, b);
             });
         }
@@ -1650,6 +1675,65 @@ private:
             return nnode;
         }
 
+        static bool reccontains(const PosRBNode<T, K>* curr, const T& v)
+        {
+            if(curr == nullptr) {
+                return false;
+            }
+
+            if(isLeafType(curr)) {
+                return curr->data.contains(v);
+            }
+            else {
+                bool containsleft = reccontains(reprGetLeft(curr), v);
+                if(containsleft) {
+                    return true;
+                }
+
+                bool containsmid = curr->data.contains(v);
+                if(containsmid) {
+                    return true;
+                }
+
+                bool containsright = reccontains(reprGetRight(curr), v);
+                if(containsright) {
+                    return true;
+                }
+
+                return false;
+            }
+        }
+
+        template<bool SafeSimplePred, typename Pred>
+        static bool recfind(const PosRBNode<T, K>* curr, Pred p, T& res)
+        {
+            if(curr == nullptr) {
+                return false;
+            }
+
+            if(isLeafType(curr)) {
+                return curr->data.template find<SafeSimplePred, Pred>(p, res);
+            }
+            else {
+                bool foundleft = recfind<SafeSimplePred, Pred>(reprGetLeft(curr), p, res);
+                if(foundleft) {
+                    return true;
+                }
+
+                bool foundmid = curr->data.template find<SafeSimplePred, Pred>(p, res);
+                if(foundmid) {
+                    return true;
+                }
+
+                bool foundright = recfind<SafeSimplePred, Pred>(reprGetRight(curr), p, res);
+                if(foundright) {
+                    return true;
+                }
+
+                return false;
+            }
+        }
+
         template<bool SafeSimplePred, typename Pred>
         static bool recallOf(const PosRBNode<T, K>* curr, Pred p)
         {
@@ -2075,7 +2159,7 @@ private:
             PosRBNode<T, K>* nroot = nullptr;
             if(lleaf && rleaf) {
                 if((size_t)(l.root->data.dcount + r.root->data.dcount) <= K) {
-                    nroot = PosRBTree<T, K, TreeID>::mkinitial_append(l.root->data.data.begin(), l.root->data.data.begin() + l.root->data.dcount, r.root->data.data.begin(), r.root->data.data.begin() + r.root->data.dcount);
+                    nroot = PosRBTree<T, K, TreeID>::mkinitial_append(l.root->data.data.cbegin(), l.root->data.data.cbegin() + l.root->data.dcount, r.root->data.data.cbegin(), r.root->data.data.cbegin() + r.root->data.dcount);
                 }
                 else {
                     if(l.root->data.dcount < r.root->data.dcount) {
@@ -2124,6 +2208,17 @@ private:
 
             BSQ_IF_ENABLED(RB_INVARIANT_VALIDATE, debugAssertInvariants(nroot, reprGetCount(l.root) + reprGetCount(r.root)));
             return PosRBTree<T, K, TreeID>{nroot};
+        }
+
+        XBool contains(const T& v) const
+        {
+            return XBool::from(reccontains(this->root, v));
+        }
+
+        template<bool SafeSimplePred, typename Pred>
+        XBool find(const Pred& p, T& res) const
+        {
+            return XBool::from(recfind<SafeSimplePred, Pred>(this->root, p, res));
         }
 
         template<bool SafeSimplePred, typename Pred>

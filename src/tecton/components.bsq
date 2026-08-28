@@ -46,47 +46,49 @@ entity PrimitiveComponent {
     field constraints: List<ComponentConstraint>;
 }
 
-function generateComponentsForPrimitive(pdecl: Assembly::PrimitiveEntityTypeDecl, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): List<PrimitiveComponent> {
-    return List<PrimitiveComponent>{ PrimitiveComponent{ pdecl.tkey, path, steps, constraints } };
-}
-
-function generateComponentsForEnum(edecl: Assembly::EnumTypeDecl, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): List<PrimitiveComponent> {
-    return List<PrimitiveComponent>{ PrimitiveComponent{ edecl.tkey, path, steps, constraints } };
-}
-
-recursive function generateComponentsForTypeDecl(tdecl: Assembly::TypedeclTypeDecl, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): List<PrimitiveComponent> {
-    let epath = path.extendWithValue();
-    let esteps = steps.pushBack('value');
-    
-    return generateComponentsForType[recursive](tdecl.valuetype.tkeystr, epath, esteps, constraints, assembly);
-}
-
-recursive function generateComponentsForNominalTypeSignature(tsig: Assembly::NominalTypeSignature, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): List<PrimitiveComponent> {
-    let tdecl = assembly.alltypes.get(tsig.tkeystr);
-
-    match(tdecl) {
-        Assembly::PrimitiveEntityTypeDecl => { return generateComponentsForPrimitive($tdecl, path, steps, constraints, assembly); }
-        Assembly::EnumTypeDecl => { return generateComponentsForEnum($tdecl, path, steps, constraints, assembly); }
-        Assembly::TypedeclTypeDecl => { return generateComponentsForTypeDecl[recursive]($tdecl, path, steps, constraints, assembly); }
+namespace ComponentGenerator {
+    function generateComponentsForPrimitive(pdecl: Assembly::PrimitiveEntityTypeDecl, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): List<PrimitiveComponent> {
+        return List<PrimitiveComponent>{ PrimitiveComponent{ pdecl.tkey, path, steps, constraints } };
     }
-}
 
-recursive function generateComponentsForEListTypeSignature(tsig: Assembly::EListTypeSignature, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): List<PrimitiveComponent> {
-    return tsig.entries.flatmapIdx[recursive]<PrimitiveComponent>(recursive fn(entry, idx) => {
-        let epath = path.extendWithIndex(Nat::toCString(idx));
-        let esteps = steps.pushBack(Nat::toCString(idx));
+    function generateComponentsForEnum(edecl: Assembly::EnumTypeDecl, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): List<PrimitiveComponent> {
+        return List<PrimitiveComponent>{ PrimitiveComponent{ edecl.tkey, path, steps, constraints } };
+    }
 
-        return generateComponentsForType[recursive](entry.tkeystr, epath, esteps, constraints, assembly);
-    });
-}
+    recursive function generateComponentsForTypeDecl(tdecl: Assembly::TypedeclTypeDecl, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): List<PrimitiveComponent> {
+        let epath = path.extendWithValue();
+        let esteps = steps.pushBack('value');
+    
+        return generateComponentsForTypeSignature[recursive](tdecl.valuetype.tkeystr, epath, esteps, constraints, assembly);
+    }
 
-recursive function generateComponentsForType(gentype: Assembly::TypeKey, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): List<PrimitiveComponent> {
-    let tsig = assembly.alltypesigs.get(gentype);
+    recursive function generateComponentsForNominalTypeSignature(tsig: Assembly::NominalTypeSignature, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): List<PrimitiveComponent> {
+        let tdecl = assembly.alltypes.get(tsig.tkeystr);
 
-    match(tsig) {
-        Assembly::VoidTypeSignature => { abort; } %%Should be handled prior to this point
-        Assembly::NominalTypeSignature => { return generateComponentsForNominalTypeSignature[recursive]($tsig, path, steps, constraints, assembly); }
-        Assembly::EListTypeSignature => { return generateComponentsForEListTypeSignature[recursive]($tsig, path, steps, constraints, assembly); }
-        %%Need to implement other cases here
+        match(tdecl) {
+            Assembly::PrimitiveEntityTypeDecl => { return generateComponentsForPrimitive($tdecl, path, steps, constraints, assembly); }
+            Assembly::EnumTypeDecl => { return generateComponentsForEnum($tdecl, path, steps, constraints, assembly); }
+            Assembly::TypedeclTypeDecl => { return generateComponentsForTypeDecl[recursive]($tdecl, path, steps, constraints, assembly); }
+        }
+    }
+
+    recursive function generateComponentsForEListTypeSignature(tsig: Assembly::EListTypeSignature, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): List<PrimitiveComponent> {
+        return tsig.entries.flatmapIdx[recursive]<PrimitiveComponent>(recursive fn(entry, idx) => {
+            let epath = path.extendWithIndex(Nat::toCString(idx));
+            let esteps = steps.pushBack(Nat::toCString(idx));
+
+            return generateComponentsForTypeSignature[recursive](entry.tkeystr, epath, esteps, constraints, assembly);
+        });
+    }
+
+    recursive function generateComponentsForTypeSignature(gentype: Assembly::TypeKey, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): List<PrimitiveComponent> {
+        let tsig = assembly.alltypesigs.get(gentype);
+
+        match(tsig) {
+            Assembly::VoidTypeSignature => { abort; } %%Should be handled prior to this point
+            Assembly::NominalTypeSignature => { return generateComponentsForNominalTypeSignature[recursive]($tsig, path, steps, constraints, assembly); }
+            Assembly::EListTypeSignature => { return generateComponentsForEListTypeSignature[recursive]($tsig, path, steps, constraints, assembly); }
+            %%Need to implement other cases here
+        }
     }
 }

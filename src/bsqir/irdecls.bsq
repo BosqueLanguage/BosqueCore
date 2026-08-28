@@ -34,16 +34,18 @@ entity CRegex
 {
     field regexID: Nat;
 
-    field bsqregex: List<CChar>;
-    field smtregex: List<CChar>;
-    field cppregex: List<CChar>;
+    %%All regex representations are stored as utf8 ByteBuffers
+    field bsqregex: ByteBuffer;
+    field smtregex: ByteBuffer;
+    field cppregex: ByteBuffer;
 }
 
-entity IRURegex
+entity URegex
 {
     field regexID: Nat;
 
-    field bsqregex: List<UnicodeChar>;
-    field smtregex: List<UnicodeChar>;
-    field cppregex: List<UnicodeChar>;
+    %%All regex representations are stored as utf8 ByteBuffers
+    field bsqregex: ByteBuffer;
+    field smtregex: ByteBuffer;
+    field cppregex: ByteBuffer;
 }

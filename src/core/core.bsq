@@ -253,6 +253,60 @@ __internal __typedeclable __keycomparable entity String {
         }
     }
 
+    function concat(...strings: List<String>): String {
+        if(ListOps::s_list_empty<String>(strings)) {
+            return "";
+        }
+        else {
+            return ListOps::s_list_concat_strs(strings);
+        }
+    }
+
+    function concatAll(strings: List<String>): String {
+        if(ListOps::s_list_empty<String>(strings)) {
+            return "";
+        }
+        else {
+            return ListOps::s_list_concat_strs(strings);
+        }
+    }
+
+    function join(separator: String, ...strings: List<String>): String 
+        requires !separator.empty();
+    {
+        if(ListOps::s_list_empty<String>(strings)) {
+            return "";
+        }
+        else {
+            return ListOps::s_list_join_strs(separator, strings);
+        }
+    }
+
+    function joinAll(separator: String, strings: List<String>): String 
+        requires !separator.empty();
+    {
+        if(ListOps::s_list_empty<String>(strings)) {
+            return "";
+        }
+        else {
+            return ListOps::s_list_join_strs(separator, strings);
+        }
+    }
+
+    function toCString(s: String): Option<CString> {
+        var result: CString;
+        if(StringOps::s_toCString(s, out? result)) {
+            return some(result);
+        }
+        else {
+            return none;
+        }
+    }
+
+    function fromCString(s: CString): String {
+        return StringOps::s_fromCString(s);
+    }
+
     %** Convert a String to a ByteBuffer in utf-8 encoding **%
     function toByteBuffer(s: String): ByteBuffer {
         return StringOps::s_toByteBuffer(s);
@@ -308,6 +362,46 @@ __internal __typedeclable __keycomparable entity CString {
         }
         else {
             return CStringOps::s_append(other, this);
+        }
+    }
+
+    function concat(...strings: List<CString>): CString {
+        if(ListOps::s_list_empty<CString>(strings)) {
+            return '';
+        }
+        else {
+            return ListOps::s_list_concat_cstrs(strings);
+        }
+    }
+
+    function concatAll(strings: List<CString>): CString {
+        if(ListOps::s_list_empty<CString>(strings)) {
+            return '';
+        }
+        else {
+            return ListOps::s_list_concat_cstrs(strings);
+        }
+    }
+
+    function join(separator: CString, ...strings: List<CString>): CString 
+        requires !separator.empty();
+    {
+        if(ListOps::s_list_empty<CString>(strings)) {
+            return '';
+        }
+        else {
+            return ListOps::s_list_join_cstrs(separator, strings);
+        }
+    }
+
+    function joinAll(separator: CString, strings: List<CString>): CString 
+        requires !separator.empty();
+    {
+        if(ListOps::s_list_empty<CString>(strings)) {
+            return '';
+        }
+        else {
+            return ListOps::s_list_join_cstrs(separator, strings);
         }
     }
 

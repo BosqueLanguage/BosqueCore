@@ -31,6 +31,6 @@ of
     LiteralCCharExpression { field value: CChar; }
     LiteralUnicodeCharExpression { field value: UnicodeChar; }
 %%And here
-    LiteralCStringExpression { field value: List<CChar>; }
-    LiteralStringExpression { field value: List<UnicodeChar>; }
+    LiteralCStringExpression { field chars: ByteBuffer; }
+    LiteralStringExpression { field utf8chars: ByteBuffer; }
 ;

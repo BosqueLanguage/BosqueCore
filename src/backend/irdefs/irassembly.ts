@@ -1,4 +1,4 @@
-import { IRCRegex, IRURegex, IRSourceInfo, emitTypeKey, parseTypeKey } from "./irsupport.js";
+import { IRCRegex, IRURegex, IRSourceInfo, emitTypeKey, parseTypeKey, emitStringAsByteBufferLiteral, parseStringAsByteBufferLiteral } from "./irsupport.js";
 import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature } from "./irtype.js";
 import { IRBody, IRImmediateExpression, IRLiteralCRegexExpression, IRLiteralFormatCStringExpression, IRLiteralFormatStringExpression, IRLiteralUnicodeRegexExpression, IRSimpleExpression, IRStatement } from "./irbody.js";
 
@@ -352,7 +352,7 @@ abstract class IRAbstractNominalTypeDecl {
     
             //TODO vtable info here
 
-            //readonly docstr: IRDeclarationDocString | undefined;
+            this.docstr !== undefined ? `some(${emitStringAsByteBufferLiteral(this.docstr.text)})` : "none",
             //readonly metatags: IRDeclarationMetaTag[];
 
             `'${this.file}'`,
@@ -364,10 +364,24 @@ abstract class IRAbstractNominalTypeDecl {
         const tkey = lexer.parseTypeIdentifier();
         lexer.ensureAndConsumeSymbol(',');
 
+        let docstr: IRDeclarationDocString | undefined = undefined;
+        if (lexer.peekTokenKind() === BAPITokenKind.NoneLiteral) {
+            lexer.consumeToken();
+        }
+        else {
+            lexer.consumeToken();
+            lexer.ensureAndConsumeSymbol('(');
+            const bbytes = parseStringAsByteBufferLiteral(lexer);
+            lexer.ensureAndConsumeSymbol(')');
+
+            docstr = new IRDeclarationDocString(bbytes);
+        }
+        lexer.ensureAndConsumeSymbol(',');
+
         const file = lexer.ensureAndConsumeToken(BAPITokenKind.CStringLiteral).slice(1, -1);
         lexer.ensureAndConsumeSymbol(',');
         const sinfo = IRSourceInfo.parseBAPI(lexer);
-        return { tkey, invariants: [], validates: [], fields: [], etag: "std", saturatedProvides: [], saturatedBFieldInfo: [], allInvariants: [], allValidates: [], docstr: undefined, metatags: [], file, sinfo };
+        return { tkey, invariants: [], validates: [], fields: [], etag: "std", saturatedProvides: [], saturatedBFieldInfo: [], allInvariants: [], allValidates: [], docstr, metatags: [], file, sinfo };
     }
 }
 
@@ -515,7 +529,7 @@ class IRTypedeclCStringDecl extends IRTypedeclTypeDecl {
 
     override toBAPI(): string {
         const rngchkstr = this.rngchk !== undefined ? this.toBAPI_RNGCheck() : 'none';
-        const rechkstr = this.rechk !== undefined ? `some(${this.rechk.toBAPI()})` : 'none';
+        const rechkstr = this.rechk !== undefined ? `some(${this.rechk.regexID}n)` : 'none';
 
         return `Assembly::TypedeclCStringTypeDecl{${this.toBAPI_IRAbstractEntityTypeDecl()}, ${this.iskeytype}, ${this.isnumerictype}, ${rngchkstr}, ${rechkstr}}`;
     }
@@ -546,7 +560,8 @@ class IRTypedeclCStringDecl extends IRTypedeclTypeDecl {
         const rechktok = lexer.consumeToken();
         if(rechktok.kind !== BAPITokenKind.NoneLiteral) {
             lexer.ensureAndConsumeSymbol("(");
-            rechk = IRLiteralCRegexExpression.parseBAPIAsIRLiteralCRegexExpression(lexer);
+            const id = lexer.ensureAndConsumeToken(BAPITokenKind.NatLiteral);
+            rechk = new IRLiteralCRegexExpression(Number(id.slice(0, -1)));
             lexer.ensureAndConsumeSymbol(")");
         }
 
@@ -565,7 +580,7 @@ class IRTypedeclStringDecl extends IRTypedeclTypeDecl {
 
     override toBAPI(): string {
         const rngchkstr = this.rngchk !== undefined ? this.toBAPI_RNGCheck() : 'none';
-        const rechkstr = this.rechk !== undefined ? `some(${this.rechk.toBAPI()})` : 'none';
+        const rechkstr = this.rechk !== undefined ? `some(${this.rechk.regexID}n)` : 'none';
         
         return `Assembly::TypedeclStringTypeDecl{${this.toBAPI_IRAbstractEntityTypeDecl()}, ${this.iskeytype}, ${this.isnumerictype}, ${rngchkstr}, ${rechkstr}}`;
     }
@@ -596,7 +611,8 @@ class IRTypedeclStringDecl extends IRTypedeclTypeDecl {
         const rechktok = lexer.consumeToken();
         if(rechktok.kind !== BAPITokenKind.NoneLiteral) {
             lexer.ensureAndConsumeSymbol("(");
-            rechk = IRLiteralUnicodeRegexExpression.parseBAPIAsIRLiteralUnicodeRegexExpression(lexer);
+            const id = lexer.ensureAndConsumeToken(BAPITokenKind.NatLiteral);
+            rechk = new IRLiteralUnicodeRegexExpression(Number(id.slice(0, -1)));
             lexer.ensureAndConsumeSymbol(")");
         }
 
@@ -1642,8 +1658,8 @@ class IRAssembly {
 
     toBAPI(): string {
         const stuff = [
-            //this.cregexps.map((cr) => cr.toBAPI()),
-            //this.uregexps.map((ur) => ur.toBAPI()),
+            ('List<Assembly::CRegex>{\n        ' + this.cregexps.map((cr) => cr.emitBAPI()).join(",\n        ") + '\n    }'),
+            ('List<Assembly::URegex>{\n        ' + this.uregexps.map((ur) => ur.emitBAPI()).join(",\n        ") + '\n    }'),
             
             //this.constants.map((c) => c.toBAPI()).join(","),
             
@@ -1708,23 +1724,37 @@ class IRAssembly {
         lexer.consumeToken(); //Assembly::BapiAssembly
         lexer.ensureAndConsumeSymbol("{");
 
+        lexer.ensureAndConsumeSymbol("List<Assembly::CRegex>");
+        irasm.cregexps.push(...parseListOf<IRCRegex>(lexer, '{', '}', ',', IRCRegex.parseBAPI));
+        lexer.ensureAndConsumeSymbol(",");
+
+        lexer.ensureAndConsumeSymbol("List<Assembly::URegex>");
+        irasm.uregexps.push(...parseListOf<IRURegex>(lexer, '{', '}', ',', IRURegex.parseBAPI));
+        lexer.ensureAndConsumeSymbol(",");
+
         lexer.ensureAndConsumeSymbol("List<Assembly::PrimitiveEntityTypeDecl>");
         irasm.primitives.push(...parseListOf<IRPrimitiveEntityTypeDecl>(lexer, '{', '}', ',', IRPrimitiveEntityTypeDecl.parseBAPIAsIRPrimitiveEntityTypeDecl));
+        lexer.ensureAndConsumeSymbol(",");
 
         lexer.ensureAndConsumeSymbol("List<Assembly::EnumTypeDecl>");
         irasm.enums.push(...parseListOf<IREnumTypeDecl>(lexer, '{', '}', ',', IREnumTypeDecl.parseBAPIAsIREnumTypeDecl));
+        lexer.ensureAndConsumeSymbol(",");
 
         lexer.ensureAndConsumeSymbol("List<Assembly::TypedeclSimpleTypeDecl>");
         irasm.typedecls.push(...parseListOf<IRTypedeclTypeDecl>(lexer, '{', '}', ',', IRTypedeclTypeDecl.parseBAPIAsIRTypedeclTypeDecl));
+        lexer.ensureAndConsumeSymbol(",");
 
         lexer.ensureAndConsumeSymbol("List<Assembly::TypedeclBoundedTypeDecl>");
         irasm.typedecls.push(...parseListOf<IRTypedeclTypeDecl>(lexer, '{', '}', ',', IRTypedeclTypeDecl.parseBAPIAsIRTypedeclTypeDecl));
+        lexer.ensureAndConsumeSymbol(",");
 
         lexer.ensureAndConsumeSymbol("List<Assembly::TypedeclCStringTypeDecl>");
         irasm.cstringoftypedecls.push(...parseListOf<IRTypedeclCStringDecl>(lexer, '{', '}', ',', IRTypedeclCStringDecl.parseBAPIAsIRTypedeclCStringDecl));
+        lexer.ensureAndConsumeSymbol(",");
 
         lexer.ensureAndConsumeSymbol("List<Assembly::TypedeclStringTypeDecl>");
         irasm.stringoftypedecls.push(...parseListOf<IRTypedeclStringDecl>(lexer, '{', '}', ',', IRTypedeclStringDecl.parseBAPIAsIRTypedeclStringDecl));
+        lexer.ensureAndConsumeSymbol(",");
 
         lexer.ensureAndConsumeSymbol("Map<Assembly::TypeKey, Assembly::TypeSignature>");
         parseListOf<[string, IRTypeSignature]>(lexer, '{', '}', ',', (lexer) => {
@@ -1733,6 +1763,7 @@ class IRAssembly {
             const value = IRTypeSignature.parseBAPI(lexer);
             return [key, value];
         });
+        lexer.ensureAndConsumeSymbol(",");
 
         lexer.ensureAndConsumeSymbol("Map<Assembly::TypeKey, Assembly::AbstractNominalTypeDecl>");
         const entrylist = parseListOf<[string, IRAbstractNominalTypeDecl]>(lexer, '{', '}', ',', (lexer) => {
@@ -1742,9 +1773,11 @@ class IRAssembly {
             return [key, value];
         });
         entrylist.forEach(([k, v]) => irasm.alltypes.set(k, v));
+        lexer.ensureAndConsumeSymbol(",");
 
         lexer.ensureAndConsumeSymbol("List<Assembly::EListTypeSignature>");
         irasm.elists.push(...parseListOf<IREListTypeSignature>(lexer, '{', '}', ',', IREListTypeSignature.parseBAPIAsIREListTypeSignature));
+        // -- lexer.ensureAndConsumeSymbol(","); later
 
         lexer.ensureAndConsumeSymbol("}");
 

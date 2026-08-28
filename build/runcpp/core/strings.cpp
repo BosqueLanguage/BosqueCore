@@ -257,6 +257,45 @@ namespace ᐸRuntimeᐳ
         return XString::mk(numbuf32, static_cast<size_t>(written));
     }
 
+    XString XString::fromCString(const XCString& cstr)
+    {
+        if(cstr.empty()) {
+            return XString{};
+        }
+        else {
+            //TODO: this is not the best in terms of memory/compute but is simple for now
+            std::vector<char32_t> buffer{};
+            buffer.reserve(cstr.size());
+            std::transform(cstr.begin(), cstr.end(), std::back_inserter(buffer), [](char c) { return static_cast<char32_t>(c); });
+
+            return XString::mk(buffer.begin(), buffer.end(), buffer.size());
+        }
+    }
+
+    XBool XString::toCString(const XString& str, XCString& cstr)
+    {
+        if(str.empty()) {
+            cstr = XCString{};
+            return XTRUE;
+        }
+        else {
+            //TODO: this is not the best in terms of memory/compute but is simple for now
+            bool allok = std::all_of(str.begin(), str.end(), [](char32_t c) { return c <= 0x7F && isLegalCChar(static_cast<uint8_t>(c)); });
+            
+            if(!allok) {
+                return XFALSE;
+            }
+            else {
+                std::vector<char> cbb{};
+                cbb.reserve(str.size());
+                std::transform(str.begin(), str.end(), std::back_inserter(cbb), [](char32_t c) { return static_cast<char>(c); });
+                    
+                cstr = XCString::mk(cbb.begin(), cbb.end(),  cbb.size());
+                return XTRUE;
+            }
+        }
+    }
+
     XByteBuffer XString::toByteBuffer(const XString& str)
     {
         if(str.empty()) {

@@ -30,7 +30,7 @@ concept AbstractNominalTypeDecl {
     
     %%TODO vtable info here
 
-    %%field docstr: IRDeclarationDocString | undefined;
+    field docstr: Option<ByteBuffer>;
     %%field metatags: IRDeclarationMetaTag[];
 
     field file: CString;
@@ -60,8 +60,8 @@ datatype TypedeclTypeDecl provides AbstractEntityTypeDecl using {
 of
     TypedeclSimpleTypeDecl { }
     TypedeclBoundedTypeDecl { field rngchk: TypedeclRangeCheck; }
-    TypedeclCStringTypeDecl { field rechk: Option<CString> = none; field rngchk: Option<TypedeclRangeCheck> = none; }
-    TypedeclStringTypeDecl { field rechk: Option<String> = none; field rngchk: Option<TypedeclRangeCheck> = none; }
+    TypedeclCStringTypeDecl { field rechk: Option<Nat> = none; field rngchk: Option<TypedeclRangeCheck> = none; }
+    TypedeclStringTypeDecl { field rechk: Option<Nat> = none; field rngchk: Option<TypedeclRangeCheck> = none; }
 ;
 
 %** This is the abstract type for internal entity type declarations **%
@@ -73,6 +73,9 @@ entity PrimitiveEntityTypeDecl provides InternalEntityTypeDecl {
 }
 
 entity BapiAssembly {
+    field cregexps: List<CRegex>;
+    field uregexps: List<URegex>;
+    
     %%readonly constants: IRConstantDecl[] = [];
 
     %%readonly tests: IRTestDecl[] = [];

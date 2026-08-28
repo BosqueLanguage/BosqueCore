@@ -1054,6 +1054,9 @@ namespace ᐸRuntimeᐳ
         static XString chkIntToString(__int128_t value);
         static XString floatToString(double value);
 
+        static XString fromCString(const XCString& cstr);
+        static XBool toCString(const XString& str, XCString& cstr);
+
         static XByteBuffer toByteBuffer(const XString& str);
         static XBool fromByteBuffer(const XByteBuffer& buffer, XString& result);
 

@@ -191,6 +191,93 @@ __internal entity List<T> {
         }
     }
 
+    method {when T: keytype} contains(v: T): Bool {
+        if(ListOps::s_list_empty<T>(this)) {
+            return false;
+        }
+        else {
+            return ListOps::s_list_contains<T>(this, v);
+        }
+    }
+
+    recursive? method find(p: recursive? pred(T) -> Bool): T 
+        requires !this.empty();
+        requires spec this.someOf[recursive?](p);
+    {
+        var res: T;
+        if(ListOps::s_list_find_cond<T>(this, p, out? res)) {
+            return res;
+        }
+        else {
+            abort;
+        }
+    }
+
+    recursive? method findTry(p: recursive? pred(T) -> Bool): Option<T> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return none;
+        }
+        else {
+            var res: T;
+            if(ListOps::s_list_find_cond<T>(this, p, out? res)) {
+                return some(res);
+            }
+            else {
+                return none;
+            }
+        }
+    }
+
+    recursive? method findCond(out? res: T, p: recursive? pred(T) -> Bool): Bool {
+        if(ListOps::s_list_empty<T>(this)) {
+            return false;
+        }
+        else {
+            return ListOps::s_list_find_cond<T>(this, p, out? res);
+        }
+    }
+
+    %%TODO: need findIdx, findIdxTry, ... methods
+
+    recursive? method findIndex(p: recursive? pred(T) -> Bool): Nat
+        requires !this.empty();
+        requires spec this.someOf[recursive?](p);
+    {
+        var res: Nat;
+        if(ListOps::s_list_find_index_cond<T>(this, p, out? res)) {
+            return res;
+        }
+        else {
+            abort;
+        }
+    }
+
+    recursive? method findIndexTry(p: recursive? pred(T) -> Bool): Option<Nat> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return none;
+        }
+        else {
+            var res: Nat;
+            if(ListOps::s_list_find_index_cond<T>(this, p, out? res)) {
+                return some(res);
+            }
+            else {
+                return none;
+            }
+        }
+    }
+
+    recursive? method findIndexCond(out? res: Nat, p: recursive? pred(T) -> Bool): Bool {
+        if(ListOps::s_list_empty<T>(this)) {
+            return false;
+        }
+        else {
+            return ListOps::s_list_find_index_cond<T>(this, p, out? res);
+        }
+    }
+
+     %%TODO: need findIndexIdx, findIndexIdxTry, ... methods -- naming is a bit clunky but we will go with it for consistency
+
     recursive? method allOf(p: recursive? pred(T) -> Bool): Bool {
         if(ListOps::s_list_empty<T>(this)) {
             return true;

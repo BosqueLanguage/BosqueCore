@@ -1,10 +1,10 @@
 declare namespace Tecton { 
     using Assembly;
-    using PrettyPrint;
+    using CodeContext;
 }
 
 public function main(asm: Assembly::BapiAssembly, gentype: Assembly::TypeKey): List<PrimitiveComponent> {
-    let components = generateComponentsForType[recursive](gentype, ComponentPath::from('root'), List<CString>{'root'}, List<ComponentConstraint>{}, asm);
+    let components = ComponentGenerator::generateComponentsForTypeSignature[recursive](gentype, ComponentPath::from('root'), List<CString>{'root'}, List<ComponentConstraint>{}, asm);
 
     return components;
 }

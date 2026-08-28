@@ -1469,6 +1469,12 @@ class CPPEmitter {
         else if(body.builtin === "string_append") {
             bstr = "s1.append(s2)";
         }
+        else if(body.builtin === "string_to_cstring") {
+            bstr = "ᐸRuntimeᐳ::XString::toCString(s, result)";
+        }
+        else if(body.builtin === "string_from_cstring") {
+            bstr = "ᐸRuntimeᐳ::XString::fromCString(s)";
+        }
         else if(body.builtin === "string_to_bytebuffer") {
             bstr = "ᐸRuntimeᐳ::XString::toByteBuffer(s)";
         }
@@ -1545,17 +1551,43 @@ class CPPEmitter {
         else if(body.builtin === "list_concat") {
             bstr = `${TransformCPPNameManager.convertTypeKey(invk.resultType.tkeystr)}::concat(l)`;
         }
+        else if(body.builtin === "list_concat_cstrs") {
+            bstr = `ᐸRuntimeᐳ::XListOps::concatStrs<CString>(l)`;
+        }
+        else if(body.builtin === "list_join_cstrs") {
+            bstr = `ᐸRuntimeᐳ::XListOps::joinStrs<CString>(sep, l)`;
+        }
+        else if(body.builtin === "list_concat_strs") {
+            bstr = `ᐸRuntimeᐳ::XListOps::concatStrs<String>(l)`;
+        }
+        else if(body.builtin === "list_join_strs") {
+            bstr = `ᐸRuntimeᐳ::XListOps::joinStrs<String>(sep, l)`;
+        }
+        else if(body.builtin === "list_contains") {
+            bstr = "l.contains(v)";
+        }
+        else if(body.builtin === "list_find_cond") {
+            const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "p");
+            bstr = `l.find<${isSimple}>([&p](${params}){ return (bool)${fn}(p, ${args}); }, res)`;
+        }
+        else if(body.builtin === "list_find_index_cond") {
+            const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "p");
+            bstr = `l.findIndex<${isSimple}>([&p](${params}){ return (bool)${fn}(p, ${args}); }, res)`;
+        }
+        else if(body.builtin === "list_find_index_cond") {
+            assert(false, "Not implemented -- list_find_index_cond");
+        }
         else if(body.builtin === "list_allof") {
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "p");
-            bstr = `l.allOf<${isSimple}>([&p](${params}){ return ${fn}(p, ${args}); })`;
+            bstr = `l.allOf<${isSimple}>([&p](${params}){ return (bool)${fn}(p, ${args}); })`;
         }
         else if(body.builtin === "list_noneof") {
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "p");
-            bstr = `l.noneOf<${isSimple}>([&p](${params}){ return ${fn}(p, ${args}); })`;
+            bstr = `l.noneOf<${isSimple}>([&p](${params}){ return (bool)${fn}(p, ${args}); })`;
         }
         else if(body.builtin === "list_someof") {
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "p");
-            bstr = `l.someOf<${isSimple}>([&p](${params}){ return ${fn}(p, ${args}); })`;
+            bstr = `l.someOf<${isSimple}>([&p](${params}){ return (bool)${fn}(p, ${args}); })`;
         }
         else if(body.builtin === "list_map") {
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "f");
@@ -1571,14 +1603,14 @@ class CPPEmitter {
         }
         else if(body.builtin === "list_filter") {
             const [pred, isSimple, params, args] = this.getParamInforForLambda(invk, "p");
-            bstr = `l.filter<${isSimple}>([&p](${params}){ return ${pred}(p, ${args}); })`;
+            bstr = `l.filter<${isSimple}>([&p](${params}){ return (bool)${pred}(p, ${args}); })`;
         }
         else if(body.builtin === "list_filtermap") {
             const [pred, isSimplePred, paramsPred, argsPred] = this.getParamInforForLambda(invk, "p");
             const [fn, isSimpleFn, paramsFn, argsFn] = this.getParamInforForLambda(invk, "f");
             const utype = body.biterms.find((bt) => bt[0] === "U") as [string, IRTypeSignature];
             const ptid = this.typeInfoManager.getTypeInfo(invk.resultType.tkeystr).bsqtypeid;
-            bstr = `l.filtermap<${isSimplePred} & ${isSimpleFn}, ${this.typeInfoManager.emitTypeAsStd(utype[1].tkeystr)}, ${ptid}>([&p](${paramsPred}){ return ${pred}(p, ${argsPred}); }, [&f](${paramsFn}){ return ${fn}(f, ${argsFn}); })`;
+            bstr = `l.filtermap<${isSimplePred} & ${isSimpleFn}, ${this.typeInfoManager.emitTypeAsStd(utype[1].tkeystr)}, ${ptid}>([&p](${paramsPred}){ return (bool)${pred}(p, ${argsPred}); }, [&f](${paramsFn}){ return ${fn}(f, ${argsFn}); })`;
         }
         else if(body.builtin === "list_min") {
             const mtype = this.typeInfoManager.emitTypeAsParameter(invk.resultType.tkeystr, false, false);
