@@ -51,7 +51,7 @@ class IRCRegex
         const bsqregexLiteral = emitStringAsByteBufferLiteral(this.bsqregex);
         const smtregexLiteral = emitStringAsByteBufferLiteral(this.smtregex);
         const cppregexLiteral = emitStringAsByteBufferLiteral(this.cppregex);
-        return `Assembly::CRegex{${this.regexID}n, ${bsqregexLiteral}, ${smtregexLiteral}, ${cppregexLiteral}}`;
+        return `Assembly::CRegexDecl{${this.regexID}n, ${bsqregexLiteral}, ${smtregexLiteral}, ${cppregexLiteral}}`;
     }
 
     static parseBAPI(lexer: BAPILexer): IRCRegex {
@@ -92,7 +92,7 @@ class IRURegex
         const bsqregexLiteral = emitStringAsByteBufferLiteral(this.bsqregex);
         const smtregexLiteral = emitStringAsByteBufferLiteral(this.smtregex);
         const cppregexLiteral = emitStringAsByteBufferLiteral(this.cppregex);
-        return `Assembly::URegex{${this.regexID}n, ${bsqregexLiteral}, ${smtregexLiteral}, ${cppregexLiteral}}`;
+        return `Assembly::URegexDecl{${this.regexID}n, ${bsqregexLiteral}, ${smtregexLiteral}, ${cppregexLiteral}}`;
     }
 
     static parseBAPI(lexer: BAPILexer): IRURegex {

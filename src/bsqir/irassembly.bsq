@@ -73,8 +73,8 @@ entity PrimitiveEntityTypeDecl provides InternalEntityTypeDecl {
 }
 
 entity BapiAssembly {
-    field cregexps: List<CRegex>;
-    field uregexps: List<URegex>;
+    field cregexps: List<CRegexDecl>;
+    field uregexps: List<URegexDecl>;
     
     %%readonly constants: IRConstantDecl[] = [];
 
