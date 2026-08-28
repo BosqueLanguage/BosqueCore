@@ -1130,7 +1130,12 @@ namespace ᐸRuntimeᐳ
                 auto il = *ii;
                 
                 if(!first) {
-                    curr = curr.append(sep);
+                    if(curr.empty()) {
+                        curr = sep;
+                    }
+                    else {
+                        curr = curr.append(sep);
+                    }
                 }
                 first = false;
 

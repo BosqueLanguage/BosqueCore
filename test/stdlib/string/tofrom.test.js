@@ -9,7 +9,7 @@ describe ("String -- convert to/from CString", () => {
     });
 
     it("should convert to CString", function () {
-        runTestSet('public function main(z: String): Option<CString> { return String::toCString(z); }', [['""', "some('')"], ['"non-empty"', "some('non-empty')"], ["x🌵z", "none"]], []);
+        runTestSet('public function main(z: String): Option<CString> { return String::toCString(z); }', [['""', "some('')"], ['"non-empty"', "some('non-empty')"], ['"x🌵z"', "none"]], []);
     });
 });
 

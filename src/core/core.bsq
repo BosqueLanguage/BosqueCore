@@ -271,7 +271,9 @@ __internal __typedeclable __keycomparable entity String {
         }
     }
 
-    function join(separator: String, ...strings: List<String>): String {
+    function join(separator: String, ...strings: List<String>): String 
+        requires !separator.empty();
+    {
         if(ListOps::s_list_empty<String>(strings)) {
             return "";
         }
@@ -280,7 +282,9 @@ __internal __typedeclable __keycomparable entity String {
         }
     }
 
-    function joinAll(separator: String, strings: List<String>): String {
+    function joinAll(separator: String, strings: List<String>): String 
+        requires !separator.empty();
+    {
         if(ListOps::s_list_empty<String>(strings)) {
             return "";
         }
@@ -379,7 +383,9 @@ __internal __typedeclable __keycomparable entity CString {
         }
     }
 
-    function join(separator: CString, ...strings: List<CString>): CString {
+    function join(separator: CString, ...strings: List<CString>): CString 
+        requires !separator.empty();
+    {
         if(ListOps::s_list_empty<CString>(strings)) {
             return '';
         }
@@ -388,7 +394,9 @@ __internal __typedeclable __keycomparable entity CString {
         }
     }
 
-    function joinAll(separator: CString, strings: List<CString>): CString {
+    function joinAll(separator: CString, strings: List<CString>): CString 
+        requires !separator.empty();
+    {
         if(ListOps::s_list_empty<CString>(strings)) {
             return '';
         }

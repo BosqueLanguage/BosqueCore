@@ -18,19 +18,21 @@ describe ("String -- append", () => {
     it("should concat", function () {
         runTestSet('public function main(z: List<String>): String { return String::concatAll(z); }', [['List<String>{"abc", "def"}', '"abcdef"'], ['List<String>{"123"}', '"123"'], ['List<String>{}', '""']], []);
 
-        runTestSet('public function main(z: List<String>): String { return String::concat(); }', [['"abc"', '""']], []);
-        runTestSet('public function main(z: List<String>): String { return String::concat(z); }', [['"abc"', '"abc"'], ['""', '""']], []);
-        runTestSet('public function main(z: List<String>): String { return String::concat(z, z); }', [['"abc"', '"abcabc"'], ['"x"', '"xx"'], ['""', '""']], []);
-        runTestSet('public function main(z: List<String>): String { return String::concat("abc", z, "xyz"); }', [['""', '"abcxyz"'], ['"123"', '"abc123xyz"']], []);
+        runTestSet('public function main(z: String): String { return String::concat(); }', [['"abc"', '""']], []);
+        runTestSet('public function main(z: String): String { return String::concat(z); }', [['"abc"', '"abc"'], ['""', '""']], []);
+        runTestSet('public function main(z: String): String { return String::concat(z, z); }', [['"abc"', '"abcabc"'], ['"x"', '"xx"'], ['""', '""']], []);
+        runTestSet('public function main(z: String): String { return String::concat("abc", z, "xyz"); }', [['""', '"abcxyz"'], ['"123"', '"abc123xyz"']], []);
     });
 
     it("should join", function () {
         runTestSet('public function main(z: List<String>): String { return String::joinAll(".", z); }', [['List<String>{"abc", "def"}', '"abc.def"'], ['List<String>{"123"}', '"123"'], ['List<String>{}', '""']], []);
 
-        runTestSet('public function main(z: List<String>): String { return String::join("."); }', [['"abc"', '""']], []);
-        runTestSet('public function main(z: List<String>): String { return String::join(".", z); }', [['"abc"', '"abc"'], ['""', '""']], []);
-        runTestSet('public function main(z: List<String>): String { return String::join(".", z, z); }', [['"abc"', '"abc.abc"'], ['"x"', '"x.x"'], ['""', '"."']], []);
-        runTestSet('public function main(z: List<String>): String { return String::join(".", "abc", z, "xyz"); }', [['""', '"abc..xyz"'], ['"123"', '"abc.123.xyz"']], []);
+        runTestSet('public function main(z: String): String { return String::join("."); }', [['"abc"', '""']], []);
+        runTestSet('public function main(z: String): String { return String::join(".", z); }', [['"abc"', '"abc"'], ['""', '""']], []);
+        runTestSet('public function main(z: String): String { return String::join(".", z, z); }', [['"abc"', '"abc.abc"'], ['"x"', '"x.x"'], ['""', '"."']], []);
+        runTestSet('public function main(z: String): String { return String::join(".", "abc", z, "xyz"); }', [['""', '"abc..xyz"'], ['"123"', '"abc.123.xyz"']], []);
+
+        runTestSet('public function main(z: String): String { return String::join("", z); }', [], ['"abc"']);
     });
 });
 
