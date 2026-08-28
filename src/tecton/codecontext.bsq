@@ -55,7 +55,7 @@ function generateTypedeclEntityContext(tdecl: Assembly::TypedeclTypeDecl, assemb
             var rechkpp = "";
             if($rch = $tdecl.rechk)@some {
                 let cregex = assembly.cregexps.find(pred(cre) => cre.regexID == $rch);
-                let rexp = String::fromByteBuffer(cregex.regex).@some;
+                let rexp = String::fromByteBuffer(cregex.bsqregex).@some;
                 
                 rechkpp = Interpolate::string($" of ${0}", rexp);
             }
@@ -71,7 +71,7 @@ function generateTypedeclEntityContext(tdecl: Assembly::TypedeclTypeDecl, assemb
             var rechkpp = "";
             if($rch = $tdecl.rechk)@some {
                 let uregex = assembly.uregexps.find(pred(cre) => cre.regexID == $rch);
-                let rexp = String::fromByteBuffer(uregex.regex).@some;
+                let rexp = String::fromByteBuffer(uregex.bsqregex).@some;
                 
                 rechkpp = Interpolate::string($" of ${0}", rexp);
             }

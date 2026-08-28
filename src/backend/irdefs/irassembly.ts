@@ -376,6 +376,7 @@ abstract class IRAbstractNominalTypeDecl {
 
             docstr = new IRDeclarationDocString(bbytes);
         }
+        lexer.ensureAndConsumeSymbol(',');
 
         const file = lexer.ensureAndConsumeToken(BAPITokenKind.CStringLiteral).slice(1, -1);
         lexer.ensureAndConsumeSymbol(',');
@@ -528,7 +529,7 @@ class IRTypedeclCStringDecl extends IRTypedeclTypeDecl {
 
     override toBAPI(): string {
         const rngchkstr = this.rngchk !== undefined ? this.toBAPI_RNGCheck() : 'none';
-        const rechkstr = this.rechk !== undefined ? `some(${this.rechk.toBAPI()})` : 'none';
+        const rechkstr = this.rechk !== undefined ? `some(${this.rechk.regexID}n)` : 'none';
 
         return `Assembly::TypedeclCStringTypeDecl{${this.toBAPI_IRAbstractEntityTypeDecl()}, ${this.iskeytype}, ${this.isnumerictype}, ${rngchkstr}, ${rechkstr}}`;
     }
@@ -559,7 +560,8 @@ class IRTypedeclCStringDecl extends IRTypedeclTypeDecl {
         const rechktok = lexer.consumeToken();
         if(rechktok.kind !== BAPITokenKind.NoneLiteral) {
             lexer.ensureAndConsumeSymbol("(");
-            rechk = IRLiteralCRegexExpression.parseBAPIAsIRLiteralCRegexExpression(lexer);
+            const id = lexer.ensureAndConsumeToken(BAPITokenKind.NatLiteral);
+            rechk = new IRLiteralCRegexExpression(Number(id.slice(0, -1)));
             lexer.ensureAndConsumeSymbol(")");
         }
 
@@ -578,7 +580,7 @@ class IRTypedeclStringDecl extends IRTypedeclTypeDecl {
 
     override toBAPI(): string {
         const rngchkstr = this.rngchk !== undefined ? this.toBAPI_RNGCheck() : 'none';
-        const rechkstr = this.rechk !== undefined ? `some(${this.rechk.toBAPI()})` : 'none';
+        const rechkstr = this.rechk !== undefined ? `some(${this.rechk.regexID}n)` : 'none';
         
         return `Assembly::TypedeclStringTypeDecl{${this.toBAPI_IRAbstractEntityTypeDecl()}, ${this.iskeytype}, ${this.isnumerictype}, ${rngchkstr}, ${rechkstr}}`;
     }
@@ -609,7 +611,8 @@ class IRTypedeclStringDecl extends IRTypedeclTypeDecl {
         const rechktok = lexer.consumeToken();
         if(rechktok.kind !== BAPITokenKind.NoneLiteral) {
             lexer.ensureAndConsumeSymbol("(");
-            rechk = IRLiteralUnicodeRegexExpression.parseBAPIAsIRLiteralUnicodeRegexExpression(lexer);
+            const id = lexer.ensureAndConsumeToken(BAPITokenKind.NatLiteral);
+            rechk = new IRLiteralUnicodeRegexExpression(Number(id.slice(0, -1)));
             lexer.ensureAndConsumeSymbol(")");
         }
 

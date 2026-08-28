@@ -1387,7 +1387,7 @@ class IRLiteralStringExpression extends IRLiteralExpression {
 
     override toBAPI(): string {
         const uchars = emitUTF32BytesAsByteBufferLiteral(this.bytes);
-        return `Assembly::LiteralStringExpression{List<UChar>{${uchars}}}`;
+        return `Assembly::LiteralStringExpression{${uchars}}`;
     }
 
     static parseBAPIAsIRLiteralStringExpression(lexer: BAPILexer): IRLiteralStringExpression {
