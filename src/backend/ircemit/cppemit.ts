@@ -312,7 +312,7 @@ class CPPEmitter {
                 return `${escstr}_cs`;
             }
             else {
-                assert(false, "CPPEmitter: need to do heap allocation for long cstrings");
+                return `${RUNTIME_NAMESPACE}::XCString::mk(${escstr}, ${lcount})`;
             }
         }
         else if(ttag === IRExpressionTag.IRLiteralStringExpression) {
@@ -322,7 +322,7 @@ class CPPEmitter {
                 return `${ustr}_us`;
             }
             else {
-                assert(false, "CPPEmitter: need to do heap allocation for long strings");
+                return `${RUNTIME_NAMESPACE}::XString::mk(${ustr}, ${lcount})`;
             }
         }
         else if(ttag === IRExpressionTag.IRLiteralFormatStringExpression) {
@@ -339,18 +339,6 @@ class CPPEmitter {
 
             return `${cce}{${this.emitIRLiteral(ilte.value as IRLiteralExpression)}}`;
         }
-        else if(ttag === IRExpressionTag.IRLiteralTypedStringExpression) {
-            const ilte = exp as IRLiteralTypedStringExpression
-            const cce = TransformCPPNameManager.convertTypeKey(ilte.constype.tkeystr);
-            const [escstr, lcount] = this.escapeLiteralString(ilte.bytes);
-
-            if(lcount <= SMALL_STRING_MAX_SIZE) {
-                return `${cce}(${escstr}_us)`;
-            }
-            else {
-                assert(false, "CPPEmitter: need to do heap allocation for long strings");
-            }
-        }
         else if(ttag === IRExpressionTag.IRLiteralTypedCStringExpression) {
             const ilte = exp as IRLiteralTypedCStringExpression
             const cce = TransformCPPNameManager.convertTypeKey(ilte.constype.tkeystr);
@@ -360,7 +348,19 @@ class CPPEmitter {
                 return `${cce}(${escstr}_cs)`;
             }
             else {
-                assert(false, "CPPEmitter: need to do heap allocation for long cstrings");
+                return `${cce}(${RUNTIME_NAMESPACE}::XCString::mk(${escstr}, ${lcount}))`;
+            }
+        }
+        else if(ttag === IRExpressionTag.IRLiteralTypedStringExpression) {
+            const ilte = exp as IRLiteralTypedStringExpression
+            const cce = TransformCPPNameManager.convertTypeKey(ilte.constype.tkeystr);
+            const [escstr, lcount] = this.escapeLiteralString(ilte.bytes);
+
+            if(lcount <= SMALL_STRING_MAX_SIZE) {
+                return `${cce}(${escstr}_us)`;
+            }
+            else {
+                return `${cce}(${RUNTIME_NAMESPACE}::XString::mk(${escstr}, ${lcount}))`;
             }
         }
         else {
