@@ -752,7 +752,7 @@ namespace ᐸRuntimeᐳ
                     blockl = blockl->next;
                 }
 
-                return XByteBuffer(revl, totalelems);
+                rbuf = XByteBuffer(revl, totalelems);
             }
 
             this->lexer.consume();
