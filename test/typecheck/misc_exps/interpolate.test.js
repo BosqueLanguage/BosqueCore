@@ -20,3 +20,19 @@ describe ("Checker -- interpolate cstring", () => {
     });
 });
 
+describe ("Checker -- interpolate string", () => {
+    it("should check simple interpolate string", function () {
+        checkTestExp('Interpolate::string($"-${0}-", "a")', "String");
+        checkTestExp('Interpolate::string($"${0}-${1}", "a", "b")', "String");
+
+        checkTestExp('Interpolate::string<String>($"${0}-${1}", "a", "b")', "String");
+    });
+
+    it("should fail bad index/names", function () {
+        checkTestExpError('Interpolate::string($"${1}", "aa")', "String", "If format string argument indexes are used, then they must start at 0 (unless being matched to an inferred type)");
+        checkTestExpError('Interpolate::string($"${-1}", "aa")', "String", "InterpolateFormatExpression with named format parameters must have all named arguments");
+
+        checkTestExpError('Interpolate::string($"${0}", val = "aa")', "String", "InterpolateFormatExpression with positional format parameters must have all positional arguments");
+        checkTestExpError('Interpolate::string($"${arg}", val = "aa")', "String", "Interpolation argument val does not match any format parameter");
+    });
+});
