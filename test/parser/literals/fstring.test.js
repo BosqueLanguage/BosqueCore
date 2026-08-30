@@ -18,3 +18,19 @@ describe ("Parser -- FCString", () => {
     });
 });
 
+
+describe ("Parser -- FString", () => {
+    it("should parse simple fstrings", function () {
+        parseTestExp('$"${1}"', undefined, "FString<String, String>");
+        parseTestExp('$"ok ${arg}"', undefined, "FString<String, arg: String>");
+        parseTestExp('$"${1}-${1}"', undefined, "FString<String, String>");
+        parseTestExp('$"${1}-${2}"', undefined, "FString<String, String, String>");
+        parseTestExp('$"${1: CString}-${1}"', undefined, "FString<String, String>");
+        parseTestExp('$"ok ${arg: CString}"', undefined, "FString<String, arg: String>");
+    });
+
+    it("should fail bad type name", function () {
+        parseTestExpError('$"ok ${arg: y}"', 'Unable to resolve type signature "y" in format string argument', "FString<String, arg: String>");
+    });
+});
+

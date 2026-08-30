@@ -2400,8 +2400,32 @@ class CPPEmitter {
     }
 
     private emitFStringDefInfo(tfstr: IRLiteralFormatStringExpression[]): string {
-        assert(tfstr.length === 0, "CPPEmitter: need to implement format string def emission");
-        return "//TODO: pending implementation of format string defs";
+        const ddefs = tfstr.map((def) => {
+            const fmts = def.fmts.map((ff) => {
+                if(ff instanceof IRFormatStringTextComponent) {
+                    return `std::make_pair(0, ${this.escapeLiteralString(ff.bytes)[0]})`;
+                }
+                else {
+                    const ffarg = ff as IRFormatStringArgComponent;
+                    return `std::make_pair(${ffarg.aidx}, nullptr)`;
+                }
+            });
+
+            const cmpsize = def.fmts.filter((ff) => ff instanceof IRFormatStringTextComponent).reduce((acc, ff) => acc + ff.bytes.length, 0);
+
+            return `        XFStringRepr{ { ${fmts.join(", ")} }, ${cmpsize}, ${def.fmtid} }`;
+        });
+
+        if(ddefs.length === 0) {
+            return "namespace ᐸRuntimeᐳ { std::vector<XFStringRepr> XFString::g_formatStringReprs = {}; }";
+        }
+        else {
+            return `namespace ᐸRuntimeᐳ {\n` +
+            `    std::vector<XFStringRepr> XFString::g_formatStringReprs = {\n` +
+            ddefs.join(",\n") + "\n" +
+            `    };\n` +
+            `}`;
+        }
     }
 
     private emitEListTypeInfo(elist: IREListTypeSignature): [string, string] {
