@@ -1027,6 +1027,7 @@ namespace ᐸRuntimeᐳ
 
         static void checkFormat(XString s, const std::basic_regex<char32_t>& re, const char* file, uint32_t line)
         {
+            //TODO: we depend on C++ regexs. This might be a problem with unicode strings -- or maybe works ok with char32_t -- we need to check on this
             if(!std::regex_match(s.begin(), s.end(), re)) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "String does not match format"); }
         }
 

@@ -14,3 +14,15 @@ describe ("CPPEmit -- FCString", () => {
     });
 });
 
+describe ("CPPEmit -- FString", () => {
+    it("should emit simple fstrings", function () {
+        checkTestEmitMainFunction('public function main(): String { let v = $"${0}"; return "a"; }', 'String Mainᕒmain() { FStringᐸStringᐪStringᐳ v = ᐸRuntimeᐳ::XFString{0}; return U"a"_us; }');
+        checkTestEmitMainFunction('public function main(): String { let v = $"${0}-${1}"; return "a"; }', 'String Mainᕒmain() { FStringᐸStringᐪStringᐪStringᐳ v = ᐸRuntimeᐳ::XFString{0}; return U"a"_us; }');
+        checkTestEmitMainFunction('public function main(): String { let v = $"${0: String}-${0}"; return "a"; }', 'String Mainᕒmain() { FStringᐸStringᐪStringᐳ v = ᐸRuntimeᐳ::XFString{0}; return U"a"_us; }');
+
+        checkTestEmitMainFunction('public function main(): String { let v = $"ok ${arg}"; return "a"; }', 'String Mainᕒmain() { FStringᐸStringᐪargᕀStringᐳ v = ᐸRuntimeᐳ::XFString{0}; return U"a"_us; }');
+        checkTestEmitMainFunction('public function main(): String { let v = $"ok ${arg: String}+${arg}"; return "a"; }', 'String Mainᕒmain() { FStringᐸStringᐪargᕀStringᐳ v = ᐸRuntimeᐳ::XFString{0}; return U"a"_us; }');
+    });
+});
+
+
