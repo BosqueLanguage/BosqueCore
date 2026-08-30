@@ -23,7 +23,7 @@ describe ("CPPEmit -- from operation", () => {
         checkTestEmitMainFunction('type Foo = String; public function main(): Foo { return Foo::from("ok"); }', 'MainᕒFoo Mainᕒmain() { return MainᕒFoo{U"ok"_us}; }'); 
         checkTestEmitMainFunction('type Foo = String; type Bar = String; public function main(x: Bar): Foo { return Foo::from(x); }', 'MainᕒFoo Mainᕒmain(MainᕒBar x) { return MainᕒFoo{x}; }'); 
 
-        checkTestEmitMainFunction('type Foo = String of /[a-z]+/; public function main(): Foo { return Foo::from("ok"); }', 'MainᕒFoo Mainᕒmain() { ᐸRuntimeᐳ::XString::checkFormat(U"ok"_us, ᐸRuntimeᐳ::g_regexs[0], "test.bsq", 2); return MainᕒFoo{U"ok"_us}; }'); 
-        checkTestEmitMainFunction('type Foo = String of /[0-9]{2}/; type Bar = String; public function main(x: Bar): Foo { return Foo::from(x); }', 'MainᕒFoo Mainᕒmain(MainᕒBar x) { ᐸRuntimeᐳ::XString::checkFormat(x, ᐸRuntimeᐳ::g_regexs[0], "test.bsq", 2); return MainᕒFoo{x}; }'); 
+        checkTestEmitMainFunction('type Foo = String of /[a-z]+/; public function main(): Foo { return Foo::from("ok"); }', 'MainᕒFoo Mainᕒmain() { ᐸRuntimeᐳ::XString::checkFormat(U"ok"_us, ᐸRuntimeᐳ::g_uregexs[0], "test.bsq", 2); return MainᕒFoo{U"ok"_us}; }'); 
+        checkTestEmitMainFunction('type Foo = String of /[0-9]{2}/; type Bar = String; public function main(x: Bar): Foo { return Foo::from(x); }', 'MainᕒFoo Mainᕒmain(MainᕒBar x) { ᐸRuntimeᐳ::XString::checkFormat(x, ᐸRuntimeᐳ::g_uregexs[0], "test.bsq", 2); return MainᕒFoo{x}; }'); 
     });
 });

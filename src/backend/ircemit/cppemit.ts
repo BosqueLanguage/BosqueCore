@@ -1103,7 +1103,7 @@ class CPPEmitter {
         }
         else if(ttag === IRStatementTag.IRTypeDeclFormatCheckUnicodeStringStatement) {
             const vvexp = stmt as IRTypeDeclFormatCheckUnicodeStringStatement;
-            const reval = `${RUNTIME_NAMESPACE}::g_regexs[${vvexp.re.regexID}]`;
+            const reval = `${RUNTIME_NAMESPACE}::g_uregexs[${vvexp.re.regexID}]`;
 
             return `${RUNTIME_NAMESPACE}::XString::checkFormat(${this.emitIRImmediateExpression(vvexp.strexp)}, ${reval}, "${vvexp.file}", ${vvexp.sinfo.line});`;
         }
@@ -2373,7 +2373,23 @@ class CPPEmitter {
     }
 
     private emitStringTypeDeclInfo(tstr: IRTypedeclStringDecl): [string, string] {
-        assert(false, "CPPEmitter: need to implement string type decl emission");
+        let echks: string[] = [];
+        if(tstr.rngchk !== undefined) {
+            if(tstr.rngchk.min === undefined) {
+                echks.push(`if(${this.emitIRImmediateExpression(tstr.rngchk.max as IRImmediateExpression)} < ᐸRuntimeᐳ::XNat{vv.size()}) { return std::nullopt; };`);
+            }
+            else if(tstr.rngchk.max === undefined) {
+                echks.push(`if(ᐸRuntimeᐳ::XNat{vv.size()} < ${this.emitIRImmediateExpression(tstr.rngchk.min as IRImmediateExpression)}) { return std::nullopt; };`);
+            }
+            else {
+                echks.push(`if((ᐸRuntimeᐳ::XNat{vv.size()} < ${this.emitIRImmediateExpression(tstr.rngchk.min)}) || (${this.emitIRImmediateExpression(tstr.rngchk.max)} < ᐸRuntimeᐳ::XNat{vv.size()})) { return std::nullopt; };`);
+            }
+        }
+        if(tstr.rechk !== undefined) {
+            echks.push(`if(!std::regex_match(vv.begin(), vv.end(), ᐸRuntimeᐳ::g_uregexs[${tstr.rechk.regexID}])) { return std::nullopt; };`);
+        }
+
+        return this.emitGeneralTypeDeclInfo(tstr, echks);
     }
 
     private emitFCStringDefInfo(tfcstr: IRLiteralFormatCStringExpression[]): string {
