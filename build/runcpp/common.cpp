@@ -1,6 +1,19 @@
 #include "common.h"
 #include "runtime/taskinfo.h"
 
+namespace boost
+{
+    void throw_exception(const std::exception&)
+    {
+        std::abort();
+    }
+
+    void throw_exception(const std::exception&, const boost::source_location&)
+    {
+        std::abort();
+    }
+}
+
 namespace ᐸRuntimeᐳ
 {
     thread_local BosqueThreadLocalInfo tl_bosque_info;

@@ -885,8 +885,8 @@ class TypeInfoManager {
         timgr.addLayoutInfo("Bool", new LayoutInfo("Bool", new IRNominalTypeSignature("Bool"), 8, "0"));
         timgr.addLayoutInfo("Int", new LayoutInfo("Int", new IRNominalTypeSignature("Int"), 8, "0"));
         timgr.addLayoutInfo("Nat", new LayoutInfo("Nat", new IRNominalTypeSignature("Nat"), 8, "0"));
-        timgr.addLayoutInfo("ChkInt", new LayoutInfo("ChkInt", new IRNominalTypeSignature("ChkInt"), 16, "00"));
-        timgr.addLayoutInfo("ChkNat", new LayoutInfo("ChkNat", new IRNominalTypeSignature("ChkNat"), 16, "00"));
+        timgr.addLayoutInfo("ChkInt", new LayoutInfo("ChkInt", new IRNominalTypeSignature("ChkInt"), 32, "0000"));
+        timgr.addLayoutInfo("ChkNat", new LayoutInfo("ChkNat", new IRNominalTypeSignature("ChkNat"), 32, "0000"));
 
         timgr.addLayoutInfo("Float", new LayoutInfo("Float", new IRNominalTypeSignature("Float"), 8, "0"));
         
@@ -979,8 +979,8 @@ class TypeInfoManager {
         timgr.addTypeInfo("Bool", new TypeInfo("Bool", new IRNominalTypeSignature("Bool"), 1, 8, LayoutTag.Value, undefined, true));
         timgr.addTypeInfo("Int", new TypeInfo("Int", new IRNominalTypeSignature("Int"), 2, 8, LayoutTag.Value, undefined, true));
         timgr.addTypeInfo("Nat", new TypeInfo("Nat", new IRNominalTypeSignature("Nat"), 3, 8, LayoutTag.Value, undefined, true));
-        timgr.addTypeInfo("ChkInt", new TypeInfo("ChkInt", new IRNominalTypeSignature("ChkInt"), 4, 16, LayoutTag.Value, undefined, true));
-        timgr.addTypeInfo("ChkNat", new TypeInfo("ChkNat", new IRNominalTypeSignature("ChkNat"), 5, 16, LayoutTag.Value, undefined, true));
+        timgr.addTypeInfo("ChkInt", new TypeInfo("ChkInt", new IRNominalTypeSignature("ChkInt"), 4, 32, LayoutTag.Value, undefined, true));
+        timgr.addTypeInfo("ChkNat", new TypeInfo("ChkNat", new IRNominalTypeSignature("ChkNat"), 5, 32, LayoutTag.Value, undefined, true));
 
         timgr.addTypeInfo("Float", new TypeInfo("Float", new IRNominalTypeSignature("Float"), 6, 8, LayoutTag.Value, undefined, true));
         

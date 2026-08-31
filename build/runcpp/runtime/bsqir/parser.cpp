@@ -12,6 +12,38 @@ namespace ᐸRuntimeᐳ
         }
     }
 
+    bool parseInt128(char* str, char suffix, int128_t min, int128_t max, int128_t& result)
+    {
+        char* current = skipPlusSignOpt(str);
+        bool negative = *current == '-';
+        if(negative) {
+            ++current;
+        }
+
+        int128_t limit = negative ? -min : max;
+        int128_t magnitude = 0;
+        if(*current < '0' || '9' < *current) {
+            return false;
+        }
+
+        while('0' <= *current && *current <= '9') {
+            int digit = *current - '0';
+            if(magnitude > (limit - digit) / 10) {
+                return false;
+            }
+
+            magnitude = magnitude * 10 + digit;
+            ++current;
+        }
+
+        if(*current != suffix || current[1] != '\0') {
+            return false;
+        }
+
+        result = negative ? -magnitude : magnitude;
+        return true;
+    }
+
     void BSQONParser::initialize(std::list<uint8_t*>&& iobuffs, size_t totalbytes)
     {
         this->lexer.initialize(std::move(iobuffs), totalbytes);
@@ -180,10 +212,10 @@ namespace ᐸRuntimeᐳ
             }
             else {
 
-                __int128_t vv = 0;
-                auto [_, ec] = std::from_chars(skipPlusSignOpt(outbuff), outbuff + sizeof(outbuff), vv);
+                int128_t vv = 0;
+                bool parsed = parseInt128(outbuff, 'N', XChkNat::MIN_VALUE, XChkNat::MAX_VALUE, vv);
 
-                if(ec != std::errc() || !XChkNat::isValidNat(vv)) {
+                if(!parsed || !XChkNat::isValidNat(vv)) {
                     return std::nullopt;
                 }
                 else {
@@ -211,10 +243,10 @@ namespace ᐸRuntimeᐳ
             }
             else {
 
-                __int128_t vv = 0;
-                auto [_, ec] = std::from_chars(skipPlusSignOpt(outbuff), outbuff + sizeof(outbuff), vv);
+                int128_t vv = 0;
+                bool parsed = parseInt128(outbuff, 'I', XChkInt::MIN_VALUE, XChkInt::MAX_VALUE, vv);
 
-                if(ec != std::errc() || !XChkInt::isValidInt(vv)) {
+                if(!parsed || !XChkInt::isValidInt(vv)) {
                     return std::nullopt;
                 }
                 else {

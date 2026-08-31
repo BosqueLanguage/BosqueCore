@@ -2765,7 +2765,7 @@ class CPPEmitter {
         `    std::array<uint8_t, ${this.typeInfoManager.getTypeInfo(tdecl.tkey).bytesize - 8}> upunning;\n` +
         `${uopts.join("\n")}\n` +
         `    ${uctname}() : upunning{} { ; };\n` +
-        `    ${uctname}(const ${uctname}& other) = default;\n` +
+        `    ${uctname}(const ${uctname}& other) : upunning{other.upunning} { ; }\n` +
         `    ${uctname}& operator=(const ${uctname}& other) { if(this == &other) { return *this; } this->upunning = other.upunning; return *this; }\n` +
         `    const uint8_t* getUP() const { return this->upunning.data(); }` +
         `    uint8_t* getUP() { return this->upunning.data(); }` +
@@ -3060,7 +3060,7 @@ class CPPEmitter {
         `    std::array<uint8_t, ${this.typeInfoManager.getTypeInfo(tdecl.tkey).bytesize - 8}> upunning;\n` +
         `${uopts.join("\n")}\n` +
         `    ${uctname}() : upunning{} { ; };\n` +
-        `    ${uctname}(const ${uctname}& other) = default;\n` +
+        `    ${uctname}(const ${uctname}& other) : upunning{other.upunning} { ; }\n` +
         `    ${uctname}& operator=(const ${uctname}& other) { if(this == &other) { return *this; } this->upunning = other.upunning; return *this; }\n` +
         `    const uint8_t* getUP() const { return this->upunning.data(); }` +
         `    uint8_t* getUP() { return this->upunning.data(); }` +

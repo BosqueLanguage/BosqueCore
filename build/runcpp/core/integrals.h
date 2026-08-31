@@ -202,21 +202,21 @@ namespace ᐸRuntimeᐳ
     class XChkNat
     {
     public:
-        constexpr static __int128_t MIN_VALUE = 0;
-        constexpr static __int128_t MAX_VALUE = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED; 
+        constexpr static int128_t MIN_VALUE = 0;
+        constexpr static int128_t MAX_VALUE = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED;
 
-        using value_type = __int128_t;
+        using value_type = int128_t;
 
-        __int128_t value;
+        int128_t value;
 
-        static bool isValidNat(__int128_t v)
+        static bool isValidNat(int128_t v)
         {
             return (XChkNat::MIN_VALUE <= v) & (v <= XChkNat::MAX_VALUE);
         }
 
-        constexpr static __int128_t BOTTOM_VALUE = (__int128_t(1) << 126);
+        constexpr static int128_t BOTTOM_VALUE = (int128_t(1) << 126);
         
-        static bool s_isBottom(__int128_t v)
+        static bool s_isBottom(int128_t v)
         {
             return v == BOTTOM_VALUE;
         }
@@ -261,8 +261,8 @@ namespace ᐸRuntimeᐳ
                 return XChkNat{XChkNat::BOTTOM_VALUE};
             }
 
-            __int128_t result = 0;
-            if(!__builtin_add_overflow(lhs.value, rhs.value, &result) && XChkNat::isValidNat(result)) [[likely]] {
+            int128_t result = lhs.value + rhs.value;
+            if(XChkNat::isValidNat(result)) [[likely]] {
                 return XChkNat{result};
             }
             else {
@@ -275,8 +275,8 @@ namespace ᐸRuntimeᐳ
                 return XChkNat{XChkNat::BOTTOM_VALUE};
             }
 
-            __int128_t result = 0;
-            if(!__builtin_sub_overflow(lhs.value, rhs.value, &result) && XChkNat::isValidNat(result)) [[likely]] {
+            int128_t result = lhs.value - rhs.value;
+            if(XChkNat::isValidNat(result)) [[likely]] {
                 return XChkNat{result};
             }
             else {
@@ -297,9 +297,8 @@ namespace ᐸRuntimeᐳ
                 return XChkNat{XChkNat::BOTTOM_VALUE};
             }
 
-            __int128_t result = 0;
-            if(!__builtin_mul_overflow(lhs.value, rhs.value, &result) && XChkNat::isValidNat(result)) [[likely]] {
-                return XChkNat{result};
+            if(lhs.value == 0 || rhs.value <= XChkNat::MAX_VALUE / lhs.value) [[likely]] {
+                return XChkNat{lhs.value * rhs.value};
             }
             else {
                 return XChkNat{XChkNat::BOTTOM_VALUE};
@@ -317,21 +316,21 @@ namespace ᐸRuntimeᐳ
     class XChkInt
     {
     public:
-        constexpr static __int128_t MIN_VALUE = -ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED; 
-        constexpr static __int128_t MAX_VALUE = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED; 
+        constexpr static int128_t MIN_VALUE = -ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED;
+        constexpr static int128_t MAX_VALUE = ᐸRuntimeᐳ::BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED;
                 
-        using value_type = __int128_t;
+        using value_type = int128_t;
 
-        __int128_t value;
+        int128_t value;
 
-        static bool isValidInt(__int128_t v)
+        static bool isValidInt(int128_t v)
         {
             return (XChkInt::MIN_VALUE <= v) & (v <= XChkInt::MAX_VALUE);
         }
 
-        constexpr static __int128_t BOTTOM_VALUE = (__int128_t(1) << 126);
+        constexpr static int128_t BOTTOM_VALUE = (int128_t(1) << 126);
 
-        static bool s_isBottom(__int128_t v)
+        static bool s_isBottom(int128_t v)
         {
             return v == BOTTOM_VALUE;
         }
@@ -384,8 +383,8 @@ namespace ᐸRuntimeᐳ
                 return XChkInt{XChkInt::BOTTOM_VALUE};
             }
 
-            __int128_t result = 0;
-            if(!__builtin_add_overflow(lhs.value, rhs.value, &result) && XChkInt::isValidInt(result)) [[likely]] {
+            int128_t result = lhs.value + rhs.value;
+            if(XChkInt::isValidInt(result)) [[likely]] {
                 return XChkInt{result};
             }
             else {
@@ -398,8 +397,8 @@ namespace ᐸRuntimeᐳ
                 return XChkInt{XChkInt::BOTTOM_VALUE};
             }
 
-            __int128_t result = 0;
-            if(!__builtin_sub_overflow(lhs.value, rhs.value, &result) && XChkInt::isValidInt(result)) [[likely]] {
+            int128_t result = lhs.value - rhs.value;
+            if(XChkInt::isValidInt(result)) [[likely]] {
                 return XChkInt{result};
             }
             else {
@@ -420,9 +419,19 @@ namespace ᐸRuntimeᐳ
                 return XChkInt{XChkInt::BOTTOM_VALUE};
             }
 
-            __int128_t result = 0;
-            if(!__builtin_mul_overflow(lhs.value, rhs.value, &result) && XChkInt::isValidInt(result)) [[likely]] {
-                return XChkInt{result};
+            bool inrange = false;
+            if(lhs.value == 0 || rhs.value == 0) {
+                inrange = true;
+            }
+            else if(lhs.value > 0) {
+                inrange = rhs.value > 0 ? lhs.value <= XChkInt::MAX_VALUE / rhs.value : rhs.value >= XChkInt::MIN_VALUE / lhs.value;
+            }
+            else {
+                inrange = rhs.value > 0 ? lhs.value >= XChkInt::MIN_VALUE / rhs.value : lhs.value >= XChkInt::MAX_VALUE / rhs.value;
+            }
+
+            if(inrange) [[likely]] {
+                return XChkInt{lhs.value * rhs.value};
             }
             else {
                 return XChkInt{XChkInt::BOTTOM_VALUE};
@@ -503,6 +512,6 @@ namespace ᐸRuntimeᐳ
 
     static_assert(sizeof(XNat) == sizeof(int64_t), "Nat size incorrect");
     static_assert(sizeof(XInt) == sizeof(int64_t), "Int size incorrect");
-    static_assert(sizeof(XChkNat) == sizeof(__int128_t), "BigNat size incorrect");
-    static_assert(sizeof(XChkInt) == sizeof(__int128_t), "BigInt size incorrect");
+    static_assert(sizeof(XChkNat) == sizeof(int128_t), "BigNat size incorrect");
+    static_assert(sizeof(XChkInt) == sizeof(int128_t), "BigInt size incorrect");
 }

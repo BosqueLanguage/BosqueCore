@@ -28,12 +28,12 @@ consteval ᐸRuntimeᐳ::XInt operator""_i(unsigned long long n)
 
 consteval ᐸRuntimeᐳ::XChkNat operator""_N(unsigned long long n)
 {
-    return ᐸRuntimeᐳ::XChkNat{(__int128_t)n};
+    return ᐸRuntimeᐳ::XChkNat{ᐸRuntimeᐳ::int128_t(n)};
 }
     
 consteval ᐸRuntimeᐳ::XChkInt operator""_I(unsigned long long n)
 {
-    return ᐸRuntimeᐳ::XChkInt{(__int128_t)n};
+    return ᐸRuntimeᐳ::XChkInt{ᐸRuntimeᐳ::int128_t(n)};
 }
 
 consteval ᐸRuntimeᐳ::XFloat operator""_f(long double n)

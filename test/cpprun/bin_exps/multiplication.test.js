@@ -15,4 +15,9 @@ describe ("CPPExec -- Simple multiplication", () => {
 
         runTestSet("type Foo = ChkNat; public function main(x: Foo): Foo { return x * 2N; }", [['0N<Main::Foo>', '0N<Main::Foo>'], ['3N<Main::Foo>', '6N<Main::Foo>'], ['ChkNat::npos<Main::Foo>', 'ChkNat::npos<Main::Foo>']], []);
     });
+
+    it("should saturate chk ops", function () {
+        runTestSet("public function main(x: ChkNat): ChkNat { return x * 2N; }", [['21267647932558653957237540927630737409N', 'ChkNat::npos']], []);
+        runTestSet("public function main(x: ChkInt): ChkInt { return x * 2I; }", [['21267647932558653957237540927630737409I', 'ChkInt::npos'], ['-21267647932558653957237540927630737409I', 'ChkInt::npos']], []);
+    });
 });

@@ -19,6 +19,7 @@ describe ("CPPExec -- simple return", () => {
     it("should exec direct returns", function () {
         runTestSet('public function foo(x: Int): Int { return x + 1i; } public function main(x: Int): Int { return foo(x); }', [['0i', '1i'], ['5i', '6i']], []);
         runTestSet('concept Baz {} entity Foo provides Baz { field f: Int; } public function foo(x: Int): Foo { return Foo{x + 1i}; } public function main(x: Int): Baz { return foo(x); }', [['0i', 'Main::Foo{ 1i }'], ['5i', 'Main::Foo{ 6i }']], []);
+        runTestSet('concept Baz {} entity Foo provides Baz { field f: ChkInt; } public function main(x: ChkInt): Baz { return Foo{x}; }', [['3I', 'Main::Foo{ 3I }']], []);
     });
 
     it("should exec returns with special coerce", function () {
@@ -42,4 +43,3 @@ describe ("CPPExec -- return with refs", () => {
         runTestSet("function bar(out? y: Int): Bool { y = 1i; return true; } function foo(out? y: Int): Bool { return bar(out? y); } public function main(): Int { var y: Int; if(foo(out? y) { return y; } else { return 0i; } }", [['0i', '1i']], []);
     });
 });
-

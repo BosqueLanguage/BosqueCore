@@ -481,8 +481,8 @@ namespace ᐸRuntimeᐳ
 
         static XCString natToCString(int64_t value);
         static XCString intToCString(int64_t value);
-        static XCString chkNatToCString(__int128_t value);
-        static XCString chkIntToCString(__int128_t value);
+        static XCString chkNatToCString(int128_t value);
+        static XCString chkIntToCString(int128_t value);
         static XCString floatToCString(double value);
 
         static XByteBuffer toByteBuffer(const XCString& cstr);
@@ -1050,8 +1050,8 @@ namespace ᐸRuntimeᐳ
 
         static XString natToString(int64_t value);
         static XString intToString(int64_t value);
-        static XString chkNatToString(__int128_t value);
-        static XString chkIntToString(__int128_t value);
+        static XString chkNatToString(int128_t value);
+        static XString chkIntToString(int128_t value);
         static XString floatToString(double value);
 
         static XString fromCString(const XCString& cstr);

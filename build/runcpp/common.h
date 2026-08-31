@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <cstdlib>
 #include <cstring>
 #include <csetjmp>
 
@@ -22,6 +23,8 @@
 
 #include <regex>
 
+#include <boost/multiprecision/cpp_int.hpp>
+
 #include <type_traits>
 #include <concepts>
 
@@ -37,10 +40,18 @@
 
 #include "./flags.h"
 
+namespace boost
+{
+    [[noreturn]] void throw_exception(const std::exception& e);
+    [[noreturn]] void throw_exception(const std::exception& e, const boost::source_location& loc);
+}
+
 namespace ᐸRuntimeᐳ
 {
+    using int128_t = boost::multiprecision::int128_t;
+
     constexpr int64_t BSQ_NUMERIC_DYNAMIC_RANGE_BASE = 4611686018427387903ll;
-    constexpr __int128_t BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED = ((__int128_t)BSQ_NUMERIC_DYNAMIC_RANGE_BASE * (__int128_t)BSQ_NUMERIC_DYNAMIC_RANGE_BASE);
+    constexpr int128_t BSQ_NUMERIC_DYNAMIC_RANGE_EXTENDED = (int128_t(BSQ_NUMERIC_DYNAMIC_RANGE_BASE) * int128_t(BSQ_NUMERIC_DYNAMIC_RANGE_BASE));
 
     enum class ErrorKind
     {

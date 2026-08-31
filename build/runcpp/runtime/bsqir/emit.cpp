@@ -91,7 +91,7 @@ namespace ᐸRuntimeᐳ
             this->bufferMgr.writeImmediate("ChkNat::npos");
         }
         else {
-            if(n.value <= (__int128_t)std::numeric_limits<int64_t>::max()) {
+            if(n.value <= int128_t(std::numeric_limits<int64_t>::max())) {
                 this->bufferMgr.writeNumberWFormat("%lliN", static_cast<int64_t>(n.value));
             }
             else {
@@ -106,7 +106,7 @@ namespace ᐸRuntimeᐳ
             this->bufferMgr.writeImmediate("ChkInt::npos");
         }
         else {
-            if(((__int128_t)std::numeric_limits<int64_t>::min() <= i.value) & (i.value <= (__int128_t)std::numeric_limits<int64_t>::max())) {
+            if((int128_t(std::numeric_limits<int64_t>::min()) <= i.value) & (i.value <= int128_t(std::numeric_limits<int64_t>::max()))) {
                 this->bufferMgr.writeNumberWFormat("%lliI", static_cast<int64_t>(i.value));
             }
             else {
@@ -335,7 +335,7 @@ namespace ᐸRuntimeᐳ
             out << "ChkNat::npos";
         }
         else {
-            if(n.value <= (__int128_t)std::numeric_limits<int64_t>::max()) {
+            if(n.value <= int128_t(std::numeric_limits<int64_t>::max())) {
                 out << (int64_t)n.value << "N";
             }
             else {
@@ -350,7 +350,7 @@ namespace ᐸRuntimeᐳ
             out << "ChkInt::npos";
         }
         else {
-            if(i.value <= (__int128_t)std::numeric_limits<int64_t>::max()) {
+            if(i.value <= int128_t(std::numeric_limits<int64_t>::max())) {
                 out << (int64_t)i.value << "I";
             }
             else {
