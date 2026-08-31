@@ -438,4 +438,27 @@ namespace ᐸRuntimeᐳ
             return XString{StrRootTreeContent{PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>::append(lnode, rnode)}};
         }
     }
+
+    std::string fromXString(const ᐸRuntimeᐳ::XString& xs)
+    {
+        std::string res;
+        res.reserve(xs.size());
+
+        for(auto iter = xs.begin(); iter != xs.end(); ++iter)
+        {
+            char32_t c = *iter;
+            if(c < 0x80)
+                res.push_back(static_cast<char>(c));
+            else {
+                size_t mbcc = multibyteCharCount(static_cast<uint8_t>(c));
+                std::array<uint8_t, 4> outbuff;
+                ucharToMultiByteEncoding(c, outbuff);
+                for(size_t i = 0; i < mbcc; ++i) {
+                    res.push_back(static_cast<char>(outbuff[i]));
+                }
+            }
+        }
+
+        return res;
+    }
 }

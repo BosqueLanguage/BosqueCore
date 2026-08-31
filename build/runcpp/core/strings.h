@@ -1151,4 +1151,7 @@ namespace ᐸRuntimeᐳ
     public:
         size_t regexid;
     };
+
+
+    std::string fromXString(const ᐸRuntimeᐳ::XString& xs);
 }
