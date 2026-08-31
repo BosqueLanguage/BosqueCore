@@ -21,3 +21,20 @@ describe ("CPPExec -- interpolate cstring", () => {
     });
 });
 
+describe ("CPPExec -- interpolate string", () => {
+    it("should exec simple interpolate string (direct)", function () {
+        runTestSet('public function main(s: String): String { return Interpolate::string($"-${0}-", s); }', [['"x"', '"-x-"']], []);
+        runTestSet('public function main(s: String): String { return Interpolate::string($"${0}-${1}", s, "b"); }', [['"x"', '"x-b"']], []);
+
+        runTestSet('public function main(s: String): String { return Interpolate::string<String>($"${0}-${0}", s); }', [['"x"', '"x-x"']], []);
+        runTestSet('public function main(s: String): String { return Interpolate::string<String>($"${arg2}-${arg1}", arg1 = s, arg2 = "b"); }', [['"x"', '"b-x"']], []);
+    });
+
+    it("should exec simple interpolate string (var)", function () {
+        runTestSet('public function main(s: String): String { let fs = $"-${0}-"; return Interpolate::string(fs, s); }', [['"x"', '"-x-"']], []);
+        runTestSet('public function main(s: String): String { let fs = $"${0}-${1}"; return Interpolate::string(fs, s, "b"); }', [['"x"', '"x-b"']], []);
+
+        runTestSet('public function main(s: String): String { let fs = $"${0}-${0}"; return Interpolate::string<String>(fs, s); }', [['"x"', '"x-x"']], []);
+        runTestSet('public function main(s: String): String { let fs = $"${arg2}-${arg1}"; return Interpolate::string<String>(fs, arg1 = s, arg2 = "b"); }', [['"x"', '"b-x"']], []);
+    });
+});
