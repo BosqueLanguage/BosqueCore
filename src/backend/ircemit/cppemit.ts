@@ -2175,18 +2175,18 @@ class CPPEmitter {
 
     private emitRegexInfos(cregexs: IRCRegex[], uregexs: IRURegex[]): [string, string] {
         const redecl = `namespace ᐸRuntimeᐳ {\n` +
-        `    extern std::array<std::basic_regex<char>, ${cregexs.length}> g_cregexs;\n` +
-        `    extern std::array<std::basic_regex<char32_t>, ${uregexs.length}> g_uregexs;\n` +
+        `    extern std::array<boost::regex, ${cregexs.length}> g_cregexs;\n` +
+        `    extern std::array<boost::u32regex, ${uregexs.length}> g_uregexs;\n` +
         `}`;
 
-        const cflags = "std::regex::ECMAScript | std::regex::nosubs";
-        const uflags = "std::regex::ECMAScript | std::regex::nosubs";
-        const crecpp = cregexs.map((re) => `std::basic_regex<char>("${re.cppregex.replace(/\\/g, '\\\\')}", ${cflags})`);
-        const urecpp = uregexs.map((re) => `std::basic_regex<char32_t>(U"${re.cppregex.replace(/\\/g, '\\\\')}", ${uflags})`);
+        const cflags = "boost::regex_constants::ECMAScript | boost::regex_constants::nosubs | boost::regex_constants::optimize";
+        const uflags = "boost::regex_constants::ECMAScript | boost::regex_constants::nosubs | boost::regex_constants::optimize";
+        const crecpp = cregexs.map((re) => `boost::regex(std::string{"${re.cppregex.replace(/\\/g, '\\\\')}"}, ${cflags})`);
+        const urecpp = uregexs.map((re) => `boost::make_u32regex(std::u32string{U"${re.cppregex.replace(/\\/g, '\\\\')}"}, ${uflags})`);
 
         const redef = `namespace ᐸRuntimeᐳ {\n` +
-        `    std::array<std::basic_regex<char>, ${cregexs.length}> g_cregexs = { ${crecpp.join(", ")} };\n` +
-        `    std::array<std::basic_regex<char32_t>, ${uregexs.length}> g_uregexs = { ${urecpp.join(", ")} };\n` +
+        `    std::array<boost::regex, ${cregexs.length}> g_cregexs = { ${crecpp.join(", ")} };\n` +
+        `    std::array<boost::u32regex, ${uregexs.length}> g_uregexs = { ${urecpp.join(", ")} };\n` +
         `}`;
 
         return [redecl, redef];
@@ -2366,7 +2366,7 @@ class CPPEmitter {
             }
         }
         if(tcstr.rechk !== undefined) {
-            echks.push(`if(!std::regex_match(vv.begin(), vv.end(), ᐸRuntimeᐳ::g_cregexs[${tcstr.rechk.regexID}])) { return std::nullopt; };`);
+            echks.push(`if(!boost::regex_match(vv.begin(), vv.end(), ᐸRuntimeᐳ::g_cregexs[${tcstr.rechk.regexID}])) { return std::nullopt; };`);
         }
 
         return this.emitGeneralTypeDeclInfo(tcstr, echks);
@@ -2386,7 +2386,7 @@ class CPPEmitter {
             }
         }
         if(tstr.rechk !== undefined) {
-            echks.push(`if(!std::regex_match(vv.begin(), vv.end(), ᐸRuntimeᐳ::g_uregexs[${tstr.rechk.regexID}])) { return std::nullopt; };`);
+            echks.push(`if(!boost::regex_match(vv.begin(), vv.end(), ᐸRuntimeᐳ::g_uregexs[${tstr.rechk.regexID}])) { return std::nullopt; };`);
         }
 
         return this.emitGeneralTypeDeclInfo(tstr, echks);
