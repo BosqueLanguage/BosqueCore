@@ -19,7 +19,7 @@ jobs:
       with:
         node-version: '22'
     - name: Install Dependencies
-      run: sudo apt-get install -y libboost-dev
+      run: sudo apt-get install -y libboost-all-dev
     - name: Install
       run: npm install
     - name: Run Tests
