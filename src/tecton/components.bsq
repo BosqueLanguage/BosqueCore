@@ -39,6 +39,7 @@ OfTypeConstraint {
 
 entity PrimitiveComponent {
     field oftype: Assembly::TypeKey;
+    field format: String;
 
     field path: ComponentPath;
     field steps: List<CString>;
@@ -47,19 +48,57 @@ entity PrimitiveComponent {
 }
 
 namespace ComponentGenerator {
+    const primitiveFormats: Map<Assembly::TypeKey, String> = Map<Assembly::TypeKey, String>{
+        'Bool'<Assembly::TypeKey> => "true|false",
+        'Nat'<Assembly::TypeKey> => "(0|([1-9][0-9]*))n",
+        'Int'<Assembly::TypeKey> => "(0|([-]?[1-9][0-9]*))i",
+
+        'CString'<Assembly::TypeKey> => "'.*'",
+        'String'<Assembly::TypeKey> => "%;.*%;"
+    };
+
     function generateComponentsForPrimitive(pdecl: Assembly::PrimitiveEntityTypeDecl, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): List<PrimitiveComponent> {
-        return List<PrimitiveComponent>{ PrimitiveComponent{ pdecl.tkey, path, steps, constraints } };
+        let formatstr = ComponentGenerator::primitiveFormats.get(pdecl.tkey);
+        return List<PrimitiveComponent>{ PrimitiveComponent{ pdecl.tkey, formatstr, path, steps, constraints } };
     }
 
     function generateComponentsForEnum(edecl: Assembly::EnumTypeDecl, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): List<PrimitiveComponent> {
-        return List<PrimitiveComponent>{ PrimitiveComponent{ edecl.tkey, path, steps, constraints } };
+        return List<PrimitiveComponent>{ PrimitiveComponent{ edecl.tkey, "[NOT IMPLEMENTED]", path, steps, constraints } };
     }
 
     recursive function generateComponentsForTypeDecl(tdecl: Assembly::TypedeclTypeDecl, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): List<PrimitiveComponent> {
         let epath = path.extendWithValue();
         let esteps = steps.pushBack('value');
     
-        return generateComponentsForTypeSignature[recursive](tdecl.valuetype.tkeystr, epath, esteps, constraints, assembly);
+
+        match(tdecl) {
+            Assembly::TypedeclSimpleTypeDecl => { return generateComponentsForTypeSignature[recursive](tdecl.valuetype.tkeystr, epath, esteps, constraints, assembly); }
+            Assembly::TypedeclBoundedTypeDecl => { return generateComponentsForTypeSignature[recursive](tdecl.valuetype.tkeystr, epath, esteps, constraints, assembly); }
+            Assembly::TypedeclCStringTypeDecl => {
+                if($rch = $tdecl.rechk)@none {
+                    return generateComponentsForTypeSignature[recursive](tdecl.valuetype.tkeystr, epath, esteps, constraints, assembly);
+                }
+                else {
+                    let cregex = assembly.cregexps.find(pred(cre) => cre.regexID == $rch);
+                    let rexp = String::fromByteBuffer(cregex.cppregex).@some;
+                
+                    let formatstr = String::concat("'(", rexp, ")'");
+                    return List<PrimitiveComponent>{ PrimitiveComponent{ tdecl.tkey, formatstr, path, steps, constraints } };
+                }
+            }
+            Assembly::TypedeclStringTypeDecl => { 
+                if($rch = $tdecl.rechk)@none {
+                    return generateComponentsForTypeSignature[recursive](tdecl.valuetype.tkeystr, epath, esteps, constraints, assembly);
+                }
+                else {
+                    let uregex = assembly.uregexps.find(pred(ure) => ure.regexID == $rch);
+                    let rexp = String::fromByteBuffer(uregex.cppregex).@some;
+                
+                    let formatstr = String::concat("%;(", rexp, ")%;");
+                    return List<PrimitiveComponent>{ PrimitiveComponent{ tdecl.tkey, formatstr, path, steps, constraints } };
+                }
+            }
+        }
     }
 
     recursive function generateComponentsForNominalTypeSignature(tsig: Assembly::NominalTypeSignature, path: ComponentPath, steps: List<CString>, constraints: List<ComponentConstraint>, assembly: Assembly::BapiAssembly): List<PrimitiveComponent> {

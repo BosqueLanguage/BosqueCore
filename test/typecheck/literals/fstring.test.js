@@ -19,3 +19,18 @@ describe ("Checker -- FCString", () => {
     });
 });
 
+describe ("Checker -- FString", () => {
+    it("should check simple fstrings", function () {
+        checkTestExp('$"${0}"', "FString<String, String>");
+        checkTestExp('$"${0}-${1}"', "FString<String, String, String>");
+        checkTestExp('$"${0: String}-${0}"', "FString<String, String>");
+
+        checkTestExp('$"ok ${arg}"', "FString<String, arg: String>");
+        checkTestExp('$"ok ${arg: String}+${arg}"', "FString<String, arg: String>");
+    });
+
+    it("should fail duplicate names/bad count", function () {
+        checkTestExpError('$"${0}-${1}"', "FString<String, String>", "Inferred format string type FString<String, String> does not have all the required argument indexes");
+        checkTestExpError('$"${a}-${b}"', "FString<String, a: String, a: String>", "Format string literal uses names not found in inferred type FString<String, a: String, a: String>");
+    });
+});

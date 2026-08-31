@@ -1658,8 +1658,8 @@ class IRAssembly {
 
     toBAPI(): string {
         const stuff = [
-            ('List<Assembly::CRegex>{\n        ' + this.cregexps.map((cr) => cr.emitBAPI()).join(",\n        ") + '\n    }'),
-            ('List<Assembly::URegex>{\n        ' + this.uregexps.map((ur) => ur.emitBAPI()).join(",\n        ") + '\n    }'),
+            ('List<Assembly::CRegexDecl>{\n        ' + this.cregexps.map((cr) => cr.emitBAPI()).join(",\n        ") + '\n    }'),
+            ('List<Assembly::URegexDecl>{\n        ' + this.uregexps.map((ur) => ur.emitBAPI()).join(",\n        ") + '\n    }'),
             
             //this.constants.map((c) => c.toBAPI()).join(","),
             
@@ -1724,11 +1724,11 @@ class IRAssembly {
         lexer.consumeToken(); //Assembly::BapiAssembly
         lexer.ensureAndConsumeSymbol("{");
 
-        lexer.ensureAndConsumeSymbol("List<Assembly::CRegex>");
+        lexer.ensureAndConsumeSymbol("List<Assembly::CRegexDecl>");
         irasm.cregexps.push(...parseListOf<IRCRegex>(lexer, '{', '}', ',', IRCRegex.parseBAPI));
         lexer.ensureAndConsumeSymbol(",");
 
-        lexer.ensureAndConsumeSymbol("List<Assembly::URegex>");
+        lexer.ensureAndConsumeSymbol("List<Assembly::URegexDecl>");
         irasm.uregexps.push(...parseListOf<IRURegex>(lexer, '{', '}', ',', IRURegex.parseBAPI));
         lexer.ensureAndConsumeSymbol(",");
 

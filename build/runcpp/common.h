@@ -31,6 +31,10 @@
 
 #include <sys/mman.h> //mmap
 
+//Boost dependencies
+#include <boost/regex.hpp>
+#include <boost/regex/icu.hpp>
+
 //Only for diagnostics
 #include <assert.h>
 #include <iostream>

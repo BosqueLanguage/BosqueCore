@@ -11,8 +11,9 @@ BUILD := unittests
 
 CPPFLAGS_OPT.unittests=-Og -g -ggdb -DRB_INVARIANT_VALIDATE
 CPPFLAGS_STD=-Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable -Wuninitialized -Werror -std=gnu++23 -fno-omit-frame-pointer -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-stack-protector
-        
 CPPFLAGS=${CPPFLAGS_OPT.${BUILD}} ${CPPFLAGS_STD}
+
+LINKAGE=-lboost_regex -licuuc -licui18n -licudata
 
 HEADERS=$(wildcard $(SRC_DIR)*.h) $(wildcard $(CORE_SRC_DIR)*.h) $(wildcard $(RUNTIME_SRC_DIR)*.h) $(wildcard $(ALLOC_SRC_DIR)*.h) $(wildcard $(BSQIR_SRC_DIR)*.h)
 CPP=$(wildcard $(SRC_DIR)*.cpp) $(wildcard $(CORE_SRC_DIR)*.cpp) $(wildcard $(RUNTIME_SRC_DIR)*.cpp) $(wildcard $(ALLOC_SRC_DIR)*.cpp) $(wildcard $(BSQIR_SRC_DIR)*.cpp)
@@ -24,43 +25,43 @@ all: $(OBJ)
 
 $(OUT_OBJ)common.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
-	g++ $(CPPFLAGS) -o $(OUT_OBJ)common.o -c $(SRC_DIR)common.cpp
+	g++ $(CPPFLAGS) -o $(OUT_OBJ)common.o -c $(SRC_DIR)common.cpp $(LINKAGE)
 
 $(OUT_OBJ)strings.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
-	g++ $(CPPFLAGS) -o $(OUT_OBJ)strings.o -c $(CORE_SRC_DIR)strings.cpp
+	g++ $(CPPFLAGS) -o $(OUT_OBJ)strings.o -c $(CORE_SRC_DIR)strings.cpp $(LINKAGE)
 
 $(OUT_OBJ)bytebuff.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
-	g++ $(CPPFLAGS) -o $(OUT_OBJ)bytebuff.o -c $(CORE_SRC_DIR)bytebuff.cpp
+	g++ $(CPPFLAGS) -o $(OUT_OBJ)bytebuff.o -c $(CORE_SRC_DIR)bytebuff.cpp $(LINKAGE)
 
 $(OUT_OBJ)memstats.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
-	g++ $(CPPFLAGS) -o $(OUT_OBJ)memstats.o -c $(ALLOC_SRC_DIR)memstats.cpp
+	g++ $(CPPFLAGS) -o $(OUT_OBJ)memstats.o -c $(ALLOC_SRC_DIR)memstats.cpp $(LINKAGE)
 
 $(OUT_OBJ)gc_validation.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
-	g++ $(CPPFLAGS) -o $(OUT_OBJ)gc_validation.o -c $(ALLOC_SRC_DIR)gc_validation.cpp
+	g++ $(CPPFLAGS) -o $(OUT_OBJ)gc_validation.o -c $(ALLOC_SRC_DIR)gc_validation.cpp $(LINKAGE)
 
 $(OUT_OBJ)alloc.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
-	g++ $(CPPFLAGS) -o $(OUT_OBJ)alloc.o -c $(ALLOC_SRC_DIR)alloc.cpp
+	g++ $(CPPFLAGS) -o $(OUT_OBJ)alloc.o -c $(ALLOC_SRC_DIR)alloc.cpp $(LINKAGE)
 
 $(OUT_OBJ)gc.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
-	g++ $(CPPFLAGS) -o $(OUT_OBJ)gc.o -c $(ALLOC_SRC_DIR)gc.cpp
+	g++ $(CPPFLAGS) -o $(OUT_OBJ)gc.o -c $(ALLOC_SRC_DIR)gc.cpp $(LINKAGE)
 
 $(OUT_OBJ)emit.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
-	g++ $(CPPFLAGS) -o $(OUT_OBJ)emit.o -c $(BSQIR_SRC_DIR)emit.cpp
+	g++ $(CPPFLAGS) -o $(OUT_OBJ)emit.o -c $(BSQIR_SRC_DIR)emit.cpp $(LINKAGE)
 
 $(OUT_OBJ)lexer.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
-	g++ $(CPPFLAGS) -o $(OUT_OBJ)lexer.o -c $(BSQIR_SRC_DIR)lexer.cpp
+	g++ $(CPPFLAGS) -o $(OUT_OBJ)lexer.o -c $(BSQIR_SRC_DIR)lexer.cpp $(LINKAGE)
 
 $(OUT_OBJ)parser.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
-	g++ $(CPPFLAGS) -o $(OUT_OBJ)parser.o -c $(BSQIR_SRC_DIR)parser.cpp
+	g++ $(CPPFLAGS) -o $(OUT_OBJ)parser.o -c $(BSQIR_SRC_DIR)parser.cpp $(LINKAGE)
 
 clean:
 	rm -rf $(OUT_OBJ)

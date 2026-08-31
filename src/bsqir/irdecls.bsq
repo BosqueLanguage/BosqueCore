@@ -30,7 +30,7 @@ entity SourceInfo {
     field column: Nat;
 }
 
-entity CRegex
+entity CRegexDecl
 {
     field regexID: Nat;
 
@@ -40,7 +40,7 @@ entity CRegex
     field cppregex: ByteBuffer;
 }
 
-entity URegex
+entity URegexDecl
 {
     field regexID: Nat;
 

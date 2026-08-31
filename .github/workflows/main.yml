@@ -18,6 +18,8 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '22'
+    - name: Install Dependencies
+      run: sudo apt-get install -y libboost-all-dev
     - name: Install
       run: npm install
     - name: Run Tests

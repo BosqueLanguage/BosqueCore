@@ -92,7 +92,7 @@ function generateNominalTypeSignatureContext(tsig: Assembly::NominalTypeSignatur
 }
 
 function generateEListTypeSignatureContext(tsig: Assembly::EListTypeSignature, assembly: Assembly::BapiAssembly): String {
-    let elems = String::joinAll(", ", tsig.entries.map(fn(entry) => String::fromCString(entry.tkeystr.value)));
+    let elems = String::joinAll(", ", tsig.entries.map<String>(fn(entry) => String::fromCString(entry.tkeystr.value)));
     return Interpolate::string($"(|${0}|)", elems);
 }
 

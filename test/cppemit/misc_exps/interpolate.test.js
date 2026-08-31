@@ -14,3 +14,13 @@ describe ("CPPEmit -- interpolate cstring", () => {
     });
 });
 
+describe ("CPPEmit -- interpolate string", () => {
+    it("should emit simple interpolate string", function () {
+        checkTestEmitMainFunction('public function main(): String { return Interpolate::string($"-${0}-", "a"); }', 'String Mainᕒmain() { return ᐸRuntimeᐳ::XFString::interpolate<1>(ᐸRuntimeᐳ::XFString{0}.fcid, { U"a"_us }); }');
+        checkTestEmitMainFunction('public function main(): String { return Interpolate::string($"${0}-${1}", "a", "b"); }', 'String Mainᕒmain() { return ᐸRuntimeᐳ::XFString::interpolate<2>(ᐸRuntimeᐳ::XFString{0}.fcid, { U"a"_us, U"b"_us }); }');
+
+        checkTestEmitMainFunction('public function main(): String { return Interpolate::string<String>($"${0}-${0}", "a"); }', 'String Mainᕒmain() { return ᐸRuntimeᐳ::XFString::interpolate<1>(ᐸRuntimeᐳ::XFString{0}.fcid, { U"a"_us }); }');
+        checkTestEmitMainFunction('public function main(): String { return Interpolate::string<String>($"${arg2}-${arg1}", arg1 = "a", arg2 = "b"); }', 'String Mainᕒmain() { return ᐸRuntimeᐳ::XFString::interpolate<2>(ᐸRuntimeᐳ::XFString{0}.fcid, { U"a"_us, U"b"_us }); }');
+        checkTestEmitMainFunction('public function main(): String { return Interpolate::string<String>($"${arg1}-${arg1}", arg1 = "a"); }', 'String Mainᕒmain() { return ᐸRuntimeᐳ::XFString::interpolate<1>(ᐸRuntimeᐳ::XFString{0}.fcid, { U"a"_us }); }');
+    });
+});

@@ -456,9 +456,9 @@ namespace ᐸRuntimeᐳ
         friend XBool operator<=(const XCString& lhs, const XCString& rhs) { return !(lhs > rhs); }
         friend XBool operator>=(const XCString& lhs, const XCString& rhs) { return !(lhs < rhs); }
 
-        static void checkFormat(XCString s, const std::basic_regex<char>& re, const char* file, uint32_t line)
+        static void checkFormat(XCString s, const boost::regex& re, const char* file, uint32_t line)
         {
-            if(!std::regex_match(s.begin(), s.end(), re)) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "CString does not match format"); }
+            if(!boost::regex_match(s.begin(), s.end(), re)) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "CString does not match format"); }
         }
 
         static void checkSizeMin(XCString s, int64_t min, const char* file, uint32_t line)
@@ -1025,9 +1025,10 @@ namespace ᐸRuntimeᐳ
         friend XBool operator<=(const XString& lhs, const XString& rhs) { return !(lhs > rhs); }
         friend XBool operator>=(const XString& lhs, const XString& rhs) { return !(lhs < rhs); }
 
-        static void checkFormat(XString s, const std::basic_regex<char32_t>& re, const char* file, uint32_t line)
+        static void checkFormat(XString s, const boost::u32regex& re, const char* file, uint32_t line)
         {
-            if(!std::regex_match(s.begin(), s.end(), re)) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "String does not match format"); }
+            //TODO: we depend on C++ regexs. This might be a problem with unicode strings -- or maybe works ok with char32_t -- we need to check on this
+            if(!boost::regex_match(s.begin(), s.end(), re)) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "String does not match format"); }
         }
 
         static void checkSizeMin(XString s, int64_t min, const char* file, uint32_t line)

@@ -4,6 +4,12 @@ declare namespace Tecton {
 }
 
 public function main(asm: Assembly::BapiAssembly, gentype: Assembly::TypeKey): List<PrimitiveComponent> {
+    %%TODO -- add typedeporder to assembly and use here
+    let typecontext = List<String>{
+        CodeContext::generateTypeSignatureContext('Int'<Assembly::TypeKey>, asm),
+        CodeContext::generateTypeSignatureContext('Main::Foo'<Assembly::TypeKey>, asm),
+    };
+
     let components = ComponentGenerator::generateComponentsForTypeSignature[recursive](gentype, ComponentPath::from('root'), List<CString>{'root'}, List<ComponentConstraint>{}, asm);
 
     return components;

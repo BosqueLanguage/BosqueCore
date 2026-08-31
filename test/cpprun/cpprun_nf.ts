@@ -61,7 +61,8 @@ function emitCommandLineMakefile(): string {
         '\n' +
         'OUT_OBJ=$(BUILD_DIR)output/obj/\n' +
         '\n' +
-        'CPPFLAGS=-Og -g -ggdb -DRB_INVARIANT_VALIDATE -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable -Wuninitialized -Werror -std=gnu++23 -fno-omit-frame-pointer -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-stack-protector\n' +
+        'CPPFLAGS=-Og -g -ggdb -DRB_INVARIANT_VALIDATE -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable -Wuninitialized -Werror -std=gnu++23 -fno-omit-frame-pointer -fno-exceptions -fno-rtti -fno-strict-aliasing\n' +
+        'LINKAGE=-lboost_regex -licuuc -licui18n -licudata\n' +
         '\n' +
         'HEADERS=$(wildcard $(SRC_DIR)*.h) $(wildcard $(CORE_SRC_DIR)*.h) $(wildcard $(RUNTIME_SRC_DIR)*.h) $(wildcard $(ALLOC_SRC_DIR)*.h) $(wildcard $(BSQIR_SRC_DIR)*.h)\n' +
         'OBJ=$(OUT_OBJ)common.o $(OUT_OBJ)strings.o $(OUT_OBJ)bytebuff.o $(OUT_OBJ)memstats.o $(OUT_OBJ)gc_validation.o $(OUT_OBJ)alloc.o $(OUT_OBJ)gc.o $(OUT_OBJ)emit.o $(OUT_OBJ)lexer.o $(OUT_OBJ)parser.o\n' +
@@ -69,7 +70,7 @@ function emitCommandLineMakefile(): string {
         '\n' +
         'all: $(MAKE_PATH)/app\n\n' +
         '$(MAKE_PATH)/app: $(HEADERS) $(OBJ) $(MAKE_PATH)/app.h $(MAKE_PATH)/app.cpp\n' +
-        '\tg++ $(CPPFLAGS) -o $(MAKE_PATH)/app $(OBJ) $(MAKE_PATH)/app.cpp\n'
+        '\tg++ $(CPPFLAGS) -o $(MAKE_PATH)/app $(OBJ) $(MAKE_PATH)/app.cpp $(LINKAGE)\n'
         ;
 }
 

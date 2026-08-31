@@ -16,3 +16,15 @@ describe ("Parser -- interpolate cstring", () => {
     });
 });
 
+describe ("Parser -- interpolate string", () => {
+    it("should parse simple interpolate string", function () {
+        parseTestExp('Interpolate::string($"-${1}-", "a")', undefined, "String");
+        parseTestExp('Interpolate::string($"${1}-${2}", "a", "b")', undefined, "String");
+
+        parseTestExp('Interpolate::string<String>($"${1}-${2}", "a", "b")', undefined, "String");
+    });
+
+    it("should fail empty", function () {
+        parseTestExpError("Interpolate::string()", "Interpolate expects the format string as the first (positional) argument", "String");
+    });
+});

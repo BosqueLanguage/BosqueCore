@@ -2252,7 +2252,7 @@ class IRInterpolateFormatStringExpression extends IRConstructExpression {
     readonly args: IRSimpleExpression[];
     
     constructor(fmtString: IRSimpleExpression, args: IRSimpleExpression[]) {
-        super(IRExpressionTag.IRInterpolateFormatCStringExpression, new IRNominalTypeSignature("String"));
+        super(IRExpressionTag.IRInterpolateFormatStringExpression, new IRNominalTypeSignature("String"));
         this.fmtString = fmtString;
         this.args = args;
     }

@@ -1,6 +1,13 @@
 #include "common.h"
 #include "runtime/taskinfo.h"
 
+namespace boost {
+    void throw_exception(const std::exception& e) {
+        //We should never be hitting this -- instead we need preconds in bosque to ensure safety
+        std::terminate();
+    }
+}
+
 namespace ᐸRuntimeᐳ
 {
     thread_local BosqueThreadLocalInfo tl_bosque_info;
