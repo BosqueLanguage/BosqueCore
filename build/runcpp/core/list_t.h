@@ -1206,6 +1206,142 @@ namespace ᐸRuntimeᐳ
 
             return curr;
         }
+
+        template<typename Iter>
+        static std::pair<Iter, Iter> wstrimHelper(bool dotrim, Iter start, Iter end)
+        {
+            if(!dotrim) {
+                return {start, end};
+            }
+
+            while(start != end && isTrimableWhitespace(*start)) {
+                ++start;
+            }
+
+            if(start == end) {
+                return {start, end};
+            }
+
+            --end;
+            while(isTrimableWhitespace(*end)) {
+                --end;
+            }
+            ++end;
+
+            return {start, end};
+        }
+
+        template<typename CharType, typename StrType, typename StrList>
+        static StrList splitStrsChar(const CharType& sep, const StrType& str, bool trim, bool dropempty)
+        {
+            StrList res{};
+
+            auto curr = str.begin();
+            auto end = str.end();
+    
+            bool extratail = false;
+            while(curr != end || extratail) {
+                auto next = std::find(curr, end, sep);
+                auto [a, b] = wstrimHelper(trim, curr, next);
+
+                if(a != b || !dropempty) {
+                    StrType part = StrType::mk(a, b, std::distance(a, b));
+                    res = res.pushBack(part);
+                }
+                curr = next;
+
+                if(curr != end) {
+                    ++curr;
+                    if(curr == end) {
+                        extratail = true; //"ab" with b should be ["a", ""] <-empty at end
+                    }
+                }
+            }
+
+            return res;
+        }
+
+        template<typename StrType, typename StrList>
+        static StrList splitStrsString(const StrType& str, const StrType& sep, bool trim, bool dropempty)
+        {
+            StrList res{};
+
+            auto sepsize = sep.size();
+            auto curr = sep.begin();
+            auto end = sep.end();
+
+            if(sepsize == 1) {
+                //faster to match single char
+                return splitStrsChar(*curr, str, trim, dropempty);
+            }
+
+            bool extratail = false;
+            while(curr != end || extratail) {
+                auto next = std::search(curr, end, sep.begin(), sep.end());
+                auto [a, b] = wstrimHelper(trim, curr, next);
+
+                if(a != b || !dropempty) {
+                    StrType part = StrType::mk(a, b, std::distance(a, b));
+                    res = res.pushBack(part);
+                }
+                curr = next;
+
+                if(curr != end) {
+                    if(sep.empty()) {
+                        ++curr;
+                    }
+                    else {
+                        for(size_t i = 0; i < sepsize; ++i) {
+                            ++curr;
+                        }
+                    }
+
+                    if(curr == end) {
+                        extratail = true; //"ab" with b should be ["a", ""] <-empty at end
+                    }
+                }
+            }
+
+            return res;
+        }
+
+        template<typename StrType, typename StrList, typename FnReMatchPosLen>
+        static StrList splitStrsRegex(const StrType& str, bool trim, bool dropempty, const FnReMatchPosLen& mfn)
+        {
+            StrList res{};
+
+            auto curr = str.begin();
+            auto end = str.end();
+
+            bool extratail = false;
+            while(curr != end || extratail) {
+                auto [next, matchlen] = mfn(curr, end);
+                auto [a, b] = wstrimHelper(trim, curr, next);
+
+                if(a != b || !dropempty) {
+                    StrType part = StrType::mk(a, b, std::distance(a, b));
+                    res = res.pushBack(part);
+                }
+                curr = next;
+
+                if(curr != end) {
+                    if(str.empty()) {
+                        ++curr;
+                    }
+                    else {
+                        for(size_t i = 0; i < matchlen; ++i) {
+                            ++curr;
+                        }
+                    }
+                }
+                
+                if(curr == end) {
+                    extratail = true; //"ab" with b should be ["a", ""] <-empty at end
+                }
+            }
+
+            return res;
+        }
     }
 
     inline bool gcIsListTInline(void** ptr) { return *((size_t*)ptr) < std::numeric_limits<uint32_t>::max(); }

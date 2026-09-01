@@ -8,13 +8,22 @@ namespace StringOps {
     function s_size(s: String): Nat = @string_size;
     function s_utf8bytes(s: String): Nat = @string_utf8bytes;
 
+    function s_startsWith<P: strpos>(s: String, prefix: P): Bool = @string_startswith;
+    function s_endsWith<P: strpos>(s: String, prefix: P): Bool = @string_endswith;
+
     function s_append(s1: String, s2: String): String = @string_append;
+
+    function s_split<P: strpos>(s: String, separator: P, trim: Bool, dropempty: Bool): List<String> = @string_split;
+    function s_trim(s: String, trimFront: Bool, trimBack: Bool): String = @string_trim;
 
     function s_toCString(s: String, out? result: CString): Bool = @string_to_cstring;
     function s_fromCString(s: CString): String = @string_from_cstring;
 
     function s_toByteBuffer(s: String): ByteBuffer = @string_to_bytebuffer;
     function s_fromByteBuffer(bb: ByteBuffer, out? result: String): Bool = @string_from_bytebuffer;
+
+    function s_toJSON(s: String): String = @string_to_json;
+    function s_fromJSON(s: String, out? result: String): Bool = @string_from_json;
 }
 #else
 #endif %% EXEC_LIBS

@@ -86,6 +86,36 @@ namespace ᐸRuntimeᐳ
         return XCString::mk(numbuf, static_cast<size_t>(written));
     }
 
+    XBool XCString::startsWith(const XCString& prefix)
+    {
+        xxxx;
+    }
+
+    XBool XCString::startsWith(const boost::regex& prefix)
+    {
+        xxxx;
+    }
+
+    XBool XCString::startsWith(XCChar prefix)
+    {
+        xxxx;
+    }
+
+    XBool XCString::endsWith(const XCString& suffix)
+    {
+        xxxx;
+    }
+
+    XBool XCString::endsWith(const boost::regex& suffix)
+    {
+        xxxx;
+    }
+
+    XBool XCString::endsWith(XCChar suffix)
+    {
+        xxxx;
+    }
+
     XByteBuffer XCString::toByteBuffer(const XCString& cstr)
     {
         if(cstr.empty()) {
@@ -177,6 +207,21 @@ namespace ᐸRuntimeᐳ
         }
     }
 
+    XCString XCString::trim(XBool front, XBool back)
+    {
+        xxxx;
+    }
+
+    XCString XCString::toJSONFormat(const XCString& cstr)
+    {
+        xxxx;
+    }
+
+    XBool XCString::fromJSONFormat(const XCString& cstr, XCString& result)
+    {
+        xxxx;
+    }
+
     void XString::diagnosticEmit(std::ostream& out, bool waddr) const
     {
         if(this->ustr.isInline()) {
@@ -255,6 +300,36 @@ namespace ᐸRuntimeᐳ
         char32_t numbuf32[64];
         std::transform(numbuf, numbuf + written, numbuf32, [](char c) { return static_cast<char32_t>(c); });
         return XString::mk(numbuf32, static_cast<size_t>(written));
+    }
+
+    XBool XString::startsWith(const XString& prefix)
+    {
+        xxxx;
+    }
+
+    XBool XString::startsWith(const boost::u32regex& prefix)
+    {
+        xxxx;
+    }
+
+    XBool XString::startsWith(XUnicodeChar prefix)
+    {
+        xxxx;
+    }
+
+    XBool XString::endsWith(const XString& suffix)
+    {
+        xxxx;
+    }
+
+    XBool XString::endsWith(const boost::u32regex& suffix)
+    {
+        xxxx;
+    }
+
+    XBool XString::endsWith(XUnicodeChar suffix)
+    {
+        xxxx;
     }
 
     XString XString::fromCString(const XCString& cstr)
@@ -437,6 +512,34 @@ namespace ᐸRuntimeᐳ
 
             return XString{StrRootTreeContent{PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>::append(lnode, rnode)}};
         }
+    }
+
+    XString XString::trim(XBool front, XBool back)
+    {
+        xxxx;
+    }
+
+    XString XString::toJSONFormat(const XString& str)
+    {
+        xxxx;
+    }
+
+    XBool XString::fromJSONFormat(const XString& str, XString& result)
+    {
+        xxxx;
+    }
+
+    std::string fromXCString(const ᐸRuntimeᐳ::XCString& xs)
+    {
+        std::string res;
+        res.reserve(xs.size());
+
+        for(auto iter = xs.begin(); iter != xs.end(); ++iter)
+        {
+            res.push_back(static_cast<char>(*iter));
+        }
+
+        return res;
     }
 
     std::string fromXString(const ᐸRuntimeᐳ::XString& xs)

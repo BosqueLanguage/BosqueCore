@@ -219,13 +219,17 @@ const CoreOnlyAttributes = [
     "__may_fail",
 
     "__keycomparable",
-    "__numeric"
+    "__numeric",
+
+    "__strpos",
+    "__cstrpos"
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
 const TermRestrictions = [
     "keytype",
     "numeric",
-    "equiv",
+    "strpos",
+    "cstrpos",
     "mergeable"
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 

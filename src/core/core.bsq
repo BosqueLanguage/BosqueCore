@@ -189,11 +189,11 @@ __internal __typedeclable __keycomparable entity Byte {
 }
 
 %** C-Style 8-bit ascii char. **%
-__internal __typedeclable __keycomparable entity CChar {
+__internal __typedeclable __keycomparable __cstrpos entity CChar {
 }
 
 %** 32-bit unicode character. **%
-__internal __typedeclable __keycomparable entity UnicodeChar { 
+__internal __typedeclable __keycomparable __strpos entity UnicodeChar { 
 }
 
 %** Primitive UUIDv4 value. **%
@@ -209,7 +209,7 @@ __internal __typedeclable __keycomparable entity SHAContentHash {
 }
 
 %** Primitive string value. **%
-__internal __typedeclable __keycomparable entity String {
+__internal __typedeclable __keycomparable __strpos entity String {
 #if STRIPPED_CORE
 #else
     %** Check if the string is empty **%
@@ -225,6 +225,14 @@ __internal __typedeclable __keycomparable entity String {
     %** Get size of String in bytes **%
     method utf8bytes(): Nat {
         return StringOps::s_utf8bytes(this);
+    }
+
+    method startsWith<P: strpos>(prefix: P): Bool {
+        return StringOps::s_startsWith<P>(this, prefix);
+    }
+
+    method endsWith<P: strpos>(prefix: P): Bool {
+        return StringOps::s_endsWith<P>(this, prefix);
     }
 
     %** Append other to this String **%
@@ -293,6 +301,21 @@ __internal __typedeclable __keycomparable entity String {
         }
     }
 
+    method trim(): String {
+        return StringOps::s_trim(this, true, true);
+    }
+
+    method trimFront(): String {
+        return StringOps::s_trim(this, true, false);
+    }
+    method trimBack(): String {
+        return StringOps::s_trim(this, false, true);
+    }
+
+    method split<P: strpos>(separator: P, trim: Bool = false, dropempty: Bool = false): List<String> {
+        return StringOps::s_split<P>(this, separator, trim, dropempty);
+    }
+
     function toCString(s: String): Option<CString> {
         var result: CString;
         if(StringOps::s_toCString(s, out? result)) {
@@ -322,11 +345,25 @@ __internal __typedeclable __keycomparable entity String {
             return none;
         }
     }
+
+    function toJSONFormat(s: String): String {
+        return StringOps::s_toJSON(s);
+    }
+
+    function fromJSONFormat(s: String): Option<String> {
+        var result: String;
+        if(StringOps::s_fromJSON(s, out? result)) {
+            return some(result);
+        }
+        else {
+            return none;
+        }
+    }
 #endif %% STRIPPED_CORE
 }
 
 %** Primitive string value. **%
-__internal __typedeclable __keycomparable entity CString {
+__internal __typedeclable __keycomparable __strpos entity CString {
 #if STRIPPED_CORE
 #else
     %** Check if the string is empty **%
@@ -337,6 +374,14 @@ __internal __typedeclable __keycomparable entity CString {
     %** Get size of CString **%
     method size(): Nat {
         return CStringOps::s_size(this);
+    }
+
+    method startsWith<P: cstrpos>(prefix: P): Bool {
+        return CStringOps::s_startsWith<P>(this, prefix);
+    }
+
+    method endsWith<P: cstrpos>(prefix: P): Bool {
+        return CStringOps::s_endsWith<P>(this, prefix);
     }
 
     %** Append other to this CString **%
@@ -405,6 +450,21 @@ __internal __typedeclable __keycomparable entity CString {
         }
     }
 
+    method trim(): CString {
+        return CStringOps::s_trim(this, true, true);
+    }
+
+    method trimFront(): CString {
+        return CStringOps::s_trim(this, true, false);
+    }
+    method trimBack(): CString {
+        return CStringOps::s_trim(this, false, true);
+    }
+
+    method split<P: cstrpos>(separator: P, trim: Bool = false, dropempty: Bool = false): List<CString> {
+        return CStringOps::s_split<P>(this, separator, trim, dropempty);
+    }
+
     function toByteBuffer(s: CString): ByteBuffer {
         return CStringOps::s_toByteBuffer(s);
     }
@@ -413,6 +473,20 @@ __internal __typedeclable __keycomparable entity CString {
     function fromByteBuffer(bb: ByteBuffer): Option<CString> {
         var result: CString;
         if(CStringOps::s_fromByteBuffer(bb, out? result)) {
+            return some(result);
+        }
+        else {
+            return none;
+        }
+    }
+
+    function toJSONFormat(s: CString): CString {
+        return CStringOps::s_toJSON(s);
+    }
+
+    function fromJSONFormat(s: CString): Option<CString> {
+        var result: CString;
+        if(CStringOps::s_fromJSON(s, out? result)) {
             return some(result);
         }
         else {
@@ -429,12 +503,12 @@ __internal __typedeclable entity ByteBuffer {
 }
 
 %** Primitive unicode regex value. **%
-__internal entity Regex {
+__internal __strpos entity Regex {
     function accepts(re: Regex, s: String): Bool = @regex_accepts;
 }
 
 %** Primitive unicode regex value. **%
-__internal entity CRegex {
+__internal __cstrpos entity CRegex {
     function accepts(re: CRegex, s: CString): Bool = @cregex_accepts;
 }
 

@@ -5,6 +5,7 @@
 #include "bsqtype.h"
 #include "postree.h"
 
+#include "chars.h"
 #include "bytebuff.h"
 
 namespace ᐸRuntimeᐳ
@@ -485,10 +486,23 @@ namespace ᐸRuntimeᐳ
         static XCString chkIntToCString(__int128_t value);
         static XCString floatToCString(double value);
 
+        XBool startsWith(const XCString& prefix);
+        XBool startsWith(const boost::regex& prefix);
+        XBool startsWith(XCChar prefix);
+
+        XBool endsWith(const XCString& suffix);
+        XBool endsWith(const boost::regex& suffix);
+        XBool endsWith(XCChar suffix);
+
         static XByteBuffer toByteBuffer(const XCString& cstr);
         static XBool fromByteBuffer(const XByteBuffer& buffer, XCString& result);
         
         XCString append(XCString other);
+
+        XCString trim(XBool front, XBool back);
+
+        static XCString toJSONFormat(const XCString& cstr);
+        static XBool fromJSONFormat(const XCString& cstr, XCString& result);
     };
 
     class XFCStringRepr 
@@ -1055,6 +1069,14 @@ namespace ᐸRuntimeᐳ
         static XString chkIntToString(__int128_t value);
         static XString floatToString(double value);
 
+        XBool startsWith(const XString& prefix);
+        XBool startsWith(const boost::u32regex& prefix);
+        XBool startsWith(XUnicodeChar prefix);
+
+        XBool endsWith(const XString& suffix);
+        XBool endsWith(const boost::u32regex& suffix);
+        XBool endsWith(XUnicodeChar suffix);
+
         static XString fromCString(const XCString& cstr);
         static XBool toCString(const XString& str, XCString& cstr);
 
@@ -1062,6 +1084,11 @@ namespace ᐸRuntimeᐳ
         static XBool fromByteBuffer(const XByteBuffer& buffer, XString& result);
 
         XString append(XString other);
+
+        XString trim(XBool front, XBool back);
+
+        static XString toJSONFormat(const XString& str);
+        static XBool fromJSONFormat(const XString& str, XString& result);
     };
 
     class XFStringRepr 
@@ -1152,6 +1179,6 @@ namespace ᐸRuntimeᐳ
         size_t regexid;
     };
 
-
+    std::string fromXCString(const ᐸRuntimeᐳ::XCString& xs);
     std::string fromXString(const ᐸRuntimeᐳ::XString& xs);
 }

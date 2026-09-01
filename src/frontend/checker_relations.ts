@@ -367,14 +367,28 @@ class TypeCheckerRelations {
         }
     }
 
-    isEquivType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
+    isStrPosType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         if(t instanceof NominalTypeSignature) {
             const oftype = (t.decl instanceof TypedeclTypeDecl) ? this.getTypeDeclValueType(t) : t;
-            return oftype !== undefined && (oftype instanceof NominalTypeSignature) && oftype.decl.isEquivRestricted();
+            return oftype !== undefined && (oftype instanceof NominalTypeSignature) && oftype.decl.isStrPosRestricted();
         }
         else if(t instanceof TemplateTypeSignature) {
             const tcs = tconstrain.resolveConstraint(t.name);
-            return tcs !== undefined && tcs.extraTags.includes(TemplateTermDeclExtraTag.Equiv);
+            return tcs !== undefined && tcs.extraTags.includes(TemplateTermDeclExtraTag.StrPos);
+        }
+        else {
+            return false;
+        }
+    }
+
+    isCStrPosType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
+        if(t instanceof NominalTypeSignature) {
+            const oftype = (t.decl instanceof TypedeclTypeDecl) ? this.getTypeDeclValueType(t) : t;
+            return oftype !== undefined && (oftype instanceof NominalTypeSignature) && oftype.decl.isCStrPosRestricted();
+        }
+        else if(t instanceof TemplateTypeSignature) {
+            const tcs = tconstrain.resolveConstraint(t.name);
+            return tcs !== undefined && tcs.extraTags.includes(TemplateTermDeclExtraTag.CStrPos);
         }
         else {
             return false;
