@@ -4,7 +4,7 @@ import * as path from "path";
 import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-import { CodeFileInfo, PackageConfig } from "../frontend/build_decls.js";
+import { CodeFileInfo, PackageConfig, PackageInfo } from "../frontend/build_decls.js";
 import { Assembly } from "../frontend/assembly.js";
 import { Parser, ParserError } from "../frontend/parser.js";
 import { TypeChecker, TypeError } from "../frontend/checker.js";
@@ -62,7 +62,39 @@ function workflowLoadAllSrc(files: string[]): CodeFileInfo[] | undefined {
     }
 }
 
-function parseArgv(dir: string, ...argv: string[]): [string[], string, string, boolean] {
+function workflowLoadPackageSrc(packagePaths: string[]): PackageInfo[] | undefined {
+    try {
+        let packages: PackageInfo[] = [];
+
+        for (let i = 0; i < packagePaths.length; ++i) {
+            const pkgpath = path.resolve(packagePaths[i]);
+            const packageconfig = JSON.parse(fs.readFileSync(path.join(pkgpath, "package.json")).toString());
+            
+            const pp = {
+                name: packageconfig.name as string, 
+                packagepath: pkgpath, 
+                bosquesrc: packageconfig.bosquesrc, 
+                hfiles: packageconfig.hfiles,
+                cppfiles: packageconfig.cppfiles,
+                buildlinks: packageconfig.buildlinks
+            };
+
+            packages.push(pp);
+        }
+
+        return packages;
+    }
+    catch (ex) {
+        Status.error(`Failed to load external package!\n`);
+        return undefined;
+    }
+}
+
+function isBsqSrcExtension(filename: string): boolean {
+    return filename.endsWith(".bsq") || filename.endsWith(".bsqtest");
+}
+
+function parseArgv(dir: string, ...argv: string[]): [string[], string, string, boolean, string[]] {
     let fullargs = argv.slice(2);
     if(fullargs.length === 0) {
         Status.error("No input files specified!\n");
@@ -90,7 +122,26 @@ function parseArgv(dir: string, ...argv: string[]): [string[], string, string, b
         fullargs = fullargs.slice(0, outdiridx).concat(fullargs.slice(outdiridx + 2));
     }
 
-    return [fullargs, mainns, outdir, emitir];
+    let bsqfiles: string[] = [];
+    let packages: string[] = [];
+    let i = 0;
+    while(i < fullargs.length) {
+        if(fullargs[i] === "--package" && i + 1 < fullargs.length) {
+            packages.push(fullargs[i + 1]);
+            i += 2;
+        }
+        else {
+            if(isBsqSrcExtension(fullargs[i])) {
+                bsqfiles.push(fullargs[i]);
+            }
+            else {
+                Status.error(`Unrecognized input file (skipping in compilation): ${fullargs[i]}\n`);
+            }
+            i++;
+        }
+    }
+
+    return [bsqfiles, mainns, outdir, emitir, packages];
 }
 
 function generateASMGeneral(usercode: PackageConfig, macrodefs: string[]): [Assembly | undefined, ParserError[], TypeError[]]{
@@ -133,16 +184,11 @@ function generateASMExec(usercode: PackageConfig): [Assembly | undefined, Parser
     return generateASMGeneral(usercode, ["EXEC_LIBS"]);
 }
 
-function generateASMSMT(usercode: PackageConfig): [Assembly | undefined, ParserError[], TypeError[]]{
-    // TODO: support for smt libraries in bosque (or perhaps unnecessary?)
-    return generateASMGeneral(usercode, []);
-}
-
 function getSimpleFilename(fn: string): string {
     return path.basename(fn);
 }
 
-function checkAssembly(srcfiles: string[], asmtype: "smt" | "cpp"): Assembly | undefined {
+function checkAssembly(srcfiles: string[]): Assembly | undefined {
     const lstart = Date.now();
     Status.output("Loading user sources...\n");
     const usersrcinfo = workflowLoadUserSrc(srcfiles);
@@ -154,9 +200,7 @@ function checkAssembly(srcfiles: string[], asmtype: "smt" | "cpp"): Assembly | u
     Status.output(`    User sources loaded [${(dend - lstart) / 1000}s]\n\n`);
 
     const userpackage = new PackageConfig([], usersrcinfo)
-    const [asm, perrors, terrors] = asmtype === "cpp"
-        ? generateASMExec(userpackage) 
-        : generateASMSMT(userpackage);
+    const [asm, perrors, terrors] = generateASMExec(userpackage);
 
     if(perrors.length === 0 && terrors.length === 0) {
         return asm;
@@ -182,7 +226,7 @@ function checkAssembly(srcfiles: string[], asmtype: "smt" | "cpp"): Assembly | u
 }
 
 export { 
-    workflowLoadUserSrc, workflowLoadCoreSrc, workflowLoadAllSrc, 
-    generateASMTest, generateASMExec, generateASMSMT, checkAssembly, 
+    workflowLoadUserSrc, workflowLoadCoreSrc, workflowLoadAllSrc, workflowLoadPackageSrc,
+    generateASMTest, generateASMExec, checkAssembly, 
     parseArgv
 };

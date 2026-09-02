@@ -5,16 +5,18 @@ import { execSync } from "child_process";
 import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-import { checkAssembly, parseArgv } from "./workflows.js";
+import { checkAssembly, parseArgv, workflowLoadPackageSrc } from "./workflows.js";
 import { Monomorphizer } from "../backend/asmprocess/monomorphize.js";
 import { ASMToIRConverter } from "../backend/asmprocess/flatten.js";
 import { CPPEmitter } from "../backend/ircemit/cppemit.js";
 import { Status } from "./status_output.js"
 import { IRAssembly } from "../backend/irdefs/irassembly.js";
+import { PackageInfo } from "../frontend/build_decls.js";
 
+const jsondir = path.join(__dirname, "../../json/");
 const runcppdir = path.join(__dirname, "../../runcpp/");
 
-const [fullargs, mainns, outdir, emitir] = parseArgv("cppout", ...process.argv);
+const [fullargs, mainns, outdir, emitir, packages] = parseArgv("cppout", ...process.argv);
 
 function buildExeCode(ircode: IRAssembly, outname: string) {
     Status.output("Emitting CPP code...\n");
@@ -41,16 +43,26 @@ function buildExeCode(ircode: IRAssembly, outname: string) {
     Status.output(`    Code generation successful -- CPP emitted to ${nndir}\n\n`);
 }
 
-function moveRuntimeFiles(buildlevel: "testing" | "release", outname: string) {
+function moveRuntimeFiles(buildlevel: "testing" | "release", outname: string, packageinfos: PackageInfo[]) {
     Status.output("    Copying CPP runtime support...\n");
     const nndir = path.normalize(outname);
 
+    if(packageinfos.length !== 0) {
+        //TODO: wire this feature in
+        Status.error("Packages detected, but this feature is not yet implemented!\n");
+        process.exit(1);
+    }
+
     const makefile = emitCommandLineMakefile(buildlevel);
     try {
-        const dstpath = path.join(nndir, "runcpp/");
+        const runjsonpath = path.join(nndir, "json/");
+        const runcppdstpath = path.join(nndir, "runcpp/");
+        
+        fs.mkdirSync(runjsonpath, {recursive: true});
+        execSync(`cp -R ${jsondir}* ${runjsonpath}`);
 
-        fs.mkdirSync(dstpath, {recursive: true});
-        execSync(`cp -R ${runcppdir}* ${dstpath}`);
+        fs.mkdirSync(runcppdstpath, {recursive: true});
+        execSync(`cp -R ${runcppdir}* ${runcppdstpath}`);
 
         fs.writeFileSync(path.join(nndir, "Makefile"), makefile);
     }
@@ -108,7 +120,14 @@ function emitAssemblyIR(ircode: IRAssembly, outname: string) {
 //////////////////////////////
 Status.enable();
 
-const asm = checkAssembly(fullargs, "cpp");
+const packageinfos = workflowLoadPackageSrc(packages);
+if(packageinfos === undefined) {
+    Status.error("Failed to load package information!\n");
+    process.exit(1);
+}
+
+const packagesrcs = packageinfos.flatMap(pkg => pkg.bosquesrc);
+const asm = checkAssembly([...fullargs, ...packagesrcs]);
 if(asm === undefined) {
     process.exit(1);
 }
@@ -129,6 +148,6 @@ if(emitir) {
 }
 
 buildExeCode(ircode, outdir);
-moveRuntimeFiles("testing", outdir);
+moveRuntimeFiles("testing", outdir, packageinfos);
 
 Status.output("All done!\n");

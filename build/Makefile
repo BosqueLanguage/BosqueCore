@@ -5,6 +5,8 @@ RUNTIME_SRC_DIR=$(SRC_DIR)runtime/
 ALLOC_SRC_DIR=$(RUNTIME_SRC_DIR)allocator/
 BSQIR_SRC_DIR=$(RUNTIME_SRC_DIR)bsqir/
 
+JSON_INCLUDES=-I $(MAKE_PATH)/json/
+
 OUT_OBJ=$(BUILD_DIR)output/obj/
 
 BUILD := unittests
@@ -25,43 +27,43 @@ all: $(OBJ)
 
 $(OUT_OBJ)common.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
-	g++ $(CPPFLAGS) -o $(OUT_OBJ)common.o -c $(SRC_DIR)common.cpp $(LINKAGE)
+	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)common.o -c $(SRC_DIR)common.cpp $(LINKAGE)
 
 $(OUT_OBJ)strings.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
-	g++ $(CPPFLAGS) -o $(OUT_OBJ)strings.o -c $(CORE_SRC_DIR)strings.cpp $(LINKAGE)
+	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)strings.o -c $(CORE_SRC_DIR)strings.cpp $(LINKAGE)
 
 $(OUT_OBJ)bytebuff.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
-	g++ $(CPPFLAGS) -o $(OUT_OBJ)bytebuff.o -c $(CORE_SRC_DIR)bytebuff.cpp $(LINKAGE)
+	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)bytebuff.o -c $(CORE_SRC_DIR)bytebuff.cpp $(LINKAGE)
 
 $(OUT_OBJ)memstats.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
-	g++ $(CPPFLAGS) -o $(OUT_OBJ)memstats.o -c $(ALLOC_SRC_DIR)memstats.cpp $(LINKAGE)
+	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)memstats.o -c $(ALLOC_SRC_DIR)memstats.cpp $(LINKAGE)
 
 $(OUT_OBJ)gc_validation.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
-	g++ $(CPPFLAGS) -o $(OUT_OBJ)gc_validation.o -c $(ALLOC_SRC_DIR)gc_validation.cpp $(LINKAGE)
+	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)gc_validation.o -c $(ALLOC_SRC_DIR)gc_validation.cpp $(LINKAGE)
 
 $(OUT_OBJ)alloc.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
-	g++ $(CPPFLAGS) -o $(OUT_OBJ)alloc.o -c $(ALLOC_SRC_DIR)alloc.cpp $(LINKAGE)
+	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)alloc.o -c $(ALLOC_SRC_DIR)alloc.cpp $(LINKAGE)
 
 $(OUT_OBJ)gc.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
-	g++ $(CPPFLAGS) -o $(OUT_OBJ)gc.o -c $(ALLOC_SRC_DIR)gc.cpp $(LINKAGE)
+	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)gc.o -c $(ALLOC_SRC_DIR)gc.cpp $(LINKAGE)
 
 $(OUT_OBJ)emit.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
-	g++ $(CPPFLAGS) -o $(OUT_OBJ)emit.o -c $(BSQIR_SRC_DIR)emit.cpp $(LINKAGE)
+	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)emit.o -c $(BSQIR_SRC_DIR)emit.cpp $(LINKAGE)
 
 $(OUT_OBJ)lexer.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
-	g++ $(CPPFLAGS) -o $(OUT_OBJ)lexer.o -c $(BSQIR_SRC_DIR)lexer.cpp $(LINKAGE)
+	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)lexer.o -c $(BSQIR_SRC_DIR)lexer.cpp $(LINKAGE)
 
 $(OUT_OBJ)parser.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
-	g++ $(CPPFLAGS) -o $(OUT_OBJ)parser.o -c $(BSQIR_SRC_DIR)parser.cpp $(LINKAGE)
+	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)parser.o -c $(BSQIR_SRC_DIR)parser.cpp $(LINKAGE)
 
 clean:
 	rm -rf $(OUT_OBJ)

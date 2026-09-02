@@ -59,6 +59,8 @@ function emitCommandLineMakefile(): string {
         'ALLOC_SRC_DIR=$(RUNTIME_SRC_DIR)allocator/\n' +
         'BSQIR_SRC_DIR=$(RUNTIME_SRC_DIR)bsqir/\n' +
         '\n' +
+        'JSON_INCLUDES=-I $(MAKE_PATH)/json/\n' +
+        '\n' +
         'OUT_OBJ=$(BUILD_DIR)output/obj/\n' +
         '\n' +
         'CPPFLAGS=-Og -g -ggdb -DRB_INVARIANT_VALIDATE -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable -Wuninitialized -Werror -std=gnu++23 -fno-omit-frame-pointer -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-stack-protector\n' +
@@ -70,7 +72,7 @@ function emitCommandLineMakefile(): string {
         '\n' +
         'all: $(MAKE_PATH)/app\n\n' +
         '$(MAKE_PATH)/app: $(HEADERS) $(OBJ) $(MAKE_PATH)/app.h $(MAKE_PATH)/app.cpp\n' +
-        '\tg++ $(CPPFLAGS) -o $(MAKE_PATH)/app $(OBJ) $(MAKE_PATH)/app.cpp $(LINKAGE)\n'
+        '\tg++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(MAKE_PATH)/app $(OBJ) $(MAKE_PATH)/app.cpp $(LINKAGE)\n'
         ;
 }
 
