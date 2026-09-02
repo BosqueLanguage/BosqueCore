@@ -37,6 +37,7 @@ process.stdout.write(`Copying resources...\n`);
 copyResourceDir("core/", "core/");
 copyResourceDir("samples/", "samples/");
 
+copyBuildResourceDir("json/", "json/");
 copyBuildResourceDir("runcpp/", "runcpp/");
 
 process.stdout.write(`done!\n`);

@@ -27,6 +27,15 @@ type CodeFileInfo = {
     contents: string
 };
 
+type PackageInfo = {
+    name: string, 
+    packagepath: string, 
+    bosquesrc: string[], 
+    hfiles: string[],
+    cppfiles: string[],
+    buildlinks: string[]
+};
+
 class CodeFormatter {
     private level: number;
 
@@ -89,5 +98,5 @@ class PackageConfig {
 export {
     BuildLevel, isBuildLevelEnabled,
     CodeFormatter,
-    SourceInfo, CodeFileInfo, PackageConfig,
+    SourceInfo, CodeFileInfo, PackageConfig, PackageInfo
 };
