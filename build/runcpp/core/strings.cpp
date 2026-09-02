@@ -263,10 +263,17 @@ namespace ᐸRuntimeᐳ
 
         if((bool)back) {
             --end;
-            while(isTrimableWhitespace(*end)) {
+            while(start != end && isTrimableWhitespace(*end)) {
                 --end;
             }
-            ++end;
+
+            if(start != end && !isTrimableWhitespace(*end)) {
+                ++end;
+            }
+        }
+
+        if(start == end) {
+            return XCString{};
         }
 
         if(start == this->begin() && end == this->end()) {
@@ -625,10 +632,17 @@ namespace ᐸRuntimeᐳ
 
         if((bool)back) {
             --end;
-            while(isTrimableWhitespace(*end)) {
+            while(start != end && isTrimableWhitespace(*end)) {
                 --end;
             }
-            ++end;
+
+            if(start != end && !isTrimableWhitespace(*end)) {
+                ++end;
+            }
+        }
+
+        if(start == end) {
+            return XString{};
         }
 
         if(start == this->begin() && end == this->end()) {
@@ -664,9 +678,8 @@ namespace ᐸRuntimeᐳ
             if(c < 0x80)
                 res.push_back(static_cast<char>(c));
             else {
-                size_t mbcc = multibyteCharCount(static_cast<uint8_t>(c));
                 std::array<uint8_t, 4> outbuff;
-                ucharToMultiByteEncoding(c, outbuff);
+                size_t mbcc = ucharToMultiByteEncoding(c, outbuff);
                 for(size_t i = 0; i < mbcc; ++i) {
                     res.push_back(static_cast<char>(outbuff[i]));
                 }
