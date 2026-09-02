@@ -18,20 +18,6 @@ namespace ᐸRuntimeᐳ
     template<> const TypeInfo* PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>::s_nodetypeinfo = &g_typeinfo_PosRBTreeNode_String;
     template<> thread_local GCAllocator<PosRBTreeNode<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE>>* PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>::s_nodeallocator = &PosRBTreeNode_String_allocator;
 
-    void XCString::diagnosticEmit(std::ostream& out, bool waddr) const
-    {
-        if(this->ucstr.isInline()) {
-            out << "'";
-            for(int64_t i = 0; i < this->ucstr.inlinecstr.data[0]; i++) {
-                out << this->ucstr.inlinecstr.data[i + 1];
-            }
-            out << "'";
-        }
-        else {
-            assert(false); // Not Implemented: diagnostic emit for non-inline strings
-        }
-    }
-
     XCString XCString::natToCString(int64_t value) {
         char numbuf[64];
         int written = std::snprintf(numbuf, sizeof(numbuf), "%llin", (long long int)value);
@@ -210,30 +196,6 @@ namespace ᐸRuntimeᐳ
     XCString XCString::trim(XBool front, XBool back)
     {
         xxxx;
-    }
-
-    XCString XCString::toJSONFormat(const XCString& cstr)
-    {
-        xxxx;
-    }
-
-    XBool XCString::fromJSONFormat(const XCString& cstr, XCString& result)
-    {
-        xxxx;
-    }
-
-    void XString::diagnosticEmit(std::ostream& out, bool waddr) const
-    {
-        if(this->ustr.isInline()) {
-            out << "\"";
-            for(int64_t i = 0; i < this->ustr.inlinestr.data[0]; i++) {
-                out << (char)this->ustr.inlinestr.data[i + 1];
-            }
-            out << "\"";
-        }
-        else {
-            assert(false); // Not Implemented: diagnostic emit for non-inline strings
-        }
     }
 
     XString XString::natToString(int64_t value) {
@@ -515,16 +477,6 @@ namespace ᐸRuntimeᐳ
     }
 
     XString XString::trim(XBool front, XBool back)
-    {
-        xxxx;
-    }
-
-    XString XString::toJSONFormat(const XString& str)
-    {
-        xxxx;
-    }
-
-    XBool XString::fromJSONFormat(const XString& str, XString& result)
     {
         xxxx;
     }

@@ -18,9 +18,6 @@ namespace CStringOps {
 
     function s_toByteBuffer(s: CString): ByteBuffer = @cstring_to_bytebuffer;
     function s_fromByteBuffer(bb: ByteBuffer, out? result: CString): Bool = @cstring_from_bytebuffer;
-
-    function s_toJSON(s: CString): CString = @cstring_to_json;
-    function s_fromJSON(s: CString, out? result: CString): Bool = @cstring_from_json;
 }
 #else
 #endif %% EXEC_LIBS

@@ -141,23 +141,6 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        template <typename Fn>
-        std::string toJSON(Fn pf) const
-        {
-            if(this->utree.empty()) {
-                return "null";
-            }
-            else {
-                return this->utree.toJSON(pf);
-            }
-        }
-
-        template <typename Fn>
-        void diagnosticEmit(std::ostream& out, const TypeInfo* ltype, Fn diagnosticEmitFn, bool waddr) const
-        {
-            this->utree.diagnosticEmit(out, ltype, diagnosticEmitFn, waddr);
-        }
-
         bool empty() const
         {
             return this->utree.empty();

@@ -345,20 +345,6 @@ __internal __typedeclable __keycomparable __strpos entity String {
             return none;
         }
     }
-
-    function toJSONFormat(s: String): String {
-        return StringOps::s_toJSON(s);
-    }
-
-    function fromJSONFormat(s: String): Option<String> {
-        var result: String;
-        if(StringOps::s_fromJSON(s, out? result)) {
-            return some(result);
-        }
-        else {
-            return none;
-        }
-    }
 #endif %% STRIPPED_CORE
 }
 
@@ -473,20 +459,6 @@ __internal __typedeclable __keycomparable __strpos entity CString {
     function fromByteBuffer(bb: ByteBuffer): Option<CString> {
         var result: CString;
         if(CStringOps::s_fromByteBuffer(bb, out? result)) {
-            return some(result);
-        }
-        else {
-            return none;
-        }
-    }
-
-    function toJSONFormat(s: CString): CString {
-        return CStringOps::s_toJSON(s);
-    }
-
-    function fromJSONFormat(s: CString): Option<CString> {
-        var result: CString;
-        if(CStringOps::s_fromJSON(s, out? result)) {
             return some(result);
         }
         else {

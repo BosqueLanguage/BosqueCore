@@ -386,16 +386,6 @@ namespace ᐸRuntimeᐳ
         out << "c\"" << char(c.value) << "\"";
     }
 
-    void DiagnosticsEmitter::emitCString(std::ostream& out, XCString s)
-    {
-        s.diagnosticEmit(out, true);
-    }
-        
-    void DiagnosticsEmitter::emitString(std::ostream& out, XString s)
-    {
-        s.diagnosticEmit(out, true);
-    }
-
     void DiagnosticsEmitter::emitByteBuffer(std::ostream& out, XByteBuffer buf)
     {
         assert(false); // Not Implemented: emitting ByteBuffer values

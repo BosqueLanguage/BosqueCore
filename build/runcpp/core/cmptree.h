@@ -31,22 +31,6 @@ namespace ᐸRuntimeᐳ
         {
             result.push_back(this->entry);
         }
-
-        template <typename Fn>
-        std::string toJSON(Fn pf) const
-        {
-            std::string result = "{color: " + std::string((this->color == RColor::Red) ? "Red" : "Black") + ", bheight: " + std::to_string(this->bheight) + ", data: [";
-            result += pf(this->entry);
-            result += "]}";
-            
-            return result;
-        }
-
-        template<typename Fn>
-        void diagnosticEmit(std::ostream& out, Fn diagnosticEmitFn, bool waddr) const
-        {
-            diagnosticEmitFn(out, this->entry, waddr);
-        }
     };
 
     template<typename K, typename V> class CmpRBTreeLeaf;
@@ -313,29 +297,9 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        template <typename Fn>
-        static std::string reprToJSON(const CmpRBNode<K, V>* node, Fn pf)
-        {
-            if(node == nullptr) {
-                return "null";
-            }
-            else {
-                const CmpRBNode<K, V>* ll = reprGetLeft(node);
-                const CmpRBNode<K, V>* rr = reprGetRight(node);
-                
-                return "{node: " + node->data.entry.toJSON(pf) + ", left: " + reprToJSON(ll, pf) + ", right: " + reprToJSON(rr, pf) + "}";
-            }
-        }
-
         void toValues(std::vector<XMapEntry<K, V>>& result) const
         {
             reprToValues(result, this->root);
-        }
-
-        template <typename Fn>
-        std::string toJSON(Fn pf) const
-        {
-            return reprToJSON(this->root, pf);
         }
 
 private:
@@ -721,31 +685,6 @@ private:
             }
         }
 
-        template <typename Fn>
-        static void recdiagnosticEmit(const CmpRBNode<K, V>* curr, std::ostream& out, Fn diagnosticEmitFn, bool waddr)
-        {
-            if(curr == nullptr) {
-                out << "()";
-                return;
-            }
-
-            if(waddr) {
-                out << "@" << curr;
-            }
-            out << "(";
-
-            if(isLeafType(curr)) {
-                curr->data.diagnosticEmit(out, diagnosticEmitFn, waddr);
-            }
-            else {
-                recdiagnosticEmit(reprGetLeft(curr), out, diagnosticEmitFn, waddr);
-                curr->data.diagnosticEmit(out, diagnosticEmitFn, waddr);
-                recdiagnosticEmit(reprGetRight(curr), out, diagnosticEmitFn, waddr);
-            }
-                
-            out << ")";
-        }
-
     public:
         bool empty() const
         {
@@ -815,14 +754,6 @@ private:
             BSQ_IF_ENABLED(RB_INVARIANT_VALIDATE, debugAssertInvariants(root, reprGetCount(this->root) + (this->has(key) ? 0 : 1))); //note this->root is never modified so we can test here (after the insert)
 
             return CmpRBTree<K, V, TreeID>{root};
-        }
-
-        template <typename Fn>
-        void diagnosticEmit(std::ostream& out, const TypeInfo* ltype, Fn diagnosticEmitFn, bool waddr) const
-        {
-            out << ltype->typekey << "{";
-            recdiagnosticEmit(this->root, out, diagnosticEmitFn, waddr);
-            out << "}";
         }
     };
 

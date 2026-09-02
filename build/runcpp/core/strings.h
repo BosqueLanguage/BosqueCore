@@ -478,8 +478,6 @@ namespace ᐸRuntimeᐳ
             if(max < s.size()) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "CString length above maximum"); }
         }
 
-        void diagnosticEmit(std::ostream& out, bool waddr) const;
-
         static XCString natToCString(int64_t value);
         static XCString intToCString(int64_t value);
         static XCString chkNatToCString(__int128_t value);
@@ -500,9 +498,6 @@ namespace ᐸRuntimeᐳ
         XCString append(XCString other);
 
         XCString trim(XBool front, XBool back);
-
-        static XCString toJSONFormat(const XCString& cstr);
-        static XBool fromJSONFormat(const XCString& cstr, XCString& result);
     };
 
     class XFCStringRepr 
@@ -1061,8 +1056,6 @@ namespace ᐸRuntimeᐳ
             if(max < s.size()) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "String length above maximum"); }
         }
 
-        void diagnosticEmit(std::ostream& out, bool waddr) const;
-
         static XString natToString(int64_t value);
         static XString intToString(int64_t value);
         static XString chkNatToString(__int128_t value);
@@ -1086,9 +1079,6 @@ namespace ᐸRuntimeᐳ
         XString append(XString other);
 
         XString trim(XBool front, XBool back);
-
-        static XString toJSONFormat(const XString& str);
-        static XBool fromJSONFormat(const XString& str, XString& result);
     };
 
     class XFStringRepr 

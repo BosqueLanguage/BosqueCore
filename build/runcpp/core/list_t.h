@@ -54,20 +54,6 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        template <typename Fn>
-        std::string toJSON(Fn pf) const
-        {
-            std::string result = "{count: " + std::to_string(this->count) + ", data: [";
-            for(size_t i = 0; i < this->count; i++) {
-                result += pf(this->data[i]);
-                if(i != this->count - 1) {
-                    result += ", ";
-                }
-            }
-            result += "]}";
-            return result;
-        }
-
         ListTInlineContent() : count{0}, data{} { ; } 
         ListTInlineContent(const ListTInlineContent& other) = default;
 
@@ -457,22 +443,6 @@ namespace ᐸRuntimeᐳ
                 }
                 result += "]";
                 return result;
-            }
-        }
-
-        template <typename Fn>
-        std::string toJSON(Fn pf) const
-        {
-            if(this->ulist.empty()) {
-                return "null";
-            }
-            else {
-                if(this->ulist.isInline()) {
-                    return this->ulist.inlinelist.toJSON(pf);
-                }
-                else {
-                    return this->ulist.treelist.postree.toJSON(pf);
-                }
             }
         }
 
@@ -1088,25 +1058,6 @@ namespace ᐸRuntimeᐳ
             }
             else {
                 return this->ulist.treelist.postree.template reduce<SafeSimpleFn>(acc, op);
-            }
-        }
-
-        template <typename Fn>
-        void diagnosticEmit(std::ostream& out, const TypeInfo* ltype, Fn diagnosticEmitFn, bool waddr) const
-        {
-            if(this->ulist.isInline()) {
-                out << ltype->typekey;
-                out << '{';
-                for(size_t i = 0; i < this->ulist.inlinelist.count; i++) {
-                    if(i != 0) {
-                        out << ", ";
-                    }
-                    diagnosticEmitFn(out, this->ulist.inlinelist.data[i], waddr);
-                }
-                out << '}';
-            }
-            else {
-                this->ulist.treelist.postree.diagnosticEmit(out, ltype, diagnosticEmitFn, waddr);
             }
         }
     };
