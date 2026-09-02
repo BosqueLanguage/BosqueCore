@@ -267,7 +267,7 @@ namespace ᐸRuntimeᐳ
                 --end;
             }
 
-            if(start != end && !isTrimableWhitespace(*end)) {
+            if(!isTrimableWhitespace(*end)) {
                 ++end;
             }
         }
@@ -636,7 +636,7 @@ namespace ᐸRuntimeᐳ
                 --end;
             }
 
-            if(start != end && !isTrimableWhitespace(*end)) {
+            if(!isTrimableWhitespace(*end)) {
                 ++end;
             }
         }

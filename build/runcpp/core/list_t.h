@@ -1313,8 +1313,18 @@ namespace ᐸRuntimeᐳ
                     auto cpos = curr;
                     ++curr;
 
-                    if(!dropempty || !isTrimableWhitespace(*cpos)) {
+                    if(!isTrimableWhitespace(*cpos)) {
                         res = res.pushBack(StrType::mk(cpos, curr, 1));
+                    }
+                    else {
+                        if(!dropempty) {
+                            if(trim) {
+                                res = res.pushBack(StrType{});
+                            }
+                            else {
+                                res = res.pushBack(StrType::mk(cpos, curr, 1));
+                            }
+                        }
                     }
                 }
                 else {
