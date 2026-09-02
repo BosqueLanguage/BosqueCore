@@ -3,15 +3,62 @@ declare namespace Tecton {
     using CodeContext;
 }
 
-public function main(asm: Assembly::BapiAssembly, gentype: Assembly::TypeKey): List<PrimitiveComponent> {
+const developerPrompt: String = "Act as an expert in API input space analysis for test input generation.
+
+Additional Context:
+- Input Space Partition: A systematic decomposition of the input domain into a set of non-overlapping subsets (partitions), where each subset represents a distinct subset of possible input values that can be tested independently to ensure comprehensive coverage of the input space.
+- Domain: The complete set of all possible input values for a specific variable or parameter, defined by its data type, format constraints, and acceptable value ranges.
+
+Assume the most likely domain-specific interpretation of the variable name and context.
+Strictly follow inferred semantics, excluding technically valid but unrealistic values.
+Inference Guidance (implicit, not rigid):
+- Consider the user provided path and the signature of the function under test to understand the intended semantics of the value. 
+- Prioritize values that reflect realistic usage while allowing for generic interpretations.
+- Cover variations in length, character composition, and edge cases. 
+
+Requirements:
+- Each value must represent a distinct, non-overlapping partition of the valid input values.
+- For each generated value, mentally walk through how it satisfies a different partition of the input space, and select examples accordingly.
+- You may silently reason through variable semantics, common formats, edge cases, and patterns before outputting the final list.
+
+Think step-by-step before giving your answer.
+Use a small but semantically diverse set of values. Assume that bugs can often be exposed by minimal input variations, in line with the small model hypothesis
+";
+
+const backgroundPrompt: FString<String, String> = $"The code under test consists of the following type definitions:
+${0}
+";
+
+const requestPrompt: FString<String, String, String, String, String> = $"The API that this value is being generated for has the following signature:
+${0}
+
+The value is on the path: 
+${1}
+with type:
+${2}
+
+After thinking carefully emit the final list of values that cover distinct partitions of the input space using the following format:
+List<${2}>{VALUE_1, ..., VALUE_K} where each value satisfies the format ${3}
+";
+
+public function main(asm: Assembly::BapiAssembly, gentype: Assembly::TypeKey): List<String> {
+    %%TODO -- fixup dummy main
+    let fsig = Interpolate::string($"main(root: ${0})", String::fromCString(gentype.value));
+
     %%TODO -- add typedeporder to assembly and use here
-    let typecontext = List<String>{
-        CodeContext::generateTypeSignatureContext('Int'<Assembly::TypeKey>, asm),
+    let typecontexts = List<String>{
+        CodeContext::generateTypeSignatureContext('Nat'<Assembly::TypeKey>, asm),
         CodeContext::generateTypeSignatureContext('Main::Foo'<Assembly::TypeKey>, asm),
     };
+    let context = String::joinAll("%n;%n;", typecontexts);
+    let background = Interpolate::string(Tecton::backgroundPrompt, context);
 
     let components = ComponentGenerator::generateComponentsForTypeSignature[recursive](gentype, ComponentPath::from('root'), List<CString>{'root'}, List<ComponentConstraint>{}, asm);
 
-    return components;
+    let prompts = components.map<String>(fn(pcomponent) => {
+        return Interpolate::string(Tecton::requestPrompt, fsig, String::fromCString(pcomponent.path.value), String::fromCString(pcomponent.oftype.value), pcomponent.format);
+    });
+
+    return prompts;
 }
 

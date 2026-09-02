@@ -4,6 +4,8 @@ import { Expression, BodyImplementation, ExpressionTag, AccessNamespaceConstantE
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls.js";
 
+import assert from "node:assert";
+
 const s_p62bit_safe = 4611686018427387903n;
 const s_p124bit_safe = s_p62bit_safe * s_p62bit_safe; 
 
@@ -24,7 +26,8 @@ const WELL_KNOWN_RESULT_EVENT_NAME = "$ofevent";
 enum TemplateTermDeclExtraTag {
     KeyType = "keytype",
     Numeric = "numeric",
-    Equiv = "equiv",
+    StrPos = "strpos",
+    CStrPos = "cstrpos",
     Mergeable = "mergeable"
 }
 
@@ -624,12 +627,16 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
         return this.attributes.find((attr) => attr.name === "__numeric") !== undefined;
     }
 
-    isEquivRestricted(): boolean {
-        return this.attributes.find((attr) => attr.name === "equiv") !== undefined;
+    isStrPosRestricted(): boolean {
+        return this.attributes.find((attr) => attr.name === "__strpos") !== undefined;
+    }
+
+    isCStrPosRestricted(): boolean {
+        return this.attributes.find((attr) => attr.name === "__cstrpos") !== undefined;
     }
 
     isMergeableRestricted(): boolean {
-        return this.attributes.find((attr) => attr.name === "mergeable") !== undefined;
+        assert(false); //TODO: this requires checking the presence of a merge operator
     }
 
     emitTerms(): string {

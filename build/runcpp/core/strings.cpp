@@ -18,20 +18,6 @@ namespace ᐸRuntimeᐳ
     template<> const TypeInfo* PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>::s_nodetypeinfo = &g_typeinfo_PosRBTreeNode_String;
     template<> thread_local GCAllocator<PosRBTreeNode<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE>>* PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>::s_nodeallocator = &PosRBTreeNode_String_allocator;
 
-    void XCString::diagnosticEmit(std::ostream& out, bool waddr) const
-    {
-        if(this->ucstr.isInline()) {
-            out << "'";
-            for(int64_t i = 0; i < this->ucstr.inlinecstr.data[0]; i++) {
-                out << this->ucstr.inlinecstr.data[i + 1];
-            }
-            out << "'";
-        }
-        else {
-            assert(false); // Not Implemented: diagnostic emit for non-inline strings
-        }
-    }
-
     XCString XCString::natToCString(int64_t value) {
         char numbuf[64];
         int written = std::snprintf(numbuf, sizeof(numbuf), "%llin", (long long int)value);
@@ -84,6 +70,85 @@ namespace ᐸRuntimeᐳ
         }
 
         return XCString::mk(numbuf, static_cast<size_t>(written));
+    }
+
+    XBool XCString::startsWith(const XCString& prefix) const
+    {
+        if(prefix.empty()) {
+            return XTRUE;
+        }
+
+        if(prefix.size() > this->size()) {
+            return XFALSE;
+        }
+
+        auto ii = this->begin();
+        auto jj = prefix.begin();
+        while(jj != prefix.end()) {
+            if(*ii != *jj) {
+                return XFALSE;
+            }
+            ++ii;
+            ++jj;
+        }
+
+        return XTRUE;
+    }
+
+    XBool XCString::startsWith(const boost::regex& prefix) const
+    {
+        bool match = boost::regex_search(this->begin(), this->end(), prefix, boost::match_continuous);
+        return XBool{match};
+    }
+
+    XBool XCString::startsWith(XCChar prefix) const
+    {
+        auto ii = this->begin();
+        if(ii == this->end()) {
+            return XFALSE;
+        }
+
+        return XBool{*ii == (char)prefix.value};
+    }
+
+    XBool XCString::endsWith(const XCString& suffix) const
+    {
+        if(suffix.empty()) {
+            return XTRUE;
+        }
+
+        if(suffix.size() > this->size()) {
+            return XFALSE;
+        }
+
+        auto ii = this->end();
+        auto jj = suffix.end();
+
+        while(jj != suffix.begin()) {
+            --ii;
+            --jj;
+            if(*ii != *jj) {
+                return XFALSE;
+            }
+        }
+
+        return XTRUE;
+    }
+
+    XBool XCString::endsWith(const boost::regex& suffix) const
+    {
+        assert(false); //TODO: Not implemented -- regex for endsWith
+    }
+
+    XBool XCString::endsWith(XCChar suffix) const
+    {
+        auto ii = this->end();
+        if(ii == this->begin()) {
+            return XFALSE;
+        }
+
+        --ii;
+        return XBool{*ii == (char)suffix.value};
     }
 
     XByteBuffer XCString::toByteBuffer(const XCString& cstr)
@@ -141,7 +206,7 @@ namespace ᐸRuntimeᐳ
         }
     }
 
-    XCString XCString::append(XCString other)
+    XCString XCString::append(XCString other) const
     {
         assert(!this->ucstr.empty());
         assert(!other.ucstr.empty());
@@ -153,7 +218,7 @@ namespace ᐸRuntimeᐳ
             else {
                 static_assert(CStrRootInlineContent::CSTR_MAX_SIZE * 2 <= CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, "If this changes then we need more complex logic like in list append");
                 
-                return XCString{CStrRootTreeContent{PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>::mkinitial_append(this->ucstr.inlinecstr.data.begin() + 1, this->ucstr.inlinecstr.data.begin() + 1 + this->ucstr.inlinecstr.data[0], other.ucstr.inlinecstr.data.begin() + 1, other.ucstr.inlinecstr.data.begin() + 1 + other.ucstr.inlinecstr.data[0])}};
+                return XCString{CStrRootTreeContent{PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>::mkinitial_append(this->ucstr.inlinecstr.data.begin() + 1, this->ucstr.inlinecstr.data.begin() + 1 + this->ucstr.inlinecstr.data[0], (const char*)other.ucstr.inlinecstr.data.begin() + 1, (const char*)other.ucstr.inlinecstr.data.begin() + 1 + other.ucstr.inlinecstr.data[0])}};
             }
         }
         else {
@@ -177,17 +242,46 @@ namespace ᐸRuntimeᐳ
         }
     }
 
-    void XString::diagnosticEmit(std::ostream& out, bool waddr) const
+    XCString XCString::trim(XBool front, XBool back) const
     {
-        if(this->ustr.isInline()) {
-            out << "\"";
-            for(int64_t i = 0; i < this->ustr.inlinestr.data[0]; i++) {
-                out << (char)this->ustr.inlinestr.data[i + 1];
+        if(this->empty()) {
+            return XCString{};
+        }
+
+        auto start = this->begin();
+        auto end = this->end();
+
+        if((bool)front) {
+            while(start != end && isTrimableWhitespace(*start)) {
+                ++start;
             }
-            out << "\"";
+        }
+
+        if(start == end) {
+            return XCString{};
+        }
+
+        if((bool)back) {
+            --end;
+            while(start != end && isTrimableWhitespace(*end)) {
+                --end;
+            }
+
+            if(!isTrimableWhitespace(*end)) {
+                ++end;
+            }
+        }
+
+        if(start == end) {
+            return XCString{};
+        }
+
+        if(start == this->begin() && end == this->end()) {
+            return *this;
         }
         else {
-            assert(false); // Not Implemented: diagnostic emit for non-inline strings
+            //TODO: this is expensive -- we want to 1) keep track of deleted whitespace and subtract here 2) implement an string split/slice so this is at least log time (NOT O(N))
+            return XCString::mk(start, end, std::distance(start, end));
         }
     }
 
@@ -255,6 +349,84 @@ namespace ᐸRuntimeᐳ
         char32_t numbuf32[64];
         std::transform(numbuf, numbuf + written, numbuf32, [](char c) { return static_cast<char32_t>(c); });
         return XString::mk(numbuf32, static_cast<size_t>(written));
+    }
+
+    XBool XString::startsWith(const XString& prefix) const
+    {
+        if(prefix.empty()) {
+            return XTRUE;
+        }
+
+        if(prefix.size() > this->size()) {
+            return XFALSE;
+        }
+
+        auto ii = this->begin();
+        auto jj = prefix.begin();
+        while(jj != prefix.end()) {
+            if(*ii != *jj) {
+                return XFALSE;
+            }
+            ++ii;
+            ++jj;
+        }
+
+        return XTRUE;
+    }
+
+    XBool XString::startsWith(const boost::u32regex& prefix) const
+    {
+        bool match = boost::u32regex_search(this->begin(), this->end(), prefix, boost::match_continuous);
+        return XBool{match};
+    }
+
+    XBool XString::startsWith(XUnicodeChar prefix) const
+    {
+        auto ii = this->begin();
+        if(ii == this->end()) {
+            return XFALSE;
+        }
+
+        return XBool{*ii == prefix.value};
+    }
+
+    XBool XString::endsWith(const XString& suffix) const
+    {
+        if(suffix.empty()) {
+            return XTRUE;
+        }
+
+        if(suffix.size() > this->size()) {
+            return XFALSE;
+        }
+
+        auto ii = this->end();
+        auto jj = suffix.end();
+        while(jj != suffix.begin()) {
+            --ii;
+            --jj;
+            if(*ii != *jj) {
+                return XFALSE;
+            }
+        }
+
+        return XTRUE;
+    }
+
+    XBool XString::endsWith(const boost::u32regex& suffix) const
+    {
+        assert(false); //TODO: Not implemented -- regex for endsWith
+    }
+
+    XBool XString::endsWith(XUnicodeChar suffix) const
+    {
+        auto ii = this->end();
+        if(ii == this->begin()) {
+            return XFALSE;
+        }
+
+        --ii;
+        return XBool{*ii == suffix.value};
     }
 
     XString XString::fromCString(const XCString& cstr)
@@ -403,7 +575,7 @@ namespace ᐸRuntimeᐳ
         }
     }
 
-    XString XString::append(XString other)
+    XString XString::append(XString other) const
     {
         assert(!this->ustr.empty());
         assert(!other.ustr.empty());
@@ -415,7 +587,7 @@ namespace ᐸRuntimeᐳ
             else {
                 static_assert(StrRootInlineContent::STR_MAX_SIZE * 2 <= StrRootTreeContent::STR_MAX_LEAF_SIZE, "If this changes then we need more complex logic like in list append");
                 
-                return XString{StrRootTreeContent{PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>::mkinitial_append(this->ustr.inlinestr.data.begin() + 1, this->ustr.inlinestr.data.begin() + 1 + this->ustr.inlinestr.data[0], other.ustr.inlinestr.data.begin() + 1, other.ustr.inlinestr.data.begin() + 1 + other.ustr.inlinestr.data[0])}};
+                return XString{StrRootTreeContent{PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>::mkinitial_append(this->ustr.inlinestr.data.begin() + 1, this->ustr.inlinestr.data.begin() + 1 + this->ustr.inlinestr.data[0], (const char32_t*)other.ustr.inlinestr.data.begin() + 1, (const char32_t*)other.ustr.inlinestr.data.begin() + 1 + other.ustr.inlinestr.data[0])}};
             }
         }
         else {
@@ -437,5 +609,83 @@ namespace ᐸRuntimeᐳ
 
             return XString{StrRootTreeContent{PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>::append(lnode, rnode)}};
         }
+    }
+
+    XString XString::trim(XBool front, XBool back) const
+    {
+        if(this->empty()) {
+            return XString{};
+        }
+
+        auto start = this->begin();
+        auto end = this->end();
+
+        if((bool)front) {
+            while(start != end && isTrimableWhitespace(*start)) {
+                ++start;
+            }
+        }
+
+        if(start == end) {
+            return XString{};
+        }
+
+        if((bool)back) {
+            --end;
+            while(start != end && isTrimableWhitespace(*end)) {
+                --end;
+            }
+
+            if(!isTrimableWhitespace(*end)) {
+                ++end;
+            }
+        }
+
+        if(start == end) {
+            return XString{};
+        }
+
+        if(start == this->begin() && end == this->end()) {
+            return *this;
+        }
+        else {
+            //TODO: this is expensive -- we want to 1) keep track of deleted whitespace and subtract here 2) implement an string split/slice so this is at least log time (NOT O(N))
+            return XString::mk(start, end, std::distance(start, end));
+        }
+    }
+
+    std::string fromXCString(const ᐸRuntimeᐳ::XCString& xs)
+    {
+        std::string res;
+        res.reserve(xs.size());
+
+        for(auto iter = xs.begin(); iter != xs.end(); ++iter)
+        {
+            res.push_back(static_cast<char>(*iter));
+        }
+
+        return res;
+    }
+
+    std::string fromXString(const ᐸRuntimeᐳ::XString& xs)
+    {
+        std::string res;
+        res.reserve(xs.size());
+
+        for(auto iter = xs.begin(); iter != xs.end(); ++iter)
+        {
+            char32_t c = *iter;
+            if(c < 0x80)
+                res.push_back(static_cast<char>(c));
+            else {
+                std::array<uint8_t, 4> outbuff;
+                size_t mbcc = ucharToMultiByteEncoding(c, outbuff);
+                for(size_t i = 0; i < mbcc; ++i) {
+                    res.push_back(static_cast<char>(outbuff[i]));
+                }
+            }
+        }
+
+        return res;
     }
 }

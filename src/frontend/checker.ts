@@ -630,8 +630,14 @@ class TypeChecker {
                         return false;
                     }
                 }
-                if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.Equiv)) {
-                    if(this.checkError(sinfo, !this.relations.isEquivType(targ, this.constraints), `Template argument ${tdecl.name} is not an equiv type`)) {                        return false;
+                if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.StrPos)) {
+                    if(this.checkError(sinfo, !this.relations.isStrPosType(targ, this.constraints), `Template argument ${tdecl.name} is not a strpos type`)) {
+                        return false;
+                    }
+                }
+                if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.CStrPos)) {
+                    if(this.checkError(sinfo, !this.relations.isCStrPosType(targ, this.constraints), `Template argument ${tdecl.name} is not a cstrpos type`)) {
+                        return false;
                     }
                 }
                 if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.Mergeable)) {
@@ -848,8 +854,13 @@ class TypeChecker {
                             return undefined;
                         }
                     }
-                    if(cc.extraTags.includes(TemplateTermDeclExtraTag.Equiv)) {
-                        if(this.checkError(sinfo, !this.relations.isEquivType(trefine, this.constraints), `Template argument ${cc.t.name} is not an equiv type`)) {
+                    if(cc.extraTags.includes(TemplateTermDeclExtraTag.StrPos)) {
+                        if(this.checkError(sinfo, !this.relations.isStrPosType(trefine, this.constraints), `Template argument ${cc.t.name} is not a strpos type`)) {
+                            return undefined;
+                        }
+                    }
+                    if(cc.extraTags.includes(TemplateTermDeclExtraTag.CStrPos)) {
+                        if(this.checkError(sinfo, !this.relations.isCStrPosType(trefine, this.constraints), `Template argument ${cc.t.name} is not a cstrpos type`)) {
                             return undefined;
                         }
                     }
@@ -891,8 +902,13 @@ class TypeChecker {
                         return undefined;
                     }
                 }
-                if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.Equiv)) {
-                    if(this.checkError(sinfo, !this.relations.isEquivType(targ, this.constraints), `Template argument ${tdecl.name} is not an equiv type`)) {
+                if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.StrPos)) {
+                    if(this.checkError(sinfo, !this.relations.isStrPosType(targ, this.constraints), `Template argument ${tdecl.name} is not a strpos type`)) {
+                        return undefined;
+                    }
+                }
+                if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.CStrPos)) {
+                    if(this.checkError(sinfo, !this.relations.isCStrPosType(targ, this.constraints), `Template argument ${tdecl.name} is not a cstrpos type`)) {
                         return undefined;
                     }
                 }
@@ -937,8 +953,13 @@ class TypeChecker {
                         return undefined;
                     }
                 }
-                if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.Equiv)) {
-                    if(this.checkError(sinfo, !this.relations.isEquivType(targ, this.constraints), `Template argument ${tdecl.name} is not an equiv type`)) {
+                if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.StrPos)) {
+                    if(this.checkError(sinfo, !this.relations.isStrPosType(targ, this.constraints), `Template argument ${tdecl.name} is not a strpos type`)) {
+                        return undefined;
+                    }
+                }
+                if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.CStrPos)) {
+                    if(this.checkError(sinfo, !this.relations.isCStrPosType(targ, this.constraints), `Template argument ${tdecl.name} is not a cstrpos type`)) {
                         return undefined;
                     }
                 }

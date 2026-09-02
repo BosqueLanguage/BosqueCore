@@ -334,6 +334,11 @@ namespace ᐸRuntimeᐳ
         return (c & 0x80) != 0;
     }
 
+    inline bool isTrimableWhitespace(char32_t c) {
+        //TODO: we don't really handle unicode whitespace -- need to investigate the expected behavior and update this function accordingly
+        return std::isspace(c);
+    }
+
     size_t multibyteCharCount(uint8_t c);
     size_t ucharToMultiByteEncoding(char32_t c, std::array<uint8_t, 4>& outbuff);
     char32_t multibyteToUChar(const std::array<uint8_t, 4>& inbuff, size_t bytecount);

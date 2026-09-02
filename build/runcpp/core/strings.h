@@ -5,6 +5,7 @@
 #include "bsqtype.h"
 #include "postree.h"
 
+#include "chars.h"
 #include "bytebuff.h"
 
 namespace ᐸRuntimeᐳ
@@ -477,18 +478,26 @@ namespace ᐸRuntimeᐳ
             if(max < s.size()) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "CString length above maximum"); }
         }
 
-        void diagnosticEmit(std::ostream& out, bool waddr) const;
-
         static XCString natToCString(int64_t value);
         static XCString intToCString(int64_t value);
         static XCString chkNatToCString(__int128_t value);
         static XCString chkIntToCString(__int128_t value);
         static XCString floatToCString(double value);
 
+        XBool startsWith(const XCString& prefix) const;
+        XBool startsWith(const boost::regex& prefix) const;
+        XBool startsWith(XCChar prefix) const;
+
+        XBool endsWith(const XCString& suffix) const;
+        XBool endsWith(const boost::regex& suffix) const;
+        XBool endsWith(XCChar suffix) const;
+
         static XByteBuffer toByteBuffer(const XCString& cstr);
         static XBool fromByteBuffer(const XByteBuffer& buffer, XCString& result);
         
-        XCString append(XCString other);
+        XCString append(XCString other) const;
+
+        XCString trim(XBool front, XBool back) const;
     };
 
     class XFCStringRepr 
@@ -1047,13 +1056,19 @@ namespace ᐸRuntimeᐳ
             if(max < s.size()) [[unlikely]] { ᐸRuntimeᐳ::bsq_handle_error(file, line, ᐸRuntimeᐳ::ErrorKind::UserInvariant, nullptr, "String length above maximum"); }
         }
 
-        void diagnosticEmit(std::ostream& out, bool waddr) const;
-
         static XString natToString(int64_t value);
         static XString intToString(int64_t value);
         static XString chkNatToString(__int128_t value);
         static XString chkIntToString(__int128_t value);
         static XString floatToString(double value);
+
+        XBool startsWith(const XString& prefix) const;
+        XBool startsWith(const boost::u32regex& prefix) const;
+        XBool startsWith(XUnicodeChar prefix) const;
+
+        XBool endsWith(const XString& suffix) const;
+        XBool endsWith(const boost::u32regex& suffix) const;
+        XBool endsWith(XUnicodeChar suffix) const;
 
         static XString fromCString(const XCString& cstr);
         static XBool toCString(const XString& str, XCString& cstr);
@@ -1061,7 +1076,9 @@ namespace ᐸRuntimeᐳ
         static XByteBuffer toByteBuffer(const XString& str);
         static XBool fromByteBuffer(const XByteBuffer& buffer, XString& result);
 
-        XString append(XString other);
+        XString append(XString other) const;
+
+        XString trim(XBool front, XBool back) const;
     };
 
     class XFStringRepr 
@@ -1151,4 +1168,7 @@ namespace ᐸRuntimeᐳ
     public:
         size_t regexid;
     };
+
+    std::string fromXCString(const ᐸRuntimeᐳ::XCString& xs);
+    std::string fromXString(const ᐸRuntimeᐳ::XString& xs);
 }

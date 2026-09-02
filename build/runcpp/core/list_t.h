@@ -54,20 +54,6 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        template <typename Fn>
-        std::string toJSON(Fn pf) const
-        {
-            std::string result = "{count: " + std::to_string(this->count) + ", data: [";
-            for(size_t i = 0; i < this->count; i++) {
-                result += pf(this->data[i]);
-                if(i != this->count - 1) {
-                    result += ", ";
-                }
-            }
-            result += "]}";
-            return result;
-        }
-
         ListTInlineContent() : count{0}, data{} { ; } 
         ListTInlineContent(const ListTInlineContent& other) = default;
 
@@ -457,22 +443,6 @@ namespace ᐸRuntimeᐳ
                 }
                 result += "]";
                 return result;
-            }
-        }
-
-        template <typename Fn>
-        std::string toJSON(Fn pf) const
-        {
-            if(this->ulist.empty()) {
-                return "null";
-            }
-            else {
-                if(this->ulist.isInline()) {
-                    return this->ulist.inlinelist.toJSON(pf);
-                }
-                else {
-                    return this->ulist.treelist.postree.toJSON(pf);
-                }
             }
         }
 
@@ -1090,25 +1060,6 @@ namespace ᐸRuntimeᐳ
                 return this->ulist.treelist.postree.template reduce<SafeSimpleFn>(acc, op);
             }
         }
-
-        template <typename Fn>
-        void diagnosticEmit(std::ostream& out, const TypeInfo* ltype, Fn diagnosticEmitFn, bool waddr) const
-        {
-            if(this->ulist.isInline()) {
-                out << ltype->typekey;
-                out << '{';
-                for(size_t i = 0; i < this->ulist.inlinelist.count; i++) {
-                    if(i != 0) {
-                        out << ", ";
-                    }
-                    diagnosticEmitFn(out, this->ulist.inlinelist.data[i], waddr);
-                }
-                out << '}';
-            }
-            else {
-                this->ulist.treelist.postree.diagnosticEmit(out, ltype, diagnosticEmitFn, waddr);
-            }
-        }
     };
 
     namespace XListOps 
@@ -1205,6 +1156,199 @@ namespace ᐸRuntimeᐳ
             }
 
             return curr;
+        }
+
+        template<typename Iter>
+        static std::pair<Iter, Iter> wstrimHelper(bool dotrim, Iter start, Iter end)
+        {
+            if(!dotrim) {
+                return {start, end};
+            }
+
+            while(start != end && isTrimableWhitespace(*start)) {
+                ++start;
+            }
+
+            if(start == end) {
+                return {start, end};
+            }
+
+            --end;
+            while(isTrimableWhitespace(*end)) {
+                --end;
+            }
+            ++end;
+
+            return {start, end};
+        }
+
+        template<typename CharType, typename StrType, typename StrList>
+        static StrList splitStrsChar(const StrType& str, const CharType& sep, bool trim, bool dropempty)
+        {
+            if(str.empty()) {
+                if(dropempty) {
+                    return StrList{};
+                }
+                else {
+                    return StrList{StrType{}};
+                }
+            }
+
+            StrList res{};
+
+            auto curr = str.begin();
+            auto end = str.end();
+    
+            while(curr != end) {
+                auto next = std::find(curr, end, sep.value);
+                auto [a, b] = wstrimHelper(trim, curr, next);
+
+                if(a != b || !dropempty) {
+                    StrType part = StrType::mk(a, b, std::distance(a, b));
+                    res = res.pushBack(part);
+                }
+                curr = next;
+
+                if(curr != end) {
+                    ++curr;
+                    if(curr == end && !dropempty) {
+                        res = res.pushBack(StrType{}); //"ab" with b should be ["a", ""] <-empty at end
+                    }
+                }
+            }
+
+            return res;
+        }
+
+        template<typename CharType, typename StrType, typename StrList>
+        static StrList splitStrsString(const StrType& str, const StrType& sep, bool trim, bool dropempty)
+        {
+            if(str.empty()) {
+                if(dropempty) {
+                    return StrList{};
+                }
+                else {
+                    return StrList{StrType{}};
+                }
+            }
+
+            auto sepsize = sep.size();
+            auto curr = str.begin();
+            auto end = str.end();
+
+            if(sep.size() == 0) {
+                StrList res{};
+                while(curr != end) {
+                    auto cpos = curr;
+                    ++curr;
+
+                    if(!isTrimableWhitespace(*cpos)) {
+                        res = res.pushBack(StrType::mk(cpos, curr, 1));
+                    }
+                    else {
+                        if(!dropempty) {
+                            if(trim) {
+                                res = res.pushBack(StrType{});
+                            }
+                            else {
+                                res = res.pushBack(StrType::mk(cpos, curr, 1));
+                            }
+                        }
+                    }
+                }
+                return res;
+            }
+            else if(sepsize == 1) {
+                //faster to match single char
+                return splitStrsChar<CharType, StrType, StrList>(str, CharType{*sep.begin()}, trim, dropempty);
+            }
+            else {
+                StrList res{};
+
+                while(curr != end) {
+                    auto next = std::search(curr, end, sep.begin(), sep.end());
+                    auto [a, b] = wstrimHelper(trim, curr, next);
+
+                    if(a != b || !dropempty) {
+                        StrType part = StrType::mk(a, b, std::distance(a, b));
+                        res = res.pushBack(part);
+                    }
+                    curr = next;
+
+                    if(curr != end) {
+                        for(int64_t i = 0; i < sepsize; ++i) {
+                            ++curr;
+                        }
+
+                        if(curr == end && !dropempty) {
+                            res = res.pushBack(StrType{}); //"ab" with b should be ["a", ""] <-empty at end
+                        }
+                    }
+                }
+
+                return res;
+            }
+        }
+
+        template<typename StrType, typename StrList, typename FnReMatchPosLen>
+        static StrList splitStrsRegex(const StrType& str, bool trim, bool dropempty, const FnReMatchPosLen& mfn)
+        {
+            if(str.empty()) {
+                if(dropempty) {
+                    return StrList{};
+                }
+                else {
+                    return StrList{StrType{}};
+                }
+            }
+
+            StrList res{};
+
+            auto curr = str.begin();
+            auto end = str.end();
+
+            while(curr != end) {
+                auto [next, matchlen] = mfn(curr, end);
+                if(next != end && matchlen == 0) {
+                    auto cpos = curr;
+                    ++curr;
+
+                    if(!isTrimableWhitespace(*cpos)) {
+                        res = res.pushBack(StrType::mk(cpos, curr, 1));
+                    }
+                    else {
+                        if(!dropempty) {
+                            if(trim) {
+                                res = res.pushBack(StrType{});
+                            }
+                            else {
+                                res = res.pushBack(StrType::mk(cpos, curr, 1));
+                            }
+                        }
+                    }
+                }
+                else {
+                    auto [a, b] = wstrimHelper(trim, curr, next);
+
+                    if(a != b || !dropempty) {
+                        StrType part = StrType::mk(a, b, std::distance(a, b));
+                        res = res.pushBack(part);
+                    }
+                    curr = next;
+
+                    if(curr != end) {
+                       for(size_t i = 0; i < matchlen; ++i) {
+                            ++curr;
+                        }
+                    }
+
+                    if(curr == end && matchlen != 0 && !dropempty) {
+                       res = res.pushBack(StrType{}); //"ab" with b should be ["a", ""] <-empty at end
+                    }
+                }
+            }
+
+            return res;
         }
     }
 

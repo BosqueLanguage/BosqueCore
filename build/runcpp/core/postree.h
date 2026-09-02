@@ -236,20 +236,6 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        template <typename Fn>
-        std::string toJSON(Fn pf) const
-        {
-            std::string result = "{color: " + std::string((this->color == RColor::Red) ? "Red" : "Black") + ", bheight: " + std::to_string(this->bheight) + ", data: [";
-            for(size_t i = 0; i < (size_t)this->dcount; i++) {
-                result += pf(this->data[i]);
-                if(i != (size_t)(this->dcount - 1)) {
-                    result += ", ";
-                }
-            }
-            result += "]}";
-            return result;
-        }
-
         bool contains(const T& v) const
         {
             return std::find_if(std::execution::unseq, this->data.cbegin(), this->data.cbegin() + this->dcount, [&v](const T& x){ return (bool)(x == v); }) != (this->data.cbegin() + this->dcount);
@@ -403,17 +389,6 @@ namespace ᐸRuntimeᐳ
             return std::accumulate(this->data.cbegin(), this->data.cbegin() + this->dcount, init, [&op](const T& a, const T& b) {
                 return op(a, b);
             });
-        }
-
-        template<typename Fn>
-        void diagnosticEmit(std::ostream& out, Fn diagnosticEmitFn, bool waddr) const
-        {
-            for(size_t i = 0; i < (size_t)this->dcount; i++) {
-                diagnosticEmitFn(out, this->data[i], waddr);
-                if(i != (size_t)(this->dcount - 1)) {
-                    out << ", ";
-                }
-            }
         }
     };
 
@@ -693,29 +668,9 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        template <typename Fn>
-        static std::string reprToJSON(const PosRBNode<T, K>* node, Fn pf)
-        {
-            if(node == nullptr) {
-                return "null";
-            }
-            else {
-                const PosRBNode<T, K>* ll = reprGetLeft(node);
-                const PosRBNode<T, K>* rr = reprGetRight(node);
-                
-                return "{node: " + node->data.toJSON(pf) + ", left: " + reprToJSON(ll, pf) + ", right: " + reprToJSON(rr, pf) + "}";
-            }
-        }
-
         void toValues(std::vector<T>& result) const
         {
             reprToValues(result, this->root);
-        }
-
-        template <typename Fn>
-        std::string toJSON(Fn pf) const
-        {
-            return reprToJSON(this->root, pf);
         }
 
 private:
@@ -2028,31 +1983,6 @@ private:
             }
         }
 
-        template <typename Fn>
-        static void recdiagnosticEmit(const PosRBNode<T, K>* curr, std::ostream& out, Fn diagnosticEmitFn, bool waddr)
-        {
-            if(curr == nullptr) {
-                out << "()";
-                return;
-            }
-
-            if(waddr) {
-                out << "@" << curr;
-            }
-            out << "(";
-
-            if(isLeafType(curr)) {
-                curr->data.diagnosticEmit(out, diagnosticEmitFn, waddr);
-            }
-            else {
-                recdiagnosticEmit(reprGetLeft(curr), out, diagnosticEmitFn, waddr);
-                curr->data.diagnosticEmit(out, diagnosticEmitFn, waddr);
-                recdiagnosticEmit(reprGetRight(curr), out, diagnosticEmitFn, waddr);
-            }
-                
-            out << ")";
-        }
-
     public:
         template <typename Iter>
         static PosRBNode<T, K>* mklargerec(Iter start, Iter end, size_t size)
@@ -2319,14 +2249,6 @@ private:
         static PosRBTree<T, K, TreeID> mkzip(const IterX& l1, const IterY& l2, int64_t count)
         {
             return PosRBTree<T, K, TreeID>{recmkzip(l1, l2, count)};
-        }
-
-        template <typename Fn>
-        void diagnosticEmit(std::ostream& out, const TypeInfo* ltype, Fn diagnosticEmitFn, bool waddr) const
-        {
-            out << ltype->typekey << "{";
-            recdiagnosticEmit(this->root, out, diagnosticEmitFn, waddr);
-            out << "}";
         }
     };
 
