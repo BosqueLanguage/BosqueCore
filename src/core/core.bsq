@@ -302,14 +302,30 @@ __internal __typedeclable __keycomparable __strpos entity String {
     }
 
     method trim(): String {
-        return StringOps::s_trim(this, true, true);
+        if(this.empty()) {
+            return "";
+        }
+        else {
+            return StringOps::s_trim(this, true, true);
+        }
     }
 
     method trimFront(): String {
-        return StringOps::s_trim(this, true, false);
+        if(this.empty()) {
+            return "";
+        }
+        else {
+            return StringOps::s_trim(this, true, false);
+        }
     }
+
     method trimBack(): String {
-        return StringOps::s_trim(this, false, true);
+        if(this.empty()) {
+            return "";
+        }
+        else {
+            return StringOps::s_trim(this, false, true);
+        }
     }
 
     method split<P: strpos>(separator: P, trim: Bool = false, dropempty: Bool = false): List<String> {
@@ -437,14 +453,30 @@ __internal __typedeclable __keycomparable __cstrpos entity CString {
     }
 
     method trim(): CString {
-        return CStringOps::s_trim(this, true, true);
+        if(this.empty()) {
+            return '';
+        }
+        else {
+            return CStringOps::s_trim(this, true, true);
+        }
     }
 
     method trimFront(): CString {
-        return CStringOps::s_trim(this, true, false);
+        if(this.empty()) {
+            return '';
+        }
+        else {
+            return CStringOps::s_trim(this, true, false);
+        }
     }
+
     method trimBack(): CString {
-        return CStringOps::s_trim(this, false, true);
+        if(this.empty()) {
+            return '';
+        }
+        else {
+            return CStringOps::s_trim(this, false, true);
+        }
     }
 
     method split<P: cstrpos>(separator: P, trim: Bool = false, dropempty: Bool = false): List<CString> {

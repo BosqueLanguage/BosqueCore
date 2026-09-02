@@ -1481,14 +1481,14 @@ class CPPEmitter {
             const intotype = body.biterms.find((bt) => bt[0] === "P") as [string, IRTypeSignature];
             const rtype = TransformCPPNameManager.convertTypeKey(invk.resultType.tkeystr);
             if(intotype[1].tkeystr === "CChar") {
-                bstr = `ᐸRuntimeᐳ::XListOps::splitStrsChar<CChar, CString, ${rtype}>(s, separator, (bool)trim, bool(dropempty))`;
+                bstr = `ᐸRuntimeᐳ::XListOps::splitStrsChar<ᐸRuntimeᐳ::XCChar, ᐸRuntimeᐳ::XCString, ${rtype}>(s, separator, (bool)trim, bool(dropempty))`;
             }
             else if(intotype[1].tkeystr === "CString") {
-                bstr = `ᐸRuntimeᐳ::XListOps::splitStrsString<CString, ${rtype}>(s, separator, (bool)trim, bool(dropempty))`;
+                bstr = `ᐸRuntimeᐳ::XListOps::splitStrsString<ᐸRuntimeᐳ::XCChar, ᐸRuntimeᐳ::XCString, ${rtype}>(s, separator, (bool)trim, bool(dropempty))`;
             }
             else {
-                const reop = "[](curr, end) { boost::match_results mm; return boost::regex_search(curr, end, mm, ᐸRuntimeᐳ::g_cregexs[separator.regexid]) ? std::make_pair(mm[0].first, std::distance(mm[0].first, mm[0].second)) : std::make_pair(end, 0); }";
-                bstr = `ᐸRuntimeᐳ::XListOps::splitStrsRegex<CString, ${rtype}>(s, (bool)trim, bool(dropempty), ${reop})`;
+                const reop = "[separator](auto curr, auto end) { boost::match_results<decltype(curr)> mm; return boost::regex_search(curr, end, mm, ᐸRuntimeᐳ::g_cregexs[separator.regexid]) ? std::make_pair(mm[0].first, (size_t)std::distance(mm[0].first, mm[0].second)) : std::make_pair(end, (size_t)0); }";
+                bstr = `ᐸRuntimeᐳ::XListOps::splitStrsRegex<ᐸRuntimeᐳ::XCString, ${rtype}>(s, (bool)trim, bool(dropempty), ${reop})`;
             }
         }
         else if(body.builtin === "cstring_trim") {
@@ -1536,14 +1536,14 @@ class CPPEmitter {
             const intotype = body.biterms.find((bt) => bt[0] === "P") as [string, IRTypeSignature];
             const rtype = TransformCPPNameManager.convertTypeKey(invk.resultType.tkeystr);
             if(intotype[1].tkeystr === "UnicodeChar") {
-                bstr = `ᐸRuntimeᐳ::XListOps::splitStrsChar<UnicodeChar, String, ${rtype}>(s, separator, (bool)trim, bool(dropempty))`;
+                bstr = `ᐸRuntimeᐳ::XListOps::splitStrsChar<ᐸRuntimeᐳ::XUnicodeChar, ᐸRuntimeᐳ::XString, ${rtype}>(s, separator, (bool)trim, bool(dropempty))`;
             }
             else if(intotype[1].tkeystr === "String") {
-                bstr = `ᐸRuntimeᐳ::XListOps::splitStrsString<String, ${rtype}>(s, separator, (bool)trim, bool(dropempty))`;
+                bstr = `ᐸRuntimeᐳ::XListOps::splitStrsString<ᐸRuntimeᐳ::XUnicodeChar, ᐸRuntimeᐳ::XString, ${rtype}>(s, separator, (bool)trim, bool(dropempty))`;
             }
             else {
-                const reop = "[](curr, end) { boost::match_results mm; return boost::u32regex_search(curr, end, mm, ᐸRuntimeᐳ::g_uregexs[separator.regexid]) ? std::make_pair(mm[0].first, std::distance(mm[0].first, mm[0].second)) : std::make_pair(end, 0); }";
-                bstr = `ᐸRuntimeᐳ::XListOps::splitStrsRegex<String, ${rtype}>(s, (bool)trim, bool(dropempty), ${reop})`;
+                const reop = "[separator](auto curr, auto end) { boost::match_results<decltype(curr)> mm; return boost::u32regex_search(curr, end, mm, ᐸRuntimeᐳ::g_uregexs[separator.regexid]) ? std::make_pair(mm[0].first, (size_t)std::distance(mm[0].first, mm[0].second)) : std::make_pair(end, (size_t)0); }";
+                bstr = `ᐸRuntimeᐳ::XListOps::splitStrsRegex<ᐸRuntimeᐳ::XString, ${rtype}>(s, (bool)trim, bool(dropempty), ${reop})`;
             }
         }
         else if(body.builtin === "string_trim") {

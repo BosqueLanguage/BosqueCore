@@ -483,7 +483,7 @@ namespace ᐸRuntimeᐳ
             return std::nullopt;
         }
 
-        return std::make_optional(XCChar{static_cast<uint64_t>(output)});
+        return std::make_optional(XCChar{output});
     }
 
     std::optional<XUnicodeChar> BSQONParser::parseUnicodeChar()
@@ -505,7 +505,7 @@ namespace ᐸRuntimeᐳ
             return std::nullopt;
         }
 
-        return std::make_optional(XUnicodeChar{static_cast<uint64_t>(output)});
+        return std::make_optional(XUnicodeChar{output});
     }
 
     std::optional<XCString> BSQONParser::parseCString()
