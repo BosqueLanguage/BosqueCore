@@ -484,20 +484,20 @@ namespace ᐸRuntimeᐳ
         static XCString chkIntToCString(__int128_t value);
         static XCString floatToCString(double value);
 
-        XBool startsWith(const XCString& prefix);
-        XBool startsWith(const boost::regex& prefix);
-        XBool startsWith(XCChar prefix);
+        XBool startsWith(const XCString& prefix) const;
+        XBool startsWith(const boost::regex& prefix) const;
+        XBool startsWith(XCChar prefix) const;
 
-        XBool endsWith(const XCString& suffix);
-        XBool endsWith(const boost::regex& suffix);
-        XBool endsWith(XCChar suffix);
+        XBool endsWith(const XCString& suffix) const;
+        XBool endsWith(const boost::regex& suffix) const;
+        XBool endsWith(XCChar suffix) const;
 
         static XByteBuffer toByteBuffer(const XCString& cstr);
         static XBool fromByteBuffer(const XByteBuffer& buffer, XCString& result);
         
-        XCString append(XCString other);
+        XCString append(XCString other) const;
 
-        XCString trim(XBool front, XBool back);
+        XCString trim(XBool front, XBool back) const;
     };
 
     class XFCStringRepr 
@@ -1062,13 +1062,13 @@ namespace ᐸRuntimeᐳ
         static XString chkIntToString(__int128_t value);
         static XString floatToString(double value);
 
-        XBool startsWith(const XString& prefix);
-        XBool startsWith(const boost::u32regex& prefix);
-        XBool startsWith(XUnicodeChar prefix);
+        XBool startsWith(const XString& prefix) const;
+        XBool startsWith(const boost::u32regex& prefix) const;
+        XBool startsWith(XUnicodeChar prefix) const;
 
-        XBool endsWith(const XString& suffix);
-        XBool endsWith(const boost::u32regex& suffix);
-        XBool endsWith(XUnicodeChar suffix);
+        XBool endsWith(const XString& suffix) const;
+        XBool endsWith(const boost::u32regex& suffix) const;
+        XBool endsWith(XUnicodeChar suffix) const;
 
         static XString fromCString(const XCString& cstr);
         static XBool toCString(const XString& str, XCString& cstr);
@@ -1076,9 +1076,9 @@ namespace ᐸRuntimeᐳ
         static XByteBuffer toByteBuffer(const XString& str);
         static XBool fromByteBuffer(const XByteBuffer& buffer, XString& result);
 
-        XString append(XString other);
+        XString append(XString other) const;
 
-        XString trim(XBool front, XBool back);
+        XString trim(XBool front, XBool back) const;
     };
 
     class XFStringRepr 

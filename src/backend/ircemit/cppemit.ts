@@ -1454,8 +1454,45 @@ class CPPEmitter {
         else if(body.builtin === "cstring_size") {
             bstr = "ᐸRuntimeᐳ::XNat{(int64_t)s.size()}";
         }
+        else if(body.builtin === "cstring_startswith") {
+            const intotype = body.biterms.find((bt) => bt[0] === "P") as [string, IRTypeSignature];
+            if(intotype[1].tkeystr === "CRegex") {
+                bstr = `s.startsWith(ᐸRuntimeᐳ::g_cregexs[prefix.regexid])`;
+            }
+            else {
+                //simple char and string
+                bstr = "s.startsWith(prefix)";
+            }
+        }
+        else if(body.builtin === "cstring_endswith") {
+            const intotype = body.biterms.find((bt) => bt[0] === "P") as [string, IRTypeSignature];
+            if(intotype[1].tkeystr === "CRegex") {
+                bstr = `s.endsWith(ᐸRuntimeᐳ::g_cregexs[suffix.regexid])`;
+            }
+            else {
+                //simple char and string
+                bstr = "s.endsWith(suffix)";
+            }
+        }
         else if(body.builtin === "cstring_append") {
             bstr = "s1.append(s2)";
+        }
+        else if(body.builtin === "cstring_split") {
+            const intotype = body.biterms.find((bt) => bt[0] === "P") as [string, IRTypeSignature];
+            const rtype = TransformCPPNameManager.convertTypeKey(invk.resultType.tkeystr);
+            if(intotype[1].tkeystr === "CChar") {
+                bstr = `ᐸRuntimeᐳ::XListOps::splitStrsChar<CChar, CString, ${rtype}>(s, separator, (bool)trim, bool(dropempty))`;
+            }
+            else if(intotype[1].tkeystr === "CString") {
+                bstr = `ᐸRuntimeᐳ::XListOps::splitStrsString<CString, ${rtype}>(s, separator, (bool)trim, bool(dropempty))`;
+            }
+            else {
+                const reop = "[](curr, end) { boost::match_results mm; return boost::regex_search(curr, end, mm, ᐸRuntimeᐳ::g_cregexs[separator.regexid]) ? std::make_pair(mm[0].first, std::distance(mm[0].first, mm[0].second)) : std::make_pair(end, 0); }";
+                bstr = `ᐸRuntimeᐳ::XListOps::splitStrsRegex<CString, ${rtype}>(s, (bool)trim, bool(dropempty), ${reop})`;
+            }
+        }
+        else if(body.builtin === "cstring_trim") {
+            bstr = "s.trim(trimFront, trimBack)";
         }
         else if(body.builtin === "cstring_to_bytebuffer") {
             bstr = "ᐸRuntimeᐳ::XCString::toByteBuffer(s)";
@@ -1472,8 +1509,45 @@ class CPPEmitter {
         else if(body.builtin === "string_utf8bytes") {
             bstr = "ᐸRuntimeᐳ::XNat{s.utf8bytes()}";
         }
+        else if(body.builtin === "string_startswith") {
+            const intotype = body.biterms.find((bt) => bt[0] === "P") as [string, IRTypeSignature];
+            if(intotype[1].tkeystr === "Regex") {
+                bstr = `s.startsWith(ᐸRuntimeᐳ::g_uregexs[prefix.regexid])`;
+            }
+            else {
+                //simple char and string
+                bstr = "s.startsWith(prefix)";
+            }
+        }
+        else if(body.builtin === "string_endswith") {
+            const intotype = body.biterms.find((bt) => bt[0] === "P") as [string, IRTypeSignature];
+            if(intotype[1].tkeystr === "Regex") {
+                bstr = `s.endsWith(ᐸRuntimeᐳ::g_uregexs[suffix.regexid])`;
+            }
+            else {
+                //simple char and string
+                bstr = "s.endsWith(suffix)";
+            }
+        }
         else if(body.builtin === "string_append") {
             bstr = "s1.append(s2)";
+        }
+        else if(body.builtin === "string_split") {
+            const intotype = body.biterms.find((bt) => bt[0] === "P") as [string, IRTypeSignature];
+            const rtype = TransformCPPNameManager.convertTypeKey(invk.resultType.tkeystr);
+            if(intotype[1].tkeystr === "UnicodeChar") {
+                bstr = `ᐸRuntimeᐳ::XListOps::splitStrsChar<UnicodeChar, String, ${rtype}>(s, separator, (bool)trim, bool(dropempty))`;
+            }
+            else if(intotype[1].tkeystr === "String") {
+                bstr = `ᐸRuntimeᐳ::XListOps::splitStrsString<String, ${rtype}>(s, separator, (bool)trim, bool(dropempty))`;
+            }
+            else {
+                const reop = "[](curr, end) { boost::match_results mm; return boost::u32regex_search(curr, end, mm, ᐸRuntimeᐳ::g_uregexs[separator.regexid]) ? std::make_pair(mm[0].first, std::distance(mm[0].first, mm[0].second)) : std::make_pair(end, 0); }";
+                bstr = `ᐸRuntimeᐳ::XListOps::splitStrsRegex<String, ${rtype}>(s, (bool)trim, bool(dropempty), ${reop})`;
+            }
+        }
+        else if(body.builtin === "string_trim") {
+            bstr = "s.trim(trimFront, trimBack)";
         }
         else if(body.builtin === "string_to_cstring") {
             bstr = "ᐸRuntimeᐳ::XString::toCString(s, result)";
@@ -3174,7 +3248,7 @@ class CPPEmitter {
         const pdefs = "//Primitive defs\n\n" + this.irasm.primitives.map((pdecl) => {
             const bsqparse = `std::optional<${pdecl.tkey}> BSQ_parse${pdecl.tkey}() { return ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.parse${pdecl.tkey}(); }`;
             const bsqemit = `void BSQ_emit${pdecl.tkey}(${pdecl.tkey} vv) { ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.emit${pdecl.tkey}(vv); }`;
-            
+
             return [bsqparse, bsqemit].join("\n");
         }).join("\n\n");
 

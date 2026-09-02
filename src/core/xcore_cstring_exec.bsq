@@ -9,7 +9,7 @@ namespace CStringOps {
     function s_size(s: CString): Nat = @cstring_size;
 
     function s_startsWith<P: cstrpos>(s: CString, prefix: P): Bool = @cstring_startswith;
-    function s_endsWith<P: cstrpos>(s: CString, prefix: P): Bool = @cstring_endswith;
+    function s_endsWith<P: cstrpos>(s: CString, suffix: P): Bool = @cstring_endswith;
 
     function s_append(s1: CString, s2: CString): CString = @cstring_append;
 

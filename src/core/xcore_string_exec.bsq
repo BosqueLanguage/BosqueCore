@@ -9,7 +9,7 @@ namespace StringOps {
     function s_utf8bytes(s: String): Nat = @string_utf8bytes;
 
     function s_startsWith<P: strpos>(s: String, prefix: P): Bool = @string_startswith;
-    function s_endsWith<P: strpos>(s: String, prefix: P): Bool = @string_endswith;
+    function s_endsWith<P: strpos>(s: String, suffix: P): Bool = @string_endswith;
 
     function s_append(s1: String, s2: String): String = @string_append;
 

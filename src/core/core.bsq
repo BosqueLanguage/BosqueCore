@@ -231,8 +231,8 @@ __internal __typedeclable __keycomparable __strpos entity String {
         return StringOps::s_startsWith<P>(this, prefix);
     }
 
-    method endsWith<P: strpos>(prefix: P): Bool {
-        return StringOps::s_endsWith<P>(this, prefix);
+    method endsWith<P: strpos>(suffix: P): Bool {
+        return StringOps::s_endsWith<P>(this, suffix);
     }
 
     %** Append other to this String **%
@@ -349,7 +349,7 @@ __internal __typedeclable __keycomparable __strpos entity String {
 }
 
 %** Primitive string value. **%
-__internal __typedeclable __keycomparable __strpos entity CString {
+__internal __typedeclable __keycomparable __cstrpos entity CString {
 #if STRIPPED_CORE
 #else
     %** Check if the string is empty **%
@@ -366,8 +366,8 @@ __internal __typedeclable __keycomparable __strpos entity CString {
         return CStringOps::s_startsWith<P>(this, prefix);
     }
 
-    method endsWith<P: cstrpos>(prefix: P): Bool {
-        return CStringOps::s_endsWith<P>(this, prefix);
+    method endsWith<P: cstrpos>(suffix: P): Bool {
+        return CStringOps::s_endsWith<P>(this, suffix);
     }
 
     %** Append other to this CString **%
