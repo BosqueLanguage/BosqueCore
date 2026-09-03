@@ -1,45 +1,16 @@
 namespace Core;
 
+#if STRIPPED_CORE
+#else
+
 datatype JSON of 
-    JsonNull {}
-    JsonBool {
-#if STRIPPED_CORE
-#else
-        value: Bool;
-#endif
-    }
-    JsonNumber {
-#if STRIPPED_CORE
-#else
-        value: Float; 
-#endif
-    }
-    JsonString { 
-#if STRIPPED_CORE
-#else
-        value: String; 
-#endif
-    }
-    JsonArray { 
-#if STRIPPED_CORE
-#else
-        value: List<JSON>; 
-        method count(): Nat { return this.value.size(); }
-        method get(i: Nat): JSON { return this.value[i]; }
-#endif
-    }
-    JsonObject {
-#if STRIPPED_CORE
-#else
-        value: Map<String, JSON>; 
-        method count(): Nat { return this.value.size(); }
-        method haskey(key: String): Bool { return this.value.has(key); }
-        method get(key: String): JSON { return this.value.get(key); }
-#endif
-    }
+    JsonNull { }
+    JsonBool { value: Bool }
+    JsonNumber { value: Float }
+    JsonString { value: String }
+    JsonArray { value: List<JSON> }
+    JsonObject { value: Map<String, JSON> }
 & {
-#if STRIPPED_CORE
-#else
     function toByteBuffer(json: JSON): ByteBuffer {
         abort;
     }
@@ -56,7 +27,7 @@ datatype JSON of
         abort;
     }
 
-    //TODO: not clear if CString conversion functions are safe meaningful
+    %%TODO: not clear if CString conversion functions are safe meaningful
 
     function toStdBAPI<T>(json: JSON): Option<T> {
         abort;
@@ -65,5 +36,6 @@ datatype JSON of
     function fromStdBAPI<T>(value: T): Option<JSON> {
         abort;
     }
-#endif
 }
+
+#endif %%STRIPPED_CORE
