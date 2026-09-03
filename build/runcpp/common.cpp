@@ -2,7 +2,14 @@
 #include "runtime/taskinfo.h"
 
 namespace boost {
-    void throw_exception(const std::exception& e) {
+    [[noreturn]] void throw_exception(const std::exception& e) 
+    {
+        //We should never be hitting this -- instead we need preconds in bosque to ensure safety
+        std::terminate();
+    }
+
+    [[noreturn]] void throw_exception(const std::exception& error, const boost::source_location&)
+    {
         //We should never be hitting this -- instead we need preconds in bosque to ensure safety
         std::terminate();
     }
