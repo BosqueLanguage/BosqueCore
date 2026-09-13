@@ -269,7 +269,7 @@ namespace ᐸRuntimeᐳ
                 return LIST_T_UNION{this->postree};
             }
             else if(this->listsize == 0) {
-                if(this->pendingelements <= ListTInlineContent<T>::MAX_SIZE) {                    
+                if(this->pendingelements <= LIST_T_INLINE::MAX_INLINE_CAPACITY) {                    
                     return LIST_T_UNION(LIST_T_INLINE(this->pendingdata.begin(), this->pendingelements));
                 }
                 else {
@@ -392,8 +392,8 @@ namespace ᐸRuntimeᐳ
     class XList
     {
     public:
-        constexpr static size_t MAX_INLINE_CAPACITY = ListTInlineContent<T>::MAX_INLINE_CAPACITY;
-        constexpr static size_t MAX_LEAF_CAPACITY = ListTTreeContent<T, TYPE_ID_LIST_T>::MAX_LEAF_CAPACITY;
+        constexpr static int64_t MAX_INLINE_CAPACITY = ListTInlineContent<T>::MAX_INLINE_CAPACITY;
+        constexpr static int64_t MAX_LEAF_CAPACITY = ListTTreeContent<T, TYPE_ID_LIST_T>::MAX_LEAF_CAPACITY;
 
         using LIST_T_INLINE = ListTInlineContent<T>;
         using LIST_T_TREE = ListTTreeContent<T, TYPE_ID_LIST_T>;
@@ -408,6 +408,7 @@ namespace ᐸRuntimeᐳ
         XList(const LIST_T_INLINE& b) : ulist{b} { ; }
         XList(const POS_TREE_T& t) : ulist{LIST_T_TREE{t}} { ; }
         XList(const LIST_T_TREE& n) : ulist{n} { ; }
+        XList(const LIST_T_UNION& u) : ulist{u} { ; }
 
         template<size_t len>
         XList(const T (&elems)[len]) : ulist{LIST_T_INLINE(elems, len)} { ; }
@@ -1087,9 +1088,9 @@ namespace ᐸRuntimeᐳ
     template<typename T, uint32_t TYPE_ID_LIST_T>
     void parseToBSQ_ListT(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr)
     {
-        bsq_validate(lexer->testIsType(tinfo->typekey), "BAPI -> BSQ", 0, nullptr, "Expected type for MapEntry");
+        bsq_validate(lexer->testIsType(tinfo->typekey), "BAPI -> BSQ", 0, nullptr, "Expected type for List<T>");
         lexer->consume();
-        bsq_validate(lexer->testIsSymbol('{'), "BAPI -> BSQ", 0, nullptr, "Expected '{' for MapEntry");
+        bsq_validate(lexer->testIsSymbol('{'), "BAPI -> BSQ", 0, nullptr, "Expected '{' for List<T>");
         lexer->consume();
 
         const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
@@ -1101,7 +1102,7 @@ namespace ᐸRuntimeᐳ
                 first = false;
             }
             else {
-                bsq_validate(lexer->testIsSymbol(','), "BAPI -> BSQ", 0, nullptr, "Expected ',' between elements for MapEntry");
+                bsq_validate(lexer->testIsSymbol(','), "BAPI -> BSQ", 0, nullptr, "Expected ',' between elements for List<T>");
                 lexer->consume();
             }
             
@@ -1110,7 +1111,7 @@ namespace ᐸRuntimeᐳ
             builder.append(val);
         }
 
-        bsq_validate(lexer->testIsSymbol('}'), "BAPI -> BSQ", 0, nullptr, "Expected '}' for MapEntry");
+        bsq_validate(lexer->testIsSymbol('}'), "BAPI -> BSQ", 0, nullptr, "Expected '}' for List<T>");
         lexer->consume();
 
         *(XList<T, TYPE_ID_LIST_T>*)resptr = XList<T, TYPE_ID_LIST_T>{builder.finalize()};
