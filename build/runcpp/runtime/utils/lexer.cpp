@@ -5,7 +5,7 @@ namespace ᐸRuntimeᐳ
     constexpr auto s_regexflags = boost::regex_constants::ECMAScript | boost::regex_constants::nosubs | boost::regex_constants::optimize;
 
     static boost::regex s_ws_re("\\s+", s_regexflags);
-    static boost::regex s_line_comment_re("^%%[^\\n]*", s_regexflags);
+    static boost::regex s_line_comment_re("%%[^\\n]*", s_regexflags);
 
     static boost::regex s_nat_re("(0|[+-]?[1-9][0-9]*)n", s_regexflags);
     static boost::regex s_int_re("(0|[+-]?[1-9][0-9]*)i", s_regexflags);
@@ -22,8 +22,11 @@ namespace ᐸRuntimeᐳ
     
     static boost::regex s_symbol_re("([(){}\\[\\]<>,#|])|(=>)|(\\(]\\|)|(\\|\\))", s_regexflags);
 
-    static boost::regex s_identifierlike_re("([a-zA-Z_][a-zA-Z0-9_]*(<.*>)?)(::([a-zA-Z_][a-zA-Z0-9_]*(<.*>)?))*", s_regexflags);
-    static boost::regex s_keyword_re("(none|true|false|some|ok|fail)", s_regexflags);
+    static boost::regex s_identifierlike_re("([a-zA-Z_][a-zA-Z0-9_]*(<([^>]|=>)+>)?)(::([a-zA-Z_][a-zA-Z0-9_]*(<([^>]|=>)+>)?))*", s_regexflags);
+    static boost::regex s_kwnone_re("none", s_regexflags);
+    static boost::regex s_kwtrue_re("true", s_regexflags);
+    static boost::regex s_kwfalse_re("false", s_regexflags);
+    static boost::regex s_keyword_re("some|ok|fail", s_regexflags);
 
     bool BAPILexer::tryLexWS()
     {
@@ -230,7 +233,16 @@ namespace ᐸRuntimeᐳ
             return false;
         }
 
-        if(boost::regex_match(mm[0].begin(), mm[0].end(), s_keyword_re)) {
+        if(boost::regex_match(mm[0].begin(), mm[0].end(), s_kwnone_re)) {
+            this->advanceToken(BAPITokenType::LiteralNone, mm[0].length());
+        }
+        else if(boost::regex_match(mm[0].begin(), mm[0].end(), s_kwtrue_re)) {
+            this->advanceToken(BAPITokenType::LiteralTrue, mm[0].length());
+        }
+        else if(boost::regex_match(mm[0].begin(), mm[0].end(), s_kwfalse_re)) {
+            this->advanceToken(BAPITokenType::LiteralFalse, mm[0].length());
+        }
+        else if(boost::regex_match(mm[0].begin(), mm[0].end(), s_keyword_re)) {
             this->advanceToken(BAPITokenType::LiteralKeyword, mm[0].length());
         }
         else {
@@ -238,8 +250,6 @@ namespace ᐸRuntimeᐳ
         }
 
         return true;
-
-
     }
 
     void BAPILexer::initialize()

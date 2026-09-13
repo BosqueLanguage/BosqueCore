@@ -146,7 +146,7 @@ namespace ᐸRuntimeᐳ
     template<typename T>
     void jsonParseToBSQ_Option(const TypeInfo* tinfo, const json& j, void* resptr)
     {
-        if(j.is_string() && j.get<std::string>() == "none") {
+        if(j.is_null()) {
             *(XOption<T>*)resptr = XOption<T>::none;
         }
         else {
@@ -167,7 +167,7 @@ namespace ᐸRuntimeᐳ
     {
         const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
 
-        if(lexer->testIsKeyword("none"))
+        if(lexer->testIsNone())
         {
             *(XOption<T>*)resptr = XOption<T>::none;
             return;
@@ -187,7 +187,7 @@ namespace ᐸRuntimeᐳ
     {
         const XOption<T>* opt = (const XOption<T>*)valptr;
         if(opt->isNone()) {
-            return "none";
+            return nullptr;
         }
         else {
             const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);

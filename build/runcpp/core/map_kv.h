@@ -158,13 +158,16 @@ namespace ᐸRuntimeᐳ
     {
         bsq_validate(j.is_array(), "JSON -> BSQ", 0, nullptr, "Expected JSON array List<T>");
 
-        XMapEntry<K, V> val;
-        const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
+        const TypeInfo* kinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
+        const TypeInfo* vinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[1].fieldbsqtypeid);
 
         XMapKV<K, V, TYPE_ID_MAP_KV> rres{};
         for(size_t i = 0; i < j.size(); i++)
         {
-            ofinfo->opdispatch.jsonParseToBSQFp(ofinfo, j[i], &val);
+            XMapEntry<K, V> val;
+            kinfo->opdispatch.jsonParseToBSQFp(kinfo, j[i][0], &val.key);
+            vinfo->opdispatch.jsonParseToBSQFp(vinfo, j[i][1], &val.value);
+
             rres = rres.insert(val);
         }
 
@@ -179,9 +182,8 @@ namespace ᐸRuntimeᐳ
         bsq_validate(lexer->testIsSymbol('{'), "BAPI -> BSQ", 0, nullptr, "Expected '{' for MapEntry");
         lexer->consume();
 
-        const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
-        const TypeInfo* kinfo = TypeInfo::getTypeInfoForID(ofinfo->ftable[0].fieldbsqtypeid);
-        const TypeInfo* vinfo = TypeInfo::getTypeInfoForID(ofinfo->ftable[1].fieldbsqtypeid);
+        const TypeInfo* kinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
+        const TypeInfo* vinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[1].fieldbsqtypeid);
 
         XMapKV<K, V, TYPE_ID_MAP_KV> rres{};
 
@@ -199,6 +201,7 @@ namespace ᐸRuntimeᐳ
             kinfo->opdispatch.parseToBSQFp(kinfo, lexer, &val.key);
 
             bsq_validate(lexer->testIsSymbol("=>"), "BAPI -> BSQ", 0, nullptr, "Expected '=>' between key and value for MapEntry");
+            lexer->consume();
 
             vinfo->opdispatch.parseToBSQFp(vinfo, lexer, &val.value);
             rres = rres.insert(val);
@@ -213,14 +216,19 @@ namespace ᐸRuntimeᐳ
     template<typename K, typename V, uint32_t TYPE_ID_MAP_KV>
     json bsqToJSON_MapKV(const TypeInfo* tinfo, const void* valptr)
     {
-        const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
+        const TypeInfo* kinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
+        const TypeInfo* vinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[1].fieldbsqtypeid);
 
         json j = json::array();
         const XMapKV<K, V, TYPE_ID_MAP_KV>* map = (const XMapKV<K, V, TYPE_ID_MAP_KV>*)valptr;
         for(auto iter = map->begin(); iter != map->end(); ++iter)
         {
             XMapEntry<K, V> val = *iter;
-            j.push_back(ofinfo->opdispatch.bsqToJSONFp(ofinfo, &val));
+
+            json jk = kinfo->opdispatch.bsqToJSONFp(kinfo, &val.key);
+            json jv = vinfo->opdispatch.bsqToJSONFp(vinfo, &val.value);
+            
+            j.push_back(json::array({jk, jv}));
         }
 
         return j;
@@ -230,9 +238,8 @@ namespace ᐸRuntimeᐳ
     template<typename K, typename V, uint32_t TYPE_ID_MAP_KV>
     void bsqToBAPI_MapKV(const TypeInfo* tinfo, const void* valptr, BSQStreamingBuilder* builder)
     {
-        const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
-        const TypeInfo* kinfo = TypeInfo::getTypeInfoForID(ofinfo->ftable[0].fieldbsqtypeid);
-        const TypeInfo* vinfo = TypeInfo::getTypeInfoForID(ofinfo->ftable[1].fieldbsqtypeid);
+        const TypeInfo* kinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
+        const TypeInfo* vinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[1].fieldbsqtypeid);
 
         const XMapKV<K, V, TYPE_ID_MAP_KV>* map = (const XMapKV<K, V, TYPE_ID_MAP_KV>*)valptr;
         
@@ -261,9 +268,8 @@ namespace ᐸRuntimeᐳ
     template<typename K, typename V, uint32_t TYPE_ID_MAP_KV>
     void displayValue_MapKV(const TypeInfo* tinfo, const void* valptr, std::ostream& os, std::optional<std::string> indent)
     {
-        const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
-        const TypeInfo* kinfo = TypeInfo::getTypeInfoForID(ofinfo->ftable[0].fieldbsqtypeid);
-        const TypeInfo* vinfo = TypeInfo::getTypeInfoForID(ofinfo->ftable[1].fieldbsqtypeid);
+        const TypeInfo* kinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
+        const TypeInfo* vinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[1].fieldbsqtypeid);
 
         const XMapKV<K, V, TYPE_ID_MAP_KV>* map = (const XMapKV<K, V, TYPE_ID_MAP_KV>*)valptr;
 

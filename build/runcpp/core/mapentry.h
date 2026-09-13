@@ -43,14 +43,14 @@ namespace ᐸRuntimeᐳ
 
         K k;
         const TypeInfo* kinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
-        parseToBSQ_MapEntry(kinfo, lexer, &k);
+        kinfo->opdispatch.parseToBSQFp(kinfo, lexer, &k);
 
         bsq_validate(lexer->testIsSymbol(','), "BAPI -> BSQ", 0, nullptr, "Expected ',' in MapEntry");
         lexer->consume();
 
         V v;
         const TypeInfo* vinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[1].fieldbsqtypeid);
-        parseToBSQ_MapEntry(vinfo, lexer, &v);
+        vinfo->opdispatch.parseToBSQFp(vinfo, lexer, &v);
 
         bsq_validate(lexer->testIsSymbol('}'), "BAPI -> BSQ", 0, nullptr, "Expected '}' after MapEntry value");
         lexer->consume();
@@ -109,7 +109,7 @@ namespace ᐸRuntimeᐳ
     }
 
     template<typename K, typename V>
-    inline TypeInfo g_typeinfo_MapEntry_generate(uint32_t id, const TypeLayoutInfo* layout, const char* mask, const char* name) 
+    consteval TypeInfo g_typeinfo_MapEntry_generate(uint32_t id, const TypeLayoutInfo* layout, const char* mask, const char* name) 
     {
         return TypeInfo{
             id,
