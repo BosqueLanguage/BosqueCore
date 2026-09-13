@@ -184,4 +184,13 @@ namespace ᐸRuntimeᐳ
     json bsqToJSON_Typedecl(const TypeInfo* tinfo, const void* valptr);
     void bsqToBAPI_Typedecl(const TypeInfo* tinfo, const void* valptr, BSQStreamingBuilder* builder);
     void displayValue_Typedecl(const TypeInfo* tinfo, const void* valptr, std::ostream& os, std::optional<std::string> indent);
+
+    ////////////////////////////////
+    //Standard processing functions for Entity types
+    ////////////////////////////////
+    void jsonParseToBSQ_Entity(const TypeInfo* tinfo, const json& j, void* resptr);
+    void parseToBSQ_Entity(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr);
+    json bsqToJSON_Entity(const TypeInfo* tinfo, const void* valptr);
+    void bsqToBAPI_Entity(const TypeInfo* tinfo, const void* valptr, BSQStreamingBuilder* builder);
+    void displayValue_Entity(const TypeInfo* tinfo, const void* valptr, std::ostream& os, std::optional<std::string> indent);
 }

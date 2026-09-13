@@ -128,4 +128,76 @@ namespace ᐸRuntimeᐳ
         ofinfo->opdispatch.displayFp(ofinfo, valptr, os, indent);
         os << '<' << tinfo->typekey << '>';
     }
+
+    ////////////////////////////////
+    //Standard processing functions for Entity types
+    ////////////////////////////////
+    const void* accessEntityMemberFieldPtr(const TypeInfo* tinfo, const void* valptr, size_t idx) 
+    {
+        if(tinfo->tag != LayoutTag::Ref) {
+            //not a pointer, just load the slot index as T
+            return valptr + idx;
+        }
+        else {
+            assert(tinfo->tag == LayoutTag::Ref);
+
+            //dereference pointer in cell and then get the slot at index
+            const void* ptrslots = *((const void**)valptr);
+            return ptrslots + idx;
+        }
+    }
+
+    void jsonParseToBSQ_Entity(const TypeInfo* tinfo, const json& j, void* resptr)
+    {
+        bsq_validate(j.is_object(), "BAPI -> BSQ", 0, nullptr, "Expected JSON object for Entity");
+
+        void* valdata = alloca(tinfo->bytesize);
+        void** valptrs = (void**)alloca(tinfo->slotcount * sizeof(void*));
+
+        void* cslot = valdata;
+        for(size_t i = 0; i < tinfo->ftablecount; ++i)
+        {
+            const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[i].fieldbsqtypeid);
+            std::string fieldname = tinfo->ftable[i].fname;
+
+            bsq_validate(j.contains(fieldname), "BAPI -> BSQ", 0, nullptr, "Missing field name in Entity");
+            ofinfo->opdispatch.jsonParseToBSQFp(ofinfo, j[fieldname], cslot);
+            valptrs[i] = cslot;
+
+            cslot += ofinfo->slotcount;
+        }
+
+        tinfo->opdispatch.validatingConstructorFp(valptrs, resptr);
+    }
+
+    void parseToBSQ_Entity(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr)
+    {
+        xxxx;
+    }
+
+    json bsqToJSON_Entity(const TypeInfo* tinfo, const void* valptr)
+    {
+        json j = json::object();
+
+        for(size_t i = 0; i < tinfo->ftablecount; ++i)
+        {
+            const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[i].fieldbsqtypeid);
+            std::string fieldname = tinfo->ftable[i].fname;
+
+            const void* cslot = accessEntityMemberFieldPtr(tinfo, valptr, tinfo->ftable[i].slotoffset);
+            j[fieldname] = ofinfo->opdispatch.bsqToJSONFp(ofinfo, cslot);
+        }
+
+        return j;
+    }
+
+    void bsqToBAPI_Entity(const TypeInfo* tinfo, const void* valptr, BSQStreamingBuilder* builder)
+    {
+        xxxx;
+    }
+
+    void displayValue_Entity(const TypeInfo* tinfo, const void* valptr, std::ostream& os, std::optional<std::string> indent)
+    {
+        xxxx;
+    }
 }
