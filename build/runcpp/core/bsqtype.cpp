@@ -149,10 +149,11 @@ namespace ᐸRuntimeᐳ
 
     void jsonParseToBSQ_Entity(const TypeInfo* tinfo, const json& j, void* resptr)
     {
-        bsq_validate(j.is_object(), "BAPI -> BSQ", 0, nullptr, "Expected JSON object for Entity");
+        bsq_validate(j.is_object(), "BAPI -> BSQ", 0, nullptr, "Expected JSON object for entity");
 
         void* valdata = alloca(tinfo->bytesize);
         void** valptrs = (void**)alloca(tinfo->slotcount * sizeof(void*));
+        std::fill(valptrs, valptrs + tinfo->slotcount, nullptr);
 
         void* cslot = valdata;
         for(size_t i = 0; i < tinfo->ftablecount; ++i)
@@ -160,9 +161,10 @@ namespace ᐸRuntimeᐳ
             const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[i].fieldbsqtypeid);
             std::string fieldname = tinfo->ftable[i].fname;
 
-            bsq_validate(j.contains(fieldname), "BAPI -> BSQ", 0, nullptr, "Missing field name in Entity");
-            ofinfo->opdispatch.jsonParseToBSQFp(ofinfo, j[fieldname], cslot);
-            valptrs[i] = cslot;
+            if(j.contains(fieldname)) {
+                ofinfo->opdispatch.jsonParseToBSQFp(ofinfo, j[fieldname], cslot);
+                valptrs[i] = cslot;
+            }
 
             cslot += ofinfo->slotcount;
         }
@@ -172,7 +174,56 @@ namespace ᐸRuntimeᐳ
 
     void parseToBSQ_Entity(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr)
     {
-        xxxx;
+        bsq_validate(lexer->testIsType(tinfo->typekey), "BAPI -> BSQ", 0, nullptr, "Expected type for entity");
+        lexer->consume();
+        bsq_validate(lexer->testIsSymbol('{'), "BAPI -> BSQ", 0, nullptr, "Expected { for entity");
+        lexer->consume();
+
+        void* valdata = alloca(tinfo->bytesize);
+        void** valptrs = (void**)alloca(tinfo->slotcount * sizeof(void*));
+        std::fill(valptrs, valptrs + tinfo->slotcount, nullptr);
+
+        bool first = true;
+        size_t cpos = 0;
+        while(!lexer->testIsSymbol('}')) {
+            if(first) {
+                first = false;
+            }
+            else {
+                bsq_validate(lexer->testIsSymbol(','), "BAPI -> BSQ", 0, nullptr, "Expected ',' between args for entity");
+                lexer->consume();
+            }
+
+            if(!lexer->constructorEqualsPeek()) {
+                auto finfo = std::find_if(tinfo->ftable, tinfo->ftable + tinfo->ftablecount, [&lexer](const TypeLayoutInfo& fi) {
+                    return lexer->testDataMatchesID(fi.fname);
+                });
+                bsq_validate(finfo != tinfo->ftable + tinfo->ftablecount, "BAPI -> BSQ", 0, nullptr, "Field name does not exist in entity");
+
+
+                xxxx;
+
+                cpos = std::numeric_limits<size_t>::max();
+            }
+            else {
+                bsq_validate(cpos != std::numeric_limits<size_t>::max(), "BAPI -> BSQ", 0, nullptr, "Positional values must come before named arguments");
+                bsq_validate(cpos < tinfo->ftablecount, "BAPI -> BSQ", 0, nullptr, "Too many (positional) values for constructor");
+
+                if(lexer->testDataMatches("_", 1)) {
+                    //explict use of default
+                    xxxx;
+                }
+                else {
+                    xxxx;
+                }
+
+                cpos++;
+            }
+        }
+        bsq_validate(lexer->testIsSymbol('}'), "BAPI -> BSQ", 0, nullptr, "Expected } for entity");
+        lexer->consume();
+
+        tinfo->opdispatch.validatingConstructorFp(valptrs, resptr);
     }
 
     json bsqToJSON_Entity(const TypeInfo* tinfo, const void* valptr)

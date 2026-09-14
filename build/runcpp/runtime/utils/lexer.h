@@ -120,6 +120,8 @@ namespace ᐸRuntimeᐳ
 
         bool tryLexIdentifierLike();
 
+        bool equalPeekTest() const;
+
     public:
         bool allowSloppyStrings;
 
@@ -160,6 +162,15 @@ namespace ᐸRuntimeᐳ
             return this->ctoken.matchesID(data);
         }
         
+        bool constructorEqualsPeek() const
+        {
+            if(this->getCurrentTokenType() != BAPITokenType::Identifier) {
+                return false;
+            }
+
+            return this->equalPeekTest();
+        }
+
         uint8_t extractSingleCharToken() const
         {
             return this->ctoken.extract();
