@@ -199,9 +199,15 @@ namespace ᐸRuntimeᐳ
                     return lexer->testDataMatchesID(fi.fname);
                 });
                 bsq_validate(finfo != tinfo->ftable + tinfo->ftablecount, "BAPI -> BSQ", 0, nullptr, "Field name does not exist in entity");
+                
+                const TypeInfo* ftypeinfo = TypeInfo::getTypeInfoForID(finfo->fieldbsqtypeid);
 
-
-                xxxx;
+                lexer->consume(); //eat Type
+                lexer->consume(); //eat = symbol
+                
+                void* valpos = valdata + finfo->slotoffset;
+                valptrs[std::distance(tinfo->ftable, finfo)] = valpos;
+                parseToBSQ_Entity(ftypeinfo, lexer, (void*)valpos);
 
                 cpos = std::numeric_limits<size_t>::max();
             }
@@ -209,12 +215,17 @@ namespace ᐸRuntimeᐳ
                 bsq_validate(cpos != std::numeric_limits<size_t>::max(), "BAPI -> BSQ", 0, nullptr, "Positional values must come before named arguments");
                 bsq_validate(cpos < tinfo->ftablecount, "BAPI -> BSQ", 0, nullptr, "Too many (positional) values for constructor");
 
+                const TypeLayoutInfo* finfo = tinfo->ftable + cpos;
+                const TypeInfo* ftypeinfo = TypeInfo::getTypeInfoForID(finfo->fieldbsqtypeid);
+
                 if(lexer->testDataMatches("_", 1)) {
                     //explict use of default
-                    xxxx;
+                    valptrs[cpos] = nullptr;    
                 }
                 else {
-                    xxxx;
+                    void* valpos = valdata + finfo->slotoffset;
+                    valptrs[cpos] = valpos;
+                    parseToBSQ_Entity(ftypeinfo, lexer, (void*)valpos);
                 }
 
                 cpos++;
