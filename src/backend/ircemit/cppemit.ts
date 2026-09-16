@@ -2186,6 +2186,8 @@ class CPPEmitter {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
         const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey);
 
+        xxxx;
+
         const superlist = (this.irasm.concretesupertypes.get(tdecl.tkey) as IRTypeSignature[]).map((tt) => this.typeInfoManager.getTypeInfo(tt.tkeystr).bsqtypeid).sort();
         let superdecl = "";
         let supertable = "nullptr";
@@ -2228,6 +2230,8 @@ class CPPEmitter {
     private emitEntityTypeInfoDecl(tdecl: IRAbstractEntityTypeDecl): string {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
         const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey);
+
+        xxxx;
 
         const superlist = (this.irasm.concretesupertypes.get(tdecl.tkey) as IRTypeSignature[]).map((tt) => this.typeInfoManager.getTypeInfo(tt.tkeystr).bsqtypeid).sort();
         let superdecl = "";
@@ -2273,6 +2277,8 @@ class CPPEmitter {
     private emitEntityTypeInfoWAllocInfo(tdecl: IRAbstractEntityTypeDecl): [string, string] {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
         const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey); 
+
+        xxxx;
 
         const superlist = (this.irasm.concretesupertypes.get(tdecl.tkey) as IRTypeSignature[]).map((tt) => this.typeInfoManager.getTypeInfo(tt.tkeystr).bsqtypeid).sort();
         let superdecl = "";

@@ -136,14 +136,14 @@ namespace ᐸRuntimeᐳ
     {
         if(tinfo->tag != LayoutTag::Ref) {
             //not a pointer, just load the slot index as T
-            return valptr + idx;
+            return (void*)((uint64_t*)valptr + idx);
         }
         else {
             assert(tinfo->tag == LayoutTag::Ref);
 
             //dereference pointer in cell and then get the slot at index
             const void* ptrslots = *((const void**)valptr);
-            return ptrslots + idx;
+            return (void*)((uint64_t*)ptrslots + idx);
         }
     }
 
@@ -165,7 +165,7 @@ namespace ᐸRuntimeᐳ
                 valptrs[i] = cslot;
             }
 
-            cslot += ofinfo->slotcount;
+            cslot = (void*)((uint64_t*)cslot + ofinfo->slotcount);
         }
 
         tinfo->opdispatch.validatingConstructorFp(valptrs, resptr);
@@ -204,7 +204,7 @@ namespace ᐸRuntimeᐳ
                 lexer->consume(); //eat Type
                 lexer->consume(); //eat = symbol
                 
-                void* valpos = valdata + finfo->slotoffset;
+                void* valpos = (void*)((uint64_t*)valdata + finfo->slotoffset);
                 valptrs[std::distance(tinfo->ftable, finfo)] = valpos;
                 parseToBSQ_Entity(ftypeinfo, lexer, (void*)valpos);
 
@@ -217,12 +217,12 @@ namespace ᐸRuntimeᐳ
                 const TypeLayoutInfo* finfo = tinfo->ftable + cpos;
                 const TypeInfo* ftypeinfo = TypeInfo::getTypeInfoForID(finfo->fieldbsqtypeid);
 
-                if(lexer->testDataMatches("_", 1)) {
+                if(lexer->testDataMatches((const uint8_t*)"_", 1)) {
                     //explict use of default
                     valptrs[cpos] = nullptr;    
                 }
                 else {
-                    void* valpos = valdata + finfo->slotoffset;
+                    void* valpos = (void*)((uint64_t*)valdata + finfo->slotoffset);
                     valptrs[cpos] = valpos;
                     parseToBSQ_Entity(ftypeinfo, lexer, (void*)valpos);
                 }
