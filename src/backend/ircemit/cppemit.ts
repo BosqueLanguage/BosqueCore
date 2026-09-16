@@ -2186,8 +2186,6 @@ class CPPEmitter {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
         const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey);
 
-        xxxx;
-
         const superlist = (this.irasm.concretesupertypes.get(tdecl.tkey) as IRTypeSignature[]).map((tt) => this.typeInfoManager.getTypeInfo(tt.tkeystr).bsqtypeid).sort();
         let superdecl = "";
         let supertable = "nullptr";
@@ -2199,7 +2197,7 @@ class CPPEmitter {
         let ftdecl = "";
         let ftable = "nullptr";
         if(ttid.ftable.length !== 0) {
-            ftdecl = `    inline constexpr FieldOffsetInfo g_ftable_${ctname}[${ttid.ftable.length}] = {\n` +
+            ftdecl = `    inline constexpr TypeLayoutInfo g_ftable_${ctname}[${ttid.ftable.length}] = {\n` +
             ttid.ftable.map((fte) => {
                 const fttid = this.typeInfoManager.getTypeInfo(fte.ftype.tkeystr);
                 return `        { ${fte.fid}, ${fttid.bsqtypeid}, ${fte.offset * 8}, ${fte.offset}, "${fte.fkey}", "${fte.fname}" }`;
@@ -2208,8 +2206,11 @@ class CPPEmitter {
             ftable = `g_ftable_${ctname}`;
         }
 
+        const vconsdecl = `    validatingConstructor_${ctname}(void** argptrs, void* resptr);\n`;
+
         return  superdecl +
                 ftdecl +
+                vconsdecl +
                 `    inline constexpr TypeInfo g_typeinfo_${ctname} = {\n` +
                 `        ${ttid.bsqtypeid},\n` +
                 `        ${ttid.bytesize},\n` +
@@ -2222,6 +2223,7 @@ class CPPEmitter {
                 `        ${ttid.ftable.length},\n` +
                 `        ${ttid.itable.length !== 0 ? "xxx" : "nullptr"},\n` +
                 `        ${ttid.itable.length},\n` +
+                `        TypeOpDispatchInfo{ (ValidatingConstructorFp)validatingConstructor_${ctname}, (JSONParseToBSQFp)&jsonParseToBSQ_Entity, (ParseToBSQFp)&parseToBSQ_Entity, (BSQToJSONFp)&bsqToJSON_Entity, (BSQToBAPIFp)&bsqToBAPI_Entity, (DisplayValueFp)&displayValue_Entity },\n` +
                 `        "${tdecl.tkey}",\n` +
                 `        ${ttid.quickrelease}\n` +
                 `    };`;
@@ -2230,8 +2232,6 @@ class CPPEmitter {
     private emitEntityTypeInfoDecl(tdecl: IRAbstractEntityTypeDecl): string {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
         const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey);
-
-        xxxx;
 
         const superlist = (this.irasm.concretesupertypes.get(tdecl.tkey) as IRTypeSignature[]).map((tt) => this.typeInfoManager.getTypeInfo(tt.tkeystr).bsqtypeid).sort();
         let superdecl = "";
@@ -2244,7 +2244,7 @@ class CPPEmitter {
         let ftdecl = "";
         let ftable = "nullptr";
         if(ttid.ftable.length !== 0) {
-            ftdecl = `    inline constexpr FieldOffsetInfo g_ftable_${ctname}[${ttid.ftable.length}] = {\n` +
+            ftdecl = `    inline constexpr TypeLayoutInfo g_ftable_${ctname}[${ttid.ftable.length}] = {\n` +
             ttid.ftable.map((fte) => {
                 const fttid = this.typeInfoManager.getTypeInfo(fte.ftype.tkeystr);
                 return `        { ${fte.fid}, ${fttid.bsqtypeid}, ${fte.offset * 8}, ${fte.offset}, "${fte.fkey}", "${fte.fname}" }`;
@@ -2253,9 +2253,12 @@ class CPPEmitter {
             ftable = `g_ftable_${ctname}`;
         }
 
+        const vconsdecl = `    validatingConstructor_${ctname}(void** argptrs, void* resptr);\n`;
+
         return `namespace ᐸRuntimeᐳ {\n` +
             superdecl +
             ftdecl +
+            vconsdecl +
             `    inline constexpr TypeInfo g_typeinfo_${ctname} = {\n` +
             `        ${ttid.bsqtypeid},\n` +
             `        ${ttid.bytesize},\n` +
@@ -2268,6 +2271,7 @@ class CPPEmitter {
             `        ${ttid.ftable.length},\n` +
             `        ${ttid.itable.length !== 0 ? "xxx" : "nullptr"},\n` +
             `        ${ttid.itable.length},\n` +
+            `        TypeOpDispatchInfo{ (ValidatingConstructorFp)validatingConstructor_${ctname}, (JSONParseToBSQFp)&jsonParseToBSQ_Entity, (ParseToBSQFp)&parseToBSQ_Entity, (BSQToJSONFp)&bsqToJSON_Entity, (BSQToBAPIFp)&bsqToBAPI_Entity, (DisplayValueFp)&displayValue_Entity },\n` +
             `        "${tdecl.tkey}",\n` +
             `        ${ttid.quickrelease}\n` +
             `    };\n` +
@@ -2277,8 +2281,6 @@ class CPPEmitter {
     private emitEntityTypeInfoWAllocInfo(tdecl: IRAbstractEntityTypeDecl): [string, string] {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
         const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey); 
-
-        xxxx;
 
         const superlist = (this.irasm.concretesupertypes.get(tdecl.tkey) as IRTypeSignature[]).map((tt) => this.typeInfoManager.getTypeInfo(tt.tkeystr).bsqtypeid).sort();
         let superdecl = "";
@@ -2291,7 +2293,7 @@ class CPPEmitter {
         let ftdecl = "";
         let ftable = "nullptr";
         if(ttid.ftable.length !== 0) {
-            ftdecl = `    inline constexpr FieldOffsetInfo g_ftable_${ctname}[${ttid.ftable.length}] = {\n` +
+            ftdecl = `    inline constexpr TypeLayoutInfo g_ftable_${ctname}[${ttid.ftable.length}] = {\n` +
             ttid.ftable.map((fte) => {
                 const fttid = this.typeInfoManager.getTypeInfo(fte.ftype.tkeystr);
                 return `        { ${fte.fid}, ${fttid.bsqtypeid}, ${fte.offset * 8}, ${fte.offset}, "${fte.fkey}", "${fte.fname}" }`;
@@ -2299,6 +2301,8 @@ class CPPEmitter {
             `    };\n`;
             ftable = `g_ftable_${ctname}`;
         }
+
+        const vconsdecl = `    validatingConstructor_${ctname}(void** argptrs, void* resptr);\n`;
 
         //we emit these typeinfos with the forward decls
         if(this.irasm.typedepcycles.some((cyc) => cyc.find((tt) => tt.tkeystr === tdecl.tkey))) {
@@ -2312,6 +2316,7 @@ class CPPEmitter {
             return [`namespace ᐸRuntimeᐳ {\n` +
                 superdecl +
                 ftdecl +
+                vconsdecl +
                 `    inline constexpr TypeInfo g_typeinfo_${ctname} = {\n` +
                 `        ${ttid.bsqtypeid},\n` +
                 `        ${ttid.bytesize},\n` +
@@ -2324,6 +2329,7 @@ class CPPEmitter {
                 `        ${ttid.ftable.length},\n` +
                 `        ${ttid.itable.length !== 0 ? "xxx" : "nullptr"},\n` +
                 `        ${ttid.itable.length},\n` +
+                `        TypeOpDispatchInfo{ (ValidatingConstructorFp)validatingConstructor_${ctname}, (JSONParseToBSQFp)&jsonParseToBSQ_Entity, (ParseToBSQFp)&parseToBSQ_Entity, (BSQToJSONFp)&bsqToJSON_Entity, (BSQToBAPIFp)&bsqToBAPI_Entity, (DisplayValueFp)&displayValue_Entity },\n` +
                 `        "${tdecl.tkey}",\n` +
                 `        ${ttid.quickrelease}\n` +
                 `    };\n` +
