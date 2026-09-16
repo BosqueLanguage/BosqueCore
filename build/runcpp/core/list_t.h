@@ -1076,8 +1076,7 @@ namespace ᐸRuntimeᐳ
         const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
 
         ListStreamingBuilder<T, TYPE_ID_LIST_T> builder;
-        for(size_t i = 0; i < j.size(); i++)
-        {
+        for(size_t i = 0; i < j.size(); i++) {
             ofinfo->opdispatch.jsonParseToBSQFp(ofinfo, j[i], &val);
             builder.append(val);
         }
@@ -1124,8 +1123,7 @@ namespace ᐸRuntimeᐳ
 
         json j = json::array();
         const XList<T, TYPE_ID_LIST_T>* list = (const XList<T, TYPE_ID_LIST_T>*)valptr;
-        for(auto iter = list->begin(); iter != list->end(); ++iter)
-        {
+        for(auto iter = list->begin(); iter != list->end(); ++iter) {
             T val = *iter;
             j.push_back(ofinfo->opdispatch.bsqToJSONFp(ofinfo, &val));
         }
@@ -1141,23 +1139,29 @@ namespace ᐸRuntimeᐳ
         const XList<T, TYPE_ID_LIST_T>* list = (const XList<T, TYPE_ID_LIST_T>*)valptr;
         
         builder->appendConstString(tinfo->typekey);
-        builder->appendLiteralString("{ ");
 
-        bool first = true;
-        for(auto iter = list->begin(); iter != list->end(); ++iter)
-        {
-            if(first) {
-                first = false;
-            }
-            else {
-                builder->appendLiteralString(", ");
-            }
-
-            T val = *iter;
-            ofinfo->opdispatch.bsqToBAPIFp(ofinfo, &val, builder);
+        if(list->empty()) {
+            builder->appendLiteralString("{ }");
+            return;
         }
+        else {
+            builder->appendLiteralString("{ ");
 
-        builder->appendLiteralString(" }");
+            bool first = true;
+            for(auto iter = list->begin(); iter != list->end(); ++iter) {
+                if(first) {
+                    first = false;
+                }
+                else {
+                    builder->appendLiteralString(", ");
+                }
+
+                T val = *iter;
+                ofinfo->opdispatch.bsqToBAPIFp(ofinfo, &val, builder);
+            }
+
+            builder->appendLiteralString(" }");
+        }
     }
     
     template<typename T, uint32_t TYPE_ID_LIST_T>
@@ -1167,20 +1171,26 @@ namespace ᐸRuntimeᐳ
         const XList<T, TYPE_ID_LIST_T>* list = (const XList<T, TYPE_ID_LIST_T>*)valptr;
 
         os << getDisplayIndent(indent) << tinfo->typekey << "{ ";
-        bool first = true;
-        for(auto iter = list->begin(); iter != list->end(); ++iter)
-        {
-            if(first) {
-                first = false;
-            }
-            else {
-                os << ", ";
-            }
-
-            T val = *iter;
-            ofinfo->opdispatch.displayFp(ofinfo, &val, os, indent);
+        
+        if(list->empty()) {
+            os << getDisplayIndent(indent) << tinfo->typekey << "{ }";
+            return;
         }
-        os << " }";
+        else {
+            bool first = true;
+            for(auto iter = list->begin(); iter != list->end(); ++iter) {
+                if(first) {
+                    first = false;
+                }
+                else {
+                    os << ", ";
+                }
+
+                T val = *iter;
+                ofinfo->opdispatch.displayFp(ofinfo, &val, os, indent);
+            }
+            os << " }";
+        }
     }
 
     template<typename T, uint32_t TYPE_ID_LIST_T>

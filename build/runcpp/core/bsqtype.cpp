@@ -156,8 +156,7 @@ namespace ᐸRuntimeᐳ
         std::fill(valptrs, valptrs + tinfo->slotcount, nullptr);
 
         void* cslot = valdata;
-        for(size_t i = 0; i < tinfo->ftablecount; ++i)
-        {
+        for(size_t i = 0; i < tinfo->ftablecount; ++i) {
             const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[i].fieldbsqtypeid);
             std::string fieldname = tinfo->ftable[i].fname;
 
@@ -241,8 +240,7 @@ namespace ᐸRuntimeᐳ
     {
         json j = json::object();
 
-        for(size_t i = 0; i < tinfo->ftablecount; ++i)
-        {
+        for(size_t i = 0; i < tinfo->ftablecount; ++i) {
             const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[i].fieldbsqtypeid);
             std::string fieldname = tinfo->ftable[i].fname;
 
@@ -255,11 +253,53 @@ namespace ᐸRuntimeᐳ
 
     void bsqToBAPI_Entity(const TypeInfo* tinfo, const void* valptr, BSQStreamingBuilder* builder)
     {
-        xxxx;
+        builder->appendConstString(tinfo->typekey);
+        if(tinfo->ftablecount == 0) {
+            builder->appendLiteralString("{ }");
+        }
+        else {
+            builder->appendLiteralString("{ ");
+            bool first = true;
+            for(size_t i = 0; i < tinfo->ftablecount; ++i) {
+                if(first) {
+                    first = false;
+                }
+                else {
+                    builder->appendLiteralString(", ");
+                }
+
+                const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[i].fieldbsqtypeid);
+                const void* cslot = accessEntityMemberFieldPtr(tinfo, valptr, tinfo->ftable[i].slotoffset);
+            
+                ofinfo->opdispatch.bsqToBAPIFp(ofinfo, cslot, builder);
+            }
+            builder->appendLiteralString(" }");
+        }
     }
 
     void displayValue_Entity(const TypeInfo* tinfo, const void* valptr, std::ostream& os, std::optional<std::string> indent)
     {
-        xxxx;
+        os << getDisplayIndent(indent) << tinfo->typekey;
+        if(tinfo->ftablecount == 0) {
+            os << "{ }";
+        }
+        else {
+            os << "{ ";
+            bool first = true;
+            for(size_t i = 0; i < tinfo->ftablecount; ++i) {
+                if(first) {
+                    first = false;
+                }
+                else {
+                    os << ", ";
+                }
+
+                const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[i].fieldbsqtypeid);
+                const void* cslot = accessEntityMemberFieldPtr(tinfo, valptr, tinfo->ftable[i].slotoffset);
+            
+                ofinfo->opdispatch.displayFp(ofinfo, cslot, os, indent);
+            }
+            os << " }";
+        }
     }
 }
