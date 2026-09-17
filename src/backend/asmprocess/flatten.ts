@@ -3994,13 +3994,16 @@ class ASMToIRConverter {
         const doc = mdecl.attributes.find((a) => a.name === "doc");
         const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
 
-        let defaultinfo: { stmts: IRStatement[], value: IRSimpleExpression } | undefined = undefined;
+        let defaultinfo: { stmts: IRStatement[], value: IRSimpleExpression, isconst: boolean } | undefined = undefined;
         if(mdecl.defaultValue !== undefined) {
             const crexp = this.assembly.tryReduceConstantExpression(mdecl.defaultValue, this.currentBinds);
+        
+            this.pushStatementBlock();
+            const eexp = this.flattenExpression(mdecl.defaultValue);
+            const stmts = this.popStatementBlock();
 
-            if(crexp === undefined) {
-                assert(false, "ASMToIRConverter not implemented: MemberFieldDecl default value is a constant evaluatable expression");
-            }
+            const fexp = this.makeCoercionExplicitAsNeeded(eexp, mdecl.defaultValue.getType(), mdecl.declaredType);
+            defaultinfo = { stmts: stmts, value: fexp, isconst: crexp !== undefined };
         }
 
         const fkey = `${containingtype.tkeystr}--${mdecl.name}`;
@@ -4058,6 +4061,7 @@ class ASMToIRConverter {
             let defaultValue: { stmts: IRStatement[], value: IRSimpleExpression } | undefined = undefined;
             if(p.optDefaultValue !== undefined) {
                 const crexp = this.assembly.tryReduceConstantExpression(p.optDefaultValue, this.currentBinds);
+
                 if(crexp === undefined) {
                     assert(false, "Not Implemented -- processInvokeParams default value");
                 }

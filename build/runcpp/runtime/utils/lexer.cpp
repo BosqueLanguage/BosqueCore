@@ -28,7 +28,7 @@ namespace ᐸRuntimeᐳ
     static boost::regex s_kwfalse_re("false", s_regexflags);
     static boost::regex s_keyword_re("some|ok|fail", s_regexflags);
 
-    static boost::regex s_constructor_equals_peek_re("\\s+=", s_regexflags);
+    static boost::regex s_constructor_equals_peek_re("\\s*=", s_regexflags);
 
     bool BAPILexer::tryLexWS()
     {

@@ -2920,37 +2920,74 @@ class CPPEmitter {
             typeinfodef = "//No allocator needed for value type";
         }
 
-        const bfinits = tdecl.saturatedBFieldInfo
-        .map((bf, ii) => {
+        const hasdefaults = tdecl.saturatedBFieldInfo.some((bf) => {
             const cftype = this.irasm.alltypes.get(bf.containingtype.tkeystr) as IRAbstractNominalTypeDecl;
             const ff = cftype.fields.find((f) => f.fkey === bf.fkey) as IRMemberFieldDecl;
-            if(ff.defaultValue === undefined) {
-                return undefined;
-            }
-            else {
-                const ftypeof = this.typeInfoManager.emitTypeAsStd(bf.ftype.tkeystr);
-                const asgnv = `*((${ftypeof}*)(argptrs[${ii}]))`;
-
-                const pfops = ff.defaultValue.stmts.map((s) => this.emitStatement(s, false, '    '));
-                return `${pfops.join("\n")}${pfops.length !== 0 ? "\n" : ""}    ${asgnv} = ${ff.defaultValue};`;
-            }
-        })
-        .filter((vinit) => vinit !== undefined) as string[];
-
-        const consargs = tdecl.saturatedBFieldInfo.map((bf) => {
-            const fname = TransformCPPNameManager.convertIdentifier(bf.fname);
-            return `v_${fname}`;
+            return ff.defaultValue !== undefined;
         });
 
+        let bfinits: string[];
+        let consargs: string[];
+        if(!hasdefaults) {
+            bfinits = [];
+
+            consargs = tdecl.saturatedBFieldInfo.map((bf, ii) => {
+                const ftypeof = this.typeInfoManager.emitTypeAsStd(bf.ftype.tkeystr);
+                return `*((${ftypeof}*)(argptrs[${ii}]))`;
+            });
+        }
+        else {
+            //TODO: eventually we need to use dependency order here -- but right now assume life is not too hard
+
+            const bfknown = tdecl.saturatedBFieldInfo.filter((bf) => {
+                const cftype = this.irasm.alltypes.get(bf.containingtype.tkeystr) as IRAbstractNominalTypeDecl;
+                const ff = cftype.fields.find((f) => f.fkey === bf.fkey) as IRMemberFieldDecl;
+                return ff.defaultValue === undefined;
+            });
+
+            const bfconst = tdecl.saturatedBFieldInfo.filter((bf) => {
+                const cftype = this.irasm.alltypes.get(bf.containingtype.tkeystr) as IRAbstractNominalTypeDecl;
+                const ff = cftype.fields.find((f) => f.fkey === bf.fkey) as IRMemberFieldDecl;
+                return ff.defaultValue !== undefined && ff.defaultValue.isconst;
+            });
+
+            const bfrest = tdecl.saturatedBFieldInfo.filter((bf) => {
+                const cftype = this.irasm.alltypes.get(bf.containingtype.tkeystr) as IRAbstractNominalTypeDecl;
+                const ff = cftype.fields.find((f) => f.fkey === bf.fkey) as IRMemberFieldDecl;
+                return ff.defaultValue !== undefined && !ff.defaultValue.isconst;
+            });
+
+            bfinits = [...bfconst, ...bfknown, ...bfrest].map((bf) => {
+                const ii = tdecl.saturatedBFieldInfo.findIndex((f) => f.fkey === bf.fkey);
+                const ftypeof = this.typeInfoManager.emitTypeAsStd(bf.ftype.tkeystr);
+
+                const cftype = this.irasm.alltypes.get(bf.containingtype.tkeystr) as IRAbstractNominalTypeDecl;
+                const ff = cftype.fields.find((f) => f.fkey === bf.fkey) as IRMemberFieldDecl;
+                if(ff.defaultValue === undefined) {
+                    return `        auto ${bf.fname} = *((${ftypeof}*)(argptrs[${ii}]));`;
+                }
+                else {
+                    assert(ff.defaultValue.isconst, "If this is not a const then we need to use an explicit intializer function -- otherwise we might have user calls/constructors in the <RUNTIME> namespace and collisions");
+
+                    const vval = this.emitIRSimpleExpression(ff.defaultValue.value, true);
+                    return `        auto ${bf.fname} = argptrs[${ii}] == nullptr ? ${vval} : *((${ftypeof}*)(argptrs[${ii}]));`;
+                }
+            });
+
+            consargs = tdecl.saturatedBFieldInfo.map((bf, ii) => bf.fname);
+        }
+        
         if(vfuncinfo.length === 0 && valfuncinfo.length === 0) {
-            const checkedconsdef = `void validatingConstructor_${ctname}(void** argptrs, void* resptr) {\n` +
-                `${bfinits.join("\n")}\n` +
-                `    *((${ctrepr}*)resptr) = ${vvcons[0]} ${consargs.join(", ")} ${vvcons[1]};\n` +
-            '}';
+            const checkedconsdef = `namespace ${RUNTIME_NAMESPACE} {\n` +
+                `    void validatingConstructor_${ctname}(void** argptrs, void* resptr) {\n` +
+                `${bfinits.join("\n")}${bfinits.length !== 0 ? "\n\n" : ""}` +
+                `        *((${ctrepr}*)resptr) = ${vvcons[0]} ${consargs.join(", ")} ${vvcons[1]};\n` +
+            `    }\n` +
+            `}\n`;
 
             return [
-                [tclass, typeinfodecl, checkedconsdef].join("\n"), 
-                typeinfodef
+                [tclass, typeinfodecl].join("\n"), 
+                [typeinfodef, checkedconsdef].join("\n")
             ];
         }
         else {
@@ -2968,7 +3005,7 @@ class CPPEmitter {
                     });
 
                     const ifname = TransformCPPNameManager.generateNameForInvariantFunction(inv.containingtype.tkeystr, inv.ii);
-                    return `if(!((bool)${ifname}(${aargs.join(", ")}))) { return std::nullopt; };`;
+                    return `${RUNTIME_NAMESPACE}::bsq_validate((bool)${ifname}(${aargs.join(", ")}), "BAPI -> BSQ", 0, nullptr, "Validation check failed");`;
                 }),
                 ...tdecl.allValidates.map((val) => {
                     const cttdecl = this.irasm.alltypes.get(val.containingtype.tkeystr) as IRAbstractNominalTypeDecl;
@@ -2980,22 +3017,21 @@ class CPPEmitter {
                     });
 
                     const vfname = TransformCPPNameManager.generateNameForValidateFunction(val.containingtype.tkeystr, val.ii);
-                    return `if(!((bool)${vfname}(${aargs.join(", ")}))) { return std::nullopt; };`;
+                    return `${RUNTIME_NAMESPACE}::bsq_validate((bool)${vfname}(${aargs.join(", ")}), "BAPI -> BSQ", 0, nullptr, "Validation check failed");`;
                 })
-            ].join("\n    ");
+            ].join("\n        ");
 
-            const bsqparsedef = `std::optional<${ctrepr}> BSQ_parse${ctname}() {\n` +
-            `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeType("${tdecl.tkey}")) { return std::nullopt; };\n` +
-            `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('{')) { return std::nullopt; };\n` +
-            `${bfparses.join("\n")}\n` +
-            `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol('}')) { return std::nullopt; };\n` +
-            `    ${allchks}\n\n` +
-            `    return std::make_optional<${ctrepr}>(${vvcons[0]} ${consargs.join(", ")} ${vvcons[1]});\n` +
-            '}';
+            const checkedconsdef = `namespace ${RUNTIME_NAMESPACE} {\n` +
+                `void validatingConstructor_${ctname}(void** argptrs, void* resptr) {\n` +
+                `${bfinits.join("\n")}${bfinits.length !== 0 ? "\n\n" : ""}` +
+                `${allchks}\n\n` +
+                `        *((${ctrepr}*)resptr) = ${vvcons[0]} ${consargs.join(", ")} ${vvcons[1]};\n` +
+            `    }\n` +
+            `}\n`;
 
             return [
-                [tclass, typeinfodecl, ivdecls, bsqparsedecl, bsqemitdecl].join("\n"), 
-                [typeinfodef, ivdefs, bsqparsedef, bsqemitdef].join("\n")
+                [tclass, typeinfodecl, ivdecls].join("\n"), 
+                [typeinfodef, ivdefs, checkedconsdef].join("\n")
             ];
         }
     }

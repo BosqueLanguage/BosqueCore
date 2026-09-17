@@ -193,7 +193,7 @@ namespace ᐸRuntimeᐳ
                 lexer->consume();
             }
 
-            if(!lexer->constructorEqualsPeek()) {
+            if(lexer->constructorEqualsPeek()) {
                 auto finfo = std::find_if(tinfo->ftable, tinfo->ftable + tinfo->ftablecount, [&lexer](const TypeLayoutInfo& fi) {
                     return lexer->testDataMatchesID(fi.fname);
                 });
@@ -201,12 +201,12 @@ namespace ᐸRuntimeᐳ
                 
                 const TypeInfo* ftypeinfo = TypeInfo::getTypeInfoForID(finfo->fieldbsqtypeid);
 
-                lexer->consume(); //eat Type
+                lexer->consume(); //eat name
                 lexer->consume(); //eat = symbol
                 
                 void* valpos = (void*)((uint64_t*)valdata + finfo->slotoffset);
                 valptrs[std::distance(tinfo->ftable, finfo)] = valpos;
-                parseToBSQ_Entity(ftypeinfo, lexer, (void*)valpos);
+                ftypeinfo->opdispatch.parseToBSQFp(ftypeinfo, lexer, (void*)valpos);
 
                 cpos = std::numeric_limits<size_t>::max();
             }
@@ -224,7 +224,7 @@ namespace ᐸRuntimeᐳ
                 else {
                     void* valpos = (void*)((uint64_t*)valdata + finfo->slotoffset);
                     valptrs[cpos] = valpos;
-                    parseToBSQ_Entity(ftypeinfo, lexer, (void*)valpos);
+                    ftypeinfo->opdispatch.parseToBSQFp(ftypeinfo, lexer, (void*)valpos);
                 }
 
                 cpos++;
