@@ -146,6 +146,12 @@ namespace ᐸRuntimeᐳ
         //For enum types, this map provides quick access to enum names
         static std::unordered_map<uint32_t, std::pair<size_t, const char**>> enuminfomap;
 
+        inline static std::optional<const TypeInfo*> tryGetTypeInfoForKey(const std::string& key)
+        {
+            auto ii = tkeytoidmap.find(key);
+            return (ii != tkeytoidmap.end()) ? std::optional<const TypeInfo*>(tinfomap.at(ii->second)) : std::nullopt;
+        }
+
         inline static const TypeInfo* getTypeInfoForKey(const std::string& key)
         {
             return tinfomap.at(tkeytoidmap.at(key));

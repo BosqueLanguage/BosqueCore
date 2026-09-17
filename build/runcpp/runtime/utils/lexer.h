@@ -152,6 +152,12 @@ namespace ᐸRuntimeᐳ
             return this->ctoken.begin;
         }
 
+        //TODO we need this in one spot -- it is slow so we want to get rid of it when we can
+        std::string getTokenIdentifierAsString() const
+        {
+            return std::string(this->ctoken.begin, this->ctoken.end);
+        }
+
         bool testDataMatches(const uint8_t* data, size_t len) const
         {
             return this->ctoken.matches(data, len);

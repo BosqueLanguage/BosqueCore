@@ -2375,6 +2375,8 @@ class CPPEmitter {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
         const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey); 
 
+        const uctname = TransformCPPNameManager.generateNameForUnionType(tdecl.tkey);
+
         return `namespace ᐸRuntimeᐳ { \n` +
             `    inline constexpr TypeInfo g_typeinfo_${ctname} = {\n` +
             `        ${ttid.bsqtypeid},\n` +
@@ -2388,6 +2390,7 @@ class CPPEmitter {
             `        0,\n` +
             `        nullptr,\n` +
             `        0,\n` +
+            `        TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_Concept<${uctname}>, (ParseToBSQFp)&parseToBSQ_Concept<${uctname}>, (BSQToJSONFp)&bsqToJSON_Concept<${uctname}>, (BSQToBAPIFp)&bsqToBAPI_Concept<${uctname}>, (DisplayValueFp)&displayValue_Concept<${uctname}> },\n` +
             `        "${tdecl.tkey}",\n` +
             `        ${ttid.quickrelease}\n` +
             `    };\n` +
@@ -3023,7 +3026,7 @@ class CPPEmitter {
 
             const checkedconsdef = `namespace ${RUNTIME_NAMESPACE} {\n` +
                 `void validatingConstructor_${ctname}(void** argptrs, void* resptr) {\n` +
-                `${bfinits.join("\n")}${bfinits.length !== 0 ? "\n\n" : ""}` +
+                `${bfinits.join("\n")}${bfinits.length !== 0 ? "\n\n        " : ""}` +
                 `${allchks}\n\n` +
                 `        *((${ctrepr}*)resptr) = ${vvcons[0]} ${consargs.join(", ")} ${vvcons[1]};\n` +
             `    }\n` +
@@ -3111,47 +3114,6 @@ class CPPEmitter {
         `${ccons.join("\n")}\n` +
         `};`;
         const decltypeinfo = this.emitConceptTypeInfoDecl(tdecl);
-        const declbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}();`;
-        const declbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv);`;
-        
-        let defbsqparse = "";
-        let defbsqemit = "";
-        if(uoptions.length === 0) {
-            defbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}() {\n` +
-            `\n    return std::nullopt;\n` +
-            `}`;
-
-            defbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv) {\n` +
-            `    ;//never reachable\n` +
-            `}`;
-        }
-        else {
-            const parseops = uoptions.map((opt, ii) => {
-                const fttname = TransformCPPNameManager.convertTypeKey(opt.tkeystr);
-                const ftvar = this.typeInfoManager.emitTypeAsStd(opt.tkeystr);
-                const testop = `ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.testType("${opt.tkeystr}")`;
-                const baseop = `{ std::optional<${ftvar}> vv = BSQ_parse${fttname}(); if(!vv.has_value()) { return std::nullopt; } else { return ${ctname}(vv.value()); } }`;
-                return `    ${ii !== 0 ? "else " : ""}if(${testop}) ${baseop}`;
-            });
-
-            defbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}() {\n` +
-            parseops.join("\n") +
-            `\n    else { return std::nullopt; }\n` +
-            `}`;
-        
-            const emitops = uoptions.map((opt) => {
-                const optypeinfo = this.typeInfoManager.getTypeInfo(opt.tkeystr);
-                const fttname = TransformCPPNameManager.convertTypeKey(opt.tkeystr);
-                const umember = TransformCPPNameManager.generateNameForUnionMember(opt.tkeystr);
-                return `    case ${optypeinfo.bsqtypeid}: BSQ_emit${fttname}(vv.uval.data.${umember}); break;`;
-            });
-
-            defbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv) {\n` +
-            `    switch(vv.uval.typeinfo->bsqtypeid) {\n` +
-            `${emitops.join("\n")}\n` +
-            `    }\n` +
-            `}`;
-        }
 
         const iifieldargl = tdecl.saturatedBFieldInfo.map((bf) => { return {pname: `${TransformCPPNameManager.convertIdentifier("$" + bf.fname)}`, ptype: bf.ftype}; }); 
         const vfuncinfo = tdecl.invariants.map((inv) => this.emitInvariantFunction(inv, tdecl, iifieldargl));
@@ -3161,8 +3123,8 @@ class CPPEmitter {
         const ivdefs = [...vfuncinfo.map((vf) => vf[1]), ...valfuncinfo.map((vf) => vf[1])].join("\n");
 
         return [
-            [declunion, declconcept, decltypeinfo, ivdecls, declbsqparse, declbsqemit].join("\n"),
-            [ivdefs, defbsqparse, defbsqemit].join("\n")
+            [declunion, declconcept, decltypeinfo, ivdecls].join("\n"),
+            ivdefs
         ];
     }
 
