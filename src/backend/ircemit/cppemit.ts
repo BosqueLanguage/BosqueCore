@@ -2623,43 +2623,25 @@ class CPPEmitter {
 
     private emitEListTypeInfo(elist: IREListTypeSignature): [string, string] {
         const ctname = TransformCPPNameManager.convertTypeKey(elist.tkeystr);
-        const ctrepr = this.typeInfoManager.emitTypeAsStd(elist.tkeystr);
+        const ttid = this.typeInfoManager.getTypeInfo(elist.tkeystr);
 
-        const bsqparsedecl = `std::optional<${ctrepr}> BSQ_parse${ctname}();`;
-        
-        const bsqemitdecl = `void BSQ_emit${ctname}(${ctrepr} vv);`;
-        const bsqemitdef = `void BSQ_emit${ctname}(${ctrepr} vv) {\n` +
-            `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate("(| "); \n` +
-            `${elist.entries.map((ee, ii) => {
-                const fttname = TransformCPPNameManager.convertTypeKey(ee.tkeystr);
-                return `    BSQ_emit${fttname}(vv.at<${ii}, ${this.typeInfoManager.emitTypeAsStd(ee.tkeystr)}>());${ii !== elist.entries.length - 1 ? ' ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate(", ");' : ""}`;
-            }).join("\n")}\n` +
-            `    ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqemitter.writeImmediate(" |)"); \n` +
+        const ftypes = elist.entries.map((entry) => {
+            return this.typeInfoManager.emitTypeAsStd(entry.tkeystr);
+        });
+
+        const fentries = elist.entries.map((entry, idx) => {
+            const ettid = this.typeInfoManager.getTypeInfo(entry.tkeystr);
+            return `{ -${idx + 1}, ${ettid.bsqtypeid}, 0, 0, "${idx}", "${idx}" }`;
+        });
+
+        const ttdecl = `namespace ᐸRuntimeᐳ {\n` +
+            `    inline constexpr TypeLayoutInfo g_ftable_${ctname}[${elist.entries.length}] = { ${fentries.join(", ")} };\n` +
+            `    inline constexpr TypeInfo g_typeinfo_${ctname} = g_typeinfo_EList${elist.entries.length}_generate<${ftypes.join(", ")}>(${ttid.bsqtypeid}, g_ftable_${ctname}, ${ttid.ptrmask !== undefined ? ('"' + ttid.ptrmask + '"') : "nullptr"}, "${elist.tkeystr}");\n` +
             `}`;
 
-        const bfparses = elist.entries.map((ee, ii) => {
-            const fttname = TransformCPPNameManager.convertTypeKey(ee.tkeystr);
-            return `    auto v_${ii} = BSQ_parse${fttname}(); if(!v_${ii}.has_value()) { return std::nullopt; } ${ii !== elist.entries.length - 1 ? "if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol(',')) { return std::nullopt; };" : ""}`;
-        });
-
-        const constypes = elist.entries.map((ee) => {
-            return this.typeInfoManager.emitTypeAsStd(ee.tkeystr);
-        });
-
-        const consargs = elist.entries.map((ee, ii) => {
-            return `v_${ii}.value()`;
-        });
-
-        const bsqparsedef = `std::optional<${ctrepr}> BSQ_parse${ctname}() {\n` +
-        `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol("(|")) { return std::nullopt; };\n` +
-        `${bfparses.join("\n")}\n` +
-        `    if(!ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.ensureAndConsumeSymbol("|)")) { return std::nullopt; };\n` +
-        `    return std::make_optional<${ctrepr}>(ᐸRuntimeᐳ::EList${constypes.length}<${constypes.join(", ")}>(${consargs.join(", ")}));\n` +
-        '}';
-
         return [
-            [bsqparsedecl, bsqemitdecl].join("\n"), 
-            [bsqparsedef, bsqemitdef].join("\n")
+            ttdecl, 
+            ""
         ];
     }
 

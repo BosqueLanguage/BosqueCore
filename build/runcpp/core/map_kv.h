@@ -162,8 +162,7 @@ namespace ᐸRuntimeᐳ
         const TypeInfo* vinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[1].fieldbsqtypeid);
 
         XMapKV<K, V, TYPE_ID_MAP_KV> rres{};
-        for(size_t i = 0; i < j.size(); i++)
-        {
+        for(size_t i = 0; i < j.size(); i++) {
             XMapEntry<K, V> val;
             kinfo->opdispatch.jsonParseToBSQFp(kinfo, j[i][0], &val.key);
             vinfo->opdispatch.jsonParseToBSQFp(vinfo, j[i][1], &val.value);
@@ -221,8 +220,7 @@ namespace ᐸRuntimeᐳ
 
         json j = json::array();
         const XMapKV<K, V, TYPE_ID_MAP_KV>* map = (const XMapKV<K, V, TYPE_ID_MAP_KV>*)valptr;
-        for(auto iter = map->begin(); iter != map->end(); ++iter)
-        {
+        for(auto iter = map->begin(); iter != map->end(); ++iter) {
             XMapEntry<K, V> val = *iter;
 
             json jk = kinfo->opdispatch.bsqToJSONFp(kinfo, &val.key);
@@ -243,26 +241,33 @@ namespace ᐸRuntimeᐳ
 
         const XMapKV<K, V, TYPE_ID_MAP_KV>* map = (const XMapKV<K, V, TYPE_ID_MAP_KV>*)valptr;
         
-        builder->appendConstString(tinfo->typekey);
-        builder->appendLiteralString("{ ");
-
-        bool first = true;
-        for(auto iter = map->begin(); iter != map->end(); ++iter)
+        if(map->empty())
         {
-            if(first) {
-                first = false;
-            }
-            else {
-                builder->appendLiteralString(", ");
-            }
-
-            XMapEntry<K, V> val = *iter;
-            kinfo->opdispatch.bsqToBAPIFp(kinfo, &val.key, builder);
-            builder->appendLiteralString(" => ");
-            vinfo->opdispatch.bsqToBAPIFp(vinfo, &val.value, builder);
+            builder->appendConstString(tinfo->typekey);
+            builder->appendLiteralString("{ }");
+            return;
         }
+        else {
+            builder->appendConstString(tinfo->typekey);
+            builder->appendLiteralString("{ ");
 
-        builder->appendLiteralString(" }");
+            bool first = true;
+            for(auto iter = map->begin(); iter != map->end(); ++iter) {
+                if(first) {
+                    first = false;
+                }
+                else {
+                    builder->appendLiteralString(", ");
+                }
+
+                XMapEntry<K, V> val = *iter;
+                kinfo->opdispatch.bsqToBAPIFp(kinfo, &val.key, builder);
+                builder->appendLiteralString(" => ");
+                vinfo->opdispatch.bsqToBAPIFp(vinfo, &val.value, builder);
+            }
+
+            builder->appendLiteralString(" }");
+        }
     }
     
     template<typename K, typename V, uint32_t TYPE_ID_MAP_KV>
@@ -273,23 +278,28 @@ namespace ᐸRuntimeᐳ
 
         const XMapKV<K, V, TYPE_ID_MAP_KV>* map = (const XMapKV<K, V, TYPE_ID_MAP_KV>*)valptr;
 
-        os << getDisplayIndent(indent) << tinfo->typekey << "{ ";
-        bool first = true;
-        for(auto iter = map->begin(); iter != map->end(); ++iter)
-        {
-            if(first) {
-                first = false;
-            }
-            else {
-                os << ", ";
-            }
-
-            XMapEntry<K, V> val = *iter;
-            kinfo->opdispatch.displayFp(kinfo, &val.key, os, indent);
-            os << " => ";
-            vinfo->opdispatch.displayFp(vinfo, &val.value, os, indent);
+        if(map->empty()) {
+            os << getDisplayIndent(indent) << tinfo->typekey << "{ }";
+            return;
         }
-        os << " }";
+        else {
+            os << getDisplayIndent(indent) << tinfo->typekey << "{ ";
+            bool first = true;
+            for(auto iter = map->begin(); iter != map->end(); ++iter) {
+                if(first) {
+                    first = false;
+                }
+                else {
+                    os << ", ";
+                }
+
+                XMapEntry<K, V> val = *iter;
+                kinfo->opdispatch.displayFp(kinfo, &val.key, os, indent);
+                os << " => ";
+                vinfo->opdispatch.displayFp(vinfo, &val.value, os, indent);
+            }
+            os << " }";
+        }
     }
 
     template<typename K, typename V, uint32_t TYPE_ID_MAP_KV>

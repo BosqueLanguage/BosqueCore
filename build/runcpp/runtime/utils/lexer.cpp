@@ -20,9 +20,9 @@ namespace ᐸRuntimeᐳ
     static boost::regex s_bytebuffer_prefix_re("0x\\[", s_regexflags);
     static boost::regex s_bytebuffer_empty_re("0x\\[\\]", s_regexflags);
     
-    static boost::regex s_symbol_re("([(){}\\[\\]<>,#|])|(=>)|(\\(]\\|)|(\\|\\))", s_regexflags);
-
-    static boost::regex s_identifierlike_re("([a-zA-Z_][a-zA-Z0-9_]*(<([^>]|=>)+>)?)(::([a-zA-Z_][a-zA-Z0-9_]*(<([^>]|=>)+>)?))*", s_regexflags);
+    static boost::regex s_symbol_re("[<>,{}#]|(=>)|(\\x28\\x7c?)|(\\x7c?\\x29)", s_regexflags);
+                                    
+    static boost::regex s_identifierlike_re("[a-zA-Z_][a-zA-Z0-9_:]+", s_regexflags);
     static boost::regex s_kwnone_re("none", s_regexflags);
     static boost::regex s_kwtrue_re("true", s_regexflags);
     static boost::regex s_kwfalse_re("false", s_regexflags);
@@ -248,7 +248,41 @@ namespace ᐸRuntimeᐳ
             this->advanceToken(BAPITokenType::LiteralKeyword, mm[0].length());
         }
         else {
-            this->advanceToken(BAPITokenType::Identifier, mm[0].length());
+            auto iir = this->iter;
+            std::advance(iir, mm[0].length()); //move to the token end
+
+            if(iir == this->end || *iir != '<') {
+                //nothing left or some regular character -- just an identifier thing
+                this->advanceToken(BAPITokenType::Identifier, mm[0].length());
+            }
+            else {
+                //template argument list follows -- we need to match nested parens and then loop eating any follow ::type::type things
+
+                while(*iir == '<') {
+                    ++iir; //eat the opening <
+                    size_t pcount = 1; //we have already seen the opening <
+
+                    while((iir != this->end) && (pcount != 0)) {
+                        if(*iir == '<') {
+                            ++pcount;
+                        }
+                        else if(*iir == '>') {
+                            --pcount;
+                        }
+                        ++iir;
+                    }
+
+                    //we have matched a complete template argument list -- now continue to see if there are any trailing :: sequences
+                    while((iir != this->end) && (*iir == ':')) {
+                        ++iir;
+                    }
+
+                    //we have consumed any trailing :: sequences -- so parse another identifier if doable
+                    if(boost::regex_search(iir, this->end, mm, s_identifierlike_re, boost::match_continuous)) {
+                        std::advance(iir, mm[0].length());
+                    }
+                }
+            }
         }
 
         return true;

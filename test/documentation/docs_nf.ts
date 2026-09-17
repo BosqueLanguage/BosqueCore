@@ -17,6 +17,7 @@ import { ASMToIRConverter } from "../../src/backend/asmprocess/flatten.js";
 import { CPPEmitter } from "../../src/backend/ircemit/cppemit.js";
 import { Parser } from "../../src/frontend/parser.js";
 
+const jsondir = path.join(__dirname, "../../json/");
 const runcppdir = path.join(__dirname, "../../runcpp/");
 const sampledir = path.join(__dirname, "../../samples/");
 
@@ -80,10 +81,14 @@ function moveRuntimeFiles(outname: string): boolean {
 
     const makefile = emitCommandLineMakefile();
     try {
-        const dstpath = path.join(nndir, "runcpp/");
-
-        fs.mkdirSync(dstpath, {recursive: true});
-        execSync(`cp -R ${runcppdir}* ${dstpath}`);
+        const runjsonpath = path.join(nndir, "json/");
+        const runcppdstpath = path.join(nndir, "runcpp/");
+                        
+        fs.mkdirSync(runjsonpath, {recursive: true});
+        execSync(`cp -R ${jsondir}* ${runjsonpath}`);
+                
+        fs.mkdirSync(runcppdstpath, {recursive: true});
+        execSync(`cp -R ${runcppdir}* ${runcppdstpath}`);
 
         fs.writeFileSync(path.join(nndir, "Makefile"), makefile);
     }

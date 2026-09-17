@@ -12,7 +12,7 @@ OUT_OBJ=$(BUILD_DIR)output/obj/
 BUILD := unittests
 
 CPPFLAGS_OPT.unittests=-Og -g -ggdb -DRB_INVARIANT_VALIDATE
-CPPFLAGS_STD=-Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable -Wuninitialized -Werror -std=gnu++23 -fno-omit-frame-pointer -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-stack-protector
+CPPFLAGS_STD=-Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable -Wuninitialized -Werror -std=gnu++23 -fpie -fno-omit-frame-pointer -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-stack-protector
 CPPFLAGS=${CPPFLAGS_OPT.${BUILD}} ${CPPFLAGS_STD}
 
 LINKAGE=-lboost_regex -licuuc -licui18n -licudata
