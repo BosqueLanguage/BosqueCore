@@ -250,23 +250,6 @@ class TypeInfoManager {
         }
     }
 
-    emitTypeInfoDecl(tkey: string): string {
-        const typeinfo = this.getTypeInfo(tkey);
-        const tk = TransformCPPNameManager.convertTypeKey(tkey);
-        
-        let layouttag = "";
-        if(typeinfo.tag === LayoutTag.Value) {
-            layouttag = "Value";
-        }
-        else {
-            layouttag = "Ref";
-        }
-
-        assert(typeinfo.itable.length === 0, `TypeInfoManager::emitTypeInfoDecl - ITable emission not yet supported for type key ${tkey}`);
-
-        return `constexpr TypeInfo g_typeinfo_${tk} = { ${typeinfo.bsqtypeid}, ${typeinfo.bytesize}, ${typeinfo.slotcount}, LayoutTag::${layouttag}, BSQ_TYPEINFO_NO_ESLOT, ${typeinfo.ptrmask ?? "BSQ_PTR_MASK_LEAF"}, "${tk}", nullptr };`;
-    }
-
     private emitTypeAsEListSelfDescribing(tinfo: TypeInfo): string {
         const entries = (tinfo.tsig as IREListTypeSignature).entries.map((ee) => this.emitTypeAsStd(ee.tkeystr));
         return `ᐸRuntimeᐳ::EList${entries.length}<${entries.join(", ")}>`;

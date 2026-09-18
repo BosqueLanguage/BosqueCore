@@ -77,7 +77,7 @@ function emitCommandLineMakefile(optlevel: "testing" | "release"): string {
         'CORE_SRC_DIR=$(SRC_DIR)core/\n' +
         'RUNTIME_SRC_DIR=$(SRC_DIR)runtime/\n' +
         'ALLOC_SRC_DIR=$(RUNTIME_SRC_DIR)allocator/\n' +
-        'BSQIR_SRC_DIR=$(RUNTIME_SRC_DIR)bsqir/\n' +
+        'UTILS_SRC_DIR=$(RUNTIME_SRC_DIR)utils/\n' +
         '\n' +
         'JSON_INCLUDES=-I $(MAKE_PATH)/json/\n' +
         '\n' +
@@ -90,8 +90,8 @@ function emitCommandLineMakefile(optlevel: "testing" | "release"): string {
         'CPPFLAGS_OPT.profile=-O2 -g -ggdb -flto=auto -ftree-vectorize -march=native -Wno-array-bounds -Wno-stringop-overflow\n' +
         'CPPFLAGS_OPT.release=-O2 -g -ggdb -flto=auto -ftree-vectorize -march=native -Wno-array-bounds -Wno-stringop-overflow\n' +
         'CPPFLAGS=${CPPFLAGS_OPT.${BUILD}} ${CPP_STDFLAGS}\n\n' +
-        'HEADERS=$(wildcard $(SRC_DIR)*.h) $(wildcard $(CORE_SRC_DIR)*.h) $(wildcard $(RUNTIME_SRC_DIR)*.h) $(wildcard $(ALLOC_SRC_DIR)*.h) $(wildcard $(BSQIR_SRC_DIR)*.h)\n' +
-        'CPP=$(wildcard $(SRC_DIR)*.cpp) $(wildcard $(CORE_SRC_DIR)*.cpp) $(wildcard $(RUNTIME_SRC_DIR)*.cpp) $(wildcard $(ALLOC_SRC_DIR)*.cpp) $(wildcard $(BSQIR_SRC_DIR)*.cpp)\n' +
+        'HEADERS=$(wildcard $(SRC_DIR)*.h) $(wildcard $(CORE_SRC_DIR)*.h) $(wildcard $(RUNTIME_SRC_DIR)*.h) $(wildcard $(ALLOC_SRC_DIR)*.h) $(wildcard $(UTILS_SRC_DIR)*.h)\n' +
+        'CPP=$(wildcard $(SRC_DIR)*.cpp) $(wildcard $(CORE_SRC_DIR)*.cpp) $(wildcard $(RUNTIME_SRC_DIR)*.cpp) $(wildcard $(ALLOC_SRC_DIR)*.cpp) $(wildcard $(UTILS_SRC_DIR)*.cpp)\n' +
         '\n' +
         'all: $(MAKE_PATH)/app\n\n' +
         '$(MAKE_PATH)/app: $(HEADERS) $(CPP) $(MAKE_PATH)/app.h $(MAKE_PATH)/app.cpp\n' +

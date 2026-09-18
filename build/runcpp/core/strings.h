@@ -8,6 +8,9 @@
 #include "chars.h"
 #include "bytebuff.h"
 
+#include "../runtime/utils/encodings.h"
+#include "../runtime/utils/builder.h"
+
 namespace ᐸRuntimeᐳ
 {
     class CStrRootInlineContent
@@ -154,16 +157,16 @@ namespace ᐸRuntimeᐳ
         constexpr static const char* CSTR_NODE_MASK = "00000110";
 
         std::array<char, 8> tags; //store tag in first byte
-        PosRBTree<char, CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING> postree;
+        PosRBTree<char, CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_CSTRING> postree;
 
         CStrRootTreeContent() : tags{std::numeric_limits<char>::max(), 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}, postree{} { ; }
-        CStrRootTreeContent(const PosRBTree<char, CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>& postree) : tags{std::numeric_limits<char>::max(), 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}, postree{postree} { ; }
+        CStrRootTreeContent(const PosRBTree<char, CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_CSTRING>& postree) : tags{std::numeric_limits<char>::max(), 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}, postree{postree} { ; }
         CStrRootTreeContent(const CStrRootTreeContent& other) = default;
     };
 
     inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_CString = g_typeinfo_PosRBTreeLeaf_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_CSTRING, BSQ_PTR_MASK_LEAF, "PosRBTreeLeaf_CString", true);
     inline constexpr TypeInfo g_typeinfo_PosRBTreeNode_CString = g_typeinfo_PosRBTreeNode_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_NODE_CSTRING, CStrRootTreeContent::CSTR_NODE_MASK, "PosRBTreeNode_CString");
-    inline constexpr TypeInfo g_typeinfo_PosRBTree_CString = g_typeinfo_PosRBTree_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>(WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING, "PosRBTree_CString");
+    inline constexpr TypeInfo g_typeinfo_PosRBTree_CString = g_typeinfo_PosRBTree_generate<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_CSTRING>(WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING, "PosRBTree_CString");
 
     extern thread_local GCAllocator<PosRBTreeLeaf<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>> PosRBTreeLeaf_CString_allocator;
     extern thread_local GCAllocator<PosRBTreeNode<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE>> PosRBTreeNode_CString_allocator;
@@ -210,6 +213,7 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
+        TypeOpDispatchInfo{},
         "CStringInline",
         false
     };
@@ -226,9 +230,16 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
+        TypeOpDispatchInfo{},
         "CStringTree",
         false
     };
+
+    void jsonParseToBSQ_CString(const TypeInfo* tinfo, const json& j, void* resptr);
+    void parseToBSQ_CString(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr);
+    json bsqToJSON_CString(const TypeInfo* tinfo, const void* valptr);
+    void bsqToBAPI_CString(const TypeInfo* tinfo, const void* valptr, BSQStreamingBuilder* builder);
+    void displayValue_CString(const TypeInfo* tinfo, const void* valptr, std::ostream& os, std::optional<std::string> indent);
 
     inline constexpr TypeInfo g_typeinfo_CString = {
         WELL_KNOWN_TYPE_ID_CSTRING,
@@ -242,6 +253,7 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
+        TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_CString, (ParseToBSQFp)&parseToBSQ_CString, (BSQToJSONFp)&bsqToJSON_CString, (BSQToBAPIFp)&bsqToBAPI_CString, (DisplayValueFp)&displayValue_CString },
         "CString",
         false
     };
@@ -310,6 +322,81 @@ namespace ᐸRuntimeᐳ
     };
     static_assert(std::bidirectional_iterator<XCStringIterator>);
 
+    class CStringStreamingBuilder : public BSQStreamingBuilder
+    {
+    public:
+        size_t pendingchars;
+        std::array<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE> pendingdata;
+
+        size_t cstrsize;
+        PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_CSTRING> postree;
+
+        CStringStreamingBuilder() : pendingchars(0), pendingdata{}, cstrsize(0), postree{} {}
+
+        void appendChar(char c)
+        {
+            this->pendingdata[this->pendingchars++] = c;
+
+            if(this->pendingchars == CStrRootTreeContent::CSTR_MAX_LEAF_SIZE) {
+                if(this->cstrsize == 0) {
+                    this->postree = PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_CSTRING>::mkinitial(this->pendingdata.begin(), this->pendingdata.begin() + CStrRootTreeContent::CSTR_MAX_LEAF_SIZE);
+                }
+                else {
+                    PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_CSTRING> newleaf = PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_CSTRING>::mkinitial(this->pendingdata.begin(), this->pendingdata.begin() + CStrRootTreeContent::CSTR_MAX_LEAF_SIZE);
+                    this->postree = PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_CSTRING>::append(this->postree, newleaf);
+                }
+
+                this->cstrsize += this->pendingchars;
+
+                this->pendingchars = 0;
+                this->pendingdata.fill(0);
+            }
+        }
+
+        void appendByte(uint8_t byte) override
+        {
+            assert(false); //This is not supported for streaming cstring builders
+        }
+
+        void appendChar(char32_t cchar) override
+        {
+            assert(false); //This is not supported for streaming cstring builders
+        }
+
+        void appendConstString(const char* str, size_t len)
+        {
+            for(size_t i = 0; i < len; i++) {
+                this->appendChar(str[i]);
+            }
+        }
+
+        void appendConstString(const char* str)
+        {
+            while(*str) {
+                this->appendChar(*str);
+                str++;
+            }
+        }
+
+        CStringUnion finalize()
+        {
+            if(this->pendingchars == 0) {
+                return CStringUnion{this->postree};
+            }
+            else if(this->cstrsize == 0) {
+                if(this->pendingchars <= CStrRootInlineContent::CSTR_MAX_SIZE) {                    
+                    return CStringUnion(CStrRootInlineContent(this->pendingdata.begin(), this->pendingchars));
+                }
+                else {
+                    return CStrRootTreeContent{PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_CSTRING>::mkinitial(this->pendingdata.begin(), this->pendingdata.begin() + this->pendingchars)};
+                }
+            }
+            else {
+                return CStringUnion(CStrRootTreeContent{this->postree.builderPushBackLeafBlock(this->pendingdata, this->pendingchars)});
+            }
+        }
+    };
+
     class XCString
     {
     private:
@@ -317,6 +404,8 @@ namespace ᐸRuntimeᐳ
 
     public:
         XCString() : ucstr{} { ; }
+        XCString(const CStringUnion& c) : ucstr{c} { ; } //just for builder to use
+
         XCString(const CStrRootInlineContent& b) : ucstr{CStringUnion{b}} { ; }
         XCString(const CStrRootTreeContent& n) : ucstr{CStringUnion{n}} { ; }
         XCString(const XCString& other) = default;
@@ -334,10 +423,10 @@ namespace ᐸRuntimeᐳ
                     return XCString{CStrRootInlineContent(cstr, len)};
                 }
                 else if(len <= CStrRootTreeContent::CSTR_MAX_LEAF_SIZE) {
-                    return XCString{CStrRootTreeContent{PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>::mkinitial(cstr, cstr + len)}};
+                    return XCString{CStrRootTreeContent{PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_CSTRING>::mkinitial(cstr, cstr + len)}};
                 }
                 else {
-                    return XCString{CStrRootTreeContent{PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>::mklargerec(cstr, cstr + len, len)}};
+                    return XCString{CStrRootTreeContent{PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_CSTRING>::mklargerec(cstr, cstr + len, len)}};
                 }
             }
         }
@@ -353,10 +442,10 @@ namespace ᐸRuntimeᐳ
                     return XCString{CStrRootInlineContent(begin, end, len)};
                 }
                 else if(len <= CStrRootTreeContent::CSTR_MAX_LEAF_SIZE) {
-                    return XCString{CStrRootTreeContent{PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>::mkinitial(begin, end)}};
+                    return XCString{CStrRootTreeContent{PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_CSTRING>::mkinitial(begin, end)}};
                 }
                 else {
-                    return XCString{CStrRootTreeContent{PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_CSTRING>::mklargerec(begin, end, len)}};
+                    return XCString{CStrRootTreeContent{PosRBTree<char, CStrRootTreeContent::CSTR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_CSTRING>::mklargerec(begin, end, len)}};
                 }
             }
         }
@@ -582,10 +671,59 @@ namespace ᐸRuntimeᐳ
         }
     };
 
+    void jsonParseToBSQ_FCString(const TypeInfo* tinfo, const json& j, void* resptr);
+    void parseToBSQ_FCString(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr);
+    json bsqToJSON_FCString(const TypeInfo* tinfo, const void* valptr);
+    void bsqToBAPI_FCString(const TypeInfo* tinfo, const void* valptr, BSQStreamingBuilder* builder);
+    void displayValue_FCString(const TypeInfo* tinfo, const void* valptr, std::ostream& os, std::optional<std::string> indent);
+
+    consteval TypeInfo g_typeinfo_FCString_generate(uint32_t id, const char* name) 
+    {
+        return TypeInfo{
+            id,
+            sizeof(XFCString),
+            byteSizeToSlotCount(sizeof(XFCString)),
+            LayoutTag::Value,
+            BSQ_PTR_MASK_LEAF,
+            nullptr,
+            0,
+            nullptr,
+            0,
+            nullptr,
+            0,
+            TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_FCString, (ParseToBSQFp)&parseToBSQ_FCString, (BSQToJSONFp)&bsqToJSON_FCString, (BSQToBAPIFp)&bsqToBAPI_FCString, (DisplayValueFp)&displayValue_FCString },
+            name,
+            false
+        };
+    }
+
     class XCRegex
     {
     public:
         size_t regexid;
+    };
+
+    void jsonParseToBSQ_CRegex(const TypeInfo* tinfo, const json& j, void* resptr);
+    void parseToBSQ_CRegex(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr);
+    json bsqToJSON_CRegex(const TypeInfo* tinfo, const void* valptr);
+    void bsqToBAPI_CRegex(const TypeInfo* tinfo, const void* valptr, BSQStreamingBuilder* builder);
+    void displayValue_CRegex(const TypeInfo* tinfo, const void* valptr, std::ostream& os, std::optional<std::string> indent);
+
+    inline constexpr TypeInfo g_typeinfo_CRegex = {
+        WELL_KNOWN_TYPE_ID_CREGEX,
+        sizeof(XCRegex),
+        byteSizeToSlotCount(sizeof(XCRegex)),
+        LayoutTag::Value,
+        BSQ_PTR_MASK_LEAF,
+        nullptr,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        0,
+        TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_CRegex, (ParseToBSQFp)&parseToBSQ_CRegex, (BSQToJSONFp)&bsqToJSON_CRegex, (BSQToBAPIFp)&bsqToBAPI_CRegex, (DisplayValueFp)&displayValue_CRegex },
+        "CRegex",
+        false
     };
 
     class StrRootInlineContent
@@ -733,16 +871,16 @@ namespace ᐸRuntimeᐳ
         constexpr static const char* STR_NODE_MASK = "00000110";
 
         std::array<char32_t, 2> tags; //store tag in first byte
-        PosRBTree<char32_t, STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING> postree;
+        PosRBTree<char32_t, STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_STRING> postree;
 
         StrRootTreeContent() : tags{std::numeric_limits<char32_t>::max(), 0x0}, postree{} { ; }
-        StrRootTreeContent(const PosRBTree<char32_t, STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>& postree) : tags{std::numeric_limits<char32_t>::max(), 0x0}, postree{postree} { ; }
+        StrRootTreeContent(const PosRBTree<char32_t, STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_STRING>& postree) : tags{std::numeric_limits<char32_t>::max(), 0x0}, postree{postree} { ; }
         StrRootTreeContent(const StrRootTreeContent& other) = default;
     };
 
     inline constexpr TypeInfo g_typeinfo_PosRBTreeLeaf_String = g_typeinfo_PosRBTreeLeaf_generate<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_LEAF_STRING, BSQ_PTR_MASK_LEAF, "PosRBTreeLeaf_String", true);
     inline constexpr TypeInfo g_typeinfo_PosRBTreeNode_String = g_typeinfo_PosRBTreeNode_generate<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE>(WELL_KNOWN_TYPE_ID_POSRB_TREE_NODE_STRING, StrRootTreeContent::STR_NODE_MASK, "PosRBTreeNode_String");
-    inline constexpr TypeInfo g_typeinfo_PosRBTree_String = g_typeinfo_PosRBTree_generate<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>(WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING, "PosRBTree_String");
+    inline constexpr TypeInfo g_typeinfo_PosRBTree_String = g_typeinfo_PosRBTree_generate<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_STRING>(WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING, "PosRBTree_String");
 
     extern thread_local GCAllocator<PosRBTreeLeaf<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE>> PosRBTreeLeaf_String_allocator;
     extern thread_local GCAllocator<PosRBTreeNode<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE>> PosRBTreeNode_String_allocator;
@@ -777,6 +915,12 @@ namespace ᐸRuntimeᐳ
         }
     };
 
+    void jsonParseToBSQ_String(const TypeInfo* tinfo, const json& j, void* resptr);
+    void parseToBSQ_String(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr);
+    json bsqToJSON_String(const TypeInfo* tinfo, const void* valptr);
+    void bsqToBAPI_String(const TypeInfo* tinfo, const void* valptr, BSQStreamingBuilder* builder);
+    void displayValue_String(const TypeInfo* tinfo, const void* valptr, std::ostream& os, std::optional<std::string> indent);
+
     inline constexpr TypeInfo g_typeinfo_StringInline = {
         WELL_KNOWN_TYPE_ID_STRING_INLINE,
         sizeof(StrRootInlineContent),
@@ -789,6 +933,7 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
+        TypeOpDispatchInfo{},
         "StringInline",
         false
     };
@@ -805,6 +950,7 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
+        TypeOpDispatchInfo{},
         "StringTree",
         false
     };
@@ -821,6 +967,7 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
+        TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_String, (ParseToBSQFp)&parseToBSQ_String, (BSQToJSONFp)&bsqToJSON_String, (BSQToBAPIFp)&bsqToBAPI_String, (DisplayValueFp)&displayValue_String },
         "String",
         false
     };
@@ -889,6 +1036,81 @@ namespace ᐸRuntimeᐳ
     };
     static_assert(std::bidirectional_iterator<XStringIterator>);
 
+    class StringStreamingBuilder : public BSQStreamingBuilder
+    {
+    public:
+        size_t pendingchars;
+        std::array<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE> pendingdata;
+
+        size_t strsize;
+        PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_STRING> postree;
+
+        StringStreamingBuilder() : pendingchars(0), pendingdata{}, strsize(0), postree{} {}
+
+        void appendChar(char32_t cchar) override
+        {
+            this->pendingdata[this->pendingchars++] = cchar;
+
+            if(this->pendingchars == StrRootTreeContent::STR_MAX_LEAF_SIZE) {
+                if(this->strsize == 0) {
+                    this->postree = PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_STRING>::mkinitial(this->pendingdata.begin(), this->pendingdata.begin() + StrRootTreeContent::STR_MAX_LEAF_SIZE);
+                }
+                else {
+                    PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_STRING> newleaf = PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_STRING>::mkinitial(this->pendingdata.begin(), this->pendingdata.begin() + StrRootTreeContent::STR_MAX_LEAF_SIZE);
+                    this->postree = PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_STRING>::append(this->postree, newleaf);
+                }
+
+                this->strsize += this->pendingchars;
+
+                this->pendingchars = 0;
+                this->pendingdata.fill(0);
+            }
+        }
+
+        void appendChar(char c)
+        {
+            this->appendChar(static_cast<char32_t>(c));
+        }
+
+        void appendByte(uint8_t byte) override
+        {
+            assert(false); //This is not supported for streaming string builders
+        }
+
+        void appendConstString(const char* str, size_t len)
+        {
+            for(size_t i = 0; i < len; i++) {
+                this->appendChar(str[i]);
+            }
+        }
+
+        void appendConstString(const char* str)
+        {
+            while(*str) {
+                this->appendChar(*str);
+                str++;
+            }
+        }
+
+        StringUnion finalize()
+        {
+            if(this->pendingchars == 0) {
+                return StringUnion{this->postree};
+            }
+            else if(this->strsize == 0) {
+                if(this->pendingchars <= StrRootInlineContent::STR_MAX_SIZE) {                    
+                    return StringUnion(StrRootInlineContent(this->pendingdata.begin(), this->pendingchars));
+                }
+                else {
+                    return StrRootTreeContent{PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_STRING>::mkinitial(this->pendingdata.begin(), this->pendingdata.begin() + this->pendingchars)};
+                }
+            }
+            else {
+                return StringUnion(StrRootTreeContent{this->postree.builderPushBackLeafBlock(this->pendingdata, this->pendingchars)});
+            }
+        }
+    };
+
     class XString
     {
     private:
@@ -896,6 +1118,8 @@ namespace ᐸRuntimeᐳ
 
     public:
         XString() : ustr{} { ; }
+        XString(const StringUnion& s) : ustr{s} { ; } //just for builder to use
+        
         XString(const StrRootInlineContent& b) : ustr{b} { ; }
         XString(const StrRootTreeContent& n) : ustr{n} { ; }
         XString(const XString& other) = default;
@@ -910,10 +1134,10 @@ namespace ᐸRuntimeᐳ
                     return XString{StrRootInlineContent(str, len)};
                 }
                 else if(len <= StrRootTreeContent::STR_MAX_LEAF_SIZE) {
-                    return XString{StrRootTreeContent{PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>::mkinitial(str, str + len)}};
+                    return XString{StrRootTreeContent{PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_STRING>::mkinitial(str, str + len)}};
                 }
                 else {
-                    return XString{StrRootTreeContent{PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>::mklargerec(str, str + len, len)}};
+                    return XString{StrRootTreeContent{PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_STRING>::mklargerec(str, str + len, len)}};
                 }
             }
         }
@@ -929,10 +1153,10 @@ namespace ᐸRuntimeᐳ
                     return XString{StrRootInlineContent(begin, end, len)};
                 }
                 else if(len <= StrRootTreeContent::STR_MAX_LEAF_SIZE) {
-                    return XString{StrRootTreeContent{PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>::mkinitial(begin, end)}};
+                    return XString{StrRootTreeContent{PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_STRING>::mkinitial(begin, end)}};
                 }
                 else {
-                    return XString{StrRootTreeContent{PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_POSRB_TREE_STRING>::mklargerec(begin, end, len)}};
+                    return XString{StrRootTreeContent{PosRBTree<char32_t, StrRootTreeContent::STR_MAX_LEAF_SIZE, WELL_KNOWN_TYPE_ID_STRING>::mklargerec(begin, end, len)}};
                 }
             }
         }
@@ -1163,12 +1387,58 @@ namespace ᐸRuntimeᐳ
         }
     };
 
+    void jsonParseToBSQ_FString(const TypeInfo* tinfo, const json& j, void* resptr);
+    void parseToBSQ_FString(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr);
+    json bsqToJSON_FString(const TypeInfo* tinfo, const void* valptr);
+    void bsqToBAPI_FString(const TypeInfo* tinfo, const void* valptr, BSQStreamingBuilder* builder);
+    void displayValue_FString(const TypeInfo* tinfo, const void* valptr, std::ostream& os, std::optional<std::string> indent);
+
+    consteval TypeInfo g_typeinfo_FString_generate(uint32_t id, const char* name) 
+    {
+        return TypeInfo{
+            id,
+            sizeof(XFString),
+            byteSizeToSlotCount(sizeof(XFString)),
+            LayoutTag::Value,
+            BSQ_PTR_MASK_LEAF,
+            nullptr,
+            0,
+            nullptr,
+            0,
+            nullptr,
+            0,
+            TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_FString, (ParseToBSQFp)&parseToBSQ_FString, (BSQToJSONFp)&bsqToJSON_FString, (BSQToBAPIFp)&bsqToBAPI_FString, (DisplayValueFp)&displayValue_FString },
+            name,
+            false
+        };
+    }
+
     class XRegex
     {
     public:
         size_t regexid;
     };
 
-    std::string fromXCString(const ᐸRuntimeᐳ::XCString& xs);
-    std::string fromXString(const ᐸRuntimeᐳ::XString& xs);
+    void jsonParseToBSQ_Regex(const TypeInfo* tinfo, const json& j, void* resptr);
+    void parseToBSQ_Regex(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr);
+    json bsqToJSON_Regex(const TypeInfo* tinfo, const void* valptr);
+    void bsqToBAPI_Regex(const TypeInfo* tinfo, const void* valptr, BSQStreamingBuilder* builder);
+    void displayValue_Regex(const TypeInfo* tinfo, const void* valptr, std::ostream& os, std::optional<std::string> indent);
+
+    inline constexpr TypeInfo g_typeinfo_Regex = {
+        WELL_KNOWN_TYPE_ID_REGEX,
+        sizeof(XRegex),
+        byteSizeToSlotCount(sizeof(XRegex)),
+        LayoutTag::Value,
+        BSQ_PTR_MASK_LEAF,
+        nullptr,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        0,
+        TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_Regex, (ParseToBSQFp)&parseToBSQ_Regex, (BSQToJSONFp)&bsqToJSON_Regex, (BSQToBAPIFp)&bsqToBAPI_Regex, (DisplayValueFp)&displayValue_Regex },
+        "Regex",
+        false
+    };
 }

@@ -6,9 +6,6 @@
 #include "../core/uuids.h"
 #include "../core/strings.h"
 
-#include "./bsqir/parser.h"
-#include "./bsqir/emit.h"
-
 namespace ᐸRuntimeᐳ
 {
     template<ConceptUnionRepr U>
@@ -79,20 +76,33 @@ namespace ᐸRuntimeᐳ
 
     class TaskInfo
     {
+    private:
+        static void bapiParseIntoBSQ(bool sloppyinputs, const std::list<uint8_t*>& iobuffs, size_t totalbytes, uint32_t bsqid, void* outvalue);
+        static size_t bsqEmitIntoBAPI(bool allowsensitive, uint32_t bsqid, const void* value, std::list<uint8_t*>& iobuffs);
+
     public:
         XUUIDv4 taskid;
 
         const TaskInfo* parent;
         TaskPriority priority;
 
-        BSQONParser bsqparser;
-        BSQONEmitter bsqemitter;
-
         std::jmp_buf error_handler;
         std::optional<ErrorInfo> pending_error;
 
-        TaskInfo() : taskid(), parent(nullptr), priority(), bsqparser(), bsqemitter(), error_handler(), pending_error() {}
-        TaskInfo(const XUUIDv4& tId, const TaskInfo* pTask, TaskPriority prio) : taskid(tId), parent(pTask), priority(prio), bsqparser(), bsqemitter(), error_handler(), pending_error() {}
+        TaskInfo() : taskid(), parent(nullptr), priority(), error_handler(), pending_error() {}
+        TaskInfo(const XUUIDv4& tId, const TaskInfo* pTask, TaskPriority prio) : taskid(tId), parent(pTask), priority(prio), error_handler(), pending_error() {}
+
+        template<typename T>
+        static void bapiParseIntoBSQ(bool relaxedparse, const std::list<uint8_t*>& iobuffs, size_t totalbytes, uint32_t bsqid, T& outvalue)
+        {
+            return bapiParseIntoBSQ(relaxedparse, iobuffs, totalbytes, bsqid, static_cast<void*>(&outvalue));
+        }
+
+        template<typename T>
+        static size_t bsqEmitIntoBAPI(bool allowsensitive, uint32_t bsqid, const T& value, std::list<uint8_t*>& iobuffs)
+        {
+            return bsqEmitIntoBAPI(allowsensitive, bsqid, static_cast<const void*>(&value), iobuffs);
+        }
     };
 
     template<ConceptUnionRepr U> //U must be a union of all possible types stored in the environment

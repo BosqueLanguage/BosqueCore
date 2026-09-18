@@ -15,6 +15,7 @@ import { Monomorphizer } from "../../src/backend/asmprocess/monomorphize.js";
 import { ASMToIRConverter } from "../../src/backend/asmprocess/flatten.js";
 import { CPPEmitter } from "../../src/backend/ircemit/cppemit.js";
 
+const jsondir = path.join(__dirname, "../../json/");
 const runcppdir = path.join(__dirname, "../../runcpp/");
 
 function buildAssembly(srcfile: string): Assembly | undefined {
@@ -57,7 +58,7 @@ function emitCommandLineMakefile(): string {
         'CORE_SRC_DIR=$(SRC_DIR)core/\n' +
         'RUNTIME_SRC_DIR=$(SRC_DIR)runtime/\n' +
         'ALLOC_SRC_DIR=$(RUNTIME_SRC_DIR)allocator/\n' +
-        'BSQIR_SRC_DIR=$(RUNTIME_SRC_DIR)bsqir/\n' +
+        'UTILS_SRC_DIR=$(RUNTIME_SRC_DIR)utils/\n' +
         '\n' +
         'JSON_INCLUDES=-I $(MAKE_PATH)/json/\n' +
         '\n' +
@@ -66,13 +67,13 @@ function emitCommandLineMakefile(): string {
         'CPPFLAGS=-Og -g -ggdb -DRB_INVARIANT_VALIDATE -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable -Wuninitialized -Werror -std=gnu++23 -fno-omit-frame-pointer -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-stack-protector\n' +
         'LINKAGE=-lboost_regex -licuuc -licui18n -licudata\n' +
         '\n' +
-        'HEADERS=$(wildcard $(SRC_DIR)*.h) $(wildcard $(CORE_SRC_DIR)*.h) $(wildcard $(RUNTIME_SRC_DIR)*.h) $(wildcard $(ALLOC_SRC_DIR)*.h) $(wildcard $(BSQIR_SRC_DIR)*.h)\n' +
-        'OBJ=$(OUT_OBJ)common.o $(OUT_OBJ)strings.o $(OUT_OBJ)bytebuff.o $(OUT_OBJ)memstats.o $(OUT_OBJ)gc_validation.o $(OUT_OBJ)alloc.o $(OUT_OBJ)gc.o $(OUT_OBJ)emit.o $(OUT_OBJ)lexer.o $(OUT_OBJ)parser.o\n' +
+        'HEADERS=$(wildcard $(SRC_DIR)*.h) $(wildcard $(CORE_SRC_DIR)*.h) $(wildcard $(RUNTIME_SRC_DIR)*.h) $(wildcard $(ALLOC_SRC_DIR)*.h) $(wildcard $(UTILS_SRC_DIR)*.h)\n' +
+        'OBJ=$(wildcard $(OUT_OBJ)*.o)\n' +
         'MAKEFLAGS += -j8\n' +
         '\n' +
         'all: $(MAKE_PATH)/app\n\n' +
         '$(MAKE_PATH)/app: $(HEADERS) $(OBJ) $(MAKE_PATH)/app.h $(MAKE_PATH)/app.cpp\n' +
-        '\tg++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(MAKE_PATH)/app $(OBJ) $(MAKE_PATH)/app.cpp $(LINKAGE)\n'
+        '\tg++ $(CPPFLAGS) -fpie $(JSON_INCLUDES) -o $(MAKE_PATH)/app $(OBJ) $(MAKE_PATH)/app.cpp $(LINKAGE)\n'
         ;
 }
 
@@ -81,10 +82,14 @@ function moveRuntimeFiles(outname: string): boolean {
 
     const makefile = emitCommandLineMakefile();
     try {
-        const dstpath = path.join(nndir, "runcpp/");
-
-        fs.mkdirSync(dstpath, {recursive: true});
-        execSync(`cp -R ${runcppdir}* ${dstpath}`);
+        const runjsonpath = path.join(nndir, "json/");
+        const runcppdstpath = path.join(nndir, "runcpp/");
+                                
+        fs.mkdirSync(runjsonpath, {recursive: true});
+        execSync(`cp -R ${jsondir}* ${runjsonpath}`);
+                        
+        fs.mkdirSync(runcppdstpath, {recursive: true});
+        execSync(`cp -R ${runcppdir}* ${runcppdstpath}`);
 
         fs.writeFileSync(path.join(nndir, "Makefile"), makefile);
     }

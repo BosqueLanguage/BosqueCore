@@ -3,7 +3,7 @@ SRC_DIR=$(MAKE_PATH)/runcpp/
 CORE_SRC_DIR=$(SRC_DIR)core/
 RUNTIME_SRC_DIR=$(SRC_DIR)runtime/
 ALLOC_SRC_DIR=$(RUNTIME_SRC_DIR)allocator/
-BSQIR_SRC_DIR=$(RUNTIME_SRC_DIR)bsqir/
+UTILS_SRC_DIR=$(RUNTIME_SRC_DIR)utils/
 
 JSON_INCLUDES=-I $(MAKE_PATH)/json/
 
@@ -12,14 +12,14 @@ OUT_OBJ=$(BUILD_DIR)output/obj/
 BUILD := unittests
 
 CPPFLAGS_OPT.unittests=-Og -g -ggdb -DRB_INVARIANT_VALIDATE
-CPPFLAGS_STD=-Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable -Wuninitialized -Werror -std=gnu++23 -fno-omit-frame-pointer -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-stack-protector
+CPPFLAGS_STD=-Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable -Wuninitialized -Werror -std=gnu++23 -fpie -fno-omit-frame-pointer -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-stack-protector
 CPPFLAGS=${CPPFLAGS_OPT.${BUILD}} ${CPPFLAGS_STD}
 
 LINKAGE=-lboost_regex -licuuc -licui18n -licudata
 
-HEADERS=$(wildcard $(SRC_DIR)*.h) $(wildcard $(CORE_SRC_DIR)*.h) $(wildcard $(RUNTIME_SRC_DIR)*.h) $(wildcard $(ALLOC_SRC_DIR)*.h) $(wildcard $(BSQIR_SRC_DIR)*.h)
-CPP=$(wildcard $(SRC_DIR)*.cpp) $(wildcard $(CORE_SRC_DIR)*.cpp) $(wildcard $(RUNTIME_SRC_DIR)*.cpp) $(wildcard $(ALLOC_SRC_DIR)*.cpp) $(wildcard $(BSQIR_SRC_DIR)*.cpp)
-OBJ=$(OUT_OBJ)common.o $(OUT_OBJ)strings.o $(OUT_OBJ)bytebuff.o $(OUT_OBJ)memstats.o $(OUT_OBJ)gc_validation.o $(OUT_OBJ)alloc.o $(OUT_OBJ)gc.o $(OUT_OBJ)emit.o $(OUT_OBJ)lexer.o $(OUT_OBJ)parser.o
+HEADERS=$(wildcard $(SRC_DIR)*.h) $(wildcard $(CORE_SRC_DIR)*.h) $(wildcard $(RUNTIME_SRC_DIR)*.h) $(wildcard $(ALLOC_SRC_DIR)*.h) $(wildcard $(UTILS_SRC_DIR)*.h)
+CPP=$(wildcard $(SRC_DIR)*.cpp) $(wildcard $(CORE_SRC_DIR)*.cpp) $(wildcard $(RUNTIME_SRC_DIR)*.cpp) $(wildcard $(ALLOC_SRC_DIR)*.cpp) $(wildcard $(UTILS_SRC_DIR)*.cpp)
+OBJ=$(OUT_OBJ)common.o $(OUT_OBJ)taskinfo.o $(OUT_OBJ)builder.o $(OUT_OBJ)encodings.o $(OUT_OBJ)lexer.o $(OUT_OBJ)alloc.o $(OUT_OBJ)gc_validation.o $(OUT_OBJ)gc.o $(OUT_OBJ)memstats.o $(OUT_OBJ)bool.o $(OUT_OBJ)bsqtype.o $(OUT_OBJ)bytebuff.o $(OUT_OBJ)chars.o $(OUT_OBJ)fpoints.o $(OUT_OBJ)integrals.o $(OUT_OBJ)none.o $(OUT_OBJ)strings.o $(OUT_OBJ)uuids.o
 
 MAKEFLAGS += -j8
 
@@ -29,41 +29,73 @@ $(OUT_OBJ)common.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
 	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)common.o -c $(SRC_DIR)common.cpp $(LINKAGE)
 
-$(OUT_OBJ)strings.o: $(HEADERS) $(CPP)
+$(OUT_OBJ)taskinfo.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
-	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)strings.o -c $(CORE_SRC_DIR)strings.cpp $(LINKAGE)
+	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)taskinfo.o -c $(RUNTIME_SRC_DIR)taskinfo.cpp $(LINKAGE)
 
-$(OUT_OBJ)bytebuff.o: $(HEADERS) $(CPP)
+$(OUT_OBJ)builder.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
-	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)bytebuff.o -c $(CORE_SRC_DIR)bytebuff.cpp $(LINKAGE)
+	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)builder.o -c $(UTILS_SRC_DIR)builder.cpp $(LINKAGE)
 
-$(OUT_OBJ)memstats.o: $(HEADERS) $(CPP)
+$(OUT_OBJ)encodings.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
-	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)memstats.o -c $(ALLOC_SRC_DIR)memstats.cpp $(LINKAGE)
+	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)encodings.o -c $(UTILS_SRC_DIR)encodings.cpp $(LINKAGE)
 
-$(OUT_OBJ)gc_validation.o: $(HEADERS) $(CPP)
+$(OUT_OBJ)lexer.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
-	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)gc_validation.o -c $(ALLOC_SRC_DIR)gc_validation.cpp $(LINKAGE)
+	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)lexer.o -c $(UTILS_SRC_DIR)lexer.cpp $(LINKAGE)
 
 $(OUT_OBJ)alloc.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
 	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)alloc.o -c $(ALLOC_SRC_DIR)alloc.cpp $(LINKAGE)
 
+$(OUT_OBJ)gc_validation.o: $(HEADERS) $(CPP)
+	@mkdir -p $(OUT_OBJ)
+	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)gc_validation.o -c $(ALLOC_SRC_DIR)gc_validation.cpp $(LINKAGE)
+
 $(OUT_OBJ)gc.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
 	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)gc.o -c $(ALLOC_SRC_DIR)gc.cpp $(LINKAGE)
 
-$(OUT_OBJ)emit.o: $(HEADERS) $(CPP)
+$(OUT_OBJ)memstats.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
-	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)emit.o -c $(BSQIR_SRC_DIR)emit.cpp $(LINKAGE)
+	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)memstats.o -c $(ALLOC_SRC_DIR)memstats.cpp $(LINKAGE)
 
-$(OUT_OBJ)lexer.o: $(HEADERS) $(CPP)
+$(OUT_OBJ)bool.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
-	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)lexer.o -c $(BSQIR_SRC_DIR)lexer.cpp $(LINKAGE)
+	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)bool.o -c $(CORE_SRC_DIR)bool.cpp $(LINKAGE)
 
-$(OUT_OBJ)parser.o: $(HEADERS) $(CPP)
+$(OUT_OBJ)bsqtype.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
-	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)parser.o -c $(BSQIR_SRC_DIR)parser.cpp $(LINKAGE)
+	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)bsqtype.o -c $(CORE_SRC_DIR)bsqtype.cpp $(LINKAGE)
+
+$(OUT_OBJ)bytebuff.o: $(HEADERS) $(CPP)
+	@mkdir -p $(OUT_OBJ)
+	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)bytebuff.o -c $(CORE_SRC_DIR)bytebuff.cpp $(LINKAGE)
+
+$(OUT_OBJ)chars.o: $(HEADERS) $(CPP)
+	@mkdir -p $(OUT_OBJ)
+	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)chars.o -c $(CORE_SRC_DIR)chars.cpp $(LINKAGE)
+
+$(OUT_OBJ)fpoints.o: $(HEADERS) $(CPP)
+	@mkdir -p $(OUT_OBJ)
+	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)fpoints.o -c $(CORE_SRC_DIR)fpoints.cpp $(LINKAGE)
+
+$(OUT_OBJ)integrals.o: $(HEADERS) $(CPP)
+	@mkdir -p $(OUT_OBJ)
+	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)integrals.o -c $(CORE_SRC_DIR)integrals.cpp $(LINKAGE)
+
+$(OUT_OBJ)none.o: $(HEADERS) $(CPP)
+	@mkdir -p $(OUT_OBJ)
+	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)none.o -c $(CORE_SRC_DIR)none.cpp $(LINKAGE)
+
+$(OUT_OBJ)strings.o: $(HEADERS) $(CPP)
+	@mkdir -p $(OUT_OBJ)
+	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)strings.o -c $(CORE_SRC_DIR)strings.cpp $(LINKAGE)
+
+$(OUT_OBJ)uuids.o: $(HEADERS) $(CPP)
+	@mkdir -p $(OUT_OBJ)
+	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)uuids.o -c $(CORE_SRC_DIR)uuids.cpp $(LINKAGE)
 
 clean:
 	rm -rf $(OUT_OBJ)

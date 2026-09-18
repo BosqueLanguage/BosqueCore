@@ -5,11 +5,11 @@ namespace Core;
 
 datatype JSON of 
     JsonNull { }
-    JsonBool { value: Bool }
-    JsonNumber { value: Float }
-    JsonString { value: String }
-    JsonArray { value: List<JSON> }
-    JsonObject { value: Map<String, JSON> }
+    JsonBool { field value: Bool; }
+    JsonNumber { field value: Float; }
+    JsonString { field value: String; }
+    JsonArray { field value: List<JSON>; }
+    JsonObject { field value: Map<String, JSON>; }
 & {
     function toByteBuffer(json: JSON): ByteBuffer {
         abort;
@@ -19,21 +19,11 @@ datatype JSON of
         abort;
     }
 
-    function toString(json: JSON): String {
-        abort;
-    }
-
-    function fromString(str: String): Option<JSON> {
-        abort;
-    }
-
-    %%TODO: not clear if CString conversion functions are safe meaningful
-
     function toStdBAPI<T>(json: JSON): Option<T> {
         abort;
     }
 
-    function fromStdBAPI<T>(value: T): Option<JSON> {
+    function fromStdBAPI<T>(value: T): JSON {
         abort;
     }
 }

@@ -6,6 +6,9 @@
 
 #include "../runtime/allocator/alloc.h"
 
+#include "../runtime/utils/encodings.h"
+#include "../runtime/utils/builder.h"
+
 namespace ᐸRuntimeᐳ 
 {
     class ByteBufferEntry
@@ -55,6 +58,7 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
+        TypeOpDispatchInfo{},
         "ByteBufferEntry",
         true
     };
@@ -71,9 +75,16 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
+        TypeOpDispatchInfo{},
         "ByteBufferBlock",
         false
     };
+
+    void jsonParseToBSQ_ByteBuffer(const TypeInfo* tinfo, const json& j, void* resptr);
+    void parseToBSQ_ByteBuffer(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr);
+    json bsqToJSON_ByteBuffer(const TypeInfo* tinfo, const void* valptr);
+    void bsqToBAPI_ByteBuffer(const TypeInfo* tinfo, const void* valptr, BSQStreamingBuilder* builder);
+    void displayValue_ByteBuffer(const TypeInfo* tinfo, const void* valptr, std::ostream& os, std::optional<std::string> indent);
 
     inline constexpr TypeInfo g_typeinfo_ByteBuffer = {
         WELL_KNOWN_TYPE_ID_BYTEBUFFER,
@@ -87,6 +98,7 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
+        TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_ByteBuffer, (ParseToBSQFp)&parseToBSQ_ByteBuffer, (BSQToJSONFp)&bsqToJSON_ByteBuffer, (BSQToBAPIFp)&bsqToBAPI_ByteBuffer, (DisplayValueFp)&displayValue_ByteBuffer },
         "ByteBuffer",
         false
     };
@@ -280,6 +292,135 @@ namespace ᐸRuntimeᐳ
             assert(this->bytesize > BUFFER_INLINE_SIZE);
 
             return ByteBufferIterator{nullptr, 0, nullptr, 0, this->bytesize, this->bytesize};
+        }
+    };
+
+    class ByteBufferStreamingBuilder : public BSQStreamingBuilder
+    {
+    public:
+        size_t pendingbytes;
+        std::array<uint8_t, ByteBufferEntry::BUFFER_ENTRY_SIZE> pendingdata;
+
+        size_t bytesize;
+        size_t blockslot;
+        void* heapbytes;
+
+        ByteBufferStreamingBuilder() : pendingbytes(0), pendingdata{}, bytesize(0), blockslot(0), heapbytes(nullptr) {}
+
+        void flushPending()
+        {
+            if(this->pendingbytes == 0) {
+                return;
+            }
+
+            if(heapbytes == nullptr) {
+                this->heapbytes = XByteBuffer::s_entryallocator->allocate(this->pendingdata.data(), this->pendingdata.data() + this->pendingbytes);
+            }
+            else {
+                if(this->bytesize <= ByteBufferEntry::BUFFER_ENTRY_SIZE) {
+                    ByteBufferEntry* obb = static_cast<ByteBufferEntry*>(this->heapbytes);
+                    ByteBufferEntry* nbb = XByteBuffer::s_entryallocator->allocate(this->pendingdata.data(), this->pendingdata.data() + this->pendingbytes);
+                    
+                    ByteBufferBlock* blockl = XByteBuffer::s_blockallocator->allocate();
+                    
+                    blockl->entries[0] = obb;
+                    blockl->entries[1] = nbb;
+
+                    this->heapbytes = blockl;
+                    this->blockslot = 2;
+                }
+                else {
+                    ByteBufferBlock* blockl = static_cast<ByteBufferBlock*>(this->heapbytes);
+
+                    if(this->blockslot == ByteBufferBlock::BUFFER_BLOCK_ENTRY_COUNT) {
+                        blockl = XByteBuffer::s_blockallocator->allocate();
+                        this->blockslot = 0;
+
+                        blockl->next = static_cast<ByteBufferBlock*>(this->heapbytes);
+                        this->heapbytes = blockl;
+                    }
+
+                    blockl->entries[this->blockslot++] = XByteBuffer::s_entryallocator->allocate(this->pendingdata.data(), this->pendingdata.data() + this->pendingbytes);
+                }
+            }
+
+            this->bytesize += this->pendingbytes;
+
+            this->pendingdata.fill(0);
+            this->pendingbytes = 0;
+        }
+
+        void appendByte(uint8_t byte) override
+        {
+            this->pendingdata[this->pendingbytes++] = byte;
+
+            if(this->pendingbytes == ByteBufferEntry::BUFFER_ENTRY_SIZE) {
+                //flush pending data to heapbytes
+                this->flushPending();
+            }
+        }
+
+        void appendChar(char c)
+        {
+            this->appendByte(static_cast<uint8_t>(c));
+        }
+
+        void appendChar(char32_t cchar) override
+        {
+            assert(false); //This is not supported for streaming bytebuffer builders
+        }
+
+        void appendConstString(const char* str, size_t len)
+        {
+            for(size_t i = 0; i < len; i++) {
+                this->appendByte(static_cast<uint8_t>(str[i]));
+            }
+        }
+
+        void appendConstString(const char* str)
+        {
+            while(*str) {
+                this->appendByte(static_cast<uint8_t>(*str));
+                str++;
+            }
+        }
+
+        XByteBuffer finalize()
+        {
+            if(this->pendingbytes == 0) {
+                if(this->bytesize == 0) {
+                    return XByteBuffer{};
+                }
+                else {
+                    return XByteBuffer(this->heapbytes, this->bytesize);
+                }
+            }
+            else if(this->bytesize == 0) {
+                if(this->pendingbytes <= XByteBuffer::BUFFER_INLINE_SIZE) {
+                    std::array<uint8_t, XByteBuffer::BUFFER_INLINE_SIZE> inlineData{};
+                    std::copy(this->pendingdata.begin(), this->pendingdata.begin() + this->pendingbytes, inlineData.begin());
+                    
+                    return XByteBuffer(inlineData, this->pendingbytes);
+                }
+                else {
+                    ByteBufferEntry* bb =  XByteBuffer::s_entryallocator->allocate(this->pendingdata.data(), this->pendingdata.data() + this->pendingbytes);
+
+                    return XByteBuffer(bb, this->pendingbytes);
+                }
+            }
+            else {
+                this->flushPending();
+
+                //reverse for flow
+                ByteBufferBlock* blockl = reinterpret_cast<ByteBufferBlock*>(this->heapbytes);
+                ByteBufferBlock* revl = nullptr;
+                while(blockl != nullptr) {
+                    revl = XByteBuffer::s_blockallocator->allocate(blockl->entries, revl);
+                    blockl = blockl->next;
+                }
+
+                return XByteBuffer(revl, this->bytesize);
+            }
         }
     };
 }

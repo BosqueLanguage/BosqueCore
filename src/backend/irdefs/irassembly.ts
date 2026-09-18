@@ -241,12 +241,12 @@ class IRMemberFieldDecl {
     readonly enclosingType: IRNominalTypeSignature;
     readonly fname: string;
     readonly declaredType: IRTypeSignature;
-    readonly defaultValue: { stmts: IRStatement[], value: IRSimpleExpression } | undefined;
+    readonly defaultValue: { stmts: IRStatement[], value: IRSimpleExpression, isconst: boolean } | undefined;
 
     readonly docstr: IRDeclarationDocString | undefined;
     readonly metatags: IRDeclarationMetaTag[];
 
-    constructor(fkey: string, enclosingType: IRNominalTypeSignature, fname: string, declaredType: IRTypeSignature, defaultValue: { stmts: IRStatement[], value: IRSimpleExpression } | undefined, docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[]) {
+    constructor(fkey: string, enclosingType: IRNominalTypeSignature, fname: string, declaredType: IRTypeSignature, defaultValue: { stmts: IRStatement[], value: IRSimpleExpression, isconst: boolean } | undefined, docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[]) {
         this.fkey = fkey;
         this.enclosingType = enclosingType;
         this.fname = fname;

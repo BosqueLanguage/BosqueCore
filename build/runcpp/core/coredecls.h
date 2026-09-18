@@ -5,7 +5,7 @@
 #include "bsqtype.h"
 #include "boxed.h"
 
-#include "bools.h"
+#include "bool.h"
 #include "chars.h"
 #include "integrals.h"
 #include "fpoints.h"

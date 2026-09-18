@@ -4,8 +4,6 @@
 
 namespace ᐸRuntimeᐳ
 {
-    constexpr size_t MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE = 8192; //8KB blocks for buffer allocation
-
     class GCAllocatorImpl;
     class GCPageList;
 

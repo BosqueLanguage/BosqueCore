@@ -75,6 +75,7 @@ namespace ᐸRuntimeᐳ
             0,
             nullptr,
             0,
+            TypeOpDispatchInfo{},
             tname,
             quickrelease
         };
@@ -109,6 +110,7 @@ namespace ᐸRuntimeᐳ
             0,
             nullptr,
             0,
+            TypeOpDispatchInfo{},
             tname,
             false
         };
@@ -772,6 +774,7 @@ private:
             0,
             nullptr,
             0,
+            TypeOpDispatchInfo{},
             tname,
             false
         };

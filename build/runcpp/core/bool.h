@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../common.h"
-
 #include "bsqtype.h"
 
 namespace ᐸRuntimeᐳ
@@ -30,6 +29,12 @@ namespace ᐸRuntimeᐳ
     constexpr XBool XFALSE = XBool{0};
     constexpr XBool XTRUE = XBool{1};
 
+    void jsonParseToBSQ_Bool(const TypeInfo* tinfo, const json& j, void* resptr);
+    void parseToBSQ_Bool(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr);
+    json bsqToJSON_Bool(const TypeInfo* tinfo, const void* valptr);
+    void bsqToBAPI_Bool(const TypeInfo* tinfo, const void* valptr, BSQStreamingBuilder* builder);
+    void displayValue_Bool(const TypeInfo* tinfo, const void* valptr, std::ostream& os, std::optional<std::string> indent);
+
     inline constexpr TypeInfo g_typeinfo_Bool = {
         WELL_KNOWN_TYPE_ID_BOOL,
         sizeof(XBool),
@@ -42,6 +47,7 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
+        TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_Bool, (ParseToBSQFp)&parseToBSQ_Bool, (BSQToJSONFp)&bsqToJSON_Bool, (BSQToBAPIFp)&bsqToBAPI_Bool, (DisplayValueFp)&displayValue_Bool },
         "Bool",
         true
     };

@@ -3,7 +3,7 @@
 #include "../common.h"
 
 #include "bsqtype.h"
-#include "bools.h"
+#include "bool.h"
 
 namespace ᐸRuntimeᐳ 
 {
@@ -437,6 +437,12 @@ namespace ᐸRuntimeᐳ
         friend XBool operator>=(const XChkInt& lhs, const XChkInt& rhs) { return XBool::from(!(lhs.value < rhs.value)); }
     };
 
+    void jsonParseToBSQ_Nat(const TypeInfo* tinfo, const json& j, void* resptr);
+    void parseToBSQ_Nat(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr);
+    json bsqToJSON_Nat(const TypeInfo* tinfo, const void* valptr);
+    void bsqToBAPI_Nat(const TypeInfo* tinfo, const void* valptr, BSQStreamingBuilder* builder);
+    void displayValue_Nat(const TypeInfo* tinfo, const void* valptr, std::ostream& os, std::optional<std::string> indent);
+
     inline constexpr TypeInfo g_typeinfo_Nat = {
         WELL_KNOWN_TYPE_ID_NAT,
         sizeof(XNat),
@@ -449,9 +455,16 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
+        TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_Nat, (ParseToBSQFp)&parseToBSQ_Nat, (BSQToJSONFp)&bsqToJSON_Nat, (BSQToBAPIFp)&bsqToBAPI_Nat, (DisplayValueFp)&displayValue_Nat },
         "Nat",
         true
     };
+
+    void jsonParseToBSQ_Int(const TypeInfo* tinfo, const json& j, void* resptr);
+    void parseToBSQ_Int(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr);
+    json bsqToJSON_Int(const TypeInfo* tinfo, const void* valptr);
+    void bsqToBAPI_Int(const TypeInfo* tinfo, const void* valptr, BSQStreamingBuilder* builder);
+    void displayValue_Int(const TypeInfo* tinfo, const void* valptr, std::ostream& os, std::optional<std::string> indent);
 
     inline constexpr TypeInfo g_typeinfo_Int = {
         WELL_KNOWN_TYPE_ID_INT,
@@ -465,9 +478,16 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
+        TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_Int, (ParseToBSQFp)&parseToBSQ_Int, (BSQToJSONFp)&bsqToJSON_Int, (BSQToBAPIFp)&bsqToBAPI_Int, (DisplayValueFp)&displayValue_Int },
         "Int",
         true
     };
+
+    void jsonParseToBSQ_ChkNat(const TypeInfo* tinfo, const json& j, void* resptr);
+    void parseToBSQ_ChkNat(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr);
+    json bsqToJSON_ChkNat(const TypeInfo* tinfo, const void* valptr);
+    void bsqToBAPI_ChkNat(const TypeInfo* tinfo, const void* valptr, BSQStreamingBuilder* builder);
+    void displayValue_ChkNat(const TypeInfo* tinfo, const void* valptr, std::ostream& os, std::optional<std::string> indent);
 
     inline constexpr TypeInfo g_typeinfo_ChkNat = {
         WELL_KNOWN_TYPE_ID_CHKNAT,
@@ -481,9 +501,16 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
+        TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_ChkNat, (ParseToBSQFp)&parseToBSQ_ChkNat, (BSQToJSONFp)&bsqToJSON_ChkNat, (BSQToBAPIFp)&bsqToBAPI_ChkNat, (DisplayValueFp)&displayValue_ChkNat },
         "ChkNat",
         true
     };
+
+    void jsonParseToBSQ_ChkInt(const TypeInfo* tinfo, const json& j, void* resptr);
+    void parseToBSQ_ChkInt(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr);
+    json bsqToJSON_ChkInt(const TypeInfo* tinfo, const void* valptr);
+    void bsqToBAPI_ChkInt(const TypeInfo* tinfo, const void* valptr, BSQStreamingBuilder* builder);
+    void displayValue_ChkInt(const TypeInfo* tinfo, const void* valptr, std::ostream& os, std::optional<std::string> indent);
 
     inline constexpr TypeInfo g_typeinfo_ChkInt = {
         WELL_KNOWN_TYPE_ID_CHKINT,
@@ -497,12 +524,13 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
+        TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_ChkInt, (ParseToBSQFp)&parseToBSQ_ChkInt, (BSQToJSONFp)&bsqToJSON_ChkInt, (BSQToBAPIFp)&bsqToBAPI_ChkInt, (DisplayValueFp)&displayValue_ChkInt },
         "ChkInt",
         true
     };
 
     static_assert(sizeof(XNat) == sizeof(int64_t), "Nat size incorrect");
     static_assert(sizeof(XInt) == sizeof(int64_t), "Int size incorrect");
-    static_assert(sizeof(XChkNat) == sizeof(__int128_t), "BigNat size incorrect");
-    static_assert(sizeof(XChkInt) == sizeof(__int128_t), "BigInt size incorrect");
+    static_assert(sizeof(XChkNat) == sizeof(__int128_t), "ChkNat size incorrect");
+    static_assert(sizeof(XChkInt) == sizeof(__int128_t), "ChkInt size incorrect");
 }
