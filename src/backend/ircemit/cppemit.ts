@@ -3540,8 +3540,10 @@ class CPPEmitter {
             '    //TODO assume chars are all printable for now\n' +
             '    size_t ii = 0; auto biter = oibb.begin();\n' +
             '    while(biter != oibb.end()) {\n' +
-            '        printf("%*s", (int)std::min(ᐸRuntimeᐳ::MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE, obytes - ii), reinterpret_cast<const char*>(*biter));\n' +
-            '        ii += ᐸRuntimeᐳ::MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE;\n' +
+            '        for(size_t jj = 0; jj < std::min(ᐸRuntimeᐳ::MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE, obytes - ii); ++jj) {\n' +
+            '            printf("%c", reinterpret_cast<const char*>(*biter)[jj]);\n' +
+            '        }\n' +
+            '        ii += std::min(ᐸRuntimeᐳ::MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE, obytes - ii);\n' +
             '        biter++;\n' +
             '    }\n' +
             '    printf("\\n");\n\n' +

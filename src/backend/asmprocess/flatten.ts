@@ -4000,9 +4000,9 @@ class ASMToIRConverter {
         
             this.pushStatementBlock();
             const eexp = this.flattenExpression(mdecl.defaultValue);
-            const stmts = this.popStatementBlock();
-
             const fexp = this.makeCoercionExplicitAsNeeded(eexp, mdecl.defaultValue.getType(), mdecl.declaredType);
+            const stmts = this.popStatementBlock();
+            
             defaultinfo = { stmts: stmts, value: fexp, isconst: crexp !== undefined };
         }
 

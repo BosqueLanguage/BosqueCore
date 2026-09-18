@@ -7,6 +7,8 @@ namespace ᐸRuntimeᐳ
         if(std::floor(val.value) == val.value && std::numeric_limits<int64_t>::lowest() < val.value && val.value < std::numeric_limits<int64_t>::max()) {
             auto [ptr, ec] = std::to_chars(numbuf.data(), numbuf.data() + numbuf.size() - 1, (int64_t)std::floor(val.value));
             assert(ec == std::errc());
+            *ptr++ = '.';
+            *ptr++ = '0';
             *ptr++ = 'f';
         
             return static_cast<size_t>(ptr - numbuf.data());
