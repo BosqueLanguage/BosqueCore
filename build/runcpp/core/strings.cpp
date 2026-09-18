@@ -634,6 +634,56 @@ namespace ᐸRuntimeᐳ
         }
     }
 
+    void jsonParseToBSQ_FCString(const TypeInfo* tinfo, const json& j, void* resptr)
+    {
+        assert(false); // Not Implemented: jsonParseToBSQ_FCString
+    }
+
+    void parseToBSQ_FCString(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr)
+    {
+        assert(false); // Not Implemented: parseToBSQ_FCString
+    }
+
+    json bsqToJSON_FCString(const TypeInfo* tinfo, const void* valptr)
+    {
+        assert(false); // Not Implemented: bsqToJSON_FCString
+    }
+
+    void bsqToBAPI_FCString(const TypeInfo* tinfo, const void* valptr, BSQStreamingBuilder* builder)
+    {
+        assert(false); // Not Implemented: bsqToBAPI_FCString
+    }
+
+    void displayValue_FCString(const TypeInfo* tinfo, const void* valptr, std::ostream& os, std::optional<std::string> indent)
+    {
+        assert(false); // Not Implemented: displayValue_FCString
+    }
+
+    void jsonParseToBSQ_CRegex(const TypeInfo* tinfo, const json& j, void* resptr)
+    {
+        assert(false); // Not Implemented: jsonParseToBSQ_CRegex
+    }
+
+    void parseToBSQ_CRegex(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr)
+    {
+        assert(false); // Not Implemented: parseToBSQ_CRegex
+    }
+    
+    json bsqToJSON_CRegex(const TypeInfo* tinfo, const void* valptr)
+    {
+        assert(false); // Not Implemented: bsqToJSON_CRegex
+    }
+
+    void bsqToBAPI_CRegex(const TypeInfo* tinfo, const void* valptr, BSQStreamingBuilder* builder)
+    {
+        assert(false); // Not Implemented: bsqToBAPI_CRegex
+    }
+    
+    void displayValue_CRegex(const TypeInfo* tinfo, const void* valptr, std::ostream& os, std::optional<std::string> indent)
+    {
+        assert(false); // Not Implemented: displayValue_CRegex
+    }
+
     XString XString::natToString(int64_t value) {
         char numbuf[64];
         int written = std::snprintf(numbuf, sizeof(numbuf), "%llin", (long long int)value);
@@ -998,5 +1048,55 @@ namespace ᐸRuntimeᐳ
             //TODO: this is expensive -- we want to 1) keep track of deleted whitespace and subtract here 2) implement an string split/slice so this is at least log time (NOT O(N))
             return XString::mk(start, end, std::distance(start, end));
         }
+    }
+
+    void jsonParseToBSQ_FString(const TypeInfo* tinfo, const json& j, void* resptr)
+    {
+        assert(false); // Not Implemented: jsonParseToBSQ_FString
+    }
+
+    void parseToBSQ_FString(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr)
+    {
+        assert(false); // Not Implemented: parseToBSQ_FString
+    }
+
+    json bsqToJSON_FString(const TypeInfo* tinfo, const void* valptr)
+    {
+        assert(false); // Not Implemented: bsqToJSON_FString
+    }
+
+    void bsqToBAPI_FString(const TypeInfo* tinfo, const void* valptr, BSQStreamingBuilder* builder)
+    {
+        assert(false); // Not Implemented: bsqToBAPI_FString
+    }
+
+    void displayValue_FString(const TypeInfo* tinfo, const void* valptr, std::ostream& os, std::optional<std::string> indent)
+    {
+        assert(false); // Not Implemented: displayValue_FString
+    }
+
+    void jsonParseToBSQ_Regex(const TypeInfo* tinfo, const json& j, void* resptr)
+    {
+        assert(false); // Not Implemented: jsonParseToBSQ_Regex
+    }
+
+    void parseToBSQ_Regex(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr)
+    {
+        assert(false); // Not Implemented: parseToBSQ_Regex
+    }
+
+    json bsqToJSON_Regex(const TypeInfo* tinfo, const void* valptr)
+    {
+        assert(false); // Not Implemented: bsqToJSON_Regex
+    }
+
+    void bsqToBAPI_Regex(const TypeInfo* tinfo, const void* valptr, BSQStreamingBuilder* builder)
+    {
+        assert(false); // Not Implemented: bsqToBAPI_Regex
+    }
+
+    void displayValue_Regex(const TypeInfo* tinfo, const void* valptr, std::ostream& os, std::optional<std::string> indent)
+    {
+        assert(false); // Not Implemented: displayValue_Regex
     }
 }

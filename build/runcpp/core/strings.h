@@ -671,10 +671,59 @@ namespace ᐸRuntimeᐳ
         }
     };
 
+    void jsonParseToBSQ_FCString(const TypeInfo* tinfo, const json& j, void* resptr);
+    void parseToBSQ_FCString(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr);
+    json bsqToJSON_FCString(const TypeInfo* tinfo, const void* valptr);
+    void bsqToBAPI_FCString(const TypeInfo* tinfo, const void* valptr, BSQStreamingBuilder* builder);
+    void displayValue_FCString(const TypeInfo* tinfo, const void* valptr, std::ostream& os, std::optional<std::string> indent);
+
+    consteval TypeInfo g_typeinfo_FCString_generate(uint32_t id, const char* name) 
+    {
+        return TypeInfo{
+            id,
+            sizeof(XFCString),
+            byteSizeToSlotCount(sizeof(XFCString)),
+            LayoutTag::Value,
+            BSQ_PTR_MASK_LEAF,
+            nullptr,
+            0,
+            nullptr,
+            0,
+            nullptr,
+            0,
+            TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_FCString, (ParseToBSQFp)&parseToBSQ_FCString, (BSQToJSONFp)&bsqToJSON_FCString, (BSQToBAPIFp)&bsqToBAPI_FCString, (DisplayValueFp)&displayValue_FCString },
+            name,
+            false
+        };
+    }
+
     class XCRegex
     {
     public:
         size_t regexid;
+    };
+
+    void jsonParseToBSQ_CRegex(const TypeInfo* tinfo, const json& j, void* resptr);
+    void parseToBSQ_CRegex(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr);
+    json bsqToJSON_CRegex(const TypeInfo* tinfo, const void* valptr);
+    void bsqToBAPI_CRegex(const TypeInfo* tinfo, const void* valptr, BSQStreamingBuilder* builder);
+    void displayValue_CRegex(const TypeInfo* tinfo, const void* valptr, std::ostream& os, std::optional<std::string> indent);
+
+    inline constexpr TypeInfo g_typeinfo_CRegex = {
+        WELL_KNOWN_TYPE_ID_CREGEX,
+        sizeof(XCRegex),
+        byteSizeToSlotCount(sizeof(XCRegex)),
+        LayoutTag::Value,
+        BSQ_PTR_MASK_LEAF,
+        nullptr,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        0,
+        TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_CRegex, (ParseToBSQFp)&parseToBSQ_CRegex, (BSQToJSONFp)&bsqToJSON_CRegex, (BSQToBAPIFp)&bsqToBAPI_CRegex, (DisplayValueFp)&displayValue_CRegex },
+        "CRegex",
+        false
     };
 
     class StrRootInlineContent
@@ -1338,9 +1387,58 @@ namespace ᐸRuntimeᐳ
         }
     };
 
+    void jsonParseToBSQ_FString(const TypeInfo* tinfo, const json& j, void* resptr);
+    void parseToBSQ_FString(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr);
+    json bsqToJSON_FString(const TypeInfo* tinfo, const void* valptr);
+    void bsqToBAPI_FString(const TypeInfo* tinfo, const void* valptr, BSQStreamingBuilder* builder);
+    void displayValue_FString(const TypeInfo* tinfo, const void* valptr, std::ostream& os, std::optional<std::string> indent);
+
+    consteval TypeInfo g_typeinfo_FString_generate(uint32_t id, const char* name) 
+    {
+        return TypeInfo{
+            id,
+            sizeof(XFString),
+            byteSizeToSlotCount(sizeof(XFString)),
+            LayoutTag::Value,
+            BSQ_PTR_MASK_LEAF,
+            nullptr,
+            0,
+            nullptr,
+            0,
+            nullptr,
+            0,
+            TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_FString, (ParseToBSQFp)&parseToBSQ_FString, (BSQToJSONFp)&bsqToJSON_FString, (BSQToBAPIFp)&bsqToBAPI_FString, (DisplayValueFp)&displayValue_FString },
+            name,
+            false
+        };
+    }
+
     class XRegex
     {
     public:
         size_t regexid;
+    };
+
+    void jsonParseToBSQ_Regex(const TypeInfo* tinfo, const json& j, void* resptr);
+    void parseToBSQ_Regex(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr);
+    json bsqToJSON_Regex(const TypeInfo* tinfo, const void* valptr);
+    void bsqToBAPI_Regex(const TypeInfo* tinfo, const void* valptr, BSQStreamingBuilder* builder);
+    void displayValue_Regex(const TypeInfo* tinfo, const void* valptr, std::ostream& os, std::optional<std::string> indent);
+
+    inline constexpr TypeInfo g_typeinfo_Regex = {
+        WELL_KNOWN_TYPE_ID_REGEX,
+        sizeof(XRegex),
+        byteSizeToSlotCount(sizeof(XRegex)),
+        LayoutTag::Value,
+        BSQ_PTR_MASK_LEAF,
+        nullptr,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        0,
+        TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_Regex, (ParseToBSQFp)&parseToBSQ_Regex, (BSQToJSONFp)&bsqToJSON_Regex, (BSQToBAPIFp)&bsqToBAPI_Regex, (DisplayValueFp)&displayValue_Regex },
+        "Regex",
+        false
     };
 }

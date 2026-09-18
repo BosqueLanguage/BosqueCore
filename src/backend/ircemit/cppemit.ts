@@ -3121,19 +3121,26 @@ class CPPEmitter {
     private emitFormatTypeInfo(tdecl: IRFormatTypeSignature): [string, string] {
         //just a using decl for now -- eventually we will need to support parsing and emitting of format types as well
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkeystr);
+        const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkeystr);
 
         let declusing = "";
+        let decltype = "";
         if(tdecl instanceof IRFormatCStringTypeSignature) {
             declusing = `using ${ctname} = ${RUNTIME_NAMESPACE}::XFCString;`;
+            decltype = `namespace ᐸRuntimeᐳ { inline constexpr TypeInfo g_typeinfo_${ctname} = g_typeinfo_FCString_generate(${ttid.bsqtypeid}, "${tdecl.tkeystr}"); }`;
         }
         else if(tdecl instanceof IRFormatStringTypeSignature) {
             declusing = `using ${ctname} = ${RUNTIME_NAMESPACE}::XFString;`;
+            decltype = `namespace ᐸRuntimeᐳ { inline constexpr TypeInfo g_typeinfo_${ctname} = g_typeinfo_FString_generate(${ttid.bsqtypeid}, "${tdecl.tkeystr}"); }`;
         }
         else {
             assert(false, "CPPEmitter: unknown format type signature emission for key " + tdecl.tkeystr);
         }
         
-        return [declusing, "//TODO: need to implement format type info emission"];
+        return [
+            [declusing, decltype].join("\n"), 
+            "//TODO: need to implement format type info emission"
+        ];
     }
 
     private emitLambdaParameterPackTypeInfo(tdecl: IRLambdaParameterPackTypeSignature): [string, string] {
