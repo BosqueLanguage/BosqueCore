@@ -210,6 +210,7 @@ namespace ᐸRuntimeᐳ
     void parseToBSQ_ChkNat(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr)
     {
         bsq_validate(lexer->getCurrentTokenType() == BAPITokenType::LiteralChkNat, "BAPI -> BSQ", 0, nullptr, "Expected literal ChkNat token");
+        bsq_validate(lexer->getCurrentTokenDataSize() < 64, "BAPI -> BSQ", 0, nullptr, "Expected literal ChkNat token");
 
         constexpr const char* nposStr = "ChkNat::npos";
 
@@ -307,7 +308,8 @@ namespace ᐸRuntimeᐳ
     void parseToBSQ_ChkInt(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr)
     {
         bsq_validate(lexer->getCurrentTokenType() == BAPITokenType::LiteralChkInt, "BAPI -> BSQ", 0, nullptr, "Expected literal ChkInt token");
-
+        bsq_validate(lexer->getCurrentTokenDataSize() < 64, "BAPI -> BSQ", 0, nullptr, "Expected literal ChkInt token");
+        
         constexpr const char* nposStr = "ChkInt::npos";
 
         std::array<uint8_t, 64> outbuff;

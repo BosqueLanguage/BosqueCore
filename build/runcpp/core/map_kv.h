@@ -156,13 +156,15 @@ namespace ᐸRuntimeᐳ
     template<typename K, typename V, uint32_t TYPE_ID_MAP_KV>
     void jsonParseToBSQ_MapKV(const TypeInfo* tinfo, const json& j, void* resptr)
     {
-        bsq_validate(j.is_array(), "JSON -> BSQ", 0, nullptr, "Expected JSON array List<T>");
+        bsq_validate(j.is_array(), "JSON -> BSQ", 0, nullptr, "Expected JSON array Map<K, V>");
 
         const TypeInfo* kinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
         const TypeInfo* vinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[1].fieldbsqtypeid);
 
         XMapKV<K, V, TYPE_ID_MAP_KV> rres{};
         for(size_t i = 0; i < j.size(); i++) {
+            bsq_validate(j[i].is_array() && j[i].size() == 2, "JSON -> BSQ", 0, nullptr, "Expected JSON array MapEntry<K, V> to be array of 2 elements");
+
             XMapEntry<K, V> val;
             kinfo->opdispatch.jsonParseToBSQFp(kinfo, j[i][0], &val.key);
             vinfo->opdispatch.jsonParseToBSQFp(vinfo, j[i][1], &val.value);

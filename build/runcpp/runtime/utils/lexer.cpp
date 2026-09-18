@@ -22,8 +22,8 @@ namespace ᐸRuntimeᐳ
     static boost::regex s_bytebuffer_prefix_re("0x\\[", s_regexflags);
     static boost::regex s_bytebuffer_empty_re("0x\\[\\]", s_regexflags);
     
-    static boost::regex s_symbol_re("[<>,{}#]|(=>)|(\\x28\\x7c?)|(\\x7c?\\x29)", s_regexflags);
-                                    
+    static boost::regex s_symbol_re("[<>,{}#=]|(=>)|(\\x28\\x7c?)|(\\x7c?\\x29)", s_regexflags);
+    
     static boost::regex s_identifierlike_re("[a-zA-Z_][a-zA-Z0-9_:]*", s_regexflags);
     static boost::regex s_kwnone_re("none", s_regexflags);
     static boost::regex s_kwtrue_re("true", s_regexflags);

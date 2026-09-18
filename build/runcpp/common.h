@@ -90,7 +90,12 @@ namespace ᐸRuntimeᐳ
 
         static IOBufferIterator initializeEnd(std::list<uint8_t*>::const_iterator iobuffs, size_t totalbytes)
         {
-            return IOBufferIterator(iobuffs, 0, totalbytes, totalbytes);
+            const size_t cindex = totalbytes % MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE;
+            if(cindex != 0) {
+                --iobuffs;
+            }
+            
+            return IOBufferIterator(iobuffs, cindex, totalbytes, totalbytes);
         }
 
         value_type operator*() const 

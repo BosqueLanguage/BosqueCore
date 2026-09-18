@@ -14,7 +14,7 @@ namespace ᐸRuntimeᐳ
             return static_cast<size_t>(ptr - numbuf.data());
         }
         else {
-            auto [ptr, ec] = std::to_chars(numbuf.data(), numbuf.data() + numbuf.size() - 1, val.value, std::chars_format::scientific, std::numeric_limits<double>::max_digits10 - 1);
+            auto [ptr, ec] = std::to_chars(numbuf.data(), numbuf.data() + numbuf.size() - 1, val.value, std::chars_format::scientific);
             assert(ec == std::errc());
             *ptr++ = 'f';
         

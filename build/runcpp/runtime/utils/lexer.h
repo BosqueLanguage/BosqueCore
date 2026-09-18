@@ -250,6 +250,10 @@ namespace ᐸRuntimeᐳ
         template<typename T>
         bool tryExtractNumericValue(T& outval) const
         {
+            if(this->ctoken.size >= 64) {
+                 return false;
+            }
+
             std::array<uint8_t, 64> outchars;
             size_t size = this->extractSmallToken(outchars);
 
