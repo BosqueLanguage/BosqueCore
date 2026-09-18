@@ -22,8 +22,10 @@ namespace ᐸRuntimeᐳ
     static boost::regex s_bytebuffer_prefix_re("0x\\[", s_regexflags);
     static boost::regex s_bytebuffer_empty_re("0x\\[\\]", s_regexflags);
     
-    static boost::regex s_symbol_re("[<>,{}#=]|(=>)|(\\x28\\x7c?)|(\\x7c?\\x29)", s_regexflags);
-    
+    static boost::regex s_symbol_arrow_re("=>", s_regexflags);
+    static boost::regex s_symbol_elistbrackets_re("(\\x28\\x7c)|(\\x7c\\x29)", s_regexflags);
+    static boost::regex s_symbol_general_re("[<>(){},#=]", s_regexflags);
+
     static boost::regex s_identifierlike_re("[a-zA-Z_][a-zA-Z0-9_:]*", s_regexflags);
     static boost::regex s_kwnone_re("none", s_regexflags);
     static boost::regex s_kwtrue_re("true", s_regexflags);
@@ -221,13 +223,25 @@ namespace ᐸRuntimeᐳ
 
     bool BAPILexer::tryLexSymbol()
     {
-        boost::match_results<IOBufferIterator> mm;
-        if(!boost::regex_search(this->iter, this->end, mm, s_symbol_re, boost::match_continuous)) {
-            return false;
+        boost::match_results<IOBufferIterator> mma;
+        if(boost::regex_search(this->iter, this->end, mma, s_symbol_arrow_re, boost::match_continuous)) {
+            this->advanceToken(BAPITokenType::LiteralSymbol, mma[0].length());
+            return true;
         }
 
-        this->advanceToken(BAPITokenType::LiteralSymbol, mm[0].length());
-        return true;
+        boost::match_results<IOBufferIterator> mmel;
+        if(boost::regex_search(this->iter, this->end, mmel, s_symbol_elistbrackets_re, boost::match_continuous)) {
+            this->advanceToken(BAPITokenType::LiteralSymbol, mmel[0].length());
+            return true;
+        }
+
+        boost::match_results<IOBufferIterator> mmg;
+        if(boost::regex_search(this->iter, this->end, mmg, s_symbol_general_re, boost::match_continuous)) {
+            this->advanceToken(BAPITokenType::LiteralSymbol, mmg[0].length());
+            return true;
+        }
+        
+        return false;
     }
 
     bool BAPILexer::tryLexIdentifierLike()

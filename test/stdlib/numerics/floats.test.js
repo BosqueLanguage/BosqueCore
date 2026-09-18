@@ -8,7 +8,7 @@ describe ("Floats Power", () => {
         runTestSet('public function main(x: Float): Float { return Float::pow(x, 5.0f); }', [['0.0f', '0.0f'], ['1.0f', '1.0f'], ['2.0f', '32.0f'], ['3.0f', '243.0f']], []);
         runTestSet('public function main(y: Float): Float { return Float::pow(3.0f, y); }', [['0.0f', '1.0f'], ['1.0f', '3.0f'], ['2.0f', '9.0f'], ['3.0f', '27.0f']], []);
 
-        runTestSet('public function main(x: Float): Float { return Float::pow(x, -2.0f); }', [['1.0f', '1.0f'], ['2.0f', '0.25f'], ['3.0f', '0.111111111111f']], ['0.0f']);
+        runTestSet('public function main(x: Float): Float { return Float::pow(x, -2.0f); }', [['1.0f', '1.0f'], ['2.0f', '2.5e-01f'], ['3.0f', '1.111111111111111e-01f']], ['0.0f']);
     });
 
     it("should compute tostring", function () {
