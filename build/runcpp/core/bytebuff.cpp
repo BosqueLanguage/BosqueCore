@@ -20,6 +20,7 @@ namespace ᐸRuntimeᐳ
         {
             const json& elem = j[i];
             bsq_validate(elem.is_number_unsigned(), "JSON -> BSQ", 0, nullptr, "Expected JSON number for ByteBuffer element");
+            bsq_validate(elem.get<uint64_t>() <= std::numeric_limits<uint8_t>::max(), "JSON -> BSQ", 0, nullptr, "Byte overflow in ByteBuffer element");
 
             builder.appendByte(static_cast<uint8_t>(elem.get<uint64_t>()));
         }

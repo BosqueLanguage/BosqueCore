@@ -54,6 +54,7 @@ namespace ᐸRuntimeᐳ
     void jsonParseToBSQ_Nat(const TypeInfo* tinfo, const json& j, void* resptr)
     {
         if(j.is_number_unsigned()) {
+            bsq_validate(XNat::isValidNat(j.get<int64_t>()), "JSON -> BSQ", 0, nullptr, "Invalid string encoding for Nat type");
             *(XNat*)resptr = XNat{ j.get<int64_t>() };
         }
         else {
@@ -119,6 +120,7 @@ namespace ᐸRuntimeᐳ
     void jsonParseToBSQ_Int(const TypeInfo* tinfo, const json& j, void* resptr)
     {
         if(j.is_number_integer()) {
+            bsq_validate(XInt::isValidInt(j.get<int64_t>()), "JSON -> BSQ", 0, nullptr, "Invalid JSON encoding for Int type");
             *(XInt*)resptr = XInt{ j.get<int64_t>() };
         }
         else {
@@ -184,6 +186,7 @@ namespace ᐸRuntimeᐳ
     void jsonParseToBSQ_ChkNat(const TypeInfo* tinfo, const json& j, void* resptr)
     {
         if(j.is_number_unsigned()) {
+            bsq_validate(XChkNat::isValidNat(j.get<int64_t>()), "JSON -> BSQ", 0, nullptr, "Invalid JSON encoding for ChkNat type");
             *(XChkNat*)resptr = XChkNat{ j.get<int64_t>() };
         }
         else {
@@ -280,6 +283,7 @@ namespace ᐸRuntimeᐳ
     void jsonParseToBSQ_ChkInt(const TypeInfo* tinfo, const json& j, void* resptr)
     {
         if(j.is_number_integer()) {
+            bsq_validate(XChkInt::isValidInt(j.get<int64_t>()), "JSON -> BSQ", 0, nullptr, "Invalid JSON encoding for ChkInt type");
             *(XChkInt*)resptr = XChkInt{ j.get<int64_t>() };
         }
         else {

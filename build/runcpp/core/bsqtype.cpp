@@ -41,6 +41,7 @@ namespace ᐸRuntimeᐳ
     
         bsq_validate(eiter != members.second + members.first, "BAPI -> BSQ", 0, nullptr, "Expected valid enum member");
         uint64_t idx = (uint64_t)std::distance(members.second, eiter);
+        lexer->consume();
         
         void* args[1] = { &idx };
         tinfo->opdispatch.validatingConstructorFp(args, resptr);
@@ -160,7 +161,10 @@ namespace ᐸRuntimeᐳ
             const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[i].fieldbsqtypeid);
             std::string fieldname = tinfo->ftable[i].fname;
 
-            if(j.contains(fieldname)) {
+            if(!j.contains(fieldname)) {
+                //TODO: on explicit use of default we need to validate that the field is indeed optional
+            }
+            else {
                 ofinfo->opdispatch.jsonParseToBSQFp(ofinfo, j[fieldname], cslot);
                 valptrs[i] = cslot;
             }
@@ -218,8 +222,8 @@ namespace ᐸRuntimeᐳ
                 const TypeInfo* ftypeinfo = TypeInfo::getTypeInfoForID(finfo->fieldbsqtypeid);
 
                 if(lexer->testDataMatches((const uint8_t*)"_", 1)) {
-                    //explict use of default
-                    valptrs[cpos] = nullptr;    
+                    //TODO: on explicit use of default we need to validate that the field is indeed optional
+                    lexer->consume();
                 }
                 else {
                     void* valpos = (void*)((uint64_t*)valdata + finfo->slotoffset);

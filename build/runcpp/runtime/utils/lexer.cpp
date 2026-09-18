@@ -22,7 +22,7 @@ namespace ᐸRuntimeᐳ
     
     static boost::regex s_symbol_re("[<>,{}#]|(=>)|(\\x28\\x7c?)|(\\x7c?\\x29)", s_regexflags);
                                     
-    static boost::regex s_identifierlike_re("[a-zA-Z_][a-zA-Z0-9_:]+", s_regexflags);
+    static boost::regex s_identifierlike_re("[a-zA-Z_][a-zA-Z0-9_:]*", s_regexflags);
     static boost::regex s_kwnone_re("none", s_regexflags);
     static boost::regex s_kwtrue_re("true", s_regexflags);
     static boost::regex s_kwfalse_re("false", s_regexflags);
@@ -258,7 +258,7 @@ namespace ᐸRuntimeᐳ
             else {
                 //template argument list follows -- we need to match nested parens and then loop eating any follow ::type::type things
 
-                while(*iir == '<') {
+                while(iir != this->end && *iir == '<') {
                     ++iir; //eat the opening <
                     size_t pcount = 1; //we have already seen the opening <
 

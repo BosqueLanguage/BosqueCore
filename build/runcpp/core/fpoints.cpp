@@ -4,13 +4,7 @@ namespace ᐸRuntimeᐳ
 {
     size_t writeFloatNumber(XFloat val, std::array<char, 64>& numbuf)
     {
-        if(std::floor(val.value) != val.value) {
-            return std::snprintf(numbuf.data(), numbuf.size(), "%.12lgf", val.value);
-        }
-        else {
-            //force the decimal and a single trailing 0 for whole numbers
-            return std::snprintf(numbuf.data(), numbuf.size(), "%.12lg.0f", val.value);
-        }
+        return std::snprintf(numbuf.data(), numbuf.size(), "%03.12lff", val.value);
     }
 
     void jsonParseToBSQ_Float(const TypeInfo* tinfo, const json& j, void* resptr)

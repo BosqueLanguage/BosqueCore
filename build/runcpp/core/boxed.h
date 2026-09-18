@@ -304,7 +304,7 @@ namespace ᐸRuntimeᐳ
     void jsonParseToBSQ_Concept(const TypeInfo* tinfo, const json& j, void* resptr)
     {
         bsq_validate(j.is_array() && j.size() == 2, "JSON -> BSQ", 0, nullptr, "Expected JSON envelope for Concept");
-        bsq_validate(j[0] == tinfo->typekey, "JSON -> BSQ", 0, nullptr, "Expected full type in JSON envelope for Concept");
+        bsq_validate(j[0].is_string(), "JSON -> BSQ", 0, nullptr, "Expected typename as key in envelope for Concept");
 
         std::string tstr = j[0].get<std::string>();
         const TypeInfo* ofinfo = TypeInfo::getTypeInfoForKey(tstr);
@@ -312,7 +312,7 @@ namespace ᐸRuntimeᐳ
         
         U val{};
         ofinfo->opdispatch.jsonParseToBSQFp(ofinfo, j[1], &val);
-
+        
         *(BoxedUnion<U>*)resptr = BoxedUnion<U>(ofinfo, val);
     }
 

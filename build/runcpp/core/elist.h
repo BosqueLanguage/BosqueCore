@@ -313,4 +313,144 @@ namespace ᐸRuntimeᐳ
             }
         }
     };
+
+    template<typename T1, typename T2, typename T3, typename T4>
+    void jsonParseToBSQ_EList4(const TypeInfo* tinfo, const json& j, void* resptr)
+    {
+        bsq_validate(j.is_array() && j.size() == 4, "JSON -> BSQ", 0, nullptr, "Expected JSON array for EList of 4 elements");
+
+        T1 val1;
+        const TypeInfo* ofinfo1 = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
+        ofinfo1->opdispatch.jsonParseToBSQFp(ofinfo1, j[0], &val1);
+
+        T2 val2;
+        const TypeInfo* ofinfo2 = TypeInfo::getTypeInfoForID(tinfo->ftable[1].fieldbsqtypeid);
+        ofinfo2->opdispatch.jsonParseToBSQFp(ofinfo2, j[1], &val2);
+
+        T3 val3;
+        const TypeInfo* ofinfo3 = TypeInfo::getTypeInfoForID(tinfo->ftable[2].fieldbsqtypeid);
+        ofinfo3->opdispatch.jsonParseToBSQFp(ofinfo3, j[2], &val3);
+
+        T4 val4;
+        const TypeInfo* ofinfo4 = TypeInfo::getTypeInfoForID(tinfo->ftable[3].fieldbsqtypeid);
+        ofinfo4->opdispatch.jsonParseToBSQFp(ofinfo4, j[3], &val4);
+
+        *(EList4<T1, T2, T3, T4>*)resptr = EList4<T1, T2, T3, T4>{val1, val2, val3, val4};
+    }
+
+    template<typename T1, typename T2, typename T3, typename T4>
+    void parseToBSQ_EList4(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr)
+    {
+        bsq_validate(lexer->testIsSymbol("(|"), "BAPI -> BSQ", 0, nullptr, "Expected type for EList4");
+        lexer->consume();
+
+        T1 val1;
+        const TypeInfo* ofinfo1 = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
+        ofinfo1->opdispatch.parseToBSQFp(ofinfo1, lexer, &val1);
+
+        bsq_validate(lexer->testIsSymbol(','), "BAPI -> BSQ", 0, nullptr, "Expected ',' between elements for EList4");
+        lexer->consume();
+
+        T2 val2;
+        const TypeInfo* ofinfo2 = TypeInfo::getTypeInfoForID(tinfo->ftable[1].fieldbsqtypeid);
+        ofinfo2->opdispatch.parseToBSQFp(ofinfo2, lexer, &val2);
+
+        bsq_validate(lexer->testIsSymbol(','), "BAPI -> BSQ", 0, nullptr, "Expected ',' between elements for EList4");
+        lexer->consume();
+
+        T3 val3;
+        const TypeInfo* ofinfo3 = TypeInfo::getTypeInfoForID(tinfo->ftable[2].fieldbsqtypeid);
+        ofinfo3->opdispatch.parseToBSQFp(ofinfo3, lexer, &val3);
+
+        bsq_validate(lexer->testIsSymbol(','), "BAPI -> BSQ", 0, nullptr, "Expected ',' between elements for EList4");
+        lexer->consume();
+
+        T4 val4;
+        const TypeInfo* ofinfo4 = TypeInfo::getTypeInfoForID(tinfo->ftable[3].fieldbsqtypeid);
+        ofinfo4->opdispatch.parseToBSQFp(ofinfo4, lexer, &val4);
+
+        *(EList4<T1, T2, T3, T4>*)resptr = EList4<T1, T2, T3, T4>{val1, val2, val3, val4};
+
+        bsq_validate(lexer->testIsSymbol("|)"), "BAPI -> BSQ", 0, nullptr, "Expected type for EList4");
+        lexer->consume();
+    }
+
+    template<typename T1, typename T2, typename T3, typename T4>
+    json bsqToJSON_EList4(const TypeInfo* tinfo, const void* valptr)
+    {
+        const EList4<T1, T2, T3, T4>* elist = (const EList4<T1, T2, T3, T4>*)valptr;
+
+        const TypeInfo* ofinfo1 = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
+        const TypeInfo* ofinfo2 = TypeInfo::getTypeInfoForID(tinfo->ftable[1].fieldbsqtypeid);
+        const TypeInfo* ofinfo3 = TypeInfo::getTypeInfoForID(tinfo->ftable[2].fieldbsqtypeid);
+        const TypeInfo* ofinfo4 = TypeInfo::getTypeInfoForID(tinfo->ftable[3].fieldbsqtypeid);
+
+        json j1 = ofinfo1->opdispatch.bsqToJSONFp(ofinfo1, &elist->first);
+        json j2 = ofinfo2->opdispatch.bsqToJSONFp(ofinfo2, &elist->second);
+        json j3 = ofinfo3->opdispatch.bsqToJSONFp(ofinfo3, &elist->third);
+        json j4 = ofinfo4->opdispatch.bsqToJSONFp(ofinfo4, &elist->fourth);
+
+        return json::array({j1, j2, j3, j4});
+    }
+
+    template<typename T1, typename T2, typename T3, typename T4>
+    void bsqToBAPI_EList4(const TypeInfo* tinfo, const void* valptr, BSQStreamingBuilder* builder)
+    {
+        const EList4<T1, T2, T3, T4>* elist = (const EList4<T1, T2, T3, T4>*)valptr;
+        const TypeInfo* ofinfo1 = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
+        const TypeInfo* ofinfo2 = TypeInfo::getTypeInfoForID(tinfo->ftable[1].fieldbsqtypeid);
+        const TypeInfo* ofinfo3 = TypeInfo::getTypeInfoForID(tinfo->ftable[2].fieldbsqtypeid);
+        const TypeInfo* ofinfo4 = TypeInfo::getTypeInfoForID(tinfo->ftable[3].fieldbsqtypeid);
+
+        builder->appendLiteralString("(| ");
+        ofinfo1->opdispatch.bsqToBAPIFp(ofinfo1, &elist->first, builder);
+        builder->appendLiteralString(", ");
+        ofinfo2->opdispatch.bsqToBAPIFp(ofinfo2, &elist->second, builder);
+        builder->appendLiteralString(", ");
+        ofinfo3->opdispatch.bsqToBAPIFp(ofinfo3, &elist->third, builder);
+        builder->appendLiteralString(", ");
+        ofinfo4->opdispatch.bsqToBAPIFp(ofinfo4, &elist->fourth, builder);
+        builder->appendLiteralString(" |)");
+    }
+    
+    template<typename T1, typename T2, typename T3, typename T4>
+    void displayValue_EList4(const TypeInfo* tinfo, const void* valptr, std::ostream& os, std::optional<std::string> indent)
+    {
+        const EList4<T1, T2, T3, T4>* elist = (const EList4<T1, T2, T3, T4>*)valptr;
+        const TypeInfo* ofinfo1 = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
+        const TypeInfo* ofinfo2 = TypeInfo::getTypeInfoForID(tinfo->ftable[1].fieldbsqtypeid);
+        const TypeInfo* ofinfo3 = TypeInfo::getTypeInfoForID(tinfo->ftable[2].fieldbsqtypeid);
+        const TypeInfo* ofinfo4 = TypeInfo::getTypeInfoForID(tinfo->ftable[3].fieldbsqtypeid);
+
+        os << getDisplayIndent(indent) << tinfo->typekey << "(| ";
+        ofinfo1->opdispatch.displayFp(ofinfo1, &elist->first, os, indent);
+        os << ", ";
+        ofinfo2->opdispatch.displayFp(ofinfo2, &elist->second, os, indent);
+        os << ", ";
+        ofinfo3->opdispatch.displayFp(ofinfo3, &elist->third, os, indent);
+        os << ", ";
+        ofinfo4->opdispatch.displayFp(ofinfo4, &elist->fourth, os, indent);
+        os << " |)";
+    }
+
+    template<typename T1, typename T2, typename T3, typename T4>
+    consteval TypeInfo g_typeinfo_EList4_generate(uint32_t id, const TypeLayoutInfo* layout, const char* mask, const char* name) 
+    {
+        return TypeInfo{
+            id,
+            sizeof(EList4<T1, T2, T3, T4>),
+            byteSizeToSlotCount(sizeof(EList4<T1, T2, T3, T4>)),
+            LayoutTag::Value,
+            mask,
+            nullptr,
+            0,
+            layout,
+            4,
+            nullptr,
+            0,
+            TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_EList4<T1, T2, T3, T4>, (ParseToBSQFp)&parseToBSQ_EList4<T1, T2, T3, T4>, (BSQToJSONFp)&bsqToJSON_EList4<T1, T2, T3, T4>, (BSQToBAPIFp)&bsqToBAPI_EList4<T1, T2, T3, T4>, (DisplayValueFp)&displayValue_EList4<T1, T2, T3, T4> },
+            name,
+            false
+        };
+    }
 }

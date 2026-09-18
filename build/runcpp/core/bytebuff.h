@@ -315,18 +315,35 @@ namespace ᐸRuntimeᐳ
 
             if(heapbytes == nullptr) {
                 this->heapbytes = XByteBuffer::s_entryallocator->allocate(this->pendingdata.data(), this->pendingdata.data() + this->pendingbytes);
-                this->bytesize = this->pendingbytes;
             }
             else {
-                ByteBufferBlock* blockl = static_cast<ByteBufferBlock*>(this->heapbytes);
+                if(this->bytesize <= ByteBufferEntry::BUFFER_ENTRY_SIZE) {
+                    ByteBufferEntry* obb = static_cast<ByteBufferEntry*>(this->heapbytes);
+                    ByteBufferEntry* nbb = XByteBuffer::s_entryallocator->allocate(this->pendingdata.data(), this->pendingdata.data() + this->pendingbytes);
+                    
+                    ByteBufferBlock* blockl = XByteBuffer::s_blockallocator->allocate();
+                    
+                    blockl->entries[0] = obb;
+                    blockl->entries[1] = nbb;
 
-                blockl->entries[this->blockslot++] = XByteBuffer::s_entryallocator->allocate(this->pendingdata.data(), this->pendingdata.data() + this->pendingbytes);
-                if(this->blockslot == ByteBufferBlock::BUFFER_BLOCK_ENTRY_COUNT) {
-                    blockl = XByteBuffer::s_blockallocator->allocate(blockl->entries, blockl);
-                    std::fill(std::begin(blockl->entries), std::end(blockl->entries), nullptr);
-                    this->blockslot = 0;
+                    this->heapbytes = blockl;
+                    this->blockslot = 2;
+                }
+                else {
+                    ByteBufferBlock* blockl = static_cast<ByteBufferBlock*>(this->heapbytes);
+
+                    blockl->entries[this->blockslot++] = XByteBuffer::s_entryallocator->allocate(this->pendingdata.data(), this->pendingdata.data() + this->pendingbytes);
+                    if(this->blockslot == ByteBufferBlock::BUFFER_BLOCK_ENTRY_COUNT) {
+                        blockl = XByteBuffer::s_blockallocator->allocate();
+                        this->blockslot = 0;
+
+                        blockl->next = static_cast<ByteBufferBlock*>(this->heapbytes);
+                        this->heapbytes = blockl;
+                    }
                 }
             }
+
+            this->bytesize += this->pendingbytes;
 
             this->pendingdata.fill(0);
             this->pendingbytes = 0;

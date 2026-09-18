@@ -58,7 +58,7 @@ function emitCommandLineMakefile(): string {
         'CORE_SRC_DIR=$(SRC_DIR)core/\n' +
         'RUNTIME_SRC_DIR=$(SRC_DIR)runtime/\n' +
         'ALLOC_SRC_DIR=$(RUNTIME_SRC_DIR)allocator/\n' +
-        'BSQIR_SRC_DIR=$(RUNTIME_SRC_DIR)bsqir/\n' +
+        'UTILS_SRC_DIR=$(RUNTIME_SRC_DIR)utils/\n' +
         '\n' +
         'JSON_INCLUDES=-I $(MAKE_PATH)/json/\n' +
         '\n' +
@@ -67,7 +67,7 @@ function emitCommandLineMakefile(): string {
         'CPPFLAGS=-Og -g -ggdb -DRB_INVARIANT_VALIDATE -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable -Wuninitialized -Werror -std=gnu++23 -fno-omit-frame-pointer -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-stack-protector\n' +
         'LINKAGE=-lboost_regex -licuuc -licui18n -licudata\n' +
         '\n' +
-        'HEADERS=$(wildcard $(SRC_DIR)*.h) $(wildcard $(CORE_SRC_DIR)*.h) $(wildcard $(RUNTIME_SRC_DIR)*.h) $(wildcard $(ALLOC_SRC_DIR)*.h) $(wildcard $(BSQIR_SRC_DIR)*.h)\n' +
+        'HEADERS=$(wildcard $(SRC_DIR)*.h) $(wildcard $(CORE_SRC_DIR)*.h) $(wildcard $(RUNTIME_SRC_DIR)*.h) $(wildcard $(ALLOC_SRC_DIR)*.h) $(wildcard $(UTILS_SRC_DIR)*.h)\n' +
         'OBJ=$(wildcard $(OUT_OBJ)*.o)\n' +
         'MAKEFLAGS += -j8\n' +
         '\n' +
