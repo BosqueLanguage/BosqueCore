@@ -266,7 +266,7 @@ namespace ᐸRuntimeᐳ
         LIST_T_UNION finalize()
         {
             if(this->pendingelements == 0) {
-                return LIST_T_UNION{this->postree};
+                return LIST_T_UNION{};
             }
             else if(this->listsize == 0) {
                 if(this->pendingelements <= LIST_T_INLINE::MAX_INLINE_CAPACITY) {                    

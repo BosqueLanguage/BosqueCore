@@ -111,13 +111,23 @@ namespace ᐸRuntimeᐳ
         if(buffer->isInline()) {
             const uint8_t* inlinedata = buffer->inlinedata();
             for(size_t i = 0; i < buffer->bytes(); ++i) {
-                size_t written = std::snprintf(numbuf.data(), numbuf.size(), "0x%x", inlinedata[i]);
+                if(i != 0) {
+                    builder->appendConstString(",");
+                }
+
+                size_t written = std::snprintf(numbuf.data(), numbuf.size(), "%x", inlinedata[i]);
                 builder->appendConstString(numbuf.data(), written);
             }
         }
         else {
+            bool first = true;
             for(auto ii = buffer->begin(); ii != buffer->end(); ++ii) {
-                size_t written = std::snprintf(numbuf.data(), numbuf.size(), "0x%x", *ii);
+                if(!first) {
+                    builder->appendConstString(",");
+                }
+                first = false;
+
+                size_t written = std::snprintf(numbuf.data(), numbuf.size(), "%x", *ii);
                 builder->appendConstString(numbuf.data(), written);
             }
         }
@@ -133,13 +143,23 @@ namespace ᐸRuntimeᐳ
         if(buffer->isInline()) {
             const uint8_t* inlinedata = buffer->inlinedata();
             for(size_t i = 0; i < buffer->bytes(); ++i) {
-                size_t written = std::snprintf(numbuf.data(), numbuf.size(), "0x%x", inlinedata[i]);
+                if(i != 0) {
+                    os << ",";
+                }
+
+                size_t written = std::snprintf(numbuf.data(), numbuf.size(), "%x", inlinedata[i]);
                 os << numbuf.data();
             }
         }
         else {
+            bool first = true;
             for(auto ii = buffer->begin(); ii != buffer->end(); ++ii) {
-                size_t written = std::snprintf(numbuf.data(), numbuf.size(), "0x%x", *ii);
+                if(!first) {
+                    os << ",";
+                }
+                first = false;
+
+                size_t written = std::snprintf(numbuf.data(), numbuf.size(), "%x", *ii);
                 os << numbuf.data();
             }
         }

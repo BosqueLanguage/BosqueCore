@@ -33,7 +33,10 @@ namespace ᐸRuntimeᐳ
                 return std::snprintf((char*)numbuf.data(), numbuf.size(), "c\"%c\"", (char)val.value);
             }
             else {
-                return ucharToMultiByteEncoding((char32_t)val.value, numbuf);
+                std::array<uint8_t, 64> outbuff{};
+                size_t written = ucharToMultiByteEncoding((char32_t)val.value, outbuff);
+
+                return std::snprintf((char*)numbuf.data(), numbuf.size(), "c\"%s\"", (const char*)outbuff.data());
             }
         }
         else {
@@ -131,7 +134,10 @@ namespace ᐸRuntimeᐳ
             output = outchars[2]; //just a simple char c'x'
         }
         else {
-            bool charok = processEncodedCChar(outchars, size, output);
+            std::array<uint8_t, 64> inbuff{};
+            std::copy(outchars.begin() + 2, outchars.begin() + (size - 1), inbuff.begin());
+
+            bool charok = processEncodedCChar(inbuff, size - 3, output);
             bsq_validate(charok, "Parse -> BSQ", 0, nullptr, "Invalid CChar literal");
         }
 
@@ -202,7 +208,10 @@ namespace ᐸRuntimeᐳ
                 bsq_validate(isLegalUnicodeChar(output), "Parse -> BSQ", 0, nullptr, "Invalid UnicodeChar literal");
             }
             else {
-                bool charok = processEncodedUnicodeChar(outchars, size, output);
+                std::array<uint8_t, 64> inbuff{};
+                std::copy(outchars.begin() + 2, outchars.begin() + (size - 1), inbuff.begin());
+
+                bool charok = processEncodedUnicodeChar(inbuff, size - 3, output);
                 bsq_validate(charok, "Parse -> BSQ", 0, nullptr, "Invalid UnicodeChar literal");
             }
         }

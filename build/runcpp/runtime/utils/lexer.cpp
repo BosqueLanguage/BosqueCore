@@ -266,9 +266,10 @@ namespace ᐸRuntimeᐳ
                         if(*iir == '<') {
                             ++pcount;
                         }
-                        else if(*iir == '>') {
+                        if(*iir == '>') {
                             --pcount;
                         }
+
                         ++iir;
                     }
 
@@ -282,6 +283,8 @@ namespace ᐸRuntimeᐳ
                         std::advance(iir, mm[0].length());
                     }
                 }
+
+                this->advanceToken(BAPITokenType::Identifier, std::distance(this->iter, iir));
             }
         }
 

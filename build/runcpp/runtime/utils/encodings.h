@@ -152,7 +152,7 @@ namespace ᐸRuntimeᐳ
     {
         //TODO: we might need to handle other unicode newline or other breaking chars
 
-        return (c < 32 || c == 127 || c == U'%' || c == U'\'' || c == U'\t' || c == U'\n');
+        return (c < 32 || c == 127 || c == U'%' || c == U'"' || c == U'\t' || c == U'\n');
     }
 
     inline bool isTrimableWhitespace(char32_t c) {

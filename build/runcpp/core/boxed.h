@@ -169,8 +169,8 @@ namespace ᐸRuntimeᐳ
 
         if(lexer->testIsNone())
         {
+            lexer->consume();
             *(XOption<T>*)resptr = XOption<T>::none;
-            return;
         }
         else {
             const TypeInfo* sominfo = TypeInfo::getTypeInfoForID(tinfo->ftable[1].fieldbsqtypeid);
