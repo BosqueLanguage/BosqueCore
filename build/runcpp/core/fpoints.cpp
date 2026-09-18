@@ -4,7 +4,20 @@ namespace ᐸRuntimeᐳ
 {
     size_t writeFloatNumber(XFloat val, std::array<char, 64>& numbuf)
     {
-        return std::snprintf(numbuf.data(), numbuf.size(), "%03.12lff", val.value);
+        if(std::floor(val.value) == val.value && std::numeric_limits<int64_t>::lowest() < val.value && val.value < std::numeric_limits<int64_t>::max()) {
+            auto [ptr, ec] = std::to_chars(numbuf.data(), numbuf.data() + numbuf.size() - 1, (int64_t)std::floor(val.value));
+            assert(ec == std::errc());
+            *ptr++ = 'f';
+        
+            return static_cast<size_t>(ptr - numbuf.data());
+        }
+        else {
+            auto [ptr, ec] = std::to_chars(numbuf.data(), numbuf.data() + numbuf.size() - 1, val.value, std::chars_format::scientific, std::numeric_limits<double>::max_digits10 - 1);
+            assert(ec == std::errc());
+            *ptr++ = 'f';
+        
+            return static_cast<size_t>(ptr - numbuf.data());
+        }
     }
 
     void jsonParseToBSQ_Float(const TypeInfo* tinfo, const json& j, void* resptr)

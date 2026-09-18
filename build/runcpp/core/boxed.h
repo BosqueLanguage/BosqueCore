@@ -307,7 +307,10 @@ namespace ᐸRuntimeᐳ
         bsq_validate(j[0].is_string(), "JSON -> BSQ", 0, nullptr, "Expected typename as key in envelope for Concept");
 
         std::string tstr = j[0].get<std::string>();
-        const TypeInfo* ofinfo = TypeInfo::getTypeInfoForKey(tstr);
+        std::optional<const TypeInfo*> ofinfo_opt = TypeInfo::tryGetTypeInfoForKey(tstr);
+        bsq_validate(ofinfo_opt.has_value(), "JSON -> BSQ", 0, nullptr, "Expected valid type for Concept");
+
+        const TypeInfo* ofinfo = ofinfo_opt.value();
         bsq_validate(ofinfo->supertypes != nullptr && std::find(ofinfo->supertypes, ofinfo->supertypes + ofinfo->supertypescount, tinfo->bsqtypeid) != ofinfo->supertypes + ofinfo->supertypescount, "JSON -> BSQ", 0, nullptr, "Expected supertype for Concept");
         
         U val{};

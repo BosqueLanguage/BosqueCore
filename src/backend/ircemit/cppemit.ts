@@ -3425,6 +3425,10 @@ class CPPEmitter {
         ].join("\n");
     }
 
+    private isTypeSignatureEmittable(tsig: IRTypeSignature): boolean {
+        return !((tsig instanceof IRVoidTypeSignature) || (tsig instanceof IRLambdaParameterPackTypeSignature));
+    }
+
     //Emit the initialization operations needed
     private emitStaticInitializationOps(): string {
         const stringunion = 'union StdEnvUnion { ᐸRuntimeᐳ::XCString strval; };\n';
@@ -3432,12 +3436,12 @@ class CPPEmitter {
         const constlayoutbytes = this.irasm.constants.map((cc) => this.typeInfoManager.getLayoutInfo(cc.declaredType.tkeystr).bytesize).reduce((acc, v) => acc + v, 0);
         const globalbuff = `void* BSQ_g_globaldata[${constlayoutbytes}];\n`;
 
-        const tkeytoidentries = this.irasm.typedeporder.map((tkey) => {
+        const tkeytoidentries = this.irasm.typedeporder.filter((tkey) => this.isTypeSignatureEmittable(tkey)).map((tkey) => {
             const tinfo = this.typeInfoManager.getTypeInfo(tkey.tkeystr);
             return `{ std::string("${tkey.tkeystr}"), ${tinfo.bsqtypeid} }`;
         });
 
-        const infoentries = this.irasm.typedeporder.map((tkey) => {
+        const infoentries = this.irasm.typedeporder.filter((tkey) => this.isTypeSignatureEmittable(tkey)).map((tkey) => {
             const ctname = TransformCPPNameManager.convertTypeKey(tkey.tkeystr);
             const tinfo = this.typeInfoManager.getTypeInfo(tkey.tkeystr);
             return `{ ${tinfo.bsqtypeid}, &g_typeinfo_${ctname} }`;

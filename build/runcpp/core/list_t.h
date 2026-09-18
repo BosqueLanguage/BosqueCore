@@ -265,11 +265,11 @@ namespace ᐸRuntimeᐳ
 
         LIST_T_UNION finalize()
         {
-            if(this->pendingelements == 0) {
-                return LIST_T_UNION{};
-            }
-            else if(this->listsize == 0) {
-                if(this->pendingelements <= LIST_T_INLINE::MAX_INLINE_CAPACITY) {                    
+            if(this->listsize == 0) {
+                if(this->pendingelements == 0) {
+                    return LIST_T_UNION{};
+                }
+                else if(this->pendingelements <= LIST_T_INLINE::MAX_INLINE_CAPACITY) {                    
                     return LIST_T_UNION(LIST_T_INLINE(this->pendingdata.begin(), this->pendingelements));
                 }
                 else {
@@ -277,7 +277,12 @@ namespace ᐸRuntimeᐳ
                 }
             }
             else {
-                return LIST_T_UNION(LIST_T_TREE{this->postree.builderPushBackLeafBlock(this->pendingdata, this->pendingelements)});
+                if(this->pendingelements == 0) {
+                    return LIST_T_UNION{LIST_T_TREE(this->postree)};
+                }
+                else {
+                    return LIST_T_UNION(LIST_T_TREE{this->postree.builderPushBackLeafBlock(this->pendingdata, this->pendingelements)});
+                }
             }
         }
     };
@@ -611,7 +616,7 @@ namespace ᐸRuntimeᐳ
             }
             else {
                 //if leaf type and size - 1 fits in inline repr
-                if(this->ulist.treelist.postree.size() - 1 <= MAX_INLINE_CAPACITY && LIST_T_TREE::isLeafType(this->ulist.treelist.postree.root)) {
+                if(this->ulist.treelist.postree.size() - 1 <= MAX_INLINE_CAPACITY && POS_TREE_T::isLeafType(this->ulist.treelist.postree.root)) {
                     return XList{LIST_T_INLINE(this->ulist.treelist.postree.root->data.data.cbegin() + 1, this->ulist.treelist.postree.root->data.data.cbegin() + this->ulist.treelist.postree.root->data.dcount)};
                 }
                 else {
@@ -632,7 +637,7 @@ namespace ᐸRuntimeᐳ
             }
             else {
                 //if leaf type and size - 1 fits in inline repr
-                if(this->ulist.treelist.postree.size() - 1 <= MAX_INLINE_CAPACITY && LIST_T_TREE::isLeafType(this->ulist.treelist.postree.root)) {
+                if(this->ulist.treelist.postree.size() - 1 <= MAX_INLINE_CAPACITY && POS_TREE_T::isLeafType(this->ulist.treelist.postree.root)) {
                     return XList{LIST_T_INLINE(this->ulist.treelist.postree.root->data.data.cbegin(), this->ulist.treelist.postree.root->data.data.cbegin() + this->ulist.treelist.postree.root->data.dcount - 1)};
                 }
                 else {

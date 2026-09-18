@@ -156,7 +156,6 @@ namespace ᐸRuntimeᐳ
         void** valptrs = (void**)alloca(tinfo->slotcount * sizeof(void*));
         std::fill(valptrs, valptrs + tinfo->slotcount, nullptr);
 
-        void* cslot = valdata;
         for(size_t i = 0; i < tinfo->ftablecount; ++i) {
             const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[i].fieldbsqtypeid);
             std::string fieldname = tinfo->ftable[i].fname;
@@ -165,11 +164,17 @@ namespace ᐸRuntimeᐳ
                 //TODO: on explicit use of default we need to validate that the field is indeed optional
             }
             else {
-                ofinfo->opdispatch.jsonParseToBSQFp(ofinfo, j[fieldname], cslot);
-                valptrs[i] = cslot;
-            }
+                auto finfo = std::find_if(tinfo->ftable, tinfo->ftable + tinfo->ftablecount, [&j, &fieldname](const TypeLayoutInfo& fi) {
+                    return fi.fname == fieldname;
+                });
+                bsq_validate(finfo != tinfo->ftable + tinfo->ftablecount, "BAPI -> BSQ", 0, nullptr, "Field name does not exist in entity");
+                
+                const TypeInfo* ftypeinfo = TypeInfo::getTypeInfoForID(finfo->fieldbsqtypeid);
 
-            cslot = (void*)((uint64_t*)cslot + ofinfo->slotcount);
+                void* valpos = (void*)((uint64_t*)valdata + finfo->slotoffset);
+                valptrs[std::distance(tinfo->ftable, finfo)] = valpos;
+                ftypeinfo->opdispatch.jsonParseToBSQFp(ftypeinfo, j[fieldname], (void*)valpos);
+            }
         }
 
         tinfo->opdispatch.validatingConstructorFp(valptrs, resptr);

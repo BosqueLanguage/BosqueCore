@@ -11,7 +11,9 @@ namespace ᐸRuntimeᐳ
     static boost::regex s_int_re("(0|[+-]?[1-9][0-9]*)i", s_regexflags);
     static boost::regex s_chknat_re("(ChkNat::npos|((0|[+-]?[1-9][0-9]*)N))", s_regexflags);
     static boost::regex s_chkint_re("(ChkInt::npos|((0|[+-]?[1-9][0-9]*)I))", s_regexflags);
-    static boost::regex s_float_re("[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)([eE][+-]?[0-9]+)?f", s_regexflags);
+
+    //TODO: we kinda differ from fp repr in the Bosque langauge here -- at some point we probably want a fully unified format
+    static boost::regex s_float_re("[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?f", s_regexflags);
 
     static boost::regex s_byte_re("0x[0-9a-fA-F]{1,2}", s_regexflags);
     static boost::regex s_cchar_re("c'[^']{1,16}'", s_regexflags);

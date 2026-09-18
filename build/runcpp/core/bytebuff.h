@@ -332,7 +332,6 @@ namespace ᐸRuntimeᐳ
                 else {
                     ByteBufferBlock* blockl = static_cast<ByteBufferBlock*>(this->heapbytes);
 
-                    blockl->entries[this->blockslot++] = XByteBuffer::s_entryallocator->allocate(this->pendingdata.data(), this->pendingdata.data() + this->pendingbytes);
                     if(this->blockslot == ByteBufferBlock::BUFFER_BLOCK_ENTRY_COUNT) {
                         blockl = XByteBuffer::s_blockallocator->allocate();
                         this->blockslot = 0;
@@ -340,6 +339,8 @@ namespace ᐸRuntimeᐳ
                         blockl->next = static_cast<ByteBufferBlock*>(this->heapbytes);
                         this->heapbytes = blockl;
                     }
+
+                    blockl->entries[this->blockslot++] = XByteBuffer::s_entryallocator->allocate(this->pendingdata.data(), this->pendingdata.data() + this->pendingbytes);
                 }
             }
 

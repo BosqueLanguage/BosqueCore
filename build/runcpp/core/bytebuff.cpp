@@ -58,7 +58,7 @@ namespace ᐸRuntimeᐳ
                 //read hex value
                 char outbuff[16] = {0};
                 size_t ecount = 0;
-                while(std::isxdigit(*ii)) {
+                while(std::isxdigit(*ii) && ecount < 4) {
                     outbuff[ecount] = *ii;
                     ++ecount;
                     ++cpos;
