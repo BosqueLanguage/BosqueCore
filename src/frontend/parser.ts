@@ -4443,9 +4443,11 @@ class Parser {
         const configs = new TaskConfiguration(undefined, undefined, undefined);
         this.parseTaskConfigs(configs);
 
+        const targs = this.parseInvokeTemplateArguments();
+
         const [args, envexp] = this.parseTaskArguments();
 
-        return new APIInvokeExpression(sinfo, (nscope ?? this.env.currentNamespace).fullnamespace, api, args, envexp, configs);
+        return new APIInvokeExpression(sinfo, (nscope ?? this.env.currentNamespace).fullnamespace, api, targs, args, envexp, configs);
     }
 
     private parseAgentInvokeExpression(): AgentInvokeExpression {
@@ -4472,16 +4474,12 @@ class Parser {
 
         const configs = new TaskConfiguration(undefined, undefined, undefined);
         this.parseTaskConfigs(configs);
-        let explicittype: TypeSignature | undefined = undefined;
-        if(this.testToken(SYM_langle)) {
-            this.consumeToken(); //<
-            explicittype = this.parseStdTypeSignature();
-            this.ensureAndConsumeTokenAlways(SYM_rangle, "agent invoke explicit type");
-        }
+        
+        const targs = this.parseInvokeTemplateArguments();
 
         const [args, envexp] = this.parseTaskArguments();
 
-        return new AgentInvokeExpression(sinfo, (nscope ?? this.env.currentNamespace).fullnamespace, api, explicittype, args, envexp, configs);
+        return new AgentInvokeExpression(sinfo, (nscope ?? this.env.currentNamespace).fullnamespace, api, targs, args, envexp, configs);
     }
 
     private parseChkLogicExpression(): ChkLogicExpression {
@@ -6875,6 +6873,11 @@ class Parser {
             const tdecl = this.env.currentNamespace.tasks.find((td) => td.name === tname);
             assert(tdecl !== undefined && tdecl instanceof TaskDecl, "Failed to find task type");
 
+            const terms = this.parseTypeTemplateTerms();
+            if(terms.length !== 0) {
+                tdecl.terms.push(...terms);
+            }
+
             while(this.testToken(KW_status) || this.testToken(KW_resource) || this.testToken(KW_env) || this.testToken(KW_event) ||this.testToken(KW_configs) ) {
                 if(this.testToken(KW_event)) {
                     if(tdecl.eventinfo.length !== 0) {
@@ -6946,6 +6949,8 @@ class Parser {
             this.scanOverSemiDelimitedDeclaration();
         }
         else {
+            const terms = this.parseInvokeTemplateTerms();
+
             const okdecl = this.testToken(SYM_lparen);
             if(!okdecl) {
                 this.recordErrorGeneral(sinfo, "API declaration missing parameter list");
@@ -7012,7 +7017,7 @@ class Parser {
             const body = this.parseBody(attributes, false);
             this.env.popStandardFunctionScope();
             
-            const api = new APIDecl(this.env.currentFile, sinfo, attributes, apiname, params, resultInfo, eventType, preconds, postconds, configs, statusinfo, envreqs, resourcereqs, body);
+            const api = new APIDecl(this.env.currentFile, sinfo, attributes, apiname, terms, params, resultInfo, eventType, preconds, postconds, configs, statusinfo, envreqs, resourcereqs, body);
             this.env.currentNamespace.apis.push(api);
 
 
@@ -7041,6 +7046,8 @@ class Parser {
             this.scanOverSemiDelimitedDeclaration();
         }
         else {
+            const terms = this.parseInvokeTemplateTerms();
+
             const okdecl = this.testToken(SYM_lparen);
             if(!okdecl) {
                 this.recordErrorGeneral(sinfo, "Agent declaration missing parameter list");
@@ -7050,11 +7057,8 @@ class Parser {
             const boundtemplates = new Set<string>();
             const params: InvokeParameterDecl[] = this.parseInvokeDeclParameters(sinfo, false, boundtemplates);
         
-            let resultInfo: TypeSignature | undefined = undefined;
-            if(this.testToken(SYM_colon)) {
-                this.consumeToken();
-                resultInfo = this.parseReturnTypeSignature(true);
-            }
+            this.ensureAndConsumeTokenIf(SYM_colon, "agent declaration");
+            const resultInfo = this.parseReturnTypeSignature(true);
 
             let eventType: TypeSignature | undefined = undefined;
             if(this.testAndConsumeTokenIf(SYM_coma)) {
@@ -7112,7 +7116,7 @@ class Parser {
             const body = this.parseBody(attributes, false);
             this.env.popStandardFunctionScope();
             
-            const agent = new AgentDecl(this.env.currentFile, sinfo, attributes, agentname, params, resultInfo, eventType, preconds, postconds, configs, statusinfo, envreqs, resourcereqs, body);
+            const agent = new AgentDecl(this.env.currentFile, sinfo, attributes, agentname, terms, params, resultInfo, eventType, preconds, postconds, configs, statusinfo, envreqs, resourcereqs, body);
             this.env.currentNamespace.agents.push(agent);
         }
     }

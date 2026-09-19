@@ -3933,6 +3933,8 @@ class TypeChecker {
 
         this.checkEnvironmentGenerationExpression(env, exp.envexp, adecl.envreqs);
 
+        xxxx;
+
         if(exp.args.length !== adecl.params.length) {
             this.reportError(exp.sinfo, `Argument count mismatch for api ${exp.ns.emit()}::${exp.api} -- expected ${adecl.params.length} arguments but got ${exp.args.length}`);
         }
@@ -3972,6 +3974,8 @@ class TypeChecker {
         exp.monoinvid = this.invidCtr++;
 
         this.checkEnvironmentGenerationExpression(env, exp.envexp, adecl.envreqs);
+
+        xxxx;
 
         if(exp.args.length !== adecl.params.length) {
             this.reportError(exp.sinfo, `Argument count mismatch for agent ${exp.ns.emit()}::${exp.agent} -- expected ${adecl.params.length} arguments but got ${exp.args.length}`);
@@ -5209,8 +5213,8 @@ class TypeChecker {
         }
     }
 
-    private checkExplicitInvokeDeclTermInfo(idecl: ExplicitInvokeDecl) {
-        this.checkTemplateTypesOnInvoke(idecl.sinfo, idecl.terms);
+    private checkExplicitInvokeDeclTermInfo(sinfo: SourceInfo, terms: InvokeTemplateTermDecl[]) {
+        this.checkTemplateTypesOnInvoke(sinfo, terms);
     }
 
     private checkExplicitInvokeDeclTermConstraints(idecl: ExplicitInvokeDecl) {
@@ -5257,7 +5261,7 @@ class TypeChecker {
             const fdecl = fdecls[i];
     
             this.file = fdecl.file;
-            this.checkExplicitInvokeDeclTermInfo(fdecl);
+            this.checkExplicitInvokeDeclTermInfo(fdecl.sinfo, fdecl.terms);
 
             if(fdecl.terms.length !== 0) {
                 this.constraints.pushConstraintDeclsScope(fdecl.terms);
@@ -5287,7 +5291,7 @@ class TypeChecker {
     private checkTypeFunctionDecls(tdecl: AbstractNominalTypeDecl, fdecls: TypeFunctionDecl[]) {
         for(let i = 0; i < fdecls.length; ++i) {
             const fdecl = fdecls[i];
-            this.checkExplicitInvokeDeclTermInfo(fdecl);
+            this.checkExplicitInvokeDeclTermInfo(fdecl.sinfo, fdecl.terms);
 
             if(fdecl.terms.length !== 0) {
                 this.constraints.pushConstraintDeclsScope(fdecl.terms);
@@ -5315,7 +5319,7 @@ class TypeChecker {
     private checkMethodDecls(tdecl: AbstractNominalTypeDecl, rcvr: TypeSignature, mdecls: MethodDecl[]) {
         for(let i = 0; i < mdecls.length; ++i) {   
             const mdecl = mdecls[i];
-            this.checkExplicitInvokeDeclTermInfo(mdecl);
+            this.checkExplicitInvokeDeclTermInfo(mdecl.sinfo, mdecl.terms);
 
             if(mdecl.terms.length !== 0) {
                 this.constraints.pushConstraintDeclsScope(mdecl.terms);
@@ -5360,7 +5364,7 @@ class TypeChecker {
                 }
             }
 
-            this.checkExplicitInvokeDeclTermInfo(adecl);
+            this.checkExplicitInvokeDeclTermInfo(adecl.sinfo, adecl.terms);
 
             if(adecl.terms.length !== 0) {
                 this.constraints.pushConstraintDeclsScope(adecl.terms);
@@ -5890,6 +5894,13 @@ class TypeChecker {
     private checkAPIDecl(adecl: APIDecl) {
         this.file = adecl.file;
 
+        this.file = adecl.file;
+        this.checkExplicitInvokeDeclTermInfo(adecl.sinfo, adecl.terms);
+
+        if(adecl.terms.length !== 0) {
+            this.constraints.pushConstraintDeclsScope(adecl.terms);
+        }
+
         this.isExternalMode = true;
         this.allowedStatusMsgs = this.checkstatusinfo(adecl.statusinfo);
         this.envinfo = this.checkenvreqs(adecl.envreqs);
@@ -5911,6 +5922,10 @@ class TypeChecker {
         const env = TypeEnvironment.createInitialStdEnv(adecl.resultType, infertype, adecl.params.map((p) => new VarInfo(p.name, p.type, p.pkind || "let", true)));
         this.checkBodyImplementation(env, adecl.body, adecl.params);
 
+        if(adecl.terms.length !== 0) {
+            this.constraints.popConstraintScope();
+        }
+
         this.isExternalMode = false;
         this.allowedStatusMsgs = [];
         this.envinfo = [];
@@ -5927,7 +5942,12 @@ class TypeChecker {
     private checkAgentDecl(adecl: AgentDecl) {
         this.file = adecl.file;
 
-        const rtype = adecl.resultType || new TemplateTypeSignature(adecl.sinfo, "T");
+        this.file = adecl.file;
+        this.checkExplicitInvokeDeclTermInfo(adecl.sinfo, adecl.terms);
+
+        if(adecl.terms.length !== 0) {
+            this.constraints.pushConstraintDeclsScope(adecl.terms);
+        }
 
         this.isExternalMode = true;
         this.allowedStatusMsgs = this.checkstatusinfo(adecl.statusinfo);
@@ -5936,19 +5956,23 @@ class TypeChecker {
         this.taskconfig = this.checkconfiguration(adecl.configs);
         this.taskeventinfo = [];
 
-        this.decltaskresult = this.checkTaskDeclaredResult(adecl.sinfo, rtype);
+        this.decltaskresult = this.checkTaskDeclaredResult(adecl.sinfo, adecl.resultType);
         this.decltaskevent = this.checkTaskDeclaredEvent(adecl.eventType);
 
-        this.checkExplicitAgentAndAPIDeclSignature(adecl.sinfo, adecl.params, rtype);
-        this.checkExplicitAgentAndAPIDeclMetaData(adecl.sinfo, adecl.params, rtype, adecl.eventType, adecl.preconditions, adecl.postconditions);
+        this.checkExplicitAgentAndAPIDeclSignature(adecl.sinfo, adecl.params, adecl.resultType);
+        this.checkExplicitAgentAndAPIDeclMetaData(adecl.sinfo, adecl.params, adecl.resultType, adecl.eventType, adecl.preconditions, adecl.postconditions);
 
         if(adecl.eventType !== undefined) {
             this.checkTypeSignature(adecl.eventType);
         }
 
-        const infertype = this.relations.convertTypeSignatureToTypeInferCtx(rtype);
-        const env = TypeEnvironment.createInitialStdEnv(rtype, infertype, adecl.params.map((p) => new VarInfo(p.name, p.type, p.pkind || "let", true)));
+        const infertype = this.relations.convertTypeSignatureToTypeInferCtx(adecl.resultType);
+        const env = TypeEnvironment.createInitialStdEnv(adecl.resultType, infertype, adecl.params.map((p) => new VarInfo(p.name, p.type, p.pkind || "let", true)));
         this.checkBodyImplementation(env, adecl.body, adecl.params);
+
+        if(adecl.terms.length !== 0) {
+            this.constraints.popConstraintScope();
+        }
 
         this.isExternalMode = false;
         this.allowedStatusMsgs = [];
