@@ -3548,10 +3548,58 @@ class CPPEmitter {
             '    ᐸRuntimeᐳ::g_alloc_info.io_buffer_free_list(oibb);\n';
     }
 
+    private emitMainPreConditionChecks(ikey: string, args: string[], preconds: IRPreConditionDecl[]): string {
+        if(preconds.length === 0) {
+            return "";
+        }
+
+        let prehandler = '    if (setjmp(ᐸRuntimeᐳ::tl_bosque_info.current_task->error_handler) > 0) {\n' +
+            '        auto perr = ᐸRuntimeᐳ::tl_bosque_info.current_task->pending_error.value();\n' +
+            '        auto pfile = std::string(perr.file);\n' +
+            '        auto pbfile = std::string(pfile.cbegin() + pfile.find_last_of("/") + 1, pfile.cend());\n' +
+            '        printf("Main precondition failed on line %d in file %s\\n", perr.line, pbfile.c_str());\n' +
+            '        if(perr.message != nullptr) { printf("  with message: %s\\n", perr.message); }\n' +
+            '        exit(1);\n' +
+            '    }\n';
+
+        let prechecks = preconds.map((pre, ii) => {
+            const prechk = `${TransformCPPNameManager.generateNameForInvokePreconditionCheck(ikey, ii)}(${args.join(", ")})`
+            const dtag = pre.diagnosticTag !== undefined ? `"${pre.diagnosticTag}"` : "nullptr";
+            return `    ᐸRuntimeᐳ::bsq_requires((bool)(${prechk}), "${pre.file}", ${pre.sinfo.line}, ${dtag}, "Failed Requires");`;
+        });
+
+        return prehandler + prechecks.join("\n") + "\n";
+    }
+
+    private emitMainPostConditionChecks(ikey: string, args: string[], res: string, postconds: IRPostConditionDecl[]): string {
+        if(postconds.length === 0) {
+            return "";
+        }
+
+        let posthandler = '    if (setjmp(ᐸRuntimeᐳ::tl_bosque_info.current_task->error_handler) > 0) {\n' +
+            '        auto perr = ᐸRuntimeᐳ::tl_bosque_info.current_task->pending_error.value();\n' +
+            '        auto pfile = std::string(perr.file);\n' +
+            '        auto pbfile = std::string(pfile.cbegin() + pfile.find_last_of("/") + 1, pfile.cend());\n' +
+            '        printf("Main postcondition failed on line %d in file %s\\n", perr.line, pbfile.c_str());\n' +
+            '        if(perr.message != nullptr) { printf("  with message: %s\\n", perr.message); }\n' +
+            '        exit(1);\n' +
+            '    }\n';
+
+        let postchecks = postconds.map((post, ii) => {
+            const postchk = `${TransformCPPNameManager.generateNameForInvokePostconditionCheck(ikey, ii)}(${[res, ...args].join(", ")})`
+            const dtag = post.diagnosticTag !== undefined ? `"${post.diagnosticTag}"` : "nullptr";
+            return `    ᐸRuntimeᐳ::bsq_ensures((bool)(${postchk}), "${post.file}", ${post.sinfo.line}, ${dtag}, "Failed Ensures");`;
+        });
+
+        return posthandler + postchecks.join("\n") + "\n";
+    }
+
     private emitFMain(idecl: IRInvokeDecl): string {
         const parse = this.emitParseArgsMain(idecl.params);
 
-        const invokeargs = idecl.params.map((p) => "_" + TransformCPPNameManager.convertIdentifier(p.name)).join(", ");
+        const invokeargs = idecl.params.map((p) => "_" + TransformCPPNameManager.convertIdentifier(p.name));
+
+        const preconds = this.emitMainPreConditionChecks(idecl.ikey, invokeargs, idecl.preconditions);
         const invoke = '    if (setjmp(ᐸRuntimeᐳ::tl_bosque_info.current_task->error_handler) > 0) {\n' +
             '        auto perr = ᐸRuntimeᐳ::tl_bosque_info.current_task->pending_error.value();\n' +
             '        auto pfile = std::string(perr.file);\n' +
@@ -3560,14 +3608,17 @@ class CPPEmitter {
             '        if(perr.message != nullptr) { printf("  with message: %s\\n", perr.message); }\n' +
             '        exit(1);\n' +
             '    }\n\n' +
-            `    auto result = ${TransformCPPNameManager.convertInvokeKey(idecl.ikey)}(${invokeargs});\n`;
+            `    auto result = ${TransformCPPNameManager.convertInvokeKey(idecl.ikey)}(${invokeargs.join(", ")});\n`;
 
+        const postconds = this.emitMainPostConditionChecks(idecl.ikey, invokeargs, "result", idecl.postconditions);
         const print = this.emitEmitResultToStdoutMain(idecl.resultType);
 
         return `void mmain(int argc, char** argv)\n` +
         `{\n` +
         parse + "\n" +
+        preconds + "\n" +
         invoke + "\n" +
+        postconds + "\n" +
         print + "\n" +
         `}`;
     }
@@ -3580,7 +3631,9 @@ class CPPEmitter {
         const initialize = `    auto _self = std::make_optional<${this.typeInfoManager.emitTypeAsStd(tdecl.tkey)}>(${consargs.join(", ")});\n` +
             `    // Initialize task runtimes here if needed\n`;
 
-        const invokeargs = idecl.params.map((p) => "_" + TransformCPPNameManager.convertIdentifier(p.name) + ".value()").join(", ");
+        const invokeargs = idecl.params.map((p) => "_" + TransformCPPNameManager.convertIdentifier(p.name) + ".value()");
+        
+        const preconds = this.emitMainPreConditionChecks(idecl.ikey, invokeargs, idecl.preconditions);
         const invoke = '    if (setjmp(ᐸRuntimeᐳ::tl_bosque_info.current_task->error_handler) > 0) {\n' +
             '        auto perr = ᐸRuntimeᐳ::tl_bosque_info.current_task->pending_error.value();\n' +
             '        auto pfile = std::string(perr.file);\n' +
@@ -3589,15 +3642,18 @@ class CPPEmitter {
             '        if(perr.message != nullptr) { printf("  with message: %s\\n", perr.message); }\n' +
             '        exit(1);\n' +
             '    }\n\n' +
-            `    auto result = ${TransformCPPNameManager.convertInvokeKey(idecl.ikey)}(${invokeargs});\n`;
+            `    auto result = ${TransformCPPNameManager.convertInvokeKey(idecl.ikey)}(${invokeargs.join(", ")});\n`;
 
+        const postconds = this.emitMainPostConditionChecks(idecl.ikey, invokeargs, "result", idecl.postconditions);
         const print = this.emitEmitResultToStdoutMain(idecl.resultType);
 
         return `void mmain(int argc, char** argv)\n` +
         `{\n` +
         parse + "\n" +
         initialize + "\n" +
+        preconds + "\n" +
         invoke + "\n" +
+        postconds + "\n" +
         print + "\n" +
         `}`;
     }
