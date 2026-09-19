@@ -259,8 +259,8 @@ class Monomorphizer {
     }
 
     //Given a agnet or api -- instantiate it
-    private instantiateAgentOrAPI(ns: NamespaceDeclaration, adecl: AgentDecl | APIDecl) {
-        const akey = computeInvokeKeyForAgentDecl(ns, adecl);
+    private instantiateAgentOrAPI(ns: NamespaceDeclaration, adecl: AgentDecl | APIDecl, tterms: TypeSignature[]) {
+        const akey = computeInvokeKeyForAgentDecl(ns, adecl, tterms);
 
         if(this.isAlreadySeenAgentsAndAPIs(akey)) {
             return;
@@ -1052,19 +1052,21 @@ class Monomorphizer {
     }
     
     private instantiateAgentInvokeExpression(exp: AgentInvokeExpression) {
-        if(exp.optrestype !== undefined) {
-            this.instantiateTypeSignature(exp.optrestype, this.currentMapping);
-        }
-
         const nns = this.assembly.resolveNamespaceDecl(exp.ns.ns) as NamespaceDeclaration;
         const agent = exp.resolvedAgent as AgentDecl;
+
+        for(let i = 0; i < exp.terms.length; ++i) {
+            this.instantiateTypeSignature(exp.terms[i], this.currentMapping);
+        }
 
         for(let i = 0; i < exp.args.length; ++i) {
             this.instantiateExpression(exp.args[i]);
         }
 
-        this.callinstmap.set(exp.monoinvid as number, computeInvokeKeyForAgentDecl(nns, agent));
-        this.instantiateAgentOrAPI(nns, agent);
+        const tterms = this.currentMapping !== undefined ? exp.terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : exp.terms;
+        this.callinstmap.set(exp.monoinvid as number, computeInvokeKeyForAgentDecl(nns, agent, tterms));
+
+        this.instantiateAgentOrAPI(nns, agent, tterms);
     }
 
     private instantiateChkLogicExpression(exp: ChkLogicExpression) {

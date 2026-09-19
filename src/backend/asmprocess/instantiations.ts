@@ -125,12 +125,12 @@ function computeInvokeKeyForNamespaceFunction(ns: NamespaceDeclaration, fdecl: N
     return `${ns.fullnamespace.emit()}::${fdecl.name}${rti}${computeTBindsKey(terms)}${computeLambdaKey(lambdas)}`;
 }
 
-function computeInvokeKeyForAPIDecl(ns: NamespaceDeclaration, adecl: APIDecl): string {
-    return `${ns.fullnamespace.emit()}::${adecl.name}`;
+function computeInvokeKeyForAPIDecl(ns: NamespaceDeclaration, adecl: APIDecl, terms: TypeSignature[]): string {
+    return `${ns.fullnamespace.emit()}::${adecl.name}${computeTBindsKey(terms)}`;
 }
 
-function computeInvokeKeyForAgentDecl(ns: NamespaceDeclaration, adecl: AgentDecl): string {
-    return `${ns.fullnamespace.emit()}::${adecl.name}`;
+function computeInvokeKeyForAgentDecl(ns: NamespaceDeclaration, adecl: AgentDecl, terms: TypeSignature[]): string {
+    return `${ns.fullnamespace.emit()}::${adecl.name}${computeTBindsKey(terms)}`;
 }
 
 function computeInvokeKeyForTypeFunction(rcvrtype: TypeSignature, fdecl: TypeFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]): string {
