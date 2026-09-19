@@ -874,16 +874,16 @@ class TypeChecker {
         }
     }
 
-    private checkTemplateBindingsOnInvokeSig(sinfo: SourceInfo, targs: TypeSignature[], decl: ExplicitInvokeDecl): TemplateNameMapper | undefined {
-        if(targs.length !== decl.terms.length) {
-            this.reportError(sinfo, `Invoke ${decl.name} expected ${decl.terms.length} terms but got ${targs.length}`);
+    private checkTemplateBindingsOnInvokeSig(sinfo: SourceInfo, targs: TypeSignature[], declname: string, declterms: InvokeTemplateTermDecl[]): TemplateNameMapper | undefined {
+        if(targs.length !== declterms.length) {
+            this.reportError(sinfo, `Invoke ${declname} expected ${declterms.length} terms but got ${targs.length}`);
             return undefined;
         }
 
         let tmap = new Map<string, TypeSignature>();
         for(let i = 0; i < targs.length; ++i) {
             const targ = targs[i];
-            const tdecl = decl.terms[i];
+            const tdecl = declterms[i];
 
             const trestrict = tdecl.tconstraint;
             if(trestrict !== undefined && !this.relations.isSubtypeOf(targ, trestrict, this.constraints)) {
@@ -2525,7 +2525,7 @@ class TypeChecker {
             return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
         }
 
-        const imapper = this.checkTemplateBindingsOnInvokeSig(exp.sinfo, exp.terms, fdecl);
+        const imapper = this.checkTemplateBindingsOnInvokeSig(exp.sinfo, exp.terms, fdecl.name, fdecl.terms);
         if(imapper === undefined) {
             return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
         }
@@ -2632,7 +2632,7 @@ class TypeChecker {
             return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(fdecl.typeinfo.tsig));
         }
         else {
-            const imapper = this.checkTemplateBindingsOnInvokeSig(exp.sinfo, exp.terms, fdecl.member);
+            const imapper = this.checkTemplateBindingsOnInvokeSig(exp.sinfo, exp.terms, fdecl.member.name, fdecl.member.terms);
             if(imapper === undefined) {
                 return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
             }
@@ -2947,7 +2947,7 @@ class TypeChecker {
             return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
         }
 
-        const imapper = this.checkTemplateBindingsOnInvokeSig(exp.sinfo, exp.terms, mresolve.member);
+        const imapper = this.checkTemplateBindingsOnInvokeSig(exp.sinfo, exp.terms, mresolve.member.name, mresolve.member.terms);
         if(imapper === undefined) {
             return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
         }
@@ -3816,7 +3816,7 @@ class TypeChecker {
             }
         }
 
-        const imapper = this.checkTemplateBindingsOnInvokeSig(exp.sinfo, exp.terms, mresolve.member);
+        const imapper = this.checkTemplateBindingsOnInvokeSig(exp.sinfo, exp.terms, mresolve.member.name, mresolve.member.terms);
         if(imapper === undefined) {
             return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
         }
@@ -3933,7 +3933,12 @@ class TypeChecker {
 
         this.checkEnvironmentGenerationExpression(env, exp.envexp, adecl.envreqs);
 
-        xxxx;
+        const imapper = this.checkTemplateBindingsOnInvokeSig(exp.sinfo, exp.terms, adecl.name, adecl.terms);
+        if(imapper === undefined) {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+        
+        exp.iimapper = imapper;
 
         if(exp.args.length !== adecl.params.length) {
             this.reportError(exp.sinfo, `Argument count mismatch for api ${exp.ns.emit()}::${exp.api} -- expected ${adecl.params.length} arguments but got ${exp.args.length}`);
@@ -3943,8 +3948,9 @@ class TypeChecker {
                 const arg = exp.args[i];
                 const pdecl = adecl.params[i];
 
-                const argtype = this.checkExpression(env, arg, new SimpleTypeInferContext(pdecl.type));
-                this.checkError(arg.sinfo, !(argtype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(argtype, pdecl.type, this.constraints), `Argument type ${argtype.emit()} is not a subtype of expected parameter type ${pdecl.type.emit()}`);
+                const ptype = pdecl.type.remapTemplateBindings(imapper);
+                const argtype = this.checkExpression(env, arg, new SimpleTypeInferContext(ptype));
+                this.checkError(arg.sinfo, !(argtype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(argtype, ptype, this.constraints), `Argument type ${argtype.emit()} is not a subtype of expected parameter type ${ptype.emit()}`);
             }
         }
 
@@ -3959,7 +3965,7 @@ class TypeChecker {
 
         //nothing we can do for now about resource info since we can't do path inclusion
 
-        return exp.setType(adecl.resultType);
+        return exp.setType(adecl.resultType.remapTemplateBindings(imapper));
     }
     
     private checkAgentInvokeExpression(env: TypeEnvironment, exp: AgentInvokeExpression): TypeSignature {
@@ -3975,8 +3981,13 @@ class TypeChecker {
 
         this.checkEnvironmentGenerationExpression(env, exp.envexp, adecl.envreqs);
 
-        xxxx;
-
+        const imapper = this.checkTemplateBindingsOnInvokeSig(exp.sinfo, exp.terms, adecl.name, adecl.terms);
+        if(imapper === undefined) {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+        
+        exp.iimapper = imapper;
+        
         if(exp.args.length !== adecl.params.length) {
             this.reportError(exp.sinfo, `Argument count mismatch for agent ${exp.ns.emit()}::${exp.agent} -- expected ${adecl.params.length} arguments but got ${exp.args.length}`);
         }
@@ -3985,8 +3996,9 @@ class TypeChecker {
                 const arg = exp.args[i];
                 const pdecl = adecl.params[i];
 
-                const argtype = this.checkExpression(env, arg, new SimpleTypeInferContext(pdecl.type));
-                this.checkError(arg.sinfo, !(argtype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(argtype, pdecl.type, this.constraints), `Argument type ${argtype.emit()} is not a subtype of expected parameter type ${pdecl.type.emit()}`);
+                const ptype = pdecl.type.remapTemplateBindings(imapper);
+                const argtype = this.checkExpression(env, arg, new SimpleTypeInferContext(ptype));
+                this.checkError(arg.sinfo, !(argtype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(argtype, ptype, this.constraints), `Argument type ${argtype.emit()} is not a subtype of expected parameter type ${ptype.emit()}`);
             }
         }
 
@@ -4001,18 +4013,7 @@ class TypeChecker {
 
         //nothing we can do for now about resource info since we can't do path inclusion
 
-        const restype = adecl.resultType ?? new VoidTypeSignature(exp.sinfo);
-        if(exp.optrestype === undefined) {
-            this.checkError(exp.sinfo, adecl.resultType === undefined, `Agent requires type to form result into`);
-
-            return exp.setType(restype);
-        }
-        else {
-            this.checkTypeSignature(exp.optrestype);
-            this.checkError(exp.sinfo, adecl.resultType !== undefined, `Agent does not allow result forming`);
-
-            return exp.setType(exp.optrestype);
-        }
+        return exp.setType(adecl.resultType.remapTemplateBindings(imapper));
     }
 
     private checkChkLogicExpression(env: TypeEnvironment, exp: ChkLogicExpression): TypeSignature {

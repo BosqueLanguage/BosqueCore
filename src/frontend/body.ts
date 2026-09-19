@@ -2048,6 +2048,7 @@ class APIInvokeExpression extends Expression {
 
     monoinvid: number | undefined = undefined;
     resolvedAPI: APIDecl | undefined = undefined;
+    iimapper: TemplateNameMapper | undefined = undefined;
 
     constructor(sinfo: SourceInfo, ns: FullyQualifiedNamespace, api: string, terms: TypeSignature[], args: Expression[], envexp: EnvironmentGenerationExpression, configs: TaskConfiguration) {
         super(ExpressionTag.APIInvokeExpression, sinfo);
@@ -2080,6 +2081,7 @@ class AgentInvokeExpression extends Expression {
 
     monoinvid: number | undefined = undefined;
     resolvedAgent: AgentDecl | undefined = undefined;
+    iimapper: TemplateNameMapper | undefined = undefined;
 
     constructor(sinfo: SourceInfo, ns: FullyQualifiedNamespace, agent: string, terms: TypeSignature[], args: Expression[], envexp: EnvironmentGenerationExpression, configs: TaskConfiguration) {
         super(ExpressionTag.AgentInvokeExpression, sinfo);
