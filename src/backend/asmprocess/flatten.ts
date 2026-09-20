@@ -2978,7 +2978,46 @@ class ASMToIRConverter {
     }
 
     private flattenAPIInvokeExpression(exp: APIInvokeExpression): IRExpression {
-        assert(false, "Not Implemented");
+        const adecl = exp.resolvedAPI as APIDecl;
+
+        const haspreconds = adecl.preconditions.length > 0;
+        const haspostconds = adecl.postconditions.length > 0;
+        const iname = (this.currentMonoInvIdMap as Map<number, string>).get(exp.monoinvid as number) as string;
+
+        const imapper = this.generateLocalTemplateMapping(adecl.terms.map((t) => t.name), exp.terms);
+
+        const aargs = exp.args.map((arg, ii) => {
+            const pinfo = adecl.params[ii];
+            const ftype = this.applyLocalTemplateMapping(pinfo.type, imapper);
+
+            const sexp = this.flattenExpression(arg);
+            const argvtype = this.tproc(arg.getType());
+            const cexp = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(sexp, argvtype), argvtype, ftype);
+
+            const fexp = (haspreconds || haspostconds) ? this.makeExpressionImmediate(cexp, ftype) : cexp;
+            return fexp;
+        });
+
+        //do preconditions as needed
+        for(let i = 0; i < adecl.preconditions.length; ++i) {
+            const invdecl = adecl.preconditions[i];
+            this.pushStatement(new IRPreconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), iname, invdecl.ii, aargs));
+        } 
+    
+        const tmpres = this.generateTempVarName();
+        this.pushStatement(new IRTempAssignExpressionStatement(tmpres, new IRInvokeCallAgentOrAPIExpression(iname, aargs, adecl.body instanceof AbstractBodyImplementation), this.processTypeSignature(exp.getType())));
+            
+        //do postconditions as needed
+        if(haspostconds) {
+            let postargs = [new IRAccessTempVariableExpression(tmpres), ...aargs];
+
+            for(let i = 0; i < adecl.postconditions.length; ++i) {
+                const invdecl = adecl.postconditions[i];
+                this.pushStatement(new IRPostconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), iname, invdecl.ii, postargs));
+            }
+        } 
+
+        return new IRAccessTempVariableExpression(tmpres);
     }
     
     private flattenAgentInvokeExpression(exp: AgentInvokeExpression): IRExpression {
@@ -2987,13 +3026,16 @@ class ASMToIRConverter {
         const haspreconds = adecl.preconditions.length > 0;
         const haspostconds = adecl.postconditions.length > 0;
         const iname = (this.currentMonoInvIdMap as Map<number, string>).get(exp.monoinvid as number) as string;
+        
+        const imapper = this.generateLocalTemplateMapping(adecl.terms.map((t) => t.name), exp.terms);
 
         const aargs = exp.args.map((arg, ii) => {
             const pinfo = adecl.params[ii];
-            const ftype = this.tproc(pinfo.type);
+            const ftype = this.applyLocalTemplateMapping(pinfo.type, imapper);
 
             const sexp = this.flattenExpression(arg);
-            const cexp = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(sexp, arg.getType()), arg.getType(), ftype);
+            const argvtype = this.tproc(arg.getType());
+            const cexp = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(sexp, argvtype), argvtype, ftype);
 
             const fexp = (haspreconds || haspostconds) ? this.makeExpressionImmediate(cexp, ftype) : cexp;
             return fexp;
@@ -4847,11 +4889,12 @@ class ASMToIRConverter {
         for(let i = 0; i < tdecl.actions.length; ++i) {
             const mm = tdecl.actions[i];
             const minst = tinst.taskactionbinds.get(mm.resolvename as string);
+
             if(minst !== undefined) {
-                assert(minst.length > 0);
-                
-                this.initCodeInvokeProcessingContext(mm.file, true, mm.resultType, undefined, minst[0]);
-                this.generateTaskActionDecl(tdecl, tinst.tsig, mm, irasm);
+                for(let j = 0; j < minst.length; ++j) {
+                    this.initCodeInvokeProcessingContext(mm.file, true, mm.resultType, undefined, minst[j]);
+                    this.generateTaskActionDecl(tdecl, tinst.tsig, mm, irasm);
+                }
             }
         }
 
