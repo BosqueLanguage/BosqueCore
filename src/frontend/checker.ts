@@ -6051,13 +6051,23 @@ class TypeChecker {
             tdecl.startaction = runaction;
         }
 
-        const completeaction = tdecl.actions.find((action) => action.name === "complete");
+        const completeaction = tdecl.actions.find((action) => action.name === "oncomplete");
+        const failureaction = tdecl.actions.find((action) => action.name === "onfailure");
+        const abortedaction = tdecl.actions.find((action) => action.name === "onabort");
+
         if(completeaction !== undefined) {
-            //Checks go here
-
             tdecl.completeaction = completeaction;
-
             assert(false, "Not implemented -- checking complete action");
+        }
+
+        if(failureaction !== undefined) {
+            tdecl.failureaction = failureaction;
+            assert(false, "Not implemented -- checking failure action");
+        }
+
+        if(abortedaction !== undefined) {
+            tdecl.abortedaction = abortedaction;
+            assert(false, "Not implemented -- checking aborted action");
         }
 
         this.decltaskresult = this.checkTaskDeclaredResult(tdecl.sinfo, runres);

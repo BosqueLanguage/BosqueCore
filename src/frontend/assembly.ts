@@ -466,10 +466,10 @@ class TestAssociation {
 }
 
 class NamespaceFunctionDecl extends FunctionInvokeDecl {
-    readonly fkind: "function" | "predicate" | "errtest" | "chktest" | "example";
+    readonly fkind: "function" | "errtest" | "chktest" | "example";
     readonly tassoc: TestAssociation[] | undefined;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: InvokeParameterDecl[], resultType: TypeSignature, body: BodyImplementation, terms: InvokeTemplateTermDecl[], termRestriction: InvokeTemplateTypeRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], tassoc: TestAssociation[] | undefined, fkind: "function" | "predicate" | "errtest" | "chktest" | "example") {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: InvokeParameterDecl[], resultType: TypeSignature, body: BodyImplementation, terms: InvokeTemplateTermDecl[], termRestriction: InvokeTemplateTypeRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], tassoc: TestAssociation[] | undefined, fkind: "function" | "errtest" | "chktest" | "example") {
         super(file, sinfo, attributes, name, recursive, params, resultType, body, terms, termRestriction, preconditions, postconditions);
 
         this.fkind = fkind;
@@ -1405,6 +1405,8 @@ class TaskDecl extends AbstractNominalTypeDecl {
 
     startaction: TaskActionDecl | undefined = undefined;
     completeaction: TaskActionDecl | undefined = undefined;
+    failureaction: TaskActionDecl | undefined = undefined;
+    abortedaction: TaskActionDecl | undefined = undefined;
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string) {
         super(file, sinfo, attributes, ns, name, AdditionalTypeDeclTag.Std);

@@ -45,12 +45,14 @@ class PendingTypeFunction {
 class PendingAgentOrAPIInvoke {
     readonly namespace: NamespaceDeclaration;
     readonly aainvkoke: AgentDecl | APIDecl;
+    readonly instantiation: TypeSignature[];
 
     readonly fkey: string;
 
-    constructor(namespace: NamespaceDeclaration, aainvoke: AgentDecl | APIDecl, fkey: string) {
+    constructor(namespace: NamespaceDeclaration, aainvoke: AgentDecl | APIDecl, instantiation: TypeSignature[], fkey: string) {
         this.namespace = namespace;
         this.aainvkoke = aainvoke;
+        this.instantiation = instantiation;
 
         this.fkey = fkey;;
     }
@@ -266,7 +268,7 @@ class Monomorphizer {
             return;
         }
 
-        this.pendingAgentsAndAPIs.push(new PendingAgentOrAPIInvoke(ns, adecl, akey));
+        this.pendingAgentsAndAPIs.push(new PendingAgentOrAPIInvoke(ns, adecl, tterms, akey));
     }
 
     //Given a type method -- instantiate it
@@ -2311,6 +2313,15 @@ class Monomorphizer {
         this.currentMapping = undefined;
         this.lambdamap = new Map<number, string>();
         this.callinstmap = new Map<number, string>();
+        if(aadecl.terms.length !== 0) {
+            let tmap = new Map<string, TypeSignature>();
+            aadecl.terms.forEach((t, ii) => {
+                tmap.set(t.name, adecl.instantiation[ii]);
+            });
+
+            this.currentMapping = TemplateNameMapper.createInitialMapping(tmap);
+        }
+
         this.currentLambdaMapping = new Map<string, string>();
 
         this.instantiatestatusinfo(aadecl.statusinfo);
@@ -2338,7 +2349,7 @@ class Monomorphizer {
             cnns.apiagentbinds.set(rkey, []);
         }
 
-        const ikey = computeInvokeKeyForAgentDecl(ns, aadecl);
+        const ikey = computeInvokeKeyForAgentDecl(ns, aadecl, adecl.instantiation);
         (cnns.apiagentbinds.get(rkey) as InvokeInstantiationInfo[]).push(new InvokeInstantiationInfo(ikey, undefined, [], this.lambdamap, this.callinstmap, undefined));
 
         this.currentMapping = undefined;
@@ -2571,15 +2582,15 @@ class Monomorphizer {
 
         for(let i = 0; i < decl.apis.length; ++i) {
             if(this.shouldInstantiateAsRootAPI(decl.apis[i])) {
-                const akey = computeInvokeKeyForAPIDecl(decl, decl.apis[i]);
-                this.pendingAgentsAndAPIs.push(new PendingAgentOrAPIInvoke(decl, decl.apis[i], akey));
+                const akey = computeInvokeKeyForAPIDecl(decl, decl.apis[i], []);
+                this.pendingAgentsAndAPIs.push(new PendingAgentOrAPIInvoke(decl, decl.apis[i], [], akey));
             }
         }
 
         for(let i = 0; i < decl.agents.length; ++i) {
             if(this.shouldInstantiateAsRootAgent(decl.agents[i])) {
-                const akey = computeInvokeKeyForAgentDecl(decl, decl.agents[i]);
-                this.pendingAgentsAndAPIs.push(new PendingAgentOrAPIInvoke(decl, decl.agents[i], akey));
+                const akey = computeInvokeKeyForAgentDecl(decl, decl.agents[i], []);
+                this.pendingAgentsAndAPIs.push(new PendingAgentOrAPIInvoke(decl, decl.agents[i], [], akey));
             }
         }
 

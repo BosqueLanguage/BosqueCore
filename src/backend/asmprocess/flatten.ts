@@ -5058,9 +5058,10 @@ class ASMToIRConverter {
 
         for(let i = 0; i < decl.functions.length; ++i) {
             const finst = asminstantiation.functionbinds.get(decl.functions[i].resolvename as string);
-            if(finst !== undefined && (decl.functions[i].fkind !== "predicate" || decl.functions[i].fkind !== "function" || this.testEmitEnabled(decl.functions[i]))) {
+            const fdecl = decl.functions[i];
+                    
+            if(finst !== undefined && (decl.functions[i].fkind !== "function" || this.testEmitEnabled(decl.functions[i]))) {
                 for(let j = 0; j < finst.length; ++j) {
-                    const fdecl = decl.functions[i];
                     const implicitreturn = fdecl.params.find((p) => p.pkind !== undefined);
 
                     this.initCodeInvokeProcessingContext(fdecl.file, false, fdecl.resultType, implicitreturn, finst[j]);
@@ -5132,24 +5133,38 @@ class ASMToIRConverter {
 
         //apis
         for(let i = 0; i < decl.apis.length; ++i) {
-            irasm.apis.push(this.generateAPIDecl(decl.apis[i], irasm));
+            const ainsts = (asminstantiation.apiagentbinds.get(decl.apis[i].name) as InvokeInstantiationInfo[]);
+            const adecl = decl.apis[i];
+
+            if(ainsts !== undefined) {
+                for(let j = 0; j < ainsts.length; ++j) {
+                    this.initCodeInvokeProcessingContext(adecl.file, true, adecl.resultType, undefined, ainsts[j]);
+                    irasm.agents.push(this.generateAPIDecl(adecl, irasm));
+                }
+            }
         }
 
         //agents
         for(let i = 0; i < decl.agents.length; ++i) {
             const ainsts = (asminstantiation.apiagentbinds.get(decl.agents[i].name) as InvokeInstantiationInfo[]);
-            assert(ainsts !== undefined && ainsts.length > 0);
+            const adecl = decl.agents[i];
 
-            this.initCodeInvokeProcessingContext(decl.agents[i].file, true, decl.agents[i].resultType || new VoidTypeSignature(decl.agents[i].sinfo), undefined, ainsts[0]);
-            irasm.agents.push(this.generateAgentDecl(decl.agents[i], irasm));
+            if(ainsts !== undefined) {
+                for(let j = 0; j < ainsts.length; ++j) {
+                    this.initCodeInvokeProcessingContext(adecl.file, true, adecl.resultType, undefined, ainsts[j]);
+                    irasm.agents.push(this.generateAgentDecl(adecl, irasm));
+                }
+            }
         }
 
         //tasks
         for(let i = 0; i < decl.tasks.length; ++i) {
             const tinsts = (asminstantiation.typebinds.get(decl.tasks[i].name) as TypeInstantiationInfo[]);
-            assert(tinsts !== undefined && tinsts.length > 0);
-            
-            irasm.tasks.push(this.generateTaskDecl(decl.tasks[i], tinsts[0], irasm));
+            if(tinsts !== undefined) {
+                for(let j = 0; j < tinsts.length; ++j) {
+                    irasm.tasks.push(this.generateTaskDecl(decl.tasks[i], tinsts[j], irasm));
+                }
+            }
         }
 
         this.currentNamespaceInstantiation = undefined;
