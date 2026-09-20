@@ -1050,7 +1050,21 @@ class Monomorphizer {
     }
 
     private instantiateAPIInvokeExpression(exp: APIInvokeExpression) {
-        assert(false, "Not Implemented");
+        const nns = this.assembly.resolveNamespaceDecl(exp.ns.ns) as NamespaceDeclaration;
+        const agent = exp.resolvedAPI as APIDecl;
+
+        for(let i = 0; i < exp.terms.length; ++i) {
+            this.instantiateTypeSignature(exp.terms[i], this.currentMapping);
+        }
+
+        for(let i = 0; i < exp.args.length; ++i) {
+            this.instantiateExpression(exp.args[i]);
+        }
+
+        const tterms = this.currentMapping !== undefined ? exp.terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : exp.terms;
+        this.callinstmap.set(exp.monoinvid as number, computeInvokeKeyForAgentDecl(nns, agent, tterms));
+
+        this.instantiateAgentOrAPI(nns, agent, tterms);
     }
     
     private instantiateAgentInvokeExpression(exp: AgentInvokeExpression) {
@@ -2303,7 +2317,53 @@ class Monomorphizer {
     }
 
     private instantiateAPIDecl(ns: NamespaceDeclaration, adecl: PendingAgentOrAPIInvoke) {
-        assert(false, "Not implemented -- checkAPIDecl");
+        this.instantiateNamespaceDeclaration(ns);
+        const aadecl = adecl.aainvkoke as APIDecl;
+
+        this.currentMapping = undefined;
+        this.lambdamap = new Map<number, string>();
+        this.callinstmap = new Map<number, string>();
+        if(aadecl.terms.length !== 0) {
+            let tmap = new Map<string, TypeSignature>();
+            aadecl.terms.forEach((t, ii) => {
+                tmap.set(t.name, adecl.instantiation[ii]);
+            });
+
+            this.currentMapping = TemplateNameMapper.createInitialMapping(tmap);
+        }
+
+        this.currentLambdaMapping = new Map<string, string>();
+
+        this.instantiatestatusinfo(aadecl.statusinfo);
+        this.instantiateenvreqs(aadecl.envreqs);
+        this.instantiateresourcereqs(aadecl.resourcereqs);
+        this.instantiateConfigurationParameters(aadecl.configs);
+
+        this.instantiateTypeSignature(aadecl.resultType, this.currentMapping);
+        if(aadecl.eventType !== undefined) {
+            this.instantiateTypeSignature(aadecl.eventType, this.currentMapping);
+        }
+
+        this.instantiateExplicitAgentOrAPIDeclSignature(aadecl.params, aadecl.resultType);
+        this.instantiateExplicitAgentOrAPIDeclMetaData(aadecl.preconditions, aadecl.postconditions, aadecl.eventType);
+
+        this.instantiateBodyImplementation(aadecl.body);
+
+        const cnns = this.currentNSInstantiation as NamespaceInstantiationInfo;
+        const rkey = computeResolveKeyForInvoke(aadecl.name, 0, false, aadecl.params, false);
+        
+        aadecl.resolvename = rkey;
+        if(!cnns.apiagentbinds.has(rkey)) {
+            cnns.apiagentbinds.set(rkey, []);
+        }
+
+        const ikey = computeInvokeKeyForAPIDecl(ns, aadecl, adecl.instantiation);
+        (cnns.apiagentbinds.get(rkey) as InvokeInstantiationInfo[]).push(new InvokeInstantiationInfo(ikey, this.currentMapping, [], this.lambdamap, this.callinstmap, undefined));
+
+        this.currentMapping = undefined;
+        this.currentLambdaMapping = undefined;
+        this.lambdamap = new Map<number, string>();
+        this.callinstmap = new Map<number, string>();
     }
 
     private instantiateAgentDecl(ns: NamespaceDeclaration, adecl: PendingAgentOrAPIInvoke) {
@@ -2329,15 +2389,13 @@ class Monomorphizer {
         this.instantiateresourcereqs(aadecl.resourcereqs);
         this.instantiateConfigurationParameters(aadecl.configs);
 
-        if(aadecl.resultType !== undefined) {
-            this.instantiateTypeSignature(aadecl.resultType, this.currentMapping);
-        }
+        this.instantiateTypeSignature(aadecl.resultType, this.currentMapping);
         if(aadecl.eventType !== undefined) {
             this.instantiateTypeSignature(aadecl.eventType, this.currentMapping);
         }
 
         this.instantiateExplicitAgentOrAPIDeclSignature(aadecl.params, aadecl.resultType);
-        this.instantiateExplicitAgentOrAPIDeclMetaData(aadecl.preconditions, aadecl.postconditions, undefined);
+        this.instantiateExplicitAgentOrAPIDeclMetaData(aadecl.preconditions, aadecl.postconditions, aadecl.eventType);
 
         this.instantiateBodyImplementation(aadecl.body);
 
@@ -2350,7 +2408,7 @@ class Monomorphizer {
         }
 
         const ikey = computeInvokeKeyForAgentDecl(ns, aadecl, adecl.instantiation);
-        (cnns.apiagentbinds.get(rkey) as InvokeInstantiationInfo[]).push(new InvokeInstantiationInfo(ikey, undefined, [], this.lambdamap, this.callinstmap, undefined));
+        (cnns.apiagentbinds.get(rkey) as InvokeInstantiationInfo[]).push(new InvokeInstantiationInfo(ikey, this.currentMapping, [], this.lambdamap, this.callinstmap, undefined));
 
         this.currentMapping = undefined;
         this.currentLambdaMapping = undefined;

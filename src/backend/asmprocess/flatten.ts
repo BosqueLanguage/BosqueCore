@@ -3918,7 +3918,7 @@ class ASMToIRConverter {
             return new IRAbstractBody();
         }
         else if(body instanceof BuiltinBodyImplementation) {
-            const bbi = (bitbinds || []).map((bb) => [this.processLocalVariableName(bb[0]), this.processTypeSignature(bb[1])] as [string, IRTypeSignature]);
+            const bbi = (bitbinds || []).map((bb) => [bb[0], this.processTypeSignature(bb[1])] as [string, IRTypeSignature]);
             return new IRBuiltinBody(body.builtin, bbi);
         }
         else if(body instanceof HoleBodyImplementation) {
@@ -4743,14 +4743,52 @@ class ASMToIRConverter {
     }
 
     private generateAPIDecl(adecl: APIDecl, irasm: IRAssembly): IRAPIDecl {
-        assert(false, "Not implemented -- generateAPIDecl");
+        const ikey = (this.currentInvokeInstantation as InvokeInstantiationInfo).newikey;
+        const bitbinds = adecl.terms.map((t) => [t.name, this.processTypeSignature(new TemplateTypeSignature(adecl.sinfo, t.name))] as [string, IRTypeSignature]);
+            
+        const params = this.processInvokeParams(adecl.params);
+        const resultType = this.processTypeSignature(adecl.resultType);
+        const eventType = (adecl.eventType !== undefined) ? this.processTypeSignature(adecl.eventType) : undefined;
+
+        const preconds = adecl.preconditions.map<IRPreConditionDecl>((pc) => this.generateRequiresClauseDecl(pc, ikey));
+        const postconds = adecl.postconditions.map<IRPostConditionDecl>((ec) => this.generateEnsuresClauseDecl(ec, ikey));
+
+        const configs = this.processTaskConfiguration(adecl.configs);
+        const statusinfo = adecl.statusinfo.map((si) => this.processTypeSignature(si));
+        const envreqs = adecl.envreqs.map((er) => this.processEnvironmentVariableInformation(er));
+        const resourcereqs = this.processResourceInformation(adecl.resourcereqs);
+
+        const doc = adecl.attributes.find((a) => a.name === "doc");
+        const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
+
+        const body = this.processBody(adecl.body, []);
+
+        return new IRAPIDecl(
+            ikey, 
+            bitbinds,
+            params, 
+            resultType, 
+            eventType, 
+            preconds, 
+            postconds, 
+            configs, 
+            statusinfo, 
+            envreqs, 
+            resourcereqs, 
+            body, 
+            docstring, 
+            this.processMetaDataTags(adecl.attributes),
+            adecl.file, 
+            this.convertSourceInfo(adecl.sinfo)
+        );
     }
 
     private generateAgentDecl(adecl: AgentDecl, irasm: IRAssembly): IRAgentDecl {
         const ikey = (this.currentInvokeInstantation as InvokeInstantiationInfo).newikey;
+        const bitbinds = adecl.terms.map((t) => [t.name, this.processTypeSignature(new TemplateTypeSignature(adecl.sinfo, t.name))] as [string, IRTypeSignature]);
         
         const params = this.processInvokeParams(adecl.params);
-        const resultType = (adecl.resultType !== undefined) ? this.processTypeSignature(adecl.resultType) : undefined;
+        const resultType = this.processTypeSignature(adecl.resultType);
         const eventType = (adecl.eventType !== undefined) ? this.processTypeSignature(adecl.eventType) : undefined;
 
         const preconds = adecl.preconditions.map<IRPreConditionDecl>((pc) => this.generateRequiresClauseDecl(pc, ikey));
@@ -4768,6 +4806,7 @@ class ASMToIRConverter {
 
         return new IRAgentDecl(
             ikey, 
+            bitbinds,
             params, 
             resultType, 
             eventType, 
