@@ -46,6 +46,18 @@ function parseFunctionInFilePlus(code: string, ctxcode: string[]): string {
 
 }
 
+function parseTaskMainInFile(code: string, expected?: string | undefined) {
+    const src = workflowLoadCoreSrc();
+    if(src === undefined) {
+        assert.equal("**LOAD ERROR**", expected);
+        return;
+    }
+
+    const rr = Parser.test_parseSTaskMainInFile(src, ["EXEC_LIBS", "STRIPPED_CORE"], code, "main");
+    const rv = wsnorm(Array.isArray(rr) ? rr[0].message : rr);
+    assert.equal(rv, expected);
+}
+
 function generateExpFunction(exp: string, type: string): string {
     return `function main(): ${type} { return ${exp}; }`;
 }
@@ -85,9 +97,14 @@ function parseTestFunctionInFilePlusError(code: string, error: string, ...ctxcod
     assert.equal(parseFunctionInFilePlus(code, ctxcode), error);
 }
 
+function parseTestTaskMainInFileError(code: string, error: string, ...ctxcode: string[]) {
+    assert.equal(parseFunctionInFilePlus(code, ctxcode), error);
+}
+
 export {
     parseTestExp, parseTestExpError,
     parseTestFunction, parseTestFunctionError,
     parseTestFunctionInFile, parseTestFunctionInFileError,
-    parseTestFunctionInFilePlus, parseTestFunctionInFilePlusError
+    parseTestFunctionInFilePlus, parseTestFunctionInFilePlusError,
+    parseTaskMainInFile, parseTestTaskMainInFileError
 };

@@ -7286,6 +7286,24 @@ class Parser {
         return sffdecl !== undefined ? sffdecl.emit(new CodeFormatter()) : "**ERROR**";
     }
 
+    static test_parseSTaskMainInFile(core: CodeFileInfo[], macrodefs: string[], code: string, fname: string): string | ParserError[] {
+        let assembly = new Assembly();
+
+        let registeredNamespaces = new Set<string>();
+        const coreerrors = Parser.parsefiles(true, core, macrodefs, assembly, registeredNamespaces);
+        const ferrors = Parser.parsefiles(false, [{srcpath: "main.bsq", filename: "main.bsq", contents: `declare namespace Main; ${code}`}], macrodefs, assembly, registeredNamespaces);
+        
+        if(coreerrors.length !== 0 || ferrors.length !== 0) {
+            return [...coreerrors, ...ferrors];
+        }
+
+        const ns = assembly.getToplevelNamespace("Main") as NamespaceDeclaration;
+        const stdecl = ns.tasks.find((f) => f.name === fname);
+        const sffdecl = stdecl !== undefined ? stdecl.startaction : undefined;
+
+        return sffdecl !== undefined ? sffdecl.emit(new CodeFormatter()) : "**ERROR**";
+    }
+
     static test_parseSFunctionInFile(core: CodeFileInfo[], macrodefs: string[], code: string, fname: string): string | ParserError[] {
         let assembly = new Assembly();
 
