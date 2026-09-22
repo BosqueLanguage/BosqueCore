@@ -1,17 +1,18 @@
 "use strict";
 
-import { checkTestFunction, checkTestFunctionError } from "../../../bin/test/typecheck/typecheck_nf.js";
+import { checkTestTaskInFile, checkTestTaskInFileError } from "../../../bin/test/typecheck/typecheck_nf.js";
 import { describe, it } from "node:test";
 
-describe ("Checker -- Task Declarations", () => {
-    it("should check simple task decl", function () {
-        checkTestFunction('public task Main { field x: Int; action start(): APIResult<Int> { return success(1i); } }');
+describe("Typecheck Task Declarations", () => {
+    it("should check a valid Main task", () => {
+        checkTestTaskInFile("public task Main { action start(): APIResult<Int> { return success(3i); } }");
     });
 
-    it("should check simple task decl fail", function () {
-        checkTestFunctionError('public task Main { field x: Int; action start(): APIResult<Int> { return 1n; } }', 'Expected a return value of type APIResult<Int> but got Nat');
+    it("should fail task", () => {
+        checkTestTaskInFileError("public task Main { }", "Missing start action on Task");
+
+        checkTestTaskInFileError("public task Main { action start(): Int { return 3i; } }", "Result of start action must be either a single result OR a result and event message");
+        checkTestTaskInFileError("public task Main { action start(): APIResult<Int> { return 3i; } }", "Expected a return value of type APIResult<Int> but got Int");
     });
 });
 
-describe ("Checker -- Task Calls", () => {
-});

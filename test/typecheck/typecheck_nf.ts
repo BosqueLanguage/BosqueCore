@@ -104,8 +104,33 @@ function checkTestFunctionInFileError(code: string, msg: string) {
     assert.equal(errors[0].msg, msg);
 }
 
+function checkTestTaskInFile(code: string) {
+    const assembly = loadContents(generateFileContents(code));
+
+    if(typeof(assembly) === "string") {
+        assert.fail(assembly);
+    }
+
+    const errors = TypeChecker.checkAssembly(assembly);
+    if(errors.length > 0) {
+        assert.fail(errors.map(e => e.msg).join("\n"));
+    }
+}
+
+function checkTestTaskInFileError(code: string, msg: string) {
+    const assembly = loadContents(generateFileContents(code));
+
+    if(typeof(assembly) === "string") {
+        assert.fail(assembly);
+    }
+
+    const errors = TypeChecker.checkAssembly(assembly);
+    assert.equal(errors[0].msg, msg);
+}
+
 export {
     checkTestExp, checkTestExpError,
     checkTestFunction, checkTestFunctionError,
-    checkTestFunctionInFile, checkTestFunctionInFileError
+    checkTestFunctionInFile, checkTestFunctionInFileError,
+    checkTestTaskInFile, checkTestTaskInFileError
 };

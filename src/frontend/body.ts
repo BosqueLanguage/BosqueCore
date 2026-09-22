@@ -1144,7 +1144,13 @@ class CallTaskActionExpression extends Expression {
 
     resolvedTaskDecl: TaskDecl | undefined = undefined;
     resolvedActionDecl: TaskActionDecl | undefined = undefined;
+
+    iimapper: TemplateNameMapper | undefined = undefined;
     monoinvid: number | undefined = undefined;
+
+    shuffleinfo: [number, TypeSignature][] = [];
+    resttype: TypeSignature | undefined = undefined;
+    restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
 
     constructor(sinfo: SourceInfo, name: string, terms: TypeSignature[], args: ArgumentList) {
         super(ExpressionTag.CallTaskActionExpression, sinfo);

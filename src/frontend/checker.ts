@@ -3888,7 +3888,49 @@ class TypeChecker {
     }
 
     private checkCallTaskActionExpression(env: TypeEnvironment, exp: CallTaskActionExpression): TypeResultWRefVarInfoResult {
-        assert(false, "Not Implemented -- checkCallTaskActionExpression");
+        if(!this.isExternalMode || env.resolveLocalVarInfoFromSrcName("self") === undefined) {
+            this.reportError(exp.sinfo, `Call to task action ${exp.name} is not allowed in non-external mode`);
+            return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
+        }
+
+        const selfvar = env.resolveLocalVarInfoFromSrcName("self") as VarInfo;
+        const taskdecl = (selfvar.decltype as NominalTypeSignature).decl as TaskDecl;
+        const actiondecl = taskdecl.actions.find((action) => action.name === exp.name);
+        if(actiondecl === undefined) {
+            this.reportError(exp.sinfo, `Could not find action ${exp.name} in task ${taskdecl.name}`);
+            return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
+        }
+
+        exp.resolvedTaskDecl = taskdecl;
+        exp.resolvedActionDecl = actiondecl;
+
+        this.checkError(exp.sinfo, exp.terms.length !== 0, `Action cannot have additional template arguments`);
+        const imapper = TemplateNameMapper.generateTemplateMappingForTypeDecl(selfvar.decltype as NominalTypeSignature);
+
+        exp.iimapper = imapper;
+        exp.monoinvid = this.invidCtr++;
+
+        const arginfo = this.checkArgumentList(exp.sinfo, env, false, exp.args.args, actiondecl.params, imapper);
+        this.checkError(exp.sinfo, !(arginfo.setcondout.length === 0 && arginfo.setuncond.length === 0 && arginfo.inout.length === 0 && arginfo.byref.length === 0), `Action cannot have special passing parameters`);
+
+        exp.shuffleinfo = arginfo.shuffleinfo;
+        exp.resttype = arginfo.resttype;
+        exp.restinfo = arginfo.restinfo;
+
+        const rrt = TypeResultWRefVarInfoResult.makeGeneralResult(
+            exp.setType(actiondecl.resultType.remapTemplateBindings(imapper)), false, false,
+            { ttrue: [], tfalse: [] },
+            [],
+            [],
+            []
+        );
+
+        if(rrt !== undefined) {
+            return rrt;
+        }
+        else {
+            return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
+        }
     }
 
     private checkTaskRunExpression(env: TypeEnvironment, exp: TaskRunExpression): TypeSignature {
@@ -5351,7 +5393,7 @@ class TypeChecker {
         for(let i = 0; i < adecls.length; ++i) {
             const adecl = adecls[i];
 
-            if(adecl.name === "start" || adecl.name === "complete") {
+            if(adecl.name === "start" || adecl.name === "oncomplete" || adecl.name === "onabort" || adecl.name === "onfailure") {
                 this.checkError(adecl.sinfo, adecl.terms.length !== 0, `Task action ${adecl.name} cannot have template type parameters`);
                 this.checkError(adecl.sinfo, adecl.termRestriction !== undefined, `Task action ${adecl.name} cannot have template type restrictions`);
                 
@@ -5359,7 +5401,15 @@ class TypeChecker {
                 this.checkError(adecl.sinfo, adecl.params.some((p) => p.type instanceof LambdaTypeSignature), `Task action ${adecl.name} cannot have lambda type parameters`);
                 this.checkError(adecl.sinfo, adecl.params.some((p) => p.isRestParam), `Task action ${adecl.name} cannot have a rest parameter`);
 
-                if(adecl.name === "complete") {
+                if(adecl.name === "oncomplete") {
+                    //make sure args is same as return type of run (both std return and event) and return type is correct for run
+                    assert(false, "Not implemented yet -- checkTaskActionDecls for oncomplete");
+                }
+                if(adecl.name === "onabort") {
+                    //make sure args is same as return type of run (both std return and event) and return type is correct for run
+                    assert(false, "Not implemented yet -- checkTaskActionDecls for onabort");
+                }
+                if(adecl.name === "onfailure") {
                     //make sure args is same as return type of run (both std return and event) and return type is correct for run
                     assert(false, "Not implemented yet -- checkTaskActionDecls for terminate");
                 }

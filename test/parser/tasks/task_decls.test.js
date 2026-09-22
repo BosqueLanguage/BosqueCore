@@ -3,7 +3,7 @@
 import { parseTaskMainInFile, parseTestTaskMainInFileError } from "../../../bin/test/parser/parse_nf.js";
 import { describe, it } from "node:test";
 
-describe("Task Declarations", () => {
+describe("Parser Task Declarations", () => {
     it("should parse a valid Main task", () => {
         parseTaskMainInFile("public task Main { action start(): APIResult<Int> { return success(3i); } }", "action start(): APIResult<Int> { return success(3i); }");
     });

@@ -3,7 +3,7 @@
 import { parseTaskMainInFile } from "../../../bin/test/parser/parse_nf.js";
 import { describe, it } from "node:test";
 
-describe("Call Function or Method", () => {
+describe("Parser Call Function or Method", () => {
     it("should handle call function", () => {
         parseTaskMainInFile("function foo(): Int { return 3i; } public task Main { action start(): APIResult<Int> { return success(foo()); } }", "action start(): APIResult<Int> { return success(foo()); }");
     });
@@ -13,7 +13,7 @@ describe("Call Function or Method", () => {
     });
 });
 
-describe("Call Agent or API", () => {
+describe("Parser Call Agent or API", () => {
     it("should handle call agent", () => {
         parseTaskMainInFile("abstract agent foo(): APIResult<Int>; public task Main { action start(): APIResult<Int> { return agent foo(); } }", "action start(): APIResult<Int> { return agent Main::foo(env{}); }");
         parseTaskMainInFile("abstract agent foo<T>(): APIResult<T>; public task Main { action start(): APIResult<Int> { return agent foo<Int>(); } }", "action start(): APIResult<Int> { return agent Main::foo<Int>(env{}); }");
@@ -25,12 +25,10 @@ describe("Call Agent or API", () => {
     });
 });
 
-describe("Call Action", () => {
+describe("Parser Call Action", () => {
     it("should handle call action", () => {
         parseTaskMainInFile("public task Main { action foo(): Int { return 3i; } action start(): APIResult<Int> { let v = do self.foo(); return success(v); } }", "action start(): APIResult<Int> { let v = do self.foo(); return success(v); }");
         parseTaskMainInFile("public task Main { action foo(): APIResult<Int> { return success(3i); } action start(): APIResult<Int> { return do self.foo(); } }", "action start(): APIResult<Int> { return do self.foo(); }");
-
-        parseTaskMainInFile("public task Main { action foo<T>(v: T): APIResult<T> { return success(v); } action start(): APIResult<Int> { return do self.foo<Int>(3i); } }", "action start(): APIResult<Int> { return do self.foo<Int>(3i); }");
     });
 });
 
