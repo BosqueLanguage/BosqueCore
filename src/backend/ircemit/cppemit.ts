@@ -3706,6 +3706,12 @@ class CPPEmitter {
         return this.emitIRInvokeDeclInfo(invk as IRInvokeDecl)[1];
     }
 
+    emitIRStartActionDeclInfo(ikey: string): string {
+        const action = this.irasm.taskactions.find((v) => v.ikey === ikey);
+
+        return this.emitIRTaskActionDeclInfo(action as IRInvokeDecl)[1];
+    }
+
     public emitForCommandLine(ns: string): [string, string] | undefined {
         const typeinfo = this.emitTypeDeclInfo();
         const iinfo = this.emitAllInvokeInfo();

@@ -5142,7 +5142,7 @@ class ASMToIRConverter {
             const finst = asminstantiation.functionbinds.get(decl.functions[i].resolvename as string);
             const fdecl = decl.functions[i];
                     
-            if(finst !== undefined && (decl.functions[i].fkind !== "function" || this.testEmitEnabled(decl.functions[i]))) {
+            if(finst !== undefined && (decl.functions[i].fkind === "function" || this.testEmitEnabled(decl.functions[i]))) {
                 for(let j = 0; j < finst.length; ++j) {
                     const implicitreturn = fdecl.params.find((p) => p.pkind !== undefined);
 

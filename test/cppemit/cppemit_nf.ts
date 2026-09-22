@@ -23,7 +23,7 @@ function buildAssembly(srcfile: string): Assembly | undefined {
     }
 }
 
-function buildMainCode(assembly: Assembly): string {
+function buildMainFunctionCode(assembly: Assembly): string {
     const iim = Monomorphizer.computeExecutableInstantiations(assembly, ["Main"]);
     const ircode = ASMToIRConverter.generateIR(assembly, iim, undefined);
 
@@ -39,10 +39,31 @@ function checkTestEmitMainFunction(code: string, expected: string) {
         assert.fail("Assembly generation failed");
     }
         
-    const ccode = buildMainCode(asm);
+    const ccode = buildMainFunctionCode(asm);
+    assert.equal(ccode, expected);
+}
+
+function buildMainTaskCode(assembly: Assembly): string {
+    const iim = Monomorphizer.computeExecutableInstantiations(assembly, ["Main"]);
+    const ircode = ASMToIRConverter.generateIR(assembly, iim, undefined);
+
+    const cppcode = CPPEmitter.createEmitter(ircode);
+    const maincode = cppcode.emitIRStartActionDeclInfo("Main::Main@start");
+
+    return wsnorm(maincode);
+}
+
+function checkTestEmitMainTask(code: string, expected: string) {
+    const asm = buildAssembly("declare namespace Main;" + "\n" + code);
+    if(asm === undefined) {
+        assert.fail("Assembly generation failed");
+    }
+        
+    const ccode = buildMainTaskCode(asm);
     assert.equal(ccode, expected);
 }
 
 export {
-    checkTestEmitMainFunction
+    checkTestEmitMainFunction,
+    checkTestEmitMainTask
 };
