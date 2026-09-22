@@ -5221,7 +5221,7 @@ class ASMToIRConverter {
             if(ainsts !== undefined) {
                 for(let j = 0; j < ainsts.length; ++j) {
                     this.initCodeInvokeProcessingContext(adecl.file, true, adecl.resultType, undefined, ainsts[j]);
-                    irasm.agents.push(this.generateAPIDecl(adecl, irasm));
+                    irasm.apis.push(this.generateAPIDecl(adecl, irasm));
                 }
             }
         }

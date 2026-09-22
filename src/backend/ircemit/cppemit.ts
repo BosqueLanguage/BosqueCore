@@ -3633,6 +3633,14 @@ class CPPEmitter {
 
         const invokeargs = idecl.params.map((p) => "_" + TransformCPPNameManager.convertIdentifier(p.name) + ".value()");
         
+        //
+        //TODO: how does this work with self? Is that a parameter or do we pass the args individually? Or one for preconditions and one for postconditions?
+        //
+
+        //
+        //TODO: we are also not handling the $events parameter here
+        //
+
         const preconds = this.emitMainPreConditionChecks(idecl.ikey, invokeargs, idecl.preconditions);
         const invoke = '    if (setjmp(ᐸRuntimeᐳ::tl_bosque_info.current_task->error_handler) > 0) {\n' +
             '        auto perr = ᐸRuntimeᐳ::tl_bosque_info.current_task->pending_error.value();\n' +

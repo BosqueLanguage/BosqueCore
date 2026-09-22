@@ -5359,7 +5359,7 @@ class TypeChecker {
         }
     }
 
-    private checkMethodDecls(tdecl: AbstractNominalTypeDecl, rcvr: TypeSignature, mdecls: MethodDecl[]) {
+    private checkMethodDecls(tdecl: AbstractNominalTypeDecl, rcvr: TypeSignature, rcvrname: string, mdecls: MethodDecl[]) {
         for(let i = 0; i < mdecls.length; ++i) {   
             const mdecl = mdecls[i];
             this.checkExplicitInvokeDeclTermInfo(mdecl.sinfo, mdecl.terms);
@@ -5374,10 +5374,10 @@ class TypeChecker {
                 this.constraints.pushConstraintRestrictionScope(mdecl.termRestriction);
             }
 
-            const thisvinfo = new VarInfo("this", rcvr, mdecl.isThisRef ? "ref" : "let", true);
+            const thisvinfo = new VarInfo(rcvrname, rcvr, mdecl.isThisRef ? "ref" : "let", true);
 
             this.checkExplicitInvokeDeclSignature(mdecl, [thisvinfo]);
-            this.checkExplicitInvokeDeclMetaData(mdecl, [thisvinfo], mdecl.isThisRef ? ["this"] : [], undefined);
+            this.checkExplicitInvokeDeclMetaData(mdecl, [thisvinfo], mdecl.isThisRef ? [rcvrname] : [], undefined);
 
             const infertype = this.relations.convertTypeSignatureToTypeInferCtx(mdecl.resultType);
             const env = TypeEnvironment.createInitialStdEnv(mdecl.resultType, infertype, [thisvinfo, ...mdecl.params.map((p) => new VarInfo(p.name, p.type, p.pkind || "let", true))]);
@@ -5527,7 +5527,7 @@ class TypeChecker {
 
         this.checkConstMemberDecls(tdecl, tdecl.consts);
         this.checkTypeFunctionDecls(tdecl, tdecl.functions);
-        this.checkMethodDecls(tdecl, rcvr, tdecl.methods);
+        this.checkMethodDecls(tdecl, rcvr, "this", tdecl.methods);
 
         if(optfdecls !== undefined) {
             this.checkMemberFieldDecls(bnames, optfdecls);
@@ -5555,7 +5555,7 @@ class TypeChecker {
         this.checkError(tdecl.sinfo, tdecl.consts.length !== 0, "Enums cannot have consts");
         this.checkError(tdecl.sinfo, tdecl.functions.length !== 0, "Enums cannot have functions");
 
-        this.checkMethodDecls(tdecl, rcvr, tdecl.methods);
+        this.checkMethodDecls(tdecl, rcvr, "this", tdecl.methods);
 
         this.checkAbstractNominalTypeDeclVCallAndInheritance(tdecl, tdecl.saturatedProvides, true);
 
@@ -5662,7 +5662,7 @@ class TypeChecker {
         this.checkConstMemberDecls(tdecl, tdecl.consts);
         this.checkTypeFunctionDecls(tdecl, tdecl.functions);
 
-        this.checkMethodDecls(tdecl, rcvr, tdecl.methods);
+        this.checkMethodDecls(tdecl, rcvr, "this", tdecl.methods);
         this.checkAbstractNominalTypeDeclVCallAndInheritance(tdecl, [], true);
 
         if(tdecl.terms.length !== 0) {
@@ -6125,6 +6125,7 @@ class TypeChecker {
 
         this.checkConstMemberDecls(tdecl, tdecl.consts);
         this.checkTypeFunctionDecls(tdecl, tdecl.functions);
+        this.checkMethodDecls(tdecl, rcvr, "self", tdecl.methods);
         this.checkTaskActionDecls(tdecl, rcvr, tdecl.actions);
 
         this.checkMemberFieldDecls(bnames, tdecl.fields);

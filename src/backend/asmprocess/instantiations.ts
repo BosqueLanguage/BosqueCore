@@ -145,10 +145,8 @@ function computeInvokeKeyForTypeMethod(rcvrtype: TypeSignature, mdecl: MethodDec
     return `${rcvrtype.tkeystr}@${mdecl.name}${rti}${computeTBindsKey(terms)}${computeLambdaKey(lambdas)}`;
 }
 
-function computeInvokeKeyForTaskAction(rcvrtype: TypeSignature, mdecl: TaskActionDecl, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]): string {
-    const pkinds = mdecl.params.map((p) => p.pkind).filter((pk) => pk !== undefined);
-    const rti = pkinds.length !== 0 ? `#${pkinds[0].replace("?", "p")}` : "";
-    return `${rcvrtype.tkeystr}@${mdecl.name}${rti}${computeTBindsKey(terms)}${computeLambdaKey(lambdas)}`;
+function computeInvokeKeyForTaskAction(rcvrtype: TypeSignature, mdecl: TaskActionDecl): string {
+    return `${rcvrtype.tkeystr}@${mdecl.name}`;
 }
 
 function computeInvokeKeyForLambdaFunction(basefn: string, line: number, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]): string {

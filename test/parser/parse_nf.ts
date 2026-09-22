@@ -46,16 +46,14 @@ function parseFunctionInFilePlus(code: string, ctxcode: string[]): string {
 
 }
 
-function parseTaskMainInFile(code: string, expected?: string | undefined) {
+function parseTaskInFile(code: string) {
     const src = workflowLoadCoreSrc();
     if(src === undefined) {
-        assert.equal("**LOAD ERROR**", expected);
-        return;
+        return "**LOAD ERROR**";
     }
 
     const rr = Parser.test_parseSTaskMainInFile(src, ["EXEC_LIBS", "STRIPPED_CORE"], code, "Main");
-    const rv = wsnorm(Array.isArray(rr) ? rr[0].message : rr);
-    assert.equal(rv, expected);
+    return wsnorm(Array.isArray(rr) ? rr[0].message : rr);
 }
 
 function generateExpFunction(exp: string, type: string): string {
@@ -97,8 +95,12 @@ function parseTestFunctionInFilePlusError(code: string, error: string, ...ctxcod
     assert.equal(parseFunctionInFilePlus(code, ctxcode), error);
 }
 
-function parseTestTaskMainInFileError(code: string, error: string, ...ctxcode: string[]) {
-    assert.equal(parseFunctionInFilePlus(code, ctxcode), error);
+function parseTaskMainInFile(code: string, expected?: string | undefined) {
+    assert.equal(parseTaskInFile(code), expected);
+}
+
+function parseTestTaskMainInFileError(code: string, error: string) {
+    assert.equal(parseTaskInFile(code), error);
 }
 
 export {
