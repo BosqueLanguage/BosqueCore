@@ -10,7 +10,7 @@ function wsnorm(s: string): string {
 function parseFunction(ff: string): string {
     const src = workflowLoadCoreSrc();
     if(src === undefined) {
-        return "**ERROR**";
+        return "**LOAD ERROR**";
     }
 
     const rr = Parser.test_parseSFunction(src, ["EXEC_LIBS", "STRIPPED_CORE"], ff);
@@ -20,7 +20,7 @@ function parseFunction(ff: string): string {
 function parseFunctionInFile(code: string): string {
     const src = workflowLoadCoreSrc();
     if(src === undefined) {
-        return "**ERROR**";
+        return "**LOAD ERROR**";
     }
 
     const rr = Parser.test_parseSFunctionInFile(src, ["EXEC_LIBS", "STRIPPED_CORE"], code, "main");
@@ -30,7 +30,7 @@ function parseFunctionInFile(code: string): string {
 function parseFunctionInFilePlus(code: string, ctxcode: string[]): string {
     const src = workflowLoadCoreSrc();
     if(src === undefined) {
-        return "**ERROR**";
+        return "**LOAD ERROR**";
     }
 
     const ctxfiles = ctxcode.map((c, i) => {
@@ -53,7 +53,7 @@ function parseTaskMainInFile(code: string, expected?: string | undefined) {
         return;
     }
 
-    const rr = Parser.test_parseSTaskMainInFile(src, ["EXEC_LIBS", "STRIPPED_CORE"], code, "main");
+    const rr = Parser.test_parseSTaskMainInFile(src, ["EXEC_LIBS", "STRIPPED_CORE"], code, "Main");
     const rv = wsnorm(Array.isArray(rr) ? rr[0].message : rr);
     assert.equal(rv, expected);
 }

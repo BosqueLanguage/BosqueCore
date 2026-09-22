@@ -9,7 +9,7 @@ describe("Task Declarations", () => {
     });
 
     it("should fail task", () => {
-        parseTestTaskMainInFileError("public task Main { action start() { return success(3i); } }", "aaa");
+        parseTestTaskMainInFileError("public task Main { action start() { return success(3i); } }", "Failed to find namespace declaration");
     });
 });
 

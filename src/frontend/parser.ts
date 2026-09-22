@@ -6924,7 +6924,7 @@ class Parser {
                 }
             }
 
-            this.parseOOPMembersCommonAll(true, undefined, new Set<string>(tdecl.terms.map((term) => term.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, tdecl.fields, undefined, tdecl.actions);
+            this.parseOOPMembersCommonAll(true, undefined, new Set<string>(tdecl.terms.map((term) => term.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, tdecl.fields, tdecl.methods, tdecl.actions);
         }
     }
 
@@ -7283,7 +7283,7 @@ class Parser {
         const ns = assembly.getToplevelNamespace("Main") as NamespaceDeclaration;
         const sffdecl = ns.functions.find((f) => f.name === "main") || ns.apis.find((f) => f.name === "main") || ns.agents.find((f) => f.name === "main");
 
-        return sffdecl !== undefined ? sffdecl.emit(new CodeFormatter()) : "**ERROR**";
+        return sffdecl !== undefined ? sffdecl.emit(new CodeFormatter()) : "**RESOLVE ERROR**";
     }
 
     static test_parseSTaskMainInFile(core: CodeFileInfo[], macrodefs: string[], code: string, fname: string): string | ParserError[] {
@@ -7299,9 +7299,9 @@ class Parser {
 
         const ns = assembly.getToplevelNamespace("Main") as NamespaceDeclaration;
         const stdecl = ns.tasks.find((f) => f.name === fname);
-        const sffdecl = stdecl !== undefined ? stdecl.startaction : undefined;
-
-        return sffdecl !== undefined ? sffdecl.emit(new CodeFormatter()) : "**ERROR**";
+        const sffdecl = stdecl !== undefined ? stdecl.actions.find((action) => action.name === "start") : undefined;
+        
+        return sffdecl !== undefined ? sffdecl.emit(new CodeFormatter()) : "**RESOLVE ERROR**";
     }
 
     static test_parseSFunctionInFile(core: CodeFileInfo[], macrodefs: string[], code: string, fname: string): string | ParserError[] {
@@ -7318,7 +7318,7 @@ class Parser {
         const ns = assembly.getToplevelNamespace("Main") as NamespaceDeclaration;
         const sffdecl = ns.functions.find((f) => f.name === fname) || ns.apis.find((f) => f.name === fname) || ns.agents.find((f) => f.name === fname);
 
-        return sffdecl !== undefined ? sffdecl.emit(new CodeFormatter()) : "**ERROR**";
+        return sffdecl !== undefined ? sffdecl.emit(new CodeFormatter()) : "**RESOLVE ERROR**";
     }
 
     static test_parseSFunctionInFilePlus(core: CodeFileInfo[], macrodefs: string[], ctxfiles: CodeFileInfo[], code: string, fname: string): string | ParserError[] {
@@ -7335,7 +7335,7 @@ class Parser {
         const ns = assembly.getToplevelNamespace("Main") as NamespaceDeclaration;
         const sffdecl = ns.functions.find((f) => f.name === fname) || ns.apis.find((f) => f.name === fname) || ns.agents.find((f) => f.name === fname);
 
-        return sffdecl !== undefined ? sffdecl.emit(new CodeFormatter()) : "**ERROR**";
+        return sffdecl !== undefined ? sffdecl.emit(new CodeFormatter()) : "**RESOLVE ERROR**";
     }
 }
 
