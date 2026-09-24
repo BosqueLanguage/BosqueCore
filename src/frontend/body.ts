@@ -1144,7 +1144,13 @@ class CallTaskActionExpression extends Expression {
 
     resolvedTaskDecl: TaskDecl | undefined = undefined;
     resolvedActionDecl: TaskActionDecl | undefined = undefined;
+
+    iimapper: TemplateNameMapper | undefined = undefined;
     monoinvid: number | undefined = undefined;
+
+    shuffleinfo: [number, TypeSignature][] = [];
+    resttype: TypeSignature | undefined = undefined;
+    restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
 
     constructor(sinfo: SourceInfo, name: string, terms: TypeSignature[], args: ArgumentList) {
         super(ExpressionTag.CallTaskActionExpression, sinfo);
@@ -2041,17 +2047,20 @@ class TaskRaceAnyExpression extends TaskInvokeExpression {
 class APIInvokeExpression extends Expression {
     readonly ns: FullyQualifiedNamespace;
     readonly api: string;
+    readonly terms: TypeSignature[];
     readonly args: Expression[];
     readonly configs: TaskConfiguration;
     readonly envexp: EnvironmentGenerationExpression;
 
     monoinvid: number | undefined = undefined;
     resolvedAPI: APIDecl | undefined = undefined;
+    iimapper: TemplateNameMapper | undefined = undefined;
 
-    constructor(sinfo: SourceInfo, ns: FullyQualifiedNamespace, api: string, args: Expression[], envexp: EnvironmentGenerationExpression, configs: TaskConfiguration) {
+    constructor(sinfo: SourceInfo, ns: FullyQualifiedNamespace, api: string, terms: TypeSignature[], args: Expression[], envexp: EnvironmentGenerationExpression, configs: TaskConfiguration) {
         super(ExpressionTag.APIInvokeExpression, sinfo);
         this.ns = ns;
         this.api = api;
+        this.terms = terms;
         this.args = args;
         this.envexp = envexp;
         this.configs = configs;
@@ -2059,30 +2068,32 @@ class APIInvokeExpression extends Expression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         const nsstr = this.ns.emit() + "::";
+        const termstr = this.terms.length > 0 ? `<${this.terms.map((t) => t.emit()).join(", ")}>` : "";
         const configs = TaskInvokeExpression.emitconfigs(this.configs, fmt);
         const envexp = this.envexp.emit(fmt);
         const argl = this.args.map((arg) => arg.emit(true, fmt)).join(", ");
 
-        return `api ${nsstr}${this.api}${configs}(${envexp}${argl !== "" ? (", " + argl) : ""})`;
+        return `api ${nsstr}${this.api}${configs}${termstr}(${envexp}${argl !== "" ? (", " + argl) : ""})`;
     }
 }
 
 class AgentInvokeExpression extends Expression {
     readonly ns: FullyQualifiedNamespace;
     readonly agent: string;
-    readonly optrestype: TypeSignature | undefined;
+    readonly terms: TypeSignature[];
     readonly args: Expression[];
     readonly configs: TaskConfiguration;
     readonly envexp: EnvironmentGenerationExpression;
 
     monoinvid: number | undefined = undefined;
     resolvedAgent: AgentDecl | undefined = undefined;
+    iimapper: TemplateNameMapper | undefined = undefined;
 
-    constructor(sinfo: SourceInfo, ns: FullyQualifiedNamespace, agent: string, optrestype: TypeSignature | undefined, args: Expression[], envexp: EnvironmentGenerationExpression, configs: TaskConfiguration) {
+    constructor(sinfo: SourceInfo, ns: FullyQualifiedNamespace, agent: string, terms: TypeSignature[], args: Expression[], envexp: EnvironmentGenerationExpression, configs: TaskConfiguration) {
         super(ExpressionTag.AgentInvokeExpression, sinfo);
         this.ns = ns;
         this.agent = agent;
-        this.optrestype = optrestype;
+        this.terms = terms;
         this.args = args;
         this.envexp = envexp;
         this.configs = configs;
@@ -2090,12 +2101,12 @@ class AgentInvokeExpression extends Expression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         const nsstr = this.ns.emit() + "::";
-        const restypeStr = this.optrestype ? `<${this.optrestype.emit()}>` : "";
+        const termstr = this.terms.length > 0 ? `<${this.terms.map((t) => t.emit()).join(", ")}>` : "";
         const configs = TaskInvokeExpression.emitconfigs(this.configs, fmt);
         const envexp = this.envexp.emit(fmt);
         const argl = this.args.map((arg) => arg.emit(true, fmt)).join(", ");
 
-        return `agent ${nsstr}${this.agent}${configs}${restypeStr}(${envexp}${argl !== "" ? (", " + argl) : ""})`;
+        return `agent ${nsstr}${this.agent}${configs}${termstr}(${envexp}${argl !== "" ? (", " + argl) : ""})`;
     }
 }
 

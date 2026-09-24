@@ -125,12 +125,12 @@ function computeInvokeKeyForNamespaceFunction(ns: NamespaceDeclaration, fdecl: N
     return `${ns.fullnamespace.emit()}::${fdecl.name}${rti}${computeTBindsKey(terms)}${computeLambdaKey(lambdas)}`;
 }
 
-function computeInvokeKeyForAPIDecl(ns: NamespaceDeclaration, adecl: APIDecl): string {
-    return `${ns.fullnamespace.emit()}::${adecl.name}`;
+function computeInvokeKeyForAPIDecl(ns: NamespaceDeclaration, adecl: APIDecl, terms: TypeSignature[]): string {
+    return `${ns.fullnamespace.emit()}::${adecl.name}${computeTBindsKey(terms)}`;
 }
 
-function computeInvokeKeyForAgentDecl(ns: NamespaceDeclaration, adecl: AgentDecl): string {
-    return `${ns.fullnamespace.emit()}::${adecl.name}`;
+function computeInvokeKeyForAgentDecl(ns: NamespaceDeclaration, adecl: AgentDecl, terms: TypeSignature[]): string {
+    return `${ns.fullnamespace.emit()}::${adecl.name}${computeTBindsKey(terms)}`;
 }
 
 function computeInvokeKeyForTypeFunction(rcvrtype: TypeSignature, fdecl: TypeFunctionDecl, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]): string {
@@ -145,10 +145,8 @@ function computeInvokeKeyForTypeMethod(rcvrtype: TypeSignature, mdecl: MethodDec
     return `${rcvrtype.tkeystr}@${mdecl.name}${rti}${computeTBindsKey(terms)}${computeLambdaKey(lambdas)}`;
 }
 
-function computeInvokeKeyForTaskAction(rcvrtype: TypeSignature, mdecl: TaskActionDecl, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]): string {
-    const pkinds = mdecl.params.map((p) => p.pkind).filter((pk) => pk !== undefined);
-    const rti = pkinds.length !== 0 ? `#${pkinds[0].replace("?", "p")}` : "";
-    return `${rcvrtype.tkeystr}@${mdecl.name}${rti}${computeTBindsKey(terms)}${computeLambdaKey(lambdas)}`;
+function computeInvokeKeyForTaskAction(rcvrtype: TypeSignature, mdecl: TaskActionDecl): string {
+    return `${rcvrtype.tkeystr}@${mdecl.name}`;
 }
 
 function computeInvokeKeyForLambdaFunction(basefn: string, line: number, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[]): string {

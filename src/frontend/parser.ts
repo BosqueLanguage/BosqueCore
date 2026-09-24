@@ -6,7 +6,7 @@ import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, ErrorTy
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, AbstractArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfStatement, LiteralRegexExpression, LiteralSimpleExpression, LiteralNoneExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, SpecialConstructorExpression, ConstructorPrimaryExpression, PostfixAccessFromName, ReturnVoidStatement, ReturnSingleStatement, PostfixInvoke, KeyCompareEqExpression, KeyCompareLessExpression, ReturnMultiStatement, PostfixAccessFromIndex, AccessStaticFieldExpression, CallTypeFunctionExpression, LambdaInvokeExpression, ThisUpdateStatement, VarUpdateStatement, CallRefThisExpression, VoidRefCallStatement, CallRefSelfExpression, CallRefVariableExpression, CallRefInvokeExpression, PostfixAssignFields, ChkLogicExpression, RValueExpression, ITestGuard, ITestGuardSet, ITestBinderGuard, ITestSimpleGuard, ITestTypeGuard, PassingArgumentValue, LiteralStringExpression, LiteralCStringExpression, LiteralFormatStringExpression, LiteralFormatCStringExpression, LiteralFormatPathItemExpression, LiteralPathItemExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LiteralTypedCStringExpression, LiteralTypedPathExpression, FormatStringComponent, FormatStringTextComponent, FormatStringArgComponent, LiteralTypedFormatCStringExpression, LiteralTypedPathFormatExpression, AccessEnvValueExpression, TaskAccessInfoExpression, InterpolateFormatExpression, PostfixSliceOperator, HoleExpression, LogicAndExpression, LogicOrExpression, TaskRunExpression, EnvironmentGenerationExpression, EmptyEnvironmentExpression, CurrentEnvironmentExpression, InitializeEnvironmentExpression, TaskMultiExpression, TaskAllExpression, TaskDashExpression, TaskDashAnyExpression, TaskRaceExpression, TaskRaceAnyExpression, APIInvokeExpression, AgentInvokeExpression, ChkLogicImpliesExpression, ChkLogicBaseExpression, BaseRValueExpression, ConditionalValueExpression, ShortCircuitAssignRHSExpressionFail, ShortCircuitAssignRHSExpressionReturn, CallTaskActionExpression, SelfUpdateStatement, TaskCheckAndHandleTerminationStatement, TaskStatusStatement, TaskYieldStatement, DispatchTaskStatement, DispatchPatternStatement, HoleStatement, HoleBodyImplementation, SkipArgumentValue, StdArgumentValue } from "./body.js";
 import { APIDecl, APIResultTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, SomeTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, OkTypeDecl, FailTypeDecl, APIErrorTypeDecl, APIRejectedTypeDecl, APIDeniedTypeDecl, APIDroppedTypeDecl, APISuccessTypeDecl, InternalEntityTypeDecl, AbstractCollectionTypeDecl, TestAssociation, TaskConfiguration, AgentDecl } from "./assembly.js";
 import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls.js";
-import { AllAttributes, CoreOnlyAttributes, KeywordStrings, KW__debug, KW_abort, KW_action, KW_agent, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_configs, KW_const, KW_datatype, KW_debug, KW_declare, KW_dispatch, KW_do, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_errtest, KW_event, KW_example, KW_fail, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_inout, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_of, KW_ok, KW_out, KW_out_q, KW_parallel, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_sequential, KW_slice, KW_softcheck, KW_some, KW_spec, KW_status, KW_switch, KW_task, KW_Task, KW_test, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KW_yield, LeftScanParens, ParenSymbols, RightScanParens, SpaceRequiredSymbols, SpecialNominalTypes, SpecialPathFormatTypes, SpecialStringFormatTypes, StandardSymbols, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_HOLE, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lparenbar, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_questionquestion, SYM_questionat, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_rparenbar, SYM_semicolon, SYM_times, TaskConfigs, TermRestrictions, KW_success } from "./parser_kw.js";
+import { AllAttributes, CoreOnlyAttributes, KeywordStrings, KW__debug, KW_abort, KW_action, KW_agent, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_configs, KW_const, KW_datatype, KW_debug, KW_declare, KW_dispatch, KW_do, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_errtest, KW_event, KW_example, KW_fail, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_inout, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_of, KW_ok, KW_out, KW_out_q, KW_parallel, KW_pred, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_sequential, KW_slice, KW_softcheck, KW_some, KW_spec, KW_status, KW_switch, KW_task, KW_Task, KW_test, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KW_yield, LeftScanParens, ParenSymbols, RightScanParens, SpaceRequiredSymbols, SpecialNominalTypes, SpecialPathFormatTypes, SpecialStringFormatTypes, StandardSymbols, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_HOLE, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lparenbar, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_questionquestion, SYM_questionat, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_rparenbar, SYM_semicolon, SYM_times, TaskConfigs, TermRestrictions, KW_success } from "./parser_kw.js";
 
 type ParsePhase = number;
 const ParsePhase_RegisterNames: ParsePhase = 1;
@@ -4443,9 +4443,11 @@ class Parser {
         const configs = new TaskConfiguration(undefined, undefined, undefined);
         this.parseTaskConfigs(configs);
 
+        const targs = this.parseInvokeTemplateArguments();
+
         const [args, envexp] = this.parseTaskArguments();
 
-        return new APIInvokeExpression(sinfo, (nscope ?? this.env.currentNamespace).fullnamespace, api, args, envexp, configs);
+        return new APIInvokeExpression(sinfo, (nscope ?? this.env.currentNamespace).fullnamespace, api, targs, args, envexp, configs);
     }
 
     private parseAgentInvokeExpression(): AgentInvokeExpression {
@@ -4472,16 +4474,12 @@ class Parser {
 
         const configs = new TaskConfiguration(undefined, undefined, undefined);
         this.parseTaskConfigs(configs);
-        let explicittype: TypeSignature | undefined = undefined;
-        if(this.testToken(SYM_langle)) {
-            this.consumeToken(); //<
-            explicittype = this.parseStdTypeSignature();
-            this.ensureAndConsumeTokenAlways(SYM_rangle, "agent invoke explicit type");
-        }
+        
+        const targs = this.parseInvokeTemplateArguments();
 
         const [args, envexp] = this.parseTaskArguments();
 
-        return new AgentInvokeExpression(sinfo, (nscope ?? this.env.currentNamespace).fullnamespace, api, explicittype, args, envexp, configs);
+        return new AgentInvokeExpression(sinfo, (nscope ?? this.env.currentNamespace).fullnamespace, api, targs, args, envexp, configs);
     }
 
     private parseChkLogicExpression(): ChkLogicExpression {
@@ -5758,9 +5756,6 @@ class Parser {
             else if(this.testFollows(KW_function) || this.testFollows(KW_recursive, KW_function) || this.testFollows(KW_recursive_q, KW_function)) {
                 this.parseNamespaceFunction(attributes);
             }
-            else if(this.testFollows(KW_predicate)) {
-                this.parseNamespaceFunction(attributes);
-            }
             else if(this.testFollows(KW_chktest) || this.testFollows(KW_errtest) || this.testFollows(KW_example)) {
                 this.parseNamespaceFunction(attributes);
             }
@@ -6875,6 +6870,11 @@ class Parser {
             const tdecl = this.env.currentNamespace.tasks.find((td) => td.name === tname);
             assert(tdecl !== undefined && tdecl instanceof TaskDecl, "Failed to find task type");
 
+            const terms = this.parseTypeTemplateTerms();
+            if(terms.length !== 0) {
+                tdecl.terms.push(...terms);
+            }
+
             while(this.testToken(KW_status) || this.testToken(KW_resource) || this.testToken(KW_env) || this.testToken(KW_event) ||this.testToken(KW_configs) ) {
                 if(this.testToken(KW_event)) {
                     if(tdecl.eventinfo.length !== 0) {
@@ -6924,7 +6924,7 @@ class Parser {
                 }
             }
 
-            this.parseOOPMembersCommonAll(true, undefined, new Set<string>(tdecl.terms.map((term) => term.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, tdecl.fields, undefined, tdecl.actions);
+            this.parseOOPMembersCommonAll(true, undefined, new Set<string>(tdecl.terms.map((term) => term.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, tdecl.fields, tdecl.methods, tdecl.actions);
         }
     }
 
@@ -6946,6 +6946,8 @@ class Parser {
             this.scanOverSemiDelimitedDeclaration();
         }
         else {
+            const terms = this.parseInvokeTemplateTerms();
+
             const okdecl = this.testToken(SYM_lparen);
             if(!okdecl) {
                 this.recordErrorGeneral(sinfo, "API declaration missing parameter list");
@@ -7012,7 +7014,7 @@ class Parser {
             const body = this.parseBody(attributes, false);
             this.env.popStandardFunctionScope();
             
-            const api = new APIDecl(this.env.currentFile, sinfo, attributes, apiname, params, resultInfo, eventType, preconds, postconds, configs, statusinfo, envreqs, resourcereqs, body);
+            const api = new APIDecl(this.env.currentFile, sinfo, attributes, apiname, terms, params, resultInfo, eventType, preconds, postconds, configs, statusinfo, envreqs, resourcereqs, body);
             this.env.currentNamespace.apis.push(api);
 
 
@@ -7041,6 +7043,8 @@ class Parser {
             this.scanOverSemiDelimitedDeclaration();
         }
         else {
+            const terms = this.parseInvokeTemplateTerms();
+
             const okdecl = this.testToken(SYM_lparen);
             if(!okdecl) {
                 this.recordErrorGeneral(sinfo, "Agent declaration missing parameter list");
@@ -7050,11 +7054,8 @@ class Parser {
             const boundtemplates = new Set<string>();
             const params: InvokeParameterDecl[] = this.parseInvokeDeclParameters(sinfo, false, boundtemplates);
         
-            let resultInfo: TypeSignature | undefined = undefined;
-            if(this.testToken(SYM_colon)) {
-                this.consumeToken();
-                resultInfo = this.parseReturnTypeSignature(true);
-            }
+            this.ensureAndConsumeTokenIf(SYM_colon, "agent declaration");
+            const resultInfo = this.parseReturnTypeSignature(true);
 
             let eventType: TypeSignature | undefined = undefined;
             if(this.testAndConsumeTokenIf(SYM_coma)) {
@@ -7112,7 +7113,7 @@ class Parser {
             const body = this.parseBody(attributes, false);
             this.env.popStandardFunctionScope();
             
-            const agent = new AgentDecl(this.env.currentFile, sinfo, attributes, agentname, params, resultInfo, eventType, preconds, postconds, configs, statusinfo, envreqs, resourcereqs, body);
+            const agent = new AgentDecl(this.env.currentFile, sinfo, attributes, agentname, terms, params, resultInfo, eventType, preconds, postconds, configs, statusinfo, envreqs, resourcereqs, body);
             this.env.currentNamespace.agents.push(agent);
         }
     }
@@ -7282,7 +7283,25 @@ class Parser {
         const ns = assembly.getToplevelNamespace("Main") as NamespaceDeclaration;
         const sffdecl = ns.functions.find((f) => f.name === "main") || ns.apis.find((f) => f.name === "main") || ns.agents.find((f) => f.name === "main");
 
-        return sffdecl !== undefined ? sffdecl.emit(new CodeFormatter()) : "**ERROR**";
+        return sffdecl !== undefined ? sffdecl.emit(new CodeFormatter()) : "**RESOLVE ERROR**";
+    }
+
+    static test_parseSTaskMainInFile(core: CodeFileInfo[], macrodefs: string[], code: string, fname: string): string | ParserError[] {
+        let assembly = new Assembly();
+
+        let registeredNamespaces = new Set<string>();
+        const coreerrors = Parser.parsefiles(true, core, macrodefs, assembly, registeredNamespaces);
+        const ferrors = Parser.parsefiles(false, [{srcpath: "main.bsq", filename: "main.bsq", contents: `declare namespace Main; ${code}`}], macrodefs, assembly, registeredNamespaces);
+        
+        if(coreerrors.length !== 0 || ferrors.length !== 0) {
+            return [...coreerrors, ...ferrors];
+        }
+
+        const ns = assembly.getToplevelNamespace("Main") as NamespaceDeclaration;
+        const stdecl = ns.tasks.find((f) => f.name === fname);
+        const sffdecl = stdecl !== undefined ? stdecl.actions.find((action) => action.name === "start") : undefined;
+        
+        return sffdecl !== undefined ? sffdecl.emit(new CodeFormatter()) : "**RESOLVE ERROR**";
     }
 
     static test_parseSFunctionInFile(core: CodeFileInfo[], macrodefs: string[], code: string, fname: string): string | ParserError[] {
@@ -7299,7 +7318,7 @@ class Parser {
         const ns = assembly.getToplevelNamespace("Main") as NamespaceDeclaration;
         const sffdecl = ns.functions.find((f) => f.name === fname) || ns.apis.find((f) => f.name === fname) || ns.agents.find((f) => f.name === fname);
 
-        return sffdecl !== undefined ? sffdecl.emit(new CodeFormatter()) : "**ERROR**";
+        return sffdecl !== undefined ? sffdecl.emit(new CodeFormatter()) : "**RESOLVE ERROR**";
     }
 
     static test_parseSFunctionInFilePlus(core: CodeFileInfo[], macrodefs: string[], ctxfiles: CodeFileInfo[], code: string, fname: string): string | ParserError[] {
@@ -7316,7 +7335,7 @@ class Parser {
         const ns = assembly.getToplevelNamespace("Main") as NamespaceDeclaration;
         const sffdecl = ns.functions.find((f) => f.name === fname) || ns.apis.find((f) => f.name === fname) || ns.agents.find((f) => f.name === fname);
 
-        return sffdecl !== undefined ? sffdecl.emit(new CodeFormatter()) : "**ERROR**";
+        return sffdecl !== undefined ? sffdecl.emit(new CodeFormatter()) : "**RESOLVE ERROR**";
     }
 }
 

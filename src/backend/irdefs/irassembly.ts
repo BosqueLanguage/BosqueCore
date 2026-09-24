@@ -1291,6 +1291,7 @@ class IRTaskConfiguration {
 
 class IRAPIDecl {
     readonly ikey: string;
+    readonly biterms: [string, IRTypeSignature][];
 
     readonly params: IRInvokeParameterDecl[];    
     readonly resultType: IRTypeSignature;
@@ -1313,8 +1314,9 @@ class IRAPIDecl {
     readonly file: string;
     readonly sinfo: IRSourceInfo;
 
-    constructor(ikey: string, params: IRInvokeParameterDecl[], resultType: IRTypeSignature, eventType: IRTypeSignature | undefined, preconditions: IRPreConditionDecl[], postconditions: IRPostConditionDecl[], configs: IRTaskConfiguration, statusinfo: IRTypeSignature[], envreqs: IREnvironmentVariableInformation[], resourcereqs: IRResourceInformation, body: IRBody, docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
+    constructor(ikey: string, biterms: [string, IRTypeSignature][], params: IRInvokeParameterDecl[], resultType: IRTypeSignature, eventType: IRTypeSignature | undefined, preconditions: IRPreConditionDecl[], postconditions: IRPostConditionDecl[], configs: IRTaskConfiguration, statusinfo: IRTypeSignature[], envreqs: IREnvironmentVariableInformation[], resourcereqs: IRResourceInformation, body: IRBody, docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
         this.ikey = ikey;
+        this.biterms = biterms;
         this.params = params;
         this.resultType = resultType;
         this.eventType = eventType;
@@ -1334,9 +1336,10 @@ class IRAPIDecl {
 
 class IRAgentDecl {
     readonly ikey: string;
+    readonly biterms: [string, IRTypeSignature][];
 
     readonly params: IRInvokeParameterDecl[];    
-    readonly resultType: IRTypeSignature | undefined; //This may be set on a per call-site basis
+    readonly resultType: IRTypeSignature;
     readonly eventType: IRTypeSignature | undefined;
 
     readonly preconditions: IRPreConditionDecl[];
@@ -1356,8 +1359,9 @@ class IRAgentDecl {
     readonly file: string;
     readonly sinfo: IRSourceInfo;
 
-    constructor(ikey: string, params: IRInvokeParameterDecl[], resultType: IRTypeSignature | undefined, eventType: IRTypeSignature | undefined, preconditions: IRPreConditionDecl[], postconditions: IRPostConditionDecl[], configs: IRTaskConfiguration, statusinfo: IRTypeSignature[], envreqs: IREnvironmentVariableInformation[], resourcereqs: IRResourceInformation, body: IRBody, docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
+    constructor(ikey: string, biterms: [string, IRTypeSignature][], params: IRInvokeParameterDecl[], resultType: IRTypeSignature, eventType: IRTypeSignature | undefined, preconditions: IRPreConditionDecl[], postconditions: IRPostConditionDecl[], configs: IRTaskConfiguration, statusinfo: IRTypeSignature[], envreqs: IREnvironmentVariableInformation[], resourcereqs: IRResourceInformation, body: IRBody, docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo) {
         this.ikey = ikey;
+        this.biterms = biterms;
         this.params = params;
         this.resultType = resultType;
         this.eventType = eventType;

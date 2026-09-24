@@ -1,4 +1,16 @@
 "use strict";
 
-import { parseTestFunctionInFile, parseTestFunctionInFileError } from "../../../bin/test/parser/parse_nf.js";
+import { parseTaskMainInFile, parseTestTaskMainInFileError } from "../../../bin/test/parser/parse_nf.js";
 import { describe, it } from "node:test";
+
+describe("Parser Task Declarations", () => {
+    it("should parse a valid Main task", () => {
+        parseTaskMainInFile("public task Main { action start(): APIResult<Int> { return success(3i); } }", "action start(): APIResult<Int> { return success(3i); }");
+        parseTestTaskMainInFileError("public task Main { action start() { return success(3i); } }", "action start() { return success(3i); }");
+    });
+
+    it("should fail task", () => {
+        parseTestTaskMainInFileError("public task Main { start(): APIResult<Int> { return success(3i); } }", "Unknown member start");
+    });
+});
+

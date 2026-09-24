@@ -874,16 +874,16 @@ class TypeChecker {
         }
     }
 
-    private checkTemplateBindingsOnInvokeSig(sinfo: SourceInfo, targs: TypeSignature[], decl: ExplicitInvokeDecl): TemplateNameMapper | undefined {
-        if(targs.length !== decl.terms.length) {
-            this.reportError(sinfo, `Invoke ${decl.name} expected ${decl.terms.length} terms but got ${targs.length}`);
+    private checkTemplateBindingsOnInvokeSig(sinfo: SourceInfo, targs: TypeSignature[], declname: string, declterms: InvokeTemplateTermDecl[]): TemplateNameMapper | undefined {
+        if(targs.length !== declterms.length) {
+            this.reportError(sinfo, `Invoke ${declname} expected ${declterms.length} terms but got ${targs.length}`);
             return undefined;
         }
 
         let tmap = new Map<string, TypeSignature>();
         for(let i = 0; i < targs.length; ++i) {
             const targ = targs[i];
-            const tdecl = decl.terms[i];
+            const tdecl = declterms[i];
 
             const trestrict = tdecl.tconstraint;
             if(trestrict !== undefined && !this.relations.isSubtypeOf(targ, trestrict, this.constraints)) {
@@ -2525,7 +2525,7 @@ class TypeChecker {
             return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
         }
 
-        const imapper = this.checkTemplateBindingsOnInvokeSig(exp.sinfo, exp.terms, fdecl);
+        const imapper = this.checkTemplateBindingsOnInvokeSig(exp.sinfo, exp.terms, fdecl.name, fdecl.terms);
         if(imapper === undefined) {
             return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
         }
@@ -2632,7 +2632,7 @@ class TypeChecker {
             return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(fdecl.typeinfo.tsig));
         }
         else {
-            const imapper = this.checkTemplateBindingsOnInvokeSig(exp.sinfo, exp.terms, fdecl.member);
+            const imapper = this.checkTemplateBindingsOnInvokeSig(exp.sinfo, exp.terms, fdecl.member.name, fdecl.member.terms);
             if(imapper === undefined) {
                 return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
             }
@@ -2947,7 +2947,7 @@ class TypeChecker {
             return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
         }
 
-        const imapper = this.checkTemplateBindingsOnInvokeSig(exp.sinfo, exp.terms, mresolve.member);
+        const imapper = this.checkTemplateBindingsOnInvokeSig(exp.sinfo, exp.terms, mresolve.member.name, mresolve.member.terms);
         if(imapper === undefined) {
             return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
         }
@@ -3816,7 +3816,7 @@ class TypeChecker {
             }
         }
 
-        const imapper = this.checkTemplateBindingsOnInvokeSig(exp.sinfo, exp.terms, mresolve.member);
+        const imapper = this.checkTemplateBindingsOnInvokeSig(exp.sinfo, exp.terms, mresolve.member.name, mresolve.member.terms);
         if(imapper === undefined) {
             return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
         }
@@ -3888,7 +3888,49 @@ class TypeChecker {
     }
 
     private checkCallTaskActionExpression(env: TypeEnvironment, exp: CallTaskActionExpression): TypeResultWRefVarInfoResult {
-        assert(false, "Not Implemented -- checkCallTaskActionExpression");
+        if(!this.isExternalMode || env.resolveLocalVarInfoFromSrcName("self") === undefined) {
+            this.reportError(exp.sinfo, `Call to task action ${exp.name} is not allowed in non-external mode`);
+            return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
+        }
+
+        const selfvar = env.resolveLocalVarInfoFromSrcName("self") as VarInfo;
+        const taskdecl = (selfvar.decltype as NominalTypeSignature).decl as TaskDecl;
+        const actiondecl = taskdecl.actions.find((action) => action.name === exp.name);
+        if(actiondecl === undefined) {
+            this.reportError(exp.sinfo, `Could not find action ${exp.name} in task ${taskdecl.name}`);
+            return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
+        }
+
+        exp.resolvedTaskDecl = taskdecl;
+        exp.resolvedActionDecl = actiondecl;
+
+        this.checkError(exp.sinfo, exp.terms.length !== 0, `Action cannot have additional template arguments`);
+        const imapper = TemplateNameMapper.generateTemplateMappingForTypeDecl(selfvar.decltype as NominalTypeSignature);
+
+        exp.iimapper = imapper;
+        exp.monoinvid = this.invidCtr++;
+
+        const arginfo = this.checkArgumentList(exp.sinfo, env, false, exp.args.args, actiondecl.params, imapper);
+        this.checkError(exp.sinfo, !(arginfo.setcondout.length === 0 && arginfo.setuncond.length === 0 && arginfo.inout.length === 0 && arginfo.byref.length === 0), `Action cannot have special passing parameters`);
+
+        exp.shuffleinfo = arginfo.shuffleinfo;
+        exp.resttype = arginfo.resttype;
+        exp.restinfo = arginfo.restinfo;
+
+        const rrt = TypeResultWRefVarInfoResult.makeGeneralResult(
+            exp.setType(actiondecl.resultType.remapTemplateBindings(imapper)), false, false,
+            { ttrue: [], tfalse: [] },
+            [],
+            [],
+            []
+        );
+
+        if(rrt !== undefined) {
+            return rrt;
+        }
+        else {
+            return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
+        }
     }
 
     private checkTaskRunExpression(env: TypeEnvironment, exp: TaskRunExpression): TypeSignature {
@@ -3933,6 +3975,13 @@ class TypeChecker {
 
         this.checkEnvironmentGenerationExpression(env, exp.envexp, adecl.envreqs);
 
+        const imapper = this.checkTemplateBindingsOnInvokeSig(exp.sinfo, exp.terms, adecl.name, adecl.terms);
+        if(imapper === undefined) {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+        
+        exp.iimapper = imapper;
+
         if(exp.args.length !== adecl.params.length) {
             this.reportError(exp.sinfo, `Argument count mismatch for api ${exp.ns.emit()}::${exp.api} -- expected ${adecl.params.length} arguments but got ${exp.args.length}`);
         }
@@ -3941,8 +3990,9 @@ class TypeChecker {
                 const arg = exp.args[i];
                 const pdecl = adecl.params[i];
 
-                const argtype = this.checkExpression(env, arg, new SimpleTypeInferContext(pdecl.type));
-                this.checkError(arg.sinfo, !(argtype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(argtype, pdecl.type, this.constraints), `Argument type ${argtype.emit()} is not a subtype of expected parameter type ${pdecl.type.emit()}`);
+                const ptype = pdecl.type.remapTemplateBindings(imapper);
+                const argtype = this.checkExpression(env, arg, new SimpleTypeInferContext(ptype));
+                this.checkError(arg.sinfo, !(argtype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(argtype, ptype, this.constraints), `Argument type ${argtype.emit()} is not a subtype of expected parameter type ${ptype.emit()}`);
             }
         }
 
@@ -3957,7 +4007,7 @@ class TypeChecker {
 
         //nothing we can do for now about resource info since we can't do path inclusion
 
-        return exp.setType(adecl.resultType);
+        return exp.setType(adecl.resultType.remapTemplateBindings(imapper));
     }
     
     private checkAgentInvokeExpression(env: TypeEnvironment, exp: AgentInvokeExpression): TypeSignature {
@@ -3973,6 +4023,13 @@ class TypeChecker {
 
         this.checkEnvironmentGenerationExpression(env, exp.envexp, adecl.envreqs);
 
+        const imapper = this.checkTemplateBindingsOnInvokeSig(exp.sinfo, exp.terms, adecl.name, adecl.terms);
+        if(imapper === undefined) {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+        
+        exp.iimapper = imapper;
+        
         if(exp.args.length !== adecl.params.length) {
             this.reportError(exp.sinfo, `Argument count mismatch for agent ${exp.ns.emit()}::${exp.agent} -- expected ${adecl.params.length} arguments but got ${exp.args.length}`);
         }
@@ -3981,8 +4038,9 @@ class TypeChecker {
                 const arg = exp.args[i];
                 const pdecl = adecl.params[i];
 
-                const argtype = this.checkExpression(env, arg, new SimpleTypeInferContext(pdecl.type));
-                this.checkError(arg.sinfo, !(argtype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(argtype, pdecl.type, this.constraints), `Argument type ${argtype.emit()} is not a subtype of expected parameter type ${pdecl.type.emit()}`);
+                const ptype = pdecl.type.remapTemplateBindings(imapper);
+                const argtype = this.checkExpression(env, arg, new SimpleTypeInferContext(ptype));
+                this.checkError(arg.sinfo, !(argtype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(argtype, ptype, this.constraints), `Argument type ${argtype.emit()} is not a subtype of expected parameter type ${ptype.emit()}`);
             }
         }
 
@@ -3997,18 +4055,7 @@ class TypeChecker {
 
         //nothing we can do for now about resource info since we can't do path inclusion
 
-        const restype = adecl.resultType ?? new VoidTypeSignature(exp.sinfo);
-        if(exp.optrestype === undefined) {
-            this.checkError(exp.sinfo, adecl.resultType === undefined, `Agent requires type to form result into`);
-
-            return exp.setType(restype);
-        }
-        else {
-            this.checkTypeSignature(exp.optrestype);
-            this.checkError(exp.sinfo, adecl.resultType !== undefined, `Agent does not allow result forming`);
-
-            return exp.setType(exp.optrestype);
-        }
+        return exp.setType(adecl.resultType.remapTemplateBindings(imapper));
     }
 
     private checkChkLogicExpression(env: TypeEnvironment, exp: ChkLogicExpression): TypeSignature {
@@ -5209,8 +5256,8 @@ class TypeChecker {
         }
     }
 
-    private checkExplicitInvokeDeclTermInfo(idecl: ExplicitInvokeDecl) {
-        this.checkTemplateTypesOnInvoke(idecl.sinfo, idecl.terms);
+    private checkExplicitInvokeDeclTermInfo(sinfo: SourceInfo, terms: InvokeTemplateTermDecl[]) {
+        this.checkTemplateTypesOnInvoke(sinfo, terms);
     }
 
     private checkExplicitInvokeDeclTermConstraints(idecl: ExplicitInvokeDecl) {
@@ -5257,7 +5304,7 @@ class TypeChecker {
             const fdecl = fdecls[i];
     
             this.file = fdecl.file;
-            this.checkExplicitInvokeDeclTermInfo(fdecl);
+            this.checkExplicitInvokeDeclTermInfo(fdecl.sinfo, fdecl.terms);
 
             if(fdecl.terms.length !== 0) {
                 this.constraints.pushConstraintDeclsScope(fdecl.terms);
@@ -5287,7 +5334,7 @@ class TypeChecker {
     private checkTypeFunctionDecls(tdecl: AbstractNominalTypeDecl, fdecls: TypeFunctionDecl[]) {
         for(let i = 0; i < fdecls.length; ++i) {
             const fdecl = fdecls[i];
-            this.checkExplicitInvokeDeclTermInfo(fdecl);
+            this.checkExplicitInvokeDeclTermInfo(fdecl.sinfo, fdecl.terms);
 
             if(fdecl.terms.length !== 0) {
                 this.constraints.pushConstraintDeclsScope(fdecl.terms);
@@ -5312,10 +5359,10 @@ class TypeChecker {
         }
     }
 
-    private checkMethodDecls(tdecl: AbstractNominalTypeDecl, rcvr: TypeSignature, mdecls: MethodDecl[]) {
+    private checkMethodDecls(tdecl: AbstractNominalTypeDecl, rcvr: TypeSignature, rcvrname: string, mdecls: MethodDecl[]) {
         for(let i = 0; i < mdecls.length; ++i) {   
             const mdecl = mdecls[i];
-            this.checkExplicitInvokeDeclTermInfo(mdecl);
+            this.checkExplicitInvokeDeclTermInfo(mdecl.sinfo, mdecl.terms);
 
             if(mdecl.terms.length !== 0) {
                 this.constraints.pushConstraintDeclsScope(mdecl.terms);
@@ -5327,10 +5374,10 @@ class TypeChecker {
                 this.constraints.pushConstraintRestrictionScope(mdecl.termRestriction);
             }
 
-            const thisvinfo = new VarInfo("this", rcvr, mdecl.isThisRef ? "ref" : "let", true);
+            const thisvinfo = new VarInfo(rcvrname, rcvr, mdecl.isThisRef ? "ref" : "let", true);
 
             this.checkExplicitInvokeDeclSignature(mdecl, [thisvinfo]);
-            this.checkExplicitInvokeDeclMetaData(mdecl, [thisvinfo], mdecl.isThisRef ? ["this"] : [], undefined);
+            this.checkExplicitInvokeDeclMetaData(mdecl, [thisvinfo], mdecl.isThisRef ? [rcvrname] : [], undefined);
 
             const infertype = this.relations.convertTypeSignatureToTypeInferCtx(mdecl.resultType);
             const env = TypeEnvironment.createInitialStdEnv(mdecl.resultType, infertype, [thisvinfo, ...mdecl.params.map((p) => new VarInfo(p.name, p.type, p.pkind || "let", true))]);
@@ -5346,7 +5393,7 @@ class TypeChecker {
         for(let i = 0; i < adecls.length; ++i) {
             const adecl = adecls[i];
 
-            if(adecl.name === "start" || adecl.name === "complete") {
+            if(adecl.name === "start" || adecl.name === "oncomplete" || adecl.name === "onabort" || adecl.name === "onfailure") {
                 this.checkError(adecl.sinfo, adecl.terms.length !== 0, `Task action ${adecl.name} cannot have template type parameters`);
                 this.checkError(adecl.sinfo, adecl.termRestriction !== undefined, `Task action ${adecl.name} cannot have template type restrictions`);
                 
@@ -5354,13 +5401,21 @@ class TypeChecker {
                 this.checkError(adecl.sinfo, adecl.params.some((p) => p.type instanceof LambdaTypeSignature), `Task action ${adecl.name} cannot have lambda type parameters`);
                 this.checkError(adecl.sinfo, adecl.params.some((p) => p.isRestParam), `Task action ${adecl.name} cannot have a rest parameter`);
 
-                if(adecl.name === "complete") {
+                if(adecl.name === "oncomplete") {
+                    //make sure args is same as return type of run (both std return and event) and return type is correct for run
+                    assert(false, "Not implemented yet -- checkTaskActionDecls for oncomplete");
+                }
+                if(adecl.name === "onabort") {
+                    //make sure args is same as return type of run (both std return and event) and return type is correct for run
+                    assert(false, "Not implemented yet -- checkTaskActionDecls for onabort");
+                }
+                if(adecl.name === "onfailure") {
                     //make sure args is same as return type of run (both std return and event) and return type is correct for run
                     assert(false, "Not implemented yet -- checkTaskActionDecls for terminate");
                 }
             }
 
-            this.checkExplicitInvokeDeclTermInfo(adecl);
+            this.checkExplicitInvokeDeclTermInfo(adecl.sinfo, adecl.terms);
 
             if(adecl.terms.length !== 0) {
                 this.constraints.pushConstraintDeclsScope(adecl.terms);
@@ -5472,7 +5527,7 @@ class TypeChecker {
 
         this.checkConstMemberDecls(tdecl, tdecl.consts);
         this.checkTypeFunctionDecls(tdecl, tdecl.functions);
-        this.checkMethodDecls(tdecl, rcvr, tdecl.methods);
+        this.checkMethodDecls(tdecl, rcvr, "this", tdecl.methods);
 
         if(optfdecls !== undefined) {
             this.checkMemberFieldDecls(bnames, optfdecls);
@@ -5500,7 +5555,7 @@ class TypeChecker {
         this.checkError(tdecl.sinfo, tdecl.consts.length !== 0, "Enums cannot have consts");
         this.checkError(tdecl.sinfo, tdecl.functions.length !== 0, "Enums cannot have functions");
 
-        this.checkMethodDecls(tdecl, rcvr, tdecl.methods);
+        this.checkMethodDecls(tdecl, rcvr, "this", tdecl.methods);
 
         this.checkAbstractNominalTypeDeclVCallAndInheritance(tdecl, tdecl.saturatedProvides, true);
 
@@ -5607,7 +5662,7 @@ class TypeChecker {
         this.checkConstMemberDecls(tdecl, tdecl.consts);
         this.checkTypeFunctionDecls(tdecl, tdecl.functions);
 
-        this.checkMethodDecls(tdecl, rcvr, tdecl.methods);
+        this.checkMethodDecls(tdecl, rcvr, "this", tdecl.methods);
         this.checkAbstractNominalTypeDeclVCallAndInheritance(tdecl, [], true);
 
         if(tdecl.terms.length !== 0) {
@@ -5890,6 +5945,13 @@ class TypeChecker {
     private checkAPIDecl(adecl: APIDecl) {
         this.file = adecl.file;
 
+        this.file = adecl.file;
+        this.checkExplicitInvokeDeclTermInfo(adecl.sinfo, adecl.terms);
+
+        if(adecl.terms.length !== 0) {
+            this.constraints.pushConstraintDeclsScope(adecl.terms);
+        }
+
         this.isExternalMode = true;
         this.allowedStatusMsgs = this.checkstatusinfo(adecl.statusinfo);
         this.envinfo = this.checkenvreqs(adecl.envreqs);
@@ -5911,6 +5973,10 @@ class TypeChecker {
         const env = TypeEnvironment.createInitialStdEnv(adecl.resultType, infertype, adecl.params.map((p) => new VarInfo(p.name, p.type, p.pkind || "let", true)));
         this.checkBodyImplementation(env, adecl.body, adecl.params);
 
+        if(adecl.terms.length !== 0) {
+            this.constraints.popConstraintScope();
+        }
+
         this.isExternalMode = false;
         this.allowedStatusMsgs = [];
         this.envinfo = [];
@@ -5927,7 +5993,12 @@ class TypeChecker {
     private checkAgentDecl(adecl: AgentDecl) {
         this.file = adecl.file;
 
-        const rtype = adecl.resultType || new TemplateTypeSignature(adecl.sinfo, "T");
+        this.file = adecl.file;
+        this.checkExplicitInvokeDeclTermInfo(adecl.sinfo, adecl.terms);
+
+        if(adecl.terms.length !== 0) {
+            this.constraints.pushConstraintDeclsScope(adecl.terms);
+        }
 
         this.isExternalMode = true;
         this.allowedStatusMsgs = this.checkstatusinfo(adecl.statusinfo);
@@ -5936,19 +6007,23 @@ class TypeChecker {
         this.taskconfig = this.checkconfiguration(adecl.configs);
         this.taskeventinfo = [];
 
-        this.decltaskresult = this.checkTaskDeclaredResult(adecl.sinfo, rtype);
+        this.decltaskresult = this.checkTaskDeclaredResult(adecl.sinfo, adecl.resultType);
         this.decltaskevent = this.checkTaskDeclaredEvent(adecl.eventType);
 
-        this.checkExplicitAgentAndAPIDeclSignature(adecl.sinfo, adecl.params, rtype);
-        this.checkExplicitAgentAndAPIDeclMetaData(adecl.sinfo, adecl.params, rtype, adecl.eventType, adecl.preconditions, adecl.postconditions);
+        this.checkExplicitAgentAndAPIDeclSignature(adecl.sinfo, adecl.params, adecl.resultType);
+        this.checkExplicitAgentAndAPIDeclMetaData(adecl.sinfo, adecl.params, adecl.resultType, adecl.eventType, adecl.preconditions, adecl.postconditions);
 
         if(adecl.eventType !== undefined) {
             this.checkTypeSignature(adecl.eventType);
         }
 
-        const infertype = this.relations.convertTypeSignatureToTypeInferCtx(rtype);
-        const env = TypeEnvironment.createInitialStdEnv(rtype, infertype, adecl.params.map((p) => new VarInfo(p.name, p.type, p.pkind || "let", true)));
+        const infertype = this.relations.convertTypeSignatureToTypeInferCtx(adecl.resultType);
+        const env = TypeEnvironment.createInitialStdEnv(adecl.resultType, infertype, adecl.params.map((p) => new VarInfo(p.name, p.type, p.pkind || "let", true)));
         this.checkBodyImplementation(env, adecl.body, adecl.params);
+
+        if(adecl.terms.length !== 0) {
+            this.constraints.popConstraintScope();
+        }
 
         this.isExternalMode = false;
         this.allowedStatusMsgs = [];
@@ -6026,13 +6101,23 @@ class TypeChecker {
             tdecl.startaction = runaction;
         }
 
-        const completeaction = tdecl.actions.find((action) => action.name === "complete");
+        const completeaction = tdecl.actions.find((action) => action.name === "oncomplete");
+        const failureaction = tdecl.actions.find((action) => action.name === "onfailure");
+        const abortedaction = tdecl.actions.find((action) => action.name === "onabort");
+
         if(completeaction !== undefined) {
-            //Checks go here
-
             tdecl.completeaction = completeaction;
-
             assert(false, "Not implemented -- checking complete action");
+        }
+
+        if(failureaction !== undefined) {
+            tdecl.failureaction = failureaction;
+            assert(false, "Not implemented -- checking failure action");
+        }
+
+        if(abortedaction !== undefined) {
+            tdecl.abortedaction = abortedaction;
+            assert(false, "Not implemented -- checking aborted action");
         }
 
         this.decltaskresult = this.checkTaskDeclaredResult(tdecl.sinfo, runres);
@@ -6040,6 +6125,7 @@ class TypeChecker {
 
         this.checkConstMemberDecls(tdecl, tdecl.consts);
         this.checkTypeFunctionDecls(tdecl, tdecl.functions);
+        this.checkMethodDecls(tdecl, rcvr, "self", tdecl.methods);
         this.checkTaskActionDecls(tdecl, rcvr, tdecl.actions);
 
         this.checkMemberFieldDecls(bnames, tdecl.fields);

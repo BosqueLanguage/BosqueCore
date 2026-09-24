@@ -84,7 +84,6 @@ const KW_when = "when";
 const KW_event = "event";
 const KW_status = "status";
 const KW_resource = "resource";
-const KW_predicate = "predicate";
 
 const KW_softcheck = "softcheck";
 const KW_errtest = "errtest";
@@ -137,7 +136,6 @@ const KeywordStrings = [
     KW_parallel,
     KW_sequential,
     KW_pred,
-    KW_predicate,
     KW_provides,
     KW_ref,
     KW_out,
@@ -427,7 +425,6 @@ export {
     KW_parallel,
     KW_sequential,
     KW_pred,
-    KW_predicate,
     KW_provides,
     KW_ref,
     KW_out,

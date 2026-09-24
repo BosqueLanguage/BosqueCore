@@ -466,10 +466,10 @@ class TestAssociation {
 }
 
 class NamespaceFunctionDecl extends FunctionInvokeDecl {
-    readonly fkind: "function" | "predicate" | "errtest" | "chktest" | "example";
+    readonly fkind: "function" | "errtest" | "chktest" | "example";
     readonly tassoc: TestAssociation[] | undefined;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: InvokeParameterDecl[], resultType: TypeSignature, body: BodyImplementation, terms: InvokeTemplateTermDecl[], termRestriction: InvokeTemplateTypeRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], tassoc: TestAssociation[] | undefined, fkind: "function" | "predicate" | "errtest" | "chktest" | "example") {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: InvokeParameterDecl[], resultType: TypeSignature, body: BodyImplementation, terms: InvokeTemplateTermDecl[], termRestriction: InvokeTemplateTypeRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], tassoc: TestAssociation[] | undefined, fkind: "function" | "errtest" | "chktest" | "example") {
         super(file, sinfo, attributes, name, recursive, params, resultType, body, terms, termRestriction, preconditions, postconditions);
 
         this.fkind = fkind;
@@ -1202,6 +1202,7 @@ class ResourceInformation {
 }
 
 class APIDecl extends AbstractCoreDecl {
+    readonly terms: InvokeTemplateTermDecl[];
     readonly params: InvokeParameterDecl[];    
     readonly resultType: TypeSignature;
     readonly eventType: TypeSignature | undefined;
@@ -1219,9 +1220,10 @@ class APIDecl extends AbstractCoreDecl {
 
     resolvename: string | undefined = undefined;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, params: InvokeParameterDecl[], resultType: TypeSignature, eventType: TypeSignature | undefined, preconds: PreConditionDecl[], postconds: PostConditionDecl[], configs: TaskConfiguration, statusinfo: TypeSignature[], envreqs: EnvironmentVariableInformation[], resourcereqs: ResourceInformation, body: BodyImplementation) {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: InvokeTemplateTermDecl[], params: InvokeParameterDecl[], resultType: TypeSignature, eventType: TypeSignature | undefined, preconds: PreConditionDecl[], postconds: PostConditionDecl[], configs: TaskConfiguration, statusinfo: TypeSignature[], envreqs: EnvironmentVariableInformation[], resourcereqs: ResourceInformation, body: BodyImplementation) {
         super(file, sinfo, attributes, name);
 
+        this.terms = terms;
         this.params = params;
         this.resultType = resultType;
         this.eventType = eventType;
@@ -1285,17 +1287,20 @@ class APIDecl extends AbstractCoreDecl {
     emit(fmt: CodeFormatter): string {
         const attrs = this.emitAttributes();
 
+        const terms = this.terms.length !== 0 ? `<${this.terms.map((t) => t.emit()).join(", ")}>` : "";
         const params = this.params.map((p) => p.emit(fmt)).join(", ");
         const result = this.resultType.emit();
 
         const minfo = this.emitMetaInfo(fmt);
-        return `${attrs}api ${this.name}(${params}): ${result}${this.eventType !== undefined ? ", " + this.eventType.emit() : ""} ${this.body.emit(fmt, minfo)}`;
+        return `${attrs}api ${this.name}${terms}(${params}): ${result}${this.eventType !== undefined ? ", " + this.eventType.emit() : ""} ${this.body.emit(fmt, minfo)}`;
     }
 }
 
 class AgentDecl extends AbstractCoreDecl {
+    readonly terms: InvokeTemplateTermDecl[];
+
     readonly params: InvokeParameterDecl[];    
-    readonly resultType: TypeSignature | undefined; //This may be set on a per call-site basis
+    readonly resultType: TypeSignature; 
     readonly eventType: TypeSignature | undefined;
 
     readonly preconditions: PreConditionDecl[];
@@ -1311,9 +1316,10 @@ class AgentDecl extends AbstractCoreDecl {
 
     resolvename: string | undefined = undefined;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, params: InvokeParameterDecl[], resultType: TypeSignature | undefined, eventType: TypeSignature | undefined, preconds: PreConditionDecl[], postconds: PostConditionDecl[], configs: TaskConfiguration, statusinfo: TypeSignature[], envreqs: EnvironmentVariableInformation[], resourcereqs: ResourceInformation, body: BodyImplementation) {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: InvokeTemplateTermDecl[], params: InvokeParameterDecl[], resultType: TypeSignature, eventType: TypeSignature | undefined, preconds: PreConditionDecl[], postconds: PostConditionDecl[], configs: TaskConfiguration, statusinfo: TypeSignature[], envreqs: EnvironmentVariableInformation[], resourcereqs: ResourceInformation, body: BodyImplementation) {
         super(file, sinfo, attributes, name);
 
+        this.terms = terms;
         this.params = params;
         this.resultType = resultType;
         this.eventType = eventType;
@@ -1377,12 +1383,12 @@ class AgentDecl extends AbstractCoreDecl {
     emit(fmt: CodeFormatter): string {
         const attrs = this.emitAttributes();
 
+        const terms = this.terms.length !== 0 ? `<${this.terms.map((t) => t.emit()).join(", ")}>` : "";
         const params = this.params.map((p) => p.emit(fmt)).join(", ");
-        const eresult = this.resultType !== undefined ? (": " + this.resultType.emit()) : "";
-        const eevent = this.eventType !== undefined ? (", " + this.eventType.emit()) : "";
+        const result = this.resultType.emit();
 
         const minfo = this.emitMetaInfo(fmt);
-        return `${attrs}agent ${this.name}(${params})${eresult}${eevent} ${this.body.emit(fmt, minfo)}`;
+        return `${attrs}agent ${this.name}${terms}(${params}): ${result}${this.eventType !== undefined ? ", " + this.eventType.emit() : ""} ${this.body.emit(fmt, minfo)}`;
     }
 }
 
@@ -1399,6 +1405,8 @@ class TaskDecl extends AbstractNominalTypeDecl {
 
     startaction: TaskActionDecl | undefined = undefined;
     completeaction: TaskActionDecl | undefined = undefined;
+    failureaction: TaskActionDecl | undefined = undefined;
+    abortedaction: TaskActionDecl | undefined = undefined;
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string) {
         super(file, sinfo, attributes, ns, name, AdditionalTypeDeclTag.Std);

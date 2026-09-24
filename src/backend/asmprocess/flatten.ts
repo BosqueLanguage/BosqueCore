@@ -2978,7 +2978,46 @@ class ASMToIRConverter {
     }
 
     private flattenAPIInvokeExpression(exp: APIInvokeExpression): IRExpression {
-        assert(false, "Not Implemented");
+        const adecl = exp.resolvedAPI as APIDecl;
+
+        const haspreconds = adecl.preconditions.length > 0;
+        const haspostconds = adecl.postconditions.length > 0;
+        const iname = (this.currentMonoInvIdMap as Map<number, string>).get(exp.monoinvid as number) as string;
+
+        const imapper = this.generateLocalTemplateMapping(adecl.terms.map((t) => t.name), exp.terms);
+
+        const aargs = exp.args.map((arg, ii) => {
+            const pinfo = adecl.params[ii];
+            const ftype = this.applyLocalTemplateMapping(pinfo.type, imapper);
+
+            const sexp = this.flattenExpression(arg);
+            const argvtype = this.tproc(arg.getType());
+            const cexp = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(sexp, argvtype), argvtype, ftype);
+
+            const fexp = (haspreconds || haspostconds) ? this.makeExpressionImmediate(cexp, ftype) : cexp;
+            return fexp;
+        });
+
+        //do preconditions as needed
+        for(let i = 0; i < adecl.preconditions.length; ++i) {
+            const invdecl = adecl.preconditions[i];
+            this.pushStatement(new IRPreconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), iname, invdecl.ii, aargs));
+        } 
+    
+        const tmpres = this.generateTempVarName();
+        this.pushStatement(new IRTempAssignExpressionStatement(tmpres, new IRInvokeCallAgentOrAPIExpression(iname, aargs, adecl.body instanceof AbstractBodyImplementation), this.processTypeSignature(exp.getType())));
+            
+        //do postconditions as needed
+        if(haspostconds) {
+            let postargs = [new IRAccessTempVariableExpression(tmpres), ...aargs];
+
+            for(let i = 0; i < adecl.postconditions.length; ++i) {
+                const invdecl = adecl.postconditions[i];
+                this.pushStatement(new IRPostconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), iname, invdecl.ii, postargs));
+            }
+        } 
+
+        return new IRAccessTempVariableExpression(tmpres);
     }
     
     private flattenAgentInvokeExpression(exp: AgentInvokeExpression): IRExpression {
@@ -2987,13 +3026,16 @@ class ASMToIRConverter {
         const haspreconds = adecl.preconditions.length > 0;
         const haspostconds = adecl.postconditions.length > 0;
         const iname = (this.currentMonoInvIdMap as Map<number, string>).get(exp.monoinvid as number) as string;
+        
+        const imapper = this.generateLocalTemplateMapping(adecl.terms.map((t) => t.name), exp.terms);
 
         const aargs = exp.args.map((arg, ii) => {
             const pinfo = adecl.params[ii];
-            const ftype = this.tproc(pinfo.type);
+            const ftype = this.applyLocalTemplateMapping(pinfo.type, imapper);
 
             const sexp = this.flattenExpression(arg);
-            const cexp = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(sexp, arg.getType()), arg.getType(), ftype);
+            const argvtype = this.tproc(arg.getType());
+            const cexp = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(sexp, argvtype), argvtype, ftype);
 
             const fexp = (haspreconds || haspostconds) ? this.makeExpressionImmediate(cexp, ftype) : cexp;
             return fexp;
@@ -3918,7 +3960,7 @@ class ASMToIRConverter {
             return new IRAbstractBody();
         }
         else if(body instanceof BuiltinBodyImplementation) {
-            const bbi = (bitbinds || []).map((bb) => [this.processLocalVariableName(bb[0]), this.processTypeSignature(bb[1])] as [string, IRTypeSignature]);
+            const bbi = (bitbinds || []).map((bb) => [bb[0], this.processTypeSignature(bb[1])] as [string, IRTypeSignature]);
             return new IRBuiltinBody(body.builtin, bbi);
         }
         else if(body instanceof HoleBodyImplementation) {
@@ -4743,14 +4785,52 @@ class ASMToIRConverter {
     }
 
     private generateAPIDecl(adecl: APIDecl, irasm: IRAssembly): IRAPIDecl {
-        assert(false, "Not implemented -- generateAPIDecl");
+        const ikey = (this.currentInvokeInstantation as InvokeInstantiationInfo).newikey;
+        const bitbinds = adecl.terms.map((t) => [t.name, this.processTypeSignature(new TemplateTypeSignature(adecl.sinfo, t.name))] as [string, IRTypeSignature]);
+            
+        const params = this.processInvokeParams(adecl.params);
+        const resultType = this.processTypeSignature(adecl.resultType);
+        const eventType = (adecl.eventType !== undefined) ? this.processTypeSignature(adecl.eventType) : undefined;
+
+        const preconds = adecl.preconditions.map<IRPreConditionDecl>((pc) => this.generateRequiresClauseDecl(pc, ikey));
+        const postconds = adecl.postconditions.map<IRPostConditionDecl>((ec) => this.generateEnsuresClauseDecl(ec, ikey));
+
+        const configs = this.processTaskConfiguration(adecl.configs);
+        const statusinfo = adecl.statusinfo.map((si) => this.processTypeSignature(si));
+        const envreqs = adecl.envreqs.map((er) => this.processEnvironmentVariableInformation(er));
+        const resourcereqs = this.processResourceInformation(adecl.resourcereqs);
+
+        const doc = adecl.attributes.find((a) => a.name === "doc");
+        const docstring = (doc !== undefined) ? new IRDeclarationDocString(doc.text as string) :  undefined;
+
+        const body = this.processBody(adecl.body, []);
+
+        return new IRAPIDecl(
+            ikey, 
+            bitbinds,
+            params, 
+            resultType, 
+            eventType, 
+            preconds, 
+            postconds, 
+            configs, 
+            statusinfo, 
+            envreqs, 
+            resourcereqs, 
+            body, 
+            docstring, 
+            this.processMetaDataTags(adecl.attributes),
+            adecl.file, 
+            this.convertSourceInfo(adecl.sinfo)
+        );
     }
 
     private generateAgentDecl(adecl: AgentDecl, irasm: IRAssembly): IRAgentDecl {
         const ikey = (this.currentInvokeInstantation as InvokeInstantiationInfo).newikey;
+        const bitbinds = adecl.terms.map((t) => [t.name, this.processTypeSignature(new TemplateTypeSignature(adecl.sinfo, t.name))] as [string, IRTypeSignature]);
         
         const params = this.processInvokeParams(adecl.params);
-        const resultType = (adecl.resultType !== undefined) ? this.processTypeSignature(adecl.resultType) : undefined;
+        const resultType = this.processTypeSignature(adecl.resultType);
         const eventType = (adecl.eventType !== undefined) ? this.processTypeSignature(adecl.eventType) : undefined;
 
         const preconds = adecl.preconditions.map<IRPreConditionDecl>((pc) => this.generateRequiresClauseDecl(pc, ikey));
@@ -4768,6 +4848,7 @@ class ASMToIRConverter {
 
         return new IRAgentDecl(
             ikey, 
+            bitbinds,
             params, 
             resultType, 
             eventType, 
@@ -4808,11 +4889,12 @@ class ASMToIRConverter {
         for(let i = 0; i < tdecl.actions.length; ++i) {
             const mm = tdecl.actions[i];
             const minst = tinst.taskactionbinds.get(mm.resolvename as string);
+
             if(minst !== undefined) {
-                assert(minst.length > 0);
-                
-                this.initCodeInvokeProcessingContext(mm.file, true, mm.resultType, undefined, minst[0]);
-                this.generateTaskActionDecl(tdecl, tinst.tsig, mm, irasm);
+                for(let j = 0; j < minst.length; ++j) {
+                    this.initCodeInvokeProcessingContext(mm.file, true, mm.resultType, undefined, minst[j]);
+                    this.generateTaskActionDecl(tdecl, tinst.tsig, mm, irasm);
+                }
             }
         }
 
@@ -5058,9 +5140,10 @@ class ASMToIRConverter {
 
         for(let i = 0; i < decl.functions.length; ++i) {
             const finst = asminstantiation.functionbinds.get(decl.functions[i].resolvename as string);
-            if(finst !== undefined && (decl.functions[i].fkind !== "predicate" || decl.functions[i].fkind !== "function" || this.testEmitEnabled(decl.functions[i]))) {
+            const fdecl = decl.functions[i];
+                    
+            if(finst !== undefined && (decl.functions[i].fkind === "function" || this.testEmitEnabled(decl.functions[i]))) {
                 for(let j = 0; j < finst.length; ++j) {
-                    const fdecl = decl.functions[i];
                     const implicitreturn = fdecl.params.find((p) => p.pkind !== undefined);
 
                     this.initCodeInvokeProcessingContext(fdecl.file, false, fdecl.resultType, implicitreturn, finst[j]);
@@ -5132,24 +5215,38 @@ class ASMToIRConverter {
 
         //apis
         for(let i = 0; i < decl.apis.length; ++i) {
-            irasm.apis.push(this.generateAPIDecl(decl.apis[i], irasm));
+            const ainsts = (asminstantiation.apiagentbinds.get(decl.apis[i].name) as InvokeInstantiationInfo[]);
+            const adecl = decl.apis[i];
+
+            if(ainsts !== undefined) {
+                for(let j = 0; j < ainsts.length; ++j) {
+                    this.initCodeInvokeProcessingContext(adecl.file, true, adecl.resultType, undefined, ainsts[j]);
+                    irasm.apis.push(this.generateAPIDecl(adecl, irasm));
+                }
+            }
         }
 
         //agents
         for(let i = 0; i < decl.agents.length; ++i) {
             const ainsts = (asminstantiation.apiagentbinds.get(decl.agents[i].name) as InvokeInstantiationInfo[]);
-            assert(ainsts !== undefined && ainsts.length > 0);
+            const adecl = decl.agents[i];
 
-            this.initCodeInvokeProcessingContext(decl.agents[i].file, true, decl.agents[i].resultType || new VoidTypeSignature(decl.agents[i].sinfo), undefined, ainsts[0]);
-            irasm.agents.push(this.generateAgentDecl(decl.agents[i], irasm));
+            if(ainsts !== undefined) {
+                for(let j = 0; j < ainsts.length; ++j) {
+                    this.initCodeInvokeProcessingContext(adecl.file, true, adecl.resultType, undefined, ainsts[j]);
+                    irasm.agents.push(this.generateAgentDecl(adecl, irasm));
+                }
+            }
         }
 
         //tasks
         for(let i = 0; i < decl.tasks.length; ++i) {
             const tinsts = (asminstantiation.typebinds.get(decl.tasks[i].name) as TypeInstantiationInfo[]);
-            assert(tinsts !== undefined && tinsts.length > 0);
-            
-            irasm.tasks.push(this.generateTaskDecl(decl.tasks[i], tinsts[0], irasm));
+            if(tinsts !== undefined) {
+                for(let j = 0; j < tinsts.length; ++j) {
+                    irasm.tasks.push(this.generateTaskDecl(decl.tasks[i], tinsts[j], irasm));
+                }
+            }
         }
 
         this.currentNamespaceInstantiation = undefined;

@@ -10,7 +10,7 @@ function wsnorm(s: string): string {
 function parseFunction(ff: string): string {
     const src = workflowLoadCoreSrc();
     if(src === undefined) {
-        return "**ERROR**";
+        return "**LOAD ERROR**";
     }
 
     const rr = Parser.test_parseSFunction(src, ["EXEC_LIBS", "STRIPPED_CORE"], ff);
@@ -20,7 +20,7 @@ function parseFunction(ff: string): string {
 function parseFunctionInFile(code: string): string {
     const src = workflowLoadCoreSrc();
     if(src === undefined) {
-        return "**ERROR**";
+        return "**LOAD ERROR**";
     }
 
     const rr = Parser.test_parseSFunctionInFile(src, ["EXEC_LIBS", "STRIPPED_CORE"], code, "main");
@@ -30,7 +30,7 @@ function parseFunctionInFile(code: string): string {
 function parseFunctionInFilePlus(code: string, ctxcode: string[]): string {
     const src = workflowLoadCoreSrc();
     if(src === undefined) {
-        return "**ERROR**";
+        return "**LOAD ERROR**";
     }
 
     const ctxfiles = ctxcode.map((c, i) => {
@@ -44,6 +44,16 @@ function parseFunctionInFilePlus(code: string, ctxcode: string[]): string {
     const rr = Parser.test_parseSFunctionInFilePlus(src, ["EXEC_LIBS", "STRIPPED_CORE"], ctxfiles, code, "main");
     return wsnorm(Array.isArray(rr) ? rr[0].message : rr);
 
+}
+
+function parseTaskInFile(code: string) {
+    const src = workflowLoadCoreSrc();
+    if(src === undefined) {
+        return "**LOAD ERROR**";
+    }
+
+    const rr = Parser.test_parseSTaskMainInFile(src, ["EXEC_LIBS", "STRIPPED_CORE"], code, "Main");
+    return wsnorm(Array.isArray(rr) ? rr[0].message : rr);
 }
 
 function generateExpFunction(exp: string, type: string): string {
@@ -85,9 +95,18 @@ function parseTestFunctionInFilePlusError(code: string, error: string, ...ctxcod
     assert.equal(parseFunctionInFilePlus(code, ctxcode), error);
 }
 
+function parseTaskMainInFile(code: string, expected?: string | undefined) {
+    assert.equal(parseTaskInFile(code), expected);
+}
+
+function parseTestTaskMainInFileError(code: string, error: string) {
+    assert.equal(parseTaskInFile(code), error);
+}
+
 export {
     parseTestExp, parseTestExpError,
     parseTestFunction, parseTestFunctionError,
     parseTestFunctionInFile, parseTestFunctionInFileError,
-    parseTestFunctionInFilePlus, parseTestFunctionInFilePlusError
+    parseTestFunctionInFilePlus, parseTestFunctionInFilePlusError,
+    parseTaskMainInFile, parseTestTaskMainInFileError
 };
