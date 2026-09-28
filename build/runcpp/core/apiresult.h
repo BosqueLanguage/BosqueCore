@@ -42,4 +42,10 @@ namespace ᐸRuntimeᐳ
         XAPIResultData data;
         T value;
     };
+
+    void jsonParseToBSQ_APIResult(const TypeInfo* tinfo, const json& j, void* resptr);
+    void parseToBSQ_APIResult(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr);
+    json bsqToJSON_APIResult(const TypeInfo* tinfo, const void* valptr);
+    void bsqToBAPI_APIResult(const TypeInfo* tinfo, const void* valptr, BSQStreamingBuilder* builder);
+    void displayValue_APIResult(const TypeInfo* tinfo, const void* valptr, std::ostream& os, std::optional<std::string> indent);
 }

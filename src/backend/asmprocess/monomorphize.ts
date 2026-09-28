@@ -2450,6 +2450,10 @@ class Monomorphizer {
         }
 
         const cnns = this.currentNSInstantiation as NamespaceInstantiationInfo;
+        if(!cnns.typebinds.has(pdecl.type.name)) {
+            cnns.typebinds.set(pdecl.type.name, []);
+        }
+
         const bbl = cnns.typebinds.get(pdecl.type.name) as TypeInstantiationInfo[];
 
         const terms = tdecl.terms.map((tt) => tt.name);

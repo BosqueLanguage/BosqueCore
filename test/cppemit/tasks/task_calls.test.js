@@ -3,7 +3,7 @@
 import { checkTestEmitMainTask } from "../../../bin/test/cppemit/cppemit_nf.js";
 import { describe, it } from "node:test";
 
-describe.skip("CPPEmit Call Function or Method in Tasks", () => {
+describe("CPPEmit Call Function or Method in Tasks", () => {
     it("should handle call function", () => {
         checkTestEmitMainTask("function foo(): Int { return 3i; } public task Main { action start(): APIResult<Int> { return success(foo()); } }", "aaa");
     });
@@ -13,7 +13,7 @@ describe.skip("CPPEmit Call Function or Method in Tasks", () => {
     });
 });
 
-describe.skip("CPPEmit Call Agent or API in Tasks", () => {
+describe("CPPEmit Call Agent or API in Tasks", () => {
     it("should handle call agent", () => {
         checkTestEmitMainTask("abstract agent foo(): APIResult<Int>; public task Main { action start(): APIResult<Int> { return agent foo(); } }", "ccc");
         checkTestEmitMainTask("abstract agent foo<T>(): APIResult<T>; public task Main { action start(): APIResult<Int> { return agent foo<Int>(); } }", "ddd");
@@ -25,7 +25,7 @@ describe.skip("CPPEmit Call Agent or API in Tasks", () => {
     });
 });
 
-describe.skip("CPPEmit Call Action in Tasks", () => {
+describe("CPPEmit Call Action in Tasks", () => {
     it("should handle call action", () => {
         checkTestEmitMainTask("public task Main { action foo(): Int { return 3i; } action start(): APIResult<Int> { let v = do self.foo(); return success(v); } }", "ggg");
         checkTestEmitMainTask("public task Main { action foo(): APIResult<Int> { return success(3i); } action start(): APIResult<Int> { return do self.foo(); } }", "hhh");
