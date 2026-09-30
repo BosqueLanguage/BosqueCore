@@ -1,5 +1,9 @@
 #include "uuids.h"
 
+#include "boost/uuid/uuid.hpp"
+#include "boost/uuid/uuid_io.hpp"
+#include "boost/uuid/uuid_generators.hpp"
+
 namespace ᐸRuntimeᐳ
 {
     ///////////////////////////////
@@ -8,7 +12,13 @@ namespace ᐸRuntimeᐳ
 
     void jsonParseToBSQ_UUIDv4(const TypeInfo* tinfo, const json& j, void* resptr)
     {
-        assert(false); //TODO UUIDv4
+        bsq_validate(j.is_string(), "JSON -> BSQ", 0, nullptr, "Expected a string for UUIDv4");
+
+        std::string uuid_str = j.get<std::string>();
+        boost::uuids::uuid uuid;
+        auto [ec, ptr] = boost::uuids::from_chars(uuid_str.data(), uuid_str.data() + uuid_str.size(), uuid);
+
+        *(boost::uuids::uuid*)resptr = uuid;
     }
 
     void parseToBSQ_UUIDv4(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr)

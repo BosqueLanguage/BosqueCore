@@ -2010,8 +2010,6 @@ class CPPEmitter {
 
         const ftdecl = `    inline constexpr TypeLayoutInfo g_ftable_${ctname}[1] = { { -1, ${fttid.bsqtypeid}, 0, 0, "value", "value" } };\n`;
 
-        xxxx;
-
         return `namespace ᐸRuntimeᐳ {\n` +
             superdecl +
             ftdecl +
@@ -2027,7 +2025,7 @@ class CPPEmitter {
             `        1,\n` +
             `        nullptr,\n` +
             `        0,\n` +
-            `        TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_APIResult, (ParseToBSQFp)&parseToBSQ_APIResult, (BSQToJSONFp)&bsqToJSON_APIResult, (BSQToBAPIFp)&bsqToBAPI_APIResult, (DisplayValueFp)&displayValue_APIResult },\n` +
+            `        TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_APIResultEntity, (ParseToBSQFp)&parseToBSQ_APIResultEntity, (BSQToJSONFp)&bsqToJSON_APIResultEntity, (BSQToBAPIFp)&bsqToBAPI_APIResultEntity, (DisplayValueFp)&displayValue_APIResultEntity },\n` +
             `        "${tdecl.tkey}",\n` +
             `        ${ttid.quickrelease}\n` +
             `    };\n` +
@@ -2403,6 +2401,32 @@ class CPPEmitter {
             `        nullptr,\n` +
             `        0,\n` +
             `        TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_Option<${oftt}>, (ParseToBSQFp)&parseToBSQ_Option<${oftt}>, (BSQToJSONFp)&bsqToJSON_Option<${oftt}>, (BSQToBAPIFp)&bsqToBAPI_Option<${oftt}>, (DisplayValueFp)&displayValue_Option<${oftt}> },\n` +
+            `        "${tdecl.tkey}",\n` +
+            `        ${ttid.quickrelease}\n` +
+            `    };\n` +
+            `}`;
+    }
+
+    private emitAPIResultConceptTypeInfoDecl(tdecl: IRAbstractConceptTypeDecl): string {
+        const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
+        const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey); 
+
+        const uctname = TransformCPPNameManager.generateNameForUnionType(tdecl.tkey);
+
+        return `namespace ᐸRuntimeᐳ { \n` +
+            `    inline constexpr TypeInfo g_typeinfo_${ctname} = {\n` +
+            `        ${ttid.bsqtypeid},\n` +
+            `        ${ttid.bytesize},\n` +
+            `        ${ttid.slotcount},\n` +
+            `        LayoutTag::Value,\n` +
+            `        ${ttid.ptrmask !== undefined ? ('"' + ttid.ptrmask + '"') : "nullptr"},\n` +
+            `        nullptr,\n` +
+            `        0,\n` +
+            `        nullptr,\n` +
+            `        0,\n` +
+            `        nullptr,\n` +
+            `        0,\n` +
+            `        TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_APIResultConcept<${uctname}>, (ParseToBSQFp)&parseToBSQ_APIResultConcept<${uctname}>, (BSQToJSONFp)&bsqToJSON_APIResultConcept<${uctname}>, (BSQToBAPIFp)&bsqToBAPI_APIResultConcept<${uctname}>, (DisplayValueFp)&displayValue_APIResultConcept<${uctname}> },\n` +
             `        "${tdecl.tkey}",\n` +
             `        ${ttid.quickrelease}\n` +
             `    };\n` +
@@ -2828,8 +2852,8 @@ class CPPEmitter {
         `    ${uctname}() : upunning{} { ; };\n` +
         `    ${uctname}(const ${uctname}& other) = default;\n` +
         `    ${uctname}& operator=(const ${uctname}& other) { if(this == &other) { return *this; } this->upunning = other.upunning; return *this; }\n` +
-        `    const uint8_t* getUP() const { return this->upunning.data(); }` +
-        `    uint8_t* getUP() { return this->upunning.data(); }` +
+        `    const uint8_t* getUP() const { return this->upunning.data(); }\n` +
+        `    uint8_t* getUP() { return this->upunning.data(); }\n` +
         `${ucons.join("\n")}\n` +
         `};`;
 
@@ -2850,52 +2874,11 @@ class CPPEmitter {
         '    //TODO: implement access field truly virtual -- with dynamic field offset lookup \n\n' +
         `${ccons.join("\n")}\n` +
         `};`;
-        const decltypeinfo = this.emitConceptTypeInfoDecl(tdecl);
-        const declbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}();`;
-        const declbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv);`;
-
-        let defbsqparse = "";
-        let defbsqemit = "";
-        if(uoptions.length === 0) {
-            defbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}() {\n` +
-            `\n    return std::nullopt;\n` +
-            `}`;
-
-            defbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv) {\n` +
-            `    ;//never reachable\n` +
-            `}`;
-        }
-        else {
-            const parseops = uoptions.map((opt, ii) => {
-                const fttname = TransformCPPNameManager.convertTypeKey(opt.tkeystr);
-                const ftvar = this.typeInfoManager.emitTypeAsStd(opt.tkeystr);
-                const testop = `ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqparser.testType("${opt.tkeystr}")`;
-                const baseop = `{ std::optional<${ftvar}> vv = BSQ_parse${fttname}(); if(!vv.has_value()) { return std::nullopt; } else { return ${ctname}(vv.value()); } }`;
-                return `    ${ii !== 0 ? "else " : ""}if(${testop}) ${baseop}`;
-            });
-
-            defbsqparse = `std::optional<${ctname}> BSQ_parse${ctname}() {\n` +
-            parseops.join("\n") +
-            `\n    else { return std::nullopt; }\n` +
-            `}`;
-        
-            const emitops = uoptions.map((opt) => {
-                const optypeinfo = this.typeInfoManager.getTypeInfo(opt.tkeystr);
-                const fttname = TransformCPPNameManager.convertTypeKey(opt.tkeystr);
-                const umember = TransformCPPNameManager.generateNameForUnionMember(opt.tkeystr);
-                return `    case ${optypeinfo.bsqtypeid}: BSQ_emit${fttname}(vv.uval.data.${umember}); break;`;
-            });
-
-            defbsqemit = `void BSQ_emit${ctname}(const ${ctname}& vv) {\n` +
-            `    switch(vv.uval.typeinfo->bsqtypeid) {\n` +
-            `${emitops.join("\n")}\n` +
-            `    }\n` +
-            `}`;
-        }
+        const decltypeinfo = this.emitAPIResultConceptTypeInfoDecl(tdecl);
 
         return [
-            [declunion, declconcept, decltypeinfo, declbsqparse, declbsqemit].join("\n"),
-            [defbsqparse, defbsqemit].join("\n")
+            [declunion, declconcept, decltypeinfo].join("\n"),
+            ""
         ];
     }
 
@@ -3104,8 +3087,8 @@ class CPPEmitter {
         `    ${uctname}() : upunning{} { ; };\n` +
         `    ${uctname}(const ${uctname}& other) = default;\n` +
         `    ${uctname}& operator=(const ${uctname}& other) { if(this == &other) { return *this; } this->upunning = other.upunning; return *this; }\n` +
-        `    const uint8_t* getUP() const { return this->upunning.data(); }` +
-        `    uint8_t* getUP() { return this->upunning.data(); }` +
+        `    const uint8_t* getUP() const { return this->upunning.data(); }\n` +
+        `    uint8_t* getUP() { return this->upunning.data(); }\n` +
         `${ucons.join("\n")}\n` +
         `};`;
 
