@@ -433,7 +433,7 @@ class CPPEmitter {
             }
             else if(ttag === IRExpressionTag.IRConstructorAPISuccessTypeExpression) {
                 const cexp = exps as IRConstructorAPISuccessTypeExpression;
-                bstr = `${TransformCPPNameManager.generateNameForConstructor(cexp.oftype.tkeystr)}{{}, ${this.emitIRSimpleExpression(cexp.value, true)}}`;
+                bstr = `${TransformCPPNameManager.generateNameForConstructor(cexp.oftype.tkeystr)}{{}, ${RUNTIME_NAMESPACE}::XAPIResultKind::Success, ${this.emitIRSimpleExpression(cexp.value, true)}}`;
             }
             else if(ttag === IRExpressionTag.IRConstructorMapEntryTypeExpression) {
                 const cexp = exps as IRConstructorMapEntryTypeExpression;
@@ -1998,6 +1998,7 @@ class CPPEmitter {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
         const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey);
 
+        const oftt = this.typeInfoManager.emitTypeAsStd(tdecl.ttype.tkeystr);
         const fttid = this.typeInfoManager.getTypeInfo(tdecl.ttype.tkeystr);
 
         const superlist = (this.irasm.concretesupertypes.get(tdecl.tkey) as IRTypeSignature[]).map((tt) => this.typeInfoManager.getTypeInfo(tt.tkeystr).bsqtypeid).sort();
@@ -2025,7 +2026,7 @@ class CPPEmitter {
             `        1,\n` +
             `        nullptr,\n` +
             `        0,\n` +
-            `        TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_APIResultEntity, (ParseToBSQFp)&parseToBSQ_APIResultEntity, (BSQToJSONFp)&bsqToJSON_APIResultEntity, (BSQToBAPIFp)&bsqToBAPI_APIResultEntity, (DisplayValueFp)&displayValue_APIResultEntity },\n` +
+            `        TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_APIResultEntity<${oftt}>, (ParseToBSQFp)&parseToBSQ_APIResultEntity<${oftt}>, (BSQToJSONFp)&bsqToJSON_APIResultEntity<${oftt}>, (BSQToBAPIFp)&bsqToBAPI_APIResultEntity<${oftt}>, (DisplayValueFp)&displayValue_APIResultEntity<${oftt}> },\n` +
             `        "${tdecl.tkey}",\n` +
             `        ${ttid.quickrelease}\n` +
             `    };\n` +
@@ -2733,7 +2734,7 @@ class CPPEmitter {
 
         const voptt = this.typeInfoManager.emitTypeAsStd(ttype.tkeystr);
         
-        const declusing = `using ${ctname} = ${RUNTIME_NAMESPACE}::XAPIResultEntityValue<${voptt}, ${RUNTIME_NAMESPACE}::XAPIResultKind::${kind}>;`;
+        const declusing = `using ${ctname} = ${RUNTIME_NAMESPACE}::XAPIResultEntityValue<${voptt}>;`;
         const decltypeinfo = this.emitAPIResultEntityTypeInfoDecl(tdecl, kind);
         
         return [

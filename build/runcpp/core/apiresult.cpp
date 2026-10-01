@@ -1,7 +1,5 @@
 #include "apiresult.h"
 
-#include "integrals.h"
-
 namespace ᐸRuntimeᐳ
 {
     XAPIResultData jsonParseToBSQ_APIResultEntityInfo(const TypeInfo* tinfo, const json& j)
@@ -96,7 +94,7 @@ namespace ᐸRuntimeᐳ
         }
     }
 
-    void displayValue_APIResultEntityInnfo(const TypeInfo* tinfo, const XAPIResultData& data, std::ostream& os, std::optional<std::string> indent)
+    void displayValue_APIResultEntityInfo(const TypeInfo* tinfo, const XAPIResultData& data, std::ostream& os, std::optional<std::string> indent)
     {
         if(data.tagid == XAPIInfoTag::Clear) {
             return;
@@ -110,25 +108,5 @@ namespace ᐸRuntimeᐳ
                 assert(false); //We need to intern or lookup these tags somehow
             }
         }
-    }
-
-    void parseToBSQ_APIResultEntity(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr)
-    {
-        xxxx;
-    }
-
-    json bsqToJSON_APIResultEntity(const TypeInfo* tinfo, const void* valptr)
-    {
-        xxxx;
-    }
-
-    void bsqToBAPI_APIResultEntity(const TypeInfo* tinfo, const void* valptr, BSQStreamingBuilder* builder)
-    {
-        xxxx;
-    }
-
-    void displayValue_APIResultEntity(const TypeInfo* tinfo, const void* valptr, std::ostream& os, std::optional<std::string> indent)
-    {
-        xxxx;
     }
 }
