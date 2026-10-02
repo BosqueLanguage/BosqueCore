@@ -29,7 +29,7 @@ namespace ᐸRuntimeᐳ
     };
     static_assert(sizeof(XAPIResultData) == 48, "Need to update values in compiler");
 
-    enum class  XAPIResultKind : uint64_t
+    enum class XAPIResultKind : uint64_t
     {
         Error,
         Rejected,
@@ -45,6 +45,11 @@ namespace ᐸRuntimeᐳ
         XAPIResultData data;
         XAPIResultKind kind;
         T value;
+    };
+
+    template <typename T, XAPIResultKind K>
+    class XAPIResultEntityValueWTag : public XAPIResultEntityValue<T>
+    {
     };
 
     XAPIResultData jsonParseToBSQ_APIResultEntityInfo(const TypeInfo* tinfo, const json& j);

@@ -2734,7 +2734,7 @@ class CPPEmitter {
 
         const voptt = this.typeInfoManager.emitTypeAsStd(ttype.tkeystr);
         
-        const declusing = `using ${ctname} = ${RUNTIME_NAMESPACE}::XAPIResultEntityValue<${voptt}>;`;
+        const declusing = `using ${ctname} = ${RUNTIME_NAMESPACE}::XAPIResultEntityValueWTag<${voptt}, ${RUNTIME_NAMESPACE}::XAPIResultKind::${kind}>;`;
         const decltypeinfo = this.emitAPIResultEntityTypeInfoDecl(tdecl, kind);
         
         return [
