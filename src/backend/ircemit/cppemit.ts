@@ -433,7 +433,7 @@ class CPPEmitter {
             }
             else if(ttag === IRExpressionTag.IRConstructorAPISuccessTypeExpression) {
                 const cexp = exps as IRConstructorAPISuccessTypeExpression;
-                bstr = `${TransformCPPNameManager.generateNameForConstructor(cexp.oftype.tkeystr)}{{}, ${RUNTIME_NAMESPACE}::XAPIResultKind::Success, ${this.emitIRSimpleExpression(cexp.value, true)}}`;
+                bstr = `${TransformCPPNameManager.generateNameForConstructor(cexp.oftype.tkeystr)}{{}, ${this.emitIRSimpleExpression(cexp.value, true)}}`;
             }
             else if(ttag === IRExpressionTag.IRConstructorMapEntryTypeExpression) {
                 const cexp = exps as IRConstructorMapEntryTypeExpression;

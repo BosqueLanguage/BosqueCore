@@ -43,13 +43,16 @@ namespace ᐸRuntimeᐳ
     {
     public:
         XAPIResultData data;
-        XAPIResultKind kind;
         T value;
     };
 
     template <typename T, XAPIResultKind K>
     class XAPIResultEntityValueWTag : public XAPIResultEntityValue<T>
     {
+    public:
+        XAPIResultEntityValueWTag() = default;
+        XAPIResultEntityValueWTag(const XAPIResultEntityValueWTag& other) = default;
+        XAPIResultEntityValueWTag(const XAPIResultData& data, const T& value) : XAPIResultEntityValue<T>{data, value} {}
     };
 
     XAPIResultData jsonParseToBSQ_APIResultEntityInfo(const TypeInfo* tinfo, const json& j);
