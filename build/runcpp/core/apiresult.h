@@ -21,13 +21,11 @@ namespace ᐸRuntimeᐳ
     class XAPIResultData
     {
     public:
-        XUUIDv7 correlationid;
-        XUUIDv4 infoid;
-
         XAPIInfoTag tagid;
+        XUUIDv4 infoid;
         const char* tag; //Type::id format to correlate ad-hoc
     };
-    static_assert(sizeof(XAPIResultData) == 48, "Need to update values in compiler");
+    static_assert(sizeof(XAPIResultData) == 32, "Need to update values in compiler");
 
     enum class XAPIResultKind : uint64_t
     {
@@ -72,7 +70,7 @@ namespace ᐸRuntimeᐳ
         XAPIResultKind kind = static_cast<XAPIResultKind>(j["kind"].get<uint64_t>());
         XAPIResultData resdata = jsonParseToBSQ_APIResultEntityInfo(tinfo, j);
 
-        *(XAPIResultEntityValue<T>*)resptr = XAPIResultEntityValue<T>{resdata, kind, val};
+        *(XAPIResultEntityValue<T>*)resptr = XAPIResultEntityValue<T>{resdata, val};
     }
 
     template<typename T>
@@ -87,20 +85,8 @@ namespace ᐸRuntimeᐳ
         const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
         ofinfo->opdispatch.parseToBSQFp(ofinfo, lexer, &valdata);
 
-        bsq_validate(lexer->testIsSymbol(','), "BAPI -> BSQ", 0, nullptr, "Expected ','");
-        lexer->consume();
-        XNat kval;
-        parseToBSQ_Nat(tinfo, lexer, &kval);
-
-        XAPIResultKind kind = static_cast<XAPIResultKind>(kval.value);
-
-        XAPIResultData resdata = XAPIResultData{}; // Initialize to default in case of failure
-        if(kind != XAPIResultKind::Success) {
-            lexer->consume(); //should be a ,
-            resdata = parseToBSQ_APIResultEntityInfo(tinfo, lexer);
-        }
-
-        *(XAPIResultEntityValue<T>*)resptr = XAPIResultEntityValue<T>{resdata, kind, valdata};
+        XAPIResultData resdata = parseToBSQ_APIResultEntityInfo(tinfo, lexer);
+        *(XAPIResultEntityValue<T>*)resptr = XAPIResultEntityValue<T>{resdata, valdata};
     }
     
     template<typename T>
@@ -111,8 +97,7 @@ namespace ᐸRuntimeᐳ
 
         const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
         j["value"] = ofinfo->opdispatch.bsqToJSONFp(ofinfo, valptr);
-        j["kind"] = static_cast<uint64_t>(static_cast<const XAPIResultEntityValue<T>*>(valptr)->kind);
-        bsqToJSON_APIResultEntityInfo(tinfo, static_cast<const XAPIResultEntityValue<T>*>(valptr)->data);
+        bsqToJSON_APIResultEntityInfo(tinfo, static_cast<const XAPIResultEntityValue<T>*>(valptr)->data, j);
 
         return j;
     }
@@ -127,15 +112,7 @@ namespace ᐸRuntimeᐳ
         const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
         ofinfo->opdispatch.bsqToBAPIFp(ofinfo, &val->value, builder);
 
-        builder->appendLiteralString(", ");
-        XNat kval{static_cast<int64_t>(val->kind)};
-        bsqToBAPI_Nat(tinfo, &kval, builder);
-
-        if(val->kind != XAPIResultKind::Success) {
-            builder->appendLiteralString(", ");
-            bsqToBAPI_APIResultEntityInfo(tinfo, val->data, builder);
-        }
-
+        bsqToBAPI_APIResultEntityInfo(tinfo, val->data, builder);
         builder->appendLiteralString(" }");
     }
 
@@ -150,14 +127,8 @@ namespace ᐸRuntimeᐳ
         ofinfo->opdispatch.displayFp(ofinfo, &val->value, os, indent);
 
         os << ", ";
-        XNat kval{static_cast<int64_t>(val->kind)};
-        displayValue_Nat(tinfo, &kval, os, indent);
-
-        if(val->kind != XAPIResultKind::Success) {
-            os << ", ";
-            displayValue_APIResultEntityInfo(tinfo, val->data, os, indent);
-        }
-
+        displayValue_APIResultEntityInfo(tinfo, val->data, os, indent);
+        
         os << " }";
     }
 

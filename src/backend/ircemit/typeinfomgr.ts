@@ -21,7 +21,7 @@ function LIST_T_LEAF_CAPACITY(elem_size: number): number {
 }
 
 //Duplicated from C++ definitions
-const BSQ_API_RESULT_DATA_SIZE_BYTES = 48;
+const BSQ_API_RESULT_DATA_SIZE_BYTES = 32;
 
 class VirtualInvokeInfo {
     readonly ikey: string;
@@ -506,7 +506,7 @@ class TypeInfoManager {
         }
         else if((tdecl instanceof IRAPIErrorTypeDecl) || (tdecl instanceof IRAPIRejectedTypeDecl) || (tdecl instanceof IRAPIDeniedTypeDecl) || (tdecl instanceof IRAPIDroppedTypeDecl) || (tdecl instanceof IRAPISuccessTypeDecl)) {
             const oftinfo = this.generateLayoutInfoForType(tdecl.ttype, irasm);
-            const mask = "000000" + oftinfo.layoutmask;
+            const mask = "0000" + oftinfo.layoutmask;
             this.addLayoutInfo(tdecl.tkey, new LayoutInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), BSQ_API_RESULT_DATA_SIZE_BYTES + oftinfo.bytesize, mask));
         }
         else if(tdecl instanceof IRMapEntryTypeDecl) {
@@ -580,7 +580,7 @@ class TypeInfoManager {
         }
         else if(tdecl instanceof IRAPIResultTypeDecl) {
             const oftinfo = this.generateLayoutInfoForType(tdecl.ttype, irasm);
-            let spm = TypeInfoManager.isAllNopMask(oftinfo.layoutmask) ? ("0" + "000000" + oftinfo.layoutmask) : ("2" + "000000" + TypeInfoManager.computeValueMaskOfK(oftinfo.slotcount));
+            let spm = TypeInfoManager.isAllNopMask(oftinfo.layoutmask) ? ("0" + "0000" + oftinfo.layoutmask) : ("2" + "0000" + TypeInfoManager.computeValueMaskOfK(oftinfo.slotcount));
             this.addLayoutInfo(tdecl.tkey, new LayoutInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), oftinfo.bytesize + BSQ_API_RESULT_DATA_SIZE_BYTES + 8, spm));
         }
         else {
