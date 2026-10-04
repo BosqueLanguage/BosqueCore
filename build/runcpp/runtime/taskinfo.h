@@ -154,7 +154,7 @@ namespace ᐸRuntimeᐳ
 
         void loadEnvVars(std::initializer_list<const char*> reqvars);
 
-        TaskInfoRepr* asRepr(TaskInfo* current_task)
+        static TaskInfoRepr* asRepr(TaskInfo* current_task)
         {
             return static_cast<TaskInfoRepr*>(current_task);
         }

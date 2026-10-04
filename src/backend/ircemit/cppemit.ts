@@ -3655,7 +3655,7 @@ class CPPEmitter {
         const parse = this.emitParseArgsMain([...idecl.params.slice(1), ...tdecl.fields.map((bf) => new IRInvokeParameterDecl(bf.fname, bf.declaredType, undefined, undefined, undefined))]);
 
         const envs = tdecl.envreqs.map((ev) => `"${ev.evname}"`);
-        const loadenv = `    ᐸRuntimeᐳ::tl_bosque_info.current_task->environment.loadEnvVars({${envs.join(", ")}});`;
+        const loadenv = `    ᐸRuntimeᐳ::TaskInfoRepr::asRepr(ᐸRuntimeᐳ::tl_bosque_info.current_task)->loadEnvVars({${envs.join(", ")}});`;
 
         const consargs = tdecl.fields.map((bf) => "_" + TransformCPPNameManager.convertIdentifier(bf.fname));
         const initialize = `    auto _self = ${this.typeInfoManager.emitTypeAsStd(tdecl.tkey)}{${consargs.join(", ")}};\n` +
@@ -3728,7 +3728,7 @@ class CPPEmitter {
 
         return mmain + "\n\n" +
                'int main(int argc, char** argv) {\n' +
-               '    ᐸRuntimeᐳ::TaskInfoRepr maintask(ᐸRuntimeᐳ::TaskInfo::generateFreshTaskId(), nullptr, ᐸRuntimeᐳ::TaskPriority::pimmediate);\n' +
+               '    ᐸRuntimeᐳ::TaskInfoRepr maintask(ᐸRuntimeᐳ::TaskInfo::generateFreshTaskId(), nullptr, ᐸRuntimeᐳ::TaskPriority::pimmediate());\n' +
                '    ᐸRuntimeᐳ::tl_bosque_info.current_task = &maintask;\n\n' +
                '    ᐸRuntimeᐳ::g_alloc_info.initializeGlobalRegion(BSQ_g_globaldata);\n' +
                `    ${initializegc}\n` +

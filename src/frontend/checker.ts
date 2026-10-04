@@ -5875,7 +5875,18 @@ class TypeChecker {
             return [];
         }
         else {
-            assert(false, "Not implemented -- checkEnvironmentRequirements");
+            let checkedEnvReqs: EnvironmentVariableInformation[] = [];
+            for(let i = 0; i < envreqs.length; ++i) {
+                this.checkError(envreqs[i].evtype.sinfo, checkedEnvReqs.find((ee) => ee.evname === envreqs[i].evname) !== undefined, `Duplicate environment variable name -- ${envreqs[i].evname}`);
+                this.checkTypeSignature(envreqs[i].evtype);
+
+                if(envreqs[i].optdefault !== undefined) {
+                    assert(false, "Not Implemented Yet!!!");
+                }
+                
+                checkedEnvReqs.push(envreqs[i]);
+            }
+            return checkedEnvReqs;
         }
     }
 

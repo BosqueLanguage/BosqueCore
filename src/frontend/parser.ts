@@ -6864,6 +6864,15 @@ class Parser {
             this.env.currentNamespace.declaredNames.add(tname);
             this.env.currentNamespace.declaredTypeNames.push({name: tname, hasterms: false});
 
+            while(this.testToken(KW_resource) || this.testToken(KW_env) || this.testToken(KW_configs) ) {
+                if(this.testToken(KW_status) || this.testToken(KW_event)) {
+                    this.scanOverSemiDelimitedDeclaration();
+                }
+                else {
+                    this.scanOverBraceDelimitedDeclaration();
+                }
+            }
+
             this.scanOverBraceDelimitedDeclaration();
         }
         else {
@@ -6875,7 +6884,7 @@ class Parser {
                 tdecl.terms.push(...terms);
             }
 
-            while(this.testToken(KW_status) || this.testToken(KW_resource) || this.testToken(KW_env) || this.testToken(KW_event) ||this.testToken(KW_configs) ) {
+            while(this.testToken(KW_status) || this.testToken(KW_resource) || this.testToken(KW_env) || this.testToken(KW_event) || this.testToken(KW_configs) ) {
                 if(this.testToken(KW_event)) {
                     if(tdecl.eventinfo.length !== 0) {
                         this.recordErrorGeneral(sinfo, "Cannot have multiple event sections");
