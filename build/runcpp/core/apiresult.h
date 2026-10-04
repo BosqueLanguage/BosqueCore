@@ -67,7 +67,6 @@ namespace ᐸRuntimeᐳ
 
         T val;
         ofinfo->opdispatch.jsonParseToBSQFp(ofinfo, j["value"], &val);
-        XAPIResultKind kind = static_cast<XAPIResultKind>(j["kind"].get<uint64_t>());
         XAPIResultData resdata = jsonParseToBSQ_APIResultEntityInfo(tinfo, j);
 
         *(XAPIResultEntityValue<T>*)resptr = XAPIResultEntityValue<T>{resdata, val};

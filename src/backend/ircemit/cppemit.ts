@@ -2021,7 +2021,7 @@ class CPPEmitter {
             supertable = `g_supertypes_${ctname}`;
         }
 
-        const ftdecl = `    inline constexpr TypeLayoutInfo g_ftable_${ctname}[1] = { { -1, ${fttid.bsqtypeid}, 0, 0, "value", "value" } };\n`;
+        const ftdecl = `    inline constexpr TypeLayoutInfo g_ftable_${ctname}[1] = { { -1, ${fttid.bsqtypeid}, ${fttid.bytesize}, ${fttid.slotcount}, "value", "value" } };\n`;
 
         return `namespace ᐸRuntimeᐳ {\n` +
             superdecl +
@@ -3458,8 +3458,6 @@ class CPPEmitter {
 
     //Emit the initialization operations needed
     private emitStaticInitializationOps(): string {
-        const stringunion = 'union StdEnvUnion { ᐸRuntimeᐳ::XCString strval; };\n';
-
         const constlayoutbytes = this.irasm.constants.map((cc) => this.typeInfoManager.getLayoutInfo(cc.declaredType.tkeystr).bytesize).reduce((acc, v) => acc + v, 0);
         const globalbuff = `void* BSQ_g_globaldata[${constlayoutbytes}];\n`;
 
@@ -3486,7 +3484,7 @@ class CPPEmitter {
         `    std::unordered_map<uint32_t, std::pair<size_t, const char**>> TypeInfo::enuminfomap = { ${enuminfoentries.join(", ")} };\n` +
         '}';
 
-        return [stringunion, globalbuff, typeinfomaps].join("\n") + "\n";
+        return [globalbuff, typeinfomaps].join("\n") + "\n";
     }
 
     ////
@@ -3656,6 +3654,9 @@ class CPPEmitter {
         const idecl = this.irasm.taskactions.find((v) => v.ikey === `${tdecl.tkey}@start`) as IRTaskActionDecl;
         const parse = this.emitParseArgsMain([...idecl.params.slice(1), ...tdecl.fields.map((bf) => new IRInvokeParameterDecl(bf.fname, bf.declaredType, undefined, undefined, undefined))]);
 
+        const envs = tdecl.envreqs.map((ev) => `"${ev.evname}"`);
+        const loadenv = `    ᐸRuntimeᐳ::tl_bosque_info.current_task->environment.loadEnvVars({${envs.join(", ")}});`;
+
         const consargs = tdecl.fields.map((bf) => "_" + TransformCPPNameManager.convertIdentifier(bf.fname));
         const initialize = `    auto _self = ${this.typeInfoManager.emitTypeAsStd(tdecl.tkey)}{${consargs.join(", ")}};\n` +
             ((idecl.postconditions.length !== 0) ? `    auto __self = _self;\n` : "") +
@@ -3688,6 +3689,7 @@ class CPPEmitter {
         return `void mmain(int argc, char** argv)\n` +
         `{\n` +
         parse + "\n" +
+        loadenv + "\n" +
         initialize + "\n" +
         preconds + "\n" +
         invoke + "\n" +
@@ -3726,7 +3728,7 @@ class CPPEmitter {
 
         return mmain + "\n\n" +
                'int main(int argc, char** argv) {\n' +
-               '    ᐸRuntimeᐳ::TaskInfoRepr<StdEnvUnion> maintask;\n' +
+               '    ᐸRuntimeᐳ::TaskInfoRepr maintask(ᐸRuntimeᐳ::TaskInfo::generateFreshTaskId(), nullptr, ᐸRuntimeᐳ::TaskPriority::pimmediate);\n' +
                '    ᐸRuntimeᐳ::tl_bosque_info.current_task = &maintask;\n\n' +
                '    ᐸRuntimeᐳ::g_alloc_info.initializeGlobalRegion(BSQ_g_globaldata);\n' +
                `    ${initializegc}\n` +

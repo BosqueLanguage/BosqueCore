@@ -667,7 +667,7 @@ class TypeInfoManager {
             const oftinfo = this.generateLayoutInfoForType(tdecl.ttype, irasm);
 
             const ttid = this.typeInfoMap.size;
-            const mask = TypeInfoManager.staticLayoutToPtrMaskConvert("000000" + oftinfo.layoutmask);
+            const mask = TypeInfoManager.staticLayoutToPtrMaskConvert("0000" + oftinfo.layoutmask);
             this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, BSQ_API_RESULT_DATA_SIZE_BYTES + oftinfo.bytesize, LayoutTag.Value, mask, quickrelease));
         }
         else if(tdecl instanceof IRMapEntryTypeDecl) {
@@ -782,7 +782,7 @@ class TypeInfoManager {
             const oftinfo = this.generateLayoutInfoForType(tdecl.ttype, irasm);
 
             const ttid = this.typeInfoMap.size;
-            let spm = TypeInfoManager.isAllNopMask(oftinfo.layoutmask) ? ("0" + "000000" + oftinfo.layoutmask) : ("2" + "000000" + TypeInfoManager.computeValueMaskOfK(oftinfo.slotcount));
+            let spm = TypeInfoManager.isAllNopMask(oftinfo.layoutmask) ? ("0" + "0000" + oftinfo.layoutmask) : ("2" + "0000" + TypeInfoManager.computeValueMaskOfK(oftinfo.slotcount));
             this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, oftinfo.bytesize + BSQ_API_RESULT_DATA_SIZE_BYTES + 8, LayoutTag.Value, TypeInfoManager.staticLayoutToPtrMaskConvert(spm), quickrelease));
         }
         else {

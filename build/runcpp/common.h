@@ -35,6 +35,10 @@
 #include <boost/regex.hpp>
 #include <boost/regex/icu.hpp>
 
+#include "boost/uuid/uuid.hpp"
+#include "boost/uuid/uuid_io.hpp"
+#include "boost/uuid/uuid_generators.hpp"
+
 //JSON dependency
 #include <json.hpp>
 using json = nlohmann::json;
