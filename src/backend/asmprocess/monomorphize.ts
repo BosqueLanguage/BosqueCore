@@ -1022,7 +1022,32 @@ class Monomorphizer {
     }
 
     private instantiateCallTaskActionExpression(exp: CallTaskActionExpression) {
-        assert(false, "Not Implemented -- instantiateCallTaskActionExpression");
+        
+        this.instantiateTypeSignature(exp.resolvedTaskDecl as TypeSignature, this.currentMapping);
+        
+        for(let i = 0; i < exp.terms.length; ++i) {
+            this.instantiateTypeSignature(exp.terms[i], this.currentMapping);
+        }
+        const mdd = exp.resolvedActionDecl as TaskActionDecl;
+        
+        for(let i = 0; i < exp.shuffleinfo.length; ++i) {
+            this.instantiateTypeSignature(exp.shuffleinfo[i][1], this.currentMapping);
+        }
+        if(exp.restinfo !== undefined) {
+            const rparamtype = (this.currentMapping !== undefined ? (exp.resttype as TypeSignature).remapTemplateBindings(this.currentMapping) : (exp.resttype as TypeSignature)) as NominalTypeSignature;
+            let rargs: AbstractArgumentValue[] = [];
+
+            for(let i = 0; i < exp.restinfo.length; ++i) {
+                this.instantiateTypeSignature(exp.restinfo[i][2], this.currentMapping);
+                rargs.push(exp.args.args[exp.restinfo[i][0]]);
+            }
+
+            this.instantiateCollectionConstructor(rparamtype.decl as AbstractCollectionTypeDecl, rparamtype, rargs);
+        }
+
+        const mdecl = this.currentMapping !== undefined ? (exp.resolvedTaskDecl as TypeSignature).remapTemplateBindings(this.currentMapping) : (exp.resolvedTaskDecl as TypeSignature);
+        this.callinstmap.set(exp.monoinvid as number, computeInvokeKeyForTaskAction(mdecl, mdd));
+        this.instantiateTaskAction(mdecl, mdd);
     }
 
     private instantiateTaskRunExpression(exp: TaskRunExpression) {

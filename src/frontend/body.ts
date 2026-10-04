@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { FullyQualifiedNamespace, AutoTypeSignature, RecursiveAnnotation, TypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper } from "./type.js";
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls.js";
-import { AgentDecl, APIDecl, LambdaDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, TaskActionDecl, TaskConfiguration, TaskDecl, TypeFunctionDecl } from "./assembly.js";
+import { AgentDecl, APIDecl, LambdaDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, TaskActionDecl, TaskConfiguration, TypeFunctionDecl } from "./assembly.js";
 
 class BinderInfo {
     readonly srcname: string; //the name in the source code
@@ -1142,7 +1142,7 @@ class CallTaskActionExpression extends Expression {
     readonly terms: TypeSignature[];
     readonly args: ArgumentList;
 
-    resolvedTaskDecl: TaskDecl | undefined = undefined;
+    resolvedTaskDecl: TypeSignature | undefined = undefined;
     resolvedActionDecl: TaskActionDecl | undefined = undefined;
 
     iimapper: TemplateNameMapper | undefined = undefined;

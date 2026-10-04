@@ -3901,7 +3901,7 @@ class TypeChecker {
             return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
         }
 
-        exp.resolvedTaskDecl = taskdecl;
+        exp.resolvedTaskDecl = selfvar.decltype as NominalTypeSignature;
         exp.resolvedActionDecl = actiondecl;
 
         this.checkError(exp.sinfo, exp.terms.length !== 0, `Action cannot have additional template arguments`);

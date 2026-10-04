@@ -2181,12 +2181,16 @@ class IRInvokeVirtualWithImplicitsExpression extends IRInvokeImplicitsExpression
 }
 
 class IRInvokeCallAgentOrAPIExpression extends IRExpression {
+    readonly bname: string;
+    readonly bterms: IRTypeSignature[];
     readonly ikey: string;
     readonly args: IRSimpleExpression[];
     readonly external: boolean;
-
-    constructor(ikey: string, args: IRSimpleExpression[], external: boolean) {
+    
+    constructor(bname: string, bterms: IRTypeSignature[], ikey: string, args: IRSimpleExpression[], external: boolean) {
         super(IRExpressionTag.IRInvokeCallAgentOrAPIExpression);
+        this.bname = bname;
+        this.bterms = bterms;
         this.ikey = ikey;
         this.args = args;
         this.external = external;

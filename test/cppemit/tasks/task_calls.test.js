@@ -16,12 +16,12 @@ describe("CPPEmit Call Function or Method in Tasks", () => {
 describe("CPPEmit Call Agent or API in Tasks", () => {
     it("should handle call agent", () => {
         checkTestEmitMainTask("abstract agent foo(): APIResult<Int>; public task Main { action start(): APIResult<Int> { return agent foo(); } }", 'APIResultᐸIntᐳ MainᕒMainᑀstart(MainᕒMain& self) { APIResultᐸIntᐳ tmp_0 = Main::foo(); return tmp_0; }');
-        checkTestEmitMainTask("abstract agent foo<T>(): APIResult<T>; public task Main { action start(): APIResult<Int> { return agent foo<Int>(); } }", 'APIResultᐸIntᐳ MainᕒMainᑀstart(MainᕒMain& self) { APIResultᐸIntᐳ tmp_0 = Main::foo<Int>(); return tmp_0; }');
+        checkTestEmitMainTask("abstract agent foo<T>(): APIResult<T>; public task Main { action start(): APIResult<Int> { return agent foo<Int>(); } }", 'APIResultᐸIntᐳ MainᕒMainᑀstart(MainᕒMain& self) { APIResultᐸIntᐳ tmp_0 = Main::foo(2); return tmp_0; }');
     });
 
     it("should handle call api", () => {
         checkTestEmitMainTask("abstract api foo(): APIResult<Int>; public task Main { action start(): APIResult<Int> { return api foo(); } }", 'APIResultᐸIntᐳ MainᕒMainᑀstart(MainᕒMain& self) { APIResultᐸIntᐳ tmp_0 = Main::foo(); return tmp_0; }');
-        checkTestEmitMainTask("abstract api foo<T>(): APIResult<T>; public task Main { action start(): APIResult<Int> { return api foo<Int>(); } }", 'APIResultᐸIntᐳ MainᕒMainᑀstart(MainᕒMain& self) { APIResultᐸIntᐳ tmp_0 = Main::foo<Int>(); return tmp_0; }');
+        checkTestEmitMainTask("abstract api foo<T>(): APIResult<T>; public task Main { action start(): APIResult<Int> { return api foo<Int>(); } }", 'APIResultᐸIntᐳ MainᕒMainᑀstart(MainᕒMain& self) { APIResultᐸIntᐳ tmp_0 = Main::foo(2); return tmp_0; }');
     });
 });
 

@@ -820,7 +820,13 @@ class CPPEmitter {
                 const aargs = aaexp.args.map((arg) => this.emitIRSimpleExpression(arg, true));
 
                 if(aaexp.external) {
-                    return `${aaexp.ikey}(${aargs.join(", ")})`;
+                    if(aaexp.bterms.length === 0) {
+                        return `${aaexp.bname}(${aargs.join(", ")})`;
+                    }
+                    else {
+                        const tids = aaexp.bterms.map((tt) => this.typeInfoManager.getTypeInfo(tt.tkeystr).bsqtypeid);
+                        return `${aaexp.bname}(${tids.join(", ")}${aargs.length > 0 ? ", " : ""}${aargs.join(", ")})`;
+                    }
                 }
                 else {
                     return `${TransformCPPNameManager.convertInvokeKey(aaexp.ikey)}(${aargs.join(", ")})`;

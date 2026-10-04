@@ -2954,7 +2954,46 @@ class ASMToIRConverter {
     }
 
     private flattenCallTaskActionExpression(exp: CallTaskActionExpression): IRExpression {
-        assert(false, "Not Implemented -- checkCallTaskActionExpression");
+        const aimpl = exp.resolvedActionDecl as TaskActionDecl;
+
+        const selfname = "self";
+        const selftype = this.processTypeSignature(exp.resolvedTaskDecl as TypeSignature);
+
+        const haspreconds = aimpl.preconditions.length > 0;
+        const haspostconds = aimpl.postconditions.length > 0;
+        const iname = (this.currentMonoInvIdMap as Map<number, string>).get(exp.monoinvid as number) as string;
+
+        const tmapper = TemplateNameMapper.generateTemplateMappingForTypeDecl(this.tproc(exp.resolvedTaskDecl as TypeSignature) as NominalTypeSignature);
+        const aargs = [selfname, ...this.flattenInvokeArgs(haspreconds, haspostconds, exp.shuffleinfo, aimpl.params, exp.args, exp.resttype, exp.restinfo, tmapper)];
+
+        //do preconditions as needed
+        for(let i = 0; i < aimpl.preconditions.length; ++i) {
+            const invdecl = aimpl.preconditions[i];
+            this.pushStatement(new IRPreconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), iname, invdecl.ii, aargs));
+        } 
+
+        if(!haspostconds) {
+            xxxx;
+            return new IRInvokeSimpleWithImplicitsExpression(iname, aargs, 0, selfname, selftype, "ref");
+        }
+        else {
+            const tmpres = this.generateTempVarName();
+            xxxx;
+            this.pushStatement(new IRTempAssignRefInvokeStatement(tmpres, this.processTypeSignature(exp.getType()), selfname, selftype, "ref", new IRInvokeSimpleWithImplicitsExpression(iname, aargs, 0, selfname, selftype, "ref")));
+            
+            //do postconditions as needed
+            let postargs = [new IRAccessTempVariableExpression(tmpres), ...aargs];
+            if(selfname !== undefined) {
+                postargs = [new IRAccessTempVariableExpression(tmpres), new IRAccessTempVariableExpression(selfname), ...postargs];
+            }
+
+            for(let i = 0; i < aimpl.postconditions.length; ++i) {
+                const invdecl = aimpl.postconditions[i];
+                this.pushStatement(new IRPostconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), iname, invdecl.ii, postargs));
+            } 
+
+            return new IRAccessTempVariableExpression(tmpres);
+        }
     }
 
     private flattenTaskRunExpression(exp: TaskRunExpression): IRExpression {
@@ -3004,8 +3043,11 @@ class ASMToIRConverter {
             this.pushStatement(new IRPreconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), iname, invdecl.ii, aargs));
         } 
     
+        const bname = `${(this.currentNamespaceInstantiation as NamespaceInstantiationInfo).ns.emit()}::${adecl.name}`;
+        const bterms = imapper !== undefined ? adecl.terms.map((t) => this.processTypeSignature(imapper.resolveTemplateMapping(new TemplateTypeSignature(exp.sinfo, t.name)))) : [];
+
         const tmpres = this.generateTempVarName();
-        this.pushStatement(new IRTempAssignExpressionStatement(tmpres, new IRInvokeCallAgentOrAPIExpression(iname, aargs, adecl.body instanceof AbstractBodyImplementation), this.processTypeSignature(exp.getType())));
+        this.pushStatement(new IRTempAssignExpressionStatement(tmpres, new IRInvokeCallAgentOrAPIExpression(bname, bterms, iname, aargs, adecl.body instanceof AbstractBodyImplementation), this.processTypeSignature(exp.getType())));
             
         //do postconditions as needed
         if(haspostconds) {
@@ -3047,8 +3089,11 @@ class ASMToIRConverter {
             this.pushStatement(new IRPreconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), iname, invdecl.ii, aargs));
         } 
     
+        const bname = `${(this.currentNamespaceInstantiation as NamespaceInstantiationInfo).ns.emit()}::${adecl.name}`;
+        const bterms = imapper !== undefined ? adecl.terms.map((t) => this.processTypeSignature(imapper.resolveTemplateMapping(new TemplateTypeSignature(exp.sinfo, t.name)))) : [];
+
         const tmpres = this.generateTempVarName();
-        this.pushStatement(new IRTempAssignExpressionStatement(tmpres, new IRInvokeCallAgentOrAPIExpression(iname, aargs, adecl.body instanceof AbstractBodyImplementation), this.processTypeSignature(exp.getType())));
+        this.pushStatement(new IRTempAssignExpressionStatement(tmpres, new IRInvokeCallAgentOrAPIExpression(bname, bterms, iname, aargs, adecl.body instanceof AbstractBodyImplementation), this.processTypeSignature(exp.getType())));
             
         //do postconditions as needed
         if(haspostconds) {
