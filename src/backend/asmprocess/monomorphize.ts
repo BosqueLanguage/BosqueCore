@@ -1022,7 +1022,32 @@ class Monomorphizer {
     }
 
     private instantiateCallTaskActionExpression(exp: CallTaskActionExpression) {
-        assert(false, "Not Implemented -- instantiateCallTaskActionExpression");
+        
+        this.instantiateTypeSignature(exp.resolvedTaskDecl as TypeSignature, this.currentMapping);
+        
+        for(let i = 0; i < exp.terms.length; ++i) {
+            this.instantiateTypeSignature(exp.terms[i], this.currentMapping);
+        }
+        const mdd = exp.resolvedActionDecl as TaskActionDecl;
+        
+        for(let i = 0; i < exp.shuffleinfo.length; ++i) {
+            this.instantiateTypeSignature(exp.shuffleinfo[i][1], this.currentMapping);
+        }
+        if(exp.restinfo !== undefined) {
+            const rparamtype = (this.currentMapping !== undefined ? (exp.resttype as TypeSignature).remapTemplateBindings(this.currentMapping) : (exp.resttype as TypeSignature)) as NominalTypeSignature;
+            let rargs: AbstractArgumentValue[] = [];
+
+            for(let i = 0; i < exp.restinfo.length; ++i) {
+                this.instantiateTypeSignature(exp.restinfo[i][2], this.currentMapping);
+                rargs.push(exp.args.args[exp.restinfo[i][0]]);
+            }
+
+            this.instantiateCollectionConstructor(rparamtype.decl as AbstractCollectionTypeDecl, rparamtype, rargs);
+        }
+
+        const mdecl = this.currentMapping !== undefined ? (exp.resolvedTaskDecl as TypeSignature).remapTemplateBindings(this.currentMapping) : (exp.resolvedTaskDecl as TypeSignature);
+        this.callinstmap.set(exp.monoinvid as number, computeInvokeKeyForTaskAction(mdecl, mdd));
+        this.instantiateTaskAction(mdecl, mdd);
     }
 
     private instantiateTaskRunExpression(exp: TaskRunExpression) {
@@ -2287,7 +2312,13 @@ class Monomorphizer {
     }
 
     private instantiateenvreqs(envreqs: EnvironmentVariableInformation[]) {
-        assert(envreqs.length === 0, "Not implemented -- instantiateEnvironmentRequirements");
+        for(let i = 0; i < envreqs.length; i++) {
+            this.instantiateTypeSignature(envreqs[i].evtype, this.currentMapping);
+
+            if(envreqs[i].optdefault !== undefined) {
+                this.instantiateExpression(envreqs[i].optdefault as Expression);
+            }
+        }
     }
 
     private instantiateresourcereqs(resourcereqs: ResourceInformation) {
@@ -2450,6 +2481,10 @@ class Monomorphizer {
         }
 
         const cnns = this.currentNSInstantiation as NamespaceInstantiationInfo;
+        if(!cnns.typebinds.has(pdecl.type.name)) {
+            cnns.typebinds.set(pdecl.type.name, []);
+        }
+
         const bbl = cnns.typebinds.get(pdecl.type.name) as TypeInstantiationInfo[];
 
         const terms = tdecl.terms.map((tt) => tt.name);

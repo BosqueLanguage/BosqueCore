@@ -19,7 +19,7 @@ LINKAGE=-lboost_regex -licuuc -licui18n -licudata
 
 HEADERS=$(wildcard $(SRC_DIR)*.h) $(wildcard $(CORE_SRC_DIR)*.h) $(wildcard $(RUNTIME_SRC_DIR)*.h) $(wildcard $(ALLOC_SRC_DIR)*.h) $(wildcard $(UTILS_SRC_DIR)*.h)
 CPP=$(wildcard $(SRC_DIR)*.cpp) $(wildcard $(CORE_SRC_DIR)*.cpp) $(wildcard $(RUNTIME_SRC_DIR)*.cpp) $(wildcard $(ALLOC_SRC_DIR)*.cpp) $(wildcard $(UTILS_SRC_DIR)*.cpp)
-OBJ=$(OUT_OBJ)common.o $(OUT_OBJ)taskinfo.o $(OUT_OBJ)builder.o $(OUT_OBJ)encodings.o $(OUT_OBJ)lexer.o $(OUT_OBJ)alloc.o $(OUT_OBJ)gc_validation.o $(OUT_OBJ)gc.o $(OUT_OBJ)memstats.o $(OUT_OBJ)bool.o $(OUT_OBJ)bsqtype.o $(OUT_OBJ)bytebuff.o $(OUT_OBJ)chars.o $(OUT_OBJ)fpoints.o $(OUT_OBJ)integrals.o $(OUT_OBJ)none.o $(OUT_OBJ)strings.o $(OUT_OBJ)uuids.o
+OBJ=$(OUT_OBJ)common.o $(OUT_OBJ)taskinfo.o $(OUT_OBJ)builder.o $(OUT_OBJ)encodings.o $(OUT_OBJ)lexer.o $(OUT_OBJ)alloc.o $(OUT_OBJ)gc_validation.o $(OUT_OBJ)gc.o $(OUT_OBJ)memstats.o $(OUT_OBJ)apiresult.o $(OUT_OBJ)bool.o $(OUT_OBJ)bsqtype.o $(OUT_OBJ)bytebuff.o $(OUT_OBJ)chars.o $(OUT_OBJ)fpoints.o $(OUT_OBJ)integrals.o $(OUT_OBJ)none.o $(OUT_OBJ)strings.o $(OUT_OBJ)uuids.o
 
 MAKEFLAGS += -j8
 
@@ -60,6 +60,10 @@ $(OUT_OBJ)gc.o: $(HEADERS) $(CPP)
 $(OUT_OBJ)memstats.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
 	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)memstats.o -c $(ALLOC_SRC_DIR)memstats.cpp $(LINKAGE)
+
+$(OUT_OBJ)apiresult.o: $(HEADERS) $(CPP)
+	@mkdir -p $(OUT_OBJ)
+	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)apiresult.o -c $(CORE_SRC_DIR)apiresult.cpp $(LINKAGE)
 
 $(OUT_OBJ)bool.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)

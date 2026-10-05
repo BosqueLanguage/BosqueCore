@@ -509,8 +509,7 @@ namespace ᐸRuntimeᐳ
         }
         else {
             ByteBufferStreamingBuilder builder{};
-            std::array<char, 64> numbuf{};
-
+            
             for(auto iter = cstr.begin(); iter != cstr.end(); ++iter) {
                 builder.appendByte((uint8_t)(*iter));
             }

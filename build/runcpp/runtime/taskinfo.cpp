@@ -2,6 +2,30 @@
 
 namespace ᐸRuntimeᐳ
 {
+    boost::uuids::random_generator g_task_uuidv4_id_generator{};
+        
+    XUUIDv4 TaskInfo::generateFreshTaskId()
+    {
+        auto id = g_task_uuidv4_id_generator();
+        return XUUIDv4::from_bytes(id.data);
+    }
+
+    void TaskInfoRepr::loadEnvVars(std::initializer_list<const char*> reqvars)
+    {
+        for(auto iter = reqvars.begin(); iter != reqvars.end(); ++iter)
+        {
+            const char* ename = *iter;
+            const char* evalue = std::getenv(ename);
+
+            bsq_validate(evalue != nullptr, "Environment variable not found", 0, nullptr, ename);
+
+            std::string sname(ename);
+            std::string svalue(evalue);
+
+            this->environment.setStartupEntry(std::move(sname), &g_typeinfo_CString, std::move(svalue));
+        }
+    }
+
     void TaskInfo::bapiParseIntoBSQ(bool sloppyinputs, const std::list<uint8_t*>& iobuffs, size_t totalbytes, uint32_t bsqid, void* outvalue)
     {
         const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(bsqid);

@@ -13,6 +13,8 @@ namespace ᐸRuntimeᐳ
         std::array<uint8_t, 16> value;
 
         static XUUIDv4 nil() { return XUUIDv4{}; }
+        static XUUIDv4 from_bytes(std::array<uint8_t, 16> bytes) { return XUUIDv4{bytes}; }
+        static XUUIDv4 from_bytes(const uint8_t (&data)[16]) { return XUUIDv4{std::to_array(data)}; } 
 
         friend XBool operator==(const XUUIDv4 &lhs, const XUUIDv4 &rhs) { return XBool::from(std::equal(lhs.value.cbegin(), lhs.value.cend(), rhs.value.cbegin())); }
         friend XBool operator<(const XUUIDv4 &lhs, const XUUIDv4 &rhs) { return XBool::from(std::lexicographical_compare(lhs.value.cbegin(), lhs.value.cend(), rhs.value.cbegin(), rhs.value.cend())); }
@@ -28,6 +30,8 @@ namespace ᐸRuntimeᐳ
         std::array<uint8_t, 16> value;
 
         static XUUIDv7 nil() { return XUUIDv7{}; }
+        static XUUIDv7 from_bytes(std::array<uint8_t, 16> bytes) { return XUUIDv7{bytes}; }
+        static XUUIDv7 from_bytes(const uint8_t (&data)[16]) { return XUUIDv7{std::to_array(data)}; } 
 
         friend XBool operator==(const XUUIDv7 &lhs, const XUUIDv7 &rhs) { return XBool::from(std::equal(lhs.value.cbegin(), lhs.value.cend(), rhs.value.cbegin())); }
         friend XBool operator<(const XUUIDv7 &lhs, const XUUIDv7 &rhs) { return XBool::from(std::lexicographical_compare(lhs.value.cbegin(), lhs.value.cend(), rhs.value.cbegin(), rhs.value.cend())); }

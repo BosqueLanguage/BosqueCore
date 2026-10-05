@@ -8,43 +8,72 @@
 
 namespace ᐸRuntimeᐳ
 {
-    template<ConceptUnionRepr U>
+    //
+    //TODO: we are making the env be only holding std::string keys/values for now -- later make them CString and any value 
+    //      need to make the GC aware of this at root walk time
+    //
+
     class TaskEnvironmentEntry
     {
     public:
         //Make sure to put key and value in special roots list for GC
-        XCString key;
+        std::string key;
 
-        const TypeInfo* typeinfo; //typeinfo of U
-        U value;
+        const TypeInfo* typeinfo;
+        std::string value;
 
-        constexpr TaskEnvironmentEntry() : key(), typeinfo(nullptr), value(nullptr) {}
-        constexpr TaskEnvironmentEntry(const XCString& k, const TypeInfo* ti, const U& u) : key(k), typeinfo(ti), value(u) {}
+        constexpr TaskEnvironmentEntry() : key(), typeinfo(nullptr), value() {}
+        constexpr TaskEnvironmentEntry(const std::string& k, const TypeInfo* ti, const std::string& v) : key(k), typeinfo(ti), value(v) {}
         constexpr TaskEnvironmentEntry(const TaskEnvironmentEntry& other) = default;
     };
 
-    template<ConceptUnionRepr U>
     class TaskEnvironment
     {
     public:
-        std::list<TaskEnvironmentEntry<U>> tenv;
+        std::list<TaskEnvironmentEntry> tenv;
 
         TaskEnvironment() : tenv() {}
         TaskEnvironment(const TaskEnvironment& other) = default;
 
+        std::string toByteBuffer(const XCString& cstr)
+        {
+            std::string res{};
+            res.reserve(cstr.size());
+
+            for(auto iter = cstr.begin(); iter != cstr.end(); ++iter) {
+                res.push_back((char)(*iter));
+            }
+
+            return res;
+        }
+
         bool has(const XCString& key)
         {
-            return std::find(this->tenv.begin(), this->tenv.end(), key) != this->tenv.end();
+            auto kkey = this->toByteBuffer(key);
+            return std::find_if(this->tenv.begin(), this->tenv.end(), [&](const TaskEnvironmentEntry& entry) {
+                return entry.key == kkey;
+            }) != this->tenv.end();
         }
 
-        void setEntry(const XCString& key, const TypeInfo* typeinfo, const U& value)
+        void setEntry(const XCString& key, const TypeInfo* typeinfo, const XCString& value)
         {
-            this->tenv.emplace_front(key, typeinfo, value);
+            auto kkey = this->toByteBuffer(key);
+            auto vvalue = this->toByteBuffer(value);
+
+            this->tenv.emplace_front(kkey, typeinfo, vvalue);
         }
 
-        std::list<TaskEnvironmentEntry<U>>::iterator get(const XCString& key)
+        void setStartupEntry(const std::string&& key, const TypeInfo* typeinfo, const std::string&& value)
         {
-            return std::find(this->tenv.begin(), this->tenv.end(), key);
+            this->tenv.emplace_front(std::move(key), typeinfo, std::move(value));
+        }
+
+        std::list<TaskEnvironmentEntry>::iterator get(const XCString& key)
+        {
+            auto kkey = this->toByteBuffer(key);
+            return std::find_if(this->tenv.begin(), this->tenv.end(), [&](const TaskEnvironmentEntry& entry) {
+                return entry.key == kkey;
+            });
         }
     };
 
@@ -81,6 +110,7 @@ namespace ᐸRuntimeᐳ
         static size_t bsqEmitIntoBAPI(bool allowsensitive, uint32_t bsqid, const void* value, std::list<uint8_t*>& iobuffs);
 
     public:
+        boost::uuids::random_generator uuidv4_generator;
         XUUIDv4 taskid;
 
         const TaskInfo* parent;
@@ -89,8 +119,18 @@ namespace ᐸRuntimeᐳ
         std::jmp_buf error_handler;
         std::optional<ErrorInfo> pending_error;
 
-        TaskInfo() : taskid(), parent(nullptr), priority(), error_handler(), pending_error() {}
+        TaskInfo() : uuidv4_generator(), taskid(XUUIDv4::nil()), parent(nullptr), priority(), error_handler(), pending_error() {}
         TaskInfo(const XUUIDv4& tId, const TaskInfo* pTask, TaskPriority prio) : taskid(tId), parent(pTask), priority(prio), error_handler(), pending_error() {}
+
+        //Generate UUID for a task
+        static XUUIDv4 generateFreshTaskId();
+
+        //Generating user requested UUID values
+        XUUIDv4 generateUUIDv4()
+        {
+            auto uuid = this->uuidv4_generator();
+            return XUUIDv4::from_bytes(uuid.data);
+        }
 
         template<typename T>
         static void bapiParseIntoBSQ(bool relaxedparse, const std::list<uint8_t*>& iobuffs, size_t totalbytes, uint32_t bsqid, T& outvalue)
@@ -105,18 +145,18 @@ namespace ᐸRuntimeᐳ
         }
     };
 
-    template<ConceptUnionRepr U> //U must be a union of all possible types stored in the environment
     class TaskInfoRepr : public TaskInfo
     {
     public:        
-        TaskEnvironment<U> environment;
+        TaskEnvironment environment;
 
-        TaskInfoRepr() : TaskInfo(), environment() {}
         TaskInfoRepr(const XUUIDv4& tId, const TaskInfo* pTask, TaskPriority prio) : TaskInfo(tId, pTask, prio), environment() {}
 
-        TaskInfoRepr* asRepr(TaskInfo* current_task)
+        void loadEnvVars(std::initializer_list<const char*> reqvars);
+
+        static TaskInfoRepr* asRepr(TaskInfo* current_task)
         {
-            return static_cast<TaskInfoRepr<U>*>(current_task);
+            return static_cast<TaskInfoRepr*>(current_task);
         }
     };
 }
