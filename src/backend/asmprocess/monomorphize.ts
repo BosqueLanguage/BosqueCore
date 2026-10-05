@@ -2312,7 +2312,13 @@ class Monomorphizer {
     }
 
     private instantiateenvreqs(envreqs: EnvironmentVariableInformation[]) {
-        assert(envreqs.length === 0, "Not implemented -- instantiateEnvironmentRequirements");
+        for(let i = 0; i < envreqs.length; i++) {
+            this.instantiateTypeSignature(envreqs[i].evtype, this.currentMapping);
+
+            if(envreqs[i].optdefault !== undefined) {
+                this.instantiateExpression(envreqs[i].optdefault as Expression);
+            }
+        }
     }
 
     private instantiateresourcereqs(resourcereqs: ResourceInformation) {

@@ -19,7 +19,7 @@ namespace ᐸRuntimeᐳ
         //Make sure to put key and value in special roots list for GC
         std::string key;
 
-        const TypeInfo* typeinfo; //typeinfo of U
+        const TypeInfo* typeinfo;
         std::string value;
 
         constexpr TaskEnvironmentEntry() : key(), typeinfo(nullptr), value() {}

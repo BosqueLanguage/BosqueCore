@@ -2021,7 +2021,7 @@ class CPPEmitter {
             supertable = `g_supertypes_${ctname}`;
         }
 
-        const ftdecl = `    inline constexpr TypeLayoutInfo g_ftable_${ctname}[1] = { { -1, ${fttid.bsqtypeid}, ${fttid.bytesize}, ${fttid.slotcount}, "value", "value" } };\n`;
+        const ftdecl = `    inline constexpr TypeLayoutInfo g_ftable_${ctname}[1] = { { -1, ${fttid.bsqtypeid}, 32, 4, "value", "value" } };\n`;
 
         return `namespace ᐸRuntimeᐳ {\n` +
             superdecl +

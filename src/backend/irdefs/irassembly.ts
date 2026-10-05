@@ -697,6 +697,29 @@ class IROkTypeDecl extends IRConstructableTypeDecl {
     }
 }
 
+class IRFailTypeDecl extends IRConstructableTypeDecl {
+    readonly ttype: IRTypeSignature;
+    readonly etype: IRTypeSignature;
+
+    constructor(tkey: string, saturatedProvides: IRTypeSignature[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, ttype: IRTypeSignature, etype: IRTypeSignature) {
+        super(tkey, saturatedProvides, docstr, file, sinfo);
+        this.ttype = ttype;
+        this.etype = etype;
+    }
+
+    override getDeclDependencyTypes(alltypes: Map<string, IRAbstractNominalTypeDecl>): IRTypeSignature[] {
+        return [this.ttype, this.etype];
+    }
+
+    override toBAPI(): string {
+        assert(false, "IRFailTypeDecl.toBAPI() is not implemented yet");
+    }
+
+    static parseBAPIAsIRFailTypeDecl(lexer: BAPILexer): IRFailTypeDecl {
+        assert(false, "IRFailTypeDecl.parseBAPI_IRFailTypeDecl() is not implemented yet");
+    }
+}
+
 abstract class IRAPIResultEntityTypeDecl extends IRConstructableTypeDecl {
     readonly ttype: IRTypeSignature;
 
@@ -715,20 +738,6 @@ abstract class IRAPIResultEntityTypeDecl extends IRConstructableTypeDecl {
 
     static parseBAPI_IRAPIResultEntityTypeDecl(lexer: BAPILexer): { tkey: string, invariants: IRInvariantDecl[], validates: IRValidateDecl[], fields: IRMemberFieldDecl[], etag: "std" | "status" | "event", saturatedProvides: IRTypeSignature[], saturatedBFieldInfo: { containingtype: IRNominalTypeSignature, fkey: string, fname: string, ftype: IRTypeSignature }[], allInvariants: { containingtype: IRNominalTypeSignature, ii: number }[], allValidates: { containingtype: IRNominalTypeSignature, ii: number }[], docstr: IRDeclarationDocString | undefined, metatags: IRDeclarationMetaTag[], file: string, sinfo: IRSourceInfo } {
         assert(false, "IRAPIResultEntityTypeDecl.parseBAPI_IRAPIResultEntityTypeDecl() is not implemented yet");
-    }
-}
-
-class IRFailTypeDecl extends IRAPIResultEntityTypeDecl {
-    constructor(tkey: string, saturatedProvides: IRTypeSignature[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, ttype: IRTypeSignature) {
-        super(tkey, saturatedProvides, docstr, file, sinfo, ttype);
-    }
-
-    override toBAPI(): string {
-        assert(false, "IRFailTypeDecl.toBAPI() is not implemented yet");
-    }
-
-    static parseBAPIAsIRFailTypeDecl(lexer: BAPILexer): IRFailTypeDecl {
-        assert(false, "IRFailTypeDecl.parseBAPI_IRFailTypeDecl() is not implemented yet");
     }
 }
 

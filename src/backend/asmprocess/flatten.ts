@@ -4812,7 +4812,9 @@ class ASMToIRConverter {
     }
 
     private processEnvironmentVariableInformation(envreq: EnvironmentVariableInformation): IREnvironmentVariableInformation {
-        assert(false, "Not implemented -- processEnvironmentVariableInformation");
+        assert(envreq.optdefault === undefined, "Default environment values are not implemented yet.");
+        
+        return new IREnvironmentVariableInformation(envreq.evname, this.processTypeSignature(envreq.evtype), true, undefined);
     }
 
     private processResourceInformation(resourcereqs: ResourceInformation): IRResourceInformation {

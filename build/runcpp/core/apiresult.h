@@ -84,6 +84,9 @@ namespace ᐸRuntimeᐳ
         const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
         ofinfo->opdispatch.parseToBSQFp(ofinfo, lexer, &valdata);
 
+        bsq_validate(lexer->testIsSymbol('}'), "BAPI -> BSQ", 0, nullptr, "Expected } for entity");
+        lexer->consume();
+
         XAPIResultData resdata = parseToBSQ_APIResultEntityInfo(tinfo, lexer);
         *(XAPIResultEntityValue<T>*)resptr = XAPIResultEntityValue<T>{resdata, valdata};
     }
@@ -91,12 +94,13 @@ namespace ᐸRuntimeᐳ
     template<typename T>
     json bsqToJSON_APIResultEntity(const TypeInfo* tinfo, const void* valptr)
     {
+        const XAPIResultEntityValue<T>* val = static_cast<const XAPIResultEntityValue<T>*>(valptr);
 
         json j = json::object();
 
         const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
-        j["value"] = ofinfo->opdispatch.bsqToJSONFp(ofinfo, valptr);
-        bsqToJSON_APIResultEntityInfo(tinfo, static_cast<const XAPIResultEntityValue<T>*>(valptr)->data, j);
+        j["value"] = ofinfo->opdispatch.bsqToJSONFp(ofinfo, &val->value);
+        bsqToJSON_APIResultEntityInfo(tinfo, val->data, j);
 
         return j;
     }
