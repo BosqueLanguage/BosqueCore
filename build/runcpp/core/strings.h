@@ -587,6 +587,11 @@ namespace ᐸRuntimeᐳ
         XCString append(XCString other) const;
 
         XCString trim(XBool front, XBool back) const;
+
+        static XCString fromstd(std::string& s)
+        {
+            return XCString::mk(s.data(), s.size());
+        }
     };
 
     class XFCStringRepr 

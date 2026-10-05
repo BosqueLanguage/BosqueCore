@@ -11,11 +11,11 @@ namespace ᐸRuntimeᐳ
 {
     enum class XAPIInfoTag : uint64_t
     {
-        Clear = 0,
-        Timeout = 1,
-        Cancelled = 2,
-        AccessDenied = 3,
-        Error = 4
+        Clear,
+        Timeout,
+        Cancelled,
+        AccessDenied,
+        Error
     };
 
     class XAPIResultData
