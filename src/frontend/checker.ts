@@ -30,7 +30,6 @@ class TypeChecker {
     readonly constraints: TemplateConstraintScope;
     readonly relations: TypeCheckerRelations;
 
-    envDecl: EnvironmentVariableInformation[] = [];
     lambdaCtr: number = 0;
     invidCtr = 0;
 
@@ -1862,20 +1861,20 @@ class TypeChecker {
             }
         }
 
-        const evdecl = this.envDecl.find((ev) => ev.evname === exp.keyname);
+        const evdecl = this.envinfo.find((ev) => ev.evname === exp.resolvedkey);
         if(exp.opname === "has") {
             if(evdecl === undefined) {
-                this.reportError(exp.sinfo, `Environment variable ${exp.keyname} is never defined`);
+                this.reportError(exp.sinfo, `Environment variable ${exp.resolvedkey} is never defined`);
             }
             else {
-                this.checkError(exp.sinfo, evdecl.required, `Environment variable ${exp.keyname} is always defined`);
+                this.checkError(exp.sinfo, evdecl.required, `Environment variable ${exp.resolvedkey} is always defined`);
             }
 
             return exp.setType(this.getWellKnownType("Bool"));
         }
         else {
             if(evdecl === undefined) {
-                this.reportError(exp.sinfo, `Could not find environment value ${exp.keyname}`);
+                this.reportError(exp.sinfo, `Could not find environment value ${exp.resolvedkey}`);
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
             exp.mustdefined = evdecl.required;
@@ -1886,7 +1885,8 @@ class TypeChecker {
             }
             else {
                 const optdecl = this.relations.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Option") as OptionTypeDecl;
-                return exp.setType(new NominalTypeSignature(exp.sinfo, undefined, optdecl, [evdecl.evtype]));
+                exp.optoftype = new NominalTypeSignature(exp.sinfo, undefined, optdecl, [evdecl.evtype]);
+                return exp.setType(exp.optoftype);
             }
         }
     }
@@ -2209,6 +2209,9 @@ class TypeChecker {
             itype = infertype;
         }
         
+        let currentexternal = this.isExternalMode;
+        this.isExternalMode = false;
+
         let argsok = true;
         let args: VarInfo[] = [];
         let params: InvokeParameterDecl[] = [];
@@ -2260,6 +2263,7 @@ class TypeChecker {
         }
 
         if(!argsok || (rtype instanceof ErrorTypeSignature)) {
+            this.isExternalMode = currentexternal;
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
         else {
@@ -2279,6 +2283,7 @@ class TypeChecker {
                 env.resolveLambdaCaptureVarInfoFromSrcName(exp.lcaptures[i].vname);
             }
 
+            this.isExternalMode = currentexternal;
             exp.monomorphizedUID = this.lambdaCtr++;
             return exp.setType(ltype);
         }

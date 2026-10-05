@@ -20,9 +20,6 @@ class CPPEmitter {
     readonly irasm: IRAssembly;
     readonly typeInfoManager: TypeInfoManager;
 
-    //The C++ TaskInfoRepr<U> for accessing the global info for the task we are emitting
-    private cppTaskType: string | undefined = undefined;
-
     constructor(irasm: IRAssembly, typeInfoManager: TypeInfoManager) {
         this.irasm = irasm;
         this.typeInfoManager = typeInfoManager;
@@ -702,30 +699,28 @@ class CPPEmitter {
             
             if(ttag === IRExpressionTag.IRAccessEnvHasExpression) {
                 const iehe = exp as IRAccessEnvHasExpression;
-                return `${this.cppTaskType}::asRepr(&${RUNTIME_NAMESPACE}::tl_info)->environment.has(${RUNTIME_NAMESPACE}::XCString::gliteral(${this.escapeLiteralCString(iehe.keybytes)}))`;
+                return `${RUNTIME_NAMESPACE}::XBool::from(${RUNTIME_NAMESPACE}::TaskInfoRepr::asRepr(${RUNTIME_NAMESPACE}::tl_bosque_info.current_task)->environment.has(${RUNTIME_NAMESPACE}::XCString::mk(${this.escapeLiteralCString(iehe.keybytes)})))`;
             }
             else if(ttag === IRExpressionTag.IRAccessEnvGetExpression) {
                 const iege = exp as IRAccessEnvGetExpression;
-                const mname = TransformCPPNameManager.generateNameForUnionMember(iege.oftype.tkeystr);
-                return `${this.cppTaskType}::asRepr(&${RUNTIME_NAMESPACE}::tl_info)->environment.tryGetEntry(${RUNTIME_NAMESPACE}::XCString::gliteral(${this.escapeLiteralCString(iege.keybytes)}))->value.${mname}`;
+                return `${RUNTIME_NAMESPACE}::XCString::fromstd(${RUNTIME_NAMESPACE}::TaskInfoRepr::asRepr(${RUNTIME_NAMESPACE}::tl_bosque_info.current_task)->environment.get(${RUNTIME_NAMESPACE}::XCString::mk(${this.escapeLiteralCString(iege.keybytes)}))->value)`;
             }
             else if(ttag === IRExpressionTag.IRAccessEnvTryGetExpression) {
                 const iege = exp as IRAccessEnvTryGetExpression;
-                const mname = TransformCPPNameManager.generateNameForUnionMember(iege.oftype.tkeystr);
-
-                const chkstr = `${this.cppTaskType}::asRepr(&${RUNTIME_NAMESPACE}::tl_info)->environment.has(${RUNTIME_NAMESPACE}::XCString::gliteral(${this.escapeLiteralCString(iege.keybytes)}))`;
-                const gettype = `${this.cppTaskType}::asRepr(&${RUNTIME_NAMESPACE}::tl_info)->environment.get(${RUNTIME_NAMESPACE}::XCString::gliteral(${this.escapeLiteralCString(iege.keybytes)}))->typeinfo`;
-                const getstr = `${this.cppTaskType}::asRepr(&${RUNTIME_NAMESPACE}::tl_info)->environment.get(${RUNTIME_NAMESPACE}::XCString::gliteral(${this.escapeLiteralCString(iege.keybytes)}))->value.${mname}`;
+                
+                const chkstr = `${RUNTIME_NAMESPACE}::TaskInfoRepr::asRepr(${RUNTIME_NAMESPACE}::tl_bosque_info.current_task)->environment.has(${RUNTIME_NAMESPACE}::XCString::mk(${this.escapeLiteralCString(iege.keybytes)}))`;
+                const gettype = `${RUNTIME_NAMESPACE}::TaskInfoRepr::asRepr(${RUNTIME_NAMESPACE}::tl_bosque_info.current_task)->environment.get(${RUNTIME_NAMESPACE}::XCString::mk(${this.escapeLiteralCString(iege.keybytes)}))->typeinfo`;
+                const getstr = `${RUNTIME_NAMESPACE}::XCString::fromstd(${RUNTIME_NAMESPACE}::TaskInfoRepr::asRepr(${RUNTIME_NAMESPACE}::tl_bosque_info.current_task)->environment.get(${RUNTIME_NAMESPACE}::XCString::mk(${this.escapeLiteralCString(iege.keybytes)}))->value)`;
 
                 const makeopt = `${RUNTIME_NAMESPACE}::XOption<${TransformCPPNameManager.convertTypeKey(iege.oftype.tkeystr)}>::makeSome(${gettype}, ${getstr})`;
                 const makenone = `${RUNTIME_NAMESPACE}::XOption<${TransformCPPNameManager.convertTypeKey(iege.oftype.tkeystr)}>::none`;
                 return `(${chkstr} ? ${makeopt} : ${makenone})`;
             }
             else if(ttag === IRExpressionTag.IRTaskAccessIDExpression) {
-                return `${RUNTIME_NAMESPACE}::tl_info.taskid`;
+                return `${RUNTIME_NAMESPACE}::tl_bosque_info.current_task->taskid`;
             }
             else if(ttag === IRExpressionTag.IRTaskAccessParentIDExpression) {
-                return `(${RUNTIME_NAMESPACE}::tl_info.parent !== nullptr ? ${RUNTIME_NAMESPACE}::tl_info.parent->taskid : ${RUNTIME_NAMESPACE}::XUUIDv4::nil())`;
+                return `(${RUNTIME_NAMESPACE}::tl_bosque_info.current_task->parent !== nullptr ? ${RUNTIME_NAMESPACE}::tl_bosque_info.current_task->parent->taskid : ${RUNTIME_NAMESPACE}::XUUIDv4::nil())`;
             }
             else if(ttag === IRExpressionTag.IRConstructorStandardEntityExpression) {
                 const iccse = exp as IRConstructorStandardEntityExpression;

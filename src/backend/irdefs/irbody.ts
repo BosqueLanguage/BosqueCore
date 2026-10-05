@@ -1565,12 +1565,10 @@ class IRAccessEnvHasExpression extends IRExpression {
 
 class IRAccessEnvGetExpression extends IRExpression {
     readonly keybytes: number[];
-    readonly oftype: IRTypeSignature;
 
-    constructor(keybytes: number[], oftype: IRTypeSignature) {
+    constructor(keybytes: number[]) {
         super(IRExpressionTag.IRAccessEnvGetExpression);
         this.keybytes = keybytes;
-        this.oftype = oftype;
     }
 
     override isSimpleExpression(): boolean {

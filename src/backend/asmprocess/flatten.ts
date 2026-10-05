@@ -2241,30 +2241,41 @@ class ASMToIRConverter {
         } 
         else if(ttag === ExpressionTag.AccessEnvValueExpression) {
             const aevexp = exp as AccessEnvValueExpression;
+            const tvar = this.generateTempVarName(); 
 
             const kbytes = this.processStringBytes(aevexp.resolvedkey as string);
             if(aevexp.opname === "has") {
-                return new IRAccessEnvHasExpression(kbytes);
+                this.pushStatement(new IRTempAssignExpressionStatement(tvar, new IRAccessEnvHasExpression(kbytes), this.processTypeSignature(exp.getType())));
+                return new IRAccessTempVariableExpression(tvar);
             }
             else if(aevexp.opname === "get"){
                 if(!aevexp.mustdefined) {
-                    this.pushStatement(new IRPreconditionCheckStatement(this.currentFile as string, this.convertSourceInfo(exp.sinfo), undefined, this.registerError(this.currentFile as string, this.convertSourceInfo(exp.sinfo), "runtime"), "env::get", 0, [new IRAccessEnvHasExpression(kbytes)]));
+                    const hvar = this.generateTempVarName();
+                    this.pushStatement(new IRTempAssignExpressionStatement(hvar, new IRAccessEnvHasExpression(kbytes), new IRNominalTypeSignature("Bool")));
+                    this.pushStatement(new IRPreconditionCheckStatement(this.currentFile as string, this.convertSourceInfo(exp.sinfo), undefined, this.registerError(this.currentFile as string, this.convertSourceInfo(exp.sinfo), "runtime"), "env::get", 0, [new IRAccessTempVariableExpression(hvar)]));
                 }
 
-                return new IRAccessEnvGetExpression(kbytes, this.processTypeSignature(aevexp.optoftype as TypeSignature));
+                this.pushStatement(new IRTempAssignExpressionStatement(tvar, new IRAccessEnvGetExpression(kbytes), this.processTypeSignature(exp.getType())));
+                return new IRAccessTempVariableExpression(tvar);
             }
             else {
-                return new IRAccessEnvTryGetExpression(kbytes, this.processTypeSignature(aevexp.optoftype as TypeSignature), this.processTypeSignature(exp.getType()));
+                this.pushStatement(new IRTempAssignExpressionStatement(tvar, new IRAccessEnvTryGetExpression(kbytes, this.processTypeSignature(aevexp.optoftype as TypeSignature), this.processTypeSignature(exp.getType())), this.processTypeSignature(exp.getType())));
+                return new IRAccessTempVariableExpression(tvar);
             }
         }
         else if(ttag === ExpressionTag.TaskAccessIDExpression) {
             const taexp = exp as TaskAccessInfoExpression;
+            const tvar = this.generateTempVarName();
+            const tvtype = this.processTypeSignature(exp.getType());
+
             if(taexp.name === "currentID") {
-                return new IRTaskAccessIDExpression();
+                this.pushStatement(new IRTempAssignExpressionStatement(tvar, new IRTaskAccessIDExpression(), tvtype));
             }
             else {
-                return new IRTaskAccessParentIDExpression();
+                this.pushStatement(new IRTempAssignExpressionStatement(tvar, new IRTaskAccessParentIDExpression(), tvtype));
             }
+
+            return new IRAccessTempVariableExpression(tvar);
         }
         else if(ttag === ExpressionTag.AccessNamespaceConstantExpression) {
             const tnsa = exp as AccessNamespaceConstantExpression;
