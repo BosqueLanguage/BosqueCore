@@ -1,4 +1,4 @@
-import { IRCRegex, IRURegex, IRSourceInfo, emitTypeKey, parseTypeKey, emitStringAsByteBufferLiteral, parseStringAsByteBufferLiteral } from "./irsupport.js";
+import { IRCRegex, IRURegex, IRSourceInfo, emitTypeKey, parseTypeKey, emitStringAsByteBufferLiteral, parseStringAsByteBufferLiteral, IRCodeFileInfo } from "./irsupport.js";
 import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature } from "./irtype.js";
 import { IRBody, IRImmediateExpression, IRLiteralCRegexExpression, IRLiteralFormatCStringExpression, IRLiteralFormatStringExpression, IRLiteralUnicodeRegexExpression, IRSimpleExpression, IRStatement } from "./irbody.js";
 
@@ -1415,6 +1415,9 @@ class IRLambdaParameterPackDecl {
 }
 
 class IRAssembly {
+    readonly code: IRCodeFileInfo[];
+    readonly macrodefs: string[];
+
     readonly cregexps: IRCRegex[] = [];
     readonly uregexps: IRURegex[] = [];
 
@@ -1465,7 +1468,9 @@ class IRAssembly {
     readonly typedeporder: IRTypeSignature[] = [];
     readonly typedepcycles: IRTypeSignature[][] = [];
 
-    constructor() {
+    constructor(code: IRCodeFileInfo[], macrodefs: string[]) {
+        this.code = code;
+        this.macrodefs = macrodefs;
     }
 
     computeSubtypeInfo() {
@@ -1708,13 +1713,13 @@ class IRAssembly {
         return `Assembly::BapiAssembly{\n    ${stuff.join(",\n    ")}\n}\n`;
     }
 
-    static parseBAPI(lexer: BAPILexer): IRAssembly {
+    static parseBAPI(lexer: BAPILexer, code: IRCodeFileInfo[], macrodefs: string[]): IRAssembly {
         const tok = lexer.peekToken();
         if(tok.kind !== BAPITokenKind.TypeIdentifier || tok.value !== "Assembly::BapiAssembly") {
             throw new Error(`Unexpected token ${tok.value} when parsing IRAssembly`);
         }
 
-        let irasm = new IRAssembly();
+        let irasm = new IRAssembly(code, macrodefs);
         lexer.consumeToken(); //Assembly::BapiAssembly
         lexer.ensureAndConsumeSymbol("{");
 

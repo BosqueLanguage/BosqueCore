@@ -5602,6 +5602,7 @@ class Parser {
                 samplesfile = this.parseExpression();
             }
 
+            this.ensureAndConsumeTokenAlways(SYM_semicolon, "hole body");
             this.ensureAndConsumeTokenAlways(SYM_rbrace, "hole body");
 
             return new HoleBodyImplementation(sinfo, this.env.currentFile, hname, doccomment, samplesfile);
@@ -7254,7 +7255,7 @@ class Parser {
     }
 
     static parse(core: CodeFileInfo[], code: CodeFileInfo[], macrodefs: string[]): Assembly | ParserError[] {
-        let assembly = new Assembly();
+        let assembly = new Assembly(code, macrodefs);
 
         let registeredNamespaces = new Set<string>();
         const coreerrors = Parser.parsefiles(true, core, macrodefs, assembly, registeredNamespaces);
@@ -7279,7 +7280,7 @@ class Parser {
 
     //Test methods
     static test_parseSFunction(core: CodeFileInfo[], macrodefs: string[], sff: string): string | ParserError[] {
-        let assembly = new Assembly();
+        let assembly = new Assembly(core, macrodefs);
 
         let registeredNamespaces = new Set<string>();
         const coreerrors = Parser.parsefiles(true, core, macrodefs, assembly, registeredNamespaces);
@@ -7296,7 +7297,7 @@ class Parser {
     }
 
     static test_parseSTaskMainInFile(core: CodeFileInfo[], macrodefs: string[], code: string, fname: string): string | ParserError[] {
-        let assembly = new Assembly();
+        let assembly = new Assembly([{srcpath: fname, filename: fname, contents: code}], macrodefs);
 
         let registeredNamespaces = new Set<string>();
         const coreerrors = Parser.parsefiles(true, core, macrodefs, assembly, registeredNamespaces);
@@ -7314,7 +7315,7 @@ class Parser {
     }
 
     static test_parseSFunctionInFile(core: CodeFileInfo[], macrodefs: string[], code: string, fname: string): string | ParserError[] {
-        let assembly = new Assembly();
+        let assembly = new Assembly([{srcpath: "main.bsq", filename: "main.bsq", contents: code}], macrodefs);
 
         let registeredNamespaces = new Set<string>();
         const coreerrors = Parser.parsefiles(true, core, macrodefs, assembly, registeredNamespaces);
@@ -7331,7 +7332,7 @@ class Parser {
     }
 
     static test_parseSFunctionInFilePlus(core: CodeFileInfo[], macrodefs: string[], ctxfiles: CodeFileInfo[], code: string, fname: string): string | ParserError[] {
-        let assembly = new Assembly();
+        let assembly = new Assembly([...ctxfiles, {srcpath: "main.bsq", filename: "main.bsq", contents: code}], macrodefs);
 
         let registeredNamespaces = new Set<string>();
         const coreerrors = Parser.parsefiles(true, core, macrodefs, assembly, registeredNamespaces);

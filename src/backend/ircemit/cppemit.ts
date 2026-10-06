@@ -5,7 +5,7 @@ import { MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_INT } from "../../frontend/assembl
 import { IRExpression, IRExpressionTag, IRLiteralChkIntExpression, IRLiteralChkNatExpression, IRLiteralBoolExpression, IRLiteralByteExpression, IRLiteralCCharExpression, IRLiteralComplexExpression, IRLiteralCRegexExpression, IRLiteralDeltaDateTimeExpression, IRLiteralDeltaISOTimeStampExpression, IRLiteralDeltaLogicalTimeExpression, IRLiteralDeltaSecondsExpression, IRLiteralFloatExpression, IRLiteralIntExpression, IRLiteralISOTimeStampExpression, IRLiteralLogicalTimeExpression, IRLiteralNatExpression, IRLiteralPlainDateExpression, IRLiteralPlainTimeExpression, IRLiteralSHAContentHashExpression, IRLiteralStringExpression, IRLiteralTAITimeExpression, IRLiteralTZDateTimeExpression, IRLiteralUnicodeCharExpression, IRLiteralUnicodeRegexExpression, IRLiteralUUIDv4Expression, IRLiteralUUIDv7Expression, IRLiteralExpression, IRImmediateExpression, IRLiteralTypedExpression, IRLiteralTypedCStringExpression, IRAccessEnvHasExpression, IRAccessEnvGetExpression, IRAccessEnvTryGetExpression, IRAccessConstantExpression, IRAccessParameterVariableExpression, IRAccessLocalVariableExpression, IRAccessCapturedVariableExpression, IRAccessEnumExpression, IRAccessTempVariableExpression, IRSimpleExpression, IRAtomicStatement, IRStatement, IRStatementTag, IRPrefixNotOpExpression, IRPrefixPlusOpExpression, IRPrefixNegateOpExpression, IRBinAddExpression, IRBinSubExpression, IRBinMultExpression, IRBinDivExpression, IRNumericEqExpression, IRNumericNeqExpression, IRNumericLessExpression, IRNumericLessEqExpression, IRNumericGreaterExpression, IRNumericGreaterEqExpression, IRLogicAndExpression, IRLogicOrExpression, IRReturnValueSimpleStatement, IRErrorAdditionBoundsCheckStatement, IRErrorSubtractionBoundsCheckStatement, IRErrorMultiplicationBoundsCheckStatement, IRErrorDivisionByZeroCheckStatement, IRTypeDeclSizeRangeCheckCStringStatement, IRTypeDeclSizeRangeCheckUnicodeStringStatement, IRAbortStatement, IRVariableDeclarationStatement, IRVariableInitializationStatement, IRTempAssignExpressionStatement, IRTypeDeclInvariantCheckStatement, IRAccessTypeDeclValueExpression, IRConstructSafeTypeDeclExpression, IRChkLogicImpliesShortCircuitStatement, IRPreconditionCheckStatement, IRPostconditionCheckStatement, IRVariableInitializationDirectInvokeStatement, IRLogicSimpleConditionalExpression, IRLogicConditionalStatement, IRAssertStatement, IRValidateStatement, IRBuiltinBody, IRStandardBody, IRHoleBody, IRIsNoneOptionExpression, IRBinKeyEqDirectExpression, IRIsOptionEqValueExpression, IRIsSomeNeqValueExpression, IRIsOptionNeqValueExpression, IRIsSomeEqValueExpression, IRConstructorSomeTypeExpression, IRLiteralOptionOfNoneExpression, IRConstructOptionFromSomeExpression, IRExtractSomeFromOptionExpression, IRExtractSomeValueFromOptionExpression, IRBinKeyNeqDirectExpression, IRBinKeyLessDirectExpression, IRSimpleIfStatement, IRSimpleIfElseStatement, IRConstructorStandardEntityExpression, IRReturnDirectConstructStatement, IRReturnDirectInvokeStatement, IRVariableInitializationDirectConstructorStatement, IREntityInvariantCheckStatement, IRBoxEntityToConceptRepresentationExpression, IRVariableAssignmentStatement, IRVariableAssignmentDirectInvokeStatement, IRVariableAssignmentDirectConstructorStatement, IRConstructorListEmptyExpression, IRConstructorListSingletonsExpression, IRInvokeSimpleExpression, IRVariableInitializationDirectInvokeWithImplicitStatement, IRVariableAssignmentDirectInvokeWithImplicitStatement, IRReturnDirectConstructWithBoxStatement, IRReturnValueImplicitStatement, IRReturnDirectInvokeImplicitStatement, IRReturnDirectInvokeImplicitPassThroughStatement, IRReturnDirectConstructImplicitStatement, IRReturnDirectConstructWithBoxImplicitStatement, IRInvokeSimpleWithImplicitsExpression, IRTempAssignRefInvokeStatement, IRTempAssignStdInvokeStatement, IRVoidInvokeStatement, IRVariableInitializationDirectConstructorWithBoxStatement, IRVariableAssignmentDirectConstructorWithBoxStatement, IRLiteralFormatCStringExpression, IRLiteralFormatStringExpression, IRInterpolateFormatCStringExpression, IRFormatStringTextComponent, IRFormatStringArgComponent, IRTypeDeclFormatCheckCStringStatement, IRLiteralTypedStringExpression, IRAccessFieldSpecialExpression, IRAccessFieldVirtualExpression, IRIsConceptRepresentationOfTypeExpression, IRIsConceptRepresentationSubtypeOfTypeExpression, IRIsNotConceptRepresentationSubtypeOfTypeExpression, IRStaticIsTypeSubtypeOfExpression, IRErrorTypeAssertionCheckStatement, IRUnboxEntityFromConceptRepresentationExpression, IRConvertConceptRepresentationExpression, IRConstructorLambdaExpression, IRMatchExactStatement, IRMatchGeneralStatement, IRBlockStatement, IRErrorExhaustiveStatement, IRTypeDeclNumericRangeCheckStatement, IRTempAssignDirectConstructorStatement, IRConstructorEListExpression, IRAccessEListIndexExpression, IRConstructorMapEntryTypeExpression, IRConstructorMapEmptyExpression, IRConstructorMapSingletonsExpression, IRUpdateLocalDirectStatement, IRUpdateParamDirectStatement, IRConstructorAPISuccessTypeExpression, IRInvokeCallAgentOrAPIExpression, IRConstructorListPassthroughExpression, IRConstructorListMixedExpression, IRLiteralByteBufferExpression, IRInterpolateFormatStringExpression, IRTypeDeclFormatCheckUnicodeStringStatement, IRDebugStatement, IRInvokeTaskActionExpression } from "../irdefs/irbody.js";
 import { IRAbstractCollectionTypeDecl, IRAbstractConceptTypeDecl, IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAPIDeniedTypeDecl, IRAPIDroppedTypeDecl, IRAPIErrorTypeDecl, IRAPIRejectedTypeDecl, IRAPIResultEntityTypeDecl, IRAPIResultTypeDecl, IRAPISuccessTypeDecl, IRAssembly, IRConceptTypeDecl, IRConstantDecl, IRConstructableTypeDecl, IRDatatypeMemberEntityTypeDecl, IRDatatypeTypeDecl, IREntityTypeDecl, IREnumTypeDecl, IRFailTypeDecl, IRInternalConceptTypeDecl, IRInvariantDecl, IRInvokeDecl, IRInvokeParameterDecl, IRLambdaParameterPackDecl, IRListTypeDecl, IRMapEntryTypeDecl, IRMapTypeDecl, IRMemberFieldDecl, IROkTypeDecl, IROptionTypeDecl, IRPostConditionDecl, IRPreConditionDecl, IRPrimitiveEntityTypeDecl, IRResultTypeDecl, IRSomeTypeDecl, IRTaskActionDecl, IRTaskDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl, IRValidateDecl } from "../irdefs/irassembly.js";
 import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatCStringTypeSignature, IRFormatStringTypeSignature, IRFormatTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype.js";
-import { IRCRegex, IRURegex } from "../irdefs/irsupport.js";
+import { IRCodeFileInfo, IRCRegex, IRURegex } from "../irdefs/irsupport.js";
 
 import assert from "node:assert";
 
@@ -1770,8 +1770,37 @@ class CPPEmitter {
         }
     }
 
-    private emitHoleBody(body: IRHoleBody, indent: string | undefined): string {
-        assert(false, "CPPEmitter: need to implement hole body");
+    private emitHoleBody(invk: IRInvokeDecl, body: IRHoleBody, indent: string | undefined): string {
+        const ffinfo = this.irasm.code.find((c) => c.srcpath === invk.file) as IRCodeFileInfo;
+
+        const holeid = this.holeidctr++;
+        const linestart = invk.sinfo.line;
+        const lineend = body.xxx;
+        const doccomment = invk.docstr !== undefined ? `std::make_optional(std::string("${invk.docstr.text}"))` : `std::nullopt`;
+
+        const argtypes = invk.params.map((p) => `&g_typeinfo_${TransformCPPNameManager.convertTypeKey(p.type.tkeystr)}`);
+        const resulttype = `&g_typeinfo_${TransformCPPNameManager.convertTypeKey(invk.resultType.tkeystr)}`;
+
+        const ctxdecl = `${RUNTIME_NAMESPACE}::HoleBodyContext(${holeid}, std::string("${invk.ikey}"), std::string("${ffinfo.filename}"), ${linestart}, ${lineend}, ${doccomment}, {${argtypes.join(", ")}}, ${resulttype});`;
+
+        xxxx; //also args and result
+
+        return `${RUNTIME_NAMESPACE}::HoleBodyContext* ctx = ${RUNTIME_NAMESPACE}::getHoleBodyContextForID(${holeid});\n` +
+        `    if(ctx == nullptr) {\n` +
+        `        ${RUNTIME_NAMESPACE}::addHoleBodyContextForID(${holeid}, ${ctxdecl});\n` +
+        `    }\n` +
+        '\n' +
+        `    const char* hhandle = std::getenv("$?_PROC");\n` +
+        `    if(hhandle == nullptr) {\n` +
+        `        bsq_abort("", 0, nullptr, "Holes handler ($?_PROC) set to abort (other options are 'user', 'llm-values', 'llm-gen', and 'llm-full')");\n` +
+        `    }\n` +
+        `    else if(std::strcmp(hhandle, "") == 0) {\n` +
+        `        ${RUNTIME_NAMESPACE}::completeViaCommandLinePrompt(ctx, args, result);\n` +
+        `    }\n` +
+        `    else {\n` +
+        `        assert(false);\n` +
+        `    }`
+        ;
     }
 
     private emitBody(invk: IRInvokeDecl, indent: string | undefined): string {
@@ -1781,7 +1810,7 @@ class CPPEmitter {
             return this.emitBuiltinBody(invk, body, indent);
         }
         else if(body instanceof IRHoleBody) {
-            return this.emitHoleBody(body, indent);
+            return this.emitHoleBody(invk, body, indent);
         }
         else {
             const sbody = body as IRStandardBody;
@@ -3534,7 +3563,7 @@ class CPPEmitter {
                 `    }\n`;
             
                 const pargs = 
-                `    if (setjmp(ᐸRuntimeᐳ::tl_bosque_info.current_task->error_handler) > 0) {\n` +
+                `    if (setjmp(*ᐸRuntimeᐳ::tl_bosque_info.current_task->error_handler) > 0) {\n` +
                 `        auto perr = ᐸRuntimeᐳ::tl_bosque_info.current_task->pending_error.value();\n` +
                 `        if(perr.message != nullptr) { printf("Parsing error: %s\\n", perr.message); }\n` +
                 `        exit(1);\n` +
@@ -3575,7 +3604,7 @@ class CPPEmitter {
             return "";
         }
 
-        let prehandler = '    if (setjmp(ᐸRuntimeᐳ::tl_bosque_info.current_task->error_handler) > 0) {\n' +
+        let prehandler = '    if (setjmp(*ᐸRuntimeᐳ::tl_bosque_info.current_task->error_handler) > 0) {\n' +
             '        auto perr = ᐸRuntimeᐳ::tl_bosque_info.current_task->pending_error.value();\n' +
             '        auto pfile = std::string(perr.file);\n' +
             '        auto pbfile = std::string(pfile.cbegin() + pfile.find_last_of("/") + 1, pfile.cend());\n' +
@@ -3598,7 +3627,7 @@ class CPPEmitter {
             return "";
         }
 
-        let posthandler = '    if (setjmp(ᐸRuntimeᐳ::tl_bosque_info.current_task->error_handler) > 0) {\n' +
+        let posthandler = '    if (setjmp(*ᐸRuntimeᐳ::tl_bosque_info.current_task->error_handler) > 0) {\n' +
             '        auto perr = ᐸRuntimeᐳ::tl_bosque_info.current_task->pending_error.value();\n' +
             '        auto pfile = std::string(perr.file);\n' +
             '        auto pbfile = std::string(pfile.cbegin() + pfile.find_last_of("/") + 1, pfile.cend());\n' +
@@ -3622,7 +3651,7 @@ class CPPEmitter {
         const invokeargs = idecl.params.map((p) => "_" + TransformCPPNameManager.convertIdentifier(p.name));
 
         const preconds = this.emitMainPreConditionChecks(idecl.ikey, invokeargs, idecl.preconditions);
-        const invoke = '    if (setjmp(ᐸRuntimeᐳ::tl_bosque_info.current_task->error_handler) > 0) {\n' +
+        const invoke = '    if (setjmp(*ᐸRuntimeᐳ::tl_bosque_info.current_task->error_handler) > 0) {\n' +
             '        auto perr = ᐸRuntimeᐳ::tl_bosque_info.current_task->pending_error.value();\n' +
             '        auto pfile = std::string(perr.file);\n' +
             '        auto pbfile = std::string(pfile.cbegin() + pfile.find_last_of("/") + 1, pfile.cend());\n' +
@@ -3668,7 +3697,7 @@ class CPPEmitter {
         //
 
         const preconds = this.emitMainPreConditionChecks(idecl.ikey, invokeargs, idecl.preconditions);
-        const invoke = '    if (setjmp(ᐸRuntimeᐳ::tl_bosque_info.current_task->error_handler) > 0) {\n' +
+        const invoke = '    if (setjmp(*ᐸRuntimeᐳ::tl_bosque_info.current_task->error_handler) > 0) {\n' +
             '        auto perr = ᐸRuntimeᐳ::tl_bosque_info.current_task->pending_error.value();\n' +
             '        auto pfile = std::string(perr.file);\n' +
             '        auto pbfile = std::string(pfile.cbegin() + pfile.find_last_of("/") + 1, pfile.cend());\n' +

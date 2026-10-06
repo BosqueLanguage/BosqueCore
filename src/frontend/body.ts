@@ -2905,7 +2905,7 @@ class HoleBodyImplementation extends BodyImplementation {
     readonly hname: string | undefined;
     readonly doccomment: string | undefined;
     readonly samplesfile: Expression | undefined;
-    
+
     constructor(sinfo: SourceInfo, file: string, hname: string | undefined, doccomment: string | undefined, samplesfile: Expression | undefined) {
         super(sinfo, file);
         this.hname = hname;
@@ -2926,7 +2926,7 @@ class HoleBodyImplementation extends BodyImplementation {
             ebody = `(${dcom})${samplstr}`;
         }
 
-        return hstr + `?_${this.hname || ""}${ebody}`;
+        return "{ " + hstr + `?_${this.hname || ""}${ebody};` + " }";
     }
 }
 

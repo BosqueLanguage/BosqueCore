@@ -4824,7 +4824,25 @@ class TypeChecker {
     }
 
     private checkHoleStatement(env: TypeEnvironment, stmt: HoleStatement): TypeEnvironment {
-        return env;
+        if(stmt.samplesfile !== undefined) {
+            const sptype = this.checkExpression(env, stmt.samplesfile, undefined);
+            this.checkError(stmt.sinfo, (sptype instanceof ErrorTypeSignature) || sptype.tkeystr !== "Path", `Samples file expression does not have a path type -- got ${sptype.emit()}`);
+        }
+
+        let nvars: {name: string, vtype: TypeSignature}[] = [];
+        for(let i = 0; i < stmt.nvars.length; ++i) {
+            const nv = stmt.nvars[i];
+            this.checkTypeSignature(nv.tsig);
+
+            nvars.push({name: nv.name, vtype: nv.tsig});
+        }
+        const nenv = env.addLocalVarSet(nvars, "let")
+        
+        for(let i = 0; i < stmt.ensures.length; ++i) {
+            this.checkChkLogicExpression(nenv, stmt.ensures[i]);
+        }
+
+        return nenv;
     }
 
     private checkBlockStatement(env: TypeEnvironment, stmt: BlockStatement): TypeEnvironment {

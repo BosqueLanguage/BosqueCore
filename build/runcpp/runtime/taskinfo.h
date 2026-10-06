@@ -116,11 +116,11 @@ namespace ᐸRuntimeᐳ
         const TaskInfo* parent;
         TaskPriority priority;
 
-        std::jmp_buf error_handler;
+        std::jmp_buf* error_handler;
         std::optional<ErrorInfo> pending_error;
 
-        TaskInfo() : uuidv4_generator(), taskid(XUUIDv4::nil()), parent(nullptr), priority(), error_handler(), pending_error() {}
-        TaskInfo(const XUUIDv4& tId, const TaskInfo* pTask, TaskPriority prio) : taskid(tId), parent(pTask), priority(prio), error_handler(), pending_error() {}
+        TaskInfo() : uuidv4_generator(), taskid(XUUIDv4::nil()), parent(nullptr), priority(), error_handler(nullptr), pending_error() {}
+        TaskInfo(const XUUIDv4& tId, const TaskInfo* pTask, TaskPriority prio) : taskid(tId), parent(pTask), priority(prio), error_handler(nullptr), pending_error() {}
 
         //Generate UUID for a task
         static XUUIDv4 generateFreshTaskId();

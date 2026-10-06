@@ -2,6 +2,20 @@ import assert from "node:assert";
 
 import type { BAPILexer } from "./irlexer.js";
 
+class IRCodeFileInfo
+{
+    readonly srcpath: string;
+    readonly filename: string;
+    readonly contents: string;
+
+    constructor(srcpath: string, filename: string, contents: string)
+    {
+        this.srcpath = srcpath;
+        this.filename = filename;
+        this.contents = contents;
+    }
+}
+
 class IRSourceInfo
 {
     readonly line: number;
@@ -235,6 +249,7 @@ export {
     parseStringAsByteBufferLiteral, parseUTF8BytesAsByteBufferLiteral, parseUTF32BytesAsByteBufferLiteral,
     parseTypeKey, parseConstKey, parseInvokeKey, parseIdentifier, parseVarIdentifier,
 
+    IRCodeFileInfo,
     IRSourceInfo,
     IRCRegex,
     IRURegex

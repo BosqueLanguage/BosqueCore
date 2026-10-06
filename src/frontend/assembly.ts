@@ -2,7 +2,7 @@
 import { FullyQualifiedNamespace, TypeSignature, LambdaTypeSignature, RecursiveAnnotation, TemplateTypeSignature, VoidTypeSignature, LambdaParameterSignature, AutoTypeSignature, NominalTypeSignature, TemplateNameMapper } from "./type.js";
 import { Expression, BodyImplementation, ExpressionTag, AccessNamespaceConstantExpression, LiteralRegexExpression, ChkLogicExpression, AccessStaticFieldExpression } from "./body.js";
 
-import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls.js";
+import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls.js";
 
 import assert from "node:assert";
 
@@ -1678,7 +1678,15 @@ class NamespaceDeclaration {
 
 class Assembly {
     readonly toplevelNamespaces: NamespaceDeclaration[] = [];
+
+    readonly code: CodeFileInfo[];
+    readonly macrodefs: string[];
     
+    constructor(code: CodeFileInfo[], macrodefs: string[]) {
+        this.code = code;
+        this.macrodefs = macrodefs;
+    }
+
     hasToplevelNamespace(ns: string): boolean {
         return this.toplevelNamespaces.find((nsd) => nsd.name === ns) !== undefined;
     }
