@@ -4016,7 +4016,7 @@ class ASMToIRConverter {
         }
         else if(body instanceof HoleBodyImplementation) {
             assert(body.samplesfile === undefined, "HoleBodyImplementation with expression not supported in IR yet");
-            return new IRHoleBody(body.hname, body.doccomment, undefined);
+            return new IRHoleBody(body.startline, body.endline, body.hname, body.doccomment, undefined);
         }
         else {
             if(body instanceof ExpressionBodyImplementation) {

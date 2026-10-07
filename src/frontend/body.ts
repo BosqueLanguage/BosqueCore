@@ -2902,12 +2902,17 @@ class BuiltinBodyImplementation extends BodyImplementation {
 }
 
 class HoleBodyImplementation extends BodyImplementation {
+    readonly startline: number;
+    readonly endline: number;
+
     readonly hname: string | undefined;
     readonly doccomment: string | undefined;
     readonly samplesfile: Expression | undefined;
 
-    constructor(sinfo: SourceInfo, file: string, hname: string | undefined, doccomment: string | undefined, samplesfile: Expression | undefined) {
+    constructor(sinfo: SourceInfo, file: string, startline: number, endline: number, hname: string | undefined, doccomment: string | undefined, samplesfile: Expression | undefined) {
         super(sinfo, file);
+        this.startline = startline;
+        this.endline = endline;
         this.hname = hname;
         this.doccomment = doccomment;
         this.samplesfile = samplesfile;

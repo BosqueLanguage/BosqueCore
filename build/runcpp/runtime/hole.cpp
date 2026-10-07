@@ -5,7 +5,9 @@
 
 namespace ᐸRuntimeᐳ 
 {
-    bool trySingleStdInRead(const TypeInfo* ofinfo, void* outvalue)
+    HoleBodyContextManager g_hole_body_contexts;
+    
+    bool HoleBodyContextManager::trySingleStdInRead(const TypeInfo* ofinfo, void* outvalue)
     {
         size_t obytes = 0;
         std::list<uint8_t*> iobb;
@@ -44,21 +46,26 @@ namespace ᐸRuntimeᐳ
         return allconsumed;
     }
 
-    HoleBodyContext* getHoleBodyContextForID(size_t holeid)
+    HoleBodyContext* HoleBodyContextManager::getHoleContextForID(size_t holeid)
     {
-        auto ii = std::find_if(tl_bosque_info.bodyhole_contexts.begin(), tl_bosque_info.bodyhole_contexts.end(), [holeid](const HoleBodyContext& hb) {
+        auto ii = std::find_if(this->contexts.begin(), this->contexts.end(), [holeid](const HoleBodyContext& hb) {
             return hb.holeid == holeid;
         });
 
-        return (ii != tl_bosque_info.bodyhole_contexts.cend()) ? &(*ii) : nullptr;
+        if(ii == this->contexts.end()) {
+            return nullptr;
+        }
+        else {
+            return &(*ii);
+        }
     }
 
-    void addHoleBodyContextForID(size_t holeid, HoleBodyContext& ctx)
+    void HoleBodyContextManager::addHoleContextForID(size_t holeid, const HoleBodyContext& ctx)
     {
-        tl_bosque_info.bodyhole_contexts.push_back(ctx);
+        this->contexts.push_back(ctx);
     }
 
-    void completeViaCommandLinePrompt(HoleBodyContext* ctx, const std::vector<void*>& args, void* result)
+    void HoleBodyContextManager::completeViaCommandLinePrompt(HoleBodyContext* ctx, const std::vector<const void*>& args, void* result)
     {        
         std::cout << "Hit hole definition of invoke: " << ctx->invokename << " need result for the input" << std::endl;
         
@@ -103,25 +110,25 @@ namespace ᐸRuntimeᐳ
         tl_bosque_info.current_task->error_handler = origenv;
     }
 
-    void completeViaLLMValueGeneration(HoleBodyContext* ctx, const std::vector<void*>& args, void* result)
+    void HoleBodyContextManager::completeViaLLMValueGeneration(HoleBodyContext* ctx, const std::vector<const void*>& args, void* result)
     {
         assert(false); //completeViaLLMValueGeneration not yet implemented
     }
 
-    std::string completeViaLLMVCodeGeneration(HoleBodyContext* ctx, const std::vector<void*>& args, void* result)
+    std::string HoleBodyContextManager::completeViaLLMVCodeGeneration(HoleBodyContext* ctx, const std::vector<const void*>& args, void* result)
     {
         assert(false); //completeViaLLMVCodeGeneration not yet implemented
     }
 
-    void loadHoleExamples(size_t holeid, std::istream& in)
+    void HoleBodyContextManager::loadHoleExamples(size_t holeid, std::istream& in)
     {
         assert(false); //loadHoleExamples not yet implemented
     }
     
-    void emitHoleExample(size_t holeid, std::ostream& out)
+    void HoleBodyContextManager::emitHoleExample(size_t holeid, std::ostream& out)
     {
         //TODO: we are assuming a single thread here but later we need a global list of all threads and then over that too
-        auto ctx = getHoleBodyContextForID(holeid);
+        auto ctx = this->getHoleContextForID(holeid);
         assert(ctx != nullptr);
 
         for(auto iter = ctx->examples.cbegin(); iter != ctx->examples.cend(); ++iter) {
@@ -141,9 +148,9 @@ namespace ᐸRuntimeᐳ
         }
     }
 
-    void emitAllBodyHolesToStdOut()
+    void HoleBodyContextManager::emitAllBodyHolesToStdOut()
     {
-        for(auto iter = tl_bosque_info.bodyhole_contexts.cbegin(); iter != tl_bosque_info.bodyhole_contexts.cend(); ++iter) {
+        for(auto iter = this->contexts.cbegin(); iter != this->contexts.cend(); ++iter) {
             std::cout << "Example IO pairs for: " << iter->invokename << std::endl;
             emitHoleExample(iter->holeid, std::cout);
 

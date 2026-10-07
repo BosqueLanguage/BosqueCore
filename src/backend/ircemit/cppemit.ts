@@ -20,6 +20,8 @@ class CPPEmitter {
     readonly irasm: IRAssembly;
     readonly typeInfoManager: TypeInfoManager;
 
+    holeidctr: number = 0;
+
     constructor(irasm: IRAssembly, typeInfoManager: TypeInfoManager) {
         this.irasm = irasm;
         this.typeInfoManager = typeInfoManager;
@@ -1774,32 +1776,38 @@ class CPPEmitter {
         const ffinfo = this.irasm.code.find((c) => c.srcpath === invk.file) as IRCodeFileInfo;
 
         const holeid = this.holeidctr++;
-        const linestart = invk.sinfo.line;
-        const lineend = body.xxx;
+        const linestart = body.startline;
+        const lineend = body.endline;
         const doccomment = invk.docstr !== undefined ? `std::make_optional(std::string("${invk.docstr.text}"))` : `std::nullopt`;
 
-        const argtypes = invk.params.map((p) => `&g_typeinfo_${TransformCPPNameManager.convertTypeKey(p.type.tkeystr)}`);
-        const resulttype = `&g_typeinfo_${TransformCPPNameManager.convertTypeKey(invk.resultType.tkeystr)}`;
+        const argtypes = invk.params.map((p) => `&ᐸRuntimeᐳ::g_typeinfo_${TransformCPPNameManager.convertTypeKey(p.type.tkeystr)}`);
+        const resulttype = `&ᐸRuntimeᐳ::g_typeinfo_${TransformCPPNameManager.convertTypeKey(invk.resultType.tkeystr)}`;
 
-        const ctxdecl = `${RUNTIME_NAMESPACE}::HoleBodyContext(${holeid}, std::string("${invk.ikey}"), std::string("${ffinfo.filename}"), ${linestart}, ${lineend}, ${doccomment}, {${argtypes.join(", ")}}, ${resulttype});`;
+        const ctxdecl = `${RUNTIME_NAMESPACE}::HoleBodyContext(${holeid}, std::string("${invk.ikey}"), std::string("${ffinfo.filename}"), ${linestart}, ${lineend}, ${doccomment}, {${argtypes.join(", ")}}, ${resulttype})`;
 
-        xxxx; //also args and result
+        const args = invk.params.map((p) => `&${p.name}`);
 
-        return `${RUNTIME_NAMESPACE}::HoleBodyContext* ctx = ${RUNTIME_NAMESPACE}::getHoleBodyContextForID(${holeid});\n` +
+        return '{\n' +
+        `    ${RUNTIME_NAMESPACE}::HoleBodyContext* ctx = ${RUNTIME_NAMESPACE}::g_hole_body_contexts.getHoleContextForID(${holeid});\n` +
         `    if(ctx == nullptr) {\n` +
-        `        ${RUNTIME_NAMESPACE}::addHoleBodyContextForID(${holeid}, ${ctxdecl});\n` +
+        `        ${RUNTIME_NAMESPACE}::g_hole_body_contexts.addHoleContextForID(${holeid}, ${ctxdecl});\n` +
+        `        ctx = ${RUNTIME_NAMESPACE}::g_hole_body_contexts.getHoleContextForID(${holeid});\n` +
         `    }\n` +
         '\n' +
         `    const char* hhandle = std::getenv("$?_PROC");\n` +
         `    if(hhandle == nullptr) {\n` +
-        `        bsq_abort("", 0, nullptr, "Holes handler ($?_PROC) set to abort (other options are 'user', 'llm-values', 'llm-gen', and 'llm-full')");\n` +
+        `        ${RUNTIME_NAMESPACE}::bsq_abort("", 0, nullptr, "Holes handler ($?_PROC) set to abort (other options are 'user', 'llm-values', 'llm-gen', and 'llm-full')");\n` +
         `    }\n` +
         `    else if(std::strcmp(hhandle, "") == 0) {\n` +
-        `        ${RUNTIME_NAMESPACE}::completeViaCommandLinePrompt(ctx, args, result);\n` +
+        `        std::vector<const void*> args = {${args.join(", ")}};\n` +
+        `        ${this.typeInfoManager.emitTypeAsStd(invk.resultType.tkeystr)} result;\n` +
+        `        ${RUNTIME_NAMESPACE}::g_hole_body_contexts.completeViaCommandLinePrompt(ctx, args, &result);\n` +
+        `        return result;\n` +
         `    }\n` +
         `    else {\n` +
-        `        assert(false);\n` +
-        `    }`
+        `        ${RUNTIME_NAMESPACE}::bsq_abort("", 0, nullptr, "Holes handler ($?_PROC) was not recognized. Valid options are 'user', 'llm-values', 'llm-gen', and 'llm-full')");\n` +
+        `    }\n` +
+        `}`
         ;
     }
 
@@ -3471,6 +3479,7 @@ class CPPEmitter {
             '#include "./runcpp/core/apiresult.h"',
             '',
             '#include "./runcpp/runtime/taskinfo.h"',
+            '#include "./runcpp/runtime/hole.h"',
             '',
             '#include "./runcpp/runtime/allocator/gc.h"'
         ].join("\n");
