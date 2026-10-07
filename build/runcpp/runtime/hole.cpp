@@ -69,6 +69,8 @@ namespace ᐸRuntimeᐳ
     {        
         std::cout << "Hit hole definition of invoke: " << ctx->invokename << " need result for the input" << std::endl;
         
+        //TODO: check for memoized match here
+
         if(ctx->argtypes.empty()) {
             std::cout << "[ ]";
         }
@@ -77,7 +79,6 @@ namespace ᐸRuntimeᐳ
 
             for(size_t j = 0; j < args.size(); ++j) {
                 ctx->argtypes[j]->opdispatch.bsqToBAPIFp(ctx->argtypes[j], args[j], &builder);
-                std::cout << args[j];
             }
             
             std::list<uint8_t*> oibb; 
@@ -93,17 +94,19 @@ namespace ᐸRuntimeᐳ
                 ii += std::min(ᐸRuntimeᐳ::MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE, obytes - ii);
                 biter++;
             }
-            std::cout << " ]";
-        }
+            std::cout << " ]" << std::endl;
 
-        //TODO: check for memoized match here
+            while(!oibb.empty()) {
+                g_alloc_info.io_buffer_free(oibb.back());
+                oibb.pop_back();
+            }
+        }
 
         std::jmp_buf env;
         std::jmp_buf* origenv = tl_bosque_info.current_task->error_handler;
         tl_bosque_info.current_task->error_handler = &env;
         bool done = false;
-        while(!done)
-        {
+        while(!done) {
             done = trySingleStdInRead(ctx->resulttype, result);
         }
 

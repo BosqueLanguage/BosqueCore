@@ -36,7 +36,7 @@ namespace ᐸRuntimeᐳ
     class HoleBodyContextManager
     {
     private:
-        static std::vector<HoleBodyContext> contexts;
+        std::vector<HoleBodyContext> contexts;
 
         bool trySingleStdInRead(const TypeInfo* ofinfo, void* outvalue);
 

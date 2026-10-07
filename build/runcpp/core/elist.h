@@ -104,7 +104,7 @@ namespace ᐸRuntimeᐳ
         const TypeInfo* ofinfo1 = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
         const TypeInfo* ofinfo2 = TypeInfo::getTypeInfoForID(tinfo->ftable[1].fieldbsqtypeid);
 
-        os << getDisplayIndent(indent) << tinfo->typekey << "(| ";
+        os << getDisplayIndent(indent) << "(| ";
         ofinfo1->opdispatch.displayFp(ofinfo1, &elist->first, os, indent);
         os << ", ";
         ofinfo2->opdispatch.displayFp(ofinfo2, &elist->second, os, indent);
@@ -251,7 +251,7 @@ namespace ᐸRuntimeᐳ
         const TypeInfo* ofinfo2 = TypeInfo::getTypeInfoForID(tinfo->ftable[1].fieldbsqtypeid);
         const TypeInfo* ofinfo3 = TypeInfo::getTypeInfoForID(tinfo->ftable[2].fieldbsqtypeid);
 
-        os << getDisplayIndent(indent) << tinfo->typekey << "(| ";
+        os << getDisplayIndent(indent) << "(| ";
         ofinfo1->opdispatch.displayFp(ofinfo1, &elist->first, os, indent);
         os << ", ";
         ofinfo2->opdispatch.displayFp(ofinfo2, &elist->second, os, indent);
@@ -422,7 +422,7 @@ namespace ᐸRuntimeᐳ
         const TypeInfo* ofinfo3 = TypeInfo::getTypeInfoForID(tinfo->ftable[2].fieldbsqtypeid);
         const TypeInfo* ofinfo4 = TypeInfo::getTypeInfoForID(tinfo->ftable[3].fieldbsqtypeid);
 
-        os << getDisplayIndent(indent) << tinfo->typekey << "(| ";
+        os << getDisplayIndent(indent) << "(| ";
         ofinfo1->opdispatch.displayFp(ofinfo1, &elist->first, os, indent);
         os << ", ";
         ofinfo2->opdispatch.displayFp(ofinfo2, &elist->second, os, indent);

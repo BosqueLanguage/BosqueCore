@@ -1794,18 +1794,18 @@ class CPPEmitter {
         `        ctx = ${RUNTIME_NAMESPACE}::g_hole_body_contexts.getHoleContextForID(${holeid});\n` +
         `    }\n` +
         '\n' +
-        `    const char* hhandle = std::getenv("$?_PROC");\n` +
+        `    const char* hhandle = std::getenv("HOLE_PROC");\n` +
         `    if(hhandle == nullptr) {\n` +
-        `        ${RUNTIME_NAMESPACE}::bsq_abort("", 0, nullptr, "Holes handler ($?_PROC) set to abort (other options are 'user', 'llm-values', 'llm-gen', and 'llm-full')");\n` +
+        `        ${RUNTIME_NAMESPACE}::bsq_abort("", 0, nullptr, "Holes handler (HOLE_PROC) set to abort (other options are 'user', 'llm-values', 'llm-gen', and 'llm-full')");\n` +
         `    }\n` +
-        `    else if(std::strcmp(hhandle, "") == 0) {\n` +
+        `    else if(std::strcmp(hhandle, "user") == 0) {\n` +
         `        std::vector<const void*> args = {${args.join(", ")}};\n` +
         `        ${this.typeInfoManager.emitTypeAsStd(invk.resultType.tkeystr)} result;\n` +
         `        ${RUNTIME_NAMESPACE}::g_hole_body_contexts.completeViaCommandLinePrompt(ctx, args, &result);\n` +
         `        return result;\n` +
         `    }\n` +
         `    else {\n` +
-        `        ${RUNTIME_NAMESPACE}::bsq_abort("", 0, nullptr, "Holes handler ($?_PROC) was not recognized. Valid options are 'user', 'llm-values', 'llm-gen', and 'llm-full')");\n` +
+        `        ${RUNTIME_NAMESPACE}::bsq_abort("", 0, nullptr, "Holes handler (HOLE_PROC) was not recognized. Valid options are 'user', 'llm-values', 'llm-gen', and 'llm-full')");\n` +
         `    }\n` +
         `}`
         ;
@@ -3766,6 +3766,7 @@ class CPPEmitter {
                '    ᐸRuntimeᐳ::g_alloc_info.initializeGlobalRegion(BSQ_g_globaldata);\n' +
                `    ${initializegc}\n` +
                `    ${notes}\n` +
+               `    std::jmp_buf rootjmp; ᐸRuntimeᐳ::tl_bosque_info.current_task->error_handler = &rootjmp;\n` +
                `    mmain(argc, argv);\n` +
                '\n' +
                `    ᐸRuntimeᐳ::tl_alloc_info.cleanup();\n` +
