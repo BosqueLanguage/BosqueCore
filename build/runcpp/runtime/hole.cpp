@@ -103,7 +103,6 @@ namespace ᐸRuntimeᐳ
         bool allconsumed = false;
         if (setjmp(*tl_bosque_info.current_task->error_handler) > 0) {
             std::cout << "Error occurred while trying to process input -- retrying" << std::endl;
-            return false;
         }
         else {
             ofinfo->opdispatch.parseToBSQFp(ofinfo, &lexer, outvalue);
@@ -193,6 +192,7 @@ namespace ᐸRuntimeᐳ
 
     void HoleBodyContextManager::completeViaLLMValueGeneration(HoleBodyContext* ctx, const std::vector<const void*>& args, void* result)
     {
+        /*
         std::string sysmsg = "We are creating mocks for testing. Given the user input, relevant code and input values, generate the appropriate return result as a valid JSON value.";
         std::string othercode = "The other relevant code for this task is --\n\n  function getBestTeams(results: List<TeamResult>): List<CString>     requires !results.empty(); { let maxscore = getMaxScore(results.map<Int>(fn(t) => t.round1), results.map<Int>(fn(t) => t.round2)); return results.filter(pred(t) => t.round1 + t.round2 == maxscore.0 + maxscore.1).map<CString>(fn(t) => t.team); }";
         
@@ -215,6 +215,9 @@ namespace ᐸRuntimeᐳ
 
         ctx->resulttype->opdispatch.displayFp(ctx->resulttype, result, std::cout, std::nullopt);
         std::cout << std::endl;
+        */
+
+        assert(false); //completeViaLLMValueGeneration not yet implemented well -- next after commit
     }
 
     std::string HoleBodyContextManager::completeViaLLMVCodeGeneration(HoleBodyContext* ctx, const std::vector<const void*>& args, void* result)
