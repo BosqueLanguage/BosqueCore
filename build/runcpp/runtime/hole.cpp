@@ -3,8 +3,85 @@
 #include "taskinfo.h"
 #include "./allocator/alloc.h"
 
+//For now we are going to run this through boost -- later want IO unified with other http and io_uring
+#include <boost/asio.hpp>
+#include <boost/beast.hpp>
+#include <boost/beast/ssl.hpp>
+
 namespace ᐸRuntimeᐳ 
 {
+    json makeAIHoleRequest(const std::string& sysprompt, const std::string& userprompt, json schema) 
+    {
+        boost::beast::error_code ec;
+        std::string host = "api.openai.com";
+        std::string target = "/v1/chat/completions";
+
+        boost::asio::io_context ioc;
+        boost::asio::ssl::context ctx{boost::asio::ssl::context::tlsv12_client};
+        boost::beast::ssl_stream<boost::beast::tcp_stream> stream{ioc, ctx};
+
+        boost::asio::ip::tcp::resolver resolver(ioc);
+        auto const results = resolver.resolve(host, "443");
+        boost::beast::get_lowest_layer(stream).connect(results, ec);
+        if(ec) {
+            std::cerr << "Error during connection: " << ec.message() << std::endl;
+            assert(false);
+        }
+
+        if (!SSL_set_tlsext_host_name(stream.native_handle(), host.c_str())) {
+            boost::system::error_code ec{static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()};
+            assert(false);
+        }
+
+        stream.handshake(boost::asio::ssl::stream_base::client, ec);
+        if(ec) {
+            std::cerr << "Error during SSL handshake: " << ec.message() << std::endl;
+            assert(false);
+        }
+
+        boost::beast::http::request<boost::beast::http::string_body> req{boost::beast::http::verb::post, target, 11}; // HTTP 1.1
+        req.set(boost::beast::http::field::host, host);
+        req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+        req.set(boost::beast::http::field::authorization, "Bearer " + std::string(getenv("TECTON_KEY"))); // Set the API key for authorization
+        req.set(boost::beast::http::field::content_type, "application/json"); // Required for JSON
+        
+        json request_json = json::object();
+        request_json["model"] = "gpt-6-sol";
+        request_json["messages"] = json::array({
+            {
+                {"role", "system"},
+                {"content", sysprompt}
+            },
+            {
+                {"role", "user"},
+                {"content", userprompt}
+            }
+        });
+
+        req.body() = std::move(request_json.dump());
+        req.prepare_payload(); // Automatically calculates Content-Length header
+
+        boost::beast::http::write(stream, req, ec);
+        if(ec) {
+            std::cerr << "Error during write: " << ec.message() << std::endl;
+            assert(false);
+        }
+
+        // Receive the response
+        boost::beast::flat_buffer buffer;
+        boost::beast::http::response<boost::beast::http::string_body> res;
+        boost::beast::http::read(stream, buffer, res, ec);
+        if(ec) {
+            std::cerr << "Error reading response: " << ec.message() << std::endl;
+            assert(false);
+        }
+
+        // Gracefully close the socket
+        stream.next_layer().socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+
+        return json::parse(res.body());
+    }
+
     HoleBodyContextManager g_hole_body_contexts;
     
     bool HoleBodyContextManager::trySingleStdInRead(const TypeInfo* ofinfo, void* outvalue)
@@ -79,6 +156,7 @@ namespace ᐸRuntimeᐳ
 
             for(size_t j = 0; j < args.size(); ++j) {
                 ctx->argtypes[j]->opdispatch.bsqToBAPIFp(ctx->argtypes[j], args[j], &builder);
+                builder.appendConstString(", ");
             }
             
             std::list<uint8_t*> oibb; 
@@ -115,7 +193,28 @@ namespace ᐸRuntimeᐳ
 
     void HoleBodyContextManager::completeViaLLMValueGeneration(HoleBodyContext* ctx, const std::vector<const void*>& args, void* result)
     {
-        assert(false); //completeViaLLMValueGeneration not yet implemented
+        std::string sysmsg = "We are creating mocks for testing. Given the user input, relevant code and input values, generate the appropriate return result as a valid JSON value.";
+        std::string othercode = "The other relevant code for this task is --\n\n  function getBestTeams(results: List<TeamResult>): List<CString>     requires !results.empty(); { let maxscore = getMaxScore(results.map<Int>(fn(t) => t.round1), results.map<Int>(fn(t) => t.round2)); return results.filter(pred(t) => t.round1 + t.round2 == maxscore.0 + maxscore.1).map<CString>(fn(t) => t.team); }";
+        
+        std::string testingusermsg = "The input function is --\n\n  %** Get the maximum combined scores for the rounds in l1 and l2 **%\nfunction getMaxScore(l1: List<Int>, l2: List<Int>): (|Int, Int|)\n    requires !l1.empty() && !l2.empty();\n    requires l1.size() == l2.size()\n{...}";
+        std::string data = "The input data is --\n\n  {l1: [10, 7], l2: [20, 25]}";
+
+        json testingschema = json::object({
+            {"type", "array"},
+            {"items", {"type", "integer"}},
+            {"minItems", 2},
+            {"maxItems", 2}
+        });
+
+        std::cout << "Hit hole definition of invoke: " << ctx->invokename << std::endl;
+        std::cout << "Constructing output using LLM Agent..." << std::endl;
+        json jres = makeAIHoleRequest(sysmsg + "\n\n" + othercode, testingusermsg + data, testingschema);
+
+        json jj = json::parse(jres["choices"][0]["message"]["content"].get<std::string>());
+        ctx->resulttype->opdispatch.jsonParseToBSQFp(ctx->resulttype, jj, result);
+
+        ctx->resulttype->opdispatch.displayFp(ctx->resulttype, result, std::cout, std::nullopt);
+        std::cout << std::endl;
     }
 
     std::string HoleBodyContextManager::completeViaLLMVCodeGeneration(HoleBodyContext* ctx, const std::vector<const void*>& args, void* result)

@@ -1804,6 +1804,19 @@ class CPPEmitter {
         `        ${RUNTIME_NAMESPACE}::g_hole_body_contexts.completeViaCommandLinePrompt(ctx, args, &result);\n` +
         `        return result;\n` +
         `    }\n` +
+        `    else if(std::strcmp(hhandle, "llm-values") == 0) {\n` +
+        `        std::vector<const void*> args = {${args.join(", ")}};\n` +
+        `        ${this.typeInfoManager.emitTypeAsStd(invk.resultType.tkeystr)} result;\n` +
+        `        ${RUNTIME_NAMESPACE}::g_hole_body_contexts.completeViaLLMValueGeneration(ctx, args, &result);\n` +
+        `        return result;\n` +
+        `    }\n` +
+        `    else if(std::strcmp(hhandle, "llm-gen") == 0) {\n` +
+        `        std::vector<const void*> args = {${args.join(", ")}};\n` +
+        `        ${this.typeInfoManager.emitTypeAsStd(invk.resultType.tkeystr)} result;\n` +
+        `        auto body = ${RUNTIME_NAMESPACE}::g_hole_body_contexts.completeViaLLMVCodeGeneration(ctx, args, &result);\n` +
+        `        std::cout << "Generated body: " << body << std::endl;\n` +
+        `        return result;\n` +
+        `    }\n` +
         `    else {\n` +
         `        ${RUNTIME_NAMESPACE}::bsq_abort("", 0, nullptr, "Holes handler (HOLE_PROC) was not recognized. Valid options are 'user', 'llm-values', 'llm-gen', and 'llm-full')");\n` +
         `    }\n` +
