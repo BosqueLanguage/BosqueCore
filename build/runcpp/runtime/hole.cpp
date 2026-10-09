@@ -12,6 +12,10 @@ namespace ᐸRuntimeᐳ
 {
     json makeAIHoleRequest(const std::string& sysprompt, const std::string& userprompt, json schema) 
     {
+        //
+        //TODO: this is very hacked together and needs some care
+        //
+
         boost::beast::error_code ec;
         std::string host = "api.openai.com";
         std::string target = "/v1/chat/completions";
@@ -42,7 +46,15 @@ namespace ᐸRuntimeᐳ
         boost::beast::http::request<boost::beast::http::string_body> req{boost::beast::http::verb::post, target, 11}; // HTTP 1.1
         req.set(boost::beast::http::field::host, host);
         req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-        req.set(boost::beast::http::field::authorization, "Bearer " + std::string(getenv("TECTON_KEY"))); // Set the API key for authorization
+
+        //TODO: we need to futz with this
+        const char* api_key = getenv("TECTON_KEY");
+        if(api_key == nullptr) {
+            std::cerr << "Error: TECTON_KEY environment variable is not set." << std::endl;
+            assert(false);
+        }
+
+        req.set(boost::beast::http::field::authorization, "Bearer " + std::string(api_key)); // Set the API key for authorization
         req.set(boost::beast::http::field::content_type, "application/json"); // Required for JSON
         
         json request_json = json::object();
@@ -90,11 +102,16 @@ namespace ᐸRuntimeᐳ
         std::list<uint8_t*> iobb;
         iobb.push_back(g_alloc_info.io_buffer_alloc());
     
-        char c; 
-        std::cin.get(c);
-        while(c != ';' && c != EOF) {
-            (iobb.back())[obytes++] = static_cast<uint8_t>(c);
-            std::cin.get(c);
+        int c = std::cin.get();
+        while(c != ';' && c != std::char_traits<char>::eof()) {
+            if(obytes != 0 && obytes % MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE == 0) {
+                iobb.push_back(g_alloc_info.io_buffer_alloc());
+            }
+
+            (iobb.back())[obytes % MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE] = static_cast<uint8_t>(c);
+            ++obytes;
+
+            c = std::cin.get();
         }
 
         BAPILexer lexer(IOBufferIterator::initializeBegin(iobb.cbegin(), obytes), IOBufferIterator::initializeEnd(iobb.cend(), obytes), true);
