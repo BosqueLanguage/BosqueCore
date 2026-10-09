@@ -22,6 +22,6 @@ namespace ᐸRuntimeᐳ
     void bsq_handle_error(const char* file, uint32_t line, ErrorKind kerror, const char* tag, const char* message)
     {
         ᐸRuntimeᐳ::tl_bosque_info.current_task->pending_error = { file, line, kerror, tag, message }; 
-        std::longjmp(ᐸRuntimeᐳ::tl_bosque_info.current_task->error_handler, 11);
+        std::longjmp(*ᐸRuntimeᐳ::tl_bosque_info.current_task->error_handler, 11);
     }
 }

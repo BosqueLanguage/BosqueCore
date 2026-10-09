@@ -4487,12 +4487,17 @@ class IRBuiltinBody extends IRBody {
 }
 
 class IRHoleBody extends IRBody {
+    readonly startline: number;
+    readonly endline: number;
+
     readonly hname: string | undefined;
     readonly doccomment: string | undefined;
     readonly samplesfile: string | undefined;
     
-    constructor(hname: string | undefined, doccomment: string | undefined, samplesfile: string | undefined) {
+    constructor(startline: number, endline: number, hname: string | undefined, doccomment: string | undefined, samplesfile: string | undefined) {
         super();
+        this.startline = startline;
+        this.endline = endline;
         this.hname = hname;
         this.doccomment = doccomment;
         this.samplesfile = samplesfile;

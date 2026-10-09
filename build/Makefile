@@ -15,11 +15,11 @@ CPPFLAGS_OPT.unittests=-Og -g -ggdb -DRB_INVARIANT_VALIDATE
 CPPFLAGS_STD=-Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable -Wuninitialized -Werror -std=gnu++23 -fpie -fno-omit-frame-pointer -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-stack-protector
 CPPFLAGS=${CPPFLAGS_OPT.${BUILD}} ${CPPFLAGS_STD}
 
-LINKAGE=-lboost_regex -licuuc -licui18n -licudata
+LINKAGE=-lboost_regex -licuuc -licui18n -licudata -lssl -lcrypto
 
 HEADERS=$(wildcard $(SRC_DIR)*.h) $(wildcard $(CORE_SRC_DIR)*.h) $(wildcard $(RUNTIME_SRC_DIR)*.h) $(wildcard $(ALLOC_SRC_DIR)*.h) $(wildcard $(UTILS_SRC_DIR)*.h)
 CPP=$(wildcard $(SRC_DIR)*.cpp) $(wildcard $(CORE_SRC_DIR)*.cpp) $(wildcard $(RUNTIME_SRC_DIR)*.cpp) $(wildcard $(ALLOC_SRC_DIR)*.cpp) $(wildcard $(UTILS_SRC_DIR)*.cpp)
-OBJ=$(OUT_OBJ)common.o $(OUT_OBJ)taskinfo.o $(OUT_OBJ)builder.o $(OUT_OBJ)encodings.o $(OUT_OBJ)lexer.o $(OUT_OBJ)alloc.o $(OUT_OBJ)gc_validation.o $(OUT_OBJ)gc.o $(OUT_OBJ)memstats.o $(OUT_OBJ)apiresult.o $(OUT_OBJ)bool.o $(OUT_OBJ)bsqtype.o $(OUT_OBJ)bytebuff.o $(OUT_OBJ)chars.o $(OUT_OBJ)fpoints.o $(OUT_OBJ)integrals.o $(OUT_OBJ)none.o $(OUT_OBJ)strings.o $(OUT_OBJ)uuids.o
+OBJ=$(OUT_OBJ)common.o $(OUT_OBJ)taskinfo.o $(OUT_OBJ)hole.o $(OUT_OBJ)builder.o $(OUT_OBJ)encodings.o $(OUT_OBJ)lexer.o $(OUT_OBJ)alloc.o $(OUT_OBJ)gc_validation.o $(OUT_OBJ)gc.o $(OUT_OBJ)memstats.o $(OUT_OBJ)apiresult.o $(OUT_OBJ)bool.o $(OUT_OBJ)bsqtype.o $(OUT_OBJ)bytebuff.o $(OUT_OBJ)chars.o $(OUT_OBJ)fpoints.o $(OUT_OBJ)integrals.o $(OUT_OBJ)none.o $(OUT_OBJ)strings.o $(OUT_OBJ)uuids.o
 
 MAKEFLAGS += -j8
 
@@ -32,6 +32,10 @@ $(OUT_OBJ)common.o: $(HEADERS) $(CPP)
 $(OUT_OBJ)taskinfo.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)
 	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)taskinfo.o -c $(RUNTIME_SRC_DIR)taskinfo.cpp $(LINKAGE)
+
+$(OUT_OBJ)hole.o: $(HEADERS) $(CPP)
+	@mkdir -p $(OUT_OBJ)
+	g++ $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_OBJ)hole.o -c $(RUNTIME_SRC_DIR)hole.cpp $(LINKAGE)
 
 $(OUT_OBJ)builder.o: $(HEADERS) $(CPP)
 	@mkdir -p $(OUT_OBJ)

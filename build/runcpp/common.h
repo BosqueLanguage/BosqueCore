@@ -262,6 +262,16 @@ namespace ᐸRuntimeᐳ
     //forward declaration of types that are stored in a thread local way
     class TaskInfo;
 
+    class SourceInfo
+    {
+    public:
+        std::string filename;
+        std::string srcpath;
+        std::string contents;
+
+        std::string getSourceRange(size_t lineStart, size_t lineEnd);
+    };
+
     class BosqueThreadLocalInfo
     {
     public:

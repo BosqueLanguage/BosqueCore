@@ -65,7 +65,7 @@ function emitCommandLineMakefile(): string {
         'OUT_OBJ=$(BUILD_DIR)output/obj/\n' +
         '\n' +
         'CPPFLAGS=-Og -g -ggdb -DRB_INVARIANT_VALIDATE -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable -Wuninitialized -Werror -std=gnu++23 -fno-omit-frame-pointer -fno-exceptions -fno-rtti -fno-strict-aliasing\n' +
-        'LINKAGE=-lboost_regex -licuuc -licui18n -licudata\n' +
+        'LINKAGE=-lboost_regex -licuuc -licui18n -licudata -lssl -lcrypto\n' +
         '\n' +
         'HEADERS=$(wildcard $(SRC_DIR)*.h) $(wildcard $(CORE_SRC_DIR)*.h) $(wildcard $(RUNTIME_SRC_DIR)*.h) $(wildcard $(ALLOC_SRC_DIR)*.h) $(wildcard $(UTILS_SRC_DIR)*.h)\n' +
         'OBJ=$(wildcard $(OUT_OBJ)*.o)\n' +

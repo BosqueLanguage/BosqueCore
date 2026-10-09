@@ -2390,7 +2390,7 @@ class Parser {
         
         const lambdaargs = params.map((param) => new VariableDefinitionInfo(param.pkind || "let", param.name));
         this.env.pushLambdaScope(lambdaargs, (resultInfo instanceof AutoTypeSignature) ? undefined : resultInfo);
-        const body = this.parseBody([], true);
+        const body = this.parseBody([], true, cinfo.line);
         this.env.popLambdaScope();
 
         return new LambdaDecl(this.env.currentFile, cinfo, [], ispred ? "pred" : "fn", isrecursive, params, resultInfo, body, !someTypedParams);
@@ -2452,7 +2452,7 @@ class Parser {
         const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, mutparams, boundtemplates, false, false);
         
         this.env.pushStandardFunctionScope(cargs, boundtemplates, resultInfo);
-        const body = this.parseBody(attributes, false);
+        const body = this.parseBody(attributes, false, cinfo.line);
         this.env.popStandardFunctionScope();
 
         if(functionkind === "typescope") {
@@ -2518,7 +2518,7 @@ class Parser {
         const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, mutparams, boundtemplates, false, false);
     
         this.env.pushStandardFunctionScope(cargs, boundtemplates, resultInfo);
-        const body = this.parseBody(attributes, false);
+        const body = this.parseBody(attributes, false, cinfo.line);
         this.env.popStandardFunctionScope();
 
         return new MethodDecl(this.env.currentFile, cinfo, attributes, fname, isrecursive, params, resultInfo, body, terms, termRestrictions, preconds, postconds, isref);
@@ -2561,7 +2561,7 @@ class Parser {
         const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, mutparams, boundtemplates, fname === taskmain, false);
 
         this.env.pushStandardFunctionScope(cargs, boundtemplates, resultInfo);
-        const body = this.parseBody(attributes, false);
+        const body = this.parseBody(attributes, false, cinfo.line);
         this.env.popStandardFunctionScope();
 
         return new TaskActionDecl(this.env.currentFile, cinfo, attributes, fname, params, resultInfo, body, terms, termRestrictions, preconds, postconds);
@@ -5558,7 +5558,7 @@ class Parser {
         }
     }
 
-    private parseBody(attribs: DeclarationAttibute[], isLambda: boolean): BodyImplementation {
+    private parseBody(attribs: DeclarationAttibute[], isLambda: boolean, startline: number): BodyImplementation {
         const sinfo = this.peekToken().getSourceInfo();
 
         if(this.testToken(SYM_semicolon)) {
@@ -5602,9 +5602,12 @@ class Parser {
                 samplesfile = this.parseExpression();
             }
 
-            this.ensureAndConsumeTokenAlways(SYM_rbrace, "hole body");
+            this.ensureAndConsumeTokenAlways(SYM_semicolon, "hole body");
+            const endline = this.peekToken().line;
 
-            return new HoleBodyImplementation(sinfo, this.env.currentFile, hname, doccomment, samplesfile);
+            this.ensureAndConsumeTokenAlways(SYM_rbrace, "hole body");
+            
+            return new HoleBodyImplementation(sinfo, this.env.currentFile, startline, endline, hname, doccomment, samplesfile);
         }
         else {
             if(this.testToken(SYM_lbrace)) {
@@ -7020,7 +7023,7 @@ class Parser {
             }
 
             this.env.pushStandardFunctionScope(cargs, boundtemplates, resultInfo);
-            const body = this.parseBody(attributes, false);
+            const body = this.parseBody(attributes, false, sinfo.line);
             this.env.popStandardFunctionScope();
             
             const api = new APIDecl(this.env.currentFile, sinfo, attributes, apiname, terms, params, resultInfo, eventType, preconds, postconds, configs, statusinfo, envreqs, resourcereqs, body);
@@ -7119,7 +7122,7 @@ class Parser {
             }
 
             this.env.pushStandardFunctionScope(cargs, boundtemplates, resultInfo);
-            const body = this.parseBody(attributes, false);
+            const body = this.parseBody(attributes, false, sinfo.line);
             this.env.popStandardFunctionScope();
             
             const agent = new AgentDecl(this.env.currentFile, sinfo, attributes, agentname, terms, params, resultInfo, eventType, preconds, postconds, configs, statusinfo, envreqs, resourcereqs, body);
@@ -7254,7 +7257,7 @@ class Parser {
     }
 
     static parse(core: CodeFileInfo[], code: CodeFileInfo[], macrodefs: string[]): Assembly | ParserError[] {
-        let assembly = new Assembly();
+        let assembly = new Assembly(code, macrodefs);
 
         let registeredNamespaces = new Set<string>();
         const coreerrors = Parser.parsefiles(true, core, macrodefs, assembly, registeredNamespaces);
@@ -7279,7 +7282,7 @@ class Parser {
 
     //Test methods
     static test_parseSFunction(core: CodeFileInfo[], macrodefs: string[], sff: string): string | ParserError[] {
-        let assembly = new Assembly();
+        let assembly = new Assembly(core, macrodefs);
 
         let registeredNamespaces = new Set<string>();
         const coreerrors = Parser.parsefiles(true, core, macrodefs, assembly, registeredNamespaces);
@@ -7296,7 +7299,7 @@ class Parser {
     }
 
     static test_parseSTaskMainInFile(core: CodeFileInfo[], macrodefs: string[], code: string, fname: string): string | ParserError[] {
-        let assembly = new Assembly();
+        let assembly = new Assembly([{srcpath: fname, filename: fname, contents: code}], macrodefs);
 
         let registeredNamespaces = new Set<string>();
         const coreerrors = Parser.parsefiles(true, core, macrodefs, assembly, registeredNamespaces);
@@ -7314,7 +7317,7 @@ class Parser {
     }
 
     static test_parseSFunctionInFile(core: CodeFileInfo[], macrodefs: string[], code: string, fname: string): string | ParserError[] {
-        let assembly = new Assembly();
+        let assembly = new Assembly([{srcpath: "main.bsq", filename: "main.bsq", contents: code}], macrodefs);
 
         let registeredNamespaces = new Set<string>();
         const coreerrors = Parser.parsefiles(true, core, macrodefs, assembly, registeredNamespaces);
@@ -7331,7 +7334,7 @@ class Parser {
     }
 
     static test_parseSFunctionInFilePlus(core: CodeFileInfo[], macrodefs: string[], ctxfiles: CodeFileInfo[], code: string, fname: string): string | ParserError[] {
-        let assembly = new Assembly();
+        let assembly = new Assembly([...ctxfiles, {srcpath: "main.bsq", filename: "main.bsq", contents: code}], macrodefs);
 
         let registeredNamespaces = new Set<string>();
         const coreerrors = Parser.parsefiles(true, core, macrodefs, assembly, registeredNamespaces);
