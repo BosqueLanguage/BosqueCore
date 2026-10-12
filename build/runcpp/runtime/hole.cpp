@@ -3,95 +3,11 @@
 #include "taskinfo.h"
 #include "./allocator/alloc.h"
 
-//For now we are going to run this through boost -- later want IO unified with other http and io_uring
-#include <boost/asio.hpp>
-#include <boost/beast.hpp>
-#include <boost/beast/ssl.hpp>
-
 namespace ᐸRuntimeᐳ 
 {
     json makeAIHoleRequest(const std::string& sysprompt, const std::string& userprompt, json schema) 
     {
-        //
-        //TODO: this is very hacked together and needs some care
-        //
-
-        boost::beast::error_code ec;
-        std::string host = "api.openai.com";
-        std::string target = "/v1/chat/completions";
-
-        boost::asio::io_context ioc;
-        boost::asio::ssl::context ctx{boost::asio::ssl::context::tlsv12_client};
-        boost::beast::ssl_stream<boost::beast::tcp_stream> stream{ioc, ctx};
-
-        boost::asio::ip::tcp::resolver resolver(ioc);
-        auto const results = resolver.resolve(host, "443");
-        boost::beast::get_lowest_layer(stream).connect(results, ec);
-        if(ec) {
-            std::cerr << "Error during connection: " << ec.message() << std::endl;
-            assert(false);
-        }
-
-        if (!SSL_set_tlsext_host_name(stream.native_handle(), host.c_str())) {
-            boost::system::error_code ec{static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()};
-            assert(false);
-        }
-
-        stream.handshake(boost::asio::ssl::stream_base::client, ec);
-        if(ec) {
-            std::cerr << "Error during SSL handshake: " << ec.message() << std::endl;
-            assert(false);
-        }
-
-        boost::beast::http::request<boost::beast::http::string_body> req{boost::beast::http::verb::post, target, 11}; // HTTP 1.1
-        req.set(boost::beast::http::field::host, host);
-        req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-
-        //TODO: we need to futz with this
-        const char* api_key = getenv("TECTON_KEY");
-        if(api_key == nullptr) {
-            std::cerr << "Error: TECTON_KEY environment variable is not set." << std::endl;
-            assert(false);
-        }
-
-        req.set(boost::beast::http::field::authorization, "Bearer " + std::string(api_key)); // Set the API key for authorization
-        req.set(boost::beast::http::field::content_type, "application/json"); // Required for JSON
-        
-        json request_json = json::object();
-        request_json["model"] = "gpt-6-sol";
-        request_json["messages"] = json::array({
-            {
-                {"role", "system"},
-                {"content", sysprompt}
-            },
-            {
-                {"role", "user"},
-                {"content", userprompt}
-            }
-        });
-
-        req.body() = std::move(request_json.dump());
-        req.prepare_payload(); // Automatically calculates Content-Length header
-
-        boost::beast::http::write(stream, req, ec);
-        if(ec) {
-            std::cerr << "Error during write: " << ec.message() << std::endl;
-            assert(false);
-        }
-
-        // Receive the response
-        boost::beast::flat_buffer buffer;
-        boost::beast::http::response<boost::beast::http::string_body> res;
-        boost::beast::http::read(stream, buffer, res, ec);
-        if(ec) {
-            std::cerr << "Error reading response: " << ec.message() << std::endl;
-            assert(false);
-        }
-
-        // Gracefully close the socket
-        stream.next_layer().socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
-
-        return json::parse(res.body());
+        assert(false);
     }
 
     HoleBodyContextManager g_hole_body_contexts;

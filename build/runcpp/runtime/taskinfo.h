@@ -103,6 +103,47 @@ namespace ᐸRuntimeᐳ
         constexpr static TaskPriority poptional() { return TaskPriority(0, "optional"); }
     };
 
+    class TaskInfoWorkItemArgs
+    {
+    public:
+        size_t argc;
+        void** argv;
+        const TypeInfo** types;
+        uint8_t* data;
+
+        TaskInfoWorkItemArgs() : argc(0), argv(nullptr), types(nullptr), data(nullptr) {}
+        TaskInfoWorkItemArgs(const TaskInfoWorkItemArgs& other) : argc(other.argc), argv(other.argv), types(other.types), data(other.data) {}
+        
+        TaskInfoWorkItemArgs(std::initializer_list<std::tuple<void*, const TypeInfo*>> args);
+        ~TaskInfoWorkItemArgs();
+    };
+
+    class TaskInfoWorkItemResults
+    {
+    public:
+        size_t argc;
+        void** argv;
+        const TypeInfo** types;
+        uint8_t* data;
+
+        TaskInfoWorkItemResults() : argc(0), argv(nullptr), types(nullptr), data(nullptr) {}
+        TaskInfoWorkItemResults(const TaskInfoWorkItemResults& other) : argc(other.argc), argv(other.argv), types(other.types), data(other.data) {}
+        
+        TaskInfoWorkItemResults(size_t argc, std::initializer_list<std::tuple<void*, const TypeInfo*>> args) : argc(argc), argv(nullptr), types(nullptr), data(data) {}
+        
+        ~TaskInfoWorkItemResults() {}
+    };
+
+    class TaskInfoWorkItem
+    {
+    public:
+        
+    };
+
+    /**
+     * A TaskInfo represents the a full logical task within the runtime system -- corresponding to a Task run, a API invoke, or an Agent invoke. It has a UUID to uniquely identify it and causally link it to parent/children.
+     * Then we are going to run individual items of work associated with this task until it is complete.
+     **/
     class TaskInfo
     {
     private:
@@ -111,19 +152,24 @@ namespace ᐸRuntimeᐳ
 
     public:
         boost::uuids::random_generator uuidv4_generator;
-        XUUIDv4 taskid;
+        XUUIDv4 taskid; //TODO: this should be a 7 when we update the version of boost
+
+        TaskPriority priority;
+        TaskEnvironment environment;
 
         const TaskInfo* parent;
-        TaskPriority priority;
+        std::list<TaskInfo*> children;
 
         std::jmp_buf* error_handler;
         std::optional<ErrorInfo> pending_error;
 
-        TaskInfo() : uuidv4_generator(), taskid(XUUIDv4::nil()), parent(nullptr), priority(), error_handler(nullptr), pending_error() {}
-        TaskInfo(const XUUIDv4& tId, const TaskInfo* pTask, TaskPriority prio) : taskid(tId), parent(pTask), priority(prio), error_handler(nullptr), pending_error() {}
+        TaskInfo() : uuidv4_generator(), taskid(XUUIDv4::nil()), priority(), environment(), parent(nullptr), error_handler(nullptr), pending_error() {}
+        TaskInfo(const XUUIDv4& tId, const TaskInfo* pTask, TaskPriority prio) : taskid(tId), priority(prio), environment(), parent(pTask), error_handler(nullptr), pending_error() {}
 
         //Generate UUID for a task
         static XUUIDv4 generateFreshTaskId();
+
+        void loadEnvVars(std::initializer_list<const char*> reqvars);
 
         //Generating user requested UUID values
         XUUIDv4 generateUUIDv4()
@@ -142,21 +188,6 @@ namespace ᐸRuntimeᐳ
         static size_t bsqEmitIntoBAPI(bool allowsensitive, uint32_t bsqid, const T& value, std::list<uint8_t*>& iobuffs)
         {
             return bsqEmitIntoBAPI(allowsensitive, bsqid, static_cast<const void*>(&value), iobuffs);
-        }
-    };
-
-    class TaskInfoRepr : public TaskInfo
-    {
-    public:        
-        TaskEnvironment environment;
-
-        TaskInfoRepr(const XUUIDv4& tId, const TaskInfo* pTask, TaskPriority prio) : TaskInfo(tId, pTask, prio), environment() {}
-
-        void loadEnvVars(std::initializer_list<const char*> reqvars);
-
-        static TaskInfoRepr* asRepr(TaskInfo* current_task)
-        {
-            return static_cast<TaskInfoRepr*>(current_task);
         }
     };
 }

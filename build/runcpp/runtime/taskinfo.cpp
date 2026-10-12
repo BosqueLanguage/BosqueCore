@@ -2,15 +2,53 @@
 
 namespace ᐸRuntimeᐳ
 {
+    //TODO: this should be a 7 when we update the version of boost
     boost::uuids::random_generator g_task_uuidv4_id_generator{};
         
+    TaskInfoWorkItemArgs::TaskInfoWorkItemArgs(std::initializer_list<std::tuple<void*, const TypeInfo*>> args) : argc(args.size()), argv(nullptr), types(nullptr), data(nullptr)
+    {
+        size_t datasize = 0;
+        for(auto iter = args.begin(); iter != args.end(); ++iter) {
+            auto tinfo = std::get<1>(*iter);
+            datasize += (tinfo->tag == LayoutTag::Ref) ? sizeof(void*) : tinfo->bytesize;
+        }
+
+        this->argv = (void**)malloc(sizeof(void*) * argc);
+        this->types = (const TypeInfo**)malloc(sizeof(const TypeInfo*) * argc);
+        this->data = (uint8_t*)malloc(datasize);
+
+        size_t slotpos = 0;
+        for(auto iter = args.begin(); iter != args.end(); ++iter) {
+            auto tinfo = std::get<1>(*iter);
+            this->types[iter - args.begin()] = tinfo;
+            this->argv[iter - args.begin()] = std::get<0>(*iter);
+
+            if(tinfo->tag == LayoutTag::Ref) {
+                ((void**)this->data)[slotpos] = std::get<0>(*iter);
+                slotpos++;
+            }
+            else {
+                size_t csize = tinfo->bytesize;
+                memcpy(((void**)this->data) + slotpos, std::get<0>(*iter), csize);
+                slotpos += csize;
+            }
+        }
+    }
+
+    TaskInfoWorkItemArgs::~TaskInfoWorkItemArgs()
+    {
+        free(this->argv);
+        free(this->types);
+        free(this->data);
+    }
+
     XUUIDv4 TaskInfo::generateFreshTaskId()
     {
         auto id = g_task_uuidv4_id_generator();
         return XUUIDv4::from_bytes(id.data);
     }
 
-    void TaskInfoRepr::loadEnvVars(std::initializer_list<const char*> reqvars)
+    void TaskInfo::loadEnvVars(std::initializer_list<const char*> reqvars)
     {
         for(auto iter = reqvars.begin(); iter != reqvars.end(); ++iter)
         {
