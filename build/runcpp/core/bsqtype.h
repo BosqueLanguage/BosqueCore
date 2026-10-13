@@ -161,6 +161,26 @@ namespace ᐸRuntimeᐳ
         {
             return tinfomap.at(id);
         }
+
+        inline size_t dynamicReprSize() const
+        {
+            return (this->tag == LayoutTag::Ref) ? sizeof(void*) : this->bytesize;
+        }
+
+        inline size_t dynamicReprSlots() const
+        {
+            return (this->tag == LayoutTag::Ref) ? 1 : this->slotcount;
+        }
+
+        inline void dynamicReprCopy(void* destptr, const void* srcptr) const
+        {
+            if(this->tag == LayoutTag::Ref) {
+                *(void**)destptr = *(void**)srcptr;
+            }
+            else {
+                std::memcpy(destptr, srcptr, this->bytesize);
+            }
+        }
     };
 
     consteval uint32_t byteSizeToSlotCount(size_t bytesize)

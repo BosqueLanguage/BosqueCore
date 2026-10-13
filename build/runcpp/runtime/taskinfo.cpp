@@ -5,41 +5,64 @@ namespace ᐸRuntimeᐳ
     //TODO: this should be a 7 when we update the version of boost
     boost::uuids::random_generator g_task_uuidv4_id_generator{};
         
-    TaskInfoWorkItemArgs::TaskInfoWorkItemArgs(std::initializer_list<std::tuple<void*, const TypeInfo*>> args) : argc(args.size()), argv(nullptr), types(nullptr), data(nullptr)
+    TaskInfoWorkItemData::TaskInfoWorkItemData(std::initializer_list<std::pair<void*, const TypeInfo*>> args) : argc(args.size()), argv(nullptr), types(nullptr), data(nullptr)
     {
         size_t datasize = 0;
         for(auto iter = args.begin(); iter != args.end(); ++iter) {
-            auto tinfo = std::get<1>(*iter);
-            datasize += (tinfo->tag == LayoutTag::Ref) ? sizeof(void*) : tinfo->bytesize;
+            datasize += iter->second->dynamicReprSize();
         }
 
         this->argv = (void**)malloc(sizeof(void*) * argc);
         this->types = (const TypeInfo**)malloc(sizeof(const TypeInfo*) * argc);
         this->data = (uint8_t*)malloc(datasize);
 
-        size_t slotpos = 0;
+        size_t datapos = 0;
+        size_t cpos = 0;
         for(auto iter = args.begin(); iter != args.end(); ++iter) {
-            auto tinfo = std::get<1>(*iter);
-            this->types[iter - args.begin()] = tinfo;
-            this->argv[iter - args.begin()] = std::get<0>(*iter);
+            this->types[cpos] = iter->second;
+            this->argv[cpos] = iter->first;
+            iter->second->dynamicReprCopy(this->data + datapos, iter->first);
 
-            if(tinfo->tag == LayoutTag::Ref) {
-                ((void**)this->data)[slotpos] = std::get<0>(*iter);
-                slotpos++;
-            }
-            else {
-                size_t csize = tinfo->bytesize;
-                memcpy(((void**)this->data) + slotpos, std::get<0>(*iter), csize);
-                slotpos += csize;
-            }
+            datapos += iter->second->dynamicReprSize();
+            cpos++;
         }
     }
 
-    TaskInfoWorkItemArgs::~TaskInfoWorkItemArgs()
+    TaskInfoWorkItemData::~TaskInfoWorkItemData()
     {
         free(this->argv);
         free(this->types);
         free(this->data);
+    }
+
+    TaskInfoWorkItemData::TaskInfoWorkItemData(TaskInfoWorkItemData&& other) : argc(other.argc), argv(other.argv), types(other.types), data(other.data)
+    {
+        other.argc = 0;
+        other.argv = nullptr;
+        other.types = nullptr;
+        other.data = nullptr;
+    }
+
+    TaskInfoWorkItemData& TaskInfoWorkItemData::operator=(TaskInfoWorkItemData&& other)
+    {
+        if(this != &other)
+        {
+            free(this->argv);
+            free(this->types);
+            free(this->data);
+
+            this->argc = other.argc;
+            this->argv = other.argv;
+            this->types = other.types;
+            this->data = other.data;
+
+            other.argc = 0;
+            other.argv = nullptr;
+            other.types = nullptr;
+            other.data = nullptr;
+        }
+        
+        return *this;
     }
 
     XUUIDv4 TaskInfo::generateFreshTaskId()

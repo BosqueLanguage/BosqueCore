@@ -103,7 +103,7 @@ namespace ᐸRuntimeᐳ
         constexpr static TaskPriority poptional() { return TaskPriority(0, "optional"); }
     };
 
-    class TaskInfoWorkItemArgs
+    class TaskInfoWorkItemData
     {
     public:
         size_t argc;
@@ -111,27 +111,15 @@ namespace ᐸRuntimeᐳ
         const TypeInfo** types;
         uint8_t* data;
 
-        TaskInfoWorkItemArgs() : argc(0), argv(nullptr), types(nullptr), data(nullptr) {}
-        TaskInfoWorkItemArgs(const TaskInfoWorkItemArgs& other) : argc(other.argc), argv(other.argv), types(other.types), data(other.data) {}
+        TaskInfoWorkItemData() : argc(0), argv(nullptr), types(nullptr), data(nullptr) {}
+        TaskInfoWorkItemData(const TaskInfoWorkItemData& other) = delete;
+        TaskInfoWorkItemData(TaskInfoWorkItemData&& other);
         
-        TaskInfoWorkItemArgs(std::initializer_list<std::tuple<void*, const TypeInfo*>> args);
-        ~TaskInfoWorkItemArgs();
-    };
+        TaskInfoWorkItemData(std::initializer_list<std::pair<void*, const TypeInfo*>> args);
+        ~TaskInfoWorkItemData();
 
-    class TaskInfoWorkItemResults
-    {
-    public:
-        size_t argc;
-        void** argv;
-        const TypeInfo** types;
-        uint8_t* data;
-
-        TaskInfoWorkItemResults() : argc(0), argv(nullptr), types(nullptr), data(nullptr) {}
-        TaskInfoWorkItemResults(const TaskInfoWorkItemResults& other) : argc(other.argc), argv(other.argv), types(other.types), data(other.data) {}
-        
-        TaskInfoWorkItemResults(size_t argc, std::initializer_list<std::tuple<void*, const TypeInfo*>> args) : argc(argc), argv(nullptr), types(nullptr), data(data) {}
-        
-        ~TaskInfoWorkItemResults() {}
+        TaskInfoWorkItemData& operator=(const TaskInfoWorkItemData& other) = delete;
+        TaskInfoWorkItemData& operator=(TaskInfoWorkItemData&& other);
     };
 
     class TaskInfoWorkItem
