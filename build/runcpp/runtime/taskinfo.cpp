@@ -2,8 +2,7 @@
 
 namespace ᐸRuntimeᐳ
 {
-    //TODO: this should be a 7 when we update the version of boost
-    boost::uuids::random_generator g_task_uuidv4_id_generator{};
+    boost::uuids::time_generator_v7 g_task_uuidv7_id_generator{};
         
     TaskInfoWorkItemData::TaskInfoWorkItemData(std::initializer_list<std::pair<void*, const TypeInfo*>> args) : argc(args.size()), argv(nullptr), types(nullptr), data(nullptr)
     {
@@ -65,10 +64,10 @@ namespace ᐸRuntimeᐳ
         return *this;
     }
 
-    XUUIDv4 TaskInfo::generateFreshTaskId()
+    XUUIDv7 TaskInfo::generateFreshTaskId()
     {
-        auto id = g_task_uuidv4_id_generator();
-        return XUUIDv4::from_bytes(id.data);
+        auto id = g_task_uuidv7_id_generator();
+        return XUUIDv7::from_bytes(id.data);
     }
 
     void TaskInfo::loadEnvVars(std::initializer_list<const char*> reqvars)
@@ -108,5 +107,39 @@ namespace ᐸRuntimeᐳ
         ofinfo->opdispatch.bsqToBAPIFp(ofinfo, value, &builder);
 
         return builder.finalize(iobuffs);
+    }
+
+    void TaskInfo::startStdExec()
+    {
+        //atomic transitions here!!!!
+        assert(this->tstatus == TaskInfoRunStatus::Pending);
+        xxxx;
+
+        this->runStdExec();
+    }
+
+    void TaskInfo::startIOExec()
+    {
+        xxxx;
+    }
+
+    void TaskInfo::runStdExec()
+    {
+        xxxx;
+    }
+
+    void TaskInfo::runOnCompletionExec()
+    {
+        assert(false); //TODO
+    }
+
+    void TaskInfo::runOnCancelledExec()
+    {
+        assert(false); //TODO
+    }
+
+    void TaskInfo::runOnErrorExec()
+    {
+        assert(false); //TODO
     }
 }
