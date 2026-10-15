@@ -108,19 +108,27 @@ namespace ᐸRuntimeᐳ
 
         return builder.finalize(iobuffs);
     }
-
+    
     void TaskInfo::startStdExec()
     {
-        //atomic transitions here!!!!
-        assert(this->tstatus == TaskInfoRunStatus::Pending);
-        xxxx;
+        {
+            std::lock_guard<std::mutex> guard(this->state_guard);
 
+            assert(this->tstatus == TaskInfoRunStatus::Pending);
+            this->tstatus = TaskInfoRunStatus::Running;
+        }
+        
         this->runStdExec();
     }
 
     void TaskInfo::startIOExec()
     {
-        xxxx;
+        std::lock_guard<std::mutex> guard(this->state_guard);
+
+        assert(this->tstatus == TaskInfoRunStatus::Pending);
+        this->tstatus = TaskInfoRunStatus::Running;
+
+        this->iofp(this);
     }
 
     void TaskInfo::runStdExec()

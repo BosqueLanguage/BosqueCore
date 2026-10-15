@@ -29,6 +29,16 @@
 #include <mutex>
 #include <thread>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <liburing.h>
+
+#ifdef __cplusplus
+}
+#endif
+
 #include <sys/mman.h> //mmap
 
 //Boost dependencies
@@ -275,13 +285,36 @@ namespace ᐸRuntimeᐳ
     class BosqueThreadLocalInfo
     {
     public:
-        TaskInfo* current_task;
+        //TODO: this parameter should be tuned or configurable -- just picked a reasonable default for now
+        constexpr static size_t IO_URING_QUEUE_DEPTH = 64;
 
-        BosqueThreadLocalInfo() : current_task(nullptr) {}
+        TaskInfo* current_task;
+        std::list<TaskInfo*> tasklist;
+
+        struct io_uring ring;
+        size_t submission_count;
+
+        BosqueThreadLocalInfo() : current_task(nullptr), tasklist(), ring(), submission_count(0) {}
 
         // Cannot copy or move thread local info
         BosqueThreadLocalInfo(const BosqueThreadLocalInfo&) = delete;
         BosqueThreadLocalInfo &operator=(const BosqueThreadLocalInfo&) = delete;
+
+        bool startup()
+        {
+            // Initialize the io_uring instance
+            int ret = io_uring_queue_init(IO_URING_QUEUE_DEPTH, &ring, 0);
+            submission_count = 0;
+            
+            return ret == 0;
+        }
+
+        bool shutdown()
+        {
+            io_uring_queue_exit(&ring);
+            submission_count = 0;
+            return true;
+        }
 
         static void generate_uuid4(char out[16])
         {

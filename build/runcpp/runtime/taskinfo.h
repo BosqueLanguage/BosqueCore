@@ -156,14 +156,6 @@ namespace ᐸRuntimeᐳ
         RunningErroredOp, //This task is running the error handling operation
         Finished //This task has finished all work and is complete
     };
-    constexpr std::strong_ordering operator<=>(TaskInfoRunStatus lhs, TaskInfoRunStatus rhs) 
-    {
-        return static_cast<std::underlying_type_t<TaskInfoRunStatus>>(lhs) <=> static_cast<std::underlying_type_t<TaskInfoRunStatus>>(rhs);
-    }
-    constexpr TaskInfoRunStatus joinRunStatus(TaskInfoRunStatus a, TaskInfoRunStatus b) 
-    {
-        return (a >= b) ? a : b;
-    }
 
     //Info on if this task is hitting io_uring (true/false) and if so what IO resource it uses (so we can ballance IO scheduling if needed -- for now just hit it hard)
     enum class TaskIOInfo
@@ -209,9 +201,11 @@ namespace ᐸRuntimeᐳ
         std::jmp_buf* error_handler;
         std::optional<ErrorInfo> pending_error;
 
-        TaskInfo() : uuidv4_generator(), taskid(XUUIDv7::nil()), priority(), environment(), parent(nullptr), children(), tstatus(TaskInfoRunStatus::Pending), iostatus(TaskIOInfo::CPU_ONLY), workitem(), iofp(nullptr), completionfp(nullptr), error_handler(nullptr), pending_error() {}
-        TaskInfo(const XUUIDv7& tId, const TaskInfo* pTask, TaskPriority prio, TaskInfoCompletionFp compfp, std::initializer_list<std::pair<void*, const TypeInfo*>> args) : taskid(tId), priority(prio), environment(), parent(pTask), children(), tstatus(TaskInfoRunStatus::Pending), iostatus(TaskIOInfo::CPU_ONLY), workitem(), iofp(nullptr), completionfp(compfp), error_handler(nullptr), pending_error() {}
-        TaskInfo(const XUUIDv7& tId, const TaskInfo* pTask, TaskPriority prio, TaskInfoCompletionFp compfp, TaskIOInfo ioinfo, RunIOFp iofp, std::initializer_list<std::pair<void*, const TypeInfo*>> args) : taskid(tId), priority(prio), environment(), parent(pTask), children(), tstatus(TaskInfoRunStatus::Pending), iostatus(ioinfo), workitem(), iofp(iofp), completionfp(compfp), error_handler(nullptr), pending_error() {}
+        std::mutex state_guard; //TODO: in the future maybe we can make this atomic and CAS for better performance
+
+        TaskInfo() : uuidv4_generator(), taskid(XUUIDv7::nil()), priority(), environment(), parent(nullptr), children(), tstatus(TaskInfoRunStatus::Pending), iostatus(TaskIOInfo::CPU_ONLY), workitem(), iofp(nullptr), completionfp(nullptr), error_handler(nullptr), pending_error(), state_guard() {}
+        TaskInfo(const XUUIDv7& tId, const TaskInfo* pTask, TaskPriority prio, TaskInfoCompletionFp compfp, std::initializer_list<std::pair<void*, const TypeInfo*>> args) : taskid(tId), priority(prio), environment(), parent(pTask), children(), tstatus(TaskInfoRunStatus::Pending), iostatus(TaskIOInfo::CPU_ONLY), workitem(), iofp(nullptr), completionfp(compfp), error_handler(nullptr), pending_error(), state_guard() {}
+        TaskInfo(const XUUIDv7& tId, const TaskInfo* pTask, TaskPriority prio, TaskInfoCompletionFp compfp, TaskIOInfo ioinfo, RunIOFp iofp, std::initializer_list<std::pair<void*, const TypeInfo*>> args) : taskid(tId), priority(prio), environment(), parent(pTask), children(), tstatus(TaskInfoRunStatus::Pending), iostatus(ioinfo), workitem(), iofp(iofp), completionfp(compfp), error_handler(nullptr), pending_error(), state_guard() {}
         ~TaskInfo() = default;
 
         //Generate UUID for a task
