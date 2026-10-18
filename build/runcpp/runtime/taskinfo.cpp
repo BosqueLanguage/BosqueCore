@@ -133,7 +133,32 @@ namespace ᐸRuntimeᐳ
 
     void TaskInfo::runStdExec()
     {
-        xxxx;
+        while(true) {
+            //check if this has status changed to something other than Running and dispatch accordingly
+            const TaskInfoRunStatus currentStatus = this->tstatus;
+            if(this->workitem.isActionSafepoint) {
+                if(currentStatus == TaskInfoRunStatus::Canceled || currentStatus == TaskInfoRunStatus::Error) {
+                    break;
+                }
+            }
+
+            //run the next step of the standard execution
+            auto [flag, nextop] = this->workitem.continuefp(&this->workitem.argvals, &this->workitem.retvals);
+            if(flag == TaskInfoWorkItemEarlyReturnFlag::Return) {
+                xxxx; //TODO: we need a pending action workitem call stack to pop from here
+            }
+
+            if(flag != TaskInfoWorkItemEarlyReturnFlag::None) {
+                assert(false); //TODO: handle special continue/return cases
+            }
+
+            //update the task status based on the execution result
+            this->workitem.argvals = std::move(this->workitem.retvals);
+            this->workitem.continuefp = (TaskInfoWorkItemWorkFp)nextop;
+        }
+
+        //dispatch based on the final status of the task
+        assert(false); 
     }
 
     void TaskInfo::runOnCompletionExec()

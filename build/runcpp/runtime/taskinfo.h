@@ -125,12 +125,14 @@ namespace ᐸRuntimeᐳ
     enum class TaskInfoWorkItemEarlyReturnFlag
     {
         None,     // If this work item should continue without any special handling
+        Return,   // If the work item wants to return
         Blocked,  // If the work item blocked on a child task (and this will be resumed later when it clears)
         Yield,    // If the work item yielded and we are going to move to completion
         Continue  // If the work item continued and we are going to dispatch on the new action
     };
 
-    using TaskInfoWorkItemWorkFp = TaskInfoWorkItemEarlyReturnFlag(*)(TaskInfoWorkItemData*, TaskInfoWorkItemData*, TaskInfoWorkItemWorkFp*);
+    //void* is actually TaskInfoWorkItemWorkFp for next iter
+    using TaskInfoWorkItemWorkFp = std::pair<TaskInfoWorkItemEarlyReturnFlag, void*>(*)(TaskInfoWorkItemData*, TaskInfoWorkItemData*);
 
     class TaskInfoWorkItem
     {
@@ -138,10 +140,11 @@ namespace ᐸRuntimeᐳ
         TaskInfoWorkItemData argvals;
         TaskInfoWorkItemData retvals;
 
+        bool isActionSafepoint;
         TaskInfoWorkItemWorkFp continuefp;
 
         TaskInfoWorkItem() = default;
-        TaskInfoWorkItem(TaskInfoWorkItemWorkFp nextop, std::initializer_list<std::pair<void*, const TypeInfo*>> args) : argvals(args), retvals(), continuefp(nextop) {}
+        TaskInfoWorkItem(bool isActionSafepoint, TaskInfoWorkItemWorkFp nextop, std::initializer_list<std::pair<void*, const TypeInfo*>> args) : argvals(args), retvals(), isActionSafepoint(isActionSafepoint), continuefp(nextop) {}
         ~TaskInfoWorkItem() = default;
     };
 
@@ -149,6 +152,7 @@ namespace ᐸRuntimeᐳ
     {
         Pending, //This task has been created but not yet started -- can canceled trivially (as if it never existed) or run
         Running, //This task is currently running some work items (maybe io_uring IO)
+        NormalComplete, //This task has completed normally
         Canceled, //This task has been canceled but the cancelation has not been initiated yet
         Error, //This task has encountered an error but the handled has not been initiated yet
         RunningCompleteOp, //This task is running the completion operation
