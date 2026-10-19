@@ -133,23 +133,19 @@ namespace ᐸRuntimeᐳ
 
     void TaskInfo::runStdExec()
     {
-        while(true) {
-            //check if this has status changed to something other than Running and dispatch accordingly
-            const TaskInfoRunStatus currentStatus = this->tstatus;
-            if(this->workitem.isActionSafepoint) {
-                if(currentStatus == TaskInfoRunStatus::Canceled || currentStatus == TaskInfoRunStatus::Error) {
-                    break;
-                }
-            }
+        while(workitem.continuefp != nullptr) {
+            
+            xxxx; //TODO: setup longjump
 
-            //run the next step of the standard execution
             auto [flag, nextop] = this->workitem.continuefp(&this->workitem.argvals, &this->workitem.retvals);
-            if(flag == TaskInfoWorkItemEarlyReturnFlag::Return) {
-                xxxx; //TODO: we need a pending action workitem call stack to pop from here
-            }
-
             if(flag != TaskInfoWorkItemEarlyReturnFlag::None) {
-                assert(false); //TODO: handle special continue/return cases
+                if(flag == TaskInfoWorkItemEarlyReturnFlag::Blocked) {
+                    //Status, lists, and work item bits should be set up operation that initiates blocking -- so just return and we will restart later
+                    return;
+                }
+                else {
+                    assert(false); //TODO: handle special continue/return cases
+                }
             }
 
             //update the task status based on the execution result
@@ -157,8 +153,14 @@ namespace ᐸRuntimeᐳ
             this->workitem.continuefp = (TaskInfoWorkItemWorkFp)nextop;
         }
 
-        //dispatch based on the final status of the task
-        assert(false); 
+        const TaskInfoRunStatus finalStatus = this->tstatus;
+        if(finalStatus == TaskInfoRunStatus::Running) {
+            this->runOnCompletionExec();
+        }
+        else {
+            assert(finalStatus == TaskInfoRunStatus::RunningCompleteOp);
+            this->runOnCancelledExec();
+        }
     }
 
     void TaskInfo::runOnCompletionExec()
