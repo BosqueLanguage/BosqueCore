@@ -29,16 +29,7 @@
 #include <mutex>
 #include <thread>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <liburing.h>
-
-#ifdef __cplusplus
-}
-#endif
-
 #include <sys/mman.h> //mmap
 
 //Boost dependencies

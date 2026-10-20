@@ -131,13 +131,23 @@ namespace ᐸRuntimeᐳ
         this->iofp(this);
     }
 
+    //Note -- caller must do setup for longjmp error handling
     void TaskInfo::runStdExec()
     {
+        std::jmp_buf env;
+        std::jmp_buf* origenv = tl_bosque_info.current_task->error_handler;
+
         while(workitem.continuefp != nullptr) {
-            
-            xxxx; //TODO: setup longjump
+            tl_bosque_info.current_task->error_handler = &env;
+            if(setjmp(*tl_bosque_info.current_task->error_handler) > 0) {
+                tl_bosque_info.current_task->error_handler = origenv;
+                this->runOnErrorExec();
+                return;
+            }
 
             auto [flag, nextop] = this->workitem.continuefp(&this->workitem.argvals, &this->workitem.retvals);
+            tl_bosque_info.current_task->error_handler = origenv;
+
             if(flag != TaskInfoWorkItemEarlyReturnFlag::None) {
                 if(flag == TaskInfoWorkItemEarlyReturnFlag::Blocked) {
                     //Status, lists, and work item bits should be set up operation that initiates blocking -- so just return and we will restart later
@@ -156,10 +166,12 @@ namespace ᐸRuntimeᐳ
         const TaskInfoRunStatus finalStatus = this->tstatus;
         if(finalStatus == TaskInfoRunStatus::Running) {
             this->runOnCompletionExec();
+            return;
         }
         else {
             assert(finalStatus == TaskInfoRunStatus::RunningCompleteOp);
             this->runOnCancelledExec();
+            return;
         }
     }
 

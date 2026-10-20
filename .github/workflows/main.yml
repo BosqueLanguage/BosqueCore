@@ -22,6 +22,8 @@ jobs:
       run: sudo apt-get update && sudo apt-get install -y liburing-dev
     - name: Install Dependencies (ssl)
       run: sudo apt-get update && sudo apt-get install -y libssl-dev
+    - name: Install Dependencies (ssl)
+      run: sudo apt-get update && sudo apt-get install -y libicu-dev
     - name: Install Dependencies (boost)
       run: sudo apt-get install -y libboost-all-dev
     - name: Install
