@@ -3774,7 +3774,7 @@ class CPPEmitter {
 
         return mmain + "\n\n" +
                'int main(int argc, char** argv) {\n' +
-               '    ᐸRuntimeᐳ::TaskInfo maintask(ᐸRuntimeᐳ::TaskInfo::generateFreshTaskId(), nullptr, ᐸRuntimeᐳ::TaskPriority::pimmediate());\n' +
+               '    ᐸRuntimeᐳ::TaskInfo maintask(ᐸRuntimeᐳ::TaskInfo::generateFreshTaskId(), nullptr, ᐸRuntimeᐳ::TaskPriority::pimmediate(), nullptr, {});\n' +
                '    ᐸRuntimeᐳ::tl_bosque_info.current_task = &maintask;\n\n' +
                '    ᐸRuntimeᐳ::g_alloc_info.initializeGlobalRegion(BSQ_g_globaldata);\n' +
                `    ${initializegc}\n` +
