@@ -103,6 +103,76 @@ namespace ᐸRuntimeᐳ
         constexpr static TaskPriority poptional() { return TaskPriority(0, "optional"); }
     };
 
+    class TaskInfoWorkItemData
+    {
+    public:
+        size_t argc;
+        void** argv;
+        const TypeInfo** types;
+        uint8_t* data;
+
+        TaskInfoWorkItemData() : argc(0), argv(nullptr), types(nullptr), data(nullptr) {}
+        TaskInfoWorkItemData(const TaskInfoWorkItemData& other) = delete;
+        TaskInfoWorkItemData(TaskInfoWorkItemData&& other);
+        
+        TaskInfoWorkItemData(std::initializer_list<std::pair<void*, const TypeInfo*>> args);
+        ~TaskInfoWorkItemData();
+
+        TaskInfoWorkItemData& operator=(const TaskInfoWorkItemData& other) = delete;
+        TaskInfoWorkItemData& operator=(TaskInfoWorkItemData&& other);
+    };
+
+    enum class TaskInfoWorkItemEarlyReturnFlag
+    {
+        None,     // If this work item should continue without any special handling
+        Blocked,  // If the work item blocked on a child task (and this will be resumed later when it clears)
+        Yield,    // If the work item yielded and we are going to move to completion
+        Continue  // If the work item continued and we are going to dispatch on the new action
+    };
+
+    //void* is actually TaskInfoWorkItemWorkFp for next iter
+    using TaskInfoWorkItemWorkFp = std::pair<TaskInfoWorkItemEarlyReturnFlag, void*>(*)(TaskInfoWorkItemData*, TaskInfoWorkItemData*);
+
+    class TaskInfoWorkItem
+    {
+    public:
+        TaskInfoWorkItemData argvals;
+        TaskInfoWorkItemData retvals;
+
+        TaskInfoWorkItemWorkFp continuefp;
+
+        TaskInfoWorkItem() = default;
+        TaskInfoWorkItem(TaskInfoWorkItemWorkFp nextop, std::initializer_list<std::pair<void*, const TypeInfo*>> args) : argvals(args), retvals(), continuefp(nextop) {}
+        ~TaskInfoWorkItem() = default;
+    };
+
+    enum class TaskInfoRunStatus
+    {
+        Pending, //This task has been created but not yet started -- can canceled trivially (as if it never existed) or run
+        Running, //This task is currently running some work items (maybe io_uring IO)
+        CancelRequested, //This task has had a cancel requested but the cancelation has not been initiated yet
+        RunningCompleteOp, //This task is running the completion operation
+        RunningCanceledOp, //This task is running the cancelation operation
+        RunningErroredOp, //This task is running the error handling operation
+        Finished //This task has finished all work and is complete
+    };
+
+    //Info on if this task is hitting io_uring (true/false) and if so what IO resource it uses (so we can ballance IO scheduling if needed -- for now just hit it hard)
+    enum class TaskIOInfo
+    {
+        CPU_ONLY, //This task is not performing any IO now
+        //TODO: loopback ??
+        LOCAL_STORAGE, //This task is performing IO on the local drive
+        LOCAL_NETWORK_STORAGE, //This task is performing IO on a network drive (local network or datacenter)
+        LOCAL_NETWORK_DB, //This task is performing IO on a DB (local network or datacenter)
+        //TODO: remote storage and DB??
+        HTTP //This task is performing IO via remote http
+    };
+
+    /**
+     * A TaskInfo represents the a full logical task within the runtime system -- corresponding to a Task run, a API invoke, or an Agent invoke. It has a UUID to uniquely identify it and causally link it to parent/children.
+     * Then we are going to run individual items of work associated with this task until it is complete.
+     **/
     class TaskInfo
     {
     private:
@@ -110,20 +180,41 @@ namespace ᐸRuntimeᐳ
         static size_t bsqEmitIntoBAPI(bool allowsensitive, uint32_t bsqid, const void* value, std::list<uint8_t*>& iobuffs);
 
     public:
+        using RunIOFp = void(*)(TaskInfo*);
+        using TaskInfoCompletionFp = void(*)(TaskInfo*);
+
         boost::uuids::random_generator uuidv4_generator;
-        XUUIDv4 taskid;
+        XUUIDv7 taskid;
+
+        TaskPriority priority;
+        TaskEnvironment environment;
 
         const TaskInfo* parent;
-        TaskPriority priority;
+        std::list<TaskInfo*> children;
+
+        TaskInfoRunStatus tstatus;
+        TaskIOInfo iostatus;
+
+        TaskInfoWorkItem workitem;
+        std::list<TaskInfoWorkItem> actionstack;
+
+        RunIOFp iofp;
+        TaskInfoCompletionFp completionfp;
 
         std::jmp_buf* error_handler;
         std::optional<ErrorInfo> pending_error;
 
-        TaskInfo() : uuidv4_generator(), taskid(XUUIDv4::nil()), parent(nullptr), priority(), error_handler(nullptr), pending_error() {}
-        TaskInfo(const XUUIDv4& tId, const TaskInfo* pTask, TaskPriority prio) : taskid(tId), parent(pTask), priority(prio), error_handler(nullptr), pending_error() {}
+        std::mutex state_guard; //TODO: in the future maybe we can make this atomic and CAS for better performance
+
+        TaskInfo() : uuidv4_generator(), taskid(XUUIDv7::nil()), priority(), environment(), parent(nullptr), children(), tstatus(TaskInfoRunStatus::Pending), iostatus(TaskIOInfo::CPU_ONLY), workitem(), actionstack(), iofp(nullptr), completionfp(nullptr), error_handler(nullptr), pending_error(), state_guard() {}
+        TaskInfo(const XUUIDv7& tId, const TaskInfo* pTask, TaskPriority prio, TaskInfoCompletionFp compfp, std::initializer_list<std::pair<void*, const TypeInfo*>> args) : taskid(tId), priority(prio), environment(), parent(pTask), children(), tstatus(TaskInfoRunStatus::Pending), iostatus(TaskIOInfo::CPU_ONLY), workitem(nullptr, args), actionstack(), iofp(nullptr), completionfp(compfp), error_handler(nullptr), pending_error(), state_guard() {}
+        TaskInfo(const XUUIDv7& tId, const TaskInfo* pTask, TaskPriority prio, TaskInfoCompletionFp compfp, TaskIOInfo ioinfo, RunIOFp iofp, std::initializer_list<std::pair<void*, const TypeInfo*>> args) : taskid(tId), priority(prio), environment(), parent(pTask), children(), tstatus(TaskInfoRunStatus::Pending), iostatus(ioinfo), workitem(nullptr, args), actionstack(), iofp(iofp), completionfp(compfp), error_handler(nullptr), pending_error(), state_guard() {}
+        ~TaskInfo() = default;
 
         //Generate UUID for a task
-        static XUUIDv4 generateFreshTaskId();
+        static XUUIDv7 generateFreshTaskId();
+
+        void loadEnvVars(std::initializer_list<const char*> reqvars);
 
         //Generating user requested UUID values
         XUUIDv4 generateUUIDv4()
@@ -143,20 +234,14 @@ namespace ᐸRuntimeᐳ
         {
             return bsqEmitIntoBAPI(allowsensitive, bsqid, static_cast<const void*>(&value), iobuffs);
         }
-    };
 
-    class TaskInfoRepr : public TaskInfo
-    {
-    public:        
-        TaskEnvironment environment;
+        void startStdExec();
+        void startIOExec();
 
-        TaskInfoRepr(const XUUIDv4& tId, const TaskInfo* pTask, TaskPriority prio) : TaskInfo(tId, pTask, prio), environment() {}
+        void runStdExec();
 
-        void loadEnvVars(std::initializer_list<const char*> reqvars);
-
-        static TaskInfoRepr* asRepr(TaskInfo* current_task)
-        {
-            return static_cast<TaskInfoRepr*>(current_task);
-        }
+        void runOnCompletionExec();
+        void runOnCancelledExec();
+        void runOnErrorExec();
     };
 }

@@ -254,10 +254,9 @@ Detailed Documentation, Tutorials, and Technical Information:
 
 In order to install/build the project the following are needed:
 
-- 64 bit Linux Operating System (Ubuntu 24 recommended)
+- 64 bit Linux Operating System (Ubuntu 26 recommended)
 - Version 22+ of [node.js](https://nodejs.org/en/download/)
-- Typescript 5.6 (installed as a dev dependency)
-- Git 
+- C++ dev dependencies per the CI workflow in main.yml
 
 ## Build & Test
 

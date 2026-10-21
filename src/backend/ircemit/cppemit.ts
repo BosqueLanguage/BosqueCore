@@ -701,18 +701,18 @@ class CPPEmitter {
             
             if(ttag === IRExpressionTag.IRAccessEnvHasExpression) {
                 const iehe = exp as IRAccessEnvHasExpression;
-                return `${RUNTIME_NAMESPACE}::XBool::from(${RUNTIME_NAMESPACE}::TaskInfoRepr::asRepr(${RUNTIME_NAMESPACE}::tl_bosque_info.current_task)->environment.has(${RUNTIME_NAMESPACE}::XCString::mk(${this.escapeLiteralCString(iehe.keybytes)})))`;
+                return `${RUNTIME_NAMESPACE}::XBool::from(${RUNTIME_NAMESPACE}::tl_bosque_info.current_task->environment.has(${RUNTIME_NAMESPACE}::XCString::mk(${this.escapeLiteralCString(iehe.keybytes)})))`;
             }
             else if(ttag === IRExpressionTag.IRAccessEnvGetExpression) {
                 const iege = exp as IRAccessEnvGetExpression;
-                return `${RUNTIME_NAMESPACE}::XCString::fromstd(${RUNTIME_NAMESPACE}::TaskInfoRepr::asRepr(${RUNTIME_NAMESPACE}::tl_bosque_info.current_task)->environment.get(${RUNTIME_NAMESPACE}::XCString::mk(${this.escapeLiteralCString(iege.keybytes)}))->value)`;
+                return `${RUNTIME_NAMESPACE}::XCString::fromstd(${RUNTIME_NAMESPACE}::tl_bosque_info.current_task->environment.get(${RUNTIME_NAMESPACE}::XCString::mk(${this.escapeLiteralCString(iege.keybytes)}))->value)`;
             }
             else if(ttag === IRExpressionTag.IRAccessEnvTryGetExpression) {
                 const iege = exp as IRAccessEnvTryGetExpression;
                 
-                const chkstr = `${RUNTIME_NAMESPACE}::TaskInfoRepr::asRepr(${RUNTIME_NAMESPACE}::tl_bosque_info.current_task)->environment.has(${RUNTIME_NAMESPACE}::XCString::mk(${this.escapeLiteralCString(iege.keybytes)}))`;
-                const gettype = `${RUNTIME_NAMESPACE}::TaskInfoRepr::asRepr(${RUNTIME_NAMESPACE}::tl_bosque_info.current_task)->environment.get(${RUNTIME_NAMESPACE}::XCString::mk(${this.escapeLiteralCString(iege.keybytes)}))->typeinfo`;
-                const getstr = `${RUNTIME_NAMESPACE}::XCString::fromstd(${RUNTIME_NAMESPACE}::TaskInfoRepr::asRepr(${RUNTIME_NAMESPACE}::tl_bosque_info.current_task)->environment.get(${RUNTIME_NAMESPACE}::XCString::mk(${this.escapeLiteralCString(iege.keybytes)}))->value)`;
+                const chkstr = `${RUNTIME_NAMESPACE}::tl_bosque_info.current_task->environment.has(${RUNTIME_NAMESPACE}::XCString::mk(${this.escapeLiteralCString(iege.keybytes)}))`;
+                const gettype = `${RUNTIME_NAMESPACE}::tl_bosque_info.current_task->environment.get(${RUNTIME_NAMESPACE}::XCString::mk(${this.escapeLiteralCString(iege.keybytes)}))->typeinfo`;
+                const getstr = `${RUNTIME_NAMESPACE}::XCString::fromstd(${RUNTIME_NAMESPACE}::tl_bosque_info.current_task->environment.get(${RUNTIME_NAMESPACE}::XCString::mk(${this.escapeLiteralCString(iege.keybytes)}))->value)`;
 
                 const makeopt = `${RUNTIME_NAMESPACE}::XOption<${TransformCPPNameManager.convertTypeKey(iege.oftype.tkeystr)}>::makeSome(${gettype}, ${getstr})`;
                 const makenone = `${RUNTIME_NAMESPACE}::XOption<${TransformCPPNameManager.convertTypeKey(iege.oftype.tkeystr)}>::none`;
@@ -3701,7 +3701,7 @@ class CPPEmitter {
         const parse = this.emitParseArgsMain([...idecl.params.slice(1), ...tdecl.fields.map((bf) => new IRInvokeParameterDecl(bf.fname, bf.declaredType, undefined, undefined, undefined))]);
 
         const envs = tdecl.envreqs.map((ev) => `"${ev.evname}"`);
-        const loadenv = `    ᐸRuntimeᐳ::TaskInfoRepr::asRepr(ᐸRuntimeᐳ::tl_bosque_info.current_task)->loadEnvVars({${envs.join(", ")}});`;
+        const loadenv = `    ᐸRuntimeᐳ::tl_bosque_info.current_task->loadEnvVars({${envs.join(", ")}});`;
 
         const consargs = tdecl.fields.map((bf) => "_" + TransformCPPNameManager.convertIdentifier(bf.fname));
         const initialize = `    auto _self = ${this.typeInfoManager.emitTypeAsStd(tdecl.tkey)}{${consargs.join(", ")}};\n` +
@@ -3774,7 +3774,7 @@ class CPPEmitter {
 
         return mmain + "\n\n" +
                'int main(int argc, char** argv) {\n' +
-               '    ᐸRuntimeᐳ::TaskInfoRepr maintask(ᐸRuntimeᐳ::TaskInfo::generateFreshTaskId(), nullptr, ᐸRuntimeᐳ::TaskPriority::pimmediate());\n' +
+               '    ᐸRuntimeᐳ::TaskInfo maintask(ᐸRuntimeᐳ::TaskInfo::generateFreshTaskId(), nullptr, ᐸRuntimeᐳ::TaskPriority::pimmediate(), nullptr, {});\n' +
                '    ᐸRuntimeᐳ::tl_bosque_info.current_task = &maintask;\n\n' +
                '    ᐸRuntimeᐳ::g_alloc_info.initializeGlobalRegion(BSQ_g_globaldata);\n' +
                `    ${initializegc}\n` +
