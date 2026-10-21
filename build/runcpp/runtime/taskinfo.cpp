@@ -19,7 +19,7 @@ namespace ᐸRuntimeᐳ
         size_t cpos = 0;
         for(auto iter = args.begin(); iter != args.end(); ++iter) {
             this->types[cpos] = iter->second;
-            this->argv[cpos] = iter->first;
+            this->argv[cpos] = this->data + datapos;
             iter->second->dynamicReprCopy(this->data + datapos, iter->first);
 
             datapos += iter->second->dynamicReprSize();
@@ -117,7 +117,9 @@ namespace ᐸRuntimeᐳ
             assert(this->tstatus == TaskInfoRunStatus::Pending);
             this->tstatus = TaskInfoRunStatus::Running;
         }
-        
+
+        //TODO: probably need to loadup the start action pointer into the continuefp
+
         this->runStdExec();
     }
 

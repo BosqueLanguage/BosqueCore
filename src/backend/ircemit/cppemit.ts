@@ -701,11 +701,11 @@ class CPPEmitter {
             
             if(ttag === IRExpressionTag.IRAccessEnvHasExpression) {
                 const iehe = exp as IRAccessEnvHasExpression;
-                return `${RUNTIME_NAMESPACE}::XBool::from(${RUNTIME_NAMESPACE}::tl_bosque_info.current_task)->environment.has(${RUNTIME_NAMESPACE}::XCString::mk(${this.escapeLiteralCString(iehe.keybytes)}))`;
+                return `${RUNTIME_NAMESPACE}::XBool::from(${RUNTIME_NAMESPACE}::tl_bosque_info.current_task->environment.has(${RUNTIME_NAMESPACE}::XCString::mk(${this.escapeLiteralCString(iehe.keybytes)})))`;
             }
             else if(ttag === IRExpressionTag.IRAccessEnvGetExpression) {
                 const iege = exp as IRAccessEnvGetExpression;
-                return `${RUNTIME_NAMESPACE}::XCString::fromstd(${RUNTIME_NAMESPACE}::tl_bosque_info.current_task)->environment.get(${RUNTIME_NAMESPACE}::XCString::mk(${this.escapeLiteralCString(iege.keybytes)})->value)`;
+                return `${RUNTIME_NAMESPACE}::XCString::fromstd(${RUNTIME_NAMESPACE}::tl_bosque_info.current_task->environment.get(${RUNTIME_NAMESPACE}::XCString::mk(${this.escapeLiteralCString(iege.keybytes)}))->value)`;
             }
             else if(ttag === IRExpressionTag.IRAccessEnvTryGetExpression) {
                 const iege = exp as IRAccessEnvTryGetExpression;

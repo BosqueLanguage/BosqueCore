@@ -142,7 +142,7 @@ namespace ᐸRuntimeᐳ
         TaskInfoWorkItemWorkFp continuefp;
 
         TaskInfoWorkItem() = default;
-        TaskInfoWorkItem(bool /*isActionSafepoint*/, TaskInfoWorkItemWorkFp nextop, std::initializer_list<std::pair<void*, const TypeInfo*>> args) : argvals(args), retvals(), continuefp(nextop) {}
+        TaskInfoWorkItem(TaskInfoWorkItemWorkFp nextop, std::initializer_list<std::pair<void*, const TypeInfo*>> args) : argvals(args), retvals(), continuefp(nextop) {}
         ~TaskInfoWorkItem() = default;
     };
 
@@ -207,8 +207,8 @@ namespace ᐸRuntimeᐳ
         std::mutex state_guard; //TODO: in the future maybe we can make this atomic and CAS for better performance
 
         TaskInfo() : uuidv4_generator(), taskid(XUUIDv7::nil()), priority(), environment(), parent(nullptr), children(), tstatus(TaskInfoRunStatus::Pending), iostatus(TaskIOInfo::CPU_ONLY), workitem(), actionstack(), iofp(nullptr), completionfp(nullptr), error_handler(nullptr), pending_error(), state_guard() {}
-        TaskInfo(const XUUIDv7& tId, const TaskInfo* pTask, TaskPriority prio, TaskInfoCompletionFp compfp, std::initializer_list<std::pair<void*, const TypeInfo*>> args) : taskid(tId), priority(prio), environment(), parent(pTask), children(), tstatus(TaskInfoRunStatus::Pending), iostatus(TaskIOInfo::CPU_ONLY), workitem(), actionstack(), iofp(nullptr), completionfp(compfp), error_handler(nullptr), pending_error(), state_guard() {}
-        TaskInfo(const XUUIDv7& tId, const TaskInfo* pTask, TaskPriority prio, TaskInfoCompletionFp compfp, TaskIOInfo ioinfo, RunIOFp iofp, std::initializer_list<std::pair<void*, const TypeInfo*>> args) : taskid(tId), priority(prio), environment(), parent(pTask), children(), tstatus(TaskInfoRunStatus::Pending), iostatus(ioinfo), workitem(), actionstack(), iofp(iofp), completionfp(compfp), error_handler(nullptr), pending_error(), state_guard() {}
+        TaskInfo(const XUUIDv7& tId, const TaskInfo* pTask, TaskPriority prio, TaskInfoCompletionFp compfp, std::initializer_list<std::pair<void*, const TypeInfo*>> args) : taskid(tId), priority(prio), environment(), parent(pTask), children(), tstatus(TaskInfoRunStatus::Pending), iostatus(TaskIOInfo::CPU_ONLY), workitem(nullptr, args), actionstack(), iofp(nullptr), completionfp(compfp), error_handler(nullptr), pending_error(), state_guard() {}
+        TaskInfo(const XUUIDv7& tId, const TaskInfo* pTask, TaskPriority prio, TaskInfoCompletionFp compfp, TaskIOInfo ioinfo, RunIOFp iofp, std::initializer_list<std::pair<void*, const TypeInfo*>> args) : taskid(tId), priority(prio), environment(), parent(pTask), children(), tstatus(TaskInfoRunStatus::Pending), iostatus(ioinfo), workitem(nullptr, args), actionstack(), iofp(iofp), completionfp(compfp), error_handler(nullptr), pending_error(), state_guard() {}
         ~TaskInfo() = default;
 
         //Generate UUID for a task
