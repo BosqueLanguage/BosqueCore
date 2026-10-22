@@ -92,6 +92,7 @@ const KW_example = "example";
 
 //reserved
 const KW_operator = "operator";
+const KW_struct = "struct";
 
 const KeywordStrings = [
     KW_recursive_q,
@@ -133,6 +134,7 @@ const KeywordStrings = [
     KW_of,
     KW_ok,
     KW_operator,
+    KW_struct,
     KW_parallel,
     KW_sequential,
     KW_pred,
@@ -283,7 +285,6 @@ const SYM_eqeqeq = " === ";
 const SYM_bigarrow = " => ";
 const SYM_implies = " ==> ";
 const SYM_arrow = " -> ";
-const SYM_barbar = " || ";
 const SYM_plus = " + ";
 const SYM_lt = " < ";
 const SYM_lteq = " <= ";
@@ -329,7 +330,6 @@ const SpaceRequiredSymbols = [
     SYM_bigarrow,
     SYM_implies,
     SYM_arrow,
-    SYM_barbar,
     SYM_plus,
     SYM_lt,
     SYM_lteq,
@@ -507,7 +507,6 @@ export {
     SYM_bigarrow,
     SYM_implies,
     SYM_arrow,
-    SYM_barbar,
     SYM_plus,
     SYM_lt,
     SYM_lteq,
