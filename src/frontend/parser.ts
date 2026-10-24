@@ -4494,30 +4494,12 @@ class Parser {
             return new ChkLogicImpliesExpression(sinfo, cle, rhs);
         }
         else {
-            xxxx;
-            let llexps: Expression[] = [];
-
-            if(!cle.guards.every((g) => g instanceof ITestSimpleGuard)) {
+            if(cle.guards.length !== 1 || !(cle.guards[0] instanceof ITestSimpleGuard)) {
                 this.recordErrorGeneral(sinfo, "Complex guard sets are not allowed in standalone chk logic expressions");
-                llexps.push(new ErrorExpression(sinfo, undefined, undefined));
+                return new ChkLogicBaseExpression(new ErrorExpression(sinfo, undefined, undefined));
             }
-            else {
-                if(cle.guards.length === 1) {
-                    llexps.push((cle.guards[0] as ITestSimpleGuard).exp);
-                }
-                else {
-                    llexps.push(new LogicAndExpression(sinfo, cle.guards.map((g) => (g as ITestSimpleGuard).exp)));
-                }
-            }
-
-            while(this.testToken(SYM_barbar)) {
-                this.consumeToken();
-                const ng = this.parseExpression();
-                llexps.push(ng);
-            }
-
-            return new ChkLogicBaseExpression(llexps.length === 1 ? llexps[0] : new LogicOrExpression(sinfo, llexps));
-
+            
+            return new ChkLogicBaseExpression((cle.guards[0] as ITestSimpleGuard).exp);
         }
     }
 

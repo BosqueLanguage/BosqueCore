@@ -1718,7 +1718,7 @@ class LogicAndExpression extends LogicExpression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.blopEmit(toplevel, fmt, "&&");
+        return this.blopEmit(toplevel, fmt, "&");
     }
 }
 
