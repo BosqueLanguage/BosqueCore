@@ -158,7 +158,7 @@ uuid4{4f63660e-e0ad-4d18-93c6-f684faf11e65}<UserID>
 These typed literals are strongly typed and do *not* auto-decay to their underlying primitive types. The underlying values can be accessed using the `.value` member. Additionally, invariants, methods, etc. can be associated with the new types via the `& { ... }` syntax. For example:
 ```none
 type Percentage = Float & { 
-    invariant 0.0f <= $value && $value <= 100.0f;
+    invariant 0.0f <= $value & $value <= 100.0f;
 }
 ```
 
@@ -708,17 +708,17 @@ KeyComparator::less<ChkInt>(3I, 2I) %%false
 KeyComparator::equal<ChkInt>(4I, ChkInt::npos) %%true -- npos is greater than all other values (except itself)
 ```
 
-## Binary Logic `&&`/`||` operators
-Bosque provides (slightly non-standard) _non_-short-circuiting boolean operators of `&&` and `||`. 
+## Binary Logic `&`/`|` operators
+Bosque provides (slightly non-standard) _non_-short-circuiting boolean operators of `&` and `|`. 
 
 ```none
-true && true  %%  true
-true && false %% false
-false && (1i / 0i == 1i) %% failure -- NOT short-circuited
+true & true  %%  true
+true & false %% false
+false & (1i / 0i == 1i) %% failure -- NOT short-circuited
 
-true || false  %% true
-false || false %% false
-true || (1i / 0i == 1i) %% failure -- NOT short-circuited
+true | false  %% true
+false | false %% false
+true | (1i / 0i == 1i) %% failure -- NOT short-circuited
 ```
 
 ## Logical Implication `==>` operator (Top-Level Only)

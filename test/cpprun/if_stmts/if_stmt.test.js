@@ -6,7 +6,7 @@ import { describe, it } from "node:test";
 describe ("CPPExec -- If Statement", () => {
     it("should exec simple ifs general", function () {
         runTestSet("public function main(b: Bool): Int { if(b) { return 3i; } return 1i; }", [['true', '3i'], ['false', '1i']], []);
-        runTestSet("public function main(b: Bool): Int { if(b && true) { return 3i; } return 1i; }", [['true', '3i'], ['false', '1i']], []);
+        runTestSet("public function main(b: Bool): Int { if(b & true) { return 3i; } return 1i; }", [['true', '3i'], ['false', '1i']], []);
     });
 
     it("should exec simple ifs scc", function () {

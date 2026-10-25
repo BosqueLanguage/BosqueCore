@@ -118,8 +118,6 @@ namespace ᐸRuntimeᐳ
             this->tstatus = TaskInfoRunStatus::Running;
         }
 
-        //TODO: probably need to loadup the start action pointer into the continuefp
-
         this->runStdExec();
     }
 

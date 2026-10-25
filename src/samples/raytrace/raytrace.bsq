@@ -78,7 +78,7 @@ entity RayTracer{
             let ldis = Vector::minus(light.pos, pos);
             let livec = Vector::norm(ldis);
             let neatIsect = this.testRay(Ray{pos, livec}, scene);
-            return (neatIsect > Vector::mag(ldis)) || (neatIsect == 0.0f);
+            return (neatIsect > Vector::mag(ldis)) | (neatIsect == 0.0f);
         }).
         map<Color>(fn(light) => {
             let ldis = Vector::minus(light.pos, pos);
@@ -179,7 +179,7 @@ entity Vector {
     }
 
     function equals(v1: Vector, v2: Vector): Bool {
-        return (v1.x == v2.x) && (v1.y == v2.y) && (v1.z == v2.z);
+        return (v1.x == v2.x) & (v1.y == v2.y) & (v1.z == v2.z);
     }
 }
 
