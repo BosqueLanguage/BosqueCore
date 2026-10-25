@@ -17,7 +17,7 @@ describe ("List -- map index basic", () => {
     it("should do simple map index", function () {
         runTestSet('public function main(z: Nat): List<Nat> { return List<Nat>{}.mapIdx<Nat>(fn(x, i) => x + i); }', [['0n', 'List<Nat>{ }']], []);
         runTestSet('public function main(z: Nat): List<Nat> { return List<Nat>{1n, z, 5n}.mapIdx<Nat>(fn(x, i) => x + i); }', [['1n', 'List<Nat>{ 1n, 2n, 7n }']], []);
-        runTestSet('public function main(z: Nat): List<Bool> { return List<Nat>{1n, z, 5n}.mapIdx<Bool>(fn(x, i) => x > 0n && x != i); }', [['1n', 'List<Bool>{ true, false, true }'], ['0n', 'List<Bool>{ true, false, true }']], []);
+        runTestSet('public function main(z: Nat): List<Bool> { return List<Nat>{1n, z, 5n}.mapIdx<Bool>(fn(x, i) => x > 0n & x != i); }', [['1n', 'List<Bool>{ true, false, true }'], ['0n', 'List<Bool>{ true, false, true }']], []);
     });
 });
 

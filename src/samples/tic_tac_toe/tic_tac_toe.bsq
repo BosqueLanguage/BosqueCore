@@ -37,22 +37,22 @@ entity Board {
     }
 
     private method check3(r1: Nat, c1: Nat, r2: Nat, c2: Nat, r3: Nat, c3: Nat, player: PlayerMark): Bool {
-        return this.getCell(r1, c1) === player && this.getCell(r2, c2) === player && this.getCell(r3, c3) === player;
+        return this.getCell(r1, c1) === player & this.getCell(r2, c2) === player & this.getCell(r3, c3) === player;
     }
 
     method checkWinner(player: PlayerMark): Bool {
         %%check rows across
-        if(this.check3(0n, 0n, 0n, 1n, 0n, 2n, player) || this.check3(1n, 0n, 1n, 1n, 1n, 2n, player) || this.check3(2n, 0n, 2n, 1n, 2n, 2n, player)) {
+        if(this.check3(0n, 0n, 0n, 1n, 0n, 2n, player) | this.check3(1n, 0n, 1n, 1n, 1n, 2n, player) | this.check3(2n, 0n, 2n, 1n, 2n, 2n, player)) {
             return true;
         }
 
         %%check columns down
-        if(this.check3(0n, 0n, 1n, 0n, 2n, 0n, player) || this.check3(0n, 1n, 1n, 1n, 2n, 1n, player) || this.check3(0n, 2n, 1n, 2n, 2n, 2n, player)) {
+        if(this.check3(0n, 0n, 1n, 0n, 2n, 0n, player) | this.check3(0n, 1n, 1n, 1n, 2n, 1n, player) | this.check3(0n, 2n, 1n, 2n, 2n, 2n, player)) {
             return true;
         }
 
         %%check diagonals
-        if(this.check3(0n, 0n, 1n, 1n, 2n, 2n, player) || this.check3(0n, 2n, 1n, 1n, 2n, 0n, player)) {
+        if(this.check3(0n, 0n, 1n, 1n, 2n, 2n, player) | this.check3(0n, 2n, 1n, 1n, 2n, 0n, player)) {
             return true;
         }
 
@@ -80,7 +80,7 @@ entity Board {
 
     method hasWinner(): Bool {
         let winner = this.checkAnyWinner();
-        return winner === PlayerMark#x || winner === PlayerMark#o;
+        return winner === PlayerMark#x | winner === PlayerMark#o;
     }
 }
 
