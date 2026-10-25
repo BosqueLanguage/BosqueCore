@@ -211,8 +211,8 @@ datatype BoolOp of
         match(this) {
             Const  => { return $this.val; }
             NotOp => { return !$this.arg.evaluate[recursive](); }
-            AndOp => { return $this.larg.evaluate[recursive]() && $this.rarg.evaluate[recursive](); }
-            OrOp  => { return $this.larg.evaluate[recursive]() || $this.rarg.evaluate[recursive](); }
+            AndOp => { return $this.larg.evaluate[recursive]() & $this.rarg.evaluate[recursive](); }
+            OrOp  => { return $this.larg.evaluate[recursive]() | $this.rarg.evaluate[recursive](); }
         }
     } 
 }
