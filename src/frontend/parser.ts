@@ -4221,6 +4221,16 @@ class Parser {
         return exp;
     }
 
+    private parseConstScopedLiteralExpression(etype: TypeSignature | undefined, boundtemplates: Set<string>): Expression {
+        this.env.pushStandardFunctionScope([], boundtemplates, etype);
+        this.env.pushBlockScope();
+        const exp = this.parsePrimaryExpression();
+        this.env.popBlockScope();
+        this.env.popStandardFunctionScope();
+
+        return exp;
+    }
+
     private parseEnvConstructionExpression(): EnvironmentGenerationExpression | undefined {
         const sinfo = this.peekToken().getSourceInfo();
         if(!this.testToken(KW_env)) {
@@ -6613,7 +6623,7 @@ class Parser {
             }
 
             if(this.testAndConsumeTokenIf(KW_of)) {
-                const ofexp = this.parseConstScopedExpression(undefined, new Set<string>());
+                const ofexp = this.parseConstScopedLiteralExpression(undefined, new Set<string>());
                 (tdecl as TypedeclTypeDecl).optofexp = ofexp;
             }
 
