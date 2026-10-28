@@ -46,7 +46,7 @@ permissions:
   security-events: read
   statuses: read
   vulnerability-alerts: read
-  copilot-requests: none # change to 'write' to use org-based billing
+  copilot-requests: write
 
 network:
   allowed:
