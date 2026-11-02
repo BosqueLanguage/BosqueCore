@@ -4128,12 +4128,10 @@ class IRReturnDirectConstructWithBoxStatement extends IRReturnSimpleStatement {
 }
 
 class IRVoidInvokeStatement extends IRAtomicStatement {
-    readonly scratchname: string; //a scratch temp variable to hold the direct invoke result if needed -- e.g. in SMT place result here, check for errors, then extract to vname
     readonly aexp: IRInvokeImplicitsExpression;
 
-    constructor(scratch: string, aexp: IRInvokeImplicitsExpression) {
+    constructor(aexp: IRInvokeImplicitsExpression) {
         super(IRStatementTag.IRVoidInvokeStatement);
-        this.scratchname = scratch;
         this.aexp = aexp;
     }
 
@@ -4143,25 +4141,23 @@ class IRVoidInvokeStatement extends IRAtomicStatement {
 
     static jsonEmit_IRVoidInvokeStatement(exp: IRVoidInvokeStatement): object {
         return {
-            scratchname: exp.scratchname,
             aexp: IRInvokeImplicitsExpression.jsonEmit_IRInvokeImplicitsExpression(exp.aexp)
         };
     }
 
     static jsonParse_IRVoidInvokeStatement(obj: any): IRVoidInvokeStatement {
-        const scratchname = obj.scratchname;
         const aexp = IRInvokeImplicitsExpression.jsonParse_IRInvokeImplicitsExpression(obj.aexp);
-        return new IRVoidInvokeStatement(scratchname, aexp);
+        return new IRVoidInvokeStatement(aexp);
     }
 }
 
 class IRChkLogicImpliesShortCircuitStatement extends IRStatement {
-    readonly tvar: string; //the temp variable to hold the result
+    readonly tvar: number; //the temp variable to hold the result
     readonly lhs: IRSimpleExpression;
     readonly rstmts: IRStatement[];
     readonly rexp: IRSimpleExpression;
 
-    constructor(tvar: string, lhs: IRSimpleExpression, rstmts: IRStatement[], rexp: IRSimpleExpression) {
+    constructor(tvar: number, lhs: IRSimpleExpression, rstmts: IRStatement[], rexp: IRSimpleExpression) {
         super(IRStatementTag.IRChkLogicImpliesShortCircuitStatement);
         this.tvar = tvar;
         this.lhs = lhs;
@@ -4183,7 +4179,7 @@ class IRChkLogicImpliesShortCircuitStatement extends IRStatement {
 }
 
 class IRLogicConditionalStatement extends IRStatement {
-    readonly tvar: string; //the temp variable to hold the result
+    readonly tvar: number; //the temp variable to hold the result
     readonly ttype: IRTypeSignature;
     readonly condition: IRSimpleExpression;
     readonly truestmt: IRStatement[];
@@ -4191,7 +4187,7 @@ class IRLogicConditionalStatement extends IRStatement {
     readonly falsestmt: IRStatement[];
     readonly falseexp: IRSimpleExpression;
 
-    constructor(tvar: string, ttype: IRTypeSignature, condition: IRSimpleExpression, truestmt: IRStatement[], trueexp: IRSimpleExpression, falsestmt: IRStatement[], falseexp: IRSimpleExpression) {
+    constructor(tvar: number, ttype: IRTypeSignature, condition: IRSimpleExpression, truestmt: IRStatement[], trueexp: IRSimpleExpression, falsestmt: IRStatement[], falseexp: IRSimpleExpression) {
         super(IRStatementTag.IRLogicConditionalStatement);
         this.tvar = tvar;
         this.ttype = ttype;
@@ -4531,7 +4527,8 @@ class IRTypeDeclSizeRangeCheckCStringStatement extends IRErrorTypedStringCheckSt
         const nval = IRErrorCheckStatement.jsonParseMeta_IRErrorCheckStatement(obj);
         const cval = IRErrorTypedStringCheckStatement.jsonParseMeta_IRErrorTypedStringCheckStatement(obj);
 
-        return new IRTypeDeclSizeRangeCheckCStringStatement(nval[0], nval[1], nval[3], ...cval, obj.min !== null ? IRSimpleExpression.jsonParse_IRSimpleExpression(obj.min) : undefined, obj.max !== null ? IRSimpleExpression.jsonParse_IRSimpleExpression(obj.max) : undefined, obj.strexp);
+        const strexp = IRImmediateExpression.jsonParse_IRSimpleExpression(cval[0]); 
+        return new IRTypeDeclSizeRangeCheckCStringStatement(nval[0], nval[1], nval[3], obj.min !== null ? IRSimpleExpression.jsonParse_IRSimpleExpression(obj.min) : undefined, obj.max !== null ? IRSimpleExpression.jsonParse_IRSimpleExpression(obj.max) : undefined, strexp);
     }
 }
 
@@ -4557,11 +4554,12 @@ class IRTypeDeclSizeRangeCheckUnicodeStringStatement extends IRErrorTypedStringC
         };
     }
 
-    static jsonParse_IRTypeDeclSizeRangeCheckCStringStatement(obj: any): IRTypeDeclSizeRangeCheckUnicodeStringStatement {
+    static jsonParse_IRTypeDeclSizeRangeCheckUnicodeStringStatement(obj: any): IRTypeDeclSizeRangeCheckUnicodeStringStatement {
         const nval = IRErrorCheckStatement.jsonParseMeta_IRErrorCheckStatement(obj);
         const sval = IRErrorTypedStringCheckStatement.jsonParseMeta_IRErrorTypedStringCheckStatement(obj);
 
-        return new IRTypeDeclSizeRangeCheckUnicodeStringStatement(nval[0], nval[1], nval[3], ...sval, obj.min !== null ? IRSimpleExpression.jsonParse_IRSimpleExpression(obj.min) : undefined, obj.max !== null ? IRSimpleExpression.jsonParse_IRSimpleExpression(obj.max) : undefined, obj.strexp);
+        const strexp = IRImmediateExpression.jsonParse_IRSimpleExpression(sval[0]); 
+        return new IRTypeDeclSizeRangeCheckUnicodeStringStatement(nval[0], nval[1], nval[3], obj.min !== null ? IRSimpleExpression.jsonParse_IRSimpleExpression(obj.min) : undefined, obj.max !== null ? IRSimpleExpression.jsonParse_IRSimpleExpression(obj.max) : undefined, strexp);
     }
 }
 
@@ -4807,16 +4805,14 @@ class IRAssertStatement extends IRErrorCheckStatement {
 
         return {
             ...nval,
-            ikey: exp.ikey,
-            requiresidx: exp.requiresidx,
-            args: exp.args.map(IRImmediateExpression.jsonEmit_IRImmediateExpression)
+            cond: IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.cond)
         };
     }
 
     static jsonParse_IRAssertStatement(obj: any): IRAssertStatement {
         const nval = IRErrorCheckStatement.jsonParseMeta_IRErrorCheckStatement(obj);
 
-        return new IRAssertStatement(nval[0], nval[1], nval[2], nval[3], obj.cond);
+        return new IRAssertStatement(nval[0], nval[1], nval[2], nval[3], IRSimpleExpression.jsonParse_IRSimpleExpression(obj.cond));
     }
 }
 
