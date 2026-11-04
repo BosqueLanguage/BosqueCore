@@ -175,85 +175,732 @@ abstract class IRExpression {
 
     abstract isSimpleExpression(): boolean;
 
-    static jsonEmit_IRExpression(expr: IRExpression): object {
-        xxxx;
+    static jsonEmit_IRExpression(expr: IRExpression): [string, object] {
+        if(expr instanceof IRLiteralNoneExpression) {
+            return ["LiteralNoneExpression", IRLiteralNoneExpression.jsonEmit_IRLiteralNoneExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralBoolExpression) {
+            return ["LiteralBoolExpression", IRLiteralBoolExpression.jsonEmit_IRLiteralBoolExpression(expr)];
+        }
+        
+        else if(expr instanceof IRLiteralNatExpression) {
+            return ["LiteralNatExpression", IRLiteralNatExpression.jsonEmit_IRLiteralNatExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralIntExpression) {
+            return ["LiteralIntExpression", IRLiteralIntExpression.jsonEmit_IRLiteralIntExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralChkNatExpression) {
+            return ["LiteralChkNatExpression", IRLiteralChkNatExpression.jsonEmit_IRLiteralChkNatExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralChkIntExpression) {
+            return ["LiteralChkIntExpression", IRLiteralChkIntExpression.jsonEmit_IRLiteralChkIntExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralRationalExpression) {
+            return ["LiteralRationalExpression", IRLiteralRationalExpression.jsonEmit_IRLiteralRationalExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralFloatExpression) {
+            return ["LiteralFloatExpression", IRLiteralFloatExpression.jsonEmit_IRLiteralFloatExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralDecimalExpression) {
+            return ["LiteralDecimalExpression", IRLiteralDecimalExpression.jsonEmit_IRLiteralDecimalExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralDecimalDegreeExpression) {
+            return ["LiteralDecimalDegreeExpression", IRLiteralDecimalDegreeExpression.jsonEmit_IRLiteralDecimalDegreeExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralLatLongCoordinateExpression) {
+            return ["LiteralLatLongCoordinateExpression", IRLiteralLatLongCoordinateExpression.jsonEmit_IRLiteralLatLongCoordinateExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralComplexExpression) {
+            return ["LiteralComplexExpression", IRLiteralComplexExpression.jsonEmit_IRLiteralComplexExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralByteBufferExpression) {
+            return ["LiteralByteBufferExpression", IRLiteralByteBufferExpression.jsonEmit_IRLiteralByteBufferExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralUUIDv4Expression) {
+            return ["LiteralUUIDv4Expression", IRLiteralUUIDv4Expression.jsonEmit_IRLiteralUUIDv4Expression(expr)];
+        }
+        else if(expr instanceof IRLiteralUUIDv7Expression) {
+            return ["LiteralUUIDv7Expression", IRLiteralUUIDv7Expression.jsonEmit_IRLiteralUUIDv7Expression(expr)];
+        }
+        else if(expr instanceof IRLiteralSHAContentHashExpression) {
+            return ["LiteralSHAContentHashExpression", IRLiteralSHAContentHashExpression.jsonEmit_IRLiteralSHAContentHashExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralTZDateTimeExpression) {
+            return ["LiteralTZDateTimeExpression", IRLiteralTZDateTimeExpression.jsonEmit_IRLiteralTZDateTimeExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralTAITimeExpression) {
+            return ["LiteralTAITimeExpression", IRLiteralTAITimeExpression.jsonEmit_IRLiteralTAITimeExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralPlainDateExpression) {
+            return ["LiteralPlainDateExpression", IRLiteralPlainDateExpression.jsonEmit_IRLiteralPlainDateExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralPlainTimeExpression) {
+            return ["LiteralPlainTimeExpression", IRLiteralPlainTimeExpression.jsonEmit_IRLiteralPlainTimeExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralLogicalTimeExpression) {
+            return ["LiteralLogicalTimeExpression", IRLiteralLogicalTimeExpression.jsonEmit_IRLiteralLogicalTimeExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralISOTimeStampExpression) {
+            return ["LiteralISOTimeStampExpression", IRLiteralISOTimeStampExpression.jsonEmit_IRLiteralISOTimeStampExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralDeltaDateTimeExpression) {
+            return ["LiteralDeltaDateTimeExpression", IRLiteralDeltaDateTimeExpression.jsonEmit_IRLiteralDeltaDateTimeExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralDeltaISOTimeStampExpression) {
+            return ["LiteralDeltaISOTimeStampExpression", IRLiteralDeltaISOTimeStampExpression.jsonEmit_IRLiteralDeltaISOTimeStampExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralDeltaSecondsExpression) {
+            return ["LiteralDeltaSecondsExpression", IRLiteralDeltaSecondsExpression.jsonEmit_IRLiteralDeltaSecondsExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralDeltaLogicalTimeExpression) {
+            return ["LiteralDeltaLogicalTimeExpression", IRLiteralDeltaLogicalTimeExpression.jsonEmit_IRLiteralDeltaLogicalTimeExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralUnicodeRegexExpression) {
+            return ["LiteralUnicodeRegexExpression", IRLiteralUnicodeRegexExpression.jsonEmit_IRLiteralUnicodeRegexExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralCRegexExpression) {
+            return ["LiteralCRegexExpression", IRLiteralCRegexExpression.jsonEmit_IRLiteralCRegexExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralByteExpression) {
+            return ["LiteralByteExpression", IRLiteralByteExpression.jsonEmit_IRLiteralByteExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralCCharExpression) {
+            return ["LiteralCCharExpression", IRLiteralCCharExpression.jsonEmit_IRLiteralCCharExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralUnicodeCharExpression) {
+            return ["LiteralUnicodeCharExpression", IRLiteralUnicodeCharExpression.jsonEmit_IRLiteralUnicodeCharExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralCStringExpression) {
+            return ["LiteralCStringExpression", IRLiteralCStringExpression.jsonEmit_IRLiteralCStringExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralStringExpression) {
+            return ["LiteralStringExpression", IRLiteralStringExpression.jsonEmit_IRLiteralStringExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralFormatStringExpression) {
+            return ["LiteralFormatStringExpression", IRLiteralFormatStringExpression.jsonEmit_IRLiteralFormatStringExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralFormatCStringExpression) {
+            return ["LiteralFormatCStringExpression", IRLiteralFormatCStringExpression.jsonEmit_IRLiteralFormatCStringExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralTypedExpression) {
+            return ["LiteralTypedExpression", IRLiteralTypedExpression.jsonEmit_IRLiteralTypedExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralTypedStringExpression) {
+            return ["LiteralTypedStringExpression", IRLiteralTypedStringExpression.jsonEmit_IRLiteralTypedStringExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralTypedCStringExpression) {
+            return ["LiteralTypedCStringExpression", IRLiteralTypedCStringExpression.jsonEmit_IRLiteralTypedCStringExpression(expr)];
+        }
+        else if(expr instanceof IRAccessEnvHasExpression) {
+            return ["AccessEnvHasExpression", IRAccessEnvHasExpression.jsonEmit_IRAccessEnvHasExpression(expr)];
+        }
+        else if(expr instanceof IRAccessEnvGetExpression) {
+            return ["AccessEnvGetExpression", IRAccessEnvGetExpression.jsonEmit_IRAccessEnvGetExpression(expr)];
+        }
+        else if(expr instanceof IRAccessEnvTryGetExpression) {
+            return ["AccessEnvTryGetExpression", IRAccessEnvTryGetExpression.jsonEmit_IRAccessEnvTryGetExpression(expr)];
+        }
+        else if(expr instanceof IRTaskAccessIDExpression) {
+            return ["TaskAccessIDExpression", IRTaskAccessIDExpression.jsonEmit_IRTaskAccessIDExpression(expr)];
+        }
+        else if(expr instanceof IRTaskAccessParentIDExpression) {
+            return ["TaskAccessParentIDExpression", IRTaskAccessParentIDExpression.jsonEmit_IRTaskAccessParentIDExpression(expr)];
+        }
+        else if(expr instanceof IRAccessConstantExpression) {
+            return ["AccessConstantExpression", IRAccessConstantExpression.jsonEmit_IRAccessConstantExpression(expr)];
+        }
+        else if(expr instanceof IRAccessEnumExpression) {
+            return ["AccessEnumExpression", IRAccessEnumExpression.jsonEmit_IRAccessEnumExpression(expr)];
+        }
+        else if(expr instanceof IRAccessParameterVariableExpression) {
+            return ["AccessParameterVariableExpression", IRAccessParameterVariableExpression.jsonEmit_IRAccessParameterVariableExpression(expr)];
+        }
+        else if(expr instanceof IRAccessLocalVariableExpression) {
+            return ["AccessLocalVariableExpression", IRAccessLocalVariableExpression.jsonEmit_IRAccessLocalVariableExpression(expr)];
+        }
+        else if(expr instanceof IRAccessCapturedVariableExpression) {
+            return ["AccessCapturedVariableExpression", IRAccessCapturedVariableExpression.jsonEmit_IRAccessCapturedVariableExpression(expr)];
+        }
+        else if(expr instanceof IRAccessTempVariableExpression) {
+            return ["AccessTempVariableExpression", IRAccessTempVariableExpression.jsonEmit_IRAccessTempVariableExpression(expr)];
+        }
+        else if(expr instanceof IRAccessTypeDeclValueExpression) {
+            return ["AccessTypeDeclValueExpression", IRAccessTypeDeclValueExpression.jsonEmit_IRAccessTypeDeclValueExpression(expr)];
+        }
+        else if(expr instanceof IRConstructSafeTypeDeclExpression) {
+            return ["ConstructSafeTypeDeclExpression", IRConstructSafeTypeDeclExpression.jsonEmit_IRConstructSafeTypeDeclExpression(expr)];
+        }
+        else if(expr instanceof IRConstructorSomeTypeExpression) {
+            return ["ConstructorSomeTypeExpression", IRConstructorSomeTypeExpression.jsonEmit_IRConstructorSomeTypeExpression(expr)];
+        }
+        else if(expr instanceof IRConstructorOkTypeExpression) {
+            return ["ConstructorOkTypeExpression", IRConstructorOkTypeExpression.jsonEmit_IRConstructorOkTypeExpression(expr)];
+        }
+        else if(expr instanceof IRConstructorFailTypeExpression) {
+            return ["ConstructorFailTypeExpression", IRConstructorFailTypeExpression.jsonEmit_IRConstructorFailTypeExpression(expr)];
+        }
+        else if(expr instanceof IRConstructorAPISuccessTypeExpression) {
+            return ["ConstructorAPISuccessTypeExpression", IRConstructorAPISuccessTypeExpression.jsonEmit_IRConstructorAPISuccessTypeExpression(expr)];
+        }
+        else if(expr instanceof IRConstructorMapEntryTypeExpression) {
+            return ["ConstructorMapEntryTypeExpression", IRConstructorMapEntryTypeExpression.jsonEmit_IRConstructorMapEntryTypeExpression(expr)];
+        }
+        else if(expr instanceof IRConstructorStandardEntityExpression) {
+            return ["ConstructorStandardEntityExpression", IRConstructorStandardEntityExpression.jsonEmit_IRConstructorStandardEntityExpression(expr)];
+        }
+        else if(expr instanceof IRConstructorLambdaExpression) {
+            return ["ConstructorLambdaExpression", IRConstructorLambdaExpression.jsonEmit_IRConstructorLambdaExpression(expr)];
+        }
+        else if(expr instanceof IRConstructorEListExpression) {
+            return ["ConstructorEListExpression", IRConstructorEListExpression.jsonEmit_IRConstructorEListExpression(expr)];
+        }
+        else if(expr instanceof IRConstructorListEmptyExpression) {
+            return ["ConstructorListEmptyExpression", IRConstructorListEmptyExpression.jsonEmit_IRConstructorListEmptyExpression(expr)];
+        }
+        else if(expr instanceof IRConstructorListPassthroughExpression) {
+            return ["ConstructorListPassthroughExpression", IRConstructorListPassthroughExpression.jsonEmit_IRConstructorListPassthroughExpression(expr)];
+        }
+        else if(expr instanceof IRConstructorListSingletonsExpression) {
+            return ["ConstructorListSingletonsExpression", IRConstructorListSingletonsExpression.jsonEmit_IRConstructorListSingletonsExpression(expr)];
+        }
+        else if(expr instanceof IRConstructorListMixedExpression) {
+            return ["ConstructorListMixedExpression", IRConstructorListMixedExpression.jsonEmit_IRConstructorListMixedExpression(expr)];
+        }
+        else if(expr instanceof IRConstructorMapEmptyExpression) {
+            return ["ConstructorMapEmptyExpression", IRConstructorMapEmptyExpression.jsonEmit_IRConstructorMapEmptyExpression(expr)];
+        }
+        else if(expr instanceof IRConstructorMapSingletonsExpression) {
+            return ["ConstructorMapSingletonsExpression", IRConstructorMapSingletonsExpression.jsonEmit_IRConstructorMapSingletonsExpression(expr)];
+        }
+        else if(expr instanceof IRAccessFieldSpecialExpression) {
+            return ["AccessFieldSpecialExpression", IRAccessFieldSpecialExpression.jsonEmit_IRAccessFieldSpecialExpression(expr)];
+        }
+        else if(expr instanceof IRAccessFieldDirectExpression) {
+            return ["AccessFieldDirectExpression", IRAccessFieldDirectExpression.jsonEmit_IRAccessFieldDirectExpression(expr)];
+        }
+        else if(expr instanceof IRAccessFieldVirtualExpression) {
+            return ["AccessFieldVirtualExpression", IRAccessFieldVirtualExpression.jsonEmit_IRAccessFieldVirtualExpression(expr)];
+        }
+        else if(expr instanceof IRAccessEListIndexExpression) {
+            return ["AccessEListIndexExpression", IRAccessEListIndexExpression.jsonEmit_IRAccessEListIndexExpression(expr)];
+        }
+        else if(expr instanceof IRInvokeSimpleExpression) {
+            return ["InvokeSimpleExpression", IRInvokeSimpleExpression.jsonEmit_IRInvokeSimpleExpression(expr)];
+        }
+        else if(expr instanceof IRInvokeSimpleWithImplicitsExpression) {
+            return ["InvokeSimpleWithImplicitsExpression", IRInvokeSimpleWithImplicitsExpression.jsonEmit_IRInvokeSimpleWithImplicitsExpression(expr)];
+        }
+        else if(expr instanceof IRInvokeVirtualSimpleExpression) {
+            return ["InvokeVirtualSimpleExpression", IRInvokeVirtualSimpleExpression.jsonEmit_IRInvokeVirtualSimpleExpression(expr)];
+        }
+        else if(expr instanceof IRInvokeVirtualWithImplicitsExpression) {
+            return ["InvokeVirtualWithImplicitsExpression", IRInvokeVirtualWithImplicitsExpression.jsonEmit_IRInvokeVirtualWithImplicitsExpression(expr)];
+        }
+        else if(expr instanceof IRInvokeCallAgentOrAPIExpression) {
+            return ["InvokeCallAgentOrAPIExpression", IRInvokeCallAgentOrAPIExpression.jsonEmit_IRInvokeCallAgentOrAPIExpression(expr)];
+        }
+        else if(expr instanceof IRInvokeTaskActionExpression) {
+            return ["InvokeTaskActionExpression", IRInvokeTaskActionExpression.jsonEmit_IRInvokeTaskActionExpression(expr)];
+        }
+        else if(expr instanceof IRInterpolateFormatCStringExpression) {
+            return ["InterpolateFormatCStringExpression", IRInterpolateFormatCStringExpression.jsonEmit_IRInterpolateFormatCStringExpression(expr)];
+        }
+        else if(expr instanceof IRInterpolateFormatStringExpression) {
+            return ["InterpolateFormatStringExpression", IRInterpolateFormatStringExpression.jsonEmit_IRInterpolateFormatStringExpression(expr)];
+        }
+        else if(expr instanceof IRPrefixNotOpExpression) {
+            return ["PrefixNotOpExpression", IRPrefixNotOpExpression.jsonEmit_IRPrefixNotOpExpression(expr)];
+        }
+        else if(expr instanceof IRPrefixNegateOpExpression) {
+            return ["PrefixNegateOpExpression", IRPrefixNegateOpExpression.jsonEmit_IRPrefixNegateOpExpression(expr)];
+        }
+        else if(expr instanceof IRPrefixPlusOpExpression) {
+            return ["PrefixPlusOpExpression", IRPrefixPlusOpExpression.jsonEmit_IRPrefixPlusOpExpression(expr)];
+        }
+        else if(expr instanceof IRBinAddExpression) {
+            return ["BinAddExpression", IRBinAddExpression.jsonEmit_IRBinAddExpression(expr)];
+        }
+        else if(expr instanceof IRBinSubExpression) {
+            return ["BinSubExpression", IRBinSubExpression.jsonEmit_IRBinSubExpression(expr)];
+        }
+        else if(expr instanceof IRBinMultExpression) {
+            return ["BinMultExpression", IRBinMultExpression.jsonEmit_IRBinMultExpression(expr)];
+        }
+        else if(expr instanceof IRBinDivExpression) {
+            return ["BinDivExpression", IRBinDivExpression.jsonEmit_IRBinDivExpression(expr)];
+        }
+        else if(expr instanceof IRNumericEqExpression) {
+            return ["NumericEqExpression", IRNumericEqExpression.jsonEmit_IRNumericEqExpression(expr)];
+        }
+        else if(expr instanceof IRNumericNeqExpression) {
+            return ["NumericNeqExpression", IRNumericNeqExpression.jsonEmit_IRNumericNeqExpression(expr)];
+        }
+        else if(expr instanceof IRNumericLessExpression) {
+            return ["NumericLessExpression", IRNumericLessExpression.jsonEmit_IRNumericLessExpression(expr)];
+        }
+        else if(expr instanceof IRNumericLessEqExpression) {
+            return ["NumericLessEqExpression", IRNumericLessEqExpression.jsonEmit_IRNumericLessEqExpression(expr)];
+        }
+        else if(expr instanceof IRNumericGreaterExpression) {
+            return ["NumericGreaterExpression", IRNumericGreaterExpression.jsonEmit_IRNumericGreaterExpression(expr)];
+        }
+        else if(expr instanceof IRNumericGreaterEqExpression) {
+            return ["NumericGreaterEqExpression", IRNumericGreaterEqExpression.jsonEmit_IRNumericGreaterEqExpression(expr)];
+        }
+        else if(expr instanceof IRIsNoneOptionExpression) {
+            return ["IsNoneOptionExpression", IRIsNoneOptionExpression.jsonEmit_IRIsNoneOptionExpression(expr)];
+        }
+        else if(expr instanceof IRIsNotNoneOptionExpression) {
+            return ["IsNotNoneOptionExpression", IRIsNotNoneOptionExpression.jsonEmit_IRIsNotNoneOptionExpression(expr)];
+        }
+        else if(expr instanceof IRIsOptionEqValueExpression) {
+            return ["IsOptionEqValueExpression", IRIsOptionEqValueExpression.jsonEmit_IRIsOptionEqValueExpression(expr)];
+        }
+        else if(expr instanceof IRIsOptionNeqValueExpression) {
+            return ["IsOptionNeqValueExpression", IRIsOptionNeqValueExpression.jsonEmit_IRIsOptionNeqValueExpression(expr)];
+        }
+        else if(expr instanceof IRIsSomeEqValueExpression) {
+            return ["IsSomeEqValueExpression", IRIsSomeEqValueExpression.jsonEmit_IRIsSomeEqValueExpression(expr)];
+        }
+        else if(expr instanceof IRIsSomeNeqValueExpression) {
+            return ["IsSomeNeqValueExpression", IRIsSomeNeqValueExpression.jsonEmit_IRIsSomeNeqValueExpression(expr)];
+        }
+        else if(expr instanceof IRBinKeyEqDirectExpression) {
+            return ["BinKeyEqDirectExpression", IRBinKeyEqDirectExpression.jsonEmit_IRBinKeyEqDirectExpression(expr)];
+        }
+        else if(expr instanceof IRBinKeyNeqDirectExpression) {
+            return ["BinKeyNeqDirectExpression", IRBinKeyNeqDirectExpression.jsonEmit_IRBinKeyNeqDirectExpression(expr)];
+        }
+        else if(expr instanceof IRBinKeyLessDirectExpression) {
+            return ["BinKeyLessDirectExpression", IRBinKeyLessDirectExpression.jsonEmit_IRBinKeyLessDirectExpression(expr)];
+        }
+        else if(expr instanceof IRLogicAndExpression) {
+            return ["LogicAndExpression", IRLogicAndExpression.jsonEmit_IRLogicAndExpression(expr)];
+        }
+        else if(expr instanceof IRLogicOrExpression) {
+            return ["LogicOrExpression", IRLogicOrExpression.jsonEmit_IRLogicOrExpression(expr)];
+        }
+        else if(expr instanceof IRLogicSimpleConditionalExpression) {
+            return ["LogicSimpleConditionalExpression", IRLogicSimpleConditionalExpression.jsonEmit_IRLogicSimpleConditionalExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralOptionOfNoneExpression) {
+            return ["LiteralOptionOfNoneExpression", IRLiteralOptionOfNoneExpression.jsonEmit_IRLiteralOptionOfNoneExpression(expr)];
+        }
+        else if(expr instanceof IRConstructOptionFromSomeExpression) {
+            return ["ConstructOptionFromSomeExpression", IRConstructOptionFromSomeExpression.jsonEmit_IRConstructOptionFromSomeExpression(expr)];
+        }
+        else if(expr instanceof IRExtractSomeFromOptionExpression) {
+            return ["ExtractSomeFromOptionExpression", IRExtractSomeFromOptionExpression.jsonEmit_IRExtractSomeFromOptionExpression(expr)];
+        }
+        else if(expr instanceof IRExtractSomeValueFromOptionExpression) {
+            return ["ExtractSomeValueFromOptionExpression", IRExtractSomeValueFromOptionExpression.jsonEmit_IRExtractSomeValueFromOptionExpression(expr)];
+        }
+        else if(expr instanceof IRConstructResultFromOkExpression) {
+            return ["ConstructResultFromOkExpression", IRConstructResultFromOkExpression.jsonEmit_IRConstructResultFromOkExpression(expr)];
+        }
+        else if(expr instanceof IRConstructResultFromFailExpression) {
+            return ["ConstructResultFromFailExpression", IRConstructResultFromFailExpression.jsonEmit_IRConstructResultFromFailExpression(expr)];
+        }
+        else if(expr instanceof IRExtractOkFromResultExpression) {
+            return ["ExtractOkFromResultExpression", IRExtractOkFromResultExpression.jsonEmit_IRExtractOkFromResultExpression(expr)];
+        }
+        else if(expr instanceof IRExtractOkValueFromResultExpression) {
+            return ["ExtractOkValueFromResultExpression", IRExtractOkValueFromResultExpression.jsonEmit_IRExtractOkValueFromResultExpression(expr)];
+        }
+        else if(expr instanceof IRExtractFailFromResultExpression) {
+            return ["ExtractFailFromResultExpression", IRExtractFailFromResultExpression.jsonEmit_IRExtractFailFromResultExpression(expr)];
+        }
+        else if(expr instanceof IRExtractFailValueFromResultExpression) {
+            return ["ExtractFailValueFromResultExpression", IRExtractFailValueFromResultExpression.jsonEmit_IRExtractFailValueFromResultExpression(expr)];
+        }
+        else if(expr instanceof IRIsConceptRepresentationOfTypeExpression) {
+            return ["IsConceptRepresentationOfTypeExpression", IRIsConceptRepresentationOfTypeExpression.jsonEmit_IRIsConceptRepresentationOfTypeExpression(expr)];
+        }
+        else if(expr instanceof IRIsNotConceptRepresentationOfTypeExpression) {
+            return ["IsNotConceptRepresentationOfTypeExpression", IRIsNotConceptRepresentationOfTypeExpression.jsonEmit_IRIsNotConceptRepresentationOfTypeExpression(expr)];
+        }
+        else if(expr instanceof IRIsConceptRepresentationSubtypeOfTypeExpression) {
+            return ["IsConceptRepresentationSubtypeOfTypeExpression", IRIsConceptRepresentationSubtypeOfTypeExpression.jsonEmit_IRIsConceptRepresentationSubtypeOfTypeExpression(expr)];
+        }
+        else if(expr instanceof IRIsNotConceptRepresentationSubtypeOfTypeExpression) {
+            return ["IsNotConceptRepresentationSubtypeOfTypeExpression", IRIsNotConceptRepresentationSubtypeOfTypeExpression.jsonEmit_IRIsNotConceptRepresentationSubtypeOfTypeExpression(expr)];
+        }
+        else if(expr instanceof IRStaticIsTypeSubtypeOfExpression) {
+            return ["StaticIsTypeSubtypeOfExpression", IRStaticIsTypeSubtypeOfExpression.jsonEmit_IRStaticIsTypeSubtypeOfExpression(expr)];
+        }
+        else if(expr instanceof IRBoxEntityToConceptRepresentationExpression) {
+            return ["BoxEntityToConceptRepresentationExpression", IRBoxEntityToConceptRepresentationExpression.jsonEmit_IRBoxEntityToConceptRepresentationExpression(expr)];
+        }
+        else if(expr instanceof IRUnboxEntityFromConceptRepresentationExpression) {
+            return ["UnboxEntityFromConceptRepresentationExpression", IRUnboxEntityFromConceptRepresentationExpression.jsonEmit_IRUnboxEntityFromConceptRepresentationExpression(expr)];
+        }
+        else if(expr instanceof IRConvertConceptRepresentationExpression) {
+            return ["ConvertConceptRepresentationExpression", IRConvertConceptRepresentationExpression.jsonEmit_IRConvertConceptRepresentationExpression(expr)];
+        }
+        else {
+            assert(false, `Unknown IRExpression kind: ${expr.tag}`);
+        }
     }
 
     static jsonParse_IRExpression(obj: any): IRExpression {
-        xxxx;
-    }
-    
-    static parseBAPI(lexer: BAPILexer): IRExpression {
-        const tok = lexer.peekToken();
-        if(tok.kind !== BAPITokenKind.TypeIdentifier) {
-            throw new Error(`Expected type identifier token but got ${tok.kind}`);
-        }
+        const kind = obj[0];
+        const value = obj[1];
 
-        if(tok.value === "Assembly::LiteralNoneExpression") {
-            return IRLiteralNoneExpression.parseBAPIAsIRLiteralNoneExpression(lexer);
-        }
-        else if(tok.value === "Assembly::LiteralBoolExpression") {
-            return IRLiteralBoolExpression.parseBAPIAsIRLiteralBoolExpression(lexer);
-        }
-        else if(tok.value === "Assembly::LiteralNatExpression") {
-            return IRLiteralNatExpression.parseBAPIAsIRLiteralNatExpression(lexer);
-        }
-        else if(tok.value === "Assembly::LiteralIntExpression") {
-            return IRLiteralIntExpression.parseBAPIAsIRLiteralIntExpression(lexer);
-        }
-        else if(tok.value === "Assembly::LiteralChkNatExpression") {
-            return IRLiteralChkNatExpression.parseBAPIAsIRLiteralChkNatExpression(lexer);
-        }
-        else if(tok.value === "Assembly::LiteralChkIntExpression") {
-            return IRLiteralChkIntExpression.parseBAPIAsIRLiteralChkIntExpression(lexer);
-        }
-        else if(tok.value === "Assembly::LiteralRationalExpression") {
-            return IRLiteralRationalExpression.parseBAPIAsIRLiteralRationalExpression(lexer);
-        }
-        else if(tok.value === "Assembly::LiteralFloatExpression") {
-            return IRLiteralFloatExpression.parseBAPIAsIRLiteralFloatExpression(lexer);
-        }
-        else if(tok.value === "Assembly::LiteralDecimalExpression") {
-            return IRLiteralDecimalExpression.parseBAPIAsIRLiteralDecimalExpression(lexer);
-        }
-        //
-        //More here
-        //
-        else if(tok.value === "Assembly::LiteralByteBufferExpression") {
-            return IRLiteralByteBufferExpression.parseBAPIAsIRLiteralByteBufferExpression(lexer);
-        }
-        else if(tok.value === "Assembly::LiteralRegexExpression") {
-            return IRLiteralUnicodeRegexExpression.parseBAPIAsIRLiteralUnicodeRegexExpression(lexer);
-        }
-        else if(tok.value === "Assembly::LiteralCRegexExpression") {
-            return IRLiteralCRegexExpression.parseBAPIAsIRLiteralCRegexExpression(lexer);
-        }
-        else if(tok.value === "Assembly::LiteralByteExpression") {
-            return IRLiteralByteExpression.parseBAPIAsIRLiteralByteExpression(lexer);
-        }
-        else if(tok.value === "Assembly::LiteralCCharExpression") {
-            return IRLiteralCCharExpression.parseBAPIAsIRLiteralCCharExpression(lexer);
-        }
-        else if(tok.value === "Assembly::LiteralUnicodeCharExpression") {
-            return IRLiteralUnicodeCharExpression.parseBAPIAsIRLiteralUnicodeCharExpression(lexer);
-        }
-        else if(tok.value === "Assembly::LiteralStringExpression") {
-            return IRLiteralStringExpression.parseBAPIAsIRLiteralStringExpression(lexer);
-        }
-        else if(tok.value === "Assembly::LiteralCStringExpression") {
-            return IRLiteralCStringExpression.parseBAPIAsIRLiteralCStringExpression(lexer);
-        }
-        //
-        //More here
-        //
-        else if(tok.value === "Assembly::AccessConstantExpression") {
-            return IRAccessConstantExpression.parseBAPIAsIRAccessConstantExpression(lexer);
-        }
-        //
-        //More here
-        //
-        else{
-            assert(false, `IRExpression.parseBAPI not implemented for token value ${tok.value}`);
+        switch(kind) {
+            case "LiteralNoneExpression": {
+                return IRLiteralNoneExpression.jsonParse_IRLiteralNoneExpression(value);
+            }
+            case "LiteralBoolExpression": {
+                return IRLiteralBoolExpression.jsonParse_IRLiteralBoolExpression(value);
+            }
+            case "LiteralNatExpression": {
+                return IRLiteralNatExpression.jsonParse_IRLiteralNatExpression(value);
+            }
+            case "LiteralIntExpression": {
+                return IRLiteralIntExpression.jsonParse_IRLiteralIntExpression(value);
+            }
+            case "LiteralChkNatExpression": {
+                return IRLiteralChkNatExpression.jsonParse_IRLiteralChkNatExpression(value);
+            }
+            case "LiteralChkIntExpression": {
+                return IRLiteralChkIntExpression.jsonParse_IRLiteralChkIntExpression(value);
+            }
+            case "LiteralRationalExpression": {
+                return IRLiteralRationalExpression.jsonParse_IRLiteralRationalExpression(value);
+            }
+            case "LiteralFloatExpression": {
+                return IRLiteralFloatExpression.jsonParse_IRLiteralFloatExpression(value);
+            }
+            case "LiteralDecimalExpression": {
+                return IRLiteralDecimalExpression.jsonParse_IRLiteralDecimalExpression(value);
+            }
+            case "LiteralDecimalDegreeExpression": {
+                return IRLiteralDecimalDegreeExpression.jsonParse_IRLiteralDecimalDegreeExpression(value);
+            }
+            case "LiteralLatLongCoordinateExpression": {
+                return IRLiteralLatLongCoordinateExpression.jsonParse_IRLiteralLatLongCoordinateExpression(value);
+            }
+            case "LiteralComplexExpression": {
+                return IRLiteralComplexExpression.jsonParse_IRLiteralComplexExpression(value);
+            }
+            case "LiteralByteBufferExpression": {
+                return IRLiteralByteBufferExpression.jsonParse_IRLiteralByteBufferExpression(value);
+            }
+            case "LiteralUUIDv4Expression": {
+                return IRLiteralUUIDv4Expression.jsonParse_IRLiteralUUIDv4Expression(value);
+            }
+            case "LiteralUUIDv7Expression": {
+                return IRLiteralUUIDv7Expression.jsonParse_IRLiteralUUIDv7Expression(value);
+            }
+            case "LiteralSHAContentHashExpression": {
+                return IRLiteralSHAContentHashExpression.jsonParse_IRLiteralSHAContentHashExpression(value);
+            }
+            case "LiteralTZDateTimeExpression": {
+                return IRLiteralTZDateTimeExpression.jsonParse_IRLiteralTZDateTimeExpression(value);
+            }
+            case "LiteralTAITimeExpression": {
+                return IRLiteralTAITimeExpression.jsonParse_IRLiteralTAITimeExpression(value);
+            }
+            case "LiteralPlainDateExpression": {
+                return IRLiteralPlainDateExpression.jsonParse_IRLiteralPlainDateExpression(value);
+            }
+            case "LiteralPlainTimeExpression": {
+                return IRLiteralPlainTimeExpression.jsonParse_IRLiteralPlainTimeExpression(value);
+            }
+            case "LiteralLogicalTimeExpression": {
+                return IRLiteralLogicalTimeExpression.jsonParse_IRLiteralLogicalTimeExpression(value);
+            }
+            case "LiteralISOTimeStampExpression": {
+                return IRLiteralISOTimeStampExpression.jsonParse_IRLiteralISOTimeStampExpression(value);
+            }
+            case "LiteralDeltaDateTimeExpression": {
+                return IRLiteralDeltaDateTimeExpression.jsonParse_IRLiteralDeltaDateTimeExpression(value);
+            }
+            case "LiteralDeltaISOTimeStampExpression": {
+                return IRLiteralDeltaISOTimeStampExpression.jsonParse_IRLiteralDeltaISOTimeStampExpression(value);
+            }
+            case "LiteralDeltaSecondsExpression": {
+                return IRLiteralDeltaSecondsExpression.jsonParse_IRLiteralDeltaSecondsExpression(value);
+            }
+            case "LiteralDeltaLogicalTimeExpression": {
+                return IRLiteralDeltaLogicalTimeExpression.jsonParse_IRLiteralDeltaLogicalTimeExpression(value);
+            }
+            case "LiteralUnicodeRegexExpression": {
+                return IRLiteralUnicodeRegexExpression.jsonParse_IRLiteralUnicodeRegexExpression(value);
+            }
+            case "LiteralCRegexExpression": {
+                return IRLiteralCRegexExpression.jsonParse_IRLiteralCRegexExpression(value);
+            }
+            case "LiteralByteExpression": {
+                return IRLiteralByteExpression.jsonParse_IRLiteralByteExpression(value);
+            }
+            case "LiteralCCharExpression": {
+                return IRLiteralCCharExpression.jsonParse_IRLiteralCCharExpression(value);
+            }
+            case "LiteralUnicodeCharExpression": {
+                return IRLiteralUnicodeCharExpression.jsonParse_IRLiteralUnicodeCharExpression(value);
+            }
+            case "LiteralCStringExpression": {
+                return IRLiteralCStringExpression.jsonParse_IRLiteralCStringExpression(value);
+            }
+            case "LiteralStringExpression": {
+                return IRLiteralStringExpression.jsonParse_IRLiteralStringExpression(value);
+            }
+            case "LiteralFormatStringExpression": {
+                return IRLiteralFormatStringExpression.jsonParse_IRLiteralFormatStringExpression(value);
+            }
+            case "LiteralFormatCStringExpression": {
+                return IRLiteralFormatCStringExpression.jsonParse_IRLiteralFormatCStringExpression(value);
+            }
+            case "LiteralTypedExpression": {
+                return IRLiteralTypedExpression.jsonParse_IRLiteralTypedExpression(value);
+            }
+            case "LiteralTypedStringExpression": {
+                return IRLiteralTypedStringExpression.jsonParse_IRLiteralTypedStringExpression(value);
+            }
+            case "LiteralTypedCStringExpression": {
+                return IRLiteralTypedCStringExpression.jsonParse_IRLiteralTypedCStringExpression(value);
+            }
+            case "AccessEnvHasExpression": {
+                return IRAccessEnvHasExpression.jsonParse_IRAccessEnvHasExpression(value);
+            }
+            case "AccessEnvGetExpression": {
+                return IRAccessEnvGetExpression.jsonParse_IRAccessEnvGetExpression(value);
+            }
+            case "AccessEnvTryGetExpression": {
+                return IRAccessEnvTryGetExpression.jsonParse_IRAccessEnvTryGetExpression(value);
+            }
+            case "TaskAccessIDExpression": {
+                return IRTaskAccessIDExpression.jsonParse_IRTaskAccessIDExpression(value);
+            }
+            case "TaskAccessParentIDExpression": {
+                return IRTaskAccessParentIDExpression.jsonParse_IRTaskAccessParentIDExpression(value);
+            }
+            case "AccessConstantExpression": {
+                return IRAccessConstantExpression.jsonParse_IRAccessConstantExpression(value);
+            }
+            case "AccessEnumExpression": {
+                return IRAccessEnumExpression.jsonParse_IRAccessEnumExpression(value);
+            }
+            case "AccessParameterVariableExpression": {
+                return IRAccessParameterVariableExpression.jsonParse_IRAccessParameterVariableExpression(value);
+            }
+            case "AccessLocalVariableExpression": {
+                return IRAccessLocalVariableExpression.jsonParse_IRAccessLocalVariableExpression(value);
+            }
+            case "AccessCapturedVariableExpression": {
+                return IRAccessCapturedVariableExpression.jsonParse_IRAccessCapturedVariableExpression(value);
+            }
+            case "AccessTempVariableExpression": {
+                return IRAccessTempVariableExpression.jsonParse_IRAccessTempVariableExpression(value);
+            }
+            case "AccessTypeDeclValueExpression": {
+                return IRAccessTypeDeclValueExpression.jsonParse_IRAccessTypeDeclValueExpression(value);
+            }
+            case "ConstructSafeTypeDeclExpression": {
+                return IRConstructSafeTypeDeclExpression.jsonParse_IRConstructSafeTypeDeclExpression(value);
+            }
+            case "ConstructSomeTypeExpression": {
+                return IRConstructorSomeTypeExpression.jsonParse_IRConstructorSomeTypeExpression(value);
+            }
+            case "ConstructOkTypeExpression": {
+                return IRConstructorOkTypeExpression.jsonParse_IRConstructorOkTypeExpression(value);
+            }
+            case "ConstructFailTypeExpression": {
+                return IRConstructorFailTypeExpression.jsonParse_IRConstructorFailTypeExpression(value);
+            }
+            case "ConstructAPISuccessTypeExpression": {
+                return IRConstructorAPISuccessTypeExpression.jsonParse_IRConstructorAPISuccessTypeExpression(value);
+            }
+            case "ConstructMapEntryTypeExpression": {
+                return IRConstructorMapEntryTypeExpression.jsonParse_IRConstructorMapEntryTypeExpression(value);
+            }
+            case "ConstructStandardEntityExpression": {
+                return IRConstructorStandardEntityExpression.jsonParse_IRConstructorStandardEntityExpression(value);
+            }
+            case "ConstructLambdaExpression": {
+                return IRConstructorLambdaExpression.jsonParse_IRConstructorLambdaExpression(value);
+            }
+            case "ConstructEListExpression": {
+                return IRConstructorEListExpression.jsonParse_IRConstructorEListExpression(value);
+            }
+            case "ConstructListEmptyExpression": {
+                return IRConstructorListEmptyExpression.jsonParse_IRConstructorListEmptyExpression(value);
+            }
+            case "ConstructListPassthroughExpression": {
+                return IRConstructorListPassthroughExpression.jsonParse_IRConstructorListPassthroughExpression(value);
+            }
+            case "ConstructListSingletonsExpression": {
+                return IRConstructorListSingletonsExpression.jsonParse_IRConstructorListSingletonsExpression(value);
+            }
+            case "ConstructListMixedExpression": {
+                return IRConstructorListMixedExpression.jsonParse_IRConstructorListMixedExpression(value);
+            }
+            case "ConstructMapEmptyExpression": {
+                return IRConstructorMapEmptyExpression.jsonParse_IRConstructorMapEmptyExpression(value);
+            }
+            case "ConstructMapSingletonsExpression": {
+                return IRConstructorMapSingletonsExpression.jsonParse_IRConstructorMapSingletonsExpression(value);
+            }
+            case "AccessFieldSpecialExpression": {
+                return IRAccessFieldSpecialExpression.jsonParse_IRAccessFieldSpecialExpression(value);
+            }
+            case "AccessFieldDirectExpression": {
+                return IRAccessFieldDirectExpression.jsonParse_IRAccessFieldDirectExpression(value);
+            }
+            case "AccessFieldVirtualExpression": {
+                return IRAccessFieldVirtualExpression.jsonParse_IRAccessFieldVirtualExpression(value);
+            }
+            case "AccessEListIndexExpression": {
+                return IRAccessEListIndexExpression.jsonParse_IRAccessEListIndexExpression(value);
+            }
+            case "InvokeSimpleExpression": {
+                return IRInvokeSimpleExpression.jsonParse_IRInvokeSimpleExpression(value);
+            }
+            case "InvokeSimpleWithImplicitsExpression": {
+                return IRInvokeSimpleWithImplicitsExpression.jsonParse_IRInvokeSimpleWithImplicitsExpression(value);
+            }
+            case "InvokeVirtualSimpleExpression": {
+                return IRInvokeVirtualSimpleExpression.jsonParse_IRInvokeVirtualSimpleExpression(value);
+            }
+            case "InvokeVirtualWithImplicitsExpression": {
+                return IRInvokeVirtualWithImplicitsExpression.jsonParse_IRInvokeVirtualWithImplicitsExpression(value);
+            }
+            case "InvokeCallAgentOrAPIExpression": {
+                return IRInvokeCallAgentOrAPIExpression.jsonParse_IRInvokeCallAgentOrAPIExpression(value);
+            }
+            case "InvokeTaskActionExpression": {
+                return IRInvokeTaskActionExpression.jsonParse_IRInvokeTaskActionExpression(value);
+            }
+            case "InterpolateFormatCStringExpression": {
+                return IRInterpolateFormatCStringExpression.jsonParse_IRInterpolateFormatCStringExpression(value);
+            }
+            case "InterpolateFormatStringExpression": {
+                return IRInterpolateFormatStringExpression.jsonParse_IRInterpolateFormatStringExpression(value);
+            }
+            case "PrefixNotOpExpression": {
+                return IRPrefixNotOpExpression.jsonParse_IRPrefixNotOpExpression(value);
+            }
+            case "PrefixNegateOpExpression": {
+                return IRPrefixNegateOpExpression.jsonParse_IRPrefixNegateOpExpression(value);
+            }
+            case "PrefixPlusOpExpression": {
+                return IRPrefixPlusOpExpression.jsonParse_IRPrefixPlusOpExpression(value);
+            }
+            case "BinAddExpression": {
+                return IRBinAddExpression.jsonParse_IRBinAddExpression(value);
+            }
+            case "BinSubExpression": {
+                return IRBinSubExpression.jsonParse_IRBinSubExpression(value);
+            }
+            case "BinMultExpression": {
+                return IRBinMultExpression.jsonParse_IRBinMultExpression(value);
+            }
+            case "BinDivExpression": {
+                return IRBinDivExpression.jsonParse_IRBinDivExpression(value);
+            }
+            case "NumericEqExpression": {
+                return IRNumericEqExpression.jsonParse_IRNumericEqExpression(value);
+            }
+            case "NumericNeqExpression": {
+                return IRNumericNeqExpression.jsonParse_IRNumericNeqExpression(value);
+            }
+            case "NumericLessExpression": {
+                return IRNumericLessExpression.jsonParse_IRNumericLessExpression(value);
+            }
+            case "NumericLessEqExpression": {
+                return IRNumericLessEqExpression.jsonParse_IRNumericLessEqExpression(value);
+            }
+            case "NumericGreaterExpression": {
+                return IRNumericGreaterExpression.jsonParse_IRNumericGreaterExpression(value);
+            }
+            case "NumericGreaterEqExpression": {
+                return IRNumericGreaterEqExpression.jsonParse_IRNumericGreaterEqExpression(value);
+            }
+            case "IsNoneOptionExpression": {
+                return IRIsNoneOptionExpression.jsonParse_IRIsNoneOptionExpression(value);
+            }
+            case "IsNotNoneOptionExpression": {
+                return IRIsNotNoneOptionExpression.jsonParse_IRIsNotNoneOptionExpression(value);
+            }
+            case "IsOptionEqValueExpression": {
+                return IRIsOptionEqValueExpression.jsonParse_IRIsOptionEqValueExpression(value);
+            }
+            case "IsOptionNeqValueExpression": {
+                return IRIsOptionNeqValueExpression.jsonParse_IRIsOptionNeqValueExpression(value);
+            }
+            case "IsSomeEqValueExpression": {
+                return IRIsSomeEqValueExpression.jsonParse_IRIsSomeEqValueExpression(value);
+            }
+            case "IsSomeNeqValueExpression": {
+                return IRIsSomeNeqValueExpression.jsonParse_IRIsSomeNeqValueExpression(value);
+            }
+            case "LogicAndExpression": {
+                return IRLogicAndExpression.jsonParse_IRLogicAndExpression(value);
+            }
+            case "LogicOrExpression": {
+                return IRLogicOrExpression.jsonParse_IRLogicOrExpression(value);
+            }
+            case "LogicSimpleConditionalExpression": {
+                return IRLogicSimpleConditionalExpression.jsonParse_IRLogicSimpleConditionalExpression(value);
+            }
+            case "LiteralOptionOfNoneExpression": {
+                return IRLiteralOptionOfNoneExpression.jsonParse_IRLiteralOptionOfNoneExpression(value);
+            }
+            case "ConstructOptionFromSomeExpression": {
+                return IRConstructOptionFromSomeExpression.jsonParse_IRConstructOptionFromSomeExpression(value);
+            }
+            case "ExtractSomeFromOptionExpression": {
+                return IRExtractSomeFromOptionExpression.jsonParse_IRExtractSomeFromOptionExpression(value);
+            }
+            case "ExtractSomeValueFromOptionExpression": {
+                return IRExtractSomeValueFromOptionExpression.jsonParse_IRExtractSomeValueFromOptionExpression(value);
+            }
+            case "ConstructResultFromOkExpression": {
+                return IRConstructResultFromOkExpression.jsonParse_IRConstructResultFromOkExpression(value);
+            }
+            case "ConstructResultFromFailExpression": {
+                return IRConstructResultFromFailExpression.jsonParse_IRConstructResultFromFailExpression(value);
+            }
+            case "ExtractOkFromResultExpression": {
+                return IRExtractOkFromResultExpression.jsonParse_IRExtractOkFromResultExpression(value);
+            }
+            case "ExtractOkValueFromResultExpression": {
+                return IRExtractOkValueFromResultExpression.jsonParse_IRExtractOkValueFromResultExpression(value);
+            }
+            case "ExtractFailFromResultExpression": {
+                return IRExtractFailFromResultExpression.jsonParse_IRExtractFailFromResultExpression(value);
+            }
+            case "ExtractFailValueFromResultExpression": {
+                return IRExtractFailValueFromResultExpression.jsonParse_IRExtractFailValueFromResultExpression(value);
+            }
+            case "IsConceptRepresentationOfTypeExpression": {
+                return IRIsConceptRepresentationOfTypeExpression.jsonParse_IRIsConceptRepresentationOfTypeExpression(value);
+            }
+            case "IsNotConceptRepresentationOfTypeExpression": {
+                return IRIsNotConceptRepresentationOfTypeExpression.jsonParse_IRIsNotConceptRepresentationOfTypeExpression(value);
+            }
+            case "IsConceptRepresentationSubtypeOfTypeExpression": {
+                return IRIsConceptRepresentationSubtypeOfTypeExpression.jsonParse_IRIsConceptRepresentationSubtypeOfTypeExpression(value);
+            }
+            case "IsNotConceptRepresentationSubtypeOfTypeExpression": {
+                return IRIsNotConceptRepresentationSubtypeOfTypeExpression.jsonParse_IRIsNotConceptRepresentationSubtypeOfTypeExpression(value);
+            }
+            case "StaticIsTypeSubtypeOfExpression": {
+                return IRStaticIsTypeSubtypeOfExpression.jsonParse_IRStaticIsTypeSubtypeOfExpression(value);
+            }
+            case "BoxEntityToConceptRepresentationExpression": {
+                return IRBoxEntityToConceptRepresentationExpression.jsonParse_IRBoxEntityToConceptRepresentationExpression(value);
+            }
+            case "UnboxEntityFromConceptRepresentationExpression": {
+                return IRUnboxEntityFromConceptRepresentationExpression.jsonParse_IRUnboxEntityFromConceptRepresentationExpression(value);
+            }
+            case "ConvertConceptRepresentationExpression": {
+                return IRConvertConceptRepresentationExpression.jsonParse_IRConvertConceptRepresentationExpression(value);
+            }
+            default: {
+                assert(false, `Unknown IR expression kind: ${kind}`);
+            }
         }
     }
 }
@@ -273,7 +920,7 @@ abstract class IRInvokeExpression extends IRExpression {
         return false;
     }
 
-    static jsonEmit_IRInvokeExpression(expr: IRInvokeExpression): object {
+    static jsonEmit_IRInvokeExpression(expr: IRInvokeExpression): [string, object] {
         return IRExpression.jsonEmit_IRExpression(expr);
     }
 
@@ -288,7 +935,7 @@ abstract class IRInvokeDirectExpression extends IRInvokeExpression {
         super(tag, ikey, args);
     }
 
-    static jsonEmit_IRInvokeDirectExpression(expr: IRInvokeDirectExpression): object {
+    static jsonEmit_IRInvokeDirectExpression(expr: IRInvokeDirectExpression): [string, object] {
         return IRExpression.jsonEmit_IRExpression(expr);
     }
 
@@ -319,7 +966,7 @@ abstract class IRInvokeImplicitsExpression extends IRInvokeExpression {
         this.passkind = passkind;
     }
 
-    static jsonEmit_IRInvokeImplicitsExpression(expr: IRInvokeImplicitsExpression): object {
+    static jsonEmit_IRInvokeImplicitsExpression(expr: IRInvokeImplicitsExpression): [string, object] {
         return IRExpression.jsonEmit_IRExpression(expr);
     }
 
@@ -359,7 +1006,7 @@ abstract class IRConstructExpression extends IRExpression {
         return true;
     }
 
-    static jsonEmit_IRConstructExpression(expr: IRConstructExpression): object {
+    static jsonEmit_IRConstructExpression(expr: IRConstructExpression): [string, object] {
         return IRExpression.jsonEmit_IRExpression(expr);
     }
 
@@ -388,7 +1035,7 @@ abstract class IRSimpleExpression extends IRExpression {
         return true;
     }
 
-    static jsonEmit_IRSimpleExpression(expr: IRSimpleExpression): object {
+    static jsonEmit_IRSimpleExpression(expr: IRSimpleExpression): [string, object] {
         return IRExpression.jsonEmit_IRExpression(expr);
     }
 
@@ -403,7 +1050,7 @@ abstract class IRImmediateExpression extends IRSimpleExpression {
         super(tag);
     }
 
-    static jsonEmit_IRImmediateExpression(expr: IRImmediateExpression): object {
+    static jsonEmit_IRImmediateExpression(expr: IRImmediateExpression): [string, object] {
         return IRExpression.jsonEmit_IRExpression(expr);
     }
 
@@ -418,7 +1065,7 @@ abstract class IRLiteralExpression extends IRImmediateExpression {
         super(tag);
     }
 
-    static jsonEmit_IRLiteralExpression(expr: IRLiteralExpression): object {
+    static jsonEmit_IRLiteralExpression(expr: IRLiteralExpression): [string, object] {
         return IRExpression.jsonEmit_IRExpression(expr);
     }
 
@@ -444,7 +1091,7 @@ abstract class IRAccessFieldExpression extends IRSimpleExpression {
         this.fieldtype = fieldtype;
     }
 
-    static jsonEmit_IRAccessFieldExpression(expr: IRAccessFieldExpression): object {
+    static jsonEmit_IRAccessFieldExpression(expr: IRAccessFieldExpression): [string, object] {
         return IRExpression.jsonEmit_IRExpression(expr);
     }
 
@@ -533,7 +1180,7 @@ abstract class IRStatement {
 
     abstract isSimpleStatement(): boolean;
 
-    static jsonEmit_IRStatement(stmt: IRStatement): object {
+    static jsonEmit_IRStatement(stmt: IRStatement): [string, object] {
         xxxx;
     }
 
@@ -548,7 +1195,7 @@ abstract class IRAtomicStatement extends IRStatement {
         super(tag);
     }
 
-    static jsonEmit_IRAtomicStatement(stmt: IRAtomicStatement): object {
+    static jsonEmit_IRAtomicStatement(stmt: IRAtomicStatement): [string, object] {
         return IRStatement.jsonEmit_IRStatement(stmt);
     }
 
@@ -568,7 +1215,7 @@ abstract class IRTempAssignStatement extends IRAtomicStatement {
         this.ttype = ttype;
     }
 
-    static jsonEmit_IRTempAssignStatement(stmt: IRTempAssignStatement): object {
+    static jsonEmit_IRTempAssignStatement(stmt: IRTempAssignStatement): [string, object] {
         return IRStatement.jsonEmit_IRStatement(stmt);
     }
 
@@ -598,7 +1245,7 @@ abstract class IRReturnSimpleStatement extends IRAtomicStatement {
         return true; 
     }
 
-    static jsonEmit_IRReturnSimpleStatement(stmt: IRReturnSimpleStatement): object {
+    static jsonEmit_IRReturnSimpleStatement(stmt: IRReturnSimpleStatement): [string, object] {
         return IRStatement.jsonEmit_IRStatement(stmt);
     }
 
@@ -629,7 +1276,7 @@ abstract class IRErrorCheckStatement extends IRAtomicStatement {
         return false;
     }
 
-    static jsonEmit_IRErrorCheckStatement(stmt: IRErrorCheckStatement): object {
+    static jsonEmit_IRErrorCheckStatement(stmt: IRErrorCheckStatement): [string, object] {
         return IRStatement.jsonEmit_IRStatement(stmt);
     }
 
@@ -669,7 +1316,7 @@ abstract class IRErrorBinArithCheckStatement extends IRErrorCheckStatement {
         this.optypechk = optypechk;
     }
 
-    static jsonEmit_IRErrorBinArithCheckStatement(stmt: IRErrorBinArithCheckStatement): object {
+    static jsonEmit_IRErrorBinArithCheckStatement(stmt: IRErrorBinArithCheckStatement): [string, object] {
         return IRStatement.jsonEmit_IRStatement(stmt);
     }
 
@@ -698,7 +1345,7 @@ abstract class IRErrorTypedStringCheckStatement extends IRErrorCheckStatement {
         this.strexp = strexp;
     }
 
-    static jsonEmit_IRErrorTypedStringCheckStatement(stmt: IRErrorTypedStringCheckStatement): object {
+    static jsonEmit_IRErrorTypedStringCheckStatement(stmt: IRErrorTypedStringCheckStatement): [string, object] {
         return IRStatement.jsonEmit_IRStatement(stmt);
     }
 
@@ -761,7 +1408,7 @@ abstract class IRLiteralIntegralNumberExpression extends IRLiteralExpression {
         this.value = value;
     }
 
-    static jsonEmit_IRLiteralIntegralNumberExpression(exp: IRLiteralIntegralNumberExpression): object {
+    static jsonEmit_IRLiteralIntegralNumberExpression(exp: IRLiteralIntegralNumberExpression): [string, object] {
         return IRExpression.jsonEmit_IRExpression(exp);
     }
 
@@ -1423,7 +2070,7 @@ class IRLiteralStringExpression extends IRLiteralExpression {
 }
 
 abstract class IRFormatStringComponent {
-    static jsonEmit_IRFormatStringComponent(exp: IRFormatStringComponent): object {
+    static jsonEmit_IRFormatStringComponent(exp: IRFormatStringComponent): [string, object] {
         if (exp instanceof IRFormatStringTextComponent) {
             return ["Assembly::FormatStringTextComponent", IRFormatStringTextComponent.jsonEmit_IRFormatStringTextComponent(exp)];
         } else if (exp instanceof IRFormatStringArgComponent) {
@@ -2379,7 +3026,7 @@ abstract class IRUnaryOpExpression extends IRSimpleExpression {
         this.opertype = opertype;
     }
 
-    static jsonEmit_IRUnaryOpExpression(exp: IRUnaryOpExpression): object {
+    static jsonEmit_IRUnaryOpExpression(exp: IRUnaryOpExpression): [string, object] {
         return IRExpression.jsonEmit_IRExpression(exp);
     }
 
@@ -2465,7 +3112,7 @@ abstract class IRBinOpExpression extends IRSimpleExpression {
         this.opertype = opertype;
     }
 
-    static jsonEmit_IRBinOpExpression(exp: IRBinOpExpression): object {
+    static jsonEmit_IRBinOpExpression(exp: IRBinOpExpression): [string, object] {
         return IRExpression.jsonEmit_IRExpression(exp);
     }
 
@@ -2570,7 +3217,7 @@ abstract class IRNumericComparisonExpression extends IRSimpleExpression {
         this.opertype = opertype;
     }
 
-    static jsonEmit_IRNumericComparisonExpression(exp: IRNumericComparisonExpression): object {
+    static jsonEmit_IRNumericComparisonExpression(exp: IRNumericComparisonExpression): [string, object] {
         return IRExpression.jsonEmit_IRExpression(exp);
     }
 
@@ -2897,7 +3544,7 @@ abstract class IRKeyComparisonExpression extends IRSimpleExpression {
         this.opertype = opertype;
     }
 
-    static jsonEmit_IRKeyComparisonExpression(exp: IRKeyComparisonExpression): object {
+    static jsonEmit_IRKeyComparisonExpression(exp: IRKeyComparisonExpression): [string, object] {
         return IRExpression.jsonEmit_IRExpression(exp);
     }
 
@@ -2980,7 +3627,7 @@ abstract class IRLogicOpExpression extends IRSimpleExpression {
         this.args = args;
     }
 
-    static jsonEmit_IRLogicOpExpression(exp: IRLogicOpExpression): object {
+    static jsonEmit_IRLogicOpExpression(exp: IRLogicOpExpression): [string, object] {
         return IRExpression.jsonEmit_IRExpression(exp);
     }
 
@@ -3280,7 +3927,7 @@ abstract class IRConceptRepresentationOfTypeExpression extends IRSimpleExpressio
         this.targettype = targettype;
     }
 
-    static jsonEmit_IRConceptRepresentationOfTypeExpression(exp: IRConceptRepresentationOfTypeExpression): object {
+    static jsonEmit_IRConceptRepresentationOfTypeExpression(exp: IRConceptRepresentationOfTypeExpression): [string, object] {
         assert(false, "IRConceptRepresentationOfTypeExpression.jsonEmit not implemented");
     }
 
@@ -4899,7 +5546,7 @@ abstract class IRBody {
 
     abstract isSimpleBody(): boolean;
 
-    static jsonEmit_IRBody(exp: IRBody): any {
+    static jsonEmit_IRBody(exp: IRBody): [string, object] {
         xxxx;
     }
 
