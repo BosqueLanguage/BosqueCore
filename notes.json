@@ -9,8 +9,8 @@
   "checks": [
     {
       "area": "qa",
-      "checked_at": "2026-11-01",
-      "result": "#474 already answered; removed needs triage. Other open issues are enhancement backlog; no confident fixes",
+      "checked_at": "2026-11-06",
+      "result": "labelled #345 enhancement; no confident fixes among open issues",
       "follow_up": "none"
     }
   ],
