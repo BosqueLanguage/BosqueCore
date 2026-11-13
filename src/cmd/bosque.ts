@@ -102,13 +102,15 @@ function emitCommandLineMakefile(optlevel: "testing" | "release"): string {
 
 function emitAssemblyIR(ircode: IRAssembly, outname: string) {
     Status.output("Emitting IR code...\n");
-    const maincode = ircode.toBAPI();
+    const maincode = ircode.jsonEmit();
 
     Status.output("    Writing IR code to disk...\n");
     const nndir = path.normalize(outname);
     try {
-        const hname = path.join(nndir, `assembly.bapi`);
-        fs.writeFileSync(hname, maincode);
+        const hname = path.join(nndir, `assembly.json`);
+        const contents = JSON.stringify(maincode, null, 4);
+        
+        fs.writeFileSync(hname, contents);
     }
     catch(e) {      
         Status.error("Failed to write output files!\n");

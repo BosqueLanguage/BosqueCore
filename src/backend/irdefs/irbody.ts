@@ -1181,11 +1181,314 @@ abstract class IRStatement {
     abstract isSimpleStatement(): boolean;
 
     static jsonEmit_IRStatement(stmt: IRStatement): [string, object] {
-        xxxx;
+        if(stmt instanceof IRNopStatement) {
+            return ["NopStatement", IRNopStatement.jsonEmit_IRNopStatement(stmt)];
+        }
+        else if(stmt instanceof IRTempAssignExpressionStatement) {
+            return ["TempAssignExpressionStatement", IRTempAssignExpressionStatement.jsonEmit_IRTempAssignExpressionStatement(stmt)];
+        }
+        else if(stmt instanceof IRTempAssignStdInvokeStatement) {
+            return ["TempAssignStdInvokeStatement", IRTempAssignStdInvokeStatement.jsonEmit_IRTempAssignStdInvokeStatement(stmt)];
+        }
+        else if(stmt instanceof IRTempAssignRefInvokeStatement) {
+            return ["TempAssignRefInvokeStatement", IRTempAssignRefInvokeStatement.jsonEmit_IRTempAssignRefInvokeStatement(stmt)];
+        }
+        else if(stmt instanceof IRTempAssignDirectConstructorStatement) {
+            return ["TempAssignDirectConstructorStatement", IRTempAssignDirectConstructorStatement.jsonEmit_IRTempAssignDirectConstructorStatement(stmt)];
+        }
+        else if(stmt instanceof IRVariableDeclarationStatement) {
+            return ["VariableDeclarationStatement", IRVariableDeclarationStatement.jsonEmit_IRVariableDeclarationStatement(stmt)];
+        }
+        else if(stmt instanceof IRVariableInitializationStatement) {
+            return ["VariableInitializationStatement", IRVariableInitializationStatement.jsonEmit_IRVariableInitializationStatement(stmt)];
+        }
+        else if(stmt instanceof IRVariableInitializationDirectInvokeStatement) {
+            return ["VariableInitializationDirectInvokeStatement", IRVariableInitializationDirectInvokeStatement.jsonEmit_IRVariableInitializationDirectInvokeStatement(stmt)];
+        }
+        else if(stmt instanceof IRVariableInitializationDirectInvokeWithImplicitStatement) {
+            return ["VariableInitializationDirectInvokeWithImplicitStatement", IRVariableInitializationDirectInvokeWithImplicitStatement.jsonEmit_IRVariableInitializationDirectInvokeWithImplicitStatement(stmt)];
+        }
+        else if(stmt instanceof IRVariableInitializationDirectConstructorStatement) {
+            return ["VariableInitializationDirectConstructorStatement", IRVariableInitializationDirectConstructorStatement.jsonEmit_IRVariableInitializationDirectConstructorStatement(stmt)];
+        }
+        else if(stmt instanceof IRVariableInitializationDirectConstructorWithBoxStatement) {
+            return ["VariableInitializationDirectConstructorWithBoxStatement", IRVariableInitializationDirectConstructorWithBoxStatement.jsonEmit_IRVariableInitializationDirectConstructorWithBoxStatement(stmt)];
+        }
+        else if(stmt instanceof IRVariableAssignmentStatement) {
+            return ["VariableAssignmentStatement", IRVariableAssignmentStatement.jsonEmit_IRVariableAssignmentStatement(stmt)];
+        }
+        else if(stmt instanceof IRVariableAssignmentDirectInvokeStatement) {
+            return ["VariableAssignmentDirectInvokeStatement", IRVariableAssignmentDirectInvokeStatement.jsonEmit_IRVariableAssignmentDirectInvokeStatement(stmt)];
+        }
+        else if(stmt instanceof IRVariableAssignmentDirectInvokeWithImplicitStatement) {
+            return ["VariableAssignmentDirectInvokeWithImplicitStatement", IRVariableAssignmentDirectInvokeWithImplicitStatement.jsonEmit_IRVariableAssignmentDirectInvokeWithImplicitStatement(stmt)];
+        }
+        else if(stmt instanceof IRVariableAssignmentDirectConstructorStatement) {
+            return ["VariableAssignmentDirectConstructorStatement", IRVariableAssignmentDirectConstructorStatement.jsonEmit_IRVariableAssignmentDirectConstructorStatement(stmt)];
+        }
+        else if(stmt instanceof IRVariableAssignmentDirectConstructorWithBoxStatement) {
+            return ["VariableAssignmentDirectConstructorWithBoxStatement", IRVariableAssignmentDirectConstructorWithBoxStatement.jsonEmit_IRVariableAssignmentDirectConstructorWithBoxStatement(stmt)];
+        }
+        else if(stmt instanceof IRUpdateLocalDirectStatement) {
+            return ["UpdateLocalDirectStatement", IRUpdateLocalDirectStatement.jsonEmit_IRUpdateLocalDirectStatement(stmt)];
+        }
+        else if(stmt instanceof IRUpdateParamDirectStatement) {
+            return ["UpdateParamDirectStatement", IRUpdateParamDirectStatement.jsonEmit_IRUpdateParamDirectStatement(stmt)];
+        }
+        else if(stmt instanceof IRReturnVoidSimpleStatement) {
+            return ["ReturnVoidSimpleStatement", IRReturnVoidSimpleStatement.jsonEmit_IRReturnVoidSimpleStatement(stmt)];
+        }
+        else if(stmt instanceof IRReturnValueSimpleStatement) {
+            return ["ReturnValueSimpleStatement", IRReturnValueSimpleStatement.jsonEmit_IRReturnValueSimpleStatement(stmt)];
+        }
+        else if(stmt instanceof IRReturnDirectInvokeStatement) {
+            return ["ReturnDirectInvokeStatement", IRReturnDirectInvokeStatement.jsonEmit_IRReturnDirectInvokeStatement(stmt)];
+        }
+        else if(stmt instanceof IRReturnDirectConstructStatement) {
+            return ["ReturnDirectConstructStatement", IRReturnDirectConstructStatement.jsonEmit_IRReturnDirectConstructStatement(stmt)];
+        }
+        else if(stmt instanceof IRReturnDirectConstructWithBoxStatement) {
+            return ["ReturnDirectConstructWithBoxStatement", IRReturnDirectConstructWithBoxStatement.jsonEmit_IRReturnDirectConstructWithBoxStatement(stmt)];
+        }
+        else if(stmt instanceof IRVoidInvokeStatement) {
+            return ["VoidInvokeStatement", IRVoidInvokeStatement.jsonEmit_IRVoidInvokeStatement(stmt)];
+        }
+        else if(stmt instanceof IRChkLogicImpliesShortCircuitStatement) {
+            return ["ChkLogicImpliesShortCircuitStatement", IRChkLogicImpliesShortCircuitStatement.jsonEmit_IRChkLogicImpliesShortCircuitStatement(stmt)];
+        }
+        else if(stmt instanceof IRLogicConditionalStatement) {
+            return ["LogicConditionalStatement", IRLogicConditionalStatement.jsonEmit_IRLogicConditionalStatement(stmt)];
+        }
+        else if(stmt instanceof IRSimpleIfStatement) {
+            return ["SimpleIfStatement", IRSimpleIfStatement.jsonEmit_IRSimpleIfStatement(stmt)];
+        }
+        else if(stmt instanceof IRSimpleIfElseStatement) {
+            return ["SimpleIfElseStatement", IRSimpleIfElseStatement.jsonEmit_IRSimpleIfElseStatement(stmt)];
+        }
+        else if(stmt instanceof IRMatchExactStatement) {
+            return ["MatchExactStatement", IRMatchExactStatement.jsonEmit_IRMatchExactStatement(stmt)];
+        }
+        else if(stmt instanceof IRMatchGeneralStatement) {
+            return ["MatchGeneralStatement", IRMatchGeneralStatement.jsonEmit_IRMatchGeneralStatement(stmt)];
+        }
+        else if(stmt instanceof IRBlockStatement) {
+            return ["BlockStatement", IRBlockStatement.jsonEmit_IRBlockStatement(stmt)];
+        }
+        else if(stmt instanceof IRErrorAdditionBoundsCheckStatement) {
+            return ["ErrorAdditionBoundsCheckStatement", IRErrorAdditionBoundsCheckStatement.jsonEmit_IRErrorAdditionBoundsCheckStatement(stmt)];
+        }
+        else if(stmt instanceof IRErrorSubtractionBoundsCheckStatement) {
+            return ["ErrorSubtractionBoundsCheckStatement", IRErrorSubtractionBoundsCheckStatement.jsonEmit_IRErrorSubtractionBoundsCheckStatement(stmt)];
+        }
+        else if(stmt instanceof IRErrorMultiplicationBoundsCheckStatement) {
+            return ["ErrorMultiplicationBoundsCheckStatement", IRErrorMultiplicationBoundsCheckStatement.jsonEmit_IRErrorMultiplicationBoundsCheckStatement(stmt)];
+        }
+        else if(stmt instanceof IRErrorDivisionByZeroCheckStatement) {
+            return ["ErrorDivisionByZeroCheckStatement", IRErrorDivisionByZeroCheckStatement.jsonEmit_IRErrorDivisionByZeroCheckStatement(stmt)];
+        }
+        else if(stmt instanceof IRErrorTypeAssertionCheckStatement) {
+            return ["ErrorTypeAssertionCheckStatement", IRErrorTypeAssertionCheckStatement.jsonEmit_IRErrorTypeAssertionCheckStatement(stmt)];
+        }
+        else if(stmt instanceof IRErrorExhaustiveStatement) {
+            return ["ErrorExhaustiveStatement", IRErrorExhaustiveStatement.jsonEmit_IRErrorExhaustiveStatement(stmt)];
+        }
+        else if(stmt instanceof IRTypeDeclSizeRangeCheckCStringStatement) {
+            return ["TypeDeclSizeRangeCheckCStringStatement", IRTypeDeclSizeRangeCheckCStringStatement.jsonEmit_IRTypeDeclSizeRangeCheckCStringStatement(stmt)];
+        }
+        else if(stmt instanceof IRTypeDeclSizeRangeCheckUnicodeStringStatement) {
+            return ["TypeDeclSizeRangeCheckUnicodeStringStatement", IRTypeDeclSizeRangeCheckUnicodeStringStatement.jsonEmit_IRTypeDeclSizeRangeCheckUnicodeStringStatement(stmt)];
+        }
+        else if(stmt instanceof IRTypeDeclNumericRangeCheckStatement) {
+            return ["TypeDeclNumericRangeCheckStatement", IRTypeDeclNumericRangeCheckStatement.jsonEmit_IRTypeDeclNumericRangeCheckStatement(stmt)];
+        }
+        else if(stmt instanceof IRTypeDeclFormatCheckCStringStatement) {
+            return ["TypeDeclFormatCheckCStringStatement", IRTypeDeclFormatCheckCStringStatement.jsonEmit_IRTypeDeclFormatCheckCStringStatement(stmt)];
+        }
+        else if(stmt instanceof IRTypeDeclFormatCheckUnicodeStringStatement) {
+            return ["TypeDeclFormatCheckUnicodeStringStatement", IRTypeDeclFormatCheckUnicodeStringStatement.jsonEmit_IRTypeDeclFormatCheckUnicodeStringStatement(stmt)];
+        }
+        else if(stmt instanceof IRTypeDeclInvariantCheckStatement) {
+            return ["TypeDeclInvariantCheckStatement", IRTypeDeclInvariantCheckStatement.jsonEmit_IRTypeDeclInvariantCheckStatement(stmt)];
+        }
+        else if(stmt instanceof IREntityInvariantCheckStatement) {
+            return ["EntityInvariantCheckStatement", IREntityInvariantCheckStatement.jsonEmit_IREntityInvariantCheckStatement(stmt)];
+        }
+        else if(stmt instanceof IRPreconditionCheckStatement) {
+            return ["PreconditionCheckStatement", IRPreconditionCheckStatement.jsonEmit_IRPreconditionCheckStatement(stmt)];
+        }
+        else if(stmt instanceof IRPostconditionCheckStatement) {
+            return ["PostconditionCheckStatement", IRPostconditionCheckStatement.jsonEmit_IRPostconditionCheckStatement(stmt)];
+        }
+        else if(stmt instanceof IRAbortStatement) {
+            return ["AbortStatement", IRAbortStatement.jsonEmit_IRAbortStatement(stmt)];
+        }
+        else if(stmt instanceof IRAssertStatement) {
+            return ["AssertStatement", IRAssertStatement.jsonEmit_IRAssertStatement(stmt)];
+        }
+        else if(stmt instanceof IRDebugStatement) {
+            return ["DebugStatement", IRDebugStatement.jsonEmit_IRDebugStatement(stmt)];
+        }
+        else {
+            assert(false, `Unknown IRStatement type -- ${stmt.tag}`)
+        }
     }
 
     static jsonParse_IRStatement(obj: any): IRStatement {
-        xxxx;
+        const kind = obj[0];
+        const value = obj[1];
+
+        switch(kind) {
+            case "NopStatement": {
+                return IRNopStatement.jsonParse_IRNopStatement(value);
+            }
+            case "TempAssignExpressionStatement": {
+                return IRTempAssignExpressionStatement.jsonParse_IRTempAssignExpressionStatement(value);
+            }
+            case "TempAssignStdInvokeStatement": {
+                return IRTempAssignStdInvokeStatement.jsonParse_IRTempAssignStdInvokeStatement(value);
+            }
+            case "TempAssignRefInvokeStatement": {
+                return IRTempAssignRefInvokeStatement.jsonParse_IRTempAssignRefInvokeStatement(value);
+            }
+            case "TempAssignDirectConstructorStatement": {
+                return IRTempAssignDirectConstructorStatement.jsonParse_IRTempAssignDirectConstructorStatement(value);
+            }
+            case "VariableDeclarationStatement": {
+                return IRVariableDeclarationStatement.jsonParse_IRVariableDeclarationStatement(value);
+            }
+            case "VariableInitializationStatement": {
+                return IRVariableInitializationStatement.jsonParse_IRVariableInitializationStatement(value);
+            }
+            case "VariableInitializationDirectInvokeStatement": {
+                return IRVariableInitializationDirectInvokeStatement.jsonParse_IRVariableInitializationDirectInvokeStatement(value);
+            }
+            case "VariableInitializationDirectInvokeWithImplicitStatement": {
+                return IRVariableInitializationDirectInvokeWithImplicitStatement.jsonParse_IRVariableInitializationDirectInvokeWithImplicitStatement(value);
+            }
+            case "VariableInitializationDirectConstructorStatement": {
+                return IRVariableInitializationDirectConstructorStatement.jsonParse_IRVariableInitializationDirectConstructorStatement(value);
+            }
+            case "VariableInitializationDirectConstructorWithBoxStatement": {
+                return IRVariableInitializationDirectConstructorWithBoxStatement.jsonParse_IRVariableInitializationDirectConstructorWithBoxStatement(value);
+            }
+            case "VariableAssignmentStatement": {
+                return IRVariableAssignmentStatement.jsonParse_IRVariableAssignmentStatement(value);
+            }
+            case "VariableAssignmentDirectInvokeStatement": {
+                return IRVariableAssignmentDirectInvokeStatement.jsonParse_IRVariableAssignmentDirectInvokeStatement(value);
+            }
+            case "VariableAssignmentDirectInvokeWithImplicitStatement": {
+                return IRVariableAssignmentDirectInvokeWithImplicitStatement.jsonParse_IRVariableAssignmentDirectInvokeWithImplicitStatement(value);
+            }
+            case "VariableAssignmentDirectConstructorStatement": {
+                return IRVariableAssignmentDirectConstructorStatement.jsonParse_IRVariableAssignmentDirectConstructorStatement(value);
+            }
+            case "VariableAssignmentDirectConstructorWithBoxStatement": {
+                return IRVariableAssignmentDirectConstructorWithBoxStatement.jsonParse_IRVariableAssignmentDirectConstructorWithBoxStatement(value);
+            }
+            case "UpdateLocalDirectStatement": {
+                return IRUpdateLocalDirectStatement.jsonParse_IRUpdateLocalDirectStatement(value);
+            }
+            case "UpdateParamDirectStatement": {
+                return IRUpdateParamDirectStatement.jsonParse_IRUpdateParamDirectStatement(value);
+            }
+            case "ReturnVoidSimpleStatement": {
+                return IRReturnVoidSimpleStatement.jsonParse_IRReturnVoidSimpleStatement(value);
+            }
+            case "ReturnValueSimpleStatement": {
+                return IRReturnValueSimpleStatement.jsonParse_IRReturnValueSimpleStatement(value);
+            }
+            case "ReturnDirectInvokeStatement": {
+                return IRReturnDirectInvokeStatement.jsonParse_IRReturnDirectInvokeStatement(value);
+            }
+            case "ReturnDirectConstructStatement": {
+                return IRReturnDirectConstructStatement.jsonParse_IRReturnDirectConstructStatement(value);
+            }
+            case "ReturnDirectConstructWithBoxStatement": {
+                return IRReturnDirectConstructWithBoxStatement.jsonParse_IRReturnDirectConstructWithBoxStatement(value);
+            }
+            case "VoidInvokeStatement": {
+                return IRVoidInvokeStatement.jsonParse_IRVoidInvokeStatement(value);
+            }
+            case "ChkLogicImpliesShortCircuitStatement": {
+                return IRChkLogicImpliesShortCircuitStatement.jsonParse_IRChkLogicImpliesShortCircuitStatement(value);
+            }
+            case "LogicConditionalStatement": {
+                return IRLogicConditionalStatement.jsonParse_IRLogicConditionalStatement(value);
+            }
+            case "SimpleIfStatement": {
+                return IRSimpleIfStatement.jsonParse_IRSimpleIfStatement(value);
+            }
+            case "SimpleIfElseStatement": {
+                return IRSimpleIfElseStatement.jsonParse_IRSimpleIfElseStatement(value);
+            }
+            case "MatchExactStatement": {
+                return IRMatchExactStatement.jsonParse_IRMatchExactStatement(value);
+            }
+            case "MatchGeneralStatement": {
+                return IRMatchGeneralStatement.jsonParse_IRMatchGeneralStatement(value);
+            }
+            case "BlockStatement": {
+                return IRBlockStatement.jsonParse_IRBlockStatement(value);
+            }
+            case "ErrorAdditionBoundsCheckStatement": {
+                return IRErrorAdditionBoundsCheckStatement.jsonParse_IRErrorAdditionBoundsCheckStatement(value);
+            }
+            case "ErrorSubtractionBoundsCheckStatement": {
+                return IRErrorSubtractionBoundsCheckStatement.jsonParse_IRErrorSubtractionBoundsCheckStatement(value);
+            }
+            case "ErrorMultiplicationBoundsCheckStatement": {
+                return IRErrorMultiplicationBoundsCheckStatement.jsonParse_IRErrorMultiplicationBoundsCheckStatement(value);
+            }
+            case "ErrorDivisionByZeroCheckStatement": {
+                return IRErrorDivisionByZeroCheckStatement.jsonParse_IRErrorDivisionByZeroCheckStatement(value);
+            }
+            case "ErrorTypeAssertionCheckStatement": {
+                return IRErrorTypeAssertionCheckStatement.jsonParse_IRErrorTypeAssertionCheckStatement(value);
+            }
+            case "ErrorExhaustiveStatement": {
+                return IRErrorExhaustiveStatement.jsonParse_IRErrorExhaustiveStatement(value);
+            }
+            case "TypeDeclSizeRangeCheckCStringStatement": {
+                return IRTypeDeclSizeRangeCheckCStringStatement.jsonParse_IRTypeDeclSizeRangeCheckCStringStatement(value);
+            }
+            case "TypeDeclSizeRangeCheckUnicodeStringStatement": {
+                return IRTypeDeclSizeRangeCheckUnicodeStringStatement.jsonParse_IRTypeDeclSizeRangeCheckUnicodeStringStatement(value);
+            }
+            case "TypeDeclNumericRangeCheckStatement": {
+                return IRTypeDeclNumericRangeCheckStatement.jsonParse_IRTypeDeclNumericRangeCheckStatement(value);
+            }
+            case "TypeDeclFormatCheckCStringStatement": {
+                return IRTypeDeclFormatCheckCStringStatement.jsonParse_IRTypeDeclFormatCheckCStringStatement(value);
+            }
+            case "TypeDeclFormatCheckUnicodeStringStatement": {
+                return IRTypeDeclFormatCheckUnicodeStringStatement.jsonParse_IRTypeDeclFormatCheckUnicodeStringStatement(value);
+            }
+            case "TypeDeclInvariantCheckStatement": {
+                return IRTypeDeclInvariantCheckStatement.jsonParse_IRTypeDeclInvariantCheckStatement(value);
+            }
+            case "EntityInvariantCheckStatement": {
+                return IREntityInvariantCheckStatement.jsonParse_IREntityInvariantCheckStatement(value);
+            }
+            case "PreconditionCheckStatement": {
+                return IRPreconditionCheckStatement.jsonParse_IRPreconditionCheckStatement(value);
+            }
+            case "PostconditionCheckStatement": {
+                return IRPostconditionCheckStatement.jsonParse_IRPostconditionCheckStatement(value);
+            }
+            case "AbortStatement": {
+                return IRAbortStatement.jsonParse_IRAbortStatement(value);
+            }
+            case "AssertStatement": {
+                return IRAssertStatement.jsonParse_IRAssertStatement(value);
+            }
+            case "DebugStatement": {
+                return IRDebugStatement.jsonParse_IRDebugStatement(value);
+            }
+            default: {
+                throw new Error(`Unknown statement type: ${kind}`);
+            }
+        }
     }
 }
 
@@ -1207,11 +1510,11 @@ abstract class IRAtomicStatement extends IRStatement {
 /* Represent temporary variable assignment statements */
 abstract class IRTempAssignStatement extends IRAtomicStatement {
     readonly ttype: IRTypeSignature;
-    readonly tcounter: number;
+    readonly tvid: number;
 
-    constructor(tag: IRStatementTag, tcounter: number, ttype: IRTypeSignature) {
+    constructor(tag: IRStatementTag, tvid: number, ttype: IRTypeSignature) {
         super(tag);
-        this.tcounter = tcounter;
+        this.tvid = tvid;
         this.ttype = ttype;
     }
 
@@ -1226,12 +1529,12 @@ abstract class IRTempAssignStatement extends IRAtomicStatement {
     static jsonEmitMeta_IRTempAssignStatement(stmt: IRTempAssignStatement): object {
         return {
             ttype: IRTypeSignature.jsonEmit_IRTypeSignature(stmt.ttype),
-            tcounter: stmt.tcounter
+            tvid: stmt.tvid
         };
     }
 
     static jsonParseMeta_IRTempAssignStatement(obj: any): [number, IRTypeSignature] {
-        return [obj.tcounter, IRTypeSignature.jsonParse_IRTypeSignature(obj.ttype)];
+        return [obj.tvid, IRTypeSignature.jsonParse_IRTypeSignature(obj.ttype)];
     }
 }
 
@@ -5547,11 +5850,44 @@ abstract class IRBody {
     abstract isSimpleBody(): boolean;
 
     static jsonEmit_IRBody(exp: IRBody): [string, object] {
-        xxxx;
+        if(exp instanceof IRAbstractBody) {
+            return ["AbstractBody", IRAbstractBody.jsonEmit_IRAbstractBody(exp)];
+        }
+        else if(exp instanceof IRBuiltinBody) {
+            return ["BuiltinBody", IRBuiltinBody.jsonEmit_IRBuiltinBody(exp)];
+        }
+        else if(exp instanceof IRHoleBody) {
+            return ["HoleBody", IRHoleBody.jsonEmit_IRHoleBody(exp)];
+        }
+        else if(exp instanceof IRStandardBody) {
+            return ["StandardBody", IRStandardBody.jsonEmit_IRStandardBody(exp)];
+        }
+        else {
+            throw new Error(`Unknown body type: ${exp}`);
+        }
     }
 
     static jsonParse_IRBody(obj: any): IRBody {
-        xxxx;
+        const kind = obj[0];
+        const value = obj[1];
+
+        switch(kind) {
+            case "AbstractBody": {
+                return IRAbstractBody.jsonParse_IRAbstractBody(value);
+            }
+            case "BuiltinBody": {
+                return IRBuiltinBody.jsonParse_IRBuiltinBody(value);
+            }
+            case "HoleBody": {
+                return IRHoleBody.jsonParse_IRHoleBody(value);
+            }
+            case "StandardBody": {
+                return IRStandardBody.jsonParse_IRStandardBody(value);
+            }
+            default: {
+                assert(false, `Unknown body type: ${kind}`);
+            }
+        }
     }
 }
 

@@ -30,11 +30,11 @@ describe ("CPPEmit -- NamespaceFunction (no template)", () => {
     });
 
     it("should emit simple rest", function () {
-        checkTestEmitMainFunction('function foo(x: Int, ...y: List<Int>): Int { return x; } public function main(): Int { return foo(1i); }', "Int Mainᕒmain() { ListᐸIntᐳ tmp_0 = ListᐸIntᐳ{}; return Mainᕒfoo(1_i, tmp_0); }");
-        checkTestEmitMainFunction('function foo(x: Int, ...y: List<Int>): Int { return x; } public function main(): Int { return foo(1i, 2i); }', "Int Mainᕒmain() { ListᐸIntᐳ tmp_0 = ListᐸIntᐳ({2_i}); return Mainᕒfoo(1_i, tmp_0); }");
-        checkTestEmitMainFunction('function foo(x: Int, ...y: List<Int>): Int { return x; } public function main(): Int { return foo(1i, 2i, 3i); }', "Int Mainᕒmain() { ListᐸIntᐳ tmp_0 = ListᐸIntᐳ({2_i, 3_i}); return Mainᕒfoo(1_i, tmp_0); }");
+        checkTestEmitMainFunction('function foo(x: Int, ...y: List<Int>): Int { return x; } public function main(): Int { return foo(1i); }', "Int Mainᕒmain() { ListᐸIntᐳ ᐸtmp_0ᐳ = ListᐸIntᐳ{}; return Mainᕒfoo(1_i, ᐸtmp_0ᐳ); }");
+        checkTestEmitMainFunction('function foo(x: Int, ...y: List<Int>): Int { return x; } public function main(): Int { return foo(1i, 2i); }', "Int Mainᕒmain() { ListᐸIntᐳ ᐸtmp_0ᐳ = ListᐸIntᐳ({2_i}); return Mainᕒfoo(1_i, ᐸtmp_0ᐳ); }");
+        checkTestEmitMainFunction('function foo(x: Int, ...y: List<Int>): Int { return x; } public function main(): Int { return foo(1i, 2i, 3i); }', "Int Mainᕒmain() { ListᐸIntᐳ ᐸtmp_0ᐳ = ListᐸIntᐳ({2_i, 3_i}); return Mainᕒfoo(1_i, ᐸtmp_0ᐳ); }");
 
-        checkTestEmitMainFunction('function foo(x: Int, ...y: List<Int>): Int { return x; } public function main(): Int { return foo(x = 0i, 2i, 3i); }', "Int Mainᕒmain() { ListᐸIntᐳ tmp_0 = ListᐸIntᐳ({2_i, 3_i}); return Mainᕒfoo(0_i, tmp_0); }");
+        checkTestEmitMainFunction('function foo(x: Int, ...y: List<Int>): Int { return x; } public function main(): Int { return foo(x = 0i, 2i, 3i); }', "Int Mainᕒmain() { ListᐸIntᐳ ᐸtmp_0ᐳ = ListᐸIntᐳ({2_i, 3_i}); return Mainᕒfoo(0_i, ᐸtmp_0ᐳ); }");
     });
 });
 

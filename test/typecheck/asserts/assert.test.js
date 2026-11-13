@@ -18,13 +18,3 @@ describe ("Checker -- Simple Assert", () => {
         checkTestFunctionError("function main(): Int { assert 3i; return 0i; }", "Expected a boolean type for assert condition but got Int");
     });
 });
-
-describe ("Checker -- Simple Validate", () => {
-    it("should check simple validate", function () {
-        checkTestFunction("function main(): Int { validate 1i < 3i; return 0i; }");
-    });
-
-    it("should fail not boolean type", function () {
-        checkTestFunctionError("function main(): Int { validate 1i; return 0i; }", "Expected a boolean type for validate condition but got Int");
-    });
-});

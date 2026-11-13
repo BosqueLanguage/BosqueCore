@@ -1930,7 +1930,7 @@ class IRAssembly {
         }
     }
 
-    jsonEmit(code: IRCodeFileInfo[], macrodefs: string[]): object {
+    jsonEmit(): object {
         return {
             cregexps: this.cregexps.map((cr) => cr.jsonEmit()),
             uregexps: this.uregexps.map((ur) => ur.jsonEmit()),
@@ -1989,7 +1989,7 @@ class IRAssembly {
         };
     }
 
-    static parseBAPI(obj: any): IRAssembly {
+    static parseJSON(obj: any): IRAssembly {
         const code = obj.code.map((c: any) => IRCodeFileInfo.jsonParse(c));
         const macrodefs = obj.macrodefs;
 

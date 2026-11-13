@@ -5,10 +5,10 @@ import { describe, it } from "node:test";
 
 describe ("CPPEmit -- eADT decl", () => {
     it("should emit simple eADT", function () {
-        checkTestEmitMainFunction('datatype Foo of F1 { field f: Int; } F2 { }; public function main(): Int { return F1{3i}.f; }', 'Int Mainᕒmain() { MainᕒF1 tmp_0 = MainᕒF1{3_i}; return tmp_0.f; }'); 
-        checkTestEmitMainFunction('datatype Foo of F1 { field f: Int; invariant $f >= 0i; } F2 { field g: Bool; }; public function main(): Bool { return F2{false}.g; }', 'Bool Mainᕒmain() { MainᕒF2 tmp_0 = MainᕒF2{FALSE}; return tmp_0.g; }'); 
+        checkTestEmitMainFunction('datatype Foo of F1 { field f: Int; } F2 { }; public function main(): Int { return F1{3i}.f; }', 'Int Mainᕒmain() { MainᕒF1 ᐸtmp_0ᐳ = MainᕒF1{3_i}; return ᐸtmp_0ᐳ.f; }'); 
+        checkTestEmitMainFunction('datatype Foo of F1 { field f: Int; invariant $f >= 0i; } F2 { field g: Bool; }; public function main(): Bool { return F2{false}.g; }', 'Bool Mainᕒmain() { MainᕒF2 ᐸtmp_0ᐳ = MainᕒF2{FALSE}; return ᐸtmp_0ᐳ.g; }'); 
 
-        checkTestEmitMainFunction('datatype Foo<T> of F1 { field f: T; } F2 { }; public function main(): Int { return F1<Int>{3i}.f; }', 'Int Mainᕒmain() { MainᕒF1ᐸIntᐳ tmp_0 = MainᕒF1ᐸIntᐳ{3_i}; return tmp_0.f; }'); 
+        checkTestEmitMainFunction('datatype Foo<T> of F1 { field f: T; } F2 { }; public function main(): Int { return F1<Int>{3i}.f; }', 'Int Mainᕒmain() { MainᕒF1ᐸIntᐳ ᐸtmp_0ᐳ = MainᕒF1ᐸIntᐳ{3_i}; return ᐸtmp_0ᐳ.f; }'); 
     });
 
     it("should check eADT const", function () {
@@ -24,11 +24,11 @@ describe ("CPPEmit -- eADT decl", () => {
 
 describe ("Checker -- eADT decl inherits", () => {
     it("should check simple inherits eADT", function () {
-        checkTestEmitMainFunction('datatype Foo using { field f: Int; } of F1 { } F2 { }; public function main(): Int { return F1{3i}.f; }', 'Int Mainᕒmain() { MainᕒF1 tmp_0 = MainᕒF1{3_i}; return tmp_0.f; }'); 
-        checkTestEmitMainFunction('datatype Foo using { field f: Int; invariant $f >= 0i; } of F1 { } F2 { field g: Bool; }; public function main(): Bool { return F2{3i, false}.g; }', 'Bool Mainᕒmain() { ᐸRuntimeᐳ::bsq_invariant((bool)(MainᕒFooᐤinvariant_0(3_i)), "test.bsq", 2, nullptr, "Failed Invariant"); MainᕒF2 tmp_0 = MainᕒF2{3_i, FALSE}; return tmp_0.g; }'); 
+        checkTestEmitMainFunction('datatype Foo using { field f: Int; } of F1 { } F2 { }; public function main(): Int { return F1{3i}.f; }', 'Int Mainᕒmain() { MainᕒF1 ᐸtmp_0ᐳ = MainᕒF1{3_i}; return ᐸtmp_0ᐳ.f; }'); 
+        checkTestEmitMainFunction('datatype Foo using { field f: Int; invariant $f >= 0i; } of F1 { } F2 { field g: Bool; }; public function main(): Bool { return F2{3i, false}.g; }', 'Bool Mainᕒmain() { ᐸRuntimeᐳ::bsq_invariant((bool)(MainᕒFooᐤinvariant_0(3_i)), "test.bsq", 2, nullptr, "Failed Invariant"); MainᕒF2 ᐸtmp_0ᐳ = MainᕒF2{3_i, FALSE}; return ᐸtmp_0ᐳ.g; }'); 
 
-        checkTestEmitMainFunction('datatype Foo<T> using { field f: T; } of F1 { } F2 { }; public function main(): Int { return F1<Int>{3i}.f; }', 'Int Mainᕒmain() { MainᕒF1ᐸIntᐳ tmp_0 = MainᕒF1ᐸIntᐳ{3_i}; return tmp_0.f; }'); 
+        checkTestEmitMainFunction('datatype Foo<T> using { field f: T; } of F1 { } F2 { }; public function main(): Int { return F1<Int>{3i}.f; }', 'Int Mainᕒmain() { MainᕒF1ᐸIntᐳ ᐸtmp_0ᐳ = MainᕒF1ᐸIntᐳ{3_i}; return ᐸtmp_0ᐳ.f; }'); 
 
-        checkTestEmitMainFunction('concept Bar<U> { field f: U; } datatype Foo provides Bar<Int> using { field g: Bool; } of F1 { invariant $g ==> $f >= 0i; } F2 { }; public function main(): Int { return F1{3i, true}.f; }', 'Int Mainᕒmain() { ᐸRuntimeᐳ::bsq_invariant((bool)(MainᕒF1ᐤinvariant_0(3_i, TRUE)), "test.bsq", 2, nullptr, "Failed Invariant"); MainᕒF1 tmp_0 = MainᕒF1{3_i, TRUE}; return tmp_0.f; }'); 
+        checkTestEmitMainFunction('concept Bar<U> { field f: U; } datatype Foo provides Bar<Int> using { field g: Bool; } of F1 { invariant $g ==> $f >= 0i; } F2 { }; public function main(): Int { return F1{3i, true}.f; }', 'Int Mainᕒmain() { ᐸRuntimeᐳ::bsq_invariant((bool)(MainᕒF1ᐤinvariant_0(3_i, TRUE)), "test.bsq", 2, nullptr, "Failed Invariant"); MainᕒF1 ᐸtmp_0ᐳ = MainᕒF1{3_i, TRUE}; return ᐸtmp_0ᐳ.f; }'); 
     });
 });

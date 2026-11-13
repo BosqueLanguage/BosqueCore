@@ -4774,7 +4774,7 @@ class TypeChecker {
             const ftype = finfo.member.declaredType.remapTemplateBindings(finfo.typeinfo.mapping);
 
             //TODO: this is too conservative as we might not use the name in the expression! Need to check if upd[1] uses the special name (and not nested), and only then check shaddowing -- also flag so we aren't always generating binders at runtime
-            this.checkError(stmt.sinfo, env.resolveLocalVarInfoFromSrcName(vname) !== undefined, `Variable ${vname} would be shadowed in this update (todo make less conservative)`);
+            this.checkError(stmt.sinfo, env.resolveLocalVarInfoFromSrcName(bname) !== undefined, `Variable ${bname} would be shadowed in this update (todo make less conservative)`);
 
             const cenv = env.pushNewLocalBinderScope([new VarInfo(bname, ftype, "let", true)]);
             const etype = this.checkExpression(cenv, upd[1], new SimpleTypeInferContext(ftype));

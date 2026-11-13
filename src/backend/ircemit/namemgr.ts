@@ -70,6 +70,10 @@ class TransformCPPNameManager {
         }
     }
 
+    static convertTempVariable(tvid: number): string {
+        return `ᐸtmp_${tvid}ᐳ`;
+    }
+
     static convertNamespaceKey(nskey: string): string {
         return TransformCPPNameManager.safeifyName(nskey);
     }

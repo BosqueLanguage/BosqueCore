@@ -6,7 +6,7 @@ import { describe, it } from "node:test";
 describe ("CPPEmit -- access field", () => {
     it("should emit simple field access", function () {
         checkTestEmitMainFunction("entity Foo { field f: Int; } public function main(x: Foo): Int { return x.f; }", "Int Mainᕒmain(MainᕒFoo x) { return x.f; }");
-        checkTestEmitMainFunction("entity Foo { field f: Int; } public function foo(): Foo { return Foo{1i}; } public function main(): Int { return foo().f; }", "Int Mainᕒmain() { MainᕒFoo tmp_0 = Mainᕒfoo(); return tmp_0.f; }");
+        checkTestEmitMainFunction("entity Foo { field f: Int; } public function foo(): Foo { return Foo{1i}; } public function main(): Int { return foo().f; }", "Int Mainᕒmain() { MainᕒFoo ᐸtmp_0ᐳ = Mainᕒfoo(); return ᐸtmp_0ᐳ.f; }");
 
         checkTestEmitMainFunction("entity Foo { field f: Int; field g: Nat; } public function main(x: Foo): Nat { return x.g; }", "Nat Mainᕒmain(MainᕒFoo x) { return x.g; }");
         checkTestEmitMainFunction("entity Bar { field h: Bool; } entity Foo { field f: Bar; } public function main(x: Foo): Bool { return x.f.h; }", "Bool Mainᕒmain(MainᕒFoo* x) { return x->f.h; }");

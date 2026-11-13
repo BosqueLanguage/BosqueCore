@@ -18,7 +18,7 @@ describe ("CPPEmit -- simple return", () => {
 
     it("should emit direct returns", function () {
         checkTestEmitMainFunction('public function foo(x: Int): Int { return x + 1i; } public function main(): Int { return foo(3i); }', 'Int Mainᕒmain() { return Mainᕒfoo(3_i); }');
-        checkTestEmitMainFunction('concept Baz {} entity Foo provides Baz { field f: Int; } public function foo(x: Int): Foo { return Foo{x + 1i}; } public function main(): Baz { return foo(3i); }', 'MainᕒBaz Mainᕒmain() { MainᕒFoo tmp_0 = Mainᕒfoo(3_i); return MainᕒBaz{tmp_0}; }');
+        checkTestEmitMainFunction('concept Baz {} entity Foo provides Baz { field f: Int; } public function foo(x: Int): Foo { return Foo{x + 1i}; } public function main(): Baz { return foo(3i); }', 'MainᕒBaz Mainᕒmain() { MainᕒFoo ᐸtmp_0ᐳ = Mainᕒfoo(3_i); return MainᕒBaz{ᐸtmp_0ᐳ}; }');
     });
 
     it("should emit returns with special coerce", function () {
@@ -33,11 +33,11 @@ describe ("CPPEmit -- simple return", () => {
 
 describe ("CPPEmit -- return with refs", () => {
     it("should emit return with refs", function () {
-        checkTestEmitMainFunction("function foo(out y: Int): Int { return 1i; } public function main(): Int { var y: Int; return foo(out y); }", 'Int Mainᕒmain() { Int y; Int tmp_0 = Mainᕒfooᙾout(y); return tmp_0; }');
-        checkTestEmitMainFunction("entity Foo { ref method foo(): Int { return 1i; } } public function main(): Int { ref z = Foo{}; return ref z.foo(); }", 'Int Mainᕒmain() { MainᕒFoo z = MainᕒFoo{}; Int tmp_0 = MainᕒFooᑀfooᙾref(z); return tmp_0; }');
+        checkTestEmitMainFunction("function foo(out y: Int): Int { return 1i; } public function main(): Int { var y: Int; return foo(out y); }", 'Int Mainᕒmain() { Int y; Int ᐸtmp_0ᐳ = Mainᕒfooᙾout(y); return ᐸtmp_0ᐳ; }');
+        checkTestEmitMainFunction("entity Foo { ref method foo(): Int { return 1i; } } public function main(): Int { ref z = Foo{}; return ref z.foo(); }", 'Int Mainᕒmain() { MainᕒFoo z = MainᕒFoo{}; Int ᐸtmp_0ᐳ = MainᕒFooᑀfooᙾref(z); return ᐸtmp_0ᐳ; }');
     });
 
     it("should emit return with out? passthrough", function () {
-        checkTestEmitMainFunction("function bar(out? y: Int): Bool { y = 1i; return true; } function foo(out? y: Int): Bool { return bar(out? y); } public function main(): Int { var y: Int; if(foo(out? y) { return y; } else { return 0i; } }", 'Int Mainᕒmain() { Int y; Bool tmp_0 = Mainᕒfooᙾoutp(y); if(tmp_0) { return y; } else { return 0_i; } }');
+        checkTestEmitMainFunction("function bar(out? y: Int): Bool { y = 1i; return true; } function foo(out? y: Int): Bool { return bar(out? y); } public function main(): Int { var y: Int; if(foo(out? y) { return y; } else { return 0i; } }", 'Int Mainᕒmain() { Int y; Bool ᐸtmp_0ᐳ = Mainᕒfooᙾoutp(y); if(ᐸtmp_0ᐳ) { return y; } else { return 0_i; } }');
     });
 });

@@ -34,7 +34,7 @@ describe ("CPPEmit -- If Statement", () => {
         checkTestEmitMainFunction("public function main(): Int { let x: Option<Int> = some(3i); if (x)@some { return $x; } return 1i; }", 'Int Mainᕒmain() { OptionᐸIntᐳ x = OptionᐸIntᐳ{SomeᐸIntᐳ{3_i}}; if(!x.isNone()) { Int ᑯx = x.unwrap(); return ᑯx; } return 1_i; }');
         checkTestEmitMainFunction("public function main(): Int { let x: Option<Int> = some(3i); if ($y = x)@some { return $y; } return 1i; }", 'Int Mainᕒmain() { OptionᐸIntᐳ x = OptionᐸIntᐳ{SomeᐸIntᐳ{3_i}}; if(!x.isNone()) { Int ᑯy = x.unwrap(); return ᑯy; } return 1_i; }');
     
-        checkTestEmitMainFunction("public function main(x: Option<Option<Int>>): Int { if (x.@some)@some { return $_; } return 3i; }", 'Int Mainᕒmain(OptionᐸOptionᐸIntᐳᐳ x) { ᐸRuntimeᐳ::bsq_typeassert((bool)(!x.isNone()), "test.bsq", 2, "Type assertion failed", "Type assertion failed"); OptionᐸIntᐳ tmp_0 = x.unwrap(); if(!tmp_0.isNone()) { Int ᑯ_ = tmp_0.unwrap(); return ᑯ_; } return 3_i; }');
+        checkTestEmitMainFunction("public function main(x: Option<Option<Int>>): Int { if (x.@some)@some { return $_; } return 3i; }", 'Int Mainᕒmain(OptionᐸOptionᐸIntᐳᐳ x) { ᐸRuntimeᐳ::bsq_typeassert((bool)(!x.isNone()), "test.bsq", 2, "Type assertion failed", "Type assertion failed"); OptionᐸIntᐳ ᐸtmp_0ᐳ = x.unwrap(); if(!ᐸtmp_0ᐳ.isNone()) { Int ᑯ_ = ᐸtmp_0ᐳ.unwrap(); return ᑯ_; } return 3_i; }');
     });
 
     it("should emit ifs w/ single itest types", function () {
