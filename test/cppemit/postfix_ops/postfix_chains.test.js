@@ -12,6 +12,6 @@ describe ("CPPEmit -- Postfix Chains", () => {
     });
 
     it("should emit postfix chains w/ ref", function () {
-        checkTestEmitMainFunction('entity Foo { method f(inout x: Int): Int { return x; } } entity Bar { field g: Foo; } public function main(): Int { var y: Int = 0i; return Bar{Foo{}}.g.f(inout y); }', "Int Mainᕒmain() { Int y = 0_i; MainᕒFoo ᐸtmp_0ᐳ = MainᕒFoo{}; MainᕒBar* ᐸtmp_1ᐳ = ᐸRuntimeᐳ::MainᕒBar_allocator.allocate(ᐸtmp_0ᐳ); Int ᐸtmp_2ᐳ = MainᕒFooᑀfᙾinout(ᐸtmp_1ᐳ->g, y); return ᐸtmp_2ᐳ; }"); 
+        checkTestEmitMainFunction('entity Foo { method f(inout x: Int): Int { return x; } } entity Bar { field g: Foo; } public function main(): Int { var y: Int = 0i; return Bar{Foo{}}.g.f(inout y); }', "Int Mainᕒmain() { Int y = 0_i; MainᕒFoo ᐸtmp_0ᐳ = MainᕒFoo{}; MainᕒBar* ᐸtmp_1ᐳ = ᐸRuntimeᐳ::MainᕒBar_allocator.allocate(ᐸtmp_0ᐳ); return MainᕒFooᑀfᙾinout(ᐸtmp_1ᐳ->g, y); }"); 
     });
 });

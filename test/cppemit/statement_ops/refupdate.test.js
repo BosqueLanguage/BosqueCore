@@ -29,7 +29,7 @@ describe ("CPPEmit -- ref updates", () => {
     });
 
     it("should emit ref updates as params", function () {
-        checkTestEmitMainFunction('entity Foo { field x: Int; } function f(ref z: Foo): Int { ref z[x = 5i]; return z.x; } public function main(): Int { ref z = Foo{3i}; return f(ref z); }', 'Int Mainᕒmain() { MainᕒFoo z = MainᕒFoo{3_i}; Int ᐸtmp_0ᐳ = Mainᕒfᙾref(z); return ᐸtmp_0ᐳ; }');
+        checkTestEmitMainFunction('entity Foo { field x: Int; } function f(ref z: Foo): Int { ref z[x = 5i]; return z.x; } public function main(): Int { ref z = Foo{3i}; return f(ref z); }', 'Int Mainᕒmain() { MainᕒFoo z = MainᕒFoo{3_i}; return Mainᕒfᙾref(z); }');
         checkTestEmitMainFunction('entity Foo { field x: Int; ref method f() { ref this[x = 0i]; return; } } public function main(): Int { ref z = Foo{3i}; ref z.f(); return z.x; }', 'Int Mainᕒmain() { MainᕒFoo z = MainᕒFoo{3_i}; MainᕒFooᑀfᙾref(z); return z.x; }');
 
         //don't need return value for Void invokes

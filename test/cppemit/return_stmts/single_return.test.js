@@ -33,8 +33,8 @@ describe ("CPPEmit -- simple return", () => {
 
 describe ("CPPEmit -- return with refs", () => {
     it("should emit return with refs", function () {
-        checkTestEmitMainFunction("function foo(out y: Int): Int { return 1i; } public function main(): Int { var y: Int; return foo(out y); }", 'Int Mainᕒmain() { Int y; Int ᐸtmp_0ᐳ = Mainᕒfooᙾout(y); return ᐸtmp_0ᐳ; }');
-        checkTestEmitMainFunction("entity Foo { ref method foo(): Int { return 1i; } } public function main(): Int { ref z = Foo{}; return ref z.foo(); }", 'Int Mainᕒmain() { MainᕒFoo z = MainᕒFoo{}; Int ᐸtmp_0ᐳ = MainᕒFooᑀfooᙾref(z); return ᐸtmp_0ᐳ; }');
+        checkTestEmitMainFunction("function foo(out y: Int): Int { return 1i; } public function main(): Int { var y: Int; return foo(out y); }", 'Int Mainᕒmain() { Int y; return Mainᕒfooᙾout(y); }');
+        checkTestEmitMainFunction("entity Foo { ref method foo(): Int { return 1i; } } public function main(): Int { ref z = Foo{}; return ref z.foo(); }", 'Int Mainᕒmain() { MainᕒFoo z = MainᕒFoo{}; return MainᕒFooᑀfooᙾref(z); }');
     });
 
     it("should emit return with out? passthrough", function () {

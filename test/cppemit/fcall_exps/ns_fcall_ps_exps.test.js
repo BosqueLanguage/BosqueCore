@@ -5,15 +5,15 @@ import { describe, it } from "node:test";
 
 describe ("CPPEmit -- NamespaceFunction Ref Params", () => {
     it("should emit simple ref", function () {
-        checkTestEmitMainFunction('function foo(out y: Int): Int { y = 2i; return 1i; } public function main(): Int { var i = 0i; return foo(out i); }', "Int Mainᕒmain() { Int i = 0_i; Int ᐸtmp_0ᐳ = Mainᕒfooᙾout(i); return ᐸtmp_0ᐳ; }");
-        checkTestEmitMainFunction('function foo(out? y: Int): Bool { y = 2i; return true; } public function main(): Bool { var i = 0i; return foo(out? i); }', "Bool Mainᕒmain() { Int i = 0_i; Bool ᐸtmp_0ᐳ = Mainᕒfooᙾoutp(i); return ᐸtmp_0ᐳ; }");
-        checkTestEmitMainFunction('function foo(inout y: Int): Int { y = y + 2i; return 1i; } public function main(): Int { var i = 0i; return foo(inout i); }', "Int Mainᕒmain() { Int i = 0_i; Int ᐸtmp_0ᐳ = Mainᕒfooᙾinout(i); return ᐸtmp_0ᐳ; }");
-        checkTestEmitMainFunction('entity Foo{ } function foo(ref y: Foo): Int { return 1i; } public function main(): Int { ref ff = Foo{}; return foo(ref ff); }', "Int Mainᕒmain() { MainᕒFoo ff = MainᕒFoo{}; Int ᐸtmp_0ᐳ = Mainᕒfooᙾref(ff); return ᐸtmp_0ᐳ; }");     
+        checkTestEmitMainFunction('function foo(out y: Int): Int { y = 2i; return 1i; } public function main(): Int { var i = 0i; return foo(out i); }', "Int Mainᕒmain() { Int i = 0_i; return Mainᕒfooᙾout(i); }");
+        checkTestEmitMainFunction('function foo(out? y: Int): Bool { y = 2i; return true; } public function main(): Bool { var i = 0i; return foo(out? i); }', "Bool Mainᕒmain() { Int i = 0_i; return Mainᕒfooᙾoutp(i); }");
+        checkTestEmitMainFunction('function foo(inout y: Int): Int { y = y + 2i; return 1i; } public function main(): Int { var i = 0i; return foo(inout i); }', "Int Mainᕒmain() { Int i = 0_i; return Mainᕒfooᙾinout(i); }");
+        checkTestEmitMainFunction('entity Foo{ } function foo(ref y: Foo): Int { return 1i; } public function main(): Int { ref ff = Foo{}; return foo(ref ff); }', "Int Mainᕒmain() { MainᕒFoo ff = MainᕒFoo{}; return Mainᕒfooᙾref(ff); }");     
     });
 
     it("should check multiple passing modes", function () {
-        checkTestEmitMainFunction('function foo(out y: Int): Int { y = 3i; return 1i; } function foo(inout y: Int): Bool { y = 3i; return true; } public function main(): Bool { var v = 0i; return foo(inout v); }', 'Bool Mainᕒmain() { Int v = 0_i; Bool ᐸtmp_0ᐳ = Mainᕒfooᙾinout(v); return ᐸtmp_0ᐳ; }');
-        checkTestEmitMainFunction('function foo(out y: Int): Int { y = 3i; return 1i; } function foo(inout y: Int): Bool { y = 3i; return true; } public function main(): Int { var v = 0i; return foo(out v); }', 'Int Mainᕒmain() { Int v = 0_i; Int ᐸtmp_0ᐳ = Mainᕒfooᙾout(v); return ᐸtmp_0ᐳ; }');
+        checkTestEmitMainFunction('function foo(out y: Int): Int { y = 3i; return 1i; } function foo(inout y: Int): Bool { y = 3i; return true; } public function main(): Bool { var v = 0i; return foo(inout v); }', 'Bool Mainᕒmain() { Int v = 0_i; return Mainᕒfooᙾinout(v); }');
+        checkTestEmitMainFunction('function foo(out y: Int): Int { y = 3i; return 1i; } function foo(inout y: Int): Bool { y = 3i; return true; } public function main(): Int { var v = 0i; return foo(out v); }', 'Int Mainᕒmain() { Int v = 0_i; return Mainᕒfooᙾout(v); }');
     });
 
     it("should emit staged ref", function () {

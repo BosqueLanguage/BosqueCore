@@ -1128,6 +1128,7 @@ enum IRStatementTag {
     IRReturnVoidSimpleStatement = "IRReturnVoidSimpleStatement",
     IRReturnValueSimpleStatement = "IRReturnValueSimpleStatement",
     IRReturnDirectInvokeStatement = "IRReturnDirectInvokeStatement",
+    IRReturnDirectInvokeImplicitsStatement = "IRReturnDirectInvokeImplicitsStatement",
     IRReturnDirectConstructStatement = "IRReturnDirectConstructStatement",
     IRReturnDirectConstructWithBoxStatement = "IRReturnDirectConstructWithBoxStatement",
 
@@ -1243,6 +1244,9 @@ abstract class IRStatement {
         }
         else if(stmt instanceof IRReturnDirectInvokeStatement) {
             return ["ReturnDirectInvokeStatement", IRReturnDirectInvokeStatement.jsonEmit_IRReturnDirectInvokeStatement(stmt)];
+        }
+        else if(stmt instanceof IRReturnDirectInvokeImplicitsStatement) {
+            return ["ReturnDirectInvokeImplicitsStatement", IRReturnDirectInvokeImplicitsStatement.jsonEmit_IRReturnDirectInvokeImplicitsStatement(stmt)];
         }
         else if(stmt instanceof IRReturnDirectConstructStatement) {
             return ["ReturnDirectConstructStatement", IRReturnDirectConstructStatement.jsonEmit_IRReturnDirectConstructStatement(stmt)];
@@ -1400,6 +1404,9 @@ abstract class IRStatement {
             }
             case "ReturnDirectInvokeStatement": {
                 return IRReturnDirectInvokeStatement.jsonParse_IRReturnDirectInvokeStatement(value);
+            }
+            case "ReturnDirectInvokeImplicitsStatement": {
+                return IRReturnDirectInvokeImplicitsStatement.jsonParse_IRReturnDirectInvokeImplicitsStatement(value);
             }
             case "ReturnDirectConstructStatement": {
                 return IRReturnDirectConstructStatement.jsonParse_IRReturnDirectConstructStatement(value);
@@ -5022,6 +5029,30 @@ class IRReturnDirectInvokeStatement extends IRReturnSimpleStatement {
     }
 }
 
+class IRReturnDirectInvokeImplicitsStatement extends IRReturnSimpleStatement {
+    readonly retexp: IRInvokeImplicitsExpression;
+
+    constructor(retexp: IRInvokeImplicitsExpression) {
+        super(IRStatementTag.IRReturnDirectInvokeImplicitsStatement);
+        this.retexp = retexp;
+    }
+
+    override isSimpleStatement(): boolean {
+        return false;
+    }
+
+    static jsonEmit_IRReturnDirectInvokeImplicitsStatement(exp: IRReturnDirectInvokeImplicitsStatement): object {
+        return {
+            retexp: IRInvokeImplicitsExpression.jsonEmit_IRInvokeImplicitsExpression(exp.retexp)
+        };
+    }
+
+    static jsonParse_IRReturnDirectInvokeImplicitsStatement(obj: any): IRReturnDirectInvokeImplicitsStatement {
+        const retexp = IRInvokeImplicitsExpression.jsonParse_IRInvokeImplicitsExpression(obj.retexp);
+        return new IRReturnDirectInvokeImplicitsStatement(retexp);
+    }
+}
+
 class IRReturnDirectConstructStatement extends IRReturnSimpleStatement {
     readonly retexp: IRConstructExpression;
 
@@ -6077,7 +6108,7 @@ export {
     
     IRUpdateLocalDirectStatement, IRUpdateParamDirectStatement,
 
-    IRReturnVoidSimpleStatement, IRReturnValueSimpleStatement, IRReturnDirectInvokeStatement, IRReturnDirectConstructStatement, IRReturnDirectConstructWithBoxStatement,
+    IRReturnVoidSimpleStatement, IRReturnValueSimpleStatement, IRReturnDirectInvokeStatement, IRReturnDirectInvokeImplicitsStatement, IRReturnDirectConstructStatement, IRReturnDirectConstructWithBoxStatement,
     
     IRVoidInvokeStatement,
 
