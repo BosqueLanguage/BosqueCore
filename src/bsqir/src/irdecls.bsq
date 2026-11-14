@@ -31,12 +31,12 @@ entity SourceInfo {
 }
 
 entity CodeFileInfo {
-    field srcpath: string;
-    field filename: string;
-    field contents: string;
+    field srcpath: String;
+    field filename: String;
+    field contents: String;
 
-    invariant $srcpath != "";
-    invariant $filename != "";
+    invariant $srcpath !== "";
+    invariant $filename !== "";
     invariant $srcpath.endsWith($filename);
 }
 

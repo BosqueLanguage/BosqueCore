@@ -550,14 +550,16 @@ class IREnumTypeDecl extends IRAbstractEntityTypeDecl {
 
     static jsonEmit_IREnumTypeDecl(tsig: IREnumTypeDecl): object {
         return {
-            ...IRAbstractEntityTypeDecl.jsonEmit_IRAbstractEntityTypeDecl(tsig),
+            ...IRAbstractNominalTypeDecl.jsonEmitMeta_IRAbstractNominalTypeDecl(tsig),
             members: tsig.members
         };
     }
 
     static jsonParse_IREnumTypeDecl(obj: any): IREnumTypeDecl {
-        const base = IRAbstractEntityTypeDecl.jsonParse_IRAbstractEntityTypeDecl(obj);
-        return new IREnumTypeDecl(base.tkey, base.docstr, base.file, base.sinfo, obj.members);
+        const ntdv = IRAbstractNominalTypeDecl.jsonParseMeta_IRAbstractNominalTypeDecl(obj);
+        const members = obj.members;
+
+        return new IREnumTypeDecl(ntdv[0], ntdv[9], ntdv[11], ntdv[12], members);
     }
 }
 
@@ -692,7 +694,7 @@ class IRTypedeclCStringTypeDecl extends IRTypedeclAbstractTypeDecl {
         const ntdv = IRAbstractNominalTypeDecl.jsonEmitMeta_IRAbstractNominalTypeDecl(tsig);
         const stt = IRTypedeclAbstractTypeDecl.jsonEmitMeta_IRTypedeclAbstractTypeDecl(tsig);
         const rngchk = tsig.rngchk === undefined ? null : ["some", IRTypedeclRngCheck.jsonEmit_IRTypedeclRngCheck(tsig.rngchk)];
-        const rechk = tsig.rechk === undefined ? null : IRLiteralCRegexExpression.jsonEmit_IRLiteralCRegexExpression(tsig.rechk);
+        const rechk = tsig.rechk === undefined ? null : ["some", IRLiteralCRegexExpression.jsonEmit_IRLiteralCRegexExpression(tsig.rechk)];
 
         return { ...ntdv, ...stt, rngchk, rechk };
     }
@@ -700,7 +702,7 @@ class IRTypedeclCStringTypeDecl extends IRTypedeclAbstractTypeDecl {
     static jsonParse_IRTypedeclCStringTypeDecl(obj: any): IRTypedeclCStringTypeDecl {
         const ntv = IRAbstractNominalTypeDecl.jsonParseMeta_IRAbstractNominalTypeDecl(obj);
         const rngchk = obj.rngchk === null ? undefined : IRTypedeclRngCheck.jsonParse_IRTypedeclRngCheck(obj.rngchk[1]);
-        const rechk = obj.rechk === null ? undefined : IRLiteralCRegexExpression.jsonParse_IRLiteralCRegexExpression(obj.rechk);
+        const rechk = obj.rechk === null ? undefined : IRLiteralCRegexExpression.jsonParse_IRLiteralCRegexExpression(obj.rechk[1]);
 
         return new IRTypedeclCStringTypeDecl(
             ntv[0], ntv[1], ntv[2], ntv[5], ntv[7], ntv[8], ntv[9], ntv[10], ntv[11], ntv[12], 
@@ -724,7 +726,7 @@ class IRTypedeclStringTypeDecl extends IRTypedeclAbstractTypeDecl {
         const ntdv = IRAbstractNominalTypeDecl.jsonEmitMeta_IRAbstractNominalTypeDecl(tsig);
         const stt = IRTypedeclAbstractTypeDecl.jsonEmitMeta_IRTypedeclAbstractTypeDecl(tsig);
         const rngchk = tsig.rngchk === undefined ? null : ["some", IRTypedeclRngCheck.jsonEmit_IRTypedeclRngCheck(tsig.rngchk)];
-        const rechk = tsig.rechk === undefined ? null : IRLiteralUnicodeRegexExpression.jsonEmit_IRLiteralUnicodeRegexExpression(tsig.rechk);
+        const rechk = tsig.rechk === undefined ? null : ["some", IRLiteralUnicodeRegexExpression.jsonEmit_IRLiteralUnicodeRegexExpression(tsig.rechk)];
 
         return { ...ntdv, ...stt, rngchk, rechk };
     }
@@ -732,7 +734,7 @@ class IRTypedeclStringTypeDecl extends IRTypedeclAbstractTypeDecl {
     static jsonParse_IRTypedeclStringTypeDecl(obj: any): IRTypedeclStringTypeDecl {
         const ntv = IRAbstractNominalTypeDecl.jsonParseMeta_IRAbstractNominalTypeDecl(obj);
         const rngchk = obj.rngchk === null ? undefined : IRTypedeclRngCheck.jsonParse_IRTypedeclRngCheck(obj.rngchk[1]);
-        const rechk = obj.rechk === null ? undefined : IRLiteralUnicodeRegexExpression.jsonParse_IRLiteralUnicodeRegexExpression(obj.rechk);
+        const rechk = obj.rechk === null ? undefined : IRLiteralUnicodeRegexExpression.jsonParse_IRLiteralUnicodeRegexExpression(obj.rechk[1]);
 
         return new IRTypedeclStringTypeDecl(
             ntv[0], ntv[1], ntv[2], ntv[5], ntv[7], ntv[8], ntv[9], ntv[10], ntv[11], ntv[12], 
@@ -1280,7 +1282,7 @@ class IREntityTypeDecl extends IRAbstractEntityTypeDecl {
     }
 
     static jsonEmit_IREntityTypeDecl(tsig: IREntityTypeDecl): any {
-        const ntv = IRAbstractNominalTypeDecl.jsonEmit_IRAbstractNominalTypeDecl(tsig);
+        const ntv = IRAbstractNominalTypeDecl.jsonEmitMeta_IRAbstractNominalTypeDecl(tsig);
         
         return ntv;
     }

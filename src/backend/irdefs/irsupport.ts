@@ -67,11 +67,11 @@ class IRCRegex
     }
 
     jsonEmit(): object {
-        return { regexID: this.regexID, bsqregex: jsonEmitStrAsByteBuffer(this.bsqregex), smtregex: jsonEmitStrAsByteBuffer(this.smtregex), cppregex: jsonEmitStrAsByteBuffer(this.cppregex) };
+        return { regexid: this.regexID, bsqregex: jsonEmitStrAsByteBuffer(this.bsqregex), smtregex: jsonEmitStrAsByteBuffer(this.smtregex), cppregex: jsonEmitStrAsByteBuffer(this.cppregex) };
     }
 
     static jsonParse(obj: any): IRCRegex {
-        return new IRCRegex(obj["regexID"] as number, jsonParseByteBufferAsStr(obj["bsqregex"] as number[]), jsonParseByteBufferAsStr(obj["smtregex"] as number[]), jsonParseByteBufferAsStr(obj["cppregex"] as number[]));
+        return new IRCRegex(obj["regexid"] as number, jsonParseByteBufferAsStr(obj["bsqregex"] as number[]), jsonParseByteBufferAsStr(obj["smtregex"] as number[]), jsonParseByteBufferAsStr(obj["cppregex"] as number[]));
     }
 }
 
