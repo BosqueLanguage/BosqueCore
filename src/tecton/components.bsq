@@ -79,7 +79,7 @@ namespace ComponentGenerator {
                     return generateComponentsForTypeSignature[recursive](tdecl.valuetype.tkeystr, epath, esteps, constraints, assembly);
                 }
                 else {
-                    let cregex = assembly.cregexps.find(pred(cre) => cre.regexID == $rch);
+                    let cregex = assembly.cregexps.find(pred(cre) => cre.regexID == $rch.regexid);
                     let rexp = String::fromByteBuffer(cregex.cppregex).@some;
                 
                     let formatstr = String::concat("'(", rexp, ")'");
@@ -91,7 +91,7 @@ namespace ComponentGenerator {
                     return generateComponentsForTypeSignature[recursive](tdecl.valuetype.tkeystr, epath, esteps, constraints, assembly);
                 }
                 else {
-                    let uregex = assembly.uregexps.find(pred(ure) => ure.regexID == $rch);
+                    let uregex = assembly.uregexps.find(pred(ure) => ure.regexID == $rch.regexid);
                     let rexp = String::fromByteBuffer(uregex.cppregex).@some;
                 
                     let formatstr = String::concat("%;(", rexp, ")%;");

@@ -1,5 +1,5 @@
 
-import { IRAbstractCollectionTypeDecl, IRAbstractConceptTypeDecl, IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAPIDeniedTypeDecl, IRAPIDroppedTypeDecl, IRAPIErrorTypeDecl, IRAPIRejectedTypeDecl, IRAPIResultTypeDecl, IRAPISuccessTypeDecl, IRAssembly, IRConceptTypeDecl, IRDatatypeMemberEntityTypeDecl, IRDatatypeTypeDecl, IREntityTypeDecl, IREnumTypeDecl, IRListTypeDecl, IRMapEntryTypeDecl, IRMapTypeDecl, IROptionTypeDecl, IRPrimitiveEntityTypeDecl, IRQueueTypeDecl, IRSetTypeDecl, IRSomeTypeDecl, IRStackTypeDecl, IRTypedeclCStringDecl, IRTypedeclStringDecl, IRTypedeclTypeDecl } from "../irdefs/irassembly.js";
+import { IRAbstractCollectionTypeDecl, IRAbstractConceptTypeDecl, IRAbstractEntityTypeDecl, IRAbstractNominalTypeDecl, IRAPIDeniedTypeDecl, IRAPIDroppedTypeDecl, IRAPIErrorTypeDecl, IRAPIRejectedTypeDecl, IRAPIResultTypeDecl, IRAPISuccessTypeDecl, IRAssembly, IRConceptTypeDecl, IRDatatypeMemberEntityTypeDecl, IRDatatypeTypeDecl, IREntityTypeDecl, IREnumTypeDecl, IRListTypeDecl, IRMapEntryTypeDecl, IRMapTypeDecl, IROptionTypeDecl, IRPrimitiveEntityTypeDecl, IRQueueTypeDecl, IRSetTypeDecl, IRSomeTypeDecl, IRStackTypeDecl, IRTypedeclBoundedTypeDecl, IRTypedeclCStringTypeDecl, IRTypedeclSimpleTypeDecl, IRTypedeclStringTypeDecl } from "../irdefs/irassembly.js";
 import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatTypeSignature, IRNominalTypeSignature, IRTypeSignature, IRVoidTypeSignature } from "../irdefs/irtype.js";
 import { TransformCPPNameManager } from "./namemgr.js";
 
@@ -346,10 +346,10 @@ class TypeInfoManager {
         if((ddecl instanceof IRPrimitiveEntityTypeDecl)) {
             return true;
         }
-        else if(ddecl instanceof IRTypedeclTypeDecl) {
+        else if((ddecl instanceof IRTypedeclSimpleTypeDecl) || (ddecl instanceof IRTypedeclBoundedTypeDecl)) {
             return true;
         }
-        else if((ddecl instanceof IRTypedeclCStringDecl) || (ddecl instanceof IRTypedeclStringDecl)) {
+        else if((ddecl instanceof IRTypedeclCStringTypeDecl) || (ddecl instanceof IRTypedeclStringTypeDecl)) {
             return true;
         }
         else if(ddecl instanceof IREnumTypeDecl) {
@@ -427,10 +427,13 @@ class TypeInfoManager {
 
             let isqr: boolean;
             if(ddecl instanceof IRAbstractEntityTypeDecl) {
-                if((ddecl instanceof IREnumTypeDecl) || (ddecl instanceof IRTypedeclTypeDecl)) {
+                if((ddecl instanceof IREnumTypeDecl)) {
                     isqr = true;
                 }
-                else if ((ddecl instanceof IRTypedeclCStringDecl) || (ddecl instanceof IRTypedeclStringDecl)) {
+                else if((ddecl instanceof IRTypedeclSimpleTypeDecl) || (ddecl instanceof IRTypedeclBoundedTypeDecl)) {
+                    isqr = true;
+                }
+                else if ((ddecl instanceof IRTypedeclCStringTypeDecl) || (ddecl instanceof IRTypedeclStringTypeDecl)) {
                     isqr = false;
                 }
                 else if((ddecl instanceof IRPrimitiveEntityTypeDecl)) {
@@ -898,8 +901,15 @@ class TypeInfoManager {
             timgr.addLayoutInfo(etdecl.tkey, new LayoutInfo(etkey, new IRNominalTypeSignature(etkey), 8, "0"));
         }
 
-        for(let i = 0; i < irasm.typedecls.length; ++i) {
-            const tdecl = irasm.typedecls[i];
+        for(let i = 0; i < irasm.simpletypedecls.length; ++i) {
+            const tdecl = irasm.simpletypedecls[i];
+            const ttkey = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
+            const utypeinfo = timgr.getLayoutInfo(TransformCPPNameManager.convertTypeKey(tdecl.valuetype.tkeystr));
+            timgr.addLayoutInfo(tdecl.tkey, new LayoutInfo(ttkey, new IRNominalTypeSignature(ttkey), utypeinfo.bytesize, utypeinfo.layoutmask));
+        }
+
+        for(let i = 0; i < irasm.boundedtypedecls.length; ++i) {
+            const tdecl = irasm.boundedtypedecls[i];
             const ttkey = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
             const utypeinfo = timgr.getLayoutInfo(TransformCPPNameManager.convertTypeKey(tdecl.valuetype.tkeystr));
             timgr.addLayoutInfo(tdecl.tkey, new LayoutInfo(ttkey, new IRNominalTypeSignature(ttkey), utypeinfo.bytesize, utypeinfo.layoutmask));
@@ -1010,8 +1020,19 @@ class TypeInfoManager {
             timgr.addTypeInfo(etdecl.tkey, enumtd);
         }
 
-        for(let i = 0; i < irasm.typedecls.length; ++i) {
-            const tdecl = irasm.typedecls[i];
+        for(let i = 0; i < irasm.simpletypedecls.length; ++i) {
+            const tdecl = irasm.simpletypedecls[i];
+            const ttkey = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
+            const ttid = timgr.typeInfoMap.size;
+
+            const utypeinfo = timgr.getTypeInfo(TransformCPPNameManager.convertTypeKey(tdecl.valuetype.tkeystr));
+            const typedtd = new TypeInfo(ttkey, new IRNominalTypeSignature(ttkey), ttid, utypeinfo.bytesize, utypeinfo.tag, utypeinfo.ptrmask, true);
+            
+            timgr.addTypeInfo(tdecl.tkey, typedtd);
+        }
+
+        for(let i = 0; i < irasm.boundedtypedecls.length; ++i) {
+            const tdecl = irasm.boundedtypedecls[i];
             const ttkey = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
             const ttid = timgr.typeInfoMap.size;
 

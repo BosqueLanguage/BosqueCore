@@ -1,6 +1,11 @@
-import assert from "node:assert";
 
-import type { BAPILexer } from "./irlexer.js";
+function jsonEmitStrAsByteBuffer(str: string): number[] {
+    return Array.from(Buffer.from(str, "utf8"));
+}
+
+function jsonParseByteBufferAsStr(str: number[]): string {
+    return Buffer.from(str).toString("utf8");
+}
 
 class IRCodeFileInfo
 {
@@ -13,6 +18,14 @@ class IRCodeFileInfo
         this.srcpath = srcpath;
         this.filename = filename;
         this.contents = contents;
+    }
+
+    jsonEmit(): object {
+        return { srcpath: this.srcpath, filename: this.filename, contents: this.contents };
+    }
+
+    static jsonParse(obj: any): IRCodeFileInfo {
+        return new IRCodeFileInfo(obj["srcpath"] as string, obj["filename"] as string, obj["contents"] as string);
     }
 }
 
@@ -27,20 +40,12 @@ class IRSourceInfo
         this.column = column;
     }
 
-    toBAPI(): string {
-        return `Assembly::SourceInfo{${this.line}n, ${this.column}n}`;
+    jsonEmit(): object {
+        return { line: this.line, column: this.column };
     }
 
-    static parseBAPI(lexer: BAPILexer): IRSourceInfo {
-        lexer.parseTypeIdentifier(); //eat type tag
-        lexer.ensureAndConsumeSymbol('{');
-        
-        const line = lexer.parseNatNumber();
-        lexer.ensureAndConsumeSymbol(',');
-        const column = lexer.parseNatNumber();
-        lexer.ensureAndConsumeSymbol('}');
-        
-        return new IRSourceInfo(line, column);
+    static jsonParse(obj: any): IRSourceInfo {
+        return new IRSourceInfo(obj["line"] as number, obj["column"] as number);
     }
 }
 
@@ -61,27 +66,12 @@ class IRCRegex
         this.cppregex = cppregex;
     }
 
-    emitBAPI(): string {
-        const bsqregexLiteral = emitStringAsByteBufferLiteral(this.bsqregex);
-        const smtregexLiteral = emitStringAsByteBufferLiteral(this.smtregex);
-        const cppregexLiteral = emitStringAsByteBufferLiteral(this.cppregex);
-        return `Assembly::CRegexDecl{${this.regexID}n, ${bsqregexLiteral}, ${smtregexLiteral}, ${cppregexLiteral}}`;
+    jsonEmit(): object {
+        return { regexid: this.regexID, bsqregex: jsonEmitStrAsByteBuffer(this.bsqregex), smtregex: jsonEmitStrAsByteBuffer(this.smtregex), cppregex: jsonEmitStrAsByteBuffer(this.cppregex) };
     }
 
-    static parseBAPI(lexer: BAPILexer): IRCRegex {
-        lexer.parseTypeIdentifier(); //eat type tag
-        lexer.ensureAndConsumeSymbol('{');
-
-        const regexID = lexer.parseNatNumber();
-        lexer.ensureAndConsumeSymbol(',');
-        const bsqregex = parseStringAsByteBufferLiteral(lexer);
-        lexer.ensureAndConsumeSymbol(',');
-        const smtregex = parseStringAsByteBufferLiteral(lexer);
-        lexer.ensureAndConsumeSymbol(',');
-        const cppregex = parseStringAsByteBufferLiteral(lexer);
-        lexer.ensureAndConsumeSymbol('}');
-
-        return new IRCRegex(regexID, bsqregex, smtregex, cppregex);
+    static jsonParse(obj: any): IRCRegex {
+        return new IRCRegex(obj["regexid"] as number, jsonParseByteBufferAsStr(obj["bsqregex"] as number[]), jsonParseByteBufferAsStr(obj["smtregex"] as number[]), jsonParseByteBufferAsStr(obj["cppregex"] as number[]));
     }
 }
 
@@ -102,152 +92,17 @@ class IRURegex
         this.cppregex = cppregex;
     }
 
-    emitBAPI(): string {
-        const bsqregexLiteral = emitStringAsByteBufferLiteral(this.bsqregex);
-        const smtregexLiteral = emitStringAsByteBufferLiteral(this.smtregex);
-        const cppregexLiteral = emitStringAsByteBufferLiteral(this.cppregex);
-        return `Assembly::URegexDecl{${this.regexID}n, ${bsqregexLiteral}, ${smtregexLiteral}, ${cppregexLiteral}}`;
+    jsonEmit(): object {
+        return { regexID: this.regexID, bsqregex: jsonEmitStrAsByteBuffer(this.bsqregex), smtregex: jsonEmitStrAsByteBuffer(this.smtregex), cppregex: jsonEmitStrAsByteBuffer(this.cppregex) };
     }
 
-    static parseBAPI(lexer: BAPILexer): IRURegex {
-        lexer.parseTypeIdentifier(); //eat type tag
-        lexer.ensureAndConsumeSymbol('{');
-
-        const regexID = lexer.parseNatNumber();
-        lexer.ensureAndConsumeSymbol(',');
-        const bsqregex = parseStringAsByteBufferLiteral(lexer);
-        lexer.ensureAndConsumeSymbol(',');
-        const smtregex = parseStringAsByteBufferLiteral(lexer);
-        lexer.ensureAndConsumeSymbol(',');
-        const cppregex = parseStringAsByteBufferLiteral(lexer);
-        lexer.ensureAndConsumeSymbol('}');
-
-        return new IRURegex(regexID, bsqregex, smtregex, cppregex);
+    static jsonParse(obj: any): IRURegex {
+        return new IRURegex(obj["regexID"] as number, jsonParseByteBufferAsStr(obj["bsqregex"] as number[]), jsonParseByteBufferAsStr(obj["smtregex"] as number[]), jsonParseByteBufferAsStr(obj["cppregex"] as number[]));
     }
-}
-
-function emitStringAsByteBufferLiteral(cstr: string): string {
-    const bbytes = Array.from(Buffer.from(cstr, 'utf8')).map(b => b.toString(16));
-    return `0x[${bbytes.join(',')}]`;
-}
-
-function parseStringAsByteBufferLiteral(lexer: BAPILexer): string {
-    assert(false);
-}
-
-function emitUTF8BytesAsByteBufferLiteral(utf8bytes: number[]): string {
-    const bbytes = utf8bytes.map(b => b.toString(16));
-    return `0x[${bbytes.join(',')}]`;
-}
-
-function parseUTF8BytesAsByteBufferLiteral(lexer: BAPILexer): number[] {
-    assert(false);
-}
-
-function emitUTF32BytesAsByteBufferLiteral(utf32bytes: number[]): string {
-    const bbytes = utf32bytes.flatMap(b => Array.from(Buffer.from(String.fromCodePoint(b), 'utf8'))).map(b => b.toString(16));
-    return `0x[${bbytes.join(',')}]`;
-}
-
-function parseUTF32BytesAsByteBufferLiteral(lexer: BAPILexer): number[] {
-    assert(false);
-}
-
-function emitTypeKey(tkeystr: string): string {
-    return `'${tkeystr}'<Assembly::TypeKey>`;
-}
-
-function parseTypeKey(lexer: BAPILexer): string {
-    const sstr = lexer.parseCString();
-    lexer.ensureAndConsumeSymbol('<');
-        
-    const typetag = lexer.parseTypeIdentifier();
-    if(typetag !== "Assembly::TypeKey") {
-        throw new Error(`Expected TypeKey 'Assembly::TypeKey' but got ${typetag}`);
-    }
-        
-    lexer.ensureAndConsumeSymbol('>');
-
-    return sstr;
-}
-
-function emitConstKey(tkeystr: string): string {
-    return `'${tkeystr}'<Assembly::ConstKey>`;
-}
-
-function parseConstKey(lexer: BAPILexer): string {
-    const sstr = lexer.parseCString();
-    lexer.ensureAndConsumeSymbol('<');
-        
-    const typetag = lexer.parseTypeIdentifier();
-    if(typetag !== "Assembly::ConstKey") {
-        throw new Error(`Expected ConstKey 'Assembly::ConstKey' but got ${typetag}`);
-    }
-        
-    lexer.ensureAndConsumeSymbol('>');
-
-    return sstr;
-}
-
-function emitInvokeKey(tkeystr: string): string {
-    return `'${tkeystr}'<Assembly::InvokeKey>`;
-}
-
-function parseInvokeKey(lexer: BAPILexer): string {
-    const sstr = lexer.parseCString();
-    lexer.ensureAndConsumeSymbol('<');
-        
-    const typetag = lexer.parseTypeIdentifier();
-    if(typetag !== "Assembly::InvokeKey") {
-        throw new Error(`Expected InvokeKey 'Assembly::InvokeKey' but got ${typetag}`);
-    }
-        
-    lexer.ensureAndConsumeSymbol('>');
-
-    return sstr;
-}
-
-function emitIdentifier(tkeystr: string): string {
-    return `'${tkeystr}'<Assembly::Identifier>`;
-}
-
-function parseIdentifier(lexer: BAPILexer): string {
-    const sstr = lexer.parseCString();
-    lexer.ensureAndConsumeSymbol('<');
-        
-    const typetag = lexer.parseTypeIdentifier();
-    if(typetag !== "Assembly::Identifier") {
-        throw new Error(`Expected Identifier 'Assembly::Identifier' but got ${typetag}`);
-    }
-        
-    lexer.ensureAndConsumeSymbol('>');
-
-    return sstr;
-}
-
-function emitVarIdentifier(tkeystr: string): string {
-    return `'${tkeystr}'<Assembly::VarIdentifier>`;
-}
-
-function parseVarIdentifier(lexer: BAPILexer): string {
-    const sstr = lexer.parseCString();
-    lexer.ensureAndConsumeSymbol('<');
-        
-    const typetag = lexer.parseTypeIdentifier();
-    if(typetag !== "Assembly::VarIdentifier") {
-        throw new Error(`Expected VarIdentifier 'Assembly::VarIdentifier' but got ${typetag}`);
-    }
-        
-    lexer.ensureAndConsumeSymbol('>');
-
-    return sstr;
 }
 
 export {
-    emitStringAsByteBufferLiteral, emitUTF8BytesAsByteBufferLiteral, emitUTF32BytesAsByteBufferLiteral,
-    emitTypeKey, emitConstKey, emitInvokeKey, emitIdentifier, emitVarIdentifier,
-    parseStringAsByteBufferLiteral, parseUTF8BytesAsByteBufferLiteral, parseUTF32BytesAsByteBufferLiteral,
-    parseTypeKey, parseConstKey, parseInvokeKey, parseIdentifier, parseVarIdentifier,
+    jsonEmitStrAsByteBuffer, jsonParseByteBufferAsStr,
 
     IRCodeFileInfo,
     IRSourceInfo,

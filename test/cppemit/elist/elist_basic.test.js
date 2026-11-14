@@ -11,7 +11,7 @@ describe ("CPPEmit -- elist decl and access", () => {
         checkTestEmitMainFunction('public function main(): Bool { let x = (|2i, true|); return x.1; }', 'Bool Mainᕒmain() { ᐸRuntimeᐳ::EList2<Int, Bool> x = ᐸRuntimeᐳ::EList2<Int, Bool>{2_i, TRUE}; return x.at<1, Bool>(); }'); 
 
         checkTestEmitMainFunction('public function main(): (|Int, Bool|) { return (|2i, true|); }', 'ᐸRuntimeᐳ::EList2<Int, Bool> Mainᕒmain() { return ᐸRuntimeᐳ::EList2<Int, Bool>{2_i, TRUE}; }'); 
-        checkTestEmitMainFunction('public function main(x: (|Int, Bool|)): Int { return 1i + x.0; }', 'Int Mainᕒmain(const ᐸRuntimeᐳ::EList2<Int, Bool>& x) { Int tmp_0 = x.at<0, Int>(); ᐸRuntimeᐳ::XInt::checkOverflowAddition(1_i, tmp_0, "test.bsq", 2); return 1_i + tmp_0; }'); 
+        checkTestEmitMainFunction('public function main(x: (|Int, Bool|)): Int { return 1i + x.0; }', 'Int Mainᕒmain(const ᐸRuntimeᐳ::EList2<Int, Bool>& x) { Int ᐸtmp_0ᐳ = x.at<0, Int>(); ᐸRuntimeᐳ::XInt::checkOverflowAddition(1_i, ᐸtmp_0ᐳ, "test.bsq", 2); return 1_i + ᐸtmp_0ᐳ; }'); 
     });
 
     it("should emit option elist", function () {

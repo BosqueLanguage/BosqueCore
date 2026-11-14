@@ -1,0 +1,22 @@
+namespace Assembly;
+
+entity FormatTypeSignatureTerm {
+    field argname: Identifier;
+    field argtype: TypeSignature;
+}
+
+datatype TypeSignature using {
+    field tkeystr: TypeKey;
+}
+of
+    VoidTypeSignature { }
+    NominalTypeSignature { }
+    EListTypeSignature { field entries: List<TypeSignature>; invariant !$entries.empty(); }
+    DashResultTypeSignature { field entries: List<TypeSignature>; invariant !$entries.empty(); }
+    FormatCStringTypeSignature { field rtype: TypeSignature; field terms: List<FormatTypeSignatureTerm>; }
+    FormatStringTypeSignature { field rtype: TypeSignature; field terms: List<FormatTypeSignatureTerm>; }
+    FormatPathTypeSignature { }
+    FormatPathFragmentTypeSignature { }
+    FormatPathGlobTypeSignature { }
+    LambdaParameterPackTypeSignature { }
+;

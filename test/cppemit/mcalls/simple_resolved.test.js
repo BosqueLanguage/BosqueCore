@@ -5,12 +5,12 @@ import { describe, it } from "node:test";
 
 describe ("CPPEmit -- entity methods", () => {
     it("should emit simple entity methods", function () {
-        checkTestEmitMainFunction('entity Foo { field f: Int; method foo(): Int { return this.f; }} public function main(): Int { return Foo{3i}.foo(); }', "Int Mainᕒmain() { MainᕒFoo tmp_0 = MainᕒFoo{3_i}; return MainᕒFooᑀfoo(tmp_0); }"); 
+        checkTestEmitMainFunction('entity Foo { field f: Int; method foo(): Int { return this.f; }} public function main(): Int { return Foo{3i}.foo(); }', "Int Mainᕒmain() { MainᕒFoo ᐸtmp_0ᐳ = MainᕒFoo{3_i}; return MainᕒFooᑀfoo(ᐸtmp_0ᐳ); }"); 
         checkTestEmitMainFunction('entity Foo { field f: Int; method foo(): Int { return this.f; }} public function main(): Int { let x = Foo{3i}; return x.foo(); }', "Int Mainᕒmain() { MainᕒFoo x = MainᕒFoo{3_i}; return MainᕒFooᑀfoo(x); }"); 
     });
 
     it("should emit simple entity methods with args", function () {
-        checkTestEmitMainFunction('entity Foo { field f: Int; method foo(x: Int): Int { return this.f + x; }} public function main(): Int { return Foo{3i}.foo(1i); }', "Int Mainᕒmain() { MainᕒFoo tmp_0 = MainᕒFoo{3_i}; return MainᕒFooᑀfoo(tmp_0, 1_i); }"); 
+        checkTestEmitMainFunction('entity Foo { field f: Int; method foo(x: Int): Int { return this.f + x; }} public function main(): Int { return Foo{3i}.foo(1i); }', "Int Mainᕒmain() { MainᕒFoo ᐸtmp_0ᐳ = MainᕒFoo{3_i}; return MainᕒFooᑀfoo(ᐸtmp_0ᐳ, 1_i); }"); 
         checkTestEmitMainFunction('entity Foo { field f: Int; method foo(x: Int = 1i): Int { return this.f + x; }} public function main(): Int { let x = Foo{3i}; return x.foo(); }', "Int Mainᕒmain() { MainᕒFoo x = MainᕒFoo{3_i}; return MainᕒFooᑀfoo(x, 1_i); }"); 
     });
 
@@ -34,16 +34,16 @@ describe ("CPPEmit -- entity methods", () => {
     });
 
     it("should emit simple entity methods multiple options", function () {
-        checkTestEmitMainFunction('entity Foo { field f: Int; method foo(): Int { return this.f; } method foo(out x: Int): Int { x = 3i; return x; } } public function main(): Int { return Foo{3i}.foo(); }', "Int Mainᕒmain() { MainᕒFoo tmp_0 = MainᕒFoo{3_i}; return MainᕒFooᑀfoo(tmp_0); }"); 
-        checkTestEmitMainFunction('entity Foo { field f: Int; method foo(): Int { return this.f; } method foo(out x: Int): Int { x = 3i; return x; } } public function main(): Int { let x = Foo{3i}; var y: Int; return x.foo(out y); }', "Int Mainᕒmain() { MainᕒFoo x = MainᕒFoo{3_i}; Int y; Int tmp_0 = MainᕒFooᑀfooᙾout(x, y); return tmp_0; }");
+        checkTestEmitMainFunction('entity Foo { field f: Int; method foo(): Int { return this.f; } method foo(out x: Int): Int { x = 3i; return x; } } public function main(): Int { return Foo{3i}.foo(); }', "Int Mainᕒmain() { MainᕒFoo ᐸtmp_0ᐳ = MainᕒFoo{3_i}; return MainᕒFooᑀfoo(ᐸtmp_0ᐳ); }"); 
+        checkTestEmitMainFunction('entity Foo { field f: Int; method foo(): Int { return this.f; } method foo(out x: Int): Int { x = 3i; return x; } } public function main(): Int { let x = Foo{3i}; var y: Int; return x.foo(out y); }', "Int Mainᕒmain() { MainᕒFoo x = MainᕒFoo{3_i}; Int y; return MainᕒFooᑀfooᙾout(x, y); }");
         checkTestEmitMainFunction('entity Foo { field f: Int; method foo(): Int { return this.f; } method foo(f: fn() -> Int): Int { return f(); } } public function main(): Int { let x = Foo{3i}; return x.foo(fn() => 3i); }', "Int Mainᕒmain() { MainᕒFoo x = MainᕒFoo{3_i}; return MainᕒFooᑀfooᑅfn_0ᑀ(x, fn_0_ldata_{}); }");
     });
 });
 
 describe ("CPPEmit -- eADT methods", () => {
     it("should emit simple eADT methods", function () {
-        checkTestEmitMainFunction('datatype Foo of Foo1 { field f: Int; method foo(): Int { return this.f; }} ; public function main(): Int { return Foo1{3i}.foo(); }', "Int Mainᕒmain() { MainᕒFoo1 tmp_0 = MainᕒFoo1{3_i}; return MainᕒFoo1ᑀfoo(tmp_0); }"); 
-        checkTestEmitMainFunction('datatype Foo of Foo1 { field f: Int; method foo(x: Int): Int { return this.f + x; }} ; public function main(): Int { return Foo1{3i}.foo(1i); }', "Int Mainᕒmain() { MainᕒFoo1 tmp_0 = MainᕒFoo1{3_i}; return MainᕒFoo1ᑀfoo(tmp_0, 1_i); }"); 
+        checkTestEmitMainFunction('datatype Foo of Foo1 { field f: Int; method foo(): Int { return this.f; }} ; public function main(): Int { return Foo1{3i}.foo(); }', "Int Mainᕒmain() { MainᕒFoo1 ᐸtmp_0ᐳ = MainᕒFoo1{3_i}; return MainᕒFoo1ᑀfoo(ᐸtmp_0ᐳ); }"); 
+        checkTestEmitMainFunction('datatype Foo of Foo1 { field f: Int; method foo(x: Int): Int { return this.f + x; }} ; public function main(): Int { return Foo1{3i}.foo(1i); }', "Int Mainᕒmain() { MainᕒFoo1 ᐸtmp_0ᐳ = MainᕒFoo1{3_i}; return MainᕒFoo1ᑀfoo(ᐸtmp_0ᐳ, 1_i); }"); 
     });
 
     it("should emit simple eADT methods with template", function () {
@@ -56,15 +56,15 @@ describe ("CPPEmit -- eADT methods", () => {
     });
 
     it("should emit simple ROOT eADT methods", function () {
-        checkTestEmitMainFunction('datatype Foo of F1 { } F2 { } & { method foo(): Int { if(this)<F1> { return 1i; } else { return 0i; } } } public function main(): Int { return F1{}.foo(); }', "Int Mainᕒmain() { MainᕒF1 tmp_0 = MainᕒF1{}; return MainᕒFooᑀfoo(MainᕒFoo{tmp_0}); }"); 
+        checkTestEmitMainFunction('datatype Foo of F1 { } F2 { } & { method foo(): Int { if(this)<F1> { return 1i; } else { return 0i; } } } public function main(): Int { return F1{}.foo(); }', "Int Mainᕒmain() { MainᕒF1 ᐸtmp_0ᐳ = MainᕒF1{}; return MainᕒFooᑀfoo(MainᕒFoo{ᐸtmp_0ᐳ}); }"); 
 
-        checkTestEmitMainFunction('datatype Foo of F1 { f: Int } F2 { g: Int } & { method foo(): Int { if(this)@<F1> { return $this.f; } else { return $this.g; } } } public function main(): Int { return F1{3i}.foo(); }', "Int Mainᕒmain() { MainᕒF1 tmp_0 = MainᕒF1{3_i}; return MainᕒFooᑀfoo(MainᕒFoo{tmp_0}); }"); 
+        checkTestEmitMainFunction('datatype Foo of F1 { f: Int } F2 { g: Int } & { method foo(): Int { if(this)@<F1> { return $this.f; } else { return $this.g; } } } public function main(): Int { return F1{3i}.foo(); }', "Int Mainᕒmain() { MainᕒF1 ᐸtmp_0ᐳ = MainᕒF1{3_i}; return MainᕒFooᑀfoo(MainᕒFoo{ᐸtmp_0ᐳ}); }"); 
     });
 
     it("should emit template ROOT eADT methods", function () {
-        checkTestEmitMainFunction('datatype Foo<T> of F1 { } F2 { } & { method foo(): Int { if(this)<F1<T>> { return  1i; } return 0i; } } public function main(): Int { return F1<Bool>{}.foo(); }', "Int Mainᕒmain() { MainᕒF1ᐸBoolᐳ tmp_0 = MainᕒF1ᐸBoolᐳ{}; return MainᕒFooᐸBoolᐳᑀfoo(MainᕒFooᐸBoolᐳ{tmp_0}); }"); 
+        checkTestEmitMainFunction('datatype Foo<T> of F1 { } F2 { } & { method foo(): Int { if(this)<F1<T>> { return  1i; } return 0i; } } public function main(): Int { return F1<Bool>{}.foo(); }', "Int Mainᕒmain() { MainᕒF1ᐸBoolᐳ ᐸtmp_0ᐳ = MainᕒF1ᐸBoolᐳ{}; return MainᕒFooᐸBoolᐳᑀfoo(MainᕒFooᐸBoolᐳ{ᐸtmp_0ᐳ}); }"); 
 
-        checkTestEmitMainFunction('datatype Foo<T> of F1 { f: T } F2 { g: T } & { method foo(): T { if(this)@<F1<T>> { return $this.f; } else { return $this.g; } } } public function main(): Int { return F1<Int>{3i}.foo(); }', "Int Mainᕒmain() { MainᕒF1ᐸIntᐳ tmp_0 = MainᕒF1ᐸIntᐳ{3_i}; return MainᕒFooᐸIntᐳᑀfoo(MainᕒFooᐸIntᐳ{tmp_0}); }"); 
+        checkTestEmitMainFunction('datatype Foo<T> of F1 { f: T } F2 { g: T } & { method foo(): T { if(this)@<F1<T>> { return $this.f; } else { return $this.g; } } } public function main(): Int { return F1<Int>{3i}.foo(); }', "Int Mainᕒmain() { MainᕒF1ᐸIntᐳ ᐸtmp_0ᐳ = MainᕒF1ᐸIntᐳ{3_i}; return MainᕒFooᐸIntᐳᑀfoo(MainᕒFooᐸIntᐳ{ᐸtmp_0ᐳ}); }"); 
     });
 });
 

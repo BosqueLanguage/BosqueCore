@@ -28,7 +28,8 @@
         "test-cppemit": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/cppemit/*/*.test.js",
         "test-cpprun": "node ./build/build_all.js && make -f ./build/Makefile && node --test-concurrency=16 --test ./test/cpprun/*/*.test.js",
         "test-docs": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/documentation/*/*.test.js",
-        "test-stdlib": "node ./build/build_all.js && make -f ./build/Makefile && node --test-concurrency=8 --test ./test/stdlib/*/*.test.js"
+        "test-stdlib": "node ./build/build_all.js && make -f ./build/Makefile && node --test-concurrency=8 --test ./test/stdlib/*/*.test.js",
+        "test-coverage": "node ./build/build_all.js && make -f ./build/Makefile && node --test-concurrency=8 --experimental-test-coverage --test-coverage-exclude=test/** --test-coverage-exclude=bin/test/*/*_nf.js --test test/*/*/*.test.js"
     },
     "files": [
         "bin/*"

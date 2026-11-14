@@ -2288,7 +2288,6 @@ enum StatementTag {
 
     AbortStatement = "AbortStatement",
     AssertStatement = "AssertStatement", //assert(x > 0)
-    ValidateStatement = "ValidateStatement", //assert(x > 0)
 
     DebugStatement = "DebugStatement", //print an arg or if empty attach debugger
 
@@ -2671,22 +2670,6 @@ class AssertStatement extends Statement {
     }
 }
 
-class ValidateStatement extends Statement {
-    readonly cond: ChkLogicExpression;
-    readonly diagnosticTag: string | undefined
-
-    constructor(sinfo: SourceInfo, cond: ChkLogicExpression, diagnosticTag: string | undefined) {
-        super(StatementTag.ValidateStatement, sinfo);
-        this.cond = cond;
-        this.diagnosticTag = diagnosticTag;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        const ttg = (this.diagnosticTag !== undefined) ? `[${this.diagnosticTag}]` : "";
-        return `validate${ttg} ${this.cond.emit(fmt)};`;
-    }
-}
-
 class DebugStatement extends Statement {
     readonly value: Expression;
 
@@ -2731,7 +2714,6 @@ abstract class UpdateStatement extends Statement {
 
     updatetype: TypeSignature | undefined = undefined;
     updateinfo: {fieldname: string, declin: TypeSignature, fieldtype: TypeSignature, etype: TypeSignature}[] = [];
-    isdirect: boolean = false;
 }
 
 class VarUpdateStatement extends UpdateStatement {
@@ -3035,7 +3017,7 @@ export {
     ReturnVoidStatement, ReturnSingleStatement, ReturnMultiStatement,
     IfStatement, IfElseStatement, IfElifElseStatement, 
     SwitchStatement, MatchStatement, DispatchPatternStatement, DispatchTaskStatement,
-    AbortStatement, AssertStatement, ValidateStatement, DebugStatement,
+    AbortStatement, AssertStatement, DebugStatement,
     VoidRefCallStatement, UpdateStatement, VarUpdateStatement, ThisUpdateStatement, SelfUpdateStatement,
     HoleStatement,
     TaskStatusStatement, TaskCheckAndHandleTerminationStatement,

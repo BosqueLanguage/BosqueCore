@@ -1,7 +1,5 @@
-import { emitConstKey, emitUTF8BytesAsByteBufferLiteral, emitUTF32BytesAsByteBufferLiteral, IRSourceInfo, parseConstKey, parseUTF8BytesAsByteBufferLiteral, parseUTF32BytesAsByteBufferLiteral } from "./irsupport.js";
+import { IRSourceInfo } from "./irsupport.js";
 import { IREListTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature } from "./irtype.js";
-
-import { BAPILexer, BAPITokenKind } from "./irlexer.js";
 
 import assert from "node:assert";
 
@@ -177,79 +175,732 @@ abstract class IRExpression {
 
     abstract isSimpleExpression(): boolean;
 
-    abstract toBAPI(): string;
+    static jsonEmit_IRExpression(expr: IRExpression): [string, object] {
+        if(expr instanceof IRLiteralNoneExpression) {
+            return ["LiteralNoneExpression", IRLiteralNoneExpression.jsonEmit_IRLiteralNoneExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralBoolExpression) {
+            return ["LiteralBoolExpression", IRLiteralBoolExpression.jsonEmit_IRLiteralBoolExpression(expr)];
+        }
+        
+        else if(expr instanceof IRLiteralNatExpression) {
+            return ["LiteralNatExpression", IRLiteralNatExpression.jsonEmit_IRLiteralNatExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralIntExpression) {
+            return ["LiteralIntExpression", IRLiteralIntExpression.jsonEmit_IRLiteralIntExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralChkNatExpression) {
+            return ["LiteralChkNatExpression", IRLiteralChkNatExpression.jsonEmit_IRLiteralChkNatExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralChkIntExpression) {
+            return ["LiteralChkIntExpression", IRLiteralChkIntExpression.jsonEmit_IRLiteralChkIntExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralRationalExpression) {
+            return ["LiteralRationalExpression", IRLiteralRationalExpression.jsonEmit_IRLiteralRationalExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralFloatExpression) {
+            return ["LiteralFloatExpression", IRLiteralFloatExpression.jsonEmit_IRLiteralFloatExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralDecimalExpression) {
+            return ["LiteralDecimalExpression", IRLiteralDecimalExpression.jsonEmit_IRLiteralDecimalExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralDecimalDegreeExpression) {
+            return ["LiteralDecimalDegreeExpression", IRLiteralDecimalDegreeExpression.jsonEmit_IRLiteralDecimalDegreeExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralLatLongCoordinateExpression) {
+            return ["LiteralLatLongCoordinateExpression", IRLiteralLatLongCoordinateExpression.jsonEmit_IRLiteralLatLongCoordinateExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralComplexExpression) {
+            return ["LiteralComplexExpression", IRLiteralComplexExpression.jsonEmit_IRLiteralComplexExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralByteBufferExpression) {
+            return ["LiteralByteBufferExpression", IRLiteralByteBufferExpression.jsonEmit_IRLiteralByteBufferExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralUUIDv4Expression) {
+            return ["LiteralUUIDv4Expression", IRLiteralUUIDv4Expression.jsonEmit_IRLiteralUUIDv4Expression(expr)];
+        }
+        else if(expr instanceof IRLiteralUUIDv7Expression) {
+            return ["LiteralUUIDv7Expression", IRLiteralUUIDv7Expression.jsonEmit_IRLiteralUUIDv7Expression(expr)];
+        }
+        else if(expr instanceof IRLiteralSHAContentHashExpression) {
+            return ["LiteralSHAContentHashExpression", IRLiteralSHAContentHashExpression.jsonEmit_IRLiteralSHAContentHashExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralTZDateTimeExpression) {
+            return ["LiteralTZDateTimeExpression", IRLiteralTZDateTimeExpression.jsonEmit_IRLiteralTZDateTimeExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralTAITimeExpression) {
+            return ["LiteralTAITimeExpression", IRLiteralTAITimeExpression.jsonEmit_IRLiteralTAITimeExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralPlainDateExpression) {
+            return ["LiteralPlainDateExpression", IRLiteralPlainDateExpression.jsonEmit_IRLiteralPlainDateExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralPlainTimeExpression) {
+            return ["LiteralPlainTimeExpression", IRLiteralPlainTimeExpression.jsonEmit_IRLiteralPlainTimeExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralLogicalTimeExpression) {
+            return ["LiteralLogicalTimeExpression", IRLiteralLogicalTimeExpression.jsonEmit_IRLiteralLogicalTimeExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralISOTimeStampExpression) {
+            return ["LiteralISOTimeStampExpression", IRLiteralISOTimeStampExpression.jsonEmit_IRLiteralISOTimeStampExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralDeltaDateTimeExpression) {
+            return ["LiteralDeltaDateTimeExpression", IRLiteralDeltaDateTimeExpression.jsonEmit_IRLiteralDeltaDateTimeExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralDeltaISOTimeStampExpression) {
+            return ["LiteralDeltaISOTimeStampExpression", IRLiteralDeltaISOTimeStampExpression.jsonEmit_IRLiteralDeltaISOTimeStampExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralDeltaSecondsExpression) {
+            return ["LiteralDeltaSecondsExpression", IRLiteralDeltaSecondsExpression.jsonEmit_IRLiteralDeltaSecondsExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralDeltaLogicalTimeExpression) {
+            return ["LiteralDeltaLogicalTimeExpression", IRLiteralDeltaLogicalTimeExpression.jsonEmit_IRLiteralDeltaLogicalTimeExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralUnicodeRegexExpression) {
+            return ["LiteralUnicodeRegexExpression", IRLiteralUnicodeRegexExpression.jsonEmit_IRLiteralUnicodeRegexExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralCRegexExpression) {
+            return ["LiteralCRegexExpression", IRLiteralCRegexExpression.jsonEmit_IRLiteralCRegexExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralByteExpression) {
+            return ["LiteralByteExpression", IRLiteralByteExpression.jsonEmit_IRLiteralByteExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralCCharExpression) {
+            return ["LiteralCCharExpression", IRLiteralCCharExpression.jsonEmit_IRLiteralCCharExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralUnicodeCharExpression) {
+            return ["LiteralUnicodeCharExpression", IRLiteralUnicodeCharExpression.jsonEmit_IRLiteralUnicodeCharExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralCStringExpression) {
+            return ["LiteralCStringExpression", IRLiteralCStringExpression.jsonEmit_IRLiteralCStringExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralStringExpression) {
+            return ["LiteralStringExpression", IRLiteralStringExpression.jsonEmit_IRLiteralStringExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralFormatStringExpression) {
+            return ["LiteralFormatStringExpression", IRLiteralFormatStringExpression.jsonEmit_IRLiteralFormatStringExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralFormatCStringExpression) {
+            return ["LiteralFormatCStringExpression", IRLiteralFormatCStringExpression.jsonEmit_IRLiteralFormatCStringExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralTypedExpression) {
+            return ["LiteralTypedExpression", IRLiteralTypedExpression.jsonEmit_IRLiteralTypedExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralTypedStringExpression) {
+            return ["LiteralTypedStringExpression", IRLiteralTypedStringExpression.jsonEmit_IRLiteralTypedStringExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralTypedCStringExpression) {
+            return ["LiteralTypedCStringExpression", IRLiteralTypedCStringExpression.jsonEmit_IRLiteralTypedCStringExpression(expr)];
+        }
+        else if(expr instanceof IRAccessEnvHasExpression) {
+            return ["AccessEnvHasExpression", IRAccessEnvHasExpression.jsonEmit_IRAccessEnvHasExpression(expr)];
+        }
+        else if(expr instanceof IRAccessEnvGetExpression) {
+            return ["AccessEnvGetExpression", IRAccessEnvGetExpression.jsonEmit_IRAccessEnvGetExpression(expr)];
+        }
+        else if(expr instanceof IRAccessEnvTryGetExpression) {
+            return ["AccessEnvTryGetExpression", IRAccessEnvTryGetExpression.jsonEmit_IRAccessEnvTryGetExpression(expr)];
+        }
+        else if(expr instanceof IRTaskAccessIDExpression) {
+            return ["TaskAccessIDExpression", IRTaskAccessIDExpression.jsonEmit_IRTaskAccessIDExpression(expr)];
+        }
+        else if(expr instanceof IRTaskAccessParentIDExpression) {
+            return ["TaskAccessParentIDExpression", IRTaskAccessParentIDExpression.jsonEmit_IRTaskAccessParentIDExpression(expr)];
+        }
+        else if(expr instanceof IRAccessConstantExpression) {
+            return ["AccessConstantExpression", IRAccessConstantExpression.jsonEmit_IRAccessConstantExpression(expr)];
+        }
+        else if(expr instanceof IRAccessEnumExpression) {
+            return ["AccessEnumExpression", IRAccessEnumExpression.jsonEmit_IRAccessEnumExpression(expr)];
+        }
+        else if(expr instanceof IRAccessParameterVariableExpression) {
+            return ["AccessParameterVariableExpression", IRAccessParameterVariableExpression.jsonEmit_IRAccessParameterVariableExpression(expr)];
+        }
+        else if(expr instanceof IRAccessLocalVariableExpression) {
+            return ["AccessLocalVariableExpression", IRAccessLocalVariableExpression.jsonEmit_IRAccessLocalVariableExpression(expr)];
+        }
+        else if(expr instanceof IRAccessCapturedVariableExpression) {
+            return ["AccessCapturedVariableExpression", IRAccessCapturedVariableExpression.jsonEmit_IRAccessCapturedVariableExpression(expr)];
+        }
+        else if(expr instanceof IRAccessTempVariableExpression) {
+            return ["AccessTempVariableExpression", IRAccessTempVariableExpression.jsonEmit_IRAccessTempVariableExpression(expr)];
+        }
+        else if(expr instanceof IRAccessTypeDeclValueExpression) {
+            return ["AccessTypeDeclValueExpression", IRAccessTypeDeclValueExpression.jsonEmit_IRAccessTypeDeclValueExpression(expr)];
+        }
+        else if(expr instanceof IRConstructSafeTypeDeclExpression) {
+            return ["ConstructSafeTypeDeclExpression", IRConstructSafeTypeDeclExpression.jsonEmit_IRConstructSafeTypeDeclExpression(expr)];
+        }
+        else if(expr instanceof IRConstructorSomeTypeExpression) {
+            return ["ConstructorSomeTypeExpression", IRConstructorSomeTypeExpression.jsonEmit_IRConstructorSomeTypeExpression(expr)];
+        }
+        else if(expr instanceof IRConstructorOkTypeExpression) {
+            return ["ConstructorOkTypeExpression", IRConstructorOkTypeExpression.jsonEmit_IRConstructorOkTypeExpression(expr)];
+        }
+        else if(expr instanceof IRConstructorFailTypeExpression) {
+            return ["ConstructorFailTypeExpression", IRConstructorFailTypeExpression.jsonEmit_IRConstructorFailTypeExpression(expr)];
+        }
+        else if(expr instanceof IRConstructorAPISuccessTypeExpression) {
+            return ["ConstructorAPISuccessTypeExpression", IRConstructorAPISuccessTypeExpression.jsonEmit_IRConstructorAPISuccessTypeExpression(expr)];
+        }
+        else if(expr instanceof IRConstructorMapEntryTypeExpression) {
+            return ["ConstructorMapEntryTypeExpression", IRConstructorMapEntryTypeExpression.jsonEmit_IRConstructorMapEntryTypeExpression(expr)];
+        }
+        else if(expr instanceof IRConstructorStandardEntityExpression) {
+            return ["ConstructorStandardEntityExpression", IRConstructorStandardEntityExpression.jsonEmit_IRConstructorStandardEntityExpression(expr)];
+        }
+        else if(expr instanceof IRConstructorLambdaExpression) {
+            return ["ConstructorLambdaExpression", IRConstructorLambdaExpression.jsonEmit_IRConstructorLambdaExpression(expr)];
+        }
+        else if(expr instanceof IRConstructorEListExpression) {
+            return ["ConstructorEListExpression", IRConstructorEListExpression.jsonEmit_IRConstructorEListExpression(expr)];
+        }
+        else if(expr instanceof IRConstructorListEmptyExpression) {
+            return ["ConstructorListEmptyExpression", IRConstructorListEmptyExpression.jsonEmit_IRConstructorListEmptyExpression(expr)];
+        }
+        else if(expr instanceof IRConstructorListPassthroughExpression) {
+            return ["ConstructorListPassthroughExpression", IRConstructorListPassthroughExpression.jsonEmit_IRConstructorListPassthroughExpression(expr)];
+        }
+        else if(expr instanceof IRConstructorListSingletonsExpression) {
+            return ["ConstructorListSingletonsExpression", IRConstructorListSingletonsExpression.jsonEmit_IRConstructorListSingletonsExpression(expr)];
+        }
+        else if(expr instanceof IRConstructorListMixedExpression) {
+            return ["ConstructorListMixedExpression", IRConstructorListMixedExpression.jsonEmit_IRConstructorListMixedExpression(expr)];
+        }
+        else if(expr instanceof IRConstructorMapEmptyExpression) {
+            return ["ConstructorMapEmptyExpression", IRConstructorMapEmptyExpression.jsonEmit_IRConstructorMapEmptyExpression(expr)];
+        }
+        else if(expr instanceof IRConstructorMapSingletonsExpression) {
+            return ["ConstructorMapSingletonsExpression", IRConstructorMapSingletonsExpression.jsonEmit_IRConstructorMapSingletonsExpression(expr)];
+        }
+        else if(expr instanceof IRAccessFieldSpecialExpression) {
+            return ["AccessFieldSpecialExpression", IRAccessFieldSpecialExpression.jsonEmit_IRAccessFieldSpecialExpression(expr)];
+        }
+        else if(expr instanceof IRAccessFieldDirectExpression) {
+            return ["AccessFieldDirectExpression", IRAccessFieldDirectExpression.jsonEmit_IRAccessFieldDirectExpression(expr)];
+        }
+        else if(expr instanceof IRAccessFieldVirtualExpression) {
+            return ["AccessFieldVirtualExpression", IRAccessFieldVirtualExpression.jsonEmit_IRAccessFieldVirtualExpression(expr)];
+        }
+        else if(expr instanceof IRAccessEListIndexExpression) {
+            return ["AccessEListIndexExpression", IRAccessEListIndexExpression.jsonEmit_IRAccessEListIndexExpression(expr)];
+        }
+        else if(expr instanceof IRInvokeSimpleExpression) {
+            return ["InvokeSimpleExpression", IRInvokeSimpleExpression.jsonEmit_IRInvokeSimpleExpression(expr)];
+        }
+        else if(expr instanceof IRInvokeSimpleWithImplicitsExpression) {
+            return ["InvokeSimpleWithImplicitsExpression", IRInvokeSimpleWithImplicitsExpression.jsonEmit_IRInvokeSimpleWithImplicitsExpression(expr)];
+        }
+        else if(expr instanceof IRInvokeVirtualSimpleExpression) {
+            return ["InvokeVirtualSimpleExpression", IRInvokeVirtualSimpleExpression.jsonEmit_IRInvokeVirtualSimpleExpression(expr)];
+        }
+        else if(expr instanceof IRInvokeVirtualWithImplicitsExpression) {
+            return ["InvokeVirtualWithImplicitsExpression", IRInvokeVirtualWithImplicitsExpression.jsonEmit_IRInvokeVirtualWithImplicitsExpression(expr)];
+        }
+        else if(expr instanceof IRInvokeCallAgentOrAPIExpression) {
+            return ["InvokeCallAgentOrAPIExpression", IRInvokeCallAgentOrAPIExpression.jsonEmit_IRInvokeCallAgentOrAPIExpression(expr)];
+        }
+        else if(expr instanceof IRInvokeTaskActionExpression) {
+            return ["InvokeTaskActionExpression", IRInvokeTaskActionExpression.jsonEmit_IRInvokeTaskActionExpression(expr)];
+        }
+        else if(expr instanceof IRInterpolateFormatCStringExpression) {
+            return ["InterpolateFormatCStringExpression", IRInterpolateFormatCStringExpression.jsonEmit_IRInterpolateFormatCStringExpression(expr)];
+        }
+        else if(expr instanceof IRInterpolateFormatStringExpression) {
+            return ["InterpolateFormatStringExpression", IRInterpolateFormatStringExpression.jsonEmit_IRInterpolateFormatStringExpression(expr)];
+        }
+        else if(expr instanceof IRPrefixNotOpExpression) {
+            return ["PrefixNotOpExpression", IRPrefixNotOpExpression.jsonEmit_IRPrefixNotOpExpression(expr)];
+        }
+        else if(expr instanceof IRPrefixNegateOpExpression) {
+            return ["PrefixNegateOpExpression", IRPrefixNegateOpExpression.jsonEmit_IRPrefixNegateOpExpression(expr)];
+        }
+        else if(expr instanceof IRPrefixPlusOpExpression) {
+            return ["PrefixPlusOpExpression", IRPrefixPlusOpExpression.jsonEmit_IRPrefixPlusOpExpression(expr)];
+        }
+        else if(expr instanceof IRBinAddExpression) {
+            return ["BinAddExpression", IRBinAddExpression.jsonEmit_IRBinAddExpression(expr)];
+        }
+        else if(expr instanceof IRBinSubExpression) {
+            return ["BinSubExpression", IRBinSubExpression.jsonEmit_IRBinSubExpression(expr)];
+        }
+        else if(expr instanceof IRBinMultExpression) {
+            return ["BinMultExpression", IRBinMultExpression.jsonEmit_IRBinMultExpression(expr)];
+        }
+        else if(expr instanceof IRBinDivExpression) {
+            return ["BinDivExpression", IRBinDivExpression.jsonEmit_IRBinDivExpression(expr)];
+        }
+        else if(expr instanceof IRNumericEqExpression) {
+            return ["NumericEqExpression", IRNumericEqExpression.jsonEmit_IRNumericEqExpression(expr)];
+        }
+        else if(expr instanceof IRNumericNeqExpression) {
+            return ["NumericNeqExpression", IRNumericNeqExpression.jsonEmit_IRNumericNeqExpression(expr)];
+        }
+        else if(expr instanceof IRNumericLessExpression) {
+            return ["NumericLessExpression", IRNumericLessExpression.jsonEmit_IRNumericLessExpression(expr)];
+        }
+        else if(expr instanceof IRNumericLessEqExpression) {
+            return ["NumericLessEqExpression", IRNumericLessEqExpression.jsonEmit_IRNumericLessEqExpression(expr)];
+        }
+        else if(expr instanceof IRNumericGreaterExpression) {
+            return ["NumericGreaterExpression", IRNumericGreaterExpression.jsonEmit_IRNumericGreaterExpression(expr)];
+        }
+        else if(expr instanceof IRNumericGreaterEqExpression) {
+            return ["NumericGreaterEqExpression", IRNumericGreaterEqExpression.jsonEmit_IRNumericGreaterEqExpression(expr)];
+        }
+        else if(expr instanceof IRIsNoneOptionExpression) {
+            return ["IsNoneOptionExpression", IRIsNoneOptionExpression.jsonEmit_IRIsNoneOptionExpression(expr)];
+        }
+        else if(expr instanceof IRIsNotNoneOptionExpression) {
+            return ["IsNotNoneOptionExpression", IRIsNotNoneOptionExpression.jsonEmit_IRIsNotNoneOptionExpression(expr)];
+        }
+        else if(expr instanceof IRIsOptionEqValueExpression) {
+            return ["IsOptionEqValueExpression", IRIsOptionEqValueExpression.jsonEmit_IRIsOptionEqValueExpression(expr)];
+        }
+        else if(expr instanceof IRIsOptionNeqValueExpression) {
+            return ["IsOptionNeqValueExpression", IRIsOptionNeqValueExpression.jsonEmit_IRIsOptionNeqValueExpression(expr)];
+        }
+        else if(expr instanceof IRIsSomeEqValueExpression) {
+            return ["IsSomeEqValueExpression", IRIsSomeEqValueExpression.jsonEmit_IRIsSomeEqValueExpression(expr)];
+        }
+        else if(expr instanceof IRIsSomeNeqValueExpression) {
+            return ["IsSomeNeqValueExpression", IRIsSomeNeqValueExpression.jsonEmit_IRIsSomeNeqValueExpression(expr)];
+        }
+        else if(expr instanceof IRBinKeyEqDirectExpression) {
+            return ["BinKeyEqDirectExpression", IRBinKeyEqDirectExpression.jsonEmit_IRBinKeyEqDirectExpression(expr)];
+        }
+        else if(expr instanceof IRBinKeyNeqDirectExpression) {
+            return ["BinKeyNeqDirectExpression", IRBinKeyNeqDirectExpression.jsonEmit_IRBinKeyNeqDirectExpression(expr)];
+        }
+        else if(expr instanceof IRBinKeyLessDirectExpression) {
+            return ["BinKeyLessDirectExpression", IRBinKeyLessDirectExpression.jsonEmit_IRBinKeyLessDirectExpression(expr)];
+        }
+        else if(expr instanceof IRLogicAndExpression) {
+            return ["LogicAndExpression", IRLogicAndExpression.jsonEmit_IRLogicAndExpression(expr)];
+        }
+        else if(expr instanceof IRLogicOrExpression) {
+            return ["LogicOrExpression", IRLogicOrExpression.jsonEmit_IRLogicOrExpression(expr)];
+        }
+        else if(expr instanceof IRLogicSimpleConditionalExpression) {
+            return ["LogicSimpleConditionalExpression", IRLogicSimpleConditionalExpression.jsonEmit_IRLogicSimpleConditionalExpression(expr)];
+        }
+        else if(expr instanceof IRLiteralOptionOfNoneExpression) {
+            return ["LiteralOptionOfNoneExpression", IRLiteralOptionOfNoneExpression.jsonEmit_IRLiteralOptionOfNoneExpression(expr)];
+        }
+        else if(expr instanceof IRConstructOptionFromSomeExpression) {
+            return ["ConstructOptionFromSomeExpression", IRConstructOptionFromSomeExpression.jsonEmit_IRConstructOptionFromSomeExpression(expr)];
+        }
+        else if(expr instanceof IRExtractSomeFromOptionExpression) {
+            return ["ExtractSomeFromOptionExpression", IRExtractSomeFromOptionExpression.jsonEmit_IRExtractSomeFromOptionExpression(expr)];
+        }
+        else if(expr instanceof IRExtractSomeValueFromOptionExpression) {
+            return ["ExtractSomeValueFromOptionExpression", IRExtractSomeValueFromOptionExpression.jsonEmit_IRExtractSomeValueFromOptionExpression(expr)];
+        }
+        else if(expr instanceof IRConstructResultFromOkExpression) {
+            return ["ConstructResultFromOkExpression", IRConstructResultFromOkExpression.jsonEmit_IRConstructResultFromOkExpression(expr)];
+        }
+        else if(expr instanceof IRConstructResultFromFailExpression) {
+            return ["ConstructResultFromFailExpression", IRConstructResultFromFailExpression.jsonEmit_IRConstructResultFromFailExpression(expr)];
+        }
+        else if(expr instanceof IRExtractOkFromResultExpression) {
+            return ["ExtractOkFromResultExpression", IRExtractOkFromResultExpression.jsonEmit_IRExtractOkFromResultExpression(expr)];
+        }
+        else if(expr instanceof IRExtractOkValueFromResultExpression) {
+            return ["ExtractOkValueFromResultExpression", IRExtractOkValueFromResultExpression.jsonEmit_IRExtractOkValueFromResultExpression(expr)];
+        }
+        else if(expr instanceof IRExtractFailFromResultExpression) {
+            return ["ExtractFailFromResultExpression", IRExtractFailFromResultExpression.jsonEmit_IRExtractFailFromResultExpression(expr)];
+        }
+        else if(expr instanceof IRExtractFailValueFromResultExpression) {
+            return ["ExtractFailValueFromResultExpression", IRExtractFailValueFromResultExpression.jsonEmit_IRExtractFailValueFromResultExpression(expr)];
+        }
+        else if(expr instanceof IRIsConceptRepresentationOfTypeExpression) {
+            return ["IsConceptRepresentationOfTypeExpression", IRIsConceptRepresentationOfTypeExpression.jsonEmit_IRIsConceptRepresentationOfTypeExpression(expr)];
+        }
+        else if(expr instanceof IRIsNotConceptRepresentationOfTypeExpression) {
+            return ["IsNotConceptRepresentationOfTypeExpression", IRIsNotConceptRepresentationOfTypeExpression.jsonEmit_IRIsNotConceptRepresentationOfTypeExpression(expr)];
+        }
+        else if(expr instanceof IRIsConceptRepresentationSubtypeOfTypeExpression) {
+            return ["IsConceptRepresentationSubtypeOfTypeExpression", IRIsConceptRepresentationSubtypeOfTypeExpression.jsonEmit_IRIsConceptRepresentationSubtypeOfTypeExpression(expr)];
+        }
+        else if(expr instanceof IRIsNotConceptRepresentationSubtypeOfTypeExpression) {
+            return ["IsNotConceptRepresentationSubtypeOfTypeExpression", IRIsNotConceptRepresentationSubtypeOfTypeExpression.jsonEmit_IRIsNotConceptRepresentationSubtypeOfTypeExpression(expr)];
+        }
+        else if(expr instanceof IRStaticIsTypeSubtypeOfExpression) {
+            return ["StaticIsTypeSubtypeOfExpression", IRStaticIsTypeSubtypeOfExpression.jsonEmit_IRStaticIsTypeSubtypeOfExpression(expr)];
+        }
+        else if(expr instanceof IRBoxEntityToConceptRepresentationExpression) {
+            return ["BoxEntityToConceptRepresentationExpression", IRBoxEntityToConceptRepresentationExpression.jsonEmit_IRBoxEntityToConceptRepresentationExpression(expr)];
+        }
+        else if(expr instanceof IRUnboxEntityFromConceptRepresentationExpression) {
+            return ["UnboxEntityFromConceptRepresentationExpression", IRUnboxEntityFromConceptRepresentationExpression.jsonEmit_IRUnboxEntityFromConceptRepresentationExpression(expr)];
+        }
+        else if(expr instanceof IRConvertConceptRepresentationExpression) {
+            return ["ConvertConceptRepresentationExpression", IRConvertConceptRepresentationExpression.jsonEmit_IRConvertConceptRepresentationExpression(expr)];
+        }
+        else {
+            assert(false, `Unknown IRExpression kind: ${expr.tag}`);
+        }
+    }
 
-    static parseBAPI(lexer: BAPILexer): IRExpression {
-        const tok = lexer.peekToken();
-        if(tok.kind !== BAPITokenKind.TypeIdentifier) {
-            throw new Error(`Expected type identifier token but got ${tok.kind}`);
-        }
+    static jsonParse_IRExpression(obj: any): IRExpression {
+        const kind = obj[0];
+        const value = obj[1];
 
-        if(tok.value === "Assembly::LiteralNoneExpression") {
-            return IRLiteralNoneExpression.parseBAPIAsIRLiteralNoneExpression(lexer);
-        }
-        else if(tok.value === "Assembly::LiteralBoolExpression") {
-            return IRLiteralBoolExpression.parseBAPIAsIRLiteralBoolExpression(lexer);
-        }
-        else if(tok.value === "Assembly::LiteralNatExpression") {
-            return IRLiteralNatExpression.parseBAPIAsIRLiteralNatExpression(lexer);
-        }
-        else if(tok.value === "Assembly::LiteralIntExpression") {
-            return IRLiteralIntExpression.parseBAPIAsIRLiteralIntExpression(lexer);
-        }
-        else if(tok.value === "Assembly::LiteralChkNatExpression") {
-            return IRLiteralChkNatExpression.parseBAPIAsIRLiteralChkNatExpression(lexer);
-        }
-        else if(tok.value === "Assembly::LiteralChkIntExpression") {
-            return IRLiteralChkIntExpression.parseBAPIAsIRLiteralChkIntExpression(lexer);
-        }
-        else if(tok.value === "Assembly::LiteralRationalExpression") {
-            return IRLiteralRationalExpression.parseBAPIAsIRLiteralRationalExpression(lexer);
-        }
-        else if(tok.value === "Assembly::LiteralFloatExpression") {
-            return IRLiteralFloatExpression.parseBAPIAsIRLiteralFloatExpression(lexer);
-        }
-        else if(tok.value === "Assembly::LiteralDecimalExpression") {
-            return IRLiteralDecimalExpression.parseBAPIAsIRLiteralDecimalExpression(lexer);
-        }
-        //
-        //More here
-        //
-        else if(tok.value === "Assembly::LiteralByteBufferExpression") {
-            return IRLiteralByteBufferExpression.parseBAPIAsIRLiteralByteBufferExpression(lexer);
-        }
-        else if(tok.value === "Assembly::LiteralRegexExpression") {
-            return IRLiteralUnicodeRegexExpression.parseBAPIAsIRLiteralUnicodeRegexExpression(lexer);
-        }
-        else if(tok.value === "Assembly::LiteralCRegexExpression") {
-            return IRLiteralCRegexExpression.parseBAPIAsIRLiteralCRegexExpression(lexer);
-        }
-        else if(tok.value === "Assembly::LiteralByteExpression") {
-            return IRLiteralByteExpression.parseBAPIAsIRLiteralByteExpression(lexer);
-        }
-        else if(tok.value === "Assembly::LiteralCCharExpression") {
-            return IRLiteralCCharExpression.parseBAPIAsIRLiteralCCharExpression(lexer);
-        }
-        else if(tok.value === "Assembly::LiteralUnicodeCharExpression") {
-            return IRLiteralUnicodeCharExpression.parseBAPIAsIRLiteralUnicodeCharExpression(lexer);
-        }
-        else if(tok.value === "Assembly::LiteralStringExpression") {
-            return IRLiteralStringExpression.parseBAPIAsIRLiteralStringExpression(lexer);
-        }
-        else if(tok.value === "Assembly::LiteralCStringExpression") {
-            return IRLiteralCStringExpression.parseBAPIAsIRLiteralCStringExpression(lexer);
-        }
-        //
-        //More here
-        //
-        else if(tok.value === "Assembly::AccessConstantExpression") {
-            return IRAccessConstantExpression.parseBAPIAsIRAccessConstantExpression(lexer);
-        }
-        //
-        //More here
-        //
-        else{
-            assert(false, `IRExpression.parseBAPI not implemented for token value ${tok.value}`);
+        switch(kind) {
+            case "LiteralNoneExpression": {
+                return IRLiteralNoneExpression.jsonParse_IRLiteralNoneExpression(value);
+            }
+            case "LiteralBoolExpression": {
+                return IRLiteralBoolExpression.jsonParse_IRLiteralBoolExpression(value);
+            }
+            case "LiteralNatExpression": {
+                return IRLiteralNatExpression.jsonParse_IRLiteralNatExpression(value);
+            }
+            case "LiteralIntExpression": {
+                return IRLiteralIntExpression.jsonParse_IRLiteralIntExpression(value);
+            }
+            case "LiteralChkNatExpression": {
+                return IRLiteralChkNatExpression.jsonParse_IRLiteralChkNatExpression(value);
+            }
+            case "LiteralChkIntExpression": {
+                return IRLiteralChkIntExpression.jsonParse_IRLiteralChkIntExpression(value);
+            }
+            case "LiteralRationalExpression": {
+                return IRLiteralRationalExpression.jsonParse_IRLiteralRationalExpression(value);
+            }
+            case "LiteralFloatExpression": {
+                return IRLiteralFloatExpression.jsonParse_IRLiteralFloatExpression(value);
+            }
+            case "LiteralDecimalExpression": {
+                return IRLiteralDecimalExpression.jsonParse_IRLiteralDecimalExpression(value);
+            }
+            case "LiteralDecimalDegreeExpression": {
+                return IRLiteralDecimalDegreeExpression.jsonParse_IRLiteralDecimalDegreeExpression(value);
+            }
+            case "LiteralLatLongCoordinateExpression": {
+                return IRLiteralLatLongCoordinateExpression.jsonParse_IRLiteralLatLongCoordinateExpression(value);
+            }
+            case "LiteralComplexExpression": {
+                return IRLiteralComplexExpression.jsonParse_IRLiteralComplexExpression(value);
+            }
+            case "LiteralByteBufferExpression": {
+                return IRLiteralByteBufferExpression.jsonParse_IRLiteralByteBufferExpression(value);
+            }
+            case "LiteralUUIDv4Expression": {
+                return IRLiteralUUIDv4Expression.jsonParse_IRLiteralUUIDv4Expression(value);
+            }
+            case "LiteralUUIDv7Expression": {
+                return IRLiteralUUIDv7Expression.jsonParse_IRLiteralUUIDv7Expression(value);
+            }
+            case "LiteralSHAContentHashExpression": {
+                return IRLiteralSHAContentHashExpression.jsonParse_IRLiteralSHAContentHashExpression(value);
+            }
+            case "LiteralTZDateTimeExpression": {
+                return IRLiteralTZDateTimeExpression.jsonParse_IRLiteralTZDateTimeExpression(value);
+            }
+            case "LiteralTAITimeExpression": {
+                return IRLiteralTAITimeExpression.jsonParse_IRLiteralTAITimeExpression(value);
+            }
+            case "LiteralPlainDateExpression": {
+                return IRLiteralPlainDateExpression.jsonParse_IRLiteralPlainDateExpression(value);
+            }
+            case "LiteralPlainTimeExpression": {
+                return IRLiteralPlainTimeExpression.jsonParse_IRLiteralPlainTimeExpression(value);
+            }
+            case "LiteralLogicalTimeExpression": {
+                return IRLiteralLogicalTimeExpression.jsonParse_IRLiteralLogicalTimeExpression(value);
+            }
+            case "LiteralISOTimeStampExpression": {
+                return IRLiteralISOTimeStampExpression.jsonParse_IRLiteralISOTimeStampExpression(value);
+            }
+            case "LiteralDeltaDateTimeExpression": {
+                return IRLiteralDeltaDateTimeExpression.jsonParse_IRLiteralDeltaDateTimeExpression(value);
+            }
+            case "LiteralDeltaISOTimeStampExpression": {
+                return IRLiteralDeltaISOTimeStampExpression.jsonParse_IRLiteralDeltaISOTimeStampExpression(value);
+            }
+            case "LiteralDeltaSecondsExpression": {
+                return IRLiteralDeltaSecondsExpression.jsonParse_IRLiteralDeltaSecondsExpression(value);
+            }
+            case "LiteralDeltaLogicalTimeExpression": {
+                return IRLiteralDeltaLogicalTimeExpression.jsonParse_IRLiteralDeltaLogicalTimeExpression(value);
+            }
+            case "LiteralUnicodeRegexExpression": {
+                return IRLiteralUnicodeRegexExpression.jsonParse_IRLiteralUnicodeRegexExpression(value);
+            }
+            case "LiteralCRegexExpression": {
+                return IRLiteralCRegexExpression.jsonParse_IRLiteralCRegexExpression(value);
+            }
+            case "LiteralByteExpression": {
+                return IRLiteralByteExpression.jsonParse_IRLiteralByteExpression(value);
+            }
+            case "LiteralCCharExpression": {
+                return IRLiteralCCharExpression.jsonParse_IRLiteralCCharExpression(value);
+            }
+            case "LiteralUnicodeCharExpression": {
+                return IRLiteralUnicodeCharExpression.jsonParse_IRLiteralUnicodeCharExpression(value);
+            }
+            case "LiteralCStringExpression": {
+                return IRLiteralCStringExpression.jsonParse_IRLiteralCStringExpression(value);
+            }
+            case "LiteralStringExpression": {
+                return IRLiteralStringExpression.jsonParse_IRLiteralStringExpression(value);
+            }
+            case "LiteralFormatStringExpression": {
+                return IRLiteralFormatStringExpression.jsonParse_IRLiteralFormatStringExpression(value);
+            }
+            case "LiteralFormatCStringExpression": {
+                return IRLiteralFormatCStringExpression.jsonParse_IRLiteralFormatCStringExpression(value);
+            }
+            case "LiteralTypedExpression": {
+                return IRLiteralTypedExpression.jsonParse_IRLiteralTypedExpression(value);
+            }
+            case "LiteralTypedStringExpression": {
+                return IRLiteralTypedStringExpression.jsonParse_IRLiteralTypedStringExpression(value);
+            }
+            case "LiteralTypedCStringExpression": {
+                return IRLiteralTypedCStringExpression.jsonParse_IRLiteralTypedCStringExpression(value);
+            }
+            case "AccessEnvHasExpression": {
+                return IRAccessEnvHasExpression.jsonParse_IRAccessEnvHasExpression(value);
+            }
+            case "AccessEnvGetExpression": {
+                return IRAccessEnvGetExpression.jsonParse_IRAccessEnvGetExpression(value);
+            }
+            case "AccessEnvTryGetExpression": {
+                return IRAccessEnvTryGetExpression.jsonParse_IRAccessEnvTryGetExpression(value);
+            }
+            case "TaskAccessIDExpression": {
+                return IRTaskAccessIDExpression.jsonParse_IRTaskAccessIDExpression(value);
+            }
+            case "TaskAccessParentIDExpression": {
+                return IRTaskAccessParentIDExpression.jsonParse_IRTaskAccessParentIDExpression(value);
+            }
+            case "AccessConstantExpression": {
+                return IRAccessConstantExpression.jsonParse_IRAccessConstantExpression(value);
+            }
+            case "AccessEnumExpression": {
+                return IRAccessEnumExpression.jsonParse_IRAccessEnumExpression(value);
+            }
+            case "AccessParameterVariableExpression": {
+                return IRAccessParameterVariableExpression.jsonParse_IRAccessParameterVariableExpression(value);
+            }
+            case "AccessLocalVariableExpression": {
+                return IRAccessLocalVariableExpression.jsonParse_IRAccessLocalVariableExpression(value);
+            }
+            case "AccessCapturedVariableExpression": {
+                return IRAccessCapturedVariableExpression.jsonParse_IRAccessCapturedVariableExpression(value);
+            }
+            case "AccessTempVariableExpression": {
+                return IRAccessTempVariableExpression.jsonParse_IRAccessTempVariableExpression(value);
+            }
+            case "AccessTypeDeclValueExpression": {
+                return IRAccessTypeDeclValueExpression.jsonParse_IRAccessTypeDeclValueExpression(value);
+            }
+            case "ConstructSafeTypeDeclExpression": {
+                return IRConstructSafeTypeDeclExpression.jsonParse_IRConstructSafeTypeDeclExpression(value);
+            }
+            case "ConstructSomeTypeExpression": {
+                return IRConstructorSomeTypeExpression.jsonParse_IRConstructorSomeTypeExpression(value);
+            }
+            case "ConstructOkTypeExpression": {
+                return IRConstructorOkTypeExpression.jsonParse_IRConstructorOkTypeExpression(value);
+            }
+            case "ConstructFailTypeExpression": {
+                return IRConstructorFailTypeExpression.jsonParse_IRConstructorFailTypeExpression(value);
+            }
+            case "ConstructAPISuccessTypeExpression": {
+                return IRConstructorAPISuccessTypeExpression.jsonParse_IRConstructorAPISuccessTypeExpression(value);
+            }
+            case "ConstructMapEntryTypeExpression": {
+                return IRConstructorMapEntryTypeExpression.jsonParse_IRConstructorMapEntryTypeExpression(value);
+            }
+            case "ConstructStandardEntityExpression": {
+                return IRConstructorStandardEntityExpression.jsonParse_IRConstructorStandardEntityExpression(value);
+            }
+            case "ConstructLambdaExpression": {
+                return IRConstructorLambdaExpression.jsonParse_IRConstructorLambdaExpression(value);
+            }
+            case "ConstructEListExpression": {
+                return IRConstructorEListExpression.jsonParse_IRConstructorEListExpression(value);
+            }
+            case "ConstructListEmptyExpression": {
+                return IRConstructorListEmptyExpression.jsonParse_IRConstructorListEmptyExpression(value);
+            }
+            case "ConstructListPassthroughExpression": {
+                return IRConstructorListPassthroughExpression.jsonParse_IRConstructorListPassthroughExpression(value);
+            }
+            case "ConstructListSingletonsExpression": {
+                return IRConstructorListSingletonsExpression.jsonParse_IRConstructorListSingletonsExpression(value);
+            }
+            case "ConstructListMixedExpression": {
+                return IRConstructorListMixedExpression.jsonParse_IRConstructorListMixedExpression(value);
+            }
+            case "ConstructMapEmptyExpression": {
+                return IRConstructorMapEmptyExpression.jsonParse_IRConstructorMapEmptyExpression(value);
+            }
+            case "ConstructMapSingletonsExpression": {
+                return IRConstructorMapSingletonsExpression.jsonParse_IRConstructorMapSingletonsExpression(value);
+            }
+            case "AccessFieldSpecialExpression": {
+                return IRAccessFieldSpecialExpression.jsonParse_IRAccessFieldSpecialExpression(value);
+            }
+            case "AccessFieldDirectExpression": {
+                return IRAccessFieldDirectExpression.jsonParse_IRAccessFieldDirectExpression(value);
+            }
+            case "AccessFieldVirtualExpression": {
+                return IRAccessFieldVirtualExpression.jsonParse_IRAccessFieldVirtualExpression(value);
+            }
+            case "AccessEListIndexExpression": {
+                return IRAccessEListIndexExpression.jsonParse_IRAccessEListIndexExpression(value);
+            }
+            case "InvokeSimpleExpression": {
+                return IRInvokeSimpleExpression.jsonParse_IRInvokeSimpleExpression(value);
+            }
+            case "InvokeSimpleWithImplicitsExpression": {
+                return IRInvokeSimpleWithImplicitsExpression.jsonParse_IRInvokeSimpleWithImplicitsExpression(value);
+            }
+            case "InvokeVirtualSimpleExpression": {
+                return IRInvokeVirtualSimpleExpression.jsonParse_IRInvokeVirtualSimpleExpression(value);
+            }
+            case "InvokeVirtualWithImplicitsExpression": {
+                return IRInvokeVirtualWithImplicitsExpression.jsonParse_IRInvokeVirtualWithImplicitsExpression(value);
+            }
+            case "InvokeCallAgentOrAPIExpression": {
+                return IRInvokeCallAgentOrAPIExpression.jsonParse_IRInvokeCallAgentOrAPIExpression(value);
+            }
+            case "InvokeTaskActionExpression": {
+                return IRInvokeTaskActionExpression.jsonParse_IRInvokeTaskActionExpression(value);
+            }
+            case "InterpolateFormatCStringExpression": {
+                return IRInterpolateFormatCStringExpression.jsonParse_IRInterpolateFormatCStringExpression(value);
+            }
+            case "InterpolateFormatStringExpression": {
+                return IRInterpolateFormatStringExpression.jsonParse_IRInterpolateFormatStringExpression(value);
+            }
+            case "PrefixNotOpExpression": {
+                return IRPrefixNotOpExpression.jsonParse_IRPrefixNotOpExpression(value);
+            }
+            case "PrefixNegateOpExpression": {
+                return IRPrefixNegateOpExpression.jsonParse_IRPrefixNegateOpExpression(value);
+            }
+            case "PrefixPlusOpExpression": {
+                return IRPrefixPlusOpExpression.jsonParse_IRPrefixPlusOpExpression(value);
+            }
+            case "BinAddExpression": {
+                return IRBinAddExpression.jsonParse_IRBinAddExpression(value);
+            }
+            case "BinSubExpression": {
+                return IRBinSubExpression.jsonParse_IRBinSubExpression(value);
+            }
+            case "BinMultExpression": {
+                return IRBinMultExpression.jsonParse_IRBinMultExpression(value);
+            }
+            case "BinDivExpression": {
+                return IRBinDivExpression.jsonParse_IRBinDivExpression(value);
+            }
+            case "NumericEqExpression": {
+                return IRNumericEqExpression.jsonParse_IRNumericEqExpression(value);
+            }
+            case "NumericNeqExpression": {
+                return IRNumericNeqExpression.jsonParse_IRNumericNeqExpression(value);
+            }
+            case "NumericLessExpression": {
+                return IRNumericLessExpression.jsonParse_IRNumericLessExpression(value);
+            }
+            case "NumericLessEqExpression": {
+                return IRNumericLessEqExpression.jsonParse_IRNumericLessEqExpression(value);
+            }
+            case "NumericGreaterExpression": {
+                return IRNumericGreaterExpression.jsonParse_IRNumericGreaterExpression(value);
+            }
+            case "NumericGreaterEqExpression": {
+                return IRNumericGreaterEqExpression.jsonParse_IRNumericGreaterEqExpression(value);
+            }
+            case "IsNoneOptionExpression": {
+                return IRIsNoneOptionExpression.jsonParse_IRIsNoneOptionExpression(value);
+            }
+            case "IsNotNoneOptionExpression": {
+                return IRIsNotNoneOptionExpression.jsonParse_IRIsNotNoneOptionExpression(value);
+            }
+            case "IsOptionEqValueExpression": {
+                return IRIsOptionEqValueExpression.jsonParse_IRIsOptionEqValueExpression(value);
+            }
+            case "IsOptionNeqValueExpression": {
+                return IRIsOptionNeqValueExpression.jsonParse_IRIsOptionNeqValueExpression(value);
+            }
+            case "IsSomeEqValueExpression": {
+                return IRIsSomeEqValueExpression.jsonParse_IRIsSomeEqValueExpression(value);
+            }
+            case "IsSomeNeqValueExpression": {
+                return IRIsSomeNeqValueExpression.jsonParse_IRIsSomeNeqValueExpression(value);
+            }
+            case "LogicAndExpression": {
+                return IRLogicAndExpression.jsonParse_IRLogicAndExpression(value);
+            }
+            case "LogicOrExpression": {
+                return IRLogicOrExpression.jsonParse_IRLogicOrExpression(value);
+            }
+            case "LogicSimpleConditionalExpression": {
+                return IRLogicSimpleConditionalExpression.jsonParse_IRLogicSimpleConditionalExpression(value);
+            }
+            case "LiteralOptionOfNoneExpression": {
+                return IRLiteralOptionOfNoneExpression.jsonParse_IRLiteralOptionOfNoneExpression(value);
+            }
+            case "ConstructOptionFromSomeExpression": {
+                return IRConstructOptionFromSomeExpression.jsonParse_IRConstructOptionFromSomeExpression(value);
+            }
+            case "ExtractSomeFromOptionExpression": {
+                return IRExtractSomeFromOptionExpression.jsonParse_IRExtractSomeFromOptionExpression(value);
+            }
+            case "ExtractSomeValueFromOptionExpression": {
+                return IRExtractSomeValueFromOptionExpression.jsonParse_IRExtractSomeValueFromOptionExpression(value);
+            }
+            case "ConstructResultFromOkExpression": {
+                return IRConstructResultFromOkExpression.jsonParse_IRConstructResultFromOkExpression(value);
+            }
+            case "ConstructResultFromFailExpression": {
+                return IRConstructResultFromFailExpression.jsonParse_IRConstructResultFromFailExpression(value);
+            }
+            case "ExtractOkFromResultExpression": {
+                return IRExtractOkFromResultExpression.jsonParse_IRExtractOkFromResultExpression(value);
+            }
+            case "ExtractOkValueFromResultExpression": {
+                return IRExtractOkValueFromResultExpression.jsonParse_IRExtractOkValueFromResultExpression(value);
+            }
+            case "ExtractFailFromResultExpression": {
+                return IRExtractFailFromResultExpression.jsonParse_IRExtractFailFromResultExpression(value);
+            }
+            case "ExtractFailValueFromResultExpression": {
+                return IRExtractFailValueFromResultExpression.jsonParse_IRExtractFailValueFromResultExpression(value);
+            }
+            case "IsConceptRepresentationOfTypeExpression": {
+                return IRIsConceptRepresentationOfTypeExpression.jsonParse_IRIsConceptRepresentationOfTypeExpression(value);
+            }
+            case "IsNotConceptRepresentationOfTypeExpression": {
+                return IRIsNotConceptRepresentationOfTypeExpression.jsonParse_IRIsNotConceptRepresentationOfTypeExpression(value);
+            }
+            case "IsConceptRepresentationSubtypeOfTypeExpression": {
+                return IRIsConceptRepresentationSubtypeOfTypeExpression.jsonParse_IRIsConceptRepresentationSubtypeOfTypeExpression(value);
+            }
+            case "IsNotConceptRepresentationSubtypeOfTypeExpression": {
+                return IRIsNotConceptRepresentationSubtypeOfTypeExpression.jsonParse_IRIsNotConceptRepresentationSubtypeOfTypeExpression(value);
+            }
+            case "StaticIsTypeSubtypeOfExpression": {
+                return IRStaticIsTypeSubtypeOfExpression.jsonParse_IRStaticIsTypeSubtypeOfExpression(value);
+            }
+            case "BoxEntityToConceptRepresentationExpression": {
+                return IRBoxEntityToConceptRepresentationExpression.jsonParse_IRBoxEntityToConceptRepresentationExpression(value);
+            }
+            case "UnboxEntityFromConceptRepresentationExpression": {
+                return IRUnboxEntityFromConceptRepresentationExpression.jsonParse_IRUnboxEntityFromConceptRepresentationExpression(value);
+            }
+            case "ConvertConceptRepresentationExpression": {
+                return IRConvertConceptRepresentationExpression.jsonParse_IRConvertConceptRepresentationExpression(value);
+            }
+            default: {
+                assert(false, `Unknown IR expression kind: ${kind}`);
+            }
         }
     }
 }
@@ -269,16 +920,12 @@ abstract class IRInvokeExpression extends IRExpression {
         return false;
     }
 
-    toBAPI_IRInvokeExpression(): string {
-        assert(false, "IRInvokeExpression.toBAPI__IRInvokeExpression not implemented");
+    static jsonEmit_IRInvokeExpression(expr: IRInvokeExpression): [string, object] {
+        return IRExpression.jsonEmit_IRExpression(expr);
     }
 
-    static parseBAPI_IRInvokeExpression(lexer: BAPILexer): {ikey: string, args: IRSimpleExpression[]} {
-        assert(false, "IRInvokeExpression.parseBAPI_IRInvokeExpression not implemented");
-    }
-
-    static parseBAPIAsIRInvokeExpression(lexer: BAPILexer): IRInvokeExpression {
-        return IRExpression.parseBAPI(lexer) as IRInvokeExpression;
+    static jsonParse_IRInvokeExpression(obj: any): IRInvokeExpression {
+        return IRExpression.jsonParse_IRExpression(obj) as IRInvokeExpression;
     }
 }
 
@@ -287,6 +934,21 @@ abstract class IRInvokeDirectExpression extends IRInvokeExpression {
     constructor(tag: IRExpressionTag, ikey: string, args: IRSimpleExpression[]) {
         super(tag, ikey, args);
     }
+
+    static jsonEmit_IRInvokeDirectExpression(expr: IRInvokeDirectExpression): [string, object] {
+        return IRExpression.jsonEmit_IRExpression(expr);
+    }
+
+    static jsonParse_IRInvokeDirectExpression(obj: any): IRInvokeDirectExpression {
+        return IRExpression.jsonParse_IRExpression(obj) as IRInvokeDirectExpression;
+    }
+}
+
+enum IRImplicitInvokeArgPassKind {
+    Ref = "IRImplicitInvokeArgPassKind#Ref",
+    Out = "IRImplicitInvokeArgPassKind#Out",
+    OutCond = "IRImplicitInvokeArgPassKind#OutCond",
+    InOut = "IRImplicitInvokeArgPassKind#InOut"
 }
 
 /* This class represents expressions that have implicit return values */
@@ -294,14 +956,40 @@ abstract class IRInvokeImplicitsExpression extends IRInvokeExpression {
     readonly implicitidx: number;
     readonly ivar: string; //the implicit variable to assign the returned ref/out/out?/inout parameter
     readonly ivartype: IRTypeSignature;
-    readonly passkind : "ref" | "out" | "out?" | "inout";
+    readonly passkind : IRImplicitInvokeArgPassKind;
 
-    constructor(tag: IRExpressionTag, ikey: string, args: IRSimpleExpression[], implicitidx: number, ivar: string, ivartype: IRTypeSignature, passkind: "ref" | "out" | "out?" | "inout") {
+    constructor(tag: IRExpressionTag, ikey: string, args: IRSimpleExpression[], implicitidx: number, ivar: string, ivartype: IRTypeSignature, passkind: IRImplicitInvokeArgPassKind) {
         super(tag, ikey, args);
         this.implicitidx = implicitidx;
         this.ivar = ivar;
         this.ivartype = ivartype;
         this.passkind = passkind;
+    }
+
+    static jsonEmit_IRInvokeImplicitsExpression(expr: IRInvokeImplicitsExpression): [string, object] {
+        return IRExpression.jsonEmit_IRExpression(expr);
+    }
+
+    static jsonParse_IRInvokeImplicitsExpression(obj: any): IRInvokeImplicitsExpression {
+        return IRExpression.jsonParse_IRExpression(obj) as IRInvokeImplicitsExpression;
+    }
+
+    static jsonEmitMeta_IRInvokeImplicitsExpression(iie: IRInvokeImplicitsExpression): object {
+        return {
+            implicitidx: iie.implicitidx,
+            ivar: iie.ivar,
+            ivartype: IRTypeSignature.jsonEmit_IRTypeSignature(iie.ivartype),
+            passkind: `Assembly::${iie.passkind}`
+        }
+    }
+
+    static jsonParseMeta_IRInvokeImplicitsExpression(obj: any): [number, string, IRTypeSignature, IRImplicitInvokeArgPassKind] {
+        return [
+            obj.implicitidx,
+            obj.ivar,
+            IRTypeSignature.jsonParse_IRTypeSignature(obj.ivartype),
+            obj.passkind.replace("Assembly::", "") as IRImplicitInvokeArgPassKind
+        ];
     }
 }
 
@@ -318,16 +1006,22 @@ abstract class IRConstructExpression extends IRExpression {
         return true;
     }
 
-    toBAPI_IRConstructExpression(): string {
-        assert(false, "IRConstructExpression.toBAPI__IRConstructExpression not implemented");
+    static jsonEmit_IRConstructExpression(expr: IRConstructExpression): [string, object] {
+        return IRExpression.jsonEmit_IRExpression(expr);
     }
 
-    static parseBAPI_IRConstructExpression(lexer: BAPILexer): {constype: IRNominalTypeSignature} {
-        assert(false, "IRConstructExpression.parseBAPI_IRConstructExpression not implemented");
+    static jsonParse_IRConstructExpression(obj: any): IRConstructExpression {
+        return IRExpression.jsonParse_IRExpression(obj) as IRConstructExpression;
     }
 
-    static parseBAPIAsIRConstructExpression(lexer: BAPILexer): IRConstructExpression {
-        return IRExpression.parseBAPI(lexer) as IRConstructExpression;
+    static jsonEmitMeta_IRConstructExpression(ce: IRConstructExpression): object {
+        return {
+            constype: IRNominalTypeSignature.jsonEmit_IRTypeSignature(ce.constype)
+        }
+    }
+
+    static jsonParseMeta_IRConstructExpression(obj: any): IRNominalTypeSignature {
+        return IRNominalTypeSignature.jsonParse_IRTypeSignature(obj.constype) as IRNominalTypeSignature;
     }
 }
 
@@ -341,8 +1035,12 @@ abstract class IRSimpleExpression extends IRExpression {
         return true;
     }
 
-    static parseBAPIAsIRSimpleExpression(lexer: BAPILexer): IRSimpleExpression {
-        return IRExpression.parseBAPI(lexer) as IRSimpleExpression;
+    static jsonEmit_IRSimpleExpression(expr: IRSimpleExpression): [string, object] {
+        return IRExpression.jsonEmit_IRExpression(expr);
+    }
+
+    static jsonParse_IRSimpleExpression(obj: any): IRSimpleExpression {
+        return IRExpression.jsonParse_IRExpression(obj) as IRSimpleExpression;
     }
 }
 
@@ -352,8 +1050,12 @@ abstract class IRImmediateExpression extends IRSimpleExpression {
         super(tag);
     }
 
-    static parseBAPIAsIRImmediateExpression(lexer: BAPILexer): IRImmediateExpression {
-        return IRExpression.parseBAPI(lexer) as IRImmediateExpression;
+    static jsonEmit_IRImmediateExpression(expr: IRImmediateExpression): [string, object] {
+        return IRExpression.jsonEmit_IRExpression(expr);
+    }
+
+    static jsonParse_IRImmediateExpression(obj: any): IRImmediateExpression {
+        return IRExpression.jsonParse_IRExpression(obj) as IRImmediateExpression;
     }
 }
 
@@ -363,8 +1065,12 @@ abstract class IRLiteralExpression extends IRImmediateExpression {
         super(tag);
     }
 
-    static parseBAPIAsIRLiteralExpression(lexer: BAPILexer): IRLiteralExpression {
-        return IRExpression.parseBAPI(lexer) as IRLiteralExpression;
+    static jsonEmit_IRLiteralExpression(expr: IRLiteralExpression): [string, object] {
+        return IRExpression.jsonEmit_IRExpression(expr);
+    }
+
+    static jsonParse_IRLiteralExpression(obj: any): IRLiteralExpression {
+        return IRExpression.jsonParse_IRExpression(obj) as IRLiteralExpression;
     }
 }
 
@@ -385,12 +1091,12 @@ abstract class IRAccessFieldExpression extends IRSimpleExpression {
         this.fieldtype = fieldtype;
     }
 
-    toBAPI_IRAccessFieldExpression(): string {
-        assert(false, "IRAccessFieldExpression.toBAPI__IRAccessFieldExpression not implemented");
+    static jsonEmit_IRAccessFieldExpression(expr: IRAccessFieldExpression): [string, object] {
+        return IRExpression.jsonEmit_IRExpression(expr);
     }
 
-    static parseBAPI_IRAccessFieldExpression(lexer: BAPILexer): {eexptype: IRNominalTypeSignature, eexp: IRSimpleExpression, intype: IRNominalTypeSignature, fieldname: string, fieldtype: IRTypeSignature} {
-        assert(false, "IRAccessFieldExpression.parseBAPI_IRAccessFieldExpression not implemented");
+    static jsonParse_IRAccessFieldExpression(obj: any): IRAccessFieldExpression {
+        return IRExpression.jsonParse_IRExpression(obj) as IRAccessFieldExpression;
     }
 }
 
@@ -422,15 +1128,9 @@ enum IRStatementTag {
     IRReturnVoidSimpleStatement = "IRReturnVoidSimpleStatement",
     IRReturnValueSimpleStatement = "IRReturnValueSimpleStatement",
     IRReturnDirectInvokeStatement = "IRReturnDirectInvokeStatement",
+    IRReturnDirectInvokeImplicitsStatement = "IRReturnDirectInvokeImplicitsStatement",
     IRReturnDirectConstructStatement = "IRReturnDirectConstructStatement",
     IRReturnDirectConstructWithBoxStatement = "IRReturnDirectConstructWithBoxStatement",
-
-    IRReturnVoidImplicitStatement = "IRReturnVoidImplicitStatement",
-    IRReturnValueImplicitStatement = "IRReturnValueImplicitStatement",
-    IRReturnDirectInvokeImplicitStatement = "IRReturnDirectInvokeImplicitStatement",
-    IRReturnDirectInvokeImplicitPassThroughStatement = "IRReturnDirectInvokeImplicitPassThroughStatement",
-    IRReturnDirectConstructImplicitStatement = "IRReturnDirectConstructImplicitStatement",
-    IRReturnDirectConstructWithBoxImplicitStatement = "IRReturnDirectConstructWithBoxImplicitStatement",
 
     IRVoidInvokeStatement = "IRVoidInvokeStatement",
 
@@ -467,8 +1167,6 @@ enum IRStatementTag {
 
     IRAbortStatement = "IRAbortStatement",
     IRAssertStatement = "IRAssertStatement",
-    IRAssumeStatement = "IRAssumeStatement",
-    IRValidateStatement = "IRValidateStatement",
     IRDebugStatement = "IRDebugStatement"
 }
 
@@ -483,10 +1181,321 @@ abstract class IRStatement {
 
     abstract isSimpleStatement(): boolean;
 
-    abstract toBAPI(): string;
+    static jsonEmit_IRStatement(stmt: IRStatement): [string, object] {
+        if(stmt instanceof IRNopStatement) {
+            return ["NopStatement", IRNopStatement.jsonEmit_IRNopStatement(stmt)];
+        }
+        else if(stmt instanceof IRTempAssignExpressionStatement) {
+            return ["TempAssignExpressionStatement", IRTempAssignExpressionStatement.jsonEmit_IRTempAssignExpressionStatement(stmt)];
+        }
+        else if(stmt instanceof IRTempAssignStdInvokeStatement) {
+            return ["TempAssignStdInvokeStatement", IRTempAssignStdInvokeStatement.jsonEmit_IRTempAssignStdInvokeStatement(stmt)];
+        }
+        else if(stmt instanceof IRTempAssignRefInvokeStatement) {
+            return ["TempAssignRefInvokeStatement", IRTempAssignRefInvokeStatement.jsonEmit_IRTempAssignRefInvokeStatement(stmt)];
+        }
+        else if(stmt instanceof IRTempAssignDirectConstructorStatement) {
+            return ["TempAssignDirectConstructorStatement", IRTempAssignDirectConstructorStatement.jsonEmit_IRTempAssignDirectConstructorStatement(stmt)];
+        }
+        else if(stmt instanceof IRVariableDeclarationStatement) {
+            return ["VariableDeclarationStatement", IRVariableDeclarationStatement.jsonEmit_IRVariableDeclarationStatement(stmt)];
+        }
+        else if(stmt instanceof IRVariableInitializationStatement) {
+            return ["VariableInitializationStatement", IRVariableInitializationStatement.jsonEmit_IRVariableInitializationStatement(stmt)];
+        }
+        else if(stmt instanceof IRVariableInitializationDirectInvokeStatement) {
+            return ["VariableInitializationDirectInvokeStatement", IRVariableInitializationDirectInvokeStatement.jsonEmit_IRVariableInitializationDirectInvokeStatement(stmt)];
+        }
+        else if(stmt instanceof IRVariableInitializationDirectInvokeWithImplicitStatement) {
+            return ["VariableInitializationDirectInvokeWithImplicitStatement", IRVariableInitializationDirectInvokeWithImplicitStatement.jsonEmit_IRVariableInitializationDirectInvokeWithImplicitStatement(stmt)];
+        }
+        else if(stmt instanceof IRVariableInitializationDirectConstructorStatement) {
+            return ["VariableInitializationDirectConstructorStatement", IRVariableInitializationDirectConstructorStatement.jsonEmit_IRVariableInitializationDirectConstructorStatement(stmt)];
+        }
+        else if(stmt instanceof IRVariableInitializationDirectConstructorWithBoxStatement) {
+            return ["VariableInitializationDirectConstructorWithBoxStatement", IRVariableInitializationDirectConstructorWithBoxStatement.jsonEmit_IRVariableInitializationDirectConstructorWithBoxStatement(stmt)];
+        }
+        else if(stmt instanceof IRVariableAssignmentStatement) {
+            return ["VariableAssignmentStatement", IRVariableAssignmentStatement.jsonEmit_IRVariableAssignmentStatement(stmt)];
+        }
+        else if(stmt instanceof IRVariableAssignmentDirectInvokeStatement) {
+            return ["VariableAssignmentDirectInvokeStatement", IRVariableAssignmentDirectInvokeStatement.jsonEmit_IRVariableAssignmentDirectInvokeStatement(stmt)];
+        }
+        else if(stmt instanceof IRVariableAssignmentDirectInvokeWithImplicitStatement) {
+            return ["VariableAssignmentDirectInvokeWithImplicitStatement", IRVariableAssignmentDirectInvokeWithImplicitStatement.jsonEmit_IRVariableAssignmentDirectInvokeWithImplicitStatement(stmt)];
+        }
+        else if(stmt instanceof IRVariableAssignmentDirectConstructorStatement) {
+            return ["VariableAssignmentDirectConstructorStatement", IRVariableAssignmentDirectConstructorStatement.jsonEmit_IRVariableAssignmentDirectConstructorStatement(stmt)];
+        }
+        else if(stmt instanceof IRVariableAssignmentDirectConstructorWithBoxStatement) {
+            return ["VariableAssignmentDirectConstructorWithBoxStatement", IRVariableAssignmentDirectConstructorWithBoxStatement.jsonEmit_IRVariableAssignmentDirectConstructorWithBoxStatement(stmt)];
+        }
+        else if(stmt instanceof IRUpdateLocalDirectStatement) {
+            return ["UpdateLocalDirectStatement", IRUpdateLocalDirectStatement.jsonEmit_IRUpdateLocalDirectStatement(stmt)];
+        }
+        else if(stmt instanceof IRUpdateParamDirectStatement) {
+            return ["UpdateParamDirectStatement", IRUpdateParamDirectStatement.jsonEmit_IRUpdateParamDirectStatement(stmt)];
+        }
+        else if(stmt instanceof IRReturnVoidSimpleStatement) {
+            return ["ReturnVoidSimpleStatement", IRReturnVoidSimpleStatement.jsonEmit_IRReturnVoidSimpleStatement(stmt)];
+        }
+        else if(stmt instanceof IRReturnValueSimpleStatement) {
+            return ["ReturnValueSimpleStatement", IRReturnValueSimpleStatement.jsonEmit_IRReturnValueSimpleStatement(stmt)];
+        }
+        else if(stmt instanceof IRReturnDirectInvokeStatement) {
+            return ["ReturnDirectInvokeStatement", IRReturnDirectInvokeStatement.jsonEmit_IRReturnDirectInvokeStatement(stmt)];
+        }
+        else if(stmt instanceof IRReturnDirectInvokeImplicitsStatement) {
+            return ["ReturnDirectInvokeImplicitsStatement", IRReturnDirectInvokeImplicitsStatement.jsonEmit_IRReturnDirectInvokeImplicitsStatement(stmt)];
+        }
+        else if(stmt instanceof IRReturnDirectConstructStatement) {
+            return ["ReturnDirectConstructStatement", IRReturnDirectConstructStatement.jsonEmit_IRReturnDirectConstructStatement(stmt)];
+        }
+        else if(stmt instanceof IRReturnDirectConstructWithBoxStatement) {
+            return ["ReturnDirectConstructWithBoxStatement", IRReturnDirectConstructWithBoxStatement.jsonEmit_IRReturnDirectConstructWithBoxStatement(stmt)];
+        }
+        else if(stmt instanceof IRVoidInvokeStatement) {
+            return ["VoidInvokeStatement", IRVoidInvokeStatement.jsonEmit_IRVoidInvokeStatement(stmt)];
+        }
+        else if(stmt instanceof IRChkLogicImpliesShortCircuitStatement) {
+            return ["ChkLogicImpliesShortCircuitStatement", IRChkLogicImpliesShortCircuitStatement.jsonEmit_IRChkLogicImpliesShortCircuitStatement(stmt)];
+        }
+        else if(stmt instanceof IRLogicConditionalStatement) {
+            return ["LogicConditionalStatement", IRLogicConditionalStatement.jsonEmit_IRLogicConditionalStatement(stmt)];
+        }
+        else if(stmt instanceof IRSimpleIfStatement) {
+            return ["SimpleIfStatement", IRSimpleIfStatement.jsonEmit_IRSimpleIfStatement(stmt)];
+        }
+        else if(stmt instanceof IRSimpleIfElseStatement) {
+            return ["SimpleIfElseStatement", IRSimpleIfElseStatement.jsonEmit_IRSimpleIfElseStatement(stmt)];
+        }
+        else if(stmt instanceof IRMatchExactStatement) {
+            return ["MatchExactStatement", IRMatchExactStatement.jsonEmit_IRMatchExactStatement(stmt)];
+        }
+        else if(stmt instanceof IRMatchGeneralStatement) {
+            return ["MatchGeneralStatement", IRMatchGeneralStatement.jsonEmit_IRMatchGeneralStatement(stmt)];
+        }
+        else if(stmt instanceof IRBlockStatement) {
+            return ["BlockStatement", IRBlockStatement.jsonEmit_IRBlockStatement(stmt)];
+        }
+        else if(stmt instanceof IRErrorAdditionBoundsCheckStatement) {
+            return ["ErrorAdditionBoundsCheckStatement", IRErrorAdditionBoundsCheckStatement.jsonEmit_IRErrorAdditionBoundsCheckStatement(stmt)];
+        }
+        else if(stmt instanceof IRErrorSubtractionBoundsCheckStatement) {
+            return ["ErrorSubtractionBoundsCheckStatement", IRErrorSubtractionBoundsCheckStatement.jsonEmit_IRErrorSubtractionBoundsCheckStatement(stmt)];
+        }
+        else if(stmt instanceof IRErrorMultiplicationBoundsCheckStatement) {
+            return ["ErrorMultiplicationBoundsCheckStatement", IRErrorMultiplicationBoundsCheckStatement.jsonEmit_IRErrorMultiplicationBoundsCheckStatement(stmt)];
+        }
+        else if(stmt instanceof IRErrorDivisionByZeroCheckStatement) {
+            return ["ErrorDivisionByZeroCheckStatement", IRErrorDivisionByZeroCheckStatement.jsonEmit_IRErrorDivisionByZeroCheckStatement(stmt)];
+        }
+        else if(stmt instanceof IRErrorTypeAssertionCheckStatement) {
+            return ["ErrorTypeAssertionCheckStatement", IRErrorTypeAssertionCheckStatement.jsonEmit_IRErrorTypeAssertionCheckStatement(stmt)];
+        }
+        else if(stmt instanceof IRErrorExhaustiveStatement) {
+            return ["ErrorExhaustiveStatement", IRErrorExhaustiveStatement.jsonEmit_IRErrorExhaustiveStatement(stmt)];
+        }
+        else if(stmt instanceof IRTypeDeclSizeRangeCheckCStringStatement) {
+            return ["TypeDeclSizeRangeCheckCStringStatement", IRTypeDeclSizeRangeCheckCStringStatement.jsonEmit_IRTypeDeclSizeRangeCheckCStringStatement(stmt)];
+        }
+        else if(stmt instanceof IRTypeDeclSizeRangeCheckUnicodeStringStatement) {
+            return ["TypeDeclSizeRangeCheckUnicodeStringStatement", IRTypeDeclSizeRangeCheckUnicodeStringStatement.jsonEmit_IRTypeDeclSizeRangeCheckUnicodeStringStatement(stmt)];
+        }
+        else if(stmt instanceof IRTypeDeclNumericRangeCheckStatement) {
+            return ["TypeDeclNumericRangeCheckStatement", IRTypeDeclNumericRangeCheckStatement.jsonEmit_IRTypeDeclNumericRangeCheckStatement(stmt)];
+        }
+        else if(stmt instanceof IRTypeDeclFormatCheckCStringStatement) {
+            return ["TypeDeclFormatCheckCStringStatement", IRTypeDeclFormatCheckCStringStatement.jsonEmit_IRTypeDeclFormatCheckCStringStatement(stmt)];
+        }
+        else if(stmt instanceof IRTypeDeclFormatCheckUnicodeStringStatement) {
+            return ["TypeDeclFormatCheckUnicodeStringStatement", IRTypeDeclFormatCheckUnicodeStringStatement.jsonEmit_IRTypeDeclFormatCheckUnicodeStringStatement(stmt)];
+        }
+        else if(stmt instanceof IRTypeDeclInvariantCheckStatement) {
+            return ["TypeDeclInvariantCheckStatement", IRTypeDeclInvariantCheckStatement.jsonEmit_IRTypeDeclInvariantCheckStatement(stmt)];
+        }
+        else if(stmt instanceof IREntityInvariantCheckStatement) {
+            return ["EntityInvariantCheckStatement", IREntityInvariantCheckStatement.jsonEmit_IREntityInvariantCheckStatement(stmt)];
+        }
+        else if(stmt instanceof IRPreconditionCheckStatement) {
+            return ["PreconditionCheckStatement", IRPreconditionCheckStatement.jsonEmit_IRPreconditionCheckStatement(stmt)];
+        }
+        else if(stmt instanceof IRPostconditionCheckStatement) {
+            return ["PostconditionCheckStatement", IRPostconditionCheckStatement.jsonEmit_IRPostconditionCheckStatement(stmt)];
+        }
+        else if(stmt instanceof IRAbortStatement) {
+            return ["AbortStatement", IRAbortStatement.jsonEmit_IRAbortStatement(stmt)];
+        }
+        else if(stmt instanceof IRAssertStatement) {
+            return ["AssertStatement", IRAssertStatement.jsonEmit_IRAssertStatement(stmt)];
+        }
+        else if(stmt instanceof IRDebugStatement) {
+            return ["DebugStatement", IRDebugStatement.jsonEmit_IRDebugStatement(stmt)];
+        }
+        else {
+            assert(false, `Unknown IRStatement type -- ${stmt.tag}`)
+        }
+    }
 
-    static parseBAPI(lexer: BAPILexer): IRStatement {
-        assert(false, "IRStatement.parseBAPI not implemented");
+    static jsonParse_IRStatement(obj: any): IRStatement {
+        const kind = obj[0];
+        const value = obj[1];
+
+        switch(kind) {
+            case "NopStatement": {
+                return IRNopStatement.jsonParse_IRNopStatement(value);
+            }
+            case "TempAssignExpressionStatement": {
+                return IRTempAssignExpressionStatement.jsonParse_IRTempAssignExpressionStatement(value);
+            }
+            case "TempAssignStdInvokeStatement": {
+                return IRTempAssignStdInvokeStatement.jsonParse_IRTempAssignStdInvokeStatement(value);
+            }
+            case "TempAssignRefInvokeStatement": {
+                return IRTempAssignRefInvokeStatement.jsonParse_IRTempAssignRefInvokeStatement(value);
+            }
+            case "TempAssignDirectConstructorStatement": {
+                return IRTempAssignDirectConstructorStatement.jsonParse_IRTempAssignDirectConstructorStatement(value);
+            }
+            case "VariableDeclarationStatement": {
+                return IRVariableDeclarationStatement.jsonParse_IRVariableDeclarationStatement(value);
+            }
+            case "VariableInitializationStatement": {
+                return IRVariableInitializationStatement.jsonParse_IRVariableInitializationStatement(value);
+            }
+            case "VariableInitializationDirectInvokeStatement": {
+                return IRVariableInitializationDirectInvokeStatement.jsonParse_IRVariableInitializationDirectInvokeStatement(value);
+            }
+            case "VariableInitializationDirectInvokeWithImplicitStatement": {
+                return IRVariableInitializationDirectInvokeWithImplicitStatement.jsonParse_IRVariableInitializationDirectInvokeWithImplicitStatement(value);
+            }
+            case "VariableInitializationDirectConstructorStatement": {
+                return IRVariableInitializationDirectConstructorStatement.jsonParse_IRVariableInitializationDirectConstructorStatement(value);
+            }
+            case "VariableInitializationDirectConstructorWithBoxStatement": {
+                return IRVariableInitializationDirectConstructorWithBoxStatement.jsonParse_IRVariableInitializationDirectConstructorWithBoxStatement(value);
+            }
+            case "VariableAssignmentStatement": {
+                return IRVariableAssignmentStatement.jsonParse_IRVariableAssignmentStatement(value);
+            }
+            case "VariableAssignmentDirectInvokeStatement": {
+                return IRVariableAssignmentDirectInvokeStatement.jsonParse_IRVariableAssignmentDirectInvokeStatement(value);
+            }
+            case "VariableAssignmentDirectInvokeWithImplicitStatement": {
+                return IRVariableAssignmentDirectInvokeWithImplicitStatement.jsonParse_IRVariableAssignmentDirectInvokeWithImplicitStatement(value);
+            }
+            case "VariableAssignmentDirectConstructorStatement": {
+                return IRVariableAssignmentDirectConstructorStatement.jsonParse_IRVariableAssignmentDirectConstructorStatement(value);
+            }
+            case "VariableAssignmentDirectConstructorWithBoxStatement": {
+                return IRVariableAssignmentDirectConstructorWithBoxStatement.jsonParse_IRVariableAssignmentDirectConstructorWithBoxStatement(value);
+            }
+            case "UpdateLocalDirectStatement": {
+                return IRUpdateLocalDirectStatement.jsonParse_IRUpdateLocalDirectStatement(value);
+            }
+            case "UpdateParamDirectStatement": {
+                return IRUpdateParamDirectStatement.jsonParse_IRUpdateParamDirectStatement(value);
+            }
+            case "ReturnVoidSimpleStatement": {
+                return IRReturnVoidSimpleStatement.jsonParse_IRReturnVoidSimpleStatement(value);
+            }
+            case "ReturnValueSimpleStatement": {
+                return IRReturnValueSimpleStatement.jsonParse_IRReturnValueSimpleStatement(value);
+            }
+            case "ReturnDirectInvokeStatement": {
+                return IRReturnDirectInvokeStatement.jsonParse_IRReturnDirectInvokeStatement(value);
+            }
+            case "ReturnDirectInvokeImplicitsStatement": {
+                return IRReturnDirectInvokeImplicitsStatement.jsonParse_IRReturnDirectInvokeImplicitsStatement(value);
+            }
+            case "ReturnDirectConstructStatement": {
+                return IRReturnDirectConstructStatement.jsonParse_IRReturnDirectConstructStatement(value);
+            }
+            case "ReturnDirectConstructWithBoxStatement": {
+                return IRReturnDirectConstructWithBoxStatement.jsonParse_IRReturnDirectConstructWithBoxStatement(value);
+            }
+            case "VoidInvokeStatement": {
+                return IRVoidInvokeStatement.jsonParse_IRVoidInvokeStatement(value);
+            }
+            case "ChkLogicImpliesShortCircuitStatement": {
+                return IRChkLogicImpliesShortCircuitStatement.jsonParse_IRChkLogicImpliesShortCircuitStatement(value);
+            }
+            case "LogicConditionalStatement": {
+                return IRLogicConditionalStatement.jsonParse_IRLogicConditionalStatement(value);
+            }
+            case "SimpleIfStatement": {
+                return IRSimpleIfStatement.jsonParse_IRSimpleIfStatement(value);
+            }
+            case "SimpleIfElseStatement": {
+                return IRSimpleIfElseStatement.jsonParse_IRSimpleIfElseStatement(value);
+            }
+            case "MatchExactStatement": {
+                return IRMatchExactStatement.jsonParse_IRMatchExactStatement(value);
+            }
+            case "MatchGeneralStatement": {
+                return IRMatchGeneralStatement.jsonParse_IRMatchGeneralStatement(value);
+            }
+            case "BlockStatement": {
+                return IRBlockStatement.jsonParse_IRBlockStatement(value);
+            }
+            case "ErrorAdditionBoundsCheckStatement": {
+                return IRErrorAdditionBoundsCheckStatement.jsonParse_IRErrorAdditionBoundsCheckStatement(value);
+            }
+            case "ErrorSubtractionBoundsCheckStatement": {
+                return IRErrorSubtractionBoundsCheckStatement.jsonParse_IRErrorSubtractionBoundsCheckStatement(value);
+            }
+            case "ErrorMultiplicationBoundsCheckStatement": {
+                return IRErrorMultiplicationBoundsCheckStatement.jsonParse_IRErrorMultiplicationBoundsCheckStatement(value);
+            }
+            case "ErrorDivisionByZeroCheckStatement": {
+                return IRErrorDivisionByZeroCheckStatement.jsonParse_IRErrorDivisionByZeroCheckStatement(value);
+            }
+            case "ErrorTypeAssertionCheckStatement": {
+                return IRErrorTypeAssertionCheckStatement.jsonParse_IRErrorTypeAssertionCheckStatement(value);
+            }
+            case "ErrorExhaustiveStatement": {
+                return IRErrorExhaustiveStatement.jsonParse_IRErrorExhaustiveStatement(value);
+            }
+            case "TypeDeclSizeRangeCheckCStringStatement": {
+                return IRTypeDeclSizeRangeCheckCStringStatement.jsonParse_IRTypeDeclSizeRangeCheckCStringStatement(value);
+            }
+            case "TypeDeclSizeRangeCheckUnicodeStringStatement": {
+                return IRTypeDeclSizeRangeCheckUnicodeStringStatement.jsonParse_IRTypeDeclSizeRangeCheckUnicodeStringStatement(value);
+            }
+            case "TypeDeclNumericRangeCheckStatement": {
+                return IRTypeDeclNumericRangeCheckStatement.jsonParse_IRTypeDeclNumericRangeCheckStatement(value);
+            }
+            case "TypeDeclFormatCheckCStringStatement": {
+                return IRTypeDeclFormatCheckCStringStatement.jsonParse_IRTypeDeclFormatCheckCStringStatement(value);
+            }
+            case "TypeDeclFormatCheckUnicodeStringStatement": {
+                return IRTypeDeclFormatCheckUnicodeStringStatement.jsonParse_IRTypeDeclFormatCheckUnicodeStringStatement(value);
+            }
+            case "TypeDeclInvariantCheckStatement": {
+                return IRTypeDeclInvariantCheckStatement.jsonParse_IRTypeDeclInvariantCheckStatement(value);
+            }
+            case "EntityInvariantCheckStatement": {
+                return IREntityInvariantCheckStatement.jsonParse_IREntityInvariantCheckStatement(value);
+            }
+            case "PreconditionCheckStatement": {
+                return IRPreconditionCheckStatement.jsonParse_IRPreconditionCheckStatement(value);
+            }
+            case "PostconditionCheckStatement": {
+                return IRPostconditionCheckStatement.jsonParse_IRPostconditionCheckStatement(value);
+            }
+            case "AbortStatement": {
+                return IRAbortStatement.jsonParse_IRAbortStatement(value);
+            }
+            case "AssertStatement": {
+                return IRAssertStatement.jsonParse_IRAssertStatement(value);
+            }
+            case "DebugStatement": {
+                return IRDebugStatement.jsonParse_IRDebugStatement(value);
+            }
+            default: {
+                throw new Error(`Unknown statement type: ${kind}`);
+            }
+        }
     }
 }
 
@@ -496,32 +1505,43 @@ abstract class IRAtomicStatement extends IRStatement {
         super(tag);
     }
 
-    static parseBAPIAsIRAtomicStatement(lexer: BAPILexer): IRAtomicStatement {
-        return IRStatement.parseBAPI(lexer) as IRAtomicStatement;
+    static jsonEmit_IRAtomicStatement(stmt: IRAtomicStatement): [string, object] {
+        return IRStatement.jsonEmit_IRStatement(stmt);
+    }
+
+    static jsonParse_IRAtomicStatement(obj: any): IRStatement {
+        return IRStatement.jsonParse_IRStatement(obj);
     }
 }
 
 /* Represent temporary variable assignment statements */
 abstract class IRTempAssignStatement extends IRAtomicStatement {
     readonly ttype: IRTypeSignature;
-    readonly tname: string;
+    readonly tvid: number;
 
-    constructor(tag: IRStatementTag, tname: string, ttype: IRTypeSignature) {
+    constructor(tag: IRStatementTag, tvid: number, ttype: IRTypeSignature) {
         super(tag);
-        this.tname = tname;
+        this.tvid = tvid;
         this.ttype = ttype;
     }
 
-    toBAPI_IRTempAssignStatement(): string {
-        assert(false, "IRTempAssignStatement.toBAPI__IRTempAssignStatement not implemented");
+    static jsonEmit_IRTempAssignStatement(stmt: IRTempAssignStatement): [string, object] {
+        return IRStatement.jsonEmit_IRStatement(stmt);
     }
 
-    static parseBAPI_IRTempAssignStatement(lexer: BAPILexer): {tname: string, ttype: IRTypeSignature} {
-        assert(false, "IRTempAssignStatement.parseBAPI_IRTempAssignStatement not implemented");
+    static jsonParse_IRTempAssignStatement(obj: any): IRTempAssignStatement {
+        return IRStatement.jsonParse_IRStatement(obj) as IRTempAssignStatement;
     }
 
-    static parseBAPIAsIRTempAssignStatement(lexer: BAPILexer): IRTempAssignStatement {
-        return IRStatement.parseBAPI(lexer) as IRTempAssignStatement;
+    static jsonEmitMeta_IRTempAssignStatement(stmt: IRTempAssignStatement): object {
+        return {
+            ttype: IRTypeSignature.jsonEmit_IRTypeSignature(stmt.ttype),
+            tvid: stmt.tvid
+        };
+    }
+
+    static jsonParseMeta_IRTempAssignStatement(obj: any): [number, IRTypeSignature] {
+        return [obj.tvid, IRTypeSignature.jsonParse_IRTypeSignature(obj.ttype)];
     }
 }
 
@@ -534,23 +1554,13 @@ abstract class IRReturnSimpleStatement extends IRAtomicStatement {
     override isTerminalStatement(): boolean { 
         return true; 
     }
-}
 
-/* Represent return statement that involve ref/out/out?/inout parameters and thus have an implicit variable to hold the returned value */
-abstract class IRReturnWithImplicitStatement extends IRAtomicStatement {
-    readonly implicitvar: string;
-
-    constructor(tag: IRStatementTag, implicitvar: string) {
-        super(tag);
-        this.implicitvar = implicitvar;
+    static jsonEmit_IRReturnSimpleStatement(stmt: IRReturnSimpleStatement): [string, object] {
+        return IRStatement.jsonEmit_IRStatement(stmt);
     }
 
-    override isTerminalStatement(): boolean { 
-        return true; 
-    }
-
-    override isSimpleStatement(): boolean {
-        return false;
+    static jsonParse_IRReturnSimpleStatement(obj: any): IRReturnSimpleStatement {
+        return IRStatement.jsonParse_IRStatement(obj) as IRReturnSimpleStatement;
     }
 }
 
@@ -576,12 +1586,30 @@ abstract class IRErrorCheckStatement extends IRAtomicStatement {
         return false;
     }
 
-    toBAPI_IRErrorCheckStatement(): string {
-        assert(false, "IRErrorCheckStatement.toBAPI__IRErrorCheckStatement not implemented");
+    static jsonEmit_IRErrorCheckStatement(stmt: IRErrorCheckStatement): [string, object] {
+        return IRStatement.jsonEmit_IRStatement(stmt);
     }
 
-    static parseBAPI_IRErrorCheckStatement(lexer: BAPILexer): {file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number} {
-        assert(false, "IRErrorCheckStatement.parseBAPI_IRErrorCheckStatement not implemented");
+    static jsonParse_IRErrorCheckStatement(obj: any): IRErrorCheckStatement {
+        return IRStatement.jsonParse_IRStatement(obj) as IRErrorCheckStatement;
+    }
+
+    static jsonEmitMeta_IRErrorCheckStatement(stmt: IRErrorCheckStatement): object {
+        return {
+            file: stmt.file,
+            sinfo: stmt.sinfo.jsonEmit(),
+            diagnosticTag: stmt.diagnosticTag === undefined ? null : ["some", stmt.diagnosticTag],
+            checkID: stmt.checkID
+        };
+    }
+
+    static jsonParseMeta_IRErrorCheckStatement(obj: any): [string, IRSourceInfo, string | undefined, number] {
+        return [
+            obj.file,
+            IRSourceInfo.jsonParse(obj.sinfo),
+            obj.diagnosticTag === null ? undefined : obj.diagnosticTag[1],
+            obj.checkID
+        ];
     }
 }
 
@@ -598,12 +1626,24 @@ abstract class IRErrorBinArithCheckStatement extends IRErrorCheckStatement {
         this.optypechk = optypechk;
     }
 
-    toBAPI_IRErrorBinArithCheckStatement(): string {
-        assert(false, "IRErrorBinArithCheckStatement.toBAPI__IRErrorBinArithCheckStatement not implemented");
+    static jsonEmit_IRErrorBinArithCheckStatement(stmt: IRErrorBinArithCheckStatement): [string, object] {
+        return IRStatement.jsonEmit_IRStatement(stmt);
     }
 
-    static parseBAPI_IRErrorBinArithCheckStatement(lexer: BAPILexer): {file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number, left: IRImmediateExpression, right: IRImmediateExpression, optypechk: "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float"} {
-        assert(false, "IRErrorBinArithCheckStatement.parseBAPI_IRErrorBinArithCheckStatement not implemented");
+    static jsonParse_IRErrorBinArithCheckStatement(obj: any): IRErrorBinArithCheckStatement {
+        return IRStatement.jsonParse_IRStatement(obj) as IRErrorBinArithCheckStatement;
+    }
+
+    static jsonEmitMeta_IRErrorBinArithCheckStatement(stmt: IRErrorBinArithCheckStatement): object {
+        return {
+            left: IRImmediateExpression.jsonEmit_IRImmediateExpression(stmt.left),
+            right: IRImmediateExpression.jsonEmit_IRImmediateExpression(stmt.right),
+            optypechk: stmt.optypechk
+        };
+    }
+
+    static jsonParseMeta_IRErrorBinArithCheckStatement(obj: any): [IRImmediateExpression, IRImmediateExpression, "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float"] {
+        return [IRImmediateExpression.jsonParse_IRImmediateExpression(obj.left), IRImmediateExpression.jsonParse_IRImmediateExpression(obj.right), obj.optypechk as "Nat" | "Int" | "ChkNat" | "ChkInt" | "Float"];
     }
 }
 
@@ -615,12 +1655,22 @@ abstract class IRErrorTypedStringCheckStatement extends IRErrorCheckStatement {
         this.strexp = strexp;
     }
 
-    toBAPI_IRErrorTypedStringCheckStatement(): string {
-        assert(false, "IRErrorTypedStringCheckStatement.toBAPI__IRErrorTypedStringCheckStatement not implemented");
+    static jsonEmit_IRErrorTypedStringCheckStatement(stmt: IRErrorTypedStringCheckStatement): [string, object] {
+        return IRStatement.jsonEmit_IRStatement(stmt);
     }
 
-    static parseBAPI_IRErrorTypedStringCheckStatement(lexer: BAPILexer): {file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number, strexp: IRImmediateExpression} {
-        assert(false, "IRErrorTypedStringCheckStatement.parseBAPI_IRErrorTypedStringCheckStatement not implemented");
+    static jsonParse_IRErrorTypedStringCheckStatement(obj: any): IRErrorTypedStringCheckStatement {
+        return IRStatement.jsonParse_IRStatement(obj) as IRErrorTypedStringCheckStatement;
+    }
+
+    static jsonEmitMeta_IRErrorTypedStringCheckStatement(stmt: IRErrorTypedStringCheckStatement): object {
+        return {
+            strexp: IRImmediateExpression.jsonEmit_IRImmediateExpression(stmt.strexp)
+        };
+    }
+
+    static jsonParseMeta_IRErrorTypedStringCheckStatement(obj: any): [IRImmediateExpression] {
+        return [IRImmediateExpression.jsonParse_IRImmediateExpression(obj.strexp)];
     }
 }
 
@@ -632,15 +1682,11 @@ class IRLiteralNoneExpression extends IRLiteralExpression {
         super(IRExpressionTag.IRLiteralNoneExpression);
     }
 
-    override toBAPI(): string {
-        return 'Assembly::LiteralNoneExpression{}';
+    static jsonEmit_IRLiteralNoneExpression(exp: IRLiteralNoneExpression): object {
+        return {};
     }
 
-    static parseBAPIAsIRLiteralNoneExpression(lexer: BAPILexer): IRLiteralNoneExpression {
-        lexer.ensureAndConsumeToken(BAPITokenKind.TypeIdentifier);
-        lexer.ensureAndConsumeSymbol("{");
-        lexer.ensureAndConsumeSymbol("}");
-
+    static jsonParse_IRLiteralNoneExpression(obj: any): IRLiteralNoneExpression {
         return new IRLiteralNoneExpression();
     }
 }
@@ -653,17 +1699,14 @@ class IRLiteralBoolExpression extends IRLiteralExpression {
         this.value = value;
     }
 
-    override toBAPI(): string {
-        return `Assembly::LiteralBoolExpression{${this.value ? "true" : "false"}}`;
+    static jsonEmit_IRLiteralBoolExpression(exp: IRLiteralBoolExpression): object {
+        return {
+            value: exp.value
+        };
     }
 
-    static parseBAPIAsIRLiteralBoolExpression(lexer: BAPILexer): IRLiteralBoolExpression {
-        lexer.ensureAndConsumeToken(BAPITokenKind.TypeIdentifier);
-        lexer.ensureAndConsumeSymbol("{");
-        const value = lexer.consumeToken().kind === BAPITokenKind.TrueLiteral;
-        lexer.ensureAndConsumeSymbol("}");
-
-        return new IRLiteralBoolExpression(value);
+    static jsonParse_IRLiteralBoolExpression(obj: any): IRLiteralBoolExpression {
+        return new IRLiteralBoolExpression(obj.value);
     }
 }
     
@@ -674,6 +1717,14 @@ abstract class IRLiteralIntegralNumberExpression extends IRLiteralExpression {
         super(tag);
         this.value = value;
     }
+
+    static jsonEmit_IRLiteralIntegralNumberExpression(exp: IRLiteralIntegralNumberExpression): [string, object] {
+        return IRExpression.jsonEmit_IRExpression(exp);
+    }
+
+    static jsonParse_IRLiteralIntegralNumberExpression(obj: any): IRLiteralIntegralNumberExpression {
+        return IRExpression.jsonParse_IRExpression(obj) as IRLiteralIntegralNumberExpression;
+    }
 }
 
 class IRLiteralNatExpression extends IRLiteralIntegralNumberExpression {
@@ -681,17 +1732,14 @@ class IRLiteralNatExpression extends IRLiteralIntegralNumberExpression {
         super(IRExpressionTag.IRLiteralNatExpression, value);
     }
 
-    override toBAPI(): string {
-        return `Assembly::LiteralNatExpression{${this.value}n}`;
+    static jsonEmit_IRLiteralNatExpression(exp: IRLiteralNatExpression): object {
+        return {
+            value: exp.value.slice(0, -1)
+        };
     }
-    
-    static parseBAPIAsIRLiteralNatExpression(lexer: BAPILexer): IRLiteralNatExpression {
-        lexer.ensureAndConsumeToken(BAPITokenKind.TypeIdentifier);
-        lexer.ensureAndConsumeSymbol("{");
-        const value = lexer.ensureAndConsumeToken(BAPITokenKind.NatLiteral);
-        lexer.ensureAndConsumeSymbol("}");
 
-        return new IRLiteralNatExpression(value.slice(0, -1)); //remove the trailing 'n' from the literal
+    static jsonParse_IRLiteralNatExpression(obj: any): IRLiteralNatExpression {
+        return new IRLiteralNatExpression(`${obj.value}n`);
     }
 }
 
@@ -700,17 +1748,14 @@ class IRLiteralIntExpression extends IRLiteralIntegralNumberExpression {
         super(IRExpressionTag.IRLiteralIntExpression, value);
     }
 
-    override toBAPI(): string {
-        return `Assembly::LiteralIntExpression{${this.value}i}`;
+    static jsonEmit_IRLiteralIntExpression(exp: IRLiteralIntExpression): object {
+        return {
+            value: exp.value.slice(0, -1)
+        };
     }
-    
-    static parseBAPIAsIRLiteralIntExpression(lexer: BAPILexer): IRLiteralIntExpression {
-        lexer.ensureAndConsumeToken(BAPITokenKind.TypeIdentifier);
-        lexer.ensureAndConsumeSymbol("{");
-        const value = lexer.ensureAndConsumeToken(BAPITokenKind.IntLiteral);
-        lexer.ensureAndConsumeSymbol("}");
 
-        return new IRLiteralIntExpression(value.slice(0, -1)); //remove the trailing 'i' from the literal
+    static jsonParse_IRLiteralIntExpression(obj: any): IRLiteralIntExpression {
+        return new IRLiteralIntExpression(`${obj.value}i`);
     }
 }
 
@@ -719,17 +1764,14 @@ class IRLiteralChkNatExpression extends IRLiteralIntegralNumberExpression {
         super(IRExpressionTag.IRLiteralChkNatExpression, value);
     }
 
-    override toBAPI(): string {
-        return `Assembly::LiteralChkNatExpression{${this.value}N}`;
+    static jsonEmit_IRLiteralChkNatExpression(exp: IRLiteralChkNatExpression): object {
+        return {
+            value: exp.value.slice(0, -1)
+        };
     }
 
-    static parseBAPIAsIRLiteralChkNatExpression(lexer: BAPILexer): IRLiteralChkNatExpression {
-        lexer.ensureAndConsumeToken(BAPITokenKind.TypeIdentifier);
-        lexer.ensureAndConsumeSymbol("{");
-        const value = lexer.ensureAndConsumeToken(BAPITokenKind.ChkNatLiteral);
-        lexer.ensureAndConsumeSymbol("}");
-        
-        return new IRLiteralChkNatExpression(value.slice(0, -1)); //remove the trailing 'N' from the literal
+    static jsonParse_IRLiteralChkNatExpression(obj: any): IRLiteralChkNatExpression {
+        return new IRLiteralChkNatExpression(`${obj.value}N`);
     }
 }
 
@@ -738,17 +1780,14 @@ class IRLiteralChkIntExpression extends IRLiteralIntegralNumberExpression {
         super(IRExpressionTag.IRLiteralChkIntExpression, value);
     }
 
-    override toBAPI(): string {
-        return `Assembly::LiteralChkIntExpression{${this.value}I}`;
+    static jsonEmit_IRLiteralChkIntExpression(exp: IRLiteralChkIntExpression): object {
+        return {
+            value: exp.value.slice(0, -1)
+        };
     }
 
-    static parseBAPIAsIRLiteralChkIntExpression(lexer: BAPILexer): IRLiteralChkIntExpression {
-        lexer.ensureAndConsumeToken(BAPITokenKind.TypeIdentifier);
-        lexer.ensureAndConsumeSymbol("{");
-        const value = lexer.ensureAndConsumeToken(BAPITokenKind.ChkIntLiteral);
-        lexer.ensureAndConsumeSymbol("}");
-
-        return new IRLiteralChkIntExpression(value.slice(0, -1)); //remove the trailing 'I' from the literal
+    static jsonParse_IRLiteralChkIntExpression(obj: any): IRLiteralChkIntExpression {
+        return new IRLiteralChkIntExpression(`${obj.value}I`);
     }
 }
 
@@ -762,29 +1801,15 @@ class IRLiteralRationalExpression extends IRLiteralExpression {
         this.denominator = denominator;
     }
 
-    override toBAPI(): string {
-        if(this.denominator === "1") {
-            return `Assembly::LiteralRationalExpression{${this.numerator}R}`;
-        }
-        else {
-            return `Assembly::LiteralRationalExpression{${this.numerator}/${this.denominator}R}`;
-        }
+    static jsonEmit_IRLiteralRationalExpression(exp: IRLiteralRationalExpression): object {
+        return {
+            numerator: exp.numerator,
+            denominator: exp.denominator
+        };
     }
 
-    static parseBAPIAsIRLiteralRationalExpression(lexer: BAPILexer): IRLiteralRationalExpression {
-        lexer.ensureAndConsumeToken(BAPITokenKind.TypeIdentifier);
-        lexer.ensureAndConsumeSymbol("{");
-        const rlit = lexer.ensureAndConsumeToken(BAPITokenKind.RationalLiteral);
-        lexer.ensureAndConsumeSymbol("}");
-
-        if(!rlit.includes("/")) {
-            const numerator = rlit.slice(0, -1);
-            return new IRLiteralRationalExpression(numerator, "1");
-        }
-        else {
-            const [numerator, denominator] = rlit.slice(0, -1).split("/");
-            return new IRLiteralRationalExpression(numerator, denominator);
-        }
+    static jsonParse_IRLiteralRationalExpression(obj: any): IRLiteralRationalExpression {
+        assert(false, "TODO -- need to check this");
     }
 }
 
@@ -802,17 +1827,14 @@ class IRLiteralFloatExpression extends IRLiteralFloatingPointExpression {
         super(IRExpressionTag.IRLiteralFloatExpression, value);
     }
 
-    override toBAPI(): string {
-        return `Assembly::LiteralFloatExpression{${this.value}f}`;
+    static jsonEmit_IRLiteralFloatExpression(exp: IRLiteralFloatExpression): object {
+        return {
+            value: exp.value
+        };
     }
 
-    static parseBAPIAsIRLiteralFloatExpression(lexer: BAPILexer): IRLiteralFloatExpression {
-        lexer.ensureAndConsumeToken(BAPITokenKind.TypeIdentifier);
-        lexer.ensureAndConsumeSymbol("{");
-        const value = lexer.ensureAndConsumeToken(BAPITokenKind.FloatLiteral);
-        lexer.ensureAndConsumeSymbol("}");
-
-        return new IRLiteralFloatExpression(value.slice(0, -1)); //remove the trailing 'f' from the literal
+    static jsonParse_IRLiteralFloatExpression(obj: any): IRLiteralFloatExpression {
+        return new IRLiteralFloatExpression(`${obj.value}f`);
     }
 }
 
@@ -821,17 +1843,12 @@ class IRLiteralDecimalExpression extends IRLiteralFloatingPointExpression {
         super(IRExpressionTag.IRLiteralDecimalExpression, value);
     }
 
-    override toBAPI(): string {
-        return `Assembly::LiteralDecimalExpression{${this.value}d}`;
+    static jsonEmit_IRLiteralDecimalExpression(exp: IRLiteralDecimalExpression): object {
+        assert(false, "IRLiteralDecimalExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRLiteralDecimalExpression(lexer: BAPILexer): IRLiteralDecimalExpression {
-        lexer.ensureAndConsumeToken(BAPITokenKind.TypeIdentifier);
-        lexer.ensureAndConsumeSymbol("{");
-        const value = lexer.ensureAndConsumeToken(BAPITokenKind.DecimalLiteral);
-        lexer.ensureAndConsumeSymbol("}");
-        
-        return new IRLiteralDecimalExpression(value.slice(0, -1)); //remove the trailing 'd' from the literal
+    static jsonParse_IRLiteralDecimalExpression(obj: any): IRLiteralDecimalExpression {
+        assert(false, "IRLiteralDecimalExpression.jsonParse not implemented");
     }
 }
 
@@ -840,12 +1857,12 @@ class IRLiteralDecimalDegreeExpression extends IRLiteralFloatingPointExpression 
         super(IRExpressionTag.IRLiteralDecimalDegreeExpression, value);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRLiteralDecimalDegreeExpression.toBAPI not implemented");
+    static jsonEmit_IRLiteralDecimalDegreeExpression(exp: IRLiteralDecimalDegreeExpression): object {
+        assert(false, "IRLiteralDecimalDegreeExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRLiteralDecimalDegreeExpression(lexer: BAPILexer): IRLiteralDecimalDegreeExpression {
-        assert(false, "IRLiteralDecimalDegreeExpression.parseBAPI not implemented");
+    static jsonParse_IRLiteralDecimalDegreeExpression(obj: any): IRLiteralDecimalDegreeExpression {
+        assert(false, "IRLiteralDecimalDegreeExpression.jsonParse not implemented");
     }
 }
 
@@ -859,12 +1876,12 @@ class IRLiteralLatLongCoordinateExpression extends IRLiteralExpression {
         this.longitude = longitude;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRLiteralLatLongCoordinateExpression.toBAPI not implemented");
+    static jsonEmit_IRLiteralLatLongCoordinateExpression(exp: IRLiteralLatLongCoordinateExpression): object {
+        assert(false, "IRLiteralLatLongCoordinateExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRLiteralLatLongCoordinateExpression(lexer: BAPILexer): IRLiteralLatLongCoordinateExpression {
-        assert(false, "IRLiteralLatLongCoordinateExpression.parseBAPI not implemented");
+    static jsonParse_IRLiteralLatLongCoordinateExpression(obj: any): IRLiteralLatLongCoordinateExpression {
+        assert(false, "IRLiteralLatLongCoordinateExpression.jsonParse not implemented");
     }
 }
 
@@ -878,12 +1895,12 @@ class IRLiteralComplexExpression extends IRLiteralExpression {
         this.imaginary = imaginary;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRLiteralComplexExpression.toBAPI not implemented");
+    static jsonEmit_IRLiteralComplexExpression(exp: IRLiteralComplexExpression): object {
+        assert(false, "IRLiteralComplexExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRLiteralComplexExpression(lexer: BAPILexer): IRLiteralComplexExpression {
-        assert(false, "IRLiteralComplexExpression.parseBAPI not implemented");
+    static jsonParse_IRLiteralComplexExpression(obj: any): IRLiteralComplexExpression {
+        assert(false, "IRLiteralComplexExpression.jsonParse not implemented");
     }
 }
 
@@ -895,12 +1912,12 @@ class IRLiteralByteBufferExpression extends IRLiteralExpression {
         this.bytes = bytes;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRLiteralByteBufferExpression.toBAPI not implemented");
+    static jsonEmit_IRLiteralByteBufferExpression(exp: IRLiteralByteBufferExpression): object {
+        assert(false, "IRLiteralByteBufferExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRLiteralByteBufferExpression(lexer: BAPILexer): IRLiteralByteBufferExpression {
-        assert(false, "IRLiteralByteBufferExpression.parseBAPI not implemented");
+    static jsonParse_IRLiteralByteBufferExpression(obj: any): IRLiteralByteBufferExpression {
+        assert(false, "IRLiteralByteBufferExpression.jsonParse not implemented");
     }
 }
 
@@ -912,12 +1929,12 @@ class IRLiteralUUIDv4Expression extends IRLiteralExpression {
         this.bytes = bytes;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRLiteralUUIDv4Expression.toBAPI not implemented");
+    static jsonEmit_IRLiteralUUIDv4Expression(exp: IRLiteralUUIDv4Expression): object {
+        assert(false, "IRLiteralUUIDv4Expression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRLiteralUUIDv4Expression(lexer: BAPILexer): IRLiteralUUIDv4Expression {
-        assert(false, "IRLiteralUUIDv4Expression.parseBAPI not implemented");
+    static jsonParse_IRLiteralUUIDv4Expression(obj: any): IRLiteralUUIDv4Expression {
+        assert(false, "IRLiteralUUIDv4Expression.jsonParse not implemented");
     }
 }
 
@@ -929,12 +1946,12 @@ class IRLiteralUUIDv7Expression extends IRLiteralExpression {
         this.bytes = bytes;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRLiteralUUIDv7Expression.toBAPI not implemented");
+    static jsonEmit_IRLiteralUUIDv7Expression(exp: IRLiteralUUIDv7Expression): object {
+        assert(false, "IRLiteralUUIDv7Expression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRLiteralUUIDv7Expression(lexer: BAPILexer): IRLiteralUUIDv7Expression {
-        assert(false, "IRLiteralUUIDv7Expression.parseBAPI not implemented");
+    static jsonParse_IRLiteralUUIDv7Expression(obj: any): IRLiteralUUIDv7Expression {
+        assert(false, "IRLiteralUUIDv7Expression.jsonParse not implemented");
     }
 }
 
@@ -946,12 +1963,12 @@ class IRLiteralSHAContentHashExpression extends IRLiteralExpression {
         this.bytes = bytes;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRLiteralSHAContentHashExpression.toBAPI not implemented");
+    static jsonEmit_IRLiteralSHAContentHashExpression(exp: IRLiteralSHAContentHashExpression): object {
+        assert(false, "IRLiteralSHAContentHashExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRLiteralSHAContentHashExpression(lexer: BAPILexer): IRLiteralSHAContentHashExpression {
-        assert(false, "IRLiteralSHAContentHashExpression.parseBAPI not implemented");
+    static jsonParse_IRLiteralSHAContentHashExpression(obj: any): IRLiteralSHAContentHashExpression {
+        assert(false, "IRLiteralSHAContentHashExpression.jsonParse not implemented");
     }
 }
 
@@ -966,12 +1983,12 @@ class IRDateRepresentation {
         this.day = day;
     }
 
-    toBAPI(): string {
-        assert(false, "IRDateRepresentation.toBAPI not implemented");
+    static jsonEmit_IRDateRepresentation(exp: IRDateRepresentation): object {
+        assert(false, "IRDateRepresentation.jsonEmit not implemented");
     }
 
-    static parseBAPI(lexer: BAPILexer): IRDateRepresentation {
-        assert(false, "IRDateRepresentation.parseBAPI not implemented");
+    static jsonParse_IRDateRepresentation(obj: any): IRDateRepresentation {
+        assert(false, "IRDateRepresentation.jsonParse not implemented");
     }
 }
 
@@ -986,12 +2003,12 @@ class IRTimeRepresentation {
         this.second = second;
     }
 
-    toBAPI(): string {
-        assert(false, "IRTimeRepresentation.toBAPI not implemented");
+    static jsonEmit_IRTimeRepresentation(exp: IRTimeRepresentation): object {
+        assert(false, "IRTimeRepresentation.jsonEmit not implemented");
     }
 
-    static parseBAPI(lexer: BAPILexer): IRTimeRepresentation {
-        assert(false, "IRTimeRepresentation.parseBAPI not implemented");
+    static jsonParse_IRTimeRepresentation(obj: any): IRTimeRepresentation {
+        assert(false, "IRTimeRepresentation.jsonParse not implemented");
     }
 }
 
@@ -1007,12 +2024,12 @@ class IRLiteralTZDateTimeExpression extends IRLiteralExpression {
         this.timezone = timezone;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRLiteralTZDateTimeExpression.toBAPI not implemented");
+    static jsonEmit_IRLiteralTZDateTimeExpression(exp: IRLiteralTZDateTimeExpression): object {
+        assert(false, "IRLiteralTZDateTimeExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRLiteralTZDateTimeExpression(lexer: BAPILexer): IRLiteralTZDateTimeExpression {
-        assert(false, "IRLiteralTZDateTimeExpression.parseBAPI not implemented");
+    static jsonParse_IRLiteralTZDateTimeExpression(obj: any): IRLiteralTZDateTimeExpression {
+        assert(false, "IRLiteralTZDateTimeExpression.jsonParse not implemented");
     }
 }
 
@@ -1026,12 +2043,12 @@ class IRLiteralTAITimeExpression extends IRLiteralExpression {
         this.time = time;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRLiteralTAITimeExpression.toBAPI not implemented");
+    static jsonEmit_IRLiteralTAITimeExpression(exp: IRLiteralTAITimeExpression): object {
+        assert(false, "IRLiteralTAITimeExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRLiteralTAITimeExpression(lexer: BAPILexer): IRLiteralTAITimeExpression {
-        assert(false, "IRLiteralTAITimeExpression.parseBAPI not implemented");
+    static jsonParse_IRLiteralTAITimeExpression(obj: any): IRLiteralTAITimeExpression {
+        assert(false, "IRLiteralTAITimeExpression.jsonParse not implemented");
     }
 }
 
@@ -1043,12 +2060,12 @@ class IRLiteralPlainDateExpression extends IRLiteralExpression {
         this.date = date;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRLiteralPlainDateExpression.toBAPI not implemented");
+    static jsonEmit_IRLiteralPlainDateExpression(exp: IRLiteralPlainDateExpression): object {
+        assert(false, "IRLiteralPlainDateExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRLiteralPlainDateExpression(lexer: BAPILexer): IRLiteralPlainDateExpression {
-        assert(false, "IRLiteralPlainDateExpression.parseBAPI not implemented");
+    static jsonParse_IRLiteralPlainDateExpression(obj: any): IRLiteralPlainDateExpression {
+        assert(false, "IRLiteralPlainDateExpression.jsonParse not implemented");
     }
 }
 
@@ -1060,12 +2077,12 @@ class IRLiteralPlainTimeExpression extends IRLiteralExpression {
         this.time = time;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRLiteralPlainTimeExpression.toBAPI not implemented");
+    static jsonEmit_IRLiteralPlainTimeExpression(exp: IRLiteralPlainTimeExpression): object {
+        assert(false, "IRLiteralPlainTimeExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRLiteralPlainTimeExpression(lexer: BAPILexer): IRLiteralPlainTimeExpression {
-        assert(false, "IRLiteralPlainTimeExpression.parseBAPI not implemented");
+    static jsonParse_IRLiteralPlainTimeExpression(obj: any): IRLiteralPlainTimeExpression {
+        assert(false, "IRLiteralPlainTimeExpression.jsonParse not implemented");
     }
 }
 
@@ -1077,12 +2094,12 @@ class IRLiteralLogicalTimeExpression extends IRLiteralExpression {
         this.ticks = ticks;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRLiteralLogicalTimeExpression.toBAPI not implemented");
+    static jsonEmit_IRLiteralLogicalTimeExpression(exp: IRLiteralLogicalTimeExpression): object {
+        assert(false, "IRLiteralLogicalTimeExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRLiteralLogicalTimeExpression(lexer: BAPILexer): IRLiteralLogicalTimeExpression {
-        assert(false, "IRLiteralLogicalTimeExpression.parseBAPI not implemented");
+    static jsonParse_IRLiteralLogicalTimeExpression(obj: any): IRLiteralLogicalTimeExpression {
+        assert(false, "IRLiteralLogicalTimeExpression.jsonParse not implemented");
     }
 }
 
@@ -1098,12 +2115,12 @@ class IRLiteralISOTimeStampExpression extends IRLiteralExpression {
         this.milliseconds = milliseconds;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRLiteralISOTimeStampExpression.toBAPI not implemented");
+    static jsonEmit_IRLiteralISOTimeStampExpression(exp: IRLiteralISOTimeStampExpression): object {
+        assert(false, "IRLiteralISOTimeStampExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRLiteralISOTimeStampExpression(lexer: BAPILexer): IRLiteralISOTimeStampExpression {
-        assert(false, "IRLiteralISOTimeStampExpression.parseBAPI not implemented");
+    static jsonParse_IRLiteralISOTimeStampExpression(obj: any): IRLiteralISOTimeStampExpression {
+        assert(false, "IRLiteralISOTimeStampExpression.jsonParse not implemented");
     }
 }
 
@@ -1118,12 +2135,12 @@ class IRDeltaDateRepresentation {
         this.days = days;
     }
 
-    toBAPI(): string {
-        assert(false, "IRDeltaDateRepresentation.toBAPI not implemented");
+    static jsonEmit_IRDeltaDateRepresentation(exp: IRDeltaDateRepresentation): object {
+        assert(false, "IRDeltaDateRepresentation.jsonEmit not implemented");
     }
 
-    static parseBAPI(lexer: BAPILexer): IRDeltaDateRepresentation {
-        assert(false, "IRDeltaDateRepresentation.parseBAPI not implemented");
+    static jsonParse_IRDeltaDateRepresentation(obj: any): IRDeltaDateRepresentation {
+        assert(false, "IRDeltaDateRepresentation.jsonParse not implemented");
     }
 }
 
@@ -1138,12 +2155,12 @@ class IRDeltaTimeRepresentation {
         this.seconds = seconds;
     }
 
-    toBAPI(): string {
-        assert(false, "IRDeltaTimeRepresentation.toBAPI not implemented");
+    static jsonEmit_IRDeltaTimeRepresentation(exp: IRDeltaTimeRepresentation): object {
+        assert(false, "IRDeltaTimeRepresentation.jsonEmit not implemented");
     }
 
-    static parseBAPI(lexer: BAPILexer): IRDeltaTimeRepresentation {
-        assert(false, "IRDeltaTimeRepresentation.parseBAPI not implemented");
+    static jsonParse_IRDeltaTimeRepresentation(obj: any): IRDeltaTimeRepresentation {
+        assert(false, "IRDeltaTimeRepresentation.jsonParse not implemented");
     }
 }
 
@@ -1159,12 +2176,12 @@ class IRLiteralDeltaDateTimeExpression extends IRLiteralExpression {
         this.deltatime = deltatime;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRLiteralDeltaDateTimeExpression.toBAPI not implemented");
+    static jsonEmit_IRLiteralDeltaDateTimeExpression(exp: IRLiteralDeltaDateTimeExpression): object {
+        assert(false, "IRLiteralDeltaDateTimeExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRLiteralDeltaDateTimeExpression(lexer: BAPILexer): IRLiteralDeltaDateTimeExpression {
-        assert(false, "IRLiteralDeltaDateTimeExpression.parseBAPI not implemented");
+    static jsonParse_IRLiteralDeltaDateTimeExpression(obj: any): IRLiteralDeltaDateTimeExpression {
+        assert(false, "IRLiteralDeltaDateTimeExpression.jsonParse not implemented");
     }
 }
  
@@ -1182,12 +2199,12 @@ class IRLiteralDeltaISOTimeStampExpression extends IRLiteralExpression {
         this.deltamilliseconds = deltamilliseconds;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRLiteralDeltaISOTimeStampExpression.toBAPI not implemented");
+    static jsonEmit_IRLiteralDeltaISOTimeStampExpression(exp: IRLiteralDeltaISOTimeStampExpression): object {
+        assert(false, "IRLiteralDeltaISOTimeStampExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRLiteralDeltaISOTimeStampExpression(lexer: BAPILexer): IRLiteralDeltaISOTimeStampExpression {
-        assert(false, "IRLiteralDeltaISOTimeStampExpression.parseBAPI not implemented");
+    static jsonParse_IRLiteralDeltaISOTimeStampExpression(obj: any): IRLiteralDeltaISOTimeStampExpression {
+        assert(false, "IRLiteralDeltaISOTimeStampExpression.jsonParse not implemented");
     }
 } 
 
@@ -1201,12 +2218,12 @@ class IRLiteralDeltaSecondsExpression extends IRLiteralExpression {
         this.seconds = seconds;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRLiteralDeltaSecondsExpression.toBAPI not implemented");
+    static jsonEmit_IRLiteralDeltaSecondsExpression(exp: IRLiteralDeltaSecondsExpression): object {
+        assert(false, "IRLiteralDeltaSecondsExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRLiteralDeltaSecondsExpression(lexer: BAPILexer): IRLiteralDeltaSecondsExpression {
-        assert(false, "IRLiteralDeltaSecondsExpression.parseBAPI not implemented");
+    static jsonParse_IRLiteralDeltaSecondsExpression(obj: any): IRLiteralDeltaSecondsExpression {
+        assert(false, "IRLiteralDeltaSecondsExpression.jsonParse not implemented");
     }
 }
 
@@ -1220,12 +2237,12 @@ class IRLiteralDeltaLogicalTimeExpression extends IRLiteralExpression {
         this.ticks = ticks;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRLiteralDeltaLogicalTimeExpression.toBAPI not implemented");
+    static jsonEmit_IRLiteralDeltaLogicalTimeExpression(exp: IRLiteralDeltaLogicalTimeExpression): object {
+        assert(false, "IRLiteralDeltaLogicalTimeExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRLiteralDeltaLogicalTimeExpression(lexer: BAPILexer): IRLiteralDeltaLogicalTimeExpression {
-        assert(false, "IRLiteralDeltaLogicalTimeExpression.parseBAPI not implemented");
+    static jsonParse_IRLiteralDeltaLogicalTimeExpression(obj: any): IRLiteralDeltaLogicalTimeExpression {
+        assert(false, "IRLiteralDeltaLogicalTimeExpression.jsonParse not implemented");
     }
 }
 
@@ -1237,17 +2254,14 @@ class IRLiteralUnicodeRegexExpression extends IRLiteralExpression {
         this.regexID = regexID;
     }
 
-    override toBAPI(): string {
-        return `Assembly::LiteralUnicodeRegexExpression{${this.regexID}}`;
+    static jsonEmit_IRLiteralUnicodeRegexExpression(expr: IRLiteralUnicodeRegexExpression): object {
+        return {
+            regexID: expr.regexID
+        };
     }
 
-    static parseBAPIAsIRLiteralUnicodeRegexExpression(lexer: BAPILexer): IRLiteralUnicodeRegexExpression {
-        lexer.ensureAndConsumeToken(BAPITokenKind.TypeIdentifier);
-        lexer.ensureAndConsumeSymbol("{");
-        const regexID = parseInt(lexer.ensureAndConsumeToken(BAPITokenKind.NatLiteral));
-        lexer.ensureAndConsumeSymbol("}");
-
-        return new IRLiteralUnicodeRegexExpression(regexID);
+    static jsonParse_IRLiteralUnicodeRegexExpression(obj: any): IRLiteralUnicodeRegexExpression {
+        return new IRLiteralUnicodeRegexExpression(obj.regexID);
     }
 }
 
@@ -1259,17 +2273,14 @@ class IRLiteralCRegexExpression extends IRLiteralExpression {
         this.regexID = regexID;
     }
 
-    override toBAPI(): string {
-        return `Assembly::LiteralCRegexExpression{${this.regexID}}`;
+    static jsonEmit_IRLiteralCRegexExpression(expr: IRLiteralCRegexExpression): object {
+        return {
+            regexID: expr.regexID
+        };
     }
 
-    static parseBAPIAsIRLiteralCRegexExpression(lexer: BAPILexer): IRLiteralCRegexExpression {
-        lexer.ensureAndConsumeToken(BAPITokenKind.TypeIdentifier);
-        lexer.ensureAndConsumeSymbol("{");
-        const regexID = parseInt(lexer.ensureAndConsumeToken(BAPITokenKind.NatLiteral));
-        lexer.ensureAndConsumeSymbol("}");
-
-        return new IRLiteralCRegexExpression(regexID);
+    static jsonParse_IRLiteralCRegexExpression(obj: any): IRLiteralCRegexExpression {
+        return new IRLiteralCRegexExpression(obj.regexID);
     }
 }
 
@@ -1281,12 +2292,14 @@ class IRLiteralByteExpression extends IRLiteralExpression {
         this.value = value;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRLiteralByteExpression.toBAPI not implemented");
+    static jsonEmit_IRLiteralByteExpression(exp: IRLiteralByteExpression): object {
+        return {
+            value: exp.value
+        };
     }
 
-    static parseBAPIAsIRLiteralByteExpression(lexer: BAPILexer): IRLiteralByteExpression {
-        assert(false, "IRLiteralByteExpression.parseBAPI not implemented");
+    static jsonParse_IRLiteralByteExpression(obj: any): IRLiteralByteExpression {
+        return new IRLiteralByteExpression(obj.value);
     }
 }
 
@@ -1298,27 +2311,14 @@ class IRLiteralCCharExpression extends IRLiteralExpression {
         this.value = value;
     }
 
-    override toBAPI(): string {
-        if(40 <= this.value && this.value <= 126) {
-            return `Assembly::LiteralCCharExpression{c'${String.fromCharCode(this.value)}'}`;
-        }
-        else {
-            return `Assembly::LiteralCCharExpression{c'%x${this.value.toString(16)};'}`;
-        }
+    static jsonEmit_IRLiteralCCharExpression(exp: IRLiteralCCharExpression): object {
+        return {
+            value: String.fromCharCode(exp.value)
+        };
     }
 
-    static parseBAPIAsIRLiteralCCharExpression(lexer: BAPILexer): IRLiteralCCharExpression {
-        lexer.consumeToken(); //TypeIdentifier
-        lexer.ensureAndConsumeSymbol("{");
-        const cchar = lexer.ensureAndConsumeToken(BAPITokenKind.CCharLiteral).slice(2, -1); //remove c' and '
-        lexer.ensureAndConsumeSymbol("}");
-
-        if(!cchar.startsWith("%x")) {
-            return new IRLiteralCCharExpression(cchar.codePointAt(0) as number);
-        }
-        else {
-            return new IRLiteralCCharExpression(parseInt(cchar, 16));
-        }
+    static jsonParse_IRLiteralCCharExpression(obj: any): IRLiteralCCharExpression {
+        return new IRLiteralCCharExpression(obj.value.codePointAt(0) as number);
     }
 }
 
@@ -1330,27 +2330,14 @@ class IRLiteralUnicodeCharExpression extends IRLiteralExpression {
         this.value = value;
     }
 
-    override toBAPI(): string {
-        if(40 <= this.value && this.value <= 126) {
-            return `Assembly::LiteralUnicodeCharExpression{c"${String.fromCharCode(this.value)}"}`;
-        }
-        else {
-            return `Assembly::LiteralUnicodeCharExpression{c"%x${this.value.toString(16)};"}`;
-        }
+    static jsonEmit_IRLiteralUnicodeCharExpression(exp: IRLiteralUnicodeCharExpression): object {
+        return {
+            value: String.fromCharCode(exp.value)
+        };
     }
 
-    static parseBAPIAsIRLiteralUnicodeCharExpression(lexer: BAPILexer): IRLiteralUnicodeCharExpression {
-        lexer.consumeToken(); //TypeIdentifier
-        lexer.ensureAndConsumeSymbol("{");
-        const uchar = lexer.ensureAndConsumeToken(BAPITokenKind.UnicodeCharLiteral).slice(2, -1); //remove c" and "
-        lexer.ensureAndConsumeSymbol("}");
-
-        if(!uchar.startsWith("%x")) {
-            return new IRLiteralUnicodeCharExpression(uchar.codePointAt(0) as number);
-        }
-        else {
-            return new IRLiteralUnicodeCharExpression(parseInt(uchar, 16));
-        }
+    static jsonParse_IRLiteralUnicodeCharExpression(obj: any): IRLiteralUnicodeCharExpression {
+        return new IRLiteralUnicodeCharExpression(obj.value.codePointAt(0) as number);
     }
 }
 
@@ -1362,18 +2349,14 @@ class IRLiteralCStringExpression extends IRLiteralExpression {
         this.bytes = bytes;
     }
 
-    override toBAPI(): string {
-        const cbytes = emitUTF8BytesAsByteBufferLiteral(this.bytes);
-        return `Assembly::LiteralCStringExpression{${cbytes}}`;
+    static jsonEmit_IRLiteralCStringExpression(exp: IRLiteralCStringExpression): object {
+        return {
+            chars: exp.bytes
+        };
     }
 
-    static parseBAPIAsIRLiteralCStringExpression(lexer: BAPILexer): IRLiteralCStringExpression {
-        lexer.ensureAndConsumeToken(BAPITokenKind.TypeIdentifier);
-        lexer.ensureAndConsumeSymbol("{");
-        const bytes = parseUTF8BytesAsByteBufferLiteral(lexer);
-        lexer.ensureAndConsumeSymbol("}");
-
-        return new IRLiteralCStringExpression(bytes);
+    static jsonParse_IRLiteralCStringExpression(obj: any): IRLiteralCStringExpression {
+        return new IRLiteralCStringExpression(obj.chars);
     }
 }
 
@@ -1385,26 +2368,38 @@ class IRLiteralStringExpression extends IRLiteralExpression {
         this.bytes = bytes;
     }
 
-    override toBAPI(): string {
-        const uchars = emitUTF32BytesAsByteBufferLiteral(this.bytes);
-        return `Assembly::LiteralStringExpression{${uchars}}`;
+    static jsonEmit_IRLiteralStringExpression(exp: IRLiteralStringExpression): object {
+        return {
+            utf8chars: exp.bytes
+        };
     }
 
-    static parseBAPIAsIRLiteralStringExpression(lexer: BAPILexer): IRLiteralStringExpression {
-        lexer.ensureAndConsumeToken(BAPITokenKind.TypeIdentifier);
-        lexer.ensureAndConsumeSymbol("{");
-        const bytes = parseUTF32BytesAsByteBufferLiteral(lexer);
-        lexer.ensureAndConsumeSymbol("}");
-
-        return new IRLiteralStringExpression(bytes);
+    static jsonParse_IRLiteralStringExpression(obj: any): IRLiteralStringExpression {
+        return new IRLiteralStringExpression(obj.utf8chars);
     }
 }
 
 abstract class IRFormatStringComponent {
-    abstract toBAPI(): string;
+    static jsonEmit_IRFormatStringComponent(exp: IRFormatStringComponent): [string, object] {
+        if (exp instanceof IRFormatStringTextComponent) {
+            return ["Assembly::FormatStringTextComponent", IRFormatStringTextComponent.jsonEmit_IRFormatStringTextComponent(exp)];
+        } else if (exp instanceof IRFormatStringArgComponent) {
+            return ["Assembly::FormatStringArgComponent", IRFormatStringArgComponent.jsonEmit_IRFormatStringArgComponent(exp)];
+        } else {
+            assert(false, "Unknown IRFormatStringComponent type");
+        }
+    }
 
-    static parseBAPI(lexer: BAPILexer): IRFormatStringComponent {
-        assert(false, "IRFormatStringComponent.parseBAPI not implemented");
+    static jsonParse_IRFormatStringComponent(obj: any): IRFormatStringComponent {
+        const tag = obj[0] as string;
+
+        if (tag === "Assembly::FormatStringTextComponent") {
+            return IRFormatStringTextComponent.jsonParse_IRFormatStringTextComponent(obj[1]);
+        } else if (tag === "Assembly::FormatStringArgComponent") {
+            return IRFormatStringArgComponent.jsonParse_IRFormatStringArgComponent(obj[1]);
+        } else {
+            assert(false, "Unknown IRFormatStringComponent type");
+        }
     }
 }
 
@@ -1416,12 +2411,14 @@ class IRFormatStringTextComponent extends IRFormatStringComponent {
         this.bytes = bytes;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRFormatStringTextComponent.toBAPI not implemented");
+    static jsonEmit_IRFormatStringTextComponent(exp: IRFormatStringTextComponent): object {
+        return {
+            bytes: exp.bytes
+        };
     }
 
-    static parseBAPIAsIRFormatStringTextComponent(lexer: BAPILexer): IRFormatStringTextComponent {
-        assert(false, "IRFormatStringTextComponent.parseBAPI not implemented");
+    static jsonParse_IRFormatStringTextComponent(obj: any): IRFormatStringTextComponent {
+        return new IRFormatStringTextComponent(obj.bytes);
     }
 }
 
@@ -1435,12 +2432,15 @@ class IRFormatStringArgComponent extends IRFormatStringComponent {
         this.atype = atype;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRFormatStringArgComponent.toBAPI not implemented");
+    static jsonEmit_IRFormatStringArgComponent(exp: IRFormatStringArgComponent): object {
+        return {
+            aidx: exp.aidx,
+            atype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.atype)
+        };
     }
 
-    static parseBAPIAsIRFormatStringArgComponent(lexer: BAPILexer): IRFormatStringArgComponent {
-        assert(false, "IRFormatStringArgComponent.parseBAPI not implemented");
+    static jsonParse_IRFormatStringArgComponent(obj: any): IRFormatStringArgComponent {
+        return new IRFormatStringArgComponent(obj.aidx, IRTypeSignature.jsonParse_IRTypeSignature(obj.atype));
     }
 }
 
@@ -1454,12 +2454,15 @@ class IRLiteralFormatStringExpression extends IRLiteralExpression {
         this.fmts = fmts;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRLiteralFormatStringExpression.toBAPI not implemented");
+    static jsonEmit_IRLiteralFormatStringExpression(exp: IRLiteralFormatStringExpression): object {
+        return {
+            fmtid: exp.fmtid,
+            fmts: exp.fmts.map(f => IRFormatStringComponent.jsonEmit_IRFormatStringComponent(f))
+        };
     }
 
-    static parseBAPIAsIRLiteralFormatStringExpression(lexer: BAPILexer): IRLiteralFormatStringExpression {
-        assert(false, "IRLiteralFormatStringExpression.parseBAPI not implemented");
+    static jsonParse_IRLiteralFormatStringExpression(obj: any): IRLiteralFormatStringExpression {
+        return new IRLiteralFormatStringExpression(obj.fmtid, obj.fmts.map((f: any) => IRFormatStringComponent.jsonParse_IRFormatStringComponent(f)));
     }
 }
 
@@ -1473,12 +2476,15 @@ class IRLiteralFormatCStringExpression extends IRLiteralExpression {
         this.fmts = fmts;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRLiteralFormatCStringExpression.toBAPI not implemented");
+    static jsonEmit_IRLiteralFormatCStringExpression(exp: IRLiteralFormatCStringExpression): object {
+        return {
+            fmtid: exp.fmtid,
+            fmts: exp.fmts.map(f => IRFormatStringComponent.jsonEmit_IRFormatStringComponent(f))
+        };
     }
 
-    static parseBAPIAsIRLiteralFormatCStringExpression(lexer: BAPILexer): IRLiteralFormatCStringExpression {
-        assert(false, "IRLiteralFormatCStringExpression.parseBAPI not implemented");
+    static jsonParse_IRLiteralFormatCStringExpression(obj: any): IRLiteralFormatCStringExpression {
+        return new IRLiteralFormatCStringExpression(obj.fmtid, obj.fmts.map((f: any) => IRFormatStringComponent.jsonParse_IRFormatStringComponent(f)));
     }
 }
 
@@ -1496,12 +2502,18 @@ class IRLiteralTypedExpression extends IRLiteralExpression {
         this.constype = constype;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRLiteralTypedExpression.toBAPI not implemented");
+    static jsonEmit_IRLiteralTypedExpression(exp: IRLiteralTypedExpression): object {
+        return {
+            value: IRLiteralExpression.jsonEmit_IRLiteralExpression(exp.value),
+            constype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.constype)
+        };
     }
 
-    static parseBAPIAsIRLiteralTypedExpression(lexer: BAPILexer): IRLiteralTypedExpression {
-        assert(false, "IRLiteralTypedExpression.parseBAPI not implemented");
+    static jsonParse_IRLiteralTypedExpression(obj: any): IRLiteralTypedExpression {
+        return new IRLiteralTypedExpression(
+            IRLiteralExpression.jsonParse_IRLiteralExpression(obj.value),
+            IRTypeSignature.jsonParse_IRTypeSignature(obj.constype)
+        );
     }
 }
 
@@ -1514,12 +2526,18 @@ class IRLiteralTypedStringExpression extends IRLiteralExpression {
         this.bytes = bytes;
         this.constype = constype;
     }
-    override toBAPI(): string {
-        assert(false, "IRLiteralTypedStringExpression.toBAPI not implemented");
+    static jsonEmit_IRLiteralTypedStringExpression(exp: IRLiteralTypedStringExpression): object {
+        return {
+            bytes: exp.bytes,
+            constype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.constype)
+        };
     }
 
-    static parseBAPIAsIRLiteralTypedStringExpression(lexer: BAPILexer): IRLiteralTypedStringExpression {
-        assert(false, "IRLiteralTypedStringExpression.parseBAPI not implemented");
+    static jsonParse_IRLiteralTypedStringExpression(obj: any): IRLiteralTypedStringExpression {
+        return new IRLiteralTypedStringExpression(
+            obj.bytes,
+            IRTypeSignature.jsonParse_IRTypeSignature(obj.constype)
+        );
     }
 }
 
@@ -1533,12 +2551,18 @@ class IRLiteralTypedCStringExpression extends IRLiteralExpression {
         this.constype = constype;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRLiteralTypedCStringExpression.toBAPI not implemented");
+    static jsonEmit_IRLiteralTypedCStringExpression(exp: IRLiteralTypedCStringExpression): object {
+        return {
+            bytes: exp.bytes,
+            constype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.constype)
+        };
     }
 
-    static parseBAPIAsIRLiteralTypedCStringExpression(lexer: BAPILexer): IRLiteralTypedCStringExpression {
-        assert(false, "IRLiteralTypedCStringExpression.parseBAPI not implemented");
+    static jsonParse_IRLiteralTypedCStringExpression(obj: any): IRLiteralTypedCStringExpression {
+        return new IRLiteralTypedCStringExpression(
+            obj.bytes,
+            IRTypeSignature.jsonParse_IRTypeSignature(obj.constype)
+        );
     }
 }
 
@@ -1554,12 +2578,12 @@ class IRAccessEnvHasExpression extends IRExpression {
         return false;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRAccessEnvHasExpression.toBAPI not implemented");
+    static jsonEmit_IRAccessEnvHasExpression(exp: IRAccessEnvHasExpression): object {
+        assert(false, "IRAccessEnvHasExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRAccessEnvHasExpression(lexer: BAPILexer): IRAccessEnvHasExpression {
-        assert(false, "IRAccessEnvHasExpression.parseBAPI not implemented");
+    static jsonParse_IRAccessEnvHasExpression(obj: any): IRAccessEnvHasExpression {
+        assert(false, "IRAccessEnvHasExpression.jsonParse not implemented");
     }
 }
 
@@ -1575,12 +2599,12 @@ class IRAccessEnvGetExpression extends IRExpression {
         return false;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRAccessEnvGetExpression.toBAPI not implemented");
+    static jsonEmit_IRAccessEnvGetExpression(exp: IRAccessEnvGetExpression): object {
+        assert(false, "IRAccessEnvGetExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRAccessEnvGetExpression(lexer: BAPILexer): IRAccessEnvGetExpression {
-        assert(false, "IRAccessEnvGetExpression.parseBAPI not implemented");
+    static jsonParse_IRAccessEnvGetExpression(obj: any): IRAccessEnvGetExpression {
+        assert(false, "IRAccessEnvGetExpression.jsonParse not implemented");
     }
 }
 
@@ -1600,12 +2624,12 @@ class IRAccessEnvTryGetExpression extends IRExpression {
         return false;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRAccessEnvTryGetExpression.toBAPI not implemented");
+    static jsonEmit_IRAccessEnvTryGetExpression(exp: IRAccessEnvTryGetExpression): object {
+        assert(false, "IRAccessEnvTryGetExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRAccessEnvTryGetExpression(lexer: BAPILexer): IRAccessEnvTryGetExpression {
-        assert(false, "IRAccessEnvTryGetExpression.parseBAPI not implemented");
+    static jsonParse_IRAccessEnvTryGetExpression(obj: any): IRAccessEnvTryGetExpression {
+        assert(false, "IRAccessEnvTryGetExpression.jsonParse not implemented");
     }
 }
 
@@ -1618,12 +2642,12 @@ class IRTaskAccessIDExpression extends IRExpression {
         return false;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRTaskAccessIDExpression.toBAPI not implemented");
+    static jsonEmit_IRTaskAccessIDExpression(exp: IRTaskAccessIDExpression): object {
+        assert(false, "IRTaskAccessIDExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRTaskAccessIDExpression(lexer: BAPILexer): IRTaskAccessIDExpression {
-        assert(false, "IRTaskAccessIDExpression.parseBAPI not implemented");
+    static jsonParse_IRTaskAccessIDExpression(obj: any): IRTaskAccessIDExpression {
+        assert(false, "IRTaskAccessIDExpression.jsonParse not implemented");
     }
 }
 
@@ -1636,12 +2660,12 @@ class IRTaskAccessParentIDExpression extends IRExpression {
         return false;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRTaskAccessParentIDExpression.toBAPI not implemented");
+    static jsonEmit_IRTaskAccessParentIDExpression(exp: IRTaskAccessParentIDExpression): object {
+        assert(false, "IRTaskAccessParentIDExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRTaskAccessParentIDExpression(lexer: BAPILexer): IRTaskAccessParentIDExpression {
-        assert(false, "IRTaskAccessParentIDExpression.parseBAPI not implemented");
+    static jsonParse_IRTaskAccessParentIDExpression(obj: any): IRTaskAccessParentIDExpression {
+        assert(false, "IRTaskAccessParentIDExpression.jsonParse not implemented");
     }
 }
 
@@ -1653,17 +2677,14 @@ class IRAccessConstantExpression extends IRImmediateExpression {
         this.constkey = constkey;
     }
 
-    override toBAPI(): string {
-        return `Assembly::AccessConstantExpression{${emitConstKey(this.constkey)}}`;
+    static jsonEmit_IRAccessConstantExpression(exp: IRAccessConstantExpression): object {
+        return {
+            constkey: exp.constkey
+        };
     }
 
-    static parseBAPIAsIRAccessConstantExpression(lexer: BAPILexer): IRAccessConstantExpression {
-        lexer.ensureAndConsumeToken(BAPITokenKind.TypeIdentifier);
-        lexer.ensureAndConsumeSymbol("{");
-        const constkey = parseConstKey(lexer);
-        lexer.ensureAndConsumeSymbol("}");
-
-        return new IRAccessConstantExpression(constkey);
+    static jsonParse_IRAccessConstantExpression(obj: any): IRAccessConstantExpression {
+        return new IRAccessConstantExpression(obj.constkey);
     }
 }
 
@@ -1677,12 +2698,15 @@ class IRAccessEnumExpression extends IRImmediateExpression {
         this.membername = membername;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRAccessEnumExpression.toBAPI not implemented");
+    static jsonEmit_IRAccessEnumExpression(exp: IRAccessEnumExpression): object {
+        return {
+            tkey: exp.tkey,
+            membername: exp.membername
+        };
     }
 
-    static parseBAPIAsIRAccessEnumExpression(lexer: BAPILexer): IRAccessEnumExpression {
-        assert(false, "IRAccessEnumExpression.parseBAPI not implemented");
+    static jsonParse_IRAccessEnumExpression(obj: any): IRAccessEnumExpression {
+        return new IRAccessEnumExpression(obj.tkey, obj.membername);
     }
 }
 
@@ -1694,12 +2718,14 @@ class IRAccessParameterVariableExpression extends IRImmediateExpression {
         this.pname = pname;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRAccessParameterVariableExpression.toBAPI not implemented");
+    static jsonEmit_IRAccessParameterVariableExpression(exp: IRAccessParameterVariableExpression): object {
+        return {
+            pname: exp.pname
+        };
     }
 
-    static parseBAPIAsIRAccessParameterVariableExpression(lexer: BAPILexer): IRAccessParameterVariableExpression {
-        assert(false, "IRAccessParameterVariableExpression.parseBAPI not implemented");
+    static jsonParse_IRAccessParameterVariableExpression(obj: any): IRAccessParameterVariableExpression {
+        return new IRAccessParameterVariableExpression(obj.pname);
     }
 }
 
@@ -1711,12 +2737,14 @@ class IRAccessLocalVariableExpression extends IRImmediateExpression {
         this.vname = vname;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRAccessLocalVariableExpression.toBAPI not implemented");
+    static jsonEmit_IRAccessLocalVariableExpression(exp: IRAccessLocalVariableExpression): object {
+        return {
+            vname: exp.vname
+        };
     }
 
-    static parseBAPIAsIRAccessLocalVariableExpression(lexer: BAPILexer): IRAccessLocalVariableExpression {
-        assert(false, "IRAccessLocalVariableExpression.parseBAPI not implemented");
+    static jsonParse_IRAccessLocalVariableExpression(obj: any): IRAccessLocalVariableExpression {
+        return new IRAccessLocalVariableExpression(obj.vname);
     }
 }
 
@@ -1728,29 +2756,33 @@ class IRAccessCapturedVariableExpression extends IRImmediateExpression {
         this.vname = vname;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRAccessCapturedVariableExpression.toBAPI not implemented");
+    static jsonEmit_IRAccessCapturedVariableExpression(exp: IRAccessCapturedVariableExpression): object {
+        return {
+            vname: exp.vname
+        };
     }
 
-    static parseBAPIAsIRAccessCapturedVariableExpression(lexer: BAPILexer): IRAccessCapturedVariableExpression {
-        assert(false, "IRAccessCapturedVariableExpression.parseBAPI not implemented");
+    static jsonParse_IRAccessCapturedVariableExpression(obj: any): IRAccessCapturedVariableExpression {
+        return new IRAccessCapturedVariableExpression(obj.vname);
     }
 }
 
 class IRAccessTempVariableExpression extends IRImmediateExpression {
-    readonly vname: string;
+    readonly tvid: number;
 
-    constructor(vname: string) {
+    constructor(tvid: number) {
         super(IRExpressionTag.IRAccessTempVariableExpression);
-        this.vname = vname;
+        this.tvid = tvid;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRAccessTempVariableExpression.toBAPI not implemented");
+    static jsonEmit_IRAccessTempVariableExpression(exp: IRAccessTempVariableExpression): object {
+        return {
+            tvid: exp.tvid
+        };
     }
 
-    static parseBAPIAsIRAccessTempVariableExpression(lexer: BAPILexer): IRAccessTempVariableExpression {
-        assert(false, "IRAccessTempVariableExpression.parseBAPI not implemented");
+    static jsonParse_IRAccessTempVariableExpression(obj: any): IRAccessTempVariableExpression {
+        return new IRAccessTempVariableExpression(obj.tvid);
     }
 }
 
@@ -1764,12 +2796,18 @@ class IRAccessTypeDeclValueExpression extends IRSimpleExpression {
         this.exp = exp;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRAccessTypeDeclValueExpression.toBAPI not implemented");
+    static jsonEmit_IRAccessTypeDeclValueExpression(exp: IRAccessTypeDeclValueExpression): object {
+        return {
+            accesstype: IRNominalTypeSignature.jsonEmit(exp.accesstype),
+            exp: IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.exp)
+        };
     }
 
-    static parseBAPIAsIRAccessTypeDeclValueExpression(lexer: BAPILexer): IRAccessTypeDeclValueExpression {
-        assert(false, "IRAccessTypeDeclValueExpression.parseBAPI not implemented");
+    static jsonParse_IRAccessTypeDeclValueExpression(obj: any): IRAccessTypeDeclValueExpression {
+        return new IRAccessTypeDeclValueExpression(
+            IRNominalTypeSignature.jsonParse(obj.accesstype),
+            IRSimpleExpression.jsonParse_IRSimpleExpression(obj.exp)
+        );
     }
 }
 
@@ -1783,12 +2821,18 @@ class IRConstructSafeTypeDeclExpression extends IRSimpleExpression {
         this.value = value;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRConstructSafeTypeDeclExpression.toBAPI not implemented");
+    static jsonEmit_IRConstructSafeTypeDeclExpression(exp: IRConstructSafeTypeDeclExpression): object {
+        return {
+            constype: IRNominalTypeSignature.jsonEmit(exp.constype),
+            value: IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.value)
+        };
     }
 
-    static parseBAPIAsIRConstructSafeTypeDeclExpression(lexer: BAPILexer): IRConstructSafeTypeDeclExpression {
-        assert(false, "IRConstructSafeTypeDeclExpression.parseBAPI not implemented");
+    static jsonParse_IRConstructSafeTypeDeclExpression(obj: any): IRConstructSafeTypeDeclExpression {
+        return new IRConstructSafeTypeDeclExpression(
+            IRNominalTypeSignature.jsonParse(obj.constype),
+            IRSimpleExpression.jsonParse_IRSimpleExpression(obj.value)
+        );
     }
 }
 
@@ -1802,12 +2846,12 @@ class IRConstructorSomeTypeExpression extends IRSimpleExpression {
         this.value = value;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRConstructorSomeTypeExpression.toBAPI not implemented");
+    static jsonEmit_IRConstructorSomeTypeExpression(exp: IRConstructorSomeTypeExpression): object {
+        assert(false, "IRConstructorSomeTypeExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRConstructorSomeTypeExpression(lexer: BAPILexer): IRConstructorSomeTypeExpression {
-        assert(false, "IRConstructorSomeTypeExpression.parseBAPI not implemented");
+    static jsonParse_IRConstructorSomeTypeExpression(obj: any): IRConstructorSomeTypeExpression {
+        assert(false, "IRConstructorSomeTypeExpression.jsonParse not implemented");
     }
 }
 
@@ -1821,12 +2865,12 @@ class IRConstructorOkTypeExpression extends IRSimpleExpression {
         this.value = value;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRConstructorOkTypeExpression.toBAPI not implemented");
+    static jsonEmit_IRConstructorOkTypeExpression(exp: IRConstructorOkTypeExpression): object {
+        assert(false, "IRConstructorOkTypeExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRConstructorOkTypeExpression(lexer: BAPILexer): IRConstructorOkTypeExpression {
-        assert(false, "IRConstructorOkTypeExpression.parseBAPI not implemented");
+    static jsonParse_IRConstructorOkTypeExpression(obj: any): IRConstructorOkTypeExpression {
+        assert(false, "IRConstructorOkTypeExpression.jsonParse not implemented");
     }
 }
 
@@ -1840,12 +2884,12 @@ class IRConstructorFailTypeExpression extends IRSimpleExpression {
         this.value = value;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRConstructorFailTypeExpression.toBAPI not implemented");
+    static jsonEmit_IRConstructorFailTypeExpression(exp: IRConstructorFailTypeExpression): object {
+        assert(false, "IRConstructorFailTypeExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRConstructorFailTypeExpression(lexer: BAPILexer): IRConstructorFailTypeExpression {
-        assert(false, "IRConstructorFailTypeExpression.parseBAPI not implemented");
+    static jsonParse_IRConstructorFailTypeExpression(obj: any): IRConstructorFailTypeExpression {
+        assert(false, "IRConstructorFailTypeExpression.jsonParse not implemented");
     }
 }
 
@@ -1859,12 +2903,12 @@ class IRConstructorAPISuccessTypeExpression extends IRSimpleExpression {
         this.value = value;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRConstructorAPISuccessTypeExpression.toBAPI not implemented");
+    static jsonEmit_IRConstructorAPISuccessTypeExpression(exp: IRConstructorAPISuccessTypeExpression): object {
+        assert(false, "IRConstructorAPISuccessTypeExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRConstructorAPISuccessTypeExpression(lexer: BAPILexer): IRConstructorAPISuccessTypeExpression {
-        assert(false, "IRConstructorAPISuccessTypeExpression.parseBAPI not implemented");
+    static jsonParse_IRConstructorAPISuccessTypeExpression(obj: any): IRConstructorAPISuccessTypeExpression {
+        assert(false, "IRConstructorAPISuccessTypeExpression.jsonParse not implemented");
     }
 }
 
@@ -1880,12 +2924,12 @@ class IRConstructorMapEntryTypeExpression extends IRSimpleExpression {
         this.value = value;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRConstructorMapEntryTypeExpression.toBAPI not implemented");
+    static jsonEmit_IRConstructorMapEntryTypeExpression(exp: IRConstructorMapEntryTypeExpression): object {
+        assert(false, "IRConstructorMapEntryTypeExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRConstructorMapEntryTypeExpression(lexer: BAPILexer): IRConstructorMapEntryTypeExpression {
-        assert(false, "IRConstructorMapEntryTypeExpression.parseBAPI not implemented");
+    static jsonParse_IRConstructorMapEntryTypeExpression(obj: any): IRConstructorMapEntryTypeExpression {
+        assert(false, "IRConstructorMapEntryTypeExpression.jsonParse not implemented");
     }
 }
 
@@ -1898,12 +2942,12 @@ class IRConstructorStandardEntityExpression extends IRConstructExpression {
         this.values = values;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRConstructorStandardEntityExpression.toBAPI not implemented");
+    static jsonEmit_IRConstructorStandardEntityExpression(exp: IRConstructorStandardEntityExpression): object {
+        assert(false, "IRConstructorStandardEntityExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRConstructorStandardEntityExpression(lexer: BAPILexer): IRConstructorStandardEntityExpression {
-        assert(false, "IRConstructorStandardEntityExpression.parseBAPI not implemented");
+    static jsonParse_IRConstructorStandardEntityExpression(obj: any): IRConstructorStandardEntityExpression {
+        assert(false, "IRConstructorStandardEntityExpression.jsonParse not implemented");
     }
 }
 
@@ -1918,12 +2962,12 @@ class IRConstructorLambdaExpression extends IRImmediateExpression {
         this.values = values;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRConstructorLambdaExpression.toBAPI not implemented");
+    static jsonEmit_IRConstructorLambdaExpression(exp: IRConstructorLambdaExpression): object {
+        assert(false, "IRConstructorLambdaExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRConstructorLambdaExpression(lexer: BAPILexer): IRConstructorLambdaExpression {
-        assert(false, "IRConstructorLambdaExpression.parseBAPI not implemented");
+    static jsonParse_IRConstructorLambdaExpression(obj: any): IRConstructorLambdaExpression {
+        assert(false, "IRConstructorLambdaExpression.jsonParse not implemented");
     }
 }
 
@@ -1937,12 +2981,18 @@ class IRConstructorEListExpression extends IRSimpleExpression {
         this.values = values;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRConstructorEListExpression.toBAPI not implemented");
+    static jsonEmit_IRConstructorEListExpression(exp: IRConstructorEListExpression): object {
+        return {
+            eltype: IREListTypeSignature.jsonEmit(exp.eltype),
+            values: exp.values.map((vv) => IRSimpleExpression.jsonEmit_IRSimpleExpression(vv))
+        };
     }
 
-    static parseBAPIAsIRConstructorEListExpression(lexer: BAPILexer): IRConstructorEListExpression {
-        assert(false, "IRConstructorEListExpression.parseBAPI not implemented");
+    static jsonParse_IRConstructorEListExpression(obj: any): IRConstructorEListExpression {
+        return new IRConstructorEListExpression(
+            IREListTypeSignature.jsonParse(obj.eltype),
+            obj.values.map((vv: any) => IRSimpleExpression.jsonParse_IRSimpleExpression(vv))
+        );
     }
 }
 
@@ -1953,12 +3003,12 @@ class IRConstructorListEmptyExpression extends IRConstructExpression {
         super(IRExpressionTag.IRConstructorListEmptyExpression, ctype);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRConstructorListEmptyExpression.toBAPI not implemented");
+    static jsonEmit_IRConstructorListEmptyExpression(exp: IRConstructorListEmptyExpression): object {
+        assert(false, "IRConstructorListEmptyExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRConstructorListEmptyExpression(lexer: BAPILexer): IRConstructorListEmptyExpression {
-        assert(false, "IRConstructorListEmptyExpression.parseBAPI not implemented");
+    static jsonParse_IRConstructorListEmptyExpression(obj: any): IRConstructorListEmptyExpression {
+        assert(false, "IRConstructorListEmptyExpression.jsonParse not implemented");
     }
 }
 
@@ -1970,12 +3020,12 @@ class IRConstructorListPassthroughExpression extends IRConstructExpression {
         this.ptl = ptl;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRConstructorListPassthroughExpression.toBAPI not implemented");
+    static jsonEmit_IRConstructorListPassthroughExpression(exp: IRConstructorListPassthroughExpression): object {
+        assert(false, "IRConstructorListPassthroughExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRConstructorListPassthroughExpression(lexer: BAPILexer): IRConstructorListPassthroughExpression {
-        assert(false, "IRConstructorListPassthroughExpression.parseBAPI not implemented");
+    static jsonParse_IRConstructorListPassthroughExpression(obj: any): IRConstructorListPassthroughExpression {
+        assert(false, "IRConstructorListPassthroughExpression.jsonParse not implemented");
     }
 }
 
@@ -1987,12 +3037,12 @@ class IRConstructorListSingletonsExpression extends IRConstructExpression {
         this.elements = elements;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRConstructorListSingletonsExpression.toBAPI not implemented");
+    static jsonEmit_IRConstructorListSingletonsExpression(exp: IRConstructorListSingletonsExpression): object {
+        assert(false, "IRConstructorListSingletonsExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRConstructorListSingletonsExpression(lexer: BAPILexer): IRConstructorListSingletonsExpression {
-        assert(false, "IRConstructorListSingletonsExpression.parseBAPI not implemented");
+    static jsonParse_IRConstructorListSingletonsExpression(obj: any): IRConstructorListSingletonsExpression {
+        assert(false, "IRConstructorListSingletonsExpression.jsonParse not implemented");
     }
 }
 
@@ -2004,12 +3054,12 @@ class IRConstructorListMixedExpression extends IRConstructExpression {
         this.elements = elements;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRConstructorListMixedExpression.toBAPI not implemented");
+    static jsonEmit_IRConstructorListMixedExpression(exp: IRConstructorListMixedExpression): object {
+        assert(false, "IRConstructorListMixedExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRConstructorListMixedExpression(lexer: BAPILexer): IRConstructorListMixedExpression {
-        assert(false, "IRConstructorListMixedExpression.parseBAPI not implemented");
+    static jsonParse_IRConstructorListMixedExpression(obj: any): IRConstructorListMixedExpression {
+        assert(false, "IRConstructorListMixedExpression.jsonParse not implemented");
     }
 }
 
@@ -2020,12 +3070,12 @@ class IRConstructorMapEmptyExpression extends IRConstructExpression {
         super(IRExpressionTag.IRConstructorMapEmptyExpression, ctype);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRConstructorMapEmptyExpression.toBAPI not implemented");
+    static jsonEmit_IRConstructorMapEmptyExpression(exp: IRConstructorMapEmptyExpression): object {
+        assert(false, "IRConstructorMapEmptyExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRConstructorMapEmptyExpression(lexer: BAPILexer): IRConstructorMapEmptyExpression {
-        assert(false, "IRConstructorMapEmptyExpression.parseBAPI not implemented");
+    static jsonParse_IRConstructorMapEmptyExpression(obj: any): IRConstructorMapEmptyExpression {
+        assert(false, "IRConstructorMapEmptyExpression.jsonParse not implemented");
     }
 }
 
@@ -2036,12 +3086,12 @@ class IRConstructorMapSingletonsExpression extends IRConstructExpression {
         super(IRExpressionTag.IRConstructorMapSingletonsExpression, ctype);
         this.elements = elements;
     }
-    override toBAPI(): string {
-        assert(false, "IRConstructorMapSingletonsExpression.toBAPI not implemented");
+    static jsonEmit_IRConstructorMapSingletonsExpression(exp: IRConstructorMapSingletonsExpression): object {
+        assert(false, "IRConstructorMapSingletonsExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRConstructorMapSingletonsExpression(lexer: BAPILexer): IRConstructorMapSingletonsExpression {
-        assert(false, "IRConstructorMapSingletonsExpression.parseBAPI not implemented");
+    static jsonParse_IRConstructorMapSingletonsExpression(obj: any): IRConstructorMapSingletonsExpression {
+        assert(false, "IRConstructorMapSingletonsExpression.jsonParse not implemented");
     }
 }
 
@@ -2054,12 +3104,12 @@ class IRAccessFieldSpecialExpression extends IRAccessFieldExpression {
         super(IRExpressionTag.IRAccessFieldSpecialExpression, eexptype, eexp, intype, fieldname, fieldtype);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRAccessFieldSpecialExpression.toBAPI not implemented");
+    static jsonEmit_IRAccessFieldSpecialExpression(exp: IRAccessFieldSpecialExpression): object {
+        assert(false, "IRAccessFieldSpecialExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRAccessFieldSpecialExpression(lexer: BAPILexer): IRAccessFieldSpecialExpression {
-        assert(false, "IRAccessFieldSpecialExpression.parseBAPI not implemented");
+    static jsonParse_IRAccessFieldSpecialExpression(obj: any): IRAccessFieldSpecialExpression {
+        assert(false, "IRAccessFieldSpecialExpression.jsonParse not implemented");
     }
 }
 
@@ -2068,12 +3118,12 @@ class IRAccessFieldDirectExpression extends IRAccessFieldExpression {
         super(IRExpressionTag.IRAccessFieldDirectExpression, eexptype, eexp, intype, fieldname, fieldtype);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRAccessFieldDirectExpression.toBAPI not implemented");
+    static jsonEmit_IRAccessFieldDirectExpression(exp: IRAccessFieldDirectExpression): object {
+        assert(false, "IRAccessFieldDirectExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRAccessFieldDirectExpression(lexer: BAPILexer): IRAccessFieldDirectExpression {
-        assert(false, "IRAccessFieldDirectExpression.parseBAPI not implemented");
+    static jsonParse_IRAccessFieldDirectExpression(obj: any): IRAccessFieldDirectExpression {
+        assert(false, "IRAccessFieldDirectExpression.jsonParse not implemented");
     }
 }
 
@@ -2082,12 +3132,12 @@ class IRAccessFieldVirtualExpression extends IRAccessFieldExpression {
         super(IRExpressionTag.IRAccessFieldVirtualExpression, eexptype, eexp, intype, fieldname, fieldtype);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRAccessFieldVirtualExpression.toBAPI not implemented");
+    static jsonEmit_IRAccessFieldVirtualExpression(exp: IRAccessFieldVirtualExpression): object {
+        assert(false, "IRAccessFieldVirtualExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRAccessFieldVirtualExpression(lexer: BAPILexer): IRAccessFieldVirtualExpression {
-        assert(false, "IRAccessFieldVirtualExpression.parseBAPI not implemented");
+    static jsonParse_IRAccessFieldVirtualExpression(obj: any): IRAccessFieldVirtualExpression {
+        assert(false, "IRAccessFieldVirtualExpression.jsonParse not implemented");
     }
 }
 
@@ -2103,12 +3153,20 @@ class IRAccessEListIndexExpression extends IRSimpleExpression {
         this.idx = idx;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRAccessEListIndexExpression.toBAPI not implemented");
+    static jsonEmit_IRAccessEListIndexExpression(exp: IRAccessEListIndexExpression): object {
+        return {
+            eltype: IREListTypeSignature.jsonEmit(exp.eltype),
+            eexp: IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.eexp),
+            idx: exp.idx
+        };
     }
 
-    static parseBAPIAsIRAccessEListIndexExpression(lexer: BAPILexer): IRAccessEListIndexExpression {
-        assert(false, "IRAccessEListIndexExpression.parseBAPI not implemented");
+    static jsonParse_IRAccessEListIndexExpression(obj: any): IRAccessEListIndexExpression {
+        return new IRAccessEListIndexExpression(
+            IREListTypeSignature.jsonParse(obj.eltype),
+            IRSimpleExpression.jsonParse_IRSimpleExpression(obj.eexp),
+            obj.idx
+        );
     }
 }
 
@@ -2118,27 +3176,27 @@ class IRInvokeSimpleExpression extends IRInvokeDirectExpression {
         super(IRExpressionTag.IRInvokeSimpleExpression, ikey, args);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRInvokeSimpleExpression.toBAPI not implemented");
+    static jsonEmit_IRInvokeSimpleExpression(exp: IRInvokeSimpleExpression): object {
+        assert(false, "IRInvokeSimpleExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRInvokeSimpleExpression(lexer: BAPILexer): IRInvokeSimpleExpression {
-        assert(false, "IRInvokeSimpleExpression.parseBAPI not implemented");
+    static jsonParse_IRInvokeSimpleExpression(obj: any): IRInvokeSimpleExpression {
+        assert(false, "IRInvokeSimpleExpression.jsonParse not implemented");
     }
 }
 
 /** Simple invocations functions/methods/lambdas that have any special ref/out/out?/inout parameters **/
 class IRInvokeSimpleWithImplicitsExpression extends IRInvokeImplicitsExpression {
-    constructor(ikey: string, args: IRSimpleExpression[], implicitidx: number, ivar: string, ivartype: IRTypeSignature, passkind: "ref" | "out" | "out?" | "inout") {
+    constructor(ikey: string, args: IRSimpleExpression[], implicitidx: number, ivar: string, ivartype: IRTypeSignature, passkind: IRImplicitInvokeArgPassKind) {
         super(IRExpressionTag.IRInvokeSimpleWithImplicitsExpression, ikey, args, implicitidx, ivar, ivartype, passkind);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRInvokeSimpleWithImplicitsExpression.toBAPI not implemented");
+    static jsonEmit_IRInvokeSimpleWithImplicitsExpression(exp: IRInvokeSimpleWithImplicitsExpression): object {
+        assert(false, "IRInvokeSimpleWithImplicitsExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRInvokeSimpleWithImplicitsExpression(lexer: BAPILexer): IRInvokeSimpleWithImplicitsExpression {
-        assert(false, "IRInvokeSimpleWithImplicitsExpression.parseBAPI not implemented");
+    static jsonParse_IRInvokeSimpleWithImplicitsExpression(obj: any): IRInvokeSimpleWithImplicitsExpression {
+        assert(false, "IRInvokeSimpleWithImplicitsExpression.jsonParse not implemented");
     }
 }
 
@@ -2151,12 +3209,12 @@ class IRInvokeVirtualSimpleExpression extends IRInvokeDirectExpression {
         this.rcvr = rcvr;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRInvokeVirtualSimpleExpression.toBAPI not implemented");
+    static jsonEmit_IRInvokeVirtualSimpleExpression(exp: IRInvokeVirtualSimpleExpression): object {
+        assert(false, "IRInvokeVirtualSimpleExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRInvokeVirtualSimpleExpression(lexer: BAPILexer): IRInvokeVirtualSimpleExpression {
-        assert(false, "IRInvokeVirtualSimpleExpression.parseBAPI not implemented");
+    static jsonParse_IRInvokeVirtualSimpleExpression(obj: any): IRInvokeVirtualSimpleExpression {
+        assert(false, "IRInvokeVirtualSimpleExpression.jsonParse not implemented");
     }
 }
 
@@ -2164,17 +3222,17 @@ class IRInvokeVirtualSimpleExpression extends IRInvokeDirectExpression {
 class IRInvokeVirtualWithImplicitsExpression extends IRInvokeImplicitsExpression {
     readonly rcvr: IRImmediateExpression;
 
-    constructor(ikey: string, rcvr: IRImmediateExpression, args: IRSimpleExpression[], implicitidx: number, ivar: string, ivartype: IRTypeSignature, passkind: "ref" | "out" | "out?" | "inout") {
+    constructor(ikey: string, rcvr: IRImmediateExpression, args: IRSimpleExpression[], implicitidx: number, ivar: string, ivartype: IRTypeSignature, passkind: IRImplicitInvokeArgPassKind) {
         super(IRExpressionTag.IRInvokeVirtualWithImplicitsExpression, ikey, args, implicitidx, ivar, ivartype, passkind);
         this.rcvr = rcvr;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRInvokeVirtualWithImplicitsExpression.toBAPI not implemented");
+    static jsonEmit_IRInvokeVirtualWithImplicitsExpression(exp: IRInvokeVirtualWithImplicitsExpression): object {
+        assert(false, "IRInvokeVirtualWithImplicitsExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRInvokeVirtualWithImplicitsExpression(lexer: BAPILexer): IRInvokeVirtualWithImplicitsExpression {
-        assert(false, "IRInvokeVirtualWithImplicitsExpression.parseBAPI not implemented");
+    static jsonParse_IRInvokeVirtualWithImplicitsExpression(obj: any): IRInvokeVirtualWithImplicitsExpression {
+        assert(false, "IRInvokeVirtualWithImplicitsExpression.jsonParse not implemented");
     }
 }
 
@@ -2198,12 +3256,12 @@ class IRInvokeCallAgentOrAPIExpression extends IRExpression {
         return false;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRInvokeCallAgentOrAPIExpression.toBAPI not implemented");
+    static jsonEmit_IRInvokeCallAgentOrAPIExpression(exp: IRInvokeCallAgentOrAPIExpression): object {
+        assert(false, "IRInvokeCallAgentOrAPIExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRInvokeCallAgentOrAPIExpression(lexer: BAPILexer): IRInvokeCallAgentOrAPIExpression {
-        assert(false, "IRInvokeCallAgentOrAPIExpression.parseBAPI not implemented");
+    static jsonParse_IRInvokeCallAgentOrAPIExpression(obj: any): IRInvokeCallAgentOrAPIExpression {
+        assert(false, "IRInvokeCallAgentOrAPIExpression.jsonParse not implemented");
     }
 }
 
@@ -2221,12 +3279,12 @@ class IRInvokeTaskActionExpression extends IRExpression {
         return false;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRInvokeTaskActionExpression.toBAPI not implemented");
+    static jsonEmit_IRInvokeTaskActionExpression(exp: IRInvokeTaskActionExpression): object {
+        assert(false, "IRInvokeTaskActionExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRInvokeTaskActionExpression(lexer: BAPILexer): IRInvokeTaskActionExpression {
-        assert(false, "IRInvokeTaskActionExpression.parseBAPI not implemented");
+    static jsonParse_IRInvokeTaskActionExpression(obj: any): IRInvokeTaskActionExpression {
+        assert(false, "IRInvokeTaskActionExpression.jsonParse not implemented");
     }
 }
 
@@ -2240,12 +3298,12 @@ class IRInterpolateFormatCStringExpression extends IRConstructExpression {
         this.args = args;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRInterpolateFormatCStringExpression.toBAPI not implemented");
+    static jsonEmit_IRInterpolateFormatCStringExpression(exp: IRInterpolateFormatCStringExpression): object {
+        assert(false, "IRInterpolateFormatCStringExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRInterpolateFormatCStringExpression(lexer: BAPILexer): IRInterpolateFormatCStringExpression {
-        assert(false, "IRInterpolateFormatCStringExpression.parseBAPI not implemented");
+    static jsonParse_IRInterpolateFormatCStringExpression(obj: any): IRInterpolateFormatCStringExpression {
+        assert(false, "IRInterpolateFormatCStringExpression.jsonParse not implemented");
     }
 }
 
@@ -2259,12 +3317,12 @@ class IRInterpolateFormatStringExpression extends IRConstructExpression {
         this.args = args;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRInterpolateFormatStringExpression.toBAPI not implemented");
+    static jsonEmit_IRInterpolateFormatStringExpression(exp: IRInterpolateFormatStringExpression): object {
+        assert(false, "IRInterpolateFormatStringExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRInterpolateFormatStringExpression(lexer: BAPILexer): IRInterpolateFormatStringExpression {
-        assert(false, "IRInterpolateFormatStringExpression.parseBAPI not implemented");
+    static jsonParse_IRInterpolateFormatStringExpression(obj: any): IRInterpolateFormatStringExpression {
+        assert(false, "IRInterpolateFormatStringExpression.jsonParse not implemented");
     }
 }
 
@@ -2278,12 +3336,23 @@ abstract class IRUnaryOpExpression extends IRSimpleExpression {
         this.opertype = opertype;
     }
 
-    toBAPI_IRUnaryOpExpression(): string {
-        assert(false, "IRUnaryOpExpression.toBAPI not implemented");
+    static jsonEmit_IRUnaryOpExpression(exp: IRUnaryOpExpression): [string, object] {
+        return IRExpression.jsonEmit_IRExpression(exp);
     }
 
-    static parseBAPI_IRUnaryOpExpression(lexer: BAPILexer):  {exp: IRSimpleExpression, opertype: IRTypeSignature} {
-        assert(false, "IRUnaryOpExpression.parseBAPI not implemented");
+    static jsonParse_IRUnaryOpExpression(obj: any): IRUnaryOpExpression {
+        return IRExpression.jsonParse_IRExpression(obj) as IRUnaryOpExpression;
+    }
+
+    static jsonEmitMeta_IRUnaryOpExpression(exp: IRUnaryOpExpression): object {
+        return {
+            exp: IRExpression.jsonEmit_IRExpression(exp.exp),
+            opertype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.opertype)
+        };
+    }
+
+    static jsonParseMeta_IRUnaryOpExpression(obj: any): [IRSimpleExpression, IRTypeSignature] {
+        return [IRExpression.jsonParse_IRExpression(obj.exp) as IRSimpleExpression, IRTypeSignature.jsonParse_IRTypeSignature(obj.opertype)];
     }
 }
 
@@ -2292,12 +3361,16 @@ class IRPrefixNotOpExpression extends IRUnaryOpExpression {
         super(IRExpressionTag.IRPrefixNotOpExpression, exp, opertype);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRPrefixNotOpExpression.toBAPI not implemented");
+    static jsonEmit_IRPrefixNotOpExpression(exp: IRPrefixNotOpExpression): object {
+        const nval = IRUnaryOpExpression.jsonEmitMeta_IRUnaryOpExpression(exp);
+        
+        return nval;
     }
 
-    static parseBAPIAsIRPrefixNotOpExpression(lexer: BAPILexer): IRPrefixNotOpExpression {
-        assert(false, "IRPrefixNotOpExpression.parseBAPI not implemented");
+    static jsonParse_IRPrefixNotOpExpression(obj: any): IRPrefixNotOpExpression {
+        const nval = IRUnaryOpExpression.jsonParseMeta_IRUnaryOpExpression(obj);
+
+        return new IRPrefixNotOpExpression(...nval);
     }
 }
 
@@ -2306,12 +3379,16 @@ class IRPrefixNegateOpExpression extends IRUnaryOpExpression {
         super(IRExpressionTag.IRPrefixNegateOpExpression, exp, opertype);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRPrefixNegateOpExpression.toBAPI not implemented");
+    static jsonEmit_IRPrefixNegateOpExpression(exp: IRPrefixNegateOpExpression): object {
+        const nval = IRUnaryOpExpression.jsonEmitMeta_IRUnaryOpExpression(exp);
+        
+        return nval;
     }
 
-    static parseBAPIAsIRPrefixNegateOpExpression(lexer: BAPILexer): IRPrefixNegateOpExpression {
-        assert(false, "IRPrefixNegateOpExpression.parseBAPI not implemented");
+    static jsonParse_IRPrefixNegateOpExpression(obj: any): IRPrefixNegateOpExpression {
+        const nval = IRUnaryOpExpression.jsonParseMeta_IRUnaryOpExpression(obj);
+
+        return new IRPrefixNegateOpExpression(...nval);
     }
 }
 
@@ -2320,12 +3397,16 @@ class IRPrefixPlusOpExpression extends IRUnaryOpExpression {
         super(IRExpressionTag.IRPrefixPlusOpExpression, exp, opertype);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRPrefixPlusOpExpression.toBAPI not implemented");
+    static jsonEmit_IRPrefixPlusOpExpression(exp: IRPrefixPlusOpExpression): object {
+        const nval = IRUnaryOpExpression.jsonEmitMeta_IRUnaryOpExpression(exp);
+    
+        return nval;
     }
 
-    static parseBAPIAsIRPrefixPlusOpExpression(lexer: BAPILexer): IRPrefixPlusOpExpression {
-        assert(false, "IRPrefixPlusOpExpression.parseBAPI not implemented");
+    static jsonParse_IRPrefixPlusOpExpression(obj: any): IRPrefixPlusOpExpression {
+        const nval = IRUnaryOpExpression.jsonParseMeta_IRUnaryOpExpression(obj);
+    
+        return new IRPrefixPlusOpExpression(...nval);
     }
 }
 
@@ -2341,12 +3422,24 @@ abstract class IRBinOpExpression extends IRSimpleExpression {
         this.opertype = opertype;
     }
 
-    toBAPI_IRBinOpExpression(): string {
-        assert(false, "IRBinOpExpression.toBAPI not implemented");
+    static jsonEmit_IRBinOpExpression(exp: IRBinOpExpression): [string, object] {
+        return IRExpression.jsonEmit_IRExpression(exp);
     }
 
-    static parseBAPI_IRBinOpExpression(lexer: BAPILexer):  {left: IRSimpleExpression, right: IRSimpleExpression, opertype: IRTypeSignature} {
-        assert(false, "IRBinOpExpression.parseBAPI not implemented");
+    static jsonParse_IRBinOpExpression(obj: any): IRBinOpExpression {
+        return IRExpression.jsonParse_IRExpression(obj) as IRBinOpExpression;
+    }
+
+    static jsonEmitMeta_IRBinOpExpression(exp: IRBinOpExpression): object {
+        return {
+            left: IRExpression.jsonEmit_IRExpression(exp.left),
+            right: IRExpression.jsonEmit_IRExpression(exp.right),
+            opertype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.opertype)
+        };
+    }
+
+    static jsonParseMeta_IRBinOpExpression(obj: any): [IRSimpleExpression, IRSimpleExpression, IRTypeSignature] {
+        return [IRSimpleExpression.jsonParse_IRSimpleExpression(obj.left), IRSimpleExpression.jsonParse_IRSimpleExpression(obj.right), IRTypeSignature.jsonParse_IRTypeSignature(obj.opertype)];
     }
 }
 
@@ -2355,12 +3448,16 @@ class IRBinAddExpression extends IRBinOpExpression {
         super(IRExpressionTag.IRBinAddExpression, left, right, opertype);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRBinAddExpression.toBAPI not implemented");
+    static jsonEmit_IRBinAddExpression(exp: IRBinAddExpression): object {
+        const nval = IRBinOpExpression.jsonEmitMeta_IRBinOpExpression(exp);
+    
+        return nval;
     }
 
-    static parseBAPIAsIRBinAddExpression(lexer: BAPILexer): IRBinAddExpression {
-        assert(false, "IRBinAddExpression.parseBAPI not implemented");
+    static jsonParse_IRBinAddExpression(obj: any): IRBinAddExpression {
+        const nval = IRBinOpExpression.jsonParseMeta_IRBinOpExpression(obj);
+
+        return new IRBinAddExpression(...nval);
     }
 }
 
@@ -2369,12 +3466,16 @@ class IRBinSubExpression extends IRBinOpExpression {
         super(IRExpressionTag.IRBinSubExpression, left, right, opertype);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRBinSubExpression.toBAPI not implemented");
+    static jsonEmit_IRBinSubExpression(exp: IRBinSubExpression): object {
+        const nval = IRBinOpExpression.jsonEmitMeta_IRBinOpExpression(exp);
+    
+        return nval;
     }
 
-    static parseBAPIAsIRBinSubExpression(lexer: BAPILexer): IRBinSubExpression {
-        assert(false, "IRBinSubExpression.parseBAPI not implemented");
+    static jsonParse_IRBinSubExpression(obj: any): IRBinSubExpression {
+        const nval = IRBinOpExpression.jsonParseMeta_IRBinOpExpression(obj);
+
+        return new IRBinSubExpression(...nval);
     }
 }
 
@@ -2383,12 +3484,16 @@ class IRBinMultExpression extends IRBinOpExpression {
         super(IRExpressionTag.IRBinMultExpression, left, right, opertype);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRBinMultExpression.toBAPI not implemented");
+    static jsonEmit_IRBinMultExpression(exp: IRBinMultExpression): object {
+        const nval = IRBinOpExpression.jsonEmitMeta_IRBinOpExpression(exp);
+    
+        return nval;
     }
 
-    static parseBAPIAsIRBinMultExpression(lexer: BAPILexer): IRBinMultExpression {
-        assert(false, "IRBinMultExpression.parseBAPI not implemented");
+    static jsonParse_IRBinMultExpression(obj: any): IRBinMultExpression {
+        const nval = IRBinOpExpression.jsonParseMeta_IRBinOpExpression(obj);
+
+        return new IRBinMultExpression(...nval);
     }
 }
 
@@ -2397,12 +3502,16 @@ class IRBinDivExpression extends IRBinOpExpression {
         super(IRExpressionTag.IRBinDivExpression, left, right, opertype);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRBinDivExpression.toBAPI not implemented");
+    static jsonEmit_IRBinDivExpression(exp: IRBinDivExpression): object {
+        const nval = IRBinOpExpression.jsonEmitMeta_IRBinOpExpression(exp);
+    
+        return nval;
     }
 
-    static parseBAPIAsIRBinDivExpression(lexer: BAPILexer): IRBinDivExpression {
-        assert(false, "IRBinDivExpression.parseBAPI not implemented");
+    static jsonParse_IRBinDivExpression(obj: any): IRBinDivExpression {
+        const nval = IRBinOpExpression.jsonParseMeta_IRBinOpExpression(obj);
+
+        return new IRBinDivExpression(...nval);
     }
 }
 
@@ -2418,12 +3527,24 @@ abstract class IRNumericComparisonExpression extends IRSimpleExpression {
         this.opertype = opertype;
     }
 
-    toBAPI_IRNumericComparisonExpression(): string {
-        assert(false, "IRNumericComparisonExpression.toBAPI not implemented");
+    static jsonEmit_IRNumericComparisonExpression(exp: IRNumericComparisonExpression): [string, object] {
+        return IRExpression.jsonEmit_IRExpression(exp);
     }
 
-    static parseBAPI_IRNumericComparisonExpression(lexer: BAPILexer):  {left: IRSimpleExpression, right: IRSimpleExpression, opertype: IRTypeSignature} {
-        assert(false, "IRNumericComparisonExpression.parseBAPI not implemented");
+    static jsonParse_IRNumericComparisonExpression(obj: any): IRNumericComparisonExpression {
+        return IRExpression.jsonParse_IRExpression(obj) as IRNumericComparisonExpression;
+    }
+
+    static jsonEmitMeta_IRNumericComparisonExpression(exp: IRNumericComparisonExpression): object {
+        return {
+            left: IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.left),
+            right: IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.right),
+            opertype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.opertype)
+        };
+    }
+
+    static jsonParseMeta_IRNumericComparisonExpression(obj: any): [IRSimpleExpression, IRSimpleExpression, IRTypeSignature] {
+        return [IRSimpleExpression.jsonParse_IRSimpleExpression(obj.left), IRSimpleExpression.jsonParse_IRSimpleExpression(obj.right), IRTypeSignature.jsonParse_IRTypeSignature(obj.opertype)];
     }
 }
 
@@ -2432,12 +3553,16 @@ class IRNumericEqExpression extends IRNumericComparisonExpression {
         super(IRExpressionTag.IRNumericEqExpression, left, right, opertype);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRNumericEqExpression.toBAPI not implemented");
-    }
+    static jsonEmit_IRNumericEqExpression(exp: IRNumericEqExpression): object {
+        const nval = IRNumericComparisonExpression.jsonEmitMeta_IRNumericComparisonExpression(exp);
 
-    static parseBAPIAsIRNumericEqExpression(lexer: BAPILexer): IRNumericEqExpression {
-        assert(false, "IRNumericEqExpression.parseBAPI not implemented");
+        return nval;
+    }
+    
+    static jsonParse_IRNumericEqExpression(obj: any): IRNumericEqExpression {
+        const nval = IRNumericComparisonExpression.jsonParseMeta_IRNumericComparisonExpression(obj);
+
+        return new IRNumericEqExpression(...nval);
     }
 }
 
@@ -2446,12 +3571,16 @@ class IRNumericNeqExpression extends IRNumericComparisonExpression {
         super(IRExpressionTag.IRNumericNeqExpression, left, right, opertype);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRNumericNeqExpression.toBAPI not implemented");
+    static jsonEmit_IRNumericNeqExpression(exp: IRNumericNeqExpression): object {
+        const nval = IRNumericComparisonExpression.jsonEmitMeta_IRNumericComparisonExpression(exp);
+
+        return nval;
     }
 
-    static parseBAPIAsIRNumericNeqExpression(lexer: BAPILexer): IRNumericNeqExpression {
-        assert(false, "IRNumericNeqExpression.parseBAPI not implemented");
+    static jsonParse_IRNumericNeqExpression(obj: any): IRNumericNeqExpression {
+        const nval = IRNumericComparisonExpression.jsonParseMeta_IRNumericComparisonExpression(obj);
+
+        return new IRNumericNeqExpression(...nval);
     }
 }
 
@@ -2460,12 +3589,16 @@ class IRNumericLessExpression extends IRNumericComparisonExpression {
         super(IRExpressionTag.IRNumericLessExpression, left, right, opertype);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRNumericLessExpression.toBAPI not implemented");
+    static jsonEmit_IRNumericLessExpression(exp: IRNumericLessExpression): object {
+        const nval = IRNumericComparisonExpression.jsonEmitMeta_IRNumericComparisonExpression(exp);
+
+        return nval;
     }
 
-    static parseBAPIAsIRNumericLessExpression(lexer: BAPILexer): IRNumericLessExpression {
-        assert(false, "IRNumericLessExpression.parseBAPI not implemented");
+    static jsonParse_IRNumericLessExpression(obj: any): IRNumericLessExpression {
+        const nval = IRNumericComparisonExpression.jsonParseMeta_IRNumericComparisonExpression(obj);
+
+        return new IRNumericLessExpression(...nval);
     }
 }
 
@@ -2474,12 +3607,16 @@ class IRNumericLessEqExpression extends IRNumericComparisonExpression {
         super(IRExpressionTag.IRNumericLessEqExpression, left, right, opertype);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRNumericLessEqExpression.toBAPI not implemented");
+    static jsonEmit_IRNumericLessEqExpression(exp: IRNumericLessEqExpression): object {
+        const nval = IRNumericComparisonExpression.jsonEmitMeta_IRNumericComparisonExpression(exp);
+
+        return nval;
     }
 
-    static parseBAPIAsIRNumericLessEqExpression(lexer: BAPILexer): IRNumericLessEqExpression {
-        assert(false, "IRNumericLessEqExpression.parseBAPI not implemented");
+    static jsonParse_IRNumericLessEqExpression(obj: any): IRNumericLessEqExpression {
+        const nval = IRNumericComparisonExpression.jsonParseMeta_IRNumericComparisonExpression(obj);
+
+        return new IRNumericLessEqExpression(...nval);
     }
 }
 
@@ -2488,12 +3625,16 @@ class IRNumericGreaterExpression extends IRNumericComparisonExpression {
         super(IRExpressionTag.IRNumericGreaterExpression, left, right, opertype);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRNumericGreaterExpression.toBAPI not implemented");
+    static jsonEmit_IRNumericGreaterExpression(exp: IRNumericGreaterExpression): object {
+        const nval = IRNumericComparisonExpression.jsonEmitMeta_IRNumericComparisonExpression(exp);
+
+        return nval;
     }
 
-    static parseBAPIAsIRNumericGreaterExpression(lexer: BAPILexer): IRNumericGreaterExpression {
-        assert(false, "IRNumericGreaterExpression.parseBAPI not implemented");
+    static jsonParse_IRNumericGreaterExpression(obj: any): IRNumericGreaterExpression {
+        const nval = IRNumericComparisonExpression.jsonParseMeta_IRNumericComparisonExpression(obj);
+
+        return new IRNumericGreaterExpression(...nval);
     }
 }
 
@@ -2502,12 +3643,16 @@ class IRNumericGreaterEqExpression extends IRNumericComparisonExpression {
         super(IRExpressionTag.IRNumericGreaterEqExpression, left, right, opertype);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRNumericGreaterEqExpression.toBAPI not implemented");
+    static jsonEmit_IRNumericGreaterEqExpression(exp: IRNumericGreaterEqExpression): object {
+        const nval = IRNumericComparisonExpression.jsonEmitMeta_IRNumericComparisonExpression(exp);
+
+        return nval;
     }
 
-    static parseBAPIAsIRNumericGreaterEqExpression(lexer: BAPILexer): IRNumericGreaterEqExpression {
-        assert(false, "IRNumericGreaterEqExpression.parseBAPI not implemented");
+    static jsonParse_IRNumericGreaterEqExpression(obj: any): IRNumericGreaterEqExpression {
+        const nval = IRNumericComparisonExpression.jsonParseMeta_IRNumericComparisonExpression(obj);
+
+        return new IRNumericGreaterEqExpression(...nval);
     }
 }
 
@@ -2521,12 +3666,18 @@ class IRIsNoneOptionExpression extends IRSimpleExpression {
         this.opttype = opttype;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRIsNoneOptionExpression.toBAPI not implemented");
+    static jsonEmit_IRIsNoneOptionExpression(exp: IRIsNoneOptionExpression): object {
+        return {
+            exp: IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.exp),
+            opttype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.opttype)
+        };
     }
 
-    static parseBAPIAsIRIsNoneOptionExpression(lexer: BAPILexer): IRIsNoneOptionExpression {
-        assert(false, "IRIsNoneOptionExpression.parseBAPI not implemented");
+    static jsonParse_IRIsNoneOptionExpression(obj: any): IRIsNoneOptionExpression {
+        const exp = IRSimpleExpression.jsonParse_IRSimpleExpression(obj.exp);
+        const opttype = IRTypeSignature.jsonParse_IRTypeSignature(obj.opttype);
+
+        return new IRIsNoneOptionExpression(exp, opttype);
     }
 }
 
@@ -2540,12 +3691,18 @@ class IRIsNotNoneOptionExpression extends IRSimpleExpression {
         this.opttype = opttype;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRIsNotNoneOptionExpression.toBAPI not implemented");
+    static jsonEmit_IRIsNotNoneOptionExpression(exp: IRIsNotNoneOptionExpression): object {
+        return {
+            exp: IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.exp),
+            opttype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.opttype)
+        };
     }
 
-    static parseBAPIAsIRIsNotNoneOptionExpression(lexer: BAPILexer): IRIsNotNoneOptionExpression {
-        assert(false, "IRIsNotNoneOptionExpression.parseBAPI not implemented");
+    static jsonParse_IRIsNotNoneOptionExpression(obj: any): IRIsNotNoneOptionExpression {
+        const exp = IRSimpleExpression.jsonParse_IRSimpleExpression(obj.exp);
+        const opttype = IRTypeSignature.jsonParse_IRTypeSignature(obj.opttype);
+
+        return new IRIsNotNoneOptionExpression(exp, opttype);
     }
 }
 
@@ -2564,12 +3721,22 @@ class IRIsOptionEqValueExpression extends IRSimpleExpression {
         this.valtype = valtype;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRIsOptionEqValueExpression.toBAPI not implemented");
+    static jsonEmit_IRIsOptionEqValueExpression(exp: IRIsOptionEqValueExpression): object {
+        return {
+            optexp: IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.optexp),
+            opttype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.opttype),
+            valexp: IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.valexp),
+            valtype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.valtype)
+        };
     }
 
-    static parseBAPIAsIRIsOptionEqValueExpression(lexer: BAPILexer): IRIsOptionEqValueExpression {
-        assert(false, "IRIsOptionEqValueExpression.parseBAPI not implemented");
+    static jsonParse_IRIsOptionEqValueExpression(obj: any): IRIsOptionEqValueExpression {
+        const optexp = IRSimpleExpression.jsonParse_IRSimpleExpression(obj.optexp);
+        const opttype = IRTypeSignature.jsonParse_IRTypeSignature(obj.opttype);
+        const valexp = IRSimpleExpression.jsonParse_IRSimpleExpression(obj.valexp);
+        const valtype = IRTypeSignature.jsonParse_IRTypeSignature(obj.valtype);
+
+        return new IRIsOptionEqValueExpression(optexp, opttype, valexp, valtype);
     }
 }
 
@@ -2588,12 +3755,22 @@ class IRIsOptionNeqValueExpression extends IRSimpleExpression {
         this.valtype = valtype;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRIsOptionNeqValueExpression.toBAPI not implemented");
+    static jsonEmit_IRIsOptionNeqValueExpression(exp: IRIsOptionNeqValueExpression): object {
+        return {
+            optexp: IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.optexp),
+            opttype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.opttype),
+            valexp: IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.valexp),
+            valtype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.valtype)
+        };
     }
 
-    static parseBAPIAsIRIsOptionNeqValueExpression(lexer: BAPILexer): IRIsOptionNeqValueExpression {
-        assert(false, "IRIsOptionNeqValueExpression.parseBAPI not implemented");
+    static jsonParse_IRIsOptionNeqValueExpression(obj: any): IRIsOptionNeqValueExpression {
+        const optexp = IRSimpleExpression.jsonParse_IRSimpleExpression(obj.optexp);
+        const opttype = IRTypeSignature.jsonParse_IRTypeSignature(obj.opttype);
+        const valexp = IRSimpleExpression.jsonParse_IRSimpleExpression(obj.valexp);
+        const valtype = IRTypeSignature.jsonParse_IRTypeSignature(obj.valtype);
+
+        return new IRIsOptionNeqValueExpression(optexp, opttype, valexp, valtype);
     }
 }
 
@@ -2612,12 +3789,22 @@ class IRIsSomeEqValueExpression extends IRSimpleExpression {
         this.valtype = valtype;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRIsSomeEqValueExpression.toBAPI not implemented");
+    static jsonEmit_IRIsSomeEqValueExpression(exp: IRIsSomeEqValueExpression): object {
+        return {
+            someexp: IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.someexp),
+            sometype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.sometype),
+            valexp: IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.valexp),
+            valtype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.valtype)
+        };
     }
 
-    static parseBAPIAsIRIsSomeEqValueExpression(lexer: BAPILexer): IRIsSomeEqValueExpression {
-        assert(false, "IRIsSomeEqValueExpression.parseBAPI not implemented");
+    static jsonParse_IRIsSomeEqValueExpression(obj: any): IRIsSomeEqValueExpression {
+        const someexp = IRSimpleExpression.jsonParse_IRSimpleExpression(obj.someexp);
+        const sometype = IRTypeSignature.jsonParse_IRTypeSignature(obj.sometype);
+        const valexp = IRSimpleExpression.jsonParse_IRSimpleExpression(obj.valexp);
+        const valtype = IRTypeSignature.jsonParse_IRTypeSignature(obj.valtype);
+
+        return new IRIsSomeEqValueExpression(someexp, sometype, valexp, valtype);
     }
 }
 
@@ -2636,12 +3823,22 @@ class IRIsSomeNeqValueExpression extends IRSimpleExpression {
         this.valtype = valtype;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRIsSomeNeqValueExpression.toBAPI not implemented");
+    static jsonEmit_IRIsSomeNeqValueExpression(exp: IRIsSomeNeqValueExpression): object {
+        return {
+            someexp: IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.someexp),
+            sometype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.sometype),
+            valexp: IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.valexp),
+            valtype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.valtype)
+        };
     }
 
-    static parseBAPIAsIRIsSomeNeqValueExpression(lexer: BAPILexer): IRIsSomeNeqValueExpression {
-        assert(false, "IRIsSomeNeqValueExpression.parseBAPI not implemented");
+    static jsonParse_IRIsSomeNeqValueExpression(obj: any): IRIsSomeNeqValueExpression {
+        const someexp = IRSimpleExpression.jsonParse_IRSimpleExpression(obj.someexp);
+        const sometype = IRTypeSignature.jsonParse_IRTypeSignature(obj.sometype);
+        const valexp = IRSimpleExpression.jsonParse_IRSimpleExpression(obj.valexp);
+        const valtype = IRTypeSignature.jsonParse_IRTypeSignature(obj.valtype);
+
+        return new IRIsSomeNeqValueExpression(someexp, sometype, valexp, valtype);
     }
 }
 
@@ -2657,12 +3854,24 @@ abstract class IRKeyComparisonExpression extends IRSimpleExpression {
         this.opertype = opertype;
     }
 
-    toBAPI_IRKeyComparisonExpression(): string {
-        assert(false, "IRKeyComparisonExpression.toBAPI not implemented");
+    static jsonEmit_IRKeyComparisonExpression(exp: IRKeyComparisonExpression): [string, object] {
+        return IRExpression.jsonEmit_IRExpression(exp);
     }
 
-    static parseBAPI_IRKeyComparisonExpression(lexer: BAPILexer):  {left: IRSimpleExpression, right: IRSimpleExpression, opertype: IRTypeSignature} {
-        assert(false, "IRKeyComparisonExpression.parseBAPI not implemented");
+    static jsonParse_IRKeyComparisonExpression(obj: any): IRKeyComparisonExpression{
+        return IRExpression.jsonParse_IRExpression(obj) as IRKeyComparisonExpression;
+    }
+
+    static jsonEmitMeta_IRKeyComparisonExpression(exp: IRKeyComparisonExpression): object {
+        return {
+            left: IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.left),
+            right: IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.right),
+            opertype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.opertype)
+        };
+    }
+
+    static jsonParseMeta_IRKeyComparisonExpression(obj: any): [IRSimpleExpression, IRSimpleExpression, IRTypeSignature] {
+        return [IRSimpleExpression.jsonParse_IRSimpleExpression(obj.left), IRSimpleExpression.jsonParse_IRSimpleExpression(obj.right), IRTypeSignature.jsonParse_IRTypeSignature(obj.opertype)];
     }
 }
 
@@ -2671,12 +3880,16 @@ class IRBinKeyEqDirectExpression extends IRKeyComparisonExpression {
         super(IRExpressionTag.IRBinKeyEqDirectExpression, left, right, opertype);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRBinKeyEqDirectExpression.toBAPI not implemented");
+    static jsonEmit_IRBinKeyEqDirectExpression(exp: IRBinKeyEqDirectExpression): object {
+        const nval = IRKeyComparisonExpression.jsonEmitMeta_IRKeyComparisonExpression(exp);
+
+        return nval;
     }
 
-    static parseBAPIAsIRBinKeyEqDirectExpression(lexer: BAPILexer): IRBinKeyEqDirectExpression {
-        assert(false, "IRBinKeyEqDirectExpression.parseBAPI not implemented");
+    static jsonParse_IRBinKeyEqDirectExpression(obj: any): IRBinKeyEqDirectExpression {
+        const nval = IRKeyComparisonExpression.jsonParseMeta_IRKeyComparisonExpression(obj);
+
+        return new IRBinKeyEqDirectExpression(...nval);
     }
 }
 
@@ -2685,12 +3898,16 @@ class IRBinKeyNeqDirectExpression extends IRKeyComparisonExpression {
         super(IRExpressionTag.IRBinKeyNeqDirectExpression, left, right, opertype);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRBinKeyNeqDirectExpression.toBAPI not implemented");
+    static jsonEmit_IRBinKeyNeqDirectExpression(exp: IRBinKeyNeqDirectExpression): object {
+        const nval = IRKeyComparisonExpression.jsonEmitMeta_IRKeyComparisonExpression(exp);
+
+        return nval;
     }
 
-    static parseBAPIAsIRBinKeyNeqDirectExpression(lexer: BAPILexer): IRBinKeyNeqDirectExpression {
-        assert(false, "IRBinKeyNeqDirectExpression.parseBAPI not implemented");
+    static jsonParse_IRBinKeyNeqDirectExpression(obj: any): IRBinKeyNeqDirectExpression {
+        const nval = IRKeyComparisonExpression.jsonParseMeta_IRKeyComparisonExpression(obj);
+
+        return new IRBinKeyNeqDirectExpression(...nval);
     }
 }
 
@@ -2699,12 +3916,16 @@ class IRBinKeyLessDirectExpression extends IRKeyComparisonExpression {
         super(IRExpressionTag.IRBinKeyLessDirectExpression, left, right, opertype);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRBinKeyLessDirectExpression.toBAPI not implemented");
+    static jsonEmit_IRBinKeyLessDirectExpression(exp: IRBinKeyLessDirectExpression): object {
+        const nval = IRKeyComparisonExpression.jsonEmitMeta_IRKeyComparisonExpression(exp);
+
+        return nval;
     }
 
-    static parseBAPIAsIRBinKeyLessDirectExpression(lexer: BAPILexer): IRBinKeyLessDirectExpression {
-        assert(false, "IRBinKeyLessDirectExpression.parseBAPI not implemented");
+    static jsonParse_IRBinKeyLessDirectExpression(obj: any): IRBinKeyLessDirectExpression {
+        const nval = IRKeyComparisonExpression.jsonParseMeta_IRKeyComparisonExpression(obj);
+
+        return new IRBinKeyLessDirectExpression(...nval);
     }
 }
 
@@ -2716,12 +3937,22 @@ abstract class IRLogicOpExpression extends IRSimpleExpression {
         this.args = args;
     }
 
-    toBAPI_IRLogicOpExpression(): string {
-        assert(false, "IRLogicOpExpression.toBAPI not implemented");
+    static jsonEmit_IRLogicOpExpression(exp: IRLogicOpExpression): [string, object] {
+        return IRExpression.jsonEmit_IRExpression(exp);
     }
 
-    static parseBAPI_IRLogicOpExpression(lexer: BAPILexer):  {args: IRSimpleExpression[]} {
-        assert(false, "IRLogicOpExpression.parseBAPI not implemented");
+    static jsonParse_IRLogicOpExpression(obj: any): IRLogicOpExpression{
+        return IRExpression.jsonParse_IRExpression(obj) as IRLogicOpExpression;
+    }
+
+    static jsonEmitMeta_IRLogicOpExpression(exp: IRLogicOpExpression): object {
+        return {
+            args: exp.args.map((arg) => IRSimpleExpression.jsonEmit_IRSimpleExpression(arg))
+        };
+    }
+
+    static jsonParseMeta_IRLogicOpExpression(obj: any): [IRSimpleExpression[]] {
+        return [obj.args.map((arg: any) => IRSimpleExpression.jsonParse_IRSimpleExpression(arg))];
     }
 }
 
@@ -2730,12 +3961,16 @@ class IRLogicAndExpression extends IRLogicOpExpression {
         super(IRExpressionTag.IRLogicAndExpression, args);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRLogicAndExpression.toBAPI not implemented");
+    static jsonEmit_IRLogicAndExpression(exp: IRLogicAndExpression): object {
+        const nval = IRLogicOpExpression.jsonEmitMeta_IRLogicOpExpression(exp);
+
+        return nval;
     }
 
-    static parseBAPIAsIRLogicAndExpression(lexer: BAPILexer): IRLogicAndExpression {
-        assert(false, "IRLogicAndExpression.parseBAPI not implemented");
+    static jsonParse_IRLogicAndExpression(obj: any): IRLogicAndExpression {
+        const nval = IRLogicOpExpression.jsonParseMeta_IRLogicOpExpression(obj);
+
+        return new IRLogicAndExpression(...nval);
     }
 }
 
@@ -2744,12 +3979,16 @@ class IRLogicOrExpression extends IRLogicOpExpression {
         super(IRExpressionTag.IRLogicOrExpression, args);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRLogicOrExpression.toBAPI not implemented");
+    static jsonEmit_IRLogicOrExpression(exp: IRLogicOrExpression): object {
+        const nval = IRLogicOpExpression.jsonEmitMeta_IRLogicOpExpression(exp);
+
+        return nval;
     }
 
-    static parseBAPIAsIRLogicOrExpression(lexer: BAPILexer): IRLogicOrExpression {
-        assert(false, "IRLogicOrExpression.parseBAPI not implemented");
+    static jsonParse_IRLogicOrExpression(obj: any): IRLogicOrExpression {
+        const nval = IRLogicOpExpression.jsonParseMeta_IRLogicOpExpression(obj);
+
+        return new IRLogicOrExpression(...nval);
     }
 }
 
@@ -2765,12 +4004,12 @@ class IRLogicSimpleConditionalExpression extends IRSimpleExpression {
         this.falseexp = falseexp;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRLogicSimpleConditionalExpression.toBAPI not implemented");
+    static jsonEmit_IRLogicSimpleConditionalExpression(exp: IRLogicSimpleConditionalExpression): object {
+        assert(false, "IRLogicSimpleConditionalExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRLogicSimpleConditionalExpression(lexer: BAPILexer): IRLogicSimpleConditionalExpression {
-        assert(false, "IRLogicSimpleConditionalExpression.parseBAPI not implemented");
+    static jsonParse_IRLogicSimpleConditionalExpression(obj: any): IRLogicSimpleConditionalExpression {
+        assert(false, "IRLogicSimpleConditionalExpression.jsonParse not implemented");
     }
 }
 
@@ -2782,12 +4021,12 @@ class IRLiteralOptionOfNoneExpression extends IRLiteralExpression {
         this.opttype = opttype;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRLiteralOptionOfNoneExpression.toBAPI not implemented");
+    static jsonEmit_IRLiteralOptionOfNoneExpression(exp: IRLiteralOptionOfNoneExpression): object {
+        assert(false, "IRLiteralOptionOfNoneExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRLiteralOptionOfNoneExpression(lexer: BAPILexer): IRLiteralOptionOfNoneExpression {
-        assert(false, "IRLiteralOptionOfNoneExpression.parseBAPI not implemented");
+    static jsonParse_IRLiteralOptionOfNoneExpression(obj: any): IRLiteralOptionOfNoneExpression {
+        assert(false, "IRLiteralOptionOfNoneExpression.jsonParse not implemented");
     }
 }
 
@@ -2803,12 +4042,12 @@ class IRConstructOptionFromSomeExpression extends IRSimpleExpression {
         this.value = value;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRConstructOptionFromSomeExpression.toBAPI not implemented");
+    static jsonEmit_IRConstructOptionFromSomeExpression(exp: IRConstructOptionFromSomeExpression): object {
+        assert(false, "IRConstructOptionFromSomeExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRConstructOptionFromSomeExpression(lexer: BAPILexer): IRConstructOptionFromSomeExpression {
-        assert(false, "IRConstructOptionFromSomeExpression.parseBAPI not implemented");
+    static jsonParse_IRConstructOptionFromSomeExpression(obj: any): IRConstructOptionFromSomeExpression {
+        assert(false, "IRConstructOptionFromSomeExpression.jsonParse not implemented");
     }
 }
 
@@ -2824,12 +4063,12 @@ class IRExtractSomeFromOptionExpression extends IRSimpleExpression {
         this.value = value;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRExtractSomeFromOptionExpression.toBAPI not implemented");
+    static jsonEmit_IRExtractSomeFromOptionExpression(exp: IRExtractSomeFromOptionExpression): object {
+        assert(false, "IRExtractSomeFromOptionExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRExtractSomeFromOptionExpression(lexer: BAPILexer): IRExtractSomeFromOptionExpression {
-        assert(false, "IRExtractSomeFromOptionExpression.parseBAPI not implemented");
+    static jsonParse_IRExtractSomeFromOptionExpression(obj: any): IRExtractSomeFromOptionExpression {
+        assert(false, "IRExtractSomeFromOptionExpression.jsonParse not implemented");
     }
 }
 
@@ -2847,12 +4086,12 @@ class IRExtractSomeValueFromOptionExpression extends IRSimpleExpression {
         this.value = value;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRExtractSomeValueFromOptionExpression.toBAPI not implemented");
+    static jsonEmit_IRExtractSomeValueFromOptionExpression(exp: IRExtractSomeValueFromOptionExpression): object {
+        assert(false, "IRExtractSomeValueFromOptionExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRExtractSomeValueFromOptionExpression(lexer: BAPILexer): IRExtractSomeValueFromOptionExpression {
-        assert(false, "IRExtractSomeValueFromOptionExpression.parseBAPI not implemented");
+    static jsonParse_IRExtractSomeValueFromOptionExpression(obj: any): IRExtractSomeValueFromOptionExpression {
+        assert(false, "IRExtractSomeValueFromOptionExpression.jsonParse not implemented");
     }
 }
 
@@ -2868,12 +4107,12 @@ class IRConstructResultFromOkExpression extends IRSimpleExpression {
         this.value = value;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRConstructResultFromOkExpression.toBAPI not implemented");
+    static jsonEmit_IRConstructResultFromOkExpression(exp: IRConstructResultFromOkExpression): object {
+        assert(false, "IRConstructResultFromOkExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRConstructResultFromOkExpression(lexer: BAPILexer): IRConstructResultFromOkExpression {
-        assert(false, "IRConstructResultFromOkExpression.parseBAPI not implemented");
+    static jsonParse_IRConstructResultFromOkExpression(obj: any): IRConstructResultFromOkExpression {
+        assert(false, "IRConstructResultFromOkExpression.jsonParse not implemented");
     }
 }
 
@@ -2889,12 +4128,12 @@ class IRConstructResultFromFailExpression extends IRSimpleExpression {
         this.value = value;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRConstructResultFromFailExpression.toBAPI not implemented");
+    static jsonEmit_IRConstructResultFromFailExpression(exp: IRConstructResultFromFailExpression): object {
+        assert(false, "IRConstructResultFromFailExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRConstructResultFromFailExpression(lexer: BAPILexer): IRConstructResultFromFailExpression {
-        assert(false, "IRConstructResultFromFailExpression.parseBAPI not implemented");
+    static jsonParse_IRConstructResultFromFailExpression(obj: any): IRConstructResultFromFailExpression {
+        assert(false, "IRConstructResultFromFailExpression.jsonParse not implemented");
     }
 }
 
@@ -2910,12 +4149,12 @@ class IRExtractOkFromResultExpression extends IRSimpleExpression {
         this.value = value;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRExtractOkFromResultExpression.toBAPI not implemented");
+    static jsonEmit_IRExtractOkFromResultExpression(exp: IRExtractOkFromResultExpression): object {
+        assert(false, "IRExtractOkFromResultExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRExtractOkFromResultExpression(lexer: BAPILexer): IRExtractOkFromResultExpression {
-        assert(false, "IRExtractOkFromResultExpression.parseBAPI not implemented");
+    static jsonParse_IRExtractOkFromResultExpression(obj: any): IRExtractOkFromResultExpression {
+        assert(false, "IRExtractOkFromResultExpression.jsonParse not implemented");
     }
 }
 
@@ -2933,12 +4172,12 @@ class IRExtractOkValueFromResultExpression extends IRSimpleExpression {
         this.value = value;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRExtractOkValueFromResultExpression.toBAPI not implemented");
+    static jsonEmit_IRExtractOkValueFromResultExpression(exp: IRExtractOkValueFromResultExpression): object {
+        assert(false, "IRExtractOkValueFromResultExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRExtractOkValueFromResultExpression(lexer: BAPILexer): IRExtractOkValueFromResultExpression {
-        assert(false, "IRExtractOkValueFromResultExpression.parseBAPI not implemented");
+    static jsonParse_IRExtractOkValueFromResultExpression(obj: any): IRExtractOkValueFromResultExpression {
+        assert(false, "IRExtractOkValueFromResultExpression.jsonParse not implemented");
     }
 }
 
@@ -2954,12 +4193,12 @@ class IRExtractFailFromResultExpression extends IRSimpleExpression {
         this.value = value;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRExtractFailFromResultExpression.toBAPI not implemented");
+    static jsonEmit_IRExtractFailFromResultExpression(exp: IRExtractFailFromResultExpression): object {
+        assert(false, "IRExtractFailFromResultExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRExtractFailFromResultExpression(lexer: BAPILexer): IRExtractFailFromResultExpression {
-        assert(false, "IRExtractFailFromResultExpression.parseBAPI not implemented");
+    static jsonParse_IRExtractFailFromResultExpression(obj: any): IRExtractFailFromResultExpression {
+        assert(false, "IRExtractFailFromResultExpression.jsonParse not implemented");
     }
 }
 
@@ -2977,12 +4216,12 @@ class IRExtractFailValueFromResultExpression extends IRSimpleExpression {
         this.value = value;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRExtractFailValueFromResultExpression.toBAPI not implemented");
+    static jsonEmit_IRExtractFailValueFromResultExpression(exp: IRExtractFailValueFromResultExpression): object {
+        assert(false, "IRExtractFailValueFromResultExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRExtractFailValueFromResultExpression(lexer: BAPILexer): IRExtractFailValueFromResultExpression {
-        assert(false, "IRExtractFailValueFromResultExpression.parseBAPI not implemented");
+    static jsonParse_IRExtractFailValueFromResultExpression(obj: any): IRExtractFailValueFromResultExpression {
+        assert(false, "IRExtractFailValueFromResultExpression.jsonParse not implemented");
     }
 }
 
@@ -2998,12 +4237,12 @@ abstract class IRConceptRepresentationOfTypeExpression extends IRSimpleExpressio
         this.targettype = targettype;
     }
 
-    toBAPI_IRConceptRepresentationOfTypeExpression(): string {
-        assert(false, "IRConceptRepresentationOfTypeExpression.toBAPI not implemented");
+    static jsonEmit_IRConceptRepresentationOfTypeExpression(exp: IRConceptRepresentationOfTypeExpression): [string, object] {
+        assert(false, "IRConceptRepresentationOfTypeExpression.jsonEmit not implemented");
     }
 
-    static parseBAPI_IRConceptRepresentationOfTypeExpression(lexer: BAPILexer):  {exp: IRSimpleExpression, exptype: IRTypeSignature, targettype: IRTypeSignature} {
-        assert(false, "IRConceptRepresentationOfTypeExpression.parseBAPI not implemented");
+    static jsonParse_IRConceptRepresentationOfTypeExpression(obj: any): IRConceptRepresentationOfTypeExpression {
+        assert(false, "IRConceptRepresentationOfTypeExpression.jsonParse not implemented");
     }
 }
 
@@ -3012,12 +4251,12 @@ class IRIsConceptRepresentationOfTypeExpression extends IRConceptRepresentationO
         super(IRExpressionTag.IRIsConceptRepresentationOfTypeExpression, exp, exptype, targettype);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRIsConceptRepresentationOfTypeExpression.toBAPI not implemented");
+    static jsonEmit_IRIsConceptRepresentationOfTypeExpression(exp: IRIsConceptRepresentationOfTypeExpression): object {
+        assert(false, "IRIsConceptRepresentationOfTypeExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRIsConceptRepresentationOfTypeExpression(lexer: BAPILexer): IRIsConceptRepresentationOfTypeExpression {
-        assert(false, "IRIsConceptRepresentationOfTypeExpression.parseBAPI not implemented");
+    static jsonParse_IRIsConceptRepresentationOfTypeExpression(obj: any): IRIsConceptRepresentationOfTypeExpression {
+        assert(false, "IRIsConceptRepresentationOfTypeExpression.jsonParse not implemented");
     }
 }
 
@@ -3026,12 +4265,12 @@ class IRIsNotConceptRepresentationOfTypeExpression extends IRConceptRepresentati
         super(IRExpressionTag.IRIsNotConceptRepresentationOfTypeExpression, exp, exptype, targettype);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRIsNotConceptRepresentationOfTypeExpression.toBAPI not implemented");
+    static jsonEmit_IRIsNotConceptRepresentationOfTypeExpression(exp: IRIsNotConceptRepresentationOfTypeExpression): object {
+        assert(false, "IRIsNotConceptRepresentationOfTypeExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRIsNotConceptRepresentationOfTypeExpression(lexer: BAPILexer): IRIsNotConceptRepresentationOfTypeExpression {
-        assert(false, "IRIsNotConceptRepresentationOfTypeExpression.parseBAPI not implemented");
+    static jsonParse_IRIsNotConceptRepresentationOfTypeExpression(obj: any): IRIsNotConceptRepresentationOfTypeExpression {
+        assert(false, "IRIsNotConceptRepresentationOfTypeExpression.jsonParse not implemented");
     }
 }
 
@@ -3040,12 +4279,12 @@ class IRIsConceptRepresentationSubtypeOfTypeExpression extends IRConceptRepresen
         super(IRExpressionTag.IRIsConceptRepresentationSubtypeOfTypeExpression, exp, exptype, targettype);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRIsConceptRepresentationSubtypeOfTypeExpression.toBAPI not implemented");
+    static jsonEmit_IRIsConceptRepresentationSubtypeOfTypeExpression(exp: IRIsConceptRepresentationSubtypeOfTypeExpression): object {
+        assert(false, "IRIsConceptRepresentationSubtypeOfTypeExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRIsConceptRepresentationSubtypeOfTypeExpression(lexer: BAPILexer): IRIsConceptRepresentationSubtypeOfTypeExpression {
-        assert(false, "IRIsConceptRepresentationSubtypeOfTypeExpression.parseBAPI not implemented");
+    static jsonParse_IRIsConceptRepresentationSubtypeOfTypeExpression(obj: any): IRIsConceptRepresentationSubtypeOfTypeExpression {
+        assert(false, "IRIsConceptRepresentationSubtypeOfTypeExpression.jsonParse not implemented");
     }
 }
 
@@ -3054,12 +4293,12 @@ class IRIsNotConceptRepresentationSubtypeOfTypeExpression extends IRConceptRepre
         super(IRExpressionTag.IRIsNotConceptRepresentationSubtypeOfTypeExpression, exp, exptype, targettype);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRIsNotConceptRepresentationSubtypeOfTypeExpression.toBAPI not implemented");
+    static jsonEmit_IRIsNotConceptRepresentationSubtypeOfTypeExpression(exp: IRIsNotConceptRepresentationSubtypeOfTypeExpression): object {
+        assert(false, "IRIsNotConceptRepresentationSubtypeOfTypeExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRIsNotConceptRepresentationSubtypeOfTypeExpression(lexer: BAPILexer): IRIsNotConceptRepresentationSubtypeOfTypeExpression {
-        assert(false, "IRIsNotConceptRepresentationSubtypeOfTypeExpression.parseBAPI not implemented");
+    static jsonParse_IRIsNotConceptRepresentationSubtypeOfTypeExpression(obj: any): IRIsNotConceptRepresentationSubtypeOfTypeExpression {
+        assert(false, "IRIsNotConceptRepresentationSubtypeOfTypeExpression.jsonParse not implemented");
     }
 }
 
@@ -3076,12 +4315,12 @@ class IRStaticIsTypeSubtypeOfExpression extends IRSimpleExpression {
         this.isnot = isnot;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRStaticIsTypeSubtypeOfExpression.toBAPI not implemented");
+    static jsonEmit_IRStaticIsTypeSubtypeOfExpression(exp: IRStaticIsTypeSubtypeOfExpression): object {
+        assert(false, "IRStaticIsTypeSubtypeOfExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRStaticIsTypeSubtypeOfExpression(lexer: BAPILexer): IRStaticIsTypeSubtypeOfExpression {
-        assert(false, "IRStaticIsTypeSubtypeOfExpression.parseBAPI not implemented");
+    static jsonParse_IRStaticIsTypeSubtypeOfExpression(obj: any): IRStaticIsTypeSubtypeOfExpression {
+        assert(false, "IRStaticIsTypeSubtypeOfExpression.jsonParse not implemented");
     }
 }
 
@@ -3097,12 +4336,12 @@ class IRBoxEntityToConceptRepresentationExpression extends IRSimpleExpression {
         this.value = value;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRBoxEntityToConceptRepresentationExpression.toBAPI not implemented");
+    static jsonEmit_IRBoxEntityToConceptRepresentationExpression(exp: IRBoxEntityToConceptRepresentationExpression): object {
+        assert(false, "IRBoxEntityToConceptRepresentationExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRBoxEntityToConceptRepresentationExpression(lexer: BAPILexer): IRBoxEntityToConceptRepresentationExpression {
-        assert(false, "IRBoxEntityToConceptRepresentationExpression.parseBAPI not implemented");
+    static jsonParse_IRBoxEntityToConceptRepresentationExpression(obj: any): IRBoxEntityToConceptRepresentationExpression {
+        assert(false, "IRBoxEntityToConceptRepresentationExpression.jsonParse not implemented");
     }
 }
 
@@ -3118,12 +4357,12 @@ class IRUnboxEntityFromConceptRepresentationExpression extends IRSimpleExpressio
         this.value = value;
     }
     
-    override toBAPI(): string {
-        assert(false, "IRUnboxEntityFromConceptRepresentationExpression.toBAPI not implemented");
+    static jsonEmit_IRUnboxEntityFromConceptRepresentationExpression(exp: IRUnboxEntityFromConceptRepresentationExpression): object {
+        assert(false, "IRUnboxEntityFromConceptRepresentationExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRUnboxEntityFromConceptRepresentationExpression(lexer: BAPILexer): IRUnboxEntityFromConceptRepresentationExpression {
-        assert(false, "IRUnboxEntityFromConceptRepresentationExpression.parseBAPI not implemented");
+    static jsonParse_IRUnboxEntityFromConceptRepresentationExpression(obj: any): IRUnboxEntityFromConceptRepresentationExpression {
+        assert(false, "IRUnboxEntityFromConceptRepresentationExpression.jsonParse not implemented");
     }
 }
 
@@ -3139,12 +4378,12 @@ class IRConvertConceptRepresentationExpression extends IRSimpleExpression {
         this.value = value;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRConvertConceptRepresentationExpression.toBAPI not implemented");
+    static jsonEmit_IRConvertConceptRepresentationExpression(exp: IRConvertConceptRepresentationExpression): object {
+        assert(false, "IRConvertConceptRepresentationExpression.jsonEmit not implemented");
     }
 
-    static parseBAPIAsIRConvertConceptRepresentationExpression(lexer: BAPILexer): IRConvertConceptRepresentationExpression {
-        assert(false, "IRConvertConceptRepresentationExpression.parseBAPI not implemented");
+    static jsonParse_IRConvertConceptRepresentationExpression(obj: any): IRConvertConceptRepresentationExpression {
+        assert(false, "IRConvertConceptRepresentationExpression.jsonParse not implemented");
     }
 }
 
@@ -3160,19 +4399,19 @@ class IRNopStatement extends IRAtomicStatement {
         return true;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRNopStatement.toBAPI not implemented");
+    static jsonEmit_IRNopStatement(exp: IRNopStatement): object {
+        return {};
     }
 
-    static parseBAPIAsIRNopStatement(lexer: BAPILexer): IRNopStatement {
-        assert(false, "IRNopStatement.parseBAPI not implemented");
+    static jsonParse_IRNopStatement(obj: any): IRNopStatement {
+        return new IRNopStatement();
     }
 }
 
 class IRTempAssignExpressionStatement extends IRTempAssignStatement {
     readonly rhs: IRExpression;
 
-    constructor(tname: string, rhs: IRExpression, ttype: IRTypeSignature) {
+    constructor(tname: number, ttype: IRTypeSignature, rhs: IRExpression) {
         super(IRStatementTag.IRTempAssignExpressionStatement, tname, ttype);
         this.rhs = rhs;
     }
@@ -3181,19 +4420,27 @@ class IRTempAssignExpressionStatement extends IRTempAssignStatement {
         return this.rhs.isSimpleExpression();
     }
 
-    override toBAPI(): string {
-        assert(false, "IRTempAssignExpressionStatement.toBAPI not implemented");
+    static jsonEmit_IRTempAssignExpressionStatement(exp: IRTempAssignExpressionStatement): object {
+        const nval = IRTempAssignStatement.jsonEmitMeta_IRTempAssignStatement(exp);
+
+        return {
+            ...nval,
+            rhs: IRExpression.jsonEmit_IRExpression(exp.rhs)
+        };
     }
 
-    static parseBAPIAsIRTempAssignExpressionStatement(lexer: BAPILexer): IRTempAssignExpressionStatement {
-        assert(false, "IRTempAssignExpressionStatement.parseBAPI not implemented");
+    static jsonParse_IRTempAssignExpressionStatement(obj: any): IRTempAssignExpressionStatement {
+        const nval = IRTempAssignStatement.jsonParseMeta_IRTempAssignStatement(obj);
+        const rhs = IRExpression.jsonParse_IRExpression(obj.rhs);
+
+        return new IRTempAssignExpressionStatement(...nval, rhs);
     }
 }
 
 class IRTempAssignStdInvokeStatement extends IRTempAssignStatement {
     readonly rhs: IRInvokeSimpleExpression;
 
-    constructor(tname: string, rhs: IRInvokeSimpleExpression, ttype: IRTypeSignature) {
+    constructor(tname: number, ttype: IRTypeSignature, rhs: IRInvokeSimpleExpression) {
         super(IRStatementTag.IRTempAssignStdInvokeStatement, tname, ttype);
         this.rhs = rhs;
     }
@@ -3202,12 +4449,20 @@ class IRTempAssignStdInvokeStatement extends IRTempAssignStatement {
         return false;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRTempAssignStdInvokeStatement.toBAPI not implemented");
+    static jsonEmit_IRTempAssignStdInvokeStatement(exp: IRTempAssignStdInvokeStatement): object {
+        const nval = IRTempAssignStatement.jsonEmitMeta_IRTempAssignStatement(exp);
+
+        return {
+            ...nval,
+            rhs: IRExpression.jsonEmit_IRExpression(exp.rhs)
+        };
     }
 
-    static parseBAPIAsIRTempAssignStdInvokeStatement(lexer: BAPILexer): IRTempAssignStdInvokeStatement {
-        assert(false, "IRTempAssignStdInvokeStatement.parseBAPI not implemented");
+    static jsonParse_IRTempAssignStdInvokeStatement(obj: any): IRTempAssignStdInvokeStatement {
+        const nval = IRTempAssignStatement.jsonParseMeta_IRTempAssignStatement(obj);
+        const rhs = IRInvokeSimpleExpression.jsonParse_IRInvokeSimpleExpression(obj.rhs);
+
+        return new IRTempAssignStdInvokeStatement(...nval, rhs);
     }
 }
 
@@ -3215,10 +4470,10 @@ class IRTempAssignStdInvokeStatement extends IRTempAssignStatement {
 class IRTempAssignRefInvokeStatement extends IRTempAssignStatement {
     readonly ivar: string; //the implicit variable to assign the returned ref/out/out?/inout parameter
     readonly ivartype: IRTypeSignature;
-    readonly passkind : "ref" | "out" | "out?" | "inout";
+    readonly passkind : IRImplicitInvokeArgPassKind;
     readonly rhs: IRInvokeImplicitsExpression;
 
-    constructor(tname: string, ttype: IRTypeSignature, ivar: string, ivartype: IRTypeSignature, passkind: "ref" | "out" | "out?" | "inout", rhs: IRInvokeImplicitsExpression) {
+    constructor(tname: number, ttype: IRTypeSignature, ivar: string, ivartype: IRTypeSignature, passkind: IRImplicitInvokeArgPassKind, rhs: IRInvokeImplicitsExpression) {
         super(IRStatementTag.IRTempAssignRefInvokeStatement, tname, ttype);
         this.ivar = ivar;
         this.ivartype = ivartype;
@@ -3230,19 +4485,33 @@ class IRTempAssignRefInvokeStatement extends IRTempAssignStatement {
         return false;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRTempAssignRefInvokeStatement.toBAPI not implemented");
+    static jsonEmit_IRTempAssignRefInvokeStatement(exp: IRTempAssignRefInvokeStatement): object {
+        const nval = IRTempAssignStatement.jsonEmitMeta_IRTempAssignStatement(exp);
+
+        return {
+            ...nval,
+            ivar: exp.ivar,
+            ivartype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.ivartype),
+            passkind: `Assembly::${exp.passkind}`,
+            rhs: IRInvokeImplicitsExpression.jsonEmit_IRInvokeImplicitsExpression(exp.rhs)
+        };
     }
 
-    static parseBAPIAsIRTempAssignRefInvokeStatement(lexer: BAPILexer): IRTempAssignRefInvokeStatement {
-        assert(false, "IRTempAssignRefInvokeStatement.parseBAPI not implemented");
+    static jsonParse_IRTempAssignRefInvokeStatement(obj: any): IRTempAssignRefInvokeStatement {
+        const nval = IRTempAssignStatement.jsonParseMeta_IRTempAssignStatement(obj);
+        const ivar = obj.ivar;
+        const ivartype = IRTypeSignature.jsonParse_IRTypeSignature(obj.ivartype);
+        const passkind = obj.passkind.replace("Assembly::", "");
+        const rhs = IRInvokeImplicitsExpression.jsonParse_IRInvokeImplicitsExpression(obj.rhs);
+
+        return new IRTempAssignRefInvokeStatement(...nval, ivar, ivartype, passkind, rhs);
     }
 }
 
 class IRTempAssignDirectConstructorStatement extends IRTempAssignStatement {
     readonly rhs: IRConstructExpression;
 
-    constructor(tname: string, ttype: IRTypeSignature, rhs: IRConstructExpression) {
+    constructor(tname: number, ttype: IRTypeSignature, rhs: IRConstructExpression) {
         super(IRStatementTag.IRTempAssignDirectConstructorStatement, tname, ttype);
         this.rhs = rhs;
     }
@@ -3251,12 +4520,20 @@ class IRTempAssignDirectConstructorStatement extends IRTempAssignStatement {
         return false;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRTempAssignDirectConstructorStatement.toBAPI not implemented");
+    static jsonEmit_IRTempAssignDirectConstructorStatement(exp: IRTempAssignDirectConstructorStatement): object {
+        const nval = IRTempAssignStatement.jsonEmitMeta_IRTempAssignStatement(exp);
+
+        return {
+            ...nval,
+            rhs: IRConstructExpression.jsonEmit_IRConstructExpression(exp.rhs)
+        };
     }
 
-    static parseBAPIAsIRTempAssignDirectConstructorStatement(lexer: BAPILexer): IRTempAssignDirectConstructorStatement {
-        assert(false, "IRTempAssignDirectConstructorStatement.parseBAPI not implemented");
+    static jsonParse_IRTempAssignDirectConstructorStatement(obj: any): IRTempAssignDirectConstructorStatement {
+        const nval = IRTempAssignStatement.jsonParseMeta_IRTempAssignStatement(obj);
+        const rhs = IRConstructExpression.jsonParse_IRConstructExpression(obj.rhs);
+
+        return new IRTempAssignDirectConstructorStatement(...nval, rhs);
     }
 }
 
@@ -3274,12 +4551,16 @@ class IRVariableDeclarationStatement extends IRAtomicStatement {
         return true;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRVariableDeclarationStatement.toBAPI not implemented");
+    static jsonEmit_IRVariableDeclarationStatement(exp: IRVariableDeclarationStatement): object {
+        return {
+            vname: exp.vname,
+            vtype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.vtype)
+        };
     }
 
-    static parseBAPIAsIRVariableDeclarationStatement(lexer: BAPILexer): IRVariableDeclarationStatement {
-        assert(false, "IRVariableDeclarationStatement.parseBAPI not implemented");
+    static jsonParse_IRVariableDeclarationStatement(obj: any): IRVariableDeclarationStatement {
+        const vtype = IRTypeSignature.jsonParse_IRTypeSignature(obj.vtype);
+        return new IRVariableDeclarationStatement(obj.vname, vtype);
     }
 }
 
@@ -3301,25 +4582,30 @@ class IRVariableInitializationStatement extends IRAtomicStatement {
         return this.initexp.isSimpleExpression();
     }
 
-    override toBAPI(): string {
-        assert(false, "IRVariableInitializationStatement.toBAPI not implemented");
+    static jsonEmit_IRVariableInitializationStatement(exp: IRVariableInitializationStatement): object {
+        return {
+            vname: exp.vname,
+            vtype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.vtype),
+            initexp: IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.initexp),
+            isconst: exp.isconst
+        };
     }
 
-    static parseBAPIAsIRVariableInitializationStatement(lexer: BAPILexer): IRVariableInitializationStatement {
-        assert(false, "IRVariableInitializationStatement.parseBAPI not implemented");
+    static jsonParse_IRVariableInitializationStatement(obj: any): IRVariableInitializationStatement {
+        const vtype = IRTypeSignature.jsonParse_IRTypeSignature(obj.vtype);
+        const initexp = IRSimpleExpression.jsonParse_IRSimpleExpression(obj.initexp);
+        return new IRVariableInitializationStatement(obj.vname, vtype, initexp, obj.isconst);
     }
 }
 
 class IRVariableInitializationDirectInvokeStatement extends IRAtomicStatement {
-    readonly scratchname: string; //a scratch temp variable to hold the direct invoke result if needed -- e.g. in SMT place result here, check for errors, then extract to vname
     readonly vname: string;
     readonly vtype: IRTypeSignature;
     readonly initexp: IRInvokeDirectExpression;
     readonly isconst: boolean;
 
-    constructor(scratch: string, vname: string, vtype: IRTypeSignature, initexp: IRInvokeDirectExpression, isconst: boolean) {
+    constructor(vname: string, vtype: IRTypeSignature, initexp: IRInvokeDirectExpression, isconst: boolean) {
         super(IRStatementTag.IRVariableInitializationDirectInvokeStatement);
-        this.scratchname = scratch;
         this.vname = vname;
         this.vtype = vtype;
         this.initexp = initexp;
@@ -3330,25 +4616,30 @@ class IRVariableInitializationDirectInvokeStatement extends IRAtomicStatement {
         return false;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRVariableInitializationDirectInvokeStatement.toBAPI not implemented");
+    static jsonEmit_IRVariableInitializationDirectInvokeStatement(exp: IRVariableInitializationDirectInvokeStatement): object {
+        return {
+            vname: exp.vname,
+            vtype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.vtype),
+            initexp: IRInvokeDirectExpression.jsonEmit_IRInvokeDirectExpression(exp.initexp),
+            isconst: exp.isconst
+        };
     }
 
-    static parseBAPIAsIRVariableInitializationDirectInvokeStatement(lexer: BAPILexer): IRVariableInitializationDirectInvokeStatement {
-        assert(false, "IRVariableInitializationDirectInvokeStatement.parseBAPI not implemented");
+    static jsonParse_IRVariableInitializationDirectInvokeStatement(obj: any): IRVariableInitializationDirectInvokeStatement {
+        const vtype = IRTypeSignature.jsonParse_IRTypeSignature(obj.vtype);
+        const initexp = IRInvokeDirectExpression.jsonParse_IRInvokeDirectExpression(obj.initexp);
+        return new IRVariableInitializationDirectInvokeStatement(obj.vname, vtype, initexp, obj.isconst);
     }
 }
 
 class IRVariableInitializationDirectInvokeWithImplicitStatement extends IRAtomicStatement {
-    readonly scratchname: string; //a scratch temp variable to hold the direct invoke result if needed -- e.g. in SMT place result here, check for errors, then extract to vname
     readonly vname: string;
     readonly vtype: IRTypeSignature;
     readonly initexp: IRInvokeImplicitsExpression;
     readonly isconst: boolean;
 
-    constructor(scratch: string, vname: string, vtype: IRTypeSignature, initexp: IRInvokeImplicitsExpression, isconst: boolean) {
+    constructor(vname: string, vtype: IRTypeSignature, initexp: IRInvokeImplicitsExpression, isconst: boolean) {
         super(IRStatementTag.IRVariableInitializationDirectInvokeWithImplicitStatement);
-        this.scratchname = scratch;
         this.vname = vname;
         this.vtype = vtype;
         this.initexp = initexp;
@@ -3359,12 +4650,19 @@ class IRVariableInitializationDirectInvokeWithImplicitStatement extends IRAtomic
         return false;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRVariableInitializationDirectInvokeWithImplicitStatement.toBAPI not implemented");
+    static jsonEmit_IRVariableInitializationDirectInvokeWithImplicitStatement(exp: IRVariableInitializationDirectInvokeWithImplicitStatement): object {
+        return {
+            vname: exp.vname,
+            vtype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.vtype),
+            initexp: IRInvokeImplicitsExpression.jsonEmit_IRInvokeImplicitsExpression(exp.initexp),
+            isconst: exp.isconst
+        };
     }
 
-    static parseBAPIAsIRVariableInitializationDirectInvokeWithImplicitStatement(lexer: BAPILexer): IRVariableInitializationDirectInvokeWithImplicitStatement {
-        assert(false, "IRVariableInitializationDirectInvokeWithImplicitStatement.parseBAPI not implemented");
+    static jsonParse_IRVariableInitializationDirectInvokeWithImplicitStatement(obj: any): IRVariableInitializationDirectInvokeWithImplicitStatement {
+        const vtype = IRTypeSignature.jsonParse_IRTypeSignature(obj.vtype);
+        const initexp = IRInvokeImplicitsExpression.jsonParse_IRInvokeImplicitsExpression(obj.initexp);
+        return new IRVariableInitializationDirectInvokeWithImplicitStatement(obj.vname, vtype, initexp, obj.isconst);
     }
 }
 
@@ -3386,12 +4684,19 @@ class IRVariableInitializationDirectConstructorStatement extends IRAtomicStateme
         return false;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRVariableInitializationDirectConstructorStatement.toBAPI not implemented");
+    static jsonEmit_IRVariableInitializationDirectConstructorStatement(exp: IRVariableInitializationDirectConstructorStatement): object {
+        return {
+            vname: exp.vname,
+            vtype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.vtype),
+            initexp: IRConstructExpression.jsonEmit_IRConstructExpression(exp.initexp),
+            isconst: exp.isconst
+        };
     }
 
-    static parseBAPIAsIRVariableInitializationDirectConstructorStatement(lexer: BAPILexer): IRVariableInitializationDirectConstructorStatement {
-        assert(false, "IRVariableInitializationDirectConstructorStatement.parseBAPI not implemented");
+    static jsonParse_IRVariableInitializationDirectConstructorStatement(obj: any): IRVariableInitializationDirectConstructorStatement {
+        const vtype = IRTypeSignature.jsonParse_IRTypeSignature(obj.vtype);
+        const initexp = IRConstructExpression.jsonParse_IRConstructExpression(obj.initexp);
+        return new IRVariableInitializationDirectConstructorStatement(obj.vname, vtype, initexp, obj.isconst);
     }
 }
 
@@ -3415,12 +4720,21 @@ class IRVariableInitializationDirectConstructorWithBoxStatement extends IRAtomic
         return false;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRVariableInitializationDirectConstructorWithBoxStatement.toBAPI not implemented");
+    static jsonEmit_IRVariableInitializationDirectConstructorWithBoxStatement(exp: IRVariableInitializationDirectConstructorWithBoxStatement): object {
+        return {
+            vname: exp.vname,
+            vtype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.vtype),
+            fromtype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.fromtype),
+            initexp: IRConstructExpression.jsonEmit_IRConstructExpression(exp.initexp),
+            isconst: exp.isconst
+        };
     }
 
-    static parseBAPIAsIRVariableInitializationDirectConstructorWithBoxStatement(lexer: BAPILexer): IRVariableInitializationDirectConstructorWithBoxStatement {
-        assert(false, "IRVariableInitializationDirectConstructorWithBoxStatement.parseBAPI not implemented");
+    static jsonParse_IRVariableInitializationDirectConstructorWithBoxStatement(obj: any): IRVariableInitializationDirectConstructorWithBoxStatement {
+        const vtype = IRTypeSignature.jsonParse_IRTypeSignature(obj.vtype);
+        const fromtype = IRTypeSignature.jsonParse_IRTypeSignature(obj.fromtype);
+        const initexp = IRConstructExpression.jsonParse_IRConstructExpression(obj.initexp);
+        return new IRVariableInitializationDirectConstructorWithBoxStatement(obj.vname, vtype, fromtype, initexp, obj.isconst);
     }
 }
 
@@ -3440,24 +4754,28 @@ class IRVariableAssignmentStatement extends IRAtomicStatement {
         return this.aexp.isSimpleExpression();
     }
 
-    override toBAPI(): string {
-        assert(false, "IRVariableAssignmentStatement.toBAPI not implemented");
+    static jsonEmit_IRVariableAssignmentStatement(exp: IRVariableAssignmentStatement): object {
+        return {
+            vname: exp.vname,
+            vtype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.vtype),
+            aexp: IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.aexp)
+        };
     }
 
-    static parseBAPIAsIRVariableAssignmentStatement(lexer: BAPILexer): IRVariableAssignmentStatement {
-        assert(false, "IRVariableAssignmentStatement.parseBAPI not implemented");
+    static jsonParse_IRVariableAssignmentStatement(obj: any): IRVariableAssignmentStatement {
+        const vtype = IRTypeSignature.jsonParse_IRTypeSignature(obj.vtype);
+        const aexp = IRSimpleExpression.jsonParse_IRSimpleExpression(obj.aexp);
+        return new IRVariableAssignmentStatement(obj.vname, vtype, aexp);
     }
 }
 
 class IRVariableAssignmentDirectInvokeStatement extends IRAtomicStatement {
-    readonly scratchname: string; //a scratch temp variable to hold the direct invoke result if needed -- e.g. in SMT place result here, check for errors, then extract to vname
     readonly vname: string;
     readonly vtype: IRTypeSignature;
     readonly aexp: IRInvokeDirectExpression;
 
-    constructor(scratch: string, vname: string, vtype: IRTypeSignature, aexp: IRInvokeDirectExpression) {
+    constructor(vname: string, vtype: IRTypeSignature, aexp: IRInvokeDirectExpression) {
         super(IRStatementTag.IRVariableAssignmentDirectInvokeStatement);
-        this.scratchname = scratch;
         this.vname = vname;
         this.vtype = vtype;
         this.aexp = aexp;
@@ -3467,24 +4785,28 @@ class IRVariableAssignmentDirectInvokeStatement extends IRAtomicStatement {
         return false;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRVariableAssignmentDirectInvokeStatement.toBAPI not implemented");
+    static jsonEmit_IRVariableAssignmentDirectInvokeStatement(exp: IRVariableAssignmentDirectInvokeStatement): object {
+        return {
+            vname: exp.vname,
+            vtype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.vtype),
+            aexp: IRInvokeDirectExpression.jsonEmit_IRInvokeDirectExpression(exp.aexp)
+        };
     }
 
-    static parseBAPIAsIRVariableAssignmentDirectInvokeStatement(lexer: BAPILexer): IRVariableAssignmentDirectInvokeStatement {
-        assert(false, "IRVariableAssignmentDirectInvokeStatement.parseBAPI not implemented");
+    static jsonParse_IRVariableAssignmentDirectInvokeStatement(obj: any): IRVariableAssignmentDirectInvokeStatement {
+        const vtype = IRTypeSignature.jsonParse_IRTypeSignature(obj.vtype);
+        const aexp = IRInvokeDirectExpression.jsonParse_IRInvokeDirectExpression(obj.aexp);
+        return new IRVariableAssignmentDirectInvokeStatement(obj.vname, vtype, aexp);
     }
 }
 
 class IRVariableAssignmentDirectInvokeWithImplicitStatement extends IRAtomicStatement {
-    readonly scratchname: string; //a scratch temp variable to hold the direct invoke result if needed -- e.g. in SMT place result here, check for errors, then extract to vname
     readonly vname: string;
     readonly vtype: IRTypeSignature;
     readonly aexp: IRInvokeImplicitsExpression;
 
-    constructor(scratch: string, vname: string, vtype: IRTypeSignature, aexp: IRInvokeImplicitsExpression) {
+    constructor(vname: string, vtype: IRTypeSignature, aexp: IRInvokeImplicitsExpression) {
         super(IRStatementTag.IRVariableAssignmentDirectInvokeWithImplicitStatement);
-        this.scratchname = scratch;
         this.vname = vname;
         this.vtype = vtype;
         this.aexp = aexp;
@@ -3494,12 +4816,18 @@ class IRVariableAssignmentDirectInvokeWithImplicitStatement extends IRAtomicStat
         return false;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRVariableAssignmentDirectInvokeWithImplicitStatement.toBAPI not implemented");
+    static jsonEmit_IRVariableAssignmentDirectInvokeWithImplicitStatement(exp: IRVariableAssignmentDirectInvokeWithImplicitStatement): object {
+        return {
+            vname: exp.vname,
+            vtype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.vtype),
+            aexp: IRInvokeImplicitsExpression.jsonEmit_IRInvokeImplicitsExpression(exp.aexp)
+        };
     }
 
-    static parseBAPIAsIRVariableAssignmentDirectInvokeWithImplicitStatement(lexer: BAPILexer): IRVariableAssignmentDirectInvokeWithImplicitStatement {
-        assert(false, "IRVariableAssignmentDirectInvokeWithImplicitStatement.parseBAPI not implemented");
+    static jsonParse_IRVariableAssignmentDirectInvokeWithImplicitStatement(obj: any): IRVariableAssignmentDirectInvokeWithImplicitStatement {
+        const vtype = IRTypeSignature.jsonParse_IRTypeSignature(obj.vtype);
+        const aexp = IRInvokeImplicitsExpression.jsonParse_IRInvokeImplicitsExpression(obj.aexp);
+        return new IRVariableAssignmentDirectInvokeWithImplicitStatement(obj.vname, vtype, aexp);
     }
 }
 
@@ -3519,12 +4847,18 @@ class IRVariableAssignmentDirectConstructorStatement extends IRAtomicStatement {
         return false;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRVariableAssignmentDirectConstructorStatement.toBAPI not implemented");
+    static jsonEmit_IRVariableAssignmentDirectConstructorStatement(exp: IRVariableAssignmentDirectConstructorStatement): object {
+        return {
+            vname: exp.vname,
+            vtype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.vtype),
+            aexp: IRConstructExpression.jsonEmit_IRConstructExpression(exp.aexp)
+        };
     }
 
-    static parseBAPIAsIRVariableAssignmentDirectConstructorStatement(lexer: BAPILexer): IRVariableAssignmentDirectConstructorStatement {
-        assert(false, "IRVariableAssignmentDirectConstructorStatement.parseBAPI not implemented");
+    static jsonParse_IRVariableAssignmentDirectConstructorStatement(obj: any): IRVariableAssignmentDirectConstructorStatement {
+        const vtype = IRTypeSignature.jsonParse_IRTypeSignature(obj.vtype);
+        const aexp = IRConstructExpression.jsonParse_IRConstructExpression(obj.aexp);
+        return new IRVariableAssignmentDirectConstructorStatement(obj.vname, vtype, aexp);
     }
 }
 
@@ -3546,12 +4880,20 @@ class IRVariableAssignmentDirectConstructorWithBoxStatement extends IRAtomicStat
         return false;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRVariableAssignmentDirectConstructorWithBoxStatement.toBAPI not implemented");
+    static jsonEmit_IRVariableAssignmentDirectConstructorWithBoxStatement(exp: IRVariableAssignmentDirectConstructorWithBoxStatement): object {
+        return {
+            vname: exp.vname,
+            vtype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.vtype),
+            fromtype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.fromtype),
+            aexp: IRConstructExpression.jsonEmit_IRConstructExpression(exp.aexp)
+        };
     }
 
-    static parseBAPIAsIRVariableAssignmentDirectConstructorWithBoxStatement(lexer: BAPILexer): IRVariableAssignmentDirectConstructorWithBoxStatement {
-        assert(false, "IRVariableAssignmentDirectConstructorWithBoxStatement.parseBAPI not implemented");
+    static jsonParse_IRVariableAssignmentDirectConstructorWithBoxStatement(obj: any): IRVariableAssignmentDirectConstructorWithBoxStatement {
+        const vtype = IRTypeSignature.jsonParse_IRTypeSignature(obj.vtype);
+        const fromtype = IRTypeSignature.jsonParse_IRTypeSignature(obj.fromtype);
+        const aexp = IRConstructExpression.jsonParse_IRConstructExpression(obj.aexp);
+        return new IRVariableAssignmentDirectConstructorWithBoxStatement(obj.vname, vtype, fromtype, aexp);
     }
 }
 
@@ -3571,12 +4913,18 @@ class IRUpdateLocalDirectStatement extends IRAtomicStatement {
         return false;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRUpdateLocalDirectStatement.toBAPI not implemented");
+    static jsonEmit_IRUpdateLocalDirectStatement(exp: IRUpdateLocalDirectStatement): object {
+        return {
+            vname: exp.vname,
+            vtype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.vtype),
+            aargs: exp.aargs.map(IRSimpleExpression.jsonEmit_IRSimpleExpression)
+        };
     }
 
-    static parseBAPIAsIRUpdateLocalDirectStatement(lexer: BAPILexer): IRUpdateLocalDirectStatement {
-        assert(false, "IRUpdateLocalDirectStatement.parseBAPI not implemented");
+    static jsonParse_IRUpdateLocalDirectStatement(obj: any): IRUpdateLocalDirectStatement {
+        const vtype = IRTypeSignature.jsonParse_IRTypeSignature(obj.vtype);
+        const aargs = obj.aargs.map(IRSimpleExpression.jsonParse_IRSimpleExpression);
+        return new IRUpdateLocalDirectStatement(obj.vname, vtype, aargs);
     }
 }
 
@@ -3596,12 +4944,18 @@ class IRUpdateParamDirectStatement extends IRAtomicStatement {
         return false;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRUpdateParamDirectStatement.toBAPI not implemented");
+    static jsonEmit_IRUpdateParamDirectStatement(exp: IRUpdateParamDirectStatement): object {
+        return {
+            vname: exp.vname,
+            vtype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.vtype),
+            aargs: exp.aargs.map(IRSimpleExpression.jsonEmit_IRSimpleExpression)
+        };
     }
 
-    static parseBAPIAsIRUpdateParamDirectStatement(lexer: BAPILexer): IRUpdateParamDirectStatement {
-        assert(false, "IRUpdateParamDirectStatement.parseBAPI not implemented");
+    static jsonParse_IRUpdateParamDirectStatement(obj: any): IRUpdateParamDirectStatement {
+        const vtype = IRTypeSignature.jsonParse_IRTypeSignature(obj.vtype);
+        const aargs = obj.aargs.map(IRSimpleExpression.jsonParse_IRSimpleExpression);
+        return new IRUpdateParamDirectStatement(obj.vname, vtype, aargs);
     }
 }
 
@@ -3618,12 +4972,12 @@ class IRReturnVoidSimpleStatement extends IRReturnSimpleStatement {
         return true;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRReturnVoidSimpleStatement.toBAPI not implemented");
+    static jsonEmit_IRReturnVoidSimpleStatement(exp: IRReturnVoidSimpleStatement): object {
+        return {};
     }
 
-    static parseBAPIAsIRReturnVoidSimpleStatement(lexer: BAPILexer): IRReturnVoidSimpleStatement {
-        assert(false, "IRReturnVoidSimpleStatement.parseBAPI not implemented");
+    static jsonParse_IRReturnVoidSimpleStatement(obj: any): IRReturnVoidSimpleStatement {
+        return new IRReturnVoidSimpleStatement();
     }
 }
 
@@ -3639,12 +4993,15 @@ class IRReturnValueSimpleStatement extends IRReturnSimpleStatement {
         return this.retexp.isSimpleExpression();
     }
 
-    override toBAPI(): string {
-        assert(false, "IRReturnValueSimpleStatement.toBAPI not implemented");
+    static jsonEmit_IRReturnValueSimpleStatement(exp: IRReturnValueSimpleStatement): object {
+        return {
+            retexp: IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.retexp)
+        };
     }
 
-    static parseBAPIAsIRReturnValueSimpleStatement(lexer: BAPILexer): IRReturnValueSimpleStatement {
-        assert(false, "IRReturnValueSimpleStatement.parseBAPI not implemented");
+    static jsonParse_IRReturnValueSimpleStatement(obj: any): IRReturnValueSimpleStatement {
+        const retexp = IRSimpleExpression.jsonParse_IRSimpleExpression(obj.retexp);
+        return new IRReturnValueSimpleStatement(retexp);
     }
 }
 
@@ -3660,12 +5017,39 @@ class IRReturnDirectInvokeStatement extends IRReturnSimpleStatement {
         return false;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRReturnDirectInvokeStatement.toBAPI not implemented");
+    static jsonEmit_IRReturnDirectInvokeStatement(exp: IRReturnDirectInvokeStatement): object {
+        return {
+            retexp: IRInvokeDirectExpression.jsonEmit_IRInvokeDirectExpression(exp.retexp)
+        };
     }
 
-    static parseBAPIAsIRReturnDirectInvokeStatement(lexer: BAPILexer): IRReturnDirectInvokeStatement {
-        assert(false, "IRReturnDirectInvokeStatement.parseBAPI not implemented");
+    static jsonParse_IRReturnDirectInvokeStatement(obj: any): IRReturnDirectInvokeStatement {
+        const retexp = IRInvokeDirectExpression.jsonParse_IRInvokeDirectExpression(obj.retexp);
+        return new IRReturnDirectInvokeStatement(retexp);
+    }
+}
+
+class IRReturnDirectInvokeImplicitsStatement extends IRReturnSimpleStatement {
+    readonly retexp: IRInvokeImplicitsExpression;
+
+    constructor(retexp: IRInvokeImplicitsExpression) {
+        super(IRStatementTag.IRReturnDirectInvokeImplicitsStatement);
+        this.retexp = retexp;
+    }
+
+    override isSimpleStatement(): boolean {
+        return false;
+    }
+
+    static jsonEmit_IRReturnDirectInvokeImplicitsStatement(exp: IRReturnDirectInvokeImplicitsStatement): object {
+        return {
+            retexp: IRInvokeImplicitsExpression.jsonEmit_IRInvokeImplicitsExpression(exp.retexp)
+        };
+    }
+
+    static jsonParse_IRReturnDirectInvokeImplicitsStatement(obj: any): IRReturnDirectInvokeImplicitsStatement {
+        const retexp = IRInvokeImplicitsExpression.jsonParse_IRInvokeImplicitsExpression(obj.retexp);
+        return new IRReturnDirectInvokeImplicitsStatement(retexp);
     }
 }
 
@@ -3680,12 +5064,15 @@ class IRReturnDirectConstructStatement extends IRReturnSimpleStatement {
         return false;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRReturnDirectConstructStatement.toBAPI not implemented");
+    static jsonEmit_IRReturnDirectConstructStatement(exp: IRReturnDirectConstructStatement): object {
+        return {
+            retexp: IRConstructExpression.jsonEmit_IRConstructExpression(exp.retexp)
+        };
     }
 
-    static parseBAPIAsIRReturnDirectConstructStatement(lexer: BAPILexer): IRReturnDirectConstructStatement {
-        assert(false, "IRReturnDirectConstructStatement.parseBAPI not implemented");
+    static jsonParse_IRReturnDirectConstructStatement(obj: any): IRReturnDirectConstructStatement {
+        const retexp = IRConstructExpression.jsonParse_IRConstructExpression(obj.retexp);
+        return new IRReturnDirectConstructStatement(retexp);
     }
 }
 
@@ -3705,149 +5092,27 @@ class IRReturnDirectConstructWithBoxStatement extends IRReturnSimpleStatement {
         return false;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRReturnDirectConstructWithBoxStatement.toBAPI not implemented");
+    static jsonEmit_IRReturnDirectConstructWithBoxStatement(exp: IRReturnDirectConstructWithBoxStatement): object {
+        return {
+            retexp: IRConstructExpression.jsonEmit_IRConstructExpression(exp.retexp),
+            fromtype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.fromtype),
+            totype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.totype)
+        };
     }
 
-    static parseBAPIAsIRReturnDirectConstructWithBoxStatement(lexer: BAPILexer): IRReturnDirectConstructWithBoxStatement {
-        assert(false, "IRReturnDirectConstructWithBoxStatement.parseBAPI not implemented");
-    }
-}
-
-class IRReturnVoidWithImplicitStatement extends IRReturnWithImplicitStatement {
-    constructor(implicitvar: string) {
-        super(IRStatementTag.IRReturnVoidImplicitStatement, implicitvar);
-    }
-
-    override isSimpleStatement(): boolean {
-        return true;
-    }
-
-    override toBAPI(): string {
-        assert(false, "IRReturnVoidWithImplicitStatement.toBAPI not implemented");
-    }
-
-    static parseBAPIAsIRReturnVoidWithImplicitStatement(lexer: BAPILexer): IRReturnVoidWithImplicitStatement {
-        assert(false, "IRReturnVoidWithImplicitStatement.parseBAPI not implemented");
-    }
-}
-
-class IRReturnValueImplicitStatement extends IRReturnWithImplicitStatement {
-    readonly retexp: IRSimpleExpression;
-
-    constructor(retexp: IRSimpleExpression, implicitvar: string) {
-        super(IRStatementTag.IRReturnValueImplicitStatement, implicitvar);
-        this.retexp = retexp;
-    }
-
-    override isSimpleStatement(): boolean {
-        return this.retexp.isSimpleExpression();
-    }
-
-    override toBAPI(): string {
-        assert(false, "IRReturnValueImplicitStatement.toBAPI not implemented");
-    }
-
-    static parseBAPIAsIRReturnValueImplicitStatement(lexer: BAPILexer): IRReturnValueImplicitStatement {
-        assert(false, "IRReturnValueImplicitStatement.parseBAPI not implemented");
-    }
-}
-
-class IRReturnDirectInvokeImplicitStatement extends IRReturnWithImplicitStatement {
-    readonly retexp: IRInvokeDirectExpression;
-
-    constructor(retexp: IRInvokeDirectExpression, implicitvar: string) {
-        super(IRStatementTag.IRReturnDirectInvokeImplicitStatement, implicitvar);
-        this.retexp = retexp;
-    }
-
-    override isSimpleStatement(): boolean {
-        return false;
-    }
-
-    override toBAPI(): string {
-        assert(false, "IRReturnDirectInvokeImplicitStatement.toBAPI not implemented");
-    }
-
-    static parseBAPIAsIRReturnDirectInvokeImplicitStatement(lexer: BAPILexer): IRReturnDirectInvokeImplicitStatement {
-        assert(false, "IRReturnDirectInvokeImplicitStatement.parseBAPI not implemented");
-    }
-}
-
-class IRReturnDirectInvokeImplicitPassThroughStatement extends IRReturnWithImplicitStatement {
-    readonly retexp: IRInvokeImplicitsExpression;
-
-    constructor(retexp: IRInvokeImplicitsExpression, implicitvar: string) {
-        super(IRStatementTag.IRReturnDirectInvokeImplicitPassThroughStatement, implicitvar);
-        this.retexp = retexp;
-    }
-
-    override isSimpleStatement(): boolean {
-        return false;
-    }
-
-    override toBAPI(): string {
-        assert(false, "IRReturnDirectInvokeImplicitPassThroughStatement.toBAPI not implemented");
-    }
-
-    static parseBAPIAsIRReturnDirectInvokeImplicitPassThroughStatement(lexer: BAPILexer): IRReturnDirectInvokeImplicitPassThroughStatement {
-        assert(false, "IRReturnDirectInvokeImplicitPassThroughStatement.parseBAPI not implemented");
-    }
-}
-
-class IRReturnDirectConstructImplicitStatement extends IRReturnWithImplicitStatement {
-    readonly retexp: IRConstructExpression;
-
-    constructor(retexp: IRConstructExpression, implicitvar: string) {
-        super(IRStatementTag.IRReturnDirectConstructImplicitStatement, implicitvar);
-        this.retexp = retexp;
-    }
-
-    override isSimpleStatement(): boolean {
-        return false;
-    }
-
-    override toBAPI(): string {
-        assert(false, "IRReturnDirectConstructImplicitStatement.toBAPI not implemented");
-    }
-
-    static parseBAPIAsIRReturnDirectConstructImplicitStatement(lexer: BAPILexer): IRReturnDirectConstructImplicitStatement {
-        assert(false, "IRReturnDirectConstructImplicitStatement.parseBAPI not implemented");
-    }
-}
-
-class IRReturnDirectConstructWithBoxImplicitStatement extends IRReturnWithImplicitStatement {
-    readonly retexp: IRConstructExpression;
-    readonly fromtype: IRTypeSignature;
-    readonly totype: IRTypeSignature;
-
-    constructor(retexp: IRConstructExpression, fromtype: IRTypeSignature, totype: IRTypeSignature, implicitvar: string) {
-        super(IRStatementTag.IRReturnDirectConstructWithBoxImplicitStatement, implicitvar);
-        this.retexp = retexp;
-        this.fromtype = fromtype;
-        this.totype = totype;
-    }
-
-    override isSimpleStatement(): boolean {
-        return false;
-    }
-
-    override toBAPI(): string {
-        assert(false, "IRReturnDirectConstructWithBoxImplicitStatement.toBAPI not implemented");
-    }
-
-    static parseBAPIAsIRReturnDirectConstructWithBoxImplicitStatement(lexer: BAPILexer): IRReturnDirectConstructWithBoxImplicitStatement {
-        assert(false, "IRReturnDirectConstructWithBoxImplicitStatement.parseBAPI not implemented");
+    static jsonParse_IRReturnDirectConstructWithBoxStatement(obj: any): IRReturnDirectConstructWithBoxStatement {
+        const retexp = IRConstructExpression.jsonParse_IRConstructExpression(obj.retexp);
+        const fromtype = IRTypeSignature.jsonParse_IRTypeSignature(obj.fromtype);
+        const totype = IRTypeSignature.jsonParse_IRTypeSignature(obj.totype);
+        return new IRReturnDirectConstructWithBoxStatement(retexp, fromtype, totype);
     }
 }
 
 class IRVoidInvokeStatement extends IRAtomicStatement {
-    readonly scratchname: string; //a scratch temp variable to hold the direct invoke result if needed -- e.g. in SMT place result here, check for errors, then extract to vname
     readonly aexp: IRInvokeImplicitsExpression;
 
-    constructor(scratch: string, aexp: IRInvokeImplicitsExpression) {
+    constructor(aexp: IRInvokeImplicitsExpression) {
         super(IRStatementTag.IRVoidInvokeStatement);
-        this.scratchname = scratch;
         this.aexp = aexp;
     }
 
@@ -3855,22 +5120,25 @@ class IRVoidInvokeStatement extends IRAtomicStatement {
         return false;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRVoidInvokeStatement.toBAPI not implemented");
+    static jsonEmit_IRVoidInvokeStatement(exp: IRVoidInvokeStatement): object {
+        return {
+            aexp: IRInvokeImplicitsExpression.jsonEmit_IRInvokeImplicitsExpression(exp.aexp)
+        };
     }
 
-    static parseBAPIAsIRVoidInvokeStatement(lexer: BAPILexer): IRVoidInvokeStatement {
-        assert(false, "IRVoidInvokeStatement.parseBAPI not implemented");
+    static jsonParse_IRVoidInvokeStatement(obj: any): IRVoidInvokeStatement {
+        const aexp = IRInvokeImplicitsExpression.jsonParse_IRInvokeImplicitsExpression(obj.aexp);
+        return new IRVoidInvokeStatement(aexp);
     }
 }
 
 class IRChkLogicImpliesShortCircuitStatement extends IRStatement {
-    readonly tvar: string; //the temp variable to hold the result
+    readonly tvar: number; //the temp variable to hold the result
     readonly lhs: IRSimpleExpression;
     readonly rstmts: IRStatement[];
     readonly rexp: IRSimpleExpression;
 
-    constructor(tvar: string, lhs: IRSimpleExpression, rstmts: IRStatement[], rexp: IRSimpleExpression) {
+    constructor(tvar: number, lhs: IRSimpleExpression, rstmts: IRStatement[], rexp: IRSimpleExpression) {
         super(IRStatementTag.IRChkLogicImpliesShortCircuitStatement);
         this.tvar = tvar;
         this.lhs = lhs;
@@ -3882,17 +5150,17 @@ class IRChkLogicImpliesShortCircuitStatement extends IRStatement {
         return this.lhs.isSimpleExpression() && this.rstmts.every(s => s.isSimpleStatement()) && this.rexp.isSimpleExpression();
     }
 
-    override toBAPI(): string {
-        assert(false, "IRChkLogicImpliesShortCircuitStatement.toBAPI not implemented");
+    static jsonEmit_IRChkLogicImpliesShortCircuitStatement(exp: IRChkLogicImpliesShortCircuitStatement): object {
+        assert(false, "Not implemented -- jsonEmit_IRChkLogicImpliesShortCircuitStatement");
     }
 
-    static parseBAPIAsIRChkLogicImpliesShortCircuitStatement(lexer: BAPILexer): IRChkLogicImpliesShortCircuitStatement {
-        assert(false, "IRChkLogicImpliesShortCircuitStatement.parseBAPI not implemented");
+    static jsonParse_IRChkLogicImpliesShortCircuitStatement(obj: any): IRChkLogicImpliesShortCircuitStatement {
+        assert(false, "Not implemented -- jsonParse_IRChkLogicImpliesShortCircuitStatement");
     }
 }
 
 class IRLogicConditionalStatement extends IRStatement {
-    readonly tvar: string; //the temp variable to hold the result
+    readonly tvar: number; //the temp variable to hold the result
     readonly ttype: IRTypeSignature;
     readonly condition: IRSimpleExpression;
     readonly truestmt: IRStatement[];
@@ -3900,7 +5168,7 @@ class IRLogicConditionalStatement extends IRStatement {
     readonly falsestmt: IRStatement[];
     readonly falseexp: IRSimpleExpression;
 
-    constructor(tvar: string, ttype: IRTypeSignature, condition: IRSimpleExpression, truestmt: IRStatement[], trueexp: IRSimpleExpression, falsestmt: IRStatement[], falseexp: IRSimpleExpression) {
+    constructor(tvar: number, ttype: IRTypeSignature, condition: IRSimpleExpression, truestmt: IRStatement[], trueexp: IRSimpleExpression, falsestmt: IRStatement[], falseexp: IRSimpleExpression) {
         super(IRStatementTag.IRLogicConditionalStatement);
         this.tvar = tvar;
         this.ttype = ttype;
@@ -3915,12 +5183,12 @@ class IRLogicConditionalStatement extends IRStatement {
         return this.condition.isSimpleExpression() && this.truestmt.every(s => s.isSimpleStatement()) && this.trueexp.isSimpleExpression() && this.falsestmt.every(s => s.isSimpleStatement()) && this.falseexp.isSimpleExpression();
     }
 
-    override toBAPI(): string {
-        assert(false, "IRLogicConditionalStatement.toBAPI not implemented");
+    static jsonEmit_IRLogicConditionalStatement(exp: IRLogicConditionalStatement): object {
+        assert(false, "Not implemented -- jsonEmit_IRLogicConditionalStatement");
     }
 
-    static parseBAPIAsIRLogicConditionalStatement(lexer: BAPILexer): IRLogicConditionalStatement {
-        assert(false, "IRLogicConditionalStatement.parseBAPI not implemented");
+    static jsonParse_IRLogicConditionalStatement(obj: any): IRLogicConditionalStatement {
+        assert(false, "Not implemented -- jsonParse_IRLogicConditionalStatement");
     }
 }
 
@@ -3938,12 +5206,17 @@ class IRSimpleIfStatement extends IRStatement {
         return this.cond.isSimpleExpression() && this.tblock.isSimpleStatement();
     }
 
-    override toBAPI(): string {
-        assert(false, "IRSimpleIfStatement.toBAPI not implemented");
+    static jsonEmit_IRSimpleIfStatement(exp: IRSimpleIfStatement): object {
+        return {
+            cond: IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.cond),
+            tblock: IRBlockStatement.jsonEmit_IRBlockStatement(exp.tblock)
+        };
     }
 
-    static parseBAPIAsIRSimpleIfStatement(lexer: BAPILexer): IRSimpleIfStatement {
-        assert(false, "IRSimpleIfStatement.parseBAPI not implemented");
+    static jsonParse_IRSimpleIfStatement(obj: any): IRSimpleIfStatement {
+        const cond = IRSimpleExpression.jsonParse_IRSimpleExpression(obj.cond);
+        const tblock = IRBlockStatement.jsonParse_IRBlockStatement(obj.tblock);
+        return new IRSimpleIfStatement(cond, tblock);
     }
 }
 
@@ -3967,12 +5240,19 @@ class IRSimpleIfElseStatement extends IRStatement {
         return this.cond.isSimpleExpression() && this.tblock.isSimpleStatement() && this.eblock.isSimpleStatement();
     }
 
-    override toBAPI(): string {
-        assert(false, "IRSimpleIfElseStatement.toBAPI not implemented");
+    static jsonEmit_IRSimpleIfElseStatement(exp: IRSimpleIfElseStatement): object {
+        return {
+            cond: IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.cond),
+            tblock: IRBlockStatement.jsonEmit_IRBlockStatement(exp.tblock),
+            eblock: IRBlockStatement.jsonEmit_IRBlockStatement(exp.eblock)
+        };
     }
 
-    static parseBAPIAsIRSimpleIfElseStatement(lexer: BAPILexer): IRSimpleIfElseStatement {
-        assert(false, "IRSimpleIfElseStatement.parseBAPI not implemented");
+    static jsonParse_IRSimpleIfElseStatement(obj: any): IRSimpleIfElseStatement {
+        const cond = IRSimpleExpression.jsonParse_IRSimpleExpression(obj.cond);
+        const tblock = IRBlockStatement.jsonParse_IRBlockStatement(obj.tblock);
+        const eblock = IRBlockStatement.jsonParse_IRBlockStatement(obj.eblock);
+        return new IRSimpleIfElseStatement(cond, tblock, eblock);
     }
 }
 
@@ -4000,12 +5280,23 @@ class IRMatchExactStatement extends IRStatement {
         return this.sval.isSimpleExpression() && this.matchflow.every(f => f.value.isSimpleStatement());
     }
 
-    override toBAPI(): string {
-        assert(false, "IRMatchExactStatement.toBAPI not implemented");
+    static jsonEmit_IRMatchExactStatement(exp: IRMatchExactStatement): object {
+        return {
+            sval: IRImmediateExpression.jsonEmit_IRImmediateExpression(exp.sval),
+            svaltype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.svaltype),
+            bindervar: exp.bindervar,
+            matchflow: exp.matchflow.map(f => ({mtype: f.mtype ? IRTypeSignature.jsonEmit_IRTypeSignature(f.mtype) : undefined, value: IRBlockStatement.jsonEmit_IRBlockStatement(f.value)})),
+            implicitFinalType: IRTypeSignature.jsonEmit_IRTypeSignature(exp.implicitFinalType)
+        };
     }
 
-    static parseBAPIAsIRMatchExactStatement(lexer: BAPILexer): IRMatchExactStatement {
-        assert(false, "IRMatchExactStatement.parseBAPI not implemented");
+    static jsonParse_IRMatchExactStatement(obj: any): IRMatchExactStatement {
+        const sval = IRImmediateExpression.jsonParse_IRImmediateExpression(obj.sval);
+        const svaltype = IRTypeSignature.jsonParse_IRTypeSignature(obj.svaltype);
+        const bindervar = obj.bindervar;
+        const matchflow = obj.matchflow.map((f: any) => ({mtype: f.mtype ? IRTypeSignature.jsonParse_IRTypeSignature(f.mtype) : undefined, value: IRBlockStatement.jsonParse_IRBlockStatement(f.value)}));
+        const implicitFinalType = IRTypeSignature.jsonParse_IRTypeSignature(obj.implicitFinalType);
+        return new IRMatchExactStatement(sval, svaltype, bindervar, matchflow, implicitFinalType);
     }
 }
 
@@ -4033,12 +5324,23 @@ class IRMatchGeneralStatement extends IRStatement {
         return this.sval.isSimpleExpression() && this.matchflow.every(f => f.value.isSimpleStatement());
     }
 
-    override toBAPI(): string {
-        assert(false, "IRMatchGeneralStatement.toBAPI not implemented");
+    static jsonEmit_IRMatchGeneralStatement(exp: IRMatchGeneralStatement): object {
+        return {
+            sval: IRImmediateExpression.jsonEmit_IRImmediateExpression(exp.sval),
+            svaltype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.svaltype),
+            bindervar: exp.bindervar,
+            matchflow: exp.matchflow.map(f => ({mtype: f.mtype ? IRTypeSignature.jsonEmit_IRTypeSignature(f.mtype) : undefined, value: IRBlockStatement.jsonEmit_IRBlockStatement(f.value)})),
+            implicitFinalType: IRTypeSignature.jsonEmit_IRTypeSignature(exp.implicitFinalType)
+        };
     }
 
-    static parseBAPIAsIRMatchGeneralStatement(lexer: BAPILexer): IRMatchGeneralStatement {
-        assert(false, "IRMatchGeneralStatement.parseBAPI not implemented");
+    static jsonParse_IRMatchGeneralStatement(obj: any): IRMatchGeneralStatement {
+        const sval = IRImmediateExpression.jsonParse_IRImmediateExpression(obj.sval);
+        const svaltype = IRTypeSignature.jsonParse_IRTypeSignature(obj.svaltype);
+        const bindervar = obj.bindervar;
+        const matchflow = obj.matchflow.map((f: any) => ({mtype: f.mtype ? IRTypeSignature.jsonParse_IRTypeSignature(f.mtype) : undefined, value: IRBlockStatement.jsonParse_IRBlockStatement(f.value)}));
+        const implicitFinalType = IRTypeSignature.jsonParse_IRTypeSignature(obj.implicitFinalType);
+        return new IRMatchGeneralStatement(sval, svaltype, bindervar, matchflow, implicitFinalType);
     }
 }
 
@@ -4047,12 +5349,21 @@ class IRErrorAdditionBoundsCheckStatement extends IRErrorBinArithCheckStatement 
         super(IRStatementTag.IRErrorAdditionBoundsCheckStatement, file, sinfo, undefined, checkID, left, right, optypechk);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRErrorAdditionBoundsCheckStatement.toBAPI not implemented");
+    static jsonEmit_IRErrorAdditionBoundsCheckStatement(exp: IRErrorAdditionBoundsCheckStatement): object {
+        const nval = IRErrorCheckStatement.jsonEmitMeta_IRErrorCheckStatement(exp);
+        const bval = IRErrorBinArithCheckStatement.jsonEmitMeta_IRErrorBinArithCheckStatement(exp);
+
+        return {
+            ...nval,
+            ...bval
+        };
     }
 
-    static parseBAPIAsIRErrorAdditionBoundsCheckStatement(lexer: BAPILexer): IRErrorAdditionBoundsCheckStatement {
-        assert(false, "IRErrorAdditionBoundsCheckStatement.parseBAPI not implemented");
+    static jsonParse_IRErrorAdditionBoundsCheckStatement(obj: any): IRErrorAdditionBoundsCheckStatement {
+        const nval = IRErrorCheckStatement.jsonParseMeta_IRErrorCheckStatement(obj);
+        const bval = IRErrorBinArithCheckStatement.jsonParseMeta_IRErrorBinArithCheckStatement(obj);
+
+        return new IRErrorAdditionBoundsCheckStatement(nval[0], nval[1], nval[3], ...bval);
     }
 }
 
@@ -4061,12 +5372,21 @@ class IRErrorSubtractionBoundsCheckStatement extends IRErrorBinArithCheckStateme
         super(IRStatementTag.IRErrorSubtractionBoundsCheckStatement, file, sinfo, undefined, checkID, left, right, optypechk);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRErrorSubtractionBoundsCheckStatement.toBAPI not implemented");
+    static jsonEmit_IRErrorSubtractionBoundsCheckStatement(exp: IRErrorSubtractionBoundsCheckStatement): object {
+        const nval = IRErrorCheckStatement.jsonEmitMeta_IRErrorCheckStatement(exp);
+        const bval = IRErrorBinArithCheckStatement.jsonEmitMeta_IRErrorBinArithCheckStatement(exp);
+
+        return {
+            ...nval,
+            ...bval
+        };
     }
 
-    static parseBAPIAsIRErrorSubtractionBoundsCheckStatement(lexer: BAPILexer): IRErrorSubtractionBoundsCheckStatement {
-        assert(false, "IRErrorSubtractionBoundsCheckStatement.parseBAPI not implemented");
+    static jsonParse_IRErrorSubtractionBoundsCheckStatement(obj: any): IRErrorSubtractionBoundsCheckStatement {
+        const nval = IRErrorCheckStatement.jsonParseMeta_IRErrorCheckStatement(obj);
+        const bval = IRErrorBinArithCheckStatement.jsonParseMeta_IRErrorBinArithCheckStatement(obj);
+
+        return new IRErrorSubtractionBoundsCheckStatement(nval[0], nval[1], nval[3], ...bval);
     }
 }
 
@@ -4075,12 +5395,21 @@ class IRErrorMultiplicationBoundsCheckStatement extends IRErrorBinArithCheckStat
         super(IRStatementTag.IRErrorMultiplicationBoundsCheckStatement, file, sinfo, undefined, checkID, left, right, optypechk);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRErrorMultiplicationBoundsCheckStatement.toBAPI not implemented");
+    static jsonEmit_IRErrorMultiplicationBoundsCheckStatement(exp: IRErrorMultiplicationBoundsCheckStatement): object {
+        const nval = IRErrorCheckStatement.jsonEmitMeta_IRErrorCheckStatement(exp);
+        const bval = IRErrorBinArithCheckStatement.jsonEmitMeta_IRErrorBinArithCheckStatement(exp);
+
+        return {
+            ...nval,
+            ...bval
+        };
     }
 
-    static parseBAPIAsIRErrorMultiplicationBoundsCheckStatement(lexer: BAPILexer): IRErrorMultiplicationBoundsCheckStatement {
-        assert(false, "IRErrorMultiplicationBoundsCheckStatement.parseBAPI not implemented");
+    static jsonParse_IRErrorMultiplicationBoundsCheckStatement(obj: any): IRErrorMultiplicationBoundsCheckStatement {
+        const nval = IRErrorCheckStatement.jsonParseMeta_IRErrorCheckStatement(obj);
+        const bval = IRErrorBinArithCheckStatement.jsonParseMeta_IRErrorBinArithCheckStatement(obj);
+
+        return new IRErrorMultiplicationBoundsCheckStatement(nval[0], nval[1], nval[3], ...bval);
     }
 }
 
@@ -4089,12 +5418,21 @@ class IRErrorDivisionByZeroCheckStatement extends IRErrorBinArithCheckStatement 
         super(IRStatementTag.IRErrorDivisionByZeroCheckStatement, file, sinfo, undefined, checkID, left, right, optypechk);
     }
 
-    override toBAPI(): string {
-        assert(false, "IRErrorDivisionByZeroCheckStatement.toBAPI not implemented");
+    static jsonEmit_IRErrorDivisionByZeroCheckStatement(exp: IRErrorDivisionByZeroCheckStatement): object {
+        const nval = IRErrorCheckStatement.jsonEmitMeta_IRErrorCheckStatement(exp);
+        const bval = IRErrorBinArithCheckStatement.jsonEmitMeta_IRErrorBinArithCheckStatement(exp);
+
+        return {
+            ...nval,
+            ...bval
+        };
     }
 
-    static parseBAPIAsIRErrorDivisionByZeroCheckStatement(lexer: BAPILexer): IRErrorDivisionByZeroCheckStatement {
-        assert(false, "IRErrorDivisionByZeroCheckStatement.parseBAPI not implemented");
+    static jsonParse_IRErrorDivisionByZeroCheckStatement(obj: any): IRErrorDivisionByZeroCheckStatement {
+        const nval = IRErrorCheckStatement.jsonParseMeta_IRErrorCheckStatement(obj);
+        const bval = IRErrorBinArithCheckStatement.jsonParseMeta_IRErrorBinArithCheckStatement(obj);
+
+        return new IRErrorDivisionByZeroCheckStatement(nval[0], nval[1], nval[3], ...bval);
     }
 }
 
@@ -4106,12 +5444,19 @@ class IRErrorTypeAssertionCheckStatement extends IRErrorCheckStatement {
         this.typeok = typeok;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRErrorTypeAssertionCheckStatement.toBAPI not implemented");
+    static jsonEmit_IRErrorTypeAssertionCheckStatement(exp: IRErrorTypeAssertionCheckStatement): object {
+        const nval = IRErrorCheckStatement.jsonEmitMeta_IRErrorCheckStatement(exp);
+
+        return {
+            ...nval,
+            typeok: IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.typeok)
+        };
     }
 
-    static parseBAPIAsIRErrorTypeAssertionCheckStatement(lexer: BAPILexer): IRErrorTypeAssertionCheckStatement {
-        assert(false, "IRErrorTypeAssertionCheckStatement.parseBAPI not implemented");
+    static jsonParse_IRErrorTypeAssertionCheckStatement(obj: any): IRErrorTypeAssertionCheckStatement {
+        const nval = IRErrorCheckStatement.jsonParseMeta_IRErrorCheckStatement(obj);
+
+        return new IRErrorTypeAssertionCheckStatement(nval[0], nval[1], nval[2], nval[3], IRSimpleExpression.jsonParse_IRSimpleExpression(obj.typeok));
     }
 }
 
@@ -4122,12 +5467,18 @@ class IRErrorExhaustiveStatement extends IRErrorCheckStatement {
 
     override isTerminalStatement(): boolean { return true; }
 
-    override toBAPI(): string {
-        assert(false, "IRErrorExhaustiveStatement.toBAPI not implemented");
+    static jsonEmit_IRErrorExhaustiveStatement(exp: IRErrorExhaustiveStatement): object {
+        const nval = IRErrorCheckStatement.jsonEmitMeta_IRErrorCheckStatement(exp);
+
+        return {
+            ...nval
+        };
     }
 
-    static parseBAPIAsIRErrorExhaustiveStatement(lexer: BAPILexer): IRErrorExhaustiveStatement {
-        assert(false, "IRErrorExhaustiveStatement.parseBAPI not implemented");
+    static jsonParse_IRErrorExhaustiveStatement(obj: any): IRErrorExhaustiveStatement {
+        const nval = IRErrorCheckStatement.jsonParseMeta_IRErrorCheckStatement(obj);
+
+        return new IRErrorExhaustiveStatement(nval[0], nval[1], nval[3]);
     }
 }
 
@@ -4141,12 +5492,24 @@ class IRTypeDeclSizeRangeCheckCStringStatement extends IRErrorTypedStringCheckSt
         this.max = max;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRTypeDeclSizeRangeCheckCStringStatement.toBAPI not implemented");
+    static jsonEmit_IRTypeDeclSizeRangeCheckCStringStatement(exp: IRTypeDeclSizeRangeCheckCStringStatement): object {
+        const nval = IRErrorCheckStatement.jsonEmitMeta_IRErrorCheckStatement(exp);
+        const cval = IRErrorTypedStringCheckStatement.jsonEmitMeta_IRErrorTypedStringCheckStatement(exp);
+
+        return {
+            ...nval,
+            ...cval,
+            min: exp.min === undefined ? null : IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.min),
+            max: exp.max === undefined ? null : IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.max)
+        };
     }
 
-    static parseBAPIAsIRTypeDeclSizeRangeCheckCStringStatement(lexer: BAPILexer): IRTypeDeclSizeRangeCheckCStringStatement {
-        assert(false, "IRTypeDeclSizeRangeCheckCStringStatement.parseBAPI not implemented");
+    static jsonParse_IRTypeDeclSizeRangeCheckCStringStatement(obj: any): IRTypeDeclSizeRangeCheckCStringStatement {
+        const nval = IRErrorCheckStatement.jsonParseMeta_IRErrorCheckStatement(obj);
+        const cval = IRErrorTypedStringCheckStatement.jsonParseMeta_IRErrorTypedStringCheckStatement(obj);
+
+        const strexp = IRImmediateExpression.jsonParse_IRSimpleExpression(cval[0]); 
+        return new IRTypeDeclSizeRangeCheckCStringStatement(nval[0], nval[1], nval[3], obj.min !== null ? IRSimpleExpression.jsonParse_IRSimpleExpression(obj.min) : undefined, obj.max !== null ? IRSimpleExpression.jsonParse_IRSimpleExpression(obj.max) : undefined, strexp);
     }
 }
 
@@ -4160,12 +5523,24 @@ class IRTypeDeclSizeRangeCheckUnicodeStringStatement extends IRErrorTypedStringC
         this.max = max;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRTypeDeclSizeRangeCheckUnicodeStringStatement.toBAPI not implemented");
+    static jsonEmit_IRTypeDeclSizeRangeCheckUnicodeStringStatement(exp: IRTypeDeclSizeRangeCheckUnicodeStringStatement): any {
+        const nval = IRErrorCheckStatement.jsonEmitMeta_IRErrorCheckStatement(exp);
+        const sval = IRErrorTypedStringCheckStatement.jsonEmitMeta_IRErrorTypedStringCheckStatement(exp);
+
+        return {
+            ...nval,
+            ...sval,
+            min: exp.min === undefined ? null : IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.min),
+            max: exp.max === undefined ? null : IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.max)
+        };
     }
 
-    static parseBAPIAsIRTypeDeclSizeRangeCheckUnicodeStringStatement(lexer: BAPILexer): IRTypeDeclSizeRangeCheckUnicodeStringStatement {
-        assert(false, "IRTypeDeclSizeRangeCheckUnicodeStringStatement.parseBAPI not implemented");
+    static jsonParse_IRTypeDeclSizeRangeCheckUnicodeStringStatement(obj: any): IRTypeDeclSizeRangeCheckUnicodeStringStatement {
+        const nval = IRErrorCheckStatement.jsonParseMeta_IRErrorCheckStatement(obj);
+        const sval = IRErrorTypedStringCheckStatement.jsonParseMeta_IRErrorTypedStringCheckStatement(obj);
+
+        const strexp = IRImmediateExpression.jsonParse_IRSimpleExpression(sval[0]); 
+        return new IRTypeDeclSizeRangeCheckUnicodeStringStatement(nval[0], nval[1], nval[3], obj.min !== null ? IRSimpleExpression.jsonParse_IRSimpleExpression(obj.min) : undefined, obj.max !== null ? IRSimpleExpression.jsonParse_IRSimpleExpression(obj.max) : undefined, strexp);
     }
 }
 
@@ -4181,46 +5556,75 @@ class IRTypeDeclNumericRangeCheckStatement extends IRErrorCheckStatement {
         this.numexp = numexp;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRTypeDeclNumericRangeCheckStatement.toBAPI not implemented");
+    static jsonEmit_IRTypeDeclNumericRangeCheckStatement(exp: IRTypeDeclNumericRangeCheckStatement): any {
+        const nval = IRErrorCheckStatement.jsonEmitMeta_IRErrorCheckStatement(exp);
+
+        return {
+            ...nval,
+            min: exp.min === undefined ? null : IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.min),
+            max: exp.max === undefined ? null : IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.max),
+            numexp: IRImmediateExpression.jsonEmit_IRSimpleExpression(exp.numexp)
+        };
     }
 
-    static parseBAPIAsIRTypeDeclNumericRangeCheckStatement(lexer: BAPILexer): IRTypeDeclNumericRangeCheckStatement {
-        assert(false, "IRTypeDeclNumericRangeCheckStatement.parseBAPI not implemented");
+    static jsonParse_IRTypeDeclNumericRangeCheckStatement(obj: any): IRTypeDeclNumericRangeCheckStatement {
+        const nval = IRErrorCheckStatement.jsonParseMeta_IRErrorCheckStatement(obj);
+
+        return new IRTypeDeclNumericRangeCheckStatement(nval[0], nval[1], nval[3], obj.min !== null ? IRSimpleExpression.jsonParse_IRSimpleExpression(obj.min) : undefined, obj.max !== null ? IRSimpleExpression.jsonParse_IRSimpleExpression(obj.max) : undefined, IRImmediateExpression.jsonParse_IRSimpleExpression(obj.numexp));
     }
 }
 
 class IRTypeDeclFormatCheckCStringStatement extends IRErrorTypedStringCheckStatement {
     readonly re: IRLiteralCRegexExpression;
 
-    constructor(file: string, sinfo: IRSourceInfo, checkID: number, re: IRLiteralCRegexExpression, strexp: IRImmediateExpression) {
+    constructor(file: string, sinfo: IRSourceInfo, checkID: number, strexp: IRImmediateExpression, re: IRLiteralCRegexExpression,) {
         super(IRStatementTag.IRTypeDeclFormatCheckCStringStatement, file, sinfo, undefined, checkID, strexp);
         this.re = re;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRTypeDeclFormatCheckCStringStatement.toBAPI not implemented");
+    static jsonEmit_IRTypeDeclFormatCheckCStringStatement(exp: IRTypeDeclFormatCheckCStringStatement): any {
+        const nval = IRErrorCheckStatement.jsonEmitMeta_IRErrorCheckStatement(exp);
+        const sval = IRErrorTypedStringCheckStatement.jsonEmitMeta_IRErrorTypedStringCheckStatement(exp);
+
+        return {
+            ...nval,
+            ...sval,
+            re: IRLiteralCRegexExpression.jsonEmit_IRLiteralCRegexExpression(exp.re)
+        };
     }
 
-    static parseBAPIAsIRTypeDeclFormatCheckCStringStatement(lexer: BAPILexer): IRTypeDeclFormatCheckCStringStatement {
-        assert(false, "IRTypeDeclFormatCheckCStringStatement.parseBAPI not implemented");
+    static jsonParse_IRTypeDeclFormatCheckCStringStatement(obj: any): IRTypeDeclFormatCheckCStringStatement {
+        const nval = IRErrorCheckStatement.jsonParseMeta_IRErrorCheckStatement(obj);
+        const sval = IRErrorTypedStringCheckStatement.jsonParseMeta_IRErrorTypedStringCheckStatement(obj);
+
+        return new IRTypeDeclFormatCheckCStringStatement(nval[0], nval[1], nval[3], ...sval, IRLiteralCRegexExpression.jsonParse_IRLiteralCRegexExpression(obj.re));
     }
 }
 
 class IRTypeDeclFormatCheckUnicodeStringStatement extends IRErrorTypedStringCheckStatement {
     readonly re: IRLiteralUnicodeRegexExpression;
 
-    constructor(file: string, sinfo: IRSourceInfo, checkID: number, re: IRLiteralUnicodeRegexExpression, strexp: IRImmediateExpression) {
+    constructor(file: string, sinfo: IRSourceInfo, checkID: number, strexp: IRImmediateExpression, re: IRLiteralUnicodeRegexExpression) {
         super(IRStatementTag.IRTypeDeclFormatCheckUnicodeStringStatement, file, sinfo, undefined, checkID, strexp);
         this.re = re;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRTypeDeclFormatCheckUnicodeStringStatement.toBAPI not implemented");
+    static jsonEmit_IRTypeDeclFormatCheckUnicodeStringStatement(exp: IRTypeDeclFormatCheckUnicodeStringStatement): any {
+        const nval = IRErrorCheckStatement.jsonEmitMeta_IRErrorCheckStatement(exp);
+        const sval = IRErrorTypedStringCheckStatement.jsonEmitMeta_IRErrorTypedStringCheckStatement(exp);
+
+        return {
+            ...nval,
+            ...sval,
+            re: IRLiteralUnicodeRegexExpression.jsonEmit_IRLiteralUnicodeRegexExpression(exp.re)
+        };
     }
 
-    static parseBAPIAsIRTypeDeclFormatCheckUnicodeStringStatement(lexer: BAPILexer): IRTypeDeclFormatCheckUnicodeStringStatement {
-        assert(false, "IRTypeDeclFormatCheckUnicodeStringStatement.parseBAPI not implemented");
+    static jsonParse_IRTypeDeclFormatCheckUnicodeStringStatement(obj: any): IRTypeDeclFormatCheckUnicodeStringStatement {
+        const nval = IRErrorCheckStatement.jsonParseMeta_IRErrorCheckStatement(obj);
+        const sval = IRErrorTypedStringCheckStatement.jsonParseMeta_IRErrorTypedStringCheckStatement(obj);
+
+        return new IRTypeDeclFormatCheckUnicodeStringStatement(nval[0], nval[1], nval[3], ...sval, IRLiteralUnicodeRegexExpression.jsonParse_IRLiteralUnicodeRegexExpression(obj.re));
     }
 }
 
@@ -4237,12 +5641,21 @@ class IRTypeDeclInvariantCheckStatement extends IRErrorCheckStatement {
         this.targetValue = targetValue;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRTypeDeclInvariantCheckStatement.toBAPI not implemented");
+    static jsonEmit_IRTypeDeclInvariantCheckStatement(exp: IRTypeDeclInvariantCheckStatement): any {
+        const nval = IRErrorCheckStatement.jsonEmitMeta_IRErrorCheckStatement(exp);
+
+        return {
+            ...nval,
+            tkey: exp.tkey,
+            invariantidx: exp.invariantidx,
+            targetValue: IRImmediateExpression.jsonEmit_IRImmediateExpression(exp.targetValue)
+        };
     }
 
-    static parseBAPIAsIRTypeDeclInvariantCheckStatement(lexer: BAPILexer): IRTypeDeclInvariantCheckStatement {
-        assert(false, "IRTypeDeclInvariantCheckStatement.parseBAPI not implemented");
+    static jsonParse_IRTypeDeclInvariantCheckStatement(obj: any): IRTypeDeclInvariantCheckStatement {
+        const nval = IRErrorCheckStatement.jsonParseMeta_IRErrorCheckStatement(obj);
+
+        return new IRTypeDeclInvariantCheckStatement(nval[0], nval[1], nval[2], nval[3], obj.tkey, obj.invariantidx, IRImmediateExpression.jsonParse_IRImmediateExpression(obj.targetValue));
     }
 }
 
@@ -4258,12 +5671,21 @@ class IREntityInvariantCheckStatement extends IRErrorCheckStatement {
         this.args = args;
     }
 
-    override toBAPI(): string {
-        assert(false, "IREntityInvariantCheckStatement.toBAPI not implemented");
+    static jsonEmit_IREntityInvariantCheckStatement(exp: IREntityInvariantCheckStatement): any {
+        const nval = IRErrorCheckStatement.jsonEmitMeta_IRErrorCheckStatement(exp);
+
+        return {
+            ...nval,
+            tkey: exp.tkey,
+            invariantidx: exp.invariantidx,
+            args: exp.args.map(IRImmediateExpression.jsonEmit_IRImmediateExpression)
+        };
     }
 
-    static parseBAPIAsIREntityInvariantCheckStatement(lexer: BAPILexer): IREntityInvariantCheckStatement {
-        assert(false, "IREntityInvariantCheckStatement.parseBAPI not implemented");
+    static jsonParse_IREntityInvariantCheckStatement(obj: any): IREntityInvariantCheckStatement {
+        const nval = IRErrorCheckStatement.jsonParseMeta_IRErrorCheckStatement(obj);
+
+        return new IREntityInvariantCheckStatement(nval[0], nval[1], nval[2], nval[3], obj.tkey, obj.invariantidx, obj.args.map(IRImmediateExpression.jsonParse_IRImmediateExpression));
     }
 }
 
@@ -4280,12 +5702,21 @@ class IRPreconditionCheckStatement extends IRErrorCheckStatement {
         this.args = args;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRPreconditionCheckStatement.toBAPI not implemented");
+    static jsonEmit_IRPreconditionCheckStatement(exp: IRPreconditionCheckStatement): any {
+        const nval = IRErrorCheckStatement.jsonEmitMeta_IRErrorCheckStatement(exp);
+
+        return {
+            ...nval,
+            ikey: exp.ikey,
+            requiresidx: exp.requiresidx,
+            args: exp.args.map(IRImmediateExpression.jsonEmit_IRImmediateExpression)
+        };
     }
 
-    static parseBAPIAsIRPreconditionCheckStatement(lexer: BAPILexer): IRPreconditionCheckStatement {
-        assert(false, "IRPreconditionCheckStatement.parseBAPI not implemented");
+    static jsonParse_IRPreconditionCheckStatement(obj: any): IRPreconditionCheckStatement {
+        const nval = IRErrorCheckStatement.jsonParseMeta_IRErrorCheckStatement(obj);
+
+        return new IRPreconditionCheckStatement(nval[0], nval[1], nval[2], nval[3], obj.ikey, obj.requiresidx, obj.args.map(IRImmediateExpression.jsonParse_IRImmediateExpression));
     }
 }
 
@@ -4302,12 +5733,21 @@ class IRPostconditionCheckStatement extends IRErrorCheckStatement {
         this.args = args;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRPostconditionCheckStatement.toBAPI not implemented");
+    static jsonEmit_IRPostconditionCheckStatement(exp: IRPostconditionCheckStatement): any {
+        const nval = IRErrorCheckStatement.jsonEmitMeta_IRErrorCheckStatement(exp);
+
+        return {
+            ...nval,
+            ikey: exp.ikey,
+            ensuresidx: exp.ensuresidx,
+            args: exp.args.map(IRImmediateExpression.jsonEmit_IRImmediateExpression)
+        };
     }
 
-    static parseBAPIAsIRPostconditionCheckStatement(lexer: BAPILexer): IRPostconditionCheckStatement {
-        assert(false, "IRPostconditionCheckStatement.parseBAPI not implemented");
+    static jsonParse_IRPostconditionCheckStatement(obj: any): IRPostconditionCheckStatement {
+        const nval = IRErrorCheckStatement.jsonParseMeta_IRErrorCheckStatement(obj);
+
+        return new IRPostconditionCheckStatement(nval[0], nval[1], nval[2], nval[3], obj.ikey, obj.ensuresidx, obj.args.map(IRImmediateExpression.jsonParse_IRImmediateExpression));
     }
 }
 
@@ -4318,12 +5758,18 @@ class IRAbortStatement extends IRErrorCheckStatement {
 
     override isTerminalStatement(): boolean { return true; }
 
-    override toBAPI(): string {
-        assert(false, "IRAbortStatement.toBAPI not implemented");
+    static jsonEmit_IRAbortStatement(exp: IRAbortStatement): any {
+        const nval = IRErrorCheckStatement.jsonEmitMeta_IRErrorCheckStatement(exp);
+
+        return {
+            ...nval
+        };
     }
 
-    static parseBAPIAsIRAbortStatement(lexer: BAPILexer): IRAbortStatement {
-        assert(false, "IRAbortStatement.parseBAPI not implemented");
+    static jsonParse_IRAbortStatement(obj: any): IRAbortStatement {
+        const nval = IRErrorCheckStatement.jsonParseMeta_IRErrorCheckStatement(obj);
+
+        return new IRAbortStatement(nval[0], nval[1], nval[2], nval[3]);
     }
 }
 
@@ -4335,46 +5781,19 @@ class IRAssertStatement extends IRErrorCheckStatement {
         this.cond = cond;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRAssertStatement.toBAPI not implemented");
+    static jsonEmit_IRAssertStatement(exp: IRAssertStatement): any {
+        const nval = IRErrorCheckStatement.jsonEmitMeta_IRErrorCheckStatement(exp);
+
+        return {
+            ...nval,
+            cond: IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.cond)
+        };
     }
 
-    static parseBAPIAsIRAssertStatement(lexer: BAPILexer): IRAssertStatement {
-        assert(false, "IRAssertStatement.parseBAPI not implemented");
-    }
-}
+    static jsonParse_IRAssertStatement(obj: any): IRAssertStatement {
+        const nval = IRErrorCheckStatement.jsonParseMeta_IRErrorCheckStatement(obj);
 
-class IRAssumeStatement extends IRErrorCheckStatement {
-    readonly cond: IRSimpleExpression;
-
-    constructor(file: string, sinfo: IRSourceInfo, cond: IRSimpleExpression) {
-        super(IRStatementTag.IRAssumeStatement, file, sinfo, undefined, IRErrorCheckStatement.assumeCheckID);
-        this.cond = cond;
-    }
-
-    override toBAPI(): string {
-        assert(false, "IRAssumeStatement.toBAPI not implemented");
-    }
-
-    static parseBAPIAsIRAssumeStatement(lexer: BAPILexer): IRAssumeStatement {
-        assert(false, "IRAssumeStatement.parseBAPI not implemented");
-    }
-}
-
-class IRValidateStatement extends IRErrorCheckStatement {
-    readonly cond: IRSimpleExpression;
-
-    constructor(file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, checkID: number, cond: IRSimpleExpression) {
-        super(IRStatementTag.IRValidateStatement, file, sinfo, diagnosticTag, checkID);
-        this.cond = cond;
-    }
-
-    override toBAPI(): string {
-        assert(false, "IRValidateStatement.toBAPI not implemented");
-    }
-
-    static parseBAPIAsIRValidateStatement(lexer: BAPILexer): IRValidateStatement {
-        assert(false, "IRValidateStatement.parseBAPI not implemented");
+        return new IRAssertStatement(nval[0], nval[1], nval[2], nval[3], IRSimpleExpression.jsonParse_IRSimpleExpression(obj.cond));
     }
 }
 
@@ -4398,21 +5817,36 @@ class IRDebugStatement extends IRAtomicStatement {
         return false;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRDebugStatement.toBAPI not implemented");
+    static jsonEmit_IRDebugStatement(exp: IRDebugStatement): any {
+        return {
+            oftype: IRTypeSignature.jsonEmit_IRTypeSignature(exp.oftype),
+            dbgexp: IRSimpleExpression.jsonEmit_IRSimpleExpression(exp.dbgexp),
+            file: exp.file,
+            line: exp.line
+        };
     }
 
-    static parseBAPIAsIRDebugStatement(lexer: BAPILexer): IRDebugStatement {
-        assert(false, "IRDebugStatement.parseBAPI not implemented");
+    static jsonParse_IRDebugStatement(obj: any): IRDebugStatement {
+        return new IRDebugStatement(
+            IRTypeSignature.jsonParse_IRTypeSignature(obj.oftype),
+            IRSimpleExpression.jsonParse_IRSimpleExpression(obj.dbgexp),
+            obj.file,
+            obj.line
+        );
     }
 }
 
 class IRBlockStatement extends IRStatement {
     readonly statements: IRStatement[];
 
-    constructor(statements: IRStatement[]) {
+    readonly livevars: string[];
+    readonly livetemps: number[];
+
+    constructor(statements: IRStatement[], livevars: string[], livetemps: number[]) {
         super(IRStatementTag.IRBlockStatement);
         this.statements = statements;
+        this.livevars = livevars;
+        this.livetemps = livetemps;
     }
 
     override isTerminalStatement(): boolean { 
@@ -4423,12 +5857,20 @@ class IRBlockStatement extends IRStatement {
         return this.statements.every(s => s.isSimpleStatement());
     }
 
-    override toBAPI(): string {
-        assert(false, "IRBlockStatement.toBAPI not implemented");
+    static jsonEmit_IRBlockStatement(exp: IRBlockStatement): any {
+        return {
+            statements: exp.statements.map((vv) => IRStatement.jsonEmit_IRStatement(vv)),
+            livevars: exp.livevars,
+            livetemps: exp.livetemps
+        };
     }
 
-    static parseBAPIAsIRBlockStatement(lexer: BAPILexer): IRBlockStatement {
-        assert(false, "IRBlockStatement.parseBAPI not implemented");
+    static jsonParse_IRBlockStatement(obj: any): IRBlockStatement {
+        return new IRBlockStatement(
+            obj.statements.map((vv: any) => IRStatement.jsonParse_IRStatement(vv)),
+            obj.livevars,
+            obj.livetemps
+        );
     }
 }
 
@@ -4438,10 +5880,45 @@ abstract class IRBody {
 
     abstract isSimpleBody(): boolean;
 
-    abstract toBAPI(): string;
+    static jsonEmit_IRBody(exp: IRBody): [string, object] {
+        if(exp instanceof IRAbstractBody) {
+            return ["AbstractBody", IRAbstractBody.jsonEmit_IRAbstractBody(exp)];
+        }
+        else if(exp instanceof IRBuiltinBody) {
+            return ["BuiltinBody", IRBuiltinBody.jsonEmit_IRBuiltinBody(exp)];
+        }
+        else if(exp instanceof IRHoleBody) {
+            return ["HoleBody", IRHoleBody.jsonEmit_IRHoleBody(exp)];
+        }
+        else if(exp instanceof IRStandardBody) {
+            return ["StandardBody", IRStandardBody.jsonEmit_IRStandardBody(exp)];
+        }
+        else {
+            throw new Error(`Unknown body type: ${exp}`);
+        }
+    }
 
-    static parseBAPI(lexer: BAPILexer): IRBody {
-        assert(false, "IRBody.parseBAPI not implemented");
+    static jsonParse_IRBody(obj: any): IRBody {
+        const kind = obj[0];
+        const value = obj[1];
+
+        switch(kind) {
+            case "AbstractBody": {
+                return IRAbstractBody.jsonParse_IRAbstractBody(value);
+            }
+            case "BuiltinBody": {
+                return IRBuiltinBody.jsonParse_IRBuiltinBody(value);
+            }
+            case "HoleBody": {
+                return IRHoleBody.jsonParse_IRHoleBody(value);
+            }
+            case "StandardBody": {
+                return IRStandardBody.jsonParse_IRStandardBody(value);
+            }
+            default: {
+                assert(false, `Unknown body type: ${kind}`);
+            }
+        }
     }
 }
 
@@ -4454,12 +5931,12 @@ class IRAbstractBody extends IRBody {
         return false;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRAbstractBody.toBAPI not implemented");
+    static jsonEmit_IRAbstractBody(exp: IRAbstractBody): any {
+        return {};
     }
 
-    static parseBAPIAsIRAbstractBody(lexer: BAPILexer): IRAbstractBody {
-        assert(false, "IRAbstractBody.parseBAPI not implemented");
+    static jsonParse_IRAbstractBody(obj: any): IRAbstractBody {
+        return new IRAbstractBody();
     }
 }
 
@@ -4477,12 +5954,18 @@ class IRBuiltinBody extends IRBody {
         return false;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRBuiltinBody.toBAPI not implemented");
+    static jsonEmit_IRBuiltinBody(exp: IRBuiltinBody): any {
+        return {
+            builtin: exp.builtin,
+            biterms: exp.biterms.map(([name, t]) => [name, IRTypeSignature.jsonEmit_IRTypeSignature(t)])
+        };
     }
 
-    static parseBAPIAsIRBuiltinBody(lexer: BAPILexer): IRBuiltinBody {
-        assert(false, "IRBuiltinBody.parseBAPI not implemented");
+    static jsonParse_IRBuiltinBody(obj: any): IRBuiltinBody {
+        return new IRBuiltinBody(
+            obj.builtin,
+            obj.biterms.map(([name, t]: [string, any]) => [name, IRTypeSignature.jsonParse_IRTypeSignature(t)])
+        );
     }
 }
 
@@ -4507,12 +5990,24 @@ class IRHoleBody extends IRBody {
         return false;
     }
 
-    override toBAPI(): string {
-        assert(false, "IRHoleBody.toBAPI not implemented");
+    static jsonEmit_IRHoleBody(exp: IRHoleBody): any {
+        return {
+            startline: exp.startline,
+            endline: exp.endline,
+            hname: exp.hname,
+            doccomment: exp.doccomment,
+            samplesfile: exp.samplesfile
+        };
     }
 
-    static parseBAPIAsIRHoleBody(lexer: BAPILexer): IRHoleBody {
-        assert(false, "IRHoleBody.parseBAPI not implemented");
+    static jsonParse_IRHoleBody(obj: any): IRHoleBody {
+        return new IRHoleBody(
+            obj.startline,
+            obj.endline,
+            obj.hname,
+            obj.doccomment,
+            obj.samplesfile
+        );
     }
 }
 
@@ -4528,12 +6023,16 @@ class IRStandardBody extends IRBody {
         return this.statements.every(s => s.isSimpleStatement());
     }
 
-    override toBAPI(): string {
-        assert(false, "IRStandardBody.toBAPI not implemented");
+    static jsonEmit_IRStandardBody(exp: IRStandardBody): any {
+        return {
+            statements: exp.statements.map(IRStatement.jsonEmit_IRStatement)
+        };
     }
 
-    static parseBAPIAsIRStandardBody(lexer: BAPILexer): IRStandardBody {
-        assert(false, "IRStandardBody.parseBAPI not implemented");
+    static jsonParse_IRStandardBody(obj: any): IRStandardBody {
+        return new IRStandardBody(
+            obj.statements.map(IRStatement.jsonParse_IRStatement)
+        );
     }
 }
 
@@ -4576,6 +6075,7 @@ export {
 
     IRAccessFieldExpression, IRAccessFieldSpecialExpression, IRAccessFieldDirectExpression, IRAccessFieldVirtualExpression, IRAccessEListIndexExpression,
 
+    IRImplicitInvokeArgPassKind,
     IRInvokeExpression, IRInvokeDirectExpression, IRInvokeImplicitsExpression, IRInvokeSimpleExpression, IRInvokeSimpleWithImplicitsExpression, IRInvokeVirtualSimpleExpression, IRInvokeVirtualWithImplicitsExpression,
 
     IRInvokeCallAgentOrAPIExpression, IRInvokeTaskActionExpression,
@@ -4596,7 +6096,7 @@ export {
     IRConceptRepresentationOfTypeExpression, IRIsConceptRepresentationOfTypeExpression, IRIsNotConceptRepresentationOfTypeExpression, IRIsConceptRepresentationSubtypeOfTypeExpression, IRIsNotConceptRepresentationSubtypeOfTypeExpression, IRStaticIsTypeSubtypeOfExpression,
     IRBoxEntityToConceptRepresentationExpression, IRUnboxEntityFromConceptRepresentationExpression, IRConvertConceptRepresentationExpression,
 
-    IRStatementTag, IRStatement, IRAtomicStatement, IRReturnSimpleStatement, IRReturnWithImplicitStatement,
+    IRStatementTag, IRStatement, IRAtomicStatement, IRReturnSimpleStatement,
     IRErrorCheckStatement, IRErrorBinArithCheckStatement,
 
     IRNopStatement,
@@ -4608,8 +6108,7 @@ export {
     
     IRUpdateLocalDirectStatement, IRUpdateParamDirectStatement,
 
-    IRReturnVoidSimpleStatement, IRReturnValueSimpleStatement, IRReturnDirectInvokeStatement, IRReturnDirectConstructStatement, IRReturnDirectConstructWithBoxStatement,
-    IRReturnVoidWithImplicitStatement, IRReturnValueImplicitStatement, IRReturnDirectInvokeImplicitStatement, IRReturnDirectInvokeImplicitPassThroughStatement, IRReturnDirectConstructImplicitStatement, IRReturnDirectConstructWithBoxImplicitStatement,
+    IRReturnVoidSimpleStatement, IRReturnValueSimpleStatement, IRReturnDirectInvokeStatement, IRReturnDirectInvokeImplicitsStatement, IRReturnDirectConstructStatement, IRReturnDirectConstructWithBoxStatement,
     
     IRVoidInvokeStatement,
 
@@ -4625,7 +6124,7 @@ export {
 
     IRTypeDeclInvariantCheckStatement, IREntityInvariantCheckStatement,
     IRPreconditionCheckStatement, IRPostconditionCheckStatement,
-    IRAbortStatement, IRAssertStatement, IRAssumeStatement, IRValidateStatement, IRDebugStatement,
+    IRAbortStatement, IRAssertStatement, IRDebugStatement,
 
     IRBlockStatement,
     IRBody, IRAbstractBody, IRBuiltinBody, IRHoleBody, IRStandardBody

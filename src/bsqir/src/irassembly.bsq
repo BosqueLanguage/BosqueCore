@@ -30,10 +30,10 @@ concept AbstractNominalTypeDecl {
     
     %%TODO vtable info here
 
-    field docstr: Option<ByteBuffer>;
+    field docstr: Option<String>;
     %%field metatags: IRDeclarationMetaTag[];
 
-    field file: CString;
+    field file: String;
     field sinfo: SourceInfo;
 }
 
@@ -44,11 +44,15 @@ concept AbstractEntityTypeDecl provides AbstractNominalTypeDecl {
 %** This is the concrete type for enumerations declarations **%
 entity EnumTypeDecl provides AbstractEntityTypeDecl {
     field members: List<CString>;
+
+    invariant !$members.empty();
 }
 
 entity TypedeclRangeCheck {
-    field min: Option<LiteralExpression>;
-    field max: Option<LiteralExpression>;
+    field min: Option<LiteralExpression> = none;
+    field max: Option<LiteralExpression> = none;
+
+    invariant $min.?some | $max.?some;
 }
 
 %** This is the concrete type for various type aliases including simple, those with ranges, and string flavors **%
@@ -59,9 +63,9 @@ datatype TypedeclTypeDecl provides AbstractEntityTypeDecl using {
 }
 of
     TypedeclSimpleTypeDecl { }
-    TypedeclBoundedTypeDecl { field rngchk: TypedeclRangeCheck; }
-    TypedeclCStringTypeDecl { field rechk: Option<Nat> = none; field rngchk: Option<TypedeclRangeCheck> = none; }
-    TypedeclStringTypeDecl { field rechk: Option<Nat> = none; field rngchk: Option<TypedeclRangeCheck> = none; }
+    TypedeclBoundedTypeDecl { field rngchk: TypedeclRangeCheck; invariant $isnumerictype; }
+    TypedeclCStringTypeDecl { field rechk: Option<LiteralCRegexExpression> = none; field rngchk: Option<TypedeclRangeCheck> = none; }
+    TypedeclStringTypeDecl { field rechk: Option<LiteralUnicodeRegexExpression> = none; field rngchk: Option<TypedeclRangeCheck> = none; }
 ;
 
 %** This is the abstract type for internal entity type declarations **%
@@ -124,4 +128,7 @@ entity BapiAssembly {
 
     %%readonly typedeporder: IRTypeSignature[] = [];
     %%readonly typedepcycles: IRTypeSignature[][] = [];
+
+    field code: List<CodeFileInfo>;
+    field macrodefs: List<CString>;
 }

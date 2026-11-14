@@ -26,15 +26,3 @@ describe ("Parser -- Assert", () => {
     });
 });
 
-describe ("Parser -- Validate", () => {
-    it("should parse validate", function () {
-        parseTestFunction("function main(): Int { validate(true); return 1i; }", "function main(): Int { validate true; return 1i; }");
-        parseTestFunction("function main(): Int { validate true; return 1i; }", undefined);
-        parseTestFunction("function main(): Int { validate['Check#1'] true; return 1i; }", undefined);
-    });
-
-    it("should fail parse validate", function () {
-        parseTestFunctionError("function main(): Int { validate(); return 1i; }", "Unexpected token in expression -- )");
-        parseTestFunctionError("function main(): Int { validate[Check] true; return 1i; }", 'Expected "[LITERAL_EX_STRING]" but got "Check" when parsing "validate statement tag"');
-    });
-});
