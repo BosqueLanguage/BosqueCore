@@ -16,7 +16,7 @@ import { PackageInfo } from "../frontend/build_decls.js";
 const jsondir = path.join(__dirname, "../../json/");
 const runcppdir = path.join(__dirname, "../../runcpp/");
 
-const [fullargs, mainns, outdir, emitir, packages] = parseArgv("cppout", ...process.argv);
+const [fullargs, mainns, outdir, emitir, injson, outjson, packages] = parseArgv("cppout", ...process.argv);
 
 function buildExeCode(ircode: IRAssembly, outname: string) {
     Status.output("Emitting CPP code...\n");
