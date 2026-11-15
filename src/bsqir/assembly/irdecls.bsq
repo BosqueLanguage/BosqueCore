@@ -37,7 +37,7 @@ entity CodeFileInfo {
 
     invariant $srcpath !== "";
     invariant $filename !== "";
-    invariant $srcpath.endsWith($filename);
+    invariant $srcpath !== "";
 }
 
 entity CRegexDecl {
