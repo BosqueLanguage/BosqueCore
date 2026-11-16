@@ -3552,7 +3552,7 @@ class CPPEmitter {
             
                 let parseop: string;
                 if(!injson) {
-                    parseop =  xxxx;
+                    parseop =  `ᐸRuntimeᐳ::TaskInfo::jsonParseIntoBSQ<${this.typeInfoManager.emitTypeAsStd(p.type.tkeystr)}>(iobb_${vname}, ibytes_${vname}, ${typeinfo.bsqtypeid}, _${vname});`;
                 }
                 else {
                     parseop =  `ᐸRuntimeᐳ::TaskInfo::bapiParseIntoBSQ<${this.typeInfoManager.emitTypeAsStd(p.type.tkeystr)}>(true, iobb_${vname}, ibytes_${vname}, ${typeinfo.bsqtypeid}, _${vname});`;
@@ -3582,7 +3582,7 @@ class CPPEmitter {
 
         let emitop: string;
         if(!outjson) {
-            emitop =  xxxx;
+            emitop =  `ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqEmitIntoJSON<${this.typeInfoManager.emitTypeAsStd(rtype.tkeystr)}>(true, ${tsig.bsqtypeid}, result, oibb)`;
         }
         else {
             emitop = `ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqEmitIntoBAPI<${this.typeInfoManager.emitTypeAsStd(rtype.tkeystr)}>(true, ${tsig.bsqtypeid}, result, oibb)`;

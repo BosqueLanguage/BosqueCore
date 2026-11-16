@@ -176,6 +176,9 @@ namespace ᐸRuntimeᐳ
     class TaskInfo
     {
     private:
+        static void jsonParseIntoBSQ(const std::list<uint8_t*>& iobuffs, size_t totalbytes, uint32_t bsqid, void* outvalue);
+        static size_t bsqEmitIntoJSON(bool allowsensitive, uint32_t bsqid, const void* value, std::list<uint8_t*>& iobuffs);
+
         static void bapiParseIntoBSQ(bool sloppyinputs, const std::list<uint8_t*>& iobuffs, size_t totalbytes, uint32_t bsqid, void* outvalue);
         static size_t bsqEmitIntoBAPI(bool allowsensitive, uint32_t bsqid, const void* value, std::list<uint8_t*>& iobuffs);
 
@@ -225,13 +228,25 @@ namespace ᐸRuntimeᐳ
             return XUUIDv4::from_bytes(uuid.data);
         }
 
-        template<typename T>
+        template <typename T>
+        static void jsonParseIntoBSQ(const std::list<uint8_t*>& iobuffs, size_t totalbytes, uint32_t bsqid, T& outvalue)
+        {
+            return jsonParseIntoBSQ(iobuffs, totalbytes, bsqid, static_cast<void*>(&outvalue));
+        }
+
+        template <typename T>
+        static size_t bsqEmitIntoJSON(bool allowsensitive, uint32_t bsqid, const T& value, std::list<uint8_t*>& iobuffs)
+        {
+            return bsqEmitIntoJSON(allowsensitive, bsqid, static_cast<const void*>(&value), iobuffs);
+        }
+
+        template <typename T>
         static void bapiParseIntoBSQ(bool relaxedparse, const std::list<uint8_t*>& iobuffs, size_t totalbytes, uint32_t bsqid, T& outvalue)
         {
             return bapiParseIntoBSQ(relaxedparse, iobuffs, totalbytes, bsqid, static_cast<void*>(&outvalue));
         }
 
-        template<typename T>
+        template <typename T>
         static size_t bsqEmitIntoBAPI(bool allowsensitive, uint32_t bsqid, const T& value, std::list<uint8_t*>& iobuffs)
         {
             return bsqEmitIntoBAPI(allowsensitive, bsqid, static_cast<const void*>(&value), iobuffs);
