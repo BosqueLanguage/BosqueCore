@@ -1954,8 +1954,8 @@ class IRAssembly {
             enums: this.enums.map((e) => IREnumTypeDecl.jsonEmit_IREnumTypeDecl(e)),
             simpletypedecls: this.simpletypedecls.map((td) => IRTypedeclSimpleTypeDecl.jsonEmit_IRTypedeclSimpleTypeDecl(td)),
             boundedtypedecls: this.boundedtypedecls.map((td) => IRTypedeclBoundedTypeDecl.jsonEmit_IRTypedeclBoundedTypeDecl(td)),
-            cstringtypedecls: this.cstringoftypedecls.map((td) => IRTypedeclCStringTypeDecl.jsonEmit_IRTypedeclCStringTypeDecl(td)),
-            stringtypedecls: this.stringoftypedecls.map((td) => IRTypedeclStringTypeDecl.jsonEmit_IRTypedeclStringTypeDecl(td)),
+            cstringoftypedecls: this.cstringoftypedecls.map((td) => IRTypedeclCStringTypeDecl.jsonEmit_IRTypedeclCStringTypeDecl(td)),
+            stringoftypedecls: this.stringoftypedecls.map((td) => IRTypedeclStringTypeDecl.jsonEmit_IRTypedeclStringTypeDecl(td)),
 
             //this.entities.map((e) => e.toBAPI()).join(","),
             //this.datamembers.map((dm) => dm.toBAPI()).join(","),

@@ -148,6 +148,11 @@ namespace ᐸRuntimeᐳ
         }
     }
 
+    const bool InitializeDefaultConstructorValue()
+    {
+        xxxx;
+    }
+
     void jsonParseToBSQ_Entity(const TypeInfo* tinfo, const json& j, void* resptr)
     {
         bsq_validate(j.is_object(), "BAPI -> BSQ", 0, nullptr, "Expected JSON object for entity");
@@ -160,10 +165,7 @@ namespace ᐸRuntimeᐳ
             const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[i].fieldbsqtypeid);
             std::string fieldname = tinfo->ftable[i].fname;
 
-            if(!j.contains(fieldname)) {
-                //TODO: on explicit use of default we need to validate that the field is indeed optional
-            }
-            else {
+            if(j.contains(fieldname)) {
                 auto finfo = std::find_if(tinfo->ftable, tinfo->ftable + tinfo->ftablecount, [&j, &fieldname](const TypeLayoutInfo& fi) {
                     return fi.fname == fieldname;
                 });
@@ -176,6 +178,8 @@ namespace ᐸRuntimeᐳ
                 ftypeinfo->opdispatch.jsonParseToBSQFp(ftypeinfo, j[fieldname], (void*)valpos);
             }
         }
+
+        xxxx;
 
         tinfo->opdispatch.validatingConstructorFp(valptrs, resptr);
     }
@@ -241,6 +245,8 @@ namespace ᐸRuntimeᐳ
         }
         bsq_validate(lexer->testIsSymbol('}'), "BAPI -> BSQ", 0, nullptr, "Expected } for entity");
         lexer->consume();
+
+        xxxx;
 
         tinfo->opdispatch.validatingConstructorFp(valptrs, resptr);
     }
