@@ -990,23 +990,12 @@ class Monomorphizer {
 
         const prepostikey = computeInvokeKeyForTypeMethod(exp.resolvedDeclType as TypeSignature, mdd, exp.terms, lambdas);
 
-        //if the decl is not the same as the impl (and the decls has pre/post conditions), then we need to instantiate the decl as well to ensure the pre/post conditions are compiled
-        if(exp.resolvedImplType !== undefined && exp.resolvedDeclType !== undefined && exp.resolvedDeclType.tkeystr !== exp.resolvedImplType.tkeystr) {
-            const rmd = exp.resolvedMethodDecl as MethodDecl;
-            if(rmd.preconditions.length !== 0 || rmd.postconditions.length !== 0) {
-                assert(false, "Not Implemented -- instantiatePostfixInvoke for decl/impl mismatch with pre/post conditions -- abstract or virtual");
-            }
-        }
+        assert(exp.resolvedMethodImpl !== undefined, "Virtual calls on ref methods are not supported");
 
-        if(exp.resolvedMethodImpl !== undefined) {
-            const mdecl = this.currentMapping !== undefined ? (exp.resolvedImplType as TypeSignature).remapTemplateBindings(this.currentMapping) : (exp.resolvedDeclType as TypeSignature);
-            const tterms = this.currentMapping !== undefined ? exp.terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : exp.terms;
-            this.callinstmap.set(exp.monoinvid as number, computeInvokeKeyForTypeMethod(mdecl, mdd, tterms, lambdas));
-            this.instantiateSpecificResolvedMemberMethod(mdecl, mdd, tterms, lambdas, prepostikey);
-        }
-        else {
-            assert(false, "Not Implemented -- instantiatePostfixInvoke for virtual");
-        }
+        const mdecl = this.currentMapping !== undefined ? (exp.resolvedImplType as TypeSignature).remapTemplateBindings(this.currentMapping) : (exp.resolvedDeclType as TypeSignature);
+        const tterms = this.currentMapping !== undefined ? exp.terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : exp.terms;
+        this.callinstmap.set(exp.monoinvid as number, computeInvokeKeyForTypeMethod(mdecl, mdd, tterms, lambdas));
+        this.instantiateSpecificResolvedMemberMethod(mdecl, mdd, tterms, lambdas, prepostikey);
     }
 
     private instantiateCallRefVariableExpression(exp: CallRefVariableExpression) {

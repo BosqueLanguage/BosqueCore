@@ -250,6 +250,13 @@ class TypeInfoManager {
         }
     }
 
+    generateFieldDefaultFunctionNames(fkey: string, isconstexpr: boolean): [string | undefined, string] {
+        return [
+            isconstexpr ? undefined : `ᐸfdefaultᐳ${fkey}`,
+            `ᐸfdefaultparseᐳ${fkey}`
+        ];
+    }
+
     private emitTypeAsEListSelfDescribing(tinfo: TypeInfo): string {
         const entries = (tinfo.tsig as IREListTypeSignature).entries.map((ee) => this.emitTypeAsStd(ee.tkeystr));
         return `ᐸRuntimeᐳ::EList${entries.length}<${entries.join(", ")}>`;

@@ -148,9 +148,11 @@ namespace ᐸRuntimeᐳ
         }
     }
 
-    const bool InitializeDefaultConstructorValue()
+    void initializeFieldWithDefaultConstructorValue(const void** fargs, void* trgt, const TypeLayoutInfo* finfo)
     {
-        xxxx;
+        bsq_validate(finfo->defaultparseFp != nullptr, "BSQ", 0, nullptr, "InitializeDefaultConstructorValue not implemented");
+
+        return finfo->defaultparseFp(fargs, trgt);
     }
 
     void jsonParseToBSQ_Entity(const TypeInfo* tinfo, const json& j, void* resptr)
@@ -179,7 +181,14 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        xxxx;
+        bool needsdefaults = std::find(valptrs, valptrs + tinfo->ftablecount, nullptr) != valptrs + tinfo->ftablecount;
+        if(needsdefaults) {
+            for(size_t i = 0; i < tinfo->ftablecount; ++i) {
+                if(valptrs[i] == nullptr) {
+                    initializeFieldWithDefaultConstructorValue((const void**)valptrs, valptrs[i], &tinfo->ftable[i]);
+                }
+            }
+        }
 
         tinfo->opdispatch.validatingConstructorFp(valptrs, resptr);
     }
@@ -246,7 +255,14 @@ namespace ᐸRuntimeᐳ
         bsq_validate(lexer->testIsSymbol('}'), "BAPI -> BSQ", 0, nullptr, "Expected } for entity");
         lexer->consume();
 
-        xxxx;
+        bool needsdefaults = std::find(valptrs, valptrs + tinfo->ftablecount, nullptr) != valptrs + tinfo->ftablecount;
+        if(needsdefaults) {
+            for(size_t i = 0; i < tinfo->ftablecount; ++i) {
+                if(valptrs[i] == nullptr) {
+                    initializeFieldWithDefaultConstructorValue((const void**)valptrs, valptrs[i], &tinfo->ftable[i]);
+                }
+            }
+        }
 
         tinfo->opdispatch.validatingConstructorFp(valptrs, resptr);
     }

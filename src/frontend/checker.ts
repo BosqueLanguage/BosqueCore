@@ -2903,7 +2903,7 @@ class TypeChecker {
 
         const tdecl = (resolvefrom as NominalTypeSignature).decl;
         if(tdecl instanceof AbstractEntityTypeDecl) {
-            return this.relations.resolveTypeMethodDeclaration(resolvefrom, name, isTemplate, hasLambda, pkinds, this.constraints); //a concrete subtype so we can resolve statically
+            return this.relations.resolveTypeMethodImplementation(resolvefrom, name, isTemplate, hasLambda, pkinds, this.constraints); //a concrete subtype so we can resolve statically
         }
 
         return undefined; //otherwise we have to do dynamic dispatch
@@ -3807,6 +3807,11 @@ class TypeChecker {
 
         if(!mresolve.member.isThisRef) {
             this.reportError(exp.sinfo, `Method ${exp.name} is not a "ref" method and cannot be called with a ref rcvr`);
+            return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
+        }
+
+        if(mresolve.member.attributes.some((attr) => attr.name === "virtual" || attr.name === "abstract")) {
+            this.reportError(exp.sinfo, `Method ${exp.name} is virtual and cannot be used with a ref receiver`);
             return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
         }
 
