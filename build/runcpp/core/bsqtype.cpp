@@ -153,8 +153,8 @@ namespace ᐸRuntimeᐳ
         bsq_validate(j.is_object(), "BAPI -> BSQ", 0, nullptr, "Expected JSON object for entity");
 
         void* valdata = alloca(tinfo->bytesize);
-        void** valptrs = (void**)alloca(tinfo->slotcount * sizeof(void*));
-        std::fill(valptrs, valptrs + tinfo->slotcount, nullptr);
+        void** valptrs = (void**)alloca(tinfo->ftablecount * sizeof(void*));
+        std::fill(valptrs, valptrs + tinfo->ftablecount, nullptr);
 
         for(size_t i = 0; i < tinfo->ftablecount; ++i) {
             const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[i].fieldbsqtypeid);
@@ -188,8 +188,8 @@ namespace ᐸRuntimeᐳ
         lexer->consume();
 
         void* valdata = alloca(tinfo->bytesize);
-        void** valptrs = (void**)alloca(tinfo->slotcount * sizeof(void*));
-        std::fill(valptrs, valptrs + tinfo->slotcount, nullptr);
+        void** valptrs = (void**)alloca(tinfo->ftablecount * sizeof(void*));
+        std::fill(valptrs, valptrs + tinfo->ftablecount, nullptr);
 
         bool first = true;
         size_t cpos = 0;

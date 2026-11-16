@@ -16,12 +16,12 @@ import { PackageInfo } from "../frontend/build_decls.js";
 const jsondir = path.join(__dirname, "../../json/");
 const runcppdir = path.join(__dirname, "../../runcpp/");
 
-const [fullargs, mainns, outdir, emitir, injson, outjson, packages] = parseArgv("cppout", ...process.argv);
+const [fullargs, mainns, outdir, emitir, packages] = parseArgv("cppout", ...process.argv);
 
 function buildExeCode(ircode: IRAssembly, outname: string) {
     Status.output("Emitting CPP code...\n");
     const cppcode = CPPEmitter.createEmitter(ircode);
-    const maincode = cppcode.emitForCommandLine(`${mainns}`, injson, outjson);
+    const maincode = cppcode.emitForCommandLine(`${mainns}`);
     if(maincode === undefined) {
         Status.error(`Could not find invoke or task for key ${mainns}::main or ${mainns}::Main\n`);
         return;

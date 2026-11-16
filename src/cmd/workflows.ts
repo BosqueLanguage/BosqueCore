@@ -94,7 +94,7 @@ function isBsqSrcExtension(filename: string): boolean {
     return filename.endsWith(".bsq") || filename.endsWith(".bsqtest");
 }
 
-function parseArgv(dir: string, ...argv: string[]): [string[], string, string, boolean, boolean, boolean, string[]] {
+function parseArgv(dir: string, ...argv: string[]): [string[], string, string, boolean, string[]] {
     let fullargs = argv.slice(2);
     if(fullargs.length === 0) {
         Status.error("No input files specified!\n");
@@ -122,27 +122,6 @@ function parseArgv(dir: string, ...argv: string[]): [string[], string, string, b
         fullargs = fullargs.slice(0, outdiridx).concat(fullargs.slice(outdiridx + 2));
     }
 
-    let injson = false;
-    let injsonidx = fullargs.findIndex((v) => v === "--injson");
-    if(injsonidx !== -1) {
-        injson = true;
-        fullargs = fullargs.slice(0, injsonidx).concat(fullargs.slice(injsonidx + 1));
-    }
-
-    let outjson = false;
-    let outjsonidx = fullargs.findIndex((v) => v === "--outjson");
-    if(outjsonidx !== -1) {
-        outjson = true;
-        fullargs = fullargs.slice(0, outjsonidx).concat(fullargs.slice(outjsonidx + 1));
-    }
-
-    let jsonidx = fullargs.findIndex((v) => v === "--json");
-    if(jsonidx !== -1) {
-        injson = true;
-        outjson = true;
-        fullargs = fullargs.slice(0, jsonidx).concat(fullargs.slice(jsonidx + 1));
-    }
-
     let bsqfiles: string[] = [];
     let packages: string[] = [];
     let i = 0;
@@ -162,7 +141,7 @@ function parseArgv(dir: string, ...argv: string[]): [string[], string, string, b
         }
     }
 
-    return [bsqfiles, mainns, outdir, emitir, injson, outjson, packages];
+    return [bsqfiles, mainns, outdir, emitir, packages];
 }
 
 function generateASMGeneral(usercode: PackageConfig, macrodefs: string[]): [Assembly | undefined, ParserError[], TypeError[]]{

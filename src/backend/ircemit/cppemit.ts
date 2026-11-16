@@ -3501,9 +3501,19 @@ class CPPEmitter {
 
     ////
     //Emit command line main support
-    private emitParseArgsMain(params: IRInvokeParameterDecl[], injson: boolean): string {
+    private emitParseArgsMain(params: IRInvokeParameterDecl[]): string {
+        const jsonchecks = 
+            '    bool injson = false;\n    bool outjson = false;\n    int scount = 1;\n' +
+            '    while(scount < argc) {\n' +
+            '        if(std::strcmp(argv[scount], "--injson") == 0) { injson = true; scount++; }\n' +
+            '        else if(std::strcmp(argv[scount], "--outjson") == 0) { outjson = true; scount++; }\n' +
+            '        else if(std::strcmp(argv[scount], "--json") == 0) { injson = true; outjson = true; scount++; }\n' +
+            '        else { break; }\n' +
+            '    }\n' +
+            '\n';
+
         if(params.length === 0) {
-            return '    //No args';
+            return jsonchecks + '    //No args';
         }
         else {
             const argistrs = params.map((p, ii) => {
@@ -3550,14 +3560,6 @@ class CPPEmitter {
                 `        std::copy(argv[${ii} + scount], argv[${ii} + scount] + ibytes_${vname}, iobb_${vname}.back());\n` +
                 `    }\n`;
             
-                let parseop: string;
-                if(!injson) {
-                    parseop =  `ᐸRuntimeᐳ::TaskInfo::jsonParseIntoBSQ<${this.typeInfoManager.emitTypeAsStd(p.type.tkeystr)}>(iobb_${vname}, ibytes_${vname}, ${typeinfo.bsqtypeid}, _${vname});`;
-                }
-                else {
-                    parseop =  `ᐸRuntimeᐳ::TaskInfo::bapiParseIntoBSQ<${this.typeInfoManager.emitTypeAsStd(p.type.tkeystr)}>(true, iobb_${vname}, ibytes_${vname}, ${typeinfo.bsqtypeid}, _${vname});`;
-                }
-
                 const pargs = 
                 `    if (setjmp(*ᐸRuntimeᐳ::tl_bosque_info.current_task->error_handler) > 0) {\n` +
                 `        auto perr = ᐸRuntimeᐳ::tl_bosque_info.current_task->pending_error.value();\n` +
@@ -3565,7 +3567,11 @@ class CPPEmitter {
                 `        exit(1);\n` +
                 `    }\n\n` +
                 `    ${this.typeInfoManager.emitTypeAsStd(p.type.tkeystr)} _${vname}{};\n` +
-                `    ${parseop}\n`;
+                '    if(injson) {\n' +
+                `        ᐸRuntimeᐳ::TaskInfo::jsonParseIntoBSQ<${this.typeInfoManager.emitTypeAsStd(p.type.tkeystr)}>(iobb_${vname}, ibytes_${vname}, ${typeinfo.bsqtypeid}, _${vname});\n` +
+                '    } else {\n' +
+                `        ᐸRuntimeᐳ::TaskInfo::bapiParseIntoBSQ<${this.typeInfoManager.emitTypeAsStd(p.type.tkeystr)}>(true, iobb_${vname}, ibytes_${vname}, ${typeinfo.bsqtypeid}, _${vname});\n` +
+                '    }\n';
             
                 const finalizeparse = 
                 `    ᐸRuntimeᐳ::g_alloc_info.io_buffer_free_list(iobb_${vname});\n`;
@@ -3573,23 +3579,20 @@ class CPPEmitter {
                 return [hhparse, initforparse_file, initforparse_stdin, initforparse_arg, pargs, finalizeparse].join("\n");
             });
 
-            return '    int scount = 1;\n    bool fread = false;\n    bool freadall = false;\n    bool cinread = false;\n\n' + argistrs.join("\n\n");
+            return jsonchecks + '    bool fread = false;\n    bool freadall = false;\n    bool cinread = false;\n\n' + argistrs.join("\n\n");
         }
     }
 
-    private emitEmitResultToStdoutMain(rtype: IRTypeSignature, outjson: boolean): string {
+    private emitEmitResultToStdoutMain(rtype: IRTypeSignature): string {
         const tsig = this.typeInfoManager.getTypeInfo(rtype.tkeystr);
 
-        let emitop: string;
-        if(!outjson) {
-            emitop =  `ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqEmitIntoJSON<${this.typeInfoManager.emitTypeAsStd(rtype.tkeystr)}>(true, ${tsig.bsqtypeid}, result, oibb)`;
-        }
-        else {
-            emitop = `ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqEmitIntoBAPI<${this.typeInfoManager.emitTypeAsStd(rtype.tkeystr)}>(true, ${tsig.bsqtypeid}, result, oibb)`;
-        }
-
         return '    std::list<uint8_t*> oibb; size_t obytes = 0;\n' +
-            `    obytes = ${emitop};\n\n` +
+            '    if(outjson) {\n' +
+            `        obytes = ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqEmitIntoJSON<${this.typeInfoManager.emitTypeAsStd(rtype.tkeystr)}>(true, ${tsig.bsqtypeid}, result, oibb);\n` +
+            '    }\n' +
+            '    else {\n' +
+            `        obytes = ᐸRuntimeᐳ::tl_bosque_info.current_task->bsqEmitIntoBAPI<${this.typeInfoManager.emitTypeAsStd(rtype.tkeystr)}>(true, ${tsig.bsqtypeid}, result, oibb);\n` +
+            '    }\n\n' +
             '    //TODO assume chars are all printable for now\n' +
             '    size_t ii = 0; auto biter = oibb.begin();\n' +
             '    while(biter != oibb.end()) {\n' +
@@ -3649,8 +3652,8 @@ class CPPEmitter {
         return posthandler + postchecks.join("\n") + "\n";
     }
 
-    private emitFMain(idecl: IRInvokeDecl, injson: boolean, outjson: boolean): string {
-        const parse = this.emitParseArgsMain(idecl.params, injson);
+    private emitFMain(idecl: IRInvokeDecl): string {
+        const parse = this.emitParseArgsMain(idecl.params);
 
         const invokeargs = idecl.params.map((p) => "_" + TransformCPPNameManager.convertIdentifier(p.name));
 
@@ -3666,7 +3669,7 @@ class CPPEmitter {
             `    auto result = ${TransformCPPNameManager.convertInvokeKey(idecl.ikey)}(${invokeargs.join(", ")});\n`;
 
         const postconds = this.emitMainPostConditionChecks(idecl.ikey, invokeargs, "result", idecl.postconditions);
-        const print = this.emitEmitResultToStdoutMain(idecl.resultType, outjson);
+        const print = this.emitEmitResultToStdoutMain(idecl.resultType);
 
         return `void mmain(int argc, char** argv)\n` +
         `{\n` +
@@ -3678,9 +3681,9 @@ class CPPEmitter {
         `}`;
     }
 
-    private emitTMain(tdecl: IRTaskDecl, injson: boolean, outjson: boolean): string {
+    private emitTMain(tdecl: IRTaskDecl): string {
         const idecl = this.irasm.taskactions.find((v) => v.ikey === `${tdecl.tkey}@start`) as IRTaskActionDecl;
-        const parse = this.emitParseArgsMain([...idecl.params.slice(1), ...tdecl.fields.map((bf) => new IRInvokeParameterDecl(bf.fname, bf.declaredType, undefined, undefined, undefined))], injson);
+        const parse = this.emitParseArgsMain([...idecl.params.slice(1), ...tdecl.fields.map((bf) => new IRInvokeParameterDecl(bf.fname, bf.declaredType, undefined, undefined, undefined))]);
 
         const envs = tdecl.envreqs.map((ev) => `"${ev.evname}"`);
         const loadenv = `    ᐸRuntimeᐳ::tl_bosque_info.current_task->loadEnvVars({${envs.join(", ")}});`;
@@ -3712,7 +3715,7 @@ class CPPEmitter {
             `    auto result = ${TransformCPPNameManager.convertInvokeKey(idecl.ikey)}(${invokeargs.join(", ")});\n`;
 
         const postconds = this.emitMainPostConditionChecks(idecl.ikey, ["__self", ...invokeargs], "result", idecl.postconditions);
-        const print = this.emitEmitResultToStdoutMain(idecl.resultType, outjson);
+        const print = this.emitEmitResultToStdoutMain(idecl.resultType);
 
         return `void mmain(int argc, char** argv)\n` +
         `{\n` +
@@ -3726,14 +3729,14 @@ class CPPEmitter {
         `}`;
     }
 
-    private emitCommandLineMain(ns: string, injson: boolean, outjson: boolean): string | undefined {
+    private emitCommandLineMain(ns: string): string | undefined {
         const idecl = this.irasm.invokes.find((v) => v.ikey === `${ns}::main`);
         const tdecl = this.irasm.tasks.find((v) => v.tkey === `${ns}::Main`);
         if(idecl === undefined && tdecl === undefined) {
             return undefined;
         }
         
-        const mmain = (idecl !== undefined) ? this.emitFMain(idecl, injson, outjson) : this.emitTMain(tdecl as IRTaskDecl, injson, outjson);
+        const mmain = (idecl !== undefined) ? this.emitFMain(idecl) : this.emitTMain(tdecl as IRTaskDecl);
 
         const sallocs = [
             ...(this.irasm.primitives.map((pdcl) => this.typeInfoManager.generateAllocatorNameForTypeKeySpecialMapEntry(pdcl.tkey)).filter((aa) => aa !== undefined) as string[][]),
@@ -3781,7 +3784,7 @@ class CPPEmitter {
         return this.emitIRTaskActionDeclInfo(action as IRInvokeDecl)[1];
     }
 
-    public emitForCommandLine(ns: string, injson: boolean, outjson: boolean): [string, string] | undefined {
+    public emitForCommandLine(ns: string): [string, string] | undefined {
         const typeinfo = this.emitTypeDeclInfo();
         const iinfo = this.emitAllInvokeInfo();
 
@@ -3792,7 +3795,7 @@ class CPPEmitter {
         ].join("\n");
 
         const statisinitstr = this.emitStaticInitializationOps();
-        const mainstr = this.emitCommandLineMain(ns, injson, outjson);
+        const mainstr = this.emitCommandLineMain(ns);
         if(mainstr === undefined) {
             return undefined;
         }
