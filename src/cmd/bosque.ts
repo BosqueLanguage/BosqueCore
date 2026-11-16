@@ -21,7 +21,7 @@ const [fullargs, mainns, outdir, emitir, injson, outjson, packages] = parseArgv(
 function buildExeCode(ircode: IRAssembly, outname: string) {
     Status.output("Emitting CPP code...\n");
     const cppcode = CPPEmitter.createEmitter(ircode);
-    const maincode = cppcode.emitForCommandLine(`${mainns}`);
+    const maincode = cppcode.emitForCommandLine(`${mainns}`, injson, outjson);
     if(maincode === undefined) {
         Status.error(`Could not find invoke or task for key ${mainns}::main or ${mainns}::Main\n`);
         return;
