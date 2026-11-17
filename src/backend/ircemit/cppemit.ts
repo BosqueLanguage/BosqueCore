@@ -2292,7 +2292,7 @@ class CPPEmitter {
         if(ttid.itable.length !== 0) {
             itabledecl = `inline constexpr VInvokeTargetInfo g_itable_${ctname}[${ttid.itable.length}] = {\n` +
             ttid.itable.map((ite) => {
-                return `    { ${0}, ${"Foo"}, ${ite.ikey} }`
+                return `    { ${0}, nullptr, "${ite.ikey}" }`
             }).join(",\n") + "\n" +
             `    };\n`;
 
@@ -2357,7 +2357,7 @@ class CPPEmitter {
         if(ttid.itable.length !== 0) {
             itabledecl = `inline constexpr VInvokeTargetInfo g_itable_${ctname}[${ttid.itable.length}] = {\n` +
             ttid.itable.map((ite) => {
-                return `    { ${0}, ${"Foo"}, ${ite.ikey} }`
+                return `    { ${0}, nullptr, "${ite.ikey}" }`
             }).join(",\n") + "\n" +
             `    };\n`;
 
@@ -2424,7 +2424,7 @@ class CPPEmitter {
         if(ttid.itable.length !== 0) {
             itabledecl = `inline constexpr VInvokeTargetInfo g_itable_${ctname}[${ttid.itable.length}] = {\n` +
             ttid.itable.map((ite) => {
-                return `    { ${0}, ${"Foo"}, ${ite.ikey} }`
+                return `    { ${0}, nullptr, "${ite.ikey}" }`
             }).join(",\n") + "\n" +
             `    };\n`;
 
