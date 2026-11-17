@@ -2784,6 +2784,27 @@ class Monomorphizer {
         }
 
 
+            /*
+
+concept Bar {
+    field k: Int = 3i;
+    abstract method foo(): Int;
+}
+
+entity Foo provides Bar {
+    override method foo(): Int {
+        return this.k;
+    }
+}
+
+public function main(): Int {
+    let v: Foo = Foo{};
+    let u: Bar = Foo{1i};
+
+    return v.foo() + u.foo();
+}
+            */
+
         return npends;
     }
 
