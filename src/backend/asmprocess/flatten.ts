@@ -1439,6 +1439,8 @@ class ASMToIRConverter {
             this.pushStatement(new IRPreconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), iname, invdecl.ii, aargs));
         } 
 
+        xxxx;
+
         if(!exp.args.hasSpecialRef()) {
             if(!haspostconds) {
                 return new IRInvokeSimpleExpression(iname, aargs);

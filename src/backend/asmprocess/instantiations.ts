@@ -38,7 +38,7 @@ class InvokeInstantiationInfo {
     readonly monoinvids: Map<number, string>;
 
     readonly prepostikey: string | undefined; //for methods where the pre/post may be on virtual/abstract decls -- this is the ikey to use
-
+    
     constructor(newikey: string, binds: TemplateNameMapper | undefined, lambdaargs: { pname: string, psigkey: string }[], lambdacons: Map<number, string>, monoinvids: Map<number, string>, prepostikey: string | undefined) {
         this.newikey = newikey;
         this.binds = binds;
@@ -91,6 +91,8 @@ class NamespaceInstantiationInfo {
     readonly lambdacons: Map<number, string> = new Map<number, string>(); //string corresponds to a lambda instantation info
     readonly monoinvids: Map<number, string> = new Map<number, string>();
 
+    readonly vcallopts: { tkey: string, vkey: string, ikeys: [string, string][] }[]; //type/invk keys for vcall targets if this is abstract or virtual decl 
+
     constructor(ns: FullyQualifiedNamespace) {
         this.ns = ns;
         
@@ -99,6 +101,7 @@ class NamespaceInstantiationInfo {
         this.elists = new Map<string, EListTypeSignature>();
         this.lambdas = new Map<string, LambdaInstantiationInfo>();
         this.apiagentbinds = new Map<string, InvokeInstantiationInfo[]>();
+        this.vcallopts = [];
     }
 }
 

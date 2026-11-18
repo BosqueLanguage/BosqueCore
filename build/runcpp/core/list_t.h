@@ -300,8 +300,6 @@ namespace ᐸRuntimeᐳ
             0,
             nullptr,
             0,
-            nullptr,
-            0,
             TypeOpDispatchInfo{},
             name,
             false
@@ -317,8 +315,6 @@ namespace ᐸRuntimeᐳ
             byteSizeToSlotCount(sizeof(ListTTreeContent<T, TYPE_ID_LIST_T>)),
             LayoutTag::Value,
             "01",
-            nullptr,
-            0,
             nullptr,
             0,
             nullptr,
@@ -1211,8 +1207,6 @@ namespace ᐸRuntimeᐳ
             0,
             layout,
             1,
-            nullptr,
-            0,
             TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_ListT<T, TYPE_ID_LIST_T>, (ParseToBSQFp)&parseToBSQ_ListT<T, TYPE_ID_LIST_T>, (BSQToJSONFp)&bsqToJSON_ListT<T, TYPE_ID_LIST_T>, (BSQToBAPIFp)&bsqToBAPI_ListT<T, TYPE_ID_LIST_T>, (DisplayValueFp)&displayValue_ListT<T, TYPE_ID_LIST_T> },
             name,
             false

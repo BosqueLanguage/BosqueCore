@@ -1975,8 +1975,6 @@ class CPPEmitter {
         `        0,\n` +
         `        nullptr,\n` +
         `        0,\n` +
-        `        nullptr,\n` +
-        `        0,` +
         `        TypeOpDispatchInfo{ (ValidatingConstructorFp)validatingConstructor_${ctname}, (JSONParseToBSQFp)&jsonParseToBSQ_Enum, (ParseToBSQFp)&parseToBSQ_Enum, (BSQToJSONFp)&bsqToJSON_Enum, (BSQToBAPIFp)&bsqToBAPI_Enum, (DisplayValueFp)&displayValue_Enum },\n` +
         `        "${tdecl.tkey}",\n` +
         `        true\n` +
@@ -2014,8 +2012,6 @@ class CPPEmitter {
             `        ${superlist.length},\n` +
             `        g_ftable_${ctname},\n` +
             `        1,\n` +
-            `        nullptr,\n` +
-            `        0,\n` +
             `        TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_Some<${oftt}>, (ParseToBSQFp)&parseToBSQ_Some<${oftt}>, (BSQToJSONFp)&bsqToJSON_Some<${oftt}>, (BSQToBAPIFp)&bsqToBAPI_Some<${oftt}>, (DisplayValueFp)&displayValue_Some<${oftt}> },\n` +
             `        "${tdecl.tkey}",\n` +
             `        ${ttid.quickrelease}\n` +
@@ -2053,8 +2049,6 @@ class CPPEmitter {
             `        ${superlist.length},\n` +
             `        g_ftable_${ctname},\n` +
             `        1,\n` +
-            `        nullptr,\n` +
-            `        0,\n` +
             `        TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_APIResultEntity<${oftt}>, (ParseToBSQFp)&parseToBSQ_APIResultEntity<${oftt}>, (BSQToJSONFp)&bsqToJSON_APIResultEntity<${oftt}>, (BSQToBAPIFp)&bsqToBAPI_APIResultEntity<${oftt}>, (DisplayValueFp)&displayValue_APIResultEntity<${oftt}> },\n` +
             `        "${tdecl.tkey}",\n` +
             `        ${ttid.quickrelease}\n` +
@@ -2091,8 +2085,6 @@ class CPPEmitter {
             `        ${superlist.length},\n` +
             `        g_ftable_${ctname},\n` +
             `        1,\n` +
-            `        ${ttid.itable.length !== 0 ? "xxx" : "nullptr"},\n` +
-            `        ${ttid.itable.length},\n` +
             `        TypeOpDispatchInfo{ (ValidatingConstructorFp)validatingConstructor_${ctname}, (JSONParseToBSQFp)&jsonParseToBSQ_Typedecl, (ParseToBSQFp)&parseToBSQ_Typedecl, (BSQToJSONFp)&bsqToJSON_Typedecl, (BSQToBAPIFp)&bsqToBAPI_Typedecl, (DisplayValueFp)&displayValue_Typedecl },\n` +
             `        "${tdecl.tkey}",\n` +
             `        ${ttid.quickrelease}\n` +
@@ -2287,21 +2279,8 @@ class CPPEmitter {
 
         const vconsdecl = `    void validatingConstructor_${ctname}(void** argptrs, void* resptr);\n`;
 
-        let itabledecl = "";
-        let itable = "nullptr";
-        if(ttid.itable.length !== 0) {
-            itabledecl = `inline constexpr VInvokeTargetInfo g_itable_${ctname}[${ttid.itable.length}] = {\n` +
-            ttid.itable.map((ite) => {
-                return `    { ${0}, nullptr, "${ite.ikey}" }`
-            }).join(",\n") + "\n" +
-            `    };\n`;
-
-            itable = `g_itable_${ctname}`;
-        }
-
         return  superdecl +
                 ftdecl +
-                itabledecl +
                 vconsdecl +
                 `    inline constexpr TypeInfo g_typeinfo_${ctname} = {\n` +
                 `        ${ttid.bsqtypeid},\n` +
@@ -2313,8 +2292,6 @@ class CPPEmitter {
                 `        ${superlist.length},\n` +
                 `        ${ftable},\n` +
                 `        ${ttid.ftable.length},\n` +
-                `        ${itable},\n` +
-                `        ${ttid.itable.length},\n` +
                 `        TypeOpDispatchInfo{ (ValidatingConstructorFp)validatingConstructor_${ctname}, (JSONParseToBSQFp)&jsonParseToBSQ_Entity, (ParseToBSQFp)&parseToBSQ_Entity, (BSQToJSONFp)&bsqToJSON_Entity, (BSQToBAPIFp)&bsqToBAPI_Entity, (DisplayValueFp)&displayValue_Entity },\n` +
                 `        "${tdecl.tkey}",\n` +
                 `        ${ttid.quickrelease}\n` +
@@ -2352,22 +2329,9 @@ class CPPEmitter {
 
         const vconsdecl = `    void validatingConstructor_${ctname}(void** argptrs, void* resptr);\n`;
 
-        let itabledecl = "";
-        let itable = "nullptr";
-        if(ttid.itable.length !== 0) {
-            itabledecl = `inline constexpr VInvokeTargetInfo g_itable_${ctname}[${ttid.itable.length}] = {\n` +
-            ttid.itable.map((ite) => {
-                return `    { ${0}, nullptr, "${ite.ikey}" }`
-            }).join(",\n") + "\n" +
-            `    };\n`;
-
-            itable = `g_itable_${ctname}`;
-        }
-
         return `namespace ᐸRuntimeᐳ {\n` +
             superdecl +
             ftdecl +
-            itabledecl +
             vconsdecl +
             `    inline constexpr TypeInfo g_typeinfo_${ctname} = {\n` +
             `        ${ttid.bsqtypeid},\n` +
@@ -2379,8 +2343,6 @@ class CPPEmitter {
             `        ${superlist.length},\n` +
             `        ${ftable},\n` +
             `        ${ttid.ftable.length},\n` +
-            `        ${itable},\n` +
-            `        ${ttid.itable.length},\n` +
             `        TypeOpDispatchInfo{ (ValidatingConstructorFp)validatingConstructor_${ctname}, (JSONParseToBSQFp)&jsonParseToBSQ_Entity, (ParseToBSQFp)&parseToBSQ_Entity, (BSQToJSONFp)&bsqToJSON_Entity, (BSQToBAPIFp)&bsqToBAPI_Entity, (DisplayValueFp)&displayValue_Entity },\n` +
             `        "${tdecl.tkey}",\n` +
             `        ${ttid.quickrelease}\n` +
@@ -2419,18 +2381,6 @@ class CPPEmitter {
 
         const vconsdecl = `    void validatingConstructor_${ctname}(void** argptrs, void* resptr);\n`;
 
-        let itabledecl = "";
-        let itable = "nullptr";
-        if(ttid.itable.length !== 0) {
-            itabledecl = `inline constexpr VInvokeTargetInfo g_itable_${ctname}[${ttid.itable.length}] = {\n` +
-            ttid.itable.map((ite) => {
-                return `    { ${0}, nullptr, "${ite.ikey}" }`
-            }).join(",\n") + "\n" +
-            `    };\n`;
-
-            itable = `g_itable_${ctname}`;
-        }
-
         //we emit these typeinfos with the forward decls
         if(this.irasm.typedepcycles.some((cyc) => cyc.find((tt) => tt.tkeystr === tdecl.tkey))) {
             return [`namespace ᐸRuntimeᐳ {\n` +
@@ -2443,7 +2393,6 @@ class CPPEmitter {
             return [`namespace ᐸRuntimeᐳ {\n` +
                 superdecl +
                 ftdecl +
-                itabledecl +
                 vconsdecl +
                 `    inline constexpr TypeInfo g_typeinfo_${ctname} = {\n` +
                 `        ${ttid.bsqtypeid},\n` +
@@ -2455,8 +2404,6 @@ class CPPEmitter {
                 `        ${superlist.length},\n` +
                 `        ${ftable},\n` +
                 `        ${ttid.ftable.length},\n` +
-                `        ${itable},\n` +
-                `        ${ttid.itable.length},\n` +
                 `        TypeOpDispatchInfo{ (ValidatingConstructorFp)validatingConstructor_${ctname}, (JSONParseToBSQFp)&jsonParseToBSQ_Entity, (ParseToBSQFp)&parseToBSQ_Entity, (BSQToJSONFp)&bsqToJSON_Entity, (BSQToBAPIFp)&bsqToBAPI_Entity, (DisplayValueFp)&displayValue_Entity },\n` +
                 `        "${tdecl.tkey}",\n` +
                 `        ${ttid.quickrelease}\n` +
@@ -2490,8 +2437,6 @@ class CPPEmitter {
             `        0,\n` +
             `        g_ftable_${ctname},\n` +
             `        2,\n` +
-            `        nullptr,\n` +
-            `        0,\n` +
             `        TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_Option<${oftt}>, (ParseToBSQFp)&parseToBSQ_Option<${oftt}>, (BSQToJSONFp)&bsqToJSON_Option<${oftt}>, (BSQToBAPIFp)&bsqToBAPI_Option<${oftt}>, (DisplayValueFp)&displayValue_Option<${oftt}> },\n` +
             `        "${tdecl.tkey}",\n` +
             `        ${ttid.quickrelease}\n` +
@@ -2516,8 +2461,6 @@ class CPPEmitter {
             `        0,\n` +
             `        nullptr,\n` +
             `        0,\n` +
-            `        nullptr,\n` +
-            `        0,\n` +
             `        TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_APIResultConcept<${uctname}>, (ParseToBSQFp)&parseToBSQ_APIResultConcept<${uctname}>, (BSQToJSONFp)&bsqToJSON_APIResultConcept<${uctname}>, (BSQToBAPIFp)&bsqToBAPI_APIResultConcept<${uctname}>, (DisplayValueFp)&displayValue_APIResultConcept<${uctname}> },\n` +
             `        "${tdecl.tkey}",\n` +
             `        ${ttid.quickrelease}\n` +
@@ -2538,8 +2481,6 @@ class CPPEmitter {
             `        ${ttid.slotcount},\n` +
             `        LayoutTag::Value,\n` +
             `        ${ttid.ptrmask !== undefined ? ('"' + ttid.ptrmask + '"') : "nullptr"},\n` +
-            `        nullptr,\n` +
-            `        0,\n` +
             `        nullptr,\n` +
             `        0,\n` +
             `        nullptr,\n` +

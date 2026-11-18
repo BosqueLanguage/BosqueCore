@@ -2773,37 +2773,12 @@ class Monomorphizer {
                 const pkinds = vcall.mdecl.params.map((arg) => (arg instanceof PassingArgumentValue) ? arg.kind : undefined).filter((k) => k !== undefined) as ("ref" | "out" | "out?" | "inout")[];
                 const [tinst, minst] = Monomorphizer.resolveTypeMethodImplementation(possibleinsts[j].tsig as NominalTypeSignature, vcall.mdecl.name, vcall.mdecl.terms.length !== 0, vcall.mdecl.params.some((p) => p.type instanceof LambdaTypeSignature), pkinds) as [TypeSignature, MethodDecl];
 
-                const terms = vcall.mdecl.terms;
-                const lambdas = vcall.mdecl.params.filter((p) => p.type instanceof LambdaTypeSignature).map((p) => ({ pname: p.name, psigkey: (p.type as LambdaTypeSignature).keystr }));
-
-                const mkey = computeInvokeKeyForTypeMethod(tinst, vcall.mdecl, terms, lambdas);
+                const mkey = computeInvokeKeyForTypeMethod(tinst, minst, vcall.terms, vcall.lambdas);
                 if(!this.isAlreadySeenMemberMethod(mkey) && !npends.some((npe) => npe.mkey === mkey)) {
-                    npends.push({ });
+                    npends.push({ mkey: mkey, mdecl: tinst, mimpl: minst, tterms: vcall.terms, lambdas: vcall.lambdas, prepostikey: "" });
                 }
             }
         }
-
-
-            /*
-
-concept Bar {
-    field k: Int = 3i;
-    abstract method foo(): Int;
-}
-
-entity Foo provides Bar {
-    override method foo(): Int {
-        return this.k;
-    }
-}
-
-public function main(): Int {
-    let v: Foo = Foo{};
-    let u: Bar = Foo{1i};
-
-    return v.foo() + u.foo();
-}
-            */
 
         return npends;
     }
@@ -2934,12 +2909,29 @@ public function main(): Int {
             }
         }
 
+        //finalize the vcall options for abstract or virtual declarations
+        for(let i = 0; i < iim.instantiatedVMethodCalls.length; ++i) {
+            const vcall = iim.instantiatedVMethodCalls[i];
+            const nsinst = iim.instantiation.find((nsi) => nsi.ns.emit() === (vcall.enclosingType as NominalTypeSignature).decl.ns.emit()) as NamespaceInstantiationInfo;
+
+            const possibleinsts = iim.instantiatedVTypeDefs.filter((ivtd) => ivtd.vsupers.some((vs) => vs.tkeystr === vcall.enclosingType.tkeystr));
+            let vvopts: [string, string][] = [];
+            for(let j = 0; j < possibleinsts.length; ++j) {
+                const pkinds = vcall.mdecl.params.map((arg) => (arg instanceof PassingArgumentValue) ? arg.kind : undefined).filter((k) => k !== undefined) as ("ref" | "out" | "out?" | "inout")[];
+                const [tinst, minst] = Monomorphizer.resolveTypeMethodImplementation(possibleinsts[j].tsig as NominalTypeSignature, vcall.mdecl.name, vcall.mdecl.terms.length !== 0, vcall.mdecl.params.some((p) => p.type instanceof LambdaTypeSignature), pkinds) as [TypeSignature, MethodDecl];
+
+                const mkey = computeInvokeKeyForTypeMethod(tinst, minst, vcall.terms, vcall.lambdas);
+                vvopts.push([tinst.tkeystr, mkey]);
+            }
+
+            nsinst.vcallopts.push({ tkey: vcall.enclosingType.tkeystr, vkey: vcall.ikey, ikeys: vvopts });
+        }
+
         return iim.instantiation;
     }
 
     static computeExecutableInstantiations(assembly: Assembly, roonts: string[]): NamespaceInstantiationInfo[] {
         return Monomorphizer.computeInstantiations(assembly, false, roonts);
-
     }
 
     static computeTestInstantiations(assembly: Assembly, roonts: string[]): NamespaceInstantiationInfo[] {
