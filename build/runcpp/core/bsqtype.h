@@ -95,8 +95,8 @@ namespace ᐸRuntimeᐳ
         constexpr TypeOpDispatchInfo(ValidatingConstructorFp validatingConstructorFp, JSONParseToBSQFp jsonParseToBSQFp, ParseToBSQFp parseToBSQFp, BSQToJSONFp bsqToJSONFp, BSQToBAPIFp bsqToBAPIFp, DisplayValueFp displayFp) : validatingConstructorFp(validatingConstructorFp), jsonParseToBSQFp(jsonParseToBSQFp), parseToBSQFp(parseToBSQFp), bsqToJSONFp(bsqToJSONFp), bsqToBAPIFp(bsqToBAPIFp), displayFp(displayFp) {}
     };
 
-    using DefaultInvokePtr = void(*)(std::initializer_list<void*>, void* resptr);
-    using DefaultInvokeParsePtr = void(*)(const void** fargs, void* resptr);
+    using DefaultInvokePtr = void(*)(std::initializer_list<void*>, void*);
+    using DefaultInvokeParsePtr = void(*)(void**, void*);
     class TypeLayoutInfo
     {
     public:

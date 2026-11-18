@@ -805,7 +805,8 @@ class Monomorphizer {
         this.instantiateSpecificResolvedMemberMethod(mdecl, exp.resolvedMethodDecl as MethodDecl, tterms, lambdas, prepostikey);
 
         if(exp.resolvedMethodImpl === undefined) {
-            this.callinstmap.set(exp.monoinvid as number, computeInvokeKeyForTypeMethod(mdecl, exp.resolvedMethodDecl as MethodDecl, tterms, lambdas));
+            const vcallinvkey = computeInvokeKeyForTypeMethod(mdecl, exp.resolvedMethodDecl as MethodDecl, tterms, lambdas) + "::_vcall_";
+            this.callinstmap.set(exp.monoinvid as number, vcallinvkey);
 
             this.setInstantiatedVMethodCall(mdecl, exp.resolvedMethodDecl as MethodDecl, tterms, lambdas);
         }

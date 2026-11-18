@@ -101,8 +101,6 @@ enum IRExpressionTag {
 
     IRInvokeSimpleExpression = "IRInvokeSimpleExpression",
     IRInvokeSimpleWithImplicitsExpression = "IRInvokeSimpleWithImplicitsExpression",
-    IRInvokeVirtualSimpleExpression = "IRInvokeVirtualSimpleExpression",
-    IRInvokeVirtualWithImplicitsExpression = "IRInvokeVirtualWithImplicitsExpression",
 
     IRInvokeCallAgentOrAPIExpression = "IRInvokeCallAgentOrAPIExpression",
     IRInvokeTaskActionExpression = "IRInvokeTaskActionExpression",
@@ -389,12 +387,6 @@ abstract class IRExpression {
         }
         else if(expr instanceof IRInvokeSimpleWithImplicitsExpression) {
             return ["InvokeSimpleWithImplicitsExpression", IRInvokeSimpleWithImplicitsExpression.jsonEmit_IRInvokeSimpleWithImplicitsExpression(expr)];
-        }
-        else if(expr instanceof IRInvokeVirtualSimpleExpression) {
-            return ["InvokeVirtualSimpleExpression", IRInvokeVirtualSimpleExpression.jsonEmit_IRInvokeVirtualSimpleExpression(expr)];
-        }
-        else if(expr instanceof IRInvokeVirtualWithImplicitsExpression) {
-            return ["InvokeVirtualWithImplicitsExpression", IRInvokeVirtualWithImplicitsExpression.jsonEmit_IRInvokeVirtualWithImplicitsExpression(expr)];
         }
         else if(expr instanceof IRInvokeCallAgentOrAPIExpression) {
             return ["InvokeCallAgentOrAPIExpression", IRInvokeCallAgentOrAPIExpression.jsonEmit_IRInvokeCallAgentOrAPIExpression(expr)];
@@ -760,12 +752,6 @@ abstract class IRExpression {
             case "InvokeSimpleWithImplicitsExpression": {
                 return IRInvokeSimpleWithImplicitsExpression.jsonParse_IRInvokeSimpleWithImplicitsExpression(value);
             }
-            case "InvokeVirtualSimpleExpression": {
-                return IRInvokeVirtualSimpleExpression.jsonParse_IRInvokeVirtualSimpleExpression(value);
-            }
-            case "InvokeVirtualWithImplicitsExpression": {
-                return IRInvokeVirtualWithImplicitsExpression.jsonParse_IRInvokeVirtualWithImplicitsExpression(value);
-            }
             case "InvokeCallAgentOrAPIExpression": {
                 return IRInvokeCallAgentOrAPIExpression.jsonParse_IRInvokeCallAgentOrAPIExpression(value);
             }
@@ -1125,6 +1111,8 @@ enum IRStatementTag {
     IRUpdateLocalDirectStatement = "IRUpdateLocalDirectStatement",
     IRUpdateParamDirectStatement = "IRUpdateParamDirectStatement",
 
+    IRConstructorGenerateDefaultFieldStatement = "IRConstructorGenerateDefaultFieldStatement",
+
     IRReturnVoidSimpleStatement = "IRReturnVoidSimpleStatement",
     IRReturnValueSimpleStatement = "IRReturnValueSimpleStatement",
     IRReturnDirectInvokeStatement = "IRReturnDirectInvokeStatement",
@@ -1235,6 +1223,9 @@ abstract class IRStatement {
         }
         else if(stmt instanceof IRUpdateParamDirectStatement) {
             return ["UpdateParamDirectStatement", IRUpdateParamDirectStatement.jsonEmit_IRUpdateParamDirectStatement(stmt)];
+        }
+        else if(stmt instanceof IRConstructorGenerateDefaultFieldStatement) {
+            return ["ConstructorGenerateDefaultFieldStatement", IRConstructorGenerateDefaultFieldStatement.jsonEmit_IRConstructorGenerateDefaultFieldStatement(stmt)];
         }
         else if(stmt instanceof IRReturnVoidSimpleStatement) {
             return ["ReturnVoidSimpleStatement", IRReturnVoidSimpleStatement.jsonEmit_IRReturnVoidSimpleStatement(stmt)];
@@ -1395,6 +1386,9 @@ abstract class IRStatement {
             }
             case "UpdateParamDirectStatement": {
                 return IRUpdateParamDirectStatement.jsonParse_IRUpdateParamDirectStatement(value);
+            }
+            case "ConstructorGenerateDefaultFieldStatement": {
+                return IRConstructorGenerateDefaultFieldStatement.jsonParse_IRConstructorGenerateDefaultFieldStatement(value);
             }
             case "ReturnVoidSimpleStatement": {
                 return IRReturnVoidSimpleStatement.jsonParse_IRReturnVoidSimpleStatement(value);
@@ -2933,7 +2927,6 @@ class IRConstructorMapEntryTypeExpression extends IRSimpleExpression {
     }
 }
 
-//TODO: maybe add a specialized version of this that does boxing to a concept as well
 class IRConstructorStandardEntityExpression extends IRConstructExpression {
     readonly values: IRSimpleExpression[];
 
@@ -2951,7 +2944,6 @@ class IRConstructorStandardEntityExpression extends IRConstructExpression {
     }
 }
 
-//TODO: maybe add a specialized version of this that does boxing to a concept as well
 class IRConstructorLambdaExpression extends IRImmediateExpression {
     readonly ltype: IRLambdaParameterPackTypeSignature;
     readonly values: IRImmediateExpression[];
@@ -3197,42 +3189,6 @@ class IRInvokeSimpleWithImplicitsExpression extends IRInvokeImplicitsExpression 
 
     static jsonParse_IRInvokeSimpleWithImplicitsExpression(obj: any): IRInvokeSimpleWithImplicitsExpression {
         assert(false, "IRInvokeSimpleWithImplicitsExpression.jsonParse not implemented");
-    }
-}
-
-/** Virtual invocations functions/methods/lambdas that do not have any special parameters (arg0 is the receiver) **/
-class IRInvokeVirtualSimpleExpression extends IRInvokeDirectExpression {
-    readonly rcvr: IRImmediateExpression;
-
-    constructor(ikey: string, rcvr: IRImmediateExpression, args: IRSimpleExpression[]) {
-        super(IRExpressionTag.IRInvokeVirtualSimpleExpression, ikey, args);
-        this.rcvr = rcvr;
-    }
-
-    static jsonEmit_IRInvokeVirtualSimpleExpression(exp: IRInvokeVirtualSimpleExpression): object {
-        assert(false, "IRInvokeVirtualSimpleExpression.jsonEmit not implemented");
-    }
-
-    static jsonParse_IRInvokeVirtualSimpleExpression(obj: any): IRInvokeVirtualSimpleExpression {
-        assert(false, "IRInvokeVirtualSimpleExpression.jsonParse not implemented");
-    }
-}
-
-/** Virtual invocations functions/methods/lambdas that have any special ref/out/out?/inout parameters (arg0 is the receiver) **/
-class IRInvokeVirtualWithImplicitsExpression extends IRInvokeImplicitsExpression {
-    readonly rcvr: IRImmediateExpression;
-
-    constructor(ikey: string, rcvr: IRImmediateExpression, args: IRSimpleExpression[], implicitidx: number, ivar: string, ivartype: IRTypeSignature, passkind: IRImplicitInvokeArgPassKind) {
-        super(IRExpressionTag.IRInvokeVirtualWithImplicitsExpression, ikey, args, implicitidx, ivar, ivartype, passkind);
-        this.rcvr = rcvr;
-    }
-
-    static jsonEmit_IRInvokeVirtualWithImplicitsExpression(exp: IRInvokeVirtualWithImplicitsExpression): object {
-        assert(false, "IRInvokeVirtualWithImplicitsExpression.jsonEmit not implemented");
-    }
-
-    static jsonParse_IRInvokeVirtualWithImplicitsExpression(obj: any): IRInvokeVirtualWithImplicitsExpression {
-        assert(false, "IRInvokeVirtualWithImplicitsExpression.jsonParse not implemented");
     }
 }
 
@@ -4959,6 +4915,35 @@ class IRUpdateParamDirectStatement extends IRAtomicStatement {
     }
 }
 
+class IRConstructorGenerateDefaultFieldStatement extends IRAtomicStatement {
+    readonly tvar: number;
+    readonly enclosingtype: IRNominalTypeSignature;
+    readonly fieldname: string;
+    readonly fieldtype: IRTypeSignature;
+    readonly args: IRSimpleExpression[];
+
+    constructor(tvar: number, enclosingtype: IRNominalTypeSignature, fieldname: string, fieldtype: IRTypeSignature, args: IRSimpleExpression[]) {
+        super(IRStatementTag.IRConstructorGenerateDefaultFieldStatement);
+        this.tvar = tvar;
+        this.enclosingtype = enclosingtype;
+        this.fieldname = fieldname;
+        this.fieldtype = fieldtype;
+        this.args = args;
+    }
+
+    override isSimpleStatement(): boolean {
+        return false;
+    }
+    
+    static jsonEmit_IRConstructorGenerateDefaultFieldStatement(exp: IRConstructorGenerateDefaultFieldStatement): object {
+        assert(false, "IRConstructorGenerateDefaultFieldStatement.jsonEmit not implemented");
+    }
+
+    static jsonParse_IRConstructorGenerateDefaultFieldStatement(obj: any): IRConstructorGenerateDefaultFieldStatement {
+        assert(false, "IRConstructorGenerateDefaultFieldStatement.jsonParse not implemented");
+    }
+}
+
 //
 //TODO: lots more statement types here
 //
@@ -6076,7 +6061,7 @@ export {
     IRAccessFieldExpression, IRAccessFieldSpecialExpression, IRAccessFieldDirectExpression, IRAccessFieldVirtualExpression, IRAccessEListIndexExpression,
 
     IRImplicitInvokeArgPassKind,
-    IRInvokeExpression, IRInvokeDirectExpression, IRInvokeImplicitsExpression, IRInvokeSimpleExpression, IRInvokeSimpleWithImplicitsExpression, IRInvokeVirtualSimpleExpression, IRInvokeVirtualWithImplicitsExpression,
+    IRInvokeExpression, IRInvokeDirectExpression, IRInvokeImplicitsExpression, IRInvokeSimpleExpression, IRInvokeSimpleWithImplicitsExpression,
 
     IRInvokeCallAgentOrAPIExpression, IRInvokeTaskActionExpression,
 
@@ -6107,6 +6092,8 @@ export {
     IRVariableAssignmentStatement, IRVariableAssignmentDirectInvokeStatement, IRVariableAssignmentDirectInvokeWithImplicitStatement, IRVariableAssignmentDirectConstructorStatement, IRVariableAssignmentDirectConstructorWithBoxStatement,
     
     IRUpdateLocalDirectStatement, IRUpdateParamDirectStatement,
+
+    IRConstructorGenerateDefaultFieldStatement,
 
     IRReturnVoidSimpleStatement, IRReturnValueSimpleStatement, IRReturnDirectInvokeStatement, IRReturnDirectInvokeImplicitsStatement, IRReturnDirectConstructStatement, IRReturnDirectConstructWithBoxStatement,
     
