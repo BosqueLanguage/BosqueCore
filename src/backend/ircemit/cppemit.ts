@@ -2268,7 +2268,7 @@ class CPPEmitter {
             ttid.ftable.map((fte) => {
                 const fttid = this.typeInfoManager.getTypeInfo(fte.ftype.tkeystr);
                 const [ftdecl, fdecl] = this.loadFieldDeclFromInfo(tdecl, fte);
-                const dfparsekey = TransformCPPNameManager.generateNameForFieldDefaultFunction(ftdecl.tkey, fdecl.fname, true);
+                const dfparsekey = fdecl.defaultValue !== undefined ? TransformCPPNameManager.generateNameForFieldDefaultFunction(ftdecl.tkey, fdecl.fname, true) : "nullptr";
 
                 return `        { ${fte.fid}, ${fttid.bsqtypeid}, ${fte.offset * 8}, ${fte.offset}, ${dfparsekey}, "${fte.fkey}", "${fte.fname}" }`;
             }).join(",\n") + "\n" +
@@ -2316,7 +2316,7 @@ class CPPEmitter {
             ttid.ftable.map((fte) => {
                 const fttid = this.typeInfoManager.getTypeInfo(fte.ftype.tkeystr);
                 const [ftdecl, fdecl] = this.loadFieldDeclFromInfo(tdecl, fte);
-                const dfparsekey = TransformCPPNameManager.generateNameForFieldDefaultFunction(ftdecl.tkey, fdecl.fname, true);
+                const dfparsekey = fdecl.defaultValue !== undefined ? TransformCPPNameManager.generateNameForFieldDefaultFunction(ftdecl.tkey, fdecl.fname, true) : "nullptr";
 
                 return `        { ${fte.fid}, ${fttid.bsqtypeid}, ${fte.offset * 8}, ${fte.offset}, ${dfparsekey}, "${fte.fkey}", "${fte.fname}" }`;
             }).join(",\n") + "\n" +
@@ -2366,7 +2366,7 @@ class CPPEmitter {
             ttid.ftable.map((fte) => {
                 const fttid = this.typeInfoManager.getTypeInfo(fte.ftype.tkeystr);
                 const [ftdecl, fdecl] = this.loadFieldDeclFromInfo(tdecl, fte);
-                const dfparsekey = TransformCPPNameManager.generateNameForFieldDefaultFunction(ftdecl.tkey, fdecl.fname, true);
+                const dfparsekey = fdecl.defaultValue !== undefined ? TransformCPPNameManager.generateNameForFieldDefaultFunction(ftdecl.tkey, fdecl.fname, true) : "nullptr";
 
                 return `        { ${fte.fid}, ${fttid.bsqtypeid}, ${fte.offset * 8}, ${fte.offset}, ${dfparsekey}, "${fte.fkey}", "${fte.fname}" }`;
             }).join(",\n") + "\n" +
@@ -3610,7 +3610,7 @@ class CPPEmitter {
     //Emit command line main support
     private emitParseArgsMain(params: IRInvokeParameterDecl[]): string {
         const jsonchecks = 
-            '    bool injson = false;\n    bool outjson = false;\n    int scount = 1;\n' +
+            '    volatile bool injson = false;\n    volatile bool outjson = false;\n    int scount = 1;\n' +
             '    while(scount < argc) {\n' +
             '        if(std::strcmp(argv[scount], "--injson") == 0) { injson = true; scount++; }\n' +
             '        else if(std::strcmp(argv[scount], "--outjson") == 0) { outjson = true; scount++; }\n' +

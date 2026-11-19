@@ -18,6 +18,8 @@ describe ("CPPExec -- Entity Constructor", () => {
     it("should exec default", function () {
         runTestSet('entity Foo { field f: Int = 0i; } public function main(v: Int): Foo { return Foo{}; }', [['3i', 'Main::Foo{ 0i }']], []);
         runTestSet('entity Foo { field f: Int = 0i; } public function main(v: Int): Foo { return Foo{v}; }', [['3i', 'Main::Foo{ 3i }']], []);
+
+        runTestSet('entity Foo { field f: Int = 0i; field g: Bool = $f <= 0i; } public function main(): Foo { return Foo{}; }', [['', 'Main::Foo{ 0i, true }']], []);
     });
 
     it("should exec skip positions", function () {
