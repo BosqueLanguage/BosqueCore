@@ -19,6 +19,8 @@ describe ("CPPEmit -- Entity Constructor", () => {
     it("should emit default", function () {
         checkTestEmitMainFunction('entity Foo { field f: Int = 0i; } public function main(): Foo { return Foo{}; }', "MainᕒFoo Mainᕒmain() { return MainᕒFoo{0_i}; }");
         checkTestEmitMainFunction('entity Foo { field f: Int = 0i; } public function main(): Foo { return Foo{5i}; }', "MainᕒFoo Mainᕒmain() { return MainᕒFoo{5_i}; }");
+
+        checkTestEmitMainFunction('entity Foo { field f: Int = 0i; field g: Bool = $f <= 0i; } public function main(): Foo { return Foo{}; }', "MainᕒFoo Mainᕒmain() { Bool ᐸtmp_0ᐳ = MainᕒFooᐤdefaultᐤg(0_i); return MainᕒFoo{0_i, ᐸtmp_0ᐳ}; }");
     });
 
     it("should emit skip positions", function () {

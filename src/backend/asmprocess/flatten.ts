@@ -9,7 +9,7 @@ import { IRDateRepresentation, IRDeltaDateRepresentation, IRDeltaTimeRepresentat
 import { IRCRegex, IRURegex, IRSourceInfo, IRCodeFileInfo } from "../irdefs/irsupport.js";
 import { IRAgentDecl, IRAPIDecl, IRAPIDeniedTypeDecl, IRAPIErrorTypeDecl, IRAPIDroppedTypeDecl, IRAPIRejectedTypeDecl, IRAPIResultTypeDecl, IRAPISuccessTypeDecl, IRAssembly, IRConceptTypeDecl, IRConstantDecl, IRDatatypeMemberEntityTypeDecl, IRDatatypeTypeDecl, IRDeclarationDocString, IRDeclarationMetaTag, IREntityTypeDecl, IREnumTypeDecl, IREnvironmentVariableInformation, IREventListTypeDecl, IRExampleDecl, IRFailTypeDecl, IRInvariantDecl, IRInvokeDecl, IRInvokeParameterDecl, IRLambdaParameterPackDecl, IRListTypeDecl, IRMapEntryTypeDecl, IRMapTypeDecl, IRMemberFieldDecl, IROkTypeDecl, IROptionTypeDecl, IRPostConditionDecl, IRPreConditionDecl, IRPrimitiveEntityTypeDecl, IRQueueTypeDecl, IRResourceInformation, IRResultTypeDecl, IRSetTypeDecl, IRSomeTypeDecl, IRStackTypeDecl, IRTaskActionDecl, IRTaskConfiguration, IRTaskDecl, IRTestAssociation, IRTestDecl, IRTypedeclCStringTypeDecl, IRTypedeclStringTypeDecl, IRTypedeclSimpleTypeDecl, IRTypedeclBoundedTypeDecl, IRValidateDecl, IRVInvokeInfo } from "../irdefs/irassembly.js";
 
-import { InvokeInstantiationInfo, LambdaInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo, VCallOptEntry } from "./instantiations.js";
+import { InvokeInstantiationInfo, LambdaInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiations.js";
 import { getBSQIRForm, getCPPForm, getSMTForm } from "@bosque/jsbrex";
 
 import assert from "node:assert";
@@ -4301,16 +4301,18 @@ class ASMToIRConverter {
         irasm.invokes.push(new IRInvokeDecl(ikey, recursive, params, this.processTypeSignature(mdecl.resultType), preconds, postconds, docstring, mdecl.file, this.convertSourceInfo(mdecl.sinfo), body));
     
         if(mdecl.attributes.find((a) => a.name === "abstract") || mdecl.attributes.find((a) => a.name === "virtual")) {
-            const vco = (this.currentNamespaceInstantiation as NamespaceInstantiationInfo).vcallopts.find((v) => v.vkey === ikey) as { tkey: string, vkey: string, ikeys: VCallOptEntry[] };
+            const vco = (this.currentNamespaceInstantiation as NamespaceInstantiationInfo).vcallopts.find((v) => v.vkey === ikey);
 
-            const vkey = vco.vkey + "::_vcall_";
-            const opts = vco.ikeys.map((op) => {
-                const stmt = this.generateVCallClause(mdecl, op.ikey, op.rcvrtype, this.tproc(rcvr), op.restype);
-                return { rcvrtype: new IRNominalTypeSignature(op.rcvrtype.tkeystr), impl: stmt }
-            });
+            if(vco !== undefined) {
+                const vkey = vco.vkey + "::_vcall_";
+                const opts = vco.ikeys.map((op) => {
+                    const stmt = this.generateVCallClause(mdecl, op.ikey, op.rcvrtype, this.tproc(rcvr), op.restype);
+                    return { rcvrtype: new IRNominalTypeSignature(op.rcvrtype.tkeystr), impl: stmt }
+                });
 
-            const vvdecl = new IRVInvokeInfo(vco.vkey, recursive, params, this.processTypeSignature(mdecl.resultType), preconds, postconds, docstring, mdecl.file, this.convertSourceInfo(mdecl.sinfo), vkey, opts);
-            irasm.vcallimpls.push(vvdecl);
+                const vvdecl = new IRVInvokeInfo(vco.vkey, recursive, params, this.processTypeSignature(mdecl.resultType), preconds, postconds, docstring, mdecl.file, this.convertSourceInfo(mdecl.sinfo), vkey, opts);
+                irasm.vcallimpls.push(vvdecl);
+            }
         }
     }
 

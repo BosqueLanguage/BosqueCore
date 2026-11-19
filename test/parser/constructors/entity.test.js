@@ -22,6 +22,7 @@ describe ("Parser -- Entity Constructor", () => {
 
     it("should parse default", function () {
         parseTestFunctionInFile('entity Foo { field f: Int = 0i; } [FUNC]', 'function main(): Foo { return Foo{}; }');
+        parseTestFunctionInFile('entity Foo { field f: Int = 0i; field g: Bool = $f <= 0i; } [FUNC]', 'function main(): Foo { return Foo{}; }');
     });
 
     it("should fail positional", function () {

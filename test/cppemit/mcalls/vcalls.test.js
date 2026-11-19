@@ -1,0 +1,30 @@
+"use strict";
+
+import { checkTestEmitMainFunction } from "../../../bin/test/cppemit/cppemit_nf.js";
+import { describe, it } from "node:test";
+
+const conceptcode_abstract = 'concept Bar { abstract method foo(): Int; }';
+const conceptcode_virtual = 'concept Bar { virtual method foo(): Int { return 0i; } }';
+
+const conceptcode_optabstract = 'concept Bar { abstract method foo(): Option<Int>; }';
+const conceptcode_optvirtual = 'concept Bar { virtual method foo(): Option<Int> { return some(0i); } }';
+
+describe ("Checker -- entity abstract/virtual methods", () => {
+    it("should check simple abstract/virtual (virtual calls) methods", function () {
+        checkTestEmitMainFunction(`${conceptcode_abstract} entity Foo provides Bar { field f: Int; override method foo(): Int { return this.f; }} public function main(): Int { let v = Foo{3i}; return v.foo(); }`, 'Int Mainᕒmain() { MainᕒFoo v = MainᕒFoo{3_i}; return MainᕒFooᑀfoo(v); }'); 
+        checkTestEmitMainFunction(`${conceptcode_virtual} entity Foo provides Bar { field f: Int; } public function main(): Int { let x = Foo{3i}; return x.foo(); }`, 'Int Mainᕒmain() { MainᕒFoo x = MainᕒFoo{3_i}; return MainᕒBarᑀfoo(MainᕒBar{x}); }'); 
+
+        checkTestEmitMainFunction(`${conceptcode_abstract} entity Foo provides Bar { field f: Int; override method foo(): Int { return this.f; }} public function main(): Int { let v: Bar = Foo{3i}; return v.foo(); }`, 'Int Mainᕒmain() { MainᕒBar v = MainᕒBar{MainᕒFoo{3_i}}; return MainᕒBarᑀfooᕒ_vcall_(v); }'); 
+        checkTestEmitMainFunction(`${conceptcode_virtual} entity Foo provides Bar { field f: Int; } public function main(): Int { let x: Bar = Foo{3i}; return x.foo(); }`, 'Int Mainᕒmain() { MainᕒBar x = MainᕒBar{MainᕒFoo{3_i}}; return MainᕒBarᑀfooᕒ_vcall_(x); }'); 
+    });
+
+    it("should check simple abstract/virtual (vary result) methods", function () {
+        checkTestEmitMainFunction(`${conceptcode_optabstract} entity Foo provides Bar { field f: Int; override method foo(): Some<Int> { return some(this.f); }} public function main(): Int { let v: Bar = Foo{3i}; return v.foo().@some; }`, 'Int Mainᕒmain() { MainᕒBar v = MainᕒBar{MainᕒFoo{3_i}}; OptionᐸIntᐳ ᐸtmp_0ᐳ = MainᕒBarᑀfooᕒ_vcall_(v); ᐸRuntimeᐳ::bsq_typeassert((bool)(!ᐸtmp_0ᐳ.isNone()), "test.bsq", 2, "Type assertion failed", "Type assertion failed"); return ᐸtmp_0ᐳ.unwrap(); }'); 
+        checkTestEmitMainFunction(`${conceptcode_optvirtual} entity Foo provides Bar { field f: Int; } public function main(): Int { let x: Bar = Foo{3i}; return x.foo().@some; }`, 'Int Mainᕒmain() { MainᕒBar x = MainᕒBar{MainᕒFoo{3_i}}; OptionᐸIntᐳ ᐸtmp_0ᐳ = MainᕒBarᑀfooᕒ_vcall_(x); ᐸRuntimeᐳ::bsq_typeassert((bool)(!ᐸtmp_0ᐳ.isNone()), "test.bsq", 2, "Type assertion failed", "Type assertion failed"); return ᐸtmp_0ᐳ.unwrap(); }'); 
+    });
+
+    it("should check simple abstract/virtual (2 opts) methods", function () {
+        checkTestEmitMainFunction(`${conceptcode_abstract} entity Foo provides Bar { field f: Int; override method foo(): Int { return this.f; }} entity Fizz provides Bar { override method foo(): Int { return 10i; }} public function main(): Int { let v: Bar = Foo{3i}; return v.foo(); }`, 'Int Mainᕒmain() { MainᕒBar v = MainᕒBar{MainᕒFoo{3_i}}; return MainᕒBarᑀfooᕒ_vcall_(v); }'); 
+        checkTestEmitMainFunction(`${conceptcode_virtual} entity Foo provides Bar { field f: Int; } entity Fizz provides Bar { override method foo(): Int { return 10i; }} public function main(): Int { let x: Bar = Foo{3i}; return x.foo(); }`, 'Int Mainᕒmain() { MainᕒBar x = MainᕒBar{MainᕒFoo{3_i}}; return MainᕒBarᑀfooᕒ_vcall_(x); }'); 
+    });
+});

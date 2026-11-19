@@ -814,7 +814,7 @@ class Monomorphizer {
             const mdef = this.currentMapping !== undefined ? (exp.resolvedImplType as TypeSignature).remapTemplateBindings(this.currentMapping) : (exp.resolvedImplType as TypeSignature);
         
             this.callinstmap.set(exp.monoinvid as number, computeInvokeKeyForTypeMethod(mdef, exp.resolvedMethodImpl as MethodDecl, tterms, lambdas));
-            this.instantiateSpecificResolvedMemberMethod(mdecl, exp.resolvedMethodImpl as MethodDecl, tterms, lambdas, prepostikey);
+            this.instantiateSpecificResolvedMemberMethod(mdef, exp.resolvedMethodImpl as MethodDecl, tterms, lambdas, prepostikey);
         }
     }
 
