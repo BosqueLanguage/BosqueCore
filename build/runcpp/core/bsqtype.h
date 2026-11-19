@@ -95,8 +95,7 @@ namespace ᐸRuntimeᐳ
         constexpr TypeOpDispatchInfo(ValidatingConstructorFp validatingConstructorFp, JSONParseToBSQFp jsonParseToBSQFp, ParseToBSQFp parseToBSQFp, BSQToJSONFp bsqToJSONFp, BSQToBAPIFp bsqToBAPIFp, DisplayValueFp displayFp) : validatingConstructorFp(validatingConstructorFp), jsonParseToBSQFp(jsonParseToBSQFp), parseToBSQFp(parseToBSQFp), bsqToJSONFp(bsqToJSONFp), bsqToBAPIFp(bsqToBAPIFp), displayFp(displayFp) {}
     };
 
-    using DefaultInvokePtr = void(*)(std::initializer_list<void*>, void*);
-    using DefaultInvokeParsePtr = void(*)(void**, void*);
+    using DefaultInvokeParsePtr = void(*)(const void**, void*);
     class TypeLayoutInfo
     {
     public:
@@ -105,8 +104,7 @@ namespace ᐸRuntimeᐳ
         uint32_t byteoffset;
         uint32_t slotoffset;
 
-        DefaultInvokePtr defaultvalFp; //nullptr if no default value -- this version should be cast to the appropriate type when invoked
-        DefaultInvokeParsePtr defaultparseFp; //nullptr if no default parse function -- this version is generic and used in the parser
+        DefaultInvokeParsePtr defaultparseFp; //nullptr if no default parse function
 
         const char* fieldkey;
         const char* fname;

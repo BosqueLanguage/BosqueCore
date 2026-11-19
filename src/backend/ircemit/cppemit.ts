@@ -983,10 +983,9 @@ class CPPEmitter {
             const icgdf = stmt as IRConstructorGenerateDefaultFieldStatement;
 
             const ddf = TransformCPPNameManager.generateNameForFieldDefaultFunction(icgdf.enclosingtype.tkeystr, icgdf.fieldname, false);
-            const sargs = icgdf.args.filter((vv) => vv instanceof IRLiteralExpression).map((vv, ii) => `auto _xarg_${ii} = ` + this.emitIRSimpleExpression(vv, true));
-            const cargs = icgdf.args.map((vv, ii) => "(void*)&" + ((vv instanceof IRLiteralExpression) ? `_xarg_${ii}` : this.emitIRSimpleExpression(vv, true)));
+            const cargs = icgdf.args.map((vv, ii) => this.emitIRSimpleExpression(vv, true));
 
-            return `${this.typeInfoManager.emitTypeAsStd(icgdf.fieldtype.tkeystr)} ${TransformCPPNameManager.convertTempVariable(icgdf.tvar)}; {  ${sargs.join(" ")}; ${ddf}({ ${cargs.join(", ")} }, (void*)&${TransformCPPNameManager.convertTempVariable(icgdf.tvar)}); }`;
+            return `${this.typeInfoManager.emitTypeAsStd(icgdf.fieldtype.tkeystr)} ${TransformCPPNameManager.convertTempVariable(icgdf.tvar)} = ${ddf}(${cargs.join(", ")});`;
         }
         else if(ttag === IRStatementTag.IRReturnVoidSimpleStatement) {
             return "return;";
@@ -1999,7 +1998,7 @@ class CPPEmitter {
             supertable = `g_supertypes_${ctname}`;
         }
         
-        const ftdecl = `    inline constexpr TypeLayoutInfo g_ftable_${ctname}[1] = { { -1, ${fttid.bsqtypeid}, 0, 0, nullptr, nullptr, "value", "value" } };\n`;
+        const ftdecl = `    inline constexpr TypeLayoutInfo g_ftable_${ctname}[1] = { { -1, ${fttid.bsqtypeid}, 0, 0, nullptr, "value", "value" } };\n`;
 
         return `namespace ᐸRuntimeᐳ {\n` +
             superdecl +
@@ -2036,7 +2035,7 @@ class CPPEmitter {
             supertable = `g_supertypes_${ctname}`;
         }
 
-        const ftdecl = `    inline constexpr TypeLayoutInfo g_ftable_${ctname}[1] = { { -1, ${fttid.bsqtypeid}, 32, 4, nullptr, nullptr, "value", "value" } };\n`;
+        const ftdecl = `    inline constexpr TypeLayoutInfo g_ftable_${ctname}[1] = { { -1, ${fttid.bsqtypeid}, 32, 4, nullptr, "value", "value" } };\n`;
 
         return `namespace ᐸRuntimeᐳ {\n` +
             superdecl +
@@ -2072,7 +2071,7 @@ class CPPEmitter {
             supertable = `g_supertypes_${ctname}`;
         }
         
-        const ftdecl = `    inline constexpr TypeLayoutInfo g_ftable_${ctname}[1] = { { -1, ${fttid.bsqtypeid}, 0, 0, nullptr, nullptr, "value", "value" } };\n`;
+        const ftdecl = `    inline constexpr TypeLayoutInfo g_ftable_${ctname}[1] = { { -1, ${fttid.bsqtypeid}, 0, 0, nullptr, "value", "value" } };\n`;
 
         return `namespace ᐸRuntimeᐳ {\n` +
             superdecl +
@@ -2129,7 +2128,7 @@ class CPPEmitter {
             nodemask = "0" + Array(lcapacity).fill(eemask).join("") + "110";
         }
         
-        const ftdecl = `    inline constexpr TypeLayoutInfo g_ftable_${ctname}[1] = { { -1, ${ofttid.bsqtypeid}, 0, 0, nullptr, nullptr, "value", "value" } };\n`;
+        const ftdecl = `    inline constexpr TypeLayoutInfo g_ftable_${ctname}[1] = { { -1, ${ofttid.bsqtypeid}, 0, 0, nullptr, "value", "value" } };\n`;
 
         const posrb_treeleafid = ttid.bsqtypeid - 5;
         const posrb_treenodeid = ttid.bsqtypeid - 4;
@@ -2177,7 +2176,7 @@ class CPPEmitter {
         const vttid = this.typeInfoManager.getTypeInfo(tdecl.vtype.tkeystr);
 
         const ttdecl = `namespace ᐸRuntimeᐳ {\n` +
-            `    inline constexpr TypeLayoutInfo g_ftable_${ctname}[2] = { { -1, ${kttid.bsqtypeid}, 0, 0, nullptr, nullptr, "key", "key" }, { -2, ${vttid.bsqtypeid}, ${kttid.bytesize}, ${kttid.slotcount}, nullptr, nullptr, "value", "value" } };\n` +
+            `    inline constexpr TypeLayoutInfo g_ftable_${ctname}[2] = { { -1, ${kttid.bsqtypeid}, 0, 0, nullptr, "key", "key" }, { -2, ${vttid.bsqtypeid}, ${kttid.bytesize}, ${kttid.slotcount}, nullptr, "value", "value" } };\n` +
             `    inline constexpr TypeInfo g_typeinfo_${ctname} = g_typeinfo_MapEntry_generate<${krepr}, ${vrepr}>(${ttid.bsqtypeid}, g_ftable_${ctname}, ${ttid.ptrmask !== undefined ? ('"' + ttid.ptrmask + '"') : "nullptr"}, "${tdecl.tkey}");\n` +
             `}`;
 
@@ -2225,7 +2224,7 @@ class CPPEmitter {
         `    extern thread_local GCAllocator<CmpRBTreeLeaf<${krepr}, ${vrepr}>> CmpRBTreeLeaf_${ctname}_allocator;\n` +
         `    extern thread_local GCAllocator<CmpRBTreeNode<${krepr}, ${vrepr}>> CmpRBTreeNode_${ctname}_allocator;\n` +
         '\n' +
-        `    inline constexpr TypeLayoutInfo g_ftable_${ctname}[2] = { { -1, ${kttid.bsqtypeid}, 0, 0, nullptr, nullptr, "key", "key" }, { -2, ${vttid.bsqtypeid}, ${kttid.bytesize}, ${kttid.slotcount}, nullptr, nullptr, "value", "value" } };\n` +
+        `    inline constexpr TypeLayoutInfo g_ftable_${ctname}[2] = { { -1, ${kttid.bsqtypeid}, 0, 0, nullptr, "key", "key" }, { -2, ${vttid.bsqtypeid}, ${kttid.bytesize}, ${kttid.slotcount}, nullptr, "value", "value" } };\n` +
         `    inline constexpr TypeInfo g_typeinfo_${ctname} = g_typeinfo_MapKV_generate<${krepr}, ${vrepr}, ${ttid.bsqtypeid}>(${ttid.bsqtypeid}, g_ftable_${ctname}, "1", "${tdecl.tkey}");\n` +
         `}`;
 
@@ -2250,18 +2249,6 @@ class CPPEmitter {
         return [cftype, ff];
     }
 
-    private emitFieldDefaultFunctionNames(tdecl: IRAbstractEntityTypeDecl, fdecl: IRMemberFieldDecl): [string | undefined, string] {
-        if(fdecl.defaultValue !== undefined) {
-            return [
-                fdecl.defaultValue.isconst ? undefined : TransformCPPNameManager.generateNameForFieldDefaultFunction(tdecl.tkey, fdecl.fname, false),
-                TransformCPPNameManager.generateNameForFieldDefaultFunction(tdecl.tkey, fdecl.fname, true)
-            ];
-        }
-        else {
-            return ["nullptr", "nullptr"];
-        }
-    }
-
     private emitEntityTypeInfoWForwarDecl(tdecl: IRAbstractEntityTypeDecl): string {
         const ctname = TransformCPPNameManager.convertTypeKey(tdecl.tkey);
         const ttid = this.typeInfoManager.getTypeInfo(tdecl.tkey);
@@ -2281,9 +2268,9 @@ class CPPEmitter {
             ttid.ftable.map((fte) => {
                 const fttid = this.typeInfoManager.getTypeInfo(fte.ftype.tkeystr);
                 const [ftdecl, fdecl] = this.loadFieldDeclFromInfo(tdecl, fte);
-                const [dfkey, dfparsekey] = this.emitFieldDefaultFunctionNames(ftdecl, fdecl);
+                const dfparsekey = TransformCPPNameManager.generateNameForFieldDefaultFunction(ftdecl.tkey, fdecl.fname, true);
 
-                return `        { ${fte.fid}, ${fttid.bsqtypeid}, ${fte.offset * 8}, ${fte.offset}, ${dfkey ?? "nullptr"}, ${dfparsekey}, "${fte.fkey}", "${fte.fname}" }`;
+                return `        { ${fte.fid}, ${fttid.bsqtypeid}, ${fte.offset * 8}, ${fte.offset}, ${dfparsekey}, "${fte.fkey}", "${fte.fname}" }`;
             }).join(",\n") + "\n" +
             `    };\n`;
             ftable = `g_ftable_${ctname}`;
@@ -2329,9 +2316,9 @@ class CPPEmitter {
             ttid.ftable.map((fte) => {
                 const fttid = this.typeInfoManager.getTypeInfo(fte.ftype.tkeystr);
                 const [ftdecl, fdecl] = this.loadFieldDeclFromInfo(tdecl, fte);
-                const [dfkey, dfparsekey] = this.emitFieldDefaultFunctionNames(ftdecl, fdecl);
+                const dfparsekey = TransformCPPNameManager.generateNameForFieldDefaultFunction(ftdecl.tkey, fdecl.fname, true);
 
-                return `        { ${fte.fid}, ${fttid.bsqtypeid}, ${fte.offset * 8}, ${fte.offset}, ${dfkey ?? "nullptr"}, ${dfparsekey}, "${fte.fkey}", "${fte.fname}" }`;
+                return `        { ${fte.fid}, ${fttid.bsqtypeid}, ${fte.offset * 8}, ${fte.offset}, ${dfparsekey}, "${fte.fkey}", "${fte.fname}" }`;
             }).join(",\n") + "\n" +
             `    };\n`;
             ftable = `g_ftable_${ctname}`;
@@ -2379,9 +2366,9 @@ class CPPEmitter {
             ttid.ftable.map((fte) => {
                 const fttid = this.typeInfoManager.getTypeInfo(fte.ftype.tkeystr);
                 const [ftdecl, fdecl] = this.loadFieldDeclFromInfo(tdecl, fte);
-                const [dfkey, dfparsekey] = this.emitFieldDefaultFunctionNames(ftdecl, fdecl);
+                const dfparsekey = TransformCPPNameManager.generateNameForFieldDefaultFunction(ftdecl.tkey, fdecl.fname, true);
 
-                return `        { ${fte.fid}, ${fttid.bsqtypeid}, ${fte.offset * 8}, ${fte.offset}, ${dfkey ?? "nullptr"}, ${dfparsekey}, "${fte.fkey}", "${fte.fname}" }`;
+                return `        { ${fte.fid}, ${fttid.bsqtypeid}, ${fte.offset * 8}, ${fte.offset}, ${dfparsekey}, "${fte.fkey}", "${fte.fname}" }`;
             }).join(",\n") + "\n" +
             `    };\n`;
             ftable = `g_ftable_${ctname}`;
@@ -2431,7 +2418,7 @@ class CPPEmitter {
         const fttid = this.typeInfoManager.getTypeInfo(tdecl.ttype.tkeystr);
         const somettid = this.typeInfoManager.getTypeInfo(tdecl.sometype.tkeystr);
 
-        const ftdecl = `    inline constexpr TypeLayoutInfo g_ftable_${ctname}[2] = { { -1, ${fttid.bsqtypeid}, 0, 0, nullptr, nullptr, "value", "value" }, { -2, ${somettid.bsqtypeid}, 0, 0, nullptr, nullptr, "somevalue", "somevalue" } };\n`;
+        const ftdecl = `    inline constexpr TypeLayoutInfo g_ftable_${ctname}[2] = { { -1, ${fttid.bsqtypeid}, 0, 0, nullptr, "value", "value" }, { -2, ${somettid.bsqtypeid}, 0, 0, nullptr, "somevalue", "somevalue" } };\n`;
         
         return `namespace ᐸRuntimeᐳ { \n` +
             ftdecl +
@@ -2734,7 +2721,7 @@ class CPPEmitter {
 
         const fentries = elist.entries.map((entry, idx) => {
             const ettid = this.typeInfoManager.getTypeInfo(entry.tkeystr);
-            return `{ -${idx + 1}, ${ettid.bsqtypeid}, 0, 0, nullptr, nullptr, "${idx}", "${idx}" }`;
+            return `{ -${idx + 1}, ${ettid.bsqtypeid}, 0, 0, nullptr, "${idx}", "${idx}" }`;
         });
 
         const ttdecl = `namespace ᐸRuntimeᐳ {\n` +
@@ -3462,24 +3449,55 @@ class CPPEmitter {
     }
 
     private generateFieldDefaultImpls(): [string, string] {
-        const dfields = [...this.irasm.alltypes].flatMap((tp) => tp[1].fields.filter((ff) => ff.defaultValue !== undefined));
+        const dfields = [...this.irasm.alltypes].flatMap((tp) => tp[1].fields.filter((ff) => ff.defaultValue !== undefined && !ff.defaultValue.isconst));
         
         const dfielddecls = dfields.map((ff) => {
             const dfname = TransformCPPNameManager.generateNameForFieldDefaultFunction(ff.enclosingType.tkeystr, ff.fname, false);
-            const pdfname = TransformCPPNameManager.generateNameForFieldDefaultFunction(ff.enclosingType.tkeystr, ff.fname, true);
+            
+            const encltype = this.irasm.alltypes.get(ff.enclosingType.tkeystr) as IRAbstractNominalTypeDecl;
+            const rtype = this.typeInfoManager.emitTypeAsReturn(ff.declaredType.tkeystr);
 
-            const dfinfo = ff.defaultValue as { stmts: IRStatement[]; value: IRSimpleExpression; isconst: boolean; };
+            const ffargs = encltype.fields.filter((f) => f.defaultValue === undefined || f.defaultValue.isconst).map((f) => {
+                const ttype = this.typeInfoManager.emitTypeAsParameter(f.declaredType.tkeystr, false, false);
+                return `${ttype} ${TransformCPPNameManager.convertIdentifier("$" + f.fname)}`;
+            });
 
-            if(dfinfo.isconst) {
-                return `void ${pdfname}(void** args, void* resptr);`;
-            }
-            else {
-                return `void ${dfname}(std::initializer_list<void*> args, void* resptr); void ${pdfname}(void** args, void* resptr);`;
-            }
+            return `${rtype} ${dfname}(${ffargs.join(", ")});`;
         });
 
         const dfieldimpls = dfields.map((ff) => {
             const dfname = TransformCPPNameManager.generateNameForFieldDefaultFunction(ff.enclosingType.tkeystr, ff.fname, false);
+            
+            const dfinfo = ff.defaultValue as { stmts: IRStatement[]; value: IRSimpleExpression; isconst: boolean; };
+            const encltype = this.irasm.alltypes.get(ff.enclosingType.tkeystr) as IRAbstractNominalTypeDecl;
+            const rtype = this.typeInfoManager.emitTypeAsReturn(ff.declaredType.tkeystr);
+            
+            const rstmt = `return ${this.emitIRSimpleExpression(dfinfo.value, true)};`;
+
+            const ffargs = encltype.fields.filter((f) => f.defaultValue === undefined || f.defaultValue.isconst).map((f) => {
+                const ttype = this.typeInfoManager.emitTypeAsParameter(f.declaredType.tkeystr, false, false);
+                return `${ttype} ${TransformCPPNameManager.convertIdentifier("$" + f.fname)}`;
+            });
+
+            const stddefault = `${rtype} ${dfname}(${ffargs.join(", ")}) {\n` +
+                `    ${this.emitStatementList(dfinfo.stmts, [], [rstmt], "    ")}\n` +
+                '}\n';
+
+            return stddefault;
+        });
+
+        return [dfielddecls.join("\n"), dfieldimpls.join("\n")];
+    }
+
+    private generateFieldDefaultParseImpls(): [string, string] {
+        const dfields = [...this.irasm.alltypes].flatMap((tp) => tp[1].fields.filter((ff) => ff.defaultValue !== undefined));
+        
+        const dfielddecls = dfields.map((ff) => {
+            const pdfname = TransformCPPNameManager.generateNameForFieldDefaultFunction(ff.enclosingType.tkeystr, ff.fname, true);
+            return `void ${pdfname}(const void** args, void* resptr);`;
+        });
+
+        const dfieldimpls = dfields.map((ff) => {
             const pdfname = TransformCPPNameManager.generateNameForFieldDefaultFunction(ff.enclosingType.tkeystr, ff.fname, true);
 
             const dfinfo = ff.defaultValue as { stmts: IRStatement[]; value: IRSimpleExpression; isconst: boolean; };
@@ -3489,22 +3507,18 @@ class CPPEmitter {
             const rstmt = `*(${rtype}*)resptr = ${this.emitIRSimpleExpression(dfinfo.value, true)};`;
 
             if(dfinfo.isconst) {
-                return `void ${pdfname}(void** args, void* resptr) { ${rstmt} }\n`;
+                return `void ${pdfname}(const void** args, void* resptr) { ${rstmt} }\n`;
             }
             else {
-                const ffargs = encltype.fields.filter((f) => f.defaultValue === undefined || f.defaultValue.isconst).map((f) => {
+                const ffargs = encltype.fields.filter((f) => f.defaultValue === undefined || f.defaultValue.isconst).map((f, ii) => {
                     const ttype = this.typeInfoManager.emitTypeAsStd(f.declaredType.tkeystr);
-                    return `${ttype} ${TransformCPPNameManager.convertIdentifier("$" + f.fname)} = *((${ttype}*)*argiter++);`;
+                    return `${ttype} ${TransformCPPNameManager.convertIdentifier("$" + f.fname)} = *((${ttype}*)args[${ii}]);`;
                 });
 
-                const stddefault = `void ${dfname}(std::initializer_list<void*> args, void* resptr) {\n` +
-                    `    ${this.emitStatementList(dfinfo.stmts, ["auto argiter = args.begin();", ...ffargs], [rstmt], "    ")}\n` +
-                    '}\n';
+                const stddefault = `void ${pdfname}(const void** args, void* resptr) ` +
+                    `${this.emitStatementList(dfinfo.stmts, ffargs, [rstmt], "")}\n`;
 
-                return stddefault + "\n" +
-                    `void ${pdfname}(void** args, void* resptr) {\n` +
-                    `    ${dfname}({${ffargs.map((_, ii) => `args[${ii}]`).join(", ")}}, resptr);\n` +
-                    '}\n';
+                return stddefault;
             }
         });
 
@@ -3858,15 +3872,17 @@ class CPPEmitter {
 
     public emitForCommandLine(ns: string): [string, string] | undefined {
         const typeinfo = this.emitTypeDeclInfo();
+        const fdefparseimpls = this.generateFieldDefaultParseImpls();
         const fdefimpls = this.generateFieldDefaultImpls();
         const vimpls = this.generateVCallImpls();
         const iinfo = this.emitAllInvokeInfo();
 
         const headerstrs = [
             this.generateHeaderSetup(), '',
-            fdefimpls[0], '',
+            fdefparseimpls[0], '',
             typeinfo[0], '',
             vimpls[0], '',
+            fdefimpls[0], '',
             iinfo[0],
         ].join("\n");
 
@@ -3878,10 +3894,11 @@ class CPPEmitter {
 
         const implstrs = [
             '#include "./app.h"', '',
-            fdefimpls[1], '',
+            fdefparseimpls[1], '',
             typeinfo[1], '',
             iinfo[1], '',
             vimpls[1], '',
+            fdefimpls[1], '',
             statisinitstr, '',
             mainstr
         ].filter((s) => s.length !== 0).join("\n");
