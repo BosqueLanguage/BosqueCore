@@ -3479,9 +3479,8 @@ class CPPEmitter {
                 return `${ttype} ${TransformCPPNameManager.convertIdentifier("$" + f.fname)}`;
             });
 
-            const stddefault = `${rtype} ${dfname}(${ffargs.join(", ")}) {\n` +
-                `    ${this.emitStatementList(dfinfo.stmts, [], [rstmt], "    ")}\n` +
-                '}\n';
+            const stddefault = `${rtype} ${dfname}(${ffargs.join(", ")}) ` +
+                `${this.emitStatementList(dfinfo.stmts, [], [rstmt], "")}\n`;
 
             return stddefault;
         });
@@ -3531,8 +3530,9 @@ class CPPEmitter {
 
         const ideclstr = `${rettyps} ${TransformCPPNameManager.convertInvokeKey(vinvk.vcallkey)}(${paramstrs})`;
 
-        const opts = vinvk.vcallimpls.map((vc) => {
-            return `        case ${this.typeInfoManager.getTypeInfo(vc.rcvrtype.tkeystr).bsqtypeid}: { ${vc.impl.map((stmt) => this.emitAtomicStatement(stmt)).join(" ")} }`;
+        const opts = vinvk.vcallimpls.map((vc, ii) => {
+            const dopt = (ii === vinvk.vcallimpls.length - 1) ? "default" : `case ${this.typeInfoManager.getTypeInfo(vc.rcvrtype.tkeystr).bsqtypeid}`;
+            return `        ${dopt}: { ${vc.impl.map((stmt) => this.emitAtomicStatement(stmt)).join(" ")} }`;
         });
         const bodystr = `\n{\n    switch(${TransformCPPNameManager.convertIdentifier("this")}.uval.typeinfo->bsqtypeid) {\n` +
             opts.join("\n") + "\n" +
