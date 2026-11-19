@@ -1,6 +1,6 @@
 import { IRCRegex, IRURegex, IRSourceInfo, IRCodeFileInfo } from "./irsupport.js";
 import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature } from "./irtype.js";
-import { IRBody, IRImmediateExpression, IRLiteralCRegexExpression, IRLiteralFormatCStringExpression, IRLiteralFormatStringExpression, IRLiteralUnicodeRegexExpression, IRSimpleExpression, IRStatement } from "./irbody.js";
+import { IRAtomicStatement, IRBody, IRImmediateExpression, IRLiteralCRegexExpression, IRLiteralFormatCStringExpression, IRLiteralFormatStringExpression, IRLiteralUnicodeRegexExpression, IRSimpleExpression, IRStatement } from "./irbody.js";
 
 import assert from "node:assert";
 
@@ -1690,6 +1690,15 @@ class IRLambdaParameterPackDecl {
     }
 }
 
+class IRVInvokeInfo extends IRInvokeMetaDecl {
+    readonly vcallimpls: { rcvrtype: IRTypeSignature; impl: IRAtomicStatement}[];
+
+    constructor(ikey: string, recursive: "recursive" | "recursive?" | undefined, params: IRInvokeParameterDecl[], resultType: IRTypeSignature, preconditions: IRPreConditionDecl[], postconditions: IRPostConditionDecl[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, vcallimpls: { rcvrtype: IRTypeSignature; impl: IRAtomicStatement}[]) {
+        super(ikey, recursive, params, resultType, preconditions, postconditions, docstr, file, sinfo);
+        this.vcallimpls = vcallimpls;
+    }
+}
+
 class IRAssembly {
     readonly code: IRCodeFileInfo[];
     readonly macrodefs: string[];
@@ -1744,6 +1753,7 @@ class IRAssembly {
 
     readonly typedeporder: IRTypeSignature[] = [];
     readonly typedepcycles: IRTypeSignature[][] = [];
+    readonly vcallimpls: IRVInvokeInfo[] = [];
 
     constructor(code: IRCodeFileInfo[], macrodefs: string[]) {
         this.code = code;
@@ -2043,5 +2053,6 @@ export {
     IREnvironmentVariableInformation, IRResourceInformation, IRTaskConfiguration,
     IRAPIDecl, IRAgentDecl, IRTaskDecl,
     IRLambdaParameterPackDecl,
+    IRVInvokeInfo,
     IRAssembly
 };
