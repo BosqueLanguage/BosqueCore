@@ -3526,28 +3526,20 @@ class CPPEmitter {
     }
 
     private generateVCallImplSingle(vinvk: IRVInvokeInfo): [string, string] {
-        const haspassing = vinvk.params.some((p) => p.pkind !== undefined);
-
         const paramstrs = vinvk.params.map((param) => this.emitIRInvokeParameterDecl(param)).join(", ");
         const rettyps = this.typeInfoManager.emitTypeAsReturn(vinvk.resultType.tkeystr);
 
-        const precondinfo = vinvk.preconditions.map((ipcs) => this.emitPreconditionCheckFunction(ipcs, vinvk));
-        const postcondinfo = vinvk.postconditions.map((ipcs) => this.emitPostconditionCheckFunction(ipcs, vinvk, haspassing));
-
-        const ppdecls = [...precondinfo, ...postcondinfo].map((ppc) => ppc[0]);
-        const ppdefs = [...precondinfo, ...postcondinfo].map((ppc) => ppc[1]);
-
-        const ideclstr = `${rettyps} ${TransformCPPNameManager.convertInvokeKey(vinvk.ikey)}(${paramstrs})`;
+        const ideclstr = `${rettyps} ${TransformCPPNameManager.convertInvokeKey(vinvk.vcallkey)}(${paramstrs})`;
 
         const opts = vinvk.vcallimpls.map((vc) => {
-            return `        case ${this.typeInfoManager.emitTypeAsStd(vc.rcvrtype.tkeystr)}: { return ${this.emitAtomicStatement(vc.impl)};}`;
+            return `        case ${this.typeInfoManager.getTypeInfo(vc.rcvrtype.tkeystr).bsqtypeid}: { ${vc.impl.map((stmt) => this.emitAtomicStatement(stmt)).join(" ")} }`;
         });
-        const bodystr = `\n{\n    switch() {\n` +
+        const bodystr = `\n{\n    switch(${TransformCPPNameManager.convertIdentifier("this")}.uval.typeinfo->bsqtypeid) {\n` +
             opts.join("\n") + "\n" +
         `    }\n}`;
         const idefstr = ideclstr + bodystr;
 
-        return [(ppdecls.length !== 0 ? ppdecls.join("\n") + "\n" : "") + ideclstr + ";", (ppdefs.length !== 0 ? ppdefs.join("\n") + "\n" : "") + idefstr];
+        return [ideclstr + ";", idefstr];
     }
 
     private generateVCallImpls(): [string, string] {

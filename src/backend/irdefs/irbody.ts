@@ -6085,7 +6085,7 @@ export {
     IRErrorCheckStatement, IRErrorBinArithCheckStatement,
 
     IRNopStatement,
-    IRTempAssignExpressionStatement, IRTempAssignStdInvokeStatement, IRTempAssignRefInvokeStatement, IRTempAssignDirectConstructorStatement,
+    IRTempAssignStatement, IRTempAssignExpressionStatement, IRTempAssignStdInvokeStatement, IRTempAssignRefInvokeStatement, IRTempAssignDirectConstructorStatement,
 
     IRVariableDeclarationStatement, 
     IRVariableInitializationStatement, IRVariableInitializationDirectInvokeStatement, IRVariableInitializationDirectInvokeWithImplicitStatement, IRVariableInitializationDirectConstructorStatement, IRVariableInitializationDirectConstructorWithBoxStatement,

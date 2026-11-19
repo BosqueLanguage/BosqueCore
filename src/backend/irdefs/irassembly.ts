@@ -1691,10 +1691,12 @@ class IRLambdaParameterPackDecl {
 }
 
 class IRVInvokeInfo extends IRInvokeMetaDecl {
-    readonly vcallimpls: { rcvrtype: IRTypeSignature; impl: IRAtomicStatement}[];
+    readonly vcallkey: string;
+    readonly vcallimpls: { rcvrtype: IRTypeSignature; impl: IRAtomicStatement[]}[];
 
-    constructor(ikey: string, recursive: "recursive" | "recursive?" | undefined, params: IRInvokeParameterDecl[], resultType: IRTypeSignature, preconditions: IRPreConditionDecl[], postconditions: IRPostConditionDecl[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, vcallimpls: { rcvrtype: IRTypeSignature; impl: IRAtomicStatement}[]) {
+    constructor(ikey: string, recursive: "recursive" | "recursive?" | undefined, params: IRInvokeParameterDecl[], resultType: IRTypeSignature, preconditions: IRPreConditionDecl[], postconditions: IRPostConditionDecl[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, vkey: string, vcallimpls: { rcvrtype: IRTypeSignature; impl: IRAtomicStatement[]}[]) {
         super(ikey, recursive, params, resultType, preconditions, postconditions, docstr, file, sinfo);
+        this.vcallkey = vkey;
         this.vcallimpls = vcallimpls;
     }
 }

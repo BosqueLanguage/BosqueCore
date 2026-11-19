@@ -1,7 +1,7 @@
 import assert from "node:assert";
 
 import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, AgentDecl, APIDecl, APIDeniedTypeDecl, APIErrorTypeDecl, APIDroppedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, ExplicitInvokeDecl, FailTypeDecl, InvariantDecl, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskActionDecl, TaskConfiguration, TaskDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl, AbstractConceptTypeDecl } from "../../frontend/assembly.js";
-import { computeInvokeKeyForAgentDecl, computeInvokeKeyForAPIDecl, computeInvokeKeyForLambdaFunction, computeInvokeKeyForNamespaceFunction, computeInvokeKeyForTaskAction, computeInvokeKeyForTypeFunction, computeInvokeKeyForTypeMethod, computeResolveKeyForInvoke, InvokeInstantiationInfo, LambdaInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiations.js";
+import { computeInvokeKeyForAgentDecl, computeInvokeKeyForAPIDecl, computeInvokeKeyForLambdaFunction, computeInvokeKeyForNamespaceFunction, computeInvokeKeyForTaskAction, computeInvokeKeyForTypeFunction, computeInvokeKeyForTypeMethod, computeResolveKeyForInvoke, InvokeInstantiationInfo, LambdaInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo, VCallOptEntry } from "./instantiations.js";
 import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "../../frontend/type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AgentInvokeExpression, APIInvokeExpression, AbstractArgumentValue, AssertStatement, BaseRValueExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ChkLogicBaseExpression, ChkLogicExpression, ChkLogicExpressionTag, ChkLogicImpliesExpression, ConditionalValueExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, DispatchPatternStatement, DispatchTaskStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, FormatStringArgComponent, FormatStringComponent, HoleBodyImplementation, HoleExpression, HoleStatement, IfElifElseStatement, IfElseStatement, IfStatement, ITestGuard, ITestGuardSet, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LiteralFormatCStringExpression, LiteralFormatStringExpression, LiteralTypedCStringExpression, LiteralTypeDeclValueExpression, LiteralTypedFormatCStringExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LogicAndExpression, LogicOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixSliceOperator, PostfixOp, PostfixOpTag, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, RValueExpression, RValueExpressionTag, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskCheckAndHandleTerminationStatement, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VarUpdateStatement, VoidRefCallStatement, StdArgumentValue, InterpolateFormatExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixProjectFromNames, ITest, ITestType, ITestTypeGuard, ITestBinderGuard, PassingArgumentValue } from "../../frontend/body.js";
 import { SourceInfo } from "../../frontend/build_decls.js";
@@ -143,7 +143,7 @@ class Monomorphizer {
     readonly completedTaskActions: Set<string> = new Set<string>();
 
     readonly instantiatedVMethodCalls: { ikey: string, enclosingType: TypeSignature, mdecl: MethodDecl, terms: TypeSignature[], lambdas: { pname: string, psigkey: string }[] }[] = [];
-    readonly instantiatedVTypeDefs: { tsig: TypeSignature, tdecl: AbstractNominalTypeDecl, vsupers: TypeSignature[], terms: TypeSignature[] }[] = [];
+    readonly instantiatedVTypeDefs: { tsig: TypeSignature, tmapping: TemplateNameMapper | undefined, tdecl: AbstractNominalTypeDecl, vsupers: TypeSignature[], terms: TypeSignature[] }[] = [];
 
     currentMapping: TemplateNameMapper | undefined = undefined;
     currentLambdaMapping: Map<string, string> | undefined = undefined;
@@ -2116,7 +2116,7 @@ class Monomorphizer {
         if(vvopts.length !== 0 && !this.instantiatedVTypeDefs.some((ivtd) => ivtd.tsig.tkeystr === pdecl.tkey)) {
             const tterms = pdecl.type.terms.map((tt) => (this.currentMapping as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(pdecl.type.sinfo, tt.name)));
             const vsupers = vvopts.map((pp) => this.currentMapping !== undefined ? pp.remapTemplateBindings(this.currentMapping) : pp);
-            this.instantiatedVTypeDefs.push({ tsig: pdecl.tsig, tdecl: pdecl.type, vsupers: vsupers, terms: tterms });
+            this.instantiatedVTypeDefs.push({ tsig: pdecl.tsig, tmapping: this.currentMapping, tdecl: pdecl.type, vsupers: vsupers, terms: tterms });
         }
 
         if(optreqtypes !== undefined) {
@@ -2916,13 +2916,15 @@ class Monomorphizer {
             const nsinst = iim.instantiation.find((nsi) => nsi.ns.emit() === (vcall.enclosingType as NominalTypeSignature).decl.ns.emit()) as NamespaceInstantiationInfo;
 
             const possibleinsts = iim.instantiatedVTypeDefs.filter((ivtd) => ivtd.vsupers.some((vs) => vs.tkeystr === vcall.enclosingType.tkeystr));
-            let vvopts: [string, string][] = [];
+            let vvopts: VCallOptEntry[] = [];
             for(let j = 0; j < possibleinsts.length; ++j) {
                 const pkinds = vcall.mdecl.params.map((arg) => (arg instanceof PassingArgumentValue) ? arg.kind : undefined).filter((k) => k !== undefined) as ("ref" | "out" | "out?" | "inout")[];
                 const [tinst, minst] = Monomorphizer.resolveTypeMethodImplementation(possibleinsts[j].tsig as NominalTypeSignature, vcall.mdecl.name, vcall.mdecl.terms.length !== 0, vcall.mdecl.params.some((p) => p.type instanceof LambdaTypeSignature), pkinds) as [TypeSignature, MethodDecl];
 
                 const mkey = computeInvokeKeyForTypeMethod(tinst, minst, vcall.terms, vcall.lambdas);
-                vvopts.push([tinst.tkeystr, mkey]);
+                const mmapping = possibleinsts[j].tmapping;
+                const restype = mmapping !== undefined ? minst.resultType.remapTemplateBindings(mmapping) : minst.resultType;
+                vvopts.push(new VCallOptEntry(mkey, possibleinsts[j].tsig, restype));
             }
 
             nsinst.vcallopts.push({ tkey: vcall.enclosingType.tkeystr, vkey: vcall.ikey, ikeys: vvopts });

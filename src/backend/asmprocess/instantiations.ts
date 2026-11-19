@@ -76,6 +76,18 @@ class TypeInstantiationInfo {
     }
 }
 
+class VCallOptEntry {
+    readonly ikey: string;
+    readonly rcvrtype: TypeSignature;
+    readonly restype: TypeSignature;
+
+    constructor(ikey: string, rcvrtype: TypeSignature, restype: TypeSignature) {
+        this.ikey = ikey;
+        this.rcvrtype = rcvrtype;
+        this.restype = restype;
+    }
+}
+
 class NamespaceInstantiationInfo {
     readonly ns: FullyQualifiedNamespace;
 
@@ -91,7 +103,7 @@ class NamespaceInstantiationInfo {
     readonly lambdacons: Map<number, string> = new Map<number, string>(); //string corresponds to a lambda instantation info
     readonly monoinvids: Map<number, string> = new Map<number, string>();
 
-    readonly vcallopts: { tkey: string, vkey: string, ikeys: [string, string][] }[]; //type/invk keys for vcall targets if this is abstract or virtual decl 
+    readonly vcallopts: { tkey: string, vkey: string, ikeys: VCallOptEntry[] }[];
 
     constructor(ns: FullyQualifiedNamespace) {
         this.ns = ns;
@@ -157,6 +169,7 @@ function computeInvokeKeyForLambdaFunction(basefn: string, line: number, terms: 
 }
 
 export {
+    VCallOptEntry,
     LambdaInstantiationInfo,
     InvokeInstantiationInfo,
     TypeInstantiationInfo,
