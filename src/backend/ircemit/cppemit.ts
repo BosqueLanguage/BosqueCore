@@ -3535,8 +3535,8 @@ class CPPEmitter {
 
         const ideclstr = `${rettyps} ${TransformCPPNameManager.convertInvokeKey(vinvk.vcallkey)}(${paramstrs})`;
 
-        const precondinfo = vinvk.preconditions.map((ipcs) => this.emitPreconditionCheckFunction(ipcs, vinvk));
-        const postcondinfo = vinvk.postconditions.map((ipcs) => this.emitPostconditionCheckFunction(ipcs, vinvk, haspassing));
+        const precondinfo = vinvk.isabstract ? vinvk.preconditions.map((ipcs) => this.emitPreconditionCheckFunction(ipcs, vinvk)) : [];
+        const postcondinfo = vinvk.isabstract ? vinvk.postconditions.map((ipcs) => this.emitPostconditionCheckFunction(ipcs, vinvk, haspassing)) : [];
 
         const ppdecls = [...precondinfo, ...postcondinfo].map((ppc) => ppc[0]);
         const ppdefs = [...precondinfo, ...postcondinfo].map((ppc) => ppc[1]);

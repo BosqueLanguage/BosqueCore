@@ -22,6 +22,7 @@ describe ("CPPExec -- Entity Constructor", () => {
         runTestSet('entity Foo { field f: Int = 0i; field g: Bool = $f <= 0i; } public function main(): Foo { return Foo{}; }', [['', 'Main::Foo{ 0i, true }']], []);
 
         runTestSet('entity Foo { field f: Int; field g: Bool = $f == 0i; } public function main(v: Foo): Bool { return v.g; }', [['Main::Foo{2i}', 'false'], ['Main::Foo{0i}', 'true'], ['Main::Foo{2i, true}', 'true']], []);
+        runTestSet('entity Foo<T> { field f: Int = 0i; field g: Bool = $f <= 0i; } public function main(x: Int): Bool { let v = Foo<Int>{x}; return v.g; }', [['2i', 'false'], ['0i', 'true']], []);
     });
 
     it("should exec skip positions", function () {

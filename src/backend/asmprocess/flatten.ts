@@ -47,7 +47,7 @@ class ASMToIRConverter {
 
     currentBinds: TemplateNameMapper | undefined;
     currentLambdaConsMap: Map<number, string> | undefined;
-    currentMonoInvIdMap: Map<number, string> | undefined;
+    currentMonoInvIdMap: Map<number, [string, string]> | undefined;
 
     pendingblocks: IRStatement[][];
     rescopeStack: Map<string, string>[]; //Maps from old name to new name
@@ -1083,7 +1083,7 @@ class ASMToIRConverter {
 
         const haspreconds = fdecl.preconditions.length > 0;
         const haspostconds = fdecl.postconditions.length > 0;
-        const iname = (this.currentMonoInvIdMap as Map<number, string>).get(exp.monoinvid as number) as string;
+        const [iname, _] = (this.currentMonoInvIdMap as Map<number, [string, string]>).get(exp.monoinvid as number) as [string, string];
 
         const imapper = this.generateLocalTemplateMapping(fdecl.terms.map((t) => t.name), exp.terms);
         const aargs = this.flattenInvokeArgs(haspreconds, haspostconds, exp.shuffleinfo, fdecl.params, exp.args, exp.resttype, exp.restinfo, imapper);
@@ -1207,7 +1207,7 @@ class ASMToIRConverter {
 
         const haspreconds = fdecl.preconditions.length > 0;
         const haspostconds = fdecl.postconditions.length > 0;
-        const iname = (this.currentMonoInvIdMap as Map<number, string>).get(exp.monoinvid as number) as string;
+        const [iname, _] = (this.currentMonoInvIdMap as Map<number, [string, string]>).get(exp.monoinvid as number) as [string, string];
 
         const tmapper = TemplateNameMapper.generateTemplateMappingForTypeDecl(this.tproc(exp.resolvedDeclType as TypeSignature) as NominalTypeSignature);
         const imapper = this.generateLocalTemplateMapping(fdecl.terms.map((t) => t.name), exp.terms);
@@ -1310,7 +1310,7 @@ class ASMToIRConverter {
     }
 
     private flattenLambdaInvokeExpression(exp: LambdaInvokeExpression): IRExpression {
-        const iname = (this.currentMonoInvIdMap as Map<number, string>).get(exp.monoinvid as number) as string;
+        const [iname, _] = (this.currentMonoInvIdMap as Map<number, [string, string]>).get(exp.monoinvid as number) as [string, string];
 
         const aargs: IRSimpleExpression[] = [exp.isCapturedLambda ? new IRAccessCapturedVariableExpression(exp.name) :  new IRAccessParameterVariableExpression(exp.name)];
         for(let i = 0; i < exp.args.args.length; ++i) {
@@ -1418,7 +1418,7 @@ class ASMToIRConverter {
 
         const haspreconds = mdecl.preconditions.length > 0;
         const haspostconds = mdecl.postconditions.length > 0;
-        const iname = (this.currentMonoInvIdMap as Map<number, string>).get(exp.monoinvid as number) as string;
+        const [iname, dname] = (this.currentMonoInvIdMap as Map<number, [string, string]>).get(exp.monoinvid as number) as [string, string];
 
         let rexp: IRSimpleExpression;
         if(exp.resolvedImplType !== undefined) {
@@ -1434,11 +1434,25 @@ class ASMToIRConverter {
         const imapper = this.generateLocalTemplateMapping(mimpl.terms.map((t) => t.name), exp.terms);
         const fullmapper = TemplateNameMapper.tryMerge(tmapper, imapper);
         const aargs = [rexp, ...this.flattenInvokeArgs(haspreconds, haspostconds, exp.shuffleinfo, mimpl.params, exp.args, exp.resttype, exp.restinfo, fullmapper)];
+        
+        let cargs: IRImmediateExpression[] = [];
+        if(haspreconds || haspostconds) {
+            let checkexp: IRImmediateExpression;
+        
+            const adjustexp = this.makeCoercionExplicitAsNeeded(rexp, this.tproc(exp.resolvedImplType ?? (exp.resolvedDeclType as TypeSignature)), this.tproc(exp.resolvedDeclType as TypeSignature));
+            if(adjustexp instanceof IRImmediateExpression) {
+                checkexp = adjustexp;
+            }
+            else {
+                checkexp = this.makeExpressionImmediate(adjustexp, this.tproc(exp.resolvedDeclType as TypeSignature));
+            }
+            cargs = [checkexp, ...aargs.slice(1)];
+        }
 
         //do preconditions as needed
         for(let i = 0; i < mdecl.preconditions.length; ++i) {
             const invdecl = mdecl.preconditions[i];
-            this.pushStatement(new IRPreconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), iname, invdecl.ii, aargs));
+            this.pushStatement(new IRPreconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), dname, invdecl.ii, cargs));
         } 
 
         if(!exp.args.hasSpecialRef()) {
@@ -1450,10 +1464,10 @@ class ASMToIRConverter {
                 this.pushStatement(new IRTempAssignStdInvokeStatement(tmpres, this.processTypeSignature(exp.getType()), new IRInvokeSimpleExpression(iname, aargs)));
 
                 //do postconditions as needed
-                const postargs = [new IRAccessTempVariableExpression(tmpres), ...aargs]
+                const postargs = [new IRAccessTempVariableExpression(tmpres), ...cargs]
                 for(let i = 0; i < mdecl.postconditions.length; ++i) {
                     const invdecl = mdecl.postconditions[i];
-                    this.pushStatement(new IRPostconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), iname, invdecl.ii, postargs));
+                    this.pushStatement(new IRPostconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), dname, invdecl.ii, postargs));
                 } 
 
                 return new IRAccessTempVariableExpression(tmpres);
@@ -1480,14 +1494,14 @@ class ASMToIRConverter {
                 this.pushStatement(new IRTempAssignRefInvokeStatement(tmpres, this.processTypeSignature(exp.getType()), ivar, ivartype, this.convertPassingKind(passarg.kind), new IRInvokeSimpleWithImplicitsExpression(iname, aargs, ii, ivar, ivartype, this.convertPassingKind(passarg.kind))));
             
                 //do postconditions as needed
-                let postargs = [new IRAccessTempVariableExpression(tmpres), ...aargs];
+                let postargs = [new IRAccessTempVariableExpression(tmpres), ...cargs];
                 if(tmppass !== undefined) {
                     postargs = [new IRAccessTempVariableExpression(tmpres), new IRAccessTempVariableExpression(tmppass), ...postargs];
                 }
 
                 for(let i = 0; i < mdecl.postconditions.length; ++i) {
                     const invdecl = mdecl.postconditions[i];
-                    this.pushStatement(new IRPostconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), iname, invdecl.ii, postargs));
+                    this.pushStatement(new IRPostconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), dname, invdecl.ii, postargs));
                 } 
 
                 return new IRAccessTempVariableExpression(tmpres);
@@ -1709,9 +1723,10 @@ class ASMToIRConverter {
             }
             
             const ftype = this.applyLocalTemplateMapping(f.type, imapper);
+            const cctype = this.applyLocalTemplateMapping(f.containingtype, imapper)
 
             const eexp = this.assembly.resolveFieldDeclDefaultExpFromTypeSignature(f.containingtype, f.name) as Expression;
-            const tbinds = TemplateNameMapper.tryMerge(this.currentBinds, TemplateNameMapper.generateTemplateMappingForTypeDecl(this.tproc(f.containingtype) as NominalTypeSignature));
+            const tbinds = TemplateNameMapper.tryMerge(this.currentBinds, TemplateNameMapper.generateTemplateMappingForTypeDecl(this.tproc(cctype) as NominalTypeSignature));
 
             const crexp = this.assembly.tryReduceConstantExpression(eexp, tbinds);
             if(crexp !== undefined) {
@@ -1721,7 +1736,7 @@ class ASMToIRConverter {
                     return this.makeExpressionImmediate(cexp, ftype);
             }
             else {
-                return [this.tproc(f.containingtype) as NominalTypeSignature, f.name, this.tproc(ftype)] as [NominalTypeSignature, string, TypeSignature];
+                return [this.tproc(cctype) as NominalTypeSignature, f.name, this.tproc(ftype)] as [NominalTypeSignature, string, TypeSignature];
             }
         });
 
@@ -2973,7 +2988,7 @@ class ASMToIRConverter {
 
         const haspreconds = mdecl.preconditions.length > 0;
         const haspostconds = mdecl.postconditions.length > 0;
-        const iname = (this.currentMonoInvIdMap as Map<number, string>).get(exp.monoinvid as number) as string;
+        const [iname, dname] = (this.currentMonoInvIdMap as Map<number, [string, string]>).get(exp.monoinvid as number) as [string, string];
 
         const tmapper = TemplateNameMapper.generateTemplateMappingForTypeDecl(this.tproc(exp.resolvedDeclType as TypeSignature) as NominalTypeSignature);
         const imapper = this.generateLocalTemplateMapping(mimpl.terms.map((t) => t.name), exp.terms);
@@ -2983,7 +2998,7 @@ class ASMToIRConverter {
         //do preconditions as needed
         for(let i = 0; i < mdecl.preconditions.length; ++i) {
             const invdecl = mdecl.preconditions[i];
-            this.pushStatement(new IRPreconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), iname, invdecl.ii, aargs));
+            this.pushStatement(new IRPreconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), dname, invdecl.ii, aargs));
         } 
 
         if(!haspostconds) {
@@ -3001,7 +3016,7 @@ class ASMToIRConverter {
             
             for(let i = 0; i < mdecl.postconditions.length; ++i) {
                 const invdecl = mdecl.postconditions[i];
-                this.pushStatement(new IRPostconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), iname, invdecl.ii, postargs));
+                this.pushStatement(new IRPostconditionCheckStatement(invdecl.file, this.convertSourceInfo(invdecl.sinfo), invdecl.diagnosticTag, this.registerError(invdecl.file, this.convertSourceInfo(invdecl.sinfo), "userspec"), dname, invdecl.ii, postargs));
             } 
 
             return new IRAccessTempVariableExpression(tmpres);
@@ -3026,7 +3041,7 @@ class ASMToIRConverter {
 
         const haspreconds = aimpl.preconditions.length > 0;
         const haspostconds = aimpl.postconditions.length > 0;
-        const iname = (this.currentMonoInvIdMap as Map<number, string>).get(exp.monoinvid as number) as string;
+        const [iname, _] = (this.currentMonoInvIdMap as Map<number, [string, string]>).get(exp.monoinvid as number) as [string, string];
 
         const tmapper = TemplateNameMapper.generateTemplateMappingForTypeDecl(this.tproc(exp.resolvedTaskDecl as TypeSignature) as NominalTypeSignature);
         const aargs = [new IRAccessLocalVariableExpression(selfname), ...this.flattenInvokeArgs(haspreconds, haspostconds, exp.shuffleinfo, aimpl.params, exp.args, exp.resttype, exp.restinfo, tmapper)];
@@ -3083,7 +3098,7 @@ class ASMToIRConverter {
 
         const haspreconds = adecl.preconditions.length > 0;
         const haspostconds = adecl.postconditions.length > 0;
-        const iname = (this.currentMonoInvIdMap as Map<number, string>).get(exp.monoinvid as number) as string;
+        const [iname, _] = (this.currentMonoInvIdMap as Map<number, [string, string]>).get(exp.monoinvid as number) as [string, string];
 
         const imapper = this.generateLocalTemplateMapping(adecl.terms.map((t) => t.name), exp.terms);
 
@@ -3129,7 +3144,7 @@ class ASMToIRConverter {
 
         const haspreconds = adecl.preconditions.length > 0;
         const haspostconds = adecl.postconditions.length > 0;
-        const iname = (this.currentMonoInvIdMap as Map<number, string>).get(exp.monoinvid as number) as string;
+        const [iname, _] = (this.currentMonoInvIdMap as Map<number, [string, string]>).get(exp.monoinvid as number) as [string, string];
         
         const imapper = this.generateLocalTemplateMapping(adecl.terms.map((t) => t.name), exp.terms);
 
@@ -4311,7 +4326,8 @@ class ASMToIRConverter {
                     return { rcvrtype: new IRNominalTypeSignature(op.rcvrtype.tkeystr), impl: stmt }
                 });
 
-                const vvdecl = new IRVInvokeInfo(vco.vkey, recursive, params, this.processTypeSignature(mdecl.resultType), preconds, postconds, docstring, mdecl.file, this.convertSourceInfo(mdecl.sinfo), vkey, opts);
+                const isabstract = mdecl.attributes.find((a) => a.name === "abstract") !== undefined;
+                const vvdecl = new IRVInvokeInfo(vco.vkey, recursive, params, this.processTypeSignature(mdecl.resultType), preconds, postconds, docstring, mdecl.file, this.convertSourceInfo(mdecl.sinfo), vkey, isabstract, opts);
                 irasm.vcallimpls.push(vvdecl);
             }
         }

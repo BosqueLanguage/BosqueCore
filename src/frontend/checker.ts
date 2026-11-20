@@ -2971,7 +2971,7 @@ class TypeChecker {
             this.checkError(exp.sinfo, rrt === undefined, `Method ${exp.name} is not specifically resolvable from type ${resolvefrom.emit()}`);
 
             if(rrt !== undefined) {
-                resolvedrtype = rrt.member.resultType;
+                resolvedrtype = rrt.member.resultType.remapTemplateBindings(rrt.typeinfo.mapping);
                 exp.resolvedImplType = rrt.typeinfo.tsig;
                 exp.resolvedMethodImpl = rrt.member;
             }
@@ -2979,7 +2979,7 @@ class TypeChecker {
         else {
             const smresolve = this.postfixInvokeStaticResolve(env, mresolve, exp.name, hastemplate, haslambda, pkinds, resolvefrom);
             if(smresolve !== undefined) {
-                resolvedrtype = smresolve.member.resultType;
+                resolvedrtype = smresolve.member.resultType.remapTemplateBindings(smresolve.typeinfo.mapping);
                 exp.resolvedImplType = smresolve.typeinfo.tsig;
                 exp.resolvedMethodImpl = smresolve.member;
             }
@@ -4261,7 +4261,7 @@ class TypeChecker {
             env = env.assignLocalVariable(rhs.setuncond[i]);
         }
 
-        this.checkError(stmt.sinfo, itype !== undefined && !(rhs instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(rhs.tsig, itype, this.constraints), `Expression of type ${TypeChecker.safeTypePrint(rhs.tsig)} cannot be assigned to variable of type ${TypeChecker.safeTypePrint(itype)}`);
+        this.checkError(stmt.sinfo, itype !== undefined && !(rhs.tsig instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(rhs.tsig, itype, this.constraints), `Expression of type ${TypeChecker.safeTypePrint(rhs.tsig)} cannot be assigned to variable of type ${TypeChecker.safeTypePrint(itype)}`);
         
         if(stmt.name === "_") {
             return env;

@@ -32,8 +32,17 @@ namespace ᐸRuntimeᐳ
 
     void IOBufferStreamingBuilder::writeSlowTail(const char* str, size_t slen)
     {
-        assert(slen < MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE); //I don't think this can (should) ever happen but assert for sanity
-
+        while(slen >= MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE) {
+            this->rotateData();
+            
+            std::memcpy(this->cpos, str, MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE);
+            this->cpos += MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE;
+            this->totalbytes += MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE;
+            
+            str += MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE;
+            slen -= MINT_IO_BUFFER_ALLOCATOR_BLOCK_SIZE;
+        }
+        
         this->rotateData();
 
         std::memcpy(this->cpos, str, slen);
