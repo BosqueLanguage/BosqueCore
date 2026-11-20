@@ -26,11 +26,6 @@ namespace ᐸRuntimeᐳ
         CmpRBData(RColor color, uint16_t bheight, const CmpRBData<K, V>& data) : color{color}, bheight{bheight}, dcount{1}, entry{data.entry} { ; }
         CmpRBData(RColor color, uint16_t bheight, const XMapEntry<K, V>& value) : color{color}, bheight{bheight}, dcount{1}, entry{value} { ; }
         CmpRBData(RColor color, uint16_t bheight, const K& key, const V& value) : color{color}, bheight{bheight}, dcount{1}, entry{key, value} { ; }
-
-        void toValues(std::vector<XMapEntry<K, V>>& result) const
-        {
-            result.push_back(this->entry);
-        }
     };
 
     template<typename K, typename V> class CmpRBTreeLeaf;
@@ -270,34 +265,6 @@ namespace ᐸRuntimeᐳ
                     return curr->data.entry.value; //key matches the current node
                 }
             }
-        }
-        
-        static void reprToValues(std::vector<XMapEntry<K, V>>& result, const CmpRBNode<K, V>* node)
-        {
-            if(node == nullptr) {
-                return;
-            }
-            else {
-                const CmpRBNode<K, V>* ll = reprGetLeft(node);
-                const CmpRBNode<K, V>* rr = reprGetRight(node);
-                
-                if(ll != nullptr) {
-                    reprToValues(result, ll);
-                }
-                
-                node->data.entry.toValues(result);
-
-                if(rr != nullptr) {
-                    reprToValues(result, rr);
-                }
-
-                return;
-            }
-        }
-
-        void toValues(std::vector<XMapEntry<K, V>>& result) const
-        {
-            reprToValues(result, this->root);
         }
 
 private:
