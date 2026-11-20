@@ -2113,7 +2113,7 @@ class Monomorphizer {
 
         //check if the type has any supertypes that implement virtual or abstract methods
         const vvopts = pdecl.type.saturatedProvides.filter((pp) => (pp instanceof NominalTypeSignature) && (pp.decl instanceof AbstractNominalTypeDecl) && pp.decl.methods.some((mm) => mm.attributes.some((aa) => aa.name === "virtual") || mm.attributes.some((aa) => aa.name === "abstract")));
-        if(vvopts.length !== 0 && !this.instantiatedVTypeDefs.some((ivtd) => ivtd.tsig.tkeystr === pdecl.tkey)) {
+        if(!(pdecl.type instanceof AbstractConceptTypeDecl) && vvopts.length !== 0 && !this.instantiatedVTypeDefs.some((ivtd) => ivtd.tsig.tkeystr === pdecl.tkey)) {
             const tterms = pdecl.type.terms.map((tt) => (this.currentMapping as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(pdecl.type.sinfo, tt.name)));
             const vsupers = vvopts.map((pp) => this.currentMapping !== undefined ? pp.remapTemplateBindings(this.currentMapping) : pp);
             this.instantiatedVTypeDefs.push({ tsig: pdecl.tsig, tmapping: this.currentMapping, tdecl: pdecl.type, vsupers: vsupers, terms: tterms });
@@ -2771,7 +2771,7 @@ class Monomorphizer {
 
             const possibleinsts = this.instantiatedVTypeDefs.filter((ivtd) => ivtd.vsupers.some((vs) => vs.tkeystr === vcall.enclosingType.tkeystr));
             for(let j = 0; j < possibleinsts.length; ++j) {
-                const pkinds = vcall.mdecl.params.map((arg) => (arg instanceof PassingArgumentValue) ? arg.kind : undefined).filter((k) => k !== undefined) as ("ref" | "out" | "out?" | "inout")[];
+                const pkinds = vcall.mdecl.params.map((p) => p.pkind).filter((k) => k !== undefined) as ("ref" | "out" | "out?" | "inout")[];
                 const [tinst, minst] = Monomorphizer.resolveTypeMethodImplementation(possibleinsts[j].tsig as NominalTypeSignature, vcall.mdecl.name, vcall.mdecl.terms.length !== 0, vcall.mdecl.params.some((p) => p.type instanceof LambdaTypeSignature), pkinds) as [TypeSignature, MethodDecl];
 
                 const mkey = computeInvokeKeyForTypeMethod(tinst, minst, vcall.terms, vcall.lambdas);
@@ -2922,8 +2922,12 @@ class Monomorphizer {
                 const [tinst, minst] = Monomorphizer.resolveTypeMethodImplementation(possibleinsts[j].tsig as NominalTypeSignature, vcall.mdecl.name, vcall.mdecl.terms.length !== 0, vcall.mdecl.params.some((p) => p.type instanceof LambdaTypeSignature), pkinds) as [TypeSignature, MethodDecl];
 
                 const mkey = computeInvokeKeyForTypeMethod(tinst, minst, vcall.terms, vcall.lambdas);
-                const mmapping = possibleinsts[j].tmapping;
-                const restype = mmapping !== undefined ? minst.resultType.remapTemplateBindings(mmapping) : minst.resultType;
+
+                const typeMapping = TemplateNameMapper.generateTemplateMappingForTypeDecl(tinst as NominalTypeSignature);
+                const methodMapping = TemplateNameMapper.createInitialMapping(new Map<string, TypeSignature>(minst.terms.map((term, ti) => [term.name, vcall.terms[ti]])));
+                const mmapping = TemplateNameMapper.merge(typeMapping, methodMapping);
+                const restype = minst.resultType.remapTemplateBindings(mmapping);
+
                 vvopts.push(new VCallOptEntry(mkey, possibleinsts[j].tsig, restype));
             }
 

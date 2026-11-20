@@ -1756,7 +1756,7 @@ class ASMToIRConverter {
 
         if(hasdefaults) {
             for(let i = 0; i < defaulttags.length; ++i) {
-                if(Array.isArray(defaulttags[i])) {
+                if(Array.isArray(defaulttags[i]) && aargs[i] === undefined) {
                     const dfinfo = defaulttags[i] as [NominalTypeSignature, string, TypeSignature];
 
                     const ffargnames = dfinfo[0].decl.saturatedBFieldInfo.map<string>((bf) => bf.name);
@@ -4281,7 +4281,8 @@ class ASMToIRConverter {
                 stash = new IRTempAssignRefInvokeStatement(tmpvar, this.processTypeSignature(restype), ivvop.ivar, ivvop.ivartype, ivvop.passkind, ivvop);
             }
 
-            return [stash, new IRReturnValueSimpleStatement(new IRAccessTempVariableExpression(tmpvar))];
+            const cvv = this.makeCoercionExplicitAsNeeded(new IRAccessTempVariableExpression(tmpvar), restype, this.currentReturnType as TypeSignature);
+            return [stash, new IRReturnValueSimpleStatement(cvv)];
         }
     }
 

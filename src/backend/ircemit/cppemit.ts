@@ -3509,7 +3509,9 @@ class CPPEmitter {
                 return `void ${pdfname}(const void** args, void* resptr) { ${rstmt} }\n`;
             }
             else {
-                const ffargs = encltype.fields.filter((f) => f.defaultValue === undefined || f.defaultValue.isconst).map((f, ii) => {
+                const sargs = encltype.saturatedBFieldInfo.map((bfi) => dfields.find((df) => df.fkey === bfi.fkey) as IRMemberFieldDecl);
+
+                const ffargs = sargs.filter((f) => f.defaultValue === undefined || f.defaultValue.isconst).map((f, ii) => {
                     const ttype = this.typeInfoManager.emitTypeAsStd(f.declaredType.tkeystr);
                     return `${ttype} ${TransformCPPNameManager.convertIdentifier("$" + f.fname)} = *((${ttype}*)args[${ii}]);`;
                 });
@@ -3525,10 +3527,18 @@ class CPPEmitter {
     }
 
     private generateVCallImplSingle(vinvk: IRVInvokeInfo): [string, string] {
+        const haspassing = vinvk.params.some((p) => p.pkind !== undefined);
+        
         const paramstrs = vinvk.params.map((param) => this.emitIRInvokeParameterDecl(param)).join(", ");
         const rettyps = this.typeInfoManager.emitTypeAsReturn(vinvk.resultType.tkeystr);
 
         const ideclstr = `${rettyps} ${TransformCPPNameManager.convertInvokeKey(vinvk.vcallkey)}(${paramstrs})`;
+
+        const precondinfo = vinvk.preconditions.map((ipcs) => this.emitPreconditionCheckFunction(ipcs, vinvk));
+        const postcondinfo = vinvk.postconditions.map((ipcs) => this.emitPostconditionCheckFunction(ipcs, vinvk, haspassing));
+
+        const ppdecls = [...precondinfo, ...postcondinfo].map((ppc) => ppc[0]);
+        const ppdefs = [...precondinfo, ...postcondinfo].map((ppc) => ppc[1]);
 
         const opts = vinvk.vcallimpls.map((vc, ii) => {
             const dopt = (ii === vinvk.vcallimpls.length - 1) ? "default" : `case ${this.typeInfoManager.getTypeInfo(vc.rcvrtype.tkeystr).bsqtypeid}`;
@@ -3539,7 +3549,7 @@ class CPPEmitter {
         `    }\n}`;
         const idefstr = ideclstr + bodystr;
 
-        return [ideclstr + ";", idefstr];
+        return [(ppdecls.length !== 0 ? ppdecls.join("\n") + "\n" : "") + ideclstr + ";", (ppdefs.length !== 0 ? ppdefs.join("\n") + "\n" : "") + idefstr];
     }
 
     private generateVCallImpls(): [string, string] {

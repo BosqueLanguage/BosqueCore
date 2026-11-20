@@ -181,11 +181,14 @@ namespace ᐸRuntimeᐳ
             }
         }
 
+        //TODO: later we need to handle this in dependency order instead of just iterating linearly
         bool needsdefaults = std::find(valptrs, valptrs + tinfo->ftablecount, nullptr) != valptrs + tinfo->ftablecount;
         if(needsdefaults) {
             for(size_t i = 0; i < tinfo->ftablecount; ++i) {
                 if(valptrs[i] == nullptr) {
-                    initializeFieldWithDefaultConstructorValue((const void**)valptrs, valptrs[i], &tinfo->ftable[i]);
+                    void* valpos = (void*)((uint64_t*)valdata + tinfo->ftable[i].slotoffset);
+                    valptrs[i] = valpos;
+                    initializeFieldWithDefaultConstructorValue((const void**)valptrs, valpos, &tinfo->ftable[i]);
                 }
             }
         }
@@ -259,7 +262,9 @@ namespace ᐸRuntimeᐳ
         if(needsdefaults) {
             for(size_t i = 0; i < tinfo->ftablecount; ++i) {
                 if(valptrs[i] == nullptr) {
-                    initializeFieldWithDefaultConstructorValue((const void**)valptrs, valptrs[i], &tinfo->ftable[i]);
+                    void* valpos = (void*)((uint64_t*)valdata + tinfo->ftable[i].slotoffset);
+                    valptrs[i] = valpos;
+                    initializeFieldWithDefaultConstructorValue((const void**)valptrs, valpos, &tinfo->ftable[i]);
                 }
             }
         }
