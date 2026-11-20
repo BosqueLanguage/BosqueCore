@@ -121,8 +121,6 @@ namespace ᐸRuntimeᐳ
             0,
             layout,
             2,
-            nullptr,
-            0,
             TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_MapEntry<K, V>, (ParseToBSQFp)&parseToBSQ_MapEntry<K, V>, (BSQToJSONFp)&bsqToJSON_MapEntry<K, V>, (BSQToBAPIFp)&bsqToBAPI_MapEntry<K, V>, (DisplayValueFp)&displayValue_MapEntry<K, V> },
             name,
             false

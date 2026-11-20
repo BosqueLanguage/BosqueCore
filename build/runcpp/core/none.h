@@ -24,8 +24,6 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
-        nullptr,
-        0,
         TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_None, (ParseToBSQFp)&parseToBSQ_None, (BSQToJSONFp)&bsqToJSON_None, (BSQToBAPIFp)&bsqToBAPI_None, (DisplayValueFp)&displayValue_None },
         "None",
         true

@@ -18,6 +18,8 @@ describe ("Checker -- Entity Constructor", () => {
     it("should check default", function () {
         checkTestFunctionInFile('entity Foo { field f: Int = 0i; } function main(): Foo { return Foo{}; }');
         checkTestFunctionInFile('entity Foo { field f: Int = 0i; field g: Bool; } function main(): Foo { return Foo{g=true}; }');
+
+        checkTestFunctionInFile('entity Foo { field f: Int = 0i; field g: Bool = $f <= 0i; } function main(): Foo { return Foo{}; }');
     });
 
     it("should check skip positions", function () {

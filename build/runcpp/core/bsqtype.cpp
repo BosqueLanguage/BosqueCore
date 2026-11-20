@@ -148,22 +148,37 @@ namespace ᐸRuntimeᐳ
         }
     }
 
+    void initializeFieldWithDefaultConstructorValueDirect(const void** fargs, void* trgt, const TypeLayoutInfo* finfo)
+    {
+        bsq_validate(finfo->defaultparseFp != nullptr, "BSQ", 0, nullptr, "InitializeDefaultConstructorValue not implemented");
+
+        return finfo->defaultparseFp(fargs, trgt);
+    }
+
+    void initializeFieldWithDefaultConstructorValueWithPossibleProjection(const void** fargs, void* trgt, const TypeLayoutInfo* finfo)
+    {
+        bsq_validate(finfo->defaultparseFp != nullptr, "BSQ", 0, nullptr, "InitializeDefaultConstructorValue not implemented");
+
+        //TODO: -- we need to project the field arguments in fargs (which is the concrete entity) into the set of fields expected by the default constructor (which may be in a supertype) and have different 
+        //         number/layout of fields.
+        assert(false);
+
+        return finfo->defaultparseFp(fargs, trgt);
+    }
+
     void jsonParseToBSQ_Entity(const TypeInfo* tinfo, const json& j, void* resptr)
     {
         bsq_validate(j.is_object(), "BAPI -> BSQ", 0, nullptr, "Expected JSON object for entity");
 
         void* valdata = alloca(tinfo->bytesize);
-        void** valptrs = (void**)alloca(tinfo->slotcount * sizeof(void*));
-        std::fill(valptrs, valptrs + tinfo->slotcount, nullptr);
+        void** valptrs = (void**)alloca(tinfo->ftablecount * sizeof(void*));
+        std::fill(valptrs, valptrs + tinfo->ftablecount, nullptr);
 
         for(size_t i = 0; i < tinfo->ftablecount; ++i) {
             const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[i].fieldbsqtypeid);
             std::string fieldname = tinfo->ftable[i].fname;
 
-            if(!j.contains(fieldname)) {
-                //TODO: on explicit use of default we need to validate that the field is indeed optional
-            }
-            else {
+            if(j.contains(fieldname)) {
                 auto finfo = std::find_if(tinfo->ftable, tinfo->ftable + tinfo->ftablecount, [&j, &fieldname](const TypeLayoutInfo& fi) {
                     return fi.fname == fieldname;
                 });
@@ -174,6 +189,24 @@ namespace ᐸRuntimeᐳ
                 void* valpos = (void*)((uint64_t*)valdata + finfo->slotoffset);
                 valptrs[std::distance(tinfo->ftable, finfo)] = valpos;
                 ftypeinfo->opdispatch.jsonParseToBSQFp(ftypeinfo, j[fieldname], (void*)valpos);
+            }
+        }
+
+        //TODO: later we need to handle this in dependency order instead of just iterating linearly
+        bool needsdefaults = std::find(valptrs, valptrs + tinfo->ftablecount, nullptr) != valptrs + tinfo->ftablecount;
+        if(needsdefaults) {
+            for(size_t i = 0; i < tinfo->ftablecount; ++i) {
+                if(valptrs[i] == nullptr) {
+                    void* valpos = (void*)((uint64_t*)valdata + tinfo->ftable[i].slotoffset);
+                    valptrs[i] = valpos;
+
+                    if(tinfo->supertypescount == 0) {
+                        initializeFieldWithDefaultConstructorValueDirect((const void**)valptrs, valpos, &tinfo->ftable[i]);
+                    }
+                    else {
+                        initializeFieldWithDefaultConstructorValueWithPossibleProjection((const void**)valptrs, valpos, &tinfo->ftable[i]);
+                    }
+                }
             }
         }
 
@@ -188,8 +221,8 @@ namespace ᐸRuntimeᐳ
         lexer->consume();
 
         void* valdata = alloca(tinfo->bytesize);
-        void** valptrs = (void**)alloca(tinfo->slotcount * sizeof(void*));
-        std::fill(valptrs, valptrs + tinfo->slotcount, nullptr);
+        void** valptrs = (void**)alloca(tinfo->ftablecount * sizeof(void*));
+        std::fill(valptrs, valptrs + tinfo->ftablecount, nullptr);
 
         bool first = true;
         size_t cpos = 0;
@@ -241,6 +274,23 @@ namespace ᐸRuntimeᐳ
         }
         bsq_validate(lexer->testIsSymbol('}'), "BAPI -> BSQ", 0, nullptr, "Expected } for entity");
         lexer->consume();
+
+        bool needsdefaults = std::find(valptrs, valptrs + tinfo->ftablecount, nullptr) != valptrs + tinfo->ftablecount;
+        if(needsdefaults) {
+            for(size_t i = 0; i < tinfo->ftablecount; ++i) {
+                if(valptrs[i] == nullptr) {
+                    void* valpos = (void*)((uint64_t*)valdata + tinfo->ftable[i].slotoffset);
+                    valptrs[i] = valpos;
+                    
+                    if(tinfo->supertypescount == 0) {
+                        initializeFieldWithDefaultConstructorValueDirect((const void**)valptrs, valpos, &tinfo->ftable[i]);
+                    }
+                    else {
+                        initializeFieldWithDefaultConstructorValueWithPossibleProjection((const void**)valptrs, valpos, &tinfo->ftable[i]);
+                    }
+                }
+            }
+        }
 
         tinfo->opdispatch.validatingConstructorFp(valptrs, resptr);
     }

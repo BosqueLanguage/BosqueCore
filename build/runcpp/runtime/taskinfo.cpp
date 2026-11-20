@@ -86,6 +86,27 @@ namespace ᐸRuntimeᐳ
         }
     }
 
+    void TaskInfo::jsonParseIntoBSQ(const std::list<uint8_t*>& iobuffs, size_t totalbytes, uint32_t bsqid, void* outvalue)
+    {
+        const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(bsqid);
+
+        json jv = json::parse(IOBufferIterator::initializeBegin(iobuffs.cbegin(), totalbytes), IOBufferIterator::initializeEnd(iobuffs.cend(), totalbytes), nullptr, false);
+        bsq_validate(!jv.is_discarded(), "JSON -> BSQ", 0, nullptr, "Invalid JSON input");
+        
+        ofinfo->opdispatch.jsonParseToBSQFp(ofinfo, jv, outvalue);
+    }
+
+    size_t TaskInfo::bsqEmitIntoJSON(bool allowsensitive, uint32_t bsqid, const void* value, std::list<uint8_t*>& iobuffs)
+    {
+        const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(bsqid);
+        json jv = ofinfo->opdispatch.bsqToJSONFp(ofinfo, value);
+        std::string s = jv.dump(4);
+
+        IOBufferStreamingBuilder builder(allowsensitive);
+        builder.appendConstString(s.data(), s.size());
+        return builder.finalize(iobuffs);
+    }
+
     void TaskInfo::bapiParseIntoBSQ(bool sloppyinputs, const std::list<uint8_t*>& iobuffs, size_t totalbytes, uint32_t bsqid, void* outvalue)
     {
         const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(bsqid);

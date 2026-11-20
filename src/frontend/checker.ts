@@ -1725,7 +1725,7 @@ class TypeChecker {
         }
 
         if(!(exp.constype instanceof NominalTypeSignature) || !(exp.constype.decl instanceof TypedeclTypeDecl)) {
-            this.reportError(exp.sinfo, `Invalid type for literal typedecl expression -- ${exp.constype}`);
+            this.reportError(exp.sinfo, `Invalid type for literal typedecl expression -- ${exp.constype.tkeystr}`);
             return exp.setType(exp.constype);
         }
 
@@ -2903,7 +2903,7 @@ class TypeChecker {
 
         const tdecl = (resolvefrom as NominalTypeSignature).decl;
         if(tdecl instanceof AbstractEntityTypeDecl) {
-            return this.relations.resolveTypeMethodDeclaration(resolvefrom, name, isTemplate, hasLambda, pkinds, this.constraints); //a concrete subtype so we can resolve statically
+            return this.relations.resolveTypeMethodImplementation(resolvefrom, name, isTemplate, hasLambda, pkinds, this.constraints); //a concrete subtype so we can resolve statically
         }
 
         return undefined; //otherwise we have to do dynamic dispatch
@@ -2971,7 +2971,7 @@ class TypeChecker {
             this.checkError(exp.sinfo, rrt === undefined, `Method ${exp.name} is not specifically resolvable from type ${resolvefrom.emit()}`);
 
             if(rrt !== undefined) {
-                resolvedrtype = rrt.member.resultType;
+                resolvedrtype = rrt.member.resultType.remapTemplateBindings(rrt.typeinfo.mapping);
                 exp.resolvedImplType = rrt.typeinfo.tsig;
                 exp.resolvedMethodImpl = rrt.member;
             }
@@ -2979,7 +2979,7 @@ class TypeChecker {
         else {
             const smresolve = this.postfixInvokeStaticResolve(env, mresolve, exp.name, hastemplate, haslambda, pkinds, resolvefrom);
             if(smresolve !== undefined) {
-                resolvedrtype = smresolve.member.resultType;
+                resolvedrtype = smresolve.member.resultType.remapTemplateBindings(smresolve.typeinfo.mapping);
                 exp.resolvedImplType = smresolve.typeinfo.tsig;
                 exp.resolvedMethodImpl = smresolve.member;
             }
@@ -3810,6 +3810,11 @@ class TypeChecker {
             return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
         }
 
+        if(mresolve.member.attributes.some((attr) => attr.name === "virtual" || attr.name === "abstract")) {
+            this.reportError(exp.sinfo, `Method ${exp.name} is virtual and cannot be used with a ref receiver`);
+            return TypeResultWRefVarInfoResult.makeSimpleResult(exp.setType(new ErrorTypeSignature(exp.sinfo, undefined)));
+        }
+
         const rcvrname = exp.rcvr.srcname;
         const vinfo = env.resolveLocalVarInfoFromSrcName(rcvrname);
         if(vinfo === undefined) {
@@ -4256,7 +4261,7 @@ class TypeChecker {
             env = env.assignLocalVariable(rhs.setuncond[i]);
         }
 
-        this.checkError(stmt.sinfo, itype !== undefined && !(rhs instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(rhs.tsig, itype, this.constraints), `Expression of type ${TypeChecker.safeTypePrint(rhs.tsig)} cannot be assigned to variable of type ${TypeChecker.safeTypePrint(itype)}`);
+        this.checkError(stmt.sinfo, itype !== undefined && !(rhs.tsig instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(rhs.tsig, itype, this.constraints), `Expression of type ${TypeChecker.safeTypePrint(rhs.tsig)} cannot be assigned to variable of type ${TypeChecker.safeTypePrint(itype)}`);
         
         if(stmt.name === "_") {
             return env;
@@ -5483,7 +5488,7 @@ class TypeChecker {
                     const [, binds] = env.popLocalScope();
                     f.initdependencies = [...binds.accessed];
 
-                    this.checkError(f.sinfo, !this.relations.isSubtypeOf(decltype, f.declaredType, this.constraints), `Field initializer does not match declared type -- expected ${f.declaredType.emit()} but got ${decltype.emit()}`);
+                    this.checkError(f.sinfo, !(decltype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(decltype, f.declaredType, this.constraints), `Field initializer does not match declared type -- expected ${f.declaredType.emit()} but got ${decltype.emit()}`);
                 }
             }
         }

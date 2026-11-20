@@ -57,8 +57,6 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
-        nullptr,
-        0,
         TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_UUIDv4, (ParseToBSQFp)&parseToBSQ_UUIDv4, (BSQToJSONFp)&bsqToJSON_UUIDv4, (BSQToBAPIFp)&bsqToBAPI_UUIDv4, (DisplayValueFp)&displayValue_UUIDv4 },
         "UUIDv4",
         true
@@ -76,8 +74,6 @@ namespace ᐸRuntimeᐳ
         byteSizeToSlotCount(sizeof(XUUIDv7)),
         LayoutTag::Value,
         BSQ_PTR_MASK_LEAF,
-        nullptr,
-        0,
         nullptr,
         0,
         nullptr,

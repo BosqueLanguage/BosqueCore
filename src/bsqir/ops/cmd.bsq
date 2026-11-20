@@ -1,0 +1,8 @@
+declare namespace TransformCommand {
+    using Assembly;
+    using Transform;
+}
+
+public function main(asm: Assembly::BapiAssembly): Assembly::BapiAssembly {
+    return asm;
+}

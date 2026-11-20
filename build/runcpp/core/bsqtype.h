@@ -95,6 +95,7 @@ namespace ᐸRuntimeᐳ
         constexpr TypeOpDispatchInfo(ValidatingConstructorFp validatingConstructorFp, JSONParseToBSQFp jsonParseToBSQFp, ParseToBSQFp parseToBSQFp, BSQToJSONFp bsqToJSONFp, BSQToBAPIFp bsqToBAPIFp, DisplayValueFp displayFp) : validatingConstructorFp(validatingConstructorFp), jsonParseToBSQFp(jsonParseToBSQFp), parseToBSQFp(parseToBSQFp), bsqToJSONFp(bsqToJSONFp), bsqToBAPIFp(bsqToBAPIFp), displayFp(displayFp) {}
     };
 
+    using DefaultInvokeParsePtr = void(*)(const void**, void*);
     class TypeLayoutInfo
     {
     public:
@@ -103,18 +104,10 @@ namespace ᐸRuntimeᐳ
         uint32_t byteoffset;
         uint32_t slotoffset;
 
+        DefaultInvokeParsePtr defaultparseFp; //nullptr if no default parse function
+
         const char* fieldkey;
         const char* fname;
-    };
-
-    using VInvokePtr = void(*)(void);
-    class VInvokeTargetInfo
-    {
-    public:
-        uint32_t invokeid;
-        VInvokePtr invokeptr;
-
-        const char* invokekey;
     };
 
     class TypeInfo
@@ -131,8 +124,6 @@ namespace ᐸRuntimeᐳ
         const uint32_t supertypescount;
         const TypeLayoutInfo* ftable;
         const uint32_t ftablecount;
-        const VInvokeTargetInfo* vitable;
-        const uint32_t vitablecount;
         const TypeOpDispatchInfo opdispatch;
 
         const char* typekey;

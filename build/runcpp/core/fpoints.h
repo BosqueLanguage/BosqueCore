@@ -102,8 +102,6 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
-        nullptr,
-        0,
         TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_Float, (ParseToBSQFp)&parseToBSQ_Float, (BSQToJSONFp)&bsqToJSON_Float, (BSQToBAPIFp)&bsqToBAPI_Float, (DisplayValueFp)&displayValue_Float },
         "Float",
         true

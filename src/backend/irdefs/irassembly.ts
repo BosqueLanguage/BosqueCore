@@ -1,6 +1,6 @@
 import { IRCRegex, IRURegex, IRSourceInfo, IRCodeFileInfo } from "./irsupport.js";
 import { IRDashResultTypeSignature, IREListTypeSignature, IRFormatTypeSignature, IRLambdaParameterPackTypeSignature, IRNominalTypeSignature, IRTypeSignature } from "./irtype.js";
-import { IRBody, IRImmediateExpression, IRLiteralCRegexExpression, IRLiteralFormatCStringExpression, IRLiteralFormatStringExpression, IRLiteralUnicodeRegexExpression, IRSimpleExpression, IRStatement } from "./irbody.js";
+import { IRAtomicStatement, IRBody, IRImmediateExpression, IRLiteralCRegexExpression, IRLiteralFormatCStringExpression, IRLiteralFormatStringExpression, IRLiteralUnicodeRegexExpression, IRSimpleExpression, IRStatement } from "./irbody.js";
 
 import assert from "node:assert";
 
@@ -1690,6 +1690,19 @@ class IRLambdaParameterPackDecl {
     }
 }
 
+class IRVInvokeInfo extends IRInvokeMetaDecl {
+    readonly vcallkey: string;
+    readonly isabstract: boolean;
+    readonly vcallimpls: { rcvrtype: IRTypeSignature; impl: IRAtomicStatement[]}[];
+
+    constructor(ikey: string, recursive: "recursive" | "recursive?" | undefined, params: IRInvokeParameterDecl[], resultType: IRTypeSignature, preconditions: IRPreConditionDecl[], postconditions: IRPostConditionDecl[], docstr: IRDeclarationDocString | undefined, file: string, sinfo: IRSourceInfo, vkey: string, isabstract: boolean, vcallimpls: { rcvrtype: IRTypeSignature; impl: IRAtomicStatement[]}[]) {
+        super(ikey, recursive, params, resultType, preconditions, postconditions, docstr, file, sinfo);
+        this.vcallkey = vkey;
+        this.isabstract = isabstract;
+        this.vcallimpls = vcallimpls;
+    }
+}
+
 class IRAssembly {
     readonly code: IRCodeFileInfo[];
     readonly macrodefs: string[];
@@ -1744,6 +1757,7 @@ class IRAssembly {
 
     readonly typedeporder: IRTypeSignature[] = [];
     readonly typedepcycles: IRTypeSignature[][] = [];
+    readonly vcallimpls: IRVInvokeInfo[] = [];
 
     constructor(code: IRCodeFileInfo[], macrodefs: string[]) {
         this.code = code;
@@ -1954,8 +1968,8 @@ class IRAssembly {
             enums: this.enums.map((e) => IREnumTypeDecl.jsonEmit_IREnumTypeDecl(e)),
             simpletypedecls: this.simpletypedecls.map((td) => IRTypedeclSimpleTypeDecl.jsonEmit_IRTypedeclSimpleTypeDecl(td)),
             boundedtypedecls: this.boundedtypedecls.map((td) => IRTypedeclBoundedTypeDecl.jsonEmit_IRTypedeclBoundedTypeDecl(td)),
-            cstringtypedecls: this.cstringoftypedecls.map((td) => IRTypedeclCStringTypeDecl.jsonEmit_IRTypedeclCStringTypeDecl(td)),
-            stringtypedecls: this.stringoftypedecls.map((td) => IRTypedeclStringTypeDecl.jsonEmit_IRTypedeclStringTypeDecl(td)),
+            cstringoftypedecls: this.cstringoftypedecls.map((td) => IRTypedeclCStringTypeDecl.jsonEmit_IRTypedeclCStringTypeDecl(td)),
+            stringoftypedecls: this.stringoftypedecls.map((td) => IRTypedeclStringTypeDecl.jsonEmit_IRTypedeclStringTypeDecl(td)),
 
             //this.entities.map((e) => e.toBAPI()).join(","),
             //this.datamembers.map((dm) => dm.toBAPI()).join(","),
@@ -2043,5 +2057,6 @@ export {
     IREnvironmentVariableInformation, IRResourceInformation, IRTaskConfiguration,
     IRAPIDecl, IRAgentDecl, IRTaskDecl,
     IRLambdaParameterPackDecl,
+    IRVInvokeInfo,
     IRAssembly
 };

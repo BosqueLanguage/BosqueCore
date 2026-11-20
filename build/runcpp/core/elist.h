@@ -124,8 +124,6 @@ namespace ᐸRuntimeᐳ
             0,
             layout,
             2,
-            nullptr,
-            0,
             TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_EList2<T1, T2>, (ParseToBSQFp)&parseToBSQ_EList2<T1, T2>, (BSQToJSONFp)&bsqToJSON_EList2<T1, T2>, (BSQToBAPIFp)&bsqToBAPI_EList2<T1, T2>, (DisplayValueFp)&displayValue_EList2<T1, T2> },
             name,
             false
@@ -273,8 +271,6 @@ namespace ᐸRuntimeᐳ
             0,
             layout,
             3,
-            nullptr,
-            0,
             TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_EList3<T1, T2, T3>, (ParseToBSQFp)&parseToBSQ_EList3<T1, T2, T3>, (BSQToJSONFp)&bsqToJSON_EList3<T1, T2, T3>, (BSQToBAPIFp)&bsqToBAPI_EList3<T1, T2, T3>, (DisplayValueFp)&displayValue_EList3<T1, T2, T3> },
             name,
             false
@@ -446,8 +442,6 @@ namespace ᐸRuntimeᐳ
             0,
             layout,
             4,
-            nullptr,
-            0,
             TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_EList4<T1, T2, T3, T4>, (ParseToBSQFp)&parseToBSQ_EList4<T1, T2, T3, T4>, (BSQToJSONFp)&bsqToJSON_EList4<T1, T2, T3, T4>, (BSQToBAPIFp)&bsqToBAPI_EList4<T1, T2, T3, T4>, (DisplayValueFp)&displayValue_EList4<T1, T2, T3, T4> },
             name,
             false

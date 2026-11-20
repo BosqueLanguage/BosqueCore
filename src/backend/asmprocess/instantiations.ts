@@ -6,7 +6,7 @@ class LambdaInstantiationInfo {
 
     readonly binds: TemplateNameMapper | undefined;
     readonly lambdacons: Map<number, string>;
-    readonly monoinvids: Map<number, string>;
+    readonly monoinvids: Map<number, [string, string]>; //[implid, declid] -- implid is used for resolving the invoke -- declid is used for resolving the pre/post methods
 
     readonly capturedVars: [string, TypeSignature, "outer" | "local" | "param"][];
     readonly capturedLambdas: { pname: string, psigkey: string, rpos: "outer" | "local" | "param"}[];
@@ -15,7 +15,7 @@ class LambdaInstantiationInfo {
     readonly lsig: LambdaTypeSignature;
     readonly body: LambdaDecl;
 
-    constructor(newikey: string, binds: TemplateNameMapper | undefined, lambdacons: Map<number, string>, monoinvids: Map<number, string>, capturedVars: [string, TypeSignature, "outer" | "local" | "param"][], capturedLambdas: { pname: string, psigkey: string, rpos: "outer" | "local" | "param"}[], capturedTemplateNames: string[], lsig: LambdaTypeSignature, body: LambdaDecl) {
+    constructor(newikey: string, binds: TemplateNameMapper | undefined, lambdacons: Map<number, string>, monoinvids: Map<number, [string, string]>, capturedVars: [string, TypeSignature, "outer" | "local" | "param"][], capturedLambdas: { pname: string, psigkey: string, rpos: "outer" | "local" | "param"}[], capturedTemplateNames: string[], lsig: LambdaTypeSignature, body: LambdaDecl) {
         this.newikey = newikey;
         this.binds = binds;
         this.lambdacons = lambdacons;
@@ -35,11 +35,11 @@ class InvokeInstantiationInfo {
     readonly lambdaargs: { pname: string, psigkey: string }[]; //string corresponds to a lambda instantation info
     readonly lambdacons: Map<number, string>; //string corresponds to a lambda instantation info
 
-    readonly monoinvids: Map<number, string>;
+    readonly monoinvids: Map<number, [string, string]>; //[implid, declid] -- implid is used for resolving the invoke -- declid is used for resolving the pre/post methods
 
     readonly prepostikey: string | undefined; //for methods where the pre/post may be on virtual/abstract decls -- this is the ikey to use
-
-    constructor(newikey: string, binds: TemplateNameMapper | undefined, lambdaargs: { pname: string, psigkey: string }[], lambdacons: Map<number, string>, monoinvids: Map<number, string>, prepostikey: string | undefined) {
+    
+    constructor(newikey: string, binds: TemplateNameMapper | undefined, lambdaargs: { pname: string, psigkey: string }[], lambdacons: Map<number, string>, monoinvids: Map<number, [string, string]>, prepostikey: string | undefined) {
         this.newikey = newikey;
         this.binds = binds;
         this.lambdaargs = lambdaargs;
@@ -60,9 +60,9 @@ class TypeInstantiationInfo {
 
     //For the implicit invokes that happen in const declarations
     readonly lambdacons: Map<number, string>; //string corresponds to a lambda instantation info
-    readonly monoinvids: Map<number, string>;
+    readonly monoinvids: Map<number, [string, string]>; //[implid, declid] -- implid is used for resolving the invoke -- declid is used for resolving the pre/post methods
 
-    constructor(tkey: string, tsig: TypeSignature, binds: TemplateNameMapper | undefined, lambdacons: Map<number, string>, monoinvids: Map<number, string>) {
+    constructor(tkey: string, tsig: TypeSignature, binds: TemplateNameMapper | undefined, lambdacons: Map<number, string>, monoinvids: Map<number, [string, string]>) {
         this.tkey = tkey;
         this.tsig = tsig;
         this.binds = binds;
@@ -73,6 +73,18 @@ class TypeInstantiationInfo {
 
         this.lambdacons = lambdacons;
         this.monoinvids = monoinvids;
+    }
+}
+
+class VCallOptEntry {
+    readonly ikey: string;
+    readonly rcvrtype: TypeSignature;
+    readonly restype: TypeSignature;
+
+    constructor(ikey: string, rcvrtype: TypeSignature, restype: TypeSignature) {
+        this.ikey = ikey;
+        this.rcvrtype = rcvrtype;
+        this.restype = restype;
     }
 }
 
@@ -89,7 +101,9 @@ class NamespaceInstantiationInfo {
 
     //For the implicit invokes that happen in const declarations
     readonly lambdacons: Map<number, string> = new Map<number, string>(); //string corresponds to a lambda instantation info
-    readonly monoinvids: Map<number, string> = new Map<number, string>();
+    readonly monoinvids: Map<number, [string, string]> = new Map<number, [string, string]>(); //[implid, declid] -- implid is used for resolving the invoke -- declid is used for resolving the pre/post methods
+
+    readonly vcallopts: { tkey: string, vkey: string, ikeys: VCallOptEntry[] }[];
 
     constructor(ns: FullyQualifiedNamespace) {
         this.ns = ns;
@@ -99,6 +113,7 @@ class NamespaceInstantiationInfo {
         this.elists = new Map<string, EListTypeSignature>();
         this.lambdas = new Map<string, LambdaInstantiationInfo>();
         this.apiagentbinds = new Map<string, InvokeInstantiationInfo[]>();
+        this.vcallopts = [];
     }
 }
 
@@ -154,6 +169,7 @@ function computeInvokeKeyForLambdaFunction(basefn: string, line: number, terms: 
 }
 
 export {
+    VCallOptEntry,
     LambdaInstantiationInfo,
     InvokeInstantiationInfo,
     TypeInstantiationInfo,

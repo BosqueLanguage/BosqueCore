@@ -45,8 +45,6 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
-        nullptr,
-        0,
         TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_Bool, (ParseToBSQFp)&parseToBSQ_Bool, (BSQToJSONFp)&bsqToJSON_Bool, (BSQToBAPIFp)&bsqToBAPI_Bool, (DisplayValueFp)&displayValue_Bool },
         "Bool",
         true

@@ -23,19 +23,6 @@ function LIST_T_LEAF_CAPACITY(elem_size: number): number {
 //Duplicated from C++ definitions
 const BSQ_API_RESULT_DATA_SIZE_BYTES = 32;
 
-class VirtualInvokeInfo {
-    readonly ikey: string;
-
-    readonly enclosingtype: IRTypeSignature;
-    readonly fname: string;
-
-    constructor(ikey: string, enclosingtype: IRTypeSignature, fname: string) {
-        this.ikey = ikey;
-        this.enclosingtype = enclosingtype;
-        this.fname = fname;
-    }
-}
-
 class FieldOffsetInfo {
     readonly fkey: string;
     readonly fid: number;
@@ -93,7 +80,6 @@ class TypeInfo {
     readonly ptrmask: string | undefined; //undefined is for leaf values or structs
     readonly quickrelease: boolean;
 
-    readonly itable: VirtualInvokeInfo[] = [];
     readonly ftable: FieldOffsetInfo[]  = [];
 
     constructor(tkey: string, tsig: IRTypeSignature, bsqtypeid: number, bytesize: number, tag: LayoutTag, ptrmask: string | undefined, quickrelease: boolean) {
@@ -1111,7 +1097,7 @@ class TypeInfoManager {
 
 export {
     MAX_LIST_INLINE_BYTES, LIST_T_INLINE_CAPACITY, LIST_T_LEAF_CAPACITY,
-    VirtualInvokeInfo, FieldOffsetInfo, 
+    FieldOffsetInfo, 
     LayoutTag, TypeInfo,
     TypeInfoManager
 };

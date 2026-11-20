@@ -21,7 +21,7 @@ of
     LiteralIntExpression { field value: Int; }
     LiteralChkNatExpression { field value: ChkNat; }
     LiteralChkIntExpression { field value: ChkInt; }
-    LiteralRationalExpression { field value: Rational; }
+    LiteralRationalExpression { %* field value: Rational; *% }
     LiteralFloatExpression { field value: Float; }
     LiteralByteBufferExpression { field value: ByteBuffer; }
 

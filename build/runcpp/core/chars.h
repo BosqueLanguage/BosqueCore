@@ -62,8 +62,6 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
-        nullptr,
-        0,
         TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_Byte, (ParseToBSQFp)&parseToBSQ_Byte, (BSQToJSONFp)&bsqToJSON_Byte, (BSQToBAPIFp)&bsqToBAPI_Byte, (DisplayValueFp)&displayValue_Byte },
         "Byte",
         true
@@ -85,8 +83,6 @@ namespace ᐸRuntimeᐳ
         0,
         nullptr,
         0,
-        nullptr,
-        0,
         TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_CChar, (ParseToBSQFp)&parseToBSQ_CChar, (BSQToJSONFp)&bsqToJSON_CChar, (BSQToBAPIFp)&bsqToBAPI_CChar, (DisplayValueFp)&displayValue_CChar },
         "CChar",
         true
@@ -104,8 +100,6 @@ namespace ᐸRuntimeᐳ
         byteSizeToSlotCount(sizeof(XUnicodeChar)),
         LayoutTag::Value,
         BSQ_PTR_MASK_LEAF,
-        nullptr,
-        0,
         nullptr,
         0,
         nullptr,

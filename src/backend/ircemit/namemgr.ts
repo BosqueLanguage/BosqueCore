@@ -118,8 +118,8 @@ class TransformCPPNameManager {
         return TransformCPPNameManager.convertTypeKey(tkey) + s_specialop_sep + "validate_" + invariantidx;
     }
 
-    static generateNameForFieldDefaultFunction(tkey: string, fname: string): string {
-        return TransformCPPNameManager.convertTypeKey(tkey) + s_specialop_sep + "default" + s_specialop_sep + TransformCPPNameManager.safeifyName(fname);
+    static generateNameForFieldDefaultFunction(tkey: string, fname: string, isparse: boolean): string {
+        return TransformCPPNameManager.convertTypeKey(tkey) + s_specialop_sep + "default" + (isparse ? "_parse" : "") + s_specialop_sep + TransformCPPNameManager.safeifyName(fname);
     }
 
     static generateNameForInvokePreconditionCheck(ikey: string, requiresidx: number): string {
