@@ -3507,12 +3507,16 @@ class CPPEmitter {
             const rstmt = `*(${rtype}*)resptr = ${this.emitIRSimpleExpression(dfinfo.value, true)};`;
 
             if(dfinfo.isconst) {
-                return `void ${pdfname}(const void** args, void* resptr) { ${rstmt} }\n`;
+                return `void ${pdfname}(const void** args, void* resptr) { ${this.emitStatementList(dfinfo.stmts, [], [rstmt], "")} }\n`;
             }
             else {
-                const sargs = encltype.saturatedBFieldInfo.map((bfi) => afields.find((df) => df.fkey === bfi.fkey) as IRMemberFieldDecl);
+                const sargs = encltype.saturatedBFieldInfo.map((bfi) => {
+                     const containingtype = this.irasm.alltypes.get(bfi.containingtype.tkeystr) as IRAbstractNominalTypeDecl;
+                     return containingtype.fields.find((f) => f.fkey === bfi.fkey) as IRMemberFieldDecl;
+                 });
 
-                const ffargs = sargs.filter((f) => f.defaultValue === undefined || f.defaultValue.isconst).map((f, ii) => {
+                const ffargs = sargs.map<[IRMemberFieldDecl, number]>((f, ii) => [f, ii]).filter((fp) => fp[0].defaultValue === undefined || fp[0].defaultValue.isconst).map((fp) => {
+                    const [f, ii] = fp;
                     const ttype = this.typeInfoManager.emitTypeAsStd(f.declaredType.tkeystr);
                     return `${ttype} ${TransformCPPNameManager.convertIdentifier("$" + f.fname)} = *((${ttype}*)args[${ii}]);`;
                 });

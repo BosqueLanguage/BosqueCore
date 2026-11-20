@@ -1725,7 +1725,7 @@ class TypeChecker {
         }
 
         if(!(exp.constype instanceof NominalTypeSignature) || !(exp.constype.decl instanceof TypedeclTypeDecl)) {
-            this.reportError(exp.sinfo, `Invalid type for literal typedecl expression -- ${exp.constype}`);
+            this.reportError(exp.sinfo, `Invalid type for literal typedecl expression -- ${exp.constype.tkeystr}`);
             return exp.setType(exp.constype);
         }
 
@@ -5488,7 +5488,7 @@ class TypeChecker {
                     const [, binds] = env.popLocalScope();
                     f.initdependencies = [...binds.accessed];
 
-                    this.checkError(f.sinfo, !this.relations.isSubtypeOf(decltype, f.declaredType, this.constraints), `Field initializer does not match declared type -- expected ${f.declaredType.emit()} but got ${decltype.emit()}`);
+                    this.checkError(f.sinfo, !(decltype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(decltype, f.declaredType, this.constraints), `Field initializer does not match declared type -- expected ${f.declaredType.emit()} but got ${decltype.emit()}`);
                 }
             }
         }
