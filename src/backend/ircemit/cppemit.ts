@@ -3515,6 +3515,8 @@ class CPPEmitter {
                      return containingtype.fields.find((f) => f.fkey === bfi.fkey) as IRMemberFieldDecl;
                  });
 
+                //TODO: at some point to ensure that fields are initialized in the correct order based on their dependencies not just linearly
+
                 const ffargs = sargs.map<[IRMemberFieldDecl, number]>((f, ii) => [f, ii]).filter((fp) => fp[0].defaultValue === undefined || fp[0].defaultValue.isconst).map((fp) => {
                     const [f, ii] = fp;
                     const ttype = this.typeInfoManager.emitTypeAsStd(f.declaredType.tkeystr);

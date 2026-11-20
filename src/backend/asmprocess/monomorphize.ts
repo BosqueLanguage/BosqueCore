@@ -803,7 +803,7 @@ class Monomorphizer {
 
         const mdecl = this.currentMapping !== undefined ? (exp.resolvedDeclType as TypeSignature).remapTemplateBindings(this.currentMapping) : (exp.resolvedDeclType as TypeSignature);
         const tterms = this.currentMapping !== undefined ? exp.terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : exp.terms;
-        const declikey = computeInvokeKeyForTypeMethod(mdecl, exp.resolvedMethodDecl as MethodDecl, exp.terms, lambdas);
+        const declikey = computeInvokeKeyForTypeMethod(mdecl, exp.resolvedMethodDecl as MethodDecl, tterms, lambdas);
 
         this.instantiateSpecificResolvedMemberMethod(mdecl, exp.resolvedMethodDecl as MethodDecl, tterms, lambdas, declikey);
 
@@ -1007,7 +1007,7 @@ class Monomorphizer {
 
         const mdecl = this.currentMapping !== undefined ? (exp.resolvedImplType as TypeSignature).remapTemplateBindings(this.currentMapping) : (exp.resolvedDeclType as TypeSignature);
         const tterms = this.currentMapping !== undefined ? exp.terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : exp.terms;
-        const ikey = computeInvokeKeyForTypeMethod(mdecl, mdd, exp.terms, lambdas);
+        const ikey = computeInvokeKeyForTypeMethod(mdecl, mdd, tterms, lambdas);
 
         this.callinstmap.set(exp.monoinvid as number, [ikey, ikey]);
         this.instantiateSpecificResolvedMemberMethod(mdecl, mdd, tterms, lambdas, ikey);
