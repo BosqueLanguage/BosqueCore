@@ -148,9 +148,20 @@ namespace ᐸRuntimeᐳ
         }
     }
 
-    void initializeFieldWithDefaultConstructorValue(const void** fargs, void* trgt, const TypeLayoutInfo* finfo)
+    void initializeFieldWithDefaultConstructorValueDirect(const void** fargs, void* trgt, const TypeLayoutInfo* finfo)
     {
         bsq_validate(finfo->defaultparseFp != nullptr, "BSQ", 0, nullptr, "InitializeDefaultConstructorValue not implemented");
+
+        return finfo->defaultparseFp(fargs, trgt);
+    }
+
+    void initializeFieldWithDefaultConstructorValueWithPossibleProjection(const void** fargs, void* trgt, const TypeLayoutInfo* finfo)
+    {
+        bsq_validate(finfo->defaultparseFp != nullptr, "BSQ", 0, nullptr, "InitializeDefaultConstructorValue not implemented");
+
+        //TODO: -- we need to project the field arguments in fargs (which is the concrete entity) into the set of fields expected by the default constructor (which may be in a supertype) and have different 
+        //         number/layout of fields.
+        assert(false);
 
         return finfo->defaultparseFp(fargs, trgt);
     }
@@ -188,7 +199,13 @@ namespace ᐸRuntimeᐳ
                 if(valptrs[i] == nullptr) {
                     void* valpos = (void*)((uint64_t*)valdata + tinfo->ftable[i].slotoffset);
                     valptrs[i] = valpos;
-                    initializeFieldWithDefaultConstructorValue((const void**)valptrs, valpos, &tinfo->ftable[i]);
+
+                    if(tinfo->supertypescount == 0) {
+                        initializeFieldWithDefaultConstructorValueDirect((const void**)valptrs, valpos, &tinfo->ftable[i]);
+                    }
+                    else {
+                        initializeFieldWithDefaultConstructorValueWithPossibleProjection((const void**)valptrs, valpos, &tinfo->ftable[i]);
+                    }
                 }
             }
         }
@@ -264,7 +281,13 @@ namespace ᐸRuntimeᐳ
                 if(valptrs[i] == nullptr) {
                     void* valpos = (void*)((uint64_t*)valdata + tinfo->ftable[i].slotoffset);
                     valptrs[i] = valpos;
-                    initializeFieldWithDefaultConstructorValue((const void**)valptrs, valpos, &tinfo->ftable[i]);
+                    
+                    if(tinfo->supertypescount == 0) {
+                        initializeFieldWithDefaultConstructorValueDirect((const void**)valptrs, valpos, &tinfo->ftable[i]);
+                    }
+                    else {
+                        initializeFieldWithDefaultConstructorValueWithPossibleProjection((const void**)valptrs, valpos, &tinfo->ftable[i]);
+                    }
                 }
             }
         }

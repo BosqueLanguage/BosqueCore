@@ -3489,7 +3489,8 @@ class CPPEmitter {
     }
 
     private generateFieldDefaultParseImpls(): [string, string] {
-        const dfields = [...this.irasm.alltypes].flatMap((tp) => tp[1].fields.filter((ff) => ff.defaultValue !== undefined));
+        const afields = [...this.irasm.alltypes].flatMap((tp) => tp[1].fields);
+        const dfields = afields.filter((ff) => ff.defaultValue !== undefined);
         
         const dfielddecls = dfields.map((ff) => {
             const pdfname = TransformCPPNameManager.generateNameForFieldDefaultFunction(ff.enclosingType.tkeystr, ff.fname, true);
@@ -3509,7 +3510,7 @@ class CPPEmitter {
                 return `void ${pdfname}(const void** args, void* resptr) { ${rstmt} }\n`;
             }
             else {
-                const sargs = encltype.saturatedBFieldInfo.map((bfi) => dfields.find((df) => df.fkey === bfi.fkey) as IRMemberFieldDecl);
+                const sargs = encltype.saturatedBFieldInfo.map((bfi) => afields.find((df) => df.fkey === bfi.fkey) as IRMemberFieldDecl);
 
                 const ffargs = sargs.filter((f) => f.defaultValue === undefined || f.defaultValue.isconst).map((f, ii) => {
                     const ttype = this.typeInfoManager.emitTypeAsStd(f.declaredType.tkeystr);

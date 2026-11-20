@@ -90,7 +90,9 @@ namespace ᐸRuntimeᐳ
     {
         const TypeInfo* ofinfo = TypeInfo::getTypeInfoForID(bsqid);
 
-        json jv = json::parse(IOBufferIterator::initializeBegin(iobuffs.cbegin(), totalbytes), IOBufferIterator::initializeEnd(iobuffs.cend(), totalbytes));
+        json jv = json::parse(IOBufferIterator::initializeBegin(iobuffs.cbegin(), totalbytes), IOBufferIterator::initializeEnd(iobuffs.cend(), totalbytes), nullptr, false);
+        bsq_validate(!jv.is_discarded(), "JSON -> BSQ", 0, nullptr, "Invalid JSON input");
+        
         ofinfo->opdispatch.jsonParseToBSQFp(ofinfo, jv, outvalue);
     }
 
