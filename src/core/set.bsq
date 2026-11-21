@@ -18,23 +18,23 @@ __internal entity Set<T: keytype> {
     method add(k: T): Set<T> 
         requires !this.has(k);
     {
-        return SetOps::s_set_add<T>(this, k);
+        return SetOps::s_set_insert<T>(this, k);
     }
 
     ref method add(k: T) 
         requires !this.has(k);
     {
-        return SetOps::s_set_add_ref<T>(ref this, k);
+        return SetOps::s_set_insert_ref<T>(ref this, k);
     }
 
     method insert(k: T): Set<T> {
-        return SetOps::s_set_add<T>(this, k);
+        return SetOps::s_set_insert<T>(this, k);
     }
 
     ref method insert(k: T) {
-        return SetOps::s_set_add_ref<T>(ref this, k);
+        return SetOps::s_set_insert_ref<T>(ref this, k);
     }
-
+%*
     method delete(k: T): Set<T> 
         requires this.has(k);
     {
@@ -106,5 +106,6 @@ __internal entity Set<T: keytype> {
             return ListOps::s_set_intersection<T>(sets);
         }
     }
+*%
 #endif
 }

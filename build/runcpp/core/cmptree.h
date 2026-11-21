@@ -3,14 +3,13 @@
 #include "../common.h"
 
 #include "bsqtype.h"
-#include "mapentry.h"
 #include "integrals.h"
 
 #include "../runtime/allocator/alloc.h"
 
 namespace ᐸRuntimeᐳ
 {
-    template<typename K, typename V>
+    template<typename E>
     class CmpRBData
     {
     public:
@@ -18,50 +17,49 @@ namespace ᐸRuntimeᐳ
         uint16_t bheight; //black height of the subtree rooted at this node
 
         int32_t dcount; //note that when the color follows immediately in enclosing classes the alignment works -- currently this is just use as alignment padding
-        XMapEntry<K, V> entry;
+        E entry;
 
         CmpRBData(): color{}, bheight{}, dcount{}, entry{} { ; }
-        CmpRBData(const CmpRBData<K, V>& other) = default;
+        CmpRBData(const CmpRBData<E>& other) = default;
 
-        CmpRBData(RColor color, uint16_t bheight, const CmpRBData<K, V>& data) : color{color}, bheight{bheight}, dcount{1}, entry{data.entry} { ; }
-        CmpRBData(RColor color, uint16_t bheight, const XMapEntry<K, V>& value) : color{color}, bheight{bheight}, dcount{1}, entry{value} { ; }
-        CmpRBData(RColor color, uint16_t bheight, const K& key, const V& value) : color{color}, bheight{bheight}, dcount{1}, entry{key, value} { ; }
+        CmpRBData(RColor color, uint16_t bheight, const CmpRBData<E>& data) : color{color}, bheight{bheight}, dcount{1}, entry{data.entry} { ; }
+        CmpRBData(RColor color, uint16_t bheight, const E& e) : color{color}, bheight{bheight}, dcount{1}, entry{e} { ; }
     };
 
-    template<typename K, typename V> class CmpRBTreeLeaf;
-    template<typename K, typename V> class CmpRBTreeNode;
+    template<typename K, typename E> class CmpRBTreeLeaf;
+    template<typename K, typename E> class CmpRBTreeNode;
 
-    template<typename K, typename V>
+    template<typename K, typename E>
     class CmpRBNode
     {
     public:
-        const CmpRBData<K, V> data;
+        const CmpRBData<E> data;
 
         CmpRBNode() : data{} { ; }
-        CmpRBNode(const CmpRBNode<K, V>& other) = default;
+        CmpRBNode(const CmpRBNode<K, E>& other) = default;
 
-        CmpRBNode(const CmpRBData<K, V>& data) : data{data} { ; }
-        CmpRBNode(RColor color, uint16_t bheight, const CmpRBData<K, V>& data) : data{color, bheight, data} { ; }
+        CmpRBNode(const CmpRBData<E>& data) : data{data} { ; }
+        CmpRBNode(RColor color, uint16_t bheight, const CmpRBData<E>& data) : data{color, bheight, data} { ; }
     };
 
-    template<typename K, typename V>
-    class CmpRBTreeLeaf : public CmpRBNode<K, V>
+    template<typename K, typename E>
+    class CmpRBTreeLeaf : public CmpRBNode<K, E>
     {
     public:
-        CmpRBTreeLeaf() : CmpRBNode<K, V>{} { ; }
+        CmpRBTreeLeaf() : CmpRBNode<K, E>{} { ; }
         CmpRBTreeLeaf(const CmpRBTreeLeaf& other) = default;
 
-        CmpRBTreeLeaf(const CmpRBData<K, V>& data) : CmpRBNode<K, V>{data} { ; }
-        CmpRBTreeLeaf(RColor color, uint16_t bheight, const CmpRBData<K, V>& data) : CmpRBNode<K, V>{color, bheight, data} { ; }
+        CmpRBTreeLeaf(const CmpRBData<E>& data) : CmpRBNode<K, E>{data} { ; }
+        CmpRBTreeLeaf(RColor color, uint16_t bheight, const CmpRBData<E>& data) : CmpRBNode<K, E>{color, bheight, data} { ; }
     };
 
-    template<typename K, typename V>
+    template<typename K, typename E>
     consteval TypeInfo g_typeinfo_CmpRBTreeLeaf_generate(uint32_t tid, const char* mask, const char* tname, bool quickrelease)
     {
         return TypeInfo{
             tid,
-            sizeof(CmpRBTreeLeaf<K, V>),
-            byteSizeToSlotCount(sizeof(CmpRBTreeLeaf<K, V>)),
+            sizeof(CmpRBTreeLeaf<K, E>),
+            byteSizeToSlotCount(sizeof(CmpRBTreeLeaf<K, E>)),
             LayoutTag::Ref,
             mask,
             nullptr,
@@ -74,27 +72,27 @@ namespace ᐸRuntimeᐳ
         };
     }
 
-    template<typename K, typename V> 
-    class CmpRBTreeNode : public CmpRBNode<K, V>
+    template<typename K, typename E> 
+    class CmpRBTreeNode : public CmpRBNode<K, E>
     {
     public:
-        const CmpRBNode<K, V>* left;
-        const CmpRBNode<K, V>* right;
+        const CmpRBNode<K, E>* left;
+        const CmpRBNode<K, E>* right;
         int64_t tcount; //total number of elements in the subtree rooted at this node
 
-        CmpRBTreeNode() : CmpRBNode<K, V>{}, left{}, right{}, tcount{} { ; }
+        CmpRBTreeNode() : CmpRBNode<K, E>{}, left{}, right{}, tcount{} { ; }
         CmpRBTreeNode(const CmpRBTreeNode& other) = default;
 
-        CmpRBTreeNode(RColor color, uint16_t bheight, int64_t tcount, const CmpRBNode<K, V>* left, const CmpRBNode<K, V>* right, const CmpRBData<K, V>& data) : CmpRBNode<K, V>{color, bheight, data}, left{left}, right{right}, tcount{tcount} { ; }
+        CmpRBTreeNode(RColor color, uint16_t bheight, int64_t tcount, const CmpRBNode<K, E>* left, const CmpRBNode<K, E>* right, const CmpRBData<E>& data) : CmpRBNode<K, E>{color, bheight, data}, left{left}, right{right}, tcount{tcount} { ; }
     };
 
-    template<typename K, typename V> 
+    template<typename K, typename E> 
     consteval TypeInfo g_typeinfo_CmpRBTreeNode_generate(uint32_t tid, const char* mask, const char* tname)
     {
         return TypeInfo{
             tid,
-            sizeof(CmpRBTreeNode<K, V>),
-            byteSizeToSlotCount(sizeof(CmpRBTreeNode<K, V>)),
+            sizeof(CmpRBTreeNode<K, E>),
+            byteSizeToSlotCount(sizeof(CmpRBTreeNode<K, E>)),
             LayoutTag::Ref,
             mask,
             nullptr,
@@ -107,34 +105,34 @@ namespace ᐸRuntimeᐳ
         };
     }
 
-    template<typename K, typename V, uint32_t TreeID>
+    template<typename K, typename E, uint32_t TreeID>
     class CmpRBTree
     {
     public:
-        CmpRBNode<K, V>* root;
+        CmpRBNode<K, E>* root;
 
         static const TypeInfo* s_leaftypeinfo;
-        thread_local static GCAllocator<CmpRBTreeLeaf<K, V>>* s_leafallocator;
+        thread_local static GCAllocator<CmpRBTreeLeaf<K, E>>* s_leafallocator;
 
         static const TypeInfo* s_nodetypeinfo;
-        thread_local static GCAllocator<CmpRBTreeNode<K, V>>* s_nodeallocator;
+        thread_local static GCAllocator<CmpRBTreeNode<K, E>>* s_nodeallocator;
 
         CmpRBTree() : root{} { ; }
-        CmpRBTree(CmpRBNode<K, V>* node) : root{node} { ; }
+        CmpRBTree(CmpRBNode<K, E>* node) : root{node} { ; }
         CmpRBTree(const CmpRBTree& other) = default;
 
-        static bool isLeafType(const CmpRBNode<K, V>* node) { return (node != nullptr) && (gcGetTypeInfo(const_cast<CmpRBNode<K, V>*>(node)) == s_leaftypeinfo); }
-        static bool isNodeType(const CmpRBNode<K, V>* node) { return (node != nullptr) && (gcGetTypeInfo(const_cast<CmpRBNode<K, V>*>(node)) == s_nodetypeinfo); }
+        static bool isLeafType(const CmpRBNode<K, E>* node) { return (node != nullptr) && (gcGetTypeInfo(const_cast<CmpRBNode<K, E>*>(node)) == s_leaftypeinfo); }
+        static bool isNodeType(const CmpRBNode<K, E>* node) { return (node != nullptr) && (gcGetTypeInfo(const_cast<CmpRBNode<K, E>*>(node)) == s_nodetypeinfo); }
 
-        static const CmpRBTreeLeaf<K, V>* asLeafType(const CmpRBNode<K, V>* node) { return static_cast<const CmpRBTreeLeaf<K, V>*>(node); }
-        static const CmpRBTreeNode<K, V>* asNodeType(const CmpRBNode<K, V>* node) { return static_cast<const CmpRBTreeNode<K, V>*>(node); }
+        static const CmpRBTreeLeaf<K, E>* asLeafType(const CmpRBNode<K, E>* node) { return static_cast<const CmpRBTreeLeaf<K, E>*>(node); }
+        static const CmpRBTreeNode<K, E>* asNodeType(const CmpRBNode<K, E>* node) { return static_cast<const CmpRBTreeNode<K, E>*>(node); }
 
-        static int64_t reprGetBHeight(const CmpRBNode<K, V>* node)
+        static int64_t reprGetBHeight(const CmpRBNode<K, E>* node)
         {
             return (node != nullptr) ? node->data.bheight : 1;
         }
 
-        static int64_t reprGetCount(const CmpRBNode<K, V>* node)
+        static int64_t reprGetCount(const CmpRBNode<K, E>* node)
         {
             if(node == nullptr) {
                 return 0;
@@ -144,27 +142,27 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        static const CmpRBNode<K, V>* reprGetLeft(const CmpRBNode<K, V>* node) 
+        static const CmpRBNode<K, E>* reprGetLeft(const CmpRBNode<K, E>* node) 
         {
             return (isNodeType(node)) ? asNodeType(node)->left : nullptr;
         }
 
-        static const CmpRBNode<K, V>* reprGetRight(const CmpRBNode<K, V>* node) 
+        static const CmpRBNode<K, E>* reprGetRight(const CmpRBNode<K, E>* node) 
         {
             return (isNodeType(node)) ? asNodeType(node)->right : nullptr;
         }
 
         static uint16_t computeNewBHeight_ForTreeLeaf(RColor color) { return 1 + ((color == RColor::Black) ? 1 : 0); }
-        static uint16_t computeNewBHeight_ForTreeNode(RColor color, const CmpRBNode<K, V>* left, const CmpRBNode<K, V>* right) { return reprGetBHeight(left) + ((color == RColor::Black) ? 1 : 0); }
-        static int64_t computeNewCount_ForTreeNode(const CmpRBNode<K, V>* left, const CmpRBNode<K, V>* right, const CmpRBData<K, V>& data) { return reprGetCount(left) + reprGetCount(right) + data.dcount; }
+        static uint16_t computeNewBHeight_ForTreeNode(RColor color, const CmpRBNode<K, E>* left, const CmpRBNode<K, E>* right) { return reprGetBHeight(left) + ((color == RColor::Black) ? 1 : 0); }
+        static int64_t computeNewCount_ForTreeNode(const CmpRBNode<K, E>* left, const CmpRBNode<K, E>* right, const CmpRBData<E>& data) { return reprGetCount(left) + reprGetCount(right) + data.dcount; }
 
         template <typename Iter>
-        static CmpRBNode<K, V>* mkinitial(const XMapEntry<K, V>& value)
+        static CmpRBNode<K, E>* mkinitial(const E& value)
         {
-            return s_leafallocator->construct(CmpRBData<K, V>(RColor::Black, 2, value));
+            return s_leafallocator->construct(CmpRBData<E>(RColor::Black, 2, value));
         }
 
-        static CmpRBNode<K, V>* mknode(RColor color, const CmpRBNode<K, V>* left, const CmpRBNode<K, V>* right, const CmpRBData<K, V>& data)
+        static CmpRBNode<K, E>* mknode(RColor color, const CmpRBNode<K, E>* left, const CmpRBNode<K, E>* right, const CmpRBData<E>& data)
         {
             if(left == nullptr && right == nullptr) {
                 return s_leafallocator->construct(color, computeNewBHeight_ForTreeLeaf(color), data);
@@ -174,18 +172,18 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        static CmpRBNode<K, V>* copyNodeReplaceData(const CmpRBNode<K, V>* node, const CmpRBData<K, V>& ndata)
+        static CmpRBNode<K, E>* copyNodeReplaceData(const CmpRBNode<K, E>* node, const CmpRBData<E>& ndata)
         {
             if(isLeafType(node)) {
                 return s_leafallocator->construct(node->data.color, computeNewBHeight_ForTreeLeaf(node->data.color), ndata);
             }  
             else {
-                const CmpRBTreeNode<K, V>* tnode = asNodeType(node);
+                const CmpRBTreeNode<K, E>* tnode = asNodeType(node);
                 return s_nodeallocator->construct(node->data.color, computeNewBHeight_ForTreeNode(node->data.color, tnode->left, tnode->right), computeNewCount_ForTreeNode(tnode->left, tnode->right, ndata), tnode->left, tnode->right, ndata);
             }
         }
 
-        static CmpRBNode<K, V>* mkcopynode(RColor color, const CmpRBNode<K, V>* left, const CmpRBNode<K, V>* right, const CmpRBData<K, V>& data)
+        static CmpRBNode<K, E>* mkcopynode(RColor color, const CmpRBNode<K, E>* left, const CmpRBNode<K, E>* right, const CmpRBData<E>& data)
         {
             if(left == nullptr && right == nullptr) {
                 return s_leafallocator->construct(color, computeNewBHeight_ForTreeLeaf(color), data);
@@ -195,7 +193,7 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        static const CmpRBNode<K, V>* reprGetMinNode(const CmpRBNode<K, V>* curr)
+        static const CmpRBNode<K, E>* reprGetMinNode(const CmpRBNode<K, E>* curr)
         {
             while(reprGetLeft(curr) != nullptr) {
                 curr = reprGetLeft(curr);
@@ -203,7 +201,7 @@ namespace ᐸRuntimeᐳ
             return curr;
         }
 
-        static const CmpRBNode<K, V>* reprGetMaxNode(const CmpRBNode<K, V>* curr)
+        static const CmpRBNode<K, E>* reprGetMaxNode(const CmpRBNode<K, E>* curr)
         {
             while(reprGetRight(curr) != nullptr) {
                 curr = reprGetRight(curr);
@@ -211,14 +209,14 @@ namespace ᐸRuntimeᐳ
             return curr;
         }
 
-        static XMapEntry<K, V> reprGetIndexValue(int64_t index, const CmpRBNode<K, V>* curr)
+        static E reprGetIndexValue(int64_t index, const CmpRBNode<K, E>* curr)
         {
             while(true) {
                 if(isLeafType(curr)) {
                     return curr->data.entry;
                 }
                 else {
-                    const CmpRBTreeNode<K, V>* tnode = asNodeType(curr);
+                    const CmpRBTreeNode<K, E>* tnode = asNodeType(curr);
                     int64_t lcount = reprGetCount(tnode->left);
 
                     if(index < lcount) {
@@ -235,7 +233,7 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        static const CmpRBNode<K, V>* reprGetKeyNode(const K& key, const CmpRBNode<K, V>* curr)
+        static const CmpRBNode<K, E>* reprGetKeyNode(const K& key, const CmpRBNode<K, E>* curr)
         {
             while(curr != nullptr) {
                 if(key < curr->data.entry.key) {
@@ -252,7 +250,7 @@ namespace ᐸRuntimeᐳ
             return nullptr; //key not found
         }
 
-        static V reprGetKeyValue(const K& key, const CmpRBNode<K, V>* curr)
+        static E reprGetKeyValue(const K& key, const CmpRBNode<K, E>* curr)
         {
             while(true) {
                 if(key < curr->data.entry.key) {
@@ -278,10 +276,10 @@ private:
         {
         public:
             const InsertResultTag tag;
-            const CmpRBNode<K, V>* tnode;
+            const CmpRBNode<K, E>* tnode;
 
-            static InsertResult makeDone(const CmpRBNode<K, V>* tnode) { return InsertResult{InsertResultTag::Done, tnode}; }
-            static InsertResult makeTree(const CmpRBNode<K, V>* ptree) { return InsertResult{InsertResultTag::Tree, ptree}; }
+            static InsertResult makeDone(const CmpRBNode<K, E>* tnode) { return InsertResult{InsertResultTag::Done, tnode}; }
+            static InsertResult makeTree(const CmpRBNode<K, E>* ptree) { return InsertResult{InsertResultTag::Tree, ptree}; }
 
             bool isEmpty() const { return this->tnode == nullptr; }
             bool isDone() const { return this->tag == InsertResultTag::Done; }
@@ -305,16 +303,16 @@ private:
         {
         public:
             const DeleteResultTag tag;
-            const CmpRBNode<K, V>* tnode;
+            const CmpRBNode<K, E>* tnode;
 
-            static DeleteResult makeDone(const CmpRBNode<K, V>* tnode) { return DeleteResult{DeleteResultTag::Done, tnode}; }
-            static DeleteResult makeShort(const CmpRBNode<K, V>* tnode) { return DeleteResult{DeleteResultTag::Short, tnode}; }
+            static DeleteResult makeDone(const CmpRBNode<K, E>* tnode) { return DeleteResult{DeleteResultTag::Done, tnode}; }
+            static DeleteResult makeShort(const CmpRBNode<K, E>* tnode) { return DeleteResult{DeleteResultTag::Short, tnode}; }
 
             bool isDone() const { return this->tag == DeleteResultTag::Done; }
             bool isShort() const { return this->tag == DeleteResultTag::Short; }
         };
 
-        static int64_t checkRBPathLengthInvariant(const CmpRBNode<K, V>* node)
+        static int64_t checkRBPathLengthInvariant(const CmpRBNode<K, E>* node)
         {
             if(node == nullptr) {
                 return 0;
@@ -324,7 +322,7 @@ private:
                 return (node->data.color == RColor::Black) ? 1 : 0;
             }
             else {
-                const CmpRBTreeNode<K, V>* tnode = asNodeType(node);
+                const CmpRBTreeNode<K, E>* tnode = asNodeType(node);
             
                 int64_t lc = checkRBPathLengthInvariant(tnode->left);
                 if(lc == -1) {
@@ -344,13 +342,13 @@ private:
             }
         }
 
-        static bool checkRBChildColorInvariant(const CmpRBNode<K, V>* node)
+        static bool checkRBChildColorInvariant(const CmpRBNode<K, E>* node)
         {
             if(node == nullptr || isLeafType(node)) {
                 return true;
             } 
             else {
-                const CmpRBTreeNode<K, V>* tnode = asNodeType(node);
+                const CmpRBTreeNode<K, E>* tnode = asNodeType(node);
                 
                 if(tnode->data.color == RColor::Red) {
                     if(tnode->left != nullptr && tnode->left->data.color == RColor::Red) {
@@ -367,13 +365,13 @@ private:
             return true;
         }
 
-        static bool checkRBLeafInvariant(const CmpRBNode<K, V>* node)
+        static bool checkRBLeafInvariant(const CmpRBNode<K, E>* node)
         {
             if(node == nullptr || isLeafType(node)) {
                 return true;
             }
             else {
-                const CmpRBTreeNode<K, V>* tnode = asNodeType(node);
+                const CmpRBTreeNode<K, E>* tnode = asNodeType(node);
                 
                 if(tnode->left == nullptr && tnode->right == nullptr) {
                     return false;
@@ -383,19 +381,19 @@ private:
             }
         }
 
-        static bool checkRBInvariants(const CmpRBNode<K, V>* node)
+        static bool checkRBInvariants(const CmpRBNode<K, E>* node)
         {
             return checkRBChildColorInvariant(node) && checkRBPathLengthInvariant(node) >= 0 && checkRBLeafInvariant(node);
         }
             
-        static void debugAssertInvariants(const CmpRBNode<K, V>* node, int64_t expectedCount)
+        static void debugAssertInvariants(const CmpRBNode<K, E>* node, int64_t expectedCount)
         {
             assert(checkRBInvariants(node));
             assert(reprGetCount(node) == expectedCount);
         }
 
         // double red violation on the LL side  (B (R (R a x b) y c) z d) = T (R (B a x b) y (B c z d))
-        static InsertResult balancehelper_RR_LL(const CmpRBNode<K, V>* cur)
+        static InsertResult balancehelper_RR_LL(const CmpRBNode<K, E>* cur)
         {
             assert(cur != nullptr);
 
@@ -407,14 +405,14 @@ private:
                 return emptyInsertResult;
             }
             else {
-                const CmpRBTreeNode<K, V>* tnode = asNodeType(cur);
+                const CmpRBTreeNode<K, E>* tnode = asNodeType(cur);
 
-                const CmpRBNode<K, V>* l = reprGetLeft(tnode);
+                const CmpRBNode<K, E>* l = reprGetLeft(tnode);
                 if(l == nullptr || l->data.color != RColor::Red) {
                     return emptyInsertResult;
                 }
 
-                const CmpRBNode<K, V>* ll = reprGetLeft(l);
+                const CmpRBNode<K, E>* ll = reprGetLeft(l);
                 if(ll == nullptr || ll->data.color != RColor::Red) {
                     return emptyInsertResult;
                 }
@@ -430,7 +428,7 @@ private:
         }
 
         // double red violation on the LR side  (B (R a x (R b y c)) z d) = T (R (B a x b) y (B c z d))
-        static InsertResult balancehelper_RR_LR(const CmpRBNode<K, V>* cur)
+        static InsertResult balancehelper_RR_LR(const CmpRBNode<K, E>* cur)
         {
             assert(cur != nullptr);
 
@@ -442,14 +440,14 @@ private:
                 return emptyInsertResult;
             }
             else {
-                const CmpRBTreeNode<K, V>* tnode = asNodeType(cur);
+                const CmpRBTreeNode<K, E>* tnode = asNodeType(cur);
 
-                const CmpRBNode<K, V>* l  = reprGetLeft(tnode);
+                const CmpRBNode<K, E>* l  = reprGetLeft(tnode);
                 if(l == nullptr || l->data.color != RColor::Red) {
                     return emptyInsertResult;
                 }
 
-                const CmpRBNode<K, V>* lr = reprGetRight(l);
+                const CmpRBNode<K, E>* lr = reprGetRight(l);
                 if(lr == nullptr || lr->data.color != RColor::Red) {
                     return emptyInsertResult;
                 }
@@ -465,7 +463,7 @@ private:
         }
 
         // double red violation on the RL side  (B a x (R (R b y c) z d)) = T (R (B a x b) y (B c z d))
-        static InsertResult balancehelper_RR_RL(const CmpRBNode<K, V>* cur)
+        static InsertResult balancehelper_RR_RL(const CmpRBNode<K, E>* cur)
         {
             assert(cur != nullptr);
             
@@ -477,14 +475,14 @@ private:
                 return emptyInsertResult;
             }
             else {
-                const CmpRBTreeNode<K, V>* tnode = asNodeType(cur);
+                const CmpRBTreeNode<K, E>* tnode = asNodeType(cur);
 
-                const CmpRBNode<K, V>* r = reprGetRight(tnode);
+                const CmpRBNode<K, E>* r = reprGetRight(tnode);
                 if(r == nullptr || r->data.color != RColor::Red) {
                     return emptyInsertResult;
                 }
 
-                const CmpRBNode<K, V>* rl = reprGetLeft(r);
+                const CmpRBNode<K, E>* rl = reprGetLeft(r);
                 if(rl == nullptr || rl->data.color != RColor::Red) {
                     return emptyInsertResult;
                 }
@@ -500,7 +498,7 @@ private:
         }
 
         // double red violation on the RR side balance (B a x (R b y (R c z d))) = T (R (B a x b) y (B c z d))
-        static InsertResult balancehelper_RR_RR(const CmpRBNode<K, V>* cur)
+        static InsertResult balancehelper_RR_RR(const CmpRBNode<K, E>* cur)
         {
             assert(cur != nullptr);
 
@@ -512,14 +510,14 @@ private:
                 return emptyInsertResult;
             }
             else {
-                const CmpRBTreeNode<K, V>* tnode = asNodeType(cur);
+                const CmpRBTreeNode<K, E>* tnode = asNodeType(cur);
 
-                const CmpRBNode<K, V>* r = reprGetRight(tnode);
+                const CmpRBNode<K, E>* r = reprGetRight(tnode);
                 if(r == nullptr || r->data.color != RColor::Red) {
                     return emptyInsertResult;
                 }
 
-                const CmpRBNode<K, V>* rr = reprGetRight(r);
+                const CmpRBNode<K, E>* rr = reprGetRight(r);
                 if(rr == nullptr || rr->data.color != RColor::Red) {
                     return emptyInsertResult;
                 }
@@ -535,7 +533,7 @@ private:
         }
 
         // Just roll up the black nodes -- balance (B a x b) = D (B a x b)
-        static InsertResult balancehelper_S_B(const CmpRBNode<K, V>* cur)
+        static InsertResult balancehelper_S_B(const CmpRBNode<K, E>* cur)
         {
             assert(cur != nullptr);
 
@@ -547,7 +545,7 @@ private:
         }
 
         // Tentatively roll up the red nodes -- balance (R a x b) = T (R a x b)
-        static InsertResult balancehelper_S_R(const CmpRBNode<K, V>* cur)
+        static InsertResult balancehelper_S_R(const CmpRBNode<K, E>* cur)
         {
             assert(cur != nullptr);
 
@@ -564,7 +562,7 @@ private:
                 return rres;
             }
 
-            const CmpRBNode<K, V>* cur = rres.tnode;
+            const CmpRBNode<K, E>* cur = rres.tnode;
 
             InsertResult res_rr_ll = balancehelper_RR_LL(cur);
             if(!res_rr_ll.isEmpty()) {
@@ -594,56 +592,56 @@ private:
             return balancehelper_S_R(cur);
         }
 
-        static InsertResult insertrec(const CmpRBNode<K, V>* curr, const K& key, const V& value)
+        static InsertResult insertrec(const CmpRBNode<K, E>* curr, const E& entry)
         {
             if(curr == nullptr) {
                 //add the element in a new leaf
-                CmpRBTreeLeaf<K, V>* nleaf = s_leafallocator->construct(CmpRBData<K, V>(RColor::Red, 1, key, value));
+                CmpRBTreeLeaf<K, E>* nleaf = s_leafallocator->construct(CmpRBData<E>(RColor::Red, 1, entry));
                 return InsertResult::makeTree(nleaf);
             }
 
             if(isLeafType(curr)) {
-                const CmpRBTreeLeaf<K, V>* leaf = asLeafType(curr);
+                const CmpRBTreeLeaf<K, E>* leaf = asLeafType(curr);
                 
-                if(key == leaf->data.entry.key) {
-                    CmpRBNode<K, V>* nnode = copyNodeReplaceData(curr, CmpRBData<K, V>(leaf->data.color, leaf->data.bheight, key, value));
+                if(entry.key == leaf->data.entry.key) {
+                    CmpRBNode<K, E>* nnode = copyNodeReplaceData(curr, CmpRBData<E>(leaf->data.color, leaf->data.bheight, entry));
                     return InsertResult::makeDone(nnode);
                 }
                 else {
-                    if(key < leaf->data.entry.key) {
-                        CmpRBNode<K, V>* lleaf = s_leafallocator->construct(CmpRBData<K, V>(RColor::Red, 1, key, value));
+                    if(entry.key < leaf->data.entry.key) {
+                        CmpRBNode<K, E>* lleaf = s_leafallocator->construct(CmpRBData<E>(RColor::Red, 1, entry));
                         return balance(InsertResult::makeTree(mknode(curr->data.color, lleaf, nullptr, curr->data)));
                     }
                     else {
-                        CmpRBTreeLeaf<K, V>* rleaf = s_leafallocator->construct(CmpRBData<K, V>(RColor::Red, 1, key, value));
+                        CmpRBTreeLeaf<K, E>* rleaf = s_leafallocator->construct(CmpRBData<E>(RColor::Red, 1, entry));
                         return balance(InsertResult::makeTree(mknode(curr->data.color, nullptr, rleaf, curr->data)));
                     }
                 }
             }
             else {
-                const CmpRBTreeNode<K, V>* opnode = asNodeType(curr);
-                const CmpRBNode<K, V>* l = opnode->left;
-                const CmpRBNode<K, V>* r = opnode->right;
+                const CmpRBTreeNode<K, E>* opnode = asNodeType(curr);
+                const CmpRBNode<K, E>* l = opnode->left;
+                const CmpRBNode<K, E>* r = opnode->right;
                 
-                if(key < opnode->data.entry.key) {
-                    InsertResult nleft = insertrec(l, key, value);
-                    return balance(nleft.apply([opnode, r](const CmpRBNode<K, V>* tnode) { return mknode(opnode->data.color, tnode, r, opnode->data); }));
+                if(entry.key < opnode->data.entry.key) {
+                    InsertResult nleft = insertrec(l, entry);
+                    return balance(nleft.apply([opnode, r](const CmpRBNode<K, E>* tnode) { return mknode(opnode->data.color, tnode, r, opnode->data); }));
                 }
-                else if(key > opnode->data.entry.key) {
-                    InsertResult nright = insertrec(r, key, value);
-                    return balance(nright.apply([opnode, l](const CmpRBNode<K, V>* tnode) { return mknode(opnode->data.color, l, tnode, opnode->data); }));
+                else if(entry.key > opnode->data.entry.key) {
+                    InsertResult nright = insertrec(r, entry);
+                    return balance(nright.apply([opnode, l](const CmpRBNode<K, E>* tnode) { return mknode(opnode->data.color, l, tnode, opnode->data); }));
                 }
                 else {
-                    CmpRBNode<K, V>* nnode = copyNodeReplaceData(curr, CmpRBData<K, V>(opnode->data.color, opnode->data.bheight, key, value));
+                    CmpRBNode<K, E>* nnode = copyNodeReplaceData(curr, CmpRBData<E>(opnode->data.color, opnode->data.bheight, entry));
                     return InsertResult::makeDone(nnode);
                 }
             }
         }
 
-        static CmpRBNode<K, V>* blacken(InsertResult rr)
+        static CmpRBNode<K, E>* blacken(InsertResult rr)
         {
             if(rr.tnode->data.color == RColor::Black) {
-                return const_cast<CmpRBNode<K, V>*>(rr.tnode);
+                return const_cast<CmpRBNode<K, E>*>(rr.tnode);
             }
             else {
                 return mknode(RColor::Black, reprGetLeft(rr.tnode), reprGetRight(rr.tnode), rr.tnode->data);
@@ -662,32 +660,32 @@ private:
         }
 
         template <typename Iter>
-        static CmpRBNode<K, V>* mklargerec(Iter start, Iter end)
+        static CmpRBNode<K, E>* mklargerec(Iter start, Iter end)
         {
-            CmpRBNode<K, V>* curr = s_leafallocator->construct(CmpRBData<K, V>(RColor::Red, 1, start->key, start->value));
+            CmpRBNode<K, E>* curr = s_leafallocator->construct(CmpRBData<E>(RColor::Red, 1, *start));
             ++start;
 
             while(start != end) {
-                curr = blacken(insertrec(curr, start->key, start->value));
+                curr = blacken(insertrec(curr, *start));
                 ++start;
             }
 
             return curr;
         }
 
-        XMapEntry<K, V> getFrontNode() const
+        E getFrontNode() const
         {
-            const CmpRBNode<K, V>* minNode = reprGetMinNode(this->root);
+            const CmpRBNode<K, E>* minNode = reprGetMinNode(this->root);
             return minNode->data.entry;
         }
 
-        XMapEntry<K, V> getBackNode() const
+        E getBackNode() const
         {
-            const CmpRBNode<K, V>* maxNode = reprGetMaxNode(this->root);
+            const CmpRBNode<K, E>* maxNode = reprGetMaxNode(this->root);
             return maxNode->data.entry;
         }
 
-        XMapEntry<K, V> getIndexNode(int64_t index) const
+        E getIndexNode(int64_t index) const
         {
             return reprGetIndexValue(index, this->root);
         }
@@ -697,38 +695,33 @@ private:
             return reprGetKeyNode(key, this->root) != nullptr;
         }
 
-        V getValue(const K& key) const
+        bool tryget(const K& key, E& entry) const
         {
-            return reprGetKeyValue(key, this->root);
-        }
-
-        bool tryget(const K& key, V& val) const
-        {
-            const CmpRBNode<K, V>* node = reprGetKeyNode(key, this->root);
+            const CmpRBNode<K, E>* node = reprGetKeyNode(key, this->root);
             if(node != nullptr) {
-                val = node->data.entry.value;
+                entry = node->data.entry;
                 return true;
             }
 
             return false;
         }
 
-        CmpRBTree<K, V, TreeID> insert(const K& key, const V& value) const
+        CmpRBTree<K, E, TreeID> insert(const E& entry) const
         {
-            CmpRBNode<K, V>* root = blacken(insertrec(this->root, key, value));
-            BSQ_IF_ENABLED(RB_INVARIANT_VALIDATE, debugAssertInvariants(root, reprGetCount(this->root) + (this->has(key) ? 0 : 1))); //note this->root is never modified so we can test here (after the insert)
+            CmpRBNode<K, E>* root = blacken(insertrec(this->root, entry));
+            BSQ_IF_ENABLED(RB_INVARIANT_VALIDATE, debugAssertInvariants(root, reprGetCount(this->root) + (this->has(entry.key) ? 0 : 1))); //note this->root is never modified so we can test here (after the insert)
 
-            return CmpRBTree<K, V, TreeID>{root};
+            return CmpRBTree<K, E, TreeID>{root};
         }
     };
 
-    template<typename K, typename V, uint32_t TreeID> 
+    template<typename K, typename E, uint32_t TreeID> 
     consteval TypeInfo g_typeinfo_CmpRBTree_generate(uint32_t tid, const char* tname)
     {
         return TypeInfo {
             tid,
-            sizeof(CmpRBTree<K, V, TreeID>),
-            byteSizeToSlotCount(sizeof(CmpRBTree<K, V, TreeID>)),
+            sizeof(CmpRBTree<K, E, TreeID>),
+            byteSizeToSlotCount(sizeof(CmpRBTree<K, E, TreeID>)),
             LayoutTag::Ref,
             "1",
             nullptr,

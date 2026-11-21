@@ -2221,21 +2221,21 @@ class CPPEmitter {
         `    inline constexpr TypeInfo g_typeinfo_CmpRBTreeNode_${ctname} = g_typeinfo_CmpRBTreeNode_generate<${krepr}, ${vrepr}>(${cmprb_treenodeid}, "${nodemask}", "CmpRBTreeNode_${tdecl.tkey}");\n` +
         `    inline constexpr TypeInfo g_typeinfo_CmpRBTree_${ctname} = g_typeinfo_CmpRBTree_generate<${krepr}, ${vrepr}, ${ttid.bsqtypeid}>(${cmprb_treeid}, "CmpRBTree_${tdecl.tkey}");\n` +
         '\n' +
-        `    extern thread_local GCAllocator<CmpRBTreeLeaf<${krepr}, ${vrepr}>> CmpRBTreeLeaf_${ctname}_allocator;\n` +
-        `    extern thread_local GCAllocator<CmpRBTreeNode<${krepr}, ${vrepr}>> CmpRBTreeNode_${ctname}_allocator;\n` +
+        `    extern thread_local GCAllocator<CmpRBTreeLeaf<${krepr}, XMapEntry<${krepr}, ${vrepr}>>> CmpRBTreeLeaf_${ctname}_allocator;\n` +
+        `    extern thread_local GCAllocator<CmpRBTreeNode<${krepr}, XMapEntry<${krepr}, ${vrepr}>>> CmpRBTreeNode_${ctname}_allocator;\n` +
         '\n' +
         `    inline constexpr TypeLayoutInfo g_ftable_${ctname}[2] = { { -1, ${kttid.bsqtypeid}, 0, 0, nullptr, "key", "key" }, { -2, ${vttid.bsqtypeid}, ${kttid.bytesize}, ${kttid.slotcount}, nullptr, "value", "value" } };\n` +
         `    inline constexpr TypeInfo g_typeinfo_${ctname} = g_typeinfo_MapKV_generate<${krepr}, ${vrepr}, ${ttid.bsqtypeid}>(${ttid.bsqtypeid}, g_ftable_${ctname}, "1", "${tdecl.tkey}");\n` +
         `}`;
 
         const tidefs = `namespace ᐸRuntimeᐳ {\n` +
-        `    thread_local GCAllocator<CmpRBTreeLeaf<${krepr}, ${vrepr}>> CmpRBTreeLeaf_${ctname}_allocator(&g_typeinfo_CmpRBTreeLeaf_${ctname});\n` +
-        `    thread_local GCAllocator<CmpRBTreeNode<${krepr}, ${vrepr}>> CmpRBTreeNode_${ctname}_allocator(&g_typeinfo_CmpRBTreeNode_${ctname});\n` +
+        `    thread_local GCAllocator<CmpRBTreeLeaf<${krepr}, XMapEntry<${krepr}, ${vrepr}>>> CmpRBTreeLeaf_${ctname}_allocator(&g_typeinfo_CmpRBTreeLeaf_${ctname});\n` +
+        `    thread_local GCAllocator<CmpRBTreeNode<${krepr}, XMapEntry<${krepr}, ${vrepr}>>> CmpRBTreeNode_${ctname}_allocator(&g_typeinfo_CmpRBTreeNode_${ctname});\n` +
         '\n' +
-        `    template<> const TypeInfo* CmpRBTree<${krepr}, ${vrepr}, ${ttid.bsqtypeid}>::s_leaftypeinfo = &g_typeinfo_CmpRBTreeLeaf_${ctname};\n` +
-        `    template<> thread_local GCAllocator<CmpRBTreeLeaf<${krepr}, ${vrepr}>>* CmpRBTree<${krepr}, ${vrepr}, ${ttid.bsqtypeid}>::s_leafallocator = &CmpRBTreeLeaf_${ctname}_allocator;\n` +
-        `    template<> const TypeInfo* CmpRBTree<${krepr}, ${vrepr}, ${ttid.bsqtypeid}>::s_nodetypeinfo = &g_typeinfo_CmpRBTreeNode_${ctname};\n` +
-        `    template<> thread_local GCAllocator<CmpRBTreeNode<${krepr}, ${vrepr}>>* CmpRBTree<${krepr}, ${vrepr}, ${ttid.bsqtypeid}>::s_nodeallocator = &CmpRBTreeNode_${ctname}_allocator;\n` +
+        `    template<> const TypeInfo* CmpRBTree<${krepr}, XMapEntry<${krepr}, ${vrepr}>, ${ttid.bsqtypeid}>::s_leaftypeinfo = &g_typeinfo_CmpRBTreeLeaf_${ctname};\n` +
+        `    template<> thread_local GCAllocator<CmpRBTreeLeaf<${krepr}, XMapEntry<${krepr}, ${vrepr}>>>* CmpRBTree<${krepr}, XMapEntry<${krepr}, ${vrepr}>, ${ttid.bsqtypeid}>::s_leafallocator = &CmpRBTreeLeaf_${ctname}_allocator;\n` +
+        `    template<> const TypeInfo* CmpRBTree<${krepr}, XMapEntry<${krepr}, ${vrepr}>, ${ttid.bsqtypeid}>::s_nodetypeinfo = &g_typeinfo_CmpRBTreeNode_${ctname};\n` +
+        `    template<> thread_local GCAllocator<CmpRBTreeNode<${krepr}, XMapEntry<${krepr}, ${vrepr}>>>* CmpRBTree<${krepr}, XMapEntry<${krepr}, ${vrepr}>, ${ttid.bsqtypeid}>::s_nodeallocator = &CmpRBTreeNode_${ctname}_allocator;\n` +
         `}`;
 
         return [tidecls, tidefs];
