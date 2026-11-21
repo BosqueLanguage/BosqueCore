@@ -229,13 +229,6 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        void toValues(std::vector<T>& result) const
-        {
-            for(size_t i = 0; i < (size_t)this->dcount; i++) {
-                result.push_back(this->data[i]);
-            }
-        }
-
         bool contains(const T& v) const
         {
             return std::find_if(std::execution::unseq, this->data.cbegin(), this->data.cbegin() + this->dcount, [&v](const T& x){ return (bool)(x == v); }) != (this->data.cbegin() + this->dcount);
@@ -620,34 +613,6 @@ namespace ᐸRuntimeᐳ
                     return curr->data.data[index - lcount]; //index is within the current node
                 }
             }
-        }
-        
-        static void reprToValues(std::vector<T>& result, const PosRBNode<T, K>* node)
-        {
-            if(node == nullptr) {
-                return;
-            }
-            else {
-                const PosRBNode<T, K>* ll = reprGetLeft(node);
-                const PosRBNode<T, K>* rr = reprGetRight(node);
-                
-                if(ll != nullptr) {
-                    reprToValues(result, ll);
-                }
-                
-                node->data.toValues(result);
-
-                if(rr != nullptr) {
-                    reprToValues(result, rr);
-                }
-
-                return;
-            }
-        }
-
-        void toValues(std::vector<T>& result) const
-        {
-            reprToValues(result, this->root);
         }
 
 private:
