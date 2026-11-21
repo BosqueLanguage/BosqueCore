@@ -134,7 +134,7 @@ namespace ᐸRuntimeᐳ
 
         V get(const K& key) const
         {
-            return this->utree.getValue(key).value;
+            return this->utree.get(key).value;
         }
 
         bool tryget(const K& key, V& val) const

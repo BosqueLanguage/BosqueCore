@@ -260,7 +260,7 @@ namespace ᐸRuntimeᐳ
                     curr = reprGetRight(curr);
                 }
                 else {
-                    return curr->data.entry.value; //key matches the current node
+                    return curr->data.entry; //key matches the current node
                 }
             }
         }
@@ -704,6 +704,11 @@ private:
             }
 
             return false;
+        }
+
+        E get(const K& key) const
+        {
+            return reprGetKeyValue(key, this->root);
         }
 
         CmpRBTree<K, E, TreeID> insert(const E& entry) const
