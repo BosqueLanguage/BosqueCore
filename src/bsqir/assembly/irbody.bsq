@@ -1,7 +1,26 @@
 namespace Assembly;
 
+entity UseDefInfo {
+    field usedtemps: Set<Nat> = Set<Nat>{};
+    field usedparams: Set<CString> = Set<CString>{};
+    field usedlocals: Set<CString> = Set<CString>{};
+
+    field declaredtemps: Set<Nat> = Set<Nat>{};
+    field declaredlocals: Set<CString> = Set<CString>{};
+
+    field modifiedparams: Set<CString> = Set<CString>{};
+    field modifiedlocals: Set<CString> = Set<CString>{};
+
+    const empty: UseDefInfo = UseDefInfo{};
+
+    function merge(...udinfos: List<UseDefInfo>): UseDefInfo {
+        abort;
+    }
+}
+
 %** Top Expression Concept Type **%
 concept Expression {
+    abstract method getUseDef(): UseDefInfo;
 }
 
 %** Simple Expressions are safe to evaluate (never return bottom value) and do not involve calls or allocating constructors. **%
@@ -37,4 +56,8 @@ of
     LiteralTypedExpression { field value: LiteralExpression; field constype: TypeSignature; }
     LiteralTypedCStringExpression { field bytes: ByteBuffer; field constype: TypeSignature; }
     LiteralTypedStringExpression { field bytes: ByteBuffer; field constype: TypeSignature; }
-;
+& {
+    override method getUseDef(): UseDefInfo {
+        return UseDefInfo::empty;
+    }
+}

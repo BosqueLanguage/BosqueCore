@@ -1,0 +1,17 @@
+namespace Core;
+
+#if STRIPPED_CORE
+#else
+#if EXEC_LIBS
+namespace SetOps {
+    function s_set_empty<T: keytype>(s: Set<T>): Bool = @set_empty;
+    function s_set_size<T: keytype>(s: Set<T>): Nat = @set_size;
+
+    function s_set_has<T: keytype>(s: Set<T>, k: T): Bool = @set_has;
+    
+    function s_set_insert<T: keytype>(s: Set<T>, k: T): Set<T> = @set_insert;
+    function s_set_insert_ref<T: keytype>(ref s: Set<T>, k: T) = @set_insert_ref;
+}
+#else
+#endif %% EXEC_LIBS
+#endif %% STRIPPED_CORE

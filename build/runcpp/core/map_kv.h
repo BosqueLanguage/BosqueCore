@@ -14,7 +14,7 @@ namespace ᐸRuntimeᐳ
     {
     public:
         int64_t index;
-        CmpRBTree<K, V, TYPE_ID_MAP_KV> umap;
+        CmpRBTree<K, XMapEntry<K, V>, TYPE_ID_MAP_KV> umap;
 
         using value_type = XMapEntry<K, V>;
         using difference_type = std::ptrdiff_t;
@@ -71,11 +71,11 @@ namespace ᐸRuntimeᐳ
     class XMapKV
     {
     public:
-        CmpRBTree<K, V, TYPE_ID_MAP_KV> utree;
+        CmpRBTree<K, XMapEntry<K, V>, TYPE_ID_MAP_KV> utree;
 
         XMapKV() : utree{} {}
         XMapKV(const XMapKV& other) = default;
-        XMapKV(const CmpRBTree<K, V, TYPE_ID_MAP_KV>& n) : utree{n} { ; }
+        XMapKV(const CmpRBTree<K, XMapEntry<K, V>, TYPE_ID_MAP_KV>& n) : utree{n} { ; }
 
         static XMapKV mk(std::initializer_list<XMapEntry<K, V>> elems)
         {
@@ -83,7 +83,7 @@ namespace ᐸRuntimeᐳ
                 return XMapKV{};
             }
             else {
-                return XMapKV(CmpRBTree<K, V, TYPE_ID_MAP_KV>::mklargerec(elems.begin(), elems.end()));
+                return XMapKV(CmpRBTree<K, XMapEntry<K, V>, TYPE_ID_MAP_KV>::mklargerec(elems.begin(), elems.end()));
             }
         }
 
@@ -93,7 +93,7 @@ namespace ᐸRuntimeᐳ
                 return XMapKV{};
             }
             else {
-                return XMapKV(CmpRBTree<K, V, TYPE_ID_MAP_KV>::mklargerec(elems, elems + len));
+                return XMapKV(CmpRBTree<K, XMapEntry<K, V>, TYPE_ID_MAP_KV>::mklargerec(elems, elems + len));
             }
         }
 
@@ -134,22 +134,27 @@ namespace ᐸRuntimeᐳ
 
         V get(const K& key) const
         {
-            return this->utree.getValue(key);
+            return this->utree.get(key).value;
         }
 
         bool tryget(const K& key, V& val) const
         {
-            return this->utree.tryget(key, val);
+            XMapEntry<K, V> entry;
+            bool res = this->utree.tryget(key, entry);
+            if(res) {
+                val = entry.value;
+            }
+            return res;
         }
 
         XMapKV insert(const K& key, const V& value) const
         {
-            return XMapKV{this->utree.insert(key, value)};
+            return XMapKV{this->utree.insert(XMapEntry<K, V>{key, value})};
         }
 
         XMapKV insert(const XMapEntry<K, V>& entry) const
         {
-            return XMapKV{this->utree.insert(entry.key, entry.value)};
+            return XMapKV{this->utree.insert(entry)};
         }
     };
 

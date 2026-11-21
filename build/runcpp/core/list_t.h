@@ -47,13 +47,6 @@ namespace ᐸRuntimeᐳ
         size_t count;
         std::array<T, MAX_INLINE_CAPACITY> data;
 
-        void toValues(std::vector<T>& result) const
-        {
-            for(size_t i = 0; i < this->count; i++) {
-                result.push_back(this->data[i]);
-            }
-        }
-
         ListTInlineContent() : count{0}, data{} { ; } 
         ListTInlineContent(const ListTInlineContent& other) = default;
 

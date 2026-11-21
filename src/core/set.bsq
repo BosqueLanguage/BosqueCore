@@ -1,4 +1,111 @@
 namespace Core;
 
 __internal entity Set<T: keytype> {
+    #if STRIPPED_CORE
+#else
+    method empty(): Bool {
+        return SetOps::s_set_empty<T>(this);
+    }
+
+    method size(): Nat {
+        return SetOps::s_set_size<T>(this);
+    }
+
+    method has(k: T): Bool {
+        return SetOps::s_set_has<T>(this, k);
+    }
+
+    method add(k: T): Set<T> 
+        requires !this.has(k);
+    {
+        return SetOps::s_set_insert<T>(this, k);
+    }
+
+    ref method add(k: T) 
+        requires !this.has(k);
+    {
+        return SetOps::s_set_insert_ref<T>(ref this, k);
+    }
+
+    method insert(k: T): Set<T> {
+        return SetOps::s_set_insert<T>(this, k);
+    }
+
+    ref method insert(k: T) {
+        return SetOps::s_set_insert_ref<T>(ref this, k);
+    }
+%*
+    method delete(k: T): Set<T> 
+        requires this.has(k);
+    {
+        return SetOps::s_set_delete<T>(this, k);
+    }
+
+    ref method delete(k: T) 
+        requires this.has(k);
+    {
+        return SetOps::s_set_delete_ref<T>(ref this, k);
+    }
+
+    method clear(k: T): Set<T> {
+        return SetOps::s_set_clear<T>(this, k);
+    }
+
+    ref method clear(k: T) {
+        return SetOps::s_set_clear_ref<T>(ref this, k);
+    }
+
+    method merge(other: Set<T>): Set<T> {
+        return SetOps::s_set_merge<T>(this, other);
+    }
+
+    ref method merge(other: Set<T>) {
+        return SetOps::s_set_merge_ref<T>(ref this, other);
+    }
+
+    method difference(other: Set<T>): Set<T> {
+        return SetOps::s_set_difference<T>(this, other);
+    }
+
+    ref method difference(other: Set<T>) {
+        return SetOps::s_set_difference_ref<T>(ref this, other);
+    }
+
+    function union(...sets: List<Set<T>>): Set<T> {
+        if(SetOps::s_set_empty<T>(sets)) {
+            return Set<T>{};
+        }
+        else {
+            return ListOps::s_set_union<T>(sets);
+        }
+    }
+
+    function unionList(sets: List<Set<T>>): Set<T> {
+        if(SetOps::s_set_empty<T>(sets)) {
+            return Set<T>{};
+        }
+        else {
+            return ListOps::s_set_union<T>(sets);
+        }
+    }
+
+    function intersection(...sets: List<Set<T>>): Set<T> {
+        if(SetOps::s_set_empty<T>(sets)) {
+            return Set<T>{};
+        }
+        else {
+            return ListOps::s_set_intersection<T>(sets);
+        }
+    }
+
+    function intersectionList(sets: List<Set<T>>): Set<T> {
+        if(SetOps::s_set_empty<T>(sets)) {
+            return Set<T>{};
+        }
+        else {
+            return ListOps::s_set_intersection<T>(sets);
+        }
+    }
+*%
+#endif
 }
