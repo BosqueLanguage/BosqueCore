@@ -3255,6 +3255,38 @@ class ASMToIRConverter {
         }
     }
 
+    private flattenChkLogicExpressionAsReturnStatement(exp: ChkLogicExpression) {
+        if(exp.tag !== ChkLogicExpressionTag.ChkLogicBaseExpression) {
+            const irval = this.flattenChkLogicExpression(exp as ChkLogicExpression);
+            this.pushStatement(new IRReturnValueSimpleStatement(irval));
+        }
+        else {
+            const cle = exp as ChkLogicBaseExpression;
+
+            const oftype = this.tproc(cle.exp.getType());
+            if(oftype.tkeystr !== "Bool") {
+                const irval = this.coerceToBoolForTest(this.makeExpressionSimple(this.flattenExpression(cle.exp), oftype), oftype);
+                this.pushStatement(new IRReturnValueSimpleStatement(irval));
+            }
+            else {
+                const irval = this.flattenExpression(cle.exp);
+
+                if(irval instanceof IRSimpleExpression) {
+                    this.pushStatement(new IRReturnValueSimpleStatement(irval));
+                }
+                else if(irval instanceof IRInvokeDirectExpression) {
+                    this.pushStatement(new IRReturnDirectInvokeStatement(irval));
+                }
+                else if(irval instanceof IRInvokeImplicitsExpression) {
+                    this.pushStatement(new IRReturnDirectInvokeImplicitsStatement(irval));
+                }
+                else {
+                    assert(false, "ASMToIRConverter not implemented: unknown flattenChkLogicExpressionAsReturnStatement variant");
+                }
+            }
+        }
+    }
+
     private flattenConditionalValueExpression(exp: ConditionalValueExpression): IRSimpleExpression {
         const renv = this.flattenITestGuardSet(exp.sinfo, exp.guardset);
 
@@ -3474,7 +3506,7 @@ class ASMToIRConverter {
             this.pushStatement(new IRReturnValueSimpleStatement(frval));
         }
         else if(irval instanceof IRInvokeDirectExpression) {
-            if((stmt.value.rtype as TypeSignature).tkeystr === (this.currentReturnType as TypeSignature).tkeystr) {
+            if((this.tproc(stmt.value.rtype as TypeSignature)).tkeystr === (this.currentReturnType as TypeSignature).tkeystr) {
                 this.pushStatement(new IRReturnDirectInvokeStatement(irval));
             }
             else {
@@ -3485,7 +3517,7 @@ class ASMToIRConverter {
             }
         }
         else if(irval instanceof IRInvokeImplicitsExpression) {
-            if((stmt.value.rtype as TypeSignature).tkeystr === (this.currentReturnType as TypeSignature).tkeystr) {
+            if((this.tproc(stmt.value.rtype as TypeSignature)).tkeystr === (this.currentReturnType as TypeSignature).tkeystr) {
                 this.pushStatement(new IRReturnDirectInvokeImplicitsStatement(irval));
             }
             else {
@@ -3496,7 +3528,7 @@ class ASMToIRConverter {
             }
         }
         else if(irval instanceof IRConstructExpression) {
-            if((stmt.value.rtype as TypeSignature).tkeystr === (this.currentReturnType as TypeSignature).tkeystr) {
+            if((this.tproc(stmt.value.rtype as TypeSignature)).tkeystr === (this.currentReturnType as TypeSignature).tkeystr) {
                 this.pushStatement(new IRReturnDirectConstructStatement(irval));
             }
             else {
@@ -4110,18 +4142,18 @@ class ASMToIRConverter {
 
     private generateRequiresClauseDecl(req: PreConditionDecl, ikey: string): IRPreConditionDecl {
         this.pushStatementBlock();
-        const eexp = this.flattenChkLogicExpression(req.exp);
+        this.flattenChkLogicExpressionAsReturnStatement(req.exp);
         const stmts = this.popStatementBlock();
 
-        return new IRPreConditionDecl(req.file, this.convertSourceInfo(req.sinfo), req.diagnosticTag, ikey, req.ii, req.issoft, stmts, eexp);
+        return new IRPreConditionDecl(req.file, this.convertSourceInfo(req.sinfo), req.diagnosticTag, ikey, req.ii, req.issoft, stmts);
     }
 
     private generateEnsuresClauseDecl(req: PostConditionDecl, ikey: string): IRPostConditionDecl {
         this.pushStatementBlock();
-        const eexp = this.flattenChkLogicExpression(req.exp);
+        this.flattenChkLogicExpressionAsReturnStatement(req.exp);
         const stmts = this.popStatementBlock();
 
-        return new IRPostConditionDecl(req.file, this.convertSourceInfo(req.sinfo), req.diagnosticTag, ikey, req.ii, req.issoft, stmts, eexp);
+        return new IRPostConditionDecl(req.file, this.convertSourceInfo(req.sinfo), req.diagnosticTag, ikey, req.ii, req.issoft, stmts);
     }
 
     private generateMemberFieldDecl(containingtype: NominalTypeSignature, mdecl: MemberFieldDecl): IRMemberFieldDecl {
@@ -4148,20 +4180,20 @@ class ASMToIRConverter {
         const encltype = this.processTypeSignature(containingtype);
         
         this.pushStatementBlock();
-        const eexp = this.flattenChkLogicExpression(req.exp);
+        this.flattenChkLogicExpressionAsReturnStatement(req.exp);
         const stmts = this.popStatementBlock();
 
-        return new IRInvariantDecl(req.file, this.convertSourceInfo(req.sinfo), req.diagnosticTag, encltype.tkeystr, req.ii, stmts, eexp);
+        return new IRInvariantDecl(req.file, this.convertSourceInfo(req.sinfo), req.diagnosticTag, encltype.tkeystr, req.ii, stmts);
     }
 
     private generateValidateClauseDecl(containingtype: NominalTypeSignature, req: ValidateDecl): IRValidateDecl {
         const encltype = this.processTypeSignature(containingtype);
         
         this.pushStatementBlock();
-        const eexp = this.flattenChkLogicExpression(req.exp);
+        this.flattenChkLogicExpressionAsReturnStatement(req.exp);
         const stmts = this.popStatementBlock();
 
-        return new IRValidateDecl(req.file, this.convertSourceInfo(req.sinfo), req.diagnosticTag, encltype.tkeystr, req.ii, stmts, eexp);
+        return new IRValidateDecl(req.file, this.convertSourceInfo(req.sinfo), req.diagnosticTag, encltype.tkeystr, req.ii, stmts);
     }
 
     private processRecursiveInfo(recursive: RecursiveAnnotation): "recursive" | "recursive?" | undefined {
