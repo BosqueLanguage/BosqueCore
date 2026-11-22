@@ -25,4 +25,15 @@ describe ("Parser -- Container Constructor (List)", () => {
         parseTestFunctionError("function main(x: Int): Map<Int, Nat> { return Map<Int, Nat>{ref x => 2n}; }", 'Cannot have a special passing argument in collection constructor context');
         parseTestFunctionError("function main(): Map<Int, Nat> { return Map<Int, Nat>{x=2n}; }", 'Cannot have named arguments in collection constructor');
     });
+
+    it("should parse set constructors", function () {
+        parseTestFunction("function main(): Set<Int> { return Set<Int>{}; }", undefined);
+        parseTestFunction("function main(): Set<Int> { return Set<Int>{1i, 2i, 3i}; }", undefined);
+        parseTestFunction("function main(m: Set<Int>): Set<Int> { return Set<Int>{1i, ...m, 3i}; }", undefined);
+    });
+
+    it("should fail set constructors", function () {
+        parseTestFunctionError("function main(x: Int): Set<Int> { return Set<Int>{ref x}; }", 'Cannot have a special passing argument in collection constructor context');
+        parseTestFunctionError("function main(): Set<Int> { return Set<Int>{x=2i}; }", 'Cannot have named arguments in collection constructor');
+    });
 });
