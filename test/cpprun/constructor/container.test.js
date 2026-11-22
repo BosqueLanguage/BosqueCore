@@ -18,7 +18,25 @@ describe ("CPPExec -- Container Constructor (List)", () => {
         runTestSet("public function main(l: List<Int>): List<Int> { return List<Int>{...l, ...l}; }", [['List<Int>{}', 'List<Int>{ }'], ['List<Int>{1i, 2i, 3i}', 'List<Int>{ 1i, 2i, 3i, 1i, 2i, 3i }']], []);
         runTestSet("public function main(l: List<Int>): List<Int> { return List<Int>{1i, ...l, 3i}; }", [['List<Int>{}', 'List<Int>{ 1i, 3i }'], ['List<Int>{1i, 2i, 3i}', 'List<Int>{ 1i, 1i, 2i, 3i, 3i }']], []);
     });
+});
 
+
+describe ("CPPExec -- Container Constructor (Set)", () => {
+    it("should exec simple set constructors", function () {
+        runTestSet("public function main(x: Int): Set<Int> { return Set<Int>{}; }", [['5i', 'Set<Int>{ }']], []);
+        runTestSet("public function main(x: Int): Set<Int> { return Set<Int>{x}; }", [['5i', 'Set<Int>{ 5i }'], ['0i', 'Set<Int>{ 0i }']], []);
+        runTestSet("public function main(x: Int): Set<Int> { return Set<Int>{1i, x}; }", [['5i', 'Set<Int>{ 1i, 5i }'], ['0i', 'Set<Int>{ 0i, 1i }']], []);
+    
+        runTestSet("public function main(y: CString): Set<CString> { let s = 'ok'; return Set<CString>{y, s}; }", [['"y"', "Set<CString>{ 'y', 'ok' }"]], []);
+        runTestSet("public function main(y: CString): Set<CString> { let s = 'ok'; return Set<CString>{y, s, 'a'}; }", [['"y"', "Set<CString>{ 'a', 'y', 'ok' }"]], []);
+    });
+
+    it.skip("should exec spread and mixed set constructors", function () {
+    });
+});
+
+
+describe ("CPPExec -- Container Constructor (Map)", () => {
     it("should exec simple map constructors", function () {
         runTestSet("public function main(x: Int): Map<Int, Nat> { return Map<Int, Nat>{}; }", [['5i', 'Map<Int, Nat>{ }']], []);
         runTestSet("public function main(x: Int): Map<Int, Nat> { return Map<Int, Nat>{x => 2n}; }", [['5i', 'Map<Int, Nat>{ 5i => 2n }'], ['0i', 'Map<Int, Nat>{ 0i => 2n }']], []);
@@ -31,3 +49,4 @@ describe ("CPPExec -- Container Constructor (List)", () => {
     it.skip("should exec spread and mixed map constructors", function () {
     });
 });
+

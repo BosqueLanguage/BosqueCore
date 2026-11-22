@@ -514,6 +514,13 @@ class TypeInfoManager {
                 this.addLayoutInfo(tdecl.tkey, new LayoutInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ltotalsize, mask));
                 return this.getLayoutInfo(tdecl.tkey);
             }
+            else if(tdecl instanceof IRSetTypeDecl) {
+                //
+                //For now sets are just a value type with a single pointer to the tree -- later might generalize like lists
+                //
+                this.addLayoutInfo(tdecl.tkey, new LayoutInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), 8, "1"));
+                return this.getLayoutInfo(tdecl.tkey);
+            }
             else if(tdecl instanceof IRMapTypeDecl) {
                 //
                 //For now maps are just a value type with a single pointer to the tree -- later might generalize like lists
@@ -687,6 +694,24 @@ class TypeInfoManager {
                 this.addTypeInfo(`${tdecl.tkey}Tree`, new TypeInfo(`${tdecl.tkey}Tree`, new IRNominalTypeSignature(`${tdecl.tkey}Tree`), ttid - 1, 16, LayoutTag.Value, undefined, false));
 
                 this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, ltotalsize, LayoutTag.Value, mask, false));
+            }
+            else if(tdecl instanceof IRSetTypeDecl) {
+                //
+                //For now sets are just a value type with a single pointer to the tree -- later might generalize like lists
+                //
+
+                const oftinfo = this.generateLayoutInfoForType(tdecl.oftype, irasm);
+                
+                const ttid = this.typeInfoMap.size + 3; //+3 for the leaf, node, and tree type infos we need to generate for all the parts in the set
+                
+                const quickrelease = this.isQuickReleaseType(tdecl.oftype, irasm);
+
+                //Add placeholders for the implicitly generated set types -- use dummy values for mask here since we just need to know they exist -- set emitter will handle the rest
+                this.addTypeInfo(`CmpRBTreeLeaf_${tdecl.tkey}`, new TypeInfo(`CmpRBTreeLeaf_${tdecl.tkey}`, new IRNominalTypeSignature(`CmpRBTreeLeaf_${tdecl.tkey}`), ttid - 3, (oftinfo.bytesize + 8), LayoutTag.Ref, undefined, quickrelease));
+                this.addTypeInfo(`CmpRBTreeNode_${tdecl.tkey}`, new TypeInfo(`CmpRBTreeNode_${tdecl.tkey}`, new IRNominalTypeSignature(`CmpRBTreeNode_${tdecl.tkey}`), ttid - 2, (oftinfo.bytesize + 32), LayoutTag.Ref, undefined, false));
+                this.addTypeInfo(`CmpRBTree_${tdecl.tkey}`, new TypeInfo(`CmpRBTree_${tdecl.tkey}`, new IRNominalTypeSignature(`CmpRBTree_${tdecl.tkey}`), ttid - 1, 8, LayoutTag.Ref, undefined, false));
+                
+                this.addTypeInfo(tdecl.tkey, new TypeInfo(tdecl.tkey, new IRNominalTypeSignature(tdecl.tkey), ttid, 8, LayoutTag.Value, "1", false));
             }
             else if(tdecl instanceof IRMapTypeDecl) {
                 //

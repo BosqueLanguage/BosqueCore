@@ -491,16 +491,16 @@ class Monomorphizer {
 
     private instantiateCollectionConstructor(decl: AbstractCollectionTypeDecl, t: NominalTypeSignature, args: AbstractArgumentValue[]) {
         if(decl instanceof ListTypeDecl) {
-            ; //Nothing additional to do
+            ; //Nothing additional to do for List
         }
         else if(decl instanceof StackTypeDecl) {
-            assert(false, "Not Implemented");
+            ; //Nothing additional to do for Stack
         }
         else if(decl instanceof QueueTypeDecl) {
-            assert(false, "Not Implemented");
+            ; //Nothing additional to do for Queue
         }
         else if(decl instanceof SetTypeDecl) {
-            assert(false, "Not Implemented");
+            ; //Nothing additional to do for Set
         }
         else {
             const medecl = this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "MapEntry") as MapTypeDecl;

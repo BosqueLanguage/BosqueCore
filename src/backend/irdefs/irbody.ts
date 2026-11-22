@@ -90,6 +90,9 @@ enum IRExpressionTag {
     IRConstructorListSingletonsExpression = "IRConstructorListSingletonsExpression",
     IRConstructorListMixedExpression = "IRConstructorListMixedExpression",
 
+    IRConstructorSetEmptyExpression = "IRConstructorSetEmptyExpression",
+    IRConstructorSetSingletonsExpression = "IRConstructorSetSingletonsExpression",
+
     IRConstructorMapEmptyExpression = "IRConstructorMapEmptyExpression",
     IRConstructorMapSingletonsExpression = "IRConstructorMapSingletonsExpression",
 
@@ -363,6 +366,12 @@ abstract class IRExpression {
         }
         else if(expr instanceof IRConstructorListMixedExpression) {
             return ["ConstructorListMixedExpression", IRConstructorListMixedExpression.jsonEmit_IRConstructorListMixedExpression(expr)];
+        }
+        else if(expr instanceof IRConstructorSetEmptyExpression) {
+            return ["ConstructorSetEmptyExpression", IRConstructorSetEmptyExpression.jsonEmit_IRConstructorSetEmptyExpression(expr)];
+        }
+        else if(expr instanceof IRConstructorSetSingletonsExpression) {
+            return ["ConstructorSetSingletonsExpression", IRConstructorSetSingletonsExpression.jsonEmit_IRConstructorSetSingletonsExpression(expr)];
         }
         else if(expr instanceof IRConstructorMapEmptyExpression) {
             return ["ConstructorMapEmptyExpression", IRConstructorMapEmptyExpression.jsonEmit_IRConstructorMapEmptyExpression(expr)];
@@ -727,6 +736,12 @@ abstract class IRExpression {
             }
             case "ConstructListMixedExpression": {
                 return IRConstructorListMixedExpression.jsonParse_IRConstructorListMixedExpression(value);
+            }
+            case "ConstructSetEmptyExpression": {
+                return IRConstructorSetEmptyExpression.jsonParse_IRConstructorSetEmptyExpression(value);
+            }
+            case "ConstructSetSingletonsExpression": {
+                return IRConstructorSetSingletonsExpression.jsonParse_IRConstructorSetSingletonsExpression(value);
             }
             case "ConstructMapEmptyExpression": {
                 return IRConstructorMapEmptyExpression.jsonParse_IRConstructorMapEmptyExpression(value);
@@ -2989,10 +3004,12 @@ class IRConstructorEListExpression extends IRSimpleExpression {
 }
 
 /* NOTE -- the empty constructor is a simple expression (as it is really a constant) we can place anywhere safely */
-class IRConstructorListEmptyExpression extends IRConstructExpression {
-    
+class IRConstructorListEmptyExpression extends IRSimpleExpression {
+    readonly constype: IRNominalTypeSignature;
+
     constructor(ctype: IRNominalTypeSignature) {
-        super(IRExpressionTag.IRConstructorListEmptyExpression, ctype);
+        super(IRExpressionTag.IRConstructorListEmptyExpression);
+        this.constype = ctype;
     }
 
     static jsonEmit_IRConstructorListEmptyExpression(exp: IRConstructorListEmptyExpression): object {
@@ -3055,11 +3072,46 @@ class IRConstructorListMixedExpression extends IRConstructExpression {
     }
 }
 
-/* NOTE -- the empty constructor is a simple expression (as it is really a constant) we can place anywhere safely */
-class IRConstructorMapEmptyExpression extends IRConstructExpression {
+class IRConstructorSetEmptyExpression extends IRSimpleExpression {
+    readonly constype: IRNominalTypeSignature;
+
+    constructor(ctype: IRNominalTypeSignature) {
+        super(IRExpressionTag.IRConstructorSetEmptyExpression);
+        this.constype = ctype;
+    }
+
+    static jsonEmit_IRConstructorSetEmptyExpression(exp: IRConstructorSetEmptyExpression): object {
+        assert(false, "IRConstructorSetEmptyExpression.jsonEmit not implemented");
+    }
+
+    static jsonParse_IRConstructorSetEmptyExpression(obj: any): IRConstructorSetEmptyExpression {
+        assert(false, "IRConstructorSetEmptyExpression.jsonParse not implemented");
+    }
+}
+
+class IRConstructorSetSingletonsExpression extends IRConstructExpression {
+    readonly elements: IRSimpleExpression[];
+
+    constructor(ctype: IRNominalTypeSignature, elements: IRSimpleExpression[]) {
+        super(IRExpressionTag.IRConstructorSetSingletonsExpression, ctype);
+        this.elements = elements;
+    }
+
+    static jsonEmit_IRConstructorSetSingletonsExpression(exp: IRConstructorSetSingletonsExpression): object {
+        assert(false, "IRConstructorSetSingletonsExpression.jsonEmit not implemented");
+    }
+
+    static jsonParse_IRConstructorSetSingletonsExpression(obj: any): IRConstructorSetSingletonsExpression {
+        assert(false, "IRConstructorSetSingletonsExpression.jsonParse not implemented");
+    }
+}
+
+class IRConstructorMapEmptyExpression extends IRSimpleExpression {
+    readonly constype: IRNominalTypeSignature;
     
     constructor(ctype: IRNominalTypeSignature) {
-        super(IRExpressionTag.IRConstructorMapEmptyExpression, ctype);
+        super(IRExpressionTag.IRConstructorMapEmptyExpression);
+        this.constype = ctype;
     }
 
     static jsonEmit_IRConstructorMapEmptyExpression(exp: IRConstructorMapEmptyExpression): object {
@@ -6056,6 +6108,7 @@ export {
     IRConstructorLambdaExpression,
     IRConstructorEListExpression,
     IRConstructorListEmptyExpression, IRConstructorListPassthroughExpression, IRConstructorListSingletonsExpression, IRConstructorListMixedExpression,
+    IRConstructorSetEmptyExpression, IRConstructorSetSingletonsExpression,
     IRConstructorMapEmptyExpression, IRConstructorMapSingletonsExpression,
 
     IRAccessFieldExpression, IRAccessFieldSpecialExpression, IRAccessFieldDirectExpression, IRAccessFieldVirtualExpression, IRAccessEListIndexExpression,

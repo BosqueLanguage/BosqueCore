@@ -8,9 +8,16 @@
 
 namespace ᐸRuntimeᐳ
 {
-    //A dummy size type for conversion of the cmptree into a set -- TODO: has some space overhead so we want to optimize this later
-    using XSetDummyEntry = void*;
-    static_assert(sizeof(XSetDummyEntry) == 8, "XSetDummyEntry must be a single slot element");
+ 
+    template<typename T>
+    class XSetEntry
+    {
+    public:
+        T key;
+
+        XSetEntry() = default;
+        XSetEntry(const T &v) : key{v} {}
+    };
 
     //TODO: this is currently n * ln(n) for iteration and access -- definitely want to speed this up later
     template<typename T, uint32_t TYPE_ID_SET_T>
@@ -18,7 +25,7 @@ namespace ᐸRuntimeᐳ
     {
     public:
         int64_t index;
-        CmpRBTree<T, XSetDummyEntry, TYPE_ID_SET_T> uset;
+        CmpRBTree<T, XSetEntry<T>, TYPE_ID_SET_T> uset;
 
         using value_type = T;
         using difference_type = std::ptrdiff_t;
@@ -31,7 +38,7 @@ namespace ᐸRuntimeᐳ
         { 
             assert(!this->uset.empty());
             
-            return this->uset.getIndexNode(this->index);
+            return this->uset.getIndexNode(this->index).key;
         }
 
         XSetTIterator& operator++()
@@ -75,11 +82,11 @@ namespace ᐸRuntimeᐳ
     class XSetT
     {
     public:
-        CmpRBTree<T, XSetDummyEntry, TYPE_ID_SET_T> uset;
+        CmpRBTree<T, XSetEntry<T>, TYPE_ID_SET_T> uset;
 
         XSetT() : uset{} {}
         XSetT(const XSetT& other) = default;
-        XSetT(const CmpRBTree<T, XSetDummyEntry, TYPE_ID_SET_T>& n) : uset{n} { ; }
+        XSetT(const CmpRBTree<T, XSetEntry<T>, TYPE_ID_SET_T>& n) : uset{n} { ; }
 
         static XSetT mk(std::initializer_list<T> elems)
         {
@@ -87,7 +94,7 @@ namespace ᐸRuntimeᐳ
                 return XSetT{};
             }
             else {
-                return XSetT(CmpRBTree<T, XSetDummyEntry, TYPE_ID_SET_T>::mklargerec(elems.begin(), elems.end()));
+                return XSetT(CmpRBTree<T, XSetEntry<T>, TYPE_ID_SET_T>::mklargerec(elems.begin(), elems.end()));
             }
         }
 
@@ -97,7 +104,7 @@ namespace ᐸRuntimeᐳ
                 return XSetT{};
             }
             else {
-                return XSetT(CmpRBTree<T, XSetDummyEntry, TYPE_ID_SET_T>::mklargerec(elems, elems + len));
+                return XSetT(CmpRBTree<T, XSetEntry<T>, TYPE_ID_SET_T>::mklargerec(elems, elems + len));
             }
         }
 
@@ -123,12 +130,12 @@ namespace ᐸRuntimeᐳ
 
         T getMin() const
         {
-            return this->uset.getFrontNode();
+            return this->uset.getFrontNode().key;
         }
 
         T getMax() const
         {
-            return this->uset.getBackNode();
+            return this->uset.getBackNode().key;
         }
 
         bool has(const T& v) const
@@ -138,44 +145,39 @@ namespace ᐸRuntimeᐳ
 
         XSetT insert(const T& v) const
         {
-            return XSetT{this->uset.insert(v, XSetDummyEntry{})};
+            return XSetT{this->uset.insert(XSetEntry<T>{v})};
         }
     };
 
-    template<typename K, typename V, uint32_t TYPE_ID_MAP_KV>
-    void jsonParseToBSQ_MapKV(const TypeInfo* tinfo, const json& j, void* resptr)
+    template<typename T, uint32_t TYPE_ID_SET_T>
+    void jsonParseToBSQ_SetT(const TypeInfo* tinfo, const json& j, void* resptr)
     {
-        bsq_validate(j.is_array(), "JSON -> BSQ", 0, nullptr, "Expected JSON array Map<K, V>");
+        bsq_validate(j.is_array(), "JSON -> BSQ", 0, nullptr, "Expected JSON array Set<T>");
 
-        const TypeInfo* kinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
-        const TypeInfo* vinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[1].fieldbsqtypeid);
+        const TypeInfo* vinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
 
-        XMapKV<K, V, TYPE_ID_MAP_KV> rres{};
+        XSetT<T, TYPE_ID_SET_T> rres{};
         for(size_t i = 0; i < j.size(); i++) {
-            bsq_validate(j[i].is_array() && j[i].size() == 2, "JSON -> BSQ", 0, nullptr, "Expected JSON array MapEntry<K, V> to be array of 2 elements");
-
-            XMapEntry<K, V> val;
-            kinfo->opdispatch.jsonParseToBSQFp(kinfo, j[i][0], &val.key);
-            vinfo->opdispatch.jsonParseToBSQFp(vinfo, j[i][1], &val.value);
+            T val;
+            vinfo->opdispatch.jsonParseToBSQFp(vinfo, j[i], &val);
 
             rres = rres.insert(val);
         }
 
-        *(XMapKV<K, V, TYPE_ID_MAP_KV>*)resptr = rres;
+        *(XSetT<T, TYPE_ID_SET_T>*)resptr = rres;
     }
 
-    template<typename K, typename V, uint32_t TYPE_ID_MAP_KV>
-    void parseToBSQ_MapKV(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr)
+    template<typename T, uint32_t TYPE_ID_SET_T>
+    void parseToBSQ_SetT(const TypeInfo* tinfo, BAPILexer* lexer, void* resptr)
     {
-        bsq_validate(lexer->testIsType(tinfo->typekey), "BAPI -> BSQ", 0, nullptr, "Expected type for MapEntry");
+        bsq_validate(lexer->testIsType(tinfo->typekey), "BAPI -> BSQ", 0, nullptr, "Expected type for Set<T>");
         lexer->consume();
-        bsq_validate(lexer->testIsSymbol('{'), "BAPI -> BSQ", 0, nullptr, "Expected '{' for MapEntry");
+        bsq_validate(lexer->testIsSymbol('{'), "BAPI -> BSQ", 0, nullptr, "Expected '{' for Set<T>");
         lexer->consume();
 
-        const TypeInfo* kinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
-        const TypeInfo* vinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[1].fieldbsqtypeid);
+        const TypeInfo* vinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
 
-        XMapKV<K, V, TYPE_ID_MAP_KV> rres{};
+        XSetT<T, TYPE_ID_SET_T> rres{};
 
         bool first = true;
         while(!lexer->testIsSymbol('}')) {
@@ -183,56 +185,47 @@ namespace ᐸRuntimeᐳ
                 first = false;
             }
             else {
-                bsq_validate(lexer->testIsSymbol(','), "BAPI -> BSQ", 0, nullptr, "Expected ',' between elements for MapEntry");
+                bsq_validate(lexer->testIsSymbol(','), "BAPI -> BSQ", 0, nullptr, "Expected ',' between elements for Set<T>");
                 lexer->consume();
             }
             
-            XMapEntry<K, V> val;
-            kinfo->opdispatch.parseToBSQFp(kinfo, lexer, &val.key);
-
-            bsq_validate(lexer->testIsSymbol("=>"), "BAPI -> BSQ", 0, nullptr, "Expected '=>' between key and value for MapEntry");
-            lexer->consume();
-
-            vinfo->opdispatch.parseToBSQFp(vinfo, lexer, &val.value);
+            T val;
+            vinfo->opdispatch.parseToBSQFp(vinfo, lexer, &val);
             rres = rres.insert(val);
         }
 
-        bsq_validate(lexer->testIsSymbol('}'), "BAPI -> BSQ", 0, nullptr, "Expected '}' for MapEntry");
+        bsq_validate(lexer->testIsSymbol('}'), "BAPI -> BSQ", 0, nullptr, "Expected '}' for Set<T>");
         lexer->consume();
 
-        *(XMapKV<K, V, TYPE_ID_MAP_KV>*)resptr = rres;
+        *(XSetT<T, TYPE_ID_SET_T>*)resptr = rres;
     }
 
-    template<typename K, typename V, uint32_t TYPE_ID_MAP_KV>
-    json bsqToJSON_MapKV(const TypeInfo* tinfo, const void* valptr)
+    template<typename T, uint32_t TYPE_ID_SET_T>
+    json bsqToJSON_SetT(const TypeInfo* tinfo, const void* valptr)
     {
-        const TypeInfo* kinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
-        const TypeInfo* vinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[1].fieldbsqtypeid);
+        const TypeInfo* vinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
 
         json j = json::array();
-        const XMapKV<K, V, TYPE_ID_MAP_KV>* map = (const XMapKV<K, V, TYPE_ID_MAP_KV>*)valptr;
-        for(auto iter = map->begin(); iter != map->end(); ++iter) {
-            XMapEntry<K, V> val = *iter;
-
-            json jk = kinfo->opdispatch.bsqToJSONFp(kinfo, &val.key);
-            json jv = vinfo->opdispatch.bsqToJSONFp(vinfo, &val.value);
+        const XSetT<T, TYPE_ID_SET_T>* set = (const XSetT<T, TYPE_ID_SET_T>*)valptr;
+        for(auto iter = set->begin(); iter != set->end(); ++iter) {
+            T val = *iter;
+            json jv = vinfo->opdispatch.bsqToJSONFp(vinfo, &val);
             
-            j.push_back(json::array({jk, jv}));
+            j.push_back(jv);
         }
 
         return j;
 
     }
 
-    template<typename K, typename V, uint32_t TYPE_ID_MAP_KV>
-    void bsqToBAPI_MapKV(const TypeInfo* tinfo, const void* valptr, BSQStreamingBuilder* builder)
+    template<typename T, uint32_t TYPE_ID_SET_T>
+    void bsqToBAPI_SetT(const TypeInfo* tinfo, const void* valptr, BSQStreamingBuilder* builder)
     {
-        const TypeInfo* kinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
-        const TypeInfo* vinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[1].fieldbsqtypeid);
+        const TypeInfo* vinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
 
-        const XMapKV<K, V, TYPE_ID_MAP_KV>* map = (const XMapKV<K, V, TYPE_ID_MAP_KV>*)valptr;
+        const XSetT<T, TYPE_ID_SET_T>* set = (const XSetT<T, TYPE_ID_SET_T>*)valptr;
         
-        if(map->empty())
+        if(set->empty())
         {
             builder->appendConstString(tinfo->typekey);
             builder->appendLiteralString("{ }");
@@ -243,7 +236,7 @@ namespace ᐸRuntimeᐳ
             builder->appendLiteralString("{ ");
 
             bool first = true;
-            for(auto iter = map->begin(); iter != map->end(); ++iter) {
+            for(auto iter = set->begin(); iter != set->end(); ++iter) {
                 if(first) {
                     first = false;
                 }
@@ -251,32 +244,29 @@ namespace ᐸRuntimeᐳ
                     builder->appendLiteralString(", ");
                 }
 
-                XMapEntry<K, V> val = *iter;
-                kinfo->opdispatch.bsqToBAPIFp(kinfo, &val.key, builder);
-                builder->appendLiteralString(" => ");
-                vinfo->opdispatch.bsqToBAPIFp(vinfo, &val.value, builder);
+                T val = *iter;
+                vinfo->opdispatch.bsqToBAPIFp(vinfo, &val, builder);
             }
 
             builder->appendLiteralString(" }");
         }
     }
     
-    template<typename K, typename V, uint32_t TYPE_ID_MAP_KV>
-    void displayValue_MapKV(const TypeInfo* tinfo, const void* valptr, std::ostream& os, std::optional<std::string> indent)
+    template<typename T, uint32_t TYPE_ID_SET_T>
+    void displayValue_SetT(const TypeInfo* tinfo, const void* valptr, std::ostream& os, std::optional<std::string> indent)
     {
-        const TypeInfo* kinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
-        const TypeInfo* vinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[1].fieldbsqtypeid);
+        const TypeInfo* vinfo = TypeInfo::getTypeInfoForID(tinfo->ftable[0].fieldbsqtypeid);
 
-        const XMapKV<K, V, TYPE_ID_MAP_KV>* map = (const XMapKV<K, V, TYPE_ID_MAP_KV>*)valptr;
+        const XSetT<T, TYPE_ID_SET_T>* set = (const XSetT<T, TYPE_ID_SET_T>*)valptr;
 
-        if(map->empty()) {
+        if(set->empty()) {
             os << getDisplayIndent(indent) << tinfo->typekey << "{ }";
             return;
         }
         else {
             os << getDisplayIndent(indent) << tinfo->typekey << "{ ";
             bool first = true;
-            for(auto iter = map->begin(); iter != map->end(); ++iter) {
+            for(auto iter = set->begin(); iter != set->end(); ++iter) {
                 if(first) {
                     first = false;
                 }
@@ -284,17 +274,15 @@ namespace ᐸRuntimeᐳ
                     os << ", ";
                 }
 
-                XMapEntry<K, V> val = *iter;
-                kinfo->opdispatch.displayFp(kinfo, &val.key, os, indent);
-                os << " => ";
-                vinfo->opdispatch.displayFp(vinfo, &val.value, os, indent);
+                T val = *iter;
+                vinfo->opdispatch.displayFp(vinfo, &val, os, indent);
             }
             os << " }";
         }
     }
 
-    template<typename K, typename V, uint32_t TYPE_ID_MAP_KV>
-    consteval TypeInfo g_typeinfo_MapKV_generate(uint32_t id, const TypeLayoutInfo* layout, const char* mask, const char* name) 
+    template<typename T, uint32_t TYPE_ID_SET_T>
+    consteval TypeInfo g_typeinfo_SetT_generate(uint32_t id, const TypeLayoutInfo* layout, const char* mask, const char* name) 
     {
         return TypeInfo{
             id,
@@ -306,7 +294,7 @@ namespace ᐸRuntimeᐳ
             0,
             layout,
             2,
-            TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_MapKV<K, V, TYPE_ID_MAP_KV>, (ParseToBSQFp)&parseToBSQ_MapKV<K, V, TYPE_ID_MAP_KV>, (BSQToJSONFp)&bsqToJSON_MapKV<K, V, TYPE_ID_MAP_KV>, (BSQToBAPIFp)&bsqToBAPI_MapKV<K, V, TYPE_ID_MAP_KV>, (DisplayValueFp)&displayValue_MapKV<K, V, TYPE_ID_MAP_KV> },
+            TypeOpDispatchInfo{ (ValidatingConstructorFp)nullptr, (JSONParseToBSQFp)&jsonParseToBSQ_SetT<T, TYPE_ID_SET_T>, (ParseToBSQFp)&parseToBSQ_SetT<T, TYPE_ID_SET_T>, (BSQToJSONFp)&bsqToJSON_SetT<T, TYPE_ID_SET_T>, (BSQToBAPIFp)&bsqToBAPI_SetT<T, TYPE_ID_SET_T>, (DisplayValueFp)&displayValue_SetT<T, TYPE_ID_SET_T> },
             name,
             false
         };

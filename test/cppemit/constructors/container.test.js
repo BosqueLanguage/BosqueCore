@@ -29,4 +29,15 @@ describe ("CPPEmit -- Container Constructor (List)", () => {
 
     it.skip("should emit spread and mixed map constructors", function () {
     });
+
+    it("should emit simple set constructors", function () {
+        checkTestEmitMainFunction("public function main(): Set<Int> { return Set<Int>{}; }", "SetᐸIntᐳ Mainᕒmain() { return SetᐸIntᐳ{}; }");
+        checkTestEmitMainFunction("public function main(x: Int): Set<Int> { return Set<Int>{x}; }", "SetᐸIntᐳ Mainᕒmain(Int x) { return SetᐸIntᐳ::mk({x}); }");
+        checkTestEmitMainFunction("public function main(x: Int): Set<Int> { return Set<Int>{1i, x}; }", "SetᐸIntᐳ Mainᕒmain(Int x) { return SetᐸIntᐳ::mk({1_i, x}); }");
+    
+        checkTestEmitMainFunction("public function main(): Set<CString> { return Set<CString>{'a', 'b', 'c'}; }", 'SetᐸCStringᐳ Mainᕒmain() { return SetᐸCStringᐳ::mk({"a"_cs, "b"_cs, "c"_cs}); }');
+    });
+
+    it.skip("should emit spread and mixed set constructors", function () {
+    });
 });

@@ -25,4 +25,14 @@ describe ("Checker -- Container Constructor (List)", () => {
         checkTestFunctionError("function main(): Map<Int, Nat> { return Map<Int, Nat>{2n}; }", 'Argument 0 expected type MapEntry<Int, Nat>');
         checkTestFunctionError("function main(): Map<Float, Nat> { return Map<Float, Nat>{ 2.0f => 3n }; }", 'Template argument K is not a keytype');
     });
+
+    it("should check set constructors", function () {
+        checkTestFunction("function main(): Set<Int> { return Set<Int>{}; }");
+        checkTestFunction("function main(): Set<Int> { return Set<Int>{1i, 2i, 3i}; }");
+        checkTestFunction("function main(m: Set<Int>): Set<Int> { return Set<Int>{1i, ...m, 3i}; }");
+    });
+
+    it("should fail set constructors", function () {
+        checkTestFunctionError("function main(): Set<Int> { return Set<Int>{2n}; }", 'Argument 0 expected type Int');
+    });
 });
