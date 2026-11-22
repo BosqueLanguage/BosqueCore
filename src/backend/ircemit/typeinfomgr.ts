@@ -434,7 +434,7 @@ class TypeInfoManager {
                 else if(ddecl instanceof IRMapEntryTypeDecl) {
                     isqr = this.isQuickReleaseType(ddecl.ktype, irasm) && this.isQuickReleaseType(ddecl.vtype, irasm);
                 }
-                else if(ddecl instanceof IRListTypeDecl) {
+                else if((ddecl instanceof IRListTypeDecl) || (ddecl instanceof IRSetTypeDecl) || (ddecl instanceof IRMapTypeDecl)) {
                     isqr = false;
                 }
                 else if(ddecl instanceof IREntityTypeDecl) {

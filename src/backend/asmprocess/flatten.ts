@@ -1689,8 +1689,9 @@ class ASMToIRConverter {
                 for(let i = 0; i < exp.args.args.length; ++i) {
                     const eexp = exp.args.args[i] as PositionalArgumentValue;
                     const sexp = this.flattenExpression(eexp.exp); //By construction this is always of the right type (only one possibility)
+                    const cexp = this.makeCoercionExplicitAsNeeded(this.makeExpressionSimple(sexp, eexp.exp.getType()), eexp.exp.getType(), tcons.alltermargs[0]);
 
-                    aargs.push(sexp);
+                    aargs.push(cexp);
                 }
 
                 return new IRConstructorSetSingletonsExpression(this.processTypeSignature(tcons), aargs);
