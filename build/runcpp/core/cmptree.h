@@ -1024,10 +1024,10 @@ private:
 
         CmpRBTree<K, E, TreeID> remove(const K& key) const
         {
-            DeleteResult root = delblacken(deleterec(this->root, key));
+            CmpRBNode<K, E>* root = delblacken(deleterec(this->root, key));
             BSQ_IF_ENABLED(RB_INVARIANT_VALIDATE, debugAssertInvariants(root, reprGetCount(this->root) - (this->has(key) ? 1 : 0))); //note this->root is never modified so we can test here (after the remove)
 
-            return CmpRBTree<K, E, TreeID>{root.tnode};
+            return CmpRBTree<K, E, TreeID>{root};
         }
     };
 
