@@ -924,7 +924,9 @@ private:
 
         static DeleteResult deleterec(const CmpRBNode<K, E>* curr, const K& key)
         {
-            assert(curr != nullptr);
+            if(curr == nullptr) {
+                return emptyDeleteResult; // key not present
+            }
 
             if(key < curr->data.entry.key) {
                 return eqL(deleterec(reprGetLeft(curr), key).apply([curr](const CmpRBNode<K, E>* lnode) { return mknode(curr->data.color, lnode, reprGetRight(curr), curr->data); }));
@@ -934,11 +936,18 @@ private:
             }
             else {
                 // key == curr->data.entry.key
-                if(reprGetLeft(curr) == nullptr) {
-                    return DeleteResult::makeDone(reprGetRight(curr));
-                }
-                else if(reprGetRight(curr) == nullptr) {
-                    return DeleteResult::makeDone(reprGetLeft(curr));
+                if(reprGetLeft(curr) == nullptr || reprGetRight(curr) == nullptr) {
+                    const CmpRBNode<K, E>* child = (reprGetLeft(curr) == nullptr) ? reprGetRight(curr) : reprGetLeft(curr);
+                    if(curr->data.color == RColor::Red) {
+                        return DeleteResult::makeDone(child);
+                    }
+                    else if(child == nullptr) {
+                        // removed a black leaf so this subtree is now one black-height short
+                        return DeleteResult::makeShort(nullptr);
+                    }
+                    else {
+                        return DeleteResult::makeDone(mkcopynode(RColor::Black, reprGetLeft(child), reprGetRight(child), child->data));
+                    }
                 }
                 else {
                     const CmpRBNode<K, E>* succ = reprGetRight(curr);
