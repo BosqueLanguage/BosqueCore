@@ -1720,7 +1720,6 @@ class CPPEmitter {
             prestr = `auto sp = s; while(${g}(guard, sp)) { sp = ${fn}(op, s); }`;
             bstr = "s";
         }
-
         else if(body.builtin === "set_empty") {
             bstr = "ᐸRuntimeᐳ::XBool::from(s.empty())";
         }
@@ -1736,7 +1735,12 @@ class CPPEmitter {
         else if(body.builtin === "set_insert_ref") {
             bstr = "s = s.insert(k)";
         }
-
+        else if(body.builtin === "set_remove") {
+            bstr = "s.remove(k)";
+        }
+        else if(body.builtin === "set_remove_ref") {
+            bstr = "s = s.remove(k)";
+        }
         else if(body.builtin === "map_empty") {
             bstr = "ᐸRuntimeᐳ::XBool::from(m.empty())";
         }
@@ -1760,6 +1764,12 @@ class CPPEmitter {
         }
         else if(body.builtin === "map_insert_ref") {
             bstr = "m = m.insert(k, v)";
+        }
+        else if(body.builtin === "map_remove") {
+            bstr = "m.remove(k)";
+        }
+        else if(body.builtin === "map_remove_ref") {
+            bstr = "m = m.remove(k)";
         }
         else {
             assert(false, "CPPEmitter: need to implement builtin body emission " + body.builtin);
@@ -1845,8 +1855,7 @@ class CPPEmitter {
         const fname = TransformCPPNameManager.generateNameForInvokePreconditionCheck(invk.ikey, ipcs.requiresidx);
         const params = invk.params.map((p) => `${this.typeInfoManager.emitTypeAsParameter(p.type.tkeystr, false, p.type instanceof IRLambdaParameterPackTypeSignature)} ${TransformCPPNameManager.convertIdentifier(p.name)}`);
 
-        const finalv = `return ${this.emitIRSimpleExpression(ipcs.value, true)};`;
-        const bodystr = this.emitStatementList(ipcs.stmts, undefined, [finalv], "");
+        const bodystr = this.emitStatementList(ipcs.stmts, undefined, undefined, "");
 
         const ideclstr = `Bool ${fname}(${params.join(", ")});`;
         const idefstr = `Bool ${fname}(${params.join(", ")}) ${bodystr}`;
@@ -1874,8 +1883,7 @@ class CPPEmitter {
             }
         }
 
-        const finalv = `return ${this.emitIRSimpleExpression(ipcs.value, true)};`;
-        const bodystr = this.emitStatementList(ipcs.stmts, undefined, [finalv], "");
+        const bodystr = this.emitStatementList(ipcs.stmts, undefined, undefined, "");
 
         const ideclstr = `Bool ${fname}(${params.join(", ")});`;
         const idefstr = `Bool ${fname}(${params.join(", ")}) ${bodystr}`;
@@ -1887,8 +1895,7 @@ class CPPEmitter {
         const fname = TransformCPPNameManager.generateNameForInvariantFunction(tdecl.tkey, iinv.invariantidx);
         const params = pinfo.map((p) => `${this.typeInfoManager.emitTypeAsParameter(p.ptype.tkeystr, false, p.ptype instanceof IRLambdaParameterPackTypeSignature)} ${TransformCPPNameManager.convertIdentifier(p.pname)}`);
 
-        const finalv = `return ${this.emitIRSimpleExpression(iinv.value, true)};`;
-        const bodystr = this.emitStatementList(iinv.stmts, undefined, [finalv], "");
+        const bodystr = this.emitStatementList(iinv.stmts, undefined, undefined, "");
 
         const ideclstr = `Bool ${fname}(${params.join(", ")});`;
         const idefstr = `Bool ${fname}(${params.join(", ")}) ${bodystr}`;
@@ -1900,8 +1907,7 @@ class CPPEmitter {
         const fname = TransformCPPNameManager.generateNameForValidateFunction(tdecl.tkey, ival.validateidx);
         const params = pinfo.map((p) => `${this.typeInfoManager.emitTypeAsParameter(p.ptype.tkeystr, false, p.ptype instanceof IRLambdaParameterPackTypeSignature)} ${TransformCPPNameManager.convertIdentifier(p.pname)}`);
 
-        const finalv = `return ${this.emitIRSimpleExpression(ival.value, true)};`;
-        const bodystr = this.emitStatementList(ival.stmts, undefined, [finalv], "");
+        const bodystr = this.emitStatementList(ival.stmts, undefined, undefined, "");
 
         const ideclstr = `Bool ${fname}(${params.join(", ")});`;
         const idefstr = `Bool ${fname}(${params.join(", ")}) ${bodystr}`;

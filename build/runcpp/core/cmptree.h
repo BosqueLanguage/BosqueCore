@@ -308,9 +308,17 @@ private:
             static DeleteResult makeDone(const CmpRBNode<K, E>* tnode) { return DeleteResult{DeleteResultTag::Done, tnode}; }
             static DeleteResult makeShort(const CmpRBNode<K, E>* tnode) { return DeleteResult{DeleteResultTag::Short, tnode}; }
 
+            bool isEmpty() const { return this->tnode == nullptr; }
             bool isDone() const { return this->tag == DeleteResultTag::Done; }
             bool isShort() const { return this->tag == DeleteResultTag::Short; }
+
+            template<typename Fn>
+            DeleteResult apply(Fn fn) const
+            {
+                return DeleteResult{this->tag, fn(this->tnode)};
+            }
         };
+        constexpr static DeleteResult emptyDeleteResult{DeleteResultTag::Done, nullptr};
 
         static int64_t checkRBPathLengthInvariant(const CmpRBNode<K, E>* node)
         {
@@ -638,13 +646,317 @@ private:
             }
         }
 
-        static CmpRBNode<K, E>* blacken(InsertResult rr)
+        static CmpRBNode<K, E>* insblacken(InsertResult rr)
         {
             if(rr.tnode->data.color == RColor::Black) {
                 return const_cast<CmpRBNode<K, E>*>(rr.tnode);
             }
             else {
                 return mknode(RColor::Black, reprGetLeft(rr.tnode), reprGetRight(rr.tnode), rr.tnode->data);
+            }
+        }
+
+        // double red violation on the LL side  (CC (R (R a x b) y c) z d) = T (CC (B a x b) y (B c z d))
+        static DeleteResult delbalancehelper_RR_LL(const CmpRBNode<K, E>* cur)
+        {
+            assert(cur != nullptr);
+
+            if(isLeafType(cur)) {
+                return emptyDeleteResult;
+            }
+            else {
+                const CmpRBTreeNode<K, E>* tnode = asNodeType(cur);
+
+                const CmpRBNode<K, E>* l = reprGetLeft(tnode);
+                if(l == nullptr || l->data.color != RColor::Red) {
+                    return emptyDeleteResult;
+                }
+
+                const CmpRBNode<K, E>* ll = reprGetLeft(l);
+                if(ll == nullptr || ll->data.color != RColor::Red) {
+                    return emptyDeleteResult;
+                }
+
+                return DeleteResult::makeDone(
+                    mknode(cur->data.color,
+                        mkcopynode(RColor::Black, reprGetLeft(ll), reprGetRight(ll), ll->data), 
+                        mkcopynode(RColor::Black, reprGetRight(l), reprGetRight(tnode), tnode->data),
+                        l->data
+                    )
+                );
+            }
+        }
+
+        // double red violation on the LR side  (CC (R a x (R b y c)) z d) = T (CC (B a x b) y (B c z d))
+        static DeleteResult delbalancehelper_RR_LR(const CmpRBNode<K, E>* cur)
+        {
+            assert(cur != nullptr);
+
+            if(isLeafType(cur)) {
+                return emptyDeleteResult;
+            }
+            else {
+                const CmpRBTreeNode<K, E>* tnode = asNodeType(cur);
+
+                const CmpRBNode<K, E>* l  = reprGetLeft(tnode);
+                if(l == nullptr || l->data.color != RColor::Red) {
+                    return emptyDeleteResult;
+                }
+
+                const CmpRBNode<K, E>* lr = reprGetRight(l);
+                if(lr == nullptr || lr->data.color != RColor::Red) {
+                    return emptyDeleteResult;
+                }
+
+                return DeleteResult::makeDone(
+                    mknode(cur->data.color,
+                        mkcopynode(RColor::Black, reprGetLeft(l), reprGetLeft(lr), l->data), 
+                        mkcopynode(RColor::Black, reprGetRight(lr), reprGetRight(tnode), tnode->data),
+                        lr->data
+                    )
+                );
+            }
+        }
+
+        // double red violation on the RL side  (CC a x (R (R b y c) z d)) = T (CC (B a x b) y (B c z d))
+        static DeleteResult delbalancehelper_RR_RL(const CmpRBNode<K, E>* cur)
+        {
+            assert(cur != nullptr);
+
+            if(isLeafType(cur)) {
+                return emptyDeleteResult;
+            }
+            else {
+                const CmpRBTreeNode<K, E>* tnode = asNodeType(cur);
+
+                const CmpRBNode<K, E>* r = reprGetRight(tnode);
+                if(r == nullptr || r->data.color != RColor::Red) {
+                    return emptyDeleteResult;
+                }
+
+                const CmpRBNode<K, E>* rl = reprGetLeft(r);
+                if(rl == nullptr || rl->data.color != RColor::Red) {
+                    return emptyDeleteResult;
+                }
+
+                return DeleteResult::makeDone(
+                    mknode(cur->data.color,
+                        mkcopynode(RColor::Black, reprGetLeft(tnode), reprGetLeft(rl), tnode->data), 
+                        mkcopynode(RColor::Black, reprGetRight(rl), reprGetRight(r), r->data),
+                        rl->data
+                    )
+                );
+            }
+        }
+
+        // double red violation on the RR side balance (B a x (R b y (R c z d))) = T (R (B a x b) y (B c z d))
+        static DeleteResult delbalancehelper_RR_RR(const CmpRBNode<K, E>* cur)
+        {
+            assert(cur != nullptr);
+
+            if(isLeafType(cur)) {
+                return emptyDeleteResult;
+            }
+            else {
+                const CmpRBTreeNode<K, E>* tnode = asNodeType(cur);
+
+                const CmpRBNode<K, E>* r = reprGetRight(tnode);
+                if(r == nullptr || r->data.color != RColor::Red) {
+                    return emptyDeleteResult;
+                }
+
+                const CmpRBNode<K, E>* rr = reprGetRight(r);
+                if(rr == nullptr || rr->data.color != RColor::Red) {
+                    return emptyDeleteResult;
+                }
+
+                return DeleteResult::makeDone(
+                    mknode(cur->data.color,
+                        mkcopynode(RColor::Black, reprGetLeft(tnode), reprGetLeft(r), tnode->data), 
+                        mkcopynode(RColor::Black, reprGetLeft(rr), reprGetRight(rr), rr->data),
+                        r->data
+                    )
+                );
+            }
+        }
+
+        // Just roll up the black nodes -- balance (R a x b) = D (B a x b)
+        static DeleteResult delbalancehelper_S_R(const CmpRBNode<K, E>* cur)
+        {
+            assert(cur != nullptr);
+
+            if(cur->data.color != RColor::Red) {
+                return emptyDeleteResult;
+            }
+
+            return DeleteResult::makeDone(
+                mkcopynode(RColor::Black, reprGetLeft(cur), reprGetRight(cur), cur->data)
+            );
+        }
+
+        // Tentatively roll up the red nodes -- balance (CC a x b) = T (CC a x b)
+        static DeleteResult delbalancehelper_S_B(const CmpRBNode<K, E>* cur)
+        {
+            assert(cur != nullptr);
+
+            return DeleteResult::makeShort(cur);
+        }
+
+        static DeleteResult delbalance(const CmpRBNode<K, E>* cur)
+        {
+            DeleteResult res_rr_ll = delbalancehelper_RR_LL(cur);
+            if(!res_rr_ll.isEmpty()) {
+                return res_rr_ll;
+            }
+
+            DeleteResult res_rr_lr = delbalancehelper_RR_LR(cur);
+            if(!res_rr_lr.isEmpty()) {
+                return res_rr_lr;
+            }
+
+            DeleteResult res_rr_rl = delbalancehelper_RR_RL(cur);
+            if(!res_rr_rl.isEmpty()) {
+                return res_rr_rl;
+            }
+            
+            DeleteResult res_rr_rr = delbalancehelper_RR_RR(cur);
+            if(!res_rr_rr.isEmpty()) {
+                return res_rr_rr;
+            }
+
+            DeleteResult res_s_r = delbalancehelper_S_R(cur);
+            if(!res_s_r.isEmpty()) {
+                return res_s_r;
+            }
+
+            return delbalancehelper_S_B(cur);
+        }
+
+        static DeleteResult eqL(const DeleteResult& rres)
+        {
+            if(rres.isDone()) {
+                return rres;
+            }
+
+            const CmpRBNode<K, E>* curr = rres.tnode;
+
+            if(curr == nullptr || isLeafType(curr)) {
+                return DeleteResult::makeDone(curr);
+            }
+            else {
+                const CmpRBTreeNode<K, E>* tnode = asNodeType(curr);
+                const CmpRBNode<K, E>* r = reprGetRight(tnode);
+                const CmpRBNode<K, E>* l = reprGetLeft(tnode);
+
+                const auto lheight = reprGetBHeight(reprGetLeft(tnode));
+                const auto rheight = reprGetBHeight(reprGetRight(tnode));
+
+                if(lheight == rheight) {
+                    return DeleteResult::makeDone(curr);
+                }
+                assert(r != nullptr); //if it is then how is r taller than l?
+
+                if(r->data.color == RColor::Black) {
+                    // shorten right (N CC k a x (B b y c)) = delbalance (N CC a x (R b y c))
+                    return delbalance(mknode(tnode->data.color, 
+                        reprGetLeft(tnode), 
+                        mknode(RColor::Red, reprGetLeft(r), reprGetRight(r), r->data), 
+                        tnode->data)
+                    );
+                }
+                else {
+                    // rotate left and increase black height on rec-repair
+                    DeleteResult neql = eqL(DeleteResult::makeShort(mknode(RColor::Red, reprGetLeft(tnode), reprGetLeft(r), tnode->data)));
+                    return neql.apply([r](const CmpRBNode<K, E>* anode) { return mknode(RColor::Black, anode, reprGetRight(r), r->data); });
+                }
+            }
+        }
+
+        static DeleteResult eqR(const DeleteResult& rres)
+        {
+            if(rres.isDone()) {
+                return rres;
+            }
+
+            const CmpRBNode<K, E>* curr = rres.tnode;
+
+            if(curr == nullptr || isLeafType(curr)) {
+                return DeleteResult::makeDone(curr);
+            }
+            else {
+                const CmpRBTreeNode<K, E>* tnode = asNodeType(curr);
+                const CmpRBNode<K, E>* r = reprGetRight(tnode);
+                const CmpRBNode<K, E>* l = reprGetLeft(tnode);
+
+                const auto lheight = reprGetBHeight(reprGetLeft(tnode));
+                const auto rheight = reprGetBHeight(reprGetRight(tnode));
+
+                if(lheight == rheight) {
+                    return DeleteResult::makeDone(curr);
+                }
+                assert(l != nullptr); //if it is then how is l taller than r?
+
+                if(l->data.color == RColor::Black) {
+                    // shorten right (N CC (B a x b) y c) = delbalance (N CC (R a x b) y c)
+                    return delbalance(mknode(tnode->data.color, 
+                        mknode(RColor::Red, reprGetLeft(l), reprGetRight(l), l->data),
+                        reprGetRight(tnode),  
+                        tnode->data)
+                    );
+                }
+                else {
+                    // rotate right and increase black height on rec-repair
+                    DeleteResult neqr = eqR(DeleteResult::makeShort(mknode(RColor::Red, reprGetRight(l), reprGetRight(tnode), tnode->data)));
+                    return neqr.apply([l](const CmpRBNode<K, E>* bnode) { return mknode(RColor::Black, reprGetLeft(l), bnode, l->data); });
+                }
+            }
+        }
+
+        static CmpRBNode<K, E>* delblacken(DeleteResult rr)
+        {
+            if(rr.tnode == nullptr || rr.tnode->data.color == RColor::Black) {
+                return const_cast<CmpRBNode<K, E>*>(rr.tnode);
+            }
+            else {
+                return mknode(RColor::Black, reprGetLeft(rr.tnode), reprGetRight(rr.tnode), rr.tnode->data);
+            }
+        }
+
+        static DeleteResult deleterec(const CmpRBNode<K, E>* curr, const K& key)
+        {
+            if(curr == nullptr) {
+                return emptyDeleteResult; // key not present
+            }
+
+            if(key < curr->data.entry.key) {
+                return eqL(deleterec(reprGetLeft(curr), key).apply([curr](const CmpRBNode<K, E>* lnode) { return mknode(curr->data.color, lnode, reprGetRight(curr), curr->data); }));
+            }
+            else if(key > curr->data.entry.key) {
+                return eqR(deleterec(reprGetRight(curr), key).apply([curr](const CmpRBNode<K, E>* rnode) { return mknode(curr->data.color, reprGetLeft(curr), rnode, curr->data); }));
+            }
+            else {
+                // key == curr->data.entry.key
+                if(reprGetLeft(curr) == nullptr || reprGetRight(curr) == nullptr) {
+                    const CmpRBNode<K, E>* child = (reprGetLeft(curr) == nullptr) ? reprGetRight(curr) : reprGetLeft(curr);
+                    if(curr->data.color == RColor::Red) {
+                        return DeleteResult::makeDone(child);
+                    }
+                    else if(child == nullptr) {
+                        // removed a black leaf so this subtree is now one black-height short
+                        return DeleteResult::makeShort(nullptr);
+                    }
+                    else {
+                        return DeleteResult::makeDone(mkcopynode(RColor::Black, reprGetLeft(child), reprGetRight(child), child->data));
+                    }
+                }
+                else {
+                    const CmpRBNode<K, E>* succ = reprGetRight(curr);
+                    while(reprGetLeft(succ) != nullptr) {
+                        succ = reprGetLeft(succ);
+                    }
+                    DeleteResult dr = deleterec(reprGetRight(curr), succ->data.entry.key);
+                    return eqR(dr.apply([curr, succ](const CmpRBNode<K, E>* rnode) { return mknode(curr->data.color, reprGetLeft(curr), rnode, succ->data); }));
+                }
             }
         }
 
@@ -666,7 +978,7 @@ private:
             ++start;
 
             while(start != end) {
-                curr = blacken(insertrec(curr, *start));
+                curr = insblacken(insertrec(curr, *start));
                 ++start;
             }
 
@@ -713,8 +1025,16 @@ private:
 
         CmpRBTree<K, E, TreeID> insert(const E& entry) const
         {
-            CmpRBNode<K, E>* root = blacken(insertrec(this->root, entry));
+            CmpRBNode<K, E>* root = insblacken(insertrec(this->root, entry));
             BSQ_IF_ENABLED(RB_INVARIANT_VALIDATE, debugAssertInvariants(root, reprGetCount(this->root) + (this->has(entry.key) ? 0 : 1))); //note this->root is never modified so we can test here (after the insert)
+
+            return CmpRBTree<K, E, TreeID>{root};
+        }
+
+        CmpRBTree<K, E, TreeID> remove(const K& key) const
+        {
+            CmpRBNode<K, E>* root = delblacken(deleterec(this->root, key));
+            BSQ_IF_ENABLED(RB_INVARIANT_VALIDATE, debugAssertInvariants(root, reprGetCount(this->root) - (this->has(key) ? 1 : 0))); //note this->root is never modified so we can test here (after the remove)
 
             return CmpRBTree<K, E, TreeID>{root};
         }

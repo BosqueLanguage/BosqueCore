@@ -11,6 +11,9 @@ namespace SetOps {
     
     function s_set_insert<T: keytype>(s: Set<T>, k: T): Set<T> = @set_insert;
     function s_set_insert_ref<T: keytype>(ref s: Set<T>, k: T) = @set_insert_ref;
+
+    function s_set_remove<T: keytype>(s: Set<T>, k: T): Set<T> = @set_remove;
+    function s_set_remove_ref<T: keytype>(ref s: Set<T>, k: T) = @set_remove_ref;
 }
 #else
 #endif %% EXEC_LIBS

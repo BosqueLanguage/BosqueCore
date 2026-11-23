@@ -11,16 +11,14 @@ abstract class IRConditionDecl {
     readonly diagnosticTag: string | undefined;
     
     readonly stmts: IRStatement[];
-    readonly value: IRSimpleExpression;
 
-    constructor(file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, stmts: IRStatement[], value: IRSimpleExpression) {
+    constructor(file: string, sinfo: IRSourceInfo, diagnosticTag: string | undefined, stmts: IRStatement[]) {
         this.file = file;
         this.sinfo = sinfo;
         
         this.diagnosticTag = diagnosticTag;
 
         this.stmts = stmts;
-        this.value = value;
     }
 }
 
@@ -30,8 +28,8 @@ class IRPreConditionDecl extends IRConditionDecl {
     
     readonly issoft: boolean;
 
-    constructor(file: string, sinfo: IRSourceInfo, tag: string | undefined, ikey: string, requiresidx: number, issoft: boolean, stmts: IRStatement[], value: IRSimpleExpression) {
-        super(file, sinfo, tag, stmts, value);
+    constructor(file: string, sinfo: IRSourceInfo, tag: string | undefined, ikey: string, requiresidx: number, issoft: boolean, stmts: IRStatement[]) {
+        super(file, sinfo, tag, stmts);
         this.ikey = ikey;
         this.requiresidx = requiresidx;
         this.issoft = issoft;
@@ -44,8 +42,8 @@ class IRPostConditionDecl extends IRConditionDecl {
     
     readonly issoft: boolean;
     
-    constructor(file: string, sinfo: IRSourceInfo, tag: string | undefined, ikey: string, ensuresidx: number, issoft: boolean, stmts: IRStatement[], value: IRSimpleExpression) {
-        super(file, sinfo, tag, stmts, value);
+    constructor(file: string, sinfo: IRSourceInfo, tag: string | undefined, ikey: string, ensuresidx: number, issoft: boolean, stmts: IRStatement[]) {
+        super(file, sinfo, tag, stmts);
         this.ikey = ikey;
         this.ensuresidx = ensuresidx;
         this.issoft = issoft;
@@ -56,8 +54,8 @@ class IRInvariantDecl extends IRConditionDecl {
     readonly tkey: string;
     readonly invariantidx: number;
     
-    constructor(file: string, sinfo: IRSourceInfo, tag: string | undefined, tkey: string, invariantidx: number, stmts: IRStatement[], value: IRSimpleExpression) {
-        super(file, sinfo, tag, stmts, value);
+    constructor(file: string, sinfo: IRSourceInfo, tag: string | undefined, tkey: string, invariantidx: number, stmts: IRStatement[]) {
+        super(file, sinfo, tag, stmts);
         this.tkey = tkey;
         this.invariantidx = invariantidx;
     }
@@ -67,8 +65,8 @@ class IRValidateDecl extends IRConditionDecl {
     readonly tkey: string;
     readonly validateidx: number;
     
-    constructor(file: string, sinfo: IRSourceInfo, tag: string | undefined, tkey: string, validateidx: number, stmts: IRStatement[], value: IRSimpleExpression) {
-        super(file, sinfo, tag, stmts, value);
+    constructor(file: string, sinfo: IRSourceInfo, tag: string | undefined, tkey: string, validateidx: number, stmts: IRStatement[]) {
+        super(file, sinfo, tag, stmts);
         this.tkey = tkey;
         this.validateidx = validateidx;
     }

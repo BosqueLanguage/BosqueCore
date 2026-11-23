@@ -147,6 +147,11 @@ namespace ᐸRuntimeᐳ
         {
             return XSetT{this->uset.insert(XSetEntry<T>{v})};
         }
+
+        XSetT remove(const T& v) const
+        {
+            return XSetT{this->uset.remove(v)};
+        }
     };
 
     template<typename T, uint32_t TYPE_ID_SET_T>

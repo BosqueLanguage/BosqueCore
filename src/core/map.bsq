@@ -89,5 +89,26 @@ __internal entity Map<K: keytype, V> {
     ref method insert(k: K, v: V) {
         return MapOps::s_map_insert_ref<K, V>(ref this, k, v);
     }
+
+    method remove(k: K): Map<K, V> 
+        requires this.has(k);
+    {
+        return MapOps::s_map_remove<K, V>(this, k);
+    }
+
+    ref method remove(k: K) 
+        requires this.has(k);
+    {
+        return MapOps::s_map_remove_ref<K, V>(ref this, k);
+    }
+
+    method clear(k: K): Map<K, V> {
+        return MapOps::s_map_remove<K, V>(this, k);
+    }
+
+    ref method clear(k: K) {
+        return MapOps::s_map_remove_ref<K, V>(ref this, k);
+    }
+
 #endif %% STRIPPED_CORE
 }
