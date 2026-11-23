@@ -14,8 +14,10 @@ namespace MapOps {
     function s_map_get<K: keytype, V>(m: Map<K, V>, k: K): V = @map_get;
 
     function s_map_insert<K: keytype, V>(m: Map<K, V>, k: K, v: V): Map<K, V> = @map_insert;
-
     function s_map_insert_ref<K: keytype, V>(ref m: Map<K, V>, k: K, v: V) = @map_insert_ref;
+
+    function s_map_remove<K: keytype, V>(m: Map<K, V>, k: K): Map<K, V> = @map_remove;
+    function s_map_remove_ref<K: keytype, V>(ref m: Map<K, V>, k: K) = @map_remove_ref;
 }
 #else
 #endif %% EXEC_LIBS

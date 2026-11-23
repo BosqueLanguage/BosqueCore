@@ -156,6 +156,11 @@ namespace ᐸRuntimeᐳ
         {
             return XMapKV{this->utree.insert(entry)};
         }
+
+        XMapKV remove(const K& k) const
+        {
+            return XMapKV{this->utree.remove(k)};
+        }
     };
 
     template<typename K, typename V, uint32_t TYPE_ID_MAP_KV>

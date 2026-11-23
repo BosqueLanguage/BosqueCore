@@ -1765,6 +1765,12 @@ class CPPEmitter {
         else if(body.builtin === "map_insert_ref") {
             bstr = "m = m.insert(k, v)";
         }
+        else if(body.builtin === "map_remove") {
+            bstr = "m.remove(k)";
+        }
+        else if(body.builtin === "map_remove_ref") {
+            bstr = "m = m.remove(k)";
+        }
         else {
             assert(false, "CPPEmitter: need to implement builtin body emission " + body.builtin);
         }
