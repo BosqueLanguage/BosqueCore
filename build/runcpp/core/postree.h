@@ -356,8 +356,15 @@ namespace ᐸRuntimeᐳ
         }
 
         template<bool SafeSimpleFn, typename Fn>
-        T reduce(const T& init, Fn op) const
+        T reduce_bin(const T& init, Fn op) const
         {
+            return std::accumulate(this->data.cbegin(), this->data.cbegin() + this->dcount, init, op);
+        }
+
+        template<bool SafeSimpleFn, typename Fn>
+        T reduce_std(const T& init, Fn op) const
+        {
+            xxxx;
             return std::accumulate(this->data.cbegin(), this->data.cbegin() + this->dcount, init, [&op](const T& a, const T& b) {
                 return op(a, b);
             });
@@ -1837,19 +1844,19 @@ private:
         }
 
         template <bool SafeSimpleFn, typename Fn>
-        static T recreduce(const PosRBNode<T, K>* curr, const T& acc, Fn op)
+        static T recreduce_bin(const PosRBNode<T, K>* curr, const T& acc, Fn op)
         {
             if(curr == nullptr) {
                 return acc;
             }
 
             if(isLeafType(curr)) {
-                return curr->data.template reduce<SafeSimpleFn>(acc, op);
+                return curr->data.template reduce_bin<SafeSimpleFn>(acc, op);
             }
             else {
-                T leftSum = recreduce<SafeSimpleFn>(reprGetLeft(curr), acc, op);
-                T midSum = curr->data.template reduce<SafeSimpleFn>(leftSum, op);
-                T rightSum = recreduce<SafeSimpleFn>(reprGetRight(curr), midSum, op);
+                T leftSum = recreduce_bin<SafeSimpleFn>(reprGetLeft(curr), acc, op);
+                T midSum = curr->data.template reduce_bin<SafeSimpleFn>(leftSum, op);
+                T rightSum = recreduce_bin<SafeSimpleFn>(reprGetRight(curr), midSum, op);
 
                 return rightSum;
             }
@@ -2153,9 +2160,9 @@ private:
         }
 
         template <bool SafeSimpleFn, typename Op>
-        T reduce(const T& acc, Op op) const
+        T reduce_bin(const T& acc, Op op) const
         {
-            return recreduce<SafeSimpleFn, Op>(this->root, acc, op);
+            return recreduce_bin<SafeSimpleFn, Op>(this->root, acc, op);
         }
 
         //Only works when T is Nat/Int

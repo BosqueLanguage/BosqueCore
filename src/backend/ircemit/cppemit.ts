@@ -1707,7 +1707,7 @@ class CPPEmitter {
         }
         else if(body.builtin === "list_sumfun") {
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "op");
-            bstr = `l.reduce<${isSimple}>(init, [&op](${params}){ return ${fn}(op, ${args}); })`;
+            bstr = `l.reduce_bin<${isSimple}>(init, [&op](${params}){ return ${fn}(op, ${args}); })`;
         }
         else if(body.builtin === "algo_for") {
             const [fn] = this.getParamInforForLambda(invk, "op");

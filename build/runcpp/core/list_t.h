@@ -1041,7 +1041,7 @@ namespace ᐸRuntimeᐳ
         }
 
         template<bool SafeSimpleFn, typename Fn>
-        T reduce(const T& acc, Fn op) const
+        T reduce_bin(const T& acc, Fn op) const
         {
             if(this->ulist.empty()) {
                 return acc;
@@ -1056,8 +1056,72 @@ namespace ᐸRuntimeᐳ
                 });
             }
             else {
-                return this->ulist.treelist.postree.template reduce<SafeSimpleFn>(acc, op);
+                return this->ulist.treelist.postree.template reduce_bin<SafeSimpleFn>(acc, op);
             }
+        }
+
+        //reduce l(U, fn(U, T) -> U) -> U
+        template<bool SafeSimpleFn, typename Fn>
+        T reduce_std(const T& acc, Fn op) const
+        {
+            if(this->ulist.empty()) {
+                return acc;
+            }
+
+            if(this->ulist.isInline()) {
+                auto ddbegin = this->ulist.inlinelist.data.cbegin();
+                auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
+
+                return std::accumulate(ddbegin, ddend, acc, [&op](const T& a, const T& b) {
+                    return op(a, b);
+                });
+            }
+            else {
+                return this->ulist.treelist.postree.template reduce_bin<SafeSimpleFn>(acc, op);
+            }
+        }
+
+        //reduce l(ref E, fn(E, T) -> (|U, E|)) -> (U, E)
+        template<bool SafeSimpleFn, typename Fn>
+        T reduce_env(const T& acc, Fn op) const
+        {
+            if(this->ulist.empty()) {
+                return acc;
+            }
+
+            if(this->ulist.isInline()) {
+                auto ddbegin = this->ulist.inlinelist.data.cbegin();
+                auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
+
+                return std::accumulate(ddbegin, ddend, acc, [&op](const T& a, const T& b) {
+                    return op(a, b);
+                });
+            }
+            else {
+                return this->ulist.treelist.postree.template reduce_bin<SafeSimpleFn>(acc, op);
+            }
+        }
+
+        //transduce l(U, fn(U, T) -> U) -> (XList<U>, U)
+        template<bool SafeSimpleFn, typename U, uint32_t TYPE_ID_LIST_U, typename Fn>
+        std::pair<XList<U, TYPE_ID_LIST_U>, U> transduce_std(U& init, Fn op) const
+        {
+            if(this->ulist.empty()) {
+                return std::make_pair(XList<U, TYPE_ID_LIST_U>{}, init);
+            }
+
+            xxxx;
+        }
+
+        //transduce l(ref E, fn(E, T) -> (|U, E|)) -> (XList<U>, E)
+        template<bool SafeSimpleFn, typename U, uint32_t TYPE_ID_LIST_U, typename E, typename Fn>
+        std::pair<XList<U, TYPE_ID_LIST_U>, E> transduce_env(E& env, Fn op) const
+        {
+            if(this->ulist.empty()) {
+                return std::make_pair(XList<U, TYPE_ID_LIST_U>{}, env);
+            }
+
+            xxxx;
         }
     };
 
