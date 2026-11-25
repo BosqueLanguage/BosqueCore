@@ -416,13 +416,16 @@ __internal entity List<T> {
 
     recursive? method refduce<E: refable>(op: recursive? fn(ref E, T) -> Void, ref ev: E) {
         if(!ListOps::s_list_empty<T>(this)) {
-            ListOps::s_list_refducefun<T, E>(this, op, ref ev);
+            return;
         }
+        else {
+            ListOps::s_list_refducefun<T, E>(this, op, ref ev);
 
-        return;
+            return;
+        }
     }
 
-    recursive? method refreduce<E: refable, U>(op: recursive? fn(ref E, U, T) -> Void, ref ev: E, init: U): U {
+    recursive? method refreduce<E: refable, U>(op: recursive? fn(ref E, U, T) -> U, ref ev: E, init: U): U {
         if(ListOps::s_list_empty<T>(this)) {
             return init;
         }
