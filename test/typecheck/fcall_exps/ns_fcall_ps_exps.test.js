@@ -29,6 +29,6 @@ describe ("Checker -- NamespaceFunction Ref Params", () => {
         checkTestFunctionInFileError('function foo(out y: Int): Int { y = 3i; return 1i; } function main(): Int { let v = 0i; return foo(ref v); }', 'Could not find namespace function Main::foo');
 
         checkTestFunctionInFileError('entity Foo{ } function foo(ref y: Foo): Int { return 1i; } function main(): Int { let v = Foo{}; return foo(out v); }', 'Could not find namespace function Main::foo');
-        checkTestFunctionInFileError('function foo(ref y: Int): Int { return 1i; } function main(): Int { let v = 0i; return foo(ref v); }', 'Ref parameter must be of an updatable type');
+        checkTestFunctionInFileError('function foo(ref y: Int): Int { return 1i; } function main(): Int { let v = 0i; return foo(ref v); }', 'Ref parameter must be of an refable type');
     });
 });

@@ -639,6 +639,11 @@ class TypeChecker {
                         return false;
                     }
                 }
+                if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.Refable)) {
+                    if(this.checkError(sinfo, !this.relations.isRefableType(targ, this.constraints), `Template argument ${tdecl.name} is not a refable type`)) {
+                        return false;
+                    }
+                }
                 if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.Mergeable)) {
                     if(this.checkError(sinfo, !this.relations.isMergeableType(targ, this.constraints), `Template argument ${tdecl.name} is not a mergeable type`)) {
                         return false;
@@ -748,7 +753,7 @@ class TypeChecker {
                     return false;
                 }
 
-                this.checkError(pp.type.sinfo, pp.pkind === "ref" && !TypeChecker.isTypeUpdatable(pp.type)[0], `Ref parameter must be of an updatable type`);
+                this.checkError(pp.type.sinfo, pp.pkind === "ref" && !this.relations.isRefableType(pp.type, this.constraints), `Ref parameter must be of an refable type`);
             }
 
             if(type.name === "pred" && type.resultType.tkeystr !== "Bool") {
@@ -863,6 +868,11 @@ class TypeChecker {
                             return undefined;
                         }
                     }
+                    if(cc.extraTags.includes(TemplateTermDeclExtraTag.Refable)) {
+                        if(this.checkError(sinfo, !this.relations.isRefableType(trefine, this.constraints), `Template argument ${cc.t.name} is not a refable type`)) {
+                            return undefined;
+                        }
+                    }
                     if(cc.extraTags.includes(TemplateTermDeclExtraTag.Mergeable)) {
                         if(this.checkError(sinfo, !this.relations.isMergeableType(trefine, this.constraints), `Template argument ${cc.t.name} is not a mergeable type`)) {
                             return undefined;
@@ -908,6 +918,11 @@ class TypeChecker {
                 }
                 if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.CStrPos)) {
                     if(this.checkError(sinfo, !this.relations.isCStrPosType(targ, this.constraints), `Template argument ${tdecl.name} is not a cstrpos type`)) {
+                        return undefined;
+                    }
+                }
+                if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.Refable)) {
+                    if(this.checkError(sinfo, !this.relations.isRefableType(targ, this.constraints), `Template argument ${tdecl.name} is not a refable type`)) {
                         return undefined;
                     }
                 }
@@ -959,6 +974,11 @@ class TypeChecker {
                 }
                 if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.CStrPos)) {
                     if(this.checkError(sinfo, !this.relations.isCStrPosType(targ, this.constraints), `Template argument ${tdecl.name} is not a cstrpos type`)) {
+                        return undefined;
+                    }
+                }
+                if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.Refable)) {
+                    if(this.checkError(sinfo, !this.relations.isRefableType(targ, this.constraints), `Template argument ${tdecl.name} is not a refable type`)) {
                         return undefined;
                     }
                 }
@@ -1029,7 +1049,7 @@ class TypeChecker {
                         this.checkError(arg.exp.sinfo, !vinfo.mustDefined, `Variable ${vname} must be definitely assigned before it can be passed as ref`);
 
                         //check if an updatable type
-                        this.checkError(arg.exp.sinfo, !TypeChecker.isTypeUpdatable(vtype)[0], `Variable ${vname} is not of an updatable type and cannot be passed as ref`);
+                        this.checkError(arg.exp.sinfo, !this.relations.isRefableType(vtype, this.constraints), `Variable ${vname} is not of a refable type and cannot be passed as ref`);
                     }
 
                     argtype = vtype;
@@ -5302,7 +5322,7 @@ class TypeChecker {
                 this.checkError(idecl.sinfo, !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, p.type, this.constraints), `Default value does not match declared type -- expected ${p.type.emit()} but got ${etype.emit()}`);
             }
 
-            this.checkError(p.type.sinfo, p.pkind === "ref" && !TypeChecker.isTypeUpdatable(p.type)[0], `Ref parameter must be of an updatable type`);
+            this.checkError(p.type.sinfo, p.pkind === "ref" && !this.relations.isRefableType(p.type, this.constraints), `Ref parameter must be of an refable type`);
         }
 
         this.checkTypeSignature(idecl.resultType);

@@ -28,6 +28,7 @@ enum TemplateTermDeclExtraTag {
     Numeric = "numeric",
     StrPos = "strpos",
     CStrPos = "cstrpos",
+    Refable = "refable",
     Mergeable = "mergeable"
 }
 
@@ -633,6 +634,10 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
 
     isCStrPosRestricted(): boolean {
         return this.attributes.find((attr) => attr.name === "__cstrpos") !== undefined;
+    }
+
+    isRefableRestricted(): boolean {
+        return (this instanceof EntityTypeDecl) || (this instanceof DatatypeMemberEntityTypeDecl) || (this instanceof ConceptTypeDecl) || (this instanceof DatatypeTypeDecl) || (this instanceof AbstractCollectionTypeDecl);
     }
 
     isMergeableRestricted(): boolean {

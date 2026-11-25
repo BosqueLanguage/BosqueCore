@@ -230,6 +230,7 @@ const TermRestrictions = [
     "numeric",
     "strpos",
     "cstrpos",
+    "refable",
     "mergeable"
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 

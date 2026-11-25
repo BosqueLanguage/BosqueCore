@@ -2577,7 +2577,13 @@ class Parser {
                 return this.parseTemplateTypeReference();
             }
             case TokenStrings.IdentifierName: {
-                return this.parseNominalType();
+                if(this.peekTokenData() !== "Void") {
+                    return this.parseNominalType();
+                }
+                else {
+                    this.consumeToken();
+                    return this.env.SpecialVoidSignature;
+                }
             }
             case SYM_lparenbar: {
                 return this.parseElistType();
