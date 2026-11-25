@@ -1068,63 +1068,6 @@ namespace ᐸRuntimeᐳ
                 return this->ulist.treelist.postree.template reduce_std<SafeSimpleFn>(acc, op);
             }
         }
-
-        //reduce l(ref E, fn(ref E, U, T) -> U) -> U
-        template<bool SafeSimpleFn, typename E, typename U, typename Fn>
-        U reduce_env(E& env, const U& acc, Fn op) const
-        {
-            assert(!this->ulist.empty());
-
-            return this->reduce_env<SafeSimpleFn>(env, acc, [&env](const U& u, const T& t) {
-                return op(env, u, t);
-            });
-        }
-
-        //transduce l(ref E, fn(E, T) -> (|U, E|)) -> (XList<U>, E)
-        template<bool SafeSimpleFn, typename U, uint32_t TYPE_ID_LIST_U, typename E, typename Fn>
-        XList<U, TYPE_ID_LIST_U> transduce_env(E& env, Fn op) const
-        {
-            assert(!this->ulist.empty());
-
-            if(this->ulist.isInline()) {
-                auto ddbegin = this->ulist.inlinelist.data.cbegin();
-                auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
-
-                std::array<U, ListTTreeContent<U, TYPE_ID_LIST_U>::MAX_LEAF_CAPACITY> result{};
-                std::transform(ddbegin, ddend, result.begin(), [&env](const T& t) {
-                    return op(env, t);
-                });
-                
-                if(this->ulist.inlinelist.count <= ListTInlineContent<U>::MAX_INLINE_CAPACITY) {
-                    return XList<U, TYPE_ID_LIST_U>{ListTInlineContent<U>(result.data(), this->ulist.inlinelist.count)};
-                }
-                else {
-                    return XList<U, TYPE_ID_LIST_U>{PosRBTree<U, ListTTreeContent<U, TYPE_ID_LIST_U>::MAX_LEAF_CAPACITY, TYPE_ID_LIST_U>::mkinitial(result.data(), result.data() + this->ulist.inlinelist.count)};
-                }
-            }
-            else {
-                return XList<U, TYPE_ID_LIST_U>{this->ulist.treelist.postree.template transduce_env<SafeSimpleFn, U, TYPE_ID_LIST_U, E, Fn>(env, [&env, op](const T& t) {
-                    return op(env, t);
-                })};
-            }
-        }
-
-        //reduce l(U, fn(U, T) -> U) -> U
-        template<bool SafeSimpleFn, typename U, typename OpFn, typename RFn>
-        U map_reduce_std(const U& acc, OpFn fop, RFn rop) const
-        {
-            assert(!this->ulist.empty());
-
-            if(this->ulist.isInline()) {
-                auto ddbegin = this->ulist.inlinelist.data.cbegin();
-                auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
-
-                return std::transform_reduce(ddbegin, ddend, acc, rop, fop);
-            }
-            else {
-                return this->ulist.treelist.postree.template map_reduce_std<SafeSimpleFn>(acc, fop, rop);
-            }
-        }
     };
 
     template<typename T, uint32_t TYPE_ID_LIST_T>

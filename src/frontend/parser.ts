@@ -7013,12 +7013,6 @@ class Parser {
             
             const api = new APIDecl(this.env.currentFile, sinfo, attributes, apiname, terms, params, resultInfo, eventType, preconds, postconds, configs, statusinfo, envreqs, resourcereqs, body);
             this.env.currentNamespace.apis.push(api);
-
-
-            ////
-            const sstr = api.emit(new CodeFormatter());
-            console.log(`API EMIT: ${sstr}`);
-            ////
         }
     }
 

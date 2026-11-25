@@ -364,10 +364,7 @@ namespace ᐸRuntimeᐳ
         template<bool SafeSimpleFn, typename Fn>
         T reduce_std(const T& init, Fn op) const
         {
-            xxxx;
-            return std::accumulate(this->data.cbegin(), this->data.cbegin() + this->dcount, init, [&op](const T& a, const T& b) {
-                return op(a, b);
-            });
+            return std::accumulate(this->data.cbegin(), this->data.cbegin() + this->dcount, init, op);
         }
     };
 
