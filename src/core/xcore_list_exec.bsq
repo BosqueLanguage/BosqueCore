@@ -66,10 +66,7 @@ namespace ListOps {
     __may_fail function s_list_sum<T: numeric>(l: List<T>): T = @list_sum;
     __may_fail function s_list_sumPrefix<T: numeric>(l: List<T>): List<T> = @list_sumprefix;
 
-    function s_list_sumfun<T>(l: List<T>, init: T, op: recursive? fn(T, T) -> T): T = @list_sumfun;
-
-
-    %%%% New Funcs
+    recursive? function s_list_sumfun<T>(l: List<T>, init: T, op: recursive? fn(T, T) -> T): T = @list_sumfun;
 
     recursive? function s_list_reducefun<T, U>(l: List<T>, init: U, op: recursive? fn(U, T) -> U): U = @list_reducefun;
     recursive? function s_list_refducefun<T, E: refable>(l: List<T>, op: recursive? fn(ref E, T) -> Void, ref ev: E) = @list_refducefun;

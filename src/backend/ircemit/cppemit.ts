@@ -1709,6 +1709,27 @@ class CPPEmitter {
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "op");
             bstr = `l.reduce_bin<${isSimple}>(init, [&op](${params}){ return ${fn}(op, ${args}); })`;
         }
+        else if(body.builtin === "list_reducefun") {
+            const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "op");
+            bstr = `l.reduce_std<${isSimple}>(init, [&op](${params}){ return ${fn}(op, ${args}); })`;
+        }
+        else if(body.builtin === "list_refducefun") {
+            const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "op");
+            bstr = `l.reduce_envref<${isSimple}>(ev, [&op](${params}){ ${fn}(op, ${args}); })`;
+        }
+        else if(body.builtin === "list_refreducefun") {
+            const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "op");
+            bstr = `l.reduce_full<${isSimple}>(ev, init, [&op](${params}){ ${fn}(op, ${args}); })`;
+        }
+        else if(body.builtin === "list_transducefun") {
+            assert(false, "list_transduce not implemented in cppemit");
+        }
+        else if(body.builtin === "list_mapreducefun") {
+            assert(false, "list_mapreduce not implemented in cppemit");
+        }
+        else if(body.builtin === "list_combinefun") {
+            assert(false, "list_combine not implemented in cppemit");
+        }
         else if(body.builtin === "algo_for") {
             const [fn] = this.getParamInforForLambda(invk, "op");
             prestr = `auto sp = s; for(Nat i = low; i < high; i = i + 1_n) { sp = ${fn}(op, sp, i); }`;
