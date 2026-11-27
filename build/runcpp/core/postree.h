@@ -2262,7 +2262,7 @@ private:
         template<bool SafeSimpleFn, typename U, typename Fn>
         U reduce_std(const U& init, Fn op) const
         {
-            return recreduce_std<SafeSimpleFn, Fn>(this->root, init, op);
+            return recreduce_std<SafeSimpleFn, U, Fn>(this->root, init, op);
         }
 
         template<bool SafeSimpleFn, typename E, typename Fn>

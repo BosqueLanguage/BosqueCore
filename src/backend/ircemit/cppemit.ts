@@ -1719,7 +1719,7 @@ class CPPEmitter {
         }
         else if(body.builtin === "list_refreducefun") {
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "op");
-            bstr = `l.reduce_full<${isSimple}>(ev, init, [&op](${params}){ ${fn}(op, ${args}); })`;
+            bstr = `l.reduce_full<${isSimple}>(ev, init, [&op](${params}){ return ${fn}(op, ${args}); })`;
         }
         else if(body.builtin === "list_transducefun") {
             assert(false, "list_transduce not implemented in cppemit");
