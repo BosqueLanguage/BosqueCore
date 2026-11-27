@@ -1639,49 +1639,50 @@ class CPPEmitter {
         }
         else if(body.builtin === "list_find_cond") {
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "p");
-            bstr = `l.find<${isSimple}>([&p](${params}){ return (bool)${fn}(p, ${args}); }, res)`;
+            bstr = `l.find<${isSimple}>([&ᐸclosureᐳ = p](${params}){ return (bool)${fn}(ᐸclosureᐳ, ${args}); }, res)`;
         }
         else if(body.builtin === "list_find_index_cond") {
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "p");
-            bstr = `l.findIndex<${isSimple}>([&p](${params}){ return (bool)${fn}(p, ${args}); }, res)`;
+            bstr = `l.findIndex<${isSimple}>([&ᐸclosureᐳ = p](${params}){ return (bool)${fn}(ᐸclosureᐳ, ${args}); }, res)`;
         }
         else if(body.builtin === "list_find_index_cond") {
             assert(false, "Not implemented -- list_find_index_cond");
         }
         else if(body.builtin === "list_allof") {
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "p");
-            bstr = `l.allOf<${isSimple}>([&p](${params}){ return (bool)${fn}(p, ${args}); })`;
+            bstr = `l.allOf<${isSimple}>([&ᐸclosureᐳ = p](${params}){ return (bool)${fn}(ᐸclosureᐳ, ${args}); })`;
         }
         else if(body.builtin === "list_noneof") {
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "p");
-            bstr = `l.noneOf<${isSimple}>([&p](${params}){ return (bool)${fn}(p, ${args}); })`;
+            bstr = `l.noneOf<${isSimple}>([&ᐸclosureᐳ = p](${params}){ return (bool)${fn}(ᐸclosureᐳ, ${args}); })`;
         }
         else if(body.builtin === "list_someof") {
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "p");
-            bstr = `l.someOf<${isSimple}>([&p](${params}){ return (bool)${fn}(p, ${args}); })`;
+            bstr = `l.someOf<${isSimple}>([&ᐸclosureᐳ = p](${params}){ return (bool)${fn}(ᐸclosureᐳ, ${args}); })`;
         }
         else if(body.builtin === "list_map") {
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "f");
             const utype = body.biterms.find((bt) => bt[0] === "U") as [string, IRTypeSignature];
             const ptid = this.typeInfoManager.getTypeInfo(invk.resultType.tkeystr).bsqtypeid;
-            bstr = `l.map<${isSimple}, ${this.typeInfoManager.emitTypeAsStd(utype[1].tkeystr)}, ${ptid}>([&f](${params}){ return ${fn}(f, ${args}); })`;
+            bstr = `l.map<${isSimple}, ${this.typeInfoManager.emitTypeAsStd(utype[1].tkeystr)}, ${ptid}>([&ᐸclosureᐳ = f](${params}){ return ${fn}(ᐸclosureᐳ, ${args}); })`;
         }
         else if(body.builtin === "list_mapidx") {
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "f");
             const utype = body.biterms.find((bt) => bt[0] === "U") as [string, IRTypeSignature];
             const ptid = this.typeInfoManager.getTypeInfo(invk.resultType.tkeystr).bsqtypeid;
-            bstr = `l.mapIdx<${isSimple}, ${this.typeInfoManager.emitTypeAsStd(utype[1].tkeystr)}, ${ptid}>([&f](${params}){ return ${fn}(f, ${args}); })`;
+            bstr = `l.mapIdx<${isSimple}, ${this.typeInfoManager.emitTypeAsStd(utype[1].tkeystr)}, ${ptid}>([&ᐸclosureᐳ = f](${params}){ return ${fn}(ᐸclosureᐳ, ${args}); })`;
         }
         else if(body.builtin === "list_filter") {
             const [pred, isSimple, params, args] = this.getParamInforForLambda(invk, "p");
-            bstr = `l.filter<${isSimple}>([&p](${params}){ return (bool)${pred}(p, ${args}); })`;
+            bstr = `l.filter<${isSimple}>([&ᐸclosureᐳ = p](${params}){ return (bool)${pred}(ᐸclosureᐳ, ${args}); })`;
         }
         else if(body.builtin === "list_filtermap") {
             const [pred, isSimplePred, paramsPred, argsPred] = this.getParamInforForLambda(invk, "p");
             const [fn, isSimpleFn, paramsFn, argsFn] = this.getParamInforForLambda(invk, "f");
+
             const utype = body.biterms.find((bt) => bt[0] === "U") as [string, IRTypeSignature];
             const ptid = this.typeInfoManager.getTypeInfo(invk.resultType.tkeystr).bsqtypeid;
-            bstr = `l.filtermap<${isSimplePred} & ${isSimpleFn}, ${this.typeInfoManager.emitTypeAsStd(utype[1].tkeystr)}, ${ptid}>([&p](${paramsPred}){ return (bool)${pred}(p, ${argsPred}); }, [&f](${paramsFn}){ return ${fn}(f, ${argsFn}); })`;
+            bstr = `l.filtermap<${isSimplePred} & ${isSimpleFn}, ${this.typeInfoManager.emitTypeAsStd(utype[1].tkeystr)}, ${ptid}>([&ᐸclosurepᐳ = p](${paramsPred}){ return (bool)${pred}(ᐸclosurepᐳ, ${argsPred}); }, [&ᐸclosurefᐳ = f](${paramsFn}){ return ${fn}(ᐸclosurefᐳ, ${argsFn}); })`;
         }
         else if(body.builtin === "list_min") {
             const mtype = this.typeInfoManager.emitTypeAsParameter(invk.resultType.tkeystr, false, false);
@@ -1689,7 +1690,7 @@ class CPPEmitter {
         }
         else if(body.builtin === "list_minfun") {
             const [cmp, isSimple, params, args] = this.getParamInforForLambda(invk, "cmp");
-            bstr = `l.minfun<${isSimple}>([&cmp](${params}){ return (bool)${cmp}(cmp, ${args}); })`;
+            bstr = `l.minfun<${isSimple}>([&ᐸclosureᐳ = cmp](${params}){ return (bool)${cmp}(ᐸclosureᐳ, ${args}); })`;
         }
         else if(body.builtin === "list_max") {
             const mtype = this.typeInfoManager.emitTypeAsParameter(invk.resultType.tkeystr, false, false);
@@ -1697,7 +1698,7 @@ class CPPEmitter {
         }
         else if(body.builtin === "list_maxfun") {
             const [cmp, isSimple, params, args] = this.getParamInforForLambda(invk, "cmp");
-            bstr = `l.maxfun<${isSimple}>([&cmp](${params}){ return (bool)${cmp}(cmp, ${args}); })`;
+            bstr = `l.maxfun<${isSimple}>([&ᐸclosureᐳ = cmp](${params}){ return (bool)${cmp}(ᐸclosureᐳ, ${args}); })`;
         }
         else if(body.builtin === "list_sum") {
             bstr = `l.sum()`
@@ -1707,19 +1708,19 @@ class CPPEmitter {
         }
         else if(body.builtin === "list_sumfun") {
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "op");
-            bstr = `l.reduce_bin<${isSimple}>(init, [&op](${params}){ return ${fn}(op, ${args}); })`;
+            bstr = `l.reduce_bin<${isSimple}>(init, [&ᐸclosureᐳ = op](${params}){ return ${fn}(ᐸclosureᐳ, ${args}); })`;
         }
         else if(body.builtin === "list_reducefun") {
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "op");
-            bstr = `l.reduce_std<${isSimple}>(init, [&op](${params}){ return ${fn}(op, ${args}); })`;
+            bstr = `l.reduce_std<${isSimple}>(init, [&ᐸclosureᐳ = op](${params}){ return ${fn}(ᐸclosureᐳ, ${args}); })`;
         }
         else if(body.builtin === "list_refducefun") {
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "op");
-            bstr = `l.reduce_envref<${isSimple}>(ev, [&op](${params}){ ${fn}(op, ${args}); })`;
+            bstr = `l.reduce_envref<${isSimple}>(ev, [&ᐸclosureᐳ = op](${params}){ ${fn}(ᐸclosureᐳ, ${args}); })`;
         }
         else if(body.builtin === "list_refreducefun") {
             const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "op");
-            bstr = `l.reduce_full<${isSimple}>(ev, init, [&op](${params}){ return ${fn}(op, ${args}); })`;
+            bstr = `l.reduce_full<${isSimple}>(ev, init, [&ᐸclosureᐳ = op](${params}){ return ${fn}(ᐸclosureᐳ, ${args}); })`;
         }
         else if(body.builtin === "list_transducefun") {
             assert(false, "list_transduce not implemented in cppemit");

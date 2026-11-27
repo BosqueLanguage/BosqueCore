@@ -1,5 +1,5 @@
 import { SourceInfo } from "./build_decls.js";
-import { AbstractNominalTypeDecl, InvokeTemplateTypeRestriction, TemplateTermDecl, TemplateTermDeclExtraTag } from "./assembly.js";
+import { AbstractNominalTypeDecl, AllTemplateTermDeclExtraTags, InvokeTemplateTypeRestriction, TemplateTermDecl, TemplateTermDeclExtraTag } from "./assembly.js";
 
 class FullyQualifiedNamespace {
     readonly ns: string[];
@@ -52,11 +52,12 @@ class TemplateConstraintScope {
 
             const tcsub = tc.subtype || btt.tconstraint;
             let tcextra = [...tc.extraTags];
-            if(!tcextra.includes(TemplateTermDeclExtraTag.KeyType) && btt.extraTags.includes(TemplateTermDeclExtraTag.KeyType)) {
-                tcextra.push(TemplateTermDeclExtraTag.KeyType);
-            }
-            if(!tcextra.includes(TemplateTermDeclExtraTag.Numeric) && btt.extraTags.includes(TemplateTermDeclExtraTag.Numeric)) {
-                tcextra.push(TemplateTermDeclExtraTag.Numeric);
+
+            for(let i = 0; i < AllTemplateTermDeclExtraTags.length; ++i) {
+                const tag = AllTemplateTermDeclExtraTags[i];
+                if(!tcextra.includes(tag) && btt.extraTags.includes(tag)) {
+                    tcextra.push(tag);
+                }
             }
 
             return new TemplateTermDecl(tc.t.name, tcsub, tcextra)
