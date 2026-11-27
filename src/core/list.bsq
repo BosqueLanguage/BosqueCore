@@ -164,33 +164,6 @@ __internal entity List<T> {
         }
     }
 
-    function concat(...lists: List<List<T>>): List<T> {
-        if(ListOps::s_list_empty<List<T>>(lists)) {
-            return List<T>{};
-        }
-        else {
-            return ListOps::s_list_concat<T>(lists);
-        }
-    }
-
-    function concatAll(lists: List<List<T>>): List<T> {
-        if(ListOps::s_list_empty<List<T>>(lists)) {
-            return List<T>{};
-        }
-        else {
-            return ListOps::s_list_concat<T>(lists);
-        }
-    }
-
-    method {when T: List<U>} flatten<U>(): List<U> {
-        if(ListOps::s_list_empty<T>(this)) {
-            return List<U>{};
-        }
-        else {
-            return ListOps::s_list_concat<U>(this);
-        }
-    }
-
     method {when T: keytype} contains(v: T): Bool {
         if(ListOps::s_list_empty<T>(this)) {
             return false;
@@ -323,26 +296,6 @@ __internal entity List<T> {
         }
     }
 
-    recursive? method flatmap<U>(f: recursive? fn(T) -> List<U>): List<U> {
-        if(ListOps::s_list_empty<T>(this)) {
-            return List<U>{};
-        }
-        else {
-            let ll = ListOps::s_list_map[recursive?]<T, List<U>>(this, f);
-            return ListOps::s_list_concat<U>(ll);
-        }
-    }
-
-    recursive? method flatmapIdx<U>(f: recursive? fn(T, Nat) -> List<U>): List<U> {
-        if(ListOps::s_list_empty<T>(this)) {
-            return List<U>{};
-        }
-        else {
-            let ll = ListOps::s_list_mapidx[recursive?]<T, List<U>>(this, f);
-            return ListOps::s_list_concat<U>(ll);
-        }
-    }
-
     method convert<U>(): List<U> {
         if(ListOps::s_list_empty<T>(this)) {
             return List<U>{};
@@ -451,5 +404,95 @@ __internal entity List<T> {
             return ListOps::s_list_sumfun<T>(this, init, op);
         }
     }
+
+    recursive? method reduce<U>(op: recursive? fn(U, T) -> U, init: U): U {
+        if(ListOps::s_list_empty<T>(this)) {
+            return init;
+        }
+        else {
+            return ListOps::s_list_reducefun<T, U>(this, init, op);
+        }
+    }
+
+    recursive? method refduce<E: refable>(op: recursive? fn(ref E, T) -> Void, ref ev: E) {
+        if(!ListOps::s_list_empty<T>(this)) {
+            ListOps::s_list_refducefun<T, E>(this, op, ref ev);
+        }
+    }
+
+    recursive? method refreduce<E: refable, U>(op: recursive? fn(ref E, U, T) -> U, ref ev: E, init: U): U {
+        if(ListOps::s_list_empty<T>(this)) {
+            return init;
+        }
+        else {
+            return ListOps::s_list_refreducefun<T, E, U>(this, op, ref ev, init);
+        }
+    }
+
+    recursive? method transduce<E: refable, U>(op: recursive? fn(U, ref E, T) -> U, ref ev: E): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+            return ListOps::s_list_transducefun<T, E, U>(this, op, ref ev);
+        }
+    }
+
+    recursive? method mapreduce<U>(f: recursive? fn(T) -> U, op: recursive? fn(U, U) -> U, init: U): U {
+        if(ListOps::s_list_empty<T>(this)) {
+            return init;
+        }
+        else {
+            return ListOps::s_list_mapreducefun<T, U>(this, f, op, init);
+        }
+    }
+
+    method {when T: List<U>} flatten<U>(): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+            return ListOps::s_list_concat<U>(this);
+        }
+    }
+
+    function concat(...lists: List<List<T>>): List<T> {
+        if(ListOps::s_list_empty<List<T>>(lists)) {
+            return List<T>{};
+        }
+        else {
+            return ListOps::s_list_concat<T>(lists);
+        }
+    }
+
+    function concatAll(lists: List<List<T>>): List<T> {
+        if(ListOps::s_list_empty<List<T>>(lists)) {
+            return List<T>{};
+        }
+        else {
+            return ListOps::s_list_concat<T>(lists);
+        }
+    }
+
+    recursive? method flatmap<U>(f: recursive? fn(T) -> List<U>): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+            let ll = ListOps::s_list_map[recursive?]<T, List<U>>(this, f);
+            return ListOps::s_list_concat<U>(ll);
+        }
+    }
+
+    recursive? method flatmapIdx<U>(f: recursive? fn(T, Nat) -> List<U>): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+            let ll = ListOps::s_list_mapidx[recursive?]<T, List<U>>(this, f);
+            return ListOps::s_list_concat<U>(ll);
+        }
+    }
+
 #endif %% STRIPPED_CORE 
 }

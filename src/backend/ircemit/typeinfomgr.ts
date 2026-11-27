@@ -110,8 +110,6 @@ class TypeInfoManager {
     private typeInfoMap: Map<string, TypeInfo> = new Map<string, TypeInfo>();
     private fieldidctr = 0;
 
-    static readonly c_ref_pass_size: number = 32; //Bytes used for ref passing (pointer + typeid + extra)
-
     constructor() {
     }
 
@@ -257,12 +255,9 @@ class TypeInfoManager {
                 return TransformCPPNameManager.convertTypeKey(tkey) + "*" + rtspec;
             }
             else {
-                if(typeinfo.bytesize <= TypeInfoManager.c_ref_pass_size) {
-                    return TransformCPPNameManager.convertTypeKey(tkey) + rtspec;
-                }
-                else {
-                    return (!isreftagged ? "const " : "") + TransformCPPNameManager.convertTypeKey(tkey) + "&";                
-                }
+                //TODO: At some point we would like to pass by const ref but this can be a problem if we mix in ref params -- e.g. foo(x, ref x) -> foo(const Foo& a, Foo& b) yikes!
+                
+                return TransformCPPNameManager.convertTypeKey(tkey) + rtspec;
             }
         }
     }

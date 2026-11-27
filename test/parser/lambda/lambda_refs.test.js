@@ -9,6 +9,11 @@ describe ("Parser -- Lambda ref calls", () => {
         parseTestFunctionInFile('entity Foo { field v: Int; } function foo(f: fn(ref Foo) -> Int): Int { let x = Foo{ 1i }; return f(ref x); } [FUNC]', 'function main(): Bool { return foo(fn(ref x: Foo): Int => x.v); }');
     });
 
+    it("should parse simple ref void", function () {
+        parseTestFunctionInFile('function foo(f: fn(inout Int) -> Void): Int { let x = 1i; return f(inout x); } [FUNC]', 'function main(): Bool { return foo(fn(inout x: Int): Void => { return; }); }');
+        parseTestFunctionInFile('entity Foo { field v: Int; } function foo(f: fn(ref Foo) -> Void): Int { let x = Foo{ 1i }; return f(ref x); } [FUNC]', 'function main(): Bool { return foo(fn(ref x) => { return; }); }');
+    });
+
     it("should parse simple ref infer", function () {
         parseTestFunctionInFile('function foo(f: fn(inout Int) -> Int): Int { let x = 1i; return f(inout x); } [FUNC]', 'function main(): Bool { return foo(fn(inout x) => x); }');
         parseTestFunctionInFile('entity Foo { field v: Int; } function foo(f: fn(ref Foo) -> Int): Int { let x = Foo{ 1i }; return f(ref x); } [FUNC]', 'function main(): Bool { return foo(fn(ref x) => { return x.v; }); }');

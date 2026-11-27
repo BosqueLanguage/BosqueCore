@@ -28,8 +28,18 @@ enum TemplateTermDeclExtraTag {
     Numeric = "numeric",
     StrPos = "strpos",
     CStrPos = "cstrpos",
+    Refable = "refable",
     Mergeable = "mergeable"
 }
+
+const AllTemplateTermDeclExtraTags = [
+    TemplateTermDeclExtraTag.KeyType,
+    TemplateTermDeclExtraTag.Numeric,
+    TemplateTermDeclExtraTag.StrPos,
+    TemplateTermDeclExtraTag.CStrPos,
+    TemplateTermDeclExtraTag.Refable,
+    TemplateTermDeclExtraTag.Mergeable
+];
 
 class TemplateTermDecl {
     readonly name: string;
@@ -633,6 +643,10 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
 
     isCStrPosRestricted(): boolean {
         return this.attributes.find((attr) => attr.name === "__cstrpos") !== undefined;
+    }
+
+    isRefableRestricted(): boolean {
+        return (this instanceof EntityTypeDecl) || (this instanceof DatatypeMemberEntityTypeDecl) || (this instanceof ConceptTypeDecl) || (this instanceof DatatypeTypeDecl) || (this instanceof AbstractCollectionTypeDecl);
     }
 
     isMergeableRestricted(): boolean {
@@ -1951,7 +1965,8 @@ class Assembly {
 export {
     MIN_SAFE_INT, MAX_SAFE_INT, MAX_SAFE_NAT, MIN_SAFE_CHK_INT, MAX_SAFE_CHK_INT, MAX_SAFE_CHK_NAT,
     WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RESULT_EVENT_NAME,
-    TemplateTermDeclExtraTag, TemplateTermDecl, TypeTemplateTermDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestriction, 
+    TemplateTermDeclExtraTag, AllTemplateTermDeclExtraTags,
+    TemplateTermDecl, TypeTemplateTermDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestriction, 
     TaskConfiguration,
     AbstractDecl, 
     ConditionDecl, PreConditionDecl, PostConditionDecl, InvariantDecl, ValidateDecl,

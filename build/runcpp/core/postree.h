@@ -356,11 +356,45 @@ namespace ᐸRuntimeᐳ
         }
 
         template<bool SafeSimpleFn, typename Fn>
-        T reduce(const T& init, Fn op) const
+        T reduce_bin(const T& init, Fn op) const
         {
-            return std::accumulate(this->data.cbegin(), this->data.cbegin() + this->dcount, init, [&op](const T& a, const T& b) {
-                return op(a, b);
-            });
+            return std::accumulate(this->data.cbegin(), this->data.cbegin() + this->dcount, init, op);
+        }
+
+        template<bool SafeSimpleFn, typename U, typename Fn>
+        U reduce_std(const U& init, Fn op) const
+        {
+            return std::accumulate(this->data.cbegin(), this->data.cbegin() + this->dcount, init, op);
+        }
+
+        template<bool SafeSimpleFn, typename E, typename Fn>
+        void reduce_envref(E& ev, Fn op) const
+        {
+            for(size_t i = 0; i < (size_t)this->dcount; ++i) {
+                op(ev, this->data[i]);
+            }
+        }
+
+        template<bool SafeSimpleFn, typename E, typename U, typename Fn>
+        U reduce_full(E& ev, const U& init, Fn op) const
+        {
+            U acc = init;
+            for(size_t i = 0; i < (size_t)this->dcount; ++i) {
+                acc = op(ev, acc, this->data[i]);
+            }
+            return acc;
+        }
+
+        template<bool SafeSimpleFn, typename E, typename U, typename Fn>
+        PosRBData<U, K> transduce_full(E& ev, Fn op) const
+        {
+            assert(false);
+        }
+
+        template<bool SafeSimpleFn, typename U, typename Fn, typename Op>
+        U mapreduce_std(const U& init, Fn f, Op op) const
+        {
+            assert(false);
         }
     };
 
@@ -1837,22 +1871,89 @@ private:
         }
 
         template <bool SafeSimpleFn, typename Fn>
-        static T recreduce(const PosRBNode<T, K>* curr, const T& acc, Fn op)
+        static T recreduce_bin(const PosRBNode<T, K>* curr, const T& acc, Fn op)
         {
             if(curr == nullptr) {
                 return acc;
             }
 
             if(isLeafType(curr)) {
-                return curr->data.template reduce<SafeSimpleFn>(acc, op);
+                return curr->data.template reduce_bin<SafeSimpleFn>(acc, op);
             }
             else {
-                T leftSum = recreduce<SafeSimpleFn>(reprGetLeft(curr), acc, op);
-                T midSum = curr->data.template reduce<SafeSimpleFn>(leftSum, op);
-                T rightSum = recreduce<SafeSimpleFn>(reprGetRight(curr), midSum, op);
+                T leftSum = recreduce_bin<SafeSimpleFn>(reprGetLeft(curr), acc, op);
+                T midSum = curr->data.template reduce_bin<SafeSimpleFn>(leftSum, op);
+                T rightSum = recreduce_bin<SafeSimpleFn>(reprGetRight(curr), midSum, op);
 
                 return rightSum;
             }
+        }
+
+        template<bool SafeSimpleFn, typename U, typename Fn>
+        static U recreduce_std(const PosRBNode<T, K>* curr, const U& acc, Fn op)
+        {
+            if(curr == nullptr) {
+                return acc;
+            }
+
+            if(isLeafType(curr)) {
+                return curr->data.template reduce_std<SafeSimpleFn>(acc, op);
+            }
+            else {
+                U leftacc = recreduce_std<SafeSimpleFn, U, Fn>(reprGetLeft(curr), acc, op);
+                U midacc = curr->data.template reduce_std<SafeSimpleFn>(leftacc, op);
+                U rightacc = recreduce_std<SafeSimpleFn, U, Fn>(reprGetRight(curr), midacc, op);
+
+                return rightacc;
+            }
+        }
+
+        template<bool SafeSimpleFn, typename E, typename Fn>
+        static void recreduce_envref(const PosRBNode<T, K>* curr, E& ev, Fn op)
+        {
+            if(curr == nullptr) {
+                return;
+            }
+
+            if(isLeafType(curr)) {
+                curr->data.template reduce_envref<SafeSimpleFn>(ev, op);
+            }
+            else {
+                recreduce_envref<SafeSimpleFn>(reprGetLeft(curr), ev, op);
+                curr->data.template reduce_envref<SafeSimpleFn>(ev, op);
+                recreduce_envref<SafeSimpleFn>(reprGetRight(curr), ev, op);
+            }
+        }
+
+        template<bool SafeSimpleFn, typename E, typename U, typename Fn>
+        static U recreduce_full(const PosRBNode<T, K>* curr, E& ev, const U& acc, Fn op)
+        {
+            if(curr == nullptr) {
+                return acc;
+            }
+
+            if(isLeafType(curr)) {
+                return curr->data.template reduce_full<SafeSimpleFn>(ev, acc, op);
+            }
+            else {
+                U leftacc = recreduce_full<SafeSimpleFn>(reprGetLeft(curr), ev, acc, op);
+                U midacc = curr->data.template reduce_full<SafeSimpleFn>(ev, leftacc, op);
+                U rightacc = recreduce_full<SafeSimpleFn>(reprGetRight(curr), ev, midacc, op);
+
+                return rightacc;
+            }
+        }
+
+        template<bool SafeSimpleFn, typename E, typename U, uint32_t TYPE_ID_LIST_U, typename Fn>
+        static PosRBNode<U, K>* rectransduce_full(const PosRBNode<T, K>* curr, E& ev, Fn op)
+        {
+            assert(false);
+        }
+
+        template<bool SafeSimpleFn, typename U, typename Fn, typename Op>
+        static U recmapreduce_std(const PosRBNode<T, K>* curr, const U& acc, Fn f, Op op)
+        {
+            assert(false);
         }
 
         //Only works when T is Nat/Int
@@ -2153,9 +2254,39 @@ private:
         }
 
         template <bool SafeSimpleFn, typename Op>
-        T reduce(const T& acc, Op op) const
+        T reduce_bin(const T& acc, Op op) const
         {
-            return recreduce<SafeSimpleFn, Op>(this->root, acc, op);
+            return recreduce_bin<SafeSimpleFn, Op>(this->root, acc, op);
+        }
+
+        template<bool SafeSimpleFn, typename U, typename Fn>
+        U reduce_std(const U& init, Fn op) const
+        {
+            return recreduce_std<SafeSimpleFn, U, Fn>(this->root, init, op);
+        }
+
+        template<bool SafeSimpleFn, typename E, typename Fn>
+        void reduce_envref(E& ev, Fn op) const
+        {
+            recreduce_envref<SafeSimpleFn, E, Fn>(this->root, ev, op);
+        }
+
+        template<bool SafeSimpleFn, typename E, typename U, typename Fn>
+        U reduce_full(E& ev, const U& init, Fn op) const
+        {
+            return recreduce_full<SafeSimpleFn, E, U, Fn>(this->root, ev, init, op);
+        }
+
+        template<bool SafeSimpleFn, typename E, typename U, uint32_t TYPE_ID_LIST_U, typename Fn>
+        PosRBTree<U, K, TYPE_ID_LIST_U> transduce_full(E& ev, Fn op) const
+        {
+            return PosRBTree<U, K, TYPE_ID_LIST_U>{rectransduce_full<SafeSimpleFn, E, U, TYPE_ID_LIST_U, Fn>(this->root, ev, op)};
+        }
+
+        template<bool SafeSimpleFn, typename U, typename Fn, typename Op>
+        U mapreduce_std(const U& init, Fn f, Op op) const
+        {
+            return recmapreduce_std<SafeSimpleFn, U, Fn, Op>(this->root, init, f, op);
         }
 
         //Only works when T is Nat/Int

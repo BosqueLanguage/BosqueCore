@@ -1002,9 +1002,7 @@ namespace ᐸRuntimeᐳ
 
         T sum() const
         {
-            if(this->ulist.empty()) {
-                return T{};
-            }
+            assert(!this->ulist.empty());
 
             if(this->ulist.isInline()) {
                 auto ddbegin = this->ulist.inlinelist.data.cbegin();
@@ -1022,9 +1020,7 @@ namespace ᐸRuntimeᐳ
 
         XList<T, TYPE_ID_LIST_T> sumprefix() const
         {
-            if(this->ulist.empty()) {
-                return XList<T, TYPE_ID_LIST_T>{};
-            }
+            assert(!this->ulist.empty());
 
             if(this->ulist.isInline()) {
                 auto ddbegin = this->ulist.inlinelist.data.cbegin();
@@ -1041,23 +1037,95 @@ namespace ᐸRuntimeᐳ
         }
 
         template<bool SafeSimpleFn, typename Fn>
-        T reduce(const T& acc, Fn op) const
+        T reduce_bin(const T& acc, Fn op) const
         {
-            if(this->ulist.empty()) {
-                return acc;
-            }
+            assert(!this->ulist.empty());
 
             if(this->ulist.isInline()) {
                 auto ddbegin = this->ulist.inlinelist.data.cbegin();
                 auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
 
-                return std::accumulate(ddbegin, ddend, acc, [&op](const T& a, const T& b) {
-                    return op(a, b);
-                });
+                return std::accumulate(ddbegin, ddend, acc, op);
             }
             else {
-                return this->ulist.treelist.postree.template reduce<SafeSimpleFn>(acc, op);
+                return this->ulist.treelist.postree.template reduce_bin<SafeSimpleFn>(acc, op);
             }
+        }
+
+        //reduce(U, fn(U, T) -> U) -> U
+        template<bool SafeSimpleFn, typename U, typename Fn>
+        U reduce_std(const U& init, Fn op) const
+        {
+            assert(!this->ulist.empty());
+
+            if(this->ulist.isInline()) {
+                auto ddbegin = this->ulist.inlinelist.data.cbegin();
+                auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
+
+                return std::accumulate(ddbegin, ddend, init, op);
+            }
+            else {
+                return this->ulist.treelist.postree.template reduce_std<SafeSimpleFn>(init, op);
+            }
+        }
+
+        //refduce(E&, fn(ref E, T) -> Void) -> Void
+        template<bool SafeSimpleFn, typename E, typename Fn>
+        void reduce_envref(E& ev, Fn op) const
+        {
+            assert(!this->ulist.empty());
+
+            if(this->ulist.isInline()) {
+                auto ddbegin = this->ulist.inlinelist.data.cbegin();
+                auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
+
+                for(auto it = ddbegin; it != ddend; ++it) {
+                    op(ev, *it);
+                }
+            }
+            else {
+                this->ulist.treelist.postree.template reduce_envref<SafeSimpleFn>(ev, op);
+            }
+        }
+
+        //refreduce(E&, U, fn(ref E, U, T) -> U) -> U
+        template<bool SafeSimpleFn, typename E, typename U, typename Fn>
+        U reduce_full(E& ev, const U& init, Fn op) const
+        {
+            assert(!this->ulist.empty());
+
+            if(this->ulist.isInline()) {
+                auto ddbegin = this->ulist.inlinelist.data.cbegin();
+                auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
+
+                auto acc = init;
+                for(auto it = ddbegin; it != ddend; ++it) {
+                    acc = op(ev, acc, *it);
+                }
+                
+                return acc;
+            }
+            else {
+                return this->ulist.treelist.postree.template reduce_full<SafeSimpleFn>(ev, init, op);
+            }
+        }
+
+        //transreduce(E&, U, fn(ref E, T) -> U) -> List<U>
+        template<bool SafeSimpleFn, typename E, typename U, uint32_t TYPE_ID_LIST_U, typename Fn>
+        XList<U, TYPE_ID_LIST_U> transduce_full(E& ev, Fn op) const
+        {
+            assert(!this->ulist.empty());
+
+            assert(false);
+        }
+
+        //mapreduce(U, fn(U, T) -> U, fn(U, U) -> U) -> U
+        template<bool SafeSimpleFn, typename U, typename Fn, typename Op>
+        U mapreduce_std(const U& init, Fn f, Op op) const
+        {
+            assert(!this->ulist.empty());
+
+            assert(false);
         }
     };
 
