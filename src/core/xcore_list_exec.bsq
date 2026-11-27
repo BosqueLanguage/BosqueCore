@@ -71,7 +71,7 @@ namespace ListOps {
     recursive? function s_list_reducefun<T, U>(l: List<T>, init: U, op: recursive? fn(U, T) -> U): U = @list_reducefun;
     recursive? function s_list_refducefun<T, E: refable>(l: List<T>, op: recursive? fn(ref E, T) -> Void, ref ev: E) = @list_refducefun;
     recursive? function s_list_refreducefun<T, E: refable, U>(l: List<T>, op: recursive? fn(ref E, U, T) -> U, ref ev: E, init: U): U = @list_refreducefun;
-    recursive? function s_list_transducefun<T, E: refable, U>(l: List<T>, op: recursive? fn(U, ref E, T) -> U, ref ev: E): List<U> = @list_transducefun;
+    recursive? function s_list_transducefun<T, E: refable, U>(l: List<T>, op: recursive? fn(ref E, T) -> U, ref ev: E): List<U> = @list_transducefun;
     recursive? function s_list_mapreducefun<T, U>(l: List<T>, f: recursive? fn(T) -> U, op: recursive? fn(U, U) -> U, init: U): U = @list_mapreducefun;
     
     recursive? function s_list_combinefun<T>(l: List<T>, op: recursive? fn(T, T) -> T, empty: T): T = @list_combinefun;

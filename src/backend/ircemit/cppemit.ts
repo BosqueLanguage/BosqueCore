@@ -1723,7 +1723,11 @@ class CPPEmitter {
             bstr = `l.reduce_full<${isSimple}>(ev, init, [&ᐸclosureᐳ = op](${params}){ return ${fn}(ᐸclosureᐳ, ${args}); })`;
         }
         else if(body.builtin === "list_transducefun") {
-            assert(false, "list_transduce not implemented in cppemit");
+            const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "op");
+            const etype = body.biterms.find((bt) => bt[0] === "E") as [string, IRTypeSignature];
+            const utype = body.biterms.find((bt) => bt[0] === "U") as [string, IRTypeSignature];
+            const ptid = this.typeInfoManager.getTypeInfo(invk.resultType.tkeystr).bsqtypeid;
+            bstr = `l.transduce<${isSimple}, ${this.typeInfoManager.emitTypeAsStd(etype[1].tkeystr)}, ${this.typeInfoManager.emitTypeAsStd(utype[1].tkeystr)}, ${ptid}>(ev, [&ᐸclosureᐳ = op](${params}){ return ${fn}(ᐸclosureᐳ, ${args}); })`;
         }
         else if(body.builtin === "list_mapreducefun") {
             assert(false, "list_mapreduce not implemented in cppemit");

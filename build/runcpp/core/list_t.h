@@ -1079,9 +1079,7 @@ namespace ᐸRuntimeᐳ
                 auto ddbegin = this->ulist.inlinelist.data.cbegin();
                 auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
 
-                for(auto it = ddbegin; it != ddend; ++it) {
-                    op(ev, *it);
-                }
+                std::for_each(ddbegin, ddend, [&ev, &op](const T& x) { op(ev, x); });
             }
             else {
                 this->ulist.treelist.postree.template reduce_envref<SafeSimpleFn>(ev, op);
@@ -1098,12 +1096,7 @@ namespace ᐸRuntimeᐳ
                 auto ddbegin = this->ulist.inlinelist.data.cbegin();
                 auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
 
-                auto acc = init;
-                for(auto it = ddbegin; it != ddend; ++it) {
-                    acc = op(ev, acc, *it);
-                }
-                
-                return acc;
+                return std::accumulate(ddbegin, ddend, init, [&ev, &op](const U& acc, const T& x) { return op(ev, acc, x); });
             }
             else {
                 return this->ulist.treelist.postree.template reduce_full<SafeSimpleFn>(ev, init, op);
@@ -1112,11 +1105,27 @@ namespace ᐸRuntimeᐳ
 
         //transreduce(E&, U, fn(ref E, T) -> U) -> List<U>
         template<bool SafeSimpleFn, typename E, typename U, uint32_t TYPE_ID_LIST_U, typename Fn>
-        XList<U, TYPE_ID_LIST_U> transduce_full(E& ev, Fn op) const
+        XList<U, TYPE_ID_LIST_U> transduce(E& ev, Fn op) const
         {
             assert(!this->ulist.empty());
 
-            assert(false);
+            if(this->ulist.isInline()) {
+                auto ddbegin = this->ulist.inlinelist.data.cbegin();
+                auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
+
+                std::array<U, ListTTreeContent<U, TYPE_ID_LIST_U>::MAX_LEAF_CAPACITY> result{};
+                std::transform(ddbegin, ddend, result.begin(), [op, &ev](const T& x) { return op(ev, x); });
+                
+                if(this->ulist.inlinelist.count <= ListTInlineContent<U>::MAX_INLINE_CAPACITY) {
+                    return XList<U, TYPE_ID_LIST_U>{ListTInlineContent<U>(result.data(), this->ulist.inlinelist.count)};
+                }
+                else {
+                    return XList<U, TYPE_ID_LIST_U>{PosRBTree<U, ListTTreeContent<U, TYPE_ID_LIST_U>::MAX_LEAF_CAPACITY, TYPE_ID_LIST_U>::mkinitial(result.data(), result.data() + this->ulist.inlinelist.count)};
+                }
+            }
+            else {
+                return XList<U, TYPE_ID_LIST_U>{this->ulist.treelist.postree.template transduce<SafeSimpleFn, E, U, TYPE_ID_LIST_U, Fn>(ev, op)};
+            }
         }
 
         //mapreduce(U, fn(U, T) -> U, fn(U, U) -> U) -> U

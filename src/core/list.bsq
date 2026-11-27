@@ -429,7 +429,7 @@ __internal entity List<T> {
         }
     }
 
-    recursive? method transduce<E: refable, U>(op: recursive? fn(U, ref E, T) -> U, ref ev: E): List<U> {
+    recursive? method transduce<E: refable, U>(op: recursive? fn(ref E, T) -> U, ref ev: E): List<U> {
         if(ListOps::s_list_empty<T>(this)) {
             return List<U>{};
         }

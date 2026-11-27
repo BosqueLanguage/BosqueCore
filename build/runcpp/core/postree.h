@@ -370,25 +370,22 @@ namespace ᐸRuntimeᐳ
         template<bool SafeSimpleFn, typename E, typename Fn>
         void reduce_envref(E& ev, Fn op) const
         {
-            for(size_t i = 0; i < (size_t)this->dcount; ++i) {
-                op(ev, this->data[i]);
-            }
+            std::for_each(this->data.cbegin(), this->data.cbegin() + this->dcount, [&ev, &op](const T& x) { op(ev, x); });
         }
 
         template<bool SafeSimpleFn, typename E, typename U, typename Fn>
         U reduce_full(E& ev, const U& init, Fn op) const
         {
-            U acc = init;
-            for(size_t i = 0; i < (size_t)this->dcount; ++i) {
-                acc = op(ev, acc, this->data[i]);
-            }
-            return acc;
+            return std::accumulate(this->data.cbegin(), this->data.cbegin() + this->dcount, init, [&ev, &op](const U& acc, const T& x) { return op(ev, acc, x); });
         }
 
         template<bool SafeSimpleFn, typename E, typename U, typename Fn>
-        PosRBData<U, K> transduce_full(E& ev, Fn op) const
+        PosRBData<U, K> transduce(E& ev, Fn op) const
         {
-            assert(false);
+            std::array<U, K> result{};
+            std::transform(this->data.cbegin(), this->data.cbegin() + this->dcount, result.begin(), [op, &ev](const T& x) { return op(ev, x); });
+            
+            return PosRBData<U, K>(this->color, this->bheight, this->dcount, result);
         }
 
         template<bool SafeSimpleFn, typename U, typename Fn, typename Op>
@@ -1944,10 +1941,23 @@ private:
             }
         }
 
-        template<bool SafeSimpleFn, typename E, typename U, uint32_t TYPE_ID_LIST_U, typename Fn>
-        static PosRBNode<U, K>* rectransduce_full(const PosRBNode<T, K>* curr, E& ev, Fn op)
+        template<bool SafeSimpleFn, typename E, typename U, uint32_t UTreeID, typename Fn>
+        static PosRBNode<U, K>* rectransduce(const PosRBNode<T, K>* curr, E& ev, Fn op)
         {
-            assert(false);
+            if(curr == nullptr) {
+                return nullptr;
+            }
+
+            if(isLeafType(curr)) {
+                return PosRBTree<U, K, UTreeID>::mkcopynode(curr->data.color, nullptr, nullptr, curr->data.template transduce<SafeSimpleFn, E, U, Fn>(ev, op));
+            }
+            else {
+                const PosRBNode<U, K>* nleft = rectransduce<SafeSimpleFn, E, U, UTreeID, Fn>(reprGetLeft(curr), ev, op);
+                const PosRBData<U, K> ndata = curr->data.template transduce<SafeSimpleFn, E, U, Fn>(ev, op);
+                const PosRBNode<U, K>* nright = rectransduce<SafeSimpleFn, E, U, UTreeID, Fn>(reprGetRight(curr), ev, op);
+
+                return PosRBTree<U, K, UTreeID>::mkcopynode(curr->data.color, nleft, nright, ndata);
+            }
         }
 
         template<bool SafeSimpleFn, typename U, typename Fn, typename Op>
@@ -2277,10 +2287,10 @@ private:
             return recreduce_full<SafeSimpleFn, E, U, Fn>(this->root, ev, init, op);
         }
 
-        template<bool SafeSimpleFn, typename E, typename U, uint32_t TYPE_ID_LIST_U, typename Fn>
-        PosRBTree<U, K, TYPE_ID_LIST_U> transduce_full(E& ev, Fn op) const
+        template<bool SafeSimpleFn, typename E, typename U, uint32_t UTreeID, typename Fn>
+        PosRBTree<U, K, UTreeID> transduce(E& ev, Fn op) const
         {
-            return PosRBTree<U, K, TYPE_ID_LIST_U>{rectransduce_full<SafeSimpleFn, E, U, TYPE_ID_LIST_U, Fn>(this->root, ev, op)};
+            return PosRBTree<U, K, UTreeID>{rectransduce<SafeSimpleFn, E, U, UTreeID, Fn>(this->root, ev, op)};
         }
 
         template<bool SafeSimpleFn, typename U, typename Fn, typename Op>
