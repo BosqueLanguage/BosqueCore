@@ -1,5 +1,5 @@
 import { SourceInfo } from "./build_decls.js";
-import { AbstractNominalTypeDecl, AllTemplateTermDeclExtraTags, InvokeTemplateTypeRestriction, TemplateTermDecl, TemplateTermDeclExtraTag } from "./assembly.js";
+import { AbstractNominalTypeDecl, AllTemplateTermDeclExtraTags, InvokeTemplateTypeRestriction, TemplateTermDecl } from "./assembly.js";
 
 class FullyQualifiedNamespace {
     readonly ns: string[];
