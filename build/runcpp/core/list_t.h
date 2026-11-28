@@ -1128,7 +1128,11 @@ namespace ᐸRuntimeᐳ
                 auto ddbegin = this->ulist.inlinelist.data.cbegin();
                 auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
 
-                return std::transform_reduce(ddbegin, ddend, init, op, f);
+                auto acc = init;
+                for(auto it = ddbegin; it != ddend; ++it) {
+                    acc = op(acc, f(*it));
+                }
+                return acc;
             }
             else {
                 return this->ulist.treelist.postree.template mapreduce<SafeSimpleFn>(init, f, op);
@@ -1142,12 +1146,15 @@ namespace ᐸRuntimeᐳ
             assert(!this->ulist.empty());
 
             if(this->ulist.isInline()) {
-                constexpr std::array<XNat, MAX_INLINE_CAPACITY> zipidx = create_idx_range<MAX_INLINE_CAPACITY>();
-
                 auto ddbegin = this->ulist.inlinelist.data.cbegin();
                 auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
 
-                return std::transform_reduce(ddbegin, ddend, zipidx.cbegin(), init, op, f);
+                auto acc = init;
+                int64_t idx = 0;
+                for(auto it = ddbegin; it != ddend; ++it, ++idx) {
+                    acc = op(acc, f(*it, XNat{idx}));
+                }
+                return acc;
             }
             else {
                 return this->ulist.treelist.postree.template mapreduceidx<SafeSimpleFn>(init, f, op);

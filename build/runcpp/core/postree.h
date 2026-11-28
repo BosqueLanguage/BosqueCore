@@ -370,20 +370,20 @@ namespace ᐸRuntimeᐳ
         template<bool SafeSimpleFn, typename E, typename Fn>
         void reduce_envref(E& ev, Fn op) const
         {
-            std::for_each(this->data.cbegin(), this->data.cbegin() + this->dcount, [&ev, &op](const T& x) { op(ev, x); });
+            std::for_each(this->data.cbegin(), this->data.cbegin() + this->dcount, [&ev, op](const T& x) { op(ev, x); });
         }
 
         template<bool SafeSimpleFn, typename E, typename U, typename Fn>
         U reduce_full(E& ev, const U& init, Fn op) const
         {
-            return std::accumulate(this->data.cbegin(), this->data.cbegin() + this->dcount, init, [&ev, &op](const U& acc, const T& x) { return op(ev, acc, x); });
+            return std::accumulate(this->data.cbegin(), this->data.cbegin() + this->dcount, init, [&ev, op](const U& acc, const T& x) { return op(ev, acc, x); });
         }
 
         template<bool SafeSimpleFn, typename E, typename U, typename Fn>
         PosRBData<U, K> transduce(E& ev, Fn op) const
         {
             std::array<U, K> result{};
-            std::transform(this->data.cbegin(), this->data.cbegin() + this->dcount, result.begin(), [op, &ev](const T& x) { return op(ev, x); });
+            std::transform(this->data.cbegin(), this->data.cbegin() + this->dcount, result.begin(), [&ev, op](const T& x) { return op(ev, x); });
             
             return PosRBData<U, K>(this->color, this->bheight, this->dcount, result);
         }
@@ -391,14 +391,28 @@ namespace ᐸRuntimeᐳ
         template<bool SafeSimpleFn, typename U, typename Fn, typename Op>
         U mapreduce(const U& init, Fn f, Op op) const
         {
-            return std::transform_reduce(this->data.cbegin(), this->data.cbegin() + this->dcount, init, op, f);
+            auto ddbegin = this->data.cbegin();
+            auto ddend = this->data.cbegin() + this->dcount;
+
+            auto acc = init;
+            for(auto it = ddbegin; it != ddend; ++it) {
+                acc = op(acc, f(*it));
+            }
+            return acc;
         }
 
         template<bool SafeSimpleFn, typename U, typename Fn, typename Op>
         U mapreduceidx(const U& init, int64_t sidx, Fn f, Op op) const
         {
-            std::array<XNat, K> zipidx = create_idx_range_from<K>(sidx);
-            return std::transform_reduce(this->data.cbegin(), this->data.cbegin() + this->dcount, zipidx.cbegin(), init, op, f);
+            auto ddbegin = this->data.cbegin();
+            auto ddend = this->data.cbegin() + this->dcount;
+
+            auto acc = init;
+            int64_t idx = sidx;
+            for(auto it = ddbegin; it != ddend; ++it, ++idx) {
+                acc = op(acc, f(*it, XNat{idx}));
+            }
+            return acc;
         }
 
         template<bool SafeSimpleFn, typename U, typename Fn>
