@@ -452,7 +452,7 @@ __internal entity List<T> {
             return List<U>{};
         }
         else {
-            return ListOps::s_list_concat<U>(this);
+            return ListOps::s_list_combinefun<List<U>>(this, fn(l1: List<U>, l2: List<U>): List<U> => ListOps::s_list_append<U>(l1, l2), List<U>{});
         }
     }
 
@@ -461,7 +461,7 @@ __internal entity List<T> {
             return List<T>{};
         }
         else {
-            return ListOps::s_list_concat<T>(lists);
+            return ListOps::s_list_combinefun<List<T>>(lists, fn(l1: List<T>, l2: List<T>): List<T> => ListOps::s_list_append<T>(l1, l2), List<T>{});
         }
     }
 
@@ -470,7 +470,7 @@ __internal entity List<T> {
             return List<T>{};
         }
         else {
-            return ListOps::s_list_concat<T>(lists);
+            return ListOps::s_list_combinefun<List<T>>(lists, fn(l1: List<T>, l2: List<T>): List<T> => ListOps::s_list_append<T>(l1, l2), List<T>{});
         }
     }
 
@@ -479,8 +479,7 @@ __internal entity List<T> {
             return List<U>{};
         }
         else {
-            let ll = ListOps::s_list_map[recursive?]<T, List<U>>(this, f);
-            return ListOps::s_list_concat<U>(ll);
+            return ListOps::s_list_mapreducefun[recursive?]<T, List<U>>(this, f, fn(l1: List<U>, l2: List<U>): List<U> => ListOps::s_list_append<U>(l1, l2), List<U>{});
         }
     }
 
@@ -489,8 +488,7 @@ __internal entity List<T> {
             return List<U>{};
         }
         else {
-            let ll = ListOps::s_list_mapidx[recursive?]<T, List<U>>(this, f);
-            return ListOps::s_list_concat<U>(ll);
+            return ListOps::s_list_mapreducefunidx[recursive?]<T, List<U>>(this, f, fn(l1: List<U>, l2: List<U>): List<U> => ListOps::s_list_append<U>(l1, l2), List<U>{});
         }
     }
 

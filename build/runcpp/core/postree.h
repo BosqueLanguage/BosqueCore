@@ -389,9 +389,15 @@ namespace ᐸRuntimeᐳ
         }
 
         template<bool SafeSimpleFn, typename U, typename Fn, typename Op>
-        U mapreduce_std(const U& init, Fn f, Op op) const
+        U mapreduce(const U& init, Fn f, Op op) const
         {
-            assert(false);
+            return std::transform_reduce(this->data.cbegin(), this->data.cbegin() + this->dcount, init, op, f);
+        }
+
+        template<bool SafeSimpleFn, typename U, typename Fn>
+        U combine(const U& init, Fn op) const
+        {
+            return std::accumulate(this->data.cbegin(), this->data.cbegin() + this->dcount, init, op);
         }
     };
 
@@ -1961,9 +1967,41 @@ private:
         }
 
         template<bool SafeSimpleFn, typename U, typename Fn, typename Op>
-        static U recmapreduce_std(const PosRBNode<T, K>* curr, const U& acc, Fn f, Op op)
+        static U recmapreduce(const PosRBNode<T, K>* curr, const U& acc, Fn f, Op op)
         {
-            assert(false);
+            if(curr == nullptr) {
+                return acc;
+            }
+
+            if(isLeafType(curr)) {
+                return curr->data.template mapreduce<SafeSimpleFn>(acc, f, op);
+            }
+            else {
+                U leftacc = recmapreduce<SafeSimpleFn, U, Fn, Op>(reprGetLeft(curr), acc, f, op);
+                U midacc = curr->data.template mapreduce<SafeSimpleFn>(leftacc, f, op);
+                U rightacc = recmapreduce<SafeSimpleFn, U, Fn, Op>(reprGetRight(curr), midacc, f, op);
+
+                return rightacc;
+            }
+        }
+
+        template<bool SafeSimpleFn, typename U, typename Fn, typename Op>
+        static U reccombine(const PosRBNode<T, K>* curr, const U& acc, Op op)
+        {
+            if(curr == nullptr) {
+                return acc;
+            }
+
+            if(isLeafType(curr)) {
+                return curr->data.template combine<SafeSimpleFn>(acc, op);
+            }
+            else {
+                U leftacc = reccombine<SafeSimpleFn, U, Fn, Op>(reprGetLeft(curr), acc, op);
+                U midacc = curr->data.template combine<SafeSimpleFn>(leftacc, op);
+                U rightacc = reccombine<SafeSimpleFn, U, Fn, Op>(reprGetRight(curr), midacc, op);
+
+                return rightacc;
+            }
         }
 
         //Only works when T is Nat/Int
@@ -2294,9 +2332,15 @@ private:
         }
 
         template<bool SafeSimpleFn, typename U, typename Fn, typename Op>
-        U mapreduce_std(const U& init, Fn f, Op op) const
+        U mapreduce(const U& init, Fn f, Op op) const
         {
-            return recmapreduce_std<SafeSimpleFn, U, Fn, Op>(this->root, init, f, op);
+            return recmapreduce<SafeSimpleFn, U, Fn, Op>(this->root, init, f, op);
+        }
+
+        template<bool SafeSimpleFn, typename U, typename Fn>
+        U combine(const U& init, Fn op) const
+        {
+            return reccombine<SafeSimpleFn, U, Fn>(this->root, init, op);
         }
 
         //Only works when T is Nat/Int

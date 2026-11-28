@@ -35,7 +35,6 @@ namespace ListOps {
     function s_list_deleteback_ref<T>(ref l: List<T>) = @list_deleteback_ref;
 
     function s_list_append<T>(l1: List<T>, l2: List<T>): List<T> = @list_append;
-    function s_list_concat<T>(l: List<List<T>>): List<T> = @list_concat;
 
     function s_list_concat_cstrs(l: List<CString>): CString = @list_concat_cstrs;
     function s_list_join_cstrs(sep: CString, l: List<CString>): CString = @list_join_cstrs;
@@ -54,7 +53,6 @@ namespace ListOps {
     recursive? function s_list_mapidx<T, U>(l: List<T>, f: recursive? fn(T, Nat) -> U): List<U> = @list_mapidx;
 
     recursive? function s_list_filter<T>(l: List<T>, p: recursive? pred(T) -> Bool): List<T> = @list_filter;
-
     recursive? function s_list_filtermap<T, U>(l: List<T>, p: recursive? pred(T) -> Bool, f: recursive? fn(T) -> U): List<U> = @list_filtermap;
 
     recursive? function s_list_min<T: keytype>(l: List<T>): T = @list_min;
@@ -72,7 +70,9 @@ namespace ListOps {
     recursive? function s_list_refducefun<T, E: refable>(l: List<T>, op: recursive? fn(ref E, T) -> Void, ref ev: E) = @list_refducefun;
     recursive? function s_list_refreducefun<T, E: refable, U>(l: List<T>, op: recursive? fn(ref E, U, T) -> U, ref ev: E, init: U): U = @list_refreducefun;
     recursive? function s_list_transducefun<T, E: refable, U>(l: List<T>, op: recursive? fn(ref E, T) -> U, ref ev: E): List<U> = @list_transducefun;
+
     recursive? function s_list_mapreducefun<T, U>(l: List<T>, f: recursive? fn(T) -> U, op: recursive? fn(U, U) -> U, init: U): U = @list_mapreducefun;
+    recursive? function s_list_mapreducefunidx<T, U>(l: List<T>, f: recursive? fn(T, Nat) -> U, op: recursive? fn(U, U) -> U, init: U): U = @list_mapreducefunidx;
     
     recursive? function s_list_combinefun<T>(l: List<T>, op: recursive? fn(T, T) -> T, empty: T): T = @list_combinefun;
 }

@@ -407,6 +407,12 @@ namespace ᐸRuntimeᐳ
         template<size_t len>
         XList(const T (&elems)[len]) : ulist{LIST_T_INLINE(elems, len)} { ; }
 
+        template<size_t len>
+        static XList mki(const T (&elems)[len])
+        {
+            return XList{LIST_T_INLINE(elems, len)};
+        }
+
         static XList mk(std::initializer_list<T> elems)
         {
             if(elems.size() == 0) {
@@ -637,65 +643,49 @@ namespace ᐸRuntimeᐳ
 
         XList append(const XList& other) const
         {
-            assert(!this->ulist.empty());
-            assert(!other.ulist.empty());
-
-            if(this->ulist.isInline() && other.ulist.isInline()) {
-                if(this->ulist.inlinelist.size() + other.ulist.inlinelist.size() <= MAX_INLINE_CAPACITY) {
-                    return XList{LIST_T_INLINE(this->ulist.inlinelist.data.cbegin(), this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count, other.ulist.inlinelist.data.cbegin(), other.ulist.inlinelist.data.cbegin() + other.ulist.inlinelist.count)};
-                }
-                else {
-                    if(this->ulist.inlinelist.size() + other.ulist.inlinelist.size() <= MAX_LEAF_CAPACITY) {
-                        return XList{LIST_T_TREE{POS_TREE_T::mkinitial_append(this->ulist.inlinelist.data.cbegin(), this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count, other.ulist.inlinelist.data.cbegin(), other.ulist.inlinelist.data.cbegin() + other.ulist.inlinelist.count)}};
-                    }
-                    else {
-                        POS_TREE_T ll = POS_TREE_T::mkinitial(this->ulist.inlinelist.data.cbegin(), this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count);
-                        POS_TREE_T lr = POS_TREE_T::mkinitial(other.ulist.inlinelist.data.cbegin(), other.ulist.inlinelist.data.cbegin() + other.ulist.inlinelist.count);
-
-                        return XList{POS_TREE_T::append(ll, lr)};
-                    }
-                }
+            if(this->ulist.empty()) {
+                return other;
+            }
+            else if(other.ulist.empty()) {
+                return *this;
             }
             else {
-                POS_TREE_T lnode{};
-                if(this->ulist.isInline()) {
-                    lnode = POS_TREE_T::mkinitial(this->ulist.inlinelist.data.cbegin(), this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count);
-                }
-                else {
-                    lnode = this->ulist.treelist.postree;
-                }
-
-                POS_TREE_T rnode{};
-                if(other.ulist.isInline()) {
-                    rnode = POS_TREE_T::mkinitial(other.ulist.inlinelist.data.cbegin(), other.ulist.inlinelist.data.cbegin() + other.ulist.inlinelist.count);
-                }
-                else {
-                    rnode = other.ulist.treelist.postree;
-                }
-
-                return XList{POS_TREE_T::append(lnode, rnode)};
-            }
-        }
-
-        template<typename U, uint32_t TYPE_ID_LIST_U>
-        static XList<T, TYPE_ID_LIST_T> concat(const XList<U, TYPE_ID_LIST_U>& ll)
-        {
-            XList<T, TYPE_ID_LIST_T> curr{};
-
-            for(auto ii = ll.begin(); ii != ll.end(); ++ii) {
-                auto il = *ii;
-                
-                if(!il.empty()) {
-                    if(curr.empty()) {
-                        curr = il;
+                if(this->ulist.isInline() && other.ulist.isInline()) {
+                    if(this->ulist.inlinelist.size() + other.ulist.inlinelist.size() <= MAX_INLINE_CAPACITY) {
+                        return XList{LIST_T_INLINE(this->ulist.inlinelist.data.cbegin(), this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count, other.ulist.inlinelist.data.cbegin(), other.ulist.inlinelist.data.cbegin() + other.ulist.inlinelist.count)};
                     }
                     else {
-                        curr = curr.append(il);
+                        if(this->ulist.inlinelist.size() + other.ulist.inlinelist.size() <= MAX_LEAF_CAPACITY) {
+                            return XList{LIST_T_TREE{POS_TREE_T::mkinitial_append(this->ulist.inlinelist.data.cbegin(), this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count, other.ulist.inlinelist.data.cbegin(), other.ulist.inlinelist.data.cbegin() + other.ulist.inlinelist.count)}};
+                        }
+                        else {
+                            POS_TREE_T ll = POS_TREE_T::mkinitial(this->ulist.inlinelist.data.cbegin(), this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count);
+                            POS_TREE_T lr = POS_TREE_T::mkinitial(other.ulist.inlinelist.data.cbegin(), other.ulist.inlinelist.data.cbegin() + other.ulist.inlinelist.count);
+
+                            return XList{POS_TREE_T::append(ll, lr)};
+                        }
                     }
                 }
-            }
+                else {
+                    POS_TREE_T lnode{};
+                    if(this->ulist.isInline()) {
+                        lnode = POS_TREE_T::mkinitial(this->ulist.inlinelist.data.cbegin(), this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count);
+                    }
+                    else {
+                        lnode = this->ulist.treelist.postree;
+                    }
 
-            return curr;
+                    POS_TREE_T rnode{};
+                    if(other.ulist.isInline()) {
+                        rnode = POS_TREE_T::mkinitial(other.ulist.inlinelist.data.cbegin(), other.ulist.inlinelist.data.cbegin() + other.ulist.inlinelist.count);
+                    }
+                    else {
+                        rnode = other.ulist.treelist.postree;
+                    }
+
+                    return XList{POS_TREE_T::append(lnode, rnode)};
+                }
+            }
         }
 
         XList mk_mixed_append(const XList& other) const
@@ -1130,11 +1120,36 @@ namespace ᐸRuntimeᐳ
 
         //mapreduce(U, fn(U, T) -> U, fn(U, U) -> U) -> U
         template<bool SafeSimpleFn, typename U, typename Fn, typename Op>
-        U mapreduce_std(const U& init, Fn f, Op op) const
+        U mapreduce(const U& init, Fn f, Op op) const
         {
             assert(!this->ulist.empty());
 
-            assert(false);
+            if(this->ulist.isInline()) {
+                auto ddbegin = this->ulist.inlinelist.data.cbegin();
+                auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
+
+                return std::transform_reduce(ddbegin, ddend, init, op, f);
+            }
+            else {
+                return this->ulist.treelist.postree.template mapreduce<SafeSimpleFn>(init, f, op);
+            }
+        }
+
+        //combine(U, fn(U, U) -> U) -> U
+        template<bool SafeSimpleFn, typename U, typename Fn>
+        U combine(const U& init, Fn op) const
+        {
+            assert(!this->ulist.empty());
+
+            if(this->ulist.isInline()) {
+                auto ddbegin = this->ulist.inlinelist.data.cbegin();
+                auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
+
+                return std::accumulate(ddbegin, ddend, init, op);
+            }
+            else {
+                return this->ulist.treelist.postree.template combine<SafeSimpleFn>(init, op);
+            }
         }
     };
 
