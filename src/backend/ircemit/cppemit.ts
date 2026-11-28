@@ -762,7 +762,7 @@ class CPPEmitter {
                 const ldecl = this.irasm.alltypes.get(iclse.constype.tkeystr) as IRListTypeDecl;
                 const tinfot = this.typeInfoManager.getTypeInfo(ldecl.oftype.tkeystr);
                 if(iclse.elements.length <= LIST_T_INLINE_CAPACITY(tinfot.bytesize)) {
-                    return `${cce}({${args}})`;
+                    return `${cce}::mki({${args}})`;
                 }
                 else {
                     return `${cce}::mk({${args}})`;
@@ -1619,9 +1619,6 @@ class CPPEmitter {
         else if(body.builtin === "list_append") {
             bstr = "l1.append(l2)";
         }
-        else if(body.builtin === "list_concat") {
-            bstr = `${TransformCPPNameManager.convertTypeKey(invk.resultType.tkeystr)}::concat(l)`;
-        }
         else if(body.builtin === "list_concat_cstrs") {
             bstr = `ᐸRuntimeᐳ::XListOps::concatStrs<CString>(l)`;
         }
@@ -1723,13 +1720,27 @@ class CPPEmitter {
             bstr = `l.reduce_full<${isSimple}>(ev, init, [&ᐸclosureᐳ = op](${params}){ return ${fn}(ᐸclosureᐳ, ${args}); })`;
         }
         else if(body.builtin === "list_transducefun") {
-            assert(false, "list_transduce not implemented in cppemit");
+            const [fn, isSimple, params, args] = this.getParamInforForLambda(invk, "op");
+            const etype = body.biterms.find((bt) => bt[0] === "E") as [string, IRTypeSignature];
+            const utype = body.biterms.find((bt) => bt[0] === "U") as [string, IRTypeSignature];
+            const ptid = this.typeInfoManager.getTypeInfo(invk.resultType.tkeystr).bsqtypeid;
+            bstr = `l.transduce<${isSimple}, ${this.typeInfoManager.emitTypeAsStd(etype[1].tkeystr)}, ${this.typeInfoManager.emitTypeAsStd(utype[1].tkeystr)}, ${ptid}>(ev, [&ᐸclosureᐳ = op](${params}){ return ${fn}(ᐸclosureᐳ, ${args}); })`;
         }
         else if(body.builtin === "list_mapreducefun") {
-            assert(false, "list_mapreduce not implemented in cppemit");
+            const [ffn, fisSimple, fparams, fargs] = this.getParamInforForLambda(invk, "f");
+            const [opfn, opisSimple, opparams, opargs] = this.getParamInforForLambda(invk, "op");
+            const utype = body.biterms.find((bt) => bt[0] === "U") as [string, IRTypeSignature];
+            bstr = `l.mapreduce<${fisSimple} & ${opisSimple}, ${this.typeInfoManager.emitTypeAsStd(utype[1].tkeystr)}>(init, [&ᐸclosurefᐳ = f](${fparams}){ return ${ffn}(ᐸclosurefᐳ, ${fargs}); }, [&ᐸclosureopᐳ = op](${opparams}){ return ${opfn}(ᐸclosureopᐳ, ${opargs}); })`;
+        }
+        else if(body.builtin === "list_mapreducefunidx") {
+            const [ffn, fisSimple, fparams, fargs] = this.getParamInforForLambda(invk, "f");
+            const [opfn, opisSimple, opparams, opargs] = this.getParamInforForLambda(invk, "op");
+            const utype = body.biterms.find((bt) => bt[0] === "U") as [string, IRTypeSignature];
+            bstr = `l.mapreduceidx<${fisSimple} & ${opisSimple}, ${this.typeInfoManager.emitTypeAsStd(utype[1].tkeystr)}>(init, [&ᐸclosurefᐳ = f](${fparams}){ return ${ffn}(ᐸclosurefᐳ, ${fargs}); }, [&ᐸclosureopᐳ = op](${opparams}){ return ${opfn}(ᐸclosureopᐳ, ${opargs}); })`;
         }
         else if(body.builtin === "list_combinefun") {
-            assert(false, "list_combine not implemented in cppemit");
+            const [opfn, opisSimple, opparams, opargs] = this.getParamInforForLambda(invk, "op");
+            bstr = `l.combine<${opisSimple}>(empty, [&ᐸclosureᐳ = op](${opparams}){ return ${opfn}(ᐸclosureᐳ, ${opargs}); })`;
         }
         else if(body.builtin === "algo_for") {
             const [fn] = this.getParamInforForLambda(invk, "op");

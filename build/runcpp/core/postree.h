@@ -370,31 +370,55 @@ namespace ᐸRuntimeᐳ
         template<bool SafeSimpleFn, typename E, typename Fn>
         void reduce_envref(E& ev, Fn op) const
         {
-            for(size_t i = 0; i < (size_t)this->dcount; ++i) {
-                op(ev, this->data[i]);
-            }
+            std::for_each(this->data.cbegin(), this->data.cbegin() + this->dcount, [&ev, op](const T& x) { op(ev, x); });
         }
 
         template<bool SafeSimpleFn, typename E, typename U, typename Fn>
         U reduce_full(E& ev, const U& init, Fn op) const
         {
-            U acc = init;
-            for(size_t i = 0; i < (size_t)this->dcount; ++i) {
-                acc = op(ev, acc, this->data[i]);
+            return std::accumulate(this->data.cbegin(), this->data.cbegin() + this->dcount, init, [&ev, op](const U& acc, const T& x) { return op(ev, acc, x); });
+        }
+
+        template<bool SafeSimpleFn, typename E, typename U, typename Fn>
+        PosRBData<U, K> transduce(E& ev, Fn op) const
+        {
+            std::array<U, K> result{};
+            std::transform(this->data.cbegin(), this->data.cbegin() + this->dcount, result.begin(), [&ev, op](const T& x) { return op(ev, x); });
+            
+            return PosRBData<U, K>(this->color, this->bheight, this->dcount, result);
+        }
+
+        template<bool SafeSimpleFn, typename U, typename Fn, typename Op>
+        U mapreduce(const U& init, Fn f, Op op) const
+        {
+            auto ddbegin = this->data.cbegin();
+            auto ddend = this->data.cbegin() + this->dcount;
+
+            auto acc = init;
+            for(auto it = ddbegin; it != ddend; ++it) {
+                acc = op(acc, f(*it));
             }
             return acc;
         }
 
-        template<bool SafeSimpleFn, typename E, typename U, typename Fn>
-        PosRBData<U, K> transduce_full(E& ev, Fn op) const
+        template<bool SafeSimpleFn, typename U, typename Fn, typename Op>
+        U mapreduceidx(const U& init, int64_t sidx, Fn f, Op op) const
         {
-            assert(false);
+            auto ddbegin = this->data.cbegin();
+            auto ddend = this->data.cbegin() + this->dcount;
+
+            auto acc = init;
+            int64_t idx = sidx;
+            for(auto it = ddbegin; it != ddend; ++it, ++idx) {
+                acc = op(acc, f(*it, XNat{idx}));
+            }
+            return acc;
         }
 
-        template<bool SafeSimpleFn, typename U, typename Fn, typename Op>
-        U mapreduce_std(const U& init, Fn f, Op op) const
+        template<bool SafeSimpleFn, typename U, typename Fn>
+        U combine(const U& init, Fn op) const
         {
-            assert(false);
+            return std::accumulate(this->data.cbegin(), this->data.cbegin() + this->dcount, init, op);
         }
     };
 
@@ -1944,16 +1968,83 @@ private:
             }
         }
 
-        template<bool SafeSimpleFn, typename E, typename U, uint32_t TYPE_ID_LIST_U, typename Fn>
-        static PosRBNode<U, K>* rectransduce_full(const PosRBNode<T, K>* curr, E& ev, Fn op)
+        template<bool SafeSimpleFn, typename E, typename U, uint32_t UTreeID, typename Fn>
+        static PosRBNode<U, K>* rectransduce(const PosRBNode<T, K>* curr, E& ev, Fn op)
         {
-            assert(false);
+            if(curr == nullptr) {
+                return nullptr;
+            }
+
+            if(isLeafType(curr)) {
+                return PosRBTree<U, K, UTreeID>::mkcopynode(curr->data.color, nullptr, nullptr, curr->data.template transduce<SafeSimpleFn, E, U, Fn>(ev, op));
+            }
+            else {
+                const PosRBNode<U, K>* nleft = rectransduce<SafeSimpleFn, E, U, UTreeID, Fn>(reprGetLeft(curr), ev, op);
+                const PosRBData<U, K> ndata = curr->data.template transduce<SafeSimpleFn, E, U, Fn>(ev, op);
+                const PosRBNode<U, K>* nright = rectransduce<SafeSimpleFn, E, U, UTreeID, Fn>(reprGetRight(curr), ev, op);
+
+                return PosRBTree<U, K, UTreeID>::mkcopynode(curr->data.color, nleft, nright, ndata);
+            }
         }
 
         template<bool SafeSimpleFn, typename U, typename Fn, typename Op>
-        static U recmapreduce_std(const PosRBNode<T, K>* curr, const U& acc, Fn f, Op op)
+        static U recmapreduce(const PosRBNode<T, K>* curr, const U& acc, Fn f, Op op)
         {
-            assert(false);
+            if(curr == nullptr) {
+                return acc;
+            }
+
+            if(isLeafType(curr)) {
+                return curr->data.template mapreduce<SafeSimpleFn>(acc, f, op);
+            }
+            else {
+                U leftacc = recmapreduce<SafeSimpleFn, U, Fn, Op>(reprGetLeft(curr), acc, f, op);
+                U midacc = curr->data.template mapreduce<SafeSimpleFn>(leftacc, f, op);
+                U rightacc = recmapreduce<SafeSimpleFn, U, Fn, Op>(reprGetRight(curr), midacc, f, op);
+
+                return rightacc;
+            }
+        }
+
+        template<bool SafeSimpleFn, typename U, typename Fn, typename Op>
+        static U recmapreduceidx(const PosRBNode<T, K>* curr, const U& acc, int64_t sidx, Fn f, Op op)
+        {
+            if(curr == nullptr) {
+                return acc;
+            }
+
+            if(isLeafType(curr)) {
+                return curr->data.template mapreduceidx<SafeSimpleFn>(acc, sidx, f, op);
+            }
+            else {
+                const int64_t leftCount = reprGetCount(reprGetLeft(curr));
+                const int64_t midCount = curr->data.dcount;
+                
+                U leftacc = recmapreduceidx<SafeSimpleFn, U, Fn, Op>(reprGetLeft(curr), acc, sidx, f, op);
+                U midacc = curr->data.template mapreduceidx<SafeSimpleFn>(leftacc, sidx + leftCount, f, op);
+                U rightacc = recmapreduceidx<SafeSimpleFn, U, Fn, Op>(reprGetRight(curr), midacc, sidx + leftCount + midCount, f, op);
+
+                return rightacc;
+            }
+        }
+
+        template<bool SafeSimpleFn, typename U, typename Fn, typename Op>
+        static U reccombine(const PosRBNode<T, K>* curr, const U& acc, Op op)
+        {
+            if(curr == nullptr) {
+                return acc;
+            }
+
+            if(isLeafType(curr)) {
+                return curr->data.template combine<SafeSimpleFn>(acc, op);
+            }
+            else {
+                U leftacc = reccombine<SafeSimpleFn, U, Fn, Op>(reprGetLeft(curr), acc, op);
+                U midacc = curr->data.template combine<SafeSimpleFn>(leftacc, op);
+                U rightacc = reccombine<SafeSimpleFn, U, Fn, Op>(reprGetRight(curr), midacc, op);
+
+                return rightacc;
+            }
         }
 
         //Only works when T is Nat/Int
@@ -2277,16 +2368,28 @@ private:
             return recreduce_full<SafeSimpleFn, E, U, Fn>(this->root, ev, init, op);
         }
 
-        template<bool SafeSimpleFn, typename E, typename U, uint32_t TYPE_ID_LIST_U, typename Fn>
-        PosRBTree<U, K, TYPE_ID_LIST_U> transduce_full(E& ev, Fn op) const
+        template<bool SafeSimpleFn, typename E, typename U, uint32_t UTreeID, typename Fn>
+        PosRBTree<U, K, UTreeID> transduce(E& ev, Fn op) const
         {
-            return PosRBTree<U, K, TYPE_ID_LIST_U>{rectransduce_full<SafeSimpleFn, E, U, TYPE_ID_LIST_U, Fn>(this->root, ev, op)};
+            return PosRBTree<U, K, UTreeID>{rectransduce<SafeSimpleFn, E, U, UTreeID, Fn>(this->root, ev, op)};
         }
 
         template<bool SafeSimpleFn, typename U, typename Fn, typename Op>
-        U mapreduce_std(const U& init, Fn f, Op op) const
+        U mapreduce(const U& init, Fn f, Op op) const
         {
-            return recmapreduce_std<SafeSimpleFn, U, Fn, Op>(this->root, init, f, op);
+            return recmapreduce<SafeSimpleFn, U, Fn, Op>(this->root, init, f, op);
+        }
+
+        template<bool SafeSimpleFn, typename U, typename Fn, typename Op>
+        U mapreduceidx(const U& init, Fn f, Op op) const
+        {
+            return recmapreduceidx<SafeSimpleFn, U, Fn, Op>(this->root, init, 0, f, op);
+        }
+
+        template<bool SafeSimpleFn, typename U, typename Fn>
+        U combine(const U& init, Fn op) const
+        {
+            return reccombine<SafeSimpleFn, U, Fn>(this->root, init, op);
         }
 
         //Only works when T is Nat/Int
