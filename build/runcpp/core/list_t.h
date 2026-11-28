@@ -1118,7 +1118,7 @@ namespace ᐸRuntimeᐳ
             }
         }
 
-        //mapreduce(U, fn(U, T) -> U, fn(U, U) -> U) -> U
+        //mapreduce(U, fn(T) -> U, fn(U, U) -> U) -> U
         template<bool SafeSimpleFn, typename U, typename Fn, typename Op>
         U mapreduce(const U& init, Fn f, Op op) const
         {
@@ -1132,6 +1132,25 @@ namespace ᐸRuntimeᐳ
             }
             else {
                 return this->ulist.treelist.postree.template mapreduce<SafeSimpleFn>(init, f, op);
+            }
+        }
+
+        //mapreduce(U, fn(T, Nat) -> U, fn(U, U) -> U) -> U
+        template<bool SafeSimpleFn, typename U, typename Fn, typename Op>
+        U mapreduceidx(const U& init, Fn f, Op op) const
+        {
+            assert(!this->ulist.empty());
+
+            if(this->ulist.isInline()) {
+                constexpr std::array<XNat, MAX_INLINE_CAPACITY> zipidx = create_idx_range<MAX_INLINE_CAPACITY>();
+
+                auto ddbegin = this->ulist.inlinelist.data.cbegin();
+                auto ddend = this->ulist.inlinelist.data.cbegin() + this->ulist.inlinelist.count;
+
+                return std::transform_reduce(ddbegin, ddend, zipidx.cbegin(), init, op, f);
+            }
+            else {
+                return this->ulist.treelist.postree.template mapreduceidx<SafeSimpleFn>(init, f, op);
             }
         }
 

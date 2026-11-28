@@ -394,6 +394,13 @@ namespace ᐸRuntimeᐳ
             return std::transform_reduce(this->data.cbegin(), this->data.cbegin() + this->dcount, init, op, f);
         }
 
+        template<bool SafeSimpleFn, typename U, typename Fn, typename Op>
+        U mapreduceidx(const U& init, int64_t sidx, Fn f, Op op) const
+        {
+            std::array<XNat, K> zipidx = create_idx_range_from<K>(sidx);
+            return std::transform_reduce(this->data.cbegin(), this->data.cbegin() + this->dcount, zipidx.cbegin(), init, op, f);
+        }
+
         template<bool SafeSimpleFn, typename U, typename Fn>
         U combine(const U& init, Fn op) const
         {
@@ -1986,6 +1993,28 @@ private:
         }
 
         template<bool SafeSimpleFn, typename U, typename Fn, typename Op>
+        static U recmapreduceidx(const PosRBNode<T, K>* curr, const U& acc, int64_t sidx, Fn f, Op op)
+        {
+            if(curr == nullptr) {
+                return acc;
+            }
+
+            if(isLeafType(curr)) {
+                return curr->data.template mapreduceidx<SafeSimpleFn>(acc, sidx, f, op);
+            }
+            else {
+                const int64_t leftCount = reprGetCount(reprGetLeft(curr));
+                const int64_t midCount = curr->data.dcount;
+                
+                U leftacc = recmapreduceidx<SafeSimpleFn, U, Fn, Op>(reprGetLeft(curr), acc, sidx, f, op);
+                U midacc = curr->data.template mapreduceidx<SafeSimpleFn>(leftacc, sidx + leftCount, f, op);
+                U rightacc = recmapreduceidx<SafeSimpleFn, U, Fn, Op>(reprGetRight(curr), midacc, sidx + leftCount + midCount, f, op);
+
+                return rightacc;
+            }
+        }
+
+        template<bool SafeSimpleFn, typename U, typename Fn, typename Op>
         static U reccombine(const PosRBNode<T, K>* curr, const U& acc, Op op)
         {
             if(curr == nullptr) {
@@ -2335,6 +2364,12 @@ private:
         U mapreduce(const U& init, Fn f, Op op) const
         {
             return recmapreduce<SafeSimpleFn, U, Fn, Op>(this->root, init, f, op);
+        }
+
+        template<bool SafeSimpleFn, typename U, typename Fn, typename Op>
+        U mapreduceidx(const U& init, Fn f, Op op) const
+        {
+            return recmapreduceidx<SafeSimpleFn, U, Fn, Op>(this->root, init, 0, f, op);
         }
 
         template<bool SafeSimpleFn, typename U, typename Fn>
